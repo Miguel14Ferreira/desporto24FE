@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:display="http://www.w3.org/1999/xhtml"
+      xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="ISO-8859-1">
+    <title>Desporto24</title>
+    <link rel="stylesheet">
+</head>
+<body>
+<div><img [src]="minhaImagem" class="img-fluid" alt=""></div>
+    <p><h1>Desporto24</h1>
+        <h2>Sessão a ser criada por {{ObterNomeDeUtilizador()}}</h2>
+        <form #createSession="ngForm" (ngSubmit)="onSubmit()" name="form" action="#">
+            <label id="input1">Seleciona o desporto que queres praticar:</label>
+        <select id="desporto" [(ngModel)]="session.desporto" name="desporto" required>
+            <option value="Futebol">Futebol</option>
+            <option value="Voleibol">Voleibol</option>
+            <option value="Basquetebol">Basquetebol</option>
+            <option value="Andebol">Andebol</option>
+            <option value="Ténis">Ténis</option>
+            <option value="Padel">Padel</option>
+            <option value="Karts">Karts</option>
+            <option value="Outro">Outro</option>
+        </select>
+        <div class="espaco12">
+        </div>
+        <input *ngIf="showMe" [(ngModel)]="session.desporto" name="desporto" id="espaco1" placeholder="coloca aqui o desporto que pretendes praticar">
+        <label id="espaco3">Data de jogo:</label>
+        <input id="espaco2" [(ngModel)]="session.datadejogo" name="datadejogo" class="dateOfBirth" min="{{minDate}}" #input [(ngModel)]="value" (change)="onChange(input.value)" type="datetime-local" placeholder="Data de jogo" required>
+        <label id="espaco4">Define por favor o limite de jogadores para a tua sessão:</label>
+        <select id="desporto2" [(ngModel)]="session.jogadores" name="jogadores" class="country" name="country" required>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="10">10</option>
+            <option value="11">11</option>
+            <option value="12">12</option>
+            <option value="13">13</option>
+            <option value="14">14</option>
+            <option value="15">15</option>
+            <option value="16">16</option>
+            <option value="17">17</option>
+            <option value="18">18</option>
+            <option value="19">19</option>
+            <option value="20">20</option>
+            <option value="21">21</option>
+            <option value="22">22</option>
+            <option value="23">23</option>
+            <option value="24">24</option>
+            <option value="25">25</option>
+            <option value="26">26</option>
+            <option value="27">27</option>
+            <option value="28">28</option>
+            <option value="29">29</option>
+            <option value="30">30</option>
+        </select>
+        <label id="espaco5">Escolhe o distrito que pretendes fazer a tua sessão de jogo:</label>
+        <select id="espaco6" [(ngModel)]="session.localidade" name="localidade" required>
+            <option value="Lisboa">Lisboa</option>
+            <option value="Porto">Porto</option>
+            <option value="Guarda">Guarda</option>
+            <option value="Braga">Braga</option>
+            <option value="Aveiro">Aveiro</option>
+            <option value="Faro">Faro</option>
+            <option value="Setubal">Setúbal</option>
+            <option value="Leiria">Leiria</option>
+            <option value="Santarém">santarém</option>
+            <option value="Bragança">Bragança</option>
+            <option value="Coimbra">Coimbra</option>
+            <option value="Evora">Évora</option>
+            <option value="Castelo Branco">Castelo Branco</option>
+            <option value="Portalegre">Portalegre</option>
+            <option value="Beja">Beja</option>
+            <option value="Viseu">Viseu</option>
+            <option value="Viana do Castelo">Viana do Castelo</option>
+            <option value="Vila Real">Vila Real</option>
+        </select>
+        <input type="text" [(ngModel)]="session.morada" name="morada" placeholder="Coloca aqui a morada completa do campo" id="espaco7" required>
+    <div class="espaco8">
+        <input type="checkbox" (click)="toogleTag2()">Quero um jogo privado
+    </div>
+    <input id="espaco10" [(ngModel)]="session.password" name="password" *ngIf="showMe2" type="text" placeholder="Por favor,coloca aqui a tua palavra-passe para o jogo.">
+    <div class="espaco9">
+        <input type="checkbox" (click)="toogleTag3()">Quero colocar preço por jogador
+    </div>
+    <input id="espaco11" [(ngModel)]="session.preco" *ngIf="showMe3" type="text" name="preco" placeholder="Por favor,coloca aqui o valor em euros para o teu jogo.">
+    <label id="espaco13">Fotografia do Campo:</label>
+    <input [(ngModel)]="session.foto" (change)="onSelectedFile($event)" name="foto" type="file" id="inpFile" accept="image/*" required>
+    <div class="image-preview" id="imagePreview">
+    <img [src]="url" alt="Image Preview" class="image-preview__image">
+    <span  class="image-preview__default-text"></span>
+    </div>
+        <button type="submit" id="botao1" [disabled]="!createSession.valid">Concluir Registo</button>
+        </form>
+            <button href="#" routerLink="login" id="botao2">Voltar atrás</button>
+        </body>
+        </html>

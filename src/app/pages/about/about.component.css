@@ -1,0 +1,29 @@
+.img-fluid{
+    width: 2000px;
+    height: 1000px;
+}
+h1{
+    color: white;
+    font-size: 60px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top:10%;
+    left: 35%;
+    transform: translateX(0%) translateY(0);
+}
+label{
+    color: white;
+    background-color: black;
+    font-size: 30px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top:30%;
+    left: 2%;
+    transform: translateX(0%) translateY(0);
+}

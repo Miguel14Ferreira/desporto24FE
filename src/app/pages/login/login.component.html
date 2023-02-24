@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:display="http://www.w3.org/1999/xhtml"
+      xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="ISO-8859-1">
+    <title>Desporto24</title>
+    <link rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+<body>
+<div><img [src]="minhaImagem" class="img-fluid" alt=""></div>
+    <p><h1>Desporto24</h1>
+    <form #signInForm="ngForm" (ngSubmit)="onLogin(signInForm.value)">
+        <p><input id="input1" name="username" [(ngModel)]="perfil.username" type="text" placeholder="Utilizador" required></p>  
+    <p><input id="input2"  name="password" [type]="changetype?'password':'text'" placeholder="Password" [(ngModel)]="perfil.password" required></p>
+    <div>
+        <span (click)="viewPass()" class="eyeicon"><i [ngClass]="visible?'fa fa-eye':'fa fa-eye-slash'"></i></span>
+    </div>
+        <button type="submit" id="input3" [disabled]="!signInForm.valid">
+        <i *ngIf= "showLoading" class="fas fa-spinner fa-spin"></i>&nbsp;&nbsp;
+        <span *ngIf="showLoading">A carregar...</span>
+        <span *ngIf="!showLoading">Iniciar Sessão</span>
+        </button>
+    </form>
+        <button href="#" routerLink="registerNewUser" routerLinkActive="active-link" id="input4">Criar nova conta</button>
+        <button href="#" routerLink="forgotp" routerLinkActive="active-link" id="input5" >Esqueci-me da password</button>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+</body>
+</html>

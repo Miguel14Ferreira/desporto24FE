@@ -1,0 +1,529 @@
+.img-fluid{
+    width: 1300px;
+    height: 700px;
+}
+.error-msg{
+    color: red;
+    font-size: 15px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 41%;
+    left: 27%;
+    transform: translateX(0%) translateY(0);
+}
+table {
+    color:white;
+  border-collapse: collapse;
+  text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 105%;
+    transform: translateX(0%) translateY(0);
+    font-size: 15px;
+}
+#l{
+    color: white;
+    font-size: 15px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    font-weight: bold;
+    position: absolute;
+    top: 80%;
+    left: 40%;
+    transform: translateX(0%) translateY(0); 
+}
+.error-msg2{
+    color: red;
+    font-size: 15px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 35%;
+    left: 27%;
+    transform: translateX(0%) translateY(0);
+}
+.error-msg3{
+    color: red;
+    font-size: 15px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 48%;
+    left: 27%;
+    transform: translateX(0%) translateY(0);
+}
+.alert{
+    color: red;
+    font-size: 15px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 80%;
+    left: 45%;
+    transform: translateX(0%) translateY(0);
+}
+.error-msg4{
+    color: red;
+    font-size: 15px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 58%;
+    left: 42%;
+    transform: translateX(0%) translateY(0);
+}
+.error-msg5{
+    color: red;
+    font-size: 15px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 71%;
+    left: 17%;
+    transform: translateX(0%) translateY(0);
+}
+.error-msg6{
+    color: red;
+    font-size: 15px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 87%;
+    left: 9%;
+    transform: translateX(0%) translateY(0);
+}
+.error-msg7{
+    color: red;
+    font-size: 15px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 87%;
+    left: 27%;
+    transform: translateX(0%) translateY(0);
+}
+.error-msg8{
+    color: red;
+    font-size: 15px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 35%;
+    left: 80%;
+    transform: translateX(0%) translateY(0);
+}
+.error-msg9{
+    color: red;
+    font-size: 15px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 46%;
+    left: 58%;
+    transform: translateX(0%) translateY(0);
+}
+.error-msg10{
+    color: red;
+    font-size: 25px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 110%;
+    left: 35%;
+    transform: translateX(0%) translateY(0);
+}
+.image-preview{
+    width: 200px;
+    height: 250px;
+    border: 2px solid #dddddd;
+    position: absolute;
+    left: 58%;
+    top: 55%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #cccccc;
+}
+.image-preview__image{
+    width: 100%;
+    height: 100%;
+}
+#inpFile{
+    font-size: 15px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 100%;
+    left: 58%;
+    transform: translateX(0%) translateY(0);
+}
+h1{
+    color: white;
+    font-size: 60px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top:10%;
+    left: 40%;
+    transform: translateX(0%) translateY(0);
+}
+h2 {
+    color: white;
+    font-size: 40px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 20%;
+    left: 43%;
+    transform: translateX(0%) translateY(0);
+}
+h3 {
+    color: white;
+    font-size: 20px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 30%;
+    left: 25%;
+    transform: translateX(0%) translateY(0);
+}
+h4 {
+    color: white;
+    font-size: 15px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 50%;
+    left: 55%;
+    transform: translateX(0%) translateY(0);
+}
+#input1{
+    font-size: 15px;
+    height: 20px;
+    width: 200px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 35%;
+    left: 10%;
+    transform: translateX(0%) translateY(0);
+}
+#password{
+    font-size: 15px;
+    height: 20px;
+    width: 200px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 41%;
+    left: 10%;
+    transform: translateX(0%) translateY(0);
+}
+#confirmPassword{
+    font-size: 15px;
+    height: 20px;
+    width: 200px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 47%;
+    left: 10%;
+    transform: translateX(0%) translateY(0);
+}
+#input3{
+    font-size: 15px;
+    height: 20px;
+    width: 200px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 30%;
+    left: 10%;
+    transform: translateX(0%) translateY(0);
+}
+#input4{
+    font-size: 15px;
+    height: 20px;
+    width: 400px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 40%;
+    left: 10%;
+    transform: translateX(0%) translateY(0);
+}
+#input5{
+    font-size: 15px;
+    height: 20px;
+    width: 208px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 50%;
+    left: 25%;
+    transform: translateX(0%) translateY(0);
+}
+#datanascimento{
+    color:white;
+    font-size: 15px;
+    height: 20px;
+    width: 200px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 50%;
+    left: 7.5%;
+    transform: translateX(0%) translateY(0);
+}
+#input6{
+    font-size: 15px;
+    height: 20px;
+    width: 400px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 60%;
+    left: 10%;
+    transform: translateX(0%) translateY(0);
+}
+#paises{
+    font-size: 15px;
+    height: 25px;
+    width: 250px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 70%;
+    left: 22%;
+    transform: translateX(0%) translateY(0);
+}
+#pais{
+    font-size: 15px;
+    color:white;
+    height: 20px;
+    width: 200px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 70%;
+    left: 7.5%;
+    transform: translateX(0%) translateY(0);
+}
+#input7{
+    font-size: 15px;
+    height: 20px;
+    width: 200px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 82%;
+    left: 10%;
+    transform: translateX(0%) translateY(0);
+}
+#input8{
+    font-size: 12px;
+    height: 20px;
+    width: 75px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 82%;
+    left: 28%;
+    transform: translateX(0%) translateY(0);
+}
+#input9{
+    font-size: 12px;
+    height: 20px;
+    width: 54px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 82%;
+    left: 37%;
+    transform: translateX(0%) translateY(0);
+}
+#input10{
+    font-size: 15px;
+    height: 20px;
+    width: 125px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translateX(0%) translateY(0);
+}
+#input11{
+    font-size: 15px;
+    height: 20px;
+    width: 400px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 45%;
+    left: 50%;
+    transform: translateX(0%) translateY(0);
+}
+#radio1{
+    font-size: 15px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 41%;
+    left: 66%;
+    transform: translateX(0%) translateY(0);
+}
+#radio2{
+    font-size: 15px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 41%;
+    left: 75%;
+    transform: translateX(0%) translateY(0);
+}
+#masculino{
+    color:white;
+    font-size: 15px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 40%;
+    left: 68%;
+    transform: translateX(0%) translateY(0);
+}
+#feminino{
+    font-size: 15px;
+    color:white;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 40%;
+    left: 77%;
+    transform: translateX(0%) translateY(0);
+}
+#genero{
+    font-size: 15px;
+    color:white;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 40%;
+    left: 61%;
+    transform: translateX(0%) translateY(0);
+}
+#botao1{
+    text-decoration: none;
+    color: white;
+    background: green;
+    width: 200px;
+    font-size: 15px;
+    height: 30px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 100%;
+    left: 30%;
+    transform: translateX(0%) translateY(0);
+}
+#botao2{
+    text-decoration: none;
+    color: white;
+    background: darkred;
+    width: 200px;
+    font-size: 15px;
+    height: 30px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 100%;
+    left: 10%;
+    transform: translateX(0%) translateY(0);
+}
+.container form .error-text{
+    background: #F8D7DA;
+    padding: 8px 0;
+    border-radius: 5px;
+    color: #8B3E46;
+    border: 1px solid #F5C6CB;
+    display: none;
+}

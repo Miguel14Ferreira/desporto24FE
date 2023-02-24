@@ -1,0 +1,228 @@
+body{
+    padding: 0;
+    margin: 0;
+}
+h1{
+    color: white;
+    font-size: 60px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 10%;
+    left: 40%;
+    transform: translateX(0%) translateY(0);
+}
+#input1{
+    font-size: 20px;
+    height: 30px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 35%;
+    left: 45%;
+    transform: translateX(0%) translateY(0);
+}
+#input2{
+    font-size: 20px;
+    height: 30px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 45%;
+    left: 45%;
+    transform: translateX(0%) translateY(0);
+}
+#input3{
+    text-decoration: none;
+    color: black;
+    width: 300px;
+    font-size: 20px;
+    height: 40px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 35%;
+    left: 5%;
+    transform: translateX(0%) translateY(0);
+}
+#input4{
+    text-decoration: none;
+    color: white;
+    background: blue;
+    width: 300px;
+    font-size: 20px;
+    height: 40px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 65%;
+    left: 43%;
+    transform: translateX(0%) translateY(0);
+}
+#input5{
+    text-decoration: none;
+    color: white;
+    background: red;
+    width: 300px;
+    font-size: 20px;
+    height: 40px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 75%;
+    left: 43%;
+    transform: translateX(0%) translateY(0);
+}
+h2{
+    color: white;
+    font-size: 30px;
+    height: 10px;
+    margin: 0;
+    padding: 10px;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translateX(0%) translateY(0);
+}
+.img-fluid{
+    width: 1300px;
+    height: 700px;
+}
+.alert-danger{
+    background-color: red;
+}
+.alert{
+    color: white;
+}
+.danger {
+    color: red;
+    font-size: 20px;
+    font-weight: bold;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 90%;
+    left: 48%;
+    transform: translateX(0%) translateY(0);
+}
+.content button{
+    text-decoration: none;
+    color: black;
+    background-color: white;
+    font-size: 20px;
+    width: 500px;
+    margin: 0;
+    padding: 10px 30px;
+    text-align: center;
+    font-family: 'Arial';
+    font-weight: bold;
+    position: absolute;
+    top: 30%;
+    left: 3%;
+    transform: translateX(0%) translateY(0);
+    border-radius: 10px;
+}
+.content button:hover{
+    background-color: lightblue;
+    color: white;
+}
+.content2 button{
+    text-decoration: none;
+    color: black;
+    background-color: white;
+    font-size: 20px;
+    width: 500px;
+    margin: 0;
+    padding: 10px 30px;
+    text-align: center;
+    font-family: 'Arial';
+    font-weight: bold;
+    position: absolute;
+    top: 40%;
+    left: 3%;
+    transform: translateX(0%) translateY(0);
+    border-radius: 10px;
+}
+.content2 button:hover{
+    background-color: lightblue;
+    color: white;
+}
+.content3 button{
+    text-decoration: none;
+    color: black;
+    background-color: white;
+    font-size: 20px;
+    width: 500px;
+    margin: 0;
+    padding: 10px 30px;
+    text-align: center;
+    font-family: 'Arial';
+    font-weight: bold;
+    position: absolute;
+    top: 50%;
+    left: 3%;
+    transform: translateX(0%) translateY(0);
+    border-radius: 10px;
+}
+.content3 button:hover{
+    background-color: lightblue;
+    color: white;
+}
+.content4 button{
+    text-decoration: none;
+    color: black;
+    background-color: white;
+    font-size: 20px;
+    width: 500px;
+    margin: 0;
+    padding: 10px 30px;
+    text-align: center;
+    font-family: 'Arial';
+    font-weight: bold;
+    position: absolute;
+    top: 60%;
+    left: 3%;
+    transform: translateX(0%) translateY(0);
+    border-radius: 10px;
+}
+.content4 button:hover{
+    background-color: lightblue;
+    color: white;
+}
+.content5 button{
+    text-decoration: none;
+    color: black;
+    background-color: white;
+    font-size: 20px;
+    width: 500px;
+    margin: 0;
+    padding: 10px 30px;
+    text-align: center;
+    font-family: 'Arial';
+    font-weight: bold;
+    position: absolute;
+    top: 70%;
+    left: 3%;
+    transform: translateX(0%) translateY(0);
+    border-radius: 10px;
+}
+.content5 button:hover{
+    background-color: lightblue;
+    color: white;
+}

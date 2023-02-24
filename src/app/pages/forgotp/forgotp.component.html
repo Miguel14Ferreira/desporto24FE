@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:display="http://www.w3.org/1999/xhtml"
+      xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="ISO-8859-1">
+    <title>Desporto24</title>
+    <link rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+<body>
+<div><img [src]="minhaImagem" class="img-fluid" alt=""></div>
+<h1 id="h1">Indica-nos por favor o teu email abaixo:</h1>
+<input type="text" class="email">
+<button class="botao1">enviar email</button>
+<button class="botao2" (click)="goToLogin()">voltar</button>
+<h2>Assim que pressionares o botão "enviar email" iremos enviar um mail para o email colocado para que possas
+    seguir as nossas instruções na criação de uma nova palavra-chave, isto claro se o teu email constar nos nossos registos
+</h2>

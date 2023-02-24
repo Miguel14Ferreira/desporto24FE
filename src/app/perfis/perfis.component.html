@@ -1,0 +1,91 @@
+<body><img [src]="minhaImagem">
+    <h1>Jogadores inscritos</h1>
+    <small *ngIf="titleAction$ | async as title">{{ title }}</small>
+    </body>
+            <input name="searchTerm" class="form-control mr-sm-2" type="search" placeholder="Procurar perfil...">
+            <button onclick="procurarperfil(searchTerm.value)"></button>
+    <div class="btn-group">
+        <button type="button" (click)="obterPerfis(true)" class="btn btn-info">
+            <i *ngIf="refreshing" class="fas fa-sync fa-spin"></i><i *ngIf="!refreshing" class="fas fa-sync"></i>
+        </button>
+    </div>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Foto de perfil</th>
+                <th>Username</th>
+                <th>Data de nascimento</th>
+                <th>Género</th>
+                <th>País de nascimento</th>
+                <th>Email</th>
+            </tr>
+        </thead>
+        <tbody *ngFor="let perfil of perfis">
+                <td>
+                    <img height="40" width="40" src="{{perfil.foto}}">
+                </td>
+                <td (click)="onSelectPerfil(perfil)"> {{perfil.username}}</td>
+                <td (click)="onSelectPerfil(perfil)"> {{perfil.dateOfBirth}}</td>
+                <td (click)="onSelectPerfil(perfil)"> {{perfil.gender}} </td>
+                <td (click)="onSelectPerfil(perfil)"> {{perfil.country}} </td>
+                <td (click)="onSelectPerfil(perfil)"> {{perfil.email}}</td>
+        </tbody>
+    </table>
+    <button [hidden]="true" type="button" id="openPerfilInfo" data-toggle="modal" data-target="#viewPerfilModal"></button>
+
+    <!-- modal user info -->
+    <div class="modal fade bd-example-modal-lg" id="viewPerfilModal" tabindex="-1" role="dialog" aria-labelledby=""
+      aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title text-center" id="exampleModalLongTitle">{{selectedPerfil.username}}</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div>
+              <div class="card">
+                <div class="card-body">
+                  <div class="row">
+                    <div class="col-12 col-sm-auto">
+                      <div class="mx-auto" style="width: 120px;">
+                        <div class="d-flex justify-content-center align-items-center rounded">
+                          <img class="rounded" height="120" width="120" src="{{selectedPerfil.foto}}" alt="{{selectedPerfil.username}}">
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col d-flex flex-column flex-sm-row justify-content-between">
+                      <div class="text-center text-sm-left mb-sm-0">
+                        <h6 class="pt-sm-2 pb-1 mb-0 text-nowrap"></h6>
+                        <p class="mb-1">{{selectedPerfil.gender}}</p>
+                        <div *ngIf="selectedPerfil.lastLoginDateDisplay" class="text-muted"><small>Ultimo Login: {{selectedPerfil.lastLoginDateDisplay}}</small>
+                        </div>
+                      <div class="text-center text-sm-right">
+                        <div class="text-muted"><small>Membro desde: {{selectedPerfil.joinDate}}</small></div>
+                      </div> 
+                <ul class="list-group list-group-flush">
+                  <li class="list-group-item"></li>
+                  <li class="list-group-item"><i class="fa fa-id-badge float-right"></i>
+                  </li>
+                  <li class="list-group-item"><i class="fa fa-envelope float-right"></i>{{selectedPerfil.email}}
+                  </li>
+                  <li *ngIf="selectedPerfil.lastLoginDateDisplay" class="list-group-item"><i
+                      class="fas fa-sign-in-alt float-right"></i>{{selectedPerfil.lastLoginDateDisplay}}
+                  </li>
+                </ul>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          </div>
+      </div>
+      </div>
+      </div>
+      </div>
+      </div>
+      </div>
+      </div>
+      </div>
+      </div>
+    </div>
+    

@@ -1,0 +1,141 @@
+h1{
+    color: white;
+    font-size: 35px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    font-weight: bold;
+    position: absolute;
+    top: 15%;
+    left: 45%;
+    transform: translateX(0%) translateY(0);
+}
+h2{
+    color: white;
+    font-size: 20px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    font-weight: bold;
+    position: absolute;
+    top: 25%;
+    left: 0%;
+    transform: translateX(0%) translateY(0);
+}
+h3{
+    color: white;
+    font-size: 20px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    font-weight: bold;
+    position: absolute;
+    top: 35%;
+    left: 3%;
+    transform: translateX(0%) translateY(0);
+}
+footer{
+    overflow: hidden;
+    background-color: black;
+    padding: 0px;
+}
+.container-fluid{
+    background-color: white;
+    padding: 350px;
+}
+img{
+    width: 1275px;
+    height: 700px;
+}
+.content button{
+    text-decoration: none;
+    color: black;
+    background-color: white;
+    font-size: 20px;
+    margin: 0;
+    padding: 10px 30px;
+    text-align: center;
+    font-family: 'Arial';
+    font-weight: bold;
+    position: absolute;
+    top: 50%;
+    left: 20%;
+    transform: translateX(0%) translateY(0);
+    border-radius: 10px;
+}
+.content2 button{
+    text-decoration: none;
+    color: black;
+    background-color: white;
+    font-size: 20px;
+    margin: 0;
+    padding: 10px 40px;
+    text-align: center;
+    font-family: 'Arial';
+    font-weight: bold;
+    position: absolute;
+    top: 50%;
+    left: 55%;
+    transform: translateX(0%) translateY(0);
+    border-radius: 10px;
+}
+.content button:hover{
+    background-color: grey;
+    color: white;
+}
+.content2 button:hover{
+    background-color: grey;
+    color: white;
+}
+.content3 button{
+    text-decoration: none;
+    color: black;
+    background-color: white;
+    font-size: 20px;
+    margin: 0;
+    padding: 10px 30px;
+    text-align: center;
+    font-family: 'Arial';
+    font-weight: bold;
+    position: absolute;
+    top: 70%;
+    left: 40%;
+    transform: translateX(0%) translateY(0);
+    border-radius: 10px;
+}
+.content3 button:hover{
+    background-color: grey;
+    color: white;
+}
+
+.evento{
+    width:25px;
+    height: 25px;
+    font-size: 20px;
+    margin: 0;
+    padding: 0px;
+    text-align: center;
+    font-family: 'Arial';
+    font-weight: bold;
+    position: absolute;
+    top: 52%;
+    left: 40%;
+    transform: translateX(0%) translateY(0);
+}
+.eventos{
+    width:25px;
+    height: 25px;
+    font-size: 20px;
+    margin: 0;
+    padding: 0px;
+    text-align: center;
+    font-family: 'Arial';
+    font-weight: bold;
+    position: absolute;
+    top: 52%;
+    left: 85%;
+    transform: translateX(0%) translateY(0);
+}
