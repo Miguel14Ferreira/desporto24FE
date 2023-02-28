@@ -19,13 +19,6 @@ export class LoginperfilService {
   private jwtHelper = new JwtHelperService();
   constructor(private httpClient: HttpClient) { }
 
-  loginPerfil(perfil: Perfil):Observable<HttpResponse<Perfil>>{
-    return this.httpClient.post<Perfil>(`${this.host}/api/auth/login`, perfil, {observe: 'response'});
-  }
-  createPerfil(perfil: Perfil):Observable<Perfil>{
-    return this.httpClient.post<Perfil>(`${this.host}/api/auth/login/registerNewUser`, perfil);
-  }
-
   updatePerfil(formData: FormData) {
     return this.httpClient.put<Perfil>(`${this.host}/api/auth/menu/alterardados/`,formData);
   }
@@ -53,46 +46,6 @@ export class LoginperfilService {
     formData.append('username',perfil.username);
     formData.append('password',perfil.password);
     return formData;
-  }
-
-  logOut():void {
-    this.tokenmf = null;
-    this.loggedInUsername = null;
-    localStorage.removeItem('perfil');
-    localStorage.removeItem('token');
-    localStorage.removeItem('perfis');
-  }
-
-  saveToken(token: string):void {
-    this.tokenmf = token;
-    localStorage.setItem('tokenmf',token);
-  }
-  addPerfilToLocalCache(perfil: Perfil):void {
-    localStorage.setItem('perfil',JSON.stringify(perfil));
-  }
-  getPerfilFromLocalCache(): Perfil{
-    return JSON.parse(localStorage.getItem('perfil')!);
-  }
-  loadToken(): void{
-    this.tokenmf = localStorage.getItem('tokenmf');
-  }
-  getToken(): string{
-    return this.tokenmf;
-  }
-
-  isLoggedIn(): boolean{
-    this.loadToken();
-    if(this.tokenmf != null && this.tokenmf !== ''){
-      if (this.jwtHelper.decodeToken(this.tokenmf).sub != null || ''){
-        if (!this.jwtHelper.isTokenExpired(this.tokenmf)){
-          this.loggedInUsername = this.jwtHelper.decodeToken(this.tokenmf).sub;
-          return true;
-        }
-      }
-    } else {
-      this.logOut();
-    }
-    return false;
   }
 
   //updatePerfil(perfil: Perfil): Observable<Perfil | HttpErrorResponse>{

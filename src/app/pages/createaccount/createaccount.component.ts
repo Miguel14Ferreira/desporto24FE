@@ -7,8 +7,7 @@ import { NotificationType } from 'src/app/enum/notification-type.enum';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { NotificationService } from 'src/app/services/notification.service';
 import { Subscription } from 'rxjs';
-import { AuthService } from 'src/auth.service';
-import { HeaderType } from 'src/app/enum/header-type.enum';
+import { AuthenticationService } from 'src/app/services/authethication.service';
 
 @Component({
   selector: 'app-createaccount',
@@ -25,11 +24,11 @@ export class CreateaccountComponent implements OnInit, OnDestroy {
   token: any;
   response: any = null;
   subscriptions: Subscription[] = [];
-  constructor(private service: LoginperfilService,private router:Router, private formBuilder: FormBuilder, private notificationType:NotificationType, private errorResponse:HttpErrorResponse, private notificationService: NotificationService,  private authService:AuthService) {}
+  constructor(private service: LoginperfilService,private router:Router, private formBuilder: FormBuilder, private notificationType:NotificationType, private errorResponse:HttpErrorResponse, private notificationService: NotificationService,  private authservice:AuthenticationService) {}
   minhaImagem = './assets/lr .jpg';
   url = './assets/foto .png';
   saveNewUser(){
-    this.service.createPerfil(this.perfil).subscribe( data =>{
+    this.authservice.createPerfil(this.perfil).subscribe( data =>{
       console.log("Enviámos um mail para o teu email para ativares a tua conta.")
       this.router.navigate(['/login']);
     },
@@ -62,7 +61,7 @@ ngOnDestroy(): void {
 }
 
 ngOnInit(): void {
-  if(this.service.isLoggedIn()){
+  if(this.authservice.isLoggedIn()){
     this.router.navigateByUrl('/menu');
   }
 }
@@ -79,7 +78,7 @@ onSelectedFile(e:any){
 onRegister(perfil: Perfil): void {
   this.showLoading = true;
   this.subscriptions.push(
-    this.service.createPerfil(perfil).subscribe(
+    this.authservice.createPerfil(perfil).subscribe(
       (response: Perfil) => {
         this.showLoading = false;
         this.sendNotification(NotificationType.SUCESS, `A tua conta foi criada ${response.username}! Pedimos agora que te dirijas ao teu email para confirmares o registo da nova tua conta!`);

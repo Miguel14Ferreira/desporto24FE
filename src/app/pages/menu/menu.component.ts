@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { AuthService } from 'src/auth.service';
-import { LoginperfilService } from '../../services/loginperfil.service';
+import { AuthenticationService } from 'src/app/services/authethication.service';
 import { Perfil } from '../model/perfil';
 
 @Component({
@@ -11,12 +10,12 @@ import { Perfil } from '../model/perfil';
 })
 export class MenuComponent implements OnInit {
   public perfis : Perfil [] = [];
-  constructor(private loginService: LoginperfilService,private authService: AuthService,private router:Router) { }
+  constructor(private authenticationService:AuthenticationService,private router:Router) { }
 
   ngOnInit(): void {
   }
   minhaImagem = "./assets/estadio .jpg";
-  perfil = this.loginService.getPerfilFromLocalCache();
+  perfil = this.authenticationService.getPerfilFromLocalCache();
 
   NomeUtilizador(){
     this.perfil.username;
@@ -29,6 +28,6 @@ export class MenuComponent implements OnInit {
     this.router.navigate(['menu/alterarPassword', this.perfil.username]);
   }
   remover(){
-    this.loginService.logOut();
+    this.authenticationService.logOut();
   }
 }

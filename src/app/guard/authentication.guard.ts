@@ -1,14 +1,13 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot, UrlTree } from '@angular/router';
-import { Observable } from 'rxjs';
 import { NotificationType } from '../enum/notification-type.enum';
-import { LoginperfilService } from '../services/loginperfil.service';
+import { AuthenticationService } from '../services/authethication.service';
 import { NotificationService } from '../services/notification.service';
 
 @Injectable({providedIn: 'root'})
 export class AuthenticationGuard implements CanActivate {
 
-  constructor(private loginPerfilService: LoginperfilService, private router: Router,private notificationService: NotificationService){}
+  constructor(private authenticationService: AuthenticationService, private router: Router,private notificationService: NotificationService){}
 
   canActivate(
     next: ActivatedRouteSnapshot,
@@ -16,7 +15,7 @@ export class AuthenticationGuard implements CanActivate {
     return this.isUserLoggedIn();
   }
   private isUserLoggedIn(): boolean{
-    if (this.loginPerfilService.isLoggedIn()){
+    if (this.authenticationService.isLoggedIn()){
       return true;
     } else {
       this.router.navigate(['/login']);

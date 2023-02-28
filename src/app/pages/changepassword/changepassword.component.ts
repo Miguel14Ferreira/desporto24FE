@@ -8,6 +8,7 @@ import { LoginperfilService } from '../../services/loginperfil.service';
 import { NotificationService } from 'src/app/services/notification.service';
 import { Perfil } from '../model/perfil';
 import { Subscription } from 'rxjs';
+import { AuthenticationService } from 'src/app/services/authethication.service';
 
 @Component({
   selector: 'app-changepassword',
@@ -26,10 +27,10 @@ export class ChangepasswordComponent implements OnInit {
   perfil!:Perfil;
   public editPerfil = new Perfil();
   fileName!: any;
-  constructor(private loginPerfilService: LoginperfilService,private router:Router, private formBuilder: FormBuilder,private route:ActivatedRoute,private authService:AuthService, private notificationService: NotificationService) { }
+  constructor(private loginPerfilService: LoginperfilService,private router:Router, private formBuilder: FormBuilder,private route:ActivatedRoute,private authenticationService:AuthenticationService,private authService:AuthService, private notificationService: NotificationService) { }
 
   ngOnInit(): void {
-    this.perfil = this.loginPerfilService.getPerfilFromLocalCache();
+    this.perfil = this.authenticationService.getPerfilFromLocalCache();
     this.loginPerfilService.obterInfo(this.perfil).subscribe( data => {
       this.perfil = data;
     }, error => console.log(error));

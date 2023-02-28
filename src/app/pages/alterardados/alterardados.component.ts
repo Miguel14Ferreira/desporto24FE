@@ -4,6 +4,7 @@ import { FormBuilder, NgForm } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { NotificationType } from 'src/app/enum/notification-type.enum';
+import { AuthenticationService } from 'src/app/services/authethication.service';
 import { NotificationService } from 'src/app/services/notification.service';
 import { AuthService } from 'src/auth.service';
 import { LoginperfilService } from '../../services/loginperfil.service';
@@ -27,10 +28,10 @@ export class AlterardadosComponent implements OnInit {
   public editPerfil = new Perfil();
   url = './assets/foto .png';
   fileName!: any;
-  constructor(private loginPerfilService: LoginperfilService, private notificationService: NotificationService) { }
+  constructor(private loginPerfilService: LoginperfilService,private authenticationService:AuthenticationService, private notificationService: NotificationService) { }
 
   ngOnInit(): void {
-    this.perfil = this.loginPerfilService.getPerfilFromLocalCache();
+    this.perfil = this.authenticationService.getPerfilFromLocalCache();
     this.loginPerfilService.obterInfo(this.perfil).subscribe( data => {
       this.perfil = data;
     }, error => console.log(error));

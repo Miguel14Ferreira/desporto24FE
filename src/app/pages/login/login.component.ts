@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { HeaderType } from 'src/app/enum/header-type.enum';
 import { NotificationType } from 'src/app/enum/notification-type.enum';
+import { AuthenticationService } from 'src/app/services/authethication.service';
 import { NotificationService } from 'src/app/services/notification.service';
 import { AuthService } from 'src/auth.service';
 import { LoginperfilService } from '../../services/loginperfil.service';
@@ -24,13 +25,13 @@ export class LoginComponent implements OnInit, OnDestroy {
   token: any;
   response: any = null;
   subscriptions: Subscription[] = [];
-  constructor(private service:LoginperfilService, private router:Router,private authService:AuthService, private notificationService: NotificationService) { }
+  constructor(private service:LoginperfilService, private router:Router, private notificationService: NotificationService, private authenticationService:AuthenticationService) { }
   ngOnDestroy(): void {
     this.subscriptions.forEach(sub => sub.unsubscribe());
   }
 
   ngOnInit(): void {
-    if(this.service.isLoggedIn()){
+    if(this.authenticationService.isLoggedIn()){
       this.router.navigateByUrl('/menu');
     } else {
       this.router.navigateByUrl('/login');
@@ -43,11 +44,11 @@ export class LoginComponent implements OnInit, OnDestroy {
   onLogin(perfil: Perfil): void {
     this.showLoading = true;
     this.subscriptions.push(
-      this.service.loginPerfil(perfil).subscribe(
+      this.authenticationService.loginPerfil(perfil).subscribe(
         (response: HttpResponse<Perfil>) => {
           this.token = response.headers.get(HeaderType.JWT_TOKEN);
-          this.service.saveToken(this.token);
-          this.service.addPerfilToLocalCache((response.body)!);
+          this.authenticationService.saveToken(this.token);
+          this.authenticationService.addPerfilToLocalCache((response.body)!);
           this.router.navigateByUrl('/menu');
           this.showLoading = false;
         },

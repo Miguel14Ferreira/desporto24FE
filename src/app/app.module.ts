@@ -26,6 +26,7 @@ import { AuthenticationGuard } from './guard/authentication.guard';
 import { NotificationModule } from './notification.module';
 import { NotificationService } from './services/notification.service';
 import { PerfisComponent } from './perfis/perfis.component';
+import { AuthenticationService } from './services/authethication.service';
 
 @NgModule({
   declarations: [
@@ -56,7 +57,7 @@ import { PerfisComponent } from './perfis/perfis.component';
     BrowserAnimationsModule,
     NotificationModule
   ],
-  providers: [NotificationService, AuthenticationGuard, LoginperfilService, {provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true}],
+  providers: [NotificationService, AuthenticationGuard, AuthenticationService, LoginperfilService, {provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true}],
   bootstrap: [AppComponent]
 })
 export class AppModule { }
