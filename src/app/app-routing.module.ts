@@ -15,9 +15,10 @@ import { MenuComponent } from './pages/menu/menu.component';
 import { PerfisComponent } from './perfis/perfis.component'; 
 
 const routes: Routes = [
-  {path:'',component:HomeComponent},
+  {path:'', redirectTo:'home',pathMatch:'full'},
+  {path:'home',component:HomeComponent},
   {path:'about',component:AboutComponent},
-  {path:'contacts',component:ContactComponent},
+  {path:'contact',component:ContactComponent},
   {path:'menu/events',component:EventsComponent},
   {path:'menu/events/menu',redirectTo:'/menu', pathMatch:'full'},
   {path:'menu/login',redirectTo:'/login', pathMatch:'full'},

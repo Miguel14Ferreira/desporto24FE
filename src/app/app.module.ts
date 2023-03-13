@@ -11,7 +11,7 @@ import { MenuComponent } from './pages/menu/menu.component';
 import { CreateventComponent } from './pages/createvent/createvent.component';
 import { ClasseventsComponent } from './pages/classevents/classevents.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import {HttpClientModule, HTTP_INTERCEPTORS} from '@angular/common/http';
+import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { CreateaccountComponent } from './pages/createaccount/createaccount.component';
 import { Events2Component } from './pages/events2/events2.component';
 import { Events3Component } from './pages/events3/events3.component';
@@ -27,10 +27,12 @@ import { NotificationModule } from './notification.module';
 import { NotificationService } from './services/notification.service';
 import { PerfisComponent } from './perfis/perfis.component';
 import { AuthenticationService } from './services/authethication.service';
+import { AboutComponent } from './pages/about/about.component';
 
 @NgModule({
   declarations: [
     AppComponent,
+    AboutComponent,
     NavbarComponent,
     FooterComponent,
     HomeComponent,

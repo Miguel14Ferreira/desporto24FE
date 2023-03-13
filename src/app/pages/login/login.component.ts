@@ -6,8 +6,6 @@ import { HeaderType } from 'src/app/enum/header-type.enum';
 import { NotificationType } from 'src/app/enum/notification-type.enum';
 import { AuthenticationService } from 'src/app/services/authethication.service';
 import { NotificationService } from 'src/app/services/notification.service';
-import { AuthService } from 'src/auth.service';
-import { LoginperfilService } from '../../services/loginperfil.service';
 import { Perfil } from '../model/perfil';
 
 @Component({
@@ -25,7 +23,7 @@ export class LoginComponent implements OnInit, OnDestroy {
   token: any;
   response: any = null;
   subscriptions: Subscription[] = [];
-  constructor(private service:LoginperfilService, private router:Router, private notificationService: NotificationService, private authenticationService:AuthenticationService) { }
+  constructor(private router:Router, private notificationService: NotificationService, private authenticationService:AuthenticationService) { }
   ngOnDestroy(): void {
     this.subscriptions.forEach(sub => sub.unsubscribe());
   }
