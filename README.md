@@ -1,28 +1,6 @@
-# FrontEnd
+This is an Sports app made by me!
+It was used Springboot + angular.
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 15.1.0.
+The idea of creation of this app is to help people to find sports sessions near them, to let know the time, the place, the sports, the max number of players of each session.
 
-## Development server
-
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
-
-## Code scaffolding
-
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
-
-## Build
-
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
-
-## Running unit tests
-
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
-
-## Running end-to-end tests
-
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
-
-## Further help
-
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
-"#desporto24FE" 
+The app was made thinking of those who want to play a different sport but know little or no one who plays it or even people on other countries that don't know a lot of people, this app was made to those people who struggle to find someone to play any kind of sports, this app easily helps find someone.
