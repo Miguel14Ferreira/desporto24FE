@@ -23,7 +23,7 @@ export class LoginComponent implements OnInit, OnDestroy {
   token: any;
   response: any = null;
   subscriptions: Subscription[] = [];
-  constructor(private router:Router, private notificationService: NotificationService, private authenticationService:AuthenticationService) { }
+  constructor(private router:Router, private authenticationService:AuthenticationService) { }
   ngOnDestroy(): void {
     this.subscriptions.forEach(sub => sub.unsubscribe());
   }
@@ -35,7 +35,7 @@ export class LoginComponent implements OnInit, OnDestroy {
       this.router.navigateByUrl('/login');
     }
   }
-  minhaImagem = "assets/Sports .jpg";
+  minhaImagem = "assets/Sports1.jpg";
   minhaImagem2 = "assets/olho1.png";
   minhaImagem3 = "assets/olho2.png";
 
@@ -51,19 +51,19 @@ export class LoginComponent implements OnInit, OnDestroy {
           this.showLoading = false;
         },
         (errorResponse: HttpErrorResponse) => {
-          this.sendErrorNotification(NotificationType.ERROR, errorResponse.error.message);
+         // this.sendErrorNotification(NotificationType.ERROR, errorResponse.error.message);
           this.showLoading = false;
         }
       )
     );
   }
-  sendErrorNotification(notificationType: NotificationType, message: string) {
-    if(message){
-      this.notificationService.notify(notificationType,message);
-    } else {
-      this.notificationService.notify(notificationType, 'Um erro ocorreu durante a operação.');
-    }
-  }
+  //sendErrorNotification(notificationType: NotificationType, message: string) {
+  //  if(message){
+  //    this.notificationService.notify(notificationType,message);
+  //  } else {
+  //    this.notificationService.notify(notificationType, 'Um erro ocorreu durante a operação.');
+  //  }
+  //}
     viewPass(){
       this.visible = !this.visible;
       this.changetype = !this.changetype;

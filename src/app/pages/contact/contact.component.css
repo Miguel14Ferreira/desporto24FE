@@ -16,7 +16,6 @@ h1{
 }
 label{
     color: white;
-    background-color: black;
     font-size: 30px;
     margin: 0;
     padding: 0;
@@ -24,7 +23,7 @@ label{
     font-family: 'Arial';
     position: absolute;
     top:25%;
-    left: 2%;
+    left: 25%;
     transform: translateX(0%) translateY(0);
 }
 .input1{
@@ -37,7 +36,7 @@ label{
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-    top: 45%;
+    top: 35%;
     left: 5%;
     transform: translateX(0%) translateY(0);
     border-radius: 10px;
@@ -52,7 +51,7 @@ label{
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-    top: 45%;
+    top: 35%;
     left: 40%;
     transform: translateX(0%) translateY(0);
     border-radius: 10px;
@@ -67,7 +66,7 @@ label{
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-    top: 45%;
+    top: 35%;
     left: 50%;
     transform: translateX(0%) translateY(0);
     border-radius: 10px;
@@ -79,7 +78,7 @@ label{
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-    top: 46.5%;
+    top: 36.5%;
     left: 90%;
     transform: translateX(0%) translateY(0);
 }
@@ -90,7 +89,7 @@ label{
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-    top: 46.5%;
+    top: 36.5%;
     left: 79%;
     transform: translateX(0%) translateY(0);
 }
@@ -103,7 +102,7 @@ label{
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-    top: 45%;
+    top: 35%;
     left: 70%;
     transform: translateX(0%) translateY(0);
 }
@@ -116,7 +115,7 @@ label{
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-    top: 45%;
+    top: 35%;
     left: 82%;
     transform: translateX(0%) translateY(0);
 }
@@ -129,7 +128,7 @@ label{
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-    top: 40%;
+    top: 30%;
     left: 80%;
     transform: translateX(0%) translateY(0);
 }
@@ -142,7 +141,7 @@ label{
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-    top: 55%;
+    top: 45%;
     left: 5%;
     transform: translateX(0%) translateY(0);
     border-radius: 10px;
@@ -156,7 +155,7 @@ label{
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-    top: 55%;
+    top: 45%;
     left: 74.5%;
     transform: translateX(0%) translateY(0);
     border-radius: 10px;
@@ -165,13 +164,13 @@ textarea{
     font-size: 20px;
     color:black;
     width: 1600px;
-    height: 400px;
+    height: 300px;
     margin: 0;
     padding: 0;
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-    top: 65%;
+    top: 55%;
     left: 5%;
     transform: translateX(0%) translateY(0);
     border-radius: 10px;
@@ -188,7 +187,7 @@ textarea{
     font-family: 'Arial';
     font-weight: bold;
     position: absolute;
-    top: 113%;
+    top: 95%;
     left: 41.5%;
     transform: translateX(0%) translateY(0);
     border-radius: 10px;
@@ -196,4 +195,29 @@ textarea{
 #botao1:hover{
     background-color: lightblue;
     color: white;
+    transition: background-color 0.5s;    
 }
+@keyframes transition {
+    from {
+        opacity: 0;
+        transform: rotateX(-10deg);
+    }
+    to{
+        opacity: 1;
+        transform: rotateX(0);
+    }
+}
+@media screen and (max-width: 1024px) { /* Specific to this particular image */
+    .img {
+      left: 50%;
+      margin-left: -512px;   /* 50% */
+    }
+}
+.img{
+            animation: transition 0.75s;
+            height: 100vh;
+            background-image: url(src\assets\Sports1.jpg);     
+            -webkit-background-size: cover;
+            background-size: cover;
+            background-position: center center;
+        }

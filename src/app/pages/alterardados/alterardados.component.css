@@ -489,8 +489,8 @@ h4 {
 }
 #botao1{
     text-decoration: none;
-    color: white;
-    background: green;
+    color: black;
+    background: white;
     width: 200px;
     font-size: 15px;
     height: 30px;
@@ -503,10 +503,15 @@ h4 {
     left: 30%;
     transform: translateX(0%) translateY(0);
 }
+    #botao1:hover{
+    background-color: lightblue;
+    color: white;
+    transition: background-color 0.5s;    
+}
 #botao2{
     text-decoration: none;
-    color: white;
-    background: darkred;
+    color: black;
+    background: white;
     width: 200px;
     font-size: 15px;
     height: 30px;
@@ -518,6 +523,11 @@ h4 {
     top: 100%;
     left: 10%;
     transform: translateX(0%) translateY(0);
+}
+#botao2:hover{
+    background-color: lightblue;
+    color: white;
+    transition: background-color 0.5s;    
 }
 .container form .error-text{
     background: #F8D7DA;

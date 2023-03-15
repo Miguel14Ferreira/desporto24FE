@@ -1,9 +1,8 @@
-<div><img [src]="minhaImagem"class="img-fluid" alt=""></div>
+<div class="img">
 <h1>Tens alguma ideia?</h1>
-<label>Tens alguma ideia de como nos podes ajudar para melhorar a qualidade dos nossos jogos ou qualquer outra coisa que aches que podia ser melhorada? Diz-nos o quê!</label>
+<label>Tens alguma coisa a dizer-nos? Algo a melhorar ou a propor? Diz-nos!</label>
 <form #enviarOpiniao="ngForm" (ngSubmit)="onSubmit()">
     <input class="input1" name="name" [(ngModel)]="ideia.name" type="text" placeholder="Nome completo" required>
-    <input class="input2" name="age" [(ngModel)]="ideia.age" type="number" pattern="[0-9]{2}" placeholder="Idade" required>
     <input class="input3" name="city" [(ngModel)]="ideia.city" type="text" placeholder="Localidade" required>
     <p id="genero">Género:</p>
     <input id="radio1" class="gender" [(ngModel)]="ideia.gender" name="gender" value="masculino" type="radio" required><p id="masculino">Masculino</p>
@@ -13,3 +12,4 @@
     <textarea id="texto" name="problem" [(ngModel)]="ideia.problem" placeholder="Diz-nos o que podiamos melhorar..." rows="10" cols="108" required></textarea>
     <button type="submit" id="botao1" [disabled]="!enviarOpiniao.valid">Submeter</button>
 </form>
+</div>

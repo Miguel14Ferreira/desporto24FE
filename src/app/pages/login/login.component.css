@@ -60,6 +60,7 @@
         #input3:hover{
             background-color: lightblue;
             color: white;
+            transition: background-color 0.5s;
         }
         #input4{
             text-decoration: none;
@@ -81,6 +82,7 @@
         #input4:hover{
             background-color: lightblue;
             color: white;
+            transition: background-color 0.5s;
         }
         #input5{
             text-decoration: none;
@@ -102,6 +104,7 @@
         #input5:hover{
             background-color: lightblue;
             color: white;
+            transition: background-color 0.5s;
         }
         h2{
             color: white;
@@ -116,9 +119,13 @@
             left: 50%;
             transform: translateX(0%) translateY(0);
         }
-        .img-fluid{
-            width: 2000px;
-            height: 1000px;
+        .img{
+            animation: transition 0.75s;
+            height: 100vh;
+            background-image: url(src\assets\Sports1.jpg);     
+            -webkit-background-size: cover;
+            background-size: cover;
+            background-position: center center;
         }
         .alert-danger{
             background-color: red;
@@ -141,6 +148,24 @@
         }
     .eyeicon{
         position: absolute;
-        left: 56%;
+        color: white;
+        left: 60%;
         top: 45.4%
     }
+    @keyframes transition {
+        from {
+            opacity: 0;
+            transform: rotateX(-10deg);
+        }
+        to{
+            opacity: 1;
+            transform: rotateX(0);
+        }
+    }
+    @media screen and (max-width: 1024px) { /* Specific to this particular image */
+        .img {
+          left: 50%;
+          margin-left: -512px;   /* 50% */
+        }
+    }
+    

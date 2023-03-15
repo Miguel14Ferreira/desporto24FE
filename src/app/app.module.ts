@@ -56,10 +56,9 @@ import { AboutComponent } from './pages/about/about.component';
     FormsModule,
     HttpClientModule,
     ReactiveFormsModule,
-    BrowserAnimationsModule,
-    NotificationModule
+    BrowserAnimationsModule
   ],
-  providers: [NotificationService, AuthenticationGuard, AuthenticationService, LoginperfilService, {provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true}],
+  providers: [AuthenticationGuard, AuthenticationService, LoginperfilService, {provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true}],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

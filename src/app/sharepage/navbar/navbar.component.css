@@ -7,3 +7,19 @@
     color: var(--primary-color);
     font-weight: bold;
 }
+.navbar-expand-lg .navbar-light .bg-lightnavbar{
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    box-sizing: border-box;
+    transition: top .6s;
+    overflow: hidden;
+}
+.navbar.animate{
+    top: -71px;
+}
+.navbar.sticky{
+    top: 0;
+    z-index: 99;
+}

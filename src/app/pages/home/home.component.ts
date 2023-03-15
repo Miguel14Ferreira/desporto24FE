@@ -11,6 +11,5 @@ export class HomeComponent implements OnInit {
 
   ngOnInit(): void {
   }
-  minhaImagem = "assets/Sports .jpg";
 
 }

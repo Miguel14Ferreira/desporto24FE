@@ -14,7 +14,6 @@ export class ContactComponent implements OnInit {
 
   ngOnInit(): void {
   }
-  minhaImagem = "./assets/Sports .jpg";
   saveNewIdea(){
     this._service.createIdea(this.ideia).subscribe( data =>{
       {alert("Obrigado pela tua mensagem, iremos tentar responder-te o mais brevemente possível.")}

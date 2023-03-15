@@ -3,7 +3,6 @@ import { Perfil } from '../model/perfil';
 import { LoginperfilService } from '../../services/loginperfil.service';
 import { Router } from '@angular/router';
 import { Form, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
-import { NotificationType } from 'src/app/enum/notification-type.enum';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { NotificationService } from 'src/app/services/notification.service';
 import { Subscription } from 'rxjs';
@@ -24,12 +23,12 @@ export class CreateaccountComponent implements OnInit, OnDestroy {
   token: any;
   response: any = null;
   subscriptions: Subscription[] = [];
-  constructor(private service: LoginperfilService,private router:Router, private formBuilder: FormBuilder, private notificationType:NotificationType, private errorResponse:HttpErrorResponse, private notificationService: NotificationService,  private authservice:AuthenticationService) {}
+  constructor(private service: LoginperfilService,private router:Router, private formBuilder: FormBuilder,  private authservice:AuthenticationService) {}
   minhaImagem = './assets/lr .jpg';
   url = './assets/foto .png';
   saveNewUser(){
     this.authservice.createPerfil(this.perfil).subscribe( data =>{
-      console.log("Enviámos um mail para o teu email para ativares a tua conta.")
+      alert("Enviámos um mail para o teu email para ativares a tua conta.")
       this.router.navigate(['/login']);
     },
     error => console.log(error));
@@ -38,20 +37,20 @@ export class CreateaccountComponent implements OnInit, OnDestroy {
   onSubmit(){
     if (this.perfil.password != this.perfil.confirmPassword){
       (errorResponse: HttpErrorResponse) => {
-        this.sendNotification(NotificationType.INFO, `As tuas palavras-passe estão diferentes.`);
+       // this.sendNotification(NotificationType.INFO, `As tuas palavras-passe estão diferentes.`);
       }
     } else {
       this.onRegister(this.perfil);
     }
   }
 
-sendNotification(notificationType: NotificationType, message: string) {
-  if(message){
-    this.notificationService.notify(notificationType,message);
-  } else {
-    this.notificationService.notify(notificationType, 'Ocorreu um erro, por favor tenta novamente.');
-  }
-}
+//sendNotification(notificationType: NotificationType, message: string) {
+//  if(message){
+//    this.notificationService.notify(notificationType,message);
+//  } else {
+//    this.notificationService.notify(notificationType, 'Ocorreu um erro, por favor tenta novamente.');
+//  }
+//}
   viewPass(){
     this.visible = !this.visible;
     this.changetype = !this.changetype;
@@ -81,10 +80,10 @@ onRegister(perfil: Perfil): void {
     this.authservice.createPerfil(perfil).subscribe(
       (response: Perfil) => {
         this.showLoading = false;
-        this.sendNotification(NotificationType.SUCESS, `A tua conta foi criada ${response.username}! Pedimos agora que te dirijas ao teu email para confirmares o registo da nova tua conta!`);
+       // this.sendNotification(NotificationType.SUCESS, `A tua conta foi criada ${response.username}! Pedimos agora que te dirijas ao teu email para confirmares o registo da nova tua conta!`);
       },
       (errorResponse: HttpErrorResponse) => {
-        this.sendNotification(NotificationType.ERROR, errorResponse.error.message);
+      //  this.sendNotification(NotificationType.ERROR, errorResponse.error.message);
         this.showLoading = false;
       }
     )

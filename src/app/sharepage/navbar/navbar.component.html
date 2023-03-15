@@ -1,11 +1,13 @@
-<nav class="navbar navbar-expand-lg navbar-light bg-light">
+<nav class="navbar-expand-lg navbar-light bg-lightnavbar">
     <div class="container-fluid">
-      <a class="navbar-brand" href="#">Desporto24</a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="collapse navbar-collapse" id="navbarSupportedContent">
         <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item">
+            <a class="nav-link" href="#" routerLink="home" routerLinkActive="active-link">Home</a>
+          </li>
           <li class="nav-item">
             <a class="nav-link" href="#" routerLink="login" routerLinkActive="active-link">Iniciar Sessão</a>
           </li>
@@ -20,4 +22,26 @@
         </ul>
       </div>
     </div>
+    <script>
+      $(function(){
+        var scroll = $(document).scrollTop();
+        var navHeight =$('.navbar-expand-lg navbar-light bg-lightnavbar').outerHeight();
+        $(window).scroll(function(){
+          var scrolled = $(document).scrollTop();
+
+          if(scrolled > navHeight){
+            $('.navbar-expand-lg navbar-light bg-lightnavbar').addClass('animate');
+          } else {
+            $('.navbar-expand-lg navbar-light bg-lightnavbar').removeClass('animate');
+          }
+
+          if(scrolled > scroll){
+            $('.navbar-expand-lg navbar-light bg-lightnavbar').removeClass('sticky');
+          }else{
+            $('.navbar-expand-lg navbar-light bg-lightnavbar').addClass('sticky');
+          }
+          scroll = $(document).scrollTop();
+        });
+      });
+    </script>
   </nav>

@@ -384,10 +384,12 @@ h4 {
 #botao1:hover{
             background-color: lightblue;
             color: white;
+            transition: background-color 0.5s;
         }
         #botao2:hover{
             background-color: lightblue;
             color: white;
+            transition: background-color 0.5s;
         }
 .container form .error-text{
     background: #F8D7DA;
