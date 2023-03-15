@@ -404,3 +404,18 @@ h4 {
     left: 20.2%;
     top: 45.1%
 }
+
+@media screen and (max-width: 1024px) { /* Specific to this particular image */
+    .img {
+      left: 50%;
+      margin-left: -512px;   /* 50% */
+    }
+}
+.img{
+            animation: transition 0.75s;
+            height: 100vh;
+            background-image: url(src\assets\LR.jpg);     
+            -webkit-background-size: cover;
+            background-size: cover;
+            background-position: center center;
+        }

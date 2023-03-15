@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 </head>
+<div class="img">
 <h1>Desporto24</h1>
 <h2>Novo Registo</h2>
 <h3>Iremos pedir-te agora para preencheres todos os campos para efetuar um novo registo na aplicação.</h3>
 <body>
-<div><img [src]="minhaImagem" class="img-fluid" alt=""></div>
 <form #passwordValidation="ngForm" #createAccount="ngForm" (ngSubmit)="onRegister(createAccount.value)" name="form" action="#">
 <input #Username="ngModel" id="input1" [(ngModel)]="perfil.username" type="text" class="username" name="username" placeholder="Nome de utilizador" required/>
 <input id="password" #Password="ngModel" [(ngModel)]="perfil.password" [type]="changetype?'password':'text'" name="password" class="password" placeholder="Password" required>
@@ -298,5 +298,7 @@
     </div>
     </form>
 <button type="submit" id="botao1" [disabled]="!createAccount.valid">Concluir Registo</button>
-    <button href="#" routerLink="login" id="botao2">Voltar atrás</button></body>
+    <button href="#" routerLink="login" id="botao2">Voltar atrás</button>
+</body>
+</div>
 </html>
