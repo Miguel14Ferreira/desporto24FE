@@ -14,6 +14,14 @@ h1{
         left: 27%;
         transform: translateX(0%) translateY(0);
 }
+.img{
+    animation: transition 0.75s;
+    height: 100vh;
+    background-image: url(src\assets\Sports1.jpg);     
+    -webkit-background-size: cover;
+    background-size: cover;
+    background-position: center center;
+}
 .email{
     font-size: 20px;
     height: 30px;
@@ -61,7 +69,7 @@ h1{
     font-family: 'Arial';
     font-weight: bold;
     position: absolute;
-    top: 65%;
+    top: 60%;
     left: 43.1%;
     transform: translateX(0%) translateY(0);
     border-radius: 10px;
@@ -72,14 +80,29 @@ h1{
 }
 h2 {
     color: white;
-    background-color: black;
     font-size: 23px;
     margin: 0;
     padding: 0;
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-    top: 55%;
+    top: 70%;
     left: 1%;
     transform: translateX(0%) translateY(0);
+}
+@keyframes transition {
+    from {
+        opacity: 0;
+        transform: rotateX(-10deg);
+    }
+    to{
+        opacity: 1;
+        transform: rotateX(0);
+    }
+}
+@media screen and (max-width: 1024px) { /* Specific to this particular image */
+    .img {
+      left: 50%;
+      margin-left: -512px;   /* 50% */
+    }
 }

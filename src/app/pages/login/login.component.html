@@ -1,15 +1,11 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:display="http://www.w3.org/1999/xhtml"
-      xmlns="http://www.w3.org/1999/html">
+<html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-    <meta charset="ISO-8859-1">
-    <title>Desporto24</title>
-    <link rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 </head>
 <div class="img">
 <body>
-    <p><h1>Desporto24</h1>
+    <h1>Desporto24</h1>
     <form #signInForm="ngForm" (ngSubmit)="onLogin(signInForm.value)">
         <p><input id="input1" name="username" [(ngModel)]="perfil.username" type="text" placeholder="Utilizador" required></p>  
     <p><input id="input2"  name="password" [type]="changetype?'password':'text'" placeholder="Password" [(ngModel)]="perfil.password" required></p>

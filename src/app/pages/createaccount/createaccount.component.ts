@@ -24,7 +24,6 @@ export class CreateaccountComponent implements OnInit, OnDestroy {
   response: any = null;
   subscriptions: Subscription[] = [];
   constructor(private service: LoginperfilService,private router:Router, private formBuilder: FormBuilder,  private authservice:AuthenticationService) {}
-  minhaImagem = './assets/lr .jpg';
   url = './assets/foto .png';
   saveNewUser(){
     this.authservice.createPerfil(this.perfil).subscribe( data =>{

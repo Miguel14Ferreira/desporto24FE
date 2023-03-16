@@ -13,7 +13,6 @@ export class ForgotpComponent implements OnInit {
 
   ngOnInit(): void {
   }
-  minhaImagem = "assets/Sports .jpg";
   goToLogin(){
     this.router.navigate(['/login']);
   }

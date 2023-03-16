@@ -160,7 +160,7 @@ h4 {
     font-family: 'Arial';
     position: absolute;
     top: 30%;
-    left: 30%;
+    left: 25%;
     transform: translateX(0%) translateY(0);
     border-radius: 10px;
 }
@@ -174,7 +174,7 @@ h4 {
     font-family: 'Arial';
     position: absolute;
     top: 45%;
-    left: 35%;
+    left: 60%;
     transform: translateX(0%) translateY(0);
     border-radius: 10px;
 }
@@ -187,7 +187,7 @@ h5 {
     font-family: 'Arial';
     position: absolute;
     top: 50%;
-    left: 25%;
+    left: 15%;
     transform: translateX(0%) translateY(0);
 }
 #paises{
@@ -215,21 +215,21 @@ h5 {
     font-family: 'Arial';
     position: absolute;
     top: 35%;
-    left: 30%;
+    left: 25%;
     transform: translateX(0%) translateY(0);
     border-radius: 10px;
 }
 #input7{
     font-size: 15px;
     height: 25px;
-    width: 200px;
+    width: 208px;
     margin: 0;
     padding: 0;
     text-align: center;
     font-family: 'Arial';
     position: absolute;
     top: 40%;
-    left: 30%;
+    left: 40%;
     transform: translateX(0%) translateY(0);
     border-radius: 10px;
 }
@@ -242,7 +242,7 @@ h5 {
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-    top: 40%;
+    top: 45%;
     left: 43%;
     transform: translateX(0%) translateY(0);
     border-radius: 10px;
@@ -256,8 +256,8 @@ h5 {
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-    top: 40%;
-    left: 48%;
+    top: 45%;
+    left: 51%;
     transform: translateX(0%) translateY(0);
     border-radius: 10px;
 }
@@ -401,8 +401,8 @@ h5 {
 }
 .eyeicon{
     position: absolute;
-    left: 22%;
-    top: 35.1%;
+    left: 26%;
+    top: 40%;
     color: white;
 }
 
@@ -429,4 +429,338 @@ h5 {
             -webkit-background-size: cover;
             background-size: cover;
             background-position: center center;
+        }
+        #radio3{
+            font-size: 15px;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            font-family: 'Arial';
+            position: absolute;
+            top: 60%;
+            left: 15%;;
+            transform: translateX(0%) translateY(0);
+        }
+        #radio4{
+            font-size: 15px;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            font-family: 'Arial';
+            position: absolute;
+            top: 70%;
+            left: 15%;
+            transform: translateX(0%) translateY(0);
+        }
+        #radio5{
+            font-size: 15px;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            font-family: 'Arial';
+            position: absolute;
+            top: 65%;
+            left: 15%;
+            transform: translateX(0%) translateY(0);
+        }
+        #radio6{
+            font-size: 15px;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            font-family: 'Arial';
+            position: absolute;
+            top: 60%;
+            left: 27.5%;
+            transform: translateX(0%) translateY(0);
+        }
+        #radio7{
+            font-size: 15px;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            font-family: 'Arial';
+            position: absolute;
+            top: 65%;
+            left: 27.5%;
+            transform: translateX(0%) translateY(0);
+        }
+        #radio8{
+            font-size: 15px;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            font-family: 'Arial';
+            position: absolute;
+            top: 70%;
+            left: 27.5%;
+            transform: translateX(0%) translateY(0);
+        }
+        #radio9{
+            font-size: 15px;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            font-family: 'Arial';
+            position: absolute;
+            top: 75%;
+            left: 27.5%;
+            transform: translateX(0%) translateY(0);
+        }
+        #radio10{
+            font-size: 15px;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            font-family: 'Arial';
+            position: absolute;
+            top: 75%;
+            left: 15%;
+            transform: translateX(0%) translateY(0);
+        }
+        #radio11{
+            font-size: 15px;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            font-family: 'Arial';
+            position: absolute;
+            top: 80%;
+            left: 15%;
+            transform: translateX(0%) translateY(0);
+        }
+        #radio12{
+            font-size: 15px;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            font-family: 'Arial';
+            position: absolute;
+            top: 80%;
+            left: 27.5%;
+            transform: translateX(0%) translateY(0);
+        }
+        #radio13{
+            font-size: 15px;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            font-family: 'Arial';
+            position: absolute;
+            top: 60%;
+            left: 38%;
+            transform: translateX(0%) translateY(0);
+        }
+        #radio14{
+            font-size: 15px;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            font-family: 'Arial';
+            position: absolute;
+            top: 65%;
+            left: 38%;
+            transform: translateX(0%) translateY(0);
+        }
+        #radio15{
+            font-size: 15px;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            font-family: 'Arial';
+            position: absolute;
+            top: 70%;
+            left: 38%;
+            transform: translateX(0%) translateY(0);
+        }
+        #radio16{
+            font-size: 15px;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            font-family: 'Arial';
+            position: absolute;
+            top: 75%;
+            left: 38%;
+            transform: translateX(0%) translateY(0);
+        }
+        #futebol{
+            color: white;
+            font-size: 15px;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            font-family: 'Arial';
+            position: absolute;
+            top: 59.5%;
+            left: 17%;
+            transform: translateX(0%) translateY(0);
+        }
+        #basquetebol{
+            color: white;
+            font-size: 15px;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            font-family: 'Arial';
+            position: absolute;
+            top: 69.5%;
+            left: 17%;
+            transform: translateX(0%) translateY(0);
+        }
+        #ténis{
+            color: white;
+            font-size: 15px;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            font-family: 'Arial';
+            position: absolute;
+            top: 64.5%;
+            left: 17%;
+            transform: translateX(0%) translateY(0);
+        }
+        #voleibol{
+            color: white;
+            font-size: 15px;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            font-family: 'Arial';
+            position: absolute;
+            top: 59.5%;
+            left: 30%;
+            transform: translateX(0%) translateY(0);
+        }
+        #andebol{
+            color: white;
+            font-size: 15px;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            font-family: 'Arial';
+            position: absolute;
+            top: 64.5%;
+            left: 30%;
+            transform: translateX(0%) translateY(0);
+        }
+        #karts{
+            color: white;
+            font-size: 15px;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            font-family: 'Arial';
+            position: absolute;
+            top: 69.5%;
+            left: 30%;
+            transform: translateX(0%) translateY(0);
+        }
+        #rapel{
+            color: white;
+            font-size: 15px;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            font-family: 'Arial';
+            position: absolute;
+            top: 74.5%;
+            left: 30%;
+            transform: translateX(0%) translateY(0);
+        }
+        #caminhada{
+            color: white;
+            font-size: 15px;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            font-family: 'Arial';
+            position: absolute;
+            top: 74.5%;
+            left: 17%;
+            transform: translateX(0%) translateY(0);
+        }
+        #padel{
+            color: white;
+            font-size: 15px;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            font-family: 'Arial';
+            position: absolute;
+            top: 79.5%;
+            left: 17%;
+            transform: translateX(0%) translateY(0);
+        }
+        #rugbi{
+            color: white;
+            font-size: 15px;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            font-family: 'Arial';
+            position: absolute;
+            top: 79.5%;
+            left: 30%;
+            transform: translateX(0%) translateY(0);
+        }
+        #ultimate{
+            color: white;
+            font-size: 15px;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            font-family: 'Arial';
+            position: absolute;
+            top: 59.5%;
+            left: 40%;
+            transform: translateX(0%) translateY(0);
+        }
+        #lacrosse{
+            color: white;
+            font-size: 15px;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            font-family: 'Arial';
+            position: absolute;
+            top: 64.5%;
+            left: 40%;
+            transform: translateX(0%) translateY(0);
+        }
+        #mma{
+            color: white;
+            font-size: 15px;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            font-family: 'Arial';
+            position: absolute;
+            top: 69.5%;
+            left: 40%;
+            transform: translateX(0%) translateY(0);
+        }
+        #outros{
+            color: white;
+            font-size: 15px;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            font-family: 'Arial';
+            position: absolute;
+            top: 74.5%;
+            left: 40%;
+            transform: translateX(0%) translateY(0);
+        }
+        #type1{
+            font-size: 15px;
+            width: 200px;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            font-family: 'Arial';
+            position: absolute;
+            top: 79.5%;
+            left: 38%;
+            transform: translateX(0%) translateY(0);
         }

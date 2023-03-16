@@ -19,7 +19,7 @@ h1{
     font-family: 'Copperplate Gothic Medium';
     position: absolute;
     top: 10%;
-    left: 30%;
+    left: 25%;
     transform: translateX(0%) translateY(0);
 }
 h2{
@@ -31,7 +31,7 @@ h2{
     font-family: 'Arial';
     position: absolute;
     top: 60%;
-    left: 35%;
+    left: 32.5%;
     transform: translateX(0%) translateY(0);
 }
 @keyframes transition {

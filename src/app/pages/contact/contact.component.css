@@ -23,7 +23,7 @@ label{
     font-family: 'Arial';
     position: absolute;
     top:25%;
-    left: 25%;
+    left: 15%;
     transform: translateX(0%) translateY(0);
 }
 .input1{
@@ -67,7 +67,7 @@ label{
     font-family: 'Arial';
     position: absolute;
     top: 35%;
-    left: 50%;
+    left: 40%;
     transform: translateX(0%) translateY(0);
     border-radius: 10px;
 }
@@ -128,14 +128,14 @@ label{
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-    top: 30%;
-    left: 80%;
+    top: 35%;
+    left: 60%;
     transform: translateX(0%) translateY(0);
 }
 #assunto{
     font-size: 20px;
     color:black;
-    width: 1100px;
+    width: 600px;
     margin: 0;
     padding: 0;
     text-align: center;
@@ -156,15 +156,15 @@ label{
     font-family: 'Arial';
     position: absolute;
     top: 45%;
-    left: 74.5%;
+    left: 60%;
     transform: translateX(0%) translateY(0);
     border-radius: 10px;
 }
 textarea{
     font-size: 20px;
     color:black;
-    width: 1600px;
-    height: 300px;
+    width: 1100px;
+    height: 200px;
     margin: 0;
     padding: 0;
     text-align: center;

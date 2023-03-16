@@ -11,7 +11,7 @@
             font-family: 'Copperplate Gothic Medium';
             position: absolute;
             top: 10%;
-            left: 30%;
+            left: 25%;
             transform: translateX(0%) translateY(0);
         }
         #input1{
@@ -53,7 +53,7 @@
             font-weight: bold;
             position: absolute;
             top: 55%;
-            left: 41.5%;
+            left: 41%;
             transform: translateX(0%) translateY(0);
             border-radius: 10px;
         }
@@ -75,7 +75,7 @@
             font-weight: bold;
             position: absolute;
             top: 65%;
-            left: 41.5%;
+            left: 41%;
             transform: translateX(0%) translateY(0);
             border-radius: 10px;
         }
@@ -97,7 +97,7 @@
             font-weight: bold;
             position: absolute;
             top: 75%;
-            left: 41.5%;
+            left: 41%;
             transform: translateX(0%) translateY(0);
             border-radius: 10px;
         }
