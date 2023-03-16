@@ -7,7 +7,6 @@
 <div class="img">
 <h1>Desporto24</h1>
 <h2>Novo Registo</h2>
-<h3>Iremos pedir-te agora para preencheres todos os campos para efetuar um novo registo na aplicação.</h3>
 <body>
 <form #passwordValidation="ngForm" #createAccount="ngForm" (ngSubmit)="onRegister(createAccount.value)" name="form" action="#">
 <input #Username="ngModel" id="input1" [(ngModel)]="perfil.username" type="text" class="username" name="username" placeholder="Nome de utilizador" required/>
@@ -281,21 +280,22 @@
     <div class="image-preview" id="imagePreview">
     <img [src]="url" alt="Image Preview" class="image-preview__image">
     <span  class="image-preview__default-text"></span>
-  <!--  <input id="radio3" [(ngModel)]="perfil.desportosfavoritos" class="desportos" value="futebol" type="radio"><p id="futebol">Futebol</p>
-    <input id="radio4" [(ngModel)]="perfil.desportosfavoritos" class="desportos" value="futebol" type="radio"><p id="futebol">Futebol</p>
-    <input id="radio5" [(ngModel)]="perfil.desportosfavoritos" class="desportos" value="futebol" type="radio"><p id="futebol">Futebol</p>
-    <input id="radio6" [(ngModel)]="perfil.desportosfavoritos" class="desportos" value="futebol" type="radio"><p id="futebol">Futebol</p>
-    <input id="radio7" [(ngModel)]="perfil.desportosfavoritos" class="desportos" value="futebol" type="radio"><p id="futebol">Futebol</p>
-    <input id="radio8" [(ngModel)]="perfil.desportosfavoritos" class="desportos" value="futebol" type="radio"><p id="futebol">Futebol</p>
-    <input id="radio9" [(ngModel)]="perfil.desportosfavoritos" class="desportos" value="futebol" type="radio"><p id="futebol">Futebol</p>
-    <input id="radio10" [(ngModel)]="perfil.desportosfavoritos" class="desportos" value="futebol" type="radio"><p id="futebol">Futebol</p>
-    <input id="radio11" [(ngModel)]="perfil.desportosfavoritos" class="desportos" value="futebol" type="radio"><p id="futebol">Futebol</p>
-    <input id="radio12" [(ngModel)]="perfil.desportosfavoritos" class="desportos" value="futebol" type="radio"><p id="futebol">Futebol</p>
-    <input id="radio13" [(ngModel)]="perfil.desportosfavoritos" class="desportos" value="futebol" type="radio"><p id="futebol">Futebol</p>
-    <input id="radio14" [(ngModel)]="perfil.desportosfavoritos" class="desportos" value="futebol" type="radio"><p id="futebol">Futebol</p>
-    <input id="radio15" [(ngModel)]="perfil.desportosfavoritos" class="desportos" value="futebol" type="radio"><p id="futebol">Futebol</p>
-    <input id="radio16" [(ngModel)]="perfil.desportosfavoritos" class="desportos" value="futebol" type="radio"><p id="futebol">Futebol</p>-->
     </div>
+    <h5>Escolhe agora os teus desportos favoritos:</h5>
+    <!--<input id="radio3" [(ngModel)]="perfil.desportosfavoritos" class="desportos" value="futebol" type="radio"><p id="futebol">Futebol</p>
+    <input id="radio4" [(ngModel)]="perfil.desportosfavoritos" class="desportos" value="basquetebol" type="radio"><p id="futebol">Basquetebol</p>
+    <input id="radio5" [(ngModel)]="perfil.desportosfavoritos" class="desportos" value="ténis" type="radio"><p id="futebol">Ténis</p>
+    <input id="radio6" [(ngModel)]="perfil.desportosfavoritos" class="desportos" value="voleibol" type="radio"><p id="futebol">Voleibol</p>
+    <input id="radio7" [(ngModel)]="perfil.desportosfavoritos" class="desportos" value="andebol" type="radio"><p id="futebol">Andebol</p>
+    <input id="radio8" [(ngModel)]="perfil.desportosfavoritos" class="desportos" value="karts" type="radio"><p id="futebol">Karts</p>
+    <input id="radio9" [(ngModel)]="perfil.desportosfavoritos" class="desportos" value="rapel" type="radio"><p id="futebol">Rapel</p>
+    <input id="radio10" [(ngModel)]="perfil.desportosfavoritos" class="desportos" value="caminhada" type="radio"><p id="futebol">Caminhada</p>
+    <input id="radio11" [(ngModel)]="perfil.desportosfavoritos" class="desportos" value="padel" type="radio"><p id="futebol">Padel</p>
+    <input id="radio12" [(ngModel)]="perfil.desportosfavoritos" class="desportos" value="rugbi" type="radio"><p id="futebol">Rugbi</p>
+    <input id="radio13" [(ngModel)]="perfil.desportosfavoritos" class="desportos" value="ultimate" type="radio"><p id="futebol">Ultimate</p>
+    <input id="radio14" [(ngModel)]="perfil.desportosfavoritos" class="desportos" value="lacrosse" type="radio"><p id="futebol">Lacrosse</p>
+    <input id="radio15" [(ngModel)]="perfil.desportosfavoritos" class="desportos" value="MMA" type="radio"><p id="futebol">MMA</p>
+    <input id="radio16" [(ngModel)]="perfil.desportosfavoritos" class="desportos" value="outro" type="radio"><p id="futebol">Outros, Quais?</p>-->
     </form>
 <button type="submit" id="botao1" [disabled]="!createAccount.valid">Concluir Registo</button>
     <button href="#" routerLink="login" id="botao2">Voltar atrás</button>
