@@ -16,10 +16,10 @@ export class AuthenticationService {
   constructor(private http: HttpClient) {}
 
   loginPerfil(perfil: Perfil):Observable<HttpResponse<Perfil>>{
-    return this.http.post<Perfil>(`${this.host}/api/auth/login`, perfil, {observe: 'response'});
+    return this.http.post<Perfil>(`${this.host}/login`, perfil, {observe: 'response'});
   }
   createPerfil(perfil: Perfil):Observable<Perfil>{
-    return this.http.post<Perfil>(`${this.host}/api/auth/login/registerNewUser`, perfil);
+    return this.http.post<Perfil>(`${this.host}/login/registerNewUser`, perfil);
   }
 
   public logOut(): void {

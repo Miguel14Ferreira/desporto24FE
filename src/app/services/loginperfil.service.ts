@@ -20,7 +20,7 @@ export class LoginperfilService {
   constructor(private httpClient: HttpClient) { }
 
   updatePerfil(formData: FormData) {
-    return this.httpClient.put<Perfil>(`${this.host}/api/auth/menu/alterardados/`,formData);
+    return this.httpClient.put<Perfil>(`${this.host}/menu/alterardados/`,formData);
   }
   public createPerfilFormData(loggedInUsername: string, perfil: Perfil): FormData {
     const formData = new FormData();
@@ -49,34 +49,34 @@ export class LoginperfilService {
   }
 
   //updatePerfil(perfil: Perfil): Observable<Perfil | HttpErrorResponse>{
-  //  return this.httpClient.put<Perfil>(`${this.host}/api/auth/menu/alterardados/`,perfil);
+  //  return this.httpClient.put<Perfil>(`${this.host}/menu/alterardados/`,perfil);
   //}
   obterDadosPessoais(): Observable<Perfil[] | HttpErrorResponse>{
-    return this.httpClient.get<Perfil[]>(`${this.host}/api/auth/menu`);
+    return this.httpClient.get<Perfil[]>(`${this.host}/menu`);
   }
   obterInfo(perfil: Perfil):Observable<Perfil>{
-    return this.httpClient.get<Perfil>(`${this.host}/api/auth/menu/alterardados/`);
+    return this.httpClient.get<Perfil>(`${this.host}/menu/alterardados/`);
   }
   obterUserPeloUsername1(username:string):Observable<Perfil>{
-    return this.httpClient.get<Perfil>(`${this.host}/api/auth/menu/alterardados`+`?username=${username}`);
+    return this.httpClient.get<Perfil>(`${this.host}/menu/alterardados`+`?username=${username}`);
   }
   updatePerfilPassword(formData: FormData){
-    return this.httpClient.put<Perfil>(`${this.host}/api/auth/menu/alterarPassword`, formData);
+    return this.httpClient.put<Perfil>(`${this.host}/menu/alterarPassword`, formData);
   }
   updateProfileImage(formData: FormData): Observable<HttpEvent<Perfil> | HttpErrorResponse>{
-    return this.httpClient.post<Perfil>(`${this.host}/api/auth/updateProfileImage`, formData, {reportProgress: true, observe: 'events'})
+    return this.httpClient.post<Perfil>(`${this.host}/updateProfileImage`, formData, {reportProgress: true, observe: 'events'})
   }
   createSession(session:Session):Observable<object>{
-    return this.httpClient.post(`${this.host}/api/auth/menu/events/events`,session);
+    return this.httpClient.post(`${this.host}/menu/events/events`,session);
   }
   createIdea(ideia:Ideia):Observable<object>{
-    return this.httpClient.post(`${this.host}/api/auth/contacts`,ideia);
+    return this.httpClient.post(`${this.host}/contacts`,ideia);
   }
   obterPerfis() {
-    return this.httpClient.get<Perfil[]>(`${this.host}/api/auth/menu/allUsers`);
+    return this.httpClient.get<Perfil[]>(`${this.host}/menu/allUsers`);
   }
   deleteUser(perfilid: number): Observable<CustomHttpResponse | HttpErrorResponse>{
-    return this.httpClient.delete<CustomHttpResponse>(`${this.host}/api/auth/delete/${perfilid}`);
+    return this.httpClient.delete<CustomHttpResponse>(`${this.host}/delete/${perfilid}`);
   }
   addPerfisToLocalCache(perfis: Perfil[]): void{
     localStorage.setItem('perfis',JSON.stringify(perfis));

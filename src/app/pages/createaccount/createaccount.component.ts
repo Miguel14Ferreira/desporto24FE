@@ -38,6 +38,7 @@ export class CreateaccountComponent implements OnInit, OnDestroy {
     if (this.perfil.password != this.perfil.confirmPassword){
       (errorResponse: HttpErrorResponse) => {
        // this.sendNotification(NotificationType.INFO, `As tuas palavras-passe estão diferentes.`);
+       alert("As tuas palavras-passe estão diferentes.")
       }
     } else {
       this.onRegister(this.perfil);
@@ -76,9 +77,6 @@ onSelectedFile(e:any){
   }
 }
 onRegister(perfil: Perfil): void {
-  if (perfil == null){
-    alert("Ainda tens de preencher o que resta");
-  } else {
   this.showLoading = true;
   this.subscriptions.push(
     this.authservice.createPerfil(perfil).subscribe(
@@ -94,6 +92,5 @@ onRegister(perfil: Perfil): void {
       }
     )
   );
-}
 }
 }

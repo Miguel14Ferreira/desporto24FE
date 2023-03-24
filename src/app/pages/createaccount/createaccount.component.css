@@ -8,7 +8,7 @@
     border: 2px solid #dddddd;
     position: absolute;
     left: 65%;
-    top: 55%;
+    top: 45%;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -25,7 +25,7 @@
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-    top: 100%;
+    top: 90%;
     left: 65%;
     transform: translateX(0%) translateY(0);
 }
@@ -49,25 +49,11 @@ h4 {
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-    top: 50%;
+    top: 35%;
     left: 63.5%;
     transform: translateX(0%) translateY(0);
 }
 #input1{
-    font-size: 15px;
-    height: 25px;
-    width: 200px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-    top: 30%;
-    left: 10%;
-    transform: translateX(0%) translateY(0);
-    border-radius: 10px;
-}
-#password{
     font-size: 15px;
     height: 25px;
     width: 200px;
@@ -81,7 +67,7 @@ h4 {
     transform: translateX(0%) translateY(0);
     border-radius: 10px;
 }
-#confirmPassword{
+#password{
     font-size: 15px;
     height: 25px;
     width: 200px;
@@ -95,7 +81,7 @@ h4 {
     transform: translateX(0%) translateY(0);
     border-radius: 10px;
 }
-#input3{
+#confirmPassword{
     font-size: 15px;
     height: 25px;
     width: 200px;
@@ -112,13 +98,13 @@ h4 {
 #input4{
     font-size: 15px;
     height: 25px;
-    width: 400px;
+    width: 590px;
     margin: 0;
     padding: 0;
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-    top: 45%;
+    top: 50%;
     left: 10%;
     transform: translateX(0%) translateY(0);
     border-radius: 10px;
@@ -132,8 +118,8 @@ h4 {
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-    top: 30%;
-    left: 40%;
+    top: 60%;
+    left: 25%;
     transform: translateX(0%) translateY(0);
     border-radius: 10px;
 }
@@ -147,48 +133,24 @@ h4 {
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-    top: 30%;
-    left: 25%;
+    top: 60%;
+    left: 8%;
     transform: translateX(0%) translateY(0);
     border-radius: 10px;
 }
 #input6{
     font-size: 15px;
     height: 25px;
-    width: 400px;
+    width: 590px;
     margin: 0;
     padding: 0;
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-    top: 45%;
-    left: 60%;
+    top: 70%;
+    left: 10%;
     transform: translateX(0%) translateY(0);
     border-radius: 10px;
-}
-h5 {
-    color: white;
-    font-size: 20px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-    top: 50%;
-    left: 15%;
-    transform: translateX(0%) translateY(0);
-}
-h6 {
-    color: white;
-    font-size: 20px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-    top: 85%;
-    left: 15%;
-    transform: translateX(0%) translateY(0);
 }
 #paises{
     font-size: 15px;
@@ -199,8 +161,8 @@ h6 {
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-    top: 35%;
-    left: 40%;
+    top: 65%;
+    left: 25%;
     transform: translateX(0%) translateY(0);
     border-radius: 10px;
 }
@@ -214,8 +176,8 @@ h6 {
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-    top: 35%;
-    left: 25%;
+    top: 65%;
+    left: 8%;
     transform: translateX(0%) translateY(0);
     border-radius: 10px;
 }
@@ -228,8 +190,8 @@ h6 {
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-    top: 40%;
-    left: 40%;
+    top: 75%;
+    left: 10%;
     transform: translateX(0%) translateY(0);
     border-radius: 10px;
 }
@@ -242,8 +204,8 @@ h6 {
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-    top: 45%;
-    left: 43%;
+    top: 75%;
+    left: 30%;
     transform: translateX(0%) translateY(0);
     border-radius: 10px;
 }
@@ -256,8 +218,8 @@ h6 {
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-    top: 45%;
-    left: 51%;
+    top: 75%;
+    left: 38%;
     transform: translateX(0%) translateY(0);
     border-radius: 10px;
 }
@@ -270,22 +232,22 @@ h6 {
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-    top: 30%;
-    left: 60%;
+    top: 35%;
+    left: 47%;
     transform: translateX(0%) translateY(0);
     border-radius: 10px;
 }
 #input11{
     font-size: 15px;
     height: 25px;
-    width: 400px;
+    width: 590px;
     margin: 0;
     padding: 0;
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-    top: 40%;
-    left: 60%;
+    top: 55%;
+    left: 10%;
     transform: translateX(0%) translateY(0);
     border-radius: 10px;
 }
@@ -296,8 +258,8 @@ h6 {
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-    top: 35.6%;
-    left: 68%;
+    top: 80.5%;
+    left: 30%;
     transform: translateX(0%) translateY(0);
 }
 #radio2{
@@ -307,8 +269,8 @@ h6 {
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-    top: 35.6%;
-    left: 78%;
+    top: 80.5%;
+    left: 50%;
     transform: translateX(0%) translateY(0);
 }
 #masculino{
@@ -319,8 +281,8 @@ h6 {
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-    top: 35%;
-    left: 71%;
+    top: 80%;
+    left: 20%;
     transform: translateX(0%) translateY(0);
 }
 #feminino{
@@ -331,8 +293,8 @@ h6 {
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-    top: 35%;
-    left: 82%;
+    top: 80%;
+    left: 40%;
     transform: translateX(0%) translateY(0);
 }
 #genero{
@@ -343,8 +305,8 @@ h6 {
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-    top: 35%;
-    left: 60%;
+    top: 80%;
+    left: 10.5%;
     transform: translateX(0%) translateY(0);
 }
 #botao1{
@@ -430,350 +392,18 @@ h6 {
             background-size: cover;
             background-position: center center;
         }
-        #radio3{
-            font-size: 15px;
-            margin: 0;
-            padding: 0;
-            text-align: center;
-            font-family: 'Arial';
-            position: absolute;
-            top: 60%;
-            left: 15%;;
-            transform: translateX(0%) translateY(0);
-        }
-        #radio4{
-            font-size: 15px;
-            margin: 0;
-            padding: 0;
-            text-align: center;
-            font-family: 'Arial';
-            position: absolute;
-            top: 70%;
-            left: 15%;
-            transform: translateX(0%) translateY(0);
-        }
-        #radio5{
-            font-size: 15px;
-            margin: 0;
-            padding: 0;
-            text-align: center;
-            font-family: 'Arial';
-            position: absolute;
-            top: 65%;
-            left: 15%;
-            transform: translateX(0%) translateY(0);
-        }
-        #radio6{
-            font-size: 15px;
-            margin: 0;
-            padding: 0;
-            text-align: center;
-            font-family: 'Arial';
-            position: absolute;
-            top: 60%;
-            left: 27.5%;
-            transform: translateX(0%) translateY(0);
-        }
-        #radio7{
-            font-size: 15px;
-            margin: 0;
-            padding: 0;
-            text-align: center;
-            font-family: 'Arial';
-            position: absolute;
-            top: 65%;
-            left: 27.5%;
-            transform: translateX(0%) translateY(0);
-        }
-        #radio8{
-            font-size: 15px;
-            margin: 0;
-            padding: 0;
-            text-align: center;
-            font-family: 'Arial';
-            position: absolute;
-            top: 70%;
-            left: 27.5%;
-            transform: translateX(0%) translateY(0);
-        }
-        #radio9{
-            font-size: 15px;
-            margin: 0;
-            padding: 0;
-            text-align: center;
-            font-family: 'Arial';
-            position: absolute;
-            top: 75%;
-            left: 27.5%;
-            transform: translateX(0%) translateY(0);
-        }
-        #radio10{
-            font-size: 15px;
-            margin: 0;
-            padding: 0;
-            text-align: center;
-            font-family: 'Arial';
-            position: absolute;
-            top: 75%;
-            left: 15%;
-            transform: translateX(0%) translateY(0);
-        }
-        #radio11{
-            font-size: 15px;
-            margin: 0;
-            padding: 0;
-            text-align: center;
-            font-family: 'Arial';
-            position: absolute;
-            top: 80%;
-            left: 15%;
-            transform: translateX(0%) translateY(0);
-        }
-        #radio12{
-            font-size: 15px;
-            margin: 0;
-            padding: 0;
-            text-align: center;
-            font-family: 'Arial';
-            position: absolute;
-            top: 80%;
-            left: 27.5%;
-            transform: translateX(0%) translateY(0);
-        }
-        #radio13{
-            font-size: 15px;
-            margin: 0;
-            padding: 0;
-            text-align: center;
-            font-family: 'Arial';
-            position: absolute;
-            top: 60%;
-            left: 38%;
-            transform: translateX(0%) translateY(0);
-        }
-        #radio14{
-            font-size: 15px;
-            margin: 0;
-            padding: 0;
-            text-align: center;
-            font-family: 'Arial';
-            position: absolute;
-            top: 65%;
-            left: 38%;
-            transform: translateX(0%) translateY(0);
-        }
-        #radio15{
-            font-size: 15px;
-            margin: 0;
-            padding: 0;
-            text-align: center;
-            font-family: 'Arial';
-            position: absolute;
-            top: 70%;
-            left: 38%;
-            transform: translateX(0%) translateY(0);
-        }
-        #radio16{
-            font-size: 15px;
-            margin: 0;
-            padding: 0;
-            text-align: center;
-            font-family: 'Arial';
-            position: absolute;
-            top: 75%;
-            left: 38%;
-            transform: translateX(0%) translateY(0);
-        }
-        #futebol{
-            color: white;
-            font-size: 15px;
-            margin: 0;
-            padding: 0;
-            text-align: center;
-            font-family: 'Arial';
-            position: absolute;
-            top: 59.5%;
-            left: 17%;
-            transform: translateX(0%) translateY(0);
-        }
-        #basquetebol{
-            color: white;
-            font-size: 15px;
-            margin: 0;
-            padding: 0;
-            text-align: center;
-            font-family: 'Arial';
-            position: absolute;
-            top: 69.5%;
-            left: 17%;
-            transform: translateX(0%) translateY(0);
-        }
-        #ténis{
-            color: white;
-            font-size: 15px;
-            margin: 0;
-            padding: 0;
-            text-align: center;
-            font-family: 'Arial';
-            position: absolute;
-            top: 64.5%;
-            left: 17%;
-            transform: translateX(0%) translateY(0);
-        }
-        #voleibol{
-            color: white;
-            font-size: 15px;
-            margin: 0;
-            padding: 0;
-            text-align: center;
-            font-family: 'Arial';
-            position: absolute;
-            top: 59.5%;
-            left: 30%;
-            transform: translateX(0%) translateY(0);
-        }
-        #andebol{
-            color: white;
-            font-size: 15px;
-            margin: 0;
-            padding: 0;
-            text-align: center;
-            font-family: 'Arial';
-            position: absolute;
-            top: 64.5%;
-            left: 30%;
-            transform: translateX(0%) translateY(0);
-        }
-        #karts{
-            color: white;
-            font-size: 15px;
-            margin: 0;
-            padding: 0;
-            text-align: center;
-            font-family: 'Arial';
-            position: absolute;
-            top: 69.5%;
-            left: 30%;
-            transform: translateX(0%) translateY(0);
-        }
-        #rapel{
-            color: white;
-            font-size: 15px;
-            margin: 0;
-            padding: 0;
-            text-align: center;
-            font-family: 'Arial';
-            position: absolute;
-            top: 74.5%;
-            left: 30%;
-            transform: translateX(0%) translateY(0);
-        }
-        #caminhada{
-            color: white;
-            font-size: 15px;
-            margin: 0;
-            padding: 0;
-            text-align: center;
-            font-family: 'Arial';
-            position: absolute;
-            top: 74.5%;
-            left: 17%;
-            transform: translateX(0%) translateY(0);
-        }
-        #padel{
-            color: white;
-            font-size: 15px;
-            margin: 0;
-            padding: 0;
-            text-align: center;
-            font-family: 'Arial';
-            position: absolute;
-            top: 79.5%;
-            left: 17%;
-            transform: translateX(0%) translateY(0);
-        }
-        #rugbi{
-            color: white;
-            font-size: 15px;
-            margin: 0;
-            padding: 0;
-            text-align: center;
-            font-family: 'Arial';
-            position: absolute;
-            top: 79.5%;
-            left: 30%;
-            transform: translateX(0%) translateY(0);
-        }
-        #ultimate{
-            color: white;
-            font-size: 15px;
-            margin: 0;
-            padding: 0;
-            text-align: center;
-            font-family: 'Arial';
-            position: absolute;
-            top: 59.5%;
-            left: 40%;
-            transform: translateX(0%) translateY(0);
-        }
-        #lacrosse{
-            color: white;
-            font-size: 15px;
-            margin: 0;
-            padding: 0;
-            text-align: center;
-            font-family: 'Arial';
-            position: absolute;
-            top: 64.5%;
-            left: 40%;
-            transform: translateX(0%) translateY(0);
-        }
-        #mma{
-            color: white;
-            font-size: 15px;
-            margin: 0;
-            padding: 0;
-            text-align: center;
-            font-family: 'Arial';
-            position: absolute;
-            top: 69.5%;
-            left: 40%;
-            transform: translateX(0%) translateY(0);
-        }
-        #outros{
-            color: white;
-            font-size: 15px;
-            margin: 0;
-            padding: 0;
-            text-align: center;
-            font-family: 'Arial';
-            position: absolute;
-            top: 74.5%;
-            left: 40%;
-            transform: translateX(0%) translateY(0);
-        }
-        #type1{
-            font-size: 15px;
-            width: 200px;
-            margin: 0;
-            padding: 0;
-            text-align: center;
-            font-family: 'Arial';
-            position: absolute;
-            top: 79.5%;
-            left: 38%;
-            transform: translateX(0%) translateY(0);
-        }
         #type2{
             font-size: 15px;
-            width: 400px;
+            width: 590px;
+            height: 50px;
             margin: 0;
             padding: 0;
             text-align: center;
             font-family: 'Arial';
             position: absolute;
-            top: 90%;
-            left: 15%;
+            top: 85%;
+            left: 10%;
             transform: translateX(0%) translateY(0);
+            border-radius: 10px;
         }
 
