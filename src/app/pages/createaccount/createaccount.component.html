@@ -6,7 +6,6 @@
 </head>
 <div class="img">
 <h1>Desporto24</h1>
-<h2>Novo Registo</h2>
 <body>
 <form #passwordValidation="ngForm" #createAccount="ngForm" (ngSubmit)="onRegister(createAccount.value)" name="form" action="#">
 <input #Username="ngModel" id="input1" [(ngModel)]="perfil.username" type="text" class="username" name="username" placeholder="Nome de utilizador" required/>
@@ -273,32 +272,34 @@
     <input #phone="ngModel" id="input10" [(ngModel)]="perfil.phone" class="phone" name="phone" type="number" pattern="[0-9]{9}" placeholder="Nº de telemóvel" required>
     <input #mail="ngModel" id="input11" [(ngModel)]="perfil.email" class="mail" name="mail" type="text" placeholder="Email" required>
     <p id="genero" >Género:</p>
-    <input id="radio1" [(ngModel)]="perfil.gender" class="gender" name="gender" value="masculino" type="radio" required><p id="masculino">Masculino</p>
+    <input id="radio1" [(ngModel)]="perfil.gender" class="gender" name="gender" value="masculino" type="radio"><p id="masculino">Masculino</p>
     <input id="radio2" [(ngModel)]="perfil.gender" class="gender" name="gender" value="feminino" type="radio"><p id="feminino">Feminino</p>
     <h4>Coloca por favor a tua fotografia aqui</h4>
-    <input [(ngModel)]="perfil.foto" (change)="onSelectedFile($event)" name="foto" type="file" id="inpFile" accept="image/*" >
+    <input [(ngModel)]="perfil.foto" (change)="onSelectedFile($event)" name="foto" type="file" id="inpFile" accept="image/*">
     <div class="image-preview" id="imagePreview">
     <img [src]="url" alt="Image Preview" class="image-preview__image">
     <span  class="image-preview__default-text"></span>
     </div>
     <h5>Escolhe agora os teus desportos favoritos:</h5>
-    <input id="radio3" [(ngModel)]="perfil.desportosfavoritos" class="desportos" value="futebol " type="checkbox"><p id="futebol">Futebol</p>
-    <input id="radio4" [(ngModel)]="perfil.desportosfavoritos" class="desportos" value="basquetebol " type="checkbox"><p id="basquetebol">Basquetebol</p>
-    <input id="radio5" [(ngModel)]="perfil.desportosfavoritos" class="desportos" value="ténis " type="checkbox"><p id="ténis">Ténis</p>
-    <input id="radio6" [(ngModel)]="perfil.desportosfavoritos" class="desportos" value="voleibol " type="checkbox"><p id="voleibol">Voleibol</p>
-    <input id="radio7" [(ngModel)]="perfil.desportosfavoritos" class="desportos" value="andebol " type="checkbox"><p id="andebol">Andebol</p>
-    <input id="radio8" [(ngModel)]="perfil.desportosfavoritos" class="desportos" value="karts " type="checkbox"><p id="karts">Karts</p>
-    <input id="radio9" [(ngModel)]="perfil.desportosfavoritos" class="desportos" value="rapel " type="checkbox"><p id="rapel">Rapel</p>
-    <input id="radio10" [(ngModel)]="perfil.desportosfavoritos" class="desportos" value="caminhada " type="checkbox"><p id="caminhada">Caminhada</p>
-    <input id="radio11" [(ngModel)]="perfil.desportosfavoritos" class="desportos" value="padel " type="checkbox"><p id="padel">Padel</p>
-    <input id="radio12" [(ngModel)]="perfil.desportosfavoritos" class="desportos" value="rugbi " type="checkbox"><p id="rugbi">Rugbi</p>
-    <input id="radio13" [(ngModel)]="perfil.desportosfavoritos" class="desportos" value="ultimate " type="checkbox"><p id="ultimate">Ultimate</p>
-    <input id="radio14" [(ngModel)]="perfil.desportosfavoritos" class="desportos" value="lacrosse " type="checkbox"><p id="lacrosse">Lacrosse</p>
-    <input id="radio15" [(ngModel)]="perfil.desportosfavoritos" class="desportos" value="MMA " type="checkbox"><p id="mma">MMA</p>
-    <input id="radio16" [(ngModel)]="perfil.desportosfavoritos" class="desportos" value=" " type="checkbox"><p id="outros">Outros</p>
-    <input id="type1" [(ngModel)]="perfil.desportosfavoritos" class="desportos" type="text" placeholder="Outro/s desporto/s..." hidden>
+    <input onclick="futebol()" id="radio3" class="desportos" value="futebol," type="checkbox"><p id="futebol">Futebol</p>
+    <input onclick="basquetebol()" id="radio4" class="desportos" value="basquetebol," type="checkbox"><p id="basquetebol">Basquetebol</p>
+    <input onclick="tenis()" id="radio5" class="desportos" value="ténis," type="checkbox"><p id="ténis">Ténis</p>
+    <input onclick="voleibol()" id="radio6" class="desportos" value="voleibol," type="checkbox"><p id="voleibol">Voleibol</p>
+    <input onclick="andebol()" id="radio7" class="desportos" value="andebol," type="checkbox"><p id="andebol">Andebol</p>
+    <input onclick="karts()" id="radio8" class="desportos" value="karts," type="checkbox"><p id="karts">Karts</p>
+    <input onclick="rapel()" id="radio9" class="desportos" value="rapel," type="checkbox"><p id="rapel">Rapel</p>
+    <input onclick="caminhada()" id="radio10" class="desportos" value="caminhada," type="checkbox"><p id="caminhada">Caminhada</p>
+    <input onclick="padel()" id="radio11" class="desportos" value="padel," type="checkbox"><p id="padel">Padel</p>
+    <input onclick="rugbi()" id="radio12" class="desportos" value="rugbi," type="checkbox"><p id="rugbi">Rugbi</p>
+    <input onclick="ultimate()" id="radio13" class="desportos" value="ultimate," type="checkbox"><p id="ultimate">Ultimate</p>
+    <input onclick="lacrosse()" id="radio14" class="desportos" value="lacrosse," type="checkbox"><p id="lacrosse">Lacrosse</p>
+    <input onclick="MMA()" id="radio15" class="desportos" value="MMA," type="checkbox"><p id="mma">MMA</p>
+    <input onclick="Appear()" id="radio16" class="desportos" type="checkbox"><p id="outros">Outros</p>
+    <input id="type1" class="desportos" type="text" placeholder="Outro/s desporto/s..." style="display:none">
+    <h6>Os teus desportos favoritos são:</h6>
+    <input id="type2" [(ngModel)]="perfil.desportosfavoritos" name="desportosfavoritos" disabled>
     </form>
-<button type="submit" id="botao1" [disabled]="!createAccount.valid">Concluir Registo</button>
+    <button type="submit" id="botao1" [disabled]="!createAccount.valid">Concluir Registo</button>
     <button href="#" routerLink="login" id="botao2">Voltar atrás</button>
 </body>
 </div>

@@ -25,32 +25,20 @@
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-    top: 85%;
+    top: 100%;
     left: 65%;
     transform: translateX(0%) translateY(0);
 }
 h1{
     color: white;
-    font-size: 60px;
+    font-size: 100px;
     margin: 0;
     padding: 0;
     text-align: center;
-    font-family: 'Arial';
+    font-family: 'Copperplate Gothic Medium';
     position: absolute;
-    top:10%;
-    left: 40%;
-    transform: translateX(0%) translateY(0);
-}
-h2 {
-    color: white;
-    font-size: 40px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-    top: 20%;
-    left: 43%;
+    top: 10%;
+    left: 25%;
     transform: translateX(0%) translateY(0);
 }
 h4 {
@@ -187,6 +175,18 @@ h5 {
     font-family: 'Arial';
     position: absolute;
     top: 50%;
+    left: 15%;
+    transform: translateX(0%) translateY(0);
+}
+h6 {
+    color: white;
+    font-size: 20px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 85%;
     left: 15%;
     transform: translateX(0%) translateY(0);
 }
@@ -359,7 +359,7 @@ h5 {
             font-family: 'Arial';
             font-weight: bold;
             position: absolute;
-            top: 95%;
+            top: 100%;
             left: 40%;
             transform: translateX(0%) translateY(0);
             border-radius: 10px;
@@ -376,7 +376,7 @@ h5 {
             font-family: 'Arial';
             font-weight: bold;
             position: absolute;
-            top: 95%;
+            top: 100%;
             left: 20%;
             transform: translateX(0%) translateY(0);
             border-radius: 10px;
@@ -764,3 +764,16 @@ h5 {
             left: 38%;
             transform: translateX(0%) translateY(0);
         }
+        #type2{
+            font-size: 15px;
+            width: 400px;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            font-family: 'Arial';
+            position: absolute;
+            top: 90%;
+            left: 15%;
+            transform: translateX(0%) translateY(0);
+        }
+

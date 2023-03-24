@@ -17,6 +17,7 @@ export class CreateaccountComponent implements OnInit, OnDestroy {
   perfil:Perfil = new Perfil();
   changetype:boolean = true;
   visible:boolean = true;
+  hidden:boolean = true;
   username!: string;
   password!: string;
   showLoading!: boolean;
@@ -50,7 +51,8 @@ export class CreateaccountComponent implements OnInit, OnDestroy {
 //    this.notificationService.notify(notificationType, 'Ocorreu um erro, por favor tenta novamente.');
 //  }
 //}
-  viewPass(){
+
+viewPass(){
     this.visible = !this.visible;
     this.changetype = !this.changetype;
 }
@@ -74,18 +76,24 @@ onSelectedFile(e:any){
   }
 }
 onRegister(perfil: Perfil): void {
+  if (perfil == null){
+    alert("Ainda tens de preencher o que resta");
+  } else {
   this.showLoading = true;
   this.subscriptions.push(
     this.authservice.createPerfil(perfil).subscribe(
       (response: Perfil) => {
         this.showLoading = false;
+        alert("Foi te enviado um email para o teu endereço pedimos que o confirmes para ativar a tua conta!")
        // this.sendNotification(NotificationType.SUCESS, `A tua conta foi criada ${response.username}! Pedimos agora que te dirijas ao teu email para confirmares o registo da nova tua conta!`);
       },
       (errorResponse: HttpErrorResponse) => {
+        alert("Ocorreu um erro")
       //  this.sendNotification(NotificationType.ERROR, errorResponse.error.message);
         this.showLoading = false;
       }
     )
   );
+}
 }
 }
