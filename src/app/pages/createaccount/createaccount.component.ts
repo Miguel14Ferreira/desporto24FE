@@ -4,7 +4,6 @@ import { LoginperfilService } from '../../services/loginperfil.service';
 import { Router } from '@angular/router';
 import { Form, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { NotificationService } from 'src/app/services/notification.service';
 import { Subscription } from 'rxjs';
 import { AuthenticationService } from 'src/app/services/authethication.service';
 
@@ -24,7 +23,7 @@ export class CreateaccountComponent implements OnInit, OnDestroy {
   token: any;
   response: any = null;
   subscriptions: Subscription[] = [];
-  constructor(private service: LoginperfilService,private router:Router, private formBuilder: FormBuilder,  private authservice:AuthenticationService) {}
+  constructor(private router:Router, private formBuilder: FormBuilder,  private authservice:AuthenticationService) {}
   url = './assets/foto .png';
   saveNewUser(){
     this.authservice.createPerfil(this.perfil).subscribe( data =>{
@@ -37,22 +36,13 @@ export class CreateaccountComponent implements OnInit, OnDestroy {
   onSubmit(){
     if (this.perfil.password != this.perfil.confirmPassword){
       (errorResponse: HttpErrorResponse) => {
-       // this.sendNotification(NotificationType.INFO, `As tuas palavras-passe estão diferentes.`);
        alert("As tuas palavras-passe estão diferentes.")
       }
     } else {
       this.onRegister(this.perfil);
     }
   }
-
-//sendNotification(notificationType: NotificationType, message: string) {
-//  if(message){
-//    this.notificationService.notify(notificationType,message);
-//  } else {
-//    this.notificationService.notify(notificationType, 'Ocorreu um erro, por favor tenta novamente.');
-//  }
-//}
-
+  
 viewPass(){
     this.visible = !this.visible;
     this.changetype = !this.changetype;
@@ -83,11 +73,9 @@ onRegister(perfil: Perfil): void {
       (response: Perfil) => {
         this.showLoading = false;
         alert("Foi te enviado um email para o teu endereço pedimos que o confirmes para ativar a tua conta!")
-       // this.sendNotification(NotificationType.SUCESS, `A tua conta foi criada ${response.username}! Pedimos agora que te dirijas ao teu email para confirmares o registo da nova tua conta!`);
       },
       (errorResponse: HttpErrorResponse) => {
         alert("Ocorreu um erro")
-      //  this.sendNotification(NotificationType.ERROR, errorResponse.error.message);
         this.showLoading = false;
       }
     )
