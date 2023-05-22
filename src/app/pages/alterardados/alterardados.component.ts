@@ -28,7 +28,7 @@ export class AlterardadosComponent implements OnInit {
   public editPerfil = new Perfil();
   url = './assets/foto .png';
   fileName!: any;
-  constructor(private loginPerfilService: LoginperfilService,private authenticationService:AuthenticationService, private notificationService: NotificationService) { }
+  constructor(private loginPerfilService: LoginperfilService,private authenticationService:AuthenticationService) { }
 
   ngOnInit(): void {
     this.perfil = this.authenticationService.getPerfilFromLocalCache();
@@ -36,7 +36,6 @@ export class AlterardadosComponent implements OnInit {
       this.perfil = data;
     }, error => console.log(error));
   }
-  minhaImagem = "./assets/sports locker room.jpg";
   
   onSelectedFile(e:any){
     if(e.target.files){
@@ -47,19 +46,12 @@ export class AlterardadosComponent implements OnInit {
       }
     }
   }
-      sendNotification(notificationType: NotificationType, message: string) {
-        if(message){
-          this.notificationService.notify(notificationType,message);
-        } else {
-          this.notificationService.notify(notificationType, 'Ocorreu um erro, por favor tenta novamente.');
-        }
-      }
 
     igualInfo(perfil:Perfil, perfilNovo: Perfil){
       if(perfil == perfilNovo){
-        this.sendNotification(NotificationType.ERROR, `A informação que estás a colocar é identica à que tu tens de momento.`);
+        alert(`A informação que estás a colocar é identica à que tu tens de momento.`);
       } else {
-        this.sendNotification(NotificationType.SUCCESS, `Informação guardada com sucesso!`);
+        alert(`Informação guardada com sucesso!`);
       }
     }
 
@@ -73,10 +65,10 @@ export class AlterardadosComponent implements OnInit {
       this.subscriptions.push(
         this.loginPerfilService.updatePerfil(formData).subscribe(
           (response: Perfil) => {
-            this.sendNotification(NotificationType.SUCCESS, `${response.username} updated successfully`);
+            alert(`O teu perfil foi atualizado com sucesso.`);
           },
           (errorResponse: HttpErrorResponse) => {
-            this.sendNotification(NotificationType.ERROR, errorResponse.error.message);
+            alert(`Ocurreu um erro`);
           }
         )
         );

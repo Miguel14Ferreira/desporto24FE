@@ -2,6 +2,14 @@ body{
     padding: 0;
     margin: 0;
 }
+.img{
+    animation: transition 0.75s;
+    height: 100vh;
+    background-image: url(src\assets\tunel.jpg);     
+    -webkit-background-size: cover;
+    background-size: cover;
+    background-position: center center;
+}
 h1{
     color: white;
     font-size: 60px;
@@ -118,7 +126,7 @@ h1{
 }
 #espaco5{
     color:white;
-    width: 425px;
+    width: 450px;
     font-size: 15px;
     margin: 0;
     padding: 0;
@@ -126,7 +134,7 @@ h1{
     font-family: 'Arial';
     position: absolute;
     top: 65%;
-    left: 4%;
+    left: 3%;
     transform: translateX(0%) translateY(0);
 }
 #espaco6{
@@ -233,6 +241,19 @@ h1{
     left: 55%;
     transform: translateX(0%) translateY(0);
 }
+#espaco14{
+    color:black;
+    width: 200px;
+    font-size: 15px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 65%;
+    left: 15%;
+    transform: translateX(0%) translateY(0);
+}
 .image-preview{
     width: 450px;
     height: 350px;
@@ -260,22 +281,6 @@ h1{
     left: 62.5%;
     transform: translateX(0%) translateY(0);
 }
-#botao1{
-    text-decoration: none;
-    color: white;
-    background: green;
-    width: 200px;
-    font-size: 15px;
-    height: 30px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-    top: 110%;
-    left: 30%;
-    transform: translateX(0%) translateY(0);
-}
 #input4{
     text-decoration: none;
     color: white;
@@ -292,22 +297,50 @@ h1{
     left: 43%;
     transform: translateX(0%) translateY(0);
 }
+#botao1{
+    text-decoration: none;
+            color: black;
+            background-color: white;
+            font-size: 20px;
+            width: 200px;
+            margin: 0;
+            padding: 1px;
+            text-align: center;
+            font-family: 'Arial';
+            font-weight: bold;
+            position: absolute;
+            top: 100%;
+            left: 40%;
+            transform: translateX(0%) translateY(0);
+            border-radius: 10px;
+}
 #botao2{
     text-decoration: none;
-    color: white;
-    background: red;
-    width: 200px;
-    font-size: 15px;
-    height: 30px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-    top: 110%;
-    left: 55%;
-    transform: translateX(0%) translateY(0);
+            color: black;
+            background-color: white;
+            font-size: 20px;
+            width: 200px;
+            margin: 0;
+            padding: 1px;
+            text-align: center;
+            font-family: 'Arial';
+            font-weight: bold;
+            position: absolute;
+            top: 100%;
+            left: 20%;
+            transform: translateX(0%) translateY(0);
+            border-radius: 10px;
 }
+#botao1:hover{
+            background-color: lightblue;
+            color: white;
+            transition: background-color 0.5s;
+        }
+        #botao2:hover{
+            background-color: lightblue;
+            color: white;
+            transition: background-color 0.5s;
+        }
 #botao3{
     text-decoration: none;
     color: black;

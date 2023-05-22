@@ -52,6 +52,7 @@ export class LoginComponent implements OnInit, OnDestroy {
         },
         (errorResponse: HttpErrorResponse) => {
          // this.sendErrorNotification(NotificationType.ERROR, errorResponse.error.message);
+         alert("Email não verificado/Utilizador ou palavra-passe incorretos.")
           this.showLoading = false;
         }
       )

@@ -33,7 +33,6 @@ export class Events2Component implements OnInit {
   }
   createNewSession(){
     this.loginPerfilService.createSession(this.session).subscribe( data =>{
-      console.log(this.session);
       {alert("Está criada agora a tua sessão!")}
     },
     error => console.log(error));

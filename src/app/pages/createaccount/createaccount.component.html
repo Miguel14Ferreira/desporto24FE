@@ -270,7 +270,7 @@
     <input #code="ngModel" id="input8" [(ngModel)]="perfil.postal" class="post" name="postal" type="number" pattern="[0-9]{4}" placeholder="Código" required>
     <input #postal="ngModel" id="input9" [(ngModel)]="perfil.code" class="code" name="code" type="number" pattern="[0-9]{3}" placeholder="Postal" required>
     <input #phone="ngModel" id="input10" [(ngModel)]="perfil.phone" class="phone" name="phone" type="number" pattern="[0-9]{9}" placeholder="Nº de telemóvel" required>
-    <input #mail="ngModel" id="input11" [(ngModel)]="perfil.email" class="mail" name="mail" type="text" placeholder="Email" required>
+    <input #mail="ngModel" id="input11" [(ngModel)]="perfil.email" class="email" name="email" type="text" placeholder="Email" required>
     <p id="genero" >Género:</p>
     <input id="radio1" [(ngModel)]="perfil.gender" class="gender" name="gender" value="masculino" type="radio"><p id="masculino">Masculino</p>
     <input id="radio2" [(ngModel)]="perfil.gender" class="gender" name="gender" value="feminino" type="radio"><p id="feminino">Feminino</p>
@@ -281,8 +281,12 @@
     <span  class="image-preview__default-text"></span>
     </div>
     <textarea id="type2" [(ngModel)]="perfil.desportosfavoritos" name="desportosfavoritos" placeholder="Coloca aqui os teus desportos favoritos" required></textarea>
-    </form>
-    <button type="submit" id="botao1" [disabled]="!createAccount.valid">Concluir Registo</button>
+    <button type="submit" id="botao1" [disabled]="!createAccount.valid">
+        <i *ngIf= "showLoading" class="fas fa-spinner fa-spin"></i>&nbsp;&nbsp;
+        <span *ngIf="showLoading">A criar conta</span>
+        <span *ngIf="!showLoading">Concluir registo</span>
+    </button>
+</form>
     <button href="#" routerLink="login" id="botao2">Voltar atrás</button>
 </body>
 </div>

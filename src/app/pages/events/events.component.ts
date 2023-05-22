@@ -11,7 +11,4 @@ export class EventsComponent implements OnInit {
 
   ngOnInit(): void {
   }
-  minhaImagem = "./assets/padel .png";
-  minhaImagem2 = "./assets/criarevent.png";
-  minhaImagem3 = "./assets/eventos.png";
 }

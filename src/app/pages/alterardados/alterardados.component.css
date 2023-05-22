@@ -1,539 +1,422 @@
-.img-fluid{
-    width: 1300px;
-    height: 700px;
+.img{
+    animation: transition 0.75s;
+    height: 100vh;
+    background-image: url(src\assets\lockerroom.jpg);     
+    -webkit-background-size: cover;
+    background-size: cover;
+    background-position: center center;
 }
-.error-msg{
-    color: red;
-    font-size: 15px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-    top: 41%;
-    left: 27%;
-    transform: translateX(0%) translateY(0);
-}
-table {
-    color:white;
-  border-collapse: collapse;
-  text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-    top: 105%;
-    transform: translateX(0%) translateY(0);
-    font-size: 15px;
-}
-#l{
-    color: white;
-    font-size: 15px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    font-weight: bold;
-    position: absolute;
-    top: 80%;
-    left: 40%;
-    transform: translateX(0%) translateY(0); 
-}
-.error-msg2{
-    color: red;
-    font-size: 15px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-    top: 35%;
-    left: 27%;
-    transform: translateX(0%) translateY(0);
-}
-.error-msg3{
-    color: red;
-    font-size: 15px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-    top: 48%;
-    left: 27%;
-    transform: translateX(0%) translateY(0);
-}
-.alert{
-    color: red;
-    font-size: 15px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-    top: 80%;
-    left: 45%;
-    transform: translateX(0%) translateY(0);
-}
-.error-msg4{
-    color: red;
-    font-size: 15px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-    top: 58%;
-    left: 42%;
-    transform: translateX(0%) translateY(0);
-}
-.error-msg5{
-    color: red;
-    font-size: 15px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-    top: 71%;
-    left: 17%;
-    transform: translateX(0%) translateY(0);
-}
-.error-msg6{
-    color: red;
-    font-size: 15px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-    top: 87%;
-    left: 9%;
-    transform: translateX(0%) translateY(0);
-}
-.error-msg7{
-    color: red;
-    font-size: 15px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-    top: 87%;
-    left: 27%;
-    transform: translateX(0%) translateY(0);
-}
-.error-msg8{
-    color: red;
-    font-size: 15px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-    top: 35%;
-    left: 80%;
-    transform: translateX(0%) translateY(0);
-}
-.error-msg9{
-    color: red;
-    font-size: 15px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-    top: 46%;
-    left: 58%;
-    transform: translateX(0%) translateY(0);
-}
-.error-msg10{
-    color: red;
-    font-size: 25px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-    top: 110%;
-    left: 35%;
-    transform: translateX(0%) translateY(0);
-}
-.image-preview{
-    width: 200px;
-    height: 250px;
-    border: 2px solid #dddddd;
-    position: absolute;
-    left: 58%;
-    top: 55%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #cccccc;
-}
-.image-preview__image{
-    width: 100%;
-    height: 100%;
-}
-#inpFile{
-    font-size: 15px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-    top: 100%;
-    left: 58%;
-    transform: translateX(0%) translateY(0);
-}
-h1{
-    color: white;
-    font-size: 60px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-    top:10%;
-    left: 40%;
-    transform: translateX(0%) translateY(0);
-}
-h2 {
-    color: white;
-    font-size: 40px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-    top: 20%;
-    left: 43%;
-    transform: translateX(0%) translateY(0);
-}
-h3 {
-    color: white;
-    font-size: 20px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-    top: 30%;
-    left: 25%;
-    transform: translateX(0%) translateY(0);
-}
-h4 {
-    color: white;
-    font-size: 15px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-    top: 50%;
-    left: 55%;
-    transform: translateX(0%) translateY(0);
-}
-#input1{
-    font-size: 15px;
-    height: 20px;
-    width: 200px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-    top: 35%;
-    left: 10%;
-    transform: translateX(0%) translateY(0);
-}
-#password{
-    font-size: 15px;
-    height: 20px;
-    width: 200px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-    top: 41%;
-    left: 10%;
-    transform: translateX(0%) translateY(0);
-}
-#confirmPassword{
-    font-size: 15px;
-    height: 20px;
-    width: 200px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-    top: 47%;
-    left: 10%;
-    transform: translateX(0%) translateY(0);
-}
-#input3{
-    font-size: 15px;
-    height: 20px;
-    width: 200px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-    top: 30%;
-    left: 10%;
-    transform: translateX(0%) translateY(0);
-}
-#input4{
-    font-size: 15px;
-    height: 20px;
-    width: 400px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-    top: 40%;
-    left: 10%;
-    transform: translateX(0%) translateY(0);
-}
-#input5{
-    font-size: 15px;
-    height: 20px;
-    width: 208px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-    top: 50%;
-    left: 25%;
-    transform: translateX(0%) translateY(0);
-}
-#datanascimento{
-    color:white;
-    font-size: 15px;
-    height: 20px;
-    width: 200px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-    top: 50%;
-    left: 7.5%;
-    transform: translateX(0%) translateY(0);
-}
-#input6{
-    font-size: 15px;
-    height: 20px;
-    width: 400px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-    top: 60%;
-    left: 10%;
-    transform: translateX(0%) translateY(0);
-}
-#paises{
-    font-size: 15px;
-    height: 25px;
-    width: 250px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-    top: 70%;
-    left: 22%;
-    transform: translateX(0%) translateY(0);
-}
-#pais{
-    font-size: 15px;
-    color:white;
-    height: 20px;
-    width: 200px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-    top: 70%;
-    left: 7.5%;
-    transform: translateX(0%) translateY(0);
-}
-#input7{
-    font-size: 15px;
-    height: 20px;
-    width: 200px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-    top: 82%;
-    left: 10%;
-    transform: translateX(0%) translateY(0);
-}
-#input8{
-    font-size: 12px;
-    height: 20px;
-    width: 75px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-    top: 82%;
-    left: 28%;
-    transform: translateX(0%) translateY(0);
-}
-#input9{
-    font-size: 12px;
-    height: 20px;
-    width: 54px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-    top: 82%;
-    left: 37%;
-    transform: translateX(0%) translateY(0);
-}
-#input10{
-    font-size: 15px;
-    height: 20px;
-    width: 125px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-    top: 40%;
-    left: 50%;
-    transform: translateX(0%) translateY(0);
-}
-#input11{
-    font-size: 15px;
-    height: 20px;
-    width: 400px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-    top: 45%;
-    left: 50%;
-    transform: translateX(0%) translateY(0);
-}
-#radio1{
-    font-size: 15px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-    top: 41%;
-    left: 66%;
-    transform: translateX(0%) translateY(0);
-}
-#radio2{
-    font-size: 15px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-    top: 41%;
-    left: 75%;
-    transform: translateX(0%) translateY(0);
-}
-#masculino{
-    color:white;
-    font-size: 15px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-    top: 40%;
-    left: 68%;
-    transform: translateX(0%) translateY(0);
-}
-#feminino{
-    font-size: 15px;
-    color:white;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-    top: 40%;
-    left: 77%;
-    transform: translateX(0%) translateY(0);
-}
-#genero{
-    font-size: 15px;
-    color:white;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-    top: 40%;
-    left: 61%;
-    transform: translateX(0%) translateY(0);
-}
-#botao1{
-    text-decoration: none;
-    color: black;
-    background: white;
-    width: 200px;
-    font-size: 15px;
-    height: 30px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-    top: 100%;
-    left: 30%;
-    transform: translateX(0%) translateY(0);
-}
+    .img-fluid{
+        width: 2000px;
+        height: 1000px;
+    }
+    .image-preview{
+        width: 200px;
+        height: 250px;
+        border: 2px solid #dddddd;
+        position: absolute;
+        left: 65%;
+        top: 45%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #cccccc;
+    }
+    .image-preview__image{
+        width: 100%;
+        height: 100%;
+    }
+    #inpFile{
+        font-size: 15px;
+        margin: 0;
+        padding: 0;
+        text-align: center;
+        font-family: 'Arial';
+        position: absolute;
+        top: 90%;
+        left: 65%;
+        transform: translateX(0%) translateY(0);
+    }
+    h1{
+        color: white;
+        font-size: 100px;
+        margin: 0;
+        padding: 0;
+        text-align: center;
+        font-family: 'Copperplate Gothic Medium';
+        position: absolute;
+        top: 10%;
+        left: 25%;
+        transform: translateX(0%) translateY(0);
+    }
+    h2 {
+        color: white;
+        font-size: 15px;
+        margin: 0;
+        padding: 0;
+        text-align: center;
+        font-family: 'Arial';
+        position: absolute;
+        top: 15%;
+        left: 20%;
+        transform: translateX(0%) translateY(0);
+    }
+    h4 {
+        color: white;
+        font-size: 15px;
+        margin: 0;
+        padding: 0;
+        text-align: center;
+        font-family: 'Arial';
+        position: absolute;
+        top: 35%;
+        left: 63.5%;
+        transform: translateX(0%) translateY(0);
+    }
+    #input1{
+        font-size: 15px;
+        height: 25px;
+        width: 200px;
+        margin: 0;
+        padding: 0;
+        text-align: center;
+        font-family: 'Arial';
+        position: absolute;
+        top: 35%;
+        left: 10%;
+        transform: translateX(0%) translateY(0);
+        border-radius: 10px;
+    }
+    #password{
+        font-size: 15px;
+        height: 25px;
+        width: 200px;
+        margin: 0;
+        padding: 0;
+        text-align: center;
+        font-family: 'Arial';
+        position: absolute;
+        top: 40%;
+        left: 10%;
+        transform: translateX(0%) translateY(0);
+        border-radius: 10px;
+    }
+    #confirmPassword{
+        font-size: 15px;
+        height: 25px;
+        width: 200px;
+        margin: 0;
+        padding: 0;
+        text-align: center;
+        font-family: 'Arial';
+        position: absolute;
+        top: 45%;
+        left: 10%;
+        transform: translateX(0%) translateY(0);
+        border-radius: 10px;
+    }
+    #input4{
+        font-size: 15px;
+        height: 25px;
+        width: 590px;
+        margin: 0;
+        padding: 0;
+        text-align: center;
+        font-family: 'Arial';
+        position: absolute;
+        top: 50%;
+        left: 10%;
+        transform: translateX(0%) translateY(0);
+        border-radius: 10px;
+    }
+    #input5{
+        font-size: 15px;
+        height: 25px;
+        width: 208px;
+        margin: 0;
+        padding: 0;
+        text-align: center;
+        font-family: 'Arial';
+        position: absolute;
+        top: 60%;
+        left: 25%;
+        transform: translateX(0%) translateY(0);
+        border-radius: 10px;
+    }
+    #datanascimento{
+        color:white;
+        font-size: 15px;
+        height: 25px;
+        width: 200px;
+        margin: 0;
+        padding: 0;
+        text-align: center;
+        font-family: 'Arial';
+        position: absolute;
+        top: 60%;
+        left: 8%;
+        transform: translateX(0%) translateY(0);
+        border-radius: 10px;
+    }
+    #input6{
+        font-size: 15px;
+        height: 25px;
+        width: 590px;
+        margin: 0;
+        padding: 0;
+        text-align: center;
+        font-family: 'Arial';
+        position: absolute;
+        top: 70%;
+        left: 10%;
+        transform: translateX(0%) translateY(0);
+        border-radius: 10px;
+    }
+    #paises{
+        font-size: 15px;
+        height: 25px;
+        width: 208px;
+        margin: 0;
+        padding: 0;
+        text-align: center;
+        font-family: 'Arial';
+        position: absolute;
+        top: 65%;
+        left: 25%;
+        transform: translateX(0%) translateY(0);
+        border-radius: 10px;
+    }
+    #pais{
+        font-size: 15px;
+        color:white;
+        height: 25px;
+        width: 200px;
+        margin: 0;
+        padding: 0;
+        text-align: center;
+        font-family: 'Arial';
+        position: absolute;
+        top: 65%;
+        left: 8%;
+        transform: translateX(0%) translateY(0);
+        border-radius: 10px;
+    }
+    #input7{
+        font-size: 15px;
+        height: 25px;
+        width: 208px;
+        margin: 0;
+        padding: 0;
+        text-align: center;
+        font-family: 'Arial';
+        position: absolute;
+        top: 75%;
+        left: 10%;
+        transform: translateX(0%) translateY(0);
+        border-radius: 10px;
+    }
+    #input8{
+        font-size: 15px;
+        height: 25px;
+        width: 75px;
+        margin: 0;
+        padding: 0;
+        text-align: center;
+        font-family: 'Arial';
+        position: absolute;
+        top: 75%;
+        left: 30%;
+        transform: translateX(0%) translateY(0);
+        border-radius: 10px;
+    }
+    #input9{
+        font-size: 15px;
+        height: 25px;
+        width: 70px;
+        margin: 0;
+        padding: 0;
+        text-align: center;
+        font-family: 'Arial';
+        position: absolute;
+        top: 75%;
+        left: 38%;
+        transform: translateX(0%) translateY(0);
+        border-radius: 10px;
+    }
+    #input10{
+        font-size: 15px;
+        height: 25px;
+        width: 125px;
+        margin: 0;
+        padding: 0;
+        text-align: center;
+        font-family: 'Arial';
+        position: absolute;
+        top: 35%;
+        left: 47%;
+        transform: translateX(0%) translateY(0);
+        border-radius: 10px;
+    }
+    #input11{
+        font-size: 15px;
+        height: 25px;
+        width: 590px;
+        margin: 0;
+        padding: 0;
+        text-align: center;
+        font-family: 'Arial';
+        position: absolute;
+        top: 55%;
+        left: 10%;
+        transform: translateX(0%) translateY(0);
+        border-radius: 10px;
+    }
+    #radio1{
+        font-size: 15px;
+        margin: 0;
+        padding: 0;
+        text-align: center;
+        font-family: 'Arial';
+        position: absolute;
+        top: 80.5%;
+        left: 30%;
+        transform: translateX(0%) translateY(0);
+    }
+    #radio2{
+        font-size: 15px;
+        margin: 0;
+        padding: 0;
+        text-align: center;
+        font-family: 'Arial';
+        position: absolute;
+        top: 80.5%;
+        left: 50%;
+        transform: translateX(0%) translateY(0);
+    }
+    #masculino{
+        color:white;
+        font-size: 15px;
+        margin: 0;
+        padding: 0;
+        text-align: center;
+        font-family: 'Arial';
+        position: absolute;
+        top: 80%;
+        left: 20%;
+        transform: translateX(0%) translateY(0);
+    }
+    #feminino{
+        font-size: 15px;
+        color:white;
+        margin: 0;
+        padding: 0;
+        text-align: center;
+        font-family: 'Arial';
+        position: absolute;
+        top: 80%;
+        left: 40%;
+        transform: translateX(0%) translateY(0);
+    }
+    #genero{
+        font-size: 15px;
+        color:white;
+        margin: 0;
+        padding: 0;
+        text-align: center;
+        font-family: 'Arial';
+        position: absolute;
+        top: 80%;
+        left: 10.5%;
+        transform: translateX(0%) translateY(0);
+    }
+    #botao1{
+        text-decoration: none;
+                color: black;
+                background-color: white;
+                font-size: 20px;
+                width: 200px;
+                margin: 0;
+                padding: 1px;
+                text-align: center;
+                font-family: 'Arial';
+                font-weight: bold;
+                position: absolute;
+                top: 100%;
+                left: 40%;
+                transform: translateX(0%) translateY(0);
+                border-radius: 10px;
+    }
+    #botao2{
+        text-decoration: none;
+                color: black;
+                background-color: white;
+                font-size: 20px;
+                width: 200px;
+                margin: 0;
+                padding: 1px;
+                text-align: center;
+                font-family: 'Arial';
+                font-weight: bold;
+                position: absolute;
+                top: 100%;
+                left: 20%;
+                transform: translateX(0%) translateY(0);
+                border-radius: 10px;
+    }
     #botao1:hover{
-    background-color: lightblue;
-    color: white;
-    transition: background-color 0.5s;    
-}
-#botao2{
-    text-decoration: none;
-    color: black;
-    background: white;
-    width: 200px;
-    font-size: 15px;
-    height: 30px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-    top: 100%;
-    left: 10%;
-    transform: translateX(0%) translateY(0);
-}
-#botao2:hover{
-    background-color: lightblue;
-    color: white;
-    transition: background-color 0.5s;    
-}
-.container form .error-text{
-    background: #F8D7DA;
-    padding: 8px 0;
-    border-radius: 5px;
-    color: #8B3E46;
-    border: 1px solid #F5C6CB;
-    display: none;
-}
+                background-color: lightblue;
+                color: white;
+                transition: background-color 0.5s;
+            }
+            #botao2:hover{
+                background-color: lightblue;
+                color: white;
+                transition: background-color 0.5s;
+            }
+    .container form .error-text{
+        background: #F8D7DA;
+        padding: 8px 0;
+        border-radius: 5px;
+        color: #8B3E46;
+        border: 1px solid #F5C6CB;
+        display: none;
+    }
+    .eyeicon{
+        position: absolute;
+        left: 26%;
+        top: 40%;
+        color: white;
+    }
+    
+    @media screen and (max-width: 1024px) { /* Specific to this particular image */
+        .img {
+          left: 50%;
+          margin-left: -512px;   /* 50% */
+        }
+    }
+    @keyframes transition {
+        from {
+            opacity: 0;
+            transform: rotateX(-10deg);
+        }
+        to{
+            opacity: 1;
+            transform: rotateX(0);
+        }
+    }
+            #type2{
+                font-size: 15px;
+                width: 590px;
+                height: 50px;
+                margin: 0;
+                padding: 0;
+                text-align: center;
+                font-family: 'Arial';
+                position: absolute;
+                top: 85%;
+                left: 10%;
+                transform: translateX(0%) translateY(0);
+                border-radius: 10px;
+            }
+    
+    

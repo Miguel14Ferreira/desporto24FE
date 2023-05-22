@@ -14,18 +14,17 @@ export class MenuComponent implements OnInit {
 
   ngOnInit(): void {
   }
-  minhaImagem = "./assets/estadio .jpg";
   perfil = this.authenticationService.getPerfilFromLocalCache();
 
   NomeUtilizador(){
-    this.perfil.username;
+    return this.perfil.username;
   }
  
   alterarDados(){
-    this.router.navigate(['menu/alterardados/username',this.perfil.username]);
+    this.router.navigate(['menu/alterardados']);
   }
   alterarPassword(){
-    this.router.navigate(['menu/alterarPassword', this.perfil.username]);
+    this.router.navigate(['menu/alterarPassword']);
   }
   remover(){
     this.authenticationService.logOut();

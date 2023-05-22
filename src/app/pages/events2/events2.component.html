@@ -2,13 +2,14 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:display="http://www.w3.org/1999/xhtml"
       xmlns="http://www.w3.org/1999/html">
 <head>
+    
     <meta charset="ISO-8859-1">
     <title>Desporto24</title>
     <link rel="stylesheet">
 </head>
 <body>
-<div><img [src]="minhaImagem" class="img-fluid" alt=""></div>
-    <p><h1>Desporto24</h1>
+    <div class="img">
+        <p><h1>Desporto24</h1>
         <h2>Sessão a ser criada por {{ObterNomeDeUtilizador()}}</h2>
         <form #createSession="ngForm" (ngSubmit)="onSubmit()" name="form" action="#">
             <label id="input1">Seleciona o desporto que queres praticar:</label>
@@ -60,27 +61,7 @@
             <option value="29">29</option>
             <option value="30">30</option>
         </select>
-        <label id="espaco5">Escolhe o distrito que pretendes fazer a tua sessão de jogo:</label>
-        <select id="espaco6" [(ngModel)]="session.localidade" name="localidade" required>
-            <option value="Lisboa">Lisboa</option>
-            <option value="Porto">Porto</option>
-            <option value="Guarda">Guarda</option>
-            <option value="Braga">Braga</option>
-            <option value="Aveiro">Aveiro</option>
-            <option value="Faro">Faro</option>
-            <option value="Setubal">Setúbal</option>
-            <option value="Leiria">Leiria</option>
-            <option value="Santarém">santarém</option>
-            <option value="Bragança">Bragança</option>
-            <option value="Coimbra">Coimbra</option>
-            <option value="Evora">Évora</option>
-            <option value="Castelo Branco">Castelo Branco</option>
-            <option value="Portalegre">Portalegre</option>
-            <option value="Beja">Beja</option>
-            <option value="Viseu">Viseu</option>
-            <option value="Viana do Castelo">Viana do Castelo</option>
-            <option value="Vila Real">Vila Real</option>
-        </select>
+        <input type="text" [(ngModel)]="session.localidade" name="localidade" placeholder="Coloca aqui a localidade" id="espaco14" required>
         <input type="text" [(ngModel)]="session.morada" name="morada" placeholder="Coloca aqui a morada completa do campo" id="espaco7" required>
     <div class="espaco8">
         <input type="checkbox" (click)="toogleTag2()">Quero um jogo privado
@@ -98,6 +79,7 @@
     </div>
         <button type="submit" id="botao1" [disabled]="!createSession.valid">Concluir Registo</button>
         </form>
-            <button href="#" routerLink="login" id="botao2">Voltar atrás</button>
+            <button href="#" routerLink="events" id="botao2">Voltar atrás</button>
+    </div>
         </body>
         </html>

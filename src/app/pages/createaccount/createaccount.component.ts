@@ -66,16 +66,17 @@ onSelectedFile(e:any){
     }
   }
 }
-onRegister(perfil: Perfil): void {
+public onRegister(user: Perfil): void {
   this.showLoading = true;
   this.subscriptions.push(
-    this.authservice.createPerfil(perfil).subscribe(
+    this.authservice.createPerfil(user).subscribe(
       (response: Perfil) => {
         this.showLoading = false;
-        alert("Foi te enviado um email para o teu endereço pedimos que o confirmes para ativar a tua conta!")
+        alert(`Foi enviado um email para ${response.email} para concluir o registo, só depois da confirmação do email, será possível efetuar o login no site.`);
+        this.router.navigate(['/login']);
       },
       (errorResponse: HttpErrorResponse) => {
-        alert("Ocorreu um erro")
+        alert(`Ocorreu um erro`);
         this.showLoading = false;
       }
     )

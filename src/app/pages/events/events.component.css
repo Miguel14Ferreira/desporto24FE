@@ -46,9 +46,13 @@ footer{
     background-color: white;
     padding: 350px;
 }
-img{
-    width: 1275px;
-    height: 700px;
+.img{
+    animation: transition 0.75s;
+    height: 100vh;
+    background-image: url(src\assets\padel.png);     
+    -webkit-background-size: cover;
+    background-size: cover;
+    background-position: center center;
 }
 .content button{
     text-decoration: none;
@@ -83,11 +87,11 @@ img{
     border-radius: 10px;
 }
 .content button:hover{
-    background-color: grey;
+    background-color: lightblue;
     color: white;
 }
 .content2 button:hover{
-    background-color: grey;
+    background-color: lightblue;
     color: white;
 }
 .content3 button{
@@ -107,7 +111,7 @@ img{
     border-radius: 10px;
 }
 .content3 button:hover{
-    background-color: grey;
+    background-color: lightblue;
     color: white;
 }
 

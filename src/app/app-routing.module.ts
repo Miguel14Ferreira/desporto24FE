@@ -27,12 +27,12 @@ const routes: Routes = [
   {path:'login/registerNewUser',component:CreateaccountComponent},
   {path:'menu/createvent',component:CreateventComponent},
   {path:'login/registerNewUser/login', redirectTo:'login',pathMatch:'full'},
-  {path:'menu/alterardados/:id',component:AlterardadosComponent},
-  {path:'menu/alterardados/:id/menu', redirectTo:'menu',pathMatch:'full'},
-  {path:'menu/alterarPassword/:id/menu', redirectTo:'menu',pathMatch:'full'},
-  {path:'menu/alterarPassword/:id', component:ChangepasswordComponent},
+  {path:'menu/alterardados',component:AlterardadosComponent},
+  {path:'menu/alterardados/menu', redirectTo:'menu',pathMatch:'full'},
+  {path:'menu/alterarPassword/menu', redirectTo:'menu',pathMatch:'full'},
+  {path:'menu/alterarPassword', component:ChangepasswordComponent},
   {path:'menu/events/events2',component:Events2Component},
-  {path:'menu/events/events2/events',redirectTo:'events',pathMatch:'full'},
+  {path:'menu/events/events2/events',redirectTo:'menu/events',pathMatch:'full'},
   {path:'login/forgotp',component:ForgotpComponent},
   {path:'menu/perfis',component:PerfisComponent}
 ];
