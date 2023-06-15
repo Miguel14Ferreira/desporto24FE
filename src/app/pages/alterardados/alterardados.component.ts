@@ -26,7 +26,7 @@ export class AlterardadosComponent implements OnInit {
   id!:number;
   perfil!:Perfil;
   public editPerfil = new Perfil();
-  url = './assets/foto .png';
+  url = this.perfil.foto;
   fileName!: any;
   constructor(private loginPerfilService: LoginperfilService,private authenticationService:AuthenticationService) { }
 

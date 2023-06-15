@@ -51,8 +51,12 @@ export class LoginComponent implements OnInit, OnDestroy {
           this.showLoading = false;
         },
         (errorResponse: HttpErrorResponse) => {
-         // this.sendErrorNotification(NotificationType.ERROR, errorResponse.error.message);
-         alert("Email não verificado/Utilizador ou palavra-passe incorretos.")
+        /*  if (perfil.notLocked == true){
+          alert("Não foi possível efetuar o login por uma destas razões: Email não verificado/Utilizador ou palavra-passe incorretos.")
+        } else {
+          */
+          alert("Utilizador ou palavra-passe incorrectos")
+        
           this.showLoading = false;
         }
       )

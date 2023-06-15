@@ -16,5 +16,9 @@
 <div class="content5">
     <button (click)="remover()" routerLink="login">Terminar Sessão</button>
 </div>
+<input [(ngModel)]="perfil.foto" (change)="onSelectedFile($event)" name="foto" type="file" id="inpFile" accept="image/*">
+    <div class="image-preview" id="imagePreview">
+    <img [src]="url" alt="Image Preview" class="image-preview__image">
+    <span  class="image-preview__default-text"></span>
 </div>
 

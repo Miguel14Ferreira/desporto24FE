@@ -1,8 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Perfil } from '../model/perfil';
-import { LoginperfilService } from '../../services/loginperfil.service';
 import { Router } from '@angular/router';
-import { Form, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 import { AuthenticationService } from 'src/app/services/authethication.service';
@@ -21,9 +19,12 @@ export class CreateaccountComponent implements OnInit, OnDestroy {
   password!: string;
   showLoading!: boolean;
   token: any;
+  fileName!: string;
+  profileImage!: File;
+  url2:any;
   response: any = null;
   subscriptions: Subscription[] = [];
-  constructor(private router:Router, private formBuilder: FormBuilder,  private authservice:AuthenticationService) {}
+  constructor(private router:Router,  private authservice:AuthenticationService) {}
   url = './assets/foto .png';
   saveNewUser(){
     this.authservice.createPerfil(this.perfil).subscribe( data =>{
@@ -57,22 +58,28 @@ ngOnInit(): void {
   }
 }
 
-onSelectedFile(e:any){
+public onProfileImageChange(e: any) {
   if(e.target.files){
+  this.fileName = e.target.files[0].name;    
+  this.profileImage = e.target.files[0];
     var reader = new FileReader();
     reader.readAsDataURL(e.target.files[0]);
     reader.onload=(event:any)=>{
       this.url=event.target.result;
     }
-  }
 }
+}
+
+
+
 public onRegister(user: Perfil): void {
+  console.log(user);
   this.showLoading = true;
   this.subscriptions.push(
     this.authservice.createPerfil(user).subscribe(
       (response: Perfil) => {
         this.showLoading = false;
-        alert(`Foi enviado um email para ${response.email} para concluir o registo, só depois da confirmação do email, será possível efetuar o login no site.`);
+        alert(`Foi enviado um email para ${response.email} para concluir o registo, só depois da confirmação do email será possível efetuar o login no site.`);
         this.router.navigate(['/login']);
       },
       (errorResponse: HttpErrorResponse) => {

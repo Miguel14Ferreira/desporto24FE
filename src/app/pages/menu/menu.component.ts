@@ -15,6 +15,7 @@ export class MenuComponent implements OnInit {
   ngOnInit(): void {
   }
   perfil = this.authenticationService.getPerfilFromLocalCache();
+  url = this.perfil.foto;
 
   NomeUtilizador(){
     return this.perfil.username;
@@ -28,5 +29,14 @@ export class MenuComponent implements OnInit {
   }
   remover(){
     this.authenticationService.logOut();
+  }
+  onSelectedFile(e:any){
+    if(e.target.files){
+      var reader = new FileReader();
+      reader.readAsDataURL(e.target.files[0]);
+      reader.onload=(event:any)=>{
+        this.url=event.target.result;
+      }
+    }
   }
 }

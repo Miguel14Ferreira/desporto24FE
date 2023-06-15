@@ -20,7 +20,7 @@ export class Perfil {
     public notLocked: boolean;
     public role: string;
     public authorities: [];
-    public desportosfavoritos: [];
+    public desportosFavoritos: string;
     
 
     constructor(){
@@ -45,6 +45,6 @@ export class Perfil {
         this.notLocked = false;
         this.role = '';
         this.authorities = [];
-        this.desportosfavoritos = [];
+        this.desportosFavoritos = '';
     }      
 }
