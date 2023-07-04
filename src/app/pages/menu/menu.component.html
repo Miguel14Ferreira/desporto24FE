@@ -17,4 +17,22 @@
     <button (click)="remover()" routerLink="login">Terminar Sessão</button>
 </div>
 </div>
+<table id="tabela1">
+    <thead>
+        <tr>
+            <th>Data de nascimento</th>
+            <th>Género</th>
+            <th>País de nascimento</th>
+            <th>Email</th>
+            <th>Desportos favoritos</th>
+        </tr>
+    </thead>
+    <tbody>
+            <td> {{perfil.dateOfBirth}}</td>
+            <td> {{perfil.gender}} </td>
+            <td> {{perfil.country}} </td>
+            <td> {{perfil.email}}</td>
+            <td> {{perfil.desportosFavoritos}}</td>
+    </tbody>
+</table>
 

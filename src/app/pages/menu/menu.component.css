@@ -293,3 +293,18 @@ h1{
       margin-left: -512px;   /* 50% */
     }
 }
+#tabela1{
+    font-size: 15px;
+    height: 25px;
+    width: 90%;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    background-color: white;
+    top: 100%;
+    left: 5%;
+    transform: translateX(0%) translateY(0);
+    border-radius: 10px;
+}
