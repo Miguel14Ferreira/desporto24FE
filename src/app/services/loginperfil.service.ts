@@ -22,16 +22,19 @@ export class LoginperfilService {
   updatePerfil(formData: FormData) {
     return this.httpClient.put<Perfil>(`${this.host}/menu/alterardados/`,formData);
   }
-  public createPerfilFormData(loggedInUsername: string, perfil: Perfil): FormData {
+
+  updatePerfil2(perfil: Perfil) {
+    return this.httpClient.put<Perfil>(`${this.host}/menu/alterardados/`,perfil);
+  }
+  public createPerfilFormData(perfil: Perfil, imageFile: File): FormData {
     const formData = new FormData();
-    formData.append('currentUsername', loggedInUsername);
+    formData.append('username', perfil.username);
+    formData.append('password', perfil.password);
     formData.append('fullName', perfil.fullName);
     formData.append('dateOfBirth', JSON.stringify(perfil.dateOfBirth));
     formData.append('email', perfil.email);
-    formData.append('foto', perfil.foto);
     formData.append('address',perfil.address);
-    formData.append('postal',perfil.postal);
-    formData.append('code',perfil.code);
+    formData.append('postal',perfil.postalCode);
     formData.append('gender',perfil.gender);
     formData.append('country',perfil.country);
     formData.append('phone',perfil.phone);
@@ -40,7 +43,21 @@ export class LoginperfilService {
     return formData;
   }
 
-  public createPerfilPasswordFormData(loggedInUsername: string, perfil: Perfil): FormData{
+  public updatePerfilFormData(loggedInUsername: string,perfil: Perfil): FormData {
+    const formData = new FormData();
+    formData.append('currentUsername', loggedInUsername);
+    formData.append('fullName', perfil.fullName);
+    formData.append('dateOfBirth', JSON.stringify(perfil.dateOfBirth));
+    formData.append('email', perfil.email);
+    formData.append('address',perfil.address);
+    formData.append('postalCode',perfil.postalCode);
+    formData.append('gender',perfil.gender);
+    formData.append('country',perfil.country);
+    formData.append('phone',perfil.phone);
+    return formData;
+  }
+
+  public updatePerfilPasswordFormData(loggedInUsername: string, perfil: Perfil): FormData{
     const formData = new FormData();
     formData.append('currentUsername',loggedInUsername);
     formData.append('username',perfil.username);

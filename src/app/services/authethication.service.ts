@@ -18,7 +18,11 @@ export class AuthenticationService {
   loginPerfil(perfil: Perfil):Observable<HttpResponse<Perfil>>{
     return this.http.post<Perfil>(`${this.host}/login`, perfil, {observe: 'response'});
   }
-  createPerfil(perfil: Perfil):Observable<Perfil>{
+  createPerfil(formData: FormData):Observable<Perfil>{
+    return this.http.post<Perfil>(`${this.host}/login/registerNewUser`, formData);
+  }
+
+  createPerfil2(perfil: Perfil):Observable<Perfil>{
     return this.http.post<Perfil>(`${this.host}/login/registerNewUser`, perfil);
   }
 

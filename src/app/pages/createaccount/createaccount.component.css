@@ -13,10 +13,12 @@
     align-items: center;
     justify-content: center;
     color: #cccccc;
+    border-radius: 20%;
 }
 .image-preview__image{
     width: 100%;
     height: 100%;
+    border-radius: 20%;
 }
 .inpFile{
     font-size: 15px;
@@ -212,7 +214,7 @@ h4 {
 #input9{
     font-size: 15px;
     height: 25px;
-    width: 70px;
+    width: 150px;
     margin: 0;
     padding: 0;
     text-align: center;

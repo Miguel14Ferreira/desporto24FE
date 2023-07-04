@@ -51,24 +51,13 @@ export class LoginComponent implements OnInit, OnDestroy {
           this.showLoading = false;
         },
         (errorResponse: HttpErrorResponse) => {
-        /*  if (perfil.notLocked == true){
-          alert("Não foi possível efetuar o login por uma destas razões: Email não verificado/Utilizador ou palavra-passe incorretos.")
-        } else {
-          */
-          alert("Utilizador ou palavra-passe incorrectos")
-        
+          alert("Utilizador ou palavra-passe incorrectos/Email não verificado")
           this.showLoading = false;
         }
       )
     );
   }
-  //sendErrorNotification(notificationType: NotificationType, message: string) {
-  //  if(message){
-  //    this.notificationService.notify(notificationType,message);
-  //  } else {
-  //    this.notificationService.notify(notificationType, 'Um erro ocorreu durante a operação.');
-  //  }
-  //}
+  
     viewPass(){
       this.visible = !this.visible;
       this.changetype = !this.changetype;

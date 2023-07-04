@@ -1,15 +1,15 @@
 <body><img [src]="minhaImagem">
-    <h1>Jogadores inscritos</h1>
-    <small *ngIf="titleAction$ | async as title">{{ title }}</small>
-    </body>
-            <input name="searchTerm" class="form-control mr-sm-2" type="search" placeholder="Procurar perfil...">
-            <button onclick="procurarperfil(searchTerm.value)"></button>
-    <div class="btn-group">
-        <button type="button" (click)="obterPerfis(true)" class="btn btn-info">
-            <i *ngIf="refreshing" class="fas fa-sync fa-spin"></i><i *ngIf="!refreshing" class="fas fa-sync"></i>
+  <h1>Desporto24</h1>
+    <h2>Jogadores inscritos</h2>
+    <h3 *ngIf="titleAction$ | async as title">{{ title }}</h3>
+          <form>
+            <input name="searchTerm" #searchTerm="ngModel" ngModel (ngModelChange)="procurarPerfis(searchTerm.value)" id="input1" type="search" placeholder="Procurar perfil...">
+          </form>
+        <button id="botao1" type="button" (click)="obterPerfis(true)" class="btn btn-info">
+            <i *ngIf="refreshing" class="fas fa-sync fa-spin"></i>
+            <i *ngIf="!refreshing" class="fas fa-sync"></i>
         </button>
-    </div>
-    <table class="table table-striped">
+    <table id="tabela1">
         <thead>
             <tr>
                 <th>Foto de perfil</th>
@@ -18,17 +18,19 @@
                 <th>Género</th>
                 <th>País de nascimento</th>
                 <th>Email</th>
+                <th>Desportos favoritos</th>
             </tr>
         </thead>
         <tbody *ngFor="let perfil of perfis">
-                <td>
-                    <img height="40" width="40" src="{{perfil.foto}}">
+                <td (click)="onSelectPerfil(perfil)">
+                    <img height="40" width="40" src="{{perfil.foto}}" class="rounded-circle img-fluid img-thumbnail" alt=""/>
                 </td>
                 <td (click)="onSelectPerfil(perfil)"> {{perfil.username}}</td>
                 <td (click)="onSelectPerfil(perfil)"> {{perfil.dateOfBirth}}</td>
                 <td (click)="onSelectPerfil(perfil)"> {{perfil.gender}} </td>
                 <td (click)="onSelectPerfil(perfil)"> {{perfil.country}} </td>
                 <td (click)="onSelectPerfil(perfil)"> {{perfil.email}}</td>
+                <td (click)="onSelectPerfil(perfil)"> {{perfil.desportosFavoritos}}</td>
         </tbody>
     </table>
     <button [hidden]="true" type="button" id="openPerfilInfo" data-toggle="modal" data-target="#viewPerfilModal"></button>

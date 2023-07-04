@@ -10,12 +10,13 @@ import { Perfil } from '../model/perfil';
 })
 export class MenuComponent implements OnInit {
   public perfis : Perfil [] = [];
+  fileName!: string;
+  profileImage!: File;
   constructor(private authenticationService:AuthenticationService,private router:Router) { }
 
   ngOnInit(): void {
   }
   perfil = this.authenticationService.getPerfilFromLocalCache();
-  url = this.perfil.foto;
 
   NomeUtilizador(){
     return this.perfil.username;
@@ -27,16 +28,10 @@ export class MenuComponent implements OnInit {
   alterarPassword(){
     this.router.navigate(['menu/alterarPassword']);
   }
+  Utilizadores(){
+    this.router.navigate(['menu/perfis']);
+  }
   remover(){
     this.authenticationService.logOut();
-  }
-  onSelectedFile(e:any){
-    if(e.target.files){
-      var reader = new FileReader();
-      reader.readAsDataURL(e.target.files[0]);
-      reader.onload=(event:any)=>{
-        this.url=event.target.result;
-      }
-    }
-  }
+}
 }

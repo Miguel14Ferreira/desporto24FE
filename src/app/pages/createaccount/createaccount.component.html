@@ -7,7 +7,7 @@
 <div class="img">
 <h1>Desporto24</h1>
 <body>
-<form #passwordValidation="ngForm" #createAccount="ngForm" (ngSubmit)="onRegister(createAccount.value)" name="form" action="#">
+<form #passwordValidation="ngForm" #createAccount="ngForm" (ngSubmit)="onRegister2(createAccount.value)">
 <input #Username="ngModel" id="input1" [(ngModel)]="perfil.username" type="text" class="username" name="username" placeholder="Nome de utilizador" required/>
 <input id="password" #Password="ngModel" [(ngModel)]="perfil.password" [type]="changetype?'password':'text'" name="password" class="password" placeholder="Password" required>
 <span (click)="viewPass()" class="eyeicon"><i [ngClass]="visible?'fa fa-eye':'fa fa-eye-slash'"></i></span>
@@ -267,17 +267,15 @@
     <option value="Zimbabwe">Zimbabwe</option>
 </select>
 <input #location="ngModel" id="input7" [(ngModel)]="perfil.location" class="location" name="location" type="text" placeholder="Localidade" required>
-    <input #code="ngModel" id="input8" [(ngModel)]="perfil.postal" class="post" name="postal" type="number" pattern="[0-9]{4}" placeholder="Código" required>
-    <input #postal="ngModel" id="input9" [(ngModel)]="perfil.code" class="code" name="code" type="number" pattern="[0-9]{3}" placeholder="Postal" required>
+    <input #postalCode="ngModel" id="input9" [(ngModel)]="perfil.postalCode" class="post" name="postalCode" type="text" placeholder="Código postal" required>
     <input #phone="ngModel" id="input10" [(ngModel)]="perfil.phone" class="phone" name="phone" type="number" pattern="[0-9]{9}" placeholder="Nº de telemóvel" required>
     <input #mail="ngModel" id="input11" [(ngModel)]="perfil.email" class="email" name="email" type="text" placeholder="Email" required>
     <p id="genero" >Género:</p>
     <input id="radio1" [(ngModel)]="perfil.gender" class="gender" name="gender" value="masculino" type="radio"><p id="masculino">Masculino</p>
     <input id="radio2" [(ngModel)]="perfil.gender" class="gender" name="gender" value="feminino" type="radio"><p id="feminino">Feminino</p>
-    <input [(ngModel)]="perfil.foto" (change)="onProfileImageChange($event)" name="foto" type="file" class="inpFile" accept="image/*">
+    <input (change)="onProfileImageChange2($event)" type="file" class="inpFile" accept="image/*">
     <div class="image-preview" id="imagePreview">
-    <img [src]="url" alt="Image Preview" class="image-preview__image">
-    <span  class="image-preview__default-text"></span>
+    <img [(ngModel)]="perfil.foto" name="foto" [src]="url" alt="Image Preview" class="image-preview__image">
     </div>
     <textarea id="type2" [(ngModel)]="perfil.desportosFavoritos" name="desportosFavoritos" placeholder="Coloca aqui os teus desportos favoritos" required></textarea>
     <button type="submit" id="botao1" [disabled]="!createAccount.valid">

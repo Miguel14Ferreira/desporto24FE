@@ -4,7 +4,7 @@ import { BehaviorSubject, Subscription } from 'rxjs';
 import { NotificationType } from 'src/app/enum/notification-type.enum';
 import { LoginperfilService } from 'src/app/services/loginperfil.service';
 import { NotificationService } from 'src/app/services/notification.service';
-import { Perfil } from '../pages/model/perfil';
+import { Perfil } from '../model/perfil';
 
 
 @Component({
@@ -13,7 +13,7 @@ import { Perfil } from '../pages/model/perfil';
   styleUrls: ['./perfis.component.css']
 })
 export class PerfisComponent {
-  minhaImagem = "assets/Sports .jpg";
+  minhaImagem = "assets/sports2.jpg";
   private titleSubject = new BehaviorSubject<String>('Perfis');
   public titleAction$ = this.titleSubject.asObservable();
   public perfis!: Perfil[];
@@ -23,7 +23,7 @@ export class PerfisComponent {
   selectedPerfil!: Perfil;
   response!: any;
 
-  constructor (private loginPerfilService: LoginperfilService, private notificationService:NotificationService){}
+  constructor (private loginPerfilService: LoginperfilService){}
 
   ngOnInit(): void{
     this.obterPerfis(true);
@@ -40,25 +40,14 @@ export class PerfisComponent {
         (response: Perfil[]) => {
           this.loginPerfilService.addPerfisToLocalCache(response);
           this.perfis = response;
-          if (showNotification){
-            this.sendNotification(NotificationType.SUCCESS, `${response.length} perfis carregados com sucesso.`);
-          }
         },
         (errorResponse: HttpErrorResponse) => {
-          this.sendNotification(NotificationType.ERROR, errorResponse.error.message);
           this.refreshing = false;
         }
       )
     )
   }
 
-  private sendNotification(notificationType: NotificationType, message: string): void {
-    if(message){
-      this.notificationService.notify(notificationType, message);
-    } else {
-      this.notificationService.notify(notificationType, "Ocorreu um erro, por favor tenta novamente.");
-    }
-  }
   onSelectPerfil(selectedPerfil: Perfil):void{
     this.selectedPerfil = selectedPerfil;
     document.getElementById('openPerfilInfo')?.click();

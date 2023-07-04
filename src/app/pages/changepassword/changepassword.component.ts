@@ -27,7 +27,7 @@ export class ChangepasswordComponent implements OnInit {
   perfil!:Perfil;
   public editPerfil = new Perfil();
   fileName!: any;
-  constructor(private loginPerfilService: LoginperfilService,private router:Router, private formBuilder: FormBuilder,private route:ActivatedRoute,private authenticationService:AuthenticationService,private authService:AuthService, private notificationService: NotificationService) { }
+  constructor(private loginPerfilService: LoginperfilService,private router:Router, private formBuilder: FormBuilder,private route:ActivatedRoute,private authenticationService:AuthenticationService,private authService:AuthService) { }
 
   ngOnInit(): void {
     this.perfil = this.authenticationService.getPerfilFromLocalCache();
@@ -39,40 +39,33 @@ export class ChangepasswordComponent implements OnInit {
 
   palavrasPassesDiferentes(novaPassword : string, novaConfirmPassword: string, password: string){
     if (novaPassword != novaConfirmPassword){
-      this.sendNotification(NotificationType.ERROR, `A nova palavra-passe e a confirmação da nova palavra-passe tem de estar iguais!`);
+      alert( `A nova palavra-passe e a confirmação da nova palavra-passe tem de estar iguais!`);
     } else if (password == novaPassword){
-      this.sendNotification(NotificationType.INFO, `A presente palavra-passe que estás a colocar, já se encontra em uso.`)
+      alert(`A presente palavra-passe que estás a colocar, já se encontra em uso.`)
     }
   }
   
   onSubmit(){
      this.palavrasPassesDiferentes(this.editPerfil.password, this.editPerfil.confirmPassword,this.perfil.password);
       this.onUpdatePerfilPassword();
-      this.sendNotification(NotificationType.INFO, `Os teus dados foram atualizados.`);
+      alert(`Os teus dados foram atualizados.`);
   }  
   
   obterNomeUtilizador (){
-    return localStorage.getItem('username');
+    return this.perfil.username;
   }
+  
   onUpdatePerfilPassword(): void {
-    const formData = this.loginPerfilService.createPerfilPasswordFormData(this.perfil.username, this.editPerfil);
+    const formData = this.loginPerfilService.updatePerfilPasswordFormData(this.perfil.username, this.editPerfil);
     this.subscriptions.push(
       this.loginPerfilService.updatePerfilPassword(formData).subscribe(
         (response: Perfil) => {
-          this.sendNotification(NotificationType.SUCCESS, `${response.username} updated successfully`);
+          alert(`Palavra-passe atualizada`);
         },
         (errorResponse: HttpErrorResponse) => {
-          this.sendNotification(NotificationType.ERROR, errorResponse.error.message);
+          alert( errorResponse.error.message);
         }
       )
       );
-  }
-
-  sendNotification(notificationType: NotificationType, message: string) {
-    if(message){
-      this.notificationService.notify(notificationType,message);
-    } else {
-      this.notificationService.notify(notificationType, 'Ocorreu um erro, por favor tenta novamente.');
-    }
   }
 }

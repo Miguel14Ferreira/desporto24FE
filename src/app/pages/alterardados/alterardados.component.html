@@ -1,15 +1,14 @@
 <div class="img">
 <h1>Desporto24</h1>
 <body>
-    {{perfil.foto}}
 <form  #updateAccount="ngForm" (ngSubmit)="onSubmit()" name="form" action="#">
- <input #username="ngModel" id="input1" [(ngModel)]="perfil.username" type="text" class="username" name="username" placeholder="Nome utilizador" required>
-<input #fullName="ngModel" id="input4" [(ngModel)]="perfil.fullName" type="text" class="fullName" name="fullName" placeholder="Nome completo" required>
+<p id="input1" type="text" class="username" name="username">{{NomeUtilizador()}}</p> 
+<input #fullName="ngModel" id="input4" [(ngModel)]="editPerfil.fullName" type="text" class="fullName" name="fullName" [placeholder]="perfil.fullName" required>
     <p id="datanascimento">Data de nascimento:</p>
-<input #dateOfBirth="ngModel" [(ngModel)]="perfil.dateOfBirth" id="input5" class="dateOfBirth" min="1950-01-01" max="2010-01-01" type="date" name="dateOfBirth" placeholder="Data de nascimento" required>
-    <input #address="ngModel" [(ngModel)]="perfil.address" id="input6" type="text" class="address" name="address" placeholder="Morada" required>
+<input #dateOfBirth="ngModel" [(ngModel)]="editPerfil.dateOfBirth" id="input5" class="dateOfBirth" min="1950-01-01" max="2010-01-01" type="date" name="dateOfBirth" [placeholder]="perfil.dateOfBirth" required>
+    <input #address="ngModel" [(ngModel)]="editPerfil.address" id="input6" type="text" class="address" name="address" [placeholder]="perfil.address" required>
     <p id="pais">País de nascimento:</p>
-<select id="paises" [(ngModel)]="perfil.country" class="country" name="country" required>
+<select id="paises" [(ngModel)]="editPerfil.country" class="country" name="country" required>
     <option value="Afganistan">Afghanistan</option>
     <option value="Albania">Albania</option>
     <option value="Algeria">Algeria</option>
@@ -257,21 +256,21 @@
     <option value="Zambia">Zambia</option>
     <option value="Zimbabwe">Zimbabwe</option>
 </select>
-<input #location="ngModel" id="input7" [(ngModel)]="perfil.location" class="location" name="location" type="text" placeholder="Localidade" required>
-    <input #code="ngModel" id="input8" [(ngModel)]="perfil.postal" class="post" name="postal" type="number" pattern="[0-9]{4}" placeholder="Código" required>
-    <input #postal="ngModel" id="input9" [(ngModel)]="perfil.code" class="code" name="code" type="number" pattern="[0-9]{3}" placeholder="Postal" required>
-    <input #phone="ngModel" id="input10" [(ngModel)]="perfil.phone" class="phone" name="phone" type="number" pattern="[0-9]{9}" placeholder="Nº de telemóvel" required>
-    <input #mail="ngModel" id="input11" [(ngModel)]="perfil.email" class="mail" name="mail" type="text" placeholder="Email" required>
+<input #location="ngModel" id="input7" [(ngModel)]="editPerfil.location" class="location" name="location" type="text" [placeholder]="perfil.location" required>
+    <input #postalCode="ngModel" id="input9" [(ngModel)]="editPerfil.postalCode" class="post" name="postalCode" type="number" pattern="[0-9]" [placeholder]="perfil.postalCode" required>
+    <input #phone="ngModel" id="input10" [(ngModel)]="editPerfil.phone" class="phone" name="phone" type="number" pattern="[0-9]{9}" [placeholder]="perfil.phone" required>
+    <input #mail="ngModel" id="input11" [(ngModel)]="editPerfil.email" class="mail" name="mail" type="text" [placeholder]="perfil.email" required>
     <p id="genero" >Género:</p>
-<input id="radio1" [(ngModel)]="perfil.gender" class="gender" name="gender" value="masculino" type="radio"><p id="masculino">Masculino</p>
-    <input id="radio2" [(ngModel)]="perfil.gender" class="gender" name="gender" value="feminino" type="radio"><p id="feminino">Feminino</p>
+    <input id="radio1" [(ngModel)]="editPerfil.gender" class="gender" name="gender" value="masculino" type="radio"><p id="masculino">Masculino</p>
+    <input id="radio2" [(ngModel)]="editPerfil.gender" class="gender" name="gender" value="feminino" type="radio"><p id="feminino">Feminino</p>
     <h4>Coloca por favor a tua fotografia aqui</h4>
-    <input [(ngModel)]="perfil.foto" (change)="onSelectedFile($event)" name="foto" type="file" id="inpFile" accept="image/*" >
+    <input (change)="onSelectedFile($event)" type="file" id="inpFile" accept="image/*" >
     <div class="image-preview" id="imagePreview">
-    <img [src]="url" alt="Image Preview" class="image-preview__image">
+    <img [(ngModel)]="editPerfil.foto" [src]="url" alt="Image Preview" class="image-preview__image">
     <span  class="image-preview__default-text"></span>
     </div>
-<button type="submit" id="botao1" [disabled]="!updateAccount.valid">
+    <textarea id="type2" [(ngModel)]="editPerfil.desportosFavoritos" name="desportosFavoritos" [placeholder]="perfil.desportosFavoritos" required></textarea>
+    <button type="submit" id="botao1">
     <i *ngIf= "showLoading" class="fas fa-spinner fa-spin"></i>&nbsp;&nbsp;
         <span *ngIf="showLoading">A atualizar...</span>
         <span *ngIf="!showLoading">Atualizar</span>

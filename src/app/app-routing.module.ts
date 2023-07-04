@@ -12,7 +12,7 @@ import { ForgotpComponent } from './pages/forgotp/forgotp.component';
 import { HomeComponent } from './pages/home/home.component';
 import { LoginComponent } from './pages/login/login.component';
 import { MenuComponent } from './pages/menu/menu.component';
-import { PerfisComponent } from './perfis/perfis.component'; 
+import { PerfisComponent } from './pages/perfis/perfis.component'; 
 
 const routes: Routes = [
   {path:'', redirectTo:'home',pathMatch:'full'},
@@ -34,7 +34,8 @@ const routes: Routes = [
   {path:'menu/events/events2',component:Events2Component},
   {path:'menu/events/events2/events',redirectTo:'menu/events',pathMatch:'full'},
   {path:'login/forgotp',component:ForgotpComponent},
-  {path:'menu/perfis',component:PerfisComponent}
+  {path:'menu/perfis',component:PerfisComponent},
+  {path:'menu/perfis/menu',redirectTo:'menu',pathMatch:'full'}
 ];
 
 @NgModule({

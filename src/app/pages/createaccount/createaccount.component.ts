@@ -4,6 +4,8 @@ import { Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 import { AuthenticationService } from 'src/app/services/authethication.service';
+import { LoginperfilService } from 'src/app/services/loginperfil.service';
+import { NgForm } from '@angular/forms';
 
 @Component({
   selector: 'app-createaccount',
@@ -21,12 +23,11 @@ export class CreateaccountComponent implements OnInit, OnDestroy {
   token: any;
   fileName!: string;
   profileImage!: File;
-  url2:any;
   response: any = null;
   subscriptions: Subscription[] = [];
-  constructor(private router:Router,  private authservice:AuthenticationService) {}
+  constructor(private router:Router,  private authservice:AuthenticationService, private loginService:LoginperfilService) {}
   url = './assets/foto .png';
-  saveNewUser(){
+  /*saveNewUser(){
     this.authservice.createPerfil(this.perfil).subscribe( data =>{
       alert("Enviámos um mail para o teu email para ativares a tua conta.")
       this.router.navigate(['/login']);
@@ -43,6 +44,7 @@ export class CreateaccountComponent implements OnInit, OnDestroy {
       this.onRegister(this.perfil);
     }
   }
+  */
   
 viewPass(){
     this.visible = !this.visible;
@@ -70,13 +72,39 @@ public onProfileImageChange(e: any) {
 }
 }
 
+public onProfileImageChange2(e: any) {
+    var reader = new FileReader();
+    reader.readAsDataURL(e.target.files[0]);
+    reader.onload=(event:any)=>{
+      this.url=event.target.result;
+}
+}
 
 
-public onRegister(user: Perfil): void {
-  console.log(user);
+
+public onRegister(perfilForm: NgForm): void {
+  const formData = this.loginService.createPerfilFormData(perfilForm.value, this.profileImage);
+  console.log(this.profileImage)
   this.showLoading = true;
   this.subscriptions.push(
-    this.authservice.createPerfil(user).subscribe(
+    this.authservice.createPerfil(formData).subscribe(
+      (response: Perfil) => {
+        this.showLoading = false;
+        alert(`Foi enviado um email para ${response.email} para concluir o registo, só depois da confirmação do email será possível efetuar o login no site.`);
+        this.router.navigate(['/login']);
+      },
+      (errorResponse: HttpErrorResponse) => {
+        alert(`Ocorreu um erro`);
+        this.showLoading = false;
+      }
+    )
+  );
+}
+
+public onRegister2(perfil: Perfil): void {
+  this.showLoading = true;
+  this.subscriptions.push(
+    this.authservice.createPerfil2(perfil).subscribe(
       (response: Perfil) => {
         this.showLoading = false;
         alert(`Foi enviado um email para ${response.email} para concluir o registo, só depois da confirmação do email será possível efetuar o login no site.`);

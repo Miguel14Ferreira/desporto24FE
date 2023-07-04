@@ -25,16 +25,17 @@ export class AlterardadosComponent implements OnInit {
   subscriptions: Subscription[] = [];
   id!:number;
   perfil!:Perfil;
-  public editPerfil = new Perfil();
-  url = this.perfil.foto;
-  fileName!: any;
+  editPerfil:Perfil = new Perfil();
+  fileName!: string;
+  profileImage!: File;
   constructor(private loginPerfilService: LoginperfilService,private authenticationService:AuthenticationService) { }
+  url = './assets/foto .png';
 
   ngOnInit(): void {
     this.perfil = this.authenticationService.getPerfilFromLocalCache();
     this.loginPerfilService.obterInfo(this.perfil).subscribe( data => {
       this.perfil = data;
-    }, error => console.log(error));
+    }, error => console.log());
   }
   
   onSelectedFile(e:any){
@@ -46,6 +47,10 @@ export class AlterardadosComponent implements OnInit {
       }
     }
   }
+  NomeUtilizador(){
+    return this.perfil.username;
+  }
+
 
     igualInfo(perfil:Perfil, perfilNovo: Perfil){
       if(perfil == perfilNovo){
@@ -57,14 +62,30 @@ export class AlterardadosComponent implements OnInit {
 
     onSubmit(): void{
       this.igualInfo(this.perfil, this.editPerfil);
-      this.onUpdatePerfil();
+      this.onUpdatePerfil2(this.editPerfil);
     }
 
-    onUpdatePerfil(): void {
-      const formData = this.loginPerfilService.createPerfilFormData(this.perfil.username, this.editPerfil);
+    onUpdatePerfil(username: string, perfil: Perfil): void {
+      const formData = this.loginPerfilService.updatePerfilFormData(username, perfil);
       this.subscriptions.push(
         this.loginPerfilService.updatePerfil(formData).subscribe(
           (response: Perfil) => {
+            alert(`O teu perfil foi atualizado com sucesso.`);
+          },
+          (errorResponse: HttpErrorResponse) => {
+            alert(`Ocurreu um erro`);
+          }
+        )
+        );
+    }
+
+    onUpdatePerfil2(perfil: Perfil): void {
+      perfil.username = this.perfil.username
+      this.showLoading = true;
+      this.subscriptions.push(
+        this.loginPerfilService.updatePerfil2(perfil).subscribe(
+          (response: Perfil) => {
+            this.showLoading = false;
             alert(`O teu perfil foi atualizado com sucesso.`);
           },
           (errorResponse: HttpErrorResponse) => {
