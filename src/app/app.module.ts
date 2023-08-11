@@ -28,6 +28,8 @@ import { NotificationService } from './services/notification.service';
 import { PerfisComponent } from './pages/perfis/perfis.component';
 import { AuthenticationService } from './services/authethication.service';
 import { AboutComponent } from './pages/about/about.component';
+import { Forgotp2Component } from './pages/forgotp2/forgotp2.component';
+import { ConfirmTokenRegistrationComponent } from './pages/confirm-token-registration/confirm-token-registration.component';
 
 @NgModule({
   declarations: [
@@ -48,7 +50,9 @@ import { AboutComponent } from './pages/about/about.component';
     AlterardadosComponent,
     ChangepasswordComponent,
     ContactComponent,
-    ForgotpComponent
+    ForgotpComponent,
+    Forgotp2Component,
+    ConfirmTokenRegistrationComponent
   ],
   imports: [
     BrowserModule,

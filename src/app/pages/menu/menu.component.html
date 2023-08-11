@@ -17,6 +17,7 @@
     <button (click)="remover()" routerLink="login">Terminar Sessão</button>
 </div>
 </div>
+<h3>Os teus dados:</h3>
 <table id="tabela1">
     <thead>
         <tr>
@@ -25,6 +26,7 @@
             <th>País de nascimento</th>
             <th>Email</th>
             <th>Desportos favoritos</th>
+            <th>Foto</th>
         </tr>
     </thead>
     <tbody>
@@ -33,6 +35,7 @@
             <td> {{perfil.country}} </td>
             <td> {{perfil.email}}</td>
             <td> {{perfil.desportosFavoritos}}</td>
+            <td> <img src="{{perfil.foto}}"/></td>
     </tbody>
 </table>
 

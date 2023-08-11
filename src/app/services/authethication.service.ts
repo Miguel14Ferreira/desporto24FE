@@ -26,6 +26,18 @@ export class AuthenticationService {
     return this.http.post<Perfil>(`${this.host}/login/registerNewUser`, perfil);
   }
 
+  sendEmail(perfil:Perfil):Observable<HttpResponse<Perfil>>{
+    return this.http.post<Perfil>(`${this.host}/login/resetPassword`,perfil, {observe: 'response'});
+  }
+
+  resetPassword(perfil:Perfil):Observable<Perfil>{
+    return this.http.put<Perfil>(`${this.host}/resetPassword/newPassword`,perfil);
+  }
+
+  activatePerfil(perfil:Perfil):Observable<Perfil>{
+    return this.http.put<Perfil>(`${this.host}/login/registerNewUser/confirmTokenRegistration`,perfil);
+  }
+
   public logOut(): void {
     this.token = null;
     this.loggedInPerfilname = null;

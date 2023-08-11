@@ -11,7 +11,7 @@
 <input #Username="ngModel" id="input1" [(ngModel)]="perfil.username" type="text" class="username" name="username" placeholder="Nome de utilizador" required/>
 <input id="password" #Password="ngModel" [(ngModel)]="perfil.password" [type]="changetype?'password':'text'" name="password" class="password" placeholder="Password" required>
 <span (click)="viewPass()" class="eyeicon"><i [ngClass]="visible?'fa fa-eye':'fa fa-eye-slash'"></i></span>
-<input #ConfirmPassword="ngModel" id="confirmPassword" [(ngModel)]="perfil.confirmPassword" appConfirmEqualValidation="password" name="confirmPassword" [type]="changetype?'password':'text'" class="confirmPassword" placeholder="Confirmar password" required>
+<input #ConfirmPassword="ngModel" id="confirmPassword" [(ngModel)]="perfil.confirmPassword" name="confirmPassword" [type]="changetype?'password':'text'" class="confirmPassword" placeholder="Confirmar password" required>
 <span class="alert"></span>
 <input #fullName="ngModel" id="input4" [(ngModel)]="perfil.fullName" type="text" class="fullName" name="fullName" placeholder="Nome completo" required>
     <p id="datanascimento">Data de nascimento:</p>
@@ -273,9 +273,9 @@
     <p id="genero" >Género:</p>
     <input id="radio1" [(ngModel)]="perfil.gender" class="gender" name="gender" value="masculino" type="radio"><p id="masculino">Masculino</p>
     <input id="radio2" [(ngModel)]="perfil.gender" class="gender" name="gender" value="feminino" type="radio"><p id="feminino">Feminino</p>
-    <input (change)="onProfileImageChange2($event)" type="file" class="inpFile" accept="image/*">
+    <input [(ngModel)]="perfil.foto" name="foto" (change)="onProfileImageChange($event)" type="file" class="inpFile">
     <div class="image-preview" id="imagePreview">
-    <img [(ngModel)]="perfil.foto" name="foto" [src]="url" alt="Image Preview" class="image-preview__image">
+    <img [src]="url" alt="Image Preview" class="image-preview__image">
     </div>
     <textarea id="type2" [(ngModel)]="perfil.desportosFavoritos" name="desportosFavoritos" placeholder="Coloca aqui os teus desportos favoritos" required></textarea>
     <button type="submit" id="botao1" [disabled]="!createAccount.valid">

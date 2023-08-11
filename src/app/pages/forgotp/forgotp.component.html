@@ -10,12 +10,15 @@
 <div class="img">
 <body>
 <h1 id="h1">Indica-nos por favor o teu email abaixo:</h1>
-<input type="text" class="email">
-<button class="botao1">enviar email</button>
+<form #resetPassword="ngForm" (ngSubmit)="sendEmail(resetPassword.value)">
+    <p><input id="input1" name="email" [(ngModel)]="perfil.email" type="text" placeholder="Email" required></p>  
+<button [disabled]="!resetPassword.valid" class="botao1">
+    <i *ngIf= "showLoading" class="fas fa-spinner fa-spin"></i>&nbsp;&nbsp;
+        <span *ngIf="showLoading">A carregar...</span>
+        <span *ngIf="!showLoading">Enviar email</span>
+</button>
 <button class="botao2" (click)="goToLogin()">voltar</button>
-<h2>Assim que pressionares o botão "enviar email" iremos enviar um mail para o email colocado para que possas
-    seguir as nossas instruções na criação de uma nova palavra-chave, isto claro se o teu email constar nos nossos registos
-</h2>
+</form>
 </body>
 </div>
 </html>

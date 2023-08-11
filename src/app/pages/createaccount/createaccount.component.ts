@@ -64,6 +64,8 @@ public onProfileImageChange(e: any) {
   if(e.target.files){
   this.fileName = e.target.files[0].name;    
   this.profileImage = e.target.files[0];
+  console.log(this.fileName)
+  console.log(this.profileImage)
     var reader = new FileReader();
     reader.readAsDataURL(e.target.files[0]);
     reader.onload=(event:any)=>{
@@ -73,25 +75,27 @@ public onProfileImageChange(e: any) {
 }
 
 public onProfileImageChange2(e: any) {
+  if(e.target.files){
+    this.fileName = e.target.files[0].name;    
+    this.profileImage = e.target.files[0];
     var reader = new FileReader();
     reader.readAsDataURL(e.target.files[0]);
     reader.onload=(event:any)=>{
       this.url=event.target.result;
 }
+  }
 }
 
 
 
 public onRegister(perfilForm: NgForm): void {
   const formData = this.loginService.createPerfilFormData(perfilForm.value, this.profileImage);
-  console.log(this.profileImage)
   this.showLoading = true;
   this.subscriptions.push(
     this.authservice.createPerfil(formData).subscribe(
       (response: Perfil) => {
         this.showLoading = false;
         alert(`Foi enviado um email para ${response.email} para concluir o registo, só depois da confirmação do email será possível efetuar o login no site.`);
-        this.router.navigate(['/login']);
       },
       (errorResponse: HttpErrorResponse) => {
         alert(`Ocorreu um erro`);
@@ -102,13 +106,18 @@ public onRegister(perfilForm: NgForm): void {
 }
 
 public onRegister2(perfil: Perfil): void {
+  if (perfil.password != perfil.confirmPassword){
+    alert(`As tuas palavras-passes não estão iguais`)
+  } else if (perfil.gender == ""){
+    alert(`Não escolheste nenhum género!`)
+  } else {
   this.showLoading = true;
   this.subscriptions.push(
     this.authservice.createPerfil2(perfil).subscribe(
       (response: Perfil) => {
         this.showLoading = false;
-        alert(`Foi enviado um email para ${response.email} para concluir o registo, só depois da confirmação do email será possível efetuar o login no site.`);
-        this.router.navigate(['/login']);
+        this.authservice.addPerfilToLocalCache((perfil)!);
+        alert(`Foi enviado um email para ${perfil.email} para concluir o registo, só depois da confirmação do email será possível efetuar o login no site.`);
       },
       (errorResponse: HttpErrorResponse) => {
         alert(`Ocorreu um erro`);
@@ -116,5 +125,6 @@ public onRegister2(perfil: Perfil): void {
       }
     )
   );
+}
 }
 }

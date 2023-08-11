@@ -38,8 +38,15 @@ export class LoginperfilService {
     formData.append('gender',perfil.gender);
     formData.append('country',perfil.country);
     formData.append('phone',perfil.phone);
+    formData.append('foto',imageFile);
     formData.append('enabled', JSON.stringify(perfil.enabled));
     formData.append('notLocked', JSON.stringify(perfil.notLocked));
+    return formData;
+  }
+
+  public createFromResetPassword(perfil: Perfil): FormData {
+    const formData = new FormData();
+    formData.append('password', perfil.username);
     return formData;
   }
 

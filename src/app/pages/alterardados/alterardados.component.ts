@@ -29,7 +29,7 @@ export class AlterardadosComponent implements OnInit {
   fileName!: string;
   profileImage!: File;
   constructor(private loginPerfilService: LoginperfilService,private authenticationService:AuthenticationService) { }
-  url = './assets/foto .png';
+  url = this.perfil.foto;
 
   ngOnInit(): void {
     this.perfil = this.authenticationService.getPerfilFromLocalCache();

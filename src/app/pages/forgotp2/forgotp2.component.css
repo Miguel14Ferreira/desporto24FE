@@ -1,0 +1,130 @@
+.img-fluid{
+    width: 2000px;
+    height: 1000px;
+}
+h1{
+        color: white;
+        font-size: 24spx;
+        margin: 0;
+        padding: 0;
+        text-align: center;
+        font-family: 'Arial';
+        position: absolute;
+        top: 30%;
+        left: 30%;
+        transform: translateX(0%) translateY(0);
+}
+#input1{
+    font-size: 20px;
+    height: 30px;
+    width: 300px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 40%;
+    left: 39%;
+    transform: translateX(0%) translateY(0);
+    border-radius: 10px;
+}
+#input2{
+    font-size: 20px;
+    height: 30px;
+    width: 300px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 50%;
+    left: 39%;
+    transform: translateX(0%) translateY(0);
+    border-radius: 10px;
+}
+.img{
+    animation: transition 0.75s;
+    height: 100vh;
+    background-image: url(src\assets\Sports1.jpg);     
+    -webkit-background-size: cover;
+    background-size: cover;
+    background-position: center center;
+}
+.email{
+    font-size: 20px;
+    height: 30px;
+    width: 300px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 40%;
+    left: 40%;
+    transform: translateX(0%) translateY(0);
+    border-radius: 10px;
+}
+.botao1{
+    text-decoration: none;
+    color: black;
+    background-color: white;
+    font-size: 20px;
+    width: 200px;
+    margin: 0;
+    padding: 1px;
+    text-align: center;
+    font-family: 'Arial';
+    font-weight: bold;
+    position: absolute;
+    top: 60%;
+    left: 43.1%;
+    transform: translateX(0%) translateY(0);
+    border-radius: 10px;
+}
+.botao1:hover{
+    background-color: lightblue;
+    color: white;
+}
+.botao2{
+    text-decoration: none;
+    color: black;
+    background-color: white;
+    font-size: 20px;
+    width: 200px;
+    margin: 0;
+    padding: 1px;
+    text-align: center;
+    font-family: 'Arial';
+    font-weight: bold;
+    position: absolute;
+    top: 70%;
+    left: 43.1%;
+    transform: translateX(0%) translateY(0);
+    border-radius: 10px;
+}
+.botao2:hover{
+    background-color: lightblue;
+    color: white;
+}
+.eyeicon{
+    position: absolute;
+    color: white;
+    left: 64%;
+    top: 40%
+}
+@keyframes transition {
+    from {
+        opacity: 0;
+        transform: rotateX(-10deg);
+    }
+    to{
+        opacity: 1;
+        transform: rotateX(0);
+    }
+}
+@media screen and (max-width: 1024px) { /* Specific to this particular image */
+    .img {
+      left: 50%;
+      margin-left: -512px;   /* 50% */
+    }
+}

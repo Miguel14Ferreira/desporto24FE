@@ -51,7 +51,7 @@ export class LoginComponent implements OnInit, OnDestroy {
           this.showLoading = false;
         },
         (errorResponse: HttpErrorResponse) => {
-          alert("Utilizador ou palavra-passe incorrectos/Email não verificado")
+          alert("Utilizador ou palavra-passe incorrectos")
           this.showLoading = false;
         }
       )

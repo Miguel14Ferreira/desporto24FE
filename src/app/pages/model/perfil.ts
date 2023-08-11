@@ -11,7 +11,7 @@ export class Perfil {
     public phone:string;
     public gender:string;
     public email:string;
-    public foto: [];
+    public foto:string;
     public joinDate:string;
     public lastLoginDate:string;
     public lastLoginDateDisplay: string;
@@ -35,7 +35,7 @@ export class Perfil {
         this.phone = '';
         this.gender = '';
         this.email = '';
-        this.foto = [];
+        this.foto = '';
         this.joinDate = '';
         this.lastLoginDate = '';
         this.lastLoginDateDisplay = '';
