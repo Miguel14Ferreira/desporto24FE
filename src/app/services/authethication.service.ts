@@ -33,7 +33,6 @@ export class AuthenticationService {
   resetPassword(perfil:Perfil):Observable<Perfil>{
     return this.http.put<Perfil>(`${this.host}/resetPassword/newPassword`,perfil);
   }
-
   activatePerfil(perfil:Perfil):Observable<Perfil>{
     return this.http.put<Perfil>(`${this.host}/login/registerNewUser/confirmTokenRegistration`,perfil);
   }

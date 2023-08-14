@@ -21,6 +21,17 @@ body{
     left: 45%;
     top: 40%;
 }
+.img3{
+    animation: transition 0.75s;
+    width: 160px;
+    height: 160px;
+    background-image: url(src\assets\wrong.png);     
+    background-position: center;
+    position: absolute;
+    border-radius: 100px;
+    left: 45%;
+    top: 40%;
+}
 h1{
     color: white;
     font-size: 100px;
@@ -43,6 +54,18 @@ h2{
     position: absolute;
     top: 75%;
     left: 20%;
+    transform: translateX(0%) translateY(0);
+}
+h3{
+    color: white;
+    font-size: 40px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 75%;
+    left: 5%;
     transform: translateX(0%) translateY(0);
 }
 #botao1{

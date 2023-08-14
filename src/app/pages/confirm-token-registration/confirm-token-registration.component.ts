@@ -16,6 +16,7 @@ export class ConfirmTokenRegistrationComponent implements OnInit {
   newPerfil: Perfil= new Perfil();
   showScreen!: boolean;
   showScreen2! :boolean;
+  showScreen3! :boolean;
   username!: string;
   password!: string;
   showLoading!: boolean;
@@ -37,7 +38,7 @@ export class ConfirmTokenRegistrationComponent implements OnInit {
   ativarConta(): void{
     this.newPerfil = this.perfil;
     this.showLoading = true;
-  this.subscriptions.push(
+    this.subscriptions.push(
     this.authservice.activatePerfil(this.newPerfil).subscribe(
       (response: Perfil) => {
         this.showLoading = false;
@@ -45,8 +46,9 @@ export class ConfirmTokenRegistrationComponent implements OnInit {
         this.showScreen = false;
       },
       (errorResponse: HttpErrorResponse) => {
-        alert(`Ocorreu um erro`);
+        this.showScreen = false;
         this.showLoading = false;
+        this.showScreen3 = true;
       }
     )
   );
