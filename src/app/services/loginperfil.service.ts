@@ -20,7 +20,7 @@ export class LoginperfilService {
   constructor(private httpClient: HttpClient) { }
 
   updatePerfil(formData: FormData) {
-    return this.httpClient.put<Perfil>(`${this.host}/menu/alterardados/`,formData);
+    return this.httpClient.put<Perfil>(`${this.host}/menu/alterardados`,formData);
   }
 
   updatePerfil2(perfil: Perfil) {
@@ -31,14 +31,17 @@ export class LoginperfilService {
     formData.append('username', perfil.username);
     formData.append('password', perfil.password);
     formData.append('fullName', perfil.fullName);
-    formData.append('dateOfBirth', JSON.stringify(perfil.dateOfBirth));
+    formData.append('dateOfBirth', perfil.dateOfBirth);
     formData.append('email', perfil.email);
     formData.append('address',perfil.address);
-    formData.append('postal',perfil.postalCode);
+    formData.append('postalCode',perfil.postalCode);
     formData.append('gender',perfil.gender);
     formData.append('country',perfil.country);
+    formData.append('location',perfil.location);
+    formData.append('indicativePhone',perfil.indicativePhone);
     formData.append('phone',perfil.phone);
     formData.append('foto',imageFile);
+    formData.append('desportosFavoritos',perfil.desportosFavoritos);
     formData.append('enabled', JSON.stringify(perfil.enabled));
     formData.append('notLocked', JSON.stringify(perfil.notLocked));
     return formData;
@@ -52,15 +55,25 @@ export class LoginperfilService {
 
   public updatePerfilFormData(loggedInUsername: string,perfil: Perfil): FormData {
     const formData = new FormData();
-    formData.append('currentUsername', loggedInUsername);
+    formData.append('username', loggedInUsername);
     formData.append('fullName', perfil.fullName);
-    formData.append('dateOfBirth', JSON.stringify(perfil.dateOfBirth));
+    formData.append('dateOfBirth', perfil.dateOfBirth);
     formData.append('email', perfil.email);
     formData.append('address',perfil.address);
     formData.append('postalCode',perfil.postalCode);
     formData.append('gender',perfil.gender);
     formData.append('country',perfil.country);
     formData.append('phone',perfil.phone);
+    formData.append('indicativePhone',perfil.indicativePhone);
+    formData.append('desportosFavoritos',perfil.desportosFavoritos);
+    formData.append('location',perfil.location);
+    return formData;
+  }
+
+  public updatePerfilFoto(loggedInUsername: string, foto: File): FormData{
+    const formData = new FormData();
+    formData.append('username',loggedInUsername);
+    formData.append('foto',foto);
     return formData;
   }
 

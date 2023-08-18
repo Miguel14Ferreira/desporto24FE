@@ -8,6 +8,7 @@ export class Perfil {
     public country:string;
     public location:string;
     public postalCode:string;
+    public indicativePhone:string;
     public phone:string;
     public gender:string;
     public email:string;
@@ -32,6 +33,7 @@ export class Perfil {
         this.country = '';
         this.location = '';
         this.postalCode = '';
+        this.indicativePhone = '';
         this.phone = '';
         this.gender = '';
         this.email = '';

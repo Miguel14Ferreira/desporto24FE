@@ -17,25 +17,15 @@
     <button (click)="remover()" routerLink="login">Terminar Sessão</button>
 </div>
 </div>
-<h3>Os teus dados:</h3>
-<table id="tabela1">
-    <thead>
-        <tr>
-            <th>Data de nascimento</th>
-            <th>Género</th>
-            <th>País de nascimento</th>
-            <th>Email</th>
-            <th>Desportos favoritos</th>
-            <th>Foto</th>
-        </tr>
-    </thead>
-    <tbody>
-            <td> {{perfil.dateOfBirth}}</td>
-            <td> {{perfil.gender}} </td>
-            <td> {{perfil.country}} </td>
-            <td> {{perfil.email}}</td>
-            <td> {{perfil.desportosFavoritos}}</td>
-            <td> <img src="{{perfil.foto}}"/></td>
-    </tbody>
-</table>
-
+<input name="foto" (change)="onProfileImageChange($event)" type="file" class="inpFile">
+    <div *ngIf="showImage" class="image-preview" id="imagePreview">
+        <img src="{{perfil.foto}}" alt="Image Preview" class="image-preview__image"/>    
+        </div>
+        <div *ngIf="!showImage" class="image-preview" id="imagePreview">
+            <img [src]="url" alt="Image Preview" class="image-preview__image"/>    
+            </div>
+        <button type="submit" id="botaofoto" (click)="atualizarFoto()">
+            <i *ngIf= "showLoading" class="fas fa-spinner fa-spin"></i>&nbsp;&nbsp;
+                <span *ngIf="showLoading">A atualizar...</span>
+                <span *ngIf="!showLoading">Atualizar foto de perfil</span>
+        </button>

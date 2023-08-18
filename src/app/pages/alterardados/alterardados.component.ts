@@ -21,6 +21,8 @@ export class AlterardadosComponent implements OnInit {
   username!: string;
   password!: string;
   showLoading!: boolean;
+  showImage!: boolean;
+  showImage2!: boolean;
   token: any;
   subscriptions: Subscription[] = [];
   id!:number;
@@ -29,54 +31,42 @@ export class AlterardadosComponent implements OnInit {
   fileName!: string;
   profileImage!: File;
   constructor(private loginPerfilService: LoginperfilService,private authenticationService:AuthenticationService) { }
-  url = this.perfil.foto;
+  url:any;
 
   ngOnInit(): void {
     this.perfil = this.authenticationService.getPerfilFromLocalCache();
     this.loginPerfilService.obterInfo(this.perfil).subscribe( data => {
       this.perfil = data;
     }, error => console.log());
+    this.showImage = true;
   }
-  
-  onSelectedFile(e:any){
-    if(e.target.files){
-      var reader = new FileReader();
-      reader.readAsDataURL(e.target.files[0]);
-      reader.onload=(event:any)=>{
-        this.url=event.target.result;
-      }
-    }
-  }
+
   NomeUtilizador(){
     return this.perfil.username;
   }
 
-
-    igualInfo(perfil:Perfil, perfilNovo: Perfil){
-      if(perfil == perfilNovo){
-        alert(`A informação que estás a colocar é identica à que tu tens de momento.`);
-      } else {
-        alert(`Informação guardada com sucesso!`);
-      }
-    }
-
-    onSubmit(): void{
-      this.igualInfo(this.perfil, this.editPerfil);
-      this.onUpdatePerfil2(this.editPerfil);
-    }
-
-    onUpdatePerfil(username: string, perfil: Perfil): void {
-      const formData = this.loginPerfilService.updatePerfilFormData(username, perfil);
-      this.subscriptions.push(
-        this.loginPerfilService.updatePerfil(formData).subscribe(
-          (response: Perfil) => {
-            alert(`O teu perfil foi atualizado com sucesso.`);
-          },
-          (errorResponse: HttpErrorResponse) => {
-            alert(`Ocurreu um erro`);
-          }
-        )
+    onUpdatePerfil(): void {
+      if (this.editPerfil.address== "" || this.editPerfil.dateOfBirth== "" || this.editPerfil.email== "" || this.editPerfil.desportosFavoritos== "" || this.editPerfil.fullName== "" ||
+      this.editPerfil.country== "" || this.editPerfil.location== "" || this.editPerfil.postalCode== "" || this.editPerfil.phone== "" || this.editPerfil.indicativePhone== "" ){
+        alert(`Ainda tens espaços em branco!`)
+      } else if (this.editPerfil.gender == ""){
+          alert(`Não escolheste nenhum género!`)
+        } else {
+        const formData = this.loginPerfilService.updatePerfilFormData(this.perfil.username, this.editPerfil);
+        this.showLoading = true;
+        this.subscriptions.push(
+          this.loginPerfilService.updatePerfil(formData).subscribe(
+            (response: Perfil) => {
+              this.showLoading = false;
+              alert(`A tua informação de perfil foi atualizada com sucesso.`);
+            },
+            (errorResponse: HttpErrorResponse) => {
+              alert(`Ocorreu um erro`);
+              this.showLoading = false;
+            }
+          )
         );
+      }
     }
 
     onUpdatePerfil2(perfil: Perfil): void {

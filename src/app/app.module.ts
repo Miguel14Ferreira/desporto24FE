@@ -30,6 +30,7 @@ import { AuthenticationService } from './services/authethication.service';
 import { AboutComponent } from './pages/about/about.component';
 import { Forgotp2Component } from './pages/forgotp2/forgotp2.component';
 import { ConfirmTokenRegistrationComponent } from './pages/confirm-token-registration/confirm-token-registration.component';
+import { ConfirmEmergencyTokenComponent } from './pages/confirm-emergency-token/confirm-emergency-token.component';
 
 @NgModule({
   declarations: [
@@ -52,7 +53,8 @@ import { ConfirmTokenRegistrationComponent } from './pages/confirm-token-registr
     ContactComponent,
     ForgotpComponent,
     Forgotp2Component,
-    ConfirmTokenRegistrationComponent
+    ConfirmTokenRegistrationComponent,
+    ConfirmEmergencyTokenComponent
   ],
   imports: [
     BrowserModule,

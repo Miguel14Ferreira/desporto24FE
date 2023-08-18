@@ -15,6 +15,7 @@ import { MenuComponent } from './pages/menu/menu.component';
 import { PerfisComponent } from './pages/perfis/perfis.component'; 
 import { Forgotp2Component } from './pages/forgotp2/forgotp2.component';
 import { ConfirmTokenRegistrationComponent } from './pages/confirm-token-registration/confirm-token-registration.component';
+import { ConfirmEmergencyTokenComponent } from './pages/confirm-emergency-token/confirm-emergency-token.component';
 
 const routes: Routes = [
   {path:'', redirectTo:'home',pathMatch:'full'},
@@ -39,7 +40,8 @@ const routes: Routes = [
   {path:'menu/perfis',component:PerfisComponent},
   {path:'menu/perfis/menu',redirectTo:'menu',pathMatch:'full'},
   {path:'resetPassword/newPassword',component:Forgotp2Component, pathMatch:'full'},
-  {path:'login/registerNewUser/confirmTokenRegistration', component:ConfirmTokenRegistrationComponent, pathMatch:'full'}
+  {path:'login/registerNewUser/confirmTokenRegistration', component:ConfirmTokenRegistrationComponent, pathMatch:'full'},
+  {path:'confirmEmergencyToken',component:ConfirmEmergencyTokenComponent, pathMatch:'full'}
 ];
 
 @NgModule({

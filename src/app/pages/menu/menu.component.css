@@ -22,7 +22,7 @@ h3{
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-    top: 90%;
+    top: 70%;
     left: 40%;
     transform: translateX(0%) translateY(0);
 }
@@ -106,7 +106,7 @@ h2{
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-    top: 48%;
+    top: 28%;
     left: 50%;
     transform: translateX(0%) translateY(0);
 }
@@ -266,16 +266,27 @@ h2{
     width: 100%;
     height: 100%;
 }
-#inpFile{
-    font-size: 15px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-    top: 90%;
-    left: 65%;
-    transform: translateX(0%) translateY(0);
+#botaofoto{
+    text-decoration: none;
+            color: black;
+            background-color: white;
+            font-size: 20px;
+            width: 300px;
+            margin: 0;
+            padding: 1px;
+            text-align: center;
+            font-family: 'Arial';
+            font-weight: bold;
+            position: absolute;
+            top: 100%;
+            left: 60%;
+            transform: translateX(0%) translateY(0);
+            border-radius: 10px;
+}
+#botaofoto:hover{
+    background-color: lightblue;
+    color: white;
+    transition: background-color 0.5s;
 }
 h1{
     color: white;
@@ -305,18 +316,36 @@ h1{
       margin-left: -512px;   /* 50% */
     }
 }
-#tabela1{
-    font-size: 15px;
-    height: 25px;
-    width: 90%;
+.img-fluid{
+    width: 2000px;
+    height: 1000px;
+}
+.image-preview{
+    width: 200px;
+    height: 250px;
+    border: 2px solid #dddddd;
+    position: absolute;
+    left: 65%;
+    top: 45%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #cccccc;
+    border-radius: 20%;
+}
+.image-preview__image{
+    width: 100%;
+    height: 100%;
+    border-radius: 20%;
+}
+.inpFile{
+    font-size: 20px;
     margin: 0;
     padding: 0;
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-    background-color: white;
-    top: 100%;
-    left: 5%;
+    top: 90%;
+    left: 65%;
     transform: translateX(0%) translateY(0);
-    border-radius: 10px;
 }

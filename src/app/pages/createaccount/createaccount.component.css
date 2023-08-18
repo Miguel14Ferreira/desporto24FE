@@ -225,6 +225,35 @@ h4 {
     transform: translateX(0%) translateY(0);
     border-radius: 10px;
 }
+#telemovel{
+    font-size: 15px;
+    color:white;
+    height: 25px;
+    width: 200px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 35%;
+    left: 30%;
+    transform: translateX(0%) translateY(0);
+    border-radius: 10px;
+}
+.indicativePhone{
+    font-size: 15px;
+    height: 25px;
+    width: 200px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 35%;
+    left: 41%;
+    transform: translateX(0%) translateY(0);
+    border-radius: 10px;
+}
 #input10{
     font-size: 15px;
     height: 25px;
@@ -234,7 +263,7 @@ h4 {
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-    top: 35%;
+    top: 40%;
     left: 47%;
     transform: translateX(0%) translateY(0);
     border-radius: 10px;

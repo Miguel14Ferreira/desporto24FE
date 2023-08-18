@@ -12,7 +12,7 @@
     <div>
         <span (click)="viewPass()" class="eyeicon"><i [ngClass]="visible?'fa fa-eye':'fa fa-eye-slash'"></i></span>
     </div>
-        <button type="submit" id="input3" [disabled]="!signInForm.valid">
+        <button type="submit" id="input3">
         <i *ngIf= "showLoading" class="fas fa-spinner fa-spin"></i>&nbsp;&nbsp;
         <span *ngIf="showLoading">A carregar...</span>
         <span *ngIf="!showLoading">Iniciar Sessão</span>

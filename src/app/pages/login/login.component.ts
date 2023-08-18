@@ -40,6 +40,9 @@ export class LoginComponent implements OnInit, OnDestroy {
   minhaImagem3 = "assets/olho2.png";
 
   onLogin(perfil: Perfil): void {
+    if (this.perfil.username == "" || this.perfil.password == ""){
+      alert(`Terás de preencher os espaços!`)
+    } else {
     this.showLoading = true;
     this.subscriptions.push(
       this.authenticationService.loginPerfil(perfil).subscribe(
@@ -51,12 +54,13 @@ export class LoginComponent implements OnInit, OnDestroy {
           this.showLoading = false;
         },
         (errorResponse: HttpErrorResponse) => {
-          alert("Utilizador ou palavra-passe incorrectos")
+          alert("Ocorreu um erro a efetuar o login")
           this.showLoading = false;
         }
       )
     );
   }
+}
   
     viewPass(){
       this.visible = !this.visible;

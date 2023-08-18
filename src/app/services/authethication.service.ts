@@ -36,6 +36,12 @@ export class AuthenticationService {
   activatePerfil(perfil:Perfil):Observable<Perfil>{
     return this.http.put<Perfil>(`${this.host}/login/registerNewUser/confirmTokenRegistration`,perfil);
   }
+  deactivatePerfil(perfil:Perfil):Observable<Perfil>{
+    return this.http.put<Perfil>(`${this.host}/confirmEmergencyToken`,perfil);
+  }
+  updatePerfilFoto(formData:FormData):Observable<Perfil>{
+    return this.http.put<Perfil>(`${this.host}/menu`,formData);
+  }
 
   public logOut(): void {
     this.token = null;

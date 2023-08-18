@@ -26,7 +26,7 @@ export class CreateaccountComponent implements OnInit, OnDestroy {
   response: any = null;
   subscriptions: Subscription[] = [];
   constructor(private router:Router,  private authservice:AuthenticationService, private loginService:LoginperfilService) {}
-  url = './assets/foto .png';
+  url = './assets/avatar.jpg';
   /*saveNewUser(){
     this.authservice.createPerfil(this.perfil).subscribe( data =>{
       alert("Enviámos um mail para o teu email para ativares a tua conta.")
@@ -64,14 +64,12 @@ public onProfileImageChange(e: any) {
   if(e.target.files){
   this.fileName = e.target.files[0].name;    
   this.profileImage = e.target.files[0];
-  console.log(this.fileName)
-  console.log(this.profileImage)
     var reader = new FileReader();
     reader.readAsDataURL(e.target.files[0]);
     reader.onload=(event:any)=>{
       this.url=event.target.result;
     }
-}
+} 
 }
 
 public onProfileImageChange2(e: any) {
@@ -88,13 +86,23 @@ public onProfileImageChange2(e: any) {
 
 
 
-public onRegister(perfilForm: NgForm): void {
-  const formData = this.loginService.createPerfilFormData(perfilForm.value, this.profileImage);
+public onRegister(): void {
+  if (this.perfil.username== "" || this.perfil.address== "" || this.perfil.confirmPassword== "" || this.perfil.dateOfBirth== "" || this.perfil.email== "" || this.perfil.desportosFavoritos== "" || this.perfil.fullName== "" ||
+    this.perfil.country== "" || this.perfil.location== "" || this.perfil.postalCode== "" || this.perfil.phone== "" || this.perfil.indicativePhone== "" || this.perfil.password == ""){
+      alert(`Ainda tens espaços em branco!`)
+  } else if (this.perfil.password != this.perfil.confirmPassword){
+    alert(`As tuas palavras-passes não estão iguais`)
+  } else if (this.perfil.gender == ""){
+    alert(`Não escolheste nenhum género!`)
+  } else {
+  const formData = this.loginService.createPerfilFormData(this.perfil, this.profileImage);
   this.showLoading = true;
   this.subscriptions.push(
     this.authservice.createPerfil(formData).subscribe(
       (response: Perfil) => {
         this.showLoading = false;
+        console.log(response);
+        this.authservice.addPerfilToLocalCache((response)!);
         alert(`Foi enviado um email para ${response.email} para concluir o registo, só depois da confirmação do email será possível efetuar o login no site.`);
       },
       (errorResponse: HttpErrorResponse) => {
@@ -103,6 +111,7 @@ public onRegister(perfilForm: NgForm): void {
       }
     )
   );
+}
 }
 
 public onRegister2(perfil: Perfil): void {
