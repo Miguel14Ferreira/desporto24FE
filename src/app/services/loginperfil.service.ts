@@ -67,6 +67,7 @@ export class LoginperfilService {
     formData.append('indicativePhone',perfil.indicativePhone);
     formData.append('desportosFavoritos',perfil.desportosFavoritos);
     formData.append('location',perfil.location);
+    formData.append('MFA',perfil.MFA);
     formData.append('foto',foto);
     return formData;
   }

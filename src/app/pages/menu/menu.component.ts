@@ -25,14 +25,18 @@ export class MenuComponent implements OnInit {
   token: any;
   subscriptions: Subscription[] = [];
   id!:number;
+  perfil!:Perfil;
   editPerfil:Perfil = new Perfil();
   constructor(private authenticationService:AuthenticationService,private router:Router,private loginPerfilService: LoginperfilService) { }
 
 
   ngOnInit(): void {
     this.showImage = true;
+    this.perfil = this.authenticationService.getPerfilFromLocalCache();
+    this.loginPerfilService.obterInfo(this.perfil).subscribe( data => {
+      this.perfil = data;
+    }, error => console.log());
   }
-  perfil = this.authenticationService.getPerfilFromLocalCache();
 
   NomeUtilizador(){
     return this.perfil.username;

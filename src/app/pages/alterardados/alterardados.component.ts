@@ -70,6 +70,8 @@ export class AlterardadosComponent implements OnInit {
         this.subscriptions.push(
           this.loginPerfilService.updatePerfil(formData).subscribe(
             (response: Perfil) => {
+              localStorage.removeItem('Perfil');
+              this.authenticationService.addPerfilToLocalCache((response)!);
               this.showLoading = false;
               alert(`A tua informação de perfil foi atualizada com sucesso.`);
             },

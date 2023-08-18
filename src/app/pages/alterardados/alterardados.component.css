@@ -75,6 +75,35 @@
         left: 67.5%;
         transform: translateX(0%) translateY(0);
     }
+    #MFA{
+        font-size: 15px;
+        height: 25px;
+        width: 208px;
+        margin: 0;
+        padding: 0;
+        text-align: center;
+        font-family: 'Arial';
+        position: absolute;
+        top: 35%;
+        left: 3%;
+        transform: translateX(0%) translateY(0);
+        border-radius: 10px;
+    }
+    #mfa2{
+        color:white;
+        font-size: 15px;
+        height: 25px;
+        width: 400px;
+        margin: 0;
+        padding: 0;
+        text-align: center;
+        font-family: 'Arial';
+        position: absolute;
+        top: 32.5%;
+        left: 12.5%;
+        transform: translateX(0%) translateY(0);
+        border-radius: 10px;
+    }
     #input1{
         font-size: 35px;
         height: 25px;

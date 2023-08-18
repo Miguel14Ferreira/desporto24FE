@@ -479,6 +479,7 @@
     <p id="genero" >Género:</p>
     <input id="radio1" [(ngModel)]="editPerfil.gender" class="gender" name="gender" value="masculino" type="radio"><p id="masculino">Masculino</p>
     <input id="radio2" [(ngModel)]="editPerfil.gender" class="gender" name="gender" value="feminino" type="radio"><p id="feminino">Feminino</p>
+    <input [(ngModel)]="editPerfil.MFA" name="MFA" value="true" id="MFA" type="checkbox"><p id="mfa2">MFA autenticação (Quero passar a receber um código de verificação quando inicio a sessão)</p>
     <h4>Coloca aqui a tua foto:</h4>
     <input name="foto" (change)="onProfileImageChange($event)" type="file" class="inpFile">
     <div *ngIf="showImage" class="image-preview" id="imagePreview">

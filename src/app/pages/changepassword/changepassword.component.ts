@@ -45,12 +45,6 @@ export class ChangepasswordComponent implements OnInit {
     }
   }
   
-  onSubmit(){
-     this.palavrasPassesDiferentes(this.editPerfil.password, this.editPerfil.confirmPassword,this.perfil.password);
-      this.onUpdatePerfilPassword();
-      alert(`Os teus dados foram atualizados.`);
-  }  
-  
   obterNomeUtilizador (){
     return this.perfil.username;
   }
@@ -60,10 +54,10 @@ export class ChangepasswordComponent implements OnInit {
     this.subscriptions.push(
       this.loginPerfilService.updatePerfilPassword(formData).subscribe(
         (response: Perfil) => {
-          alert(`Palavra-passe atualizada`);
+          alert(`Dados atualizados`);
         },
         (errorResponse: HttpErrorResponse) => {
-          alert( errorResponse.error.message);
+          alert(`Ocorreu um erro ao atualizar os dados`);
         }
       )
       );
