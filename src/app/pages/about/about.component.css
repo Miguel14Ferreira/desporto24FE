@@ -8,25 +8,39 @@
 }
 h1{
     color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 20%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+}
+h2{
+    color: white;
     font-size: 60px;
     margin: 0;
     padding: 0;
     text-align: center;
     font-family: 'Arial';
-    top:40%;
-    transform: translateX(0%) translateY(0);
+    position: absolute;
+        top: 30%;
+        left: 50%;
+        transform: translate(-50%, -50%);
 }
 label{
     color: white;
+    width: max-content;
+    height: max-content;
     font-size: 15px;
-    margin: 300px;
-    padding: 10px;
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-    top: -15%;
-    left: 2%;
-    transform: translateX(0%) translateY(0);
+        top: 60%;
+        left: 50%;
+        transform: translate(-50%, -50%);
 }
 @keyframes transition {
     from {

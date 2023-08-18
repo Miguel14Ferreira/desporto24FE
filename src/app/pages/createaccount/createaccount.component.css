@@ -7,8 +7,9 @@
     height: 250px;
     border: 2px solid #dddddd;
     position: absolute;
-    left: 65%;
-    top: 45%;
+        top: 65%;
+        left: 72.5%;
+        transform: translate(-50%, -50%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -27,9 +28,9 @@
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-    top: 90%;
-    left: 65%;
-    transform: translateX(0%) translateY(0);
+        top: 90%;
+        left: 75%;
+        transform: translate(-50%, -50%);
 }
 h1{
     color: white;
@@ -39,9 +40,9 @@ h1{
     text-align: center;
     font-family: 'Copperplate Gothic Medium';
     position: absolute;
-    top: 10%;
-    left: 25%;
-    transform: translateX(0%) translateY(0);
+        top: 20%;
+        left: 50%;
+        transform: translate(-50%, -50%);
 }
 h4 {
     color: white;
@@ -51,9 +52,9 @@ h4 {
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-    top: 35%;
-    left: 63.5%;
-    transform: translateX(0%) translateY(0);
+        top: 40%;
+        left: 72.5%;
+        transform: translate(-50%, -50%);
 }
 #input1{
     font-size: 15px;
@@ -235,9 +236,9 @@ h4 {
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-    top: 35%;
-    left: 30%;
-    transform: translateX(0%) translateY(0);
+        top: 37.5%;
+        left: 35%;
+        transform: translate(-50%, -50%);
     border-radius: 10px;
 }
 .indicativePhone{
@@ -249,9 +250,9 @@ h4 {
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-    top: 35%;
-    left: 41%;
-    transform: translateX(0%) translateY(0);
+    top: 36%;
+    left: 48.5%;
+    transform: translate(-50%, -50%);
     border-radius: 10px;
 }
 #input10{
@@ -352,9 +353,9 @@ h4 {
             font-family: 'Arial';
             font-weight: bold;
             position: absolute;
-            top: 100%;
-            left: 40%;
-            transform: translateX(0%) translateY(0);
+        top: 100%;
+        left: 60%;
+        transform: translate(-50%, -50%);
             border-radius: 10px;
 }
 #botao2{
@@ -369,9 +370,9 @@ h4 {
             font-family: 'Arial';
             font-weight: bold;
             position: absolute;
-            top: 100%;
-            left: 20%;
-            transform: translateX(0%) translateY(0);
+        top: 100%;
+        left: 40%;
+        transform: translate(-50%, -50%);
             border-radius: 10px;
 }
 #botao1:hover{

@@ -9,19 +9,20 @@
 </head>
 <div class="img">
 <body>
-<h1 id="h1">Coloca a tua nova password</h1>
+    <h1>DESPORTO24</h1>
+<h2>Coloca a tua nova password</h2>
 <form #resetPassword="ngForm" (ngSubmit)="reset(resetPassword.value)">
     <div>
         <span (click)="viewPass()" class="eyeicon"><i [ngClass]="visible?'fa fa-eye':'fa fa-eye-slash'"></i></span>
     </div>
     <p><input id="input1" name="password" [type]="changetype?'password':'text'" [(ngModel)]="newPerfil.password" type="password" placeholder="password" required></p>
-    <input #ConfirmPassword="ngModel" id="input2" [(ngModel)]="newPerfil.confirmPassword" name="confirmPassword" [type]="changetype?'password':'text'" class="confirmPassword" placeholder="Confirmar password" required>  
-    <button [disabled]="!resetPassword.valid" class="botao1">
+    <input #ConfirmPassword="ngModel" id="input2" [(ngModel)]="newPerfil.confirmPassword" name="confirmPassword" [type]="changetype?'password':'text'" class="confirmPassword" placeholder="confirmar password" required>  
+    <button class="botao1">
     <i *ngIf= "showLoading" class="fas fa-spinner fa-spin"></i>&nbsp;&nbsp;
         <span *ngIf="showLoading">A carregar...</span>
         <span *ngIf="!showLoading">Reset Password</span>
 </button>
-<button class="botao2" (click)="goToLogin()">voltar</button>
+<button class="botao2" (click)="goToLogin()">Voltar</button>
 </form>
 </body>
 </div>

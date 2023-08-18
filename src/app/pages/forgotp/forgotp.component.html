@@ -9,15 +9,16 @@
 </head>
 <div class="img">
 <body>
-<h1 id="h1">Indica-nos por favor o teu email abaixo:</h1>
+    <h1>DESPORTO24</h1>
+<h2>Indica-nos por favor o teu email abaixo:</h2>
 <form #resetPassword="ngForm" (ngSubmit)="sendEmail(resetPassword.value)">
     <p><input id="input1" name="email" [(ngModel)]="perfil.email" type="text" placeholder="Email" required></p>  
-<button [disabled]="!resetPassword.valid" class="botao1">
+<button class="botao1">
     <i *ngIf= "showLoading" class="fas fa-spinner fa-spin"></i>&nbsp;&nbsp;
         <span *ngIf="showLoading">A carregar...</span>
         <span *ngIf="!showLoading">Enviar email</span>
 </button>
-<button class="botao2" (click)="goToLogin()">voltar</button>
+<button class="botao2" (click)="goToLogin()">Voltar</button>
 </form>
 </body>
 </div>

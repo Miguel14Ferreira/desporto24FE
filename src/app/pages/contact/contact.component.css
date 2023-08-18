@@ -4,56 +4,53 @@
 }
 h1{
     color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 20%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+}
+h2{
+    color: white;
     font-size: 60px;
     margin: 0;
     padding: 0;
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-    top:10%;
-    left: 35%;
-    transform: translateX(0%) translateY(0);
+        top: 30%;
+        left: 50%;
+        transform: translate(-50%, -50%);
 }
 label{
     color: white;
+    width: max-content;
     font-size: 30px;
     margin: 0;
     padding: 0;
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-    top:25%;
-    left: 15%;
-    transform: translateX(0%) translateY(0);
+        top: 40%;
+        left: 50%;
+        transform: translate(-50%, -50%);
 }
 .input1{
-    color: black;
     font-size: 20px;
+    color:black;
     width: 400px;
-    height: 30px;
     margin: 0;
     padding: 0;
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-    top: 35%;
-    left: 5%;
-    transform: translateX(0%) translateY(0);
-    border-radius: 10px;
-}
-.input2{
-    color: black;
-    font-size: 20px;
-    width: 100px;
-    height: 30px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-    top: 35%;
-    left: 40%;
-    transform: translateX(0%) translateY(0);
+        top: 50%;
+        left: 25%;
+        transform: translate(-50%, -50%);
     border-radius: 10px;
 }
 .input3{
@@ -66,9 +63,9 @@ label{
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-    top: 35%;
-    left: 40%;
-    transform: translateX(0%) translateY(0);
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
     border-radius: 10px;
 }
 #radio1{
@@ -78,9 +75,9 @@ label{
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-    top: 36.5%;
-    left: 90%;
-    transform: translateX(0%) translateY(0);
+        top: 50%;
+        left: 70%;
+        transform: translate(-50%, -50%);
 }
 #radio2{
     font-size: 15px;
@@ -89,9 +86,9 @@ label{
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-    top: 36.5%;
-    left: 79%;
-    transform: translateX(0%) translateY(0);
+        top: 50%;
+        left: 80%;
+        transform: translate(-50%, -50%);
 }
 #masculino{
     color:white;
@@ -102,9 +99,9 @@ label{
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-    top: 35%;
-    left: 70%;
-    transform: translateX(0%) translateY(0);
+        top: 50%;
+        left: 75%;
+        transform: translate(-50%, -50%);
 }
 #feminino{
     font-size: 20px;
@@ -115,9 +112,9 @@ label{
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-    top: 35%;
-    left: 82%;
-    transform: translateX(0%) translateY(0);
+        top: 50%;
+        left: 85%;
+        transform: translate(-50%, -50%);
 }
 #genero{
     font-size: 20px;
@@ -128,9 +125,9 @@ label{
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-    top: 35%;
-    left: 60%;
-    transform: translateX(0%) translateY(0);
+        top: 50%;
+        left: 65%;
+        transform: translate(-50%, -50%);
 }
 #assunto{
     font-size: 20px;
@@ -141,9 +138,9 @@ label{
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-    top: 45%;
-    left: 5%;
-    transform: translateX(0%) translateY(0);
+        top: 60%;
+        left: 30%;
+        transform: translate(-50%, -50%);
     border-radius: 10px;
 }
 #email{
@@ -155,9 +152,9 @@ label{
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-    top: 45%;
-    left: 60%;
-    transform: translateX(0%) translateY(0);
+        top: 60%;
+        left: 77.5%;
+        transform: translate(-50%, -50%);
     border-radius: 10px;
 }
 textarea{
@@ -170,9 +167,9 @@ textarea{
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-    top: 55%;
-    left: 5%;
-    transform: translateX(0%) translateY(0);
+    top: 85%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     border-radius: 10px;
 }
 #botao1{
@@ -187,9 +184,9 @@ textarea{
     font-family: 'Arial';
     font-weight: bold;
     position: absolute;
-    top: 95%;
-    left: 41.5%;
-    transform: translateX(0%) translateY(0);
+        top: 110%;
+        left: 50%;
+        transform: translate(-50%, -50%);
     border-radius: 10px;
 }
 #botao1:hover{

@@ -37,6 +37,9 @@ export class Forgotp2Component implements OnInit {
     this.authservice.logOut();
   }
   public reset(perfil: Perfil): void {
+    if (perfil.password == null || perfil.confirmPassword == null){
+      alert(`Ainda tens espaços em branco`)
+    } else {
     if (perfil.password != perfil.confirmPassword){
       alert(`As tuas palavras-passes não estão iguais`)
     } else {
@@ -56,6 +59,7 @@ export class Forgotp2Component implements OnInit {
     );
   }
 }
+  }
 
 
   viewPass(){

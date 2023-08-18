@@ -3,16 +3,29 @@
     height: 1000px;
 }
 h1{
-        color: white;
-        font-size: 24spx;
-        margin: 0;
-        padding: 0;
-        text-align: center;
-        font-family: 'Arial';
-        position: absolute;
-        top: 30%;
-        left: 27%;
-        transform: translateX(0%) translateY(0);
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+top: 20%;
+left: 50%;
+transform: translate(-50%, -50%);
+}
+h2 {
+    color: white;
+    font-size: 40px;
+    margin: 0;
+    width: max-content;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+        top: 35%;
+        left: 50%;
+        transform: translate(-50%, -50%);
 }
 #input1{
     font-size: 20px;
@@ -23,9 +36,9 @@ h1{
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-    top: 40%;
-    left: 39%;
-    transform: translateX(0%) translateY(0);
+        top: 60%;
+        left: 50%;
+        transform: translate(-50%, -50%);
     border-radius: 10px;
 }
 .img{
@@ -35,20 +48,6 @@ h1{
     -webkit-background-size: cover;
     background-size: cover;
     background-position: center center;
-}
-.email{
-    font-size: 20px;
-    height: 30px;
-    width: 300px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-    top: 40%;
-    left: 40%;
-    transform: translateX(0%) translateY(0);
-    border-radius: 10px;
 }
 .botao1{
     text-decoration: none;
@@ -62,9 +61,9 @@ h1{
     font-family: 'Arial';
     font-weight: bold;
     position: absolute;
-    top: 48%;
-    left: 43.1%;
-    transform: translateX(0%) translateY(0);
+        top: 70%;
+        left: 50%;
+        transform: translate(-50%, -50%);
     border-radius: 10px;
 }
 .botao1:hover{
@@ -83,26 +82,14 @@ h1{
     font-family: 'Arial';
     font-weight: bold;
     position: absolute;
-    top: 60%;
-    left: 43.1%;
-    transform: translateX(0%) translateY(0);
+        top:80%;
+        left: 50%;
+        transform: translate(-50%, -50%);
     border-radius: 10px;
 }
 .botao2:hover{
     background-color: lightblue;
     color: white;
-}
-h2 {
-    color: white;
-    font-size: 23px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-    top: 70%;
-    left: 1%;
-    transform: translateX(0%) translateY(0);
 }
 @keyframes transition {
     from {

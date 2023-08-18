@@ -10,9 +10,9 @@
             text-align: center;
             font-family: 'Copperplate Gothic Medium';
             position: absolute;
-            top: 10%;
-            left: 25%;
-            transform: translateX(0%) translateY(0);
+        top: 20%;
+        left: 50%;
+        transform: translate(-50%, -50%);
         }
         #input1{
             font-size: 20px;
@@ -22,9 +22,9 @@
             text-align: center;
             font-family: 'Arial';
             position: absolute;
-            top: 35%;
-            left: 43%;
-            transform: translateX(0%) translateY(0);
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             border-radius: 10px;
         }
         #input2{
@@ -35,9 +35,9 @@
             text-align: center;
             font-family: 'Arial';
             position: absolute;
-            top: 45%;
-            left: 43%;
-            transform: translateX(0%) translateY(0);
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
             border-radius: 10px;
         }
         #input3{
@@ -52,9 +52,9 @@
             font-family: 'Arial';
             font-weight: bold;
             position: absolute;
-            top: 55%;
-            left: 41%;
-            transform: translateX(0%) translateY(0);
+        top: 60%;
+        left: 50%;
+        transform: translate(-50%, -50%);
             border-radius: 10px;
         }
         #input3:hover{
@@ -74,9 +74,9 @@
             font-family: 'Arial';
             font-weight: bold;
             position: absolute;
-            top: 65%;
-            left: 41%;
-            transform: translateX(0%) translateY(0);
+        top: 70%;
+        left: 50%;
+        transform: translate(-50%, -50%);
             border-radius: 10px;
         }
         #input4:hover{
@@ -96,9 +96,9 @@
             font-family: 'Arial';
             font-weight: bold;
             position: absolute;
-            top: 75%;
-            left: 41%;
-            transform: translateX(0%) translateY(0);
+        top: 80%;
+        left: 50%;
+        transform: translate(-50%, -50%);
             border-radius: 10px;
         }
         #input5:hover{
@@ -147,10 +147,11 @@
             transform: translateX(0%) translateY(0);
         }
     .eyeicon{
-        position: absolute;
         color: white;
-        left: 65%;
-        top: 45.4%
+        position: absolute;
+        top: 50%;
+        left: 62%;
+        transform: translate(-50%, -50%);
     }
     @keyframes transition {
         from {

@@ -1,7 +1,8 @@
 <div class="img">
-<h1>Tens alguma ideia?</h1>
+<h1>DESPORTO24</h1>
+<h2>Tens alguma ideia?</h2>
 <label>Tens alguma coisa a dizer-nos? Algo a melhorar ou a propor? Diz-nos!</label>
-<form #enviarOpiniao="ngForm" (ngSubmit)="onSubmit()">
+<form #enviarOpiniao="ngForm" (ngSubmit)="saveNewIdea()">
     <input class="input1" name="name" [(ngModel)]="ideia.name" type="text" placeholder="Nome completo" required>
     <input class="input3" name="city" [(ngModel)]="ideia.city" type="text" placeholder="Localidade" required>
     <p id="genero">Género:</p>
@@ -10,6 +11,6 @@
     <input id="assunto" name="assunto" [(ngModel)]="ideia.subject" name="subject" type="text" placeholder="Assunto..." required>
     <input id="email" name="email" [(ngModel)]="ideia.email" type="text" placeholder="Email" required>
     <textarea id="texto" name="problem" [(ngModel)]="ideia.problem" placeholder="Diz-nos o que podiamos melhorar..." rows="10" cols="108" required></textarea>
-    <button type="submit" id="botao1" [disabled]="!enviarOpiniao.valid">Submeter</button>
+    <button type="submit" id="botao1">Submeter</button>
 </form>
 </div>

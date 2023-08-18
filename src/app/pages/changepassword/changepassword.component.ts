@@ -44,12 +44,22 @@ export class ChangepasswordComponent implements OnInit {
       alert(`A presente palavra-passe que estás a colocar, já se encontra em uso.`)
     }
   }
+
+  viewPass(){
+    this.visible = !this.visible;
+    this.changetype = !this.changetype;
+}
   
   obterNomeUtilizador (){
     return this.perfil.username;
   }
   
   onUpdatePerfilPassword(): void {
+    if (this.editPerfil.username == "" || this.editPerfil.password == "" || this.editPerfil.confirmPassword == ""){
+      alert(`Ainda tens espaços brancos para preencher!`)
+    } else if (this.editPerfil.password != this.editPerfil.confirmPassword){
+      alert(`As tuas palavras-passes são diferentes!`)
+    } else {
     const formData = this.loginPerfilService.updatePerfilPasswordFormData(this.perfil.username, this.editPerfil);
     this.subscriptions.push(
       this.loginPerfilService.updatePerfilPassword(formData).subscribe(
@@ -62,4 +72,5 @@ export class ChangepasswordComponent implements OnInit {
       )
       );
   }
+}
 }

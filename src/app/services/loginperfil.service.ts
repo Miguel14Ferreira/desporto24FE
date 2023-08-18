@@ -87,9 +87,6 @@ export class LoginperfilService {
     return formData;
   }
 
-  //updatePerfil(perfil: Perfil): Observable<Perfil | HttpErrorResponse>{
-  //  return this.httpClient.put<Perfil>(`${this.host}/menu/alterardados/`,perfil);
-  //}
   obterDadosPessoais(): Observable<Perfil[] | HttpErrorResponse>{
     return this.httpClient.get<Perfil[]>(`${this.host}/menu`);
   }
@@ -101,9 +98,6 @@ export class LoginperfilService {
   }
   updatePerfilPassword(formData: FormData){
     return this.httpClient.put<Perfil>(`${this.host}/menu/alterarPassword`, formData);
-  }
-  updateProfileImage(formData: FormData): Observable<HttpEvent<Perfil> | HttpErrorResponse>{
-    return this.httpClient.post<Perfil>(`${this.host}/updateProfileImage`, formData, {reportProgress: true, observe: 'events'})
   }
   createSession(session:Session):Observable<object>{
     return this.httpClient.post(`${this.host}/menu/events/events`,session);
