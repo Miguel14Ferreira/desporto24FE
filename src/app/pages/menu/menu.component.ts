@@ -49,39 +49,5 @@ export class MenuComponent implements OnInit {
   }
   remover(){
     this.authenticationService.logOut();
+}    
 }
-public onProfileImageChange(e: any) {
-  if(e.target.files){
-    this.showImage = false;
-  this.fileName = e.target.files[0].name;    
-  this.profileImage = e.target.files[0];
-    var reader = new FileReader();
-    reader.readAsDataURL(e.target.files[0]);
-    reader.onload=(event:any)=>{
-      this.url=event.target.result;
-    }
-  }
-}
-
-
-public atualizarFoto(){
-  if (this.profileImage == null){
-    alert(`Por favor coloca uma nova foto para fazermos a alteração.`)
-  } else {
-  const formData = this.loginPerfilService.updatePerfilFoto(this.perfil.username, this.profileImage);
-        this.showLoading = true;
-        this.subscriptions.push(
-          this.authenticationService.updatePerfilFoto(formData).subscribe(
-            (response: Perfil) => {
-              this.showLoading = false;
-              alert(`A tua foto de perfil foi atualizada com sucesso.`);
-            },
-            (errorResponse: HttpErrorResponse) => {
-              alert(`Ocorreu um erro`);
-              this.showLoading = false;
-            }
-          )
-        );
-      }
-    }
-    }

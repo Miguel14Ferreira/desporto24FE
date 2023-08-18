@@ -53,7 +53,7 @@ export class LoginperfilService {
     return formData;
   }
 
-  public updatePerfilFormData(loggedInUsername: string,perfil: Perfil): FormData {
+  public updatePerfilFormData(loggedInUsername: string,perfil: Perfil, foto: File): FormData {
     const formData = new FormData();
     formData.append('username', loggedInUsername);
     formData.append('fullName', perfil.fullName);
@@ -67,6 +67,7 @@ export class LoginperfilService {
     formData.append('indicativePhone',perfil.indicativePhone);
     formData.append('desportosFavoritos',perfil.desportosFavoritos);
     formData.append('location',perfil.location);
+    formData.append('foto',foto);
     return formData;
   }
 

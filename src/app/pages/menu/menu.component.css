@@ -110,6 +110,19 @@ h2{
     left: 50%;
     transform: translateX(0%) translateY(0);
 }
+h3{
+    color: white;
+    font-size: 15px;
+    height: 10px;
+    margin: 0;
+    padding: 10px;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 43%;
+    left: 67.5%;
+    transform: translateX(0%) translateY(0);
+}
 .img-fluid{
     width: 1300px;
     height: 700px;
@@ -348,4 +361,31 @@ h1{
     top: 90%;
     left: 65%;
     transform: translateX(0%) translateY(0);
+}
+#tabela1{
+    font-size: 15px;
+    height: 25px;
+    width: 30%;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    background-color: white;
+    top: 50%;
+    left: 60%;
+    transform: translateX(0%) translateY(0);
+    border-radius: 10px;
+}
+#img{
+    width: 100px;
+    height: 100px;
+    border: 2px solid #dddddd;
+    position: relative;
+    left: 25%;
+    top: 45%;
+    display: flex;
+    align-items: center;
+    color: #cccccc;
+    border-radius: 20%;
 }

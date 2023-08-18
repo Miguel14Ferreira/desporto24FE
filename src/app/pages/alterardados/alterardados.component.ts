@@ -40,9 +40,22 @@ export class AlterardadosComponent implements OnInit {
     }, error => console.log());
     this.showImage = true;
   }
+  
 
   NomeUtilizador(){
     return this.perfil.username;
+  }
+  public onProfileImageChange(e: any) {
+    if(e.target.files){
+      this.showImage = false;
+    this.fileName = e.target.files[0].name;    
+    this.profileImage = e.target.files[0];
+      var reader = new FileReader();
+      reader.readAsDataURL(e.target.files[0]);
+      reader.onload=(event:any)=>{
+        this.url=event.target.result;
+      }
+    }
   }
 
     onUpdatePerfil(): void {
@@ -52,7 +65,7 @@ export class AlterardadosComponent implements OnInit {
       } else if (this.editPerfil.gender == ""){
           alert(`Não escolheste nenhum género!`)
         } else {
-        const formData = this.loginPerfilService.updatePerfilFormData(this.perfil.username, this.editPerfil);
+        const formData = this.loginPerfilService.updatePerfilFormData(this.perfil.username, this.editPerfil, this.profileImage);
         this.showLoading = true;
         this.subscriptions.push(
           this.loginPerfilService.updatePerfil(formData).subscribe(
