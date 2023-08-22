@@ -1,7 +1,8 @@
-<body><img [src]="minhaImagem">
+<div class="img">
+<body>
   <h1>Desporto24</h1>
     <h2>Jogadores inscritos</h2>
-    <h3 *ngIf="titleAction$ | async as title">{{ title }}</h3>
+    <!--<h3> *ngIf="titleAction$ | async as title">{{ title }}</h3>-->
           <form>
             <input name="searchTerm" #searchTerm="ngModel" ngModel (ngModelChange)="procurarPerfis(searchTerm.value)" id="input1" type="search" placeholder="Procurar perfil...">
           </form>
@@ -13,15 +14,15 @@
         <thead>
             <tr>
                 <th>Foto de perfil</th>
-                <th>Username</th>
+                <th>Nome de utilizador</th>
                 <th>Data de nascimento</th>
                 <th>Género</th>
                 <th>País de nascimento</th>
-                <th>Email</th>
                 <th>Desportos favoritos</th>
+                <th>Ver mais</th>
             </tr>
         </thead>
-        <tbody *ngFor="let perfil of perfis">
+        <tbody *ngFor="let perfil of perfis" id="tabela2">
                 <td (click)="onSelectPerfil(perfil)">
                     <img height="40" width="40" src="{{perfil.foto}}" class="rounded-circle img-fluid img-thumbnail" alt=""/>
                 </td>
@@ -29,65 +30,55 @@
                 <td (click)="onSelectPerfil(perfil)"> {{perfil.dateOfBirth}}</td>
                 <td (click)="onSelectPerfil(perfil)"> {{perfil.gender}} </td>
                 <td (click)="onSelectPerfil(perfil)"> {{perfil.country}} </td>
-                <td (click)="onSelectPerfil(perfil)"> {{perfil.email}}</td>
                 <td (click)="onSelectPerfil(perfil)"> {{perfil.desportosFavoritos}}</td>
+                <td><button (click)="onSelectPerfil(perfil)"><i class="fas fa-info"></i></button></td>
         </tbody>
     </table>
-    <button [hidden]="true" type="button" id="openPerfilInfo" data-toggle="modal" data-target="#viewPerfilModal"></button>
-
-    <!-- modal user info -->
-    <div class="modal fade bd-example-modal-lg" id="viewPerfilModal" tabindex="-1" role="dialog" aria-labelledby=""
-      aria-hidden="true">
-      <div class="modal-dialog" role="document">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title text-center" id="exampleModalLongTitle">{{selectedPerfil.username}}</h5>
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button>
+    <button id="botao2" routerLink="menu" type="button">
+      <i *ngIf= "showLoading" class="fas fa-spinner fa-spin"></i>&nbsp;&nbsp;
+      <span *ngIf="showLoading">A carregar...</span>
+      <span *ngIf="!showLoading">Voltar para o menu principal</span>
+  </button>    
+  
+      <div *ngIf="show" id="viewPerfilModal">
+        <p id="D24">Desporto24</p>
+        <p id="D241">Desporto24</p>
+        <p id="D242">Desporto24</p>
+        <p id="D243">Desporto24</p>
+        <p id="D244">Desporto24</p>
+        <p id="D245">Desporto24</p>
+        <p id="D246">Desporto24</p>
+        <p id="D247">Desporto24</p>
+        <p id="D248">Desporto24</p>
+          <div class="image-preview" id="imagePreview">
+            <img src="{{selectedPerfil?.foto}}" alt="Image Preview" class="image-preview__image"/>
           </div>
-          <div class="modal-body">
-            <div>
-              <div class="card">
-                <div class="card-body">
-                  <div class="row">
-                    <div class="col-12 col-sm-auto">
-                      <div class="mx-auto" style="width: 120px;">
-                        <div class="d-flex justify-content-center align-items-center rounded">
-                          <img class="rounded" height="120" width="120" src="{{selectedPerfil.foto}}" alt="{{selectedPerfil.username}}">
-                        </div>
-                      </div>
-                    </div>
-                    <div class="col d-flex flex-column flex-sm-row justify-content-between">
-                      <div class="text-center text-sm-left mb-sm-0">
-                        <h6 class="pt-sm-2 pb-1 mb-0 text-nowrap"></h6>
-                        <p class="mb-1">{{selectedPerfil.gender}}</p>
-                        <div *ngIf="selectedPerfil.lastLoginDateDisplay" class="text-muted"><small>Ultimo Login: {{selectedPerfil.lastLoginDateDisplay}}</small>
-                        </div>
-                      <div class="text-center text-sm-right">
-                        <div class="text-muted"><small>Membro desde: {{selectedPerfil.joinDate}}</small></div>
-                      </div> 
-                <ul class="list-group list-group-flush">
-                  <li class="list-group-item"></li>
-                  <li class="list-group-item"><i class="fa fa-id-badge float-right"></i>
-                  </li>
-                  <li class="list-group-item"><i class="fa fa-envelope float-right"></i>{{selectedPerfil.email}}
-                  </li>
-                  <li *ngIf="selectedPerfil.lastLoginDateDisplay" class="list-group-item"><i
-                      class="fas fa-sign-in-alt float-right"></i>{{selectedPerfil.lastLoginDateDisplay}}
-                  </li>
-                </ul>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-          </div>
-      </div>
-      </div>
-      </div>
-      </div>
-      </div>
-      </div>
-      </div>
-      </div>
-      </div>
+    <div id="username">
+        {{selectedPerfil?.username}}
     </div>
-    
+    <ul>
+    <li id="dataNascimento">Data de nascimento</li>
+        <li id="dataNascimento2"> {{selectedPerfil?.dateOfBirth}}
+        </li>
+        <li id="genero">Género </li>
+        <li id="genero2"> {{selectedPerfil?.gender}} </li>
+        <li id="paisNascimento">País de nascimento </li>
+        <li id="paisNascimento2"> {{selectedPerfil?.country}} </li>
+        <li id="desportosFavoritos">Desportos favoritos</li>
+        <li id="desportosFavoritos2"> {{selectedPerfil?.desportosFavoritos}}</li>
+        <li id="localidade">Localidade</li>
+        <li id="localidade2"> {{selectedPerfil?.location}}</li>
+      <li id="estadoDaConta">Estado da conta:</li>
+      <li>
+          <span *ngIf="locked" id="estadoDaConta2">Conta bloqueada</span>
+          <span *ngIf="!locked" id="estadoDaConta2">Conta ativa</span>
+      </li>
+      <li id="membroDesde">Membro desde:</li>
+      <li id="membroDesde2"> {{selectedPerfil?.joinDate}}</li>
+    <li  id="ultimoLogin">Ultimo Login:</li>
+    <li  id="ultimoLogin2"> {{selectedPerfil?.lastLoginDateDisplay}}</li>
+    </ul>
+<button (click)="fecharPerfil()" id="botaoFechar">X</button>
+<button id="setadir"></button>
+<button id="setaesq"></button>
+<button id="botaoChat">Iniciar Chat</button>

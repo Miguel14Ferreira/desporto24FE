@@ -1,7 +1,7 @@
 .img{
     animation: transition 0.75s;
     height: 100vh;
-    background-image: url(src\assets\Sports1.jpg);     
+    background-image: url(src\assets\futebol3.jpg);     
     -webkit-background-size: cover;
     background-size: cover;
     background-position: center center;
@@ -19,6 +19,7 @@ h1{
         transform: translate(-50%, -50%);
 }
 h2{
+    width: max-content;
     color: white;
     font-size: 60px;
     margin: 0;
@@ -30,15 +31,39 @@ h2{
         left: 50%;
         transform: translate(-50%, -50%);
 }
-label{
-    color: white;
+h3{
     width: max-content;
-    height: max-content;
-    font-size: 15px;
+    color: white;
+    font-size: 60px;
+    margin: 0;
+    padding: 0;
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-        top: 60%;
+        top: 70%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+}
+#label1{
+    color: white;
+    width: 1000px;
+    height: max-content;
+    font-size: 20px;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+}
+#label2{
+    color: white;
+    height: max-content;
+    font-size: 20px;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+        top: 90%;
         left: 50%;
         transform: translate(-50%, -50%);
 }

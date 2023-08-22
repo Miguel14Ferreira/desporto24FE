@@ -5,6 +5,7 @@ import { NotificationType } from 'src/app/enum/notification-type.enum';
 import { LoginperfilService } from 'src/app/services/loginperfil.service';
 import { NotificationService } from 'src/app/services/notification.service';
 import { Perfil } from '../model/perfil';
+import { AuthenticationService } from 'src/app/services/authethication.service';
 
 
 @Component({
@@ -13,24 +14,36 @@ import { Perfil } from '../model/perfil';
   styleUrls: ['./perfis.component.css']
 })
 export class PerfisComponent {
-  minhaImagem = "assets/sports2.jpg";
   private titleSubject = new BehaviorSubject<String>('Perfis');
   public titleAction$ = this.titleSubject.asObservable();
-  public perfis!: Perfil[];
+  public perfis: Perfil[] = [];
   perfil!: Perfil;
   refreshing!:boolean;
-  private subscriptions!: Subscription[];
+  showLoading!:boolean;
+  locked!:boolean;
+  subscriptions: Subscription[] = [];
   selectedPerfil!: Perfil;
+  show!:boolean;
   response!: any;
 
-  constructor (private loginPerfilService: LoginperfilService){}
+  constructor (private loginPerfilService: LoginperfilService, private authenticationService: AuthenticationService){}
 
   ngOnInit(): void{
-    this.obterPerfis(true);
+    this.selectedPerfil = this.authenticationService.getPerfilFromLocalCache();
+    this.show = true;
+    if (this.selectedPerfil.notLocked == true){
+      this.locked = false
+    } else {
+      this.locked = true
+    }
   }
 
   changeTitle(title: string): void{
     this.titleSubject.next(title);
+  }
+
+  fecharPerfil(){
+    this.show = false;
   }
 
   obterPerfis(showNotification: boolean): void{
@@ -38,23 +51,25 @@ export class PerfisComponent {
     this.subscriptions.push(
       this.loginPerfilService.obterPerfis().subscribe(
         (response: Perfil[]) => {
+          this.refreshing = false;
           this.loginPerfilService.addPerfisToLocalCache(response);
           this.perfis = response;
+          alert(`Foram encontrados ${response.length} utilizadores`);
         },
         (errorResponse: HttpErrorResponse) => {
+          alert(`Ocorreu um erro a executar a operação`);
           this.refreshing = false;
         }
       )
     )
   }
 
+
   onSelectPerfil(selectedPerfil: Perfil):void{
     this.selectedPerfil = selectedPerfil;
-    document.getElementById('openPerfilInfo')?.click();
+    this.show = true;
   }
-  private clickButton(buttonId: string): void{
-    document.getElementById(buttonId)?.click();
-  }
+  
   procurarPerfis(searchTerm: string): void{
     const results: Perfil[] = [];
     for (const perfil of this.loginPerfilService.getPerfisFromLocalCache()) {

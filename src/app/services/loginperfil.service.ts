@@ -103,10 +103,10 @@ export class LoginperfilService {
     return this.httpClient.post(`${this.host}/menu/events/events`,session);
   }
   createIdea(ideia:Ideia):Observable<object>{
-    return this.httpClient.post(`${this.host}/contacts`,ideia);
+    return this.httpClient.post(`${this.host}/contact`,ideia);
   }
   obterPerfis() {
-    return this.httpClient.get<Perfil[]>(`${this.host}/menu/allUsers`);
+    return this.httpClient.get<Perfil[]>(`${this.host}/menu/perfis`);
   }
   deleteUser(perfilid: number): Observable<CustomHttpResponse | HttpErrorResponse>{
     return this.httpClient.delete<CustomHttpResponse>(`${this.host}/delete/${perfilid}`);
