@@ -1,6 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { LoginperfilService } from '../../services/loginperfil.service';
 import { Session } from '../session';
+import { AuthenticationService } from 'src/app/services/authethication.service';
+import { Perfil } from '../model/perfil';
+import { Subscription } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
   selector: 'app-events2',
@@ -9,43 +13,65 @@ import { Session } from '../session';
 })
 export class Events2Component implements OnInit {
   session:Session = new Session();
+  perfil!:Perfil;
   buttonDisabled: boolean = false;
   showMe:boolean = false;
   showMe2:boolean = false;
   showMe3:boolean = false;
+  fileName!: string;
+  showLoading:boolean = false;
+  profileImage!: File;
+  response: any = null;
+  subscriptions: Subscription [] = [];
   desporto = ['Futebol','Basquetbol','Voleibol','Karts','Ténis','Padel','Outro'];
   url='./assets/campo .jpg';
 
-  constructor(private loginPerfilService: LoginperfilService) { }
+  constructor(private loginPerfilService: LoginperfilService, private authenticationService: AuthenticationService) { }
   ngOnInit(): void {
     this.Date();
-    this.session.utilizador == sessionStorage.getItem("name")
+    this.perfil == this.authenticationService.getPerfilFromLocalCache();
   }
   minhaImagem = "./assets/tunel .jpg";
   value = "Outro";
   ObterNomeDeUtilizador(){
     return sessionStorage.getItem("name");
   }
-  minDate:any = "2022-02-17T19:33";
+  minDate!:any;
 
-  onSubmit(){
-    this.createNewSession();
+  public onCreatingNewSession(): void {
+    if (this.session.desporto== "" || this.session.dataDeJogo== "" || this.session.jogadores== "" || this.session.jogadores== "" || this.session.localidade== "" || this.session.morada== ""){
+        alert(`Ainda tens espaços em branco!`)
+    } else if (this.session.foto == ""){
+      alert(`Terás de colocar uma fotografia do local, os jogadores tem que saber onde irão jogar!`)
+    } else {
+    const formData = this.loginPerfilService.createSessionForm(this.session, this.profileImage);
+    this.showLoading = true;
+    this.subscriptions.push(
+      this.loginPerfilService.createSession(formData).subscribe(
+        (response: Session) => {
+          this.showLoading = false;
+          this.authenticationService.addSessaoToLocalCache((response)!);
+          alert(`Está criada a tua nova sessão`);
+        },
+        (errorResponse: HttpErrorResponse) => {
+          alert(`Ocorreu um erro`);
+          this.showLoading = false;
+        }
+      )
+    );
   }
-  createNewSession(){
-    this.loginPerfilService.createSession(this.session).subscribe( data =>{
-      {alert("Está criada agora a tua sessão!")}
-    },
-    error => console.log(error));
-  }
-  onSelectedFile(e:any){
-    if(e.target.files){
-      var reader = new FileReader();
-      reader.readAsDataURL(e.target.files[0]);
-      reader.onload=(event:any)=>{
-        this.url=event.target.result;
-      }
+}
+public onSessionImageChange(e: any) {
+  if(e.target.files){
+  this.fileName = e.target.files[0].name;    
+  this.profileImage = e.target.files[0];
+    var reader = new FileReader();
+    reader.readAsDataURL(e.target.files[0]);
+    reader.onload=(event:any)=>{
+      this.url=event.target.result;
     }
-  }
+} 
+}
   toogleTag(){
     this.showMe=!this.showMe
   }

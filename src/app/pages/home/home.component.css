@@ -44,9 +44,3 @@ h2{
         transform: rotateX(0);
     }
 }
-@media screen { /* Specific to this particular image */
-    .img {
-      left: 50%;
-      margin-left: -512px;   /* 50% */
-    }
-}

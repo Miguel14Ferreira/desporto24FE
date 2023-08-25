@@ -25,12 +25,13 @@ export class PerfisComponent {
   selectedPerfil!: Perfil;
   show!:boolean;
   response!: any;
+  buttonId!: any;
 
   constructor (private loginPerfilService: LoginperfilService, private authenticationService: AuthenticationService){}
 
   ngOnInit(): void{
     this.selectedPerfil = this.authenticationService.getPerfilFromLocalCache();
-    this.show = true;
+    this.show = false;
     if (this.selectedPerfil.notLocked == true){
       this.locked = false
     } else {

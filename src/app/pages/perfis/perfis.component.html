@@ -19,7 +19,6 @@
                 <th>Género</th>
                 <th>País de nascimento</th>
                 <th>Desportos favoritos</th>
-                <th>Ver mais</th>
             </tr>
         </thead>
         <tbody *ngFor="let perfil of perfis" id="tabela2">
@@ -31,14 +30,13 @@
                 <td (click)="onSelectPerfil(perfil)"> {{perfil.gender}} </td>
                 <td (click)="onSelectPerfil(perfil)"> {{perfil.country}} </td>
                 <td (click)="onSelectPerfil(perfil)"> {{perfil.desportosFavoritos}}</td>
-                <td><button (click)="onSelectPerfil(perfil)"><i class="fas fa-info"></i></button></td>
         </tbody>
     </table>
     <button id="botao2" routerLink="menu" type="button">
       <i *ngIf= "showLoading" class="fas fa-spinner fa-spin"></i>&nbsp;&nbsp;
       <span *ngIf="showLoading">A carregar...</span>
       <span *ngIf="!showLoading">Voltar para o menu principal</span>
-  </button>    
+  </button> 
   
       <div *ngIf="show" id="viewPerfilModal">
         <p id="D24">Desporto24</p>
@@ -79,6 +77,6 @@
     <li  id="ultimoLogin2"> {{selectedPerfil?.lastLoginDateDisplay}}</li>
     </ul>
 <button (click)="fecharPerfil()" id="botaoFechar">X</button>
-<button id="setadir"></button>
-<button id="setaesq"></button>
+<button id="setadir" type="button"><i class="fas fa-angle-double-right"></i>&nbsp;&nbsp;</button>
+<button id="setaesq" type="button"><i class="fas fa-angle-double-left"></i>&nbsp;&nbsp;</button>
 <button id="botaoChat">Iniciar Chat</button>

@@ -4,6 +4,7 @@ import { environment } from '../../environments/environment';
 import { Observable } from 'rxjs';
 import { Perfil } from '../pages/model/perfil';
 import { JwtHelperService } from '@auth0/angular-jwt';
+import { Session } from '../pages/session';
 
 
 @Injectable({providedIn: 'root'})
@@ -24,6 +25,10 @@ export class AuthenticationService {
 
   createPerfil2(perfil: Perfil):Observable<Perfil>{
     return this.http.post<Perfil>(`${this.host}/login/registerNewUser`, perfil);
+  }
+
+  createSessao(formData: FormData):Observable<Session>{
+    return this.http.post<Session>(`${this.host}/menu/createEvents`, formData);
   }
 
   sendEmail(perfil:Perfil):Observable<HttpResponse<Perfil>>{
@@ -48,7 +53,7 @@ export class AuthenticationService {
     this.loggedInPerfilname = null;
     localStorage.removeItem('Perfil');
     localStorage.removeItem('token');
-    localStorage.removeItem('Perfils');
+    localStorage.removeItem('Perfis');
   }
 
   public saveToken(token: string): void {
@@ -58,6 +63,10 @@ export class AuthenticationService {
 
   public addPerfilToLocalCache(Perfil: Perfil): void {
     localStorage.setItem('Perfil', JSON.stringify(Perfil));
+  }
+
+  public addSessaoToLocalCache(Sessao: Session): void {
+    localStorage.setItem('Sessao', JSON.stringify(Sessao));
   }
 
   public getPerfilFromLocalCache(): Perfil {

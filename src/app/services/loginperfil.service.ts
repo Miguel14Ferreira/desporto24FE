@@ -47,9 +47,23 @@ export class LoginperfilService {
     return formData;
   }
 
-  public createFromResetPassword(perfil: Perfil): FormData {
+  public createFormResetPassword(perfil: Perfil): FormData {
     const formData = new FormData();
-    formData.append('password', perfil.username);
+    formData.append('password', perfil.password);
+    return formData;
+  }
+
+  public createSessionForm(sessao: Session, imageFile: File): FormData {
+    const formData = new FormData();
+    formData.append('desporto', sessao.desporto);
+    formData.append('dataDeJogo', sessao.dataDeJogo);
+    formData.append('foto', imageFile);
+    formData.append('jogadores', sessao.jogadores);
+    formData.append('localidade', sessao.localidade);
+    formData.append('password', sessao.password);
+    formData.append('private', sessao.private);
+    formData.append('preco', sessao.preco);
+    formData.append('utilizador', sessao.utilizador);
     return formData;
   }
 
@@ -90,6 +104,9 @@ export class LoginperfilService {
   obterDadosPessoais(): Observable<Perfil[] | HttpErrorResponse>{
     return this.httpClient.get<Perfil[]>(`${this.host}/menu`);
   }
+  obterSessoes() {
+    return this.httpClient.get<Session[]>(`${this.host}/menu`);
+  }
   obterInfo(perfil: Perfil):Observable<Perfil>{
     return this.httpClient.get<Perfil>(`${this.host}/menu/alterardados/`);
   }
@@ -99,8 +116,8 @@ export class LoginperfilService {
   updatePerfilPassword(formData: FormData){
     return this.httpClient.put<Perfil>(`${this.host}/menu/alterarPassword`, formData);
   }
-  createSession(session:Session):Observable<object>{
-    return this.httpClient.post(`${this.host}/menu/events/events`,session);
+  createSession(formData:FormData){
+    return this.httpClient.post<Session>(`${this.host}/menu/createEvent`,formData);
   }
   createIdea(ideia:Ideia):Observable<object>{
     return this.httpClient.post(`${this.host}/contact`,ideia);
@@ -108,13 +125,21 @@ export class LoginperfilService {
   obterPerfis() {
     return this.httpClient.get<Perfil[]>(`${this.host}/menu/perfis`);
   }
+
   deleteUser(perfilid: number): Observable<CustomHttpResponse | HttpErrorResponse>{
     return this.httpClient.delete<CustomHttpResponse>(`${this.host}/delete/${perfilid}`);
   }
   addPerfisToLocalCache(perfis: Perfil[]): void{
     localStorage.setItem('perfis',JSON.stringify(perfis));
   }
+  addSessoesToLocalCache(sessoes: Session[]): void{
+    localStorage.setItem('sessoes',JSON.stringify(sessoes));
+  }
+
   getPerfisFromLocalCache(): Perfil[]{
       return JSON.parse(localStorage.getItem('perfis')!);
   }
+  getSessoesFromLocalCache(): Session[]{
+    return JSON.parse(localStorage.getItem('sessoes')!);
+}
 }

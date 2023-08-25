@@ -1,64 +1,106 @@
 <div class="img">
-    <h1>Desporto24</h1>
-<h2>Olá {{NomeUtilizador()}}, qual é o desporto que queres fazer hoje?</h2>
-<div class="content">
-    <button href="#" routerLink="events" routerLinkActive="active-link">Eventos</button>
-</div>
-<div class="content2">
-    <button (click) = "alterarDados()" routerLinkActive="active-link">Alterar dados do perfil</button>
-</div>
-<div class="content3">
-    <button (click) = "alterarPassword()" routerLinkActive="active-link">Alterar nome de utilizador/password</button>
-</div>
-<div class="content4">
-    <button (click)="Utilizadores()">Mais utilizadores</button>
-</div>
-<div class="content5">
-    <button (click)="remover()" routerLink="login">Terminar Sessão</button>
-</div>
-</div>
-<h3>Os teus dados pessoais:</h3>
+<h1>DESPORTO24</h1>
+<h2>Sessões disponíveis</h2>
+  <div id="img-fluid2" *ngIf="!showMenu">
+    <img src="{{perfil.foto}}" (click)="MostrarMenu()" class="image-preview__image2" class="rounded-circle img-thumbnail">
+    <p>Abrir Menu</p>
+  </div>
+  <div *ngIf="showMenu" id="content">
+    <p id="D243">Desporto24</p>
+        <p id="D244">Desporto24</p>
+        <p id="D245">Desporto24</p>
+        <p id="D246">Desporto24</p>
+        <p id="D247">Desporto24</p>
+        <p id="D248">Desporto24</p>
+    <h3>{{perfil.username}}</h3>
+    <img src="{{perfil.foto}}" id="img-fluid" class="rounded-circle" alt=""/>
+    <button (click)="NaoMostrarMenu()" id="botaoFechar">X</button>
+    <ul>
+    <li id="opcao1" href="#" routerLink="events" routerLinkActive="active-link">Eventos</li>
+    <li id="opcao2" (click)="alterarDados()" routerLinkActive="active-link">Alterar dados do perfil</li>
+    <li id="opcao3" (click)="alterarPassword()" routerLinkActive="active-link">Alterar nome de utilizador/password</li>
+    <li id="opcao4" routerLinkActive="active-link">Ver dados do meu perfil</li>
+    <li id="opcao6" (click)="Utilizadores()" routerLinkActive="active-link">Mais Utilizadores</li>
+    <li id="opcao7" routerLinkActive="active-link">Criar Sessão</li>
+    <li id="opcao5" (click)="terminarSessao()" routerLinkActive="active-link">Terminar Sessão</li>
+    </ul>
+  </div>
+  <div id="content2" *ngIf="logOut">
+    <p id="D242">Desporto24</p>
+        <p id="D241">Desporto24</p>
+        <p id="D240">Desporto24</p>
+        <p id="D239">Desporto24</p>
+        <p id="D238">Desporto24</p>
+        <p id="D237">Desporto24</p>
+    <h4>Tens a certeza que queres terminar a sessão?</h4>
+    <button id="botao6" (click)="remover()">Sim</button>
+    <button id="botao7" (click)="voltar()">Não</button>
+  </div>
+<form>
+    <input name="searchTerm" #searchTerm="ngModel" ngModel (ngModelChange)="procurarSessoes(searchTerm.value)" id="input1" type="search" placeholder="Procurar sessão...">
+  </form>
+<button id="botao1" type="button" (click)="obterSessoes(true)" class="btn btn-info">
+    <i *ngIf="refreshing" class="fas fa-sync fa-spin"></i>
+    <i *ngIf="!refreshing" class="fas fa-sync"></i>
+</button>
 <table id="tabela1">
+<thead>
     <tr>
-        <th>Foto de perfil</th>
-        <td>
-            <img id="img" src="{{perfil.foto}}"/>
-        </td>
-    </tr>
-    <tr>
-        <th>Nome de utilizador</th>
-        <td> {{perfil.username}}</td>
-    </tr>
-    <tr>
-        <th>Data de nascimento</th>
-        <td> {{perfil.dateOfBirth}}</td>
-    </tr>
-    <tr>
-        <th>Género</th>
-        <td> {{perfil.gender}} </td>
-    </tr>
-    <tr>
-        <th>País de nascimento</th>
-        <td> {{perfil.country}} </td>
-    </tr>
-    <tr>
-        <th>Email</th>
-        <td> {{perfil.email}}</td>
-    </tr>
-    <tr>
-        <th>Desportos favoritos</th>
-        <td> {{perfil.desportosFavoritos}}</td>
-    </tr>
-    <tr>
-        <th>Morada</th>
-        <td> {{perfil.address}}</td>
-    </tr>
-    <tr>
+        <th>Foto do local de jogo</th>
+        <th>Jogo criado por</th>
+        <th>Nº de jogadores</th>
+        <th>Data de jogo</th>
         <th>Localidade</th>
-        <td> {{perfil.location}}</td>
+        <th>Privado</th>
+        <th>Ver mais</th>
     </tr>
-    <tr>
-        <th>Telemóvel</th>
-        <td> {{perfil.phone}}</td>
-    </tr>
+</thead>
+<tbody *ngFor="let sessao of sessoes" id="tabela2">
+        <td>
+            <img height="40" width="40" src="{{sessao.foto}}" class="rounded-circle img-fluid img-thumbnail" alt=""/>
+        </td>
+        <td> {{sessao.utilizador}}</td>
+        <td> {{sessao.desporto}}</td>
+        <td> {{sessao.jogadores}} </td>
+        <td> {{sessao.localidade}}</td>
+        <td> {{sessao.private}} </td>
+        <td><button (click)="onSelectSessao(sessao)"><i class="fas fa-info"></i></button></td>
+</tbody>
 </table>
+<div *ngIf="show" id="viewPerfilModal">
+    <p id="D24">Desporto24</p>
+    <p id="D241">Desporto24</p>
+    <p id="D242">Desporto24</p>
+    <p id="D243">Desporto24</p>
+    <p id="D244">Desporto24</p>
+    <p id="D245">Desporto24</p>
+    <p id="D246">Desporto24</p>
+    <p id="D247">Desporto24</p>
+    <p id="D248">Desporto24</p>
+      <div class="image-preview" id="imagePreview">
+        <img src="{{selectedSessao?.foto}}" alt="Image Preview" class="image-preview__image"/>
+      </div>
+<ul>
+<li id="dataNascimento">Data de jogo</li>
+    <li id="dataNascimento2"> {{selectedSessao?.dataDeJogo}}
+    </li>
+    <li id="genero">Nº máximo jogadores</li>
+    <li id="genero2"> {{selectedSessao?.jogadores}} </li>
+    <li id="paisNascimento">Localidade</li>
+    <li id="paisNascimento2"> {{selectedSessao?.localidade}} </li>
+    <li id="desportosFavoritos">Morada de jogo</li>
+    <li id="desportosFavoritos2"> {{selectedSessao?.morada}}</li>
+  <li id="estadoDaConta">Tipo de jogo</li>
+  <li>
+      <span *ngIf="locked" id="estadoDaConta2">Privado</span>
+      <span *ngIf="!locked" id="estadoDaConta2">Publico</span>
+  </li>
+  <li id="membroDesde">Jogo criado por:</li>
+  <li id="membroDesde2"> {{selectedSessao?.utilizador}}</li>
+<li  id="ultimoLogin">Jogo criado no dia:</li>
+<li  id="ultimoLogin2"> {{selectedSessao?.dataDeJogoCriado}}</li>
+</ul>
+<button (click)="fecharSessao()" id="botaoFechar">X</button>
+<button id="setadir" type="button"><i class="fas fa-angle-double-right"></i>&nbsp;&nbsp;</button>
+<button id="setaesq" type="button"><i class="fas fa-angle-double-left"></i>&nbsp;&nbsp;</button>
+<button id="botaoChat">Iniciar Chat</button>

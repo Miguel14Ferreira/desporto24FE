@@ -27,24 +27,6 @@ export class CreateaccountComponent implements OnInit, OnDestroy {
   subscriptions: Subscription[] = [];
   constructor(private router:Router,  private authservice:AuthenticationService, private loginService:LoginperfilService) {}
   url = './assets/avatar.jpg';
-  /*saveNewUser(){
-    this.authservice.createPerfil(this.perfil).subscribe( data =>{
-      alert("Enviámos um mail para o teu email para ativares a tua conta.")
-      this.router.navigate(['/login']);
-    },
-    error => console.log(error));
-  }
-
-  onSubmit(){
-    if (this.perfil.password != this.perfil.confirmPassword){
-      (errorResponse: HttpErrorResponse) => {
-       alert("As tuas palavras-passe estão diferentes.")
-      }
-    } else {
-      this.onRegister(this.perfil);
-    }
-  }
-  */
   
 viewPass(){
     this.visible = !this.visible;

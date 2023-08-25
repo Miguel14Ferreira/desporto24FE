@@ -11,7 +11,7 @@
     <div class="img">
         <p><h1>Desporto24</h1>
         <h2>Sessão a ser criada por {{ObterNomeDeUtilizador()}}</h2>
-        <form #createSession="ngForm" (ngSubmit)="onSubmit()" name="form" action="#">
+        <form #createSession="ngForm" (ngSubmit)="onCreatingNewSession()" name="form" action="#">
             <label id="input1">Seleciona o desporto que queres praticar:</label>
         <select id="desporto" [(ngModel)]="session.desporto" name="desporto" required>
             <option value="Futebol">Futebol</option>
@@ -27,7 +27,7 @@
         </div>
         <input *ngIf="showMe" [(ngModel)]="session.desporto" name="desporto" id="espaco1" placeholder="coloca aqui o desporto que pretendes praticar">
         <label id="espaco3">Data de jogo:</label>
-        <input id="espaco2" [(ngModel)]="session.datadejogo" name="datadejogo" class="dateOfBirth" min="{{minDate}}" #input [(ngModel)]="value" (change)="onChange(input.value)" type="datetime-local" placeholder="Data de jogo" required>
+        <input id="espaco2" [(ngModel)]="session.dataDeJogo" name="datadejogo" class="dateOfBirth" min="{{minDate}}" #input [(ngModel)]="value" (change)="onChange(input.value)" type="datetime-local" placeholder="Data de jogo" required>
         <label id="espaco4">Define por favor o limite de jogadores para a tua sessão:</label>
         <select id="desporto2" [(ngModel)]="session.jogadores" name="jogadores" class="country" name="country" required>
             <option value="1">1</option>
@@ -72,13 +72,17 @@
     </div>
     <input id="espaco11" [(ngModel)]="session.preco" *ngIf="showMe3" type="text" name="preco" placeholder="Por favor,coloca aqui o valor em euros para o teu jogo.">
     <label id="espaco13">Fotografia do Campo:</label>
-    <input [(ngModel)]="session.foto" (change)="onSelectedFile($event)" name="foto" type="file" id="inpFile" accept="image/*" required>
+    <input [(ngModel)]="session.foto" (change)="onSessionImageChange($event)" name="foto" type="file" id="inpFile" accept="image/*" required>
     <div class="image-preview" id="imagePreview">
     <img [src]="url" alt="Image Preview" class="image-preview__image">
     <span  class="image-preview__default-text"></span>
     </div>
-        <button type="submit" id="botao1" [disabled]="!createSession.valid">Concluir Registo</button>
-        </form>
+</form>
+        <button class="botao1">
+        <i *ngIf= "showLoading" class="fas fa-spinner fa-spin"></i>&nbsp;&nbsp;
+        <span *ngIf="showLoading">A carregar...</span>
+        <span *ngIf="!showLoading">Criar Sessão</span>
+        </button>
             <button href="#" routerLink="events" id="botao2">Voltar atrás</button>
     </div>
         </body>

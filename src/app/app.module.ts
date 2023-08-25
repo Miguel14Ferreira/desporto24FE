@@ -14,7 +14,6 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { CreateaccountComponent } from './pages/createaccount/createaccount.component';
 import { Events2Component } from './pages/events2/events2.component';
-import { Events3Component } from './pages/events3/events3.component';
 import { AlterardadosComponent } from './pages/alterardados/alterardados.component';
 import { ChangepasswordComponent } from './pages/changepassword/changepassword.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -47,7 +46,6 @@ import { ConfirmEmergencyTokenComponent } from './pages/confirm-emergency-token/
     CreateaccountComponent,
     PerfisComponent,
     Events2Component,
-    Events3Component,
     AlterardadosComponent,
     ChangepasswordComponent,
     ContactComponent,
