@@ -53,7 +53,7 @@ export class PerfisComponent {
       this.loginPerfilService.obterPerfis().subscribe(
         (response: Perfil[]) => {
           this.refreshing = false;
-          this.loginPerfilService.addPerfisToLocalCache(response);
+          this.loginPerfilService.obterPerfis();
           this.perfis = response;
           alert(`Foram encontrados ${response.length} utilizadores`);
         },
@@ -72,8 +72,9 @@ export class PerfisComponent {
   }
   
   procurarPerfis(searchTerm: string): void{
+    /*
     const results: Perfil[] = [];
-    for (const perfil of this.loginPerfilService.getPerfisFromLocalCache()) {
+    for (const perfil of this.loginPerfilService.obterPerfis()) {
       if (perfil.username.toLowerCase().indexOf(searchTerm.toLowerCase()) !== -1 ||
           perfil.fullName.toLowerCase().indexOf(searchTerm.toLowerCase()) !== -1){
       results.push(perfil);
@@ -83,5 +84,6 @@ export class PerfisComponent {
     if(results.length === 0 || !searchTerm){
       this.perfis = this.loginPerfilService.getPerfisFromLocalCache();
     }
+    */
   }
 }

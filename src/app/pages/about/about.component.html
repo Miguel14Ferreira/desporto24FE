@@ -1,14 +1,50 @@
-<div class="img">
-    <h1>DESPORTO24</h1>
-<h2>Quem somos nós?</h2>
-<label id="label1">Nós somos alguém que te quer proporcionar um, dois ou imensos bons momentos desportivos.<p>
-    Este site serve para facilitar a pratica de desporto comunicando sessões desportivas de utilizadores de qualquer tipo de desporto perto de ti.</p>
-    <p>Nós entendemos que o desporto deve estar presente na vida de todos nós. Para além de ser algo que nos faz falta e que faz bem à saude, também nos pode proporcionar grandes momentos e conhecer mais pessoas
-    de todo o lado e quem sabe criando amizades.</p></label>
-    <h3>Qual é o nosso objetivo?</h3>
-    <label id="label2"><p>O nosso objetivo ao criarmos este site é para ajudar todos aqueles amantes
-    de desporto que tem dificuldade em encontrar alguém para praticar qualquer tipo de desporto.
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:display="http://www.w3.org/1999/xhtml"
+      xmlns="http://www.w3.org/1999/html">
+      <head>
+        <meta charset="ISO-8859-1">
+        <title>Desporto24</title>
+        <link rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    </head>
+<div *ngIf="dark" class="img">
+    <h1 id="h1white">DESPORTO24</h1>
+    <div id="container2">
+        <p id="D24a">Desporto24</p>
+                <p id="D241a">Desporto24</p>
+                <p id="D243a">Desporto24</p>
+                <p id="D244a">Desporto24</p>
+                <p id="D245a">Desporto24</p>
+          </div>
+<h2 id="h2white">Quem somos nós?</h2>
+<label id="label1white">Nós, somos alguém que te quer proporcionar um, dois ou imensos bons momentos desportivos.<p>
+    Este site serve para facilitar a pratica de desporto comunicando sessões desportivas de qualquer tipo para todos os utilizadores perto de ti.</p>
+    <p>Nós, entendemos que o desporto deve estar presente na vida de todos nós. Para além de ser algo que nos faz falta e que faz bem à saude, também nos pode proporcionar grandes momentos e conhecer mais pessoas
+    de todo o lado e quem sabe criar amizades.</p></label>
+    <h3 id="h3white">Qual é o nosso objetivo?</h3>
+    <label id="label2white"><p>O nosso objetivo ao criarmos este site é ajudar a encontrar parceiros para praticar qualquer tipo de desporto.
     </p>
     Esperamos que te venhas a divertir muito connosco tal como nós, nos divertimos a criar este site para ti!
     Diverte-te! Pratica desporto!</label>
 </div>
+<div *ngIf="!dark" class="img2">
+    <h1 id="h1black">DESPORTO24</h1>
+    <div id="container">
+        <p id="D24">Desporto24</p>
+                <p id="D241">Desporto24</p>
+                <p id="D243">Desporto24</p>
+                <p id="D244">Desporto24</p>
+                <p id="D245">Desporto24</p>
+          </div>
+<h2 id="h2black">Quem somos nós?</h2>
+<label id="label1black">Nós, somos alguém que te quer proporcionar um, dois ou imensos bons momentos desportivos.<p>
+    Este site serve para facilitar a pratica de desporto comunicando sessões desportivas de qualquer tipo para todos os utilizadores perto de ti.</p>
+    <p>Nós, entendemos que o desporto deve estar presente na vida de todos nós. Para além de ser algo que nos faz falta e que faz bem à saude, também nos pode proporcionar grandes momentos e conhecer mais pessoas
+    de todo o lado e quem sabe criar amizades.</p></label>
+    <h3 id="h3black">Qual é o nosso objetivo?</h3>
+    <label id="label2black"><p>O nosso objetivo ao criarmos este site é ajudar a encontrar parceiros para praticar qualquer tipo de desporto.
+    </p>
+    Esperamos que te venhas a divertir muito connosco tal como nós, nos divertimos a criar este site para ti!
+    Diverte-te! Pratica desporto!</label>
+</div>
+</html>

@@ -6,10 +6,16 @@ import { Component, OnInit } from '@angular/core';
   styleUrls: ['./about.component.css']
 })
 export class AboutComponent implements OnInit {
+  dark!:boolean;
 
   constructor() { }
 
   ngOnInit(): void {
+    var theme = localStorage.getItem('theme');
+    if (theme == 'claro'){
+      this.dark = false
+    } else {
+      this.dark = true
+    }
   }
-  minhaImagem='./assets/Sports .jpg';
 }

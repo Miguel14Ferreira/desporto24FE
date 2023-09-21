@@ -10,10 +10,17 @@ import { LoginperfilService } from '../../services/loginperfil.service';
 })
 export class ContactComponent implements OnInit {
   ideia = new Ideia();
+  dark!:boolean;
   showLoading!: boolean;
   constructor(private _service:LoginperfilService,private formBuilder: FormBuilder) { }
 
   ngOnInit(): void {
+    var theme = localStorage.getItem('theme');
+    if (theme == 'claro'){
+      this.dark = false
+    } else {
+      this.dark = true
+    }
   }
   saveNewIdea(){
     if (this.ideia.name == null || this.ideia.city == null || this.ideia.email == null || this.ideia.problem == null || this.ideia.subject == null) {

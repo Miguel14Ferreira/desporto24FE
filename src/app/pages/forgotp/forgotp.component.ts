@@ -24,10 +24,17 @@ export class ForgotpComponent implements OnInit {
   fileName!: string;
   profileImage!: File;
   response: any = null;
+  dark!:boolean;
   subscriptions: Subscription[] = [];
   constructor(private router:Router,  private authservice:AuthenticationService, private loginService:LoginperfilService) {}
 
   ngOnInit(): void {
+    var theme = localStorage.getItem('theme');
+    if (theme == 'claro'){
+      this.dark = false
+    } else {
+      this.dark = true
+    }
   }
   goToLogin(){
     this.router.navigate(['/login']);

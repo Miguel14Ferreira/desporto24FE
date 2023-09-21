@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Perfil } from '../model/perfil';
 import { Subscription } from 'rxjs';
-import { Router } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { LoginperfilService } from 'src/app/services/loginperfil.service';
 import { AuthenticationService } from 'src/app/services/authethication.service';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -18,19 +18,33 @@ export class Forgotp2Component implements OnInit {
   changetype:boolean = true;
   visible:boolean = true;
   hidden:boolean = true;
-  username!: string;
+  username!: any;
   password!: string;
   showLoading!: boolean;
   token: any;
   fileName!: string;
   profileImage!: File;
+  dark!: boolean;
   response: any = null;
   subscriptions: Subscription[] = [];
-  constructor(private router:Router,  private authservice:AuthenticationService, private loginService:LoginperfilService) {}
+  private readonly ACCOUNT_USERNAME = 'username';
+  private readonly ACCOUNT_TOKEN = 'token';
+  constructor(private activatedRoute: ActivatedRoute,private router:Router,  private authservice:AuthenticationService, private loginService:LoginperfilService) {}
 
   ngOnInit(): void {
+    var theme = localStorage.getItem('theme');
+    if (theme == 'claro'){
+      this.dark = false
+    } else {
+      this.dark = true
+    }
+    this.activatedRoute.paramMap.subscribe(
+      (params: ParamMap) => {
+        this.username = params.get(this.ACCOUNT_USERNAME);
+        this.token = params.get(this.ACCOUNT_USERNAME);
+      }
+      )
   }
-  perfil = this.authservice.getPerfilFromLocalCache();
 
   goToLogin(){
     this.router.navigate(['/login']);
@@ -43,17 +57,17 @@ export class Forgotp2Component implements OnInit {
     if (perfil.password != perfil.confirmPassword){
       alert(`As tuas palavras-passes não estão iguais`)
     } else {
-    perfil.username = this.perfil.username;
+    perfil.username = this.username;
     this.showLoading = true;
     this.subscriptions.push(
-      this.authservice.resetPassword(perfil).subscribe(
+      this.authservice.resetPassword(this.token,perfil).subscribe(
         (response: Perfil) => {
           this.showLoading = false;
           alert(`A tua palavra passe foi alterada com sucesso.`);
         },
         (errorResponse: HttpErrorResponse) => {
-          alert(`Ocorreu um erro`);
           this.showLoading = false;
+          alert(`Ocorreu um erro`);
         }
       )
     );

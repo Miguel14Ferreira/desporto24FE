@@ -37,6 +37,7 @@ export class MenuComponent implements OnInit {
   sessao!: Session;
   showMenu!: boolean;
   logOut!:boolean;
+  dark!:boolean;
 
   constructor(private authenticationService:AuthenticationService,private router:Router,private loginPerfilService: LoginperfilService) { }
 
@@ -46,14 +47,22 @@ export class MenuComponent implements OnInit {
     this.showMenu = false;
     this.logOut = false;
     this.perfil = this.authenticationService.getPerfilFromLocalCache();
-    if (this.selectedSessao.private == "true"){
+    /*if (this.selectedSessao.private == "true"){
       this.locked = true;
     } else {
       this.locked = false;
     }
+    */
+    
     this.loginPerfilService.obterInfo(this.perfil).subscribe( data => {
       this.perfil = data;
     }, error => console.log());
+    var theme = localStorage.getItem('theme');
+    if (theme == 'claro'){
+      this.dark = false
+    } else {
+      this.dark = true
+    }
   }
 
   NomeUtilizador(){
@@ -89,7 +98,7 @@ obterSessoes(showNotification: boolean): void{
     this.loginPerfilService.obterSessoes().subscribe(
       (response: Session[]) => {
         this.refreshing = false;
-        this.loginPerfilService.addSessoesToLocalCache(response);
+        this.loginPerfilService.obterSessoes();
         this.sessoes = response;
         alert(`Foram encontrados ${response.length} sessões`);
       },
@@ -102,6 +111,7 @@ obterSessoes(showNotification: boolean): void{
 }
 
 procurarSessoes(searchTerm: string): void{
+  /*
   const results: Session[] = [];
   for (const sessao of this.loginPerfilService.getSessoesFromLocalCache()) {
     if (sessao.desporto.toLowerCase().indexOf(searchTerm.toLowerCase()) !== -1 ||
@@ -113,6 +123,7 @@ procurarSessoes(searchTerm: string): void{
   if(results.length === 0 || !searchTerm){
     this.sessoes = this.loginPerfilService.getSessoesFromLocalCache();
   }
+  */
 }
 
 onSelectSessao(selectedSessao: Session):void{

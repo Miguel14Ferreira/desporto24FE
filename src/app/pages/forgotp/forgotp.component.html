@@ -7,10 +7,15 @@
     <link rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 </head>
-<div class="img">
+<div *ngIf="dark" class="img">
 <body>
-    <h1>DESPORTO24</h1>
-<h2>Indica-nos por favor o teu email abaixo:</h2>
+    <h1 id="h1white">DESPORTO24</h1>
+<h2 id="h2white">Indica-nos por favor o teu email abaixo:</h2>
+<p id="D24a">Desporto24</p>
+                  <p id="D241a">Desporto24</p>
+                  <p id="D243a">Desporto24</p>
+                  <p id="D244a">Desporto24</p>
+                  <p id="D245a">Desporto24</p>
 <form #resetPassword="ngForm" (ngSubmit)="sendEmail(resetPassword.value)">
     <p><input id="input1" name="email" [(ngModel)]="perfil.email" type="text" placeholder="Email" required></p>  
 <button class="botao1">
@@ -22,4 +27,24 @@
 </form>
 </body>
 </div>
+<div *ngIf="!dark" class="img2">
+    <body>
+        <h1 id="h1black">DESPORTO24</h1>
+    <h2 id="h2black">Indica-nos por favor o teu email abaixo:</h2>
+    <p id="D24">Desporto24</p>
+                  <p id="D241">Desporto24</p>
+                  <p id="D243">Desporto24</p>
+                  <p id="D244">Desporto24</p>
+                  <p id="D245">Desporto24</p>
+    <form #resetPassword="ngForm" (ngSubmit)="sendEmail(resetPassword.value)">
+        <p><input id="input1" name="email" [(ngModel)]="perfil.email" type="text" placeholder="Email" required></p>  
+    <button class="botao1">
+        <i *ngIf= "showLoading" class="fas fa-spinner fa-spin"></i>&nbsp;&nbsp;
+            <span *ngIf="showLoading">A carregar...</span>
+            <span *ngIf="!showLoading">Enviar email</span>
+    </button>
+    <button class="botao2" (click)="goToLogin()">Voltar</button>
+    </form>
+    </body>
+    </div>
 </html>

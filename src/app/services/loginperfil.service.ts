@@ -7,6 +7,7 @@ import { Session } from '../pages/session';
 import { environment } from 'src/environments/environment';
 import { JwtHelperService } from "@auth0/angular-jwt";
 import { CustomHttpResponse } from '../pages/custom-http-response';
+import { Token } from '../pages/model/token';
 
 @Injectable({
   providedIn: 'root'
@@ -50,6 +51,12 @@ export class LoginperfilService {
   public createFormResetPassword(perfil: Perfil): FormData {
     const formData = new FormData();
     formData.append('password', perfil.password);
+    return formData;
+  }
+
+  activatePerfil(token: Token): FormData{
+    const formData = new FormData();
+    formData.append('token', token.token);
     return formData;
   }
 
@@ -125,21 +132,7 @@ export class LoginperfilService {
   obterPerfis() {
     return this.httpClient.get<Perfil[]>(`${this.host}/menu/perfis`);
   }
-
   deleteUser(perfilid: number): Observable<CustomHttpResponse | HttpErrorResponse>{
     return this.httpClient.delete<CustomHttpResponse>(`${this.host}/delete/${perfilid}`);
   }
-  addPerfisToLocalCache(perfis: Perfil[]): void{
-    localStorage.setItem('perfis',JSON.stringify(perfis));
-  }
-  addSessoesToLocalCache(sessoes: Session[]): void{
-    localStorage.setItem('sessoes',JSON.stringify(sessoes));
-  }
-
-  getPerfisFromLocalCache(): Perfil[]{
-      return JSON.parse(localStorage.getItem('perfis')!);
-  }
-  getSessoesFromLocalCache(): Session[]{
-    return JSON.parse(localStorage.getItem('sessoes')!);
-}
 }

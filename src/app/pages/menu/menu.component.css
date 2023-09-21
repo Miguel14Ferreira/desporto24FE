@@ -1,19 +1,3 @@
-body{
-    padding: 0;
-    margin: 0;
-}
-h1{
-    color: white;
-    font-size: 60px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-    top: 10%;
-    left: 40%;
-    transform: translateX(0%) translateY(0);
-}
 #botao6{
     text-decoration: none;
             color: black;
@@ -129,32 +113,29 @@ color: black;
     font-family: 'Arial';
     cursor:pointer;
 }
-h2{
-    color: white;
+#img-fluid2black{
+    width: 110px;
+    height: 100px;
+    position: absolute;
+top: 10%;
+left: 90%;
+transform: translate(-50%, -50%);
+opacity: 0.5;
+transition: 0.6s;
+color: white;
     font-size: 20px;
-    height: 10px;
-    margin: 0;
-    width: max-content;
-    padding: 10px;
     text-align: center;
     font-family: 'Arial';
-    position: absolute;
-        top: 30%;
-        left: 75%;
-        transform: translate(-50%, -50%);
 }
-h3{
-    color: white;
+#img-fluid2black:hover{
+    opacity: 1;
+    transition: 0.6s;
+    color: black;
     font-size: 20px;
-    margin: 0;
-    padding: 0;
     text-align: center;
-    position: absolute;
-    font-weight: bold;
-        top: 10%;
-        left: 35%;
-        transform: translate(-50%, -50%);
-    }
+    font-family: 'Arial';
+    cursor:pointer;
+}
     h4{
         color: white;
         font-size: 20px;
@@ -168,14 +149,6 @@ h3{
             left: 50%;
             transform: translate(-50%, -50%);
         }
-.img{
-    animation: transition 0.75s;
-    height: 100vh;
-    background-image: url(src\assets\estadio.jpg);     
-    -webkit-background-size: cover;
-    background-size: cover;
-    background-position: center center;
-}
 #img-fluid{
     width: 50px;
     height: 50px;
@@ -224,7 +197,7 @@ h3{
     padding: 1px;
     text-align: center;
     position: absolute;
-        top: 40%;
+        top: 30%;
         left: 70%;
         transform: translate(-50%, -50%);
     border-radius: 10px;
@@ -257,18 +230,6 @@ h3{
     color: white;
     transition: background-color 0.5s;
     cursor:pointer;
-}
-h1{
-    color: white;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-    top: 10%;
-    left: 25%;
-    transform: translateX(0%) translateY(0);
 }
 @keyframes transition {
     from {
@@ -319,21 +280,6 @@ h1{
     left: 65%;
     transform: translateX(0%) translateY(0);
 }
-#tabela1{
-    font-size: 15px;
-    height: 25px;
-    width: 30%;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    background-color: white;
-    position: absolute;
-        top: 65%;
-        left: 75%;
-        transform: translate(-50%, -50%);
-    border-radius: 10px;
-}
 #img{
     width: 100px;
     height: 100px;
@@ -345,20 +291,6 @@ h1{
     align-items: center;
     color: #cccccc;
     border-radius: 20%;
-}
-#D240{
-    color: white;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 20%;
-        left: 30%;
-        transform: translate(-50%, -50%);
-        opacity: 20%;
-        transform: rotate(45deg);
 }
 #D241{
     color: white;
@@ -388,7 +320,21 @@ h1{
         opacity: 20%;
         transform: rotate(45deg);
 }
-#D239{
+#D240logOut{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 20%;
+        left: 30%;
+        transform: translate(-50%, -50%);
+        opacity: 20%;
+        transform: rotate(45deg);
+}
+#D239logOut{
     color: white;
     font-size: 100px;
     margin: 0;
@@ -402,7 +348,7 @@ h1{
         opacity: 20%;
         transform: rotate(45deg);
 }
-#D238{
+#D238logOut{
     color: white;
     font-size: 100px;
     margin: 0;
@@ -416,7 +362,7 @@ h1{
         opacity: 20%;
         transform: rotate(45deg);
 }
-#D237{
+#D237logOut{
     color: white;
     font-size: 100px;
     margin: 0;
@@ -426,6 +372,34 @@ h1{
     position: absolute;
         top: 70%;
         left: -65%;
+        transform: translate(-50%, -50%);
+        opacity: 20%;
+        transform: rotate(45deg);
+}
+#D236logOut{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 70%;
+        left: 32%;
+        transform: translate(-50%, -50%);
+        opacity: 20%;
+        transform: rotate(45deg);
+}
+#D235logOut{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 70%;
+        left: 10%;
         transform: translate(-50%, -50%);
         opacity: 20%;
         transform: rotate(45deg);
@@ -501,6 +475,90 @@ h1{
         transform: rotate(45deg);
 }
 #D248{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 100%;
+        left: -100%;
+        transform: translate(-50%, -50%);
+        opacity: 20%;
+        transform: rotate(45deg);
+}
+#D243menu{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 20%;
+        left: -60%;
+        transform: translate(-50%, -50%);
+        opacity: 20%;
+        transform: rotate(45deg);
+}
+#D244menu{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: -20%;
+        left: -80%;
+        transform: translate(-50%, -50%);
+        opacity: 20%;
+        transform: rotate(45deg);
+}
+#D245menu{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 20%;
+        left: -100%;
+        transform: translate(-50%, -50%);
+        opacity: 20%;
+        transform: rotate(45deg);
+}
+#D246menu{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 70%;
+        left: -60%;
+        transform: translate(-50%, -50%);
+        opacity: 20%;
+        transform: rotate(45deg);
+}
+#D247menu{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 85%;
+        left: -80%;
+        transform: translate(-50%, -50%);
+        opacity: 20%;
+        transform: rotate(45deg);
+}
+#D248menu{
     color: white;
     font-size: 100px;
     margin: 0;
@@ -791,11 +849,31 @@ transform: translate(-50%, -50%);
     font-family: 'Arial';
     background-color: white;
     position: absolute;
-        top: 50%;
+        top: 40%;
         left: 50%;
         transform: translate(-50%, -50%);
     border-radius: 10px;
-    border-style: solid;
+    border-color: black;
+            border-style: solid;
+            border-width: 1px;
+}
+#tabela1black{
+    font-size: 15px;
+    height: 25px;
+    width: 90%;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    background-color: black;
+    color: white;
+    position: absolute;
+        top: 40%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    border-radius: 10px;
+        border-color: white;
+        border-width: bold;
 }
 #tabela2:hover{
     background-color: grey;
@@ -1110,8 +1188,338 @@ h2{
     text-align: center;
     font-family: 'Arial';
     position: absolute;
-        top: 40%;
+        top: 30%;
         left: 50%;
         transform: translate(-50%, -50%);
     border-radius: 10px;
+}
+.img{
+    animation: transition 0.75s;
+    height: 100vh;
+    background-color: black;     
+    -webkit-background-size: cover;
+    background-size: cover;
+    background-position: center center;
+}
+.img2{
+    animation: transition 0.75s;
+    height: 100vh;
+    background-color: white;     
+    -webkit-background-size: cover;
+    background-size: cover;
+    background-position: center center;
+}
+#h1white{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 20%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+}
+#h1black{
+    color: black;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 20%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+}
+#h2white{
+    width: max-content;
+    color: white;
+    font-size: 60px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+        top: 10%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+}
+#h2black{
+    width: max-content;
+    color: black;
+    font-size: 60px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+        top: 10%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+}
+h3{
+    width: max-content;
+    color: white;
+    font-size: 20px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+        top: 10%;
+        left: 25%;
+        transform: translate(-50%, -50%);
+}
+#label1white{
+    color: white;
+    width: 1000px;
+    height: max-content;
+    font-size: 20px;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+        top: 55%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+}
+#label2white{
+    color: white;
+    height: max-content;
+    font-size: 20px;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+        top: 95%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+}
+#label1black{
+    color: black;
+    width: 1000px;
+    height: max-content;
+    font-size: 20px;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+        top: 55%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+}
+#label2black{
+    color: black;
+    height: max-content;
+    font-size: 20px;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+        top: 95%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+}
+@keyframes transition {
+    from {
+        opacity: 0;
+        transform: rotateX(-10deg);
+    }
+    to{
+        opacity: 1;
+        transform: rotateX(0);
+    }
+}
+@media screen and (max-width: 1024px) { /* Specific to this particular image */
+    .img {
+      left: 50%;
+      margin-left: -512px;   /* 50% */
+    }
+}
+#container{
+    font-size: 15px;
+    height: 80vh;
+    width: 200vh;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    background-color: white;
+    position: absolute;
+        top: 70%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    overflow: hidden;
+}
+#container2{
+    font-size: 15px;
+    height: 80vh;
+    width: 200vh;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    background-color: black;
+    position: absolute;
+        top: 70%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    overflow: hidden;
+}
+
+@keyframes transition {
+    from {
+        opacity: 0;
+        transform: rotateX(-10deg);
+    }
+    to{
+        opacity: 1;
+        transform: rotateX(0);
+    }
+}
+@keyframes slide-right {
+    from {
+        transform: translate(150%, -50%);
+    }
+
+    to {
+        transform: translate(-150%, -50%);
+    }
+ }
+ @keyframes slide-left {
+    from {
+        transform: translate(-70%, -50%);
+    }
+
+    to {
+        transform: translate(150%, -50%);
+    }
+ }
+#D24{
+    color: black;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 20%;
+        left: 70%;
+        opacity: 20%;
+        animation: infinite 100s slide-right;
+}
+#D241{
+    color: black;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 40%;
+        left: 10%;
+        opacity: 20%;
+        animation: infinite 100s slide-left;
+}
+#D243{
+    color: black;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 60%;
+        left: -30%;
+        opacity: 20%;
+        animation: infinite 100s slide-right;
+}
+#D244{
+    color: black;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 100%;
+        left: 8%;
+        opacity: 20%;
+        animation: infinite 100s slide-right;
+}
+#D245{
+    color: black;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 80%;
+        left: 50%;
+        opacity: 20%;
+        animation: infinite 100s slide-left;
+}
+#D24a{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 20%;
+        left: 70%;
+        opacity: 20%;
+        animation: infinite 100s slide-right;
+}
+#D241a{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 40%;
+        left: 10%;
+        opacity: 20%;
+        animation: infinite 100s slide-left;
+}
+#D243a{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 60%;
+        left: -30%;
+        opacity: 20%;
+        animation: infinite 100s slide-right;
+}
+#D244a{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 100%;
+        left: 8%;
+        opacity: 20%;
+        animation: infinite 100s slide-right;
+}
+#D245a{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 80%;
+        left: 50%;
+        opacity: 20%;
+        animation: infinite 100s slide-left;
 }

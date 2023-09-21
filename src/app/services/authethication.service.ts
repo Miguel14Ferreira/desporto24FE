@@ -1,10 +1,12 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { environment } from '../../environments/environment';
-import { Observable } from 'rxjs';
+import { Observable, catchError, tap } from 'rxjs';
 import { Perfil } from '../pages/model/perfil';
 import { JwtHelperService } from '@auth0/angular-jwt';
 import { Session } from '../pages/session';
+import { CustomHttpResponse } from '../pages/custom-http-response';
+import { Token } from '../pages/model/token';
 
 
 @Injectable({providedIn: 'root'})
@@ -12,6 +14,8 @@ export class AuthenticationService {
   public host = environment.apiUrl;
   token: any;
   loggedInPerfilname: any;
+  email: any;
+  PerfilName: any;
   private jwtHelper = new JwtHelperService();
 
   constructor(private http: HttpClient) {}
@@ -23,8 +27,8 @@ export class AuthenticationService {
     return this.http.post<Perfil>(`${this.host}/login/registerNewUser`, formData);
   }
 
-  createPerfil2(perfil: Perfil):Observable<Perfil>{
-    return this.http.post<Perfil>(`${this.host}/login/registerNewUser`, perfil);
+  createPerfil2(perfil: Perfil):Observable<HttpResponse<Perfil>>{
+    return this.http.post<Perfil>(`${this.host}/login/registerNewUser`, perfil, {observe: 'response'});
   }
 
   createSessao(formData: FormData):Observable<Session>{
@@ -35,11 +39,11 @@ export class AuthenticationService {
     return this.http.post<Perfil>(`${this.host}/login/resetPassword`,perfil, {observe: 'response'});
   }
 
-  resetPassword(perfil:Perfil):Observable<Perfil>{
-    return this.http.put<Perfil>(`${this.host}/resetPassword/newPassword`,perfil);
+  resetPassword(token:string,perfil:Perfil):Observable<Perfil>{
+    return this.http.put<Perfil>(`${this.host}/resetPassword/newPassword/${token}/${perfil.username}`,perfil);
   }
-  activatePerfil(perfil:Perfil):Observable<Perfil>{
-    return this.http.put<Perfil>(`${this.host}/login/registerNewUser/confirmTokenRegistration`,perfil);
+  activatePerfil(token: string):Observable<Token>{
+    return this.http.get<Token>(`${this.host}/login/registerNewUser/confirmTokenRegistration/${token}`);
   }
   deactivatePerfil(perfil:Perfil):Observable<Perfil>{
     return this.http.put<Perfil>(`${this.host}/confirmEmergencyToken`,perfil);
@@ -51,14 +55,15 @@ export class AuthenticationService {
   public logOut(): void {
     this.token = null;
     this.loggedInPerfilname = null;
-    localStorage.removeItem('Perfil');
     localStorage.removeItem('token');
-    localStorage.removeItem('Perfis');
+    localStorage.removeItem('Perfil');
   }
 
   public saveToken(token: string): void {
-    this.token = token;
     localStorage.setItem('token', token);
+  }
+  public saveRefreshToken(token: string): void {
+    localStorage.setItem('refreshToken', token);
   }
 
   public addPerfilToLocalCache(Perfil: Perfil): void {
@@ -95,5 +100,4 @@ export class AuthenticationService {
     }
     return false;
   }
-
 }

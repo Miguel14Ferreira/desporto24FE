@@ -21,7 +21,9 @@ export class LoginComponent implements OnInit, OnDestroy {
   changetype:boolean = true;
   showLoading!: boolean;
   token: any;
+  refreshtoken: any;
   response: any = null;
+  dark!:boolean;
   subscriptions: Subscription[] = [];
   constructor(private router:Router, private authenticationService:AuthenticationService) { }
   ngOnDestroy(): void {
@@ -29,6 +31,12 @@ export class LoginComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    var theme = localStorage.getItem('theme');
+    if (theme == 'claro'){
+      this.dark = false
+    } else {
+      this.dark = true
+    }
     if(this.authenticationService.isLoggedIn()){
       this.router.navigateByUrl('/menu');
     } else {
@@ -39,6 +47,7 @@ export class LoginComponent implements OnInit, OnDestroy {
   minhaImagem2 = "assets/olho1.png";
   minhaImagem3 = "assets/olho2.png";
 
+  /*
   onLogin(perfil: Perfil): void {
     if (this.perfil.username == "" || this.perfil.password == ""){
       alert(`Terás de preencher os espaços!`)
@@ -60,6 +69,41 @@ export class LoginComponent implements OnInit, OnDestroy {
       )
     );
   }
+}
+*/
+onLogin(perfil: Perfil): void {
+  if (this.perfil.username == "" || this.perfil.password == ""){
+    alert(`Terás de preencher os espaços!`)
+  } else {
+  this.showLoading = true;
+  this.subscriptions.push(
+    this.authenticationService.loginPerfil(perfil).subscribe(
+      (response: HttpResponse<Perfil>) => {
+        this.token = response.headers.get(HeaderType.JWT_TOKEN);
+        this.refreshtoken = response.headers.get(HeaderType.JWT_REFRESH_TOKEN);
+        this.authenticationService.saveToken(this.token);
+        this.authenticationService.saveToken(this.refreshtoken);
+        this.router.navigateByUrl('/menu');
+        this.showLoading = false;
+      },
+      (errorResponse: HttpErrorResponse) => {
+        if(errorResponse.error instanceof ErrorEvent){
+          alert(`Ocorreu um erro - ${errorResponse.error.message}`)
+          this.showLoading = false;
+        } else {
+          if(errorResponse.error.reason){
+            alert (errorResponse.error.reason);
+            console.log(errorResponse);
+            this.showLoading = false;
+          } else {
+            alert (`Um erro aplicacional ocorreu ${errorResponse.status}`)
+            this.showLoading = false;
+          }
+        }
+      }
+    )
+  );
+}
 }
   
     viewPass(){

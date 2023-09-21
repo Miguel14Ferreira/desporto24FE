@@ -24,6 +24,7 @@ export class CreateaccountComponent implements OnInit, OnDestroy {
   fileName!: string;
   profileImage!: File;
   response: any = null;
+  dark!:boolean;
   subscriptions: Subscription[] = [];
   constructor(private router:Router,  private authservice:AuthenticationService, private loginService:LoginperfilService) {}
   url = './assets/avatar.jpg';
@@ -40,6 +41,12 @@ ngOnInit(): void {
   if(this.authservice.isLoggedIn()){
     this.router.navigateByUrl('/menu');
   }
+  var theme = localStorage.getItem('theme');
+    if (theme == 'claro'){
+      this.dark = false
+    } else {
+      this.dark = true
+    }
 }
 
 public onProfileImageChange(e: any) {
@@ -82,9 +89,47 @@ public onRegister(): void {
   this.subscriptions.push(
     this.authservice.createPerfil(formData).subscribe(
       (response: Perfil) => {
-        this.showLoading = false;
         console.log(response);
-        this.authservice.addPerfilToLocalCache((response)!);
+        this.showLoading = false;
+        alert(`Foi enviado um email para ${response.email} para concluir o registo, só depois da confirmação do email será possível efetuar o login no site.`);
+      },
+      (errorResponse: HttpErrorResponse) => {
+        if(errorResponse.error instanceof ErrorEvent){
+          alert(`Ocorreu um erro - ${errorResponse.error.message}`)
+          this.showLoading = false;
+        } else {
+          if(errorResponse.error.reason){
+            alert (errorResponse.error.reason);
+            console.log(errorResponse);
+            this.showLoading = false;
+          } else {
+            alert (`Um erro aplicacional ocorreu ${errorResponse.status}`)
+            this.showLoading = false;
+          }
+        }
+      }
+    )
+  );
+}
+}
+
+/*
+public onRegister2(): void {
+  if (this.perfil.username== "" || this.perfil.address== "" || this.perfil.confirmPassword== "" || this.perfil.dateOfBirth== "" || this.perfil.email== "" || this.perfil.desportosFavoritos== "" || this.perfil.fullName== "" ||
+    this.perfil.country== "" || this.perfil.location== "" || this.perfil.postalCode== "" || this.perfil.phone== "" || this.perfil.indicativePhone== "" || this.perfil.password == ""){
+      alert(`Ainda tens espaços em branco!`)
+  } else if (this.perfil.password != this.perfil.confirmPassword){
+    alert(`As tuas palavras-passes não estão iguais`)
+  } else if (this.perfil.gender == ""){
+    alert(`Não escolheste nenhum género!`)
+  } else {
+  const formData = this.loginService.createPerfilFormData(this.perfil, this.profileImage);
+  this.showLoading = true;
+  this.subscriptions.push(
+    this.authservice.createPerfil(formData).subscribe(
+      (response: Perfil) => {
+        this.showLoading = false;
+        this.authservice.addPerfilToLocalCache2((response.email)!);
         alert(`Foi enviado um email para ${response.email} para concluir o registo, só depois da confirmação do email será possível efetuar o login no site.`);
       },
       (errorResponse: HttpErrorResponse) => {
@@ -95,27 +140,5 @@ public onRegister(): void {
   );
 }
 }
-
-public onRegister2(perfil: Perfil): void {
-  if (perfil.password != perfil.confirmPassword){
-    alert(`As tuas palavras-passes não estão iguais`)
-  } else if (perfil.gender == ""){
-    alert(`Não escolheste nenhum género!`)
-  } else {
-  this.showLoading = true;
-  this.subscriptions.push(
-    this.authservice.createPerfil2(perfil).subscribe(
-      (response: Perfil) => {
-        this.showLoading = false;
-        this.authservice.addPerfilToLocalCache((perfil)!);
-        alert(`Foi enviado um email para ${perfil.email} para concluir o registo, só depois da confirmação do email será possível efetuar o login no site.`);
-      },
-      (errorResponse: HttpErrorResponse) => {
-        alert(`Ocorreu um erro`);
-        this.showLoading = false;
-      }
-    )
-  );
-}
-}
+*/
 }
