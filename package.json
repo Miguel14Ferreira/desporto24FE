@@ -20,7 +20,10 @@
     "@angular/router": "^15.1.0",
     "@auth0/angular-jwt": "^5.1.2",
     "@nestjs/ng-universal": "^7.0.0",
+<<<<<<< HEAD
     "angular-notifier": "^14.0.0",
+=======
+>>>>>>> 202330b3f2eb933769daa09fff17e79d050c114f
     "mime": "^3.0.0",
     "mime-types": "^2.1.35",
     "p-limit": "^4.0.0",
@@ -32,7 +35,11 @@
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "^15.1.0",
+<<<<<<< HEAD
     "@angular/cli": "^15.2.9",
+=======
+    "@angular/cli": "~15.1.0",
+>>>>>>> 202330b3f2eb933769daa09fff17e79d050c114f
     "@angular/compiler-cli": "^15.1.0",
     "@types/jasmine": "~4.3.0",
     "jasmine-core": "~4.5.0",

@@ -56,7 +56,7 @@ export class Forgotp2Component implements OnInit {
     this.showLoading = true;
     this.subscriptions.push(
       this.authservice.resetPassword(this.token,perfil).subscribe(
-        (response) => {
+        (response : Perfil) => {
           this.showLoading = false;
           alert(`A tua palavra passe foi alterada com sucesso.`);
         },

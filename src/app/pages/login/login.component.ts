@@ -80,9 +80,15 @@ onLogin(perfil: Perfil): void {
     this.authenticationService.loginPerfil(perfil).subscribe(
       (response: HttpResponse<Perfil>) => {
         this.token = response.headers.get(HeaderType.JWT_TOKEN);
+<<<<<<< HEAD
         //this.refreshtoken = response.headers.get(HeaderType.JWT_REFRESH_TOKEN);
         this.authenticationService.saveToken(this.token);
         //this.authenticationService.saveRefreshToken(this.refreshtoken);
+=======
+        this.refreshtoken = response.headers.get(HeaderType.JWT_REFRESH_TOKEN);
+        this.authenticationService.saveToken(this.token);
+        this.authenticationService.saveToken(this.refreshtoken);
+>>>>>>> 202330b3f2eb933769daa09fff17e79d050c114f
         this.router.navigateByUrl('/menu');
         this.showLoading = false;
       },
