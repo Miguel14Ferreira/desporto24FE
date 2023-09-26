@@ -14,6 +14,136 @@
     background-size: cover;
     background-position: center center;
 }
+#D24{
+    color: black;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 20%;
+        left: 70%;
+        opacity: 20%;
+        animation: infinite 100s slide-right;
+}
+#D241{
+    color: black;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 40%;
+        left: 10%;
+        opacity: 20%;
+        animation: infinite 100s slide-left;
+}
+#D243{
+    color: black;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 60%;
+        left: -30%;
+        opacity: 20%;
+        animation: infinite 100s slide-right;
+}
+#D244{
+    color: black;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 100%;
+        left: 8%;
+        opacity: 20%;
+        animation: infinite 100s slide-right;
+}
+#D245{
+    color: black;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 80%;
+        left: 50%;
+        opacity: 20%;
+        animation: infinite 100s slide-left;
+}
+#D24a{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 20%;
+        left: 70%;
+        opacity: 20%;
+        animation: infinite 100s slide-right;
+}
+#D241a{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 40%;
+        left: 10%;
+        opacity: 20%;
+        animation: infinite 100s slide-left;
+}
+#D243a{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 60%;
+        left: -30%;
+        opacity: 20%;
+        animation: infinite 100s slide-right;
+}
+#D244a{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 100%;
+        left: 8%;
+        opacity: 20%;
+        animation: infinite 100s slide-right;
+}
+#D245a{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 80%;
+        left: 50%;
+        opacity: 20%;
+        animation: infinite 100s slide-left;
+}
 #h1white{
     color: white;
     font-size: 100px;

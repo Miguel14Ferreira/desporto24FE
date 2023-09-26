@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, NgForm } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { NotificationType } from 'src/app/enum/notification-type.enum';
 import { AuthenticationService } from 'src/app/services/authethication.service';
@@ -18,7 +18,7 @@ import { Perfil } from '../model/perfil';
 export class AlterardadosComponent implements OnInit {
   changetype:boolean = true;
   visible:boolean = true;
-  username!: string;
+  username!: any;
   password!: string;
   showLoading!: boolean;
   showImage!: boolean;
@@ -30,15 +30,27 @@ export class AlterardadosComponent implements OnInit {
   editPerfil:Perfil = new Perfil();
   fileName!: string;
   profileImage!: File;
-  constructor(private loginPerfilService: LoginperfilService,private authenticationService:AuthenticationService) { }
+  dark!:boolean;
+  private readonly USERNAME: string = "username";
+  constructor(private loginPerfilService: LoginperfilService,private authenticationService:AuthenticationService, private activatedRoute:ActivatedRoute) { }
   url:any;
 
   ngOnInit(): void {
-    this.perfil = this.authenticationService.getPerfilFromLocalCache();
-    this.loginPerfilService.obterInfo(this.perfil).subscribe( data => {
+    this.activatedRoute.paramMap.subscribe(
+      (params: ParamMap) => {
+        this.username = params.get(this.USERNAME);
+      }
+      )
+    this.loginPerfilService.obterUserPeloUsername1(this.username).subscribe( data => {
       this.perfil = data;
     }, error => console.log());
     this.showImage = true;
+    var theme = localStorage.getItem('theme');
+    if (theme == 'claro'){
+      this.dark = false
+    } else {
+      this.dark = true
+    }
   }
   
 
@@ -70,7 +82,6 @@ export class AlterardadosComponent implements OnInit {
         this.subscriptions.push(
           this.loginPerfilService.updatePerfil(formData).subscribe(
             (response: Perfil) => {
-              localStorage.removeItem('Perfil');
               this.showLoading = false;
               alert(`A tua informação de perfil foi atualizada com sucesso.`);
             },
@@ -81,21 +92,5 @@ export class AlterardadosComponent implements OnInit {
           )
         );
       }
-    }
-
-    onUpdatePerfil2(perfil: Perfil): void {
-      perfil.username = this.perfil.username
-      this.showLoading = true;
-      this.subscriptions.push(
-        this.loginPerfilService.updatePerfil2(perfil).subscribe(
-          (response: Perfil) => {
-            this.showLoading = false;
-            alert(`O teu perfil foi atualizado com sucesso.`);
-          },
-          (errorResponse: HttpErrorResponse) => {
-            alert(`Ocurreu um erro`);
-          }
-        )
-        );
     }
   }

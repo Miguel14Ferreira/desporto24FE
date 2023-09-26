@@ -74,10 +74,10 @@ export class MenuComponent implements OnInit {
   }
  
   alterarDados(){
-    this.router.navigate(['menu/alterardados']);
+    this.router.navigate([`menu/${this.username}/alterardados`]);
   }
   alterarPassword(){
-    this.router.navigate(['menu/alterarPassword']);
+    this.router.navigate([`menu/${this.username}/alterarPassword`]);
   }
   Utilizadores(){
     this.router.navigate([`menu/${this.username}/perfis`]);
