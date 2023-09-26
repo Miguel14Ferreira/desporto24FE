@@ -1,0 +1,54 @@
+<div *ngIf="dark" class="img">
+    <h1 id="h1white">DESPORTO24</h1>
+<div id="container2">
+    <h2 id="h2white">Tens alguma ideia?</h2>
+    <label id="label1white">Tens alguma coisa a dizer-nos? Algo a melhorar ou a propor? Diz-nos!</label>
+    <p id="D24a">Desporto24</p>
+            <p id="D241a">Desporto24</p>
+            <p id="D243a">Desporto24</p>
+            <p id="D244a">Desporto24</p>
+            <p id="D245a">Desporto24</p>
+      </div>
+<form #enviarOpiniao="ngForm" (ngSubmit)="saveNewIdea()">
+    <input class="input1" name="name" [(ngModel)]="ideia.name" type="text" placeholder="Nome completo" required>
+    <input class="input3" name="city" [(ngModel)]="ideia.city" type="text" placeholder="Localidade" required>
+    <p id="genero">Género:</p>
+    <input id="radio1" class="gender" [(ngModel)]="ideia.gender" name="gender" value="masculino" type="radio"><p id="masculino">Masculino</p>
+    <input id="radio2" class="gender" [(ngModel)]="ideia.gender" name="gender" value="feminino" type="radio"><p id="feminino">Feminino</p>
+    <input id="assunto" name="assunto" [(ngModel)]="ideia.subject" name="subject" type="text" placeholder="Assunto..." required>
+    <input id="email" name="email" [(ngModel)]="ideia.email" type="text" placeholder="Email" required>
+    <textarea id="texto" name="problem" [(ngModel)]="ideia.problem" placeholder="Diz-nos o que podiamos melhorar..." rows="10" cols="108" required></textarea>
+    <button type="submit" id="botao1">
+        <i *ngIf= "showLoading" class="fas fa-spinner fa-spin"></i>&nbsp;&nbsp;
+        <span *ngIf="showLoading">A carregar...</span>
+        <span *ngIf="!showLoading">Enviar</span>
+        </button>
+</form>
+</div>
+<div *ngIf="!dark" class="img2">
+    <h1 id="h1black">DESPORTO24</h1>
+<div id="container">
+<h2 id="h2black">Tens alguma ideia?</h2>
+<label id="label1black">Tens alguma coisa a dizer-nos? Algo a melhorar ou a propor? Diz-nos!</label>
+<p id="D24">Desporto24</p>
+                  <p id="D241">Desporto24</p>
+                  <p id="D243">Desporto24</p>
+                  <p id="D244">Desporto24</p>
+                  <p id="D245">Desporto24</p>
+                  </div>
+    <form #enviarOpiniao="ngForm" (ngSubmit)="saveNewIdea()">
+        <input class="input1" name="name" [(ngModel)]="ideia.name" type="text" placeholder="Nome completo" required>
+        <input class="input3" name="city" [(ngModel)]="ideia.city" type="text" placeholder="Localidade" required>
+        <p id="generoblack">Género:</p>
+        <input id="radio1" class="gender" [(ngModel)]="ideia.gender" name="gender" value="masculino" type="radio"><p id="masculinoblack">Masculino</p>
+        <input id="radio2" class="gender" [(ngModel)]="ideia.gender" name="gender" value="feminino" type="radio"><p id="femininoblack">Feminino</p>
+        <input id="assunto" name="assunto" [(ngModel)]="ideia.subject" name="subject" type="text" placeholder="Assunto..." required>
+        <input id="email" name="email" [(ngModel)]="ideia.email" type="text" placeholder="Email" required>
+        <textarea id="texto" name="problem" [(ngModel)]="ideia.problem" placeholder="Diz-nos o que podiamos melhorar..." rows="10" cols="108" required></textarea>
+        <button type="submit" id="botao1">
+            <i *ngIf= "showLoading" class="fas fa-spinner fa-spin"></i>&nbsp;&nbsp;
+            <span *ngIf="showLoading">A carregar...</span>
+            <span *ngIf="!showLoading">Enviar</span>
+            </button>
+    </form>
+    </div>

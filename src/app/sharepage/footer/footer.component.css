@@ -1,0 +1,110 @@
+.footer{
+    background-color: black;
+    padding: 110px;
+}
+#h1white{
+    color: white;
+    font-size: 25px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 115%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+.cenaswhite{
+    font-size: 30px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 125%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+.footer2{
+    background-color: white;
+    padding: 110px;
+}
+#h1black{
+    color: black;
+    font-size: 25px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 115%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+.cenasblack{
+    font-size: 30px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 125%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+#facebookwhite{
+    color:white;
+    padding: 0 10px;
+}
+#facebookblack{
+    color:black;
+    padding: 0 10px;
+}
+#whatswhite{
+    color:white;
+    padding: 0 10px;
+}
+#whatsblack{
+    color:black;
+    padding: 0 10px;
+}
+#instawhite{
+    color:white;
+    padding: 0 10px;
+}
+#instablack{
+    color:black;
+    padding: 0 10px;
+}
+#youwhite{
+    color:white;
+    padding: 0 10px;
+}
+#youblack{
+    color:black;
+    padding: 0 10px;
+}
+#facebookwhite:hover{
+    color: grey;
+}
+#facebookblack:hover{
+    color: grey;
+}
+#instawhite:hover{
+    color: grey;
+}
+#instablack:hover{
+    color: grey;
+}
+#whatswhite:hover{
+    color: grey;
+}
+#whatsblack:hover{
+    color: grey;
+}
+#youwhite:hover{
+    color: grey;
+}
+#youblack:hover{
+    color: grey;
+}

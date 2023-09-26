@@ -1,0 +1,1525 @@
+#botao6{
+    text-decoration: none;
+            color: black;
+            background-color: white;
+            font-size: 20px;
+            width: 100px;
+            margin: 0;
+            padding: 1px;
+            text-align: center;
+            font-family: 'Arial';
+            font-weight: bold;
+            position: absolute;
+        top: 80%;
+        left: 30%;
+        transform: translate(-50%, -50%);
+            border-radius: 10px;
+}
+#botao7:hover{
+    background-color: lightblue;
+    color: white;
+    transition: background-color 0.5s;
+        cursor:pointer;
+}
+#botao7{
+    text-decoration: none;
+            color: black;
+            background-color: white;
+            font-size: 20px;
+            width: 100px;
+            margin: 0;
+            padding: 1px;
+            text-align: center;
+            font-family: 'Arial';
+            font-weight: bold;
+            position: absolute;
+            top: 80%;
+            left: 70%;
+        transform: translate(-50%, -50%);
+            border-radius: 10px;
+}
+#botao6:hover{
+    background-color: lightblue;
+    color: white;
+    transition: background-color 0.5s;
+        cursor:pointer;
+}
+#botao5{
+    text-decoration: none;
+            color: black;
+            background-color: white;
+            font-size: 20px;
+            width: 300px;
+            margin: 0;
+            padding: 1px;
+            text-align: center;
+            font-family: 'Arial';
+            font-weight: bold;
+            position: absolute;
+        top: 90%;
+        left: 80%;
+        transform: translate(-50%, -50%);
+            border-radius: 10px;
+}
+#botao5:hover{
+    background-color: lightblue;
+    color: white;
+    transition: background-color 0.5s;
+        cursor:pointer;
+}
+#botao4{
+    text-decoration: none;
+    color: black;
+    background-color: white;
+    font-size: 20px;
+    width: 200px;
+    margin: 0;
+    padding: 1px;
+    text-align: center;
+    font-family: 'Arial';
+    font-weight: bold;
+    position: absolute;
+top: 90%;
+left: 20%;
+transform: translate(-50%, -50%);
+    border-radius: 10px;
+}
+#botao4:hover{
+    background-color: lightblue;
+    color: white;
+    transition: background-color 0.5s;
+    cursor:pointer;
+}
+#img-fluid2{
+    width: 110px;
+    height: 100px;
+    position: absolute;
+top: 10%;
+left: 90%;
+transform: translate(-50%, -50%);
+opacity: 0.5;
+transition: 0.6s;
+color: black;
+    font-size: 20px;
+    text-align: center;
+    font-family: 'Arial';
+}
+#img-fluid2:hover{
+    opacity: 1;
+    transition: 0.6s;
+    color: white;
+    font-size: 20px;
+    text-align: center;
+    font-family: 'Arial';
+    cursor:pointer;
+}
+#img-fluid2black{
+    width: 110px;
+    height: 100px;
+    position: absolute;
+top: 10%;
+left: 90%;
+transform: translate(-50%, -50%);
+opacity: 0.5;
+transition: 0.6s;
+color: white;
+    font-size: 20px;
+    text-align: center;
+    font-family: 'Arial';
+}
+#img-fluid2black:hover{
+    opacity: 1;
+    transition: 0.6s;
+    color: black;
+    font-size: 20px;
+    text-align: center;
+    font-family: 'Arial';
+    cursor:pointer;
+}
+    h4{
+        color: white;
+        font-size: 20px;
+        width: 400px;
+        margin: 0;
+        padding: 0;
+        text-align: center;
+        position: absolute;
+        font-weight: bold;
+            top: 15%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+#img-fluid{
+    width: 50px;
+    height: 50px;
+    position: absolute;
+        top: 10%;
+        left: 80%;
+        transform: translate(-50%, -50%);
+}
+#botao3{
+    font-size: 20px;
+            height: 30px;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            font-family: 'Arial';
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border-radius: 10px;
+            cursor:pointer;
+}
+.image-preview{
+    width: 200px;
+    height: 250px;
+    border: 2px solid #dddddd;
+    position: absolute;
+    left: 65%;
+    top: 45%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #cccccc;
+}
+.image-preview__image{
+    width: 100%;
+    height: 100%;
+}
+#botao1{
+    text-decoration: none;
+    color: black;
+    background-color: white;
+    font-size: 20px;
+    width: 30px;
+    margin: 0;
+    padding: 1px;
+    text-align: center;
+    position: absolute;
+        top: 30%;
+        left: 70%;
+        transform: translate(-50%, -50%);
+    border-radius: 10px;
+}
+#botao1:hover{
+    background-color: lightblue;
+    color: white;
+    transition: background-color 0.5s;
+    cursor:pointer;
+}
+#botaofoto{
+    text-decoration: none;
+            color: black;
+            background-color: white;
+            font-size: 20px;
+            width: 300px;
+            margin: 0;
+            padding: 1px;
+            text-align: center;
+            font-family: 'Arial';
+            font-weight: bold;
+            position: absolute;
+            top: 100%;
+            left: 60%;
+            transform: translateX(0%) translateY(0);
+            border-radius: 10px;
+}
+#botaofoto:hover{
+    background-color: lightblue;
+    color: white;
+    transition: background-color 0.5s;
+    cursor:pointer;
+}
+@keyframes transition {
+    from {
+        opacity: 0;
+        transform: rotateX(-10deg);
+    }
+    to{
+        opacity: 1;
+        transform: rotateX(0);
+    }
+}
+@media screen and (max-width: 1024px) { /* Specific to this particular image */
+    .img {
+      left: 50%;
+      margin-left: -512px;   /* 50% */
+    }
+}
+.img-fluid{
+    width: 2000px;
+    height: 1000px;
+}
+.image-preview{
+    width: 200px;
+    height: 250px;
+    border: 2px solid #dddddd;
+    position: absolute;
+    left: 65%;
+    top: 45%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #cccccc;
+    border-radius: 20%;
+}
+.image-preview__image{
+    width: 100%;
+    height: 100%;
+    border-radius: 20%;
+}
+.inpFile{
+    font-size: 20px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    top: 90%;
+    left: 65%;
+    transform: translateX(0%) translateY(0);
+}
+#img{
+    width: 100px;
+    height: 100px;
+    border: 2px solid #dddddd;
+    position: relative;
+    left: 32.5%;
+    top: 45%;
+    display: flex;
+    align-items: center;
+    color: #cccccc;
+    border-radius: 20%;
+}
+#D241{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: -20%;
+        left: -10%;
+        transform: translate(-50%, -50%);
+        opacity: 20%;
+        transform: rotate(45deg);
+}
+#D242{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 20%;
+        left: -15%;
+        transform: translate(-50%, -50%);
+        opacity: 20%;
+        transform: rotate(45deg);
+}
+#D240logOut{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 20%;
+        left: 30%;
+        transform: translate(-50%, -50%);
+        opacity: 20%;
+        transform: rotate(45deg);
+}
+#D239logOut{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 70%;
+        left: -15%;
+        transform: translate(-50%, -50%);
+        opacity: 20%;
+        transform: rotate(45deg);
+}
+#D238logOut{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 70%;
+        left: -40%;
+        transform: translate(-50%, -50%);
+        opacity: 20%;
+        transform: rotate(45deg);
+}
+#D237logOut{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 70%;
+        left: -65%;
+        transform: translate(-50%, -50%);
+        opacity: 20%;
+        transform: rotate(45deg);
+}
+#D236logOut{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 70%;
+        left: 32%;
+        transform: translate(-50%, -50%);
+        opacity: 20%;
+        transform: rotate(45deg);
+}
+#D235logOut{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 70%;
+        left: 10%;
+        transform: translate(-50%, -50%);
+        opacity: 20%;
+        transform: rotate(45deg);
+}
+#D243{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 20%;
+        left: -60%;
+        transform: translate(-50%, -50%);
+        opacity: 20%;
+        transform: rotate(45deg);
+}
+#D244{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: -20%;
+        left: -80%;
+        transform: translate(-50%, -50%);
+        opacity: 20%;
+        transform: rotate(45deg);
+}
+#D245{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 20%;
+        left: -100%;
+        transform: translate(-50%, -50%);
+        opacity: 20%;
+        transform: rotate(45deg);
+}
+#D246{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 70%;
+        left: -60%;
+        transform: translate(-50%, -50%);
+        opacity: 20%;
+        transform: rotate(45deg);
+}
+#D247{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 85%;
+        left: -80%;
+        transform: translate(-50%, -50%);
+        opacity: 20%;
+        transform: rotate(45deg);
+}
+#D248{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 100%;
+        left: -100%;
+        transform: translate(-50%, -50%);
+        opacity: 20%;
+        transform: rotate(45deg);
+}
+#D243menu{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 20%;
+        left: -60%;
+        transform: translate(-50%, -50%);
+        opacity: 20%;
+        transform: rotate(45deg);
+}
+#D244menu{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: -20%;
+        left: -80%;
+        transform: translate(-50%, -50%);
+        opacity: 20%;
+        transform: rotate(45deg);
+}
+#D245menu{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 20%;
+        left: -100%;
+        transform: translate(-50%, -50%);
+        opacity: 20%;
+        transform: rotate(45deg);
+}
+#D246menu{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 70%;
+        left: -60%;
+        transform: translate(-50%, -50%);
+        opacity: 20%;
+        transform: rotate(45deg);
+}
+#D247menu{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 85%;
+        left: -80%;
+        transform: translate(-50%, -50%);
+        opacity: 20%;
+        transform: rotate(45deg);
+}
+#D248menu{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 100%;
+        left: -100%;
+        transform: translate(-50%, -50%);
+        opacity: 20%;
+        transform: rotate(45deg);
+}
+#setadir{
+    text-decoration: none;
+    color: black;
+    background-color: white;
+    font-size: 20px;
+    width: 25px;
+    margin: 0;
+    padding: 1px;
+    text-align: center;
+    position: absolute;
+        top: 83%;
+        left: 95%;
+        transform: translate(-50%, -50%);
+    border-radius: 10px;
+}
+#setadir:hover{
+    background-color: lightblue;
+    color: white;
+    transition: background-color 0.5s;
+}
+#setaesq{
+    text-decoration: none;
+    color: black;
+    background-color: white;
+    font-size: 20px;
+    width: 25px;
+    margin: 0;
+    padding: 1px;
+    text-align: center;
+    font-family: 'Arial';
+    font-weight: bold;
+    position: absolute;
+        top: 83%;
+        left: 90%;
+        transform: translate(-50%, -50%);
+    border-radius: 10px;
+}
+#setaesq:hover{
+    background-color: lightblue;
+    color: white;
+    transition: background-color 0.5s;
+}
+#botao2{
+    text-decoration: none;
+    color: black;
+    background-color: white;
+    font-size: 20px;
+    width: 300px;
+    margin: 0;
+    padding: 1px;
+    text-align: center;
+    font-family: 'Arial';
+    font-weight: bold;
+    position: absolute;
+top: 100%;
+left: 50%;
+transform: translate(-50%, -50%);
+    border-radius: 10px;
+}
+#botao2:hover{
+    background-color: lightblue;
+    color: white;
+    transition: background-color 0.5s;
+}
+#content{
+    font-size: 15px;
+    height: 400px;
+    width: 225px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    background-color: white;
+    position: absolute;
+    z-index: 1;
+        top: 35%;
+        left: 90%;
+        transform: translate(-50%, -50%);
+    border-radius: 10px;
+    border-style: solid;
+    border-width: 5px;
+    background-color: darkslategrey;
+    overflow: hidden;
+    animation:a 1s;
+}
+#content2{
+    font-size: 15px;
+    height: 200px;
+    width: 400px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    background-color: white;
+    position: absolute;
+    z-index: 1;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    border-radius: 10px;
+    border-style: solid;
+    border-width: 5px;
+    background-color: grey;
+    overflow: hidden;
+}
+@keyframes a{
+  0%{
+    height: 0px;
+  }
+  100%{
+    height:350px;
+  }
+}
+#opcao1{
+    color: white;
+    font-weight: bold;
+    font-size: 15px;
+    margin: 0;
+    height: 30px;
+    width: 200px;
+    padding: 0;
+    text-align: left;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 25%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+}
+#opcao1:hover{
+    background-color: lightblue;
+    color: white;
+    transition: background-color 0.5s;
+    border-radius: 5px;
+    cursor:pointer;
+}
+#opcao2:hover{
+    background-color: lightblue;
+    color: white;
+    transition: background-color 0.5s;
+    border-radius: 5px;
+    cursor:pointer;
+}
+#opcao3:hover{
+    background-color: lightblue;
+    color: white;
+    transition: background-color 0.5s;
+    border-radius: 5px;
+    cursor:pointer;
+}
+#opcao4:hover{
+    background-color: lightblue;
+    color: white;
+    transition: background-color 0.5s;
+    border-radius: 5px;
+    cursor:pointer;
+
+}
+#opcao5:hover{
+    background-color: lightblue;
+    color: white;
+    transition: background-color 0.5s;
+    border-radius: 5px;
+    cursor:pointer;
+}
+#opcao6:hover{
+    background-color: lightblue;
+    color: white;
+    transition: background-color 0.5s;
+    border-radius: 5px;
+    cursor:pointer;
+}
+#opcao7:hover{
+    background-color: lightblue;
+    color: white;
+    transition: background-color 0.5s;
+    border-radius: 5px;
+    cursor:pointer;
+}
+#opcao2{
+    color: white;
+    font-weight: bold;
+    width: 200px;
+    font-size: 15px;
+    margin: 0;
+    padding: 0;
+    text-align: left;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 55%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+}
+#opcao3{
+    color: white;
+    font-weight: bold;
+    font-size: 15px;
+        width: 200px;
+        height: 42px;
+    margin: 0;
+    padding: 0;
+    font-family: 'Copperplate Gothic Medium';
+    text-align: left;
+    position: absolute;
+        top: 70%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+}
+#opcao4{
+    color: white;
+    font-weight: bold;
+    font-size: 15px;
+        width: 200px;
+        height: 42px;
+    margin: 0;
+    padding: 0;
+    font-family: 'Copperplate Gothic Medium';
+    text-align: left;
+    position: absolute;
+        top: 82.5%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+}
+#opcao5{
+    color: white;
+    font-weight: bold;
+    font-size: 15px;
+    width: 200px;
+    height: 30px;
+    margin: 0;
+    font-family: 'Copperplate Gothic Medium';
+    padding: 0;
+    text-align: left;
+    position: absolute;
+        top: 95%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+}
+#opcao6{
+    color: white;
+    font-weight: bold;
+    font-size: 15px;
+    width: 200px;
+    height: 30px;
+    margin: 0;
+    font-family: 'Copperplate Gothic Medium';
+    padding: 0;
+    text-align: left;
+    position: absolute;
+        top: 45%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+}
+#opcao7{
+    color: white;
+    font-weight: bold;
+    font-size: 15px;
+    width: 200px;
+    height: 30px;
+    margin: 0;
+    font-family: 'Copperplate Gothic Medium';
+    padding: 0;
+    text-align: left;
+    position: absolute;
+        top: 35%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+}
+#tabela1{
+    font-size: 15px;
+    height: 25px;
+    width: 90%;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    background-color: white;
+    position: absolute;
+        top: 40%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    border-radius: 10px;
+    border-color: black;
+            border-style: solid;
+            border-width: 1px;
+}
+#tabela1black{
+    font-size: 15px;
+    height: 25px;
+    width: 90%;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    background-color: black;
+    color: white;
+    position: absolute;
+        top: 40%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    border-radius: 10px;
+        border-color: white;
+        border-width: bold;
+}
+#tabela2:hover{
+    background-color: grey;
+    color: white;
+    transition: background-color 0.5s;
+    border-radius: 10px;
+}
+#viewPerfilModal{
+    background-color: rgb(1, 1, 61);
+    width: 500px;
+    height: 400px;
+    position: absolute;
+        top: 60%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        border-style: solid;
+        border-width: 5px;
+        padding: 50px;
+        border-radius: 5%;
+        white-space: nowrap;
+  overflow: hidden;
+    }
+    .image-preview{
+        width: 200px;
+        height: 200px;
+        border: 2px solid #dddddd;
+        position: absolute;
+        top: 30%;
+        left: 75%;
+        transform: translate(-50%, -50%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #cccccc;
+        border-radius: 20%;
+    }
+    .image-preview__image{
+        width: 100%;
+        height: 100%;
+        border-radius: 20%;
+    }
+#username{
+    color: white;
+    font-size: 30px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    position: absolute;
+        top: 10%;
+        left: 30%;
+        transform: translate(-50%, -50%);
+}
+#genero{
+    color: white;
+    font-weight: bold;
+    font-size: 15px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    position: absolute;
+        top: 25%;
+        left: 10%;
+        transform: translate(-50%, -50%);
+}
+#genero2{
+    color: white;
+    font-size: 15px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    position: absolute;
+        top: 30%;
+        left: 15%;
+        transform: translate(-50%, -50%);
+}
+#dataNascimento{
+    color: white;
+    font-weight: bold;
+    font-size: 15px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    position: absolute;
+        top: 35%;
+        left: 19%;
+        transform: translate(-50%, -50%);
+}
+#dataNascimento2{
+    color: white;
+    font-size: 15px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    position: absolute;
+        top: 40%;
+        left: 15%;
+        transform: translate(-50%, -50%);
+}
+#paisNascimento{
+    color: white;
+    font-size: 15px;
+    margin: 0;
+    font-weight: bold;
+    padding: 0;
+    text-align: center;
+    position: absolute;
+        top: 45%;
+        left: 19%;
+        transform: translate(-50%, -50%);
+}
+#paisNascimento2{
+    color: white;
+    font-size: 15px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    position: absolute;
+        top: 50%;
+        left: 14%;
+        transform: translate(-50%, -50%);
+}
+#membroDesde{
+    color: white;
+    font-size: 10px;
+    margin: 0;
+    font-weight: bold;
+    padding: 0;
+    text-align: center;
+    position: absolute;
+        top: 90%;
+        left: 10%;
+        transform: translate(-50%, -50%);
+}
+ul{
+    list-style-type: none;
+}
+#membroDesde2{
+    color: white;
+    font-size: 10px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    position: absolute;
+        top: 90%;
+        left: 35%;
+        transform: translate(-50%, -50%);
+}
+#ultimoLogin{
+    color: white;
+    font-size: 10px;
+    margin: 0;
+    font-weight: bold;
+    padding: 0;
+    text-align: center;
+    position: absolute;
+        top: 95%;
+        left: 9%;
+        transform: translate(-50%, -50%);
+}
+#ultimoLogin2{
+    color: white;
+    font-size: 10px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    position: absolute;
+        top: 95%;
+        left: 35%;
+        transform: translate(-50%, -50%);
+}
+#localidade{
+    color: white;
+    font-size: 15px;
+    font-weight: bold;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    position: absolute;
+        top: 55%;
+        left: 12.5%;
+        transform: translate(-50%, -50%);
+}
+#localidade2{
+    color: white;
+    font-size: 15px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    position: absolute;
+        top: 60%;
+        left: 19%;
+        transform: translate(-50%, -50%);
+}
+#desportosFavoritos{
+    color: white;
+    font-size: 15px;
+    font-weight: bold;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    position: absolute;
+        top: 65%;
+        left: 19%;
+        transform: translate(-50%, -50%);
+}
+#desportosFavoritos2{
+    color: white;
+    font-size: 15px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    position: absolute;
+        top: 70%;
+        left: 22.5%;
+        transform: translate(-50%, -50%);
+}
+#estadoDaConta{
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    position: absolute;
+        top: 85%;
+        left: 10.5%;
+        transform: translate(-50%, -50%);
+}
+#estadoDaConta2{
+    color: white;
+    font-size: 10px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    position: absolute;
+        top: 85%;
+        left: 25.5%;
+        transform: translate(-50%, -50%);
+}       
+#botaoFechar{
+    text-decoration: none;
+    color: black;
+    font-size: 10px;
+    width: 20px;
+    margin: 0;
+    padding: 1px;
+    text-align: center;
+    font-family: 'Arial';
+    font-weight: bold;
+    position: absolute;
+top: 2.5%;
+left: 95%;
+transform: translate(-50%, -50%);
+    border-radius: 10px;
+}
+#botaoFechar:hover{
+    background-color: lightblue;
+    color: white;
+    transition: background-color 0.5s;
+}
+#botaoChat{
+    text-decoration: none;
+    color: black;
+    background-color: white;
+    font-size: 20px;
+    width: 200px;
+    margin: 0;
+    padding: 1px;
+    text-align: center;
+    font-family: 'Arial';
+    font-weight: bold;
+    position: absolute;
+top: 92.5%;
+left: 77.5%;
+transform: translate(-50%, -50%);
+    border-radius: 10px;
+}
+#botaoChat:hover{
+    background-color: lightblue;
+    color: white;
+    transition: background-color 0.5s;
+}
+h1{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 20%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+}
+h2{
+    color: white;
+    font-size: 30px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    position: absolute;
+        top: 30%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+}
+#input1{
+    font-size: 15px;
+    height: 25px;
+    width: 400px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+        top: 30%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    border-radius: 10px;
+}
+.img{
+    animation: transition 0.75s;
+    height: 100vh;
+    background-color: black;     
+    -webkit-background-size: cover;
+    background-size: cover;
+    background-position: center center;
+}
+.img2{
+    animation: transition 0.75s;
+    height: 100vh;
+    background-color: white;     
+    -webkit-background-size: cover;
+    background-size: cover;
+    background-position: center center;
+}
+#h1white{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 20%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+}
+#h1black{
+    color: black;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 20%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+}
+#h2white{
+    width: max-content;
+    color: white;
+    font-size: 60px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+        top: 10%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+}
+#h2black{
+    width: max-content;
+    color: black;
+    font-size: 60px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+        top: 10%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+}
+h3{
+    width: max-content;
+    color: white;
+    font-size: 20px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+        top: 10%;
+        left: 25%;
+        transform: translate(-50%, -50%);
+}
+#label1white{
+    color: white;
+    width: 1000px;
+    height: max-content;
+    font-size: 20px;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+        top: 55%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+}
+#label2white{
+    color: white;
+    height: max-content;
+    font-size: 20px;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+        top: 95%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+}
+#label1black{
+    color: black;
+    width: 1000px;
+    height: max-content;
+    font-size: 20px;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+        top: 55%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+}
+#label2black{
+    color: black;
+    height: max-content;
+    font-size: 20px;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+        top: 95%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+}
+@keyframes transition {
+    from {
+        opacity: 0;
+        transform: rotateX(-10deg);
+    }
+    to{
+        opacity: 1;
+        transform: rotateX(0);
+    }
+}
+@media screen and (max-width: 1024px) { /* Specific to this particular image */
+    .img {
+      left: 50%;
+      margin-left: -512px;   /* 50% */
+    }
+}
+#container{
+    font-size: 15px;
+    height: 80vh;
+    width: 200vh;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    background-color: white;
+    position: absolute;
+        top: 70%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    overflow: hidden;
+}
+#container2{
+    font-size: 15px;
+    height: 80vh;
+    width: 200vh;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    background-color: black;
+    position: absolute;
+        top: 70%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    overflow: hidden;
+}
+
+@keyframes transition {
+    from {
+        opacity: 0;
+        transform: rotateX(-10deg);
+    }
+    to{
+        opacity: 1;
+        transform: rotateX(0);
+    }
+}
+@keyframes slide-right {
+    from {
+        transform: translate(150%, -50%);
+    }
+
+    to {
+        transform: translate(-150%, -50%);
+    }
+ }
+ @keyframes slide-left {
+    from {
+        transform: translate(-70%, -50%);
+    }
+
+    to {
+        transform: translate(150%, -50%);
+    }
+ }
+#D24{
+    color: black;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 20%;
+        left: 70%;
+        opacity: 20%;
+        animation: infinite 100s slide-right;
+}
+#D241{
+    color: black;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 40%;
+        left: 10%;
+        opacity: 20%;
+        animation: infinite 100s slide-left;
+}
+#D243{
+    color: black;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 60%;
+        left: -30%;
+        opacity: 20%;
+        animation: infinite 100s slide-right;
+}
+#D244{
+    color: black;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 100%;
+        left: 8%;
+        opacity: 20%;
+        animation: infinite 100s slide-right;
+}
+#D245{
+    color: black;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 80%;
+        left: 50%;
+        opacity: 20%;
+        animation: infinite 100s slide-left;
+}
+#D24a{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 20%;
+        left: 70%;
+        opacity: 20%;
+        animation: infinite 100s slide-right;
+}
+#D241a{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 40%;
+        left: 10%;
+        opacity: 20%;
+        animation: infinite 100s slide-left;
+}
+#D243a{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 60%;
+        left: -30%;
+        opacity: 20%;
+        animation: infinite 100s slide-right;
+}
+#D244a{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 100%;
+        left: 8%;
+        opacity: 20%;
+        animation: infinite 100s slide-right;
+}
+#D245a{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 80%;
+        left: 50%;
+        opacity: 20%;
+        animation: infinite 100s slide-left;
+}
