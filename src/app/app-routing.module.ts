@@ -26,7 +26,7 @@ const routes: Routes = [
   {path:'menu/events/menu',redirectTo:'/menu', pathMatch:'full'},
   {path:'menu/login',redirectTo:'/login', pathMatch:'full'},
   {path:'login',component:LoginComponent},
-  {path:'menu',component:MenuComponent},
+  {path:'menu/:username',component:MenuComponent},
   {path:'login/registerNewUser',component:CreateaccountComponent},
   {path:'menu/createvent',component:CreateventComponent},
   {path:'login/registerNewUser/login', redirectTo:'login',pathMatch:'full'},
@@ -39,11 +39,7 @@ const routes: Routes = [
   {path:'login/resetPassword',component:ForgotpComponent},
   {path:'menu/perfis',component:PerfisComponent},
   {path:'menu/perfis/menu',redirectTo:'menu',pathMatch:'full'},
-<<<<<<< HEAD
   {path:'login/resetPassword/:token',component:Forgotp2Component, pathMatch:'full'},
-=======
-  {path:'login/resetPassword/:username',component:Forgotp2Component, pathMatch:'full'},
->>>>>>> 202330b3f2eb933769daa09fff17e79d050c114f
   {path:'login/registerNewUser/confirmTokenRegistration/:token', component:ConfirmTokenRegistrationComponent, pathMatch:'full'},
   {path:'confirmEmergencyToken',component:ConfirmEmergencyTokenComponent, pathMatch:'full'}
 ];

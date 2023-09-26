@@ -66,8 +66,8 @@ export class AuthenticationService {
     localStorage.setItem('refreshToken', token);
   }
 
-  public addPerfilToLocalCache(Perfil: Perfil): void {
-    localStorage.setItem('Perfil', JSON.stringify(Perfil));
+  public addPerfilToLocalCache(username: string): void {
+    localStorage.setItem('username', JSON.stringify(username));
   }
 
   public addSessaoToLocalCache(Sessao: Session): void {

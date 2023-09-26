@@ -48,7 +48,6 @@ export class ForgotpComponent implements OnInit {
       this.authservice.sendEmail(perfil).subscribe(
         (response: HttpResponse<Perfil>) => {
           this.showLoading = false;
-          this.authservice.addPerfilToLocalCache((response.body)!);
           alert(`Foi enviado um email para ${perfil.email} para efetuar o reset à tua password.`);
         },
         (errorResponse: HttpErrorResponse) => {
