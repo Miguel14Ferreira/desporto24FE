@@ -29,7 +29,7 @@ export class ContactComponent implements OnInit {
       alert(`Não escolheste nenhum género!`)
     } else {
     this._service.createIdea(this.ideia).subscribe( data =>{
-      {alert("Foi enviado um mail para o email que colocaste.")}
+      {alert("Foi enviado um mail para o email que colocaste.a")}
     },
     error => console.log(error));
   }
