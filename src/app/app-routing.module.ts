@@ -37,8 +37,8 @@ const routes: Routes = [
   {path:'menu/createEvents',component:Events2Component},
   {path:'menu/createEvents/menu',redirectTo:'menu',pathMatch:'full'},
   {path:'login/resetPassword',component:ForgotpComponent},
-  {path:'menu/perfis',component:PerfisComponent},
-  {path:'menu/perfis/menu',redirectTo:'menu',pathMatch:'full'},
+  {path:'menu/:username/perfis',component:PerfisComponent},
+  {path:'menu/:username/perfis/menu',redirectTo:'menu/:username',pathMatch:'full'},
   {path:'login/resetPassword/:token',component:Forgotp2Component, pathMatch:'full'},
   {path:'login/registerNewUser/confirmTokenRegistration/:token', component:ConfirmTokenRegistrationComponent, pathMatch:'full'},
   {path:'confirmEmergencyToken',component:ConfirmEmergencyTokenComponent, pathMatch:'full'}

@@ -118,7 +118,7 @@ export class LoginperfilService {
     return this.httpClient.get<Perfil>(`${this.host}/menu/alterardados/`);
   }
   obterUserPeloUsername1(username:string):Observable<Perfil>{
-    return this.httpClient.get<Perfil>(`${this.host}/menu/alterardados`+`?username=${username}`);
+    return this.httpClient.get<Perfil>(`${this.host}/menu/${username}`);
   }
   updatePerfilPassword(formData: FormData){
     return this.httpClient.put<Perfil>(`${this.host}/menu/alterarPassword`, formData);

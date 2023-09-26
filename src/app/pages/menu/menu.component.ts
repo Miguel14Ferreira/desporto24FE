@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { AuthenticationService } from 'src/app/services/authethication.service';
 import { Perfil } from '../model/perfil';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -19,7 +19,7 @@ export class MenuComponent implements OnInit {
   url:any;
   changetype:boolean = true;
   visible:boolean = true;
-  username!: string;
+  username!: any;
   password!: string;
   showLoading!: boolean;
   showImage!: boolean;
@@ -38,23 +38,27 @@ export class MenuComponent implements OnInit {
   showMenu!: boolean;
   logOut!:boolean;
   dark!:boolean;
+  private readonly USERNAME:string = 'username';
 
-  constructor(private authenticationService:AuthenticationService,private router:Router,private loginPerfilService: LoginperfilService) { }
+  constructor(private authenticationService:AuthenticationService,private router:Router,private loginPerfilService: LoginperfilService, private activatedRoute:ActivatedRoute) { }
 
 
   ngOnInit(): void {
     this.showImage = true;
     this.showMenu = false;
     this.logOut = false;
-    this.perfil = this.authenticationService.getPerfilFromLocalCache();
+    this.activatedRoute.paramMap.subscribe(
+      (params: ParamMap) => {
+        this.username = params.get(this.USERNAME);
+      }
+      )
     /*if (this.selectedSessao.private == "true"){
       this.locked = true;
     } else {
       this.locked = false;
     }
     */
-    
-    this.loginPerfilService.obterInfo(this.perfil).subscribe( data => {
+    this.loginPerfilService.obterUserPeloUsername1(this.username).subscribe( data => {
       this.perfil = data;
     }, error => console.log());
     var theme = localStorage.getItem('theme');
@@ -76,7 +80,7 @@ export class MenuComponent implements OnInit {
     this.router.navigate(['menu/alterarPassword']);
   }
   Utilizadores(){
-    this.router.navigate(['menu/perfis']);
+    this.router.navigate([`menu/${this.username}/perfis`]);
   }
   remover(){
     this.authenticationService.logOut();

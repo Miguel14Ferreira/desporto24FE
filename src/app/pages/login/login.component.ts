@@ -81,8 +81,7 @@ onLogin(perfil: Perfil): void {
       (response: HttpResponse<Perfil>) => {
         this.token = response.headers.get(HeaderType.JWT_TOKEN);
         this.authenticationService.saveToken(this.token);
-        this.authenticationService.addPerfilToLocalCache(perfil.username);
-        this.router.navigateByUrl('/menu/:'+perfil.username);
+        this.router.navigateByUrl('/menu/'+perfil.username);
         this.showLoading = false;
       },
       (errorResponse: HttpErrorResponse) => {

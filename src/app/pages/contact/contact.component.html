@@ -1,6 +1,6 @@
 <div *ngIf="dark" class="img">
     <h1 id="h1white">DESPORTO24</h1>
-<div id="container2">
+    <div id="container2">
     <h2 id="h2white">Tens alguma ideia?</h2>
     <label id="label1white">Tens alguma coisa a dizer-nos? Algo a melhorar ou a propor? Diz-nos!</label>
     <p id="D24a">Desporto24</p>
@@ -8,7 +8,7 @@
             <p id="D243a">Desporto24</p>
             <p id="D244a">Desporto24</p>
             <p id="D245a">Desporto24</p>
-      </div>
+    </div>
 <form #enviarOpiniao="ngForm" (ngSubmit)="saveNewIdea()">
     <input class="input1" name="name" [(ngModel)]="ideia.name" type="text" placeholder="Nome completo" required>
     <input class="input3" name="city" [(ngModel)]="ideia.city" type="text" placeholder="Localidade" required>

@@ -38,7 +38,6 @@ export class AuthenticationService {
   sendEmail(perfil:Perfil):Observable<HttpResponse<Perfil>>{
     return this.http.post<Perfil>(`${this.host}/login/resetPassword`,perfil, {observe: 'response'});
   }
-
   resetPassword(token:string, perfil: Perfil):Observable<Perfil>{
     return this.http.put<Perfil>(`${this.host}/login/resetPassword/${token}`,perfil);
   }
@@ -56,7 +55,6 @@ export class AuthenticationService {
     this.token = null;
     this.loggedInPerfilname = null;
     localStorage.removeItem('token');
-    localStorage.removeItem('Perfil');
   }
 
   public saveToken(token: string): void {
@@ -64,10 +62,6 @@ export class AuthenticationService {
   }
   public saveRefreshToken(token: string): void {
     localStorage.setItem('refreshToken', token);
-  }
-
-  public addPerfilToLocalCache(username: string): void {
-    localStorage.setItem('username', JSON.stringify(username));
   }
 
   public addSessaoToLocalCache(Sessao: Session): void {

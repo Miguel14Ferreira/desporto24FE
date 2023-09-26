@@ -26,21 +26,17 @@ export class PerfisComponent {
   show!:boolean;
   response!: any;
   buttonId!: any;
+  dark!:boolean;
 
-  constructor (private loginPerfilService: LoginperfilService, private authenticationService: AuthenticationService){}
+  constructor (private loginPerfilService: LoginperfilService){}
 
   ngOnInit(): void{
-    this.selectedPerfil = this.authenticationService.getPerfilFromLocalCache();
-    this.show = false;
-    if (this.selectedPerfil.notLocked == true){
-      this.locked = false
+    var theme = localStorage.getItem('theme');
+    if (theme == 'claro'){
+      this.dark = false
     } else {
-      this.locked = true
+      this.dark = true
     }
-  }
-
-  changeTitle(title: string): void{
-    this.titleSubject.next(title);
   }
 
   fecharPerfil(){
