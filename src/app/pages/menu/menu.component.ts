@@ -82,6 +82,9 @@ export class MenuComponent implements OnInit {
   Utilizadores(){
     this.router.navigate([`menu/${this.username}/perfis`]);
   }
+  verDadosPerfil(){
+    this.router.navigate([`menu/${this.username}/dadosPerfil`]);
+  }
   remover(){
     this.authenticationService.logOut();
         this.router.navigate(['login']);

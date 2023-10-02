@@ -7,22 +7,50 @@
         <link rel="stylesheet">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     </head>
-<div class="img">
-<h1>Desporto24</h1>
+    <div *ngIf="dark" class="img">
+        <h1 id="h1white">Desporto24</h1>
+        <div id="container2">
+        <p id="D24a">Desporto24</p>
+            <p id="D241a">Desporto24</p>
+            <p id="D243a">Desporto24</p>
+            <p id="D244a">Desporto24</p>
+            <p id="D245a">Desporto24</p>
+            </div>
 <div *ngIf="showScreen2">
-<h2>A tua conta neste momento está bloqueada</h2>
+    <img id="img2">
+<h2 id="h2white">A tua conta neste momento está bloqueada</h2>
 <button id="botao2" (click)="goToLogin()">Clica aqui para voltares ao Login</button>
 </div>
 <body *ngIf="showScreen">
-    <button type="submit" id="botao1" (click)="bloquearConta()">
         <i *ngIf="showLoading" class="fas fa-spinner fa-spin"></i>&nbsp;&nbsp;
         <span *ngIf="showLoading">A verificar conta</span>
-        <span *ngIf="!showLoading">Clica para bloqueares a tua conta</span>
-    </button>
+    </body>
+    <div *ngIf="showScreen3">
+        <img id="img3">
+    <h3 id="h3white">Ocorreu um erro ao bloquear a tua conta, por favor vamos pedir que tentes de novo</h3>
+</div>
+</div>
+<div *ngIf="!dark" class="img2">
+    <h1 id="h1black">Desporto24</h1>
+    <div id="container">
+        <p id="D24">Desporto24</p>
+            <p id="D241">Desporto24</p>
+            <p id="D243">Desporto24</p>
+            <p id="D244">Desporto24</p>
+            <p id="D245">Desporto24</p>
+            </div>
+<div *ngIf="showScreen2">
+    <img id="img2">
+<h2 id="h2black">A tua conta neste momento está bloqueada</h2>
+<button id="botao2" (click)="goToLogin()">Clica aqui para voltares ao Login</button>
+</div>
+<body *ngIf="showScreen">
+        <i *ngIf="showLoading" class="fas fa-spinner fa-spin"></i>&nbsp;&nbsp;
+        <span *ngIf="showLoading">A verificar conta</span>
 </body>
     <div *ngIf="showScreen3">
-        <img class="img3">
-    <h3>Ocorreu um erro ao verificar a tua conta, por favor vamos pedir que tentes de novo</h3>
+        <img id="img3">
+    <h3 id="h3black">Ocorreu um erro ao bloquear a tua conta, por favor vamos pedir que tentes de novo</h3>
 </div>
 </div>
 </html>

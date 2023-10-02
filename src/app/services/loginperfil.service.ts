@@ -114,9 +114,6 @@ export class LoginperfilService {
   obterSessoes() {
     return this.httpClient.get<Session[]>(`${this.host}/menu`);
   }
-  obterInfo(perfil: Perfil):Observable<Perfil>{
-    return this.httpClient.get<Perfil>(`${this.host}/menu/alterardados/`);
-  }
   obterUserPeloUsername1(username:string):Observable<Perfil>{
     return this.httpClient.get<Perfil>(`${this.host}/menu/${username}`);
   }

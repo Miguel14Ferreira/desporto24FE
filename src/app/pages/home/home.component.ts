@@ -1,4 +1,7 @@
 import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, ParamMap } from '@angular/router';
+import { LoginperfilService } from 'src/app/services/loginperfil.service';
+import { Perfil } from '../model/perfil';
 
 @Component({
   selector: 'app-home',
@@ -8,7 +11,10 @@ import { Component, OnInit } from '@angular/core';
 export class HomeComponent implements OnInit {
 
   dark!:boolean;
-  constructor() { }
+  username!:any;
+  private readonly USERNAME : string = "username";
+  perfil!:Perfil;
+  constructor(private activatedRoute:ActivatedRoute, private loginPerfilService:LoginperfilService) { }
 
   ngOnInit(): void {
     var theme = localStorage.getItem('theme');

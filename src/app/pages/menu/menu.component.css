@@ -849,31 +849,11 @@ transform: translate(-50%, -50%);
     font-family: 'Arial';
     background-color: white;
     position: absolute;
-        top: 40%;
+        top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
     border-radius: 10px;
-    border-color: black;
-            border-style: solid;
-            border-width: 1px;
-}
-#tabela1black{
-    font-size: 15px;
-    height: 25px;
-    width: 90%;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    background-color: black;
-    color: white;
-    position: absolute;
-        top: 40%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-    border-radius: 10px;
-        border-color: white;
-        border-width: bold;
+    border-style: solid;
 }
 #tabela2:hover{
     background-color: grey;

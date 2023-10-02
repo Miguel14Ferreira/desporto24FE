@@ -16,6 +16,7 @@ import { PerfisComponent } from './pages/perfis/perfis.component';
 import { Forgotp2Component } from './pages/forgotp2/forgotp2.component';
 import { ConfirmTokenRegistrationComponent } from './pages/confirm-token-registration/confirm-token-registration.component';
 import { ConfirmEmergencyTokenComponent } from './pages/confirm-emergency-token/confirm-emergency-token.component';
+import { PerfilDataComponent } from './pages/perfil-data/perfil-data.component';
 
 const routes: Routes = [
   {path:'', redirectTo:'home',pathMatch:'full'},
@@ -41,7 +42,9 @@ const routes: Routes = [
   {path:'menu/:username/perfis/menu',redirectTo:'menu/:username',pathMatch:'full'},
   {path:'login/resetPassword/:token',component:Forgotp2Component, pathMatch:'full'},
   {path:'login/registerNewUser/confirmTokenRegistration/:token', component:ConfirmTokenRegistrationComponent, pathMatch:'full'},
-  {path:'confirmEmergencyToken',component:ConfirmEmergencyTokenComponent, pathMatch:'full'}
+  {path:'confirmEmergencyToken/:token',component:ConfirmEmergencyTokenComponent, pathMatch:'full'},
+  {path:'menu/:username/dadosPerfil',component:PerfilDataComponent, pathMatch:'full'},
+  {path:'menu/:username/dadosPerfil/menu',redirectTo:'menu/:username',pathMatch:'full'},  
 ];
 
 @NgModule({

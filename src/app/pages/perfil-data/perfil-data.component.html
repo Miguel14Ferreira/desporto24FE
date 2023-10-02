@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:display="http://www.w3.org/1999/xhtml"
+      xmlns="http://www.w3.org/1999/html">
+      <head>
+        <meta charset="ISO-8859-1">
+        <title>Desporto24</title>
+        <link rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    </head>
+<div *ngIf="!dark" class="img2">
+  <div id="container">
+<p id="D24">Desporto24</p>
+        <p id="D241">Desporto24</p>
+        <p id="D243">Desporto24</p>
+        <p id="D244">Desporto24</p>
+        <p id="D245">Desporto24</p>
+      </div>
+<body>
+  <h1 id="h1black">Desporto24</h1>
+  <h2 id="h2black">Os teus dados:</h2>
+  <div id="viewPerfilModal">
+  <p id="D24modal">Desporto24</p>
+  <p id="D241modal">Desporto24</p>
+  <p id="D242modal">Desporto24</p>
+  <p id="D243modal">Desporto24</p>
+  <p id="D244modal">Desporto24</p>
+  <p id="D245modal">Desporto24</p>
+  <p id="D246modal">Desporto24</p>
+  <p id="D247modal">Desporto24</p>
+  <p id="D248modal">Desporto24</p>
+  <div class="image-preview" id="imagePreview">
+    <img src="{{username?.foto}}" alt="Image Preview" class="image-preview__image"/>
+  </div>
+<div id="username">
+{{username?.username}}
+</div>
+<ul>
+<li id="dataNascimento">Data de nascimento</li>
+<li id="dataNascimento2"> {{username?.dateOfBirth}}
+</li>
+<li id="genero">Género </li>
+<li id="genero2"> {{username?.gender}} </li>
+<li id="paisNascimento">País de nascimento </li>
+<li id="paisNascimento2"> {{username?.country}} </li>
+<li id="desportosFavoritos">Desportos favoritos</li>
+<li id="desportosFavoritos2"> {{username?.desportosFavoritos}}</li>
+<li id="localidade">Localidade</li>
+<li id="localidade2"> {{username?.location}}</li>
+<li id="estadoDaConta">Estado da conta:</li>
+<li>
+  <span *ngIf="locked" id="estadoDaConta2">Conta bloqueada</span>
+  <span *ngIf="!locked" id="estadoDaConta2">Conta ativa</span>
+</li>
+<li id="membroDesde">Membro desde:</li>
+<li id="membroDesde2"> {{username?.joinDate}}</li>
+<li  id="ultimoLogin">Ultimo Login:</li>
+<li  id="ultimoLogin2"> {{username?.lastLoginDateDisplay}}</li>
+</ul>
+</div>
+  <button href="#" routerLink="menu" id="botao1">Voltar atrás</button>
+</body>
+</div>
+<div *ngIf="dark" class="img">
+  <div id="container2">
+    <p id="D24">Desporto24</p>
+            <p id="D241a">Desporto24</p>
+            <p id="D243a">Desporto24</p>
+            <p id="D244a">Desporto24</p>
+            <p id="D245a">Desporto24</p>
+            </div>
+      <body>
+        <h1 id="h1white">Desporto24</h1>
+        <h2 id="h2white">Os teus dados:</h2>
+        <div id="viewPerfilModal">
+            <p id="D24modal">Desporto24</p>
+            <p id="D241modal">Desporto24</p>
+            <p id="D242modal">Desporto24</p>
+            <p id="D243modal">Desporto24</p>
+            <p id="D244modal">Desporto24</p>
+            <p id="D245modal">Desporto24</p>
+            <p id="D246modal">Desporto24</p>
+            <p id="D247modal">Desporto24</p>
+            <p id="D248modal">Desporto24</p>
+            <div class="image-preview" id="imagePreview">
+              <img src="{{perfil?.foto}}" alt="Image Preview" class="image-preview__image"/>
+            </div>
+          <div id="username">
+          {{perfil?.username}}
+          </div>
+          <ul>
+          <li id="dataNascimento">Data de nascimento</li>
+          <li id="dataNascimento2"> {{perfil?.dateOfBirth}}
+          </li>
+          <li id="genero">Género </li>
+          <li id="genero2"> {{perfil?.gender}} </li>
+          <li id="paisNascimento">País de nascimento </li>
+          <li id="paisNascimento2"> {{perfil?.country}} </li>
+          <li id="desportosFavoritos">Desportos favoritos</li>
+          <li id="desportosFavoritos2"> {{perfil?.desportosFavoritos}}</li>
+          <li id="localidade">Localidade</li>
+          <li id="localidade2"> {{perfil?.location}}</li>
+          <li id="estadoDaConta">Estado da conta:</li>
+          <li id="morada">Morada</li>
+          <li id="morada2">{{perfil?.address}}</li>
+          <li>
+            <span *ngIf="locked" id="estadoDaConta2">Conta bloqueada</span>
+            <span *ngIf="!locked" id="estadoDaConta2">Conta ativa</span>
+          </li>
+          <li id="membroDesde">Membro desde:</li>
+          <li id="membroDesde2"> {{perfil?.joinDate}}</li>
+          <li  id="ultimoLogin">Ultimo Login:</li>
+          <li  id="ultimoLogin2"> {{perfil?.lastLoginDateDisplay}}</li>
+          </ul>
+          </div>
+        <button href="#" routerLink="menu" id="botao1">Voltar atrás</button>
+</body>
+</div>
+</html>

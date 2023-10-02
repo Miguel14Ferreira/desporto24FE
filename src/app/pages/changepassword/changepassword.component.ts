@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { NotificationType } from 'src/app/enum/notification-type.enum';
 import { AuthService } from 'src/auth.service';
 import { LoginperfilService } from '../../services/loginperfil.service';
@@ -18,7 +18,7 @@ import { AuthenticationService } from 'src/app/services/authethication.service';
 export class ChangepasswordComponent implements OnInit {
   changetype:boolean = true;
   visible:boolean = true;
-  username!: string;
+  username!: any;
   password!: string;
   showLoading!: boolean;
   token: any;
@@ -27,14 +27,27 @@ export class ChangepasswordComponent implements OnInit {
   perfil!:Perfil;
   public editPerfil = new Perfil();
   fileName!: any;
-  constructor(private loginPerfilService: LoginperfilService,private router:Router, private formBuilder: FormBuilder,private route:ActivatedRoute,private authenticationService:AuthenticationService,private authService:AuthService) { }
+  dark!:boolean;
+  private readonly USERNAME:string = "username";
+  
+  constructor(private loginPerfilService: LoginperfilService,private router:Router, private formBuilder: FormBuilder,private route:ActivatedRoute,private activatedRoute:ActivatedRoute,private authenticationService:AuthenticationService,private authService:AuthService) { }
 
   ngOnInit(): void {
-    this.perfil = this.authenticationService.getPerfilFromLocalCache();
-    this.loginPerfilService.obterInfo(this.perfil).subscribe( data => {
+    this.activatedRoute.paramMap.subscribe(
+      (params: ParamMap) => {
+        this.username = params.get(this.USERNAME);
+      }
+      )
+    this.loginPerfilService.obterUserPeloUsername1(this.username).subscribe( data => {
       this.perfil = data;
-    }, error => console.log(error));
-}
+    }, error => console.log());
+    var theme = localStorage.getItem('theme');
+    if (theme == 'claro'){
+      this.dark = false
+    } else {
+      this.dark = true
+    }
+  }
   minhaImagem = "./assets/ski .jpg";
 
   palavrasPassesDiferentes(novaPassword : string, novaConfirmPassword: string, password: string){

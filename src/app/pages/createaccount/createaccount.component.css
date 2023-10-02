@@ -729,6 +729,12 @@ h4 {
     top: 40%;
     color: white;
 }
+.eyeicon1{
+    position: absolute;
+    left: 26%;
+    top: 40%;
+    color: black;
+}
 
 @media screen and (max-width: 1024px) { /* Specific to this particular image */
     .img {

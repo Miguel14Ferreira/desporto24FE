@@ -525,7 +525,7 @@
     <form #passwordValidation="ngForm" #createAccount="ngForm" (ngSubmit)="onRegister()">
     <input #Username="ngModel" id="input1" [(ngModel)]="perfil.username" type="text" class="username" name="username" placeholder="Nome de utilizador" />
     <input id="password" #Password="ngModel" [(ngModel)]="perfil.password" [type]="changetype?'password':'text'" name="password" class="password" placeholder="Password" >
-    <span (click)="viewPass()" class="eyeicon"><i [ngClass]="visible?'fa fa-eye':'fa fa-eye-slash'"></i></span>
+    <span (click)="viewPass()" class="eyeicon1"><i [ngClass]="visible?'fa fa-eye':'fa fa-eye-slash'"></i></span>
     <input #ConfirmPassword="ngModel" id="confirmPassword" [(ngModel)]="perfil.confirmPassword" name="confirmPassword" [type]="changetype?'password':'text'" class="confirmPassword" placeholder="Confirmar password" >
     <span class="alert"></span>
     <input #fullName="ngModel" id="input4" [(ngModel)]="perfil.fullName" type="text" class="fullName" name="fullName" placeholder="Nome completo" >
