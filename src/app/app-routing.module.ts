@@ -5,7 +5,6 @@ import { AlterardadosComponent } from './pages/alterardados/alterardados.compone
 import { ChangepasswordComponent } from './pages/changepassword/changepassword.component';
 import { ContactComponent } from './pages/contact/contact.component';
 import { CreateaccountComponent } from './pages/createaccount/createaccount.component';
-import { CreateventComponent } from './pages/createvent/createvent.component';
 import { EventsComponent } from './pages/events/events.component';
 import { Events2Component } from './pages/events2/events2.component';
 import { ForgotpComponent } from './pages/forgotp/forgotp.component';
@@ -17,6 +16,7 @@ import { Forgotp2Component } from './pages/forgotp2/forgotp2.component';
 import { ConfirmTokenRegistrationComponent } from './pages/confirm-token-registration/confirm-token-registration.component';
 import { ConfirmEmergencyTokenComponent } from './pages/confirm-emergency-token/confirm-emergency-token.component';
 import { PerfilDataComponent } from './pages/perfil-data/perfil-data.component';
+import { LoginMFAComponent } from './pages/login-mfa/login-mfa.component';
 
 const routes: Routes = [
   {path:'', redirectTo:'home',pathMatch:'full'},
@@ -29,7 +29,8 @@ const routes: Routes = [
   {path:'login',component:LoginComponent},
   {path:'menu/:username',component:MenuComponent},
   {path:'login/registerNewUser',component:CreateaccountComponent},
-  {path:'menu/:username/createvent',component:CreateventComponent},
+  {path:'menu/:username/createEvent',component:Events2Component},
+  {path:'menu/:username/createEvent/menu', redirectTo:'menu/:username',pathMatch:'full'},
   {path:'login/registerNewUser/login', redirectTo:'login',pathMatch:'full'},
   {path:'menu/:username/alterardados',component:AlterardadosComponent},
   {path:'menu/:username/alterardados/menu', redirectTo:'menu/:username',pathMatch:'full'},
@@ -40,11 +41,13 @@ const routes: Routes = [
   {path:'login/resetPassword',component:ForgotpComponent},
   {path:'menu/:username/perfis',component:PerfisComponent},
   {path:'menu/:username/perfis/menu',redirectTo:'menu/:username',pathMatch:'full'},
-  {path:'login/resetPassword/:token',component:Forgotp2Component, pathMatch:'full'},
+  {path:'login/resetPassword/:token/:username',component:Forgotp2Component, pathMatch:'full'},
   {path:'login/registerNewUser/confirmTokenRegistration/:token', component:ConfirmTokenRegistrationComponent, pathMatch:'full'},
   {path:'confirmEmergencyToken/:token',component:ConfirmEmergencyTokenComponent, pathMatch:'full'},
   {path:'menu/:username/dadosPerfil',component:PerfilDataComponent, pathMatch:'full'},
   {path:'menu/:username/dadosPerfil/menu',redirectTo:'menu/:username',pathMatch:'full'},  
+  {path:'menu/:username/dadosPerfil/alterardados',redirectTo:'menu/:username/alterardados',pathMatch:'full'},
+  {path:'login/MFAauthentication/:username', component: LoginMFAComponent}  
 ];
 
 @NgModule({

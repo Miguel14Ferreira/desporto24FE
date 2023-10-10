@@ -46,13 +46,11 @@ export class ConfirmTokenRegistrationComponent implements OnInit {
     this.subscriptions.push(
     this.authservice.activatePerfil(this.token).subscribe(
       (response: Token) => {
-        console.log(response);
         this.showLoading = false;
         this.showScreen2 = true;
         this.showScreen = false;
       },
       (errorResponse: HttpErrorResponse) => {
-        console.log(errorResponse);
         this.showScreen = false;
         this.showLoading = false;
         this.showScreen3 = true;

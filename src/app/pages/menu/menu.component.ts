@@ -85,6 +85,9 @@ export class MenuComponent implements OnInit {
   verDadosPerfil(){
     this.router.navigate([`menu/${this.username}/dadosPerfil`]);
   }
+  CriarSessao(){
+    this.router.navigate([`menu/${this.username}/createEvent`]);
+  }
   remover(){
     this.authenticationService.logOut();
         this.router.navigate(['login']);

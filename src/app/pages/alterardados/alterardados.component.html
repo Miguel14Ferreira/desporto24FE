@@ -491,7 +491,7 @@
     <p id="genero" >Género:</p>
     <input id="radio1" [(ngModel)]="editPerfil.gender" class="gender" name="gender" value="masculino" type="radio"><p id="masculino">Masculino</p>
     <input id="radio2" [(ngModel)]="editPerfil.gender" class="gender" name="gender" value="feminino" type="radio"><p id="feminino">Feminino</p>
-    <input [(ngModel)]="editPerfil.MFA" name="MFA" value="true" id="MFA" type="checkbox"><p id="mfa2">MFA autenticação (Quero passar a receber um código de verificação quando inicio a sessão)</p>
+    <input [(ngModel)]="editPerfil.mfa" name="MFA" value="true" id="MFA" type="checkbox"><p id="mfa2">MFA autenticação (Quero passar a receber um código de verificação quando inicio a sessão)</p>
     <h4 id="h4white">Coloca aqui a tua foto:</h4>
     <input name="foto" (change)="onProfileImageChange($event)" type="file" class="inpFilewhite">
     <div *ngIf="showImage" class="image-preview" id="imagePreview">
@@ -507,7 +507,8 @@
         <span *ngIf="!showLoading">Atualizar</span>
 </button>
 </form>
-    <button href="#" routerLink="menu" id="botao2">Voltar atrás</button>
+    <button href="#" routerLink="menu" id="botao2">Menu</button>
+    <button href="#" (click)="verDadosPerfil()" id="botao3">Ver dados de perfil</button>
 </div>
 <div *ngIf="!dark" class="img2">
     <h1 id="h1black">Desporto24</h1>
@@ -996,7 +997,7 @@
     <p id="generoblack" >Género:</p>
     <input id="radio1" [(ngModel)]="editPerfil.gender" class="gender" name="gender" value="masculino" type="radio"><p id="masculinoblack">Masculino</p>
     <input id="radio2" [(ngModel)]="editPerfil.gender" class="gender" name="gender" value="feminino" type="radio"><p id="femininoblack">Feminino</p>
-    <input [(ngModel)]="editPerfil.MFA" name="MFA" value="true" id="MFA" type="checkbox"><p id="mfa2black">MFA autenticação (Quero passar a receber um código de verificação quando inicio a sessão)</p>
+    <input [(ngModel)]="editPerfil.mfa" name="MFA" value="true" id="MFA" type="checkbox"><p id="mfa2black">MFA autenticação (Quero passar a receber um código de verificação quando inicio a sessão)</p>
     <h4 id="h4black">Coloca aqui a tua foto:</h4>
     <input name="foto" (change)="onProfileImageChange($event)" type="file" class="inpFile">
     <div *ngIf="showImage" class="image-preview" id="imagePreview">
@@ -1012,6 +1013,7 @@
         <span *ngIf="!showLoading">Atualizar</span>
 </button>
 </form>
-    <button href="#" routerLink="menu" id="botao2">Voltar atrás</button>
+<button href="#" routerLink="menu" id="botao2">Menu</button>
+<button href="#" (click)="verDadosPerfil()" id="botao3">Ver dados de perfil</button>
 </div>
 </html>

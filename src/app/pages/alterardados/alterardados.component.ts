@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, NgForm } from '@angular/forms';
-import { ActivatedRoute, ParamMap, Router } from '@angular/router';
+import { ActivatedRoute, ParamMap, Route, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { NotificationType } from 'src/app/enum/notification-type.enum';
 import { AuthenticationService } from 'src/app/services/authethication.service';
@@ -32,7 +32,7 @@ export class AlterardadosComponent implements OnInit {
   profileImage!: File;
   dark!:boolean;
   private readonly USERNAME: string = "username";
-  constructor(private loginPerfilService: LoginperfilService,private authenticationService:AuthenticationService, private activatedRoute:ActivatedRoute) { }
+  constructor(private loginPerfilService: LoginperfilService,private authenticationService:AuthenticationService, private activatedRoute:ActivatedRoute, private router:Router) { }
   url:any;
 
   ngOnInit(): void {
@@ -52,7 +52,10 @@ export class AlterardadosComponent implements OnInit {
       this.dark = true
     }
   }
-  
+
+  verDadosPerfil(){
+    this.router.navigate([`menu/${this.username}/dadosPerfil`]);
+  }
 
   NomeUtilizador(){
     return this.perfil.username;
@@ -79,6 +82,7 @@ export class AlterardadosComponent implements OnInit {
         } else {
         const formData = this.loginPerfilService.updatePerfilFormData(this.perfil.username, this.editPerfil, this.profileImage);
         this.showLoading = true;
+        console.log(this.editPerfil);
         this.subscriptions.push(
           this.loginPerfilService.updatePerfil(formData).subscribe(
             (response: Perfil) => {

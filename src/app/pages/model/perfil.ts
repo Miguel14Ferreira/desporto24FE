@@ -18,7 +18,7 @@ export class Perfil {
     public lastLoginDateDisplay: string;
     public enabled: boolean;
     public notLocked: boolean;
-    public MFA:string;
+    public mfa:boolean;
     public role: string;
     public authorities: [];
     public desportosFavoritos: string;
@@ -41,7 +41,7 @@ export class Perfil {
         this.joinDate = '';
         this.lastLoginDate = '';
         this.lastLoginDateDisplay = '';
-        this.MFA = '';
+        this.mfa = false;
         this.enabled = false;
         this.notLocked = false;
         this.role = '';

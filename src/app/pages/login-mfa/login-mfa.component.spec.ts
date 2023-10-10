@@ -1,20 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { CreateventComponent } from './createvent.component';
+import { LoginMFAComponent } from './login-mfa.component';
 
-describe('CreateventComponent', () => {
-  let component: CreateventComponent;
-  let fixture: ComponentFixture<CreateventComponent>;
+describe('LoginMFAComponent', () => {
+  let component: LoginMFAComponent;
+  let fixture: ComponentFixture<LoginMFAComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ CreateventComponent ]
+      declarations: [ LoginMFAComponent ]
     })
     .compileComponents();
-  });
 
-  beforeEach(() => {
-    fixture = TestBed.createComponent(CreateventComponent);
+    fixture = TestBed.createComponent(LoginMFAComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

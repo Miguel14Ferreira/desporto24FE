@@ -8,7 +8,6 @@ import { HomeComponent } from './pages/home/home.component';
 import { EventsComponent } from './pages/events/events.component';
 import { LoginComponent } from './pages/login/login.component';
 import { MenuComponent } from './pages/menu/menu.component';
-import { CreateventComponent } from './pages/createvent/createvent.component';
 import { ClasseventsComponent } from './pages/classevents/classevents.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
@@ -31,6 +30,7 @@ import { Forgotp2Component } from './pages/forgotp2/forgotp2.component';
 import { ConfirmTokenRegistrationComponent } from './pages/confirm-token-registration/confirm-token-registration.component';
 import { ConfirmEmergencyTokenComponent } from './pages/confirm-emergency-token/confirm-emergency-token.component';
 import { PerfilDataComponent } from './pages/perfil-data/perfil-data.component';
+import { LoginMFAComponent } from './pages/login-mfa/login-mfa.component';
 
 @NgModule({
   declarations: [
@@ -42,7 +42,8 @@ import { PerfilDataComponent } from './pages/perfil-data/perfil-data.component';
     EventsComponent,
     LoginComponent,
     MenuComponent,
-    CreateventComponent,
+    LoginMFAComponent,
+    LoginComponent,
     ClasseventsComponent,
     CreateaccountComponent,
     PerfisComponent,

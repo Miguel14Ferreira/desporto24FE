@@ -5,6 +5,7 @@ import { AuthenticationService } from 'src/app/services/authethication.service';
 import { Perfil } from '../model/perfil';
 import { Subscription } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
+import { ActivatedRoute, ParamMap } from '@angular/router';
 
 @Component({
   selector: 'app-events2',
@@ -23,20 +24,37 @@ export class Events2Component implements OnInit {
   profileImage!: File;
   response: any = null;
   subscriptions: Subscription [] = [];
-  desporto = ['Futebol','Basquetbol','Voleibol','Karts','Ténis','Padel','Outro'];
-  url='./assets/campo .jpg';
-
-  constructor(private loginPerfilService: LoginperfilService, private authenticationService: AuthenticationService) { }
-  ngOnInit(): void {
-    this.Date();
-    this.perfil == this.authenticationService.getPerfilFromLocalCache();
-  }
-  minhaImagem = "./assets/tunel .jpg";
-  value = "Outro";
-  ObterNomeDeUtilizador(){
-    return sessionStorage.getItem("name");
-  }
+  changetype:boolean = true;
+  visible:boolean = true;
+  hidden:boolean = true;
+  password!: string;
+  token: any;
+  dark!:boolean;
+  username!:any;
   minDate!:any;
+  value:string = "Outro";
+  private readonly USERNAME:string = "username";
+
+  constructor(private loginPerfilService: LoginperfilService, private authenticationService: AuthenticationService, private activatedRoute:ActivatedRoute) { }
+  url = './assets/estadio.jpg';
+
+  ngOnInit(): void {
+    this.activatedRoute.paramMap.subscribe(
+      (params: ParamMap) => {
+        this.username = params.get(this.USERNAME);
+      }
+      )
+    this.loginPerfilService.obterUserPeloUsername1(this.username).subscribe( data => {
+      this.perfil = data;
+    }, error => console.log());
+    var theme = localStorage.getItem('theme');
+    if (theme == 'claro'){
+      this.dark = false
+    } else {
+      this.dark = true
+    }
+    this.Date();
+  }
 
   public onCreatingNewSession(): void {
     if (this.session.desporto== "" || this.session.dataDeJogo== "" || this.session.jogadores== "" || this.session.jogadores== "" || this.session.localidade== "" || this.session.morada== ""){
@@ -50,7 +68,6 @@ export class Events2Component implements OnInit {
       this.loginPerfilService.createSession(formData).subscribe(
         (response: Session) => {
           this.showLoading = false;
-          this.authenticationService.addSessaoToLocalCache((response)!);
           alert(`Está criada a tua nova sessão`);
         },
         (errorResponse: HttpErrorResponse) => {

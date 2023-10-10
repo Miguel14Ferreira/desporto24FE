@@ -24,6 +24,7 @@ export class LoginComponent implements OnInit, OnDestroy {
   refreshtoken: any;
   response: any = null;
   dark!:boolean;
+  showMFA: boolean = false;
   subscriptions: Subscription[] = [];
   constructor(private router:Router, private authenticationService:AuthenticationService) { }
   ngOnDestroy(): void {
@@ -79,11 +80,16 @@ onLogin(perfil: Perfil): void {
   this.subscriptions.push(
     this.authenticationService.loginPerfil(perfil).subscribe(
       (response: HttpResponse<Perfil>) => {
+        if (response.body?.mfa == true){
+          this.router.navigateByUrl('/login/MFAauthentication/'+this.perfil.username);
+          this.showLoading = false;
+        } else {
         this.token = response.headers.get(HeaderType.JWT_TOKEN);
         this.authenticationService.saveToken(this.token);
         this.router.navigateByUrl('/menu/'+perfil.username);
         this.showLoading = false;
-      },
+      }
+    },
       (errorResponse: HttpErrorResponse) => {
         if(errorResponse.error instanceof ErrorEvent){
           alert(`Ocorreu um erro - ${errorResponse.error.message}`)

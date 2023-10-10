@@ -6,6 +6,7 @@ import { LoginperfilService } from 'src/app/services/loginperfil.service';
 import { AuthenticationService } from 'src/app/services/authethication.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgForm } from '@angular/forms';
+import { Token } from '../model/token';
 
 @Component({
   selector: 'app-forgotp2',
@@ -17,6 +18,7 @@ export class Forgotp2Component implements OnInit {
   changetype:boolean = true;
   visible:boolean = true;
   hidden:boolean = true;
+  perfil!:Perfil;
   username!: any;
   password!: string;
   showLoading!: boolean;
@@ -27,6 +29,7 @@ export class Forgotp2Component implements OnInit {
   response: any = null;
   subscriptions: Subscription[] = [];
   private readonly ACCOUNT_TOKEN = 'token';
+  private readonly USERNAME = 'username';
   constructor(private activatedRoute: ActivatedRoute,private router:Router,  private authservice:AuthenticationService, private loginService:LoginperfilService) {}
 
   ngOnInit(): void {
@@ -39,8 +42,12 @@ export class Forgotp2Component implements OnInit {
     this.activatedRoute.paramMap.subscribe(
       (params: ParamMap) => {
         this.token = params.get(this.ACCOUNT_TOKEN);
+        this.username = params.get(this.USERNAME);
       }
       )
+      this.loginService.obterUserPeloUsername1(this.username).subscribe( data => {
+        this.perfil = data;
+      }, error => console.log());
   }
 
   goToLogin(){
@@ -54,8 +61,10 @@ export class Forgotp2Component implements OnInit {
       alert(`As tuas palavras-passes não estão iguais`)
     } else {
     this.showLoading = true;
+    console.log(this.token);
+    console.log(perfil);
     this.subscriptions.push(
-      this.authservice.resetPassword(this.token,perfil).subscribe(
+      this.authservice.resetPassword(this.token,this.perfil.email,perfil).subscribe(
         (response : Perfil) => {
           this.showLoading = false;
           alert(`A tua palavra passe foi alterada com sucesso.`);

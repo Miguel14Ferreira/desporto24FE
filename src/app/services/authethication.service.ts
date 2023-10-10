@@ -26,26 +26,29 @@ export class AuthenticationService {
   createPerfil(formData: FormData):Observable<Perfil>{
     return this.http.post<Perfil>(`${this.host}/login/registerNewUser`, formData);
   }
-
   createPerfil2(perfil: Perfil):Observable<HttpResponse<Perfil>>{
     return this.http.post<Perfil>(`${this.host}/login/registerNewUser`, perfil, {observe: 'response'});
   }
-
   createSessao(formData: FormData):Observable<Session>{
     return this.http.post<Session>(`${this.host}/menu/createEvents`, formData);
   }
-
+  confirmMFA(token:string):Observable<HttpResponse<Token>>{
+    return this.http.post<Token>(`${this.host}/login/MFAauthentication/:username`,token, {observe: 'response'});
+  }
+  resendMFA(perfil:string):Observable<Perfil>{
+    return this.http.get<Perfil>(`${this.host}/login/MFAauthentication/${perfil}`);
+  }
   sendEmail(perfil:Perfil):Observable<HttpResponse<Perfil>>{
     return this.http.post<Perfil>(`${this.host}/login/resetPassword`,perfil, {observe: 'response'});
   }
-  resetPassword(token:string, perfil: Perfil):Observable<Perfil>{
+  resetPassword(token:string, email: string,perfil:Perfil):Observable<Perfil>{
     return this.http.put<Perfil>(`${this.host}/login/resetPassword/${token}`,perfil);
   }
   activatePerfil(token: string):Observable<Token>{
     return this.http.get<Token>(`${this.host}/login/registerNewUser/confirmTokenRegistration/${token}`);
   }
-  deactivatePerfil(token: string):Observable<Token>{
-    return this.http.get<Token>(`${this.host}/confirmEmergencyToken/${token}`);
+  deactivatePerfil(username: string):Observable<Token>{
+    return this.http.get<Token>(`${this.host}/confirmEmergencyToken/${username}`);
   }
   updatePerfilFoto(formData:FormData):Observable<Perfil>{
     return this.http.put<Perfil>(`${this.host}/menu`,formData);
@@ -66,10 +69,6 @@ export class AuthenticationService {
 
   public addSessaoToLocalCache(Sessao: Session): void {
     localStorage.setItem('Sessao', JSON.stringify(Sessao));
-  }
-
-  public getPerfilFromLocalCache(): Perfil {
-    return JSON.parse(localStorage.getItem('Perfil')!);
   }
 
   public loadToken(): void {

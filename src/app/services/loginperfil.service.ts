@@ -45,6 +45,7 @@ export class LoginperfilService {
     formData.append('desportosFavoritos',perfil.desportosFavoritos);
     formData.append('enabled', JSON.stringify(perfil.enabled));
     formData.append('notLocked', JSON.stringify(perfil.notLocked));
+    formData.append('mfa', JSON.stringify(perfil.mfa));
     return formData;
   }
 
@@ -88,7 +89,7 @@ export class LoginperfilService {
     formData.append('indicativePhone',perfil.indicativePhone);
     formData.append('desportosFavoritos',perfil.desportosFavoritos);
     formData.append('location',perfil.location);
-    formData.append('MFA',perfil.MFA);
+    formData.append('mfa', JSON.stringify(perfil.mfa));
     formData.append('foto',foto);
     return formData;
   }

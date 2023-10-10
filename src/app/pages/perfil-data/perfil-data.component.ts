@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { ActivatedRoute, ParamMap } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { Perfil } from '../model/perfil';
 import { LoginperfilService } from 'src/app/services/loginperfil.service';
 
@@ -12,9 +12,10 @@ export class PerfilDataComponent {
   dark!:boolean;
   username!:any;
   locked!:boolean;
+  mfa!:boolean;
   private readonly USERNAME : string = "username";
   perfil!:Perfil;
-  constructor(private activatedRoute:ActivatedRoute, private loginPerfilService:LoginperfilService) { }
+  constructor(private activatedRoute:ActivatedRoute, private loginPerfilService:LoginperfilService, private router:Router) { }
 
   ngOnInit(): void {
     this.activatedRoute.paramMap.subscribe(
@@ -24,13 +25,17 @@ export class PerfilDataComponent {
       )
     this.loginPerfilService.obterUserPeloUsername1(this.username).subscribe( data => {
       this.perfil = data;
-    }, error => console.log());
-    /*if (this.selectedSessao.private == "true"){
-      this.locked = true;
-    } else {
-      this.locked = false;
-    }
-    */
+      if (this.perfil.notLocked == true){
+        this.locked = false;
+      } else {
+        this.locked = true;
+      }
+      if (this.perfil.mfa == false){
+        this.mfa = false;
+      } else {
+        this.mfa = true;
+      }
+    }, error => console.log(error));
     var theme = localStorage.getItem('theme');
     if (theme == 'claro'){
       this.dark = false
@@ -38,5 +43,7 @@ export class PerfilDataComponent {
       this.dark = true
     }
   }
-
+  alterarDados(){
+    this.router.navigate([`menu/${this.username}/alterardados`]);
+  }
 }
