@@ -2,7 +2,6 @@ import { Component } from '@angular/core';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { LoginperfilService } from 'src/app/services/loginperfil.service';
 import { Perfil } from '../model/perfil';
-import { AuthService } from 'src/auth.service';
 import { Subscription } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AuthenticationService } from 'src/app/services/authethication.service';
@@ -45,7 +44,6 @@ export class LoginMFAComponent {
   }
   confirmCode(){
     this.showLoading = true;
-    console.log(this.token2.token);
     this.subscriptions.push(
       this.authService.confirmMFA(this.token2.token).subscribe(
         (response: HttpResponse<Token>) => {
@@ -56,6 +54,7 @@ export class LoginMFAComponent {
         },
         (errorResponse: HttpErrorResponse) => {
           this.showLoading = false;
+          console.log(errorResponse);
         }
       )
     )
