@@ -38,12 +38,14 @@ export class MenuComponent implements OnInit {
   showMenu!: boolean;
   logOut!:boolean;
   dark!:boolean;
+  amigos!:boolean;
   private readonly USERNAME:string = 'username';
 
   constructor(private authenticationService:AuthenticationService,private router:Router,private loginPerfilService: LoginperfilService, private activatedRoute:ActivatedRoute) { }
 
 
   ngOnInit(): void {
+    this.amigos = true;
     this.showImage = true;
     this.showMenu = false;
     this.logOut = false;
@@ -87,6 +89,9 @@ export class MenuComponent implements OnInit {
   }
   CriarSessao(){
     this.router.navigate([`menu/${this.username}/createEvent`]);
+  }
+  Amigos(){
+    this.amigos = true;
   }
   remover(){
     this.authenticationService.logOut();
@@ -145,5 +150,8 @@ MostrarMenu(){
 }
 NaoMostrarMenu(){
   this.showMenu = false;
+}
+NaoMostrarAmigos(){
+  this.amigos = false;
 }
 }

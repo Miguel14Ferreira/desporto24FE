@@ -15,7 +15,8 @@
         <img src="{{perfil.foto}}" id="img-fluid" class="rounded-circle" alt=""/>
         <button (click)="NaoMostrarMenu()" id="botaoFechar">X</button>
         <ul>
-        <li id="opcao2" (click)="alterarDados()" routerLinkActive="active-link">Alterar dados do perfil</li>
+          <li id="opcao8" (click)="Amigos()" routerLinkActive="active-link">Lista de amigos</li>
+          <li id="opcao2" (click)="alterarDados()" routerLinkActive="active-link">Alterar dados do perfil</li>
         <li id="opcao3" (click)="alterarPassword()" routerLinkActive="active-link">Alterar nome de utilizador/password</li>
         <li id="opcao4" (click)="verDadosPerfil()" routerLinkActive="active-link">Ver dados do meu perfil</li>
         <li id="opcao6" (click)="Utilizadores()" routerLinkActive="active-link">Mais Utilizadores</li>
@@ -23,6 +24,24 @@
         <li id="opcao5" (click)="terminarSessao()" routerLinkActive="active-link">Terminar Sessão</li>
         </ul>
       </div>
+      <div id="content3" *ngIf="amigos">
+    <p id="D235amigos">Desporto24</p>
+        <p id="D236amigos">Desporto24</p>
+        <p id="D240amigos">Desporto24</p>
+        <p id="D239amigos">Desporto24</p>
+        <p id="D238amigos">Desporto24</p>
+        <p id="D237amigos">Desporto24</p>
+    <h4>Lista de amigos:</h4>
+    <table id="perfil">
+      <tbody>
+              <td>
+                  <img height="40" width="40" src="{{perfil.foto}}" class="rounded-circle img-thumbnail" alt=""/>
+              </td>
+              <td> {{perfil.username}}</td>
+      </tbody>
+      </table>
+    <button (click)="NaoMostrarAmigos()" id="botaoFecharAmigos">X</button>
+    </div>
       <div id="container2">
         <p id="D24a">Desporto24</p>
                 <p id="D241a">Desporto24</p>
@@ -37,7 +56,7 @@
         <p id="D239logOut">Desporto24</p>
         <p id="D238logOut">Desporto24</p>
         <p id="D237logOut">Desporto24</p>
-    <h4>Tens a certeza que queres terminar a sessão?</h4>
+    <h4 id="h4white">Tens a certeza que queres terminar a sessão?</h4>
     <button id="botao6" (click)="remover()">Sim</button>
     <button id="botao7" (click)="voltar()">Não</button>
     </div>
@@ -122,6 +141,7 @@
         <img src="{{perfil.foto}}" id="img-fluid" class="rounded-circle" alt=""/>
         <button (click)="NaoMostrarMenu()" id="botaoFechar">X</button>
     <ul>
+      <li id="opcao8" (click)="Amigos()" routerLinkActive="active-link">Lista de amigos</li>
     <li id="opcao2" (click)="alterarDados()" routerLinkActive="active-link">Alterar dados do perfil</li>
     <li id="opcao3" (click)="alterarPassword()" routerLinkActive="active-link">Alterar nome de utilizador/password</li>
     <li id="opcao4" (click)="verDadosPerfil()" routerLinkActive="active-link">Ver dados do meu perfil</li>
@@ -130,6 +150,16 @@
     <li id="opcao5" (click)="terminarSessao()" routerLinkActive="active-link">Terminar Sessão</li>
     </ul>
     </div>
+    <div id="content3" *ngIf="amigos">
+<p id="D235amigos">Desporto24</p>
+  <p id="D236amigos">Desporto24</p>
+  <p id="D240amigos">Desporto24</p>
+  <p id="D239amigos">Desporto24</p>
+  <p id="D238amigos">Desporto24</p>
+  <p id="D237amigos">Desporto24</p>
+<h4>Lista de amigos:</h4>
+<button (click)="NaoMostrarAmigos()" id="botaoFecharAmigos">X</button>
+</div>
     <div id="container">
       <p id="D24">Desporto24</p>
       <p id="D241">Desporto24</p>
@@ -144,8 +174,8 @@
         <p id="D239logOut">Desporto24</p>
         <p id="D238logOut">Desporto24</p>
         <p id="D237logOut">Desporto24</p>
-    <h4>Tens a certeza que queres terminar a sessão?</h4>
-    <button id="botao6" (click)="remover()">Sim</button>
+        <h4 id="h4black">Tens a certeza que queres terminar a sessão?</h4>
+        <button id="botao6" (click)="remover()">Sim</button>
     <button id="botao7" (click)="voltar()">Não</button>
     </div>
 <form>
