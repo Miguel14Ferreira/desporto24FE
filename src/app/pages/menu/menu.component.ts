@@ -45,7 +45,6 @@ export class MenuComponent implements OnInit {
 
 
   ngOnInit(): void {
-    this.amigos = true;
     this.showImage = true;
     this.showMenu = false;
     this.logOut = false;
