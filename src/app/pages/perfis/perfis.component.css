@@ -489,6 +489,14 @@ transform: translate(-50%, -50%);
     transition: background-color 0.5s;
     border-radius: 10px;
 }
+@keyframes a{
+    0%{
+      height: 0px;
+    }
+    100%{
+      height:400px;
+    }
+  }
 #viewPerfilModal{
     background-color: rgb(1, 1, 61);
     width: 500px;
@@ -503,6 +511,7 @@ transform: translate(-50%, -50%);
         border-radius: 5%;
         white-space: nowrap;
   overflow: hidden;
+  animation: a 1s;
     }
     td{
         cursor:pointer;
@@ -746,6 +755,192 @@ transform: translate(-50%, -50%);
     color: white;
     transition: background-color 0.5s;
 }
+#botaoAdicionarAmigo{
+    text-decoration: none;
+    color: black;
+    background-color: white;
+    font-size: 20px;
+    width: 200px;
+    height: 75px;
+    margin: 0;
+    padding: 1px;
+    text-align: center;
+    font-family: 'Arial';
+    font-weight: bold;
+    position: absolute;
+top: 75%;
+left: 77.5%;
+transform: translate(-50%, -50%);
+    border-radius: 10px;
+}
+#botaoAdicionarAmigo:hover{
+    background-color: lightblue;
+    color: white;
+    transition: background-color 0.5s;
+}
+#D240logOut{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 20%;
+        left: 30%;
+        transform: translate(-50%, -50%);
+        opacity: 20%;
+        transform: rotate(45deg);
+}
+#D239logOut{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 70%;
+        left: -15%;
+        transform: translate(-50%, -50%);
+        opacity: 20%;
+        transform: rotate(45deg);
+}
+#D238logOut{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 70%;
+        left: -40%;
+        transform: translate(-50%, -50%);
+        opacity: 20%;
+        transform: rotate(45deg);
+}
+#D237logOut{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 70%;
+        left: -65%;
+        transform: translate(-50%, -50%);
+        opacity: 20%;
+        transform: rotate(45deg);
+}
+#D236logOut{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 70%;
+        left: 32%;
+        transform: translate(-50%, -50%);
+        opacity: 20%;
+        transform: rotate(45deg);
+}
+#D235logOut{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 70%;
+        left: 10%;
+        transform: translate(-50%, -50%);
+        opacity: 20%;
+        transform: rotate(45deg);
+}
+#h4black{
+                color: white;
+                font-size: 20px;
+                margin: 0;
+                padding: 0;
+                text-align: center;
+                position: absolute;
+                font-weight: bold;
+                    top: 30%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                }
+#botao6{
+    text-decoration: none;
+            color: black;
+            background-color: white;
+            font-size: 20px;
+            width: 100px;
+            margin: 0;
+            padding: 1px;
+            text-align: center;
+            font-family: 'Arial';
+            font-weight: bold;
+            position: absolute;
+        top: 80%;
+        left: 30%;
+        transform: translate(-50%, -50%);
+            border-radius: 10px;
+}
+#botao7:hover{
+    background-color: lightblue;
+    color: white;
+    transition: background-color 0.5s;
+        cursor:pointer;
+}
+#botao7{
+    text-decoration: none;
+            color: black;
+            background-color: white;
+            font-size: 20px;
+            width: 100px;
+            margin: 0;
+            padding: 1px;
+            text-align: center;
+            font-family: 'Arial';
+            font-weight: bold;
+            position: absolute;
+            top: 80%;
+            left: 70%;
+        transform: translate(-50%, -50%);
+            border-radius: 10px;
+}
+#botao6:hover{
+    background-color: lightblue;
+    color: white;
+    transition: background-color 0.5s;
+        cursor:pointer;
+}
+#content2{
+    font-size: 15px;
+    height: 200px;
+    width: 400px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    background-color: white;
+    position: absolute;
+    z-index: 1;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    border-radius: 10px;
+    border-style: solid;
+    border-width: 5px;
+    background-color: grey;
+    overflow: hidden;
+    animation: b 1s;
+}
 #botaoChat{
     text-decoration: none;
     color: black;
@@ -768,7 +963,6 @@ transform: translate(-50%, -50%);
     color: white;
     transition: background-color 0.5s;
 }
-
 h1{
     color: white;
     font-size: 100px;

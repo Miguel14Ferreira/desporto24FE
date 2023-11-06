@@ -7,6 +7,7 @@ import { JwtHelperService } from '@auth0/angular-jwt';
 import { Session } from '../pages/session';
 import { CustomHttpResponse } from '../pages/custom-http-response';
 import { Token } from '../pages/model/token';
+import { Router } from '@angular/router';
 
 
 @Injectable({providedIn: 'root'})
@@ -18,7 +19,7 @@ export class AuthenticationService {
   PerfilName: any;
   private jwtHelper = new JwtHelperService();
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient,private router:Router) {}
 
   loginPerfil(perfil: Perfil):Observable<HttpResponse<Perfil>>{
     return this.http.post<Perfil>(`${this.host}/login`, perfil, {observe: 'response'});
@@ -50,9 +51,6 @@ export class AuthenticationService {
   deactivatePerfil(username: string):Observable<Token>{
     return this.http.get<Token>(`${this.host}/confirmEmergencyToken/${username}`);
   }
-  updatePerfilFoto(formData:FormData):Observable<Perfil>{
-    return this.http.put<Perfil>(`${this.host}/menu`,formData);
-  }
 
   public logOut(): void {
     this.token = null;
@@ -79,18 +77,18 @@ export class AuthenticationService {
     return this.token;
   }
 
-  isLoggedIn(): boolean{
+  isLoggedIn(){
     this.loadToken();
+    console.log(this.token);
     if(this.token != null && this.token !== ''){
       if (this.jwtHelper.decodeToken(this.token).sub != null || ''){
         if (!this.jwtHelper.isTokenExpired(this.token)){
           this.loggedInPerfilname = this.jwtHelper.decodeToken(this.token).sub;
-          return true;
+          return this.router.navigateByUrl('/menu/'+this.loggedInPerfilname+'/')
         }
       }
     } else {
-      this.logOut();
+      return this.logOut();
     }
-    return false;
   }
 }

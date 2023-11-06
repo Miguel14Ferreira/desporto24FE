@@ -14,6 +14,7 @@ import { Session } from '../session';
 })
 export class MenuComponent implements OnInit {
   public sessoes : Session [] = [];
+  perfis : Perfil[] = [];
   fileName!: string;
   profileImage!: File;
   url:any;
@@ -24,6 +25,7 @@ export class MenuComponent implements OnInit {
   showLoading!: boolean;
   showImage!: boolean;
   token: any;
+  showPerfil!: boolean;
   subscriptions: Subscription[] = [];
   id!:number;
   perfil!:Perfil;
@@ -39,13 +41,13 @@ export class MenuComponent implements OnInit {
   logOut!:boolean;
   dark!:boolean;
   amigos!:boolean;
+  selectedPerfil!: Perfil;
   private readonly USERNAME:string = 'username';
 
   constructor(private authenticationService:AuthenticationService,private router:Router,private loginPerfilService: LoginperfilService, private activatedRoute:ActivatedRoute) { }
 
 
   ngOnInit(): void {
-    this.amigos = true;
     this.showImage = true;
     this.showMenu = false;
     this.logOut = false;
@@ -69,12 +71,35 @@ export class MenuComponent implements OnInit {
     } else {
       this.dark = true
     }
+    this.refreshing = true;
+    this.subscriptions.push(
+      this.loginPerfilService.friendList(this.perfil.username).subscribe(
+        (response: Perfil[]) => {
+          this.refreshing = false;
+          this.perfis = response;
+          alert(`Foram encontrados ${response.length} utilizadores`);
+        },
+        (errorResponse: HttpErrorResponse) => {
+          alert(`Ocorreu um erro a executar a operação`);
+          this.refreshing = false;
+        }
+      )
+    )
+  }
+
+
+  fecharPerfil(){
+    this.showPerfil = false;
+  }
+
+  onSelectPerfil(selectedPerfil: Perfil):void{
+    this.selectedPerfil = selectedPerfil;
+    this.showPerfil = true;
   }
 
   NomeUtilizador(){
     return this.perfil.username;
   }
- 
   alterarDados(){
     this.router.navigate([`menu/${this.username}/alterardados`]);
   }

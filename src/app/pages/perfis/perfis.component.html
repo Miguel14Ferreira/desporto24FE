@@ -82,9 +82,20 @@
     <li  id="ultimoLogin2"> {{selectedPerfil?.lastLoginDate}}</li>
     </ul>
 <button (click)="fecharPerfil()" id="botaoFechar">X</button>
-<button id="setadir" type="button"><i class="fas fa-angle-double-right"></i>&nbsp;&nbsp;</button>
-<button id="setaesq" type="button"><i class="fas fa-angle-double-left"></i>&nbsp;&nbsp;</button>
+<button (click)="AddFriend()" id="botaoAdicionarAmigo">Enviar pedido<p> de amizade</p></button>
 <button id="botaoChat">Iniciar Chat</button>
+<div id="content2" *ngIf="addFriend">
+  <p id="D235logOut">Desporto24</p>
+      <p id="D236logOut">Desporto24</p>
+      <p id="D240logOut">Desporto24</p>
+      <p id="D239logOut">Desporto24</p>
+      <p id="D238logOut">Desporto24</p>
+      <p id="D237logOut">Desporto24</p>
+      <h4 id="h4black">Tens a certeza que queres adicionar
+      <p>{{selectedPerfil?.username}} à tua lista de amigos?</p></h4>
+      <button (click)="SendFriendRequest()" id="botao6">Sim</button>
+  <button (click)="NaoAdd()" id="botao7">Não</button>
+  </div>
 </div>
 </div>
 <div *ngIf="!dark" class="img2">
@@ -171,6 +182,17 @@
       <li  id="ultimoLogin2"> {{selectedPerfil?.lastLoginDate}}</li>
       </ul>
   <button (click)="fecharPerfil()" id="botaoFechar">X</button>
-  <button id="setadir" type="button"><i class="fas fa-angle-double-right"></i>&nbsp;&nbsp;</button>
-  <button id="setaesq" type="button"><i class="fas fa-angle-double-left"></i>&nbsp;&nbsp;</button>
-  <button id="botaoChat">Iniciar Chat</button>
+  <button (click)="AddFriend()" id="botaoAdicionarAmigo">Enviar pedido<p> de amizade</p></button>
+<button id="botaoChat">Iniciar Chat</button>
+<div id="content2" *ngIf="addFriend">
+  <p id="D235logOut">Desporto24</p>
+      <p id="D236logOut">Desporto24</p>
+      <p id="D240logOut">Desporto24</p>
+      <p id="D239logOut">Desporto24</p>
+      <p id="D238logOut">Desporto24</p>
+      <p id="D237logOut">Desporto24</p>
+      <h4 id="h4black">Tens a certeza que queres adicionar
+      <p>{{selectedPerfil?.username}} à tua lista de amigos?</p></h4>
+      <button (click)="SendFriendRequest()" id="botao6">Sim</button>
+  <button (click)="NaoAdd()" id="botao7">Não</button>
+  </div>
