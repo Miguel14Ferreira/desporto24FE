@@ -41,6 +41,11 @@ export class LoginMFAComponent {
       this.loginPerfilService.obterUserPeloUsername1(this.username).subscribe( data => {
         this.perfil = data;
       }, error => console.log());
+      if(this.authService.isLoggedIn()){
+        this.router.navigateByUrl('/menu/'+this.perfil.username+'/');
+      } else {
+        this.router.navigateByUrl('/login');
+      }
   }
   confirmCode(){
     this.showLoading = true;
@@ -49,7 +54,7 @@ export class LoginMFAComponent {
         (response: HttpResponse<Token>) => {
         this.token = response.headers.get(HeaderType.JWT_TOKEN);
         this.authService.saveToken(this.token);
-        this.router.navigateByUrl('/menu/'+this.perfil.username);
+        this.router.navigateByUrl('/menu/'+this.perfil.username+'/');
         this.showLoading = false;
         },
         (errorResponse: HttpErrorResponse) => {

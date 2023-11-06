@@ -6,6 +6,7 @@ import { LoginperfilService } from 'src/app/services/loginperfil.service';
 import { NotificationService } from 'src/app/services/notification.service';
 import { Perfil } from '../model/perfil';
 import { AuthenticationService } from 'src/app/services/authethication.service';
+import { ActivatedRoute, ParamMap } from '@angular/router';
 
 
 @Component({
@@ -27,8 +28,11 @@ export class PerfisComponent {
   response!: any;
   buttonId!: any;
   dark!:boolean;
+  addFriend!:boolean;
+  username!:any;
+  private readonly USERNAME:string = 'username';
 
-  constructor (private loginPerfilService: LoginperfilService){}
+  constructor (private loginPerfilService: LoginperfilService,private activatedRoute:ActivatedRoute){}
 
   ngOnInit(): void{
     var theme = localStorage.getItem('theme');
@@ -37,10 +41,43 @@ export class PerfisComponent {
     } else {
       this.dark = true
     }
+    this.activatedRoute.paramMap.subscribe(
+      (params: ParamMap) => {
+        this.username = params.get(this.USERNAME);
+      }
+      )
+    this.loginPerfilService.obterUserPeloUsername1(this.username).subscribe( data => {
+      this.perfil = data;
+    }, error => console.log());
   }
 
   fecharPerfil(){
     this.show = false;
+  }
+
+  AddFriend(){
+    this.addFriend = true;
+  }
+  NaoAdd(){
+    this.addFriend = false;
+  }
+  SendFriendRequest(){
+    const formData = this.loginPerfilService.addFriendFromData(this.perfil.username,this.selectedPerfil.username);
+    this.refreshing = true;
+    console.log(this.perfil.username)
+    console.log(this.selectedPerfil.username)
+    this.subscriptions.push(
+      this.loginPerfilService.addFriend(formData).subscribe(
+        (response: Perfil) => {
+          this.refreshing = false;
+          alert(`Foi enviado um novo pedido de amizade a este utilizador!`);
+        },
+        (errorResponse: HttpErrorResponse) => {
+          alert(`Ocorreu um erro a executar a operação`);
+          this.refreshing = false;
+        }
+      )
+    )
   }
 
   obterPerfis(showNotification: boolean): void{

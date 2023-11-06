@@ -27,7 +27,7 @@ const routes: Routes = [
   {path:'menu/:username/events/menu',redirectTo:'/menu/:username', pathMatch:'full'},
   {path:'menu/login',redirectTo:'/login', pathMatch:'full'},
   {path:'login',component:LoginComponent},
-  {path:'menu/:username',component:MenuComponent},
+  {path:'menu/:username/',component:MenuComponent},
   {path:'login/registerNewUser',component:CreateaccountComponent},
   {path:'menu/:username/createEvent',component:Events2Component},
   {path:'menu/:username/createEvent/menu', redirectTo:'menu/:username',pathMatch:'full'},
@@ -47,7 +47,8 @@ const routes: Routes = [
   {path:'menu/:username/dadosPerfil',component:PerfilDataComponent, pathMatch:'full'},
   {path:'menu/:username/dadosPerfil/menu',redirectTo:'menu/:username',pathMatch:'full'},  
   {path:'menu/:username/dadosPerfil/alterardados',redirectTo:'menu/:username/alterardados',pathMatch:'full'},
-  {path:'login/MFAauthentication/:username', component: LoginMFAComponent}  
+  {path:'login/MFAauthentication/:username', component: LoginMFAComponent},
+  {path:'menu/:username', redirectTo: 'menu/:username/'}
 ];
 
 @NgModule({

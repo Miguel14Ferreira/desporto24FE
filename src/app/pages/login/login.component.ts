@@ -38,11 +38,7 @@ export class LoginComponent implements OnInit, OnDestroy {
     } else {
       this.dark = true
     }
-    if(this.authenticationService.isLoggedIn()){
-      this.router.navigateByUrl('/menu');
-    } else {
-      this.router.navigateByUrl('/login');
-    }
+    this.authenticationService.isLoggedIn()
   }
   minhaImagem = "assets/Sports1.jpg";
   minhaImagem2 = "assets/olho1.png";
@@ -86,7 +82,7 @@ onLogin(perfil: Perfil): void {
         } else {
         this.token = response.headers.get(HeaderType.JWT_TOKEN);
         this.authenticationService.saveToken(this.token);
-        this.router.navigateByUrl('/menu/'+perfil.username);
+        this.router.navigateByUrl('/menu/'+perfil.username+'/');
         this.showLoading = false;
       }
     },

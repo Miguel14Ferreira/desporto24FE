@@ -1004,6 +1004,27 @@ transform: translate(-50%, -50%);
         left: 50%;
         transform: translate(-50%, -50%);
 }
+#perfil{
+    font-size: 15px;
+    height: 50px;
+    width: 90%;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    background-color: white;
+    position: absolute;
+        top: 20%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    border-radius: 50px;
+}
+#perfil:hover{
+    background-color: grey;
+    color: white;
+    transition: background-color 0.5s;
+    border-radius: 50px;
+}
 #tabela1{
     font-size: 15px;
     height: 25px;
@@ -1014,9 +1035,9 @@ transform: translate(-50%, -50%);
     font-family: 'Arial';
     background-color: white;
     position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     border-radius: 10px;
     border-style: solid;
 }
@@ -1026,7 +1047,150 @@ transform: translate(-50%, -50%);
     transition: background-color 0.5s;
     border-radius: 10px;
 }
+#D24modal{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 20%;
+        left: 0%;
+        transform: translate(-50%, -50%);
+        opacity: 20%;
+        transform: rotate(45deg);
+}
+#D241modal{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 20%;
+        left: -20%;
+        transform: translate(-50%, -50%);
+        opacity: 20%;
+        transform: rotate(45deg);
+}
+#D242modal{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 20%;
+        left: -40%;
+        transform: translate(-50%, -50%);
+        opacity: 20%;
+        transform: rotate(45deg);
+}
+#D243modal{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 20%;
+        left: -60%;
+        transform: translate(-50%, -50%);
+        opacity: 20%;
+        transform: rotate(45deg);
+}
+#D244modal{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 20%;
+        left: -80%;
+        transform: translate(-50%, -50%);
+        opacity: 20%;
+        transform: rotate(45deg);
+}
+#D245modal{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 20%;
+        left: -100%;
+        transform: translate(-50%, -50%);
+        opacity: 20%;
+        transform: rotate(45deg);
+}
+#D246modal{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 20%;
+        left: 20%;
+        transform: translate(-50%, -50%);
+        opacity: 20%;
+        transform: rotate(45deg);
+}
+#D247modal{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 20%;
+        left: 40%;
+        transform: translate(-50%, -50%);
+        opacity: 20%;
+        transform: rotate(45deg);
+}
+#D248modal{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 20%;
+        left: 60%;
+        transform: translate(-50%, -50%);
+        opacity: 20%;
+        transform: rotate(45deg);
+}
 #viewPerfilModal{
+    background-color: rgb(1, 1, 61);
+    width: 500px;
+    height: 400px;
+    position: absolute;
+        top: 60%;
+        left: 50%;
+        z-index: 1;
+        transform: translate(-50%, -50%);
+        border-style: solid;
+        border-width: 5px;
+        padding: 50px;
+        border-radius: 5%;
+        white-space: nowrap;
+  overflow: hidden;
+  animation: a 1s;
+    }
+#viewSessaoModal{
     background-color: rgb(1, 1, 61);
     width: 500px;
     height: 400px;

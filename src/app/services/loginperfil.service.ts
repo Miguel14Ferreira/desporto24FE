@@ -108,9 +108,21 @@ export class LoginperfilService {
     formData.append('password',perfil.password);
     return formData;
   }
+  public addFriendFromData(loggedInUsername: string, username2: string): FormData{
+    const formData = new FormData();
+    formData.append('username1',loggedInUsername);
+    formData.append('username2',username2);
+    return formData;
+  }
 
   obterDadosPessoais(): Observable<Perfil[] | HttpErrorResponse>{
     return this.httpClient.get<Perfil[]>(`${this.host}/menu`);
+  }
+  friendList(username:string):Observable<Perfil[]>{
+    return this.httpClient.get<Perfil[]>(`${this.host}/menu/${username}/`);
+  }
+  addFriend(formData:FormData):Observable<Perfil>{
+    return this.httpClient.post<Perfil>(`${this.host}/menu/:username/perfis`,formData);
   }
   obterSessoes() {
     return this.httpClient.get<Session[]>(`${this.host}/menu`);

@@ -4,6 +4,10 @@
         <img src="{{perfil.foto}}" class="image-preview__image2" class="rounded-circle img-thumbnail">
         <p>Abrir Menu</p>
       </div>
+        <a href="" class="text-white mx-5">
+          <i class="fas fa-envelope fa-2x"></i>
+          <span class="badge rounded-pill badge-notification bg-danger toggle-badge d-none"></span>
+      </a>
       <div *ngIf="showMenu" id="content">
         <p id="D243menu">Desporto24</p>
             <p id="D244menu">Desporto24</p>
@@ -15,8 +19,8 @@
         <img src="{{perfil.foto}}" id="img-fluid" class="rounded-circle" alt=""/>
         <button (click)="NaoMostrarMenu()" id="botaoFechar">X</button>
         <ul>
-          <li id="opcao8" (click)="Amigos()" routerLinkActive="active-link">Lista de amigos</li>
-          <li id="opcao2" (click)="alterarDados()" routerLinkActive="active-link">Alterar dados do perfil</li>
+        <li id="opcao8" (click)="Amigos()" routerLinkActive="active-link">Lista de amigos</li>
+        <li id="opcao2" (click)="alterarDados()" routerLinkActive="active-link">Alterar dados do perfil</li>
         <li id="opcao3" (click)="alterarPassword()" routerLinkActive="active-link">Alterar nome de utilizador/password</li>
         <li id="opcao4" (click)="verDadosPerfil()" routerLinkActive="active-link">Ver dados do meu perfil</li>
         <li id="opcao6" (click)="Utilizadores()" routerLinkActive="active-link">Mais Utilizadores</li>
@@ -33,11 +37,11 @@
         <p id="D237amigos">Desporto24</p>
     <h4>Lista de amigos:</h4>
     <table id="perfil">
-      <tbody>
-              <td>
-                  <img height="40" width="40" src="{{perfil.foto}}" class="rounded-circle img-thumbnail" alt=""/>
+      <tbody *ngFor="let perfil of perfis">
+              <td (click)="onSelectPerfil(perfil)">
+                  <img height="70" width="70" src="{{perfil.foto}}" class="rounded-circle img-thumbnail" alt=""/>
               </td>
-              <td> {{perfil.username}}</td>
+              <td (click)="onSelectPerfil(perfil)"> {{perfil.username}}</td>
       </tbody>
       </table>
     <button (click)="NaoMostrarAmigos()" id="botaoFecharAmigos">X</button>
@@ -88,7 +92,7 @@
         <td (click)="onSelectSessao(sessao)"> {{sessao.private}} </td>
 </tbody>
 </table>
-<div *ngIf="show" id="viewPerfilModal">
+<div *ngIf="show" id="viewSessaoModal">
     <p id="D24">Desporto24</p>
     <p id="D241">Desporto24</p>
     <p id="D242">Desporto24</p>
@@ -122,6 +126,47 @@
 <button id="setaesq" type="button"><i class="fas fa-angle-double-left"></i>&nbsp;&nbsp;</button>
 <button id="botaoChat">Iniciar Chat</button>
 </div>
+</div>
+<div *ngIf="showPerfil" id="viewPerfilModal">
+  <p id="D24modal">Desporto24</p>
+    <p id="D241modal">Desporto24</p>
+    <p id="D242modal">Desporto24</p>
+    <p id="D243modal">Desporto24</p>
+    <p id="D244modal">Desporto24</p>
+    <p id="D245modal">Desporto24</p>
+    <p id="D246modal">Desporto24</p>
+    <p id="D247modal">Desporto24</p>
+    <p id="D248modal">Desporto24</p>
+    <div class="image-preview" id="imagePreview">
+      <img src="{{selectedPerfil?.foto}}" alt="Image Preview" class="image-preview__image"/>
+    </div>
+<div id="username">
+  {{selectedPerfil?.username}}
+</div>
+<ul>
+<li id="dataNascimento">Data de nascimento</li>
+  <li id="dataNascimento2"> {{selectedPerfil?.dateOfBirth}}
+  </li>
+  <li id="genero">Género </li>
+  <li id="genero2"> {{selectedPerfil?.gender}} </li>
+  <li id="paisNascimento">País de nascimento </li>
+  <li id="paisNascimento2"> {{selectedPerfil?.country}} </li>
+  <li id="desportosFavoritos">Desportos favoritos</li>
+  <li id="desportosFavoritos2"> {{selectedPerfil?.desportosFavoritos}}</li>
+  <li id="localidade">Localidade</li>
+  <li id="localidade2"> {{selectedPerfil?.location}}</li>
+<li id="estadoDaConta">Estado da conta:</li>
+<li>
+    <span *ngIf="locked" id="estadoDaConta2">Conta bloqueada</span>
+    <span *ngIf="!locked" id="estadoDaConta2">Conta ativa</span>
+</li>
+<li id="membroDesde">Membro desde:</li>
+<li id="membroDesde2"> {{selectedPerfil?.joinDate}}</li>
+<li  id="ultimoLogin">Ultimo Login:</li>
+<li  id="ultimoLogin2"> {{selectedPerfil?.lastLoginDate}}</li>
+</ul>
+<button (click)="fecharPerfil()" id="botaoFechar">X</button>
+<button id="botaoChat">Iniciar Chat</button>
 </div>
 </div>
 <div *ngIf="!dark" class="img2">
@@ -158,6 +203,14 @@
   <p id="D238amigos">Desporto24</p>
   <p id="D237amigos">Desporto24</p>
 <h4>Lista de amigos:</h4>
+<table id="perfil">
+      <tbody *ngFor="let perfil of perfis">
+              <td (click)="onSelectPerfil(perfil)">
+                  <img height="70" width="70" src="{{perfil.foto}}" class="rounded-circle img-thumbnail" alt=""/>
+              </td>
+              <td (click)="onSelectPerfil(perfil)"> {{perfil.username}}</td>
+      </tbody>
+      </table>
 <button (click)="NaoMostrarAmigos()" id="botaoFecharAmigos">X</button>
 </div>
     <div id="container">
@@ -206,7 +259,7 @@
         <td (click)="onSelectSessao(sessao)"> {{sessao.private}} </td>
 </tbody>
 </table>
-<div *ngIf="show" id="viewPerfilModal">
+<div *ngIf="show" id="viewSessaoModal">
     <p id="D24">Desporto24</p>
     <p id="D241">Desporto24</p>
     <p id="D242">Desporto24</p>
@@ -239,5 +292,46 @@
 <button id="setaesq" type="button"><i class="fas fa-angle-double-left"></i>&nbsp;&nbsp;</button>
 <button id="botaoChat">Iniciar Chat</button>
 </div>
+</div>
+<div *ngIf="showPerfil" id="viewPerfilModal">
+  <p id="D24modal">Desporto24</p>
+    <p id="D241modal">Desporto24</p>
+    <p id="D242modal">Desporto24</p>
+    <p id="D243modal">Desporto24</p>
+    <p id="D244modal">Desporto24</p>
+    <p id="D245modal">Desporto24</p>
+    <p id="D246modal">Desporto24</p>
+    <p id="D247modal">Desporto24</p>
+    <p id="D248modal">Desporto24</p>
+    <div class="image-preview" id="imagePreview">
+      <img src="{{selectedPerfil?.foto}}" alt="Image Preview" class="image-preview__image"/>
+    </div>
+<div id="username">
+  {{selectedPerfil?.username}}
+</div>
+<ul>
+<li id="dataNascimento">Data de nascimento</li>
+  <li id="dataNascimento2"> {{selectedPerfil?.dateOfBirth}}
+  </li>
+  <li id="genero">Género </li>
+  <li id="genero2"> {{selectedPerfil?.gender}} </li>
+  <li id="paisNascimento">País de nascimento </li>
+  <li id="paisNascimento2"> {{selectedPerfil?.country}} </li>
+  <li id="desportosFavoritos">Desportos favoritos</li>
+  <li id="desportosFavoritos2"> {{selectedPerfil?.desportosFavoritos}}</li>
+  <li id="localidade">Localidade</li>
+  <li id="localidade2"> {{selectedPerfil?.location}}</li>
+<li id="estadoDaConta">Estado da conta:</li>
+<li>
+    <span *ngIf="locked" id="estadoDaConta2">Conta bloqueada</span>
+    <span *ngIf="!locked" id="estadoDaConta2">Conta ativa</span>
+</li>
+<li id="membroDesde">Membro desde:</li>
+<li id="membroDesde2"> {{selectedPerfil?.joinDate}}</li>
+<li  id="ultimoLogin">Ultimo Login:</li>
+<li  id="ultimoLogin2"> {{selectedPerfil?.lastLoginDate}}</li>
+</ul>
+<button (click)="fecharPerfil()" id="botaoFechar">X</button>
+<button id="botaoChat">Iniciar Chat</button>
 </div>
 </div>
