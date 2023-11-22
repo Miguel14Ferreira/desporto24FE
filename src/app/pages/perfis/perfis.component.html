@@ -37,7 +37,7 @@
                 <td (click)="onSelectPerfil(perfil)"> {{perfil.desportosFavoritos}}</td>
         </tbody>
     </table>
-    <button id="botao2" routerLink="menu" type="button">
+    <button id="botao2" (click)="Menu()" type="button">
       <i *ngIf= "showLoading" class="fas fa-spinner fa-spin"></i>&nbsp;&nbsp;
       <span *ngIf="showLoading">A carregar...</span>
       <span *ngIf="!showLoading">Voltar para o menu principal</span>
@@ -137,7 +137,7 @@
                   <td (click)="onSelectPerfil(perfil)"> {{perfil.desportosFavoritos}}</td>
           </tbody>
       </table>
-      <button id="botao2" routerLink="menu" type="button">
+      <button id="botao2" (click)="Menu()" type="button">
         <i *ngIf= "showLoading" class="fas fa-spinner fa-spin"></i>&nbsp;&nbsp;
         <span *ngIf="showLoading">A carregar...</span>
         <span *ngIf="!showLoading">Voltar para o menu principal</span>

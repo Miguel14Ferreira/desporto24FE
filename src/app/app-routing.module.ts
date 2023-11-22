@@ -17,6 +17,8 @@ import { ConfirmTokenRegistrationComponent } from './pages/confirm-token-registr
 import { ConfirmEmergencyTokenComponent } from './pages/confirm-emergency-token/confirm-emergency-token.component';
 import { PerfilDataComponent } from './pages/perfil-data/perfil-data.component';
 import { LoginMFAComponent } from './pages/login-mfa/login-mfa.component';
+import { ConfirmationNewFriendComponent } from './pages/confirmation-new-friend/confirmation-new-friend.component';
+import { FriendListComponent } from './pages/friend-list/friend-list.component';
 
 const routes: Routes = [
   {path:'', redirectTo:'home',pathMatch:'full'},
@@ -27,7 +29,6 @@ const routes: Routes = [
   {path:'menu/:username/events/menu',redirectTo:'/menu/:username', pathMatch:'full'},
   {path:'menu/login',redirectTo:'/login', pathMatch:'full'},
   {path:'login',component:LoginComponent},
-  {path:'menu/:username/',component:MenuComponent},
   {path:'login/registerNewUser',component:CreateaccountComponent},
   {path:'menu/:username/createEvent',component:Events2Component},
   {path:'menu/:username/createEvent/menu', redirectTo:'menu/:username',pathMatch:'full'},
@@ -48,7 +49,10 @@ const routes: Routes = [
   {path:'menu/:username/dadosPerfil/menu',redirectTo:'menu/:username',pathMatch:'full'},  
   {path:'menu/:username/dadosPerfil/alterardados',redirectTo:'menu/:username/alterardados',pathMatch:'full'},
   {path:'login/MFAauthentication/:username', component: LoginMFAComponent},
-  {path:'menu/:username', redirectTo: 'menu/:username/'}
+  {path:'menu/:username', component:MenuComponent},
+  {path:'menu/:username/friendList', component:FriendListComponent},
+  {path:'menu/:username/friendList/:username', redirectTo:'menu/:username'},
+  {path:'login/confirmNewFriend/:token',component:ConfirmationNewFriendComponent}
 ];
 
 @NgModule({

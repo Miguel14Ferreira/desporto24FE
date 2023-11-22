@@ -57,6 +57,9 @@ export class ChangepasswordComponent implements OnInit {
       alert(`A presente palavra-passe que estás a colocar, já se encontra em uso.`)
     }
   }
+  Menu(){
+    this.router.navigate([`menu/${this.username}`]);
+  }
 
   viewPass(){
     this.visible = !this.visible;

@@ -119,7 +119,7 @@ export class LoginperfilService {
     return this.httpClient.get<Perfil[]>(`${this.host}/menu`);
   }
   friendList(username:string):Observable<Perfil[]>{
-    return this.httpClient.get<Perfil[]>(`${this.host}/menu/${username}/`);
+    return this.httpClient.get<Perfil[]>(`${this.host}/menu/${username}/friendList`);
   }
   addFriend(formData:FormData):Observable<Perfil>{
     return this.httpClient.post<Perfil>(`${this.host}/menu/:username/perfis`,formData);

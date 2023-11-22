@@ -470,7 +470,7 @@ transform: translate(-50%, -50%);
 #tabela1{
     font-size: 15px;
     height: 25px;
-    width: 90%;
+    width: 20%;
     margin: 0;
     padding: 0;
     text-align: center;
@@ -480,15 +480,15 @@ transform: translate(-50%, -50%);
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-    border-radius: 10px;
+    border-radius: 50px;
     border-collapse: collapse;
     border-spacing: 0;
 }
-#tabela2:hover{
+#tabela1:hover{
     background-color: grey;
     color: white;
     transition: background-color 0.5s;
-    border-radius: 10px;
+    border-radius: 50px;
 }
 @keyframes a{
     0%{
@@ -756,25 +756,24 @@ transform: translate(-50%, -50%);
     color: white;
     transition: background-color 0.5s;
 }
-#botaoAdicionarAmigo{
+#botaoBloquear{
     text-decoration: none;
     color: black;
     background-color: white;
     font-size: 20px;
     width: 200px;
-    height: 75px;
     margin: 0;
     padding: 1px;
     text-align: center;
     font-family: 'Arial';
     font-weight: bold;
     position: absolute;
-top: 75%;
+top: 80%;
 left: 77.5%;
 transform: translate(-50%, -50%);
     border-radius: 10px;
 }
-#botaoAdicionarAmigo:hover{
+#botaoBloquear:hover{
     background-color: lightblue;
     color: white;
     transition: background-color 0.5s;

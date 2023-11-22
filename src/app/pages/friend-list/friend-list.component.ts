@@ -11,12 +11,10 @@ import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 
 @Component({
   selector: 'app-perfis',
-  templateUrl: './perfis.component.html',
-  styleUrls: ['./perfis.component.css']
+  templateUrl: './friend-list.component.html',
+  styleUrls: ['./friend-list.component.css']
 })
-export class PerfisComponent {
-  private titleSubject = new BehaviorSubject<String>('Perfis');
-  public titleAction$ = this.titleSubject.asObservable();
+export class FriendListComponent {
   public perfis: Perfil[] = [];
   perfil!: Perfil;
   refreshing!:boolean;
@@ -51,12 +49,10 @@ export class PerfisComponent {
     }, error => console.log());
     this.refreshing = true;
     this.subscriptions.push(
-      this.loginPerfilService.obterPerfis().subscribe(
+      this.loginPerfilService.friendList(this.perfil.username).subscribe(
         (response: Perfil[]) => {
-          this.refreshing = false;
-          this.loginPerfilService.obterPerfis();
           this.perfis = response;
-          alert(`Foram encontrados ${response.length} utilizadores`);
+          this.refreshing = false;
         },
         (errorResponse: HttpErrorResponse) => {
           alert(`Ocorreu um erro a executar a operação`);
@@ -93,15 +89,13 @@ export class PerfisComponent {
     )
   }
 
-  obterPerfis(showNotification: boolean): void{
+  listarAmigos(showNotification: boolean): void{
     this.refreshing = true;
     this.subscriptions.push(
-      this.loginPerfilService.obterPerfis().subscribe(
+      this.loginPerfilService.friendList(this.perfil.username).subscribe(
         (response: Perfil[]) => {
-          this.refreshing = false;
-          this.loginPerfilService.obterPerfis();
           this.perfis = response;
-          alert(`Foram encontrados ${response.length} utilizadores`);
+          this.refreshing = false;
         },
         (errorResponse: HttpErrorResponse) => {
           alert(`Ocorreu um erro a executar a operação`);

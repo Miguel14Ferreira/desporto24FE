@@ -82,7 +82,7 @@ onLogin(perfil: Perfil): void {
         } else {
         this.token = response.headers.get(HeaderType.JWT_TOKEN);
         this.authenticationService.saveToken(this.token);
-        this.router.navigateByUrl('/menu/'+perfil.username+'/');
+        this.router.navigateByUrl('/menu/'+perfil.username);
         this.showLoading = false;
       }
     },

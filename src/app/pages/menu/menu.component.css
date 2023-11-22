@@ -794,15 +794,39 @@ transform: translate(-50%, -50%);
     font-family: 'Arial';
     position: absolute;
     z-index: 1;
-        top: 50%;
-        left: 50%;
+        top: 40%;
+        left: 10%;
         transform: translate(-50%, -50%);
     border-radius: 10px;
     border-style: solid;
     border-width: 5px;
-    background-color: darkblue;
+    background-color: grey;
     overflow: hidden;
     animation:a 1s;
+}
+#envelope{
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    z-index: 1;
+        top: 10%;
+        left: 10%;
+        width: 100px;
+        height: 50px;
+        transform: translate(-50%, -50%);
+    overflow: hidden;
+    color: white;
+    font-size: 40px;
+    opacity: 0.5;
+transition: 0.6s;
+}
+#envelope:hover{
+    opacity: 1;
+    transition: 0.6s;
+    color: white;
+    text-align: center;
+    font-family: 'Arial';
+    cursor:pointer;
 }
 @keyframes a{
   0%{
@@ -1039,7 +1063,8 @@ transform: translate(-50%, -50%);
     left: 50%;
     transform: translate(-50%, -50%);
     border-radius: 10px;
-    border-style: solid;
+    border-collapse: collapse;
+    border-spacing: 0;
 }
 #tabela2:hover{
     background-color: grey;

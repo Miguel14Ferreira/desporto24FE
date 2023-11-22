@@ -6,6 +6,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { LoginperfilService } from 'src/app/services/loginperfil.service';
 import { Subscription } from 'rxjs';
 import { Session } from '../session';
+import { FriendRequest } from '../model/friendRequest';
 
 @Component({
   selector: 'app-menu',
@@ -31,10 +32,11 @@ export class MenuComponent implements OnInit {
   perfil!:Perfil;
   editPerfil:Perfil = new Perfil();
   refreshing!:boolean;
+  public friendList: FriendRequest[] = [];
+  friend!: FriendRequest;
   locked!:boolean;
   selectedSessao!: Session;
   show!:boolean;
-  response!: any;
   buttonId!: any;
   sessao!: Session;
   showMenu!: boolean;
@@ -42,6 +44,7 @@ export class MenuComponent implements OnInit {
   dark!:boolean;
   amigos!:boolean;
   selectedPerfil!: Perfil;
+  showNotification!:boolean;
   private readonly USERNAME:string = 'username';
 
   constructor(private authenticationService:AuthenticationService,private router:Router,private loginPerfilService: LoginperfilService, private activatedRoute:ActivatedRoute) { }
@@ -71,20 +74,6 @@ export class MenuComponent implements OnInit {
     } else {
       this.dark = true
     }
-    this.refreshing = true;
-    this.subscriptions.push(
-      this.loginPerfilService.friendList(this.perfil.username).subscribe(
-        (response: Perfil[]) => {
-          this.refreshing = false;
-          this.perfis = response;
-          alert(`Foram encontrados ${response.length} utilizadores`);
-        },
-        (errorResponse: HttpErrorResponse) => {
-          alert(`Ocorreu um erro a executar a operação`);
-          this.refreshing = false;
-        }
-      )
-    )
   }
 
 
@@ -116,7 +105,7 @@ export class MenuComponent implements OnInit {
     this.router.navigate([`menu/${this.username}/createEvent`]);
   }
   Amigos(){
-    this.amigos = true;
+    this.router.navigate([`menu/${this.username}/friendList`]);
   }
   remover(){
     this.authenticationService.logOut();
@@ -176,7 +165,14 @@ MostrarMenu(){
 NaoMostrarMenu(){
   this.showMenu = false;
 }
-NaoMostrarAmigos(){
-  this.amigos = false;
+MostrarNotificacoes(){
+  if (this.showNotification == false){
+  this.showNotification = true;
+  } else {
+    this.showNotification = false
+  }
+}
+NaoMostrarNotificacoes(){
+  this.showNotification = false;
 }
 }

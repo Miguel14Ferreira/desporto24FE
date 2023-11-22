@@ -72,6 +72,9 @@ export class AlterardadosComponent implements OnInit {
       }
     }
   }
+  Menu(){
+    this.router.navigate([`menu/${this.username}`]);
+  }
 
     onUpdatePerfil(): void {
       if (this.editPerfil.address== "" || this.editPerfil.dateOfBirth== "" || this.editPerfil.email== "" || this.editPerfil.desportosFavoritos== "" || this.editPerfil.fullName== "" ||

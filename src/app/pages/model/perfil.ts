@@ -22,6 +22,7 @@ export class Perfil {
     public role: string;
     public authorities: [];
     public desportosFavoritos: string;
+    public messages: [];
     
     constructor(){
         this.username = '';
@@ -47,5 +48,6 @@ export class Perfil {
         this.role = '';
         this.authorities = [];
         this.desportosFavoritos = '';
+        this.messages = [];
     }      
 }

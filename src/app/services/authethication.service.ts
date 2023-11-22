@@ -51,6 +51,9 @@ export class AuthenticationService {
   deactivatePerfil(username: string):Observable<Token>{
     return this.http.get<Token>(`${this.host}/confirmEmergencyToken/${username}`);
   }
+  acceptFriendRequestToken(token:string):Observable<Token>{
+    return this.http.get<Token>(`${this.host}/login/confirmNewFriend/${token}`);
+  }
 
   public logOut(): void {
     this.token = null;
@@ -79,12 +82,11 @@ export class AuthenticationService {
 
   isLoggedIn(){
     this.loadToken();
-    console.log(this.token);
     if(this.token != null && this.token !== ''){
       if (this.jwtHelper.decodeToken(this.token).sub != null || ''){
         if (!this.jwtHelper.isTokenExpired(this.token)){
           this.loggedInPerfilname = this.jwtHelper.decodeToken(this.token).sub;
-          return this.router.navigateByUrl('/menu/'+this.loggedInPerfilname+'/')
+          return this.router.navigateByUrl('/menu/'+this.loggedInPerfilname)
         }
       }
     } else {

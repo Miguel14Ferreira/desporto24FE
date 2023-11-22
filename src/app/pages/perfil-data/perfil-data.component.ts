@@ -46,4 +46,7 @@ export class PerfilDataComponent {
   alterarDados(){
     this.router.navigate([`menu/${this.username}/alterardados`]);
   }
+  Menu(){
+    this.router.navigate([`menu/${this.username}`]);
+  }
 }
