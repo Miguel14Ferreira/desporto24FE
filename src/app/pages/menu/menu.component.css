@@ -804,6 +804,26 @@ transform: translate(-50%, -50%);
     overflow: hidden;
     animation:a 1s;
 }
+#content4{
+    font-size: 15px;
+    height: 400px;
+    width: 300px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    z-index: 1;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    border-radius: 10px;
+    border-style: solid;
+    border-width: 5px;
+    background-color: grey;
+    overflow: hidden;
+    animation:a 1s;
+}
 #envelope{
     text-align: center;
     font-family: 'Arial';
@@ -1071,6 +1091,50 @@ transition: 0.6s;
     color: white;
     transition: background-color 0.5s;
     border-radius: 10px;
+}
+#tabela3{
+    font-size: 15px;
+    width: 80%;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    background-color: white;
+    position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    border-radius: 50px;
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+#tabela3:hover{
+    background-color: grey;
+    color: white;
+    transition: background-color 0.5s;
+    border-radius: 50px;
+}
+#botaoBloquear{
+    text-decoration: none;
+    color: black;
+    background-color: white;
+    font-size: 20px;
+    width: 200px;
+    margin: 0;
+    padding: 1px;
+    text-align: center;
+    font-family: 'Arial';
+    font-weight: bold;
+    position: absolute;
+top: 80%;
+left: 77.5%;
+transform: translate(-50%, -50%);
+    border-radius: 10px;
+}
+#botaoBloquear:hover{
+    background-color: lightblue;
+    color: white;
+    transition: background-color 0.5s;
 }
 #D24modal{
     color: white;

@@ -45,6 +45,7 @@ export class MenuComponent implements OnInit {
   amigos!:boolean;
   selectedPerfil!: Perfil;
   showNotification!:boolean;
+  bloquear!:boolean;
   private readonly USERNAME:string = 'username';
 
   constructor(private authenticationService:AuthenticationService,private router:Router,private loginPerfilService: LoginperfilService, private activatedRoute:ActivatedRoute) { }
@@ -105,7 +106,40 @@ export class MenuComponent implements OnInit {
     this.router.navigate([`menu/${this.username}/createEvent`]);
   }
   Amigos(){
-    this.router.navigate([`menu/${this.username}/friendList`]);
+    this.amigos = true;
+    this.loginPerfilService.friendList(this.perfil.username).subscribe(
+      (response: Perfil[]) => {
+        this.perfis = response;
+      },
+      (errorResponse: HttpErrorResponse) => {
+        alert(`Ocorreu um erro a executar a operação`);
+      }
+    )
+  }
+  naoBloquear(){
+    this.bloquear = false;
+  }
+  blockAmigo(){
+    this.bloquear = true;
+  }
+  bloquearAmigo(){
+    const formData = this.loginPerfilService.addFriendFromData(this.perfil.username,this.selectedPerfil.username);
+    this.refreshing = true;
+    this.subscriptions.push(
+      this.loginPerfilService.addFriend(formData).subscribe(
+        (response: Perfil) => {
+          this.refreshing = false;
+          alert(`Foi enviado um novo pedido de amizade a este utilizador!`);
+        },
+        (errorResponse: HttpErrorResponse) => {
+          alert(`Ocorreu um erro a executar a operação`);
+          this.refreshing = false;
+        }
+      )
+    )
+  }
+  naoMostrarAmigos(){
+    this.amigos = false;
   }
   remover(){
     this.authenticationService.logOut();
