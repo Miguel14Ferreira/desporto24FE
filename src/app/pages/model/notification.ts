@@ -1,7 +1,7 @@
-export class Nofication{
-    message:String;
+export class Notification{
+    mensagem:String;
 
     constructor(){
-        this.message = '';
+        this.mensagem = '';
     }
 }

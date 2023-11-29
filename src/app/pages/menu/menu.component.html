@@ -7,8 +7,6 @@
       <div id="envelope">
         <i class="bi bi-envelope" (click)="MostrarNotificacoes()"></i>
       </div>
-      <div *ngIf="showNotification" id="notifications">
-      </div>
             <div *ngIf="showMenu" id="content">
         <p id="D243menu">Desporto24</p>
             <p id="D244menu">Desporto24</p>
@@ -68,6 +66,18 @@
         <p id="D237amigos">Desporto24</p>
         <h4>Notificações</h4>
     <button (click)="NaoMostrarNotificacoes()" id="botaoFecharAmigos">X</button>
+    <table id="notificacoes">
+      <tbody *ngFor="let Notification of Notifications">
+              <td (click)="onSelectedNotification(Notification)" id="notification"> {{Notification.mensagem}}</td>
+      </tbody>
+  </table>
+    </div>
+    <div *ngIf="showNotificationMessage" id="viewNotificationModal">
+      <h4>Mensagem:</h4>
+      <div id="mensagem">
+        <h5>{{selectedNotification?.mensagem}}</h5>
+      </div>
+      <button (click)="fecharMensagem()" id="botaoFecharNotificacoes">X</button>
     </div>
       <div id="container2">
         <p id="D24a">Desporto24</p>

@@ -7,6 +7,7 @@ import { LoginperfilService } from 'src/app/services/loginperfil.service';
 import { Subscription } from 'rxjs';
 import { Session } from '../session';
 import { FriendRequest } from '../model/friendRequest';
+import { Notification } from '../model/notification';
 
 @Component({
   selector: 'app-menu',
@@ -16,6 +17,8 @@ import { FriendRequest } from '../model/friendRequest';
 export class MenuComponent implements OnInit {
   public sessoes : Session [] = [];
   perfis : Perfil[] = [];
+  Notifications : Notification[] = []; 
+  Notification!: Notification;
   fileName!: string;
   profileImage!: File;
   url:any;
@@ -44,8 +47,11 @@ export class MenuComponent implements OnInit {
   dark!:boolean;
   amigos!:boolean;
   selectedPerfil!: Perfil;
+  selectedNotification!: Notification;
   showNotification!:boolean;
   bloquear!:boolean;
+  showNotificationMessage!:boolean;
+  showNotificationFriendRequestMessage!:boolean;
   private readonly USERNAME:string = 'username';
 
   constructor(private authenticationService:AuthenticationService,private router:Router,private loginPerfilService: LoginperfilService, private activatedRoute:ActivatedRoute) { }
@@ -81,10 +87,18 @@ export class MenuComponent implements OnInit {
   fecharPerfil(){
     this.showPerfil = false;
   }
+  fecharMensagem(){
+    this.showNotificationMessage = false;
+    this.showNotificationFriendRequestMessage = false;
+  }
 
   onSelectPerfil(selectedPerfil: Perfil):void{
     this.selectedPerfil = selectedPerfil;
     this.showPerfil = true;
+  }
+  onSelectedNotification(selectedNotification: Notification):void{
+    this.selectedNotification = selectedNotification;
+    this.showNotificationMessage = true;
   }
 
   NomeUtilizador(){
@@ -129,7 +143,7 @@ export class MenuComponent implements OnInit {
       this.loginPerfilService.addFriend(formData).subscribe(
         (response: Perfil) => {
           this.refreshing = false;
-          alert(`Foi enviado um novo pedido de amizade a este utilizador!`);
+          alert(`o teu amigo está agora bloqueado.`);
         },
         (errorResponse: HttpErrorResponse) => {
           alert(`Ocorreu um erro a executar a operação`);
@@ -161,7 +175,6 @@ obterSessoes(showNotification: boolean): void{
     this.loginPerfilService.obterSessoes().subscribe(
       (response: Session[]) => {
         this.refreshing = false;
-        this.loginPerfilService.obterSessoes();
         this.sessoes = response;
         alert(`Foram encontrados ${response.length} sessões`);
       },
@@ -195,16 +208,24 @@ onSelectSessao(selectedSessao: Session):void{
 }
 MostrarMenu(){
   this.showMenu = true;
+  this.showNotification = false;
 }
 NaoMostrarMenu(){
   this.showMenu = false;
 }
 MostrarNotificacoes(){
-  if (this.showNotification == false){
   this.showNotification = true;
-  } else {
-    this.showNotification = false
-  }
+  this.showMenu = false;
+  this.subscriptions.push(
+    this.loginPerfilService.obterNotificacoesDoPerfil(this.username).subscribe(
+      (response: Notification[]) => {
+        this.Notifications = response;
+      },
+      (errorResponse: HttpErrorResponse) => {
+        alert(`Ocorreu um erro a executar a operação`);
+      }
+    )
+  )
 }
 NaoMostrarNotificacoes(){
   this.showNotification = false;

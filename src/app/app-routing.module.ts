@@ -18,7 +18,6 @@ import { ConfirmEmergencyTokenComponent } from './pages/confirm-emergency-token/
 import { PerfilDataComponent } from './pages/perfil-data/perfil-data.component';
 import { LoginMFAComponent } from './pages/login-mfa/login-mfa.component';
 import { ConfirmationNewFriendComponent } from './pages/confirmation-new-friend/confirmation-new-friend.component';
-import { FriendListComponent } from './pages/friend-list/friend-list.component';
 
 const routes: Routes = [
   {path:'', redirectTo:'home',pathMatch:'full'},
@@ -50,8 +49,6 @@ const routes: Routes = [
   {path:'menu/:username/dadosPerfil/alterardados',redirectTo:'menu/:username/alterardados',pathMatch:'full'},
   {path:'login/MFAauthentication/:username', component: LoginMFAComponent},
   {path:'menu/:username', component:MenuComponent},
-  {path:'menu/:username/friendList', component:FriendListComponent},
-  {path:'menu/:username/friendList/:username', redirectTo:'menu/:username'},
   {path:'login/confirmNewFriend/:token',component:ConfirmationNewFriendComponent}
 ];
 

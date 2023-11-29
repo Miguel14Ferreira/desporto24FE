@@ -163,18 +163,38 @@ color: white;
                 transform: translate(-50%, -50%);
             }
             #h4black{
-                color: white;
-                font-size: 20px;
-                width: 400px;
-                margin: 0;
-                padding: 0;
-                text-align: center;
-                position: absolute;
-                font-weight: bold;
-                    top: 20%;
-                    left: 50%;
-                    transform: translate(-50%, -50%);
+                font-size: 15px;
+    width: 80%;
+    height: 300px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    border-collapse: collapse;
+    border-spacing: 0;
+  overflow:auto;
                 }
+                h5{
+                    color: black;
+                    font-size: 15px;
+        width: 80%;
+        height: 300px;
+        margin: 0;
+        padding: 0;
+        text-align: center;
+        font-family: 'Arial';
+        position: absolute;
+            top: 60%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        border-collapse: collapse;
+        border-spacing: 0;
+      overflow:auto;
+                    }
 #img-fluid{
     width: 50px;
     height: 50px;
@@ -795,7 +815,7 @@ transform: translate(-50%, -50%);
     position: absolute;
     z-index: 1;
         top: 40%;
-        left: 10%;
+        left: 12.5%;
         transform: translate(-50%, -50%);
     border-radius: 10px;
     border-style: solid;
@@ -830,7 +850,7 @@ transform: translate(-50%, -50%);
     position: absolute;
     z-index: 1;
         top: 10%;
-        left: 10%;
+        left: 12.5%;
         width: 100px;
         height: 50px;
         transform: translate(-50%, -50%);
@@ -1114,6 +1134,37 @@ transition: 0.6s;
     transition: background-color 0.5s;
     border-radius: 50px;
 }
+#notification{
+    position: relative;
+    padding: 16px 16px 16px 0;
+    display: flexbox;
+    display: flex;
+    flex-direction: row;
+    text-align: center;
+  border: 1px solid black;
+}
+#notificacoes{
+    font-size: 15px;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    border-collapse: collapse;
+    border-spacing: 0;
+    table-layout: fixed;
+  display: block;
+  max-height: 325px;
+  overflow: auto;
+}
+#notification:hover{
+    background-color: white;
+    transition: background-color 1s;
+}
 #botaoBloquear{
     text-decoration: none;
     color: black;
@@ -1262,6 +1313,36 @@ transform: translate(-50%, -50%);
         opacity: 20%;
         transform: rotate(45deg);
 }
+#viewNotificationModal{
+    background-color: grey;
+    width: 500px;
+    height: 400px;
+    position: absolute;
+        top: 60%;
+        left: 50%;
+        z-index: 1;
+        transform: translate(-50%, -50%);
+        border-style: solid;
+        border-width: 5px;
+        padding: 50px;
+        border-radius: 5%;
+        white-space: nowrap;
+  overflow: hidden;
+  animation: a 1s;
+    }
+    #mensagem{
+        width: 400px;
+    height: 300px;
+    position: absolute;
+        top: 50%;
+        left: 50%;
+        z-index: 1;
+        transform: translate(-50%, -50%);
+        border-style: solid;
+        border-width: 5px;
+        border-radius: 5%;
+  background-color: white;
+    }
 #viewPerfilModal{
     background-color: rgb(1, 1, 61);
     width: 500px;
@@ -1533,6 +1614,27 @@ transform: translate(-50%, -50%);
     border-radius: 10px;
 }   
 #botaoFecharAmigos:hover{
+    background-color: lightblue;
+    color: white;
+    transition: background-color 0.5s;
+}
+#botaoFecharNotificacoes{
+    text-decoration: none;
+    color: black;
+    font-size: 10px;
+    width: 20px;
+    margin: 0;
+    padding: 1px;
+    text-align: center;
+    font-family: 'Arial';
+    font-weight: bold;
+    position: absolute;
+top: 5%;
+left: 95%;
+transform: translate(-50%, -50%);
+    border-radius: 10px;
+}
+#botaoFecharNotificacoes:hover{
     background-color: lightblue;
     color: white;
     transition: background-color 0.5s;

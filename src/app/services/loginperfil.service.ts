@@ -8,6 +8,7 @@ import { environment } from 'src/environments/environment';
 import { JwtHelperService } from "@auth0/angular-jwt";
 import { CustomHttpResponse } from '../pages/custom-http-response';
 import { Token } from '../pages/model/token';
+import { Notification } from '../pages/model/notification';
 
 @Injectable({
   providedIn: 'root'
@@ -132,6 +133,9 @@ export class LoginperfilService {
   }
   updatePerfilPassword(formData: FormData){
     return this.httpClient.put<Perfil>(`${this.host}/menu/alterarPassword`, formData);
+  }
+  obterNotificacoesDoPerfil(username:string):Observable<Notification[]>{
+    return this.httpClient.get<Notification[]>(`${this.host}/menu/${username}/notifications`)
   }
   createSession(formData:FormData){
     return this.httpClient.post<Session>(`${this.host}/menu/createEvent`,formData);

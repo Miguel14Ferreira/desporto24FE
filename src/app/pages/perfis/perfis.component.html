@@ -126,7 +126,7 @@
                   <th>Desportos favoritos</th>
               </tr>
           </thead>
-          <tbody *ngFor="let perfil of perfis" id="tabela2">
+          <tbody *ngFor="let perfil of perfis">
                   <td (click)="onSelectPerfil(perfil)">
                       <img height="40" width="40" src="{{perfil.foto}}" class="rounded-circle img-fluid img-thumbnail" alt=""/>
                   </td>
