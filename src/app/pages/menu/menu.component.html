@@ -66,16 +66,17 @@
         <p id="D237amigos">Desporto24</p>
         <h4>Notificações</h4>
     <button (click)="NaoMostrarNotificacoes()" id="botaoFecharAmigos">X</button>
-    <table id="notificacoes">
-      <tbody *ngFor="let Notification of Notifications">
-              <td (click)="onSelectedNotification(Notification)" id="notification"> {{Notification.mensagem}}</td>
-      </tbody>
-  </table>
+    <div id="notificacoes">
+      <div *ngFor="let Notification of Notifications">
+        <hr>
+              <div (click)="onSelectedNotification(Notification)" id="notification">{{Notification.mensagem}}</div>
+      </div>
+    </div>
     </div>
     <div *ngIf="showNotificationMessage" id="viewNotificationModal">
       <h4>Mensagem:</h4>
       <div id="mensagem">
-        <h5>{{selectedNotification?.mensagem}}</h5>
+        <p id="p1">{{selectedNotification?.mensagem}}</p>
       </div>
       <button (click)="fecharMensagem()" id="botaoFecharNotificacoes">X</button>
     </div>

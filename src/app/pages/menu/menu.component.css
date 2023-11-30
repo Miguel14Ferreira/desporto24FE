@@ -178,31 +178,6 @@ color: white;
     border-spacing: 0;
   overflow:auto;
                 }
-                h5{
-                    color: black;
-                    font-size: 15px;
-        width: 80%;
-        height: 300px;
-        margin: 0;
-        padding: 0;
-        text-align: center;
-        font-family: 'Arial';
-        position: absolute;
-            top: 60%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-        border-collapse: collapse;
-        border-spacing: 0;
-      overflow:auto;
-                    }
-#img-fluid{
-    width: 50px;
-    height: 50px;
-    position: absolute;
-        top: 10%;
-        left: 80%;
-        transform: translate(-50%, -50%);
-}
 #botao3{
     font-size: 20px;
             height: 30px;
@@ -1134,14 +1109,22 @@ transition: 0.6s;
     transition: background-color 0.5s;
     border-radius: 50px;
 }
+hr{
+    opacity: 100%;
+    margin: 0px;
+    size: 3px;
+    border-radius: 20%;
+    width: 90%;
+    position: absolute;
+left: 50%;
+transform: translate(-50%, -50%);
+}
 #notification{
-    position: relative;
-    padding: 16px 16px 16px 0;
-    display: flexbox;
-    display: flex;
+    padding: 16px 16px 16px 16px;
+    display: block;
     flex-direction: row;
-    text-align: center;
-  border: 1px solid black;
+    max-height: 90px;
+  overflow: hidden;
 }
 #notificacoes{
     font-size: 15px;
@@ -1330,6 +1313,22 @@ transform: translate(-50%, -50%);
   overflow: hidden;
   animation: a 1s;
     }
+#img-fluid{
+width: 50px;
+height: 50px;
+position: absolute;
+top: 10%;
+left: 80%;
+transform: translate(-50%, -50%);
+}
+#p1{
+    padding: 16px 16px 16px 16px;
+    display: block;
+    flex-direction: row;
+    max-height: 90px;
+  overflow: hidden;
+  z-index: 1;
+    }
     #mensagem{
         width: 400px;
     height: 300px;
@@ -1342,6 +1341,15 @@ transform: translate(-50%, -50%);
         border-width: 5px;
         border-radius: 5%;
   background-color: white;
+  font-size: 15px;
+    text-align: right;
+    font-family: 'Arial';
+    border-collapse: collapse;
+    border-spacing: 0;
+    table-layout: fixed;
+  display: flex;
+  max-height: 325px;
+  overflow: auto;
     }
 #viewPerfilModal{
     background-color: rgb(1, 1, 61);
