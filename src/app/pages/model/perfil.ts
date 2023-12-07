@@ -14,6 +14,7 @@ export class Perfil {
     public email:string;
     public foto:string;
     public joinDate:string;
+    public joinDateDisplay:string;
     public lastLoginDate:string;
     public lastLoginDateDisplay: string;
     public enabled: boolean;
@@ -40,6 +41,7 @@ export class Perfil {
         this.email = '';
         this.foto = '';
         this.joinDate = '';
+        this.joinDateDisplay = '';
         this.lastLoginDate = '';
         this.lastLoginDateDisplay = '';
         this.mfa = false;

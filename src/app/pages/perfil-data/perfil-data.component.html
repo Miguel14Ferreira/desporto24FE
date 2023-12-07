@@ -29,35 +29,47 @@
   <p id="D247modal">Desporto24</p>
   <p id="D248modal">Desporto24</p>
   <div class="image-preview" id="imagePreview">
-    <img src="{{username?.foto}}" alt="Image Preview" class="image-preview__image"/>
+    <img src="{{perfil?.foto}}" alt="Image Preview" class="image-preview__image"/>
   </div>
 <div id="username">
-{{username?.username}}
+{{perfil?.username}}
 </div>
 <ul>
 <li id="dataNascimento">Data de nascimento</li>
-<li id="dataNascimento2"> {{username?.dateOfBirth}}
+<li id="dataNascimento2"> {{perfil?.dateOfBirth}}
 </li>
 <li id="genero">Género </li>
-<li id="genero2"> {{username?.gender}} </li>
+<li id="genero2"> {{perfil?.gender}} </li>
 <li id="paisNascimento">País de nascimento </li>
-<li id="paisNascimento2"> {{username?.country}} </li>
+<li id="paisNascimento2"> {{perfil?.country}} </li>
 <li id="desportosFavoritos">Desportos favoritos</li>
-<li id="desportosFavoritos2"> {{username?.desportosFavoritos}}</li>
+<li id="desportosFavoritos2"> {{perfil?.desportosFavoritos}}</li>
 <li id="localidade">Localidade</li>
-<li id="localidade2"> {{username?.location}}</li>
+<li id="localidade2"> {{perfil?.location}}</li>
 <li id="estadoDaConta">Estado da conta:</li>
+<li id="morada">Morada</li>
+          <li id="morada2">{{perfil?.address}}</li>
+          <li id="phone">Telemóvel</li>
+          <li id="phone2">{{perfil?.phone}}</li>
+          <li id="email">Email</li>
+          <li id="email2">{{perfil?.email}}</li>
 <li>
   <span *ngIf="locked" id="estadoDaConta2">Conta bloqueada</span>
   <span *ngIf="!locked" id="estadoDaConta2">Conta ativa</span>
 </li>
+<li id="mfa">MFA:</li>
+<li>
+  <span *ngIf="mfa" id="mfativado">Ativado</span>
+  <span *ngIf="!mfa" id="mfadesativado">Desativado</span>
+</li>
 <li id="membroDesde">Membro desde:</li>
-<li id="membroDesde2"> {{username?.joinDate}}</li>
+<li id="membroDesde2"> {{perfil?.joinDateDisplay}}</li>
 <li  id="ultimoLogin">Ultimo Login:</li>
-<li  id="ultimoLogin2"> {{username?.lastLoginDateDisplay}}</li>
+<li  id="ultimoLogin2"> {{perfil?.lastLoginDateDisplay}}</li>
 </ul>
 </div>
   <button href="#" (click)="Menu()" id="botao1">Voltar atrás</button>
+  <button href="#" (click)="alterarDados()" id="botao2">Alterar dados</button>
 </body>
 </div>
 <div *ngIf="dark" class="img">
@@ -102,21 +114,27 @@
           <li id="estadoDaConta">Estado da conta:</li>
           <li id="morada">Morada</li>
           <li id="morada2">{{perfil?.address}}</li>
+          <li id="phone">Telemóvel</li>
+          <li id="phone2">{{perfil?.phone}}</li>
+          <li id="email">Email</li>
+          <li id="email2">{{perfil?.email}}</li>
           <li>
             <span *ngIf="locked" id="estadoDaConta2">Conta bloqueada</span>
             <span *ngIf="!locked" id="estadoDaConta2">Conta ativa</span>
           </li>
+          <li id="mfa">MFA:</li>
           <li>
-            <span *ngIf="locked" id="estadoDaConta2">Conta bloqueada</span>
-            <span *ngIf="!locked" id="estadoDaConta2">Conta ativa</span>
+            <span *ngIf="mfa" id="mfativado">Ativado</span>
+            <span *ngIf="!mfa" id="mfadesativado">Desativado</span>
           </li>
           <li id="membroDesde">Membro desde:</li>
-          <li id="membroDesde2"> {{perfil?.joinDate}}</li>
+          <li id="membroDesde2"> {{perfil?.joinDateDisplay}}</li>
           <li  id="ultimoLogin">Ultimo Login:</li>
           <li  id="ultimoLogin2"> {{perfil?.lastLoginDateDisplay}}</li>
           </ul>
           </div>
         <button href="#" routerLink="menu" id="botao1">Voltar atrás</button>
+        <button href="#" (click)="alterarDados()" id="botao2">Alterar dados</button>
 </body>
 </div>
 </html>

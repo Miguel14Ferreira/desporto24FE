@@ -1,3 +1,4 @@
+<html>
 <div *ngIf="dark" class="img">
       <h1 id="h1white">Desporto24</h1>
       <div (click)="MostrarMenu()" id="img-fluid2" *ngIf="!showMenu">
@@ -69,16 +70,24 @@
     <div id="notificacoes">
       <div *ngFor="let Notification of Notifications">
         <hr>
-              <div (click)="onSelectedNotification(Notification)" id="notification">{{Notification.mensagem}}</div>
+              <div (click)="onSelectedNotification(Notification)" id="notification">{{Notification.assunto}}
+                {{selectedNotification?.created_at}}
+              </div>
+              <hr>
       </div>
     </div>
     </div>
     <div *ngIf="showNotificationMessage" id="viewNotificationModal">
       <h4>Mensagem:</h4>
       <div id="mensagem">
-        <p id="p1">{{selectedNotification?.mensagem}}</p>
+        <p id="p1">{{selectedNotification?.assunto}}</p>
+        <p id="p2">{{selectedNotification?.mensagem}}</p>
+        <p id="p3">{{selectedNotification?.cumprimentos}}</p>
+        <p id="p4">{{selectedNotification?.assinatura}}</p>
+        <p id="p5">{{selectedNotification?.created_at}}</p>
       </div>
       <button (click)="fecharMensagem()" id="botaoFecharNotificacoes">X</button>
+      <button (click)="eliminarNotificacao()" id="botaoEliminarNotificacao">Eliminar</button>
     </div>
       <div id="container2">
         <p id="D24a">Desporto24</p>
@@ -202,6 +211,7 @@
 <button (click)="blockAmigo()" id="botaoBloquear">Bloquear</button>
 </div>
 </div>
+
 <div *ngIf="!dark" class="img2">
       <h1 id="h1black">Desporto24</h1>
       <div (click)="MostrarMenu()" id="img-fluid2black" *ngIf="!showMenu">

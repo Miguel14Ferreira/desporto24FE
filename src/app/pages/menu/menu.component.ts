@@ -130,6 +130,8 @@ export class MenuComponent implements OnInit {
       }
     )
   }
+  eliminarNotificacao(){
+  }
   naoBloquear(){
     this.bloquear = false;
   }

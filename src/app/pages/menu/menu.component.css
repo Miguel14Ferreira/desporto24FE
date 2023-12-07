@@ -297,6 +297,29 @@ color: white;
     left: 65%;
     transform: translateX(0%) translateY(0);
 }
+    html {
+    overflow-y: auto;
+    background-color: transparent;
+    }
+    ::-webkit-scrollbar {
+        width: 10px;
+      }
+      
+      /* Track */
+      ::-webkit-scrollbar-track {
+        background: transparent; 
+      }
+       
+      /* Handle */
+      ::-webkit-scrollbar-thumb {
+        background: transparent;
+        border-radius: 20%; 
+      }
+      
+      /* Handle on hover */
+      ::-webkit-scrollbar-thumb:hover {
+        background: #555; 
+      }
 #img{
     width: 100px;
     height: 100px;
@@ -866,6 +889,14 @@ transition: 0.6s;
     100%{
       height:0px;
     }
+}
+    @keyframes d{
+        0%{
+          height:0px;
+        }
+        100%{
+          height:300px;
+        }
   }
 #opcao1{
     color: white;
@@ -1307,10 +1338,7 @@ transform: translate(-50%, -50%);
         transform: translate(-50%, -50%);
         border-style: solid;
         border-width: 5px;
-        padding: 50px;
         border-radius: 5%;
-        white-space: nowrap;
-  overflow: hidden;
   animation: a 1s;
     }
 #img-fluid{
@@ -1321,14 +1349,23 @@ top: 10%;
 left: 80%;
 transform: translate(-50%, -50%);
 }
+
 #p1{
     padding: 16px 16px 16px 16px;
-    display: block;
-    flex-direction: row;
-    max-height: 90px;
-  overflow: hidden;
-  z-index: 1;
+  display: flex;
     }
+    #p2{
+        padding: 25px 25px 16px 16px;
+      display: flex;
+        }
+        #p3{
+            padding: 5px 16px 5px 16px;
+          display: flex;
+            }
+            #p4{
+                padding: 5px 16px 5px 16px;
+              display: flex;
+                }
     #mensagem{
         width: 400px;
     height: 300px;
@@ -1342,15 +1379,13 @@ transform: translate(-50%, -50%);
         border-radius: 5%;
   background-color: white;
   font-size: 15px;
-    text-align: right;
     font-family: 'Arial';
     border-collapse: collapse;
     border-spacing: 0;
-    table-layout: fixed;
-  display: flex;
-  max-height: 325px;
-  overflow: auto;
-    }
+    overflow: auto;
+    animation: d 1s;
+}
+
 #viewPerfilModal{
     background-color: rgb(1, 1, 61);
     width: 500px;
@@ -1731,7 +1766,6 @@ h2{
     animation: transition 0.75s;
     height: 100vh;
     background-color: black;     
-    -webkit-background-size: cover;
     background-size: cover;
     background-position: center center;
 }
@@ -1739,7 +1773,6 @@ h2{
     animation: transition 0.75s;
     height: 100vh;
     background-color: white;     
-    -webkit-background-size: cover;
     background-size: cover;
     background-position: center center;
 }
