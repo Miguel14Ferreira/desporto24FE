@@ -90,6 +90,7 @@ export class MenuComponent implements OnInit {
   fecharMensagem(){
     this.showNotificationMessage = false;
     this.showNotificationFriendRequestMessage = false;
+    window.history.replaceState({},'',`/menu/${this.perfil.username}`)
   }
 
   onSelectPerfil(selectedPerfil: Perfil):void{
@@ -97,6 +98,7 @@ export class MenuComponent implements OnInit {
     this.showPerfil = true;
   }
   onSelectedNotification(selectedNotification: Notification):void{
+    window.history.replaceState({},'',`/menu/${this.perfil.username}/notifications/${selectedNotification.id}`)
     this.selectedNotification = selectedNotification;
     this.showNotificationMessage = true;
   }
@@ -124,13 +126,44 @@ export class MenuComponent implements OnInit {
     this.loginPerfilService.friendList(this.perfil.username).subscribe(
       (response: Perfil[]) => {
         this.perfis = response;
+        window.history.replaceState({},'',`/menu/${this.perfil.username}/friendList`)
       },
       (errorResponse: HttpErrorResponse) => {
         alert(`Ocorreu um erro a executar a operação`);
       }
     )
   }
-  eliminarNotificacao(){
+  eliminarNotificacao(selectedNotification: Notification){
+    this.refreshing = true;
+    this.subscriptions.push(
+      this.authenticationService.deleteNotification(selectedNotification.id).subscribe(
+        (response: Notification) => {
+          this.refreshing = false;
+          alert(`Esta notificação foi eliminada`);
+          window.history.replaceState({},'',`/menu/${this.perfil.username}`)
+        },
+        (errorResponse: HttpErrorResponse) => {
+          alert(`Ocorreu um erro a executar a operação`);
+          this.refreshing = false;
+        }
+      )
+    )
+  }
+  rejeitarAmigo(selectedNotification: Notification){
+    this.refreshing = true;
+    this.subscriptions.push(
+      this.authenticationService.deleteNotification(selectedNotification.id).subscribe(
+        (response: Notification) => {
+          this.refreshing = false;
+          alert(`Rejeitaste o pedido de amizade e esta notificação vai ser eliminada.`);
+          window.history.replaceState({},'',`/menu/${this.perfil.username}`)
+        },
+        (errorResponse: HttpErrorResponse) => {
+          alert(`Ocorreu um erro a executar a operação`);
+          this.refreshing = false;
+        }
+      )
+    )
   }
   naoBloquear(){
     this.bloquear = false;
@@ -156,6 +189,7 @@ export class MenuComponent implements OnInit {
   }
   naoMostrarAmigos(){
     this.amigos = false;
+    window.history.replaceState({},'',`/menu/${this.perfil.username}`)
   }
   remover(){
     this.authenticationService.logOut();

@@ -1,15 +1,16 @@
 export class Notification{
-    assunto:String;
-    mensagem:String;
-    cumprimentos:String;
-    assinatura:String;
-    created_at:String;
+    id!:number;
+    assunto:string;
+    mensagem:string;
+    cumprimentos:string;
+    assinatura:string;
+    createdAt:string;
 
     constructor(){
         this.assunto = '';
         this.mensagem = '';
         this.cumprimentos = '';
         this.assinatura = '';
-        this.created_at = '';
+        this.createdAt = '';
     }
 }

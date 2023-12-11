@@ -318,7 +318,7 @@ color: white;
       
       /* Handle on hover */
       ::-webkit-scrollbar-thumb:hover {
-        background: #555; 
+        background: #555;
       }
 #img{
     width: 100px;
@@ -738,6 +738,50 @@ color: white;
     color: white;
     transition: background-color 0.5s;
 }
+#botaoEliminarNotificacao{
+    text-decoration: none;
+    color: black;
+    background-color: white;
+    font-size: 20px;
+    width: 150px;
+    margin: 0;
+    padding: 1px;
+    text-align: center;
+    font-family: 'Arial';
+    font-weight: bold;
+    position: absolute;
+top: 95%;
+left: 50%;
+transform: translate(-50%, -50%);
+    border-radius: 10px;
+}
+#botaoEliminarNotificacao:hover{
+    background-color: lightblue;
+    color: white;
+    transition: background-color 0.5s;
+}
+#botaoEliminarNotificacao2{
+    text-decoration: none;
+    color: black;
+    background-color: white;
+    font-size: 20px;
+    width: 150px;
+    margin: 0;
+    padding: 1px;
+    text-align: center;
+    font-family: 'Arial';
+    font-weight: bold;
+    position: absolute;
+top: 95%;
+left: 70%;
+transform: translate(-50%, -50%);
+    border-radius: 10px;
+}
+#botaoEliminarNotificacao2:hover{
+    background-color: lightblue;
+    color: white;
+    transition: background-color 0.5s;
+}
 #botao2{
     text-decoration: none;
     color: black;
@@ -862,6 +906,30 @@ transition: 0.6s;
     opacity: 1;
     transition: 0.6s;
     color: white;
+    text-align: center;
+    font-family: 'Arial';
+    cursor:pointer;
+}
+#envelopeblack{
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    z-index: 1;
+        top: 10%;
+        left: 12.5%;
+        width: 100px;
+        height: 50px;
+        transform: translate(-50%, -50%);
+    overflow: hidden;
+    color: grey;
+    font-size: 40px;
+    opacity: 0.5;
+transition: 0.6s;
+}
+#envelopeblack:hover{
+    opacity: 1;
+    transition: 0.6s;
+    color: black;
     text-align: center;
     font-family: 'Arial';
     cursor:pointer;
@@ -1157,6 +1225,14 @@ transform: translate(-50%, -50%);
     max-height: 90px;
   overflow: hidden;
 }
+#notification2{
+    font-size: 10px;
+    padding: 16px 16px 16px 16px;
+    display: block;
+    flex-direction: row;
+    max-height: 90px;
+  overflow: hidden;
+}
 #notificacoes{
     font-size: 15px;
     width: 100%;
@@ -1363,9 +1439,27 @@ transform: translate(-50%, -50%);
           display: flex;
             }
             #p4{
-                padding: 5px 16px 5px 16px;
+                padding: 5px 5px 5px 16px;
               display: flex;
                 }
+                #p5{
+                    width: 60px;
+                    font-size: 10px;
+                  display: flex;
+                  position: absolute;
+                      top: 92%;
+        left: 85%;
+        transform: translate(-50%, -50%);
+                    }
+                    #p6{
+                        width: 75px;
+                        font-size: 10px;
+                      display: flex;
+                      position: absolute;
+                      top: 90%;
+        left: 85%;
+        transform: translate(-50%, -50%);
+                        }
     #mensagem{
         width: 400px;
     height: 300px;

@@ -8,6 +8,7 @@ import { Session } from '../pages/session';
 import { CustomHttpResponse } from '../pages/custom-http-response';
 import { Token } from '../pages/model/token';
 import { Router } from '@angular/router';
+import { Notification } from '../pages/model/notification';
 
 
 @Injectable({providedIn: 'root'})
@@ -53,6 +54,9 @@ export class AuthenticationService {
   }
   acceptFriendRequestToken(token:string):Observable<Token>{
     return this.http.get<Token>(`${this.host}/login/confirmNewFriend/${token}`);
+  }
+  deleteNotification(NotificationNumber:number):Observable<Notification>{
+    return this.http.delete<Notification>(`${this.host}/menu/:username/notifications/${NotificationNumber}`)
   }
 
   public logOut(): void {
