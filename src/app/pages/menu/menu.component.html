@@ -24,7 +24,7 @@
         <li id="opcao2" (click)="alterarDados()" routerLinkActive="active-link">Alterar dados do perfil</li>
         <li id="opcao3" (click)="alterarPassword()" routerLinkActive="active-link">Alterar nome de utilizador/password</li>
         <li id="opcao4" (click)="verDadosPerfil()" routerLinkActive="active-link">Ver dados do meu perfil</li>
-        <li id="opcao6" (click)="Utilizadores()" routerLinkActive="active-link">Mais Utilizadores</li>
+        <li id="opcao6" (click)="Utilizadores()" routerLinkActive="active-link">Procurar Utilizadores</li>
         <li id="opcao7" (click)="CriarSessao()" routerLinkActive="active-link">Criar Sessão</li>
         <li id="opcao5" (click)="terminarSessao()" routerLinkActive="active-link">Terminar Sessão</li>
         </ul>
@@ -100,6 +100,7 @@
         <p id="p5">{{selectedNotification?.createdAt}}</p>
       </div>
       <button (click)="fecharMensagem()" id="botaoFecharNotificacoes">X</button>
+      <button (click)="aceitarAmigo(selectedNotification)" id="botaoAceitar">Aceitar</button>
       <button (click)="rejeitarAmigo(selectedNotification)" id="botaoEliminarNotificacao2">Rejeitar</button>
     </div>
       <div id="container2">
@@ -280,7 +281,7 @@
     <li id="opcao2" (click)="alterarDados()" routerLinkActive="active-link">Alterar dados do perfil</li>
     <li id="opcao3" (click)="alterarPassword()" routerLinkActive="active-link">Alterar nome de utilizador/password</li>
     <li id="opcao4" (click)="verDadosPerfil()" routerLinkActive="active-link">Ver dados do meu perfil</li>
-    <li id="opcao6" (click)="Utilizadores()" routerLinkActive="active-link">Mais Utilizadores</li>
+    <li id="opcao6" (click)="Utilizadores()" routerLinkActive="active-link">Procurar Utilizadores</li>
     <li id="opcao7" (click)="CriarSessao()" routerLinkActive="active-link">Criar Sessão</li>
     <li id="opcao5" (click)="terminarSessao()" routerLinkActive="active-link">Terminar Sessão</li>
     </ul>

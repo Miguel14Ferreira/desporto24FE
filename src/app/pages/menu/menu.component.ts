@@ -99,8 +99,15 @@ export class MenuComponent implements OnInit {
   }
   onSelectedNotification(selectedNotification: Notification):void{
     window.history.replaceState({},'',`/menu/${this.perfil.username}/notifications/${selectedNotification.id}`)
+    console.log(selectedNotification)
     this.selectedNotification = selectedNotification;
+    if (selectedNotification.friendRequest == false){
     this.showNotificationMessage = true;
+    this.showNotificationFriendRequestMessage = false;
+    } else {
+      this.showNotificationMessage = false;
+      this.showNotificationFriendRequestMessage = true;
+    }
   }
 
   NomeUtilizador(){
@@ -157,6 +164,23 @@ export class MenuComponent implements OnInit {
           this.refreshing = false;
           alert(`Rejeitaste o pedido de amizade e esta notificação vai ser eliminada.`);
           window.history.replaceState({},'',`/menu/${this.perfil.username}`)
+        },
+        (errorResponse: HttpErrorResponse) => {
+          alert(`Ocorreu um erro a executar a operação`);
+          this.refreshing = false;
+        }
+      )
+    )
+  }
+  aceitarAmigo(selectedNotification: Notification){
+    this.refreshing = true;
+    this.subscriptions.push(
+      this.authenticationService.acceptFriendRequest(selectedNotification.id,selectedNotification.token).subscribe(
+        (response: Notification) => {
+          this.refreshing = false;
+          alert(`Tens um novo amigo na lista de amizade!`);
+          window.history.replaceState({},'',`/menu/${this.perfil.username}`)
+          location.reload();
         },
         (errorResponse: HttpErrorResponse) => {
           alert(`Ocorreu um erro a executar a operação`);

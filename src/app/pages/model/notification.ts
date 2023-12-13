@@ -5,6 +5,8 @@ export class Notification{
     cumprimentos:string;
     assinatura:string;
     createdAt:string;
+    friendRequest:boolean;
+    token:string;
 
     constructor(){
         this.assunto = '';
@@ -12,5 +14,7 @@ export class Notification{
         this.cumprimentos = '';
         this.assinatura = '';
         this.createdAt = '';
+        this.friendRequest = false;
+        this.token = '';
     }
 }

@@ -58,6 +58,9 @@ export class AuthenticationService {
   deleteNotification(NotificationNumber:number):Observable<Notification>{
     return this.http.delete<Notification>(`${this.host}/menu/:username/notifications/${NotificationNumber}`)
   }
+  acceptFriendRequest(NotificationNumber:number,NotificationToken:string):Observable<Notification>{
+    return this.http.get<Notification>(`${this.host}/menu/:username/notifications/${NotificationNumber}/${NotificationToken}`,);
+  }
 
   public logOut(): void {
     this.token = null;

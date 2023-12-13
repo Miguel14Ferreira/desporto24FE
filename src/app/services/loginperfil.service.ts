@@ -143,8 +143,8 @@ export class LoginperfilService {
   createIdea(ideia:Ideia):Observable<object>{
     return this.httpClient.post(`${this.host}/contact`,ideia);
   }
-  obterPerfis() {
-    return this.httpClient.get<Perfil[]>(`${this.host}/menu/perfis`);
+  obterPerfis(searchTerm: string):Observable<Perfil[]> {
+    return this.httpClient.get<Perfil[]>(`${this.host}/menu/:username/perfis/${searchTerm}`);
   }
   deleteUser(perfilid: number): Observable<CustomHttpResponse | HttpErrorResponse>{
     return this.httpClient.delete<CustomHttpResponse>(`${this.host}/delete/${perfilid}`);

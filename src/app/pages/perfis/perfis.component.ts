@@ -19,7 +19,6 @@ export class PerfisComponent {
   public titleAction$ = this.titleSubject.asObservable();
   public perfis: Perfil[] = [];
   perfil!: Perfil;
-  refreshing!:boolean;
   showLoading!:boolean;
   locked!:boolean;
   subscriptions: Subscription[] = [];
@@ -31,6 +30,7 @@ export class PerfisComponent {
   addFriend!:boolean;
   username!:any;
   private readonly USERNAME:string = 'username';
+  showTable!:boolean;
 
   constructor (private router:Router,private loginPerfilService: LoginperfilService,private activatedRoute:ActivatedRoute){}
 
@@ -49,21 +49,6 @@ export class PerfisComponent {
     this.loginPerfilService.obterUserPeloUsername1(this.username).subscribe( data => {
       this.perfil = data;
     }, error => console.log());
-    this.refreshing = true;
-    this.subscriptions.push(
-      this.loginPerfilService.obterPerfis().subscribe(
-        (response: Perfil[]) => {
-          this.refreshing = false;
-          this.loginPerfilService.obterPerfis();
-          this.perfis = response;
-          alert(`Foram encontrados ${response.length} utilizadores`);
-        },
-        (errorResponse: HttpErrorResponse) => {
-          alert(`Ocorreu um erro a executar a operação`);
-          this.refreshing = false;
-        }
-      )
-    )
   }
 
   fecharPerfil(){
@@ -78,34 +63,34 @@ export class PerfisComponent {
   }
   SendFriendRequest(){
     const formData = this.loginPerfilService.addFriendFromData(this.perfil.username,this.selectedPerfil.username);
-    this.refreshing = true;
+    this.showLoading = true;
     this.subscriptions.push(
       this.loginPerfilService.addFriend(formData).subscribe(
         (response: Perfil) => {
-          this.refreshing = false;
+          this.showLoading = false;
           alert(`Foi enviado um novo pedido de amizade a este utilizador!`);
         },
         (errorResponse: HttpErrorResponse) => {
           alert(`Ocorreu um erro a executar a operação`);
-          this.refreshing = false;
+          this.showLoading = false;
         }
       )
     )
   }
 
-  obterPerfis(showNotification: boolean): void{
-    this.refreshing = true;
+  obterPerfis(searchTerm: string): void{
+    this.showLoading = true;
     this.subscriptions.push(
-      this.loginPerfilService.obterPerfis().subscribe(
+      this.loginPerfilService.obterPerfis(searchTerm).subscribe(
         (response: Perfil[]) => {
-          this.refreshing = false;
-          this.loginPerfilService.obterPerfis();
+          this.showTable = true;
+          this.showLoading = false;
           this.perfis = response;
           alert(`Foram encontrados ${response.length} utilizadores`);
         },
         (errorResponse: HttpErrorResponse) => {
           alert(`Ocorreu um erro a executar a operação`);
-          this.refreshing = false;
+          this.showLoading = false;
         }
       )
     )

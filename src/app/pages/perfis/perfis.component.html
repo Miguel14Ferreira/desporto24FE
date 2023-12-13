@@ -7,36 +7,26 @@
               <p id="D244a">Desporto24</p>
               <p id="D245a">Desporto24</p>
     </div>
-    <h2 id="h2white">Jogadores inscritos</h2>
         <form>
-            <input name="searchTerm" #searchTerm="ngModel" ngModel (ngModelChange)="procurarPerfis(searchTerm.value)" id="input1" type="search" placeholder="Procurar perfil...">
-          </form>
-        <button id="botao1" type="button" (click)="obterPerfis(true)" class="btn btn-info">
-            <i *ngIf="refreshing" class="fas fa-sync fa-spin"></i>
-            <i *ngIf="!refreshing" class="fas fa-sync"></i>
+          <input name="searchTerm" #searchTerm="ngModel" ngModel id="input1" type="search" placeholder="Procurar perfil...">
+          <button id="botao1" type="submit" (click)="obterPerfis(searchTerm.value)">
+              <i *ngIf= "showLoading" class="fas fa-spinner fa-spin"></i>&nbsp;&nbsp;
+        <span *ngIf="showLoading">A carregar...</span>
+        <span *ngIf="!showLoading">Pesquisar</span>
         </button>
-    <table id="tabela1">
-        <thead>
-            <tr>
-                <th>Foto de perfil</th>
-                <th>Nome de utilizador</th>
-                <th>Data de nascimento</th>
-                <th>Género</th>
-                <th>País de nascimento</th>
-                <th>Desportos favoritos</th>
-            </tr>
-        </thead>
-        <tbody *ngFor="let perfil of perfis" id="tabela2">
-                <td (click)="onSelectPerfil(perfil)">
-                    <img height="40" width="40" src="{{perfil.foto}}" class="rounded-circle img-fluid img-thumbnail" alt=""/>
-                </td>
-                <td (click)="onSelectPerfil(perfil)"> {{perfil.username}}</td>
-                <td (click)="onSelectPerfil(perfil)"> {{perfil.dateOfBirth}}</td>
-                <td (click)="onSelectPerfil(perfil)"> {{perfil.gender}} </td>
-                <td (click)="onSelectPerfil(perfil)"> {{perfil.country}} </td>
-                <td (click)="onSelectPerfil(perfil)"> {{perfil.desportosFavoritos}}</td>
-        </tbody>
-    </table>
+          </form>
+          <table id="tabela1" *ngIf="showTable">
+            <thead>
+              <th>Foto de perfil</th>
+              <th>Nome do perfil</th>
+            </thead>
+            <tbody *ngFor="let perfil of perfis">
+                    <td (click)="onSelectPerfil(perfil)">
+                        <img height="40" width="40" src="{{perfil.foto}}" class="rounded-circle img-thumbnail" alt=""/>
+                    </td>
+                    <td (click)="onSelectPerfil(perfil)"> {{perfil.username}}</td>
+            </tbody>
+        </table>
     <button id="botao2" (click)="Menu()" type="button">
       <i *ngIf= "showLoading" class="fas fa-spinner fa-spin"></i>&nbsp;&nbsp;
       <span *ngIf="showLoading">A carregar...</span>
@@ -93,7 +83,11 @@
       <p id="D237logOut">Desporto24</p>
       <h4 id="h4black">Tens a certeza que queres adicionar
       <p>{{selectedPerfil?.username}} à tua lista de amigos?</p></h4>
-      <button (click)="SendFriendRequest()" id="botao6">Sim</button>
+      <button (click)="SendFriendRequest()" id="botao6">Sim
+        <i *ngIf= "showLoading" class="fas fa-spinner fa-spin"></i>&nbsp;&nbsp;
+        <span *ngIf="showLoading">A carregar...</span>
+        <span *ngIf="!showLoading">Sim</span>
+    </button> 
   <button (click)="NaoAdd()" id="botao7">Não</button>
   </div>
 </div>
@@ -107,36 +101,22 @@
                 <p id="D244">Desporto24</p>
                 <p id="D245">Desporto24</p>
           </div>
-          <h2 id="h2black">Jogadores inscritos</h2>
-            <form>
-              <input name="searchTerm" #searchTerm="ngModel" ngModel (ngModelChange)="procurarPerfis(searchTerm.value)" id="input1" type="search" placeholder="Procurar perfil...">
-            </form>
-          <button id="botao1" type="button" (click)="obterPerfis(true)" class="btn btn-info">
-              <i *ngIf="refreshing" class="fas fa-sync fa-spin"></i>
-              <i *ngIf="!refreshing" class="fas fa-sync"></i>
-          </button>
-      <table id="tabela1">
-          <thead>
-              <tr>
-                  <th>Foto de perfil</th>
-                  <th>Nome de utilizador</th>
-                  <th>Data de nascimento</th>
-                  <th>Género</th>
-                  <th>País de nascimento</th>
-                  <th>Desportos favoritos</th>
-              </tr>
-          </thead>
-          <tbody *ngFor="let perfil of perfis">
-                  <td (click)="onSelectPerfil(perfil)">
-                      <img height="40" width="40" src="{{perfil.foto}}" class="rounded-circle img-fluid img-thumbnail" alt=""/>
-                  </td>
-                  <td (click)="onSelectPerfil(perfil)"> {{perfil.username}}</td>
-                  <td (click)="onSelectPerfil(perfil)"> {{perfil.dateOfBirth}}</td>
-                  <td (click)="onSelectPerfil(perfil)"> {{perfil.gender}} </td>
-                  <td (click)="onSelectPerfil(perfil)"> {{perfil.country}} </td>
-                  <td (click)="onSelectPerfil(perfil)"> {{perfil.desportosFavoritos}}</td>
-          </tbody>
-      </table>
+          <form>
+            <input name="searchTerm" #searchTerm="ngModel" ngModel id="input1" type="search" placeholder="Procurar perfil...">
+            <button id="botao1" type="submit" (click)="obterPerfis(searchTerm.value)">
+              <i *ngIf= "showLoading" class="fas fa-spinner fa-spin"></i>&nbsp;&nbsp;
+        <span *ngIf="showLoading">A carregar...</span>
+        <span *ngIf="!showLoading">Pesquisar</span>
+        </button>
+          </form>
+          <table id="tabela1" *ngIf="showTable">
+            <tbody *ngFor="let perfil of perfis" id="tabela2">
+                    <td (click)="onSelectPerfil(perfil)">
+                        <img height="40" width="40" src="{{perfil.foto}}" class="rounded-circle img-thumbnail" alt=""/>
+                    </td>
+                    <td (click)="onSelectPerfil(perfil)"> {{perfil.username}}</td>
+            </tbody>
+        </table>
       <button id="botao2" (click)="Menu()" type="button">
         <i *ngIf= "showLoading" class="fas fa-spinner fa-spin"></i>&nbsp;&nbsp;
         <span *ngIf="showLoading">A carregar...</span>
@@ -193,6 +173,10 @@
       <p id="D237logOut">Desporto24</p>
       <h4 id="h4black">Tens a certeza que queres adicionar
       <p>{{selectedPerfil?.username}} à tua lista de amigos?</p></h4>
-      <button (click)="SendFriendRequest()" id="botao6">Sim</button>
+      <button (click)="SendFriendRequest()" id="botao6">Sim
+        <i *ngIf= "showLoading" class="fas fa-spinner fa-spin"></i>&nbsp;&nbsp;
+        <span *ngIf="showLoading">A carregar...</span>
+        <span *ngIf="!showLoading">Sim</span>
+    </button>
   <button (click)="NaoAdd()" id="botao7">Não</button>
   </div>
