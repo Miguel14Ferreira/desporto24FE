@@ -53,14 +53,12 @@ export class MenuComponent implements OnInit {
   showNotificationMessage!:boolean;
   showNotificationFriendRequestMessage!:boolean;
   private readonly USERNAME:string = 'username';
+  chat!:boolean;
 
   constructor(private authenticationService:AuthenticationService,private router:Router,private loginPerfilService: LoginperfilService, private activatedRoute:ActivatedRoute) { }
 
 
   ngOnInit(): void {
-    this.showImage = true;
-    this.showMenu = false;
-    this.logOut = false;
     this.activatedRoute.paramMap.subscribe(
       (params: ParamMap) => {
         this.username = params.get(this.USERNAME);
@@ -99,7 +97,6 @@ export class MenuComponent implements OnInit {
   }
   onSelectedNotification(selectedNotification: Notification):void{
     window.history.replaceState({},'',`/menu/${this.perfil.username}/notifications/${selectedNotification.id}`)
-    console.log(selectedNotification)
     this.selectedNotification = selectedNotification;
     if (selectedNotification.friendRequest == false){
     this.showNotificationMessage = true;
@@ -108,6 +105,14 @@ export class MenuComponent implements OnInit {
       this.showNotificationMessage = false;
       this.showNotificationFriendRequestMessage = true;
     }
+  }
+  abrirChat(){
+    this.chat = true;
+    window.history.replaceState({},'',`/menu/${this.perfil.username}/friendList/chat`)
+  }
+  fecharChat(){
+    this.chat = false;
+    window.history.replaceState({},'',`/menu/${this.perfil.username}/friendList`)
   }
 
   NomeUtilizador(){
@@ -247,19 +252,7 @@ obterSessoes(showNotification: boolean): void{
 }
 
 procurarSessoes(searchTerm: string): void{
-  /*
-  const results: Session[] = [];
-  for (const sessao of this.loginPerfilService.getSessoesFromLocalCache()) {
-    if (sessao.desporto.toLowerCase().indexOf(searchTerm.toLowerCase()) !== -1 ||
-        sessao.utilizador.toLowerCase().indexOf(searchTerm.toLowerCase()) !== -1){
-    results.push(sessao);
-    }
-  }
-  this.sessoes = results;
-  if(results.length === 0 || !searchTerm){
-    this.sessoes = this.loginPerfilService.getSessoesFromLocalCache();
-  }
-  */
+  
 }
 
 onSelectSessao(selectedSessao: Session):void{
@@ -272,6 +265,7 @@ MostrarMenu(){
 }
 NaoMostrarMenu(){
   this.showMenu = false;
+  this.showNotification = false;
 }
 MostrarNotificacoes(){
   this.showNotification = true;

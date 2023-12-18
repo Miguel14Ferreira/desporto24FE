@@ -79,6 +79,9 @@ export class PerfisComponent {
   }
 
   obterPerfis(searchTerm: string): void{
+    if (searchTerm == ""){
+      alert("Terás de preencher o campo de pesquisa para pesquisar.")
+    } else  {
     this.showLoading = true;
     this.subscriptions.push(
       this.loginPerfilService.obterPerfis(searchTerm).subscribe(
@@ -94,7 +97,9 @@ export class PerfisComponent {
         }
       )
     )
-  }
+      }
+    }
+      
   Menu(){
     this.router.navigate([`menu/${this.username}`]);
   }

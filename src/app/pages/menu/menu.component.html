@@ -1,13 +1,11 @@
 <html>
-<div *ngIf="dark" class="img">
+<div *ngIf="dark" class="img" (click)="NaoMostrarMenu()">
       <h1 id="h1white">Desporto24</h1>
-      <div (click)="MostrarMenu()" id="img-fluid2" *ngIf="!showMenu">
+      <div (mouseover)="MostrarMenu()" id="img-fluid2" *ngIf="!showMenu">
         <img src="{{perfil.foto}}" class="image-preview__image2" class="rounded-circle img-thumbnail">
-        <p>Abrir Menu</p>
       </div>
-      <div id="envelope">
-        <i class="bi bi-envelope" (click)="MostrarNotificacoes()"></i>
-        <p>Abrir Notificações</p>
+      <div id="envelope" *ngIf="!showNotification">
+        <i class="bi bi-envelope" (mouseover)="MostrarNotificacoes()"></i>
       </div>
             <div *ngIf="showMenu" id="content">
         <p id="D243menu">Desporto24</p>
@@ -221,19 +219,44 @@
 <li  id="ultimoLogin2"> {{selectedPerfil?.lastLoginDate}}</li>
 </ul>
 <button (click)="fecharPerfil()" id="botaoFechar">X</button>
-<button id="botaoChat">Iniciar Chat</button>
+<button (click)="abrirChat()" id="botaoChat">Abrir Chat</button>
 <button (click)="blockAmigo()" id="botaoBloquear">Bloquear</button>
 </div>
+<div id="content5" *ngIf="chat">
+  <p id="D235chat">Desporto24</p>
+      <p id="D236chat">Desporto24</p>
+      <p id="D240chat">Desporto24</p>
+      <p id="D239chat">Desporto24</p>
+      <p id="D238chat">Desporto24</p>
+      <p id="D237chat">Desporto24</p>
+      <p id="D241chat">Desporto24</p>
+      <h4>Chat</h4>
+        <div id="tabela4">
+          <div *ngFor="let perfil of perfis">
+            <div class="image-previewChat" id="imagePreview">
+              <img src="{{selectedPerfil?.foto}}" alt="Image Preview" class="image-preview__image"/>
+            </div>
+                  <div id="conversaComPerfil"> {{selectedPerfil.username}}</div>
+          </div>
+      </div>
+      <div id="mensagensChat"></div>
+      <textarea id="mensagensChatEnvio"></textarea>
+      <button id="botaoChatEnvio" type="button">Enviar
+        <i *ngIf="refreshing" class="fas fa-spin"></i>
+        <i *ngIf="!refreshing" class="fas"></i>
+    </button>
+      <button (click)="fecharChat()" id="botaoFechar">X</button>
+      </div>
 </div>
 
-<div *ngIf="!dark" class="img2">
+<div *ngIf="!dark" class="img2" (click)="NaoMostrarMenu()">
       <h1 id="h1black">Desporto24</h1>
-      <div (click)="MostrarMenu()" id="img-fluid2black" *ngIf="!showMenu">
+      <div (mouseover)="MostrarMenu()" id="img-fluid2black" *ngIf="!showMenu">
         <img src="{{perfil.foto}}" class="image-preview__image2" class="rounded-circle img-thumbnail">
-        <p>Abrir Menu</p>
+
       </div>
-      <div id="envelopeblack">
-        <i class="bi bi-envelope" (click)="MostrarNotificacoes()"></i>
+      <div *ngIf="!showNotification" id="envelopeblack">
+        <i class="bi bi-envelope" (mouseover)="MostrarNotificacoes()"></i>
       </div>
       <div id="content3" *ngIf="showNotification">
         <p id="D235amigos">Desporto24</p>

@@ -204,6 +204,18 @@ color: white;
     justify-content: center;
     color: #cccccc;
 }
+.image-previewChat{
+    width: 100px;
+    height: 100px;
+    position: absolute;
+    left: 20%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #cccccc;
+}
 #botao1{
     text-decoration: none;
     color: black;
@@ -297,10 +309,6 @@ color: white;
     left: 65%;
     transform: translateX(0%) translateY(0);
 }
-    html {
-    overflow-y: auto;
-    background-color: transparent;
-    }
     ::-webkit-scrollbar {
         width: 10px;
       }
@@ -527,6 +535,149 @@ color: white;
         transform: translate(-50%, -50%);
         opacity: 20%;
         transform: rotate(45deg);
+}
+#D235chat{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 40%;
+        left: -50%;
+        transform: translate(-50%, -50%);
+        opacity: 20%;
+        transform: rotate(45deg);
+}
+#D236chat{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 40%;
+        left: -30%;
+        transform: translate(-50%, -50%);
+        opacity: 20%;
+        transform: rotate(45deg);
+}
+#D237chat{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 40%;
+        left: -10%;
+        transform: translate(-50%, -50%);
+        opacity: 20%;
+        transform: rotate(45deg);
+}
+#D238chat{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 40%;
+        left: 10%;
+        transform: translate(-50%, -50%);
+        opacity: 20%;
+        transform: rotate(45deg);
+}
+#D239chat{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 40%;
+        left: 30%;
+        transform: translate(-50%, -50%);
+        opacity: 20%;
+        transform: rotate(45deg);
+}
+#D240chat{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 40%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        opacity: 20%;
+        transform: rotate(45deg);
+}
+#D241chat{
+    color: white;
+    font-size: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 40%;
+        left: 70%;
+        transform: translate(-50%, -50%);
+        opacity: 20%;
+        transform: rotate(45deg);
+}
+
+#mensagensChat{
+    background-color: white;
+    width: 750px;
+    height: 300px;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+        top: 55%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        border-radius: 10px;
+    border-style: solid;
+    border-width: 5px;
+    }
+#mensagensChatEnvio{
+    background-color: white;
+    width: 600px;
+    height: 100px;
+    font-family: 'Arial';
+    position: absolute;
+        top: 90%;
+        left: 40%;
+        transform: translate(-50%, -50%);
+        border-radius: 10px;
+    border-style: solid;
+    border-width: 5px;
+    text-align: left;
+    align-items: top;
+    padding: 15px 15px 15px 15px;
+}
+#botaoChatEnvio{
+    background-color: white;
+    width: 130px;
+    height: 100px;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+        top: 90%;
+        left: 89%;
+        transform: translate(-50%, -50%);
+        border-radius: 10px;
+    border-style: solid;
+    border-width: 5px;
 }
 #D243{
     color: white;
@@ -908,6 +1059,26 @@ transform: translate(-50%, -50%);
     overflow: hidden;
     animation:a 1s;
 }
+#content5{
+    font-size: 15px;
+    height: 600px;
+    width: 800px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    z-index: 1;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    border-radius: 10px;
+    border-style: solid;
+    border-width: 5px;
+    background-color:grey;
+    overflow: hidden;
+    animation:e 1s;
+}
 #envelope{
     text-align: center;
     font-family: 'Arial';
@@ -987,6 +1158,14 @@ transition: 0.6s;
         100%{
           height:300px;
         }
+    }
+        @keyframes e{
+            0%{
+              height:0px;
+            }
+            100%{
+              height:600px;
+            }
   }
 #opcao1{
     color: white;
@@ -1229,6 +1408,22 @@ transition: 0.6s;
     color: white;
     transition: background-color 0.5s;
     border-radius: 50px;
+}
+#tabela4{
+    font-size: 15px;
+    width: 80%;
+    height: 100px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+        top: 20%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    border-radius: 10px;
+    border-collapse: collapse;
+    border-spacing: 0;
 }
 hr{
     opacity: 100%;
@@ -1839,6 +2034,18 @@ transform: translate(-50%, -50%);
     background-color: lightblue;
     color: white;
     transition: background-color 0.5s;
+}
+#conversaComPerfil{
+    color: white;
+    font-size: 50px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Copperplate Gothic Medium';
+    position: absolute;
+        top: 50%;
+        left: 60%;
+        transform: translate(-50%, -50%);
 }
 h1{
     color: white;
