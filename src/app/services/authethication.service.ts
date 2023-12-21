@@ -9,6 +9,7 @@ import { CustomHttpResponse } from '../pages/custom-http-response';
 import { Token } from '../pages/model/token';
 import { Router } from '@angular/router';
 import { Notification } from '../pages/model/notification';
+import { Chat } from '../pages/model/chat';
 
 
 @Injectable({providedIn: 'root'})
@@ -60,6 +61,15 @@ export class AuthenticationService {
   }
   acceptFriendRequest(NotificationNumber:number,NotificationToken:string):Observable<Notification>{
     return this.http.get<Notification>(`${this.host}/menu/:username/notifications/${NotificationNumber}/${NotificationToken}`,);
+  }
+  getChat(senderId: string, recipientId: string):Observable<Chat[]>{
+    return this.http.get<Chat[]>(`${this.host}/menu/:username/friendList/chat/${senderId}/${recipientId}`);
+  }
+  sendChatMessagem(chat: Chat):Observable<Chat>{
+    return this.http.post<Chat>(`${this.host}/menu/:username/friendList/chat/:sender/:recipient`,chat)
+  }
+  terminarSessao(email: Perfil):Observable<Perfil>{
+    return this.http.post<Perfil>(`${this.host}/menu/:username/terminarSessao`,email)
   }
 
   public logOut(): void {

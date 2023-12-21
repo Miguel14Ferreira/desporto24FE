@@ -1,4 +1,5 @@
 export class Perfil {
+    public id:number;
     public username:string;
     public password:string;
     public confirmPassword:string;
@@ -26,6 +27,7 @@ export class Perfil {
     public messages: [];
     
     constructor(){
+        this.id = 0;
         this.username = '';
         this.password = '';
         this.confirmPassword = '';

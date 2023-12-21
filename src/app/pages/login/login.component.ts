@@ -44,30 +44,7 @@ export class LoginComponent implements OnInit, OnDestroy {
   minhaImagem2 = "assets/olho1.png";
   minhaImagem3 = "assets/olho2.png";
 
-  /*
-  onLogin(perfil: Perfil): void {
-    if (this.perfil.username == "" || this.perfil.password == ""){
-      alert(`Terás de preencher os espaços!`)
-    } else {
-    this.showLoading = true;
-    this.subscriptions.push(
-      this.authenticationService.loginPerfil(perfil).subscribe(
-        (response: HttpResponse<Perfil>) => {
-          this.token = response.headers.get(HeaderType.JWT_TOKEN);
-          this.authenticationService.saveToken(this.token);
-          this.authenticationService.addPerfilToLocalCache((response.body)!);
-          this.router.navigateByUrl('/menu');
-          this.showLoading = false;
-        },
-        (errorResponse: HttpErrorResponse) => {
-          alert("Ocorreu um erro a efetuar o login")
-          this.showLoading = false;
-        }
-      )
-    );
-  }
-}
-*/
+ 
 onLogin(perfil: Perfil): void {
   if (this.perfil.username == "" || this.perfil.password == ""){
     alert(`Terás de preencher os espaços!`)

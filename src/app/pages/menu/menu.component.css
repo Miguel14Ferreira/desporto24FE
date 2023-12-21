@@ -637,9 +637,11 @@ color: white;
 
 #mensagensChat{
     background-color: white;
+    color: black;
     width: 750px;
     height: 300px;
-    text-align: center;
+    padding: 16px 16px 16px 16px;
+    text-align: left;
     font-family: 'Arial';
     position: absolute;
         top: 55%;
@@ -648,6 +650,7 @@ color: white;
         border-radius: 10px;
     border-style: solid;
     border-width: 5px;
+    overflow: auto;
     }
 #mensagensChatEnvio{
     background-color: white;

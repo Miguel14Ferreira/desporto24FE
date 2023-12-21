@@ -2,12 +2,13 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { AuthenticationService } from 'src/app/services/authethication.service';
 import { Perfil } from '../model/perfil';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { LoginperfilService } from 'src/app/services/loginperfil.service';
 import { Subscription } from 'rxjs';
 import { Session } from '../session';
 import { FriendRequest } from '../model/friendRequest';
 import { Notification } from '../model/notification';
+import { Chat } from '../model/chat';
 
 @Component({
   selector: 'app-menu',
@@ -17,6 +18,8 @@ import { Notification } from '../model/notification';
 export class MenuComponent implements OnInit {
   public sessoes : Session [] = [];
   perfis : Perfil[] = [];
+  chats : Chat[] = [];
+  enviarMensagem : Chat = new Chat();
   Notifications : Notification[] = []; 
   Notification!: Notification;
   fileName!: string;
@@ -108,12 +111,52 @@ export class MenuComponent implements OnInit {
   }
   abrirChat(){
     this.chat = true;
-    window.history.replaceState({},'',`/menu/${this.perfil.username}/friendList/chat`)
+    const sender = this.perfil.username;
+    const recipient = this.selectedPerfil.username;
+    window.history.replaceState({},'',`/menu/${this.perfil.username}/friendList/chat/`+sender+"/"+recipient)
+    this.subscriptions.push(
+      this.authenticationService.getChat(sender,recipient).subscribe(
+        (response: Chat[]) => {
+          this.chats = response;
+          this.refreshing = false;
+        },
+        (errorResponse: HttpErrorResponse) => {
+          alert(`Ocorreu um erro a executar a operação`);
+          this.refreshing = false;
+        }
+      )
+    )
   }
   fecharChat(){
     this.chat = false;
     window.history.replaceState({},'',`/menu/${this.perfil.username}/friendList`)
   }
+
+  enviarMensagemChat(chat:Chat){
+     chat.texto = this.enviarMensagem.texto;
+     this.enviarMensagem.username1 = this.perfil.username
+     this.enviarMensagem.username2 = this.selectedPerfil.username;
+     console.log(this.enviarMensagem);
+    this.subscriptions.push(
+      this.authenticationService.sendChatMessagem(this.enviarMensagem).subscribe(
+        (response: Chat) => {
+          this.refreshing = false;
+          const sender = this.perfil.username;
+          const recipient = this.selectedPerfil.username;
+          this.authenticationService.getChat(sender,recipient).subscribe(
+            (response: Chat[])=>{
+              this.chats = response;
+              this.refreshing = false;
+            }
+          )
+        },
+        (errorResponse: HttpErrorResponse) => {
+          alert(`Ocorreu um erro a executar a operação`);
+          this.refreshing = false;
+        }
+      )
+    )
+  } 
 
   NomeUtilizador(){
     return this.perfil.username;
@@ -221,17 +264,31 @@ export class MenuComponent implements OnInit {
     window.history.replaceState({},'',`/menu/${this.perfil.username}`)
   }
   remover(){
-    this.authenticationService.logOut();
+    this.refreshing = true;
+    this.subscriptions.push(
+      this.authenticationService.terminarSessao(this.perfil).subscribe(
+        (response: Perfil) => {
+          this.authenticationService.logOut();
         this.router.navigate(['login']);
+          this.refreshing = false;
+        },
+        (errorResponse: HttpErrorResponse) => {
+          alert(`Ocorreu um erro a executar a operação`);
+          this.refreshing = false;
+        }
+      )
+    )
 }    
 terminarSessao(){
   this.logOut = true;
+  window.history.replaceState({},'',`/menu/${this.perfil.username}/terminarSessao`)
 }
 fecharSessao(){
   this.show = false;
 }
 voltar(){
   this.logOut = false;
+  window.history.replaceState({},'',`/menu/${this.perfil.username}`)
 }
 
 obterSessoes(showNotification: boolean): void{

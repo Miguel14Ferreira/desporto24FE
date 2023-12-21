@@ -230,21 +230,26 @@
       <p id="D238chat">Desporto24</p>
       <p id="D237chat">Desporto24</p>
       <p id="D241chat">Desporto24</p>
-      <h4>Chat</h4>
         <div id="tabela4">
-          <div *ngFor="let perfil of perfis">
+          <div>
             <div class="image-previewChat" id="imagePreview">
               <img src="{{selectedPerfil?.foto}}" alt="Image Preview" class="image-preview__image"/>
             </div>
                   <div id="conversaComPerfil"> {{selectedPerfil.username}}</div>
           </div>
       </div>
-      <div id="mensagensChat"></div>
-      <textarea id="mensagensChatEnvio"></textarea>
-      <button id="botaoChatEnvio" type="button">Enviar
+      <div id="mensagensChat">
+        <div *ngFor="let chat of chats" id="">
+        <strong>{{chat.username1}}:</strong> {{chat.texto}}
+        </div>
+      </div>
+      <form #sendMessageForm="ngForm" (ngSubmit)="enviarMensagemChat(sendMessageForm.value)">
+      <input [(ngModel)]="enviarMensagem.texto" name="chat" id="mensagensChatEnvio">
+      <button id="botaoChatEnvio" type="submit">Enviar
         <i *ngIf="refreshing" class="fas fa-spin"></i>
         <i *ngIf="!refreshing" class="fas"></i>
     </button>
+  </form>
       <button (click)="fecharChat()" id="botaoFechar">X</button>
       </div>
 </div>
@@ -335,7 +340,10 @@
           <p id="D237logOut">Desporto24</p>
           <h4 id="h4black">Tens a certeza que queres bloquear
           <p>{{selectedPerfil?.username}}?</p></h4>
-          <button (click)="bloquearAmigo()" id="botao6">Sim</button>
+          <button (click)="bloquearAmigo()" id="botao6">Sim
+            <i *ngIf="refreshing" class="fas fa-spin"></i>
+            <i *ngIf="!refreshing" class="fas"></i>
+        </button>
       <button (click)="naoBloquear()" id="botao7">Não</button>
       </div>
 <button (click)="NaoMostrarNotificacoes()" id="botaoFecharAmigos">X</button>
