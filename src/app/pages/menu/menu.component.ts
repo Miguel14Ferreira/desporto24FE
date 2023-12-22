@@ -83,6 +83,7 @@ export class MenuComponent implements OnInit {
       this.dark = true
     }
   }
+    
 
 
   fecharPerfil(){
@@ -121,12 +122,11 @@ export class MenuComponent implements OnInit {
           this.refreshing = false;
         },
         (errorResponse: HttpErrorResponse) => {
-          alert(`Ocorreu um erro a executar a operação`);
           this.refreshing = false;
         }
       )
     )
-  }
+}
   fecharChat(){
     this.chat = false;
     window.history.replaceState({},'',`/menu/${this.perfil.username}/friendList`)
@@ -136,7 +136,6 @@ export class MenuComponent implements OnInit {
      chat.texto = this.enviarMensagem.texto;
      this.enviarMensagem.username1 = this.perfil.username
      this.enviarMensagem.username2 = this.selectedPerfil.username;
-     console.log(this.enviarMensagem);
     this.subscriptions.push(
       this.authenticationService.sendChatMessagem(this.enviarMensagem).subscribe(
         (response: Chat) => {
@@ -281,6 +280,7 @@ export class MenuComponent implements OnInit {
 }    
 terminarSessao(){
   this.logOut = true;
+  this.showPerfil = false;
   window.history.replaceState({},'',`/menu/${this.perfil.username}/terminarSessao`)
 }
 fecharSessao(){
