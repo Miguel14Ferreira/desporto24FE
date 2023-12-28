@@ -214,9 +214,9 @@
     <span *ngIf="!locked" id="estadoDaConta2">Conta ativa</span>
 </li>
 <li id="membroDesde">Membro desde:</li>
-<li id="membroDesde2"> {{selectedPerfil?.joinDate}}</li>
+<li id="membroDesde2"> {{selectedPerfil?.joinDateDisplay}}</li>
 <li  id="ultimoLogin">Ultimo Login:</li>
-<li  id="ultimoLogin2"> {{selectedPerfil?.lastLoginDate}}</li>
+<li  id="ultimoLogin2"> {{selectedPerfil?.lastLoginDateDisplay}}</li>
 </ul>
 <button (click)="fecharPerfil()" id="botaoFechar">X</button>
 <button (click)="abrirChat()" id="botaoChat">Abrir Chat</button>
@@ -236,11 +236,20 @@
               <img src="{{selectedPerfil?.foto}}" alt="Image Preview" class="image-preview__image"/>
             </div>
                   <div id="conversaComPerfil"> {{selectedPerfil.username}}</div>
-          </div>
-      </div>
+                  <div *ngIf="!online">
+                  <div id="conversaComPerfil2">OFFLINE</div>
+                  <div id="conversaComPerfil3">Ultima vez online: {{selectedPerfil.lastLoginDateDisplay}}</div></div>
+                  <div *ngIf="online"><div id="conversaComPerfil2">ONLINE</div></div>
+                </div>
+                </div>
       <div id="mensagensChat">
-        <div *ngFor="let chat of chats" id="">
-        <strong>{{chat.username1}}:</strong> {{chat.texto}}
+        <div *ngFor="let chat of chats">
+          <div id="mensagemEnviada" *ngIf="chat.username1 == this.perfil.username">
+        <strong>{{chat.username1}}:</strong>&nbsp;{{chat.texto}}
+      </div>
+      <div id="mensagemRecebida" *ngIf="chat.username1 == this.selectedPerfil.username">
+        <strong>{{chat.username1}}:</strong>&nbsp;{{chat.texto}}
+      </div>
         </div>
       </div>
       <form #sendMessageForm="ngForm" (ngSubmit)="enviarMensagemChat(sendMessageForm.value)">
@@ -263,211 +272,250 @@
       <div *ngIf="!showNotification" id="envelopeblack">
         <i class="bi bi-envelope" (mouseover)="MostrarNotificacoes()"></i>
       </div>
-      <div id="content3" *ngIf="showNotification">
+      <div *ngIf="showMenu" id="content">
+        <p id="D243menu">Desporto24</p>
+            <p id="D244menu">Desporto24</p>
+            <p id="D245menu">Desporto24</p>
+            <p id="D246menu">Desporto24</p>
+            <p id="D247menu">Desporto24</p>
+            <p id="D248menu">Desporto24</p>
+        <h3>{{perfil.username}}</h3>
+        <img src="{{perfil.foto}}" id="img-fluid" class="rounded-circle" alt=""/>
+        <button (click)="NaoMostrarMenu()" id="botaoFechar">X</button>
+        <ul>
+        <li id="opcao8" (click)="Amigos()" routerLinkActive="active-link">Lista de amigos</li>
+        <li id="opcao2" (click)="alterarDados()" routerLinkActive="active-link">Alterar dados do perfil</li>
+        <li id="opcao3" (click)="alterarPassword()" routerLinkActive="active-link">Alterar nome de utilizador/password</li>
+        <li id="opcao4" (click)="verDadosPerfil()" routerLinkActive="active-link">Ver dados do meu perfil</li>
+        <li id="opcao6" (click)="Utilizadores()" routerLinkActive="active-link">Procurar Utilizadores</li>
+        <li id="opcao7" (click)="CriarSessao()" routerLinkActive="active-link">Criar Sessão</li>
+        <li id="opcao5" (click)="terminarSessao()" routerLinkActive="active-link">Terminar Sessão</li>
+        </ul>
+      </div>
+      <div id="content4" *ngIf="amigos">
         <p id="D235amigos">Desporto24</p>
             <p id="D236amigos">Desporto24</p>
             <p id="D240amigos">Desporto24</p>
             <p id="D239amigos">Desporto24</p>
             <p id="D238amigos">Desporto24</p>
             <p id="D237amigos">Desporto24</p>
-            <h4>Notificações</h4>
-        <button (click)="NaoMostrarNotificacoes()" id="botaoFecharAmigos">X</button>
-        <div id="notificacoes">
-          <div *ngFor="let Notification of Notifications">
-            <hr>
-                  <div (click)="onSelectedNotification(Notification)" id="notification">{{Notification.assunto}}
-                    <p id="p6">{{Notification.createdAt}}</p>
-                  </div>
-                  <hr>
-          </div>
+            <h4>Amigos</h4>
+        <button (click)="naoMostrarAmigos()" id="botaoFecharAmigos">X</button>
+        <table id="tabela3">
+          <tbody *ngFor="let perfil of perfis">
+                  <td (click)="onSelectPerfil(perfil)">
+                      <img height="40" width="40" src="{{perfil.foto}}" class="rounded-circle img-thumbnail" alt=""/>
+                  </td>
+                  <td (click)="onSelectPerfil(perfil)"> {{perfil.username}}</td>
+          </tbody>
+      </table>
+      <div id="content2" *ngIf="bloquear">
+        <p id="D235logOut">Desporto24</p>
+            <p id="D236logOut">Desporto24</p>
+            <p id="D240logOut">Desporto24</p>
+            <p id="D239logOut">Desporto24</p>
+            <p id="D238logOut">Desporto24</p>
+            <p id="D237logOut">Desporto24</p>
+            <h4 id="h4black">Tens a certeza que queres bloquear
+            <p>{{selectedPerfil?.username}}?</p></h4>
+            <button (click)="bloquearAmigo()" id="botao6">Sim</button>
+        <button (click)="naoBloquear()" id="botao7">Não</button>
         </div>
         </div>
-        <div *ngIf="showNotificationMessage" id="viewNotificationModal">
-          <h4>Mensagem:</h4>
-          <div id="mensagem">
-            <p id="p1"><strong>Assunto:</strong>{{selectedNotification?.assunto}}</p>
-            <p id="p2">{{selectedNotification?.mensagem}}</p>
-            <p id="p3">{{selectedNotification?.cumprimentos}}</p>
-            <p id="p4">{{selectedNotification?.assinatura}}</p>
-            <p id="p5">{{selectedNotification?.createdAt}}</p>
-          </div>
-          <button (click)="fecharMensagem()" id="botaoFecharNotificacoes">X</button>
-          <button (click)="eliminarNotificacao(selectedNotification)" id="botaoEliminarNotificacao">Eliminar</button>
-        </div>
-      <div *ngIf="showMenu" id="content">
-        <p id="D243menu">Desporto24</p>
-        <p id="D244menu">Desporto24</p>
-        <p id="D245menu">Desporto24</p>
-        <p id="D246menu">Desporto24</p>
-        <p id="D247menu">Desporto24</p>
-        <p id="D248menu">Desporto24</p>
-        <h3>{{perfil.username}}</h3>
-        <img src="{{perfil.foto}}" id="img-fluid" class="rounded-circle" alt=""/>
-        <button (click)="NaoMostrarMenu()" id="botaoFechar">X</button>
-    <ul>
-      <li id="opcao8" (click)="Amigos()" routerLinkActive="active-link">Lista de amigos</li>
-    <li id="opcao2" (click)="alterarDados()" routerLinkActive="active-link">Alterar dados do perfil</li>
-    <li id="opcao3" (click)="alterarPassword()" routerLinkActive="active-link">Alterar nome de utilizador/password</li>
-    <li id="opcao4" (click)="verDadosPerfil()" routerLinkActive="active-link">Ver dados do meu perfil</li>
-    <li id="opcao6" (click)="Utilizadores()" routerLinkActive="active-link">Procurar Utilizadores</li>
-    <li id="opcao7" (click)="CriarSessao()" routerLinkActive="active-link">Criar Sessão</li>
-    <li id="opcao5" (click)="terminarSessao()" routerLinkActive="active-link">Terminar Sessão</li>
-    </ul>
-    </div>
-    <div id="content4" *ngIf="amigos">
-      <p id="D235amigos">Desporto24</p>
-          <p id="D236amigos">Desporto24</p>
-          <p id="D240amigos">Desporto24</p>
-          <p id="D239amigos">Desporto24</p>
-          <p id="D238amigos">Desporto24</p>
-          <p id="D237amigos">Desporto24</p>
-          <h4>Amigos</h4>
-      <button (click)="naoMostrarAmigos()" id="botaoFecharAmigos">X</button>
-      <table id="tabela3">
-        <tbody *ngFor="let perfil of perfis">
-                <td (click)="onSelectPerfil(perfil)">
-                    <img height="40" width="40" src="{{perfil.foto}}" class="rounded-circle img-thumbnail" alt=""/>
-                </td>
-                <td (click)="onSelectPerfil(perfil)"> {{perfil.username}}</td>
-        </tbody>
-    </table>
-    <div id="content2" *ngIf="bloquear">
-      <p id="D235logOut">Desporto24</p>
-          <p id="D236logOut">Desporto24</p>
-          <p id="D240logOut">Desporto24</p>
-          <p id="D239logOut">Desporto24</p>
-          <p id="D238logOut">Desporto24</p>
-          <p id="D237logOut">Desporto24</p>
-          <h4 id="h4black">Tens a certeza que queres bloquear
-          <p>{{selectedPerfil?.username}}?</p></h4>
-          <button (click)="bloquearAmigo()" id="botao6">Sim
-            <i *ngIf="refreshing" class="fas fa-spin"></i>
-            <i *ngIf="!refreshing" class="fas"></i>
-        </button>
-      <button (click)="naoBloquear()" id="botao7">Não</button>
+      <div id="content3" *ngIf="showNotification">
+    <p id="D235amigos">Desporto24</p>
+        <p id="D236amigos">Desporto24</p>
+        <p id="D240amigos">Desporto24</p>
+        <p id="D239amigos">Desporto24</p>
+        <p id="D238amigos">Desporto24</p>
+        <p id="D237amigos">Desporto24</p>
+        <h4>Notificações</h4>
+    <button (click)="NaoMostrarNotificacoes()" id="botaoFecharAmigos">X</button>
+    <div id="notificacoes">
+      <div *ngFor="let Notification of Notifications">
+        <hr>
+              <div (click)="onSelectedNotification(Notification)" id="notification">{{Notification.assunto}}
+                <p id="notification2">{{Notification.createdAt}}</p>
+              </div>
+              <hr>
       </div>
-<button (click)="NaoMostrarNotificacoes()" id="botaoFecharAmigos">X</button>
-</div>
+    </div>
+    </div>
+    <div *ngIf="showNotificationMessage" id="viewNotificationModal">
+      <h4>Mensagem:</h4>
+      <div id="mensagem">
+        <p id="p1"><strong>Assunto:</strong>{{selectedNotification?.assunto}}</p>
+        <p id="p2">{{selectedNotification?.mensagem}}</p>
+        <p id="p3">{{selectedNotification?.cumprimentos}}</p>
+        <p id="p4">{{selectedNotification?.assinatura}}</p>
+        <p id="p5">{{selectedNotification?.createdAt}}</p>
+      </div>
+      <button (click)="fecharMensagem()" id="botaoFecharNotificacoes">X</button>
+      <button (click)="eliminarNotificacao(selectedNotification)" id="botaoEliminarNotificacao">Eliminar</button>
+    </div>
+    <div *ngIf="showNotificationFriendRequestMessage" id="viewNotificationModal">
+      <h4>Mensagem:</h4>
+      <div id="mensagem">
+        <p id="p1"><strong>Assunto:</strong>{{selectedNotification?.assunto}}</p>
+        <p id="p2">{{selectedNotification?.mensagem}}</p>
+        <p id="p3">{{selectedNotification?.cumprimentos}}</p>
+        <p id="p4">{{selectedNotification?.assinatura}}</p>
+        <p id="p5">{{selectedNotification?.createdAt}}</p>
+      </div>
+      <button (click)="fecharMensagem()" id="botaoFecharNotificacoes">X</button>
+      <button (click)="aceitarAmigo(selectedNotification)" id="botaoAceitar">Aceitar</button>
+      <button (click)="rejeitarAmigo(selectedNotification)" id="botaoEliminarNotificacao2">Rejeitar</button>
+    </div>
     <div id="container">
       <p id="D24">Desporto24</p>
       <p id="D241">Desporto24</p>
       <p id="D243">Desporto24</p>
       <p id="D244">Desporto24</p>
+
       <p id="D245">Desporto24</p>
 <h2 id="h2black">Sessões disponíveis</h2>
-  <div id="content2" *ngIf="logOut">
-    <p id="D235logOut">Desporto24</p>
-        <p id="D236logOut">Desporto24</p>
-        <p id="D240logOut">Desporto24</p>
-        <p id="D239logOut">Desporto24</p>
-        <p id="D238logOut">Desporto24</p>
-        <p id="D237logOut">Desporto24</p>
-        <h4 id="h4black">Tens a certeza que queres terminar a sessão?</h4>
-        <button id="botao6" (click)="remover()">Sim</button>
-    <button id="botao7" (click)="voltar()">Não</button>
-    </div>
+<div id="content2" *ngIf="logOut">
+  <p id="D235logOut">Desporto24</p>
+      <p id="D236logOut">Desporto24</p>
+      <p id="D240logOut">Desporto24</p>
+      <p id="D239logOut">Desporto24</p>
+      <p id="D238logOut">Desporto24</p>
+      <p id="D237logOut">Desporto24</p>
+  <h4 id="h4white">Tens a certeza que queres terminar a sessão?</h4>
+  <button id="botao6" (click)="remover()">Sim</button>
+  <button id="botao7" (click)="voltar()">Não</button>
+  </div>
 <form>
-    <input name="searchTerm" #searchTerm="ngModel" ngModel (ngModelChange)="procurarSessoes(searchTerm.value)" id="input1" type="search" placeholder="Procurar sessão...">
-  </form>
+  <input name="searchTerm" #searchTerm="ngModel" ngModel (ngModelChange)="procurarSessoes(searchTerm.value)" id="input1" type="search" placeholder="Procurar sessão...">
+</form>
 <button id="botao1" type="button" (click)="obterSessoes(true)" class="btn btn-info">
-    <i *ngIf="refreshing" class="fas fa-sync fa-spin"></i>
-    <i *ngIf="!refreshing" class="fas fa-sync"></i>
+  <i *ngIf="refreshing" class="fas fa-sync fa-spin"></i>
+  <i *ngIf="!refreshing" class="fas fa-sync"></i>
 </button>
 <table id="tabela1">
 <thead>
-    <tr>
-        <th>Foto do local de jogo</th>
-        <th>Jogo criado por</th>
-        <th>Nº de jogadores</th>
-        <th>Data de jogo</th>
-        <th>Localidade</th>
-    </tr>
+  <tr>
+      <th>Foto do local de jogo</th>
+      <th>Jogo criado por</th>
+      <th>Nº de jogadores</th>
+      <th>Data de jogo</th>
+      <th>Localidade</th>
+  </tr>
 </thead>
 <tbody *ngFor="let sessao of sessoes" id="tabela2">
-        <td>
-            <img height="40" width="40" src="{{sessao.foto}}" class="rounded-circle img-fluid img-thumbnail" alt=""/>
-        </td>
-        <td (click)="onSelectSessao(sessao)"> {{sessao.utilizador}}</td>
-        <td (click)="onSelectSessao(sessao)"> {{sessao.desporto}}</td>
-        <td (click)="onSelectSessao(sessao)"> {{sessao.jogadores}} </td>
-        <td (click)="onSelectSessao(sessao)"> {{sessao.localidade}}</td>
-        <td (click)="onSelectSessao(sessao)"> {{sessao.private}} </td>
+      <td>
+          <img height="40" width="40" src="{{sessao.foto}}" class="rounded-circle img-fluid img-thumbnail" alt=""/>
+      </td>
+      <td (click)="onSelectSessao(sessao)"> {{sessao.utilizador}}</td>
+      <td (click)="onSelectSessao(sessao)"> {{sessao.desporto}}</td>
+      <td (click)="onSelectSessao(sessao)"> {{sessao.jogadores}} </td>
+      <td (click)="onSelectSessao(sessao)"> {{sessao.localidade}}</td>
+      <td (click)="onSelectSessao(sessao)"> {{sessao.private}} </td>
 </tbody>
 </table>
 <div *ngIf="show" id="viewSessaoModal">
-    <p id="D24">Desporto24</p>
-    <p id="D241">Desporto24</p>
-    <p id="D242">Desporto24</p>
-    <p id="D243">Desporto24</p>
-    <p id="D244">Desporto24</p>
-    <p id="D245">Desporto24</p>
-    <p id="D246">Desporto24</p>
-    <p id="D247">Desporto24</p>
-    <p id="D248">Desporto24</p>
-      <div class="image-preview" id="imagePreview">
-        <img src="{{selectedSessao?.foto}}" alt="Image Preview" class="image-preview__image"/>
+  <p id="D24">Desporto24</p>
+  <p id="D241">Desporto24</p>
+  <p id="D242">Desporto24</p>
+  <p id="D243">Desporto24</p>
+  <p id="D244">Desporto24</p>
+  <p id="D245">Desporto24</p>
+  <p id="D246">Desporto24</p>
+  <p id="D247">Desporto24</p>
+  <p id="D248">Desporto24</p>
+    <div class="image-preview" id="imagePreview">
+      <img src="{{selectedSessao?.foto}}" alt="Image Preview" class="image-preview__image"/>
+    </div>
 <ul>
 <li id="dataNascimento">Data de jogo</li>
-    <li id="dataNascimento2"> {{selectedSessao?.dataDeJogo}}
-    </li>
-    <li id="genero">Nº máximo jogadores</li>
-    <li id="genero2"> {{selectedSessao?.jogadores}} </li>
-    <li id="paisNascimento">Localidade</li>
-    <li id="paisNascimento2"> {{selectedSessao?.localidade}} </li>
-    <li id="desportosFavoritos">Morada de jogo</li>
-    <li id="desportosFavoritos2"> {{selectedSessao?.morada}}</li>
-  <li id="estadoDaConta">Tipo de jogo</li>
-  <li id="membroDesde">Jogo criado por:</li>
-  <li id="membroDesde2"> {{selectedSessao?.utilizador}}</li>
+  <li id="dataNascimento2"> {{selectedSessao?.dataDeJogo}}
+  </li>
+  <li id="genero">Nº máximo jogadores</li>
+  <li id="genero2"> {{selectedSessao?.jogadores}} </li>
+  <li id="paisNascimento">Localidade</li>
+  <li id="paisNascimento2"> {{selectedSessao?.localidade}} </li>
+  <li id="desportosFavoritos">Morada de jogo</li>
+  <li id="desportosFavoritos2"> {{selectedSessao?.morada}}</li>
+<li id="estadoDaConta">Tipo de jogo</li>
+<li id="membroDesde">Jogo criado por:</li>
+<li id="membroDesde2"> {{selectedSessao?.utilizador}}</li>
 <li  id="ultimoLogin">Jogo criado no dia:</li>
 <li  id="ultimoLogin2"> {{selectedSessao?.dataDeJogoCriado}}</li>
 </ul>
 <button (click)="fecharSessao()" id="botaoFechar">X</button>
-<button id="setadir" type="button"><i class="fas fa-angle-double-right"></i>&nbsp;&nbsp;</button>
-<button id="setaesq" type="button"><i class="fas fa-angle-double-left"></i>&nbsp;&nbsp;</button>
 <button id="botaoChat">Iniciar Chat</button>
 </div>
 </div>
 <div *ngIf="showPerfil" id="viewPerfilModal">
-  <p id="D24modal">Desporto24</p>
-    <p id="D241modal">Desporto24</p>
-    <p id="D242modal">Desporto24</p>
-    <p id="D243modal">Desporto24</p>
-    <p id="D244modal">Desporto24</p>
-    <p id="D245modal">Desporto24</p>
-    <p id="D246modal">Desporto24</p>
-    <p id="D247modal">Desporto24</p>
-    <p id="D248modal">Desporto24</p>
-    <div class="image-preview" id="imagePreview">
-      <img src="{{selectedPerfil?.foto}}" alt="Image Preview" class="image-preview__image"/>
-    </div>
+<p id="D24modal">Desporto24</p>
+  <p id="D241modal">Desporto24</p>
+  <p id="D242modal">Desporto24</p>
+  <p id="D243modal">Desporto24</p>
+  <p id="D244modal">Desporto24</p>
+  <p id="D245modal">Desporto24</p>
+  <p id="D246modal">Desporto24</p>
+  <p id="D247modal">Desporto24</p>
+  <p id="D248modal">Desporto24</p>
+  <div class="image-preview" id="imagePreview">
+    <img src="{{selectedPerfil?.foto}}" alt="Image Preview" class="image-preview__image"/>
+  </div>
 <div id="username">
-  {{selectedPerfil?.username}}
+{{selectedPerfil?.username}}
 </div>
 <ul>
 <li id="dataNascimento">Data de nascimento</li>
-  <li id="dataNascimento2"> {{selectedPerfil?.dateOfBirth}}
-  </li>
-  <li id="genero">Género </li>
-  <li id="genero2"> {{selectedPerfil?.gender}} </li>
-  <li id="paisNascimento">País de nascimento </li>
-  <li id="paisNascimento2"> {{selectedPerfil?.country}} </li>
-  <li id="desportosFavoritos">Desportos favoritos</li>
-  <li id="desportosFavoritos2"> {{selectedPerfil?.desportosFavoritos}}</li>
-  <li id="localidade">Localidade</li>
-  <li id="localidade2"> {{selectedPerfil?.location}}</li>
+<li id="dataNascimento2"> {{selectedPerfil?.dateOfBirth}}
+</li>
+<li id="genero">Género </li>
+<li id="genero2"> {{selectedPerfil?.gender}} </li>
+<li id="paisNascimento">País de nascimento </li>
+<li id="paisNascimento2"> {{selectedPerfil?.country}} </li>
+<li id="desportosFavoritos">Desportos favoritos</li>
+<li id="desportosFavoritos2"> {{selectedPerfil?.desportosFavoritos}}</li>
+<li id="localidade">Localidade</li>
+<li id="localidade2"> {{selectedPerfil?.location}}</li>
 <li id="estadoDaConta">Estado da conta:</li>
 <li>
-    <span *ngIf="locked" id="estadoDaConta2">Conta bloqueada</span>
-    <span *ngIf="!locked" id="estadoDaConta2">Conta ativa</span>
+  <span *ngIf="locked" id="estadoDaConta2">Conta bloqueada</span>
+  <span *ngIf="!locked" id="estadoDaConta2">Conta ativa</span>
 </li>
 <li id="membroDesde">Membro desde:</li>
-<li id="membroDesde2"> {{selectedPerfil?.joinDate}}</li>
+<li id="membroDesde2"> {{selectedPerfil?.joinDateDisplay}}</li>
 <li  id="ultimoLogin">Ultimo Login:</li>
-<li  id="ultimoLogin2"> {{selectedPerfil?.lastLoginDate}}</li>
+<li  id="ultimoLogin2"> {{selectedPerfil?.lastLoginDateDisplay}}</li>
 </ul>
 <button (click)="fecharPerfil()" id="botaoFechar">X</button>
-<button id="botaoChat">Iniciar Chat</button>
+<button (click)="abrirChat()" id="botaoChat">Abrir Chat</button>
 <button (click)="blockAmigo()" id="botaoBloquear">Bloquear</button>
 </div>
+<div id="content5" *ngIf="chat">
+<p id="D235chat">Desporto24</p>
+    <p id="D236chat">Desporto24</p>
+    <p id="D240chat">Desporto24</p>
+    <p id="D239chat">Desporto24</p>
+    <p id="D238chat">Desporto24</p>
+    <p id="D237chat">Desporto24</p>
+    <p id="D241chat">Desporto24</p>
+      <div id="tabela4">
+        <div>
+          <div class="image-previewChat" id="imagePreview">
+            <img src="{{selectedPerfil?.foto}}" alt="Image Preview" class="image-preview__image"/>
+          </div>
+                <div id="conversaComPerfil"> {{selectedPerfil.username}}</div>
+        </div>
+    </div>
+    <div id="mensagensChat">
+      <div *ngFor="let chat of chats">
+      <strong>{{chat.username1}}:</strong> {{chat.texto}}
+      </div>
+    </div>
+    <form #sendMessageForm="ngForm" (ngSubmit)="enviarMensagemChat(sendMessageForm.value)">
+    <input [(ngModel)]="enviarMensagem.texto" name="chat" id="mensagensChatEnvio">
+    <button id="botaoChatEnvio" type="submit">Enviar
+      <i *ngIf="refreshing" class="fas fa-spin"></i>
+      <i *ngIf="!refreshing" class="fas"></i>
+  </button>
+</form>
+    <button (click)="fecharChat()" id="botaoFechar">X</button>
+    </div>
 </div>

@@ -4,7 +4,7 @@ import { AuthenticationService } from 'src/app/services/authethication.service';
 import { Perfil } from '../model/perfil';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { LoginperfilService } from 'src/app/services/loginperfil.service';
-import { Subscription } from 'rxjs';
+import { Observable, Subscription, interval } from 'rxjs';
 import { Session } from '../session';
 import { FriendRequest } from '../model/friendRequest';
 import { Notification } from '../model/notification';
@@ -42,6 +42,7 @@ export class MenuComponent implements OnInit {
   friend!: FriendRequest;
   locked!:boolean;
   selectedSessao!: Session;
+  subscription!: Subscription;
   show!:boolean;
   buttonId!: any;
   sessao!: Session;
@@ -57,8 +58,11 @@ export class MenuComponent implements OnInit {
   showNotificationFriendRequestMessage!:boolean;
   private readonly USERNAME:string = 'username';
   chat!:boolean;
+  online!:boolean;
+  variable!:ReturnType<typeof setTimeout>;
 
-  constructor(private authenticationService:AuthenticationService,private router:Router,private loginPerfilService: LoginperfilService, private activatedRoute:ActivatedRoute) { }
+  constructor(private authenticationService:AuthenticationService,private router:Router,private loginPerfilService: LoginperfilService, private activatedRoute:ActivatedRoute) {
+   }
 
 
   ngOnInit(): void {
@@ -83,8 +87,6 @@ export class MenuComponent implements OnInit {
       this.dark = true
     }
   }
-    
-
 
   fecharPerfil(){
     this.showPerfil = false;
@@ -110,26 +112,40 @@ export class MenuComponent implements OnInit {
       this.showNotificationFriendRequestMessage = true;
     }
   }
+  
   abrirChat(){
     this.chat = true;
+    this.amigos = false;
+    this.showPerfil = false;
     const sender = this.perfil.username;
     const recipient = this.selectedPerfil.username;
-    window.history.replaceState({},'',`/menu/${this.perfil.username}/friendList/chat/`+sender+"/"+recipient)
-    this.subscriptions.push(
-      this.authenticationService.getChat(sender,recipient).subscribe(
-        (response: Chat[]) => {
-          this.chats = response;
-          this.refreshing = false;
-        },
-        (errorResponse: HttpErrorResponse) => {
-          this.refreshing = false;
-        }
-      )
-    )
+        window.history.replaceState({},'',`/menu/${this.perfil.username}/friendList/chat/`+sender+"/"+recipient)
+       this.variable = setInterval(() => {
+       this.subscriptions.push(
+         this.authenticationService.getChat(sender,recipient).subscribe(
+           (response: Chat[]) => {
+             this.chats = response;
+             this.refreshing = false;
+             console.log(this.chats);
+            },
+           (errorResponse: HttpErrorResponse) => {
+             this.refreshing = false;
+           }
+         )
+       )
+     },1000);
+     if(this.selectedPerfil.status == 'ONLINE'){
+      this.online = true;
+    } else {
+      this.online = false;
+    }
+    console.log(this.selectedPerfil.status)
 }
+
   fecharChat(){
     this.chat = false;
     window.history.replaceState({},'',`/menu/${this.perfil.username}/friendList`)
+    clearInterval(this.variable);
   }
 
   enviarMensagemChat(chat:Chat){
