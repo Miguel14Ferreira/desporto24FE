@@ -7,11 +7,11 @@ import { AuthenticationService } from 'src/app/services/authethication.service';
 import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
-  selector: 'app-forgotp2',
-  templateUrl: './forgotp2.component.html',
-  styleUrls: ['./forgotp2.component.css']
+  selector: 'app-reset-pw-emergency',
+  templateUrl: './reset-pw-emergency.component.html',
+  styleUrls: ['./reset-pw-emergency.component.css']
 })
-export class Forgotp2Component implements OnInit {
+export class ResetPwEmergencyComponent implements OnInit{
   newPerfil: Perfil = new Perfil();
   changetype:boolean = true;
   visible:boolean = true;
@@ -24,14 +24,12 @@ export class Forgotp2Component implements OnInit {
   fileName!: string;
   profileImage!: File;
   dark!: boolean;
-  response: any = null;
   subscriptions: Subscription[] = [];
   private readonly ACCOUNT_TOKEN = 'token';
   private readonly USERNAME = 'username';
   constructor(private activatedRoute: ActivatedRoute,private router:Router,  private authservice:AuthenticationService, private loginService:LoginperfilService) {}
 
   ngOnInit(): void {
-    this.authservice.logOut();
     var theme = localStorage.getItem('theme');
     if (theme == 'claro'){
       this.dark = false
@@ -61,12 +59,13 @@ export class Forgotp2Component implements OnInit {
     } else {
     this.showLoading = true;
     this.subscriptions.push(
-      this.authservice.resetPassword(this.token,perfil).subscribe(
+      this.authservice.resetPasswordEmergency(this.token,this.username,perfil.password).subscribe(
         (response : Perfil) => {
           this.showLoading = false;
-          alert(`A tua palavra passe foi alterada com sucesso, podes aceder à tua conta com a tua nova palavra-passe`);
+          alert(`A tua palavra passe foi alterada com sucesso, podes agora entrar na tua conta.`);
         },
         (errorResponse: HttpErrorResponse) => {
+          console.log(errorResponse);
           this.showLoading = false;
           alert(`Ocorreu um erro`);
         }

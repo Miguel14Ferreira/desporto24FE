@@ -67,7 +67,7 @@
         <h4>Notificações</h4>
     <button (click)="NaoMostrarNotificacoes()" id="botaoFecharAmigos">X</button>
     <div id="notificacoes">
-      <div *ngFor="let Notification of Notifications">
+      <div *ngFor="let Notification of Notifications.slice().reverse() let i = index;">
         <hr>
               <div (click)="onSelectedNotification(Notification)" id="notification">{{Notification.assunto}}
                 <p id="notification2">{{Notification.createdAt}}</p>
@@ -100,6 +100,19 @@
       <button (click)="fecharMensagem()" id="botaoFecharNotificacoes">X</button>
       <button (click)="aceitarAmigo(selectedNotification)" id="botaoAceitar">Aceitar</button>
       <button (click)="rejeitarAmigo(selectedNotification)" id="botaoEliminarNotificacao2">Rejeitar</button>
+    </div>
+    <div *ngIf="showNotificationUpdatePerfil" id="viewNotificationModal">
+      <h4>Mensagem:</h4>
+      <div id="mensagem">
+        <p id="p1"><strong>Assunto:</strong>{{selectedNotification?.assunto}}</p>
+        <p id="p2">{{selectedNotification?.mensagem}}</p>
+        <p id="p3">{{selectedNotification?.cumprimentos}}</p>
+        <p id="p4">{{selectedNotification?.assinatura}}</p>
+        <p id="p5">{{selectedNotification?.createdAt}}</p>
+      </div>
+      <button (click)="fecharMensagem()" id="botaoFecharNotificacoes">X</button>
+      <button (click)="eliminarNotificacao(selectedNotification)" id="botaoAceitar">Eliminar mensagem</button>
+      <button (click)="bloquearConta(selectedNotification)" id="botaoEliminarNotificacao2">Bloquear conta</button>
     </div>
       <div id="container2">
         <p id="D24a">Desporto24</p>

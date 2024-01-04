@@ -89,7 +89,6 @@ public onRegister(): void {
   this.subscriptions.push(
     this.authservice.createPerfil(formData).subscribe(
       (response: Perfil) => {
-        console.log(response);
         this.showLoading = false;
         alert(`Foi enviado um email para ${response.email} para concluir o registo, só depois da confirmação do email será possível efetuar o login no site.`);
       },
@@ -100,7 +99,6 @@ public onRegister(): void {
         } else {
           if(errorResponse.error.reason){
             alert (errorResponse.error.reason);
-            console.log(errorResponse);
             this.showLoading = false;
           } else {
             alert (`Um erro aplicacional ocorreu ${errorResponse.status}`)

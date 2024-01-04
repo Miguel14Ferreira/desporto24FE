@@ -18,13 +18,15 @@
             </div>
 <div *ngIf="showScreen2">
     <img id="img2">
-<h2 id="h2white">A tua conta neste momento está bloqueada</h2>
+<h2 id="h2white">A tua conta neste momento está bloqueada, pedimos-te agora para te dirigires ao teu email para novas instruções</h2>
 <button id="botao2" (click)="goToLogin()">Clica aqui para voltares ao Login</button>
 </div>
-<body *ngIf="showScreen">
+<div *ngIf="showScreen">
+    <h3 id="h4white">
         <i *ngIf="showLoading" class="fas fa-spinner fa-spin"></i>&nbsp;&nbsp;
         <span *ngIf="showLoading">A verificar conta</span>
-    </body>
+    </h3>
+</div>
     <div *ngIf="showScreen3">
         <img id="img3">
     <h3 id="h3white">Ocorreu um erro ao bloquear a tua conta, por favor vamos pedir que tentes de novo</h3>
@@ -41,13 +43,15 @@
             </div>
 <div *ngIf="showScreen2">
     <img id="img2">
-<h2 id="h2black">A tua conta neste momento está bloqueada</h2>
+<h2 id="h2black">A tua conta neste momento está bloqueada, pedimos-te agora para te dirigires ao teu email para novas instruções</h2>
 <button id="botao2" (click)="goToLogin()">Clica aqui para voltares ao Login</button>
 </div>
-<body *ngIf="showScreen">
+<div *ngIf="showScreen">
+    <h3 id="h4black">
         <i *ngIf="showLoading" class="fas fa-spinner fa-spin"></i>&nbsp;&nbsp;
         <span *ngIf="showLoading">A verificar conta</span>
-</body>
+    </h3>
+</div>
     <div *ngIf="showScreen3">
         <img id="img3">
     <h3 id="h3black">Ocorreu um erro ao bloquear a tua conta, por favor vamos pedir que tentes de novo</h3>

@@ -16,10 +16,10 @@ export class ConfirmEmergencyTokenComponent {
 
   perfis: Perfil [] = [];
   newPerfil: Perfil= new Perfil();
+  perfil!:Perfil;
   showScreen!: boolean;
   showScreen2! :boolean;
   showScreen3! :boolean;
-  username!: string;
   password!: string;
   showLoading!: boolean;
   token: any;
@@ -28,11 +28,27 @@ export class ConfirmEmergencyTokenComponent {
   response: any = null;
   subscriptions: Subscription[] = [];
   dark!:boolean;
+  username!:any;
+  private readonly USERNAME:string = 'username';
   private readonly ACCOUNT_KEY:string = "token";
   constructor(private router:Router,  private authservice:AuthenticationService, private loginService:LoginperfilService,private activatedRoute:ActivatedRoute) {}
 
   ngOnInit(): void {
     this.showScreen = true;
+    this.activatedRoute.paramMap.subscribe(
+      (params: ParamMap) => {
+        this.username = params.get(this.USERNAME);
+      }
+      )
+    /*if (this.selectedSessao.private == "true"){
+      this.locked = true;
+    } else {
+      this.locked = false;
+    }
+    */
+    this.loginService.obterUserPeloUsername1(this.username).subscribe( data => {
+      this.perfil = data;
+    }, error => console.log());
     var theme = localStorage.getItem('theme');
     if (theme == 'claro'){
       this.dark = false
@@ -44,9 +60,10 @@ export class ConfirmEmergencyTokenComponent {
         this.token = params.get(this.ACCOUNT_KEY);
       }
       )
+      this.authservice.logOut();
       this.showLoading = true;
     this.subscriptions.push(
-    this.authservice.deactivatePerfil(this.token).subscribe(
+    this.authservice.deactivatePerfil(this.token,this.username).subscribe(
       (response: Token) => {
         this.showLoading = false;
         this.showScreen2 = true;

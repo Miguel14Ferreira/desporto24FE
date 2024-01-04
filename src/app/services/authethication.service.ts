@@ -44,14 +44,17 @@ export class AuthenticationService {
   sendEmail(perfil:Perfil):Observable<HttpResponse<Perfil>>{
     return this.http.post<Perfil>(`${this.host}/login/resetPassword`,perfil, {observe: 'response'});
   }
-  resetPassword(token:string, email: string,perfil:Perfil):Observable<Perfil>{
-    return this.http.put<Perfil>(`${this.host}/login/resetPassword/${token}`,perfil);
+  resetPassword(token:string,perfil:Perfil):Observable<Perfil>{
+    return this.http.put<Perfil>(`${this.host}/login/resetPassword/${token}/:username`,perfil);
+  }
+  resetPasswordEmergency(token:string,username:string,password:string):Observable<Perfil>{
+    return this.http.put<Perfil>(`${this.host}/confirmEmergencyToken/resetPassword/${token}/${username}`,password)
   }
   activatePerfil(token: string):Observable<Token>{
     return this.http.get<Token>(`${this.host}/login/registerNewUser/confirmTokenRegistration/${token}`);
   }
-  deactivatePerfil(username: string):Observable<Token>{
-    return this.http.get<Token>(`${this.host}/confirmEmergencyToken/${username}`);
+  deactivatePerfil(token: string,username:string):Observable<Token>{
+    return this.http.get<Token>(`${this.host}/confirmEmergencyToken/${token}/${username}`);
   }
   acceptFriendRequestToken(token:string):Observable<Token>{
     return this.http.get<Token>(`${this.host}/login/confirmNewFriend/${token}`);

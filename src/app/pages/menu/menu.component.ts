@@ -56,6 +56,7 @@ export class MenuComponent implements OnInit {
   bloquear!:boolean;
   showNotificationMessage!:boolean;
   showNotificationFriendRequestMessage!:boolean;
+  showNotificationUpdatePerfil!:boolean;
   private readonly USERNAME:string = 'username';
   chat!:boolean;
   online!:boolean;
@@ -97,6 +98,23 @@ export class MenuComponent implements OnInit {
     window.history.replaceState({},'',`/menu/${this.perfil.username}`)
   }
 
+  bloquearConta(selectedNotification : Notification){
+    this.refreshing = true;
+    this.subscriptions.push(
+      this.authenticationService.deleteNotification(selectedNotification.id).subscribe(
+        (response: Notification) => {
+          this.refreshing = false;
+          alert(`Foi enviado um novo mail para o teu email, pedimos que sigas atentamente as instruções para os próximos passos.`);
+          window.history.replaceState({},'',`/menu/${this.perfil.username}`)
+        },
+        (errorResponse: HttpErrorResponse) => {
+          alert(`Ocorreu um erro a executar a operação`);
+          this.refreshing = false;
+        }
+      )
+    )
+  }
+
   onSelectPerfil(selectedPerfil: Perfil):void{
     this.selectedPerfil = selectedPerfil;
     this.showPerfil = true;
@@ -107,9 +125,15 @@ export class MenuComponent implements OnInit {
     if (selectedNotification.friendRequest == false){
     this.showNotificationMessage = true;
     this.showNotificationFriendRequestMessage = false;
-    } else {
+    this.showNotificationUpdatePerfil = false;
+    } else if(selectedNotification.friendRequest == true){
       this.showNotificationMessage = false;
       this.showNotificationFriendRequestMessage = true;
+      this.showNotificationUpdatePerfil = false;
+    } else if (selectedNotification.updatePerfil == true){
+      this.showNotificationMessage = false;
+      this.showNotificationFriendRequestMessage = false;
+      this.showNotificationUpdatePerfil = true;
     }
   }
   
@@ -126,7 +150,6 @@ export class MenuComponent implements OnInit {
            (response: Chat[]) => {
              this.chats = response;
              this.refreshing = false;
-             console.log(this.chats);
             },
            (errorResponse: HttpErrorResponse) => {
              this.refreshing = false;

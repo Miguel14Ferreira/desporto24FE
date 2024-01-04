@@ -1447,12 +1447,10 @@ transform: translate(-50%, -50%);
 }
 #notification2{
     font-size: 10px;
-    padding: 16px 16px 16px 16px;
-    display: block;
     text-align: right;
     flex-direction: row;
-    max-height: 90px;
   overflow: hidden;
+  padding: 16px 0px 0px 0px;
 }
 #notificacoes{
     font-size: 15px;

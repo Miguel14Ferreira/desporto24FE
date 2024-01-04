@@ -18,6 +18,7 @@ import { ConfirmEmergencyTokenComponent } from './pages/confirm-emergency-token/
 import { PerfilDataComponent } from './pages/perfil-data/perfil-data.component';
 import { LoginMFAComponent } from './pages/login-mfa/login-mfa.component';
 import { ConfirmationNewFriendComponent } from './pages/confirmation-new-friend/confirmation-new-friend.component';
+import { ResetPwEmergencyComponent } from './pages/reset-pw-emergency/reset-pw-emergency.component';
 
 const routes: Routes = [
   {path:'', redirectTo:'home',pathMatch:'full'},
@@ -43,13 +44,14 @@ const routes: Routes = [
   {path:'menu/:username/perfis/menu',redirectTo:'menu/:username',pathMatch:'full'},
   {path:'login/resetPassword/:token/:username',component:Forgotp2Component, pathMatch:'full'},
   {path:'login/registerNewUser/confirmTokenRegistration/:token', component:ConfirmTokenRegistrationComponent, pathMatch:'full'},
-  {path:'confirmEmergencyToken/:token',component:ConfirmEmergencyTokenComponent, pathMatch:'full'},
+  {path:'confirmEmergencyToken/:token/:username',component:ConfirmEmergencyTokenComponent, pathMatch:'full'},
   {path:'menu/:username/dadosPerfil',component:PerfilDataComponent, pathMatch:'full'},
   {path:'menu/:username/dadosPerfil/menu',redirectTo:'menu/:username',pathMatch:'full'},  
   {path:'menu/:username/dadosPerfil/alterardados',redirectTo:'menu/:username/alterardados',pathMatch:'full'},
   {path:'login/MFAauthentication/:username', component: LoginMFAComponent},
   {path:'menu/:username', component:MenuComponent},
-  {path:'login/confirmNewFriend/:token',component:ConfirmationNewFriendComponent}
+  {path:'login/confirmNewFriend/:token',component:ConfirmationNewFriendComponent},
+  {path:'confirmEmergencyToken/resetPassword/:token/:username',component:ResetPwEmergencyComponent}
 ];
 
 @NgModule({

@@ -32,6 +32,7 @@ import { ConfirmEmergencyTokenComponent } from './pages/confirm-emergency-token/
 import { PerfilDataComponent } from './pages/perfil-data/perfil-data.component';
 import { LoginMFAComponent } from './pages/login-mfa/login-mfa.component';
 import { ConfirmationNewFriendComponent } from './pages/confirmation-new-friend/confirmation-new-friend.component';
+import { ResetPwEmergencyComponent } from './pages/reset-pw-emergency/reset-pw-emergency.component';
 
 @NgModule({
   declarations: [
@@ -57,7 +58,8 @@ import { ConfirmationNewFriendComponent } from './pages/confirmation-new-friend/
     Forgotp2Component,
     ConfirmTokenRegistrationComponent,
     ConfirmEmergencyTokenComponent,
-    ConfirmationNewFriendComponent
+    ConfirmationNewFriendComponent,
+    ResetPwEmergencyComponent
   ],
   imports: [
     BrowserModule,

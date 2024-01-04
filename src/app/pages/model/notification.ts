@@ -6,6 +6,7 @@ export class Notification{
     assinatura:string;
     createdAt:string;
     friendRequest:boolean;
+    updatePerfil:boolean;
     token:string;
 
     constructor(){
@@ -15,6 +16,7 @@ export class Notification{
         this.assinatura = '';
         this.createdAt = '';
         this.friendRequest = false;
+        this.updatePerfil = false;
         this.token = '';
     }
 }
