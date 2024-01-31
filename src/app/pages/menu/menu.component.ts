@@ -67,20 +67,17 @@ export class MenuComponent implements OnInit {
 
 
   ngOnInit(): void {
-    this.activatedRoute.paramMap.subscribe(
-      (params: ParamMap) => {
-        this.username = params.get(this.USERNAME);
-      }
-      )
     /*if (this.selectedSessao.private == "true"){
       this.locked = true;
     } else {
       this.locked = false;
     }
     */
-    this.loginPerfilService.obterUserPeloUsername1(this.username).subscribe( data => {
+    this.authenticationService.isLoggedIn()
+    this.loginPerfilService.obterUserPeloUsername1(this.authenticationService.loggedInPerfilname).subscribe( data => {
       this.perfil = data;
     }, error => console.log());
+    localStorage.removeItem('tokenMFA');
     var theme = localStorage.getItem('theme');
     if (theme == 'claro'){
       this.dark = false
@@ -95,6 +92,7 @@ export class MenuComponent implements OnInit {
   fecharMensagem(){
     this.showNotificationMessage = false;
     this.showNotificationFriendRequestMessage = false;
+    this.showNotificationUpdatePerfil = false;
     window.history.replaceState({},'',`/menu/${this.perfil.username}`)
   }
 
@@ -104,7 +102,8 @@ export class MenuComponent implements OnInit {
       this.authenticationService.deleteNotification(selectedNotification.id).subscribe(
         (response: Notification) => {
           this.refreshing = false;
-          alert(`Foi enviado um novo mail para o teu email, pedimos que sigas atentamente as instruções para os próximos passos.`);
+          this.authenticationService.logOut();
+          alert(`A tua conta está agora bloqueada. Foi enviado um novo mail para o teu email, pedimos que sigas atentamente as instruções para os próximos passos.`);
           window.history.replaceState({},'',`/menu/${this.perfil.username}`)
         },
         (errorResponse: HttpErrorResponse) => {
@@ -120,9 +119,9 @@ export class MenuComponent implements OnInit {
     this.showPerfil = true;
   }
   onSelectedNotification(selectedNotification: Notification):void{
-    window.history.replaceState({},'',`/menu/${this.perfil.username}/notifications/${selectedNotification.id}`)
+    window.history.replaceState({},'',`/menu/notifications/${selectedNotification.id}`)
     this.selectedNotification = selectedNotification;
-    if (selectedNotification.friendRequest == false){
+    if (selectedNotification.normalMessage == true){
     this.showNotificationMessage = true;
     this.showNotificationFriendRequestMessage = false;
     this.showNotificationUpdatePerfil = false;
@@ -143,7 +142,7 @@ export class MenuComponent implements OnInit {
     this.showPerfil = false;
     const sender = this.perfil.username;
     const recipient = this.selectedPerfil.username;
-        window.history.replaceState({},'',`/menu/${this.perfil.username}/friendList/chat/`+sender+"/"+recipient)
+        window.history.replaceState({},'',`/menu/friendList/chat/`+sender+"/"+recipient)
        this.variable = setInterval(() => {
        this.subscriptions.push(
          this.authenticationService.getChat(sender,recipient).subscribe(
@@ -167,7 +166,7 @@ export class MenuComponent implements OnInit {
 
   fecharChat(){
     this.chat = false;
-    window.history.replaceState({},'',`/menu/${this.perfil.username}/friendList`)
+    window.history.replaceState({},'',`/menu/friendList`)
     clearInterval(this.variable);
   }
 
@@ -185,6 +184,7 @@ export class MenuComponent implements OnInit {
             (response: Chat[])=>{
               this.chats = response;
               this.refreshing = false;
+              (document.getElementById('mensagensChatEnvio') as HTMLInputElement).value = "";
             }
           )
         },
@@ -200,26 +200,26 @@ export class MenuComponent implements OnInit {
     return this.perfil.username;
   }
   alterarDados(){
-    this.router.navigate([`menu/${this.username}/alterardados`]);
+    this.router.navigate([`menu/alterardados`]);
   }
   alterarPassword(){
-    this.router.navigate([`menu/${this.username}/alterarPassword`]);
+    this.router.navigate([`menu/alterarPassword`]);
   }
   Utilizadores(){
-    this.router.navigate([`menu/${this.username}/perfis`]);
+    this.router.navigate([`menu/perfis`]);
   }
   verDadosPerfil(){
-    this.router.navigate([`menu/${this.username}/dadosPerfil`]);
+    this.router.navigate([`menu/dadosPerfil`]);
   }
   CriarSessao(){
-    this.router.navigate([`menu/${this.username}/createEvent`]);
+    this.router.navigate([`menu/createEvent`]);
   }
   Amigos(){
     this.amigos = true;
     this.loginPerfilService.friendList(this.perfil.username).subscribe(
       (response: Perfil[]) => {
         this.perfis = response;
-        window.history.replaceState({},'',`/menu/${this.perfil.username}/friendList`)
+        window.history.replaceState({},'',`/menu/friendList`)
       },
       (errorResponse: HttpErrorResponse) => {
         alert(`Ocorreu um erro a executar a operação`);
@@ -233,7 +233,7 @@ export class MenuComponent implements OnInit {
         (response: Notification) => {
           this.refreshing = false;
           alert(`Esta notificação foi eliminada`);
-          window.history.replaceState({},'',`/menu/${this.perfil.username}`)
+          window.history.replaceState({},'',`/menu`)
         },
         (errorResponse: HttpErrorResponse) => {
           alert(`Ocorreu um erro a executar a operação`);
@@ -265,7 +265,7 @@ export class MenuComponent implements OnInit {
         (response: Notification) => {
           this.refreshing = false;
           alert(`Tens um novo amigo na lista de amizade!`);
-          window.history.replaceState({},'',`/menu/${this.perfil.username}`)
+          window.history.replaceState({},'',`/menu`)
           location.reload();
         },
         (errorResponse: HttpErrorResponse) => {
@@ -299,7 +299,7 @@ export class MenuComponent implements OnInit {
   }
   naoMostrarAmigos(){
     this.amigos = false;
-    window.history.replaceState({},'',`/menu/${this.perfil.username}`)
+    window.history.replaceState({},'',`/menu`)
   }
   remover(){
     this.refreshing = true;
@@ -320,14 +320,14 @@ export class MenuComponent implements OnInit {
 terminarSessao(){
   this.logOut = true;
   this.showPerfil = false;
-  window.history.replaceState({},'',`/menu/${this.perfil.username}/terminarSessao`)
+  window.history.replaceState({},'',`/menu/terminarSessao`)
 }
 fecharSessao(){
   this.show = false;
 }
 voltar(){
   this.logOut = false;
-  window.history.replaceState({},'',`/menu/${this.perfil.username}`)
+  window.history.replaceState({},'',`/menu`)
 }
 
 obterSessoes(showNotification: boolean): void{
@@ -367,7 +367,7 @@ MostrarNotificacoes(){
   this.showNotification = true;
   this.showMenu = false;
   this.subscriptions.push(
-    this.loginPerfilService.obterNotificacoesDoPerfil(this.username).subscribe(
+    this.loginPerfilService.obterNotificacoesDoPerfil(this.perfil.username).subscribe(
       (response: Notification[]) => {
         this.Notifications = response;
       },

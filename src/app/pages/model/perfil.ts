@@ -1,6 +1,8 @@
 export class Perfil {
     public id:number;
+    public userId:string;
     public username:string;
+    public newUsername:string;
     public password:string;
     public confirmPassword:string;
     public fullName:string;
@@ -28,7 +30,9 @@ export class Perfil {
     
     constructor(){
         this.id = 0;
+        this.userId = '';
         this.username = '';
+        this.newUsername = '';
         this.password = '';
         this.confirmPassword = '';
         this.fullName = '';

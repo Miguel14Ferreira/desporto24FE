@@ -27,14 +27,11 @@
     </button>
     </form>
     <button type="submit" id="input4" (click)="sendSMS()">
-        <i *ngIf= "showLoading" class="fas fa-spinner fa-spin"></i>&nbsp;&nbsp;
-        <span *ngIf="showLoading">A carregar...</span>
-        <span *ngIf="!showLoading">Enviar SMS novamente</span>
+        <i *ngIf= "showLoading2" class="fas fa-spinner fa-spin"></i>&nbsp;&nbsp;
+        <span *ngIf="showLoading2">A carregar...</span>
+        <span *ngIf="!showLoading2">Enviar SMS novamente</span>
         </button> 
-    <button type="submit" id="input5" (click)="remover()">
-    <i *ngIf= "showLoading" class="fas fa-spinner fa-spin"></i>&nbsp;&nbsp;
-    <span *ngIf="showLoading">A carregar...</span>
-    <span *ngIf="!showLoading">Voltar</span>
+    <button type="submit" id="input5" (click)="remover()">Voltar
     </button>  
 </body>
 </div>

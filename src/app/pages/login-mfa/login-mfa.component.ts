@@ -22,6 +22,8 @@ export class LoginMFAComponent {
   token2:Token = new Token();
   subscriptions:Subscription[] = [];
   showLoading!:boolean;
+  showLoading2!:boolean;
+  showLoading3!:boolean;
   private readonly USERNAME: string = "username";
   constructor(private activatedRoute:ActivatedRoute, private loginPerfilService:LoginperfilService,private authService:AuthenticationService,private router:Router) { }
 
@@ -41,21 +43,17 @@ export class LoginMFAComponent {
       this.loginPerfilService.obterUserPeloUsername1(this.username).subscribe( data => {
         this.perfil = data;
       }, error => console.log());
-      if(this.authService.isLoggedIn()){
-        this.router.navigateByUrl('/menu/'+this.perfil.username+'/');
-      } else {
-        this.router.navigateByUrl('/login');
-      }
   }
   confirmCode(){
     this.showLoading = true;
     this.subscriptions.push(
       this.authService.confirmMFA(this.token2.token).subscribe(
-        (response: HttpResponse<Token>) => {
-        this.token = response.headers.get(HeaderType.JWT_TOKEN);
+        (response: HttpResponse<Perfil>) => {
+        this.token = localStorage.getItem('tokenMFA')
         this.authService.saveToken(this.token);
-        this.router.navigateByUrl('/menu/'+this.perfil.username+'/');
+        this.router.navigateByUrl('/menu');
         this.showLoading = false;
+        localStorage.removeItem('tokenMFA');
         },
         (errorResponse: HttpErrorResponse) => {
           this.showLoading = false;
@@ -69,16 +67,17 @@ export class LoginMFAComponent {
     this.subscriptions.push(
       this.authService.resendMFA(this.perfil.username).subscribe(
         (response: Perfil) => {
-          this.showLoading = false;
+          this.showLoading2 = false;
         },
         (errorResponse: HttpErrorResponse) => {
-          this.showLoading = false;
+          this.showLoading2 = false;
         }
       )
     )
   }
   remover(){
         this.router.navigate(['login']);
+        localStorage.removeItem('tokenMFA');
 }   
 
 }

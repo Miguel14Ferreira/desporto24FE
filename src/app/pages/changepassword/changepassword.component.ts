@@ -21,11 +21,12 @@ export class ChangepasswordComponent implements OnInit {
   username!: any;
   password!: string;
   showLoading!: boolean;
+  showLoading2!: boolean;
   token: any;
   subscriptions: Subscription[] = [];
   id!:number;
   perfil!:Perfil;
-  public editPerfil = new Perfil();
+  editperfil:Perfil = new Perfil();
   fileName!: any;
   dark!:boolean;
   private readonly USERNAME:string = "username";
@@ -33,12 +34,8 @@ export class ChangepasswordComponent implements OnInit {
   constructor(private loginPerfilService: LoginperfilService,private router:Router, private formBuilder: FormBuilder,private route:ActivatedRoute,private activatedRoute:ActivatedRoute,private authenticationService:AuthenticationService,private authService:AuthService) { }
 
   ngOnInit(): void {
-    this.activatedRoute.paramMap.subscribe(
-      (params: ParamMap) => {
-        this.username = params.get(this.USERNAME);
-      }
-      )
-    this.loginPerfilService.obterUserPeloUsername1(this.username).subscribe( data => {
+    this.authenticationService.isLoggedIn2()
+    this.loginPerfilService.obterUserPeloUsername1(this.authenticationService.loggedInPerfilname).subscribe( data => {
       this.perfil = data;
     }, error => console.log());
     var theme = localStorage.getItem('theme');
@@ -48,17 +45,8 @@ export class ChangepasswordComponent implements OnInit {
       this.dark = true
     }
   }
-  minhaImagem = "./assets/ski .jpg";
-
-  palavrasPassesDiferentes(novaPassword : string, novaConfirmPassword: string, password: string){
-    if (novaPassword != novaConfirmPassword){
-      alert( `A nova palavra-passe e a confirmação da nova palavra-passe tem de estar iguais!`);
-    } else if (password == novaPassword){
-      alert(`A presente palavra-passe que estás a colocar, já se encontra em uso.`)
-    }
-  }
   Menu(){
-    this.router.navigate([`menu/${this.username}`]);
+    this.router.navigate([`menu`]);
   }
 
   viewPass(){
@@ -66,23 +54,25 @@ export class ChangepasswordComponent implements OnInit {
     this.changetype = !this.changetype;
 }
   
-  obterNomeUtilizador (){
-    return this.perfil.username;
-  }
+
   
   onUpdatePerfilPassword(): void {
-    if (this.editPerfil.username == "" || this.editPerfil.password == "" || this.editPerfil.confirmPassword == ""){
+    if (this.editperfil.newUsername == "" || this.editperfil.password == "" || this.editperfil.confirmPassword == ""){
       alert(`Ainda tens espaços brancos para preencher!`)
-    } else if (this.editPerfil.password != this.editPerfil.confirmPassword){
+    } else if (this.editperfil.password != this.editperfil.confirmPassword){
       alert(`As tuas palavras-passes são diferentes!`)
     } else {
-    const formData = this.loginPerfilService.updatePerfilPasswordFormData(this.perfil.username, this.editPerfil);
+      this.showLoading = true;
+    const formData = this.loginPerfilService.updatePerfilPasswordFormData(this.username, this.editperfil);
+    console.log(formData.get('newUsername'))
     this.subscriptions.push(
       this.loginPerfilService.updatePerfilPassword(formData).subscribe(
         (response: Perfil) => {
+          this.showLoading = false;
           alert(`Dados atualizados`);
         },
         (errorResponse: HttpErrorResponse) => {
+          this.showLoading = false;
           alert(`Ocorreu um erro ao atualizar os dados`);
         }
       )

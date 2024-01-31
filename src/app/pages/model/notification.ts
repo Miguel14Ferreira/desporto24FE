@@ -7,6 +7,8 @@ export class Notification{
     createdAt:string;
     friendRequest:boolean;
     updatePerfil:boolean;
+    sessionInvite:boolean;
+    normalMessage:boolean;
     token:string;
 
     constructor(){
@@ -17,6 +19,8 @@ export class Notification{
         this.createdAt = '';
         this.friendRequest = false;
         this.updatePerfil = false;
+        this.sessionInvite = false;
+        this.normalMessage = false;
         this.token = '';
     }
 }

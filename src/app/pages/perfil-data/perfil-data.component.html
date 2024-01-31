@@ -29,30 +29,30 @@
   <p id="D247modal">Desporto24</p>
   <p id="D248modal">Desporto24</p>
   <div class="image-preview" id="imagePreview">
-    <img src="{{perfil?.foto}}" alt="Image Preview" class="image-preview__image"/>
+    <img src="{{this.perfil?.foto}}" alt="Image Preview" class="image-preview__image"/>
   </div>
 <div id="username">
-{{perfil?.username}}
+{{this.perfil?.username}}
 </div>
 <ul>
 <li id="dataNascimento">Data de nascimento</li>
-<li id="dataNascimento2"> {{perfil?.dateOfBirth}}
+<li id="dataNascimento2"> {{this.perfil?.dateOfBirth}}
 </li>
 <li id="genero">Género </li>
-<li id="genero2"> {{perfil?.gender}} </li>
+<li id="genero2"> {{this.perfil?.gender}} </li>
 <li id="paisNascimento">País de nascimento </li>
-<li id="paisNascimento2"> {{perfil?.country}} </li>
+<li id="paisNascimento2"> {{this.perfil?.country}} </li>
 <li id="desportosFavoritos">Desportos favoritos</li>
-<li id="desportosFavoritos2"> {{perfil?.desportosFavoritos}}</li>
+<li id="desportosFavoritos2"> {{this.perfil?.desportosFavoritos}}</li>
 <li id="localidade">Localidade</li>
-<li id="localidade2"> {{perfil?.location}}</li>
+<li id="localidade2"> {{this.perfil?.location}}</li>
 <li id="estadoDaConta">Estado da conta:</li>
 <li id="morada">Morada</li>
-          <li id="morada2">{{perfil?.address}}</li>
+          <li id="morada2">{{this.perfil?.address}}</li>
           <li id="phone">Telemóvel</li>
-          <li id="phone2">{{perfil?.phone}}</li>
+          <li id="phone2">{{this.perfil?.phone}}</li>
           <li id="email">Email</li>
-          <li id="email2">{{perfil?.email}}</li>
+          <li id="email2">{{this.perfil?.email}}</li>
 <li>
   <span *ngIf="locked" id="estadoDaConta2">Conta bloqueada</span>
   <span *ngIf="!locked" id="estadoDaConta2">Conta ativa</span>
@@ -63,9 +63,9 @@
   <span *ngIf="!mfa" id="mfadesativado">Desativado</span>
 </li>
 <li id="membroDesde">Membro desde:</li>
-<li id="membroDesde2"> {{perfil?.joinDateDisplay}}</li>
+<li id="membroDesde2"> {{this.perfil?.joinDateDisplay}}</li>
 <li  id="ultimoLogin">Ultimo Login:</li>
-<li  id="ultimoLogin2"> {{perfil?.lastLoginDateDisplay}}</li>
+<li  id="ultimoLogin2"> {{this.perfil?.lastLoginDateDisplay}}</li>
 </ul>
 </div>
   <button href="#" (click)="Menu()" id="botao1">Voltar atrás</button>
@@ -94,30 +94,30 @@
             <p id="D247modal">Desporto24</p>
             <p id="D248modal">Desporto24</p>
             <div class="image-preview" id="imagePreview">
-              <img src="{{perfil?.foto}}" alt="Image Preview" class="image-preview__image"/>
+              <img src="{{this.perfil?.foto}}" alt="Image Preview" class="image-preview__image"/>
             </div>
           <div id="username">
-          {{perfil?.username}}
+          {{this.perfil?.username}}
           </div>
           <ul>
           <li id="dataNascimento">Data de nascimento</li>
-          <li id="dataNascimento2"> {{perfil?.dateOfBirth}}
+          <li id="dataNascimento2"> {{this.perfil?.dateOfBirth}}
           </li>
           <li id="genero">Género </li>
-          <li id="genero2"> {{perfil?.gender}} </li>
+          <li id="genero2"> {{this.perfil?.gender}} </li>
           <li id="paisNascimento">País de nascimento </li>
-          <li id="paisNascimento2"> {{perfil?.country}} </li>
+          <li id="paisNascimento2"> {{this.perfil?.country}} </li>
           <li id="desportosFavoritos">Desportos favoritos</li>
-          <li id="desportosFavoritos2"> {{perfil?.desportosFavoritos}}</li>
+          <li id="desportosFavoritos2"> {{this.perfil?.desportosFavoritos}}</li>
           <li id="localidade">Localidade</li>
-          <li id="localidade2"> {{perfil?.location}}</li>
+          <li id="localidade2"> {{this.perfil?.location}}</li>
           <li id="estadoDaConta">Estado da conta:</li>
           <li id="morada">Morada</li>
-          <li id="morada2">{{perfil?.address}}</li>
+          <li id="morada2">{{this.perfil?.address}}</li>
           <li id="phone">Telemóvel</li>
-          <li id="phone2">{{perfil?.phone}}</li>
+          <li id="phone2">{{this.perfil?.phone}}</li>
           <li id="email">Email</li>
-          <li id="email2">{{perfil?.email}}</li>
+          <li id="email2">{{this.perfil?.email}}</li>
           <li>
             <span *ngIf="locked" id="estadoDaConta2">Conta bloqueada</span>
             <span *ngIf="!locked" id="estadoDaConta2">Conta ativa</span>
@@ -128,9 +128,9 @@
             <span *ngIf="!mfa" id="mfadesativado">Desativado</span>
           </li>
           <li id="membroDesde">Membro desde:</li>
-          <li id="membroDesde2"> {{perfil?.joinDateDisplay}}</li>
+          <li id="membroDesde2"> {{this.perfil?.joinDateDisplay}}</li>
           <li  id="ultimoLogin">Ultimo Login:</li>
-          <li  id="ultimoLogin2"> {{perfil?.lastLoginDateDisplay}}</li>
+          <li  id="ultimoLogin2"> {{this.perfil?.lastLoginDateDisplay}}</li>
           </ul>
           </div>
         <button href="#" routerLink="menu" id="botao1">Voltar atrás</button>

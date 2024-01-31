@@ -32,7 +32,7 @@ export class PerfisComponent {
   private readonly USERNAME:string = 'username';
   showTable!:boolean;
 
-  constructor (private router:Router,private loginPerfilService: LoginperfilService,private activatedRoute:ActivatedRoute){}
+  constructor (private router:Router,private loginPerfilService: LoginperfilService,private activatedRoute:ActivatedRoute, private authenticationService:AuthenticationService){}
 
   ngOnInit(): void{
     var theme = localStorage.getItem('theme');
@@ -41,12 +41,8 @@ export class PerfisComponent {
     } else {
       this.dark = true
     }
-    this.activatedRoute.paramMap.subscribe(
-      (params: ParamMap) => {
-        this.username = params.get(this.USERNAME);
-      }
-      )
-    this.loginPerfilService.obterUserPeloUsername1(this.username).subscribe( data => {
+    this.authenticationService.isLoggedIn2()
+    this.loginPerfilService.obterUserPeloUsername1(this.authenticationService.loggedInPerfilname).subscribe( data => {
       this.perfil = data;
     }, error => console.log());
   }

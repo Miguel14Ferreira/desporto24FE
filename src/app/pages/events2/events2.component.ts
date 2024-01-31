@@ -39,12 +39,8 @@ export class Events2Component implements OnInit {
   url = './assets/estadio.jpg';
 
   ngOnInit(): void {
-    this.activatedRoute.paramMap.subscribe(
-      (params: ParamMap) => {
-        this.username = params.get(this.USERNAME);
-      }
-      )
-    this.loginPerfilService.obterUserPeloUsername1(this.username).subscribe( data => {
+    this.authenticationService.isLoggedIn2()
+    this.loginPerfilService.obterUserPeloUsername1(this.authenticationService.loggedInPerfilname).subscribe( data => {
       this.perfil = data;
     }, error => console.log());
     var theme = localStorage.getItem('theme');

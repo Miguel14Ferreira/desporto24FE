@@ -313,6 +313,7 @@
             <p id="D238amigos">Desporto24</p>
             <p id="D237amigos">Desporto24</p>
             <h4>Amigos</h4>
+            <h5>ONLINE</h5>
         <button (click)="naoMostrarAmigos()" id="botaoFecharAmigos">X</button>
         <table id="tabela3">
           <tbody *ngFor="let perfil of perfis">
@@ -510,25 +511,33 @@
     <p id="D237chat">Desporto24</p>
     <p id="D241chat">Desporto24</p>
       <div id="tabela4">
-        <div>
-          <div class="image-previewChat" id="imagePreview">
-            <img src="{{selectedPerfil?.foto}}" alt="Image Preview" class="image-preview__image"/>
-          </div>
-                <div id="conversaComPerfil"> {{selectedPerfil.username}}</div>
+        <div class="image-previewChat" id="imagePreview">
+          <img src="{{selectedPerfil?.foto}}" alt="Image Preview" class="image-preview__image"/>
         </div>
+              <div id="conversaComPerfil"> {{selectedPerfil.username}}</div>
+              <div *ngIf="!online">
+              <div id="conversaComPerfil2">OFFLINE</div>
+              <div id="conversaComPerfil3">Ultima vez online: {{selectedPerfil.lastLoginDateDisplay}}</div></div>
+              <div *ngIf="online"><div id="conversaComPerfil2">ONLINE</div></div>
+            </div>
+  <div id="mensagensChat">
+    <div *ngFor="let chat of chats">
+      <div id="mensagemEnviada" *ngIf="chat.username1 == this.perfil.username">
+    <strong>{{chat.username1}}:</strong>&nbsp;{{chat.texto}}
+  </div>
+  <div id="mensagemRecebida" *ngIf="chat.username1 == this.selectedPerfil.username">
+    <strong>{{chat.username1}}:</strong>&nbsp;{{chat.texto}}
+  </div>
     </div>
-    <div id="mensagensChat">
-      <div *ngFor="let chat of chats">
-      <strong>{{chat.username1}}:</strong> {{chat.texto}}
-      </div>
-    </div>
-    <form #sendMessageForm="ngForm" (ngSubmit)="enviarMensagemChat(sendMessageForm.value)">
-    <input [(ngModel)]="enviarMensagem.texto" name="chat" id="mensagensChatEnvio">
-    <button id="botaoChatEnvio" type="submit">Enviar
-      <i *ngIf="refreshing" class="fas fa-spin"></i>
-      <i *ngIf="!refreshing" class="fas"></i>
-  </button>
+  </div>
+  <form #sendMessageForm="ngForm" (ngSubmit)="enviarMensagemChat(sendMessageForm.value)">
+  <input [(ngModel)]="enviarMensagem.texto" name="chat" id="mensagensChatEnvio">
+  <button id="botaoChatEnvio" type="submit">Enviar
+    <i *ngIf="refreshing" class="fas fa-spin"></i>
+    <i *ngIf="!refreshing" class="fas"></i>
+</button>
 </form>
-    <button (click)="fecharChat()" id="botaoFechar">X</button>
-    </div>
-</div>
+  <button (click)="fecharChat()" id="botaoFechar">X</button>
+  </div>
+  </div>
+</html>

@@ -40,9 +40,9 @@ export class ForgotpComponent implements OnInit {
     this.router.navigate(['/login']);
   }
   public sendEmail(perfil: Perfil): void {
-    if(this.perfil.email == null){
+    if(perfil.email == ""){
       alert(`Não foi colocado nada no campo email`)
-    }
+    } else {
     this.showLoading = true;
     this.subscriptions.push(
       this.authservice.sendEmail(perfil).subscribe(
@@ -57,4 +57,5 @@ export class ForgotpComponent implements OnInit {
       )
     );
   }
+}
 }

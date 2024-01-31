@@ -63,6 +63,7 @@ export class ResetPwEmergencyComponent implements OnInit{
         (response : Perfil) => {
           this.showLoading = false;
           alert(`A tua palavra passe foi alterada com sucesso, podes agora entrar na tua conta.`);
+          this.router.navigate(['/login']);
         },
         (errorResponse: HttpErrorResponse) => {
           console.log(errorResponse);

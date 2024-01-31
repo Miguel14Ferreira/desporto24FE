@@ -10,6 +10,7 @@ import { Token } from '../pages/model/token';
 import { Router } from '@angular/router';
 import { Notification } from '../pages/model/notification';
 import { Chat } from '../pages/model/chat';
+import { LoginperfilService } from './loginperfil.service';
 
 
 @Injectable({providedIn: 'root'})
@@ -20,8 +21,9 @@ export class AuthenticationService {
   email: any;
   PerfilName: any;
   private jwtHelper = new JwtHelperService();
+  perfil!:Perfil;
 
-  constructor(private http: HttpClient,private router:Router) {}
+  constructor(private http: HttpClient,private router:Router,private loginPerfilService:LoginperfilService) {}
 
   loginPerfil(perfil: Perfil):Observable<HttpResponse<Perfil>>{
     return this.http.post<Perfil>(`${this.host}/login`, perfil, {observe: 'response'});
@@ -35,8 +37,8 @@ export class AuthenticationService {
   createSessao(formData: FormData):Observable<Session>{
     return this.http.post<Session>(`${this.host}/menu/createEvents`, formData);
   }
-  confirmMFA(token:string):Observable<HttpResponse<Token>>{
-    return this.http.post<Token>(`${this.host}/login/MFAauthentication/:username`,token, {observe: 'response'});
+  confirmMFA(token:string):Observable<HttpResponse<Perfil>>{
+    return this.http.post<Perfil>(`${this.host}/login/MFAauthentication/:username`,token, {observe: 'response'});
   }
   resendMFA(perfil:string):Observable<Perfil>{
     return this.http.get<Perfil>(`${this.host}/login/MFAauthentication/${perfil}`);
@@ -63,19 +65,25 @@ export class AuthenticationService {
     return this.http.delete<Notification>(`${this.host}/menu/:username/notifications/${NotificationNumber}`)
   }
   acceptFriendRequest(NotificationNumber:number,NotificationToken:string):Observable<Notification>{
-    return this.http.get<Notification>(`${this.host}/menu/:username/notifications/${NotificationNumber}/${NotificationToken}`,);
+    return this.http.get<Notification>(`${this.host}/menu/notifications/${NotificationNumber}/${NotificationToken}`,);
   }
   getChat(senderId: string, recipientId: string):Observable<Chat[]>{
-    return this.http.get<Chat[]>(`${this.host}/menu/:username/friendList/chat/${senderId}/${recipientId}`);
+    return this.http.get<Chat[]>(`${this.host}/menu/friendList/chat/${senderId}/${recipientId}`);
   }
   sendChatMessagem(chat: Chat):Observable<Chat>{
-    return this.http.post<Chat>(`${this.host}/menu/:username/friendList/chat/:sender/:recipient`,chat)
+    return this.http.post<Chat>(`${this.host}/menu/friendList/chat/:sender/:recipient`,chat)
   }
   terminarSessao(email: Perfil):Observable<Perfil>{
-    return this.http.post<Perfil>(`${this.host}/menu/:username/terminarSessao`,email)
+    return this.http.post<Perfil>(`${this.host}/menu/terminarSessao`,email)
   }
 
   public logOut(): void {
+    this.token = null;
+    this.loggedInPerfilname = null;
+    localStorage.removeItem('token');
+  }
+
+  public logOut2(): void {
     this.token = null;
     this.loggedInPerfilname = null;
     localStorage.removeItem('token');
@@ -96,6 +104,10 @@ export class AuthenticationService {
     this.token = localStorage.getItem('token');
   }
 
+  public loadTokenMFA(): void {
+    this.token = localStorage.getItem('tokenMFA');
+  }
+
   public getToken(): string {
     return this.token;
   }
@@ -106,11 +118,36 @@ export class AuthenticationService {
       if (this.jwtHelper.decodeToken(this.token).sub != null || ''){
         if (!this.jwtHelper.isTokenExpired(this.token)){
           this.loggedInPerfilname = this.jwtHelper.decodeToken(this.token).sub;
-          return this.router.navigateByUrl('/menu/'+this.loggedInPerfilname)
+          return this.router.navigateByUrl('/menu')
         }
       }
     } else {
       return this.logOut();
+    }
+  }
+  isLoggedIn2(){
+    this.loadToken();
+    if(this.token != null && this.token !== ''){
+      if (this.jwtHelper.decodeToken(this.token).sub != null || ''){
+        if (!this.jwtHelper.isTokenExpired(this.token)){
+          this.loggedInPerfilname = this.jwtHelper.decodeToken(this.token).sub;
+        }
+      }
+    } else {
+      return this.logOut();
+    }
+  }
+  isLoggedIn3(){
+    this.loadTokenMFA();
+    if(this.token != null && this.token !== ''){
+      if (this.jwtHelper.decodeToken(this.token).sub != null || ''){
+        if (!this.jwtHelper.isTokenExpired(this.token)){
+          this.loggedInPerfilname = this.jwtHelper.decodeToken(this.token).sub;
+          return this.router.navigateByUrl('/login/MFAauthentication/'+this.loggedInPerfilname)
+        }
+      }
+    } else {
+      return this.logOut2();
     }
   }
 }

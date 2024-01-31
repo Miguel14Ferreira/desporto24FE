@@ -36,12 +36,8 @@ export class AlterardadosComponent implements OnInit {
   url:any;
 
   ngOnInit(): void {
-    this.activatedRoute.paramMap.subscribe(
-      (params: ParamMap) => {
-        this.username = params.get(this.USERNAME);
-      }
-      )
-    this.loginPerfilService.obterUserPeloUsername1(this.username).subscribe( data => {
+    this.authenticationService.isLoggedIn2()
+    this.loginPerfilService.obterUserPeloUsername1(this.authenticationService.loggedInPerfilname).subscribe( data => {
       this.perfil = data;
     }, error => console.log());
     this.showImage = true;
@@ -54,7 +50,7 @@ export class AlterardadosComponent implements OnInit {
   }
 
   verDadosPerfil(){
-    this.router.navigate([`menu/${this.username}/dadosPerfil`]);
+    this.router.navigate([`menu/dadosPerfil`]);
   }
 
   NomeUtilizador(){
@@ -73,7 +69,7 @@ export class AlterardadosComponent implements OnInit {
     }
   }
   Menu(){
-    this.router.navigate([`menu/${this.username}`]);
+    this.router.navigate([`menu`]);
   }
 
     onUpdatePerfil(): void {
@@ -85,7 +81,6 @@ export class AlterardadosComponent implements OnInit {
         } else {
         const formData = this.loginPerfilService.updatePerfilFormData(this.perfil.username, this.editPerfil, this.profileImage);
         this.showLoading = true;
-        console.log(this.editPerfil);
         this.subscriptions.push(
           this.loginPerfilService.updatePerfil(formData).subscribe(
             (response: Perfil) => {

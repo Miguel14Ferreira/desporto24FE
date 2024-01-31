@@ -104,8 +104,8 @@ export class LoginperfilService {
 
   public updatePerfilPasswordFormData(loggedInUsername: string, perfil: Perfil): FormData{
     const formData = new FormData();
-    formData.append('currentUsername',loggedInUsername);
-    formData.append('username',perfil.username);
+    formData.append('username',loggedInUsername);
+    formData.append('newUsername',perfil.newUsername);
     formData.append('password',perfil.password);
     return formData;
   }
@@ -120,10 +120,10 @@ export class LoginperfilService {
     return this.httpClient.get<Perfil[]>(`${this.host}/menu`);
   }
   friendList(username:string):Observable<Perfil[]>{
-    return this.httpClient.get<Perfil[]>(`${this.host}/menu/${username}/friendList`);
+    return this.httpClient.get<Perfil[]>(`${this.host}/menu/friendList/${username}`);
   }
   addFriend(formData:FormData):Observable<Perfil>{
-    return this.httpClient.post<Perfil>(`${this.host}/menu/:username/perfis`,formData);
+    return this.httpClient.post<Perfil>(`${this.host}/menu/perfis`,formData);
   }
   obterSessoes() {
     return this.httpClient.get<Session[]>(`${this.host}/menu`);
@@ -135,7 +135,7 @@ export class LoginperfilService {
     return this.httpClient.put<Perfil>(`${this.host}/menu/alterarPassword`, formData);
   }
   obterNotificacoesDoPerfil(username:string):Observable<Notification[]>{
-    return this.httpClient.get<Notification[]>(`${this.host}/menu/${username}/notifications`)
+    return this.httpClient.get<Notification[]>(`${this.host}/menu/notifications/${username}`)
   }
   createSession(formData:FormData){
     return this.httpClient.post<Session>(`${this.host}/menu/createEvent`,formData);
@@ -144,7 +144,7 @@ export class LoginperfilService {
     return this.httpClient.post(`${this.host}/contact`,ideia);
   }
   obterPerfis(searchTerm: string):Observable<Perfil[]> {
-    return this.httpClient.get<Perfil[]>(`${this.host}/menu/:username/perfis/${searchTerm}`);
+    return this.httpClient.get<Perfil[]>(`${this.host}/menu/perfis/${searchTerm}`);
   }
   deleteUser(perfilid: number): Observable<CustomHttpResponse | HttpErrorResponse>{
     return this.httpClient.delete<CustomHttpResponse>(`${this.host}/delete/${perfilid}`);
