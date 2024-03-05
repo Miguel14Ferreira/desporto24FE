@@ -19,7 +19,6 @@ export class PerfilDataComponent {
   constructor(private authenticationService:AuthenticationService, private loginPerfilService:LoginperfilService, private router:Router) { }
 
   ngOnInit(): void {
-    this.authenticationService.isLoggedIn2()
     this.loginPerfilService.obterUserPeloUsername1(this.authenticationService.loggedInPerfilname).subscribe( data => {
       this.perfil = data;
     }, error => console.log());

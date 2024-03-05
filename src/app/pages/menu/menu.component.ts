@@ -9,6 +9,7 @@ import { Session } from '../session';
 import { FriendRequest } from '../model/friendRequest';
 import { Notification } from '../model/notification';
 import { Chat } from '../model/chat';
+import { CustomHttpResponse } from '../custom-http-response';
 
 @Component({
   selector: 'app-menu',
@@ -61,6 +62,13 @@ export class MenuComponent implements OnInit {
   chat!:boolean;
   online!:boolean;
   variable!:ReturnType<typeof setTimeout>;
+  registerError:boolean =false;
+  errorMessage!:string;
+  registerSuccess:boolean =false;
+  successMessage!:any;
+  validation1:boolean=false;
+  validation!:any;
+  showScreen2! :boolean;
 
   constructor(private authenticationService:AuthenticationService,private router:Router,private loginPerfilService: LoginperfilService, private activatedRoute:ActivatedRoute) {
    }
@@ -86,6 +94,16 @@ export class MenuComponent implements OnInit {
     }
   }
 
+  closeError(){
+    this.registerError = false;
+  }
+  closeSuccess(){
+    this.registerSuccess = false;
+  }
+  closeValidation(){
+    this.validation1 = false;
+  }
+
   fecharPerfil(){
     this.showPerfil = false;
   }
@@ -93,26 +111,26 @@ export class MenuComponent implements OnInit {
     this.showNotificationMessage = false;
     this.showNotificationFriendRequestMessage = false;
     this.showNotificationUpdatePerfil = false;
-    window.history.replaceState({},'',`/menu/${this.perfil.username}`)
+    window.history.replaceState({},'',`/menu`)
   }
 
-  bloquearConta(selectedNotification : Notification){
+  bloquearConta(){
     this.refreshing = true;
     this.subscriptions.push(
-      this.authenticationService.deleteNotification(selectedNotification.id).subscribe(
-        (response: Notification) => {
+      this.authenticationService.deactivatePerfilEmergency(this.perfil.email).subscribe(
+        (response: HttpResponse<CustomHttpResponse>) => {
           this.refreshing = false;
+          this.validation = response.body?.message;
           this.authenticationService.logOut();
-          alert(`A tua conta está agora bloqueada. Foi enviado um novo mail para o teu email, pedimos que sigas atentamente as instruções para os próximos passos.`);
-          window.history.replaceState({},'',`/menu/${this.perfil.username}`)
+          this.router.navigateByUrl('menu/blockAcc');
         },
         (errorResponse: HttpErrorResponse) => {
-          alert(`Ocorreu um erro a executar a operação`);
+          this.registerError = true;
+          this.errorMessage = errorResponse.error.message;
           this.refreshing = false;
         }
-      )
-    )
-  }
+      ))
+      }
 
   onSelectPerfil(selectedPerfil: Perfil):void{
     this.selectedPerfil = selectedPerfil;
@@ -230,7 +248,7 @@ export class MenuComponent implements OnInit {
     this.refreshing = true;
     this.subscriptions.push(
       this.authenticationService.deleteNotification(selectedNotification.id).subscribe(
-        (response: Notification) => {
+        (response: HttpResponse<CustomHttpResponse>) => {
           this.refreshing = false;
           alert(`Esta notificação foi eliminada`);
           window.history.replaceState({},'',`/menu`)
@@ -246,7 +264,7 @@ export class MenuComponent implements OnInit {
     this.refreshing = true;
     this.subscriptions.push(
       this.authenticationService.deleteNotification(selectedNotification.id).subscribe(
-        (response: Notification) => {
+        (response: HttpResponse<CustomHttpResponse>) => {
           this.refreshing = false;
           alert(`Rejeitaste o pedido de amizade e esta notificação vai ser eliminada.`);
           window.history.replaceState({},'',`/menu/${this.perfil.username}`)
@@ -264,7 +282,7 @@ export class MenuComponent implements OnInit {
       this.authenticationService.acceptFriendRequest(selectedNotification.id,selectedNotification.token).subscribe(
         (response: Notification) => {
           this.refreshing = false;
-          alert(`Tens um novo amigo na lista de amizade!`);
+          alert(`Tens um novo amigo na tua lista de amigos`);
           window.history.replaceState({},'',`/menu`)
           location.reload();
         },
@@ -305,9 +323,9 @@ export class MenuComponent implements OnInit {
     this.refreshing = true;
     this.subscriptions.push(
       this.authenticationService.terminarSessao(this.perfil).subscribe(
-        (response: Perfil) => {
+        () => {
           this.authenticationService.logOut();
-        this.router.navigate(['login']);
+          this.router.navigate(['login']);
           this.refreshing = false;
         },
         (errorResponse: HttpErrorResponse) => {

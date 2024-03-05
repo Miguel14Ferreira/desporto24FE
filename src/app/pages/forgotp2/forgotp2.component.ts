@@ -4,7 +4,9 @@ import { Subscription } from 'rxjs';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { LoginperfilService } from 'src/app/services/loginperfil.service';
 import { AuthenticationService } from 'src/app/services/authethication.service';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { NotificationService } from 'src/app/notifier.service';
+import { CustomHttpResponse } from '../custom-http-response';
 
 @Component({
   selector: 'app-forgotp2',
@@ -28,7 +30,13 @@ export class Forgotp2Component implements OnInit {
   subscriptions: Subscription[] = [];
   private readonly ACCOUNT_TOKEN = 'token';
   private readonly USERNAME = 'username';
-  constructor(private activatedRoute: ActivatedRoute,private router:Router,  private authservice:AuthenticationService, private loginService:LoginperfilService) {}
+  registerError:boolean =false;
+  errorMessage!:string;
+  registerSuccess:boolean =false;
+  successMessage!:any;
+  validation1!:boolean;
+  validation!:string;
+  constructor(private activatedRoute: ActivatedRoute,private router:Router,  private authservice:AuthenticationService, private loginService:LoginperfilService,private notificationService:NotificationService) {}
 
   ngOnInit(): void {
     this.authservice.logOut();
@@ -54,26 +62,44 @@ export class Forgotp2Component implements OnInit {
   }
   public reset(perfil: Perfil): void {
     if (perfil.password == "" || perfil.confirmPassword == ""){
-      alert(`Ainda tens espaços em branco`)
+      this.validation1 = true;
+      this.validation = `Ainda tens espaços em branco`;
     } else {
     if (perfil.password != perfil.confirmPassword){
-      alert(`As tuas palavras-passes não estão iguais`)
+      this.validation1 = true;
+      this.validation = `As tuas palavras-passes não estão iguais`;
     } else {
     this.showLoading = true;
     this.subscriptions.push(
       this.authservice.resetPassword(this.token,perfil).subscribe(
-        (response : Perfil) => {
+        (response: HttpResponse<CustomHttpResponse>) => {
           this.showLoading = false;
-          alert(`A tua palavra passe foi alterada com sucesso, podes aceder à tua conta com a tua nova palavra-passe`);
+          this.showLoading = false;
+        this.registerSuccess = true;
+        this.registerError = false;
+        this.validation1 = false;
+        this.successMessage = response.body?.message
         },
         (errorResponse: HttpErrorResponse) => {
+          this.errorMessage = errorResponse.error.message;
           this.showLoading = false;
-          alert(`Ocorreu um erro`);
+          this.registerError = true;
+          this.registerSuccess = false;
+          this.validation1 = false;
         }
       )
     );
   }
 }
+  }
+  closeError(){
+    this.registerError = false;
+  }
+  closeSuccess(){
+    this.registerSuccess = false;
+  }
+  closeValidation(){
+    this.validation1 = false;
   }
 
 

@@ -3,12 +3,10 @@ import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { HeaderType } from 'src/app/enum/header-type.enum';
-import { NotificationType } from 'src/app/enum/notification-type.enum';
 import { AuthenticationService } from 'src/app/services/authethication.service';
-import { NotificationService } from 'src/app/services/notification.service';
 import { Perfil } from '../model/perfil';
 import { LoginperfilService } from 'src/app/services/loginperfil.service';
-import { LoginMFAComponent } from '../login-mfa/login-mfa.component';
+import { NotificationService } from 'src/app/notifier.service';
 
 @Component({
   selector: 'app-login',
@@ -29,13 +27,17 @@ export class LoginComponent implements OnInit, OnDestroy {
   dark!:boolean;
   showMFA: boolean = false;
   subscriptions: Subscription[] = [];
-  constructor(private router:Router, private authenticationService:AuthenticationService, private loginPerfilService:LoginperfilService) { }
+  loginError:boolean =false;
+  errorMessage!:string;
+  validation1!:boolean;
+  validation!:string;
+  constructor(private router:Router, private authenticationService:AuthenticationService) { }
   ngOnDestroy(): void {
     this.subscriptions.forEach(sub => sub.unsubscribe());
   }
 
   ngOnInit(): void {
-    this.authenticationService.isLoggedIn3()
+    this.authenticationService.isLoggedIn()
     var theme = localStorage.getItem('theme');
     if (theme == 'claro'){
       this.dark = false
@@ -50,7 +52,9 @@ export class LoginComponent implements OnInit, OnDestroy {
  
 onLogin(perfil: Perfil): void {
   if (perfil.username == "" || perfil.password == ""){
-    alert(`Terás de preencher os espaços!`)
+    this.validation1 = true;
+    this.loginError = false;
+    this.validation = `Ainda tens espaços em branco`;
   } else {
   this.showLoading = true;
   this.subscriptions.push(
@@ -69,11 +73,20 @@ onLogin(perfil: Perfil): void {
       }
     },
       (errorResponse: HttpErrorResponse) => {
-          alert(`${errorResponse.error.message}`)
+          this.errorMessage = errorResponse.error.message;
           this.showLoading = false;
+          this.loginError = true;
+          this.validation1 = false;
           }
     )
   )}
+}
+
+closeError(){
+  this.loginError = false;
+}
+closeValidation(){
+  this.validation1 = false;
 }
   
     viewPass(){

@@ -14,6 +14,21 @@
             <p id="D245a">Desporto24</p>
       </div>
 <body>
+    <div *ngIf="registerError" id="notificationError">
+        <i class="bi bi-exclamation-triangle-fill"></i>&nbsp;&nbsp;
+        {{ errorMessage }}
+        <button (click)="closeError()" type="button" type="button" id="botaoFecharError">X</button>
+      </div>
+      <div *ngIf="registerSuccess" id="notificationSuccess">
+        <i class="bi bi-check-circle-fill"></i>&nbsp;&nbsp;
+        {{ successMessage }}
+        <button (click)="closeSuccess()" type="button" id="botaoFecharSuccess">X</button>
+      </div>
+      <div *ngIf="validation1" id="notificationInfo">
+        <i class="bi bi-exclamation-circle-fill"></i>&nbsp;&nbsp;
+        {{ validation }}
+        <button (click)="closeValidation()" type="button" id="botaoFecharInfo">X</button>
+      </div>
 <form #passwordValidation="ngForm" #createAccount="ngForm" (ngSubmit)="onRegister()">
 <input #Username="ngModel" id="input1" [(ngModel)]="perfil.username" type="text" class="username" name="username" placeholder="Nome de utilizador" />
 <input id="password" #Password="ngModel" [(ngModel)]="perfil.password" [type]="changetype?'password':'text'" name="password" class="password" placeholder="Password" >
@@ -522,6 +537,21 @@
                 <p id="D245">Desporto24</p>
           </div>
     <body>
+        <div *ngIf="registerError" id="notificationError">
+            <i class="bi bi-exclamation-triangle-fill"></i>&nbsp;&nbsp;
+            {{ errorMessage }}
+            <button (click)="closeError()" type="button" type="button" id="botaoFecharError">X</button>
+          </div>
+          <div *ngIf="registerSuccess" id="notificationSuccess">
+            <i class="bi bi-check-circle-fill"></i>&nbsp;&nbsp;
+            {{ successMessage }}
+            <button (click)="closeSuccess()" type="button" id="botaoFecharSuccess">X</button>
+          </div>
+          <div *ngIf="validation1" id="notificationInfo">
+            <i class="bi bi-exclamation-circle-fill"></i>&nbsp;&nbsp;
+            {{ validation }}
+            <button (click)="closeValidation()" type="button" id="botaoFecharInfo">X</button>
+          </div>
     <form #passwordValidation="ngForm" #createAccount="ngForm" (ngSubmit)="onRegister()">
     <input #Username="ngModel" id="input1" [(ngModel)]="perfil.username" type="text" class="username" name="username" placeholder="Nome de utilizador" />
     <input id="password" #Password="ngModel" [(ngModel)]="perfil.password" [type]="changetype?'password':'text'" name="password" class="password" placeholder="Password" >

@@ -19,6 +19,7 @@ import { PerfilDataComponent } from './pages/perfil-data/perfil-data.component';
 import { LoginMFAComponent } from './pages/login-mfa/login-mfa.component';
 import { ConfirmationNewFriendComponent } from './pages/confirmation-new-friend/confirmation-new-friend.component';
 import { ResetPwEmergencyComponent } from './pages/reset-pw-emergency/reset-pw-emergency.component';
+import { BlockaccComponent } from './pages/blockacc/blockacc.component';
 
 const routes: Routes = [
   {path:'', redirectTo:'home',pathMatch:'full'},
@@ -55,7 +56,8 @@ const routes: Routes = [
   {path:'menu/notifications/:id',redirectTo:'menu',pathMatch:'full'},
   {path:'menu/terminarSessao',redirectTo:'menu',pathMatch:'full'},
   {path:'login/confirmNewFriend/:token',component:ConfirmationNewFriendComponent},
-  {path:'confirmEmergencyToken/resetPassword/:token/:username',component:ResetPwEmergencyComponent}
+  {path:'confirmEmergencyToken/resetPassword/:token/:username',component:ResetPwEmergencyComponent},
+  {path:'menu/blockAcc',component:BlockaccComponent}
 ];
 
 @NgModule({

@@ -39,7 +39,6 @@ export class Events2Component implements OnInit {
   url = './assets/estadio.jpg';
 
   ngOnInit(): void {
-    this.authenticationService.isLoggedIn2()
     this.loginPerfilService.obterUserPeloUsername1(this.authenticationService.loggedInPerfilname).subscribe( data => {
       this.perfil = data;
     }, error => console.log());

@@ -6,6 +6,7 @@ import { Subscription } from 'rxjs';
 import { AuthenticationService } from 'src/app/services/authethication.service';
 import { LoginperfilService } from 'src/app/services/loginperfil.service';
 import { NgForm } from '@angular/forms';
+import { CustomHttpResponse } from '../custom-http-response';
 
 @Component({
   selector: 'app-createaccount',
@@ -26,6 +27,12 @@ export class CreateaccountComponent implements OnInit, OnDestroy {
   response: any = null;
   dark!:boolean;
   subscriptions: Subscription[] = [];
+  registerError:boolean =false;
+  errorMessage!:string;
+  registerSuccess:boolean =false;
+  successMessage!:any;
+  validation1!:boolean;
+  validation!:string;
   constructor(private router:Router,  private authservice:AuthenticationService, private loginService:LoginperfilService) {}
   url = './assets/avatar.jpg';
   
@@ -73,70 +80,48 @@ public onProfileImageChange2(e: any) {
   }
 }
 
+closeError(){
+  this.registerError = false;
+}
+closeSuccess(){
+  this.registerSuccess = false;
+}
+closeValidation(){
+  this.validation1 = false;
+}
+
 
 
 public onRegister(): void {
   if (this.perfil.username== "" || this.perfil.address== "" || this.perfil.confirmPassword== "" || this.perfil.dateOfBirth== "" || this.perfil.email== "" || this.perfil.desportosFavoritos== "" || this.perfil.fullName== "" ||
     this.perfil.country== "" || this.perfil.location== "" || this.perfil.postalCode== "" || this.perfil.phone== "" || this.perfil.indicativePhone== "" || this.perfil.password == ""){
-      alert(`Ainda tens espaços em branco!`)
+      this.validation1 = true;
+      this.validation = `Ainda tens espaços em branco`;
   } else if (this.perfil.password != this.perfil.confirmPassword){
-    alert(`As tuas palavras-passes não estão iguais`)
+    this.validation1 = true;
+    this.validation =`As tuas palavras-passes não estão iguais`
   } else if (this.perfil.gender == ""){
-    alert(`Não escolheste nenhum género!`)
+    this.validation1 = true;
+    this.validation =`Não escolheste nenhum género!`
   } else {
   const formData = this.loginService.createPerfilFormData(this.perfil, this.profileImage);
   this.showLoading = true;
   this.subscriptions.push(
     this.authservice.createPerfil(formData).subscribe(
-      (response: Perfil) => {
+      (response: HttpResponse<CustomHttpResponse>) => {
         this.showLoading = false;
-        alert(`Foi enviado um email para ${response.email} para concluir o registo, só depois da confirmação do email será possível efetuar o login no site.`);
+        this.registerSuccess = true;
+        this.registerError = false;
+        this.validation1 = false;
+        this.successMessage = response.body?.message
       },
-      (errorResponse: HttpErrorResponse) => {
-        if(errorResponse.error instanceof ErrorEvent){
-          alert(`Ocorreu um erro - ${errorResponse.error.message}`)
+        (errorResponse: HttpErrorResponse) => {
+          this.errorMessage = errorResponse.error.message;
           this.showLoading = false;
-        } else {
-          if(errorResponse.error.reason){
-            alert (errorResponse.error.reason);
-            this.showLoading = false;
-          } else {
-            alert (`Um erro aplicacional ocorreu ${errorResponse.status}`)
-            this.showLoading = false;
-          }
-        }
-      }
-    )
-  );
+          this.registerError = true;
+          this.registerSuccess = false;
+          this.validation1 = false;
+          }));
 }
 }
-
-/*
-public onRegister2(): void {
-  if (this.perfil.username== "" || this.perfil.address== "" || this.perfil.confirmPassword== "" || this.perfil.dateOfBirth== "" || this.perfil.email== "" || this.perfil.desportosFavoritos== "" || this.perfil.fullName== "" ||
-    this.perfil.country== "" || this.perfil.location== "" || this.perfil.postalCode== "" || this.perfil.phone== "" || this.perfil.indicativePhone== "" || this.perfil.password == ""){
-      alert(`Ainda tens espaços em branco!`)
-  } else if (this.perfil.password != this.perfil.confirmPassword){
-    alert(`As tuas palavras-passes não estão iguais`)
-  } else if (this.perfil.gender == ""){
-    alert(`Não escolheste nenhum género!`)
-  } else {
-  const formData = this.loginService.createPerfilFormData(this.perfil, this.profileImage);
-  this.showLoading = true;
-  this.subscriptions.push(
-    this.authservice.createPerfil(formData).subscribe(
-      (response: Perfil) => {
-        this.showLoading = false;
-        this.authservice.addPerfilToLocalCache2((response.email)!);
-        alert(`Foi enviado um email para ${response.email} para concluir o registo, só depois da confirmação do email será possível efetuar o login no site.`);
-      },
-      (errorResponse: HttpErrorResponse) => {
-        alert(`Ocorreu um erro`);
-        this.showLoading = false;
-      }
-    )
-  );
-}
-}
-*/
 }

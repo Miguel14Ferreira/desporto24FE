@@ -10,12 +10,29 @@
 <div *ngIf="dark" class="img">
 <body>
     <h1 id="h1white">DESPORTO24</h1>
-<h2 id="h2white">Indica-nos por favor o teu email abaixo:</h2>
+<div id="container2">
 <p id="D24a">Desporto24</p>
                   <p id="D241a">Desporto24</p>
                   <p id="D243a">Desporto24</p>
                   <p id="D244a">Desporto24</p>
                   <p id="D245a">Desporto24</p>
+                  </div>
+                  <h2 id="h2white">Indica-nos por favor o teu email abaixo:</h2>
+                  <div *ngIf="registerError" id="notificationError">
+                    <i class="bi bi-exclamation-triangle-fill"></i>&nbsp;&nbsp;
+                    {{ errorMessage }}
+                    <button (click)="closeError()" type="button" type="button" id="botaoFecharError">X</button>
+                  </div>
+                  <div *ngIf="registerSuccess" id="notificationSuccess">
+                    <i class="bi bi-check-circle-fill"></i>&nbsp;&nbsp;
+                    {{ successMessage }}
+                    <button (click)="closeSuccess()" type="button" id="botaoFecharSuccess">X</button>
+                  </div>
+                  <div *ngIf="validation1" id="notificationInfo">
+                    <i class="bi bi-exclamation-circle-fill"></i>&nbsp;&nbsp;
+                    {{ validation }}
+                    <button (click)="closeValidation()" type="button" id="botaoFecharInfo">X</button>
+                  </div>
 <form #resetPassword="ngForm" (ngSubmit)="sendEmail(resetPassword.value)">
     <p><input id="input1" name="email" [(ngModel)]="perfil.email" type="text" placeholder="Email" required></p>  
 <button class="botao1">
@@ -30,12 +47,29 @@
 <div *ngIf="!dark" class="img2">
     <body>
         <h1 id="h1black">DESPORTO24</h1>
-    <h2 id="h2black">Indica-nos por favor o teu email abaixo:</h2>
+    <div id="container">
     <p id="D24">Desporto24</p>
                   <p id="D241">Desporto24</p>
                   <p id="D243">Desporto24</p>
                   <p id="D244">Desporto24</p>
                   <p id="D245">Desporto24</p>
+                  </div>
+                  <h2 id="h2black">Indica-nos por favor o teu email abaixo:</h2>
+                  <div *ngIf="registerError" id="notificationError">
+                    <i class="bi bi-exclamation-triangle-fill"></i>&nbsp;&nbsp;
+                    {{ errorMessage }}
+                    <button (click)="closeError()" type="button" type="button" id="botaoFecharError">X</button>
+                  </div>
+                  <div *ngIf="registerSuccess" id="notificationSuccess">
+                    <i class="bi bi-check-circle-fill"></i>&nbsp;&nbsp;
+                    {{ successMessage }}
+                    <button (click)="closeSuccess()" type="button" id="botaoFecharSuccess">X</button>
+                  </div>
+                  <div *ngIf="validation1" id="notificationInfo">
+                    <i class="bi bi-exclamation-circle-fill"></i>&nbsp;&nbsp;
+                    {{ validation }}
+                    <button (click)="closeValidation()" type="button" id="botaoFecharInfo">X</button>
+                  </div>
     <form #resetPassword="ngForm" (ngSubmit)="sendEmail(resetPassword.value)">
         <p><input id="input1" name="email" [(ngModel)]="perfil.email" type="text" placeholder="Email" required></p>  
     <button class="botao1">

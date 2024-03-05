@@ -28,7 +28,7 @@ export class ContactComponent implements OnInit {
     } else if ( this.ideia.gender == ""){
       alert(`Não escolheste nenhum género!`)
     } else {
-    this._service.createIdea(this.ideia).subscribe( data =>{
+    this._service.createIdea(this.ideia).subscribe( (response:Ideia) =>{
       {alert("Foi enviado um mail para o email que colocaste.")}
     },
     error => console.log(error));

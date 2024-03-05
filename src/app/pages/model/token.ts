@@ -1,3 +1,7 @@
 export class Token{
-    public token:any;
+    public token!:string;
+
+    constructor(){
+        this.token = "";
+    }
 }

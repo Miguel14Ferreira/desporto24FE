@@ -21,8 +21,8 @@ export class LoginperfilService {
   private jwtHelper = new JwtHelperService();
   constructor(private httpClient: HttpClient) { }
 
-  updatePerfil(formData: FormData) {
-    return this.httpClient.put<Perfil>(`${this.host}/menu/alterardados`,formData);
+  updatePerfil(formData: FormData):Observable<HttpResponse<CustomHttpResponse>> {
+    return this.httpClient.put<CustomHttpResponse>(`${this.host}/menu/alterardados`,formData, {observe: 'response'});
   }
 
   updatePerfil2(perfil: Perfil) {
@@ -131,8 +131,8 @@ export class LoginperfilService {
   obterUserPeloUsername1(username:string):Observable<Perfil>{
     return this.httpClient.get<Perfil>(`${this.host}/menu/${username}`);
   }
-  updatePerfilPassword(formData: FormData){
-    return this.httpClient.put<Perfil>(`${this.host}/menu/alterarPassword`, formData);
+  updatePerfilPassword(formData: FormData):Observable<HttpResponse<CustomHttpResponse>>{
+    return this.httpClient.put<CustomHttpResponse>(`${this.host}/menu/alterarPassword`, formData, {observe: 'response'});
   }
   obterNotificacoesDoPerfil(username:string):Observable<Notification[]>{
     return this.httpClient.get<Notification[]>(`${this.host}/menu/notifications/${username}`)
@@ -140,8 +140,8 @@ export class LoginperfilService {
   createSession(formData:FormData){
     return this.httpClient.post<Session>(`${this.host}/menu/createEvent`,formData);
   }
-  createIdea(ideia:Ideia):Observable<object>{
-    return this.httpClient.post(`${this.host}/contact`,ideia);
+  createIdea(ideia:Ideia):Observable<Ideia>{
+    return this.httpClient.post<Ideia>(`${this.host}/contact`,ideia);
   }
   obterPerfis(searchTerm: string):Observable<Perfil[]> {
     return this.httpClient.get<Perfil[]>(`${this.host}/menu/perfis/${searchTerm}`);

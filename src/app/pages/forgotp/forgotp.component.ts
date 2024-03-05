@@ -6,6 +6,7 @@ import { AuthenticationService } from 'src/app/services/authethication.service';
 import { LoginperfilService } from 'src/app/services/loginperfil.service';
 import { Perfil } from '../model/perfil';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { CustomHttpResponse } from '../custom-http-response';
 
 @Component({
   selector: 'app-forgotp',
@@ -26,6 +27,12 @@ export class ForgotpComponent implements OnInit {
   response: any = null;
   dark!:boolean;
   subscriptions: Subscription[] = [];
+  registerError:boolean =false;
+  errorMessage!:string;
+  registerSuccess:boolean =false;
+  successMessage!:any;
+  validation1!:boolean;
+  validation!:string;
   constructor(private router:Router,  private authservice:AuthenticationService, private loginService:LoginperfilService) {}
 
   ngOnInit(): void {
@@ -41,21 +48,38 @@ export class ForgotpComponent implements OnInit {
   }
   public sendEmail(perfil: Perfil): void {
     if(perfil.email == ""){
-      alert(`Não foi colocado nada no campo email`)
+      this.validation1 = true;
+      this.validation = `Ainda tens espaços em branco`;
     } else {
     this.showLoading = true;
     this.subscriptions.push(
       this.authservice.sendEmail(perfil).subscribe(
-        (response: HttpResponse<Perfil>) => {
+        (response: HttpResponse<CustomHttpResponse>) => {
           this.showLoading = false;
-          alert(`Foi enviado um email para ${perfil.email} para efetuar o reset à tua password.`);
+          this.showLoading = false;
+        this.registerSuccess = true;
+        this.registerError = false;
+        this.validation1 = false;
+        this.successMessage = response.body?.message
         },
         (errorResponse: HttpErrorResponse) => {
-          alert(`Ocorreu um erro `);
+          this.errorMessage = errorResponse.error.message;
           this.showLoading = false;
+          this.registerError = true;
+          this.registerSuccess = false;
+          this.validation1 = false;
         }
       )
     );
   }
+}
+closeError(){
+  this.registerError = false;
+}
+closeSuccess(){
+  this.registerSuccess = false;
+}
+closeValidation(){
+  this.validation1 = false;
 }
 }

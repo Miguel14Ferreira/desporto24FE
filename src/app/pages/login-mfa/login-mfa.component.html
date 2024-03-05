@@ -15,10 +15,25 @@
         <p id="D244">Desporto24</p>
         <p id="D245">Desporto24</p>
       </div>
+      <div *ngIf="loginError" id="notificationError">
+        <i class="bi bi-exclamation-triangle-fill"></i>&nbsp;&nbsp;
+        {{ errorMessage }}
+        <button (click)="closeError()" type="button" type="button" id="botaoFecharError">X</button>
+      </div>
+      <div *ngIf="validation1" id="notificationInfo">
+        <i class="bi bi-exclamation-circle-fill"></i>&nbsp;&nbsp;
+        {{ validation }}
+        <button (click)="closeValidation()" type="button" id="botaoFecharInfo">X</button>
+      </div>
+      <div *ngIf="registerSuccess" id="notificationSuccess">
+        <i class="bi bi-check-circle-fill"></i>&nbsp;&nbsp;
+        {{ successMessage }}
+        <button (click)="closeSuccess()" type="button" id="botaoFecharSuccess">X</button>
+      </div>
 <body>
   <h1 id="h1black">Desporto24</h1>
 <h2 id="h2black">Coloca aqui o código que recebeste por SMS</h2>
-<form #signInForm="ngForm" (ngSubmit)="confirmCode()">
+<form #signInForm="ngForm" (ngSubmit)="confirmCode(signInForm.value)">
 <input id="input1" [(ngModel)]="token2.token" name="token">
 <button type="submit" id="input3">
     <i *ngIf= "showLoading" class="fas fa-spinner fa-spin"></i>&nbsp;&nbsp;
@@ -43,10 +58,25 @@
             <p id="D244a">Desporto24</p>
             <p id="D245a">Desporto24</p>
             </div>
+            <div *ngIf="loginError" id="notificationError">
+              <i class="bi bi-exclamation-triangle-fill"></i>&nbsp;&nbsp;
+              {{ errorMessage }}
+              <button (click)="closeError()" type="button" type="button" id="botaoFecharError">X</button>
+            </div>
+            <div *ngIf="validation1" id="notificationInfo">
+              <i class="bi bi-exclamation-circle-fill"></i>&nbsp;&nbsp;
+              {{ validation }}
+              <button (click)="closeValidation()" type="button" id="botaoFecharInfo">X</button>
+            </div>
+            <div *ngIf="registerSuccess" id="notificationSuccess">
+              <i class="bi bi-check-circle-fill"></i>&nbsp;&nbsp;
+              {{ successMessage }}
+              <button (click)="closeSuccess()" type="button" id="botaoFecharSuccess">X</button>
+            </div>
       <body>
         <h1 id="h1white">Desporto24</h1>
 <h2 id="h2white">Coloca aqui o código que recebeste por SMS</h2>
-<form #signInForm="ngForm" (ngSubmit)="confirmCode()">
+<form #signInForm="ngForm" (ngSubmit)="confirmCode(signInForm.value)">
     <input id="input1" [(ngModel)]="token2.token" name="token">
     <button type="submit" id="input3">
         <i *ngIf= "showLoading" class="fas fa-spinner fa-spin"></i>&nbsp;&nbsp;

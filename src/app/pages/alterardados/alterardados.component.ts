@@ -1,14 +1,14 @@
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, NgForm } from '@angular/forms';
 import { ActivatedRoute, ParamMap, Route, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { NotificationType } from 'src/app/enum/notification-type.enum';
 import { AuthenticationService } from 'src/app/services/authethication.service';
-import { NotificationService } from 'src/app/services/notification.service';
 import { AuthService } from 'src/auth.service';
 import { LoginperfilService } from '../../services/loginperfil.service';
 import { Perfil } from '../model/perfil';
+import { CustomHttpResponse } from '../custom-http-response';
 
 @Component({
   selector: 'app-alterardados',
@@ -32,11 +32,16 @@ export class AlterardadosComponent implements OnInit {
   profileImage!: File;
   dark!:boolean;
   private readonly USERNAME: string = "username";
-  constructor(private loginPerfilService: LoginperfilService,private authenticationService:AuthenticationService, private activatedRoute:ActivatedRoute, private router:Router) { }
+  registerError:boolean =false;
+  errorMessage!:string;
+  registerSuccess:boolean =false;
+  successMessage!:any;
+  validation1!:boolean;
+  validation!:string;
+  constructor(private loginPerfilService: LoginperfilService,private authenticationService:AuthenticationService, private router:Router) { }
   url:any;
 
   ngOnInit(): void {
-    this.authenticationService.isLoggedIn2()
     this.loginPerfilService.obterUserPeloUsername1(this.authenticationService.loggedInPerfilname).subscribe( data => {
       this.perfil = data;
     }, error => console.log());
@@ -47,6 +52,16 @@ export class AlterardadosComponent implements OnInit {
     } else {
       this.dark = true
     }
+  }
+
+  closeError(){
+    this.registerError = false;
+  }
+  closeSuccess(){
+    this.registerSuccess = false;
+  }
+  closeValidation(){
+    this.validation1 = false;
   }
 
   verDadosPerfil(){
@@ -75,21 +90,29 @@ export class AlterardadosComponent implements OnInit {
     onUpdatePerfil(): void {
       if (this.editPerfil.address== "" || this.editPerfil.dateOfBirth== "" || this.editPerfil.email== "" || this.editPerfil.desportosFavoritos== "" || this.editPerfil.fullName== "" ||
       this.editPerfil.country== "" || this.editPerfil.location== "" || this.editPerfil.postalCode== "" || this.editPerfil.phone== "" || this.editPerfil.indicativePhone== "" ){
-        alert(`Ainda tens espaços em branco!`)
+        this.validation1 = true;
+      this.validation = `Ainda tens espaços em branco`;
       } else if (this.editPerfil.gender == ""){
-          alert(`Não escolheste nenhum género!`)
+        this.validation1 = true;
+    this.validation =`Não escolheste nenhum género!`
         } else {
         const formData = this.loginPerfilService.updatePerfilFormData(this.perfil.username, this.editPerfil, this.profileImage);
         this.showLoading = true;
         this.subscriptions.push(
           this.loginPerfilService.updatePerfil(formData).subscribe(
-            (response: Perfil) => {
+            (response: HttpResponse<CustomHttpResponse>) => {
               this.showLoading = false;
-              alert(`A tua informação de perfil foi atualizada com sucesso.`);
+        this.registerSuccess = true;
+        this.registerError = false;
+        this.validation1 = false;
+        this.successMessage = response.body?.message
             },
             (errorResponse: HttpErrorResponse) => {
-              alert(`Ocorreu um erro`);
-              this.showLoading = false;
+              this.errorMessage = errorResponse.error.message;
+          this.showLoading = false;
+          this.registerError = true;
+          this.registerSuccess = false;
+          this.validation1 = false;
             }
           )
         );

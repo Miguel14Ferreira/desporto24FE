@@ -11,10 +11,7 @@ import { Perfil } from '../model/perfil';
 export class HomeComponent implements OnInit {
 
   dark!:boolean;
-  username!:any;
-  private readonly USERNAME : string = "username";
-  perfil!:Perfil;
-  constructor(private activatedRoute:ActivatedRoute, private loginPerfilService:LoginperfilService) { }
+  constructor() { }
 
   ngOnInit(): void {
     var theme = localStorage.getItem('theme');

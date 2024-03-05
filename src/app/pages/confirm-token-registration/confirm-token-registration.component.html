@@ -19,7 +19,7 @@
             </div>
 <div *ngIf="showScreen2">
     <img id="img2">
-<h2 id="h2white">A tua conta neste momento está ativada</h2>
+<h2 id="h2white">{{successMessage}}</h2>
 <button id="botao2" (click)="goToLogin()">Clica aqui para voltares ao Login</button>
 </div>
 <div *ngIf="showScreen">
@@ -30,7 +30,7 @@
 </div>
     <div *ngIf="showScreen3">
         <img class="img3">
-    <h3 id="h3white">Ocorreu um erro ao verificar a tua conta, por favor vamos pedir que tentes de novo</h3>
+    <h3 id="h3white">{{failedMessage}}</h3>
 </div>
 </body>
 </div>
@@ -45,7 +45,7 @@
             </div>
     <div *ngIf="showScreen2">
         <img id="img2">
-    <h2 id="h2black">A tua conta neste momento está ativada</h2>
+    <h2 id="h2black">{{successMessage}}</h2>
     <button id="botao2" (click)="goToLogin()">Clica aqui para voltares ao Login</button>
     </div>
     <div *ngIf="showScreen">
@@ -56,7 +56,7 @@
     </div>
         <div *ngIf="showScreen3">
             <img class="img3">
-        <h3 id="h3black">Ocorreu um erro ao verificar a tua conta, por favor vamos pedir que tentes de novo</h3>
+        <h3 id="h3black">{{failedMessage}}</h3>
     </div>
     </div>
 </html>

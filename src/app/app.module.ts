@@ -22,7 +22,6 @@ import { LoginperfilService } from './services/loginperfil.service';
 import { AuthInterceptor } from './auth.interceptor';
 import { AuthenticationGuard } from './guard/authentication.guard';
 import { NotificationModule } from './notification.module';
-import { NotificationService } from './services/notification.service';
 import { PerfisComponent } from './pages/perfis/perfis.component';
 import { AuthenticationService } from './services/authethication.service';
 import { AboutComponent } from './pages/about/about.component';
@@ -33,6 +32,8 @@ import { PerfilDataComponent } from './pages/perfil-data/perfil-data.component';
 import { LoginMFAComponent } from './pages/login-mfa/login-mfa.component';
 import { ConfirmationNewFriendComponent } from './pages/confirmation-new-friend/confirmation-new-friend.component';
 import { ResetPwEmergencyComponent } from './pages/reset-pw-emergency/reset-pw-emergency.component';
+import { NotificationService } from './notifier.service';
+import { BlockaccComponent } from './pages/blockacc/blockacc.component';
 
 @NgModule({
   declarations: [
@@ -59,7 +60,8 @@ import { ResetPwEmergencyComponent } from './pages/reset-pw-emergency/reset-pw-e
     ConfirmTokenRegistrationComponent,
     ConfirmEmergencyTokenComponent,
     ConfirmationNewFriendComponent,
-    ResetPwEmergencyComponent
+    ResetPwEmergencyComponent,
+    BlockaccComponent
   ],
   imports: [
     BrowserModule,

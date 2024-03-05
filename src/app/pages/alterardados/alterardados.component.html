@@ -13,6 +13,21 @@
                 <p id="D244a">Desporto24</p>
                 <p id="D245a">Desporto24</p>
           </div>
+          <div *ngIf="registerError" id="notificationError">
+            <i class="bi bi-exclamation-triangle-fill"></i>&nbsp;&nbsp;
+            {{ errorMessage }}
+            <button (click)="closeError()" type="button" type="button" id="botaoFecharError">X</button>
+          </div>
+          <div *ngIf="registerSuccess" id="notificationSuccess">
+            <i class="bi bi-check-circle-fill"></i>&nbsp;&nbsp;
+            {{ successMessage }}
+            <button (click)="closeSuccess()" type="button" id="botaoFecharSuccess">X</button>
+          </div>
+          <div *ngIf="validation1" id="notificationInfo">
+            <i class="bi bi-exclamation-circle-fill"></i>&nbsp;&nbsp;
+            {{ validation }}
+            <button (click)="closeValidation()" type="button" id="botaoFecharInfo">X</button>
+          </div>
 <form  #updateAccount="ngForm" (ngSubmit)="onUpdatePerfil()" name="form" action="#">
 <input #fullName="ngModel" id="input4" [(ngModel)]="editPerfil.fullName" type="text" class="fullName" name="fullName" placeholder="Nome completo" required>
     <p id="datanascimento">Data de nascimento:</p>
@@ -518,6 +533,21 @@
                 <p id="D243">Desporto24</p>
                 <p id="D244">Desporto24</p>
                 <p id="D245">Desporto24</p>
+          </div>
+          <div *ngIf="registerError" id="notificationError">
+            <i class="bi bi-exclamation-triangle-fill"></i>&nbsp;&nbsp;
+            {{ errorMessage }}
+            <button (click)="closeError()" type="button" type="button" id="botaoFecharError">X</button>
+          </div>
+          <div *ngIf="registerSuccess" id="notificationSuccess">
+            <i class="bi bi-check-circle-fill"></i>&nbsp;&nbsp;
+            {{ successMessage }}
+            <button (click)="closeSuccess()" type="button" id="botaoFecharSuccess">X</button>
+          </div>
+          <div *ngIf="validation1" id="notificationInfo">
+            <i class="bi bi-exclamation-circle-fill"></i>&nbsp;&nbsp;
+            {{ validation }}
+            <button (click)="closeValidation()" type="button" id="botaoFecharInfo">X</button>
           </div>
 <form  #updateAccount="ngForm" (ngSubmit)="onUpdatePerfil()" name="form" action="#">
 <input #fullName="ngModel" id="input4" [(ngModel)]="editPerfil.fullName" type="text" class="fullName" name="fullName" placeholder="Nome completo" required>

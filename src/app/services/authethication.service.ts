@@ -23,13 +23,13 @@ export class AuthenticationService {
   private jwtHelper = new JwtHelperService();
   perfil!:Perfil;
 
-  constructor(private http: HttpClient,private router:Router,private loginPerfilService:LoginperfilService) {}
+  constructor(private http: HttpClient,private router:Router) {}
 
   loginPerfil(perfil: Perfil):Observable<HttpResponse<Perfil>>{
     return this.http.post<Perfil>(`${this.host}/login`, perfil, {observe: 'response'});
   }
-  createPerfil(formData: FormData):Observable<Perfil>{
-    return this.http.post<Perfil>(`${this.host}/login/registerNewUser`, formData);
+  createPerfil(formData: FormData):Observable<HttpResponse<CustomHttpResponse>>{
+    return this.http.post<CustomHttpResponse>(`${this.host}/login/registerNewUser`, formData,{observe: 'response'});
   }
   createPerfil2(perfil: Perfil):Observable<HttpResponse<Perfil>>{
     return this.http.post<Perfil>(`${this.host}/login/registerNewUser`, perfil, {observe: 'response'});
@@ -37,32 +37,35 @@ export class AuthenticationService {
   createSessao(formData: FormData):Observable<Session>{
     return this.http.post<Session>(`${this.host}/menu/createEvents`, formData);
   }
-  confirmMFA(token:string):Observable<HttpResponse<Perfil>>{
-    return this.http.post<Perfil>(`${this.host}/login/MFAauthentication/:username`,token, {observe: 'response'});
+  confirmMFA(token:string):Observable<HttpResponse<CustomHttpResponse>>{
+    return this.http.post<CustomHttpResponse>(`${this.host}/login/MFAauthentication/:username`,token, {observe: 'response'});
   }
-  resendMFA(perfil:string):Observable<Perfil>{
-    return this.http.get<Perfil>(`${this.host}/login/MFAauthentication/${perfil}`);
+  resendMFA(perfil:string):Observable<HttpResponse<CustomHttpResponse>>{
+    return this.http.get<CustomHttpResponse>(`${this.host}/login/MFAauthentication/${perfil}`,{observe: 'response'});
   }
-  sendEmail(perfil:Perfil):Observable<HttpResponse<Perfil>>{
-    return this.http.post<Perfil>(`${this.host}/login/resetPassword`,perfil, {observe: 'response'});
+  sendEmail(perfil:Perfil):Observable<HttpResponse<CustomHttpResponse>>{
+    return this.http.post<CustomHttpResponse>(`${this.host}/login/resetPassword`,perfil, {observe: 'response'});
   }
-  resetPassword(token:string,perfil:Perfil):Observable<Perfil>{
-    return this.http.put<Perfil>(`${this.host}/login/resetPassword/${token}/:username`,perfil);
+  resetPassword(token:string,perfil:Perfil):Observable<HttpResponse<CustomHttpResponse>>{
+    return this.http.put<CustomHttpResponse>(`${this.host}/login/resetPassword/${token}/:username`,perfil ,{observe: 'response'});
   }
   resetPasswordEmergency(token:string,username:string,password:string):Observable<Perfil>{
     return this.http.put<Perfil>(`${this.host}/confirmEmergencyToken/resetPassword/${token}/${username}`,password)
   }
-  activatePerfil(token: string):Observable<Token>{
-    return this.http.get<Token>(`${this.host}/login/registerNewUser/confirmTokenRegistration/${token}`);
+  activatePerfil(token: string):Observable<HttpResponse<CustomHttpResponse>>{
+    return this.http.get<CustomHttpResponse>(`${this.host}/login/registerNewUser/confirmTokenRegistration/${token}`,{observe: 'response'});
   }
   deactivatePerfil(token: string,username:string):Observable<Token>{
     return this.http.get<Token>(`${this.host}/confirmEmergencyToken/${token}/${username}`);
   }
+  deactivatePerfilEmergency(username:string):Observable<HttpResponse<CustomHttpResponse>>{
+    return this.http.post<CustomHttpResponse>(`${this.host}/menu/notifications/:id`,username,{observe: 'response'});
+  }
   acceptFriendRequestToken(token:string):Observable<Token>{
     return this.http.get<Token>(`${this.host}/login/confirmNewFriend/${token}`);
   }
-  deleteNotification(NotificationNumber:number):Observable<Notification>{
-    return this.http.delete<Notification>(`${this.host}/menu/:username/notifications/${NotificationNumber}`)
+  deleteNotification(NotificationNumber:number):Observable<HttpResponse<CustomHttpResponse>>{
+    return this.http.delete<CustomHttpResponse>(`${this.host}/menu/notifications/${NotificationNumber}`,{observe: 'response'})
   }
   acceptFriendRequest(NotificationNumber:number,NotificationToken:string):Observable<Notification>{
     return this.http.get<Notification>(`${this.host}/menu/notifications/${NotificationNumber}/${NotificationToken}`,);
@@ -86,7 +89,7 @@ export class AuthenticationService {
   public logOut2(): void {
     this.token = null;
     this.loggedInPerfilname = null;
-    localStorage.removeItem('token');
+    localStorage.removeItem('tokenMFA');
   }
 
   public saveToken(token: string): void {
@@ -102,10 +105,6 @@ export class AuthenticationService {
 
   public loadToken(): void {
     this.token = localStorage.getItem('token');
-  }
-
-  public loadTokenMFA(): void {
-    this.token = localStorage.getItem('tokenMFA');
   }
 
   public getToken(): string {
@@ -127,27 +126,10 @@ export class AuthenticationService {
   }
   isLoggedIn2(){
     this.loadToken();
-    if(this.token != null && this.token !== ''){
-      if (this.jwtHelper.decodeToken(this.token).sub != null || ''){
-        if (!this.jwtHelper.isTokenExpired(this.token)){
-          this.loggedInPerfilname = this.jwtHelper.decodeToken(this.token).sub;
-        }
-      }
-    } else {
+    if(this.token == null && this.token == ''){
+      return this.router.navigateByUrl('/login')
+        } else {
       return this.logOut();
-    }
-  }
-  isLoggedIn3(){
-    this.loadTokenMFA();
-    if(this.token != null && this.token !== ''){
-      if (this.jwtHelper.decodeToken(this.token).sub != null || ''){
-        if (!this.jwtHelper.isTokenExpired(this.token)){
-          this.loggedInPerfilname = this.jwtHelper.decodeToken(this.token).sub;
-          return this.router.navigateByUrl('/login/MFAauthentication/'+this.loggedInPerfilname)
         }
-      }
-    } else {
-      return this.logOut2();
-    }
   }
 }

@@ -3,7 +3,6 @@ import { Component } from '@angular/core';
 import { BehaviorSubject, Subscription } from 'rxjs';
 import { NotificationType } from 'src/app/enum/notification-type.enum';
 import { LoginperfilService } from 'src/app/services/loginperfil.service';
-import { NotificationService } from 'src/app/services/notification.service';
 import { Perfil } from '../model/perfil';
 import { AuthenticationService } from 'src/app/services/authethication.service';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
@@ -41,7 +40,6 @@ export class PerfisComponent {
     } else {
       this.dark = true
     }
-    this.authenticationService.isLoggedIn2()
     this.loginPerfilService.obterUserPeloUsername1(this.authenticationService.loggedInPerfilname).subscribe( data => {
       this.perfil = data;
     }, error => console.log());

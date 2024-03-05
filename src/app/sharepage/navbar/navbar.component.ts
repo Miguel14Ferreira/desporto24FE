@@ -1,4 +1,6 @@
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
+import { AuthenticationService } from 'src/app/services/authethication.service';
 
 @Component({
   selector: 'app-navbar',
@@ -10,7 +12,7 @@ export class NavbarComponent implements OnInit {
   dark!:boolean;
   escuro:string = "escuro";
   claro:string = "claro";
-  constructor() { }
+  constructor(private router:Router,private authService:AuthenticationService) { }
 
   ngOnInit(): void {
     var theme = localStorage.getItem('theme');
@@ -30,5 +32,9 @@ export class NavbarComponent implements OnInit {
       this.dark = false;
       localStorage.setItem('theme',this.claro);
       location.reload();
+    }
+    remover(){
+      this.router.navigate(['login']);
+      this.authService.logOut2();
     }
 }
