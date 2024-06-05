@@ -21,7 +21,6 @@ import { ForgotpComponent } from './pages/forgotp/forgotp.component';
 import { LoginperfilService } from './services/loginperfil.service';
 import { AuthInterceptor } from './auth.interceptor';
 import { AuthenticationGuard } from './guard/authentication.guard';
-import { NotificationModule } from './notification.module';
 import { PerfisComponent } from './pages/perfis/perfis.component';
 import { AuthenticationService } from './services/authethication.service';
 import { AboutComponent } from './pages/about/about.component';
@@ -32,7 +31,6 @@ import { PerfilDataComponent } from './pages/perfil-data/perfil-data.component';
 import { LoginMFAComponent } from './pages/login-mfa/login-mfa.component';
 import { ConfirmationNewFriendComponent } from './pages/confirmation-new-friend/confirmation-new-friend.component';
 import { ResetPwEmergencyComponent } from './pages/reset-pw-emergency/reset-pw-emergency.component';
-import { NotificationService } from './notifier.service';
 import { BlockaccComponent } from './pages/blockacc/blockacc.component';
 
 @NgModule({
@@ -70,9 +68,8 @@ import { BlockaccComponent } from './pages/blockacc/blockacc.component';
     HttpClientModule,
     ReactiveFormsModule,
     BrowserAnimationsModule,
-    NotificationModule
   ],
-  providers: [NotificationService, AuthenticationGuard, AuthenticationService, LoginperfilService, {provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true}],
+  providers: [AuthenticationGuard, AuthenticationService, LoginperfilService, {provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true}],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

@@ -1,0 +1,15 @@
+services:
+  desporto24:
+    container_name: desporto24fecontainer
+    build:  .
+    image: desporto24fe:v1
+    ports:
+      - 80:80
+    expose:
+      - 80
+    networks:
+      - internalnet
+
+networks:
+  internalnet:
+    driver:  bridge

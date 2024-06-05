@@ -5,7 +5,6 @@ import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { LoginperfilService } from 'src/app/services/loginperfil.service';
 import { AuthenticationService } from 'src/app/services/authethication.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { NotificationService } from 'src/app/notifier.service';
 import { CustomHttpResponse } from '../custom-http-response';
 
 @Component({
@@ -36,7 +35,7 @@ export class Forgotp2Component implements OnInit {
   successMessage!:any;
   validation1!:boolean;
   validation!:string;
-  constructor(private activatedRoute: ActivatedRoute,private router:Router,  private authservice:AuthenticationService, private loginService:LoginperfilService,private notificationService:NotificationService) {}
+  constructor(private activatedRoute: ActivatedRoute,private router:Router,  private authservice:AuthenticationService, private loginService:LoginperfilService) {}
 
   ngOnInit(): void {
     this.authservice.logOut();

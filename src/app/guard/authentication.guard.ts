@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot, UrlTree } from '@angular/router';
 import { NotificationType } from '../enum/notification-type.enum';
 import { AuthenticationService } from '../services/authethication.service';
-import { NotificationService } from '../notifier.service';
 
 @Injectable({providedIn: 'root'})
 export class AuthenticationGuard implements CanActivate {

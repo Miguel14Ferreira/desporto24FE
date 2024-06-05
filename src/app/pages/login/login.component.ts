@@ -5,8 +5,6 @@ import { Subscription } from 'rxjs';
 import { HeaderType } from 'src/app/enum/header-type.enum';
 import { AuthenticationService } from 'src/app/services/authethication.service';
 import { Perfil } from '../model/perfil';
-import { LoginperfilService } from 'src/app/services/loginperfil.service';
-import { NotificationService } from 'src/app/notifier.service';
 
 @Component({
   selector: 'app-login',

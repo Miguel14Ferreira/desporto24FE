@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse, HttpErrorResponse } from '@angular/common/http';
-import { environment } from '../../environments/environment';
+import { environment } from '../../environment/environment';
 import { Observable, catchError, tap } from 'rxjs';
 import { Perfil } from '../pages/model/perfil';
 import { JwtHelperService } from '@auth0/angular-jwt';
@@ -13,7 +13,7 @@ import { Chat } from '../pages/model/chat';
 import { LoginperfilService } from './loginperfil.service';
 
 
-@Injectable({providedIn: 'root'})
+@Injectable()
 export class AuthenticationService {
   public host = environment.apiUrl;
   token: any;
@@ -123,13 +123,5 @@ export class AuthenticationService {
     } else {
       return this.logOut();
     }
-  }
-  isLoggedIn2(){
-    this.loadToken();
-    if(this.token == null && this.token == ''){
-      return this.router.navigateByUrl('/login')
-        } else {
-      return this.logOut();
-        }
   }
 }

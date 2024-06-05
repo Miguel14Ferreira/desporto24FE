@@ -7,7 +7,6 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AuthenticationService } from 'src/app/services/authethication.service';
 import { Token } from '../model/token';
 import { HeaderType } from 'src/app/enum/header-type.enum';
-import { NotificationService } from 'src/app/notifier.service';
 import { CustomHttpResponse } from '../custom-http-response';
 
 @Component({
@@ -32,7 +31,7 @@ export class LoginMFAComponent {
   successMessage!:any;
   validation1!:boolean;
   validation!:string;
-  constructor(private activatedRoute:ActivatedRoute, private loginPerfilService:LoginperfilService,private authService:AuthenticationService,private router:Router,private notificationService:NotificationService) { }
+  constructor(private activatedRoute:ActivatedRoute, private loginPerfilService:LoginperfilService,private authService:AuthenticationService,private router:Router) { }
 
   ngOnInit(): void {
     this.showLoading = false;

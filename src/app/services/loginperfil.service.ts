@@ -4,15 +4,13 @@ import { Observable } from 'rxjs';
 import { Ideia } from '../ideia';
 import { Perfil } from '../pages/model/perfil';
 import { Session } from '../pages/session';
-import { environment } from 'src/environments/environment';
+import { environment } from 'src/environment/environment';
 import { JwtHelperService } from "@auth0/angular-jwt";
 import { CustomHttpResponse } from '../pages/custom-http-response';
 import { Token } from '../pages/model/token';
 import { Notification } from '../pages/model/notification';
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable()
 export class LoginperfilService {
   
   host = environment.apiUrl;
