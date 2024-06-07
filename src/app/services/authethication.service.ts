@@ -46,11 +46,11 @@ export class AuthenticationService {
   sendEmail(perfil:Perfil):Observable<HttpResponse<CustomHttpResponse>>{
     return this.http.post<CustomHttpResponse>(`${this.host}/login/resetPassword`,perfil, {observe: 'response'});
   }
-  resetPassword(token:string,perfil:Perfil):Observable<HttpResponse<CustomHttpResponse>>{
-    return this.http.put<CustomHttpResponse>(`${this.host}/login/resetPassword/${token}/:username`,perfil ,{observe: 'response'});
+  resetPassword(token:string,username:string,password:string):Observable<HttpResponse<CustomHttpResponse>>{
+    return this.http.put<CustomHttpResponse>(`${this.host}/login/resetPassword/${token}/${username}`,password, {observe: 'response'});
   }
-  resetPasswordEmergency(token:string,username:string,password:string):Observable<Perfil>{
-    return this.http.put<Perfil>(`${this.host}/confirmEmergencyToken/resetPassword/${token}/${username}`,password)
+  resetPasswordEmergency(token:string,username:string,password:string):Observable<HttpResponse<CustomHttpResponse>>{
+    return this.http.put<CustomHttpResponse>(`${this.host}/confirmEmergencyToken/resetPassword/${token}/${username}`,password, {observe: 'response'})
   }
   activatePerfil(token: string):Observable<HttpResponse<CustomHttpResponse>>{
     return this.http.get<CustomHttpResponse>(`${this.host}/login/registerNewUser/confirmTokenRegistration/${token}`,{observe: 'response'});

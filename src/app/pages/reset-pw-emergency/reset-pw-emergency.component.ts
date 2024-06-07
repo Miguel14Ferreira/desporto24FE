@@ -4,7 +4,8 @@ import { Subscription } from 'rxjs';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { LoginperfilService } from 'src/app/services/loginperfil.service';
 import { AuthenticationService } from 'src/app/services/authethication.service';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { CustomHttpResponse } from '../custom-http-response';
 
 @Component({
   selector: 'app-reset-pw-emergency',
@@ -60,7 +61,7 @@ export class ResetPwEmergencyComponent implements OnInit{
     this.showLoading = true;
     this.subscriptions.push(
       this.authservice.resetPasswordEmergency(this.token,this.username,perfil.password).subscribe(
-        (response : Perfil) => {
+        (response : HttpResponse<CustomHttpResponse>) => {
           this.showLoading = false;
           alert(`A tua palavra passe foi alterada com sucesso, podes agora entrar na tua conta.`);
           this.router.navigate(['/login']);

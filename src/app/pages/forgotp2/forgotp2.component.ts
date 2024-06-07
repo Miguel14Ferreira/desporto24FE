@@ -70,7 +70,7 @@ export class Forgotp2Component implements OnInit {
     } else {
     this.showLoading = true;
     this.subscriptions.push(
-      this.authservice.resetPassword(this.token,perfil).subscribe(
+      this.authservice.resetPassword(this.token,this.username,perfil.password).subscribe(
         (response: HttpResponse<CustomHttpResponse>) => {
           this.showLoading = false;
           this.showLoading = false;
