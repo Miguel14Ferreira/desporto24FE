@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: 'http://192.168.1.155:8080'
+  apiUrl: 'http://desporto24.eu-north-1.elasticbeanstalk.com'
 };

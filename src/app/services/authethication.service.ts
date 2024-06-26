@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { environment } from '../../environment/environment';
+//import { environment } from '../../environment/environment.prod';
 import { Observable, catchError, tap } from 'rxjs';
 import { Perfil } from '../pages/model/perfil';
 import { JwtHelperService } from '@auth0/angular-jwt';
@@ -84,6 +85,7 @@ export class AuthenticationService {
     this.token = null;
     this.loggedInPerfilname = null;
     localStorage.removeItem('token');
+    this.router.navigateByUrl('/login')
   }
 
   public logOut2(): void {

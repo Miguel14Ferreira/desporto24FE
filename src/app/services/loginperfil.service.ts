@@ -5,6 +5,7 @@ import { Ideia } from '../ideia';
 import { Perfil } from '../pages/model/perfil';
 import { Session } from '../pages/session';
 import { environment } from 'src/environment/environment';
+//import { environment } from '../../environment/environment.prod';
 import { JwtHelperService } from "@auth0/angular-jwt";
 import { CustomHttpResponse } from '../pages/custom-http-response';
 import { Token } from '../pages/model/token';
@@ -16,7 +17,6 @@ export class LoginperfilService {
   host = environment.apiUrl;
   tokenmf:any;
   loggedInUsername:any;
-  private jwtHelper = new JwtHelperService();
   constructor(private httpClient: HttpClient) { }
 
   updatePerfil(formData: FormData):Observable<HttpResponse<CustomHttpResponse>> {
@@ -138,8 +138,8 @@ export class LoginperfilService {
   createSession(formData:FormData){
     return this.httpClient.post<Session>(`${this.host}/menu/createEvent`,formData);
   }
-  createIdea(ideia:Ideia):Observable<Ideia>{
-    return this.httpClient.post<Ideia>(`${this.host}/contact`,ideia);
+  createIdea(ideia:Ideia):Observable<HttpResponse<CustomHttpResponse>>{
+    return this.httpClient.post<CustomHttpResponse>(`${this.host}/contact`,ideia, {observe : 'response'});
   }
   obterPerfis(searchTerm: string):Observable<Perfil[]> {
     return this.httpClient.get<Perfil[]>(`${this.host}/menu/perfis/${searchTerm}`);
