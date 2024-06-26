@@ -13,6 +13,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
+            "allowedCommonJsDependencies": [ "jspdf", "file-saver", "core-js", "raf", "rgbcolor", "dompurify", "html2canvas" ],
             "outputPath": "dist/desporto24",
             "index": "src/index.html",
             "main": "src/main.ts",
