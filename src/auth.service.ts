@@ -12,6 +12,5 @@ export class AuthService {
   login (authData: Perfil ){
     sessionStorage.setItem(AUTH_TOKEN_KEY, authData.username + 'RANDOM_STRING');
     sessionStorage.setItem(AUTH_USER_DATA, JSON.stringify(authData));
-    console.log(sessionStorage);
   }
 }

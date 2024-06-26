@@ -45,9 +45,6 @@ ngOnDestroy(): void {
 }
 
 ngOnInit(): void {
-  if(this.authservice.isLoggedIn()){
-    this.router.navigateByUrl('/menu');
-  }
   var theme = localStorage.getItem('theme');
     if (theme == 'claro'){
       this.dark = false
