@@ -2,7 +2,7 @@
 <div *ngIf="dark" class="img" (click)="NaoMostrarMenu()">
       <h1 id="h1white">Desporto24</h1>
       <div (mouseover)="MostrarMenu()" id="img-fluid2" *ngIf="!showMenu">
-        <img src="{{perfil.foto}}" class="image-preview__image2" class="rounded-circle img-thumbnail">
+        <img src="{{perfil.profilePic}}" class="image-preview__image2" class="rounded-circle img-thumbnail">
       </div>
       <div id="envelope" *ngIf="!showNotification">
         <i class="bi bi-envelope" (mouseover)="MostrarNotificacoes()"></i>
@@ -30,7 +30,7 @@
             <p id="D247menu">Desporto24</p>
             <p id="D248menu">Desporto24</p>
         <h3>{{perfil.username}}</h3>
-        <img src="{{perfil.foto}}" id="img-fluid" class="rounded-circle" alt=""/>
+        <img src="{{perfil.profilePic}}" id="img-fluid" class="rounded-circle" alt=""/>
         <button (click)="NaoMostrarMenu()" id="botaoFechar">X</button>
         <ul>
         <li id="opcao8" (click)="Amigos()" routerLinkActive="active-link">Lista de amigos</li>
@@ -54,7 +54,7 @@
         <table id="tabela3">
           <tbody *ngFor="let perfil of perfis">
                   <td (click)="onSelectPerfil(perfil)">
-                      <img height="40" width="40" src="{{perfil.foto}}" class="rounded-circle img-thumbnail" alt=""/>
+                      <img height="40" width="40" src="{{perfil.profilePic}}" class="rounded-circle img-thumbnail" alt=""/>
                   </td>
                   <td (click)="onSelectPerfil(perfil)"> {{perfil.username}}</td>
           </tbody>
@@ -150,7 +150,7 @@
 <form>
     <input name="searchTerm" #searchTerm="ngModel" ngModel (ngModelChange)="procurarSessoes(searchTerm.value)" id="input1" type="search" placeholder="Procurar sessão...">
   </form>
-<button id="botao1" type="button" (click)="obterSessoes(true)" class="btn btn-info">
+<button id="botao1" type="button" (click)="obterSessoes()" class="btn btn-info">
     <i *ngIf="refreshing" class="fas fa-sync fa-spin"></i>
     <i *ngIf="!refreshing" class="fas fa-sync"></i>
 </button>
@@ -219,7 +219,7 @@
     <p id="D247modal">Desporto24</p>
     <p id="D248modal">Desporto24</p>
     <div class="image-preview" id="imagePreview">
-      <img src="{{selectedPerfil?.foto}}" alt="Image Preview" class="image-preview__image"/>
+      <img src="{{selectedPerfil?.profilePic}}" alt="Image Preview" class="image-preview__image"/>
     </div>
 <div id="username">
   {{selectedPerfil?.username}}
@@ -233,7 +233,7 @@
   <li id="paisNascimento">País de nascimento </li>
   <li id="paisNascimento2"> {{selectedPerfil?.country}} </li>
   <li id="desportosFavoritos">Desportos favoritos</li>
-  <li id="desportosFavoritos2"> {{selectedPerfil?.desportosFavoritos}}</li>
+  <li id="desportosFavoritos2"> {{selectedPerfil?.favoriteSports}}</li>
   <li id="localidade">Localidade</li>
   <li id="localidade2"> {{selectedPerfil?.location}}</li>
 <li id="estadoDaConta">Estado da conta:</li>
@@ -261,7 +261,7 @@
         <div id="tabela4">
           <div>
             <div class="image-previewChat" id="imagePreview">
-              <img src="{{selectedPerfil?.foto}}" alt="Image Preview" class="image-preview__image"/>
+              <img src="{{selectedPerfil?.profilePic}}" alt="Image Preview" class="image-preview__image"/>
             </div>
                   <div id="conversaComPerfil"> {{selectedPerfil.username}}</div>
                   <div *ngIf="!online">
@@ -294,7 +294,7 @@
 <div *ngIf="!dark" class="img2" (click)="NaoMostrarMenu()">
       <h1 id="h1black">Desporto24</h1>
       <div (mouseover)="MostrarMenu()" id="img-fluid2black" *ngIf="!showMenu">
-        <img src="{{perfil.foto}}" class="image-preview__image2" class="rounded-circle img-thumbnail">
+        <img src="{{perfil.profilePic}}" class="image-preview__image2" class="rounded-circle img-thumbnail">
 
       </div>
       <div *ngIf="!showNotification" id="envelopeblack">
@@ -323,7 +323,7 @@
             <p id="D247menu">Desporto24</p>
             <p id="D248menu">Desporto24</p>
         <h3>{{perfil.username}}</h3>
-        <img src="{{perfil.foto}}" id="img-fluid" class="rounded-circle" alt=""/>
+        <img src="{{perfil.profilePic}}" id="img-fluid" class="rounded-circle" alt=""/>
         <button (click)="NaoMostrarMenu()" id="botaoFechar">X</button>
         <ul>
         <li id="opcao8" (click)="Amigos()" routerLinkActive="active-link">Lista de amigos</li>
@@ -348,7 +348,7 @@
         <table id="tabela3">
           <tbody *ngFor="let perfil of perfis">
                   <td (click)="onSelectPerfil(perfil)">
-                      <img height="40" width="40" src="{{perfil.foto}}" class="rounded-circle img-thumbnail" alt=""/>
+                      <img height="40" width="40" src="{{perfil.profilePic}}" class="rounded-circle img-thumbnail" alt=""/>
                   </td>
                   <td (click)="onSelectPerfil(perfil)"> {{perfil.username}}</td>
           </tbody>
@@ -445,7 +445,7 @@
 <form>
   <input name="searchTerm" #searchTerm="ngModel" ngModel (ngModelChange)="procurarSessoes(searchTerm.value)" id="input1" type="search" placeholder="Procurar sessão...">
 </form>
-<button id="botao1" type="button" (click)="obterSessoes(true)" class="btn btn-info">
+<button id="botao1" type="button" (click)="obterSessoes()" class="btn btn-info">
   <i *ngIf="refreshing" class="fas fa-sync fa-spin"></i>
   <i *ngIf="!refreshing" class="fas fa-sync"></i>
 </button>
@@ -514,7 +514,7 @@
   <p id="D247modal">Desporto24</p>
   <p id="D248modal">Desporto24</p>
   <div class="image-preview" id="imagePreview">
-    <img src="{{selectedPerfil?.foto}}" alt="Image Preview" class="image-preview__image"/>
+    <img src="{{selectedPerfil?.profilePic}}" alt="Image Preview" class="image-preview__image"/>
   </div>
 <div id="username">
 {{selectedPerfil?.username}}
@@ -528,7 +528,7 @@
 <li id="paisNascimento">País de nascimento </li>
 <li id="paisNascimento2"> {{selectedPerfil?.country}} </li>
 <li id="desportosFavoritos">Desportos favoritos</li>
-<li id="desportosFavoritos2"> {{selectedPerfil?.desportosFavoritos}}</li>
+<li id="desportosFavoritos2"> {{selectedPerfil?.favoriteSports}}</li>
 <li id="localidade">Localidade</li>
 <li id="localidade2"> {{selectedPerfil?.location}}</li>
 <li id="estadoDaConta">Estado da conta:</li>
@@ -555,7 +555,7 @@
     <p id="D241chat">Desporto24</p>
       <div id="tabela4">
         <div class="image-previewChat" id="imagePreview">
-          <img src="{{selectedPerfil?.foto}}" alt="Image Preview" class="image-preview__image"/>
+          <img src="{{selectedPerfil?.profilePic}}" alt="Image Preview" class="image-preview__image"/>
         </div>
               <div id="conversaComPerfil"> {{selectedPerfil.username}}</div>
               <div *ngIf="!online">

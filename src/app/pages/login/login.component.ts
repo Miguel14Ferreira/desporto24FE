@@ -49,6 +49,7 @@ export class LoginComponent implements OnInit, OnDestroy {
 
  
 onLogin(perfil: Perfil): void {
+  console.log(perfil.username )
   if (perfil.username == "" || perfil.password == ""){
     this.validation1 = true;
     this.loginError = false;
@@ -62,7 +63,7 @@ onLogin(perfil: Perfil): void {
           this.router.navigateByUrl('/login/MFAauthentication/'+perfil.username);
           this.showLoading = false;
           this.token = response.headers.get(HeaderType.JWT_TOKEN);
-          localStorage.setItem('tokenMFA',this.token);
+          localStorage.setItem('MFA',this.token);
         } else {
         this.token = response.headers.get(HeaderType.JWT_TOKEN);
         this.authenticationService.saveToken(this.token);

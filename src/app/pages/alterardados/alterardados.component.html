@@ -510,12 +510,12 @@
     <h4 id="h4white">Coloca aqui a tua foto:</h4>
     <input name="foto" (change)="onProfileImageChange($event)" type="file" class="inpFilewhite">
     <div *ngIf="showImage" class="image-preview" id="imagePreview">
-        <img src="{{perfil.foto}}" alt="Image Preview" class="image-preview__image"/>    
+        <img src="{{perfil.profilePic}}" alt="Image Preview" class="image-preview__image"/>    
         </div>
         <div *ngIf="!showImage" class="image-preview" id="imagePreview">
             <img [src]="url" alt="Image Preview" class="image-preview__image"/>    
             </div>
-    <textarea id="type2" [(ngModel)]="editPerfil.desportosFavoritos" name="desportosFavoritos" placeholder="Desportos favoritos" required></textarea>
+    <textarea id="type2" [(ngModel)]="editPerfil.favoriteSports" name="favoriteSports" placeholder="Desportos favoritos" required></textarea>
     <button type="submit" id="botao1">
     <i *ngIf= "showLoading" class="fas fa-spinner fa-spin"></i>&nbsp;&nbsp;
         <span *ngIf="showLoading">A atualizar...</span>
@@ -1031,12 +1031,12 @@
     <h4 id="h4black">Coloca aqui a tua foto:</h4>
     <input name="foto" (change)="onProfileImageChange($event)" type="file" class="inpFile">
     <div *ngIf="showImage" class="image-preview" id="imagePreview">
-        <img src="{{perfil.foto}}" alt="Image Preview" class="image-preview__image"/>    
+        <img src="{{perfil.profilePic}}" alt="Image Preview" class="image-preview__image"/>    
         </div>
         <div *ngIf="!showImage" class="image-preview" id="imagePreview">
             <img [src]="url" alt="Image Preview" class="image-preview__image"/>    
             </div>
-    <textarea id="type2" [(ngModel)]="editPerfil.desportosFavoritos" name="desportosFavoritos" placeholder="Desportos favoritos" required></textarea>
+    <textarea id="type2" [(ngModel)]="editPerfil.favoriteSports" name="favoriteSports" placeholder="Desportos favoritos" required></textarea>
     <button type="submit" id="botao1">
     <i *ngIf= "showLoading" class="fas fa-spinner fa-spin"></i>&nbsp;&nbsp;
         <span *ngIf="showLoading">A atualizar...</span>

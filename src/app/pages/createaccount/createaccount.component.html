@@ -517,7 +517,7 @@
     <div class="image-preview" id="imagePreview">
     <img [src]="url" alt="Image Preview" class="image-preview__image">
     </div>
-    <textarea id="type2" [(ngModel)]="perfil.desportosFavoritos" name="desportosFavoritos" placeholder="Coloca aqui os teus desportos favoritos" ></textarea>
+    <textarea id="type2" [(ngModel)]="perfil.favoriteSports" name="favoriteSports" placeholder="Coloca aqui os teus desportos favoritos" ></textarea>
     <button type="submit" id="botao1">
         <i *ngIf= "showLoading" class="fas fa-spinner fa-spin"></i>&nbsp;&nbsp;
         <span *ngIf="showLoading">A criar conta</span>
@@ -1040,7 +1040,7 @@
         <div class="image-preview" id="imagePreview">
         <img [src]="url" alt="Image Preview" class="image-preview__image">
         </div>
-        <textarea id="type2" [(ngModel)]="perfil.desportosFavoritos" name="desportosFavoritos" placeholder="Coloca aqui os teus desportos favoritos" ></textarea>
+        <textarea id="type2" [(ngModel)]="perfil.favoriteSports" name="favoriteSports" placeholder="Coloca aqui os teus desportos favoritos" ></textarea>
         <button type="submit" id="botao1">
             <i *ngIf= "showLoading" class="fas fa-spinner fa-spin"></i>&nbsp;&nbsp;
             <span *ngIf="showLoading">A criar conta</span>

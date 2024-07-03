@@ -68,8 +68,8 @@ export class AuthenticationService {
   deleteNotification(NotificationNumber:number):Observable<HttpResponse<CustomHttpResponse>>{
     return this.http.delete<CustomHttpResponse>(`${this.host}/menu/notifications/${NotificationNumber}`,{observe: 'response'})
   }
-  acceptFriendRequest(NotificationNumber:number,NotificationToken:string):Observable<Notification>{
-    return this.http.get<Notification>(`${this.host}/menu/notifications/${NotificationNumber}/${NotificationToken}`,);
+  acceptFriendRequest(NotificationNumber:number,NotificationToken:string):Observable<HttpResponse<CustomHttpResponse>>{
+    return this.http.get<CustomHttpResponse>(`${this.host}/menu/notifications/${NotificationNumber}/${NotificationToken}`,{observe: 'response'});
   }
   getChat(senderId: string, recipientId: string):Observable<Chat[]>{
     return this.http.get<Chat[]>(`${this.host}/menu/friendList/chat/${senderId}/${recipientId}`);
@@ -84,18 +84,18 @@ export class AuthenticationService {
   public logOut(): void {
     this.token = null;
     this.loggedInPerfilname = null;
-    localStorage.removeItem('token');
+    localStorage.removeItem('t');
     this.router.navigateByUrl('/login')
   }
 
   public logOut2(): void {
     this.token = null;
     this.loggedInPerfilname = null;
-    localStorage.removeItem('tokenMFA');
+    localStorage.removeItem('MFA');
   }
 
   public saveToken(token: string): void {
-    localStorage.setItem('token', token);
+    localStorage.setItem('t', token);
   }
   public saveRefreshToken(token: string): void {
     localStorage.setItem('refreshToken', token);
@@ -106,7 +106,7 @@ export class AuthenticationService {
   }
 
   public loadToken(): void {
-    this.token = localStorage.getItem('token');
+    this.token = localStorage.getItem('t');
   }
 
   public getToken(): string {

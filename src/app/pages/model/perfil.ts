@@ -15,7 +15,7 @@ export class Perfil {
     public phone:string;
     public gender:string;
     public email:string;
-    public foto:string;
+    public profilePic:string;
     public joinDate:string;
     public joinDateDisplay:string;
     public lastLoginDate:string;
@@ -25,7 +25,7 @@ export class Perfil {
     public mfa:boolean;
     public role: string;
     public authorities: [];
-    public desportosFavoritos: string;
+    public favoriteSports: string;
     public status:string;
     
     constructor(){
@@ -45,7 +45,7 @@ export class Perfil {
         this.phone = '';
         this.gender = '';
         this.email = '';
-        this.foto = '';
+        this.profilePic = '';
         this.joinDate = '';
         this.joinDateDisplay = '';
         this.lastLoginDate = '';
@@ -55,7 +55,7 @@ export class Perfil {
         this.notLocked = false;
         this.role = '';
         this.authorities = [];
-        this.desportosFavoritos = '';
+        this.favoriteSports = '';
         this.status = '';
     }      
 }

@@ -288,7 +288,7 @@
         position: absolute;
         top: 60%;
         left: 8%;
-        transform: translateX(0%) translateY(0);
+                        transform: translate(-50%, -50%);
         border-radius: 10px;
     }
     #datanascimentoblack{
@@ -303,7 +303,7 @@
         position: absolute;
         top: 60%;
         left: 8%;
-        transform: translateX(0%) translateY(0);
+                        transform: translate(-50%, -50%);
         border-radius: 10px;
     }
     #input6{
@@ -317,7 +317,7 @@
         position: absolute;
         top: 70%;
         left: 10%;
-        transform: translateX(0%) translateY(0);
+                        transform: translate(-50%, -50%);
         border-radius: 10px;
     }
     #masculinoblack{
@@ -330,7 +330,7 @@
         position: absolute;
         top: 80%;
         left: 20%;
-        transform: translateX(0%) translateY(0);
+                        transform: translate(-50%, -50%);
     }
     #telemovelblack{
         font-size: 15px;
@@ -357,7 +357,7 @@
         position: absolute;
         top: 80%;
         left: 40%;
-        transform: translateX(0%) translateY(0);
+                        transform: translate(-50%, -50%);
     }
     #generoblack{
         font-size: 15px;
@@ -369,7 +369,7 @@
         position: absolute;
         top: 80%;
         left: 10.5%;
-        transform: translateX(0%) translateY(0);
+                        transform: translate(-50%, -50%);
     }
     #paises{
         font-size: 15px;
@@ -382,7 +382,7 @@
         position: absolute;
         top: 65%;
         left: 25%;
-        transform: translateX(0%) translateY(0);
+                        transform: translate(-50%, -50%);
         border-radius: 10px;
     }
     #paisblack{
@@ -397,7 +397,7 @@
         position: absolute;
         top: 65%;
         left: 8%;
-        transform: translateX(0%) translateY(0);
+                        transform: translate(-50%, -50%);
         border-radius: 10px;
     }
     #MFA{
@@ -454,238 +454,25 @@
         font-family: 'Arial';
         position: absolute;
         top: 37%;
-        left: 16%;
+        left: 13.5%;
         color:white;
         transform: translate(-50%, -50%);
         border-radius: 10px;
     }
-    #input4{
+    #input1black{
         font-size: 15px;
         height: 25px;
-        width: 590px;
+        width: 300px;
         margin: 0;
         padding: 0;
         text-align: center;
         font-family: 'Arial';
         position: absolute;
-        top: 50%;
-        left: 10%;
-        transform: translateX(0%) translateY(0);
-        border-radius: 10px;
-    }
-    #input5{
-        font-size: 15px;
-        height: 25px;
-        width: 208px;
-        margin: 0;
-        padding: 0;
-        text-align: center;
-        font-family: 'Arial';
-        position: absolute;
-        top: 60%;
-        left: 25%;
-        transform: translateX(0%) translateY(0);
-        border-radius: 10px;
-    }
-    #input6{
-        font-size: 15px;
-        height: 25px;
-        width: 590px;
-        margin: 0;
-        padding: 0;
-        text-align: center;
-        font-family: 'Arial';
-        position: absolute;
-        top: 70%;
-        left: 10%;
-        transform: translateX(0%) translateY(0);
-        border-radius: 10px;
-    }
-    #paises{
-        font-size: 15px;
-        height: 25px;
-        width: 208px;
-        margin: 0;
-        padding: 0;
-        text-align: center;
-        font-family: 'Arial';
-        position: absolute;
-        top: 65%;
-        left: 25%;
-        transform: translateX(0%) translateY(0);
-        border-radius: 10px;
-    }
-    #pais{
-        font-size: 15px;
-        color:white;
-        height: 25px;
-        width: 200px;
-        margin: 0;
-        padding: 0;
-        text-align: center;
-        font-family: 'Arial';
-        position: absolute;
-        top: 65%;
-        left: 8%;
-        transform: translateX(0%) translateY(0);
-        border-radius: 10px;
-    }
-    #input7{
-        font-size: 15px;
-        height: 25px;
-        width: 208px;
-        margin: 0;
-        padding: 0;
-        text-align: center;
-        font-family: 'Arial';
-        position: absolute;
-        top: 75%;
-        left: 10%;
-        transform: translateX(0%) translateY(0);
-        border-radius: 10px;
-    }
-    #input8{
-        font-size: 15px;
-        height: 25px;
-        width: 75px;
-        margin: 0;
-        padding: 0;
-        text-align: center;
-        font-family: 'Arial';
-        position: absolute;
-        top: 75%;
-        left: 30%;
-        transform: translateX(0%) translateY(0);
-        border-radius: 10px;
-    }
-    #input9{
-        font-size: 15px;
-    height: 25px;
-    width: 150px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-    top: 75%;
-    left: 38%;
-    transform: translateX(0%) translateY(0);
-    border-radius: 10px;
-    }
-    #telemovel{
-        font-size: 15px;
-        color:white;
-        height: 25px;
-        width: 200px;
-        margin: 0;
-        padding: 0;
-        text-align: center;
-        font-family: 'Arial';
-        position: absolute;
-        top: 45%;
-        left: 15%;
+        top: 37%;
+        left: 13.5%;
+        color:black;
         transform: translate(-50%, -50%);
         border-radius: 10px;
-    }
-    .indicativePhone{
-        font-size: 15px;
-        height: 25px;
-        width: 200px;
-        margin: 0;
-        padding: 0;
-        text-align: center;
-        font-family: 'Arial';
-        position: absolute;
-        top: 43%;
-        left: 20%;
-        transform: translateX(0%) translateY(0);
-        border-radius: 10px;
-    }
-    #input10{
-        font-size: 15px;
-        height: 25px;
-        width: 125px;
-        margin: 0;
-        padding: 0;
-        text-align: center;
-        font-family: 'Arial';
-        position: absolute;
-        top: 42.5%;
-        left: 40%;
-        transform: translateX(0%) translateY(0);
-        border-radius: 10px;
-    }
-    #input11{
-        font-size: 15px;
-        height: 25px;
-        width: 590px;
-        margin: 0;
-        padding: 0;
-        text-align: center;
-        font-family: 'Arial';
-        position: absolute;
-        top: 55%;
-        left: 10%;
-        transform: translateX(0%) translateY(0);
-        border-radius: 10px;
-    }
-    #radio1{
-        font-size: 15px;
-        margin: 0;
-        padding: 0;
-        text-align: center;
-        font-family: 'Arial';
-        position: absolute;
-        top: 80.5%;
-        left: 30%;
-        transform: translateX(0%) translateY(0);
-    }
-    #radio2{
-        font-size: 15px;
-        margin: 0;
-        padding: 0;
-        text-align: center;
-        font-family: 'Arial';
-        position: absolute;
-        top: 80.5%;
-        left: 50%;
-        transform: translateX(0%) translateY(0);
-    }
-    #masculino{
-        color:white;
-        font-size: 15px;
-        margin: 0;
-        padding: 0;
-        text-align: center;
-        font-family: 'Arial';
-        position: absolute;
-        top: 80%;
-        left: 20%;
-        transform: translateX(0%) translateY(0);
-    }
-    #feminino{
-        font-size: 15px;
-        color:white;
-        margin: 0;
-        padding: 0;
-        text-align: center;
-        font-family: 'Arial';
-        position: absolute;
-        top: 80%;
-        left: 40%;
-        transform: translateX(0%) translateY(0);
-    }
-    #genero{
-        font-size: 15px;
-        color:white;
-        margin: 0;
-        padding: 0;
-        text-align: center;
-        font-family: 'Arial';
-        position: absolute;
-        top: 80%;
-        left: 10.5%;
-        transform: translateX(0%) translateY(0);
     }
     #botao2{
         text-decoration: none;
@@ -701,7 +488,7 @@
                 position: absolute;
                 top: 100%;
                 left: 20%;
-                transform: translateX(0%) translateY(0);
+                                transform: translate(-50%, -50%);
                 border-radius: 10px;
     }
     #botao1:hover{
@@ -728,7 +515,7 @@
                 position: absolute;
                 top: 100%;
                 left: 60%;
-                transform: translateX(0%) translateY(0);
+                                transform: translate(-50%, -50%);
                 border-radius: 10px;
     }
             #botao3:hover{
@@ -781,7 +568,7 @@
                 position: absolute;
                 top: 85%;
                 left: 10%;
-                transform: translateX(0%) translateY(0);
+                                transform: translate(-50%, -50%);
                 border-radius: 10px;
             }
             #tabela1{
@@ -796,7 +583,7 @@
                 background-color: white;
                 top: 40%;
                 left: 60%;
-                transform: translateX(0%) translateY(0);
+                                transform: translate(-50%, -50%);
                 border-radius: 10px;
             }
             #img{
@@ -819,8 +606,8 @@
                 font-family: 'Arial';
                 position: absolute;
                 top: 34%;
-                left: 30%;
-                transform: translateX(0%) translateY(0);
+                left: 25%;
+                                transform: translate(-50%, -50%);
                 border-radius: 20%;
             }
             #desporto2{
@@ -846,20 +633,21 @@
                 position: absolute;
                 top: 45%;
                 left: 45%;
-                transform: translateX(0%) translateY(0);
+                                transform: translate(-50%, -50%);
             }
             #espaco1{
-                width: 325px;
+                width: 350px;
                 font-size: 15px;
-                height: 25px;
+                height: 35px;
                 margin: 0;
                 padding: 0;
                 text-align: center;
                 font-family: 'Arial';
                 position: absolute;
-                top: 40%;
-                left: 16%;
+                top: 37%;
+                left: 35%;
                 transform: translate(-50%, -50%);
+                border-radius: 20px;
             }
             #espaco2{
                 width: 200px;
@@ -886,7 +674,21 @@
                 font-family: 'Arial';
                 position: absolute;
                 top: 45%;
-                left: 8.5%;
+                left: 7.5%;
+                transform: translate(-50%, -50%);
+            }
+            #espaco3black{
+                color:black;
+                width: 100px;
+                font-size: 15px;
+                height: 20px;
+                margin: 0;
+                padding: 0;
+                text-align: center;
+                font-family: 'Arial';
+                position: absolute;
+                top: 45%;
+                left: 7.5%;
                 transform: translate(-50%, -50%);
             }
             #espaco4{
@@ -899,7 +701,20 @@
                 font-family: 'Arial';
                 position: absolute;
                 top: 55%;
-                left: 19%;
+                left: 17%;
+                transform: translate(-50%, -50%);
+            }
+            #espaco4black{
+                color:black;
+                width: 400px;
+                font-size: 15px;
+                margin: 0;
+                padding: 0;
+                text-align: center;
+                font-family: 'Arial';
+                position: absolute;
+                top: 55%;
+                left: 17%;
                 transform: translate(-50%, -50%);
             }
             #espaco5{
@@ -913,7 +728,7 @@
                 position: absolute;
                 top: 65%;
                 left: 3%;
-                transform: translateX(0%) translateY(0);
+                                transform: translate(-50%, -50%);
             }
             #espaco6{
                 color:black;
@@ -926,7 +741,7 @@
                 position: absolute;
                 top: 65%;
                 left: 37.5%;
-                transform: translateX(0%) translateY(0);
+                                transform: translate(-50%, -50%);
             }
             #espaco7{
                 color:black;
@@ -953,8 +768,21 @@
                 font-family: 'Arial';
                 position: absolute;
                 top: 75%;
-                left: 3.5%;
-                transform: translateX(0%) translateY(0);
+                left: 10%;
+                transform: translate(-50%, -50%);
+            }
+            .espaco8black{
+                color:black;
+                width: 200px;
+                font-size: 15px;
+                margin: 0;
+                padding: 0;
+                text-align: center;
+                font-family: 'Arial';
+                position: absolute;
+                top: 75%;
+                left: 10%;
+                                transform: translate(-50%, -50%);
             }
             .espaco9{
                 color:white;
@@ -966,8 +794,21 @@
                 font-family: 'Arial';
                 position: absolute;
                 top: 80%;
-                left: 4%;
-                transform: translateX(0%) translateY(0);
+                left: 12%;
+                                transform: translate(-50%, -50%);
+            }
+            .espaco9black{
+                color:black;
+                width: 250px;
+                font-size: 15px;
+                margin: 0;
+                padding: 0;
+                text-align: center;
+                font-family: 'Arial';
+                position: absolute;
+                top: 80%;
+                left: 12%;
+                                transform: translate(-50%, -50%);
             }
             #espaco10{
                 color:black;
@@ -1008,7 +849,7 @@
                 position: absolute;
                 top: 35%;
                 left: 35%;
-                transform: translateX(0%) translateY(0);
+                                transform: translate(-50%, -50%);
             }
             #espaco13{
                 color:white;
@@ -1020,8 +861,21 @@
                 font-family: 'Arial';
                 position: absolute;
                 top: 30%;
-                left: 55%;
-                transform: translateX(0%) translateY(0);
+                left: 71%;
+                transform: translate(-50%, -50%);
+            }
+            #espaco13black{
+                color:black;
+                width: 400px;
+                font-size: 40px;
+                margin: 0;
+                padding: 0;
+                text-align: center;
+                font-family: 'Arial';
+                position: absolute;
+                top: 30%;
+                left: 71%;
+                transform: translate(-50%, -50%);
             }
             #espaco14{
                 color:black;
@@ -1087,18 +941,16 @@
             #input4{
                 text-decoration: none;
                 color: white;
-                background: blue;
-                width: 300px;
+                width: 150px;
                 font-size: 20px;
                 height: 40px;
-                margin: 0;
-                padding: 0;
                 text-align: center;
                 font-family: 'Arial';
                 position: absolute;
-                top: 65%;
-                left: 43%;
-                transform: translateX(0%) translateY(0);
+                top: 34%;
+                left: 40%;
+                                transform: translate(-50%, -50%);
+                border-radius: 10%;
             }
             #botao1{
                 text-decoration: none;
@@ -1114,7 +966,7 @@
                         position: absolute;
                         top: 100%;
                         left: 40%;
-                        transform: translateX(0%) translateY(0);
+                                        transform: translate(-50%, -50%);
                         border-radius: 10px;
             }
             #botao2{
@@ -1131,7 +983,7 @@
                         position: absolute;
                         top: 100%;
                         left: 20%;
-                        transform: translateX(0%) translateY(0);
+                                        transform: translate(-50%, -50%);
                         border-radius: 10px;
             }
             
@@ -1153,7 +1005,7 @@
                 position: absolute;
                 top: 34%;
                 left: 37.5%;
-                transform: translateX(0%) translateY(0);
+                                transform: translate(-50%, -50%);
             }
             h2{
                 color: white;
@@ -1166,7 +1018,7 @@
                 position: absolute;
                 top: 22.5%;
                 left: 35%;
-                transform: translateX(0%) translateY(0);
+                                transform: translate(-50%, -50%);
             }
             .img-fluid{
                 width: 1300px;
@@ -1189,6 +1041,163 @@
                 position: absolute;
                 top: 90%;
                 left: 48%;
-                transform: translateX(0%) translateY(0);
+                                transform: translate(-50%, -50%);
+            }
+            #notificationSuccess{
+                color: white;
+                background-color: rgb(100, 167, 0);
+                font-size: 15px;
+                position: absolute;
+                display: flex;
+              justify-content: center;
+              align-items: center;
+              box-shadow: 0 2px 10px 10px rgba(#000, 0.05);
+              left: 50%;
+              top: 10%;
+              width: 1000px;
+              height: 50px;
+              transform: translate(-50%, -50%);
+              animation: normal 1s fadeIn;
+              border-radius: 5px;
+            }
+            #botaoFecharSuccess{
+                color: white;
+            transform: translate(-50%, -50%);
+            position: absolute;
+            left: 95%;
+              top: 50%;
+            border-style: none;
+                background-color: rgb(100, 167, 0);
+            }
+            #notificationInfo{
+                color: white;
+                background-color: rgb(0, 114, 167);
+                font-size: 15px;
+                position: absolute;
+                display: flex;
+              justify-content: center;
+              align-items: center;
+              box-shadow: 0 2px 10px 10px rgba(#000, 0.05);
+              left: 50%;
+              top: 10%;
+              width: 500px;
+              height: 50px;
+              transform: translate(-50%, -50%);
+              animation-name: bounce;
+              animation-duration: .5s;
+              border-radius: 5px;
+            }
+            #botaoFecharInfo{
+                color: white;
+            transform: translate(-50%, -50%);
+            position: absolute;
+            left: 95%;
+              top: 50%;
+            border-style: none;
+            background-color: rgb(0, 114, 167);
+            }
+            #notificationError{
+                color: white;
+                background-color: red;
+                font-size: 15px;
+                position: absolute;
+                display: flex;
+              justify-content: center;
+              align-items: center;
+              box-shadow: 0 2px 10px 10px rgba(#000, 0.05);
+                left: 50%;
+                top: 10%;
+                width: 1000px;
+                height: 50px;
+                transform: translate(-50%, -50%);
+                animation-name: bounce;
+              animation-duration: .5s;
+              border-radius: 5px;
+            }
+            @keyframes bounce {
+                0% {
+                  timing-function: ease-in;
+                  opacity: 0;
+                  position: absolute;
+                  left: 50%;
+                top: 10%;
+                transform: translate(-50%, -50%);
+                }
+                25%{
+                    opacity: 1;
+                    position: absolute;
+                  left: 50%;
+                top: 10%;
+                transform: translate(-50%, -50%);
+                }
+                37% {
+                  timing-function: ease-out;
+                  position: absolute;
+                  left: 50%;
+                top: 10%;
+                transform: translate(-45%, -50%);
+                }
+                55% {
+                  timing-function: ease-in;
+                  position: absolute;
+                  left: 50%;
+                top: 10%;
+                transform: translate(-55%, -50%);
+                }
+                73% {
+                  timing-function: ease-out;
+                  position: absolute;
+                  left: 50%;
+                top: 10%;
+                transform: translate(-46%, -50%);
+                }
+                82% {
+                  timing-function: ease-in;
+                  position: absolute;
+                  left: 50%;
+                top: 10%;
+                transform: translate(-54%, -50%);
+                }
+                91% {
+                  timing-function: ease-out;
+                  position: absolute;
+                  left: 50%;
+                top: 10%;
+                transform: translate(-48%, -50%);
+                }
+                96% {
+                  timing-function: ease-in;
+                  position: absolute;
+                  left: 50%;
+                top: 10%;
+                transform: translate(-52%, -50%);
+                }
+                100% {
+                  timing-function: ease-in;
+                  position: absolute;
+                  left: 50%;
+                top: 10%;
+                transform: translate(-50%, -50%);
+            
+                }
+            }
+            #botaoFecharError{
+                color: white;
+            transform: translate(-50%, -50%);
+            position: absolute;
+            left: 95%;
+              top: 50%;
+            border-style: none;
+                background-color: red;
+            }
+            @keyframes transition {
+                from {
+                    opacity: 0;
+                    transform: rotateX(-10deg);
+                }
+                to{
+                    opacity: 1;
+                    transform: rotateX(0);
+                }
             }
     

@@ -22,7 +22,7 @@
             </thead>
             <tbody *ngFor="let perfil of perfis">
                     <td (click)="onSelectPerfil(perfil)">
-                        <img height="40" width="40" src="{{perfil.foto}}" class="rounded-circle img-thumbnail" alt=""/>
+                        <img height="40" width="40" src="{{perfil.profilePic}}" class="rounded-circle img-thumbnail" alt=""/>
                     </td>
                     <td (click)="onSelectPerfil(perfil)"> {{perfil.username}}</td>
             </tbody>
@@ -44,7 +44,7 @@
           <p id="D247modal">Desporto24</p>
           <p id="D248modal">Desporto24</p>
           <div class="image-preview" id="imagePreview">
-            <img src="{{selectedPerfil?.foto}}" alt="Image Preview" class="image-preview__image"/>
+            <img src="{{selectedPerfil?.profilePic}}" alt="Image Preview" class="image-preview__image"/>
           </div>
     <div id="username">
         {{selectedPerfil?.username}}
@@ -58,7 +58,7 @@
         <li id="paisNascimento">País de nascimento </li>
         <li id="paisNascimento2"> {{selectedPerfil?.country}} </li>
         <li id="desportosFavoritos">Desportos favoritos</li>
-        <li id="desportosFavoritos2"> {{selectedPerfil?.desportosFavoritos}}</li>
+        <li id="desportosFavoritos2"> {{selectedPerfil?.favoriteSports}}</li>
         <li id="localidade">Localidade</li>
         <li id="localidade2"> {{selectedPerfil?.location}}</li>
       <li id="estadoDaConta">Estado da conta:</li>
@@ -112,7 +112,7 @@
           <table id="tabela1" *ngIf="showTable">
             <tbody *ngFor="let perfil of perfis" id="tabela2">
                     <td (click)="onSelectPerfil(perfil)">
-                        <img height="40" width="40" src="{{perfil.foto}}" class="rounded-circle img-thumbnail" alt=""/>
+                        <img height="40" width="40" src="{{perfil.profilePic}}" class="rounded-circle img-thumbnail" alt=""/>
                     </td>
                     <td (click)="onSelectPerfil(perfil)"> {{perfil.username}}</td>
             </tbody>
@@ -134,7 +134,7 @@
           <p id="D247modal">Desporto24</p>
           <p id="D248modal">Desporto24</p>
             <div class="image-preview" id="imagePreview">
-              <img src="{{selectedPerfil?.foto}}" alt="Image Preview" class="image-preview__image"/>
+              <img src="{{selectedPerfil?.profilePic}}" alt="Image Preview" class="image-preview__image"/>
             </div>
       <div id="username">
           {{selectedPerfil?.username}}
@@ -148,7 +148,7 @@
           <li id="paisNascimento">País de nascimento </li>
           <li id="paisNascimento2"> {{selectedPerfil?.country}} </li>
           <li id="desportosFavoritos">Desportos favoritos</li>
-          <li id="desportosFavoritos2"> {{selectedPerfil?.desportosFavoritos}}</li>
+          <li id="desportosFavoritos2"> {{selectedPerfil?.favoriteSports}}</li>
           <li id="localidade">Localidade</li>
           <li id="localidade2"> {{selectedPerfil?.location}}</li>
         <li id="estadoDaConta">Estado da conta:</li>

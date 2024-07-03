@@ -88,7 +88,7 @@ export class AlterardadosComponent implements OnInit {
   }
 
     onUpdatePerfil(): void {
-      if (this.editPerfil.address== "" || this.editPerfil.dateOfBirth== "" || this.editPerfil.email== "" || this.editPerfil.desportosFavoritos== "" || this.editPerfil.fullName== "" ||
+      if (this.editPerfil.address== "" || this.editPerfil.dateOfBirth== "" || this.editPerfil.email== "" || this.editPerfil.favoriteSports== "" || this.editPerfil.fullName== "" ||
       this.editPerfil.country== "" || this.editPerfil.location== "" || this.editPerfil.postalCode== "" || this.editPerfil.phone== "" || this.editPerfil.indicativePhone== "" ){
         this.validation1 = true;
       this.validation = `Ainda tens espaços em branco`;

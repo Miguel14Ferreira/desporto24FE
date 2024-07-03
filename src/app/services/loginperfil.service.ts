@@ -41,7 +41,7 @@ export class LoginperfilService {
     formData.append('indicativePhone',perfil.indicativePhone);
     formData.append('phone',perfil.phone);
     formData.append('foto',imageFile);
-    formData.append('desportosFavoritos',perfil.desportosFavoritos);
+    formData.append('favoriteSports',perfil.favoriteSports);
     formData.append('enabled', JSON.stringify(perfil.enabled));
     formData.append('notLocked', JSON.stringify(perfil.notLocked));
     formData.append('mfa', JSON.stringify(perfil.mfa));
@@ -86,17 +86,17 @@ export class LoginperfilService {
     formData.append('country',perfil.country);
     formData.append('phone',perfil.phone);
     formData.append('indicativePhone',perfil.indicativePhone);
-    formData.append('desportosFavoritos',perfil.desportosFavoritos);
+    formData.append('favoriteSports',perfil.favoriteSports);
     formData.append('location',perfil.location);
     formData.append('mfa', JSON.stringify(perfil.mfa));
-    formData.append('foto',foto);
+    formData.append('profilePic',foto);
     return formData;
   }
 
   public updatePerfilFoto(loggedInUsername: string, foto: File): FormData{
     const formData = new FormData();
     formData.append('username',loggedInUsername);
-    formData.append('foto',foto);
+    formData.append('profilePic',foto);
     return formData;
   }
 
@@ -112,6 +112,17 @@ export class LoginperfilService {
     formData.append('username1',loggedInUsername);
     formData.append('username2',username2);
     return formData;
+  }
+
+  public blockFriendFromData(loggedInUsername: string, username2: string): FormData{
+    const formData = new FormData();
+    formData.append('username1',loggedInUsername);
+    formData.append('username2',username2);
+    return formData;
+  }
+
+  blockFriend(formData: FormData):Observable<HttpResponse<CustomHttpResponse>>{
+    return this.httpClient.put<CustomHttpResponse>(`${this.host}/menu/friendList`, formData, {observe: 'response'})
   }
 
   obterDadosPessoais(): Observable<Perfil[] | HttpErrorResponse>{
@@ -135,8 +146,8 @@ export class LoginperfilService {
   obterNotificacoesDoPerfil(username:string):Observable<Notification[]>{
     return this.httpClient.get<Notification[]>(`${this.host}/menu/notifications/${username}`)
   }
-  createSession(formData:FormData){
-    return this.httpClient.post<Session>(`${this.host}/menu/createEvent`,formData);
+  createSession(formData:FormData):Observable<HttpResponse<CustomHttpResponse>>{
+    return this.httpClient.post<CustomHttpResponse>(`${this.host}/menu/createEvent`,formData, {observe: 'response'});
   }
   createIdea(ideia:Ideia):Observable<HttpResponse<CustomHttpResponse>>{
     return this.httpClient.post<CustomHttpResponse>(`${this.host}/contact`,ideia, {observe : 'response'});

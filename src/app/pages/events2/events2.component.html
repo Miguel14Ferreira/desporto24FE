@@ -16,19 +16,24 @@
                     <p id="D244a">Desporto24</p>
                     <p id="D245a">Desporto24</p>
               </div>
+              <div *ngIf="registerError" id="notificationError">
+                <i class="bi bi-exclamation-triangle-fill"></i>&nbsp;&nbsp;
+                {{ errorMessage }}
+                <button (click)="closeError()" type="button" type="button" id="botaoFecharError">X</button>
+              </div>
+              <div *ngIf="registerSuccess" id="notificationSuccess">
+                <i class="bi bi-check-circle-fill"></i>&nbsp;&nbsp;
+                {{ successMessage }}
+                <button (click)="closeSuccess()" type="button" id="botaoFecharSuccess">X</button>
+              </div>
+              <div *ngIf="validation1" id="notificationInfo">
+                <i class="bi bi-exclamation-circle-fill"></i>&nbsp;&nbsp;
+                {{ validation }}
+                <button (click)="closeValidation()" type="button" id="botaoFecharInfo">X</button>
+              </div>
         <form #createSession="ngForm" (ngSubmit)="onCreatingNewSession()" name="form" action="#">
-            <label id="input1">Seleciona o desporto que queres praticar:</label>
-        <select id="desporto" [(ngModel)]="session.desporto" name="desporto" required>
-            <option value="Futebol">Futebol</option>
-            <option value="Voleibol">Voleibol</option>
-            <option value="Basquetebol">Basquetebol</option>
-            <option value="Andebol">Andebol</option>
-            <option value="Ténis">Ténis</option>
-            <option value="Padel">Padel</option>
-            <option value="Karts">Karts</option>
-            <option value="Outro">Outro</option>
-        </select>
-        <input *ngIf="showMe" [(ngModel)]="session.desporto" name="desporto" id="espaco1" placeholder="coloca aqui o desporto que pretendes praticar">
+            <label id="input1">Coloca o desporto que tu queres praticar:</label>
+        <input [(ngModel)]="session.desporto" name="desporto" id="espaco1" placeholder="Escreve aqui o desporto que pretendes praticar">
         <label id="espaco3">Data de jogo:</label>
         <input id="espaco2" [(ngModel)]="session.dataDeJogo" name="datadejogo" class="dateOfBirth" min="{{minDate}}" #input [(ngModel)]="value" (change)="onChange(input.value)" type="datetime-local" placeholder="Data de jogo" required>
         <label id="espaco4">Define por favor o limite de jogadores para a tua sessão:</label>
@@ -97,24 +102,27 @@
                         <p id="D244">Desporto24</p>
                         <p id="D245">Desporto24</p>
                   </div>
+                  <div *ngIf="registerError" id="notificationError">
+                    <i class="bi bi-exclamation-triangle-fill"></i>&nbsp;&nbsp;
+                    {{ errorMessage }}
+                    <button (click)="closeError()" type="button" type="button" id="botaoFecharError">X</button>
+                  </div>
+                  <div *ngIf="registerSuccess" id="notificationSuccess">
+                    <i class="bi bi-check-circle-fill"></i>&nbsp;&nbsp;
+                    {{ successMessage }}
+                    <button (click)="closeSuccess()" type="button" id="botaoFecharSuccess">X</button>
+                  </div>
+                  <div *ngIf="validation1" id="notificationInfo">
+                    <i class="bi bi-exclamation-circle-fill"></i>&nbsp;&nbsp;
+                    {{ validation }}
+                    <button (click)="closeValidation()" type="button" id="botaoFecharInfo">X</button>
+                  </div>
         <form #createSession="ngForm" (ngSubmit)="onCreatingNewSession()" name="form" action="#">
-            <label id="input1">Seleciona o desporto que queres praticar:</label>
-        <select id="desporto" [(ngModel)]="session.desporto" name="desporto" required>
-            <option value="Futebol">Futebol</option>
-            <option value="Voleibol">Voleibol</option>
-            <option value="Basquetebol">Basquetebol</option>
-            <option value="Andebol">Andebol</option>
-            <option value="Ténis">Ténis</option>
-            <option value="Padel">Padel</option>
-            <option value="Karts">Karts</option>
-            <option value="Outro">Outro</option>
-        </select>
-        <div class="espaco12">
-        </div>
-        <input *ngIf="showMe" [(ngModel)]="session.desporto" name="desporto" id="espaco1" placeholder="coloca aqui o desporto que pretendes praticar">
-        <label id="espaco3">Data de jogo:</label>
+            <label id="input1black">Coloca o desporto que tu queres praticar:</label>
+            <input [(ngModel)]="session.desporto" name="desporto" id="espaco1" placeholder="Escreve aqui o desporto que pretendes praticar">
+        <label id="espaco3black">Data de jogo:</label>
         <input id="espaco2" [(ngModel)]="session.dataDeJogo" name="datadejogo" class="dateOfBirth" min="{{minDate}}" #input [(ngModel)]="value" (change)="onChange(input.value)" type="datetime-local" placeholder="Data de jogo" required>
-        <label id="espaco4">Define por favor o limite de jogadores para a tua sessão:</label>
+        <label id="espaco4black">Define por favor o limite de jogadores para a tua sessão:</label>
         <select id="desporto2" [(ngModel)]="session.jogadores" name="jogadores" class="country" name="country" required>
             <option value="1">1</option>
             <option value="2">2</option>
@@ -150,15 +158,15 @@
         </select>
         <input type="text" [(ngModel)]="session.localidade" name="localidade" placeholder="Coloca aqui a localidade" id="espaco14" required>
         <input type="text" [(ngModel)]="session.morada" name="morada" placeholder="Coloca aqui a morada completa do campo" id="espaco7" required>
-    <div class="espaco8">
+    <div class="espaco8black">
         <input type="checkbox" (click)="toogleTag2()">Quero um jogo privado
     </div>
     <input id="espaco10" [(ngModel)]="session.password" name="password" *ngIf="showMe2" type="text" placeholder="Por favor,coloca aqui a tua palavra-passe para o jogo.">
-    <div class="espaco9">
+    <div class="espaco9black">
         <input type="checkbox" (click)="toogleTag3()">Quero colocar preço por jogador
     </div>
     <input id="espaco11" [(ngModel)]="session.preco" *ngIf="showMe3" type="text" name="preco" placeholder="Por favor,coloca aqui o valor em euros para o teu jogo.">
-    <label id="espaco13">Fotografia do Campo:</label>
+    <label id="espaco13black">Fotografia do Campo:</label>
     <input [(ngModel)]="session.foto" (change)="onSessionImageChange($event)" name="foto" type="file" class="inpFile" accept="image/*" required>
     <div class="image-preview" id="imagePreview">
     <img [src]="url" alt="Image Preview" class="image-preview__image">

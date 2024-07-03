@@ -90,7 +90,7 @@ closeValidation(){
 
 
 public onRegister(): void {
-  if (this.perfil.username== "" || this.perfil.address== "" || this.perfil.confirmPassword== "" || this.perfil.dateOfBirth== "" || this.perfil.email== "" || this.perfil.desportosFavoritos== "" || this.perfil.fullName== "" ||
+  if (this.perfil.username== "" || this.perfil.address== "" || this.perfil.confirmPassword== "" || this.perfil.dateOfBirth== "" || this.perfil.email== "" || this.perfil.favoriteSports== "" || this.perfil.fullName== "" ||
     this.perfil.country== "" || this.perfil.location== "" || this.perfil.postalCode== "" || this.perfil.phone== "" || this.perfil.indicativePhone== "" || this.perfil.password == ""){
       this.validation1 = true;
       this.validation = `Ainda tens espaços em branco`;

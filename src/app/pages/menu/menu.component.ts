@@ -70,7 +70,7 @@ export class MenuComponent implements OnInit {
   validation!:any;
   showScreen2! :boolean;
 
-  constructor(private authenticationService:AuthenticationService,private router:Router,private loginPerfilService: LoginperfilService, private activatedRoute:ActivatedRoute) {
+  constructor(private authenticationService:AuthenticationService,private router:Router,private loginPerfilService: LoginperfilService) {
    }
 
 
@@ -84,8 +84,8 @@ export class MenuComponent implements OnInit {
     this.authenticationService.isLoggedIn()
     this.loginPerfilService.obterUserPeloUsername1(this.authenticationService.loggedInPerfilname).subscribe( data => {
       this.perfil = data;
-    }, error => console.log());
-    localStorage.removeItem('tokenMFA');
+    }, error => console.log(error));
+    localStorage.removeItem('MFA');
     var theme = localStorage.getItem('theme');
     if (theme == 'claro'){
       this.dark = false
@@ -120,6 +120,7 @@ export class MenuComponent implements OnInit {
       this.authenticationService.deactivatePerfilEmergency(this.perfil.email).subscribe(
         (response: HttpResponse<CustomHttpResponse>) => {
           this.refreshing = false;
+          this.validation1 = true;
           this.validation = response.body?.message;
           this.authenticationService.logOut();
           this.router.navigateByUrl('menu/blockAcc');
@@ -169,6 +170,8 @@ export class MenuComponent implements OnInit {
              this.refreshing = false;
             },
            (errorResponse: HttpErrorResponse) => {
+            this.registerError = true;
+            this.errorMessage = errorResponse.error.message;
              this.refreshing = false;
            }
          )
@@ -179,7 +182,6 @@ export class MenuComponent implements OnInit {
     } else {
       this.online = false;
     }
-    console.log(this.selectedPerfil.status)
 }
 
   fecharChat(){
@@ -194,7 +196,7 @@ export class MenuComponent implements OnInit {
      this.enviarMensagem.username2 = this.selectedPerfil.username;
     this.subscriptions.push(
       this.authenticationService.sendChatMessagem(this.enviarMensagem).subscribe(
-        (response: Chat) => {
+        () => {
           this.refreshing = false;
           const sender = this.perfil.username;
           const recipient = this.selectedPerfil.username;
@@ -207,7 +209,8 @@ export class MenuComponent implements OnInit {
           )
         },
         (errorResponse: HttpErrorResponse) => {
-          alert(`Ocorreu um erro a executar a operação`);
+          this.registerError = true;
+          this.errorMessage = errorResponse.error.message;
           this.refreshing = false;
         }
       )
@@ -240,7 +243,8 @@ export class MenuComponent implements OnInit {
         window.history.replaceState({},'',`/menu/friendList`)
       },
       (errorResponse: HttpErrorResponse) => {
-        alert(`Ocorreu um erro a executar a operação`);
+        this.registerError = true;
+        this.errorMessage = errorResponse.error.message;
       }
     )
   }
@@ -250,11 +254,13 @@ export class MenuComponent implements OnInit {
       this.authenticationService.deleteNotification(selectedNotification.id).subscribe(
         (response: HttpResponse<CustomHttpResponse>) => {
           this.refreshing = false;
-          alert(`Esta notificação foi eliminada`);
+          this.successMessage = response.body?.message;
+          this.registerSuccess = true;
           window.history.replaceState({},'',`/menu`)
         },
         (errorResponse: HttpErrorResponse) => {
-          alert(`Ocorreu um erro a executar a operação`);
+          this.registerError = true;
+          this.errorMessage = errorResponse.error.message;
           this.refreshing = false;
         }
       )
@@ -266,11 +272,13 @@ export class MenuComponent implements OnInit {
       this.authenticationService.deleteNotification(selectedNotification.id).subscribe(
         (response: HttpResponse<CustomHttpResponse>) => {
           this.refreshing = false;
-          alert(`Rejeitaste o pedido de amizade e esta notificação vai ser eliminada.`);
+          this.validation1 = true;
+          this.validation = response.body?.message;
           window.history.replaceState({},'',`/menu/${this.perfil.username}`)
         },
         (errorResponse: HttpErrorResponse) => {
-          alert(`Ocorreu um erro a executar a operação`);
+          this.registerError = true;
+          this.errorMessage = errorResponse.error.message;
           this.refreshing = false;
         }
       )
@@ -280,14 +288,16 @@ export class MenuComponent implements OnInit {
     this.refreshing = true;
     this.subscriptions.push(
       this.authenticationService.acceptFriendRequest(selectedNotification.id,selectedNotification.token).subscribe(
-        (response: Notification) => {
+        (response: HttpResponse<CustomHttpResponse>) => {
           this.refreshing = false;
-          alert(`Tens um novo amigo na tua lista de amigos`);
+          this.registerSuccess = true;
+          this.successMessage = response.body?.message;
           window.history.replaceState({},'',`/menu`)
           location.reload();
         },
         (errorResponse: HttpErrorResponse) => {
-          alert(`Ocorreu um erro a executar a operação`);
+          this.registerError = true;
+          this.errorMessage = errorResponse.error.message;
           this.refreshing = false;
         }
       )
@@ -300,16 +310,18 @@ export class MenuComponent implements OnInit {
     this.bloquear = true;
   }
   bloquearAmigo(){
-    const formData = this.loginPerfilService.addFriendFromData(this.perfil.username,this.selectedPerfil.username);
+    const formData = this.loginPerfilService.blockFriendFromData(this.perfil.username,this.selectedPerfil.username);
     this.refreshing = true;
     this.subscriptions.push(
-      this.loginPerfilService.addFriend(formData).subscribe(
-        (response: Perfil) => {
+      this.loginPerfilService.blockFriend(formData).subscribe(
+        (response: HttpResponse<CustomHttpResponse>) => {
           this.refreshing = false;
-          alert(`o teu amigo está agora bloqueado.`);
+          this.validation1 = true;
+          this.validation = response.body?.message;
         },
         (errorResponse: HttpErrorResponse) => {
-          alert(`Ocorreu um erro a executar a operação`);
+          this.errorMessage = errorResponse.error.message;
+          this.registerError = true;
           this.refreshing = false;
         }
       )
@@ -329,7 +341,8 @@ export class MenuComponent implements OnInit {
           this.refreshing = false;
         },
         (errorResponse: HttpErrorResponse) => {
-          alert(`Ocorreu um erro a executar a operação`);
+          this.errorMessage = errorResponse.error.message;
+          this.registerError = true;
           this.refreshing = false;
         }
       )
@@ -348,17 +361,19 @@ voltar(){
   window.history.replaceState({},'',`/menu`)
 }
 
-obterSessoes(showNotification: boolean): void{
+obterSessoes(): void{
   this.refreshing = true;
   this.subscriptions.push(
     this.loginPerfilService.obterSessoes().subscribe(
       (response: Session[]) => {
         this.refreshing = false;
         this.sessoes = response;
-        alert(`Foram encontrados ${response.length} sessões`);
+        this.validation1 = true;
+        this.validation = `Foram encontrados ${response.length} sessões`;
       },
       (errorResponse: HttpErrorResponse) => {
-        alert(`Ocorreu um erro a executar a operação`);
+        this.errorMessage = errorResponse.error.message;
+          this.registerError = true;
         this.refreshing = false;
       }
     )
@@ -390,7 +405,8 @@ MostrarNotificacoes(){
         this.Notifications = response;
       },
       (errorResponse: HttpErrorResponse) => {
-        alert(`Ocorreu um erro a executar a operação`);
+        this.errorMessage = errorResponse.error.message;
+          this.registerError = true;
       }
     )
   )
