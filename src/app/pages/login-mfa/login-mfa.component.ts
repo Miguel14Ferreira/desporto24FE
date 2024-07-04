@@ -60,7 +60,7 @@ export class LoginMFAComponent {
     this.subscriptions.push(
       this.authService.confirmMFA(token.token).subscribe(
         () => {
-        this.token = localStorage.getItem('tokenMFA')
+        this.token = localStorage.getItem('MFA')
         this.authService.saveToken(this.token);
         this.router.navigateByUrl('/menu');
         this.showLoading = false;
