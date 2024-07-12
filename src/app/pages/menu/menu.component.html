@@ -82,6 +82,7 @@
         <h4>Notificações</h4>
     <button (click)="NaoMostrarNotificacoes()" id="botaoFecharAmigos">X</button>
     <div id="notificacoes">
+      <div *ngIf="moreThan1Notifications">
       <div *ngFor="let Notification of Notifications.slice().reverse() let i = index;">
         <hr>
               <div (click)="onSelectedNotification(Notification)" id="notification">{{Notification.assunto}}
@@ -89,6 +90,10 @@
               </div>
               <hr>
       </div>
+    </div>
+    <div *ngIf="!moreThan1Notifications">
+      <p>De momento não tens qualquer notificações!</p>
+    </div>
     </div>
     </div>
     <div *ngIf="showNotificationMessage" id="viewNotificationModal">
@@ -248,7 +253,8 @@
 </ul>
 <button (click)="fecharPerfil()" id="botaoFechar">X</button>
 <button (click)="abrirChat()" id="botaoChat">Abrir Chat</button>
-<button (click)="blockAmigo()" id="botaoBloquear">Bloquear</button>
+<button *ngIf="block" (click)="blockAmigo()" id="botaoBloquear">Bloquear</button>
+<button *ngIf="!block" (click)="blockAmigo()" id="botaoBloquear">Desbloquear</button>
 <button (click)="blockAmigo()" id="botaoRemover">Remover amigo</button>
 </div>
 <div id="content5" *ngIf="chat">
@@ -274,15 +280,15 @@
       <div id="mensagensChat">
         <div *ngFor="let chat of chats">
           <div id="mensagemEnviada" *ngIf="chat.username1 == this.perfil.username">
-        <strong>{{chat.username1}}:</strong>&nbsp;{{chat.texto}}
+        <strong>{{chat.username1}}:</strong>&nbsp;{{chat.text}}
       </div>
       <div id="mensagemRecebida" *ngIf="chat.username1 == this.selectedPerfil.username">
-        <strong>{{chat.username1}}:</strong>&nbsp;{{chat.texto}}
+        <strong>{{chat.username1}}:</strong>&nbsp;{{chat.text}}
       </div>
         </div>
       </div>
       <form #sendMessageForm="ngForm" (ngSubmit)="enviarMensagemChat(sendMessageForm.value)">
-      <input [(ngModel)]="enviarMensagem.texto" name="chat" id="mensagensChatEnvio">
+      <input [(ngModel)]="enviarMensagem.text" name="chat" id="mensagensChatEnvio">
       <button id="botaoChatEnvio" type="submit">Enviar
         <i *ngIf="refreshing" class="fas fa-spin"></i>
         <i *ngIf="!refreshing" class="fas"></i>
@@ -344,7 +350,6 @@
             <p id="D238amigos">Desporto24</p>
             <p id="D237amigos">Desporto24</p>
             <h4>Amigos</h4>
-            <h5>ONLINE</h5>
         <button (click)="naoMostrarAmigos()" id="botaoFecharAmigos">X</button>
         <table id="tabela3">
           <tbody *ngFor="let perfil of perfis">
@@ -377,14 +382,19 @@
         <h4>Notificações</h4>
     <button (click)="NaoMostrarNotificacoes()" id="botaoFecharAmigos">X</button>
     <div id="notificacoes">
-      <div *ngFor="let Notification of Notifications.slice().reverse() let i = index;">
-        <hr>
-              <div (click)="onSelectedNotification(Notification)" id="notification">{{Notification.assunto}}
-                <p id="notification2">{{Notification.createdAt}}</p>
-              </div>
-              <hr>
+      <div *ngIf="moreThan1Notifications">
+        <div *ngFor="let Notification of Notifications.slice().reverse() let i = index;">
+          <hr>
+                <div (click)="onSelectedNotification(Notification)" id="notification">{{Notification.assunto}}
+                  <p id="notification2">{{Notification.createdAt}}</p>
+                </div>
+                <hr>
+        </div>
       </div>
-    </div>
+      <div *ngIf="!moreThan1Notifications">
+        <p>De momento não tens qualquer notificações!</p>
+      </div>
+      </div>
     </div>
     <div *ngIf="showNotificationMessage" id="viewNotificationModal">
       <h4>Mensagem:</h4>
@@ -544,7 +554,8 @@
 </ul>
 <button (click)="fecharPerfil()" id="botaoFechar">X</button>
 <button (click)="abrirChat()" id="botaoChat">Abrir Chat</button>
-<button (click)="blockAmigo()" id="botaoBloquear">Bloquear</button>
+<button *ngIf="block" (click)="blockAmigo()" id="botaoBloquear">Bloquear</button>
+<button *ngIf="!block" (click)="blockAmigo()" id="botaoBloquear">Desbloquear</button>
 <button (click)="blockAmigo()" id="botaoRemover">Remover amigo</button>
 </div>
 <div id="content5" *ngIf="chat">
@@ -568,15 +579,15 @@
   <div id="mensagensChat">
     <div *ngFor="let chat of chats">
       <div id="mensagemEnviada" *ngIf="chat.username1 == this.perfil.username">
-    <strong>{{chat.username1}}:</strong>&nbsp;{{chat.texto}}
+    <strong>{{chat.username1}}:</strong>&nbsp;{{chat.text}}
   </div>
   <div id="mensagemRecebida" *ngIf="chat.username1 == this.selectedPerfil.username">
-    <strong>{{chat.username1}}:</strong>&nbsp;{{chat.texto}}
+    <strong>{{chat.username1}}:</strong>&nbsp;{{chat.text}}
   </div>
     </div>
   </div>
   <form #sendMessageForm="ngForm" (ngSubmit)="enviarMensagemChat(sendMessageForm.value)">
-  <input [(ngModel)]="enviarMensagem.texto" name="chat" id="mensagensChatEnvio">
+  <input [(ngModel)]="enviarMensagem.text" name="chat" id="mensagensChatEnvio">
   <button id="botaoChatEnvio" type="submit">Enviar
     <i *ngIf="refreshing" class="fas fa-spin"></i>
     <i *ngIf="!refreshing" class="fas"></i>

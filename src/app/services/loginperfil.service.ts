@@ -10,6 +10,7 @@ import { JwtHelperService } from "@auth0/angular-jwt";
 import { CustomHttpResponse } from '../pages/custom-http-response';
 import { Token } from '../pages/model/token';
 import { Notification } from '../pages/model/notification';
+import { Friend } from '../pages/model/friend';
 
 @Injectable()
 export class LoginperfilService {
@@ -121,10 +122,12 @@ export class LoginperfilService {
     return formData;
   }
 
-  blockFriend(formData: FormData):Observable<HttpResponse<CustomHttpResponse>>{
-    return this.httpClient.put<CustomHttpResponse>(`${this.host}/menu/friendList`, formData, {observe: 'response'})
+  getChat(senderId: string, recipientId: string):Observable<Friend>{
+    return this.httpClient.get<Friend>(`${this.host}/menu/getInfoChat/${senderId}/${recipientId}`);
   }
-
+  blockFriend(formData: FormData):Observable<HttpResponse<CustomHttpResponse>>{
+    return this.httpClient.put<CustomHttpResponse>(`${this.host}/menu/friendList/blockFriend`, formData, {observe: 'response'})
+  }
   obterDadosPessoais(): Observable<Perfil[] | HttpErrorResponse>{
     return this.httpClient.get<Perfil[]>(`${this.host}/menu`);
   }

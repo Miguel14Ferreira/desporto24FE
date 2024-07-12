@@ -10,6 +10,7 @@ import { FriendRequest } from '../model/friendRequest';
 import { Notification } from '../model/notification';
 import { Chat } from '../model/chat';
 import { CustomHttpResponse } from '../custom-http-response';
+import { Friend } from '../model/friend';
 
 @Component({
   selector: 'app-menu',
@@ -23,6 +24,7 @@ export class MenuComponent implements OnInit {
   enviarMensagem : Chat = new Chat();
   Notifications : Notification[] = []; 
   Notification!: Notification;
+  chatFriend:Friend = new Friend();
   fileName!: string;
   profileImage!: File;
   url:any;
@@ -50,6 +52,7 @@ export class MenuComponent implements OnInit {
   showMenu!: boolean;
   logOut!:boolean;
   dark!:boolean;
+  block!:boolean;
   amigos!:boolean;
   selectedPerfil!: Perfil;
   selectedNotification!: Notification;
@@ -68,7 +71,8 @@ export class MenuComponent implements OnInit {
   successMessage!:any;
   validation1:boolean=false;
   validation!:any;
-  showScreen2! :boolean;
+  showScreen2!:boolean;
+  moreThan1Notifications!:boolean;
 
   constructor(private authenticationService:AuthenticationService,private router:Router,private loginPerfilService: LoginperfilService) {
    }
@@ -136,6 +140,16 @@ export class MenuComponent implements OnInit {
   onSelectPerfil(selectedPerfil: Perfil):void{
     this.selectedPerfil = selectedPerfil;
     this.showPerfil = true;
+    this.loginPerfilService.getChat(this.authenticationService.loggedInPerfilname,selectedPerfil.username).subscribe( data => {
+      this.chatFriend = data;
+      console.log(this.chatFriend.whoBlocked)
+      console.log(this.perfil.username)
+      if (this.chatFriend.whoBlocked == this.perfil.username){
+        this.block = false;
+      } else {
+        this.block = true;
+      }
+    }, error => console.log(error));
   }
   onSelectedNotification(selectedNotification: Notification):void{
     window.history.replaceState({},'',`/menu/notifications/${selectedNotification.id}`)
@@ -191,7 +205,7 @@ export class MenuComponent implements OnInit {
   }
 
   enviarMensagemChat(chat:Chat){
-     chat.texto = this.enviarMensagem.texto;
+     chat.text = this.enviarMensagem.text;
      this.enviarMensagem.username1 = this.perfil.username
      this.enviarMensagem.username2 = this.selectedPerfil.username;
     this.subscriptions.push(
@@ -409,6 +423,11 @@ MostrarNotificacoes(){
     this.loginPerfilService.obterNotificacoesDoPerfil(this.perfil.username).subscribe(
       (response: Notification[]) => {
         this.Notifications = response;
+        if (this.Notifications.length > 0){
+          this.moreThan1Notifications = true;
+        } else {
+          this.moreThan1Notifications = false;
+        }
       },
       (errorResponse: HttpErrorResponse) => {
         this.errorMessage = errorResponse.error.message;
