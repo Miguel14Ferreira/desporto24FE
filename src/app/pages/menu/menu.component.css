@@ -163,7 +163,7 @@ color: white;
                 transform: translate(-50%, -50%);
             }
             #h4black{
-                font-size: 15px;
+        font-size: 15px;
     width: 80%;
     height: 300px;
     margin: 0;
@@ -1163,7 +1163,7 @@ transform: translate(-50%, -50%);
     font-family: 'Arial';
     background-color: white;
     position: absolute;
-    z-index: 1;
+    z-index: 2;
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
@@ -1215,6 +1215,26 @@ transform: translate(-50%, -50%);
     animation:a 1s;
 }
 #content5{
+    font-size: 15px;
+    height: 600px;
+    width: 800px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Arial';
+    position: absolute;
+    z-index: 1;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    border-radius: 10px;
+    border-style: solid;
+    border-width: 5px;
+    background-color:grey;
+    overflow: hidden;
+    animation:e 1s;
+}
+#content6{
     font-size: 15px;
     height: 600px;
     width: 800px;
@@ -1644,6 +1664,28 @@ transform: translate(-50%, -50%);
     border-radius: 10px;
 }
 #botaoBloquear:hover{
+    background-color: lightblue;
+    color: white;
+    transition: background-color 0.5s;
+}
+#botaoRemover{
+    text-decoration: none;
+    color: black;
+    background-color: white;
+    font-size: 20px;
+    width: 200px;
+    margin: 0;
+    padding: 1px;
+    text-align: center;
+    font-family: 'Arial';
+    font-weight: bold;
+    position: absolute;
+top: 90%;
+left: 77.5%;
+transform: translate(-50%, -50%);
+    border-radius: 10px;
+}
+#botaoRemover:hover{
     background-color: lightblue;
     color: white;
     transition: background-color 0.5s;
@@ -2178,7 +2220,7 @@ transform: translate(-50%, -50%);
     font-family: 'Arial';
     font-weight: bold;
     position: absolute;
-top: 92.5%;
+top: 70.5%;
 left: 77.5%;
 transform: translate(-50%, -50%);
     border-radius: 10px;

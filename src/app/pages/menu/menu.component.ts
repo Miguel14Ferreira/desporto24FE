@@ -237,6 +237,7 @@ export class MenuComponent implements OnInit {
   }
   Amigos(){
     this.amigos = true;
+    this.logOut = false;
     this.loginPerfilService.friendList(this.perfil.username).subscribe(
       (response: Perfil[]) => {
         this.perfis = response;
@@ -305,9 +306,11 @@ export class MenuComponent implements OnInit {
   }
   naoBloquear(){
     this.bloquear = false;
+    window.history.replaceState({},'',`/menu/friendList`)
   }
   blockAmigo(){
     this.bloquear = true;
+    window.history.replaceState({},'',`/menu/friendList/blockFriend`)
   }
   bloquearAmigo(){
     const formData = this.loginPerfilService.blockFriendFromData(this.perfil.username,this.selectedPerfil.username);
@@ -351,6 +354,9 @@ export class MenuComponent implements OnInit {
 terminarSessao(){
   this.logOut = true;
   this.showPerfil = false;
+  this.chat = false;
+  this.bloquear = false;
+  this.amigos = false;
   window.history.replaceState({},'',`/menu/terminarSessao`)
 }
 fecharSessao(){

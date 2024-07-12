@@ -49,7 +49,6 @@ export class LoginComponent implements OnInit, OnDestroy {
 
  
 onLogin(perfil: Perfil): void {
-  console.log(perfil.username )
   if (perfil.username == "" || perfil.password == ""){
     this.validation1 = true;
     this.loginError = false;
