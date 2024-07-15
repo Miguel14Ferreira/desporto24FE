@@ -73,6 +73,7 @@ export class MenuComponent implements OnInit {
   validation!:any;
   showScreen2!:boolean;
   moreThan1Notifications!:boolean;
+  desbloquear!:boolean;
 
   constructor(private authenticationService:AuthenticationService,private router:Router,private loginPerfilService: LoginperfilService) {
    }
@@ -322,15 +323,42 @@ export class MenuComponent implements OnInit {
     this.bloquear = false;
     window.history.replaceState({},'',`/menu/friendList`)
   }
+  naoDesbloquear(){
+    this.desbloquear = false;
+    window.history.replaceState({},'',`/menu/friendList`)
+  }
   blockAmigo(){
     this.bloquear = true;
     window.history.replaceState({},'',`/menu/friendList/blockFriend`)
+  }
+  unblockAmigo(){
+    this.desbloquear = true;
+    window.history.replaceState({},'',`/menu/friendList/unblockFriend`)
   }
   bloquearAmigo(){
     const formData = this.loginPerfilService.blockFriendFromData(this.perfil.username,this.selectedPerfil.username);
     this.refreshing = true;
     this.subscriptions.push(
       this.loginPerfilService.blockFriend(formData).subscribe(
+        (response: HttpResponse<CustomHttpResponse>) => {
+          this.refreshing = false;
+          this.validation1 = true;
+          this.validation = response.body?.message;
+        },
+        (errorResponse: HttpErrorResponse) => {
+          this.errorMessage = errorResponse.error.message;
+          this.registerError = true;
+          this.refreshing = false;
+        }
+      )
+    )
+  }
+
+  DesbloquearAmigo(){
+    const formData = this.loginPerfilService.unblockFriendFromData(this.perfil.username,this.selectedPerfil.username);
+    this.refreshing = true;
+    this.subscriptions.push(
+      this.loginPerfilService.unblockFriend(formData).subscribe(
         (response: HttpResponse<CustomHttpResponse>) => {
           this.refreshing = false;
           this.validation1 = true;

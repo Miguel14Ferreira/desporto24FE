@@ -122,6 +122,16 @@ export class LoginperfilService {
     return formData;
   }
 
+  public unblockFriendFromData(loggedInUsername: string, username2: string): FormData{
+    const formData = new FormData();
+    formData.append('username1',loggedInUsername);
+    formData.append('username2',username2);
+    return formData;
+  }
+
+  unblockFriend(formData: FormData):Observable<HttpResponse<CustomHttpResponse>>{
+    return this.httpClient.put<CustomHttpResponse>(`${this.host}/menu/friendList/unblockFriend`, formData, {observe: 'response'})
+  }
   getChat(senderId: string, recipientId: string):Observable<Friend>{
     return this.httpClient.get<Friend>(`${this.host}/menu/getInfoChat/${senderId}/${recipientId}`);
   }
