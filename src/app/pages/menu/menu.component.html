@@ -1,6 +1,6 @@
 <html>
 <div *ngIf="dark" class="img" (click)="NaoMostrarMenu()">
-      <h1 id="h1white">Desporto24</h1>
+      <h1 id="h1white">{{DESPORTO24}}</h1>
       <div (mouseover)="MostrarMenu()" id="img-fluid2" *ngIf="!showMenu">
         <img src="{{perfil.profilePic}}" class="image-preview__image2" class="rounded-circle img-thumbnail">
       </div>
@@ -30,32 +30,32 @@
         <button (click)="closeValidation()" type="button" id="botaoFecharInfo">X</button>
       </div>
             <div *ngIf="showMenu" id="content">
-        <p id="D243menu">Desporto24</p>
-            <p id="D244menu">Desporto24</p>
-            <p id="D245menu">Desporto24</p>
-            <p id="D246menu">Desporto24</p>
-            <p id="D247menu">Desporto24</p>
-            <p id="D248menu">Desporto24</p>
+        <p id="D243menu">{{DESPORTO24}}</p>
+            <p id="D244menu">{{DESPORTO24}}</p>
+            <p id="D245menu">{{DESPORTO24}}</p>
+            <p id="D246menu">{{DESPORTO24}}</p>
+            <p id="D247menu">{{DESPORTO24}}</p>
+            <p id="D248menu">{{DESPORTO24}}</p>
         <h3>{{perfil.username}}</h3>
         <img src="{{perfil.profilePic}}" id="img-fluid" class="rounded-circle" alt=""/>
         <button (click)="NaoMostrarMenu()" id="botaoFechar">X</button>
         <ul>
-        <li id="opcao8" (click)="Amigos()" routerLinkActive="active-link">Lista de amigos</li>
-        <li id="opcao2" (click)="alterarDados()" routerLinkActive="active-link">Alterar dados do perfil</li>
-        <li id="opcao3" (click)="alterarPassword()" routerLinkActive="active-link">Alterar nome de utilizador/password</li>
-        <li id="opcao4" (click)="verDadosPerfil()" routerLinkActive="active-link">Ver dados do meu perfil</li>
-        <li id="opcao6" (click)="Utilizadores()" routerLinkActive="active-link">Procurar Utilizadores</li>
-        <li id="opcao7" (click)="CriarSessao()" routerLinkActive="active-link">Criar Sessão</li>
-        <li id="opcao5" (click)="terminarSessao()" routerLinkActive="active-link">Terminar Sessão</li>
+        <li id="opcao8" (click)="Amigos()" routerLinkActive="active-link">{{FRIENDLIST}}</li>
+        <li id="opcao2" (click)="alterarDados()" routerLinkActive="active-link">{{CHANGEPROFILEDATA}}</li>
+        <li id="opcao3" (click)="alterarPassword()" routerLinkActive="active-link">{{CHANGEPROFILEPASSWORD}}</li>
+        <li id="opcao4" (click)="verDadosPerfil()" routerLinkActive="active-link">{{PROFILEDATA}}</li>
+        <li id="opcao6" (click)="Utilizadores()" routerLinkActive="active-link">{{SEARCH_PLAYERS}}</li>
+        <li id="opcao7" (click)="CriarSessao()" routerLinkActive="active-link">{{CREATE_SESSION}}</li>
+        <li id="opcao5" (click)="terminarSessao()" routerLinkActive="active-link">{{LOG_OFF}}</li>
         </ul>
       </div>
       <div id="content4" *ngIf="amigos">
-        <p id="D235amigos">Desporto24</p>
-            <p id="D236amigos">Desporto24</p>
-            <p id="D240amigos">Desporto24</p>
-            <p id="D239amigos">Desporto24</p>
-            <p id="D238amigos">Desporto24</p>
-            <p id="D237amigos">Desporto24</p>
+        <p id="D235amigos">{{DESPORTO24}}</p>
+            <p id="D236amigos">{{DESPORTO24}}</p>
+            <p id="D240amigos">{{DESPORTO24}}</p>
+            <p id="D239amigos">{{DESPORTO24}}</p>
+            <p id="D238amigos">{{DESPORTO24}}</p>
+            <p id="D237amigos">{{DESPORTO24}}</p>
             <h4>Amigos</h4>
         <button (click)="naoMostrarAmigos()" id="botaoFecharAmigos">X</button>
         <div *ngIf="!emptyFriendList">
@@ -71,48 +71,48 @@
       </table>
       </div>
       <div id="content2" *ngIf="bloquear">
-        <p id="D235logOut">Desporto24</p>
-            <p id="D236logOut">Desporto24</p>
-            <p id="D240logOut">Desporto24</p>
-            <p id="D239logOut">Desporto24</p>
-            <p id="D238logOut">Desporto24</p>
-            <p id="D237logOut">Desporto24</p>
+        <p id="D235logOut">{{DESPORTO24}}</p>
+            <p id="D236logOut">{{DESPORTO24}}</p>
+            <p id="D240logOut">{{DESPORTO24}}</p>
+            <p id="D239logOut">{{DESPORTO24}}</p>
+            <p id="D238logOut">{{DESPORTO24}}</p>
+            <p id="D237logOut">{{DESPORTO24}}</p>
             <h4 id="h4white">Tens a certeza que queres bloquear
             <p>{{selectedPerfil?.username}}?</p></h4>
             <button (click)="bloquearAmigo()" id="botao6">Sim</button>
         <button (click)="naoBloquear()" id="botao7">Não</button>
         </div>
         <div id="content2" *ngIf="desbloquear">
-          <p id="D235logOut">Desporto24</p>
-              <p id="D236logOut">Desporto24</p>
-              <p id="D240logOut">Desporto24</p>
-              <p id="D239logOut">Desporto24</p>
-              <p id="D238logOut">Desporto24</p>
-              <p id="D237logOut">Desporto24</p>
+          <p id="D235logOut">{{DESPORTO24}}</p>
+              <p id="D236logOut">{{DESPORTO24}}</p>
+              <p id="D240logOut">{{DESPORTO24}}</p>
+              <p id="D239logOut">{{DESPORTO24}}</p>
+              <p id="D238logOut">{{DESPORTO24}}</p>
+              <p id="D237logOut">{{DESPORTO24}}</p>
               <h4 id="h4white">Tens a certeza que queres desbloquear
               <p>{{selectedPerfil?.username}}?</p></h4>
               <button (click)="DesbloquearAmigo()" id="botao6">Sim</button>
           <button (click)="naoDesbloquear()" id="botao7">Não</button>
           </div>
           <div id="content2" *ngIf="removerAmigo">
-            <p id="D235logOut">Desporto24</p>
-                <p id="D236logOut">Desporto24</p>
-                <p id="D240logOut">Desporto24</p>
-                <p id="D239logOut">Desporto24</p>
-                <p id="D238logOut">Desporto24</p>
-                <p id="D237logOut">Desporto24</p>
+            <p id="D235logOut">{{DESPORTO24}}</p>
+                <p id="D236logOut">{{DESPORTO24}}</p>
+                <p id="D240logOut">{{DESPORTO24}}</p>
+                <p id="D239logOut">{{DESPORTO24}}</p>
+                <p id="D238logOut">{{DESPORTO24}}</p>
+                <p id="D237logOut">{{DESPORTO24}}</p>
                 <h4 id="h4white">Tens a certeza que queres remover
                   {{selectedPerfil?.username}} da tua lista de amigos?</h4>
                 <button (click)="removeFriend()" id="botao6">Sim</button>
             <button (click)="dontRemove()" id="botao7">Não</button>
             </div>
       <div id="content3" *ngIf="showNotification">
-    <p id="D235amigos">Desporto24</p>
-        <p id="D236amigos">Desporto24</p>
-        <p id="D240amigos">Desporto24</p>
-        <p id="D239amigos">Desporto24</p>
-        <p id="D238amigos">Desporto24</p>
-        <p id="D237amigos">Desporto24</p>
+    <p id="D235amigos">{{DESPORTO24}}</p>
+        <p id="D236amigos">{{DESPORTO24}}</p>
+        <p id="D240amigos">{{DESPORTO24}}</p>
+        <p id="D239amigos">{{DESPORTO24}}</p>
+        <p id="D238amigos">{{DESPORTO24}}</p>
+        <p id="D237amigos">{{DESPORTO24}}</p>
         <h4>Notificações</h4>
     <button (click)="NaoMostrarNotificacoes()" id="botaoFecharAmigos">X</button>
     <div id="notificacoes">
@@ -169,19 +169,19 @@
       <button (click)="bloquearConta()" id="botaoEliminarNotificacao2">Bloquear conta</button>
     </div>
       <div id="container2">
-        <p id="D24a">Desporto24</p>
-                <p id="D241a">Desporto24</p>
-                <p id="D243a">Desporto24</p>
-                <p id="D244a">Desporto24</p>
-                <p id="D245a">Desporto24</p>
-<h2 id="h2white">Sessões disponíveis</h2>
+        <p id="D24a">{{DESPORTO24}}</p>
+                <p id="D241a">{{DESPORTO24}}</p>
+                <p id="D243a">{{DESPORTO24}}</p>
+                <p id="D244a">{{DESPORTO24}}</p>
+                <p id="D245a">{{DESPORTO24}}</p>
+<h2 id="h2white">{{AVAILABLE_SESSIONS}}</h2>
   <div id="content2" *ngIf="logOut">
-    <p id="D235logOut">Desporto24</p>
-        <p id="D236logOut">Desporto24</p>
-        <p id="D240logOut">Desporto24</p>
-        <p id="D239logOut">Desporto24</p>
-        <p id="D238logOut">Desporto24</p>
-        <p id="D237logOut">Desporto24</p>
+    <p id="D235logOut">{{DESPORTO24}}</p>
+        <p id="D236logOut">{{DESPORTO24}}</p>
+        <p id="D240logOut">{{DESPORTO24}}</p>
+        <p id="D239logOut">{{DESPORTO24}}</p>
+        <p id="D238logOut">{{DESPORTO24}}</p>
+        <p id="D237logOut">{{DESPORTO24}}</p>
     <h4 id="h4white">Tens a certeza que queres terminar a sessão?</h4>
     <button id="botao6" (click)="remover()">Sim</button>
     <button id="botao7" (click)="voltar()">Não</button>
@@ -196,11 +196,11 @@
 <table id="tabela1">
 <thead>
     <tr>
-        <th>Foto do local de jogo</th>
-        <th>Jogo criado por</th>
-        <th>Nº de jogadores</th>
-        <th>Data de jogo</th>
-        <th>Localidade</th>
+        <th>{{GAME_PIC}}</th>
+        <th>{{GAME_CREATED_BY}}</th>
+        <th>{{GAME_NUMBER_PLAYERS}}</th>
+        <th>{{GAME_DATE}}</th>
+        <th>{{GAME_LOCAL}}</th>
     </tr>
 </thead>
 <tbody *ngFor="let sessao of sessoes" id="tabela2">
@@ -215,15 +215,15 @@
 </tbody>
 </table>
 <div *ngIf="show" id="viewSessaoModal">
-    <p id="D24">Desporto24</p>
-    <p id="D241">Desporto24</p>
-    <p id="D242">Desporto24</p>
-    <p id="D243">Desporto24</p>
-    <p id="D244">Desporto24</p>
-    <p id="D245">Desporto24</p>
-    <p id="D246">Desporto24</p>
-    <p id="D247">Desporto24</p>
-    <p id="D248">Desporto24</p>
+    <p id="D24">{{DESPORTO24}}</p>
+    <p id="D241">{{DESPORTO24}}</p>
+    <p id="D242">{{DESPORTO24}}</p>
+    <p id="D243">{{DESPORTO24}}</p>
+    <p id="D244">{{DESPORTO24}}</p>
+    <p id="D245">{{DESPORTO24}}</p>
+    <p id="D246">{{DESPORTO24}}</p>
+    <p id="D247">{{DESPORTO24}}</p>
+    <p id="D248">{{DESPORTO24}}</p>
       <div class="image-preview" id="imagePreview">
         <img src="{{selectedSessao?.foto}}" alt="Image Preview" class="image-preview__image"/>
       </div>
@@ -248,15 +248,15 @@
 </div>
 </div>
 <div *ngIf="showPerfil" id="viewPerfilModal">
-  <p id="D24modal">Desporto24</p>
-    <p id="D241modal">Desporto24</p>
-    <p id="D242modal">Desporto24</p>
-    <p id="D243modal">Desporto24</p>
-    <p id="D244modal">Desporto24</p>
-    <p id="D245modal">Desporto24</p>
-    <p id="D246modal">Desporto24</p>
-    <p id="D247modal">Desporto24</p>
-    <p id="D248modal">Desporto24</p>
+  <p id="D24modal">{{DESPORTO24}}</p>
+    <p id="D241modal">{{DESPORTO24}}</p>
+    <p id="D242modal">{{DESPORTO24}}</p>
+    <p id="D243modal">{{DESPORTO24}}</p>
+    <p id="D244modal">{{DESPORTO24}}</p>
+    <p id="D245modal">{{DESPORTO24}}</p>
+    <p id="D246modal">{{DESPORTO24}}</p>
+    <p id="D247modal">{{DESPORTO24}}</p>
+    <p id="D248modal">{{DESPORTO24}}</p>
     <div class="image-preview" id="imagePreview">
       <img src="{{selectedPerfil?.profilePic}}" alt="Image Preview" class="image-preview__image"/>
     </div>
@@ -292,13 +292,13 @@
 <button (click)="remove()" id="botaoRemover">Remover amigo</button>
 </div>
 <div id="content5" *ngIf="chat">
-  <p id="D235chat">Desporto24</p>
-      <p id="D236chat">Desporto24</p>
-      <p id="D240chat">Desporto24</p>
-      <p id="D239chat">Desporto24</p>
-      <p id="D238chat">Desporto24</p>
-      <p id="D237chat">Desporto24</p>
-      <p id="D241chat">Desporto24</p>
+  <p id="D235chat">{{DESPORTO24}}</p>
+      <p id="D236chat">{{DESPORTO24}}</p>
+      <p id="D240chat">{{DESPORTO24}}</p>
+      <p id="D239chat">{{DESPORTO24}}</p>
+      <p id="D238chat">{{DESPORTO24}}</p>
+      <p id="D237chat">{{DESPORTO24}}</p>
+      <p id="D241chat">{{DESPORTO24}}</p>
         <div id="tabela4">
           <div>
             <div class="image-previewChat" id="imagePreview">
@@ -333,7 +333,7 @@
 </div>
 
 <div *ngIf="!dark" class="img2" (click)="NaoMostrarMenu()">
-      <h1 id="h1black">Desporto24</h1>
+      <h1 id="h1black">{{DESPORTO24}}</h1>
       <div (mouseover)="MostrarMenu()" id="img-fluid2black" *ngIf="!showMenu">
         <img src="{{perfil.profilePic}}" class="image-preview__image2" class="rounded-circle img-thumbnail">
 
@@ -364,32 +364,32 @@
         <button (click)="closeValidation()" type="button" id="botaoFecharInfo">X</button>
       </div>
       <div *ngIf="showMenu" id="content">
-        <p id="D243menu">Desporto24</p>
-            <p id="D244menu">Desporto24</p>
-            <p id="D245menu">Desporto24</p>
-            <p id="D246menu">Desporto24</p>
-            <p id="D247menu">Desporto24</p>
-            <p id="D248menu">Desporto24</p>
+        <p id="D243menu">{{DESPORTO24}}</p>
+            <p id="D244menu">{{DESPORTO24}}</p>
+            <p id="D245menu">{{DESPORTO24}}</p>
+            <p id="D246menu">{{DESPORTO24}}</p>
+            <p id="D247menu">{{DESPORTO24}}</p>
+            <p id="D248menu">{{DESPORTO24}}</p>
         <h3>{{perfil.username}}</h3>
         <img src="{{perfil.profilePic}}" id="img-fluid" class="rounded-circle" alt=""/>
         <button (click)="NaoMostrarMenu()" id="botaoFechar">X</button>
         <ul>
-        <li id="opcao8" (click)="Amigos()" routerLinkActive="active-link">Lista de amigos</li>
-        <li id="opcao2" (click)="alterarDados()" routerLinkActive="active-link">Alterar dados do perfil</li>
-        <li id="opcao3" (click)="alterarPassword()" routerLinkActive="active-link">Alterar nome de utilizador/password</li>
-        <li id="opcao4" (click)="verDadosPerfil()" routerLinkActive="active-link">Ver dados do meu perfil</li>
-        <li id="opcao6" (click)="Utilizadores()" routerLinkActive="active-link">Procurar Utilizadores</li>
-        <li id="opcao7" (click)="CriarSessao()" routerLinkActive="active-link">Criar Sessão</li>
-        <li id="opcao5" (click)="terminarSessao()" routerLinkActive="active-link">Terminar Sessão</li>
+        <li id="opcao8" (click)="Amigos()" routerLinkActive="active-link">{{FRIENDLIST}}</li>
+        <li id="opcao2" (click)="alterarDados()" routerLinkActive="active-link">{{CHANGEPROFILEDATA}}</li>
+        <li id="opcao3" (click)="alterarPassword()" routerLinkActive="active-link">{{CHANGEPROFILEPASSWORD}}</li>
+        <li id="opcao4" (click)="verDadosPerfil()" routerLinkActive="active-link">{{PROFILEDATA}}</li>
+        <li id="opcao6" (click)="Utilizadores()" routerLinkActive="active-link">{{SEARCH_PLAYERS}}</li>
+        <li id="opcao7" (click)="CriarSessao()" routerLinkActive="active-link">{{CREATE_SESSION}}</li>
+        <li id="opcao5" (click)="terminarSessao()" routerLinkActive="active-link">{{LOG_OFF}}</li>
         </ul>
       </div>
       <div id="content4" *ngIf="amigos">
-        <p id="D235amigos">Desporto24</p>
-            <p id="D236amigos">Desporto24</p>
-            <p id="D240amigos">Desporto24</p>
-            <p id="D239amigos">Desporto24</p>
-            <p id="D238amigos">Desporto24</p>
-            <p id="D237amigos">Desporto24</p>
+        <p id="D235amigos">{{DESPORTO24}}</p>
+            <p id="D236amigos">{{DESPORTO24}}</p>
+            <p id="D240amigos">{{DESPORTO24}}</p>
+            <p id="D239amigos">{{DESPORTO24}}</p>
+            <p id="D238amigos">{{DESPORTO24}}</p>
+            <p id="D237amigos">{{DESPORTO24}}</p>
             <h4>Amigos</h4>
         <button (click)="naoMostrarAmigos()" id="botaoFecharAmigos">X</button>
         <div *ngIf="!emptyFriendList">
@@ -405,48 +405,48 @@
       </table>
       </div>
       <div id="content2" *ngIf="bloquear">
-        <p id="D235logOut">Desporto24</p>
-            <p id="D236logOut">Desporto24</p>
-            <p id="D240logOut">Desporto24</p>
-            <p id="D239logOut">Desporto24</p>
-            <p id="D238logOut">Desporto24</p>
-            <p id="D237logOut">Desporto24</p>
+        <p id="D235logOut">{{DESPORTO24}}</p>
+            <p id="D236logOut">{{DESPORTO24}}</p>
+            <p id="D240logOut">{{DESPORTO24}}</p>
+            <p id="D239logOut">{{DESPORTO24}}</p>
+            <p id="D238logOut">{{DESPORTO24}}</p>
+            <p id="D237logOut">{{DESPORTO24}}</p>
             <h4 id="h4white">Tens a certeza que queres bloquear
             <p>{{selectedPerfil?.username}}?</p></h4>
             <button (click)="bloquearAmigo()" id="botao6">Sim</button>
         <button (click)="naoBloquear()" id="botao7">Não</button>
         </div>
         <div id="content2" *ngIf="desbloquear">
-          <p id="D235logOut">Desporto24</p>
-              <p id="D236logOut">Desporto24</p>
-              <p id="D240logOut">Desporto24</p>
-              <p id="D239logOut">Desporto24</p>
-              <p id="D238logOut">Desporto24</p>
-              <p id="D237logOut">Desporto24</p>
+          <p id="D235logOut">{{DESPORTO24}}</p>
+              <p id="D236logOut">{{DESPORTO24}}</p>
+              <p id="D240logOut">{{DESPORTO24}}</p>
+              <p id="D239logOut">{{DESPORTO24}}</p>
+              <p id="D238logOut">{{DESPORTO24}}</p>
+              <p id="D237logOut">{{DESPORTO24}}</p>
               <h4 id="h4white">Tens a certeza que queres desbloquear
               <p>{{selectedPerfil?.username}}?</p></h4>
               <button (click)="DesbloquearAmigo()" id="botao6">Sim</button>
           <button (click)="naoDesbloquear()" id="botao7">Não</button>
           </div>
           <div id="content2" *ngIf="removerAmigo">
-            <p id="D235logOut">Desporto24</p>
-                <p id="D236logOut">Desporto24</p>
-                <p id="D240logOut">Desporto24</p>
-                <p id="D239logOut">Desporto24</p>
-                <p id="D238logOut">Desporto24</p>
-                <p id="D237logOut">Desporto24</p>
+            <p id="D235logOut">{{DESPORTO24}}</p>
+                <p id="D236logOut">{{DESPORTO24}}</p>
+                <p id="D240logOut">{{DESPORTO24}}</p>
+                <p id="D239logOut">{{DESPORTO24}}</p>
+                <p id="D238logOut">{{DESPORTO24}}</p>
+                <p id="D237logOut">{{DESPORTO24}}</p>
                 <h4 id="h4white">Tens a certeza que queres remover
                   {{selectedPerfil?.username}} da tua lista de amigos?</h4>
                 <button (click)="removeFriend()" id="botao6">Sim</button>
             <button (click)="dontRemove()" id="botao7">Não</button>
             </div>
       <div id="content3" *ngIf="showNotification">
-    <p id="D235amigos">Desporto24</p>
-        <p id="D236amigos">Desporto24</p>
-        <p id="D240amigos">Desporto24</p>
-        <p id="D239amigos">Desporto24</p>
-        <p id="D238amigos">Desporto24</p>
-        <p id="D237amigos">Desporto24</p>
+    <p id="D235amigos">{{DESPORTO24}}</p>
+        <p id="D236amigos">{{DESPORTO24}}</p>
+        <p id="D240amigos">{{DESPORTO24}}</p>
+        <p id="D239amigos">{{DESPORTO24}}</p>
+        <p id="D238amigos">{{DESPORTO24}}</p>
+        <p id="D237amigos">{{DESPORTO24}}</p>
         <h4>Notificações</h4>
     <button (click)="NaoMostrarNotificacoes()" id="botaoFecharAmigos">X</button>
     <div id="notificacoes">
@@ -503,20 +503,19 @@
       <button (click)="bloquearConta()" id="botaoEliminarNotificacao2">Bloquear conta</button>
     </div>
     <div id="container">
-      <p id="D24">Desporto24</p>
-      <p id="D241">Desporto24</p>
-      <p id="D243">Desporto24</p>
-      <p id="D244">Desporto24</p>
-
-      <p id="D245">Desporto24</p>
-<h2 id="h2black">Sessões disponíveis</h2>
+      <p id="D24">{{DESPORTO24}}</p>
+      <p id="D241">{{DESPORTO24}}</p>
+      <p id="D243">{{DESPORTO24}}</p>
+      <p id="D244">{{DESPORTO24}}</p>
+      <p id="D245">{{DESPORTO24}}</p>
+<h2 id="h2black">{{AVAILABLE_SESSIONS}}</h2>
 <div id="content2" *ngIf="logOut">
-  <p id="D235logOut">Desporto24</p>
-      <p id="D236logOut">Desporto24</p>
-      <p id="D240logOut">Desporto24</p>
-      <p id="D239logOut">Desporto24</p>
-      <p id="D238logOut">Desporto24</p>
-      <p id="D237logOut">Desporto24</p>
+  <p id="D235logOut">{{DESPORTO24}}</p>
+      <p id="D236logOut">{{DESPORTO24}}</p>
+      <p id="D240logOut">{{DESPORTO24}}</p>
+      <p id="D239logOut">{{DESPORTO24}}</p>
+      <p id="D238logOut">{{DESPORTO24}}</p>
+      <p id="D237logOut">{{DESPORTO24}}</p>
   <h4 id="h4white">Tens a certeza que queres terminar a sessão?</h4>
   <button id="botao6" (click)="remover()">Sim</button>
   <button id="botao7" (click)="voltar()">Não</button>
@@ -531,11 +530,11 @@
 <table id="tabela1">
 <thead>
   <tr>
-      <th>Foto do local de jogo</th>
-      <th>Jogo criado por</th>
-      <th>Nº de jogadores</th>
-      <th>Data de jogo</th>
-      <th>Localidade</th>
+      <th>{{GAME_PIC}}</th>
+      <th>{{GAME_CREATED_BY}}</th>
+      <th>{{GAME_NUMBER_PLAYERS}}</th>
+      <th>{{GAME_DATE}}</th>
+      <th>{{GAME_LOCAL}}</th>
   </tr>
 </thead>
 <tbody *ngFor="let sessao of sessoes" id="tabela2">
@@ -550,15 +549,15 @@
 </tbody>
 </table>
 <div *ngIf="show" id="viewSessaoModal">
-  <p id="D24">Desporto24</p>
-  <p id="D241">Desporto24</p>
-  <p id="D242">Desporto24</p>
-  <p id="D243">Desporto24</p>
-  <p id="D244">Desporto24</p>
-  <p id="D245">Desporto24</p>
-  <p id="D246">Desporto24</p>
-  <p id="D247">Desporto24</p>
-  <p id="D248">Desporto24</p>
+  <p id="D24">{{DESPORTO24}}</p>
+  <p id="D241">{{DESPORTO24}}</p>
+  <p id="D242">{{DESPORTO24}}</p>
+  <p id="D243">{{DESPORTO24}}</p>
+  <p id="D244">{{DESPORTO24}}</p>
+  <p id="D245">{{DESPORTO24}}</p>
+  <p id="D246">{{DESPORTO24}}</p>
+  <p id="D247">{{DESPORTO24}}</p>
+  <p id="D248">{{DESPORTO24}}</p>
     <div class="image-preview" id="imagePreview">
       <img src="{{selectedSessao?.foto}}" alt="Image Preview" class="image-preview__image"/>
     </div>
@@ -583,15 +582,15 @@
 </div>
 </div>
 <div *ngIf="showPerfil" id="viewPerfilModal">
-<p id="D24modal">Desporto24</p>
-  <p id="D241modal">Desporto24</p>
-  <p id="D242modal">Desporto24</p>
-  <p id="D243modal">Desporto24</p>
-  <p id="D244modal">Desporto24</p>
-  <p id="D245modal">Desporto24</p>
-  <p id="D246modal">Desporto24</p>
-  <p id="D247modal">Desporto24</p>
-  <p id="D248modal">Desporto24</p>
+<p id="D24modal">{{DESPORTO24}}</p>
+  <p id="D241modal">{{DESPORTO24}}</p>
+  <p id="D242modal">{{DESPORTO24}}</p>
+  <p id="D243modal">{{DESPORTO24}}</p>
+  <p id="D244modal">{{DESPORTO24}}</p>
+  <p id="D245modal">{{DESPORTO24}}</p>
+  <p id="D246modal">{{DESPORTO24}}</p>
+  <p id="D247modal">{{DESPORTO24}}</p>
+  <p id="D248modal">{{DESPORTO24}}</p>
   <div class="image-preview" id="imagePreview">
     <img src="{{selectedPerfil?.profilePic}}" alt="Image Preview" class="image-preview__image"/>
   </div>
@@ -627,13 +626,13 @@
 <button (click)="blockAmigo()" id="botaoRemover">Remover amigo</button>
 </div>
 <div id="content5" *ngIf="chat">
-<p id="D235chat">Desporto24</p>
-    <p id="D236chat">Desporto24</p>
-    <p id="D240chat">Desporto24</p>
-    <p id="D239chat">Desporto24</p>
-    <p id="D238chat">Desporto24</p>
-    <p id="D237chat">Desporto24</p>
-    <p id="D241chat">Desporto24</p>
+<p id="D235chat">{{DESPORTO24}}</p>
+    <p id="D236chat">{{DESPORTO24}}</p>
+    <p id="D240chat">{{DESPORTO24}}</p>
+    <p id="D239chat">{{DESPORTO24}}</p>
+    <p id="D238chat">{{DESPORTO24}}</p>
+    <p id="D237chat">{{DESPORTO24}}</p>
+    <p id="D241chat">{{DESPORTO24}}</p>
       <div id="tabela4">
         <div class="image-previewChat" id="imagePreview">
           <img src="{{selectedPerfil?.profilePic}}" alt="Image Preview" class="image-preview__image"/>

@@ -61,7 +61,6 @@ export class MenuComponent implements OnInit {
   showNotificationMessage!:boolean;
   showNotificationFriendRequestMessage!:boolean;
   showNotificationUpdatePerfil!:boolean;
-  private readonly USERNAME:string = 'username';
   chat!:boolean;
   online!:boolean;
   variable!:ReturnType<typeof setTimeout>;
@@ -79,6 +78,20 @@ export class MenuComponent implements OnInit {
   emptyFriendList!:boolean;
   public readonly EMPTY_FRIENDLIST: string = 'De momento não tens quaisquer amigos, clica em procurar jogadores para encontrares jogadores para adicioná-los à tua lista de amigos.';
   public readonly EMPTY_NOTIFICATIONS: string = 'De momento não tens quaisquer notificações.';
+  public readonly DESPORTO24: string = 'DESPORTO24';
+  public readonly FRIENDLIST: string = 'Lista de amigos';
+  public readonly CHANGEPROFILEDATA: string = 'Alterar dados do perfil';
+  public readonly CHANGEPROFILEPASSWORD: string = 'Alterar nome de utilizador/password';
+  public readonly PROFILEDATA: string = 'Ver dados do meu perfil';
+  public readonly SEARCH_PLAYERS: string = 'Procurar Utilizadores';
+  public readonly CREATE_SESSION: string = 'Criar Sessão';
+  public readonly LOG_OFF: string = 'Terminar Sessão';
+  public readonly AVAILABLE_SESSIONS: string = 'Sessões disponíveis';
+  public readonly GAME_PIC: string = 'Foto do local de jogo';
+  public readonly GAME_CREATED_BY: string = 'Jogo criado por';
+  public readonly GAME_NUMBER_PLAYERS: string = 'Nº de jogadores';
+  public readonly GAME_DATE: string = 'Data de jogo';
+  public readonly GAME_LOCAL: string = 'Localidade';
 
   constructor(private authenticationService:AuthenticationService,private router:Router,private loginPerfilService: LoginperfilService) {
    }
