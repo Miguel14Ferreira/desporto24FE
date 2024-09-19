@@ -75,6 +75,10 @@ export class MenuComponent implements OnInit {
   moreThan1Notifications!:boolean;
   desbloquear!:boolean;
   removerAmigo!:boolean;
+  newNotification!:boolean;
+  emptyFriendList!:boolean;
+  public readonly EMPTY_FRIENDLIST: string = 'De momento não tens quaisquer amigos, clica em procurar jogadores para encontrares jogadores para adicioná-los à tua lista de amigos.';
+  public readonly EMPTY_NOTIFICATIONS: string = 'De momento não tens quaisquer notificações.';
 
   constructor(private authenticationService:AuthenticationService,private router:Router,private loginPerfilService: LoginperfilService) {
    }
@@ -98,6 +102,14 @@ export class MenuComponent implements OnInit {
     } else {
       this.dark = true
     }
+    this.loginPerfilService.obterNotificacoesDoPerfil(this.authenticationService.loggedInPerfilname).subscribe( data => {
+      this.Notifications = data;
+      if (this.Notifications.length > 0){
+        this.newNotification = true;
+      } else {
+        this.newNotification = false;
+      }
+        }, error => console.log(error));
   }
 
   closeError(){
@@ -256,6 +268,11 @@ export class MenuComponent implements OnInit {
       (response: Perfil[]) => {
         this.perfis = response;
         window.history.replaceState({},'',`/menu/friendList`)
+        if (response.length = 0){
+          this.emptyFriendList = true;
+        } else {
+          this.emptyFriendList = false;
+        }
       },
       (errorResponse: HttpErrorResponse) => {
         this.registerError = true;
@@ -271,7 +288,9 @@ export class MenuComponent implements OnInit {
           this.refreshing = false;
           this.successMessage = response.body?.message;
           this.registerSuccess = true;
-          this.showNotification = false;
+          this.showNotificationMessage = false;
+          this.showNotificationFriendRequestMessage = false;
+          this.showNotificationUpdatePerfil = false;
           window.history.replaceState({},'',`/menu`)
         },
         (errorResponse: HttpErrorResponse) => {
@@ -291,6 +310,7 @@ export class MenuComponent implements OnInit {
           this.validation1 = true;
           this.validation = response.body?.message;
           this.showNotification = false;
+          this.showNotificationFriendRequestMessage = false;
           window.history.replaceState({},'',`/menu/${this.perfil.username}`)
         },
         (errorResponse: HttpErrorResponse) => {
@@ -310,6 +330,7 @@ export class MenuComponent implements OnInit {
           this.registerSuccess = true;
           this.successMessage = response.body?.message;
           this.showNotification = false;
+          this.showNotificationFriendRequestMessage = false;
           window.history.replaceState({},'',`/menu`)
         },
         (errorResponse: HttpErrorResponse) => {
@@ -487,9 +508,11 @@ MostrarNotificacoes(){
       (response: Notification[]) => {
         this.Notifications = response;
         if (this.Notifications.length > 0){
-          this.moreThan1Notifications = true;
+          this.moreThan1Notifications = false
+          this.newNotification = true;
         } else {
           this.moreThan1Notifications = false;
+          this.newNotification = false;
         }
       },
       (errorResponse: HttpErrorResponse) => {
