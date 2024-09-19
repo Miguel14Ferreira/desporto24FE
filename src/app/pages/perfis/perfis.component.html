@@ -7,6 +7,21 @@
               <p id="D244a">Desporto24</p>
               <p id="D245a">Desporto24</p>
     </div>
+  <div *ngIf="registerError" id="notificationError">
+    <i class="bi bi-exclamation-triangle-fill"></i>&nbsp;&nbsp;
+    {{ errorMessage }}
+    <button (click)="closeError()" type="button" type="button" id="botaoFecharError">X</button>
+  </div>
+  <div *ngIf="registerSuccess" id="notificationSuccess">
+    <i class="bi bi-check-circle-fill"></i>&nbsp;&nbsp;
+    {{ successMessage }}
+    <button (click)="closeSuccess()" type="button" id="botaoFecharSuccess">X</button>
+  </div>
+  <div *ngIf="validation1" id="notificationInfo">
+    <i class="bi bi-exclamation-circle-fill"></i>&nbsp;&nbsp;
+    {{ validation }}
+    <button (click)="closeValidation()" type="button" id="botaoFecharInfo">X</button>
+  </div>
         <form>
           <input name="searchTerm" #searchTerm="ngModel" ngModel id="input1" type="search" placeholder="Procurar perfil...">
           <button id="botao1" type="submit" (click)="obterPerfis(searchTerm.value)">
@@ -72,8 +87,10 @@
     <li  id="ultimoLogin2"> {{selectedPerfil?.lastLoginDate}}</li>
     </ul>
 <button (click)="fecharPerfil()" id="botaoFechar">X</button>
+<div *ngIf="showOptions">
 <button (click)="AddFriend()" id="botaoAdicionarAmigo">Enviar pedido<p> de amizade</p></button>
 <button id="botaoChat">Iniciar Chat</button>
+</div>
 <div id="content2" *ngIf="addFriend">
   <p id="D235logOut">Desporto24</p>
       <p id="D236logOut">Desporto24</p>
@@ -101,6 +118,21 @@
                 <p id="D244">Desporto24</p>
                 <p id="D245">Desporto24</p>
           </div>
+        <div *ngIf="registerError" id="notificationError">
+          <i class="bi bi-exclamation-triangle-fill"></i>&nbsp;&nbsp;
+          {{ errorMessage }}
+          <button (click)="closeError()" type="button" type="button" id="botaoFecharError">X</button>
+        </div>
+        <div *ngIf="registerSuccess" id="notificationSuccess">
+          <i class="bi bi-check-circle-fill"></i>&nbsp;&nbsp;
+          {{ successMessage }}
+          <button (click)="closeSuccess()" type="button" id="botaoFecharSuccess">X</button>
+        </div>
+        <div *ngIf="validation1" id="notificationInfo">
+          <i class="bi bi-exclamation-circle-fill"></i>&nbsp;&nbsp;
+          {{ validation }}
+          <button (click)="closeValidation()" type="button" id="botaoFecharInfo">X</button>
+        </div>
           <form>
             <input name="searchTerm" #searchTerm="ngModel" ngModel id="input1" type="search" placeholder="Procurar perfil...">
             <button id="botao1" type="submit" (click)="obterPerfis(searchTerm.value)">
@@ -110,6 +142,10 @@
         </button>
           </form>
           <table id="tabela1" *ngIf="showTable">
+            <thead>
+              <th>Foto de perfil</th>
+              <th>Nome do perfil</th>
+            </thead>
             <tbody *ngFor="let perfil of perfis" id="tabela2">
                     <td (click)="onSelectPerfil(perfil)">
                         <img height="40" width="40" src="{{perfil.profilePic}}" class="rounded-circle img-thumbnail" alt=""/>
@@ -162,8 +198,10 @@
       <li  id="ultimoLogin2"> {{selectedPerfil?.lastLoginDate}}</li>
       </ul>
   <button (click)="fecharPerfil()" id="botaoFechar">X</button>
+  <div *ngIf="showOptions">
   <button (click)="AddFriend()" id="botaoAdicionarAmigo">Enviar pedido<p> de amizade</p></button>
 <button id="botaoChat">Iniciar Chat</button>
+</div>
 <div id="content2" *ngIf="addFriend">
   <p id="D235logOut">Desporto24</p>
       <p id="D236logOut">Desporto24</p>
@@ -179,4 +217,6 @@
         <span *ngIf="!showLoading">Sim</span>
     </button>
   <button (click)="NaoAdd()" id="botao7">Não</button>
+</div>
+  </div>
   </div>

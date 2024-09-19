@@ -84,6 +84,18 @@
               <button (click)="DesbloquearAmigo()" id="botao6">Sim</button>
           <button (click)="naoDesbloquear()" id="botao7">Não</button>
           </div>
+          <div id="content2" *ngIf="removerAmigo">
+            <p id="D235logOut">Desporto24</p>
+                <p id="D236logOut">Desporto24</p>
+                <p id="D240logOut">Desporto24</p>
+                <p id="D239logOut">Desporto24</p>
+                <p id="D238logOut">Desporto24</p>
+                <p id="D237logOut">Desporto24</p>
+                <h4 id="h4white">Tens a certeza que queres remover
+                  {{selectedPerfil?.username}} da tua lista de amigos?</h4>
+                <button (click)="removeFriend()" id="botao6">Sim</button>
+            <button (click)="dontRemove()" id="botao7">Não</button>
+            </div>
       <div id="content3" *ngIf="showNotification">
     <p id="D235amigos">Desporto24</p>
         <p id="D236amigos">Desporto24</p>
@@ -267,7 +279,7 @@
 <button (click)="abrirChat()" id="botaoChat">Abrir Chat</button>
 <button *ngIf="block" (click)="blockAmigo()" id="botaoBloquear">Bloquear</button>
 <button *ngIf="!block" (click)="unblockAmigo()" id="botaoBloquear">Desbloquear</button>
-<button (click)="blockAmigo()" id="botaoRemover">Remover amigo</button>
+<button (click)="remove()" id="botaoRemover">Remover amigo</button>
 </div>
 <div id="content5" *ngIf="chat">
   <p id="D235chat">Desporto24</p>
@@ -396,6 +408,18 @@
               <button (click)="DesbloquearAmigo()" id="botao6">Sim</button>
           <button (click)="naoDesbloquear()" id="botao7">Não</button>
           </div>
+          <div id="content2" *ngIf="removerAmigo">
+            <p id="D235logOut">Desporto24</p>
+                <p id="D236logOut">Desporto24</p>
+                <p id="D240logOut">Desporto24</p>
+                <p id="D239logOut">Desporto24</p>
+                <p id="D238logOut">Desporto24</p>
+                <p id="D237logOut">Desporto24</p>
+                <h4 id="h4white">Tens a certeza que queres remover
+                  {{selectedPerfil?.username}} da tua lista de amigos?</h4>
+                <button (click)="removeFriend()" id="botao6">Sim</button>
+            <button (click)="dontRemove()" id="botao7">Não</button>
+            </div>
       <div id="content3" *ngIf="showNotification">
     <p id="D235amigos">Desporto24</p>
         <p id="D236amigos">Desporto24</p>

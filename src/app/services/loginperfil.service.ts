@@ -129,6 +129,16 @@ export class LoginperfilService {
     return formData;
   }
 
+  public removeFriendFromData(loggedInUsername: string, username2: string): FormData{
+    const formData = new FormData();
+    formData.append('username1',loggedInUsername);
+    formData.append('username2',username2);
+    return formData;
+  }
+
+  removeFriend(formData: FormData):Observable<HttpResponse<CustomHttpResponse>>{
+    return this.httpClient.put<CustomHttpResponse>(`${this.host}/menu/friendList/removeFriend`, formData, {observe: 'response'})
+  }
   unblockFriend(formData: FormData):Observable<HttpResponse<CustomHttpResponse>>{
     return this.httpClient.put<CustomHttpResponse>(`${this.host}/menu/friendList/unblockFriend`, formData, {observe: 'response'})
   }
@@ -144,8 +154,8 @@ export class LoginperfilService {
   friendList(username:string):Observable<Perfil[]>{
     return this.httpClient.get<Perfil[]>(`${this.host}/menu/friendList/${username}`);
   }
-  addFriend(formData:FormData):Observable<Perfil>{
-    return this.httpClient.post<Perfil>(`${this.host}/menu/perfis`,formData);
+  addFriend(formData:FormData):Observable<HttpResponse<CustomHttpResponse>>{
+    return this.httpClient.post<CustomHttpResponse>(`${this.host}/menu/perfis`,formData, {observe : 'response'});
   }
   obterSessoes() {
     return this.httpClient.get<Session[]>(`${this.host}/menu`);

@@ -74,6 +74,7 @@ export class MenuComponent implements OnInit {
   showScreen2!:boolean;
   moreThan1Notifications!:boolean;
   desbloquear!:boolean;
+  removerAmigo!:boolean;
 
   constructor(private authenticationService:AuthenticationService,private router:Router,private loginPerfilService: LoginperfilService) {
    }
@@ -143,8 +144,6 @@ export class MenuComponent implements OnInit {
     this.showPerfil = true;
     this.loginPerfilService.getChat(this.authenticationService.loggedInPerfilname,selectedPerfil.username).subscribe( data => {
       this.chatFriend = data;
-      console.log(this.chatFriend.whoBlocked)
-      console.log(this.perfil.username)
       if (this.chatFriend.whoBlocked == this.perfil.username){
         this.block = false;
       } else {
@@ -272,6 +271,7 @@ export class MenuComponent implements OnInit {
           this.refreshing = false;
           this.successMessage = response.body?.message;
           this.registerSuccess = true;
+          this.showNotification = false;
           window.history.replaceState({},'',`/menu`)
         },
         (errorResponse: HttpErrorResponse) => {
@@ -290,6 +290,7 @@ export class MenuComponent implements OnInit {
           this.refreshing = false;
           this.validation1 = true;
           this.validation = response.body?.message;
+          this.showNotification = false;
           window.history.replaceState({},'',`/menu/${this.perfil.username}`)
         },
         (errorResponse: HttpErrorResponse) => {
@@ -308,12 +309,41 @@ export class MenuComponent implements OnInit {
           this.refreshing = false;
           this.registerSuccess = true;
           this.successMessage = response.body?.message;
+          this.showNotification = false;
           window.history.replaceState({},'',`/menu`)
-          location.reload();
         },
         (errorResponse: HttpErrorResponse) => {
           this.registerError = true;
           this.errorMessage = errorResponse.error.message;
+          this.refreshing = false;
+        }
+      )
+    )
+  }
+  remove(){
+    this.removerAmigo = true;
+    window.history.replaceState({},'',`/menu/friendList/removeFriend`)
+  }
+  dontRemove(){
+    this.removerAmigo = false;
+    window.history.replaceState({},'',`/menu/friendList`)
+  }
+  removeFriend(){
+    const formData = this.loginPerfilService.removeFriendFromData(this.perfil.username,this.selectedPerfil.username);
+    this.refreshing = true;
+    this.subscriptions.push(
+      this.loginPerfilService.removeFriend(formData).subscribe(
+        (response: HttpResponse<CustomHttpResponse>) => {
+          this.refreshing = false;
+          this.validation1 = true;
+          this.validation = response.body?.message;
+          this.removerAmigo = false;
+          this.amigos = false;
+          this.showPerfil = false;
+        },
+        (errorResponse: HttpErrorResponse) => {
+          this.errorMessage = errorResponse.error.message;
+          this.registerError = true;
           this.refreshing = false;
         }
       )
@@ -344,6 +374,9 @@ export class MenuComponent implements OnInit {
           this.refreshing = false;
           this.validation1 = true;
           this.validation = response.body?.message;
+          this.bloquear = false;
+          this.amigos = false;
+          this.showPerfil = false;
         },
         (errorResponse: HttpErrorResponse) => {
           this.errorMessage = errorResponse.error.message;
@@ -363,6 +396,8 @@ export class MenuComponent implements OnInit {
           this.refreshing = false;
           this.validation1 = true;
           this.validation = response.body?.message;
+          this.amigos = false;
+          this.showPerfil = false;
         },
         (errorResponse: HttpErrorResponse) => {
           this.errorMessage = errorResponse.error.message;
@@ -417,7 +452,7 @@ obterSessoes(): void{
         this.refreshing = false;
         this.sessoes = response;
         this.validation1 = true;
-        this.validation = `Foram encontrados ${response.length} sessões`;
+        this.validation = `Foram encontradas ${response.length} sessões`;
       },
       (errorResponse: HttpErrorResponse) => {
         this.errorMessage = errorResponse.error.message;
