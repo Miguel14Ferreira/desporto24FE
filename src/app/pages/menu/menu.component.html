@@ -1,829 +1,135 @@
-<html>
-  @if (dark) {
-    <div class="img" (click)="NaoMostrarMenu()">
-      <h1 id="h1white">{{DESPORTO24}}</h1>
-      @if (!showMenu) {
-        <div (mouseover)="MostrarMenu()" id="img-fluid2">
-          <img src="{{perfil.profilePic}}" class="image-preview__image2" class="rounded-circle img-thumbnail">
-        </div>
-      }
-      @if (newNotification) {
-        <div>
-          @if (!showNotification) {
-            <div id="envelope">
-              <i class="bi bi-envelope-exclamation" routerLink="/menu/notifications" title="Abrir notificações"></i>
-            </div>
+<section class="dashboard-page">
+  <div class="dashboard-shell">
+    <header class="dashboard-header">
+      <div>
+        <p class="eyebrow">Desporto24</p>
+        <h1>
+          @if (profile) {
+            Olá, {{ profile.fullName || profile.username }}
+          } @else {
+            O teu desporto começa aqui
           }
-        </div>
-      }
-      @if (!newNotification) {
-        <div>
-          @if (!showNotification) {
-            <div id="envelope">
-              <i class="bi bi-envelope" routerLink="/menu/notifications" title="Abrir notificações"></i>
-            </div>
-          }
-        </div>
-      }
-      @if (registerError) {
-        <div id="notificationError">
-          <i class="bi bi-exclamation-triangle-fill"></i>&nbsp;&nbsp;
-          {{ errorMessage }}
-          <button (click)="closeError()" type="button" type="button" id="botaoFecharError">X</button>
-        </div>
-      }
-      @if (registerSuccess) {
-        <div id="notificationSuccess">
-          <i class="bi bi-check-circle-fill"></i>&nbsp;&nbsp;
-          {{ successMessage }}
-          <button (click)="closeSuccess()" type="button" id="botaoFecharSuccess">X</button>
-        </div>
-      }
-      @if (validation1) {
-        <div id="notificationInfo">
-          <i class="bi bi-exclamation-circle-fill"></i>&nbsp;&nbsp;
-          {{ validation }}
-          <button (click)="closeValidation()" type="button" id="botaoFecharInfo">X</button>
-        </div>
-      }
-      @if (showMenu) {
-        <div id="content">
-          <p id="D243menu">{{DESPORTO24}}</p>
-          <p id="D244menu">{{DESPORTO24}}</p>
-          <p id="D245menu">{{DESPORTO24}}</p>
-          <p id="D246menu">{{DESPORTO24}}</p>
-          <p id="D247menu">{{DESPORTO24}}</p>
-          <p id="D248menu">{{DESPORTO24}}</p>
-          <h3>{{perfil.username}}</h3>
-          <img src="{{perfil.profilePic}}" id="img-fluid" class="rounded-circle" alt=""/>
-          <button (click)="NaoMostrarMenu()" id="botaoFechar">X</button>
-          <ul>
-            <li id="opcao8" (click)="Amigos()" routerLinkActive="active-link">{{FRIENDLIST}}</li>
-            <li id="opcao2" (click)="alterarDados()" routerLinkActive="active-link">{{CHANGEPROFILEDATA}}</li>
-            <li id="opcao3" (click)="alterarPassword()" routerLinkActive="active-link">{{CHANGEPROFILEPASSWORD}}</li>
-            <li id="opcao4" (click)="verDadosPerfil()" routerLinkActive="active-link">{{PROFILEDATA}}</li>
-            <li id="opcao6" (click)="Utilizadores()" routerLinkActive="active-link">{{SEARCH_PLAYERS}}</li>
-            <li id="opcao7" (click)="CriarSessao()" routerLinkActive="active-link">{{CREATE_SESSION}}</li>
-            <li id="opcao5" (click)="terminarSessao()" routerLinkActive="active-link">{{LOG_OFF}}</li>
-          </ul>
-        </div>
-      }
-      @if (amigos) {
-        <div id="content4">
-          <p id="D235amigos">{{DESPORTO24}}</p>
-          <p id="D236amigos">{{DESPORTO24}}</p>
-          <p id="D240amigos">{{DESPORTO24}}</p>
-          <p id="D239amigos">{{DESPORTO24}}</p>
-          <p id="D238amigos">{{DESPORTO24}}</p>
-          <p id="D237amigos">{{DESPORTO24}}</p>
-          <h4>Amigos</h4>
-          <button (click)="naoMostrarAmigos()" id="botaoFecharAmigos">X</button>
-          @if (!emptyFriendList) {
-            <div>
-              <p id="empty">{{EMPTY_FRIENDLIST}}</p>
-            </div>
-          }
-          <table id="tabela3">
-            @for (perfil of perfis; track perfil) {
-              <tbody>
-                <td (click)="onSelectPerfil(perfil)">
-                  <img height="40" width="40" src="{{perfil.profilePic}}" class="rounded-circle img-thumbnail" alt=""/>
-                </td>
-                <td (click)="onSelectPerfil(perfil)"> {{perfil.username}}</td>
-              </tbody>
-            }
-          </table>
-        </div>
-      }
-      @if (bloquear) {
-        <div id="content2">
-          <p id="D235logOut">{{DESPORTO24}}</p>
-          <p id="D236logOut">{{DESPORTO24}}</p>
-          <p id="D240logOut">{{DESPORTO24}}</p>
-          <p id="D239logOut">{{DESPORTO24}}</p>
-          <p id="D238logOut">{{DESPORTO24}}</p>
-          <p id="D237logOut">{{DESPORTO24}}</p>
-          <h4 id="h4white">Tens a certeza que queres bloquear
-            <p>{{selectedPerfil?.username}}?</p></h4>
-            <button (click)="bloquearAmigo()" id="botao6">Sim</button>
-            <button (click)="naoBloquear()" id="botao7">Não</button>
-          </div>
-        }
-        @if (desbloquear) {
-          <div id="content2">
-            <p id="D235logOut">{{DESPORTO24}}</p>
-            <p id="D236logOut">{{DESPORTO24}}</p>
-            <p id="D240logOut">{{DESPORTO24}}</p>
-            <p id="D239logOut">{{DESPORTO24}}</p>
-            <p id="D238logOut">{{DESPORTO24}}</p>
-            <p id="D237logOut">{{DESPORTO24}}</p>
-            <h4 id="h4white">Tens a certeza que queres desbloquear
-              <p>{{selectedPerfil?.username}}?</p></h4>
-              <button (click)="DesbloquearAmigo()" id="botao6">Sim</button>
-              <button (click)="naoDesbloquear()" id="botao7">Não</button>
-            </div>
-          }
-          @if (removerAmigo) {
-            <div id="content2">
-              <p id="D235logOut">{{DESPORTO24}}</p>
-              <p id="D236logOut">{{DESPORTO24}}</p>
-              <p id="D240logOut">{{DESPORTO24}}</p>
-              <p id="D239logOut">{{DESPORTO24}}</p>
-              <p id="D238logOut">{{DESPORTO24}}</p>
-              <p id="D237logOut">{{DESPORTO24}}</p>
-              <h4 id="h4white">Tens a certeza que queres remover
-              {{selectedPerfil?.username}} da tua lista de amigos?</h4>
-              <button (click)="removeFriend()" id="botao6">Sim</button>
-              <button (click)="dontRemove()" id="botao7">Não</button>
-            </div>
-          }
-          @if (showNotification) {
-            <div id="content3">
-              <p id="D235amigos">{{DESPORTO24}}</p>
-              <p id="D236amigos">{{DESPORTO24}}</p>
-              <p id="D240amigos">{{DESPORTO24}}</p>
-              <p id="D239amigos">{{DESPORTO24}}</p>
-              <p id="D238amigos">{{DESPORTO24}}</p>
-              <p id="D237amigos">{{DESPORTO24}}</p>
-              <h4>Notificações</h4>
-              <button (click)="NaoMostrarNotificacoes()" id="botaoFecharAmigos">X</button>
-              <div id="notificacoes">
-                @if (moreThan1Notifications) {
-                  <div>
-                    @for (Notification of Notifications.slice().reverse(); track Notification; let i = $index) {
-                      <div>
-                        <hr>
-                          <div (click)="onSelectedNotification(Notification)" id="notification">{{Notification.assunto}}
-                            <p id="notification2">{{Notification.createdAt}}</p>
-                          </div>
-                          <hr>
-                          </div>
-                        }
-                      </div>
-                    }
-                    @if (!moreThan1Notifications) {
-                      <div>
-                        <p>{{EMPTY_NOTIFICATIONS}}</p>
-                      </div>
-                    }
-                  </div>
-                </div>
-              }
-              @if (showNotificationMessage) {
-                <div id="viewNotificationModal">
-                  <h4>Mensagem:</h4>
-                  <div id="mensagem">
-                    <p id="p1"><strong>Assunto:</strong>{{selectedNotification?.assunto}}</p>
-                    <p id="p2">{{selectedNotification?.mensagem}}</p>
-                    <p id="p3">{{selectedNotification?.cumprimentos}}</p>
-                    <p id="p4">{{selectedNotification?.assinatura}}</p>
-                    <p id="p5">{{selectedNotification?.createdAt}}</p>
-                  </div>
-                  <button (click)="fecharMensagem()" id="botaoFecharNotificacoes">X</button>
-                  <button (click)="eliminarNotificacao(selectedNotification)" id="botaoEliminarNotificacao">Eliminar</button>
-                </div>
-              }
-              @if (showNotificationFriendRequestMessage) {
-                <div id="viewNotificationModal">
-                  <h4>Mensagem:</h4>
-                  <div id="mensagem">
-                    <p id="p1"><strong>Assunto:</strong>{{selectedNotification?.assunto}}</p>
-                    <p id="p2">{{selectedNotification?.mensagem}}</p>
-                    <p id="p3">{{selectedNotification?.cumprimentos}}</p>
-                    <p id="p4">{{selectedNotification?.assinatura}}</p>
-                    <p id="p5">{{selectedNotification?.createdAt}}</p>
-                  </div>
-                  <button (click)="fecharMensagem()" id="botaoFecharNotificacoes">X</button>
-                  <button (click)="aceitarAmigo(selectedNotification)" id="botaoAceitar">Aceitar</button>
-                  <button (click)="rejeitarAmigo(selectedNotification)" id="botaoEliminarNotificacao2">Rejeitar</button>
-                </div>
-              }
-              @if (showNotificationUpdatePerfil) {
-                <div id="viewNotificationModal">
-                  <h4>Mensagem:</h4>
-                  <div id="mensagem">
-                    <p id="p1"><strong>Assunto:</strong>{{selectedNotification?.assunto}}</p>
-                    <p id="p2">{{selectedNotification?.mensagem}}</p>
-                    <p id="p3">{{selectedNotification?.cumprimentos}}</p>
-                    <p id="p4">{{selectedNotification?.assinatura}}</p>
-                    <p id="p5">{{selectedNotification?.createdAt}}</p>
-                  </div>
-                  <button (click)="fecharMensagem()" id="botaoFecharNotificacoes">X</button>
-                  <button (click)="eliminarNotificacao(selectedNotification)" id="botaoAceitar">Eliminar mensagem</button>
-                  <button (click)="bloquearConta()" id="botaoEliminarNotificacao2">Bloquear conta</button>
-                </div>
-              }
-              <div id="container2">
-                <p id="D24a">{{DESPORTO24}}</p>
-                <p id="D241a">{{DESPORTO24}}</p>
-                <p id="D243a">{{DESPORTO24}}</p>
-                <p id="D244a">{{DESPORTO24}}</p>
-                <p id="D245a">{{DESPORTO24}}</p>
-                <h2 id="h2white">{{AVAILABLE_SESSIONS}}</h2>
-                @if (logOut) {
-                  <div id="content2">
-                    <p id="D235logOut">{{DESPORTO24}}</p>
-                    <p id="D236logOut">{{DESPORTO24}}</p>
-                    <p id="D240logOut">{{DESPORTO24}}</p>
-                    <p id="D239logOut">{{DESPORTO24}}</p>
-                    <p id="D238logOut">{{DESPORTO24}}</p>
-                    <p id="D237logOut">{{DESPORTO24}}</p>
-                    <h4 id="h4white">Tens a certeza que queres terminar a sessão?</h4>
-                    <button id="botao6" (click)="remover()">Sim</button>
-                    <button id="botao7" (click)="voltar()">Não</button>
-                  </div>
-                }
-                <form>
-                  <input name="searchTerm" #searchTerm="ngModel" ngModel (ngModelChange)="procurarSessoes(searchTerm.value)" id="input1" type="search" placeholder="Procurar sessão...">
-                </form>
-                <button id="botao1" type="button" (click)="obterSessoes()" class="btn btn-info">
-                  @if (refreshing) {
-                    <i class="fas fa-sync fa-spin"></i>
-                  }
-                  @if (!refreshing) {
-                    <i class="fas fa-sync"></i>
-                  }
-                </button>
-                <table id="tabela1">
-                  <thead>
-                    <tr>
-                      <th>{{GAME_PIC}}</th>
-                      <th>{{GAME_CREATED_BY}}</th>
-                      <th>{{GAME_NUMBER_PLAYERS}}</th>
-                      <th>{{GAME_DATE}}</th>
-                      <th>{{GAME_LOCAL}}</th>
-                    </tr>
-                  </thead>
-                  @for (sessao of sessoes; track sessao) {
-                    <tbody id="tabela2">
-                      <td>
-                        <img height="40" width="40" src="{{sessao.foto}}" class="rounded-circle img-fluid img-thumbnail" alt=""/>
-                      </td>
-                      <td (click)="onSelectSessao(sessao)"> {{sessao.utilizador}}</td>
-                      <td (click)="onSelectSessao(sessao)"> {{sessao.desporto}}</td>
-                      <td (click)="onSelectSessao(sessao)"> {{sessao.jogadores}} </td>
-                      <td (click)="onSelectSessao(sessao)"> {{sessao.localidade}}</td>
-                      <td (click)="onSelectSessao(sessao)"> {{sessao.private}} </td>
-                    </tbody>
-                  }
-                </table>
-                @if (show) {
-                  <div id="viewSessaoModal">
-                    <p id="D24">{{DESPORTO24}}</p>
-                    <p id="D241">{{DESPORTO24}}</p>
-                    <p id="D242">{{DESPORTO24}}</p>
-                    <p id="D243">{{DESPORTO24}}</p>
-                    <p id="D244">{{DESPORTO24}}</p>
-                    <p id="D245">{{DESPORTO24}}</p>
-                    <p id="D246">{{DESPORTO24}}</p>
-                    <p id="D247">{{DESPORTO24}}</p>
-                    <p id="D248">{{DESPORTO24}}</p>
-                    <div class="image-preview" id="imagePreview">
-                      <img src="{{selectedSessao?.foto}}" alt="Image Preview" class="image-preview__image"/>
-                    </div>
-                    <ul>
-                      <li id="dataNascimento">Data de jogo</li>
-                      <li id="dataNascimento2"> {{selectedSessao?.dataDeJogo}}
-                      </li>
-                      <li id="genero">Nº máximo jogadores</li>
-                      <li id="genero2"> {{selectedSessao?.jogadores}} </li>
-                      <li id="paisNascimento">Localidade</li>
-                      <li id="paisNascimento2"> {{selectedSessao?.localidade}} </li>
-                      <li id="desportosFavoritos">Morada de jogo</li>
-                      <li id="desportosFavoritos2"> {{selectedSessao?.morada}}</li>
-                      <li id="estadoDaConta">Tipo de jogo</li>
-                      <li id="membroDesde">Jogo criado por:</li>
-                      <li id="membroDesde2"> {{selectedSessao?.utilizador}}</li>
-                      <li  id="ultimoLogin">Jogo criado no dia:</li>
-                      <li  id="ultimoLogin2"> {{selectedSessao?.dataDeJogoCriado}}</li>
-                    </ul>
-                    <button (click)="fecharSessao()" id="botaoFechar">X</button>
-                    <button id="botaoChat">Iniciar Chat</button>
-                  </div>
-                }
-              </div>
-              @if (showPerfil) {
-                <div id="viewPerfilModal">
-                  <p id="D24modal">{{DESPORTO24}}</p>
-                  <p id="D241modal">{{DESPORTO24}}</p>
-                  <p id="D242modal">{{DESPORTO24}}</p>
-                  <p id="D243modal">{{DESPORTO24}}</p>
-                  <p id="D244modal">{{DESPORTO24}}</p>
-                  <p id="D245modal">{{DESPORTO24}}</p>
-                  <p id="D246modal">{{DESPORTO24}}</p>
-                  <p id="D247modal">{{DESPORTO24}}</p>
-                  <p id="D248modal">{{DESPORTO24}}</p>
-                  <div class="image-preview" id="imagePreview">
-                    <img src="{{selectedPerfil?.profilePic}}" alt="Image Preview" class="image-preview__image"/>
-                  </div>
-                  <div id="username">
-                    {{selectedPerfil?.username}}
-                  </div>
-                  <ul>
-                    <li id="dataNascimento">Data de nascimento</li>
-                    <li id="dataNascimento2"> {{selectedPerfil?.dateOfBirth}}
-                    </li>
-                    <li id="genero">Género </li>
-                    <li id="genero2"> {{selectedPerfil?.gender}} </li>
-                    <li id="paisNascimento">País de nascimento </li>
-                    <li id="paisNascimento2"> {{selectedPerfil?.country}} </li>
-                    <li id="desportosFavoritos">Desportos favoritos</li>
-                    <li id="desportosFavoritos2"> {{selectedPerfil?.favoriteSports}}</li>
-                    <li id="localidade">Localidade</li>
-                    <li id="localidade2"> {{selectedPerfil?.location}}</li>
-                    <li id="estadoDaConta">Estado da conta:</li>
-                    <li>
-                      @if (locked) {
-                        <span id="estadoDaConta2">Conta bloqueada</span>
-                      }
-                      @if (!locked) {
-                        <span id="estadoDaConta2">Conta ativa</span>
-                      }
-                    </li>
-                    <li id="membroDesde">Membro desde:</li>
-                    <li id="membroDesde2"> {{selectedPerfil?.joinDateDisplay}}</li>
-                    <li  id="ultimoLogin">Ultimo Login:</li>
-                    <li  id="ultimoLogin2"> {{selectedPerfil?.lastLoginDateDisplay}}</li>
-                  </ul>
-                  <button (click)="fecharPerfil()" id="botaoFechar">X</button>
-                  <button (click)="abrirChat()" id="botaoChat">Abrir Chat</button>
-                  @if (block) {
-                    <button (click)="blockAmigo()" id="botaoBloquear">Bloquear</button>
-                  }
-                  @if (!block) {
-                    <button (click)="unblockAmigo()" id="botaoBloquear">Desbloquear</button>
-                  }
-                  <button (click)="remove()" id="botaoRemover">Remover amigo</button>
-                </div>
-              }
-              @if (chat) {
-                <div id="content5">
-                  <p id="D235chat">{{DESPORTO24}}</p>
-                  <p id="D236chat">{{DESPORTO24}}</p>
-                  <p id="D240chat">{{DESPORTO24}}</p>
-                  <p id="D239chat">{{DESPORTO24}}</p>
-                  <p id="D238chat">{{DESPORTO24}}</p>
-                  <p id="D237chat">{{DESPORTO24}}</p>
-                  <p id="D241chat">{{DESPORTO24}}</p>
-                  <div id="tabela4">
-                    <div>
-                      <div class="image-previewChat" id="imagePreview">
-                        <img src="{{selectedPerfil?.profilePic}}" alt="Image Preview" class="image-preview__image"/>
-                      </div>
-                      <div id="conversaComPerfil"> {{selectedPerfil.username}}</div>
-                      @if (!online) {
-                        <div>
-                          <div id="conversaComPerfil2">OFFLINE</div>
-                          <div id="conversaComPerfil3">Ultima vez online: {{selectedPerfil.lastLoginDateDisplay}}</div></div>
-                        }
-                        @if (online) {
-                          <div><div id="conversaComPerfil2">ONLINE</div></div>
-                        }
-                      </div>
-                    </div>
-                    <div id="mensagensChat">
-                      @for (chat of chats; track chat) {
-                        <div>
-                          @if (chat.username1 == this.perfil.username) {
-                            <div id="mensagemEnviada">
-                              <strong>{{chat.username1}}:</strong>&nbsp;{{chat.text}}
-                            </div>
-                          }
-                          @if (chat.username1 == this.selectedPerfil.username) {
-                            <div id="mensagemRecebida">
-                              <strong>{{chat.username1}}:</strong>&nbsp;{{chat.text}}
-                            </div>
-                          }
-                        </div>
-                      }
-                    </div>
-                    <form #sendMessageForm="ngForm" (ngSubmit)="enviarMensagemChat(sendMessageForm.value)">
-                      <input [(ngModel)]="enviarMensagem.text" name="chat" id="mensagensChatEnvio">
-                      <button id="botaoChatEnvio" type="submit">Enviar
-                        @if (refreshing) {
-                          <i class="fas fa-spin"></i>
-                        }
-                        @if (!refreshing) {
-                          <i class="fas"></i>
-                        }
-                      </button>
-                    </form>
-                    <button (click)="fecharChat()" id="botaoFechar">X</button>
-                  </div>
-                }
-              </div>
-            }
+        </h1>
+        <p class="subtitle">Encontra pessoas para jogar, cria sessões e acompanha a tua comunidade.</p>
+      </div>
 
-            @if (!dark) {
-              <div class="img2" (click)="NaoMostrarMenu()">
-                <h1 id="h1black">{{DESPORTO24}}</h1>
-                @if (!showMenu) {
-                  <div (mouseover)="MostrarMenu()" id="img-fluid2black">
-                    <img src="{{perfil.profilePic}}" class="image-preview__image2" class="rounded-circle img-thumbnail">
-                  </div>
-                }
-                @if (newNotification) {
-                  <div>
-                    @if (!showNotification) {
-                      <div id="envelope">
-                        <i class="bi bi-envelope-exclamation" routerLink="/menu/notifications" title="Abrir notificações"></i>
-                      </div>
-                    }
-                  </div>
-                }
-                @if (!newNotification) {
-                  <div>
-                    @if (!showNotification) {
-                      <div id="envelope">
-                        <i class="bi bi-envelope" routerLink="/menu/notifications" title="Abrir notificações"></i>
-                      </div>
-                    }
-                  </div>
-                }
-                @if (registerError) {
-                  <div id="notificationError">
-                    <i class="bi bi-exclamation-triangle-fill"></i>&nbsp;&nbsp;
-                    {{ errorMessage }}
-                    <button (click)="closeError()" type="button" type="button" id="botaoFecharError">X</button>
-                  </div>
-                }
-                @if (registerSuccess) {
-                  <div id="notificationSuccess">
-                    <i class="bi bi-check-circle-fill"></i>&nbsp;&nbsp;
-                    {{ successMessage }}
-                    <button (click)="closeSuccess()" type="button" id="botaoFecharSuccess">X</button>
-                  </div>
-                }
-                @if (validation1) {
-                  <div id="notificationInfo">
-                    <i class="bi bi-exclamation-circle-fill"></i>&nbsp;&nbsp;
-                    {{ validation }}
-                    <button (click)="closeValidation()" type="button" id="botaoFecharInfo">X</button>
-                  </div>
-                }
-                @if (showMenu) {
-                  <div id="content">
-                    <p id="D243menu">{{DESPORTO24}}</p>
-                    <p id="D244menu">{{DESPORTO24}}</p>
-                    <p id="D245menu">{{DESPORTO24}}</p>
-                    <p id="D246menu">{{DESPORTO24}}</p>
-                    <p id="D247menu">{{DESPORTO24}}</p>
-                    <p id="D248menu">{{DESPORTO24}}</p>
-                    <h3>{{perfil.username}}</h3>
-                    <img src="{{perfil.profilePic}}" id="img-fluid" class="rounded-circle" alt=""/>
-                    <button (click)="NaoMostrarMenu()" id="botaoFechar">X</button>
-                    <ul>
-                      <li id="opcao8" (click)="Amigos()" routerLinkActive="active-link">{{FRIENDLIST}}</li>
-                      <li id="opcao2" (click)="alterarDados()" routerLinkActive="active-link">{{CHANGEPROFILEDATA}}</li>
-                      <li id="opcao3" (click)="alterarPassword()" routerLinkActive="active-link">{{CHANGEPROFILEPASSWORD}}</li>
-                      <li id="opcao4" (click)="verDadosPerfil()" routerLinkActive="active-link">{{PROFILEDATA}}</li>
-                      <li id="opcao6" (click)="Utilizadores()" routerLinkActive="active-link">{{SEARCH_PLAYERS}}</li>
-                      <li id="opcao7" (click)="CriarSessao()" routerLinkActive="active-link">{{CREATE_SESSION}}</li>
-                      <li id="opcao5" (click)="terminarSessao()" routerLinkActive="active-link">{{LOG_OFF}}</li>
-                    </ul>
-                  </div>
-                }
-                @if (amigos) {
-                  <div id="content4">
-                    <p id="D235amigos">{{DESPORTO24}}</p>
-                    <p id="D236amigos">{{DESPORTO24}}</p>
-                    <p id="D240amigos">{{DESPORTO24}}</p>
-                    <p id="D239amigos">{{DESPORTO24}}</p>
-                    <p id="D238amigos">{{DESPORTO24}}</p>
-                    <p id="D237amigos">{{DESPORTO24}}</p>
-                    <h4>Amigos</h4>
-                    <button (click)="naoMostrarAmigos()" id="botaoFecharAmigos">X</button>
-                    @if (!emptyFriendList) {
-                      <div>
-                        <p id="empty">{{EMPTY_FRIENDLIST}}</p>
-                      </div>
-                    }
-                    <table id="tabela3">
-                      @for (perfil of perfis; track perfil) {
-                        <tbody>
-                          <td (click)="onSelectPerfil(perfil)">
-                            <img height="40" width="40" src="{{perfil.profilePic}}" class="rounded-circle img-thumbnail" alt=""/>
-                          </td>
-                          <td (click)="onSelectPerfil(perfil)"> {{perfil.username}}</td>
-                        </tbody>
-                      }
-                    </table>
-                  </div>
-                }
-                @if (bloquear) {
-                  <div id="content2">
-                    <p id="D235logOut">{{DESPORTO24}}</p>
-                    <p id="D236logOut">{{DESPORTO24}}</p>
-                    <p id="D240logOut">{{DESPORTO24}}</p>
-                    <p id="D239logOut">{{DESPORTO24}}</p>
-                    <p id="D238logOut">{{DESPORTO24}}</p>
-                    <p id="D237logOut">{{DESPORTO24}}</p>
-                    <h4 id="h4white">Tens a certeza que queres bloquear
-                      <p>{{selectedPerfil?.username}}?</p></h4>
-                      <button (click)="bloquearAmigo()" id="botao6">Sim</button>
-                      <button (click)="naoBloquear()" id="botao7">Não</button>
-                    </div>
-                  }
-                  @if (desbloquear) {
-                    <div id="content2">
-                      <p id="D235logOut">{{DESPORTO24}}</p>
-                      <p id="D236logOut">{{DESPORTO24}}</p>
-                      <p id="D240logOut">{{DESPORTO24}}</p>
-                      <p id="D239logOut">{{DESPORTO24}}</p>
-                      <p id="D238logOut">{{DESPORTO24}}</p>
-                      <p id="D237logOut">{{DESPORTO24}}</p>
-                      <h4 id="h4white">Tens a certeza que queres desbloquear
-                        <p>{{selectedPerfil?.username}}?</p></h4>
-                        <button (click)="DesbloquearAmigo()" id="botao6">Sim</button>
-                        <button (click)="naoDesbloquear()" id="botao7">Não</button>
-                      </div>
-                    }
-                    @if (removerAmigo) {
-                      <div id="content2">
-                        <p id="D235logOut">{{DESPORTO24}}</p>
-                        <p id="D236logOut">{{DESPORTO24}}</p>
-                        <p id="D240logOut">{{DESPORTO24}}</p>
-                        <p id="D239logOut">{{DESPORTO24}}</p>
-                        <p id="D238logOut">{{DESPORTO24}}</p>
-                        <p id="D237logOut">{{DESPORTO24}}</p>
-                        <h4 id="h4white">Tens a certeza que queres remover
-                        {{selectedPerfil?.username}} da tua lista de amigos?</h4>
-                        <button (click)="removeFriend()" id="botao6">Sim</button>
-                        <button (click)="dontRemove()" id="botao7">Não</button>
-                      </div>
-                    }
-                    @if (showNotification) {
-                      <div id="content3">
-                        <p id="D235amigos">{{DESPORTO24}}</p>
-                        <p id="D236amigos">{{DESPORTO24}}</p>
-                        <p id="D240amigos">{{DESPORTO24}}</p>
-                        <p id="D239amigos">{{DESPORTO24}}</p>
-                        <p id="D238amigos">{{DESPORTO24}}</p>
-                        <p id="D237amigos">{{DESPORTO24}}</p>
-                        <h4>Notificações</h4>
-                        <button (click)="NaoMostrarNotificacoes()" id="botaoFecharAmigos">X</button>
-                        <div id="notificacoes">
-                          @if (moreThan1Notifications) {
-                            <div>
-                              @for (Notification of Notifications.slice().reverse(); track Notification; let i = $index) {
-                                <div>
-                                  <hr>
-                                    <div (click)="onSelectedNotification(Notification)" id="notification">{{Notification.assunto}}
-                                      <p id="notification2">{{Notification.createdAt}}</p>
-                                    </div>
-                                    <hr>
-                                    </div>
-                                  }
-                                </div>
-                              }
-                              @if (!moreThan1Notifications) {
-                                <div>
-                                  <p>{{EMPTY_NOTIFICATIONS}}</p>
-                                </div>
-                              }
-                            </div>
-                          </div>
-                        }
-                        @if (showNotificationMessage) {
-                          <div id="viewNotificationModal">
-                            <h4>Mensagem:</h4>
-                            <div id="mensagem">
-                              <p id="p1"><strong>Assunto:</strong>{{selectedNotification?.assunto}}</p>
-                              <p id="p2">{{selectedNotification?.mensagem}}</p>
-                              <p id="p3">{{selectedNotification?.cumprimentos}}</p>
-                              <p id="p4">{{selectedNotification?.assinatura}}</p>
-                              <p id="p5">{{selectedNotification?.createdAt}}</p>
-                            </div>
-                            <button (click)="fecharMensagem()" id="botaoFecharNotificacoes">X</button>
-                            <button (click)="eliminarNotificacao(selectedNotification)" id="botaoEliminarNotificacao">Eliminar</button>
-                          </div>
-                        }
-                        @if (showNotificationFriendRequestMessage) {
-                          <div id="viewNotificationModal">
-                            <h4>Mensagem:</h4>
-                            <div id="mensagem">
-                              <p id="p1"><strong>Assunto:</strong>{{selectedNotification?.assunto}}</p>
-                              <p id="p2">{{selectedNotification?.mensagem}}</p>
-                              <p id="p3">{{selectedNotification?.cumprimentos}}</p>
-                              <p id="p4">{{selectedNotification?.assinatura}}</p>
-                              <p id="p5">{{selectedNotification?.createdAt}}</p>
-                            </div>
-                            <button (click)="fecharMensagem()" id="botaoFecharNotificacoes">X</button>
-                            <button (click)="aceitarAmigo(selectedNotification)" id="botaoAceitar">Aceitar</button>
-                            <button (click)="rejeitarAmigo(selectedNotification)" id="botaoEliminarNotificacao2">Rejeitar</button>
-                          </div>
-                        }
-                        @if (showNotificationUpdatePerfil) {
-                          <div id="viewNotificationModal">
-                            <h4>Mensagem:</h4>
-                            <div id="mensagem">
-                              <p id="p1"><strong>Assunto:</strong>{{selectedNotification?.assunto}}</p>
-                              <p id="p2">{{selectedNotification?.mensagem}}</p>
-                              <p id="p3">{{selectedNotification?.cumprimentos}}</p>
-                              <p id="p4">{{selectedNotification?.assinatura}}</p>
-                              <p id="p5">{{selectedNotification?.createdAt}}</p>
-                            </div>
-                            <button (click)="fecharMensagem()" id="botaoFecharNotificacoes">X</button>
-                            <button (click)="eliminarNotificacao(selectedNotification)" id="botaoAceitar">Eliminar mensagem</button>
-                            <button (click)="bloquearConta()" id="botaoEliminarNotificacao2">Bloquear conta</button>
-                          </div>
-                        }
-                        <div id="container">
-                          <p id="D24">{{DESPORTO24}}</p>
-                          <p id="D241">{{DESPORTO24}}</p>
-                          <p id="D243">{{DESPORTO24}}</p>
-                          <p id="D244">{{DESPORTO24}}</p>
-                          <p id="D245">{{DESPORTO24}}</p>
-                          <h2 id="h2black">{{AVAILABLE_SESSIONS}}</h2>
-                          @if (logOut) {
-                            <div id="content2">
-                              <p id="D235logOut">{{DESPORTO24}}</p>
-                              <p id="D236logOut">{{DESPORTO24}}</p>
-                              <p id="D240logOut">{{DESPORTO24}}</p>
-                              <p id="D239logOut">{{DESPORTO24}}</p>
-                              <p id="D238logOut">{{DESPORTO24}}</p>
-                              <p id="D237logOut">{{DESPORTO24}}</p>
-                              <h4 id="h4white">Tens a certeza que queres terminar a sessão?</h4>
-                              <button id="botao6" (click)="remover()">Sim</button>
-                              <button id="botao7" (click)="voltar()">Não</button>
-                            </div>
-                          }
-                          <form>
-                            <input name="searchTerm" #searchTerm="ngModel" ngModel (ngModelChange)="procurarSessoes(searchTerm.value)" id="input1" type="search" placeholder="Procurar sessão...">
-                          </form>
-                          <button id="botao1" type="button" (click)="obterSessoes()" class="btn btn-info">
-                            @if (refreshing) {
-                              <i class="fas fa-sync fa-spin"></i>
-                            }
-                            @if (!refreshing) {
-                              <i class="fas fa-sync"></i>
-                            }
-                          </button>
-                          <table id="tabela1">
-                            <thead>
-                              <tr>
-                                <th>{{GAME_PIC}}</th>
-                                <th>{{GAME_CREATED_BY}}</th>
-                                <th>{{GAME_NUMBER_PLAYERS}}</th>
-                                <th>{{GAME_DATE}}</th>
-                                <th>{{GAME_LOCAL}}</th>
-                              </tr>
-                            </thead>
-                            @for (sessao of sessoes; track sessao) {
-                              <tbody id="tabela2">
-                                <td>
-                                  <img height="40" width="40" src="{{sessao.foto}}" class="rounded-circle img-fluid img-thumbnail" alt=""/>
-                                </td>
-                                <td (click)="onSelectSessao(sessao)"> {{sessao.utilizador}}</td>
-                                <td (click)="onSelectSessao(sessao)"> {{sessao.desporto}}</td>
-                                <td (click)="onSelectSessao(sessao)"> {{sessao.jogadores}} </td>
-                                <td (click)="onSelectSessao(sessao)"> {{sessao.localidade}}</td>
-                                <td (click)="onSelectSessao(sessao)"> {{sessao.private}} </td>
-                              </tbody>
-                            }
-                          </table>
-                          @if (show) {
-                            <div id="viewSessaoModal">
-                              <p id="D24">{{DESPORTO24}}</p>
-                              <p id="D241">{{DESPORTO24}}</p>
-                              <p id="D242">{{DESPORTO24}}</p>
-                              <p id="D243">{{DESPORTO24}}</p>
-                              <p id="D244">{{DESPORTO24}}</p>
-                              <p id="D245">{{DESPORTO24}}</p>
-                              <p id="D246">{{DESPORTO24}}</p>
-                              <p id="D247">{{DESPORTO24}}</p>
-                              <p id="D248">{{DESPORTO24}}</p>
-                              <div class="image-preview" id="imagePreview">
-                                <img src="{{selectedSessao?.foto}}" alt="Image Preview" class="image-preview__image"/>
-                              </div>
-                              <ul>
-                                <li id="dataNascimento">Data de jogo</li>
-                                <li id="dataNascimento2"> {{selectedSessao?.dataDeJogo}}
-                                </li>
-                                <li id="genero">Nº máximo jogadores</li>
-                                <li id="genero2"> {{selectedSessao?.jogadores}} </li>
-                                <li id="paisNascimento">Localidade</li>
-                                <li id="paisNascimento2"> {{selectedSessao?.localidade}} </li>
-                                <li id="desportosFavoritos">Morada de jogo</li>
-                                <li id="desportosFavoritos2"> {{selectedSessao?.morada}}</li>
-                                <li id="estadoDaConta">Tipo de jogo</li>
-                                <li id="membroDesde">Jogo criado por:</li>
-                                <li id="membroDesde2"> {{selectedSessao?.utilizador}}</li>
-                                <li  id="ultimoLogin">Jogo criado no dia:</li>
-                                <li  id="ultimoLogin2"> {{selectedSessao?.dataDeJogoCriado}}</li>
-                              </ul>
-                              <button (click)="fecharSessao()" id="botaoFechar">X</button>
-                              <button id="botaoChat">Iniciar Chat</button>
-                            </div>
-                          }
-                        </div>
-                        @if (showPerfil) {
-                          <div id="viewPerfilModal">
-                            <p id="D24modal">{{DESPORTO24}}</p>
-                            <p id="D241modal">{{DESPORTO24}}</p>
-                            <p id="D242modal">{{DESPORTO24}}</p>
-                            <p id="D243modal">{{DESPORTO24}}</p>
-                            <p id="D244modal">{{DESPORTO24}}</p>
-                            <p id="D245modal">{{DESPORTO24}}</p>
-                            <p id="D246modal">{{DESPORTO24}}</p>
-                            <p id="D247modal">{{DESPORTO24}}</p>
-                            <p id="D248modal">{{DESPORTO24}}</p>
-                            <div class="image-preview" id="imagePreview">
-                              <img src="{{selectedPerfil?.profilePic}}" alt="Image Preview" class="image-preview__image"/>
-                            </div>
-                            <div id="username">
-                              {{selectedPerfil?.username}}
-                            </div>
-                            <ul>
-                              <li id="dataNascimento">Data de nascimento</li>
-                              <li id="dataNascimento2"> {{selectedPerfil?.dateOfBirth}}
-                              </li>
-                              <li id="genero">Género </li>
-                              <li id="genero2"> {{selectedPerfil?.gender}} </li>
-                              <li id="paisNascimento">País de nascimento </li>
-                              <li id="paisNascimento2"> {{selectedPerfil?.country}} </li>
-                              <li id="desportosFavoritos">Desportos favoritos</li>
-                              <li id="desportosFavoritos2"> {{selectedPerfil?.favoriteSports}}</li>
-                              <li id="localidade">Localidade</li>
-                              <li id="localidade2"> {{selectedPerfil?.location}}</li>
-                              <li id="estadoDaConta">Estado da conta:</li>
-                              <li>
-                                @if (locked) {
-                                  <span id="estadoDaConta2">Conta bloqueada</span>
-                                }
-                                @if (!locked) {
-                                  <span id="estadoDaConta2">Conta ativa</span>
-                                }
-                              </li>
-                              <li id="membroDesde">Membro desde:</li>
-                              <li id="membroDesde2"> {{selectedPerfil?.joinDateDisplay}}</li>
-                              <li  id="ultimoLogin">Ultimo Login:</li>
-                              <li  id="ultimoLogin2"> {{selectedPerfil?.lastLoginDateDisplay}}</li>
-                            </ul>
-                            <button (click)="fecharPerfil()" id="botaoFechar">X</button>
-                            <button (click)="abrirChat()" id="botaoChat">Abrir Chat</button>
-                            @if (block) {
-                              <button (click)="blockAmigo()" id="botaoBloquear">Bloquear</button>
-                            }
-                            @if (!block) {
-                              <button (click)="blockAmigo()" id="botaoBloquear">Desbloquear</button>
-                            }
-                            <button (click)="blockAmigo()" id="botaoRemover">Remover amigo</button>
-                          </div>
-                        }
-                        @if (chat) {
-                          <div id="content5">
-                            <p id="D235chat">{{DESPORTO24}}</p>
-                            <p id="D236chat">{{DESPORTO24}}</p>
-                            <p id="D240chat">{{DESPORTO24}}</p>
-                            <p id="D239chat">{{DESPORTO24}}</p>
-                            <p id="D238chat">{{DESPORTO24}}</p>
-                            <p id="D237chat">{{DESPORTO24}}</p>
-                            <p id="D241chat">{{DESPORTO24}}</p>
-                            <div id="tabela4">
-                              <div class="image-previewChat" id="imagePreview">
-                                <img src="{{selectedPerfil?.profilePic}}" alt="Image Preview" class="image-preview__image"/>
-                              </div>
-                              <div id="conversaComPerfil"> {{selectedPerfil.username}}</div>
-                              @if (!online) {
-                                <div>
-                                  <div id="conversaComPerfil2">OFFLINE</div>
-                                  <div id="conversaComPerfil3">Ultima vez online: {{selectedPerfil.lastLoginDateDisplay}}</div></div>
-                                }
-                                @if (online) {
-                                  <div><div id="conversaComPerfil2">ONLINE</div></div>
-                                }
-                              </div>
-                              <div id="mensagensChat">
-                                @for (chat of chats; track chat) {
-                                  <div>
-                                    @if (chat.username1 == this.perfil.username) {
-                                      <div id="mensagemEnviada">
-                                        <strong>{{chat.username1}}:</strong>&nbsp;{{chat.text}}
-                                      </div>
-                                    }
-                                    @if (chat.username1 == this.selectedPerfil.username) {
-                                      <div id="mensagemRecebida">
-                                        <strong>{{chat.username1}}:</strong>&nbsp;{{chat.text}}
-                                      </div>
-                                    }
-                                  </div>
-                                }
-                              </div>
-                              <form #sendMessageForm="ngForm" (ngSubmit)="enviarMensagemChat(sendMessageForm.value)">
-                                <input [(ngModel)]="enviarMensagem.text" name="chat" id="mensagensChatEnvio">
-                                <button id="botaoChatEnvio" type="submit">Enviar
-                                  @if (refreshing) {
-                                    <i class="fas fa-spin"></i>
-                                  }
-                                  @if (!refreshing) {
-                                    <i class="fas"></i>
-                                  }
-                                </button>
-                              </form>
-                              <button (click)="fecharChat()" id="botaoFechar">X</button>
-                            </div>
-                          }
-                        </div>
-                      }
-                    </html>
+      <div class="header-profile">
+        <a class="profile-link" routerLink="/menu/dadosPerfil">
+          <div class="avatar">
+            @if (profileImage(); as image) {
+              <img [src]="image" [alt]="profile?.username || 'Perfil'">
+            } @else {
+              <span>{{ initials() }}</span>
+            }
+          </div>
+          <div>
+            <strong>{{ profile?.username || 'Perfil' }}</strong>
+            <span>Ver perfil</span>
+          </div>
+        </a>
+
+        <button
+          type="button"
+          class="logout-action"
+          [disabled]="loggingOut"
+          (click)="logout()">
+          {{ loggingOut ? 'A terminar...' : 'Sair' }}
+        </button>
+      </div>
+    </header>
+
+    @if (loadingProfile) {
+      <div class="status-card">A carregar o teu perfil...</div>
+    }
+
+    @if (errorMessage) {
+      <div class="status-card error-state">
+        <span>{{ errorMessage }}</span>
+        <button type="button" (click)="loadProfile()">Tentar novamente</button>
+      </div>
+    }
+
+    <section class="primary-actions">
+      <a class="hero-action" routerLink="/menu/events">
+        <span class="action-kicker">Descobrir</span>
+        <strong>Encontrar sessões</strong>
+        <p>Pesquisa por desporto, localidade ou jogos perto de ti.</p>
+      </a>
+
+      <a class="hero-action" routerLink="/menu/createEvent">
+        <span class="action-kicker">Organizar</span>
+        <strong>Criar uma sessão</strong>
+        <p>Define o local, horário, vagas e convida a comunidade.</p>
+      </a>
+    </section>
+
+    <section class="dashboard-grid">
+      <a class="dashboard-card" routerLink="/menu/my-sessions">
+        <span class="card-icon">◎</span>
+        <div>
+          <strong>As minhas sessões</strong>
+          <p>Criadas, participações e lista de espera.</p>
+        </div>
+      </a>
+
+      <a class="dashboard-card" routerLink="/menu/perfis">
+        <span class="card-icon">⌕</span>
+        <div>
+          <strong>Comunidade</strong>
+          <p>Encontra jogadores e envia pedidos de amizade.</p>
+        </div>
+      </a>
+
+      <a class="dashboard-card" routerLink="/menu/friendList">
+        <span class="card-icon">◇</span>
+        <div>
+          <strong>Amigos</strong>
+          <p>Lista de amigos, chat direto e gestão de contactos.</p>
+        </div>
+      </a>
+
+      <a class="dashboard-card notification-card" routerLink="/menu/notifications">
+        <span class="card-icon">✉</span>
+        <div>
+          <strong>Notificações</strong>
+          <p>
+            @if (loadingNotifications) {
+              A atualizar...
+            } @else if (unreadNotifications > 0) {
+              {{ unreadNotifications }} {{ unreadNotifications === 1 ? 'por ler' : 'por ler' }}
+            } @else {
+              Sem notificações por ler.
+            }
+          </p>
+        </div>
+        @if (unreadNotifications > 0) {
+          <span class="notification-count">{{ unreadNotifications }}</span>
+        }
+      </a>
+
+      <a class="dashboard-card" routerLink="/menu/dadosPerfil">
+        <span class="card-icon">○</span>
+        <div>
+          <strong>O meu perfil</strong>
+          <p>Dados pessoais, fotografia e fiabilidade.</p>
+        </div>
+      </a>
+
+      <a class="dashboard-card" routerLink="/menu/alterardados">
+        <span class="card-icon">✎</span>
+        <div>
+          <strong>Editar perfil</strong>
+          <p>Atualiza localização, contacto, MFA e preferências.</p>
+        </div>
+      </a>
+
+      <a class="dashboard-card" routerLink="/menu/alterarPassword">
+        <span class="card-icon">⌁</span>
+        <div>
+          <strong>Segurança</strong>
+          <p>Altera a tua palavra-passe.</p>
+        </div>
+      </a>
+    </section>
+  </div>
+</section>
