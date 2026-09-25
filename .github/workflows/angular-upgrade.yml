@@ -1,0 +1,115 @@
+name: Angular 22 One-Time Upgrade
+
+on:
+  push:
+    branches:
+      - feature/desporto24-relaunch
+    paths:
+      - .github/workflows/angular-upgrade.yml
+
+permissions:
+  contents: write
+
+jobs:
+  upgrade:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@v4
+        with:
+          ref: feature/desporto24-relaunch
+          fetch-depth: 0
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Node 18 for Angular 16-18
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.20.8'
+          cache: npm
+
+      - name: Remove unused incompatible dependencies and refresh Angular 15 lock
+        run: |
+          npm pkg delete 'dependencies.@ngneat/query'
+          npm pkg delete 'dependencies.@nestjs/ng-universal'
+          rm -rf node_modules
+          npm install
+          npm run build
+
+      - name: Upgrade Angular 16
+        run: |
+          npx ng update @angular/core@16 @angular/cli@16 --allow-dirty
+          npm run build
+
+      - name: Upgrade Angular 17
+        run: |
+          npx ng update @angular/core@17 @angular/cli@17 --allow-dirty
+          npm run build
+
+      - name: Upgrade Angular 18
+        run: |
+          npx ng update @angular/core@18 @angular/cli@18 --allow-dirty
+          npm run build
+
+      - name: Node 20 for Angular 19-21
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.19.5'
+          cache: npm
+
+      - name: Upgrade Angular 19
+        run: |
+          npx ng update @angular/core@19 @angular/cli@19 --allow-dirty
+          npm run build
+
+      - name: Upgrade Angular 20
+        run: |
+          npx ng update @angular/core@20 @angular/cli@20 --allow-dirty
+          npm run build
+
+      - name: Upgrade Angular 21
+        run: |
+          npx ng update @angular/core@21 @angular/cli@21 --allow-dirty
+          npm run build
+
+      - name: Node 22 for Angular 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.23.3'
+          cache: npm
+
+      - name: Upgrade Angular 22
+        run: |
+          node --version
+          npx ng update @angular/core@22 @angular/cli@22 --allow-dirty
+          npm run build
+
+      - name: Run frontend tests
+        run: npm test -- --watch=false --browsers=ChromeHeadless
+
+      - name: Move feature CI to supported Node
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path(".github/workflows/feature-ci.yml")
+          s = p.read_text()
+          s = s.replace("Set up Node 18", "Set up Node 22")
+          s = s.replace("node-version: '18'", "node-version: '22.23.3'")
+          p.write_text(s)
+          PY
+
+      - name: Commit upgraded frontend
+        run: |
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "build: upgrade frontend to angular 22"
+            git push origin HEAD:feature/desporto24-relaunch
+          fi
