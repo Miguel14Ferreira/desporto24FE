@@ -52,7 +52,8 @@
             <h4>Amigos</h4>
         <button (click)="naoMostrarAmigos()" id="botaoFecharAmigos">X</button>
         <table id="tabela3">
-          <tbody *ngFor="let perfil of perfis">
+          <tbody>
+        <tr *ngFor="let perfil of perfis">
                   <td (click)="onSelectPerfil(perfil)">
                       <img height="40" width="40" src="{{perfil.foto}}" class="rounded-circle img-thumbnail" alt=""/>
                   </td>
@@ -82,7 +83,7 @@
         <h4>Notificações</h4>
     <button (click)="NaoMostrarNotificacoes()" id="botaoFecharAmigos">X</button>
     <div id="notificacoes">
-      <div *ngFor="let Notification of Notifications.slice().reverse(); let i = index">
+      <div *ngFor="let Notification of Notifications.slice().reverse(); index as i">
         <hr>
               <div (click)="onSelectedNotification(Notification)" id="notification">{{Notification.assunto}}
                 <p id="notification2">{{Notification.createdAt}}</p>
@@ -173,6 +174,7 @@
         <td (click)="onSelectSessao(sessao)"> {{sessao.jogadores}} </td>
         <td (click)="onSelectSessao(sessao)"> {{sessao.localidade}}</td>
         <td (click)="onSelectSessao(sessao)"> {{sessao.private}} </td>
+    </tr>
 </tbody>
 </table>
 <div *ngIf="show" id="viewSessaoModal">
@@ -346,7 +348,8 @@
             <h5>ONLINE</h5>
         <button (click)="naoMostrarAmigos()" id="botaoFecharAmigos">X</button>
         <table id="tabela3">
-          <tbody *ngFor="let perfil of perfis">
+          <tbody>
+        <tr *ngFor="let perfil of perfis">
                   <td (click)="onSelectPerfil(perfil)">
                       <img height="40" width="40" src="{{perfil.foto}}" class="rounded-circle img-thumbnail" alt=""/>
                   </td>
@@ -376,7 +379,7 @@
         <h4>Notificações</h4>
     <button (click)="NaoMostrarNotificacoes()" id="botaoFecharAmigos">X</button>
     <div id="notificacoes">
-      <div *ngFor="let Notification of Notifications.slice().reverse(); let i = index">
+      <div *ngFor="let Notification of Notifications.slice().reverse(); index as i">
         <hr>
               <div (click)="onSelectedNotification(Notification)" id="notification">{{Notification.assunto}}
                 <p id="notification2">{{Notification.createdAt}}</p>
@@ -459,7 +462,8 @@
       <th>Localidade</th>
   </tr>
 </thead>
-<tbody *ngFor="let sessao of sessoes" id="tabela2">
+<tbody id="tabela2">
+    <tr *ngFor="let sessao of sessoes">
       <td>
           <img height="40" width="40" src="{{sessao.foto}}" class="rounded-circle img-fluid img-thumbnail" alt=""/>
       </td>
@@ -468,6 +472,7 @@
       <td (click)="onSelectSessao(sessao)"> {{sessao.jogadores}} </td>
       <td (click)="onSelectSessao(sessao)"> {{sessao.localidade}}</td>
       <td (click)="onSelectSessao(sessao)"> {{sessao.private}} </td>
+    </tr>
 </tbody>
 </table>
 <div *ngIf="show" id="viewSessaoModal">
