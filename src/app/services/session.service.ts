@@ -17,6 +17,9 @@ export interface SessionSearchFilters {
   privateGame?: boolean;
   freeOnly?: boolean;
   sort?: string;
+  latitude?: number;
+  longitude?: number;
+  radiusKm?: number;
 }
 
 export interface JoinSessionResponse {
@@ -52,6 +55,15 @@ export class SessionService {
     }
     if (filters.sort) {
       params = params.set('sort', filters.sort);
+    }
+    if (filters.latitude !== undefined) {
+      params = params.set('latitude', String(filters.latitude));
+    }
+    if (filters.longitude !== undefined) {
+      params = params.set('longitude', String(filters.longitude));
+    }
+    if (filters.radiusKm !== undefined) {
+      params = params.set('radiusKm', String(filters.radiusKm));
     }
 
     return this.http.get<SessionSummary[]>(this.baseUrl, { params });

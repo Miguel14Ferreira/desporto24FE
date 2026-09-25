@@ -14,12 +14,20 @@ import { SessionService } from '../../services/session.service';
 export class EventsComponent implements OnInit {
   sessions: SessionSummary[] = [];
   loading = false;
+  locating = false;
   errorMessage = '';
+  locationError = '';
 
   sport = '';
   city = '';
   availableOnly = true;
   freeOnly = false;
+  sort = 'date';
+
+  nearbyActive = false;
+  radiusKm = 25;
+  latitude: number | null = null;
+  longitude: number | null = null;
 
   constructor(private sessionService: SessionService) {}
 
@@ -35,7 +43,11 @@ export class EventsComponent implements OnInit {
       sport: this.sport,
       city: this.city,
       availability: this.availableOnly ? 'available' : undefined,
-      freeOnly: this.freeOnly ? true : undefined
+      freeOnly: this.freeOnly ? true : undefined,
+      sort: this.sort,
+      latitude: this.nearbyActive && this.latitude !== null ? this.latitude : undefined,
+      longitude: this.nearbyActive && this.longitude !== null ? this.longitude : undefined,
+      radiusKm: this.nearbyActive ? this.radiusKm : undefined
     })
     .pipe(finalize(() => this.loading = false))
     .subscribe({
@@ -47,11 +59,54 @@ export class EventsComponent implements OnInit {
     });
   }
 
+  useCurrentLocation(): void {
+    this.locationError = '';
+
+    if (!navigator.geolocation) {
+      this.locationError = 'O teu browser não suporta localização.';
+      return;
+    }
+
+    this.locating = true;
+
+    navigator.geolocation.getCurrentPosition(
+      position => {
+        this.latitude = position.coords.latitude;
+        this.longitude = position.coords.longitude;
+        this.nearbyActive = true;
+        this.sort = 'distance';
+        this.locating = false;
+        this.loadSessions();
+      },
+      () => {
+        this.locating = false;
+        this.locationError = 'Não foi possível obter a tua localização. Confirma a permissão do browser.';
+      },
+      {
+        enableHighAccuracy: false,
+        timeout: 10000,
+        maximumAge: 300000
+      }
+    );
+  }
+
+  disableNearby(): void {
+    this.nearbyActive = false;
+    this.latitude = null;
+    this.longitude = null;
+    this.locationError = '';
+    if (this.sort === 'distance') {
+      this.sort = 'date';
+    }
+    this.loadSessions();
+  }
+
   clearFilters(): void {
     this.sport = '';
     this.city = '';
     this.availableOnly = true;
     this.freeOnly = false;
+    this.sort = this.nearbyActive ? 'distance' : 'date';
     this.loadSessions();
   }
 }

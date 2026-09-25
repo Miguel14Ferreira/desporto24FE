@@ -74,6 +74,27 @@ describe('Events2Component', () => {
     expect(router.navigate).toHaveBeenCalledWith(['/menu/events', 42]);
   });
 
+  it('should include captured coordinates when creating a session', () => {
+    component.sport = 'Padel';
+    component.gameDate = '2099-10-15T18:00';
+    component.city = 'Lisboa';
+    component.address = 'Rua do Campo';
+    component.maxParticipants = 4;
+    component.locationCaptured = true;
+    component.latitude = 38.72;
+    component.longitude = -9.14;
+
+    component.createSession();
+
+    expect(sessionService.create).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        latitude: 38.72,
+        longitude: -9.14
+      }),
+      undefined
+    );
+  });
+
   it('should require a password when the session is private', () => {
     component.sport = 'Padel';
     component.gameDate = '2099-10-15T18:00';

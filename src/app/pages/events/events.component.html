@@ -4,7 +4,7 @@
       <div>
         <p class="eyebrow">Desporto24</p>
         <h1>Encontra a tua próxima sessão</h1>
-        <p class="subtitle">Pesquisa sessões criadas pela comunidade e abre os detalhes antes de te juntares.</p>
+        <p class="subtitle">Pesquisa sessões criadas pela comunidade ou encontra jogos perto de ti.</p>
       </div>
 
       <div class="header-actions">
@@ -13,6 +13,43 @@
         <a class="secondary-action" routerLink="/menu">Voltar ao menu</a>
       </div>
     </header>
+
+    <section class="nearby-panel" [class.active]="nearbyActive">
+      <div>
+        <strong>{{ nearbyActive ? 'Pesquisa por proximidade ativa' : 'Queres jogar perto de ti?' }}</strong>
+        <p>
+          @if (nearbyActive) {
+            A mostrar sessões até {{ radiusKm }} km da tua localização.
+          } @else {
+            Usa a localização do browser para ordenar e filtrar sessões por distância.
+          }
+        </p>
+      </div>
+
+      <div class="nearby-actions">
+        @if (nearbyActive) {
+          <label>
+            <span>Raio</span>
+            <select [(ngModel)]="radiusKm" name="radiusKm" (change)="loadSessions()">
+              <option [ngValue]="5">5 km</option>
+              <option [ngValue]="10">10 km</option>
+              <option [ngValue]="25">25 km</option>
+              <option [ngValue]="50">50 km</option>
+              <option [ngValue]="100">100 km</option>
+            </select>
+          </label>
+          <button type="button" class="ghost-button" (click)="disableNearby()">Desativar</button>
+        } @else {
+          <button type="button" [disabled]="locating" (click)="useCurrentLocation()">
+            {{ locating ? 'A obter localização...' : 'Usar a minha localização' }}
+          </button>
+        }
+      </div>
+    </section>
+
+    @if (locationError) {
+      <div class="location-error">{{ locationError }}</div>
+    }
 
     <form class="filters" (ngSubmit)="loadSessions()">
       <label>
@@ -31,6 +68,18 @@
           name="city"
           [(ngModel)]="city"
           placeholder="Ex.: Lisboa">
+      </label>
+
+      <label>
+        <span>Ordenar por</span>
+        <select name="sort" [(ngModel)]="sort">
+          @if (nearbyActive) {
+            <option value="distance">Distância</option>
+          }
+          <option value="date">Data</option>
+          <option value="vacancies">Mais vagas</option>
+          <option value="price">Preço</option>
+        </select>
       </label>
 
       <label class="check-filter">
@@ -63,7 +112,13 @@
     @if (!loading && !errorMessage && sessions.length === 0) {
       <div class="state-card">
         <h2>Ainda não encontrámos sessões</h2>
-        <p>Experimenta remover filtros ou cria a primeira sessão nesta zona.</p>
+        <p>
+          @if (nearbyActive) {
+            Experimenta aumentar o raio ou remover alguns filtros.
+          } @else {
+            Experimenta remover filtros ou cria a primeira sessão nesta zona.
+          }
+        </p>
       </div>
     }
 

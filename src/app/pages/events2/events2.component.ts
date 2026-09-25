@@ -30,6 +30,12 @@ export class Events2Component implements OnInit {
   photoPreview = '';
   minDate = '';
 
+  latitude: number | null = null;
+  longitude: number | null = null;
+  locating = false;
+  locationCaptured = false;
+  locationError = '';
+
   loading = false;
   errorMessage = '';
 
@@ -58,8 +64,8 @@ export class Events2Component implements OnInit {
       priceAmount: this.hasPrice ? Number(this.priceAmount ?? 0) : 0,
       privateGame: this.privateGame,
       password: this.privateGame ? this.password.trim() : null,
-      latitude: null,
-      longitude: null
+      latitude: this.locationCaptured ? this.latitude : null,
+      longitude: this.locationCaptured ? this.longitude : null
     };
 
     this.loading = true;
@@ -76,6 +82,45 @@ export class Events2Component implements OnInit {
           );
         }
       });
+  }
+
+  captureCurrentLocation(): void {
+    this.locationError = '';
+
+    if (!navigator.geolocation) {
+      this.locationError = 'O teu browser não suporta localização.';
+      return;
+    }
+
+    this.locating = true;
+
+    navigator.geolocation.getCurrentPosition(
+      position => {
+        this.latitude = position.coords.latitude;
+        this.longitude = position.coords.longitude;
+        this.locationCaptured = true;
+        this.locating = false;
+      },
+      () => {
+        this.locationCaptured = false;
+        this.latitude = null;
+        this.longitude = null;
+        this.locating = false;
+        this.locationError = 'Não foi possível obter a tua localização. Confirma a permissão do browser.';
+      },
+      {
+        enableHighAccuracy: false,
+        timeout: 10000,
+        maximumAge: 300000
+      }
+    );
+  }
+
+  clearLocation(): void {
+    this.locationCaptured = false;
+    this.latitude = null;
+    this.longitude = null;
+    this.locationError = '';
   }
 
   onPhotoChange(event: Event): void {

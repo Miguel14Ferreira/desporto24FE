@@ -71,6 +71,38 @@
         </label>
       </div>
 
+      <section class="location-section" [class.location-ready]="locationCaptured">
+        <div>
+          <h2>Localização da sessão</h2>
+          <p>
+            @if (locationCaptured) {
+              Localização guardada. Esta sessão poderá aparecer nas pesquisas "perto de mim".
+            } @else {
+              Opcional. Se estiveres no local onde o jogo vai acontecer, podes guardar a localização atual.
+            }
+          </p>
+          @if (locationError) {
+            <div class="location-error">{{ locationError }}</div>
+          }
+        </div>
+
+        <div class="location-actions">
+          @if (locationCaptured) {
+            <button type="button" class="secondary-action" [disabled]="loading" (click)="clearLocation()">
+              Remover localização
+            </button>
+          } @else {
+            <button
+              type="button"
+              class="secondary-action"
+              [disabled]="loading || locating"
+              (click)="captureCurrentLocation()">
+              {{ locating ? 'A obter localização...' : 'Usar localização atual' }}
+            </button>
+          }
+        </div>
+      </section>
+
       <div class="options-grid">
         <section class="option-card">
           <label class="toggle-row">

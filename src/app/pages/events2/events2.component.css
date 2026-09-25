@@ -273,3 +273,51 @@ input[type='datetime-local'] {
     flex-direction: column;
   }
 }
+
+.location-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+  border-radius: .9rem;
+  padding: 1rem;
+  background: rgba(56, 189, 248, .05);
+  border: 1px solid rgba(56, 189, 248, .15);
+}
+
+.location-section.location-ready {
+  background: rgba(74, 222, 128, .06);
+  border-color: rgba(74, 222, 128, .25);
+}
+
+.location-section h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.location-section p {
+  margin: .35rem 0 0;
+  color: #94a3b8;
+  line-height: 1.45;
+}
+
+.location-actions {
+  flex: 0 0 auto;
+}
+
+.location-error {
+  margin-top: .7rem;
+  border-radius: .7rem;
+  padding: .7rem .8rem;
+  background: rgba(248, 113, 113, .08);
+  color: #fecaca;
+  border: 1px solid rgba(248, 113, 113, .25);
+}
+
+@media (max-width: 760px) {
+  .location-section {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
