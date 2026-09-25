@@ -25,7 +25,7 @@
     }
 
     @if (!loading && !errorMessage) {
-      @if (chatInfo?.chatBlocked) {
+      @if (chatInfo?.chatBlocked === true) {
         <div class="blocked-banner">{{ blockedMessage() }}</div>
       }
 
@@ -60,7 +60,7 @@
               [(ngModel)]="messageBody"
               maxlength="2000"
               rows="3"
-              [disabled]="sending || chatInfo?.chatBlocked"
+              [disabled]="sending || chatInfo?.chatBlocked === true"
               placeholder="Escreve uma mensagem..."></textarea>
           </label>
 
@@ -68,7 +68,7 @@
             <span>{{ messageBody.length }}/2000</span>
             <button
               type="submit"
-              [disabled]="sending || chatInfo?.chatBlocked || !messageBody.trim()">
+              [disabled]="sending || chatInfo?.chatBlocked === true || !messageBody.trim()">
               {{ sending ? 'A enviar...' : 'Enviar' }}
             </button>
           </div>
