@@ -7,13 +7,31 @@
         <h1>{{ recipientUsername }}</h1>
       </div>
 
-      <button
-        type="button"
-        class="refresh-action"
-        [disabled]="loading"
-        (click)="load()">
-        {{ loading ? 'A atualizar...' : 'Atualizar' }}
-      </button>
+      <div>
+        @if (!(chatInfo?.chatBlocked === true) || isBlockedByMe()) {
+          <button
+            type="button"
+            class="refresh-action"
+            [disabled]="friendshipActionLoading"
+            (click)="toggleChatBlock()">
+            @if (friendshipActionLoading) {
+              A processar...
+            } @else if (isBlockedByMe()) {
+              Desbloquear chat
+            } @else {
+              Bloquear chat
+            }
+          </button>
+        }
+
+        <button
+          type="button"
+          class="refresh-action"
+          [disabled]="loading"
+          (click)="load()">
+          {{ loading ? 'A atualizar...' : 'Atualizar' }}
+        </button>
+      </div>
     </header>
 
     @if (loading) {
@@ -27,6 +45,10 @@
     @if (!loading && !errorMessage) {
       @if (chatInfo?.chatBlocked === true) {
         <div class="blocked-banner">{{ blockedMessage() }}</div>
+      }
+
+      @if (actionSuccess) {
+        <div class="feedback">{{ actionSuccess }}</div>
       }
 
       @if (actionError) {
