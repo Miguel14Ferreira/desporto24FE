@@ -450,7 +450,7 @@ export class MenuComponent implements OnInit {
   remover(){
     this.refreshing = true;
     this.subscriptions.push(
-      this.authenticationService.terminarSessao(this.perfil).subscribe(
+      this.authenticationService.terminarSessao().subscribe(
         () => {
           this.authenticationService.logOut();
           this.router.navigate(['login']);
