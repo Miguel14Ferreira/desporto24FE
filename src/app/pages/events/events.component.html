@@ -1,14 +1,119 @@
-<div class="img">
-<h1>Eventos</h1>
-<h2>Olá, Aqui poderás ver todos os eventos que estão a acontecer de momento e aqueles que irão acontecer no futuro com as suas respetivas datas de jogo e respetivas localidades.</h2>
-<h3>Em baixo como podes ver tens duas opções, aqui podes criar um evento ou então ver outros criados por outros utilizadores</h3>
-<div class="content">
-<button routerLink="events2">Quero criar o meu evento</button>
-</div>
-<div class="content2">
-<button routerLink="events3">Quero ver os eventos a decorrer</button>
-</div>
-<div class="content3">
-    <button routerLink="menu">Voltar ao menu principal</button>
-    </div>
-    </div>
+<section class="sessions-page">
+  <div class="sessions-shell">
+    <header class="page-header">
+      <div>
+        <p class="eyebrow">Desporto24</p>
+        <h1>Encontra a tua próxima sessão</h1>
+        <p class="subtitle">Pesquisa sessões criadas pela comunidade e abre os detalhes antes de te juntares.</p>
+      </div>
+
+      <div class="header-actions">
+        <a class="primary-action" routerLink="/menu/createEvent">Criar sessão</a>
+        <a class="secondary-action" routerLink="/menu">Voltar ao menu</a>
+      </div>
+    </header>
+
+    <form class="filters" (ngSubmit)="loadSessions()">
+      <label>
+        <span>Desporto</span>
+        <input
+          type="text"
+          name="sport"
+          [(ngModel)]="sport"
+          placeholder="Ex.: Padel, Futebol, Ténis">
+      </label>
+
+      <label>
+        <span>Localidade</span>
+        <input
+          type="text"
+          name="city"
+          [(ngModel)]="city"
+          placeholder="Ex.: Lisboa">
+      </label>
+
+      <label class="check-filter">
+        <input type="checkbox" name="availableOnly" [(ngModel)]="availableOnly">
+        <span>Apenas com vagas</span>
+      </label>
+
+      <label class="check-filter">
+        <input type="checkbox" name="freeOnly" [(ngModel)]="freeOnly">
+        <span>Apenas gratuitas</span>
+      </label>
+
+      <div class="filter-actions">
+        <button type="submit">Pesquisar</button>
+        <button type="button" class="ghost-button" (click)="clearFilters()">Limpar</button>
+      </div>
+    </form>
+
+    @if (loading) {
+      <div class="state-card">A carregar sessões...</div>
+    }
+
+    @if (!loading && errorMessage) {
+      <div class="state-card error-state">
+        <p>{{ errorMessage }}</p>
+        <button type="button" (click)="loadSessions()">Tentar novamente</button>
+      </div>
+    }
+
+    @if (!loading && !errorMessage && sessions.length === 0) {
+      <div class="state-card">
+        <h2>Ainda não encontrámos sessões</h2>
+        <p>Experimenta remover filtros ou cria a primeira sessão nesta zona.</p>
+      </div>
+    }
+
+    @if (!loading && !errorMessage && sessions.length > 0) {
+      <div class="session-grid">
+        @for (session of sessions; track session.id) {
+          <article class="session-card">
+            <div class="session-card__top">
+              <div>
+                <span class="sport-label">{{ session.sport }}</span>
+                <h2>{{ session.city }}</h2>
+              </div>
+              @if (session.privateGame) {
+                <span class="private-badge">Privada</span>
+              }
+            </div>
+
+            <dl class="session-meta">
+              <div>
+                <dt>Data</dt>
+                <dd>{{ session.gameDate | date:'dd/MM/yyyy HH:mm' }}</dd>
+              </div>
+              <div>
+                <dt>Jogadores</dt>
+                <dd>{{ session.participantCount }}/{{ session.maxParticipants }}</dd>
+              </div>
+              <div>
+                <dt>Preço</dt>
+                <dd>
+                  @if (session.priceAmount > 0) {
+                    {{ session.priceAmount | number:'1.2-2' }} €
+                  } @else {
+                    Grátis
+                  }
+                </dd>
+              </div>
+              @if (session.distanceKm !== null) {
+                <div>
+                  <dt>Distância</dt>
+                  <dd>{{ session.distanceKm | number:'1.1-1' }} km</dd>
+                </div>
+              }
+            </dl>
+
+            <div class="session-card__footer">
+              <span class="status">{{ session.status }}</span>
+              <a [routerLink]="['/menu/events', session.id]">Ver detalhes</a>
+            </div>
+          </article>
+        }
+      </div>
+    }
+  </div>
+</section>

@@ -1,7 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { of } from 'rxjs';
 
 import { EventsComponent } from './events.component';
 import { TEST_IMPORTS, TEST_PROVIDERS } from '../../testing/test-providers';
+import { SessionService } from '../../services/session.service';
 
 describe('EventsComponent', () => {
   let component: EventsComponent;
@@ -9,11 +11,18 @@ describe('EventsComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ EventsComponent ],
+      declarations: [EventsComponent],
       imports: TEST_IMPORTS,
-      providers: TEST_PROVIDERS
-    })
-    .compileComponents();
+      providers: [
+        ...TEST_PROVIDERS,
+        {
+          provide: SessionService,
+          useValue: {
+            discover: () => of([])
+          }
+        }
+      ]
+    }).compileComponents();
   });
 
   beforeEach(() => {
@@ -24,5 +33,9 @@ describe('EventsComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('should load discovered sessions on init', () => {
+    expect(component.sessions).toEqual([]);
   });
 });

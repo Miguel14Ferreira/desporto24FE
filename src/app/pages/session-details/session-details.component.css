@@ -1,0 +1,148 @@
+:host {
+  display: block;
+}
+
+.detail-page {
+  min-height: 100vh;
+  padding: 7rem 1.25rem 3rem;
+  background: linear-gradient(145deg, #07111f, #12334a);
+  color: #f8fafc;
+}
+
+.detail-shell {
+  width: min(980px, 100%);
+  margin: 0 auto;
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 1rem;
+  color: #bae6fd;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.detail-card,
+.state-card {
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, .12);
+  border-radius: 1.1rem;
+  background: rgba(15, 23, 42, .82);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, .22);
+}
+
+.session-photo {
+  display: block;
+  width: 100%;
+  max-height: 420px;
+  object-fit: cover;
+}
+
+.detail-content {
+  padding: clamp(1.25rem, 4vw, 2.25rem);
+}
+
+.title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.eyebrow {
+  margin: 0 0 .4rem;
+  color: #7dd3fc;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(2rem, 6vw, 3.4rem);
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+}
+
+.badges span,
+.membership-state {
+  border-radius: 999px;
+  padding: .45rem .75rem;
+  background: rgba(125, 211, 252, .12);
+  color: #bae6fd;
+  font-weight: 800;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: .8rem;
+  margin: 1.5rem 0;
+}
+
+.detail-grid div,
+.address-panel {
+  border-radius: .85rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, .05);
+}
+
+.detail-grid span {
+  display: block;
+  margin-bottom: .3rem;
+  color: #94a3b8;
+  font-size: .75rem;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+.address-panel h2 {
+  margin: 0 0 .5rem;
+  font-size: 1rem;
+}
+
+.address-panel p,
+.next-step-note {
+  margin: 0;
+  color: #cbd5e1;
+  line-height: 1.6;
+}
+
+.membership-state {
+  display: inline-block;
+  margin: 1rem .5rem 0 0;
+}
+
+.next-step-note {
+  margin-top: 1.5rem;
+  font-size: .9rem;
+}
+
+.state-card {
+  padding: 2rem;
+  text-align: center;
+}
+
+.error-state {
+  border-color: rgba(248, 113, 113, .45);
+}
+
+@media (max-width: 760px) {
+  .title-row {
+    flex-direction: column;
+  }
+
+  .detail-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 460px) {
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,145 +1,237 @@
-h1{
-    color: white;
-    font-size: 35px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    font-weight: bold;
-    position: absolute;
-    top: 15%;
-    left: 45%;
-    transform: translateX(0%) translateY(0);
-}
-h2{
-    color: white;
-    font-size: 20px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    font-weight: bold;
-    position: absolute;
-    top: 25%;
-    left: 0%;
-    transform: translateX(0%) translateY(0);
-}
-h3{
-    color: white;
-    font-size: 20px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    font-weight: bold;
-    position: absolute;
-    top: 35%;
-    left: 3%;
-    transform: translateX(0%) translateY(0);
-}
-footer{
-    overflow: hidden;
-    background-color: black;
-    padding: 0px;
-}
-.container-fluid{
-    background-color: white;
-    padding: 350px;
-}
-.img{
-    animation: transition 0.75s;
-    height: 100vh;
-    background-image: url(src\assets\padel.png);     
-    -webkit-background-size: cover;
-    background-size: cover;
-    background-position: center center;
-}
-.content button{
-    text-decoration: none;
-    color: black;
-    background-color: white;
-    font-size: 20px;
-    margin: 0;
-    padding: 10px 30px;
-    text-align: center;
-    font-family: 'Arial';
-    font-weight: bold;
-    position: absolute;
-    top: 50%;
-    left: 20%;
-    transform: translateX(0%) translateY(0);
-    border-radius: 10px;
-}
-.content2 button{
-    text-decoration: none;
-    color: black;
-    background-color: white;
-    font-size: 20px;
-    margin: 0;
-    padding: 10px 40px;
-    text-align: center;
-    font-family: 'Arial';
-    font-weight: bold;
-    position: absolute;
-    top: 50%;
-    left: 55%;
-    transform: translateX(0%) translateY(0);
-    border-radius: 10px;
-}
-.content button:hover{
-    background-color: lightblue;
-    color: white;
-}
-.content2 button:hover{
-    background-color: lightblue;
-    color: white;
-}
-.content3 button{
-    text-decoration: none;
-    color: black;
-    background-color: white;
-    font-size: 20px;
-    margin: 0;
-    padding: 10px 30px;
-    text-align: center;
-    font-family: 'Arial';
-    font-weight: bold;
-    position: absolute;
-    top: 70%;
-    left: 40%;
-    transform: translateX(0%) translateY(0);
-    border-radius: 10px;
-}
-.content3 button:hover{
-    background-color: lightblue;
-    color: white;
+:host {
+  display: block;
 }
 
-.evento{
-    width:25px;
-    height: 25px;
-    font-size: 20px;
-    margin: 0;
-    padding: 0px;
-    text-align: center;
-    font-family: 'Arial';
-    font-weight: bold;
-    position: absolute;
-    top: 52%;
-    left: 40%;
-    transform: translateX(0%) translateY(0);
+.sessions-page {
+  min-height: 100vh;
+  padding: 7rem 1.25rem 3rem;
+  background:
+    linear-gradient(135deg, rgba(7, 17, 34, 0.96), rgba(15, 47, 67, 0.92)),
+    url('/assets/padel.png') center / cover fixed;
+  color: #f8fafc;
 }
-.eventos{
-    width:25px;
-    height: 25px;
-    font-size: 20px;
-    margin: 0;
-    padding: 0px;
-    text-align: center;
-    font-family: 'Arial';
-    font-weight: bold;
-    position: absolute;
-    top: 52%;
-    left: 85%;
-    transform: translateX(0%) translateY(0);
+
+.sessions-shell {
+  width: min(1180px, 100%);
+  margin: 0 auto;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.eyebrow {
+  margin: 0 0 .5rem;
+  text-transform: uppercase;
+  letter-spacing: .16em;
+  font-size: .8rem;
+  font-weight: 700;
+  opacity: .72;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(2rem, 5vw, 3.4rem);
+}
+
+.subtitle {
+  max-width: 720px;
+  margin: .75rem 0 0;
+  color: #cbd5e1;
+  line-height: 1.6;
+}
+
+.header-actions,
+.filter-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem;
+}
+
+.primary-action,
+.secondary-action,
+.filters button,
+.session-card__footer a,
+.state-card button {
+  border: 0;
+  border-radius: .8rem;
+  padding: .8rem 1rem;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.primary-action,
+.filters button,
+.session-card__footer a,
+.state-card button {
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.secondary-action,
+.ghost-button {
+  background: rgba(255, 255, 255, .1) !important;
+  color: #f8fafc !important;
+  border: 1px solid rgba(255, 255, 255, .18) !important;
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(180px, 1fr)) auto auto auto;
+  gap: 1rem;
+  align-items: end;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, .12);
+  border-radius: 1rem;
+  background: rgba(15, 23, 42, .72);
+  backdrop-filter: blur(10px);
+}
+
+.filters label:not(.check-filter) {
+  display: grid;
+  gap: .45rem;
+}
+
+.filters label span {
+  font-size: .85rem;
+  font-weight: 700;
+  color: #cbd5e1;
+}
+
+.filters input[type='text'] {
+  min-width: 0;
+  border: 1px solid rgba(255, 255, 255, .16);
+  border-radius: .7rem;
+  padding: .8rem .9rem;
+  background: rgba(255, 255, 255, .08);
+  color: #fff;
+  outline: none;
+}
+
+.filters input[type='text']::placeholder {
+  color: #94a3b8;
+}
+
+.check-filter {
+  display: flex;
+  gap: .5rem;
+  align-items: center;
+  min-height: 44px;
+  white-space: nowrap;
+}
+
+.session-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.session-card,
+.state-card {
+  border: 1px solid rgba(255, 255, 255, .12);
+  border-radius: 1rem;
+  background: rgba(15, 23, 42, .78);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, .18);
+  backdrop-filter: blur(10px);
+}
+
+.session-card {
+  padding: 1.15rem;
+}
+
+.session-card__top,
+.session-card__footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+}
+
+.session-card h2 {
+  margin: .3rem 0 0;
+  font-size: 1.35rem;
+}
+
+.sport-label {
+  color: #7dd3fc;
+  font-size: .85rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+.private-badge,
+.status {
+  border-radius: 999px;
+  padding: .35rem .65rem;
+  background: rgba(125, 211, 252, .12);
+  color: #bae6fd;
+  font-size: .75rem;
+  font-weight: 800;
+}
+
+.session-meta {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: .85rem;
+  margin: 1.15rem 0;
+}
+
+.session-meta div {
+  padding: .75rem;
+  border-radius: .75rem;
+  background: rgba(255, 255, 255, .05);
+}
+
+.session-meta dt {
+  margin-bottom: .2rem;
+  color: #94a3b8;
+  font-size: .75rem;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+.session-meta dd {
+  margin: 0;
+  font-weight: 700;
+}
+
+.state-card {
+  padding: 2rem;
+  text-align: center;
+}
+
+.error-state {
+  border-color: rgba(248, 113, 113, .45);
+}
+
+@media (max-width: 900px) {
+  .page-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .filters {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  .sessions-page {
+    padding-top: 5.5rem;
+  }
+
+  .filters {
+    grid-template-columns: 1fr;
+  }
+
+  .session-meta {
+    grid-template-columns: 1fr;
+  }
 }

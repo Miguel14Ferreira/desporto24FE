@@ -20,14 +20,16 @@ import { LoginMFAComponent } from './pages/login-mfa/login-mfa.component';
 import { ConfirmationNewFriendComponent } from './pages/confirmation-new-friend/confirmation-new-friend.component';
 import { ResetPwEmergencyComponent } from './pages/reset-pw-emergency/reset-pw-emergency.component';
 import { BlockaccComponent } from './pages/blockacc/blockacc.component';
+import { SessionDetailsComponent } from './pages/session-details/session-details.component';
 
 const routes: Routes = [
   {path:'', redirectTo:'home',pathMatch:'full'},
   {path:'home',component:HomeComponent},
   {path:'about',component:AboutComponent},
   {path:'contact',component:ContactComponent},
-  {path:'menu/events',component:EventsComponent},
   {path:'menu/events/menu',redirectTo:'/menu', pathMatch:'full'},
+  {path:'menu/events/:id',component:SessionDetailsComponent},
+  {path:'menu/events',component:EventsComponent},
   {path:'menu/login',redirectTo:'/login', pathMatch:'full'},
   {path:'login',component:LoginComponent},
   {path:'login/registerNewUser',component:CreateaccountComponent},

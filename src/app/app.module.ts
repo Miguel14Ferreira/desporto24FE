@@ -32,6 +32,7 @@ import { LoginMFAComponent } from './pages/login-mfa/login-mfa.component';
 import { ConfirmationNewFriendComponent } from './pages/confirmation-new-friend/confirmation-new-friend.component';
 import { ResetPwEmergencyComponent } from './pages/reset-pw-emergency/reset-pw-emergency.component';
 import { BlockaccComponent } from './pages/blockacc/blockacc.component';
+import { SessionDetailsComponent } from './pages/session-details/session-details.component';
 
 @NgModule({ declarations: [
         AppComponent,
@@ -58,7 +59,8 @@ import { BlockaccComponent } from './pages/blockacc/blockacc.component';
         ConfirmEmergencyTokenComponent,
         ConfirmationNewFriendComponent,
         ResetPwEmergencyComponent,
-        BlockaccComponent
+        BlockaccComponent,
+        SessionDetailsComponent
     ],
     bootstrap: [AppComponent], imports: [BrowserModule,
         AppRoutingModule,
