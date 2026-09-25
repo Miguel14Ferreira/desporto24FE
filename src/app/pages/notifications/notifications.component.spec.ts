@@ -12,7 +12,7 @@ describe('NotificationsComponent', () => {
   let service: jasmine.SpyObj<NotificationApiService>;
   let router: Router;
 
-  const notification = {
+  const notificationFixture = () => ({
     id: 4,
     subject: 'Vaga disponível',
     message: 'Foste promovido para participante.',
@@ -28,14 +28,14 @@ describe('NotificationsComponent', () => {
     sessionId: 12,
     read: false,
     username: 'fixture-user'
-  };
+  });
 
   beforeEach(async () => {
     service = jasmine.createSpyObj<NotificationApiService>(
       'NotificationApiService',
       ['mine', 'markRead', 'delete', 'acceptFriendRequest']
     );
-    service.mine.and.returnValue(of([notification]));
+    service.mine.and.returnValue(of([notificationFixture()]));
     service.markRead.and.returnValue(of(void 0));
     service.delete.and.returnValue(of(void 0));
     service.acceptFriendRequest.and.returnValue(of({}));
