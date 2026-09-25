@@ -1,6 +1,6 @@
 import { Provider } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { of } from 'rxjs';
 
@@ -59,11 +59,6 @@ const authenticationServiceMock = new Proxy(
   }
 );
 
-const routerMock = {
-  navigate: () => Promise.resolve(true),
-  navigateByUrl: () => Promise.resolve(true)
-};
-
 const activatedRouteMock = {
   params: of({}),
   queryParams: of({}),
@@ -86,6 +81,5 @@ export const TEST_IMPORTS = [
 export const TEST_PROVIDERS: Provider[] = [
   { provide: AuthenticationService, useValue: authenticationServiceMock },
   { provide: LoginperfilService, useValue: loginPerfilServiceMock },
-  { provide: Router, useValue: routerMock },
   { provide: ActivatedRoute, useValue: activatedRouteMock }
 ];
