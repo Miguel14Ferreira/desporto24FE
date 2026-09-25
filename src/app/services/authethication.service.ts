@@ -77,15 +77,22 @@ export class AuthenticationService {
   sendChatMessagem(chat: Chat):Observable<Chat>{
     return this.http.post<Chat>(`${this.host}/menu/friendList/chat/:sender/:recipient`,chat)
   }
-  terminarSessao(email: Perfil):Observable<Perfil>{
-    return this.http.post<Perfil>(`${this.host}/menu/terminarSessao`,email)
+  terminarSessao(): Observable<void> {
+    return this.http.post<void>(`${this.host}/api/auth/logout`, null);
   }
 
   public logOut(): void {
     this.token = null;
     this.loggedInPerfilname = null;
+    this.email = null;
+    this.PerfilName = null;
     localStorage.removeItem('t');
-    this.router.navigateByUrl('/login')
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('MFA');
+    localStorage.removeItem('Sessao');
+    sessionStorage.removeItem('auth-token');
+    sessionStorage.removeItem('user-data');
+    this.router.navigateByUrl('/login');
   }
 
   public logOut2(): void {
