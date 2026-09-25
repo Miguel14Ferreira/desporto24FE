@@ -1,104 +1,57 @@
-<!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-  </head>
-  @if (dark) {
-    <div class="img">
-      <body>
-        <h1 id="h1white">Desporto24</h1>
-        <div id="container2">
-          <p id="D24a">Desporto24</p>
-          <p id="D241a">Desporto24</p>
-          <p id="D243a">Desporto24</p>
-          <p id="D244a">Desporto24</p>
-          <p id="D245a">Desporto24</p>
-        </div>
-        @if (loginError) {
-          <div id="notificationError">
-            <i class="bi bi-exclamation-triangle-fill"></i>&nbsp;&nbsp;
-            {{ errorMessage }}
-            <button (click)="closeError()" type="button" id="botaoFecharError">X</button>
-          </div>
-        }
-        @if (validation1) {
-          <div id="notificationInfo">
-            <i class="bi bi-exclamation-circle-fill"></i>&nbsp;&nbsp;
-            {{ validation }}
-            <button (click)="closeValidation()" type="button" id="botaoFecharInfo">X</button>
-          </div>
-        }
-        <form #signInForm="ngForm" (ngSubmit)="onLogin(signInForm.value)">
-          <p><input id="input1" name="username" [(ngModel)]="perfil.username" type="text" placeholder="Utilizador" required></p>
-          <p><input id="input2"  name="password" [type]="changetype?'password':'text'" placeholder="Password" [(ngModel)]="perfil.password" required></p>
-          <div>
-            <span (click)="viewPass()" class="eyeicon"><i [ngClass]="visible?'fa fa-eye':'fa fa-eye-slash'"></i></span>
-          </div>
-          <button type="submit" id="input3">
-            @if (showLoading) {
-              <i class="fas fa-spinner fa-spin"></i>
-              }&nbsp;&nbsp;
-              @if (showLoading) {
-                <span>A carregar...</span>
-              }
-              @if (!showLoading) {
-                <span>Iniciar Sessão</span>
-              }
-            </button>
-          </form>
-          <button href="#" routerLink="registerNewUser" routerLinkActive="active-link" id="input4">Criar nova conta</button>
-          <button href="#" routerLink="resetPassword" routerLinkActive="active-link" id="input5" >Esqueci-me da password</button>
-          <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
-        </body>
+<section class="login-page">
+  <div class="login-shell">
+    <div class="login-copy">
+      <p class="eyebrow">Desporto24</p>
+      <h1>Encontra pessoas para praticar o teu desporto.</h1>
+      <p>Descobre sessões, cria jogos, conversa com participantes e constrói a tua comunidade.</p>
+    </div>
+
+    <div class="login-card">
+      <div>
+        <p class="eyebrow">Bem-vindo de volta</p>
+        <h2>Iniciar sessão</h2>
       </div>
-    }
-    @if (!dark) {
-      <div class="img2">
-        <body>
-          <h1 id="h1black">Desporto24</h1>
-          <div id="container">
-            <p id="D24">Desporto24</p>
-            <p id="D241">Desporto24</p>
-            <p id="D243">Desporto24</p>
-            <p id="D244">Desporto24</p>
-            <p id="D245">Desporto24</p>
-          </div>
-          @if (loginError) {
-            <div id="notificationError">
-              <i class="bi bi-exclamation-triangle-fill"></i>&nbsp;&nbsp;
-              {{ errorMessage }}
-              <button (click)="closeError()" type="button" id="botaoFecharError">X</button>
-            </div>
-          }
-          @if (validation1) {
-            <div id="notificationInfo">
-              <i class="bi bi-exclamation-circle-fill"></i>&nbsp;&nbsp;
-              {{ validation }}
-              <button (click)="closeValidation()" type="button" id="botaoFecharInfo">X</button>
-            </div>
-          }
-          <form #signInForm="ngForm" (ngSubmit)="onLogin(signInForm.value)">
-            <p><input id="input1" name="username" [(ngModel)]="perfil.username" type="text" placeholder="Utilizador" required></p>
-            <p><input id="input2"  name="password" [type]="changetype?'password':'text'" placeholder="Password" [(ngModel)]="perfil.password" required></p>
-            <div>
-              <span (click)="viewPass()" class="eyeiconblack"><i [ngClass]="visible?'fa fa-eye':'fa fa-eye-slash'"></i></span>
-            </div>
-            <button type="submit" id="input3">
-              @if (showLoading) {
-                <i class="fas fa-spinner fa-spin"></i>
-                }&nbsp;&nbsp;
-                @if (showLoading) {
-                  <span>A carregar...</span>
-                }
-                @if (!showLoading) {
-                  <span>Iniciar Sessão</span>
-                }
-              </button>
-            </form>
-            <button href="#" routerLink="registerNewUser" routerLinkActive="active-link" id="input4">Criar nova conta</button>
-            <button href="#" routerLink="resetPassword" routerLinkActive="active-link" id="input5" >Esqueci-me da password</button>
-            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
-          </body>
-        </div>
+
+      @if (errorMessage) {
+        <div class="error-feedback">{{ errorMessage }}</div>
       }
-    </html>
+
+      <form (ngSubmit)="onLogin()">
+        <label>
+          <span>Nome de utilizador</span>
+          <input
+            name="username"
+            [(ngModel)]="username"
+            autocomplete="username"
+            [disabled]="loading"
+            placeholder="O teu username">
+        </label>
+
+        <label>
+          <span>Palavra-passe</span>
+          <div class="password-field">
+            <input
+              [type]="showPassword ? 'text' : 'password'"
+              name="password"
+              [(ngModel)]="password"
+              autocomplete="current-password"
+              [disabled]="loading"
+              placeholder="A tua palavra-passe">
+            <button type="button" (click)="showPassword = !showPassword">
+              {{ showPassword ? 'Ocultar' : 'Mostrar' }}
+            </button>
+          </div>
+        </label>
+
+        <button type="submit" class="primary-action" [disabled]="loading">
+          {{ loading ? 'A entrar...' : 'Entrar' }}
+        </button>
+      </form>
+
+      <div class="login-links">
+        <a routerLink="/login/resetPassword">Esqueci-me da palavra-passe</a>
+        <a routerLink="/login/registerNewUser">Criar nova conta</a>
+      </div>
+    </div>
+  </div>
+</section>

@@ -12,6 +12,7 @@ import { Router } from '@angular/router';
 import { Notification } from '../pages/model/notification';
 import { Chat } from '../pages/model/chat';
 import { LoginperfilService } from './loginperfil.service';
+import { LoginResponse } from '../pages/model/login-response';
 
 
 @Injectable()
@@ -25,6 +26,27 @@ export class AuthenticationService {
   perfil!:Perfil;
 
   constructor(private http: HttpClient,private router:Router) {}
+
+  login(username: string, password: string): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>(
+      `${this.host}/api/auth/login`,
+      { username, password }
+    );
+  }
+
+  confirmMfaChallenge(challengeId: string, code: string): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>(
+      `${this.host}/api/auth/mfa/confirm`,
+      { challengeId, code }
+    );
+  }
+
+  resendMfaChallenge(challengeId: string): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>(
+      `${this.host}/api/auth/mfa/resend`,
+      { challengeId }
+    );
+  }
 
   loginPerfil(perfil: Perfil):Observable<HttpResponse<Perfil>>{
     return this.http.post<Perfil>(`${this.host}/login`, perfil, {observe: 'response'});
@@ -102,7 +124,21 @@ export class AuthenticationService {
   }
 
   public saveToken(token: string): void {
+    this.token = token;
     localStorage.setItem('t', token);
+  }
+
+  public hasValidToken(): boolean {
+    const token = localStorage.getItem('t');
+    if (!token) {
+      return false;
+    }
+
+    try {
+      return !this.jwtHelper.isTokenExpired(token);
+    } catch {
+      return false;
+    }
   }
   public saveRefreshToken(token: string): void {
     localStorage.setItem('refreshToken', token);

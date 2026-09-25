@@ -1,136 +1,49 @@
-<!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:display="http://www.w3.org/1999/xhtml"
-  xmlns="http://www.w3.org/1999/html">
-  <head>
-    <meta charset="ISO-8859-1">
-    <title>Desporto24</title>
-    <link rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-  </head>
-  @if (!dark) {
-    <div class="img2">
-      <div id="container">
-        <p id="D24">Desporto24</p>
-        <p id="D241">Desporto24</p>
-        <p id="D243">Desporto24</p>
-        <p id="D244">Desporto24</p>
-        <p id="D245">Desporto24</p>
-      </div>
-      @if (loginError) {
-        <div id="notificationError">
-          <i class="bi bi-exclamation-triangle-fill"></i>&nbsp;&nbsp;
-          {{ errorMessage }}
-          <button (click)="closeError()" type="button" type="button" id="botaoFecharError">X</button>
-        </div>
+<section class="mfa-page">
+  <div class="mfa-card">
+    <p class="eyebrow">Verificação adicional</p>
+    <h1>Confirma o código MFA</h1>
+    <p class="subtitle">
+      Enviámos um código por SMS.
+      @if (expiryLabel()) {
+        Este desafio é válido até às {{ expiryLabel() }}.
       }
-      @if (validation1) {
-        <div id="notificationInfo">
-          <i class="bi bi-exclamation-circle-fill"></i>&nbsp;&nbsp;
-          {{ validation }}
-          <button (click)="closeValidation()" type="button" id="botaoFecharInfo">X</button>
-        </div>
-      }
-      @if (registerSuccess) {
-        <div id="notificationSuccess">
-          <i class="bi bi-check-circle-fill"></i>&nbsp;&nbsp;
-          {{ successMessage }}
-          <button (click)="closeSuccess()" type="button" id="botaoFecharSuccess">X</button>
-        </div>
-      }
-      <body>
-        <h1 id="h1black">Desporto24</h1>
-        <h2 id="h2black">Coloca aqui o código que recebeste por SMS</h2>
-        <form #signInForm="ngForm" (ngSubmit)="confirmCode(signInForm.value)">
-          <input id="input1" [(ngModel)]="token2.token" name="token">
-          <button type="submit" id="input3">
-            @if (showLoading) {
-              <i class="fas fa-spinner fa-spin"></i>
-              }&nbsp;&nbsp;
-              @if (showLoading) {
-                <span>A carregar...</span>
-              }
-              @if (!showLoading) {
-                <span>Avançar</span>
-              }
-            </button>
-          </form>
-          <button type="submit" id="input4" (click)="sendSMS()">
-            @if (showLoading2) {
-              <i class="fas fa-spinner fa-spin"></i>
-              }&nbsp;&nbsp;
-              @if (showLoading2) {
-                <span>A carregar...</span>
-              }
-              @if (!showLoading2) {
-                <span>Enviar SMS novamente</span>
-              }
-            </button>
-            <button type="submit" id="input5" (click)="remover()">Voltar
-            </button>
-          </body>
-        </div>
-      }
-      @if (dark) {
-        <div class="img">
-          <div id="container2">
-            <p id="D24">Desporto24</p>
-            <p id="D241a">Desporto24</p>
-            <p id="D243a">Desporto24</p>
-            <p id="D244a">Desporto24</p>
-            <p id="D245a">Desporto24</p>
-          </div>
-          @if (loginError) {
-            <div id="notificationError">
-              <i class="bi bi-exclamation-triangle-fill"></i>&nbsp;&nbsp;
-              {{ errorMessage }}
-              <button (click)="closeError()" type="button" type="button" id="botaoFecharError">X</button>
-            </div>
-          }
-          @if (validation1) {
-            <div id="notificationInfo">
-              <i class="bi bi-exclamation-circle-fill"></i>&nbsp;&nbsp;
-              {{ validation }}
-              <button (click)="closeValidation()" type="button" id="botaoFecharInfo">X</button>
-            </div>
-          }
-          @if (registerSuccess) {
-            <div id="notificationSuccess">
-              <i class="bi bi-check-circle-fill"></i>&nbsp;&nbsp;
-              {{ successMessage }}
-              <button (click)="closeSuccess()" type="button" id="botaoFecharSuccess">X</button>
-            </div>
-          }
-          <body>
-            <h1 id="h1white">Desporto24</h1>
-            <h2 id="h2white">Coloca aqui o código que recebeste por SMS</h2>
-            <form #signInForm="ngForm" (ngSubmit)="confirmCode(signInForm.value)">
-              <input id="input1" [(ngModel)]="token2.token" name="token">
-              <button type="submit" id="input3">
-                @if (showLoading) {
-                  <i class="fas fa-spinner fa-spin"></i>
-                  }&nbsp;&nbsp;
-                  @if (showLoading) {
-                    <span>A carregar...</span>
-                  }
-                  @if (!showLoading) {
-                    <span>Avançar</span>
-                  }
-                </button>
-              </form>
-              <button type="submit" id="input4" (click)="sendSMS()">
-                @if (showLoading) {
-                  <i class="fas fa-spinner fa-spin"></i>
-                  }&nbsp;&nbsp;
-                  @if (showLoading2) {
-                    <span>A carregar...</span>
-                  }
-                  @if (!showLoading2) {
-                    <span>Enviar SMS novamente</span>
-                  }
-                </button>
-                <button type="submit" id="input5" (click)="remover()">Voltar
-                </button>
-              </body>
-            </div>
-          }
-        </html>
+    </p>
+
+    @if (errorMessage) {
+      <div class="feedback error-feedback">{{ errorMessage }}</div>
+    }
+
+    @if (successMessage) {
+      <div class="feedback success-feedback">{{ successMessage }}</div>
+    }
+
+    <form (ngSubmit)="confirmCode()">
+      <label>
+        <span>Código</span>
+        <input
+          name="code"
+          [(ngModel)]="code"
+          autocomplete="one-time-code"
+          [disabled]="confirming"
+          placeholder="Código recebido por SMS">
+      </label>
+
+      <button
+        type="submit"
+        class="primary-action"
+        [disabled]="confirming || !challengeId">
+        {{ confirming ? 'A confirmar...' : 'Confirmar e entrar' }}
+      </button>
+    </form>
+
+    <div class="secondary-actions">
+      <button
+        type="button"
+        [disabled]="resending || !challengeId"
+        (click)="resendCode()">
+        {{ resending ? 'A reenviar...' : 'Reenviar código' }}
+      </button>
+      <button type="button" (click)="cancel()">Voltar ao login</button>
+    </div>
+  </div>
+</section>
