@@ -8,15 +8,16 @@ export class AuthenticationGuard {
 
   constructor(private router: Router) {}
 
-  canActivate(
+  async canActivate(
     _next: ActivatedRouteSnapshot,
     state: RouterStateSnapshot
-  ): boolean | UrlTree {
+  ): Promise<boolean | UrlTree> {
     const token = localStorage.getItem('t');
 
     if (token) {
       try {
-        if (!this.jwtHelper.isTokenExpired(token)) {
+        const expired = await this.jwtHelper.isTokenExpired(token);
+        if (!expired) {
           return true;
         }
       } catch {
