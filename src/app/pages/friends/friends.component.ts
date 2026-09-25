@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { finalize } from 'rxjs';
 
@@ -15,8 +16,14 @@ import { CommunityService } from '../../services/community.service';
 export class FriendsComponent implements OnInit {
   friends: FriendSummary[] = [];
   filter = '';
+
   loading = false;
+  actionLoadingUsername: string | null = null;
+  pendingRemovalUsername: string | null = null;
+
   errorMessage = '';
+  actionError = '';
+  actionSuccess = '';
 
   constructor(private communityService: CommunityService) {}
 
@@ -52,6 +59,94 @@ export class FriendsComponent implements OnInit {
       });
   }
 
+  toggleBlock(friend: FriendSummary): void {
+    if (this.actionLoadingUsername !== null) {
+      return;
+    }
+
+    if (friend.chatBlocked && !friend.blockedByMe) {
+      this.actionError = 'Este chat foi bloqueado pelo outro utilizador.';
+      this.actionSuccess = '';
+      return;
+    }
+
+    const shouldUnblock = friend.chatBlocked && friend.blockedByMe;
+    const request$ = shouldUnblock
+      ? this.communityService.unblockFriend(friend.username)
+      : this.communityService.blockFriend(friend.username);
+
+    this.actionLoadingUsername = friend.username;
+    this.actionError = '';
+    this.actionSuccess = '';
+
+    request$
+      .pipe(finalize(() => this.actionLoadingUsername = null))
+      .subscribe({
+        next: () => {
+          friend.chatBlocked = !shouldUnblock;
+          friend.blockedByMe = !shouldUnblock;
+          this.actionSuccess = shouldUnblock
+            ? `Chat com ${friend.username} desbloqueado.`
+            : `Chat com ${friend.username} bloqueado.`;
+        },
+        error: error => {
+          this.actionError = this.errorFrom(
+            error,
+            shouldUnblock
+              ? 'Não foi possível desbloquear este chat.'
+              : 'Não foi possível bloquear este chat.'
+          );
+        }
+      });
+  }
+
+  requestRemove(friend: FriendSummary): void {
+    if (this.actionLoadingUsername !== null) {
+      return;
+    }
+
+    this.pendingRemovalUsername = friend.username;
+    this.actionError = '';
+    this.actionSuccess = '';
+  }
+
+  cancelRemove(): void {
+    if (this.actionLoadingUsername !== null) {
+      return;
+    }
+
+    this.pendingRemovalUsername = null;
+  }
+
+  confirmRemove(friend: FriendSummary): void {
+    if (
+      this.pendingRemovalUsername !== friend.username
+      || this.actionLoadingUsername !== null
+    ) {
+      return;
+    }
+
+    this.actionLoadingUsername = friend.username;
+    this.actionError = '';
+    this.actionSuccess = '';
+
+    this.communityService.removeFriend(friend.username)
+      .pipe(finalize(() => this.actionLoadingUsername = null))
+      .subscribe({
+        next: () => {
+          this.friends = this.friends.filter(item => item.username !== friend.username);
+          this.pendingRemovalUsername = null;
+          this.actionSuccess = `${friend.username} foi removido da tua lista de amigos.`;
+        },
+        error: error => {
+          this.actionError = this.errorFrom(
+            error,
+            'Não foi possível remover este amigo.'
+          );
+        }
+      });
+  }
+
   profileImage(friend: FriendSummary): string | null {
     const path = friend.profilePicUrl;
     if (!path) {
@@ -73,5 +168,12 @@ export class FriendsComponent implements OnInit {
       .slice(0, 2)
       .map(value => value.charAt(0).toUpperCase())
       .join('');
+  }
+
+  private errorFrom(error: HttpErrorResponse, fallback: string): string {
+    const apiMessage = error.error?.message;
+    return typeof apiMessage === 'string' && apiMessage.trim()
+      ? apiMessage
+      : fallback;
   }
 }
