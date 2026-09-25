@@ -6,6 +6,7 @@ import { environment } from 'src/environment/environment';
 import { SessionDetail } from '../pages/model/session-detail';
 import { SessionSummary } from '../pages/model/session-summary';
 import { MySessionsResponse } from '../pages/model/my-sessions-response';
+import { SessionMessage } from '../pages/model/session-message';
 
 export interface SessionSearchFilters {
   sport?: string;
@@ -75,5 +76,16 @@ export class SessionService {
 
   cancel(id: number): Observable<void> {
     return this.http.post<void>(this.baseUrl + '/' + id + '/cancel', null);
+  }
+
+  messages(id: number): Observable<SessionMessage[]> {
+    return this.http.get<SessionMessage[]>(this.baseUrl + '/' + id + '/messages');
+  }
+
+  postMessage(id: number, body: string): Observable<SessionMessage> {
+    return this.http.post<SessionMessage>(
+      this.baseUrl + '/' + id + '/messages',
+      { body: body.trim() }
+    );
   }
 }

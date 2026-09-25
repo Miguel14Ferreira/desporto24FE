@@ -34,7 +34,7 @@ describe('SessionDetailsComponent', () => {
   beforeEach(async () => {
     sessionService = jasmine.createSpyObj<SessionService>(
       'SessionService',
-      ['detail', 'join', 'leave']
+      ['detail', 'join', 'leave', 'messages', 'postMessage']
     );
     sessionService.detail.and.returnValue(of(session));
     sessionService.join.and.returnValue(of({
@@ -42,6 +42,14 @@ describe('SessionDetailsComponent', () => {
       waitlistPosition: null
     }));
     sessionService.leave.and.returnValue(of(void 0));
+    sessionService.messages.and.returnValue(of([]));
+    sessionService.postMessage.and.returnValue(of({
+      id: 1,
+      sessionId: 7,
+      senderUsername: 'fixture-user',
+      body: 'Bora jogar!',
+      createdAt: '2026-10-01T16:00:00Z'
+    }));
 
     await TestBed.configureTestingModule({
       declarations: [SessionDetailsComponent],
@@ -94,5 +102,31 @@ describe('SessionDetailsComponent', () => {
 
     expect(sessionService.join).not.toHaveBeenCalled();
     expect(component.actionError).toContain('palavra-passe');
+  });
+
+  it('should load chat messages for a participant', () => {
+    component.session = {
+      ...session,
+      joined: true
+    };
+
+    component.refreshMessages();
+
+    expect(sessionService.messages).toHaveBeenCalledWith(7);
+    expect(component.messages).toEqual([]);
+  });
+
+  it('should send a chat message and append it locally', () => {
+    component.session = {
+      ...session,
+      joined: true
+    };
+    component.messageBody = '  Bora jogar!  ';
+
+    component.sendMessage();
+
+    expect(sessionService.postMessage).toHaveBeenCalledWith(7, 'Bora jogar!');
+    expect(component.messages.length).toBe(1);
+    expect(component.messageBody).toBe('');
   });
 });

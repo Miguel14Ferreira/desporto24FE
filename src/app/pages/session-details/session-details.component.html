@@ -140,6 +140,74 @@
               </div>
             </section>
           }
+
+          @if (canAccessChat()) {
+            <section class="chat-panel">
+              <div class="chat-header">
+                <div>
+                  <h2>Chat da sessão</h2>
+                  <p>Fala com o criador e com os restantes participantes.</p>
+                </div>
+                <button
+                  type="button"
+                  class="refresh-chat"
+                  [disabled]="chatLoading"
+                  (click)="refreshMessages()">
+                  {{ chatLoading ? 'A atualizar...' : 'Atualizar' }}
+                </button>
+              </div>
+
+              @if (chatError) {
+                <div class="chat-error">{{ chatError }}</div>
+              }
+
+              <div class="message-list">
+                @if (!chatLoading && messages.length === 0) {
+                  <div class="empty-chat">Ainda não há mensagens. Podes começar a conversa.</div>
+                }
+
+                @for (message of messages; track message.id) {
+                  <article
+                    class="message"
+                    [class.own-message]="isOwnMessage(message)">
+                    <div class="message-meta">
+                      <strong>{{ message.senderUsername }}</strong>
+                      <span>{{ message.createdAt | date:'dd/MM HH:mm' }}</span>
+                    </div>
+                    <p>{{ message.body }}</p>
+                  </article>
+                }
+              </div>
+
+              <form class="message-composer" (ngSubmit)="sendMessage()">
+                <label>
+                  <span>Nova mensagem</span>
+                  <textarea
+                    name="messageBody"
+                    [(ngModel)]="messageBody"
+                    maxlength="2000"
+                    rows="3"
+                    [disabled]="messageSending"
+                    placeholder="Escreve uma mensagem para o grupo..."></textarea>
+                </label>
+
+                <div class="composer-footer">
+                  <span>{{ messageBody.length }}/2000</span>
+                  <button
+                    type="submit"
+                    class="primary-action"
+                    [disabled]="messageSending || !messageBody.trim()">
+                    {{ messageSending ? 'A enviar...' : 'Enviar mensagem' }}
+                  </button>
+                </div>
+              </form>
+            </section>
+          } @else if (!session.waitlisted) {
+            <section class="chat-locked">
+              <h2>Chat da sessão</h2>
+              <p>O chat fica disponível assim que entrares na sessão.</p>
+            </section>
+          }
         </div>
       </article>
     }

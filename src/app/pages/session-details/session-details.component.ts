@@ -6,6 +6,7 @@ import { finalize } from 'rxjs';
 
 import { environment } from 'src/environment/environment';
 import { SessionDetail } from '../model/session-detail';
+import { SessionMessage } from '../model/session-message';
 import { JoinSessionResponse, SessionService } from '../../services/session.service';
 
 @Component({
@@ -17,12 +18,20 @@ import { JoinSessionResponse, SessionService } from '../../services/session.serv
 })
 export class SessionDetailsComponent implements OnInit {
   session?: SessionDetail;
+  messages: SessionMessage[] = [];
+
   loading = false;
   actionLoading = false;
+  chatLoading = false;
+  messageSending = false;
+
   errorMessage = '';
   actionError = '';
   actionSuccess = '';
+  chatError = '';
+
   joinPassword = '';
+  messageBody = '';
 
   private sessionId?: number;
   private currentUsername: string | null = null;
@@ -97,6 +106,68 @@ export class SessionDetailsComponent implements OnInit {
       });
   }
 
+  refreshMessages(): void {
+    if (!this.sessionId || !this.canAccessChat() || this.chatLoading) {
+      return;
+    }
+
+    this.chatLoading = true;
+    this.chatError = '';
+
+    this.sessionService.messages(this.sessionId)
+      .pipe(finalize(() => this.chatLoading = false))
+      .subscribe({
+        next: messages => this.messages = messages,
+        error: error => {
+          this.chatError = this.errorFrom(error, 'Não foi possível carregar o chat desta sessão.');
+        }
+      });
+  }
+
+  sendMessage(): void {
+    const body = this.messageBody.trim();
+
+    if (!this.sessionId || !this.canAccessChat() || this.messageSending) {
+      return;
+    }
+
+    if (!body) {
+      this.chatError = 'Escreve uma mensagem antes de enviar.';
+      return;
+    }
+
+    if (body.length > 2000) {
+      this.chatError = 'A mensagem não pode ter mais de 2000 caracteres.';
+      return;
+    }
+
+    this.messageSending = true;
+    this.chatError = '';
+
+    this.sessionService.postMessage(this.sessionId, body)
+      .pipe(finalize(() => this.messageSending = false))
+      .subscribe({
+        next: message => {
+          this.messages = [...this.messages, message];
+          this.messageBody = '';
+        },
+        error: error => {
+          this.chatError = this.errorFrom(error, 'Não foi possível enviar a mensagem.');
+        }
+      });
+  }
+
+  canAccessChat(): boolean {
+    return Boolean(this.session?.joined);
+  }
+
+  isOwnMessage(message: SessionMessage): boolean {
+    return Boolean(
+      this.currentUsername
+      && message.senderUsername.toLowerCase() === this.currentUsername.toLowerCase()
+    );
+  }
+
   isCreator(): boolean {
     if (!this.session?.creatorUsername || !this.currentUsername) {
       return false;
@@ -149,7 +220,16 @@ export class SessionDetailsComponent implements OnInit {
         }
       }))
       .subscribe({
-        next: session => this.session = session,
+        next: session => {
+          this.session = session;
+
+          if (session.joined) {
+            this.refreshMessages();
+          } else {
+            this.messages = [];
+            this.chatError = '';
+          }
+        },
         error: () => this.errorMessage = 'Não foi possível carregar os detalhes desta sessão.'
       });
   }
