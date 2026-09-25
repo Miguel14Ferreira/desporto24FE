@@ -1,0 +1,198 @@
+<section class="my-sessions-page">
+  <div class="page-shell">
+    <header class="page-header">
+      <div>
+        <p class="eyebrow">Desporto24</p>
+        <h1>As minhas sessões</h1>
+        <p class="subtitle">Vê o que criaste, onde já estás inscrito e as sessões onde aguardas uma vaga.</p>
+      </div>
+
+      <div class="header-actions">
+        <a class="primary-action" routerLink="/menu/createEvent">Criar sessão</a>
+        <a class="secondary-action" routerLink="/menu/events">Descobrir sessões</a>
+      </div>
+    </header>
+
+    @if (actionMessage) {
+      <div class="feedback success-feedback">{{ actionMessage }}</div>
+    }
+
+    @if (actionError) {
+      <div class="feedback error-feedback">{{ actionError }}</div>
+    }
+
+    @if (loading) {
+      <div class="state-card">A carregar as tuas sessões...</div>
+    }
+
+    @if (!loading && errorMessage) {
+      <div class="state-card error-state">
+        <p>{{ errorMessage }}</p>
+        <button type="button" (click)="load()">Tentar novamente</button>
+      </div>
+    }
+
+    @if (!loading && !errorMessage) {
+      <section class="session-section">
+        <div class="section-heading">
+          <div>
+            <span class="section-kicker">Organização</span>
+            <h2>Criadas por mim</h2>
+          </div>
+          <span class="count-badge">{{ data.created.length }}</span>
+        </div>
+
+        @if (data.created.length === 0) {
+          <div class="empty-card">
+            <p>Ainda não criaste nenhuma sessão.</p>
+            <a routerLink="/menu/createEvent">Criar a primeira</a>
+          </div>
+        } @else {
+          <div class="session-grid">
+            @for (session of data.created; track session.id) {
+              <article class="session-card">
+                <div class="card-top">
+                  <div>
+                    <span class="sport">{{ session.sport }}</span>
+                    <h3>{{ session.city }}</h3>
+                  </div>
+                  <span class="status">{{ session.status }}</span>
+                </div>
+
+                <div class="meta-grid">
+                  <div>
+                    <span>Data</span>
+                    <strong>{{ session.gameDate | date:'dd/MM/yyyy HH:mm' }}</strong>
+                  </div>
+                  <div>
+                    <span>Participantes</span>
+                    <strong>{{ session.participantCount }}/{{ session.maxParticipants }}</strong>
+                  </div>
+                  <div>
+                    <span>Vagas</span>
+                    <strong>{{ vacancies(session) }}</strong>
+                  </div>
+                  <div>
+                    <span>Preço</span>
+                    <strong>
+                      @if (session.priceAmount > 0) {
+                        {{ session.priceAmount | number:'1.2-2' }} €
+                      } @else {
+                        Grátis
+                      }
+                    </strong>
+                  </div>
+                </div>
+
+                <div class="card-actions">
+                  <a [routerLink]="['/menu/events', session.id]">Ver detalhes</a>
+                  @if (canCancel(session)) {
+                    <button type="button" class="danger-action" (click)="requestCancel(session)">
+                      Cancelar sessão
+                    </button>
+                  }
+                </div>
+              </article>
+            }
+          </div>
+        }
+      </section>
+
+      <section class="session-section">
+        <div class="section-heading">
+          <div>
+            <span class="section-kicker">Participação</span>
+            <h2>Sessões onde estou inscrito</h2>
+          </div>
+          <span class="count-badge">{{ data.joined.length }}</span>
+        </div>
+
+        @if (data.joined.length === 0) {
+          <div class="empty-card">
+            <p>Não estás inscrito noutras sessões neste momento.</p>
+            <a routerLink="/menu/events">Encontrar uma sessão</a>
+          </div>
+        } @else {
+          <div class="session-grid">
+            @for (session of data.joined; track session.id) {
+              <article class="session-card">
+                <div class="card-top">
+                  <div>
+                    <span class="sport">{{ session.sport }}</span>
+                    <h3>{{ session.city }}</h3>
+                  </div>
+                  <span class="status">{{ session.status }}</span>
+                </div>
+
+                <div class="compact-meta">
+                  <span>{{ session.gameDate | date:'dd/MM/yyyy HH:mm' }}</span>
+                  <span>{{ session.participantCount }}/{{ session.maxParticipants }} jogadores</span>
+                </div>
+
+                <div class="card-actions">
+                  <a [routerLink]="['/menu/events', session.id]">Abrir sessão</a>
+                </div>
+              </article>
+            }
+          </div>
+        }
+      </section>
+
+      <section class="session-section">
+        <div class="section-heading">
+          <div>
+            <span class="section-kicker">Espera</span>
+            <h2>Lista de espera</h2>
+          </div>
+          <span class="count-badge">{{ data.waitlisted.length }}</span>
+        </div>
+
+        @if (data.waitlisted.length === 0) {
+          <div class="empty-card">
+            <p>Não estás em nenhuma lista de espera.</p>
+          </div>
+        } @else {
+          <div class="session-grid">
+            @for (session of data.waitlisted; track session.id) {
+              <article class="session-card">
+                <div class="card-top">
+                  <div>
+                    <span class="sport">{{ session.sport }}</span>
+                    <h3>{{ session.city }}</h3>
+                  </div>
+                  <span class="waitlist-badge">Em espera</span>
+                </div>
+
+                <div class="compact-meta">
+                  <span>{{ session.gameDate | date:'dd/MM/yyyy HH:mm' }}</span>
+                  <span>{{ session.participantCount }}/{{ session.maxParticipants }} jogadores</span>
+                </div>
+
+                <div class="card-actions">
+                  <a [routerLink]="['/menu/events', session.id]">Ver estado</a>
+                </div>
+              </article>
+            }
+          </div>
+        }
+      </section>
+    }
+
+    @if (pendingCancelId !== null) {
+      <div class="modal-backdrop">
+        <div class="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="cancel-title">
+          <h2 id="cancel-title">Cancelar sessão?</h2>
+          <p>Os participantes serão notificados e a sessão deixará de aceitar entradas.</p>
+          <div class="modal-actions">
+            <button type="button" class="secondary-button" [disabled]="cancelLoading" (click)="dismissCancel()">
+              Manter sessão
+            </button>
+            <button type="button" class="danger-action" [disabled]="cancelLoading" (click)="confirmCancel()">
+              {{ cancelLoading ? 'A cancelar...' : 'Confirmar cancelamento' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</section>

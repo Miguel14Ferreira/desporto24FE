@@ -33,6 +33,7 @@ import { ConfirmationNewFriendComponent } from './pages/confirmation-new-friend/
 import { ResetPwEmergencyComponent } from './pages/reset-pw-emergency/reset-pw-emergency.component';
 import { BlockaccComponent } from './pages/blockacc/blockacc.component';
 import { SessionDetailsComponent } from './pages/session-details/session-details.component';
+import { MySessionsComponent } from './pages/my-sessions/my-sessions.component';
 
 @NgModule({ declarations: [
         AppComponent,
@@ -60,7 +61,8 @@ import { SessionDetailsComponent } from './pages/session-details/session-details
         ConfirmationNewFriendComponent,
         ResetPwEmergencyComponent,
         BlockaccComponent,
-        SessionDetailsComponent
+        SessionDetailsComponent,
+        MySessionsComponent
     ],
     bootstrap: [AppComponent], imports: [BrowserModule,
         AppRoutingModule,

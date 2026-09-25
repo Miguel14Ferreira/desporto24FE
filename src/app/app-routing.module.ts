@@ -21,6 +21,7 @@ import { ConfirmationNewFriendComponent } from './pages/confirmation-new-friend/
 import { ResetPwEmergencyComponent } from './pages/reset-pw-emergency/reset-pw-emergency.component';
 import { BlockaccComponent } from './pages/blockacc/blockacc.component';
 import { SessionDetailsComponent } from './pages/session-details/session-details.component';
+import { MySessionsComponent } from './pages/my-sessions/my-sessions.component';
 
 const routes: Routes = [
   {path:'', redirectTo:'home',pathMatch:'full'},
@@ -28,6 +29,7 @@ const routes: Routes = [
   {path:'about',component:AboutComponent},
   {path:'contact',component:ContactComponent},
   {path:'menu/events/menu',redirectTo:'/menu', pathMatch:'full'},
+  {path:'menu/my-sessions',component:MySessionsComponent},
   {path:'menu/events/:id',component:SessionDetailsComponent},
   {path:'menu/events',component:EventsComponent},
   {path:'menu/login',redirectTo:'/login', pathMatch:'full'},

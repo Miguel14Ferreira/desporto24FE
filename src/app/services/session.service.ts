@@ -5,6 +5,7 @@ import { Observable } from 'rxjs';
 import { environment } from 'src/environment/environment';
 import { SessionDetail } from '../pages/model/session-detail';
 import { SessionSummary } from '../pages/model/session-summary';
+import { MySessionsResponse } from '../pages/model/my-sessions-response';
 
 export interface SessionSearchFilters {
   sport?: string;
@@ -66,5 +67,13 @@ export class SessionService {
 
   leave(id: number): Observable<void> {
     return this.http.post<void>(this.baseUrl + '/' + id + '/leave', null);
+  }
+
+  mine(): Observable<MySessionsResponse> {
+    return this.http.get<MySessionsResponse>(this.baseUrl + '/mine');
+  }
+
+  cancel(id: number): Observable<void> {
+    return this.http.post<void>(this.baseUrl + '/' + id + '/cancel', null);
   }
 }
