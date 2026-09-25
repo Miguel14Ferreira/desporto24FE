@@ -66,6 +66,20 @@ export class AuthenticationService {
   resendMFA(perfil:string):Observable<HttpResponse<CustomHttpResponse>>{
     return this.http.get<CustomHttpResponse>(`${this.host}/login/MFAauthentication/${perfil}`,{observe: 'response'});
   }
+  initiatePasswordReset(email: string): Observable<CustomHttpResponse> {
+    return this.http.post<CustomHttpResponse>(
+      `${this.host}/api/auth/reset-password/initiate`,
+      { email: email.trim() }
+    );
+  }
+
+  confirmPasswordReset(token: string, newPassword: string): Observable<CustomHttpResponse> {
+    return this.http.put<CustomHttpResponse>(
+      `${this.host}/api/auth/reset-password/confirm`,
+      { token, newPassword }
+    );
+  }
+
   sendEmail(perfil:Perfil):Observable<HttpResponse<CustomHttpResponse>>{
     return this.http.post<CustomHttpResponse>(`${this.host}/login/resetPassword`,perfil, {observe: 'response'});
   }

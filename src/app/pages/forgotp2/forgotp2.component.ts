@@ -1,111 +1,86 @@
-import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
-import { Perfil } from '../model/perfil';
-import { Subscription } from 'rxjs';
-import { ActivatedRoute, ParamMap, Router } from '@angular/router';
-import { LoginperfilService } from 'src/app/services/loginperfil.service';
-import { AuthenticationService } from 'src/app/services/authethication.service';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { CustomHttpResponse } from '../custom-http-response';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { finalize } from 'rxjs';
+
+import { AuthenticationService } from '../../services/authethication.service';
 
 @Component({
-    selector: 'app-forgotp2',
-    templateUrl: './forgotp2.component.html',
-    styleUrls: ['./forgotp2.component.css'],
-    changeDetection: ChangeDetectionStrategy.Eager,
-    standalone: false
+  selector: 'app-forgotp2',
+  templateUrl: './forgotp2.component.html',
+  styleUrls: ['./forgotp2.component.css'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false
 })
 export class Forgotp2Component implements OnInit {
-  newPerfil: Perfil = new Perfil();
-  changetype:boolean = true;
-  visible:boolean = true;
-  hidden:boolean = true;
-  perfil!:Perfil;
-  username!: any;
-  password!: string;
-  showLoading!: boolean;
-  token: any;
-  fileName!: string;
-  profileImage!: File;
-  dark!: boolean;
-  response: any = null;
-  subscriptions: Subscription[] = [];
-  private readonly ACCOUNT_TOKEN = 'token';
-  private readonly USERNAME = 'username';
-  registerError:boolean =false;
-  errorMessage!:string;
-  registerSuccess:boolean =false;
-  successMessage!:any;
-  validation1!:boolean;
-  validation!:string;
-  constructor(private activatedRoute: ActivatedRoute,private router:Router,  private authservice:AuthenticationService, private loginService:LoginperfilService) {}
+  token = '';
+  newPassword = '';
+  confirmPassword = '';
+  showPassword = false;
+
+  loading = false;
+  errorMessage = '';
+  successMessage = '';
+
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private authenticationService: AuthenticationService
+  ) {}
 
   ngOnInit(): void {
-    this.authservice.logOut();
-    var theme = localStorage.getItem('theme');
-    if (theme == 'claro'){
-      this.dark = false
-    } else {
-      this.dark = true
+    this.token = this.route.snapshot.paramMap.get('token') || '';
+
+    if (!this.token) {
+      this.errorMessage = 'O link de recuperação não contém um token válido.';
     }
-    this.activatedRoute.paramMap.subscribe(
-      (params: ParamMap) => {
-        this.token = params.get(this.ACCOUNT_TOKEN);
-        this.username = params.get(this.USERNAME);
-      }
-      )
-      this.loginService.obterUserPeloUsername1(this.username).subscribe( data => {
-        this.perfil = data;
-      }, error => console.log());
   }
 
-  goToLogin(){
+  resetPassword(): void {
+    if (!this.token || this.loading) {
+      return;
+    }
+
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    if (this.newPassword.length < 8) {
+      this.errorMessage = 'A nova palavra-passe tem de ter pelo menos 8 caracteres.';
+      return;
+    }
+
+    if (this.newPassword !== this.confirmPassword) {
+      this.errorMessage = 'A nova palavra-passe e a confirmação não coincidem.';
+      return;
+    }
+
+    this.loading = true;
+
+    this.authenticationService.confirmPasswordReset(this.token, this.newPassword)
+      .pipe(finalize(() => this.loading = false))
+      .subscribe({
+        next: response => {
+          this.successMessage = response.message || 'Palavra-passe alterada com sucesso.';
+          this.newPassword = '';
+          this.confirmPassword = '';
+        },
+        error: error => {
+          this.errorMessage = this.errorFrom(
+            error,
+            'Não foi possível redefinir a palavra-passe. O link pode ter expirado.'
+          );
+        }
+      });
+  }
+
+  goToLogin(): void {
     this.router.navigate(['/login']);
   }
-  public reset(perfil: Perfil): void {
-    if (perfil.password == "" || perfil.confirmPassword == ""){
-      this.validation1 = true;
-      this.validation = `Ainda tens espaços em branco`;
-    } else {
-    if (perfil.password != perfil.confirmPassword){
-      this.validation1 = true;
-      this.validation = `As tuas palavras-passes não estão iguais`;
-    } else {
-    this.showLoading = true;
-    this.subscriptions.push(
-      this.authservice.resetPassword(this.token,this.username,perfil.password).subscribe(
-        (response: HttpResponse<CustomHttpResponse>) => {
-          this.showLoading = false;
-          this.showLoading = false;
-        this.registerSuccess = true;
-        this.registerError = false;
-        this.validation1 = false;
-        this.successMessage = response.body?.message
-        },
-        (errorResponse: HttpErrorResponse) => {
-          this.errorMessage = errorResponse.error.message;
-          this.showLoading = false;
-          this.registerError = true;
-          this.registerSuccess = false;
-          this.validation1 = false;
-        }
-      )
-    );
-  }
-}
-  }
-  closeError(){
-    this.registerError = false;
-  }
-  closeSuccess(){
-    this.registerSuccess = false;
-  }
-  closeValidation(){
-    this.validation1 = false;
-  }
 
-
-  viewPass(){
-    this.visible = !this.visible;
-    this.changetype = !this.changetype;
-}
+  private errorFrom(error: HttpErrorResponse, fallback: string): string {
+    const apiMessage = error.error?.message;
+    return typeof apiMessage === 'string' && apiMessage.trim()
+      ? apiMessage
+      : fallback;
+  }
 }
