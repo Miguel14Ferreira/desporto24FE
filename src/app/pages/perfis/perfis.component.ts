@@ -1,146 +1,128 @@
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Component, ChangeDetectionStrategy } from '@angular/core';
-import { BehaviorSubject, Subscription } from 'rxjs';
-import { NotificationType } from 'src/app/enum/notification-type.enum';
-import { LoginperfilService } from 'src/app/services/loginperfil.service';
-import { Perfil } from '../model/perfil';
-import { AuthenticationService } from 'src/app/services/authethication.service';
-import { ActivatedRoute, ParamMap, Router } from '@angular/router';
-import { CustomHttpResponse } from '../custom-http-response';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { finalize } from 'rxjs';
 
+import { environment } from 'src/environment/environment';
+import { CommunityProfile } from '../model/community-profile';
+import { CommunityService } from '../../services/community.service';
 
 @Component({
-    selector: 'app-perfis',
-    templateUrl: './perfis.component.html',
-    styleUrls: ['./perfis.component.css'],
-    changeDetection: ChangeDetectionStrategy.Eager,
-    standalone: false
+  selector: 'app-perfis',
+  templateUrl: './perfis.component.html',
+  styleUrls: ['./perfis.component.css'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false
 })
 export class PerfisComponent {
-  private titleSubject = new BehaviorSubject<String>('Perfis');
-  public titleAction$ = this.titleSubject.asObservable();
-  public perfis: Perfil[] = [];
-  perfil!: Perfil;
-  showLoading!:boolean;
-  locked!:boolean;
-  subscriptions: Subscription[] = [];
-  selectedPerfil!: Perfil;
-  show!:boolean;
-  response!: any;
-  buttonId!: any;
-  dark!:boolean;
-  addFriend!:boolean;
-  username!:any;
-  private readonly USERNAME:string = 'username';
-  showTable!:boolean;
-  registerError:boolean=false;
-  errorMessage!:string;
-  registerSuccess:boolean =false;
-  successMessage!:any;
-  validation1:boolean=false;
-  validation!:any;
-  showOptions!:boolean;
+  searchTerm = '';
+  profiles: CommunityProfile[] = [];
+  selectedProfile?: CommunityProfile;
 
-  constructor (private router:Router,private loginPerfilService: LoginperfilService,private activatedRoute:ActivatedRoute, private authenticationService:AuthenticationService){}
+  loading = false;
+  actionLoading = false;
+  searched = false;
 
-  ngOnInit(): void{
-    var theme = localStorage.getItem('theme');
-    if (theme == 'claro'){
-      this.dark = false
-    } else {
-      this.dark = true
+  errorMessage = '';
+  actionError = '';
+  actionSuccess = '';
+
+  constructor(private communityService: CommunityService) {}
+
+  search(): void {
+    const term = this.searchTerm.trim();
+
+    if (!term) {
+      this.errorMessage = 'Escreve um nome de utilizador para pesquisar.';
+      this.profiles = [];
+      this.searched = false;
+      return;
     }
-    this.loginPerfilService.obterUserPeloUsername1(this.authenticationService.loggedInPerfilname).subscribe( data => {
-      this.perfil = data;
-    }, error => console.log(error));
-  }
 
-  fecharPerfil(){
-    this.show = false;
-  }
+    this.loading = true;
+    this.errorMessage = '';
+    this.actionError = '';
+    this.actionSuccess = '';
 
-  AddFriend(){
-    this.addFriend = true;
-  }
-  NaoAdd(){
-    this.addFriend = false;
-  }
-
-  closeError(){
-    this.registerError = false;
-  }
-  closeSuccess(){
-    this.registerSuccess = false;
-  }
-  closeValidation(){
-    this.validation1 = false;
-  }
-  
-  SendFriendRequest(){
-    const formData = this.loginPerfilService.addFriendFromData(this.perfil.username,this.selectedPerfil.username);
-    this.showLoading = true;
-    this.subscriptions.push(
-      this.loginPerfilService.addFriend(formData).subscribe(
-        (response: HttpResponse<CustomHttpResponse>) => {
-          this.showLoading = false;
-          this.registerSuccess = true;
-          this.successMessage = response.body?.message;
-          this.registerError = false;
-          this.validation1 = false;
+    this.communityService.searchProfiles(term)
+      .pipe(finalize(() => this.loading = false))
+      .subscribe({
+        next: profiles => {
+          this.profiles = profiles;
+          this.searched = true;
+          this.selectedProfile = undefined;
         },
-        (errorResponse: HttpErrorResponse) => {
-          this.registerError = true;
-          this.errorMessage = errorResponse.error.message;
-          this.validation1 = false;
-          this.showLoading = false;
+        error: error => {
+          this.profiles = [];
+          this.searched = true;
+          this.errorMessage = this.errorFrom(
+            error,
+            'Não foi possível pesquisar utilizadores.'
+          );
         }
-      )
-    )
+      });
   }
 
-  obterPerfis(searchTerm: string): void{
-    if (searchTerm == ""){
-      this.validation1 = true;
-    this.registerError = false;
-    this.validation = `Terás de preencher o campo de pesquisa para pesquisar.`;
-    } else  {
-    this.showLoading = true;
-    this.subscriptions.push(
-      this.loginPerfilService.obterPerfis(searchTerm).subscribe(
-        (response: Perfil[]) => {
-          this.showTable = true;
-          this.showLoading = false;
-          this.perfis = response;
-          if (this.perfis.length == 0){
-            this.validation1 = false;
-            this.showTable = false
-            this.registerError = true;
-          this.errorMessage = `Não foi encontrado nenhum perfil com esse nome de utilizador`
-          }
+  openProfile(profile: CommunityProfile): void {
+    this.selectedProfile = profile;
+    this.actionError = '';
+    this.actionSuccess = '';
+  }
+
+  closeProfile(): void {
+    this.selectedProfile = undefined;
+  }
+
+  sendFriendRequest(profile: CommunityProfile): void {
+    if (this.actionLoading) {
+      return;
+    }
+
+    this.actionLoading = true;
+    this.actionError = '';
+    this.actionSuccess = '';
+
+    this.communityService.sendFriendRequest(profile.username)
+      .pipe(finalize(() => this.actionLoading = false))
+      .subscribe({
+        next: () => {
+          this.actionSuccess = `Pedido de amizade enviado para ${profile.username}.`;
         },
-        (errorResponse: HttpErrorResponse) => {
-          this.validation1 = false;
-          this.registerError = false;
-          this.errorMessage = errorResponse.error.message;
-          this.showLoading = false;
+        error: error => {
+          this.actionError = this.errorFrom(
+            error,
+            'Não foi possível enviar o pedido de amizade.'
+          );
         }
-      )
-    )
-      }
-    }
-      
-  Menu(){
-    this.router.navigate([`/menu`]);
+      });
   }
 
-
-  onSelectPerfil(selectedPerfil: Perfil):void{
-    this.selectedPerfil = selectedPerfil;
-    this.show = true;
-    if (this.perfil.username == this.selectedPerfil.username){
-      this.showOptions = false;
-    } else {
-      this.showOptions = true;
+  profileImage(profile: CommunityProfile): string | null {
+    const path = profile.profilePicUrl;
+    if (!path) {
+      return null;
     }
+
+    if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('data:')) {
+      return path;
+    }
+
+    return environment.apiUrl + (path.startsWith('/') ? path : '/' + path);
+  }
+
+  initials(profile: CommunityProfile): string {
+    const source = profile.fullName?.trim() || profile.username;
+    return source
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map(value => value.charAt(0).toUpperCase())
+      .join('');
+  }
+
+  private errorFrom(error: HttpErrorResponse, fallback: string): string {
+    const apiMessage = error.error?.message;
+    return typeof apiMessage === 'string' && apiMessage.trim()
+      ? apiMessage
+      : fallback;
   }
 }
