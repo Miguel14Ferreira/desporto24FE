@@ -1,160 +1,72 @@
-<!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:display="http://www.w3.org/1999/xhtml"
-  xmlns="http://www.w3.org/1999/html">
-  <head>
-    <meta charset="ISO-8859-1">
-    <title>Desporto24</title>
-    <link rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-  </head>
-  @if (!dark) {
-    <div class="img2">
-      <div id="container">
-        <p id="D24">Desporto24</p>
-        <p id="D241">Desporto24</p>
-        <p id="D243">Desporto24</p>
-        <p id="D244">Desporto24</p>
-        <p id="D245">Desporto24</p>
+<section class="profile-page">
+  <div class="profile-shell">
+    <header class="page-header">
+      <div>
+        <p class="eyebrow">Desporto24</p>
+        <h1>O meu perfil</h1>
+        <p class="subtitle">Consulta os teus dados e a tua atividade na comunidade.</p>
       </div>
-      <body>
-        <h1 id="h1black">Desporto24</h1>
-        <h2 id="h2black">Os teus dados:</h2>
-        <div id="viewPerfilModal">
-          <p id="D24modal">Desporto24</p>
-          <p id="D241modal">Desporto24</p>
-          <p id="D242modal">Desporto24</p>
-          <p id="D243modal">Desporto24</p>
-          <p id="D244modal">Desporto24</p>
-          <p id="D245modal">Desporto24</p>
-          <p id="D246modal">Desporto24</p>
-          <p id="D247modal">Desporto24</p>
-          <p id="D248modal">Desporto24</p>
-          <div class="image-preview" id="imagePreview">
-            <img src="{{this.perfil?.profilePic}}" alt="Image Preview" class="image-preview__image"/>
-          </div>
-          <div id="username">
-            {{this.perfil?.username}}
-          </div>
-          <ul>
-            <li id="dataNascimento">Data de nascimento</li>
-            <li id="dataNascimento2"> {{this.perfil?.dateOfBirth}}
-            </li>
-            <li id="genero">Género </li>
-            <li id="genero2"> {{this.perfil?.gender}} </li>
-            <li id="paisNascimento">País de nascimento </li>
-            <li id="paisNascimento2"> {{this.perfil?.country}} </li>
-            <li id="desportosFavoritos">Desportos favoritos</li>
-            <li id="desportosFavoritos2"> {{this.perfil?.favoriteSports}}</li>
-            <li id="localidade">Localidade</li>
-            <li id="localidade2"> {{this.perfil?.location}}</li>
-            <li id="estadoDaConta">Estado da conta:</li>
-            <li id="morada">Morada</li>
-            <li id="morada2">{{this.perfil?.address}}</li>
-            <li id="phone">Telemóvel</li>
-            <li id="phone2">{{this.perfil?.phone}}</li>
-            <li id="email">Email</li>
-            <li id="email2">{{this.perfil?.email}}</li>
-            <li>
-              @if (locked) {
-                <span id="estadoDaConta2">Conta bloqueada</span>
-              }
-              @if (!locked) {
-                <span id="estadoDaConta2">Conta ativa</span>
-              }
-            </li>
-            <li id="mfa">MFA:</li>
-            <li>
-              @if (mfa) {
-                <span id="mfativado">Ativado</span>
-              }
-              @if (!mfa) {
-                <span id="mfadesativado">Desativado</span>
-              }
-            </li>
-            <li id="membroDesde">Membro desde:</li>
-            <li id="membroDesde2"> {{this.perfil?.joinDateDisplay}}</li>
-            <li  id="ultimoLogin">Ultimo Login:</li>
-            <li  id="ultimoLogin2"> {{this.perfil?.lastLoginDateDisplay}}</li>
-          </ul>
-        </div>
-        <button href="#" (click)="Menu()" id="botao1">Voltar atrás</button>
-        <button href="#" (click)="alterarDados()" id="botao2">Alterar dados</button>
-      </body>
-    </div>
-  }
-  @if (dark) {
-    <div class="img">
-      <div id="container2">
-        <p id="D24">Desporto24</p>
-        <p id="D241a">Desporto24</p>
-        <p id="D243a">Desporto24</p>
-        <p id="D244a">Desporto24</p>
-        <p id="D245a">Desporto24</p>
+
+      <div class="header-actions">
+        <a class="primary-action" routerLink="/menu/alterardados">Editar perfil</a>
+        <a class="secondary-action" routerLink="/menu">Menu</a>
       </div>
-      <body>
-        <h1 id="h1white">Desporto24</h1>
-        <h2 id="h2white">Os teus dados:</h2>
-        <div id="viewPerfilModal">
-          <p id="D24modal">Desporto24</p>
-          <p id="D241modal">Desporto24</p>
-          <p id="D242modal">Desporto24</p>
-          <p id="D243modal">Desporto24</p>
-          <p id="D244modal">Desporto24</p>
-          <p id="D245modal">Desporto24</p>
-          <p id="D246modal">Desporto24</p>
-          <p id="D247modal">Desporto24</p>
-          <p id="D248modal">Desporto24</p>
-          <div class="image-preview" id="imagePreview">
-            <img src="{{this.perfil?.profilePic}}" alt="Image Preview" class="image-preview__image"/>
+    </header>
+
+    @if (loading) {
+      <div class="state-card">A carregar perfil...</div>
+    }
+
+    @if (!loading && errorMessage) {
+      <div class="state-card error-state">
+        <p>{{ errorMessage }}</p>
+        <button type="button" (click)="load()">Tentar novamente</button>
+      </div>
+    }
+
+    @if (!loading && profile) {
+      <section class="profile-card">
+        <div class="identity">
+          <div class="avatar">
+            @if (profileImage(); as image) {
+              <img [src]="image" [alt]="profile.username">
+            } @else {
+              <span>{{ initials() }}</span>
+            }
           </div>
-          <div id="username">
-            {{this.perfil?.username}}
+
+          <div>
+            <h2>{{ profile.fullName || profile.username }}</h2>
+            <p>@{{ profile.username }}</p>
+            @if (profile.location || profile.country) {
+              <small>{{ profile.location || '' }}{{ profile.location && profile.country ? ', ' : '' }}{{ profile.country || '' }}</small>
+            }
           </div>
-          <ul>
-            <li id="dataNascimento">Data de nascimento</li>
-            <li id="dataNascimento2"> {{this.perfil?.dateOfBirth}}
-            </li>
-            <li id="genero">Género </li>
-            <li id="genero2"> {{this.perfil?.gender}} </li>
-            <li id="paisNascimento">País de nascimento </li>
-            <li id="paisNascimento2"> {{this.perfil?.country}} </li>
-            <li id="desportosFavoritos">Desportos favoritos</li>
-            <li id="desportosFavoritos2"> {{this.perfil?.favoriteSports}}</li>
-            <li id="localidade">Localidade</li>
-            <li id="localidade2"> {{this.perfil?.location}}</li>
-            <li id="estadoDaConta">Estado da conta:</li>
-            <li id="morada">Morada</li>
-            <li id="morada2">{{this.perfil?.address}}</li>
-            <li id="phone">Telemóvel</li>
-            <li id="phone2">{{this.perfil?.phone}}</li>
-            <li id="email">Email</li>
-            <li id="email2">{{this.perfil?.email}}</li>
-            <li>
-              @if (locked) {
-                <span id="estadoDaConta2">Conta bloqueada</span>
-              }
-              @if (!locked) {
-                <span id="estadoDaConta2">Conta ativa</span>
-              }
-            </li>
-            <li id="mfa">MFA:</li>
-            <li>
-              @if (mfa) {
-                <span id="mfativado">Ativado</span>
-              }
-              @if (!mfa) {
-                <span id="mfadesativado">Desativado</span>
-              }
-            </li>
-            <li id="membroDesde">Membro desde:</li>
-            <li id="membroDesde2"> {{this.perfil?.joinDateDisplay}}</li>
-            <li  id="ultimoLogin">Ultimo Login:</li>
-            <li  id="ultimoLogin2"> {{this.perfil?.lastLoginDateDisplay}}</li>
-          </ul>
         </div>
-        <button href="#" routerLink="menu" id="botao1">Voltar atrás</button>
-        <button href="#" (click)="alterarDados()" id="botao2">Alterar dados</button>
-      </body>
-    </div>
-  }
-</html>
+
+        <div class="details-grid">
+          <div><span>Email</span><strong>{{ profile.email }}</strong></div>
+          <div><span>Telefone</span><strong>{{ profile.indicativePhone ? '+' + profile.indicativePhone + ' ' : '' }}{{ profile.phone || 'Não indicado' }}</strong></div>
+          <div><span>Data de nascimento</span><strong>{{ profile.dateOfBirth || 'Não indicada' }}</strong></div>
+          <div><span>Género</span><strong>{{ profile.gender || 'Não indicado' }}</strong></div>
+          <div><span>Morada</span><strong>{{ profile.address || 'Não indicada' }}</strong></div>
+          <div><span>Código postal</span><strong>{{ profile.postalCode || 'Não indicado' }}</strong></div>
+          <div><span>Desportos favoritos</span><strong>{{ profile.favoriteSports || 'Não indicados' }}</strong></div>
+          <div><span>MFA</span><strong>{{ profile.mfa ? 'Ativo' : 'Inativo' }}</strong></div>
+        </div>
+
+        @if (reliability) {
+          <section class="reliability-card">
+            <h3>Fiabilidade</h3>
+            <div class="reliability-grid">
+              <div><span>Taxa de presença</span><strong>{{ reliability.attendanceRate | number:'1.0-0' }}%</strong></div>
+              <div><span>Sessões concluídas</span><strong>{{ reliability.completedSessions }}</strong></div>
+              <div><span>Faltas</span><strong>{{ reliability.noShows }}</strong></div>
+              <div><span>Cancelamentos tardios</span><strong>{{ reliability.lateCancellations }}</strong></div>
+            </div>
+          </section>
+        }
+      </section>
+    }
+  </div>
+</section>

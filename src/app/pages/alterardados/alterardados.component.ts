@@ -1,123 +1,143 @@
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
-import { FormBuilder, NgForm } from '@angular/forms';
-import { ActivatedRoute, ParamMap, Route, Router } from '@angular/router';
-import { Subscription } from 'rxjs';
-import { NotificationType } from 'src/app/enum/notification-type.enum';
-import { AuthenticationService } from 'src/app/services/authethication.service';
-import { AuthService } from 'src/auth.service';
-import { LoginperfilService } from '../../services/loginperfil.service';
-import { Perfil } from '../model/perfil';
-import { CustomHttpResponse } from '../custom-http-response';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { finalize } from 'rxjs';
+
+import { environment } from 'src/environment/environment';
+import { MyProfile, UpdateMyProfileRequest } from '../model/my-profile';
+import { MyProfileService } from '../../services/my-profile.service';
 
 @Component({
-    selector: 'app-alterardados',
-    templateUrl: './alterardados.component.html',
-    styleUrls: ['./alterardados.component.css'],
-    changeDetection: ChangeDetectionStrategy.Eager,
-    standalone: false
+  selector: 'app-alterardados',
+  templateUrl: './alterardados.component.html',
+  styleUrls: ['./alterardados.component.css'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false
 })
 export class AlterardadosComponent implements OnInit {
-  changetype:boolean = true;
-  visible:boolean = true;
-  username!: any;
-  password!: string;
-  showLoading!: boolean;
-  showImage!: boolean;
-  showImage2!: boolean;
-  token: any;
-  subscriptions: Subscription[] = [];
-  id!:number;
-  perfil!:Perfil;
-  editPerfil:Perfil = new Perfil();
-  fileName!: string;
-  profileImage!: File;
-  dark!:boolean;
-  private readonly USERNAME: string = "username";
-  registerError:boolean =false;
-  errorMessage!:string;
-  registerSuccess:boolean =false;
-  successMessage!:any;
-  validation1!:boolean;
-  validation!:string;
-  constructor(private loginPerfilService: LoginperfilService,private authenticationService:AuthenticationService, private router:Router) { }
-  url:any;
+  profile?: MyProfile;
+  photo?: File;
+  photoPreview = '';
+
+  loading = false;
+  saving = false;
+  errorMessage = '';
+  successMessage = '';
+
+  constructor(private myProfileService: MyProfileService) {}
 
   ngOnInit(): void {
-    this.loginPerfilService.obterUserPeloUsername1(this.authenticationService.loggedInPerfilname).subscribe( data => {
-      this.perfil = data;
-    }, error => console.log());
-    this.showImage = true;
-    var theme = localStorage.getItem('theme');
-    if (theme == 'claro'){
-      this.dark = false
-    } else {
-      this.dark = true
+    this.load();
+  }
+
+  load(): void {
+    this.loading = true;
+    this.errorMessage = '';
+
+    this.myProfileService.get()
+      .pipe(finalize(() => this.loading = false))
+      .subscribe({
+        next: profile => {
+          this.profile = { ...profile };
+          this.photoPreview = this.profileImage(profile) || '';
+        },
+        error: () => this.errorMessage = 'Não foi possível carregar os teus dados.'
+      });
+  }
+
+  save(): void {
+    if (!this.profile || this.saving) {
+      return;
     }
-  }
 
-  closeError(){
-    this.registerError = false;
-  }
-  closeSuccess(){
-    this.registerSuccess = false;
-  }
-  closeValidation(){
-    this.validation1 = false;
-  }
-
-  verDadosPerfil(){
-    this.router.navigate([`menu/dadosPerfil`]);
-  }
-
-  NomeUtilizador(){
-    return this.perfil.username;
-  }
-  public onProfileImageChange(e: any) {
-    if(e.target.files){
-      this.showImage = false;
-    this.fileName = e.target.files[0].name;    
-    this.profileImage = e.target.files[0];
-      var reader = new FileReader();
-      reader.readAsDataURL(e.target.files[0]);
-      reader.onload=(event:any)=>{
-        this.url=event.target.result;
-      }
+    if (!this.profile.email?.trim()) {
+      this.errorMessage = 'O email é obrigatório.';
+      return;
     }
-  }
-  Menu(){
-    this.router.navigate([`menu`]);
+
+    const request: UpdateMyProfileRequest = {
+      fullName: this.clean(this.profile.fullName),
+      dateOfBirth: this.clean(this.profile.dateOfBirth),
+      address: this.clean(this.profile.address),
+      country: this.clean(this.profile.country),
+      location: this.clean(this.profile.location),
+      postalCode: this.clean(this.profile.postalCode),
+      indicativePhone: this.clean(this.profile.indicativePhone),
+      phone: this.clean(this.profile.phone),
+      gender: this.clean(this.profile.gender),
+      email: this.profile.email.trim(),
+      favoriteSports: this.clean(this.profile.favoriteSports),
+      mfa: Boolean(this.profile.mfa)
+    };
+
+    this.saving = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    this.myProfileService.update(request, this.photo)
+      .pipe(finalize(() => this.saving = false))
+      .subscribe({
+        next: updated => {
+          this.profile = { ...updated };
+          this.photo = undefined;
+          this.photoPreview = this.profileImage(updated) || this.photoPreview;
+          this.successMessage = 'Perfil atualizado com sucesso.';
+        },
+        error: error => {
+          this.errorMessage = this.errorFrom(
+            error,
+            'Não foi possível atualizar o perfil.'
+          );
+        }
+      });
   }
 
-    onUpdatePerfil(): void {
-      if (this.editPerfil.address== "" || this.editPerfil.dateOfBirth== "" || this.editPerfil.email== "" || this.editPerfil.favoriteSports== "" || this.editPerfil.fullName== "" ||
-      this.editPerfil.country== "" || this.editPerfil.location== "" || this.editPerfil.postalCode== "" || this.editPerfil.phone== "" || this.editPerfil.indicativePhone== "" ){
-        this.validation1 = true;
-      this.validation = `Ainda tens espaços em branco`;
-      } else if (this.editPerfil.gender == ""){
-        this.validation1 = true;
-    this.validation =`Não escolheste nenhum género!`
-        } else {
-        const formData = this.loginPerfilService.updatePerfilFormData(this.perfil.username, this.editPerfil, this.profileImage);
-        this.showLoading = true;
-        this.subscriptions.push(
-          this.loginPerfilService.updatePerfil(formData).subscribe(
-            (response: HttpResponse<CustomHttpResponse>) => {
-              this.showLoading = false;
-        this.registerSuccess = true;
-        this.registerError = false;
-        this.validation1 = false;
-        this.successMessage = response.body?.message
-            },
-            (errorResponse: HttpErrorResponse) => {
-              this.errorMessage = errorResponse.error.message;
-          this.showLoading = false;
-          this.registerError = true;
-          this.registerSuccess = false;
-          this.validation1 = false;
-            }
-          )
-        );
-      }
+  onPhotoChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+
+    if (!file) {
+      this.photo = undefined;
+      return;
     }
+
+    if (!file.type.startsWith('image/')) {
+      this.errorMessage = 'Escolhe um ficheiro de imagem.';
+      input.value = '';
+      return;
+    }
+
+    this.photo = file;
+    this.errorMessage = '';
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.photoPreview = typeof reader.result === 'string' ? reader.result : '';
+    };
+    reader.readAsDataURL(file);
   }
+
+  private profileImage(profile: MyProfile): string | null {
+    const path = profile.profilePicUrl;
+    if (!path) {
+      return null;
+    }
+
+    if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('data:')) {
+      return path;
+    }
+
+    return environment.apiUrl + (path.startsWith('/') ? path : '/' + path);
+  }
+
+  private clean(value: string | null): string | null {
+    const cleaned = value?.trim();
+    return cleaned ? cleaned : null;
+  }
+
+  private errorFrom(error: HttpErrorResponse, fallback: string): string {
+    const apiMessage = error.error?.message;
+    return typeof apiMessage === 'string' && apiMessage.trim()
+      ? apiMessage
+      : fallback;
+  }
+}
