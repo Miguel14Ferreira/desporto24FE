@@ -38,6 +38,7 @@ jobs:
         run: |
           npm pkg delete 'dependencies.@ngneat/query'
           npm pkg delete 'dependencies.@nestjs/ng-universal'
+          npm pkg delete 'dependencies.angular-notifier'
           rm -rf node_modules
           npm install
           npm run build
