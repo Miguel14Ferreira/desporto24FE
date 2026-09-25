@@ -1,4 +1,4 @@
-# Task 9 verification round 4: second interceptor spec
+# Task 9 finalization: persist Angular 22 upgrade
 name: Angular 22 One-Time Upgrade
 
 on:
@@ -104,44 +104,6 @@ jobs:
 
       - name: Run frontend tests
         run: npm test -- --watch=false --browsers=ChromeHeadless
-
-      - name: Install final feature CI and remove one-time workflow
-        run: |
-          cat > .github/workflows/feature-ci.yml <<'YAML'
-          name: Desporto24 FE Feature CI
-
-          on:
-            push:
-              branches:
-                - feature/desporto24-relaunch-develop
-            pull_request:
-              branches:
-                - develop
-
-          jobs:
-            test-and-build:
-              runs-on: ubuntu-latest
-              timeout-minutes: 20
-              steps:
-                - name: Checkout
-                  uses: actions/checkout@v4
-
-                - name: Set up Node 22
-                  uses: actions/setup-node@v4
-                  with:
-                    node-version: '22.23.3'
-                    cache: npm
-
-                - name: Install dependencies
-                  run: npm ci
-
-                - name: Run tests
-                  run: npm test -- --watch=false --browsers=ChromeHeadless
-
-                - name: Build
-                  run: npm run build
-          YAML
-          rm .github/workflows/angular-upgrade.yml
 
       - name: Commit upgraded frontend
         run: |
