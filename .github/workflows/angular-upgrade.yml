@@ -1,4 +1,5 @@
 name: Angular 22 One-Time Upgrade
+# retry after legacy template normalization
 # retry after ngFor syntax fix
 
 on:
