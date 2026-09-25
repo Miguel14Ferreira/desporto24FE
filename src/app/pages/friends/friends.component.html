@@ -21,6 +21,14 @@
         placeholder="Nome, username ou localidade">
     </label>
 
+    @if (actionSuccess) {
+      <div class="state-card">{{ actionSuccess }}</div>
+    }
+
+    @if (actionError) {
+      <div class="state-card error-state">{{ actionError }}</div>
+    }
+
     @if (loading) {
       <div class="state-card">A carregar amigos...</div>
     }
@@ -70,14 +78,52 @@
             </div>
 
             <div class="friend-actions">
-              @if (friend.chatBlocked) {
-                <span class="blocked-badge">
-                  {{ friend.blockedByMe ? 'Bloqueado por ti' : 'Chat bloqueado' }}
-                </span>
+              @if (friend.chatBlocked && !friend.blockedByMe) {
+                <span class="blocked-badge">Bloqueado pelo amigo</span>
               }
-              <a [routerLink]="['/menu/friendList/chat', friend.username]">
-                Abrir chat
-              </a>
+
+              <a [routerLink]="['/menu/friendList/chat', friend.username]">Abrir chat</a>
+
+              @if (!friend.chatBlocked || friend.blockedByMe) {
+                <button
+                  type="button"
+                  class="secondary-action"
+                  [disabled]="actionLoadingUsername !== null"
+                  (click)="toggleBlock(friend)">
+                  @if (actionLoadingUsername === friend.username) {
+                    A processar...
+                  } @else if (friend.chatBlocked) {
+                    Desbloquear chat
+                  } @else {
+                    Bloquear chat
+                  }
+                </button>
+              }
+
+              @if (pendingRemovalUsername === friend.username) {
+                <button
+                  type="button"
+                  class="secondary-action"
+                  [disabled]="actionLoadingUsername !== null"
+                  (click)="confirmRemove(friend)">
+                  {{ actionLoadingUsername === friend.username ? 'A remover...' : 'Confirmar remoção' }}
+                </button>
+                <button
+                  type="button"
+                  class="secondary-action"
+                  [disabled]="actionLoadingUsername !== null"
+                  (click)="cancelRemove()">
+                  Cancelar
+                </button>
+              } @else {
+                <button
+                  type="button"
+                  class="secondary-action"
+                  [disabled]="actionLoadingUsername !== null"
+                  (click)="requestRemove(friend)">
+                  Remover amigo
+                </button>
+              }
             </div>
           </article>
         }
