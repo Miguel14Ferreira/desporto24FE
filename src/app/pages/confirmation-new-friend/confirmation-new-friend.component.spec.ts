@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { ConfirmationNewFriendComponent } from './confirmation-new-friend.component';
+import { TEST_PROVIDERS } from '../../testing/test-providers';
 
 describe('ConfirmationNewFriendComponent', () => {
   let component: ConfirmationNewFriendComponent;
@@ -8,7 +9,8 @@ describe('ConfirmationNewFriendComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ ConfirmationNewFriendComponent ]
+      declarations: [ ConfirmationNewFriendComponent ],
+      providers: TEST_PROVIDERS
     })
     .compileComponents();
 
