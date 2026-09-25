@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { AuthenticationService } from 'src/app/services/authethication.service';
 import { Perfil } from '../model/perfil';
@@ -13,9 +13,11 @@ import { CustomHttpResponse } from '../custom-http-response';
 import { Friend } from '../model/friend';
 
 @Component({
-  selector: 'app-menu',
-  templateUrl: './menu.component.html',
-  styleUrls: ['./menu.component.css']
+    selector: 'app-menu',
+    templateUrl: './menu.component.html',
+    styleUrls: ['./menu.component.css'],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false
 })
 export class MenuComponent implements OnInit {
   public sessoes : Session [] = [];

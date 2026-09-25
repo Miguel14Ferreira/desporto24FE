@@ -1,5 +1,5 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { BehaviorSubject, Subscription } from 'rxjs';
 import { NotificationType } from 'src/app/enum/notification-type.enum';
 import { LoginperfilService } from 'src/app/services/loginperfil.service';
@@ -10,9 +10,11 @@ import { CustomHttpResponse } from '../custom-http-response';
 
 
 @Component({
-  selector: 'app-perfis',
-  templateUrl: './perfis.component.html',
-  styleUrls: ['./perfis.component.css']
+    selector: 'app-perfis',
+    templateUrl: './perfis.component.html',
+    styleUrls: ['./perfis.component.css'],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false
 })
 export class PerfisComponent {
   private titleSubject = new BehaviorSubject<String>('Perfis');

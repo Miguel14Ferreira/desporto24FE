@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Perfil } from '../model/perfil';
 import { Subscription } from 'rxjs';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
@@ -8,9 +8,11 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { CustomHttpResponse } from '../custom-http-response';
 
 @Component({
-  selector: 'app-forgotp2',
-  templateUrl: './forgotp2.component.html',
-  styleUrls: ['./forgotp2.component.css']
+    selector: 'app-forgotp2',
+    templateUrl: './forgotp2.component.html',
+    styleUrls: ['./forgotp2.component.css'],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false
 })
 export class Forgotp2Component implements OnInit {
   newPerfil: Perfil = new Perfil();

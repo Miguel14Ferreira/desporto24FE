@@ -1,5 +1,5 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder } from '@angular/forms';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { NotificationType } from 'src/app/enum/notification-type.enum';
@@ -11,9 +11,11 @@ import { AuthenticationService } from 'src/app/services/authethication.service';
 import { CustomHttpResponse } from '../custom-http-response';
 
 @Component({
-  selector: 'app-changepassword',
-  templateUrl: './changepassword.component.html',
-  styleUrls: ['./changepassword.component.css']
+    selector: 'app-changepassword',
+    templateUrl: './changepassword.component.html',
+    styleUrls: ['./changepassword.component.css'],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false
 })
 export class ChangepasswordComponent implements OnInit {
   changetype:boolean = true;

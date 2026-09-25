@@ -1,13 +1,15 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { Perfil } from '../model/perfil';
 import { LoginperfilService } from 'src/app/services/loginperfil.service';
 import { AuthenticationService } from 'src/app/services/authethication.service';
 
 @Component({
-  selector: 'app-perfil-data',
-  templateUrl: './perfil-data.component.html',
-  styleUrls: ['./perfil-data.component.css']
+    selector: 'app-perfil-data',
+    templateUrl: './perfil-data.component.html',
+    styleUrls: ['./perfil-data.component.css'],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false
 })
 export class PerfilDataComponent {
   dark!:boolean;

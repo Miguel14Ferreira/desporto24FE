@@ -1,5 +1,5 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, NgForm } from '@angular/forms';
 import { ActivatedRoute, ParamMap, Route, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -11,9 +11,11 @@ import { Perfil } from '../model/perfil';
 import { CustomHttpResponse } from '../custom-http-response';
 
 @Component({
-  selector: 'app-alterardados',
-  templateUrl: './alterardados.component.html',
-  styleUrls: ['./alterardados.component.css']
+    selector: 'app-alterardados',
+    templateUrl: './alterardados.component.html',
+    styleUrls: ['./alterardados.component.css'],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false
 })
 export class AlterardadosComponent implements OnInit {
   changetype:boolean = true;

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { LoginperfilService } from 'src/app/services/loginperfil.service';
 import { Perfil } from '../model/perfil';
@@ -10,9 +10,11 @@ import { HeaderType } from 'src/app/enum/header-type.enum';
 import { CustomHttpResponse } from '../custom-http-response';
 
 @Component({
-  selector: 'app-login-mfa',
-  templateUrl: './login-mfa.component.html',
-  styleUrls: ['./login-mfa.component.css']
+    selector: 'app-login-mfa',
+    templateUrl: './login-mfa.component.html',
+    styleUrls: ['./login-mfa.component.css'],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false
 })
 export class LoginMFAComponent {
 

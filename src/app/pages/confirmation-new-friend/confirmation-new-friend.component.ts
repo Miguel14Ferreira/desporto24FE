@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Perfil } from '../model/perfil';
 import { BehaviorSubject, Observable, Subscription, catchError, map, of, startWith, switchMap } from 'rxjs';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
@@ -8,9 +8,11 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Token } from '../model/token';
 
 @Component({
-  selector: 'app-confirmation-new-friend',
-  templateUrl: './confirmation-new-friend.component.html',
-  styleUrls: ['./confirmation-new-friend.component.css']
+    selector: 'app-confirmation-new-friend',
+    templateUrl: './confirmation-new-friend.component.html',
+    styleUrls: ['./confirmation-new-friend.component.css'],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false
 })
 export class ConfirmationNewFriendComponent implements OnInit {
   perfil = new Perfil();

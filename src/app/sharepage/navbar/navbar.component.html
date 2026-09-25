@@ -1,4 +1,5 @@
-<nav *ngIf="dark" class="navbar-expand-lg navbar-dark bg-dark">
+@if (dark) {
+  <nav class="navbar-expand-lg navbar-dark bg-dark">
     <div class="container-fluid">
       <div class="collapse navbar-collapse" id="navbarSupportedContent">
         <ul class="navbar-nav me-auto mb-2 mb-lg-0">
@@ -16,33 +17,33 @@
           </li>
         </ul>
         <input type="checkbox" class="checkbox" id="chk" value="true"/>
-      <i (click)="LightMode()" class="fas fa-moon"></i>
+        <i (click)="LightMode()" class="fas fa-moon"></i>
       </div>
     </div>
     <script>
       $(function(){
-        var scroll = $(document).scrollTop();
-        var navHeight =$('.navbar-expand-lg navbar-light bg-lightnavbar').outerHeight();
-        $(window).scroll(function(){
-          var scrolled = $(document).scrollTop();
-
-          if(scrolled > navHeight){
-            $('.navbar-expand-lg navbar-light bg-lightnavbar').addClass('animate');
-          } else {
-            $('.navbar-expand-lg navbar-light bg-lightnavbar').removeClass('animate');
-          }
-
-          if(scrolled > scroll){
-            $('.navbar-expand-lg navbar-light bg-lightnavbar').removeClass('sticky');
-          }else{
-            $('.navbar-expand-lg navbar-light bg-lightnavbar').addClass('sticky');
-          }
-          scroll = $(document).scrollTop();
-        });
-      });
-    </script>
-  </nav>
-  <nav *ngIf="!dark" class="navbar-expand-lg navbar-light bg-lightnavbar">
+      var scroll = $(document).scrollTop();
+      var navHeight =$('.navbar-expand-lg navbar-light bg-lightnavbar').outerHeight();
+      $(window).scroll(function(){
+      var scrolled = $(document).scrollTop();
+      if(scrolled > navHeight){
+      $('.navbar-expand-lg navbar-light bg-lightnavbar').addClass('animate');
+      } else {
+      $('.navbar-expand-lg navbar-light bg-lightnavbar').removeClass('animate');
+    }
+    if(scrolled > scroll){
+    $('.navbar-expand-lg navbar-light bg-lightnavbar').removeClass('sticky');
+    }else{
+    $('.navbar-expand-lg navbar-light bg-lightnavbar').addClass('sticky');
+  }
+  scroll = $(document).scrollTop();
+  });
+  });
+</script>
+</nav>
+}
+@if (!dark) {
+  <nav class="navbar-expand-lg navbar-light bg-lightnavbar">
     <div class="container-fluid">
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
@@ -70,24 +71,23 @@
     </div>
     <script>
       $(function(){
-        var scroll = $(document).scrollTop();
-        var navHeight =$('.navbar-expand-lg navbar-light bg-lightnavbar').outerHeight();
-        $(window).scroll(function(){
-          var scrolled = $(document).scrollTop();
-
-          if(scrolled > navHeight){
-            $('.navbar-expand-lg navbar-light bg-lightnavbar').addClass('animate');
-          } else {
-            $('.navbar-expand-lg navbar-light bg-lightnavbar').removeClass('animate');
-          }
-
-          if(scrolled > scroll){
-            $('.navbar-expand-lg navbar-light bg-lightnavbar').removeClass('sticky');
-          }else{
-            $('.navbar-expand-lg navbar-light bg-lightnavbar').addClass('sticky');
-          }
-          scroll = $(document).scrollTop();
-        });
-      });
-    </script>
-  </nav>
+      var scroll = $(document).scrollTop();
+      var navHeight =$('.navbar-expand-lg navbar-light bg-lightnavbar').outerHeight();
+      $(window).scroll(function(){
+      var scrolled = $(document).scrollTop();
+      if(scrolled > navHeight){
+      $('.navbar-expand-lg navbar-light bg-lightnavbar').addClass('animate');
+      } else {
+      $('.navbar-expand-lg navbar-light bg-lightnavbar').removeClass('animate');
+    }
+    if(scrolled > scroll){
+    $('.navbar-expand-lg navbar-light bg-lightnavbar').removeClass('sticky');
+    }else{
+    $('.navbar-expand-lg navbar-light bg-lightnavbar').addClass('sticky');
+  }
+  scroll = $(document).scrollTop();
+  });
+  });
+</script>
+</nav>
+}

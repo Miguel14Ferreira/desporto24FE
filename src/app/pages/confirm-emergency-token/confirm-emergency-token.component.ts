@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { Perfil } from '../model/perfil';
 import { LoginperfilService } from 'src/app/services/loginperfil.service';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -8,9 +8,11 @@ import { AuthenticationService } from 'src/app/services/authethication.service';
 import { Token } from '../model/token';
 
 @Component({
-  selector: 'app-confirm-emergency-token',
-  templateUrl: './confirm-emergency-token.component.html',
-  styleUrls: ['./confirm-emergency-token.component.css']
+    selector: 'app-confirm-emergency-token',
+    templateUrl: './confirm-emergency-token.component.html',
+    styleUrls: ['./confirm-emergency-token.component.css'],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false
 })
 export class ConfirmEmergencyTokenComponent {
 

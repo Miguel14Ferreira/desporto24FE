@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { LoginperfilService } from '../../services/loginperfil.service';
 import { Session } from '../session';
 import { AuthenticationService } from 'src/app/services/authethication.service';
@@ -9,9 +9,11 @@ import { ActivatedRoute, ParamMap } from '@angular/router';
 import { CustomHttpResponse } from '../custom-http-response';
 
 @Component({
-  selector: 'app-events2',
-  templateUrl: './events2.component.html',
-  styleUrls: ['./events2.component.css']
+    selector: 'app-events2',
+    templateUrl: './events2.component.html',
+    styleUrls: ['./events2.component.css'],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false
 })
 export class Events2Component implements OnInit {
   session:Session = new Session();

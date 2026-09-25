@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Perfil } from '../model/perfil';
 import { BehaviorSubject, Observable, Subscription, catchError, map, of, startWith, switchMap } from 'rxjs';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
@@ -9,9 +9,11 @@ import { Token } from '../model/token';
 import { CustomHttpResponse } from '../custom-http-response';
 
 @Component({
-  selector: 'app-confirm-token-registration',
-  templateUrl: './confirm-token-registration.component.html',
-  styleUrls: ['./confirm-token-registration.component.css']
+    selector: 'app-confirm-token-registration',
+    templateUrl: './confirm-token-registration.component.html',
+    styleUrls: ['./confirm-token-registration.component.css'],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false
 })
 export class ConfirmTokenRegistrationComponent implements OnInit {
   perfil = new Perfil();

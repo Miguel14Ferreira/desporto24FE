@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder } from '@angular/forms';
 import { Ideia } from 'src/app/ideia';
 import { LoginperfilService } from '../../services/loginperfil.service';
@@ -6,9 +6,11 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { CustomHttpResponse } from '../custom-http-response';
 
 @Component({
-  selector: 'app-contact',
-  templateUrl: './contact.component.html',
-  styleUrls: ['./contact.component.css']
+    selector: 'app-contact',
+    templateUrl: './contact.component.html',
+    styleUrls: ['./contact.component.css'],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false
 })
 export class ContactComponent implements OnInit {
   ideia = new Ideia();

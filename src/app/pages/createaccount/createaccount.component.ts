@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Perfil } from '../model/perfil';
 import { Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -9,9 +9,11 @@ import { NgForm } from '@angular/forms';
 import { CustomHttpResponse } from '../custom-http-response';
 
 @Component({
-  selector: 'app-createaccount',
-  templateUrl: './createaccount.component.html',
-  styleUrls: ['./createaccount.component.css']
+    selector: 'app-createaccount',
+    templateUrl: './createaccount.component.html',
+    styleUrls: ['./createaccount.component.css'],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false
 })
 export class CreateaccountComponent implements OnInit, OnDestroy {
   perfil:Perfil = new Perfil();
