@@ -6,6 +6,7 @@ import { forkJoin, finalize } from 'rxjs';
 
 import { DirectChatInfo, DirectChatMessage } from '../model/direct-chat';
 import { DirectChatService } from '../../services/direct-chat.service';
+import { CommunityService } from '../../services/community.service';
 
 @Component({
   selector: 'app-direct-chat',
@@ -22,15 +23,18 @@ export class DirectChatComponent implements OnInit {
 
   loading = false;
   sending = false;
+  friendshipActionLoading = false;
   errorMessage = '';
   actionError = '';
+  actionSuccess = '';
   messageBody = '';
 
   private readonly jwtHelper = new JwtHelperService();
 
   constructor(
     private route: ActivatedRoute,
-    private chatService: DirectChatService
+    private chatService: DirectChatService,
+    private communityService: CommunityService
   ) {}
 
   ngOnInit(): void {
@@ -94,6 +98,7 @@ export class DirectChatComponent implements OnInit {
 
     this.sending = true;
     this.actionError = '';
+    this.actionSuccess = '';
 
     this.chatService.send(this.recipientUsername, text)
       .pipe(finalize(() => this.sending = false))
@@ -118,15 +123,62 @@ export class DirectChatComponent implements OnInit {
     );
   }
 
+  isBlockedByMe(): boolean {
+    return Boolean(
+      this.chatInfo?.chatBlocked
+      && this.currentUsername
+      && this.chatInfo.whoBlocked?.toLowerCase() === this.currentUsername.toLowerCase()
+    );
+  }
+
+  toggleChatBlock(): void {
+    if (!this.recipientUsername || this.friendshipActionLoading) {
+      return;
+    }
+
+    if (this.chatInfo?.chatBlocked && !this.isBlockedByMe()) {
+      this.actionError = 'Este chat foi bloqueado pelo outro utilizador.';
+      this.actionSuccess = '';
+      return;
+    }
+
+    const shouldUnblock = this.isBlockedByMe();
+    const request$ = shouldUnblock
+      ? this.communityService.unblockFriend(this.recipientUsername)
+      : this.communityService.blockFriend(this.recipientUsername);
+
+    this.friendshipActionLoading = true;
+    this.actionError = '';
+    this.actionSuccess = '';
+
+    request$
+      .pipe(finalize(() => this.friendshipActionLoading = false))
+      .subscribe({
+        next: () => {
+          this.chatInfo = shouldUnblock
+            ? { chatBlocked: false, whoBlocked: null }
+            : { chatBlocked: true, whoBlocked: this.currentUsername };
+          this.actionSuccess = shouldUnblock
+            ? 'Chat desbloqueado.'
+            : 'Chat bloqueado.';
+        },
+        error: error => {
+          this.actionError = this.errorFrom(
+            error,
+            shouldUnblock
+              ? 'Não foi possível desbloquear este chat.'
+              : 'Não foi possível bloquear este chat.'
+          );
+        }
+      });
+  }
+
   blockedMessage(): string {
     if (!this.chatInfo?.chatBlocked) {
       return '';
     }
 
-    if (
-      this.currentUsername
-      && this.chatInfo.whoBlocked?.toLowerCase() === this.currentUsername.toLowerCase()
-    ) {
+    if (this.isBlockedByMe()) {
       return 'Bloqueaste este chat.';
     }
 
