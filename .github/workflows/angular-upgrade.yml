@@ -92,8 +92,9 @@ jobs:
           from pathlib import Path
           p = Path("tsconfig.json")
           s = p.read_text()
-          s = s.replace('    "baseUrl": "./",\n', '')
-          s = s.replace('    "downlevelIteration": true,\n', '')
+          if '"ignoreDeprecations": "6.0"' not in s:
+              s = s.replace('    "moduleResolution": "node",\n',
+                            '    "moduleResolution": "node",\n    "ignoreDeprecations": "6.0",\n')
           p.write_text(s)
           PY
           npx ng update @angular/core@22 @angular/cli@22 --allow-dirty
