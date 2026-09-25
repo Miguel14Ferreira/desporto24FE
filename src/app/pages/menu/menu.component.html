@@ -11,7 +11,7 @@
         <div>
           @if (!showNotification) {
             <div id="envelope">
-              <i class="bi bi-envelope-exclamation" (mouseover)="MostrarNotificacoes()"></i>
+              <i class="bi bi-envelope-exclamation" routerLink="/menu/notifications" title="Abrir notificações"></i>
             </div>
           }
         </div>
@@ -20,7 +20,7 @@
         <div>
           @if (!showNotification) {
             <div id="envelope">
-              <i class="bi bi-envelope" (mouseover)="MostrarNotificacoes()"></i>
+              <i class="bi bi-envelope" routerLink="/menu/notifications" title="Abrir notificações"></i>
             </div>
           }
         </div>
@@ -426,7 +426,7 @@
                   <div>
                     @if (!showNotification) {
                       <div id="envelope">
-                        <i class="bi bi-envelope-exclamation" (mouseover)="MostrarNotificacoes()"></i>
+                        <i class="bi bi-envelope-exclamation" routerLink="/menu/notifications" title="Abrir notificações"></i>
                       </div>
                     }
                   </div>
@@ -435,7 +435,7 @@
                   <div>
                     @if (!showNotification) {
                       <div id="envelope">
-                        <i class="bi bi-envelope" (mouseover)="MostrarNotificacoes()"></i>
+                        <i class="bi bi-envelope" routerLink="/menu/notifications" title="Abrir notificações"></i>
                       </div>
                     }
                   </div>

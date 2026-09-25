@@ -34,6 +34,7 @@ import { ResetPwEmergencyComponent } from './pages/reset-pw-emergency/reset-pw-e
 import { BlockaccComponent } from './pages/blockacc/blockacc.component';
 import { SessionDetailsComponent } from './pages/session-details/session-details.component';
 import { MySessionsComponent } from './pages/my-sessions/my-sessions.component';
+import { NotificationsComponent } from './pages/notifications/notifications.component';
 
 @NgModule({ declarations: [
         AppComponent,
@@ -62,7 +63,8 @@ import { MySessionsComponent } from './pages/my-sessions/my-sessions.component';
         ResetPwEmergencyComponent,
         BlockaccComponent,
         SessionDetailsComponent,
-        MySessionsComponent
+        MySessionsComponent,
+        NotificationsComponent
     ],
     bootstrap: [AppComponent], imports: [BrowserModule,
         AppRoutingModule,
