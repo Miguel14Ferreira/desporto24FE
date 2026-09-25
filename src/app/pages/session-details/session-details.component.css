@@ -643,3 +643,53 @@ h1 {
     flex: 1;
   }
 }
+
+
+.remove-participant-action,
+.confirm-remove-action,
+.cancel-remove-action {
+  border-radius: .7rem;
+  padding: .6rem .75rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.remove-participant-action,
+.confirm-remove-action {
+  border: 1px solid rgba(248, 113, 113, .28);
+  background: rgba(248, 113, 113, .1);
+  color: #fecaca;
+}
+
+.cancel-remove-action {
+  border: 1px solid rgba(255, 255, 255, .16);
+  background: rgba(255, 255, 255, .06);
+  color: #e2e8f0;
+}
+
+.remove-participant-action:disabled,
+.confirm-remove-action:disabled,
+.cancel-remove-action:disabled {
+  opacity: .5;
+  cursor: wait;
+}
+
+.removal-confirmation {
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+  padding-left: .25rem;
+}
+
+.removal-confirmation span {
+  color: #fecaca;
+  font-size: .75rem;
+  font-weight: 700;
+}
+
+@media (max-width: 760px) {
+  .attendance-actions,
+  .removal-confirmation {
+    flex-wrap: wrap;
+  }
+}

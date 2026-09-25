@@ -36,7 +36,7 @@ describe('SessionDetailsComponent', () => {
   beforeEach(async () => {
     sessionService = jasmine.createSpyObj<SessionService>(
       'SessionService',
-      ['detail', 'join', 'leave', 'messages', 'postMessage', 'participants']
+      ['detail', 'join', 'leave', 'messages', 'postMessage', 'participants', 'removeParticipant']
     );
     sessionService.detail.and.returnValue(of(session));
     sessionService.join.and.returnValue(of({
@@ -44,6 +44,7 @@ describe('SessionDetailsComponent', () => {
       waitlistPosition: null
     }));
     sessionService.leave.and.returnValue(of(void 0));
+    sessionService.removeParticipant.and.returnValue(of(void 0));
     sessionService.messages.and.returnValue(of([]));
     sessionService.participants.and.returnValue(of([
       {
@@ -176,6 +177,43 @@ describe('SessionDetailsComponent', () => {
 
     expect(sessionService.participants).toHaveBeenCalledWith(7);
     expect(component.participants.length).toBe(1);
+  });
+
+  it('should remove a non-creator participant and refresh the session', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session,
+      creatorUsername: 'creator-user',
+      joined: true
+    };
+    const participant = {
+      id: 15,
+      username: 'player-one',
+      attendanceStatus: 'PENDING',
+      joinedAt: '2026-09-20T18:00:00Z'
+    } as any;
+
+    component.requestRemoveParticipant(participant);
+    component.confirmRemoveParticipant(participant);
+
+    expect(sessionService.removeParticipant).toHaveBeenCalledWith(7, 15);
+    expect(component.participantManagementSuccess).toContain('removido');
+    expect(component.pendingRemovalId).toBeNull();
+  });
+
+  it('should never offer removal for the session creator', () => {
+    component.session = {
+      ...session,
+      creatorUsername: 'creator-user'
+    };
+    const creatorParticipant = {
+      id: 1,
+      username: 'creator-user',
+      attendanceStatus: 'PENDING',
+      joinedAt: '2026-09-20T18:00:00Z'
+    } as any;
+
+    expect(component.canRemoveParticipant(creatorParticipant)).toBeFalse();
   });
 
   it('should record participant attendance after the session starts', () => {

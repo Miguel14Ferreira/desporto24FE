@@ -32,6 +32,8 @@ export class SessionDetailsComponent implements OnInit {
   reliabilityLoading = false;
   participantsLoading = false;
   attendanceUpdatingId: number | null = null;
+  removeLoadingId: number | null = null;
+  pendingRemovalId: number | null = null;
 
   errorMessage = '';
   actionError = '';
@@ -40,6 +42,8 @@ export class SessionDetailsComponent implements OnInit {
   reliabilityError = '';
   attendanceError = '';
   attendanceSuccess = '';
+  participantManagementError = '';
+  participantManagementSuccess = '';
 
   joinPassword = '';
   messageBody = '';
@@ -168,6 +172,64 @@ export class SessionDetailsComponent implements OnInit {
           this.attendanceError = this.errorFrom(
             error,
             'Não foi possível atualizar a presença. O backend pode exigir um pequeno período após o início da sessão.'
+          );
+        }
+      });
+  }
+
+  canRemoveParticipant(participant: SessionParticipant): boolean {
+    if (!this.session?.creatorUsername) {
+      return false;
+    }
+
+    return participant.username.toLowerCase() !== this.session.creatorUsername.toLowerCase();
+  }
+
+  requestRemoveParticipant(participant: SessionParticipant): void {
+    if (!this.canRemoveParticipant(participant) || this.removeLoadingId !== null) {
+      return;
+    }
+
+    this.pendingRemovalId = participant.id;
+    this.participantManagementError = '';
+    this.participantManagementSuccess = '';
+  }
+
+  cancelRemoveParticipant(): void {
+    if (this.removeLoadingId !== null) {
+      return;
+    }
+
+    this.pendingRemovalId = null;
+  }
+
+  confirmRemoveParticipant(participant: SessionParticipant): void {
+    if (
+      !this.sessionId
+      || !this.isCreator()
+      || !this.canRemoveParticipant(participant)
+      || this.removeLoadingId !== null
+    ) {
+      return;
+    }
+
+    this.removeLoadingId = participant.id;
+    this.participantManagementError = '';
+    this.participantManagementSuccess = '';
+
+    this.sessionService.removeParticipant(this.sessionId, participant.id)
+      .pipe(finalize(() => this.removeLoadingId = null))
+      .subscribe({
+        next: () => {
+          this.pendingRemovalId = null;
+          this.participantManagementSuccess =
+            `${participant.username} foi removido da sessão.`;
+          this.loadSession(false);
+        },
+        error: error => {
+          this.participantManagementError = this.errorFrom(
+            error,
+            'Não foi possível remover este participante.'
           );
         }
       });

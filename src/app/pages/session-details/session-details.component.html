@@ -223,6 +223,14 @@
                 <div class="attendance-feedback attendance-error">{{ attendanceError }}</div>
               }
 
+              @if (participantManagementSuccess) {
+                <div class="attendance-feedback attendance-success">{{ participantManagementSuccess }}</div>
+              }
+
+              @if (participantManagementError) {
+                <div class="attendance-feedback attendance-error">{{ participantManagementError }}</div>
+              }
+
               @if (!participantsLoading && participants.length === 0 && !attendanceError) {
                 <div class="attendance-empty">Ainda não há participantes ativos para gerir.</div>
               }
@@ -247,17 +255,47 @@
                         <button
                           type="button"
                           class="attended-action"
-                          [disabled]="!hasSessionStarted() || attendanceUpdatingId !== null"
+                          [disabled]="!hasSessionStarted() || attendanceUpdatingId !== null || removeLoadingId !== null"
                           (click)="recordAttendance(participant, 'ATTENDED')">
                           {{ attendanceUpdatingId === participant.id ? 'A guardar...' : 'Presente' }}
                         </button>
                         <button
                           type="button"
                           class="no-show-action"
-                          [disabled]="!hasSessionStarted() || attendanceUpdatingId !== null"
+                          [disabled]="!hasSessionStarted() || attendanceUpdatingId !== null || removeLoadingId !== null"
                           (click)="recordAttendance(participant, 'NO_SHOW')">
                           {{ attendanceUpdatingId === participant.id ? 'A guardar...' : 'Faltou' }}
                         </button>
+
+                        @if (canRemoveParticipant(participant)) {
+                          @if (pendingRemovalId === participant.id) {
+                            <div class="removal-confirmation">
+                              <span>Remover {{ participant.username }}?</span>
+                              <button
+                                type="button"
+                                class="confirm-remove-action"
+                                [disabled]="removeLoadingId !== null"
+                                (click)="confirmRemoveParticipant(participant)">
+                                {{ removeLoadingId === participant.id ? 'A remover...' : 'Confirmar' }}
+                              </button>
+                              <button
+                                type="button"
+                                class="cancel-remove-action"
+                                [disabled]="removeLoadingId !== null"
+                                (click)="cancelRemoveParticipant()">
+                                Cancelar
+                              </button>
+                            </div>
+                          } @else {
+                            <button
+                              type="button"
+                              class="remove-participant-action"
+                              [disabled]="removeLoadingId !== null || attendanceUpdatingId !== null"
+                              (click)="requestRemoveParticipant(participant)">
+                              Remover
+                            </button>
+                          }
+                        }
                       </div>
                     </article>
                   }

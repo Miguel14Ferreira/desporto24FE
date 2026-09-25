@@ -95,6 +95,12 @@ export class SessionService {
     return this.http.get<SessionParticipant[]>(this.baseUrl + '/' + id + '/participants');
   }
 
+  removeParticipant(id: number, participantId: number): Observable<void> {
+    return this.http.delete<void>(
+      this.baseUrl + '/' + id + '/participants/' + participantId
+    );
+  }
+
   create(request: CreateSessionRequest, photo?: File): Observable<SessionDetail> {
     if (!photo) {
       return this.http.post<SessionDetail>(this.baseUrl, request);
