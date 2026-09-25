@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { ConfirmEmergencyTokenComponent } from './confirm-emergency-token.component';
+import { TEST_PROVIDERS } from '../../testing/test-providers';
 
 describe('ConfirmEmergencyTokenComponent', () => {
   let component: ConfirmEmergencyTokenComponent;
@@ -8,7 +9,8 @@ describe('ConfirmEmergencyTokenComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ ConfirmEmergencyTokenComponent ]
+      declarations: [ ConfirmEmergencyTokenComponent ],
+      providers: TEST_PROVIDERS
     })
     .compileComponents();
 
