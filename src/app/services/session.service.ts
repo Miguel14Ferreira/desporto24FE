@@ -7,6 +7,7 @@ import { SessionDetail } from '../pages/model/session-detail';
 import { SessionSummary } from '../pages/model/session-summary';
 import { MySessionsResponse } from '../pages/model/my-sessions-response';
 import { SessionMessage } from '../pages/model/session-message';
+import { CreateSessionRequest } from '../pages/model/create-session-request';
 
 export interface SessionSearchFilters {
   sport?: string;
@@ -87,5 +88,20 @@ export class SessionService {
       this.baseUrl + '/' + id + '/messages',
       { body: body.trim() }
     );
+  }
+
+  create(request: CreateSessionRequest, photo?: File): Observable<SessionDetail> {
+    if (!photo) {
+      return this.http.post<SessionDetail>(this.baseUrl, request);
+    }
+
+    const formData = new FormData();
+    formData.append(
+      'session',
+      new Blob([JSON.stringify(request)], { type: 'application/json' })
+    );
+    formData.append('photo', photo);
+
+    return this.http.post<SessionDetail>(this.baseUrl, formData);
   }
 }

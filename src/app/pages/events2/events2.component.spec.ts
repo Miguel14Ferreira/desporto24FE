@@ -1,28 +1,90 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Router } from '@angular/router';
+import { of } from 'rxjs';
 
 import { Events2Component } from './events2.component';
+import { SessionService } from '../../services/session.service';
 import { TEST_IMPORTS, TEST_PROVIDERS } from '../../testing/test-providers';
 
 describe('Events2Component', () => {
   let component: Events2Component;
   let fixture: ComponentFixture<Events2Component>;
+  let sessionService: jasmine.SpyObj<SessionService>;
+  let router: Router;
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      declarations: [ Events2Component ],
-      imports: TEST_IMPORTS,
-      providers: TEST_PROVIDERS
-    })
-    .compileComponents();
-  });
+    sessionService = jasmine.createSpyObj<SessionService>('SessionService', ['create']);
+    sessionService.create.and.returnValue(of({
+      id: 42,
+      sport: 'Padel',
+      city: 'Lisboa',
+      gameDate: '2026-10-15T18:00:00Z',
+      distanceKm: null,
+      participantCount: 1,
+      maxParticipants: 4,
+      priceAmount: 0,
+      privateGame: false,
+      status: 'OPEN',
+      creatorUsername: 'fixture-user',
+      address: 'Rua do Campo',
+      canSeeExactAddress: true,
+      joined: true,
+      waitlisted: false,
+      waitlistPosition: null,
+      gamePhoto: null
+    }));
 
-  beforeEach(() => {
+    await TestBed.configureTestingModule({
+      declarations: [Events2Component],
+      imports: TEST_IMPORTS,
+      providers: [
+        ...TEST_PROVIDERS,
+        { provide: SessionService, useValue: sessionService }
+      ]
+    }).compileComponents();
+
     fixture = TestBed.createComponent(Events2Component);
     component = fixture.componentInstance;
+    router = TestBed.inject(Router);
+    spyOn(router, 'navigate').and.returnValue(Promise.resolve(true));
     fixture.detectChanges();
   });
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('should reject an incomplete session', () => {
+    component.createSession();
+
+    expect(sessionService.create).not.toHaveBeenCalled();
+    expect(component.errorMessage).toContain('Preenche');
+  });
+
+  it('should create a session through the new API and navigate to its details', () => {
+    component.sport = 'Padel';
+    component.gameDate = '2099-10-15T18:00';
+    component.city = 'Lisboa';
+    component.address = 'Rua do Campo';
+    component.maxParticipants = 4;
+
+    component.createSession();
+
+    expect(sessionService.create).toHaveBeenCalled();
+    expect(router.navigate).toHaveBeenCalledWith(['/menu/events', 42]);
+  });
+
+  it('should require a password when the session is private', () => {
+    component.sport = 'Padel';
+    component.gameDate = '2099-10-15T18:00';
+    component.city = 'Lisboa';
+    component.address = 'Rua do Campo';
+    component.maxParticipants = 4;
+    component.privateGame = true;
+
+    component.createSession();
+
+    expect(sessionService.create).not.toHaveBeenCalled();
+    expect(component.errorMessage).toContain('palavra-passe');
   });
 });

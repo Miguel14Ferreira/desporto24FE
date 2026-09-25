@@ -1,219 +1,164 @@
-<!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:display="http://www.w3.org/1999/xhtml"
-  xmlns="http://www.w3.org/1999/html">
-  <head>
+<section class="create-page">
+  <div class="create-shell">
+    <header class="page-header">
+      <div>
+        <p class="eyebrow">Desporto24</p>
+        <h1>Criar uma sessão</h1>
+        <p class="subtitle">Define quando, onde e como queres jogar. Depois da criação vais diretamente para os detalhes da sessão.</p>
+      </div>
 
-    <meta charset="ISO-8859-1">
-    <title>Desporto24</title>
-    <link rel="stylesheet">
-  </head>
-  @if (dark) {
-    <div class="img">
-      <h1 id="h1white">Desporto24</h1>
-      <div id="container2">
-        <p id="D24a">Desporto24</p>
-        <p id="D241a">Desporto24</p>
-        <p id="D243a">Desporto24</p>
-        <p id="D244a">Desporto24</p>
-        <p id="D245a">Desporto24</p>
+      <div class="header-actions">
+        <a class="secondary-action" routerLink="/menu/events">Descobrir sessões</a>
+        <a class="secondary-action" routerLink="/menu/my-sessions">As minhas sessões</a>
       </div>
-      @if (registerError) {
-        <div id="notificationError">
-          <i class="bi bi-exclamation-triangle-fill"></i>&nbsp;&nbsp;
-          {{ errorMessage }}
-          <button (click)="closeError()" type="button" type="button" id="botaoFecharError">X</button>
-        </div>
-      }
-      @if (registerSuccess) {
-        <div id="notificationSuccess">
-          <i class="bi bi-check-circle-fill"></i>&nbsp;&nbsp;
-          {{ successMessage }}
-          <button (click)="closeSuccess()" type="button" id="botaoFecharSuccess">X</button>
-        </div>
-      }
-      @if (validation1) {
-        <div id="notificationInfo">
-          <i class="bi bi-exclamation-circle-fill"></i>&nbsp;&nbsp;
-          {{ validation }}
-          <button (click)="closeValidation()" type="button" id="botaoFecharInfo">X</button>
-        </div>
-      }
-      <form #createSession="ngForm" (ngSubmit)="onCreatingNewSession()" name="form" action="#">
-        <label id="input1">Coloca o desporto que tu queres praticar:</label>
-        <input [(ngModel)]="session.desporto" name="desporto" id="espaco1" placeholder="Escreve aqui o desporto que pretendes praticar">
-        <label id="espaco3">Data de jogo:</label>
-        <input id="espaco2" [(ngModel)]="session.dataDeJogo" name="datadejogo" class="dateOfBirth" min="{{minDate}}" #input [(ngModel)]="value" (change)="onChange(input.value)" type="datetime-local" placeholder="Data de jogo" required>
-        <label id="espaco4">Define por favor o limite de jogadores para a tua sessão:</label>
-        <select id="desporto2" [(ngModel)]="session.jogadores" name="jogadores" class="country" name="country" required>
-          <option value="1">1</option>
-          <option value="2">2</option>
-          <option value="3">3</option>
-          <option value="4">4</option>
-          <option value="5">5</option>
-          <option value="6">6</option>
-          <option value="7">7</option>
-          <option value="8">8</option>
-          <option value="9">9</option>
-          <option value="10">10</option>
-          <option value="11">11</option>
-          <option value="12">12</option>
-          <option value="13">13</option>
-          <option value="14">14</option>
-          <option value="15">15</option>
-          <option value="16">16</option>
-          <option value="17">17</option>
-          <option value="18">18</option>
-          <option value="19">19</option>
-          <option value="20">20</option>
-          <option value="21">21</option>
-          <option value="22">22</option>
-          <option value="23">23</option>
-          <option value="24">24</option>
-          <option value="25">25</option>
-          <option value="26">26</option>
-          <option value="27">27</option>
-          <option value="28">28</option>
-          <option value="29">29</option>
-          <option value="30">30</option>
-          <option value="other">mais que 30</option>
-        </select>
-        <input type="text" [(ngModel)]="session.localidade" name="localidade" placeholder="Coloca aqui a localidade" id="espaco14" required>
-        <input type="text" [(ngModel)]="session.morada" name="morada" placeholder="Coloca aqui a morada completa do campo" id="espaco7" required>
-        <div class="espaco8">
-          <input type="checkbox" (click)="toogleTag2()"> Quero um jogo privado
-        </div>
-        @if (showMe2) {
-          <input id="espaco10" [(ngModel)]="session.password" name="password" type="text" placeholder="Por favor,define aqui a tua palavra-passe para o jogo.">
-        }
-        <div class="espaco9">
-          <input type="checkbox" (click)="toogleTag3()"> Quero colocar preço por jogador
-        </div>
-        @if (showMe3) {
-          <input id="espaco11" [(ngModel)]="session.preco" type="text" name="preco" placeholder="Por favor,coloca aqui o valor em euros para o teu jogo.">
-        }
-        <label id="espaco13">Fotografia do Campo:</label>
-        <input name="foto" (change)="onSessionImageChange($event)" type="file" class="inpFilewhite">
-        <div class="image-preview" id="imagePreview">
-          <img [src]="url" alt="Image Preview" class="image-preview__image">
-        </div>
-      </form>
-      <button id="botao1">
-        @if (showLoading) {
-          <i class="fas fa-spinner fa-spin"></i>
-          }&nbsp;&nbsp;
-          @if (showLoading) {
-            <span>A carregar...</span>
-          }
-          @if (!showLoading) {
-            <span>Criar Sessão</span>
-          }
-        </button>
-        <button href="#" routerLink="menu" id="botao2">Voltar atrás</button>
-      </div>
+    </header>
+
+    @if (errorMessage) {
+      <div class="feedback error-feedback">{{ errorMessage }}</div>
     }
-    @if (!dark) {
-      <div class="img2">
-        <h1 id="h1black">Desporto24</h1>
-        <div id="container">
-          <p id="D24">Desporto24</p>
-          <p id="D241">Desporto24</p>
-          <p id="D243">Desporto24</p>
-          <p id="D244">Desporto24</p>
-          <p id="D245">Desporto24</p>
-        </div>
-        @if (registerError) {
-          <div id="notificationError">
-            <i class="bi bi-exclamation-triangle-fill"></i>&nbsp;&nbsp;
-            {{ errorMessage }}
-            <button (click)="closeError()" type="button" type="button" id="botaoFecharError">X</button>
-          </div>
-        }
-        @if (registerSuccess) {
-          <div id="notificationSuccess">
-            <i class="bi bi-check-circle-fill"></i>&nbsp;&nbsp;
-            {{ successMessage }}
-            <button (click)="closeSuccess()" type="button" id="botaoFecharSuccess">X</button>
-          </div>
-        }
-        @if (validation1) {
-          <div id="notificationInfo">
-            <i class="bi bi-exclamation-circle-fill"></i>&nbsp;&nbsp;
-            {{ validation }}
-            <button (click)="closeValidation()" type="button" id="botaoFecharInfo">X</button>
-          </div>
-        }
-        <form #createSession="ngForm" (ngSubmit)="onCreatingNewSession()" name="form" action="#">
-          <label id="input1black">Coloca o desporto que tu queres praticar:</label>
-          <input [(ngModel)]="session.desporto" name="desporto" id="espaco1" placeholder="Escreve aqui o desporto que pretendes praticar">
-          <label id="espaco3black">Data de jogo:</label>
-          <input id="espaco2" [(ngModel)]="session.dataDeJogo" name="datadejogo" class="dateOfBirth" min="{{minDate}}" #input [(ngModel)]="value" (change)="onChange(input.value)" type="datetime-local" placeholder="Data de jogo" required>
-          <label id="espaco4black">Define por favor o limite de jogadores para a tua sessão:</label>
-          <select id="desporto2" [(ngModel)]="session.jogadores" name="jogadores" class="country" name="country" required>
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="4">4</option>
-            <option value="5">5</option>
-            <option value="6">6</option>
-            <option value="7">7</option>
-            <option value="8">8</option>
-            <option value="9">9</option>
-            <option value="10">10</option>
-            <option value="11">11</option>
-            <option value="12">12</option>
-            <option value="13">13</option>
-            <option value="14">14</option>
-            <option value="15">15</option>
-            <option value="16">16</option>
-            <option value="17">17</option>
-            <option value="18">18</option>
-            <option value="19">19</option>
-            <option value="20">20</option>
-            <option value="21">21</option>
-            <option value="22">22</option>
-            <option value="23">23</option>
-            <option value="24">24</option>
-            <option value="25">25</option>
-            <option value="26">26</option>
-            <option value="27">27</option>
-            <option value="28">28</option>
-            <option value="29">29</option>
-            <option value="30">30</option>
-            <option value="other">mais que 30</option>
-          </select>
-          <input type="text" [(ngModel)]="session.localidade" name="localidade" placeholder="Coloca aqui a localidade" id="espaco14" required>
-          <input type="text" [(ngModel)]="session.morada" name="morada" placeholder="Coloca aqui a morada completa do campo" id="espaco7" required>
-          <div class="espaco8black">
-            <input type="checkbox" (click)="toogleTag2()">Quero um jogo privado
-          </div>
-          @if (showMe2) {
-            <input id="espaco10" [(ngModel)]="session.password" name="password" type="text" placeholder="Por favor,coloca aqui a tua palavra-passe para o jogo.">
+
+    <form class="create-card" (ngSubmit)="createSession()">
+      <div class="form-grid">
+        <label>
+          <span>Desporto *</span>
+          <input
+            type="text"
+            name="sport"
+            [(ngModel)]="sport"
+            [disabled]="loading"
+            placeholder="Ex.: Padel">
+        </label>
+
+        <label>
+          <span>Data e hora *</span>
+          <input
+            type="datetime-local"
+            name="gameDate"
+            [(ngModel)]="gameDate"
+            [min]="minDate"
+            [disabled]="loading">
+        </label>
+
+        <label>
+          <span>Localidade *</span>
+          <input
+            type="text"
+            name="city"
+            [(ngModel)]="city"
+            [disabled]="loading"
+            placeholder="Ex.: Lisboa">
+        </label>
+
+        <label>
+          <span>Máximo de jogadores *</span>
+          <input
+            type="number"
+            name="maxParticipants"
+            [(ngModel)]="maxParticipants"
+            min="2"
+            max="100"
+            [disabled]="loading">
+        </label>
+
+        <label class="full-width">
+          <span>Morada do local *</span>
+          <input
+            type="text"
+            name="address"
+            [(ngModel)]="address"
+            [disabled]="loading"
+            placeholder="Ex.: Rua do Campo 10, Lisboa">
+        </label>
+      </div>
+
+      <div class="options-grid">
+        <section class="option-card">
+          <label class="toggle-row">
+            <input
+              type="checkbox"
+              name="privateGame"
+              [(ngModel)]="privateGame"
+              [disabled]="loading">
+            <span>
+              <strong>Sessão privada</strong>
+              <small>Quem quiser entrar precisa da palavra-passe.</small>
+            </span>
+          </label>
+
+          @if (privateGame) {
+            <label class="nested-field">
+              <span>Palavra-passe *</span>
+              <input
+                type="password"
+                name="password"
+                [(ngModel)]="password"
+                [disabled]="loading"
+                placeholder="Palavra-passe da sessão">
+            </label>
           }
-          <div class="espaco9black">
-            <input type="checkbox" (click)="toogleTag3()">Quero colocar preço por jogador
-          </div>
-          @if (showMe3) {
-            <input id="espaco11" [(ngModel)]="session.preco" type="text" name="preco" placeholder="Por favor,coloca aqui o valor em euros para o teu jogo.">
+        </section>
+
+        <section class="option-card">
+          <label class="toggle-row">
+            <input
+              type="checkbox"
+              name="hasPrice"
+              [(ngModel)]="hasPrice"
+              [disabled]="loading">
+            <span>
+              <strong>Tem custo por jogador</strong>
+              <small>Se estiver desligado, a sessão aparece como grátis.</small>
+            </span>
+          </label>
+
+          @if (hasPrice) {
+            <label class="nested-field">
+              <span>Preço por jogador (€)</span>
+              <input
+                type="number"
+                name="priceAmount"
+                [(ngModel)]="priceAmount"
+                min="0"
+                step="0.01"
+                [disabled]="loading"
+                placeholder="0,00">
+            </label>
           }
-          <label id="espaco13black">Fotografia do Campo:</label>
-          <input [(ngModel)]="session.foto" (change)="onSessionImageChange($event)" name="foto" type="file" class="inpFile" accept="image/*" required>
-          <div class="image-preview" id="imagePreview">
-            <img [src]="url" alt="Image Preview" class="image-preview__image">
-            <span  class="image-preview__default-text"></span>
-          </div>
-        </form>
-        <button id="botao1">
-          @if (showLoading) {
-            <i class="fas fa-spinner fa-spin"></i>
-            }&nbsp;&nbsp;
-            @if (showLoading) {
-              <span>A carregar...</span>
-            }
-            @if (!showLoading) {
-              <span>Criar Sessão</span>
-            }
-          </button>
-          <button href="#" routerLink="menu" id="botao2">Voltar atrás</button>
+        </section>
+      </div>
+
+      <section class="photo-section">
+        <div>
+          <h2>Fotografia do local</h2>
+          <p>Opcional. Ajuda os jogadores a reconhecer o campo ou espaço onde vão jogar.</p>
         </div>
-      }
-    </html>
+
+        <label class="upload-button">
+          <input
+            type="file"
+            accept="image/*"
+            [disabled]="loading"
+            (change)="onPhotoChange($event)">
+          Escolher fotografia
+        </label>
+
+        @if (photoPreview) {
+          <div class="photo-preview">
+            <img [src]="photoPreview" alt="Pré-visualização do local">
+            <div>
+              <strong>{{ photo?.name }}</strong>
+              <button type="button" [disabled]="loading" (click)="clearPhoto()">Remover</button>
+            </div>
+          </div>
+        }
+      </section>
+
+      <div class="form-actions">
+        <a class="secondary-action" routerLink="/menu/events">Cancelar</a>
+        <button type="submit" class="primary-action" [disabled]="loading">
+          {{ loading ? 'A criar sessão...' : 'Criar sessão' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</section>
