@@ -1,104 +1,82 @@
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
-import { FormBuilder } from '@angular/forms';
-import { ActivatedRoute, ParamMap, Router } from '@angular/router';
-import { NotificationType } from 'src/app/enum/notification-type.enum';
-import { AuthService } from 'src/auth.service';
-import { LoginperfilService } from '../../services/loginperfil.service';
-import { Perfil } from '../model/perfil';
-import { Subscription } from 'rxjs';
-import { AuthenticationService } from 'src/app/services/authethication.service';
-import { CustomHttpResponse } from '../custom-http-response';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { finalize } from 'rxjs';
+
+import { MyProfileService } from '../../services/my-profile.service';
 
 @Component({
-    selector: 'app-changepassword',
-    templateUrl: './changepassword.component.html',
-    styleUrls: ['./changepassword.component.css'],
-    changeDetection: ChangeDetectionStrategy.Eager,
-    standalone: false
+  selector: 'app-changepassword',
+  templateUrl: './changepassword.component.html',
+  styleUrls: ['./changepassword.component.css'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false
 })
-export class ChangepasswordComponent implements OnInit {
-  changetype:boolean = true;
-  visible:boolean = true;
-  username!: any;
-  password!: string;
-  showLoading!: boolean;
-  showLoading2!: boolean;
-  token: any;
-  subscriptions: Subscription[] = [];
-  id!:number;
-  perfil!:Perfil;
-  editperfil:Perfil = new Perfil();
-  fileName!: any;
-  dark!:boolean;
-  registerError:boolean =false;
-  errorMessage!:string;
-  registerSuccess:boolean =false;
-  successMessage!:any;
-  validation1!:boolean;
-  validation!:string;
-  private readonly USERNAME:string = "username";
-  
-  constructor(private loginPerfilService: LoginperfilService,private router:Router, private formBuilder: FormBuilder,private route:ActivatedRoute,private activatedRoute:ActivatedRoute,private authenticationService:AuthenticationService,private authService:AuthService) { }
+export class ChangepasswordComponent {
+  currentPassword = '';
+  newPassword = '';
+  confirmPassword = '';
 
-  ngOnInit(): void {
-    this.loginPerfilService.obterUserPeloUsername1(this.authenticationService.loggedInPerfilname).subscribe( data => {
-      this.perfil = data;
-    }, error => console.log());
-    var theme = localStorage.getItem('theme');
-    if (theme == 'claro'){
-      this.dark = false
-    } else {
-      this.dark = true
+  showCurrent = false;
+  showNew = false;
+
+  saving = false;
+  errorMessage = '';
+  successMessage = '';
+
+  constructor(private myProfileService: MyProfileService) {}
+
+  changePassword(): void {
+    if (this.saving) {
+      return;
     }
-  }
-  Menu(){
-    this.router.navigate([`menu`]);
-  }
 
-  viewPass(){
-    this.visible = !this.visible;
-    this.changetype = !this.changetype;
-}
-closeError(){
-  this.registerError = false;
-}
-closeSuccess(){
-  this.registerSuccess = false;
-}
-closeValidation(){
-  this.validation1 = false;
-}
+    this.errorMessage = '';
+    this.successMessage = '';
 
-  
-  onUpdatePerfilPassword(): void {
-    if (this.editperfil.newUsername == "" || this.editperfil.password == "" || this.editperfil.confirmPassword == ""){
-      this.validation1 = true;
-      this.validation = `Ainda tens espaços em branco`;
-    } else if (this.editperfil.password != this.editperfil.confirmPassword){
-      this.validation1 = true;
-    this.validation =`As tuas palavras-passes não estão iguais`;
-    } else {
-      this.showLoading = true;
-    const formData = this.loginPerfilService.updatePerfilPasswordFormData(this.perfil.username, this.editperfil);
-    this.subscriptions.push(
-      this.loginPerfilService.updatePerfilPassword(formData).subscribe(
-        (response: HttpResponse<CustomHttpResponse>) => {
-          this.showLoading = false;
-        this.registerSuccess = true;
-        this.registerError = false;
-        this.validation1 = false;
-        this.successMessage = response.body?.message
+    if (!this.currentPassword || !this.newPassword || !this.confirmPassword) {
+      this.errorMessage = 'Preenche todos os campos.';
+      return;
+    }
+
+    if (this.newPassword.length < 8) {
+      this.errorMessage = 'A nova palavra-passe tem de ter pelo menos 8 caracteres.';
+      return;
+    }
+
+    if (this.newPassword !== this.confirmPassword) {
+      this.errorMessage = 'A nova palavra-passe e a confirmação não coincidem.';
+      return;
+    }
+
+    if (this.currentPassword === this.newPassword) {
+      this.errorMessage = 'A nova palavra-passe tem de ser diferente da atual.';
+      return;
+    }
+
+    this.saving = true;
+
+    this.myProfileService.changePassword(this.currentPassword, this.newPassword)
+      .pipe(finalize(() => this.saving = false))
+      .subscribe({
+        next: () => {
+          this.currentPassword = '';
+          this.newPassword = '';
+          this.confirmPassword = '';
+          this.successMessage = 'Palavra-passe alterada com sucesso.';
         },
-        (errorResponse: HttpErrorResponse) => {
-          this.errorMessage = errorResponse.error.message;
-          this.showLoading = false;
-          this.registerError = true;
-          this.registerSuccess = false;
-          this.validation1 = false;
+        error: error => {
+          this.errorMessage = this.errorFrom(
+            error,
+            'Não foi possível alterar a palavra-passe.'
+          );
         }
-      )
-      );
+      });
   }
-}
+
+  private errorFrom(error: HttpErrorResponse, fallback: string): string {
+    const apiMessage = error.error?.message;
+    return typeof apiMessage === 'string' && apiMessage.trim()
+      ? apiMessage
+      : fallback;
+  }
 }

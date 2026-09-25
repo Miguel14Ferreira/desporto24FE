@@ -30,4 +30,11 @@ export class MyProfileService {
 
     return this.http.put<MyProfile>(this.baseUrl, formData);
   }
+
+  changePassword(currentPassword: string, newPassword: string): Observable<unknown> {
+    return this.http.put(
+      this.baseUrl + '/password',
+      { currentPassword, newPassword }
+    );
+  }
 }
