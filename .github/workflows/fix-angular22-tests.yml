@@ -1,0 +1,270 @@
+name: Fix Angular 22 Tests
+
+on:
+  push:
+    branches:
+      - feature/desporto24-relaunch-develop
+    paths:
+      - .github/workflows/fix-angular22-tests.yml
+
+permissions:
+  contents: write
+
+jobs:
+  fix-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/desporto24-relaunch-develop
+          fetch-depth: 0
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Normalize Angular smoke tests
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          helper = """import { Provider } from '@angular/core';
+          import { HttpClientTestingModule } from '@angular/common/http/testing';
+          import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+          import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
+          import { RouterTestingModule } from '@angular/router/testing';
+          import { of } from 'rxjs';
+
+          import { AuthenticationService } from '../services/authethication.service';
+          import { LoginperfilService } from '../services/loginperfil.service';
+
+          const profile = {
+            username: 'miguel',
+            email: 'miguel@example.invalid',
+            status: 'OFFLINE'
+          };
+
+          const loginPerfilServiceMock = new Proxy(
+            { loggedInUsername: 'miguel' } as Record<string, unknown>,
+            {
+              get(target, property) {
+                if (property in target) {
+                  return target[property as string];
+                }
+
+                const method = String(property);
+                if (['obterNotificacoesDoPerfil', 'friendList', 'obterSessoes', 'obterPerfis'].includes(method)) {
+                  return () => of([]);
+                }
+                if (method === 'obterUserPeloUsername1') {
+                  return () => of(profile);
+                }
+                if (['createPerfilFormData', 'createSessionForm', 'updatePerfilFormData', 'updatePerfilFoto',
+                     'updatePerfilPasswordFormData', 'addFriendFromData', 'blockFriendFromData',
+                     'unblockFriendFromData', 'removeFriendFromData', 'createFormResetPassword'].includes(method)) {
+                  return () => new FormData();
+                }
+
+                return () => of({});
+              }
+            }
+          );
+
+          const authenticationServiceMock = new Proxy(
+            {
+              loggedInPerfilname: 'miguel',
+              isLoggedIn: () => true,
+              logOut: () => undefined,
+              logOut2: () => undefined,
+              saveToken: () => undefined,
+              getToken: () => 'test-token',
+              getChat: () => of([])
+            } as Record<string, unknown>,
+            {
+              get(target, property) {
+                if (property in target) {
+                  return target[property as string];
+                }
+                return () => of({});
+              }
+            }
+          );
+
+          const routerMock = {
+            navigate: () => Promise.resolve(true),
+            navigateByUrl: () => Promise.resolve(true)
+          };
+
+          const activatedRouteMock = {
+            params: of({}),
+            queryParams: of({}),
+            paramMap: of(convertToParamMap({})),
+            queryParamMap: of(convertToParamMap({})),
+            snapshot: {
+              params: {},
+              queryParams: {},
+              paramMap: convertToParamMap({}),
+              queryParamMap: convertToParamMap({})
+            }
+          };
+
+          export const TEST_IMPORTS = [
+            FormsModule,
+            ReactiveFormsModule,
+            RouterTestingModule,
+            HttpClientTestingModule
+          ];
+
+          export const TEST_PROVIDERS: Provider[] = [
+            { provide: AuthenticationService, useValue: authenticationServiceMock },
+            { provide: LoginperfilService, useValue: loginPerfilServiceMock },
+            { provide: Router, useValue: routerMock },
+            { provide: ActivatedRoute, useValue: activatedRouteMock }
+          ];
+          """
+          helper = "\n".join(line[10:] if line.startswith("          ") else line for line in helper.splitlines()) + "\n"
+          helper_path = Path("src/app/testing/test-providers.ts")
+          helper_path.parent.mkdir(parents=True, exist_ok=True)
+          helper_path.write_text(helper)
+
+          targets = [
+            "src/app/pages/alterardados/alterardados.component.spec.ts",
+            "src/app/pages/changepassword/changepassword.component.spec.ts",
+            "src/app/pages/confirm-emergency-token/confirm-emergency-token.component.spec.ts",
+            "src/app/pages/confirm-token-registration/confirm-token-registration.component.spec.ts",
+            "src/app/pages/confirmation-new-friend/confirmation-new-friend.component.spec.ts",
+            "src/app/pages/contact/contact.component.spec.ts",
+            "src/app/pages/createaccount/createaccount.component.spec.ts",
+            "src/app/pages/events/events.component.spec.ts",
+            "src/app/pages/events2/events2.component.spec.ts",
+            "src/app/pages/forgotp/forgotp.component.spec.ts",
+            "src/app/pages/forgotp2/forgotp2.component.spec.ts",
+            "src/app/pages/login-mfa/login-mfa.component.spec.ts",
+            "src/app/pages/login/login.component.spec.ts",
+            "src/app/pages/menu/menu.component.spec.ts",
+            "src/app/pages/perfil-data/perfil-data.component.spec.ts",
+            "src/app/pages/perfis/perfis.component.spec.ts",
+            "src/app/pages/reset-pw-emergency/reset-pw-emergency.component.spec.ts",
+            "src/app/sharepage/navbar/navbar.component.spec.ts"
+          ]
+
+          for filename in targets:
+              p = Path(filename)
+              s = p.read_text()
+
+              s = re.sub(
+                  r"import \{ TEST_PROVIDERS \} from ['\"]\.\./\.\./testing/test-providers['\"];?\n?",
+                  "",
+                  s
+              )
+              if "TEST_IMPORTS" not in s:
+                  lines = s.splitlines()
+                  last_import = max(i for i, line in enumerate(lines) if line.startswith("import "))
+                  lines.insert(last_import + 1, "import { TEST_IMPORTS, TEST_PROVIDERS } from '../../testing/test-providers';")
+                  s = "\n".join(lines) + ("\n" if not s.endswith("\n") else "")
+
+              if not re.search(r"\bimports\s*:", s):
+                  s = re.sub(
+                      r"(declarations\s*:\s*\[[^\]]*\])",
+                      r"\1,\n      imports: TEST_IMPORTS",
+                      s,
+                      count=1,
+                      flags=re.S
+                  )
+
+              if not re.search(r"\bproviders\s*:", s):
+                  s = re.sub(
+                      r"(imports\s*:\s*TEST_IMPORTS)",
+                      r"\1,\n      providers: TEST_PROVIDERS",
+                      s,
+                      count=1
+                  )
+              else:
+                  # If a partial previous edit added providers already, normalize it.
+                  s = re.sub(r"providers\s*:\s*TEST_PROVIDERS", "providers: TEST_PROVIDERS", s)
+
+              p.write_text(s)
+
+          Path("src/app/app.component.spec.ts").write_text("""import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+          import { TestBed } from '@angular/core/testing';
+          import { RouterTestingModule } from '@angular/router/testing';
+          import { AppComponent } from './app.component';
+
+          describe('AppComponent', () => {
+            beforeEach(async () => {
+              await TestBed.configureTestingModule({
+                imports: [RouterTestingModule],
+                declarations: [AppComponent],
+                schemas: [CUSTOM_ELEMENTS_SCHEMA]
+              }).compileComponents();
+            });
+
+            it('should create the app', () => {
+              const fixture = TestBed.createComponent(AppComponent);
+              expect(fixture.componentInstance).toBeTruthy();
+            });
+
+            it('should expose the Desporto24 title', () => {
+              const fixture = TestBed.createComponent(AppComponent);
+              expect(fixture.componentInstance.title).toEqual('desporto24');
+            });
+
+            it('should render the application shell', () => {
+              const fixture = TestBed.createComponent(AppComponent);
+              fixture.detectChanges();
+              const compiled = fixture.nativeElement as HTMLElement;
+              expect(compiled.querySelector('app-navbar')).not.toBeNull();
+              expect(compiled.querySelector('app-footer')).not.toBeNull();
+            });
+          });
+          """.replace("          ", ""))
+
+          Path("src/app/pages/loginperfil.service.spec.ts").write_text("""import { HttpClientTestingModule } from '@angular/common/http/testing';
+          import { TestBed } from '@angular/core/testing';
+
+          import { LoginperfilService } from '../services/loginperfil.service';
+
+          describe('LoginperfilService', () => {
+            let service: LoginperfilService;
+
+            beforeEach(() => {
+              TestBed.configureTestingModule({
+                imports: [HttpClientTestingModule],
+                providers: [LoginperfilService]
+              });
+              service = TestBed.inject(LoginperfilService);
+            });
+
+            it('should be created', () => {
+              expect(service).toBeTruthy();
+            });
+          });
+          """.replace("          ", ""))
+
+          interceptor = Path("src/app/auth.interceptor.spec.ts")
+          s = interceptor.read_text()
+          if "TEST_PROVIDERS" not in s:
+              s = s.replace(
+                  "import { AuthInterceptor } from './auth.interceptor';",
+                  "import { AuthInterceptor } from './auth.interceptor';\nimport { TEST_PROVIDERS } from './testing/test-providers';"
+              )
+          s = re.sub(
+              r"providers\s*:\s*\[\s*AuthInterceptor(?:\s*,\s*\.\.\.TEST_PROVIDERS)?\s*\]",
+              "providers: [AuthInterceptor, ...TEST_PROVIDERS]",
+              s
+          )
+          interceptor.write_text(s)
+          PY
+
+      - name: Remove one-time workflow and commit
+        run: |
+          rm .github/workflows/fix-angular22-tests.yml
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes required"
+          else
+            git commit -m "test: modernize Angular 22 smoke test setup"
+            git push origin HEAD:feature/desporto24-relaunch-develop
+          fi
