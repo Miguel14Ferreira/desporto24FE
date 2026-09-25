@@ -55,6 +55,57 @@
             </div>
           </div>
 
+          <section class="creator-reliability">
+            <div class="creator-reliability__header">
+              <div>
+                <h2>Fiabilidade do criador</h2>
+                <p>{{ session.creatorUsername || 'Utilizador' }}</p>
+              </div>
+              @if (reliabilityLoading) {
+                <span class="reliability-loading">A carregar...</span>
+              }
+            </div>
+
+            @if (reliabilityError) {
+              <div class="reliability-error">{{ reliabilityError }}</div>
+            }
+
+            @if (!reliabilityLoading && creatorReliability) {
+              <div class="reliability-grid">
+                <div>
+                  <span>Taxa de presença</span>
+                  <strong>{{ creatorReliability.attendanceRate | percent:'1.0-0' }}</strong>
+                </div>
+                <div>
+                  <span>Sessões concluídas</span>
+                  <strong>{{ creatorReliability.completedSessions }}</strong>
+                </div>
+                <div>
+                  <span>Faltas</span>
+                  <strong>{{ creatorReliability.noShows }}</strong>
+                </div>
+                <div>
+                  <span>Cancelamentos tardios</span>
+                  <strong>{{ creatorReliability.lateCancellations }}</strong>
+                </div>
+              </div>
+
+              @if (creatorReliability.warning || creatorReliability.reducedPriority || creatorReliability.joinRestricted) {
+                <div class="reliability-flags">
+                  @if (creatorReliability.warning) {
+                    <span>Aviso ativo</span>
+                  }
+                  @if (creatorReliability.reducedPriority) {
+                    <span>Prioridade reduzida</span>
+                  }
+                  @if (creatorReliability.joinRestricted) {
+                    <span>Entradas restringidas</span>
+                  }
+                </div>
+              }
+            }
+          </section>
+
           <section class="address-panel">
             <h2>Local</h2>
             @if (session.canSeeExactAddress && session.address) {

@@ -7,7 +7,9 @@ import { finalize } from 'rxjs';
 import { environment } from 'src/environment/environment';
 import { SessionDetail } from '../model/session-detail';
 import { SessionMessage } from '../model/session-message';
+import { ReliabilitySummary } from '../model/reliability-summary';
 import { JoinSessionResponse, SessionService } from '../../services/session.service';
+import { ReliabilityService } from '../../services/reliability.service';
 
 @Component({
   selector: 'app-session-details',
@@ -19,16 +21,19 @@ import { JoinSessionResponse, SessionService } from '../../services/session.serv
 export class SessionDetailsComponent implements OnInit {
   session?: SessionDetail;
   messages: SessionMessage[] = [];
+  creatorReliability?: ReliabilitySummary;
 
   loading = false;
   actionLoading = false;
   chatLoading = false;
   messageSending = false;
+  reliabilityLoading = false;
 
   errorMessage = '';
   actionError = '';
   actionSuccess = '';
   chatError = '';
+  reliabilityError = '';
 
   joinPassword = '';
   messageBody = '';
@@ -39,7 +44,8 @@ export class SessionDetailsComponent implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
-    private sessionService: SessionService
+    private sessionService: SessionService,
+    private reliabilityService: ReliabilityService
   ) {}
 
   ngOnInit(): void {
@@ -223,6 +229,10 @@ export class SessionDetailsComponent implements OnInit {
         next: session => {
           this.session = session;
 
+          if (session.creatorUsername) {
+            this.loadCreatorReliability(session.creatorUsername);
+          }
+
           if (session.joined) {
             this.refreshMessages();
           } else {
@@ -231,6 +241,21 @@ export class SessionDetailsComponent implements OnInit {
           }
         },
         error: () => this.errorMessage = 'Não foi possível carregar os detalhes desta sessão.'
+      });
+  }
+
+  private loadCreatorReliability(username: string): void {
+    this.reliabilityLoading = true;
+    this.reliabilityError = '';
+
+    this.reliabilityService.summary(username)
+      .pipe(finalize(() => this.reliabilityLoading = false))
+      .subscribe({
+        next: summary => this.creatorReliability = summary,
+        error: () => {
+          this.creatorReliability = undefined;
+          this.reliabilityError = 'Não foi possível carregar a fiabilidade deste utilizador.';
+        }
       });
   }
 

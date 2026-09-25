@@ -4,12 +4,14 @@ import { of } from 'rxjs';
 
 import { SessionDetailsComponent } from './session-details.component';
 import { SessionService } from '../../services/session.service';
+import { ReliabilityService } from '../../services/reliability.service';
 import { TEST_IMPORTS, TEST_PROVIDERS } from '../../testing/test-providers';
 
 describe('SessionDetailsComponent', () => {
   let component: SessionDetailsComponent;
   let fixture: ComponentFixture<SessionDetailsComponent>;
   let sessionService: jasmine.SpyObj<SessionService>;
+  let reliabilityService: jasmine.SpyObj<ReliabilityService>;
 
   const session = {
     id: 7,
@@ -51,6 +53,18 @@ describe('SessionDetailsComponent', () => {
       createdAt: '2026-10-01T16:00:00Z'
     }));
 
+    reliabilityService = jasmine.createSpyObj<ReliabilityService>('ReliabilityService', ['summary']);
+    reliabilityService.summary.and.returnValue(of({
+      attendanceRate: 0.9,
+      completedSessions: 10,
+      noShows: 1,
+      lateCancellations: 0,
+      penaltyScore: 1,
+      warning: false,
+      reducedPriority: false,
+      joinRestricted: false
+    }));
+
     await TestBed.configureTestingModule({
       declarations: [SessionDetailsComponent],
       imports: TEST_IMPORTS,
@@ -67,6 +81,10 @@ describe('SessionDetailsComponent', () => {
         {
           provide: SessionService,
           useValue: sessionService
+        },
+        {
+          provide: ReliabilityService,
+          useValue: reliabilityService
         }
       ]
     }).compileComponents();
@@ -82,6 +100,11 @@ describe('SessionDetailsComponent', () => {
 
   it('should load the session from the route id', () => {
     expect(component.session?.id).toBe(7);
+  });
+
+  it('should load creator reliability with the session', () => {
+    expect(reliabilityService.summary).toHaveBeenCalledWith('creator-user');
+    expect(component.creatorReliability?.attendanceRate).toBe(0.9);
   });
 
   it('should join the session and refresh its details', () => {
