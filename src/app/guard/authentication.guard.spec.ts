@@ -24,27 +24,29 @@ describe('AuthenticationGuard', () => {
     localStorage.clear();
   });
 
-  it('should allow a non-expired token', () => {
+  it('should allow a non-expired token', async () => {
     localStorage.setItem('t', 'header.payload.signature');
-    spyOn(JwtHelperService.prototype, 'isTokenExpired').and.returnValue(false);
+    spyOn(JwtHelperService.prototype, 'isTokenExpired')
+      .and.returnValue(Promise.resolve(false));
 
-    const result = guard.canActivate({} as any, { url: '/menu/events' } as any);
+    const result = await guard.canActivate({} as any, { url: '/menu/events' } as any);
 
     expect(result).toBeTrue();
   });
 
-  it('should redirect unauthenticated users to login with returnUrl', () => {
-    const result = guard.canActivate({} as any, { url: '/menu/events' } as any);
+  it('should redirect unauthenticated users to login with returnUrl', async () => {
+    const result = await guard.canActivate({} as any, { url: '/menu/events' } as any);
 
     expect(router.serializeUrl(result as any)).toContain('/login');
     expect(router.serializeUrl(result as any)).toContain('returnUrl');
   });
 
-  it('should redirect expired tokens', () => {
+  it('should redirect expired tokens', async () => {
     localStorage.setItem('t', 'header.payload.signature');
-    spyOn(JwtHelperService.prototype, 'isTokenExpired').and.returnValue(true);
+    spyOn(JwtHelperService.prototype, 'isTokenExpired')
+      .and.returnValue(Promise.resolve(true));
 
-    const result = guard.canActivate({} as any, { url: '/menu' } as any);
+    const result = await guard.canActivate({} as any, { url: '/menu' } as any);
 
     expect(router.serializeUrl(result as any)).toContain('/login');
   });
