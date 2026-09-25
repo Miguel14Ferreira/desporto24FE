@@ -1,16 +1,15 @@
-import { TestBed } from '@angular/core/testing';
-
 import { AuthInterceptor } from './auth.interceptor';
 
 describe('AuthInterceptor', () => {
-  beforeEach(() => TestBed.configureTestingModule({
-    providers: [
-      AuthInterceptor
-      ]
-  }));
-
   it('should be created', () => {
-    const interceptor: AuthInterceptor = TestBed.inject(AuthInterceptor);
+    const loginPerfil = { host: 'http://test' };
+    const authService = {
+      loadToken: () => undefined,
+      getToken: () => 'test-token'
+    };
+
+    const interceptor = new AuthInterceptor(loginPerfil as any, authService as any);
+
     expect(interceptor).toBeTruthy();
   });
 });
