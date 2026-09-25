@@ -8,6 +8,7 @@ import { environment } from 'src/environment/environment';
 import { SessionDetail } from '../model/session-detail';
 import { SessionMessage } from '../model/session-message';
 import { ReliabilitySummary } from '../model/reliability-summary';
+import { SessionParticipant } from '../model/session-participant';
 import { JoinSessionResponse, SessionService } from '../../services/session.service';
 import { ReliabilityService } from '../../services/reliability.service';
 
@@ -22,18 +23,23 @@ export class SessionDetailsComponent implements OnInit {
   session?: SessionDetail;
   messages: SessionMessage[] = [];
   creatorReliability?: ReliabilitySummary;
+  participants: SessionParticipant[] = [];
 
   loading = false;
   actionLoading = false;
   chatLoading = false;
   messageSending = false;
   reliabilityLoading = false;
+  participantsLoading = false;
+  attendanceUpdatingId: number | null = null;
 
   errorMessage = '';
   actionError = '';
   actionSuccess = '';
   chatError = '';
   reliabilityError = '';
+  attendanceError = '';
+  attendanceSuccess = '';
 
   joinPassword = '';
   messageBody = '';
@@ -110,6 +116,82 @@ export class SessionDetailsComponent implements OnInit {
           this.actionError = this.errorFrom(error, 'Não foi possível sair desta sessão.');
         }
       });
+  }
+
+  loadParticipants(): void {
+    if (!this.sessionId || !this.isCreator() || this.participantsLoading) {
+      return;
+    }
+
+    this.participantsLoading = true;
+    this.attendanceError = '';
+
+    this.sessionService.participants(this.sessionId)
+      .pipe(finalize(() => this.participantsLoading = false))
+      .subscribe({
+        next: participants => this.participants = participants,
+        error: error => {
+          this.participants = [];
+          this.attendanceError = this.errorFrom(
+            error,
+            'Não foi possível carregar os participantes desta sessão.'
+          );
+        }
+      });
+  }
+
+  recordAttendance(participant: SessionParticipant, status: 'ATTENDED' | 'NO_SHOW'): void {
+    if (!this.sessionId || !this.isCreator() || this.attendanceUpdatingId !== null) {
+      return;
+    }
+
+    if (!this.hasSessionStarted()) {
+      this.attendanceError = 'Só podes marcar presenças depois de a sessão começar.';
+      this.attendanceSuccess = '';
+      return;
+    }
+
+    this.attendanceUpdatingId = participant.id;
+    this.attendanceError = '';
+    this.attendanceSuccess = '';
+
+    this.reliabilityService.recordAttendance(this.sessionId, participant.id, status)
+      .pipe(finalize(() => this.attendanceUpdatingId = null))
+      .subscribe({
+        next: () => {
+          participant.attendanceStatus = status;
+          this.attendanceSuccess = status === 'ATTENDED'
+            ? `${participant.username} marcado como presente.`
+            : `${participant.username} marcado como falta.`;
+        },
+        error: error => {
+          this.attendanceError = this.errorFrom(
+            error,
+            'Não foi possível atualizar a presença. O backend pode exigir um pequeno período após o início da sessão.'
+          );
+        }
+      });
+  }
+
+  attendanceLabel(status: string): string {
+    switch (status) {
+      case 'ATTENDED':
+        return 'Presente';
+      case 'NO_SHOW':
+        return 'Faltou';
+      case 'LATE_CANCELLED':
+        return 'Cancelou tarde';
+      default:
+        return 'Por marcar';
+    }
+  }
+
+  hasSessionStarted(): boolean {
+    if (!this.session?.gameDate) {
+      return false;
+    }
+
+    return new Date(this.session.gameDate).getTime() <= Date.now();
   }
 
   refreshMessages(): void {
@@ -231,6 +313,12 @@ export class SessionDetailsComponent implements OnInit {
 
           if (session.creatorUsername) {
             this.loadCreatorReliability(session.creatorUsername);
+          }
+
+          if (this.isCreator()) {
+            this.loadParticipants();
+          } else {
+            this.participants = [];
           }
 
           if (session.joined) {

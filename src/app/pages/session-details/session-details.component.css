@@ -470,3 +470,176 @@ h1 {
     grid-template-columns: 1fr;
   }
 }
+
+
+.attendance-panel {
+  margin-top: 1.25rem;
+  border-radius: .95rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, .045);
+  border: 1px solid rgba(255, 255, 255, .1);
+}
+
+.attendance-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.attendance-header h2 {
+  margin: 0 0 .3rem;
+  font-size: 1.05rem;
+}
+
+.attendance-header p {
+  margin: 0;
+  color: #94a3b8;
+  line-height: 1.45;
+}
+
+.refresh-attendance {
+  border: 1px solid rgba(255, 255, 255, .16);
+  border-radius: .7rem;
+  padding: .65rem .8rem;
+  background: rgba(255, 255, 255, .07);
+  color: #f8fafc;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.refresh-attendance:disabled {
+  opacity: .6;
+  cursor: wait;
+}
+
+.attendance-info,
+.attendance-feedback,
+.attendance-empty {
+  margin-bottom: .8rem;
+  border-radius: .7rem;
+  padding: .75rem .85rem;
+}
+
+.attendance-info,
+.attendance-empty {
+  background: rgba(56, 189, 248, .08);
+  color: #bae6fd;
+  border: 1px solid rgba(56, 189, 248, .18);
+}
+
+.attendance-success {
+  background: rgba(74, 222, 128, .1);
+  color: #bbf7d0;
+  border: 1px solid rgba(74, 222, 128, .25);
+}
+
+.attendance-error {
+  background: rgba(248, 113, 113, .1);
+  color: #fecaca;
+  border: 1px solid rgba(248, 113, 113, .28);
+}
+
+.participant-list {
+  display: flex;
+  flex-direction: column;
+  gap: .65rem;
+}
+
+.participant-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: .9rem;
+  padding: .8rem;
+  border-radius: .8rem;
+  background: rgba(255, 255, 255, .045);
+}
+
+.participant-identity {
+  display: grid;
+  gap: .2rem;
+  min-width: 0;
+}
+
+.participant-identity strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.participant-identity span {
+  color: #94a3b8;
+  font-size: .75rem;
+}
+
+.attendance-status {
+  border-radius: 999px;
+  padding: .35rem .6rem;
+  background: rgba(148, 163, 184, .12);
+  color: #cbd5e1;
+  font-size: .75rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.status-attended {
+  background: rgba(74, 222, 128, .12);
+  color: #bbf7d0;
+}
+
+.status-no-show {
+  background: rgba(248, 113, 113, .12);
+  color: #fecaca;
+}
+
+.attendance-actions {
+  display: flex;
+  gap: .5rem;
+}
+
+.attended-action,
+.no-show-action {
+  border-radius: .7rem;
+  padding: .6rem .75rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.attended-action {
+  border: 1px solid rgba(74, 222, 128, .28);
+  background: rgba(74, 222, 128, .1);
+  color: #bbf7d0;
+}
+
+.no-show-action {
+  border: 1px solid rgba(248, 113, 113, .28);
+  background: rgba(248, 113, 113, .1);
+  color: #fecaca;
+}
+
+.attended-action:disabled,
+.no-show-action:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 760px) {
+  .attendance-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .participant-row {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .attendance-status {
+    justify-self: start;
+  }
+
+  .attendance-actions button {
+    flex: 1;
+  }
+}

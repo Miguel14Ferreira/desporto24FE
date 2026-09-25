@@ -9,13 +9,25 @@ import { ReliabilitySummary } from '../pages/model/reliability-summary';
   providedIn: 'root'
 })
 export class ReliabilityService {
-  private readonly baseUrl = environment.apiUrl + '/api/profiles';
+  private readonly profilesUrl = environment.apiUrl + '/api/profiles';
+  private readonly sessionsUrl = environment.apiUrl + '/api/sessions';
 
   constructor(private http: HttpClient) {}
 
   summary(username: string): Observable<ReliabilitySummary> {
     return this.http.get<ReliabilitySummary>(
-      this.baseUrl + '/' + encodeURIComponent(username) + '/reliability'
+      this.profilesUrl + '/' + encodeURIComponent(username) + '/reliability'
+    );
+  }
+
+  recordAttendance(
+    sessionId: number,
+    participantId: number,
+    status: 'ATTENDED' | 'NO_SHOW'
+  ): Observable<void> {
+    return this.http.put<void>(
+      this.sessionsUrl + '/' + sessionId + '/participants/' + participantId + '/attendance',
+      { status }
     );
   }
 }

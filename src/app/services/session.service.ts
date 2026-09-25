@@ -8,6 +8,7 @@ import { SessionSummary } from '../pages/model/session-summary';
 import { MySessionsResponse } from '../pages/model/my-sessions-response';
 import { SessionMessage } from '../pages/model/session-message';
 import { CreateSessionRequest } from '../pages/model/create-session-request';
+import { SessionParticipant } from '../pages/model/session-participant';
 
 export interface SessionSearchFilters {
   sport?: string;
@@ -88,6 +89,10 @@ export class SessionService {
       this.baseUrl + '/' + id + '/messages',
       { body: body.trim() }
     );
+  }
+
+  participants(id: number): Observable<SessionParticipant[]> {
+    return this.http.get<SessionParticipant[]>(this.baseUrl + '/' + id + '/participants');
   }
 
   create(request: CreateSessionRequest, photo?: File): Observable<SessionDetail> {

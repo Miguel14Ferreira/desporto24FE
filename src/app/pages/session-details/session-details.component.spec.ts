@@ -36,7 +36,7 @@ describe('SessionDetailsComponent', () => {
   beforeEach(async () => {
     sessionService = jasmine.createSpyObj<SessionService>(
       'SessionService',
-      ['detail', 'join', 'leave', 'messages', 'postMessage']
+      ['detail', 'join', 'leave', 'messages', 'postMessage', 'participants']
     );
     sessionService.detail.and.returnValue(of(session));
     sessionService.join.and.returnValue(of({
@@ -45,6 +45,14 @@ describe('SessionDetailsComponent', () => {
     }));
     sessionService.leave.and.returnValue(of(void 0));
     sessionService.messages.and.returnValue(of([]));
+    sessionService.participants.and.returnValue(of([
+      {
+        id: 15,
+        username: 'player-one',
+        attendanceStatus: 'PENDING',
+        joinedAt: '2026-09-20T18:00:00Z'
+      }
+    ]));
     sessionService.postMessage.and.returnValue(of({
       id: 1,
       sessionId: 7,
@@ -53,9 +61,12 @@ describe('SessionDetailsComponent', () => {
       createdAt: '2026-10-01T16:00:00Z'
     }));
 
-    reliabilityService = jasmine.createSpyObj<ReliabilityService>('ReliabilityService', ['summary']);
+    reliabilityService = jasmine.createSpyObj<ReliabilityService>(
+      'ReliabilityService',
+      ['summary', 'recordAttendance']
+    );
     reliabilityService.summary.and.returnValue(of({
-      attendanceRate: 0.9,
+      attendanceRate: 90,
       completedSessions: 10,
       noShows: 1,
       lateCancellations: 0,
@@ -64,6 +75,7 @@ describe('SessionDetailsComponent', () => {
       reducedPriority: false,
       joinRestricted: false
     }));
+    reliabilityService.recordAttendance.and.returnValue(of(void 0));
 
     await TestBed.configureTestingModule({
       declarations: [SessionDetailsComponent],
@@ -104,7 +116,7 @@ describe('SessionDetailsComponent', () => {
 
   it('should load creator reliability with the session', () => {
     expect(reliabilityService.summary).toHaveBeenCalledWith('creator-user');
-    expect(component.creatorReliability?.attendanceRate).toBe(0.9);
+    expect(component.creatorReliability?.attendanceRate).toBe(90);
   });
 
   it('should join the session and refresh its details', () => {
@@ -151,5 +163,38 @@ describe('SessionDetailsComponent', () => {
     expect(sessionService.postMessage).toHaveBeenCalledWith(7, 'Bora jogar!');
     expect(component.messages.length).toBe(1);
     expect(component.messageBody).toBe('');
+  });
+
+  it('should allow the creator to load active participants', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session,
+      joined: true
+    };
+
+    component.loadParticipants();
+
+    expect(sessionService.participants).toHaveBeenCalledWith(7);
+    expect(component.participants.length).toBe(1);
+  });
+
+  it('should record participant attendance after the session starts', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session,
+      gameDate: '2020-10-01T18:00:00Z',
+      joined: true
+    };
+    const participant = {
+      id: 15,
+      username: 'player-one',
+      attendanceStatus: 'PENDING',
+      joinedAt: '2026-09-20T18:00:00Z'
+    } as any;
+
+    component.recordAttendance(participant, 'ATTENDED');
+
+    expect(reliabilityService.recordAttendance).toHaveBeenCalledWith(7, 15, 'ATTENDED');
+    expect(participant.attendanceStatus).toBe('ATTENDED');
   });
 });

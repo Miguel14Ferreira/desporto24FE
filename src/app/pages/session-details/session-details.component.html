@@ -74,7 +74,7 @@
               <div class="reliability-grid">
                 <div>
                   <span>Taxa de presença</span>
-                  <strong>{{ creatorReliability.attendanceRate | percent:'1.0-0' }}</strong>
+                  <strong>{{ creatorReliability.attendanceRate | number:'1.0-0' }}%</strong>
                 </div>
                 <div>
                   <span>Sessões concluídas</span>
@@ -189,6 +189,80 @@
                   {{ joinButtonLabel() }}
                 </button>
               </div>
+            </section>
+          }
+
+
+          @if (isCreator()) {
+            <section class="attendance-panel">
+              <div class="attendance-header">
+                <div>
+                  <h2>Presenças</h2>
+                  <p>Marca quem esteve presente ou faltou. A política do backend define quando esta ação fica disponível.</p>
+                </div>
+                <button
+                  type="button"
+                  class="refresh-attendance"
+                  [disabled]="participantsLoading"
+                  (click)="loadParticipants()">
+                  {{ participantsLoading ? 'A atualizar...' : 'Atualizar' }}
+                </button>
+              </div>
+
+              @if (!hasSessionStarted()) {
+                <div class="attendance-info">
+                  A marcação de presenças fica disponível depois de a sessão começar.
+                </div>
+              }
+
+              @if (attendanceSuccess) {
+                <div class="attendance-feedback attendance-success">{{ attendanceSuccess }}</div>
+              }
+
+              @if (attendanceError) {
+                <div class="attendance-feedback attendance-error">{{ attendanceError }}</div>
+              }
+
+              @if (!participantsLoading && participants.length === 0 && !attendanceError) {
+                <div class="attendance-empty">Ainda não há participantes ativos para gerir.</div>
+              }
+
+              @if (participants.length > 0) {
+                <div class="participant-list">
+                  @for (participant of participants; track participant.id) {
+                    <article class="participant-row">
+                      <div class="participant-identity">
+                        <strong>{{ participant.username }}</strong>
+                        <span>Entrou em {{ participant.joinedAt | date:'dd/MM/yyyy HH:mm' }}</span>
+                      </div>
+
+                      <span
+                        class="attendance-status"
+                        [class.status-attended]="participant.attendanceStatus === 'ATTENDED'"
+                        [class.status-no-show]="participant.attendanceStatus === 'NO_SHOW'">
+                        {{ attendanceLabel(participant.attendanceStatus) }}
+                      </span>
+
+                      <div class="attendance-actions">
+                        <button
+                          type="button"
+                          class="attended-action"
+                          [disabled]="!hasSessionStarted() || attendanceUpdatingId !== null"
+                          (click)="recordAttendance(participant, 'ATTENDED')">
+                          {{ attendanceUpdatingId === participant.id ? 'A guardar...' : 'Presente' }}
+                        </button>
+                        <button
+                          type="button"
+                          class="no-show-action"
+                          [disabled]="!hasSessionStarted() || attendanceUpdatingId !== null"
+                          (click)="recordAttendance(participant, 'NO_SHOW')">
+                          {{ attendanceUpdatingId === participant.id ? 'A guardar...' : 'Faltou' }}
+                        </button>
+                      </div>
+                    </article>
+                  }
+                </div>
+              }
             </section>
           }
 
