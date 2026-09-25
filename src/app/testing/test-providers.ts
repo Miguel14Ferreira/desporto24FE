@@ -1,5 +1,4 @@
 import { Provider } from '@angular/core';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -81,8 +80,7 @@ const activatedRouteMock = {
 export const TEST_IMPORTS = [
   FormsModule,
   ReactiveFormsModule,
-  RouterTestingModule,
-  HttpClientTestingModule
+  RouterTestingModule
 ];
 
 export const TEST_PROVIDERS: Provider[] = [
