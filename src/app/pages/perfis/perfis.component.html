@@ -17,14 +17,18 @@
           </form>
           <table id="tabela1" *ngIf="showTable">
             <thead>
-              <th>Foto de perfil</th>
-              <th>Nome do perfil</th>
+              <tr>
+                <th>Foto de perfil</th>
+                <th>Nome do perfil</th>
+              </tr>
             </thead>
-            <tbody *ngFor="let perfil of perfis">
-                    <td (click)="onSelectPerfil(perfil)">
-                        <img height="40" width="40" src="{{perfil.foto}}" class="rounded-circle img-thumbnail" alt=""/>
-                    </td>
-                    <td (click)="onSelectPerfil(perfil)"> {{perfil.username}}</td>
+            <tbody>
+              <tr *ngFor="let perfil of perfis">
+                <td (click)="onSelectPerfil(perfil)">
+                  <img height="40" width="40" src="{{perfil.foto}}" class="rounded-circle img-thumbnail" alt=""/>
+                </td>
+                <td (click)="onSelectPerfil(perfil)"> {{perfil.username}}</td>
+              </tr>
             </tbody>
         </table>
     <button id="botao2" (click)="Menu()" type="button">
@@ -72,7 +76,7 @@
     <li  id="ultimoLogin2"> {{selectedPerfil?.lastLoginDate}}</li>
     </ul>
 <button (click)="fecharPerfil()" id="botaoFechar">X</button>
-<button (click)="AddFriend()" id="botaoAdicionarAmigo">Enviar pedido<p> de amizade</p></button>
+<button (click)="AddFriend()" id="botaoAdicionarAmigo">Enviar pedido de amizade</button>
 <button id="botaoChat">Iniciar Chat</button>
 <div id="content2" *ngIf="addFriend">
   <p id="D235logOut">Desporto24</p>
@@ -81,8 +85,7 @@
       <p id="D239logOut">Desporto24</p>
       <p id="D238logOut">Desporto24</p>
       <p id="D237logOut">Desporto24</p>
-      <h4 id="h4black">Tens a certeza que queres adicionar
-      <p>{{selectedPerfil?.username}} à tua lista de amigos?</p></h4>
+      <h4 id="h4black">Tens a certeza que queres adicionar {{selectedPerfil?.username}} à tua lista de amigos?</h4>
       <button (click)="SendFriendRequest()" id="botao6">
         <i *ngIf= "showLoading" class="fas fa-spinner fa-spin"></i>&nbsp;&nbsp;
         <span *ngIf="showLoading">A carregar...</span>
@@ -110,13 +113,15 @@
         </button>
           </form>
           <table id="tabela1" *ngIf="showTable">
-            <tbody *ngFor="let perfil of perfis" id="tabela2">
-                    <td (click)="onSelectPerfil(perfil)">
-                        <img height="40" width="40" src="{{perfil.foto}}" class="rounded-circle img-thumbnail" alt=""/>
-                    </td>
-                    <td (click)="onSelectPerfil(perfil)"> {{perfil.username}}</td>
+            <tbody id="tabela2">
+              <tr *ngFor="let perfil of perfis">
+                <td (click)="onSelectPerfil(perfil)">
+                  <img height="40" width="40" src="{{perfil.foto}}" class="rounded-circle img-thumbnail" alt=""/>
+                </td>
+                <td (click)="onSelectPerfil(perfil)"> {{perfil.username}}</td>
+              </tr>
             </tbody>
-        </table>
+          </table>
       <button id="botao2" (click)="Menu()" type="button">
         <i *ngIf= "showLoading" class="fas fa-spinner fa-spin"></i>&nbsp;&nbsp;
         <span *ngIf="showLoading">A carregar...</span>
@@ -162,7 +167,7 @@
       <li  id="ultimoLogin2"> {{selectedPerfil?.lastLoginDate}}</li>
       </ul>
   <button (click)="fecharPerfil()" id="botaoFechar">X</button>
-  <button (click)="AddFriend()" id="botaoAdicionarAmigo">Enviar pedido<p> de amizade</p></button>
+  <button (click)="AddFriend()" id="botaoAdicionarAmigo">Enviar pedido de amizade</button>
 <button id="botaoChat">Iniciar Chat</button>
 <div id="content2" *ngIf="addFriend">
   <p id="D235logOut">Desporto24</p>
@@ -171,8 +176,7 @@
       <p id="D239logOut">Desporto24</p>
       <p id="D238logOut">Desporto24</p>
       <p id="D237logOut">Desporto24</p>
-      <h4 id="h4black">Tens a certeza que queres adicionar
-      <p>{{selectedPerfil?.username}} à tua lista de amigos?</p></h4>
+      <h4 id="h4black">Tens a certeza que queres adicionar {{selectedPerfil?.username}} à tua lista de amigos?</h4>
       <button (click)="SendFriendRequest()" id="botao6">
         <i *ngIf= "showLoading" class="fas fa-spinner fa-spin"></i>&nbsp;&nbsp;
         <span *ngIf="showLoading">A carregar...</span>
