@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { Forgotp2Component } from './forgotp2.component';
+import { TEST_IMPORTS, TEST_PROVIDERS } from '../../testing/test-providers';
 
 describe('Forgotp2Component', () => {
   let component: Forgotp2Component;
@@ -8,7 +9,9 @@ describe('Forgotp2Component', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ Forgotp2Component ]
+      declarations: [ Forgotp2Component ],
+      imports: TEST_IMPORTS,
+      providers: TEST_PROVIDERS
     })
     .compileComponents();
 
