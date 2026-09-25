@@ -82,7 +82,7 @@
         <h4>Notificações</h4>
     <button (click)="NaoMostrarNotificacoes()" id="botaoFecharAmigos">X</button>
     <div id="notificacoes">
-      <div *ngFor="let Notification of Notifications.slice().reverse() let i = index;">
+      <div *ngFor="let Notification of Notifications.slice().reverse(); let i = index">
         <hr>
               <div (click)="onSelectedNotification(Notification)" id="notification">{{Notification.assunto}}
                 <p id="notification2">{{Notification.createdAt}}</p>
@@ -376,7 +376,7 @@
         <h4>Notificações</h4>
     <button (click)="NaoMostrarNotificacoes()" id="botaoFecharAmigos">X</button>
     <div id="notificacoes">
-      <div *ngFor="let Notification of Notifications.slice().reverse() let i = index;">
+      <div *ngFor="let Notification of Notifications.slice().reverse(); let i = index">
         <hr>
               <div (click)="onSelectedNotification(Notification)" id="notification">{{Notification.assunto}}
                 <p id="notification2">{{Notification.createdAt}}</p>
