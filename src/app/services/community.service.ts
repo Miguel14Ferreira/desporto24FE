@@ -31,4 +31,24 @@ export class CommunityService {
   friends(): Observable<FriendSummary[]> {
     return this.http.get<FriendSummary[]>(this.friendsUrl + '/me');
   }
+
+  blockFriend(username: string): Observable<unknown> {
+    return this.http.put(
+      this.friendsUrl + '/' + encodeURIComponent(username) + '/block',
+      null
+    );
+  }
+
+  unblockFriend(username: string): Observable<unknown> {
+    return this.http.put(
+      this.friendsUrl + '/' + encodeURIComponent(username) + '/unblock',
+      null
+    );
+  }
+
+  removeFriend(username: string): Observable<unknown> {
+    return this.http.delete(
+      this.friendsUrl + '/' + encodeURIComponent(username)
+    );
+  }
 }
