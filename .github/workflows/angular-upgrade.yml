@@ -1,4 +1,4 @@
-# Task 9 verification: Angular 22 smoke-test fixes
+# Task 9 verification round 2: HttpClient test setup
 name: Angular 22 One-Time Upgrade
 
 on:
