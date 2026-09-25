@@ -89,13 +89,14 @@ jobs:
         run: |
           node --version
           python3 - <<'PY'
+          import json
           from pathlib import Path
           p = Path("tsconfig.json")
-          s = p.read_text()
-          if '"ignoreDeprecations": "6.0"' not in s:
-              s = s.replace('    "moduleResolution": "node",\n',
-                            '    "moduleResolution": "node",\n    "ignoreDeprecations": "6.0",\n')
-          p.write_text(s)
+          raw = p.read_text()
+          lines = [line for line in raw.splitlines() if not line.lstrip().startswith("/*")]
+          data = json.loads("\n".join(lines))
+          data.setdefault("compilerOptions", {})["ignoreDeprecations"] = "6.0"
+          p.write_text(json.dumps(data, indent=2) + "\n")
           PY
           npx ng update @angular/core@22 @angular/cli@22 --allow-dirty
           npm run build
