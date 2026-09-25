@@ -135,7 +135,8 @@ export class AuthenticationService {
     }
 
     try {
-      return !this.jwtHelper.isTokenExpired(token);
+      const payload = this.jwtHelper.decodeToken(token);
+      return Boolean(payload?.exp && payload.exp * 1000 > Date.now());
     } catch {
       return false;
     }
@@ -156,17 +157,15 @@ export class AuthenticationService {
     return this.token;
   }
 
-  isLoggedIn(){
+  isLoggedIn(): boolean {
     this.loadToken();
-    if(this.token != null && this.token !== ''){
-      if (this.jwtHelper.decodeToken(this.token).sub != null || ''){
-        if (!this.jwtHelper.isTokenExpired(this.token)){
-          this.loggedInPerfilname = this.jwtHelper.decodeToken(this.token).sub;
-          return this.router.navigateByUrl('/menu')
-        }
-      }
-    } else {
-      return this.logOut();
+
+    if (!this.hasValidToken()) {
+      return false;
     }
+
+    const payload = this.jwtHelper.decodeToken(this.token);
+    this.loggedInPerfilname = payload?.sub ?? null;
+    return Boolean(this.loggedInPerfilname);
   }
 }
