@@ -35,6 +35,8 @@ import { BlockaccComponent } from './pages/blockacc/blockacc.component';
 import { SessionDetailsComponent } from './pages/session-details/session-details.component';
 import { MySessionsComponent } from './pages/my-sessions/my-sessions.component';
 import { NotificationsComponent } from './pages/notifications/notifications.component';
+import { FriendsComponent } from './pages/friends/friends.component';
+import { DirectChatComponent } from './pages/direct-chat/direct-chat.component';
 
 @NgModule({ declarations: [
         AppComponent,
@@ -64,7 +66,9 @@ import { NotificationsComponent } from './pages/notifications/notifications.comp
         BlockaccComponent,
         SessionDetailsComponent,
         MySessionsComponent,
-        NotificationsComponent
+        NotificationsComponent,
+        FriendsComponent,
+        DirectChatComponent
     ],
     bootstrap: [AppComponent], imports: [BrowserModule,
         AppRoutingModule,

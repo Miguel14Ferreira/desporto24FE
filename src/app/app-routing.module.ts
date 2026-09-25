@@ -23,6 +23,8 @@ import { BlockaccComponent } from './pages/blockacc/blockacc.component';
 import { SessionDetailsComponent } from './pages/session-details/session-details.component';
 import { MySessionsComponent } from './pages/my-sessions/my-sessions.component';
 import { NotificationsComponent } from './pages/notifications/notifications.component';
+import { FriendsComponent } from './pages/friends/friends.component';
+import { DirectChatComponent } from './pages/direct-chat/direct-chat.component';
 
 const routes: Routes = [
   {path:'', redirectTo:'home',pathMatch:'full'},
@@ -56,8 +58,9 @@ const routes: Routes = [
   {path:'menu/dadosPerfil/alterardados',redirectTo:'menu/alterardados',pathMatch:'full'},
   {path:'login/MFAauthentication/:username', component: LoginMFAComponent},
   {path:'menu', component:MenuComponent},
-  {path:'menu/friendList',redirectTo:'menu',pathMatch:'full'},
-  {path:'menu/friendList/chat/:username1/:username2',redirectTo:'menu',pathMatch:'full'},
+  {path:'menu/friendList',component:FriendsComponent},
+  {path:'menu/friendList/chat/:username',component:DirectChatComponent},
+  {path:'menu/friendList/chat/:username1/:username2',component:DirectChatComponent},
   {path:'menu/notifications',component:NotificationsComponent},
   {path:'menu/notifications/:id',component:NotificationsComponent},
   {path:'menu/terminarSessao',redirectTo:'menu',pathMatch:'full'},

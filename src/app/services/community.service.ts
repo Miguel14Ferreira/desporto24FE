@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 
 import { environment } from 'src/environment/environment';
 import { CommunityProfile } from '../pages/model/community-profile';
+import { FriendSummary } from '../pages/model/friend-summary';
 
 @Injectable({
   providedIn: 'root'
@@ -25,5 +26,9 @@ export class CommunityService {
       this.friendsUrl + '/add/' + encodeURIComponent(username),
       null
     );
+  }
+
+  friends(): Observable<FriendSummary[]> {
+    return this.http.get<FriendSummary[]>(this.friendsUrl + '/me');
   }
 }

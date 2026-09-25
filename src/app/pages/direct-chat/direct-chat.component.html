@@ -1,0 +1,79 @@
+<section class="chat-page">
+  <div class="chat-shell">
+    <header class="chat-header">
+      <div>
+        <a class="back-link" routerLink="/menu/friendList">← Voltar aos amigos</a>
+        <p class="eyebrow">Chat direto</p>
+        <h1>{{ recipientUsername }}</h1>
+      </div>
+
+      <button
+        type="button"
+        class="refresh-action"
+        [disabled]="loading"
+        (click)="load()">
+        {{ loading ? 'A atualizar...' : 'Atualizar' }}
+      </button>
+    </header>
+
+    @if (loading) {
+      <div class="state-card">A carregar conversa...</div>
+    }
+
+    @if (!loading && errorMessage) {
+      <div class="state-card error-state">{{ errorMessage }}</div>
+    }
+
+    @if (!loading && !errorMessage) {
+      @if (chatInfo?.chatBlocked) {
+        <div class="blocked-banner">{{ blockedMessage() }}</div>
+      }
+
+      @if (actionError) {
+        <div class="feedback error-feedback">{{ actionError }}</div>
+      }
+
+      <section class="chat-card">
+        <div class="message-list">
+          @if (messages.length === 0) {
+            <div class="empty-chat">Ainda não há mensagens nesta conversa.</div>
+          }
+
+          @for (message of messages; track message.id ?? $index) {
+            <article
+              class="message"
+              [class.own-message]="isOwnMessage(message)">
+              <div class="message-meta">
+                <strong>{{ message.username1 }}</strong>
+                <span>{{ messageDate(message) }}</span>
+              </div>
+              <p>{{ message.text }}</p>
+            </article>
+          }
+        </div>
+
+        <form class="composer" (ngSubmit)="sendMessage()">
+          <label>
+            <span>Mensagem</span>
+            <textarea
+              name="messageBody"
+              [(ngModel)]="messageBody"
+              maxlength="2000"
+              rows="3"
+              [disabled]="sending || chatInfo?.chatBlocked"
+              placeholder="Escreve uma mensagem..."></textarea>
+          </label>
+
+          <div class="composer-footer">
+            <span>{{ messageBody.length }}/2000</span>
+            <button
+              type="submit"
+              [disabled]="sending || chatInfo?.chatBlocked || !messageBody.trim()">
+              {{ sending ? 'A enviar...' : 'Enviar' }}
+            </button>
+          </div>
+        </form>
+      </section>
+    }
+  </div>
+</section>
