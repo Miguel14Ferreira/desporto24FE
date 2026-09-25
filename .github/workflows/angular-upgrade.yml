@@ -1,4 +1,5 @@
 name: Angular 22 One-Time Upgrade
+# retry after ngFor syntax fix
 
 on:
   push:
