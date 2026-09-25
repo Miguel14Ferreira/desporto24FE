@@ -64,22 +64,82 @@
             }
           </section>
 
-          @if (session.joined) {
-            <p class="membership-state">Já fazes parte desta sessão.</p>
+          @if (actionSuccess) {
+            <div class="action-message success-message">{{ actionSuccess }}</div>
+          }
+
+          @if (actionError) {
+            <div class="action-message error-message">{{ actionError }}</div>
           }
 
           @if (session.waitlisted) {
-            <p class="membership-state">
-              Estás na lista de espera
-              @if (session.waitlistPosition !== null) {
-                — posição {{ session.waitlistPosition }}
-              }.
-            </p>
-          }
+            <section class="participation-panel">
+              <div>
+                <h2>Lista de espera</h2>
+                <p>
+                  Estás na lista de espera
+                  @if (session.waitlistPosition !== null) {
+                    na posição {{ session.waitlistPosition }}
+                  }.
+                </p>
+              </div>
+            </section>
+          } @else if (session.joined && isCreator()) {
+            <section class="participation-panel">
+              <div>
+                <h2>Esta sessão é tua</h2>
+                <p>Como criador já contas como participante. A gestão e cancelamento da sessão entram no próximo bloco.</p>
+              </div>
+            </section>
+          } @else if (session.joined) {
+            <section class="participation-panel">
+              <div>
+                <h2>Já estás dentro</h2>
+                <p>Fazes parte desta sessão e já podes ver a morada exata.</p>
+              </div>
+              <button
+                type="button"
+                class="danger-action"
+                [disabled]="actionLoading"
+                (click)="leaveSession()">
+                {{ actionLoading ? 'A processar...' : 'Sair da sessão' }}
+              </button>
+            </section>
+          } @else {
+            <section class="participation-panel">
+              <div>
+                <h2>{{ isFull() ? 'Sessão cheia' : 'Queres participar?' }}</h2>
+                <p>
+                  @if (isFull()) {
+                    Podes entrar na lista de espera. Se surgir uma vaga, o backend promove o próximo participante.
+                  } @else {
+                    Confirma a tua entrada nesta sessão.
+                  }
+                </p>
+              </div>
 
-          <p class="next-step-note">
-            Nesta Task 10 estamos apenas a consultar sessões. Entrar, sair e lista de espera ficam para o próximo bloco funcional.
-          </p>
+              <div class="join-controls">
+                @if (session.privateGame) {
+                  <label>
+                    <span>Palavra-passe da sessão</span>
+                    <input
+                      type="password"
+                      [(ngModel)]="joinPassword"
+                      [disabled]="actionLoading"
+                      placeholder="Introduz a palavra-passe">
+                  </label>
+                }
+
+                <button
+                  type="button"
+                  class="primary-action"
+                  [disabled]="actionLoading"
+                  (click)="joinSession()">
+                  {{ joinButtonLabel() }}
+                </button>
+              </div>
+            </section>
+          }
         </div>
       </article>
     }

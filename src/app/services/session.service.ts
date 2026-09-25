@@ -15,6 +15,11 @@ export interface SessionSearchFilters {
   sort?: string;
 }
 
+export interface JoinSessionResponse {
+  state: 'PARTICIPANT' | 'WAITLISTED';
+  waitlistPosition: number | null;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -50,5 +55,16 @@ export class SessionService {
 
   detail(id: number): Observable<SessionDetail> {
     return this.http.get<SessionDetail>(this.baseUrl + '/' + id);
+  }
+
+  join(id: number, password?: string): Observable<JoinSessionResponse> {
+    return this.http.post<JoinSessionResponse>(
+      this.baseUrl + '/' + id + '/join',
+      { password: password?.trim() || null }
+    );
+  }
+
+  leave(id: number): Observable<void> {
+    return this.http.post<void>(this.baseUrl + '/' + id + '/leave', null);
   }
 }
