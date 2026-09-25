@@ -4,12 +4,14 @@ import { of } from 'rxjs';
 
 import { DirectChatComponent } from './direct-chat.component';
 import { DirectChatService } from '../../services/direct-chat.service';
+import { CommunityService } from '../../services/community.service';
 import { TEST_IMPORTS, TEST_PROVIDERS } from '../../testing/test-providers';
 
 describe('DirectChatComponent', () => {
   let component: DirectChatComponent;
   let fixture: ComponentFixture<DirectChatComponent>;
   let service: jasmine.SpyObj<DirectChatService>;
+  let communityService: jasmine.SpyObj<CommunityService>;
 
   beforeEach(async () => {
     service = jasmine.createSpyObj<DirectChatService>(
@@ -30,6 +32,13 @@ describe('DirectChatComponent', () => {
       date: '2026-09-26T00:00:00Z'
     }));
 
+    communityService = jasmine.createSpyObj<CommunityService>(
+      'CommunityService',
+      ['blockFriend', 'unblockFriend']
+    );
+    communityService.blockFriend.and.returnValue(of({}));
+    communityService.unblockFriend.and.returnValue(of({}));
+
     await TestBed.configureTestingModule({
       declarations: [DirectChatComponent],
       imports: TEST_IMPORTS,
@@ -43,7 +52,8 @@ describe('DirectChatComponent', () => {
             }
           }
         },
-        { provide: DirectChatService, useValue: service }
+        { provide: DirectChatService, useValue: service },
+        { provide: CommunityService, useValue: communityService }
       ]
     }).compileComponents();
 
@@ -79,5 +89,28 @@ describe('DirectChatComponent', () => {
     component.sendMessage();
 
     expect(service.send).not.toHaveBeenCalled();
+  });
+
+  it('should block the direct chat', () => {
+    component.currentUsername = 'fixture-user';
+    component.chatInfo = { chatBlocked: false, whoBlocked: null };
+
+    component.toggleChatBlock();
+
+    expect(communityService.blockFriend).toHaveBeenCalledWith('ana');
+    expect(component.chatInfo?.chatBlocked).toBeTrue();
+  });
+
+  it('should unblock a chat blocked by the current user', () => {
+    component.currentUsername = 'fixture-user';
+    component.chatInfo = {
+      chatBlocked: true,
+      whoBlocked: 'fixture-user'
+    };
+
+    component.toggleChatBlock();
+
+    expect(communityService.unblockFriend).toHaveBeenCalledWith('ana');
+    expect(component.chatInfo?.chatBlocked).toBeFalse();
   });
 });
