@@ -11,18 +11,12 @@ describe('PerfisComponent', () => {
   let service: jasmine.SpyObj<CommunityService>;
 
   const profile = {
-    userId: 'u1',
     username: 'ana',
     fullName: 'Ana Silva',
-    dateOfBirth: null,
     country: 'Portugal',
     location: 'Lisboa',
     favoriteSports: 'Padel',
-    gender: null,
-    notLocked: true,
-    enabled: true,
     profilePicUrl: null,
-    lastLoginDateDisplay: null,
     joinDateDisplay: '2026-09-01'
   };
 
