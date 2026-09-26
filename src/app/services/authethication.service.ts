@@ -141,8 +141,9 @@ export class AuthenticationService {
 
     try {
       const payload = this.jwtHelper.decodeToken(token);
-      const authorities = Array.isArray(payload?.authorities)
-        ? payload.authorities as string[]
+      const rawAuthorities = payload?.Authorities ?? payload?.authorities;
+      const authorities = Array.isArray(rawAuthorities)
+        ? rawAuthorities as string[]
         : [];
 
       return roles.some(role => authorities.includes(role));
