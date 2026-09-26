@@ -32,6 +32,7 @@ import { NotificationsComponent } from './pages/notifications/notifications.comp
 import { FriendsComponent } from './pages/friends/friends.component';
 import { DirectChatComponent } from './pages/direct-chat/direct-chat.component';
 import { AdminDisputesComponent } from './pages/admin-disputes/admin-disputes.component';
+import { NotFoundComponent } from './pages/not-found/not-found.component';
 
 @NgModule({ declarations: [
         AppComponent,
@@ -58,7 +59,8 @@ import { AdminDisputesComponent } from './pages/admin-disputes/admin-disputes.co
         NotificationsComponent,
         FriendsComponent,
         DirectChatComponent,
-        AdminDisputesComponent
+        AdminDisputesComponent,
+        NotFoundComponent
     ],
     bootstrap: [AppComponent], imports: [BrowserModule,
         AppRoutingModule,

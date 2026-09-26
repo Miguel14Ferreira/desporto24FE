@@ -24,6 +24,7 @@ import { DirectChatComponent } from './pages/direct-chat/direct-chat.component';
 import { AuthenticationGuard } from './guard/authentication.guard';
 import { AdminGuard } from './guard/admin.guard';
 import { AdminDisputesComponent } from './pages/admin-disputes/admin-disputes.component';
+import { NotFoundComponent } from './pages/not-found/not-found.component';
 
 const routes: Routes = [
   {path:'', redirectTo:'home',pathMatch:'full'},
@@ -63,7 +64,8 @@ const routes: Routes = [
   {path:'menu/notifications',component:NotificationsComponent,canActivate:[AuthenticationGuard]},
   {path:'menu/notifications/:id',component:NotificationsComponent,canActivate:[AuthenticationGuard]},
   {path:'menu/admin/attendance-disputes',component:AdminDisputesComponent,canActivate:[AuthenticationGuard,AdminGuard]},
-  {path:'menu/terminarSessao',redirectTo:'menu',pathMatch:'full'}
+  {path:'menu/terminarSessao',redirectTo:'menu',pathMatch:'full'},
+  {path:'**',component:NotFoundComponent}
 ];
 
 @NgModule({
