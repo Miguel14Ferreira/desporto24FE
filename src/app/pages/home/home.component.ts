@@ -1,7 +1,4 @@
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
-import { ActivatedRoute, ParamMap } from '@angular/router';
-import { LoginperfilService } from 'src/app/services/loginperfil.service';
-import { Perfil } from '../model/perfil';
 
 @Component({
     selector: 'app-home',

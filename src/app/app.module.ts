@@ -8,7 +8,6 @@ import { HomeComponent } from './pages/home/home.component';
 import { EventsComponent } from './pages/events/events.component';
 import { LoginComponent } from './pages/login/login.component';
 import { MenuComponent } from './pages/menu/menu.component';
-import { ClasseventsComponent } from './pages/classevents/classevents.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi, withXhr } from '@angular/common/http';
 import { CreateaccountComponent } from './pages/createaccount/createaccount.component';
@@ -18,7 +17,6 @@ import { ChangepasswordComponent } from './pages/changepassword/changepassword.c
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ContactComponent } from './pages/contact/contact.component';
 import { ForgotpComponent } from './pages/forgotp/forgotp.component';
-import { LoginperfilService } from './services/loginperfil.service';
 import { AuthInterceptor } from './auth.interceptor';
 import { AuthenticationGuard } from './guard/authentication.guard';
 import { PerfisComponent } from './pages/perfis/perfis.component';
@@ -44,7 +42,6 @@ import { DirectChatComponent } from './pages/direct-chat/direct-chat.component';
         LoginComponent,
         MenuComponent,
         LoginMFAComponent,
-        ClasseventsComponent,
         CreateaccountComponent,
         PerfisComponent,
         Events2Component,
@@ -65,5 +62,5 @@ import { DirectChatComponent } from './pages/direct-chat/direct-chat.component';
         AppRoutingModule,
         FormsModule,
         ReactiveFormsModule,
-        BrowserAnimationsModule], providers: [AuthenticationGuard, AuthenticationService, LoginperfilService, { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }, provideHttpClient(withXhr(), withInterceptorsFromDi())] })
+        BrowserAnimationsModule], providers: [AuthenticationGuard, AuthenticationService, { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }, provideHttpClient(withXhr(), withInterceptorsFromDi())] })
 export class AppModule { }
