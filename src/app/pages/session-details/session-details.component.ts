@@ -105,6 +105,8 @@ export class SessionDetailsComponent implements OnInit {
       return;
     }
 
+    const wasWaitlisted = Boolean(this.session?.waitlisted);
+
     this.actionLoading = true;
     this.actionError = '';
     this.actionSuccess = '';
@@ -113,7 +115,9 @@ export class SessionDetailsComponent implements OnInit {
       .pipe(finalize(() => this.actionLoading = false))
       .subscribe({
         next: () => {
-          this.actionSuccess = 'Saíste da sessão.';
+          this.actionSuccess = wasWaitlisted
+            ? 'Saíste da lista de espera.'
+            : 'Saíste da sessão.';
           this.loadSession(false);
         },
         error: error => {

@@ -170,6 +170,13 @@
 
                 <div class="card-actions">
                   <a [routerLink]="['/menu/events', session.id]">Ver estado</a>
+                  <button
+                    type="button"
+                    class="danger-action"
+                    [disabled]="waitlistLeavingId !== null"
+                    (click)="leaveWaitlist(session)">
+                    {{ waitlistLeavingId === session.id ? 'A sair...' : 'Sair da lista de espera' }}
+                  </button>
                 </div>
               </article>
             }

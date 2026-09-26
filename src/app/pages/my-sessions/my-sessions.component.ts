@@ -28,6 +28,7 @@ export class MySessionsComponent implements OnInit {
   attendanceLoading = false;
   cancelLoading = false;
   disputeLoading = false;
+  waitlistLeavingId: number | null = null;
 
   errorMessage = '';
   attendanceError = '';
@@ -113,6 +114,36 @@ export class MySessionsComponent implements OnInit {
         },
         error: error => {
           this.actionError = this.errorFrom(error, 'Não foi possível cancelar esta sessão.');
+        }
+      });
+  }
+
+  leaveWaitlist(session: SessionSummary): void {
+    if (this.waitlistLeavingId !== null) {
+      return;
+    }
+
+    this.waitlistLeavingId = session.id;
+    this.actionMessage = '';
+    this.actionError = '';
+
+    this.sessionService.leave(session.id)
+      .pipe(finalize(() => this.waitlistLeavingId = null))
+      .subscribe({
+        next: () => {
+          this.data = {
+            ...this.data,
+            waitlisted: this.data.waitlisted.filter(
+              item => item.id !== session.id
+            )
+          };
+          this.actionMessage = 'Saíste da lista de espera.';
+        },
+        error: error => {
+          this.actionError = this.errorFrom(
+            error,
+            'Não foi possível sair da lista de espera.'
+          );
         }
       });
   }

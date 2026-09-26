@@ -40,7 +40,7 @@ describe('MySessionsComponent', () => {
   beforeEach(async () => {
     sessionService = jasmine.createSpyObj<SessionService>(
       'SessionService',
-      ['mine', 'cancel']
+      ['mine', 'cancel', 'leave']
     );
     reliabilityService = jasmine.createSpyObj<ReliabilityService>(
       'ReliabilityService',
@@ -53,6 +53,7 @@ describe('MySessionsComponent', () => {
       waitlisted: []
     }));
     sessionService.cancel.and.returnValue(of(void 0));
+    sessionService.leave.and.returnValue(of(void 0));
 
     reliabilityService.attendanceHistory.and.returnValue(of([noShow]));
     reliabilityService.createDispute.and.returnValue(of(void 0));
@@ -87,6 +88,24 @@ describe('MySessionsComponent', () => {
     expect(sessionService.cancel).toHaveBeenCalledWith(11);
     expect(sessionService.mine).toHaveBeenCalledTimes(2);
     expect(component.actionMessage).toContain('cancelada');
+  });
+
+  it('should leave a waitlisted session without a page reload', () => {
+    const waitlisted = {
+      ...createdSession,
+      id: 22,
+      status: 'FULL'
+    };
+    component.data = {
+      ...component.data,
+      waitlisted: [waitlisted]
+    };
+
+    component.leaveWaitlist(waitlisted);
+
+    expect(sessionService.leave).toHaveBeenCalledWith(22);
+    expect(component.data.waitlisted.length).toBe(0);
+    expect(component.actionMessage).toContain('lista de espera');
   });
 
   it('should calculate remaining vacancies', () => {

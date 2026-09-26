@@ -134,6 +134,13 @@
                   }.
                 </p>
               </div>
+              <button
+                type="button"
+                class="danger-action"
+                [disabled]="actionLoading"
+                (click)="leaveSession()">
+                {{ actionLoading ? 'A processar...' : 'Sair da lista de espera' }}
+              </button>
             </section>
           } @else if (session.joined && isCreator()) {
             <section class="participation-panel">

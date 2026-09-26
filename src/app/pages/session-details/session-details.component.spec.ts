@@ -128,6 +128,20 @@ describe('SessionDetailsComponent', () => {
     expect(component.actionSuccess).toContain('sucesso');
   });
 
+  it('should leave a waitlisted session and refresh details', () => {
+    component.session = {
+      ...session,
+      waitlisted: true,
+      waitlistPosition: 2
+    };
+
+    component.leaveSession();
+
+    expect(sessionService.leave).toHaveBeenCalledWith(7);
+    expect(sessionService.detail).toHaveBeenCalledTimes(2);
+    expect(component.actionSuccess).toContain('lista de espera');
+  });
+
   it('should require a password for private sessions', () => {
     component.session = {
       ...session,
