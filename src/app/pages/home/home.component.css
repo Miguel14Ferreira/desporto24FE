@@ -1,257 +1,158 @@
-body{
-    padding: 0;
-    margin: 0;
-}
-.img{
-    animation: transition 0.75s;
-    height: 100vh;
-    background-color: black;     
-    -webkit-background-size: cover;
-    background-size: cover;
-    background-position: center center;
-}
-.img2{
-    animation: transition 0.75s;
-    height: 100vh;
-    background-color: white;     
-    -webkit-background-size: cover;
-    background-size: cover;
-    background-position: center center;
-}
-#h1white{
-    color: white;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 20%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-}
-#container{
-    font-size: 15px;
-    height: 80vh;
-    width: 200vh;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    background-color: white;
-    position: absolute;
-        top: 60%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-    overflow: hidden;
-}
-#container2{
-    font-size: 15px;
-    height: 80vh;
-    width: 200vh;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    background-color: black;
-    position: absolute;
-        top: 60%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-    overflow: hidden;
-}
-#h2white{
-    color: white;
-    font-size: 40px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-}
-#h1black{
-    color: black;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 20%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-}
-#h2black{
-    color: black;
-    font-size: 40px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
+:host { display: block; }
+
+.home-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 7rem 1.25rem 4rem;
+  background:
+    radial-gradient(circle at 15% 20%, rgba(14, 165, 233, .18), transparent 30rem),
+    linear-gradient(145deg, #07111f, #12334a);
+  color: #f8fafc;
 }
 
-@keyframes transition {
-    from {
-        opacity: 0;
-        transform: rotateX(-10deg);
-    }
-    to{
-        opacity: 1;
-        transform: rotateX(0);
-    }
+.home-shell {
+  width: min(1120px, 100%);
+  margin: 0 auto;
 }
-@keyframes slide-right {
-    from {
-        transform: translate(150%, -50%);
-    }
 
-    to {
-        transform: translate(-150%, -50%);
-    }
- }
- @keyframes slide-left {
-    from {
-        transform: translate(-70%, -50%);
-    }
+.hero {
+  display: grid;
+  grid-template-columns: 1.15fr .85fr;
+  align-items: center;
+  gap: clamp(2rem, 7vw, 6rem);
+}
 
-    to {
-        transform: translate(150%, -50%);
-    }
- }
-#D24{
-    color: black;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 20%;
-        left: 70%;
-        opacity: 20%;
-        animation: infinite 100s slide-right;
+.eyebrow {
+  margin: 0 0 .55rem;
+  color: #7dd3fc;
+  font-size: .78rem;
+  font-weight: 900;
+  letter-spacing: .12em;
+  text-transform: uppercase;
 }
-#D241{
-    color: black;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 40%;
-        left: 10%;
-        opacity: 20%;
-        animation: infinite 100s slide-left;
+
+.hero h1 {
+  max-width: 680px;
+  margin: 0;
+  font-size: clamp(3rem, 7vw, 5.4rem);
+  line-height: .98;
 }
-#D243{
-    color: black;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 60%;
-        left: -30%;
-        opacity: 20%;
-        animation: infinite 100s slide-right;
+
+.subtitle {
+  max-width: 650px;
+  margin: 1.2rem 0 0;
+  color: #cbd5e1;
+  font-size: 1.05rem;
+  line-height: 1.65;
 }
-#D244{
-    color: black;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 100%;
-        left: 8%;
-        opacity: 20%;
-        animation: infinite 100s slide-right;
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem;
+  margin-top: 1.5rem;
 }
-#D245{
-    color: black;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 80%;
-        left: 50%;
-        opacity: 20%;
-        animation: infinite 100s slide-left;
+
+.primary-action,
+.secondary-action {
+  border-radius: .8rem;
+  padding: .9rem 1.1rem;
+  font-weight: 900;
+  text-decoration: none;
 }
-#D24a{
-    color: white;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 20%;
-        left: 70%;
-        opacity: 20%;
-        animation: infinite 100s slide-right;
+
+.primary-action {
+  background: #f8fafc;
+  color: #0f172a;
 }
-#D241a{
-    color: white;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 40%;
-        left: 10%;
-        opacity: 20%;
-        animation: infinite 100s slide-left;
+
+.secondary-action {
+  border: 1px solid rgba(255,255,255,.16);
+  background: rgba(255,255,255,.06);
+  color: #f8fafc;
 }
-#D243a{
-    color: white;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 60%;
-        left: -30%;
-        opacity: 20%;
-        animation: infinite 100s slide-right;
+
+.primary-action:hover,
+.secondary-action:hover {
+  transform: translateY(-2px);
+  text-decoration: none;
 }
-#D244a{
-    color: white;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 100%;
-        left: 8%;
-        opacity: 20%;
-        animation: infinite 100s slide-right;
+
+.feature-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .55rem;
+  margin-top: 1.4rem;
 }
-#D245a{
-    color: white;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 80%;
-        left: 50%;
-        opacity: 20%;
-        animation: infinite 100s slide-left;
+
+.feature-row span {
+  border: 1px solid rgba(125,211,252,.2);
+  border-radius: 999px;
+  padding: .42rem .7rem;
+  background: rgba(125,211,252,.07);
+  color: #bae6fd;
+  font-size: .78rem;
+  font-weight: 800;
+}
+
+.welcome-card {
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 1.2rem;
+  padding: clamp(1.35rem, 4vw, 2rem);
+  background: rgba(15,23,42,.82);
+  box-shadow: 0 24px 60px rgba(0,0,0,.24);
+}
+
+.welcome-card h2 {
+  margin: 0;
+  font-size: clamp(1.8rem, 4vw, 2.5rem);
+  line-height: 1.08;
+}
+
+.welcome-card > p:not(.eyebrow) {
+  margin: .8rem 0 1.25rem;
+  color: #94a3b8;
+  line-height: 1.55;
+}
+
+.quick-links {
+  display: grid;
+  gap: .65rem;
+}
+
+.quick-links a {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: .8rem;
+  padding: .85rem .95rem;
+  background: rgba(255,255,255,.04);
+  color: #e2e8f0;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.quick-links a:hover {
+  border-color: rgba(125,211,252,.4);
+  background: rgba(125,211,252,.08);
+  color: #f8fafc;
+  transform: translateY(-1px);
+}
+
+@media (max-width: 800px) {
+  .home-page {
+    place-items: start center;
+    padding-top: 6rem;
+  }
+
+  .hero {
+    grid-template-columns: 1fr;
+  }
+
+  .hero h1 {
+    font-size: clamp(2.8rem, 12vw, 4.5rem);
+  }
 }
