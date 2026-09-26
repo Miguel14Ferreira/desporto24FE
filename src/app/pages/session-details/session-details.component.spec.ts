@@ -230,7 +230,28 @@ describe('SessionDetailsComponent', () => {
     expect(component.canRemoveParticipant(creatorParticipant)).toBeFalse();
   });
 
-  it('should record participant attendance after the session starts', () => {
+  it('should block attendance during the 30 minute post-start delay', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session,
+      gameDate: new Date(Date.now() - (29 * 60 * 1000)).toISOString(),
+      joined: true
+    };
+    const participant = {
+      id: 15,
+      username: 'player-one',
+      attendanceStatus: 'PENDING',
+      joinedAt: '2026-09-20T18:00:00Z'
+    } as any;
+
+    component.recordAttendance(participant, 'NO_SHOW');
+
+    expect(reliabilityService.recordAttendance).not.toHaveBeenCalled();
+    expect(component.attendanceError).toContain('30 minutos');
+    expect(participant.attendanceStatus).toBe('PENDING');
+  });
+
+  it('should record participant attendance after the 30 minute delay', () => {
     (component as any).currentUsername = 'creator-user';
     component.session = {
       ...session,
