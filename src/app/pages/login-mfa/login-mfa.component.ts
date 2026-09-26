@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
 
@@ -12,7 +12,7 @@ import { AuthenticationService } from '../../services/authethication.service';
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false
 })
-export class LoginMFAComponent implements OnInit {
+export class LoginMFAComponent implements OnInit, OnDestroy {
   code = '';
   challengeId = '';
   expiresAt = '';
@@ -21,6 +21,9 @@ export class LoginMFAComponent implements OnInit {
   resending = false;
   errorMessage = '';
   successMessage = '';
+  remainingSeconds: number | null = null;
+
+  private countdownTimer?: ReturnType<typeof setInterval>;
 
   constructor(
     private authService: AuthenticationService,
@@ -33,7 +36,14 @@ export class LoginMFAComponent implements OnInit {
 
     if (!this.challengeId) {
       this.errorMessage = 'O desafio MFA já não está disponível. Inicia sessão novamente.';
+      return;
     }
+
+    this.startCountdown();
+  }
+
+  ngOnDestroy(): void {
+    this.stopCountdown();
   }
 
   confirmCode(): void {
@@ -41,6 +51,12 @@ export class LoginMFAComponent implements OnInit {
 
     if (!this.challengeId) {
       this.errorMessage = 'O desafio MFA expirou. Inicia sessão novamente.';
+      return;
+    }
+
+    if (this.isChallengeExpired()) {
+      this.errorMessage = 'O código MFA expirou. Reenvia o código para continuar.';
+      this.successMessage = '';
       return;
     }
 
@@ -104,6 +120,12 @@ export class LoginMFAComponent implements OnInit {
           if (response.expiresAt) {
             this.expiresAt = response.expiresAt;
             sessionStorage.setItem('mfa-expires-at', response.expiresAt);
+            this.startCountdown();
+          } else {
+            this.expiresAt = '';
+            this.remainingSeconds = null;
+            sessionStorage.removeItem('mfa-expires-at');
+            this.stopCountdown();
           }
 
           this.successMessage = 'Foi enviado um novo código por SMS.';
@@ -122,23 +144,65 @@ export class LoginMFAComponent implements OnInit {
     this.router.navigate(['/login']);
   }
 
-  expiryLabel(): string {
-    if (!this.expiresAt) {
+  countdownLabel(): string {
+    if (this.remainingSeconds === null) {
       return '';
+    }
+
+    const minutes = Math.floor(this.remainingSeconds / 60);
+    const seconds = this.remainingSeconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  }
+
+  isChallengeExpired(): boolean {
+    if (!this.expiresAt) {
+      return false;
+    }
+
+    const parsed = Date.parse(this.expiresAt);
+    return !Number.isNaN(parsed) && parsed <= Date.now();
+  }
+
+  private startCountdown(): void {
+    this.stopCountdown();
+    this.syncCountdown();
+
+    if (this.remainingSeconds !== null && this.remainingSeconds > 0) {
+      this.countdownTimer = setInterval(() => this.syncCountdown(), 1000);
+    }
+  }
+
+  private syncCountdown(): void {
+    if (!this.expiresAt) {
+      this.remainingSeconds = null;
+      return;
     }
 
     const parsed = Date.parse(this.expiresAt);
     if (Number.isNaN(parsed)) {
-      return '';
+      this.remainingSeconds = null;
+      return;
     }
 
-    return new Intl.DateTimeFormat('pt-PT', {
-      hour: '2-digit',
-      minute: '2-digit'
-    }).format(new Date(parsed));
+    this.remainingSeconds = Math.max(
+      0,
+      Math.ceil((parsed - Date.now()) / 1000)
+    );
+
+    if (this.remainingSeconds === 0) {
+      this.stopCountdown();
+    }
+  }
+
+  private stopCountdown(): void {
+    if (this.countdownTimer) {
+      clearInterval(this.countdownTimer);
+      this.countdownTimer = undefined;
+    }
   }
 
   private clearChallenge(): void {
+    this.stopCountdown();
     sessionStorage.removeItem('mfa-challenge-id');
     sessionStorage.removeItem('mfa-expires-at');
     sessionStorage.removeItem('mfa-return-url');

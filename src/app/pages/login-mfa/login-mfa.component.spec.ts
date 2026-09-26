@@ -29,7 +29,7 @@ describe('LoginMFAComponent', () => {
     auth.resendMfaChallenge.and.returnValue(of({
       mfaRequired: true,
       challengeId: 'challenge-456',
-      expiresAt: '2026-09-26T00:05:00Z',
+      expiresAt: '2099-09-26T00:05:00Z',
       token: null,
       profile: null
     }));
@@ -58,6 +58,22 @@ describe('LoginMFAComponent', () => {
     expect(component.challengeId).toBe('challenge-123');
   });
 
+  it('should show the remaining MFA challenge time', () => {
+    component.remainingSeconds = 125;
+
+    expect(component.countdownLabel()).toBe('02:05');
+  });
+
+  it('should block confirmation after the MFA challenge expires', () => {
+    component.expiresAt = new Date(Date.now() - 1000).toISOString();
+    component.code = 'ABC12345';
+
+    component.confirmCode();
+
+    expect(auth.confirmMfaChallenge).not.toHaveBeenCalled();
+    expect(component.errorMessage).toContain('expirou');
+  });
+
   it('should confirm MFA and save the returned JWT', () => {
     component.code = 'ABC12345';
 
@@ -74,5 +90,7 @@ describe('LoginMFAComponent', () => {
     expect(auth.resendMfaChallenge).toHaveBeenCalledWith('challenge-123');
     expect(component.challengeId).toBe('challenge-456');
     expect(sessionStorage.getItem('mfa-challenge-id')).toBe('challenge-456');
+    expect(component.remainingSeconds).not.toBeNull();
+    expect(component.isChallengeExpired()).toBeFalse();
   });
 });

@@ -4,10 +4,19 @@
     <h1>Confirma o código MFA</h1>
     <p class="subtitle">
       Enviámos um código por SMS.
-      @if (expiryLabel()) {
-        Este desafio é válido até às {{ expiryLabel() }}.
-      }
     </p>
+
+    @if (countdownLabel() && !isChallengeExpired()) {
+      <div class="countdown" aria-live="polite">
+        <span>O código expira em</span>
+        <strong>{{ countdownLabel() }}</strong>
+      </div>
+    } @else if (isChallengeExpired()) {
+      <div class="countdown countdown-expired" aria-live="polite">
+        <span>Código expirado</span>
+        <strong>Reenvia para continuar</strong>
+      </div>
+    }
 
     @if (errorMessage) {
       <div class="feedback error-feedback">{{ errorMessage }}</div>
@@ -24,14 +33,14 @@
           name="code"
           [(ngModel)]="code"
           autocomplete="one-time-code"
-          [disabled]="confirming"
+          [disabled]="confirming || isChallengeExpired()"
           placeholder="Código recebido por SMS">
       </label>
 
       <button
         type="submit"
         class="primary-action"
-        [disabled]="confirming || !challengeId">
+        [disabled]="confirming || !challengeId || isChallengeExpired()">
         {{ confirming ? 'A confirmar...' : 'Confirmar e entrar' }}
       </button>
     </form>
