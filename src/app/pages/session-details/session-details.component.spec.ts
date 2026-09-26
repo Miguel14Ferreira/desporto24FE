@@ -120,6 +120,33 @@ describe('SessionDetailsComponent', () => {
     expect(component.creatorReliability?.attendanceRate).toBe(90);
   });
 
+  it('should build calendar links with the session start and safe location', () => {
+    const googleUrl = component.googleCalendarUrl();
+    const outlookUrl = component.outlookCalendarUrl();
+
+    expect(googleUrl).toContain('calendar.google.com/calendar/render');
+    expect(googleUrl).toContain('dates=20261001T180000Z');
+    expect(decodeURIComponent(googleUrl ?? '')).toContain('location=Lisboa');
+
+    expect(outlookUrl).toContain('outlook.live.com/calendar');
+    expect(decodeURIComponent(outlookUrl ?? '')).toContain('startdt=2026-10-01T18:00:00.000Z');
+    expect(decodeURIComponent(outlookUrl ?? '')).toContain('location=Lisboa');
+  });
+
+  it('should prefer the exact address in calendar exports when it is visible', () => {
+    component.session = {
+      ...session,
+      canSeeExactAddress: true,
+      address: 'Rua do Campo, 10'
+    };
+
+    const ics = component.calendarIcsContent();
+
+    expect(ics).toContain('DTSTART:20261001T180000Z');
+    expect(ics).toContain('SUMMARY:Desporto24 — Padel');
+    expect(ics).toContain('LOCATION:Rua do Campo\\, 10');
+  });
+
   it('should join the session and refresh its details', () => {
     component.joinSession();
 

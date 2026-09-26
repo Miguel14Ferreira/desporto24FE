@@ -360,6 +360,126 @@ export class SessionDetailsComponent implements OnInit {
     return environment.apiUrl + (path.startsWith('/') ? path : '/' + path);
   }
 
+  googleCalendarUrl(): string | null {
+    if (!this.session) {
+      return null;
+    }
+
+    const params = new URLSearchParams({
+      action: 'TEMPLATE',
+      text: this.calendarTitle(),
+      dates: this.calendarStartUtc(),
+      details: this.calendarDescription(),
+      location: this.calendarLocation()
+    });
+
+    return `https://calendar.google.com/calendar/render?${params.toString()}`;
+  }
+
+  outlookCalendarUrl(): string | null {
+    if (!this.session) {
+      return null;
+    }
+
+    const params = new URLSearchParams({
+      path: '/calendar/action/compose',
+      rru: 'addevent',
+      subject: this.calendarTitle(),
+      startdt: new Date(this.session.gameDate).toISOString(),
+      body: this.calendarDescription(),
+      location: this.calendarLocation()
+    });
+
+    return `https://outlook.live.com/calendar/0/deeplink/compose?${params.toString()}`;
+  }
+
+  calendarIcsContent(): string | null {
+    if (!this.session) {
+      return null;
+    }
+
+    const uid = `session-${this.session.id}@desporto24`;
+    const dtStamp = this.toIcsUtc(new Date());
+    const dtStart = this.toIcsUtc(new Date(this.session.gameDate));
+
+    return [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//Desporto24//Session Calendar//PT',
+      'CALSCALE:GREGORIAN',
+      'BEGIN:VEVENT',
+      `UID:${uid}`,
+      `DTSTAMP:${dtStamp}`,
+      `DTSTART:${dtStart}`,
+      `SUMMARY:${this.escapeIcs(this.calendarTitle())}`,
+      `DESCRIPTION:${this.escapeIcs(this.calendarDescription())}`,
+      `LOCATION:${this.escapeIcs(this.calendarLocation())}`,
+      'END:VEVENT',
+      'END:VCALENDAR'
+    ].join('\r\n');
+  }
+
+  downloadIcs(): void {
+    if (!this.session) {
+      return;
+    }
+
+    const content = this.calendarIcsContent();
+    if (!content) {
+      return;
+    }
+
+    const blob = new Blob([content], { type: 'text/calendar;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+
+    anchor.href = url;
+    anchor.download = `desporto24-session-${this.session.id}.ics`;
+    anchor.click();
+
+    URL.revokeObjectURL(url);
+  }
+
+  private calendarTitle(): string {
+    return `Desporto24 — ${this.session?.sport ?? 'Sessão'}`;
+  }
+
+  private calendarDescription(): string {
+    const creator = this.session?.creatorUsername
+      ? ` Criada por ${this.session.creatorUsername}.`
+      : '';
+
+    return `Sessão de ${this.session?.sport ?? 'desporto'} no Desporto24.${creator}`;
+  }
+
+  private calendarLocation(): string {
+    if (!this.session) {
+      return '';
+    }
+
+    return this.session.canSeeExactAddress && this.session.address
+      ? this.session.address
+      : this.session.city;
+  }
+
+  private calendarStartUtc(): string {
+    return this.toIcsUtc(new Date(this.session?.gameDate ?? ''));
+  }
+
+  private toIcsUtc(date: Date): string {
+    return date.toISOString()
+      .replace(/[-:]/g, '')
+      .replace(/\.\d{3}Z$/, 'Z');
+  }
+
+  private escapeIcs(value: string): string {
+    return value
+      .replace(/\\/g, '\\\\')
+      .replace(/\r?\n/g, '\\n')
+      .replace(/,/g, '\\,')
+      .replace(/;/g, '\\;');
+  }
+
   private loadSession(showPageLoader = true): void {
     if (!this.sessionId) {
       return;

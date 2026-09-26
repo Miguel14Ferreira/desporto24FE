@@ -55,6 +55,28 @@
             </div>
           </div>
 
+          <section class="calendar-panel">
+            <div>
+              <h2>Adicionar ao calendário</h2>
+              <p>Guarda esta sessão para não perderes a hora do jogo.</p>
+            </div>
+            <div class="calendar-actions">
+              @if (googleCalendarUrl(); as googleUrl) {
+                <a class="calendar-action" [href]="googleUrl" target="_blank" rel="noopener noreferrer">
+                  Google Calendar
+                </a>
+              }
+              @if (outlookCalendarUrl(); as outlookUrl) {
+                <a class="calendar-action" [href]="outlookUrl" target="_blank" rel="noopener noreferrer">
+                  Outlook
+                </a>
+              }
+              <button type="button" class="calendar-action" (click)="downloadIcs()">
+                Descarregar .ics
+              </button>
+            </div>
+          </section>
+
           <section class="creator-reliability">
             <div class="creator-reliability__header">
               <div>

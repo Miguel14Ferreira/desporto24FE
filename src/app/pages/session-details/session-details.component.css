@@ -693,3 +693,65 @@ h1 {
     flex-wrap: wrap;
   }
 }
+
+
+.calendar-panel {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin: 1.25rem 0;
+  border-radius: .9rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, .045);
+  border: 1px solid rgba(255, 255, 255, .08);
+}
+
+.calendar-panel h2 {
+  margin: 0 0 .3rem;
+  font-size: 1rem;
+}
+
+.calendar-panel p {
+  margin: 0;
+  color: #94a3b8;
+}
+
+.calendar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: .6rem;
+}
+
+.calendar-action {
+  border: 1px solid rgba(125, 211, 252, .24);
+  border-radius: .75rem;
+  padding: .65rem .8rem;
+  background: rgba(125, 211, 252, .08);
+  color: #bae6fd;
+  font: inherit;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.calendar-action:hover {
+  background: rgba(125, 211, 252, .14);
+}
+
+@media (max-width: 760px) {
+  .calendar-panel,
+  .calendar-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .calendar-actions {
+    justify-content: flex-start;
+  }
+
+  .calendar-action {
+    text-align: center;
+  }
+}
