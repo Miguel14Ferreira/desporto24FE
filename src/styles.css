@@ -74,3 +74,13 @@ textarea:focus-visible {
   background: rgba(125, 211, 252, .25);
   color: var(--d24-text);
 }
+
+
+select {
+  color-scheme: dark;
+}
+
+select option {
+  background: #0f172a;
+  color: #f8fafc;
+}
