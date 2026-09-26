@@ -26,12 +26,8 @@ import { AuthenticationService } from './services/authethication.service';
 import { AboutComponent } from './pages/about/about.component';
 import { Forgotp2Component } from './pages/forgotp2/forgotp2.component';
 import { ConfirmTokenRegistrationComponent } from './pages/confirm-token-registration/confirm-token-registration.component';
-import { ConfirmEmergencyTokenComponent } from './pages/confirm-emergency-token/confirm-emergency-token.component';
 import { PerfilDataComponent } from './pages/perfil-data/perfil-data.component';
 import { LoginMFAComponent } from './pages/login-mfa/login-mfa.component';
-import { ConfirmationNewFriendComponent } from './pages/confirmation-new-friend/confirmation-new-friend.component';
-import { ResetPwEmergencyComponent } from './pages/reset-pw-emergency/reset-pw-emergency.component';
-import { BlockaccComponent } from './pages/blockacc/blockacc.component';
 import { SessionDetailsComponent } from './pages/session-details/session-details.component';
 import { MySessionsComponent } from './pages/my-sessions/my-sessions.component';
 import { NotificationsComponent } from './pages/notifications/notifications.component';
@@ -48,7 +44,6 @@ import { DirectChatComponent } from './pages/direct-chat/direct-chat.component';
         LoginComponent,
         MenuComponent,
         LoginMFAComponent,
-        LoginComponent,
         ClasseventsComponent,
         CreateaccountComponent,
         PerfisComponent,
@@ -60,10 +55,6 @@ import { DirectChatComponent } from './pages/direct-chat/direct-chat.component';
         PerfilDataComponent,
         Forgotp2Component,
         ConfirmTokenRegistrationComponent,
-        ConfirmEmergencyTokenComponent,
-        ConfirmationNewFriendComponent,
-        ResetPwEmergencyComponent,
-        BlockaccComponent,
         SessionDetailsComponent,
         MySessionsComponent,
         NotificationsComponent,

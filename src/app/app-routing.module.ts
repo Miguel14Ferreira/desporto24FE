@@ -14,12 +14,8 @@ import { MenuComponent } from './pages/menu/menu.component';
 import { PerfisComponent } from './pages/perfis/perfis.component'; 
 import { Forgotp2Component } from './pages/forgotp2/forgotp2.component';
 import { ConfirmTokenRegistrationComponent } from './pages/confirm-token-registration/confirm-token-registration.component';
-import { ConfirmEmergencyTokenComponent } from './pages/confirm-emergency-token/confirm-emergency-token.component';
 import { PerfilDataComponent } from './pages/perfil-data/perfil-data.component';
 import { LoginMFAComponent } from './pages/login-mfa/login-mfa.component';
-import { ConfirmationNewFriendComponent } from './pages/confirmation-new-friend/confirmation-new-friend.component';
-import { ResetPwEmergencyComponent } from './pages/reset-pw-emergency/reset-pw-emergency.component';
-import { BlockaccComponent } from './pages/blockacc/blockacc.component';
 import { SessionDetailsComponent } from './pages/session-details/session-details.component';
 import { MySessionsComponent } from './pages/my-sessions/my-sessions.component';
 import { NotificationsComponent } from './pages/notifications/notifications.component';
@@ -54,7 +50,6 @@ const routes: Routes = [
   {path:'login/resetPassword/:token',component:Forgotp2Component, pathMatch:'full'},
   {path:'login/resetPassword/:token/:username',component:Forgotp2Component, pathMatch:'full'},
   {path:'login/registerNewUser/confirmTokenRegistration/:token', component:ConfirmTokenRegistrationComponent, pathMatch:'full'},
-  {path:'confirmEmergencyToken/:token/:username',component:ConfirmEmergencyTokenComponent, pathMatch:'full'},
   {path:'menu/dadosPerfil',component:PerfilDataComponent,canActivate:[AuthenticationGuard], pathMatch:'full'},
   {path:'menu/dadosPerfil/menu',redirectTo:'menu',pathMatch:'full'},  
   {path:'menu/dadosPerfil/alterardados',redirectTo:'menu/alterardados',pathMatch:'full'},
@@ -65,10 +60,7 @@ const routes: Routes = [
   {path:'menu/friendList/chat/:username1/:username2',component:DirectChatComponent,canActivate:[AuthenticationGuard]},
   {path:'menu/notifications',component:NotificationsComponent,canActivate:[AuthenticationGuard]},
   {path:'menu/notifications/:id',component:NotificationsComponent,canActivate:[AuthenticationGuard]},
-  {path:'menu/terminarSessao',redirectTo:'menu',pathMatch:'full'},
-  {path:'login/confirmNewFriend/:token',component:ConfirmationNewFriendComponent},
-  {path:'confirmEmergencyToken/resetPassword/:token/:username',component:ResetPwEmergencyComponent},
-  {path:'menu/blockAcc',component:BlockaccComponent}
+  {path:'menu/terminarSessao',redirectTo:'menu',pathMatch:'full'}
 ];
 
 @NgModule({
