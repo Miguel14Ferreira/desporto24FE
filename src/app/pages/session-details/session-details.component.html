@@ -205,7 +205,7 @@
               <div class="attendance-header">
                 <div>
                   <h2>Presenças</h2>
-                  <p>Marca quem esteve presente ou faltou. A política do backend define quando esta ação fica disponível.</p>
+                  <p>Marca quem esteve presente ou faltou. A marcação fica disponível 30 minutos depois do início da sessão.</p>
                 </div>
                 <button
                   type="button"
@@ -216,9 +216,9 @@
                 </button>
               </div>
 
-              @if (!hasSessionStarted()) {
+              @if (!canRecordAttendance()) {
                 <div class="attendance-info">
-                  A marcação de presenças fica disponível depois de a sessão começar.
+                  A marcação de presenças fica disponível 30 minutos depois do início da sessão.
                 </div>
               }
 
@@ -262,14 +262,14 @@
                         <button
                           type="button"
                           class="attended-action"
-                          [disabled]="!hasSessionStarted() || attendanceUpdatingId !== null || removeLoadingId !== null"
+                          [disabled]="!canRecordAttendance() || attendanceUpdatingId !== null || removeLoadingId !== null"
                           (click)="recordAttendance(participant, 'ATTENDED')">
                           {{ attendanceUpdatingId === participant.id ? 'A guardar...' : 'Presente' }}
                         </button>
                         <button
                           type="button"
                           class="no-show-action"
-                          [disabled]="!hasSessionStarted() || attendanceUpdatingId !== null || removeLoadingId !== null"
+                          [disabled]="!canRecordAttendance() || attendanceUpdatingId !== null || removeLoadingId !== null"
                           (click)="recordAttendance(participant, 'NO_SHOW')">
                           {{ attendanceUpdatingId === participant.id ? 'A guardar...' : 'Faltou' }}
                         </button>
