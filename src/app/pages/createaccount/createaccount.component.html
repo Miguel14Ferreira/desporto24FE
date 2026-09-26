@@ -115,14 +115,23 @@
         </label>
 
         <label>
+          <span>Indicativo *</span>
+          <select name="indicativePhone" [(ngModel)]="indicativePhone" [disabled]="loading">
+            @for (item of phoneIndicatives; track item.code) {
+              <option [value]="item.code">{{ item.label }}</option>
+            }
+          </select>
+        </label>
+
+        <label>
           <span>Telemóvel *</span>
           <input
             type="tel"
             name="phone"
             [(ngModel)]="phone"
-            autocomplete="tel"
+            autocomplete="tel-national"
             [disabled]="loading"
-            placeholder="+351 927 382 368">
+            placeholder="Ex.: 927 382 368">
         </label>
 
         <label>
