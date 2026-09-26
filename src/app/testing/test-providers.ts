@@ -5,7 +5,6 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { of } from 'rxjs';
 
 import { AuthenticationService } from '../services/authethication.service';
-import { LoginperfilService } from '../services/loginperfil.service';
 
 const profile = {
   username: 'miguel',
@@ -80,6 +79,5 @@ export const TEST_IMPORTS = [
 
 export const TEST_PROVIDERS: Provider[] = [
   { provide: AuthenticationService, useValue: authenticationServiceMock },
-  { provide: LoginperfilService, useValue: loginPerfilServiceMock },
   { provide: ActivatedRoute, useValue: activatedRouteMock }
 ];
