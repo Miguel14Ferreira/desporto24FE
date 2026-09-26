@@ -20,6 +20,8 @@ export class LoginComponent implements OnInit {
   loading = false;
   errorMessage = '';
   successMessage = '';
+  canResendConfirmation = false;
+  resendLoading = false;
 
   private returnUrl = '/menu';
 
@@ -33,7 +35,9 @@ export class LoginComponent implements OnInit {
     this.returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') || '/menu';
 
     this.successMessage = sessionStorage.getItem('auth-success-message') || '';
+    this.errorMessage = sessionStorage.getItem('auth-error-message') || '';
     sessionStorage.removeItem('auth-success-message');
+    sessionStorage.removeItem('auth-error-message');
 
     if (this.authenticationService.hasValidToken()) {
       this.router.navigateByUrl(this.returnUrl);
@@ -54,6 +58,7 @@ export class LoginComponent implements OnInit {
 
     this.loading = true;
     this.errorMessage = '';
+    this.canResendConfirmation = false;
 
     this.authenticationService.login(username, this.password)
       .pipe(finalize(() => this.loading = false))
@@ -90,6 +95,35 @@ export class LoginComponent implements OnInit {
           this.errorMessage = this.errorFrom(
             error,
             'Não foi possível iniciar sessão. Confirma as credenciais.'
+          );
+          this.canResendConfirmation = this.errorMessage
+            .toLowerCase()
+            .includes('email ainda não está verificado');
+        }
+      });
+  }
+
+  resendConfirmation(): void {
+    const username = this.username.trim();
+    if (!username || this.resendLoading) {
+      return;
+    }
+
+    this.resendLoading = true;
+    this.successMessage = '';
+
+    this.authenticationService.resendRegistrationConfirmation(username)
+      .pipe(finalize(() => this.resendLoading = false))
+      .subscribe({
+        next: response => {
+          this.successMessage = response.message || 'Foi enviado um novo email de confirmação.';
+          this.errorMessage = '';
+          this.canResendConfirmation = false;
+        },
+        error: error => {
+          this.errorMessage = this.errorFrom(
+            error,
+            'Não foi possível reenviar o email de confirmação.'
           );
         }
       });
