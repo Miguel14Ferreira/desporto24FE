@@ -124,7 +124,7 @@ export class NotificationsComponent implements OnInit {
   }
 
   acceptFriendRequest(notification: AppNotification): void {
-    if (!notification.token || this.actionLoadingId !== null) {
+    if (!notification.friendRequest || this.actionLoadingId !== null) {
       return;
     }
 
@@ -132,7 +132,7 @@ export class NotificationsComponent implements OnInit {
     this.actionError = '';
     this.actionSuccess = '';
 
-    this.notificationService.acceptFriendRequest(notification.id, notification.token)
+    this.notificationService.acceptFriendRequest(notification.id)
       .pipe(finalize(() => this.actionLoadingId = null))
       .subscribe({
         next: () => {
@@ -148,7 +148,30 @@ export class NotificationsComponent implements OnInit {
   }
 
   rejectFriendRequest(notification: AppNotification): void {
-    this.deleteNotification(notification);
+    if (!notification.friendRequest || this.actionLoadingId !== null) {
+      return;
+    }
+
+    this.actionLoadingId = notification.id;
+    this.actionError = '';
+    this.actionSuccess = '';
+
+    this.notificationService.rejectFriendRequest(notification.id)
+      .pipe(finalize(() => this.actionLoadingId = null))
+      .subscribe({
+        next: () => {
+          this.notifications = this.notifications.filter(item => item.id !== notification.id);
+          this.selected = undefined;
+          this.actionSuccess = 'Pedido de amizade rejeitado.';
+          this.router.navigate(['/menu/notifications']);
+        },
+        error: error => {
+          this.actionError = this.errorFrom(
+            error,
+            'Não foi possível rejeitar o pedido de amizade.'
+          );
+        }
+      });
   }
 
   formatCreatedAt(value: string): string {

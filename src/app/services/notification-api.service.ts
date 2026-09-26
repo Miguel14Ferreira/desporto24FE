@@ -25,9 +25,16 @@ export class NotificationApiService {
     return this.http.delete<void>(this.baseUrl + '/' + id);
   }
 
-  acceptFriendRequest(id: number, token: string): Observable<unknown> {
-    return this.http.get(
-      this.baseUrl + '/friend-request/accept/' + id + '/' + encodeURIComponent(token)
+  acceptFriendRequest(id: number): Observable<unknown> {
+    return this.http.post(
+      this.baseUrl + '/friend-request/' + id + '/accept',
+      null
+    );
+  }
+
+  rejectFriendRequest(id: number): Observable<void> {
+    return this.http.delete<void>(
+      this.baseUrl + '/friend-request/' + id + '/reject'
     );
   }
 }

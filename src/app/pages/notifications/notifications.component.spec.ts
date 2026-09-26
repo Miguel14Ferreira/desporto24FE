@@ -30,15 +30,34 @@ describe('NotificationsComponent', () => {
     username: 'fixture-user'
   });
 
+  const friendRequestFixture = () => ({
+    id: 8,
+    subject: 'Novo pedido de amizade',
+    message: 'ana enviou-te um pedido de amizade.',
+    greeting: '',
+    signature: '',
+    createdAt: '2026-09-25T21:00:00Z',
+    friendRequest: true,
+    updateProfile: false,
+    sessionInvite: false,
+    normalMessage: false,
+    token: null,
+    type: null,
+    sessionId: null,
+    read: false,
+    username: 'fixture-user'
+  });
+
   beforeEach(async () => {
     service = jasmine.createSpyObj<NotificationApiService>(
       'NotificationApiService',
-      ['mine', 'markRead', 'delete', 'acceptFriendRequest']
+      ['mine', 'markRead', 'delete', 'acceptFriendRequest', 'rejectFriendRequest']
     );
     service.mine.and.returnValue(of([notificationFixture()]));
     service.markRead.and.returnValue(of(void 0));
     service.delete.and.returnValue(of(void 0));
     service.acceptFriendRequest.and.returnValue(of({}));
+    service.rejectFriendRequest.and.returnValue(of(void 0));
 
     await TestBed.configureTestingModule({
       declarations: [NotificationsComponent],
@@ -88,5 +107,29 @@ describe('NotificationsComponent', () => {
     component.openSession(component.notifications[0]);
 
     expect(router.navigate).toHaveBeenCalledWith(['/menu/events', 12]);
+  });
+
+  it('should accept a friend request without exposing its token', () => {
+    const friendRequest = friendRequestFixture();
+    component.notifications = [friendRequest];
+    component.selected = friendRequest;
+
+    component.acceptFriendRequest(friendRequest);
+
+    expect(service.acceptFriendRequest).toHaveBeenCalledWith(8);
+    expect(component.notifications.length).toBe(0);
+    expect(component.actionSuccess).toContain('aceite');
+  });
+
+  it('should reject a friend request through the authenticated endpoint', () => {
+    const friendRequest = friendRequestFixture();
+    component.notifications = [friendRequest];
+    component.selected = friendRequest;
+
+    component.rejectFriendRequest(friendRequest);
+
+    expect(service.rejectFriendRequest).toHaveBeenCalledWith(8);
+    expect(component.notifications.length).toBe(0);
+    expect(component.actionSuccess).toContain('rejeitado');
   });
 });
