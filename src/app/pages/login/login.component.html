@@ -17,18 +17,7 @@
       }
 
       @if (errorMessage) {
-        <div class="error-feedback">
-          <div>{{ errorMessage }}</div>
-          @if (canResendConfirmation) {
-            <button
-              type="button"
-              class="resend-confirmation"
-              [disabled]="resendLoading"
-              (click)="resendConfirmation()">
-              {{ resendLoading ? 'A reenviar...' : 'Reenviar email de confirmação' }}
-            </button>
-          }
-        </div>
+        <div class="error-feedback">{{ errorMessage }}</div>
       }
 
       <form (ngSubmit)="onLogin()">
@@ -62,6 +51,17 @@
           {{ loading ? 'A entrar...' : 'Entrar' }}
         </button>
       </form>
+
+      <div class="confirmation-help">
+        <span>Não recebeste o email de confirmação?</span>
+        <button
+          type="button"
+          class="resend-confirmation"
+          [disabled]="resendLoading || !username.trim()"
+          (click)="resendConfirmation()">
+          {{ resendLoading ? 'A reenviar...' : 'Reenviar email' }}
+        </button>
+      </div>
 
       <div class="login-links">
         <a routerLink="/login/resetPassword">Esqueci-me da palavra-passe</a>
