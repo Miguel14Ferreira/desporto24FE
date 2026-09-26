@@ -12,6 +12,10 @@
         <h2>Iniciar sessão</h2>
       </div>
 
+      @if (successMessage) {
+        <div class="success-feedback">{{ successMessage }}</div>
+      }
+
       @if (errorMessage) {
         <div class="error-feedback">{{ errorMessage }}</div>
       }
