@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { finalize } from 'rxjs';
 
 import { MyProfileService } from '../../services/my-profile.service';
+import { AuthenticationService } from '../../services/authethication.service';
 
 @Component({
   selector: 'app-changepassword',
@@ -23,7 +24,10 @@ export class ChangepasswordComponent {
   errorMessage = '';
   successMessage = '';
 
-  constructor(private myProfileService: MyProfileService) {}
+  constructor(
+    private myProfileService: MyProfileService,
+    private authenticationService: AuthenticationService
+  ) {}
 
   changePassword(): void {
     if (this.saving) {
@@ -62,7 +66,12 @@ export class ChangepasswordComponent {
           this.currentPassword = '';
           this.newPassword = '';
           this.confirmPassword = '';
-          this.successMessage = 'Palavra-passe alterada com sucesso.';
+
+          sessionStorage.setItem(
+            'auth-success-message',
+            'Palavra-passe alterada com sucesso. Inicia sessão novamente.'
+          );
+          this.authenticationService.logOut();
         },
         error: error => {
           this.errorMessage = this.errorFrom(
