@@ -5,6 +5,7 @@ import { finalize } from 'rxjs';
 import { environment } from 'src/environment/environment';
 import { CommunityProfile } from '../model/community-profile';
 import { CommunityService } from '../../services/community.service';
+import { AuthenticationService } from '../../services/authethication.service';
 
 @Component({
   selector: 'app-perfis',
@@ -26,7 +27,16 @@ export class PerfisComponent {
   actionError = '';
   actionSuccess = '';
 
-  constructor(private communityService: CommunityService) {}
+  currentUsername = '';
+  pendingFriendRequests = new Set<string>();
+
+  constructor(
+    private communityService: CommunityService,
+    private authenticationService: AuthenticationService
+  ) {
+    this.authenticationService.isLoggedIn();
+    this.currentUsername = this.authenticationService.loggedInPerfilname || '';
+  }
 
   search(): void {
     const term = this.searchTerm.trim();
@@ -73,7 +83,11 @@ export class PerfisComponent {
   }
 
   sendFriendRequest(profile: CommunityProfile): void {
-    if (this.actionLoading) {
+    if (
+      this.actionLoading
+      || this.isOwnProfile(profile)
+      || this.pendingFriendRequests.has(profile.username)
+    ) {
       return;
     }
 
@@ -85,15 +99,30 @@ export class PerfisComponent {
       .pipe(finalize(() => this.actionLoading = false))
       .subscribe({
         next: () => {
+          this.pendingFriendRequests.add(profile.username);
           this.actionSuccess = `Pedido de amizade enviado para ${profile.username}.`;
         },
         error: error => {
-          this.actionError = this.errorFrom(
+          const message = this.errorFrom(
             error,
             'Não foi possível enviar o pedido de amizade.'
           );
+
+          if (message.toLowerCase().includes('pendente')) {
+            this.pendingFriendRequests.add(profile.username);
+          }
+
+          this.actionError = message;
         }
       });
+  }
+
+  isOwnProfile(profile: CommunityProfile): boolean {
+    return profile.username === this.currentUsername;
+  }
+
+  friendRequestPending(profile: CommunityProfile): boolean {
+    return this.pendingFriendRequests.has(profile.username);
   }
 
   profileImage(profile: CommunityProfile): string | null {

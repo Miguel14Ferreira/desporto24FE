@@ -114,13 +114,21 @@
           </div>
 
           <div class="detail-actions">
-            <button
-              type="button"
-              class="primary-action"
-              [disabled]="actionLoading"
-              (click)="sendFriendRequest(selectedProfile)">
-              {{ actionLoading ? 'A enviar...' : 'Enviar pedido de amizade' }}
-            </button>
+            @if (isOwnProfile(selectedProfile)) {
+              <span>Este é o teu perfil.</span>
+            } @else {
+              <button
+                type="button"
+                class="primary-action"
+                [disabled]="actionLoading || friendRequestPending(selectedProfile)"
+                (click)="sendFriendRequest(selectedProfile)">
+                @if (friendRequestPending(selectedProfile)) {
+                  Pedido de amizade pendente
+                } @else {
+                  {{ actionLoading ? 'A enviar...' : 'Enviar pedido de amizade' }}
+                }
+              </button>
+            }
           </div>
         </article>
       </div>

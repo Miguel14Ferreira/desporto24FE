@@ -60,6 +60,24 @@ describe('PerfisComponent', () => {
 
     expect(service.sendFriendRequest).toHaveBeenCalledWith('ana');
     expect(component.actionSuccess).toContain('ana');
+    expect(component.friendRequestPending(profile)).toBeTrue();
+  });
+
+  it('should not allow a friend request to the logged-in profile', () => {
+    const ownProfile = { ...profile, username: 'miguel' };
+
+    component.sendFriendRequest(ownProfile);
+
+    expect(component.isOwnProfile(ownProfile)).toBeTrue();
+    expect(service.sendFriendRequest).not.toHaveBeenCalled();
+  });
+
+  it('should not resend a locally pending friend request', () => {
+    component.pendingFriendRequests.add('ana');
+
+    component.sendFriendRequest(profile);
+
+    expect(service.sendFriendRequest).not.toHaveBeenCalled();
   });
 
   it('should reject an empty search', () => {
