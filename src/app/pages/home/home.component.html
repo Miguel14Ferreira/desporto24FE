@@ -1,40 +1,41 @@
-<!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:display="http://www.w3.org/1999/xhtml"
-  xmlns="http://www.w3.org/1999/html">
-  <head>
-    <meta charset="ISO-8859-1">
-    <title>Desporto24</title>
-    <link rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-  </head>
-  @if (!dark) {
-    <div class="img2">
-      <div id="container">
-        <p id="D24">Desporto24</p>
-        <p id="D241">Desporto24</p>
-        <p id="D243">Desporto24</p>
-        <p id="D244">Desporto24</p>
-        <p id="D245">Desporto24</p>
+<section class="home-page">
+  <div class="home-shell">
+    <main class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Desporto24</p>
+        <h1>Encontra pessoas para praticar o teu desporto.</h1>
+        <p class="subtitle">
+          Descobre sessões perto de ti, cria jogos, conversa com participantes
+          e constrói uma comunidade à volta do desporto.
+        </p>
+
+        <div class="hero-actions">
+          <a class="primary-action" routerLink="/login/registerNewUser">Criar conta</a>
+          <a class="secondary-action" routerLink="/login">Já tenho conta</a>
+        </div>
+
+        <div class="feature-row" aria-label="Funcionalidades principais">
+          <span>Sessões locais</span>
+          <span>Chat</span>
+          <span>Comunidade</span>
+          <span>Fiabilidade</span>
+        </div>
       </div>
-      <body>
-        <h1 id="h1black">Desporto24</h1>
-        <h2 id="h2black">Sê bem-vindo/a ao nosso site</h2>
-      </body>
-    </div>
-  }
-  @if (dark) {
-    <div class="img">
-      <div id="container2">
-        <p id="D24">Desporto24</p>
-        <p id="D241a">Desporto24</p>
-        <p id="D243a">Desporto24</p>
-        <p id="D244a">Desporto24</p>
-        <p id="D245a">Desporto24</p>
-      </div>
-      <body>
-        <h1 id="h1white">Desporto24</h1>
-        <h2 id="h2white">Sê bem-vindo/a ao nosso site</h2>
-      </body>
-    </div>
-  }
-</html>
+
+      <aside class="welcome-card">
+        <p class="eyebrow">Começa por aqui</p>
+        <h2>Joga mais. Combina mais facilmente.</h2>
+        <p>
+          Junta-te a jogadores da tua zona, encontra sessões abertas
+          e organiza os teus próprios jogos.
+        </p>
+
+        <div class="quick-links">
+          <a routerLink="/login">Entrar na comunidade <span>→</span></a>
+          <a routerLink="/about">Conhecer o Desporto24 <span>→</span></a>
+          <a routerLink="/contact">Falar connosco <span>→</span></a>
+        </div>
+      </aside>
+    </main>
+  </div>
+</section>

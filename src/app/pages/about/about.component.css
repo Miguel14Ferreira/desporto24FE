@@ -1,473 +1,118 @@
-.img{
-    animation: transition 0.75s;
-    height: 100vh;
-    background-color: black;     
-    -webkit-background-size: cover;
-    background-size: cover;
-    background-position: center center;
-}
-.img2{
-    animation: transition 0.75s;
-    height: 100vh;
-    background-color: white;     
-    -webkit-background-size: cover;
-    background-size: cover;
-    background-position: center center;
-}
-#D24{
-    color: black;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 20%;
-        left: 70%;
-        opacity: 20%;
-        animation: infinite 100s slide-right;
-}
-#D241{
-    color: black;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 40%;
-        left: 10%;
-        opacity: 20%;
-        animation: infinite 100s slide-left;
-}
-#D243{
-    color: black;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 60%;
-        left: -30%;
-        opacity: 20%;
-        animation: infinite 100s slide-right;
-}
-#D244{
-    color: black;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 100%;
-        left: 8%;
-        opacity: 20%;
-        animation: infinite 100s slide-right;
-}
-#D245{
-    color: black;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 80%;
-        left: 50%;
-        opacity: 20%;
-        animation: infinite 100s slide-left;
-}
-#D24a{
-    color: white;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 20%;
-        left: 70%;
-        opacity: 20%;
-        animation: infinite 100s slide-right;
-}
-#D241a{
-    color: white;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 40%;
-        left: 10%;
-        opacity: 20%;
-        animation: infinite 100s slide-left;
-}
-#D243a{
-    color: white;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 60%;
-        left: -30%;
-        opacity: 20%;
-        animation: infinite 100s slide-right;
-}
-#D244a{
-    color: white;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 100%;
-        left: 8%;
-        opacity: 20%;
-        animation: infinite 100s slide-right;
-}
-#D245a{
-    color: white;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 80%;
-        left: 50%;
-        opacity: 20%;
-        animation: infinite 100s slide-left;
-}
-#h1white{
-    color: white;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 20%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-}
-#h1black{
-    color: black;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 20%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-}
-#h2white{
-    width: max-content;
-    color: white;
-    font-size: 60px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-        top: 30%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        z-index: 1;
-}
-#h2black{
-    width: max-content;
-    color: black;
-    font-size: 60px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-        top: 30%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-}
-#h3white{
-    width: max-content;
-    color: white;
-    font-size: 60px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-        top: 75%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-}
-#h3black{
-    width: max-content;
-    color: black;
-    font-size: 60px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-        top: 75%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-}
-#label1white{
-    color: white;
-    width: 1000px;
-    height: max-content;
-    font-size: 20px;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-        top: 55%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-}
-#label2white{
-    color: white;
-    height: max-content;
-    font-size: 20px;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-        top: 95%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-}
-#label1black{
-    color: black;
-    width: 1000px;
-    height: max-content;
-    font-size: 20px;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-        top: 55%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-}
-#label2black{
-    color: black;
-    height: max-content;
-    font-size: 20px;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-        top: 95%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-}
-@keyframes transition {
-    from {
-        opacity: 0;
-        transform: rotateX(-10deg);
-    }
-    to{
-        opacity: 1;
-        transform: rotateX(0);
-    }
-}
-@media screen and (max-width: 1024px) { /* Specific to this particular image */
-    .img {
-      left: 50%;
-      margin-left: -512px;   /* 50% */
-    }
-}
-#container{
-    font-size: 15px;
-    height: 80vh;
-    width: 200vh;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    background-color: white;
-    position: absolute;
-        top: 70%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-    overflow: hidden;
-}
-#container2{
-    font-size: 15px;
-    height: 80vh;
-    width: 200vh;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    background-color: black;
-    position: absolute;
-        top: 70%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-    overflow: hidden;
-}
-@keyframes transition {
-    from {
-        opacity: 0;
-        transform: rotateX(-10deg);
-    }
-    to{
-        opacity: 1;
-        transform: rotateX(0);
-    }
-}
-@keyframes slide-right {
-    from {
-        transform: translate(150%, -50%);
-    }
+:host { display: block; }
 
-    to {
-        transform: translate(-150%, -50%);
-    }
- }
- @keyframes slide-left {
-    from {
-        transform: translate(-70%, -50%);
-    }
+.about-page {
+  min-height: 100vh;
+  padding: 8rem 1.25rem 4rem;
+  background:
+    radial-gradient(circle at top right, rgba(14,165,233,.16), transparent 32rem),
+    linear-gradient(145deg, #07111f, #12334a);
+  color: #f8fafc;
+}
 
-    to {
-        transform: translate(150%, -50%);
-    }
- }
-#D24{
-    color: black;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 20%;
-        left: 70%;
-        opacity: 20%;
-        animation: infinite 100s slide-right;
+.about-shell {
+  width: min(1050px, 100%);
+  margin: 0 auto;
 }
-#D241{
-    color: black;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 40%;
-        left: 10%;
-        opacity: 20%;
-        animation: infinite 100s slide-left;
+
+.page-header {
+  max-width: 820px;
 }
-#D243{
-    color: black;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 60%;
-        left: -30%;
-        opacity: 20%;
-        animation: infinite 100s slide-right;
+
+.eyebrow {
+  margin: 0 0 .5rem;
+  color: #7dd3fc;
+  font-size: .78rem;
+  font-weight: 900;
+  letter-spacing: .12em;
+  text-transform: uppercase;
 }
-#D244{
-    color: black;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 100%;
-        left: 8%;
-        opacity: 20%;
-        animation: infinite 100s slide-right;
+
+h1 {
+  margin: 0;
+  font-size: clamp(2.8rem, 7vw, 5rem);
+  line-height: 1;
 }
-#D245{
-    color: black;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 80%;
-        left: 50%;
-        opacity: 20%;
-        animation: infinite 100s slide-left;
+
+.subtitle {
+  max-width: 760px;
+  margin: 1rem 0 0;
+  color: #cbd5e1;
+  font-size: 1.05rem;
+  line-height: 1.65;
 }
-#D24a{
-    color: white;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 20%;
-        left: 70%;
-        opacity: 20%;
-        animation: infinite 100s slide-right;
+
+.about-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-top: 2.4rem;
 }
-#D241a{
-    color: white;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 40%;
-        left: 10%;
-        opacity: 20%;
-        animation: infinite 100s slide-left;
+
+.about-card {
+  min-height: 260px;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 1rem;
+  padding: 1.25rem;
+  background: rgba(15,23,42,.78);
+  box-shadow: 0 18px 42px rgba(0,0,0,.16);
 }
-#D243a{
-    color: white;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 60%;
-        left: -30%;
-        opacity: 20%;
-        animation: infinite 100s slide-right;
+
+.card-number {
+  color: #7dd3fc;
+  font-size: .78rem;
+  font-weight: 900;
+  letter-spacing: .12em;
 }
-#D244a{
-    color: white;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 100%;
-        left: 8%;
-        opacity: 20%;
-        animation: infinite 100s slide-right;
+
+.about-card h2 {
+  margin: 1.4rem 0 .65rem;
+  font-size: 1.45rem;
 }
-#D245a{
-    color: white;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 80%;
-        left: 50%;
-        opacity: 20%;
-        animation: infinite 100s slide-left;
+
+.about-card p {
+  margin: 0;
+  color: #94a3b8;
+  line-height: 1.6;
+}
+
+.about-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem;
+  margin-top: 1.5rem;
+}
+
+.primary-action,
+.secondary-action {
+  border-radius: .8rem;
+  padding: .85rem 1rem;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.primary-action {
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.secondary-action {
+  border: 1px solid rgba(255,255,255,.16);
+  background: rgba(255,255,255,.06);
+  color: #f8fafc;
+}
+
+.primary-action:hover,
+.secondary-action:hover {
+  transform: translateY(-2px);
+  text-decoration: none;
+}
+
+@media (max-width: 800px) {
+  .about-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .about-card {
+    min-height: auto;
+  }
 }
