@@ -167,3 +167,22 @@
     flex-direction: column;
   }
 }
+
+
+.resend-confirmation {
+  margin-top: .7rem;
+  border: 1px solid rgba(254,202,202,.35);
+  border-radius: .65rem;
+  padding: .55rem .7rem;
+  background: transparent;
+  color: #fecaca;
+  font: inherit;
+  font-size: .85rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.resend-confirmation:disabled {
+  opacity: .6;
+  cursor: wait;
+}
