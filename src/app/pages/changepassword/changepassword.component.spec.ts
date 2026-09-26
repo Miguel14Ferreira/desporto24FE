@@ -3,23 +3,30 @@ import { of } from 'rxjs';
 
 import { ChangepasswordComponent } from './changepassword.component';
 import { MyProfileService } from '../../services/my-profile.service';
+import { AuthenticationService } from '../../services/authethication.service';
 import { TEST_IMPORTS, TEST_PROVIDERS } from '../../testing/test-providers';
 
 describe('ChangepasswordComponent', () => {
   let component: ChangepasswordComponent;
   let fixture: ComponentFixture<ChangepasswordComponent>;
   let service: jasmine.SpyObj<MyProfileService>;
+  let authenticationService: jasmine.SpyObj<AuthenticationService>;
 
   beforeEach(async () => {
     service = jasmine.createSpyObj<MyProfileService>('MyProfileService', ['changePassword']);
     service.changePassword.and.returnValue(of({}));
+    authenticationService = jasmine.createSpyObj<AuthenticationService>(
+      'AuthenticationService',
+      ['logOut']
+    );
 
     await TestBed.configureTestingModule({
       declarations: [ChangepasswordComponent],
       imports: TEST_IMPORTS,
       providers: [
         ...TEST_PROVIDERS,
-        { provide: MyProfileService, useValue: service }
+        { provide: MyProfileService, useValue: service },
+        { provide: AuthenticationService, useValue: authenticationService }
       ]
     }).compileComponents();
 
@@ -43,7 +50,9 @@ describe('ChangepasswordComponent', () => {
       'current-password',
       'new-password-123'
     );
-    expect(component.successMessage).toContain('sucesso');
+    expect(authenticationService.logOut).toHaveBeenCalled();
+    expect(sessionStorage.getItem('auth-success-message'))
+      .toContain('Palavra-passe alterada');
   });
 
   it('should reject mismatching confirmation', () => {
