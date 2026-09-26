@@ -76,6 +76,19 @@ describe('FriendsComponent', () => {
     expect(target.blockedByMe).toBeFalse();
   });
 
+  it('should not unblock a chat blocked by the other user', () => {
+    const target = component.friends[0];
+    target.chatBlocked = true;
+    target.blockedByMe = false;
+
+    component.toggleBlock(target);
+
+    expect(service.unblockFriend).not.toHaveBeenCalled();
+    expect(service.blockFriend).not.toHaveBeenCalled();
+    expect(component.actionError).toContain('outro utilizador');
+    expect(target.chatBlocked).toBeTrue();
+  });
+
   it('should remove a friend after confirmation', () => {
     const target = component.friends[0];
 
