@@ -22,8 +22,7 @@ export class CreateaccountComponent {
   country = '';
   location = '';
   postalCode = '';
-  indicativePhone = '';
-  phone = '';
+  phone = '+351 ';
   gender = '';
   email = '';
   favoriteSports = '';
@@ -46,6 +45,13 @@ export class CreateaccountComponent {
       return;
     }
 
+    const parsedPhone = this.parsePhone();
+    if (!parsedPhone) {
+      this.errorMessage = 'Introduz um telemóvel português válido. Ex.: +351 927 382 368.';
+      this.successMessage = '';
+      return;
+    }
+
     const request: RegistrationRequest = {
       username: this.username.trim(),
       password: this.password,
@@ -55,8 +61,8 @@ export class CreateaccountComponent {
       country: this.country.trim(),
       location: this.location.trim(),
       postalCode: this.postalCode.trim(),
-      indicativePhone: this.indicativePhone.trim(),
-      phone: this.phone.trim(),
+      indicativePhone: parsedPhone.indicativePhone,
+      phone: parsedPhone.phone,
       gender: this.gender,
       email: this.email.trim(),
       favoriteSports: this.favoriteSports.trim()
@@ -119,7 +125,6 @@ export class CreateaccountComponent {
       this.country,
       this.location,
       this.postalCode,
-      this.indicativePhone,
       this.phone,
       this.gender,
       this.email,
@@ -144,6 +149,28 @@ export class CreateaccountComponent {
 
     if (!this.email.includes('@')) {
       return 'Introduz um email válido.';
+    }
+
+    if (!this.parsePhone()) {
+      return 'Introduz um telemóvel português válido. Ex.: +351 927 382 368.';
+    }
+
+    return null;
+  }
+
+  private parsePhone(): { indicativePhone: string; phone: string } | null {
+    const compact = this.phone.replace(/[\s()-]/g, '');
+
+    if (/^\+351\d{9}$/.test(compact)) {
+      return { indicativePhone: '351', phone: compact.substring(4) };
+    }
+
+    if (/^351\d{9}$/.test(compact)) {
+      return { indicativePhone: '351', phone: compact.substring(3) };
+    }
+
+    if (/^\d{9}$/.test(compact)) {
+      return { indicativePhone: '351', phone: compact };
     }
 
     return null;
