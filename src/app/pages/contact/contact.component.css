@@ -2,7 +2,7 @@
 
 .contact-page {
   min-height: 100vh;
-  padding: 4rem 1.25rem;
+  padding: 6.5rem 1.25rem 4rem;
   background:
     radial-gradient(circle at top right, rgba(14,165,233,.16), transparent 32rem),
     linear-gradient(145deg, #07111f, #12334a);
