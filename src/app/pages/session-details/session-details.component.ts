@@ -153,8 +153,8 @@ export class SessionDetailsComponent implements OnInit {
       return;
     }
 
-    if (!this.hasSessionStarted()) {
-      this.attendanceError = 'Só podes marcar presenças depois de a sessão começar.';
+    if (!this.canRecordAttendance()) {
+      this.attendanceError = 'Só podes marcar presenças 30 minutos depois do início da sessão.';
       this.attendanceSuccess = '';
       return;
     }
@@ -252,12 +252,15 @@ export class SessionDetailsComponent implements OnInit {
     }
   }
 
-  hasSessionStarted(): boolean {
+  canRecordAttendance(): boolean {
     if (!this.session?.gameDate) {
       return false;
     }
 
-    return new Date(this.session.gameDate).getTime() <= Date.now();
+    const attendanceAvailableAt =
+      new Date(this.session.gameDate).getTime() + (30 * 60 * 1000);
+
+    return attendanceAvailableAt <= Date.now();
   }
 
   refreshMessages(): void {
