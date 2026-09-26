@@ -31,6 +31,7 @@ import { MySessionsComponent } from './pages/my-sessions/my-sessions.component';
 import { NotificationsComponent } from './pages/notifications/notifications.component';
 import { FriendsComponent } from './pages/friends/friends.component';
 import { DirectChatComponent } from './pages/direct-chat/direct-chat.component';
+import { AdminDisputesComponent } from './pages/admin-disputes/admin-disputes.component';
 
 @NgModule({ declarations: [
         AppComponent,
@@ -56,7 +57,8 @@ import { DirectChatComponent } from './pages/direct-chat/direct-chat.component';
         MySessionsComponent,
         NotificationsComponent,
         FriendsComponent,
-        DirectChatComponent
+        DirectChatComponent,
+        AdminDisputesComponent
     ],
     bootstrap: [AppComponent], imports: [BrowserModule,
         AppRoutingModule,

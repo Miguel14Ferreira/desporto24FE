@@ -18,6 +18,7 @@ export class MenuComponent implements OnInit {
   profile?: MyProfile;
 
   unreadNotifications = 0;
+  isAdmin = false;
   loadingProfile = false;
   loadingNotifications = false;
   loggingOut = false;
@@ -30,6 +31,10 @@ export class MenuComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.isAdmin = this.authenticationService.hasAnyRole(
+      'ROLE_ADMIN',
+      'ROLE_SUPER_ADMIN'
+    );
     this.loadProfile();
     this.loadNotifications();
   }

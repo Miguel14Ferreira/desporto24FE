@@ -130,6 +130,16 @@
           <p>Altera a tua palavra-passe.</p>
         </div>
       </a>
+
+      @if (isAdmin) {
+        <a class="dashboard-card" routerLink="/menu/admin/attendance-disputes">
+          <span class="card-icon">⚑</span>
+          <div>
+            <strong>Contestações</strong>
+            <p>Analisa e resolve contestações de faltas.</p>
+          </div>
+        </a>
+      }
     </section>
   </div>
 </section>

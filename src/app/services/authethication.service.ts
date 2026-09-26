@@ -133,6 +133,24 @@ export class AuthenticationService {
     }
   }
 
+  public hasAnyRole(...roles: string[]): boolean {
+    const token = localStorage.getItem('t');
+    if (!token) {
+      return false;
+    }
+
+    try {
+      const payload = this.jwtHelper.decodeToken(token);
+      const authorities = Array.isArray(payload?.authorities)
+        ? payload.authorities as string[]
+        : [];
+
+      return roles.some(role => authorities.includes(role));
+    } catch {
+      return false;
+    }
+  }
+
   public saveRefreshToken(token: string): void {
     localStorage.setItem('refreshToken', token);
   }

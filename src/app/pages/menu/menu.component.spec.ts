@@ -18,9 +18,10 @@ describe('MenuComponent', () => {
   beforeEach(async () => {
     authenticationService = jasmine.createSpyObj<AuthenticationService>(
       'AuthenticationService',
-      ['terminarSessao', 'logOut']
+      ['terminarSessao', 'logOut', 'hasAnyRole']
     );
     authenticationService.terminarSessao.and.returnValue(of(void 0));
+    authenticationService.hasAnyRole.and.returnValue(false);
 
     profileService = jasmine.createSpyObj<MyProfileService>('MyProfileService', ['get']);
     profileService.get.and.returnValue(of({
@@ -89,6 +90,8 @@ describe('MenuComponent', () => {
     expect(notificationService.mine).toHaveBeenCalled();
     expect(component.profile?.username).toBe('miguel');
     expect(component.unreadNotifications).toBe(1);
+    expect(authenticationService.hasAnyRole)
+      .toHaveBeenCalledWith('ROLE_ADMIN', 'ROLE_SUPER_ADMIN');
   });
 
   it('should terminate the remote session and clear local authentication', () => {
