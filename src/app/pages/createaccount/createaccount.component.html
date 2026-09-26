@@ -117,7 +117,7 @@
         <label>
           <span>Indicativo *</span>
           <select name="indicativePhone" [(ngModel)]="indicativePhone" [disabled]="loading">
-            @for (item of phoneIndicatives; track item.code) {
+            @for (item of phoneIndicatives; track item.label) {
               <option [value]="item.code">{{ item.label }}</option>
             }
           </select>
