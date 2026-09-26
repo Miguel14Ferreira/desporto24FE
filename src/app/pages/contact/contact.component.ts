@@ -1,72 +1,101 @@
-import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
-import { FormBuilder } from '@angular/forms';
-import { Ideia } from 'src/app/ideia';
-import { LoginperfilService } from '../../services/loginperfil.service';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { CustomHttpResponse } from '../custom-http-response';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { finalize } from 'rxjs';
+
+import { FeedbackRequest, FeedbackService } from '../../services/feedback.service';
 
 @Component({
-    selector: 'app-contact',
-    templateUrl: './contact.component.html',
-    styleUrls: ['./contact.component.css'],
-    changeDetection: ChangeDetectionStrategy.Eager,
-    standalone: false
+  selector: 'app-contact',
+  templateUrl: './contact.component.html',
+  styleUrls: ['./contact.component.css'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false
 })
-export class ContactComponent implements OnInit {
-  ideia = new Ideia();
-  dark!:boolean;
-  showLoading!: boolean;
-  registerError:boolean =false;
-  errorMessage!:string;
-  registerSuccess:boolean =false;
-  successMessage!:any;
-  validation1:boolean=false;
-  validation!:any;
-  refreshing!:boolean;
-  constructor(private _service:LoginperfilService) { }
+export class ContactComponent {
+  name = '';
+  city = '';
+  email = '';
+  gender = '';
+  subject = '';
+  problem = '';
 
-  ngOnInit(): void {
-    var theme = localStorage.getItem('theme');
-    if (theme == 'claro'){
-      this.dark = false
-    } else {
-      this.dark = true
+  loading = false;
+  errorMessage = '';
+  successMessage = '';
+
+  constructor(private feedbackService: FeedbackService) {}
+
+  submit(): void {
+    const validation = this.validate();
+    if (validation) {
+      this.errorMessage = validation;
+      this.successMessage = '';
+      return;
     }
+
+    const request: FeedbackRequest = {
+      name: this.name.trim(),
+      city: this.city.trim(),
+      email: this.email.trim(),
+      gender: this.gender,
+      subject: this.subject.trim(),
+      problem: this.problem.trim()
+    };
+
+    this.loading = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    this.feedbackService.submit(request)
+      .pipe(finalize(() => this.loading = false))
+      .subscribe({
+        next: response => {
+          this.successMessage = response.message || 'Obrigado pelo teu feedback.';
+          this.subject = '';
+          this.problem = '';
+        },
+        error: error => {
+          this.errorMessage = this.errorFrom(
+            error,
+            'Não foi possível enviar a tua mensagem.'
+          );
+        }
+      });
   }
-  saveNewIdea(){
-    this.showLoading = true;
-    if (this.ideia.name == null || this.ideia.city == null || this.ideia.email == null || this.ideia.problem == null || this.ideia.subject == null) {
-      this.showLoading = false;
-      this.validation1 = true;
-      this.validation = `Ainda tens espaços brancos!`;
-    } else if ( this.ideia.gender == ""){
-      this.validation1 = true;
-      this.showLoading = false;
-      this.validation = `Não escolheste nenhum género!`;
-    } else {
-    this._service.createIdea(this.ideia).subscribe((
-      response:HttpResponse<CustomHttpResponse>) =>{
-      {
-        this.showLoading = false;
-        this.registerSuccess = true;
-        this.successMessage = response.body?.message;
-      }
-    },
-  
-    (errorResponse: HttpErrorResponse) => {
-      this.registerError = true;
-      this.errorMessage = errorResponse.error.message;
-      this.showLoading = false;
+
+  private validate(): string | null {
+    const required = [
+      this.name,
+      this.city,
+      this.email,
+      this.gender,
+      this.subject,
+      this.problem
+    ];
+
+    if (required.some(value => !value?.trim())) {
+      return 'Preenche todos os campos.';
     }
-  )}
-}
-closeError(){
-  this.registerError = false;
-}
-closeSuccess(){
-  this.registerSuccess = false;
-}
-closeValidation(){
-  this.validation1 = false;
-}
+
+    if (!this.email.includes('@')) {
+      return 'Introduz um email válido.';
+    }
+
+    if (this.subject.trim().length > 160) {
+      return 'O assunto não pode ter mais de 160 caracteres.';
+    }
+
+    if (this.problem.trim().length > 4000) {
+      return 'A mensagem não pode ter mais de 4000 caracteres.';
+    }
+
+    return null;
   }
+
+  private errorFrom(error: HttpErrorResponse, fallback: string): string {
+    const apiMessage = error.error?.message;
+    return typeof apiMessage === 'string' && apiMessage.trim()
+      ? apiMessage
+      : fallback;
+  }
+}

@@ -1,112 +1,95 @@
-@if (dark) {
-  <div class="img">
-    <h1 id="h1white">DESPORTO24</h1>
-    <div id="container2">
-      <h2 id="h2white">Tens alguma ideia?</h2>
-      <label id="label1white">Tens alguma coisa a dizer-nos? Algo a melhorar ou a propor? Diz-nos!</label>
-      <p id="D24a">Desporto24</p>
-      <p id="D241a">Desporto24</p>
-      <p id="D243a">Desporto24</p>
-      <p id="D244a">Desporto24</p>
-      <p id="D245a">Desporto24</p>
-    </div>
-    @if (registerError) {
-      <div id="notificationError">
-        <i class="bi bi-exclamation-triangle-fill"></i>&nbsp;&nbsp;
-        {{ errorMessage }}
-        <button (click)="closeError()" type="button" type="button" id="botaoFecharError">X</button>
+<section class="contact-page">
+  <div class="contact-shell">
+    <header class="page-header">
+      <div>
+        <p class="eyebrow">Desporto24</p>
+        <h1>Fala connosco</h1>
+        <p class="subtitle">Tens uma ideia, uma sugestão ou algo que devíamos melhorar? Envia-nos.</p>
       </div>
-    }
-    @if (registerSuccess) {
-      <div id="notificationSuccess">
-        <i class="bi bi-check-circle-fill"></i>&nbsp;&nbsp;
-        {{ successMessage }}
-        <button (click)="closeSuccess()" type="button" id="botaoFecharSuccess">X</button>
+
+      <div class="header-actions">
+        <a class="secondary-action" routerLink="/home">Início</a>
+        <a class="secondary-action" routerLink="/login">Entrar</a>
       </div>
+    </header>
+
+    @if (errorMessage) {
+      <div class="feedback error-feedback">{{ errorMessage }}</div>
     }
-    @if (validation1) {
-      <div id="notificationInfo">
-        <i class="bi bi-exclamation-circle-fill"></i>&nbsp;&nbsp;
-        {{ validation }}
-        <button (click)="closeValidation()" type="button" id="botaoFecharInfo">X</button>
+
+    @if (successMessage) {
+      <div class="feedback success-feedback">{{ successMessage }}</div>
+    }
+
+    <form class="contact-card" (ngSubmit)="submit()">
+      <div class="form-grid">
+        <label>
+          <span>Nome *</span>
+          <input
+            name="name"
+            [(ngModel)]="name"
+            autocomplete="name"
+            [disabled]="loading">
+        </label>
+
+        <label>
+          <span>Localidade *</span>
+          <input
+            name="city"
+            [(ngModel)]="city"
+            autocomplete="address-level2"
+            [disabled]="loading">
+        </label>
+
+        <label>
+          <span>Email *</span>
+          <input
+            type="email"
+            name="email"
+            [(ngModel)]="email"
+            autocomplete="email"
+            [disabled]="loading">
+        </label>
+
+        <label>
+          <span>Género *</span>
+          <select name="gender" [(ngModel)]="gender" [disabled]="loading">
+            <option value="">Selecionar</option>
+            <option value="masculino">Masculino</option>
+            <option value="feminino">Feminino</option>
+            <option value="outro">Outro</option>
+            <option value="prefiro-nao-dizer">Prefiro não dizer</option>
+          </select>
+        </label>
+
+        <label class="full-width">
+          <span>Assunto *</span>
+          <input
+            name="subject"
+            [(ngModel)]="subject"
+            maxlength="160"
+            [disabled]="loading"
+            placeholder="Ex.: Sugestão para torneios">
+        </label>
+
+        <label class="full-width">
+          <span>Mensagem *</span>
+          <textarea
+            name="problem"
+            [(ngModel)]="problem"
+            maxlength="4000"
+            rows="8"
+            [disabled]="loading"
+            placeholder="Conta-nos a tua ideia..."></textarea>
+          <small>{{ problem.length }}/4000</small>
+        </label>
       </div>
-    }
-    <form #enviarOpiniao="ngForm" (ngSubmit)="saveNewIdea()">
-      <input class="input1" [(ngModel)]="ideia.name" name="name" type="text" placeholder="Nome completo" required>
-      <input class="input3" [(ngModel)]="ideia.city" name="city" type="text" placeholder="Localidade" required>
-      <p id="genero">Género:</p>
-      <input id="radio1" class="gender" [(ngModel)]="ideia.gender" name="gender" value="masculino" type="radio"><p id="masculino">Masculino</p>
-      <input id="radio2" class="gender" [(ngModel)]="ideia.gender" name="gender" value="feminino" type="radio"><p id="feminino">Feminino</p>
-      <input id="assunto" [(ngModel)]="ideia.subject" name="subject" type="text" placeholder="Assunto..." required>
-      <input id="email" [(ngModel)]="ideia.email" name="email" type="text" placeholder="Email" required>
-      <textarea id="texto" [(ngModel)]="ideia.problem" name="problem" placeholder="Diz-nos o que podiamos melhorar..." rows="10" cols="108" required></textarea>
-      <button type="submit" id="botao1">
-        @if (showLoading) {
-          <i class="fas fa-spinner fa-spin"></i>
-          }&nbsp;&nbsp;
-          @if (showLoading) {
-            <span>A carregar...</span>
-          }
-          @if (!showLoading) {
-            <span>Enviar</span>
-          }
+
+      <div class="form-actions">
+        <button type="submit" [disabled]="loading">
+          {{ loading ? 'A enviar...' : 'Enviar mensagem' }}
         </button>
-      </form>
-    </div>
-  }
-  @if (!dark) {
-    <div class="img2">
-      <h1 id="h1black">DESPORTO24</h1>
-      <div id="container">
-        <h2 id="h2black">Tens alguma ideia?</h2>
-        <label id="label1black">Tens alguma coisa a dizer-nos? Algo a melhorar ou a propor? Diz-nos!</label>
-        <p id="D24">Desporto24</p>
-        <p id="D241">Desporto24</p>
-        <p id="D243">Desporto24</p>
-        <p id="D244">Desporto24</p>
-        <p id="D245">Desporto24</p>
       </div>
-      @if (registerError) {
-        <div id="notificationError">
-          <i class="bi bi-exclamation-triangle-fill"></i>&nbsp;&nbsp;
-          {{ errorMessage }}
-          <button (click)="closeError()" type="button" type="button" id="botaoFecharError">X</button>
-        </div>
-      }
-      @if (registerSuccess) {
-        <div id="notificationSuccess">
-          <i class="bi bi-check-circle-fill"></i>&nbsp;&nbsp;
-          {{ successMessage }}
-          <button (click)="closeSuccess()" type="button" id="botaoFecharSuccess">X</button>
-        </div>
-      }
-      @if (validation1) {
-        <div id="notificationInfo">
-          <i class="bi bi-exclamation-circle-fill"></i>&nbsp;&nbsp;
-          {{ validation }}
-          <button (click)="closeValidation()" type="button" id="botaoFecharInfo">X</button>
-        </div>
-      }
-      <form #enviarOpiniao="ngForm" (ngSubmit)="saveNewIdea()">
-        <input class="input1" [(ngModel)]="ideia.name" name="name" type="text" placeholder="Nome completo" required>
-        <input class="input3" [(ngModel)]="ideia.city" name="city" type="text" placeholder="Localidade" required>
-        <p id="generoblack">Género:</p>
-        <input id="radio1" class="gender" [(ngModel)]="ideia.gender" name="gender" value="masculino" type="radio"><p id="masculinoblack">Masculino</p>
-        <input id="radio2" class="gender" [(ngModel)]="ideia.gender" name="gender" value="feminino" type="radio"><p id="femininoblack">Feminino</p>
-        <input id="assunto" [(ngModel)]="ideia.subject" name="subject" type="text" placeholder="Assunto..." required>
-        <input id="email" [(ngModel)]="ideia.email" name="email" type="text" placeholder="Email" required>
-        <textarea id="texto" [(ngModel)]="ideia.problem" name="problem" placeholder="Diz-nos o que podiamos melhorar..." rows="10" cols="108" required></textarea>
-        <button type="submit" id="botao1">
-          @if (showLoading) {
-            <i class="fas fa-spinner fa-spin"></i>
-            }&nbsp;&nbsp;
-            @if (showLoading) {
-              <span>A carregar...</span>
-            }
-            @if (!showLoading) {
-              <span>Enviar</span>
-            }
-          </button>
-        </form>
-      </div>
-    }
+    </form>
+  </div>
+</section>
