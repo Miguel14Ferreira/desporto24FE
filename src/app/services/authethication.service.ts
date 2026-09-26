@@ -70,6 +70,14 @@ export class AuthenticationService {
     );
   }
 
+  resendRegistrationConfirmation(username: string): Observable<CustomHttpResponse> {
+    return this.http.post<CustomHttpResponse>(
+      `${this.host}/api/auth/register/resend-confirmation`,
+      null,
+      { params: { username: username.trim() } }
+    );
+  }
+
   initiatePasswordReset(email: string): Observable<CustomHttpResponse> {
     return this.http.post<CustomHttpResponse>(
       `${this.host}/api/auth/reset-password/initiate`,
