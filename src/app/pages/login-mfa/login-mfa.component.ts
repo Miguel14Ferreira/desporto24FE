@@ -1,110 +1,217 @@
-import { Component } from '@angular/core';
-import { ActivatedRoute, ParamMap, Router } from '@angular/router';
-import { LoginperfilService } from 'src/app/services/loginperfil.service';
-import { Perfil } from '../model/perfil';
-import { Subscription } from 'rxjs';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { AuthenticationService } from 'src/app/services/authethication.service';
-import { Token } from '../model/token';
-import { HeaderType } from 'src/app/enum/header-type.enum';
-import { CustomHttpResponse } from '../custom-http-response';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
+import { finalize } from 'rxjs';
+
+import { AuthenticationService } from '../../services/authethication.service';
 
 @Component({
   selector: 'app-login-mfa',
   templateUrl: './login-mfa.component.html',
-  styleUrls: ['./login-mfa.component.css']
+  styleUrls: ['./login-mfa.component.css'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false
 })
-export class LoginMFAComponent {
+export class LoginMFAComponent implements OnInit, OnDestroy {
+  code = '';
+  challengeId = '';
+  expiresAt = '';
 
-  dark!:boolean;
-  username!:any;
-  token!:any;
-  perfil!:Perfil;
-  token2:Token = new Token();
-  subscriptions:Subscription[] = [];
-  showLoading!:boolean;
-  showLoading2!:boolean;
-  private readonly USERNAME: string = "username";
-  loginError:boolean =false;
-  errorMessage!:string;
-  registerSuccess:boolean =false;
-  successMessage!:any;
-  validation1!:boolean;
-  validation!:string;
-  constructor(private activatedRoute:ActivatedRoute, private loginPerfilService:LoginperfilService,private authService:AuthenticationService,private router:Router) { }
+  confirming = false;
+  resending = false;
+  errorMessage = '';
+  successMessage = '';
+  remainingSeconds: number | null = null;
+
+  private countdownTimer?: ReturnType<typeof setInterval>;
+
+  constructor(
+    private authService: AuthenticationService,
+    private router: Router
+  ) {}
 
   ngOnInit(): void {
-    this.showLoading = false;
-    var theme = localStorage.getItem('theme');
-    if (theme == 'claro'){
-      this.dark = false
-    } else {
-      this.dark = true
-    }
-    this.activatedRoute.paramMap.subscribe(
-      (params: ParamMap) => {
-        this.username = params.get(this.USERNAME);
-      }
-      )
-      this.loginPerfilService.obterUserPeloUsername1(this.username).subscribe( data => {
-        this.perfil = data;
-      }, error => console.log());
-  }
-  confirmCode(token:Token){
-    if (token.token == ""){
-      this.loginError = false;
-      this.validation1 = true;
-      this.validation = "Ainda tens espaços em branco!"
-    } else {
-    this.showLoading = true;
-    this.subscriptions.push(
-      this.authService.confirmMFA(token.token).subscribe(
-        () => {
-        this.token = localStorage.getItem('MFA')
-        this.authService.saveToken(this.token);
-        this.router.navigateByUrl('/menu');
-        this.showLoading = false;
-        },
-        (errorResponse: HttpErrorResponse) => {
-          this.errorMessage = errorResponse.error.message;
-          this.showLoading = false;
-          this.loginError = true;
-          }
-    )
-  )}
-        }
+    this.challengeId = sessionStorage.getItem('mfa-challenge-id') || '';
+    this.expiresAt = sessionStorage.getItem('mfa-expires-at') || '';
 
-close(){
-  this.loginError = false;
-}
-  sendSMS(){
-    this.showLoading2 = true;
-    this.subscriptions.push(
-      this.authService.resendMFA(this.perfil.username).subscribe(
-        (response: HttpResponse<CustomHttpResponse>) => {
-          this.showLoading2 = false;
-          this.registerSuccess = true;
-          this.successMessage = response.body?.message;
-        },
-        (errorResponse: HttpErrorResponse) => {
-          this.showLoading2 = false;
-          this.loginError = true;
-          this.errorMessage = errorResponse.error.message;
-        }
-      )
-    )
+    if (!this.challengeId) {
+      this.errorMessage = 'O desafio MFA já não está disponível. Inicia sessão novamente.';
+      return;
+    }
+
+    this.startCountdown();
   }
-  remover(){
-        this.router.navigate(['login']);
-        this.authService.logOut2();
-      }   
-closeError(){
-  this.loginError = false;
-}
-closeValidation(){
-  this.validation1 = false;
-}
-closeSuccess(){
-  this.registerSuccess = false;
-}
+
+  ngOnDestroy(): void {
+    this.stopCountdown();
+  }
+
+  confirmCode(): void {
+    const code = this.code.trim();
+
+    if (!this.challengeId) {
+      this.errorMessage = 'O desafio MFA expirou. Inicia sessão novamente.';
+      return;
+    }
+
+    if (this.isChallengeExpired()) {
+      this.errorMessage = 'O código MFA expirou. Reenvia o código para continuar.';
+      this.successMessage = '';
+      return;
+    }
+
+    if (!code) {
+      this.errorMessage = 'Introduz o código recebido por SMS.';
+      return;
+    }
+
+    if (this.confirming) {
+      return;
+    }
+
+    this.confirming = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    this.authService.confirmMfaChallenge(this.challengeId, code)
+      .pipe(finalize(() => this.confirming = false))
+      .subscribe({
+        next: response => {
+          if (!response.token) {
+            this.errorMessage = 'O servidor não devolveu um token de autenticação.';
+            return;
+          }
+
+          this.authService.saveToken(response.token);
+          const returnUrl = sessionStorage.getItem('mfa-return-url') || '/menu';
+          this.clearChallenge();
+          this.router.navigateByUrl(returnUrl);
+        },
+        error: error => {
+          this.errorMessage = this.errorFrom(
+            error,
+            'Código inválido ou expirado.'
+          );
+        }
+      });
+  }
+
+  resendCode(): void {
+    if (!this.challengeId || this.resending) {
+      return;
+    }
+
+    this.resending = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    this.authService.resendMfaChallenge(this.challengeId)
+      .pipe(finalize(() => this.resending = false))
+      .subscribe({
+        next: response => {
+          if (!response.challengeId) {
+            this.errorMessage = 'Não foi possível criar um novo desafio MFA.';
+            return;
+          }
+
+          this.challengeId = response.challengeId;
+          sessionStorage.setItem('mfa-challenge-id', response.challengeId);
+
+          if (response.expiresAt) {
+            this.expiresAt = response.expiresAt;
+            sessionStorage.setItem('mfa-expires-at', response.expiresAt);
+            this.startCountdown();
+          } else {
+            this.expiresAt = '';
+            this.remainingSeconds = null;
+            sessionStorage.removeItem('mfa-expires-at');
+            this.stopCountdown();
+          }
+
+          this.successMessage = 'Foi enviado um novo código por SMS.';
+        },
+        error: error => {
+          this.errorMessage = this.errorFrom(
+            error,
+            'Não foi possível reenviar o código.'
+          );
+        }
+      });
+  }
+
+  cancel(): void {
+    this.clearChallenge();
+    this.router.navigate(['/login']);
+  }
+
+  countdownLabel(): string {
+    if (this.remainingSeconds === null) {
+      return '';
+    }
+
+    const minutes = Math.floor(this.remainingSeconds / 60);
+    const seconds = this.remainingSeconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  }
+
+  isChallengeExpired(): boolean {
+    if (!this.expiresAt) {
+      return false;
+    }
+
+    const parsed = Date.parse(this.expiresAt);
+    return !Number.isNaN(parsed) && parsed <= Date.now();
+  }
+
+  private startCountdown(): void {
+    this.stopCountdown();
+    this.syncCountdown();
+
+    if (this.remainingSeconds !== null && this.remainingSeconds > 0) {
+      this.countdownTimer = setInterval(() => this.syncCountdown(), 1000);
+    }
+  }
+
+  private syncCountdown(): void {
+    if (!this.expiresAt) {
+      this.remainingSeconds = null;
+      return;
+    }
+
+    const parsed = Date.parse(this.expiresAt);
+    if (Number.isNaN(parsed)) {
+      this.remainingSeconds = null;
+      return;
+    }
+
+    this.remainingSeconds = Math.max(
+      0,
+      Math.ceil((parsed - Date.now()) / 1000)
+    );
+
+    if (this.remainingSeconds === 0) {
+      this.stopCountdown();
+    }
+  }
+
+  private stopCountdown(): void {
+    if (this.countdownTimer) {
+      clearInterval(this.countdownTimer);
+      this.countdownTimer = undefined;
+    }
+  }
+
+  private clearChallenge(): void {
+    this.stopCountdown();
+    sessionStorage.removeItem('mfa-challenge-id');
+    sessionStorage.removeItem('mfa-expires-at');
+    sessionStorage.removeItem('mfa-return-url');
+  }
+
+  private errorFrom(error: HttpErrorResponse, fallback: string): string {
+    const apiMessage = error.error?.message;
+    return typeof apiMessage === 'string' && apiMessage.trim()
+      ? apiMessage
+      : fallback;
+  }
 }

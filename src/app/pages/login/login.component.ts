@@ -1,94 +1,104 @@
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { Router } from '@angular/router';
-import { Subscription } from 'rxjs';
-import { HeaderType } from 'src/app/enum/header-type.enum';
-import { AuthenticationService } from 'src/app/services/authethication.service';
-import { Perfil } from '../model/perfil';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { finalize } from 'rxjs';
+
+import { AuthenticationService } from '../../services/authethication.service';
 
 @Component({
   selector: 'app-login',
   templateUrl: './login.component.html',
-  styleUrls: ['./login.component.css']
+  styleUrls: ['./login.component.css'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false
 })
-export class LoginComponent implements OnInit, OnDestroy {
-  perfil = new Perfil();
-  loggedPerfil!:Perfil;
-  username!: string;
-  password!: string;
-  visible:boolean = true;
-  changetype:boolean = true;
-  showLoading!: boolean;
-  token: any;
-  refreshtoken: any;
-  response: any = null;
-  dark!:boolean;
-  showMFA: boolean = false;
-  subscriptions: Subscription[] = [];
-  loginError:boolean =false;
-  errorMessage!:string;
-  validation1!:boolean;
-  validation!:string;
-  constructor(private router:Router, private authenticationService:AuthenticationService) { }
-  ngOnDestroy(): void {
-    this.subscriptions.forEach(sub => sub.unsubscribe());
-  }
+export class LoginComponent implements OnInit {
+  username = '';
+  password = '';
+  showPassword = false;
+
+  loading = false;
+  errorMessage = '';
+  successMessage = '';
+
+  private returnUrl = '/menu';
+
+  constructor(
+    private router: Router,
+    private route: ActivatedRoute,
+    private authenticationService: AuthenticationService
+  ) {}
 
   ngOnInit(): void {
-    this.authenticationService.isLoggedIn()
-    var theme = localStorage.getItem('theme');
-    if (theme == 'claro'){
-      this.dark = false
-    } else {
-      this.dark = true
+    this.returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') || '/menu';
+
+    this.successMessage = sessionStorage.getItem('auth-success-message') || '';
+    sessionStorage.removeItem('auth-success-message');
+
+    if (this.authenticationService.hasValidToken()) {
+      this.router.navigateByUrl(this.returnUrl);
     }
   }
-  minhaImagem = "assets/Sports1.jpg";
-  minhaImagem2 = "assets/olho1.png";
-  minhaImagem3 = "assets/olho2.png";
 
- 
-onLogin(perfil: Perfil): void {
-  if (perfil.username == "" || perfil.password == ""){
-    this.validation1 = true;
-    this.loginError = false;
-    this.validation = `Ainda tens espaços em branco`;
-  } else {
-  this.showLoading = true;
-  this.subscriptions.push(
-    this.authenticationService.loginPerfil(perfil).subscribe(
-      (response: HttpResponse<Perfil>) => {
-        if (response.body?.mfa == true){
-          this.router.navigateByUrl('/login/MFAauthentication/'+perfil.username);
-          this.showLoading = false;
-          this.token = response.headers.get(HeaderType.JWT_TOKEN);
-          localStorage.setItem('MFA',this.token);
-        } else {
-        this.token = response.headers.get(HeaderType.JWT_TOKEN);
-        this.authenticationService.saveToken(this.token);
-        this.router.navigateByUrl('/menu');
-        this.showLoading = false;
-      }
-    },
-      (errorResponse: HttpErrorResponse) => {
-          this.errorMessage = errorResponse.error.message;
-          this.showLoading = false;
-          this.loginError = true;
-          this.validation1 = false;
+  onLogin(): void {
+    const username = this.username.trim();
+
+    if (!username || !this.password) {
+      this.errorMessage = 'Preenche o nome de utilizador e a palavra-passe.';
+      return;
+    }
+
+    if (this.loading) {
+      return;
+    }
+
+    this.loading = true;
+    this.errorMessage = '';
+
+    this.authenticationService.login(username, this.password)
+      .pipe(finalize(() => this.loading = false))
+      .subscribe({
+        next: response => {
+          if (response.mfaRequired) {
+            if (!response.challengeId) {
+              this.errorMessage = 'O servidor não devolveu um desafio MFA válido.';
+              return;
+            }
+
+            sessionStorage.setItem('mfa-challenge-id', response.challengeId);
+            sessionStorage.setItem('mfa-return-url', this.returnUrl);
+
+            if (response.expiresAt) {
+              sessionStorage.setItem('mfa-expires-at', response.expiresAt);
+            } else {
+              sessionStorage.removeItem('mfa-expires-at');
+            }
+
+            this.router.navigate(['/login/MFAauthentication', username]);
+            return;
           }
-    )
-  )}
-}
 
-closeError(){
-  this.loginError = false;
-}
-closeValidation(){
-  this.validation1 = false;
-}
-  
-    viewPass(){
-      this.visible = !this.visible;
-      this.changetype = !this.changetype;
+          if (!response.token) {
+            this.errorMessage = 'O servidor não devolveu um token de autenticação.';
+            return;
+          }
+
+          this.authenticationService.saveToken(response.token);
+          this.router.navigateByUrl(this.returnUrl);
+        },
+        error: error => {
+          this.errorMessage = this.errorFrom(
+            error,
+            'Não foi possível iniciar sessão. Confirma as credenciais.'
+          );
+        }
+      });
+  }
+
+  private errorFrom(error: HttpErrorResponse, fallback: string): string {
+    const apiMessage = error.error?.message;
+    return typeof apiMessage === 'string' && apiMessage.trim()
+      ? apiMessage
+      : fallback;
   }
 }

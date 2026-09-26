@@ -1,22 +1,26 @@
 services:
   desporto24fe:
     container_name: desporto24fecontainer
-    build: .
-    image: desporto24fe:v1
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: desporto24fe:v2
+    restart: unless-stopped
     ports:
-      - 80:80
-    expose:
-      - 80
+      - "80:80"
+    environment:
+      BACKEND_UPSTREAM: http://desporto24be:8080
     depends_on:
       - desporto24be
     networks:
       - internalnet
-  
+
   desporto24be:
-    image: desporto24be:v1
+    image: desporto24be:v2
     container_name: desporto24becontainer
-    ports:
-      - 8080:8080
+    restart: unless-stopped
+    expose:
+      - "8080"
     networks:
       - internalnet
 

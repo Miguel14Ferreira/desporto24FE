@@ -8,9 +8,8 @@ import { HomeComponent } from './pages/home/home.component';
 import { EventsComponent } from './pages/events/events.component';
 import { LoginComponent } from './pages/login/login.component';
 import { MenuComponent } from './pages/menu/menu.component';
-import { ClasseventsComponent } from './pages/classevents/classevents.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi, withXhr } from '@angular/common/http';
 import { CreateaccountComponent } from './pages/createaccount/createaccount.component';
 import { Events2Component } from './pages/events2/events2.component';
 import { AlterardadosComponent } from './pages/alterardados/alterardados.component';
@@ -18,7 +17,6 @@ import { ChangepasswordComponent } from './pages/changepassword/changepassword.c
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ContactComponent } from './pages/contact/contact.component';
 import { ForgotpComponent } from './pages/forgotp/forgotp.component';
-import { LoginperfilService } from './services/loginperfil.service';
 import { AuthInterceptor } from './auth.interceptor';
 import { AuthenticationGuard } from './guard/authentication.guard';
 import { PerfisComponent } from './pages/perfis/perfis.component';
@@ -26,50 +24,47 @@ import { AuthenticationService } from './services/authethication.service';
 import { AboutComponent } from './pages/about/about.component';
 import { Forgotp2Component } from './pages/forgotp2/forgotp2.component';
 import { ConfirmTokenRegistrationComponent } from './pages/confirm-token-registration/confirm-token-registration.component';
-import { ConfirmEmergencyTokenComponent } from './pages/confirm-emergency-token/confirm-emergency-token.component';
 import { PerfilDataComponent } from './pages/perfil-data/perfil-data.component';
 import { LoginMFAComponent } from './pages/login-mfa/login-mfa.component';
-import { ConfirmationNewFriendComponent } from './pages/confirmation-new-friend/confirmation-new-friend.component';
-import { ResetPwEmergencyComponent } from './pages/reset-pw-emergency/reset-pw-emergency.component';
-import { BlockaccComponent } from './pages/blockacc/blockacc.component';
+import { SessionDetailsComponent } from './pages/session-details/session-details.component';
+import { MySessionsComponent } from './pages/my-sessions/my-sessions.component';
+import { NotificationsComponent } from './pages/notifications/notifications.component';
+import { FriendsComponent } from './pages/friends/friends.component';
+import { DirectChatComponent } from './pages/direct-chat/direct-chat.component';
+import { AdminDisputesComponent } from './pages/admin-disputes/admin-disputes.component';
+import { NotFoundComponent } from './pages/not-found/not-found.component';
 
-@NgModule({
-  declarations: [
-    AppComponent,
-    AboutComponent,
-    NavbarComponent,
-    FooterComponent,
-    HomeComponent,
-    EventsComponent,
-    LoginComponent,
-    MenuComponent,
-    LoginMFAComponent,
-    LoginComponent,
-    ClasseventsComponent,
-    CreateaccountComponent,
-    PerfisComponent,
-    Events2Component,
-    AlterardadosComponent,
-    ChangepasswordComponent,
-    ContactComponent,
-    ForgotpComponent,
-    PerfilDataComponent,
-    Forgotp2Component,
-    ConfirmTokenRegistrationComponent,
-    ConfirmEmergencyTokenComponent,
-    ConfirmationNewFriendComponent,
-    ResetPwEmergencyComponent,
-    BlockaccComponent
-  ],
-  imports: [
-    BrowserModule,
-    AppRoutingModule,
-    FormsModule,
-    HttpClientModule,
-    ReactiveFormsModule,
-    BrowserAnimationsModule,
-  ],
-  providers: [AuthenticationGuard, AuthenticationService, LoginperfilService, {provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true}],
-  bootstrap: [AppComponent]
-})
+@NgModule({ declarations: [
+        AppComponent,
+        AboutComponent,
+        NavbarComponent,
+        FooterComponent,
+        HomeComponent,
+        EventsComponent,
+        LoginComponent,
+        MenuComponent,
+        LoginMFAComponent,
+        CreateaccountComponent,
+        PerfisComponent,
+        Events2Component,
+        AlterardadosComponent,
+        ChangepasswordComponent,
+        ContactComponent,
+        ForgotpComponent,
+        PerfilDataComponent,
+        Forgotp2Component,
+        ConfirmTokenRegistrationComponent,
+        SessionDetailsComponent,
+        MySessionsComponent,
+        NotificationsComponent,
+        FriendsComponent,
+        DirectChatComponent,
+        AdminDisputesComponent,
+        NotFoundComponent
+    ],
+    bootstrap: [AppComponent], imports: [BrowserModule,
+        AppRoutingModule,
+        FormsModule,
+        ReactiveFormsModule,
+        BrowserAnimationsModule], providers: [AuthenticationGuard, AuthenticationService, { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }, provideHttpClient(withXhr(), withInterceptorsFromDi())] })
 export class AppModule { }

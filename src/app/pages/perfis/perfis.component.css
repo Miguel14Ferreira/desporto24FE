@@ -1,1577 +1,276 @@
-body{
-    padding: 0;
-    margin: 0;
+:host {
+  display: block;
 }
-.img{
-    animation: transition 0.75s;
-    height: 100vh;
-    background-color: black;     
-    -webkit-background-size: cover;
-    background-size: cover;
-    background-position: center center;
+
+.community-page {
+  min-height: 100vh;
+  padding: 7rem 1.25rem 4rem;
+  background: linear-gradient(145deg, #07111f, #12334a);
+  color: #f8fafc;
 }
-.img2{
-    animation: transition 0.75s;
-    height: 100vh;
-    background-color: white;     
-    -webkit-background-size: cover;
-    background-size: cover;
-    background-position: center center;
+
+.community-shell {
+  width: min(1050px, 100%);
+  margin: 0 auto;
 }
-#notificationSuccess{
-    color: white;
-    background-color: rgb(100, 167, 0);
-    font-size: 15px;
-    position: absolute;
-    display: flex;
-  justify-content: center;
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.eyebrow {
+  margin: 0 0 .4rem;
+  color: #7dd3fc;
+  font-size: .8rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+}
+
+h1,
+h2 {
+  margin: 0;
+}
+
+h1 {
+  font-size: clamp(2.1rem, 5vw, 3.5rem);
+}
+
+.subtitle {
+  margin: .7rem 0 0;
+  color: #cbd5e1;
+}
+
+.header-actions,
+.detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .7rem;
+}
+
+.secondary-action,
+.primary-action,
+.search-bar button {
+  border-radius: .8rem;
+  padding: .8rem 1rem;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.secondary-action {
+  border: 1px solid rgba(255,255,255,.16);
+  background: rgba(255,255,255,.07);
+  color: #f8fafc;
+}
+
+.primary-action,
+.search-bar button {
+  border: 0;
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.primary-action:disabled,
+.search-bar button:disabled {
+  opacity: .6;
+  cursor: wait;
+}
+
+.search-bar {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: .8rem;
+  align-items: end;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 1rem;
+  background: rgba(15,23,42,.8);
+}
+
+.search-bar label {
+  display: grid;
+  gap: .4rem;
+}
+
+.search-bar label span {
+  color: #cbd5e1;
+  font-size: .8rem;
+  font-weight: 800;
+}
+
+.search-bar input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: .75rem;
+  padding: .8rem .9rem;
+  background: rgba(255,255,255,.07);
+  color: #fff;
+  outline: none;
+}
+
+.feedback,
+.state-card {
+  margin-bottom: 1rem;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: .9rem;
+  padding: .9rem 1rem;
+  background: rgba(15,23,42,.78);
+}
+
+.success-feedback {
+  color: #bbf7d0;
+  border-color: rgba(74,222,128,.3);
+}
+
+.error-feedback {
+  color: #fecaca;
+  border-color: rgba(248,113,113,.4);
+}
+
+.profile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: .9rem;
+}
+
+.profile-card {
+  display: flex;
   align-items: center;
-  box-shadow: 0 2px 10px 10px rgba(#000, 0.05);
-  left: 50%;
-  top: 10%;
-  width: 1000px;
-  height: 50px;
-  transform: translate(-50%, -50%);
-  animation: normal 1s fadeIn;
-  border-radius: 5px;
+  gap: .9rem;
+  width: 100%;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: .9rem;
+  padding: .9rem;
+  background: rgba(15,23,42,.78);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
 }
-#botaoFecharSuccess{
-    color: white;
-transform: translate(-50%, -50%);
-position: absolute;
-left: 95%;
-  top: 50%;
-border-style: none;
-    background-color: rgb(100, 167, 0);
-}
-#notificationInfo{
-    color: white;
-    background-color: rgb(0, 114, 167);
-    font-size: 15px;
-    position: absolute;
-    display: flex;
-  justify-content: center;
-  align-items: center;
-  box-shadow: 0 2px 10px 10px rgba(#000, 0.05);
-  left: 50%;
-  top: 10%;
-  width: 500px;
-  height: 50px;
-  transform: translate(-50%, -50%);
-  animation-name: bounce;
-  animation-duration: .5s;
-  border-radius: 5px;
-}
-#botaoFecharInfo{
-    color: white;
-transform: translate(-50%, -50%);
-position: absolute;
-left: 95%;
-  top: 50%;
-border-style: none;
-background-color: rgb(0, 114, 167);
-}
-#notificationError{
-    color: white;
-    background-color: red;
-    font-size: 15px;
-    position: absolute;
-    display: flex;
-  justify-content: center;
-  align-items: center;
-  box-shadow: 0 2px 10px 10px rgba(#000, 0.05);
-    left: 50%;
-    top: 10%;
-    width: 1000px;
-    height: 50px;
-    transform: translate(-50%, -50%);
-    animation-name: bounce;
-  animation-duration: .5s;
-  border-radius: 5px;
-}
-@keyframes bounce {
-    0% {
-      timing-function: ease-in;
-      opacity: 0;
-      position: absolute;
-      left: 50%;
-    top: 10%;
-    transform: translate(-50%, -50%);
-    }
-    25%{
-        opacity: 1;
-        position: absolute;
-      left: 50%;
-    top: 10%;
-    transform: translate(-50%, -50%);
-    }
-    37% {
-      timing-function: ease-out;
-      position: absolute;
-      left: 50%;
-    top: 10%;
-    transform: translate(-45%, -50%);
-    }
-    55% {
-      timing-function: ease-in;
-      position: absolute;
-      left: 50%;
-    top: 10%;
-    transform: translate(-55%, -50%);
-    }
-    73% {
-      timing-function: ease-out;
-      position: absolute;
-      left: 50%;
-    top: 10%;
-    transform: translate(-46%, -50%);
-    }
-    82% {
-      timing-function: ease-in;
-      position: absolute;
-      left: 50%;
-    top: 10%;
-    transform: translate(-54%, -50%);
-    }
-    91% {
-      timing-function: ease-out;
-      position: absolute;
-      left: 50%;
-    top: 10%;
-    transform: translate(-48%, -50%);
-    }
-    96% {
-      timing-function: ease-in;
-      position: absolute;
-      left: 50%;
-    top: 10%;
-    transform: translate(-52%, -50%);
-    }
-    100% {
-      timing-function: ease-in;
-      position: absolute;
-      left: 50%;
-    top: 10%;
-    transform: translate(-50%, -50%);
 
-    }
+.profile-card:hover {
+  border-color: rgba(125,211,252,.45);
+  background: rgba(30,41,59,.9);
 }
-#botaoFecharError{
-    color: white;
-transform: translate(-50%, -50%);
-position: absolute;
-left: 95%;
-  top: 50%;
-border-style: none;
-    background-color: red;
-}
-@keyframes slide-right {
-    from {
-        transform: translate(150%, -50%);
-    }
 
-    to {
-        transform: translate(-150%, -50%);
-    }
- }
- @keyframes slide-left {
-    from {
-        transform: translate(-70%, -50%);
-    }
-
-    to {
-        transform: translate(150%, -50%);
-    }
- }
-h1{
-    color: white;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 20%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-}
-#container{
-    font-size: 15px;
-    height: 80vh;
-    width: 200vh;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    background-color: white;
-    position: absolute;
-        top: 70%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-    overflow: hidden;
-}
-#container2{
-    font-size: 15px;
-    height: 80vh;
-    width: 200vh;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    background-color: black;
-    position: absolute;
-        top: 70%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-    overflow: hidden;
-}
-#D24{
-    color: black;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 20%;
-        left: 70%;
-        opacity: 20%;
-        animation: infinite 100s slide-right;
-}
-#D241{
-    color: black;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 40%;
-        left: 10%;
-        opacity: 20%;
-        animation: infinite 100s slide-left;
-}
-#D243{
-    color: black;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 60%;
-        left: -30%;
-        opacity: 20%;
-        animation: infinite 100s slide-right;
-}
-#D244{
-    color: black;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 100%;
-        left: 8%;
-        opacity: 20%;
-        animation: infinite 100s slide-right;
-}
-#D245{
-    color: black;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 80%;
-        left: 50%;
-        opacity: 20%;
-        animation: infinite 100s slide-left;
-}
-#D24a{
-    color: white;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 20%;
-        left: 70%;
-        opacity: 20%;
-        animation: infinite 100s slide-right;
-}
-#D241a{
-    color: white;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 40%;
-        left: 10%;
-        opacity: 20%;
-        animation: infinite 100s slide-left;
-}
-#D243a{
-    color: white;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 60%;
-        left: -30%;
-        opacity: 20%;
-        animation: infinite 100s slide-right;
-}
-#D244a{
-    color: white;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 100%;
-        left: 8%;
-        opacity: 20%;
-        animation: infinite 100s slide-right;
-}
-#D245a{
-    color: white;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 80%;
-        left: 50%;
-        opacity: 20%;
-        animation: infinite 100s slide-left;
-}
-h2{
-    color: white;
-    font-size: 30px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    position: absolute;
-        top: 30%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-}
-#input1{
-    font-size: 15px;
-    height: 25px;
-    width: 400px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-        top: 40%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-    border-radius: 10px;
-}
-@keyframes slide-right {
-    from {
-        transform: translate(150%, -50%);
-    }
-
-    to {
-        transform: translate(-150%, -50%);
-    }
- }
- @keyframes slide-left {
-    from {
-        transform: translate(-70%, -50%);
-    }
-
-    to {
-        transform: translate(150%, -50%);
-    }
- }
- #h1white{
-    color: white;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 20%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-}
-#h1black{
-    color: black;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 20%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-}
-#D24modal{
-    color: white;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 20%;
-        left: 0%;
-        transform: translate(-50%, -50%);
-        opacity: 20%;
-        transform: rotate(45deg);
-}
-#D241modal{
-    color: white;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 20%;
-        left: -20%;
-        transform: translate(-50%, -50%);
-        opacity: 20%;
-        transform: rotate(45deg);
-}
-#D242modal{
-    color: white;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 20%;
-        left: -40%;
-        transform: translate(-50%, -50%);
-        opacity: 20%;
-        transform: rotate(45deg);
-}
-#D243modal{
-    color: white;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 20%;
-        left: -60%;
-        transform: translate(-50%, -50%);
-        opacity: 20%;
-        transform: rotate(45deg);
-}
-#D244modal{
-    color: white;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 20%;
-        left: -80%;
-        transform: translate(-50%, -50%);
-        opacity: 20%;
-        transform: rotate(45deg);
-}
-#D245modal{
-    color: white;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 20%;
-        left: -100%;
-        transform: translate(-50%, -50%);
-        opacity: 20%;
-        transform: rotate(45deg);
-}
-#D246modal{
-    color: white;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 20%;
-        left: 20%;
-        transform: translate(-50%, -50%);
-        opacity: 20%;
-        transform: rotate(45deg);
-}
-#D247modal{
-    color: white;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 20%;
-        left: 40%;
-        transform: translate(-50%, -50%);
-        opacity: 20%;
-        transform: rotate(45deg);
-}
-#D248modal{
-    color: white;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 20%;
-        left: 60%;
-        transform: translate(-50%, -50%);
-        opacity: 20%;
-        transform: rotate(45deg);
-}
-#botao1{
-    color: black;
-    background-color: white;
-    font-size: 20px;
-    width: 200px;
-    margin: 0;
-    padding: 1px;
-    text-align: center;
-    font-family: 'Arial';
-    font-weight: bold;
-    position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-    border-radius: 10px;
-}
-#botao1:hover{
-    background-color: lightblue;
-    color: white;
-    transition: background-color 0.5s;
-}
-#setadir{
-    text-decoration: none;
-    color: black;
-    background-color: white;
-    font-size: 20px;
-    width: 25px;
-    margin: 0;
-    padding: 1px;
-    text-align: center;
-    position: absolute;
-        top: 83%;
-        left: 95%;
-        transform: translate(-50%, -50%);
-    border-radius: 10px;
-}
-#setadir:hover{
-    background-color: lightblue;
-    color: white;
-    transition: background-color 0.5s;
-}
-#setaesq{
-    text-decoration: none;
-    color: black;
-    background-color: white;
-    font-size: 20px;
-    width: 25px;
-    margin: 0;
-    padding: 1px;
-    text-align: center;
-    font-family: 'Arial';
-    font-weight: bold;
-    position: absolute;
-        top: 83%;
-        left: 90%;
-        transform: translate(-50%, -50%);
-    border-radius: 10px;
-}
-#setaesq:hover{
-    background-color: lightblue;
-    color: white;
-    transition: background-color 0.5s;
-}
-#botao2{
-    color: black;
-    background-color: white;
-    font-size: 20px;
-    width: 300px;
-    margin: 0;
-    padding: 1px;
-    text-align: center;
-    font-family: 'Arial';
-    font-weight: bold;
-    position: absolute;
-top: 100%;
-left: 50%;
-transform: translate(-50%, -50%);
-    border-radius: 10px;
-}
-#botao2:hover{
-    background-color: lightblue;
-    color: white;
-    transition: background-color 0.5s;
-}
-#tabela1{
-    font-size: 15px;
-    height: 25px;
-    width: 20%;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    background-color: white;
-    position: absolute;
-        top: 70%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-    border-radius: 10px;
-    border-collapse: collapse;
-    border-spacing: 0;
-    overflow: auto;
-}
-#tabela2:hover{
-    background-color: grey;
-    color: white;
-    transition: background-color 0.5s;
-    border-radius: 10px;
-}
-@keyframes a{
-    0%{
-      height: 0px;
-    }
-    100%{
-      height:400px;
-    }
-  }
-#viewPerfilModal{
-    background-color: rgb(1, 1, 61);
-    width: 500px;
-    height: 400px;
-    position: absolute;
-        top: 60%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        border-style: solid;
-        border-width: 5px;
-        padding: 50px;
-        border-radius: 5%;
-        white-space: nowrap;
+.avatar {
+  display: grid;
+  width: 58px;
+  height: 58px;
+  flex: 0 0 58px;
+  place-items: center;
   overflow: hidden;
-  animation: a 1s;
-    }
-    td{
-        cursor:pointer;
-    }
-    .image-preview{
-        position: absolute;
-        width: 170px;
-        height: 170px;
-        top: 30%;
-        left: 75%;
-        transform: translate(-50%, -50%);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #cccccc;
-    }
-    .image-preview__image{
-        width: 100%;
-        height: 100%;
-        border-radius: 5%;
-    }
-#username{
-    color: white;
-    font-size: 30px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    position: absolute;
-        top: 10%;
-        left: 30%;
-        transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: rgba(125,211,252,.14);
+  color: #bae6fd;
+  font-weight: 900;
 }
-#genero{
-    color: white;
-    font-weight: bold;
-    font-size: 15px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    position: absolute;
-        top: 25%;
-        left: 10%;
-        transform: translate(-50%, -50%);
-}
-#genero2{
-    color: white;
-    font-size: 15px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    position: absolute;
-        top: 30%;
-        left: 15%;
-        transform: translate(-50%, -50%);
-}
-#dataNascimento{
-    color: white;
-    font-weight: bold;
-    font-size: 15px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    position: absolute;
-        top: 35%;
-        left: 19%;
-        transform: translate(-50%, -50%);
-}
-#dataNascimento2{
-    color: white;
-    font-size: 15px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    position: absolute;
-        top: 40%;
-        left: 15%;
-        transform: translate(-50%, -50%);
-}
-#paisNascimento{
-    color: white;
-    font-size: 15px;
-    margin: 0;
-    font-weight: bold;
-    padding: 0;
-    text-align: center;
-    position: absolute;
-        top: 45%;
-        left: 19%;
-        transform: translate(-50%, -50%);
-}
-#paisNascimento2{
-    color: white;
-    font-size: 15px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    position: absolute;
-        top: 50%;
-        left: 14%;
-        transform: translate(-50%, -50%);
-}
-#membroDesde{
-    color: white;
-    font-size: 10px;
-    margin: 0;
-    font-weight: bold;
-    padding: 0;
-    text-align: center;
-    position: absolute;
-        top: 90%;
-        left: 10%;
-        transform: translate(-50%, -50%);
-}
-ul{
-    list-style-type: none;
-}
-#membroDesde2{
-    color: white;
-    font-size: 10px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    position: absolute;
-        top: 90%;
-        left: 35%;
-        transform: translate(-50%, -50%);
-}
-#ultimoLogin{
-    color: white;
-    font-size: 10px;
-    margin: 0;
-    font-weight: bold;
-    padding: 0;
-    text-align: center;
-    position: absolute;
-        top: 95%;
-        left: 9%;
-        transform: translate(-50%, -50%);
-}
-#ultimoLogin2{
-    color: white;
-    font-size: 10px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    position: absolute;
-        top: 95%;
-        left: 35%;
-        transform: translate(-50%, -50%);
-}
-#localidade{
-    color: white;
-    font-size: 15px;
-    font-weight: bold;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    position: absolute;
-        top: 55%;
-        left: 12.5%;
-        transform: translate(-50%, -50%);
-}
-#localidade2{
-    color: white;
-    font-size: 15px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    position: absolute;
-        top: 60%;
-        left: 19%;
-        transform: translate(-50%, -50%);
-}
-#desportosFavoritos{
-    color: white;
-    font-size: 15px;
-    font-weight: bold;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    position: absolute;
-        top: 65%;
-        left: 19%;
-        transform: translate(-50%, -50%);
-}
-#desportosFavoritos2{
-    color: white;
-    font-size: 15px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    position: absolute;
-        top: 70%;
-        left: 22.5%;
-        transform: translate(-50%, -50%);
-}
-#estadoDaConta{
-    color: white;
-    font-size: 10px;
-    font-weight: bold;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    position: absolute;
-        top: 85%;
-        left: 10.5%;
-        transform: translate(-50%, -50%);
-}
-#estadoDaConta2{
-    color: white;
-    font-size: 10px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    position: absolute;
-        top: 85%;
-        left: 25.5%;
-        transform: translate(-50%, -50%);
-}       
-#botaoFechar{
-    text-decoration: none;
-    color: black;
-    background-color: white;
-    font-size: 20px;
-    width: 30px;
-    margin: 0;
-    padding: 1px;
-    text-align: center;
-    font-family: 'Arial';
-    font-weight: bold;
-    position: absolute;
-top: 7%;
-left: 5%;
-transform: translate(-50%, -50%);
-    border-radius: 10px;
-}
-#botaoFechar:hover{
-    background-color: lightblue;
-    color: white;
-    transition: background-color 0.5s;
-}
-#botaoAdicionarAmigo{
-    text-decoration: none;
-    color: black;
-    background-color: white;
-    font-size: 20px;
-    width: 200px;
-    height: 75px;
-    margin: 0;
-    padding: 1px;
-    text-align: center;
-    font-family: 'Arial';
-    font-weight: bold;
-    position: absolute;
-top: 75%;
-left: 77.5%;
-transform: translate(-50%, -50%);
-    border-radius: 10px;
-}
-#botaoAdicionarAmigo:hover{
-    background-color: lightblue;
-    color: white;
-    transition: background-color 0.5s;
-}
-#D240logOut{
-    color: white;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 20%;
-        left: 30%;
-        transform: translate(-50%, -50%);
-        opacity: 20%;
-        transform: rotate(45deg);
-}
-#D239logOut{
-    color: white;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 70%;
-        left: -15%;
-        transform: translate(-50%, -50%);
-        opacity: 20%;
-        transform: rotate(45deg);
-}
-#D238logOut{
-    color: white;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 70%;
-        left: -40%;
-        transform: translate(-50%, -50%);
-        opacity: 20%;
-        transform: rotate(45deg);
-}
-#D237logOut{
-    color: white;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 70%;
-        left: -65%;
-        transform: translate(-50%, -50%);
-        opacity: 20%;
-        transform: rotate(45deg);
-}
-#D236logOut{
-    color: white;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 70%;
-        left: 32%;
-        transform: translate(-50%, -50%);
-        opacity: 20%;
-        transform: rotate(45deg);
-}
-#D235logOut{
-    color: white;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 70%;
-        left: 10%;
-        transform: translate(-50%, -50%);
-        opacity: 20%;
-        transform: rotate(45deg);
-}
-#h4black{
-                color: white;
-                font-size: 20px;
-                margin: 0;
-                padding: 0;
-                text-align: center;
-                position: absolute;
-                font-weight: bold;
-                    top: 30%;
-                    left: 50%;
-                    transform: translate(-50%, -50%);
-                }
-#botao6{
-    text-decoration: none;
-            color: black;
-            background-color: white;
-            font-size: 20px;
-            width: 100px;
-            margin: 0;
-            padding: 1px;
-            text-align: center;
-            font-family: 'Arial';
-            font-weight: bold;
-            position: absolute;
-        top: 80%;
-        left: 30%;
-        transform: translate(-50%, -50%);
-            border-radius: 10px;
-}
-#botao7:hover{
-    background-color: lightblue;
-    color: white;
-    transition: background-color 0.5s;
-        cursor:pointer;
-}
-#botao7{
-    text-decoration: none;
-            color: black;
-            background-color: white;
-            font-size: 20px;
-            width: 100px;
-            margin: 0;
-            padding: 1px;
-            text-align: center;
-            font-family: 'Arial';
-            font-weight: bold;
-            position: absolute;
-            top: 80%;
-            left: 70%;
-        transform: translate(-50%, -50%);
-            border-radius: 10px;
-}
-#botao6:hover{
-    background-color: lightblue;
-    color: white;
-    transition: background-color 0.5s;
-        cursor:pointer;
-}
-#content2{
-    font-size: 15px;
-    height: 200px;
-    width: 400px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    background-color: white;
-    position: absolute;
-    z-index: 1;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-    border-radius: 10px;
-    border-style: solid;
-    border-width: 5px;
-    background-color: grey;
-    overflow: hidden;
-    animation: b 1s;
-}
-#botaoChat{
-    text-decoration: none;
-    color: black;
-    background-color: white;
-    font-size: 20px;
-    width: 200px;
-    margin: 0;
-    padding: 1px;
-    text-align: center;
-    font-family: 'Arial';
-    font-weight: bold;
-    position: absolute;
-top: 92.5%;
-left: 77.5%;
-transform: translate(-50%, -50%);
-    border-radius: 10px;
-}
-#botaoChat:hover{
-    background-color: lightblue;
-    color: white;
-    transition: background-color 0.5s;
-}
-h1{
-    color: white;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-top: 20%;
-left: 50%;
-transform: translate(-50%, -50%);
-}
-h2 {
-    color: white;
-    font-size: 40px;
-    margin: 0;
-    width: max-content;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-        top: 35%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-}
-#input2{
-    font-size: 20px;
-    height: 30px;
-    width: 300px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-        top: 60%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-    border-radius: 10px;
-}
-.email{
-    font-size: 20px;
-    height: 30px;
-    width: 300px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-    top: 70%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    border-radius: 10px;
-}
-.botao2{
-    text-decoration: none;
-    color: black;
-    background-color: white;
-    font-size: 20px;
-    width: 200px;
-    margin: 0;
-    padding: 1px;
-    text-align: center;
-    font-family: 'Arial';
-    font-weight: bold;
-    position: absolute;
-    top: 80%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    border-radius: 10px;
-}
-.botao2:hover{
-    background-color: lightblue;
-    color: white;
-}
-.eyeicon{
-    color: white;
-    position: absolute;
-    top: 50%;
-    left: 65%;
-    transform: translate(-50%, -50%);
-}
-@keyframes transition {
-    from {
-        opacity: 0;
-        transform: rotateX(-10deg);
-    }
-    to{
-        opacity: 1;
-        transform: rotateX(0);
-    }
-}
-@media screen and (max-width: 1024px) { /* Specific to this particular image */
-    .img {
-      left: 50%;
-      margin-left: -512px;   /* 50% */
-    }
-}
-h1{
-    color: white;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-top: 20%;
-left: 50%;
-transform: translate(-50%, -50%);
-}
-h2 {
-    color: white;
-    font-size: 40px;
-    margin: 0;
-    width: max-content;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-        top: 35%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-}
-.botao2{
-    text-decoration: none;
-    color: black;
-    background-color: white;
-    font-size: 20px;
-    width: 200px;
-    margin: 0;
-    padding: 1px;
-    text-align: center;
-    font-family: 'Arial';
-    font-weight: bold;
-    position: absolute;
-        top:80%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-    border-radius: 10px;
-}
-.botao2:hover{
-    background-color: lightblue;
-    color: white;
-}
-@keyframes transition {
-    from {
-        opacity: 0;
-        transform: rotateX(-10deg);
-    }
-    to{
-        opacity: 1;
-        transform: rotateX(0);
-    }
-}
-@media screen and (max-width: 1024px) { /* Specific to this particular image */
-    .img {
-      left: 50%;
-      margin-left: -512px;   /* 50% */
-    }
-}
-.img{
-    animation: transition 0.75s;
-    height: 100vh;
-    background-color: black;     
-    -webkit-background-size: cover;
-    background-size: cover;
-    background-position: center center;
-}
-.img2{
-    animation: transition 0.75s;
-    height: 100vh;
-    background-color: white;     
-    -webkit-background-size: cover;
-    background-size: cover;
-    background-position: center center;
-}
-#h2white{
-    width: max-content;
-    color: white;
-    font-size: 30px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-        top: 30%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-}
-#h2black{
-    width: max-content;
-    color: black;
-    font-size: 30px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-        top: 30%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-}
-#h3white{
-    width: max-content;
-    color: white;
-    font-size: 60px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-        top: 75%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-}
-#h3black{
-    width: max-content;
-    color: black;
-    font-size: 60px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-        top: 75%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-}
-#label1white{
-    color: white;
-    width: 1000px;
-    height: max-content;
-    font-size: 20px;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-        top: 40%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-}
-#label2white{
-    color: white;
-    height: max-content;
-    font-size: 20px;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-        top: 95%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-}
-#label1black{
-    color: black;
-    width: 1000px;
-    height: max-content;
-    font-size: 20px;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-    top: 40%;
-    left: 50%;
-        transform: translate(-50%, -50%);
-}
-#label2black{
-    color: black;
-    height: max-content;
-    font-size: 20px;
-    text-align: center;
-    font-family: 'Arial';
-    position: absolute;
-        top: 95%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-}
-@keyframes transition {
-    from {
-        opacity: 0;
-        transform: rotateX(-10deg);
-    }
-    to{
-        opacity: 1;
-        transform: rotateX(0);
-    }
-}
-@media screen and (max-width: 1024px) { /* Specific to this particular image */
-    .img {
-      left: 50%;
-      margin-left: -512px;   /* 50% */
-    }
-}
-@keyframes transition {
-    from {
-        opacity: 0;
-        transform: rotateX(-10deg);
-    }
-    to{
-        opacity: 1;
-        transform: rotateX(0);
-    }
-}
-@keyframes slide-right {
-    from {
-        transform: translate(150%, -50%);
-    }
 
-    to {
-        transform: translate(-150%, -50%);
-    }
- }
- @keyframes slide-left {
-    from {
-        transform: translate(-70%, -50%);
-    }
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 
-    to {
-        transform: translate(150%, -50%);
-    }
- }
-#D24{
-    color: black;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 20%;
-        left: 70%;
-        opacity: 20%;
-        animation: infinite 100s slide-right;
+.profile-copy {
+  display: grid;
+  gap: .15rem;
+  min-width: 0;
 }
-#D241{
-    color: black;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 40%;
-        left: 10%;
-        opacity: 20%;
-        animation: infinite 100s slide-left;
+
+.profile-copy span,
+.profile-copy small {
+  color: #94a3b8;
 }
-#D243{
-    color: black;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 60%;
-        left: -30%;
-        opacity: 20%;
-        animation: infinite 100s slide-right;
+
+.profile-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(2,6,23,.78);
 }
-#D244{
-    color: black;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 100%;
-        left: 8%;
-        opacity: 20%;
-        animation: infinite 100s slide-right;
+
+.profile-detail {
+  position: relative;
+  width: min(620px, 100%);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 1rem;
+  padding: 1.25rem;
+  background: #0f172a;
+  box-shadow: 0 24px 70px rgba(0,0,0,.35);
 }
-#D245{
-    color: black;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 80%;
-        left: 50%;
-        opacity: 20%;
-        animation: infinite 100s slide-left;
+
+.close-detail {
+  position: absolute;
+  top: .8rem;
+  right: .8rem;
+  border: 0;
+  background: transparent;
+  color: #cbd5e1;
+  font-size: 1.6rem;
+  cursor: pointer;
 }
-#D24a{
-    color: white;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 20%;
-        left: 70%;
-        opacity: 20%;
-        animation: infinite 100s slide-right;
+
+.detail-heading {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding-right: 2rem;
 }
-#D241a{
-    color: white;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 40%;
-        left: 10%;
-        opacity: 20%;
-        animation: infinite 100s slide-left;
+
+.large-avatar {
+  width: 84px;
+  height: 84px;
+  flex-basis: 84px;
 }
-#D243a{
-    color: white;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 60%;
-        left: -30%;
-        opacity: 20%;
-        animation: infinite 100s slide-right;
+
+.detail-heading p:last-child {
+  margin: .35rem 0 0;
+  color: #94a3b8;
 }
-#D244a{
-    color: white;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 100%;
-        left: 8%;
-        opacity: 20%;
-        animation: infinite 100s slide-right;
+
+.profile-meta {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: .75rem;
+  margin: 1.2rem 0;
 }
-#D245a{
-    color: white;
-    font-size: 100px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-    font-family: 'Copperplate Gothic Medium';
-    position: absolute;
-        top: 80%;
-        left: 50%;
-        opacity: 20%;
-        animation: infinite 100s slide-left;
+
+.profile-meta div {
+  border-radius: .75rem;
+  padding: .8rem;
+  background: rgba(255,255,255,.05);
+}
+
+.profile-meta span {
+  display: block;
+  margin-bottom: .25rem;
+  color: #94a3b8;
+  font-size: .75rem;
+}
+
+.detail-actions {
+  justify-content: flex-end;
+}
+
+@media (max-width: 700px) {
+  .page-header,
+  .detail-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .search-bar,
+  .profile-meta {
+    grid-template-columns: 1fr;
+  }
 }

@@ -1,0 +1,249 @@
+:host {
+  display: block;
+}
+
+.notifications-page {
+  min-height: 100vh;
+  padding: 7rem 1.25rem 4rem;
+  background: linear-gradient(145deg, #07111f, #12334a);
+  color: #f8fafc;
+}
+
+.notifications-shell {
+  width: min(1100px, 100%);
+  margin: 0 auto;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.eyebrow {
+  margin: 0 0 .4rem;
+  color: #7dd3fc;
+  font-size: .8rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(2rem, 5vw, 3.4rem);
+}
+
+.subtitle {
+  margin: .65rem 0 0;
+  color: #cbd5e1;
+}
+
+.header-actions,
+.detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .65rem;
+}
+
+.secondary-action,
+.primary-action,
+.secondary-button,
+.danger-action,
+.state-card button {
+  border-radius: .75rem;
+  padding: .75rem .9rem;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.secondary-action,
+.secondary-button {
+  border: 1px solid rgba(255, 255, 255, .16);
+  background: rgba(255, 255, 255, .07);
+  color: #f8fafc;
+}
+
+.primary-action,
+.state-card button {
+  border: 0;
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.danger-action {
+  border: 1px solid rgba(248, 113, 113, .3);
+  background: rgba(248, 113, 113, .12);
+  color: #fecaca;
+}
+
+.primary-action:disabled,
+.secondary-button:disabled,
+.danger-action:disabled {
+  opacity: .6;
+  cursor: wait;
+}
+
+.feedback,
+.state-card {
+  border: 1px solid rgba(255, 255, 255, .12);
+  border-radius: .9rem;
+  padding: .9rem 1rem;
+  background: rgba(15, 23, 42, .78);
+}
+
+.feedback {
+  margin-bottom: 1rem;
+}
+
+.success-feedback {
+  color: #bbf7d0;
+  border-color: rgba(74, 222, 128, .3);
+}
+
+.error-feedback,
+.error-state {
+  color: #fecaca;
+  border-color: rgba(248, 113, 113, .4);
+}
+
+.notifications-grid {
+  display: grid;
+  grid-template-columns: minmax(280px, .85fr) minmax(0, 1.15fr);
+  gap: 1rem;
+}
+
+.notification-list {
+  display: flex;
+  flex-direction: column;
+  gap: .65rem;
+}
+
+.notification-card,
+.notification-detail {
+  border: 1px solid rgba(255, 255, 255, .1);
+  border-radius: .9rem;
+  background: rgba(15, 23, 42, .78);
+}
+
+.notification-card {
+  width: 100%;
+  padding: .95rem;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.notification-card:hover,
+.notification-card.active {
+  border-color: rgba(125, 211, 252, .45);
+  background: rgba(30, 41, 59, .92);
+}
+
+.notification-card.unread {
+  box-shadow: inset 3px 0 0 #7dd3fc;
+}
+
+.notification-card__top,
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: .8rem;
+}
+
+.notification-card strong {
+  display: block;
+  margin-top: .65rem;
+}
+
+.notification-card p {
+  margin: .35rem 0 .65rem;
+  color: #cbd5e1;
+  line-height: 1.45;
+}
+
+.type-badge {
+  display: inline-block;
+  border-radius: 999px;
+  padding: .3rem .55rem;
+  background: rgba(125, 211, 252, .1);
+  color: #bae6fd;
+  font-size: .72rem;
+  font-weight: 800;
+}
+
+.unread-dot {
+  width: .55rem;
+  height: .55rem;
+  flex: 0 0 .55rem;
+  border-radius: 50%;
+  background: #7dd3fc;
+}
+
+.created-at {
+  color: #64748b;
+  font-size: .75rem;
+}
+
+.notification-detail {
+  min-height: 360px;
+  padding: 1.2rem;
+}
+
+.detail-placeholder {
+  display: grid;
+  min-height: 320px;
+  place-content: center;
+  text-align: center;
+  color: #94a3b8;
+}
+
+.detail-placeholder h2 {
+  color: #e2e8f0;
+}
+
+.detail-header h2 {
+  margin: .6rem 0 0;
+}
+
+.close-detail {
+  border: 0;
+  background: transparent;
+  color: #cbd5e1;
+  font-size: 1.6rem;
+  cursor: pointer;
+}
+
+.detail-message {
+  margin: 1.25rem 0;
+  color: #e2e8f0;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.signature {
+  color: #94a3b8;
+}
+
+.detail-actions {
+  margin-top: 1.4rem;
+}
+
+@media (max-width: 760px) {
+  .page-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .notifications-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .notification-detail {
+    min-height: 0;
+  }
+}

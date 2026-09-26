@@ -1,25 +1,39 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { of } from 'rxjs';
 
 import { ForgotpComponent } from './forgotp.component';
+import { AuthenticationService } from '../../services/authethication.service';
+import { TEST_IMPORTS, TEST_PROVIDERS } from '../../testing/test-providers';
 
 describe('ForgotpComponent', () => {
   let component: ForgotpComponent;
   let fixture: ComponentFixture<ForgotpComponent>;
+  let auth: jasmine.SpyObj<AuthenticationService>;
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      declarations: [ ForgotpComponent ]
-    })
-    .compileComponents();
-  });
+    auth = jasmine.createSpyObj<AuthenticationService>('AuthenticationService', ['initiatePasswordReset']);
+    auth.initiatePasswordReset.and.returnValue(of({ message: 'Email enviado' } as any));
 
-  beforeEach(() => {
+    await TestBed.configureTestingModule({
+      declarations: [ForgotpComponent],
+      imports: TEST_IMPORTS,
+      providers: [
+        ...TEST_PROVIDERS,
+        { provide: AuthenticationService, useValue: auth }
+      ]
+    }).compileComponents();
+
     fixture = TestBed.createComponent(ForgotpComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
 
-  it('should create', () => {
-    expect(component).toBeTruthy();
+  it('should initiate password reset by email', () => {
+    component.email = 'miguel@example.com';
+
+    component.sendResetEmail();
+
+    expect(auth.initiatePasswordReset).toHaveBeenCalledWith('miguel@example.com');
+    expect(component.successMessage).toContain('Email enviado');
   });
 });

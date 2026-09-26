@@ -1,25 +1,77 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { of } from 'rxjs';
 
 import { CreateaccountComponent } from './createaccount.component';
+import { AuthenticationService } from '../../services/authethication.service';
+import { TEST_IMPORTS, TEST_PROVIDERS } from '../../testing/test-providers';
 
 describe('CreateaccountComponent', () => {
   let component: CreateaccountComponent;
   let fixture: ComponentFixture<CreateaccountComponent>;
+  let auth: jasmine.SpyObj<AuthenticationService>;
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      declarations: [ CreateaccountComponent ]
-    })
-    .compileComponents();
-  });
+    auth = jasmine.createSpyObj<AuthenticationService>('AuthenticationService', ['register']);
+    auth.register.and.returnValue(of({ message: 'Conta criada' } as any));
 
-  beforeEach(() => {
+    await TestBed.configureTestingModule({
+      declarations: [CreateaccountComponent],
+      imports: TEST_IMPORTS,
+      providers: [
+        ...TEST_PROVIDERS,
+        { provide: AuthenticationService, useValue: auth }
+      ]
+    }).compileComponents();
+
     fixture = TestBed.createComponent(CreateaccountComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
 
+  function fillValidForm(): void {
+    component.username = 'miguel';
+    component.password = 'password-123';
+    component.confirmPassword = 'password-123';
+    component.fullName = 'Miguel Ferreira';
+    component.dateOfBirth = '1990-01-01';
+    component.address = 'Rua Teste';
+    component.country = 'Portugal';
+    component.location = 'Lisboa';
+    component.postalCode = '1000-000';
+    component.indicativePhone = '351';
+    component.phone = '912345678';
+    component.gender = 'masculino';
+    component.email = 'miguel@example.com';
+    component.favoriteSports = 'Padel';
+  }
+
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('should register using only the public registration contract', () => {
+    fillValidForm();
+
+    component.register();
+
+    expect(auth.register).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        username: 'miguel',
+        email: 'miguel@example.com',
+        favoriteSports: 'Padel'
+      }),
+      undefined
+    );
+    expect(component.successMessage).toContain('Conta criada');
+  });
+
+  it('should reject mismatching passwords', () => {
+    fillValidForm();
+    component.confirmPassword = 'different-password';
+
+    component.register();
+
+    expect(auth.register).not.toHaveBeenCalled();
+    expect(component.errorMessage).toContain('não coincidem');
   });
 });

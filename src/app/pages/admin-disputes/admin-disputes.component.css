@@ -1,0 +1,259 @@
+:host { display: block; }
+
+.admin-page {
+  min-height: 100vh;
+  padding: 7rem 1.25rem 4rem;
+  background:
+    radial-gradient(circle at top right, rgba(99,102,241,.12), transparent 32rem),
+    linear-gradient(145deg, #07111f, #102f46);
+  color: #f8fafc;
+}
+
+.admin-shell {
+  width: min(1040px, 100%);
+  margin: 0 auto;
+}
+
+.page-header,
+.card-heading,
+.card-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.page-header {
+  align-items: flex-end;
+  margin-bottom: 1.4rem;
+}
+
+.eyebrow {
+  margin: 0 0 .4rem;
+  color: #a5b4fc;
+  font-size: .78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(2.2rem, 5vw, 3.6rem);
+}
+
+.subtitle {
+  max-width: 700px;
+  margin: .7rem 0 0;
+  color: #cbd5e1;
+  line-height: 1.55;
+}
+
+.header-actions,
+.status-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .6rem;
+}
+
+.secondary-action,
+.status-tabs button,
+.card-actions a,
+.accept-action,
+.reject-action,
+.state-card button {
+  border-radius: .75rem;
+  padding: .72rem .9rem;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.secondary-action,
+.status-tabs button {
+  border: 1px solid rgba(255,255,255,.16);
+  background: rgba(255,255,255,.06);
+  color: #f8fafc;
+}
+
+.status-tabs button.active {
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: .9rem;
+  padding: .8rem 1rem;
+  background: rgba(15,23,42,.72);
+}
+
+.toolbar > span {
+  color: #94a3b8;
+  font-size: .8rem;
+  font-weight: 800;
+}
+
+.feedback,
+.state-card,
+.dispute-card {
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 1rem;
+  background: rgba(15,23,42,.82);
+}
+
+.feedback,
+.state-card {
+  margin-bottom: 1rem;
+  padding: .9rem 1rem;
+}
+
+.success-feedback {
+  color: #bbf7d0;
+  border-color: rgba(74,222,128,.3);
+}
+
+.error-feedback,
+.error-state {
+  color: #fecaca;
+  border-color: rgba(248,113,113,.4);
+}
+
+.dispute-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.dispute-card {
+  padding: 1.1rem;
+}
+
+.card-heading {
+  align-items: flex-start;
+}
+
+.card-heading h2 {
+  margin: .25rem 0 0;
+}
+
+.card-heading p {
+  margin: .3rem 0 0;
+  color: #94a3b8;
+}
+
+.sport {
+  color: #a5b4fc;
+  font-size: .78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+}
+
+.status-badge {
+  border-radius: 999px;
+  padding: .38rem .65rem;
+  font-size: .78rem;
+  font-weight: 900;
+}
+
+.status-badge.open {
+  background: rgba(250,204,21,.12);
+  color: #fde68a;
+}
+
+.status-badge.accepted {
+  background: rgba(74,222,128,.12);
+  color: #bbf7d0;
+}
+
+.status-badge.rejected {
+  background: rgba(248,113,113,.12);
+  color: #fecaca;
+}
+
+.meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: .75rem;
+  margin: 1rem 0;
+}
+
+.meta-grid div,
+.reason-card {
+  border-radius: .75rem;
+  padding: .8rem;
+  background: rgba(255,255,255,.05);
+}
+
+.meta-grid span,
+.reason-card > span {
+  display: block;
+  margin-bottom: .3rem;
+  color: #94a3b8;
+  font-size: .75rem;
+  font-weight: 800;
+}
+
+.reason-card p {
+  margin: 0;
+  color: #e2e8f0;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.card-actions {
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255,255,255,.08);
+}
+
+.card-actions a,
+.state-card button {
+  border: 0;
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.accept-action {
+  border: 1px solid rgba(74,222,128,.3);
+  background: rgba(74,222,128,.1);
+  color: #bbf7d0;
+}
+
+.reject-action {
+  border: 1px solid rgba(248,113,113,.3);
+  background: rgba(248,113,113,.1);
+  color: #fecaca;
+}
+
+.accept-action:disabled,
+.reject-action:disabled {
+  opacity: .6;
+  cursor: wait;
+}
+
+.resolved-at {
+  color: #94a3b8;
+  font-size: .8rem;
+}
+
+@media (max-width: 700px) {
+  .page-header,
+  .toolbar,
+  .card-heading,
+  .card-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .meta-grid {
+    grid-template-columns: 1fr;
+  }
+}

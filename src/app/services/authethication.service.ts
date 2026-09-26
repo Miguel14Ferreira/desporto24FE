@@ -1,91 +1,111 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpResponse, HttpErrorResponse } from '@angular/common/http';
-import { environment } from '../../environment/environment';
-//import { environment } from '../../environment/environment.prod';
-import { Observable, catchError, tap } from 'rxjs';
-import { Perfil } from '../pages/model/perfil';
-import { JwtHelperService } from '@auth0/angular-jwt';
-import { Session } from '../pages/session';
-import { CustomHttpResponse } from '../pages/custom-http-response';
-import { Token } from '../pages/model/token';
+import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Notification } from '../pages/model/notification';
-import { Chat } from '../pages/model/chat';
-import { LoginperfilService } from './loginperfil.service';
+import { JwtHelperService } from '@auth0/angular-jwt';
+import { Observable } from 'rxjs';
 
+import { environment } from '../../environment/environment';
+import { CustomHttpResponse } from '../pages/custom-http-response';
+import { LoginResponse } from '../pages/model/login-response';
+import { RegistrationRequest } from '../pages/model/registration-request';
 
 @Injectable()
 export class AuthenticationService {
   public host = environment.apiUrl;
-  token: any;
-  loggedInPerfilname: any;
-  email: any;
-  PerfilName: any;
-  private jwtHelper = new JwtHelperService();
-  perfil!:Perfil;
 
-  constructor(private http: HttpClient,private router:Router) {}
+  token: string | null = null;
+  loggedInPerfilname: string | null = null;
+  email: string | null = null;
+  PerfilName: string | null = null;
 
-  loginPerfil(perfil: Perfil):Observable<HttpResponse<Perfil>>{
-    return this.http.post<Perfil>(`${this.host}/login`, perfil, {observe: 'response'});
+  private readonly jwtHelper = new JwtHelperService();
+
+  constructor(
+    private http: HttpClient,
+    private router: Router
+  ) {}
+
+  login(username: string, password: string): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>(
+      `${this.host}/api/auth/login`,
+      { username, password }
+    );
   }
-  createPerfil(formData: FormData):Observable<HttpResponse<CustomHttpResponse>>{
-    return this.http.post<CustomHttpResponse>(`${this.host}/login/registerNewUser`, formData,{observe: 'response'});
+
+  confirmMfaChallenge(challengeId: string, code: string): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>(
+      `${this.host}/api/auth/mfa/confirm`,
+      { challengeId, code }
+    );
   }
-  createPerfil2(perfil: Perfil):Observable<HttpResponse<Perfil>>{
-    return this.http.post<Perfil>(`${this.host}/login/registerNewUser`, perfil, {observe: 'response'});
+
+  resendMfaChallenge(challengeId: string): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>(
+      `${this.host}/api/auth/mfa/resend`,
+      { challengeId }
+    );
   }
-  createSessao(formData: FormData):Observable<Session>{
-    return this.http.post<Session>(`${this.host}/menu/createEvents`, formData);
+
+  register(request: RegistrationRequest, photo?: File): Observable<CustomHttpResponse> {
+    const formData = new FormData();
+    formData.append(
+      'profile',
+      new Blob([JSON.stringify(request)], { type: 'application/json' })
+    );
+
+    if (photo) {
+      formData.append('photo', photo);
+    }
+
+    return this.http.post<CustomHttpResponse>(
+      `${this.host}/api/auth/register`,
+      formData
+    );
   }
-  confirmMFA(token:string):Observable<HttpResponse<CustomHttpResponse>>{
-    return this.http.post<CustomHttpResponse>(`${this.host}/login/MFAauthentication/:username`,token, {observe: 'response'});
+
+  confirmRegistration(token: string): Observable<CustomHttpResponse> {
+    return this.http.get<CustomHttpResponse>(
+      `${this.host}/api/auth/register/confirm`,
+      { params: { token } }
+    );
   }
-  resendMFA(perfil:string):Observable<HttpResponse<CustomHttpResponse>>{
-    return this.http.get<CustomHttpResponse>(`${this.host}/login/MFAauthentication/${perfil}`,{observe: 'response'});
+
+  initiatePasswordReset(email: string): Observable<CustomHttpResponse> {
+    return this.http.post<CustomHttpResponse>(
+      `${this.host}/api/auth/reset-password/initiate`,
+      { email: email.trim() }
+    );
   }
-  sendEmail(perfil:Perfil):Observable<HttpResponse<CustomHttpResponse>>{
-    return this.http.post<CustomHttpResponse>(`${this.host}/login/resetPassword`,perfil, {observe: 'response'});
+
+  confirmPasswordReset(token: string, newPassword: string): Observable<CustomHttpResponse> {
+    return this.http.put<CustomHttpResponse>(
+      `${this.host}/api/auth/reset-password/confirm`,
+      { token, newPassword }
+    );
   }
-  resetPassword(token:string,username:string,password:string):Observable<HttpResponse<CustomHttpResponse>>{
-    return this.http.put<CustomHttpResponse>(`${this.host}/login/resetPassword/${token}/${username}`,password, {observe: 'response'});
-  }
-  resetPasswordEmergency(token:string,username:string,password:string):Observable<HttpResponse<CustomHttpResponse>>{
-    return this.http.put<CustomHttpResponse>(`${this.host}/confirmEmergencyToken/resetPassword/${token}/${username}`,password, {observe: 'response'})
-  }
-  activatePerfil(token: string):Observable<HttpResponse<CustomHttpResponse>>{
-    return this.http.get<CustomHttpResponse>(`${this.host}/login/registerNewUser/confirmTokenRegistration/${token}`,{observe: 'response'});
-  }
-  deactivatePerfil(token: string,username:string):Observable<Token>{
-    return this.http.get<Token>(`${this.host}/confirmEmergencyToken/${token}/${username}`);
-  }
-  deactivatePerfilEmergency(username:string):Observable<HttpResponse<CustomHttpResponse>>{
-    return this.http.post<CustomHttpResponse>(`${this.host}/menu/notifications/:id`,username,{observe: 'response'});
-  }
-  acceptFriendRequestToken(token:string):Observable<Token>{
-    return this.http.get<Token>(`${this.host}/login/confirmNewFriend/${token}`);
-  }
-  deleteNotification(NotificationNumber:number):Observable<HttpResponse<CustomHttpResponse>>{
-    return this.http.delete<CustomHttpResponse>(`${this.host}/menu/notifications/${NotificationNumber}`,{observe: 'response'})
-  }
-  acceptFriendRequest(NotificationNumber:number,NotificationToken:string):Observable<HttpResponse<CustomHttpResponse>>{
-    return this.http.get<CustomHttpResponse>(`${this.host}/menu/notifications/${NotificationNumber}/${NotificationToken}`,{observe: 'response'});
-  }
-  getChat(senderId: string, recipientId: string):Observable<Chat[]>{
-    return this.http.get<Chat[]>(`${this.host}/menu/friendList/chat/${senderId}/${recipientId}`);
-  }
-  sendChatMessagem(chat: Chat):Observable<Chat>{
-    return this.http.post<Chat>(`${this.host}/menu/friendList/chat/:sender/:recipient`,chat)
-  }
-  terminarSessao(email: Perfil):Observable<Perfil>{
-    return this.http.post<Perfil>(`${this.host}/menu/terminarSessao`,email)
+
+  terminarSessao(): Observable<void> {
+    return this.http.post<void>(`${this.host}/api/auth/logout`, null);
   }
 
   public logOut(): void {
     this.token = null;
     this.loggedInPerfilname = null;
+    this.email = null;
+    this.PerfilName = null;
+
     localStorage.removeItem('t');
-    this.router.navigateByUrl('/login')
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('MFA');
+    localStorage.removeItem('Sessao');
+
+    sessionStorage.removeItem('auth-token');
+    sessionStorage.removeItem('user-data');
+    sessionStorage.removeItem('mfa-challenge-id');
+    sessionStorage.removeItem('mfa-expires-at');
+    sessionStorage.removeItem('mfa-return-url');
+
+    this.router.navigateByUrl('/login');
   }
 
   public logOut2(): void {
@@ -95,35 +115,65 @@ export class AuthenticationService {
   }
 
   public saveToken(token: string): void {
+    this.token = token;
     localStorage.setItem('t', token);
   }
-  public saveRefreshToken(token: string): void {
-    localStorage.setItem('refreshToken', token);
+
+  public hasValidToken(): boolean {
+    const token = localStorage.getItem('t');
+    if (!token) {
+      return false;
+    }
+
+    try {
+      const payload = this.jwtHelper.decodeToken(token);
+      return Boolean(payload?.exp && payload.exp * 1000 > Date.now());
+    } catch {
+      return false;
+    }
   }
 
-  public addSessaoToLocalCache(Sessao: Session): void {
-    localStorage.setItem('Sessao', JSON.stringify(Sessao));
+  public hasAnyRole(...roles: string[]): boolean {
+    const token = localStorage.getItem('t');
+    if (!token) {
+      return false;
+    }
+
+    try {
+      const payload = this.jwtHelper.decodeToken(token);
+      const rawAuthorities = payload?.Authorities ?? payload?.authorities;
+      const authorities = Array.isArray(rawAuthorities)
+        ? rawAuthorities as string[]
+        : [];
+
+      return roles.some(role => authorities.includes(role));
+    } catch {
+      return false;
+    }
+  }
+
+  public saveRefreshToken(token: string): void {
+    localStorage.setItem('refreshToken', token);
   }
 
   public loadToken(): void {
     this.token = localStorage.getItem('t');
   }
 
-  public getToken(): string {
+  public getToken(): string | null {
     return this.token;
   }
 
-  isLoggedIn(){
+  isLoggedIn(): boolean {
     this.loadToken();
-    if(this.token != null && this.token !== ''){
-      if (this.jwtHelper.decodeToken(this.token).sub != null || ''){
-        if (!this.jwtHelper.isTokenExpired(this.token)){
-          this.loggedInPerfilname = this.jwtHelper.decodeToken(this.token).sub;
-          return this.router.navigateByUrl('/menu')
-        }
-      }
-    } else {
-      return this.logOut();
+
+    const token = this.token;
+    if (!token || !this.hasValidToken()) {
+      return false;
     }
+
+    const payload = this.jwtHelper.decodeToken(token);
+    this.loggedInPerfilname = payload?.sub ?? null;
+    return Boolean(this.loggedInPerfilname);
   }
 }

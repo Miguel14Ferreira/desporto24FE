@@ -1,0 +1,133 @@
+<section class="friends-page">
+  <div class="friends-shell">
+    <header class="page-header">
+      <div>
+        <p class="eyebrow">Desporto24</p>
+        <h1>Amigos</h1>
+        <p class="subtitle">Encontra rapidamente os teus amigos e abre uma conversa direta.</p>
+      </div>
+
+      <div class="header-actions">
+        <a class="secondary-action" routerLink="/menu/perfis">Encontrar jogadores</a>
+        <a class="secondary-action" routerLink="/menu">Menu</a>
+      </div>
+    </header>
+
+    <label class="friend-filter">
+      <span>Filtrar amigos</span>
+      <input
+        type="search"
+        [(ngModel)]="filter"
+        placeholder="Nome, username ou localidade">
+    </label>
+
+    @if (actionSuccess) {
+      <div class="state-card">{{ actionSuccess }}</div>
+    }
+
+    @if (actionError) {
+      <div class="state-card error-state">{{ actionError }}</div>
+    }
+
+    @if (loading) {
+      <div class="state-card">A carregar amigos...</div>
+    }
+
+    @if (!loading && errorMessage) {
+      <div class="state-card error-state">
+        <p>{{ errorMessage }}</p>
+        <button type="button" (click)="load()">Tentar novamente</button>
+      </div>
+    }
+
+    @if (!loading && !errorMessage && friends.length === 0) {
+      <div class="state-card">
+        <h2>Ainda não tens amigos adicionados</h2>
+        <p>Procura jogadores na comunidade e envia um pedido de amizade.</p>
+        <a routerLink="/menu/perfis">Ir para a comunidade</a>
+      </div>
+    }
+
+    @if (!loading && !errorMessage && friends.length > 0 && filteredFriends.length === 0) {
+      <div class="state-card">
+        <p>Nenhum amigo corresponde ao filtro.</p>
+      </div>
+    }
+
+    @if (filteredFriends.length > 0) {
+      <div class="friend-grid">
+        @for (friend of filteredFriends; track friend.username) {
+          <article class="friend-card">
+            <div class="avatar">
+              @if (profileImage(friend); as image) {
+                <img [src]="image" [alt]="friend.username">
+              } @else {
+                <span>{{ initials(friend) }}</span>
+              }
+            </div>
+
+            <div class="friend-copy">
+              <strong>{{ friend.username }}</strong>
+              <span>{{ friend.fullName || 'Jogador Desporto24' }}</span>
+              @if (friend.location) {
+                <small>{{ friend.location }}</small>
+              }
+              @if (friend.favoriteSports) {
+                <small>{{ friend.favoriteSports }}</small>
+              }
+            </div>
+
+            <div class="friend-actions">
+              @if (friend.chatBlocked && !friend.blockedByMe) {
+                <span class="blocked-badge">Bloqueado pelo amigo</span>
+              }
+
+              <a [routerLink]="['/menu/friendList/chat', friend.username]">Abrir chat</a>
+
+              @if (!friend.chatBlocked || friend.blockedByMe) {
+                <button
+                  type="button"
+                  class="secondary-action"
+                  [disabled]="actionLoadingUsername !== null"
+                  (click)="toggleBlock(friend)">
+                  @if (actionLoadingUsername === friend.username) {
+                    A processar...
+                  } @else if (friend.chatBlocked) {
+                    Desbloquear chat
+                  } @else {
+                    Bloquear chat
+                  }
+                </button>
+              }
+
+              @if (pendingRemovalUsername === friend.username) {
+                <button
+                  type="button"
+                  class="secondary-action"
+                  [disabled]="actionLoadingUsername !== null"
+                  (click)="confirmRemove(friend)">
+                  {{ actionLoadingUsername === friend.username ? 'A remover...' : 'Confirmar remoção' }}
+                </button>
+                <button
+                  type="button"
+                  class="secondary-action"
+                  [disabled]="actionLoadingUsername !== null"
+                  (click)="cancelRemove()">
+                  Cancelar
+                </button>
+              } @else {
+                <button
+                  type="button"
+                  class="secondary-action"
+                  [disabled]="actionLoadingUsername !== null"
+                  (click)="requestRemove(friend)">
+                  Remover amigo
+                </button>
+              }
+            </div>
+          </article>
+        }
+      </div>
+    }
+  </div>
+</section>
