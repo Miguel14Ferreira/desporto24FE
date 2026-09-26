@@ -22,10 +22,32 @@ export class CreateaccountComponent {
   country = '';
   location = '';
   postalCode = '';
-  phone = '+351 ';
+  indicativePhone = '351';
+  phone = '';
   gender = '';
   email = '';
   favoriteSports = '';
+
+  readonly phoneIndicatives = [
+    { code: '351', label: 'Portugal (+351)' },
+    { code: '244', label: 'Angola (+244)' },
+    { code: '55', label: 'Brasil (+55)' },
+    { code: '238', label: 'Cabo Verde (+238)' },
+    { code: '245', label: 'Guiné-Bissau (+245)' },
+    { code: '258', label: 'Moçambique (+258)' },
+    { code: '239', label: 'São Tomé e Príncipe (+239)' },
+    { code: '34', label: 'Espanha (+34)' },
+    { code: '33', label: 'França (+33)' },
+    { code: '44', label: 'Reino Unido (+44)' },
+    { code: '49', label: 'Alemanha (+49)' },
+    { code: '39', label: 'Itália (+39)' },
+    { code: '41', label: 'Suíça (+41)' },
+    { code: '352', label: 'Luxemburgo (+352)' },
+    { code: '32', label: 'Bélgica (+32)' },
+    { code: '31', label: 'Países Baixos (+31)' },
+    { code: '353', label: 'Irlanda (+353)' },
+    { code: '1', label: 'Estados Unidos / Canadá (+1)' }
+  ];
 
   showPassword = false;
   photo?: File;
@@ -45,13 +67,6 @@ export class CreateaccountComponent {
       return;
     }
 
-    const parsedPhone = this.parsePhone();
-    if (!parsedPhone) {
-      this.errorMessage = 'Introduz um telemóvel português válido. Ex.: +351 927 382 368.';
-      this.successMessage = '';
-      return;
-    }
-
     const request: RegistrationRequest = {
       username: this.username.trim(),
       password: this.password,
@@ -61,8 +76,8 @@ export class CreateaccountComponent {
       country: this.country.trim(),
       location: this.location.trim(),
       postalCode: this.postalCode.trim(),
-      indicativePhone: parsedPhone.indicativePhone,
-      phone: parsedPhone.phone,
+      indicativePhone: this.indicativePhone,
+      phone: this.phone.replace(/\D/g, ''),
       gender: this.gender,
       email: this.email.trim(),
       favoriteSports: this.favoriteSports.trim()
@@ -125,6 +140,7 @@ export class CreateaccountComponent {
       this.country,
       this.location,
       this.postalCode,
+      this.indicativePhone,
       this.phone,
       this.gender,
       this.email,
@@ -151,26 +167,9 @@ export class CreateaccountComponent {
       return 'Introduz um email válido.';
     }
 
-    if (!this.parsePhone()) {
-      return 'Introduz um telemóvel português válido. Ex.: +351 927 382 368.';
-    }
-
-    return null;
-  }
-
-  private parsePhone(): { indicativePhone: string; phone: string } | null {
-    const compact = this.phone.replace(/[\s()-]/g, '');
-
-    if (/^\+351\d{9}$/.test(compact)) {
-      return { indicativePhone: '351', phone: compact.substring(4) };
-    }
-
-    if (/^351\d{9}$/.test(compact)) {
-      return { indicativePhone: '351', phone: compact.substring(3) };
-    }
-
-    if (/^\d{9}$/.test(compact)) {
-      return { indicativePhone: '351', phone: compact };
+    const normalizedPhone = this.phone.replace(/\D/g, '');
+    if (normalizedPhone.length < 6 || normalizedPhone.length > 15) {
+      return 'Introduz um número de telemóvel válido.';
     }
 
     return null;
