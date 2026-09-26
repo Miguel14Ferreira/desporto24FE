@@ -4,7 +4,7 @@
       <div>
         <p class="eyebrow">Desporto24</p>
         <h1>As minhas sessões</h1>
-        <p class="subtitle">Vê o que criaste, onde já estás inscrito e as sessões onde aguardas uma vaga.</p>
+        <p class="subtitle">Vê o que criaste, onde já estás inscrito, listas de espera e o teu histórico de presenças.</p>
       </div>
 
       <div class="header-actions">
@@ -178,6 +178,82 @@
       </section>
     }
 
+    <section class="session-section attendance-section">
+      <div class="section-heading">
+        <div>
+          <span class="section-kicker">Fiabilidade</span>
+          <h2>Histórico de presenças</h2>
+        </div>
+        <span class="count-badge">{{ attendanceHistory.length }}</span>
+      </div>
+
+      @if (attendanceLoading) {
+        <div class="state-card">A carregar histórico de presenças...</div>
+      }
+
+      @if (!attendanceLoading && attendanceError) {
+        <div class="state-card error-state">
+          <p>{{ attendanceError }}</p>
+          <button type="button" (click)="loadAttendanceHistory()">Tentar novamente</button>
+        </div>
+      }
+
+      @if (!attendanceLoading && !attendanceError && attendanceHistory.length === 0) {
+        <div class="empty-card">
+          <p>Ainda não tens presenças registadas em sessões concluídas.</p>
+        </div>
+      }
+
+      @if (!attendanceLoading && !attendanceError && attendanceHistory.length > 0) {
+        <div class="attendance-list">
+          @for (item of attendanceHistory; track item.participantId) {
+            <article class="attendance-card">
+              <div class="attendance-main">
+                <div>
+                  <span class="sport">{{ item.sport }}</span>
+                  <h3>{{ item.city }}</h3>
+                  @if (item.gameDate) {
+                    <span class="attendance-date">{{ item.gameDate | date:'dd/MM/yyyy HH:mm' }}</span>
+                  }
+                </div>
+
+                <span
+                  class="attendance-badge"
+                  [class.attended]="item.attendanceStatus === 'ATTENDED'"
+                  [class.no-show]="item.attendanceStatus === 'NO_SHOW'"
+                  [class.late-cancel]="item.attendanceStatus === 'LATE_CANCELLED'">
+                  {{ attendanceLabel(item) }}
+                </span>
+              </div>
+
+              <div class="attendance-actions">
+                <a [routerLink]="['/menu/events', item.sessionId]">Ver sessão</a>
+
+                @if (item.disputeStatus) {
+                  <span
+                    class="dispute-badge"
+                    [class.dispute-open]="item.disputeStatus === 'OPEN'"
+                    [class.dispute-accepted]="item.disputeStatus === 'ACCEPTED'"
+                    [class.dispute-rejected]="item.disputeStatus === 'REJECTED'">
+                    Contestação: {{ disputeLabel(item) }}
+                  </span>
+                }
+
+                @if (item.canDispute) {
+                  <button
+                    type="button"
+                    class="dispute-action"
+                    (click)="requestDispute(item)">
+                    Contestar falta
+                  </button>
+                }
+              </div>
+            </article>
+          }
+        </div>
+      }
+    </section>
+
     @if (pendingCancelId !== null) {
       <div class="modal-backdrop">
         <div class="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="cancel-title">
@@ -189,6 +265,45 @@
             </button>
             <button type="button" class="danger-action" [disabled]="cancelLoading" (click)="confirmCancel()">
               {{ cancelLoading ? 'A cancelar...' : 'Confirmar cancelamento' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (pendingDispute) {
+      <div class="modal-backdrop">
+        <div class="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="dispute-title">
+          <span class="section-kicker">Contestação de presença</span>
+          <h2 id="dispute-title">Contestar falta em {{ pendingDispute.sport }}</h2>
+          <p>Explica de forma objetiva por que motivo consideras que o registo de falta está incorreto.</p>
+
+          <label class="dispute-reason">
+            <span>Justificação</span>
+            <textarea
+              name="disputeReason"
+              [(ngModel)]="disputeReason"
+              maxlength="2000"
+              rows="6"
+              [disabled]="disputeLoading"
+              placeholder="Ex.: Estive presente na sessão e fui registado por engano como falta."></textarea>
+            <small>{{ disputeReason.length }}/2000</small>
+          </label>
+
+          <div class="modal-actions">
+            <button
+              type="button"
+              class="secondary-button"
+              [disabled]="disputeLoading"
+              (click)="dismissDispute()">
+              Cancelar
+            </button>
+            <button
+              type="button"
+              class="dispute-action"
+              [disabled]="disputeLoading || !disputeReason.trim()"
+              (click)="confirmDispute()">
+              {{ disputeLoading ? 'A enviar...' : 'Enviar contestação' }}
             </button>
           </div>
         </div>

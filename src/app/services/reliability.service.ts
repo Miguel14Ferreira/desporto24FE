@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 
 import { environment } from 'src/environment/environment';
 import { ReliabilitySummary } from '../pages/model/reliability-summary';
+import { AttendanceHistoryItem } from '../pages/model/attendance-history';
 
 @Injectable({
   providedIn: 'root'
@@ -28,6 +29,22 @@ export class ReliabilityService {
     return this.http.put<void>(
       this.sessionsUrl + '/' + sessionId + '/participants/' + participantId + '/attendance',
       { status }
+    );
+  }
+
+  attendanceHistory(): Observable<AttendanceHistoryItem[]> {
+    return this.http.get<AttendanceHistoryItem[]>(
+      environment.apiUrl + '/api/attendance/me'
+    );
+  }
+
+  createDispute(participantId: number, reason: string): Observable<void> {
+    return this.http.post<void>(
+      environment.apiUrl + '/api/attendance-disputes',
+      {
+        participantId,
+        reason: reason.trim()
+      }
     );
   }
 }

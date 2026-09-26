@@ -6,38 +6,6 @@ import { of } from 'rxjs';
 
 import { AuthenticationService } from '../services/authethication.service';
 
-const profile = {
-  username: 'miguel',
-  email: 'miguel@example.invalid',
-  status: 'OFFLINE'
-};
-
-const loginPerfilServiceMock = new Proxy(
-  { loggedInUsername: 'miguel' } as Record<string, unknown>,
-  {
-    get(target, property) {
-      if (property in target) {
-        return target[property as string];
-      }
-
-      const method = String(property);
-      if (['obterNotificacoesDoPerfil', 'friendList', 'obterSessoes', 'obterPerfis'].includes(method)) {
-        return () => of([]);
-      }
-      if (method === 'obterUserPeloUsername1') {
-        return () => of(profile);
-      }
-      if (['createPerfilFormData', 'createSessionForm', 'updatePerfilFormData', 'updatePerfilFoto',
- 'updatePerfilPasswordFormData', 'addFriendFromData', 'blockFriendFromData',
- 'unblockFriendFromData', 'removeFriendFromData', 'createFormResetPassword'].includes(method)) {
-        return () => new FormData();
-      }
-
-      return () => of({});
-    }
-  }
-);
-
 const authenticationServiceMock = new Proxy(
   {
     loggedInPerfilname: 'miguel',

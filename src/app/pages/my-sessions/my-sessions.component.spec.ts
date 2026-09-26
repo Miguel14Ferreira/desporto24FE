@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 
 import { MySessionsComponent } from './my-sessions.component';
+import { ReliabilityService } from '../../services/reliability.service';
 import { SessionService } from '../../services/session.service';
 import { TEST_IMPORTS, TEST_PROVIDERS } from '../../testing/test-providers';
 
@@ -9,6 +10,7 @@ describe('MySessionsComponent', () => {
   let component: MySessionsComponent;
   let fixture: ComponentFixture<MySessionsComponent>;
   let sessionService: jasmine.SpyObj<SessionService>;
+  let reliabilityService: jasmine.SpyObj<ReliabilityService>;
 
   const createdSession = {
     id: 11,
@@ -23,8 +25,28 @@ describe('MySessionsComponent', () => {
     status: 'OPEN'
   };
 
+  const noShow = {
+    participantId: 20,
+    sessionId: 12,
+    sport: 'Padel',
+    city: 'Lisboa',
+    gameDate: '2026-09-20T19:00:00Z',
+    attendanceStatus: 'NO_SHOW' as const,
+    attendanceRecordedAt: '2026-09-20T20:00:00Z',
+    disputeStatus: null,
+    canDispute: true
+  };
+
   beforeEach(async () => {
-    sessionService = jasmine.createSpyObj<SessionService>('SessionService', ['mine', 'cancel']);
+    sessionService = jasmine.createSpyObj<SessionService>(
+      'SessionService',
+      ['mine', 'cancel']
+    );
+    reliabilityService = jasmine.createSpyObj<ReliabilityService>(
+      'ReliabilityService',
+      ['attendanceHistory', 'createDispute']
+    );
+
     sessionService.mine.and.returnValue(of({
       created: [createdSession],
       joined: [],
@@ -32,12 +54,16 @@ describe('MySessionsComponent', () => {
     }));
     sessionService.cancel.and.returnValue(of(void 0));
 
+    reliabilityService.attendanceHistory.and.returnValue(of([noShow]));
+    reliabilityService.createDispute.and.returnValue(of(void 0));
+
     await TestBed.configureTestingModule({
       declarations: [MySessionsComponent],
       imports: TEST_IMPORTS,
       providers: [
         ...TEST_PROVIDERS,
-        { provide: SessionService, useValue: sessionService }
+        { provide: SessionService, useValue: sessionService },
+        { provide: ReliabilityService, useValue: reliabilityService }
       ]
     }).compileComponents();
 
@@ -46,10 +72,12 @@ describe('MySessionsComponent', () => {
     fixture.detectChanges();
   });
 
-  it('should create and load the user sessions', () => {
+  it('should create and load sessions and attendance history', () => {
     expect(component).toBeTruthy();
     expect(component.data.created.length).toBe(1);
+    expect(component.attendanceHistory.length).toBe(1);
     expect(sessionService.mine).toHaveBeenCalled();
+    expect(reliabilityService.attendanceHistory).toHaveBeenCalled();
   });
 
   it('should cancel a created session and refresh the list', () => {
@@ -63,5 +91,30 @@ describe('MySessionsComponent', () => {
 
   it('should calculate remaining vacancies', () => {
     expect(component.vacancies(createdSession)).toBe(7);
+  });
+
+  it('should dispute a no-show and update its local state', () => {
+    component.requestDispute(component.attendanceHistory[0]);
+    component.disputeReason = 'Estive presente nesta sessão.';
+
+    component.confirmDispute();
+
+    expect(reliabilityService.createDispute).toHaveBeenCalledWith(
+      20,
+      'Estive presente nesta sessão.'
+    );
+    expect(component.attendanceHistory[0].disputeStatus).toBe('OPEN');
+    expect(component.attendanceHistory[0].canDispute).toBeFalse();
+    expect(component.actionMessage).toContain('Contestação enviada');
+  });
+
+  it('should require a reason before sending a dispute', () => {
+    component.requestDispute(component.attendanceHistory[0]);
+    component.disputeReason = '   ';
+
+    component.confirmDispute();
+
+    expect(reliabilityService.createDispute).not.toHaveBeenCalled();
+    expect(component.actionError).toContain('Explica');
   });
 });
