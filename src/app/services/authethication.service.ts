@@ -148,11 +148,12 @@ export class AuthenticationService {
   isLoggedIn(): boolean {
     this.loadToken();
 
-    if (!this.hasValidToken()) {
+    const token = this.token;
+    if (!token || !this.hasValidToken()) {
       return false;
     }
 
-    const payload = this.jwtHelper.decodeToken(this.token);
+    const payload = this.jwtHelper.decodeToken(token);
     this.loggedInPerfilname = payload?.sub ?? null;
     return Boolean(this.loggedInPerfilname);
   }
