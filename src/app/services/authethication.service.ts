@@ -13,6 +13,7 @@ import { Notification } from '../pages/model/notification';
 import { Chat } from '../pages/model/chat';
 import { LoginperfilService } from './loginperfil.service';
 import { LoginResponse } from '../pages/model/login-response';
+import { RegistrationRequest } from '../pages/model/registration-request';
 
 
 @Injectable()
@@ -51,6 +52,30 @@ export class AuthenticationService {
   loginPerfil(perfil: Perfil):Observable<HttpResponse<Perfil>>{
     return this.http.post<Perfil>(`${this.host}/login`, perfil, {observe: 'response'});
   }
+  register(request: RegistrationRequest, photo?: File): Observable<CustomHttpResponse> {
+    const formData = new FormData();
+    formData.append(
+      'profile',
+      new Blob([JSON.stringify(request)], { type: 'application/json' })
+    );
+
+    if (photo) {
+      formData.append('photo', photo);
+    }
+
+    return this.http.post<CustomHttpResponse>(
+      `${this.host}/api/auth/register`,
+      formData
+    );
+  }
+
+  confirmRegistration(token: string): Observable<CustomHttpResponse> {
+    return this.http.get<CustomHttpResponse>(
+      `${this.host}/api/auth/register/confirm`,
+      { params: { token } }
+    );
+  }
+
   createPerfil(formData: FormData):Observable<HttpResponse<CustomHttpResponse>>{
     return this.http.post<CustomHttpResponse>(`${this.host}/login/registerNewUser`, formData,{observe: 'response'});
   }
