@@ -115,13 +115,14 @@
         </label>
 
         <label>
-          <span>Indicativo *</span>
-          <input name="indicativePhone" [(ngModel)]="indicativePhone" [disabled]="loading" placeholder="351">
-        </label>
-
-        <label>
-          <span>Telefone *</span>
-          <input name="phone" [(ngModel)]="phone" autocomplete="tel" [disabled]="loading">
+          <span>Telemóvel *</span>
+          <input
+            type="tel"
+            name="phone"
+            [(ngModel)]="phone"
+            autocomplete="tel"
+            [disabled]="loading"
+            placeholder="+351 927 382 368">
         </label>
 
         <label>
