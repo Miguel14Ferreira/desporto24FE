@@ -19,6 +19,7 @@ export class LoginComponent implements OnInit {
 
   loading = false;
   errorMessage = '';
+  successMessage = '';
 
   private returnUrl = '/menu';
 
@@ -30,6 +31,9 @@ export class LoginComponent implements OnInit {
 
   ngOnInit(): void {
     this.returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') || '/menu';
+
+    this.successMessage = sessionStorage.getItem('auth-success-message') || '';
+    sessionStorage.removeItem('auth-success-message');
 
     if (this.authenticationService.hasValidToken()) {
       this.router.navigateByUrl(this.returnUrl);
