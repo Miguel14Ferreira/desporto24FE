@@ -144,7 +144,50 @@ const PT: Dictionary = {
   'menu.security': 'Segurança',
   'menu.securityText': 'Altera a tua palavra-passe.',
   'menu.disputes': 'Contestações',
-  'menu.disputesText': 'Analisa e resolve contestações de faltas.'
+  'menu.disputesText': 'Analisa e resolve contestações de faltas.',
+
+  'about.title': 'Desporto aproxima pessoas.',
+  'about.subtitle': 'Criámos o Desporto24 para ser mais simples encontrar companhia para jogar, descobrir sessões perto de ti e transformar vontade de praticar em jogos reais.',
+  'about.who.title': 'Quem somos',
+  'about.who.text': 'Somos uma comunidade pensada para quem quer praticar desporto com mais frequência, conhecer jogadores e encontrar oportunidades para entrar em campo.',
+  'about.goal.title': 'O nosso objetivo',
+  'about.goal.text': 'Tornar mais fácil organizar e encontrar sessões desportivas, independentemente da modalidade ou do nível de experiência.',
+  'about.more.title': 'Mais do que jogos',
+  'about.more.text': 'Queremos que cada sessão possa trazer novos hábitos, novos parceiros de treino e muitas vezes novas amizades.',
+  'about.join': 'Juntar-me à comunidade',
+  'about.contact': 'Falar connosco',
+
+  'contact.title': 'Fala connosco',
+  'contact.subtitle': 'Tens uma ideia, uma sugestão ou algo que devíamos melhorar? Envia-nos.',
+  'contact.name': 'Nome',
+  'contact.subject': 'Assunto',
+  'contact.subjectPlaceholder': 'Ex.: Sugestão para torneios',
+  'contact.message': 'Mensagem',
+  'contact.messagePlaceholder': 'Conta-nos a tua ideia...',
+  'contact.preferNotSay': 'Prefiro não dizer',
+  'contact.sending': 'A enviar...',
+  'contact.send': 'Enviar mensagem',
+
+  'password.title': 'Alterar palavra-passe',
+  'password.subtitle': 'Confirma a palavra-passe atual e define uma nova.',
+  'password.current': 'Palavra-passe atual',
+  'password.new': 'Nova palavra-passe',
+  'password.confirm': 'Confirmar nova palavra-passe',
+  'password.minimum': 'Mínimo de 8 caracteres.',
+  'password.saving': 'A alterar...',
+  'password.save': 'Alterar palavra-passe',
+
+  'confirm.eyebrow': 'Ativação de conta',
+  'confirm.loadingTitle': 'A confirmar a tua conta...',
+  'confirm.loadingText': 'Só demora alguns segundos.',
+  'confirm.successTitle': 'Conta ativada',
+  'confirm.enter': 'Entrar no Desporto24',
+  'confirm.errorTitle': 'Não foi possível ativar a conta',
+  'confirm.back': 'Voltar ao login',
+
+  'notFound.title': 'Página não encontrada',
+  'notFound.text': 'A página que procuras não existe ou foi movida.',
+  'notFound.home': 'Voltar ao início'
 };
 
 const EN: Dictionary = {
@@ -287,7 +330,50 @@ const EN: Dictionary = {
   'menu.security': 'Security',
   'menu.securityText': 'Change your password.',
   'menu.disputes': 'Disputes',
-  'menu.disputesText': 'Review and resolve attendance disputes.'
+  'menu.disputesText': 'Review and resolve attendance disputes.',
+
+  'about.title': 'Sport brings people together.',
+  'about.subtitle': 'We created Desporto24 to make it easier to find people to play with, discover nearby sessions and turn the desire to be active into real games.',
+  'about.who.title': 'Who we are',
+  'about.who.text': 'We are a community for people who want to play sports more often, meet players and find opportunities to get in the game.',
+  'about.goal.title': 'Our goal',
+  'about.goal.text': 'Make it easier to organise and find sports sessions, regardless of the sport or experience level.',
+  'about.more.title': 'More than games',
+  'about.more.text': 'We want every session to create new habits, new training partners and often new friendships.',
+  'about.join': 'Join the community',
+  'about.contact': 'Contact us',
+
+  'contact.title': 'Talk to us',
+  'contact.subtitle': 'Have an idea, suggestion or something we should improve? Send it to us.',
+  'contact.name': 'Name',
+  'contact.subject': 'Subject',
+  'contact.subjectPlaceholder': 'E.g. Tournament suggestion',
+  'contact.message': 'Message',
+  'contact.messagePlaceholder': 'Tell us your idea...',
+  'contact.preferNotSay': 'Prefer not to say',
+  'contact.sending': 'Sending...',
+  'contact.send': 'Send message',
+
+  'password.title': 'Change password',
+  'password.subtitle': 'Confirm your current password and choose a new one.',
+  'password.current': 'Current password',
+  'password.new': 'New password',
+  'password.confirm': 'Confirm new password',
+  'password.minimum': 'Minimum 8 characters.',
+  'password.saving': 'Changing...',
+  'password.save': 'Change password',
+
+  'confirm.eyebrow': 'Account activation',
+  'confirm.loadingTitle': 'Confirming your account...',
+  'confirm.loadingText': 'This will only take a few seconds.',
+  'confirm.successTitle': 'Account activated',
+  'confirm.enter': 'Sign in to Desporto24',
+  'confirm.errorTitle': 'We could not activate the account',
+  'confirm.back': 'Back to sign in',
+
+  'notFound.title': 'Page not found',
+  'notFound.text': 'The page you are looking for does not exist or has been moved.',
+  'notFound.home': 'Back to home'
 };
 
 @Injectable({ providedIn: 'root' })
