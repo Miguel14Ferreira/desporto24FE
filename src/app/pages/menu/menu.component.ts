@@ -47,7 +47,7 @@ export class MenuComponent implements OnInit {
       .pipe(finalize(() => this.loadingProfile = false))
       .subscribe({
         next: profile => this.profile = profile,
-        error: () => this.errorMessage = 'Não foi possível carregar o teu perfil.'
+        error: () => this.errorMessage = t('feedback.profile.loadError')
       });
   }
 
