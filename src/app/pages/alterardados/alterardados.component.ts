@@ -20,6 +20,8 @@ export class AlterardadosComponent implements OnInit {
 
   loading = false;
   saving = false;
+  photoSaving = false;
+  photoEditing = false;
   errorMessage = '';
   successMessage = '';
 
@@ -73,7 +75,7 @@ export class AlterardadosComponent implements OnInit {
     this.errorMessage = '';
     this.successMessage = '';
 
-    this.myProfileService.update(request, this.photo)
+    this.myProfileService.update(request)
       .pipe(finalize(() => this.saving = false))
       .subscribe({
         next: updated => {
@@ -86,6 +88,47 @@ export class AlterardadosComponent implements OnInit {
           this.errorMessage = this.errorFrom(
             error,
             'Não foi possível atualizar o perfil.'
+          );
+        }
+      });
+  }
+
+  startPhotoEdit(): void {
+    this.photoEditing = true;
+    this.photo = undefined;
+    this.errorMessage = '';
+    this.successMessage = '';
+  }
+
+  cancelPhotoEdit(): void {
+    this.photoEditing = false;
+    this.photo = undefined;
+    this.photoPreview = this.profile ? (this.profileImage(this.profile) || '') : '';
+  }
+
+  savePhoto(): void {
+    if (!this.photo || this.photoSaving) {
+      return;
+    }
+
+    this.photoSaving = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    this.myProfileService.updatePhoto(this.photo)
+      .pipe(finalize(() => this.photoSaving = false))
+      .subscribe({
+        next: updated => {
+          this.profile = { ...updated };
+          this.photoPreview = this.profileImage(updated) || this.photoPreview;
+          this.photo = undefined;
+          this.photoEditing = false;
+          this.successMessage = 'Fotografia atualizada com sucesso.';
+        },
+        error: error => {
+          this.errorMessage = this.errorFrom(
+            error,
+            'Não foi possível atualizar a fotografia.'
           );
         }
       });
