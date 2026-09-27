@@ -1,8 +1,8 @@
 <section class="reset-page">
   <div class="reset-card">
-    <p class="eyebrow">Nova palavra-passe</p>
-    <h1>Define uma nova palavra-passe</h1>
-    <p class="subtitle">Escolhe uma palavra-passe com pelo menos 8 caracteres.</p>
+    <p class="eyebrow">{{ 'reset.newEyebrow' | t }}</p>
+    <h1>{{ 'reset.newTitle' | t }}</h1>
+    <p class="subtitle">{{ 'reset.newSubtitle' | t }}</p>
 
     @if (errorMessage) {
       <div class="feedback error-feedback">{{ errorMessage }}</div>
@@ -14,7 +14,7 @@
 
     <form (ngSubmit)="resetPassword()">
       <label>
-        <span>Nova palavra-passe</span>
+        <span>{{ 'password.new' | t }}</span>
         <div class="password-field">
           <input
             [type]="showPassword ? 'text' : 'password'"
@@ -25,13 +25,13 @@
             maxlength="128"
             [disabled]="loading || !token">
           <button type="button" (click)="showPassword = !showPassword">
-            {{ showPassword ? 'Ocultar' : 'Mostrar' }}
+            {{ showPassword ? ('common.hide' | t) : ('common.show' | t) }}
           </button>
         </div>
       </label>
 
       <label>
-        <span>Confirmar palavra-passe</span>
+        <span>{{ 'reset.confirmPassword' | t }}</span>
         <input
           [type]="showPassword ? 'text' : 'password'"
           name="confirmPassword"
@@ -43,10 +43,10 @@
       </label>
 
       <button type="submit" class="primary-action" [disabled]="loading || !token">
-        {{ loading ? 'A guardar...' : 'Guardar nova palavra-passe' }}
+        {{ loading ? ('profile.saving' | t) : ('reset.save' | t) }}
       </button>
     </form>
 
-    <button type="button" class="back-action" (click)="goToLogin()">Voltar ao login</button>
+    <button type="button" class="back-action" (click)="goToLogin()">{{ 'reset.back' | t }}</button>
   </div>
 </section>
