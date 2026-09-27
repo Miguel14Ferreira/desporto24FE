@@ -14,12 +14,31 @@
       <div class="feedback error-feedback">{{ errorMessage }}</div>
     }
 
-    @if (successMessage) {
-      <div class="feedback success-feedback">
-        <strong>Conta criada</strong>
-        <span>{{ successMessage }}</span>
-        <a routerLink="/login">Voltar ao login</a>
-      </div>
+    @if (registrationComplete) {
+      <section class="confirmation-card">
+        <p class="eyebrow">Confirmação de conta</p>
+        <h2>Verifica o teu email</h2>
+        <p>{{ successMessage }}</p>
+        <p class="confirmation-note">Não recebeste o email? Podes pedir um novo envio.</p>
+
+        @if (errorMessage) {
+          <div class="feedback error-feedback">{{ errorMessage }}</div>
+        }
+
+        <div class="confirmation-actions">
+          <button
+            type="button"
+            class="secondary-action resend-action"
+            [disabled]="resendLoading"
+            (click)="resendConfirmation()">
+            {{ resendLoading ? 'A reenviar...' : 'Reenviar email de confirmação' }}
+          </button>
+          <a class="primary-link" routerLink="/login">Ir para o login</a>
+        </div>
+      </section>
+    } @else {
+    @if (errorMessage) {
+      <div class="feedback error-feedback">{{ errorMessage }}</div>
     }
 
     <form class="register-card" (ngSubmit)="register()">
@@ -162,5 +181,6 @@
         </button>
       </div>
     </form>
+    }
   </div>
 </section>
