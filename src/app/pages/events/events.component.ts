@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { finalize } from 'rxjs';
 
 import { SessionSummary } from '../model/session-summary';
+import { appTranslate as t } from '../../i18n/i18n.service';
 import { SessionService } from '../../services/session.service';
 
 @Component({
@@ -54,7 +55,7 @@ export class EventsComponent implements OnInit {
       next: sessions => this.sessions = sessions,
       error: () => {
         this.sessions = [];
-        this.errorMessage = 'Não foi possível carregar as sessões. Tenta novamente.';
+        this.errorMessage = t('feedback.events.loadError');
       }
     });
   }
@@ -63,7 +64,7 @@ export class EventsComponent implements OnInit {
     this.locationError = '';
 
     if (!navigator.geolocation) {
-      this.locationError = 'O teu browser não suporta localização.';
+      this.locationError = t('feedback.location.unsupported');
       return;
     }
 
@@ -80,7 +81,7 @@ export class EventsComponent implements OnInit {
       },
       () => {
         this.locating = false;
-        this.locationError = 'Não foi possível obter a tua localização. Confirma a permissão do browser.';
+        this.locationError = t('feedback.location.error');
       },
       {
         enableHighAccuracy: false,
