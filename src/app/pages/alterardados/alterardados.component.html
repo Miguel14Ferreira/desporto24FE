@@ -85,7 +85,7 @@
 
           <label>
             <span>{{ 'profile.birthDate' | t }}</span>
-            <input type="date" name="dateOfBirth" [(ngModel)]="profile.dateOfBirth" [disabled]="saving">
+            <input type="date" name="dateOfBirth" [(ngModel)]="profile.dateOfBirth" [min]="minBirthDate" [max]="maxBirthDate" [disabled]="saving">
           </label>
 
           <label>
