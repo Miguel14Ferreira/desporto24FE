@@ -5,8 +5,10 @@ import { finalize } from 'rxjs';
 
 import { environment } from 'src/environment/environment';
 import { CommunityProfile } from '../model/community-profile';
+import { ReliabilitySummary } from '../model/reliability-summary';
 import { CommunityService } from '../../services/community.service';
 import { AuthenticationService } from '../../services/authethication.service';
+import { ReliabilityService } from '../../services/reliability.service';
 
 @Component({
   selector: 'app-perfis',
@@ -19,6 +21,7 @@ export class PerfisComponent implements OnInit {
   searchTerm = '';
   profiles: CommunityProfile[] = [];
   selectedProfile?: CommunityProfile;
+  selectedReliability?: ReliabilitySummary;
 
   loading = false;
   actionLoading = false;
@@ -33,7 +36,8 @@ export class PerfisComponent implements OnInit {
 
   constructor(
     private communityService: CommunityService,
-    private authenticationService: AuthenticationService
+    private authenticationService: AuthenticationService,
+    private reliabilityService: ReliabilityService
   ) {
     this.authenticationService.isLoggedIn();
     this.currentUsername = this.authenticationService.loggedInPerfilname || '';
@@ -101,12 +105,19 @@ export class PerfisComponent implements OnInit {
 
   openProfile(profile: CommunityProfile): void {
     this.selectedProfile = profile;
+    this.selectedReliability = undefined;
     this.actionError = '';
     this.actionSuccess = '';
+
+    this.reliabilityService.summary(profile.username).subscribe({
+      next: reliability => this.selectedReliability = reliability,
+      error: () => this.selectedReliability = undefined
+    });
   }
 
   closeProfile(): void {
     this.selectedProfile = undefined;
+    this.selectedReliability = undefined;
   }
 
   sendFriendRequest(profile: CommunityProfile): void {
