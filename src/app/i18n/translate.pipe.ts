@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, OnDestroy, Pipe, PipeTransform } from '@angular/core';
+import { Pipe, PipeTransform } from '@angular/core';
 import { I18nService } from './i18n.service';
 
 @Pipe({
