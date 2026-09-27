@@ -1,4 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { appTranslate as t } from '../../i18n/i18n.service';
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
@@ -37,7 +38,7 @@ export class LoginMFAComponent implements OnInit, OnDestroy {
     this.expiresAt = sessionStorage.getItem('mfa-expires-at') || '';
 
     if (!this.challengeId) {
-      this.errorMessage = 'O desafio MFA já não está disponível. Inicia sessão novamente.';
+      this.errorMessage = t('feedback.mfa.missing');
       return;
     }
 
@@ -55,18 +56,18 @@ export class LoginMFAComponent implements OnInit, OnDestroy {
     const code = this.code.trim();
 
     if (!this.challengeId) {
-      this.errorMessage = 'O desafio MFA expirou. Inicia sessão novamente.';
+      this.errorMessage = t('feedback.mfa.expiredLogin');
       return;
     }
 
     if (this.isChallengeExpired()) {
-      this.errorMessage = 'O código MFA expirou. Reenvia o código para continuar.';
+      this.errorMessage = t('feedback.mfa.codeExpired');
       this.successMessage = '';
       return;
     }
 
     if (!code) {
-      this.errorMessage = 'Introduz o código recebido por SMS.';
+      this.errorMessage = t('feedback.mfa.enterCode');
       return;
     }
 
@@ -83,7 +84,7 @@ export class LoginMFAComponent implements OnInit, OnDestroy {
       .subscribe({
         next: response => {
           if (!response.token) {
-            this.errorMessage = 'O servidor não devolveu um token de autenticação.';
+            this.errorMessage = t('feedback.mfa.noToken');
             return;
           }
 
@@ -95,7 +96,7 @@ export class LoginMFAComponent implements OnInit, OnDestroy {
         error: error => {
           this.errorMessage = this.errorFrom(
             error,
-            'Código inválido ou expirado.'
+            t('feedback.mfa.invalid')
           );
         }
       });
@@ -115,7 +116,7 @@ export class LoginMFAComponent implements OnInit, OnDestroy {
       .subscribe({
         next: response => {
           if (!response.challengeId) {
-            this.errorMessage = 'Não foi possível criar um novo desafio MFA.';
+            this.errorMessage = t('feedback.mfa.noChallenge');
             return;
           }
 
@@ -133,13 +134,13 @@ export class LoginMFAComponent implements OnInit, OnDestroy {
             this.stopCountdown();
           }
 
-          this.successMessage = 'Foi enviado um novo código por SMS.';
+          this.successMessage = t('feedback.mfa.resent');
           this.startResendCooldown();
         },
         error: error => {
           this.errorMessage = this.errorFrom(
             error,
-            'Não foi possível reenviar o código.'
+            t('feedback.mfa.resendError')
           );
         }
       });
