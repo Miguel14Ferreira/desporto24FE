@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { appTranslate as t } from '../../i18n/i18n.service';
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { finalize } from 'rxjs';
 
 import { environment } from 'src/environment/environment';
@@ -15,7 +15,7 @@ import { AuthenticationService } from '../../services/authethication.service';
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false
 })
-export class PerfisComponent {
+export class PerfisComponent implements OnInit {
   searchTerm = '';
   profiles: CommunityProfile[] = [];
   selectedProfile?: CommunityProfile;
@@ -39,13 +39,39 @@ export class PerfisComponent {
     this.currentUsername = this.authenticationService.loggedInPerfilname || '';
   }
 
+  ngOnInit(): void {
+    this.loadDiscoverableProfiles();
+  }
+
+  private loadDiscoverableProfiles(): void {
+    this.loading = true;
+    this.errorMessage = '';
+
+    this.communityService.discoverProfiles()
+      .pipe(finalize(() => this.loading = false))
+      .subscribe({
+        next: profiles => {
+          this.profiles = profiles;
+          this.searched = false;
+        },
+        error: error => {
+          this.profiles = [];
+          this.errorMessage = this.errorFrom(
+            error,
+            t('feedback.community.searchError')
+          );
+        }
+      });
+  }
+
   search(): void {
     const term = this.searchTerm.trim();
 
     if (!term) {
-      this.errorMessage = t('feedback.community.searchRequired');
-      this.profiles = [];
-      this.searched = false;
+      this.selectedProfile = undefined;
+      this.actionError = '';
+      this.actionSuccess = '';
+      this.loadDiscoverableProfiles();
       return;
     }
 
