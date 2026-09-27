@@ -3,15 +3,15 @@
     <header class="page-header">
       <div>
         <p class="eyebrow">Desporto24</p>
-        <h1>Notificações</h1>
+        <h1>{{ 'notifications.title' | t }}</h1>
         <p class="subtitle">
-          Tens {{ unreadCount }} {{ unreadCount === 1 ? 'notificação por ler' : 'notificações por ler' }}.
+          {{ unreadCount === 1 ? ('notifications.unreadOne' | t:{ count: unreadCount }) : ('notifications.unreadMany' | t:{ count: unreadCount }) }}
         </p>
       </div>
 
       <div class="header-actions">
-        <a class="secondary-action" routerLink="/menu/events">Sessões</a>
-        <a class="secondary-action" routerLink="/menu">Menu</a>
+        <a class="secondary-action" routerLink="/menu/events">{{ 'common.sessions' | t }}</a>
+        <a class="secondary-action" routerLink="/menu">{{ 'common.menu' | t }}</a>
       </div>
     </header>
 
@@ -24,20 +24,20 @@
     }
 
     @if (loading) {
-      <div class="state-card">A carregar notificações...</div>
+      <div class="state-card">{{ 'notifications.loading' | t }}</div>
     }
 
     @if (!loading && errorMessage) {
       <div class="state-card error-state">
         <p>{{ errorMessage }}</p>
-        <button type="button" (click)="load()">Tentar novamente</button>
+        <button type="button" (click)="load()">{{ 'common.retry' | t }}</button>
       </div>
     }
 
     @if (!loading && !errorMessage && notifications.length === 0) {
       <div class="state-card">
-        <h2>Sem notificações</h2>
-        <p>Quando houver novidades sobre sessões, lista de espera ou pedidos de amizade, aparecem aqui.</p>
+        <h2>{{ 'notifications.emptyTitle' | t }}</h2>
+        <p>{{ 'notifications.emptyText' | t }}</p>
       </div>
     }
 
@@ -54,7 +54,7 @@
               <div class="notification-card__top">
                 <span class="type-badge">{{ typeLabel(notification) }}</span>
                 @if (!notification.read) {
-                  <span class="unread-dot" aria-label="Não lida"></span>
+                  <span class="unread-dot" [attr.aria-label]="'notifications.unreadLabel' | t"></span>
                 }
               </div>
 
@@ -68,8 +68,8 @@
         <aside class="notification-detail">
           @if (!selected) {
             <div class="detail-placeholder">
-              <h2>Seleciona uma notificação</h2>
-              <p>Abre uma notificação para veres os detalhes e ações disponíveis.</p>
+              <h2>{{ 'notifications.selectTitle' | t }}</h2>
+              <p>{{ 'notifications.selectText' | t }}</p>
             </div>
           }
 
@@ -98,7 +98,7 @@
               <div class="detail-actions">
                 @if (selected.sessionId !== null) {
                   <button type="button" class="primary-action" (click)="openSession(selected)">
-                    Abrir sessão
+                    {{ 'notifications.openSession' | t }}
                   </button>
                 }
 
@@ -108,7 +108,7 @@
                     class="primary-action"
                     [disabled]="actionLoadingId !== null"
                     (click)="acceptFriendRequest(selected)">
-                    {{ actionLoadingId === selected.id ? 'A processar...' : 'Aceitar amizade' }}
+                    {{ actionLoadingId === selected.id ? ('common.processing' | t) : ('notifications.acceptFriend' | t) }}
                   </button>
 
                   <button
@@ -125,7 +125,7 @@
                   class="danger-action"
                   [disabled]="actionLoadingId !== null"
                   (click)="deleteNotification(selected)">
-                  {{ actionLoadingId === selected.id ? 'A apagar...' : 'Apagar' }}
+                  {{ actionLoadingId === selected.id ? ('notifications.deleting' | t) : ('notifications.delete' | t) }}
                 </button>
               </div>
             </div>
