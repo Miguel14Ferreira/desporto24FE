@@ -24,6 +24,12 @@
       </div>
 
       @if (isAuthenticated()) {
+        <a class="notification-link" routerLink="/menu/notifications" routerLinkActive="active-link">
+          {{ 'menu.notifications' | t }}
+          @if (unreadNotifications > 0) {
+            <span class="notification-badge">{{ unreadNotifications > 99 ? '99+' : unreadNotifications }}</span>
+          }
+        </a>
         <a class="login-link" routerLink="/menu" routerLinkActive="active-link">{{ 'common.menu' | t }}</a>
       } @else {
         <a class="login-link" routerLink="/login" routerLinkActive="active-link">{{ 'nav.login' | t }}</a>
