@@ -52,17 +52,6 @@
         </button>
       </form>
 
-      <div class="confirmation-help">
-        <span>Não recebeste o email de confirmação?</span>
-        <button
-          type="button"
-          class="resend-confirmation"
-          [disabled]="resendLoading || !username.trim()"
-          (click)="resendConfirmation()">
-          {{ resendLoading ? 'A reenviar...' : 'Reenviar email' }}
-        </button>
-      </div>
-
       <div class="login-links">
         <a routerLink="/login/resetPassword">Esqueci-me da palavra-passe</a>
         <a routerLink="/login/registerNewUser">Criar nova conta</a>
