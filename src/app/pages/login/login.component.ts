@@ -1,4 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { appTranslate as t } from '../../i18n/i18n.service';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { finalize } from 'rxjs';
@@ -51,7 +52,7 @@ export class LoginComponent implements OnInit {
     const username = this.username.trim();
 
     if (!username || !this.password) {
-      this.errorMessage = 'Preenche o nome de utilizador e a palavra-passe.';
+      this.errorMessage = t('feedback.login.required');
       return;
     }
 
@@ -69,7 +70,7 @@ export class LoginComponent implements OnInit {
         next: response => {
           if (response.mfaRequired) {
             if (!response.challengeId) {
-              this.errorMessage = 'O servidor não devolveu um desafio MFA válido.';
+              this.errorMessage = t('feedback.login.noChallenge');
               return;
             }
 
@@ -87,7 +88,7 @@ export class LoginComponent implements OnInit {
           }
 
           if (!response.token) {
-            this.errorMessage = 'O servidor não devolveu um token de autenticação.';
+            this.errorMessage = t('feedback.login.noToken');
             return;
           }
 
@@ -97,7 +98,7 @@ export class LoginComponent implements OnInit {
         error: error => {
           this.errorMessage = this.errorFrom(
             error,
-            'Não foi possível iniciar sessão. Confirma as credenciais.'
+            t('feedback.login.error')
           );
 
           const normalizedError = this.errorMessage.toLowerCase();
@@ -122,14 +123,14 @@ export class LoginComponent implements OnInit {
       .pipe(finalize(() => this.resendLoading = false))
       .subscribe({
         next: response => {
-          this.successMessage = response.message || 'Foi enviado um novo email de confirmação.';
+          this.successMessage = t('feedback.register.resent');
           this.errorMessage = '';
           this.startResendCooldown();
         },
         error: error => {
           this.errorMessage = this.errorFrom(
             error,
-            'Não foi possível reenviar o email de confirmação.'
+            t('feedback.register.resendError')
           );
         }
       });
