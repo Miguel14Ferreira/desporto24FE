@@ -1,20 +1,20 @@
 <section class="mfa-page">
   <div class="mfa-card">
-    <p class="eyebrow">Verificação adicional</p>
-    <h1>Confirma o código MFA</h1>
+    <p class="eyebrow">{{ 'mfa.eyebrow' | t }}</p>
+    <h1>{{ 'mfa.title' | t }}</h1>
     <p class="subtitle">
-      Enviámos um código por SMS.
+      {{ 'mfa.sent' | t }}
     </p>
 
     @if (countdownLabel() && !isChallengeExpired()) {
       <div class="countdown" aria-live="polite">
-        <span>O código expira em</span>
+        <span>{{ 'mfa.expiresIn' | t }}</span>
         <strong>{{ countdownLabel() }}</strong>
       </div>
     } @else if (isChallengeExpired()) {
       <div class="countdown countdown-expired" aria-live="polite">
-        <span>Código expirado</span>
-        <strong>Reenvia para continuar</strong>
+        <span>{{ 'mfa.expired' | t }}</span>
+        <strong>{{ 'mfa.resendToContinue' | t }}</strong>
       </div>
     }
 
@@ -28,20 +28,20 @@
 
     <form (ngSubmit)="confirmCode()">
       <label>
-        <span>Código</span>
+        <span>{{ 'mfa.code' | t }}</span>
         <input
           name="code"
           [(ngModel)]="code"
           autocomplete="one-time-code"
           [disabled]="confirming || isChallengeExpired()"
-          placeholder="Código recebido por SMS">
+          [placeholder]="'mfa.codePlaceholder' | t">
       </label>
 
       <button
         type="submit"
         class="primary-action"
         [disabled]="confirming || !challengeId || isChallengeExpired()">
-        {{ confirming ? 'A confirmar...' : 'Confirmar e entrar' }}
+        {{ confirming ? ('mfa.confirming' | t) : ('mfa.confirm' | t) }}
       </button>
     </form>
 
@@ -51,12 +51,12 @@
         [disabled]="resending || !challengeId || resendCooldownSeconds > 0"
         (click)="resendCode()">
         {{ resending
-          ? 'A reenviar...'
+          ? ('login.resending' | t)
           : (resendCooldownSeconds > 0
-              ? 'Podes reenviar em ' + resendCooldownSeconds + 's'
-              : 'Reenviar código') }}
+              ? ('login.resendIn' | t:{ seconds: resendCooldownSeconds })
+              : ('mfa.resend' | t)) }}
       </button>
-      <button type="button" (click)="cancel()">Voltar ao login</button>
+      <button type="button" (click)="cancel()">{{ 'mfa.back' | t }}</button>
     </div>
   </div>
 </section>
