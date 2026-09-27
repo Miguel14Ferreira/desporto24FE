@@ -1,4 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { appTranslate as t } from '../../i18n/i18n.service';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { finalize } from 'rxjs';
 
@@ -42,7 +43,7 @@ export class AlterardadosComponent implements OnInit {
           this.profile = { ...profile };
           this.photoPreview = this.profileImage(profile) || '';
         },
-        error: () => this.errorMessage = 'Não foi possível carregar os teus dados.'
+        error: () => this.errorMessage = t('feedback.profile.dataLoadError')
       });
   }
 
@@ -52,7 +53,7 @@ export class AlterardadosComponent implements OnInit {
     }
 
     if (!this.profile.email?.trim()) {
-      this.errorMessage = 'O email é obrigatório.';
+      this.errorMessage = t('feedback.profile.emailRequired');
       return;
     }
 
@@ -82,12 +83,12 @@ export class AlterardadosComponent implements OnInit {
           this.profile = { ...updated };
           this.photo = undefined;
           this.photoPreview = this.profileImage(updated) || this.photoPreview;
-          this.successMessage = 'Perfil atualizado com sucesso.';
+          this.successMessage = t('feedback.profile.updated');
         },
         error: error => {
           this.errorMessage = this.errorFrom(
             error,
-            'Não foi possível atualizar o perfil.'
+            t('feedback.profile.updateError')
           );
         }
       });
@@ -123,12 +124,12 @@ export class AlterardadosComponent implements OnInit {
           this.photoPreview = this.profileImage(updated) || this.photoPreview;
           this.photo = undefined;
           this.photoEditing = false;
-          this.successMessage = 'Fotografia atualizada com sucesso.';
+          this.successMessage = t('feedback.profile.photoUpdated');
         },
         error: error => {
           this.errorMessage = this.errorFrom(
             error,
-            'Não foi possível atualizar a fotografia.'
+            t('feedback.profile.photoError')
           );
         }
       });
@@ -144,7 +145,7 @@ export class AlterardadosComponent implements OnInit {
     }
 
     if (!file.type.startsWith('image/')) {
-      this.errorMessage = 'Escolhe um ficheiro de imagem.';
+      this.errorMessage = t('feedback.image.choose');
       input.value = '';
       return;
     }
