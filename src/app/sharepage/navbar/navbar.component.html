@@ -23,7 +23,11 @@
         </button>
       </div>
 
-      <a class="login-link" routerLink="/login" routerLinkActive="active-link">{{ 'nav.login' | t }}</a>
+      @if (isAuthenticated()) {
+        <a class="login-link" routerLink="/menu" routerLinkActive="active-link">{{ 'common.menu' | t }}</a>
+      } @else {
+        <a class="login-link" routerLink="/login" routerLinkActive="active-link">{{ 'nav.login' | t }}</a>
+      }
     </div>
   </div>
 </nav>
