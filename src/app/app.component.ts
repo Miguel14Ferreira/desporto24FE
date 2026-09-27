@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { AuthenticationService } from './services/authethication.service';
+import { appTranslate as t } from './i18n/i18n.service';
 
 @Component({
     selector: 'app-root',
@@ -32,7 +33,7 @@ export class AppComponent implements OnInit {
       next: response => {
         sessionStorage.setItem(
           'auth-success-message',
-          response.message || 'Conta ativada com sucesso. Já podes iniciar sessão.'
+          t('feedback.confirm.successLogin')
         );
         this.router.navigateByUrl('/login');
       },
@@ -42,7 +43,7 @@ export class AppComponent implements OnInit {
           'auth-error-message',
           typeof apiMessage === 'string' && apiMessage.trim()
             ? apiMessage
-            : 'Não foi possível ativar a conta. O link pode ter expirado.'
+            : t('feedback.confirm.error')
         );
         this.router.navigateByUrl('/login');
       }
