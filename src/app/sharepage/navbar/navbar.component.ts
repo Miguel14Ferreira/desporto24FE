@@ -1,7 +1,8 @@
-import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthenticationService } from 'src/app/services/authethication.service';
 import { AppLanguage, I18nService } from 'src/app/i18n/i18n.service';
+import { NotificationApiService } from 'src/app/services/notification-api.service';
 
 @Component({
     selector: 'app-navbar',
@@ -10,14 +11,18 @@ import { AppLanguage, I18nService } from 'src/app/i18n/i18n.service';
     changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
-export class NavbarComponent implements OnInit {
+export class NavbarComponent implements OnInit, OnDestroy {
 
   dark!:boolean;
   escuro:string = "escuro";
   claro:string = "claro";
+  unreadNotifications = 0;
+  private notificationTimer?: ReturnType<typeof setInterval>;
+
   constructor(
     private router: Router,
     private authService: AuthenticationService,
+    private notificationService: NotificationApiService,
     public i18n: I18nService
   ) { }
 
@@ -28,6 +33,25 @@ export class NavbarComponent implements OnInit {
     } else {
       this.dark = true
     }
+      if (this.isAuthenticated()) {
+        this.loadUnreadNotifications();
+        this.notificationTimer = setInterval(() => this.loadUnreadNotifications(), 15000);
+      }
+    }
+
+    ngOnDestroy(): void {
+      if (this.notificationTimer) {
+        clearInterval(this.notificationTimer);
+      }
+    }
+
+    loadUnreadNotifications(): void {
+      this.notificationService.mine().subscribe({
+        next: notifications => {
+          this.unreadNotifications = notifications.filter(notification => !notification.read).length;
+        },
+        error: () => this.unreadNotifications = 0
+      });
     }
     
     DarkMode(){
