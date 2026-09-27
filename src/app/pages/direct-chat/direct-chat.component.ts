@@ -3,11 +3,12 @@ import { appTranslate as t } from '../../i18n/i18n.service';
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { JwtHelperService } from '@auth0/angular-jwt';
-import { forkJoin, finalize } from 'rxjs';
+import { Subscription, forkJoin, finalize } from 'rxjs';
 
 import { DirectChatInfo, DirectChatMessage } from '../model/direct-chat';
 import { DirectChatService } from '../../services/direct-chat.service';
 import { CommunityService } from '../../services/community.service';
+import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.service';
 
 @Component({
   selector: 'app-direct-chat',
@@ -34,12 +35,13 @@ export class DirectChatComponent implements OnInit, OnDestroy {
   readonly emojis = ['😀', '😂', '😊', '😍', '🥳', '😎', '😉', '👍', '👏', '🙌', '🔥', '⚽', '🏀', '🎾', '🏓', '💪', '❤️', '✅'];
 
   private readonly jwtHelper = new JwtHelperService();
-  private refreshTimer?: ReturnType<typeof setInterval>;
+  private readonly realtimeSubscriptions = new Subscription();
 
   constructor(
     private route: ActivatedRoute,
     private chatService: DirectChatService,
-    private communityService: CommunityService
+    private communityService: CommunityService,
+    private realtimeService: DirectChatRealtimeService
   ) {}
 
   ngOnInit(): void {
@@ -52,17 +54,34 @@ export class DirectChatComponent implements OnInit, OnDestroy {
     }
 
     this.load();
-    this.refreshTimer = setInterval(() => {
-      if (!document.hidden && !this.sending) {
-        this.refreshMessages();
-      }
-    }, 7000);
+    this.realtimeService.connect();
+
+    this.realtimeSubscriptions.add(
+      this.realtimeService.messages$.subscribe(message => {
+        if (!this.belongsToCurrentConversation(message)) {
+          return;
+        }
+
+        const alreadyPresent = message.id !== null
+          && this.messages.some(existing => existing.id === message.id);
+
+        if (!alreadyPresent) {
+          this.messages = this.sorted([...this.messages, message]);
+        }
+      })
+    );
+
+    this.realtimeSubscriptions.add(
+      this.realtimeService.connected$.subscribe(connected => {
+        if (connected) {
+          this.refreshMessages();
+        }
+      })
+    );
   }
 
   ngOnDestroy(): void {
-    if (this.refreshTimer) {
-      clearInterval(this.refreshTimer);
-    }
+    this.realtimeSubscriptions.unsubscribe();
   }
 
   load(): void {
@@ -233,6 +252,20 @@ export class DirectChatComponent implements OnInit, OnDestroy {
 
   private sorted(messages: DirectChatMessage[]): DirectChatMessage[] {
     return [...messages].sort((a, b) => this.timestamp(a) - this.timestamp(b));
+  }
+
+  private belongsToCurrentConversation(message: DirectChatMessage): boolean {
+    if (!this.currentUsername || !this.recipientUsername) {
+      return false;
+    }
+
+    const current = this.currentUsername.toLowerCase();
+    const recipient = this.recipientUsername.toLowerCase();
+    const sender = message.username1.toLowerCase();
+    const receiver = message.username2.toLowerCase();
+
+    return (sender === current && receiver === recipient)
+      || (sender === recipient && receiver === current);
   }
 
   private resolveRecipient(): string {
