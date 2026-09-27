@@ -81,6 +81,7 @@
                 <span class="blocked-badge">{{ 'friends.blockedByFriend' | t }}</span>
               }
 
+              <button type="button" class="secondary-action" (click)="openProfile(friend)">Ver perfil</button>
               <a [routerLink]="['/menu/friendList/chat', friend.username]">{{ 'friends.openChat' | t }}</a>
 
               @if (!friend.chatBlocked || friend.blockedByMe) {
@@ -126,6 +127,81 @@
             </div>
           </article>
         }
+      </div>
+    }
+    @if (profileLoading) {
+      <div class="profile-backdrop">
+        <div class="profile-detail">A carregar perfil...</div>
+      </div>
+    }
+
+    @if (selectedProfile) {
+      <div class="profile-backdrop" (click)="closeProfile()">
+        <article class="profile-detail" (click)="$event.stopPropagation()">
+          <button type="button" class="close-detail" (click)="closeProfile()">×</button>
+
+          <div class="detail-heading">
+            <div class="avatar large-avatar">
+              @if (profileImage(selectedProfile); as image) {
+                <img [src]="image" [alt]="selectedProfile.username">
+              } @else {
+                <span>{{ initials(selectedProfile) }}</span>
+              }
+            </div>
+
+            <div>
+              <p class="eyebrow">Perfil</p>
+              <h2>{{ selectedProfile.username }}</h2>
+              <p>{{ selectedProfile.fullName || ('friends.player' | t) }}</p>
+            </div>
+          </div>
+
+          <div class="profile-meta">
+            <div>
+              <span>{{ 'common.location' | t }}</span>
+              <strong>{{ selectedProfile.location || ('common.notProvidedF' | t) }}</strong>
+            </div>
+            <div>
+              <span>{{ 'common.country' | t }}</span>
+              <strong>{{ selectedProfile.country || ('common.notProvided' | t) }}</strong>
+            </div>
+            <div>
+              <span>{{ 'profileData.favoriteSports' | t }}</span>
+              <strong>{{ selectedProfile.favoriteSports || ('common.notProvided' | t) }}</strong>
+            </div>
+            <div>
+              <span>{{ 'community.memberSince' | t }}</span>
+              <strong>{{ selectedProfile.joinDateDisplay || ('common.noInfo' | t) }}</strong>
+            </div>
+
+            @if (selectedReliability) {
+              <div>
+                <span>Taxa de presença</span>
+                <strong>{{ selectedReliability.attendanceRate | number:'1.0-0' }}%</strong>
+              </div>
+              <div>
+                <span>Sessões concluídas</span>
+                <strong>{{ selectedReliability.completedSessions }}</strong>
+              </div>
+              <div>
+                <span>Faltas</span>
+                <strong>{{ selectedReliability.noShows }}</strong>
+              </div>
+              <div>
+                <span>Estado de fiabilidade</span>
+                <strong>
+                  {{ selectedReliability.joinRestricted
+                    ? 'Restrito'
+                    : (selectedReliability.warning ? 'Em observação' : 'Bom') }}
+                </strong>
+              </div>
+            }
+          </div>
+
+          <div class="detail-actions">
+            <a [routerLink]="['/menu/friendList/chat', selectedProfile.username]">Abrir chat</a>
+          </div>
+        </article>
       </div>
     }
   </div>
