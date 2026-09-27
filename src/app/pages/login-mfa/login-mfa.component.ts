@@ -22,8 +22,10 @@ export class LoginMFAComponent implements OnInit, OnDestroy {
   errorMessage = '';
   successMessage = '';
   remainingSeconds: number | null = null;
+  resendCooldownSeconds = 0;
 
   private countdownTimer?: ReturnType<typeof setInterval>;
+  private resendCooldownTimer?: ReturnType<typeof setInterval>;
 
   constructor(
     private authService: AuthenticationService,
@@ -44,6 +46,9 @@ export class LoginMFAComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.stopCountdown();
+    if (this.resendCooldownTimer) {
+      clearInterval(this.resendCooldownTimer);
+    }
   }
 
   confirmCode(): void {
@@ -129,6 +134,7 @@ export class LoginMFAComponent implements OnInit, OnDestroy {
           }
 
           this.successMessage = 'Foi enviado um novo código por SMS.';
+          this.startResendCooldown();
         },
         error: error => {
           this.errorMessage = this.errorFrom(
@@ -161,6 +167,20 @@ export class LoginMFAComponent implements OnInit, OnDestroy {
 
     const parsed = Date.parse(this.expiresAt);
     return !Number.isNaN(parsed) && parsed <= Date.now();
+  }
+
+  private startResendCooldown(): void {
+    this.resendCooldownSeconds = 60;
+    if (this.resendCooldownTimer) {
+      clearInterval(this.resendCooldownTimer);
+    }
+    this.resendCooldownTimer = setInterval(() => {
+      this.resendCooldownSeconds = Math.max(0, this.resendCooldownSeconds - 1);
+      if (this.resendCooldownSeconds === 0 && this.resendCooldownTimer) {
+        clearInterval(this.resendCooldownTimer);
+        this.resendCooldownTimer = undefined;
+      }
+    }, 1000);
   }
 
   private startCountdown(): void {
