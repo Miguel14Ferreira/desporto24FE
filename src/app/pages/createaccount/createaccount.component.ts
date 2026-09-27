@@ -274,6 +274,7 @@ export class CreateaccountComponent {
   errorMessage = '';
   successMessage = '';
   registrationComplete = false;
+  existingAccountRecovery = false;
   resendLoading = false;
 
   constructor(private authenticationService: AuthenticationService) {}
@@ -305,6 +306,7 @@ export class CreateaccountComponent {
     this.loading = true;
     this.errorMessage = '';
     this.successMessage = '';
+    this.existingAccountRecovery = false;
 
     this.authenticationService.register(request, this.photo)
       .pipe(finalize(() => this.loading = false))
@@ -319,6 +321,9 @@ export class CreateaccountComponent {
             error,
             'Não foi possível criar a conta.'
           );
+          this.existingAccountRecovery = this.errorMessage
+            .toLowerCase()
+            .includes('já existe um perfil');
         }
       });
   }
