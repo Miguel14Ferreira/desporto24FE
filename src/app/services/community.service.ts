@@ -25,6 +25,12 @@ export class CommunityService {
     );
   }
 
+  publicProfile(username: string): Observable<CommunityProfile> {
+    return this.http.get<CommunityProfile>(
+      this.profileUrl + '/' + encodeURIComponent(username)
+    );
+  }
+
   sendFriendRequest(username: string): Observable<unknown> {
     return this.http.post(
       this.friendsUrl + '/add/' + encodeURIComponent(username),
