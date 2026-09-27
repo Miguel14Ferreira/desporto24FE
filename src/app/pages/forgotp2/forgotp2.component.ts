@@ -1,4 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { appTranslate as t } from '../../i18n/i18n.service';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { finalize } from 'rxjs';
@@ -32,7 +33,7 @@ export class Forgotp2Component implements OnInit {
     this.token = this.route.snapshot.paramMap.get('token') || '';
 
     if (!this.token) {
-      this.errorMessage = 'O link de recuperação não contém um token válido.';
+      this.errorMessage = t('feedback.reset.invalidToken');
     }
   }
 
@@ -45,12 +46,12 @@ export class Forgotp2Component implements OnInit {
     this.successMessage = '';
 
     if (this.newPassword.length < 8) {
-      this.errorMessage = 'A nova palavra-passe tem de ter pelo menos 8 caracteres.';
+      this.errorMessage = t('feedback.password.min8');
       return;
     }
 
     if (this.newPassword !== this.confirmPassword) {
-      this.errorMessage = 'A nova palavra-passe e a confirmação não coincidem.';
+      this.errorMessage = t('feedback.password.mismatch');
       return;
     }
 
@@ -60,14 +61,14 @@ export class Forgotp2Component implements OnInit {
       .pipe(finalize(() => this.loading = false))
       .subscribe({
         next: response => {
-          this.successMessage = response.message || 'Palavra-passe alterada com sucesso.';
+          this.successMessage = t('feedback.reset.changed');
           this.newPassword = '';
           this.confirmPassword = '';
         },
         error: error => {
           this.errorMessage = this.errorFrom(
             error,
-            'Não foi possível redefinir a palavra-passe. O link pode ter expirado.'
+            t('feedback.reset.error')
           );
         }
       });
