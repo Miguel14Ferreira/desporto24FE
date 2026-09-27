@@ -44,6 +44,10 @@ export class NavbarComponent implements OnInit {
       this.i18n.setLanguage(language);
     }
 
+    isAuthenticated(): boolean {
+      return this.authService.isLoggedIn();
+    }
+
     remover(){
       this.router.navigate(['login']);
       this.authService.logOut2();
