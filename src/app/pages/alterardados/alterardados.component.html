@@ -39,10 +39,42 @@
           <div>
             <strong>@{{ profile.username }}</strong>
             <p>O nome de utilizador é gerido separadamente da edição do perfil.</p>
-            <label class="upload-action">
-              <input type="file" accept="image/*" [disabled]="saving" (change)="onPhotoChange($event)">
-              Escolher fotografia
-            </label>
+            @if (!photoEditing) {
+              <button
+                type="button"
+                class="upload-action"
+                [disabled]="saving || photoSaving"
+                (click)="startPhotoEdit()">
+                Alterar fotografia
+              </button>
+            } @else {
+              <div class="photo-edit-actions">
+                <label class="upload-action">
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    [disabled]="photoSaving"
+                    (change)="onPhotoChange($event)">
+                  Escolher nova fotografia
+                </label>
+
+                <button
+                  type="button"
+                  class="photo-save-action"
+                  [disabled]="photoSaving || !photo"
+                  (click)="savePhoto()">
+                  {{ photoSaving ? 'A guardar...' : 'Guardar fotografia' }}
+                </button>
+
+                <button
+                  type="button"
+                  class="photo-cancel-action"
+                  [disabled]="photoSaving"
+                  (click)="cancelPhotoEdit()">
+                  Cancelar
+                </button>
+              </div>
+            }
           </div>
         </section>
 
