@@ -26,9 +26,13 @@
           <button
             type="button"
             class="resend-confirmation"
-            [disabled]="resendLoading"
+            [disabled]="resendLoading || resendCooldownSeconds > 0"
             (click)="resendConfirmation()">
-            {{ resendLoading ? 'A reenviar...' : 'Reenviar email de confirmação' }}
+            {{ resendLoading
+              ? 'A reenviar...'
+              : (resendCooldownSeconds > 0
+                  ? 'Podes reenviar em ' + resendCooldownSeconds + 's'
+                  : 'Reenviar email de confirmação') }}
           </button>
         </div>
       }
