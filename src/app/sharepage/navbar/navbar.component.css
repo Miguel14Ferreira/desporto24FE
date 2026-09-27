@@ -62,3 +62,39 @@
     display: none;
   }
 }
+
+
+.language-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: .25rem;
+  margin-left: .25rem;
+  padding: .25rem .35rem;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: .65rem;
+  background: rgba(255,255,255,.04);
+}
+
+.language-switch button {
+  border: 0;
+  padding: .25rem .35rem;
+  background: transparent;
+  color: #94a3b8;
+  font-size: .78rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.language-switch span {
+  color: rgba(255,255,255,.22);
+}
+
+.language-switch .active-language {
+  color: #7dd3fc;
+}
+
+@media (max-width: 620px) {
+  .language-switch {
+    margin-left: 0;
+  }
+}
