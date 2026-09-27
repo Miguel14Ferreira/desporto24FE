@@ -117,6 +117,29 @@
               <span>{{ 'community.memberSince' | t }}</span>
               <strong>{{ selectedProfile.joinDateDisplay || ('common.noInfo' | t) }}</strong>
             </div>
+
+            @if (selectedReliability) {
+              <div>
+                <span>Taxa de presença</span>
+                <strong>{{ selectedReliability.attendanceRate | number:'1.0-0' }}%</strong>
+              </div>
+              <div>
+                <span>Sessões concluídas</span>
+                <strong>{{ selectedReliability.completedSessions }}</strong>
+              </div>
+              <div>
+                <span>Faltas</span>
+                <strong>{{ selectedReliability.noShows }}</strong>
+              </div>
+              <div>
+                <span>Estado de fiabilidade</span>
+                <strong>
+                  {{ selectedReliability.joinRestricted
+                    ? 'Restrito'
+                    : (selectedReliability.warning ? 'Em observação' : 'Bom') }}
+                </strong>
+              </div>
+            }
           </div>
 
           <div class="detail-actions">
