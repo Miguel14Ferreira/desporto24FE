@@ -258,6 +258,8 @@ const PT: Dictionary = {
   'community.memberSince': 'Membro desde',
   'community.ownProfile': 'Este é o teu perfil.',
   'community.requestPending': 'Pedido de amizade pendente',
+  'community.discoverTitle': 'Jogadores para descobrir',
+  'community.discoverHint': 'Explora alguns jogadores da comunidade ou pesquisa por nome de utilizador.',
   'community.sendRequest': 'Enviar pedido de amizade',
 
   'mySessions.title': 'As minhas sessões',
@@ -842,6 +844,8 @@ const EN: Dictionary = {
   'community.memberSince': 'Member since',
   'community.ownProfile': 'This is your profile.',
   'community.requestPending': 'Friend request pending',
+  'community.discoverTitle': 'Players to discover',
+  'community.discoverHint': 'Explore players from the community or search by username.',
   'community.sendRequest': 'Send friend request',
 
   'mySessions.title': 'My sessions',
