@@ -29,6 +29,9 @@ export class CreateaccountComponent {
   email = '';
   favoriteSports = '';
 
+  readonly maxBirthDate = this.dateYearsAgo(18);
+  readonly minBirthDate = this.dateYearsAgo(120);
+
   readonly phoneIndicatives = [
     { code: '93', label: 'Afeganistão (+93)' },
     { code: '355', label: 'Albânia (+355)' },
@@ -432,6 +435,10 @@ export class CreateaccountComponent {
       return t('feedback.register.passwordMismatch');
     }
 
+    if (!this.isAdultBirthDate(this.dateOfBirth)) {
+      return t('feedback.register.minimumAge');
+    }
+
     if (!this.email.includes('@')) {
       return t('feedback.contact.invalidEmail');
     }
@@ -442,6 +449,30 @@ export class CreateaccountComponent {
     }
 
     return null;
+  }
+
+  private isAdultBirthDate(value: string): boolean {
+    if (!value) {
+      return false;
+    }
+
+    const birthDate = new Date(value + 'T00:00:00');
+    if (Number.isNaN(birthDate.getTime())) {
+      return false;
+    }
+
+    const minDate = new Date(this.minBirthDate + 'T00:00:00');
+    const maxDate = new Date(this.maxBirthDate + 'T00:00:00');
+    return birthDate >= minDate && birthDate <= maxDate;
+  }
+
+  private dateYearsAgo(years: number): string {
+    const date = new Date();
+    date.setFullYear(date.getFullYear() - years);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
   private errorFrom(error: HttpErrorResponse, fallback: string): string {
