@@ -145,13 +145,23 @@
           </label>
         </div>
 
-        <label class="mfa-toggle">
-          <input type="checkbox" name="mfa" [(ngModel)]="profile.mfa" [disabled]="saving">
-          <span>
+        <section class="mfa-setting">
+          <div class="mfa-copy">
             <strong>Autenticação multifator</strong>
-            <small>Pedir um código adicional quando iniciares sessão.</small>
-          </span>
-        </label>
+            <small>Adiciona uma camada extra de segurança à tua conta.</small>
+          </div>
+
+          <label class="switch" aria-label="Autenticação multifator">
+            <input
+              type="checkbox"
+              name="mfa"
+              [(ngModel)]="profile.mfa"
+              [disabled]="saving">
+            <span class="switch-track">
+              <span class="switch-thumb"></span>
+            </span>
+          </label>
+        </section>
 
         <div class="form-actions">
           <a class="secondary-action" routerLink="/menu/dadosPerfil">Cancelar</a>
