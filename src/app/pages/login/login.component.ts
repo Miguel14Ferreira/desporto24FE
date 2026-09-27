@@ -121,7 +121,6 @@ export class LoginComponent implements OnInit {
         next: response => {
           this.successMessage = response.message || 'Foi enviado um novo email de confirmação.';
           this.errorMessage = '';
-          this.canResendConfirmation = false;
         },
         error: error => {
           this.errorMessage = this.errorFrom(
