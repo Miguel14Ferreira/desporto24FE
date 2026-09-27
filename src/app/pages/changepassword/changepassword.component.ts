@@ -1,4 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { appTranslate as t } from '../../i18n/i18n.service';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { finalize } from 'rxjs';
 
@@ -38,22 +39,22 @@ export class ChangepasswordComponent {
     this.successMessage = '';
 
     if (!this.currentPassword || !this.newPassword || !this.confirmPassword) {
-      this.errorMessage = 'Preenche todos os campos.';
+      this.errorMessage = t('feedback.password.fillAll');
       return;
     }
 
     if (this.newPassword.length < 8) {
-      this.errorMessage = 'A nova palavra-passe tem de ter pelo menos 8 caracteres.';
+      this.errorMessage = t('feedback.password.min8');
       return;
     }
 
     if (this.newPassword !== this.confirmPassword) {
-      this.errorMessage = 'A nova palavra-passe e a confirmação não coincidem.';
+      this.errorMessage = t('feedback.password.mismatch');
       return;
     }
 
     if (this.currentPassword === this.newPassword) {
-      this.errorMessage = 'A nova palavra-passe tem de ser diferente da atual.';
+      this.errorMessage = t('feedback.password.different');
       return;
     }
 
@@ -69,14 +70,14 @@ export class ChangepasswordComponent {
 
           sessionStorage.setItem(
             'auth-success-message',
-            'Palavra-passe alterada com sucesso. Inicia sessão novamente.'
+            t('feedback.password.changed')
           );
           this.authenticationService.logOut();
         },
         error: error => {
           this.errorMessage = this.errorFrom(
             error,
-            'Não foi possível alterar a palavra-passe.'
+            t('feedback.password.changeError')
           );
         }
       });
