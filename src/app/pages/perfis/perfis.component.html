@@ -3,30 +3,30 @@
     <header class="page-header">
       <div>
         <p class="eyebrow">Desporto24</p>
-        <h1>Comunidade</h1>
-        <p class="subtitle">Procura jogadores, consulta o perfil e envia pedidos de amizade.</p>
+        <h1>{{ 'community.title' | t }}</h1>
+        <p class="subtitle">{{ 'community.subtitle' | t }}</p>
       </div>
 
       <div class="header-actions">
-        <a class="secondary-action" routerLink="/menu/friendList">Amigos</a>
-        <a class="secondary-action" routerLink="/menu/events">Sessões</a>
-        <a class="secondary-action" routerLink="/menu">Menu</a>
+        <a class="secondary-action" routerLink="/menu/friendList">{{ 'friends.title' | t }}</a>
+        <a class="secondary-action" routerLink="/menu/events">{{ 'common.sessions' | t }}</a>
+        <a class="secondary-action" routerLink="/menu">{{ 'common.menu' | t }}</a>
       </div>
     </header>
 
     <form class="search-bar" (ngSubmit)="search()">
       <label>
-        <span>Nome de utilizador</span>
+        <span>{{ 'login.username' | t }}</span>
         <input
           type="search"
           name="searchTerm"
           [(ngModel)]="searchTerm"
-          placeholder="Ex.: miguel"
+          [placeholder]="'community.searchPlaceholder' | t"
           autocomplete="off">
       </label>
 
       <button type="submit" [disabled]="loading">
-        {{ loading ? 'A pesquisar...' : 'Pesquisar' }}
+        {{ loading ? ('common.searching' | t) : ('common.search' | t) }}
       </button>
     </form>
 
@@ -44,8 +44,8 @@
 
     @if (!loading && searched && profiles.length === 0 && !errorMessage) {
       <div class="state-card">
-        <h2>Nenhum utilizador encontrado</h2>
-        <p>Experimenta outro nome de utilizador.</p>
+        <h2>{{ 'community.noneTitle' | t }}</h2>
+        <p>{{ 'community.noneText' | t }}</p>
       </div>
     }
 
@@ -63,7 +63,7 @@
 
             <div class="profile-copy">
               <strong>{{ profile.username }}</strong>
-              <span>{{ profile.fullName || 'Jogador Desporto24' }}</span>
+              <span>{{ profile.fullName || ('friends.player' | t) }}</span>
               @if (profile.location) {
                 <small>{{ profile.location }}</small>
               }
@@ -88,7 +88,7 @@
             </div>
 
             <div>
-              <p class="eyebrow">Perfil</p>
+              <p class="eyebrow">{{ 'community.profile' | t }}</p>
               <h2>{{ selectedProfile.username }}</h2>
               <p>{{ selectedProfile.fullName || 'Jogador Desporto24' }}</p>
             </div>
@@ -96,26 +96,26 @@
 
           <div class="profile-meta">
             <div>
-              <span>Localidade</span>
-              <strong>{{ selectedProfile.location || 'Não indicada' }}</strong>
+              <span>{{ 'common.location' | t }}</span>
+              <strong>{{ selectedProfile.location || ('common.notProvidedF' | t) }}</strong>
             </div>
             <div>
-              <span>País</span>
-              <strong>{{ selectedProfile.country || 'Não indicado' }}</strong>
+              <span>{{ 'common.country' | t }}</span>
+              <strong>{{ selectedProfile.country || ('common.notProvided' | t) }}</strong>
             </div>
             <div>
-              <span>Desportos favoritos</span>
-              <strong>{{ selectedProfile.favoriteSports || 'Não indicados' }}</strong>
+              <span>{{ 'profileData.favoriteSports' | t }}</span>
+              <strong>{{ selectedProfile.favoriteSports || ('common.notProvided' | t) }}</strong>
             </div>
             <div>
-              <span>Membro desde</span>
-              <strong>{{ selectedProfile.joinDateDisplay || 'Sem informação' }}</strong>
+              <span>{{ 'community.memberSince' | t }}</span>
+              <strong>{{ selectedProfile.joinDateDisplay || ('common.noInfo' | t) }}</strong>
             </div>
           </div>
 
           <div class="detail-actions">
             @if (isOwnProfile(selectedProfile)) {
-              <span>Este é o teu perfil.</span>
+              <span>{{ 'community.ownProfile' | t }}</span>
             } @else {
               <button
                 type="button"
@@ -123,9 +123,9 @@
                 [disabled]="actionLoading || friendRequestPending(selectedProfile)"
                 (click)="sendFriendRequest(selectedProfile)">
                 @if (friendRequestPending(selectedProfile)) {
-                  Pedido de amizade pendente
+                  {{ 'community.requestPending' | t }}
                 } @else {
-                  {{ actionLoading ? 'A enviar...' : 'Enviar pedido de amizade' }}
+                  {{ actionLoading ? ('contact.sending' | t) : ('community.sendRequest' | t) }}
                 }
               </button>
             }
