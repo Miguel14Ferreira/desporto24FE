@@ -476,6 +476,7 @@ const PT: Dictionary = {
   'feedback.register.passwordMin': 'A palavra-passe tem de ter pelo menos 8 caracteres.',
   'feedback.register.passwordMismatch': 'A palavra-passe e a confirmação não coincidem.',
   'feedback.register.invalidPhone': 'Introduz um número de telemóvel válido.',
+  'feedback.register.minimumAge': 'Tens de ter pelo menos 18 anos.',
 
   'feedback.chat.invalid': 'Conversa inválida.',
   'feedback.chat.loadError': 'Não foi possível carregar esta conversa.',
@@ -1062,6 +1063,7 @@ const EN: Dictionary = {
   'feedback.register.passwordMin': 'The password must be at least 8 characters.',
   'feedback.register.passwordMismatch': 'The password and confirmation do not match.',
   'feedback.register.invalidPhone': 'Enter a valid mobile number.',
+  'feedback.register.minimumAge': 'You must be at least 18 years old.',
 
   'feedback.chat.invalid': 'Invalid conversation.',
   'feedback.chat.loadError': 'We could not load this conversation.',
