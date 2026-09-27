@@ -3,13 +3,13 @@
     <header class="page-header">
       <div>
         <p class="eyebrow">Desporto24</p>
-        <h1>Fala connosco</h1>
-        <p class="subtitle">Tens uma ideia, uma sugestão ou algo que devíamos melhorar? Envia-nos.</p>
+        <h1>{{ 'contact.title' | t }}</h1>
+        <p class="subtitle">{{ 'contact.subtitle' | t }}</p>
       </div>
 
       <div class="header-actions">
-        <a class="secondary-action" routerLink="/home">Início</a>
-        <a class="secondary-action" routerLink="/login">Entrar</a>
+        <a class="secondary-action" routerLink="/home">{{ 'nav.home' | t }}</a>
+        <a class="secondary-action" routerLink="/login">{{ 'nav.login' | t }}</a>
       </div>
     </header>
 
@@ -24,7 +24,7 @@
     <form class="contact-card" (ngSubmit)="submit()">
       <div class="form-grid">
         <label>
-          <span>Nome *</span>
+          <span>{{ 'contact.name' | t }} *</span>
           <input
             name="name"
             [(ngModel)]="name"
@@ -33,7 +33,7 @@
         </label>
 
         <label>
-          <span>Localidade *</span>
+          <span>{{ 'common.location' | t }} *</span>
           <input
             name="city"
             [(ngModel)]="city"
@@ -42,7 +42,7 @@
         </label>
 
         <label>
-          <span>Email *</span>
+          <span>{{ 'common.email' | t }} *</span>
           <input
             type="email"
             name="email"
@@ -52,42 +52,42 @@
         </label>
 
         <label>
-          <span>Género *</span>
+          <span>{{ 'common.gender' | t }} *</span>
           <select name="gender" [(ngModel)]="gender" [disabled]="loading">
-            <option value="">Selecionar</option>
-            <option value="masculino">Masculino</option>
-            <option value="feminino">Feminino</option>
-            <option value="outro">Outro</option>
-            <option value="prefiro-nao-dizer">Prefiro não dizer</option>
+            <option value="">{{ 'register.select' | t }}</option>
+            <option value="masculino">{{ 'register.male' | t }}</option>
+            <option value="feminino">{{ 'register.female' | t }}</option>
+            <option value="outro">{{ 'register.other' | t }}</option>
+            <option value="prefiro-nao-dizer">{{ 'contact.preferNotSay' | t }}</option>
           </select>
         </label>
 
         <label class="full-width">
-          <span>Assunto *</span>
+          <span>{{ 'contact.subject' | t }} *</span>
           <input
             name="subject"
             [(ngModel)]="subject"
             maxlength="160"
             [disabled]="loading"
-            placeholder="Ex.: Sugestão para torneios">
+            [placeholder]="'contact.subjectPlaceholder' | t">
         </label>
 
         <label class="full-width">
-          <span>Mensagem *</span>
+          <span>{{ 'contact.message' | t }} *</span>
           <textarea
             name="problem"
             [(ngModel)]="problem"
             maxlength="4000"
             rows="8"
             [disabled]="loading"
-            placeholder="Conta-nos a tua ideia..."></textarea>
+            [placeholder]="'contact.messagePlaceholder' | t"></textarea>
           <small>{{ problem.length }}/4000</small>
         </label>
       </div>
 
       <div class="form-actions">
         <button type="submit" [disabled]="loading">
-          {{ loading ? 'A enviar...' : 'Enviar mensagem' }}
+          {{ loading ? ('contact.sending' | t) : ('contact.send' | t) }}
         </button>
       </div>
     </form>
