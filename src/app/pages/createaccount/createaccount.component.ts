@@ -28,6 +28,31 @@ export class CreateaccountComponent {
   gender = '';
   email = '';
   favoriteSports = '';
+  sportQuery = '';
+  selectedSports: string[] = [];
+
+  readonly sportsCatalog = [
+    'Futebol',
+    'Futsal',
+    'Basquetebol',
+    'Ténis',
+    'Padel',
+    'Voleibol',
+    'Corrida',
+    'Ciclismo',
+    'Natação',
+    'Andebol',
+    'Rugby',
+    'Badminton',
+    'Ténis de mesa',
+    'Squash',
+    'Hóquei',
+    'Surf',
+    'Escalada',
+    'Ginásio',
+    'Yoga',
+    'Pilates'
+  ];
 
   readonly maxBirthDate = this.dateYearsAgo(18);
   readonly minBirthDate = this.dateYearsAgo(120);
@@ -285,6 +310,33 @@ export class CreateaccountComponent {
   private resendCooldownTimer?: ReturnType<typeof setInterval>;
 
   constructor(private authenticationService: AuthenticationService) {}
+
+  get sportSuggestions(): string[] {
+    const query = this.sportQuery.trim().toLocaleLowerCase('pt');
+    return this.sportsCatalog
+      .filter(sport => !this.selectedSports.includes(sport))
+      .filter(sport => !query || sport.toLocaleLowerCase('pt').includes(query))
+      .slice(0, 8);
+  }
+
+  addSport(sport: string): void {
+    if (!this.sportsCatalog.includes(sport) || this.selectedSports.includes(sport)) {
+      return;
+    }
+
+    this.selectedSports = [...this.selectedSports, sport];
+    this.sportQuery = '';
+    this.syncFavoriteSports();
+  }
+
+  removeSport(sport: string): void {
+    this.selectedSports = this.selectedSports.filter(item => item !== sport);
+    this.syncFavoriteSports();
+  }
+
+  private syncFavoriteSports(): void {
+    this.favoriteSports = this.selectedSports.join(', ');
+  }
 
   register(): void {
     const validation = this.validate();
