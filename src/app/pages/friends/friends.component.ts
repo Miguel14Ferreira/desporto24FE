@@ -1,4 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { appTranslate as t } from '../../i18n/i18n.service';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { finalize } from 'rxjs';
 
@@ -54,7 +55,7 @@ export class FriendsComponent implements OnInit {
         next: friends => this.friends = friends,
         error: () => {
           this.friends = [];
-          this.errorMessage = 'Não foi possível carregar a tua lista de amigos.';
+          this.errorMessage = t('feedback.friends.loadError');
         }
       });
   }
@@ -65,7 +66,7 @@ export class FriendsComponent implements OnInit {
     }
 
     if (friend.chatBlocked && !friend.blockedByMe) {
-      this.actionError = 'Este chat foi bloqueado pelo outro utilizador.';
+      this.actionError = t('feedback.chat.blockedOther');
       this.actionSuccess = '';
       return;
     }
@@ -86,15 +87,15 @@ export class FriendsComponent implements OnInit {
           friend.chatBlocked = !shouldUnblock;
           friend.blockedByMe = !shouldUnblock;
           this.actionSuccess = shouldUnblock
-            ? `Chat com ${friend.username} desbloqueado.`
-            : `Chat com ${friend.username} bloqueado.`;
+            ? t('feedback.friends.unblockedUser', { username: friend.username })
+            : t('feedback.friends.blockedUser', { username: friend.username });
         },
         error: error => {
           this.actionError = this.errorFrom(
             error,
             shouldUnblock
-              ? 'Não foi possível desbloquear este chat.'
-              : 'Não foi possível bloquear este chat.'
+              ? t('feedback.chat.unblockError')
+              : t('feedback.chat.blockError')
           );
         }
       });
@@ -136,12 +137,12 @@ export class FriendsComponent implements OnInit {
         next: () => {
           this.friends = this.friends.filter(item => item.username !== friend.username);
           this.pendingRemovalUsername = null;
-          this.actionSuccess = `${friend.username} foi removido da tua lista de amigos.`;
+          this.actionSuccess = t('feedback.friends.removed', { username: friend.username });
         },
         error: error => {
           this.actionError = this.errorFrom(
             error,
-            'Não foi possível remover este amigo.'
+            t('feedback.friends.removeError')
           );
         }
       });
