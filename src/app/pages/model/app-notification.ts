@@ -2,6 +2,7 @@ export type AppNotificationType =
   | 'WAITLIST_PROMOTED'
   | 'SESSION_REMOVED'
   | 'SESSION_CANCELLED'
+  | 'CHAT_MESSAGE'
   | string
   | null;
 
@@ -19,6 +20,7 @@ export interface AppNotification {
   token: string | null;
   type: AppNotificationType;
   sessionId: number | null;
+  relatedUsername: string | null;
   read: boolean;
   username: string;
 }
