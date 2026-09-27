@@ -3,10 +3,27 @@
     <a class="brand" routerLink="/home">DESPORTO24</a>
 
     <div class="site-nav__links">
-      <a routerLink="/home" routerLinkActive="active-link">Início</a>
-      <a routerLink="/about" routerLinkActive="active-link">Sobre</a>
-      <a routerLink="/contact" routerLinkActive="active-link">Contacto</a>
-      <a class="login-link" routerLink="/login" routerLinkActive="active-link">Entrar</a>
+      <a routerLink="/home" routerLinkActive="active-link">{{ 'nav.home' | t }}</a>
+      <a routerLink="/about" routerLinkActive="active-link">{{ 'nav.about' | t }}</a>
+      <a routerLink="/contact" routerLinkActive="active-link">{{ 'nav.contact' | t }}</a>
+
+      <div class="language-switch" aria-label="Language selector">
+        <button
+          type="button"
+          [class.active-language]="i18n.currentLanguage === 'pt'"
+          (click)="setLanguage('pt')">
+          PT
+        </button>
+        <span>/</span>
+        <button
+          type="button"
+          [class.active-language]="i18n.currentLanguage === 'en'"
+          (click)="setLanguage('en')">
+          EN
+        </button>
+      </div>
+
+      <a class="login-link" routerLink="/login" routerLinkActive="active-link">{{ 'nav.login' | t }}</a>
     </div>
   </div>
 </nav>
