@@ -1,6 +1,7 @@
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthenticationService } from 'src/app/services/authethication.service';
+import { AppLanguage, I18nService } from 'src/app/i18n/i18n.service';
 
 @Component({
     selector: 'app-navbar',
@@ -14,7 +15,11 @@ export class NavbarComponent implements OnInit {
   dark!:boolean;
   escuro:string = "escuro";
   claro:string = "claro";
-  constructor(private router:Router,private authService:AuthenticationService) { }
+  constructor(
+    private router: Router,
+    private authService: AuthenticationService,
+    public i18n: I18nService
+  ) { }
 
   ngOnInit(): void {
     var theme = localStorage.getItem('theme');
@@ -35,6 +40,10 @@ export class NavbarComponent implements OnInit {
       localStorage.setItem('theme',this.claro);
       location.reload();
     }
+    setLanguage(language: AppLanguage): void {
+      this.i18n.setLanguage(language);
+    }
+
     remover(){
       this.router.navigate(['login']);
       this.authService.logOut2();
