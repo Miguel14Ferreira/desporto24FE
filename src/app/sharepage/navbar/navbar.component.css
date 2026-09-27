@@ -98,3 +98,23 @@
     margin-left: 0;
   }
 }
+
+
+.notification-link {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+}
+
+.notification-badge {
+  display: inline-grid;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 .3rem;
+  place-items: center;
+  border-radius: 999px;
+  background: #7dd3fc;
+  color: #082033;
+  font-size: .68rem;
+  font-weight: 900;
+}
