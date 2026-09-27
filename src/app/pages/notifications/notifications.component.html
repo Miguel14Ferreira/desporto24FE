@@ -101,6 +101,12 @@
                   </button>
                 }
 
+                @if (selected.type === 'CHAT_MESSAGE' && selected.relatedUsername) {
+                  <button type="button" class="primary-action" (click)="openChat(selected)">
+                    {{ 'notifications.openChat' | t }}
+                  </button>
+                }
+
                 @if (selected.friendRequest) {
                   <button
                     type="button"
