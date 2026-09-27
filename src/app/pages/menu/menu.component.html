@@ -88,24 +88,6 @@
         </div>
       </a>
 
-      <a class="dashboard-card notification-card" routerLink="/menu/notifications">
-        <span class="card-icon">✉</span>
-        <div>
-          <strong>{{ 'menu.notifications' | t }}</strong>
-          <p>
-            @if (loadingNotifications) {
-              {{ 'menu.updating' | t }}
-            } @else if (unreadNotifications > 0) {
-              {{ 'menu.unread' | t:{ count: unreadNotifications } }}
-            } @else {
-              {{ 'menu.noUnread' | t }}
-            }
-          </p>
-        </div>
-        @if (unreadNotifications > 0) {
-          <span class="notification-count">{{ unreadNotifications }}</span>
-        }
-      </a>
 
       <a class="dashboard-card" routerLink="/menu/dadosPerfil">
         <span class="card-icon">○</span>
