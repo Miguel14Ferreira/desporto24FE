@@ -321,9 +321,11 @@ export class CreateaccountComponent {
             error,
             'Não foi possível criar a conta.'
           );
-          this.existingAccountRecovery = this.errorMessage
-            .toLowerCase()
-            .includes('já existe um perfil');
+          const normalizedError = this.errorMessage.toLowerCase();
+          this.existingAccountRecovery =
+            normalizedError.includes('já se encontra registado')
+            || normalizedError.includes('já se encontra registrado')
+            || normalizedError.includes('já existe um perfil');
         }
       });
   }
