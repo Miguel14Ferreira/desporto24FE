@@ -2,8 +2,8 @@
   <div class="chat-shell">
     <header class="chat-header">
       <div>
-        <a class="back-link" routerLink="/menu/friendList">← Voltar aos amigos</a>
-        <p class="eyebrow">Chat direto</p>
+        <a class="back-link" routerLink="/menu/friendList">← {{ 'chat.backFriends' | t }}</a>
+        <p class="eyebrow">{{ 'chat.direct' | t }}</p>
         <h1>{{ recipientUsername }}</h1>
       </div>
 
@@ -15,11 +15,11 @@
             [disabled]="friendshipActionLoading"
             (click)="toggleChatBlock()">
             @if (friendshipActionLoading) {
-              A processar...
+              {{ 'common.processing' | t }}
             } @else if (isBlockedByMe()) {
-              Desbloquear chat
+              {{ 'friends.unblockChat' | t }}
             } @else {
-              Bloquear chat
+              {{ 'friends.blockChat' | t }}
             }
           </button>
         }
@@ -29,13 +29,13 @@
           class="refresh-action"
           [disabled]="loading"
           (click)="load()">
-          {{ loading ? 'A atualizar...' : 'Atualizar' }}
+          {{ loading ? ('chat.refreshing' | t) : ('chat.refresh' | t) }}
         </button>
       </div>
     </header>
 
     @if (loading) {
-      <div class="state-card">A carregar conversa...</div>
+      <div class="state-card">{{ 'chat.loading' | t }}</div>
     }
 
     @if (!loading && errorMessage) {
@@ -58,7 +58,7 @@
       <section class="chat-card">
         <div class="message-list">
           @if (messages.length === 0) {
-            <div class="empty-chat">Ainda não há mensagens nesta conversa.</div>
+            <div class="empty-chat">{{ 'chat.empty' | t }}</div>
           }
 
           @for (message of messages; track message.id ?? $index) {
@@ -76,14 +76,14 @@
 
         <form class="composer" (ngSubmit)="sendMessage()">
           <label>
-            <span>Mensagem</span>
+            <span>{{ 'chat.message' | t }}</span>
             <textarea
               name="messageBody"
               [(ngModel)]="messageBody"
               maxlength="2000"
               rows="3"
               [disabled]="sending || chatInfo?.chatBlocked === true"
-              placeholder="Escreve uma mensagem..."></textarea>
+              [placeholder]="'chat.placeholder' | t"></textarea>
           </label>
 
           <div class="composer-footer">
@@ -91,7 +91,7 @@
             <button
               type="submit"
               [disabled]="sending || chatInfo?.chatBlocked === true || !messageBody.trim()">
-              {{ sending ? 'A enviar...' : 'Enviar' }}
+              {{ sending ? ('chat.sending' | t) : ('chat.send' | t) }}
             </button>
           </div>
         </form>
