@@ -1,4 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { appTranslate as t } from '../../i18n/i18n.service';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
@@ -78,7 +79,7 @@ export class Events2Component implements OnInit {
         error: error => {
           this.errorMessage = this.errorFrom(
             error,
-            'Não foi possível criar a sessão. Confirma os dados e tenta novamente.'
+            t('feedback.create.error')
           );
         }
       });
@@ -88,7 +89,7 @@ export class Events2Component implements OnInit {
     this.locationError = '';
 
     if (!navigator.geolocation) {
-      this.locationError = 'O teu browser não suporta localização.';
+      this.locationError = t('feedback.location.unsupported');
       return;
     }
 
@@ -106,7 +107,7 @@ export class Events2Component implements OnInit {
         this.latitude = null;
         this.longitude = null;
         this.locating = false;
-        this.locationError = 'Não foi possível obter a tua localização. Confirma a permissão do browser.';
+        this.locationError = t('feedback.location.error');
       },
       {
         enableHighAccuracy: false,
@@ -134,7 +135,7 @@ export class Events2Component implements OnInit {
     }
 
     if (!file.type.startsWith('image/')) {
-      this.errorMessage = 'Escolhe um ficheiro de imagem.';
+      this.errorMessage = t('feedback.image.choose');
       input.value = '';
       return;
     }
@@ -161,22 +162,22 @@ export class Events2Component implements OnInit {
 
     const gameInstant = new Date(this.gameDate);
     if (Number.isNaN(gameInstant.getTime()) || gameInstant.getTime() <= Date.now()) {
-      return 'A data da sessão tem de ser no futuro.';
+      return t('feedback.create.futureDate');
     }
 
     const players = Number(this.maxParticipants);
     if (!Number.isInteger(players) || players < 2 || players > 100) {
-      return 'O número máximo de jogadores tem de estar entre 2 e 100.';
+      return t('feedback.create.playersRange');
     }
 
     if (this.privateGame && !this.password.trim()) {
-      return 'Define uma palavra-passe para a sessão privada.';
+      return t('feedback.create.privatePassword');
     }
 
     if (this.hasPrice) {
       const price = Number(this.priceAmount);
       if (!Number.isFinite(price) || price < 0) {
-        return 'O preço por jogador não pode ser negativo.';
+        return t('feedback.create.negativePrice');
       }
     }
 
