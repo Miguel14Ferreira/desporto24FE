@@ -40,7 +40,7 @@ export class PerfilDataComponent implements OnInit {
           this.profile = profile;
           this.loadReliability(profile.username);
         },
-        error: () => this.errorMessage = 'Não foi possível carregar o teu perfil.'
+        error: () => this.errorMessage = t('feedback.profile.loadError')
       });
   }
 
