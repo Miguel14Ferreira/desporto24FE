@@ -26,6 +26,7 @@ describe('NotificationsComponent', () => {
     token: null,
     type: 'WAITLIST_PROMOTED',
     sessionId: 12,
+    relatedUsername: null,
     read: false,
     username: 'fixture-user'
   });
@@ -44,6 +45,7 @@ describe('NotificationsComponent', () => {
     token: null,
     type: null,
     sessionId: null,
+    relatedUsername: null,
     read: false,
     username: 'fixture-user'
   });
