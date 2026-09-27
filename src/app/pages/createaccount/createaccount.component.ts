@@ -273,6 +273,8 @@ export class CreateaccountComponent {
   loading = false;
   errorMessage = '';
   successMessage = '';
+  registrationComplete = false;
+  resendLoading = false;
 
   constructor(private authenticationService: AuthenticationService) {}
 
@@ -310,11 +312,36 @@ export class CreateaccountComponent {
         next: response => {
           this.successMessage = response.message
             || 'Conta criada. Confirma o email para ativares a conta.';
+          this.registrationComplete = true;
         },
         error: error => {
           this.errorMessage = this.errorFrom(
             error,
             'Não foi possível criar a conta.'
+          );
+        }
+      });
+  }
+
+  resendConfirmation(): void {
+    const username = this.username.trim();
+    if (!username || this.resendLoading) {
+      return;
+    }
+
+    this.resendLoading = true;
+    this.errorMessage = '';
+
+    this.authenticationService.resendRegistrationConfirmation(username)
+      .pipe(finalize(() => this.resendLoading = false))
+      .subscribe({
+        next: response => {
+          this.successMessage = response.message || 'Foi enviado um novo email de confirmação.';
+        },
+        error: error => {
+          this.errorMessage = this.errorFrom(
+            error,
+            'Não foi possível reenviar o email de confirmação.'
           );
         }
       });
