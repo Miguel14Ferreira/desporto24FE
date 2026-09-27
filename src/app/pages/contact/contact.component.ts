@@ -1,4 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { appTranslate as t } from '../../i18n/i18n.service';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { finalize } from 'rxjs';
 
@@ -57,7 +58,7 @@ export class ContactComponent {
         error: error => {
           this.errorMessage = this.errorFrom(
             error,
-            'Não foi possível enviar a tua mensagem.'
+            t('feedback.contact.sendError')
           );
         }
       });
@@ -78,15 +79,15 @@ export class ContactComponent {
     }
 
     if (!this.email.includes('@')) {
-      return 'Introduz um email válido.';
+      return t('feedback.contact.invalidEmail');
     }
 
     if (this.subject.trim().length > 160) {
-      return 'O assunto não pode ter mais de 160 caracteres.';
+      return t('feedback.contact.subjectLong');
     }
 
     if (this.problem.trim().length > 4000) {
-      return 'A mensagem não pode ter mais de 4000 caracteres.';
+      return t('feedback.contact.messageLong');
     }
 
     return null;
