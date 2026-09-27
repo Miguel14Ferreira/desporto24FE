@@ -1,3 +1,4 @@
+import { appTranslate as t } from '../../i18n/i18n.service';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { forkJoin, finalize, of, catchError } from 'rxjs';
 
