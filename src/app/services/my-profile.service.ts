@@ -31,6 +31,16 @@ export class MyProfileService {
     return this.http.put<MyProfile>(this.baseUrl, formData);
   }
 
+  updatePhoto(photo: File): Observable<MyProfile> {
+    const formData = new FormData();
+    formData.append('photo', photo);
+
+    return this.http.put<MyProfile>(
+      this.baseUrl + '/photo',
+      formData
+    );
+  }
+
   changePassword(currentPassword: string, newPassword: string): Observable<unknown> {
     return this.http.put(
       this.baseUrl + '/password',
