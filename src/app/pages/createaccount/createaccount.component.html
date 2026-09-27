@@ -109,7 +109,7 @@
 
         <label>
           <span>{{ 'register.birthDate' | t }} *</span>
-          <input type="date" name="dateOfBirth" [(ngModel)]="dateOfBirth" [disabled]="loading">
+          <input type="date" name="dateOfBirth" [(ngModel)]="dateOfBirth" [min]="minBirthDate" [max]="maxBirthDate" [disabled]="loading">
         </label>
 
         <label>
