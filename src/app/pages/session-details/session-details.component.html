@@ -1,9 +1,9 @@
 <section class="detail-page">
   <div class="detail-shell">
-    <a class="back-link" routerLink="/menu/events">← Voltar às sessões</a>
+    <a class="back-link" routerLink="/menu/events">← {{ 'sessionDetail.back' | t }}</a>
 
     @if (loading) {
-      <div class="state-card">A carregar detalhes...</div>
+      <div class="state-card">{{ 'sessionDetail.loading' | t }}</div>
     }
 
     @if (!loading && errorMessage) {
@@ -13,7 +13,7 @@
     @if (!loading && session) {
       <article class="detail-card">
         @if (photoUrl(session.gamePhoto); as imageUrl) {
-          <img class="session-photo" [src]="imageUrl" [alt]="'Sessão de ' + session.sport">
+          <img class="session-photo" [src]="imageUrl" [alt]="'sessionDetail.photoAlt' | t:{ sport: session.sport }">
         }
 
         <div class="detail-content">
@@ -25,40 +25,40 @@
             <div class="badges">
               <span>{{ session.status }}</span>
               @if (session.privateGame) {
-                <span>Privada</span>
+                <span>{{ 'events.private' | t }}</span>
               }
             </div>
           </div>
 
           <div class="detail-grid">
             <div>
-              <span>Data</span>
+              <span>{{ 'mySessions.date' | t }}</span>
               <strong>{{ session.gameDate | date:'dd/MM/yyyy HH:mm' }}</strong>
             </div>
             <div>
-              <span>Participantes</span>
+              <span>{{ 'mySessions.participants' | t }}</span>
               <strong>{{ session.participantCount }}/{{ session.maxParticipants }}</strong>
             </div>
             <div>
-              <span>Preço</span>
+              <span>{{ 'mySessions.price' | t }}</span>
               <strong>
                 @if (session.priceAmount > 0) {
                   {{ session.priceAmount | number:'1.2-2' }} €
                 } @else {
-                  Grátis
+                  {{ 'common.free' | t }}
                 }
               </strong>
             </div>
             <div>
-              <span>Criador</span>
-              <strong>{{ session.creatorUsername || 'Utilizador' }}</strong>
+              <span>{{ 'sessionDetail.creator' | t }}</span>
+              <strong>{{ session.creatorUsername || ('sessionDetail.user' | t) }}</strong>
             </div>
           </div>
 
           <section class="calendar-panel">
             <div>
-              <h2>Adicionar ao calendário</h2>
-              <p>Guarda esta sessão para não perderes a hora do jogo.</p>
+              <h2>{{ 'sessionDetail.calendarTitle' | t }}</h2>
+              <p>{{ 'sessionDetail.calendarText' | t }}</p>
             </div>
             <div class="calendar-actions">
               @if (googleCalendarUrl(); as googleUrl) {
@@ -72,7 +72,7 @@
                 </a>
               }
               <button type="button" class="calendar-action" (click)="downloadIcs()">
-                Descarregar .ics
+                {{ 'sessionDetail.downloadIcs' | t }}
               </button>
             </div>
           </section>
@@ -80,11 +80,11 @@
           <section class="creator-reliability">
             <div class="creator-reliability__header">
               <div>
-                <h2>Fiabilidade do criador</h2>
+                <h2>{{ 'sessionDetail.creatorReliability' | t }}</h2>
                 <p>{{ session.creatorUsername || 'Utilizador' }}</p>
               </div>
               @if (reliabilityLoading) {
-                <span class="reliability-loading">A carregar...</span>
+                <span class="reliability-loading">{{ 'common.loading' | t }}</span>
               }
             </div>
 
@@ -95,19 +95,19 @@
             @if (!reliabilityLoading && creatorReliability) {
               <div class="reliability-grid">
                 <div>
-                  <span>Taxa de presença</span>
+                  <span>{{ 'profileData.attendanceRate' | t }}</span>
                   <strong>{{ creatorReliability.attendanceRate | number:'1.0-0' }}%</strong>
                 </div>
                 <div>
-                  <span>Sessões concluídas</span>
+                  <span>{{ 'profileData.completedSessions' | t }}</span>
                   <strong>{{ creatorReliability.completedSessions }}</strong>
                 </div>
                 <div>
-                  <span>Faltas</span>
+                  <span>{{ 'profileData.noShows' | t }}</span>
                   <strong>{{ creatorReliability.noShows }}</strong>
                 </div>
                 <div>
-                  <span>Cancelamentos tardios</span>
+                  <span>{{ 'profileData.lateCancellations' | t }}</span>
                   <strong>{{ creatorReliability.lateCancellations }}</strong>
                 </div>
               </div>
@@ -115,13 +115,13 @@
               @if (creatorReliability.warning || creatorReliability.reducedPriority || creatorReliability.joinRestricted) {
                 <div class="reliability-flags">
                   @if (creatorReliability.warning) {
-                    <span>Aviso ativo</span>
+                    <span>{{ 'sessionDetail.warning' | t }}</span>
                   }
                   @if (creatorReliability.reducedPriority) {
-                    <span>Prioridade reduzida</span>
+                    <span>{{ 'sessionDetail.reducedPriority' | t }}</span>
                   }
                   @if (creatorReliability.joinRestricted) {
-                    <span>Entradas restringidas</span>
+                    <span>{{ 'sessionDetail.joinRestricted' | t }}</span>
                   }
                 </div>
               }
@@ -129,11 +129,11 @@
           </section>
 
           <section class="address-panel">
-            <h2>Local</h2>
+            <h2>{{ 'sessionDetail.location' | t }}</h2>
             @if (session.canSeeExactAddress && session.address) {
               <p>{{ session.address }}</p>
             } @else {
-              <p>A morada exata fica disponível depois de entrares na sessão.</p>
+              <p>{{ 'sessionDetail.addressLocked' | t }}</p>
             }
           </section>
 
@@ -148,11 +148,11 @@
           @if (session.waitlisted) {
             <section class="participation-panel">
               <div>
-                <h2>Lista de espera</h2>
+                <h2>{{ 'mySessions.waitlist' | t }}</h2>
                 <p>
-                  Estás na lista de espera
+                  {{ 'sessionDetail.waitlistText' | t }}
                   @if (session.waitlistPosition !== null) {
-                    na posição {{ session.waitlistPosition }}
+                    {{ 'sessionDetail.position' | t:{ position: session.waitlistPosition } }}
                   }.
                 </p>
               </div>
@@ -161,39 +161,39 @@
                 class="danger-action"
                 [disabled]="actionLoading"
                 (click)="leaveSession()">
-                {{ actionLoading ? 'A processar...' : 'Sair da lista de espera' }}
+                {{ actionLoading ? ('common.processing' | t) : ('mySessions.leaveWaitlist' | t) }}
               </button>
             </section>
           } @else if (session.joined && isCreator()) {
             <section class="participation-panel">
               <div>
-                <h2>Esta sessão é tua</h2>
-                <p>Como criador já contas como participante. Podes gerir e cancelar esta sessão em <a routerLink="/menu/my-sessions">As minhas sessões</a>.</p>
+                <h2>{{ 'sessionDetail.ownTitle' | t }}</h2>
+                <p>{{ 'sessionDetail.ownTextStart' | t }} <a routerLink="/menu/my-sessions">{{ 'mySessions.title' | t }}</a>.</p>
               </div>
             </section>
           } @else if (session.joined) {
             <section class="participation-panel">
               <div>
-                <h2>Já estás dentro</h2>
-                <p>Fazes parte desta sessão e já podes ver a morada exata.</p>
+                <h2>{{ 'sessionDetail.joinedTitle' | t }}</h2>
+                <p>{{ 'sessionDetail.joinedText' | t }}</p>
               </div>
               <button
                 type="button"
                 class="danger-action"
                 [disabled]="actionLoading"
                 (click)="leaveSession()">
-                {{ actionLoading ? 'A processar...' : 'Sair da sessão' }}
+                {{ actionLoading ? ('common.processing' | t) : ('sessionDetail.leaveSession' | t) }}
               </button>
             </section>
           } @else {
             <section class="participation-panel">
               <div>
-                <h2>{{ isFull() ? 'Sessão cheia' : 'Queres participar?' }}</h2>
+                <h2>{{ isFull() ? ('sessionDetail.full' | t) : ('sessionDetail.wantJoin' | t) }}</h2>
                 <p>
                   @if (isFull()) {
-                    Podes entrar na lista de espera. Se surgir uma vaga, o backend promove o próximo participante.
+                    {{ 'sessionDetail.fullText' | t }}
                   } @else {
-                    Confirma a tua entrada nesta sessão.
+                    {{ 'sessionDetail.joinText' | t }}
                   }
                 </p>
               </div>
@@ -201,12 +201,12 @@
               <div class="join-controls">
                 @if (session.privateGame) {
                   <label>
-                    <span>Palavra-passe da sessão</span>
+                    <span>{{ 'sessionDetail.password' | t }}</span>
                     <input
                       type="password"
                       [(ngModel)]="joinPassword"
                       [disabled]="actionLoading"
-                      placeholder="Introduz a palavra-passe">
+                      [placeholder]="'sessionDetail.passwordPlaceholder' | t">
                   </label>
                 }
 
@@ -226,21 +226,21 @@
             <section class="attendance-panel">
               <div class="attendance-header">
                 <div>
-                  <h2>Presenças</h2>
-                  <p>Marca quem esteve presente ou faltou. A marcação fica disponível 30 minutos depois do início da sessão.</p>
+                  <h2>{{ 'sessionDetail.attendance' | t }}</h2>
+                  <p>{{ 'sessionDetail.attendanceText' | t }}</p>
                 </div>
                 <button
                   type="button"
                   class="refresh-attendance"
                   [disabled]="participantsLoading"
                   (click)="loadParticipants()">
-                  {{ participantsLoading ? 'A atualizar...' : 'Atualizar' }}
+                  {{ participantsLoading ? ('chat.refreshing' | t) : ('chat.refresh' | t) }}
                 </button>
               </div>
 
               @if (!canRecordAttendance()) {
                 <div class="attendance-info">
-                  A marcação de presenças fica disponível 30 minutos depois do início da sessão.
+                  {{ 'sessionDetail.attendanceInfo' | t }}
                 </div>
               }
 
@@ -261,7 +261,7 @@
               }
 
               @if (!participantsLoading && participants.length === 0 && !attendanceError) {
-                <div class="attendance-empty">Ainda não há participantes ativos para gerir.</div>
+                <div class="attendance-empty">{{ 'sessionDetail.noParticipants' | t }}</div>
               }
 
               @if (participants.length > 0) {
@@ -270,7 +270,7 @@
                     <article class="participant-row">
                       <div class="participant-identity">
                         <strong>{{ participant.username }}</strong>
-                        <span>Entrou em {{ participant.joinedAt | date:'dd/MM/yyyy HH:mm' }}</span>
+                        <span>{{ 'sessionDetail.joinedAt' | t:{ date: (participant.joinedAt | date:'dd/MM/yyyy HH:mm')! } }}</span>
                       </div>
 
                       <span
@@ -286,26 +286,26 @@
                           class="attended-action"
                           [disabled]="!canRecordAttendance() || attendanceUpdatingId !== null || removeLoadingId !== null"
                           (click)="recordAttendance(participant, 'ATTENDED')">
-                          {{ attendanceUpdatingId === participant.id ? 'A guardar...' : 'Presente' }}
+                          {{ attendanceUpdatingId === participant.id ? ('profile.saving' | t) : ('sessionDetail.present' | t) }}
                         </button>
                         <button
                           type="button"
                           class="no-show-action"
                           [disabled]="!canRecordAttendance() || attendanceUpdatingId !== null || removeLoadingId !== null"
                           (click)="recordAttendance(participant, 'NO_SHOW')">
-                          {{ attendanceUpdatingId === participant.id ? 'A guardar...' : 'Faltou' }}
+                          {{ attendanceUpdatingId === participant.id ? ('profile.saving' | t) : ('sessionDetail.absent' | t) }}
                         </button>
 
                         @if (canRemoveParticipant(participant)) {
                           @if (pendingRemovalId === participant.id) {
                             <div class="removal-confirmation">
-                              <span>Remover {{ participant.username }}?</span>
+                              <span>{{ 'sessionDetail.removeUser' | t:{ username: participant.username } }}</span>
                               <button
                                 type="button"
                                 class="confirm-remove-action"
                                 [disabled]="removeLoadingId !== null"
                                 (click)="confirmRemoveParticipant(participant)">
-                                {{ removeLoadingId === participant.id ? 'A remover...' : 'Confirmar' }}
+                                {{ removeLoadingId === participant.id ? ('friends.removing' | t) : ('common.confirm' | t) }}
                               </button>
                               <button
                                 type="button"
@@ -337,15 +337,15 @@
             <section class="chat-panel">
               <div class="chat-header">
                 <div>
-                  <h2>Chat da sessão</h2>
-                  <p>Fala com o criador e com os restantes participantes.</p>
+                  <h2>{{ 'sessionDetail.sessionChat' | t }}</h2>
+                  <p>{{ 'sessionDetail.sessionChatText' | t }}</p>
                 </div>
                 <button
                   type="button"
                   class="refresh-chat"
                   [disabled]="chatLoading"
                   (click)="refreshMessages()">
-                  {{ chatLoading ? 'A atualizar...' : 'Atualizar' }}
+                  {{ chatLoading ? ('chat.refreshing' | t) : ('chat.refresh' | t) }}
                 </button>
               </div>
 
@@ -355,7 +355,7 @@
 
               <div class="message-list">
                 @if (!chatLoading && messages.length === 0) {
-                  <div class="empty-chat">Ainda não há mensagens. Podes começar a conversa.</div>
+                  <div class="empty-chat">{{ 'sessionDetail.emptyChat' | t }}</div>
                 }
 
                 @for (message of messages; track message.id) {
@@ -373,14 +373,14 @@
 
               <form class="message-composer" (ngSubmit)="sendMessage()">
                 <label>
-                  <span>Nova mensagem</span>
+                  <span>{{ 'sessionDetail.newMessage' | t }}</span>
                   <textarea
                     name="messageBody"
                     [(ngModel)]="messageBody"
                     maxlength="2000"
                     rows="3"
                     [disabled]="messageSending"
-                    placeholder="Escreve uma mensagem para o grupo..."></textarea>
+                    [placeholder]="'sessionDetail.groupPlaceholder' | t"></textarea>
                 </label>
 
                 <div class="composer-footer">
@@ -389,7 +389,7 @@
                     type="submit"
                     class="primary-action"
                     [disabled]="messageSending || !messageBody.trim()">
-                    {{ messageSending ? 'A enviar...' : 'Enviar mensagem' }}
+                    {{ messageSending ? ('chat.sending' | t) : ('sessionDetail.sendMessage' | t) }}
                   </button>
                 </div>
               </form>
@@ -397,7 +397,7 @@
           } @else if (!session.waitlisted) {
             <section class="chat-locked">
               <h2>Chat da sessão</h2>
-              <p>O chat fica disponível assim que entrares na sessão.</p>
+              <p>{{ 'sessionDetail.chatLocked' | t }}</p>
             </section>
           }
         </div>
