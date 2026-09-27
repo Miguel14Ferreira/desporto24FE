@@ -3,13 +3,13 @@
     <header class="page-header">
       <div>
         <p class="eyebrow">Desporto24</p>
-        <h1>As minhas sessões</h1>
-        <p class="subtitle">Vê o que criaste, onde já estás inscrito, listas de espera e o teu histórico de presenças.</p>
+        <h1>{{ 'mySessions.title' | t }}</h1>
+        <p class="subtitle">{{ 'mySessions.subtitle' | t }}</p>
       </div>
 
       <div class="header-actions">
-        <a class="primary-action" routerLink="/menu/createEvent">Criar sessão</a>
-        <a class="secondary-action" routerLink="/menu/events">Descobrir sessões</a>
+        <a class="primary-action" routerLink="/menu/createEvent">{{ 'mySessions.create' | t }}</a>
+        <a class="secondary-action" routerLink="/menu/events">{{ 'mySessions.discover' | t }}</a>
       </div>
     </header>
 
@@ -22,13 +22,13 @@
     }
 
     @if (loading) {
-      <div class="state-card">A carregar as tuas sessões...</div>
+      <div class="state-card">{{ 'mySessions.loading' | t }}</div>
     }
 
     @if (!loading && errorMessage) {
       <div class="state-card error-state">
         <p>{{ errorMessage }}</p>
-        <button type="button" (click)="load()">Tentar novamente</button>
+        <button type="button" (click)="load()">{{ 'common.retry' | t }}</button>
       </div>
     }
 
@@ -36,16 +36,16 @@
       <section class="session-section">
         <div class="section-heading">
           <div>
-            <span class="section-kicker">Organização</span>
-            <h2>Criadas por mim</h2>
+            <span class="section-kicker">{{ 'mySessions.organisation' | t }}</span>
+            <h2>{{ 'mySessions.createdByMe' | t }}</h2>
           </div>
           <span class="count-badge">{{ data.created.length }}</span>
         </div>
 
         @if (data.created.length === 0) {
           <div class="empty-card">
-            <p>Ainda não criaste nenhuma sessão.</p>
-            <a routerLink="/menu/createEvent">Criar a primeira</a>
+            <p>{{ 'mySessions.noneCreated' | t }}</p>
+            <a routerLink="/menu/createEvent">{{ 'mySessions.createFirst' | t }}</a>
           </div>
         } @else {
           <div class="session-grid">
@@ -61,34 +61,34 @@
 
                 <div class="meta-grid">
                   <div>
-                    <span>Data</span>
+                    <span>{{ 'mySessions.date' | t }}</span>
                     <strong>{{ session.gameDate | date:'dd/MM/yyyy HH:mm' }}</strong>
                   </div>
                   <div>
-                    <span>Participantes</span>
+                    <span>{{ 'mySessions.participants' | t }}</span>
                     <strong>{{ session.participantCount }}/{{ session.maxParticipants }}</strong>
                   </div>
                   <div>
-                    <span>Vagas</span>
+                    <span>{{ 'mySessions.vacancies' | t }}</span>
                     <strong>{{ vacancies(session) }}</strong>
                   </div>
                   <div>
-                    <span>Preço</span>
+                    <span>{{ 'mySessions.price' | t }}</span>
                     <strong>
                       @if (session.priceAmount > 0) {
                         {{ session.priceAmount | number:'1.2-2' }} €
                       } @else {
-                        Grátis
+                        {{ 'common.free' | t }}
                       }
                     </strong>
                   </div>
                 </div>
 
                 <div class="card-actions">
-                  <a [routerLink]="['/menu/events', session.id]">Ver detalhes</a>
+                  <a [routerLink]="['/menu/events', session.id]">{{ 'mySessions.details' | t }}</a>
                   @if (canCancel(session)) {
                     <button type="button" class="danger-action" (click)="requestCancel(session)">
-                      Cancelar sessão
+                      {{ 'mySessions.cancelSession' | t }}
                     </button>
                   }
                 </div>
@@ -101,16 +101,16 @@
       <section class="session-section">
         <div class="section-heading">
           <div>
-            <span class="section-kicker">Participação</span>
-            <h2>Sessões onde estou inscrito</h2>
+            <span class="section-kicker">{{ 'mySessions.participation' | t }}</span>
+            <h2>{{ 'mySessions.joined' | t }}</h2>
           </div>
           <span class="count-badge">{{ data.joined.length }}</span>
         </div>
 
         @if (data.joined.length === 0) {
           <div class="empty-card">
-            <p>Não estás inscrito noutras sessões neste momento.</p>
-            <a routerLink="/menu/events">Encontrar uma sessão</a>
+            <p>{{ 'mySessions.noneJoined' | t }}</p>
+            <a routerLink="/menu/events">{{ 'mySessions.findSession' | t }}</a>
           </div>
         } @else {
           <div class="session-grid">
@@ -126,11 +126,11 @@
 
                 <div class="compact-meta">
                   <span>{{ session.gameDate | date:'dd/MM/yyyy HH:mm' }}</span>
-                  <span>{{ session.participantCount }}/{{ session.maxParticipants }} jogadores</span>
+                  <span>{{ 'mySessions.players' | t:{ count: session.participantCount + '/' + session.maxParticipants } }}</span>
                 </div>
 
                 <div class="card-actions">
-                  <a [routerLink]="['/menu/events', session.id]">Abrir sessão</a>
+                  <a [routerLink]="['/menu/events', session.id]">{{ 'mySessions.openSession' | t }}</a>
                 </div>
               </article>
             }
@@ -141,15 +141,15 @@
       <section class="session-section">
         <div class="section-heading">
           <div>
-            <span class="section-kicker">Espera</span>
-            <h2>Lista de espera</h2>
+            <span class="section-kicker">{{ 'mySessions.waiting' | t }}</span>
+            <h2>{{ 'mySessions.waitlist' | t }}</h2>
           </div>
           <span class="count-badge">{{ data.waitlisted.length }}</span>
         </div>
 
         @if (data.waitlisted.length === 0) {
           <div class="empty-card">
-            <p>Não estás em nenhuma lista de espera.</p>
+            <p>{{ 'mySessions.noneWaitlist' | t }}</p>
           </div>
         } @else {
           <div class="session-grid">
@@ -160,7 +160,7 @@
                     <span class="sport">{{ session.sport }}</span>
                     <h3>{{ session.city }}</h3>
                   </div>
-                  <span class="waitlist-badge">Em espera</span>
+                  <span class="waitlist-badge">{{ 'mySessions.waitingStatus' | t }}</span>
                 </div>
 
                 <div class="compact-meta">
@@ -169,13 +169,13 @@
                 </div>
 
                 <div class="card-actions">
-                  <a [routerLink]="['/menu/events', session.id]">Ver estado</a>
+                  <a [routerLink]="['/menu/events', session.id]">{{ 'mySessions.viewStatus' | t }}</a>
                   <button
                     type="button"
                     class="danger-action"
                     [disabled]="waitlistLeavingId !== null"
                     (click)="leaveWaitlist(session)">
-                    {{ waitlistLeavingId === session.id ? 'A sair...' : 'Sair da lista de espera' }}
+                    {{ waitlistLeavingId === session.id ? ('mySessions.leaving' | t) : ('mySessions.leaveWaitlist' | t) }}
                   </button>
                 </div>
               </article>
@@ -188,26 +188,26 @@
     <section class="session-section attendance-section">
       <div class="section-heading">
         <div>
-          <span class="section-kicker">Fiabilidade</span>
-          <h2>Histórico de presenças</h2>
+          <span class="section-kicker">{{ 'profileData.reliability' | t }}</span>
+          <h2>{{ 'mySessions.attendanceHistory' | t }}</h2>
         </div>
         <span class="count-badge">{{ attendanceHistory.length }}</span>
       </div>
 
       @if (attendanceLoading) {
-        <div class="state-card">A carregar histórico de presenças...</div>
+        <div class="state-card">{{ 'mySessions.loadingAttendance' | t }}</div>
       }
 
       @if (!attendanceLoading && attendanceError) {
         <div class="state-card error-state">
           <p>{{ attendanceError }}</p>
-          <button type="button" (click)="loadAttendanceHistory()">Tentar novamente</button>
+          <button type="button" (click)="loadAttendanceHistory()">{{ 'common.retry' | t }}</button>
         </div>
       }
 
       @if (!attendanceLoading && !attendanceError && attendanceHistory.length === 0) {
         <div class="empty-card">
-          <p>Ainda não tens presenças registadas em sessões concluídas.</p>
+          <p>{{ 'mySessions.noAttendance' | t }}</p>
         </div>
       }
 
@@ -234,7 +234,7 @@
               </div>
 
               <div class="attendance-actions">
-                <a [routerLink]="['/menu/events', item.sessionId]">Ver sessão</a>
+                <a [routerLink]="['/menu/events', item.sessionId]">{{ 'mySessions.viewSession' | t }}</a>
 
                 @if (item.disputeStatus) {
                   <span
@@ -242,7 +242,7 @@
                     [class.dispute-open]="item.disputeStatus === 'OPEN'"
                     [class.dispute-accepted]="item.disputeStatus === 'ACCEPTED'"
                     [class.dispute-rejected]="item.disputeStatus === 'REJECTED'">
-                    Contestação: {{ disputeLabel(item) }}
+                    {{ 'mySessions.disputePrefix' | t }} {{ disputeLabel(item) }}
                   </span>
                 }
 
@@ -251,7 +251,7 @@
                     type="button"
                     class="dispute-action"
                     (click)="requestDispute(item)">
-                    Contestar falta
+                    {{ 'mySessions.disputeNoShow' | t }}
                   </button>
                 }
               </div>
@@ -264,14 +264,14 @@
     @if (pendingCancelId !== null) {
       <div class="modal-backdrop">
         <div class="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="cancel-title">
-          <h2 id="cancel-title">Cancelar sessão?</h2>
-          <p>Os participantes serão notificados e a sessão deixará de aceitar entradas.</p>
+          <h2 id="cancel-title">{{ 'mySessions.cancelTitle' | t }}</h2>
+          <p>{{ 'mySessions.cancelText' | t }}</p>
           <div class="modal-actions">
             <button type="button" class="secondary-button" [disabled]="cancelLoading" (click)="dismissCancel()">
-              Manter sessão
+              {{ 'mySessions.keepSession' | t }}
             </button>
             <button type="button" class="danger-action" [disabled]="cancelLoading" (click)="confirmCancel()">
-              {{ cancelLoading ? 'A cancelar...' : 'Confirmar cancelamento' }}
+              {{ cancelLoading ? ('mySessions.cancelling' | t) : ('mySessions.confirmCancel' | t) }}
             </button>
           </div>
         </div>
@@ -281,19 +281,19 @@
     @if (pendingDispute) {
       <div class="modal-backdrop">
         <div class="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="dispute-title">
-          <span class="section-kicker">Contestação de presença</span>
-          <h2 id="dispute-title">Contestar falta em {{ pendingDispute.sport }}</h2>
-          <p>Explica de forma objetiva por que motivo consideras que o registo de falta está incorreto.</p>
+          <span class="section-kicker">{{ 'mySessions.disputeKicker' | t }}</span>
+          <h2 id="dispute-title">{{ 'mySessions.disputeTitle' | t:{ sport: pendingDispute.sport } }}</h2>
+          <p>{{ 'mySessions.disputeText' | t }}</p>
 
           <label class="dispute-reason">
-            <span>Justificação</span>
+            <span>{{ 'mySessions.reason' | t }}</span>
             <textarea
               name="disputeReason"
               [(ngModel)]="disputeReason"
               maxlength="2000"
               rows="6"
               [disabled]="disputeLoading"
-              placeholder="Ex.: Estive presente na sessão e fui registado por engano como falta."></textarea>
+              [placeholder]="'mySessions.reasonPlaceholder' | t"></textarea>
             <small>{{ disputeReason.length }}/2000</small>
           </label>
 
@@ -310,7 +310,7 @@
               class="dispute-action"
               [disabled]="disputeLoading || !disputeReason.trim()"
               (click)="confirmDispute()">
-              {{ disputeLoading ? 'A enviar...' : 'Enviar contestação' }}
+              {{ disputeLoading ? ('contact.sending' | t) : ('mySessions.sendDispute' | t) }}
             </button>
           </div>
         </div>
