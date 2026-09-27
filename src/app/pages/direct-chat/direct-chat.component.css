@@ -18,8 +18,14 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  gap: 1rem;
+  gap: 1.5rem;
   margin-bottom: 1rem;
+}
+
+.chat-actions {
+  display: flex;
+  align-items: center;
+  gap: .85rem;
 }
 
 .back-link {
@@ -43,18 +49,27 @@ h1 {
   margin: 0;
 }
 
-.refresh-action,
+.block-action,
 .composer button {
   border: 0;
   border-radius: .75rem;
   padding: .75rem .9rem;
-  background: #f8fafc;
-  color: #0f172a;
   font-weight: 800;
   cursor: pointer;
 }
 
-.refresh-action:disabled,
+.block-action {
+  border: 1px solid rgba(248, 113, 113, .28);
+  background: rgba(248, 113, 113, .08);
+  color: #fecaca;
+}
+
+.sync-status {
+  color: #94a3b8;
+  font-size: .78rem;
+}
+
+.block-action:disabled,
 .composer button:disabled {
   opacity: .6;
   cursor: wait;
@@ -152,17 +167,71 @@ h1 {
   outline: none;
 }
 
+.composer-tools,
 .composer-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: .8rem;
+}
+
+.composer-tools {
   margin-top: .65rem;
 }
 
-.composer-footer > span {
+.composer-footer {
+  margin-top: .8rem;
+}
+
+.composer-footer > span,
+.character-count {
   color: #64748b;
   font-size: .75rem;
+}
+
+.composer-footer > button {
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.emoji-wrap {
+  position: relative;
+}
+
+.emoji-toggle {
+  border: 1px solid rgba(255,255,255,.14) !important;
+  padding: .55rem .7rem !important;
+  background: rgba(255,255,255,.06);
+  color: #e2e8f0;
+}
+
+.emoji-picker {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + .5rem);
+  z-index: 5;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: .25rem;
+  width: max-content;
+  max-width: min(300px, 80vw);
+  padding: .55rem;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: .8rem;
+  background: #172033;
+  box-shadow: 0 14px 35px rgba(0,0,0,.3);
+}
+
+.emoji-option {
+  min-width: 2.35rem;
+  padding: .4rem !important;
+  background: transparent;
+  color: #fff;
+  font-size: 1.2rem;
+}
+
+.emoji-option:hover {
+  background: rgba(255,255,255,.08);
 }
 
 .state-card,
@@ -187,6 +256,11 @@ h1 {
   .chat-header,
   .composer-footer {
     align-items: stretch;
+    flex-direction: column;
+  }
+
+  .chat-actions {
+    align-items: flex-start;
     flex-direction: column;
   }
 
