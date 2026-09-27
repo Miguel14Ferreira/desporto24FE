@@ -1,4 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { appTranslate as t } from '../../i18n/i18n.service';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { finalize } from 'rxjs';
 
@@ -42,7 +43,7 @@ export class PerfisComponent {
     const term = this.searchTerm.trim();
 
     if (!term) {
-      this.errorMessage = 'Escreve um nome de utilizador para pesquisar.';
+      this.errorMessage = t('feedback.community.searchRequired');
       this.profiles = [];
       this.searched = false;
       return;
@@ -66,7 +67,7 @@ export class PerfisComponent {
           this.searched = true;
           this.errorMessage = this.errorFrom(
             error,
-            'Não foi possível pesquisar utilizadores.'
+            t('feedback.community.searchError')
           );
         }
       });
@@ -100,12 +101,12 @@ export class PerfisComponent {
       .subscribe({
         next: () => {
           this.pendingFriendRequests.add(profile.username);
-          this.actionSuccess = `Pedido de amizade enviado para ${profile.username}.`;
+          this.actionSuccess = t('feedback.community.requestSent', { username: profile.username });
         },
         error: error => {
           const message = this.errorFrom(
             error,
-            'Não foi possível enviar o pedido de amizade.'
+            t('feedback.community.requestError')
           );
 
           if (message.toLowerCase().includes('pendente')) {
