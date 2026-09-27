@@ -7,11 +7,11 @@
         <h1>{{ recipientUsername }}</h1>
       </div>
 
-      <div>
+      <div class="chat-actions">
         @if (!(chatInfo?.chatBlocked === true) || isBlockedByMe()) {
           <button
             type="button"
-            class="refresh-action"
+            class="block-action"
             [disabled]="friendshipActionLoading"
             (click)="toggleChatBlock()">
             @if (friendshipActionLoading) {
@@ -23,14 +23,7 @@
             }
           </button>
         }
-
-        <button
-          type="button"
-          class="refresh-action"
-          [disabled]="loading"
-          (click)="load()">
-          {{ loading ? ('chat.refreshing' | t) : ('chat.refresh' | t) }}
-        </button>
+        <span class="sync-status">{{ 'chat.autoRefresh' | t }}</span>
       </div>
     </header>
 
@@ -62,9 +55,7 @@
           }
 
           @for (message of messages; track message.id ?? $index) {
-            <article
-              class="message"
-              [class.own-message]="isOwnMessage(message)">
+            <article class="message" [class.own-message]="isOwnMessage(message)">
               <div class="message-meta">
                 <strong>{{ message.username1 }}</strong>
                 <span>{{ messageDate(message) }}</span>
@@ -86,8 +77,33 @@
               [placeholder]="'chat.placeholder' | t"></textarea>
           </label>
 
+          <div class="composer-tools">
+            <div class="emoji-wrap">
+              <button
+                type="button"
+                class="emoji-toggle"
+                [attr.aria-expanded]="showEmojiPicker"
+                [disabled]="sending || chatInfo?.chatBlocked === true"
+                (click)="toggleEmojiPicker()">
+                😊 {{ 'chat.emoji' | t }}
+              </button>
+
+              @if (showEmojiPicker) {
+                <div class="emoji-picker">
+                  @for (emoji of emojis; track emoji) {
+                    <button type="button" class="emoji-option" (click)="addEmoji(emoji)">
+                      {{ emoji }}
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+
+            <span class="character-count">{{ messageBody.length }}/2000</span>
+          </div>
+
           <div class="composer-footer">
-            <span>{{ messageBody.length }}/2000</span>
+            <span>{{ 'chat.autoRefreshHint' | t }}</span>
             <button
               type="submit"
               [disabled]="sending || chatInfo?.chatBlocked === true || !messageBody.trim()">
