@@ -1,4 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { appTranslate as t } from '../../i18n/i18n.service';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { finalize } from 'rxjs';
 
@@ -23,7 +24,7 @@ export class ForgotpComponent {
     const email = this.email.trim();
 
     if (!email) {
-      this.errorMessage = 'Introduz o email associado à tua conta.';
+      this.errorMessage = t('feedback.reset.emailRequired');
       this.successMessage = '';
       return;
     }
@@ -40,13 +41,12 @@ export class ForgotpComponent {
       .pipe(finalize(() => this.loading = false))
       .subscribe({
         next: response => {
-          this.successMessage = response.message
-            || 'Foi enviado um email com instruções para redefinir a palavra-passe.';
+          this.successMessage = t('feedback.reset.sent');
         },
         error: error => {
           this.errorMessage = this.errorFrom(
             error,
-            'Não foi possível iniciar o reset da palavra-passe.'
+            t('feedback.reset.startError')
           );
         }
       });
