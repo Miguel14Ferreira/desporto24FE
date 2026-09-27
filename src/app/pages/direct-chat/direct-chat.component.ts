@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { appTranslate as t } from '../../i18n/i18n.service';
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { JwtHelperService } from '@auth0/angular-jwt';
 import { forkJoin, finalize } from 'rxjs';
@@ -16,7 +16,7 @@ import { CommunityService } from '../../services/community.service';
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false
 })
-export class DirectChatComponent implements OnInit {
+export class DirectChatComponent implements OnInit, OnDestroy {
   recipientUsername = '';
   currentUsername: string | null = null;
   messages: DirectChatMessage[] = [];
@@ -29,8 +29,12 @@ export class DirectChatComponent implements OnInit {
   actionError = '';
   actionSuccess = '';
   messageBody = '';
+  showEmojiPicker = false;
+
+  readonly emojis = ['😀', '😂', '😊', '😍', '🥳', '😎', '😉', '👍', '👏', '🙌', '🔥', '⚽', '🏀', '🎾', '🏓', '💪', '❤️', '✅'];
 
   private readonly jwtHelper = new JwtHelperService();
+  private refreshTimer?: ReturnType<typeof setInterval>;
 
   constructor(
     private route: ActivatedRoute,
@@ -48,6 +52,17 @@ export class DirectChatComponent implements OnInit {
     }
 
     this.load();
+    this.refreshTimer = setInterval(() => {
+      if (!document.hidden && !this.sending) {
+        this.refreshMessages();
+      }
+    }, 7000);
+  }
+
+  ngOnDestroy(): void {
+    if (this.refreshTimer) {
+      clearInterval(this.refreshTimer);
+    }
   }
 
   load(): void {
@@ -65,19 +80,26 @@ export class DirectChatComponent implements OnInit {
       .pipe(finalize(() => this.loading = false))
       .subscribe({
         next: result => {
-          this.messages = [...result.messages].sort(
-            (a, b) => this.timestamp(a) - this.timestamp(b)
-          );
+          this.messages = this.sorted(result.messages);
           this.chatInfo = result.info;
         },
         error: error => {
           this.messages = [];
-          this.errorMessage = this.errorFrom(
-            error,
-            t('feedback.chat.loadError')
-          );
+          this.errorMessage = this.errorFrom(error, t('feedback.chat.loadError'));
         }
       });
+  }
+
+  refreshMessages(): void {
+    if (!this.recipientUsername) {
+      return;
+    }
+
+    this.chatService.history(this.recipientUsername).subscribe({
+      next: messages => {
+        this.messages = this.sorted(messages);
+      }
+    });
   }
 
   sendMessage(): void {
@@ -105,16 +127,24 @@ export class DirectChatComponent implements OnInit {
       .pipe(finalize(() => this.sending = false))
       .subscribe({
         next: message => {
-          this.messages = [...this.messages, message];
+          this.messages = this.sorted([...this.messages, message]);
           this.messageBody = '';
+          this.showEmojiPicker = false;
         },
         error: error => {
-          this.actionError = this.errorFrom(
-            error,
-            t('feedback.chat.sendError')
-          );
+          this.actionError = this.errorFrom(error, t('feedback.chat.sendError'));
         }
       });
+  }
+
+  toggleEmojiPicker(): void {
+    this.showEmojiPicker = !this.showEmojiPicker;
+  }
+
+  addEmoji(emoji: string): void {
+    if (this.messageBody.length + emoji.length <= 2000) {
+      this.messageBody += emoji;
+    }
   }
 
   isOwnMessage(message: DirectChatMessage): boolean {
@@ -166,9 +196,7 @@ export class DirectChatComponent implements OnInit {
         error: error => {
           this.actionError = this.errorFrom(
             error,
-            shouldUnblock
-              ? t('feedback.chat.unblockError')
-              : t('feedback.chat.blockError')
+            shouldUnblock ? t('feedback.chat.unblockError') : t('feedback.chat.blockError')
           );
         }
       });
@@ -201,6 +229,10 @@ export class DirectChatComponent implements OnInit {
       dateStyle: 'short',
       timeStyle: 'short'
     }).format(new Date(parsed));
+  }
+
+  private sorted(messages: DirectChatMessage[]): DirectChatMessage[] {
+    return [...messages].sort((a, b) => this.timestamp(a) - this.timestamp(b));
   }
 
   private resolveRecipient(): string {
@@ -252,8 +284,6 @@ export class DirectChatComponent implements OnInit {
 
   private errorFrom(error: HttpErrorResponse, fallback: string): string {
     const apiMessage = error.error?.message;
-    return typeof apiMessage === 'string' && apiMessage.trim()
-      ? apiMessage
-      : fallback;
+    return typeof apiMessage === 'string' && apiMessage.trim() ? apiMessage : fallback;
   }
 }
