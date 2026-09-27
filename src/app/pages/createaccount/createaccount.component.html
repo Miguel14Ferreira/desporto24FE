@@ -25,9 +25,13 @@
           <button
             type="button"
             class="secondary-action resend-action"
-            [disabled]="resendLoading"
+            [disabled]="resendLoading || resendCooldownSeconds > 0"
             (click)="resendConfirmation()">
-            {{ resendLoading ? 'A reenviar...' : 'Reenviar email de confirmação' }}
+            {{ resendLoading
+              ? 'A reenviar...'
+              : (resendCooldownSeconds > 0
+                  ? 'Podes reenviar em ' + resendCooldownSeconds + 's'
+                  : 'Reenviar email de confirmação') }}
           </button>
           <a class="primary-link" routerLink="/login">Ir para o login</a>
         </div>
@@ -51,9 +55,13 @@
           <button
             type="button"
             class="secondary-action resend-action"
-            [disabled]="resendLoading"
+            [disabled]="resendLoading || resendCooldownSeconds > 0"
             (click)="resendConfirmation()">
-            {{ resendLoading ? 'A reenviar...' : 'Reenviar email de confirmação' }}
+            {{ resendLoading
+              ? 'A reenviar...'
+              : (resendCooldownSeconds > 0
+                  ? 'Podes reenviar em ' + resendCooldownSeconds + 's'
+                  : 'Reenviar email de confirmação') }}
           </button>
           <a class="primary-link" routerLink="/login">Ir para o login</a>
         </div>
