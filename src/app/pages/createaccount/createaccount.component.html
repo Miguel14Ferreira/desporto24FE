@@ -59,10 +59,6 @@
         </div>
       </section>
     } @else {
-    @if (errorMessage) {
-      <div class="feedback error-feedback">{{ errorMessage }}</div>
-    }
-
     <form class="register-card" (ngSubmit)="register()">
       <section class="photo-section">
         <div class="photo-preview">
