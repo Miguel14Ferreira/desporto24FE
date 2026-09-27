@@ -1,4 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { appTranslate as t } from '../../i18n/i18n.service';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { finalize } from 'rxjs';
 
@@ -315,14 +316,13 @@ export class CreateaccountComponent {
       .pipe(finalize(() => this.loading = false))
       .subscribe({
         next: response => {
-          this.successMessage = response.message
-            || 'Conta criada. Confirma o email para ativares a conta.';
+          this.successMessage = t('feedback.register.created');
           this.registrationComplete = true;
         },
         error: error => {
           this.errorMessage = this.errorFrom(
             error,
-            'Não foi possível criar a conta.'
+            t('feedback.register.createError')
           );
           const normalizedError = this.errorMessage.toLowerCase();
           this.existingAccountRecovery =
@@ -346,13 +346,13 @@ export class CreateaccountComponent {
       .pipe(finalize(() => this.resendLoading = false))
       .subscribe({
         next: response => {
-          this.successMessage = response.message || 'Foi enviado um novo email de confirmação.';
+          this.successMessage = t('feedback.register.resent');
           this.startResendCooldown();
         },
         error: error => {
           this.errorMessage = this.errorFrom(
             error,
-            'Não foi possível reenviar o email de confirmação.'
+            t('feedback.register.resendError')
           );
         }
       });
@@ -383,7 +383,7 @@ export class CreateaccountComponent {
     }
 
     if (!file.type.startsWith('image/')) {
-      this.errorMessage = 'Escolhe um ficheiro de imagem.';
+      this.errorMessage = t('feedback.image.choose');
       input.value = '';
       return;
     }
@@ -417,28 +417,28 @@ export class CreateaccountComponent {
     ];
 
     if (required.some(value => !value?.trim())) {
-      return 'Preenche todos os campos obrigatórios.';
+      return t('feedback.register.required');
     }
 
     if (this.username.trim().length < 3) {
-      return 'O nome de utilizador tem de ter pelo menos 3 caracteres.';
+      return t('feedback.register.usernameMin');
     }
 
     if (this.password.length < 8) {
-      return 'A palavra-passe tem de ter pelo menos 8 caracteres.';
+      return t('feedback.register.passwordMin');
     }
 
     if (this.password !== this.confirmPassword) {
-      return 'A palavra-passe e a confirmação não coincidem.';
+      return t('feedback.register.passwordMismatch');
     }
 
     if (!this.email.includes('@')) {
-      return 'Introduz um email válido.';
+      return t('feedback.contact.invalidEmail');
     }
 
     const normalizedPhone = this.phone.replace(/\D/g, '');
     if (normalizedPhone.length < 6 || normalizedPhone.length > 15) {
-      return 'Introduz um número de telemóvel válido.';
+      return t('feedback.register.invalidPhone');
     }
 
     return null;
