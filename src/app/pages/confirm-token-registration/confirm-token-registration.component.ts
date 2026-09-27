@@ -1,4 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { appTranslate as t } from '../../i18n/i18n.service';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { finalize } from 'rxjs';
@@ -27,7 +28,7 @@ export class ConfirmTokenRegistrationComponent implements OnInit {
     this.token = this.route.snapshot.paramMap.get('token') || '';
 
     if (!this.token) {
-      this.errorMessage = 'O link de ativação não contém um token válido.';
+      this.errorMessage = t('feedback.confirm.invalidToken');
       return;
     }
 
@@ -47,12 +48,12 @@ export class ConfirmTokenRegistrationComponent implements OnInit {
       .pipe(finalize(() => this.loading = false))
       .subscribe({
         next: response => {
-          this.successMessage = response.message || 'Conta ativada com sucesso.';
+          this.successMessage = t('feedback.confirm.success');
         },
         error: error => {
           this.errorMessage = this.errorFrom(
             error,
-            'Não foi possível ativar a conta. O link pode ter expirado.'
+            t('feedback.confirm.error')
           );
         }
       });
