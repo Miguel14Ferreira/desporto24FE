@@ -2,45 +2,33 @@
   <div class="about-shell">
     <header class="page-header">
       <p class="eyebrow">Desporto24</p>
-      <h1>Desporto aproxima pessoas.</h1>
-      <p class="subtitle">
-        Criámos o Desporto24 para ser mais simples encontrar companhia para jogar,
-        descobrir sessões perto de ti e transformar vontade de praticar em jogos reais.
-      </p>
+      <h1>{{ 'about.title' | t }}</h1>
+      <p class="subtitle">{{ 'about.subtitle' | t }}</p>
     </header>
 
     <div class="about-grid">
       <article class="about-card">
         <span class="card-number">01</span>
-        <h2>Quem somos</h2>
-        <p>
-          Somos uma comunidade pensada para quem quer praticar desporto com mais frequência,
-          conhecer jogadores e encontrar oportunidades para entrar em campo.
-        </p>
+        <h2>{{ 'about.who.title' | t }}</h2>
+        <p>{{ 'about.who.text' | t }}</p>
       </article>
 
       <article class="about-card">
         <span class="card-number">02</span>
-        <h2>O nosso objetivo</h2>
-        <p>
-          Tornar mais fácil organizar e encontrar sessões desportivas, independentemente
-          da modalidade ou do nível de experiência.
-        </p>
+        <h2>{{ 'about.goal.title' | t }}</h2>
+        <p>{{ 'about.goal.text' | t }}</p>
       </article>
 
       <article class="about-card">
         <span class="card-number">03</span>
-        <h2>Mais do que jogos</h2>
-        <p>
-          Queremos que cada sessão possa trazer novos hábitos, novos parceiros de treino
-          e muitas vezes novas amizades.
-        </p>
+        <h2>{{ 'about.more.title' | t }}</h2>
+        <p>{{ 'about.more.text' | t }}</p>
       </article>
     </div>
 
     <div class="about-actions">
-      <a class="primary-action" routerLink="/login/registerNewUser">Juntar-me à comunidade</a>
-      <a class="secondary-action" routerLink="/contact">Falar connosco</a>
+      <a class="primary-action" routerLink="/login/registerNewUser">{{ 'about.join' | t }}</a>
+      <a class="secondary-action" routerLink="/contact">{{ 'about.contact' | t }}</a>
     </div>
   </div>
 </section>
