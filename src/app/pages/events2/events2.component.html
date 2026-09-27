@@ -3,13 +3,13 @@
     <header class="page-header">
       <div>
         <p class="eyebrow">Desporto24</p>
-        <h1>Criar uma sessão</h1>
-        <p class="subtitle">Define quando, onde e como queres jogar. Depois da criação vais diretamente para os detalhes da sessão.</p>
+        <h1>{{ 'createSession.title' | t }}</h1>
+        <p class="subtitle">{{ 'createSession.subtitle' | t }}</p>
       </div>
 
       <div class="header-actions">
-        <a class="secondary-action" routerLink="/menu/events">Descobrir sessões</a>
-        <a class="secondary-action" routerLink="/menu/my-sessions">As minhas sessões</a>
+        <a class="secondary-action" routerLink="/menu/events">{{ 'mySessions.discover' | t }}</a>
+        <a class="secondary-action" routerLink="/menu/my-sessions">{{ 'mySessions.title' | t }}</a>
       </div>
     </header>
 
@@ -20,17 +20,17 @@
     <form class="create-card" (ngSubmit)="createSession()">
       <div class="form-grid">
         <label>
-          <span>Desporto *</span>
+          <span>{{ 'events.sport' | t }} *</span>
           <input
             type="text"
             name="sport"
             [(ngModel)]="sport"
             [disabled]="loading"
-            placeholder="Ex.: Padel">
+            [placeholder]="'events.sportPlaceholder' | t">
         </label>
 
         <label>
-          <span>Data e hora *</span>
+          <span>{{ 'createSession.dateTime' | t }} *</span>
           <input
             type="datetime-local"
             name="gameDate"
@@ -40,17 +40,17 @@
         </label>
 
         <label>
-          <span>Localidade *</span>
+          <span>{{ 'common.location' | t }} *</span>
           <input
             type="text"
             name="city"
             [(ngModel)]="city"
             [disabled]="loading"
-            placeholder="Ex.: Lisboa">
+            [placeholder]="'events.cityPlaceholder' | t">
         </label>
 
         <label>
-          <span>Máximo de jogadores *</span>
+          <span>{{ 'createSession.maxPlayers' | t }} *</span>
           <input
             type="number"
             name="maxParticipants"
@@ -61,24 +61,24 @@
         </label>
 
         <label class="full-width">
-          <span>Morada do local *</span>
+          <span>{{ 'createSession.address' | t }} *</span>
           <input
             type="text"
             name="address"
             [(ngModel)]="address"
             [disabled]="loading"
-            placeholder="Ex.: Rua do Campo 10, Lisboa">
+            [placeholder]="'createSession.addressPlaceholder' | t">
         </label>
       </div>
 
       <section class="location-section" [class.location-ready]="locationCaptured">
         <div>
-          <h2>Localização da sessão</h2>
+          <h2>{{ 'createSession.locationTitle' | t }}</h2>
           <p>
             @if (locationCaptured) {
-              Localização guardada. Esta sessão poderá aparecer nas pesquisas "perto de mim".
+              {{ 'createSession.locationSaved' | t }}
             } @else {
-              Opcional. Se estiveres no local onde o jogo vai acontecer, podes guardar a localização atual.
+              {{ 'createSession.locationOptional' | t }}
             }
           </p>
           @if (locationError) {
@@ -89,7 +89,7 @@
         <div class="location-actions">
           @if (locationCaptured) {
             <button type="button" class="secondary-action" [disabled]="loading" (click)="clearLocation()">
-              Remover localização
+              {{ 'createSession.removeLocation' | t }}
             </button>
           } @else {
             <button
@@ -97,7 +97,7 @@
               class="secondary-action"
               [disabled]="loading || locating"
               (click)="captureCurrentLocation()">
-              {{ locating ? 'A obter localização...' : 'Usar localização atual' }}
+              {{ locating ? ('events.locating' | t) : ('createSession.useLocation' | t) }}
             </button>
           }
         </div>
@@ -112,20 +112,20 @@
               [(ngModel)]="privateGame"
               [disabled]="loading">
             <span>
-              <strong>Sessão privada</strong>
-              <small>Quem quiser entrar precisa da palavra-passe.</small>
+              <strong>{{ 'createSession.private' | t }}</strong>
+              <small>{{ 'createSession.privateHint' | t }}</small>
             </span>
           </label>
 
           @if (privateGame) {
             <label class="nested-field">
-              <span>Palavra-passe *</span>
+              <span>{{ 'login.password' | t }} *</span>
               <input
                 type="password"
                 name="password"
                 [(ngModel)]="password"
                 [disabled]="loading"
-                placeholder="Palavra-passe da sessão">
+                [placeholder]="'createSession.sessionPassword' | t">
             </label>
           }
         </section>
@@ -138,14 +138,14 @@
               [(ngModel)]="hasPrice"
               [disabled]="loading">
             <span>
-              <strong>Tem custo por jogador</strong>
-              <small>Se estiver desligado, a sessão aparece como grátis.</small>
+              <strong>{{ 'createSession.hasCost' | t }}</strong>
+              <small>{{ 'createSession.costHint' | t }}</small>
             </span>
           </label>
 
           @if (hasPrice) {
             <label class="nested-field">
-              <span>Preço por jogador (€)</span>
+              <span>{{ 'createSession.pricePerPlayer' | t }}</span>
               <input
                 type="number"
                 name="priceAmount"
@@ -161,8 +161,8 @@
 
       <section class="photo-section">
         <div>
-          <h2>Fotografia do local</h2>
-          <p>Opcional. Ajuda os jogadores a reconhecer o campo ou espaço onde vão jogar.</p>
+          <h2>{{ 'createSession.photoTitle' | t }}</h2>
+          <p>{{ 'createSession.photoHint' | t }}</p>
         </div>
 
         <label class="upload-button">
@@ -171,24 +171,24 @@
             accept="image/*"
             [disabled]="loading"
             (change)="onPhotoChange($event)">
-          Escolher fotografia
+          {{ 'register.choosePhoto' | t }}
         </label>
 
         @if (photoPreview) {
           <div class="photo-preview">
-            <img [src]="photoPreview" alt="Pré-visualização do local">
+            <img [src]="photoPreview" [alt]="'createSession.photoAlt' | t">
             <div>
               <strong>{{ photo?.name }}</strong>
-              <button type="button" [disabled]="loading" (click)="clearPhoto()">Remover</button>
+              <button type="button" [disabled]="loading" (click)="clearPhoto()">{{ 'common.remove' | t }}</button>
             </div>
           </div>
         }
       </section>
 
       <div class="form-actions">
-        <a class="secondary-action" routerLink="/menu/events">Cancelar</a>
+        <a class="secondary-action" routerLink="/menu/events">{{ 'common.cancel' | t }}</a>
         <button type="submit" class="primary-action" [disabled]="loading">
-          {{ loading ? 'A criar sessão...' : 'Criar sessão' }}
+          {{ loading ? ('createSession.creating' | t) : ('mySessions.create' | t) }}
         </button>
       </div>
     </form>
