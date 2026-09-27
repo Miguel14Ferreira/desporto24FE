@@ -3,18 +3,18 @@
     <header class="page-header">
       <div>
         <p class="eyebrow">Desporto24</p>
-        <h1>Editar perfil</h1>
-        <p class="subtitle">Atualiza apenas os dados que queres partilhar na tua conta.</p>
+        <h1>{{ 'profile.edit.title' | t }}</h1>
+        <p class="subtitle">{{ 'profile.edit.subtitle' | t }}</p>
       </div>
 
       <div class="header-actions">
-        <a class="secondary-action" routerLink="/menu/dadosPerfil">Ver perfil</a>
-        <a class="secondary-action" routerLink="/menu">Menu</a>
+        <a class="secondary-action" routerLink="/menu/dadosPerfil">{{ 'profile.view' | t }}</a>
+        <a class="secondary-action" routerLink="/menu">{{ 'common.menu' | t }}</a>
       </div>
     </header>
 
     @if (loading) {
-      <div class="state-card">A carregar os teus dados...</div>
+      <div class="state-card">{{ 'profile.loading' | t }}</div>
     }
 
     @if (errorMessage) {
@@ -38,14 +38,14 @@
 
           <div>
             <strong>@{{ profile.username }}</strong>
-            <p>O nome de utilizador é gerido separadamente da edição do perfil.</p>
+            <p>{{ 'profile.usernameManaged' | t }}</p>
             @if (!photoEditing) {
               <button
                 type="button"
                 class="upload-action"
                 [disabled]="saving || photoSaving"
                 (click)="startPhotoEdit()">
-                Alterar fotografia
+                {{ 'profile.changePhoto' | t }}
               </button>
             } @else {
               <div class="photo-edit-actions">
@@ -55,7 +55,7 @@
                     accept="image/jpeg,image/png,image/webp"
                     [disabled]="photoSaving"
                     (change)="onPhotoChange($event)">
-                  Escolher nova fotografia
+                  {{ 'profile.chooseNewPhoto' | t }}
                 </label>
 
                 <button
@@ -63,7 +63,7 @@
                   class="photo-save-action"
                   [disabled]="photoSaving || !photo"
                   (click)="savePhoto()">
-                  {{ photoSaving ? 'A guardar...' : 'Guardar fotografia' }}
+                  {{ photoSaving ? ('profile.saving' | t) : ('profile.savePhoto' | t) }}
                 </button>
 
                 <button
@@ -80,78 +80,78 @@
 
         <div class="form-grid">
           <label>
-            <span>Nome completo</span>
+            <span>{{ 'profile.fullName' | t }}</span>
             <input name="fullName" [(ngModel)]="profile.fullName" [disabled]="saving">
           </label>
 
           <label>
-            <span>Data de nascimento</span>
+            <span>{{ 'profile.birthDate' | t }}</span>
             <input type="date" name="dateOfBirth" [(ngModel)]="profile.dateOfBirth" [disabled]="saving">
           </label>
 
           <label>
-            <span>Email *</span>
+            <span>{{ 'common.email' | t }} *</span>
             <input type="email" name="email" [(ngModel)]="profile.email" required [disabled]="saving">
           </label>
 
           <label>
-            <span>País</span>
+            <span>{{ 'common.country' | t }}</span>
             <input name="country" [(ngModel)]="profile.country" [disabled]="saving">
           </label>
 
           <label>
-            <span>Localidade</span>
+            <span>{{ 'common.location' | t }}</span>
             <input name="location" [(ngModel)]="profile.location" [disabled]="saving">
           </label>
 
           <label>
-            <span>Código postal</span>
+            <span>{{ 'common.postalCode' | t }}</span>
             <input name="postalCode" [(ngModel)]="profile.postalCode" [disabled]="saving">
           </label>
 
           <label class="full-width">
-            <span>Morada</span>
+            <span>{{ 'common.address' | t }}</span>
             <input name="address" [(ngModel)]="profile.address" [disabled]="saving">
           </label>
 
           <label>
-            <span>Indicativo</span>
+            <span>{{ 'profile.callingCode' | t }}</span>
             <input name="indicativePhone" [(ngModel)]="profile.indicativePhone" placeholder="351" [disabled]="saving">
           </label>
 
           <label>
-            <span>Telefone</span>
+            <span>{{ 'common.phone' | t }}</span>
             <input name="phone" [(ngModel)]="profile.phone" [disabled]="saving">
           </label>
 
           <label>
-            <span>Género</span>
+            <span>{{ 'common.gender' | t }}</span>
             <select name="gender" [(ngModel)]="profile.gender" [disabled]="saving">
-              <option [ngValue]="null">Não indicar</option>
-              <option value="masculino">Masculino</option>
-              <option value="feminino">Feminino</option>
-              <option value="outro">Outro</option>
+              <option [ngValue]="null">{{ 'profile.gender.none' | t }}</option>
+              <option value="masculino">{{ 'register.male' | t }}</option>
+              <option value="feminino">{{ 'register.female' | t }}</option>
+              <option value="outro">{{ 'register.other' | t }}</option>
             </select>
           </label>
 
           <label class="full-width">
-            <span>Desportos favoritos</span>
+            <span>{{ 'profile.favoriteSports' | t }}</span>
             <textarea
               name="favoriteSports"
               [(ngModel)]="profile.favoriteSports"
               rows="3"
               [disabled]="saving"
-              placeholder="Ex.: Padel, Futebol, Corrida"></textarea>
+              [placeholder]="'register.favoriteSportsPlaceholder' | t"></textarea>
           </label>
         </div>
 
         <section class="mfa-setting">
           <div class="mfa-copy">
-            <strong>Autenticação multifator</strong>
-            <small>Adiciona uma camada extra de segurança à tua conta.</small>
+            <strong>{{ 'profile.mfa.title' | t }}</strong>
+            <small>{{ 'profile.mfa.subtitle' | t }}</small>
           </div>
 
-          <label class="switch" aria-label="Autenticação multifator">
+          <label class="switch" [attr.aria-label]="'profile.mfa.title' | t">
             <input
               type="checkbox"
               name="mfa"
@@ -164,9 +164,9 @@
         </section>
 
         <div class="form-actions">
-          <a class="secondary-action" routerLink="/menu/dadosPerfil">Cancelar</a>
+          <a class="secondary-action" routerLink="/menu/dadosPerfil">{{ 'common.cancel' | t }}</a>
           <button type="submit" [disabled]="saving">
-            {{ saving ? 'A guardar...' : 'Guardar alterações' }}
+            {{ saving ? ('profile.saving' | t) : ('profile.save' | t) }}
           </button>
         </div>
       </form>
