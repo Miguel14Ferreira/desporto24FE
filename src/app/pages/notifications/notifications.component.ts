@@ -1,4 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { appTranslate as t } from '../../i18n/i18n.service';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { finalize } from 'rxjs';
@@ -60,7 +61,7 @@ export class NotificationsComponent implements OnInit {
         },
         error: () => {
           this.notifications = [];
-          this.errorMessage = 'Não foi possível carregar as notificações.';
+          this.errorMessage = t('feedback.notifications.loadError');
         }
       });
   }
@@ -115,10 +116,10 @@ export class NotificationsComponent implements OnInit {
             this.selected = undefined;
             this.router.navigate(['/menu/notifications']);
           }
-          this.actionSuccess = 'Notificação apagada.';
+          this.actionSuccess = t('feedback.notifications.deleted');
         },
         error: error => {
-          this.actionError = this.errorFrom(error, 'Não foi possível apagar a notificação.');
+          this.actionError = this.errorFrom(error, t('feedback.notifications.deleteError'));
         }
       });
   }
@@ -138,11 +139,11 @@ export class NotificationsComponent implements OnInit {
         next: () => {
           this.notifications = this.notifications.filter(item => item.id !== notification.id);
           this.selected = undefined;
-          this.actionSuccess = 'Pedido de amizade aceite.';
+          this.actionSuccess = t('feedback.notifications.friendAccepted');
           this.router.navigate(['/menu/notifications']);
         },
         error: error => {
-          this.actionError = this.errorFrom(error, 'Não foi possível aceitar o pedido de amizade.');
+          this.actionError = this.errorFrom(error, t('feedback.notifications.friendAcceptError'));
         }
       });
   }
@@ -162,13 +163,13 @@ export class NotificationsComponent implements OnInit {
         next: () => {
           this.notifications = this.notifications.filter(item => item.id !== notification.id);
           this.selected = undefined;
-          this.actionSuccess = 'Pedido de amizade rejeitado.';
+          this.actionSuccess = t('feedback.notifications.friendRejected');
           this.router.navigate(['/menu/notifications']);
         },
         error: error => {
           this.actionError = this.errorFrom(
             error,
-            'Não foi possível rejeitar o pedido de amizade.'
+            t('feedback.notifications.friendRejectError')
           );
         }
       });
@@ -189,13 +190,13 @@ export class NotificationsComponent implements OnInit {
   typeLabel(notification: AppNotification): string {
     switch (notification.type) {
       case 'WAITLIST_PROMOTED':
-        return 'Lista de espera';
+        return t('notification.waitlist');
       case 'SESSION_REMOVED':
-        return 'Sessão';
+        return t('notification.session');
       case 'SESSION_CANCELLED':
-        return 'Sessão cancelada';
+        return t('notification.sessionCancelled');
       default:
-        return notification.friendRequest ? 'Pedido de amizade' : 'Notificação';
+        return notification.friendRequest ? t('notification.friendRequest') : t('notification.generic');
     }
   }
 
