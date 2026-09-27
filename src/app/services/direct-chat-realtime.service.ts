@@ -1,0 +1,121 @@
+import { Injectable } from '@angular/core';
+import { BehaviorSubject, Subject } from 'rxjs';
+import { JwtHelperService } from '@auth0/angular-jwt';
+
+import { environment } from 'src/environment/environment';
+import { DirectChatMessage } from '../pages/model/direct-chat';
+
+interface ChatSocketEnvelope {
+  type?: string;
+  message?: DirectChatMessage;
+}
+
+@Injectable({
+  providedIn: 'root'
+})
+export class DirectChatRealtimeService {
+  private socket?: WebSocket;
+  private reconnectTimer?: ReturnType<typeof setTimeout>;
+  private shouldReconnect = false;
+  private readonly jwtHelper = new JwtHelperService();
+
+  private readonly messageSubject = new Subject<DirectChatMessage>();
+  private readonly connectedSubject = new BehaviorSubject<boolean>(false);
+
+  readonly messages$ = this.messageSubject.asObservable();
+  readonly connected$ = this.connectedSubject.asObservable();
+
+  connect(): void {
+    const token = localStorage.getItem('t');
+    if (!token || this.jwtHelper.isTokenExpired(token)) {
+      this.disconnect();
+      return;
+    }
+
+    if (
+      this.socket?.readyState === WebSocket.OPEN
+      || this.socket?.readyState === WebSocket.CONNECTING
+    ) {
+      return;
+    }
+
+    this.shouldReconnect = true;
+    this.clearReconnectTimer();
+
+    const websocketUrl =
+      environment.apiUrl.replace(/^http:/, 'ws:').replace(/^https:/, 'wss:')
+      + '/ws/chat';
+
+    this.socket = new WebSocket(websocketUrl);
+
+    this.socket.onopen = () => {
+      this.socket?.send(JSON.stringify({
+        type: 'AUTH',
+        token
+      }));
+    };
+
+    this.socket.onmessage = event => {
+      try {
+        const envelope = JSON.parse(event.data) as ChatSocketEnvelope;
+
+        if (envelope.type === 'AUTHENTICATED') {
+          this.connectedSubject.next(true);
+          return;
+        }
+
+        if (envelope.type === 'CHAT_MESSAGE' && envelope.message) {
+          this.messageSubject.next(envelope.message);
+        }
+      } catch {
+        // Ignore malformed realtime events; HTTP history remains authoritative.
+      }
+    };
+
+    this.socket.onerror = () => {
+      this.connectedSubject.next(false);
+    };
+
+    this.socket.onclose = () => {
+      this.connectedSubject.next(false);
+      this.socket = undefined;
+
+      if (this.shouldReconnect) {
+        this.scheduleReconnect();
+      }
+    };
+  }
+
+  disconnect(): void {
+    this.shouldReconnect = false;
+    this.clearReconnectTimer();
+    this.connectedSubject.next(false);
+
+    if (this.socket) {
+      const socket = this.socket;
+      this.socket = undefined;
+      socket.close();
+    }
+  }
+
+  private scheduleReconnect(): void {
+    this.clearReconnectTimer();
+
+    this.reconnectTimer = setTimeout(() => {
+      const token = localStorage.getItem('t');
+      if (!token || this.jwtHelper.isTokenExpired(token)) {
+        this.disconnect();
+        return;
+      }
+
+      this.connect();
+    }, 3000);
+  }
+
+  private clearReconnectTimer(): void {
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = undefined;
+    }
+  }
+}
