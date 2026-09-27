@@ -48,9 +48,13 @@
     <div class="secondary-actions">
       <button
         type="button"
-        [disabled]="resending || !challengeId"
+        [disabled]="resending || !challengeId || resendCooldownSeconds > 0"
         (click)="resendCode()">
-        {{ resending ? 'A reenviar...' : 'Reenviar código' }}
+        {{ resending
+          ? 'A reenviar...'
+          : (resendCooldownSeconds > 0
+              ? 'Podes reenviar em ' + resendCooldownSeconds + 's'
+              : 'Reenviar código') }}
       </button>
       <button type="button" (click)="cancel()">Voltar ao login</button>
     </div>
