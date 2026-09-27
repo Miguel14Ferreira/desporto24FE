@@ -217,3 +217,50 @@ textarea {
     grid-template-columns: 1fr;
   }
 }
+
+
+.confirmation-card {
+  width: min(620px, 100%);
+  box-sizing: border-box;
+  margin: 2rem auto 0;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  background: rgba(15,23,42,.82);
+  box-shadow: 0 24px 60px rgba(0,0,0,.2);
+}
+
+.confirmation-card h2 {
+  margin: 0 0 .75rem;
+  font-size: 1.8rem;
+}
+
+.confirmation-card > p:not(.eyebrow) {
+  color: #cbd5e1;
+  line-height: 1.6;
+}
+
+.confirmation-note {
+  margin-top: 1rem;
+}
+
+.confirmation-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem;
+  margin-top: 1.25rem;
+}
+
+.resend-action:disabled {
+  opacity: .6;
+  cursor: wait;
+}
+
+.primary-link {
+  border-radius: .75rem;
+  padding: .75rem .9rem;
+  background: #f8fafc;
+  color: #0f172a;
+  font-weight: 800;
+  text-decoration: none;
+}
