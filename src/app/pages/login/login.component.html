@@ -2,14 +2,14 @@
   <div class="login-shell">
     <div class="login-copy">
       <p class="eyebrow">Desporto24</p>
-      <h1>Encontra pessoas para praticar o teu desporto.</h1>
-      <p>Descobre sessões, cria jogos, conversa com participantes e constrói a tua comunidade.</p>
+      <h1>{{ 'login.hero.title' | t }}</h1>
+      <p>{{ 'login.hero.subtitle' | t }}</p>
     </div>
 
     <div class="login-card">
       <div>
-        <p class="eyebrow">Bem-vindo de volta</p>
-        <h2>Iniciar sessão</h2>
+        <p class="eyebrow">{{ 'login.welcome' | t }}</p>
+        <h2>{{ 'login.title' | t }}</h2>
       </div>
 
       @if (successMessage) {
@@ -22,34 +22,34 @@
 
       @if (canResendConfirmation) {
         <div class="confirmation-resend">
-          <span>Não recebeste o email?</span>
+          <span>{{ 'login.noEmail' | t }}</span>
           <button
             type="button"
             class="resend-confirmation"
             [disabled]="resendLoading || resendCooldownSeconds > 0"
             (click)="resendConfirmation()">
             {{ resendLoading
-              ? 'A reenviar...'
+              ? ('login.resending' | t)
               : (resendCooldownSeconds > 0
-                  ? 'Podes reenviar em ' + resendCooldownSeconds + 's'
-                  : 'Reenviar email de confirmação') }}
+                  ? ('login.resendIn' | t:{ seconds: resendCooldownSeconds })
+                  : ('login.resend' | t)) }}
           </button>
         </div>
       }
 
       <form (ngSubmit)="onLogin()">
         <label>
-          <span>Nome de utilizador</span>
+          <span>{{ 'login.username' | t }}</span>
           <input
             name="username"
             [(ngModel)]="username"
             autocomplete="username"
             [disabled]="loading"
-            placeholder="O teu username">
+            [placeholder]="'login.usernamePlaceholder' | t">
         </label>
 
         <label>
-          <span>Palavra-passe</span>
+          <span>{{ 'login.password' | t }}</span>
           <div class="password-field">
             <input
               [type]="showPassword ? 'text' : 'password'"
@@ -57,21 +57,21 @@
               [(ngModel)]="password"
               autocomplete="current-password"
               [disabled]="loading"
-              placeholder="A tua palavra-passe">
+              [placeholder]="'login.passwordPlaceholder' | t">
             <button type="button" (click)="showPassword = !showPassword">
-              {{ showPassword ? 'Ocultar' : 'Mostrar' }}
+              {{ showPassword ? ('common.hide' | t) : ('common.show' | t) }}
             </button>
           </div>
         </label>
 
         <button type="submit" class="primary-action" [disabled]="loading">
-          {{ loading ? 'A entrar...' : 'Entrar' }}
+          {{ loading ? ('login.entering' | t) : ('login.enter' | t) }}
         </button>
       </form>
 
       <div class="login-links">
-        <a routerLink="/login/resetPassword">Esqueci-me da palavra-passe</a>
-        <a routerLink="/login/registerNewUser">Criar nova conta</a>
+        <a routerLink="/login/resetPassword">{{ 'login.forgot' | t }}</a>
+        <a routerLink="/login/registerNewUser">{{ 'login.create' | t }}</a>
       </div>
     </div>
   </div>
