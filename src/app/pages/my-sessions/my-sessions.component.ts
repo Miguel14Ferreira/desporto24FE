@@ -1,4 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { appTranslate as t } from '../../i18n/i18n.service';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { finalize } from 'rxjs';
 
@@ -57,7 +58,7 @@ export class MySessionsComponent implements OnInit {
       .pipe(finalize(() => this.loading = false))
       .subscribe({
         next: data => this.data = data,
-        error: () => this.errorMessage = 'Não foi possível carregar as tuas sessões.'
+        error: () => this.errorMessage = t('feedback.sessions.loadError')
       });
   }
 
@@ -71,7 +72,7 @@ export class MySessionsComponent implements OnInit {
         next: history => this.attendanceHistory = history,
         error: () => {
           this.attendanceHistory = [];
-          this.attendanceError = 'Não foi possível carregar o histórico de presenças.';
+          this.attendanceError = t('feedback.sessions.attendanceLoadError');
         }
       });
   }
@@ -109,11 +110,11 @@ export class MySessionsComponent implements OnInit {
       .subscribe({
         next: () => {
           this.pendingCancelId = null;
-          this.actionMessage = 'Sessão cancelada com sucesso.';
+          this.actionMessage = t('feedback.sessions.cancelled');
           this.load();
         },
         error: error => {
-          this.actionError = this.errorFrom(error, 'Não foi possível cancelar esta sessão.');
+          this.actionError = this.errorFrom(error, t('feedback.sessions.cancelError'));
         }
       });
   }
@@ -137,12 +138,12 @@ export class MySessionsComponent implements OnInit {
               item => item.id !== session.id
             )
           };
-          this.actionMessage = 'Saíste da lista de espera.';
+          this.actionMessage = t('feedback.sessions.leftWaitlist');
         },
         error: error => {
           this.actionError = this.errorFrom(
             error,
-            'Não foi possível sair da lista de espera.'
+            t('feedback.sessions.leaveWaitlistError')
           );
         }
       });
@@ -176,12 +177,12 @@ export class MySessionsComponent implements OnInit {
     }
 
     if (!reason) {
-      this.actionError = 'Explica por que motivo queres contestar esta falta.';
+      this.actionError = t('feedback.sessions.disputeReasonRequired');
       return;
     }
 
     if (reason.length > 2000) {
-      this.actionError = 'A justificação não pode ter mais de 2000 caracteres.';
+      this.actionError = t('feedback.sessions.disputeReasonLong');
       return;
     }
 
@@ -201,12 +202,12 @@ export class MySessionsComponent implements OnInit {
           );
           this.pendingDispute = undefined;
           this.disputeReason = '';
-          this.actionMessage = 'Contestação enviada. O estado fica agora em análise.';
+          this.actionMessage = t('feedback.sessions.disputeSent');
         },
         error: error => {
           this.actionError = this.errorFrom(
             error,
-            'Não foi possível enviar a contestação.'
+            t('feedback.sessions.disputeError')
           );
         }
       });
@@ -227,7 +228,7 @@ export class MySessionsComponent implements OnInit {
       case 'NO_SHOW':
         return 'Faltou';
       case 'LATE_CANCELLED':
-        return 'Cancelamento tardio';
+        return t('status.lateCancelled');
       default:
         return 'Pendente';
     }
@@ -236,7 +237,7 @@ export class MySessionsComponent implements OnInit {
   disputeLabel(item: AttendanceHistoryItem): string {
     switch (item.disputeStatus) {
       case 'OPEN':
-        return 'Em análise';
+        return t('status.openReview');
       case 'ACCEPTED':
         return 'Aceite';
       case 'REJECTED':
