@@ -26,6 +26,9 @@ export class AlterardadosComponent implements OnInit {
   errorMessage = '';
   successMessage = '';
 
+  readonly maxBirthDate = this.dateYearsAgo(18);
+  readonly minBirthDate = this.dateYearsAgo(120);
+
   constructor(private myProfileService: MyProfileService) {}
 
   ngOnInit(): void {
@@ -54,6 +57,11 @@ export class AlterardadosComponent implements OnInit {
 
     if (!this.profile.email?.trim()) {
       this.errorMessage = t('feedback.profile.emailRequired');
+      return;
+    }
+
+    if (this.profile.dateOfBirth && !this.isAdultBirthDate(this.profile.dateOfBirth)) {
+      this.errorMessage = t('feedback.register.minimumAge');
       return;
     }
 
@@ -171,6 +179,26 @@ export class AlterardadosComponent implements OnInit {
     }
 
     return environment.apiUrl + (path.startsWith('/') ? path : '/' + path);
+  }
+
+  private isAdultBirthDate(value: string): boolean {
+    const birthDate = new Date(value + 'T00:00:00');
+    if (Number.isNaN(birthDate.getTime())) {
+      return false;
+    }
+
+    const minDate = new Date(this.minBirthDate + 'T00:00:00');
+    const maxDate = new Date(this.maxBirthDate + 'T00:00:00');
+    return birthDate >= minDate && birthDate <= maxDate;
+  }
+
+  private dateYearsAgo(years: number): string {
+    const date = new Date();
+    date.setFullYear(date.getFullYear() - years);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
   private clean(value: string | null): string | null {
