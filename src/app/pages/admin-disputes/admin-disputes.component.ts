@@ -1,4 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { appTranslate as t } from '../../i18n/i18n.service';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { finalize } from 'rxjs';
 
@@ -44,7 +45,7 @@ export class AdminDisputesComponent implements OnInit {
           this.disputes = [];
           this.errorMessage = this.errorFrom(
             error,
-            'Não foi possível carregar as contestações.'
+            t('feedback.admin.loadError')
           );
         }
       });
@@ -74,14 +75,14 @@ export class AdminDisputesComponent implements OnInit {
       .subscribe({
         next: () => {
           this.actionMessage = status === 'ACCEPTED'
-            ? 'Contestação aceite.'
-            : 'Contestação rejeitada.';
+            ? t('feedback.admin.accepted')
+            : t('feedback.admin.rejected');
           this.load();
         },
         error: error => {
           this.actionError = this.errorFrom(
             error,
-            'Não foi possível resolver a contestação.'
+            t('feedback.admin.resolveError')
           );
         }
       });
@@ -90,7 +91,7 @@ export class AdminDisputesComponent implements OnInit {
   statusLabel(status: AttendanceDisputeStatus): string {
     switch (status) {
       case 'OPEN':
-        return 'Em análise';
+        return t('status.openReview');
       case 'ACCEPTED':
         return 'Aceites';
       case 'REJECTED':
