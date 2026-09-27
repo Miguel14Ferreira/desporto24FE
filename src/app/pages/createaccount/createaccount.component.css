@@ -264,3 +264,52 @@ textarea {
   font-weight: 800;
   text-decoration: none;
 }
+
+
+.sport-selector {
+  display: grid;
+  gap: .55rem;
+}
+
+.field-label {
+  color: #cbd5e1;
+  font-size: .8rem;
+  font-weight: 800;
+}
+
+.sport-chips,
+.sport-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .45rem;
+}
+
+.sport-chip,
+.sport-suggestions button {
+  border: 1px solid rgba(125,211,252,.22);
+  border-radius: 999px;
+  padding: .45rem .65rem;
+  background: rgba(125,211,252,.08);
+  color: #e0f2fe;
+  font: inherit;
+  font-size: .82rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.sport-suggestions {
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: .75rem;
+  padding: .6rem;
+  background: rgba(2,6,23,.35);
+}
+
+.sport-suggestions button:hover,
+.sport-chip:hover {
+  border-color: rgba(125,211,252,.5);
+  background: rgba(125,211,252,.14);
+}
+
+.sport-selector small {
+  color: #94a3b8;
+}
