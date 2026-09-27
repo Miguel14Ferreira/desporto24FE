@@ -3,24 +3,24 @@
     <header class="page-header">
       <div>
         <p class="eyebrow">Desporto24</p>
-        <h1>O meu perfil</h1>
-        <p class="subtitle">Consulta os teus dados e a tua atividade na comunidade.</p>
+        <h1>{{ 'profileData.title' | t }}</h1>
+        <p class="subtitle">{{ 'profileData.subtitle' | t }}</p>
       </div>
 
       <div class="header-actions">
-        <a class="primary-action" routerLink="/menu/alterardados">Editar perfil</a>
-        <a class="secondary-action" routerLink="/menu">Menu</a>
+        <a class="primary-action" routerLink="/menu/alterardados">{{ 'menu.editProfile' | t }}</a>
+        <a class="secondary-action" routerLink="/menu">{{ 'common.menu' | t }}</a>
       </div>
     </header>
 
     @if (loading) {
-      <div class="state-card">A carregar perfil...</div>
+      <div class="state-card">{{ 'profileData.loading' | t }}</div>
     }
 
     @if (!loading && errorMessage) {
       <div class="state-card error-state">
         <p>{{ errorMessage }}</p>
-        <button type="button" (click)="load()">Tentar novamente</button>
+        <button type="button" (click)="load()">{{ 'common.retry' | t }}</button>
       </div>
     }
 
@@ -45,24 +45,24 @@
         </div>
 
         <div class="details-grid">
-          <div><span>Email</span><strong>{{ profile.email }}</strong></div>
-          <div><span>Telefone</span><strong>{{ profile.indicativePhone ? '+' + profile.indicativePhone + ' ' : '' }}{{ profile.phone || 'Não indicado' }}</strong></div>
-          <div><span>Data de nascimento</span><strong>{{ profile.dateOfBirth || 'Não indicada' }}</strong></div>
-          <div><span>Género</span><strong>{{ profile.gender || 'Não indicado' }}</strong></div>
-          <div><span>Morada</span><strong>{{ profile.address || 'Não indicada' }}</strong></div>
-          <div><span>Código postal</span><strong>{{ profile.postalCode || 'Não indicado' }}</strong></div>
-          <div><span>Desportos favoritos</span><strong>{{ profile.favoriteSports || 'Não indicados' }}</strong></div>
-          <div><span>MFA</span><strong>{{ profile.mfa ? 'Ativo' : 'Inativo' }}</strong></div>
+          <div><span>{{ 'common.email' | t }}</span><strong>{{ profile.email }}</strong></div>
+          <div><span>{{ 'common.phone' | t }}</span><strong>{{ profile.indicativePhone ? '+' + profile.indicativePhone + ' ' : '' }}{{ profile.phone || ('common.notProvided' | t) }}</strong></div>
+          <div><span>{{ 'profileData.birthDate' | t }}</span><strong>{{ profile.dateOfBirth || ('common.notProvidedF' | t) }}</strong></div>
+          <div><span>{{ 'common.gender' | t }}</span><strong>{{ profile.gender || 'Não indicado' }}</strong></div>
+          <div><span>{{ 'common.address' | t }}</span><strong>{{ profile.address || 'Não indicada' }}</strong></div>
+          <div><span>{{ 'common.postalCode' | t }}</span><strong>{{ profile.postalCode || 'Não indicado' }}</strong></div>
+          <div><span>{{ 'profileData.favoriteSports' | t }}</span><strong>{{ profile.favoriteSports || ('common.notProvided' | t) }}</strong></div>
+          <div><span>MFA</span><strong>{{ profile.mfa ? ('common.active' | t) : ('common.inactive' | t) }}</strong></div>
         </div>
 
         @if (reliability) {
           <section class="reliability-card">
-            <h3>Fiabilidade</h3>
+            <h3>{{ 'profileData.reliability' | t }}</h3>
             <div class="reliability-grid">
-              <div><span>Taxa de presença</span><strong>{{ reliability.attendanceRate | number:'1.0-0' }}%</strong></div>
-              <div><span>Sessões concluídas</span><strong>{{ reliability.completedSessions }}</strong></div>
-              <div><span>Faltas</span><strong>{{ reliability.noShows }}</strong></div>
-              <div><span>Cancelamentos tardios</span><strong>{{ reliability.lateCancellations }}</strong></div>
+              <div><span>{{ 'profileData.attendanceRate' | t }}</span><strong>{{ reliability.attendanceRate | number:'1.0-0' }}%</strong></div>
+              <div><span>{{ 'profileData.completedSessions' | t }}</span><strong>{{ reliability.completedSessions }}</strong></div>
+              <div><span>{{ 'profileData.noShows' | t }}</span><strong>{{ reliability.noShows }}</strong></div>
+              <div><span>{{ 'profileData.lateCancellations' | t }}</span><strong>{{ reliability.lateCancellations }}</strong></div>
             </div>
           </section>
         }
