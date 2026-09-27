@@ -3,37 +3,31 @@
     <main class="hero">
       <div class="hero-copy">
         <p class="eyebrow">Desporto24</p>
-        <h1>Encontra pessoas para praticar o teu desporto.</h1>
-        <p class="subtitle">
-          Descobre sessões perto de ti, cria jogos, conversa com participantes
-          e constrói uma comunidade à volta do desporto.
-        </p>
+        <h1>{{ 'home.hero.title' | t }}</h1>
+        <p class="subtitle">{{ 'home.hero.subtitle' | t }}</p>
 
         <div class="hero-actions">
-          <a class="primary-action" routerLink="/login/registerNewUser">Criar conta</a>
-          <a class="secondary-action" routerLink="/login">Já tenho conta</a>
+          <a class="primary-action" routerLink="/login/registerNewUser">{{ 'home.createAccount' | t }}</a>
+          <a class="secondary-action" routerLink="/login">{{ 'home.haveAccount' | t }}</a>
         </div>
 
-        <div class="feature-row" aria-label="Funcionalidades principais">
-          <span>Sessões locais</span>
-          <span>Chat</span>
-          <span>Comunidade</span>
-          <span>Fiabilidade</span>
+        <div class="feature-row" [attr.aria-label]="'home.features' | t">
+          <span>{{ 'home.localSessions' | t }}</span>
+          <span>{{ 'home.chat' | t }}</span>
+          <span>{{ 'home.community' | t }}</span>
+          <span>{{ 'home.reliability' | t }}</span>
         </div>
       </div>
 
       <aside class="welcome-card">
-        <p class="eyebrow">Começa por aqui</p>
-        <h2>Joga mais. Combina mais facilmente.</h2>
-        <p>
-          Junta-te a jogadores da tua zona, encontra sessões abertas
-          e organiza os teus próprios jogos.
-        </p>
+        <p class="eyebrow">{{ 'home.startHere' | t }}</p>
+        <h2>{{ 'home.playMore' | t }}</h2>
+        <p>{{ 'home.welcomeText' | t }}</p>
 
         <div class="quick-links">
-          <a routerLink="/login">Entrar na comunidade <span>→</span></a>
-          <a routerLink="/about">Conhecer o Desporto24 <span>→</span></a>
-          <a routerLink="/contact">Falar connosco <span>→</span></a>
+          <a routerLink="/login">{{ 'home.enterCommunity' | t }} <span>→</span></a>
+          <a routerLink="/about">{{ 'home.aboutD24' | t }} <span>→</span></a>
+          <a routerLink="/contact">{{ 'home.contactUs' | t }} <span>→</span></a>
         </div>
       </aside>
     </main>
