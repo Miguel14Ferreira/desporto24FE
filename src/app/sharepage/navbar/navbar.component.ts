@@ -1,8 +1,10 @@
 import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
-import { Router } from '@angular/router';
+import { NavigationEnd, Router } from '@angular/router';
 import { AuthenticationService } from 'src/app/services/authethication.service';
 import { AppLanguage, I18nService } from 'src/app/i18n/i18n.service';
 import { NotificationApiService } from 'src/app/services/notification-api.service';
+import { DirectChatRealtimeService } from 'src/app/services/direct-chat-realtime.service';
+import { Subscription, filter } from 'rxjs';
 
 @Component({
     selector: 'app-navbar',
@@ -18,11 +20,13 @@ export class NavbarComponent implements OnInit, OnDestroy {
   claro:string = "claro";
   unreadNotifications = 0;
   private notificationTimer?: ReturnType<typeof setInterval>;
+  private readonly subscriptions = new Subscription();
 
   constructor(
     private router: Router,
     private authService: AuthenticationService,
     private notificationService: NotificationApiService,
+    private realtimeService: DirectChatRealtimeService,
     public i18n: I18nService
   ) { }
 
@@ -33,15 +37,50 @@ export class NavbarComponent implements OnInit, OnDestroy {
     } else {
       this.dark = true
     }
-      if (this.isAuthenticated()) {
-        this.loadUnreadNotifications();
-        this.notificationTimer = setInterval(() => this.loadUnreadNotifications(), 15000);
-      }
+      this.syncAuthenticatedState();
+
+      this.subscriptions.add(
+        this.router.events
+          .pipe(filter(event => event instanceof NavigationEnd))
+          .subscribe(() => this.syncAuthenticatedState())
+      );
+
+      this.subscriptions.add(
+        this.realtimeService.messages$.subscribe(() => {
+          if (this.isAuthenticated()) {
+            this.unreadNotifications += 1;
+          }
+        })
+      );
     }
 
     ngOnDestroy(): void {
+      this.subscriptions.unsubscribe();
       if (this.notificationTimer) {
         clearInterval(this.notificationTimer);
+      }
+      this.realtimeService.disconnect();
+    }
+
+    private syncAuthenticatedState(): void {
+      if (!this.isAuthenticated()) {
+        this.realtimeService.disconnect();
+        this.unreadNotifications = 0;
+        if (this.notificationTimer) {
+          clearInterval(this.notificationTimer);
+          this.notificationTimer = undefined;
+        }
+        return;
+      }
+
+      this.realtimeService.connect();
+      this.loadUnreadNotifications();
+
+      if (!this.notificationTimer) {
+        this.notificationTimer = setInterval(
+          () => this.loadUnreadNotifications(),
+          60000
+        );
       }
     }
 
