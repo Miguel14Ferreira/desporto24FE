@@ -20,7 +20,6 @@ export class LoginComponent implements OnInit {
   loading = false;
   errorMessage = '';
   successMessage = '';
-  resendLoading = false;
 
   private returnUrl = '/menu';
 
@@ -93,31 +92,6 @@ export class LoginComponent implements OnInit {
           this.errorMessage = this.errorFrom(
             error,
             'Não foi possível iniciar sessão. Confirma as credenciais.'
-          );
-        }
-      });
-  }
-
-  resendConfirmation(): void {
-    const username = this.username.trim();
-    if (!username || this.resendLoading) {
-      return;
-    }
-
-    this.resendLoading = true;
-    this.successMessage = '';
-
-    this.authenticationService.resendRegistrationConfirmation(username)
-      .pipe(finalize(() => this.resendLoading = false))
-      .subscribe({
-        next: response => {
-          this.successMessage = response.message || 'Foi enviado um novo email de confirmação.';
-          this.errorMessage = '';
-        },
-        error: error => {
-          this.errorMessage = this.errorFrom(
-            error,
-            'Não foi possível reenviar o email de confirmação.'
           );
         }
       });
