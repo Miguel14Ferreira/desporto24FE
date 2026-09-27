@@ -141,3 +141,35 @@ textarea { resize: vertical; }
   .form-grid { grid-template-columns: 1fr; }
   .full-width { grid-column: auto; }
 }
+
+
+.photo-edit-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .6rem;
+}
+
+.photo-edit-actions button {
+  border-radius: .8rem;
+  padding: .8rem 1rem;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.photo-save-action {
+  border: 0;
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.photo-cancel-action {
+  border: 1px solid rgba(255,255,255,.16);
+  background: rgba(255,255,255,.04);
+  color: #e2e8f0;
+}
+
+.photo-edit-actions button:disabled {
+  opacity: .6;
+  cursor: wait;
+}
