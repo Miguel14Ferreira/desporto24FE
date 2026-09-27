@@ -10,11 +10,33 @@
       <a class="secondary-action" routerLink="/login">Já tenho conta</a>
     </header>
 
-    @if (errorMessage) {
+    @if (errorMessage && !existingAccountRecovery) {
       <div class="feedback error-feedback">{{ errorMessage }}</div>
     }
 
-    @if (registrationComplete) {
+    @if (existingAccountRecovery) {
+      <section class="confirmation-card">
+        <p class="eyebrow">Conta já existente</p>
+        <h2>Esta conta pode estar por confirmar</h2>
+        <p>{{ errorMessage }}</p>
+        <p class="confirmation-note">Se esta conta é tua e ainda não confirmaste o email, podes pedir um novo envio.</p>
+
+        <div class="confirmation-actions">
+          <button
+            type="button"
+            class="secondary-action resend-action"
+            [disabled]="resendLoading"
+            (click)="resendConfirmation()">
+            {{ resendLoading ? 'A reenviar...' : 'Reenviar email de confirmação' }}
+          </button>
+          <a class="primary-link" routerLink="/login">Ir para o login</a>
+        </div>
+
+        @if (successMessage) {
+          <div class="feedback success-feedback">{{ successMessage }}</div>
+        }
+      </section>
+    } @else if (registrationComplete) {
       <section class="confirmation-card">
         <p class="eyebrow">Confirmação de conta</p>
         <h2>Verifica o teu email</h2>
