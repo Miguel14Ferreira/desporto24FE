@@ -1,4 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { appTranslate as t } from '../../i18n/i18n.service';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { JwtHelperService } from '@auth0/angular-jwt';
@@ -42,7 +43,7 @@ export class DirectChatComponent implements OnInit {
     this.recipientUsername = this.resolveRecipient();
 
     if (!this.recipientUsername) {
-      this.errorMessage = 'Conversa inválida.';
+      this.errorMessage = t('feedback.chat.invalid');
       return;
     }
 
@@ -73,7 +74,7 @@ export class DirectChatComponent implements OnInit {
           this.messages = [];
           this.errorMessage = this.errorFrom(
             error,
-            'Não foi possível carregar esta conversa.'
+            t('feedback.chat.loadError')
           );
         }
       });
@@ -87,12 +88,12 @@ export class DirectChatComponent implements OnInit {
     }
 
     if (!text) {
-      this.actionError = 'Escreve uma mensagem antes de enviar.';
+      this.actionError = t('feedback.chat.writeFirst');
       return;
     }
 
     if (text.length > 2000) {
-      this.actionError = 'A mensagem não pode ter mais de 2000 caracteres.';
+      this.actionError = t('feedback.chat.messageLong');
       return;
     }
 
@@ -110,7 +111,7 @@ export class DirectChatComponent implements OnInit {
         error: error => {
           this.actionError = this.errorFrom(
             error,
-            'Não foi possível enviar a mensagem.'
+            t('feedback.chat.sendError')
           );
         }
       });
@@ -137,7 +138,7 @@ export class DirectChatComponent implements OnInit {
     }
 
     if (this.chatInfo?.chatBlocked && !this.isBlockedByMe()) {
-      this.actionError = 'Este chat foi bloqueado pelo outro utilizador.';
+      this.actionError = t('feedback.chat.blockedOther');
       this.actionSuccess = '';
       return;
     }
@@ -159,15 +160,15 @@ export class DirectChatComponent implements OnInit {
             ? { chatBlocked: false, whoBlocked: null }
             : { chatBlocked: true, whoBlocked: this.currentUsername };
           this.actionSuccess = shouldUnblock
-            ? 'Chat desbloqueado.'
-            : 'Chat bloqueado.';
+            ? t('feedback.chat.unblocked')
+            : t('feedback.chat.blocked');
         },
         error: error => {
           this.actionError = this.errorFrom(
             error,
             shouldUnblock
-              ? 'Não foi possível desbloquear este chat.'
-              : 'Não foi possível bloquear este chat.'
+              ? t('feedback.chat.unblockError')
+              : t('feedback.chat.blockError')
           );
         }
       });
@@ -179,10 +180,10 @@ export class DirectChatComponent implements OnInit {
     }
 
     if (this.isBlockedByMe()) {
-      return 'Bloqueaste este chat.';
+      return t('feedback.chat.blockedByMe');
     }
 
-    return 'Este chat está bloqueado.';
+    return t('feedback.chat.blockedGeneric');
   }
 
   messageDate(message: DirectChatMessage): string {
