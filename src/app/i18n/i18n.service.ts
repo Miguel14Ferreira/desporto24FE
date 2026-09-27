@@ -876,6 +876,24 @@ const EN: Dictionary = {
   'sessionDetail.chatLocked': 'Chat becomes available once you join the session.'
 };
 
+export function appTranslate(
+  key: string,
+  params?: Record<string, string | number>
+): string {
+  const language: AppLanguage =
+    typeof localStorage !== 'undefined' && localStorage.getItem('d24-language') === 'en'
+      ? 'en'
+      : 'pt';
+  const dictionary = language === 'en' ? EN : PT;
+  let value = dictionary[key] ?? PT[key] ?? key;
+
+  for (const [name, replacement] of Object.entries(params ?? {})) {
+    value = value.replaceAll('{{' + name + '}}', String(replacement));
+  }
+
+  return value;
+}
+
 @Injectable({ providedIn: 'root' })
 export class I18nService {
   private readonly storageKey = 'd24-language';
