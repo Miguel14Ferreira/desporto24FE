@@ -276,6 +276,9 @@ export class CreateaccountComponent {
   registrationComplete = false;
   existingAccountRecovery = false;
   resendLoading = false;
+  resendCooldownSeconds = 0;
+
+  private resendCooldownTimer?: ReturnType<typeof setInterval>;
 
   constructor(private authenticationService: AuthenticationService) {}
 
@@ -344,6 +347,7 @@ export class CreateaccountComponent {
       .subscribe({
         next: response => {
           this.successMessage = response.message || 'Foi enviado um novo email de confirmação.';
+          this.startResendCooldown();
         },
         error: error => {
           this.errorMessage = this.errorFrom(
@@ -352,6 +356,20 @@ export class CreateaccountComponent {
           );
         }
       });
+  }
+
+  private startResendCooldown(): void {
+    this.resendCooldownSeconds = 60;
+    if (this.resendCooldownTimer) {
+      clearInterval(this.resendCooldownTimer);
+    }
+    this.resendCooldownTimer = setInterval(() => {
+      this.resendCooldownSeconds = Math.max(0, this.resendCooldownSeconds - 1);
+      if (this.resendCooldownSeconds === 0 && this.resendCooldownTimer) {
+        clearInterval(this.resendCooldownTimer);
+        this.resendCooldownTimer = undefined;
+      }
+    }, 1000);
   }
 
   onPhotoChange(event: Event): void {
