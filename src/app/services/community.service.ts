@@ -15,6 +15,10 @@ export class CommunityService {
 
   constructor(private http: HttpClient) {}
 
+  discoverProfiles(): Observable<CommunityProfile[]> {
+    return this.http.get<CommunityProfile[]>(this.profileUrl + '/discover');
+  }
+
   searchProfiles(name: string): Observable<CommunityProfile[]> {
     return this.http.get<CommunityProfile[]>(
       this.profileUrl + '/name/' + encodeURIComponent(name.trim())
