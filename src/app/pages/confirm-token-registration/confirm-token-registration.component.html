@@ -1,22 +1,22 @@
 <section class="confirmation-page">
   <div class="confirmation-card">
-    <p class="eyebrow">Ativação de conta</p>
+    <p class="eyebrow">{{ 'confirm.eyebrow' | t }}</p>
 
     @if (loading) {
-      <h1>A confirmar a tua conta...</h1>
-      <p class="subtitle">Só demora alguns segundos.</p>
+      <h1>{{ 'confirm.loadingTitle' | t }}</h1>
+      <p class="subtitle">{{ 'confirm.loadingText' | t }}</p>
     }
 
     @if (!loading && successMessage) {
-      <h1>Conta ativada</h1>
+      <h1>{{ 'confirm.successTitle' | t }}</h1>
       <div class="feedback success-feedback">{{ successMessage }}</div>
-      <a class="primary-action" routerLink="/login">Entrar no Desporto24</a>
+      <a class="primary-action" routerLink="/login">{{ 'confirm.enter' | t }}</a>
     }
 
     @if (!loading && errorMessage) {
-      <h1>Não foi possível ativar a conta</h1>
+      <h1>{{ 'confirm.errorTitle' | t }}</h1>
       <div class="feedback error-feedback">{{ errorMessage }}</div>
-      <a class="secondary-action" routerLink="/login">Voltar ao login</a>
+      <a class="secondary-action" routerLink="/login">{{ 'confirm.back' | t }}</a>
     }
   </div>
 </section>
