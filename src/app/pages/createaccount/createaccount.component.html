@@ -189,15 +189,46 @@
           </select>
         </label>
 
-        <label class="full-width">
-          <span>{{ 'register.favoriteSports' | t }} *</span>
-          <textarea
-            name="favoriteSports"
-            [(ngModel)]="favoriteSports"
-            rows="3"
+        <div class="full-width sport-selector">
+          <span class="field-label">{{ 'register.favoriteSports' | t }} *</span>
+
+          @if (selectedSports.length > 0) {
+            <div class="sport-chips">
+              @for (sport of selectedSports; track sport) {
+                <button
+                  type="button"
+                  class="sport-chip"
+                  [disabled]="loading"
+                  (click)="removeSport(sport)">
+                  {{ sport }} ×
+                </button>
+              }
+            </div>
+          }
+
+          <input
+            type="search"
+            name="sportQuery"
+            [(ngModel)]="sportQuery"
+            autocomplete="off"
             [disabled]="loading"
-            [placeholder]="'register.favoriteSportsPlaceholder' | t"></textarea>
-        </label>
+            placeholder="Começa a escrever: Futebol, Padel, Ténis...">
+
+          @if (sportSuggestions.length > 0) {
+            <div class="sport-suggestions">
+              @for (sport of sportSuggestions; track sport) {
+                <button
+                  type="button"
+                  [disabled]="loading"
+                  (click)="addSport(sport)">
+                  {{ sport }}
+                </button>
+              }
+            </div>
+          }
+
+          <small>Seleciona um ou mais desportos da lista.</small>
+        </div>
       </div>
 
       <div class="form-actions">
