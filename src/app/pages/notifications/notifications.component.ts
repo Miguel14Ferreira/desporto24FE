@@ -98,6 +98,14 @@ export class NotificationsComponent implements OnInit {
     this.router.navigate(['/menu/events', notification.sessionId]);
   }
 
+  openChat(notification: AppNotification): void {
+    if (!notification.relatedUsername) {
+      return;
+    }
+
+    this.router.navigate(['/menu/friendList/chat', notification.relatedUsername]);
+  }
+
   deleteNotification(notification: AppNotification): void {
     if (this.actionLoadingId !== null) {
       return;
@@ -195,6 +203,8 @@ export class NotificationsComponent implements OnInit {
         return t('notification.session');
       case 'SESSION_CANCELLED':
         return t('notification.sessionCancelled');
+      case 'CHAT_MESSAGE':
+        return t('notification.chatMessage');
       default:
         return notification.friendRequest ? t('notification.friendRequest') : t('notification.generic');
     }
