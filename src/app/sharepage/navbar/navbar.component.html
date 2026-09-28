@@ -1,11 +1,25 @@
 <nav class="site-nav">
   <div class="site-nav__shell">
-    <a class="brand" routerLink="/home">DESPORTO24</a>
+    <a class="brand" [routerLink]="isAuthenticated() ? '/menu' : '/home'">DESPORTO24</a>
 
     <div class="site-nav__links">
-      <a routerLink="/home" routerLinkActive="active-link">{{ 'nav.home' | t }}</a>
-      <a routerLink="/about" routerLinkActive="active-link">{{ 'nav.about' | t }}</a>
-      <a routerLink="/contact" routerLinkActive="active-link">{{ 'nav.contact' | t }}</a>
+      @if (isAuthenticated()) {
+        <a routerLink="/menu/events" routerLinkActive="active-link">{{ 'nav.discover' | t }}</a>
+        <a routerLink="/menu/my-sessions" routerLinkActive="active-link">{{ 'nav.activities' | t }}</a>
+        <a routerLink="/menu/communities" routerLinkActive="active-link">{{ 'nav.communities' | t }}</a>
+        <a routerLink="/menu/friendList" routerLinkActive="active-link">{{ 'nav.messages' | t }}</a>
+        <a class="notification-link" routerLink="/menu/notifications" routerLinkActive="active-link">
+          {{ 'menu.notifications' | t }}
+          @if (unreadNotifications > 0) {
+            <span class="notification-badge">{{ unreadNotifications > 99 ? '99+' : unreadNotifications }}</span>
+          }
+        </a>
+        <a class="profile-nav-link" routerLink="/menu/dadosPerfil" routerLinkActive="active-link">{{ 'nav.profile' | t }}</a>
+      } @else {
+        <a routerLink="/home" routerLinkActive="active-link">{{ 'nav.home' | t }}</a>
+        <a routerLink="/about" routerLinkActive="active-link">{{ 'nav.about' | t }}</a>
+        <a routerLink="/contact" routerLinkActive="active-link">{{ 'nav.contact' | t }}</a>
+      }
 
       <div class="language-switch" aria-label="Language selector">
         <button
@@ -23,15 +37,8 @@
         </button>
       </div>
 
-      @if (isAuthenticated()) {
-        <a class="notification-link" routerLink="/menu/notifications" routerLinkActive="active-link">
-          {{ 'menu.notifications' | t }}
-          @if (unreadNotifications > 0) {
-            <span class="notification-badge">{{ unreadNotifications > 99 ? '99+' : unreadNotifications }}</span>
-          }
-        </a>
-        <a class="login-link" routerLink="/menu" routerLinkActive="active-link">{{ 'common.menu' | t }}</a>
-      } @else {
+      @if (!isAuthenticated()) {
+        <a class="register-link" routerLink="/login/registerNewUser">{{ 'nav.register' | t }}</a>
         <a class="login-link" routerLink="/login" routerLinkActive="active-link">{{ 'nav.login' | t }}</a>
       }
     </div>
