@@ -4,6 +4,7 @@ import { of } from 'rxjs';
 
 import { NotificationsComponent } from './notifications.component';
 import { NotificationApiService } from '../../services/notification-api.service';
+import { AuthenticationService } from '../../services/authethication.service';
 import { TEST_IMPORTS, TEST_PROVIDERS } from '../../testing/test-providers';
 
 describe('NotificationsComponent', () => {
@@ -11,6 +12,7 @@ describe('NotificationsComponent', () => {
   let fixture: ComponentFixture<NotificationsComponent>;
   let service: jasmine.SpyObj<NotificationApiService>;
   let router: Router;
+  let authenticationService: jasmine.SpyObj<AuthenticationService>;
 
   const notificationFixture = () => ({
     id: 4,
@@ -50,16 +52,40 @@ describe('NotificationsComponent', () => {
     username: 'fixture-user'
   });
 
+  const securityNotificationFixture = () => ({
+    id: 12,
+    subject: 'Autenticação multifator desativada',
+    message: 'A autenticação multifator foi desativada na tua conta DESPORTO24. Se não foste tu, protege imediatamente a tua conta.',
+    greeting: 'Cumprimentos,',
+    signature: 'DESPORTO24 MANAGEMENT TEAM',
+    createdAt: '2026-09-28T19:12:00Z',
+    friendRequest: false,
+    updateProfile: true,
+    sessionInvite: false,
+    normalMessage: false,
+    token: null,
+    type: null,
+    sessionId: null,
+    relatedUsername: null,
+    read: true,
+    username: 'fixture-user'
+  });
+
   beforeEach(async () => {
     service = jasmine.createSpyObj<NotificationApiService>(
       'NotificationApiService',
-      ['mine', 'markRead', 'delete', 'acceptFriendRequest', 'rejectFriendRequest']
+      ['mine', 'markRead', 'delete', 'acceptFriendRequest', 'rejectFriendRequest', 'blockOwnAccount']
     );
     service.mine.and.returnValue(of([notificationFixture()]));
     service.markRead.and.returnValue(of(void 0));
     service.delete.and.returnValue(of(void 0));
     service.acceptFriendRequest.and.returnValue(of({}));
     service.rejectFriendRequest.and.returnValue(of(void 0));
+    service.blockOwnAccount.and.returnValue(of(void 0));
+    authenticationService = jasmine.createSpyObj<AuthenticationService>(
+      'AuthenticationService',
+      ['logOut']
+    );
 
     await TestBed.configureTestingModule({
       declarations: [NotificationsComponent],
@@ -74,7 +100,8 @@ describe('NotificationsComponent', () => {
             }
           }
         },
-        { provide: NotificationApiService, useValue: service }
+        { provide: NotificationApiService, useValue: service },
+        { provide: AuthenticationService, useValue: authenticationService }
       ]
     }).compileComponents();
 
@@ -121,6 +148,22 @@ describe('NotificationsComponent', () => {
     expect(service.acceptFriendRequest).toHaveBeenCalledWith(8);
     expect(component.notifications.length).toBe(0);
     expect(component.actionSuccess).toContain('aceite');
+  });
+
+  it('should offer account protection for suspicious security notifications', () => {
+    const securityNotification = securityNotificationFixture();
+
+    expect(component.canProtectAccount(securityNotification)).toBeTrue();
+  });
+
+  it('should block the account and clear the local session after confirmation', () => {
+    const securityNotification = securityNotificationFixture();
+    component.selected = securityNotification;
+
+    component.blockAccountAccess();
+
+    expect(service.blockOwnAccount).toHaveBeenCalled();
+    expect(authenticationService.logOut).toHaveBeenCalled();
   });
 
   it('should reject a friend request through the authenticated endpoint', () => {
