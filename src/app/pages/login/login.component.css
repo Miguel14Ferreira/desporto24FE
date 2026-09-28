@@ -216,3 +216,40 @@
   color: #cbd5e1;
   font-size: .85rem;
 }
+
+
+.login-divider {
+  display: flex;
+  align-items: center;
+  gap: .8rem;
+  margin: 1rem 0;
+  color: #64748b;
+  font-size: .8rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.login-divider::before,
+.login-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(255,255,255,.12);
+}
+
+.google-login {
+  display: grid;
+  justify-items: center;
+  gap: .6rem;
+  min-height: 44px;
+}
+
+#google-signin-button {
+  width: min(340px, 100%);
+  min-height: 40px;
+}
+
+.google-status {
+  color: #94a3b8;
+  font-size: .82rem;
+}
