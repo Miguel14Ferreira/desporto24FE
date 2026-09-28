@@ -4,8 +4,11 @@ import { Observable } from 'rxjs';
 
 import { environment } from 'src/environment/environment';
 import {
+  CommunityCompetitionOverview,
+  CommunityCompetitionSettings,
   CommunityGroup,
   CommunityInvite,
+  CommunityMatchResult,
   CommunityRole,
   CommunityVisibility
 } from '../pages/model/community-group';
@@ -31,6 +34,54 @@ export class CommunityGroupsService {
     visibility: CommunityVisibility;
   }): Observable<CommunityGroup> {
     return this.http.post<CommunityGroup>(this.url, request);
+  }
+
+  competition(id: number): Observable<CommunityCompetitionOverview> {
+    return this.http.get<CommunityCompetitionOverview>(
+      this.url + '/' + id + '/competition'
+    );
+  }
+
+  updateCompetitionSettings(
+    id: number,
+    request: {
+      rankingsEnabled: boolean;
+      winPoints: number;
+      drawPoints: number;
+      lossPoints: number;
+    }
+  ): Observable<CommunityCompetitionSettings> {
+    return this.http.put<CommunityCompetitionSettings>(
+      this.url + '/' + id + '/competition/settings',
+      request
+    );
+  }
+
+  createRound(
+    id: number,
+    request: {
+      name: string;
+      playedAt: string;
+      entries: Array<{
+        username: string;
+        result: CommunityMatchResult;
+        goals: number;
+        assists: number;
+        mvp: boolean;
+        cleanSheet: boolean;
+      }>;
+    }
+  ): Observable<unknown> {
+    return this.http.post(
+      this.url + '/' + id + '/rounds',
+      request
+    );
+  }
+
+  deleteRound(communityId: number, roundId: number): Observable<void> {
+    return this.http.delete<void>(
+      this.url + '/' + communityId + '/rounds/' + roundId
+    );
   }
 
   updatePhoto(id: number, photo: File): Observable<CommunityGroup> {
