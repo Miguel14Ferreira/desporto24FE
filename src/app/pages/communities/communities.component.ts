@@ -62,6 +62,9 @@ export class CommunitiesComponent implements OnInit {
   seasonSaving = false;
   closeSeasonConfirming = false;
 
+  compareUsernameA = '';
+  compareUsernameB = '';
+
   constructor(
     private communityService: CommunityGroupsService,
     private route: ActivatedRoute
@@ -591,6 +594,39 @@ export class CommunitiesComponent implements OnInit {
     );
   }
 
+  mostGames(): CommunityStanding | undefined {
+    return this.topBy('games');
+  }
+
+  bestWinRate(): CommunityStanding | undefined {
+    return this.topBy('winRate');
+  }
+
+  bestWinStreak(): CommunityStanding | undefined {
+    return this.topBy('bestWinStreak');
+  }
+
+  comparePlayerA(): CommunityStanding | undefined {
+    return this.competition?.standings.find(
+      row => row.username === this.compareUsernameA
+    );
+  }
+
+  comparePlayerB(): CommunityStanding | undefined {
+    return this.competition?.standings.find(
+      row => row.username === this.compareUsernameB
+    );
+  }
+
+  pointsBarWidth(row: CommunityStanding): number {
+    const standings = this.competition?.standings || [];
+    const maxPoints = Math.max(0, ...standings.map(item => item.points));
+    if (maxPoints <= 0) {
+      return 0;
+    }
+    return Math.max(4, Math.round((row.points / maxPoints) * 100));
+  }
+
   leader(): CommunityStanding | undefined {
     return this.competition?.standings[0];
   }
@@ -619,7 +655,9 @@ export class CommunitiesComponent implements OnInit {
     return this.selected?.myRole === 'OWNER';
   }
 
-  private topBy(field: 'goals' | 'assists' | 'mvps' | 'cleanSheets'): CommunityStanding | undefined {
+  private topBy(
+    field: 'games' | 'goals' | 'assists' | 'mvps' | 'cleanSheets' | 'winRate' | 'bestWinStreak'
+  ): CommunityStanding | undefined {
     const rows = this.competition?.standings || [];
     if (rows.length === 0) {
       return undefined;
