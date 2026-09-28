@@ -25,6 +25,8 @@ export class AlterardadosComponent implements OnInit {
   photoEditing = false;
   errorMessage = '';
   successMessage = '';
+  toastMessage = '';
+  private toastTimer?: ReturnType<typeof setTimeout>;
 
   readonly maxBirthDate = this.dateYearsAgo(18);
   readonly minBirthDate = this.dateYearsAgo(120);
@@ -91,7 +93,7 @@ export class AlterardadosComponent implements OnInit {
           this.profile = { ...updated };
           this.photo = undefined;
           this.photoPreview = this.profileImage(updated) || this.photoPreview;
-          this.successMessage = t('feedback.profile.updated');
+          this.showToast(t('feedback.profile.updated'));
         },
         error: error => {
           this.errorMessage = this.errorFrom(
@@ -132,7 +134,7 @@ export class AlterardadosComponent implements OnInit {
           this.photoPreview = this.profileImage(updated) || this.photoPreview;
           this.photo = undefined;
           this.photoEditing = false;
-          this.successMessage = t('feedback.profile.photoUpdated');
+          this.showToast(t('feedback.profile.photoUpdated'));
         },
         error: error => {
           this.errorMessage = this.errorFrom(
@@ -204,6 +206,19 @@ export class AlterardadosComponent implements OnInit {
   private clean(value: string | null): string | null {
     const cleaned = value?.trim();
     return cleaned ? cleaned : null;
+  }
+
+  private showToast(message: string): void {
+    this.toastMessage = message;
+
+    if (this.toastTimer) {
+      clearTimeout(this.toastTimer);
+    }
+
+    this.toastTimer = setTimeout(() => {
+      this.toastMessage = '';
+      this.toastTimer = undefined;
+    }, 3500);
   }
 
   private errorFrom(error: HttpErrorResponse, fallback: string): string {
