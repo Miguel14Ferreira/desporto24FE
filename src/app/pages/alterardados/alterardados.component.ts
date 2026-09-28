@@ -282,11 +282,14 @@ export class AlterardadosComponent implements OnInit {
   }
 
   disableMfa(): void {
-    if (this.mfaDisabling || (!this.profile?.mfa && !this.mfaSetup)) {
+    if (this.mfaDisabling) {
       return;
     }
 
-    const wasActive = Boolean(this.profile?.mfa);
+    if (!this.profile?.mfa) {
+      this.cancelMfaSetup();
+      return;
+    }
 
     this.mfaDisabling = true;
     this.errorMessage = '';
@@ -298,18 +301,12 @@ export class AlterardadosComponent implements OnInit {
           this.profile = { ...updated };
           this.mfaSetup = undefined;
           this.mfaSetupCode = '';
-          this.showToast(
-            wasActive
-              ? t('feedback.profile.mfaDisabled')
-              : t('feedback.profile.mfaCancelled')
-          );
+          this.showToast(t('feedback.profile.mfaDisabled'));
         },
         error: error => {
           this.errorMessage = this.errorFrom(
             error,
-            wasActive
-              ? t('feedback.profile.mfaDisableError')
-              : t('feedback.profile.mfaCancelError')
+            t('feedback.profile.mfaDisableError')
           );
         }
       });
