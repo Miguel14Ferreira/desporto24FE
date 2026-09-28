@@ -1,15 +1,11 @@
 export interface RegistrationRequest {
   username: string;
   password: string;
-  fullName: string;
+  nickname: string | null;
   dateOfBirth: string;
-  address: string;
   country: string;
-  location: string;
-  postalCode: string;
   indicativePhone: string;
   phone: string;
-  gender: string;
+  gender: string | null;
   email: string;
-  favoriteSports: string;
 }
