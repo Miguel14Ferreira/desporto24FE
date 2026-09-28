@@ -7,6 +7,9 @@ import { finalize } from 'rxjs';
 import { CreateSessionRequest } from '../model/create-session-request';
 import { SessionService } from '../../services/session.service';
 import { CommunityGroupsService } from '../../services/community-groups.service';
+import { VenueService } from '../../services/venue.service';
+import { Venue } from '../model/venue';
+import { SPORTS_CATALOG } from '../../shared/sports-catalog';
 
 @Component({
   selector: 'app-events2',
@@ -44,15 +47,30 @@ export class Events2Component implements OnInit {
   communityId: number | null = null;
   communityName = '';
 
+  readonly sportsCatalog = SPORTS_CATALOG;
+  venues: Venue[] = [];
+  selectedVenueId: number | null = null;
+  venuesLoading = false;
+  venueSaving = false;
+  showVenueCreator = false;
+  venueName = '';
+  venueSurfaceType = '';
+  venueIndoor = false;
+  venueChangingRooms = false;
+  venueParking = false;
+  venueLighting = false;
+
   constructor(
     private sessionService: SessionService,
     private communityService: CommunityGroupsService,
+    private venueService: VenueService,
     private route: ActivatedRoute,
     private router: Router
   ) {}
 
   ngOnInit(): void {
     this.minDate = this.toLocalDateTimeValue(new Date());
+    this.loadVenues();
 
     const communityId = Number(this.route.snapshot.queryParamMap.get('community'));
     if (Number.isFinite(communityId) && communityId > 0) {
@@ -90,7 +108,8 @@ export class Events2Component implements OnInit {
       password: this.privateGame ? this.password.trim() : null,
       latitude: this.locationCaptured ? this.latitude : null,
       longitude: this.locationCaptured ? this.longitude : null,
-      communityId: this.communityId
+      communityId: this.communityId,
+      venueId: this.selectedVenueId
     };
 
     this.loading = true;
@@ -107,6 +126,126 @@ export class Events2Component implements OnInit {
           );
         }
       });
+  }
+
+  loadVenues(): void {
+    this.venuesLoading = true;
+
+    this.venueService.search()
+      .pipe(finalize(() => this.venuesLoading = false))
+      .subscribe({
+        next: venues => this.venues = venues,
+        error: () => this.venues = []
+      });
+  }
+
+  get venueOptions(): Venue[] {
+    const city = this.city.trim().toLocaleLowerCase('pt');
+    const sport = this.sport.trim().toLocaleLowerCase('pt');
+
+    return this.venues.filter(venue => {
+      const cityMatches = !city
+        || venue.city.toLocaleLowerCase('pt').includes(city);
+
+      const venueSports = (venue.sports || '').toLocaleLowerCase('pt');
+      const sportMatches = !sport
+        || !venueSports
+        || venueSports.includes(sport);
+
+      return cityMatches && sportMatches;
+    });
+  }
+
+  selectVenue(value: number | string | null): void {
+    const venueId = value === null || value === ''
+      ? null
+      : Number(value);
+
+    this.selectedVenueId = venueId !== null && Number.isFinite(venueId)
+      ? venueId
+      : null;
+
+    if (this.selectedVenueId === null) {
+      return;
+    }
+
+    const venue = this.venues.find(item => item.id === this.selectedVenueId);
+    if (!venue) {
+      return;
+    }
+
+    this.city = venue.city;
+    this.address = venue.address;
+
+    if (!this.sport.trim() && venue.sports) {
+      this.sport = venue.sports.split(',')[0]?.trim() || '';
+    }
+
+    if (venue.latitude !== null && venue.longitude !== null) {
+      this.latitude = venue.latitude;
+      this.longitude = venue.longitude;
+      this.locationCaptured = true;
+    } else {
+      this.clearLocation();
+    }
+  }
+
+  toggleVenueCreator(): void {
+    this.showVenueCreator = !this.showVenueCreator;
+    this.errorMessage = '';
+  }
+
+  saveVenue(): void {
+    if (this.venueSaving) {
+      return;
+    }
+
+    if (!this.venueName.trim() || !this.city.trim() || !this.address.trim()) {
+      this.errorMessage = t('feedback.venue.required');
+      return;
+    }
+
+    this.venueSaving = true;
+    this.errorMessage = '';
+
+    this.venueService.create({
+      name: this.venueName.trim(),
+      city: this.city.trim(),
+      address: this.address.trim(),
+      sports: this.sport.trim() || null,
+      surfaceType: this.venueSurfaceType.trim() || null,
+      indoor: this.venueIndoor,
+      changingRooms: this.venueChangingRooms,
+      parking: this.venueParking,
+      lighting: this.venueLighting,
+      latitude: this.locationCaptured ? this.latitude : null,
+      longitude: this.locationCaptured ? this.longitude : null
+    })
+      .pipe(finalize(() => this.venueSaving = false))
+      .subscribe({
+        next: venue => {
+          this.venues = [...this.venues, venue]
+            .sort((a, b) => a.name.localeCompare(b.name, 'pt'));
+          this.selectedVenueId = venue.id;
+          this.showVenueCreator = false;
+          this.venueName = '';
+          this.venueSurfaceType = '';
+          this.venueIndoor = false;
+          this.venueChangingRooms = false;
+          this.venueParking = false;
+          this.venueLighting = false;
+        },
+        error: error => {
+          this.errorMessage = this.errorFrom(
+            error,
+            t('feedback.venue.createError')
+          );
+        }
+      });
+  }
+
+  selectedVenue(): Venue | undefined {
+    return this.venues.find(venue => venue.id === this.selectedVenueId);
   }
 
   captureCurrentLocation(): void {
