@@ -252,161 +252,220 @@
 
             @if (!competitionLoading && activeTab === 'sessions') {
               <section class="community-tab-panel">
-                @if (!competition?.settings?.rankingsEnabled) {
-                  <div class="module-empty">
-                    <span>🏆</span>
-                    <h3>{{ 'communities.competitionDisabledTitle' | t }}</h3>
-                    <p>{{ 'communities.competitionDisabledText' | t }}</p>
+                <div class="section-heading">
+                  <div>
+                    <span class="section-kicker">{{ 'communities.sessionsKicker' | t }}</span>
+                    <h3>{{ 'communities.sessionsTitle' | t }}</h3>
+                  </div>
+                  <a
+                    class="primary-action button-link small"
+                    routerLink="/menu/createEvent"
+                    [queryParams]="{ community: selected.id }">
+                    {{ 'communities.createSession' | t }}
+                  </a>
+                </div>
+
+                @if (sessionsLoading) {
+                  <div class="module-empty compact">
+                    <p>{{ 'communities.sessionsLoading' | t }}</p>
+                  </div>
+                } @else if (communitySessions.length === 0) {
+                  <div class="module-empty compact">
+                    <h3>{{ 'communities.noSessions' | t }}</h3>
+                    <p>{{ 'communities.noSessionsText' | t }}</p>
                   </div>
                 } @else {
-                  @if (canManage()) {
-                    <section class="round-editor">
-                      <div class="section-heading">
-                        <div>
-                          <span class="section-kicker">{{ 'communities.newRoundKicker' | t }}</span>
-                          <h3>{{ 'communities.newRound' | t }}</h3>
+                  <div class="community-sessions-list">
+                    @for (session of communitySessions; track session.id) {
+                      <a
+                        class="community-session-card"
+                        [routerLink]="['/menu/events', session.id]">
+                        <div class="community-session-main">
+                          <strong>{{ session.sport }}</strong>
+                          <span>{{ session.city }} · {{ formatSessionDate(session.gameDate) }}</span>
                         </div>
-                      </div>
+                        <div class="community-session-meta">
+                          <span>
+                            {{ session.participantCount }}/{{ session.maxParticipants }}
+                            {{ 'communities.participantsShort' | t }}
+                          </span>
+                          @if (session.priceAmount > 0) {
+                            <span>{{ session.priceAmount }} €</span>
+                          } @else {
+                            <span>{{ 'events.freeOnly' | t }}</span>
+                          }
+                        </div>
+                      </a>
+                    }
+                  </div>
+                }
 
-                      <div class="round-meta-form">
-                        <label>
-                          <span>{{ 'communities.roundName' | t }}</span>
-                          <input
-                            [(ngModel)]="roundName"
-                            [placeholder]="'communities.roundNamePlaceholder' | t">
-                        </label>
-                        <label>
-                          <span>{{ 'communities.roundDate' | t }}</span>
-                          <input type="datetime-local" [(ngModel)]="roundPlayedAt">
-                        </label>
-                      </div>
-
-                      <div class="round-player-list">
-                        @for (entry of roundEntries; track entry.username) {
-                          <article class="round-player" [class.included]="entry.included">
-                            <label class="round-player-toggle">
-                              <input type="checkbox" [(ngModel)]="entry.included">
-                              <strong>@{{ entry.username }}</strong>
-                            </label>
-
-                            @if (entry.included) {
-                              <div class="round-player-fields">
-                                <label>
-                                  <span>{{ 'communities.result' | t }}</span>
-                                  <select [(ngModel)]="entry.result">
-                                    <option value="WIN">{{ 'communities.result.win' | t }}</option>
-                                    <option value="DRAW">{{ 'communities.result.draw' | t }}</option>
-                                    <option value="LOSS">{{ 'communities.result.loss' | t }}</option>
-                                  </select>
-                                </label>
-                                <label>
-                                  <span>{{ 'communities.goals' | t }}</span>
-                                  <input type="number" min="0" [(ngModel)]="entry.goals">
-                                </label>
-                                <label>
-                                  <span>{{ 'communities.assists' | t }}</span>
-                                  <input type="number" min="0" [(ngModel)]="entry.assists">
-                                </label>
-                                <label class="check-stat">
-                                  <input type="checkbox" [(ngModel)]="entry.mvp">
-                                  <span>MVP</span>
-                                </label>
-                                <label class="check-stat">
-                                  <input type="checkbox" [(ngModel)]="entry.cleanSheet">
-                                  <span>{{ 'communities.cleanSheet' | t }}</span>
-                                </label>
-                              </div>
-                            }
-                          </article>
-                        }
-                      </div>
-
-                      <button
-                        type="button"
-                        class="primary-action"
-                        [disabled]="roundSaving"
-                        (click)="createRound()">
-                        {{ roundSaving
-                          ? ('communities.savingRound' | t)
-                          : ('communities.saveRound' | t) }}
-                      </button>
-                    </section>
-                  }
-
-                  <section class="round-history">
-                    <div class="section-heading">
-                      <div>
-                        <span class="section-kicker">{{ 'communities.history' | t }}</span>
-                        <h3>{{ 'communities.rounds' | t }}</h3>
-                      </div>
-                      <span class="count-pill">{{ competition?.rounds?.length || 0 }}</span>
+                <section class="competition-results-section">
+                  <div class="section-heading">
+                    <div>
+                      <span class="section-kicker">{{ 'communities.competitionKicker' | t }}</span>
+                      <h3>{{ 'communities.competitionResults' | t }}</h3>
                     </div>
+                  </div>
 
-                    @if (!competition?.rounds?.length) {
-                      <div class="module-empty compact">
-                        <h3>{{ 'communities.noRounds' | t }}</h3>
-                        <p>{{ 'communities.noRoundsText' | t }}</p>
-                      </div>
+                  @if (!competition?.settings?.rankingsEnabled) {
+                    <div class="module-empty compact">
+                      <h3>{{ 'communities.competitionDisabledTitle' | t }}</h3>
+                      <p>{{ 'communities.competitionSessionsHint' | t }}</p>
+                    </div>
+                  } @else {
+                    @if (canManage()) {
+                      <section class="round-editor">
+                        <div class="section-heading">
+                          <div>
+                            <span class="section-kicker">{{ 'communities.newRoundKicker' | t }}</span>
+                            <h3>{{ 'communities.newRound' | t }}</h3>
+                          </div>
+                        </div>
+
+                        <div class="round-meta-form">
+                          <label>
+                            <span>{{ 'communities.roundName' | t }}</span>
+                            <input
+                              [(ngModel)]="roundName"
+                              [placeholder]="'communities.roundNamePlaceholder' | t">
+                          </label>
+                          <label>
+                            <span>{{ 'communities.roundDate' | t }}</span>
+                            <input type="datetime-local" [(ngModel)]="roundPlayedAt">
+                          </label>
+                        </div>
+
+                        <div class="round-player-list">
+                          @for (entry of roundEntries; track entry.username) {
+                            <article class="round-player" [class.included]="entry.included">
+                              <label class="round-player-toggle">
+                                <input type="checkbox" [(ngModel)]="entry.included">
+                                <strong>@{{ entry.username }}</strong>
+                              </label>
+
+                              @if (entry.included) {
+                                <div class="round-player-fields">
+                                  <label>
+                                    <span>{{ 'communities.result' | t }}</span>
+                                    <select [(ngModel)]="entry.result">
+                                      <option value="WIN">{{ 'communities.result.win' | t }}</option>
+                                      <option value="DRAW">{{ 'communities.result.draw' | t }}</option>
+                                      <option value="LOSS">{{ 'communities.result.loss' | t }}</option>
+                                    </select>
+                                  </label>
+                                  <label>
+                                    <span>{{ 'communities.goals' | t }}</span>
+                                    <input type="number" min="0" [(ngModel)]="entry.goals">
+                                  </label>
+                                  <label>
+                                    <span>{{ 'communities.assists' | t }}</span>
+                                    <input type="number" min="0" [(ngModel)]="entry.assists">
+                                  </label>
+                                  <label class="check-stat">
+                                    <input type="checkbox" [(ngModel)]="entry.mvp">
+                                    <span>MVP</span>
+                                  </label>
+                                  <label class="check-stat">
+                                    <input type="checkbox" [(ngModel)]="entry.cleanSheet">
+                                    <span>{{ 'communities.cleanSheet' | t }}</span>
+                                  </label>
+                                </div>
+                              }
+                            </article>
+                          }
+                        </div>
+
+                        <button
+                          type="button"
+                          class="primary-action"
+                          [disabled]="roundSaving"
+                          (click)="createRound()">
+                          {{ roundSaving
+                            ? ('communities.savingRound' | t)
+                            : ('communities.saveRound' | t) }}
+                        </button>
+                      </section>
                     }
 
-                    @for (round of competition?.rounds || []; track round.id) {
-                      <article class="round-card">
-                        <div class="round-card-header">
-                          <div>
-                            <strong>{{ round.name }}</strong>
-                            <span>{{ formatRoundDate(round.playedAt) }}</span>
-                          </div>
+                    <section class="round-history">
+                      <div class="section-heading">
+                        <div>
+                          <span class="section-kicker">{{ 'communities.history' | t }}</span>
+                          <h3>{{ 'communities.rounds' | t }}</h3>
+                        </div>
+                        <span class="count-pill">{{ competition?.rounds?.length || 0 }}</span>
+                      </div>
 
-                          @if (canManage()) {
-                            @if (roundDeleteConfirmId !== round.id) {
-                              <button
-                                type="button"
-                                class="danger-action small"
-                                (click)="askDeleteRound(round)">
-                                {{ 'communities.deleteRound' | t }}
-                              </button>
-                            } @else {
-                              <div class="row-actions">
+                      @if (!competition?.rounds?.length) {
+                        <div class="module-empty compact">
+                          <h3>{{ 'communities.noRounds' | t }}</h3>
+                          <p>{{ 'communities.noRoundsText' | t }}</p>
+                        </div>
+                      }
+
+                      @for (round of competition?.rounds || []; track round.id) {
+                        <article class="round-card">
+                          <div class="round-card-header">
+                            <div>
+                              <strong>{{ round.name }}</strong>
+                              <span>{{ formatRoundDate(round.playedAt) }}</span>
+                            </div>
+
+                            @if (canManage()) {
+                              @if (roundDeleteConfirmId !== round.id) {
                                 <button
                                   type="button"
                                   class="danger-action small"
-                                  [disabled]="roundSaving"
-                                  (click)="deleteRound(round)">
-                                  {{ 'communities.confirmDeleteRound' | t }}
+                                  (click)="askDeleteRound(round)">
+                                  {{ 'communities.deleteRound' | t }}
                                 </button>
-                                <button
-                                  type="button"
-                                  class="secondary-action small"
-                                  [disabled]="roundSaving"
-                                  (click)="cancelDeleteRound()">
-                                  {{ 'common.cancel' | t }}
-                                </button>
+                              } @else {
+                                <div class="row-actions">
+                                  <button
+                                    type="button"
+                                    class="danger-action small"
+                                    [disabled]="roundSaving"
+                                    (click)="deleteRound(round)">
+                                    {{ 'communities.confirmDeleteRound' | t }}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    class="secondary-action small"
+                                    [disabled]="roundSaving"
+                                    (click)="cancelDeleteRound()">
+                                    {{ 'common.cancel' | t }}
+                                  </button>
+                                </div>
+                              }
+                            }
+                          </div>
+
+                          <div class="round-results">
+                            @for (entry of round.entries; track entry.profileId) {
+                              <div class="round-result-row">
+                                <div>
+                                  <strong>{{ entry.fullName || entry.username }}</strong>
+                                  <span>@{{ entry.username }}</span>
+                                </div>
+                                <span
+                                  class="result-chip"
+                                  [class.win]="entry.result === 'WIN'"
+                                  [class.loss]="entry.result === 'LOSS'">
+                                  {{ resultLabel(entry.result) }}
+                                </span>
+                                <span>{{ entry.goals }} G</span>
+                                <span>{{ entry.assists }} A</span>
+                                @if (entry.mvp) { <span class="mini-badge">MVP</span> }
+                                @if (entry.cleanSheet) { <span class="mini-badge">CS</span> }
                               </div>
                             }
-                          }
-                        </div>
-
-                        <div class="round-results">
-                          @for (entry of round.entries; track entry.profileId) {
-                            <div class="round-result-row">
-                              <div>
-                                <strong>{{ entry.fullName || entry.username }}</strong>
-                                <span>@{{ entry.username }}</span>
-                              </div>
-                              <span class="result-chip" [class.win]="entry.result === 'WIN'" [class.loss]="entry.result === 'LOSS'">
-                                {{ resultLabel(entry.result) }}
-                              </span>
-                              <span>{{ entry.goals }} G</span>
-                              <span>{{ entry.assists }} A</span>
-                              @if (entry.mvp) { <span class="mini-badge">MVP</span> }
-                              @if (entry.cleanSheet) { <span class="mini-badge">CS</span> }
-                            </div>
-                          }
-                        </div>
-                      </article>
-                    }
-                  </section>
-                }
+                          </div>
+                        </article>
+                      }
+                    </section>
+                  }
+                </section>
               </section>
             }
 
