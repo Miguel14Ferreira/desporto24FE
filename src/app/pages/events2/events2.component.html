@@ -17,6 +17,21 @@
       <div class="feedback error-feedback">{{ errorMessage }}</div>
     }
 
+    @if (communityId && communityName) {
+      <div class="community-context">
+        <div>
+          <span class="section-kicker">{{ 'createSession.communityKicker' | t }}</span>
+          <strong>{{ communityName }}</strong>
+        </div>
+        <a
+          class="secondary-action"
+          routerLink="/menu/communities"
+          [queryParams]="{ community: communityId }">
+          {{ 'createSession.backCommunity' | t }}
+        </a>
+      </div>
+    }
+
     <form class="create-card" (ngSubmit)="createSession()">
       <div class="form-grid">
         <label>
