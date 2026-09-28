@@ -6,6 +6,7 @@ import { finalize } from 'rxjs';
 
 import { AppNotification } from '../model/app-notification';
 import { NotificationApiService } from '../../services/notification-api.service';
+import { AuthenticationService } from '../../services/authethication.service';
 
 @Component({
   selector: 'app-notifications',
@@ -20,6 +21,7 @@ export class NotificationsComponent implements OnInit {
 
   loading = false;
   actionLoadingId: number | null = null;
+  accountBlockConfirming = false;
 
   errorMessage = '';
   actionError = '';
@@ -27,6 +29,7 @@ export class NotificationsComponent implements OnInit {
 
   constructor(
     private notificationService: NotificationApiService,
+    private authenticationService: AuthenticationService,
     private route: ActivatedRoute,
     private router: Router
   ) {}
@@ -70,6 +73,7 @@ export class NotificationsComponent implements OnInit {
     this.selected = notification;
     this.actionError = '';
     this.actionSuccess = '';
+    this.accountBlockConfirming = false;
 
     if (navigate) {
       this.router.navigate(['/menu/notifications', notification.id]);
@@ -87,6 +91,7 @@ export class NotificationsComponent implements OnInit {
 
   closeNotification(): void {
     this.selected = undefined;
+    this.accountBlockConfirming = false;
     this.router.navigate(['/menu/notifications']);
   }
 
@@ -106,23 +111,46 @@ export class NotificationsComponent implements OnInit {
     this.router.navigate(['/menu/friendList/chat', notification.relatedUsername]);
   }
 
-  openMfaSettings(): void {
-    this.router.navigate(['/menu/alterardados'], {
-      queryParams: { focus: 'mfa' }
-    });
+  canProtectAccount(notification: AppNotification): boolean {
+    const message = (notification.message || '').toLocaleLowerCase();
+    return Boolean(notification.updateProfile)
+      && (
+        message.includes('se não foste tu')
+        || message.includes("if this wasn't you")
+        || message.includes('if you did not')
+      );
   }
 
-  isMfaDisabledNotification(notification: AppNotification): boolean {
-    if (notification.type === 'MFA_DISABLED') {
-      return true;
+  requestAccountBlock(): void {
+    this.accountBlockConfirming = true;
+    this.actionError = '';
+  }
+
+  cancelAccountBlock(): void {
+    this.accountBlockConfirming = false;
+  }
+
+  blockAccountAccess(): void {
+    if (!this.selected || this.actionLoadingId !== null) {
+      return;
     }
 
-    const subject = notification.subject.toLocaleLowerCase();
-    return notification.updateProfile
-      && (
-        (subject.includes('autenticação multifator') && subject.includes('desativ'))
-        || (subject.includes('multi-factor authentication') && subject.includes('disabled'))
-      );
+    this.actionLoadingId = this.selected.id;
+    this.actionError = '';
+
+    this.notificationService.blockOwnAccount()
+      .pipe(finalize(() => this.actionLoadingId = null))
+      .subscribe({
+        next: () => {
+          this.authenticationService.logOut();
+        },
+        error: error => {
+          this.actionError = this.errorFrom(
+            error,
+            t('feedback.notifications.blockAccountError')
+          );
+        }
+      });
   }
 
   deleteNotification(notification: AppNotification): void {
