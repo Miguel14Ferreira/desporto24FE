@@ -569,7 +569,7 @@ input,textarea,select {
 
 .round-player-fields {
   display: grid;
-  grid-template-columns: minmax(130px, 1.5fr) minmax(80px, .6fr) minmax(80px, .6fr) auto auto;
+  grid-template-columns: minmax(120px, 1fr) minmax(130px, 1.2fr) minmax(70px, .5fr) minmax(70px, .5fr) auto auto;
   align-items: end;
   gap: .55rem;
   margin-top: .65rem;
