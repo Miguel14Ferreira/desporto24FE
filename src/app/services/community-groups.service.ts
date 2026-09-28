@@ -71,6 +71,7 @@ export class CommunityGroupsService {
       playedAt: string;
       entries: Array<{
         username: string;
+        team: string | null;
         result: CommunityMatchResult;
         goals: number;
         assists: number;
