@@ -1,0 +1,169 @@
+<section class="communities-page">
+  <div class="communities-shell">
+    <header class="page-header">
+      <div>
+        <p class="eyebrow">Desporto24</p>
+        <h1>Comunidades</h1>
+        <p class="subtitle">Cria grupos privados ou públicos, convida jogadores e gere a tua equipa de admins.</p>
+      </div>
+      <button type="button" class="primary-action" (click)="creating = !creating">
+        {{ creating ? 'Fechar' : 'Criar comunidade' }}
+      </button>
+    </header>
+
+    @if (errorMessage) {
+      <div class="feedback error-feedback">{{ errorMessage }}</div>
+    }
+
+    @if (creating) {
+      <section class="create-card">
+        <h2>Nova comunidade</h2>
+        <div class="form-grid">
+          <label>
+            <span>Nome *</span>
+            <input [(ngModel)]="newName" placeholder="Ex.: CNG - Quintas Feiras">
+          </label>
+
+          <label>
+            <span>Desporto</span>
+            <input [(ngModel)]="newSport" placeholder="Ex.: Futebol">
+          </label>
+
+          <label class="full-width">
+            <span>Descrição</span>
+            <textarea [(ngModel)]="newDescription" rows="3" placeholder="Conta aos membros o objetivo deste grupo."></textarea>
+          </label>
+
+          <label>
+            <span>Privacidade</span>
+            <select [(ngModel)]="newVisibility">
+              <option value="PRIVATE">Privada</option>
+              <option value="PUBLIC">Pública</option>
+            </select>
+          </label>
+        </div>
+
+        <button type="button" class="primary-action" [disabled]="saving || !newName.trim()" (click)="create()">
+          {{ saving ? 'A criar...' : 'Criar comunidade' }}
+        </button>
+      </section>
+    }
+
+    @if (invites.length > 0) {
+      <section class="invites-card">
+        <h2>Convites pendentes</h2>
+        @for (invite of invites; track invite.id) {
+          <div class="invite-row">
+            <div>
+              <strong>{{ invite.communityName }}</strong>
+              <span>Convite enviado por @{{ invite.invitedByUsername }}</span>
+            </div>
+            <div class="row-actions">
+              <button type="button" class="primary-action small" (click)="acceptInvite(invite)">Aceitar</button>
+              <button type="button" class="secondary-action small" (click)="rejectInvite(invite)">Rejeitar</button>
+            </div>
+          </div>
+        }
+      </section>
+    }
+
+    <div class="communities-layout">
+      <aside class="community-list">
+        @if (loading) {
+          <div class="state-card">A carregar...</div>
+        }
+
+        @if (!loading && communities.length === 0) {
+          <div class="state-card">
+            <strong>Ainda não pertences a nenhuma comunidade.</strong>
+            <span>Cria uma ou aceita um convite.</span>
+          </div>
+        }
+
+        @for (community of communities; track community.id) {
+          <button
+            type="button"
+            class="community-card"
+            [class.active]="selected?.id === community.id"
+            (click)="open(community)">
+            <div>
+              <strong>{{ community.name }}</strong>
+              <span>{{ community.sport || 'Multidesporto' }}</span>
+            </div>
+            <small>{{ community.memberCount }} membro{{ community.memberCount === 1 ? '' : 's' }}</small>
+          </button>
+        }
+      </aside>
+
+      <main class="community-detail">
+        @if (!selected) {
+          <div class="detail-placeholder">
+            <h2>Seleciona uma comunidade</h2>
+            <p>Aqui vais poder gerir membros, admins e convites.</p>
+          </div>
+        }
+
+        @if (selected) {
+          <div class="detail-header">
+            <div>
+              <span class="visibility">{{ selected.visibility === 'PRIVATE' ? 'Privada' : 'Pública' }}</span>
+              <h2>{{ selected.name }}</h2>
+              <p>{{ selected.description || 'Sem descrição.' }}</p>
+            </div>
+            <span class="role-badge">{{ selected.myRole }}</span>
+          </div>
+
+          @if (canManage()) {
+            <section class="management-block">
+              <h3>Convidar jogador</h3>
+              <div class="inline-form">
+                <input [(ngModel)]="inviteUsername" placeholder="Nome de utilizador">
+                <button type="button" class="primary-action small" (click)="invite()">Enviar convite</button>
+              </div>
+            </section>
+          }
+
+          <section class="members-block">
+            <h3>Membros</h3>
+            @for (member of selected.members; track member.profileId) {
+              <div class="member-row">
+                <div>
+                  <strong>{{ member.fullName || member.username }}</strong>
+                  <span>@{{ member.username }} · {{ member.role }}</span>
+                </div>
+
+                @if (isOwner() && member.role !== 'OWNER') {
+                  <div class="row-actions">
+                    @if (member.role === 'MEMBER') {
+                      <button type="button" class="secondary-action small" (click)="setRole(member.username, 'ADMIN')">Tornar admin</button>
+                    } @else {
+                      <button type="button" class="secondary-action small" (click)="setRole(member.username, 'MEMBER')">Remover admin</button>
+                    }
+                    <button type="button" class="danger-action small" (click)="removeMember(member.username)">Remover</button>
+                  </div>
+                } @else if (selected.myRole === 'ADMIN' && member.role === 'MEMBER') {
+                  <button type="button" class="danger-action small" (click)="removeMember(member.username)">Remover</button>
+                }
+              </div>
+            }
+          </section>
+
+          @if (isOwner()) {
+            <section class="management-block">
+              <h3>Transferir ownership</h3>
+              <p>O novo Owner tem de ser membro da comunidade. Tu passas automaticamente a Admin.</p>
+              <div class="inline-form">
+                <input [(ngModel)]="ownershipUsername" placeholder="Username do novo Owner">
+                <button type="button" class="secondary-action small" (click)="transferOwnership()">Transferir</button>
+              </div>
+            </section>
+          } @else {
+            <section class="leave-block">
+              <button type="button" class="danger-action" (click)="leave()">Sair da comunidade</button>
+            </section>
+          }
+        }
+      </main>
+    </div>
+  </div>
+</section>
