@@ -98,7 +98,12 @@
               [(ngModel)]="profile.email"
               autocomplete="email"
               required
-              [disabled]="saving">
+              [disabled]="saving"
+              [attr.aria-invalid]="fieldErrors.email ? 'true' : 'false'"
+              (input)="clearFieldError('email')">
+            @if (fieldErrors.email) {
+              <small class="field-error">{{ fieldErrors.email }}</small>
+            }
           </label>
 
           <label>
@@ -110,7 +115,12 @@
               [min]="minBirthDate"
               [max]="maxBirthDate"
               required
-              [disabled]="saving">
+              [disabled]="saving"
+              [attr.aria-invalid]="fieldErrors.dateOfBirth ? 'true' : 'false'"
+              (change)="clearFieldError('dateOfBirth')">
+            @if (fieldErrors.dateOfBirth) {
+              <small class="field-error">{{ fieldErrors.dateOfBirth }}</small>
+            }
           </label>
 
           <label>
@@ -119,12 +129,17 @@
               name="country"
               [(ngModel)]="profile.country"
               required
-              [disabled]="saving">
+              [disabled]="saving"
+              [attr.aria-invalid]="fieldErrors.country ? 'true' : 'false'"
+              (change)="clearFieldError('country')">
               <option value="">{{ 'register.select' | t }}</option>
               @for (item of countryOptions; track item.label) {
                 <option [value]="countryName(item.label)">{{ item.label }}</option>
               }
             </select>
+            @if (fieldErrors.country) {
+              <small class="field-error">{{ fieldErrors.country }}</small>
+            }
           </label>
 
           <div class="full-width phone-field">
@@ -147,8 +162,13 @@
                 autocomplete="tel-national"
                 inputmode="tel"
                 [disabled]="saving"
+                [attr.aria-invalid]="fieldErrors.phone ? 'true' : 'false'"
+                (input)="clearFieldError('phone')"
                 placeholder="912 345 678">
             </div>
+            @if (fieldErrors.phone) {
+              <small class="field-error">{{ fieldErrors.phone }}</small>
+            }
           </div>
 
           <label>
@@ -235,7 +255,12 @@
               maxlength="280"
               rows="4"
               [disabled]="saving"
+              [attr.aria-invalid]="fieldErrors.bio ? 'true' : 'false'"
+              (input)="clearFieldError('bio')"
               [placeholder]="'profile.bioPlaceholder' | t"></textarea>
+            @if (fieldErrors.bio) {
+              <small class="field-error">{{ fieldErrors.bio }}</small>
+            }
             <small class="character-count">{{ (profile.bio || '').length }}/280</small>
           </label>
         </div>
