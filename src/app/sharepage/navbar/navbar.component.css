@@ -48,9 +48,35 @@
   color: #f8fafc;
 }
 
-.site-nav__links .login-link {
+.site-nav__links .login-link,
+.site-nav__links .register-link,
+.site-nav__links .profile-nav-link {
   margin-left: .25rem;
   border: 1px solid rgba(255,255,255,.14);
+}
+
+.site-nav__links .register-link {
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+@media (max-width: 900px) {
+  .site-nav__shell {
+    align-items: stretch;
+    flex-direction: column;
+    gap: .35rem;
+    padding: .65rem 0;
+  }
+
+  .site-nav__links {
+    width: 100%;
+    overflow-x: auto;
+    padding-bottom: .15rem;
+  }
+
+  .site-nav__links a {
+    flex: 0 0 auto;
+  }
 }
 
 @media (max-width: 620px) {
@@ -58,8 +84,13 @@
     min-height: 58px;
   }
 
-  .site-nav__links a:not(.login-link) {
-    display: none;
+  .site-nav__links {
+    gap: .2rem;
+  }
+
+  .site-nav__links a {
+    padding: .5rem .6rem;
+    font-size: .8rem;
   }
 }
 
