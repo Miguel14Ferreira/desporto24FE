@@ -1,0 +1,99 @@
+<section class="create-community-page">
+  <div class="create-shell">
+    <header class="create-header">
+      <div>
+        <p class="eyebrow">Comunidades</p>
+        <h1>Criar comunidade</h1>
+        <p>Cria o teu espaço, escolhe quem entra e gere-o com outros admins.</p>
+      </div>
+
+      <button type="button" class="secondary-action" (click)="cancel()">
+        Voltar
+      </button>
+    </header>
+
+    @if (errorMessage) {
+      <div class="feedback error-feedback">{{ errorMessage }}</div>
+    }
+
+    <form class="create-panel" (ngSubmit)="create()">
+      <div class="panel-heading">
+        <div>
+          <span class="step">Configuração inicial</span>
+          <h2>Sobre a comunidade</h2>
+        </div>
+        <p>Podes alterar estes dados mais tarde.</p>
+      </div>
+
+      <div class="form-grid">
+        <label class="full-width">
+          <span>Nome da comunidade *</span>
+          <input
+            name="name"
+            [(ngModel)]="name"
+            maxlength="100"
+            [disabled]="saving"
+            placeholder="Ex.: CNG - Quintas Feiras"
+            required>
+        </label>
+
+        <label>
+          <span>Desporto</span>
+          <select
+            name="sport"
+            [(ngModel)]="sport"
+            [disabled]="saving">
+            <option value="">Multidesporto / nenhum específico</option>
+            @for (item of sportsCatalog; track item) {
+              <option [value]="item">{{ item }}</option>
+            }
+          </select>
+        </label>
+
+        <label>
+          <span>Privacidade</span>
+          <select
+            name="visibility"
+            [(ngModel)]="visibility"
+            [disabled]="saving">
+            <option value="PRIVATE">Privada</option>
+            <option value="PUBLIC">Pública</option>
+          </select>
+          <small>
+            {{ visibility === 'PRIVATE'
+              ? 'Só entra quem for convidado ou aceite pela equipa de gestão.'
+              : 'A comunidade poderá ser descoberta por outros utilizadores.' }}
+          </small>
+        </label>
+
+        <label class="full-width">
+          <span>Descrição</span>
+          <textarea
+            name="description"
+            [(ngModel)]="description"
+            maxlength="2000"
+            rows="5"
+            [disabled]="saving"
+            placeholder="Conta aos futuros membros para que serve esta comunidade."></textarea>
+        </label>
+      </div>
+
+      <div class="creation-note">
+        <span class="note-icon">◎</span>
+        <div>
+          <strong>Tu serás o Owner.</strong>
+          <p>Depois podes convidar jogadores e promover membros a Admin para te ajudarem a gerir o grupo.</p>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="secondary-action" [disabled]="saving" (click)="cancel()">
+          Cancelar
+        </button>
+        <button type="submit" class="primary-action" [disabled]="saving || !name.trim()">
+          {{ saving ? 'A criar...' : 'Criar comunidade' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</section>
