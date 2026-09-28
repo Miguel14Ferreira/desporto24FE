@@ -25,6 +25,7 @@ import { AuthenticationGuard } from './guard/authentication.guard';
 import { AdminGuard } from './guard/admin.guard';
 import { AdminDisputesComponent } from './pages/admin-disputes/admin-disputes.component';
 import { AdminDashboardComponent } from './pages/admin-dashboard/admin-dashboard.component';
+import { GoogleOnboardingComponent } from './pages/google-onboarding/google-onboarding.component';
 import { AdminIdeasComponent } from './pages/admin-ideas/admin-ideas.component';
 import { NotFoundComponent } from './pages/not-found/not-found.component';
 
@@ -40,6 +41,7 @@ const routes: Routes = [
   {path:'menu/login',redirectTo:'/login', pathMatch:'full'},
   {path:'login',component:LoginComponent},
   {path:'login/registerNewUser',component:CreateaccountComponent},
+  {path:'login/google/complete-profile',component:GoogleOnboardingComponent},
   {path:'menu/createEvent',component:Events2Component,canActivate:[AuthenticationGuard]},
   {path:'menu/createEvent/menu', redirectTo:'menu',pathMatch:'full'},
   {path:'login/registerNewUser/login', redirectTo:'login',pathMatch:'full'},
