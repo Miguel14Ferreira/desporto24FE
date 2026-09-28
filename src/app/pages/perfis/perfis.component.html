@@ -99,10 +99,30 @@
             </div>
           </div>
 
+          @if (selectedProfile.bio) {
+            <p class="public-bio">{{ selectedProfile.bio }}</p>
+          }
+
           <div class="profile-meta">
             <div>
               <span>{{ 'common.country' | t }}</span>
               <strong>{{ selectedProfile.country || ('common.notProvided' | t) }}</strong>
+            </div>
+            <div>
+              <span>{{ 'profileData.favoriteSports' | t }}</span>
+              <strong>{{ selectedProfile.favoriteSports || ('common.notProvided' | t) }}</strong>
+            </div>
+            <div>
+              <span>{{ 'profile.skillLevel' | t }}</span>
+              <strong>
+                {{ selectedProfile.skillLevel
+                  ? (('profile.level.' + selectedProfile.skillLevel) | t)
+                  : ('common.notProvided' | t) }}
+              </strong>
+            </div>
+            <div>
+              <span>{{ 'profile.availability' | t }}</span>
+              <strong>{{ selectedProfile.availability || ('common.notProvided' | t) }}</strong>
             </div>
             <div>
               <span>{{ 'community.memberSince' | t }}</span>
@@ -111,27 +131,31 @@
 
             @if (selectedReliability) {
               <div>
-                <span>Taxa de presença</span>
+                <span>{{ 'profileData.attendanceRate' | t }}</span>
                 <strong>{{ selectedReliability.attendanceRate | number:'1.0-0' }}%</strong>
-              </div>
-              <div>
-                <span>Sessões concluídas</span>
-                <strong>{{ selectedReliability.completedSessions }}</strong>
-              </div>
-              <div>
-                <span>Faltas</span>
-                <strong>{{ selectedReliability.noShows }}</strong>
-              </div>
-              <div>
-                <span>Estado de fiabilidade</span>
-                <strong>
-                  {{ selectedReliability.joinRestricted
-                    ? 'Restrito'
-                    : (selectedReliability.warning ? 'Em observação' : 'Bom') }}
-                </strong>
               </div>
             }
           </div>
+
+          @if (selectedActivity) {
+            <section class="public-activity">
+              <span class="section-kicker">{{ 'profileData.activityKicker' | t }}</span>
+              <div class="public-activity-grid">
+                <div><strong>{{ selectedActivity.activitiesCompleted }}</strong><span>{{ 'profileData.activitiesCompleted' | t }}</span></div>
+                <div><strong>{{ selectedActivity.peoplePlayedWith }}</strong><span>{{ 'profileData.peoplePlayedWith' | t }}</span></div>
+                <div><strong>{{ selectedActivity.sportsPractised }}</strong><span>{{ 'profileData.sportsPractised' | t }}</span></div>
+                <div><strong>{{ selectedActivity.eventsCreated }}</strong><span>{{ 'profileData.eventsCreated' | t }}</span></div>
+              </div>
+
+              @if (selectedActivity.achievements.length > 0) {
+                <div class="public-achievements">
+                  @for (achievement of selectedActivity.achievements; track achievement) {
+                    <span>{{ ('profileData.achievement.' + achievement) | t }}</span>
+                  }
+                </div>
+              }
+            </section>
+          }
 
           <div class="detail-actions">
             @if (isOwnProfile(selectedProfile)) {
