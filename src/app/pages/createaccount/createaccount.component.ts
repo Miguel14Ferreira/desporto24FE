@@ -5,6 +5,7 @@ import { finalize } from 'rxjs';
 
 import { RegistrationRequest } from '../model/registration-request';
 import { AuthenticationService } from '../../services/authethication.service';
+import { SPORTS_CATALOG } from '../../shared/sports-catalog';
 
 @Component({
   selector: 'app-createaccount',
@@ -31,28 +32,7 @@ export class CreateaccountComponent {
   sportQuery = '';
   selectedSports: string[] = [];
 
-  readonly sportsCatalog = [
-    'Futebol',
-    'Futsal',
-    'Basquetebol',
-    'Ténis',
-    'Padel',
-    'Voleibol',
-    'Corrida',
-    'Ciclismo',
-    'Natação',
-    'Andebol',
-    'Rugby',
-    'Badminton',
-    'Ténis de mesa',
-    'Squash',
-    'Hóquei',
-    'Surf',
-    'Escalada',
-    'Ginásio',
-    'Yoga',
-    'Pilates'
-  ];
+  readonly sportsCatalog = SPORTS_CATALOG;
 
   readonly maxBirthDate = this.dateYearsAgo(18);
   readonly minBirthDate = this.dateYearsAgo(120);
