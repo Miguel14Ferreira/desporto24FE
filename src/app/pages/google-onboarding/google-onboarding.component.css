@@ -260,6 +260,13 @@ button:disabled {
 
 .calling-code {
   min-width: 0;
+  height: 52px;
+}
+
+.phone-row input,
+.phone-row select {
+  height: 52px;
+  box-sizing: border-box;
 }
 
 @media (max-width: 520px) {
