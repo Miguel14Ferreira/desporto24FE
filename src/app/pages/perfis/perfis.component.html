@@ -145,6 +145,13 @@
           <div class="detail-actions">
             @if (isOwnProfile(selectedProfile)) {
               <span>{{ 'community.ownProfile' | t }}</span>
+            } @else if (isFriend(selectedProfile)) {
+              <span>Já são amigos</span>
+              <a
+                class="primary-action"
+                [routerLink]="['/menu/friendList/chat', selectedProfile.username]">
+                Abrir chat
+              </a>
             } @else {
               <button
                 type="button"
