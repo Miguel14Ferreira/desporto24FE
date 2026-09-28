@@ -112,10 +112,17 @@ export class NotificationsComponent implements OnInit {
   }
 
   canProtectAccount(notification: AppNotification): boolean {
+    const subject = (notification.subject || '').toLocaleLowerCase();
     const message = (notification.message || '').toLocaleLowerCase();
-    return message.includes('se não foste tu')
-      || message.includes("if this wasn't you")
-      || message.includes('if you did not');
+    const content = subject + ' ' + message;
+
+    return (
+      content.includes('autenticação multifator')
+      && content.includes('desativ')
+    ) || (
+      content.includes('multi-factor authentication')
+      && content.includes('disabled')
+    );
   }
 
   requestAccountBlock(): void {
