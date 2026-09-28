@@ -197,7 +197,9 @@ export class PerfisComponent implements OnInit {
   }
 
   initials(profile: CommunityProfile): string {
-    const source = profile.fullName?.trim() || profile.username;
+    const source = profile.nickname?.trim()
+      || profile.fullName?.trim()
+      || profile.username;
     return source
       .split(/\s+/)
       .filter(Boolean)
