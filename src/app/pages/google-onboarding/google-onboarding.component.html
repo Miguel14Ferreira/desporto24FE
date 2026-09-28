@@ -1,0 +1,182 @@
+<section class="onboarding-page">
+  <div class="onboarding-shell">
+    <header class="page-header">
+      <div>
+        <p class="eyebrow">DESPORTO24 · Passo 2 de 2</p>
+        <h1>Completa o teu perfil</h1>
+        <p class="subtitle">
+          A tua conta Google já foi validada. Só precisamos de alguns dados para preparar o teu perfil na comunidade.
+        </p>
+      </div>
+
+      <button type="button" class="secondary-action" (click)="cancel()">
+        Cancelar
+      </button>
+    </header>
+
+    <section class="google-account-card">
+      @if (pictureUrl) {
+        <img [src]="pictureUrl" alt="Fotografia da conta Google">
+      } @else {
+        <div class="avatar-fallback">{{ (fullName || email).charAt(0).toUpperCase() }}</div>
+      }
+
+      <div>
+        <span class="verified-label">Conta Google verificada</span>
+        <strong>{{ fullName || 'Utilizador Google' }}</strong>
+        <span>{{ email }}</span>
+      </div>
+    </section>
+
+    @if (errorMessage) {
+      <div class="feedback error-feedback">{{ errorMessage }}</div>
+    }
+
+    <form class="onboarding-card" (ngSubmit)="submit()">
+      <div class="form-grid">
+        <label>
+          <span>Nome de utilizador *</span>
+          <input
+            name="username"
+            [(ngModel)]="username"
+            autocomplete="username"
+            maxlength="50"
+            [disabled]="loading">
+        </label>
+
+        <label>
+          <span>Data de nascimento *</span>
+          <input
+            type="date"
+            name="dateOfBirth"
+            [(ngModel)]="dateOfBirth"
+            [min]="minBirthDate"
+            [max]="maxBirthDate"
+            [disabled]="loading">
+        </label>
+
+        <label class="full-width">
+          <span>Morada *</span>
+          <input
+            name="address"
+            [(ngModel)]="address"
+            autocomplete="street-address"
+            [disabled]="loading">
+        </label>
+
+        <label>
+          <span>País *</span>
+          <input
+            name="country"
+            [(ngModel)]="country"
+            autocomplete="country-name"
+            [disabled]="loading">
+        </label>
+
+        <label>
+          <span>Localidade *</span>
+          <input
+            name="location"
+            [(ngModel)]="location"
+            autocomplete="address-level2"
+            [disabled]="loading">
+        </label>
+
+        <label>
+          <span>Código postal *</span>
+          <input
+            name="postalCode"
+            [(ngModel)]="postalCode"
+            autocomplete="postal-code"
+            [disabled]="loading">
+        </label>
+
+        <label>
+          <span>Indicativo *</span>
+          <input
+            name="indicativePhone"
+            [(ngModel)]="indicativePhone"
+            inputmode="numeric"
+            [disabled]="loading"
+            placeholder="351">
+        </label>
+
+        <label>
+          <span>Telemóvel *</span>
+          <input
+            type="tel"
+            name="phone"
+            [(ngModel)]="phone"
+            autocomplete="tel-national"
+            [disabled]="loading"
+            placeholder="912 345 678">
+        </label>
+
+        <label>
+          <span>Género *</span>
+          <select name="gender" [(ngModel)]="gender" [disabled]="loading">
+            <option value="">Seleciona</option>
+            <option value="masculino">Masculino</option>
+            <option value="feminino">Feminino</option>
+            <option value="outro">Outro</option>
+          </select>
+        </label>
+
+        <div class="full-width sport-selector">
+          <span class="field-label">Desportos favoritos *</span>
+
+          @if (selectedSports.length > 0) {
+            <div class="sport-chips">
+              @for (sport of selectedSports; track sport) {
+                <button
+                  type="button"
+                  class="sport-chip"
+                  [disabled]="loading"
+                  (click)="removeSport(sport)">
+                  {{ sport }} ×
+                </button>
+              }
+            </div>
+          }
+
+          <input
+            type="search"
+            name="sportQuery"
+            [(ngModel)]="sportQuery"
+            autocomplete="off"
+            [disabled]="loading"
+            placeholder="Futebol, Padel, Ténis...">
+
+          @if (sportSuggestions.length > 0) {
+            <div class="sport-suggestions">
+              @for (sport of sportSuggestions; track sport) {
+                <button
+                  type="button"
+                  [disabled]="loading"
+                  (click)="addSport(sport)">
+                  {{ sport }}
+                </button>
+              }
+            </div>
+          }
+
+          <small>Seleciona um ou mais desportos da lista.</small>
+        </div>
+      </div>
+
+      <div class="privacy-note">
+        <strong>O teu email e identidade já foram verificados pela Google.</strong>
+        <span>Não precisas de criar outra palavra-passe para concluir este registo.</span>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="secondary-action" (click)="cancel()" [disabled]="loading">
+          Cancelar
+        </button>
+        <button type="submit" class="primary-action" [disabled]="loading">
+          {{ loading ? 'A criar conta...' : 'Concluir registo' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</section>
