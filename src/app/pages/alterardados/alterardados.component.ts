@@ -98,6 +98,11 @@ export class AlterardadosComponent implements OnInit {
       return;
     }
 
+    if (this.profile.bio && this.profile.bio.length > 280) {
+      this.errorMessage = t('feedback.profile.bioLong');
+      return;
+    }
+
     const normalizedPhone = (this.profile.phone || '').replace(/\D/g, '');
     if (
       this.profile.phone?.trim()
@@ -126,6 +131,9 @@ export class AlterardadosComponent implements OnInit {
       gender: this.clean(this.profile.gender),
       email: this.profile.email.trim(),
       favoriteSports: this.clean(this.profile.favoriteSports),
+      bio: this.clean(this.profile.bio),
+      skillLevel: this.clean(this.profile.skillLevel),
+      availability: this.clean(this.profile.availability),
       mfa: Boolean(this.profile.mfa)
     };
 
