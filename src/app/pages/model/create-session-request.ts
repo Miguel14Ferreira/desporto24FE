@@ -10,4 +10,5 @@ export interface CreateSessionRequest {
   latitude: number | null;
   longitude: number | null;
   communityId?: number | null;
+  venueId?: number | null;
 }
