@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Router } from '@angular/router';
-import { finalize } from 'rxjs';
+import { finalize, of, switchMap } from 'rxjs';
 import { appTranslate as t } from '../../i18n/i18n.service';
 
 import { CommunityVisibility } from '../model/community-group';
@@ -19,6 +19,9 @@ export class CommunityCreateComponent {
   description = '';
   sport = '';
   visibility: CommunityVisibility = 'PRIVATE';
+
+  photo?: File;
+  photoPreview = '';
 
   readonly sportsCatalog = SPORTS_CATALOG;
 
@@ -44,7 +47,14 @@ export class CommunityCreateComponent {
       sport: this.sport || null,
       visibility: this.visibility
     })
-      .pipe(finalize(() => this.saving = false))
+      .pipe(
+        switchMap(community =>
+          this.photo
+            ? this.communityService.updatePhoto(community.id, this.photo)
+            : of(community)
+        ),
+        finalize(() => this.saving = false)
+      )
       .subscribe({
         next: community => {
           void this.router.navigate(
@@ -57,6 +67,37 @@ export class CommunityCreateComponent {
             error.error?.message || t('communityCreate.error');
         }
       });
+  }
+
+  onPhotoChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+
+    if (!file) {
+      this.photo = undefined;
+      this.photoPreview = '';
+      return;
+    }
+
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024) {
+      this.errorMessage = t('feedback.image.choose');
+      input.value = '';
+      return;
+    }
+
+    this.photo = file;
+    this.errorMessage = '';
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.photoPreview = typeof reader.result === 'string' ? reader.result : '';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  removePhoto(): void {
+    this.photo = undefined;
+    this.photoPreview = '';
   }
 
   cancel(): void {
