@@ -74,7 +74,8 @@
               maxlength="2000"
               rows="3"
               [disabled]="sending || chatInfo?.chatBlocked === true"
-              [placeholder]="'chat.placeholder' | t"></textarea>
+              [placeholder]="'chat.placeholder' | t"
+              (keydown.enter)="onEnter($event)"></textarea>
           </label>
 
           <div class="composer-tools">
