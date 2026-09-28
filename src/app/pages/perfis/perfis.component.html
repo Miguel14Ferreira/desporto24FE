@@ -14,19 +14,21 @@
     </header>
 
     <form class="search-bar" (ngSubmit)="search()">
-      <label>
-        <span>{{ 'login.username' | t }}</span>
+      <label for="player-search">{{ 'login.username' | t }}</label>
+
+      <div class="search-row">
         <input
+          id="player-search"
           type="search"
           name="searchTerm"
           [(ngModel)]="searchTerm"
           [placeholder]="'community.searchPlaceholder' | t"
           autocomplete="off">
-      </label>
 
-      <button type="submit" [disabled]="loading">
-        {{ loading ? ('common.searching' | t) : ('common.search' | t) }}
-      </button>
+        <button type="submit" [disabled]="loading">
+          {{ loading ? ('common.searching' | t) : ('common.search' | t) }}
+        </button>
+      </div>
     </form>
 
     @if (errorMessage) {
