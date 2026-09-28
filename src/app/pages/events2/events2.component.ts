@@ -1,11 +1,12 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { appTranslate as t } from '../../i18n/i18n.service';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { finalize } from 'rxjs';
 
 import { CreateSessionRequest } from '../model/create-session-request';
 import { SessionService } from '../../services/session.service';
+import { CommunityGroupsService } from '../../services/community-groups.service';
 
 @Component({
   selector: 'app-events2',
@@ -40,13 +41,35 @@ export class Events2Component implements OnInit {
   loading = false;
   errorMessage = '';
 
+  communityId: number | null = null;
+  communityName = '';
+
   constructor(
     private sessionService: SessionService,
+    private communityService: CommunityGroupsService,
+    private route: ActivatedRoute,
     private router: Router
   ) {}
 
   ngOnInit(): void {
     this.minDate = this.toLocalDateTimeValue(new Date());
+
+    const communityId = Number(this.route.snapshot.queryParamMap.get('community'));
+    if (Number.isFinite(communityId) && communityId > 0) {
+      this.communityId = communityId;
+      this.communityService.get(communityId).subscribe({
+        next: community => {
+          this.communityName = community.name;
+          if (!this.sport.trim() && community.sport) {
+            this.sport = community.sport;
+          }
+        },
+        error: () => {
+          this.communityId = null;
+          this.communityName = '';
+        }
+      });
+    }
   }
 
   createSession(): void {
@@ -66,7 +89,8 @@ export class Events2Component implements OnInit {
       privateGame: this.privateGame,
       password: this.privateGame ? this.password.trim() : null,
       latitude: this.locationCaptured ? this.latitude : null,
-      longitude: this.locationCaptured ? this.longitude : null
+      longitude: this.locationCaptured ? this.longitude : null,
+      communityId: this.communityId
     };
 
     this.loading = true;
