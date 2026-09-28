@@ -441,6 +441,18 @@ export class CommunitiesComponent implements OnInit {
       .join('') || '◎';
   }
 
+  formatSessionDate(value: string): string {
+    const parsed = Date.parse(value);
+    if (Number.isNaN(parsed)) {
+      return value;
+    }
+
+    return new Intl.DateTimeFormat('pt-PT', {
+      dateStyle: 'medium',
+      timeStyle: 'short'
+    }).format(new Date(parsed));
+  }
+
   formatRoundDate(value: string): string {
     const parsed = Date.parse(value);
     if (Number.isNaN(parsed)) {
