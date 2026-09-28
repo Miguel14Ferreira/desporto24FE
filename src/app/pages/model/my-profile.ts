@@ -21,6 +21,7 @@ export interface MyProfile {
 
 export interface UpdateMyProfileRequest {
   fullName: string | null;
+  nickname: string | null;
   dateOfBirth: string | null;
   address: string | null;
   country: string | null;
