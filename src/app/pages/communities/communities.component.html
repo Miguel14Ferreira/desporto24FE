@@ -25,8 +25,12 @@
               <span>{{ 'communities.invitedBy' | t:{ username: invite.invitedByUsername } }}</span>
             </div>
             <div class="row-actions">
-              <button type="button" class="primary-action small" (click)="acceptInvite(invite)">{{ 'communities.accept' | t }}</button>
-              <button type="button" class="secondary-action small" (click)="rejectInvite(invite)">{{ 'communities.reject' | t }}</button>
+              <button type="button" class="primary-action small" (click)="acceptInvite(invite)">
+                {{ 'communities.accept' | t }}
+              </button>
+              <button type="button" class="secondary-action small" (click)="rejectInvite(invite)">
+                {{ 'communities.reject' | t }}
+              </button>
             </div>
           </div>
         }
@@ -48,138 +52,579 @@
         </a>
       </section>
     } @else if (communities.length > 0) {
-    <div class="communities-layout">
-      <aside class="community-list">
-        <div class="list-heading">
-          <strong>{{ 'communities.mine' | t }}</strong>
-          <span>{{ communities.length }}</span>
-        </div>
-
-        @for (community of communities; track community.id) {
-          <button
-            type="button"
-            class="community-card"
-            [class.active]="selected?.id === community.id"
-            (click)="open(community)">
-            <div class="community-card-main">
-              <div class="community-avatar">
-                @if (community.photoUrl) {
-                  <img [src]="community.photoUrl" [alt]="community.name">
-                } @else {
-                  <span>{{ communityInitials(community) }}</span>
-                }
-              </div>
-              <div class="community-card-copy">
-                <strong>{{ community.name }}</strong>
-                <span>{{ community.sport || ('communities.multiSport' | t) }}</span>
-              </div>
-            </div>
-            <small>{{ community.memberCount === 1
-                ? ('communities.memberOne' | t:{ count: community.memberCount })
-                : ('communities.memberMany' | t:{ count: community.memberCount }) }}</small>
-          </button>
-        }
-      </aside>
-
-      <main class="community-detail">
-        @if (!selected) {
-          <div class="detail-placeholder">
-            <h2>{{ 'communities.selectTitle' | t }}</h2>
-            <p>{{ 'communities.selectText' | t }}</p>
+      <div class="communities-layout">
+        <aside class="community-list">
+          <div class="list-heading">
+            <strong>{{ 'communities.mine' | t }}</strong>
+            <span>{{ communities.length }}</span>
           </div>
-        }
 
-        @if (selected) {
-          <div class="detail-header">
-            <div class="community-detail-identity">
-              <div class="community-avatar community-avatar--large">
-                @if (selected.photoUrl) {
-                  <img [src]="selected.photoUrl" [alt]="selected.name">
-                } @else {
-                  <span>{{ communityInitials(selected) }}</span>
+          @for (community of communities; track community.id) {
+            <button
+              type="button"
+              class="community-card"
+              [class.active]="selected?.id === community.id"
+              (click)="open(community)">
+              <div class="community-card-main">
+                <div class="community-avatar">
+                  @if (community.photoUrl) {
+                    <img [src]="community.photoUrl" [alt]="community.name">
+                  } @else {
+                    <span>{{ communityInitials(community) }}</span>
+                  }
+                </div>
+                <div class="community-card-copy">
+                  <strong>{{ community.name }}</strong>
+                  <span>{{ community.sport || ('communities.multiSport' | t) }}</span>
+                </div>
+              </div>
+              <small>
+                {{ community.memberCount === 1
+                  ? ('communities.memberOne' | t:{ count: community.memberCount })
+                  : ('communities.memberMany' | t:{ count: community.memberCount }) }}
+              </small>
+            </button>
+          }
+        </aside>
+
+        <main class="community-detail">
+          @if (!selected) {
+            <div class="detail-placeholder">
+              <h2>{{ 'communities.selectTitle' | t }}</h2>
+              <p>{{ 'communities.selectText' | t }}</p>
+            </div>
+          }
+
+          @if (selected) {
+            <div class="detail-header">
+              <div class="community-detail-identity">
+                <div class="community-avatar community-avatar--large">
+                  @if (selected.photoUrl) {
+                    <img [src]="selected.photoUrl" [alt]="selected.name">
+                  } @else {
+                    <span>{{ communityInitials(selected) }}</span>
+                  }
+
+                  @if (canManage()) {
+                    <label class="community-photo-edit" [class.disabled]="photoUpdating">
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        [disabled]="photoUpdating"
+                        (change)="onCommunityPhotoChange($event)">
+                      <span>{{ 'communities.changePhoto' | t }}</span>
+                    </label>
+                  }
+                </div>
+
+                <div>
+                  <div class="community-title-meta">
+                    <span class="visibility">
+                      {{ selected.visibility === 'PRIVATE'
+                        ? ('communities.private' | t)
+                        : ('communities.public' | t) }}
+                    </span>
+                    @if (competition?.settings?.rankingsEnabled) {
+                      <span class="competition-badge">{{ 'communities.competitionOn' | t }}</span>
+                    }
+                  </div>
+                  <h2>{{ selected.name }}</h2>
+                  <p>{{ selected.description || ('communities.noDescription' | t) }}</p>
+                </div>
+              </div>
+
+              <span class="role-badge">
+                {{ selected.myRole === 'OWNER'
+                  ? ('communities.role.owner' | t)
+                  : (selected.myRole === 'ADMIN'
+                    ? ('communities.role.admin' | t)
+                    : ('communities.role.member' | t)) }}
+              </span>
+            </div>
+
+            <nav class="community-tabs" [attr.aria-label]="'communities.tabsLabel' | t">
+              <button type="button" [class.active]="activeTab === 'home'" (click)="setTab('home')">
+                {{ 'communities.tab.home' | t }}
+              </button>
+              <button type="button" [class.active]="activeTab === 'sessions'" (click)="setTab('sessions')">
+                {{ 'communities.tab.sessions' | t }}
+              </button>
+              <button type="button" [class.active]="activeTab === 'ranking'" (click)="setTab('ranking')">
+                {{ 'communities.tab.ranking' | t }}
+              </button>
+              <button type="button" [class.active]="activeTab === 'stats'" (click)="setTab('stats')">
+                {{ 'communities.tab.stats' | t }}
+              </button>
+              <button type="button" [class.active]="activeTab === 'members'" (click)="setTab('members')">
+                {{ 'communities.tab.members' | t }}
+              </button>
+            </nav>
+
+            @if (competitionLoading) {
+              <div class="tab-state">{{ 'communities.competitionLoading' | t }}</div>
+            }
+
+            @if (!competitionLoading && activeTab === 'home') {
+              <section class="community-tab-panel">
+                <div class="overview-grid">
+                  <article class="overview-card">
+                    <span>{{ 'communities.members' | t }}</span>
+                    <strong>{{ selected.memberCount }}</strong>
+                  </article>
+                  <article class="overview-card">
+                    <span>{{ 'communities.sportLabel' | t }}</span>
+                    <strong>{{ selected.sport || ('communities.multiSport' | t) }}</strong>
+                  </article>
+                  <article class="overview-card">
+                    <span>{{ 'communities.visibilityLabel' | t }}</span>
+                    <strong>
+                      {{ selected.visibility === 'PRIVATE'
+                        ? ('communities.private' | t)
+                        : ('communities.public' | t) }}
+                    </strong>
+                  </article>
+                  <article class="overview-card">
+                    <span>{{ 'communities.competition' | t }}</span>
+                    <strong>
+                      {{ competition?.settings?.rankingsEnabled
+                        ? ('communities.enabled' | t)
+                        : ('communities.disabled' | t) }}
+                    </strong>
+                  </article>
+                </div>
+
+                @if (competition?.settings?.rankingsEnabled && leader()) {
+                  <section class="leader-highlight">
+                    <div>
+                      <span class="section-kicker">{{ 'communities.currentLeader' | t }}</span>
+                      <h3>{{ leader()?.fullName || leader()?.username }}</h3>
+                      <p>@{{ leader()?.username }} · {{ leader()?.points }} {{ 'communities.pointsShort' | t }}</p>
+                    </div>
+                    <div class="leader-score">{{ leader()?.points }}</div>
+                  </section>
                 }
 
                 @if (canManage()) {
-                  <label class="community-photo-edit" [class.disabled]="photoUpdating">
-                    <input
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp"
-                      [disabled]="photoUpdating"
-                      (change)="onCommunityPhotoChange($event)">
-                    <span>{{ 'communities.changePhoto' | t }}</span>
-                  </label>
+                  <section class="management-block competition-settings">
+                    <div class="section-heading">
+                      <div>
+                        <span class="section-kicker">{{ 'communities.competitionSettings' | t }}</span>
+                        <h3>{{ 'communities.rankingsModule' | t }}</h3>
+                      </div>
+                      <label class="switch-control">
+                        <input type="checkbox" [(ngModel)]="rankingsEnabledDraft">
+                        <span>{{ rankingsEnabledDraft
+                          ? ('communities.enabled' | t)
+                          : ('communities.disabled' | t) }}</span>
+                      </label>
+                    </div>
+
+                    <p>{{ 'communities.rankingsOptionalHint' | t }}</p>
+
+                    <div class="points-settings">
+                      <label>
+                        <span>{{ 'communities.winPoints' | t }}</span>
+                        <input type="number" min="0" [(ngModel)]="winPointsDraft">
+                      </label>
+                      <label>
+                        <span>{{ 'communities.drawPoints' | t }}</span>
+                        <input type="number" min="0" [(ngModel)]="drawPointsDraft">
+                      </label>
+                      <label>
+                        <span>{{ 'communities.lossPoints' | t }}</span>
+                        <input type="number" min="0" [(ngModel)]="lossPointsDraft">
+                      </label>
+                    </div>
+
+                    <button
+                      type="button"
+                      class="primary-action"
+                      [disabled]="competitionSaving"
+                      (click)="saveCompetitionSettings()">
+                      {{ competitionSaving
+                        ? ('communities.savingCompetition' | t)
+                        : ('communities.saveCompetition' | t) }}
+                    </button>
+                  </section>
                 }
-              </div>
-
-              <div>
-              <span class="visibility">{{ selected.visibility === 'PRIVATE'
-                ? ('communities.private' | t)
-                : ('communities.public' | t) }}</span>
-              <h2>{{ selected.name }}</h2>
-              <p>{{ selected.description || ('communities.noDescription' | t) }}</p>
-              </div>
-            </div>
-            <span class="role-badge">
-              {{ selected.myRole === 'OWNER'
-                ? ('communities.role.owner' | t)
-                : (selected.myRole === 'ADMIN'
-                  ? ('communities.role.admin' | t)
-                  : ('communities.role.member' | t)) }}
-            </span>
-          </div>
-
-          @if (canManage()) {
-            <section class="management-block">
-              <h3>{{ 'communities.invitePlayer' | t }}</h3>
-              <div class="inline-form">
-                <input [(ngModel)]="inviteUsername" [placeholder]="'communities.usernamePlaceholder' | t">
-                <button type="button" class="primary-action small" (click)="invite()">{{ 'communities.sendInvite' | t }}</button>
-              </div>
-            </section>
-          }
-
-          <section class="members-block">
-            <h3>{{ 'communities.members' | t }}</h3>
-            @for (member of selected.members; track member.profileId) {
-              <div class="member-row">
-                <div>
-                  <strong>{{ member.fullName || member.username }}</strong>
-                  <span>@{{ member.username }} · {{ member.role }}</span>
-                </div>
-
-                @if (isOwner() && member.role !== 'OWNER') {
-                  <div class="row-actions">
-                    @if (member.role === 'MEMBER') {
-                      <button type="button" class="secondary-action small" (click)="setRole(member.username, 'ADMIN')">{{ 'communities.makeAdmin' | t }}</button>
-                    } @else {
-                      <button type="button" class="secondary-action small" (click)="setRole(member.username, 'MEMBER')">{{ 'communities.removeAdmin' | t }}</button>
-                    }
-                    <button type="button" class="danger-action small" (click)="removeMember(member.username)">{{ 'communities.removeMember' | t }}</button>
-                  </div>
-                } @else if (selected.myRole === 'ADMIN' && member.role === 'MEMBER') {
-                  <button type="button" class="danger-action small" (click)="removeMember(member.username)">{{ 'communities.removeMember' | t }}</button>
-                }
-              </div>
+              </section>
             }
-          </section>
 
-          @if (isOwner()) {
-            <section class="management-block">
-              <h3>{{ 'communities.transferOwnership' | t }}</h3>
-              <p>{{ 'communities.transferOwnershipHint' | t }}</p>
-              <div class="inline-form">
-                <input [(ngModel)]="ownershipUsername" [placeholder]="'communities.newOwnerPlaceholder' | t">
-                <button type="button" class="secondary-action small" (click)="transferOwnership()">{{ 'communities.transfer' | t }}</button>
-              </div>
-            </section>
-          } @else {
-            <section class="leave-block">
-              <button type="button" class="danger-action" (click)="leave()">{{ 'communities.leave' | t }}</button>
-            </section>
+            @if (!competitionLoading && activeTab === 'sessions') {
+              <section class="community-tab-panel">
+                @if (!competition?.settings?.rankingsEnabled) {
+                  <div class="module-empty">
+                    <span>🏆</span>
+                    <h3>{{ 'communities.competitionDisabledTitle' | t }}</h3>
+                    <p>{{ 'communities.competitionDisabledText' | t }}</p>
+                  </div>
+                } @else {
+                  @if (canManage()) {
+                    <section class="round-editor">
+                      <div class="section-heading">
+                        <div>
+                          <span class="section-kicker">{{ 'communities.newRoundKicker' | t }}</span>
+                          <h3>{{ 'communities.newRound' | t }}</h3>
+                        </div>
+                      </div>
+
+                      <div class="round-meta-form">
+                        <label>
+                          <span>{{ 'communities.roundName' | t }}</span>
+                          <input
+                            [(ngModel)]="roundName"
+                            [placeholder]="'communities.roundNamePlaceholder' | t">
+                        </label>
+                        <label>
+                          <span>{{ 'communities.roundDate' | t }}</span>
+                          <input type="datetime-local" [(ngModel)]="roundPlayedAt">
+                        </label>
+                      </div>
+
+                      <div class="round-player-list">
+                        @for (entry of roundEntries; track entry.username) {
+                          <article class="round-player" [class.included]="entry.included">
+                            <label class="round-player-toggle">
+                              <input type="checkbox" [(ngModel)]="entry.included">
+                              <strong>@{{ entry.username }}</strong>
+                            </label>
+
+                            @if (entry.included) {
+                              <div class="round-player-fields">
+                                <label>
+                                  <span>{{ 'communities.result' | t }}</span>
+                                  <select [(ngModel)]="entry.result">
+                                    <option value="WIN">{{ 'communities.result.win' | t }}</option>
+                                    <option value="DRAW">{{ 'communities.result.draw' | t }}</option>
+                                    <option value="LOSS">{{ 'communities.result.loss' | t }}</option>
+                                  </select>
+                                </label>
+                                <label>
+                                  <span>{{ 'communities.goals' | t }}</span>
+                                  <input type="number" min="0" [(ngModel)]="entry.goals">
+                                </label>
+                                <label>
+                                  <span>{{ 'communities.assists' | t }}</span>
+                                  <input type="number" min="0" [(ngModel)]="entry.assists">
+                                </label>
+                                <label class="check-stat">
+                                  <input type="checkbox" [(ngModel)]="entry.mvp">
+                                  <span>MVP</span>
+                                </label>
+                                <label class="check-stat">
+                                  <input type="checkbox" [(ngModel)]="entry.cleanSheet">
+                                  <span>{{ 'communities.cleanSheet' | t }}</span>
+                                </label>
+                              </div>
+                            }
+                          </article>
+                        }
+                      </div>
+
+                      <button
+                        type="button"
+                        class="primary-action"
+                        [disabled]="roundSaving"
+                        (click)="createRound()">
+                        {{ roundSaving
+                          ? ('communities.savingRound' | t)
+                          : ('communities.saveRound' | t) }}
+                      </button>
+                    </section>
+                  }
+
+                  <section class="round-history">
+                    <div class="section-heading">
+                      <div>
+                        <span class="section-kicker">{{ 'communities.history' | t }}</span>
+                        <h3>{{ 'communities.rounds' | t }}</h3>
+                      </div>
+                      <span class="count-pill">{{ competition?.rounds?.length || 0 }}</span>
+                    </div>
+
+                    @if (!competition?.rounds?.length) {
+                      <div class="module-empty compact">
+                        <h3>{{ 'communities.noRounds' | t }}</h3>
+                        <p>{{ 'communities.noRoundsText' | t }}</p>
+                      </div>
+                    }
+
+                    @for (round of competition?.rounds || []; track round.id) {
+                      <article class="round-card">
+                        <div class="round-card-header">
+                          <div>
+                            <strong>{{ round.name }}</strong>
+                            <span>{{ formatRoundDate(round.playedAt) }}</span>
+                          </div>
+
+                          @if (canManage()) {
+                            @if (roundDeleteConfirmId !== round.id) {
+                              <button
+                                type="button"
+                                class="danger-action small"
+                                (click)="askDeleteRound(round)">
+                                {{ 'communities.deleteRound' | t }}
+                              </button>
+                            } @else {
+                              <div class="row-actions">
+                                <button
+                                  type="button"
+                                  class="danger-action small"
+                                  [disabled]="roundSaving"
+                                  (click)="deleteRound(round)">
+                                  {{ 'communities.confirmDeleteRound' | t }}
+                                </button>
+                                <button
+                                  type="button"
+                                  class="secondary-action small"
+                                  [disabled]="roundSaving"
+                                  (click)="cancelDeleteRound()">
+                                  {{ 'common.cancel' | t }}
+                                </button>
+                              </div>
+                            }
+                          }
+                        </div>
+
+                        <div class="round-results">
+                          @for (entry of round.entries; track entry.profileId) {
+                            <div class="round-result-row">
+                              <div>
+                                <strong>{{ entry.fullName || entry.username }}</strong>
+                                <span>@{{ entry.username }}</span>
+                              </div>
+                              <span class="result-chip" [class.win]="entry.result === 'WIN'" [class.loss]="entry.result === 'LOSS'">
+                                {{ resultLabel(entry.result) }}
+                              </span>
+                              <span>{{ entry.goals }} G</span>
+                              <span>{{ entry.assists }} A</span>
+                              @if (entry.mvp) { <span class="mini-badge">MVP</span> }
+                              @if (entry.cleanSheet) { <span class="mini-badge">CS</span> }
+                            </div>
+                          }
+                        </div>
+                      </article>
+                    }
+                  </section>
+                }
+              </section>
+            }
+
+            @if (!competitionLoading && activeTab === 'ranking') {
+              <section class="community-tab-panel">
+                @if (!competition?.settings?.rankingsEnabled) {
+                  <div class="module-empty">
+                    <span>🏆</span>
+                    <h3>{{ 'communities.competitionDisabledTitle' | t }}</h3>
+                    <p>{{ 'communities.competitionDisabledText' | t }}</p>
+                  </div>
+                } @else {
+                  <div class="section-heading">
+                    <div>
+                      <span class="section-kicker">{{ 'communities.rankingKicker' | t }}</span>
+                      <h3>{{ 'communities.rankingTitle' | t }}</h3>
+                    </div>
+                    <span class="scoring-caption">
+                      {{ competition?.settings?.winPoints }}/{{ competition?.settings?.drawPoints }}/{{ competition?.settings?.lossPoints }}
+                    </span>
+                  </div>
+
+                  <div class="ranking-table-wrap">
+                    <table class="ranking-table">
+                      <thead>
+                        <tr>
+                          <th>#</th>
+                          <th>{{ 'communities.player' | t }}</th>
+                          <th>J</th>
+                          <th>V</th>
+                          <th>E</th>
+                          <th>D</th>
+                          <th>{{ 'communities.pointsShort' | t }}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (row of competition?.standings || []; track row.profileId) {
+                          <tr [class.podium]="row.position <= 3">
+                            <td><strong>{{ row.position }}</strong></td>
+                            <td>
+                              <div class="ranking-player">
+                                <strong>{{ row.fullName || row.username }}</strong>
+                                <span>@{{ row.username }}</span>
+                              </div>
+                            </td>
+                            <td>{{ row.games }}</td>
+                            <td>{{ row.wins }}</td>
+                            <td>{{ row.draws }}</td>
+                            <td>{{ row.losses }}</td>
+                            <td class="points-cell">{{ row.points }}</td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+
+                  @if (!(competition?.standings?.length)) {
+                    <div class="module-empty compact">
+                      <h3>{{ 'communities.noRanking' | t }}</h3>
+                      <p>{{ 'communities.noRankingText' | t }}</p>
+                    </div>
+                  }
+                }
+              </section>
+            }
+
+            @if (!competitionLoading && activeTab === 'stats') {
+              <section class="community-tab-panel">
+                @if (!competition?.settings?.rankingsEnabled) {
+                  <div class="module-empty">
+                    <span>📊</span>
+                    <h3>{{ 'communities.competitionDisabledTitle' | t }}</h3>
+                    <p>{{ 'communities.competitionDisabledText' | t }}</p>
+                  </div>
+                } @else {
+                  <div class="stats-grid">
+                    <article class="stat-card">
+                      <span>{{ 'communities.stat.leader' | t }}</span>
+                      <strong>{{ leader()?.fullName || leader()?.username || '—' }}</strong>
+                      <small>{{ leader()?.points || 0 }} {{ 'communities.pointsShort' | t }}</small>
+                    </article>
+                    <article class="stat-card">
+                      <span>{{ 'communities.stat.goals' | t }}</span>
+                      <strong>{{ topGoals()?.fullName || topGoals()?.username || '—' }}</strong>
+                      <small>{{ topGoals()?.goals || 0 }}</small>
+                    </article>
+                    <article class="stat-card">
+                      <span>{{ 'communities.stat.assists' | t }}</span>
+                      <strong>{{ topAssists()?.fullName || topAssists()?.username || '—' }}</strong>
+                      <small>{{ topAssists()?.assists || 0 }}</small>
+                    </article>
+                    <article class="stat-card">
+                      <span>MVP</span>
+                      <strong>{{ topMvps()?.fullName || topMvps()?.username || '—' }}</strong>
+                      <small>{{ topMvps()?.mvps || 0 }}</small>
+                    </article>
+                    <article class="stat-card">
+                      <span>{{ 'communities.stat.cleanSheets' | t }}</span>
+                      <strong>{{ topCleanSheets()?.fullName || topCleanSheets()?.username || '—' }}</strong>
+                      <small>{{ topCleanSheets()?.cleanSheets || 0 }}</small>
+                    </article>
+                  </div>
+
+                  <div class="stats-table-wrap">
+                    <table class="stats-table">
+                      <thead>
+                        <tr>
+                          <th>{{ 'communities.player' | t }}</th>
+                          <th>J</th>
+                          <th>G</th>
+                          <th>A</th>
+                          <th>MVP</th>
+                          <th>CS</th>
+                          <th>{{ 'communities.winRate' | t }}</th>
+                          <th>{{ 'communities.streak' | t }}</th>
+                          <th>{{ 'communities.bestWinStreak' | t }}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (row of competition?.standings || []; track row.profileId) {
+                          <tr>
+                            <td>
+                              <div class="ranking-player">
+                                <strong>{{ row.fullName || row.username }}</strong>
+                                <span>@{{ row.username }}</span>
+                              </div>
+                            </td>
+                            <td>{{ row.games }}</td>
+                            <td>{{ row.goals }}</td>
+                            <td>{{ row.assists }}</td>
+                            <td>{{ row.mvps }}</td>
+                            <td>{{ row.cleanSheets }}</td>
+                            <td>{{ row.winRate }}%</td>
+                            <td>{{ row.currentStreak }}</td>
+                            <td>{{ row.bestWinStreak }}</td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                }
+              </section>
+            }
+
+            @if (!competitionLoading && activeTab === 'members') {
+              <section class="community-tab-panel">
+                @if (canManage()) {
+                  <section class="management-block first-block">
+                    <h3>{{ 'communities.invitePlayer' | t }}</h3>
+                    <div class="inline-form">
+                      <input [(ngModel)]="inviteUsername" [placeholder]="'communities.usernamePlaceholder' | t">
+                      <button type="button" class="primary-action small" (click)="invite()">
+                        {{ 'communities.sendInvite' | t }}
+                      </button>
+                    </div>
+                  </section>
+                }
+
+                <section class="members-block">
+                  <div class="section-heading">
+                    <h3>{{ 'communities.members' | t }}</h3>
+                    <span class="count-pill">{{ selected.memberCount }}</span>
+                  </div>
+
+                  @for (member of selected.members; track member.profileId) {
+                    <div class="member-row">
+                      <div>
+                        <strong>{{ member.fullName || member.username }}</strong>
+                        <span>@{{ member.username }} · {{ member.role }}</span>
+                      </div>
+
+                      @if (isOwner() && member.role !== 'OWNER') {
+                        <div class="row-actions">
+                          @if (member.role === 'MEMBER') {
+                            <button type="button" class="secondary-action small" (click)="setRole(member.username, 'ADMIN')">
+                              {{ 'communities.makeAdmin' | t }}
+                            </button>
+                          } @else {
+                            <button type="button" class="secondary-action small" (click)="setRole(member.username, 'MEMBER')">
+                              {{ 'communities.removeAdmin' | t }}
+                            </button>
+                          }
+                          <button type="button" class="danger-action small" (click)="removeMember(member.username)">
+                            {{ 'communities.removeMember' | t }}
+                          </button>
+                        </div>
+                      } @else if (selected.myRole === 'ADMIN' && member.role === 'MEMBER') {
+                        <button type="button" class="danger-action small" (click)="removeMember(member.username)">
+                          {{ 'communities.removeMember' | t }}
+                        </button>
+                      }
+                    </div>
+                  }
+                </section>
+
+                @if (isOwner()) {
+                  <section class="management-block">
+                    <h3>{{ 'communities.transferOwnership' | t }}</h3>
+                    <p>{{ 'communities.transferOwnershipHint' | t }}</p>
+                    <div class="inline-form">
+                      <input [(ngModel)]="ownershipUsername" [placeholder]="'communities.newOwnerPlaceholder' | t">
+                      <button type="button" class="secondary-action small" (click)="transferOwnership()">
+                        {{ 'communities.transfer' | t }}
+                      </button>
+                    </div>
+                  </section>
+                } @else {
+                  <section class="leave-block">
+                    <button type="button" class="danger-action" (click)="leave()">
+                      {{ 'communities.leave' | t }}
+                    </button>
+                  </section>
+                }
+              </section>
+            }
           }
-        }
-      </main>
-    </div>
+        </main>
+      </div>
     }
   </div>
 </section>
