@@ -156,13 +156,62 @@
             <input
               type="checkbox"
               name="mfa"
-              [(ngModel)]="profile.mfa"
-              [disabled]="saving">
+              [checked]="profile.mfa"
+              [disabled]="saving || mfaSetupLoading || mfaConfirming || mfaDisabling"
+              (change)="onMfaToggle($event)">
             <span class="switch-track">
               <span class="switch-thumb"></span>
             </span>
           </label>
         </section>
+
+        @if (mfaSetup) {
+          <section class="mfa-setup-card">
+            <div>
+              <p class="mfa-step">1. Abre o Google Authenticator, Microsoft Authenticator ou outra app TOTP.</p>
+              <p class="mfa-step">2. Digitaliza este QR code.</p>
+            </div>
+
+            <div class="mfa-qr-wrap">
+              <img class="mfa-qr" [src]="mfaSetup.qrCodeDataUrl" alt="QR code para configurar MFA">
+            </div>
+
+            <div class="mfa-manual-key">
+              <span>Ou introduz manualmente esta chave:</span>
+              <code>{{ mfaSetup.secret }}</code>
+            </div>
+
+            <label class="mfa-code-field">
+              <span>3. Introduz o código de 6 dígitos mostrado na app</span>
+              <input
+                name="mfaSetupCode"
+                [(ngModel)]="mfaSetupCode"
+                inputmode="numeric"
+                autocomplete="one-time-code"
+                maxlength="6"
+                placeholder="000000"
+                [disabled]="mfaConfirming">
+            </label>
+
+            <div class="mfa-setup-actions">
+              <button
+                type="button"
+                class="photo-save-action"
+                [disabled]="mfaConfirming || mfaSetupCode.length !== 6"
+                (click)="confirmMfaSetup()">
+                {{ mfaConfirming ? 'A confirmar...' : 'Confirmar e ativar MFA' }}
+              </button>
+
+              <button
+                type="button"
+                class="photo-cancel-action"
+                [disabled]="mfaConfirming"
+                (click)="cancelMfaSetup()">
+                Cancelar
+              </button>
+            </div>
+          </section>
+        }
 
         <div class="form-actions">
           <a class="secondary-action" routerLink="/menu/dadosPerfil">{{ 'common.cancel' | t }}</a>
