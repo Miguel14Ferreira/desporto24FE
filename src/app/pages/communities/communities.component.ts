@@ -120,6 +120,24 @@ export class CommunitiesComponent implements OnInit {
     this.errorMessage = '';
   }
 
+  loadCommunitySessions(community: CommunityGroup = this.selected as CommunityGroup): void {
+    if (!community) {
+      this.communitySessions = [];
+      return;
+    }
+
+    this.sessionsLoading = true;
+    this.communityService.sessions(community.id)
+      .pipe(finalize(() => this.sessionsLoading = false))
+      .subscribe({
+        next: sessions => this.communitySessions = sessions,
+        error: () => {
+          this.communitySessions = [];
+          this.errorMessage = t('feedback.communities.sessionsLoadError');
+        }
+      });
+  }
+
   loadCompetition(community: CommunityGroup = this.selected as CommunityGroup): void {
     if (!community) {
       return;
