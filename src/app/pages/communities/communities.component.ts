@@ -9,6 +9,7 @@ import {
   CommunityInvite,
   CommunityMatchResult,
   CommunityRole,
+  CommunitySeason,
   CommunityRound,
   CommunityRoundEntryDraft,
   CommunityStanding
@@ -54,6 +55,12 @@ export class CommunitiesComponent implements OnInit {
   roundPlayedAt = '';
   roundEntries: CommunityRoundEntryDraft[] = [];
   roundDeleteConfirmId?: number;
+
+  selectedSeasonId: number | null = null;
+  seasonName = '';
+  seasonStartsAt = '';
+  seasonSaving = false;
+  closeSeasonConfirming = false;
 
   constructor(
     private communityService: CommunityGroupsService,
@@ -107,6 +114,8 @@ export class CommunitiesComponent implements OnInit {
         this.selected = full;
         this.activeTab = 'home';
         this.roundDeleteConfirmId = undefined;
+        this.selectedSeasonId = null;
+        this.closeSeasonConfirming = false;
         this.prepareRoundEntries(full);
         this.loadCompetition(full);
         this.loadCommunitySessions(full);
@@ -138,17 +147,21 @@ export class CommunitiesComponent implements OnInit {
       });
   }
 
-  loadCompetition(community: CommunityGroup = this.selected as CommunityGroup): void {
+  loadCompetition(
+    community: CommunityGroup = this.selected as CommunityGroup,
+    seasonId: number | null = this.selectedSeasonId
+  ): void {
     if (!community) {
       return;
     }
 
     this.competitionLoading = true;
-    this.communityService.competition(community.id)
+    this.communityService.competition(community.id, seasonId)
       .pipe(finalize(() => this.competitionLoading = false))
       .subscribe({
         next: competition => {
           this.competition = competition;
+          this.selectedSeasonId = competition.selectedSeasonId;
           this.rankingsEnabledDraft = competition.settings.rankingsEnabled;
           this.winPointsDraft = competition.settings.winPoints;
           this.drawPointsDraft = competition.settings.drawPoints;
@@ -157,6 +170,90 @@ export class CommunitiesComponent implements OnInit {
         error: () => {
           this.competition = undefined;
           this.errorMessage = t('feedback.communities.competitionLoadError');
+        }
+      });
+  }
+
+  selectSeason(value: string): void {
+    if (!this.selected) {
+      return;
+    }
+
+    const seasonId = value === '' ? null : Number(value);
+    this.selectedSeasonId = seasonId !== null && Number.isFinite(seasonId)
+      ? seasonId
+      : null;
+    this.loadCompetition(this.selected, this.selectedSeasonId);
+  }
+
+  createSeason(): void {
+    if (!this.selected || !this.canManage() || this.seasonSaving || !this.seasonName.trim()) {
+      return;
+    }
+
+    this.seasonSaving = true;
+    this.errorMessage = '';
+
+    let startsAt: string | null = null;
+    if (this.seasonStartsAt) {
+      const parsed = new Date(this.seasonStartsAt);
+      if (Number.isNaN(parsed.getTime())) {
+        this.errorMessage = t('feedback.communities.seasonDateInvalid');
+        this.seasonSaving = false;
+        return;
+      }
+      startsAt = parsed.toISOString();
+    }
+
+    this.communityService.createSeason(this.selected.id, {
+      name: this.seasonName.trim(),
+      startsAt
+    })
+      .pipe(finalize(() => this.seasonSaving = false))
+      .subscribe({
+        next: season => {
+          this.seasonName = '';
+          this.seasonStartsAt = '';
+          this.selectedSeasonId = season.id;
+          this.loadCompetition(this.selected as CommunityGroup, season.id);
+        },
+        error: error => {
+          this.errorMessage = error.error?.message
+            || t('feedback.communities.seasonCreateError');
+        }
+      });
+  }
+
+  requestCloseSeason(): void {
+    if (this.activeSeason()) {
+      this.closeSeasonConfirming = true;
+    }
+  }
+
+  cancelCloseSeason(): void {
+    this.closeSeasonConfirming = false;
+  }
+
+  closeActiveSeason(): void {
+    const active = this.activeSeason();
+    if (!this.selected || !active || !this.canManage() || this.seasonSaving) {
+      return;
+    }
+
+    this.seasonSaving = true;
+    this.errorMessage = '';
+
+    this.communityService.closeSeason(this.selected.id, active.id)
+      .pipe(finalize(() => this.seasonSaving = false))
+      .subscribe({
+        next: season => {
+          this.closeSeasonConfirming = false;
+          this.selectedSeasonId = season.id;
+          this.loadCompetition(this.selected as CommunityGroup, season.id);
+        },
+        error: error => {
+          this.errorMessage = error.error?.message
+            || t('feedback.communities.seasonCloseError');
         }
       });
   }
@@ -191,7 +288,7 @@ export class CommunitiesComponent implements OnInit {
           };
           this.selected = updated;
           this.replaceCommunity(updated);
-          this.loadCompetition(updated);
+          this.loadCompetition(updated, this.selectedSeasonId);
         },
         error: error => {
           this.errorMessage = error.error?.message
@@ -260,7 +357,7 @@ export class CommunitiesComponent implements OnInit {
           this.roundName = '';
           this.roundPlayedAt = '';
           this.prepareRoundEntries();
-          this.loadCompetition();
+          this.loadCompetition(this.selected as CommunityGroup, this.selectedSeasonId);
         },
         error: error => {
           this.errorMessage = error.error?.message
@@ -290,7 +387,7 @@ export class CommunitiesComponent implements OnInit {
       .subscribe({
         next: () => {
           this.roundDeleteConfirmId = undefined;
-          this.loadCompetition();
+          this.loadCompetition(this.selected as CommunityGroup, this.selectedSeasonId);
         },
         error: error => {
           this.errorMessage = error.error?.message
@@ -475,6 +572,17 @@ export class CommunitiesComponent implements OnInit {
       case 'LOSS':
         return t('communities.result.loss');
     }
+  }
+
+  activeSeason(): CommunitySeason | undefined {
+    const activeId = this.competition?.activeSeasonId;
+    return this.competition?.seasons.find(season => season.id === activeId);
+  }
+
+  trophies(): CommunitySeason[] {
+    return (this.competition?.seasons || []).filter(
+      season => !season.active && Boolean(season.championUsername)
+    );
   }
 
   leader(): CommunityStanding | undefined {
