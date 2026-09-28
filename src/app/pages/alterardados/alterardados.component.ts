@@ -6,6 +6,7 @@ import { finalize } from 'rxjs';
 import { environment } from 'src/environment/environment';
 import { MyProfile, UpdateMyProfileRequest } from '../model/my-profile';
 import { MfaSetupResponse, MyProfileService } from '../../services/my-profile.service';
+import { SPORTS_CATALOG } from '../../shared/sports-catalog';
 
 @Component({
   selector: 'app-alterardados',
@@ -31,6 +32,9 @@ export class AlterardadosComponent implements OnInit {
   errorMessage = '';
   successMessage = '';
   toastMessage = '';
+  sportQuery = '';
+  selectedSports: string[] = [];
+  readonly sportsCatalog = SPORTS_CATALOG;
   private toastTimer?: ReturnType<typeof setTimeout>;
 
   readonly maxBirthDate = this.dateYearsAgo(18);
@@ -52,6 +56,11 @@ export class AlterardadosComponent implements OnInit {
         next: profile => {
           this.profile = { ...profile };
           this.photoPreview = this.profileImage(profile) || '';
+          this.selectedSports = (profile.favoriteSports || '')
+            .split(',')
+            .map(value => value.trim())
+            .filter(value => this.sportsCatalog.includes(value));
+          this.syncFavoriteSports();
         },
         error: () => this.errorMessage = t('feedback.profile.dataLoadError')
       });
@@ -107,6 +116,70 @@ export class AlterardadosComponent implements OnInit {
           );
         }
       });
+  }
+
+  get sportSuggestions(): string[] {
+    const query = this.sportQuery.trim().toLocaleLowerCase('pt');
+    return this.sportsCatalog
+      .filter(sport => !this.selectedSports.includes(sport))
+      .filter(sport => !query || sport.toLocaleLowerCase('pt').includes(query))
+      .slice(0, 8);
+  }
+
+  addSport(sport: string): void {
+    if (!this.sportsCatalog.includes(sport) || this.selectedSports.includes(sport)) {
+      return;
+    }
+
+    this.selectedSports = [...this.selectedSports, sport];
+    this.sportQuery = '';
+    this.syncFavoriteSports();
+  }
+
+  removeSport(sport: string): void {
+    this.selectedSports = this.selectedSports.filter(item => item !== sport);
+    this.syncFavoriteSports();
+  }
+
+  onSportSearchKeydown(event: KeyboardEvent): void {
+    if (event.key !== 'Enter') {
+      return;
+    }
+
+    event.preventDefault();
+    const query = this.sportQuery.trim().toLocaleLowerCase('pt');
+    const exactMatch = this.sportsCatalog.find(
+      sport => sport.toLocaleLowerCase('pt') === query
+    );
+
+    if (exactMatch) {
+      this.addSport(exactMatch);
+    } else {
+      this.sportQuery = '';
+    }
+  }
+
+  clearInvalidSportQuery(): void {
+    const query = this.sportQuery.trim();
+    if (!query) {
+      return;
+    }
+
+    const exactMatch = this.sportsCatalog.find(
+      sport => sport.toLocaleLowerCase('pt') === query.toLocaleLowerCase('pt')
+    );
+
+    if (exactMatch) {
+      this.addSport(exactMatch);
+    } else {
+      this.sportQuery = '';
+    }
+  }
+
+  private syncFavoriteSports(): void {
+    if (this.profile) {
+      this.profile.favoriteSports = this.selectedSports.join(', ');
+    }
   }
 
   onMfaToggle(event: Event): void {
