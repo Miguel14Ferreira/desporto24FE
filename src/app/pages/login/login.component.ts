@@ -88,12 +88,14 @@ export class LoginComponent implements OnInit, AfterViewInit {
       }
 
       host.innerHTML = '';
+      const width = Math.max(260, Math.min(420, Math.floor(host.getBoundingClientRect().width || 360)));
+
       window.google.accounts.id.renderButton(host, {
         theme: 'outline',
         size: 'large',
-        width: 340,
+        width,
         text: 'continue_with',
-        shape: 'rectangular'
+        shape: 'pill'
       });
       this.googleReady = true;
     };
