@@ -209,6 +209,7 @@ export class CommunitiesComponent implements OnInit {
     this.roundEntries = community.members.map(member => ({
       username: member.username,
       included: false,
+      team: '',
       result: 'WIN' as CommunityMatchResult,
       goals: 0,
       assists: 0,
@@ -226,6 +227,7 @@ export class CommunitiesComponent implements OnInit {
       .filter(entry => entry.included)
       .map(entry => ({
         username: entry.username,
+        team: entry.team.trim() || null,
         result: entry.result,
         goals: Math.max(0, Number(entry.goals) || 0),
         assists: Math.max(0, Number(entry.assists) || 0),
