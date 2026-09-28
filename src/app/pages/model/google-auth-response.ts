@@ -15,13 +15,10 @@ export interface GoogleAuthResponse {
 export interface GoogleRegistrationRequest {
   credential: string;
   username: string;
+  nickname: string | null;
   dateOfBirth: string;
-  address: string;
   country: string;
-  location: string;
-  postalCode: string;
   indicativePhone: string;
   phone: string;
-  gender: string;
-  favoriteSports: string;
+  gender: string | null;
 }
