@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { appTranslate as t } from '../../i18n/i18n.service';
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, OnInit } from '@angular/core';
 import { finalize } from 'rxjs';
 
 import { environment } from 'src/environment/environment';
@@ -35,6 +35,7 @@ export class AlterardadosComponent implements OnInit {
   toastMessage = '';
   sportQuery = '';
   selectedSports: string[] = [];
+  fieldErrors: Partial<Record<'email' | 'dateOfBirth' | 'country' | 'phone' | 'bio', string>> = {};
   readonly sportsCatalog = SPORTS_CATALOG;
   readonly countryOptions = COUNTRY_CALLING_CODES;
   private toastTimer?: ReturnType<typeof setTimeout>;
@@ -42,7 +43,10 @@ export class AlterardadosComponent implements OnInit {
   readonly maxBirthDate = this.dateYearsAgo(18);
   readonly minBirthDate = this.dateYearsAgo(120);
 
-  constructor(private myProfileService: MyProfileService) {}
+  constructor(
+    private myProfileService: MyProfileService,
+    private host: ElementRef<HTMLElement>
+  ) {}
 
   ngOnInit(): void {
     this.load();
@@ -79,43 +83,15 @@ export class AlterardadosComponent implements OnInit {
       return;
     }
 
-    if (
-      !this.profile.email?.trim()
-      || !this.profile.dateOfBirth?.trim()
-      || !this.profile.country?.trim()
-    ) {
-      this.errorMessage = t('feedback.register.required');
-      return;
-    }
+    this.fieldErrors = this.validateProfile();
 
-    if (!this.profile.email.includes('@')) {
-      this.errorMessage = t('feedback.contact.invalidEmail');
-      return;
-    }
-
-    if (!this.isAdultBirthDate(this.profile.dateOfBirth)) {
-      this.errorMessage = t('feedback.register.minimumAge');
-      return;
-    }
-
-    if (this.profile.bio && this.profile.bio.length > 280) {
-      this.errorMessage = t('feedback.profile.bioLong');
+    if (Object.keys(this.fieldErrors).length > 0) {
+      this.errorMessage = t('feedback.form.attention');
+      this.focusFirstInvalidField();
       return;
     }
 
     const normalizedPhone = (this.profile.phone || '').replace(/\D/g, '');
-    if (
-      this.profile.phone?.trim()
-      && (normalizedPhone.length < 4 || normalizedPhone.length > 15)
-    ) {
-      this.errorMessage = t('feedback.register.invalidPhone');
-      return;
-    }
-
-    if (normalizedPhone && !this.profile.indicativePhone?.trim()) {
-      this.errorMessage = t('feedback.register.invalidPhone');
-      return;
-    }
 
     const request: UpdateMyProfileRequest = {
       // Legacy fields are preserved even though they are no longer part of the current account form.
@@ -157,6 +133,76 @@ export class AlterardadosComponent implements OnInit {
           );
         }
       });
+  }
+
+  clearFieldError(field: 'email' | 'dateOfBirth' | 'country' | 'phone' | 'bio'): void {
+    if (!this.fieldErrors[field]) {
+      return;
+    }
+
+    const updated = { ...this.fieldErrors };
+    delete updated[field];
+    this.fieldErrors = updated;
+  }
+
+  private validateProfile(): Partial<Record<'email' | 'dateOfBirth' | 'country' | 'phone' | 'bio', string>> {
+    const errors: Partial<Record<'email' | 'dateOfBirth' | 'country' | 'phone' | 'bio', string>> = {};
+
+    if (!this.profile) {
+      return errors;
+    }
+
+    if (!this.profile.email?.trim()) {
+      errors.email = t('feedback.contact.emailRequired');
+    } else if (!this.profile.email.includes('@')) {
+      errors.email = t('feedback.contact.invalidEmail');
+    }
+
+    if (!this.profile.dateOfBirth?.trim()) {
+      errors.dateOfBirth = t('feedback.profile.birthDateRequired');
+    } else if (!this.isAdultBirthDate(this.profile.dateOfBirth)) {
+      errors.dateOfBirth = t('feedback.register.minimumAge');
+    }
+
+    if (!this.profile.country?.trim()) {
+      errors.country = t('feedback.profile.countryRequired');
+    }
+
+    const normalizedPhone = (this.profile.phone || '').replace(/\D/g, '');
+    if (
+      this.profile.phone?.trim()
+      && (
+        normalizedPhone.length < 4
+        || normalizedPhone.length > 15
+        || !this.profile.indicativePhone?.trim()
+      )
+    ) {
+      errors.phone = t('feedback.register.invalidPhone');
+    }
+
+    if (this.profile.bio && this.profile.bio.length > 280) {
+      errors.bio = t('feedback.profile.bioLong');
+    }
+
+    return errors;
+  }
+
+  private focusFirstInvalidField(): void {
+    queueMicrotask(() => {
+      const firstInvalid = this.host.nativeElement.querySelector<HTMLElement>(
+        '[aria-invalid="true"]'
+      );
+
+      if (!firstInvalid) {
+        return;
+      }
+
+      firstInvalid.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
+      });
+      firstInvalid.focus({ preventScroll: true });
+    });
   }
 
   countryName(label: string): string {
