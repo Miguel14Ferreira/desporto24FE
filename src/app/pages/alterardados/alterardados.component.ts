@@ -99,7 +99,7 @@ export class AlterardadosComponent implements OnInit {
       nickname: this.clean(this.profile.nickname),
       dateOfBirth: this.profile.dateOfBirth,
       address: this.clean(this.profile.address),
-      country: this.profile.country.trim(),
+      country: (this.profile.country || '').trim(),
       location: this.clean(this.profile.location),
       postalCode: this.clean(this.profile.postalCode),
       indicativePhone: normalizedPhone ? this.clean(this.profile.indicativePhone) : null,
