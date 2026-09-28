@@ -52,16 +52,6 @@ export class GoogleOnboardingComponent implements OnInit {
     }
   }
 
-  onCountryChange(country: string): void {
-    this.country = country;
-    const match = this.countryOptions.find(
-      item => countryNameFromLabel(item.label) === country
-    );
-    if (match) {
-      this.indicativePhone = match.code;
-    }
-  }
-
   countryName(label: string): string {
     return countryNameFromLabel(label);
   }
