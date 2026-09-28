@@ -846,3 +846,152 @@ input,textarea,select {
     flex-direction: column;
   }
 }
+
+
+.season-dashboard {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255,255,255,.08);
+}
+
+.season-create-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, .75fr) auto;
+  align-items: end;
+  gap: .7rem;
+  margin-top: .8rem;
+}
+
+.active-season-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: .8rem;
+  padding: .85rem .95rem;
+  border: 1px solid rgba(74,222,128,.20);
+  border-radius: .85rem;
+  background: rgba(74,222,128,.055);
+}
+
+.active-season-card > div:first-child {
+  display: grid;
+  gap: .2rem;
+}
+
+.active-season-card span {
+  color: #94a3b8;
+  font-size: .8rem;
+}
+
+.season-close-confirmation {
+  display: grid;
+  justify-items: end;
+  gap: .45rem;
+  text-align: right;
+}
+
+.trophies-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .65rem;
+  margin-top: .85rem;
+}
+
+.trophy-card {
+  display: flex;
+  align-items: center;
+  gap: .7rem;
+  padding: .8rem .9rem;
+  border: 1px solid rgba(251,191,36,.22);
+  border-radius: .85rem;
+  background: rgba(251,191,36,.055);
+}
+
+.trophy-icon {
+  font-size: 1.45rem;
+}
+
+.trophy-card > div {
+  min-width: 0;
+  display: grid;
+  gap: .15rem;
+}
+
+.trophy-card strong,
+.trophy-card span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.trophy-card span {
+  color: #cbd5e1;
+  font-size: .77rem;
+}
+
+.season-filter {
+  display: grid;
+  gap: .25rem;
+  min-width: 190px;
+}
+
+.season-filter > span {
+  color: #94a3b8;
+  font-size: .7rem;
+  font-weight: 800;
+}
+
+.season-filter select {
+  height: 40px;
+  padding: 0 .65rem;
+}
+
+.section-heading-actions,
+.stats-filter-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: .6rem;
+}
+
+.stats-filter-row {
+  margin-bottom: .8rem;
+}
+
+.season-round-hint {
+  margin-top: .65rem;
+  padding: .6rem .7rem;
+  border-radius: .7rem;
+  background: rgba(125,211,252,.07);
+  color: #bae6fd;
+  font-size: .8rem;
+}
+
+.season-round-hint.muted {
+  background: rgba(148,163,184,.07);
+  color: #94a3b8;
+}
+
+@media (max-width: 900px) {
+  .season-create-form,
+  .trophies-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .active-season-card,
+  .section-heading-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .season-close-confirmation {
+    justify-items: stretch;
+    text-align: left;
+  }
+
+  .season-filter {
+    width: 100%;
+    min-width: 0;
+  }
+}
