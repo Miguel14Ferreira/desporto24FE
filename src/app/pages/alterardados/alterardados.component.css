@@ -440,3 +440,10 @@ textarea { resize: vertical; }
     grid-template-columns: 110px minmax(0, 1fr);
   }
 }
+
+
+.character-count {
+  justify-self: end;
+  color: #64748b;
+  font-size: .74rem;
+}
