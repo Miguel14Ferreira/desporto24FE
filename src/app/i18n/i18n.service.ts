@@ -1222,6 +1222,12 @@ const EN: Dictionary = {
   'sessionDetail.groupPlaceholder': 'Write a message to the group...',
   'sessionDetail.sendMessage': 'Send message',
   'sessionDetail.chatLocked': 'Chat becomes available once you join the session.',
+  'sessionDetail.pendingAttendance': 'Not marked',
+  'sessionDetail.remove': 'Remove',
+  'sessionDetail.calendarSessionFallback': 'Session',
+  'sessionDetail.calendarSportFallback': 'sport',
+  'sessionDetail.calendarSummary': 'Desporto24 — {{sport}}',
+  'sessionDetail.calendarDescription': '{{sport}} session on Desporto24.{{creator}}',
 
   'feedback.profile.loadError': 'We could not load your profile.',
   'feedback.profile.dataLoadError': 'We could not load your details.',
