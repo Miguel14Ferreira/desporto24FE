@@ -74,11 +74,12 @@ describe('NotificationsComponent', () => {
   beforeEach(async () => {
     service = jasmine.createSpyObj<NotificationApiService>(
       'NotificationApiService',
-      ['mine', 'markRead', 'delete', 'acceptFriendRequest', 'rejectFriendRequest', 'blockOwnAccount']
+      ['mine', 'markRead', 'delete', 'deleteAll', 'acceptFriendRequest', 'rejectFriendRequest', 'blockOwnAccount']
     );
     service.mine.and.returnValue(of([notificationFixture()]));
     service.markRead.and.returnValue(of(void 0));
     service.delete.and.returnValue(of(void 0));
+    service.deleteAll.and.returnValue(of(void 0));
     service.acceptFriendRequest.and.returnValue(of({}));
     service.rejectFriendRequest.and.returnValue(of(void 0));
     service.blockOwnAccount.and.returnValue(of(void 0));
@@ -130,6 +131,22 @@ describe('NotificationsComponent', () => {
 
     expect(service.delete).toHaveBeenCalledWith(4);
     expect(component.notifications.length).toBe(0);
+  });
+
+  it('should clear all notifications after confirmation', () => {
+    component.notifications = [notificationFixture(), friendRequestFixture()];
+    component.selected = component.notifications[0];
+
+    component.requestClearAll();
+    expect(component.clearAllConfirming).toBeTrue();
+
+    component.clearAllNotifications();
+
+    expect(service.deleteAll).toHaveBeenCalled();
+    expect(component.notifications).toEqual([]);
+    expect(component.selected).toBeUndefined();
+    expect(component.clearAllConfirming).toBeFalse();
+    expect(router.navigate).toHaveBeenCalledWith(['/menu/notifications']);
   });
 
   it('should navigate to the related session', () => {
