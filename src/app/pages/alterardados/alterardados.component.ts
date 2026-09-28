@@ -83,6 +83,7 @@ export class AlterardadosComponent implements OnInit {
 
     const request: UpdateMyProfileRequest = {
       fullName: this.clean(this.profile.fullName),
+      nickname: this.clean(this.profile.nickname),
       dateOfBirth: this.clean(this.profile.dateOfBirth),
       address: this.clean(this.profile.address),
       country: this.clean(this.profile.country),
