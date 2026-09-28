@@ -32,9 +32,10 @@ describe('AlterardadosComponent', () => {
   };
 
   beforeEach(async () => {
-    service = jasmine.createSpyObj<MyProfileService>('MyProfileService', ['get', 'update']);
+    service = jasmine.createSpyObj<MyProfileService>('MyProfileService', ['get', 'update', 'disableMfa']);
     service.get.and.returnValue(of({ ...profile }));
     service.update.and.returnValue(of({ ...profile, location: 'Sintra' }));
+    service.disableMfa.and.returnValue(of({ ...profile, mfa: false }));
 
     await TestBed.configureTestingModule({
       declarations: [AlterardadosComponent],
@@ -113,6 +114,28 @@ describe('AlterardadosComponent', () => {
         indicativePhone: '351'
       })
     );
+  });
+
+  it('should silently close an unfinished MFA setup when the toggle is turned off', () => {
+    if (!component.profile) {
+      fail('Profile should be loaded');
+      return;
+    }
+
+    component.profile.mfa = false;
+    component.mfaSetup = {
+      secret: 'secret',
+      qrCodeDataUrl: 'data:image/png;base64,test',
+      otpauthUri: 'otpauth://totp/desporto24'
+    };
+    component.mfaSetupCode = '123456';
+
+    component.onMfaToggle({ target: { checked: false } } as unknown as Event);
+
+    expect(service.disableMfa).not.toHaveBeenCalled();
+    expect(component.mfaSetup).toBeUndefined();
+    expect(component.mfaSetupCode).toBe('');
+    expect(component.toastMessage).toBe('');
   });
 
   it('should require an email before saving', () => {
