@@ -33,6 +33,12 @@ export class CommunityGroupsService {
     return this.http.post<CommunityGroup>(this.url, request);
   }
 
+  updatePhoto(id: number, photo: File): Observable<CommunityGroup> {
+    const formData = new FormData();
+    formData.append('photo', photo);
+    return this.http.put<CommunityGroup>(this.url + '/' + id + '/photo', formData);
+  }
+
   myInvites(): Observable<CommunityInvite[]> {
     return this.http.get<CommunityInvite[]>(this.url + '/invites/me');
   }
