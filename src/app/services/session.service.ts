@@ -20,6 +20,10 @@ export interface SessionSearchFilters {
   latitude?: number;
   longitude?: number;
   radiusKm?: number;
+  from?: string;
+  to?: string;
+  minPrice?: number;
+  maxPrice?: number;
 }
 
 export interface JoinSessionResponse {
@@ -64,6 +68,18 @@ export class SessionService {
     }
     if (filters.radiusKm !== undefined) {
       params = params.set('radiusKm', String(filters.radiusKm));
+    }
+    if (filters.from) {
+      params = params.set('from', filters.from);
+    }
+    if (filters.to) {
+      params = params.set('to', filters.to);
+    }
+    if (filters.minPrice !== undefined) {
+      params = params.set('minPrice', String(filters.minPrice));
+    }
+    if (filters.maxPrice !== undefined) {
+      params = params.set('maxPrice', String(filters.maxPrice));
     }
 
     return this.http.get<SessionSummary[]>(this.baseUrl, { params });
