@@ -7,6 +7,7 @@ export interface FeedItem {
   authorDisplayName: string;
   authorProfilePicUrl: string | null;
   content: string | null;
+  imageUrl: string | null;
   createdAt: string;
   sessionId: number | null;
   sport: string | null;
