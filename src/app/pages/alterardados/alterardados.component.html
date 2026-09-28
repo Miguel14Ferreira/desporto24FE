@@ -203,6 +203,41 @@
 
             <small>{{ 'profile.favoriteSportsHint' | t }}</small>
           </div>
+
+          <label>
+            <span>{{ 'profile.skillLevel' | t }}</span>
+            <select
+              name="skillLevel"
+              [(ngModel)]="profile.skillLevel"
+              [disabled]="saving">
+              <option [ngValue]="null">{{ 'profile.skillLevel.none' | t }}</option>
+              <option value="BEGINNER">{{ 'profile.level.BEGINNER' | t }}</option>
+              <option value="INTERMEDIATE">{{ 'profile.level.INTERMEDIATE' | t }}</option>
+              <option value="ADVANCED">{{ 'profile.level.ADVANCED' | t }}</option>
+            </select>
+          </label>
+
+          <label>
+            <span>{{ 'profile.availability' | t }}</span>
+            <input
+              name="availability"
+              [(ngModel)]="profile.availability"
+              maxlength="120"
+              [disabled]="saving"
+              [placeholder]="'profile.availabilityPlaceholder' | t">
+          </label>
+
+          <label class="full-width">
+            <span>{{ 'profile.bio' | t }}</span>
+            <textarea
+              name="bio"
+              [(ngModel)]="profile.bio"
+              maxlength="280"
+              rows="4"
+              [disabled]="saving"
+              [placeholder]="'profile.bioPlaceholder' | t"></textarea>
+            <small class="character-count">{{ (profile.bio || '').length }}/280</small>
+          </label>
         </div>
 
         <section id="mfa-security" class="mfa-setting">
