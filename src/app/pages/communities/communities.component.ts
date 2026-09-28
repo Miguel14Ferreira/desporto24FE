@@ -540,6 +540,12 @@ export class CommunitiesComponent implements OnInit {
       .join('') || '◎';
   }
 
+  seasonOptionLabel(season: CommunitySeason): string {
+    return season.active
+      ? season.name + ' · ' + t('communities.activeShort')
+      : season.name;
+  }
+
   formatSessionDate(value: string): string {
     const parsed = Date.parse(value);
     if (Number.isNaN(parsed)) {
