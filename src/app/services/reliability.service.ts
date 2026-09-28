@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 
 import { environment } from 'src/environment/environment';
 import { ReliabilitySummary } from '../pages/model/reliability-summary';
+import { ProfileActivity } from '../pages/model/my-profile';
 import { AttendanceHistoryItem } from '../pages/model/attendance-history';
 import { AttendanceDisputeItem, AttendanceDisputeStatus } from '../pages/model/attendance-dispute';
 
@@ -15,6 +16,12 @@ export class ReliabilityService {
   private readonly sessionsUrl = environment.apiUrl + '/api/sessions';
 
   constructor(private http: HttpClient) {}
+
+  activity(username: string): Observable<ProfileActivity> {
+    return this.http.get<ProfileActivity>(
+      this.profilesUrl + '/' + encodeURIComponent(username) + '/activity'
+    );
+  }
 
   summary(username: string): Observable<ReliabilitySummary> {
     return this.http.get<ReliabilitySummary>(
