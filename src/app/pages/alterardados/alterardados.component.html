@@ -135,15 +135,48 @@
             </select>
           </label>
 
-          <label class="full-width">
-            <span>{{ 'profile.favoriteSports' | t }}</span>
-            <textarea
-              name="favoriteSports"
-              [(ngModel)]="profile.favoriteSports"
-              rows="3"
+          <div class="full-width sport-selector">
+            <span class="field-label">{{ 'profile.favoriteSports' | t }}</span>
+
+            @if (selectedSports.length > 0) {
+              <div class="sport-chips">
+                @for (sport of selectedSports; track sport) {
+                  <button
+                    type="button"
+                    class="sport-chip"
+                    [disabled]="saving"
+                    (click)="removeSport(sport)">
+                    {{ sport }} ×
+                  </button>
+                }
+              </div>
+            }
+
+            <input
+              type="search"
+              name="sportQuery"
+              [(ngModel)]="sportQuery"
+              autocomplete="off"
               [disabled]="saving"
-              [placeholder]="'register.favoriteSportsPlaceholder' | t"></textarea>
-          </label>
+              (keydown)="onSportSearchKeydown($event)"
+              (blur)="clearInvalidSportQuery()"
+              placeholder="Pesquisa um desporto da lista...">
+
+            @if (sportSuggestions.length > 0) {
+              <div class="sport-suggestions">
+                @for (sport of sportSuggestions; track sport) {
+                  <button
+                    type="button"
+                    [disabled]="saving"
+                    (click)="addSport(sport)">
+                    {{ sport }}
+                  </button>
+                }
+              </div>
+            }
+
+            <small>Só podes adicionar desportos disponíveis na lista.</small>
+          </div>
         </div>
 
         <section class="mfa-setting">
