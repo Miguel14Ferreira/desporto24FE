@@ -84,13 +84,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
           return;
         }
 
-        const alreadyPresent = this.messages.some(existing => existing.id === message.id);
-        if (!alreadyPresent) {
-          const alreadyPresent = this.messages.some(existing => existing.id === message.id);
-          if (!alreadyPresent) {
-            this.messages = this.sortedMessages([...this.messages, message]);
-          }
-        }
+        this.appendMessageIfMissing(message);
       })
     );
 
@@ -347,7 +341,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
       .pipe(finalize(() => this.messageSending = false))
       .subscribe({
         next: message => {
-          this.messages = this.sortedMessages([...this.messages, message]);
+          this.appendMessageIfMissing(message);
           this.messageBody = '';
           this.showEmojiPicker = false;
         },
@@ -392,6 +386,14 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
       dateStyle: 'short',
       timeStyle: 'short'
     }).format(new Date(parsed));
+  }
+
+  private appendMessageIfMissing(message: SessionMessage): void {
+    if (this.messages.some(existing => existing.id === message.id)) {
+      return;
+    }
+
+    this.messages = this.sortedMessages([...this.messages, message]);
   }
 
   private sortedMessages(messages: SessionMessage[]): SessionMessage[] {
