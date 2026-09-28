@@ -1,0 +1,91 @@
+import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+
+import { environment } from 'src/environment/environment';
+import {
+  CommunityGroup,
+  CommunityInvite,
+  CommunityRole,
+  CommunityVisibility
+} from '../pages/model/community-group';
+
+@Injectable({ providedIn: 'root' })
+export class CommunityGroupsService {
+  private readonly url = environment.apiUrl + '/api/communities';
+
+  constructor(private http: HttpClient) {}
+
+  mine(): Observable<CommunityGroup[]> {
+    return this.http.get<CommunityGroup[]>(this.url + '/mine');
+  }
+
+  get(id: number): Observable<CommunityGroup> {
+    return this.http.get<CommunityGroup>(this.url + '/' + id);
+  }
+
+  create(request: {
+    name: string;
+    description: string | null;
+    sport: string | null;
+    visibility: CommunityVisibility;
+  }): Observable<CommunityGroup> {
+    return this.http.post<CommunityGroup>(this.url, request);
+  }
+
+  myInvites(): Observable<CommunityInvite[]> {
+    return this.http.get<CommunityInvite[]>(this.url + '/invites/me');
+  }
+
+  invite(id: number, username: string): Observable<CommunityInvite> {
+    return this.http.post<CommunityInvite>(
+      this.url + '/' + id + '/invites',
+      { username }
+    );
+  }
+
+  acceptInvite(inviteId: number): Observable<CommunityGroup> {
+    return this.http.post<CommunityGroup>(
+      this.url + '/invites/' + inviteId + '/accept',
+      null
+    );
+  }
+
+  rejectInvite(inviteId: number): Observable<void> {
+    return this.http.post<void>(
+      this.url + '/invites/' + inviteId + '/reject',
+      null
+    );
+  }
+
+  updateRole(
+    communityId: number,
+    username: string,
+    role: Exclude<CommunityRole, 'OWNER'>
+  ): Observable<CommunityGroup> {
+    return this.http.put<CommunityGroup>(
+      this.url + '/' + communityId + '/members/' + encodeURIComponent(username) + '/role',
+      { role }
+    );
+  }
+
+  removeMember(communityId: number, username: string): Observable<void> {
+    return this.http.delete<void>(
+      this.url + '/' + communityId + '/members/' + encodeURIComponent(username)
+    );
+  }
+
+  leave(communityId: number): Observable<void> {
+    return this.http.post<void>(
+      this.url + '/' + communityId + '/leave',
+      null
+    );
+  }
+
+  transferOwnership(communityId: number, username: string): Observable<CommunityGroup> {
+    return this.http.put<CommunityGroup>(
+      this.url + '/' + communityId + '/owner',
+      { username }
+    );
+  }
+}
