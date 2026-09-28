@@ -5,7 +5,7 @@ import { finalize } from 'rxjs';
 
 import { environment } from 'src/environment/environment';
 import { MyProfile, UpdateMyProfileRequest } from '../model/my-profile';
-import { MyProfileService } from '../../services/my-profile.service';
+import { MfaSetupResponse, MyProfileService } from '../../services/my-profile.service';
 
 @Component({
   selector: 'app-alterardados',
@@ -23,6 +23,11 @@ export class AlterardadosComponent implements OnInit {
   saving = false;
   photoSaving = false;
   photoEditing = false;
+  mfaSetup?: MfaSetupResponse;
+  mfaSetupCode = '';
+  mfaSetupLoading = false;
+  mfaConfirming = false;
+  mfaDisabling = false;
   errorMessage = '';
   successMessage = '';
   toastMessage = '';
@@ -100,6 +105,90 @@ export class AlterardadosComponent implements OnInit {
             error,
             t('feedback.profile.updateError')
           );
+        }
+      });
+  }
+
+  onMfaToggle(event: Event): void {
+    const checked = (event.target as HTMLInputElement).checked;
+
+    if (checked) {
+      this.startMfaSetup();
+      return;
+    }
+
+    this.disableMfa();
+  }
+
+  startMfaSetup(): void {
+    if (this.mfaSetupLoading || this.profile?.mfa) {
+      return;
+    }
+
+    this.mfaSetupLoading = true;
+    this.errorMessage = '';
+
+    this.myProfileService.setupMfa()
+      .pipe(finalize(() => this.mfaSetupLoading = false))
+      .subscribe({
+        next: setup => {
+          this.mfaSetup = setup;
+          this.mfaSetupCode = '';
+        },
+        error: error => {
+          this.errorMessage = this.errorFrom(error, 'Não foi possível iniciar a configuração MFA.');
+        }
+      });
+  }
+
+  confirmMfaSetup(): void {
+    const code = this.mfaSetupCode.trim();
+    if (!/^\d{6}$/.test(code) || this.mfaConfirming) {
+      this.errorMessage = 'Introduz o código de 6 dígitos da tua aplicação Authenticator.';
+      return;
+    }
+
+    this.mfaConfirming = true;
+    this.errorMessage = '';
+
+    this.myProfileService.confirmMfa(code)
+      .pipe(finalize(() => this.mfaConfirming = false))
+      .subscribe({
+        next: updated => {
+          this.profile = { ...updated };
+          this.mfaSetup = undefined;
+          this.mfaSetupCode = '';
+          this.showToast('Autenticação multifator ativada com sucesso.');
+        },
+        error: error => {
+          this.errorMessage = this.errorFrom(error, 'Código MFA inválido.');
+        }
+      });
+  }
+
+  cancelMfaSetup(): void {
+    this.mfaSetup = undefined;
+    this.mfaSetupCode = '';
+  }
+
+  disableMfa(): void {
+    if (this.mfaDisabling || !this.profile?.mfa) {
+      return;
+    }
+
+    this.mfaDisabling = true;
+    this.errorMessage = '';
+
+    this.myProfileService.disableMfa()
+      .pipe(finalize(() => this.mfaDisabling = false))
+      .subscribe({
+        next: updated => {
+          this.profile = { ...updated };
+          this.mfaSetup = undefined;
+          this.showToast('Autenticação multifator desativada.');
+        },
+        error: error => {
+          this.errorMessage = this.errorFrom(error, 'Não foi possível desativar o MFA.');
         }
       });
   }
