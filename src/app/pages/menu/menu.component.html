@@ -5,7 +5,7 @@
         <p class="eyebrow">Desporto24</p>
         <h1>
           @if (profile) {
-            {{ 'menu.hello' | t:{ name: (profile.fullName || profile.username) } }}
+            {{ 'menu.hello' | t:{ name: (profile.nickname || profile.fullName || profile.username) } }}
           } @else {
             {{ 'menu.fallbackTitle' | t }}
           }
