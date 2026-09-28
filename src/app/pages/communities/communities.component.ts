@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { finalize } from 'rxjs';
+import { appTranslate as t } from '../../i18n/i18n.service';
 
 import {
   CommunityGroup,
@@ -60,7 +61,7 @@ export class CommunitiesComponent implements OnInit {
             this.selected = communities.find(item => item.id === this.selected?.id);
           }
         },
-        error: () => this.errorMessage = 'Não foi possível carregar as comunidades.'
+        error: () => this.errorMessage = t('feedback.communities.loadError')
       });
 
     this.communityService.myInvites().subscribe({
@@ -72,7 +73,7 @@ export class CommunitiesComponent implements OnInit {
   open(community: CommunityGroup): void {
     this.communityService.get(community.id).subscribe({
       next: full => this.selected = full,
-      error: () => this.errorMessage = 'Não foi possível abrir a comunidade.'
+      error: () => this.errorMessage = t('feedback.communities.openError')
     });
   }
 
@@ -89,7 +90,7 @@ export class CommunitiesComponent implements OnInit {
       .subscribe({
         next: () => this.inviteUsername = '',
         error: error => {
-          this.errorMessage = error.error?.message || 'Não foi possível enviar o convite.';
+          this.errorMessage = error.error?.message || t('feedback.communities.inviteError');
         }
       });
   }
@@ -101,14 +102,14 @@ export class CommunitiesComponent implements OnInit {
         this.communities = [community, ...this.communities.filter(item => item.id !== community.id)];
         this.selected = community;
       },
-      error: () => this.errorMessage = 'Não foi possível aceitar o convite.'
+      error: () => this.errorMessage = t('feedback.communities.acceptError')
     });
   }
 
   rejectInvite(invite: CommunityInvite): void {
     this.communityService.rejectInvite(invite.id).subscribe({
       next: () => this.invites = this.invites.filter(item => item.id !== invite.id),
-      error: () => this.errorMessage = 'Não foi possível rejeitar o convite.'
+      error: () => this.errorMessage = t('feedback.communities.rejectError')
     });
   }
 
@@ -122,7 +123,7 @@ export class CommunitiesComponent implements OnInit {
         this.selected = community;
         this.replaceCommunity(community);
       },
-      error: () => this.errorMessage = 'Não foi possível alterar o papel deste membro.'
+      error: () => this.errorMessage = t('feedback.communities.roleError')
     });
   }
 
@@ -133,7 +134,7 @@ export class CommunitiesComponent implements OnInit {
 
     this.communityService.removeMember(this.selected.id, username).subscribe({
       next: () => this.refreshSelected(),
-      error: () => this.errorMessage = 'Não foi possível remover o membro.'
+      error: () => this.errorMessage = t('feedback.communities.removeError')
     });
   }
 
@@ -148,7 +149,7 @@ export class CommunitiesComponent implements OnInit {
         this.communities = this.communities.filter(item => item.id !== id);
         this.selected = undefined;
       },
-      error: error => this.errorMessage = error.error?.message || 'Não foi possível sair da comunidade.'
+      error: error => this.errorMessage = error.error?.message || t('feedback.communities.leaveError')
     });
   }
 
@@ -166,7 +167,7 @@ export class CommunitiesComponent implements OnInit {
         this.replaceCommunity(community);
         this.ownershipUsername = '';
       },
-      error: error => this.errorMessage = error.error?.message || 'Não foi possível transferir a ownership.'
+      error: error => this.errorMessage = error.error?.message || t('feedback.communities.transferError')
     });
   }
 
