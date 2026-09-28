@@ -2,28 +2,28 @@
   <div class="onboarding-shell">
     <header class="page-header">
       <div>
-        <p class="eyebrow">DESPORTO24 · Passo 2 de 2</p>
-        <h1>Completa o teu perfil</h1>
+        <p class="eyebrow">{{ 'googleOnboarding.eyebrow' | t }}</p>
+        <h1>{{ 'googleOnboarding.title' | t }}</h1>
         <p class="subtitle">
-          A tua conta Google já foi validada. Só precisamos de alguns dados para preparar o teu perfil na comunidade.
+          {{ 'googleOnboarding.subtitle' | t }}
         </p>
       </div>
 
       <button type="button" class="secondary-action" (click)="cancel()">
-        Cancelar
+        {{ 'common.cancel' | t }}
       </button>
     </header>
 
     <section class="google-account-card">
       @if (pictureUrl) {
-        <img [src]="pictureUrl" alt="Fotografia da conta Google">
+        <img [src]="pictureUrl" [alt]="'register.photo' | t">
       } @else {
         <div class="avatar-fallback">{{ (fullName || email).charAt(0).toUpperCase() }}</div>
       }
 
       <div>
-        <span class="verified-label">Conta Google verificada</span>
-        <strong>{{ fullName || 'Utilizador Google' }}</strong>
+        <span class="verified-label">{{ 'googleOnboarding.verified' | t }}</span>
+        <strong>{{ fullName || ('googleOnboarding.googleUser' | t) }}</strong>
         <span>{{ email }}</span>
       </div>
     </section>
@@ -35,7 +35,7 @@
     <form class="onboarding-card" (ngSubmit)="submit()">
       <div class="form-grid">
         <label>
-          <span>Nome de utilizador *</span>
+          <span>{{ 'login.username' | t }} *</span>
           <input
             name="username"
             [(ngModel)]="username"
@@ -45,17 +45,17 @@
         </label>
 
         <label>
-          <span>Alcunha</span>
+          <span>{{ 'register.nickname' | t }}</span>
           <input
             name="nickname"
             [(ngModel)]="nickname"
             maxlength="80"
             [disabled]="loading"
-            placeholder="Como queres ser conhecido?">
+            [placeholder]="'register.nicknamePlaceholder' | t">
         </label>
 
         <label>
-          <span>Data de nascimento *</span>
+          <span>{{ 'register.birthDate' | t }} *</span>
           <input
             type="date"
             name="dateOfBirth"
@@ -66,7 +66,7 @@
         </label>
 
         <label>
-          <span>País *</span>
+          <span>{{ 'common.country' | t }} *</span>
           <select
             name="country"
             [(ngModel)]="country"
@@ -77,52 +77,51 @@
           </select>
         </label>
 
-        <label>
-          <span>Indicativo *</span>
-          <select
-            name="indicativePhone"
-            [(ngModel)]="indicativePhone"
-            [disabled]="loading">
-            @for (item of countryOptions; track item.label) {
-              <option [value]="item.code">{{ item.label }}</option>
-            }
-          </select>
-        </label>
+        <div class="full-width phone-field">
+          <span class="field-label">{{ 'register.phoneOptional' | t }}</span>
+          <div class="phone-row">
+            <select
+              class="calling-code"
+              name="indicativePhone"
+              [(ngModel)]="indicativePhone"
+              [disabled]="loading || !phone.trim()">
+              @for (item of countryOptions; track item.label) {
+                <option [value]="item.code">+{{ item.code }}</option>
+              }
+            </select>
+            <input
+              type="tel"
+              name="phone"
+              [(ngModel)]="phone"
+              autocomplete="tel-national"
+              [disabled]="loading"
+              placeholder="912 345 678">
+          </div>
+        </div>
 
         <label>
-          <span>Telemóvel *</span>
-          <input
-            type="tel"
-            name="phone"
-            [(ngModel)]="phone"
-            autocomplete="tel-national"
-            [disabled]="loading"
-            placeholder="912 345 678">
-        </label>
-
-        <label>
-          <span>Género</span>
+          <span>{{ 'common.gender' | t }}</span>
           <select name="gender" [(ngModel)]="gender" [disabled]="loading">
-            <option value="">Seleciona</option>
-            <option value="masculino">Masculino</option>
-            <option value="feminino">Feminino</option>
-            <option value="outro">Outro</option>
+            <option value="">{{ 'register.select' | t }}</option>
+            <option value="masculino">{{ 'register.male' | t }}</option>
+            <option value="feminino">{{ 'register.female' | t }}</option>
+            <option value="outro">{{ 'register.other' | t }}</option>
           </select>
         </label>
 
       </div>
 
       <div class="privacy-note">
-        <strong>O teu email e identidade já foram verificados pela Google.</strong>
-        <span>Não precisas de criar outra palavra-passe para concluir este registo.</span>
+        <strong>{{ 'googleOnboarding.identityVerified' | t }}</strong>
+        <span>{{ 'googleOnboarding.noPassword' | t }}</span>
       </div>
 
       <div class="form-actions">
         <button type="button" class="secondary-action" (click)="cancel()" [disabled]="loading">
-          Cancelar
+          {{ 'common.cancel' | t }}
         </button>
         <button type="submit" class="primary-action" [disabled]="loading">
-          {{ loading ? 'A criar conta...' : 'Concluir registo' }}
+          {{ loading ? ('googleOnboarding.creating' | t) : ('googleOnboarding.finish' | t) }}
         </button>
       </div>
     </form>
