@@ -45,6 +45,16 @@
         </label>
 
         <label>
+          <span>Alcunha</span>
+          <input
+            name="nickname"
+            [(ngModel)]="nickname"
+            maxlength="80"
+            [disabled]="loading"
+            placeholder="Como queres ser conhecido?">
+        </label>
+
+        <label>
           <span>Data de nascimento *</span>
           <input
             type="date"
@@ -55,50 +65,25 @@
             [disabled]="loading">
         </label>
 
-        <label class="full-width">
-          <span>Morada *</span>
-          <input
-            name="address"
-            [(ngModel)]="address"
-            autocomplete="street-address"
-            [disabled]="loading">
-        </label>
-
         <label>
           <span>País *</span>
-          <input
+          <select
             name="country"
             [(ngModel)]="country"
-            autocomplete="country-name"
-            [disabled]="loading">
+            [disabled]="loading"
+            (ngModelChange)="onCountryChange($event)">
+            @for (item of countryOptions; track item.label) {
+              <option [value]="countryName(item.label)">{{ item.label }}</option>
+            }
+          </select>
         </label>
 
         <label>
-          <span>Localidade *</span>
-          <input
-            name="location"
-            [(ngModel)]="location"
-            autocomplete="address-level2"
-            [disabled]="loading">
-        </label>
-
-        <label>
-          <span>Código postal *</span>
-          <input
-            name="postalCode"
-            [(ngModel)]="postalCode"
-            autocomplete="postal-code"
-            [disabled]="loading">
-        </label>
-
-        <label>
-          <span>Indicativo *</span>
+          <span>Indicativo</span>
           <input
             name="indicativePhone"
-            [(ngModel)]="indicativePhone"
-            inputmode="numeric"
-            [disabled]="loading"
-            placeholder="351">
+            [ngModel]=" '+' + indicativePhone"
+            disabled>
         </label>
 
         <label>
@@ -113,7 +98,7 @@
         </label>
 
         <label>
-          <span>Género *</span>
+          <span>Género</span>
           <select name="gender" [(ngModel)]="gender" [disabled]="loading">
             <option value="">Seleciona</option>
             <option value="masculino">Masculino</option>
@@ -122,48 +107,6 @@
           </select>
         </label>
 
-        <div class="full-width sport-selector">
-          <span class="field-label">Desportos favoritos *</span>
-
-          @if (selectedSports.length > 0) {
-            <div class="sport-chips">
-              @for (sport of selectedSports; track sport) {
-                <button
-                  type="button"
-                  class="sport-chip"
-                  [disabled]="loading"
-                  (click)="removeSport(sport)">
-                  {{ sport }} ×
-                </button>
-              }
-            </div>
-          }
-
-          <input
-            type="search"
-            name="sportQuery"
-            [(ngModel)]="sportQuery"
-            autocomplete="off"
-            [disabled]="loading"
-            (keydown)="onSportSearchKeydown($event)"
-            (blur)="clearInvalidSportQuery()"
-            placeholder="Pesquisa um desporto da lista...">
-
-          @if (sportSuggestions.length > 0) {
-            <div class="sport-suggestions">
-              @for (sport of sportSuggestions; track sport) {
-                <button
-                  type="button"
-                  [disabled]="loading"
-                  (click)="addSport(sport)">
-                  {{ sport }}
-                </button>
-              }
-            </div>
-          }
-
-          <small>Só podes adicionar desportos disponíveis na lista.</small>
-        </div>
       </div>
 
       <div class="privacy-note">
