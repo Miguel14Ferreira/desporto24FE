@@ -69,10 +69,7 @@
 
             <div class="profile-copy">
               <strong>{{ profile.username }}</strong>
-              <span>{{ profile.fullName || ('friends.player' | t) }}</span>
-              @if (profile.location) {
-                <small>{{ profile.location }}</small>
-              }
+              <span>{{ profile.nickname || profile.fullName || ('friends.player' | t) }}</span>
             </div>
           </button>
         }
@@ -96,22 +93,14 @@
             <div>
               <p class="eyebrow">{{ 'community.profile' | t }}</p>
               <h2>{{ selectedProfile.username }}</h2>
-              <p>{{ selectedProfile.fullName || 'Jogador Desporto24' }}</p>
+              <p>{{ selectedProfile.nickname || selectedProfile.fullName || 'Jogador Desporto24' }}</p>
             </div>
           </div>
 
           <div class="profile-meta">
             <div>
-              <span>{{ 'common.location' | t }}</span>
-              <strong>{{ selectedProfile.location || ('common.notProvidedF' | t) }}</strong>
-            </div>
-            <div>
               <span>{{ 'common.country' | t }}</span>
               <strong>{{ selectedProfile.country || ('common.notProvided' | t) }}</strong>
-            </div>
-            <div>
-              <span>{{ 'profileData.favoriteSports' | t }}</span>
-              <strong>{{ selectedProfile.favoriteSports || ('common.notProvided' | t) }}</strong>
             </div>
             <div>
               <span>{{ 'community.memberSince' | t }}</span>
