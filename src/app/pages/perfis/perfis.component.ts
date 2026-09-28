@@ -1,11 +1,12 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { appTranslate as t } from '../../i18n/i18n.service';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
-import { finalize } from 'rxjs';
+import { catchError, finalize, forkJoin, of } from 'rxjs';
 
 import { environment } from 'src/environment/environment';
 import { CommunityProfile } from '../model/community-profile';
 import { ReliabilitySummary } from '../model/reliability-summary';
+import { ProfileActivity } from '../model/my-profile';
 import { CommunityService } from '../../services/community.service';
 import { AuthenticationService } from '../../services/authethication.service';
 import { ReliabilityService } from '../../services/reliability.service';
@@ -22,6 +23,7 @@ export class PerfisComponent implements OnInit {
   profiles: CommunityProfile[] = [];
   selectedProfile?: CommunityProfile;
   selectedReliability?: ReliabilitySummary;
+  selectedActivity?: ProfileActivity;
 
   loading = false;
   actionLoading = false;
@@ -121,18 +123,25 @@ export class PerfisComponent implements OnInit {
   openProfile(profile: CommunityProfile): void {
     this.selectedProfile = profile;
     this.selectedReliability = undefined;
+    this.selectedActivity = undefined;
     this.actionError = '';
     this.actionSuccess = '';
 
-    this.reliabilityService.summary(profile.username).subscribe({
-      next: reliability => this.selectedReliability = reliability,
-      error: () => this.selectedReliability = undefined
+    forkJoin({
+      reliability: this.reliabilityService.summary(profile.username)
+        .pipe(catchError(() => of(undefined))),
+      activity: this.reliabilityService.activity(profile.username)
+        .pipe(catchError(() => of(undefined)))
+    }).subscribe(({ reliability, activity }) => {
+      this.selectedReliability = reliability;
+      this.selectedActivity = activity;
     });
   }
 
   closeProfile(): void {
     this.selectedProfile = undefined;
     this.selectedReliability = undefined;
+    this.selectedActivity = undefined;
   }
 
   sendFriendRequest(profile: CommunityProfile): void {
