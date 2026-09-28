@@ -1,11 +1,11 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { finalize } from 'rxjs';
 
 import {
   CommunityGroup,
   CommunityInvite,
-  CommunityRole,
-  CommunityVisibility
+  CommunityRole
 } from '../model/community-group';
 import { CommunityGroupsService } from '../../services/community-groups.service';
 
@@ -21,20 +21,17 @@ export class CommunitiesComponent implements OnInit {
   invites: CommunityInvite[] = [];
   selected?: CommunityGroup;
 
-  creating = false;
   loading = false;
   saving = false;
   errorMessage = '';
 
-  newName = '';
-  newDescription = '';
-  newSport = '';
-  newVisibility: CommunityVisibility = 'PRIVATE';
-
   inviteUsername = '';
   ownershipUsername = '';
 
-  constructor(private communityService: CommunityGroupsService) {}
+  constructor(
+    private communityService: CommunityGroupsService,
+    private route: ActivatedRoute
+  ) {}
 
   ngOnInit(): void {
     this.reload();
@@ -49,6 +46,16 @@ export class CommunitiesComponent implements OnInit {
       .subscribe({
         next: communities => {
           this.communities = communities;
+
+          const requestedId = Number(this.route.snapshot.queryParamMap.get('community'));
+          if (requestedId && !Number.isNaN(requestedId)) {
+            const requested = communities.find(item => item.id === requestedId);
+            if (requested) {
+              this.open(requested);
+              return;
+            }
+          }
+
           if (this.selected) {
             this.selected = communities.find(item => item.id === this.selected?.id);
           }
@@ -67,35 +74,6 @@ export class CommunitiesComponent implements OnInit {
       next: full => this.selected = full,
       error: () => this.errorMessage = 'Não foi possível abrir a comunidade.'
     });
-  }
-
-  create(): void {
-    if (!this.newName.trim() || this.saving) {
-      return;
-    }
-
-    this.saving = true;
-    this.errorMessage = '';
-
-    this.communityService.create({
-      name: this.newName.trim(),
-      description: this.newDescription.trim() || null,
-      sport: this.newSport.trim() || null,
-      visibility: this.newVisibility
-    })
-      .pipe(finalize(() => this.saving = false))
-      .subscribe({
-        next: community => {
-          this.communities = [community, ...this.communities];
-          this.selected = community;
-          this.creating = false;
-          this.newName = '';
-          this.newDescription = '';
-          this.newSport = '';
-          this.newVisibility = 'PRIVATE';
-        },
-        error: () => this.errorMessage = 'Não foi possível criar a comunidade.'
-      });
   }
 
   invite(): void {
