@@ -80,8 +80,24 @@ input,textarea,select {
 
 .management-block,.members-block,.leave-block { margin-top:1rem; padding-top:1rem; border-top:1px solid rgba(255,255,255,.08); }
 .management-block p { color:#94a3b8; }
-.inline-form { display:flex; gap:.6rem; margin-top:.7rem; }
-.inline-form input { flex:1; }
+.inline-form {
+  display:flex;
+  align-items:stretch;
+  gap:.6rem;
+  margin-top:.7rem;
+}
+.inline-form input {
+  flex:1;
+  height:52px;
+  box-sizing:border-box;
+}
+.inline-form button {
+  height:52px;
+  box-sizing:border-box;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+}
 
 .member-row,.invite-row {
   display:flex;
