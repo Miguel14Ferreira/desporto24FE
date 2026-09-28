@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { environment } from 'src/environment/environment';
+import { SessionSummary } from '../pages/model/session-summary';
 import {
   CommunityCompetitionOverview,
   CommunityCompetitionSettings,
@@ -34,6 +35,12 @@ export class CommunityGroupsService {
     visibility: CommunityVisibility;
   }): Observable<CommunityGroup> {
     return this.http.post<CommunityGroup>(this.url, request);
+  }
+
+  sessions(id: number): Observable<SessionSummary[]> {
+    return this.http.get<SessionSummary[]>(
+      this.url + '/' + id + '/sessions'
+    );
   }
 
   competition(id: number): Observable<CommunityCompetitionOverview> {
