@@ -106,6 +106,25 @@ export class NotificationsComponent implements OnInit {
     this.router.navigate(['/menu/friendList/chat', notification.relatedUsername]);
   }
 
+  openMfaSettings(): void {
+    this.router.navigate(['/menu/alterardados'], {
+      queryParams: { focus: 'mfa' }
+    });
+  }
+
+  isMfaDisabledNotification(notification: AppNotification): boolean {
+    if (notification.type === 'MFA_DISABLED') {
+      return true;
+    }
+
+    const subject = notification.subject.toLocaleLowerCase();
+    return notification.updateProfile
+      && (
+        (subject.includes('autenticação multifator') && subject.includes('desativ'))
+        || (subject.includes('multi-factor authentication') && subject.includes('disabled'))
+      );
+  }
+
   deleteNotification(notification: AppNotification): void {
     if (this.actionLoadingId !== null) {
       return;
