@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { JwtHelperService } from '@auth0/angular-jwt';
-import { Observable } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 
 import { environment } from '../../environment/environment';
 import { CustomHttpResponse } from '../pages/custom-http-response';
@@ -28,14 +28,16 @@ export class AuthenticationService {
   login(username: string, password: string): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(
       `${this.host}/api/auth/login`,
-      { username, password }
+      { username, password },
+      { withCredentials: true }
     );
   }
 
   confirmMfaChallenge(challengeId: string, code: string): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(
       `${this.host}/api/auth/mfa/confirm`,
-      { challengeId, code }
+      { challengeId, code },
+      { withCredentials: true }
     );
   }
 
@@ -92,8 +94,26 @@ export class AuthenticationService {
     );
   }
 
+  refreshSession(): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>(
+      `${this.host}/api/auth/refresh`,
+      null,
+      { withCredentials: true }
+    ).pipe(
+      tap(response => {
+        if (response.token) {
+          this.saveToken(response.token);
+        }
+      })
+    );
+  }
+
   terminarSessao(): Observable<void> {
-    return this.http.post<void>(`${this.host}/api/auth/logout`, null);
+    return this.http.post<void>(
+      `${this.host}/api/auth/logout`,
+      null,
+      { withCredentials: true }
+    );
   }
 
   public logOut(): void {
