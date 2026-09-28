@@ -66,7 +66,7 @@
                   class="photo-cancel-action"
                   [disabled]="photoSaving"
                   (click)="cancelPhotoEdit()">
-                  Cancelar
+                  {{ 'common.cancel' | t }}
                 </button>
               </div>
             }
@@ -81,54 +81,75 @@
 
         <div class="form-grid">
           <label>
-            <span>{{ 'profile.fullName' | t }}</span>
-            <input name="fullName" [(ngModel)]="profile.fullName" [disabled]="saving">
-          </label>
-
-          <label>
-            <span>Alcunha</span>
-            <input name="nickname" [(ngModel)]="profile.nickname" maxlength="80" [disabled]="saving">
-          </label>
-
-          <label>
-            <span>{{ 'profile.birthDate' | t }}</span>
-            <input type="date" name="dateOfBirth" [(ngModel)]="profile.dateOfBirth" [min]="minBirthDate" [max]="maxBirthDate" [disabled]="saving">
+            <span>{{ 'register.nickname' | t }}</span>
+            <input
+              name="nickname"
+              [(ngModel)]="profile.nickname"
+              maxlength="80"
+              [disabled]="saving"
+              [placeholder]="'register.nicknamePlaceholder' | t">
           </label>
 
           <label>
             <span>{{ 'common.email' | t }} *</span>
-            <input type="email" name="email" [(ngModel)]="profile.email" required [disabled]="saving">
+            <input
+              type="email"
+              name="email"
+              [(ngModel)]="profile.email"
+              autocomplete="email"
+              required
+              [disabled]="saving">
           </label>
 
           <label>
-            <span>{{ 'common.country' | t }}</span>
-            <input name="country" [(ngModel)]="profile.country" [disabled]="saving">
+            <span>{{ 'register.birthDate' | t }} *</span>
+            <input
+              type="date"
+              name="dateOfBirth"
+              [(ngModel)]="profile.dateOfBirth"
+              [min]="minBirthDate"
+              [max]="maxBirthDate"
+              required
+              [disabled]="saving">
           </label>
 
           <label>
-            <span>{{ 'common.location' | t }}</span>
-            <input name="location" [(ngModel)]="profile.location" [disabled]="saving">
+            <span>{{ 'common.country' | t }} *</span>
+            <select
+              name="country"
+              [(ngModel)]="profile.country"
+              required
+              [disabled]="saving">
+              <option value="">{{ 'register.select' | t }}</option>
+              @for (item of countryOptions; track item.label) {
+                <option [value]="countryName(item.label)">{{ item.label }}</option>
+              }
+            </select>
           </label>
 
-          <label>
-            <span>{{ 'common.postalCode' | t }}</span>
-            <input name="postalCode" [(ngModel)]="profile.postalCode" [disabled]="saving">
-          </label>
+          <div class="full-width phone-field">
+            <span class="field-label">{{ 'register.phoneOptional' | t }}</span>
+            <div class="phone-row">
+              <select
+                class="calling-code"
+                name="indicativePhone"
+                [(ngModel)]="profile.indicativePhone"
+                [disabled]="saving || !(profile.phone || '').trim()">
+                @for (item of countryOptions; track item.label) {
+                  <option [value]="item.code">+{{ item.code }}</option>
+                }
+              </select>
 
-          <label class="full-width">
-            <span>{{ 'common.address' | t }}</span>
-            <input name="address" [(ngModel)]="profile.address" [disabled]="saving">
-          </label>
-
-          <label>
-            <span>{{ 'profile.callingCode' | t }}</span>
-            <input name="indicativePhone" [(ngModel)]="profile.indicativePhone" placeholder="351" [disabled]="saving">
-          </label>
-
-          <label>
-            <span>{{ 'common.phone' | t }}</span>
-            <input name="phone" [(ngModel)]="profile.phone" [disabled]="saving">
-          </label>
+              <input
+                type="tel"
+                name="phone"
+                [(ngModel)]="profile.phone"
+                autocomplete="tel-national"
+                inputmode="tel"
+                [disabled]="saving"
+                placeholder="912 345 678">
+            </div>
+          </div>
 
           <label>
             <span>{{ 'common.gender' | t }}</span>
@@ -165,7 +186,7 @@
               [disabled]="saving"
               (keydown)="onSportSearchKeydown($event)"
               (blur)="clearInvalidSportQuery()"
-              placeholder="Pesquisa um desporto da lista...">
+              [placeholder]="'profile.favoriteSportsSearch' | t">
 
             @if (sportSuggestions.length > 0) {
               <div class="sport-suggestions">
@@ -180,7 +201,7 @@
               </div>
             }
 
-            <small>Só podes adicionar desportos disponíveis na lista.</small>
+            <small>{{ 'profile.favoriteSportsHint' | t }}</small>
           </div>
         </div>
 
@@ -206,21 +227,21 @@
         @if (mfaSetup) {
           <section class="mfa-setup-card">
             <div>
-              <p class="mfa-step">1. Abre o Google Authenticator, Microsoft Authenticator ou outra app TOTP.</p>
-              <p class="mfa-step">2. Digitaliza este QR code.</p>
+              <p class="mfa-step">{{ 'profile.mfa.step1' | t }}</p>
+              <p class="mfa-step">{{ 'profile.mfa.step2' | t }}</p>
             </div>
 
             <div class="mfa-qr-wrap">
-              <img class="mfa-qr" [src]="mfaSetup.qrCodeDataUrl" alt="QR code para configurar MFA">
+              <img class="mfa-qr" [src]="mfaSetup.qrCodeDataUrl" [alt]="'profile.mfa.qrAlt' | t">
             </div>
 
             <div class="mfa-manual-key">
-              <span>Ou introduz manualmente esta chave:</span>
+              <span>{{ 'profile.mfa.manualKey' | t }}</span>
               <code>{{ mfaSetup.secret }}</code>
             </div>
 
             <label class="mfa-code-field">
-              <span>3. Introduz o código de 6 dígitos mostrado na app</span>
+              <span>{{ 'profile.mfa.step3' | t }}</span>
               <input
                 name="mfaSetupCode"
                 [(ngModel)]="mfaSetupCode"
@@ -237,7 +258,7 @@
                 class="photo-save-action"
                 [disabled]="mfaConfirming || mfaSetupCode.length !== 6"
                 (click)="confirmMfaSetup()">
-                {{ mfaConfirming ? 'A confirmar...' : 'Confirmar e ativar MFA' }}
+                {{ mfaConfirming ? ('profile.mfa.confirming' | t) : ('profile.mfa.confirmEnable' | t) }}
               </button>
 
               <button
@@ -245,7 +266,7 @@
                 class="photo-cancel-action"
                 [disabled]="mfaConfirming"
                 (click)="cancelMfaSetup()">
-                Cancelar
+                {{ 'common.cancel' | t }}
               </button>
             </div>
           </section>
