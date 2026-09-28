@@ -337,7 +337,7 @@ const PT: Dictionary = {
   'googleOnboarding.identityVerified': 'O teu email e identidade já foram verificados pela Google.',
   'googleOnboarding.noPassword': 'Não precisas de criar outra palavra-passe para concluir este registo.',
   'feedback.google.createdNoLogin': 'A conta foi criada, mas não foi possível iniciar a sessão.',
-  'feedback.google.completeError': 'Não foi possível concluir o registo com Google.'
+  'feedback.google.completeError': 'Não foi possível concluir o registo com Google.',
 
   'feedback.communities.loadError': 'Não foi possível carregar as comunidades.',
   'feedback.communities.openError': 'Não foi possível abrir a comunidade.',
@@ -1015,7 +1015,7 @@ const EN: Dictionary = {
   'googleOnboarding.identityVerified': 'Your email and identity have already been verified by Google.',
   'googleOnboarding.noPassword': 'You do not need to create another password to complete this registration.',
   'feedback.google.createdNoLogin': 'The account was created, but we could not sign you in.',
-  'feedback.google.completeError': 'We could not complete the Google registration.'
+  'feedback.google.completeError': 'We could not complete the Google registration.',
 
   'feedback.communities.loadError': 'We could not load the communities.',
   'feedback.communities.openError': 'We could not open the community.',
