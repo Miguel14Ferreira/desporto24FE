@@ -55,6 +55,28 @@
             </div>
           </div>
 
+          @if (session.venue) {
+            <section class="venue-detail-panel">
+              <div class="venue-detail-heading">
+                <div>
+                  <span class="section-kicker">{{ 'venue.kicker' | t }}</span>
+                  <h2>{{ session.venue.name }}</h2>
+                  <p>{{ session.venue.city }}</p>
+                </div>
+                @if (session.venue.surfaceType) {
+                  <span class="venue-surface">{{ session.venue.surfaceType }}</span>
+                }
+              </div>
+
+              <div class="venue-detail-tags">
+                <span>{{ session.venue.indoor ? ('venue.indoor' | t) : ('venue.outdoor' | t) }}</span>
+                @if (session.venue.changingRooms) { <span>{{ 'venue.changingRooms' | t }}</span> }
+                @if (session.venue.parking) { <span>{{ 'venue.parking' | t }}</span> }
+                @if (session.venue.lighting) { <span>{{ 'venue.lighting' | t }}</span> }
+              </div>
+            </section>
+          }
+
           <section class="calendar-panel">
             <div>
               <h2>{{ 'sessionDetail.calendarTitle' | t }}</h2>
