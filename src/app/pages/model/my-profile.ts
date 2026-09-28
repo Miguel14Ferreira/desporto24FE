@@ -13,6 +13,9 @@ export interface MyProfile {
   gender: string | null;
   email: string;
   favoriteSports: string | null;
+  bio: string | null;
+  skillLevel: string | null;
+  availability: string | null;
   mfa: boolean | null;
   profilePicUrl: string | null;
   joinDateDisplay: string | null;
@@ -32,5 +35,19 @@ export interface UpdateMyProfileRequest {
   gender: string | null;
   email: string;
   favoriteSports: string | null;
+  bio: string | null;
+  skillLevel: string | null;
+  availability: string | null;
   mfa: boolean | null;
+}
+
+
+export interface ProfileActivity {
+  activitiesCompleted: number;
+  peoplePlayedWith: number;
+  sportsPractised: number;
+  eventsCreated: number;
+  participantsMobilized: number;
+  communitiesJoined: number;
+  achievements: string[];
 }
