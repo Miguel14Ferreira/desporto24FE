@@ -446,7 +446,10 @@
                               <div class="round-result-row">
                                 <div>
                                   <strong>{{ entry.fullName || entry.username }}</strong>
-                                  <span>@{{ entry.username }}</span>
+                                  <span>
+                                    @{{ entry.username }}
+                                    @if (entry.team) { · {{ entry.team }} }
+                                  </span>
                                 </div>
                                 <span
                                   class="result-chip"
