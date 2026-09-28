@@ -149,8 +149,7 @@
           <select
             name="country"
             [(ngModel)]="country"
-            [disabled]="loading"
-            (ngModelChange)="onCountryChange($event)">
+            [disabled]="loading">
             @for (item of countryOptions; track item.label) {
               <option [value]="countryName(item.label)">{{ item.label }}</option>
             }
@@ -158,11 +157,15 @@
         </label>
 
         <label>
-          <span>Indicativo</span>
-          <input
+          <span>Indicativo *</span>
+          <select
             name="indicativePhone"
-            [ngModel]=" '+' + indicativePhone"
-            disabled>
+            [(ngModel)]="indicativePhone"
+            [disabled]="loading">
+            @for (item of countryOptions; track item.label) {
+              <option [value]="item.code">{{ item.label }}</option>
+            }
+          </select>
         </label>
 
         <label>
