@@ -121,6 +121,15 @@ export class DirectChatComponent implements OnInit, OnDestroy {
     });
   }
 
+  onEnter(event: KeyboardEvent): void {
+    if (event.shiftKey) {
+      return;
+    }
+
+    event.preventDefault();
+    this.sendMessage();
+  }
+
   sendMessage(): void {
     const text = this.messageBody.trim();
 
