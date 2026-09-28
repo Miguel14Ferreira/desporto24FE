@@ -61,9 +61,18 @@
             class="community-card"
             [class.active]="selected?.id === community.id"
             (click)="open(community)">
-            <div>
-              <strong>{{ community.name }}</strong>
-              <span>{{ community.sport || ('communities.multiSport' | t) }}</span>
+            <div class="community-card-main">
+              <div class="community-avatar">
+                @if (community.photoUrl) {
+                  <img [src]="community.photoUrl" [alt]="community.name">
+                } @else {
+                  <span>{{ communityInitials(community) }}</span>
+                }
+              </div>
+              <div class="community-card-copy">
+                <strong>{{ community.name }}</strong>
+                <span>{{ community.sport || ('communities.multiSport' | t) }}</span>
+              </div>
             </div>
             <small>{{ community.memberCount === 1
                 ? ('communities.memberOne' | t:{ count: community.memberCount })
@@ -82,12 +91,33 @@
 
         @if (selected) {
           <div class="detail-header">
-            <div>
+            <div class="community-detail-identity">
+              <div class="community-avatar community-avatar--large">
+                @if (selected.photoUrl) {
+                  <img [src]="selected.photoUrl" [alt]="selected.name">
+                } @else {
+                  <span>{{ communityInitials(selected) }}</span>
+                }
+
+                @if (canManage()) {
+                  <label class="community-photo-edit" [class.disabled]="photoUpdating">
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      [disabled]="photoUpdating"
+                      (change)="onCommunityPhotoChange($event)">
+                    <span>{{ 'communities.changePhoto' | t }}</span>
+                  </label>
+                }
+              </div>
+
+              <div>
               <span class="visibility">{{ selected.visibility === 'PRIVATE'
                 ? ('communities.private' | t)
                 : ('communities.public' | t) }}</span>
               <h2>{{ selected.name }}</h2>
               <p>{{ selected.description || ('communities.noDescription' | t) }}</p>
+              </div>
             </div>
             <span class="role-badge">
               {{ selected.myRole === 'OWNER'
@@ -127,7 +157,7 @@
                     <button type="button" class="danger-action small" (click)="removeMember(member.username)">{{ 'communities.removeMember' | t }}</button>
                   </div>
                 } @else if (selected.myRole === 'ADMIN' && member.role === 'MEMBER') {
-                  <button type="button" class="danger-action small" (click)="removeMember(member.username)">Remover</button>
+                  <button type="button" class="danger-action small" (click)="removeMember(member.username)">{{ 'communities.removeMember' | t }}</button>
                 }
               </div>
             }
