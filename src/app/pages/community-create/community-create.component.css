@@ -222,3 +222,20 @@ label small {
     width: 100%;
   }
 }
+
+
+.form-grid input,
+.form-grid select {
+  height: 52px;
+  min-height: 52px;
+  box-sizing: border-box;
+}
+
+.form-grid label {
+  align-content: start;
+}
+
+.form-grid label > small {
+  min-height: 1.35rem;
+  margin-top: 0;
+}
