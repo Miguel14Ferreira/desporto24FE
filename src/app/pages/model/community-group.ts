@@ -47,6 +47,7 @@ export interface CommunityRoundEntry {
   username: string;
   fullName: string | null;
   profilePicUrl: string | null;
+  team: string | null;
   result: CommunityMatchResult;
   goals: number;
   assists: number;
@@ -90,6 +91,7 @@ export interface CommunityCompetitionOverview {
 export interface CommunityRoundEntryDraft {
   username: string;
   included: boolean;
+  team: string;
   result: CommunityMatchResult;
   goals: number;
   assists: number;
