@@ -5,7 +5,7 @@ import { finalize } from 'rxjs';
 
 import { AuthenticationService } from '../../services/authethication.service';
 import { GoogleRegistrationRequest } from '../model/google-auth-response';
-import { SPORTS_CATALOG } from '../../shared/sports-catalog';
+import { COUNTRY_CALLING_CODES, countryNameFromLabel } from '../../shared/country-calling-codes';
 
 @Component({
   selector: 'app-google-onboarding',
@@ -21,16 +21,12 @@ export class GoogleOnboardingComponent implements OnInit {
   pictureUrl = '';
 
   username = '';
+  nickname = '';
   dateOfBirth = '';
-  address = '';
   country = 'Portugal';
-  location = '';
-  postalCode = '';
   indicativePhone = '351';
   phone = '';
   gender = '';
-  sportQuery = '';
-  selectedSports: string[] = [];
 
   loading = false;
   errorMessage = '';
@@ -38,7 +34,7 @@ export class GoogleOnboardingComponent implements OnInit {
   readonly maxBirthDate = this.dateYearsAgo(18);
   readonly minBirthDate = this.dateYearsAgo(120);
 
-  readonly sportsCatalog = SPORTS_CATALOG;
+  readonly countryOptions = COUNTRY_CALLING_CODES;
 
   constructor(
     private authenticationService: AuthenticationService,
@@ -56,63 +52,18 @@ export class GoogleOnboardingComponent implements OnInit {
     }
   }
 
-  get sportSuggestions(): string[] {
-    const query = this.sportQuery.trim().toLocaleLowerCase('pt');
-    return this.sportsCatalog
-      .filter(sport => !this.selectedSports.includes(sport))
-      .filter(sport => !query || sport.toLocaleLowerCase('pt').includes(query))
-      .slice(0, 8);
-  }
-
-  addSport(sport: string): void {
-    if (!this.sportsCatalog.includes(sport) || this.selectedSports.includes(sport)) {
-      return;
-    }
-
-    this.selectedSports = [...this.selectedSports, sport];
-    this.sportQuery = '';
-  }
-
-  removeSport(sport: string): void {
-    this.selectedSports = this.selectedSports.filter(item => item !== sport);
-  }
-
-  onSportSearchKeydown(event: KeyboardEvent): void {
-    if (event.key !== 'Enter') {
-      return;
-    }
-
-    event.preventDefault();
-
-    const query = this.sportQuery.trim().toLocaleLowerCase('pt');
-    const exactMatch = this.sportsCatalog.find(
-      sport => sport.toLocaleLowerCase('pt') === query
+  onCountryChange(country: string): void {
+    this.country = country;
+    const match = this.countryOptions.find(
+      item => countryNameFromLabel(item.label) === country
     );
-
-    if (exactMatch && !this.selectedSports.includes(exactMatch)) {
-      this.addSport(exactMatch);
-      return;
+    if (match) {
+      this.indicativePhone = match.code;
     }
-
-    this.sportQuery = '';
   }
 
-  clearInvalidSportQuery(): void {
-    const query = this.sportQuery.trim();
-    if (!query) {
-      return;
-    }
-
-    const exactMatch = this.sportsCatalog.find(
-      sport => sport.toLocaleLowerCase('pt') === query.toLocaleLowerCase('pt')
-    );
-
-    if (exactMatch && !this.selectedSports.includes(exactMatch)) {
-      this.addSport(exactMatch);
-      return;
-    }
-
-    this.sportQuery = '';
+  countryName(label: string): string {
+    return countryNameFromLabel(label);
   }
 
   submit(): void {
@@ -125,15 +76,12 @@ export class GoogleOnboardingComponent implements OnInit {
     const request: GoogleRegistrationRequest = {
       credential: this.credential,
       username: this.username.trim(),
+      nickname: this.nickname.trim() || null,
       dateOfBirth: this.dateOfBirth,
-      address: this.address.trim(),
       country: this.country.trim(),
-      location: this.location.trim(),
-      postalCode: this.postalCode.trim(),
       indicativePhone: this.indicativePhone.replace(/\D/g, ''),
       phone: this.phone.replace(/\D/g, ''),
-      gender: this.gender,
-      favoriteSports: this.selectedSports.join(', ')
+      gender: this.gender || null
     };
 
     this.loading = true;
@@ -170,16 +118,12 @@ export class GoogleOnboardingComponent implements OnInit {
     const required = [
       this.username,
       this.dateOfBirth,
-      this.address,
       this.country,
-      this.location,
-      this.postalCode,
       this.indicativePhone,
-      this.phone,
-      this.gender
+      this.phone
     ];
 
-    if (required.some(value => !value?.trim()) || this.selectedSports.length === 0) {
+    if (required.some(value => !value?.trim())) {
       return 'Preenche todos os campos obrigatórios.';
     }
 
