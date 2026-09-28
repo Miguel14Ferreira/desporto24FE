@@ -1,8 +1,8 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { JwtHelperService } from '@auth0/angular-jwt';
-import { finalize } from 'rxjs';
+import { finalize, interval, Subscription } from 'rxjs';
 
 import { environment } from 'src/environment/environment';
 import { SessionDetail } from '../model/session-detail';
@@ -20,7 +20,7 @@ import { ReliabilityService } from '../../services/reliability.service';
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false
 })
-export class SessionDetailsComponent implements OnInit {
+export class SessionDetailsComponent implements OnInit, OnDestroy {
   session?: SessionDetail;
   messages: SessionMessage[] = [];
   creatorReliability?: ReliabilitySummary;
@@ -48,10 +48,14 @@ export class SessionDetailsComponent implements OnInit {
 
   joinPassword = '';
   messageBody = '';
+  showEmojiPicker = false;
+
+  readonly emojis = ['😀', '😂', '😊', '😍', '🥳', '😎', '😉', '👍', '👏', '🙌', '🔥', '⚽', '🏀', '🎾', '🏓', '💪', '❤️', '✅'];
 
   private sessionId?: number;
   private currentUsername: string | null = null;
   private readonly jwtHelper = new JwtHelperService();
+  private readonly chatRefreshSubscription = new Subscription();
 
   constructor(
     private route: ActivatedRoute,
@@ -70,6 +74,18 @@ export class SessionDetailsComponent implements OnInit {
 
     this.sessionId = id;
     this.loadSession();
+
+    this.chatRefreshSubscription.add(
+      interval(5000).subscribe(() => {
+        if (this.canAccessChat() && !this.chatLoading && !this.messageSending) {
+          this.refreshMessages(false);
+        }
+      })
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.chatRefreshSubscription.unsubscribe();
   }
 
   joinSession(): void {
@@ -264,18 +280,24 @@ export class SessionDetailsComponent implements OnInit {
     return attendanceAvailableAt <= Date.now();
   }
 
-  refreshMessages(): void {
+  refreshMessages(showLoading = true): void {
     if (!this.sessionId || !this.canAccessChat() || this.chatLoading) {
       return;
     }
 
-    this.chatLoading = true;
+    if (showLoading) {
+      this.chatLoading = true;
+    }
     this.chatError = '';
 
     this.sessionService.messages(this.sessionId)
-      .pipe(finalize(() => this.chatLoading = false))
+      .pipe(finalize(() => {
+        if (showLoading) {
+          this.chatLoading = false;
+        }
+      }))
       .subscribe({
-        next: messages => this.messages = messages,
+        next: messages => this.messages = this.sortedMessages(messages),
         error: error => {
           this.chatError = this.errorFrom(error, t('feedback.session.chatLoadError'));
         }
@@ -306,13 +328,59 @@ export class SessionDetailsComponent implements OnInit {
       .pipe(finalize(() => this.messageSending = false))
       .subscribe({
         next: message => {
-          this.messages = [...this.messages, message];
+          this.messages = this.sortedMessages([...this.messages, message]);
           this.messageBody = '';
+          this.showEmojiPicker = false;
         },
         error: error => {
           this.chatError = this.errorFrom(error, t('feedback.chat.sendError'));
         }
       });
+  }
+
+  onChatEnter(event: Event): void {
+    const keyboardEvent = event as KeyboardEvent;
+    if (keyboardEvent.shiftKey) {
+      return;
+    }
+
+    keyboardEvent.preventDefault();
+    this.sendMessage();
+  }
+
+  toggleEmojiPicker(): void {
+    this.showEmojiPicker = !this.showEmojiPicker;
+  }
+
+  addEmoji(emoji: string): void {
+    if (this.messageBody.length + emoji.length <= 2000) {
+      this.messageBody += emoji;
+      this.showEmojiPicker = false;
+    }
+  }
+
+  messageDate(message: SessionMessage): string {
+    if (!message.createdAt) {
+      return '';
+    }
+
+    const parsed = Date.parse(message.createdAt);
+    if (Number.isNaN(parsed)) {
+      return message.createdAt;
+    }
+
+    return new Intl.DateTimeFormat('pt-PT', {
+      dateStyle: 'short',
+      timeStyle: 'short'
+    }).format(new Date(parsed));
+  }
+
+  private sortedMessages(messages: SessionMessage[]): SessionMessage[] {
+    return [...messages].sort((a, b) => {
+      const aTime = Date.parse(a.createdAt || '') || 0;
+      const bTime = Date.parse(b.createdAt || '') || 0;
+      return aTime - bTime;
+    });
   }
 
   canAccessChat(): boolean {
