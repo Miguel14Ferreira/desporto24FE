@@ -49,8 +49,8 @@ export class FriendsComponent implements OnInit {
 
     return this.friends.filter(friend =>
       friend.username.toLowerCase().includes(term)
+      || (friend.nickname ?? '').toLowerCase().includes(term)
       || (friend.fullName ?? '').toLowerCase().includes(term)
-      || (friend.location ?? '').toLowerCase().includes(term)
     );
   }
 
@@ -199,7 +199,9 @@ export class FriendsComponent implements OnInit {
   }
 
   initials(friend: FriendSummary | CommunityProfile): string {
-    const source = friend.fullName?.trim() || friend.username;
+    const source = ('nickname' in friend ? friend.nickname?.trim() : null)
+      || friend.fullName?.trim()
+      || friend.username;
     return source
       .split(/\s+/)
       .filter(Boolean)
