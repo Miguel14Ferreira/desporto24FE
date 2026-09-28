@@ -9,5 +9,5 @@ export interface SessionDetail extends SessionSummary {
   waitlisted: boolean;
   waitlistPosition: number | null;
   gamePhoto: string | null;
-  venue: Venue | null;
+  venue?: Venue | null;
 }
