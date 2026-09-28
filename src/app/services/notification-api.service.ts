@@ -17,6 +17,14 @@ export class NotificationApiService {
     return this.http.get<AppNotification[]>(this.baseUrl + '/me');
   }
 
+  blockOwnAccount(): Observable<void> {
+    return this.http.post<void>(
+      this.baseUrl + '/me/block',
+      null,
+      { withCredentials: true }
+    );
+  }
+
   markRead(id: number): Observable<void> {
     return this.http.put<void>(this.baseUrl + '/' + id + '/read', null);
   }
