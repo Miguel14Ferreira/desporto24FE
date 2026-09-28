@@ -8,6 +8,7 @@ import { environment } from '../../environment/environment';
 import { CustomHttpResponse } from '../pages/custom-http-response';
 import { LoginResponse } from '../pages/model/login-response';
 import { RegistrationRequest } from '../pages/model/registration-request';
+import { GoogleAuthResponse, GoogleRegistrationRequest } from '../pages/model/google-auth-response';
 
 @Injectable()
 export class AuthenticationService {
@@ -24,6 +25,28 @@ export class AuthenticationService {
     private http: HttpClient,
     private router: Router
   ) {}
+
+  googleConfig(): Observable<{ clientId: string }> {
+    return this.http.get<{ clientId: string }>(
+      `${this.host}/api/auth/google/config`
+    );
+  }
+
+  googleLogin(credential: string): Observable<GoogleAuthResponse> {
+    return this.http.post<GoogleAuthResponse>(
+      `${this.host}/api/auth/google/login`,
+      { credential },
+      { withCredentials: true }
+    );
+  }
+
+  googleRegister(request: GoogleRegistrationRequest): Observable<GoogleAuthResponse> {
+    return this.http.post<GoogleAuthResponse>(
+      `${this.host}/api/auth/google/register`,
+      request,
+      { withCredentials: true }
+    );
+  }
 
   login(username: string, password: string): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(
