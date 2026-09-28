@@ -5,7 +5,7 @@ import { environment } from 'src/environment/environment';
 import { appTranslate as t } from '../../i18n/i18n.service';
 import { AuthenticationService } from '../../services/authethication.service';
 import { SocialFeedService } from '../../services/social-feed.service';
-import { FeedItem } from '../model/feed-item';
+import { FeedItem, SocialComment } from '../model/feed-item';
 
 @Component({
   selector: 'app-social-feed',
@@ -21,6 +21,11 @@ export class SocialFeedComponent implements OnInit {
   loading = false;
   posting = false;
   deletingPostId: number | null = null;
+  interactionLoadingPostId: number | null = null;
+  deletingCommentId: number | null = null;
+  openCommentPosts = new Set<number>();
+  commentsByPost: Record<number, SocialComment[]> = {};
+  commentDrafts: Record<number, string> = {};
   errorMessage = '';
   actionError = '';
 
@@ -73,6 +78,116 @@ export class SocialFeedComponent implements OnInit {
       });
   }
 
+  toggleLike(item: FeedItem): void {
+    if (
+      item.type !== 'POST'
+      || item.postId === null
+      || this.interactionLoadingPostId !== null
+    ) {
+      return;
+    }
+
+    this.interactionLoadingPostId = item.postId;
+    this.actionError = '';
+
+    const request$ = item.likedByMe
+      ? this.feedService.unlikePost(item.postId)
+      : this.feedService.likePost(item.postId);
+
+    request$
+      .pipe(finalize(() => this.interactionLoadingPostId = null))
+      .subscribe({
+        next: status => {
+          item.likedByMe = status.likedByMe;
+          item.likeCount = status.likeCount;
+        },
+        error: () => this.actionError = t('feedback.feed.likeError')
+      });
+  }
+
+  toggleComments(item: FeedItem): void {
+    if (item.type !== 'POST' || item.postId === null) {
+      return;
+    }
+
+    const postId = item.postId;
+
+    if (this.openCommentPosts.has(postId)) {
+      this.openCommentPosts.delete(postId);
+      return;
+    }
+
+    this.openCommentPosts.add(postId);
+
+    if (this.commentsByPost[postId]) {
+      return;
+    }
+
+    this.feedService.comments(postId).subscribe({
+      next: comments => this.commentsByPost[postId] = comments,
+      error: () => this.actionError = t('feedback.feed.commentsLoadError')
+    });
+  }
+
+  submitComment(item: FeedItem): void {
+    if (
+      item.type !== 'POST'
+      || item.postId === null
+      || this.interactionLoadingPostId !== null
+    ) {
+      return;
+    }
+
+    const postId = item.postId;
+    const content = (this.commentDrafts[postId] || '').trim();
+
+    if (!content) {
+      return;
+    }
+
+    this.interactionLoadingPostId = postId;
+    this.actionError = '';
+
+    this.feedService.addComment(postId, content)
+      .pipe(finalize(() => this.interactionLoadingPostId = null))
+      .subscribe({
+        next: comment => {
+          this.commentsByPost[postId] = [
+            ...(this.commentsByPost[postId] || []),
+            comment
+          ];
+          this.commentDrafts[postId] = '';
+          item.commentCount++;
+        },
+        error: () => this.actionError = t('feedback.feed.commentError')
+      });
+  }
+
+  deleteComment(item: FeedItem, comment: SocialComment): void {
+    if (
+      item.postId === null
+      || comment.authorUsername !== this.currentUsername
+      || this.deletingCommentId !== null
+    ) {
+      return;
+    }
+
+    const postId = item.postId;
+    this.deletingCommentId = comment.id;
+    this.actionError = '';
+
+    this.feedService.deleteComment(postId, comment.id)
+      .pipe(finalize(() => this.deletingCommentId = null))
+      .subscribe({
+        next: () => {
+          this.commentsByPost[postId] = (this.commentsByPost[postId] || [])
+            .filter(current => current.id !== comment.id);
+          item.commentCount = Math.max(0, item.commentCount - 1);
+        },
+        error: () => this.actionError = t('feedback.feed.commentDeleteError')
+      });
+  }
+
   deletePost(item: FeedItem): void {
     if (
       item.type !== 'POST'
@@ -96,6 +211,32 @@ export class SocialFeedComponent implements OnInit {
         },
         error: () => this.actionError = t('feedback.feed.deleteError')
       });
+  }
+
+  commentProfileImage(comment: SocialComment): string | null {
+    const path = comment.authorProfilePicUrl;
+    if (!path) {
+      return null;
+    }
+
+    if (
+      path.startsWith('http://')
+      || path.startsWith('https://')
+      || path.startsWith('data:')
+    ) {
+      return path;
+    }
+
+    return environment.apiUrl + (path.startsWith('/') ? path : '/' + path);
+  }
+
+  commentInitials(comment: SocialComment): string {
+    return (comment.authorDisplayName || comment.authorUsername)
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map(part => part.charAt(0).toUpperCase())
+      .join('');
   }
 
   profileImage(item: FeedItem): string | null {
