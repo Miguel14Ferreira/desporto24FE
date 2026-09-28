@@ -25,6 +25,7 @@ import { AuthenticationGuard } from './guard/authentication.guard';
 import { AdminGuard } from './guard/admin.guard';
 import { AdminDisputesComponent } from './pages/admin-disputes/admin-disputes.component';
 import { AdminDashboardComponent } from './pages/admin-dashboard/admin-dashboard.component';
+import { AdminIdeasComponent } from './pages/admin-ideas/admin-ideas.component';
 import { NotFoundComponent } from './pages/not-found/not-found.component';
 
 const routes: Routes = [
@@ -66,6 +67,7 @@ const routes: Routes = [
   {path:'menu/notifications/:id',component:NotificationsComponent,canActivate:[AuthenticationGuard]},
   {path:'menu/admin',component:AdminDashboardComponent,canActivate:[AuthenticationGuard,AdminGuard]},
   {path:'menu/admin/attendance-disputes',component:AdminDisputesComponent,canActivate:[AuthenticationGuard,AdminGuard]},
+  {path:'menu/admin/ideas',component:AdminIdeasComponent,canActivate:[AuthenticationGuard,AdminGuard]},
   {path:'menu/terminarSessao',redirectTo:'menu',pathMatch:'full'},
   {path:'**',component:NotFoundComponent}
 ];
