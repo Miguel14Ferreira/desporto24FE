@@ -65,8 +65,8 @@ export class CreateaccountComponent {
       nickname: this.nickname.trim() || null,
       dateOfBirth: this.dateOfBirth,
       country: this.country.trim(),
-      indicativePhone: this.indicativePhone,
-      phone: this.phone.replace(/\D/g, ''),
+      indicativePhone: this.phone.trim() ? this.indicativePhone : null,
+      phone: this.phone.trim() ? this.phone.replace(/\D/g, '') : null,
       gender: this.gender || null,
       email: this.email.trim()
     };
@@ -169,8 +169,6 @@ export class CreateaccountComponent {
       this.confirmPassword,
       this.dateOfBirth,
       this.country,
-      this.indicativePhone,
-      this.phone,
       this.email
     ];
 
@@ -199,7 +197,11 @@ export class CreateaccountComponent {
     }
 
     const normalizedPhone = this.phone.replace(/\D/g, '');
-    if (normalizedPhone.length < 6 || normalizedPhone.length > 15) {
+    if (this.phone.trim() && (normalizedPhone.length < 4 || normalizedPhone.length > 15)) {
+      return t('feedback.register.invalidPhone');
+    }
+
+    if (this.phone.trim() && !this.indicativePhone.trim()) {
       return t('feedback.register.invalidPhone');
     }
 
