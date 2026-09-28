@@ -2,6 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
+import { appTranslate as t } from '../../i18n/i18n.service';
 
 import { AuthenticationService } from '../../services/authethication.service';
 import { GoogleRegistrationRequest } from '../model/google-auth-response';
@@ -69,8 +70,8 @@ export class GoogleOnboardingComponent implements OnInit {
       nickname: this.nickname.trim() || null,
       dateOfBirth: this.dateOfBirth,
       country: this.country.trim(),
-      indicativePhone: this.indicativePhone.replace(/\D/g, ''),
-      phone: this.phone.replace(/\D/g, ''),
+      indicativePhone: this.phone.trim() ? this.indicativePhone.replace(/\D/g, '') : null,
+      phone: this.phone.trim() ? this.phone.replace(/\D/g, '') : null,
       gender: this.gender || null
     };
 
@@ -82,7 +83,7 @@ export class GoogleOnboardingComponent implements OnInit {
       .subscribe({
         next: response => {
           if (!response.token) {
-            this.errorMessage = 'A conta foi criada, mas não foi possível iniciar a sessão.';
+            this.errorMessage = t('feedback.google.createdNoLogin');
             return;
           }
 
@@ -93,7 +94,7 @@ export class GoogleOnboardingComponent implements OnInit {
         error: error => {
           this.errorMessage = this.errorFrom(
             error,
-            'Não foi possível concluir o registo com Google.'
+            t('feedback.google.completeError')
           );
         }
       });
@@ -108,27 +109,29 @@ export class GoogleOnboardingComponent implements OnInit {
     const required = [
       this.username,
       this.dateOfBirth,
-      this.country,
-      this.indicativePhone,
-      this.phone
+      this.country
     ];
 
     if (required.some(value => !value?.trim())) {
-      return 'Preenche todos os campos obrigatórios.';
+      return t('feedback.register.required');
     }
 
     if (this.username.trim().length < 3) {
-      return 'O nome de utilizador deve ter pelo menos 3 caracteres.';
+      return t('feedback.register.usernameMin');
     }
 
     if (!this.isAdultBirthDate(this.dateOfBirth)) {
-      return 'Tens de ter pelo menos 18 anos.';
+      return t('feedback.register.minimumAge');
     }
 
     const indicative = this.indicativePhone.replace(/\D/g, '');
     const phone = this.phone.replace(/\D/g, '');
-    if (phone.length < 4 || indicative.length + phone.length > 15) {
-      return 'Introduz um número de telefone válido.';
+    if (this.phone.trim() && (phone.length < 4 || indicative.length + phone.length > 15)) {
+      return t('feedback.register.invalidPhone');
+    }
+
+    if (this.phone.trim() && !indicative) {
+      return t('feedback.register.invalidPhone');
     }
 
     return null;
