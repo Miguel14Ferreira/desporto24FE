@@ -113,12 +113,9 @@ export class NotificationsComponent implements OnInit {
 
   canProtectAccount(notification: AppNotification): boolean {
     const message = (notification.message || '').toLocaleLowerCase();
-    return Boolean(notification.updateProfile)
-      && (
-        message.includes('se não foste tu')
-        || message.includes("if this wasn't you")
-        || message.includes('if you did not')
-      );
+    return message.includes('se não foste tu')
+      || message.includes("if this wasn't you")
+      || message.includes('if you did not');
   }
 
   requestAccountBlock(): void {
