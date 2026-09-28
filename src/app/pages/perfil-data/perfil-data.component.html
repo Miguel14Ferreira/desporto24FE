@@ -34,29 +34,94 @@
             }
           </div>
 
-          <div>
-            <h2>{{ profile.fullName || profile.username }}</h2>
+          <div class="identity-copy">
+            <h2>{{ profile.nickname || profile.fullName || profile.username }}</h2>
             <p>@{{ profile.username }}</p>
-            @if (profile.location || profile.country) {
-              <small>{{ profile.location || '' }}{{ profile.location && profile.country ? ', ' : '' }}{{ profile.country || '' }}</small>
+
+            <div class="sports-identity-line">
+              @if (profile.country) {
+                <span>📍 {{ profile.country }}</span>
+              }
+              @if (profile.favoriteSports) {
+                <span>⚽ {{ profile.favoriteSports }}</span>
+              }
+              @if (profile.skillLevel) {
+                <span>◎ {{ ('profile.level.' + profile.skillLevel) | t }}</span>
+              }
+            </div>
+
+            @if (profile.availability) {
+              <small>{{ 'profile.availability' | t }} · {{ profile.availability }}</small>
             }
           </div>
         </div>
 
-        <div class="details-grid">
-          <div><span>{{ 'common.email' | t }}</span><strong>{{ profile.email }}</strong></div>
-          <div><span>{{ 'common.phone' | t }}</span><strong>{{ profile.indicativePhone ? '+' + profile.indicativePhone + ' ' : '' }}{{ profile.phone || ('common.notProvided' | t) }}</strong></div>
-          <div><span>{{ 'profileData.birthDate' | t }}</span><strong>{{ profile.dateOfBirth || ('common.notProvidedF' | t) }}</strong></div>
-          <div><span>{{ 'common.gender' | t }}</span><strong>{{ profile.gender || 'Não indicado' }}</strong></div>
-          <div><span>{{ 'common.address' | t }}</span><strong>{{ profile.address || 'Não indicada' }}</strong></div>
-          <div><span>{{ 'common.postalCode' | t }}</span><strong>{{ profile.postalCode || 'Não indicado' }}</strong></div>
-          <div><span>{{ 'profileData.favoriteSports' | t }}</span><strong>{{ profile.favoriteSports || ('common.notProvided' | t) }}</strong></div>
-          <div><span>MFA</span><strong>{{ profile.mfa ? ('common.active' | t) : ('common.inactive' | t) }}</strong></div>
-        </div>
+        @if (profile.bio) {
+          <section class="bio-card">
+            <span class="section-kicker">{{ 'profile.bio' | t }}</span>
+            <p>{{ profile.bio }}</p>
+          </section>
+        }
+
+        @if (activity) {
+          <section class="activity-section">
+            <div class="section-heading">
+              <div>
+                <span class="section-kicker">{{ 'profileData.activityKicker' | t }}</span>
+                <h3>{{ 'profileData.activityTitle' | t }}</h3>
+              </div>
+            </div>
+
+            <div class="activity-grid">
+              <div>
+                <strong>{{ activity.activitiesCompleted }}</strong>
+                <span>{{ 'profileData.activitiesCompleted' | t }}</span>
+              </div>
+              <div>
+                <strong>{{ activity.peoplePlayedWith }}</strong>
+                <span>{{ 'profileData.peoplePlayedWith' | t }}</span>
+              </div>
+              <div>
+                <strong>{{ activity.sportsPractised }}</strong>
+                <span>{{ 'profileData.sportsPractised' | t }}</span>
+              </div>
+              <div>
+                <strong>{{ activity.eventsCreated }}</strong>
+                <span>{{ 'profileData.eventsCreated' | t }}</span>
+              </div>
+              <div>
+                <strong>{{ activity.participantsMobilized }}</strong>
+                <span>{{ 'profileData.participantsMobilized' | t }}</span>
+              </div>
+              <div>
+                <strong>{{ activity.communitiesJoined }}</strong>
+                <span>{{ 'profileData.communitiesJoined' | t }}</span>
+              </div>
+            </div>
+
+            @if (activity.achievements.length > 0) {
+              <div class="achievement-block">
+                <span class="section-kicker">{{ 'profileData.achievements' | t }}</span>
+                <div class="achievement-list">
+                  @for (achievement of activity.achievements; track achievement) {
+                    <span class="achievement-badge">
+                      {{ ('profileData.achievement.' + achievement) | t }}
+                    </span>
+                  }
+                </div>
+              </div>
+            }
+          </section>
+        }
 
         @if (reliability) {
           <section class="reliability-card">
-            <h3>{{ 'profileData.reliability' | t }}</h3>
+            <div class="section-heading">
+              <div>
+                <span class="section-kicker">{{ 'profileData.trustKicker' | t }}</span>
+                <h3>{{ 'profileData.reliability' | t }}</h3>
+              </div>
+            </div>
             <div class="reliability-grid">
               <div><span>{{ 'profileData.attendanceRate' | t }}</span><strong>{{ reliability.attendanceRate | number:'1.0-0' }}%</strong></div>
               <div><span>{{ 'profileData.completedSessions' | t }}</span><strong>{{ reliability.completedSessions }}</strong></div>
@@ -65,6 +130,24 @@
             </div>
           </section>
         }
+
+        <section class="account-section">
+          <div class="section-heading">
+            <div>
+              <span class="section-kicker">{{ 'profileData.accountKicker' | t }}</span>
+              <h3>{{ 'profileData.privateData' | t }}</h3>
+            </div>
+          </div>
+
+          <div class="details-grid">
+            <div><span>{{ 'common.email' | t }}</span><strong>{{ profile.email }}</strong></div>
+            <div><span>{{ 'common.phone' | t }}</span><strong>{{ profile.indicativePhone ? '+' + profile.indicativePhone + ' ' : '' }}{{ profile.phone || ('common.notProvided' | t) }}</strong></div>
+            <div><span>{{ 'profileData.birthDate' | t }}</span><strong>{{ profile.dateOfBirth || ('common.notProvidedF' | t) }}</strong></div>
+            <div><span>{{ 'common.gender' | t }}</span><strong>{{ profile.gender || ('common.notProvided' | t) }}</strong></div>
+            <div><span>{{ 'profileData.memberSince' | t }}</span><strong>{{ profile.joinDateDisplay || ('common.noInfo' | t) }}</strong></div>
+            <div><span>MFA</span><strong>{{ profile.mfa ? ('common.active' | t) : ('common.inactive' | t) }}</strong></div>
+          </div>
+        </section>
       </section>
     }
   </div>
