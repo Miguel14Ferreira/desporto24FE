@@ -69,16 +69,18 @@
         </button>
       </form>
 
-      <div class="login-divider">
-        <span>ou</span>
-      </div>
+      @if (googleReady || googleLoading) {
+        <div class="login-divider">
+          <span>ou</span>
+        </div>
 
-      <div class="google-login">
-        <div id="google-signin-button"></div>
-        @if (googleLoading) {
-          <span class="google-status">A autenticar com Google...</span>
-        }
-      </div>
+        <div class="google-login">
+          <div id="google-signin-button"></div>
+          @if (googleLoading) {
+            <span class="google-status">A autenticar com Google...</span>
+          }
+        </div>
+      }
 
       <div class="login-links">
         <a routerLink="/login/resetPassword">{{ 'login.forgot' | t }}</a>
