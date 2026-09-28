@@ -31,3 +31,68 @@ export interface CommunityInvite {
   invitedByUsername: string;
   createdAt: string;
 }
+
+
+export type CommunityMatchResult = 'WIN' | 'DRAW' | 'LOSS';
+
+export interface CommunityCompetitionSettings {
+  rankingsEnabled: boolean;
+  winPoints: number;
+  drawPoints: number;
+  lossPoints: number;
+}
+
+export interface CommunityRoundEntry {
+  profileId: number;
+  username: string;
+  fullName: string | null;
+  profilePicUrl: string | null;
+  result: CommunityMatchResult;
+  goals: number;
+  assists: number;
+  mvp: boolean;
+  cleanSheet: boolean;
+}
+
+export interface CommunityRound {
+  id: number;
+  name: string;
+  playedAt: string;
+  entries: CommunityRoundEntry[];
+}
+
+export interface CommunityStanding {
+  position: number;
+  profileId: number;
+  username: string;
+  fullName: string | null;
+  profilePicUrl: string | null;
+  games: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  points: number;
+  goals: number;
+  assists: number;
+  mvps: number;
+  cleanSheets: number;
+  winRate: number;
+  currentStreak: string;
+  bestWinStreak: number;
+}
+
+export interface CommunityCompetitionOverview {
+  settings: CommunityCompetitionSettings;
+  rounds: CommunityRound[];
+  standings: CommunityStanding[];
+}
+
+export interface CommunityRoundEntryDraft {
+  username: string;
+  included: boolean;
+  result: CommunityMatchResult;
+  goals: number;
+  assists: number;
+  mvp: boolean;
+  cleanSheet: boolean;
+}
