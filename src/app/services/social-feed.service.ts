@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { environment } from 'src/environment/environment';
-import { FeedItem } from '../pages/model/feed-item';
+import { FeedItem, PostLikeStatus, SocialComment } from '../pages/model/feed-item';
 
 @Injectable({
   providedIn: 'root'
@@ -21,6 +21,38 @@ export class SocialFeedService {
     return this.http.post<FeedItem>(
       this.baseUrl + '/posts',
       { content }
+    );
+  }
+
+  likePost(postId: number): Observable<PostLikeStatus> {
+    return this.http.post<PostLikeStatus>(
+      this.baseUrl + '/posts/' + postId + '/likes',
+      null
+    );
+  }
+
+  unlikePost(postId: number): Observable<PostLikeStatus> {
+    return this.http.delete<PostLikeStatus>(
+      this.baseUrl + '/posts/' + postId + '/likes'
+    );
+  }
+
+  comments(postId: number): Observable<SocialComment[]> {
+    return this.http.get<SocialComment[]>(
+      this.baseUrl + '/posts/' + postId + '/comments'
+    );
+  }
+
+  addComment(postId: number, content: string): Observable<SocialComment> {
+    return this.http.post<SocialComment>(
+      this.baseUrl + '/posts/' + postId + '/comments',
+      { content }
+    );
+  }
+
+  deleteComment(postId: number, commentId: number): Observable<void> {
+    return this.http.delete<void>(
+      this.baseUrl + '/posts/' + postId + '/comments/' + commentId
     );
   }
 
