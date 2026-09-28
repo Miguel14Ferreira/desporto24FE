@@ -14,6 +14,7 @@ export interface CommunityGroup {
   name: string;
   description: string | null;
   sport: string | null;
+  photoUrl: string | null;
   visibility: CommunityVisibility;
   rankingsEnabled: boolean;
   ownerUsername: string;
