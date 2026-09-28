@@ -321,3 +321,28 @@ input[type='datetime-local'] {
     flex-direction: column;
   }
 }
+
+
+.community-context {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding: .85rem 1rem;
+  border: 1px solid rgba(125, 211, 252, .22);
+  border-radius: .9rem;
+  background: rgba(125, 211, 252, .06);
+}
+
+.community-context > div {
+  display: grid;
+  gap: .2rem;
+}
+
+@media (max-width: 700px) {
+  .community-context {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
