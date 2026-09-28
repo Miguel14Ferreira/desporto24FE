@@ -36,9 +36,10 @@
             required>
         </label>
 
-        <label>
-          <span>{{ 'communityCreate.sport' | t }}</span>
+        <div class="field-group paired-field">
+          <label for="community-sport">{{ 'communityCreate.sport' | t }}</label>
           <select
+            id="community-sport"
             name="sport"
             [(ngModel)]="sport"
             [disabled]="saving">
@@ -47,23 +48,25 @@
               <option [value]="item">{{ item }}</option>
             }
           </select>
-        </label>
+          <small class="field-help field-help--empty" aria-hidden="true">&nbsp;</small>
+        </div>
 
-        <label>
-          <span>{{ 'communityCreate.privacy' | t }}</span>
+        <div class="field-group paired-field">
+          <label for="community-visibility">{{ 'communityCreate.privacy' | t }}</label>
           <select
+            id="community-visibility"
             name="visibility"
             [(ngModel)]="visibility"
             [disabled]="saving">
             <option value="PRIVATE">{{ 'communityCreate.private' | t }}</option>
             <option value="PUBLIC">{{ 'communityCreate.public' | t }}</option>
           </select>
-          <small>
+          <small class="field-help">
             {{ visibility === 'PRIVATE'
               ? ('communityCreate.privateHint' | t)
               : ('communityCreate.publicHint' | t) }}
           </small>
-        </label>
+        </div>
 
         <label class="full-width">
           <span>{{ 'communityCreate.description' | t }}</span>
