@@ -4,6 +4,7 @@ import { finalize } from 'rxjs';
 import { SessionSummary } from '../model/session-summary';
 import { appTranslate as t } from '../../i18n/i18n.service';
 import { SessionService } from '../../services/session.service';
+import { SPORTS_CATALOG } from '../../shared/sports-catalog';
 
 @Component({
   selector: 'app-events',
@@ -19,11 +20,19 @@ export class EventsComponent implements OnInit {
   errorMessage = '';
   locationError = '';
 
+  readonly sportsCatalog = SPORTS_CATALOG;
+
   sport = '';
   city = '';
   availableOnly = true;
   freeOnly = false;
   sort = 'date';
+
+  showAdvancedFilters = false;
+  fromDateTime = '';
+  toDateTime = '';
+  minPrice: number | null = null;
+  maxPrice: number | null = null;
 
   nearbyActive = false;
   radiusKm = 25;
@@ -40,6 +49,25 @@ export class EventsComponent implements OnInit {
     this.loading = true;
     this.errorMessage = '';
 
+    const from = this.toIsoOrUndefined(this.fromDateTime);
+    const to = this.toIsoOrUndefined(this.toDateTime);
+
+    if (from && to && new Date(from).getTime() > new Date(to).getTime()) {
+      this.loading = false;
+      this.errorMessage = t('feedback.events.invalidDateRange');
+      return;
+    }
+
+    if (
+      this.minPrice !== null
+      && this.maxPrice !== null
+      && this.minPrice > this.maxPrice
+    ) {
+      this.loading = false;
+      this.errorMessage = t('feedback.events.invalidPriceRange');
+      return;
+    }
+
     this.sessionService.discover({
       sport: this.sport,
       city: this.city,
@@ -48,7 +76,15 @@ export class EventsComponent implements OnInit {
       sort: this.sort,
       latitude: this.nearbyActive && this.latitude !== null ? this.latitude : undefined,
       longitude: this.nearbyActive && this.longitude !== null ? this.longitude : undefined,
-      radiusKm: this.nearbyActive ? this.radiusKm : undefined
+      radiusKm: this.nearbyActive ? this.radiusKm : undefined,
+      from,
+      to,
+      minPrice: this.freeOnly || this.minPrice === null
+        ? undefined
+        : Math.max(0, Number(this.minPrice)),
+      maxPrice: this.freeOnly || this.maxPrice === null
+        ? undefined
+        : Math.max(0, Number(this.maxPrice))
     })
     .pipe(finalize(() => this.loading = false))
     .subscribe({
@@ -102,12 +138,32 @@ export class EventsComponent implements OnInit {
     this.loadSessions();
   }
 
+  toggleAdvancedFilters(): void {
+    this.showAdvancedFilters = !this.showAdvancedFilters;
+  }
+
   clearFilters(): void {
     this.sport = '';
     this.city = '';
     this.availableOnly = true;
     this.freeOnly = false;
+    this.fromDateTime = '';
+    this.toDateTime = '';
+    this.minPrice = null;
+    this.maxPrice = null;
     this.sort = this.nearbyActive ? 'distance' : 'date';
+    this.errorMessage = '';
     this.loadSessions();
+  }
+
+  private toIsoOrUndefined(value: string): string | undefined {
+    if (!value) {
+      return undefined;
+    }
+
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime())
+      ? undefined
+      : parsed.toISOString();
   }
 }
