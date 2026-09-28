@@ -247,6 +247,106 @@
                     </button>
                   </section>
                 }
+
+                @if (competition?.settings?.rankingsEnabled) {
+                  <section class="season-dashboard">
+                    <div class="section-heading">
+                      <div>
+                        <span class="section-kicker">{{ 'communities.seasonsKicker' | t }}</span>
+                        <h3>{{ 'communities.seasonsTitle' | t }}</h3>
+                      </div>
+                      @if (activeSeason()) {
+                        <span class="competition-badge">
+                          {{ 'communities.activeSeason' | t }} · {{ activeSeason()?.name }}
+                        </span>
+                      }
+                    </div>
+
+                    @if (canManage()) {
+                      @if (!activeSeason()) {
+                        <div class="season-create-form">
+                          <label>
+                            <span>{{ 'communities.seasonName' | t }}</span>
+                            <input
+                              [(ngModel)]="seasonName"
+                              [placeholder]="'communities.seasonNamePlaceholder' | t">
+                          </label>
+                          <label>
+                            <span>{{ 'communities.seasonStart' | t }}</span>
+                            <input type="datetime-local" [(ngModel)]="seasonStartsAt">
+                          </label>
+                          <button
+                            type="button"
+                            class="primary-action"
+                            [disabled]="seasonSaving || !seasonName.trim()"
+                            (click)="createSeason()">
+                            {{ seasonSaving
+                              ? ('communities.creatingSeason' | t)
+                              : ('communities.createSeason' | t) }}
+                          </button>
+                        </div>
+                      } @else {
+                        <div class="active-season-card">
+                          <div>
+                            <strong>{{ activeSeason()?.name }}</strong>
+                            <span>{{ 'communities.activeSeasonHint' | t }}</span>
+                          </div>
+
+                          @if (!closeSeasonConfirming) {
+                            <button
+                              type="button"
+                              class="danger-action small"
+                              (click)="requestCloseSeason()">
+                              {{ 'communities.closeSeason' | t }}
+                            </button>
+                          } @else {
+                            <div class="season-close-confirmation">
+                              <span>{{ 'communities.closeSeasonConfirmText' | t }}</span>
+                              <div class="row-actions">
+                                <button
+                                  type="button"
+                                  class="danger-action small"
+                                  [disabled]="seasonSaving"
+                                  (click)="closeActiveSeason()">
+                                  {{ 'communities.confirmCloseSeason' | t }}
+                                </button>
+                                <button
+                                  type="button"
+                                  class="secondary-action small"
+                                  [disabled]="seasonSaving"
+                                  (click)="cancelCloseSeason()">
+                                  {{ 'common.cancel' | t }}
+                                </button>
+                              </div>
+                            </div>
+                          }
+                        </div>
+                      }
+                    }
+
+                    @if (trophies().length > 0) {
+                      <div class="trophies-grid">
+                        @for (season of trophies(); track season.id) {
+                          <article class="trophy-card">
+                            <span class="trophy-icon">🏆</span>
+                            <div>
+                              <strong>{{ season.name }}</strong>
+                              <span>
+                                {{ season.championDisplayName || season.championUsername }}
+                                · {{ season.championPoints }} {{ 'communities.pointsShort' | t }}
+                              </span>
+                            </div>
+                          </article>
+                        }
+                      </div>
+                    } @else {
+                      <div class="module-empty compact">
+                        <h3>{{ 'communities.noTrophies' | t }}</h3>
+                        <p>{{ 'communities.noTrophiesText' | t }}</p>
+                      </div>
+                    }
+                  </section>
+                }
               </section>
             }
 
@@ -306,6 +406,21 @@
                       <span class="section-kicker">{{ 'communities.competitionKicker' | t }}</span>
                       <h3>{{ 'communities.competitionResults' | t }}</h3>
                     </div>
+                    @if ((competition?.seasons?.length || 0) > 0) {
+                      <label class="season-filter">
+                        <span>{{ 'communities.seasonFilter' | t }}</span>
+                        <select
+                          [ngModel]="selectedSeasonId"
+                          (ngModelChange)="selectSeason($event === null ? '' : $event.toString())">
+                          <option [ngValue]="null">{{ 'communities.allTime' | t }}</option>
+                          @for (season of competition?.seasons || []; track season.id) {
+                            <option [ngValue]="season.id">
+                              {{ season.name }}{{ season.active ? ' · ' + ('communities.activeShort' | t) : '' }}
+                            </option>
+                          }
+                        </select>
+                      </label>
+                    }
                   </div>
 
                   @if (!competition?.settings?.rankingsEnabled) {
@@ -322,6 +437,16 @@
                             <h3>{{ 'communities.newRound' | t }}</h3>
                           </div>
                         </div>
+
+                        @if (activeSeason()) {
+                          <div class="season-round-hint">
+                            {{ 'communities.roundCountsFor' | t:{ season: activeSeason()?.name || '' } }}
+                          </div>
+                        } @else {
+                          <div class="season-round-hint muted">
+                            {{ 'communities.roundNoSeason' | t }}
+                          </div>
+                        }
 
                         <div class="round-meta-form">
                           <label>
@@ -346,6 +471,12 @@
 
                               @if (entry.included) {
                                 <div class="round-player-fields">
+                                  <label>
+                                    <span>{{ 'communities.team' | t }}</span>
+                                    <input
+                                      [(ngModel)]="entry.team"
+                                      [placeholder]="'communities.teamPlaceholder' | t">
+                                  </label>
                                   <label>
                                     <span>{{ 'communities.result' | t }}</span>
                                     <select [(ngModel)]="entry.result">
@@ -486,9 +617,26 @@
                       <span class="section-kicker">{{ 'communities.rankingKicker' | t }}</span>
                       <h3>{{ 'communities.rankingTitle' | t }}</h3>
                     </div>
-                    <span class="scoring-caption">
-                      {{ competition?.settings?.winPoints }}/{{ competition?.settings?.drawPoints }}/{{ competition?.settings?.lossPoints }}
-                    </span>
+                    <div class="section-heading-actions">
+                      @if ((competition?.seasons?.length || 0) > 0) {
+                        <label class="season-filter">
+                          <span>{{ 'communities.seasonFilter' | t }}</span>
+                          <select
+                            [ngModel]="selectedSeasonId"
+                            (ngModelChange)="selectSeason($event === null ? '' : $event.toString())">
+                            <option [ngValue]="null">{{ 'communities.allTime' | t }}</option>
+                            @for (season of competition?.seasons || []; track season.id) {
+                              <option [ngValue]="season.id">
+                                {{ season.name }}{{ season.active ? ' · ' + ('communities.activeShort' | t) : '' }}
+                              </option>
+                            }
+                          </select>
+                        </label>
+                      }
+                      <span class="scoring-caption">
+                        {{ competition?.settings?.winPoints }}/{{ competition?.settings?.drawPoints }}/{{ competition?.settings?.lossPoints }}
+                      </span>
+                    </div>
                   </div>
 
                   <div class="ranking-table-wrap">
@@ -544,6 +692,24 @@
                     <p>{{ 'communities.competitionDisabledText' | t }}</p>
                   </div>
                 } @else {
+                  @if ((competition?.seasons?.length || 0) > 0) {
+                    <div class="stats-filter-row">
+                      <label class="season-filter">
+                        <span>{{ 'communities.seasonFilter' | t }}</span>
+                        <select
+                          [ngModel]="selectedSeasonId"
+                          (ngModelChange)="selectSeason($event === null ? '' : $event.toString())">
+                          <option [ngValue]="null">{{ 'communities.allTime' | t }}</option>
+                          @for (season of competition?.seasons || []; track season.id) {
+                            <option [ngValue]="season.id">
+                              {{ season.name }}{{ season.active ? ' · ' + ('communities.activeShort' | t) : '' }}
+                            </option>
+                          }
+                        </select>
+                      </label>
+                    </div>
+                  }
+
                   <div class="stats-grid">
                     <article class="stat-card">
                       <span>{{ 'communities.stat.leader' | t }}</span>
