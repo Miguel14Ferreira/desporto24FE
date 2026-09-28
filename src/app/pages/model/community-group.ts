@@ -62,6 +62,17 @@ export interface CommunityRound {
   entries: CommunityRoundEntry[];
 }
 
+export interface CommunitySeason {
+  id: number;
+  name: string;
+  startsAt: string;
+  endedAt: string | null;
+  active: boolean;
+  championUsername: string | null;
+  championDisplayName: string | null;
+  championPoints: number | null;
+}
+
 export interface CommunityStanding {
   position: number;
   profileId: number;
@@ -84,6 +95,9 @@ export interface CommunityStanding {
 
 export interface CommunityCompetitionOverview {
   settings: CommunityCompetitionSettings;
+  seasons: CommunitySeason[];
+  selectedSeasonId: number | null;
+  activeSeasonId: number | null;
   rounds: CommunityRound[];
   standings: CommunityStanding[];
 }
