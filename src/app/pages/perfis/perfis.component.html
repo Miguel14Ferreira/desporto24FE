@@ -137,6 +137,22 @@
             }
           </div>
 
+          @if (selectedFollowStatus) {
+            <section class="social-summary">
+              <div>
+                <strong>{{ selectedFollowStatus.followers }}</strong>
+                <span>{{ 'social.followers' | t }}</span>
+              </div>
+              <div>
+                <strong>{{ selectedFollowStatus.following }}</strong>
+                <span>{{ 'social.following' | t }}</span>
+              </div>
+              @if (!isOwnProfile(selectedProfile) && selectedFollowStatus.followsMe) {
+                <span class="follows-you-badge">{{ 'social.followsYou' | t }}</span>
+              }
+            </section>
+          }
+
           @if (selectedActivity) {
             <section class="public-activity">
               <span class="section-kicker">{{ 'profileData.activityKicker' | t }}</span>
@@ -158,6 +174,23 @@
           }
 
           <div class="detail-actions">
+            @if (!isOwnProfile(selectedProfile)) {
+              <button
+                type="button"
+                class="follow-action"
+                [class.following]="selectedFollowStatus?.followedByMe"
+                [disabled]="followLoading"
+                (click)="toggleFollow(selectedProfile)">
+                @if (followLoading) {
+                  {{ 'common.processing' | t }}
+                } @else if (selectedFollowStatus?.followedByMe) {
+                  {{ 'social.following' | t }}
+                } @else {
+                  {{ 'social.follow' | t }}
+                }
+              </button>
+            }
+
             @if (isOwnProfile(selectedProfile)) {
               <span>{{ 'community.ownProfile' | t }}</span>
             } @else if (isFriend(selectedProfile)) {
