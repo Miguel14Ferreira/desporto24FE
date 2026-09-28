@@ -7,6 +7,7 @@ import { environment } from 'src/environment/environment';
 import { MyProfile, UpdateMyProfileRequest } from '../model/my-profile';
 import { MfaSetupResponse, MyProfileService } from '../../services/my-profile.service';
 import { SPORTS_CATALOG } from '../../shared/sports-catalog';
+import { COUNTRY_CALLING_CODES, countryNameFromLabel } from '../../shared/country-calling-codes';
 
 @Component({
   selector: 'app-alterardados',
@@ -35,6 +36,7 @@ export class AlterardadosComponent implements OnInit {
   sportQuery = '';
   selectedSports: string[] = [];
   readonly sportsCatalog = SPORTS_CATALOG;
+  readonly countryOptions = COUNTRY_CALLING_CODES;
   private toastTimer?: ReturnType<typeof setTimeout>;
 
   readonly maxBirthDate = this.dateYearsAgo(18);
@@ -55,6 +57,12 @@ export class AlterardadosComponent implements OnInit {
       .subscribe({
         next: profile => {
           this.profile = { ...profile };
+          if (!this.profile.indicativePhone) {
+            const matchingCountry = this.countryOptions.find(
+              item => this.countryName(item.label) === this.profile?.country
+            );
+            this.profile.indicativePhone = matchingCountry?.code ?? '351';
+          }
           this.photoPreview = this.profileImage(profile) || '';
           this.selectedSports = (profile.favoriteSports || '')
             .split(',')
@@ -71,26 +79,50 @@ export class AlterardadosComponent implements OnInit {
       return;
     }
 
-    if (!this.profile.email?.trim()) {
-      this.errorMessage = t('feedback.profile.emailRequired');
+    if (
+      !this.profile.email?.trim()
+      || !this.profile.dateOfBirth?.trim()
+      || !this.profile.country?.trim()
+    ) {
+      this.errorMessage = t('feedback.register.required');
       return;
     }
 
-    if (this.profile.dateOfBirth && !this.isAdultBirthDate(this.profile.dateOfBirth)) {
+    if (!this.profile.email.includes('@')) {
+      this.errorMessage = t('feedback.contact.invalidEmail');
+      return;
+    }
+
+    if (!this.isAdultBirthDate(this.profile.dateOfBirth)) {
       this.errorMessage = t('feedback.register.minimumAge');
       return;
     }
 
+    const normalizedPhone = (this.profile.phone || '').replace(/\D/g, '');
+    if (
+      this.profile.phone?.trim()
+      && (normalizedPhone.length < 4 || normalizedPhone.length > 15)
+    ) {
+      this.errorMessage = t('feedback.register.invalidPhone');
+      return;
+    }
+
+    if (normalizedPhone && !this.profile.indicativePhone?.trim()) {
+      this.errorMessage = t('feedback.register.invalidPhone');
+      return;
+    }
+
     const request: UpdateMyProfileRequest = {
+      // Legacy fields are preserved even though they are no longer part of the current account form.
       fullName: this.clean(this.profile.fullName),
       nickname: this.clean(this.profile.nickname),
-      dateOfBirth: this.clean(this.profile.dateOfBirth),
+      dateOfBirth: this.profile.dateOfBirth,
       address: this.clean(this.profile.address),
-      country: this.clean(this.profile.country),
+      country: this.profile.country.trim(),
       location: this.clean(this.profile.location),
       postalCode: this.clean(this.profile.postalCode),
-      indicativePhone: this.clean(this.profile.indicativePhone),
-      phone: this.clean(this.profile.phone),
+      indicativePhone: normalizedPhone ? this.clean(this.profile.indicativePhone) : null,
+      phone: normalizedPhone || null,
       gender: this.clean(this.profile.gender),
       email: this.profile.email.trim(),
       favoriteSports: this.clean(this.profile.favoriteSports),
@@ -117,6 +149,10 @@ export class AlterardadosComponent implements OnInit {
           );
         }
       });
+  }
+
+  countryName(label: string): string {
+    return countryNameFromLabel(label);
   }
 
   get sportSuggestions(): string[] {
@@ -210,7 +246,7 @@ export class AlterardadosComponent implements OnInit {
           this.mfaSetupCode = '';
         },
         error: error => {
-          this.errorMessage = this.errorFrom(error, 'Não foi possível iniciar a configuração MFA.');
+          this.errorMessage = this.errorFrom(error, t('feedback.profile.mfaSetupError'));
         }
       });
   }
@@ -218,7 +254,7 @@ export class AlterardadosComponent implements OnInit {
   confirmMfaSetup(): void {
     const code = this.mfaSetupCode.trim();
     if (!/^\d{6}$/.test(code) || this.mfaConfirming) {
-      this.errorMessage = 'Introduz o código de 6 dígitos da tua aplicação Authenticator.';
+      this.errorMessage = t('feedback.profile.mfaCodeRequired');
       return;
     }
 
@@ -232,10 +268,10 @@ export class AlterardadosComponent implements OnInit {
           this.profile = { ...updated };
           this.mfaSetup = undefined;
           this.mfaSetupCode = '';
-          this.showToast('Autenticação multifator ativada com sucesso.');
+          this.showToast(t('feedback.profile.mfaEnabled'));
         },
         error: error => {
-          this.errorMessage = this.errorFrom(error, 'Código MFA inválido.');
+          this.errorMessage = this.errorFrom(error, t('feedback.profile.mfaInvalidCode'));
         }
       });
   }
@@ -264,16 +300,16 @@ export class AlterardadosComponent implements OnInit {
           this.mfaSetupCode = '';
           this.showToast(
             wasActive
-              ? 'Autenticação multifator desativada.'
-              : 'Configuração MFA cancelada.'
+              ? t('feedback.profile.mfaDisabled')
+              : t('feedback.profile.mfaCancelled')
           );
         },
         error: error => {
           this.errorMessage = this.errorFrom(
             error,
             wasActive
-              ? 'Não foi possível desativar o MFA.'
-              : 'Não foi possível cancelar a configuração MFA.'
+              ? t('feedback.profile.mfaDisableError')
+              : t('feedback.profile.mfaCancelError')
           );
         }
       });
