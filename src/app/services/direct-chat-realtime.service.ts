@@ -4,10 +4,11 @@ import { JwtHelperService } from '@auth0/angular-jwt';
 
 import { environment } from 'src/environment/environment';
 import { DirectChatMessage } from '../pages/model/direct-chat';
+import { SessionMessage } from '../pages/model/session-message';
 
 interface ChatSocketEnvelope {
   type?: string;
-  message?: DirectChatMessage;
+  message?: DirectChatMessage | SessionMessage;
 }
 
 @Injectable({
@@ -20,9 +21,11 @@ export class DirectChatRealtimeService {
   private readonly jwtHelper = new JwtHelperService();
 
   private readonly messageSubject = new Subject<DirectChatMessage>();
+  private readonly sessionMessageSubject = new Subject<SessionMessage>();
   private readonly connectedSubject = new BehaviorSubject<boolean>(false);
 
   readonly messages$ = this.messageSubject.asObservable();
+  readonly sessionMessages$ = this.sessionMessageSubject.asObservable();
   readonly connected$ = this.connectedSubject.asObservable();
 
   connect(): void {
@@ -65,7 +68,12 @@ export class DirectChatRealtimeService {
         }
 
         if (envelope.type === 'CHAT_MESSAGE' && envelope.message) {
-          this.messageSubject.next(envelope.message);
+          this.messageSubject.next(envelope.message as DirectChatMessage);
+          return;
+        }
+
+        if (envelope.type === 'SESSION_CHAT_MESSAGE' && envelope.message) {
+          this.sessionMessageSubject.next(envelope.message as SessionMessage);
         }
       } catch {
         // Ignore malformed realtime events; HTTP history remains authoritative.
