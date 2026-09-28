@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
+import { appTranslate as t } from '../../i18n/i18n.service';
 
 import { CommunityVisibility } from '../model/community-group';
 import { CommunityGroupsService } from '../../services/community-groups.service';
@@ -53,7 +54,7 @@ export class CommunityCreateComponent {
         },
         error: error => {
           this.errorMessage =
-            error.error?.message || 'Não foi possível criar a comunidade.';
+            error.error?.message || t('communityCreate.error');
         }
       });
   }
