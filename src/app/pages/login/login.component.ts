@@ -6,6 +6,12 @@ import { finalize } from 'rxjs';
 
 import { AuthenticationService } from '../../services/authethication.service';
 
+declare global {
+  interface Window {
+    google?: any;
+  }
+}
+
 @Component({
   selector: 'app-login',
   templateUrl: './login.component.html',
@@ -13,12 +19,6 @@ import { AuthenticationService } from '../../services/authethication.service';
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false
 })
-declare global {
-  interface Window {
-    google?: any;
-  }
-}
-
 export class LoginComponent implements OnInit, AfterViewInit {
   username = '';
   password = '';
