@@ -123,9 +123,9 @@ export class LoginMFAComponent implements OnInit, OnDestroy {
           this.challengeId = response.challengeId;
           sessionStorage.setItem('mfa-challenge-id', response.challengeId);
 
-          if (response.expiresAt) {
-            this.expiresAt = response.expiresAt;
-            sessionStorage.setItem('mfa-expires-at', response.expiresAt);
+          if (response.challengeExpiresAt) {
+            this.expiresAt = response.challengeExpiresAt;
+            sessionStorage.setItem('mfa-expires-at', response.challengeExpiresAt);
             this.startCountdown();
           } else {
             this.expiresAt = '';
