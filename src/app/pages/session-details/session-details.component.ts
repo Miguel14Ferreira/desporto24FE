@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { JwtHelperService } from '@auth0/angular-jwt';
-import { finalize, interval, Subscription } from 'rxjs';
+import { finalize, Subscription } from 'rxjs';
 
 import { environment } from 'src/environment/environment';
 import { SessionDetail } from '../model/session-detail';
@@ -12,6 +12,7 @@ import { ReliabilitySummary } from '../model/reliability-summary';
 import { SessionParticipant } from '../model/session-participant';
 import { JoinSessionResponse, SessionService } from '../../services/session.service';
 import { ReliabilityService } from '../../services/reliability.service';
+import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.service';
 
 @Component({
   selector: 'app-session-details',
@@ -55,12 +56,13 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
   private sessionId?: number;
   private currentUsername: string | null = null;
   private readonly jwtHelper = new JwtHelperService();
-  private readonly chatRefreshSubscription = new Subscription();
+  private readonly realtimeSubscriptions = new Subscription();
 
   constructor(
     private route: ActivatedRoute,
     private sessionService: SessionService,
-    private reliabilityService: ReliabilityService
+    private reliabilityService: ReliabilityService,
+    private realtimeService: DirectChatRealtimeService
   ) {}
 
   ngOnInit(): void {
@@ -74,10 +76,27 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
 
     this.sessionId = id;
     this.loadSession();
+    this.realtimeService.connect();
 
-    this.chatRefreshSubscription.add(
-      interval(5000).subscribe(() => {
-        if (this.canAccessChat() && !this.chatLoading && !this.messageSending) {
+    this.realtimeSubscriptions.add(
+      this.realtimeService.sessionMessages$.subscribe(message => {
+        if (message.sessionId !== this.sessionId) {
+          return;
+        }
+
+        const alreadyPresent = this.messages.some(existing => existing.id === message.id);
+        if (!alreadyPresent) {
+          const alreadyPresent = this.messages.some(existing => existing.id === message.id);
+          if (!alreadyPresent) {
+            this.messages = this.sortedMessages([...this.messages, message]);
+          }
+        }
+      })
+    );
+
+    this.realtimeSubscriptions.add(
+      this.realtimeService.connected$.subscribe(connected => {
+        if (connected && this.canAccessChat()) {
           this.refreshMessages(false);
         }
       })
@@ -85,7 +104,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.chatRefreshSubscription.unsubscribe();
+    this.realtimeSubscriptions.unsubscribe();
   }
 
   joinSession(): void {
