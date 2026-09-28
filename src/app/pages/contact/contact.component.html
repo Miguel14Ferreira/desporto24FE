@@ -14,10 +14,9 @@
     </header>
 
     <div class="contact-note">
-      <strong>A tua ideia vai diretamente para a equipa DESPORTO24.</strong>
+      <strong>{{ 'contact.noteTitle' | t }}</strong>
       <p>
-        Guardamos a sugestão para acompanhamento no painel de administração e enviamos também um aviso à equipa.
-        Se preferires falar connosco diretamente, escreve para
+        {{ 'contact.noteText' | t }}
         <a href="mailto:desporto24app@gmail.com">desporto24app@gmail.com</a>.
       </p>
     </div>
@@ -30,7 +29,7 @@
       <div class="feedback success-feedback">{{ successMessage }}</div>
     }
 
-    <form class="contact-card" (ngSubmit)="submit()">
+    <form class="contact-card" (ngSubmit)="submit()" novalidate>
       <div class="form-grid">
         <label>
           <span>{{ 'contact.name' | t }} *</span>
@@ -38,16 +37,12 @@
             name="name"
             [(ngModel)]="name"
             autocomplete="name"
-            [disabled]="loading">
-        </label>
-
-        <label>
-          <span>{{ 'common.location' | t }} *</span>
-          <input
-            name="city"
-            [(ngModel)]="city"
-            autocomplete="address-level2"
-            [disabled]="loading">
+            [disabled]="loading"
+            [attr.aria-invalid]="fieldErrors.name ? 'true' : 'false'"
+            (input)="clearFieldError('name')">
+          @if (fieldErrors.name) {
+            <small class="field-error">{{ fieldErrors.name }}</small>
+          }
         </label>
 
         <label>
@@ -57,28 +52,30 @@
             name="email"
             [(ngModel)]="email"
             autocomplete="email"
-            [disabled]="loading">
-        </label>
-
-        <label>
-          <span>{{ 'common.gender' | t }} *</span>
-          <select name="gender" [(ngModel)]="gender" [disabled]="loading">
-            <option value="">{{ 'register.select' | t }}</option>
-            <option value="masculino">{{ 'register.male' | t }}</option>
-            <option value="feminino">{{ 'register.female' | t }}</option>
-            <option value="outro">{{ 'register.other' | t }}</option>
-            <option value="prefiro-nao-dizer">{{ 'contact.preferNotSay' | t }}</option>
-          </select>
+            [disabled]="loading"
+            [attr.aria-invalid]="fieldErrors.email ? 'true' : 'false'"
+            (input)="clearFieldError('email')">
+          @if (fieldErrors.email) {
+            <small class="field-error">{{ fieldErrors.email }}</small>
+          }
         </label>
 
         <label class="full-width">
-          <span>{{ 'contact.subject' | t }} *</span>
-          <input
-            name="subject"
-            [(ngModel)]="subject"
-            maxlength="160"
+          <span>{{ 'contact.category' | t }} *</span>
+          <select
+            name="category"
+            [(ngModel)]="category"
             [disabled]="loading"
-            [placeholder]="'contact.subjectPlaceholder' | t">
+            [attr.aria-invalid]="fieldErrors.category ? 'true' : 'false'"
+            (change)="clearFieldError('category')">
+            <option value="">{{ 'contact.categoryPlaceholder' | t }}</option>
+            @for (categoryKey of categories; track categoryKey) {
+              <option [value]="categoryKey">{{ categoryKey | t }}</option>
+            }
+          </select>
+          @if (fieldErrors.category) {
+            <small class="field-error">{{ fieldErrors.category }}</small>
+          }
         </label>
 
         <label class="full-width">
@@ -89,8 +86,17 @@
             maxlength="4000"
             rows="8"
             [disabled]="loading"
+            [attr.aria-invalid]="fieldErrors.problem ? 'true' : 'false'"
+            (input)="clearFieldError('problem')"
             [placeholder]="'contact.messagePlaceholder' | t"></textarea>
-          <small>{{ problem.length }}/4000</small>
+          <div class="field-footer">
+            @if (fieldErrors.problem) {
+              <small class="field-error">{{ fieldErrors.problem }}</small>
+            } @else {
+              <span></span>
+            }
+            <small>{{ problem.length }}/4000</small>
+          </div>
         </label>
       </div>
 
