@@ -167,3 +167,27 @@ small {
     grid-column: auto;
   }
 }
+
+
+.contact-note {
+  margin-bottom: 1rem;
+  border: 1px solid rgba(125,211,252,.2);
+  border-radius: 1rem;
+  padding: 1rem;
+  background: rgba(125,211,252,.06);
+}
+
+.contact-note strong {
+  color: #f8fafc;
+}
+
+.contact-note p {
+  margin: .45rem 0 0;
+  color: #cbd5e1;
+  line-height: 1.55;
+}
+
+.contact-note a {
+  color: #7dd3fc;
+  font-weight: 800;
+}
