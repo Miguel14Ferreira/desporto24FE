@@ -7,9 +7,11 @@ import { environment } from 'src/environment/environment';
 import { CommunityProfile } from '../model/community-profile';
 import { ReliabilitySummary } from '../model/reliability-summary';
 import { ProfileActivity } from '../model/my-profile';
+import { FollowStatus } from '../model/follow';
 import { CommunityService } from '../../services/community.service';
 import { AuthenticationService } from '../../services/authethication.service';
 import { ReliabilityService } from '../../services/reliability.service';
+import { SocialGraphService } from '../../services/social-graph.service';
 
 @Component({
   selector: 'app-perfis',
@@ -24,9 +26,11 @@ export class PerfisComponent implements OnInit {
   selectedProfile?: CommunityProfile;
   selectedReliability?: ReliabilitySummary;
   selectedActivity?: ProfileActivity;
+  selectedFollowStatus?: FollowStatus;
 
   loading = false;
   actionLoading = false;
+  followLoading = false;
   searched = false;
 
   errorMessage = '';
@@ -40,7 +44,8 @@ export class PerfisComponent implements OnInit {
   constructor(
     private communityService: CommunityService,
     private authenticationService: AuthenticationService,
-    private reliabilityService: ReliabilityService
+    private reliabilityService: ReliabilityService,
+    private socialGraphService: SocialGraphService
   ) {
     this.authenticationService.isLoggedIn();
     this.currentUsername = this.authenticationService.loggedInPerfilname || '';
@@ -124,6 +129,7 @@ export class PerfisComponent implements OnInit {
     this.selectedProfile = profile;
     this.selectedReliability = undefined;
     this.selectedActivity = undefined;
+    this.selectedFollowStatus = undefined;
     this.actionError = '';
     this.actionSuccess = '';
 
@@ -131,10 +137,13 @@ export class PerfisComponent implements OnInit {
       reliability: this.reliabilityService.summary(profile.username)
         .pipe(catchError(() => of(undefined))),
       activity: this.reliabilityService.activity(profile.username)
+        .pipe(catchError(() => of(undefined))),
+      followStatus: this.socialGraphService.status(profile.username)
         .pipe(catchError(() => of(undefined)))
-    }).subscribe(({ reliability, activity }) => {
+    }).subscribe(({ reliability, activity, followStatus }) => {
       this.selectedReliability = reliability;
       this.selectedActivity = activity;
+      this.selectedFollowStatus = followStatus;
     });
   }
 
@@ -142,6 +151,41 @@ export class PerfisComponent implements OnInit {
     this.selectedProfile = undefined;
     this.selectedReliability = undefined;
     this.selectedActivity = undefined;
+    this.selectedFollowStatus = undefined;
+  }
+
+  toggleFollow(profile: CommunityProfile): void {
+    if (
+      this.followLoading
+      || this.isOwnProfile(profile)
+    ) {
+      return;
+    }
+
+    this.followLoading = true;
+    this.actionError = '';
+    this.actionSuccess = '';
+
+    const request$ = this.selectedFollowStatus?.followedByMe
+      ? this.socialGraphService.unfollow(profile.username)
+      : this.socialGraphService.follow(profile.username);
+
+    request$
+      .pipe(finalize(() => this.followLoading = false))
+      .subscribe({
+        next: status => {
+          this.selectedFollowStatus = status;
+          this.actionSuccess = status.followedByMe
+            ? t('feedback.social.followed', { username: profile.username })
+            : t('feedback.social.unfollowed', { username: profile.username });
+        },
+        error: error => {
+          this.actionError = this.errorFrom(
+            error,
+            t('feedback.social.followError')
+          );
+        }
+      });
   }
 
   sendFriendRequest(profile: CommunityProfile): void {
