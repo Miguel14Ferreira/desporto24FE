@@ -340,13 +340,7 @@
                   <h2>{{ 'sessionDetail.sessionChat' | t }}</h2>
                   <p>{{ 'sessionDetail.sessionChatText' | t }}</p>
                 </div>
-                <button
-                  type="button"
-                  class="refresh-chat"
-                  [disabled]="chatLoading"
-                  (click)="refreshMessages()">
-                  {{ chatLoading ? ('chat.refreshing' | t) : ('chat.refresh' | t) }}
-                </button>
+                <span class="sync-status">{{ 'chat.autoRefresh' | t }}</span>
               </div>
 
               @if (chatError) {
@@ -364,7 +358,7 @@
                     [class.own-message]="isOwnMessage(message)">
                     <div class="message-meta">
                       <strong>{{ message.senderUsername }}</strong>
-                      <span>{{ message.createdAt | date:'dd/MM HH:mm' }}</span>
+                      <span>{{ messageDate(message) }}</span>
                     </div>
                     <p>{{ message.body }}</p>
                   </article>
@@ -380,23 +374,49 @@
                     maxlength="2000"
                     rows="3"
                     [disabled]="messageSending"
-                    [placeholder]="'sessionDetail.groupPlaceholder' | t"></textarea>
+                    [placeholder]="'sessionDetail.groupPlaceholder' | t"
+                    (keydown.enter)="onChatEnter($event)"></textarea>
                 </label>
 
+                <div class="composer-tools">
+                  <div class="emoji-wrap">
+                    <button
+                      type="button"
+                      class="emoji-toggle"
+                      [attr.aria-expanded]="showEmojiPicker"
+                      [disabled]="messageSending"
+                      (click)="toggleEmojiPicker()">
+                      😊 {{ 'chat.emoji' | t }}
+                    </button>
+
+                    @if (showEmojiPicker) {
+                      <div class="emoji-picker">
+                        @for (emoji of emojis; track emoji) {
+                          <button type="button" class="emoji-option" (click)="addEmoji(emoji)">
+                            {{ emoji }}
+                          </button>
+                        }
+                      </div>
+                    }
+                  </div>
+
+                  <span class="character-count">{{ messageBody.length }}/2000</span>
+                </div>
+
                 <div class="composer-footer">
-                  <span>{{ messageBody.length }}/2000</span>
+                  <span>{{ 'chat.autoRefreshHint' | t }}</span>
                   <button
                     type="submit"
                     class="primary-action"
                     [disabled]="messageSending || !messageBody.trim()">
-                    {{ messageSending ? ('chat.sending' | t) : ('sessionDetail.sendMessage' | t) }}
+                    {{ messageSending ? ('chat.sending' | t) : ('chat.send' | t) }}
                   </button>
                 </div>
               </form>
             </section>
           } @else if (!session.waitlisted) {
             <section class="chat-locked">
-              <h2>Chat da sessão</h2>
+              <h2>{{ 'sessionDetail.sessionChat' | t }}</h2>
               <p>{{ 'sessionDetail.chatLocked' | t }}</p>
             </section>
           }
