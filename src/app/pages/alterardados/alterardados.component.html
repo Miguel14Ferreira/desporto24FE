@@ -86,6 +86,11 @@
           </label>
 
           <label>
+            <span>Alcunha</span>
+            <input name="nickname" [(ngModel)]="profile.nickname" maxlength="80" [disabled]="saving">
+          </label>
+
+          <label>
             <span>{{ 'profile.birthDate' | t }}</span>
             <input type="date" name="dateOfBirth" [(ngModel)]="profile.dateOfBirth" [min]="minBirthDate" [max]="maxBirthDate" [disabled]="saving">
           </label>
