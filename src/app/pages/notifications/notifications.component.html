@@ -10,6 +10,38 @@
       </div>
 
       <div class="header-actions">
+        @if (!loading && notifications.length > 0) {
+          @if (!clearAllConfirming) {
+            <button
+              type="button"
+              class="clear-all-action"
+              [disabled]="clearAllLoading"
+              (click)="requestClearAll()">
+              {{ 'notifications.clearAll' | t }}
+            </button>
+          } @else {
+            <div class="clear-all-confirmation">
+              <span>{{ 'notifications.clearAllQuestion' | t }}</span>
+              <button
+                type="button"
+                class="danger-action"
+                [disabled]="clearAllLoading"
+                (click)="clearAllNotifications()">
+                {{ clearAllLoading
+                  ? ('notifications.clearingAll' | t)
+                  : ('notifications.clearAllConfirm' | t) }}
+              </button>
+              <button
+                type="button"
+                class="secondary-button"
+                [disabled]="clearAllLoading"
+                (click)="cancelClearAll()">
+                {{ 'common.cancel' | t }}
+              </button>
+            </div>
+          }
+        }
+
         <a class="secondary-action" routerLink="/menu/events">{{ 'common.sessions' | t }}</a>
       </div>
     </header>
