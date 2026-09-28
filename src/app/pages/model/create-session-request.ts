@@ -9,4 +9,5 @@ export interface CreateSessionRequest {
   password: string | null;
   latitude: number | null;
   longitude: number | null;
+  communityId?: number | null;
 }
