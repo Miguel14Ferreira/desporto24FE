@@ -100,7 +100,10 @@ export class MenuComponent implements OnInit {
   }
 
   initials(): string {
-    const source = this.profile?.fullName?.trim() || this.profile?.username || '?';
+    const source = this.profile?.nickname?.trim()
+      || this.profile?.fullName?.trim()
+      || this.profile?.username
+      || '?';
 
     return source
       .split(/\s+/)
