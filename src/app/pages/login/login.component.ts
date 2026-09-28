@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { appTranslate as t } from '../../i18n/i18n.service';
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, NgZone, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { finalize } from 'rxjs';
 
@@ -13,7 +13,13 @@ import { AuthenticationService } from '../../services/authethication.service';
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false
 })
-export class LoginComponent implements OnInit {
+declare global {
+  interface Window {
+    google?: any;
+  }
+}
+
+export class LoginComponent implements OnInit, AfterViewInit {
   username = '';
   password = '';
   showPassword = false;
@@ -24,6 +30,8 @@ export class LoginComponent implements OnInit {
   canResendConfirmation = false;
   resendLoading = false;
   resendCooldownSeconds = 0;
+  googleLoading = false;
+  googleReady = false;
 
   private resendCooldownTimer?: ReturnType<typeof setInterval>;
 
@@ -32,7 +40,8 @@ export class LoginComponent implements OnInit {
   constructor(
     private router: Router,
     private route: ActivatedRoute,
-    private authenticationService: AuthenticationService
+    private authenticationService: AuthenticationService,
+    private ngZone: NgZone
   ) {}
 
   ngOnInit(): void {
@@ -46,6 +55,125 @@ export class LoginComponent implements OnInit {
     if (this.authenticationService.hasValidToken()) {
       this.router.navigateByUrl(this.returnUrl);
     }
+  }
+
+  ngAfterViewInit(): void {
+    this.authenticationService.googleConfig().subscribe({
+      next: config => {
+        if (!config.clientId?.trim()) {
+          return;
+        }
+
+        this.loadGoogleIdentityScript(config.clientId.trim());
+      }
+    });
+  }
+
+  private loadGoogleIdentityScript(clientId: string): void {
+    const initialize = () => {
+      if (!window.google?.accounts?.id) {
+        return;
+      }
+
+      window.google.accounts.id.initialize({
+        client_id: clientId,
+        callback: (response: { credential?: string }) => {
+          this.ngZone.run(() => this.handleGoogleCredential(response.credential || ''));
+        }
+      });
+
+      const host = document.getElementById('google-signin-button');
+      if (!host) {
+        return;
+      }
+
+      host.innerHTML = '';
+      window.google.accounts.id.renderButton(host, {
+        theme: 'outline',
+        size: 'large',
+        width: 340,
+        text: 'continue_with',
+        shape: 'rectangular'
+      });
+      this.googleReady = true;
+    };
+
+    if (window.google?.accounts?.id) {
+      initialize();
+      return;
+    }
+
+    const existing = document.querySelector<HTMLScriptElement>(
+      'script[src="https://accounts.google.com/gsi/client"]'
+    );
+    if (existing) {
+      existing.addEventListener('load', initialize, { once: true });
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    script.onload = initialize;
+    document.head.appendChild(script);
+  }
+
+  private handleGoogleCredential(credential: string): void {
+    if (!credential || this.googleLoading) {
+      return;
+    }
+
+    this.googleLoading = true;
+    this.errorMessage = '';
+
+    this.authenticationService.googleLogin(credential)
+      .pipe(finalize(() => this.googleLoading = false))
+      .subscribe({
+        next: response => {
+          if (response.onboardingRequired) {
+            sessionStorage.setItem('google-onboarding-credential', credential);
+            sessionStorage.setItem('google-onboarding-email', response.email || '');
+            sessionStorage.setItem('google-onboarding-name', response.fullName || '');
+            sessionStorage.setItem('google-onboarding-picture', response.pictureUrl || '');
+            this.router.navigate(['/login/google/complete-profile']);
+            return;
+          }
+
+          if (response.mfaRequired) {
+            if (!response.challengeId) {
+              this.errorMessage = 'Não foi possível iniciar a autenticação multifator.';
+              return;
+            }
+
+            sessionStorage.setItem('mfa-challenge-id', response.challengeId);
+            sessionStorage.setItem('mfa-return-url', this.returnUrl);
+
+            if (response.challengeExpiresAt) {
+              sessionStorage.setItem('mfa-expires-at', response.challengeExpiresAt);
+            } else {
+              sessionStorage.removeItem('mfa-expires-at');
+            }
+
+            this.router.navigate(['/login/MFAauthentication', 'google']);
+            return;
+          }
+
+          if (!response.token) {
+            this.errorMessage = 'Não foi possível concluir o login com Google.';
+            return;
+          }
+
+          this.authenticationService.saveToken(response.token);
+          this.router.navigateByUrl(this.returnUrl);
+        },
+        error: error => {
+          this.errorMessage = this.errorFrom(
+            error,
+            'Não foi possível iniciar sessão com Google.'
+          );
+        }
+      });
   }
 
   onLogin(): void {
