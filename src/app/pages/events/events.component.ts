@@ -138,6 +138,14 @@ export class EventsComponent implements OnInit {
     this.loadSessions();
   }
 
+  get citySuggestions(): string[] {
+    return [...new Set(
+      this.sessions
+        .map(session => session.city?.trim())
+        .filter((city): city is string => Boolean(city))
+    )].sort((a, b) => a.localeCompare(b, 'pt'));
+  }
+
   toggleAdvancedFilters(): void {
     this.showAdvancedFilters = !this.showAdvancedFilters;
   }
