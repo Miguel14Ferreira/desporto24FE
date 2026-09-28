@@ -14,6 +14,7 @@ import {
   CommunityStanding
 } from '../model/community-group';
 import { CommunityGroupsService } from '../../services/community-groups.service';
+import { SessionSummary } from '../model/session-summary';
 
 type CommunityTab = 'home' | 'sessions' | 'ranking' | 'stats' | 'members';
 
@@ -29,10 +30,12 @@ export class CommunitiesComponent implements OnInit {
   invites: CommunityInvite[] = [];
   selected?: CommunityGroup;
   competition?: CommunityCompetitionOverview;
+  communitySessions: SessionSummary[] = [];
 
   loading = false;
   saving = false;
   competitionLoading = false;
+  sessionsLoading = false;
   competitionSaving = false;
   roundSaving = false;
   errorMessage = '';
@@ -106,6 +109,7 @@ export class CommunitiesComponent implements OnInit {
         this.roundDeleteConfirmId = undefined;
         this.prepareRoundEntries(full);
         this.loadCompetition(full);
+        this.loadCommunitySessions(full);
       },
       error: () => this.errorMessage = t('feedback.communities.openError')
     });
@@ -302,6 +306,7 @@ export class CommunitiesComponent implements OnInit {
         this.activeTab = 'home';
         this.prepareRoundEntries(community);
         this.loadCompetition(community);
+        this.loadCommunitySessions(community);
       },
       error: () => this.errorMessage = t('feedback.communities.acceptError')
     });
@@ -351,6 +356,7 @@ export class CommunitiesComponent implements OnInit {
         this.communities = this.communities.filter(item => item.id !== id);
         this.selected = undefined;
         this.competition = undefined;
+        this.communitySessions = [];
       },
       error: error => this.errorMessage = error.error?.message || t('feedback.communities.leaveError')
     });
@@ -489,6 +495,7 @@ export class CommunitiesComponent implements OnInit {
         this.replaceCommunity(community);
         this.prepareRoundEntries(community);
         this.loadCompetition(community);
+        this.loadCommunitySessions(community);
       }
     });
   }
