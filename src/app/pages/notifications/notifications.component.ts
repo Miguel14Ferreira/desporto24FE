@@ -112,17 +112,22 @@ export class NotificationsComponent implements OnInit {
   }
 
   canProtectAccount(notification: AppNotification): boolean {
+    if (notification.updateProfile) {
+      return true;
+    }
+
     const subject = (notification.subject || '').toLocaleLowerCase();
     const message = (notification.message || '').toLocaleLowerCase();
     const content = subject + ' ' + message;
 
-    return (
-      content.includes('autenticação multifator')
-      && content.includes('desativ')
-    ) || (
-      content.includes('multi-factor authentication')
-      && content.includes('disabled')
-    );
+    return content.includes('palavra-passe alterada')
+      || content.includes('password changed')
+      || content.includes('alteração de email')
+      || content.includes('email changed')
+      || content.includes('autenticação multifator')
+      || content.includes('multi-factor authentication')
+      || content.includes('perfil atualizado')
+      || content.includes('profile updated');
   }
 
   requestAccountBlock(): void {
