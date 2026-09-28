@@ -253,3 +253,20 @@
   color: #94a3b8;
   font-size: .82rem;
 }
+
+
+.google-auth-area {
+  min-height: 0;
+}
+
+.google-auth-area:not(.google-auth-area--ready) {
+  height: 0;
+  overflow: hidden;
+  visibility: hidden;
+}
+
+.google-auth-area--ready {
+  height: auto;
+  overflow: visible;
+  visibility: visible;
+}
