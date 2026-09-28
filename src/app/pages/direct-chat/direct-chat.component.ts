@@ -121,12 +121,14 @@ export class DirectChatComponent implements OnInit, OnDestroy {
     });
   }
 
-  onEnter(event: KeyboardEvent): void {
-    if (event.shiftKey) {
+  onEnter(event: Event): void {
+    const keyboardEvent = event as KeyboardEvent;
+
+    if (keyboardEvent.shiftKey) {
       return;
     }
 
-    event.preventDefault();
+    keyboardEvent.preventDefault();
     this.sendMessage();
   }
 
