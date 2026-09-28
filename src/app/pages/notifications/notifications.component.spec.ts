@@ -156,14 +156,30 @@ describe('NotificationsComponent', () => {
     expect(component.canProtectAccount(securityNotification)).toBeTrue();
   });
 
-  it('should not expose account blocking for unrelated notifications', () => {
-    const unrelated = {
+  it('should offer account protection on profile update notifications', () => {
+    const profileUpdate = {
       ...securityNotificationFixture(),
       subject: 'Perfil atualizado',
-      message: 'Se não foste tu, verifica os teus dados.'
+      message: 'Foram atualizados dados do teu perfil.',
+      updateProfile: true
     };
 
-    expect(component.canProtectAccount(unrelated)).toBeFalse();
+    expect(component.canProtectAccount(profileUpdate)).toBeTrue();
+  });
+
+  it('should offer account protection on password change notifications', () => {
+    const passwordChange = {
+      ...securityNotificationFixture(),
+      subject: 'Palavra-passe alterada',
+      message: 'A tua palavra-passe foi alterada.',
+      updateProfile: true
+    };
+
+    expect(component.canProtectAccount(passwordChange)).toBeTrue();
+  });
+
+  it('should not expose account blocking for unrelated notifications', () => {
+    expect(component.canProtectAccount(notificationFixture())).toBeFalse();
   });
 
   it('should block the account and clear the local session after confirmation', () => {
