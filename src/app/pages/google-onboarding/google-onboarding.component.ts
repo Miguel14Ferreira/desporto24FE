@@ -97,6 +97,44 @@ export class GoogleOnboardingComponent implements OnInit {
     this.selectedSports = this.selectedSports.filter(item => item !== sport);
   }
 
+  onSportSearchKeydown(event: KeyboardEvent): void {
+    if (event.key !== 'Enter') {
+      return;
+    }
+
+    event.preventDefault();
+
+    const query = this.sportQuery.trim().toLocaleLowerCase('pt');
+    const exactMatch = this.sportsCatalog.find(
+      sport => sport.toLocaleLowerCase('pt') === query
+    );
+
+    if (exactMatch && !this.selectedSports.includes(exactMatch)) {
+      this.addSport(exactMatch);
+      return;
+    }
+
+    this.sportQuery = '';
+  }
+
+  clearInvalidSportQuery(): void {
+    const query = this.sportQuery.trim();
+    if (!query) {
+      return;
+    }
+
+    const exactMatch = this.sportsCatalog.find(
+      sport => sport.toLocaleLowerCase('pt') === query.toLocaleLowerCase('pt')
+    );
+
+    if (exactMatch && !this.selectedSports.includes(exactMatch)) {
+      this.addSport(exactMatch);
+      return;
+    }
+
+    this.sportQuery = '';
+  }
+
   submit(): void {
     const validation = this.validate();
     if (validation || this.loading) {
