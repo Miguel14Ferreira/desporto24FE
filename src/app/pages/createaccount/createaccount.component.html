@@ -98,13 +98,13 @@
         </label>
 
         <label>
-          <span>Alcunha</span>
+          <span>{{ 'register.nickname' | t }}</span>
           <input
             name="nickname"
             [(ngModel)]="nickname"
             maxlength="80"
             [disabled]="loading"
-            placeholder="Como queres ser conhecido?">
+            [placeholder]="'register.nicknamePlaceholder' | t">
         </label>
 
         <label>
@@ -156,28 +156,27 @@
           </select>
         </label>
 
-        <label>
-          <span>Indicativo *</span>
-          <select
-            name="indicativePhone"
-            [(ngModel)]="indicativePhone"
-            [disabled]="loading">
-            @for (item of countryOptions; track item.label) {
-              <option [value]="item.code">{{ item.label }}</option>
-            }
-          </select>
-        </label>
-
-        <label>
-          <span>{{ 'register.mobile' | t }} *</span>
-          <input
-            type="tel"
-            name="phone"
-            [(ngModel)]="phone"
-            autocomplete="tel-national"
-            [disabled]="loading"
-            placeholder="Ex.: 912 345 678">
-        </label>
+        <div class="full-width phone-field">
+          <span class="field-label">{{ 'register.phoneOptional' | t }}</span>
+          <div class="phone-row">
+            <select
+              class="calling-code"
+              name="indicativePhone"
+              [(ngModel)]="indicativePhone"
+              [disabled]="loading || !phone.trim()">
+              @for (item of countryOptions; track item.label) {
+                <option [value]="item.code">+{{ item.code }}</option>
+              }
+            </select>
+            <input
+              type="tel"
+              name="phone"
+              [(ngModel)]="phone"
+              autocomplete="tel-national"
+              [disabled]="loading"
+              placeholder="912 345 678">
+          </div>
+        </div>
 
         <label>
           <span>{{ 'common.gender' | t }}</span>
