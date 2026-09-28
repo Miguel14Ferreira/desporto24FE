@@ -56,8 +56,15 @@
         <input
           type="text"
           name="sport"
+          list="sport-options"
           [(ngModel)]="sport"
+          autocomplete="off"
           [placeholder]="'events.sportPlaceholder' | t">
+        <datalist id="sport-options">
+          @for (sportOption of sportsCatalog; track sportOption) {
+            <option [value]="sportOption"></option>
+          }
+        </datalist>
       </label>
 
       <label>
@@ -65,8 +72,15 @@
         <input
           type="text"
           name="city"
+          list="city-options"
           [(ngModel)]="city"
+          autocomplete="address-level2"
           [placeholder]="'events.cityPlaceholder' | t">
+        <datalist id="city-options">
+          @for (cityOption of citySuggestions; track cityOption) {
+            <option [value]="cityOption"></option>
+          }
+        </datalist>
       </label>
 
       <label>
@@ -90,6 +104,56 @@
         <input type="checkbox" name="freeOnly" [(ngModel)]="freeOnly">
         <span>{{ 'events.freeOnly' | t }}</span>
       </label>
+
+      <button type="button" class="advanced-toggle" (click)="toggleAdvancedFilters()">
+        {{ showAdvancedFilters ? ('events.lessFilters' | t) : ('events.moreFilters' | t) }}
+      </button>
+
+      @if (showAdvancedFilters) {
+        <div class="advanced-filters">
+          <label>
+            <span>{{ 'events.fromDateTime' | t }}</span>
+            <input
+              type="datetime-local"
+              lang="pt-PT"
+              name="fromDateTime"
+              [(ngModel)]="fromDateTime">
+          </label>
+
+          <label>
+            <span>{{ 'events.toDateTime' | t }}</span>
+            <input
+              type="datetime-local"
+              lang="pt-PT"
+              name="toDateTime"
+              [(ngModel)]="toDateTime">
+          </label>
+
+          <label>
+            <span>{{ 'events.minPrice' | t }}</span>
+            <input
+              type="number"
+              min="0"
+              step="0.5"
+              name="minPrice"
+              [(ngModel)]="minPrice"
+              [disabled]="freeOnly"
+              placeholder="0">
+          </label>
+
+          <label>
+            <span>{{ 'events.maxPrice' | t }}</span>
+            <input
+              type="number"
+              min="0"
+              step="0.5"
+              name="maxPrice"
+              [(ngModel)]="maxPrice"
+              [disabled]="freeOnly"
+              placeholder="20">
+          </label>
+        </div>
+      }
 
       <div class="filter-actions">
         <button type="submit">{{ 'common.search' | t }}</button>
@@ -137,7 +201,7 @@
 
             <dl class="session-meta">
               <div>
-                <dt>Data</dt>
+                <dt>{{ 'events.date' | t }}</dt>
                 <dd>{{ session.gameDate | date:'dd/MM/yyyy HH:mm' }}</dd>
               </div>
               <div>
@@ -145,7 +209,7 @@
                 <dd>{{ session.participantCount }}/{{ session.maxParticipants }}</dd>
               </div>
               <div>
-                <dt>Preço</dt>
+                <dt>{{ 'events.price' | t }}</dt>
                 <dd>
                   @if (session.priceAmount > 0) {
                     {{ session.priceAmount | number:'1.2-2' }} €
@@ -156,7 +220,7 @@
               </div>
               @if (session.distanceKm !== null) {
                 <div>
-                  <dt>Distância</dt>
+                  <dt>{{ 'events.distance' | t }}</dt>
                   <dd>{{ session.distanceKm | number:'1.1-1' }} km</dd>
                 </div>
               }
