@@ -1,0 +1,122 @@
+<section class="feed-page">
+  <div class="feed-shell">
+    <header class="page-header">
+      <div>
+        <p class="eyebrow">Desporto24</p>
+        <h1>{{ 'feed.title' | t }}</h1>
+        <p class="subtitle">{{ 'feed.subtitle' | t }}</p>
+      </div>
+
+      <div class="header-actions">
+        <a class="secondary-action" routerLink="/menu/perfis">{{ 'feed.findPeople' | t }}</a>
+        <a class="primary-action" routerLink="/menu/createEvent">{{ 'feed.createSession' | t }}</a>
+      </div>
+    </header>
+
+    <section class="composer">
+      <div class="composer-heading">
+        <strong>{{ 'feed.shareTitle' | t }}</strong>
+        <span>{{ postContent.length }}/1000</span>
+      </div>
+      <textarea
+        [(ngModel)]="postContent"
+        maxlength="1000"
+        rows="4"
+        [disabled]="posting"
+        [placeholder]="'feed.sharePlaceholder' | t"></textarea>
+      <div class="composer-actions">
+        <button
+          type="button"
+          [disabled]="posting || !postContent.trim()"
+          (click)="publish()">
+          {{ posting ? ('feed.publishing' | t) : ('feed.publish' | t) }}
+        </button>
+      </div>
+    </section>
+
+    @if (actionError) {
+      <div class="feedback error-feedback">{{ actionError }}</div>
+    }
+
+    @if (loading) {
+      <div class="state-card">{{ 'feed.loading' | t }}</div>
+    }
+
+    @if (!loading && errorMessage) {
+      <div class="state-card error-state">
+        <p>{{ errorMessage }}</p>
+        <button type="button" (click)="load()">{{ 'common.retry' | t }}</button>
+      </div>
+    }
+
+    @if (!loading && !errorMessage && items.length === 0) {
+      <div class="state-card">
+        <h2>{{ 'feed.emptyTitle' | t }}</h2>
+        <p>{{ 'feed.emptyText' | t }}</p>
+        <a routerLink="/menu/perfis">{{ 'feed.findPeople' | t }}</a>
+      </div>
+    }
+
+    @if (!loading && !errorMessage && items.length > 0) {
+      <div class="feed-list">
+        @for (item of items; track item.type + '-' + (item.postId || item.sessionId) + '-' + item.createdAt) {
+          <article class="feed-card">
+            <div class="feed-author">
+              <div class="avatar">
+                @if (profileImage(item); as image) {
+                  <img [src]="image" [alt]="item.authorUsername">
+                } @else {
+                  <span>{{ initials(item) }}</span>
+                }
+              </div>
+
+              <div class="author-copy">
+                <strong>{{ item.authorDisplayName }}</strong>
+                <span>@{{ item.authorUsername }} · {{ item.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
+              </div>
+
+              @if (item.type === 'POST' && item.authorUsername === currentUsername) {
+                <button
+                  type="button"
+                  class="delete-post"
+                  [disabled]="deletingPostId !== null"
+                  (click)="deletePost(item)">
+                  {{ deletingPostId === item.postId ? ('common.processing' | t) : ('feed.delete' | t) }}
+                </button>
+              }
+            </div>
+
+            @if (item.type === 'POST') {
+              <p class="post-content">{{ item.content }}</p>
+            }
+
+            @if (item.type === 'SESSION_CREATED') {
+              <div class="activity-copy">
+                <span class="activity-label">{{ 'feed.activity.sessionCreated' | t }}</span>
+                <p>
+                  {{ 'feed.activity.createdSession' | t:{
+                    sport: item.sport || '',
+                    city: item.city || ''
+                  } }}
+                </p>
+              </div>
+
+              <a
+                class="session-preview"
+                [routerLink]="['/menu/events', item.sessionId]">
+                <div>
+                  <strong>{{ item.sport }}</strong>
+                  <span>{{ item.city }}</span>
+                </div>
+                <div>
+                  <span>{{ item.gameDate | date:'dd/MM/yyyy HH:mm' }}</span>
+                  <strong>{{ 'feed.viewSession' | t }}</strong>
+                </div>
+              </a>
+            }
+          </article>
+        }
+      </div>
+    }
+  </div>
+</section>
