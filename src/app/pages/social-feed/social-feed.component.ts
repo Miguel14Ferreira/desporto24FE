@@ -17,6 +17,8 @@ import { FeedItem, SocialComment } from '../model/feed-item';
 export class SocialFeedComponent implements OnInit {
   items: FeedItem[] = [];
   postContent = '';
+  postImageFile?: File;
+  postImagePreview = '';
 
   loading = false;
   posting = false;
@@ -67,15 +69,72 @@ export class SocialFeedComponent implements OnInit {
     this.posting = true;
     this.actionError = '';
 
-    this.feedService.createPost(content)
+    this.feedService.createPost(content, this.postImageFile)
       .pipe(finalize(() => this.posting = false))
       .subscribe({
         next: item => {
           this.items = [item, ...this.items];
           this.postContent = '';
+          this.postImageFile = undefined;
+          this.postImagePreview = '';
         },
         error: () => this.actionError = t('feedback.feed.publishError')
       });
+  }
+
+  onPostImageChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      this.actionError = t('feedback.feed.imageType');
+      input.value = '';
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      this.actionError = t('feedback.feed.imageSize');
+      input.value = '';
+      return;
+    }
+
+    this.postImageFile = file;
+    this.actionError = '';
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.postImagePreview = typeof reader.result === 'string'
+        ? reader.result
+        : '';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  removePostImage(): void {
+    this.postImageFile = undefined;
+    this.postImagePreview = '';
+  }
+
+  postImage(item: FeedItem): string | null {
+    const path = item.imageUrl;
+    if (!path) {
+      return null;
+    }
+
+    if (
+      path.startsWith('http://')
+      || path.startsWith('https://')
+      || path.startsWith('data:')
+    ) {
+      return path;
+    }
+
+    return environment.apiUrl + (path.startsWith('/') ? path : '/' + path);
   }
 
   toggleLike(item: FeedItem): void {
