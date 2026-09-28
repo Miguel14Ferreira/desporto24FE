@@ -3,12 +3,14 @@ import { of } from 'rxjs';
 
 import { PerfisComponent } from './perfis.component';
 import { CommunityService } from '../../services/community.service';
+import { SocialGraphService } from '../../services/social-graph.service';
 import { TEST_IMPORTS, TEST_PROVIDERS } from '../../testing/test-providers';
 
 describe('PerfisComponent', () => {
   let component: PerfisComponent;
   let fixture: ComponentFixture<PerfisComponent>;
   let service: jasmine.SpyObj<CommunityService>;
+  let socialGraphService: jasmine.SpyObj<SocialGraphService>;
 
   const profile = {
     username: 'ana',
@@ -16,6 +18,9 @@ describe('PerfisComponent', () => {
     country: 'Portugal',
     location: 'Lisboa',
     favoriteSports: 'Padel',
+    bio: null,
+    skillLevel: 'INTERMEDIATE',
+    availability: null,
     profilePicUrl: null,
     joinDateDisplay: '2026-09-01'
   };
@@ -23,17 +28,44 @@ describe('PerfisComponent', () => {
   beforeEach(async () => {
     service = jasmine.createSpyObj<CommunityService>(
       'CommunityService',
-      ['searchProfiles', 'sendFriendRequest']
+      ['searchProfiles', 'sendFriendRequest', 'discoverProfiles', 'friends', 'publicProfile']
     );
     service.searchProfiles.and.returnValue(of([profile]));
+    service.discoverProfiles.and.returnValue(of([profile]));
+    service.friends.and.returnValue(of([]));
+    service.publicProfile.and.returnValue(of(profile));
     service.sendFriendRequest.and.returnValue(of({}));
+
+    socialGraphService = jasmine.createSpyObj<SocialGraphService>(
+      'SocialGraphService',
+      ['status', 'follow', 'unfollow']
+    );
+    socialGraphService.status.and.returnValue(of({
+      followedByMe: false,
+      followsMe: false,
+      followers: 3,
+      following: 5
+    }));
+    socialGraphService.follow.and.returnValue(of({
+      followedByMe: true,
+      followsMe: false,
+      followers: 4,
+      following: 5
+    }));
+    socialGraphService.unfollow.and.returnValue(of({
+      followedByMe: false,
+      followsMe: false,
+      followers: 3,
+      following: 5
+    }));
 
     await TestBed.configureTestingModule({
       declarations: [PerfisComponent],
       imports: TEST_IMPORTS,
       providers: [
         ...TEST_PROVIDERS,
-        { provide: CommunityService, useValue: service }
+        { provide: CommunityService, useValue: service },
+        { provide: SocialGraphService, useValue: socialGraphService }
       ]
     }).compileComponents();
 
@@ -61,6 +93,21 @@ describe('PerfisComponent', () => {
     expect(service.sendFriendRequest).toHaveBeenCalledWith('ana');
     expect(component.actionSuccess).toContain('ana');
     expect(component.friendRequestPending(profile)).toBeTrue();
+  });
+
+  it('should follow a selected profile', () => {
+    component.selectedProfile = profile;
+    component.selectedFollowStatus = {
+      followedByMe: false,
+      followsMe: false,
+      followers: 3,
+      following: 5
+    };
+
+    component.toggleFollow(profile);
+
+    expect(socialGraphService.follow).toHaveBeenCalledWith('ana');
+    expect(component.selectedFollowStatus?.followedByMe).toBeTrue();
   });
 
   it('should not allow a friend request to the logged-in profile', () => {
