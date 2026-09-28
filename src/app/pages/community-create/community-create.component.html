@@ -25,6 +25,38 @@
         <p>{{ 'communityCreate.editLater' | t }}</p>
       </div>
 
+      <section class="community-photo-field">
+        <div class="community-photo-preview">
+          @if (photoPreview) {
+            <img [src]="photoPreview" [alt]="'communityCreate.photo' | t">
+          } @else {
+            <span>◎</span>
+          }
+        </div>
+
+        <div class="community-photo-copy">
+          <strong>{{ 'communityCreate.photo' | t }}</strong>
+          <p>{{ 'communityCreate.photoOptional' | t }}</p>
+
+          <div class="community-photo-actions">
+            <label class="secondary-action photo-picker">
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                [disabled]="saving"
+                (change)="onPhotoChange($event)">
+              {{ photoPreview ? ('communityCreate.changePhoto' | t) : ('communityCreate.choosePhoto' | t) }}
+            </label>
+
+            @if (photoPreview) {
+              <button type="button" class="secondary-action" [disabled]="saving" (click)="removePhoto()">
+                {{ 'communityCreate.removePhoto' | t }}
+              </button>
+            }
+          </div>
+        </div>
+      </section>
+
       <div class="form-grid">
         <label class="full-width">
           <span>{{ 'communityCreate.name' | t }} *</span>
