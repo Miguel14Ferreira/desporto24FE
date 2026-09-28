@@ -38,6 +38,7 @@ import { CommunitiesComponent } from './pages/communities/communities.component'
 import { CommunityCreateComponent } from './pages/community-create/community-create.component';
 import { AdminIdeasComponent } from './pages/admin-ideas/admin-ideas.component';
 import { NotFoundComponent } from './pages/not-found/not-found.component';
+import { SocialFeedComponent } from './pages/social-feed/social-feed.component';
 import { TranslatePipe } from './i18n/translate.pipe';
 
 @NgModule({ declarations: [
@@ -72,6 +73,7 @@ import { TranslatePipe } from './i18n/translate.pipe';
         CommunitiesComponent,
         CommunityCreateComponent,
         NotFoundComponent,
+        SocialFeedComponent,
         TranslatePipe
     ],
     bootstrap: [AppComponent], imports: [BrowserModule,
