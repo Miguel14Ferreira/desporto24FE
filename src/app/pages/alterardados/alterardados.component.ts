@@ -172,9 +172,11 @@ export class AlterardadosComponent implements OnInit {
   }
 
   disableMfa(): void {
-    if (this.mfaDisabling || !this.profile?.mfa) {
+    if (this.mfaDisabling || (!this.profile?.mfa && !this.mfaSetup)) {
       return;
     }
+
+    const wasActive = Boolean(this.profile?.mfa);
 
     this.mfaDisabling = true;
     this.errorMessage = '';
@@ -185,10 +187,20 @@ export class AlterardadosComponent implements OnInit {
         next: updated => {
           this.profile = { ...updated };
           this.mfaSetup = undefined;
-          this.showToast('Autenticação multifator desativada.');
+          this.mfaSetupCode = '';
+          this.showToast(
+            wasActive
+              ? 'Autenticação multifator desativada.'
+              : 'Configuração MFA cancelada.'
+          );
         },
         error: error => {
-          this.errorMessage = this.errorFrom(error, 'Não foi possível desativar o MFA.');
+          this.errorMessage = this.errorFrom(
+            error,
+            wasActive
+              ? 'Não foi possível desativar o MFA.'
+              : 'Não foi possível cancelar a configuração MFA.'
+          );
         }
       });
   }
