@@ -5,6 +5,12 @@ import { Observable } from 'rxjs';
 import { environment } from 'src/environment/environment';
 import { MyProfile, UpdateMyProfileRequest } from '../pages/model/my-profile';
 
+export interface MfaSetupResponse {
+  secret: string;
+  qrCodeDataUrl: string;
+  otpauthUri: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -39,6 +45,21 @@ export class MyProfileService {
       this.baseUrl + '/photo',
       formData
     );
+  }
+
+  setupMfa(): Observable<MfaSetupResponse> {
+    return this.http.post<MfaSetupResponse>(this.baseUrl + '/mfa/setup', null);
+  }
+
+  confirmMfa(code: string): Observable<MyProfile> {
+    return this.http.post<MyProfile>(
+      this.baseUrl + '/mfa/confirm',
+      { code }
+    );
+  }
+
+  disableMfa(): Observable<MyProfile> {
+    return this.http.delete<MyProfile>(this.baseUrl + '/mfa');
   }
 
   changePassword(currentPassword: string, newPassword: string): Observable<unknown> {
