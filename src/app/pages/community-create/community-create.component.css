@@ -239,3 +239,36 @@ label small {
   min-height: 1.35rem;
   margin-top: 0;
 }
+
+
+.field-group {
+  display: grid;
+  grid-template-rows: auto 52px auto;
+  gap: .45rem;
+  align-content: start;
+}
+
+.field-group > label {
+  display: block;
+  color: #e2e8f0;
+  font-size: .82rem;
+  font-weight: 900;
+}
+
+.field-group > select {
+  height: 52px;
+  min-height: 52px;
+  box-sizing: border-box;
+}
+
+.field-help {
+  min-height: 1.35rem;
+  margin: 0;
+  color: #94a3b8;
+  line-height: 1.35rem;
+  font-size: .8rem;
+}
+
+.field-help--empty {
+  visibility: hidden;
+}
