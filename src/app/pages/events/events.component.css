@@ -6,8 +6,9 @@
   min-height: 100vh;
   padding: 7rem 1.25rem 3rem;
   background:
-    linear-gradient(135deg, rgba(7, 17, 34, 0.96), rgba(15, 47, 67, 0.92)),
-    url('/assets/padel.png') center / cover fixed;
+    radial-gradient(circle at 15% 10%, rgba(14, 165, 233, .14), transparent 28rem),
+    radial-gradient(circle at 85% 25%, rgba(34, 211, 238, .08), transparent 24rem),
+    linear-gradient(145deg, #07111f, #12334a);
   color: #f8fafc;
 }
 
@@ -82,7 +83,7 @@ h1 {
 
 .filters {
   display: grid;
-  grid-template-columns: repeat(2, minmax(180px, 1fr)) auto auto auto;
+  grid-template-columns: repeat(3, minmax(160px, 1fr)) auto auto;
   gap: 1rem;
   align-items: end;
   padding: 1rem;
@@ -104,7 +105,9 @@ h1 {
   color: #cbd5e1;
 }
 
-.filters input[type='text'] {
+.filters input[type='text'],
+.filters input[type='number'],
+.filters input[type='datetime-local'] {
   min-width: 0;
   border: 1px solid rgba(255, 255, 255, .16);
   border-radius: .7rem;
@@ -114,7 +117,8 @@ h1 {
   outline: none;
 }
 
-.filters input[type='text']::placeholder {
+.filters input[type='text']::placeholder,
+.filters input[type='number']::placeholder {
   color: #94a3b8;
 }
 
@@ -315,5 +319,49 @@ h1 {
   .nearby-actions {
     align-items: stretch;
     flex-direction: column;
+  }
+}
+
+
+.advanced-toggle {
+  border: 1px solid rgba(125, 211, 252, .22) !important;
+  background: rgba(125, 211, 252, .07) !important;
+  color: #bae6fd !important;
+  white-space: nowrap;
+}
+
+.advanced-filters {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
+  gap: .75rem;
+  padding-top: .85rem;
+  border-top: 1px solid rgba(255,255,255,.08);
+}
+
+.advanced-filters label {
+  display: grid;
+  gap: .45rem;
+}
+
+.advanced-filters input:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+
+.filter-actions {
+  grid-column: 1 / -1;
+  justify-content: flex-end;
+}
+
+@media (max-width: 900px) {
+  .advanced-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .advanced-filters {
+    grid-template-columns: 1fr;
   }
 }
