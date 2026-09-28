@@ -163,6 +163,7 @@ export class DirectChatComponent implements OnInit, OnDestroy {
   addEmoji(emoji: string): void {
     if (this.messageBody.length + emoji.length <= 2000) {
       this.messageBody += emoji;
+      this.showEmojiPicker = false;
     }
   }
 
