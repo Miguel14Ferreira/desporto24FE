@@ -26,6 +26,7 @@ import { AdminGuard } from './guard/admin.guard';
 import { AdminDisputesComponent } from './pages/admin-disputes/admin-disputes.component';
 import { AdminDashboardComponent } from './pages/admin-dashboard/admin-dashboard.component';
 import { GoogleOnboardingComponent } from './pages/google-onboarding/google-onboarding.component';
+import { CommunitiesComponent } from './pages/communities/communities.component';
 import { AdminIdeasComponent } from './pages/admin-ideas/admin-ideas.component';
 import { NotFoundComponent } from './pages/not-found/not-found.component';
 
@@ -67,6 +68,7 @@ const routes: Routes = [
   {path:'menu/friendList/chat/:username1/:username2',component:DirectChatComponent,canActivate:[AuthenticationGuard]},
   {path:'menu/notifications',component:NotificationsComponent,canActivate:[AuthenticationGuard]},
   {path:'menu/notifications/:id',component:NotificationsComponent,canActivate:[AuthenticationGuard]},
+  {path:'menu/communities',component:CommunitiesComponent,canActivate:[AuthenticationGuard]},
   {path:'menu/admin',component:AdminDashboardComponent,canActivate:[AuthenticationGuard,AdminGuard]},
   {path:'menu/admin/attendance-disputes',component:AdminDisputesComponent,canActivate:[AuthenticationGuard,AdminGuard]},
   {path:'menu/admin/ideas',component:AdminIdeasComponent,canActivate:[AuthenticationGuard,AdminGuard]},
