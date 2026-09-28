@@ -4,11 +4,18 @@ import { finalize } from 'rxjs';
 import { appTranslate as t } from '../../i18n/i18n.service';
 
 import {
+  CommunityCompetitionOverview,
   CommunityGroup,
   CommunityInvite,
-  CommunityRole
+  CommunityMatchResult,
+  CommunityRole,
+  CommunityRound,
+  CommunityRoundEntryDraft,
+  CommunityStanding
 } from '../model/community-group';
 import { CommunityGroupsService } from '../../services/community-groups.service';
+
+type CommunityTab = 'home' | 'sessions' | 'ranking' | 'stats' | 'members';
 
 @Component({
   selector: 'app-communities',
@@ -21,14 +28,29 @@ export class CommunitiesComponent implements OnInit {
   communities: CommunityGroup[] = [];
   invites: CommunityInvite[] = [];
   selected?: CommunityGroup;
+  competition?: CommunityCompetitionOverview;
 
   loading = false;
   saving = false;
+  competitionLoading = false;
+  competitionSaving = false;
+  roundSaving = false;
   errorMessage = '';
 
+  activeTab: CommunityTab = 'home';
   inviteUsername = '';
   ownershipUsername = '';
   photoUpdating = false;
+
+  rankingsEnabledDraft = false;
+  winPointsDraft = 3;
+  drawPointsDraft = 1;
+  lossPointsDraft = 0;
+
+  roundName = '';
+  roundPlayedAt = '';
+  roundEntries: CommunityRoundEntryDraft[] = [];
+  roundDeleteConfirmId?: number;
 
   constructor(
     private communityService: CommunityGroupsService,
@@ -59,7 +81,10 @@ export class CommunitiesComponent implements OnInit {
           }
 
           if (this.selected) {
-            this.selected = communities.find(item => item.id === this.selected?.id);
+            const refreshed = communities.find(item => item.id === this.selected?.id);
+            if (refreshed) {
+              this.open(refreshed);
+            }
           }
         },
         error: () => this.errorMessage = t('feedback.communities.loadError')
@@ -72,10 +97,182 @@ export class CommunitiesComponent implements OnInit {
   }
 
   open(community: CommunityGroup): void {
+    this.errorMessage = '';
+
     this.communityService.get(community.id).subscribe({
-      next: full => this.selected = full,
+      next: full => {
+        this.selected = full;
+        this.activeTab = 'home';
+        this.roundDeleteConfirmId = undefined;
+        this.prepareRoundEntries(full);
+        this.loadCompetition(full);
+      },
       error: () => this.errorMessage = t('feedback.communities.openError')
     });
+  }
+
+  setTab(tab: CommunityTab): void {
+    this.activeTab = tab;
+    this.errorMessage = '';
+  }
+
+  loadCompetition(community: CommunityGroup = this.selected as CommunityGroup): void {
+    if (!community) {
+      return;
+    }
+
+    this.competitionLoading = true;
+    this.communityService.competition(community.id)
+      .pipe(finalize(() => this.competitionLoading = false))
+      .subscribe({
+        next: competition => {
+          this.competition = competition;
+          this.rankingsEnabledDraft = competition.settings.rankingsEnabled;
+          this.winPointsDraft = competition.settings.winPoints;
+          this.drawPointsDraft = competition.settings.drawPoints;
+          this.lossPointsDraft = competition.settings.lossPoints;
+        },
+        error: () => {
+          this.competition = undefined;
+          this.errorMessage = t('feedback.communities.competitionLoadError');
+        }
+      });
+  }
+
+  saveCompetitionSettings(): void {
+    if (!this.selected || !this.canManage() || this.competitionSaving) {
+      return;
+    }
+
+    this.competitionSaving = true;
+    this.errorMessage = '';
+
+    this.communityService.updateCompetitionSettings(this.selected.id, {
+      rankingsEnabled: this.rankingsEnabledDraft,
+      winPoints: Math.max(0, Number(this.winPointsDraft) || 0),
+      drawPoints: Math.max(0, Number(this.drawPointsDraft) || 0),
+      lossPoints: Math.max(0, Number(this.lossPointsDraft) || 0)
+    })
+      .pipe(finalize(() => this.competitionSaving = false))
+      .subscribe({
+        next: settings => {
+          if (this.competition) {
+            this.competition = {
+              ...this.competition,
+              settings
+            };
+          }
+
+          const updated = {
+            ...this.selected as CommunityGroup,
+            rankingsEnabled: settings.rankingsEnabled
+          };
+          this.selected = updated;
+          this.replaceCommunity(updated);
+          this.loadCompetition(updated);
+        },
+        error: error => {
+          this.errorMessage = error.error?.message
+            || t('feedback.communities.competitionSettingsError');
+        }
+      });
+  }
+
+  prepareRoundEntries(community: CommunityGroup = this.selected as CommunityGroup): void {
+    if (!community) {
+      this.roundEntries = [];
+      return;
+    }
+
+    this.roundEntries = community.members.map(member => ({
+      username: member.username,
+      included: false,
+      result: 'WIN' as CommunityMatchResult,
+      goals: 0,
+      assists: 0,
+      mvp: false,
+      cleanSheet: false
+    }));
+  }
+
+  createRound(): void {
+    if (!this.selected || !this.canManage() || this.roundSaving) {
+      return;
+    }
+
+    const entries = this.roundEntries
+      .filter(entry => entry.included)
+      .map(entry => ({
+        username: entry.username,
+        result: entry.result,
+        goals: Math.max(0, Number(entry.goals) || 0),
+        assists: Math.max(0, Number(entry.assists) || 0),
+        mvp: Boolean(entry.mvp),
+        cleanSheet: Boolean(entry.cleanSheet)
+      }));
+
+    if (!this.roundName.trim() || !this.roundPlayedAt || entries.length === 0) {
+      this.errorMessage = t('feedback.communities.roundRequired');
+      return;
+    }
+
+    const playedAt = new Date(this.roundPlayedAt);
+    if (Number.isNaN(playedAt.getTime())) {
+      this.errorMessage = t('feedback.communities.roundRequired');
+      return;
+    }
+
+    this.roundSaving = true;
+    this.errorMessage = '';
+
+    this.communityService.createRound(this.selected.id, {
+      name: this.roundName.trim(),
+      playedAt: playedAt.toISOString(),
+      entries
+    })
+      .pipe(finalize(() => this.roundSaving = false))
+      .subscribe({
+        next: () => {
+          this.roundName = '';
+          this.roundPlayedAt = '';
+          this.prepareRoundEntries();
+          this.loadCompetition();
+        },
+        error: error => {
+          this.errorMessage = error.error?.message
+            || t('feedback.communities.roundSaveError');
+        }
+      });
+  }
+
+  askDeleteRound(round: CommunityRound): void {
+    this.roundDeleteConfirmId = round.id;
+  }
+
+  cancelDeleteRound(): void {
+    this.roundDeleteConfirmId = undefined;
+  }
+
+  deleteRound(round: CommunityRound): void {
+    if (!this.selected || !this.canManage() || this.roundSaving) {
+      return;
+    }
+
+    this.roundSaving = true;
+    this.errorMessage = '';
+
+    this.communityService.deleteRound(this.selected.id, round.id)
+      .pipe(finalize(() => this.roundSaving = false))
+      .subscribe({
+        next: () => {
+          this.roundDeleteConfirmId = undefined;
+          this.loadCompetition();
+        },
+        error: error => {
+          this.errorMessage = error.error?.message
+            || t('feedback.communities.roundDeleteError');
+        }
+      });
   }
 
   invite(): void {
@@ -102,6 +299,9 @@ export class CommunitiesComponent implements OnInit {
         this.invites = this.invites.filter(item => item.id !== invite.id);
         this.communities = [community, ...this.communities.filter(item => item.id !== community.id)];
         this.selected = community;
+        this.activeTab = 'home';
+        this.prepareRoundEntries(community);
+        this.loadCompetition(community);
       },
       error: () => this.errorMessage = t('feedback.communities.acceptError')
     });
@@ -123,6 +323,7 @@ export class CommunitiesComponent implements OnInit {
       next: community => {
         this.selected = community;
         this.replaceCommunity(community);
+        this.prepareRoundEntries(community);
       },
       error: () => this.errorMessage = t('feedback.communities.roleError')
     });
@@ -149,6 +350,7 @@ export class CommunitiesComponent implements OnInit {
       next: () => {
         this.communities = this.communities.filter(item => item.id !== id);
         this.selected = undefined;
+        this.competition = undefined;
       },
       error: error => this.errorMessage = error.error?.message || t('feedback.communities.leaveError')
     });
@@ -215,12 +417,65 @@ export class CommunitiesComponent implements OnInit {
       .join('') || '◎';
   }
 
+  formatRoundDate(value: string): string {
+    const parsed = Date.parse(value);
+    if (Number.isNaN(parsed)) {
+      return value;
+    }
+
+    return new Intl.DateTimeFormat('pt-PT', {
+      dateStyle: 'medium'
+    }).format(new Date(parsed));
+  }
+
+  resultLabel(result: CommunityMatchResult): string {
+    switch (result) {
+      case 'WIN':
+        return t('communities.result.win');
+      case 'DRAW':
+        return t('communities.result.draw');
+      case 'LOSS':
+        return t('communities.result.loss');
+    }
+  }
+
+  leader(): CommunityStanding | undefined {
+    return this.competition?.standings[0];
+  }
+
+  topGoals(): CommunityStanding | undefined {
+    return this.topBy('goals');
+  }
+
+  topAssists(): CommunityStanding | undefined {
+    return this.topBy('assists');
+  }
+
+  topMvps(): CommunityStanding | undefined {
+    return this.topBy('mvps');
+  }
+
+  topCleanSheets(): CommunityStanding | undefined {
+    return this.topBy('cleanSheets');
+  }
+
   canManage(): boolean {
     return this.selected?.myRole === 'OWNER' || this.selected?.myRole === 'ADMIN';
   }
 
   isOwner(): boolean {
     return this.selected?.myRole === 'OWNER';
+  }
+
+  private topBy(field: 'goals' | 'assists' | 'mvps' | 'cleanSheets'): CommunityStanding | undefined {
+    const rows = this.competition?.standings || [];
+    if (rows.length === 0) {
+      return undefined;
+    }
+
+    return [...rows].sort((a, b) =>
+      b[field] - a[field] || a.position - b.position
+    )[0];
   }
 
   private refreshSelected(): void {
@@ -232,6 +487,8 @@ export class CommunitiesComponent implements OnInit {
       next: community => {
         this.selected = community;
         this.replaceCommunity(community);
+        this.prepareRoundEntries(community);
+        this.loadCompetition(community);
       }
     });
   }
