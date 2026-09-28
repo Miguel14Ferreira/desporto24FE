@@ -33,6 +33,7 @@ export class PerfisComponent implements OnInit {
 
   currentUsername = '';
   pendingFriendRequests = new Set<string>();
+  friendUsernames = new Set<string>();
 
   constructor(
     private communityService: CommunityService,
@@ -44,7 +45,21 @@ export class PerfisComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.loadFriendUsernames();
     this.loadDiscoverableProfiles();
+  }
+
+  private loadFriendUsernames(): void {
+    this.communityService.friends().subscribe({
+      next: friends => {
+        this.friendUsernames = new Set(
+          friends.map(friend => friend.username.toLowerCase())
+        );
+      },
+      error: () => {
+        this.friendUsernames = new Set<string>();
+      }
+    });
   }
 
   private loadDiscoverableProfiles(): void {
@@ -124,6 +139,7 @@ export class PerfisComponent implements OnInit {
     if (
       this.actionLoading
       || this.isOwnProfile(profile)
+      || this.isFriend(profile)
       || this.pendingFriendRequests.has(profile.username)
     ) {
       return;
@@ -161,6 +177,10 @@ export class PerfisComponent implements OnInit {
 
   friendRequestPending(profile: CommunityProfile): boolean {
     return this.pendingFriendRequests.has(profile.username);
+  }
+
+  isFriend(profile: CommunityProfile): boolean {
+    return this.friendUsernames.has(profile.username.toLowerCase());
   }
 
   profileImage(profile: CommunityProfile): string | null {
