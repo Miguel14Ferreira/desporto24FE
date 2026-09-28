@@ -816,3 +816,54 @@ h1 {
     text-align: center;
   }
 }
+
+
+.venue-detail-panel {
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid rgba(125, 211, 252, .16);
+  border-radius: .9rem;
+  background: rgba(125, 211, 252, .045);
+}
+
+.venue-detail-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.venue-detail-heading h2 {
+  margin: .15rem 0 .2rem;
+  font-size: 1.05rem;
+}
+
+.venue-detail-heading p {
+  margin: 0;
+  color: #94a3b8;
+}
+
+.venue-surface,
+.venue-detail-tags span {
+  border-radius: 999px;
+  padding: .3rem .55rem;
+  background: rgba(74, 222, 128, .09);
+  color: #bbf7d0;
+  font-size: .72rem;
+  font-weight: 800;
+}
+
+.venue-detail-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .45rem;
+  margin-top: .75rem;
+}
+
+.section-kicker {
+  color: #7dd3fc;
+  font-size: .7rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
