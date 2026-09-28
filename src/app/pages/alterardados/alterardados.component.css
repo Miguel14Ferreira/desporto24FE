@@ -292,3 +292,74 @@ textarea { resize: vertical; }
     left: 1rem;
   }
 }
+
+
+.mfa-setup-card {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid rgba(125,211,252,.22);
+  border-radius: .9rem;
+  background: rgba(2,6,23,.55);
+}
+
+.mfa-step {
+  margin: .25rem 0;
+  color: #cbd5e1;
+  line-height: 1.5;
+}
+
+.mfa-qr-wrap {
+  display: flex;
+  justify-content: center;
+}
+
+.mfa-qr {
+  width: 220px;
+  max-width: 100%;
+  border-radius: .75rem;
+  background: #fff;
+  padding: .5rem;
+}
+
+.mfa-manual-key {
+  display: grid;
+  gap: .4rem;
+  color: #94a3b8;
+  font-size: .85rem;
+}
+
+.mfa-manual-key code {
+  overflow-wrap: anywhere;
+  border-radius: .6rem;
+  padding: .7rem .8rem;
+  background: rgba(255,255,255,.06);
+  color: #bae6fd;
+  font-size: .9rem;
+}
+
+.mfa-code-field {
+  display: grid;
+  gap: .4rem;
+}
+
+.mfa-code-field > span {
+  color: #cbd5e1;
+  font-size: .82rem;
+  font-weight: 800;
+}
+
+.mfa-code-field input {
+  max-width: 220px;
+  letter-spacing: .2em;
+  text-align: center;
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.mfa-setup-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .6rem;
+}
