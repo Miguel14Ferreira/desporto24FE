@@ -313,3 +313,25 @@ textarea {
 .sport-selector small {
   color: #94a3b8;
 }
+
+
+.phone-field {
+  display: grid;
+  gap: .4rem;
+}
+
+.phone-row {
+  display: grid;
+  grid-template-columns: 130px minmax(0, 1fr);
+  gap: .55rem;
+}
+
+.calling-code {
+  min-width: 0;
+}
+
+@media (max-width: 520px) {
+  .phone-row {
+    grid-template-columns: 110px minmax(0, 1fr);
+  }
+}
