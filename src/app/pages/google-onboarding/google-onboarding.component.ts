@@ -5,6 +5,7 @@ import { finalize } from 'rxjs';
 
 import { AuthenticationService } from '../../services/authethication.service';
 import { GoogleRegistrationRequest } from '../model/google-auth-response';
+import { SPORTS_CATALOG } from '../../shared/sports-catalog';
 
 @Component({
   selector: 'app-google-onboarding',
@@ -37,28 +38,7 @@ export class GoogleOnboardingComponent implements OnInit {
   readonly maxBirthDate = this.dateYearsAgo(18);
   readonly minBirthDate = this.dateYearsAgo(120);
 
-  readonly sportsCatalog = [
-    'Futebol',
-    'Futsal',
-    'Basquetebol',
-    'Ténis',
-    'Padel',
-    'Voleibol',
-    'Corrida',
-    'Ciclismo',
-    'Natação',
-    'Andebol',
-    'Rugby',
-    'Badminton',
-    'Ténis de mesa',
-    'Squash',
-    'Hóquei',
-    'Surf',
-    'Escalada',
-    'Ginásio',
-    'Yoga',
-    'Pilates'
-  ];
+  readonly sportsCatalog = SPORTS_CATALOG;
 
   constructor(
     private authenticationService: AuthenticationService,
