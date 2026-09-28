@@ -247,3 +247,44 @@ h1 {
     min-height: 0;
   }
 }
+
+
+.security-action {
+  border: 1px solid rgba(251, 191, 36, .35);
+  border-radius: .75rem;
+  padding: .75rem .9rem;
+  background: rgba(251, 191, 36, .1);
+  color: #fde68a;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.security-action:disabled {
+  opacity: .6;
+  cursor: wait;
+}
+
+.security-confirmation {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid rgba(248, 113, 113, .28);
+  border-radius: .85rem;
+  padding: .9rem 1rem;
+  background: rgba(248, 113, 113, .06);
+}
+
+.security-confirmation strong {
+  color: #fecaca;
+}
+
+.security-confirmation p {
+  margin: .45rem 0 .85rem;
+  color: #cbd5e1;
+  line-height: 1.5;
+}
+
+.security-confirmation__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .65rem;
+}
