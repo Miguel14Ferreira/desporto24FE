@@ -4,6 +4,7 @@
 
     <div class="site-nav__links">
       @if (isAuthenticated()) {
+        <a routerLink="/menu/feed" routerLinkActive="active-link">{{ 'nav.feed' | t }}</a>
         <a routerLink="/menu/events" routerLinkActive="active-link">{{ 'nav.discover' | t }}</a>
         <a routerLink="/menu/my-sessions" routerLinkActive="active-link">{{ 'nav.activities' | t }}</a>
         <a routerLink="/menu/communities" routerLinkActive="active-link">{{ 'nav.communities' | t }}</a>
