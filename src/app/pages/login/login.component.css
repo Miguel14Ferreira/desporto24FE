@@ -270,3 +270,14 @@
   overflow: visible;
   visibility: visible;
 }
+
+
+.google-login,
+#google-signin-button {
+  width: 100%;
+}
+
+#google-signin-button {
+  display: flex;
+  justify-content: center;
+}
