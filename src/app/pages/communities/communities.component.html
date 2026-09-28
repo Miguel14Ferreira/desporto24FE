@@ -6,53 +6,13 @@
         <h1>Comunidades</h1>
         <p class="subtitle">Cria grupos privados ou públicos, convida jogadores e gere a tua equipa de admins.</p>
       </div>
-      <button type="button" class="primary-action header-action" (click)="creating = !creating">
-        {{ creating ? 'Cancelar criação' : 'Criar comunidade' }}
-      </button>
+      <a class="primary-action header-action button-link" routerLink="/menu/communities/create">
+        Criar comunidade
+      </a>
     </header>
 
     @if (errorMessage) {
       <div class="feedback error-feedback">{{ errorMessage }}</div>
-    }
-
-    @if (creating) {
-      <section class="create-card">
-        <div class="create-card-header">
-          <div>
-            <p class="section-kicker">Nova comunidade</p>
-            <h2>Cria o teu grupo</h2>
-          </div>
-          <p>Podes alterar estes dados mais tarde.</p>
-        </div>
-        <div class="form-grid">
-          <label>
-            <span>Nome *</span>
-            <input [(ngModel)]="newName" placeholder="Ex.: CNG - Quintas Feiras">
-          </label>
-
-          <label>
-            <span>Desporto</span>
-            <input [(ngModel)]="newSport" placeholder="Ex.: Futebol">
-          </label>
-
-          <label class="full-width">
-            <span>Descrição</span>
-            <textarea [(ngModel)]="newDescription" rows="3" placeholder="Conta aos membros o objetivo deste grupo."></textarea>
-          </label>
-
-          <label>
-            <span>Privacidade</span>
-            <select [(ngModel)]="newVisibility">
-              <option value="PRIVATE">Privada</option>
-              <option value="PUBLIC">Pública</option>
-            </select>
-          </label>
-        </div>
-
-        <button type="button" class="primary-action" [disabled]="saving || !newName.trim()" (click)="create()">
-          {{ saving ? 'A criar...' : 'Criar comunidade' }}
-        </button>
-      </section>
     }
 
     @if (invites.length > 0) {
@@ -83,9 +43,9 @@
         <span class="empty-icon">◎</span>
         <h2>A tua primeira comunidade começa aqui</h2>
         <p>Cria um grupo para juntares os teus jogadores, organizares sessões e definires quem te ajuda a gerir a comunidade.</p>
-        @if (!creating) {
-          <button type="button" class="primary-action" (click)="creating = true">Criar primeira comunidade</button>
-        }
+        <a class="primary-action button-link" routerLink="/menu/communities/create">
+          Criar primeira comunidade
+        </a>
       </section>
     } @else if (communities.length > 0) {
     <div class="communities-layout">
