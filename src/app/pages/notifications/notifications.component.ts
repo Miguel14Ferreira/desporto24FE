@@ -22,6 +22,8 @@ export class NotificationsComponent implements OnInit {
   loading = false;
   actionLoadingId: number | null = null;
   accountBlockConfirming = false;
+  clearAllConfirming = false;
+  clearAllLoading = false;
 
   errorMessage = '';
   actionError = '';
@@ -93,6 +95,45 @@ export class NotificationsComponent implements OnInit {
     this.selected = undefined;
     this.accountBlockConfirming = false;
     this.router.navigate(['/menu/notifications']);
+  }
+
+  requestClearAll(): void {
+    this.clearAllConfirming = true;
+    this.actionError = '';
+    this.actionSuccess = '';
+  }
+
+  cancelClearAll(): void {
+    this.clearAllConfirming = false;
+  }
+
+  clearAllNotifications(): void {
+    if (this.clearAllLoading || this.notifications.length === 0) {
+      return;
+    }
+
+    this.clearAllLoading = true;
+    this.actionError = '';
+    this.actionSuccess = '';
+
+    this.notificationService.deleteAll()
+      .pipe(finalize(() => this.clearAllLoading = false))
+      .subscribe({
+        next: () => {
+          this.notifications = [];
+          this.selected = undefined;
+          this.clearAllConfirming = false;
+          this.accountBlockConfirming = false;
+          this.actionSuccess = t('feedback.notifications.cleared');
+          this.router.navigate(['/menu/notifications']);
+        },
+        error: error => {
+          this.actionError = this.errorFrom(
+            error,
+            t('feedback.notifications.clearAllError')
+          );
+        }
+      });
   }
 
   openSession(notification: AppNotification): void {
