@@ -28,6 +28,7 @@ export class CommunitiesComponent implements OnInit {
 
   inviteUsername = '';
   ownershipUsername = '';
+  photoUpdating = false;
 
   constructor(
     private communityService: CommunityGroupsService,
@@ -169,6 +170,49 @@ export class CommunitiesComponent implements OnInit {
       },
       error: error => this.errorMessage = error.error?.message || t('feedback.communities.transferError')
     });
+  }
+
+  onCommunityPhotoChange(event: Event): void {
+    if (!this.selected || !this.canManage() || this.photoUpdating) {
+      return;
+    }
+
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024) {
+      this.errorMessage = t('feedback.image.choose');
+      input.value = '';
+      return;
+    }
+
+    this.photoUpdating = true;
+    this.errorMessage = '';
+
+    this.communityService.updatePhoto(this.selected.id, file)
+      .pipe(finalize(() => {
+        this.photoUpdating = false;
+        input.value = '';
+      }))
+      .subscribe({
+        next: community => {
+          this.selected = community;
+          this.replaceCommunity(community);
+        },
+        error: () => this.errorMessage = t('feedback.communities.photoError')
+      });
+  }
+
+  communityInitials(community: CommunityGroup): string {
+    return community.name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map(part => part.charAt(0).toUpperCase())
+      .join('') || '◎';
   }
 
   canManage(): boolean {
