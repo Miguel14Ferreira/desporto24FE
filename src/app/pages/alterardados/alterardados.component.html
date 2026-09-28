@@ -20,10 +20,6 @@
       <div class="feedback error-feedback">{{ errorMessage }}</div>
     }
 
-    @if (successMessage) {
-      <div class="feedback success-feedback">{{ successMessage }}</div>
-    }
-
     @if (!loading && profile) {
       <form class="edit-card" (ngSubmit)="save()">
         <section class="photo-panel">
@@ -75,7 +71,13 @@
               </div>
             }
           </div>
-        </section>
+          @if (toastMessage) {
+    <div class="profile-toast" role="status" aria-live="polite">
+      <span class="profile-toast-icon">✓</span>
+      <span>{{ toastMessage }}</span>
+    </div>
+  }
+</section>
 
         <div class="form-grid">
           <label>
