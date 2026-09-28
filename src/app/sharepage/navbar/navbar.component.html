@@ -1,6 +1,6 @@
 <nav class="site-nav">
   <div class="site-nav__shell">
-    <a class="brand" [routerLink]="isAuthenticated() ? '/menu' : '/home'">DESPORTO24</a>
+    <a class="brand" [routerLink]="isAuthenticated() ? '/menu/feed' : '/home'">DESPORTO24</a>
 
     <div class="site-nav__links">
       @if (isAuthenticated()) {
