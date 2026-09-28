@@ -11,6 +11,7 @@ import {
   CommunityInvite,
   CommunityMatchResult,
   CommunityRole,
+  CommunitySeason,
   CommunityVisibility
 } from '../pages/model/community-group';
 
@@ -43,9 +44,30 @@ export class CommunityGroupsService {
     );
   }
 
-  competition(id: number): Observable<CommunityCompetitionOverview> {
+  competition(
+    id: number,
+    seasonId: number | null = null
+  ): Observable<CommunityCompetitionOverview> {
+    const suffix = seasonId === null ? '' : '?seasonId=' + seasonId;
     return this.http.get<CommunityCompetitionOverview>(
-      this.url + '/' + id + '/competition'
+      this.url + '/' + id + '/competition' + suffix
+    );
+  }
+
+  createSeason(
+    id: number,
+    request: { name: string; startsAt: string | null }
+  ): Observable<CommunitySeason> {
+    return this.http.post<CommunitySeason>(
+      this.url + '/' + id + '/seasons',
+      request
+    );
+  }
+
+  closeSeason(id: number, seasonId: number): Observable<CommunitySeason> {
+    return this.http.post<CommunitySeason>(
+      this.url + '/' + id + '/seasons/' + seasonId + '/close',
+      null
     );
   }
 
