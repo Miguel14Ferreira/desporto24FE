@@ -95,10 +95,41 @@
               <span class="created-at">{{ formatCreatedAt(selected.createdAt) }}</span>
 
               <div class="detail-actions">
-                @if (isMfaDisabledNotification(selected)) {
-                  <button type="button" class="primary-action" (click)="openMfaSettings()">
-                    {{ 'notifications.enableMfa' | t }}
-                  </button>
+                @if (canProtectAccount(selected)) {
+                  @if (!accountBlockConfirming) {
+                    <button
+                      type="button"
+                      class="security-action"
+                      [disabled]="actionLoadingId !== null"
+                      (click)="requestAccountBlock()">
+                      {{ 'notifications.blockAccess' | t }}
+                    </button>
+                  } @else {
+                    <div class="security-confirmation">
+                      <strong>{{ 'notifications.blockAccessTitle' | t }}</strong>
+                      <p>{{ 'notifications.blockAccessText' | t }}</p>
+
+                      <div class="security-confirmation__actions">
+                        <button
+                          type="button"
+                          class="danger-action"
+                          [disabled]="actionLoadingId !== null"
+                          (click)="blockAccountAccess()">
+                          {{ actionLoadingId === selected.id
+                            ? ('notifications.blockingAccess' | t)
+                            : ('notifications.confirmBlockAccess' | t) }}
+                        </button>
+
+                        <button
+                          type="button"
+                          class="secondary-button"
+                          [disabled]="actionLoadingId !== null"
+                          (click)="cancelAccountBlock()">
+                          {{ 'common.cancel' | t }}
+                        </button>
+                      </div>
+                    </div>
+                  }
                 }
 
                 @if (selected.sessionId !== null) {
