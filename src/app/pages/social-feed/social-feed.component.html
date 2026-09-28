@@ -24,7 +24,29 @@
         rows="4"
         [disabled]="posting"
         [placeholder]="'feed.sharePlaceholder' | t"></textarea>
+
+      @if (postImagePreview) {
+        <div class="composer-image-preview">
+          <img [src]="postImagePreview" [alt]="'feed.imagePreviewAlt' | t">
+          <button
+            type="button"
+            class="remove-image"
+            [disabled]="posting"
+            (click)="removePostImage()">
+            {{ 'feed.removeImage' | t }}
+          </button>
+        </div>
+      }
+
       <div class="composer-actions">
+        <label class="image-picker" [class.disabled]="posting">
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            [disabled]="posting"
+            (change)="onPostImageChange($event)">
+          <span>{{ postImagePreview ? ('feed.changeImage' | t) : ('feed.addImage' | t) }}</span>
+        </label>
         <button
           type="button"
           [disabled]="posting || !postContent.trim()"
@@ -88,6 +110,13 @@
 
             @if (item.type === 'POST') {
               <p class="post-content">{{ item.content }}</p>
+
+              @if (postImage(item); as image) {
+                <img
+                  class="post-image"
+                  [src]="image"
+                  [alt]="'feed.postImageAlt' | t:{ user: item.authorDisplayName }">
+              }
 
               <div class="post-actions">
                 <button
