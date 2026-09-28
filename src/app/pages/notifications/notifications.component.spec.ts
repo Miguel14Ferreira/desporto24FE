@@ -60,7 +60,7 @@ describe('NotificationsComponent', () => {
     signature: 'DESPORTO24 MANAGEMENT TEAM',
     createdAt: '2026-09-28T19:12:00Z',
     friendRequest: false,
-    updateProfile: true,
+    updateProfile: false,
     sessionInvite: false,
     normalMessage: false,
     token: null,
