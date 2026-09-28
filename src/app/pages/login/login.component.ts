@@ -205,8 +205,8 @@ export class LoginComponent implements OnInit, AfterViewInit {
             sessionStorage.setItem('mfa-challenge-id', response.challengeId);
             sessionStorage.setItem('mfa-return-url', this.returnUrl);
 
-            if (response.expiresAt) {
-              sessionStorage.setItem('mfa-expires-at', response.expiresAt);
+            if (response.challengeExpiresAt) {
+              sessionStorage.setItem('mfa-expires-at', response.challengeExpiresAt);
             } else {
               sessionStorage.removeItem('mfa-expires-at');
             }
