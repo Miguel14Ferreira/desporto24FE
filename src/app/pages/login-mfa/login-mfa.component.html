@@ -3,7 +3,7 @@
     <p class="eyebrow">{{ 'mfa.eyebrow' | t }}</p>
     <h1>{{ 'mfa.title' | t }}</h1>
     <p class="subtitle">
-      {{ 'mfa.sent' | t }}
+      Abre a tua aplicação Authenticator e introduz o código atual de 6 dígitos.
     </p>
 
     @if (countdownLabel() && !isChallengeExpired()) {
@@ -46,16 +46,6 @@
     </form>
 
     <div class="secondary-actions">
-      <button
-        type="button"
-        [disabled]="resending || !challengeId || resendCooldownSeconds > 0"
-        (click)="resendCode()">
-        {{ resending
-          ? ('login.resending' | t)
-          : (resendCooldownSeconds > 0
-              ? ('login.resendIn' | t:{ seconds: resendCooldownSeconds })
-              : ('mfa.resend' | t)) }}
-      </button>
       <button type="button" (click)="cancel()">{{ 'mfa.back' | t }}</button>
     </div>
   </div>
