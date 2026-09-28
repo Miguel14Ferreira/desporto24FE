@@ -5,6 +5,9 @@ export interface CommunityProfile {
   country: string | null;
   location: string | null;
   favoriteSports: string | null;
+  bio: string | null;
+  skillLevel: string | null;
+  availability: string | null;
   profilePicUrl: string | null;
   joinDateDisplay: string | null;
 }
