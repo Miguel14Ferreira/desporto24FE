@@ -179,6 +179,20 @@ textarea {
   gap: .5rem;
 }
 
+.password-field input,
+.password-field button,
+.phone-row input,
+.phone-row select {
+  height: 52px;
+  box-sizing: border-box;
+}
+
+.password-field button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .form-actions {
   display: flex;
   justify-content: flex-end;
@@ -328,6 +342,7 @@ textarea {
 
 .calling-code {
   min-width: 0;
+  height: 52px;
 }
 
 @media (max-width: 520px) {
