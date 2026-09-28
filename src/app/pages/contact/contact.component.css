@@ -191,3 +191,23 @@ small {
   color: #7dd3fc;
   font-weight: 800;
 }
+
+
+.field-error {
+  justify-self: start;
+  color: #fca5a5;
+  font-size: .76rem;
+  line-height: 1.35;
+}
+
+.field-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: .75rem;
+  min-height: 1.1rem;
+}
+
+[aria-invalid="true"] {
+  border-color: rgba(248, 113, 113, .72);
+  box-shadow: 0 0 0 2px rgba(248, 113, 113, .10);
+}
