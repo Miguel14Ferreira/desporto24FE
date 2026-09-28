@@ -95,6 +95,12 @@
               <span class="created-at">{{ formatCreatedAt(selected.createdAt) }}</span>
 
               <div class="detail-actions">
+                @if (isMfaDisabledNotification(selected)) {
+                  <button type="button" class="primary-action" (click)="openMfaSettings()">
+                    {{ 'notifications.enableMfa' | t }}
+                  </button>
+                }
+
                 @if (selected.sessionId !== null) {
                   <button type="button" class="primary-action" (click)="openSession(selected)">
                     {{ 'notifications.openSession' | t }}
