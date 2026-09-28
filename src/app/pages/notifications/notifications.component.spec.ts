@@ -156,6 +156,16 @@ describe('NotificationsComponent', () => {
     expect(component.canProtectAccount(securityNotification)).toBeTrue();
   });
 
+  it('should not expose account blocking for unrelated notifications', () => {
+    const unrelated = {
+      ...securityNotificationFixture(),
+      subject: 'Perfil atualizado',
+      message: 'Se não foste tu, verifica os teus dados.'
+    };
+
+    expect(component.canProtectAccount(unrelated)).toBeFalse();
+  });
+
   it('should block the account and clear the local session after confirmation', () => {
     const securityNotification = securityNotificationFixture();
     component.selected = securityNotification;
