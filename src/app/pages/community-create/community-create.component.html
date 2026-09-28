@@ -2,13 +2,13 @@
   <div class="create-shell">
     <header class="create-header">
       <div>
-        <p class="eyebrow">Comunidades</p>
-        <h1>Criar comunidade</h1>
-        <p>Cria o teu espaço, escolhe quem entra e gere-o com outros admins.</p>
+        <p class="eyebrow">{{ 'communityCreate.eyebrow' | t }}</p>
+        <h1>{{ 'communityCreate.title' | t }}</h1>
+        <p>{{ 'communityCreate.subtitle' | t }}</p>
       </div>
 
       <button type="button" class="secondary-action" (click)="cancel()">
-        Voltar
+        {{ 'communityCreate.back' | t }}
       </button>
     </header>
 
@@ -19,31 +19,31 @@
     <form class="create-panel" (ngSubmit)="create()">
       <div class="panel-heading">
         <div>
-          <span class="step">Configuração inicial</span>
-          <h2>Sobre a comunidade</h2>
+          <span class="step">{{ 'communityCreate.step' | t }}</span>
+          <h2>{{ 'communityCreate.about' | t }}</h2>
         </div>
-        <p>Podes alterar estes dados mais tarde.</p>
+        <p>{{ 'communityCreate.editLater' | t }}</p>
       </div>
 
       <div class="form-grid">
         <label class="full-width">
-          <span>Nome da comunidade *</span>
+          <span>{{ 'communityCreate.name' | t }} *</span>
           <input
             name="name"
             [(ngModel)]="name"
             maxlength="100"
             [disabled]="saving"
-            placeholder="Ex.: CNG - Quintas Feiras"
+            [placeholder]="'communityCreate.namePlaceholder' | t"
             required>
         </label>
 
         <label>
-          <span>Desporto</span>
+          <span>{{ 'communityCreate.sport' | t }}</span>
           <select
             name="sport"
             [(ngModel)]="sport"
             [disabled]="saving">
-            <option value="">Multidesporto / nenhum específico</option>
+            <option value="">{{ 'communityCreate.multiSport' | t }}</option>
             @for (item of sportsCatalog; track item) {
               <option [value]="item">{{ item }}</option>
             }
@@ -51,47 +51,47 @@
         </label>
 
         <label>
-          <span>Privacidade</span>
+          <span>{{ 'communityCreate.privacy' | t }}</span>
           <select
             name="visibility"
             [(ngModel)]="visibility"
             [disabled]="saving">
-            <option value="PRIVATE">Privada</option>
-            <option value="PUBLIC">Pública</option>
+            <option value="PRIVATE">{{ 'communityCreate.private' | t }}</option>
+            <option value="PUBLIC">{{ 'communityCreate.public' | t }}</option>
           </select>
           <small>
             {{ visibility === 'PRIVATE'
-              ? 'Só entra quem for convidado ou aceite pela equipa de gestão.'
-              : 'A comunidade poderá ser descoberta por outros utilizadores.' }}
+              ? ('communityCreate.privateHint' | t)
+              : ('communityCreate.publicHint' | t) }}
           </small>
         </label>
 
         <label class="full-width">
-          <span>Descrição</span>
+          <span>{{ 'communityCreate.description' | t }}</span>
           <textarea
             name="description"
             [(ngModel)]="description"
             maxlength="2000"
             rows="5"
             [disabled]="saving"
-            placeholder="Conta aos futuros membros para que serve esta comunidade."></textarea>
+            [placeholder]="'communityCreate.descriptionPlaceholder' | t"></textarea>
         </label>
       </div>
 
       <div class="creation-note">
         <span class="note-icon">◎</span>
         <div>
-          <strong>Tu serás o Owner.</strong>
-          <p>Depois podes convidar jogadores e promover membros a Admin para te ajudarem a gerir o grupo.</p>
+          <strong>{{ 'communityCreate.ownerTitle' | t }}</strong>
+          <p>{{ 'communityCreate.ownerHint' | t }}</p>
         </div>
       </div>
 
       <div class="form-actions">
         <button type="button" class="secondary-action" [disabled]="saving" (click)="cancel()">
-          Cancelar
+          {{ 'common.cancel' | t }}
         </button>
         <button type="submit" class="primary-action" [disabled]="saving || !name.trim()">
-          {{ saving ? 'A criar...' : 'Criar comunidade' }}
+          {{ saving ? ('communityCreate.creating' | t) : ('communityCreate.create' | t) }}
         </button>
       </div>
     </form>
