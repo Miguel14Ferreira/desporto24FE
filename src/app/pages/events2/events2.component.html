@@ -216,6 +216,16 @@
                   [disabled]="venueSaving"
                   [placeholder]="'venue.openingHoursPlaceholder' | t">
               </label>
+
+              <label>
+                <span>{{ 'venue.priceInfo' | t }}</span>
+                <input
+                  name="venuePriceInfo"
+                  [(ngModel)]="venuePriceInfo"
+                  maxlength="500"
+                  [disabled]="venueSaving"
+                  [placeholder]="'venue.priceInfoPlaceholder' | t">
+              </label>
             </div>
 
             <p class="venue-current-location">
