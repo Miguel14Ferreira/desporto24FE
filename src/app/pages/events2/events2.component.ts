@@ -63,6 +63,7 @@ export class Events2Component implements OnInit {
   venueLockers: boolean | null = null;
   venueAccessible: boolean | null = null;
   venueFirstAid: boolean | null = null;
+  venueAed: boolean | null = null;
   venueParking = false;
   venueLighting = false;
 
@@ -228,6 +229,7 @@ export class Events2Component implements OnInit {
       lockers: this.venueLockers,
       accessible: this.venueAccessible,
       firstAid: this.venueFirstAid,
+      aed: this.venueAed,
       parking: this.venueParking,
       lighting: this.venueLighting,
       latitude: this.locationCaptured ? this.latitude : null,
@@ -250,6 +252,7 @@ export class Events2Component implements OnInit {
           this.venueLockers = null;
           this.venueAccessible = null;
           this.venueFirstAid = null;
+          this.venueAed = null;
           this.venueParking = false;
           this.venueLighting = false;
         },
