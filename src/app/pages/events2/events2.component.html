@@ -156,6 +156,16 @@
               </label>
 
               <label>
+                <span>{{ 'venue.type' | t }}</span>
+                <input
+                  name="venueType"
+                  [(ngModel)]="venueType"
+                  maxlength="80"
+                  [disabled]="venueSaving"
+                  [placeholder]="'venue.typePlaceholder' | t">
+              </label>
+
+              <label>
                 <span>{{ 'venue.surface' | t }}</span>
                 <input
                   name="venueSurfaceType"
