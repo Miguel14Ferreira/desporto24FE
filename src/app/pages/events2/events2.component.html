@@ -196,6 +196,16 @@
                   [disabled]="venueSaving"
                   [placeholder]="'venue.servicesPlaceholder' | t">
               </label>
+
+              <label>
+                <span>{{ 'venue.transport' | t }}</span>
+                <input
+                  name="venueTransport"
+                  [(ngModel)]="venueTransport"
+                  maxlength="500"
+                  [disabled]="venueSaving"
+                  [placeholder]="'venue.transportPlaceholder' | t">
+              </label>
             </div>
 
             <p class="venue-current-location">
