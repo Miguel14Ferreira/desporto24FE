@@ -166,6 +166,18 @@
               </label>
 
               <label>
+                <span>{{ 'venue.ownership' | t }}</span>
+                <select
+                  name="venueOwnershipType"
+                  [(ngModel)]="venueOwnershipType"
+                  [disabled]="venueSaving">
+                  <option [ngValue]="null">{{ 'venue.ownership.none' | t }}</option>
+                  <option [ngValue]="'PUBLIC'">{{ 'venue.ownership.public' | t }}</option>
+                  <option [ngValue]="'PRIVATE'">{{ 'venue.ownership.private' | t }}</option>
+                </select>
+              </label>
+
+              <label>
                 <span>{{ 'venue.surface' | t }}</span>
                 <input
                   name="venueSurfaceType"
