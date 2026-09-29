@@ -31,6 +31,7 @@ import { CommunityCreateComponent } from './pages/community-create/community-cre
 import { AdminIdeasComponent } from './pages/admin-ideas/admin-ideas.component';
 import { NotFoundComponent } from './pages/not-found/not-found.component';
 import { SocialFeedComponent } from './pages/social-feed/social-feed.component';
+import { DiscoverComponent } from './pages/discover/discover.component';
 
 const routes: Routes = [
   {path:'', redirectTo:'home',pathMatch:'full'},
@@ -41,6 +42,7 @@ const routes: Routes = [
   {path:'menu/my-sessions',component:MySessionsComponent,canActivate:[AuthenticationGuard]},
   {path:'menu/events/:id',component:SessionDetailsComponent,canActivate:[AuthenticationGuard]},
   {path:'menu/feed',component:SocialFeedComponent,canActivate:[AuthenticationGuard]},
+  {path:'menu/discover',component:DiscoverComponent,canActivate:[AuthenticationGuard]},
   {path:'menu/events',component:EventsComponent,canActivate:[AuthenticationGuard]},
   {path:'menu/login',redirectTo:'/login', pathMatch:'full'},
   {path:'login',component:LoginComponent},
