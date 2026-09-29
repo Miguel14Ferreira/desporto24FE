@@ -335,3 +335,33 @@
 .venue-sport-condition-save-error {
   font-weight: 600;
 }
+
+
+.venue-provenance {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.venue-source-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border: 1px solid #d9d9d9;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.venue-created-by {
+  font-size: 0.9rem;
+}
+
+@media (max-width: 520px) {
+  .venue-provenance {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

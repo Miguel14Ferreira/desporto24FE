@@ -10,6 +10,20 @@
       <header class="venue-header">
         <span class="venue-kicker">{{ 'venue.detail.kicker' | t }}</span>
         <h1>{{ venue.name }}</h1>
+
+        <div class="venue-provenance">
+          <span class="venue-source-badge">
+            {{ venue.informationSource === 'OFFICIAL'
+              ? ('venue.detail.sourceOfficial' | t)
+              : ('venue.detail.sourceCommunity' | t) }}
+          </span>
+
+          @if (venue.createdByUsername) {
+            <span class="venue-created-by">
+              {{ 'venue.detail.createdBy' | t }} <strong>@{{ venue.createdByUsername }}</strong>
+            </span>
+          }
+        </div>
       </header>
 
       <div class="venue-basic-info">
