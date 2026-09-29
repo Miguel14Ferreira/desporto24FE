@@ -69,4 +69,35 @@ describe('VenueDetailsComponent', () => {
     expect(component.sportConditionsLoading).toBeFalse();
     expect(component.loadError).toBeFalse();
   });
+
+  it('rejects an invalid route id without calling the venue APIs', () => {
+    const route = {
+      snapshot: {
+        paramMap: {
+          get: () => 'invalid'
+        }
+      }
+    } as unknown as ActivatedRoute;
+
+    const venueService = jasmine.createSpyObj<VenueService>('VenueService', [
+      'get',
+      'listPhotos',
+      'listSportConditions',
+      'addPhoto',
+      'addSportCondition'
+    ]);
+
+    const component = new VenueDetailsComponent(route, venueService);
+
+    component.ngOnInit();
+
+    expect(venueService.get).not.toHaveBeenCalled();
+    expect(venueService.listPhotos).not.toHaveBeenCalled();
+    expect(venueService.listSportConditions).not.toHaveBeenCalled();
+    expect(component.venue).toBeNull();
+    expect(component.loading).toBeFalse();
+    expect(component.photosLoading).toBeFalse();
+    expect(component.sportConditionsLoading).toBeFalse();
+    expect(component.loadError).toBeTrue();
+  });
 });
