@@ -79,6 +79,41 @@
   }
 </section>
 
+        <section class="profile-completion-card">
+          <div class="profile-completion-card__heading">
+            <div>
+              <span class="section-kicker">{{ 'profileCompletion.kicker' | t }}</span>
+              <h2>{{ 'profileCompletion.title' | t }}</h2>
+            </div>
+            <strong>{{ profileCompletion.percentage }}%</strong>
+          </div>
+
+          <div
+            class="profile-completion-track"
+            role="progressbar"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            [attr.aria-valuenow]="profileCompletion.percentage">
+            <span [style.width.%]="profileCompletion.percentage"></span>
+          </div>
+
+          <p>
+            {{ profileCompletion.percentage === 100
+              ? ('profileCompletion.complete' | t)
+              : ('profileCompletion.hint' | t) }}
+          </p>
+
+          @if (profileCompletion.percentage < 100) {
+            <div class="profile-completion-missing">
+              @for (item of completionMissingPreview; track item.key) {
+                <span>
+                  ○ {{ ('profileCompletion.item.' + item.key) | t }}
+                </span>
+              }
+            </div>
+          }
+        </section>
+
         <div class="form-grid">
           <label>
             <span>{{ 'register.nickname' | t }}</span>

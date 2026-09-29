@@ -87,6 +87,11 @@ describe('PerfilDataComponent', () => {
     expect(component.visibleFavoriteSports.length).toBe(6);
   });
 
+  it('should expose profile completion', () => {
+    expect(component.profileCompletion.percentage).toBeGreaterThan(0);
+    expect(component.profileCompletion.missing.length).toBeGreaterThan(0);
+  });
+
   it('should load reliability after the profile', () => {
     expect(reliabilityService.summary).toHaveBeenCalledWith('miguel');
     expect(component.reliability?.attendanceRate).toBe(90);

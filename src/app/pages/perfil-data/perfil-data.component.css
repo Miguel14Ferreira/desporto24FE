@@ -273,3 +273,85 @@ h1 { font-size: clamp(2.1rem, 5vw, 3.5rem); }
 .favorite-sports__list button:hover {
   border-color: rgba(125,211,252,.45);
 }
+
+
+.profile-completion-card {
+  display: grid;
+  gap: .7rem;
+  margin-top: 1.2rem;
+  padding: 1rem;
+  border: 1px solid rgba(125,211,252,.16);
+  border-radius: .9rem;
+  background: linear-gradient(135deg, rgba(14,165,233,.07), rgba(255,255,255,.025));
+}
+
+.profile-completion-card__heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.profile-completion-card__heading h3 {
+  margin-top: .2rem;
+}
+
+.profile-completion-card__heading > strong {
+  color: #bae6fd;
+  font-size: 1.25rem;
+}
+
+.profile-completion-track {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255,255,255,.08);
+}
+
+.profile-completion-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #38bdf8, #22d3ee);
+}
+
+.profile-completion-card p {
+  margin: 0;
+  color: #94a3b8;
+  font-size: .8rem;
+  line-height: 1.5;
+}
+
+.profile-completion-missing {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .4rem;
+}
+
+.profile-completion-missing span {
+  border-radius: 999px;
+  padding: .3rem .5rem;
+  background: rgba(255,255,255,.05);
+  color: #cbd5e1;
+  font-size: .7rem;
+  font-weight: 750;
+}
+
+.profile-completion-missing a {
+  margin-left: auto;
+  color: #bae6fd;
+  font-size: .74rem;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.profile-complete-badge {
+  justify-self: start;
+  border-radius: 999px;
+  padding: .35rem .6rem;
+  background: rgba(74,222,128,.08);
+  color: #bbf7d0;
+  font-size: .74rem;
+  font-weight: 850;
+}

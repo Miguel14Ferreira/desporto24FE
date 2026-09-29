@@ -138,6 +138,11 @@ describe('AlterardadosComponent', () => {
     expect(component.toastMessage).toBe('');
   });
 
+  it('should calculate sports profile completion', () => {
+    expect(component.profileCompletion.percentage).toBeGreaterThan(0);
+    expect(component.profileCompletion.missing.length).toBeGreaterThan(0);
+  });
+
   it('should expose an icon for sports', () => {
     expect(component.iconForSport('Futebol')).toBe('⚽');
     expect(component.iconForSport('Padel')).toBe('🎾');

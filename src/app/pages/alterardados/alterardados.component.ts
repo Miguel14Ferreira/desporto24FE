@@ -8,6 +8,7 @@ import { MyProfile, UpdateMyProfileRequest } from '../model/my-profile';
 import { MfaSetupResponse, MyProfileService } from '../../services/my-profile.service';
 import { SPORTS_CATALOG, sportIcon } from '../../shared/sports-catalog';
 import { COUNTRY_CALLING_CODES, countryNameFromLabel } from '../../shared/country-calling-codes';
+import { calculateProfileCompletion } from '../../shared/profile-completion';
 
 @Component({
   selector: 'app-alterardados',
@@ -204,6 +205,14 @@ export class AlterardadosComponent implements OnInit {
       });
       firstInvalid.focus({ preventScroll: true });
     });
+  }
+
+  get profileCompletion() {
+    return calculateProfileCompletion(this.profile);
+  }
+
+  get completionMissingPreview() {
+    return this.profileCompletion.missing.slice(0, 3);
   }
 
   countryName(label: string): string {
