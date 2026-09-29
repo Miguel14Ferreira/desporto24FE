@@ -1,0 +1,72 @@
+import { ActivatedRoute } from '@angular/router';
+import { of } from 'rxjs';
+
+import { VenueService } from '../../services/venue.service';
+import { Venue } from '../model/venue';
+import { VenueDetailsComponent } from './venue-details.component';
+
+describe('VenueDetailsComponent', () => {
+  it('loads the venue, photos and sport conditions from the route id', () => {
+    const venue: Venue = {
+      id: 7,
+      name: 'Pavilhão Central',
+      city: 'Lisboa',
+      address: 'Rua do Desporto',
+      sports: 'Futsal',
+      venueType: 'Pavilhão',
+      ownershipType: 'PUBLIC',
+      surfaceType: 'Madeira',
+      indoor: true,
+      changingRooms: true,
+      toilets: true,
+      lockers: true,
+      accessible: true,
+      firstAid: true,
+      aed: true,
+      cafe: false,
+      services: null,
+      transport: null,
+      openingHours: null,
+      priceInfo: null,
+      parking: true,
+      lighting: true,
+      latitude: 38.7223,
+      longitude: -9.1393,
+      informationSource: 'COMMUNITY',
+      createdByUsername: 'miguel'
+    };
+
+    const route = {
+      snapshot: {
+        paramMap: {
+          get: () => '7'
+        }
+      }
+    } as unknown as ActivatedRoute;
+
+    const venueService = jasmine.createSpyObj<VenueService>('VenueService', [
+      'get',
+      'listPhotos',
+      'listSportConditions',
+      'addPhoto',
+      'addSportCondition'
+    ]);
+
+    venueService.get.and.returnValue(of(venue));
+    venueService.listPhotos.and.returnValue(of([]));
+    venueService.listSportConditions.and.returnValue(of([]));
+
+    const component = new VenueDetailsComponent(route, venueService);
+
+    component.ngOnInit();
+
+    expect(venueService.get).toHaveBeenCalledOnceWith(7);
+    expect(venueService.listPhotos).toHaveBeenCalledOnceWith(7);
+    expect(venueService.listSportConditions).toHaveBeenCalledOnceWith(7);
+    expect(component.venue).toEqual(venue);
+    expect(component.loading).toBeFalse();
+    expect(component.photosLoading).toBeFalse();
+    expect(component.sportConditionsLoading).toBeFalse();
+    expect(component.loadError).toBeFalse();
+  });
+});
