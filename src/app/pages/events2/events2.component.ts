@@ -8,7 +8,7 @@ import { CreateSessionRequest } from '../model/create-session-request';
 import { SessionService } from '../../services/session.service';
 import { CommunityGroupsService } from '../../services/community-groups.service';
 import { VenueService } from '../../services/venue.service';
-import { Venue } from '../model/venue';
+import { Venue, VenueOwnershipType } from '../model/venue';
 import { SPORTS_CATALOG } from '../../shared/sports-catalog';
 
 @Component({
@@ -55,6 +55,7 @@ export class Events2Component implements OnInit {
   showVenueCreator = false;
   venueName = '';
   venueType = '';
+  venueOwnershipType: VenueOwnershipType | null = null;
   venueSurfaceType = '';
   venueIndoor = false;
   venueChangingRooms = false;
@@ -215,6 +216,7 @@ export class Events2Component implements OnInit {
       address: this.address.trim(),
       sports: this.sport.trim() || null,
       venueType: this.venueType.trim() || null,
+      ownershipType: this.venueOwnershipType,
       surfaceType: this.venueSurfaceType.trim() || null,
       indoor: this.venueIndoor,
       changingRooms: this.venueChangingRooms,
@@ -232,6 +234,7 @@ export class Events2Component implements OnInit {
           this.showVenueCreator = false;
           this.venueName = '';
           this.venueType = '';
+          this.venueOwnershipType = null;
           this.venueSurfaceType = '';
           this.venueIndoor = false;
           this.venueChangingRooms = false;
