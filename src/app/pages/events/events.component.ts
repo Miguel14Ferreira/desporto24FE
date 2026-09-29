@@ -146,6 +146,19 @@ export class EventsComponent implements OnInit {
     )].sort((a, b) => a.localeCompare(b, 'pt'));
   }
 
+  vacancies(session: SessionSummary): number {
+    return Math.max(
+      0,
+      session.maxParticipants - session.participantCount
+    );
+  }
+
+  canJoin(session: SessionSummary): boolean {
+    return !session.privateGame
+      && this.vacancies(session) > 0
+      && session.status?.toUpperCase() === 'OPEN';
+  }
+
   toggleAdvancedFilters(): void {
     this.showAdvancedFilters = !this.showAdvancedFilters;
   }

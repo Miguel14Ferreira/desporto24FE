@@ -130,13 +130,123 @@ h1 {
   white-space: nowrap;
 }
 
-.session-grid {
+.session-list {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 1rem;
+  gap: .55rem;
 }
 
-.session-card,
+.session-row {
+  display: grid;
+  grid-template-columns:
+    minmax(150px, 1.25fr)
+    minmax(145px, 1fr)
+    minmax(115px, .8fr)
+    minmax(100px, .7fr)
+    auto
+    auto;
+  align-items: center;
+  gap: .8rem;
+  min-height: 78px;
+  padding: .7rem .8rem;
+  border: 1px solid rgba(255, 255, 255, .1);
+  border-radius: .9rem;
+  background: rgba(15, 23, 42, .78);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, .12);
+  backdrop-filter: blur(10px);
+  transition: border-color .18s ease, background .18s ease, transform .18s ease;
+}
+
+.session-row:hover {
+  border-color: rgba(125, 211, 252, .28);
+  background: rgba(15, 23, 42, .92);
+  transform: translateY(-1px);
+}
+
+.session-row--full {
+  opacity: .78;
+}
+
+.session-identity,
+.session-fact {
+  display: grid;
+  min-width: 0;
+  gap: .18rem;
+}
+
+.session-identity strong,
+.session-fact strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.session-identity small,
+.session-fact span {
+  color: #94a3b8;
+  font-size: .72rem;
+}
+
+.sport-label {
+  color: #7dd3fc;
+  font-size: .72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+.session-vacancies strong {
+  color: #cbd5e1;
+}
+
+.session-vacancies.available strong {
+  color: #86efac;
+}
+
+.private-badge,
+.status {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: .32rem .55rem;
+  background: rgba(125, 211, 252, .1);
+  color: #bae6fd;
+  font-size: .7rem;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.status {
+  color: #86efac;
+  background: rgba(74, 222, 128, .08);
+}
+
+.session-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .55rem;
+  min-width: 104px;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: .72rem;
+  padding: .62rem .72rem;
+  background: rgba(255,255,255,.06);
+  color: #f8fafc;
+  font-size: .76rem;
+  font-weight: 900;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.session-action--join {
+  border-color: transparent;
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.session-action:hover {
+  border-color: rgba(125,211,252,.45);
+}
+
 .state-card {
   border: 1px solid rgba(255, 255, 255, .12);
   border-radius: 1rem;
@@ -215,6 +325,24 @@ h1 {
   border-color: rgba(248, 113, 113, .45);
 }
 
+@media (max-width: 1040px) {
+  .session-row {
+    grid-template-columns:
+      minmax(140px, 1fr)
+      minmax(135px, 1fr)
+      minmax(105px, .8fr)
+      minmax(90px, .7fr);
+  }
+
+  .session-state {
+    justify-self: start;
+  }
+
+  .session-action {
+    justify-self: stretch;
+  }
+}
+
 @media (max-width: 900px) {
   .page-header {
     align-items: flex-start;
@@ -235,8 +363,18 @@ h1 {
     grid-template-columns: 1fr;
   }
 
-  .session-meta {
-    grid-template-columns: 1fr;
+  .session-row {
+    grid-template-columns: 1fr 1fr;
+    gap: .65rem;
+  }
+
+  .session-state,
+  .session-action {
+    width: 100%;
+  }
+
+  .session-action {
+    box-sizing: border-box;
   }
 }
 
