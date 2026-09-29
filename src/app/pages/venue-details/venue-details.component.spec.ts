@@ -288,6 +288,37 @@ describe('VenueDetailsComponent', () => {
     expect(component.sportConditionSaveError).toBeTrue();
   });
 
+  it('uploads a photo and adds it to the gallery on success', () => {
+    const route = {} as ActivatedRoute;
+    const venueService = jasmine.createSpyObj<VenueService>('VenueService', [
+      'addPhoto'
+    ]);
+    const file = new File(['photo'], 'venue.jpg', { type: 'image/jpeg' });
+    const createdPhoto = {
+      id: 21,
+      photoUrl: 'https://cdn.example.com/venue.jpg',
+      uploadedByUsername: 'miguel',
+      createdAt: '2026-09-29T20:10:00Z'
+    };
+    const input = {
+      files: [file],
+      value: 'C:\\fakepath\\venue.jpg'
+    } as unknown as HTMLInputElement;
+
+    venueService.addPhoto.and.returnValue(of(createdPhoto));
+
+    const component = new VenueDetailsComponent(route, venueService);
+    component.venue = { id: 7 } as Venue;
+
+    component.uploadPhoto({ target: input } as unknown as Event);
+
+    expect(venueService.addPhoto).toHaveBeenCalledOnceWith(7, file);
+    expect(component.photos[0]).toEqual(createdPhoto);
+    expect(input.value).toBe('');
+    expect(component.photoUploading).toBeFalse();
+    expect(component.photoUploadError).toBeFalse();
+  });
+
   it('rejects an invalid route id without calling the venue APIs', () => {
     const route = {
       snapshot: {
