@@ -346,6 +346,29 @@ describe('VenueDetailsComponent', () => {
     expect(component.photoUploadError).toBeTrue();
   });
 
+  it('rejects a non-image photo upload before calling the API', () => {
+    const route = {} as ActivatedRoute;
+    const venueService = jasmine.createSpyObj<VenueService>('VenueService', [
+      'addPhoto'
+    ]);
+    const file = new File(['document'], 'venue.txt', { type: 'text/plain' });
+    const input = {
+      files: [file],
+      value: 'C:\\fakepath\\venue.txt'
+    } as unknown as HTMLInputElement;
+
+    const component = new VenueDetailsComponent(route, venueService);
+    component.venue = { id: 7 } as Venue;
+
+    component.uploadPhoto({ target: input } as unknown as Event);
+
+    expect(venueService.addPhoto).not.toHaveBeenCalled();
+    expect(component.photos).toEqual([]);
+    expect(input.value).toBe('');
+    expect(component.photoUploading).toBeFalse();
+    expect(component.photoUploadError).toBeTrue();
+  });
+
   it('rejects an invalid route id without calling the venue APIs', () => {
     const route = {
       snapshot: {
