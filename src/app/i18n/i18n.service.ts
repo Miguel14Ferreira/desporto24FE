@@ -800,6 +800,7 @@ const PT: Dictionary = {
   'venue.detail.city': 'Localidade',
   'venue.detail.address': 'Morada',
   'venue.detail.amenities': 'Comodidades',
+  'venue.detail.information': 'Informação',
 
   'chat.backFriends': 'Voltar aos amigos',
   'chat.direct': 'Chat direto',
@@ -1872,6 +1873,7 @@ const EN: Dictionary = {
   'venue.detail.city': 'City',
   'venue.detail.address': 'Address',
   'venue.detail.amenities': 'Amenities',
+  'venue.detail.information': 'Information',
 
   'chat.backFriends': 'Back to friends',
   'chat.direct': 'Direct chat',

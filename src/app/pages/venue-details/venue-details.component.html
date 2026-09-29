@@ -23,6 +23,58 @@
         </div>
       </div>
 
+      <section class="venue-information-section">
+        <h2>{{ 'venue.detail.information' | t }}</h2>
+        <div class="venue-information-grid">
+          @if (venue.venueType) {
+            <div>
+              <span>{{ 'venue.type' | t }}</span>
+              <strong>{{ venue.venueType }}</strong>
+            </div>
+          }
+          @if (venue.ownershipType) {
+            <div>
+              <span>{{ 'venue.ownership' | t }}</span>
+              <strong>
+                {{ venue.ownershipType === 'PUBLIC'
+                  ? ('venue.ownership.public' | t)
+                  : ('venue.ownership.private' | t) }}
+              </strong>
+            </div>
+          }
+          @if (venue.surfaceType) {
+            <div>
+              <span>{{ 'venue.surface' | t }}</span>
+              <strong>{{ venue.surfaceType }}</strong>
+            </div>
+          }
+          @if (venue.services) {
+            <div>
+              <span>{{ 'venue.services' | t }}</span>
+              <strong>{{ venue.services }}</strong>
+            </div>
+          }
+          @if (venue.transport) {
+            <div>
+              <span>{{ 'venue.transport' | t }}</span>
+              <strong>{{ venue.transport }}</strong>
+            </div>
+          }
+          @if (venue.openingHours) {
+            <div>
+              <span>{{ 'venue.openingHours' | t }}</span>
+              <strong>{{ venue.openingHours }}</strong>
+            </div>
+          }
+          @if (venue.priceInfo) {
+            <div>
+              <span>{{ 'venue.priceInfo' | t }}</span>
+              <strong>{{ venue.priceInfo }}</strong>
+            </div>
+          }
+        </div>
+      </section>
+
       <section class="venue-amenities-section">
         <h2>{{ 'venue.detail.amenities' | t }}</h2>
         <div class="venue-amenities-list">
