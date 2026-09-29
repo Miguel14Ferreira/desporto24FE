@@ -83,11 +83,12 @@
                   [src]="photo.photoUrl"
                   [alt]="'venue.detail.photoAlt' | t">
 
-                @if (photo.uploadedByUsername) {
-                  <figcaption>
-                    {{ 'venue.detail.createdBy' | t }} <strong>@{{ photo.uploadedByUsername }}</strong>
-                  </figcaption>
-                }
+                <figcaption>
+                  @if (photo.uploadedByUsername) {
+                    {{ 'venue.detail.createdBy' | t }} <strong>@{{ photo.uploadedByUsername }}</strong> ·
+                  }
+                  {{ 'venue.detail.addedAt' | t }} {{ photo.createdAt | date:'short' }}
+                </figcaption>
               </figure>
             }
           </div>
