@@ -83,6 +83,16 @@
                     <span>{{ venue.city }}</span>
                   </div>
                   <div class="tags">
+                    @if (venue.venueType) {
+                      <span>{{ venue.venueType }}</span>
+                    }
+                    @if (venue.ownershipType) {
+                      <span>
+                        {{ venue.ownershipType === 'PUBLIC'
+                          ? ('venue.ownership.public' | t)
+                          : ('venue.ownership.private' | t) }}
+                      </span>
+                    }
                     @if (venue.surfaceType) {
                       <span>{{ venue.surfaceType }}</span>
                     }
