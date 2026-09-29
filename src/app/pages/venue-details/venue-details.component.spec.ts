@@ -164,6 +164,68 @@ describe('VenueDetailsComponent', () => {
     expect(component.loadError).toBeFalse();
   });
 
+  it('keeps the page usable when loading photos errors', () => {
+    const venue: Venue = {
+      id: 7,
+      name: 'Pavilhão Central',
+      city: 'Lisboa',
+      address: 'Rua do Desporto',
+      sports: 'Futsal',
+      venueType: 'Pavilhão',
+      ownershipType: 'PUBLIC',
+      surfaceType: 'Madeira',
+      indoor: true,
+      changingRooms: true,
+      toilets: true,
+      lockers: true,
+      accessible: true,
+      firstAid: true,
+      aed: true,
+      cafe: false,
+      services: null,
+      transport: null,
+      openingHours: null,
+      priceInfo: null,
+      parking: true,
+      lighting: true,
+      latitude: 38.7223,
+      longitude: -9.1393,
+      informationSource: 'COMMUNITY',
+      createdByUsername: 'miguel'
+    };
+
+    const route = {
+      snapshot: {
+        paramMap: {
+          get: () => '7'
+        }
+      }
+    } as unknown as ActivatedRoute;
+
+    const venueService = jasmine.createSpyObj<VenueService>('VenueService', [
+      'get',
+      'listPhotos',
+      'listSportConditions',
+      'addPhoto',
+      'addSportCondition'
+    ]);
+
+    venueService.get.and.returnValue(of(venue));
+    venueService.listPhotos.and.returnValue(
+      throwError(() => new Error('photos failed'))
+    );
+    venueService.listSportConditions.and.returnValue(of([]));
+
+    const component = new VenueDetailsComponent(route, venueService);
+
+    component.ngOnInit();
+
+    expect(component.venue).toEqual(venue);
+    expect(component.photos).toEqual([]);
+    expect(component.photosLoading).toBeFalse();
+    expect(component.loadError).toBeFalse();
+  });
+
   it('rejects an invalid route id without calling the venue APIs', () => {
     const route = {
       snapshot: {
