@@ -209,6 +209,7 @@
         } @else if (sportConditionsLoadError) {
           <div class="venue-sport-conditions-state">
             {{ 'venue.detail.sportConditionsError' | t }}
+            <button type="button" (click)="retrySportConditions()">{{ 'common.retry' | t }}</button>
           </div>
         } @else if (sportConditions.length === 0) {
           <div class="venue-sport-conditions-state">
