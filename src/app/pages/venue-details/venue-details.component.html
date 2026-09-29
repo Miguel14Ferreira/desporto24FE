@@ -79,6 +79,12 @@
       <section class="venue-information-section">
         <h2>{{ 'venue.detail.information' | t }}</h2>
         <div class="venue-information-grid">
+          @if (venue.sports) {
+            <div>
+              <span>{{ 'venue.detail.sports' | t }}</span>
+              <strong>{{ venue.sports }}</strong>
+            </div>
+          }
           @if (venue.venueType) {
             <div>
               <span>{{ 'venue.type' | t }}</span>
