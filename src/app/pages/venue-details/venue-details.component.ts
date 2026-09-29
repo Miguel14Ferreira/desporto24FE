@@ -16,6 +16,8 @@ export class VenueDetailsComponent implements OnInit {
   photos: VenuePhoto[] = [];
   loading = true;
   photosLoading = true;
+  photoUploading = false;
+  photoUploadError = false;
   loadError = false;
 
   constructor(
@@ -45,6 +47,38 @@ export class VenueDetailsComponent implements OnInit {
       .subscribe({
         next: photos => this.photos = photos,
         error: () => this.photos = []
+      });
+  }
+
+  uploadPhoto(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+
+    if (!file || !this.venue || this.photoUploading) {
+      input.value = '';
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      this.photoUploadError = true;
+      input.value = '';
+      return;
+    }
+
+    this.photoUploading = true;
+    this.photoUploadError = false;
+
+    this.venueService.addPhoto(this.venue.id, file)
+      .pipe(finalize(() => this.photoUploading = false))
+      .subscribe({
+        next: photo => {
+          this.photos = [photo, ...this.photos];
+          input.value = '';
+        },
+        error: () => {
+          this.photoUploadError = true;
+          input.value = '';
+        }
       });
   }
 }

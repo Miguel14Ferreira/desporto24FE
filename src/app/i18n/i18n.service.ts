@@ -805,6 +805,9 @@ const PT: Dictionary = {
   'venue.detail.photosLoading': 'A carregar fotografias...',
   'venue.detail.photosEmpty': 'Este recinto ainda não tem fotografias.',
   'venue.detail.photoAlt': 'Fotografia do recinto',
+  'venue.detail.photoUpload': 'Adicionar fotografia',
+  'venue.detail.photoUploading': 'A enviar...',
+  'venue.detail.photoUploadError': 'Não foi possível enviar a fotografia. Tenta novamente.',
 
   'chat.backFriends': 'Voltar aos amigos',
   'chat.direct': 'Chat direto',
@@ -1882,6 +1885,9 @@ const EN: Dictionary = {
   'venue.detail.photosLoading': 'Loading photos...',
   'venue.detail.photosEmpty': 'This venue does not have any photos yet.',
   'venue.detail.photoAlt': 'Venue photo',
+  'venue.detail.photoUpload': 'Add photo',
+  'venue.detail.photoUploading': 'Uploading...',
+  'venue.detail.photoUploadError': 'We could not upload the photo. Try again.',
 
   'chat.backFriends': 'Back to friends',
   'chat.direct': 'Direct chat',

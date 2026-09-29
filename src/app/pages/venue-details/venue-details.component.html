@@ -24,7 +24,28 @@
       </div>
 
       <section class="venue-photos-section">
-        <h2>{{ 'venue.detail.photos' | t }}</h2>
+        <div class="venue-photos-heading">
+          <h2>{{ 'venue.detail.photos' | t }}</h2>
+
+          <label class="venue-photo-upload" [class.is-disabled]="photoUploading">
+            <input
+              type="file"
+              accept="image/*"
+              [disabled]="photoUploading"
+              (change)="uploadPhoto($event)">
+            <span>
+              {{ photoUploading
+                ? ('venue.detail.photoUploading' | t)
+                : ('venue.detail.photoUpload' | t) }}
+            </span>
+          </label>
+        </div>
+
+        @if (photoUploadError) {
+          <div class="venue-photo-upload-error">
+            {{ 'venue.detail.photoUploadError' | t }}
+          </div>
+        }
 
         @if (photosLoading) {
           <div class="venue-photos-state">{{ 'venue.detail.photosLoading' | t }}</div>
