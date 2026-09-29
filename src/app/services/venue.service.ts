@@ -41,6 +41,16 @@ export class VenueService {
     return this.http.get<VenuePhoto[]>(this.baseUrl + '/' + id + '/photos');
   }
 
+  addPhoto(id: number, file: File): Observable<VenuePhoto> {
+    const formData = new FormData();
+    formData.append('photo', file);
+
+    return this.http.post<VenuePhoto>(
+      this.baseUrl + '/' + id + '/photos',
+      formData
+    );
+  }
+
   create(request: CreateVenueRequest): Observable<Venue> {
     return this.http.post<Venue>(this.baseUrl, request);
   }
