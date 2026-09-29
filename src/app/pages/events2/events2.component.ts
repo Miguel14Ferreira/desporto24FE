@@ -68,6 +68,7 @@ export class Events2Component implements OnInit {
   venueServices = '';
   venueTransport = '';
   venueOpeningHours = '';
+  venuePriceInfo = '';
   venueParking = false;
   venueLighting = false;
 
@@ -238,6 +239,7 @@ export class Events2Component implements OnInit {
       services: this.venueServices.trim() || null,
       transport: this.venueTransport.trim() || null,
       openingHours: this.venueOpeningHours.trim() || null,
+      priceInfo: this.venuePriceInfo.trim() || null,
       parking: this.venueParking,
       lighting: this.venueLighting,
       latitude: this.locationCaptured ? this.latitude : null,
@@ -265,6 +267,7 @@ export class Events2Component implements OnInit {
           this.venueServices = '';
           this.venueTransport = '';
           this.venueOpeningHours = '';
+          this.venuePriceInfo = '';
           this.venueParking = false;
           this.venueLighting = false;
         },
