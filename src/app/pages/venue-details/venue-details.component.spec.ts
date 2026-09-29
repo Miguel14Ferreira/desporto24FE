@@ -1,5 +1,5 @@
 import { ActivatedRoute } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 
 import { VenueService } from '../../services/venue.service';
 import { Venue } from '../model/venue';
@@ -68,6 +68,37 @@ describe('VenueDetailsComponent', () => {
     expect(component.photosLoading).toBeFalse();
     expect(component.sportConditionsLoading).toBeFalse();
     expect(component.loadError).toBeFalse();
+  });
+
+  it('marks the page as failed when loading the venue errors', () => {
+    const route = {
+      snapshot: {
+        paramMap: {
+          get: () => '7'
+        }
+      }
+    } as unknown as ActivatedRoute;
+
+    const venueService = jasmine.createSpyObj<VenueService>('VenueService', [
+      'get',
+      'listPhotos',
+      'listSportConditions',
+      'addPhoto',
+      'addSportCondition'
+    ]);
+
+    venueService.get.and.returnValue(throwError(() => new Error('load failed')));
+    venueService.listPhotos.and.returnValue(of([]));
+    venueService.listSportConditions.and.returnValue(of([]));
+
+    const component = new VenueDetailsComponent(route, venueService);
+
+    component.ngOnInit();
+
+    expect(venueService.get).toHaveBeenCalledOnceWith(7);
+    expect(component.venue).toBeNull();
+    expect(component.loading).toBeFalse();
+    expect(component.loadError).toBeTrue();
   });
 
   it('rejects an invalid route id without calling the venue APIs', () => {
