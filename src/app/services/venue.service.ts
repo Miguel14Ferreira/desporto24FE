@@ -5,6 +5,13 @@ import { Observable } from 'rxjs';
 import { environment } from 'src/environment/environment';
 import { CreateVenueRequest, Venue } from '../pages/model/venue';
 
+export interface VenuePhoto {
+  id: number;
+  photoUrl: string;
+  uploadedByUsername: string | null;
+  createdAt: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -28,6 +35,10 @@ export class VenueService {
 
   get(id: number): Observable<Venue> {
     return this.http.get<Venue>(this.baseUrl + '/' + id);
+  }
+
+  listPhotos(id: number): Observable<VenuePhoto[]> {
+    return this.http.get<VenuePhoto[]>(this.baseUrl + '/' + id + '/photos');
   }
 
   create(request: CreateVenueRequest): Observable<Venue> {
