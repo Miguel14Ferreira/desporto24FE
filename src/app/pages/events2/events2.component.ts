@@ -54,6 +54,7 @@ export class Events2Component implements OnInit {
   venueSaving = false;
   showVenueCreator = false;
   venueName = '';
+  venueType = '';
   venueSurfaceType = '';
   venueIndoor = false;
   venueChangingRooms = false;
@@ -213,6 +214,7 @@ export class Events2Component implements OnInit {
       city: this.city.trim(),
       address: this.address.trim(),
       sports: this.sport.trim() || null,
+      venueType: this.venueType.trim() || null,
       surfaceType: this.venueSurfaceType.trim() || null,
       indoor: this.venueIndoor,
       changingRooms: this.venueChangingRooms,
@@ -229,6 +231,7 @@ export class Events2Component implements OnInit {
           this.selectedVenueId = venue.id;
           this.showVenueCreator = false;
           this.venueName = '';
+          this.venueType = '';
           this.venueSurfaceType = '';
           this.venueIndoor = false;
           this.venueChangingRooms = false;
