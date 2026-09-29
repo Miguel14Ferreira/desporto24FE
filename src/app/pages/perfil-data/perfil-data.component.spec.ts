@@ -14,7 +14,7 @@ describe('PerfilDataComponent', () => {
 
   beforeEach(async () => {
     profileService = jasmine.createSpyObj<MyProfileService>('MyProfileService', ['get']);
-    reliabilityService = jasmine.createSpyObj<ReliabilityService>('ReliabilityService', ['summary']);
+    reliabilityService = jasmine.createSpyObj<ReliabilityService>('ReliabilityService', ['summary', 'activity']);
 
     profileService.get.and.returnValue(of({
       userId: 'u1',
@@ -29,7 +29,7 @@ describe('PerfilDataComponent', () => {
       phone: '912345678',
       gender: null,
       email: 'miguel@example.com',
-      favoriteSports: 'Padel',
+      favoriteSports: 'Padel, Futebol, Futsal, Corrida, Ténis, Natação',
       mfa: true,
       profilePicUrl: null,
       joinDateDisplay: null,
@@ -45,6 +45,15 @@ describe('PerfilDataComponent', () => {
       warning: false,
       reducedPriority: false,
       joinRestricted: false
+    }));
+    reliabilityService.activity.and.returnValue(of({
+      activitiesCompleted: 0,
+      peoplePlayedWith: 0,
+      sportsPractised: 0,
+      eventsCreated: 0,
+      participantsMobilized: 0,
+      communitiesJoined: 0,
+      achievements: []
     }));
 
     await TestBed.configureTestingModule({
@@ -66,6 +75,16 @@ describe('PerfilDataComponent', () => {
     expect(component).toBeTruthy();
     expect(profileService.get).toHaveBeenCalled();
     expect(component.profile?.username).toBe('miguel');
+  });
+
+  it('should collapse favorite sports after five', () => {
+    expect(component.favoriteSports.length).toBe(6);
+    expect(component.visibleFavoriteSports.length).toBe(5);
+    expect(component.hiddenFavoriteSportsCount).toBe(1);
+
+    component.toggleFavoriteSports();
+
+    expect(component.visibleFavoriteSports.length).toBe(6);
   });
 
   it('should load reliability after the profile', () => {

@@ -42,9 +42,6 @@
               @if (profile.country) {
                 <span>📍 {{ profile.country }}</span>
               }
-              @if (profile.favoriteSports) {
-                <span>⚽ {{ profile.favoriteSports }}</span>
-              }
               @if (profile.skillLevel) {
                 <span>◎ {{ ('profile.level.' + profile.skillLevel) | t }}</span>
               }
@@ -52,6 +49,30 @@
 
             @if (profile.availability) {
               <small>{{ 'profile.availability' | t }} · {{ profile.availability }}</small>
+            }
+
+            @if (favoriteSports.length > 0) {
+              <div class="favorite-sports">
+                <span class="favorite-sports__label">⭐ {{ 'profileData.favoriteSports' | t }}</span>
+                <div class="favorite-sports__list">
+                  @for (sport of visibleFavoriteSports; track sport) {
+                    <span class="favorite-sport-chip">
+                      <span>{{ iconForSport(sport) }}</span>
+                      {{ sport }}
+                    </span>
+                  }
+
+                  @if (!favoritesExpanded && hiddenFavoriteSportsCount > 0) {
+                    <button type="button" (click)="toggleFavoriteSports()">
+                      +{{ hiddenFavoriteSportsCount }}
+                    </button>
+                  } @else if (favoritesExpanded && hiddenFavoriteSportsCount > 0) {
+                    <button type="button" (click)="toggleFavoriteSports()">
+                      {{ 'profileData.showLess' | t }}
+                    </button>
+                  }
+                </div>
+              </div>
             }
           </div>
         </div>

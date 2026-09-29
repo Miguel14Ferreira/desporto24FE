@@ -231,3 +231,45 @@ h1 { font-size: clamp(2.1rem, 5vw, 3.5rem); }
     grid-template-columns: 1fr;
   }
 }
+
+
+.favorite-sports {
+  display: grid;
+  gap: .4rem;
+  margin-top: .6rem;
+}
+
+.favorite-sports__label {
+  color: #94a3b8;
+  font-size: .72rem;
+  font-weight: 850;
+}
+
+.favorite-sports__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .4rem;
+}
+
+.favorite-sport-chip,
+.favorite-sports__list button {
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  border: 1px solid rgba(125,211,252,.18);
+  border-radius: 999px;
+  padding: .32rem .55rem;
+  background: rgba(125,211,252,.07);
+  color: #bae6fd;
+  font: inherit;
+  font-size: .72rem;
+  font-weight: 800;
+}
+
+.favorite-sports__list button {
+  cursor: pointer;
+}
+
+.favorite-sports__list button:hover {
+  border-color: rgba(125,211,252,.45);
+}

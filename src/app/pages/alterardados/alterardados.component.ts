@@ -6,7 +6,7 @@ import { finalize } from 'rxjs';
 import { environment } from 'src/environment/environment';
 import { MyProfile, UpdateMyProfileRequest } from '../model/my-profile';
 import { MfaSetupResponse, MyProfileService } from '../../services/my-profile.service';
-import { SPORTS_CATALOG } from '../../shared/sports-catalog';
+import { SPORTS_CATALOG, sportIcon } from '../../shared/sports-catalog';
 import { COUNTRY_CALLING_CODES, countryNameFromLabel } from '../../shared/country-calling-codes';
 
 @Component({
@@ -37,6 +37,7 @@ export class AlterardadosComponent implements OnInit {
   selectedSports: string[] = [];
   fieldErrors: Partial<Record<'email' | 'dateOfBirth' | 'country' | 'phone' | 'bio', string>> = {};
   readonly sportsCatalog = SPORTS_CATALOG;
+  readonly iconForSport = sportIcon;
   readonly countryOptions = COUNTRY_CALLING_CODES;
   private toastTimer?: ReturnType<typeof setTimeout>;
 

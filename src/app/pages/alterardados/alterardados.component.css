@@ -460,3 +460,15 @@ textarea { resize: vertical; }
   border-color: rgba(248, 113, 113, .72);
   box-shadow: 0 0 0 2px rgba(248, 113, 113, .10);
 }
+
+
+.sport-chip,
+.sport-suggestions button {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+}
+
+.sport-chip__icon {
+  line-height: 1;
+}

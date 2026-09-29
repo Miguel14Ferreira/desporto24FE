@@ -7,6 +7,7 @@ import { MyProfile, ProfileActivity } from '../model/my-profile';
 import { ReliabilitySummary } from '../model/reliability-summary';
 import { MyProfileService } from '../../services/my-profile.service';
 import { ReliabilityService } from '../../services/reliability.service';
+import { sportIcon } from '../../shared/sports-catalog';
 
 @Component({
   selector: 'app-perfil-data',
@@ -21,6 +22,8 @@ export class PerfilDataComponent implements OnInit {
   activity?: ProfileActivity;
   loading = false;
   errorMessage = '';
+  favoritesExpanded = false;
+  readonly iconForSport = sportIcon;
 
   constructor(
     private myProfileService: MyProfileService,
@@ -45,6 +48,27 @@ export class PerfilDataComponent implements OnInit {
         },
         error: () => this.errorMessage = t('feedback.profile.loadError')
       });
+  }
+
+  get favoriteSports(): string[] {
+    return (this.profile?.favoriteSports || '')
+      .split(',')
+      .map(value => value.trim())
+      .filter(Boolean);
+  }
+
+  get visibleFavoriteSports(): string[] {
+    return this.favoritesExpanded
+      ? this.favoriteSports
+      : this.favoriteSports.slice(0, 5);
+  }
+
+  get hiddenFavoriteSportsCount(): number {
+    return Math.max(0, this.favoriteSports.length - 5);
+  }
+
+  toggleFavoriteSports(): void {
+    this.favoritesExpanded = !this.favoritesExpanded;
   }
 
   profileImage(): string | null {

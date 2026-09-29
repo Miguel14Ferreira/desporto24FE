@@ -192,7 +192,9 @@
                     class="sport-chip"
                     [disabled]="saving"
                     (click)="removeSport(sport)">
-                    {{ sport }} ×
+                    <span class="sport-chip__icon">{{ iconForSport(sport) }}</span>
+                    <span>{{ sport }}</span>
+                    <span aria-hidden="true">×</span>
                   </button>
                 }
               </div>
@@ -215,7 +217,8 @@
                     type="button"
                     [disabled]="saving"
                     (click)="addSport(sport)">
-                    {{ sport }}
+                    <span>{{ iconForSport(sport) }}</span>
+                    <span>{{ sport }}</span>
                   </button>
                 }
               </div>

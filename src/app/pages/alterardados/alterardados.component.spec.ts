@@ -138,6 +138,11 @@ describe('AlterardadosComponent', () => {
     expect(component.toastMessage).toBe('');
   });
 
+  it('should expose an icon for sports', () => {
+    expect(component.iconForSport('Futebol')).toBe('⚽');
+    expect(component.iconForSport('Padel')).toBe('🎾');
+  });
+
   it('should require an email before saving', () => {
     if (!component.profile) {
       fail('Profile should be loaded');

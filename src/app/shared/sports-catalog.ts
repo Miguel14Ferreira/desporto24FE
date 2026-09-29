@@ -116,3 +116,55 @@ export const SPORTS_CATALOG: readonly string[] = [
   "Xadrez",
   "Yoga"
 ];
+
+
+export function sportIcon(sport: string): string {
+  const value = sport
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+
+  if (value.includes('badminton')) return '🏸';
+  if (value.includes('basquetebol')) return '🏀';
+  if (value.includes('andebol')) return '🤾';
+  if (value.includes('voleibol')) return '🏐';
+  if (value.includes('futebol') || value.includes('futsal') || value.includes('futevolei')) return '⚽';
+  if (value.includes('padel') || value.includes('tenis') || value.includes('pickleball') || value.includes('squash')) return '🎾';
+  if (value.includes('basebol') || value.includes('softbol')) return '⚾';
+  if (value.includes('cricket')) return '🏏';
+  if (value.includes('rugby')) return '🏉';
+  if (value.includes('futebol americano') || value.includes('football americano')) return '🏈';
+  if (value.includes('hoquei')) return '🏒';
+  if (value.includes('golfe')) return '⛳';
+  if (value.includes('natacao') || value.includes('apneia') || value.includes('mergulho') || value.includes('polo aquatico') || value.includes('subaquatic')) return '🏊';
+  if (value.includes('surf') || value.includes('bodyboard') || value.includes('stand up paddle')) return '🏄';
+  if (value.includes('canoagem') || value.includes('remo')) return '🚣';
+  if (value.includes('vela')) return '⛵';
+  if (value.includes('corrida') || value.includes('atletismo') || value.includes('trail running')) return '🏃';
+  if (value.includes('ciclismo') || value.includes('bmx') || value.includes('mountain bike') || value.includes('ciclocrosse')) return '🚴';
+  if (value.includes('caminhada')) return '🚶';
+  if (value.includes('boxe') || value.includes('kickboxing') || value.includes('muay thai')) return '🥊';
+  if (
+    value.includes('aikido') || value.includes('jiu-jitsu') || value.includes('judo')
+    || value.includes('karate') || value.includes('kempo') || value.includes('kung fu')
+    || value.includes('taekwondo') || value.includes('artes marciais')
+  ) return '🥋';
+  if (value.includes('ginastica')) return '🤸';
+  if (value.includes('halterofilismo') || value.includes('powerlifting') || value.includes('musculacao') || value.includes('ginasio')) return '🏋️';
+  if (value.includes('yoga') || value.includes('pilates')) return '🧘';
+  if (value.includes('escalada') || value.includes('montanhismo')) return '🧗';
+  if (value.includes('esqui') || value.includes('snowboard')) return '🎿';
+  if (value.includes('skate')) return '🛹';
+  if (value.includes('patinagem')) return '⛸️';
+  if (value.includes('tiro com arco')) return '🏹';
+  if (value === 'tiro') return '🎯';
+  if (value.includes('xadrez')) return '♟️';
+  if (value.includes('bilhar')) return '🎱';
+  if (value.includes('pesca')) return '🎣';
+  if (value.includes('danca') || value.includes('breaking')) return '💃';
+  if (value.includes('automobilismo') || value.includes('karting')) return '🏎️';
+  if (value.includes('motociclismo') || value.includes('motocross')) return '🏍️';
+  if (value.includes('paraquedismo') || value.includes('voo livre')) return '🪂';
+
+  return '🏅';
+}
