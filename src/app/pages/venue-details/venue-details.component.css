@@ -152,12 +152,21 @@
   gap: 12px;
 }
 
+.venue-photo-item {
+  margin: 0;
+}
+
 .venue-photo-grid img {
   width: 100%;
   aspect-ratio: 4 / 3;
   object-fit: cover;
   border-radius: 16px;
   border: 1px solid #d9d9d9;
+}
+
+.venue-photo-item figcaption {
+  margin-top: 8px;
+  font-size: 0.82rem;
 }
 
 .venue-photos-state {

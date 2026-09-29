@@ -78,9 +78,17 @@
         } @else {
           <div class="venue-photo-grid">
             @for (photo of photos; track photo.id) {
-              <img
-                [src]="photo.photoUrl"
-                [alt]="'venue.detail.photoAlt' | t">
+              <figure class="venue-photo-item">
+                <img
+                  [src]="photo.photoUrl"
+                  [alt]="'venue.detail.photoAlt' | t">
+
+                @if (photo.uploadedByUsername) {
+                  <figcaption>
+                    {{ 'venue.detail.createdBy' | t }} <strong>@{{ photo.uploadedByUsername }}</strong>
+                  </figcaption>
+                }
+              </figure>
             }
           </div>
         }
