@@ -212,6 +212,16 @@
                 </select>
               </label>
               <label>
+                <span>{{ 'venue.lockers' | t }}</span>
+                <select
+                  name="venueLockers"
+                  [(ngModel)]="venueLockers">
+                  <option [ngValue]="null">{{ 'venue.boolean.none' | t }}</option>
+                  <option [ngValue]="true">{{ 'venue.boolean.yes' | t }}</option>
+                  <option [ngValue]="false">{{ 'venue.boolean.no' | t }}</option>
+                </select>
+              </label>
+              <label>
                 <input type="checkbox" name="venueParking" [(ngModel)]="venueParking">
                 <span>{{ 'venue.parking' | t }}</span>
               </label>
