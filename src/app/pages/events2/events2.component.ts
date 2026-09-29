@@ -59,6 +59,7 @@ export class Events2Component implements OnInit {
   venueSurfaceType = '';
   venueIndoor = false;
   venueChangingRooms = false;
+  venueToilets: boolean | null = null;
   venueParking = false;
   venueLighting = false;
 
@@ -220,6 +221,7 @@ export class Events2Component implements OnInit {
       surfaceType: this.venueSurfaceType.trim() || null,
       indoor: this.venueIndoor,
       changingRooms: this.venueChangingRooms,
+      toilets: this.venueToilets,
       parking: this.venueParking,
       lighting: this.venueLighting,
       latitude: this.locationCaptured ? this.latitude : null,
@@ -238,6 +240,7 @@ export class Events2Component implements OnInit {
           this.venueSurfaceType = '';
           this.venueIndoor = false;
           this.venueChangingRooms = false;
+          this.venueToilets = null;
           this.venueParking = false;
           this.venueLighting = false;
         },
