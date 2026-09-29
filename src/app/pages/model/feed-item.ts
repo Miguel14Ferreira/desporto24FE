@@ -1,4 +1,4 @@
-export type FeedItemType = 'POST' | 'SESSION_CREATED';
+export type FeedItemType = 'POST' | 'SESSION_CREATED' | 'SESSION_ATTENDED';
 
 export interface FeedItem {
   type: FeedItemType;

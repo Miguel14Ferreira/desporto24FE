@@ -190,6 +190,31 @@
               }
             }
 
+            @if (item.type === 'SESSION_ATTENDED') {
+              <div class="activity-copy">
+                <span class="activity-label">{{ 'feed.activity.sessionAttended' | t }}</span>
+                <p>
+                  {{ 'feed.activity.attendedSession' | t:{
+                    sport: item.sport || '',
+                    city: item.city || ''
+                  } }}
+                </p>
+              </div>
+
+              <a
+                class="session-preview"
+                [routerLink]="['/menu/events', item.sessionId]">
+                <div>
+                  <strong>{{ item.sport }}</strong>
+                  <span>{{ item.city }}</span>
+                </div>
+                <div>
+                  <span>{{ item.gameDate | date:'dd/MM/yyyy HH:mm' }}</span>
+                  <strong>{{ 'feed.viewSession' | t }}</strong>
+                </div>
+              </a>
+            }
+
             @if (item.type === 'SESSION_CREATED') {
               <div class="activity-copy">
                 <span class="activity-label">{{ 'feed.activity.sessionCreated' | t }}</span>
