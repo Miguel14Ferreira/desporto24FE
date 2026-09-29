@@ -33,7 +33,8 @@ describe('VenueDetailsComponent', () => {
       latitude: 38.7223,
       longitude: -9.1393,
       informationSource: 'COMMUNITY',
-      createdByUsername: 'miguel'
+      createdByUsername: 'miguel',
+      createdAt: '2026-09-29T20:00:00Z'
     };
 
     const route = {
@@ -128,7 +129,8 @@ describe('VenueDetailsComponent', () => {
       latitude: 38.7223,
       longitude: -9.1393,
       informationSource: 'COMMUNITY',
-      createdByUsername: 'miguel'
+      createdByUsername: 'miguel',
+      createdAt: '2026-09-29T20:00:00Z'
     };
 
     const route = {
@@ -191,7 +193,8 @@ describe('VenueDetailsComponent', () => {
       latitude: 38.7223,
       longitude: -9.1393,
       informationSource: 'COMMUNITY',
-      createdByUsername: 'miguel'
+      createdByUsername: 'miguel',
+      createdAt: '2026-09-29T20:00:00Z'
     };
 
     const route = {
@@ -223,6 +226,7 @@ describe('VenueDetailsComponent', () => {
     expect(component.venue).toEqual(venue);
     expect(component.photos).toEqual([]);
     expect(component.photosLoading).toBeFalse();
+    expect(component.photosLoadError).toBeTrue();
     expect(component.loadError).toBeFalse();
   });
 
