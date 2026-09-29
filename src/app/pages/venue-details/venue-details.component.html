@@ -114,6 +114,40 @@
         </div>
       </section>
 
+      <section class="venue-sport-conditions-section">
+        <h2>{{ 'venue.detail.sportConditions' | t }}</h2>
+
+        @if (sportConditionsLoading) {
+          <div class="venue-sport-conditions-state">
+            {{ 'venue.detail.sportConditionsLoading' | t }}
+          </div>
+        } @else if (sportConditionsLoadError) {
+          <div class="venue-sport-conditions-state">
+            {{ 'venue.detail.sportConditionsError' | t }}
+          </div>
+        } @else if (sportConditions.length === 0) {
+          <div class="venue-sport-conditions-state">
+            {{ 'venue.detail.sportConditionsEmpty' | t }}
+          </div>
+        } @else {
+          <div class="venue-sport-conditions-list">
+            @for (condition of sportConditions; track condition.id) {
+              <article class="venue-sport-condition-card">
+                <div class="venue-sport-condition-heading">
+                  <strong>{{ condition.sport }}</strong>
+                  <span>
+                    {{ condition.informationSource === 'OFFICIAL'
+                      ? ('venue.detail.sourceOfficial' | t)
+                      : ('venue.detail.sourceCommunity' | t) }}
+                  </span>
+                </div>
+                <p>{{ condition.conditions }}</p>
+              </article>
+            }
+          </div>
+        }
+      </section>
+
       <section class="venue-amenities-section">
         <h2>{{ 'venue.detail.amenities' | t }}</h2>
         <div class="venue-amenities-list">

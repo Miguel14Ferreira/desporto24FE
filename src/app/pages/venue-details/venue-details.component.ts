@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { finalize } from 'rxjs';
 
-import { VenuePhoto, VenueService } from '../../services/venue.service';
+import { VenuePhoto, VenueService, VenueSportCondition } from '../../services/venue.service';
 import { Venue } from '../model/venue';
 
 @Component({
@@ -14,10 +14,13 @@ import { Venue } from '../model/venue';
 export class VenueDetailsComponent implements OnInit {
   venue: Venue | null = null;
   photos: VenuePhoto[] = [];
+  sportConditions: VenueSportCondition[] = [];
   loading = true;
   photosLoading = true;
+  sportConditionsLoading = true;
   photoUploading = false;
   photoUploadError = false;
+  sportConditionsLoadError = false;
   loadError = false;
 
   constructor(
@@ -31,6 +34,7 @@ export class VenueDetailsComponent implements OnInit {
     if (!Number.isFinite(venueId) || venueId <= 0) {
       this.loading = false;
       this.photosLoading = false;
+      this.sportConditionsLoading = false;
       this.loadError = true;
       return;
     }
@@ -47,6 +51,16 @@ export class VenueDetailsComponent implements OnInit {
       .subscribe({
         next: photos => this.photos = photos,
         error: () => this.photos = []
+      });
+
+    this.venueService.listSportConditions(venueId)
+      .pipe(finalize(() => this.sportConditionsLoading = false))
+      .subscribe({
+        next: conditions => this.sportConditions = conditions,
+        error: () => {
+          this.sportConditions = [];
+          this.sportConditionsLoadError = true;
+        }
       });
   }
 

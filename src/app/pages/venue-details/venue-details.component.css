@@ -226,3 +226,52 @@
     flex-direction: column;
   }
 }
+
+
+.venue-sport-conditions-section {
+  margin-top: 28px;
+}
+
+.venue-sport-conditions-section h2 {
+  margin: 0 0 14px;
+  font-size: 1.1rem;
+}
+
+.venue-sport-conditions-list {
+  display: grid;
+  gap: 12px;
+}
+
+.venue-sport-condition-card,
+.venue-sport-conditions-state {
+  padding: 18px;
+  border: 1px solid #d9d9d9;
+  border-radius: 16px;
+}
+
+.venue-sport-condition-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.venue-sport-condition-heading span {
+  padding: 5px 9px;
+  border: 1px solid #d9d9d9;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.venue-sport-condition-card p {
+  margin: 12px 0 0;
+  white-space: pre-line;
+}
+
+@media (max-width: 520px) {
+  .venue-sport-condition-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
