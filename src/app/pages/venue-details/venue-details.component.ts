@@ -22,6 +22,7 @@ export class VenueDetailsComponent implements OnInit {
   sportConditionsLoading = true;
   photoUploading = false;
   photoUploadError = false;
+  photosLoadError = false;
   sportConditionsLoadError = false;
   sportConditionSaving = false;
   sportConditionSaveError = false;
@@ -54,7 +55,10 @@ export class VenueDetailsComponent implements OnInit {
       .pipe(finalize(() => this.photosLoading = false))
       .subscribe({
         next: photos => this.photos = photos,
-        error: () => this.photos = []
+        error: () => {
+          this.photos = [];
+          this.photosLoadError = true;
+        }
       });
 
     this.venueService.listSportConditions(venueId)
