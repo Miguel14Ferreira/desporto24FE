@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { finalize } from 'rxjs';
 
-import { VenueService } from '../../services/venue.service';
+import { VenuePhoto, VenueService } from '../../services/venue.service';
 import { Venue } from '../model/venue';
 
 @Component({
@@ -13,7 +13,9 @@ import { Venue } from '../model/venue';
 })
 export class VenueDetailsComponent implements OnInit {
   venue: Venue | null = null;
+  photos: VenuePhoto[] = [];
   loading = true;
+  photosLoading = true;
   loadError = false;
 
   constructor(
@@ -26,6 +28,7 @@ export class VenueDetailsComponent implements OnInit {
 
     if (!Number.isFinite(venueId) || venueId <= 0) {
       this.loading = false;
+      this.photosLoading = false;
       this.loadError = true;
       return;
     }
@@ -35,6 +38,13 @@ export class VenueDetailsComponent implements OnInit {
       .subscribe({
         next: venue => this.venue = venue,
         error: () => this.loadError = true
+      });
+
+    this.venueService.listPhotos(venueId)
+      .pipe(finalize(() => this.photosLoading = false))
+      .subscribe({
+        next: photos => this.photos = photos,
+        error: () => this.photos = []
       });
   }
 }

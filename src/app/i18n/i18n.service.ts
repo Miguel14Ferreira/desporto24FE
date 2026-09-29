@@ -801,6 +801,10 @@ const PT: Dictionary = {
   'venue.detail.address': 'Morada',
   'venue.detail.amenities': 'Comodidades',
   'venue.detail.information': 'Informação',
+  'venue.detail.photos': 'Fotografias',
+  'venue.detail.photosLoading': 'A carregar fotografias...',
+  'venue.detail.photosEmpty': 'Este recinto ainda não tem fotografias.',
+  'venue.detail.photoAlt': 'Fotografia do recinto',
 
   'chat.backFriends': 'Voltar aos amigos',
   'chat.direct': 'Chat direto',
@@ -1874,6 +1878,10 @@ const EN: Dictionary = {
   'venue.detail.address': 'Address',
   'venue.detail.amenities': 'Amenities',
   'venue.detail.information': 'Information',
+  'venue.detail.photos': 'Photos',
+  'venue.detail.photosLoading': 'Loading photos...',
+  'venue.detail.photosEmpty': 'This venue does not have any photos yet.',
+  'venue.detail.photoAlt': 'Venue photo',
 
   'chat.backFriends': 'Back to friends',
   'chat.direct': 'Direct chat',

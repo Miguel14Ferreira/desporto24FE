@@ -23,6 +23,24 @@
         </div>
       </div>
 
+      <section class="venue-photos-section">
+        <h2>{{ 'venue.detail.photos' | t }}</h2>
+
+        @if (photosLoading) {
+          <div class="venue-photos-state">{{ 'venue.detail.photosLoading' | t }}</div>
+        } @else if (photos.length === 0) {
+          <div class="venue-photos-state">{{ 'venue.detail.photosEmpty' | t }}</div>
+        } @else {
+          <div class="venue-photo-grid">
+            @for (photo of photos; track photo.id) {
+              <img
+                [src]="photo.photoUrl"
+                [alt]="'venue.detail.photoAlt' | t">
+            }
+          </div>
+        }
+      </section>
+
       <section class="venue-information-section">
         <h2>{{ 'venue.detail.information' | t }}</h2>
         <div class="venue-information-grid">
