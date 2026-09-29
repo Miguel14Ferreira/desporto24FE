@@ -18,11 +18,12 @@
               : ('venue.detail.sourceCommunity' | t) }}
           </span>
 
-          @if (venue.createdByUsername) {
-            <span class="venue-created-by">
-              {{ 'venue.detail.createdBy' | t }} <strong>@{{ venue.createdByUsername }}</strong>
-            </span>
-          }
+          <span class="venue-created-by">
+            @if (venue.createdByUsername) {
+              {{ 'venue.detail.createdBy' | t }} <strong>@{{ venue.createdByUsername }}</strong> ·
+            }
+            {{ 'venue.detail.addedAt' | t }} {{ venue.createdAt | date:'short' }}
+          </span>
         </div>
       </header>
 

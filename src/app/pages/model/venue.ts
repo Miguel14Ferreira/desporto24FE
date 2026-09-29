@@ -28,6 +28,7 @@ export interface Venue {
   longitude: number | null;
   informationSource: VenueInformationSource;
   createdByUsername: string | null;
+  createdAt: string;
 }
 
 export interface CreateVenueRequest {
