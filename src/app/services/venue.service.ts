@@ -3,12 +3,25 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { environment } from 'src/environment/environment';
-import { CreateVenueRequest, Venue } from '../pages/model/venue';
+import {
+  CreateVenueRequest,
+  Venue,
+  VenueInformationSource
+} from '../pages/model/venue';
 
 export interface VenuePhoto {
   id: number;
   photoUrl: string;
   uploadedByUsername: string | null;
+  createdAt: string;
+}
+
+export interface VenueSportCondition {
+  id: number;
+  sport: string;
+  conditions: string;
+  informationSource: VenueInformationSource;
+  createdByUsername: string | null;
   createdAt: string;
 }
 
@@ -48,6 +61,12 @@ export class VenueService {
     return this.http.post<VenuePhoto>(
       this.baseUrl + '/' + id + '/photos',
       formData
+    );
+  }
+
+  listSportConditions(id: number): Observable<VenueSportCondition[]> {
+    return this.http.get<VenueSportCondition[]>(
+      this.baseUrl + '/' + id + '/sport-conditions'
     );
   }
 
