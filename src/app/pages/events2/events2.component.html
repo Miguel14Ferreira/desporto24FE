@@ -186,6 +186,16 @@
                   [disabled]="venueSaving"
                   [placeholder]="'venue.surfacePlaceholder' | t">
               </label>
+
+              <label>
+                <span>{{ 'venue.services' | t }}</span>
+                <input
+                  name="venueServices"
+                  [(ngModel)]="venueServices"
+                  maxlength="500"
+                  [disabled]="venueSaving"
+                  [placeholder]="'venue.servicesPlaceholder' | t">
+              </label>
             </div>
 
             <p class="venue-current-location">
