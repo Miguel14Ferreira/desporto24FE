@@ -13,20 +13,91 @@
       </div>
     </header>
 
-    <form class="search-bar" (ngSubmit)="search()">
-      <label for="player-search">{{ 'login.username' | t }}</label>
+    <form class="search-bar partner-search" (ngSubmit)="search()">
+      <div class="search-intro">
+        <div>
+          <span class="section-kicker">{{ 'community.searchKicker' | t }}</span>
+          <h2>{{ 'community.searchTitle' | t }}</h2>
+          <p>{{ 'community.searchHint' | t }}</p>
+        </div>
+      </div>
 
-      <div class="search-row">
-        <input
-          id="player-search"
-          type="search"
-          name="searchTerm"
-          [(ngModel)]="searchTerm"
-          [placeholder]="'community.searchPlaceholder' | t"
-          autocomplete="off">
+      <div class="partner-filter-grid">
+        <label>
+          <span>{{ 'events.sport' | t }}</span>
+          <input
+            type="text"
+            name="sportFilter"
+            list="community-sport-options"
+            [(ngModel)]="sportFilter"
+            autocomplete="off"
+            [placeholder]="'community.sportPlaceholder' | t">
+          <datalist id="community-sport-options">
+            @for (sportOption of sportsCatalog; track sportOption) {
+              <option [value]="sportOption"></option>
+            }
+          </datalist>
+        </label>
 
+        <label>
+          <span>{{ 'common.location' | t }}</span>
+          <input
+            type="text"
+            name="locationFilter"
+            [(ngModel)]="locationFilter"
+            autocomplete="address-level2"
+            [placeholder]="'community.locationPlaceholder' | t">
+        </label>
+
+        <label>
+          <span>{{ 'community.minAge' | t }}</span>
+          <input
+            type="number"
+            name="minAge"
+            min="18"
+            max="99"
+            [(ngModel)]="minAge"
+            placeholder="25">
+        </label>
+
+        <label>
+          <span>{{ 'community.maxAge' | t }}</span>
+          <input
+            type="number"
+            name="maxAge"
+            min="18"
+            max="99"
+            [(ngModel)]="maxAge"
+            placeholder="45">
+        </label>
+
+        <label>
+          <span>{{ 'profile.skillLevel' | t }}</span>
+          <select name="levelFilter" [(ngModel)]="levelFilter">
+            <option value="">{{ 'community.anyLevel' | t }}</option>
+            <option value="BEGINNER">{{ 'profile.level.BEGINNER' | t }}</option>
+            <option value="INTERMEDIATE">{{ 'profile.level.INTERMEDIATE' | t }}</option>
+            <option value="ADVANCED">{{ 'profile.level.ADVANCED' | t }}</option>
+          </select>
+        </label>
+
+        <label>
+          <span>{{ 'community.nameOptional' | t }}</span>
+          <input
+            type="search"
+            name="searchTerm"
+            [(ngModel)]="searchTerm"
+            [placeholder]="'community.searchPlaceholder' | t"
+            autocomplete="off">
+        </label>
+      </div>
+
+      <div class="partner-search-actions">
+        <button type="button" class="clear-search" (click)="clearSearch()">
+          {{ 'events.clear' | t }}
+        </button>
         <button type="submit" [disabled]="loading">
-          {{ loading ? ('common.searching' | t) : ('common.search' | t) }}
+          {{ loading ? ('common.searching' | t) : ('community.findPeople' | t) }}
         </button>
       </div>
     </form>
@@ -56,6 +127,11 @@
           <h2>{{ 'community.discoverTitle' | t }}</h2>
           <p>{{ 'community.discoverHint' | t }}</p>
         </div>
+      } @else {
+        <div class="discovery-heading">
+          <h2>{{ 'community.resultsTitle' | t:{ count: profiles.length } }}</h2>
+          <p>{{ 'community.resultsHint' | t }}</p>
+        </div>
       }
 
       <div class="profile-grid">
@@ -70,8 +146,20 @@
             </div>
 
             <div class="profile-copy">
-              <strong>{{ profile.username }}</strong>
-              <span>{{ profile.nickname || profile.fullName || ('friends.player' | t) }}</span>
+              <strong>{{ profile.nickname || profile.fullName || profile.username }}</strong>
+              <span>@{{ profile.username }}</span>
+              <small class="profile-match-line">
+                @if (profile.age !== null) {
+                  {{ profile.age }} {{ 'community.years' | t }} ·
+                }
+                {{ profile.location || ('common.notProvided' | t) }}
+              </small>
+              @if (profile.favoriteSports) {
+                <small class="profile-sports">{{ profile.favoriteSports }}</small>
+              }
+              @if (profile.skillLevel) {
+                <small>{{ ('profile.level.' + profile.skillLevel) | t }}</small>
+              }
             </div>
           </button>
         }
@@ -107,6 +195,14 @@
             <div>
               <span>{{ 'common.country' | t }}</span>
               <strong>{{ selectedProfile.country || ('common.notProvided' | t) }}</strong>
+            </div>
+            <div>
+              <span>{{ 'community.age' | t }}</span>
+              <strong>
+                {{ selectedProfile.age !== null
+                  ? (selectedProfile.age + ' ' + ('community.years' | t))
+                  : ('common.notProvided' | t) }}
+              </strong>
             </div>
             <div>
               <span>{{ 'profileData.favoriteSports' | t }}</span>

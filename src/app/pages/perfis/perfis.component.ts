@@ -12,6 +12,7 @@ import { CommunityService } from '../../services/community.service';
 import { AuthenticationService } from '../../services/authethication.service';
 import { ReliabilityService } from '../../services/reliability.service';
 import { SocialGraphService } from '../../services/social-graph.service';
+import { SPORTS_CATALOG } from '../../shared/sports-catalog';
 
 @Component({
   selector: 'app-perfis',
@@ -22,6 +23,13 @@ import { SocialGraphService } from '../../services/social-graph.service';
 })
 export class PerfisComponent implements OnInit {
   searchTerm = '';
+  sportFilter = '';
+  locationFilter = '';
+  minAge: number | null = null;
+  maxAge: number | null = null;
+  levelFilter = '';
+  readonly sportsCatalog = SPORTS_CATALOG;
+
   profiles: CommunityProfile[] = [];
   selectedProfile?: CommunityProfile;
   selectedReliability?: ReliabilitySummary;
@@ -53,7 +61,41 @@ export class PerfisComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadFriendUsernames();
+    this.prefillSearchFromProfile();
     this.loadDiscoverableProfiles();
+  }
+
+  private prefillSearchFromProfile(): void {
+    if (!this.currentUsername) {
+      return;
+    }
+
+    this.communityService.publicProfile(this.currentUsername).subscribe({
+      next: profile => {
+        if (!this.sportFilter && profile.favoriteSports) {
+          this.sportFilter = profile.favoriteSports
+            .split(',')
+            .map(value => value.trim())
+            .find(Boolean) || '';
+        }
+
+        if (!this.locationFilter && profile.location) {
+          this.locationFilter = profile.location;
+        }
+
+        if (!this.levelFilter && profile.skillLevel) {
+          this.levelFilter = profile.skillLevel;
+        }
+
+        if (profile.age !== null && profile.age !== undefined) {
+          this.minAge ??= Math.max(18, profile.age - 10);
+          this.maxAge ??= Math.min(99, profile.age + 10);
+        }
+      },
+      error: () => {
+        // Discovery still works without pre-filling the form.
+      }
+    });
   }
 
   private loadFriendUsernames(): void {
@@ -91,13 +133,29 @@ export class PerfisComponent implements OnInit {
   }
 
   search(): void {
-    const term = this.searchTerm.trim();
+    const hasFilters = Boolean(
+      this.searchTerm.trim()
+      || this.sportFilter.trim()
+      || this.locationFilter.trim()
+      || this.levelFilter.trim()
+      || this.minAge !== null
+      || this.maxAge !== null
+    );
 
-    if (!term) {
+    if (!hasFilters) {
       this.selectedProfile = undefined;
       this.actionError = '';
       this.actionSuccess = '';
       this.loadDiscoverableProfiles();
+      return;
+    }
+
+    if (
+      this.minAge !== null
+      && this.maxAge !== null
+      && this.minAge > this.maxAge
+    ) {
+      this.errorMessage = t('feedback.community.invalidAgeRange');
       return;
     }
 
@@ -106,7 +164,14 @@ export class PerfisComponent implements OnInit {
     this.actionError = '';
     this.actionSuccess = '';
 
-    this.communityService.searchProfiles(term)
+    this.communityService.findProfiles({
+      name: this.searchTerm.trim() || undefined,
+      sport: this.sportFilter.trim() || undefined,
+      location: this.locationFilter.trim() || undefined,
+      minAge: this.minAge === null ? undefined : this.minAge,
+      maxAge: this.maxAge === null ? undefined : this.maxAge,
+      skillLevel: this.levelFilter || undefined
+    })
       .pipe(finalize(() => this.loading = false))
       .subscribe({
         next: profiles => {
@@ -123,6 +188,20 @@ export class PerfisComponent implements OnInit {
           );
         }
       });
+  }
+
+  clearSearch(): void {
+    this.searchTerm = '';
+    this.sportFilter = '';
+    this.locationFilter = '';
+    this.minAge = null;
+    this.maxAge = null;
+    this.levelFilter = '';
+    this.selectedProfile = undefined;
+    this.errorMessage = '';
+    this.actionError = '';
+    this.actionSuccess = '';
+    this.loadDiscoverableProfiles();
   }
 
   openProfile(profile: CommunityProfile): void {

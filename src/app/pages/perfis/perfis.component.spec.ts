@@ -21,6 +21,7 @@ describe('PerfisComponent', () => {
     bio: null,
     skillLevel: 'INTERMEDIATE',
     availability: null,
+    age: 37,
     profilePicUrl: null,
     joinDateDisplay: '2026-09-01'
   };
@@ -28,9 +29,10 @@ describe('PerfisComponent', () => {
   beforeEach(async () => {
     service = jasmine.createSpyObj<CommunityService>(
       'CommunityService',
-      ['searchProfiles', 'sendFriendRequest', 'discoverProfiles', 'friends', 'publicProfile']
+      ['searchProfiles', 'findProfiles', 'sendFriendRequest', 'discoverProfiles', 'friends', 'publicProfile']
     );
     service.searchProfiles.and.returnValue(of([profile]));
+    service.findProfiles.and.returnValue(of([profile]));
     service.discoverProfiles.and.returnValue(of([profile]));
     service.friends.and.returnValue(of([]));
     service.publicProfile.and.returnValue(of(profile));
@@ -78,12 +80,24 @@ describe('PerfisComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should search profiles through the community API', () => {
+  it('should search profiles using sports matching filters', () => {
     component.searchTerm = 'ana';
+    component.sportFilter = 'Padel';
+    component.locationFilter = 'Lisboa';
+    component.minAge = 30;
+    component.maxAge = 45;
+    component.levelFilter = 'INTERMEDIATE';
 
     component.search();
 
-    expect(service.searchProfiles).toHaveBeenCalledWith('ana');
+    expect(service.findProfiles).toHaveBeenCalledWith({
+      name: 'ana',
+      sport: 'Padel',
+      location: 'Lisboa',
+      minAge: 30,
+      maxAge: 45,
+      skillLevel: 'INTERMEDIATE'
+    });
     expect(component.profiles).toEqual([profile]);
   });
 
@@ -127,12 +141,18 @@ describe('PerfisComponent', () => {
     expect(service.sendFriendRequest).not.toHaveBeenCalled();
   });
 
-  it('should reject an empty search', () => {
+  it('should return to discovery when all filters are empty', () => {
     component.searchTerm = '  ';
+    component.sportFilter = '';
+    component.locationFilter = '';
+    component.minAge = null;
+    component.maxAge = null;
+    component.levelFilter = '';
 
+    const callsBefore = service.discoverProfiles.calls.count();
     component.search();
 
-    expect(service.searchProfiles).not.toHaveBeenCalled();
-    expect(component.errorMessage).toContain('nome de utilizador');
+    expect(service.findProfiles).not.toHaveBeenCalled();
+    expect(service.discoverProfiles.calls.count()).toBe(callsBefore + 1);
   });
 });

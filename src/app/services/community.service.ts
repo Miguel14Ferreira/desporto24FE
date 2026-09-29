@@ -1,10 +1,19 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { environment } from 'src/environment/environment';
 import { CommunityProfile } from '../pages/model/community-profile';
 import { FriendSummary } from '../pages/model/friend-summary';
+
+export interface ProfileSearchFilters {
+  name?: string;
+  sport?: string;
+  location?: string;
+  minAge?: number;
+  maxAge?: number;
+  skillLevel?: string;
+}
 
 @Injectable({
   providedIn: 'root'
@@ -17,6 +26,34 @@ export class CommunityService {
 
   discoverProfiles(): Observable<CommunityProfile[]> {
     return this.http.get<CommunityProfile[]>(this.profileUrl + '/discover');
+  }
+
+  findProfiles(filters: ProfileSearchFilters): Observable<CommunityProfile[]> {
+    let params = new HttpParams();
+
+    if (filters.name?.trim()) {
+      params = params.set('name', filters.name.trim());
+    }
+    if (filters.sport?.trim()) {
+      params = params.set('sport', filters.sport.trim());
+    }
+    if (filters.location?.trim()) {
+      params = params.set('location', filters.location.trim());
+    }
+    if (filters.minAge !== undefined) {
+      params = params.set('minAge', String(filters.minAge));
+    }
+    if (filters.maxAge !== undefined) {
+      params = params.set('maxAge', String(filters.maxAge));
+    }
+    if (filters.skillLevel?.trim()) {
+      params = params.set('skillLevel', filters.skillLevel.trim());
+    }
+
+    return this.http.get<CommunityProfile[]>(
+      this.profileUrl + '/search',
+      { params }
+    );
   }
 
   searchProfiles(name: string): Observable<CommunityProfile[]> {
