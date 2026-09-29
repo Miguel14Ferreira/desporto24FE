@@ -66,6 +66,7 @@ export class Events2Component implements OnInit {
   venueAed: boolean | null = null;
   venueCafe: boolean | null = null;
   venueServices = '';
+  venueTransport = '';
   venueParking = false;
   venueLighting = false;
 
@@ -234,6 +235,7 @@ export class Events2Component implements OnInit {
       aed: this.venueAed,
       cafe: this.venueCafe,
       services: this.venueServices.trim() || null,
+      transport: this.venueTransport.trim() || null,
       parking: this.venueParking,
       lighting: this.venueLighting,
       latitude: this.locationCaptured ? this.latitude : null,
@@ -259,6 +261,7 @@ export class Events2Component implements OnInit {
           this.venueAed = null;
           this.venueCafe = null;
           this.venueServices = '';
+          this.venueTransport = '';
           this.venueParking = false;
           this.venueLighting = false;
         },
