@@ -25,6 +25,11 @@ export interface VenueSportCondition {
   createdAt: string;
 }
 
+export interface CreateVenueSportConditionRequest {
+  sport: string;
+  conditions: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -67,6 +72,16 @@ export class VenueService {
   listSportConditions(id: number): Observable<VenueSportCondition[]> {
     return this.http.get<VenueSportCondition[]>(
       this.baseUrl + '/' + id + '/sport-conditions'
+    );
+  }
+
+  addSportCondition(
+    id: number,
+    request: CreateVenueSportConditionRequest
+  ): Observable<VenueSportCondition> {
+    return this.http.post<VenueSportCondition>(
+      this.baseUrl + '/' + id + '/sport-conditions',
+      request
     );
   }
 
