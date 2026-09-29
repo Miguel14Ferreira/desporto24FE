@@ -799,6 +799,7 @@ const PT: Dictionary = {
   'venue.detail.error': 'Não foi possível carregar este recinto.',
   'venue.detail.city': 'Localidade',
   'venue.detail.address': 'Morada',
+  'venue.detail.amenities': 'Comodidades',
 
   'chat.backFriends': 'Voltar aos amigos',
   'chat.direct': 'Chat direto',
@@ -1870,6 +1871,7 @@ const EN: Dictionary = {
   'venue.detail.error': 'We could not load this venue.',
   'venue.detail.city': 'City',
   'venue.detail.address': 'Address',
+  'venue.detail.amenities': 'Amenities',
 
   'chat.backFriends': 'Back to friends',
   'chat.direct': 'Direct chat',

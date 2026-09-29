@@ -22,6 +22,22 @@
           <strong>{{ venue.address }}</strong>
         </div>
       </div>
+
+      <section class="venue-amenities-section">
+        <h2>{{ 'venue.detail.amenities' | t }}</h2>
+        <div class="venue-amenities-list">
+          <span>{{ venue.indoor ? ('venue.indoor' | t) : ('venue.outdoor' | t) }}</span>
+          @if (venue.changingRooms) { <span>{{ 'venue.changingRooms' | t }}</span> }
+          @if (venue.toilets) { <span>{{ 'venue.toilets' | t }}</span> }
+          @if (venue.lockers) { <span>{{ 'venue.lockers' | t }}</span> }
+          @if (venue.accessible) { <span>{{ 'venue.accessible' | t }}</span> }
+          @if (venue.firstAid) { <span>{{ 'venue.firstAid' | t }}</span> }
+          @if (venue.aed) { <span>{{ 'venue.aed' | t }}</span> }
+          @if (venue.cafe) { <span>{{ 'venue.cafe' | t }}</span> }
+          @if (venue.parking) { <span>{{ 'venue.parking' | t }}</span> }
+          @if (venue.lighting) { <span>{{ 'venue.lighting' | t }}</span> }
+        </div>
+      </section>
     }
   </div>
 </section>

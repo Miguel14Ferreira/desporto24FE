@@ -73,3 +73,27 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+.venue-amenities-section {
+  margin-top: 28px;
+}
+
+.venue-amenities-section h2 {
+  margin: 0 0 14px;
+  font-size: 1.1rem;
+}
+
+.venue-amenities-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.venue-amenities-list span {
+  padding: 8px 12px;
+  border: 1px solid #d9d9d9;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
