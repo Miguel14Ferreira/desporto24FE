@@ -51,15 +51,7 @@ export class VenueDetailsComponent implements OnInit {
         error: () => this.loadError = true
       });
 
-    this.venueService.listPhotos(venueId)
-      .pipe(finalize(() => this.photosLoading = false))
-      .subscribe({
-        next: photos => this.photos = photos,
-        error: () => {
-          this.photos = [];
-          this.photosLoadError = true;
-        }
-      });
+    this.loadPhotos(venueId);
 
     this.venueService.listSportConditions(venueId)
       .pipe(finalize(() => this.sportConditionsLoading = false))
@@ -70,6 +62,11 @@ export class VenueDetailsComponent implements OnInit {
           this.sportConditionsLoadError = true;
         }
       });
+  }
+
+  retryPhotos(): void {
+    if (!this.venue) return;
+    this.loadPhotos(this.venue.id);
   }
 
   addSportCondition(): void {
@@ -93,6 +90,21 @@ export class VenueDetailsComponent implements OnInit {
           this.sportConditionText = '';
         },
         error: () => this.sportConditionSaveError = true
+      });
+  }
+
+  private loadPhotos(venueId: number): void {
+    this.photosLoading = true;
+    this.photosLoadError = false;
+
+    this.venueService.listPhotos(venueId)
+      .pipe(finalize(() => this.photosLoading = false))
+      .subscribe({
+        next: photos => this.photos = photos,
+        error: () => {
+          this.photos = [];
+          this.photosLoadError = true;
+        }
       });
   }
 

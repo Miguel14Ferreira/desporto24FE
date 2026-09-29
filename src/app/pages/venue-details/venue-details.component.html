@@ -75,7 +75,10 @@
         @if (photosLoading) {
           <div class="venue-photos-state">{{ 'venue.detail.photosLoading' | t }}</div>
         } @else if (photosLoadError) {
-          <div class="venue-photos-state">{{ 'venue.detail.photosError' | t }}</div>
+          <div class="venue-photos-state">
+            {{ 'venue.detail.photosError' | t }}
+            <button type="button" (click)="retryPhotos()">{{ 'common.retry' | t }}</button>
+          </div>
         } @else if (photos.length === 0) {
           <div class="venue-photos-state">{{ 'venue.detail.photosEmpty' | t }}</div>
         } @else {
