@@ -220,11 +220,12 @@
                   </span>
                 </div>
                 <p>{{ condition.conditions }}</p>
-                @if (condition.createdByUsername) {
-                  <div class="venue-sport-condition-created-by">
-                    {{ 'venue.detail.createdBy' | t }} <strong>@{{ condition.createdByUsername }}</strong>
-                  </div>
-                }
+                <div class="venue-sport-condition-created-by">
+                  @if (condition.createdByUsername) {
+                    {{ 'venue.detail.createdBy' | t }} <strong>@{{ condition.createdByUsername }}</strong> ·
+                  }
+                  {{ 'venue.detail.addedAt' | t }} {{ condition.createdAt | date:'short' }}
+                </div>
               </article>
             }
           </div>
