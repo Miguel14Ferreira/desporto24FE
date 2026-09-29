@@ -15,12 +15,16 @@ export class VenueDetailsComponent implements OnInit {
   venue: Venue | null = null;
   photos: VenuePhoto[] = [];
   sportConditions: VenueSportCondition[] = [];
+  sportConditionSport = '';
+  sportConditionText = '';
   loading = true;
   photosLoading = true;
   sportConditionsLoading = true;
   photoUploading = false;
   photoUploadError = false;
   sportConditionsLoadError = false;
+  sportConditionSaving = false;
+  sportConditionSaveError = false;
   loadError = false;
 
   constructor(
@@ -61,6 +65,30 @@ export class VenueDetailsComponent implements OnInit {
           this.sportConditions = [];
           this.sportConditionsLoadError = true;
         }
+      });
+  }
+
+  addSportCondition(): void {
+    const sport = this.sportConditionSport.trim();
+    const conditions = this.sportConditionText.trim();
+
+    if (!this.venue || this.sportConditionSaving || !sport || !conditions) {
+      this.sportConditionSaveError = true;
+      return;
+    }
+
+    this.sportConditionSaving = true;
+    this.sportConditionSaveError = false;
+
+    this.venueService.addSportCondition(this.venue.id, { sport, conditions })
+      .pipe(finalize(() => this.sportConditionSaving = false))
+      .subscribe({
+        next: condition => {
+          this.sportConditions = [condition, ...this.sportConditions];
+          this.sportConditionSport = '';
+          this.sportConditionText = '';
+        },
+        error: () => this.sportConditionSaveError = true
       });
   }
 

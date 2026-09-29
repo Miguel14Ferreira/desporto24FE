@@ -275,3 +275,63 @@
     flex-direction: column;
   }
 }
+
+
+.venue-sport-conditions-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.venue-sport-condition-form {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 18px;
+  border: 1px solid #d9d9d9;
+  border-radius: 16px;
+}
+
+.venue-sport-condition-form label {
+  display: grid;
+  gap: 7px;
+}
+
+.venue-sport-condition-form label > span {
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.venue-sport-condition-form input,
+.venue-sport-condition-form textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid #d9d9d9;
+  border-radius: 12px;
+  font: inherit;
+}
+
+.venue-sport-condition-form textarea {
+  resize: vertical;
+}
+
+.venue-sport-condition-submit {
+  justify-self: start;
+  padding: 9px 14px;
+  border: 1px solid #d9d9d9;
+  border-radius: 999px;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+}
+
+.venue-sport-condition-submit:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.venue-sport-condition-save-error {
+  font-weight: 600;
+}

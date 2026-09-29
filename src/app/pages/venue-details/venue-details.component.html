@@ -115,7 +115,47 @@
       </section>
 
       <section class="venue-sport-conditions-section">
-        <h2>{{ 'venue.detail.sportConditions' | t }}</h2>
+        <div class="venue-sport-conditions-heading">
+          <h2>{{ 'venue.detail.sportConditions' | t }}</h2>
+        </div>
+
+        <form class="venue-sport-condition-form" (ngSubmit)="addSportCondition()">
+          <label>
+            <span>{{ 'venue.detail.sportConditionSport' | t }}</span>
+            <input
+              name="sportConditionSport"
+              [(ngModel)]="sportConditionSport"
+              maxlength="80"
+              [disabled]="sportConditionSaving"
+              [placeholder]="'venue.detail.sportConditionSportPlaceholder' | t">
+          </label>
+
+          <label>
+            <span>{{ 'venue.detail.sportConditionText' | t }}</span>
+            <textarea
+              name="sportConditionText"
+              [(ngModel)]="sportConditionText"
+              maxlength="1500"
+              rows="4"
+              [disabled]="sportConditionSaving"
+              [placeholder]="'venue.detail.sportConditionTextPlaceholder' | t"></textarea>
+          </label>
+
+          @if (sportConditionSaveError) {
+            <div class="venue-sport-condition-save-error">
+              {{ 'venue.detail.sportConditionSaveError' | t }}
+            </div>
+          }
+
+          <button
+            type="submit"
+            class="venue-sport-condition-submit"
+            [disabled]="sportConditionSaving || !sportConditionSport.trim() || !sportConditionText.trim()">
+            {{ sportConditionSaving
+              ? ('venue.detail.sportConditionSaving' | t)
+              : ('venue.detail.sportConditionAdd' | t) }}
+          </button>
+        </form>
 
         @if (sportConditionsLoading) {
           <div class="venue-sport-conditions-state">
