@@ -27,6 +27,7 @@ export class FriendsComponent implements OnInit {
   loading = false;
   actionLoadingUsername: string | null = null;
   pendingRemovalUsername: string | null = null;
+  openActionsUsername: string | null = null;
 
   errorMessage = '';
   actionError = '';
@@ -97,6 +98,18 @@ export class FriendsComponent implements OnInit {
     this.selectedReliability = undefined;
   }
 
+  toggleActions(friend: FriendSummary): void {
+    this.openActionsUsername = this.openActionsUsername === friend.username
+      ? null
+      : friend.username;
+    this.pendingRemovalUsername = null;
+  }
+
+  closeActions(): void {
+    this.openActionsUsername = null;
+    this.pendingRemovalUsername = null;
+  }
+
   toggleBlock(friend: FriendSummary): void {
     if (this.actionLoadingUsername !== null) {
       return;
@@ -126,6 +139,7 @@ export class FriendsComponent implements OnInit {
           this.actionSuccess = shouldUnblock
             ? t('feedback.friends.unblockedUser', { username: friend.username })
             : t('feedback.friends.blockedUser', { username: friend.username });
+          this.openActionsUsername = null;
         },
         error: error => {
           this.actionError = this.errorFrom(
@@ -174,6 +188,7 @@ export class FriendsComponent implements OnInit {
         next: () => {
           this.friends = this.friends.filter(item => item.username !== friend.username);
           this.pendingRemovalUsername = null;
+          this.openActionsUsername = null;
           this.actionSuccess = t('feedback.friends.removed', { username: friend.username });
         },
         error: error => {

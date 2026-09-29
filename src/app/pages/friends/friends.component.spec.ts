@@ -55,6 +55,16 @@ describe('FriendsComponent', () => {
     expect(component.filteredFriends.length).toBe(1);
   });
 
+  it('should toggle the compact more-actions menu', () => {
+    const target = component.friends[0];
+
+    component.toggleActions(target);
+    expect(component.openActionsUsername).toBe('ana');
+
+    component.toggleActions(target);
+    expect(component.openActionsUsername).toBeNull();
+  });
+
   it('should block a friend chat', () => {
     const target = component.friends[0];
     component.toggleBlock(target);
