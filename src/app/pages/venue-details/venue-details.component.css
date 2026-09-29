@@ -269,6 +269,11 @@
   white-space: pre-line;
 }
 
+.venue-sport-condition-created-by {
+  margin-top: 10px;
+  font-size: 0.85rem;
+}
+
 @media (max-width: 520px) {
   .venue-sport-condition-heading {
     align-items: flex-start;

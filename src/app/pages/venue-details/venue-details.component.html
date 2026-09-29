@@ -212,6 +212,11 @@
                   </span>
                 </div>
                 <p>{{ condition.conditions }}</p>
+                @if (condition.createdByUsername) {
+                  <div class="venue-sport-condition-created-by">
+                    {{ 'venue.detail.createdBy' | t }} <strong>@{{ condition.createdByUsername }}</strong>
+                  </div>
+                }
               </article>
             }
           </div>
