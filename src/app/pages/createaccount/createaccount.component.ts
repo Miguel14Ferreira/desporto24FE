@@ -1,9 +1,11 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { appTranslate as t } from '../../i18n/i18n.service';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { finalize } from 'rxjs';
 
 import { RegistrationRequest } from '../model/registration-request';
 import { AuthenticationService } from '../../services/authethication.service';
+import { COUNTRY_CALLING_CODES, countryNameFromLabel } from '../../shared/country-calling-codes';
 
 @Component({
   selector: 'app-createaccount',
@@ -16,17 +18,18 @@ export class CreateaccountComponent {
   username = '';
   password = '';
   confirmPassword = '';
-  fullName = '';
+  nickname = '';
   dateOfBirth = '';
-  address = '';
-  country = '';
-  location = '';
-  postalCode = '';
-  indicativePhone = '';
+  country = 'Portugal';
+  indicativePhone = '351';
   phone = '';
   gender = '';
   email = '';
-  favoriteSports = '';
+
+  readonly maxBirthDate = this.dateYearsAgo(18);
+  readonly minBirthDate = this.dateYearsAgo(120);
+
+  readonly countryOptions = COUNTRY_CALLING_CODES;
 
   showPassword = false;
   photo?: File;
@@ -35,8 +38,18 @@ export class CreateaccountComponent {
   loading = false;
   errorMessage = '';
   successMessage = '';
+  registrationComplete = false;
+  existingAccountRecovery = false;
+  resendLoading = false;
+  resendCooldownSeconds = 0;
+
+  private resendCooldownTimer?: ReturnType<typeof setInterval>;
 
   constructor(private authenticationService: AuthenticationService) {}
+
+  countryName(label: string): string {
+    return countryNameFromLabel(label);
+  }
 
   register(): void {
     const validation = this.validate();
@@ -49,37 +62,78 @@ export class CreateaccountComponent {
     const request: RegistrationRequest = {
       username: this.username.trim(),
       password: this.password,
-      fullName: this.fullName.trim(),
+      nickname: this.nickname.trim() || null,
       dateOfBirth: this.dateOfBirth,
-      address: this.address.trim(),
       country: this.country.trim(),
-      location: this.location.trim(),
-      postalCode: this.postalCode.trim(),
-      indicativePhone: this.indicativePhone.trim(),
-      phone: this.phone.trim(),
-      gender: this.gender,
-      email: this.email.trim(),
-      favoriteSports: this.favoriteSports.trim()
+      indicativePhone: this.phone.trim() ? this.indicativePhone : null,
+      phone: this.phone.trim() ? this.phone.replace(/\D/g, '') : null,
+      gender: this.gender || null,
+      email: this.email.trim()
     };
 
     this.loading = true;
     this.errorMessage = '';
     this.successMessage = '';
+    this.existingAccountRecovery = false;
 
     this.authenticationService.register(request, this.photo)
       .pipe(finalize(() => this.loading = false))
       .subscribe({
         next: response => {
-          this.successMessage = response.message
-            || 'Conta criada. Confirma o email para ativares a conta.';
+          this.successMessage = t('feedback.register.created');
+          this.registrationComplete = true;
         },
         error: error => {
           this.errorMessage = this.errorFrom(
             error,
-            'Não foi possível criar a conta.'
+            t('feedback.register.createError')
+          );
+          const normalizedError = this.errorMessage.toLowerCase();
+          this.existingAccountRecovery =
+            normalizedError.includes('já se encontra registado')
+            || normalizedError.includes('já se encontra registrado')
+            || normalizedError.includes('já existe um perfil');
+        }
+      });
+  }
+
+  resendConfirmation(): void {
+    const username = this.username.trim();
+    if (!username || this.resendLoading) {
+      return;
+    }
+
+    this.resendLoading = true;
+    this.errorMessage = '';
+
+    this.authenticationService.resendRegistrationConfirmation(username)
+      .pipe(finalize(() => this.resendLoading = false))
+      .subscribe({
+        next: response => {
+          this.successMessage = t('feedback.register.resent');
+          this.startResendCooldown();
+        },
+        error: error => {
+          this.errorMessage = this.errorFrom(
+            error,
+            t('feedback.register.resendError')
           );
         }
       });
+  }
+
+  private startResendCooldown(): void {
+    this.resendCooldownSeconds = 60;
+    if (this.resendCooldownTimer) {
+      clearInterval(this.resendCooldownTimer);
+    }
+    this.resendCooldownTimer = setInterval(() => {
+      this.resendCooldownSeconds = Math.max(0, this.resendCooldownSeconds - 1);
+      if (this.resendCooldownSeconds === 0 && this.resendCooldownTimer) {
+        clearInterval(this.resendCooldownTimer);
+        this.resendCooldownTimer = undefined;
+      }
+    }, 1000);
   }
 
   onPhotoChange(event: Event): void {
@@ -93,7 +147,7 @@ export class CreateaccountComponent {
     }
 
     if (!file.type.startsWith('image/')) {
-      this.errorMessage = 'Escolhe um ficheiro de imagem.';
+      this.errorMessage = t('feedback.image.choose');
       input.value = '';
       return;
     }
@@ -113,40 +167,69 @@ export class CreateaccountComponent {
       this.username,
       this.password,
       this.confirmPassword,
-      this.fullName,
       this.dateOfBirth,
-      this.address,
       this.country,
-      this.location,
-      this.postalCode,
-      this.indicativePhone,
-      this.phone,
-      this.gender,
-      this.email,
-      this.favoriteSports
+      this.email
     ];
 
     if (required.some(value => !value?.trim())) {
-      return 'Preenche todos os campos obrigatórios.';
+      return t('feedback.register.required');
     }
 
     if (this.username.trim().length < 3) {
-      return 'O nome de utilizador tem de ter pelo menos 3 caracteres.';
+      return t('feedback.register.usernameMin');
     }
 
     if (this.password.length < 8) {
-      return 'A palavra-passe tem de ter pelo menos 8 caracteres.';
+      return t('feedback.register.passwordMin');
     }
 
     if (this.password !== this.confirmPassword) {
-      return 'A palavra-passe e a confirmação não coincidem.';
+      return t('feedback.register.passwordMismatch');
+    }
+
+    if (!this.isAdultBirthDate(this.dateOfBirth)) {
+      return t('feedback.register.minimumAge');
     }
 
     if (!this.email.includes('@')) {
-      return 'Introduz um email válido.';
+      return t('feedback.contact.invalidEmail');
+    }
+
+    const normalizedPhone = this.phone.replace(/\D/g, '');
+    if (this.phone.trim() && (normalizedPhone.length < 4 || normalizedPhone.length > 15)) {
+      return t('feedback.register.invalidPhone');
+    }
+
+    if (this.phone.trim() && !this.indicativePhone.trim()) {
+      return t('feedback.register.invalidPhone');
     }
 
     return null;
+  }
+
+  private isAdultBirthDate(value: string): boolean {
+    if (!value) {
+      return false;
+    }
+
+    const birthDate = new Date(value + 'T00:00:00');
+    if (Number.isNaN(birthDate.getTime())) {
+      return false;
+    }
+
+    const minDate = new Date(this.minBirthDate + 'T00:00:00');
+    const maxDate = new Date(this.maxBirthDate + 'T00:00:00');
+    return birthDate >= minDate && birthDate <= maxDate;
+  }
+
+  private dateYearsAgo(years: number): string {
+    const date = new Date();
+    date.setFullYear(date.getFullYear() - years);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
   private errorFrom(error: HttpErrorResponse, fallback: string): string {

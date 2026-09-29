@@ -1,10 +1,14 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { appTranslate as t } from '../../i18n/i18n.service';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
-import { finalize } from 'rxjs';
+import { finalize, forkJoin } from 'rxjs';
 
 import { environment } from 'src/environment/environment';
 import { FriendSummary } from '../model/friend-summary';
+import { CommunityProfile } from '../model/community-profile';
+import { ReliabilitySummary } from '../model/reliability-summary';
 import { CommunityService } from '../../services/community.service';
+import { ReliabilityService } from '../../services/reliability.service';
 
 @Component({
   selector: 'app-friends',
@@ -16,6 +20,9 @@ import { CommunityService } from '../../services/community.service';
 export class FriendsComponent implements OnInit {
   friends: FriendSummary[] = [];
   filter = '';
+  selectedProfile?: CommunityProfile;
+  selectedReliability?: ReliabilitySummary;
+  profileLoading = false;
 
   loading = false;
   actionLoadingUsername: string | null = null;
@@ -25,7 +32,10 @@ export class FriendsComponent implements OnInit {
   actionError = '';
   actionSuccess = '';
 
-  constructor(private communityService: CommunityService) {}
+  constructor(
+    private communityService: CommunityService,
+    private reliabilityService: ReliabilityService
+  ) {}
 
   ngOnInit(): void {
     this.load();
@@ -39,8 +49,8 @@ export class FriendsComponent implements OnInit {
 
     return this.friends.filter(friend =>
       friend.username.toLowerCase().includes(term)
+      || (friend.nickname ?? '').toLowerCase().includes(term)
       || (friend.fullName ?? '').toLowerCase().includes(term)
-      || (friend.location ?? '').toLowerCase().includes(term)
     );
   }
 
@@ -54,9 +64,37 @@ export class FriendsComponent implements OnInit {
         next: friends => this.friends = friends,
         error: () => {
           this.friends = [];
-          this.errorMessage = 'Não foi possível carregar a tua lista de amigos.';
+          this.errorMessage = t('feedback.friends.loadError');
         }
       });
+  }
+
+  openProfile(friend: FriendSummary): void {
+    this.profileLoading = true;
+    this.selectedProfile = undefined;
+    this.selectedReliability = undefined;
+
+    forkJoin({
+      profile: this.communityService.publicProfile(friend.username),
+      reliability: this.reliabilityService.summary(friend.username)
+    })
+      .pipe(finalize(() => this.profileLoading = false))
+      .subscribe({
+        next: result => {
+          this.selectedProfile = result.profile;
+          this.selectedReliability = result.reliability;
+        },
+        error: () => {
+          this.communityService.publicProfile(friend.username).subscribe({
+            next: profile => this.selectedProfile = profile
+          });
+        }
+      });
+  }
+
+  closeProfile(): void {
+    this.selectedProfile = undefined;
+    this.selectedReliability = undefined;
   }
 
   toggleBlock(friend: FriendSummary): void {
@@ -65,7 +103,7 @@ export class FriendsComponent implements OnInit {
     }
 
     if (friend.chatBlocked && !friend.blockedByMe) {
-      this.actionError = 'Este chat foi bloqueado pelo outro utilizador.';
+      this.actionError = t('feedback.chat.blockedOther');
       this.actionSuccess = '';
       return;
     }
@@ -86,15 +124,15 @@ export class FriendsComponent implements OnInit {
           friend.chatBlocked = !shouldUnblock;
           friend.blockedByMe = !shouldUnblock;
           this.actionSuccess = shouldUnblock
-            ? `Chat com ${friend.username} desbloqueado.`
-            : `Chat com ${friend.username} bloqueado.`;
+            ? t('feedback.friends.unblockedUser', { username: friend.username })
+            : t('feedback.friends.blockedUser', { username: friend.username });
         },
         error: error => {
           this.actionError = this.errorFrom(
             error,
             shouldUnblock
-              ? 'Não foi possível desbloquear este chat.'
-              : 'Não foi possível bloquear este chat.'
+              ? t('feedback.chat.unblockError')
+              : t('feedback.chat.blockError')
           );
         }
       });
@@ -136,18 +174,18 @@ export class FriendsComponent implements OnInit {
         next: () => {
           this.friends = this.friends.filter(item => item.username !== friend.username);
           this.pendingRemovalUsername = null;
-          this.actionSuccess = `${friend.username} foi removido da tua lista de amigos.`;
+          this.actionSuccess = t('feedback.friends.removed', { username: friend.username });
         },
         error: error => {
           this.actionError = this.errorFrom(
             error,
-            'Não foi possível remover este amigo.'
+            t('feedback.friends.removeError')
           );
         }
       });
   }
 
-  profileImage(friend: FriendSummary): string | null {
+  profileImage(friend: FriendSummary | CommunityProfile): string | null {
     const path = friend.profilePicUrl;
     if (!path) {
       return null;
@@ -160,8 +198,10 @@ export class FriendsComponent implements OnInit {
     return environment.apiUrl + (path.startsWith('/') ? path : '/' + path);
   }
 
-  initials(friend: FriendSummary): string {
-    const source = friend.fullName?.trim() || friend.username;
+  initials(friend: FriendSummary | CommunityProfile): string {
+    const source = ('nickname' in friend ? friend.nickname?.trim() : null)
+      || friend.fullName?.trim()
+      || friend.username;
     return source
       .split(/\s+/)
       .filter(Boolean)

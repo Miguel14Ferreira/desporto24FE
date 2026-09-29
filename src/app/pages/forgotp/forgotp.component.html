@@ -1,8 +1,8 @@
 <section class="reset-page">
   <div class="reset-card">
-    <p class="eyebrow">Recuperar acesso</p>
-    <h1>Esqueceste-te da palavra-passe?</h1>
-    <p class="subtitle">Indica o email da tua conta. Vais receber um link seguro para definires uma nova palavra-passe.</p>
+    <p class="eyebrow">{{ 'reset.eyebrow' | t }}</p>
+    <h1>{{ 'reset.title' | t }}</h1>
+    <p class="subtitle">{{ 'reset.subtitle' | t }}</p>
 
     @if (errorMessage) {
       <div class="feedback error-feedback">{{ errorMessage }}</div>
@@ -14,7 +14,7 @@
 
     <form (ngSubmit)="sendResetEmail()">
       <label>
-        <span>Email</span>
+        <span>{{ 'common.email' | t }}</span>
         <input
           type="email"
           name="email"
@@ -25,10 +25,10 @@
       </label>
 
       <button type="submit" class="primary-action" [disabled]="loading">
-        {{ loading ? 'A enviar...' : 'Enviar link de recuperação' }}
+        {{ loading ? ('contact.sending' | t) : ('reset.sendLink' | t) }}
       </button>
     </form>
 
-    <a class="back-link" routerLink="/login">← Voltar ao login</a>
+    <a class="back-link" routerLink="/login">← {{ 'reset.back' | t }}</a>
   </div>
 </section>

@@ -3,72 +3,122 @@
     <header class="page-header">
       <div>
         <p class="eyebrow">Desporto24</p>
-        <h1>Criar conta</h1>
-        <p class="subtitle">Cria o teu perfil e começa a encontrar pessoas para praticar desporto.</p>
+        <h1>{{ 'register.title' | t }}</h1>
+        <p class="subtitle">{{ 'register.subtitle' | t }}</p>
       </div>
 
-      <a class="secondary-action" routerLink="/login">Já tenho conta</a>
+      <a class="secondary-action" routerLink="/login">{{ 'register.haveAccount' | t }}</a>
     </header>
 
-    @if (errorMessage) {
+    @if (errorMessage && !existingAccountRecovery) {
       <div class="feedback error-feedback">{{ errorMessage }}</div>
     }
 
-    @if (successMessage) {
-      <div class="feedback success-feedback">
-        <strong>Conta criada</strong>
-        <span>{{ successMessage }}</span>
-        <a routerLink="/login">Voltar ao login</a>
-      </div>
-    }
+    @if (existingAccountRecovery) {
+      <section class="confirmation-card">
+        <p class="eyebrow">{{ 'register.existing' | t }}</p>
+        <h2>{{ 'register.mayNeedConfirmation' | t }}</h2>
+        <p>{{ errorMessage }}</p>
+        <p class="confirmation-note">{{ 'register.recoveryHint' | t }}</p>
 
+        <div class="confirmation-actions">
+          <button
+            type="button"
+            class="secondary-action resend-action"
+            [disabled]="resendLoading || resendCooldownSeconds > 0"
+            (click)="resendConfirmation()">
+            {{ resendLoading
+              ? ('login.resending' | t)
+              : (resendCooldownSeconds > 0
+                  ? ('login.resendIn' | t:{ seconds: resendCooldownSeconds })
+                  : ('login.resend' | t)) }}
+          </button>
+          <a class="primary-link" routerLink="/login">{{ 'register.goLogin' | t }}</a>
+        </div>
+
+        @if (successMessage) {
+          <div class="feedback success-feedback">{{ successMessage }}</div>
+        }
+      </section>
+    } @else if (registrationComplete) {
+      <section class="confirmation-card">
+        <p class="eyebrow">{{ 'register.confirmation' | t }}</p>
+        <h2>{{ 'register.checkEmail' | t }}</h2>
+        <p>{{ successMessage }}</p>
+        <p class="confirmation-note">{{ 'register.noEmailHint' | t }}</p>
+
+        @if (errorMessage) {
+          <div class="feedback error-feedback">{{ errorMessage }}</div>
+        }
+
+        <div class="confirmation-actions">
+          <button
+            type="button"
+            class="secondary-action resend-action"
+            [disabled]="resendLoading || resendCooldownSeconds > 0"
+            (click)="resendConfirmation()">
+            {{ resendLoading
+              ? ('login.resending' | t)
+              : (resendCooldownSeconds > 0
+                  ? ('login.resendIn' | t:{ seconds: resendCooldownSeconds })
+                  : ('login.resend' | t)) }}
+          </button>
+          <a class="primary-link" routerLink="/login">{{ 'register.goLogin' | t }}</a>
+        </div>
+      </section>
+    } @else {
     <form class="register-card" (ngSubmit)="register()">
       <section class="photo-section">
         <div class="photo-preview">
           @if (photoPreview) {
-            <img [src]="photoPreview" alt="Pré-visualização da fotografia de perfil">
+            <img [src]="photoPreview" [alt]="'register.photo' | t">
           } @else {
             <span>+</span>
           }
         </div>
 
         <div>
-          <strong>Fotografia de perfil</strong>
-          <p>Opcional. Podes alterá-la mais tarde.</p>
+          <strong>{{ 'register.photo' | t }}</strong>
+          <p>{{ 'register.photoOptional' | t }}</p>
           <label class="upload-action">
             <input
               type="file"
               accept="image/*"
               [disabled]="loading"
               (change)="onPhotoChange($event)">
-            Escolher fotografia
+            {{ 'register.choosePhoto' | t }}
           </label>
         </div>
       </section>
 
       <div class="form-grid">
         <label>
-          <span>Nome de utilizador *</span>
+          <span>{{ 'login.username' | t }} *</span>
           <input name="username" [(ngModel)]="username" autocomplete="username" [disabled]="loading">
         </label>
 
         <label>
-          <span>Nome completo *</span>
-          <input name="fullName" [(ngModel)]="fullName" autocomplete="name" [disabled]="loading">
+          <span>{{ 'register.nickname' | t }}</span>
+          <input
+            name="nickname"
+            [(ngModel)]="nickname"
+            maxlength="80"
+            [disabled]="loading"
+            [placeholder]="'register.nicknamePlaceholder' | t">
         </label>
 
         <label>
-          <span>Email *</span>
+          <span>{{ 'common.email' | t }} *</span>
           <input type="email" name="email" [(ngModel)]="email" autocomplete="email" [disabled]="loading">
         </label>
 
         <label>
-          <span>Data de nascimento *</span>
-          <input type="date" name="dateOfBirth" [(ngModel)]="dateOfBirth" [disabled]="loading">
+          <span>{{ 'register.birthDate' | t }} *</span>
+          <input type="date" name="dateOfBirth" [(ngModel)]="dateOfBirth" [min]="minBirthDate" [max]="maxBirthDate" [disabled]="loading">
         </label>
 
         <label>
-          <span>Palavra-passe *</span>
+          <span>{{ 'login.password' | t }} *</span>
           <div class="password-field">
             <input
               [type]="showPassword ? 'text' : 'password'"
@@ -78,13 +128,13 @@
               minlength="8"
               [disabled]="loading">
             <button type="button" (click)="showPassword = !showPassword">
-              {{ showPassword ? 'Ocultar' : 'Mostrar' }}
+              {{ showPassword ? ('common.hide' | t) : ('common.show' | t) }}
             </button>
           </div>
         </label>
 
         <label>
-          <span>Confirmar palavra-passe *</span>
+          <span>{{ 'register.confirmPassword' | t }} *</span>
           <input
             [type]="showPassword ? 'text' : 'password'"
             name="confirmPassword"
@@ -94,63 +144,59 @@
             [disabled]="loading">
         </label>
 
-        <label class="full-width">
-          <span>Morada *</span>
-          <input name="address" [(ngModel)]="address" autocomplete="street-address" [disabled]="loading">
-        </label>
-
         <label>
-          <span>País *</span>
-          <input name="country" [(ngModel)]="country" autocomplete="country-name" [disabled]="loading" placeholder="Portugal">
-        </label>
-
-        <label>
-          <span>Localidade *</span>
-          <input name="location" [(ngModel)]="location" autocomplete="address-level2" [disabled]="loading">
-        </label>
-
-        <label>
-          <span>Código postal *</span>
-          <input name="postalCode" [(ngModel)]="postalCode" autocomplete="postal-code" [disabled]="loading">
-        </label>
-
-        <label>
-          <span>Indicativo *</span>
-          <input name="indicativePhone" [(ngModel)]="indicativePhone" [disabled]="loading" placeholder="351">
-        </label>
-
-        <label>
-          <span>Telefone *</span>
-          <input name="phone" [(ngModel)]="phone" autocomplete="tel" [disabled]="loading">
-        </label>
-
-        <label>
-          <span>Género *</span>
-          <select name="gender" [(ngModel)]="gender" [disabled]="loading">
-            <option value="">Selecionar</option>
-            <option value="masculino">Masculino</option>
-            <option value="feminino">Feminino</option>
-            <option value="outro">Outro</option>
+          <span>{{ 'common.country' | t }} *</span>
+          <select
+            name="country"
+            [(ngModel)]="country"
+            [disabled]="loading">
+            @for (item of countryOptions; track item.label) {
+              <option [value]="countryName(item.label)">{{ item.label }}</option>
+            }
           </select>
         </label>
 
-        <label class="full-width">
-          <span>Desportos favoritos *</span>
-          <textarea
-            name="favoriteSports"
-            [(ngModel)]="favoriteSports"
-            rows="3"
-            [disabled]="loading"
-            placeholder="Ex.: Padel, Futebol, Corrida"></textarea>
+        <div class="full-width phone-field">
+          <span class="field-label">{{ 'register.phoneOptional' | t }}</span>
+          <div class="phone-row">
+            <select
+              class="calling-code"
+              name="indicativePhone"
+              [(ngModel)]="indicativePhone"
+              [disabled]="loading || !phone.trim()">
+              @for (item of countryOptions; track item.label) {
+                <option [value]="item.code">+{{ item.code }}</option>
+              }
+            </select>
+            <input
+              type="tel"
+              name="phone"
+              [(ngModel)]="phone"
+              autocomplete="tel-national"
+              [disabled]="loading"
+              placeholder="912 345 678">
+          </div>
+        </div>
+
+        <label>
+          <span>{{ 'common.gender' | t }}</span>
+          <select name="gender" [(ngModel)]="gender" [disabled]="loading">
+            <option value="">{{ 'register.select' | t }}</option>
+            <option value="masculino">{{ 'register.male' | t }}</option>
+            <option value="feminino">{{ 'register.female' | t }}</option>
+            <option value="outro">{{ 'register.other' | t }}</option>
+          </select>
         </label>
+
       </div>
 
       <div class="form-actions">
-        <a class="secondary-action" routerLink="/login">Cancelar</a>
+        <a class="secondary-action" routerLink="/login">{{ 'common.cancel' | t }}</a>
         <button type="submit" [disabled]="loading">
-          {{ loading ? 'A criar conta...' : 'Criar conta' }}
+          {{ loading ? ('register.creating' | t) : ('register.title' | t) }}
         </button>
       </div>
     </form>
+    }
   </div>
 </section>

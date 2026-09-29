@@ -1,0 +1,59 @@
+<section class="admin-page">
+  <div class="admin-shell">
+    <header class="page-header">
+      <div>
+        <p class="eyebrow">Administração</p>
+        <h1>Centro de administração</h1>
+        <p class="subtitle">
+          Moderação de jogadores, segurança da comunidade e gestão de ocorrências.
+        </p>
+      </div>
+
+      <a class="secondary-action" routerLink="/menu">Voltar ao menu</a>
+    </header>
+
+    <div class="admin-grid">
+      <a class="admin-card" routerLink="/menu/admin/attendance-disputes">
+        <span class="card-icon">⚑</span>
+        <div>
+          <strong>Contestações</strong>
+          <p>Analisa faltas contestadas e resolve pedidos pendentes.</p>
+        </div>
+      </a>
+
+      <div class="admin-card admin-card--planned">
+        <span class="card-icon">◎</span>
+        <div>
+          <strong>Jogadores</strong>
+          <p>Pesquisa, suspensão, ban e histórico de moderação.</p>
+          <span class="planned-badge">A seguir</span>
+        </div>
+      </div>
+
+      <a class="admin-card" routerLink="/menu/admin/ideas">
+        <span class="card-icon">✦</span>
+        <div>
+          <strong>Ideias / Sugestões</strong>
+          <p>Analisa feedback da comunidade e acompanha o estado das propostas.</p>
+        </div>
+      </a>
+
+      <div class="admin-card admin-card--planned">
+        <span class="card-icon">◇</span>
+        <div>
+          <strong>Audit log</strong>
+          <p>Registo de ações administrativas e alterações críticas.</p>
+          <span class="planned-badge">A seguir</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="security-note">
+      <strong>Área protegida</strong>
+      <p>
+        O acesso requer uma role administrativa válida no JWT e os endpoints do backend
+        voltam a validar a autorização no servidor.
+      </p>
+    </div>
+  </div>
+</section>

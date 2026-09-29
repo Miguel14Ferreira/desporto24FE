@@ -1,6 +1,10 @@
-import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { NavigationEnd, Router } from '@angular/router';
 import { AuthenticationService } from 'src/app/services/authethication.service';
+import { AppLanguage, I18nService } from 'src/app/i18n/i18n.service';
+import { NotificationApiService } from 'src/app/services/notification-api.service';
+import { DirectChatRealtimeService } from 'src/app/services/direct-chat-realtime.service';
+import { Subscription, filter } from 'rxjs';
 
 @Component({
     selector: 'app-navbar',
@@ -9,12 +13,22 @@ import { AuthenticationService } from 'src/app/services/authethication.service';
     changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
-export class NavbarComponent implements OnInit {
+export class NavbarComponent implements OnInit, OnDestroy {
 
   dark!:boolean;
   escuro:string = "escuro";
   claro:string = "claro";
-  constructor(private router:Router,private authService:AuthenticationService) { }
+  unreadNotifications = 0;
+  private notificationTimer?: ReturnType<typeof setInterval>;
+  private readonly subscriptions = new Subscription();
+
+  constructor(
+    private router: Router,
+    private authService: AuthenticationService,
+    private notificationService: NotificationApiService,
+    private realtimeService: DirectChatRealtimeService,
+    public i18n: I18nService
+  ) { }
 
   ngOnInit(): void {
     var theme = localStorage.getItem('theme');
@@ -23,6 +37,60 @@ export class NavbarComponent implements OnInit {
     } else {
       this.dark = true
     }
+      this.syncAuthenticatedState();
+
+      this.subscriptions.add(
+        this.router.events
+          .pipe(filter(event => event instanceof NavigationEnd))
+          .subscribe(() => this.syncAuthenticatedState())
+      );
+
+      this.subscriptions.add(
+        this.realtimeService.messages$.subscribe(() => {
+          if (this.isAuthenticated()) {
+            this.unreadNotifications += 1;
+          }
+        })
+      );
+    }
+
+    ngOnDestroy(): void {
+      this.subscriptions.unsubscribe();
+      if (this.notificationTimer) {
+        clearInterval(this.notificationTimer);
+      }
+      this.realtimeService.disconnect();
+    }
+
+    private syncAuthenticatedState(): void {
+      if (!this.isAuthenticated()) {
+        this.realtimeService.disconnect();
+        this.unreadNotifications = 0;
+        if (this.notificationTimer) {
+          clearInterval(this.notificationTimer);
+          this.notificationTimer = undefined;
+        }
+        return;
+      }
+
+      this.realtimeService.connect();
+      this.loadUnreadNotifications();
+
+      if (!this.notificationTimer) {
+        this.notificationTimer = setInterval(
+          () => this.loadUnreadNotifications(),
+          60000
+        );
+      }
+    }
+
+    loadUnreadNotifications(): void {
+      this.notificationService.mine().subscribe({
+        next: notifications => {
+          this.unreadNotifications = notifications.filter(notification => !notification.read).length;
+        },
+        error: () => this.unreadNotifications = 0
+      });
     }
     
     DarkMode(){
@@ -35,6 +103,14 @@ export class NavbarComponent implements OnInit {
       localStorage.setItem('theme',this.claro);
       location.reload();
     }
+    setLanguage(language: AppLanguage): void {
+      this.i18n.setLanguage(language);
+    }
+
+    isAuthenticated(): boolean {
+      return this.authService.isLoggedIn();
+    }
+
     remover(){
       this.router.navigate(['login']);
       this.authService.logOut2();

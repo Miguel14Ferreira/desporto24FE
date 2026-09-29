@@ -2,12 +2,13 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { JwtHelperService } from '@auth0/angular-jwt';
-import { Observable } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 
 import { environment } from '../../environment/environment';
 import { CustomHttpResponse } from '../pages/custom-http-response';
 import { LoginResponse } from '../pages/model/login-response';
 import { RegistrationRequest } from '../pages/model/registration-request';
+import { GoogleAuthResponse, GoogleRegistrationRequest } from '../pages/model/google-auth-response';
 
 @Injectable()
 export class AuthenticationService {
@@ -25,17 +26,41 @@ export class AuthenticationService {
     private router: Router
   ) {}
 
+  googleConfig(): Observable<{ clientId: string }> {
+    return this.http.get<{ clientId: string }>(
+      `${this.host}/api/auth/google/config`
+    );
+  }
+
+  googleLogin(credential: string): Observable<GoogleAuthResponse> {
+    return this.http.post<GoogleAuthResponse>(
+      `${this.host}/api/auth/google/login`,
+      { credential },
+      { withCredentials: true }
+    );
+  }
+
+  googleRegister(request: GoogleRegistrationRequest): Observable<GoogleAuthResponse> {
+    return this.http.post<GoogleAuthResponse>(
+      `${this.host}/api/auth/google/register`,
+      request,
+      { withCredentials: true }
+    );
+  }
+
   login(username: string, password: string): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(
       `${this.host}/api/auth/login`,
-      { username, password }
+      { username, password },
+      { withCredentials: true }
     );
   }
 
   confirmMfaChallenge(challengeId: string, code: string): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(
       `${this.host}/api/auth/mfa/confirm`,
-      { challengeId, code }
+      { challengeId, code },
+      { withCredentials: true }
     );
   }
 
@@ -70,6 +95,14 @@ export class AuthenticationService {
     );
   }
 
+  resendRegistrationConfirmation(username: string): Observable<CustomHttpResponse> {
+    return this.http.post<CustomHttpResponse>(
+      `${this.host}/api/auth/register/resend-confirmation`,
+      null,
+      { params: { username: username.trim() } }
+    );
+  }
+
   initiatePasswordReset(email: string): Observable<CustomHttpResponse> {
     return this.http.post<CustomHttpResponse>(
       `${this.host}/api/auth/reset-password/initiate`,
@@ -84,8 +117,26 @@ export class AuthenticationService {
     );
   }
 
+  refreshSession(): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>(
+      `${this.host}/api/auth/refresh`,
+      null,
+      { withCredentials: true }
+    ).pipe(
+      tap(response => {
+        if (response.token) {
+          this.saveToken(response.token);
+        }
+      })
+    );
+  }
+
   terminarSessao(): Observable<void> {
-    return this.http.post<void>(`${this.host}/api/auth/logout`, null);
+    return this.http.post<void>(
+      `${this.host}/api/auth/logout`,
+      null,
+      { withCredentials: true }
+    );
   }
 
   public logOut(): void {
@@ -127,8 +178,15 @@ export class AuthenticationService {
 
     try {
       const payload = this.jwtHelper.decodeToken(token);
-      return Boolean(payload?.exp && payload.exp * 1000 > Date.now());
+      const valid = Boolean(payload?.exp && payload.exp * 1000 > Date.now());
+      if (!valid) {
+        localStorage.removeItem('t');
+        this.token = null;
+      }
+      return valid;
     } catch {
+      localStorage.removeItem('t');
+      this.token = null;
       return false;
     }
   }

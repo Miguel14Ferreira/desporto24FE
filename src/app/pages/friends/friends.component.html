@@ -3,22 +3,21 @@
     <header class="page-header">
       <div>
         <p class="eyebrow">Desporto24</p>
-        <h1>Amigos</h1>
-        <p class="subtitle">Encontra rapidamente os teus amigos e abre uma conversa direta.</p>
+        <h1>{{ 'friends.title' | t }}</h1>
+        <p class="subtitle">{{ 'friends.subtitle' | t }}</p>
       </div>
 
       <div class="header-actions">
-        <a class="secondary-action" routerLink="/menu/perfis">Encontrar jogadores</a>
-        <a class="secondary-action" routerLink="/menu">Menu</a>
+        <a class="secondary-action" routerLink="/menu/perfis">{{ 'friends.findPlayers' | t }}</a>
       </div>
     </header>
 
     <label class="friend-filter">
-      <span>Filtrar amigos</span>
+      <span>{{ 'friends.filter' | t }}</span>
       <input
         type="search"
         [(ngModel)]="filter"
-        placeholder="Nome, username ou localidade">
+        [placeholder]="'friends.filterPlaceholder' | t">
     </label>
 
     @if (actionSuccess) {
@@ -30,27 +29,27 @@
     }
 
     @if (loading) {
-      <div class="state-card">A carregar amigos...</div>
+      <div class="state-card">{{ 'friends.loading' | t }}</div>
     }
 
     @if (!loading && errorMessage) {
       <div class="state-card error-state">
         <p>{{ errorMessage }}</p>
-        <button type="button" (click)="load()">Tentar novamente</button>
+        <button type="button" (click)="load()">{{ 'common.retry' | t }}</button>
       </div>
     }
 
     @if (!loading && !errorMessage && friends.length === 0) {
       <div class="state-card">
-        <h2>Ainda não tens amigos adicionados</h2>
-        <p>Procura jogadores na comunidade e envia um pedido de amizade.</p>
-        <a routerLink="/menu/perfis">Ir para a comunidade</a>
+        <h2>{{ 'friends.emptyTitle' | t }}</h2>
+        <p>{{ 'friends.emptyText' | t }}</p>
+        <a routerLink="/menu/perfis">{{ 'friends.goCommunity' | t }}</a>
       </div>
     }
 
     @if (!loading && !errorMessage && friends.length > 0 && filteredFriends.length === 0) {
       <div class="state-card">
-        <p>Nenhum amigo corresponde ao filtro.</p>
+        <p>{{ 'friends.noMatch' | t }}</p>
       </div>
     }
 
@@ -68,21 +67,16 @@
 
             <div class="friend-copy">
               <strong>{{ friend.username }}</strong>
-              <span>{{ friend.fullName || 'Jogador Desporto24' }}</span>
-              @if (friend.location) {
-                <small>{{ friend.location }}</small>
-              }
-              @if (friend.favoriteSports) {
-                <small>{{ friend.favoriteSports }}</small>
-              }
+              <span>{{ friend.nickname || friend.fullName || ('friends.player' | t) }}</span>
             </div>
 
             <div class="friend-actions">
               @if (friend.chatBlocked && !friend.blockedByMe) {
-                <span class="blocked-badge">Bloqueado pelo amigo</span>
+                <span class="blocked-badge">{{ 'friends.blockedByFriend' | t }}</span>
               }
 
-              <a [routerLink]="['/menu/friendList/chat', friend.username]">Abrir chat</a>
+              <button type="button" class="secondary-action" (click)="openProfile(friend)">Ver perfil</button>
+              <a [routerLink]="['/menu/friendList/chat', friend.username]">{{ 'friends.openChat' | t }}</a>
 
               @if (!friend.chatBlocked || friend.blockedByMe) {
                 <button
@@ -91,11 +85,11 @@
                   [disabled]="actionLoadingUsername !== null"
                   (click)="toggleBlock(friend)">
                   @if (actionLoadingUsername === friend.username) {
-                    A processar...
+                    {{ 'common.processing' | t }}
                   } @else if (friend.chatBlocked) {
-                    Desbloquear chat
+                    {{ 'friends.unblockChat' | t }}
                   } @else {
-                    Bloquear chat
+                    {{ 'friends.blockChat' | t }}
                   }
                 </button>
               }
@@ -106,7 +100,7 @@
                   class="secondary-action"
                   [disabled]="actionLoadingUsername !== null"
                   (click)="confirmRemove(friend)">
-                  {{ actionLoadingUsername === friend.username ? 'A remover...' : 'Confirmar remoção' }}
+                  {{ actionLoadingUsername === friend.username ? ('friends.removing' | t) : ('friends.confirmRemoval' | t) }}
                 </button>
                 <button
                   type="button"
@@ -121,12 +115,79 @@
                   class="secondary-action"
                   [disabled]="actionLoadingUsername !== null"
                   (click)="requestRemove(friend)">
-                  Remover amigo
+                  {{ 'friends.removeFriend' | t }}
                 </button>
               }
             </div>
           </article>
         }
+      </div>
+    }
+    @if (profileLoading) {
+      <div class="profile-backdrop">
+        <div class="profile-detail">A carregar perfil...</div>
+      </div>
+    }
+
+    @if (selectedProfile) {
+      <div class="profile-backdrop" (click)="closeProfile()">
+        <article class="profile-detail" (click)="$event.stopPropagation()">
+          <button type="button" class="close-detail" (click)="closeProfile()">×</button>
+
+          <div class="detail-heading">
+            <div class="avatar large-avatar">
+              @if (profileImage(selectedProfile); as image) {
+                <img [src]="image" [alt]="selectedProfile.username">
+              } @else {
+                <span>{{ initials(selectedProfile) }}</span>
+              }
+            </div>
+
+            <div>
+              <p class="eyebrow">Perfil</p>
+              <h2>{{ selectedProfile.username }}</h2>
+              <p>{{ selectedProfile.nickname || selectedProfile.fullName || ('friends.player' | t) }}</p>
+            </div>
+          </div>
+
+          <div class="profile-meta">
+            <div>
+              <span>{{ 'common.country' | t }}</span>
+              <strong>{{ selectedProfile.country || ('common.notProvided' | t) }}</strong>
+            </div>
+            <div>
+              <span>{{ 'community.memberSince' | t }}</span>
+              <strong>{{ selectedProfile.joinDateDisplay || ('common.noInfo' | t) }}</strong>
+            </div>
+
+            @if (selectedReliability) {
+              <div>
+                <span>Taxa de presença</span>
+                <strong>{{ selectedReliability.attendanceRate | number:'1.0-0' }}%</strong>
+              </div>
+              <div>
+                <span>Sessões concluídas</span>
+                <strong>{{ selectedReliability.completedSessions }}</strong>
+              </div>
+              <div>
+                <span>Faltas</span>
+                <strong>{{ selectedReliability.noShows }}</strong>
+              </div>
+              <div>
+                <span>Estado de fiabilidade</span>
+                <strong>
+                  {{ selectedReliability.joinRestricted
+                    ? 'Restrito'
+                    : (selectedReliability.warning ? 'Em observação' : 'Bom') }}
+                </strong>
+              </div>
+            }
+          </div>
+
+          <div class="detail-actions">
+            <a [routerLink]="['/menu/friendList/chat', selectedProfile.username]">Abrir chat</a>
+          </div>
+        </article>
       </div>
     }
   </div>

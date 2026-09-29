@@ -3,15 +3,23 @@
     <header class="page-header">
       <div>
         <p class="eyebrow">Desporto24</p>
-        <h1>Fala connosco</h1>
-        <p class="subtitle">Tens uma ideia, uma sugestão ou algo que devíamos melhorar? Envia-nos.</p>
+        <h1>{{ 'contact.title' | t }}</h1>
+        <p class="subtitle">{{ 'contact.subtitle' | t }}</p>
       </div>
 
       <div class="header-actions">
-        <a class="secondary-action" routerLink="/home">Início</a>
-        <a class="secondary-action" routerLink="/login">Entrar</a>
+        <a class="secondary-action" routerLink="/home">{{ 'nav.home' | t }}</a>
+        <a class="secondary-action" routerLink="/login">{{ 'nav.login' | t }}</a>
       </div>
     </header>
+
+    <div class="contact-note">
+      <strong>{{ 'contact.noteTitle' | t }}</strong>
+      <p>
+        {{ 'contact.noteText' | t }}
+        <a href="mailto:desporto24app@gmail.com">desporto24app@gmail.com</a>.
+      </p>
+    </div>
 
     @if (errorMessage) {
       <div class="feedback error-feedback">{{ errorMessage }}</div>
@@ -21,73 +29,80 @@
       <div class="feedback success-feedback">{{ successMessage }}</div>
     }
 
-    <form class="contact-card" (ngSubmit)="submit()">
+    <form class="contact-card" (ngSubmit)="submit()" novalidate>
       <div class="form-grid">
         <label>
-          <span>Nome *</span>
+          <span>{{ 'contact.name' | t }} *</span>
           <input
             name="name"
             [(ngModel)]="name"
             autocomplete="name"
-            [disabled]="loading">
+            [disabled]="loading"
+            [attr.aria-invalid]="fieldErrors.name ? 'true' : 'false'"
+            (input)="clearFieldError('name')">
+          @if (fieldErrors.name) {
+            <small class="field-error">{{ fieldErrors.name }}</small>
+          }
         </label>
 
         <label>
-          <span>Localidade *</span>
-          <input
-            name="city"
-            [(ngModel)]="city"
-            autocomplete="address-level2"
-            [disabled]="loading">
-        </label>
-
-        <label>
-          <span>Email *</span>
+          <span>{{ 'common.email' | t }} *</span>
           <input
             type="email"
             name="email"
             [(ngModel)]="email"
             autocomplete="email"
-            [disabled]="loading">
-        </label>
-
-        <label>
-          <span>Género *</span>
-          <select name="gender" [(ngModel)]="gender" [disabled]="loading">
-            <option value="">Selecionar</option>
-            <option value="masculino">Masculino</option>
-            <option value="feminino">Feminino</option>
-            <option value="outro">Outro</option>
-            <option value="prefiro-nao-dizer">Prefiro não dizer</option>
-          </select>
-        </label>
-
-        <label class="full-width">
-          <span>Assunto *</span>
-          <input
-            name="subject"
-            [(ngModel)]="subject"
-            maxlength="160"
             [disabled]="loading"
-            placeholder="Ex.: Sugestão para torneios">
+            [attr.aria-invalid]="fieldErrors.email ? 'true' : 'false'"
+            (input)="clearFieldError('email')">
+          @if (fieldErrors.email) {
+            <small class="field-error">{{ fieldErrors.email }}</small>
+          }
         </label>
 
         <label class="full-width">
-          <span>Mensagem *</span>
+          <span>{{ 'contact.category' | t }} *</span>
+          <select
+            name="category"
+            [(ngModel)]="category"
+            [disabled]="loading"
+            [attr.aria-invalid]="fieldErrors.category ? 'true' : 'false'"
+            (change)="clearFieldError('category')">
+            <option value="">{{ 'contact.categoryPlaceholder' | t }}</option>
+            @for (categoryKey of categories; track categoryKey) {
+              <option [value]="categoryKey">{{ categoryKey | t }}</option>
+            }
+          </select>
+          @if (fieldErrors.category) {
+            <small class="field-error">{{ fieldErrors.category }}</small>
+          }
+        </label>
+
+        <label class="full-width">
+          <span>{{ 'contact.message' | t }} *</span>
           <textarea
             name="problem"
             [(ngModel)]="problem"
             maxlength="4000"
             rows="8"
             [disabled]="loading"
-            placeholder="Conta-nos a tua ideia..."></textarea>
-          <small>{{ problem.length }}/4000</small>
+            [attr.aria-invalid]="fieldErrors.problem ? 'true' : 'false'"
+            (input)="clearFieldError('problem')"
+            [placeholder]="'contact.messagePlaceholder' | t"></textarea>
+          <div class="field-footer">
+            @if (fieldErrors.problem) {
+              <small class="field-error">{{ fieldErrors.problem }}</small>
+            } @else {
+              <span></span>
+            }
+            <small>{{ problem.length }}/4000</small>
+          </div>
         </label>
       </div>
 
       <div class="form-actions">
         <button type="submit" [disabled]="loading">
-          {{ loading ? 'A enviar...' : 'Enviar mensagem' }}
+          {{ loading ? ('contact.sending' | t) : ('contact.send' | t) }}
         </button>
       </div>
     </form>

@@ -2,7 +2,7 @@
 
 .register-page {
   min-height: 100vh;
-  padding: 4rem 1.25rem;
+  padding: 6.5rem 1.25rem 4rem;
   background:
     radial-gradient(circle at top right, rgba(14,165,233,.16), transparent 32rem),
     linear-gradient(145deg, #07111f, #12334a);
@@ -179,6 +179,20 @@ textarea {
   gap: .5rem;
 }
 
+.password-field input,
+.password-field button,
+.phone-row input,
+.phone-row select {
+  height: 52px;
+  box-sizing: border-box;
+}
+
+.password-field button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .form-actions {
   display: flex;
   justify-content: flex-end;
@@ -215,5 +229,124 @@ textarea {
 
   .password-field {
     grid-template-columns: 1fr;
+  }
+}
+
+
+.confirmation-card {
+  width: min(620px, 100%);
+  box-sizing: border-box;
+  margin: 2rem auto 0;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  background: rgba(15,23,42,.82);
+  box-shadow: 0 24px 60px rgba(0,0,0,.2);
+}
+
+.confirmation-card h2 {
+  margin: 0 0 .75rem;
+  font-size: 1.8rem;
+}
+
+.confirmation-card > p:not(.eyebrow) {
+  color: #cbd5e1;
+  line-height: 1.6;
+}
+
+.confirmation-note {
+  margin-top: 1rem;
+}
+
+.confirmation-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem;
+  margin-top: 1.25rem;
+}
+
+.resend-action:disabled {
+  opacity: .6;
+  cursor: wait;
+}
+
+.primary-link {
+  border-radius: .75rem;
+  padding: .75rem .9rem;
+  background: #f8fafc;
+  color: #0f172a;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+
+.sport-selector {
+  display: grid;
+  gap: .55rem;
+}
+
+.field-label {
+  color: #cbd5e1;
+  font-size: .8rem;
+  font-weight: 800;
+}
+
+.sport-chips,
+.sport-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .45rem;
+}
+
+.sport-chip,
+.sport-suggestions button {
+  border: 1px solid rgba(125,211,252,.22);
+  border-radius: 999px;
+  padding: .45rem .65rem;
+  background: rgba(125,211,252,.08);
+  color: #e0f2fe;
+  font: inherit;
+  font-size: .82rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.sport-suggestions {
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: .75rem;
+  padding: .6rem;
+  background: rgba(2,6,23,.35);
+}
+
+.sport-suggestions button:hover,
+.sport-chip:hover {
+  border-color: rgba(125,211,252,.5);
+  background: rgba(125,211,252,.14);
+}
+
+.sport-selector small {
+  color: #94a3b8;
+}
+
+
+.phone-field {
+  display: grid;
+  gap: .4rem;
+}
+
+.phone-row {
+  display: grid;
+  grid-template-columns: 130px minmax(0, 1fr);
+  gap: .55rem;
+}
+
+.calling-code {
+  min-width: 0;
+  height: 52px;
+}
+
+@media (max-width: 520px) {
+  .phone-row {
+    grid-template-columns: 110px minmax(0, 1fr);
   }
 }

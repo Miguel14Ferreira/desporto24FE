@@ -4,16 +4,21 @@ import { of } from 'rxjs';
 
 import { Events2Component } from './events2.component';
 import { SessionService } from '../../services/session.service';
+import { VenueService } from '../../services/venue.service';
 import { TEST_IMPORTS, TEST_PROVIDERS } from '../../testing/test-providers';
 
 describe('Events2Component', () => {
   let component: Events2Component;
   let fixture: ComponentFixture<Events2Component>;
   let sessionService: jasmine.SpyObj<SessionService>;
+  let venueService: jasmine.SpyObj<VenueService>;
   let router: Router;
 
   beforeEach(async () => {
     sessionService = jasmine.createSpyObj<SessionService>('SessionService', ['create']);
+    venueService = jasmine.createSpyObj<VenueService>('VenueService', ['search', 'create']);
+    venueService.search.and.returnValue(of([]));
+
     sessionService.create.and.returnValue(of({
       id: 42,
       sport: 'Padel',
@@ -39,7 +44,8 @@ describe('Events2Component', () => {
       imports: TEST_IMPORTS,
       providers: [
         ...TEST_PROVIDERS,
-        { provide: SessionService, useValue: sessionService }
+        { provide: SessionService, useValue: sessionService },
+        { provide: VenueService, useValue: venueService }
       ]
     }).compileComponents();
 
@@ -93,6 +99,31 @@ describe('Events2Component', () => {
       }),
       undefined
     );
+  });
+
+  it('should apply a saved venue to the session form', () => {
+    component.venues = [{
+      id: 5,
+      name: 'Pavilhão Central',
+      city: 'Lisboa',
+      address: 'Rua do Desporto 10',
+      sports: 'Futsal',
+      surfaceType: 'Madeira',
+      indoor: true,
+      changingRooms: true,
+      parking: true,
+      lighting: true,
+      latitude: 38.72,
+      longitude: -9.14,
+      createdByUsername: 'fixture-user'
+    }];
+
+    component.selectVenue(5);
+
+    expect(component.selectedVenueId).toBe(5);
+    expect(component.city).toBe('Lisboa');
+    expect(component.address).toBe('Rua do Desporto 10');
+    expect(component.locationCaptured).toBeTrue();
   });
 
   it('should require a password when the session is private', () => {

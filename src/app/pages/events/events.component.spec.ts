@@ -56,6 +56,24 @@ describe('EventsComponent', () => {
     );
   });
 
+  it('should send advanced time and price filters', () => {
+    component.fromDateTime = '2026-10-02T18:00';
+    component.toDateTime = '2026-10-02T22:00';
+    component.minPrice = 2;
+    component.maxPrice = 10;
+
+    component.loadSessions();
+
+    expect(sessionService.discover).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        from: jasmine.any(String),
+        to: jasmine.any(String),
+        minPrice: 2,
+        maxPrice: 10
+      })
+    );
+  });
+
   it('should disable nearby search and clear coordinates', () => {
     component.nearbyActive = true;
     component.latitude = 38.72;

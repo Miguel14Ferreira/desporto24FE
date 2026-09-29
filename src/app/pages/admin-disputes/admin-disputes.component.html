@@ -2,28 +2,27 @@
   <div class="admin-shell">
     <header class="page-header">
       <div>
-        <p class="eyebrow">Administração</p>
-        <h1>Contestações de presença</h1>
-        <p class="subtitle">Analisa faltas contestadas e decide se o registo deve ser excluído da fiabilidade.</p>
+        <p class="eyebrow">{{ 'admin.eyebrow' | t }}</p>
+        <h1>{{ 'admin.title' | t }}</h1>
+        <p class="subtitle">{{ 'admin.subtitle' | t }}</p>
       </div>
 
       <div class="header-actions">
-        <a class="secondary-action" routerLink="/menu">Dashboard</a>
-        <a class="secondary-action" routerLink="/menu/my-sessions">Sessões</a>
+        <a class="secondary-action" routerLink="/menu/my-sessions">{{ 'common.sessions' | t }}</a>
       </div>
     </header>
 
     <div class="toolbar">
-      <span>Estado</span>
+      <span>{{ 'admin.status' | t }}</span>
       <div class="status-tabs">
         <button type="button" [class.active]="statusFilter === 'OPEN'" (click)="changeStatus('OPEN')">
-          Em análise
+          {{ 'admin.open' | t }}
         </button>
         <button type="button" [class.active]="statusFilter === 'ACCEPTED'" (click)="changeStatus('ACCEPTED')">
-          Aceites
+          {{ 'admin.accepted' | t }}
         </button>
         <button type="button" [class.active]="statusFilter === 'REJECTED'" (click)="changeStatus('REJECTED')">
-          Rejeitadas
+          {{ 'admin.rejected' | t }}
         </button>
       </div>
     </div>
@@ -37,20 +36,20 @@
     }
 
     @if (loading) {
-      <div class="state-card">A carregar contestações...</div>
+      <div class="state-card">{{ 'admin.loading' | t }}</div>
     }
 
     @if (!loading && errorMessage) {
       <div class="state-card error-state">
         <p>{{ errorMessage }}</p>
-        <button type="button" (click)="load()">Tentar novamente</button>
+        <button type="button" (click)="load()">{{ 'common.retry' | t }}</button>
       </div>
     }
 
     @if (!loading && !errorMessage && disputes.length === 0) {
       <div class="state-card">
-        <h2>Sem contestações {{ statusLabel(statusFilter).toLowerCase() }}</h2>
-        <p>Não há registos neste estado neste momento.</p>
+        <h2>{{ 'admin.none' | t:{ status: statusLabel(statusFilter).toLowerCase() } }}</h2>
+        <p>{{ 'admin.noneText' | t }}</p>
       </div>
     }
 
@@ -76,17 +75,17 @@
 
             <div class="meta-grid">
               <div>
-                <span>Data da sessão</span>
+                <span>{{ 'admin.sessionDate' | t }}</span>
                 <strong>
-                  {{ dispute.gameDate ? (dispute.gameDate | date:'dd/MM/yyyy HH:mm') : 'Sem informação' }}
+                  {{ dispute.gameDate ? (dispute.gameDate | date:'dd/MM/yyyy HH:mm') : ('common.noInfo' | t) }}
                 </strong>
               </div>
               <div>
-                <span>Registado por</span>
+                <span>{{ 'admin.reportedBy' | t }}</span>
                 <strong>{{ dispute.reporterUsername }}</strong>
               </div>
               <div>
-                <span>Contestada em</span>
+                <span>{{ 'admin.disputedAt' | t }}</span>
                 <strong>{{ dispute.createdAt | date:'dd/MM/yyyy HH:mm' }}</strong>
               </div>
               <div>
@@ -96,12 +95,12 @@
             </div>
 
             <div class="reason-card">
-              <span>Justificação do participante</span>
+              <span>{{ 'admin.reason' | t }}</span>
               <p>{{ dispute.reason }}</p>
             </div>
 
             <div class="card-actions">
-              <a [routerLink]="['/menu/events', dispute.sessionId]">Ver sessão</a>
+              <a [routerLink]="['/menu/events', dispute.sessionId]">{{ 'mySessions.viewSession' | t }}</a>
 
               @if (dispute.status === 'OPEN') {
                 <button
@@ -109,18 +108,18 @@
                   class="reject-action"
                   [disabled]="resolvingId !== null"
                   (click)="resolve(dispute, 'REJECTED')">
-                  {{ resolvingId === dispute.id ? 'A processar...' : 'Rejeitar' }}
+                  {{ resolvingId === dispute.id ? ('common.processing' | t) : ('admin.reject' | t) }}
                 </button>
                 <button
                   type="button"
                   class="accept-action"
                   [disabled]="resolvingId !== null"
                   (click)="resolve(dispute, 'ACCEPTED')">
-                  {{ resolvingId === dispute.id ? 'A processar...' : 'Aceitar' }}
+                  {{ resolvingId === dispute.id ? ('common.processing' | t) : ('admin.accept' | t) }}
                 </button>
               } @else if (dispute.resolvedAt) {
                 <span class="resolved-at">
-                  Resolvida em {{ dispute.resolvedAt | date:'dd/MM/yyyy HH:mm' }}
+                  {{ 'admin.resolvedAt' | t:{ date: (dispute.resolvedAt | date:'dd/MM/yyyy HH:mm')! } }}
                 </span>
               }
             </div>

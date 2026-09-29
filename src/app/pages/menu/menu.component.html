@@ -5,26 +5,26 @@
         <p class="eyebrow">Desporto24</p>
         <h1>
           @if (profile) {
-            Olá, {{ profile.fullName || profile.username }}
+            {{ 'menu.hello' | t:{ name: (profile.nickname || profile.fullName || profile.username) } }}
           } @else {
-            O teu desporto começa aqui
+            {{ 'menu.fallbackTitle' | t }}
           }
         </h1>
-        <p class="subtitle">Encontra pessoas para jogar, cria sessões e acompanha a tua comunidade.</p>
+        <p class="subtitle">{{ 'menu.subtitle' | t }}</p>
       </div>
 
       <div class="header-profile">
         <a class="profile-link" routerLink="/menu/dadosPerfil">
           <div class="avatar">
             @if (profileImage(); as image) {
-              <img [src]="image" [alt]="profile?.username || 'Perfil'">
+              <img [src]="image" [alt]="profile?.username || ('menu.profile' | t)">
             } @else {
               <span>{{ initials() }}</span>
             }
           </div>
           <div>
             <strong>{{ profile?.username || 'Perfil' }}</strong>
-            <span>Ver perfil</span>
+            <span>{{ 'menu.viewProfile' | t }}</span>
           </div>
         </a>
 
@@ -33,33 +33,33 @@
           class="logout-action"
           [disabled]="loggingOut"
           (click)="logout()">
-          {{ loggingOut ? 'A terminar...' : 'Sair' }}
+          {{ loggingOut ? ('menu.loggingOut' | t) : ('menu.logout' | t) }}
         </button>
       </div>
     </header>
 
     @if (loadingProfile) {
-      <div class="status-card">A carregar o teu perfil...</div>
+      <div class="status-card">{{ 'menu.loadingProfile' | t }}</div>
     }
 
     @if (errorMessage) {
       <div class="status-card error-state">
         <span>{{ errorMessage }}</span>
-        <button type="button" (click)="loadProfile()">Tentar novamente</button>
+        <button type="button" (click)="loadProfile()">{{ 'menu.retry' | t }}</button>
       </div>
     }
 
     <section class="primary-actions">
       <a class="hero-action" routerLink="/menu/events">
-        <span class="action-kicker">Descobrir</span>
-        <strong>Encontrar sessões</strong>
-        <p>Pesquisa por desporto, localidade ou jogos perto de ti.</p>
+        <span class="action-kicker">{{ 'menu.discover' | t }}</span>
+        <strong>{{ 'menu.findSessions' | t }}</strong>
+        <p>{{ 'menu.findSessionsText' | t }}</p>
       </a>
 
       <a class="hero-action" routerLink="/menu/createEvent">
-        <span class="action-kicker">Organizar</span>
-        <strong>Criar uma sessão</strong>
-        <p>Define o local, horário, vagas e convida a comunidade.</p>
+        <span class="action-kicker">{{ 'menu.organize' | t }}</span>
+        <strong>{{ 'menu.createSession' | t }}</strong>
+        <p>{{ 'menu.createSessionText' | t }}</p>
       </a>
     </section>
 
@@ -67,76 +67,66 @@
       <a class="dashboard-card" routerLink="/menu/my-sessions">
         <span class="card-icon">◎</span>
         <div>
-          <strong>As minhas sessões</strong>
-          <p>Criadas, participações e lista de espera.</p>
+          <strong>{{ 'menu.mySessions' | t }}</strong>
+          <p>{{ 'menu.mySessionsText' | t }}</p>
         </div>
       </a>
 
       <a class="dashboard-card" routerLink="/menu/perfis">
         <span class="card-icon">⌕</span>
         <div>
-          <strong>Comunidade</strong>
-          <p>Encontra jogadores e envia pedidos de amizade.</p>
+          <strong>{{ 'menu.community' | t }}</strong>
+          <p>{{ 'menu.communityText' | t }}</p>
+        </div>
+      </a>
+
+      <a class="dashboard-card" routerLink="/menu/communities">
+        <span class="card-icon">◎</span>
+        <div>
+          <strong>Comunidades</strong>
+          <p>Cria grupos, convida jogadores e gere admins e membros.</p>
         </div>
       </a>
 
       <a class="dashboard-card" routerLink="/menu/friendList">
         <span class="card-icon">◇</span>
         <div>
-          <strong>Amigos</strong>
-          <p>Lista de amigos, chat direto e gestão de contactos.</p>
+          <strong>{{ 'menu.friends' | t }}</strong>
+          <p>{{ 'menu.friendsText' | t }}</p>
         </div>
       </a>
 
-      <a class="dashboard-card notification-card" routerLink="/menu/notifications">
-        <span class="card-icon">✉</span>
-        <div>
-          <strong>Notificações</strong>
-          <p>
-            @if (loadingNotifications) {
-              A atualizar...
-            } @else if (unreadNotifications > 0) {
-              {{ unreadNotifications }} {{ unreadNotifications === 1 ? 'por ler' : 'por ler' }}
-            } @else {
-              Sem notificações por ler.
-            }
-          </p>
-        </div>
-        @if (unreadNotifications > 0) {
-          <span class="notification-count">{{ unreadNotifications }}</span>
-        }
-      </a>
 
       <a class="dashboard-card" routerLink="/menu/dadosPerfil">
         <span class="card-icon">○</span>
         <div>
-          <strong>O meu perfil</strong>
-          <p>Dados pessoais, fotografia e fiabilidade.</p>
+          <strong>{{ 'menu.myProfile' | t }}</strong>
+          <p>{{ 'menu.myProfileText' | t }}</p>
         </div>
       </a>
 
       <a class="dashboard-card" routerLink="/menu/alterardados">
         <span class="card-icon">✎</span>
         <div>
-          <strong>Editar perfil</strong>
-          <p>Atualiza localização, contacto, MFA e preferências.</p>
+          <strong>{{ 'menu.editProfile' | t }}</strong>
+          <p>{{ 'menu.editProfileText' | t }}</p>
         </div>
       </a>
 
       <a class="dashboard-card" routerLink="/menu/alterarPassword">
         <span class="card-icon">⌁</span>
         <div>
-          <strong>Segurança</strong>
-          <p>Altera a tua palavra-passe.</p>
+          <strong>{{ 'menu.security' | t }}</strong>
+          <p>{{ 'menu.securityText' | t }}</p>
         </div>
       </a>
 
       @if (isAdmin) {
-        <a class="dashboard-card" routerLink="/menu/admin/attendance-disputes">
+        <a class="dashboard-card" routerLink="/menu/admin">
           <span class="card-icon">⚑</span>
           <div>
-            <strong>Contestações</strong>
-            <p>Analisa e resolve contestações de faltas.</p>
+            <strong>Administração</strong>
+            <p>Moderação, contestações e segurança da comunidade.</p>
           </div>
         </a>
       }

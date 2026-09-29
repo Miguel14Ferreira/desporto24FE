@@ -32,7 +32,14 @@ import { NotificationsComponent } from './pages/notifications/notifications.comp
 import { FriendsComponent } from './pages/friends/friends.component';
 import { DirectChatComponent } from './pages/direct-chat/direct-chat.component';
 import { AdminDisputesComponent } from './pages/admin-disputes/admin-disputes.component';
+import { AdminDashboardComponent } from './pages/admin-dashboard/admin-dashboard.component';
+import { GoogleOnboardingComponent } from './pages/google-onboarding/google-onboarding.component';
+import { CommunitiesComponent } from './pages/communities/communities.component';
+import { CommunityCreateComponent } from './pages/community-create/community-create.component';
+import { AdminIdeasComponent } from './pages/admin-ideas/admin-ideas.component';
 import { NotFoundComponent } from './pages/not-found/not-found.component';
+import { SocialFeedComponent } from './pages/social-feed/social-feed.component';
+import { TranslatePipe } from './i18n/translate.pipe';
 
 @NgModule({ declarations: [
         AppComponent,
@@ -60,7 +67,14 @@ import { NotFoundComponent } from './pages/not-found/not-found.component';
         FriendsComponent,
         DirectChatComponent,
         AdminDisputesComponent,
-        NotFoundComponent
+        AdminDashboardComponent,
+        AdminIdeasComponent,
+        GoogleOnboardingComponent,
+        CommunitiesComponent,
+        CommunityCreateComponent,
+        NotFoundComponent,
+        SocialFeedComponent,
+        TranslatePipe
     ],
     bootstrap: [AppComponent], imports: [BrowserModule,
         AppRoutingModule,

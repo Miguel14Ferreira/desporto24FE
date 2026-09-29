@@ -1,11 +1,17 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { finalize } from 'rxjs';
+import { appTranslate as t } from '../../i18n/i18n.service';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { catchError, finalize, forkJoin, of } from 'rxjs';
 
 import { environment } from 'src/environment/environment';
 import { CommunityProfile } from '../model/community-profile';
+import { ReliabilitySummary } from '../model/reliability-summary';
+import { ProfileActivity } from '../model/my-profile';
+import { FollowStatus } from '../model/follow';
 import { CommunityService } from '../../services/community.service';
 import { AuthenticationService } from '../../services/authethication.service';
+import { ReliabilityService } from '../../services/reliability.service';
+import { SocialGraphService } from '../../services/social-graph.service';
 
 @Component({
   selector: 'app-perfis',
@@ -14,13 +20,17 @@ import { AuthenticationService } from '../../services/authethication.service';
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false
 })
-export class PerfisComponent {
+export class PerfisComponent implements OnInit {
   searchTerm = '';
   profiles: CommunityProfile[] = [];
   selectedProfile?: CommunityProfile;
+  selectedReliability?: ReliabilitySummary;
+  selectedActivity?: ProfileActivity;
+  selectedFollowStatus?: FollowStatus;
 
   loading = false;
   actionLoading = false;
+  followLoading = false;
   searched = false;
 
   errorMessage = '';
@@ -29,22 +39,65 @@ export class PerfisComponent {
 
   currentUsername = '';
   pendingFriendRequests = new Set<string>();
+  friendUsernames = new Set<string>();
 
   constructor(
     private communityService: CommunityService,
-    private authenticationService: AuthenticationService
+    private authenticationService: AuthenticationService,
+    private reliabilityService: ReliabilityService,
+    private socialGraphService: SocialGraphService
   ) {
     this.authenticationService.isLoggedIn();
     this.currentUsername = this.authenticationService.loggedInPerfilname || '';
+  }
+
+  ngOnInit(): void {
+    this.loadFriendUsernames();
+    this.loadDiscoverableProfiles();
+  }
+
+  private loadFriendUsernames(): void {
+    this.communityService.friends().subscribe({
+      next: friends => {
+        this.friendUsernames = new Set(
+          friends.map(friend => friend.username.toLowerCase())
+        );
+      },
+      error: () => {
+        this.friendUsernames = new Set<string>();
+      }
+    });
+  }
+
+  private loadDiscoverableProfiles(): void {
+    this.loading = true;
+    this.errorMessage = '';
+
+    this.communityService.discoverProfiles()
+      .pipe(finalize(() => this.loading = false))
+      .subscribe({
+        next: profiles => {
+          this.profiles = profiles;
+          this.searched = false;
+        },
+        error: error => {
+          this.profiles = [];
+          this.errorMessage = this.errorFrom(
+            error,
+            t('feedback.community.searchError')
+          );
+        }
+      });
   }
 
   search(): void {
     const term = this.searchTerm.trim();
 
     if (!term) {
-      this.errorMessage = 'Escreve um nome de utilizador para pesquisar.';
-      this.profiles = [];
-      this.searched = false;
+      this.selectedProfile = undefined;
+      this.actionError = '';
+      this.actionSuccess = '';
+      this.loadDiscoverableProfiles();
       return;
     }
 
@@ -66,7 +119,7 @@ export class PerfisComponent {
           this.searched = true;
           this.errorMessage = this.errorFrom(
             error,
-            'Não foi possível pesquisar utilizadores.'
+            t('feedback.community.searchError')
           );
         }
       });
@@ -74,18 +127,72 @@ export class PerfisComponent {
 
   openProfile(profile: CommunityProfile): void {
     this.selectedProfile = profile;
+    this.selectedReliability = undefined;
+    this.selectedActivity = undefined;
+    this.selectedFollowStatus = undefined;
     this.actionError = '';
     this.actionSuccess = '';
+
+    forkJoin({
+      reliability: this.reliabilityService.summary(profile.username)
+        .pipe(catchError(() => of(undefined))),
+      activity: this.reliabilityService.activity(profile.username)
+        .pipe(catchError(() => of(undefined))),
+      followStatus: this.socialGraphService.status(profile.username)
+        .pipe(catchError(() => of(undefined)))
+    }).subscribe(({ reliability, activity, followStatus }) => {
+      this.selectedReliability = reliability;
+      this.selectedActivity = activity;
+      this.selectedFollowStatus = followStatus;
+    });
   }
 
   closeProfile(): void {
     this.selectedProfile = undefined;
+    this.selectedReliability = undefined;
+    this.selectedActivity = undefined;
+    this.selectedFollowStatus = undefined;
+  }
+
+  toggleFollow(profile: CommunityProfile): void {
+    if (
+      this.followLoading
+      || this.isOwnProfile(profile)
+    ) {
+      return;
+    }
+
+    this.followLoading = true;
+    this.actionError = '';
+    this.actionSuccess = '';
+
+    const request$ = this.selectedFollowStatus?.followedByMe
+      ? this.socialGraphService.unfollow(profile.username)
+      : this.socialGraphService.follow(profile.username);
+
+    request$
+      .pipe(finalize(() => this.followLoading = false))
+      .subscribe({
+        next: status => {
+          this.selectedFollowStatus = status;
+          this.actionSuccess = status.followedByMe
+            ? t('feedback.social.followed', { username: profile.username })
+            : t('feedback.social.unfollowed', { username: profile.username });
+        },
+        error: error => {
+          this.actionError = this.errorFrom(
+            error,
+            t('feedback.social.followError')
+          );
+        }
+      });
   }
 
   sendFriendRequest(profile: CommunityProfile): void {
     if (
       this.actionLoading
       || this.isOwnProfile(profile)
+      || this.isFriend(profile)
       || this.pendingFriendRequests.has(profile.username)
     ) {
       return;
@@ -100,12 +207,12 @@ export class PerfisComponent {
       .subscribe({
         next: () => {
           this.pendingFriendRequests.add(profile.username);
-          this.actionSuccess = `Pedido de amizade enviado para ${profile.username}.`;
+          this.actionSuccess = t('feedback.community.requestSent', { username: profile.username });
         },
         error: error => {
           const message = this.errorFrom(
             error,
-            'Não foi possível enviar o pedido de amizade.'
+            t('feedback.community.requestError')
           );
 
           if (message.toLowerCase().includes('pendente')) {
@@ -125,6 +232,10 @@ export class PerfisComponent {
     return this.pendingFriendRequests.has(profile.username);
   }
 
+  isFriend(profile: CommunityProfile): boolean {
+    return this.friendUsernames.has(profile.username.toLowerCase());
+  }
+
   profileImage(profile: CommunityProfile): string | null {
     const path = profile.profilePicUrl;
     if (!path) {
@@ -139,7 +250,9 @@ export class PerfisComponent {
   }
 
   initials(profile: CommunityProfile): string {
-    const source = profile.fullName?.trim() || profile.username;
+    const source = profile.nickname?.trim()
+      || profile.fullName?.trim()
+      || profile.username;
     return source
       .split(/\s+/)
       .filter(Boolean)

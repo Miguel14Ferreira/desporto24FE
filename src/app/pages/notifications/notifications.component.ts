@@ -1,10 +1,12 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { appTranslate as t } from '../../i18n/i18n.service';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { finalize } from 'rxjs';
 
 import { AppNotification } from '../model/app-notification';
 import { NotificationApiService } from '../../services/notification-api.service';
+import { AuthenticationService } from '../../services/authethication.service';
 
 @Component({
   selector: 'app-notifications',
@@ -19,6 +21,9 @@ export class NotificationsComponent implements OnInit {
 
   loading = false;
   actionLoadingId: number | null = null;
+  accountBlockConfirming = false;
+  clearAllConfirming = false;
+  clearAllLoading = false;
 
   errorMessage = '';
   actionError = '';
@@ -26,6 +31,7 @@ export class NotificationsComponent implements OnInit {
 
   constructor(
     private notificationService: NotificationApiService,
+    private authenticationService: AuthenticationService,
     private route: ActivatedRoute,
     private router: Router
   ) {}
@@ -60,7 +66,7 @@ export class NotificationsComponent implements OnInit {
         },
         error: () => {
           this.notifications = [];
-          this.errorMessage = 'Não foi possível carregar as notificações.';
+          this.errorMessage = t('feedback.notifications.loadError');
         }
       });
   }
@@ -69,6 +75,7 @@ export class NotificationsComponent implements OnInit {
     this.selected = notification;
     this.actionError = '';
     this.actionSuccess = '';
+    this.accountBlockConfirming = false;
 
     if (navigate) {
       this.router.navigate(['/menu/notifications', notification.id]);
@@ -86,7 +93,47 @@ export class NotificationsComponent implements OnInit {
 
   closeNotification(): void {
     this.selected = undefined;
+    this.accountBlockConfirming = false;
     this.router.navigate(['/menu/notifications']);
+  }
+
+  requestClearAll(): void {
+    this.clearAllConfirming = true;
+    this.actionError = '';
+    this.actionSuccess = '';
+  }
+
+  cancelClearAll(): void {
+    this.clearAllConfirming = false;
+  }
+
+  clearAllNotifications(): void {
+    if (this.clearAllLoading || this.notifications.length === 0) {
+      return;
+    }
+
+    this.clearAllLoading = true;
+    this.actionError = '';
+    this.actionSuccess = '';
+
+    this.notificationService.deleteAll()
+      .pipe(finalize(() => this.clearAllLoading = false))
+      .subscribe({
+        next: () => {
+          this.notifications = [];
+          this.selected = undefined;
+          this.clearAllConfirming = false;
+          this.accountBlockConfirming = false;
+          this.actionSuccess = t('feedback.notifications.cleared');
+          this.router.navigate(['/menu/notifications']);
+        },
+        error: error => {
+          this.actionError = this.errorFrom(
+            error,
+            t('feedback.notifications.clearAllError')
+          );
+        }
+      });
   }
 
   openSession(notification: AppNotification): void {
@@ -95,6 +142,65 @@ export class NotificationsComponent implements OnInit {
     }
 
     this.router.navigate(['/menu/events', notification.sessionId]);
+  }
+
+  openChat(notification: AppNotification): void {
+    if (!notification.relatedUsername) {
+      return;
+    }
+
+    this.router.navigate(['/menu/friendList/chat', notification.relatedUsername]);
+  }
+
+  canProtectAccount(notification: AppNotification): boolean {
+    if (notification.updateProfile) {
+      return true;
+    }
+
+    const subject = (notification.subject || '').toLocaleLowerCase();
+    const message = (notification.message || '').toLocaleLowerCase();
+    const content = subject + ' ' + message;
+
+    return content.includes('palavra-passe alterada')
+      || content.includes('password changed')
+      || content.includes('alteração de email')
+      || content.includes('email changed')
+      || content.includes('autenticação multifator')
+      || content.includes('multi-factor authentication')
+      || content.includes('perfil atualizado')
+      || content.includes('profile updated');
+  }
+
+  requestAccountBlock(): void {
+    this.accountBlockConfirming = true;
+    this.actionError = '';
+  }
+
+  cancelAccountBlock(): void {
+    this.accountBlockConfirming = false;
+  }
+
+  blockAccountAccess(): void {
+    if (!this.selected || this.actionLoadingId !== null) {
+      return;
+    }
+
+    this.actionLoadingId = this.selected.id;
+    this.actionError = '';
+
+    this.notificationService.blockOwnAccount()
+      .pipe(finalize(() => this.actionLoadingId = null))
+      .subscribe({
+        next: () => {
+          this.authenticationService.logOut();
+        },
+        error: error => {
+          this.actionError = this.errorFrom(
+            error,
+            t('feedback.notifications.blockAccountError')
+          );
+        }
+      });
   }
 
   deleteNotification(notification: AppNotification): void {
@@ -115,10 +221,10 @@ export class NotificationsComponent implements OnInit {
             this.selected = undefined;
             this.router.navigate(['/menu/notifications']);
           }
-          this.actionSuccess = 'Notificação apagada.';
+          this.actionSuccess = t('feedback.notifications.deleted');
         },
         error: error => {
-          this.actionError = this.errorFrom(error, 'Não foi possível apagar a notificação.');
+          this.actionError = this.errorFrom(error, t('feedback.notifications.deleteError'));
         }
       });
   }
@@ -138,11 +244,11 @@ export class NotificationsComponent implements OnInit {
         next: () => {
           this.notifications = this.notifications.filter(item => item.id !== notification.id);
           this.selected = undefined;
-          this.actionSuccess = 'Pedido de amizade aceite.';
+          this.actionSuccess = t('feedback.notifications.friendAccepted');
           this.router.navigate(['/menu/notifications']);
         },
         error: error => {
-          this.actionError = this.errorFrom(error, 'Não foi possível aceitar o pedido de amizade.');
+          this.actionError = this.errorFrom(error, t('feedback.notifications.friendAcceptError'));
         }
       });
   }
@@ -162,13 +268,13 @@ export class NotificationsComponent implements OnInit {
         next: () => {
           this.notifications = this.notifications.filter(item => item.id !== notification.id);
           this.selected = undefined;
-          this.actionSuccess = 'Pedido de amizade rejeitado.';
+          this.actionSuccess = t('feedback.notifications.friendRejected');
           this.router.navigate(['/menu/notifications']);
         },
         error: error => {
           this.actionError = this.errorFrom(
             error,
-            'Não foi possível rejeitar o pedido de amizade.'
+            t('feedback.notifications.friendRejectError')
           );
         }
       });
@@ -189,13 +295,15 @@ export class NotificationsComponent implements OnInit {
   typeLabel(notification: AppNotification): string {
     switch (notification.type) {
       case 'WAITLIST_PROMOTED':
-        return 'Lista de espera';
+        return t('notification.waitlist');
       case 'SESSION_REMOVED':
-        return 'Sessão';
+        return t('notification.session');
       case 'SESSION_CANCELLED':
-        return 'Sessão cancelada';
+        return t('notification.sessionCancelled');
+      case 'CHAT_MESSAGE':
+        return t('notification.chatMessage');
       default:
-        return notification.friendRequest ? 'Pedido de amizade' : 'Notificação';
+        return notification.friendRequest ? t('notification.friendRequest') : t('notification.generic');
     }
   }
 

@@ -24,7 +24,13 @@ import { DirectChatComponent } from './pages/direct-chat/direct-chat.component';
 import { AuthenticationGuard } from './guard/authentication.guard';
 import { AdminGuard } from './guard/admin.guard';
 import { AdminDisputesComponent } from './pages/admin-disputes/admin-disputes.component';
+import { AdminDashboardComponent } from './pages/admin-dashboard/admin-dashboard.component';
+import { GoogleOnboardingComponent } from './pages/google-onboarding/google-onboarding.component';
+import { CommunitiesComponent } from './pages/communities/communities.component';
+import { CommunityCreateComponent } from './pages/community-create/community-create.component';
+import { AdminIdeasComponent } from './pages/admin-ideas/admin-ideas.component';
 import { NotFoundComponent } from './pages/not-found/not-found.component';
+import { SocialFeedComponent } from './pages/social-feed/social-feed.component';
 
 const routes: Routes = [
   {path:'', redirectTo:'home',pathMatch:'full'},
@@ -34,10 +40,12 @@ const routes: Routes = [
   {path:'menu/events/menu',redirectTo:'/menu', pathMatch:'full'},
   {path:'menu/my-sessions',component:MySessionsComponent,canActivate:[AuthenticationGuard]},
   {path:'menu/events/:id',component:SessionDetailsComponent,canActivate:[AuthenticationGuard]},
+  {path:'menu/feed',component:SocialFeedComponent,canActivate:[AuthenticationGuard]},
   {path:'menu/events',component:EventsComponent,canActivate:[AuthenticationGuard]},
   {path:'menu/login',redirectTo:'/login', pathMatch:'full'},
   {path:'login',component:LoginComponent},
   {path:'login/registerNewUser',component:CreateaccountComponent},
+  {path:'login/google/complete-profile',component:GoogleOnboardingComponent},
   {path:'menu/createEvent',component:Events2Component,canActivate:[AuthenticationGuard]},
   {path:'menu/createEvent/menu', redirectTo:'menu',pathMatch:'full'},
   {path:'login/registerNewUser/login', redirectTo:'login',pathMatch:'full'},
@@ -63,7 +71,11 @@ const routes: Routes = [
   {path:'menu/friendList/chat/:username1/:username2',component:DirectChatComponent,canActivate:[AuthenticationGuard]},
   {path:'menu/notifications',component:NotificationsComponent,canActivate:[AuthenticationGuard]},
   {path:'menu/notifications/:id',component:NotificationsComponent,canActivate:[AuthenticationGuard]},
+  {path:'menu/communities/create',component:CommunityCreateComponent,canActivate:[AuthenticationGuard]},
+  {path:'menu/communities',component:CommunitiesComponent,canActivate:[AuthenticationGuard]},
+  {path:'menu/admin',component:AdminDashboardComponent,canActivate:[AuthenticationGuard,AdminGuard]},
   {path:'menu/admin/attendance-disputes',component:AdminDisputesComponent,canActivate:[AuthenticationGuard,AdminGuard]},
+  {path:'menu/admin/ideas',component:AdminIdeasComponent,canActivate:[AuthenticationGuard,AdminGuard]},
   {path:'menu/terminarSessao',redirectTo:'menu',pathMatch:'full'},
   {path:'**',component:NotFoundComponent}
 ];

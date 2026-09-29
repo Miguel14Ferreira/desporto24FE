@@ -1,10 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { of } from 'rxjs';
+import { BehaviorSubject, Subject, of } from 'rxjs';
 
 import { SessionDetailsComponent } from './session-details.component';
 import { SessionService } from '../../services/session.service';
 import { ReliabilityService } from '../../services/reliability.service';
+import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.service';
+import { SessionMessage } from '../model/session-message';
 import { TEST_IMPORTS, TEST_PROVIDERS } from '../../testing/test-providers';
 
 describe('SessionDetailsComponent', () => {
@@ -12,6 +14,9 @@ describe('SessionDetailsComponent', () => {
   let fixture: ComponentFixture<SessionDetailsComponent>;
   let sessionService: jasmine.SpyObj<SessionService>;
   let reliabilityService: jasmine.SpyObj<ReliabilityService>;
+  let realtimeService: jasmine.SpyObj<DirectChatRealtimeService>;
+  let realtimeSessionMessages: Subject<SessionMessage>;
+  let realtimeConnected: BehaviorSubject<boolean>;
 
   const session = {
     id: 7,
@@ -78,6 +83,17 @@ describe('SessionDetailsComponent', () => {
     }));
     reliabilityService.recordAttendance.and.returnValue(of(void 0));
 
+    realtimeSessionMessages = new Subject<SessionMessage>();
+    realtimeConnected = new BehaviorSubject<boolean>(false);
+    realtimeService = jasmine.createSpyObj<DirectChatRealtimeService>(
+      'DirectChatRealtimeService',
+      ['connect', 'disconnect'],
+      {
+        sessionMessages$: realtimeSessionMessages.asObservable(),
+        connected$: realtimeConnected.asObservable()
+      }
+    );
+
     await TestBed.configureTestingModule({
       declarations: [SessionDetailsComponent],
       imports: TEST_IMPORTS,
@@ -98,6 +114,10 @@ describe('SessionDetailsComponent', () => {
         {
           provide: ReliabilityService,
           useValue: reliabilityService
+        },
+        {
+          provide: DirectChatRealtimeService,
+          useValue: realtimeService
         }
       ]
     }).compileComponents();
@@ -205,6 +225,42 @@ describe('SessionDetailsComponent', () => {
     expect(sessionService.postMessage).toHaveBeenCalledWith(7, 'Bora jogar!');
     expect(component.messages.length).toBe(1);
     expect(component.messageBody).toBe('');
+  });
+
+  it('should append a realtime session message only once', () => {
+    const message: SessionMessage = {
+      id: 50,
+      sessionId: 7,
+      senderUsername: 'player-one',
+      body: 'Estou a caminho',
+      createdAt: '2026-10-01T16:05:00Z'
+    };
+
+    realtimeSessionMessages.next(message);
+    realtimeSessionMessages.next(message);
+
+    expect(component.messages).toEqual([message]);
+  });
+
+  it('should deduplicate the WebSocket echo from the HTTP send response', () => {
+    const message: SessionMessage = {
+      id: 1,
+      sessionId: 7,
+      senderUsername: 'fixture-user',
+      body: 'Bora jogar!',
+      createdAt: '2026-10-01T16:00:00Z'
+    };
+    component.session = {
+      ...session,
+      joined: true
+    };
+    component.messageBody = 'Bora jogar!';
+
+    realtimeSessionMessages.next(message);
+    component.sendMessage();
+
+    expect(sessionService.postMessage).toHaveBeenCalledWith(7, 'Bora jogar!');
+    expect(component.messages).toEqual([message]);
   });
 
   it('should allow the creator to load active participants', () => {

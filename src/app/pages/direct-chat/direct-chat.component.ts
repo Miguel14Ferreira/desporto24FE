@@ -1,12 +1,14 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { appTranslate as t } from '../../i18n/i18n.service';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { JwtHelperService } from '@auth0/angular-jwt';
-import { forkJoin, finalize } from 'rxjs';
+import { Subscription, forkJoin, finalize } from 'rxjs';
 
 import { DirectChatInfo, DirectChatMessage } from '../model/direct-chat';
 import { DirectChatService } from '../../services/direct-chat.service';
 import { CommunityService } from '../../services/community.service';
+import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.service';
 
 @Component({
   selector: 'app-direct-chat',
@@ -15,7 +17,7 @@ import { CommunityService } from '../../services/community.service';
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false
 })
-export class DirectChatComponent implements OnInit {
+export class DirectChatComponent implements OnInit, OnDestroy {
   recipientUsername = '';
   currentUsername: string | null = null;
   messages: DirectChatMessage[] = [];
@@ -28,13 +30,18 @@ export class DirectChatComponent implements OnInit {
   actionError = '';
   actionSuccess = '';
   messageBody = '';
+  showEmojiPicker = false;
+
+  readonly emojis = ['😀', '😂', '😊', '😍', '🥳', '😎', '😉', '👍', '👏', '🙌', '🔥', '⚽', '🏀', '🎾', '🏓', '💪', '❤️', '✅'];
 
   private readonly jwtHelper = new JwtHelperService();
+  private readonly realtimeSubscriptions = new Subscription();
 
   constructor(
     private route: ActivatedRoute,
     private chatService: DirectChatService,
-    private communityService: CommunityService
+    private communityService: CommunityService,
+    private realtimeService: DirectChatRealtimeService
   ) {}
 
   ngOnInit(): void {
@@ -42,11 +49,39 @@ export class DirectChatComponent implements OnInit {
     this.recipientUsername = this.resolveRecipient();
 
     if (!this.recipientUsername) {
-      this.errorMessage = 'Conversa inválida.';
+      this.errorMessage = t('feedback.chat.invalid');
       return;
     }
 
     this.load();
+    this.realtimeService.connect();
+
+    this.realtimeSubscriptions.add(
+      this.realtimeService.messages$.subscribe(message => {
+        if (!this.belongsToCurrentConversation(message)) {
+          return;
+        }
+
+        const alreadyPresent = message.id !== null
+          && this.messages.some(existing => existing.id === message.id);
+
+        if (!alreadyPresent) {
+          this.messages = this.sorted([...this.messages, message]);
+        }
+      })
+    );
+
+    this.realtimeSubscriptions.add(
+      this.realtimeService.connected$.subscribe(connected => {
+        if (connected) {
+          this.refreshMessages();
+        }
+      })
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.realtimeSubscriptions.unsubscribe();
   }
 
   load(): void {
@@ -64,19 +99,37 @@ export class DirectChatComponent implements OnInit {
       .pipe(finalize(() => this.loading = false))
       .subscribe({
         next: result => {
-          this.messages = [...result.messages].sort(
-            (a, b) => this.timestamp(a) - this.timestamp(b)
-          );
+          this.messages = this.sorted(result.messages);
           this.chatInfo = result.info;
         },
         error: error => {
           this.messages = [];
-          this.errorMessage = this.errorFrom(
-            error,
-            'Não foi possível carregar esta conversa.'
-          );
+          this.errorMessage = this.errorFrom(error, t('feedback.chat.loadError'));
         }
       });
+  }
+
+  refreshMessages(): void {
+    if (!this.recipientUsername) {
+      return;
+    }
+
+    this.chatService.history(this.recipientUsername).subscribe({
+      next: messages => {
+        this.messages = this.sorted(messages);
+      }
+    });
+  }
+
+  onEnter(event: Event): void {
+    const keyboardEvent = event as KeyboardEvent;
+
+    if (keyboardEvent.shiftKey) {
+      return;
+    }
+
+    keyboardEvent.preventDefault();
+    this.sendMessage();
   }
 
   sendMessage(): void {
@@ -87,12 +140,12 @@ export class DirectChatComponent implements OnInit {
     }
 
     if (!text) {
-      this.actionError = 'Escreve uma mensagem antes de enviar.';
+      this.actionError = t('feedback.chat.writeFirst');
       return;
     }
 
     if (text.length > 2000) {
-      this.actionError = 'A mensagem não pode ter mais de 2000 caracteres.';
+      this.actionError = t('feedback.chat.messageLong');
       return;
     }
 
@@ -104,16 +157,25 @@ export class DirectChatComponent implements OnInit {
       .pipe(finalize(() => this.sending = false))
       .subscribe({
         next: message => {
-          this.messages = [...this.messages, message];
+          this.messages = this.sorted([...this.messages, message]);
           this.messageBody = '';
+          this.showEmojiPicker = false;
         },
         error: error => {
-          this.actionError = this.errorFrom(
-            error,
-            'Não foi possível enviar a mensagem.'
-          );
+          this.actionError = this.errorFrom(error, t('feedback.chat.sendError'));
         }
       });
+  }
+
+  toggleEmojiPicker(): void {
+    this.showEmojiPicker = !this.showEmojiPicker;
+  }
+
+  addEmoji(emoji: string): void {
+    if (this.messageBody.length + emoji.length <= 2000) {
+      this.messageBody += emoji;
+      this.showEmojiPicker = false;
+    }
   }
 
   isOwnMessage(message: DirectChatMessage): boolean {
@@ -137,7 +199,7 @@ export class DirectChatComponent implements OnInit {
     }
 
     if (this.chatInfo?.chatBlocked && !this.isBlockedByMe()) {
-      this.actionError = 'Este chat foi bloqueado pelo outro utilizador.';
+      this.actionError = t('feedback.chat.blockedOther');
       this.actionSuccess = '';
       return;
     }
@@ -159,15 +221,13 @@ export class DirectChatComponent implements OnInit {
             ? { chatBlocked: false, whoBlocked: null }
             : { chatBlocked: true, whoBlocked: this.currentUsername };
           this.actionSuccess = shouldUnblock
-            ? 'Chat desbloqueado.'
-            : 'Chat bloqueado.';
+            ? t('feedback.chat.unblocked')
+            : t('feedback.chat.blocked');
         },
         error: error => {
           this.actionError = this.errorFrom(
             error,
-            shouldUnblock
-              ? 'Não foi possível desbloquear este chat.'
-              : 'Não foi possível bloquear este chat.'
+            shouldUnblock ? t('feedback.chat.unblockError') : t('feedback.chat.blockError')
           );
         }
       });
@@ -179,10 +239,10 @@ export class DirectChatComponent implements OnInit {
     }
 
     if (this.isBlockedByMe()) {
-      return 'Bloqueaste este chat.';
+      return t('feedback.chat.blockedByMe');
     }
 
-    return 'Este chat está bloqueado.';
+    return t('feedback.chat.blockedGeneric');
   }
 
   messageDate(message: DirectChatMessage): string {
@@ -200,6 +260,24 @@ export class DirectChatComponent implements OnInit {
       dateStyle: 'short',
       timeStyle: 'short'
     }).format(new Date(parsed));
+  }
+
+  private sorted(messages: DirectChatMessage[]): DirectChatMessage[] {
+    return [...messages].sort((a, b) => this.timestamp(a) - this.timestamp(b));
+  }
+
+  private belongsToCurrentConversation(message: DirectChatMessage): boolean {
+    if (!this.currentUsername || !this.recipientUsername) {
+      return false;
+    }
+
+    const current = this.currentUsername.toLowerCase();
+    const recipient = this.recipientUsername.toLowerCase();
+    const sender = message.username1.toLowerCase();
+    const receiver = message.username2.toLowerCase();
+
+    return (sender === current && receiver === recipient)
+      || (sender === recipient && receiver === current);
   }
 
   private resolveRecipient(): string {
@@ -251,8 +329,6 @@ export class DirectChatComponent implements OnInit {
 
   private errorFrom(error: HttpErrorResponse, fallback: string): string {
     const apiMessage = error.error?.message;
-    return typeof apiMessage === 'string' && apiMessage.trim()
-      ? apiMessage
-      : fallback;
+    return typeof apiMessage === 'string' && apiMessage.trim() ? apiMessage : fallback;
   }
 }

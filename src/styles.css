@@ -1,15 +1,86 @@
-/* You can add global styles to this file, and also import other style files */
-*
-{
-    padding: 0;
-    margin: 0;
-}
-body{
-    font-family: Arial, Helvetica, sans-serif;
-}
-:root{
-    --primary-color: black;
-    --secundary-color: grey;
-}
 @import 'https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css';
 @import 'https://use.fontawesome.com/releases/v5.8.1/css/all.css';
+
+:root {
+  --d24-bg: #07111f;
+  --d24-bg-soft: #12334a;
+  --d24-surface: rgba(15, 23, 42, .82);
+  --d24-surface-soft: rgba(255, 255, 255, .07);
+  --d24-border: rgba(255, 255, 255, .12);
+  --d24-border-strong: rgba(255, 255, 255, .18);
+  --d24-text: #f8fafc;
+  --d24-text-muted: #cbd5e1;
+  --d24-text-subtle: #94a3b8;
+  --d24-accent: #7dd3fc;
+  --d24-accent-soft: #bae6fd;
+  --d24-danger: #fecaca;
+  --d24-success: #bbf7d0;
+  --d24-radius: 1rem;
+  --d24-shadow: 0 24px 60px rgba(0, 0, 0, .24);
+  --primary-color: var(--d24-bg);
+  --secundary-color: var(--d24-text-subtle);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  padding: 0;
+  background: var(--d24-bg);
+  color: var(--d24-text);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  text-rendering: optimizeLegibility;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+a,
+button,
+input,
+select,
+textarea {
+  transition:
+    border-color .18s ease,
+    background-color .18s ease,
+    color .18s ease,
+    box-shadow .18s ease,
+    transform .18s ease;
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid rgba(125, 211, 252, .32);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: rgba(125, 211, 252, .25);
+  color: var(--d24-text);
+}
+
+
+select {
+  color-scheme: dark;
+}
+
+select option {
+  background: #0f172a;
+  color: #f8fafc;
+}

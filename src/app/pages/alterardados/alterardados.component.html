@@ -3,26 +3,21 @@
     <header class="page-header">
       <div>
         <p class="eyebrow">Desporto24</p>
-        <h1>Editar perfil</h1>
-        <p class="subtitle">Atualiza apenas os dados que queres partilhar na tua conta.</p>
+        <h1>{{ 'profile.edit.title' | t }}</h1>
+        <p class="subtitle">{{ 'profile.edit.subtitle' | t }}</p>
       </div>
 
       <div class="header-actions">
-        <a class="secondary-action" routerLink="/menu/dadosPerfil">Ver perfil</a>
-        <a class="secondary-action" routerLink="/menu">Menu</a>
+        <a class="secondary-action" routerLink="/menu/dadosPerfil">{{ 'profile.view' | t }}</a>
       </div>
     </header>
 
     @if (loading) {
-      <div class="state-card">A carregar os teus dados...</div>
+      <div class="state-card">{{ 'profile.loading' | t }}</div>
     }
 
     @if (errorMessage) {
       <div class="feedback error-feedback">{{ errorMessage }}</div>
-    }
-
-    @if (successMessage) {
-      <div class="feedback success-feedback">{{ successMessage }}</div>
     }
 
     @if (!loading && profile) {
@@ -38,93 +33,309 @@
 
           <div>
             <strong>@{{ profile.username }}</strong>
-            <p>O nome de utilizador é gerido separadamente da edição do perfil.</p>
-            <label class="upload-action">
-              <input type="file" accept="image/*" [disabled]="saving" (change)="onPhotoChange($event)">
-              Escolher fotografia
-            </label>
+            <p>{{ 'profile.usernameManaged' | t }}</p>
+            @if (!photoEditing) {
+              <button
+                type="button"
+                class="upload-action"
+                [disabled]="saving || photoSaving"
+                (click)="startPhotoEdit()">
+                {{ 'profile.changePhoto' | t }}
+              </button>
+            } @else {
+              <div class="photo-edit-actions">
+                <label class="upload-action">
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    [disabled]="photoSaving"
+                    (change)="onPhotoChange($event)">
+                  {{ 'profile.chooseNewPhoto' | t }}
+                </label>
+
+                <button
+                  type="button"
+                  class="photo-save-action"
+                  [disabled]="photoSaving || !photo"
+                  (click)="savePhoto()">
+                  {{ photoSaving ? ('profile.saving' | t) : ('profile.savePhoto' | t) }}
+                </button>
+
+                <button
+                  type="button"
+                  class="photo-cancel-action"
+                  [disabled]="photoSaving"
+                  (click)="cancelPhotoEdit()">
+                  {{ 'common.cancel' | t }}
+                </button>
+              </div>
+            }
           </div>
-        </section>
+          @if (toastMessage) {
+    <div class="profile-toast" role="status" aria-live="polite">
+      <span class="profile-toast-icon">✓</span>
+      <span>{{ toastMessage }}</span>
+    </div>
+  }
+</section>
 
         <div class="form-grid">
           <label>
-            <span>Nome completo</span>
-            <input name="fullName" [(ngModel)]="profile.fullName" [disabled]="saving">
+            <span>{{ 'register.nickname' | t }}</span>
+            <input
+              name="nickname"
+              [(ngModel)]="profile.nickname"
+              maxlength="80"
+              [disabled]="saving"
+              [placeholder]="'register.nicknamePlaceholder' | t">
           </label>
 
           <label>
-            <span>Data de nascimento</span>
-            <input type="date" name="dateOfBirth" [(ngModel)]="profile.dateOfBirth" [disabled]="saving">
+            <span>{{ 'common.email' | t }} *</span>
+            <input
+              type="email"
+              name="email"
+              [(ngModel)]="profile.email"
+              autocomplete="email"
+              required
+              [disabled]="saving"
+              [attr.aria-invalid]="fieldErrors.email ? 'true' : 'false'"
+              (input)="clearFieldError('email')">
+            @if (fieldErrors.email) {
+              <small class="field-error">{{ fieldErrors.email }}</small>
+            }
           </label>
 
           <label>
-            <span>Email *</span>
-            <input type="email" name="email" [(ngModel)]="profile.email" required [disabled]="saving">
+            <span>{{ 'register.birthDate' | t }} *</span>
+            <input
+              type="date"
+              name="dateOfBirth"
+              [(ngModel)]="profile.dateOfBirth"
+              [min]="minBirthDate"
+              [max]="maxBirthDate"
+              required
+              [disabled]="saving"
+              [attr.aria-invalid]="fieldErrors.dateOfBirth ? 'true' : 'false'"
+              (change)="clearFieldError('dateOfBirth')">
+            @if (fieldErrors.dateOfBirth) {
+              <small class="field-error">{{ fieldErrors.dateOfBirth }}</small>
+            }
           </label>
 
           <label>
-            <span>País</span>
-            <input name="country" [(ngModel)]="profile.country" [disabled]="saving">
+            <span>{{ 'common.country' | t }} *</span>
+            <select
+              name="country"
+              [(ngModel)]="profile.country"
+              required
+              [disabled]="saving"
+              [attr.aria-invalid]="fieldErrors.country ? 'true' : 'false'"
+              (change)="clearFieldError('country')">
+              <option value="">{{ 'register.select' | t }}</option>
+              @for (item of countryOptions; track item.label) {
+                <option [value]="countryName(item.label)">{{ item.label }}</option>
+              }
+            </select>
+            @if (fieldErrors.country) {
+              <small class="field-error">{{ fieldErrors.country }}</small>
+            }
           </label>
+
+          <div class="full-width phone-field">
+            <span class="field-label">{{ 'register.phoneOptional' | t }}</span>
+            <div class="phone-row">
+              <select
+                class="calling-code"
+                name="indicativePhone"
+                [(ngModel)]="profile.indicativePhone"
+                [disabled]="saving || !(profile.phone || '').trim()">
+                @for (item of countryOptions; track item.label) {
+                  <option [value]="item.code">+{{ item.code }}</option>
+                }
+              </select>
+
+              <input
+                type="tel"
+                name="phone"
+                [(ngModel)]="profile.phone"
+                autocomplete="tel-national"
+                inputmode="tel"
+                [disabled]="saving"
+                [attr.aria-invalid]="fieldErrors.phone ? 'true' : 'false'"
+                (input)="clearFieldError('phone')"
+                placeholder="912 345 678">
+            </div>
+            @if (fieldErrors.phone) {
+              <small class="field-error">{{ fieldErrors.phone }}</small>
+            }
+          </div>
 
           <label>
-            <span>Localidade</span>
-            <input name="location" [(ngModel)]="profile.location" [disabled]="saving">
-          </label>
-
-          <label>
-            <span>Código postal</span>
-            <input name="postalCode" [(ngModel)]="profile.postalCode" [disabled]="saving">
-          </label>
-
-          <label class="full-width">
-            <span>Morada</span>
-            <input name="address" [(ngModel)]="profile.address" [disabled]="saving">
-          </label>
-
-          <label>
-            <span>Indicativo</span>
-            <input name="indicativePhone" [(ngModel)]="profile.indicativePhone" placeholder="351" [disabled]="saving">
-          </label>
-
-          <label>
-            <span>Telefone</span>
-            <input name="phone" [(ngModel)]="profile.phone" [disabled]="saving">
-          </label>
-
-          <label>
-            <span>Género</span>
+            <span>{{ 'common.gender' | t }}</span>
             <select name="gender" [(ngModel)]="profile.gender" [disabled]="saving">
-              <option [ngValue]="null">Não indicar</option>
-              <option value="masculino">Masculino</option>
-              <option value="feminino">Feminino</option>
-              <option value="outro">Outro</option>
+              <option [ngValue]="null">{{ 'profile.gender.none' | t }}</option>
+              <option value="masculino">{{ 'register.male' | t }}</option>
+              <option value="feminino">{{ 'register.female' | t }}</option>
+              <option value="outro">{{ 'register.other' | t }}</option>
             </select>
           </label>
 
-          <label class="full-width">
-            <span>Desportos favoritos</span>
-            <textarea
-              name="favoriteSports"
-              [(ngModel)]="profile.favoriteSports"
-              rows="3"
+          <div class="full-width sport-selector">
+            <span class="field-label">{{ 'profile.favoriteSports' | t }}</span>
+
+            @if (selectedSports.length > 0) {
+              <div class="sport-chips">
+                @for (sport of selectedSports; track sport) {
+                  <button
+                    type="button"
+                    class="sport-chip"
+                    [disabled]="saving"
+                    (click)="removeSport(sport)">
+                    {{ sport }} ×
+                  </button>
+                }
+              </div>
+            }
+
+            <input
+              type="search"
+              name="sportQuery"
+              [(ngModel)]="sportQuery"
+              autocomplete="off"
               [disabled]="saving"
-              placeholder="Ex.: Padel, Futebol, Corrida"></textarea>
+              (keydown)="onSportSearchKeydown($event)"
+              (blur)="clearInvalidSportQuery()"
+              [placeholder]="'profile.favoriteSportsSearch' | t">
+
+            @if (sportSuggestions.length > 0) {
+              <div class="sport-suggestions">
+                @for (sport of sportSuggestions; track sport) {
+                  <button
+                    type="button"
+                    [disabled]="saving"
+                    (click)="addSport(sport)">
+                    {{ sport }}
+                  </button>
+                }
+              </div>
+            }
+
+            <small>{{ 'profile.favoriteSportsHint' | t }}</small>
+          </div>
+
+          <label>
+            <span>{{ 'profile.skillLevel' | t }}</span>
+            <select
+              name="skillLevel"
+              [(ngModel)]="profile.skillLevel"
+              [disabled]="saving">
+              <option [ngValue]="null">{{ 'profile.skillLevel.none' | t }}</option>
+              <option value="BEGINNER">{{ 'profile.level.BEGINNER' | t }}</option>
+              <option value="INTERMEDIATE">{{ 'profile.level.INTERMEDIATE' | t }}</option>
+              <option value="ADVANCED">{{ 'profile.level.ADVANCED' | t }}</option>
+            </select>
+          </label>
+
+          <label>
+            <span>{{ 'profile.availability' | t }}</span>
+            <input
+              name="availability"
+              [(ngModel)]="profile.availability"
+              maxlength="120"
+              [disabled]="saving"
+              [placeholder]="'profile.availabilityPlaceholder' | t">
+          </label>
+
+          <label class="full-width">
+            <span>{{ 'profile.bio' | t }}</span>
+            <textarea
+              name="bio"
+              [(ngModel)]="profile.bio"
+              maxlength="280"
+              rows="4"
+              [disabled]="saving"
+              [attr.aria-invalid]="fieldErrors.bio ? 'true' : 'false'"
+              (input)="clearFieldError('bio')"
+              [placeholder]="'profile.bioPlaceholder' | t"></textarea>
+            @if (fieldErrors.bio) {
+              <small class="field-error">{{ fieldErrors.bio }}</small>
+            }
+            <small class="character-count">{{ (profile.bio || '').length }}/280</small>
           </label>
         </div>
 
-        <label class="mfa-toggle">
-          <input type="checkbox" name="mfa" [(ngModel)]="profile.mfa" [disabled]="saving">
-          <span>
-            <strong>Autenticação multifator</strong>
-            <small>Pedir um código adicional quando iniciares sessão.</small>
-          </span>
-        </label>
+        <section id="mfa-security" class="mfa-setting">
+          <div class="mfa-copy">
+            <strong>{{ 'profile.mfa.title' | t }}</strong>
+            <small>{{ 'profile.mfa.subtitle' | t }}</small>
+          </div>
+
+          <label class="switch" [attr.aria-label]="'profile.mfa.title' | t">
+            <input
+              type="checkbox"
+              name="mfa"
+              [checked]="profile.mfa"
+              [disabled]="saving || mfaSetupLoading || mfaConfirming || mfaDisabling"
+              (change)="onMfaToggle($event)">
+            <span class="switch-track">
+              <span class="switch-thumb"></span>
+            </span>
+          </label>
+        </section>
+
+        @if (mfaSetup) {
+          <section class="mfa-setup-card">
+            <div>
+              <p class="mfa-step">{{ 'profile.mfa.step1' | t }}</p>
+              <p class="mfa-step">{{ 'profile.mfa.step2' | t }}</p>
+            </div>
+
+            <div class="mfa-qr-wrap">
+              <img class="mfa-qr" [src]="mfaSetup.qrCodeDataUrl" [alt]="'profile.mfa.qrAlt' | t">
+            </div>
+
+            <div class="mfa-manual-key">
+              <span>{{ 'profile.mfa.manualKey' | t }}</span>
+              <code>{{ mfaSetup.secret }}</code>
+            </div>
+
+            <label class="mfa-code-field">
+              <span>{{ 'profile.mfa.step3' | t }}</span>
+              <input
+                name="mfaSetupCode"
+                [(ngModel)]="mfaSetupCode"
+                inputmode="numeric"
+                autocomplete="one-time-code"
+                maxlength="6"
+                placeholder="000000"
+                [disabled]="mfaConfirming">
+            </label>
+
+            <div class="mfa-setup-actions">
+              <button
+                type="button"
+                class="photo-save-action"
+                [disabled]="mfaConfirming || mfaSetupCode.length !== 6"
+                (click)="confirmMfaSetup()">
+                {{ mfaConfirming ? ('profile.mfa.confirming' | t) : ('profile.mfa.confirmEnable' | t) }}
+              </button>
+
+              <button
+                type="button"
+                class="photo-cancel-action"
+                [disabled]="mfaConfirming"
+                (click)="cancelMfaSetup()">
+                {{ 'common.cancel' | t }}
+              </button>
+            </div>
+          </section>
+        }
 
         <div class="form-actions">
-          <a class="secondary-action" routerLink="/menu/dadosPerfil">Cancelar</a>
+          <a class="secondary-action" routerLink="/menu/dadosPerfil">{{ 'common.cancel' | t }}</a>
           <button type="submit" [disabled]="saving">
-            {{ saving ? 'A guardar...' : 'Guardar alterações' }}
+            {{ saving ? ('profile.saving' | t) : ('profile.save' | t) }}
           </button>
         </div>
       </form>

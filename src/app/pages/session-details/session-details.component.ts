@@ -1,16 +1,18 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { JwtHelperService } from '@auth0/angular-jwt';
-import { finalize } from 'rxjs';
+import { finalize, Subscription } from 'rxjs';
 
 import { environment } from 'src/environment/environment';
 import { SessionDetail } from '../model/session-detail';
+import { appTranslate as t } from '../../i18n/i18n.service';
 import { SessionMessage } from '../model/session-message';
 import { ReliabilitySummary } from '../model/reliability-summary';
 import { SessionParticipant } from '../model/session-participant';
 import { JoinSessionResponse, SessionService } from '../../services/session.service';
 import { ReliabilityService } from '../../services/reliability.service';
+import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.service';
 
 @Component({
   selector: 'app-session-details',
@@ -19,7 +21,7 @@ import { ReliabilityService } from '../../services/reliability.service';
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false
 })
-export class SessionDetailsComponent implements OnInit {
+export class SessionDetailsComponent implements OnInit, OnDestroy {
   session?: SessionDetail;
   messages: SessionMessage[] = [];
   creatorReliability?: ReliabilitySummary;
@@ -47,15 +49,20 @@ export class SessionDetailsComponent implements OnInit {
 
   joinPassword = '';
   messageBody = '';
+  showEmojiPicker = false;
+
+  readonly emojis = ['😀', '😂', '😊', '😍', '🥳', '😎', '😉', '👍', '👏', '🙌', '🔥', '⚽', '🏀', '🎾', '🏓', '💪', '❤️', '✅'];
 
   private sessionId?: number;
   private currentUsername: string | null = null;
   private readonly jwtHelper = new JwtHelperService();
+  private readonly realtimeSubscriptions = new Subscription();
 
   constructor(
     private route: ActivatedRoute,
     private sessionService: SessionService,
-    private reliabilityService: ReliabilityService
+    private reliabilityService: ReliabilityService,
+    private realtimeService: DirectChatRealtimeService
   ) {}
 
   ngOnInit(): void {
@@ -63,12 +70,35 @@ export class SessionDetailsComponent implements OnInit {
 
     const id = Number(this.route.snapshot.paramMap.get('id'));
     if (!Number.isFinite(id) || id <= 0) {
-      this.errorMessage = 'Sessão inválida.';
+      this.errorMessage = t('feedback.session.invalid');
       return;
     }
 
     this.sessionId = id;
     this.loadSession();
+    this.realtimeService.connect();
+
+    this.realtimeSubscriptions.add(
+      this.realtimeService.sessionMessages$.subscribe(message => {
+        if (message.sessionId !== this.sessionId) {
+          return;
+        }
+
+        this.appendMessageIfMissing(message);
+      })
+    );
+
+    this.realtimeSubscriptions.add(
+      this.realtimeService.connected$.subscribe(connected => {
+        if (connected && this.canAccessChat()) {
+          this.refreshMessages(false);
+        }
+      })
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.realtimeSubscriptions.unsubscribe();
   }
 
   joinSession(): void {
@@ -77,7 +107,7 @@ export class SessionDetailsComponent implements OnInit {
     }
 
     if (this.session.privateGame && !this.joinPassword.trim()) {
-      this.actionError = 'Esta sessão é privada. Introduz a palavra-passe.';
+      this.actionError = t('feedback.session.privatePassword');
       this.actionSuccess = '';
       return;
     }
@@ -95,7 +125,7 @@ export class SessionDetailsComponent implements OnInit {
           this.loadSession(false);
         },
         error: error => {
-          this.actionError = this.errorFrom(error, 'Não foi possível entrar nesta sessão.');
+          this.actionError = this.errorFrom(error, t('feedback.session.joinError'));
         }
       });
   }
@@ -116,12 +146,12 @@ export class SessionDetailsComponent implements OnInit {
       .subscribe({
         next: () => {
           this.actionSuccess = wasWaitlisted
-            ? 'Saíste da lista de espera.'
-            : 'Saíste da sessão.';
+            ? t('feedback.session.leftWaitlist')
+            : t('feedback.session.left');
           this.loadSession(false);
         },
         error: error => {
-          this.actionError = this.errorFrom(error, 'Não foi possível sair desta sessão.');
+          this.actionError = this.errorFrom(error, t('feedback.session.leaveError'));
         }
       });
   }
@@ -142,7 +172,7 @@ export class SessionDetailsComponent implements OnInit {
           this.participants = [];
           this.attendanceError = this.errorFrom(
             error,
-            'Não foi possível carregar os participantes desta sessão.'
+            t('feedback.session.participantsError')
           );
         }
       });
@@ -154,7 +184,7 @@ export class SessionDetailsComponent implements OnInit {
     }
 
     if (!this.canRecordAttendance()) {
-      this.attendanceError = 'Só podes marcar presenças 30 minutos depois do início da sessão.';
+      this.attendanceError = t('feedback.session.attendanceTooEarly');
       this.attendanceSuccess = '';
       return;
     }
@@ -169,13 +199,13 @@ export class SessionDetailsComponent implements OnInit {
         next: () => {
           participant.attendanceStatus = status;
           this.attendanceSuccess = status === 'ATTENDED'
-            ? `${participant.username} marcado como presente.`
-            : `${participant.username} marcado como falta.`;
+            ? t('feedback.session.present', { username: participant.username })
+            : t('feedback.session.absent', { username: participant.username });
         },
         error: error => {
           this.attendanceError = this.errorFrom(
             error,
-            'Não foi possível atualizar a presença. O backend pode exigir um pequeno período após o início da sessão.'
+            t('feedback.session.attendanceError')
           );
         }
       });
@@ -227,13 +257,13 @@ export class SessionDetailsComponent implements OnInit {
         next: () => {
           this.pendingRemovalId = null;
           this.participantManagementSuccess =
-            `${participant.username} foi removido da sessão.`;
+            t('feedback.session.removed', { username: participant.username });
           this.loadSession(false);
         },
         error: error => {
           this.participantManagementError = this.errorFrom(
             error,
-            'Não foi possível remover este participante.'
+            t('feedback.session.removeError')
           );
         }
       });
@@ -242,11 +272,11 @@ export class SessionDetailsComponent implements OnInit {
   attendanceLabel(status: string): string {
     switch (status) {
       case 'ATTENDED':
-        return 'Presente';
+        return t('status.attended');
       case 'NO_SHOW':
-        return 'Faltou';
+        return t('status.noShow');
       case 'LATE_CANCELLED':
-        return 'Cancelou tarde';
+        return t('status.lateCancelShort');
       default:
         return 'Por marcar';
     }
@@ -263,20 +293,26 @@ export class SessionDetailsComponent implements OnInit {
     return attendanceAvailableAt <= Date.now();
   }
 
-  refreshMessages(): void {
+  refreshMessages(showLoading = true): void {
     if (!this.sessionId || !this.canAccessChat() || this.chatLoading) {
       return;
     }
 
-    this.chatLoading = true;
+    if (showLoading) {
+      this.chatLoading = true;
+    }
     this.chatError = '';
 
     this.sessionService.messages(this.sessionId)
-      .pipe(finalize(() => this.chatLoading = false))
+      .pipe(finalize(() => {
+        if (showLoading) {
+          this.chatLoading = false;
+        }
+      }))
       .subscribe({
-        next: messages => this.messages = messages,
+        next: messages => this.messages = this.sortedMessages(messages),
         error: error => {
-          this.chatError = this.errorFrom(error, 'Não foi possível carregar o chat desta sessão.');
+          this.chatError = this.errorFrom(error, t('feedback.session.chatLoadError'));
         }
       });
   }
@@ -289,12 +325,12 @@ export class SessionDetailsComponent implements OnInit {
     }
 
     if (!body) {
-      this.chatError = 'Escreve uma mensagem antes de enviar.';
+      this.chatError = t('feedback.chat.writeFirst');
       return;
     }
 
     if (body.length > 2000) {
-      this.chatError = 'A mensagem não pode ter mais de 2000 caracteres.';
+      this.chatError = t('feedback.chat.messageLong');
       return;
     }
 
@@ -305,13 +341,67 @@ export class SessionDetailsComponent implements OnInit {
       .pipe(finalize(() => this.messageSending = false))
       .subscribe({
         next: message => {
-          this.messages = [...this.messages, message];
+          this.appendMessageIfMissing(message);
           this.messageBody = '';
+          this.showEmojiPicker = false;
         },
         error: error => {
-          this.chatError = this.errorFrom(error, 'Não foi possível enviar a mensagem.');
+          this.chatError = this.errorFrom(error, t('feedback.chat.sendError'));
         }
       });
+  }
+
+  onChatEnter(event: Event): void {
+    const keyboardEvent = event as KeyboardEvent;
+    if (keyboardEvent.shiftKey) {
+      return;
+    }
+
+    keyboardEvent.preventDefault();
+    this.sendMessage();
+  }
+
+  toggleEmojiPicker(): void {
+    this.showEmojiPicker = !this.showEmojiPicker;
+  }
+
+  addEmoji(emoji: string): void {
+    if (this.messageBody.length + emoji.length <= 2000) {
+      this.messageBody += emoji;
+      this.showEmojiPicker = false;
+    }
+  }
+
+  messageDate(message: SessionMessage): string {
+    if (!message.createdAt) {
+      return '';
+    }
+
+    const parsed = Date.parse(message.createdAt);
+    if (Number.isNaN(parsed)) {
+      return message.createdAt;
+    }
+
+    return new Intl.DateTimeFormat('pt-PT', {
+      dateStyle: 'short',
+      timeStyle: 'short'
+    }).format(new Date(parsed));
+  }
+
+  private appendMessageIfMissing(message: SessionMessage): void {
+    if (this.messages.some(existing => existing.id === message.id)) {
+      return;
+    }
+
+    this.messages = this.sortedMessages([...this.messages, message]);
+  }
+
+  private sortedMessages(messages: SessionMessage[]): SessionMessage[] {
+    return [...messages].sort((a, b) => {
+      const aTime = Date.parse(a.createdAt || '') || 0;
+      const bTime = Date.parse(b.createdAt || '') || 0;
+      return aTime - bTime;
+    });
   }
 
   canAccessChat(): boolean {
@@ -344,10 +434,10 @@ export class SessionDetailsComponent implements OnInit {
 
   joinButtonLabel(): string {
     if (this.actionLoading) {
-      return 'A processar...';
+      return t('session.joinProcessing');
     }
 
-    return this.isFull() ? 'Entrar na lista de espera' : 'Juntar-me à sessão';
+    return this.isFull() ? t('session.joinWaitlist') : t('session.join');
   }
 
   photoUrl(path: string | null): string | null {
@@ -517,7 +607,7 @@ export class SessionDetailsComponent implements OnInit {
             this.chatError = '';
           }
         },
-        error: () => this.errorMessage = 'Não foi possível carregar os detalhes desta sessão.'
+        error: () => this.errorMessage = t('feedback.session.detailsError')
       });
   }
 
@@ -531,7 +621,7 @@ export class SessionDetailsComponent implements OnInit {
         next: summary => this.creatorReliability = summary,
         error: () => {
           this.creatorReliability = undefined;
-          this.reliabilityError = 'Não foi possível carregar a fiabilidade deste utilizador.';
+          this.reliabilityError = t('feedback.session.reliabilityError');
         }
       });
   }
@@ -539,11 +629,11 @@ export class SessionDetailsComponent implements OnInit {
   private joinSuccessMessage(response: JoinSessionResponse): string {
     if (response.state === 'WAITLISTED') {
       return response.waitlistPosition
-        ? `A sessão está cheia. Ficaste na posição ${response.waitlistPosition} da lista de espera.`
-        : 'A sessão está cheia. Foste adicionado à lista de espera.';
+        ? t('feedback.session.waitlistedPos', { position: response.waitlistPosition })
+        : t('feedback.session.waitlisted');
     }
 
-    return 'Entraste na sessão com sucesso.';
+    return t('feedback.session.joined');
   }
 
   private errorFrom(error: HttpErrorResponse, fallback: string): string {

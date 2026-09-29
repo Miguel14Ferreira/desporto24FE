@@ -39,7 +39,7 @@ describe('CreateaccountComponent', () => {
     component.location = 'Lisboa';
     component.postalCode = '1000-000';
     component.indicativePhone = '351';
-    component.phone = '912345678';
+    component.phone = '912 345 678';
     component.gender = 'masculino';
     component.email = 'miguel@example.com';
     component.favoriteSports = 'Padel';
@@ -58,6 +58,8 @@ describe('CreateaccountComponent', () => {
       jasmine.objectContaining({
         username: 'miguel',
         email: 'miguel@example.com',
+        indicativePhone: '351',
+        phone: '912345678',
         favoriteSports: 'Padel'
       }),
       undefined

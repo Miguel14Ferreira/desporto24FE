@@ -1,4 +1,5 @@
 import { SessionSummary } from './session-summary';
+import { Venue } from './venue';
 
 export interface SessionDetail extends SessionSummary {
   creatorUsername: string | null;
@@ -8,4 +9,5 @@ export interface SessionDetail extends SessionSummary {
   waitlisted: boolean;
   waitlistPosition: number | null;
   gamePhoto: string | null;
+  venue?: Venue | null;
 }

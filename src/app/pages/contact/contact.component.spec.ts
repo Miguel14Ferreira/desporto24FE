@@ -30,10 +30,8 @@ describe('ContactComponent', () => {
 
   function fill(): void {
     component.name = 'Miguel Ferreira';
-    component.city = 'Lisboa';
     component.email = 'miguel@example.com';
-    component.gender = 'masculino';
-    component.subject = 'Sugestão';
+    component.category = 'contact.category.tournaments';
     component.problem = 'Gostava de ter torneios.';
   }
 
@@ -48,13 +46,23 @@ describe('ContactComponent', () => {
 
     expect(service.submit).toHaveBeenCalledWith({
       name: 'Miguel Ferreira',
-      city: 'Lisboa',
+      city: '',
       email: 'miguel@example.com',
-      gender: 'masculino',
-      subject: 'Sugestão',
+      gender: '',
+      subject: jasmine.any(String),
       problem: 'Gostava de ter torneios.'
     });
     expect(component.successMessage).toContain('Obrigado');
+  });
+
+  it('should show contextual email validation', () => {
+    fill();
+    component.email = 'invalid-email';
+
+    component.submit();
+
+    expect(service.submit).not.toHaveBeenCalled();
+    expect(component.fieldErrors.email).toBeTruthy();
   });
 
   it('should reject incomplete feedback', () => {
@@ -63,6 +71,8 @@ describe('ContactComponent', () => {
     component.submit();
 
     expect(service.submit).not.toHaveBeenCalled();
-    expect(component.errorMessage).toContain('todos os campos');
+    expect(component.fieldErrors.email).toBeTruthy();
+    expect(component.fieldErrors.category).toBeTruthy();
+    expect(component.fieldErrors.problem).toBeTruthy();
   });
 });

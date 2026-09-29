@@ -1,8 +1,9 @@
+import { appTranslate as t } from '../../i18n/i18n.service';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { forkJoin, finalize, of, catchError } from 'rxjs';
 
 import { environment } from 'src/environment/environment';
-import { MyProfile } from '../model/my-profile';
+import { MyProfile, ProfileActivity } from '../model/my-profile';
 import { ReliabilitySummary } from '../model/reliability-summary';
 import { MyProfileService } from '../../services/my-profile.service';
 import { ReliabilityService } from '../../services/reliability.service';
@@ -17,6 +18,7 @@ import { ReliabilityService } from '../../services/reliability.service';
 export class PerfilDataComponent implements OnInit {
   profile?: MyProfile;
   reliability?: ReliabilitySummary;
+  activity?: ProfileActivity;
   loading = false;
   errorMessage = '';
 
@@ -39,8 +41,9 @@ export class PerfilDataComponent implements OnInit {
         next: profile => {
           this.profile = profile;
           this.loadReliability(profile.username);
+          this.loadActivity(profile.username);
         },
-        error: () => this.errorMessage = 'Não foi possível carregar o teu perfil.'
+        error: () => this.errorMessage = t('feedback.profile.loadError')
       });
   }
 
@@ -65,6 +68,12 @@ export class PerfilDataComponent implements OnInit {
       .slice(0, 2)
       .map(value => value.charAt(0).toUpperCase())
       .join('');
+  }
+
+  private loadActivity(username: string): void {
+    this.reliabilityService.activity(username)
+      .pipe(catchError(() => of(undefined)))
+      .subscribe(activity => this.activity = activity);
   }
 
   private loadReliability(username: string): void {

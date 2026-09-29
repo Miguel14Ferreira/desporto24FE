@@ -3,24 +3,23 @@
     <header class="page-header">
       <div>
         <p class="eyebrow">Desporto24</p>
-        <h1>O meu perfil</h1>
-        <p class="subtitle">Consulta os teus dados e a tua atividade na comunidade.</p>
+        <h1>{{ 'profileData.title' | t }}</h1>
+        <p class="subtitle">{{ 'profileData.subtitle' | t }}</p>
       </div>
 
       <div class="header-actions">
-        <a class="primary-action" routerLink="/menu/alterardados">Editar perfil</a>
-        <a class="secondary-action" routerLink="/menu">Menu</a>
+        <a class="primary-action" routerLink="/menu/alterardados">{{ 'menu.editProfile' | t }}</a>
       </div>
     </header>
 
     @if (loading) {
-      <div class="state-card">A carregar perfil...</div>
+      <div class="state-card">{{ 'profileData.loading' | t }}</div>
     }
 
     @if (!loading && errorMessage) {
       <div class="state-card error-state">
         <p>{{ errorMessage }}</p>
-        <button type="button" (click)="load()">Tentar novamente</button>
+        <button type="button" (click)="load()">{{ 'common.retry' | t }}</button>
       </div>
     }
 
@@ -35,37 +34,120 @@
             }
           </div>
 
-          <div>
-            <h2>{{ profile.fullName || profile.username }}</h2>
+          <div class="identity-copy">
+            <h2>{{ profile.nickname || profile.fullName || profile.username }}</h2>
             <p>@{{ profile.username }}</p>
-            @if (profile.location || profile.country) {
-              <small>{{ profile.location || '' }}{{ profile.location && profile.country ? ', ' : '' }}{{ profile.country || '' }}</small>
+
+            <div class="sports-identity-line">
+              @if (profile.country) {
+                <span>📍 {{ profile.country }}</span>
+              }
+              @if (profile.favoriteSports) {
+                <span>⚽ {{ profile.favoriteSports }}</span>
+              }
+              @if (profile.skillLevel) {
+                <span>◎ {{ ('profile.level.' + profile.skillLevel) | t }}</span>
+              }
+            </div>
+
+            @if (profile.availability) {
+              <small>{{ 'profile.availability' | t }} · {{ profile.availability }}</small>
             }
           </div>
         </div>
 
-        <div class="details-grid">
-          <div><span>Email</span><strong>{{ profile.email }}</strong></div>
-          <div><span>Telefone</span><strong>{{ profile.indicativePhone ? '+' + profile.indicativePhone + ' ' : '' }}{{ profile.phone || 'Não indicado' }}</strong></div>
-          <div><span>Data de nascimento</span><strong>{{ profile.dateOfBirth || 'Não indicada' }}</strong></div>
-          <div><span>Género</span><strong>{{ profile.gender || 'Não indicado' }}</strong></div>
-          <div><span>Morada</span><strong>{{ profile.address || 'Não indicada' }}</strong></div>
-          <div><span>Código postal</span><strong>{{ profile.postalCode || 'Não indicado' }}</strong></div>
-          <div><span>Desportos favoritos</span><strong>{{ profile.favoriteSports || 'Não indicados' }}</strong></div>
-          <div><span>MFA</span><strong>{{ profile.mfa ? 'Ativo' : 'Inativo' }}</strong></div>
-        </div>
+        @if (profile.bio) {
+          <section class="bio-card">
+            <span class="section-kicker">{{ 'profile.bio' | t }}</span>
+            <p>{{ profile.bio }}</p>
+          </section>
+        }
+
+        @if (activity) {
+          <section class="activity-section">
+            <div class="section-heading">
+              <div>
+                <span class="section-kicker">{{ 'profileData.activityKicker' | t }}</span>
+                <h3>{{ 'profileData.activityTitle' | t }}</h3>
+              </div>
+            </div>
+
+            <div class="activity-grid">
+              <div>
+                <strong>{{ activity.activitiesCompleted }}</strong>
+                <span>{{ 'profileData.activitiesCompleted' | t }}</span>
+              </div>
+              <div>
+                <strong>{{ activity.peoplePlayedWith }}</strong>
+                <span>{{ 'profileData.peoplePlayedWith' | t }}</span>
+              </div>
+              <div>
+                <strong>{{ activity.sportsPractised }}</strong>
+                <span>{{ 'profileData.sportsPractised' | t }}</span>
+              </div>
+              <div>
+                <strong>{{ activity.eventsCreated }}</strong>
+                <span>{{ 'profileData.eventsCreated' | t }}</span>
+              </div>
+              <div>
+                <strong>{{ activity.participantsMobilized }}</strong>
+                <span>{{ 'profileData.participantsMobilized' | t }}</span>
+              </div>
+              <div>
+                <strong>{{ activity.communitiesJoined }}</strong>
+                <span>{{ 'profileData.communitiesJoined' | t }}</span>
+              </div>
+            </div>
+
+            @if (activity.achievements.length > 0) {
+              <div class="achievement-block">
+                <span class="section-kicker">{{ 'profileData.achievements' | t }}</span>
+                <div class="achievement-list">
+                  @for (achievement of activity.achievements; track achievement) {
+                    <span class="achievement-badge">
+                      {{ ('profileData.achievement.' + achievement) | t }}
+                    </span>
+                  }
+                </div>
+              </div>
+            }
+          </section>
+        }
 
         @if (reliability) {
           <section class="reliability-card">
-            <h3>Fiabilidade</h3>
+            <div class="section-heading">
+              <div>
+                <span class="section-kicker">{{ 'profileData.trustKicker' | t }}</span>
+                <h3>{{ 'profileData.reliability' | t }}</h3>
+              </div>
+            </div>
             <div class="reliability-grid">
-              <div><span>Taxa de presença</span><strong>{{ reliability.attendanceRate | number:'1.0-0' }}%</strong></div>
-              <div><span>Sessões concluídas</span><strong>{{ reliability.completedSessions }}</strong></div>
-              <div><span>Faltas</span><strong>{{ reliability.noShows }}</strong></div>
-              <div><span>Cancelamentos tardios</span><strong>{{ reliability.lateCancellations }}</strong></div>
+              <div><span>{{ 'profileData.attendanceRate' | t }}</span><strong>{{ reliability.attendanceRate | number:'1.0-0' }}%</strong></div>
+              <div><span>{{ 'profileData.completedSessions' | t }}</span><strong>{{ reliability.completedSessions }}</strong></div>
+              <div><span>{{ 'profileData.noShows' | t }}</span><strong>{{ reliability.noShows }}</strong></div>
+              <div><span>{{ 'profileData.lateCancellations' | t }}</span><strong>{{ reliability.lateCancellations }}</strong></div>
             </div>
           </section>
         }
+
+        <section class="account-section">
+          <div class="section-heading">
+            <div>
+              <span class="section-kicker">{{ 'profileData.accountKicker' | t }}</span>
+              <h3>{{ 'profileData.privateData' | t }}</h3>
+            </div>
+          </div>
+
+          <div class="details-grid">
+            <div><span>{{ 'common.email' | t }}</span><strong>{{ profile.email }}</strong></div>
+            <div><span>{{ 'common.phone' | t }}</span><strong>{{ profile.indicativePhone ? '+' + profile.indicativePhone + ' ' : '' }}{{ profile.phone || ('common.notProvided' | t) }}</strong></div>
+            <div><span>{{ 'profileData.birthDate' | t }}</span><strong>{{ profile.dateOfBirth || ('common.notProvidedF' | t) }}</strong></div>
+            <div><span>{{ 'common.gender' | t }}</span><strong>{{ profile.gender || ('common.notProvided' | t) }}</strong></div>
+            <div><span>{{ 'profileData.memberSince' | t }}</span><strong>{{ profile.joinDateDisplay || ('common.noInfo' | t) }}</strong></div>
+            <div><span>MFA</span><strong>{{ profile.mfa ? ('common.active' | t) : ('common.inactive' | t) }}</strong></div>
+          </div>
+        </section>
       </section>
     }
   </div>

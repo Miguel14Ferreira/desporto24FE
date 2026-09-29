@@ -1,3 +1,4 @@
+import { appTranslate as t } from '../../i18n/i18n.service';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { finalize } from 'rxjs';
 
@@ -5,6 +6,7 @@ import { environment } from 'src/environment/environment';
 import { AuthenticationService } from '../../services/authethication.service';
 import { MyProfileService } from '../../services/my-profile.service';
 import { NotificationApiService } from '../../services/notification-api.service';
+import { AdminAccessService } from '../../services/admin-access.service';
 import { MyProfile } from '../model/my-profile';
 
 @Component({
@@ -27,16 +29,22 @@ export class MenuComponent implements OnInit {
   constructor(
     private authenticationService: AuthenticationService,
     private myProfileService: MyProfileService,
-    private notificationService: NotificationApiService
+    private notificationService: NotificationApiService,
+    private adminAccessService: AdminAccessService
   ) {}
 
   ngOnInit(): void {
-    this.isAdmin = this.authenticationService.hasAnyRole(
-      'ROLE_ADMIN',
-      'ROLE_SUPER_ADMIN'
-    );
+    this.loadAdminAccess();
     this.loadProfile();
     this.loadNotifications();
+  }
+
+  loadAdminAccess(): void {
+    this.isAdmin = false;
+    this.adminAccessService.check().subscribe({
+      next: () => this.isAdmin = true,
+      error: () => this.isAdmin = false
+    });
   }
 
   loadProfile(): void {
@@ -47,7 +55,7 @@ export class MenuComponent implements OnInit {
       .pipe(finalize(() => this.loadingProfile = false))
       .subscribe({
         next: profile => this.profile = profile,
-        error: () => this.errorMessage = 'Não foi possível carregar o teu perfil.'
+        error: () => this.errorMessage = t('feedback.profile.loadError')
       });
   }
 
@@ -92,7 +100,10 @@ export class MenuComponent implements OnInit {
   }
 
   initials(): string {
-    const source = this.profile?.fullName?.trim() || this.profile?.username || '?';
+    const source = this.profile?.nickname?.trim()
+      || this.profile?.fullName?.trim()
+      || this.profile?.username
+      || '?';
 
     return source
       .split(/\s+/)

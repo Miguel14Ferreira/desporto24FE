@@ -4,6 +4,7 @@ import { of } from 'rxjs';
 
 import { NotificationsComponent } from './notifications.component';
 import { NotificationApiService } from '../../services/notification-api.service';
+import { AuthenticationService } from '../../services/authethication.service';
 import { TEST_IMPORTS, TEST_PROVIDERS } from '../../testing/test-providers';
 
 describe('NotificationsComponent', () => {
@@ -11,6 +12,7 @@ describe('NotificationsComponent', () => {
   let fixture: ComponentFixture<NotificationsComponent>;
   let service: jasmine.SpyObj<NotificationApiService>;
   let router: Router;
+  let authenticationService: jasmine.SpyObj<AuthenticationService>;
 
   const notificationFixture = () => ({
     id: 4,
@@ -26,6 +28,7 @@ describe('NotificationsComponent', () => {
     token: null,
     type: 'WAITLIST_PROMOTED',
     sessionId: 12,
+    relatedUsername: null,
     read: false,
     username: 'fixture-user'
   });
@@ -44,20 +47,46 @@ describe('NotificationsComponent', () => {
     token: null,
     type: null,
     sessionId: null,
+    relatedUsername: null,
     read: false,
+    username: 'fixture-user'
+  });
+
+  const securityNotificationFixture = () => ({
+    id: 12,
+    subject: 'Autenticação multifator desativada',
+    message: 'A autenticação multifator foi desativada na tua conta DESPORTO24. Se não foste tu, protege imediatamente a tua conta.',
+    greeting: 'Cumprimentos,',
+    signature: 'DESPORTO24 MANAGEMENT TEAM',
+    createdAt: '2026-09-28T19:12:00Z',
+    friendRequest: false,
+    updateProfile: false,
+    sessionInvite: false,
+    normalMessage: false,
+    token: null,
+    type: null,
+    sessionId: null,
+    relatedUsername: null,
+    read: true,
     username: 'fixture-user'
   });
 
   beforeEach(async () => {
     service = jasmine.createSpyObj<NotificationApiService>(
       'NotificationApiService',
-      ['mine', 'markRead', 'delete', 'acceptFriendRequest', 'rejectFriendRequest']
+      ['mine', 'markRead', 'delete', 'deleteAll', 'acceptFriendRequest', 'rejectFriendRequest', 'blockOwnAccount']
     );
     service.mine.and.returnValue(of([notificationFixture()]));
     service.markRead.and.returnValue(of(void 0));
     service.delete.and.returnValue(of(void 0));
+    service.deleteAll.and.returnValue(of(void 0));
     service.acceptFriendRequest.and.returnValue(of({}));
     service.rejectFriendRequest.and.returnValue(of(void 0));
+    service.blockOwnAccount.and.returnValue(of(void 0));
+    authenticationService = jasmine.createSpyObj<AuthenticationService>(
+      'AuthenticationService',
+      ['logOut']
+    );
 
     await TestBed.configureTestingModule({
       declarations: [NotificationsComponent],
@@ -72,7 +101,8 @@ describe('NotificationsComponent', () => {
             }
           }
         },
-        { provide: NotificationApiService, useValue: service }
+        { provide: NotificationApiService, useValue: service },
+        { provide: AuthenticationService, useValue: authenticationService }
       ]
     }).compileComponents();
 
@@ -103,6 +133,22 @@ describe('NotificationsComponent', () => {
     expect(component.notifications.length).toBe(0);
   });
 
+  it('should clear all notifications after confirmation', () => {
+    component.notifications = [notificationFixture(), friendRequestFixture()];
+    component.selected = component.notifications[0];
+
+    component.requestClearAll();
+    expect(component.clearAllConfirming).toBeTrue();
+
+    component.clearAllNotifications();
+
+    expect(service.deleteAll).toHaveBeenCalled();
+    expect(component.notifications).toEqual([]);
+    expect(component.selected).toBeUndefined();
+    expect(component.clearAllConfirming).toBeFalse();
+    expect(router.navigate).toHaveBeenCalledWith(['/menu/notifications']);
+  });
+
   it('should navigate to the related session', () => {
     component.openSession(component.notifications[0]);
 
@@ -119,6 +165,48 @@ describe('NotificationsComponent', () => {
     expect(service.acceptFriendRequest).toHaveBeenCalledWith(8);
     expect(component.notifications.length).toBe(0);
     expect(component.actionSuccess).toContain('aceite');
+  });
+
+  it('should offer account protection for suspicious security notifications', () => {
+    const securityNotification = securityNotificationFixture();
+
+    expect(component.canProtectAccount(securityNotification)).toBeTrue();
+  });
+
+  it('should offer account protection on profile update notifications', () => {
+    const profileUpdate = {
+      ...securityNotificationFixture(),
+      subject: 'Perfil atualizado',
+      message: 'Foram atualizados dados do teu perfil.',
+      updateProfile: true
+    };
+
+    expect(component.canProtectAccount(profileUpdate)).toBeTrue();
+  });
+
+  it('should offer account protection on password change notifications', () => {
+    const passwordChange = {
+      ...securityNotificationFixture(),
+      subject: 'Palavra-passe alterada',
+      message: 'A tua palavra-passe foi alterada.',
+      updateProfile: true
+    };
+
+    expect(component.canProtectAccount(passwordChange)).toBeTrue();
+  });
+
+  it('should not expose account blocking for unrelated notifications', () => {
+    expect(component.canProtectAccount(notificationFixture())).toBeFalse();
+  });
+
+  it('should block the account and clear the local session after confirmation', () => {
+    const securityNotification = securityNotificationFixture();
+    component.selected = securityNotification;
+
+    component.blockAccountAccess();
+
+    expect(service.blockOwnAccount).toHaveBeenCalled();
+    expect(authenticationService.logOut).toHaveBeenCalled();
   });
 
   it('should reject a friend request through the authenticated endpoint', () => {

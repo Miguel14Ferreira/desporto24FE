@@ -1,93 +1,47 @@
-@if (dark) {
-  <nav class="navbar-expand-lg navbar-dark bg-dark">
-    <div class="container-fluid">
-      <div class="collapse navbar-collapse" id="navbarSupportedContent">
-        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-          <li class="nav-item">
-            <a class="nav-link" href="#" routerLink="home" routerLinkActive="active-link">Home</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="#" routerLink="login" routerLinkActive="active-link">Iniciar Sessão</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="#" routerLink="about" routerLinkActive="active-link">Sobre nós</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="#" routerLink="contact" routerLinkActive="active-link">Contacta-nos</a>
-          </li>
-        </ul>
-        <input type="checkbox" class="checkbox" id="chk" value="true"/>
-        <i (click)="LightMode()" class="fas fa-moon"></i>
+<nav class="site-nav">
+  <div class="site-nav__shell">
+    <a class="brand" [routerLink]="isAuthenticated() ? '/menu/feed' : '/home'">DESPORTO24</a>
+
+    <div class="site-nav__links">
+      @if (isAuthenticated()) {
+        <a routerLink="/menu/feed" routerLinkActive="active-link">{{ 'nav.feed' | t }}</a>
+        <a routerLink="/menu/events" routerLinkActive="active-link">{{ 'nav.discover' | t }}</a>
+        <a routerLink="/menu/my-sessions" routerLinkActive="active-link">{{ 'nav.activities' | t }}</a>
+        <a routerLink="/menu/communities" routerLinkActive="active-link">{{ 'nav.communities' | t }}</a>
+        <a routerLink="/menu/friendList" routerLinkActive="active-link">{{ 'nav.messages' | t }}</a>
+        <a class="notification-link" routerLink="/menu/notifications" routerLinkActive="active-link">
+          {{ 'menu.notifications' | t }}
+          @if (unreadNotifications > 0) {
+            <span class="notification-badge">{{ unreadNotifications > 99 ? '99+' : unreadNotifications }}</span>
+          }
+        </a>
+        <a class="profile-nav-link" routerLink="/menu/dadosPerfil" routerLinkActive="active-link">{{ 'nav.profile' | t }}</a>
+      } @else {
+        <a routerLink="/home" routerLinkActive="active-link">{{ 'nav.home' | t }}</a>
+        <a routerLink="/about" routerLinkActive="active-link">{{ 'nav.about' | t }}</a>
+        <a routerLink="/contact" routerLinkActive="active-link">{{ 'nav.contact' | t }}</a>
+      }
+
+      <div class="language-switch" aria-label="Language selector">
+        <button
+          type="button"
+          [class.active-language]="i18n.currentLanguage === 'pt'"
+          (click)="setLanguage('pt')">
+          PT
+        </button>
+        <span>/</span>
+        <button
+          type="button"
+          [class.active-language]="i18n.currentLanguage === 'en'"
+          (click)="setLanguage('en')">
+          EN
+        </button>
       </div>
+
+      @if (!isAuthenticated()) {
+        <a class="register-link" routerLink="/login/registerNewUser">{{ 'nav.register' | t }}</a>
+        <a class="login-link" routerLink="/login" routerLinkActive="active-link">{{ 'nav.login' | t }}</a>
+      }
     </div>
-    <script>
-      $(function(){
-      var scroll = $(document).scrollTop();
-      var navHeight =$('.navbar-expand-lg navbar-light bg-lightnavbar').outerHeight();
-      $(window).scroll(function(){
-      var scrolled = $(document).scrollTop();
-      if(scrolled > navHeight){
-      $('.navbar-expand-lg navbar-light bg-lightnavbar').addClass('animate');
-      } else {
-      $('.navbar-expand-lg navbar-light bg-lightnavbar').removeClass('animate');
-    }
-    if(scrolled > scroll){
-    $('.navbar-expand-lg navbar-light bg-lightnavbar').removeClass('sticky');
-    }else{
-    $('.navbar-expand-lg navbar-light bg-lightnavbar').addClass('sticky');
-  }
-  scroll = $(document).scrollTop();
-  });
-  });
-</script>
+  </div>
 </nav>
-}
-@if (!dark) {
-  <nav class="navbar-expand-lg navbar-light bg-lightnavbar">
-    <div class="container-fluid">
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="navbarSupportedContent">
-        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-          <li class="nav-item">
-            <a class="nav-link" href="#" routerLink="home" routerLinkActive="active-link">Home</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="#" (click)="remover()" routerLink="login" routerLinkActive="active-link">Iniciar Sessão</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="#" routerLink="about" routerLinkActive="active-link">Sobre nós</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="#" routerLink="contact" routerLinkActive="active-link">Contacta-nos</a>
-          </li>
-          <li class="nav-item">
-          </li>
-        </ul>
-        <input type="checkbox" class="checkbox" value="false"/>
-        <i (click)="DarkMode()" id="chk" class="fas fa-sun"></i>
-      </div>
-    </div>
-    <script>
-      $(function(){
-      var scroll = $(document).scrollTop();
-      var navHeight =$('.navbar-expand-lg navbar-light bg-lightnavbar').outerHeight();
-      $(window).scroll(function(){
-      var scrolled = $(document).scrollTop();
-      if(scrolled > navHeight){
-      $('.navbar-expand-lg navbar-light bg-lightnavbar').addClass('animate');
-      } else {
-      $('.navbar-expand-lg navbar-light bg-lightnavbar').removeClass('animate');
-    }
-    if(scrolled > scroll){
-    $('.navbar-expand-lg navbar-light bg-lightnavbar').removeClass('sticky');
-    }else{
-    $('.navbar-expand-lg navbar-light bg-lightnavbar').addClass('sticky');
-  }
-  scroll = $(document).scrollTop();
-  });
-  });
-</script>
-</nav>
-}

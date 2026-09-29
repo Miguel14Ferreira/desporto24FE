@@ -1,0 +1,129 @@
+<section class="onboarding-page">
+  <div class="onboarding-shell">
+    <header class="page-header">
+      <div>
+        <p class="eyebrow">{{ 'googleOnboarding.eyebrow' | t }}</p>
+        <h1>{{ 'googleOnboarding.title' | t }}</h1>
+        <p class="subtitle">
+          {{ 'googleOnboarding.subtitle' | t }}
+        </p>
+      </div>
+
+      <button type="button" class="secondary-action" (click)="cancel()">
+        {{ 'common.cancel' | t }}
+      </button>
+    </header>
+
+    <section class="google-account-card">
+      @if (pictureUrl) {
+        <img [src]="pictureUrl" [alt]="'register.photo' | t">
+      } @else {
+        <div class="avatar-fallback">{{ (fullName || email).charAt(0).toUpperCase() }}</div>
+      }
+
+      <div>
+        <span class="verified-label">{{ 'googleOnboarding.verified' | t }}</span>
+        <strong>{{ fullName || ('googleOnboarding.googleUser' | t) }}</strong>
+        <span>{{ email }}</span>
+      </div>
+    </section>
+
+    @if (errorMessage) {
+      <div class="feedback error-feedback">{{ errorMessage }}</div>
+    }
+
+    <form class="onboarding-card" (ngSubmit)="submit()">
+      <div class="form-grid">
+        <label>
+          <span>{{ 'login.username' | t }} *</span>
+          <input
+            name="username"
+            [(ngModel)]="username"
+            autocomplete="username"
+            maxlength="50"
+            [disabled]="loading">
+        </label>
+
+        <label>
+          <span>{{ 'register.nickname' | t }}</span>
+          <input
+            name="nickname"
+            [(ngModel)]="nickname"
+            maxlength="80"
+            [disabled]="loading"
+            [placeholder]="'register.nicknamePlaceholder' | t">
+        </label>
+
+        <label>
+          <span>{{ 'register.birthDate' | t }} *</span>
+          <input
+            type="date"
+            name="dateOfBirth"
+            [(ngModel)]="dateOfBirth"
+            [min]="minBirthDate"
+            [max]="maxBirthDate"
+            [disabled]="loading">
+        </label>
+
+        <label>
+          <span>{{ 'common.country' | t }} *</span>
+          <select
+            name="country"
+            [(ngModel)]="country"
+            [disabled]="loading">
+            @for (item of countryOptions; track item.label) {
+              <option [value]="countryName(item.label)">{{ item.label }}</option>
+            }
+          </select>
+        </label>
+
+        <div class="full-width phone-field">
+          <span class="field-label">{{ 'register.phoneOptional' | t }}</span>
+          <div class="phone-row">
+            <select
+              class="calling-code"
+              name="indicativePhone"
+              [(ngModel)]="indicativePhone"
+              [disabled]="loading || !phone.trim()">
+              @for (item of countryOptions; track item.label) {
+                <option [value]="item.code">+{{ item.code }}</option>
+              }
+            </select>
+            <input
+              type="tel"
+              name="phone"
+              [(ngModel)]="phone"
+              autocomplete="tel-national"
+              [disabled]="loading"
+              placeholder="912 345 678">
+          </div>
+        </div>
+
+        <label>
+          <span>{{ 'common.gender' | t }}</span>
+          <select name="gender" [(ngModel)]="gender" [disabled]="loading">
+            <option value="">{{ 'register.select' | t }}</option>
+            <option value="masculino">{{ 'register.male' | t }}</option>
+            <option value="feminino">{{ 'register.female' | t }}</option>
+            <option value="outro">{{ 'register.other' | t }}</option>
+          </select>
+        </label>
+
+      </div>
+
+      <div class="privacy-note">
+        <strong>{{ 'googleOnboarding.identityVerified' | t }}</strong>
+        <span>{{ 'googleOnboarding.noPassword' | t }}</span>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="secondary-action" (click)="cancel()" [disabled]="loading">
+          {{ 'common.cancel' | t }}
+        </button>
+        <button type="submit" class="primary-action" [disabled]="loading">
+          {{ loading ? ('googleOnboarding.creating' | t) : ('googleOnboarding.finish' | t) }}
+        </button>
+      </div>
+    </form>
+  </div>
+</section>

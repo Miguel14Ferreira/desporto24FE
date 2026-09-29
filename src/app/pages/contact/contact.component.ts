@@ -1,8 +1,11 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef } from '@angular/core';
 import { finalize } from 'rxjs';
 
+import { appTranslate as t } from '../../i18n/i18n.service';
 import { FeedbackRequest, FeedbackService } from '../../services/feedback.service';
+
+type ContactField = 'name' | 'email' | 'category' | 'problem';
 
 @Component({
   selector: 'app-contact',
@@ -13,32 +16,49 @@ import { FeedbackRequest, FeedbackService } from '../../services/feedback.servic
 })
 export class ContactComponent {
   name = '';
-  city = '';
   email = '';
-  gender = '';
-  subject = '';
+  category = '';
   problem = '';
+
+  readonly categories = [
+    'contact.category.partners',
+    'contact.category.activity',
+    'contact.category.groups',
+    'contact.category.tournaments',
+    'contact.category.suggestions',
+    'contact.category.partnerships',
+    'contact.category.technical',
+    'contact.category.account',
+    'contact.category.safety',
+    'contact.category.other'
+  ];
 
   loading = false;
   errorMessage = '';
   successMessage = '';
+  fieldErrors: Partial<Record<ContactField, string>> = {};
 
-  constructor(private feedbackService: FeedbackService) {}
+  constructor(
+    private feedbackService: FeedbackService,
+    private host: ElementRef<HTMLElement>
+  ) {}
 
   submit(): void {
-    const validation = this.validate();
-    if (validation) {
-      this.errorMessage = validation;
+    this.fieldErrors = this.validate();
+
+    if (Object.keys(this.fieldErrors).length > 0) {
+      this.errorMessage = t('feedback.form.attention');
       this.successMessage = '';
+      this.focusFirstInvalidField();
       return;
     }
 
     const request: FeedbackRequest = {
       name: this.name.trim(),
-      city: this.city.trim(),
+      city: '',
       email: this.email.trim(),
-      gender: this.gender,
-      subject: this.subject.trim(),
+      gender: '',
+      subject: t(this.category),
       problem: this.problem.trim()
     };
 
@@ -50,46 +70,72 @@ export class ContactComponent {
       .pipe(finalize(() => this.loading = false))
       .subscribe({
         next: response => {
-          this.successMessage = response.message || 'Obrigado pelo teu feedback.';
-          this.subject = '';
+          this.successMessage = response.message || t('feedback.contact.thanks');
+          this.category = '';
           this.problem = '';
+          this.fieldErrors = {};
         },
         error: error => {
           this.errorMessage = this.errorFrom(
             error,
-            'Não foi possível enviar a tua mensagem.'
+            t('feedback.contact.sendError')
           );
         }
       });
   }
 
-  private validate(): string | null {
-    const required = [
-      this.name,
-      this.city,
-      this.email,
-      this.gender,
-      this.subject,
-      this.problem
-    ];
-
-    if (required.some(value => !value?.trim())) {
-      return 'Preenche todos os campos.';
+  clearFieldError(field: ContactField): void {
+    if (!this.fieldErrors[field]) {
+      return;
     }
 
-    if (!this.email.includes('@')) {
-      return 'Introduz um email válido.';
+    const updated = { ...this.fieldErrors };
+    delete updated[field];
+    this.fieldErrors = updated;
+  }
+
+  private validate(): Partial<Record<ContactField, string>> {
+    const errors: Partial<Record<ContactField, string>> = {};
+
+    if (!this.name.trim()) {
+      errors.name = t('feedback.contact.nameRequired');
     }
 
-    if (this.subject.trim().length > 160) {
-      return 'O assunto não pode ter mais de 160 caracteres.';
+    if (!this.email.trim()) {
+      errors.email = t('feedback.contact.emailRequired');
+    } else if (!this.email.includes('@')) {
+      errors.email = t('feedback.contact.invalidEmail');
     }
 
-    if (this.problem.trim().length > 4000) {
-      return 'A mensagem não pode ter mais de 4000 caracteres.';
+    if (!this.category) {
+      errors.category = t('feedback.contact.categoryRequired');
     }
 
-    return null;
+    if (!this.problem.trim()) {
+      errors.problem = t('feedback.contact.messageRequired');
+    } else if (this.problem.trim().length > 4000) {
+      errors.problem = t('feedback.contact.messageLong');
+    }
+
+    return errors;
+  }
+
+  private focusFirstInvalidField(): void {
+    queueMicrotask(() => {
+      const firstInvalid = this.host.nativeElement.querySelector<HTMLElement>(
+        '[aria-invalid="true"]'
+      );
+
+      if (!firstInvalid) {
+        return;
+      }
+
+      firstInvalid.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
+      });
+      firstInvalid.focus({ preventScroll: true });
+    });
   }
 
   private errorFrom(error: HttpErrorResponse, fallback: string): string {
