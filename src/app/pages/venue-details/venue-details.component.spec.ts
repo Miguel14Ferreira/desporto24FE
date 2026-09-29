@@ -226,6 +226,40 @@ describe('VenueDetailsComponent', () => {
     expect(component.loadError).toBeFalse();
   });
 
+  it('adds a sport condition and resets the form on success', () => {
+    const route = {} as ActivatedRoute;
+    const venueService = jasmine.createSpyObj<VenueService>('VenueService', [
+      'addSportCondition'
+    ]);
+    const createdCondition = {
+      id: 12,
+      sport: 'Padel',
+      conditions: 'Piso rápido',
+      informationSource: 'COMMUNITY' as const,
+      createdByUsername: 'miguel',
+      createdAt: '2026-09-29T20:00:00Z'
+    };
+
+    venueService.addSportCondition.and.returnValue(of(createdCondition));
+
+    const component = new VenueDetailsComponent(route, venueService);
+    component.venue = { id: 7 } as Venue;
+    component.sportConditionSport = '  Padel  ';
+    component.sportConditionText = '  Piso rápido  ';
+
+    component.addSportCondition();
+
+    expect(venueService.addSportCondition).toHaveBeenCalledOnceWith(7, {
+      sport: 'Padel',
+      conditions: 'Piso rápido'
+    });
+    expect(component.sportConditions[0]).toEqual(createdCondition);
+    expect(component.sportConditionSport).toBe('');
+    expect(component.sportConditionText).toBe('');
+    expect(component.sportConditionSaving).toBeFalse();
+    expect(component.sportConditionSaveError).toBeFalse();
+  });
+
   it('rejects an invalid route id without calling the venue APIs', () => {
     const route = {
       snapshot: {
