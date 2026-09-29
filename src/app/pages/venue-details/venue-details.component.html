@@ -1,0 +1,27 @@
+<section class="venue-detail-page">
+  <div class="venue-detail-shell">
+    <a class="back-link" routerLink="/menu/discover">{{ 'venue.detail.back' | t }}</a>
+
+    @if (loading) {
+      <div class="venue-state">{{ 'venue.detail.loading' | t }}</div>
+    } @else if (loadError || !venue) {
+      <div class="venue-state venue-state-error">{{ 'venue.detail.error' | t }}</div>
+    } @else {
+      <header class="venue-header">
+        <span class="venue-kicker">{{ 'venue.detail.kicker' | t }}</span>
+        <h1>{{ venue.name }}</h1>
+      </header>
+
+      <div class="venue-basic-info">
+        <div>
+          <span>{{ 'venue.detail.city' | t }}</span>
+          <strong>{{ venue.city }}</strong>
+        </div>
+        <div>
+          <span>{{ 'venue.detail.address' | t }}</span>
+          <strong>{{ venue.address }}</strong>
+        </div>
+      </div>
+    }
+  </div>
+</section>

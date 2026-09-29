@@ -40,6 +40,7 @@ import { AdminIdeasComponent } from './pages/admin-ideas/admin-ideas.component';
 import { NotFoundComponent } from './pages/not-found/not-found.component';
 import { SocialFeedComponent } from './pages/social-feed/social-feed.component';
 import { DiscoverComponent } from './pages/discover/discover.component';
+import { VenueDetailsComponent } from './pages/venue-details/venue-details.component';
 import { TranslatePipe } from './i18n/translate.pipe';
 
 @NgModule({ declarations: [
@@ -76,6 +77,7 @@ import { TranslatePipe } from './i18n/translate.pipe';
         NotFoundComponent,
         SocialFeedComponent,
         DiscoverComponent,
+        VenueDetailsComponent,
         TranslatePipe
     ],
     bootstrap: [AppComponent], imports: [BrowserModule,
