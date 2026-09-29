@@ -37,6 +37,16 @@
         </div>
       </div>
 
+      @if (venue.latitude !== null && venue.longitude !== null) {
+        <a
+          class="venue-map-link"
+          [href]="'https://www.google.com/maps?q=' + venue.latitude + ',' + venue.longitude"
+          target="_blank"
+          rel="noopener noreferrer">
+          {{ 'venue.detail.viewMap' | t }}
+        </a>
+      }
+
       <section class="venue-photos-section">
         <div class="venue-photos-heading">
           <h2>{{ 'venue.detail.photos' | t }}</h2>
