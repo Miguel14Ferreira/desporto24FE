@@ -38,11 +38,19 @@ export class VenueCreateComponent {
   priceInfo = '';
   saving = false;
   saveError = false;
+  validationError = false;
 
   constructor(private venueService: VenueService, private router: Router) {}
 
   save(): void {
     if (this.saving) return;
+
+    if (!this.name.trim() || !this.city.trim() || !this.address.trim()) {
+      this.validationError = true;
+      return;
+    }
+
+    this.validationError = false;
 
     const request: CreateVenueRequest = {
       name: this.name.trim(), city: this.city.trim(), address: this.address.trim(),

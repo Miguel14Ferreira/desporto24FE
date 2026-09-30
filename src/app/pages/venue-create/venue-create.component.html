@@ -11,6 +11,7 @@
           type="text"
           name="name"
           [(ngModel)]="name"
+          required
           [placeholder]="'venue.namePlaceholder' | t">
       </label>
 
@@ -20,6 +21,7 @@
           type="text"
           name="city"
           [(ngModel)]="city"
+          required
           autocomplete="address-level2"
           [placeholder]="'events.cityPlaceholder' | t">
       </label>
@@ -30,6 +32,7 @@
           type="text"
           name="address"
           [(ngModel)]="address"
+          required
           autocomplete="street-address"
           [placeholder]="'createSession.addressPlaceholder' | t">
       </label>
@@ -134,6 +137,9 @@
       </label>
 
       <div class="venue-create-actions venue-create-wide">
+        @if (validationError) {
+          <span class="venue-create-error">{{ 'venue.requiredFields' | t }}</span>
+        }
         @if (saveError) {
           <span class="venue-create-error">{{ 'venue.createError' | t }}</span>
         }
