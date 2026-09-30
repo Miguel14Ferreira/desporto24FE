@@ -5,6 +5,8 @@
     <h1>{{ 'venue.saveNew' | t }}</h1>
 
     <form class="venue-create-form" (ngSubmit)="save()">
+      <h2 class="venue-create-section-title">{{ 'venue.create.basicInfo' | t }}</h2>
+
       <label>
         <span>{{ 'venue.name' | t }}</span>
         <input
