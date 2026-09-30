@@ -28,4 +28,8 @@ export class VenueCreateComponent {
   firstAid = false;
   aed = false;
   cafe = false;
+  services = '';
+  transport = '';
+  openingHours = '';
+  priceInfo = '';
 }

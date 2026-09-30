@@ -48,7 +48,8 @@
 }
 
 .venue-create-form input,
-.venue-create-form select {
+.venue-create-form select,
+.venue-create-form textarea {
   width: 100%;
   box-sizing: border-box;
   padding: 12px 14px;
@@ -95,4 +96,9 @@
   .venue-create-options {
     grid-template-columns: 1fr;
   }
+}
+
+.venue-create-form textarea {
+  min-height: 96px;
+  resize: vertical;
 }

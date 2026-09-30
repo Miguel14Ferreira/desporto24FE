@@ -108,6 +108,30 @@
           <span>{{ 'venue.cafe' | t }}</span>
         </label>
       </div>
+
+      <label class="venue-create-wide">
+        <span>{{ 'venue.services' | t }}</span>
+        <textarea name="services" [(ngModel)]="services"
+          [placeholder]="'venue.servicesPlaceholder' | t"></textarea>
+      </label>
+
+      <label class="venue-create-wide">
+        <span>{{ 'venue.transport' | t }}</span>
+        <textarea name="transport" [(ngModel)]="transport"
+          [placeholder]="'venue.transportPlaceholder' | t"></textarea>
+      </label>
+
+      <label>
+        <span>{{ 'venue.openingHours' | t }}</span>
+        <input type="text" name="openingHours" [(ngModel)]="openingHours"
+          [placeholder]="'venue.openingHoursPlaceholder' | t">
+      </label>
+
+      <label>
+        <span>{{ 'venue.priceInfo' | t }}</span>
+        <input type="text" name="priceInfo" [(ngModel)]="priceInfo"
+          [placeholder]="'venue.priceInfoPlaceholder' | t">
+      </label>
     </form>
   </div>
 </section>
