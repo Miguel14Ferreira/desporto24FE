@@ -92,4 +92,17 @@ describe('DiscoverComponent', () => {
       status: 'OPEN'
     })).toBe(2);
   });
+  it('expands and collapses venue results', () => {
+    component.venues = Array.from({ length: 6 }, (_, index) => ({
+      id: index + 1
+    } as any));
+
+    expect(component.topVenues.length).toBe(4);
+
+    component.toggleAllVenues();
+    expect(component.topVenues.length).toBe(6);
+
+    component.toggleAllVenues();
+    expect(component.topVenues.length).toBe(4);
+  });
 });

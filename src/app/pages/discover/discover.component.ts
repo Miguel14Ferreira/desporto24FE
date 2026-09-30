@@ -28,6 +28,7 @@ export class DiscoverComponent implements OnInit {
 
   loading = false;
   initialized = false;
+  showAllVenues = false;
 
   constructor(
     private authenticationService: AuthenticationService,
@@ -98,7 +99,11 @@ export class DiscoverComponent implements OnInit {
   }
 
   get topVenues(): Venue[] {
-    return this.venues.slice(0, 4);
+    return this.showAllVenues ? this.venues : this.venues.slice(0, 4);
+  }
+
+  toggleAllVenues(): void {
+    this.showAllVenues = !this.showAllVenues;
   }
 
   get topSessions(): SessionSummary[] {

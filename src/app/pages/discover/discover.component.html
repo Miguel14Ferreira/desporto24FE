@@ -106,6 +106,13 @@
             </div>
           }
 
+          @if (venues.length > 4) {
+            <button type="button" class="pillar-action" (click)="toggleAllVenues()">
+              {{ (showAllVenues ? 'discover.where.showLess' : 'discover.where.showAll') | t }}
+              <span>{{ showAllVenues ? '↑' : '↓' }}</span>
+            </button>
+          }
+
           <a class="pillar-action" routerLink="/menu/venues/new">
             {{ 'discover.where.action' | t }} <span>→</span>
           </a>
