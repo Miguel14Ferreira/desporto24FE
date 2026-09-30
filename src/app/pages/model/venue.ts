@@ -28,6 +28,7 @@ export interface Venue {
   staffOnSite: boolean | null;
   securitySurveillance: boolean | null;
   cafe: boolean | null;
+  restaurant: boolean | null;
   services: string | null;
   transport: string | null;
   openingHours: string | null;
@@ -68,6 +69,7 @@ export interface CreateVenueRequest {
   staffOnSite?: boolean | null;
   securitySurveillance?: boolean | null;
   cafe?: boolean | null;
+  restaurant?: boolean | null;
   services?: string | null;
   transport?: string | null;
   openingHours?: string | null;

@@ -46,13 +46,14 @@ describe('VenueCreateComponent', () => {
     component.lifeguard = true;
     component.staffOnSite = true;
     component.securitySurveillance = true;
+    component.restaurant = true;
 
     component.save();
 
     expect(venueService.create).toHaveBeenCalledOnceWith(jasmine.objectContaining({
       name: 'Pavilhão Central', city: 'Lisboa', address: 'Rua do Desporto',
       sports: 'Futsal;Padel', environmentType: 'BOTH', indoor: true,
-      website: 'https://pavilhao.example', contact: '+351 210 000 000', changingRooms: true, changingRoomTypes: 'MALE;FEMALE;ADAPTED', showers: true, stands: true, drinkingFountain: true, medicalStation: true, lifeguard: true, staffOnSite: true, securitySurveillance: true, latitude: null, longitude: null
+      website: 'https://pavilhao.example', contact: '+351 210 000 000', changingRooms: true, changingRoomTypes: 'MALE;FEMALE;ADAPTED', showers: true, stands: true, drinkingFountain: true, medicalStation: true, lifeguard: true, staffOnSite: true, securitySurveillance: true, restaurant: true, latitude: null, longitude: null
     }));
     expect(router.navigate).toHaveBeenCalledOnceWith(['/menu/venues', 7]);
     expect(component.validationError).toBeFalse();
@@ -152,7 +153,8 @@ describe('VenueCreateComponent', () => {
       lifeguard: null,
       staffOnSite: null,
       securitySurveillance: null,
-      cafe: null
+      cafe: null,
+      restaurant: null
     }));
   });
 });
