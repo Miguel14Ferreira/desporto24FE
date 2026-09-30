@@ -26,6 +26,7 @@ export interface Venue {
   medicalStation: boolean | null;
   lifeguard: boolean | null;
   staffOnSite: boolean | null;
+  securitySurveillance: boolean | null;
   cafe: boolean | null;
   services: string | null;
   transport: string | null;
@@ -65,6 +66,7 @@ export interface CreateVenueRequest {
   medicalStation?: boolean | null;
   lifeguard?: boolean | null;
   staffOnSite?: boolean | null;
+  securitySurveillance?: boolean | null;
   cafe?: boolean | null;
   services?: string | null;
   transport?: string | null;

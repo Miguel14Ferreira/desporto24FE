@@ -212,6 +212,14 @@
           </select>
         </label>
         <label>
+          <span>{{ 'venue.securitySurveillance' | t }}</span>
+          <select name="securitySurveillance" [(ngModel)]="securitySurveillance">
+            <option [ngValue]="null">{{ 'venue.boolean.none' | t }}</option>
+            <option [ngValue]="true">{{ 'venue.boolean.yes' | t }}</option>
+            <option [ngValue]="false">{{ 'venue.boolean.no' | t }}</option>
+          </select>
+        </label>
+        <label>
           <span>{{ 'venue.cafe' | t }}</span>
           <select name="cafe" [(ngModel)]="cafe">
             <option [ngValue]="null">{{ 'venue.boolean.none' | t }}</option>
