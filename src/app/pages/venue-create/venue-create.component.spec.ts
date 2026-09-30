@@ -50,6 +50,7 @@ describe('VenueCreateComponent', () => {
     component.vendingMachines = true;
     component.sportsShop = true;
     component.wifi = true;
+    component.phoneCharging = true;
     component.nearbyRadiusMeters = 1000;
     component.nearbyPharmacy = true;
     component.nearbyAtm = true;
@@ -59,7 +60,7 @@ describe('VenueCreateComponent', () => {
     expect(venueService.create).toHaveBeenCalledOnceWith(jasmine.objectContaining({
       name: 'Pavilhão Central', city: 'Lisboa', address: 'Rua do Desporto',
       sports: 'Futsal;Padel', environmentType: 'BOTH', indoor: true,
-      website: 'https://pavilhao.example', contact: '+351 210 000 000', changingRooms: true, changingRoomTypes: 'MALE;FEMALE;ADAPTED', showers: true, stands: true, drinkingFountain: true, medicalStation: true, lifeguard: true, staffOnSite: true, securitySurveillance: true, restaurant: true, vendingMachines: true, sportsShop: true, wifi: true, nearbyRadiusMeters: 1000, nearbyPharmacy: true, nearbyAtm: true, latitude: null, longitude: null
+      website: 'https://pavilhao.example', contact: '+351 210 000 000', changingRooms: true, changingRoomTypes: 'MALE;FEMALE;ADAPTED', showers: true, stands: true, drinkingFountain: true, medicalStation: true, lifeguard: true, staffOnSite: true, securitySurveillance: true, restaurant: true, vendingMachines: true, sportsShop: true, wifi: true, phoneCharging: true, nearbyRadiusMeters: 1000, nearbyPharmacy: true, nearbyAtm: true, latitude: null, longitude: null
     }));
     expect(router.navigate).toHaveBeenCalledOnceWith(['/menu/venues', 7]);
     expect(component.validationError).toBeFalse();
@@ -164,6 +165,7 @@ describe('VenueCreateComponent', () => {
       vendingMachines: null,
       sportsShop: null,
       wifi: null,
+      phoneCharging: null,
       nearbyRadiusMeters: 500,
       nearbyPharmacy: null,
       nearbyAtm: null
