@@ -92,6 +92,12 @@ describe('DiscoverComponent', () => {
       status: 'OPEN'
     })).toBe(2);
   });
+  it('collapses expanded venue results when starting a new search', () => {
+    component.showAllVenues = true;
+    component.search();
+    expect(component.showAllVenues).toBeFalse();
+  });
+
   it('expands and collapses venue results', () => {
     component.venues = Array.from({ length: 6 }, (_, index) => ({
       id: index + 1

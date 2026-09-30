@@ -63,6 +63,8 @@ export class DiscoverComponent implements OnInit {
   }
 
   search(): void {
+    this.showAllVenues = false;
+
     const sport = this.sport.trim();
     const location = this.location.trim();
 
