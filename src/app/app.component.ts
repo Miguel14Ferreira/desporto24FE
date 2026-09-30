@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { AuthenticationService } from './services/authethication.service';
+import { PilotAnalyticsService } from './services/pilot-analytics.service';
 import { appTranslate as t } from './i18n/i18n.service';
 
 @Component({
@@ -16,10 +17,13 @@ export class AppComponent implements OnInit {
 
   constructor(
     private router: Router,
-    private authenticationService: AuthenticationService
+    private authenticationService: AuthenticationService,
+    private pilotAnalyticsService: PilotAnalyticsService
   ) {}
 
   ngOnInit(): void {
+    this.pilotAnalyticsService.recordFirstAccess();
+
     const params = new URLSearchParams(window.location.search);
     const token = params.get('confirmRegistration');
 
