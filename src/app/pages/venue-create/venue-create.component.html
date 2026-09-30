@@ -15,6 +15,7 @@
           [(ngModel)]="name"
           required
           [attr.aria-invalid]="validationError && !name.trim() ? 'true' : null"
+          [attr.aria-describedby]="validationError && !name.trim() ? 'venue-required-fields-error' : null"
           [placeholder]="'venue.namePlaceholder' | t">
       </label>
 
@@ -26,6 +27,7 @@
           [(ngModel)]="city"
           required
           [attr.aria-invalid]="validationError && !city.trim() ? 'true' : null"
+          [attr.aria-describedby]="validationError && !city.trim() ? 'venue-required-fields-error' : null"
           autocomplete="address-level2"
           [placeholder]="'events.cityPlaceholder' | t">
       </label>
@@ -38,6 +40,7 @@
           [(ngModel)]="address"
           required
           [attr.aria-invalid]="validationError && !address.trim() ? 'true' : null"
+          [attr.aria-describedby]="validationError && !address.trim() ? 'venue-required-fields-error' : null"
           autocomplete="street-address"
           [placeholder]="'createSession.addressPlaceholder' | t">
       </label>
@@ -196,7 +199,7 @@
 
       <div class="venue-create-actions venue-create-wide">
         @if (validationError) {
-          <span class="venue-create-error" role="alert" aria-live="assertive">{{ 'venue.requiredFields' | t }}</span>
+          <span id="venue-required-fields-error" class="venue-create-error" role="alert" aria-live="assertive">{{ 'venue.requiredFields' | t }}</span>
         }
         @if (saveError) {
           <span class="venue-create-error" role="alert" aria-live="assertive">{{ 'venue.createError' | t }}</span>
