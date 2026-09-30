@@ -379,6 +379,7 @@ describe('VenueDetailsComponent', () => {
 
     const component = new VenueDetailsComponent(route, venueService);
     component.venue = { id: 7 } as Venue;
+    component.photosLoadError = true;
 
     component.uploadPhoto({ target: input } as unknown as Event);
 
@@ -387,6 +388,7 @@ describe('VenueDetailsComponent', () => {
     expect(input.value).toBe('');
     expect(component.photoUploading).toBeFalse();
     expect(component.photoUploadError).toBeFalse();
+    expect(component.photosLoadError).toBeFalse();
   });
 
   it('marks the photo upload as failed when saving errors', () => {

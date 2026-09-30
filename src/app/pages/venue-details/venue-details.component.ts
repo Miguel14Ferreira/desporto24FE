@@ -142,6 +142,7 @@ export class VenueDetailsComponent implements OnInit {
       .pipe(finalize(() => this.photoUploading = false))
       .subscribe({
         next: photo => {
+          this.photosLoadError = false;
           this.photos = [photo, ...this.photos];
           input.value = '';
         },
