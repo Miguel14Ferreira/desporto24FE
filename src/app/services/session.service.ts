@@ -108,6 +108,10 @@ export class SessionService {
     return this.http.post<void>(this.baseUrl + '/' + id + '/cancel', null);
   }
 
+  complete(id: number): Observable<void> {
+    return this.http.post<void>(this.baseUrl + '/' + id + '/complete', null);
+  }
+
   messages(id: number): Observable<SessionMessage[]> {
     return this.http.get<SessionMessage[]>(this.baseUrl + '/' + id + '/messages');
   }

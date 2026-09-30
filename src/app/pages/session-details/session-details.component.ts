@@ -156,6 +156,28 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
       });
   }
 
+  completeSession(): void {
+    if (!this.sessionId || !this.canCompleteSession() || this.actionLoading) {
+      return;
+    }
+
+    this.actionLoading = true;
+    this.actionError = '';
+    this.actionSuccess = '';
+
+    this.sessionService.complete(this.sessionId)
+      .pipe(finalize(() => this.actionLoading = false))
+      .subscribe({
+        next: () => {
+          this.actionSuccess = t('feedback.session.completed');
+          this.loadSession(false);
+        },
+        error: error => {
+          this.actionError = this.errorFrom(error, t('feedback.session.completeError'));
+        }
+      });
+  }
+
   loadParticipants(): void {
     if (!this.sessionId || !this.isCreator() || this.participantsLoading) {
       return;
@@ -421,6 +443,19 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
     }
 
     return this.session.creatorUsername.toLowerCase() === this.currentUsername.toLowerCase();
+  }
+
+  canCompleteSession(): boolean {
+    if (!this.session || !this.isCreator()) {
+      return false;
+    }
+
+    if (this.session.status !== 'OPEN' && this.session.status !== 'FULL') {
+      return false;
+    }
+
+    const startTime = new Date(this.session.gameDate).getTime();
+    return Number.isFinite(startTime) && startTime <= Date.now();
   }
 
   isFull(): boolean {

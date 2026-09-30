@@ -41,7 +41,7 @@ describe('SessionDetailsComponent', () => {
   beforeEach(async () => {
     sessionService = jasmine.createSpyObj<SessionService>(
       'SessionService',
-      ['detail', 'join', 'leave', 'messages', 'postMessage', 'participants', 'removeParticipant']
+      ['detail', 'join', 'leave', 'complete', 'messages', 'postMessage', 'participants', 'removeParticipant']
     );
     sessionService.detail.and.returnValue(of(session));
     sessionService.join.and.returnValue(of({
@@ -49,6 +49,7 @@ describe('SessionDetailsComponent', () => {
       waitlistPosition: null
     }));
     sessionService.leave.and.returnValue(of(void 0));
+    sessionService.complete.and.returnValue(of(void 0));
     sessionService.removeParticipant.and.returnValue(of(void 0));
     sessionService.messages.and.returnValue(of([]));
     sessionService.participants.and.returnValue(of([
@@ -187,6 +188,36 @@ describe('SessionDetailsComponent', () => {
     expect(sessionService.leave).toHaveBeenCalledWith(7);
     expect(sessionService.detail).toHaveBeenCalledTimes(2);
     expect(component.actionSuccess).toContain('lista de espera');
+  });
+
+  it('should complete a started session as creator and refresh details', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session,
+      joined: true,
+      status: 'OPEN',
+      gameDate: '2026-09-30T18:00:00Z'
+    };
+
+    component.completeSession();
+
+    expect(sessionService.complete).toHaveBeenCalledWith(7);
+    expect(sessionService.detail).toHaveBeenCalledTimes(2);
+    expect(component.actionSuccess).toContain('concluída');
+  });
+
+  it('should not allow completion before the session starts', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session,
+      joined: true,
+      status: 'OPEN',
+      gameDate: '2099-10-01T18:00:00Z'
+    };
+
+    component.completeSession();
+
+    expect(sessionService.complete).not.toHaveBeenCalled();
   });
 
   it('should require a password for private sessions', () => {
