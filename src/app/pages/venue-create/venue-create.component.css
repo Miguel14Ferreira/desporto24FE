@@ -127,3 +127,23 @@
 .venue-create-error {
   font-size: 0.9rem;
 }
+
+.venue-create-location {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.venue-create-location button {
+  padding: 10px 16px;
+  border: 1px solid #d9d9d9;
+  border-radius: 12px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.venue-create-location button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}

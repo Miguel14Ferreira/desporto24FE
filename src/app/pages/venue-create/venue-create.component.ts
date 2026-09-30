@@ -41,8 +41,31 @@ export class VenueCreateComponent {
   saving = false;
   saveError = false;
   validationError = false;
+  locating = false;
+  locationError = false;
 
   constructor(private venueService: VenueService, private router: Router) {}
+
+  useCurrentLocation(): void {
+    if (!navigator.geolocation || this.locating) {
+      this.locationError = true;
+      return;
+    }
+
+    this.locating = true;
+    this.locationError = false;
+    navigator.geolocation.getCurrentPosition(
+      position => {
+        this.latitude = position.coords.latitude;
+        this.longitude = position.coords.longitude;
+        this.locating = false;
+      },
+      () => {
+        this.locationError = true;
+        this.locating = false;
+      }
+    );
+  }
 
   save(): void {
     if (this.saving) return;

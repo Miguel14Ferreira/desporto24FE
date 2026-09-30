@@ -148,6 +148,15 @@
           min="-180" max="180" step="any" placeholder="-9.1393">
       </label>
 
+      <div class="venue-create-location venue-create-wide">
+        <button type="button" (click)="useCurrentLocation()" [disabled]="locating">
+          {{ (locating ? 'venue.locating' : 'venue.useCurrentLocation') | t }}
+        </button>
+        @if (locationError) {
+          <span class="venue-create-error">{{ 'feedback.location.error' | t }}</span>
+        }
+      </div>
+
       <div class="venue-create-actions venue-create-wide">
         @if (validationError) {
           <span class="venue-create-error">{{ 'venue.requiredFields' | t }}</span>
