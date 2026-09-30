@@ -23,6 +23,7 @@ export interface Venue {
   accessible: boolean | null;
   firstAid: boolean | null;
   aed: boolean | null;
+  medicalStation: boolean | null;
   cafe: boolean | null;
   services: string | null;
   transport: string | null;
@@ -59,6 +60,7 @@ export interface CreateVenueRequest {
   accessible?: boolean | null;
   firstAid?: boolean | null;
   aed?: boolean | null;
+  medicalStation?: boolean | null;
   cafe?: boolean | null;
   services?: string | null;
   transport?: string | null;
