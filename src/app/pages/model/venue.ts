@@ -14,6 +14,7 @@ export interface Venue {
   environmentType: VenueEnvironmentType;
   indoor: boolean;
   changingRooms: boolean;
+  changingRoomTypes: string | null;
   toilets: boolean | null;
   lockers: boolean | null;
   showers: boolean | null;
@@ -49,6 +50,7 @@ export interface CreateVenueRequest {
   environmentType?: VenueEnvironmentType | null;
   indoor: boolean;
   changingRooms: boolean;
+  changingRoomTypes?: string | null;
   toilets?: boolean | null;
   lockers?: boolean | null;
   showers?: boolean | null;

@@ -25,6 +25,7 @@ export class VenueCreateComponent {
   environmentType: VenueEnvironmentType = 'OUTDOOR';
   indoor = false;
   changingRooms = false;
+  changingRoomTypes: string[] = [];
   parking = false;
   lighting = false;
   toilets: boolean | null = null;
@@ -73,6 +74,16 @@ export class VenueCreateComponent {
     );
   }
 
+  isChangingRoomTypeSelected(type: string): boolean {
+    return this.changingRoomTypes.includes(type);
+  }
+
+  toggleChangingRoomType(type: string, selected: boolean): void {
+    this.changingRoomTypes = selected
+      ? [...this.changingRoomTypes, type]
+      : this.changingRoomTypes.filter(item => item !== type);
+  }
+
   isSportSelected(sport: string): boolean {
     return this.selectedSports.includes(sport);
   }
@@ -97,7 +108,8 @@ export class VenueCreateComponent {
       name: this.name.trim(), city: this.city.trim(), address: this.address.trim(),
       sports: this.selectedSports.length ? this.selectedSports.join(';') : null, venueType: this.valueOrNull(this.venueType),
       ownershipType: this.ownershipType, surfaceType: this.valueOrNull(this.surfaceType),
-      environmentType: this.environmentType, indoor: this.environmentType !== 'OUTDOOR', changingRooms: this.changingRooms, toilets: this.toilets,
+      environmentType: this.environmentType, indoor: this.environmentType !== 'OUTDOOR', changingRooms: this.changingRooms,
+      changingRoomTypes: this.changingRooms && this.changingRoomTypes.length ? this.changingRoomTypes.join(';') : null, toilets: this.toilets,
       lockers: this.lockers, showers: this.showers, stands: this.stands, drinkingFountain: this.drinkingFountain, accessible: this.accessible, firstAid: this.firstAid,
       aed: this.aed, cafe: this.cafe, services: this.valueOrNull(this.services),
       transport: this.valueOrNull(this.transport), openingHours: this.valueOrNull(this.openingHours),

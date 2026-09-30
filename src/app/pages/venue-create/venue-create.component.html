@@ -100,6 +100,21 @@
           <input type="checkbox" name="changingRooms" [(ngModel)]="changingRooms">
           <span>{{ 'venue.changingRooms' | t }}</span>
         </label>
+        @if (changingRooms) {
+          <div class="venue-create-wide">
+            <span>{{ 'venue.changingRoomTypes' | t }}</span>
+            <div class="venue-create-options">
+              @for (type of ['MALE', 'FEMALE', 'INDIVIDUAL', 'ADAPTED']; track type) {
+                <label class="venue-create-option">
+                  <input type="checkbox" [name]="'changingRoomType-' + type"
+                    [checked]="isChangingRoomTypeSelected(type)"
+                    (change)="toggleChangingRoomType(type, $any($event.target).checked)">
+                  <span>{{ ('venue.changingRoomType.' + type.toLowerCase()) | t }}</span>
+                </label>
+              }
+            </div>
+          </div>
+        }
         <label class="venue-create-option">
           <input type="checkbox" name="parking" [(ngModel)]="parking">
           <span>{{ 'venue.parking' | t }}</span>
