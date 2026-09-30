@@ -29,6 +29,7 @@ export interface Venue {
   securitySurveillance: boolean | null;
   cafe: boolean | null;
   restaurant: boolean | null;
+  vendingMachines: boolean | null;
   services: string | null;
   transport: string | null;
   openingHours: string | null;
@@ -70,6 +71,7 @@ export interface CreateVenueRequest {
   securitySurveillance?: boolean | null;
   cafe?: boolean | null;
   restaurant?: boolean | null;
+  vendingMachines?: boolean | null;
   services?: string | null;
   transport?: string | null;
   openingHours?: string | null;
