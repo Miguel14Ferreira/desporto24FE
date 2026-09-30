@@ -17,6 +17,7 @@ export interface Venue {
   toilets: boolean | null;
   lockers: boolean | null;
   showers: boolean | null;
+  stands: boolean | null;
   accessible: boolean | null;
   firstAid: boolean | null;
   aed: boolean | null;
@@ -50,6 +51,7 @@ export interface CreateVenueRequest {
   toilets?: boolean | null;
   lockers?: boolean | null;
   showers?: boolean | null;
+  stands?: boolean | null;
   accessible?: boolean | null;
   firstAid?: boolean | null;
   aed?: boolean | null;
