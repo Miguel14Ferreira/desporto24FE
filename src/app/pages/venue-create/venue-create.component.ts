@@ -27,6 +27,7 @@ export class VenueCreateComponent {
   changingRooms = false;
   changingRoomTypes: string[] = [];
   parking = false;
+  freeParking: boolean | null = null;
   lighting = false;
   toilets: boolean | null = null;
   lockers: boolean | null = null;
@@ -125,7 +126,7 @@ export class VenueCreateComponent {
       lockers: this.lockers, showers: this.showers, stands: this.stands, drinkingFountain: this.drinkingFountain, accessible: this.accessible, firstAid: this.firstAid,
       aed: this.aed, medicalStation: this.medicalStation, lifeguard: this.lifeguard, staffOnSite: this.staffOnSite, securitySurveillance: this.securitySurveillance, cafe: this.cafe, restaurant: this.restaurant, vendingMachines: this.vendingMachines, sportsShop: this.sportsShop, wifi: this.wifi, phoneCharging: this.phoneCharging, nearbyRadiusMeters: this.nearbyRadiusMeters, nearbyPharmacy: this.nearbyPharmacy, nearbyAtm: this.nearbyAtm, services: this.valueOrNull(this.services),
       transport: this.valueOrNull(this.transport), openingHours: this.valueOrNull(this.openingHours),
-      priceInfo: this.valueOrNull(this.priceInfo), website: this.valueOrNull(this.website), contact: this.valueOrNull(this.contact), parking: this.parking, lighting: this.lighting,
+      priceInfo: this.valueOrNull(this.priceInfo), website: this.valueOrNull(this.website), contact: this.valueOrNull(this.contact), parking: this.parking, freeParking: this.freeParking, lighting: this.lighting,
       latitude: this.latitude, longitude: this.longitude
     };
 

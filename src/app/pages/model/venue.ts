@@ -43,6 +43,7 @@ export interface Venue {
   website: string | null;
   contact: string | null;
   parking: boolean;
+  freeParking: boolean | null;
   lighting: boolean;
   latitude: number | null;
   longitude: number | null;
@@ -91,6 +92,7 @@ export interface CreateVenueRequest {
   website?: string | null;
   contact?: string | null;
   parking: boolean;
+  freeParking?: boolean | null;
   lighting: boolean;
   latitude: number | null;
   longitude: number | null;

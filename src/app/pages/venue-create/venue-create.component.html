@@ -119,6 +119,14 @@
           <input type="checkbox" name="parking" [(ngModel)]="parking">
           <span>{{ 'venue.parking' | t }}</span>
         </label>
+        <label>
+          <span>{{ 'venue.freeParking' | t }}</span>
+          <select name="freeParking" [(ngModel)]="freeParking">
+            <option [ngValue]="null">{{ 'venue.boolean.none' | t }}</option>
+            <option [ngValue]="true">{{ 'venue.boolean.yes' | t }}</option>
+            <option [ngValue]="false">{{ 'venue.boolean.no' | t }}</option>
+          </select>
+        </label>
         <label class="venue-create-option">
           <input type="checkbox" name="lighting" [(ngModel)]="lighting">
           <span>{{ 'venue.lighting' | t }}</span>
