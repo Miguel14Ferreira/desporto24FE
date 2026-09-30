@@ -275,6 +275,16 @@
   text-decoration: none;
 }
 
+button.pillar-action {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: .8rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+
 .discover-flow {
   display: flex;
   justify-content: center;
