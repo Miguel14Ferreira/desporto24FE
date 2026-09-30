@@ -1,5 +1,6 @@
 export type VenueOwnershipType = 'PUBLIC' | 'PRIVATE';
 export type VenueInformationSource = 'COMMUNITY' | 'OFFICIAL';
+export type VenueEnvironmentType = 'INDOOR' | 'OUTDOOR' | 'BOTH';
 
 export interface Venue {
   id: number;
@@ -10,6 +11,7 @@ export interface Venue {
   venueType: string | null;
   ownershipType: VenueOwnershipType | null;
   surfaceType: string | null;
+  environmentType: VenueEnvironmentType;
   indoor: boolean;
   changingRooms: boolean;
   toilets: boolean | null;
@@ -39,6 +41,7 @@ export interface CreateVenueRequest {
   venueType?: string | null;
   ownershipType?: VenueOwnershipType | null;
   surfaceType: string | null;
+  environmentType?: VenueEnvironmentType | null;
   indoor: boolean;
   changingRooms: boolean;
   toilets?: boolean | null;

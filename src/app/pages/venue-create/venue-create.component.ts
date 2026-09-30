@@ -5,7 +5,7 @@ import { finalize } from 'rxjs';
 import { VenueService } from '../../services/venue.service';
 
 import { SPORTS_CATALOG } from '../../shared/sports-catalog';
-import { CreateVenueRequest, VenueOwnershipType } from '../model/venue';
+import { CreateVenueRequest, VenueEnvironmentType, VenueOwnershipType } from '../model/venue';
 
 @Component({
   selector: 'app-venue-create',
@@ -22,6 +22,7 @@ export class VenueCreateComponent {
   venueType = '';
   ownershipType: VenueOwnershipType | null = null;
   surfaceType = '';
+  environmentType: VenueEnvironmentType = 'OUTDOOR';
   indoor = false;
   changingRooms = false;
   parking = false;
@@ -91,7 +92,7 @@ export class VenueCreateComponent {
       name: this.name.trim(), city: this.city.trim(), address: this.address.trim(),
       sports: this.selectedSports.length ? this.selectedSports.join(';') : null, venueType: this.valueOrNull(this.venueType),
       ownershipType: this.ownershipType, surfaceType: this.valueOrNull(this.surfaceType),
-      indoor: this.indoor, changingRooms: this.changingRooms, toilets: this.toilets,
+      environmentType: this.environmentType, indoor: this.environmentType !== 'OUTDOOR', changingRooms: this.changingRooms, toilets: this.toilets,
       lockers: this.lockers, accessible: this.accessible, firstAid: this.firstAid,
       aed: this.aed, cafe: this.cafe, services: this.valueOrNull(this.services),
       transport: this.valueOrNull(this.transport), openingHours: this.valueOrNull(this.openingHours),

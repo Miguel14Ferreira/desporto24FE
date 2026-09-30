@@ -34,12 +34,13 @@ describe('VenueCreateComponent', () => {
     component.city = '  Lisboa  ';
     component.address = '  Rua do Desporto  ';
     component.selectedSports = ['Futsal', 'Padel'];
+    component.environmentType = 'BOTH';
 
     component.save();
 
     expect(venueService.create).toHaveBeenCalledOnceWith(jasmine.objectContaining({
       name: 'Pavilhão Central', city: 'Lisboa', address: 'Rua do Desporto',
-      sports: 'Futsal;Padel', latitude: null, longitude: null
+      sports: 'Futsal;Padel', environmentType: 'BOTH', indoor: true, latitude: null, longitude: null
     }));
     expect(router.navigate).toHaveBeenCalledOnceWith(['/menu/venues', 7]);
     expect(component.validationError).toBeFalse();

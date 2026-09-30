@@ -80,6 +80,15 @@
           [placeholder]="'venue.surfacePlaceholder' | t">
       </label>
 
+      <label>
+        <span>{{ 'venue.environment' | t }}</span>
+        <select name="environmentType" [(ngModel)]="environmentType">
+          <option value="INDOOR">{{ 'venue.environment.indoor' | t }}</option>
+          <option value="OUTDOOR">{{ 'venue.environment.outdoor' | t }}</option>
+          <option value="BOTH">{{ 'venue.environment.both' | t }}</option>
+        </select>
+      </label>
+
       <h2 class="venue-create-section-title">{{ 'venue.create.amenities' | t }}</h2>
 
       <div class="venue-create-options venue-create-wide">
