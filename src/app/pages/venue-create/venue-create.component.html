@@ -202,10 +202,11 @@
           <span id="venue-required-fields-error" class="venue-create-error" role="alert" aria-live="assertive">{{ 'venue.requiredFields' | t }}</span>
         }
         @if (saveError) {
-          <span class="venue-create-error" role="alert" aria-live="assertive">{{ 'venue.createError' | t }}</span>
+          <span id="venue-create-save-error" class="venue-create-error" role="alert" aria-live="assertive">{{ 'venue.createError' | t }}</span>
         }
         <a class="venue-create-cancel" routerLink="/menu/discover">{{ 'common.cancel' | t }}</a>
-        <button type="submit" [disabled]="saving">
+        <button type="submit" [disabled]="saving"
+          [attr.aria-describedby]="saveError ? 'venue-create-save-error' : null">
           {{ (saving ? 'venue.saving' : 'venue.save') | t }}
         </button>
       </div>
