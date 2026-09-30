@@ -41,6 +41,7 @@ import { NotFoundComponent } from './pages/not-found/not-found.component';
 import { SocialFeedComponent } from './pages/social-feed/social-feed.component';
 import { DiscoverComponent } from './pages/discover/discover.component';
 import { VenueDetailsComponent } from './pages/venue-details/venue-details.component';
+import { VenueCreateComponent } from './pages/venue-create/venue-create.component';
 import { TranslatePipe } from './i18n/translate.pipe';
 
 @NgModule({ declarations: [
@@ -78,6 +79,7 @@ import { TranslatePipe } from './i18n/translate.pipe';
         SocialFeedComponent,
         DiscoverComponent,
         VenueDetailsComponent,
+        VenueCreateComponent,
         TranslatePipe
     ],
     bootstrap: [AppComponent], imports: [BrowserModule,

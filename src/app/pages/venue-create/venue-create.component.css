@@ -1,0 +1,35 @@
+.venue-create-page {
+  min-height: 100%;
+  padding: 32px 20px 56px;
+}
+
+.venue-create-shell {
+  width: min(760px, 100%);
+  margin: 0 auto;
+}
+
+.back-link {
+  display: inline-flex;
+  margin-bottom: 24px;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.venue-kicker {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.venue-create-shell h1 {
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .venue-create-page {
+    padding: 24px 16px 40px;
+  }
+}
