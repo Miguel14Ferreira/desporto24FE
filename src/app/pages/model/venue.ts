@@ -30,6 +30,7 @@ export interface Venue {
   cafe: boolean | null;
   restaurant: boolean | null;
   vendingMachines: boolean | null;
+  sportsShop: boolean | null;
   services: string | null;
   transport: string | null;
   openingHours: string | null;
@@ -72,6 +73,7 @@ export interface CreateVenueRequest {
   cafe?: boolean | null;
   restaurant?: boolean | null;
   vendingMachines?: boolean | null;
+  sportsShop?: boolean | null;
   services?: string | null;
   transport?: string | null;
   openingHours?: string | null;

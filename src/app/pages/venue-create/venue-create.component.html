@@ -243,6 +243,14 @@
             <option [ngValue]="false">{{ 'venue.boolean.no' | t }}</option>
           </select>
         </label>
+        <label>
+          <span>{{ 'venue.sportsShop' | t }}</span>
+          <select name="sportsShop" [(ngModel)]="sportsShop">
+            <option [ngValue]="null">{{ 'venue.boolean.none' | t }}</option>
+            <option [ngValue]="true">{{ 'venue.boolean.yes' | t }}</option>
+            <option [ngValue]="false">{{ 'venue.boolean.no' | t }}</option>
+          </select>
+        </label>
       </div>
 
       <h2 class="venue-create-section-title">{{ 'venue.create.practicalInfo' | t }}</h2>
