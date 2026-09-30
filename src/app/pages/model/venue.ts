@@ -16,6 +16,7 @@ export interface Venue {
   changingRooms: boolean;
   toilets: boolean | null;
   lockers: boolean | null;
+  showers: boolean | null;
   accessible: boolean | null;
   firstAid: boolean | null;
   aed: boolean | null;
@@ -48,6 +49,7 @@ export interface CreateVenueRequest {
   changingRooms: boolean;
   toilets?: boolean | null;
   lockers?: boolean | null;
+  showers?: boolean | null;
   accessible?: boolean | null;
   firstAid?: boolean | null;
   aed?: boolean | null;

@@ -29,6 +29,7 @@ export class VenueCreateComponent {
   lighting = false;
   toilets: boolean | null = null;
   lockers: boolean | null = null;
+  showers: boolean | null = null;
   accessible: boolean | null = null;
   firstAid: boolean | null = null;
   aed: boolean | null = null;
@@ -95,7 +96,7 @@ export class VenueCreateComponent {
       sports: this.selectedSports.length ? this.selectedSports.join(';') : null, venueType: this.valueOrNull(this.venueType),
       ownershipType: this.ownershipType, surfaceType: this.valueOrNull(this.surfaceType),
       environmentType: this.environmentType, indoor: this.environmentType !== 'OUTDOOR', changingRooms: this.changingRooms, toilets: this.toilets,
-      lockers: this.lockers, accessible: this.accessible, firstAid: this.firstAid,
+      lockers: this.lockers, showers: this.showers, accessible: this.accessible, firstAid: this.firstAid,
       aed: this.aed, cafe: this.cafe, services: this.valueOrNull(this.services),
       transport: this.valueOrNull(this.transport), openingHours: this.valueOrNull(this.openingHours),
       priceInfo: this.valueOrNull(this.priceInfo), website: this.valueOrNull(this.website), contact: this.valueOrNull(this.contact), parking: this.parking, lighting: this.lighting,
