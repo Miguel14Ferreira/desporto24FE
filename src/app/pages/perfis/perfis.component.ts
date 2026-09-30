@@ -40,6 +40,8 @@ export class PerfisComponent implements OnInit {
   actionLoading = false;
   followLoading = false;
   reportLoading = false;
+  blockLoading = false;
+  selectedBlocked = false;
   reportOpen = false;
   reportReason = '';
   searched = false;
@@ -212,6 +214,7 @@ export class PerfisComponent implements OnInit {
     this.selectedReliability = undefined;
     this.selectedActivity = undefined;
     this.selectedFollowStatus = undefined;
+    this.selectedBlocked = false;
     this.reportOpen = false;
     this.reportReason = '';
     this.actionError = '';
@@ -223,11 +226,14 @@ export class PerfisComponent implements OnInit {
       activity: this.reliabilityService.activity(profile.username)
         .pipe(catchError(() => of(undefined))),
       followStatus: this.socialGraphService.status(profile.username)
-        .pipe(catchError(() => of(undefined)))
-    }).subscribe(({ reliability, activity, followStatus }) => {
+        .pipe(catchError(() => of(undefined))),
+      blockStatus: this.communityService.userBlockStatus(profile.username)
+        .pipe(catchError(() => of({ blocked: false })))
+    }).subscribe(({ reliability, activity, followStatus, blockStatus }) => {
       this.selectedReliability = reliability;
       this.selectedActivity = activity;
       this.selectedFollowStatus = followStatus;
+      this.selectedBlocked = blockStatus.blocked;
     });
   }
 
@@ -236,8 +242,52 @@ export class PerfisComponent implements OnInit {
     this.selectedReliability = undefined;
     this.selectedActivity = undefined;
     this.selectedFollowStatus = undefined;
+    this.selectedBlocked = false;
     this.reportOpen = false;
     this.reportReason = '';
+  }
+
+  toggleBlock(profile: CommunityProfile): void {
+    if (
+      this.blockLoading
+      || this.isOwnProfile(profile)
+    ) {
+      return;
+    }
+
+    this.blockLoading = true;
+    this.actionError = '';
+    this.actionSuccess = '';
+
+    const request$ = this.selectedBlocked
+      ? this.communityService.unblockUser(profile.username)
+      : this.communityService.blockUser(profile.username);
+
+    request$
+      .pipe(finalize(() => this.blockLoading = false))
+      .subscribe({
+        next: status => {
+          this.selectedBlocked = status.blocked;
+
+          if (status.blocked) {
+            this.selectedFollowStatus = undefined;
+            this.friendUsernames.delete(profile.username.toLowerCase());
+            this.pendingFriendRequests.delete(profile.username);
+            this.reportOpen = false;
+            this.reportReason = '';
+          }
+
+          this.actionSuccess = status.blocked
+            ? t('feedback.community.blocked', { username: profile.username })
+            : t('feedback.community.unblocked', { username: profile.username });
+        },
+        error: error => {
+          this.actionError = this.errorFrom(
+            error,
+            t('feedback.community.blockError')
+          );
+        }
+      });
   }
 
   toggleReport(): void {
@@ -257,6 +307,7 @@ export class PerfisComponent implements OnInit {
     if (
       this.reportLoading
       || this.isOwnProfile(profile)
+      || this.selectedBlocked
       || !reason
     ) {
       return;
@@ -287,6 +338,7 @@ export class PerfisComponent implements OnInit {
     if (
       this.followLoading
       || this.isOwnProfile(profile)
+      || this.selectedBlocked
     ) {
       return;
     }
@@ -321,6 +373,7 @@ export class PerfisComponent implements OnInit {
     if (
       this.actionLoading
       || this.isOwnProfile(profile)
+      || this.selectedBlocked
       || this.isFriend(profile)
       || this.pendingFriendRequests.has(profile.username)
     ) {

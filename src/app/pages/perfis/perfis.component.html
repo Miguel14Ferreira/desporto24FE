@@ -270,7 +270,7 @@
           }
 
           <div class="detail-actions">
-            @if (!isOwnProfile(selectedProfile)) {
+            @if (!isOwnProfile(selectedProfile) && !selectedBlocked) {
               <button
                 type="button"
                 class="follow-action"
@@ -289,6 +289,8 @@
 
             @if (isOwnProfile(selectedProfile)) {
               <span>{{ 'community.ownProfile' | t }}</span>
+            } @else if (selectedBlocked) {
+              <span></span>
             } @else if (isFriend(selectedProfile)) {
               <span>Já são amigos</span>
               <a
@@ -314,6 +316,16 @@
               <button
                 type="button"
                 class="report-action"
+                [disabled]="blockLoading"
+                (click)="toggleBlock(selectedProfile)">
+                {{ selectedBlocked ? ('community.unblockUser' | t) : ('community.blockUser' | t) }}
+              </button>
+            }
+
+            @if (!isOwnProfile(selectedProfile) && !selectedBlocked) {
+              <button
+                type="button"
+                class="report-action"
                 [disabled]="reportLoading"
                 (click)="toggleReport()">
                 {{ reportOpen ? ('community.reportCancel' | t) : ('community.reportUser' | t) }}
@@ -321,7 +333,7 @@
             }
           </div>
 
-          @if (reportOpen && !isOwnProfile(selectedProfile)) {
+          @if (reportOpen && !isOwnProfile(selectedProfile) && !selectedBlocked) {
             <section class="report-panel">
               <label>
                 <span>{{ 'community.reportReason' | t }}</span>

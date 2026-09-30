@@ -29,7 +29,7 @@ describe('PerfisComponent', () => {
   beforeEach(async () => {
     service = jasmine.createSpyObj<CommunityService>(
       'CommunityService',
-      ['searchProfiles', 'findProfiles', 'sendFriendRequest', 'reportUser', 'discoverProfiles', 'friends', 'publicProfile']
+      ['searchProfiles', 'findProfiles', 'sendFriendRequest', 'reportUser', 'userBlockStatus', 'blockUser', 'unblockUser', 'discoverProfiles', 'friends', 'publicProfile']
     );
     service.searchProfiles.and.returnValue(of([profile]));
     service.findProfiles.and.returnValue(of([profile]));
@@ -38,6 +38,9 @@ describe('PerfisComponent', () => {
     service.publicProfile.and.returnValue(of(profile));
     service.sendFriendRequest.and.returnValue(of({}));
     service.reportUser.and.returnValue(of(void 0));
+    service.userBlockStatus.and.returnValue(of({ blocked: false }));
+    service.blockUser.and.returnValue(of({ blocked: true }));
+    service.unblockUser.and.returnValue(of({ blocked: false }));
 
     socialGraphService = jasmine.createSpyObj<SocialGraphService>(
       'SocialGraphService',
@@ -123,6 +126,49 @@ describe('PerfisComponent', () => {
 
     expect(socialGraphService.follow).toHaveBeenCalledWith('ana');
     expect(component.selectedFollowStatus?.followedByMe).toBeTrue();
+  });
+
+  it('should block a selected user and remove local social actions', () => {
+    component.selectedProfile = profile;
+    component.selectedFollowStatus = {
+      followedByMe: true,
+      followsMe: true,
+      followers: 4,
+      following: 5
+    };
+    component.friendUsernames.add('ana');
+
+    component.toggleBlock(profile);
+
+    expect(service.blockUser).toHaveBeenCalledWith('ana');
+    expect(component.selectedBlocked).toBeTrue();
+    expect(component.selectedFollowStatus).toBeUndefined();
+    expect(component.friendUsernames.has('ana')).toBeFalse();
+    expect(component.actionSuccess).toContain('ana');
+  });
+
+  it('should unblock a selected user', () => {
+    component.selectedProfile = profile;
+    component.selectedBlocked = true;
+
+    component.toggleBlock(profile);
+
+    expect(service.unblockUser).toHaveBeenCalledWith('ana');
+    expect(component.selectedBlocked).toBeFalse();
+    expect(component.actionSuccess).toContain('ana');
+  });
+
+  it('should not send social actions while the selected user is blocked', () => {
+    component.selectedBlocked = true;
+
+    component.toggleFollow(profile);
+    component.sendFriendRequest(profile);
+    component.reportReason = 'motivo';
+    component.submitReport(profile);
+
+    expect(socialGraphService.follow).not.toHaveBeenCalled();
+    expect(service.sendFriendRequest).not.toHaveBeenCalled();
+    expect(service.reportUser).not.toHaveBeenCalled();
   });
 
   it('should report a selected user with a trimmed reason', () => {

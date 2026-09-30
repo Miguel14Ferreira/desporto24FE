@@ -6,6 +6,10 @@ import { environment } from 'src/environment/environment';
 import { CommunityProfile } from '../pages/model/community-profile';
 import { FriendSummary } from '../pages/model/friend-summary';
 
+export interface UserBlockStatus {
+  blocked: boolean;
+}
+
 export interface ProfileSearchFilters {
   name?: string;
   sport?: string;
@@ -22,6 +26,7 @@ export class CommunityService {
   private readonly profileUrl = environment.apiUrl + '/api/profile';
   private readonly friendsUrl = environment.apiUrl + '/api/friends';
   private readonly userReportsUrl = environment.apiUrl + '/api/reports/users';
+  private readonly userBlocksUrl = environment.apiUrl + '/api/blocks/users';
 
   constructor(private http: HttpClient) {}
 
@@ -80,6 +85,25 @@ export class CommunityService {
     return this.http.post<void>(
       this.userReportsUrl + '/' + encodeURIComponent(username),
       { reason: reason.trim() }
+    );
+  }
+
+  userBlockStatus(username: string): Observable<UserBlockStatus> {
+    return this.http.get<UserBlockStatus>(
+      this.userBlocksUrl + '/' + encodeURIComponent(username) + '/status'
+    );
+  }
+
+  blockUser(username: string): Observable<UserBlockStatus> {
+    return this.http.post<UserBlockStatus>(
+      this.userBlocksUrl + '/' + encodeURIComponent(username),
+      null
+    );
+  }
+
+  unblockUser(username: string): Observable<UserBlockStatus> {
+    return this.http.delete<UserBlockStatus>(
+      this.userBlocksUrl + '/' + encodeURIComponent(username)
     );
   }
 
