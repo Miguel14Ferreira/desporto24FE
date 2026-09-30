@@ -262,6 +262,40 @@ describe('VenueDetailsComponent', () => {
     expect(component.photosLoadError).toBeFalse();
   });
 
+  it('retries loading sport conditions after an error', () => {
+    const route = {} as ActivatedRoute;
+    const venueService = jasmine.createSpyObj<VenueService>('VenueService', [
+      'listSportConditions'
+    ]);
+    const condition = {
+      id: 12,
+      sport: 'Padel',
+      conditions: 'Piso rápido',
+      informationSource: 'COMMUNITY' as const,
+      createdByUsername: 'miguel',
+      createdAt: '2026-09-29T20:00:00Z'
+    };
+
+    venueService.listSportConditions.and.returnValues(
+      throwError(() => new Error('conditions failed')),
+      of([condition])
+    );
+
+    const component = new VenueDetailsComponent(route, venueService);
+    component.venue = { id: 7 } as Venue;
+
+    component.retrySportConditions();
+    expect(component.sportConditionsLoadError).toBeTrue();
+
+    component.retrySportConditions();
+
+    expect(venueService.listSportConditions).toHaveBeenCalledTimes(2);
+    expect(venueService.listSportConditions).toHaveBeenCalledWith(7);
+    expect(component.sportConditions).toEqual([condition]);
+    expect(component.sportConditionsLoading).toBeFalse();
+    expect(component.sportConditionsLoadError).toBeFalse();
+  });
+
   it('adds a sport condition and resets the form on success', () => {
     const route = {} as ActivatedRoute;
     const venueService = jasmine.createSpyObj<VenueService>('VenueService', [
