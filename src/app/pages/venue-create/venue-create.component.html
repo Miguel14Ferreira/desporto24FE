@@ -4,7 +4,7 @@
     <span class="venue-kicker">{{ 'venue.kicker' | t }}</span>
     <h1>{{ 'venue.saveNew' | t }}</h1>
 
-    <form class="venue-create-form">
+    <form class="venue-create-form" (ngSubmit)="save()">
       <label>
         <span>{{ 'venue.name' | t }}</span>
         <input
@@ -132,6 +132,15 @@
         <input type="text" name="priceInfo" [(ngModel)]="priceInfo"
           [placeholder]="'venue.priceInfoPlaceholder' | t">
       </label>
+
+      <div class="venue-create-actions venue-create-wide">
+        @if (saveError) {
+          <span class="venue-create-error">{{ 'venue.createError' | t }}</span>
+        }
+        <button type="submit" [disabled]="saving">
+          {{ (saving ? 'venue.saving' : 'venue.save') | t }}
+        </button>
+      </div>
     </form>
   </div>
 </section>

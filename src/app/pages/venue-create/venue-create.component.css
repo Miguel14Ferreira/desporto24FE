@@ -102,3 +102,28 @@
   min-height: 96px;
   resize: vertical;
 }
+
+.venue-create-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
+}
+
+.venue-create-actions button {
+  padding: 12px 20px;
+  border: 0;
+  border-radius: 12px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.venue-create-actions button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.venue-create-error {
+  font-size: 0.9rem;
+}
