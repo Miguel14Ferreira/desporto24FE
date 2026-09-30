@@ -22,4 +22,10 @@ export class VenueCreateComponent {
   changingRooms = false;
   parking = false;
   lighting = false;
+  toilets = false;
+  lockers = false;
+  accessible = false;
+  firstAid = false;
+  aed = false;
+  cafe = false;
 }
