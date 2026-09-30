@@ -101,4 +101,27 @@ describe('VenueCreateComponent', () => {
     expect(component.locationError).toBeTrue();
     expect(component.locating).toBeFalse();
   });
+  it('preserves unknown and explicit optional amenities in the request', () => {
+    const venueService = jasmine.createSpyObj<VenueService>('VenueService', ['create']);
+    const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
+    venueService.create.and.returnValue(of({ id: 8 } as Venue));
+
+    const component = new VenueCreateComponent(venueService, router);
+    component.name = 'Pavilhão Central';
+    component.city = 'Lisboa';
+    component.address = 'Rua do Desporto';
+    component.toilets = true;
+    component.lockers = false;
+
+    component.save();
+
+    expect(venueService.create).toHaveBeenCalledOnceWith(jasmine.objectContaining({
+      toilets: true,
+      lockers: false,
+      accessible: null,
+      firstAid: null,
+      aed: null,
+      cafe: null
+    }));
+  });
 });
