@@ -189,11 +189,12 @@
       </label>
 
       <div class="venue-create-location venue-create-wide">
-        <button type="button" (click)="useCurrentLocation()" [disabled]="locating">
+        <button type="button" (click)="useCurrentLocation()" [disabled]="locating"
+          [attr.aria-describedby]="locationError ? 'venue-create-location-error' : null">
           {{ (locating ? 'venue.locating' : 'venue.useCurrentLocation') | t }}
         </button>
         @if (locationError) {
-          <span class="venue-create-error" role="alert" aria-live="assertive">{{ 'feedback.location.error' | t }}</span>
+          <span id="venue-create-location-error" class="venue-create-error" role="alert" aria-live="assertive">{{ 'feedback.location.error' | t }}</span>
         }
       </div>
 
