@@ -136,6 +136,18 @@
           [placeholder]="'venue.priceInfoPlaceholder' | t">
       </label>
 
+      <label>
+        <span>{{ 'venue.latitude' | t }}</span>
+        <input type="number" name="latitude" [(ngModel)]="latitude"
+          min="-90" max="90" step="any" placeholder="38.7223">
+      </label>
+
+      <label>
+        <span>{{ 'venue.longitude' | t }}</span>
+        <input type="number" name="longitude" [(ngModel)]="longitude"
+          min="-180" max="180" step="any" placeholder="-9.1393">
+      </label>
+
       <div class="venue-create-actions venue-create-wide">
         @if (validationError) {
           <span class="venue-create-error">{{ 'venue.requiredFields' | t }}</span>
