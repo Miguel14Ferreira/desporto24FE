@@ -230,6 +230,38 @@ describe('VenueDetailsComponent', () => {
     expect(component.loadError).toBeFalse();
   });
 
+  it('retries loading photos after an error', () => {
+    const route = {} as ActivatedRoute;
+    const venueService = jasmine.createSpyObj<VenueService>('VenueService', [
+      'listPhotos'
+    ]);
+    const photo = {
+      id: 21,
+      photoUrl: 'https://cdn.example.com/venue.jpg',
+      uploadedByUsername: 'miguel',
+      createdAt: '2026-09-29T20:10:00Z'
+    };
+
+    venueService.listPhotos.and.returnValues(
+      throwError(() => new Error('photos failed')),
+      of([photo])
+    );
+
+    const component = new VenueDetailsComponent(route, venueService);
+    component.venue = { id: 7 } as Venue;
+
+    component.retryPhotos();
+    expect(component.photosLoadError).toBeTrue();
+
+    component.retryPhotos();
+
+    expect(venueService.listPhotos).toHaveBeenCalledTimes(2);
+    expect(venueService.listPhotos).toHaveBeenCalledWith(7);
+    expect(component.photos).toEqual([photo]);
+    expect(component.photosLoading).toBeFalse();
+    expect(component.photosLoadError).toBeFalse();
+  });
+
   it('adds a sport condition and resets the form on success', () => {
     const route = {} as ActivatedRoute;
     const venueService = jasmine.createSpyObj<VenueService>('VenueService', [
