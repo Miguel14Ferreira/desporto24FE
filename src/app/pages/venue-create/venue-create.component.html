@@ -141,6 +141,14 @@
           </select>
         </label>
         <label>
+          <span>{{ 'venue.drinkingFountain' | t }}</span>
+          <select name="drinkingFountain" [(ngModel)]="drinkingFountain">
+            <option [ngValue]="null">{{ 'venue.boolean.none' | t }}</option>
+            <option [ngValue]="true">{{ 'venue.boolean.yes' | t }}</option>
+            <option [ngValue]="false">{{ 'venue.boolean.no' | t }}</option>
+          </select>
+        </label>
+        <label>
           <span>{{ 'venue.accessible' | t }}</span>
           <select name="accessible" [(ngModel)]="accessible">
             <option [ngValue]="null">{{ 'venue.boolean.none' | t }}</option>
