@@ -177,16 +177,16 @@
           {{ (locating ? 'venue.locating' : 'venue.useCurrentLocation') | t }}
         </button>
         @if (locationError) {
-          <span class="venue-create-error">{{ 'feedback.location.error' | t }}</span>
+          <span class="venue-create-error" role="alert" aria-live="assertive">{{ 'feedback.location.error' | t }}</span>
         }
       </div>
 
       <div class="venue-create-actions venue-create-wide">
         @if (validationError) {
-          <span class="venue-create-error">{{ 'venue.requiredFields' | t }}</span>
+          <span class="venue-create-error" role="alert" aria-live="assertive">{{ 'venue.requiredFields' | t }}</span>
         }
         @if (saveError) {
-          <span class="venue-create-error">{{ 'venue.createError' | t }}</span>
+          <span class="venue-create-error" role="alert" aria-live="assertive">{{ 'venue.createError' | t }}</span>
         }
         <a class="venue-create-cancel" routerLink="/menu/discover">{{ 'common.cancel' | t }}</a>
         <button type="submit" [disabled]="saving">
