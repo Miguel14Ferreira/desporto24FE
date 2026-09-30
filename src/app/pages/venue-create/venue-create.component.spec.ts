@@ -1,5 +1,5 @@
 import { Router } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 
 import { VenueService } from '../../services/venue.service';
 import { Venue } from '../model/venue';
@@ -26,11 +26,7 @@ describe('VenueCreateComponent', () => {
   it('creates the venue and navigates to its detail page', () => {
     const venueService = jasmine.createSpyObj<VenueService>('VenueService', ['create']);
     const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
-    const venue = {
-      id: 7,
-      name: 'Pavilhão Central'
-    } as Venue;
-
+    const venue = { id: 7, name: 'Pavilhão Central' } as Venue;
     venueService.create.and.returnValue(of(venue));
 
     const component = new VenueCreateComponent(venueService, router);
@@ -42,16 +38,30 @@ describe('VenueCreateComponent', () => {
     component.save();
 
     expect(venueService.create).toHaveBeenCalledOnceWith(jasmine.objectContaining({
-      name: 'Pavilhão Central',
-      city: 'Lisboa',
-      address: 'Rua do Desporto',
-      sports: 'Futsal',
-      latitude: null,
-      longitude: null
+      name: 'Pavilhão Central', city: 'Lisboa', address: 'Rua do Desporto',
+      sports: 'Futsal', latitude: null, longitude: null
     }));
     expect(router.navigate).toHaveBeenCalledOnceWith(['/menu/venues', 7]);
     expect(component.validationError).toBeFalse();
     expect(component.saveError).toBeFalse();
+    expect(component.saving).toBeFalse();
+  });
+
+  it('shows an error and stays on the form when creation fails', () => {
+    const venueService = jasmine.createSpyObj<VenueService>('VenueService', ['create']);
+    const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
+    venueService.create.and.returnValue(throwError(() => new Error('create failed')));
+
+    const component = new VenueCreateComponent(venueService, router);
+    component.name = 'Pavilhão Central';
+    component.city = 'Lisboa';
+    component.address = 'Rua do Desporto';
+
+    component.save();
+
+    expect(venueService.create).toHaveBeenCalled();
+    expect(router.navigate).not.toHaveBeenCalled();
+    expect(component.saveError).toBeTrue();
     expect(component.saving).toBeFalse();
   });
 });
