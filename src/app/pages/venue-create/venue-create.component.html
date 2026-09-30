@@ -33,6 +33,38 @@
           autocomplete="street-address"
           [placeholder]="'createSession.addressPlaceholder' | t">
       </label>
+
+      <label>
+        <span>{{ 'events.sport' | t }}</span>
+        <input type="text" name="sports" list="venue-create-sports" [(ngModel)]="sports"
+          autocomplete="off" [placeholder]="'events.sportPlaceholder' | t">
+        <datalist id="venue-create-sports">
+          @for (sportOption of sportsCatalog; track sportOption) {
+            <option [value]="sportOption"></option>
+          }
+        </datalist>
+      </label>
+
+      <label>
+        <span>{{ 'venue.type' | t }}</span>
+        <input type="text" name="venueType" [(ngModel)]="venueType"
+          [placeholder]="'venue.typePlaceholder' | t">
+      </label>
+
+      <label>
+        <span>{{ 'venue.ownership' | t }}</span>
+        <select name="ownershipType" [(ngModel)]="ownershipType">
+          <option [ngValue]="null">{{ 'venue.ownership.none' | t }}</option>
+          <option value="PUBLIC">{{ 'venue.ownership.public' | t }}</option>
+          <option value="PRIVATE">{{ 'venue.ownership.private' | t }}</option>
+        </select>
+      </label>
+
+      <label>
+        <span>{{ 'venue.surface' | t }}</span>
+        <input type="text" name="surfaceType" [(ngModel)]="surfaceType"
+          [placeholder]="'venue.surfacePlaceholder' | t">
+      </label>
     </form>
   </div>
 </section>
