@@ -309,7 +309,43 @@
                 }
               </button>
             }
+
+            @if (!isOwnProfile(selectedProfile)) {
+              <button
+                type="button"
+                class="report-action"
+                [disabled]="reportLoading"
+                (click)="toggleReport()">
+                {{ reportOpen ? ('community.reportCancel' | t) : ('community.reportUser' | t) }}
+              </button>
+            }
           </div>
+
+          @if (reportOpen && !isOwnProfile(selectedProfile)) {
+            <section class="report-panel">
+              <label>
+                <span>{{ 'community.reportReason' | t }}</span>
+                <textarea
+                  name="reportReason"
+                  rows="4"
+                  maxlength="1000"
+                  [(ngModel)]="reportReason"
+                  [disabled]="reportLoading"
+                  [placeholder]="'community.reportPlaceholder' | t"></textarea>
+              </label>
+
+              <div class="report-actions">
+                <small>{{ reportReason.length }}/1000</small>
+                <button
+                  type="button"
+                  class="primary-action"
+                  [disabled]="reportLoading || !reportReason.trim()"
+                  (click)="submitReport(selectedProfile)">
+                  {{ reportLoading ? ('common.processing' | t) : ('community.reportSubmit' | t) }}
+                </button>
+              </div>
+            </section>
+          }
         </article>
       </div>
     }

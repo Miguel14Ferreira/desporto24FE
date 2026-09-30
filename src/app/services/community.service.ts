@@ -21,6 +21,7 @@ export interface ProfileSearchFilters {
 export class CommunityService {
   private readonly profileUrl = environment.apiUrl + '/api/profile';
   private readonly friendsUrl = environment.apiUrl + '/api/friends';
+  private readonly userReportsUrl = environment.apiUrl + '/api/reports/users';
 
   constructor(private http: HttpClient) {}
 
@@ -72,6 +73,13 @@ export class CommunityService {
     return this.http.post(
       this.friendsUrl + '/add/' + encodeURIComponent(username),
       null
+    );
+  }
+
+  reportUser(username: string, reason: string): Observable<void> {
+    return this.http.post<void>(
+      this.userReportsUrl + '/' + encodeURIComponent(username),
+      { reason: reason.trim() }
     );
   }
 

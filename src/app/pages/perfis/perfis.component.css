@@ -530,3 +530,67 @@ h1 {
     flex-direction: column-reverse;
   }
 }
+
+
+.report-action {
+  border: 1px solid rgba(248,113,113,.32);
+  border-radius: .75rem;
+  padding: .75rem .9rem;
+  background: transparent;
+  color: #fecaca;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.report-action:disabled {
+  opacity: .6;
+  cursor: wait;
+}
+
+.report-panel {
+  margin-top: 1rem;
+  padding: .9rem;
+  border: 1px solid rgba(248,113,113,.22);
+  border-radius: .8rem;
+  background: rgba(127,29,29,.10);
+}
+
+.report-panel label {
+  display: grid;
+  gap: .45rem;
+}
+
+.report-panel label > span {
+  color: #fecaca;
+  font-size: .78rem;
+  font-weight: 800;
+}
+
+.report-panel textarea {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: .7rem;
+  padding: .75rem;
+  background: rgba(15,23,42,.82);
+  color: #f8fafc;
+  font: inherit;
+  outline: none;
+}
+
+.report-panel textarea:focus {
+  border-color: rgba(248,113,113,.5);
+}
+
+.report-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  margin-top: .65rem;
+}
+
+.report-actions small {
+  color: #94a3b8;
+}

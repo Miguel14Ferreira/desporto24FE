@@ -39,6 +39,9 @@ export class PerfisComponent implements OnInit {
   loading = false;
   actionLoading = false;
   followLoading = false;
+  reportLoading = false;
+  reportOpen = false;
+  reportReason = '';
   searched = false;
 
   errorMessage = '';
@@ -209,6 +212,8 @@ export class PerfisComponent implements OnInit {
     this.selectedReliability = undefined;
     this.selectedActivity = undefined;
     this.selectedFollowStatus = undefined;
+    this.reportOpen = false;
+    this.reportReason = '';
     this.actionError = '';
     this.actionSuccess = '';
 
@@ -231,6 +236,51 @@ export class PerfisComponent implements OnInit {
     this.selectedReliability = undefined;
     this.selectedActivity = undefined;
     this.selectedFollowStatus = undefined;
+    this.reportOpen = false;
+    this.reportReason = '';
+  }
+
+  toggleReport(): void {
+    if (this.reportLoading) {
+      return;
+    }
+
+    this.reportOpen = !this.reportOpen;
+    this.reportReason = '';
+    this.actionError = '';
+    this.actionSuccess = '';
+  }
+
+  submitReport(profile: CommunityProfile): void {
+    const reason = this.reportReason.trim();
+
+    if (
+      this.reportLoading
+      || this.isOwnProfile(profile)
+      || !reason
+    ) {
+      return;
+    }
+
+    this.reportLoading = true;
+    this.actionError = '';
+    this.actionSuccess = '';
+
+    this.communityService.reportUser(profile.username, reason)
+      .pipe(finalize(() => this.reportLoading = false))
+      .subscribe({
+        next: () => {
+          this.reportOpen = false;
+          this.reportReason = '';
+          this.actionSuccess = t('feedback.community.reported', { username: profile.username });
+        },
+        error: error => {
+          this.actionError = this.errorFrom(
+            error,
+            t('feedback.community.reportError')
+          );
+        }
+      });
   }
 
   toggleFollow(profile: CommunityProfile): void {

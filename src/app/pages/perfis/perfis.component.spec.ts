@@ -29,7 +29,7 @@ describe('PerfisComponent', () => {
   beforeEach(async () => {
     service = jasmine.createSpyObj<CommunityService>(
       'CommunityService',
-      ['searchProfiles', 'findProfiles', 'sendFriendRequest', 'discoverProfiles', 'friends', 'publicProfile']
+      ['searchProfiles', 'findProfiles', 'sendFriendRequest', 'reportUser', 'discoverProfiles', 'friends', 'publicProfile']
     );
     service.searchProfiles.and.returnValue(of([profile]));
     service.findProfiles.and.returnValue(of([profile]));
@@ -37,6 +37,7 @@ describe('PerfisComponent', () => {
     service.friends.and.returnValue(of([]));
     service.publicProfile.and.returnValue(of(profile));
     service.sendFriendRequest.and.returnValue(of({}));
+    service.reportUser.and.returnValue(of(void 0));
 
     socialGraphService = jasmine.createSpyObj<SocialGraphService>(
       'SocialGraphService',
@@ -122,6 +123,28 @@ describe('PerfisComponent', () => {
 
     expect(socialGraphService.follow).toHaveBeenCalledWith('ana');
     expect(component.selectedFollowStatus?.followedByMe).toBeTrue();
+  });
+
+  it('should report a selected user with a trimmed reason', () => {
+    component.selectedProfile = profile;
+    component.reportOpen = true;
+    component.reportReason = '  Comportamento abusivo  ';
+
+    component.submitReport(profile);
+
+    expect(service.reportUser).toHaveBeenCalledWith('ana', 'Comportamento abusivo');
+    expect(component.reportOpen).toBeFalse();
+    expect(component.reportReason).toBe('');
+    expect(component.actionSuccess).toContain('ana');
+  });
+
+  it('should not report the logged-in profile', () => {
+    const ownProfile = { ...profile, username: 'miguel' };
+    component.reportReason = 'motivo';
+
+    component.submitReport(ownProfile);
+
+    expect(service.reportUser).not.toHaveBeenCalled();
   });
 
   it('should not allow a friend request to the logged-in profile', () => {
