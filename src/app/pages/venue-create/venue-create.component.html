@@ -3,5 +3,36 @@
     <a class="back-link" routerLink="/menu/discover">{{ 'venue.detail.back' | t }}</a>
     <span class="venue-kicker">{{ 'venue.kicker' | t }}</span>
     <h1>{{ 'venue.saveNew' | t }}</h1>
+
+    <form class="venue-create-form">
+      <label>
+        <span>{{ 'venue.name' | t }}</span>
+        <input
+          type="text"
+          name="name"
+          [(ngModel)]="name"
+          [placeholder]="'venue.namePlaceholder' | t">
+      </label>
+
+      <label>
+        <span>{{ 'venue.detail.city' | t }}</span>
+        <input
+          type="text"
+          name="city"
+          [(ngModel)]="city"
+          autocomplete="address-level2"
+          [placeholder]="'events.cityPlaceholder' | t">
+      </label>
+
+      <label class="venue-create-wide">
+        <span>{{ 'common.address' | t }}</span>
+        <input
+          type="text"
+          name="address"
+          [(ngModel)]="address"
+          autocomplete="street-address"
+          [placeholder]="'createSession.addressPlaceholder' | t">
+      </label>
+    </form>
   </div>
 </section>

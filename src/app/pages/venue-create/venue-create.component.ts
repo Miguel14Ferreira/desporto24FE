@@ -6,4 +6,8 @@ import { Component } from '@angular/core';
   styleUrls: ['./venue-create.component.css'],
   standalone: false
 })
-export class VenueCreateComponent {}
+export class VenueCreateComponent {
+  name = '';
+  city = '';
+  address = '';
+}
