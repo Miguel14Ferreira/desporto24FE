@@ -65,6 +65,25 @@
         <input type="text" name="surfaceType" [(ngModel)]="surfaceType"
           [placeholder]="'venue.surfacePlaceholder' | t">
       </label>
+
+      <div class="venue-create-options venue-create-wide">
+        <label class="venue-create-option">
+          <input type="checkbox" name="indoor" [(ngModel)]="indoor">
+          <span>{{ 'venue.indoor' | t }}</span>
+        </label>
+        <label class="venue-create-option">
+          <input type="checkbox" name="changingRooms" [(ngModel)]="changingRooms">
+          <span>{{ 'venue.changingRooms' | t }}</span>
+        </label>
+        <label class="venue-create-option">
+          <input type="checkbox" name="parking" [(ngModel)]="parking">
+          <span>{{ 'venue.parking' | t }}</span>
+        </label>
+        <label class="venue-create-option">
+          <input type="checkbox" name="lighting" [(ngModel)]="lighting">
+          <span>{{ 'venue.lighting' | t }}</span>
+        </label>
+      </div>
     </form>
   </div>
 </section>

@@ -70,3 +70,29 @@
     grid-column: auto;
   }
 }
+
+.venue-create-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.venue-create-form .venue-create-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid #d9d9d9;
+  border-radius: 12px;
+}
+
+.venue-create-form .venue-create-option input {
+  width: auto;
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .venue-create-options {
+    grid-template-columns: 1fr;
+  }
+}

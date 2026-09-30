@@ -18,4 +18,8 @@ export class VenueCreateComponent {
   venueType = '';
   ownershipType: VenueOwnershipType | null = null;
   surfaceType = '';
+  indoor = false;
+  changingRooms = false;
+  parking = false;
+  lighting = false;
 }
