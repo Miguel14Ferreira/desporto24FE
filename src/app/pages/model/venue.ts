@@ -31,6 +31,8 @@ export interface Venue {
   restaurant: boolean | null;
   vendingMachines: boolean | null;
   sportsShop: boolean | null;
+  nearbyRadiusMeters: number | null;
+  nearbyPharmacy: boolean | null;
   services: string | null;
   transport: string | null;
   openingHours: string | null;
@@ -74,6 +76,8 @@ export interface CreateVenueRequest {
   restaurant?: boolean | null;
   vendingMachines?: boolean | null;
   sportsShop?: boolean | null;
+  nearbyRadiusMeters?: number | null;
+  nearbyPharmacy?: boolean | null;
   services?: string | null;
   transport?: string | null;
   openingHours?: string | null;
