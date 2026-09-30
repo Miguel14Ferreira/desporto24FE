@@ -86,29 +86,53 @@
           <input type="checkbox" name="lighting" [(ngModel)]="lighting">
           <span>{{ 'venue.lighting' | t }}</span>
         </label>
-        <label class="venue-create-option">
-          <input type="checkbox" name="toilets" [(ngModel)]="toilets">
+        <label>
           <span>{{ 'venue.toilets' | t }}</span>
+          <select name="toilets" [(ngModel)]="toilets">
+            <option [ngValue]="null">{{ 'venue.boolean.none' | t }}</option>
+            <option [ngValue]="true">{{ 'venue.boolean.yes' | t }}</option>
+            <option [ngValue]="false">{{ 'venue.boolean.no' | t }}</option>
+          </select>
         </label>
-        <label class="venue-create-option">
-          <input type="checkbox" name="lockers" [(ngModel)]="lockers">
+        <label>
           <span>{{ 'venue.lockers' | t }}</span>
+          <select name="lockers" [(ngModel)]="lockers">
+            <option [ngValue]="null">{{ 'venue.boolean.none' | t }}</option>
+            <option [ngValue]="true">{{ 'venue.boolean.yes' | t }}</option>
+            <option [ngValue]="false">{{ 'venue.boolean.no' | t }}</option>
+          </select>
         </label>
-        <label class="venue-create-option">
-          <input type="checkbox" name="accessible" [(ngModel)]="accessible">
+        <label>
           <span>{{ 'venue.accessible' | t }}</span>
+          <select name="accessible" [(ngModel)]="accessible">
+            <option [ngValue]="null">{{ 'venue.boolean.none' | t }}</option>
+            <option [ngValue]="true">{{ 'venue.boolean.yes' | t }}</option>
+            <option [ngValue]="false">{{ 'venue.boolean.no' | t }}</option>
+          </select>
         </label>
-        <label class="venue-create-option">
-          <input type="checkbox" name="firstAid" [(ngModel)]="firstAid">
+        <label>
           <span>{{ 'venue.firstAid' | t }}</span>
+          <select name="firstAid" [(ngModel)]="firstAid">
+            <option [ngValue]="null">{{ 'venue.boolean.none' | t }}</option>
+            <option [ngValue]="true">{{ 'venue.boolean.yes' | t }}</option>
+            <option [ngValue]="false">{{ 'venue.boolean.no' | t }}</option>
+          </select>
         </label>
-        <label class="venue-create-option">
-          <input type="checkbox" name="aed" [(ngModel)]="aed">
+        <label>
           <span>{{ 'venue.aed' | t }}</span>
+          <select name="aed" [(ngModel)]="aed">
+            <option [ngValue]="null">{{ 'venue.boolean.none' | t }}</option>
+            <option [ngValue]="true">{{ 'venue.boolean.yes' | t }}</option>
+            <option [ngValue]="false">{{ 'venue.boolean.no' | t }}</option>
+          </select>
         </label>
-        <label class="venue-create-option">
-          <input type="checkbox" name="cafe" [(ngModel)]="cafe">
+        <label>
           <span>{{ 'venue.cafe' | t }}</span>
+          <select name="cafe" [(ngModel)]="cafe">
+            <option [ngValue]="null">{{ 'venue.boolean.none' | t }}</option>
+            <option [ngValue]="true">{{ 'venue.boolean.yes' | t }}</option>
+            <option [ngValue]="false">{{ 'venue.boolean.no' | t }}</option>
+          </select>
         </label>
       </div>
 
