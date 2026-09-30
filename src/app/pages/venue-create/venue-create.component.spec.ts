@@ -33,18 +33,32 @@ describe('VenueCreateComponent', () => {
     component.name = '  Pavilhão Central  ';
     component.city = '  Lisboa  ';
     component.address = '  Rua do Desporto  ';
-    component.sports = '  Futsal  ';
+    component.selectedSports = ['Futsal', 'Padel'];
 
     component.save();
 
     expect(venueService.create).toHaveBeenCalledOnceWith(jasmine.objectContaining({
       name: 'Pavilhão Central', city: 'Lisboa', address: 'Rua do Desporto',
-      sports: 'Futsal', latitude: null, longitude: null
+      sports: 'Futsal;Padel', latitude: null, longitude: null
     }));
     expect(router.navigate).toHaveBeenCalledOnceWith(['/menu/venues', 7]);
     expect(component.validationError).toBeFalse();
     expect(component.saveError).toBeFalse();
     expect(component.saving).toBeFalse();
+  });
+
+  it('adds and removes sports from the multi-selection', () => {
+    const venueService = jasmine.createSpyObj<VenueService>('VenueService', ['create']);
+    const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
+    const component = new VenueCreateComponent(venueService, router);
+
+    component.toggleSport('Futsal', true);
+    component.toggleSport('Padel', true);
+    component.toggleSport('Futsal', false);
+
+    expect(component.selectedSports).toEqual(['Padel']);
+    expect(component.isSportSelected('Padel')).toBeTrue();
+    expect(component.isSportSelected('Futsal')).toBeFalse();
   });
 
   it('shows an error and stays on the form when creation fails', () => {

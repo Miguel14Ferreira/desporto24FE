@@ -18,7 +18,7 @@ export class VenueCreateComponent {
   name = '';
   city = '';
   address = '';
-  sports = '';
+  selectedSports: string[] = [];
   venueType = '';
   ownershipType: VenueOwnershipType | null = null;
   surfaceType = '';
@@ -67,6 +67,16 @@ export class VenueCreateComponent {
     );
   }
 
+  isSportSelected(sport: string): boolean {
+    return this.selectedSports.includes(sport);
+  }
+
+  toggleSport(sport: string, selected: boolean): void {
+    this.selectedSports = selected
+      ? [...this.selectedSports, sport]
+      : this.selectedSports.filter(item => item !== sport);
+  }
+
   save(): void {
     if (this.saving) return;
 
@@ -79,7 +89,7 @@ export class VenueCreateComponent {
 
     const request: CreateVenueRequest = {
       name: this.name.trim(), city: this.city.trim(), address: this.address.trim(),
-      sports: this.valueOrNull(this.sports), venueType: this.valueOrNull(this.venueType),
+      sports: this.selectedSports.length ? this.selectedSports.join(';') : null, venueType: this.valueOrNull(this.venueType),
       ownershipType: this.ownershipType, surfaceType: this.valueOrNull(this.surfaceType),
       indoor: this.indoor, changingRooms: this.changingRooms, toilets: this.toilets,
       lockers: this.lockers, accessible: this.accessible, firstAid: this.firstAid,

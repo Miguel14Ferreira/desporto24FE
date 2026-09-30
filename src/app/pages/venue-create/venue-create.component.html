@@ -47,16 +47,17 @@
 
       <h2 class="venue-create-section-title">{{ 'venue.create.characteristics' | t }}</h2>
 
-      <label>
-        <span>{{ 'events.sport' | t }}</span>
-        <input type="text" name="sports" list="venue-create-sports" [(ngModel)]="sports"
-          autocomplete="off" [placeholder]="'events.sportPlaceholder' | t">
-        <datalist id="venue-create-sports">
-          @for (sportOption of sportsCatalog; track sportOption) {
-            <option [value]="sportOption"></option>
-          }
-        </datalist>
-      </label>
+      <div class="venue-create-options venue-create-wide">
+        @for (sportOption of sportsCatalog; track sportOption) {
+          <label class="venue-create-option">
+            <input type="checkbox"
+              [name]="'sport-' + sportOption"
+              [checked]="isSportSelected(sportOption)"
+              (change)="toggleSport(sportOption, $any($event.target).checked)">
+            <span>{{ sportOption }}</span>
+          </label>
+        }
+      </div>
 
       <label>
         <span>{{ 'venue.type' | t }}</span>
