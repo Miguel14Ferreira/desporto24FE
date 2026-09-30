@@ -188,6 +188,7 @@
         @if (saveError) {
           <span class="venue-create-error">{{ 'venue.createError' | t }}</span>
         }
+        <a class="venue-create-cancel" routerLink="/menu/discover">{{ 'common.cancel' | t }}</a>
         <button type="submit" [disabled]="saving">
           {{ (saving ? 'venue.saving' : 'venue.save') | t }}
         </button>

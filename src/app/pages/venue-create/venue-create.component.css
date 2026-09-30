@@ -147,3 +147,9 @@
   cursor: wait;
   opacity: 0.65;
 }
+
+.venue-create-cancel {
+  padding: 12px 4px;
+  text-decoration: none;
+  font-weight: 700;
+}
