@@ -14,6 +14,7 @@
           name="name"
           [(ngModel)]="name"
           required
+          [attr.aria-invalid]="validationError && !name.trim() ? 'true' : null"
           [placeholder]="'venue.namePlaceholder' | t">
       </label>
 
@@ -24,6 +25,7 @@
           name="city"
           [(ngModel)]="city"
           required
+          [attr.aria-invalid]="validationError && !city.trim() ? 'true' : null"
           autocomplete="address-level2"
           [placeholder]="'events.cityPlaceholder' | t">
       </label>
@@ -35,6 +37,7 @@
           name="address"
           [(ngModel)]="address"
           required
+          [attr.aria-invalid]="validationError && !address.trim() ? 'true' : null"
           autocomplete="street-address"
           [placeholder]="'createSession.addressPlaceholder' | t">
       </label>
