@@ -316,6 +316,7 @@ describe('VenueDetailsComponent', () => {
     component.venue = { id: 7 } as Venue;
     component.sportConditionSport = '  Padel  ';
     component.sportConditionText = '  Piso rápido  ';
+    component.sportConditionsLoadError = true;
 
     component.addSportCondition();
 
@@ -328,6 +329,7 @@ describe('VenueDetailsComponent', () => {
     expect(component.sportConditionText).toBe('');
     expect(component.sportConditionSaving).toBeFalse();
     expect(component.sportConditionSaveError).toBeFalse();
+    expect(component.sportConditionsLoadError).toBeFalse();
   });
 
   it('keeps the sport condition form filled when saving errors', () => {

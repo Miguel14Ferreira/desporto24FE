@@ -82,6 +82,7 @@ export class VenueDetailsComponent implements OnInit {
       .pipe(finalize(() => this.sportConditionSaving = false))
       .subscribe({
         next: condition => {
+          this.sportConditionsLoadError = false;
           this.sportConditions = [condition, ...this.sportConditions];
           this.sportConditionSport = '';
           this.sportConditionText = '';
