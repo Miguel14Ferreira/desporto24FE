@@ -37,6 +37,8 @@ export class VenueCreateComponent {
   transport = '';
   openingHours = '';
   priceInfo = '';
+  website = '';
+  contact = '';
   latitude: number | null = null;
   longitude: number | null = null;
   saving = false;
@@ -96,7 +98,7 @@ export class VenueCreateComponent {
       lockers: this.lockers, accessible: this.accessible, firstAid: this.firstAid,
       aed: this.aed, cafe: this.cafe, services: this.valueOrNull(this.services),
       transport: this.valueOrNull(this.transport), openingHours: this.valueOrNull(this.openingHours),
-      priceInfo: this.valueOrNull(this.priceInfo), parking: this.parking, lighting: this.lighting,
+      priceInfo: this.valueOrNull(this.priceInfo), website: this.valueOrNull(this.website), contact: this.valueOrNull(this.contact), parking: this.parking, lighting: this.lighting,
       latitude: this.latitude, longitude: this.longitude
     };
 

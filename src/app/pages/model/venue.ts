@@ -24,6 +24,8 @@ export interface Venue {
   transport: string | null;
   openingHours: string | null;
   priceInfo: string | null;
+  website: string | null;
+  contact: string | null;
   parking: boolean;
   lighting: boolean;
   latitude: number | null;
@@ -54,6 +56,8 @@ export interface CreateVenueRequest {
   transport?: string | null;
   openingHours?: string | null;
   priceInfo?: string | null;
+  website?: string | null;
+  contact?: string | null;
   parking: boolean;
   lighting: boolean;
   latitude: number | null;

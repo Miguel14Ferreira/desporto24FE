@@ -184,6 +184,18 @@
           [placeholder]="'venue.priceInfoPlaceholder' | t">
       </label>
 
+      <label>
+        <span>{{ 'venue.website' | t }}</span>
+        <input type="url" name="website" [(ngModel)]="website" maxlength="255"
+          [placeholder]="'venue.websitePlaceholder' | t">
+      </label>
+
+      <label>
+        <span>{{ 'venue.contact' | t }}</span>
+        <input type="text" name="contact" [(ngModel)]="contact" maxlength="255"
+          [placeholder]="'venue.contactPlaceholder' | t">
+      </label>
+
       <h2 class="venue-create-section-title">{{ 'venue.create.location' | t }}</h2>
 
       <label>
