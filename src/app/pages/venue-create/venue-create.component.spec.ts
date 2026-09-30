@@ -64,4 +64,41 @@ describe('VenueCreateComponent', () => {
     expect(component.saveError).toBeTrue();
     expect(component.saving).toBeFalse();
   });
+  it('fills coordinates from the current location', () => {
+    const venueService = jasmine.createSpyObj<VenueService>('VenueService', ['create']);
+    const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
+    const component = new VenueCreateComponent(venueService, router);
+    const geolocation = spyOn(navigator.geolocation, 'getCurrentPosition');
+
+    geolocation.and.callFake(success => success({
+      coords: { latitude: 38.7223, longitude: -9.1393 }
+    } as GeolocationPosition));
+
+    component.useCurrentLocation();
+
+    expect(component.latitude).toBe(38.7223);
+    expect(component.longitude).toBe(-9.1393);
+    expect(component.locationError).toBeFalse();
+    expect(component.locating).toBeFalse();
+  });
+
+  it('shows an error when current location cannot be obtained', () => {
+    const venueService = jasmine.createSpyObj<VenueService>('VenueService', ['create']);
+    const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
+    const component = new VenueCreateComponent(venueService, router);
+    const geolocation = spyOn(navigator.geolocation, 'getCurrentPosition');
+
+    geolocation.and.callFake((_success, error) => error?.({
+      code: 1,
+      message: 'permission denied',
+      PERMISSION_DENIED: 1,
+      POSITION_UNAVAILABLE: 2,
+      TIMEOUT: 3
+    } as GeolocationPositionError));
+
+    component.useCurrentLocation();
+
+    expect(component.locationError).toBeTrue();
+    expect(component.locating).toBeFalse();
+  });
 });
