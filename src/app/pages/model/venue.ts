@@ -33,6 +33,7 @@ export interface Venue {
   sportsShop: boolean | null;
   nearbyRadiusMeters: number | null;
   nearbyPharmacy: boolean | null;
+  nearbyAtm: boolean | null;
   services: string | null;
   transport: string | null;
   openingHours: string | null;
@@ -78,6 +79,7 @@ export interface CreateVenueRequest {
   sportsShop?: boolean | null;
   nearbyRadiusMeters?: number | null;
   nearbyPharmacy?: boolean | null;
+  nearbyAtm?: boolean | null;
   services?: string | null;
   transport?: string | null;
   openingHours?: string | null;

@@ -274,6 +274,15 @@
         </select>
       </label>
 
+      <label>
+        <span>{{ 'venue.nearby.atm' | t }}</span>
+        <select name="nearbyAtm" [(ngModel)]="nearbyAtm">
+          <option [ngValue]="null">{{ 'venue.boolean.none' | t }}</option>
+          <option [ngValue]="true">{{ 'venue.boolean.yes' | t }}</option>
+          <option [ngValue]="false">{{ 'venue.boolean.no' | t }}</option>
+        </select>
+      </label>
+
       <h2 class="venue-create-section-title">{{ 'venue.create.practicalInfo' | t }}</h2>
 
       <label class="venue-create-wide">
