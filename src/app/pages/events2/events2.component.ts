@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { appTranslate as t } from '../../i18n/i18n.service';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { finalize, timeout } from 'rxjs';
+import { finalize, retry, timeout } from 'rxjs';
 
 import { CreateSessionRequest } from '../model/create-session-request';
 import { SessionService } from '../../services/session.service';
@@ -147,7 +147,11 @@ export class Events2Component implements OnInit {
     this.venuesLoading = true;
 
     this.venueService.search()
-      .pipe(finalize(() => this.venuesLoading = false))
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        finalize(() => this.venuesLoading = false)
+      )
       .subscribe({
         next: venues => this.venues = venues,
         error: () => this.venues = []
