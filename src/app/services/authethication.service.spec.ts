@@ -1,5 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
+import { JwtHelperService } from '@auth0/angular-jwt';
 import { of } from 'rxjs';
 
 import { AuthenticationService } from './authethication.service';
@@ -89,6 +90,26 @@ describe('AuthenticationService pilot cohort attribution', () => {
     service.register(request).subscribe();
 
     const formData = http.post.calls.mostRecent().args[1] as FormData;
+  it('keeps an expired access token as a session candidate until refresh decides', () => {
+    localStorage.setItem('t', 'expired.jwt.token');
+    spyOn(JwtHelperService.prototype, 'decodeToken')
+      .and.returnValue({ sub: 'miguel', exp: 1 } as any);
+
+    expect(service.hasSessionCandidate()).toBeTrue();
+    expect(service.loggedInPerfilname).toBe('miguel');
+    expect(localStorage.getItem('t')).toBe('expired.jwt.token');
+  });
+
+  it('removes a malformed access token from the session candidate state', () => {
+    localStorage.setItem('t', 'not-a-jwt');
+    spyOn(JwtHelperService.prototype, 'decodeToken')
+      .and.throwError('invalid token');
+
+    expect(service.hasSessionCandidate()).toBeFalse();
+    expect(localStorage.getItem('t')).toBeNull();
+    expect(service.loggedInPerfilname).toBeNull();
+  });
+
     expect(formData.has('cohort')).toBeFalse();
   });
 });

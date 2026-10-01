@@ -194,6 +194,27 @@ export class AuthenticationService {
     localStorage.setItem('t', token);
   }
 
+  public hasSessionCandidate(): boolean {
+    const token = localStorage.getItem('t');
+    if (!token) {
+      this.token = null;
+      this.loggedInPerfilname = null;
+      return false;
+    }
+
+    try {
+      const payload = this.jwtHelper.decodeToken(token);
+      this.token = token;
+      this.loggedInPerfilname = payload?.sub ?? null;
+      return Boolean(this.loggedInPerfilname);
+    } catch {
+      localStorage.removeItem('t');
+      this.token = null;
+      this.loggedInPerfilname = null;
+      return false;
+    }
+  }
+
   public hasValidToken(): boolean {
     const token = localStorage.getItem('t');
     if (!token) {

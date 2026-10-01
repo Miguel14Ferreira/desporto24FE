@@ -109,7 +109,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
 
     isAuthenticated(): boolean {
-      return this.authService.isLoggedIn();
+      return this.authService.hasSessionCandidate();
     }
 
     logout(): void {
