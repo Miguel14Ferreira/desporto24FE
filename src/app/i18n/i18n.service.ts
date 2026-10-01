@@ -251,7 +251,7 @@ const PT: Dictionary = {
   'menu.subtitle': 'Encontra pessoas para jogar, cria sessões e acompanha a tua comunidade.',
   'menu.profile': 'Perfil',
   'menu.viewProfile': 'Ver perfil',
-  'menu.logout': 'Sair',
+  'menu.logout': 'Terminar sessão',
   'menu.loggingOut': 'A terminar...',
   'menu.loadingProfile': 'A carregar o teu perfil...',
   'menu.retry': 'Tentar novamente',

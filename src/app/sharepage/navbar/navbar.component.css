@@ -48,6 +48,31 @@
   color: #f8fafc;
 }
 
+
+.site-nav__links .logout-action {
+  flex: 0 0 auto;
+  margin-left: .25rem;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: .7rem;
+  padding: .55rem .75rem;
+  background: transparent;
+  color: #cbd5e1;
+  font: inherit;
+  font-size: .86rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.site-nav__links .logout-action:hover:not(:disabled) {
+  background: rgba(255,255,255,.07);
+  color: #f8fafc;
+}
+
+.site-nav__links .logout-action:disabled {
+  opacity: .6;
+  cursor: wait;
+}
+
 .site-nav__links .login-link,
 .site-nav__links .register-link,
 .site-nav__links .profile-nav-link {
@@ -89,6 +114,12 @@
   }
 
   .site-nav__links a {
+    padding: .5rem .6rem;
+    font-size: .8rem;
+  }
+
+
+  .site-nav__links .logout-action {
     padding: .5rem .6rem;
     font-size: .8rem;
   }
