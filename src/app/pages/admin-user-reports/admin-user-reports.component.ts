@@ -1,0 +1,82 @@
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { finalize } from 'rxjs';
+
+import {
+  AdminUserReport,
+  ClosedUserReportStatus
+} from '../model/admin-user-report';
+import { AdminUserReportsService } from '../../services/admin-user-reports.service';
+
+@Component({
+  selector: 'app-admin-user-reports',
+  templateUrl: './admin-user-reports.component.html',
+  styleUrls: ['./admin-user-reports.component.css'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false
+})
+export class AdminUserReportsComponent implements OnInit {
+  reports: AdminUserReport[] = [];
+  loading = false;
+  updatingId: number | null = null;
+  errorMessage = '';
+
+  constructor(private adminUserReportsService: AdminUserReportsService) {}
+
+  ngOnInit(): void {
+    this.load();
+  }
+
+  load(): void {
+    this.loading = true;
+    this.errorMessage = '';
+
+    this.adminUserReportsService.listOpen()
+      .pipe(finalize(() => this.loading = false))
+      .subscribe({
+        next: reports => this.reports = reports,
+        error: () => {
+          this.reports = [];
+          this.errorMessage = 'Não foi possível carregar os reports.';
+        }
+      });
+  }
+
+  closeReport(
+    report: AdminUserReport,
+    status: ClosedUserReportStatus
+  ): void {
+    if (this.updatingId !== null) {
+      return;
+    }
+
+    this.updatingId = report.id;
+    this.errorMessage = '';
+
+    this.adminUserReportsService.updateStatus(report.id, status)
+      .pipe(finalize(() => this.updatingId = null))
+      .subscribe({
+        next: () => {
+          this.reports = this.reports.filter(item => item.id !== report.id);
+        },
+        error: () => {
+          this.errorMessage = 'Não foi possível atualizar o report.';
+        }
+      });
+  }
+
+  formatDate(value: string | null): string {
+    if (!value) {
+      return 'Data indisponível';
+    }
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return value;
+    }
+
+    return new Intl.DateTimeFormat('pt-PT', {
+      dateStyle: 'short',
+      timeStyle: 'short'
+    }).format(date);
+  }
+}

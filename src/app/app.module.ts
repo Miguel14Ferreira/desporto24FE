@@ -37,6 +37,7 @@ import { GoogleOnboardingComponent } from './pages/google-onboarding/google-onbo
 import { CommunitiesComponent } from './pages/communities/communities.component';
 import { CommunityCreateComponent } from './pages/community-create/community-create.component';
 import { AdminIdeasComponent } from './pages/admin-ideas/admin-ideas.component';
+import { AdminUserReportsComponent } from './pages/admin-user-reports/admin-user-reports.component';
 import { NotFoundComponent } from './pages/not-found/not-found.component';
 import { SocialFeedComponent } from './pages/social-feed/social-feed.component';
 import { DiscoverComponent } from './pages/discover/discover.component';
@@ -73,6 +74,7 @@ import { LegalPageComponent } from './pages/legal-page/legal-page.component';
         AdminDisputesComponent,
         AdminDashboardComponent,
         AdminIdeasComponent,
+        AdminUserReportsComponent,
         GoogleOnboardingComponent,
         CommunitiesComponent,
         CommunityCreateComponent,

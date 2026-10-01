@@ -28,6 +28,7 @@ import { GoogleOnboardingComponent } from './pages/google-onboarding/google-onbo
 import { CommunitiesComponent } from './pages/communities/communities.component';
 import { CommunityCreateComponent } from './pages/community-create/community-create.component';
 import { AdminIdeasComponent } from './pages/admin-ideas/admin-ideas.component';
+import { AdminUserReportsComponent } from './pages/admin-user-reports/admin-user-reports.component';
 import { NotFoundComponent } from './pages/not-found/not-found.component';
 import { SocialFeedComponent } from './pages/social-feed/social-feed.component';
 import { DiscoverComponent } from './pages/discover/discover.component';
@@ -84,6 +85,7 @@ const routes: Routes = [
   {path:'menu/admin',component:AdminDashboardComponent,canActivate:[AuthenticationGuard,AdminGuard]},
   {path:'menu/admin/attendance-disputes',component:AdminDisputesComponent,canActivate:[AuthenticationGuard,AdminGuard]},
   {path:'menu/admin/ideas',component:AdminIdeasComponent,canActivate:[AuthenticationGuard,AdminGuard]},
+  {path:'menu/admin/reports',component:AdminUserReportsComponent,canActivate:[AuthenticationGuard,AdminGuard]},
   {path:'menu/terminarSessao',redirectTo:'menu',pathMatch:'full'},
   {path:'**',component:NotFoundComponent}
 ];
