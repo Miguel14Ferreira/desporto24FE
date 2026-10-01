@@ -247,7 +247,12 @@ export class PerfisComponent implements OnInit {
         .pipe(catchError(() => of(undefined))),
       blockStatus: this.communityService.userBlockStatus(profile.username)
         .pipe(catchError(() => of({ blocked: false })))
-    }).subscribe(({ reliability, activity, followStatus, blockStatus }) => {
+    })
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 })
+      )
+      .subscribe(({ reliability, activity, followStatus, blockStatus }) => {
       this.selectedReliability = reliability;
       this.selectedActivity = activity;
       this.selectedFollowStatus = followStatus;
