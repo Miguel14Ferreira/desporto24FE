@@ -322,6 +322,40 @@
           </label>
         </section>
 
+        @if (mfaDisablePending) {
+          <section class="mfa-setup-card">
+            <label class="mfa-code-field">
+              <span>{{ 'profile.mfa.step3' | t }}</span>
+              <input
+                name="mfaDisableCode"
+                [(ngModel)]="mfaDisableCode"
+                inputmode="numeric"
+                autocomplete="one-time-code"
+                maxlength="6"
+                placeholder="000000"
+                [disabled]="mfaDisabling">
+            </label>
+
+            <div class="mfa-setup-actions">
+              <button
+                type="button"
+                class="photo-save-action"
+                [disabled]="mfaDisabling || mfaDisableCode.length !== 6"
+                (click)="disableMfa()">
+                {{ mfaDisabling ? ('profile.mfa.confirming' | t) : ('common.confirm' | t) }}
+              </button>
+
+              <button
+                type="button"
+                class="photo-cancel-action"
+                [disabled]="mfaDisabling"
+                (click)="cancelMfaDisable()">
+                {{ 'common.cancel' | t }}
+              </button>
+            </div>
+          </section>
+        }
+
         @if (mfaSetup) {
           <section class="mfa-setup-card">
             <div>

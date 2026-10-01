@@ -31,6 +31,8 @@ export class AlterardadosComponent implements OnInit {
   mfaSetupLoading = false;
   mfaConfirming = false;
   mfaDisabling = false;
+  mfaDisablePending = false;
+  mfaDisableCode = '';
   errorMessage = '';
   successMessage = '';
   toastMessage = '';
@@ -291,7 +293,10 @@ export class AlterardadosComponent implements OnInit {
       return;
     }
 
-    this.disableMfa();
+    (event.target as HTMLInputElement).checked = true;
+    this.mfaDisablePending = true;
+    this.mfaDisableCode = '';
+    this.errorMessage = '';
   }
 
   startMfaSetup(): void {
@@ -346,25 +351,30 @@ export class AlterardadosComponent implements OnInit {
   }
 
   disableMfa(): void {
-    if (this.mfaDisabling) {
+    const code = this.mfaDisableCode.trim();
+
+    if (!/^\d{6}$/.test(code) || this.mfaDisabling) {
+      this.errorMessage = t('feedback.profile.mfaCodeRequired');
       return;
     }
 
     if (!this.profile?.mfa) {
-      this.cancelMfaSetup();
+      this.cancelMfaDisable();
       return;
     }
 
     this.mfaDisabling = true;
     this.errorMessage = '';
 
-    this.myProfileService.disableMfa()
+    this.myProfileService.disableMfa(code)
       .pipe(finalize(() => this.mfaDisabling = false))
       .subscribe({
         next: updated => {
           this.profile = { ...updated };
           this.mfaSetup = undefined;
           this.mfaSetupCode = '';
+          this.mfaDisablePending = false;
+          this.mfaDisableCode = '';
           this.showToast(t('feedback.profile.mfaDisabled'));
         },
         error: error => {
@@ -374,6 +384,11 @@ export class AlterardadosComponent implements OnInit {
           );
         }
       });
+  }
+
+  cancelMfaDisable(): void {
+    this.mfaDisablePending = false;
+    this.mfaDisableCode = '';
   }
 
   startPhotoEdit(): void {
