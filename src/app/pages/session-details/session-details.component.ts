@@ -172,7 +172,10 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
     this.actionSuccess = '';
 
     this.sessionService.complete(this.sessionId)
-      .pipe(finalize(() => this.actionLoading = false))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.actionLoading = false)
+      )
       .subscribe({
         next: () => {
           this.actionSuccess = t('feedback.session.completed');
