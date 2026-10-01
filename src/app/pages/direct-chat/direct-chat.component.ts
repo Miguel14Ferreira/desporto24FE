@@ -3,7 +3,7 @@ import { appTranslate as t } from '../../i18n/i18n.service';
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { JwtHelperService } from '@auth0/angular-jwt';
-import { Subscription, forkJoin, finalize } from 'rxjs';
+import { Subscription, forkJoin, finalize, retry, timeout } from 'rxjs';
 
 import { DirectChatInfo, DirectChatMessage } from '../model/direct-chat';
 import { DirectChatService } from '../../services/direct-chat.service';
@@ -96,7 +96,11 @@ export class DirectChatComponent implements OnInit, OnDestroy {
       messages: this.chatService.history(this.recipientUsername),
       info: this.chatService.info(this.recipientUsername)
     })
-      .pipe(finalize(() => this.loading = false))
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        finalize(() => this.loading = false)
+      )
       .subscribe({
         next: result => {
           this.messages = this.sorted(result.messages);
