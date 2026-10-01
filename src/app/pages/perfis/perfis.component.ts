@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { appTranslate as t } from '../../i18n/i18n.service';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
-import { catchError, finalize, forkJoin, of } from 'rxjs';
+import { catchError, finalize, forkJoin, of, retry, timeout } from 'rxjs';
 
 import { environment } from 'src/environment/environment';
 import { CommunityProfile } from '../model/community-profile';
@@ -75,7 +75,12 @@ export class PerfisComponent implements OnInit {
       return;
     }
 
-    this.communityService.publicProfile(this.currentUsername).subscribe({
+    this.communityService.publicProfile(this.currentUsername)
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 })
+      )
+      .subscribe({
       next: profile => {
         if (!this.sportFilter && profile.favoriteSports) {
           this.sportFilter = profile.favoriteSports
