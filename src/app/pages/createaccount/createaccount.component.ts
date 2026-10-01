@@ -25,6 +25,7 @@ export class CreateaccountComponent {
   phone = '';
   gender = '';
   email = '';
+  acceptedLegalTerms = false;
 
   readonly maxBirthDate = this.dateYearsAgo(18);
   readonly minBirthDate = this.dateYearsAgo(120);
@@ -203,6 +204,10 @@ export class CreateaccountComponent {
 
     if (this.phone.trim() && !this.indicativePhone.trim()) {
       return t('feedback.register.invalidPhone');
+    }
+
+    if (!this.acceptedLegalTerms) {
+      return t('feedback.register.acceptLegal');
     }
 
     return null;

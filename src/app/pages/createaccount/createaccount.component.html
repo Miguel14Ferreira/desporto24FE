@@ -188,11 +188,28 @@
           </select>
         </label>
 
+        <div class="full-width legal-consent">
+          <label class="consent-row" for="legalConsent">
+            <input
+              id="legalConsent"
+              type="checkbox"
+              name="legalConsent"
+              [(ngModel)]="acceptedLegalTerms"
+              [disabled]="loading">
+            <span>
+              {{ 'register.legal.prefix' | t }}
+              <a routerLink="/terms" target="_blank" rel="noopener">{{ 'register.legal.terms' | t }}</a>
+              {{ 'register.legal.and' | t }}
+              <a routerLink="/privacy" target="_blank" rel="noopener">{{ 'register.legal.privacy' | t }}</a>.
+            </span>
+          </label>
+        </div>
+
       </div>
 
       <div class="form-actions">
         <a class="secondary-action" routerLink="/login">{{ 'common.cancel' | t }}</a>
-        <button type="submit" [disabled]="loading">
+        <button type="submit" [disabled]="loading || !acceptedLegalTerms">
           {{ loading ? ('register.creating' | t) : ('register.title' | t) }}
         </button>
       </div>

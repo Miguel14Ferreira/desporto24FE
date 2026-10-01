@@ -115,6 +115,10 @@ const PT: Dictionary = {
   'register.favoriteSports': 'Desportos favoritos',
   'register.favoriteSportsPlaceholder': 'Ex.: Padel, Futebol, Corrida',
   'register.creating': 'A criar conta...',
+  'register.legal.prefix': 'Li e aceito os',
+  'register.legal.terms': 'Termos de Utilização',
+  'register.legal.and': 'e a',
+  'register.legal.privacy': 'Política de Privacidade',
 
   'mfa.eyebrow': 'Verificação adicional',
   'mfa.title': 'Confirma o código MFA',
@@ -1054,6 +1058,7 @@ const PT: Dictionary = {
   'feedback.register.passwordMismatch': 'A palavra-passe e a confirmação não coincidem.',
   'feedback.register.invalidPhone': 'Introduz um número de telemóvel válido.',
   'feedback.register.minimumAge': 'Tens de ter pelo menos 18 anos.',
+  'feedback.register.acceptLegal': 'Tens de aceitar os Termos de Utilização e a Política de Privacidade para criar a conta.',
 
   'feedback.chat.invalid': 'Conversa inválida.',
   'feedback.chat.loadError': 'Não foi possível carregar esta conversa.',
@@ -1307,6 +1312,10 @@ const EN: Dictionary = {
   'register.favoriteSports': 'Favourite sports',
   'register.favoriteSportsPlaceholder': 'E.g. Padel, Football, Running',
   'register.creating': 'Creating account...',
+  'register.legal.prefix': 'I have read and accept the',
+  'register.legal.terms': 'Terms of Use',
+  'register.legal.and': 'and the',
+  'register.legal.privacy': 'Privacy Policy',
 
   'mfa.eyebrow': 'Additional verification',
   'mfa.title': 'Confirm your MFA code',
@@ -2252,6 +2261,7 @@ const EN: Dictionary = {
   'feedback.register.passwordMismatch': 'The password and confirmation do not match.',
   'feedback.register.invalidPhone': 'Enter a valid mobile number.',
   'feedback.register.minimumAge': 'You must be at least 18 years old.',
+  'feedback.register.acceptLegal': 'You must accept the Terms of Use and Privacy Policy to create an account.',
 
   'feedback.chat.invalid': 'Invalid conversation.',
   'feedback.chat.loadError': 'We could not load this conversation.',

@@ -32,17 +32,14 @@ describe('CreateaccountComponent', () => {
     component.username = 'miguel';
     component.password = 'password-123';
     component.confirmPassword = 'password-123';
-    component.fullName = 'Miguel Ferreira';
+    component.nickname = 'Miguel';
     component.dateOfBirth = '1990-01-01';
-    component.address = 'Rua Teste';
     component.country = 'Portugal';
-    component.location = 'Lisboa';
-    component.postalCode = '1000-000';
     component.indicativePhone = '351';
     component.phone = '912 345 678';
     component.gender = 'masculino';
     component.email = 'miguel@example.com';
-    component.favoriteSports = 'Padel';
+    component.acceptedLegalTerms = true;
   }
 
   it('should create', () => {
@@ -59,12 +56,21 @@ describe('CreateaccountComponent', () => {
         username: 'miguel',
         email: 'miguel@example.com',
         indicativePhone: '351',
-        phone: '912345678',
-        favoriteSports: 'Padel'
+        phone: '912345678'
       }),
       undefined
     );
     expect(component.successMessage).toContain('Conta criada');
+  });
+
+  it('should reject registration without legal acceptance', () => {
+    fillValidForm();
+    component.acceptedLegalTerms = false;
+
+    component.register();
+
+    expect(auth.register).not.toHaveBeenCalled();
+    expect(component.errorMessage).toContain('Termos de Utilização');
   });
 
   it('should reject mismatching passwords', () => {
