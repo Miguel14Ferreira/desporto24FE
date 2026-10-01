@@ -118,11 +118,16 @@ export class DirectChatComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.chatService.history(this.recipientUsername).subscribe({
-      next: messages => {
-        this.messages = this.sorted(messages);
-      }
-    });
+    this.chatService.history(this.recipientUsername)
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 })
+      )
+      .subscribe({
+        next: messages => {
+          this.messages = this.sorted(messages);
+        }
+      });
   }
 
   onEnter(event: Event): void {
