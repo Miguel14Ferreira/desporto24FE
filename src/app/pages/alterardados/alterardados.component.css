@@ -537,3 +537,62 @@ textarea { resize: vertical; }
   font-size: .7rem;
   font-weight: 750;
 }
+
+
+.danger-zone {
+  display: grid;
+  gap: .9rem;
+  margin-top: 1.2rem;
+  padding: 1rem;
+  border: 1px solid rgba(248,113,113,.35);
+  border-radius: .9rem;
+  background: rgba(127,29,29,.12);
+}
+
+.danger-zone__copy {
+  display: grid;
+  gap: .3rem;
+}
+
+.danger-zone__copy strong {
+  color: #fecaca;
+}
+
+.danger-zone__copy p,
+.danger-confirmation p {
+  margin: 0;
+  color: #cbd5e1;
+  line-height: 1.45;
+}
+
+.danger-action {
+  width: fit-content;
+  border: 1px solid rgba(248,113,113,.55);
+  border-radius: .8rem;
+  padding: .75rem 1rem;
+  background: rgba(127,29,29,.35);
+  color: #fee2e2;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.danger-action:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+.danger-confirmation {
+  display: grid;
+  gap: .75rem;
+}
+
+.danger-confirmation input {
+  max-width: 360px;
+}
+
+.danger-confirmation__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .6rem;
+}

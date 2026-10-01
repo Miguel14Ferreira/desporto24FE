@@ -404,6 +404,55 @@
           </section>
         }
 
+        <section class="danger-zone">
+          <div class="danger-zone__copy">
+            <strong>{{ 'profile.delete.title' | t }}</strong>
+            <p>{{ 'profile.delete.subtitle' | t }}</p>
+          </div>
+
+          @if (!accountDeletionPending) {
+            <button
+              type="button"
+              class="danger-action"
+              [disabled]="deletingAccount"
+              (click)="openAccountDeletion()">
+              {{ 'profile.delete.action' | t }}
+            </button>
+          } @else {
+            <div class="danger-confirmation">
+              <p>
+                {{ 'profile.delete.confirmHint' | t }}
+                <strong>@{{ profile.username }}</strong>
+              </p>
+
+              <input
+                name="accountDeletionConfirmation"
+                [(ngModel)]="accountDeletionConfirmation"
+                autocomplete="off"
+                [disabled]="deletingAccount"
+                [placeholder]="profile.username">
+
+              <div class="danger-confirmation__actions">
+                <button
+                  type="button"
+                  class="danger-action"
+                  [disabled]="deletingAccount || accountDeletionConfirmation.trim() !== profile.username"
+                  (click)="deleteAccount()">
+                  {{ deletingAccount ? ('profile.delete.deleting' | t) : ('profile.delete.confirmAction' | t) }}
+                </button>
+
+                <button
+                  type="button"
+                  class="photo-cancel-action"
+                  [disabled]="deletingAccount"
+                  (click)="cancelAccountDeletion()">
+                  {{ 'common.cancel' | t }}
+                </button>
+              </div>
+            </div>
+          }
+        </section>
+
         <div class="form-actions">
           <a class="secondary-action" routerLink="/menu/dadosPerfil">{{ 'common.cancel' | t }}</a>
           <button type="submit" [disabled]="saving">

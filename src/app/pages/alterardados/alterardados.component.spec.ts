@@ -3,6 +3,7 @@ import { of } from 'rxjs';
 
 import { AlterardadosComponent } from './alterardados.component';
 import { MyProfileService } from '../../services/my-profile.service';
+import { AuthenticationService } from '../../services/authethication.service';
 import { TEST_IMPORTS, TEST_PROVIDERS } from '../../testing/test-providers';
 
 describe('AlterardadosComponent', () => {
@@ -32,10 +33,11 @@ describe('AlterardadosComponent', () => {
   };
 
   beforeEach(async () => {
-    service = jasmine.createSpyObj<MyProfileService>('MyProfileService', ['get', 'update', 'disableMfa']);
+    service = jasmine.createSpyObj<MyProfileService>('MyProfileService', ['get', 'update', 'disableMfa', 'deleteAccount']);
     service.get.and.returnValue(of({ ...profile }));
     service.update.and.returnValue(of({ ...profile, location: 'Sintra' }));
     service.disableMfa.and.returnValue(of({ ...profile, mfa: false }));
+    service.deleteAccount.and.returnValue(of(void 0));
 
     await TestBed.configureTestingModule({
       declarations: [AlterardadosComponent],
@@ -159,5 +161,27 @@ describe('AlterardadosComponent', () => {
 
     expect(service.update).not.toHaveBeenCalled();
     expect(component.errorMessage).toContain('email');
+  });
+
+  it('should not delete the account when the confirmation username is wrong', () => {
+    component.openAccountDeletion();
+    component.accountDeletionConfirmation = 'another-user';
+
+    component.deleteAccount();
+
+    expect(service.deleteAccount).not.toHaveBeenCalled();
+    expect(component.errorMessage).toContain('utilizador');
+  });
+
+  it('should delete the authenticated account and clear the local session', () => {
+    const authenticationService = TestBed.inject(AuthenticationService);
+    const logoutSpy = spyOn(authenticationService, 'logOut').and.callThrough();
+
+    component.openAccountDeletion();
+    component.accountDeletionConfirmation = 'miguel';
+    component.deleteAccount();
+
+    expect(service.deleteAccount).toHaveBeenCalled();
+    expect(logoutSpy).toHaveBeenCalled();
   });
 });

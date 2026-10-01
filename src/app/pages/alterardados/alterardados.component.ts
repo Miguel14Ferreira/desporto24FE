@@ -33,6 +33,9 @@ export class AlterardadosComponent implements OnInit {
   mfaDisabling = false;
   mfaDisablePending = false;
   mfaDisableCode = '';
+  accountDeletionPending = false;
+  accountDeletionConfirmation = '';
+  deletingAccount = false;
   errorMessage = '';
   successMessage = '';
   toastMessage = '';
@@ -49,6 +52,7 @@ export class AlterardadosComponent implements OnInit {
 
   constructor(
     private myProfileService: MyProfileService,
+    private authenticationService: AuthenticationService,
     private host: ElementRef<HTMLElement>
   ) {}
 
@@ -389,6 +393,43 @@ export class AlterardadosComponent implements OnInit {
   cancelMfaDisable(): void {
     this.mfaDisablePending = false;
     this.mfaDisableCode = '';
+  }
+
+  openAccountDeletion(): void {
+    this.accountDeletionPending = true;
+    this.accountDeletionConfirmation = '';
+    this.errorMessage = '';
+  }
+
+  cancelAccountDeletion(): void {
+    this.accountDeletionPending = false;
+    this.accountDeletionConfirmation = '';
+  }
+
+  deleteAccount(): void {
+    if (!this.profile || this.deletingAccount) {
+      return;
+    }
+
+    if (this.accountDeletionConfirmation.trim() !== this.profile.username) {
+      this.errorMessage = t('feedback.profile.deleteConfirmationMismatch');
+      return;
+    }
+
+    this.deletingAccount = true;
+    this.errorMessage = '';
+
+    this.myProfileService.deleteAccount()
+      .pipe(finalize(() => this.deletingAccount = false))
+      .subscribe({
+        next: () => this.authenticationService.logOut(),
+        error: error => {
+          this.errorMessage = this.errorFrom(
+            error,
+            t('feedback.profile.deleteError')
+          );
+        }
+      });
   }
 
   startPhotoEdit(): void {

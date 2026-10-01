@@ -65,6 +65,13 @@ export class MyProfileService {
     );
   }
 
+  deleteAccount(): Observable<void> {
+    return this.http.delete<void>(
+      this.baseUrl,
+      { withCredentials: true }
+    );
+  }
+
   changePassword(currentPassword: string, newPassword: string): Observable<unknown> {
     return this.http.put(
       this.baseUrl + '/password',

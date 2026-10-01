@@ -167,6 +167,12 @@ const PT: Dictionary = {
   'profile.mfa.step3': '3. Introduz o código de 6 dígitos mostrado na app',
   'profile.mfa.confirming': 'A confirmar...',
   'profile.mfa.confirmEnable': 'Confirmar e ativar MFA',
+  'profile.delete.title': 'Eliminar conta',
+  'profile.delete.subtitle': 'Esta ação é irreversível. Os teus dados pessoais serão removidos ou anonimizados e deixarás de conseguir iniciar sessão.',
+  'profile.delete.action': 'Eliminar conta',
+  'profile.delete.confirmHint': 'Para confirmar, escreve exatamente o teu nome de utilizador:',
+  'profile.delete.confirmAction': 'Eliminar definitivamente',
+  'profile.delete.deleting': 'A eliminar...',
   'profile.save': 'Guardar alterações',
 
   'home.eyebrow': 'DESPORTO24 · A tua vida desportiva',
@@ -1023,6 +1029,8 @@ const PT: Dictionary = {
   'feedback.profile.mfaCancelled': 'Configuração MFA cancelada.',
   'feedback.profile.mfaDisableError': 'Não foi possível desativar o MFA.',
   'feedback.profile.mfaCancelError': 'Não foi possível cancelar a configuração MFA.',
+  'feedback.profile.deleteConfirmationMismatch': 'O nome de utilizador não corresponde. Confirma o texto antes de eliminar a conta.',
+  'feedback.profile.deleteError': 'Não foi possível eliminar a conta.',
   'feedback.image.choose': 'Escolhe um ficheiro de imagem.',
 
   'feedback.password.fillAll': 'Preenche todos os campos.',
@@ -1364,6 +1372,12 @@ const EN: Dictionary = {
   'profile.mfa.step3': '3. Enter the 6-digit code shown in the app',
   'profile.mfa.confirming': 'Confirming...',
   'profile.mfa.confirmEnable': 'Confirm and enable MFA',
+  'profile.delete.title': 'Delete account',
+  'profile.delete.subtitle': 'This action is irreversible. Your personal data will be removed or anonymised and you will no longer be able to sign in.',
+  'profile.delete.action': 'Delete account',
+  'profile.delete.confirmHint': 'To confirm, type your username exactly:',
+  'profile.delete.confirmAction': 'Delete permanently',
+  'profile.delete.deleting': 'Deleting...',
   'profile.save': 'Save changes',
 
   'home.eyebrow': 'DESPORTO24 · Your sports life',
@@ -2226,6 +2240,8 @@ const EN: Dictionary = {
   'feedback.profile.mfaCancelled': 'MFA setup cancelled.',
   'feedback.profile.mfaDisableError': 'We could not disable MFA.',
   'feedback.profile.mfaCancelError': 'We could not cancel MFA setup.',
+  'feedback.profile.deleteConfirmationMismatch': 'The username does not match. Confirm the text before deleting your account.',
+  'feedback.profile.deleteError': 'We could not delete your account.',
   'feedback.image.choose': 'Choose an image file.',
 
   'feedback.password.fillAll': 'Fill in all fields.',
