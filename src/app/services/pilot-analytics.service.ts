@@ -10,23 +10,38 @@ export class PilotAnalyticsService {
   private readonly accessUrl = environment.apiUrl + '/api/pilot/events/access';
   private readonly deviceIdKey = 'd24_pilot_device_id';
   private readonly accessRecordedKey = 'd24_pilot_access_recorded';
+  private readonly cohortKey = 'd24_pilot_cohort';
 
   constructor(private http: HttpClient) {}
 
-  recordFirstAccess(): void {
+  recordFirstAccess(cohort?: string | null): void {
     if (this.readStorage(this.accessRecordedKey) === '1') {
       return;
     }
 
+    const normalizedCohort = this.normalizeCohort(cohort)
+      ?? this.normalizeCohort(this.readStorage(this.cohortKey));
+    if (normalizedCohort) {
+      this.writeStorage(this.cohortKey, normalizedCohort);
+    }
+
     const deviceId = this.getOrCreateDeviceId();
 
-    this.http.post<void>(this.accessUrl, { deviceId }).subscribe({
+    this.http.post<void>(this.accessUrl, {
+      deviceId,
+      cohort: normalizedCohort
+    }).subscribe({
       next: () => this.writeStorage(this.accessRecordedKey, '1'),
       error: () => {
         // Analytics must never interrupt the user journey.
         // A failed request is retried on a future app start.
       }
     });
+  }
+
+  private normalizeCohort(cohort?: string | null): string | null {
+    const normalized = cohort?.trim();
+    return normalized ? normalized : null;
   }
 
   private getOrCreateDeviceId(): string {

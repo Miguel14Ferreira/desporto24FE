@@ -22,9 +22,9 @@ export class AppComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.pilotAnalyticsService.recordFirstAccess();
-
     const params = new URLSearchParams(window.location.search);
+    this.pilotAnalyticsService.recordFirstAccess(params.get('cohort'));
+
     const token = params.get('confirmRegistration');
 
     if (!token) {
