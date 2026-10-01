@@ -115,7 +115,11 @@ export class VenueDetailsComponent implements OnInit {
     this.photosLoadError = false;
 
     this.venueService.listPhotos(venueId)
-      .pipe(finalize(() => this.photosLoading = false))
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        finalize(() => this.photosLoading = false)
+      )
       .subscribe({
         next: photos => this.photos = photos,
         error: () => {
