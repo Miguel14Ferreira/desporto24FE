@@ -140,7 +140,10 @@ export class MySessionsComponent implements OnInit {
     this.actionError = '';
 
     this.sessionService.leave(session.id)
-      .pipe(finalize(() => this.waitlistLeavingId = null))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.waitlistLeavingId = null)
+      )
       .subscribe({
         next: () => {
           this.data = {
