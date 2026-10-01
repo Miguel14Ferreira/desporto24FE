@@ -48,7 +48,11 @@ export class DiscoverComponent implements OnInit {
     }
 
     this.communityService.publicProfile(username)
-      .pipe(catchError(() => of(null)))
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        catchError(() => of(null))
+      )
       .subscribe(profile => {
         if (profile) {
           this.sport = profile.favoriteSports
