@@ -114,7 +114,10 @@ export class MySessionsComponent implements OnInit {
     this.actionError = '';
 
     this.sessionService.cancel(sessionId)
-      .pipe(finalize(() => this.cancelLoading = false))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.cancelLoading = false)
+      )
       .subscribe({
         next: () => {
           this.pendingCancelId = null;
