@@ -109,7 +109,12 @@ export class PerfisComponent implements OnInit {
   }
 
   private loadFriendUsernames(): void {
-    this.communityService.friends().subscribe({
+    this.communityService.friends()
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 })
+      )
+      .subscribe({
       next: friends => {
         this.friendUsernames = new Set(
           friends.map(friend => friend.username.toLowerCase())
