@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { finalize } from 'rxjs';
+import { finalize, retry, timeout } from 'rxjs';
 
 import { VenuePhoto, VenueService, VenueSportCondition } from '../../services/venue.service';
 import { Venue } from '../model/venue';
@@ -45,7 +45,11 @@ export class VenueDetailsComponent implements OnInit {
     }
 
     this.venueService.get(venueId)
-      .pipe(finalize(() => this.loading = false))
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        finalize(() => this.loading = false)
+      )
       .subscribe({
         next: venue => this.venue = venue,
         error: () => this.loadError = true
