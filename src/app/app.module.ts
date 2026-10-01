@@ -43,6 +43,7 @@ import { DiscoverComponent } from './pages/discover/discover.component';
 import { VenueDetailsComponent } from './pages/venue-details/venue-details.component';
 import { VenueCreateComponent } from './pages/venue-create/venue-create.component';
 import { TranslatePipe } from './i18n/translate.pipe';
+import { LegalPageComponent } from './pages/legal-page/legal-page.component';
 
 @NgModule({ declarations: [
         AppComponent,
@@ -80,6 +81,7 @@ import { TranslatePipe } from './i18n/translate.pipe';
         DiscoverComponent,
         VenueDetailsComponent,
         VenueCreateComponent,
+        LegalPageComponent,
         TranslatePipe
     ],
     bootstrap: [AppComponent], imports: [BrowserModule,

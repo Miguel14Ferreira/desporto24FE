@@ -34,12 +34,15 @@ import { SocialFeedComponent } from './pages/social-feed/social-feed.component';
 import { DiscoverComponent } from './pages/discover/discover.component';
 import { VenueDetailsComponent } from './pages/venue-details/venue-details.component';
 import { VenueCreateComponent } from './pages/venue-create/venue-create.component';
+import { LegalPageComponent } from './pages/legal-page/legal-page.component';
 
 const routes: Routes = [
   {path:'', redirectTo:'home',pathMatch:'full'},
   {path:'home',component:HomeComponent},
   {path:'about',component:AboutComponent},
   {path:'contact',component:ContactComponent},
+  {path:'privacy',component:LegalPageComponent,data:{document:'privacy'}},
+  {path:'terms',component:LegalPageComponent,data:{document:'terms'}},
   {path:'menu/events/menu',redirectTo:'/menu', pathMatch:'full'},
   {path:'menu/my-sessions',component:MySessionsComponent,canActivate:[AuthenticationGuard]},
   {path:'menu/events/:id',component:SessionDetailsComponent,canActivate:[AuthenticationGuard]},

@@ -1,0 +1,26 @@
+<section class="legal-page">
+  <div class="legal-shell">
+    <header class="legal-header">
+      <p class="eyebrow">{{ 'legal.eyebrow' | t }}</p>
+      <h1>{{ titleKey | t }}</h1>
+      <p class="intro">{{ introKey | t }}</p>
+      <p class="updated">{{ 'legal.updated' | t }}</p>
+    </header>
+
+    <aside class="pilot-notice" role="note">
+      {{ 'legal.pilotNotice' | t }}
+    </aside>
+
+    <div class="legal-sections">
+      <article class="legal-card" *ngFor="let section of sections">
+        <h2>{{ section.titleKey | t }}</h2>
+        <p>{{ section.textKey | t }}</p>
+      </article>
+    </div>
+
+    <footer class="legal-footer">
+      <p>{{ 'legal.contact' | t }}</p>
+      <a routerLink="/home">{{ 'legal.back' | t }}</a>
+    </footer>
+  </div>
+</section>
