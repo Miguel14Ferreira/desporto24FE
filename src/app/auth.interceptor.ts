@@ -61,7 +61,9 @@ export class AuthInterceptor implements HttpInterceptor {
             return next.handle(retryRequest);
           }),
           catchError(refreshError => {
-            this.clearSessionAndRedirect();
+            if (this.isRefreshRejected(refreshError)) {
+              this.clearSessionAndRedirect();
+            }
             return throwError(() => refreshError);
           })
         );
@@ -90,6 +92,14 @@ export class AuthInterceptor implements HttpInterceptor {
     }
 
     return this.refreshInFlight;
+  }
+
+  private isRefreshRejected(error: unknown): boolean {
+    if (!(error instanceof HttpErrorResponse)) {
+      return false;
+    }
+
+    return [400, 401, 403].includes(error.status);
   }
 
   private clearSessionAndRedirect(): void {

@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRouteSnapshot, Router, RouterStateSnapshot, UrlTree } from '@angular/router';
 import { JwtHelperService } from '@auth0/angular-jwt';
 import { firstValueFrom } from 'rxjs';
@@ -36,8 +37,14 @@ export class AuthenticationGuard {
       if (refreshed.token) {
         return true;
       }
-    } catch {
-      // No valid refresh session remains.
+
+      return true;
+    } catch (error) {
+      if (!this.isRefreshRejected(error)) {
+        // Keep the current route during temporary API/network outages.
+        // The next protected request can try the refresh cookie again.
+        return true;
+      }
     }
 
     localStorage.removeItem('t');
@@ -45,5 +52,13 @@ export class AuthenticationGuard {
       ['/login'],
       { queryParams: { returnUrl: state.url, sessionExpired: '1' } }
     );
+  }
+
+  private isRefreshRejected(error: unknown): boolean {
+    if (!(error instanceof HttpErrorResponse)) {
+      return false;
+    }
+
+    return [400, 401, 403].includes(error.status);
   }
 }
