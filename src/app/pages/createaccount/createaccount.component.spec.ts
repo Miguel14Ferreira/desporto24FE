@@ -56,7 +56,8 @@ describe('CreateaccountComponent', () => {
         username: 'miguel',
         email: 'miguel@example.com',
         indicativePhone: '351',
-        phone: '912345678'
+        phone: '912345678',
+        acceptedLegalTerms: true
       }),
       undefined
     );

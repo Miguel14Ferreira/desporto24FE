@@ -8,4 +8,5 @@ export interface RegistrationRequest {
   phone: string | null;
   gender: string | null;
   email: string;
+  acceptedLegalTerms: boolean;
 }

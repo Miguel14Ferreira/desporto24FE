@@ -69,7 +69,8 @@ export class CreateaccountComponent {
       indicativePhone: this.phone.trim() ? this.indicativePhone : null,
       phone: this.phone.trim() ? this.phone.replace(/\D/g, '') : null,
       gender: this.gender || null,
-      email: this.email.trim()
+      email: this.email.trim(),
+      acceptedLegalTerms: this.acceptedLegalTerms
     };
 
     this.loading = true;
