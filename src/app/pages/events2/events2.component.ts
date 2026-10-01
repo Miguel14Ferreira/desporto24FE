@@ -257,7 +257,10 @@ export class Events2Component implements OnInit {
       latitude: this.locationCaptured ? this.latitude : null,
       longitude: this.locationCaptured ? this.longitude : null
     })
-      .pipe(finalize(() => this.venueSaving = false))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.venueSaving = false)
+      )
       .subscribe({
         next: venue => {
           this.venues = [...this.venues, venue]
