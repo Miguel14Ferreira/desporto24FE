@@ -28,6 +28,7 @@ export class GoogleOnboardingComponent implements OnInit {
   indicativePhone = '351';
   phone = '';
   gender = '';
+  acceptedLegalTerms = false;
 
   loading = false;
   errorMessage = '';
@@ -72,7 +73,8 @@ export class GoogleOnboardingComponent implements OnInit {
       country: this.country.trim(),
       indicativePhone: this.phone.trim() ? this.indicativePhone.replace(/\D/g, '') : null,
       phone: this.phone.trim() ? this.phone.replace(/\D/g, '') : null,
-      gender: this.gender || null
+      gender: this.gender || null,
+      acceptedLegalTerms: this.acceptedLegalTerms
     };
 
     this.loading = true;
@@ -132,6 +134,10 @@ export class GoogleOnboardingComponent implements OnInit {
 
     if (this.phone.trim() && !indicative) {
       return t('feedback.register.invalidPhone');
+    }
+
+    if (!this.acceptedLegalTerms) {
+      return t('feedback.register.acceptLegal');
     }
 
     return null;
