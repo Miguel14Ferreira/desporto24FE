@@ -196,7 +196,11 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
     this.attendanceError = '';
 
     this.sessionService.participants(this.sessionId)
-      .pipe(finalize(() => this.participantsLoading = false))
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        finalize(() => this.participantsLoading = false)
+      )
       .subscribe({
         next: participants => this.participants = participants,
         error: error => {
