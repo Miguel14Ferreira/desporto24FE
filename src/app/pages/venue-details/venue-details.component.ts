@@ -83,7 +83,10 @@ export class VenueDetailsComponent implements OnInit {
     this.sportConditionSaveError = false;
 
     this.venueService.addSportCondition(this.venue.id, { sport, conditions })
-      .pipe(finalize(() => this.sportConditionSaving = false))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.sportConditionSaving = false)
+      )
       .subscribe({
         next: condition => {
           this.sportConditionsLoadError = false;
