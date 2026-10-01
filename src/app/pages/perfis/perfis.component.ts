@@ -131,7 +131,11 @@ export class PerfisComponent implements OnInit {
     this.errorMessage = '';
 
     this.communityService.discoverProfiles()
-      .pipe(finalize(() => this.loading = false))
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        finalize(() => this.loading = false)
+      )
       .subscribe({
         next: profiles => {
           this.profiles = profiles;
