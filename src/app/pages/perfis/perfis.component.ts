@@ -417,7 +417,10 @@ export class PerfisComponent implements OnInit {
     this.actionSuccess = '';
 
     this.communityService.sendFriendRequest(profile.username)
-      .pipe(finalize(() => this.actionLoading = false))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.actionLoading = false)
+      )
       .subscribe({
         next: () => {
           this.pendingFriendRequests.add(profile.username);
