@@ -90,6 +90,9 @@ describe('AuthenticationService pilot cohort attribution', () => {
     service.register(request).subscribe();
 
     const formData = http.post.calls.mostRecent().args[1] as FormData;
+    expect(formData.has('cohort')).toBeFalse();
+  });
+
   it('keeps an expired access token as a session candidate until refresh decides', () => {
     localStorage.setItem('t', 'expired.jwt.token');
     spyOn(JwtHelperService.prototype, 'decodeToken')
@@ -108,8 +111,5 @@ describe('AuthenticationService pilot cohort attribution', () => {
     expect(service.hasSessionCandidate()).toBeFalse();
     expect(localStorage.getItem('t')).toBeNull();
     expect(service.loggedInPerfilname).toBeNull();
-  });
-
-    expect(formData.has('cohort')).toBeFalse();
   });
 });
