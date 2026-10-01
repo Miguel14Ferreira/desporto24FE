@@ -117,7 +117,10 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
     this.actionSuccess = '';
 
     this.sessionService.join(this.sessionId, this.joinPassword)
-      .pipe(finalize(() => this.actionLoading = false))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.actionLoading = false)
+      )
       .subscribe({
         next: response => {
           this.joinPassword = '';
