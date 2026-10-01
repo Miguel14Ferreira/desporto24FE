@@ -157,7 +157,7 @@ export class LoginComponent implements OnInit, AfterViewInit {
               sessionStorage.removeItem('mfa-expires-at');
             }
 
-            this.router.navigate(['/login/MFAauthentication', 'google']);
+            this.router.navigate(['/login/MFAauthentication']);
             return;
           }
 
@@ -213,7 +213,7 @@ export class LoginComponent implements OnInit, AfterViewInit {
               sessionStorage.removeItem('mfa-expires-at');
             }
 
-            this.router.navigate(['/login/MFAauthentication', username]);
+            this.router.navigate(['/login/MFAauthentication']);
             return;
           }
 

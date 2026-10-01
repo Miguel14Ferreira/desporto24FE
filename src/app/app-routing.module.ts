@@ -70,7 +70,7 @@ const routes: Routes = [
   {path:'menu/dadosPerfil',component:PerfilDataComponent,canActivate:[AuthenticationGuard], pathMatch:'full'},
   {path:'menu/dadosPerfil/menu',redirectTo:'menu',pathMatch:'full'},  
   {path:'menu/dadosPerfil/alterardados',redirectTo:'menu/alterardados',pathMatch:'full'},
-  {path:'login/MFAauthentication/:username', component: LoginMFAComponent},
+  {path:'login/MFAauthentication', component: LoginMFAComponent},
   {path:'menu', component:MenuComponent,canActivate:[AuthenticationGuard]},
   {path:'menu/friendList',component:FriendsComponent,canActivate:[AuthenticationGuard]},
   {path:'menu/friendList/chat/:username',component:DirectChatComponent,canActivate:[AuthenticationGuard]},

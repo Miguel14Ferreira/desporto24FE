@@ -83,6 +83,6 @@ describe('LoginComponent', () => {
 
     expect(sessionStorage.getItem('mfa-challenge-id')).toBe('challenge-123');
     expect(auth.saveToken).not.toHaveBeenCalled();
-    expect(router.navigate).toHaveBeenCalledWith(['/login/MFAauthentication', 'miguel']);
+    expect(router.navigate).toHaveBeenCalledWith(['/login/MFAauthentication']);
   });
 });
