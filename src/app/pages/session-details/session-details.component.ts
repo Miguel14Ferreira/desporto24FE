@@ -345,11 +345,15 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
     this.chatError = '';
 
     this.sessionService.messages(this.sessionId)
-      .pipe(finalize(() => {
-        if (showLoading) {
-          this.chatLoading = false;
-        }
-      }))
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        finalize(() => {
+          if (showLoading) {
+            this.chatLoading = false;
+          }
+        })
+      )
       .subscribe({
         next: messages => this.messages = this.sortedMessages(messages),
         error: error => {
