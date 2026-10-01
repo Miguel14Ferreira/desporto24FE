@@ -383,7 +383,10 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
     this.chatError = '';
 
     this.sessionService.postMessage(this.sessionId, body)
-      .pipe(finalize(() => this.messageSending = false))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.messageSending = false)
+      )
       .subscribe({
         next: message => {
           this.appendMessageIfMissing(message);
