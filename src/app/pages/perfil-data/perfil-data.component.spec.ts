@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 
 import { PerfilDataComponent } from './perfil-data.component';
 import { MyProfileService } from '../../services/my-profile.service';
@@ -96,4 +96,33 @@ describe('PerfilDataComponent', () => {
     expect(reliabilityService.summary).toHaveBeenCalledWith('miguel');
     expect(component.reliability?.attendanceRate).toBe(90);
   });
+
+  it('should expose a recoverable error when profile loading keeps failing', () => {
+    profileService.get.calls.reset();
+    profileService.get.and.returnValue(
+      throwError(() => new Error('service unavailable'))
+    );
+
+    component.load();
+
+    expect(profileService.get).toHaveBeenCalledTimes(2);
+    expect(component.loading).toBeFalse();
+    expect(component.errorMessage).toBeTruthy();
+  });
+
+  it('should recover profile loading after one automatic retry', () => {
+    const profile = component.profile!;
+    profileService.get.calls.reset();
+    profileService.get.and.returnValues(
+      throwError(() => new Error('temporary failure')),
+      of(profile)
+    );
+
+    component.load();
+
+    expect(profileService.get).toHaveBeenCalledTimes(2);
+    expect(component.errorMessage).toBe('');
+    expect(component.profile?.username).toBe('miguel');
+  });
+
 });
