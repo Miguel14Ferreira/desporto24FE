@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { finalize } from 'rxjs';
+import { finalize, retry, timeout } from 'rxjs';
 import { appTranslate as t } from '../../i18n/i18n.service';
 
 import {
@@ -15,6 +15,8 @@ import {
   CommunityStanding
 } from '../model/community-group';
 import { CommunityGroupsService } from '../../services/community-groups.service';
+import { CommunityService } from '../../services/community.service';
+import { CommunityProfile } from '../model/community-profile';
 import { SessionSummary } from '../model/session-summary';
 
 type CommunityTab = 'home' | 'sessions' | 'ranking' | 'stats' | 'members';
@@ -43,6 +45,10 @@ export class CommunitiesComponent implements OnInit {
 
   activeTab: CommunityTab = 'home';
   inviteUsername = '';
+  inviteSearchResults: CommunityProfile[] = [];
+  inviteSearchLoading = false;
+  inviteSearchPerformed = false;
+  inviteMessage = '';
   ownershipUsername = '';
   photoUpdating = false;
 
@@ -67,6 +73,7 @@ export class CommunitiesComponent implements OnInit {
 
   constructor(
     private communityService: CommunityGroupsService,
+    private profileService: CommunityService,
     private route: ActivatedRoute
   ) {}
 
@@ -116,6 +123,10 @@ export class CommunitiesComponent implements OnInit {
       next: full => {
         this.selected = full;
         this.activeTab = 'home';
+        this.inviteUsername = '';
+        this.inviteSearchResults = [];
+        this.inviteSearchPerformed = false;
+        this.inviteMessage = '';
         this.roundDeleteConfirmId = undefined;
         this.selectedSeasonId = null;
         this.closeSeasonConfirming = false;
@@ -399,18 +410,68 @@ export class CommunitiesComponent implements OnInit {
       });
   }
 
+  searchInviteUsers(): void {
+    const query = this.inviteUsername.trim();
+    if (!this.selected || !query || this.inviteSearchLoading) {
+      return;
+    }
+
+    this.inviteSearchLoading = true;
+    this.inviteSearchPerformed = false;
+    this.inviteSearchResults = [];
+    this.inviteMessage = '';
+    this.errorMessage = '';
+
+    this.profileService.findProfiles({ name: query })
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        finalize(() => this.inviteSearchLoading = false)
+      )
+      .subscribe({
+        next: profiles => {
+          const existingMembers = new Set(
+            this.selected?.members.map(member => member.username.toLowerCase()) || []
+          );
+
+          this.inviteSearchResults = profiles
+            .filter(profile => !existingMembers.has(profile.username.toLowerCase()))
+            .slice(0, 8);
+          this.inviteSearchPerformed = true;
+        },
+        error: () => {
+          this.inviteSearchPerformed = true;
+          this.errorMessage = t('feedback.communities.inviteSearchError');
+        }
+      });
+  }
+
+  selectInviteUser(profile: CommunityProfile): void {
+    this.inviteUsername = profile.username;
+    this.inviteSearchResults = [];
+    this.inviteSearchPerformed = false;
+    this.inviteMessage = '';
+  }
+
   invite(): void {
     if (!this.selected || !this.inviteUsername.trim() || this.saving) {
       return;
     }
 
+    const username = this.inviteUsername.trim();
     this.saving = true;
     this.errorMessage = '';
+    this.inviteMessage = '';
 
-    this.communityService.invite(this.selected.id, this.inviteUsername.trim())
+    this.communityService.invite(this.selected.id, username)
       .pipe(finalize(() => this.saving = false))
       .subscribe({
-        next: () => this.inviteUsername = '',
+        next: () => {
+          this.inviteUsername = '';
+          this.inviteSearchResults = [];
+          this.inviteSearchPerformed = false;
+          this.inviteMessage = t('feedback.communities.inviteSent', { username });
+        },
         error: error => {
           this.errorMessage = error.error?.message || t('feedback.communities.inviteError');
         }

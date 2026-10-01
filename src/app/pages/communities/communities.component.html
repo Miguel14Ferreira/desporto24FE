@@ -882,12 +882,55 @@
                 @if (canManage()) {
                   <section class="management-block first-block">
                     <h3>{{ 'communities.invitePlayer' | t }}</h3>
-                    <div class="inline-form">
-                      <input [(ngModel)]="inviteUsername" [placeholder]="'communities.usernamePlaceholder' | t">
-                      <button type="button" class="primary-action small" (click)="invite()">
-                        {{ 'communities.sendInvite' | t }}
+                    <p>{{ 'communities.inviteSearchHint' | t }}</p>
+
+                    <div class="inline-form invite-search-form">
+                      <input
+                        [(ngModel)]="inviteUsername"
+                        [placeholder]="'communities.usernamePlaceholder' | t"
+                        (keyup.enter)="searchInviteUsers()">
+                      <button
+                        type="button"
+                        class="secondary-action small"
+                        [disabled]="inviteSearchLoading || !inviteUsername.trim()"
+                        (click)="searchInviteUsers()">
+                        {{ inviteSearchLoading
+                          ? ('communities.searchingUsers' | t)
+                          : ('communities.searchUsers' | t) }}
+                      </button>
+                      <button
+                        type="button"
+                        class="primary-action small"
+                        [disabled]="saving || !inviteUsername.trim()"
+                        (click)="invite()">
+                        {{ saving ? ('communities.sendingInvite' | t) : ('communities.sendInvite' | t) }}
                       </button>
                     </div>
+
+                    @if (inviteMessage) {
+                      <p class="invite-success" role="status">{{ inviteMessage }}</p>
+                    }
+
+                    @if (inviteSearchResults.length > 0) {
+                      <div class="invite-search-results">
+                        @for (profile of inviteSearchResults; track profile.username) {
+                          <button
+                            type="button"
+                            class="invite-profile-result"
+                            (click)="selectInviteUser(profile)">
+                            <span class="invite-profile-avatar">
+                              {{ (profile.nickname || profile.fullName || profile.username).charAt(0).toUpperCase() }}
+                            </span>
+                            <span>
+                              <strong>{{ profile.nickname || profile.fullName || profile.username }}</strong>
+                              <small>@{{ profile.username }}@if (profile.location) { · {{ profile.location }} }</small>
+                            </span>
+                          </button>
+                        }
+                      </div>
+                    } @else if (inviteSearchPerformed && !inviteSearchLoading) {
+                      <p class="invite-search-empty">{{ 'communities.noInviteUsersFound' | t }}</p>
+                    }
                   </section>
                 }
 

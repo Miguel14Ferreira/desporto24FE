@@ -99,6 +99,63 @@ input,textarea,select {
   justify-content:center;
 }
 
+
+.invite-search-form {
+  flex-wrap: wrap;
+}
+
+.invite-search-results {
+  display: grid;
+  gap: .45rem;
+  margin-top: .65rem;
+}
+
+.invite-profile-result {
+  display: flex;
+  align-items: center;
+  gap: .7rem;
+  width: 100%;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: .75rem;
+  padding: .65rem .75rem;
+  background: rgba(255,255,255,.035);
+  color: #f8fafc;
+  text-align: left;
+  cursor: pointer;
+}
+
+.invite-profile-result:hover {
+  border-color: rgba(125,211,252,.35);
+  background: rgba(125,211,252,.07);
+}
+
+.invite-profile-result > span:last-child {
+  display: grid;
+  gap: .15rem;
+}
+
+.invite-profile-result small,
+.invite-search-empty {
+  color: #94a3b8;
+}
+
+.invite-profile-avatar {
+  display: grid;
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(125,211,252,.12);
+  color: #bae6fd;
+  font-weight: 900;
+}
+
+.invite-success {
+  margin: .65rem 0 0;
+  color: #86efac !important;
+}
+
 .member-row,.invite-row {
   display:flex;
   justify-content:space-between;
