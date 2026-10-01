@@ -206,7 +206,10 @@ export class MySessionsComponent implements OnInit {
     this.actionError = '';
 
     this.reliabilityService.createDispute(participantId, reason)
-      .pipe(finalize(() => this.disputeLoading = false))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.disputeLoading = false)
+      )
       .subscribe({
         next: () => {
           this.attendanceHistory = this.attendanceHistory.map(item =>
