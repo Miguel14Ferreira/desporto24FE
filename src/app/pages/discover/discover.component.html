@@ -57,6 +57,19 @@
       <div class="state-card">{{ 'discover.loading' | t }}</div>
     }
 
+    @if (!loading && loadError) {
+      <div class="state-card discover-error" role="alert">
+        <div>
+          <strong>{{ 'discover.error.title' | t }}</strong>
+          <span>{{ 'discover.error.text' | t }}</span>
+        </div>
+        <button type="button" (click)="search()">
+          {{ 'discover.error.retry' | t }}
+        </button>
+      </div>
+    }
+
+
     @if (!loading && initialized) {
       <div class="discovery-grid">
         <section class="pillar-panel">

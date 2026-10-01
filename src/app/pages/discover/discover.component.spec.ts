@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 
 import { DiscoverComponent } from './discover.component';
 import { TEST_IMPORTS, TEST_PROVIDERS } from '../../testing/test-providers';
@@ -110,5 +110,30 @@ describe('DiscoverComponent', () => {
 
     component.toggleAllVenues();
     expect(component.topVenues.length).toBe(4);
+  });
+
+  it('should show an availability error when a discover request still fails after retry', () => {
+    venueService.search.and.returnValue(
+      throwError(() => new Error('API unavailable'))
+    );
+
+    component.search();
+
+    expect(venueService.search).toHaveBeenCalled();
+    expect(component.loadError).toBeTrue();
+    expect(component.initialized).toBeTrue();
+  });
+
+  it('should clear the availability error when a retry search succeeds', () => {
+    venueService.search.and.returnValue(
+      throwError(() => new Error('API unavailable'))
+    );
+    component.search();
+    expect(component.loadError).toBeTrue();
+
+    venueService.search.and.returnValue(of([]));
+    component.search();
+
+    expect(component.loadError).toBeFalse();
   });
 });

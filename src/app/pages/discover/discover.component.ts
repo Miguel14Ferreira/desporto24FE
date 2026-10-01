@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
-import { Observable, catchError, finalize, forkJoin, of } from 'rxjs';
+import { Observable, catchError, finalize, forkJoin, of, retry, timeout } from 'rxjs';
 
 import { AuthenticationService } from '../../services/authethication.service';
 import { CommunityService } from '../../services/community.service';
@@ -28,6 +28,7 @@ export class DiscoverComponent implements OnInit {
 
   loading = false;
   initialized = false;
+  loadError = false;
   showAllVenues = false;
 
   constructor(
@@ -69,19 +70,29 @@ export class DiscoverComponent implements OnInit {
     const location = this.location.trim();
 
     this.loading = true;
+    this.loadError = false;
 
     forkJoin({
-      venues: this.venueService.search(
-        location || undefined,
-        sport || undefined
-      ).pipe(catchError(() => of([] as Venue[]))),
-      sessions: this.sessionService.discover({
-        sport: sport || undefined,
-        city: location || undefined,
-        availability: 'available',
-        sort: 'date'
-      }).pipe(catchError(() => of([] as SessionSummary[]))),
-      people: this.peopleRequest(sport, location)
+      venues: this.withRecovery(
+        this.venueService.search(
+          location || undefined,
+          sport || undefined
+        ),
+        [] as Venue[]
+      ),
+      sessions: this.withRecovery(
+        this.sessionService.discover({
+          sport: sport || undefined,
+          city: location || undefined,
+          availability: 'available',
+          sort: 'date'
+        }),
+        [] as SessionSummary[]
+      ),
+      people: this.withRecovery(
+        this.peopleRequest(sport, location),
+        [] as CommunityProfile[]
+      )
     })
       .pipe(finalize(() => {
         this.loading = false;
@@ -118,6 +129,20 @@ export class DiscoverComponent implements OnInit {
 
   vacancies(session: SessionSummary): number {
     return Math.max(0, session.maxParticipants - session.participantCount);
+  }
+
+  private withRecovery<T>(
+    request$: Observable<T>,
+    fallback: T
+  ): Observable<T> {
+    return request$.pipe(
+      timeout(10_000),
+      retry({ count: 1 }),
+      catchError(() => {
+        this.loadError = true;
+        return of(fallback);
+      })
+    );
   }
 
   private peopleRequest(
