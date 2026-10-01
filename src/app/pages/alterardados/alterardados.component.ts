@@ -6,6 +6,7 @@ import { finalize } from 'rxjs';
 import { environment } from 'src/environment/environment';
 import { MyProfile, UpdateMyProfileRequest } from '../model/my-profile';
 import { MfaSetupResponse, MyProfileService } from '../../services/my-profile.service';
+import { AuthenticationService } from '../../services/authethication.service';
 import { SPORTS_CATALOG, sportIcon } from '../../shared/sports-catalog';
 import { COUNTRY_CALLING_CODES, countryNameFromLabel } from '../../shared/country-calling-codes';
 import { calculateProfileCompletion } from '../../shared/profile-completion';
