@@ -87,7 +87,12 @@ export class Events2Component implements OnInit {
     const communityId = Number(this.route.snapshot.queryParamMap.get('community'));
     if (Number.isFinite(communityId) && communityId > 0) {
       this.communityId = communityId;
-      this.communityService.get(communityId).subscribe({
+      this.communityService.get(communityId)
+        .pipe(
+          timeout(10_000),
+          retry({ count: 1 })
+        )
+        .subscribe({
         next: community => {
           this.communityName = community.name;
           if (!this.sport.trim() && community.sport) {
