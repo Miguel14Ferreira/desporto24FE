@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { appTranslate as t } from '../../i18n/i18n.service';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { finalize } from 'rxjs';
+import { finalize, timeout } from 'rxjs';
 
 import { CreateSessionRequest } from '../model/create-session-request';
 import { SessionService } from '../../services/session.service';
@@ -128,7 +128,10 @@ export class Events2Component implements OnInit {
     this.errorMessage = '';
 
     this.sessionService.create(request, this.photo)
-      .pipe(finalize(() => this.loading = false))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.loading = false)
+      )
       .subscribe({
         next: session => this.router.navigate(['/menu/events', session.id]),
         error: error => {
