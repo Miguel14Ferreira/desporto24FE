@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { appTranslate as t } from '../../i18n/i18n.service';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
-import { finalize } from 'rxjs';
+import { finalize, retry, timeout } from 'rxjs';
 
 import { AttendanceHistoryItem } from '../model/attendance-history';
 import { MySessionsResponse } from '../model/my-sessions-response';
@@ -55,7 +55,11 @@ export class MySessionsComponent implements OnInit {
     this.errorMessage = '';
 
     this.sessionService.mine()
-      .pipe(finalize(() => this.loading = false))
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        finalize(() => this.loading = false)
+      )
       .subscribe({
         next: data => this.data = data,
         error: () => this.errorMessage = t('feedback.sessions.loadError')
@@ -67,7 +71,11 @@ export class MySessionsComponent implements OnInit {
     this.attendanceError = '';
 
     this.reliabilityService.attendanceHistory()
-      .pipe(finalize(() => this.attendanceLoading = false))
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        finalize(() => this.attendanceLoading = false)
+      )
       .subscribe({
         next: history => this.attendanceHistory = history,
         error: () => {
