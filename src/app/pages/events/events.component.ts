@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
-import { finalize } from 'rxjs';
+import { finalize, retry, timeout } from 'rxjs';
 
 import { SessionSummary } from '../model/session-summary';
 import { appTranslate as t } from '../../i18n/i18n.service';
@@ -86,7 +86,11 @@ export class EventsComponent implements OnInit {
         ? undefined
         : Math.max(0, Number(this.maxPrice))
     })
-    .pipe(finalize(() => this.loading = false))
+    .pipe(
+      timeout(10_000),
+      retry({ count: 1 }),
+      finalize(() => this.loading = false)
+    )
     .subscribe({
       next: sessions => this.sessions = sessions,
       error: () => {
