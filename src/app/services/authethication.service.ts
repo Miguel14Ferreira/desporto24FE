@@ -202,12 +202,7 @@ export class AuthenticationService {
 
     try {
       const payload = this.jwtHelper.decodeToken(token);
-      const valid = Boolean(payload?.exp && payload.exp * 1000 > Date.now());
-      if (!valid) {
-        localStorage.removeItem('t');
-        this.token = null;
-      }
-      return valid;
+      return Boolean(payload?.exp && payload.exp * 1000 > Date.now());
     } catch {
       localStorage.removeItem('t');
       this.token = null;

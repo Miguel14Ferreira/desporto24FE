@@ -40,7 +40,6 @@ export class AuthInterceptor implements HttpInterceptor {
       catchError((error: HttpErrorResponse) => {
         if (
           error.status !== 401
-          || !token
           || request.url.includes('/api/auth/login')
           || request.url.includes('/api/auth/mfa/')
           || request.url.includes('/api/auth/refresh')
