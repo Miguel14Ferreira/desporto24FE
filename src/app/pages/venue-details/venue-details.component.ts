@@ -100,7 +100,11 @@ export class VenueDetailsComponent implements OnInit {
     this.sportConditionsLoadError = false;
 
     this.venueService.listSportConditions(venueId)
-      .pipe(finalize(() => this.sportConditionsLoading = false))
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        finalize(() => this.sportConditionsLoading = false)
+      )
       .subscribe({
         next: conditions => this.sportConditions = conditions,
         error: () => {
