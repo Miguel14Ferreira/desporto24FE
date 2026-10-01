@@ -10,7 +10,6 @@ import { Events2Component } from './pages/events2/events2.component';
 import { ForgotpComponent } from './pages/forgotp/forgotp.component';
 import { HomeComponent } from './pages/home/home.component';
 import { LoginComponent } from './pages/login/login.component';
-import { MenuComponent } from './pages/menu/menu.component';
 import { PerfisComponent } from './pages/perfis/perfis.component'; 
 import { Forgotp2Component } from './pages/forgotp2/forgotp2.component';
 import { ConfirmTokenRegistrationComponent } from './pages/confirm-token-registration/confirm-token-registration.component';
@@ -74,7 +73,7 @@ const routes: Routes = [
   {path:'menu/dadosPerfil/menu',redirectTo:'menu',pathMatch:'full'},  
   {path:'menu/dadosPerfil/alterardados',redirectTo:'menu/alterardados',pathMatch:'full'},
   {path:'login/MFAauthentication', component: LoginMFAComponent},
-  {path:'menu', component:MenuComponent,canActivate:[AuthenticationGuard]},
+  {path:'menu', redirectTo:'/menu/feed', pathMatch:'full'},
   {path:'menu/friendList',component:FriendsComponent,canActivate:[AuthenticationGuard]},
   {path:'menu/friendList/chat/:username',component:DirectChatComponent,canActivate:[AuthenticationGuard]},
   {path:'menu/friendList/chat/:username1/:username2',component:DirectChatComponent,canActivate:[AuthenticationGuard]},

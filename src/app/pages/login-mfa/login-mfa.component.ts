@@ -89,7 +89,7 @@ export class LoginMFAComponent implements OnInit, OnDestroy {
           }
 
           this.authService.saveToken(response.token);
-          const returnUrl = sessionStorage.getItem('mfa-return-url') || '/menu';
+          const returnUrl = sessionStorage.getItem('mfa-return-url') || '/menu/feed';
           this.clearChallenge();
           this.router.navigateByUrl(returnUrl);
         },

@@ -19,6 +19,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
   escuro:string = "escuro";
   claro:string = "claro";
   unreadNotifications = 0;
+  loggingOut = false;
   private notificationTimer?: ReturnType<typeof setInterval>;
   private readonly subscriptions = new Subscription();
 
@@ -109,6 +110,18 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
     isAuthenticated(): boolean {
       return this.authService.isLoggedIn();
+    }
+
+    logout(): void {
+      if (this.loggingOut) {
+        return;
+      }
+
+      this.loggingOut = true;
+      this.authService.terminarSessao().subscribe({
+        next: () => this.authService.logOut(),
+        error: () => this.authService.logOut()
+      });
     }
 
     remover(){

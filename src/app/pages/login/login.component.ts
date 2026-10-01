@@ -35,7 +35,7 @@ export class LoginComponent implements OnInit, AfterViewInit {
 
   private resendCooldownTimer?: ReturnType<typeof setInterval>;
 
-  private returnUrl = '/menu';
+  private returnUrl = '/menu/feed';
 
   constructor(
     private router: Router,
@@ -45,7 +45,7 @@ export class LoginComponent implements OnInit, AfterViewInit {
   ) {}
 
   ngOnInit(): void {
-    this.returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') || '/menu';
+    this.returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') || '/menu/feed';
 
     this.successMessage = sessionStorage.getItem('auth-success-message') || '';
     this.errorMessage = sessionStorage.getItem('auth-error-message') || '';

@@ -91,7 +91,7 @@ export class GoogleOnboardingComponent implements OnInit {
 
           this.authenticationService.saveToken(response.token);
           this.clearPendingGoogleRegistration();
-          this.router.navigate(['/menu']);
+          this.router.navigate(['/menu/feed']);
         },
         error: error => {
           this.errorMessage = this.errorFrom(
