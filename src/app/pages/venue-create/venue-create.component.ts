@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
-import { finalize } from 'rxjs';
+import { finalize, timeout } from 'rxjs';
 
 import { VenueService } from '../../services/venue.service';
 
@@ -132,7 +132,12 @@ export class VenueCreateComponent {
 
     this.saving = true;
     this.saveError = false;
-    this.venueService.create(request).pipe(finalize(() => this.saving = false)).subscribe({
+    this.venueService.create(request)
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.saving = false)
+      )
+      .subscribe({
       next: venue => this.router.navigate(['/menu/venues', venue.id]),
       error: () => this.saveError = true
     });
