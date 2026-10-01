@@ -685,7 +685,11 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
     this.reliabilityError = '';
 
     this.reliabilityService.summary(username)
-      .pipe(finalize(() => this.reliabilityLoading = false))
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        finalize(() => this.reliabilityLoading = false)
+      )
       .subscribe({
         next: summary => this.creatorReliability = summary,
         error: () => {
