@@ -41,10 +41,20 @@ export class AuthenticationService {
   }
 
   googleRegister(request: GoogleRegistrationRequest): Observable<GoogleAuthResponse> {
+    const cohort = this.getPilotCohort();
+    const options: {
+      withCredentials: boolean;
+      params?: { cohort: string };
+    } = { withCredentials: true };
+
+    if (cohort) {
+      options.params = { cohort };
+    }
+
     return this.http.post<GoogleAuthResponse>(
       `${this.host}/api/auth/google/register`,
       request,
-      { withCredentials: true }
+      options
     );
   }
 
@@ -80,6 +90,11 @@ export class AuthenticationService {
 
     if (photo) {
       formData.append('photo', photo);
+    }
+
+    const cohort = this.getPilotCohort();
+    if (cohort) {
+      formData.append('cohort', cohort);
     }
 
     return this.http.post<CustomHttpResponse>(
@@ -137,6 +152,15 @@ export class AuthenticationService {
       null,
       { withCredentials: true }
     );
+  }
+
+  private getPilotCohort(): string | null {
+    try {
+      const cohort = localStorage.getItem('d24_pilot_cohort')?.trim();
+      return cohort ? cohort : null;
+    } catch {
+      return null;
+    }
   }
 
   public logOut(): void {
