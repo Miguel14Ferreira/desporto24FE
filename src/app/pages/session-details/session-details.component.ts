@@ -229,7 +229,10 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
     this.attendanceSuccess = '';
 
     this.reliabilityService.recordAttendance(this.sessionId, participant.id, status)
-      .pipe(finalize(() => this.attendanceUpdatingId = null))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.attendanceUpdatingId = null)
+      )
       .subscribe({
         next: () => {
           participant.attendanceStatus = status;
