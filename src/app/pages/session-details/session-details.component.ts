@@ -290,7 +290,10 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
     this.participantManagementSuccess = '';
 
     this.sessionService.removeParticipant(this.sessionId, participant.id)
-      .pipe(finalize(() => this.removeLoadingId = null))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.removeLoadingId = null)
+      )
       .subscribe({
         next: () => {
           this.pendingRemovalId = null;
