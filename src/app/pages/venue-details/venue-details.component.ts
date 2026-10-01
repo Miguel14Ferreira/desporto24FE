@@ -155,7 +155,10 @@ export class VenueDetailsComponent implements OnInit {
     this.photoUploadError = false;
 
     this.venueService.addPhoto(this.venue.id, file)
-      .pipe(finalize(() => this.photoUploading = false))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.photoUploading = false)
+      )
       .subscribe({
         next: photo => {
           this.photosLoadError = false;
