@@ -7,7 +7,15 @@
     }
 
     @if (!loading && errorMessage) {
-      <div class="state-card error-state">{{ errorMessage }}</div>
+      <div class="state-card error-state session-load-error" role="alert">
+        <span>{{ errorMessage }}</span>
+        <button
+          type="button"
+          class="primary-action"
+          (click)="retrySessionLoad()">
+          {{ 'sessionDetail.retry' | t }}
+        </button>
+      </div>
     }
 
     @if (!loading && session) {

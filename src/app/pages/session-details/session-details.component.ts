@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { JwtHelperService } from '@auth0/angular-jwt';
-import { finalize, Subscription } from 'rxjs';
+import { finalize, retry, Subscription, timeout } from 'rxjs';
 
 import { environment } from 'src/environment/environment';
 import { SessionDetail } from '../model/session-detail';
@@ -605,6 +605,10 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
       .replace(/;/g, '\\;');
   }
 
+  retrySessionLoad(): void {
+    this.loadSession();
+  }
+
   private loadSession(showPageLoader = true): void {
     if (!this.sessionId) {
       return;
@@ -616,11 +620,15 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
     this.errorMessage = '';
 
     this.sessionService.detail(this.sessionId)
-      .pipe(finalize(() => {
-        if (showPageLoader) {
-          this.loading = false;
-        }
-      }))
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        finalize(() => {
+          if (showPageLoader) {
+            this.loading = false;
+          }
+        })
+      )
       .subscribe({
         next: session => {
           this.session = session;

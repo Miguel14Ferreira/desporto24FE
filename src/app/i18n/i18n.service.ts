@@ -972,6 +972,7 @@ const PT: Dictionary = {
 
   'sessionDetail.back': 'Voltar às sessões',
   'sessionDetail.loading': 'A carregar detalhes...',
+  'sessionDetail.retry': 'Tentar novamente',
   'sessionDetail.photoAlt': 'Sessão de {{sport}}',
   'sessionDetail.creator': 'Criador',
   'sessionDetail.user': 'Utilizador',
@@ -2180,6 +2181,7 @@ const EN: Dictionary = {
 
   'sessionDetail.back': 'Back to sessions',
   'sessionDetail.loading': 'Loading details...',
+  'sessionDetail.retry': 'Try again',
   'sessionDetail.photoAlt': '{{sport}} session',
   'sessionDetail.creator': 'Creator',
   'sessionDetail.user': 'User',

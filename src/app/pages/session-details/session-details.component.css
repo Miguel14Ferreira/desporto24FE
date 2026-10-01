@@ -867,3 +867,14 @@ h1 {
   text-transform: uppercase;
   letter-spacing: .08em;
 }
+
+
+.session-load-error {
+  display: grid;
+  justify-items: center;
+  gap: .85rem;
+}
+
+.session-load-error .primary-action {
+  width: fit-content;
+}

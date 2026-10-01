@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { BehaviorSubject, Subject, of } from 'rxjs';
+import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
 
 import { SessionDetailsComponent } from './session-details.component';
 import { SessionService } from '../../services/session.service';
@@ -383,5 +383,26 @@ describe('SessionDetailsComponent', () => {
 
     expect(reliabilityService.recordAttendance).toHaveBeenCalledWith(7, 15, 'ATTENDED');
     expect(participant.attendanceStatus).toBe('ATTENDED');
+  });
+
+  it('should expose a recoverable error when session details fail to load', () => {
+    sessionService.detail.and.returnValue(
+      throwError(() => new Error('API unavailable'))
+    );
+
+    component.retrySessionLoad();
+
+    expect(component.loading).toBeFalse();
+    expect(component.errorMessage).toContain('detalhes');
+  });
+
+  it('should clear the load error when retrying session details successfully', () => {
+    component.errorMessage = 'temporary error';
+    sessionService.detail.and.returnValue(of(session));
+
+    component.retrySessionLoad();
+
+    expect(component.errorMessage).toBe('');
+    expect(component.session?.id).toBe(7);
   });
 });
