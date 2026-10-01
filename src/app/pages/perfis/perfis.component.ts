@@ -381,7 +381,10 @@ export class PerfisComponent implements OnInit {
       : this.socialGraphService.follow(profile.username);
 
     request$
-      .pipe(finalize(() => this.followLoading = false))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.followLoading = false)
+      )
       .subscribe({
         next: status => {
           this.selectedFollowStatus = status;
