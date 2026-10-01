@@ -344,7 +344,10 @@ export class PerfisComponent implements OnInit {
     this.actionSuccess = '';
 
     this.communityService.reportUser(profile.username, reason)
-      .pipe(finalize(() => this.reportLoading = false))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.reportLoading = false)
+      )
       .subscribe({
         next: () => {
           this.reportOpen = false;
