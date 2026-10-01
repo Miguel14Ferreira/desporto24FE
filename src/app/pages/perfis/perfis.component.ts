@@ -287,7 +287,10 @@ export class PerfisComponent implements OnInit {
       : this.communityService.blockUser(profile.username);
 
     request$
-      .pipe(finalize(() => this.blockLoading = false))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.blockLoading = false)
+      )
       .subscribe({
         next: status => {
           this.selectedBlocked = status.blocked;
