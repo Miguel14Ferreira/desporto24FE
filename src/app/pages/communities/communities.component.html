@@ -278,7 +278,7 @@
                           <button
                             type="button"
                             class="primary-action"
-                            [disabled]="seasonSaving || !seasonName.trim()"
+                            [disabled]="seasonSaving"
                             (click)="createSeason()">
                             {{ seasonSaving
                               ? ('communities.creatingSeason' | t)
