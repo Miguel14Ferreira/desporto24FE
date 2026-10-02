@@ -199,7 +199,10 @@ export class FriendsComponent implements OnInit {
     this.actionSuccess = '';
 
     this.communityService.removeFriend(friend.username)
-      .pipe(finalize(() => this.actionLoadingUsername = null))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.actionLoadingUsername = null)
+      )
       .subscribe({
         next: () => {
           this.friends = this.friends.filter(item => item.username !== friend.username);
