@@ -165,7 +165,10 @@ export class SocialFeedComponent implements OnInit {
       : this.feedService.likePost(item.postId);
 
     request$
-      .pipe(finalize(() => this.interactionLoadingPostId = null))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.interactionLoadingPostId = null)
+      )
       .subscribe({
         next: status => {
           item.likedByMe = status.likedByMe;
