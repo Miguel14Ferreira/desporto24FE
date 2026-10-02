@@ -555,7 +555,7 @@
                               <div class="import-context">
                                 <label>
                                   <span>{{ 'communities.import.season' | t }}</span>
-                                  <select [(ngModel)]="selectedSeasonId">
+                                  <select [(ngModel)]="selectedSeasonId" (ngModelChange)="invalidateImportPlan()">
                                     <option [ngValue]="null">{{ 'communities.import.selectSeason' | t }}</option>
                                     @for (season of competition?.seasons || []; track season.id) {
                                       <option [ngValue]="season.id">{{ seasonOptionLabel(season) }}</option>
@@ -564,7 +564,7 @@
                                 </label>
                                 <label>
                                   <span>{{ 'communities.import.defaultYear' | t }}</span>
-                                  <input type="number" min="1900" max="2100" [(ngModel)]="importDefaultYear">
+                                  <input type="number" min="1900" max="2100" [(ngModel)]="importDefaultYear" (ngModelChange)="invalidateImportPlan()">
                                 </label>
                               </div>
 

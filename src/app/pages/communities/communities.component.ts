@@ -567,6 +567,12 @@ export class CommunitiesComponent implements OnInit {
       });
   }
 
+  invalidateImportPlan(): void {
+    this.importFinalPlan = undefined;
+    this.importResult = undefined;
+    this.importFileError = '';
+  }
+
   buildImportFinalPlan(): void {
     if (!this.selected || !this.importFile || !this.importSheetName || !this.selectedSeasonId || this.importPlanLoading) {
       this.importFileError = t('communities.import.seasonRequired');
