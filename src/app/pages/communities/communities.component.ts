@@ -601,7 +601,9 @@ export class CommunitiesComponent implements OnInit {
     this.communityService.transferOwnership(
       this.selected.id,
       this.ownershipUsername.trim()
-    ).subscribe({
+    )
+      .pipe(timeout(10_000))
+      .subscribe({
       next: community => {
         this.selected = community;
         this.replaceCommunity(community);
