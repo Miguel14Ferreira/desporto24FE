@@ -478,7 +478,10 @@ export class CommunitiesComponent implements OnInit {
     this.inviteMessage = '';
 
     this.communityService.invite(this.selected.id, username)
-      .pipe(finalize(() => this.saving = false))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.saving = false)
+      )
       .subscribe({
         next: () => {
           this.inviteUsername = '';
