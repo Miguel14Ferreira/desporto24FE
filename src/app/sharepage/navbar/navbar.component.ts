@@ -112,6 +112,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
       return this.authService.hasSessionCandidate();
     }
 
+    isAdmin(): boolean {
+      return this.authService.hasAnyRole('ROLE_ADMIN', 'ROLE_SUPER_ADMIN');
+    }
+
     logout(): void {
       if (this.loggingOut) {
         return;

@@ -16,6 +16,9 @@
           }
         </a>
         <a class="profile-nav-link" routerLink="/menu/dadosPerfil" routerLinkActive="active-link">{{ 'nav.profile' | t }}</a>
+        @if (isAdmin()) {
+          <a routerLink="/menu/admin" routerLinkActive="active-link">Administração</a>
+        }
         <button
           type="button"
           class="logout-action"
