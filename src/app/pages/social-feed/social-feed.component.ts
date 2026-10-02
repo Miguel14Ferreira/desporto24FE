@@ -78,7 +78,10 @@ export class SocialFeedComponent implements OnInit {
     this.actionError = '';
 
     this.feedService.createPost(content, this.postImageFile)
-      .pipe(finalize(() => this.posting = false))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.posting = false)
+      )
       .subscribe({
         next: item => {
           this.items = [item, ...this.items];
