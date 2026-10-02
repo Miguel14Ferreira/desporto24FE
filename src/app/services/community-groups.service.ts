@@ -78,6 +78,23 @@ export class CommunityGroupsService {
     );
   }
 
+  validateImport(id: number, file: File, mapping: unknown): Observable<any> {
+    const formData = this.importForm(file, mapping);
+    return this.http.post<any>(this.url + '/' + id + '/competition/import/validate', formData);
+  }
+
+  normalizedImportPreview(id: number, file: File, mapping: unknown): Observable<any> {
+    const formData = this.importForm(file, mapping);
+    return this.http.post<any>(this.url + '/' + id + '/competition/import/normalized-preview', formData);
+  }
+
+  private importForm(file: File, mapping: unknown): FormData {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('mapping', new Blob([JSON.stringify(mapping)], { type: 'application/json' }));
+    return formData;
+  }
+
   createSeason(
     id: number,
     request: { name: string; startsAt: string | null }

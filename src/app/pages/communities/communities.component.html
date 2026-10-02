@@ -523,6 +523,34 @@
                                   </div>
                                 }
                               </div>
+                              <button type="button" class="primary-action import-continue"
+                                [disabled]="importMappingLoading"
+                                (click)="validateImportMapping()">
+                                {{ importMappingLoading
+                                  ? ('communities.import.validating' | t)
+                                  : ('communities.import.previewData' | t) }}
+                              </button>
+                            }
+
+                            @if (importValidation && !importValidation.valid) {
+                              <div class="import-validation import-validation--error">
+                                <strong>{{ 'communities.import.mappingInvalid' | t }}</strong>
+                                @for (error of importValidation.errors; track error) { <span>{{ error }}</span> }
+                              </div>
+                            }
+
+                            @if (importNormalized) {
+                              <div class="import-normalized">
+                                <strong>{{ 'communities.import.understood' | t }}</strong>
+                                <span>{{ importNormalized.acceptedRows }} {{ 'communities.import.accepted' | t }} · {{ importNormalized.skippedRows }} {{ 'communities.import.skipped' | t }}</span>
+                                @for (row of importNormalized.rows.slice(0, 8); track row.sourceRow) {
+                                  <div class="import-normalized-row">
+                                    <b>{{ row.player }}</b>
+                                    <span>{{ row.date || '—' }}</span>
+                                    <span>{{ row.result || (row.win ? 'WIN' : (row.draw ? 'DRAW' : (row.loss ? 'LOSS' : '—'))) }}</span>
+                                  </div>
+                                }
+                              </div>
                             }
                           </div>
                         }

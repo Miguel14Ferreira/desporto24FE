@@ -74,6 +74,9 @@ export class CommunitiesComponent implements OnInit {
   importPreviewLoading = false;
   importSheetName = '';
   importMappings: Array<{ columnIndex: number; header: string; field: string; confidence: number }> = [];
+  importValidation?: { valid: boolean; dataRows: number; validRows: number; errors: string[]; warnings: string[] };
+  importNormalized?: { acceptedRows: number; skippedRows: number; rows: any[]; skipped: any[] };
+  importMappingLoading = false;
   readonly importFields = ['IGNORE', 'PLAYER', 'DATE', 'RESULT', 'WIN', 'DRAW', 'LOSS', 'GOALS', 'ASSISTS', 'POINTS', 'MVP'];
   importPreview?: {
     fileName: string;
@@ -495,6 +498,48 @@ export class CommunitiesComponent implements OnInit {
     if (mapping) {
       mapping.field = field;
     }
+  }
+
+  validateImportMapping(): void {
+    if (!this.selected || !this.importFile || !this.importSheetName || this.importMappingLoading) return;
+
+    const mapping = {
+      sheetName: this.importSheetName,
+      columns: this.importMappings.map(item => ({
+        columnIndex: item.columnIndex,
+        field: item.field
+      }))
+    };
+
+    this.importMappingLoading = true;
+    this.importFileError = '';
+    this.importValidation = undefined;
+    this.importNormalized = undefined;
+
+    this.communityService.validateImport(this.selected.id, this.importFile, mapping)
+      .pipe(timeout(20_000))
+      .subscribe({
+        next: validation => {
+          this.importValidation = validation;
+          if (!validation.valid) {
+            this.importMappingLoading = false;
+            return;
+          }
+          this.communityService.normalizedImportPreview(this.selected!.id, this.importFile!, mapping)
+            .pipe(
+              timeout(20_000),
+              finalize(() => this.importMappingLoading = false)
+            )
+            .subscribe({
+              next: preview => this.importNormalized = preview,
+              error: error => this.importFileError = error.error?.message || t('communities.import.normalizeError')
+            });
+        },
+        error: error => {
+          this.importMappingLoading = false;
+          this.importFileError = error.error?.message || t('communities.import.validateError');
+        }
+      });
   }
 
   createRound(): void {

@@ -1356,3 +1356,9 @@ input,textarea,select {
 @media (max-width: 640px) {
   .import-mapping-head, .import-mapping-row { grid-template-columns: 1fr; }
 }
+
+.import-continue { margin-top: 14px; justify-self: start; }
+.import-validation, .import-normalized { display: grid; gap: 6px; margin-top: 14px; padding: 14px; border-radius: 12px; background: rgba(127,127,127,.08); }
+.import-validation--error { border: 1px solid rgba(180,35,24,.35); }
+.import-normalized-row { display: grid; grid-template-columns: minmax(120px,1fr) minmax(90px,.6fr) minmax(70px,.4fr); gap: 10px; padding: 7px 0; border-top: 1px solid var(--border-color, #e5e7eb); }
+@media (max-width: 640px) { .import-normalized-row { grid-template-columns: 1fr; gap: 2px; } }
