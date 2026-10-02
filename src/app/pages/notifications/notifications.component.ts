@@ -121,7 +121,10 @@ export class NotificationsComponent implements OnInit {
     this.actionSuccess = '';
 
     this.notificationService.deleteAll()
-      .pipe(finalize(() => this.clearAllLoading = false))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.clearAllLoading = false)
+      )
       .subscribe({
         next: () => {
           this.notifications = [];
