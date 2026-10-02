@@ -169,7 +169,7 @@
               (change)="clearFieldError('country')">
               <option value="">{{ 'register.select' | t }}</option>
               @for (item of countryOptions; track item.label) {
-                <option [value]="countryName(item.label)">{{ item.label }}</option>
+                <option [value]="countryName(item.label)">{{ countryName(item.label) }}</option>
               }
             </select>
             @if (fieldErrors.country) {
