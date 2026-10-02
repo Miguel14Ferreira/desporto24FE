@@ -109,13 +109,21 @@ export class PerfilDataComponent implements OnInit {
 
   private loadActivity(username: string): void {
     this.reliabilityService.activity(username)
-      .pipe(catchError(() => of(undefined)))
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        catchError(() => of(undefined))
+      )
       .subscribe(activity => this.activity = activity);
   }
 
   private loadReliability(username: string): void {
     this.reliabilityService.summary(username)
-      .pipe(catchError(() => of(undefined)))
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        catchError(() => of(undefined))
+      )
       .subscribe(summary => this.reliability = summary);
   }
 }
