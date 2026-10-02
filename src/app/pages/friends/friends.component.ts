@@ -144,7 +144,10 @@ export class FriendsComponent implements OnInit {
     this.actionSuccess = '';
 
     request$
-      .pipe(finalize(() => this.actionLoadingUsername = null))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.actionLoadingUsername = null)
+      )
       .subscribe({
         next: () => {
           friend.chatBlocked = !shouldUnblock;
