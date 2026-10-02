@@ -134,6 +134,17 @@
                   <span>💬</span>
                   {{ item.commentCount }}
                 </button>
+
+                @if (item.authorUsername !== currentUsername) {
+                  <button
+                    type="button"
+                    [disabled]="reportingPostId !== null || (item.postId !== null && reportedPostIds.has(item.postId))"
+                    (click)="reportPost(item)">
+                    {{ item.postId !== null && reportedPostIds.has(item.postId)
+                      ? ('feed.reported' | t)
+                      : (reportingPostId === item.postId ? ('common.processing' | t) : ('feed.report' | t)) }}
+                  </button>
+                }
               </div>
 
               @if (item.postId !== null && openCommentPosts.has(item.postId)) {

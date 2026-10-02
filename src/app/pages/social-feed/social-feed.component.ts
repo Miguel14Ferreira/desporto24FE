@@ -25,6 +25,8 @@ export class SocialFeedComponent implements OnInit {
   deletingPostId: number | null = null;
   interactionLoadingPostId: number | null = null;
   deletingCommentId: number | null = null;
+  reportingPostId: number | null = null;
+  reportedPostIds = new Set<number>();
   openCommentPosts = new Set<number>();
   commentsByPost: Record<number, SocialComment[]> = {};
   commentDrafts: Record<number, string> = {};
@@ -244,6 +246,34 @@ export class SocialFeedComponent implements OnInit {
           item.commentCount = Math.max(0, item.commentCount - 1);
         },
         error: () => this.actionError = t('feedback.feed.commentDeleteError')
+      });
+  }
+
+  reportPost(item: FeedItem): void {
+    if (
+      item.type !== 'POST'
+      || item.postId === null
+      || item.authorUsername === this.currentUsername
+      || this.reportingPostId !== null
+      || this.reportedPostIds.has(item.postId)
+    ) {
+      return;
+    }
+
+    const reason = window.prompt(t('feed.reportReasonPrompt'))?.trim();
+    if (!reason) {
+      return;
+    }
+
+    const postId = item.postId;
+    this.reportingPostId = postId;
+    this.actionError = '';
+
+    this.feedService.reportPost(postId, reason.slice(0, 1000))
+      .pipe(finalize(() => this.reportingPostId = null))
+      .subscribe({
+        next: () => this.reportedPostIds.add(postId),
+        error: () => this.actionError = t('feedback.feed.reportError')
       });
   }
 
