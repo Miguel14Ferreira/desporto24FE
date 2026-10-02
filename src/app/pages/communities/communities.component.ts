@@ -245,7 +245,10 @@ export class CommunitiesComponent implements OnInit {
       name: this.seasonName.trim(),
       startsAt
     })
-      .pipe(finalize(() => this.seasonSaving = false))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.seasonSaving = false)
+      )
       .subscribe({
         next: season => {
           this.seasonName = '';
