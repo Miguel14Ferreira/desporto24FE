@@ -1,6 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { RouterModule } from '@angular/router';
 
 import { FooterComponent } from './footer.component';
+import { TranslatePipe } from '../../i18n/translate.pipe';
 
 describe('FooterComponent', () => {
   let component: FooterComponent;
@@ -8,7 +10,8 @@ describe('FooterComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ FooterComponent ]
+      declarations: [FooterComponent, TranslatePipe],
+      imports: [RouterModule.forRoot([])]
     })
     .compileComponents();
   });
@@ -21,5 +24,14 @@ describe('FooterComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('renders the legal and contact links', () => {
+    const links = Array.from(
+      fixture.nativeElement.querySelectorAll('.footer-links a')
+    ) as HTMLAnchorElement[];
+
+    expect(links.map(link => link.getAttribute('href')))
+      .toEqual(['/terms', '/privacy', '/contact']);
   });
 });

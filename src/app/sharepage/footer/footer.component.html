@@ -1,0 +1,16 @@
+<footer class="site-footer">
+  <div class="footer-shell">
+    <div class="footer-brand">
+      <strong>Desporto24</strong>
+      <span>{{ 'footer.tagline' | t }}</span>
+    </div>
+
+    <nav class="footer-links" [attr.aria-label]="'footer.navigation' | t">
+      <a routerLink="/terms">{{ 'footer.terms' | t }}</a>
+      <a routerLink="/privacy">{{ 'footer.privacy' | t }}</a>
+      <a routerLink="/contact">{{ 'footer.contact' | t }}</a>
+    </nav>
+
+    <small>© {{ currentYear }} Desporto24 · {{ 'footer.pilot' | t }}</small>
+  </div>
+</footer>
