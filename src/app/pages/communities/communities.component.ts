@@ -283,7 +283,10 @@ export class CommunitiesComponent implements OnInit {
     this.errorMessage = '';
 
     this.communityService.closeSeason(this.selected.id, active.id)
-      .pipe(finalize(() => this.seasonSaving = false))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.seasonSaving = false)
+      )
       .subscribe({
         next: season => {
           this.closeSeasonConfirming = false;
