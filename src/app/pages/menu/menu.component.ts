@@ -1,6 +1,6 @@
 import { appTranslate as t } from '../../i18n/i18n.service';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
-import { finalize } from 'rxjs';
+import { finalize, retry, timeout } from 'rxjs';
 
 import { environment } from 'src/environment/environment';
 import { AuthenticationService } from '../../services/authethication.service';
@@ -52,7 +52,11 @@ export class MenuComponent implements OnInit {
     this.errorMessage = '';
 
     this.myProfileService.get()
-      .pipe(finalize(() => this.loadingProfile = false))
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        finalize(() => this.loadingProfile = false)
+      )
       .subscribe({
         next: profile => this.profile = profile,
         error: () => this.errorMessage = t('feedback.profile.loadError')
