@@ -4,7 +4,6 @@
 
     <div class="site-nav__links">
       @if (isAuthenticated()) {
-        <a routerLink="/menu/feed" routerLinkActive="active-link">{{ 'nav.feed' | t }}</a>
         <a routerLink="/menu/discover" routerLinkActive="active-link">{{ 'nav.discover' | t }}</a>
         <a routerLink="/menu/my-sessions" routerLinkActive="active-link">{{ 'nav.activities' | t }}</a>
         <a routerLink="/menu/communities" routerLinkActive="active-link">{{ 'nav.communities' | t }}</a>
@@ -15,23 +14,32 @@
             <span class="notification-badge">{{ unreadNotifications > 99 ? '99+' : unreadNotifications }}</span>
           }
         </a>
-        <a class="profile-nav-link" routerLink="/menu/dadosPerfil" routerLinkActive="active-link">{{ 'nav.profile' | t }}</a>
-        @if (isAdmin()) {
-          <a routerLink="/menu/admin" routerLinkActive="active-link">Administração</a>
-        }
-        <button
-          type="button"
-          class="logout-action"
-          [disabled]="loggingOut"
-          (click)="logout()">
-          {{ loggingOut ? ('menu.loggingOut' | t) : ('menu.logout' | t) }}
-        </button>
+
+        <details class="account-menu">
+          <summary>Menu</summary>
+          <div class="account-menu__panel">
+            <a routerLink="/menu/feed" routerLinkActive="active-link">{{ 'nav.feed' | t }}</a>
+            <a routerLink="/menu/dadosPerfil" routerLinkActive="active-link">{{ 'nav.profile' | t }}</a>
+            @if (isAdmin()) {
+              <a routerLink="/menu/admin" routerLinkActive="active-link">Administração</a>
+            }
+            <div class="language-switch" aria-label="Language selector">
+              <button type="button" [class.active-language]="i18n.currentLanguage === 'pt'" (click)="setLanguage('pt')">PT</button>
+              <span>/</span>
+              <button type="button" [class.active-language]="i18n.currentLanguage === 'en'" (click)="setLanguage('en')">EN</button>
+            </div>
+            <button type="button" class="logout-action" [disabled]="loggingOut" (click)="logout()">
+              {{ loggingOut ? ('menu.loggingOut' | t) : ('menu.logout' | t) }}
+            </button>
+          </div>
+        </details>
       } @else {
         <a routerLink="/home" routerLinkActive="active-link">{{ 'nav.home' | t }}</a>
         <a routerLink="/about" routerLinkActive="active-link">{{ 'nav.about' | t }}</a>
         <a routerLink="/contact" routerLinkActive="active-link">{{ 'nav.contact' | t }}</a>
       }
 
+      @if (!isAuthenticated()) {
       <div class="language-switch" aria-label="Language selector">
         <button
           type="button"
@@ -47,6 +55,7 @@
           EN
         </button>
       </div>
+      }
 
       @if (!isAuthenticated()) {
         <a class="register-link" routerLink="/login/registerNewUser">{{ 'nav.register' | t }}</a>
