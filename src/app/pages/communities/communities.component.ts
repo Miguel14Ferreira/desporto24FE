@@ -68,6 +68,10 @@ export class CommunitiesComponent implements OnInit {
   seasonSaving = false;
   closeSeasonConfirming = false;
 
+  importFile?: File;
+  importFileName = '';
+  importFileError = '';
+
   compareUsernameA = '';
   compareUsernameB = '';
 
@@ -384,6 +388,36 @@ export class CommunitiesComponent implements OnInit {
       mvp: false,
       cleanSheet: false
     }));
+  }
+
+  onImportFileChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    this.importFileError = '';
+
+    if (!file) {
+      this.importFile = undefined;
+      this.importFileName = '';
+      return;
+    }
+
+    if (!file.name.toLowerCase().endsWith('.xlsx')) {
+      this.importFile = undefined;
+      this.importFileName = '';
+      this.importFileError = t('communities.import.invalidFile');
+      input.value = '';
+      return;
+    }
+
+    this.importFile = file;
+    this.importFileName = file.name;
+  }
+
+  clearImportFile(input: HTMLInputElement): void {
+    this.importFile = undefined;
+    this.importFileName = '';
+    this.importFileError = '';
+    input.value = '';
   }
 
   createRound(): void {
