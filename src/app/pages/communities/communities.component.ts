@@ -86,7 +86,11 @@ export class CommunitiesComponent implements OnInit {
     this.errorMessage = '';
 
     this.communityService.mine()
-      .pipe(finalize(() => this.loading = false))
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        finalize(() => this.loading = false)
+      )
       .subscribe({
         next: communities => {
           this.communities = communities;
