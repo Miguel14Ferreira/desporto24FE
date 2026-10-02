@@ -688,7 +688,9 @@ const PT: Dictionary = {
   'communityCreate.changePhoto': 'Alterar fotografia',
   'communityCreate.removePhoto': 'Remover fotografia',
   'communities.changePhoto': 'Alterar fotografia',
+  'communities.removePhoto': 'Remover fotografia',
   'feedback.communities.photoError': 'Não foi possível atualizar a fotografia da comunidade.',
+  'feedback.communities.photoRemoveError': 'Não foi possível remover a fotografia da comunidade.',
 
   'googleOnboarding.eyebrow': 'DESPORTO24 · Passo 2 de 2',
   'googleOnboarding.title': 'Completa o teu perfil',
@@ -1917,7 +1919,9 @@ const EN: Dictionary = {
   'communityCreate.changePhoto': 'Change photo',
   'communityCreate.removePhoto': 'Remove photo',
   'communities.changePhoto': 'Change photo',
+  'communities.removePhoto': 'Remove photo',
   'feedback.communities.photoError': 'We could not update the community photo.',
+  'feedback.communities.photoRemoveError': 'We could not remove the community photo.',
 
   'googleOnboarding.eyebrow': 'DESPORTO24 · Step 2 of 2',
   'googleOnboarding.title': 'Complete your profile',

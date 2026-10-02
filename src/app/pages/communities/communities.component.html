@@ -98,26 +98,39 @@
           @if (selected) {
             <div class="detail-header">
               <div class="community-detail-identity">
-                <div class="community-avatar community-avatar--large">
-                  @if (selected.photoUrl) {
-                    <img [src]="selected.photoUrl" [alt]="selected.name">
-                  } @else {
-                    <span>{{ communityInitials(selected) }}</span>
-                  }
+                <div class="community-photo-block">
+                  <div class="community-avatar community-avatar--large">
+                    @if (selected.photoUrl) {
+                      <img [src]="selected.photoUrl" [alt]="selected.name">
+                    } @else {
+                      <span>{{ communityInitials(selected) }}</span>
+                    }
+                  </div>
 
                   @if (canManage()) {
-                    <label class="community-photo-edit" [class.disabled]="photoUpdating">
-                      <input
-                        type="file"
-                        accept="image/jpeg,image/png,image/webp"
-                        [disabled]="photoUpdating"
-                        (change)="onCommunityPhotoChange($event)">
-                      <span>{{ 'communities.changePhoto' | t }}</span>
-                    </label>
+                    <div class="community-photo-actions">
+                      <label class="community-photo-action" [class.disabled]="photoUpdating">
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp"
+                          [disabled]="photoUpdating"
+                          (change)="onCommunityPhotoChange($event)">
+                        <span>{{ 'communities.changePhoto' | t }}</span>
+                      </label>
+                      @if (selected.photoUrl) {
+                        <button
+                          type="button"
+                          class="community-photo-action community-photo-remove"
+                          [disabled]="photoUpdating"
+                          (click)="removeCommunityPhoto()">
+                          {{ 'communities.removePhoto' | t }}
+                        </button>
+                      }
+                    </div>
                   }
                 </div>
 
-                <div>
+                <div class="community-detail-copy">
                   <div class="community-title-meta">
                     <span class="visibility">
                       {{ selected.visibility === 'PRIVATE'

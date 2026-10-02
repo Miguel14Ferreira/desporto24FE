@@ -120,6 +120,10 @@ export class CommunityGroupsService {
     return this.http.put<CommunityGroup>(this.url + '/' + id + '/photo', formData);
   }
 
+  removePhoto(id: number): Observable<CommunityGroup> {
+    return this.http.delete<CommunityGroup>(this.url + '/' + id + '/photo');
+  }
+
   myInvites(): Observable<CommunityInvite[]> {
     return this.http.get<CommunityInvite[]>(this.url + '/invites/me');
   }

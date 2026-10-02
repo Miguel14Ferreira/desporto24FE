@@ -661,6 +661,28 @@ export class CommunitiesComponent implements OnInit {
       });
   }
 
+  removeCommunityPhoto(): void {
+    if (!this.selected || !this.selected.photoUrl || !this.canManage() || this.photoUpdating) {
+      return;
+    }
+
+    this.photoUpdating = true;
+    this.errorMessage = '';
+
+    this.communityService.removePhoto(this.selected.id)
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.photoUpdating = false)
+      )
+      .subscribe({
+        next: community => {
+          this.selected = community;
+          this.replaceCommunity(community);
+        },
+        error: () => this.errorMessage = t('feedback.communities.photoRemoveError')
+      });
+  }
+
   communityInitials(community: CommunityGroup): string {
     return community.name
       .split(/\s+/)
