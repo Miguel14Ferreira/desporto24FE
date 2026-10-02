@@ -323,7 +323,10 @@ export class SocialFeedComponent implements OnInit {
     this.actionError = '';
 
     this.feedService.reportPost(postId, reason.slice(0, 1000))
-      .pipe(finalize(() => this.reportingPostId = null))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.reportingPostId = null)
+      )
       .subscribe({
         next: () => this.reportedPostIds.add(postId),
         error: () => this.actionError = t('feedback.feed.reportError')
@@ -344,7 +347,10 @@ export class SocialFeedComponent implements OnInit {
     this.actionError = '';
 
     this.feedService.deletePost(item.postId)
-      .pipe(finalize(() => this.deletingPostId = null))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.deletingPostId = null)
+      )
       .subscribe({
         next: () => {
           this.items = this.items.filter(
