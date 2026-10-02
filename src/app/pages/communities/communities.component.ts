@@ -493,7 +493,9 @@ export class CommunitiesComponent implements OnInit {
   }
 
   acceptInvite(invite: CommunityInvite): void {
-    this.communityService.acceptInvite(invite.id).subscribe({
+    this.communityService.acceptInvite(invite.id)
+      .pipe(timeout(10_000))
+      .subscribe({
       next: community => {
         this.invites = this.invites.filter(item => item.id !== invite.id);
         this.communities = [community, ...this.communities.filter(item => item.id !== community.id)];
