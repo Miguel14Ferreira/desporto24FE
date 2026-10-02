@@ -114,10 +114,15 @@ export class CommunitiesComponent implements OnInit {
         error: () => this.errorMessage = t('feedback.communities.loadError')
       });
 
-    this.communityService.myInvites().subscribe({
-      next: invites => this.invites = invites,
-      error: () => this.invites = []
-    });
+    this.communityService.myInvites()
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 })
+      )
+      .subscribe({
+        next: invites => this.invites = invites,
+        error: () => this.invites = []
+      });
   }
 
   open(community: CommunityGroup): void {
