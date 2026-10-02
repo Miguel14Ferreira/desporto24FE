@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { appTranslate as t } from '../../i18n/i18n.service';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { finalize } from 'rxjs';
+import { finalize, timeout } from 'rxjs';
 
 import { RegistrationRequest } from '../model/registration-request';
 import { AuthenticationService } from '../../services/authethication.service';
@@ -79,7 +79,7 @@ export class CreateaccountComponent {
     this.existingAccountRecovery = false;
 
     this.authenticationService.register(request, this.photo)
-      .pipe(finalize(() => this.loading = false))
+      .pipe(timeout(10_000), finalize(() => this.loading = false))
       .subscribe({
         next: response => {
           this.successMessage = t('feedback.register.created');
@@ -109,7 +109,7 @@ export class CreateaccountComponent {
     this.errorMessage = '';
 
     this.authenticationService.resendRegistrationConfirmation(username)
-      .pipe(finalize(() => this.resendLoading = false))
+      .pipe(timeout(10_000), finalize(() => this.resendLoading = false))
       .subscribe({
         next: response => {
           this.successMessage = t('feedback.register.resent');

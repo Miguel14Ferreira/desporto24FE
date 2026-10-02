@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { appTranslate as t } from '../../i18n/i18n.service';
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { finalize } from 'rxjs';
+import { finalize, timeout } from 'rxjs';
 
 import { AuthenticationService } from '../../services/authethication.service';
 
@@ -80,7 +80,7 @@ export class LoginMFAComponent implements OnInit, OnDestroy {
     this.successMessage = '';
 
     this.authService.confirmMfaChallenge(this.challengeId, code)
-      .pipe(finalize(() => this.confirming = false))
+      .pipe(timeout(10_000), finalize(() => this.confirming = false))
       .subscribe({
         next: response => {
           if (!response.token) {
@@ -112,7 +112,7 @@ export class LoginMFAComponent implements OnInit, OnDestroy {
     this.successMessage = '';
 
     this.authService.resendMfaChallenge(this.challengeId)
-      .pipe(finalize(() => this.resending = false))
+      .pipe(timeout(10_000), finalize(() => this.resending = false))
       .subscribe({
         next: response => {
           if (!response.challengeId) {

@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { appTranslate as t } from '../../i18n/i18n.service';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { finalize } from 'rxjs';
+import { finalize, timeout } from 'rxjs';
 
 import { MyProfileService } from '../../services/my-profile.service';
 import { AuthenticationService } from '../../services/authethication.service';
@@ -61,7 +61,7 @@ export class ChangepasswordComponent {
     this.saving = true;
 
     this.myProfileService.changePassword(this.currentPassword, this.newPassword)
-      .pipe(finalize(() => this.saving = false))
+      .pipe(timeout(10_000), finalize(() => this.saving = false))
       .subscribe({
         next: () => {
           this.currentPassword = '';

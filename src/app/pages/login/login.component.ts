@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { appTranslate as t } from '../../i18n/i18n.service';
 import { AfterViewInit, ChangeDetectionStrategy, Component, NgZone, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { finalize } from 'rxjs';
+import { finalize, timeout } from 'rxjs';
 
 import { AuthenticationService } from '../../services/authethication.service';
 
@@ -58,7 +58,9 @@ export class LoginComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    this.authenticationService.googleConfig().subscribe({
+    this.authenticationService.googleConfig()
+      .pipe(timeout(10_000))
+      .subscribe({
       next: config => {
         if (!config.clientId?.trim()) {
           return;
@@ -130,7 +132,7 @@ export class LoginComponent implements OnInit, AfterViewInit {
     this.errorMessage = '';
 
     this.authenticationService.googleLogin(credential)
-      .pipe(finalize(() => this.googleLoading = false))
+      .pipe(timeout(10_000), finalize(() => this.googleLoading = false))
       .subscribe({
         next: response => {
           if (response.onboardingRequired) {
@@ -195,7 +197,7 @@ export class LoginComponent implements OnInit, AfterViewInit {
     this.canResendConfirmation = false;
 
     this.authenticationService.login(username, this.password)
-      .pipe(finalize(() => this.loading = false))
+      .pipe(timeout(10_000), finalize(() => this.loading = false))
       .subscribe({
         next: response => {
           if (response.mfaRequired) {
@@ -250,7 +252,7 @@ export class LoginComponent implements OnInit, AfterViewInit {
     this.successMessage = '';
 
     this.authenticationService.resendRegistrationConfirmation(username)
-      .pipe(finalize(() => this.resendLoading = false))
+      .pipe(timeout(10_000), finalize(() => this.resendLoading = false))
       .subscribe({
         next: response => {
           this.successMessage = t('feedback.register.resent');
