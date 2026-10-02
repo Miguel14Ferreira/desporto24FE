@@ -566,7 +566,9 @@ export class CommunitiesComponent implements OnInit {
       return;
     }
 
-    this.communityService.removeMember(this.selected.id, username).subscribe({
+    this.communityService.removeMember(this.selected.id, username)
+      .pipe(timeout(10_000))
+      .subscribe({
       next: () => this.refreshSelected(),
       error: () => this.errorMessage = t('feedback.communities.removeError')
     });
