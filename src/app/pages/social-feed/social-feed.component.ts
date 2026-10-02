@@ -258,7 +258,10 @@ export class SocialFeedComponent implements OnInit {
     this.actionError = '';
 
     this.feedService.deleteComment(postId, comment.id)
-      .pipe(finalize(() => this.deletingCommentId = null))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.deletingCommentId = null)
+      )
       .subscribe({
         next: () => {
           this.commentsByPost[postId] = (this.commentsByPost[postId] || [])
