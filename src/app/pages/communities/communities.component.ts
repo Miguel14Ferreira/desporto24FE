@@ -431,7 +431,10 @@ export class CommunitiesComponent implements OnInit {
     this.errorMessage = '';
 
     this.communityService.deleteRound(this.selected.id, round.id)
-      .pipe(finalize(() => this.roundSaving = false))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.roundSaving = false)
+      )
       .subscribe({
         next: () => {
           this.roundDeleteConfirmId = undefined;
