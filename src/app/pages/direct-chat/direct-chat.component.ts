@@ -226,7 +226,10 @@ export class DirectChatComponent implements OnInit, OnDestroy {
     this.actionSuccess = '';
 
     request$
-      .pipe(finalize(() => this.friendshipActionLoading = false))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.friendshipActionLoading = false)
+      )
       .subscribe({
         next: () => {
           this.chatInfo = shouldUnblock
