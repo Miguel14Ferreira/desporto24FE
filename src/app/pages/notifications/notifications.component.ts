@@ -87,11 +87,13 @@ export class NotificationsComponent implements OnInit {
 
     if (!notification.read) {
       notification.read = true;
-      this.notificationService.markRead(notification.id).subscribe({
-        error: () => {
-          notification.read = false;
-        }
-      });
+      this.notificationService.markRead(notification.id)
+        .pipe(timeout(10_000))
+        .subscribe({
+          error: () => {
+            notification.read = false;
+          }
+        });
     }
   }
 
