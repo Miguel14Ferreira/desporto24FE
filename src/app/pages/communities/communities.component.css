@@ -1269,3 +1269,61 @@ input,textarea,select {
     flex-direction: column;
   }
 }
+
+
+/* Detail page visual hierarchy */
+.community-detail-page .community-detail {
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.community-detail-page .detail-header {
+  padding: clamp(1.25rem, 2.5vw, 2rem);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 1.25rem;
+  background: rgba(15,23,42,.84);
+  box-shadow: 0 20px 50px rgba(2,6,23,.18);
+}
+
+.community-detail-page .community-tabs {
+  padding: .55rem;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 1rem;
+  background: rgba(15,23,42,.72);
+}
+
+.community-detail-page .community-tabs button {
+  min-height: 42px;
+}
+
+.community-detail-page .community-tab-panel {
+  margin-top: 1rem;
+  padding: clamp(1rem, 2vw, 1.5rem);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 1.25rem;
+  background: rgba(15,23,42,.72);
+}
+
+.community-detail-page .overview-grid {
+  gap: .85rem;
+}
+
+.community-detail-page .overview-card,
+.community-detail-page .leader-highlight {
+  border-radius: 1rem;
+}
+
+@media (max-width: 800px) {
+  .community-detail-page .detail-header {
+    padding: 1rem;
+  }
+
+  .community-detail-page .community-tabs {
+    padding: .4rem;
+  }
+
+  .community-detail-page .community-tab-panel {
+    padding: .9rem;
+  }
+}
