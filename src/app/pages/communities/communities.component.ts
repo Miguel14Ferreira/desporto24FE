@@ -396,7 +396,10 @@ export class CommunitiesComponent implements OnInit {
       playedAt: playedAt.toISOString(),
       entries
     })
-      .pipe(finalize(() => this.roundSaving = false))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.roundSaving = false)
+      )
       .subscribe({
         next: () => {
           this.roundName = '';
