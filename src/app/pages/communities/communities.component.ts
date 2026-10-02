@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { finalize, retry, timeout } from 'rxjs';
 import { appTranslate as t } from '../../i18n/i18n.service';
 
@@ -74,11 +74,20 @@ export class CommunitiesComponent implements OnInit {
   constructor(
     private communityService: CommunityGroupsService,
     private profileService: CommunityService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
     this.reload();
+  }
+
+  detailMode(): boolean {
+    return Boolean(this.route.snapshot.paramMap.get('id'));
+  }
+
+  backToCommunities(): void {
+    void this.router.navigate(['/menu/communities']);
   }
 
   reload(): void {
@@ -95,7 +104,8 @@ export class CommunitiesComponent implements OnInit {
         next: communities => {
           this.communities = communities;
 
-          const requestedId = Number(this.route.snapshot.queryParamMap.get('community'));
+          const routeId = this.route.snapshot.paramMap.get('id');
+          const requestedId = Number(routeId || this.route.snapshot.queryParamMap.get('community'));
           if (requestedId && !Number.isNaN(requestedId)) {
             const requested = communities.find(item => item.id === requestedId);
             if (requested) {
@@ -126,6 +136,11 @@ export class CommunitiesComponent implements OnInit {
   }
 
   open(community: CommunityGroup): void {
+    if (!this.detailMode()) {
+      void this.router.navigate(['/menu/communities', community.id]);
+      return;
+    }
+
     this.errorMessage = '';
 
     this.communityService.get(community.id)

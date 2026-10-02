@@ -80,6 +80,7 @@ const routes: Routes = [
   {path:'menu/notifications',component:NotificationsComponent,canActivate:[AuthenticationGuard]},
   {path:'menu/notifications/:id',component:NotificationsComponent,canActivate:[AuthenticationGuard]},
   {path:'menu/communities/create',component:CommunityCreateComponent,canActivate:[AuthenticationGuard]},
+  {path:'menu/communities/:id',component:CommunitiesComponent,canActivate:[AuthenticationGuard]},
   {path:'menu/communities',component:CommunitiesComponent,canActivate:[AuthenticationGuard]},
   {path:'menu/admin',component:AdminDashboardComponent,canActivate:[AuthenticationGuard,AdminGuard]},
   {path:'menu/admin/attendance-disputes',component:AdminDisputesComponent,canActivate:[AuthenticationGuard,AdminGuard]},

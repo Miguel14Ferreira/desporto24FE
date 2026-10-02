@@ -1,5 +1,6 @@
-<section class="communities-page">
+<section class="communities-page" [class.community-detail-page]="detailMode()">
   <div class="communities-shell">
+    @if (!detailMode()) {
     <header class="page-header">
       <div>
         <p class="eyebrow">Desporto24</p>
@@ -10,6 +11,13 @@
         {{ 'communities.create' | t }}
       </a>
     </header>
+    } @else {
+      <div class="detail-page-toolbar">
+        <button type="button" class="secondary-action" (click)="backToCommunities()">
+          ← {{ 'communities.title' | t }}
+        </button>
+      </div>
+    }
 
     @if (errorMessage) {
       <div class="feedback error-feedback">{{ errorMessage }}</div>
@@ -53,6 +61,7 @@
       </section>
     } @else if (communities.length > 0) {
       <div class="communities-layout">
+        @if (!detailMode()) {
         <aside class="community-list">
           <div class="list-heading">
             <strong>{{ 'communities.mine' | t }}</strong>
@@ -86,6 +95,7 @@
             </button>
           }
         </aside>
+        }
 
         <main class="community-detail">
           @if (!selected) {
