@@ -165,7 +165,11 @@ export class CommunitiesComponent implements OnInit {
 
     this.sessionsLoading = true;
     this.communityService.sessions(community.id)
-      .pipe(finalize(() => this.sessionsLoading = false))
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        finalize(() => this.sessionsLoading = false)
+      )
       .subscribe({
         next: sessions => this.communitySessions = sessions,
         error: () => {
