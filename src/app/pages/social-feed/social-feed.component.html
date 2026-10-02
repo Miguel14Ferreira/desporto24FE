@@ -179,6 +179,16 @@
                           (click)="deleteComment(item, comment)">
                           {{ deletingCommentId === comment.id ? ('common.processing' | t) : '×' }}
                         </button>
+                      } @else {
+                        <button
+                          type="button"
+                          class="delete-comment"
+                          [disabled]="reportingCommentId !== null || reportedCommentIds.has(comment.id)"
+                          (click)="reportComment(item, comment)">
+                          {{ reportedCommentIds.has(comment.id)
+                            ? ('feed.reported' | t)
+                            : (reportingCommentId === comment.id ? ('common.processing' | t) : ('feed.report' | t)) }}
+                        </button>
                       }
                     </div>
                   }

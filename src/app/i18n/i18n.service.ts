@@ -473,6 +473,7 @@ const PT: Dictionary = {
   'feed.report': 'Denunciar',
   'feed.reported': 'Denunciado',
   'feed.reportReasonPrompt': 'Indica o motivo da denúncia desta publicação:',
+  'feed.reportCommentReasonPrompt': 'Indica o motivo da denúncia deste comentário:',
   'profileData.reliability': 'Fiabilidade',
   'profileData.attendanceRate': 'Taxa de presença',
   'profileData.completedSessions': 'Sessões concluídas',
@@ -1196,6 +1197,7 @@ const PT: Dictionary = {
   'feedback.feed.imageType': 'Escolhe uma imagem JPEG, PNG ou WebP.',
   'feedback.feed.imageSize': 'A fotografia não pode ultrapassar 5 MB.',
   'feedback.feed.reportError': 'Não foi possível denunciar a publicação.',
+  'feedback.feed.commentReportError': 'Não foi possível denunciar o comentário.',
 
   'feedback.admin.loadError': 'Não foi possível carregar as contestações.',
   'feedback.admin.accepted': 'Contestação aceite.',
@@ -1700,6 +1702,7 @@ const EN: Dictionary = {
   'feed.report': 'Report',
   'feed.reported': 'Reported',
   'feed.reportReasonPrompt': 'Tell us why you are reporting this post:',
+  'feed.reportCommentReasonPrompt': 'Tell us why you are reporting this comment:',
   'profileData.reliability': 'Reliability',
   'profileData.attendanceRate': 'Attendance rate',
   'profileData.completedSessions': 'Completed sessions',
@@ -2427,6 +2430,7 @@ const EN: Dictionary = {
   'feedback.feed.imageType': 'Choose a JPEG, PNG or WebP image.',
   'feedback.feed.imageSize': 'The photo cannot exceed 5 MB.',
   'feedback.feed.reportError': 'We could not report the post.',
+  'feedback.feed.commentReportError': 'We could not report the comment.',
 
   'feedback.admin.loadError': 'We could not load the disputes.',
   'feedback.admin.accepted': 'Dispute accepted.',

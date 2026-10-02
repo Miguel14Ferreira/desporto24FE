@@ -67,6 +67,13 @@ export class SocialFeedService {
     );
   }
 
+  reportComment(postId: number, commentId: number, reason: string): Observable<void> {
+    return this.http.post<void>(
+      this.baseUrl + '/posts/' + postId + '/comments/' + commentId + '/report',
+      { reason }
+    );
+  }
+
   reportPost(postId: number, reason: string): Observable<void> {
     return this.http.post<void>(
       this.baseUrl + '/posts/' + postId + '/report',
