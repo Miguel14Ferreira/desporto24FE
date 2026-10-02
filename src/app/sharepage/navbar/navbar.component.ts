@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ElementRef, HostListener, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { AuthenticationService } from 'src/app/services/authethication.service';
 import { AppLanguage, I18nService } from 'src/app/i18n/i18n.service';
@@ -24,6 +24,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
   private readonly subscriptions = new Subscription();
 
   constructor(
+    private elementRef: ElementRef<HTMLElement>,
     private router: Router,
     private authService: AuthenticationService,
     private notificationService: NotificationApiService,
@@ -111,6 +112,20 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
     setLanguage(language: AppLanguage): void {
       this.i18n.setLanguage(language);
+    }
+
+    @HostListener('document:click', ['$event'])
+    closeAccountMenuOnOutsideClick(event: MouseEvent): void {
+      if (this.elementRef.nativeElement.contains(event.target as Node)) {
+        return;
+      }
+      this.closeAccountMenu();
+    }
+
+    closeAccountMenu(): void {
+      this.elementRef.nativeElement
+        .querySelector<HTMLDetailsElement>('.account-menu')
+        ?.removeAttribute('open');
     }
 
     isAuthenticated(): boolean {

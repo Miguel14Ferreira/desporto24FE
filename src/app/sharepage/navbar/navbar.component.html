@@ -18,10 +18,10 @@
         <details class="account-menu">
           <summary>Menu</summary>
           <div class="account-menu__panel">
-            <a routerLink="/menu/feed" routerLinkActive="active-link">{{ 'nav.feed' | t }}</a>
-            <a routerLink="/menu/dadosPerfil" routerLinkActive="active-link">{{ 'nav.profile' | t }}</a>
+            <a routerLink="/menu/feed" routerLinkActive="active-link" (click)="closeAccountMenu()">{{ 'nav.feed' | t }}</a>
+            <a routerLink="/menu/dadosPerfil" routerLinkActive="active-link" (click)="closeAccountMenu()">{{ 'nav.profile' | t }}</a>
             @if (isAdmin()) {
-              <a routerLink="/menu/admin" routerLinkActive="active-link">Administração</a>
+              <a routerLink="/menu/admin" routerLinkActive="active-link" (click)="closeAccountMenu()">Administração</a>
             }
             <div class="language-switch" aria-label="Language selector">
               <button type="button" [class.active-language]="i18n.currentLanguage === 'pt'" (click)="setLanguage('pt')">PT</button>
