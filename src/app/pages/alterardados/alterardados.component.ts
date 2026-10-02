@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { appTranslate as t } from '../../i18n/i18n.service';
 import { ChangeDetectionStrategy, Component, ElementRef, OnInit } from '@angular/core';
-import { finalize } from 'rxjs';
+import { finalize, retry, timeout } from 'rxjs';
 
 import { environment } from 'src/environment/environment';
 import { MyProfile, UpdateMyProfileRequest } from '../model/my-profile';
@@ -66,7 +66,11 @@ export class AlterardadosComponent implements OnInit {
     this.errorMessage = '';
 
     this.myProfileService.get()
-      .pipe(finalize(() => this.loading = false))
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        finalize(() => this.loading = false)
+      )
       .subscribe({
         next: profile => {
           this.profile = { ...profile };
@@ -127,7 +131,10 @@ export class AlterardadosComponent implements OnInit {
     this.successMessage = '';
 
     this.myProfileService.update(request)
-      .pipe(finalize(() => this.saving = false))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.saving = false)
+      )
       .subscribe({
         next: updated => {
           this.profile = { ...updated };
@@ -313,7 +320,10 @@ export class AlterardadosComponent implements OnInit {
     this.errorMessage = '';
 
     this.myProfileService.setupMfa()
-      .pipe(finalize(() => this.mfaSetupLoading = false))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.mfaSetupLoading = false)
+      )
       .subscribe({
         next: setup => {
           this.mfaSetup = setup;
@@ -336,7 +346,10 @@ export class AlterardadosComponent implements OnInit {
     this.errorMessage = '';
 
     this.myProfileService.confirmMfa(code)
-      .pipe(finalize(() => this.mfaConfirming = false))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.mfaConfirming = false)
+      )
       .subscribe({
         next: updated => {
           this.profile = { ...updated };
@@ -372,7 +385,10 @@ export class AlterardadosComponent implements OnInit {
     this.errorMessage = '';
 
     this.myProfileService.disableMfa(code)
-      .pipe(finalize(() => this.mfaDisabling = false))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.mfaDisabling = false)
+      )
       .subscribe({
         next: updated => {
           this.profile = { ...updated };
@@ -421,7 +437,10 @@ export class AlterardadosComponent implements OnInit {
     this.errorMessage = '';
 
     this.myProfileService.deleteAccount()
-      .pipe(finalize(() => this.deletingAccount = false))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.deletingAccount = false)
+      )
       .subscribe({
         next: () => this.authenticationService.logOut(),
         error: error => {
@@ -456,7 +475,10 @@ export class AlterardadosComponent implements OnInit {
     this.successMessage = '';
 
     this.myProfileService.updatePhoto(this.photo)
-      .pipe(finalize(() => this.photoSaving = false))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.photoSaving = false)
+      )
       .subscribe({
         next: updated => {
           this.profile = { ...updated };
