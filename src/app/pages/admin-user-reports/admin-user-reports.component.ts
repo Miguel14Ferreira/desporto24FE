@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
-import { finalize } from 'rxjs';
+import { finalize, retry, timeout } from 'rxjs';
 
 import {
   AdminUserReport,
@@ -31,7 +31,11 @@ export class AdminUserReportsComponent implements OnInit {
     this.errorMessage = '';
 
     this.adminUserReportsService.listOpen()
-      .pipe(finalize(() => this.loading = false))
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        finalize(() => this.loading = false)
+      )
       .subscribe({
         next: reports => this.reports = reports,
         error: () => {
@@ -53,7 +57,10 @@ export class AdminUserReportsComponent implements OnInit {
     this.errorMessage = '';
 
     this.adminUserReportsService.updateStatus(report.id, status)
-      .pipe(finalize(() => this.updatingId = null))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.updatingId = null)
+      )
       .subscribe({
         next: () => {
           this.reports = this.reports.filter(item => item.id !== report.id);

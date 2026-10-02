@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { finalize } from 'rxjs';
+import { finalize, timeout } from 'rxjs';
 import { appTranslate as t } from '../../i18n/i18n.service';
 
 import { AuthenticationService } from '../../services/authethication.service';
@@ -81,7 +81,10 @@ export class GoogleOnboardingComponent implements OnInit {
     this.errorMessage = '';
 
     this.authenticationService.googleRegister(request)
-      .pipe(finalize(() => this.loading = false))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.loading = false)
+      )
       .subscribe({
         next: response => {
           if (!response.token) {
