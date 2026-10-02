@@ -196,7 +196,10 @@ export class NotificationsComponent implements OnInit {
     this.actionError = '';
 
     this.notificationService.blockOwnAccount()
-      .pipe(finalize(() => this.actionLoadingId = null))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.actionLoadingId = null)
+      )
       .subscribe({
         next: () => {
           this.authenticationService.logOut();
