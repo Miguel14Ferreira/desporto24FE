@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { appTranslate as t } from '../../i18n/i18n.service';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
-import { finalize, forkJoin } from 'rxjs';
+import { finalize, forkJoin, retry, timeout } from 'rxjs';
 
 import { environment } from 'src/environment/environment';
 import { FriendSummary } from '../model/friend-summary';
@@ -60,7 +60,11 @@ export class FriendsComponent implements OnInit {
     this.errorMessage = '';
 
     this.communityService.friends()
-      .pipe(finalize(() => this.loading = false))
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        finalize(() => this.loading = false)
+      )
       .subscribe({
         next: friends => this.friends = friends,
         error: () => {
