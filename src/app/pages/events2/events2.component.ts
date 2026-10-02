@@ -374,6 +374,11 @@ export class Events2Component implements OnInit {
       return 'Preenche o desporto, data, localidade e morada.';
     }
 
+    const city = this.city.trim();
+    if (!/^[\p{L}\p{M}][\p{L}\p{M}\d .,'’()/-]{1,119}$/u.test(city)) {
+      return t('feedback.create.invalidCity');
+    }
+
     const gameInstant = new Date(this.gameDate);
     if (Number.isNaN(gameInstant.getTime()) || gameInstant.getTime() <= Date.now()) {
       return t('feedback.create.futureDate');
