@@ -551,6 +551,46 @@
                                   </div>
                                 }
                               </div>
+
+                              <div class="import-context">
+                                <label>
+                                  <span>{{ 'communities.import.season' | t }}</span>
+                                  <select [(ngModel)]="selectedSeasonId">
+                                    <option [ngValue]="null">{{ 'communities.import.selectSeason' | t }}</option>
+                                    @for (season of competition?.seasons || []; track season.id) {
+                                      <option [ngValue]="season.id">{{ seasonOptionLabel(season) }}</option>
+                                    }
+                                  </select>
+                                </label>
+                                <label>
+                                  <span>{{ 'communities.import.defaultYear' | t }}</span>
+                                  <input type="number" min="1900" max="2100" [(ngModel)]="importDefaultYear">
+                                </label>
+                              </div>
+
+                              <button type="button" class="primary-action import-continue"
+                                [disabled]="importPlanLoading || !selectedSeasonId"
+                                (click)="buildImportFinalPlan()">
+                                {{ importPlanLoading
+                                  ? ('communities.import.planning' | t)
+                                  : ('communities.import.plan' | t) }}
+                              </button>
+
+                              @if (importFinalPlan) {
+                                <div class="import-final-plan">
+                                  <strong>{{ 'communities.import.planReady' | t }}</strong>
+                                  <span>{{ importFinalPlan.distinctRounds }} {{ 'communities.import.rounds' | t }} · {{ importFinalPlan.duplicateRounds }} {{ 'communities.import.duplicates' | t }}</span>
+                                  @for (round of importFinalPlan.rounds; track round.sourceDate) {
+                                    <div class="import-round-plan" [class.duplicate]="round.duplicate">
+                                      <b>{{ round.parsedDate || round.sourceDate }}</b>
+                                      <span>{{ round.players }} {{ 'communities.import.players' | t }}</span>
+                                      <span>{{ round.wins }}V · {{ round.draws }}E · {{ round.losses }}D</span>
+                                      @if (round.duplicate) { <span>{{ 'communities.import.duplicate' | t }}</span> }
+                                      @if (round.unresolvedResults > 0) { <span>{{ round.unresolvedResults }} {{ 'communities.import.unresolved' | t }}</span> }
+                                    </div>
+                                  }
+                                </div>
+                              }
                             }
                           </div>
                         }

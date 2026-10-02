@@ -77,6 +77,9 @@ export class CommunitiesComponent implements OnInit {
   importValidation?: { valid: boolean; dataRows: number; validRows: number; errors: string[]; warnings: string[] };
   importNormalized?: { acceptedRows: number; skippedRows: number; rows: any[]; skipped: any[] };
   importMappingLoading = false;
+  importDefaultYear: number | null = new Date().getFullYear();
+  importPlanLoading = false;
+  importFinalPlan?: any;
   readonly importFields = ['IGNORE', 'PLAYER', 'DATE', 'RESULT', 'WIN', 'DRAW', 'LOSS', 'GOALS', 'ASSISTS', 'POINTS', 'MVP'];
   importPreview?: {
     fileName: string;
@@ -539,6 +542,31 @@ export class CommunitiesComponent implements OnInit {
           this.importMappingLoading = false;
           this.importFileError = error.error?.message || t('communities.import.validateError');
         }
+      });
+  }
+
+  buildImportFinalPlan(): void {
+    if (!this.selected || !this.importFile || !this.importSheetName || !this.selectedSeasonId || this.importPlanLoading) {
+      this.importFileError = t('communities.import.seasonRequired');
+      return;
+    }
+    const mapping = {
+      sheetName: this.importSheetName,
+      columns: this.importMappings.map(item => ({ columnIndex: item.columnIndex, field: item.field }))
+    };
+    const context = {
+      seasonId: this.selectedSeasonId,
+      defaultYear: this.importDefaultYear || null
+    };
+
+    this.importPlanLoading = true;
+    this.importFileError = '';
+    this.importFinalPlan = undefined;
+    this.communityService.finalImportPlan(this.selected.id, this.importFile, mapping, context)
+      .pipe(timeout(20_000), finalize(() => this.importPlanLoading = false))
+      .subscribe({
+        next: plan => this.importFinalPlan = plan,
+        error: error => this.importFileError = error.error?.message || t('communities.import.planError')
       });
   }
 
