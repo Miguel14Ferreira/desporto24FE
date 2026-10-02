@@ -580,7 +580,9 @@ export class CommunitiesComponent implements OnInit {
     }
 
     const id = this.selected.id;
-    this.communityService.leave(id).subscribe({
+    this.communityService.leave(id)
+      .pipe(timeout(10_000))
+      .subscribe({
       next: () => {
         this.communities = this.communities.filter(item => item.id !== id);
         this.selected = undefined;
