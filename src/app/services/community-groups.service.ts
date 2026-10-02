@@ -88,6 +88,12 @@ export class CommunityGroupsService {
     return this.http.post<any>(this.url + '/' + id + '/competition/import/normalized-preview', formData);
   }
 
+  confirmImportRounds(id: number, file: File, mapping: unknown, context: unknown): Observable<any> {
+    const formData = this.importForm(file, mapping);
+    formData.append('context', new Blob([JSON.stringify(context)], { type: 'application/json' }));
+    return this.http.post<any>(this.url + '/' + id + '/competition/import/rounds/confirm', formData);
+  }
+
   finalImportPlan(id: number, file: File, mapping: unknown, context: unknown): Observable<any> {
     const formData = this.importForm(file, mapping);
     formData.append('context', new Blob([JSON.stringify(context)], { type: 'application/json' }));

@@ -80,6 +80,8 @@ export class CommunitiesComponent implements OnInit {
   importDefaultYear: number | null = new Date().getFullYear();
   importPlanLoading = false;
   importFinalPlan?: any;
+  importConfirming = false;
+  importResult?: { createdRounds: number; skippedDuplicateRounds: number; createdEntries: number };
   readonly importFields = ['IGNORE', 'PLAYER', 'DATE', 'RESULT', 'WIN', 'DRAW', 'LOSS', 'GOALS', 'ASSISTS', 'POINTS', 'MVP'];
   importPreview?: {
     fileName: string;
@@ -567,6 +569,29 @@ export class CommunitiesComponent implements OnInit {
       .subscribe({
         next: plan => this.importFinalPlan = plan,
         error: error => this.importFileError = error.error?.message || t('communities.import.planError')
+      });
+  }
+
+  confirmHistoricalImport(): void {
+    if (!this.selected || !this.importFile || !this.importSheetName || !this.selectedSeasonId || !this.importFinalPlan || this.importConfirming) return;
+    if (this.importFinalPlan.invalidDates > 0 || this.importFinalPlan.roundsNeedingYear > 0 ||
+        this.importFinalPlan.rounds.some((round: any) => round.unresolvedResults > 0)) {
+      this.importFileError = t('communities.import.notReady');
+      return;
+    }
+    const mapping = { sheetName: this.importSheetName, columns: this.importMappings.map(item => ({ columnIndex: item.columnIndex, field: item.field })) };
+    const context = { seasonId: this.selectedSeasonId, defaultYear: this.importDefaultYear || null };
+    this.importConfirming = true;
+    this.importFileError = '';
+    this.importResult = undefined;
+    this.communityService.confirmImportRounds(this.selected.id, this.importFile, mapping, context)
+      .pipe(timeout(30_000), finalize(() => this.importConfirming = false))
+      .subscribe({
+        next: result => {
+          this.importResult = result;
+          this.loadCompetition(this.selected!, this.selectedSeasonId);
+        },
+        error: error => this.importFileError = error.error?.message || t('communities.import.confirmError')
       });
   }
 

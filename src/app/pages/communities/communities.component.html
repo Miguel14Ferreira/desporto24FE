@@ -590,6 +590,20 @@
                                     </div>
                                   }
                                 </div>
+                                @if (importFinalPlan.invalidDates === 0 && importFinalPlan.roundsNeedingYear === 0) {
+                                  <button type="button" class="primary-action import-confirm"
+                                    [disabled]="importConfirming"
+                                    (click)="confirmHistoricalImport()">
+                                    {{ importConfirming ? ('communities.import.importing' | t) : ('communities.import.confirm' | t) }}
+                                  </button>
+                                }
+                              }
+
+                              @if (importResult) {
+                                <div class="import-success" role="status">
+                                  <strong>{{ 'communities.import.success' | t }}</strong>
+                                  <span>{{ importResult.createdRounds }} {{ 'communities.import.roundsCreated' | t }} · {{ importResult.createdEntries }} {{ 'communities.import.entriesCreated' | t }} · {{ importResult.skippedDuplicateRounds }} {{ 'communities.import.duplicatesSkipped' | t }}</span>
+                                </div>
                               }
                             }
                           </div>

@@ -1369,3 +1369,6 @@ input,textarea,select {
 .import-round-plan { display: grid; grid-template-columns: minmax(110px,.8fr) repeat(3,minmax(90px,.5fr)); gap: 8px; padding: 8px 0; border-top: 1px solid var(--border-color,#e5e7eb); }
 .import-round-plan.duplicate { opacity: .65; }
 @media (max-width:640px){ .import-context,.import-round-plan { grid-template-columns:1fr; } }
+
+.import-confirm { margin-top:14px; }
+.import-success { display:grid; gap:4px; margin-top:16px; padding:14px; border:1px solid rgba(22,163,74,.35); border-radius:12px; background:rgba(22,163,74,.08); }
