@@ -196,10 +196,15 @@ export class SocialFeedComponent implements OnInit {
       return;
     }
 
-    this.feedService.comments(postId).subscribe({
-      next: comments => this.commentsByPost[postId] = comments,
-      error: () => this.actionError = t('feedback.feed.commentsLoadError')
-    });
+    this.feedService.comments(postId)
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 })
+      )
+      .subscribe({
+        next: comments => this.commentsByPost[postId] = comments,
+        error: () => this.actionError = t('feedback.feed.commentsLoadError')
+      });
   }
 
   submitComment(item: FeedItem): void {
