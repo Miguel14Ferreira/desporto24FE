@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { appTranslate as t } from '../../i18n/i18n.service';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { finalize } from 'rxjs';
+import { finalize, retry, timeout } from 'rxjs';
 
 import { AppNotification } from '../model/app-notification';
 import { NotificationApiService } from '../../services/notification-api.service';
@@ -49,7 +49,11 @@ export class NotificationsComponent implements OnInit {
     this.errorMessage = '';
 
     this.notificationService.mine()
-      .pipe(finalize(() => this.loading = false))
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        finalize(() => this.loading = false)
+      )
       .subscribe({
         next: notifications => {
           this.notifications = [...notifications].sort(
