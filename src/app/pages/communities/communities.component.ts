@@ -123,7 +123,12 @@ export class CommunitiesComponent implements OnInit {
   open(community: CommunityGroup): void {
     this.errorMessage = '';
 
-    this.communityService.get(community.id).subscribe({
+    this.communityService.get(community.id)
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 })
+      )
+      .subscribe({
       next: full => {
         this.selected = full;
         this.activeTab = 'home';
