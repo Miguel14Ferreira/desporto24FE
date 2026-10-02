@@ -314,7 +314,10 @@ export class CommunitiesComponent implements OnInit {
       drawPoints: Math.max(0, Number(this.drawPointsDraft) || 0),
       lossPoints: Math.max(0, Number(this.lossPointsDraft) || 0)
     })
-      .pipe(finalize(() => this.competitionSaving = false))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.competitionSaving = false)
+      )
       .subscribe({
         next: settings => {
           if (this.competition) {
