@@ -279,7 +279,10 @@ export class NotificationsComponent implements OnInit {
     this.actionSuccess = '';
 
     this.notificationService.rejectFriendRequest(notification.id)
-      .pipe(finalize(() => this.actionLoadingId = null))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.actionLoadingId = null)
+      )
       .subscribe({
         next: () => {
           this.notifications = this.notifications.filter(item => item.id !== notification.id);
