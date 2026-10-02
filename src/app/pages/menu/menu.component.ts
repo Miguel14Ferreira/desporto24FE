@@ -41,10 +41,15 @@ export class MenuComponent implements OnInit {
 
   loadAdminAccess(): void {
     this.isAdmin = false;
-    this.adminAccessService.check().subscribe({
-      next: () => this.isAdmin = true,
-      error: () => this.isAdmin = false
-    });
+    this.adminAccessService.check()
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 })
+      )
+      .subscribe({
+        next: () => this.isAdmin = true,
+        error: () => this.isAdmin = false
+      });
   }
 
   loadProfile(): void {
