@@ -189,7 +189,11 @@ export class CommunitiesComponent implements OnInit {
 
     this.competitionLoading = true;
     this.communityService.competition(community.id, seasonId)
-      .pipe(finalize(() => this.competitionLoading = false))
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        finalize(() => this.competitionLoading = false)
+      )
       .subscribe({
         next: competition => {
           this.competition = competition;
