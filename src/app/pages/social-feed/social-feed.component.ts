@@ -292,7 +292,10 @@ export class SocialFeedComponent implements OnInit {
     this.actionError = '';
 
     this.feedService.reportComment(postId, comment.id, reason.slice(0, 1000))
-      .pipe(finalize(() => this.reportingCommentId = null))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.reportingCommentId = null)
+      )
       .subscribe({
         next: () => this.reportedCommentIds.add(comment.id),
         error: () => this.actionError = t('feedback.feed.commentReportError')
