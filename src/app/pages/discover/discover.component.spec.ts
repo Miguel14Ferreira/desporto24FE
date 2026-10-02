@@ -61,20 +61,20 @@ describe('DiscoverComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should prefill discovery from the sports profile', () => {
+  it('should prefill only the sport and ignore legacy profile location', () => {
     expect(component.sport).toBe('Padel');
-    expect(component.location).toBe('Lisboa');
-    expect(venueService.search).toHaveBeenCalledWith('Lisboa', 'Padel');
+    expect(component.location).toBe('');
+    expect(venueService.search).toHaveBeenCalledWith(undefined, 'Padel');
     expect(sessionService.discover).toHaveBeenCalledWith(
       jasmine.objectContaining({
         sport: 'Padel',
-        city: 'Lisboa',
+        city: undefined,
         availability: 'available'
       })
     );
     expect(communityService.findProfiles).toHaveBeenCalledWith({
       sport: 'Padel',
-      location: 'Lisboa'
+      location: undefined
     });
   });
 

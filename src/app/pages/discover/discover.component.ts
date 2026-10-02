@@ -60,7 +60,6 @@ export class DiscoverComponent implements OnInit {
             .map(value => value.trim())
             .find(Boolean) || '';
 
-          this.location = profile.location?.trim() || '';
         }
 
         this.search();
