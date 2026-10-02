@@ -93,6 +93,7 @@ export class MenuComponent implements OnInit {
     this.loggingOut = true;
 
     this.authenticationService.terminarSessao()
+      .pipe(timeout(10_000))
       .subscribe({
         next: () => this.authenticationService.logOut(),
         error: () => this.authenticationService.logOut()
