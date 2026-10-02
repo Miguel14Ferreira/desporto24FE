@@ -4,7 +4,7 @@ import { AuthenticationService } from 'src/app/services/authethication.service';
 import { AppLanguage, I18nService } from 'src/app/i18n/i18n.service';
 import { NotificationApiService } from 'src/app/services/notification-api.service';
 import { DirectChatRealtimeService } from 'src/app/services/direct-chat-realtime.service';
-import { Subscription, filter } from 'rxjs';
+import { Subscription, filter, retry, timeout } from 'rxjs';
 
 @Component({
     selector: 'app-navbar',
@@ -86,7 +86,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
 
     loadUnreadNotifications(): void {
-      this.notificationService.mine().subscribe({
+      this.notificationService.mine()
+        .pipe(
+          timeout(10_000),
+          retry({ count: 1 })
+        )
+        .subscribe({
         next: notifications => {
           this.unreadNotifications = notifications.filter(notification => !notification.read).length;
         },
@@ -122,7 +127,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
       }
 
       this.loggingOut = true;
-      this.authService.terminarSessao().subscribe({
+      this.authService.terminarSessao()
+        .pipe(timeout(10_000))
+        .subscribe({
         next: () => this.authService.logOut(),
         error: () => this.authService.logOut()
       });
