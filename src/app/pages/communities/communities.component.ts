@@ -223,7 +223,18 @@ export class CommunitiesComponent implements OnInit {
   }
 
   createSeason(): void {
-    if (!this.selected || !this.canManage() || this.seasonSaving || !this.seasonName.trim()) {
+    if (this.seasonSaving) {
+      return;
+    }
+
+    if (!this.selected || !this.canManage()) {
+      this.errorMessage = t('feedback.communities.seasonCreateError');
+      return;
+    }
+
+    const name = this.seasonName.trim();
+    if (!name) {
+      this.errorMessage = t('feedback.communities.seasonCreateError');
       return;
     }
 
@@ -242,7 +253,7 @@ export class CommunitiesComponent implements OnInit {
     }
 
     this.communityService.createSeason(this.selected.id, {
-      name: this.seasonName.trim(),
+      name,
       startsAt
     })
       .pipe(
