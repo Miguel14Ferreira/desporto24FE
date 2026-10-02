@@ -789,7 +789,12 @@ export class CommunitiesComponent implements OnInit {
       return;
     }
 
-    this.communityService.get(this.selected.id).subscribe({
+    this.communityService.get(this.selected.id)
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 })
+      )
+      .subscribe({
       next: community => {
         this.selected = community;
         this.replaceCommunity(community);
