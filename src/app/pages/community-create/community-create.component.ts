@@ -52,7 +52,10 @@ export class CommunityCreateComponent {
         switchMap(community =>
           this.photo
             ? this.communityService.updatePhoto(community.id, this.photo)
-                .pipe(catchError(() => of(community)))
+                .pipe(
+                  timeout(10_000),
+                  catchError(() => of(community))
+                )
             : of(community)
         ),
         finalize(() => this.saving = false)
