@@ -72,6 +72,9 @@ export class CommunitiesComponent implements OnInit {
   importFileName = '';
   importFileError = '';
   importPreviewLoading = false;
+  importSheetName = '';
+  importMappings: Array<{ columnIndex: number; header: string; field: string; confidence: number }> = [];
+  readonly importFields = ['IGNORE', 'PLAYER', 'DATE', 'RESULT', 'WIN', 'DRAW', 'LOSS', 'GOALS', 'ASSISTS', 'POINTS', 'MVP'];
   importPreview?: {
     fileName: string;
     sheets: Array<{
@@ -454,11 +457,44 @@ export class CommunitiesComponent implements OnInit {
         finalize(() => this.importPreviewLoading = false)
       )
       .subscribe({
-        next: preview => this.importPreview = preview,
+        next: preview => {
+          this.importPreview = preview;
+          const sheet = preview.sheets.find(item => item.structure === 'TABULAR') || preview.sheets[0];
+          this.selectImportSheet(sheet?.name || '');
+        },
         error: error => {
           this.importFileError = error.error?.message || t('communities.import.inspectError');
         }
       });
+  }
+
+  selectImportSheet(sheetName: string): void {
+    this.importSheetName = sheetName;
+    const sheet = this.importPreview?.sheets.find(item => item.name === sheetName);
+    if (!sheet) {
+      this.importMappings = [];
+      return;
+    }
+
+    const suggestions = new Map(
+      sheet.columnSuggestions.map(item => [item.columnIndex, item])
+    );
+    this.importMappings = sheet.headers.map((header, columnIndex) => {
+      const suggestion = suggestions.get(columnIndex);
+      return {
+        columnIndex,
+        header,
+        field: suggestion?.field || 'IGNORE',
+        confidence: suggestion?.confidence || 0
+      };
+    });
+  }
+
+  setImportMapping(columnIndex: number, field: string): void {
+    const mapping = this.importMappings.find(item => item.columnIndex === columnIndex);
+    if (mapping) {
+      mapping.field = field;
+    }
   }
 
   createRound(): void {

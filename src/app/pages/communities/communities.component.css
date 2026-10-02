@@ -1344,3 +1344,15 @@ input,textarea,select {
 .import-sheet span { font-size: .86rem; opacity: .75; }
 .import-columns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
 .import-columns span { padding: 5px 8px; border-radius: 999px; background: rgba(127,127,127,.1); opacity: 1; }
+
+.import-sheet-select { display: grid; gap: 6px; max-width: 520px; }
+.import-sheet-select select, .import-mapping-row select { min-height: 42px; }
+.import-mapping { display: grid; gap: 0; margin-top: 14px; border: 1px solid var(--border-color, #e5e7eb); border-radius: 12px; overflow: hidden; }
+.import-mapping-head, .import-mapping-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(150px, .55fr); gap: 14px; align-items: center; padding: 10px 12px; }
+.import-mapping-head { background: rgba(127,127,127,.08); }
+.import-mapping-row + .import-mapping-row { border-top: 1px solid var(--border-color, #e5e7eb); }
+.import-mapping-row > div { display: grid; gap: 2px; min-width: 0; }
+.import-mapping-row small { opacity: .7; }
+@media (max-width: 640px) {
+  .import-mapping-head, .import-mapping-row { grid-template-columns: 1fr; }
+}

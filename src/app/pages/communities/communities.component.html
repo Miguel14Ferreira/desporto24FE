@@ -489,20 +489,40 @@
 
                         @if (importPreview) {
                           <div class="import-preview">
-                            @for (sheet of importPreview.sheets; track sheet.name) {
-                              <article class="import-sheet">
-                                <div>
-                                  <strong>{{ sheet.name }}</strong>
-                                  <span>{{ sheet.structure }} · {{ sheet.nonEmptyRows }} {{ 'communities.import.rows' | t }}</span>
+                            <label class="import-sheet-select">
+                              <span>{{ 'communities.import.sheet' | t }}</span>
+                              <select [ngModel]="importSheetName" (ngModelChange)="selectImportSheet($event)">
+                                @for (sheet of importPreview.sheets; track sheet.name) {
+                                  <option [value]="sheet.name">
+                                    {{ sheet.name }} · {{ sheet.structure }} · {{ sheet.nonEmptyRows }} {{ 'communities.import.rows' | t }}
+                                  </option>
+                                }
+                              </select>
+                            </label>
+
+                            @if (importMappings.length) {
+                              <div class="import-mapping">
+                                <div class="import-mapping-head">
+                                  <strong>{{ 'communities.import.column' | t }}</strong>
+                                  <strong>{{ 'communities.import.meaning' | t }}</strong>
                                 </div>
-                                @if (sheet.headers.length) {
-                                  <div class="import-columns">
-                                    @for (header of sheet.headers; track $index) {
-                                      <span>{{ header || ('communities.import.unnamed' | t) }}</span>
-                                    }
+                                @for (mapping of importMappings; track mapping.columnIndex) {
+                                  <div class="import-mapping-row">
+                                    <div>
+                                      <strong>{{ mapping.header || ('communities.import.unnamed' | t) }}</strong>
+                                      @if (mapping.confidence > 0) {
+                                        <small>{{ 'communities.import.suggested' | t }} · {{ mapping.confidence * 100 | number:'1.0-0' }}%</small>
+                                      }
+                                    </div>
+                                    <select [ngModel]="mapping.field"
+                                      (ngModelChange)="setImportMapping(mapping.columnIndex, $event)">
+                                      @for (field of importFields; track field) {
+                                        <option [value]="field">{{ field }}</option>
+                                      }
+                                    </select>
                                   </div>
                                 }
-                              </article>
+                              </div>
                             }
                           </div>
                         }
