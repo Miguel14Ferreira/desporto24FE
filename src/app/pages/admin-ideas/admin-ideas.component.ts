@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
-import { finalize } from 'rxjs';
+import { finalize, retry, timeout } from 'rxjs';
 
 import { AdminIdea, IdeaStatus } from '../model/admin-idea';
 import { AdminIdeasService } from '../../services/admin-ideas.service';
@@ -41,7 +41,11 @@ export class AdminIdeasComponent implements OnInit {
     this.errorMessage = '';
 
     this.adminIdeasService.list()
-      .pipe(finalize(() => this.loading = false))
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        finalize(() => this.loading = false)
+      )
       .subscribe({
         next: ideas => {
           this.ideas = ideas;
@@ -73,7 +77,10 @@ export class AdminIdeasComponent implements OnInit {
     this.errorMessage = '';
 
     this.adminIdeasService.updateStatus(idea.id, status)
-      .pipe(finalize(() => this.updatingId = null))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.updatingId = null)
+      )
       .subscribe({
         next: updated => {
           this.ideas = this.ideas.map(item => item.id === updated.id ? updated : item);
