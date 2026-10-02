@@ -227,7 +227,10 @@ export class SocialFeedComponent implements OnInit {
     this.actionError = '';
 
     this.feedService.addComment(postId, content)
-      .pipe(finalize(() => this.interactionLoadingPostId = null))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.interactionLoadingPostId = null)
+      )
       .subscribe({
         next: comment => {
           this.commentsByPost[postId] = [
