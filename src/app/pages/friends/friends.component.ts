@@ -94,9 +94,14 @@ export class FriendsComponent implements OnInit {
           this.selectedReliability = result.reliability;
         },
         error: () => {
-          this.communityService.publicProfile(friend.username).subscribe({
-            next: profile => this.selectedProfile = profile
-          });
+          this.communityService.publicProfile(friend.username)
+            .pipe(
+              timeout(10_000),
+              retry({ count: 1 })
+            )
+            .subscribe({
+              next: profile => this.selectedProfile = profile
+            });
         }
       });
   }
