@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
-import { finalize } from 'rxjs';
+import { finalize, retry, timeout } from 'rxjs';
 
 import { environment } from 'src/environment/environment';
 import { appTranslate as t } from '../../i18n/i18n.service';
@@ -54,7 +54,11 @@ export class SocialFeedComponent implements OnInit {
     this.errorMessage = '';
 
     this.feedService.feed()
-      .pipe(finalize(() => this.loading = false))
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        finalize(() => this.loading = false)
+      )
       .subscribe({
         next: items => this.items = items,
         error: () => {
