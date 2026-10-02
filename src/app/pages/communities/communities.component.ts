@@ -510,7 +510,9 @@ export class CommunitiesComponent implements OnInit {
   }
 
   rejectInvite(invite: CommunityInvite): void {
-    this.communityService.rejectInvite(invite.id).subscribe({
+    this.communityService.rejectInvite(invite.id)
+      .pipe(timeout(10_000))
+      .subscribe({
       next: () => this.invites = this.invites.filter(item => item.id !== invite.id),
       error: () => this.errorMessage = t('feedback.communities.rejectError')
     });
