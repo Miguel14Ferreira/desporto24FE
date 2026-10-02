@@ -71,6 +71,23 @@ export class CommunitiesComponent implements OnInit {
   importFile?: File;
   importFileName = '';
   importFileError = '';
+  importPreviewLoading = false;
+  importPreview?: {
+    fileName: string;
+    sheets: Array<{
+      name: string;
+      nonEmptyRows: number;
+      structure: string;
+      headers: string[];
+      sampleRows: string[][];
+      columnSuggestions: Array<{
+        columnIndex: number;
+        header: string;
+        field: string;
+        confidence: number;
+      }>;
+    }>;
+  };
 
   compareUsernameA = '';
   compareUsernameB = '';
@@ -411,13 +428,37 @@ export class CommunitiesComponent implements OnInit {
 
     this.importFile = file;
     this.importFileName = file.name;
+    this.importPreview = undefined;
   }
 
   clearImportFile(input: HTMLInputElement): void {
     this.importFile = undefined;
     this.importFileName = '';
     this.importFileError = '';
+    this.importPreview = undefined;
     input.value = '';
+  }
+
+  inspectImportFile(): void {
+    if (!this.selected || !this.importFile || this.importPreviewLoading) {
+      return;
+    }
+
+    this.importPreviewLoading = true;
+    this.importFileError = '';
+    this.importPreview = undefined;
+
+    this.communityService.importPreview(this.selected.id, this.importFile)
+      .pipe(
+        timeout(20_000),
+        finalize(() => this.importPreviewLoading = false)
+      )
+      .subscribe({
+        next: preview => this.importPreview = preview,
+        error: error => {
+          this.importFileError = error.error?.message || t('communities.import.inspectError');
+        }
+      });
   }
 
   createRound(): void {

@@ -1327,3 +1327,20 @@ input,textarea,select {
     padding: .9rem;
   }
 }
+
+.import-panel {
+  margin-bottom: 24px;
+  padding: 20px;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 16px;
+}
+.import-file-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 14px; }
+.import-file-picker { cursor: pointer; }
+.import-file-picker input { display: none; }
+.import-error { margin: 10px 0 0; color: #b42318; }
+.import-preview { display: grid; gap: 10px; margin-top: 16px; }
+.import-sheet { padding: 14px; border: 1px solid var(--border-color, #e5e7eb); border-radius: 12px; }
+.import-sheet > div:first-child { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.import-sheet span { font-size: .86rem; opacity: .75; }
+.import-columns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.import-columns span { padding: 5px 8px; border-radius: 999px; background: rgba(127,127,127,.1); opacity: 1; }

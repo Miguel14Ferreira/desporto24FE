@@ -54,6 +54,30 @@ export class CommunityGroupsService {
     );
   }
 
+  importPreview(id: number, file: File): Observable<{
+    fileName: string;
+    sheets: Array<{
+      name: string;
+      nonEmptyRows: number;
+      structure: string;
+      headers: string[];
+      sampleRows: string[][];
+      columnSuggestions: Array<{
+        columnIndex: number;
+        header: string;
+        field: string;
+        confidence: number;
+      }>;
+    }>;
+  }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<any>(
+      this.url + '/' + id + '/competition/import/preview',
+      formData
+    );
+  }
+
   createSeason(
     id: number,
     request: { name: string; startsAt: string | null }

@@ -453,6 +453,61 @@
                     </div>
                   } @else {
                     @if (canManage()) {
+                      <section class="import-panel">
+                        <div class="section-heading">
+                          <div>
+                            <span class="section-kicker">{{ 'communities.import.kicker' | t }}</span>
+                            <h3>{{ 'communities.import.title' | t }}</h3>
+                          </div>
+                        </div>
+                        <p>{{ 'communities.import.hint' | t }}</p>
+
+                        <div class="import-file-row">
+                          <label class="secondary-action import-file-picker">
+                            <input #importInput type="file" accept=".xlsx" (change)="onImportFileChange($event)">
+                            <span>{{ importFileName || ('communities.import.choose' | t) }}</span>
+                          </label>
+                          @if (importFile) {
+                            <button type="button" class="primary-action small"
+                              [disabled]="importPreviewLoading"
+                              (click)="inspectImportFile()">
+                              {{ importPreviewLoading
+                                ? ('communities.import.inspecting' | t)
+                                : ('communities.import.inspect' | t) }}
+                            </button>
+                            <button type="button" class="secondary-action small"
+                              [disabled]="importPreviewLoading"
+                              (click)="clearImportFile(importInput)">
+                              {{ 'communities.import.clear' | t }}
+                            </button>
+                          }
+                        </div>
+
+                        @if (importFileError) {
+                          <p class="import-error" role="alert">{{ importFileError }}</p>
+                        }
+
+                        @if (importPreview) {
+                          <div class="import-preview">
+                            @for (sheet of importPreview.sheets; track sheet.name) {
+                              <article class="import-sheet">
+                                <div>
+                                  <strong>{{ sheet.name }}</strong>
+                                  <span>{{ sheet.structure }} · {{ sheet.nonEmptyRows }} {{ 'communities.import.rows' | t }}</span>
+                                </div>
+                                @if (sheet.headers.length) {
+                                  <div class="import-columns">
+                                    @for (header of sheet.headers; track $index) {
+                                      <span>{{ header || ('communities.import.unnamed' | t) }}</span>
+                                    }
+                                  </div>
+                                }
+                              </article>
+                            }
+                          </div>
+                        }
+                      </section>
+
                       <section class="round-editor">
                         <div class="section-heading">
                           <div>
