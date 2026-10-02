@@ -549,7 +549,9 @@ export class CommunitiesComponent implements OnInit {
       return;
     }
 
-    this.communityService.updateRole(this.selected.id, username, role).subscribe({
+    this.communityService.updateRole(this.selected.id, username, role)
+      .pipe(timeout(10_000))
+      .subscribe({
       next: community => {
         this.selected = community;
         this.replaceCommunity(community);
