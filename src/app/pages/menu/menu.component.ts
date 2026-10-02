@@ -67,7 +67,11 @@ export class MenuComponent implements OnInit {
     this.loadingNotifications = true;
 
     this.notificationService.mine()
-      .pipe(finalize(() => this.loadingNotifications = false))
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        finalize(() => this.loadingNotifications = false)
+      )
       .subscribe({
         next: notifications => {
           this.unreadNotifications = notifications.filter(notification => !notification.read).length;
