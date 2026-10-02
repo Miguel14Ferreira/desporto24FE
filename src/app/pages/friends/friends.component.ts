@@ -83,7 +83,11 @@ export class FriendsComponent implements OnInit {
       profile: this.communityService.publicProfile(friend.username),
       reliability: this.reliabilityService.summary(friend.username)
     })
-      .pipe(finalize(() => this.profileLoading = false))
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        finalize(() => this.profileLoading = false)
+      )
       .subscribe({
         next: result => {
           this.selectedProfile = result.profile;
