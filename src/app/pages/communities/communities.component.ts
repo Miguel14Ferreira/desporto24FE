@@ -418,6 +418,22 @@ export class CommunitiesComponent implements OnInit {
     }));
   }
 
+  private resetImportAfterFile(): void {
+    this.importSheetName = '';
+    this.importMappings = [];
+    this.importValidation = undefined;
+    this.importNormalized = undefined;
+    this.importFinalPlan = undefined;
+    this.importResult = undefined;
+  }
+
+  private resetImportAfterMapping(): void {
+    this.importValidation = undefined;
+    this.importNormalized = undefined;
+    this.importFinalPlan = undefined;
+    this.importResult = undefined;
+  }
+
   onImportFileChange(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
@@ -440,6 +456,7 @@ export class CommunitiesComponent implements OnInit {
     this.importFile = file;
     this.importFileName = file.name;
     this.importPreview = undefined;
+    this.resetImportAfterFile();
   }
 
   clearImportFile(input: HTMLInputElement): void {
@@ -447,6 +464,7 @@ export class CommunitiesComponent implements OnInit {
     this.importFileName = '';
     this.importFileError = '';
     this.importPreview = undefined;
+    this.resetImportAfterFile();
     input.value = '';
   }
 
@@ -478,6 +496,7 @@ export class CommunitiesComponent implements OnInit {
 
   selectImportSheet(sheetName: string): void {
     this.importSheetName = sheetName;
+    this.resetImportAfterMapping();
     const sheet = this.importPreview?.sheets.find(item => item.name === sheetName);
     if (!sheet) {
       this.importMappings = [];
@@ -502,6 +521,7 @@ export class CommunitiesComponent implements OnInit {
     const mapping = this.importMappings.find(item => item.columnIndex === columnIndex);
     if (mapping) {
       mapping.field = field;
+      this.resetImportAfterMapping();
     }
   }
 
@@ -564,6 +584,7 @@ export class CommunitiesComponent implements OnInit {
     this.importPlanLoading = true;
     this.importFileError = '';
     this.importFinalPlan = undefined;
+    this.importResult = undefined;
     this.communityService.finalImportPlan(this.selected.id, this.importFile, mapping, context)
       .pipe(timeout(20_000), finalize(() => this.importPlanLoading = false))
       .subscribe({
