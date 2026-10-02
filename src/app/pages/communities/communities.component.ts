@@ -634,10 +634,13 @@ export class CommunitiesComponent implements OnInit {
     this.errorMessage = '';
 
     this.communityService.updatePhoto(this.selected.id, file)
-      .pipe(finalize(() => {
-        this.photoUpdating = false;
-        input.value = '';
-      }))
+      .pipe(
+        timeout(10_000),
+        finalize(() => {
+          this.photoUpdating = false;
+          input.value = '';
+        })
+      )
       .subscribe({
         next: community => {
           this.selected = community;
