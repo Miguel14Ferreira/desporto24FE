@@ -32,6 +32,7 @@ import { NotificationsComponent } from './pages/notifications/notifications.comp
 import { FriendsComponent } from './pages/friends/friends.component';
 import { DirectChatComponent } from './pages/direct-chat/direct-chat.component';
 import { AdminDisputesComponent } from './pages/admin-disputes/admin-disputes.component';
+import { AdminPlayersComponent } from './pages/admin-players/admin-players.component';
 import { AdminDashboardComponent } from './pages/admin-dashboard/admin-dashboard.component';
 import { GoogleOnboardingComponent } from './pages/google-onboarding/google-onboarding.component';
 import { CommunitiesComponent } from './pages/communities/communities.component';
@@ -73,6 +74,7 @@ import { LegalPageComponent } from './pages/legal-page/legal-page.component';
         DirectChatComponent,
         AdminDisputesComponent,
         AdminDashboardComponent,
+        AdminPlayersComponent,
         AdminIdeasComponent,
         AdminUserReportsComponent,
         GoogleOnboardingComponent,
