@@ -128,12 +128,12 @@ export function sportIcon(sport: string): string {
   if (value.includes('basquetebol')) return '🏀';
   if (value.includes('andebol')) return '🤾';
   if (value.includes('voleibol')) return '🏐';
+  if (value.includes('futebol americano') || value.includes('football americano')) return '🏈';
   if (value.includes('futebol') || value.includes('futsal') || value.includes('futevolei')) return '⚽';
   if (value.includes('padel') || value.includes('tenis') || value.includes('pickleball') || value.includes('squash')) return '🎾';
   if (value.includes('basebol') || value.includes('softbol')) return '⚾';
   if (value.includes('cricket')) return '🏏';
   if (value.includes('rugby')) return '🏉';
-  if (value.includes('futebol americano') || value.includes('football americano')) return '🏈';
   if (value.includes('hoquei')) return '🏒';
   if (value.includes('golfe')) return '⛳';
   if (value.includes('natacao') || value.includes('apneia') || value.includes('mergulho') || value.includes('polo aquatico') || value.includes('subaquatic')) return '🏊';
