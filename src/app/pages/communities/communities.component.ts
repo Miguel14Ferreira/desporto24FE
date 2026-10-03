@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { finalize, retry, timeout } from 'rxjs';
+import { finalize, Observable, retry, timeout } from 'rxjs';
 import { appTranslate as t } from '../../i18n/i18n.service';
 
 import {
@@ -221,7 +221,7 @@ export class CommunitiesComponent implements OnInit {
     this.membershipActionMessage = '';
     this.errorMessage = '';
 
-    const action = community.visibility === 'PUBLIC'
+    const action: Observable<unknown> = community.visibility === 'PUBLIC'
       ? this.communityService.joinPublic(community.id)
       : this.communityService.requestJoin(community.id);
 
