@@ -213,8 +213,36 @@ export class CommunitiesComponent implements OnInit {
         finalize(() => this.presentationLoading = false)
       )
       .subscribe({
-        next: presentation => this.communityPresentation = presentation,
+        next: presentation => {
+          this.communityPresentation = presentation;
+          if (presentation.visibility === 'PRIVATE') {
+            this.loadMyPendingJoinRequest(presentation.id);
+          }
+        },
         error: () => this.errorMessage = t('feedback.communities.openError')
+      });
+  }
+
+  private loadMyPendingJoinRequest(communityId: number): void {
+    this.communityService.myPendingJoinRequest(communityId)
+      .pipe(timeout(10_000))
+      .subscribe({
+        next: request => {
+          if (this.communityPresentation?.id !== communityId) {
+            return;
+          }
+
+          this.joinRequestSent = Boolean(request);
+          this.membershipActionMessage = request
+            ? t('communities.joinRequestSent')
+            : '';
+        },
+        error: () => {
+          if (this.communityPresentation?.id === communityId) {
+            this.joinRequestSent = false;
+            this.membershipActionMessage = '';
+          }
+        }
       });
   }
 

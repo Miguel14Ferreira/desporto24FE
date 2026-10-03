@@ -74,6 +74,10 @@ export class CommunityGroupsService {
     return this.http.get<CommunityJoinRequest[]>(this.url + '/' + id + '/join-requests');
   }
 
+  myPendingJoinRequest(id: number): Observable<CommunityJoinRequest | null> {
+    return this.http.get<CommunityJoinRequest | null>(this.url + '/' + id + '/join-requests/me');
+  }
+
   acceptJoinRequest(communityId: number, requestId: number): Observable<CommunityGroup> {
     return this.http.post<CommunityGroup>(
       this.url + '/' + communityId + '/join-requests/' + requestId + '/accept',
