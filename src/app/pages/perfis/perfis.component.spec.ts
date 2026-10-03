@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 
 import { PerfisComponent } from './perfis.component';
 import { CommunityService } from '../../services/community.service';
@@ -78,6 +78,37 @@ describe('PerfisComponent', () => {
     fixture = TestBed.createComponent(PerfisComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
+  });
+
+  it('should start without requesting or showing discoverable profiles', () => {
+    expect(service.discoverProfiles).not.toHaveBeenCalled();
+    expect(service.findProfiles).not.toHaveBeenCalled();
+    expect(service.publicProfile).not.toHaveBeenCalled();
+    expect(component.profiles).toEqual([]);
+    expect(component.searched).toBeFalse();
+  });
+
+  it('should clear results without loading discovery again', () => {
+    component.profiles = [profile];
+    component.searched = true;
+    component.searchTerm = 'ana';
+    component.clearSearch();
+    expect(component.profiles).toEqual([]);
+    expect(component.searched).toBeFalse();
+    expect(service.discoverProfiles).not.toHaveBeenCalled();
+  });
+
+  it('should cancel a pending search when results are cleared', () => {
+    const pending = new Subject<typeof profile[]>();
+    service.findProfiles.and.returnValue(pending);
+    component.searchTerm = 'ana';
+    component.search();
+    component.clearSearch();
+    pending.next([profile]);
+    pending.complete();
+    expect(component.profiles).toEqual([]);
+    expect(component.loading).toBeFalse();
+    expect(component.searched).toBeFalse();
   });
 
   it('should create', () => {
@@ -210,7 +241,7 @@ describe('PerfisComponent', () => {
     expect(service.sendFriendRequest).not.toHaveBeenCalled();
   });
 
-  it('should return to discovery when all filters are empty', () => {
+  it('should keep results empty when all filters are empty', () => {
     component.searchTerm = '  ';
     component.sportFilter = '';
     component.locationFilter = '';
@@ -218,10 +249,11 @@ describe('PerfisComponent', () => {
     component.maxAge = null;
     component.levelFilter = '';
 
-    const callsBefore = service.discoverProfiles.calls.count();
     component.search();
 
     expect(service.findProfiles).not.toHaveBeenCalled();
-    expect(service.discoverProfiles.calls.count()).toBe(callsBefore + 1);
+    expect(service.discoverProfiles).not.toHaveBeenCalled();
+    expect(component.profiles).toEqual([]);
+    expect(component.searched).toBeFalse();
   });
 });

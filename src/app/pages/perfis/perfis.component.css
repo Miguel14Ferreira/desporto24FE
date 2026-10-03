@@ -146,8 +146,9 @@ h1 {
 
 .profile-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: .9rem;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+  max-width: 720px;
 }
 
 .profile-card {
@@ -155,10 +156,12 @@ h1 {
   align-items: center;
   gap: .9rem;
   width: 100%;
-  border: 1px solid rgba(255,255,255,.1);
-  border-radius: .9rem;
-  padding: .9rem;
-  background: rgba(15,23,42,.78);
+  box-sizing: border-box;
+  border: 0;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  border-radius: 0;
+  padding: .8rem .5rem;
+  background: transparent;
   color: inherit;
   text-align: left;
   cursor: pointer;
@@ -171,9 +174,9 @@ h1 {
 
 .avatar {
   display: grid;
-  width: 58px;
-  height: 58px;
-  flex: 0 0 58px;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
   place-items: center;
   overflow: hidden;
   border-radius: 50%;
@@ -592,5 +595,10 @@ h1 {
 }
 
 .report-actions small {
+  color: #94a3b8;
+}
+
+.search-ready p {
+  margin: 0;
   color: #94a3b8;
 }

@@ -114,6 +114,12 @@
       <div class="feedback error-feedback">{{ actionError }}</div>
     }
 
+    @if (!loading && !searched && !errorMessage) {
+      <div class="state-card search-ready">
+        <p>{{ 'community.searchReady' | t }}</p>
+      </div>
+    }
+
     @if (!loading && searched && profiles.length === 0 && !errorMessage) {
       <div class="state-card">
         <h2>{{ 'community.noneTitle' | t }}</h2>
@@ -122,17 +128,10 @@
     }
 
     @if (profiles.length > 0) {
-      @if (!searched) {
-        <div class="discovery-heading">
-          <h2>{{ 'community.discoverTitle' | t }}</h2>
-          <p>{{ 'community.discoverHint' | t }}</p>
-        </div>
-      } @else {
-        <div class="discovery-heading">
-          <h2>{{ 'community.resultsTitle' | t:{ count: profiles.length } }}</h2>
-          <p>{{ 'community.resultsHint' | t }}</p>
-        </div>
-      }
+      <div class="discovery-heading">
+        <h2>{{ 'community.resultsTitle' | t:{ count: profiles.length } }}</h2>
+        <p>{{ 'community.resultsHint' | t }}</p>
+      </div>
 
       <div class="profile-grid">
         @for (profile of profiles; track profile.username) {
@@ -146,8 +145,10 @@
             </div>
 
             <div class="profile-copy">
-              <strong>{{ profile.nickname || profile.fullName || profile.username }}</strong>
-              <span>@{{ profile.username }}</span>
+              <strong>@{{ profile.username }}</strong>
+              @if (profile.nickname || profile.fullName) {
+                <span>{{ profile.nickname || profile.fullName }}</span>
+              }
               <small class="profile-match-line">
                 @if (profile.age !== null) {
                   {{ profile.age }} {{ 'community.years' | t }} ·

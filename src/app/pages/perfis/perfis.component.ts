@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { appTranslate as t } from '../../i18n/i18n.service';
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
-import { catchError, finalize, forkJoin, of, retry, timeout } from 'rxjs';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
+import { catchError, finalize, forkJoin, of, retry, Subscription, timeout } from 'rxjs';
 
 import { environment } from 'src/environment/environment';
 import { CommunityProfile } from '../model/community-profile';
@@ -21,7 +21,7 @@ import { SPORTS_CATALOG } from '../../shared/sports-catalog';
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false
 })
-export class PerfisComponent implements OnInit {
+export class PerfisComponent implements OnInit, OnDestroy {
   searchTerm = '';
   sportFilter = '';
   locationFilter = '';
@@ -29,6 +29,8 @@ export class PerfisComponent implements OnInit {
   maxAge: number | null = null;
   levelFilter = '';
   readonly sportsCatalog = SPORTS_CATALOG;
+
+  private searchSubscription?: Subscription;
 
   profiles: CommunityProfile[] = [];
   selectedProfile?: CommunityProfile;
@@ -66,46 +68,10 @@ export class PerfisComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadFriendUsernames();
-    this.prefillSearchFromProfile();
-    this.loadDiscoverableProfiles();
   }
 
-  private prefillSearchFromProfile(): void {
-    if (!this.currentUsername) {
-      return;
-    }
-
-    this.communityService.publicProfile(this.currentUsername)
-      .pipe(
-        timeout(10_000),
-        retry({ count: 1 })
-      )
-      .subscribe({
-      next: profile => {
-        if (!this.sportFilter && profile.favoriteSports) {
-          this.sportFilter = profile.favoriteSports
-            .split(',')
-            .map(value => value.trim())
-            .find(Boolean) || '';
-        }
-
-        if (!this.locationFilter && profile.location) {
-          this.locationFilter = profile.location;
-        }
-
-        if (!this.levelFilter && profile.skillLevel) {
-          this.levelFilter = profile.skillLevel;
-        }
-
-        if (profile.age !== null && profile.age !== undefined) {
-          this.minAge ??= Math.max(18, profile.age - 10);
-          this.maxAge ??= Math.min(99, profile.age + 10);
-        }
-      },
-      error: () => {
-        // Discovery still works without pre-filling the form.
-      }
-    });
+  ngOnDestroy(): void {
+    this.searchSubscription?.unsubscribe();
   }
 
   private loadFriendUsernames(): void {
@@ -126,31 +92,6 @@ export class PerfisComponent implements OnInit {
     });
   }
 
-  private loadDiscoverableProfiles(): void {
-    this.loading = true;
-    this.errorMessage = '';
-
-    this.communityService.discoverProfiles()
-      .pipe(
-        timeout(10_000),
-        retry({ count: 1 }),
-        finalize(() => this.loading = false)
-      )
-      .subscribe({
-        next: profiles => {
-          this.profiles = profiles;
-          this.searched = false;
-        },
-        error: error => {
-          this.profiles = [];
-          this.errorMessage = this.errorFrom(
-            error,
-            t('feedback.community.searchError')
-          );
-        }
-      });
-  }
-
   search(): void {
     const hasFilters = Boolean(
       this.searchTerm.trim()
@@ -162,10 +103,7 @@ export class PerfisComponent implements OnInit {
     );
 
     if (!hasFilters) {
-      this.selectedProfile = undefined;
-      this.actionError = '';
-      this.actionSuccess = '';
-      this.loadDiscoverableProfiles();
+      this.clearSearch();
       return;
     }
 
@@ -178,12 +116,13 @@ export class PerfisComponent implements OnInit {
       return;
     }
 
+    this.searchSubscription?.unsubscribe();
     this.loading = true;
     this.errorMessage = '';
     this.actionError = '';
     this.actionSuccess = '';
 
-    this.communityService.findProfiles({
+    this.searchSubscription = this.communityService.findProfiles({
       name: this.searchTerm.trim() || undefined,
       sport: this.sportFilter.trim() || undefined,
       location: this.locationFilter.trim() || undefined,
@@ -214,6 +153,10 @@ export class PerfisComponent implements OnInit {
   }
 
   clearSearch(): void {
+    this.searchSubscription?.unsubscribe();
+    this.loading = false;
+    this.profiles = [];
+    this.searched = false;
     this.searchTerm = '';
     this.sportFilter = '';
     this.locationFilter = '';
@@ -224,7 +167,6 @@ export class PerfisComponent implements OnInit {
     this.errorMessage = '';
     this.actionError = '';
     this.actionSuccess = '';
-    this.loadDiscoverableProfiles();
   }
 
   openProfile(profile: CommunityProfile): void {
