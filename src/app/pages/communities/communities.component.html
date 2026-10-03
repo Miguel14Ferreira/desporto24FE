@@ -19,6 +19,106 @@
       </div>
     }
 
+    @if (!detailMode()) {
+      <section class="create-card">
+        <div>
+          <p class="eyebrow">{{ 'communities.title' | t }}</p>
+          <h2>{{ 'community.searchTitle' | t }}</h2>
+          <p class="subtitle">{{ 'communities.subtitle' | t }}</p>
+        </div>
+
+        <form class="form-grid" (ngSubmit)="searchCommunities(0)">
+          <label>
+            <span>{{ 'community.nameOptional' | t }}</span>
+            <input
+              name="communitySearchName"
+              type="search"
+              maxlength="100"
+              autocomplete="off"
+              [(ngModel)]="communitySearchName"
+              [placeholder]="'communities.title' | t">
+          </label>
+
+          <label>
+            <span>{{ 'events.sport' | t }}</span>
+            <input
+              name="communitySearchSport"
+              type="search"
+              maxlength="100"
+              autocomplete="off"
+              [(ngModel)]="communitySearchSport"
+              [placeholder]="'events.sportPlaceholder' | t">
+          </label>
+
+          <div class="row-actions full-width">
+            <button
+              type="submit"
+              class="primary-action"
+              [disabled]="communitySearchLoading || (!communitySearchName.trim() && !communitySearchSport.trim())">
+              {{ (communitySearchLoading ? 'common.searching' : 'adminPlayers.search') | t }}
+            </button>
+            <button
+              type="button"
+              class="secondary-action"
+              [disabled]="communitySearchLoading"
+              (click)="clearCommunitySearch()">
+              {{ 'events.clear' | t }}
+            </button>
+          </div>
+        </form>
+
+        @if (communitySearchError) {
+          <div class="feedback error-feedback">{{ communitySearchError }}</div>
+        }
+
+        @if (communitySearchPerformed && !communitySearchLoading && communitySearchResults.length > 0) {
+          <div class="community-list">
+            @for (community of communitySearchResults; track community.id) {
+              <article class="community-card">
+                <div class="community-card-main">
+                  <div class="community-avatar">
+                    @if (community.photoUrl) {
+                      <img [src]="community.photoUrl" [alt]="community.name">
+                    } @else {
+                      <span>{{ community.name.charAt(0).toUpperCase() }}</span>
+                    }
+                  </div>
+                  <div class="community-card-copy">
+                    <strong>{{ community.name }}</strong>
+                    <span>{{ community.sport || ('communities.multiSport' | t) }}</span>
+                    <small>{{ community.description || ('communities.noDescription' | t) }}</small>
+                  </div>
+                </div>
+                <span class="visibility">
+                  {{ community.visibility === 'PRIVATE'
+                    ? ('communities.private' | t)
+                    : ('communities.public' | t) }}
+                </span>
+              </article>
+            }
+          </div>
+
+          <nav class="row-actions" [attr.aria-label]="'communities.title' | t">
+            <button
+              type="button"
+              class="secondary-action"
+              [disabled]="communitySearchLoading || communitySearchPage === 0"
+              (click)="changeCommunitySearchPage(-1)">
+              {{ 'adminPlayers.previous' | t }}
+            </button>
+            <span>{{ 'adminPlayers.page' | t:{ page: communitySearchPage + 1 } }}</span>
+            <button
+              type="button"
+              class="secondary-action"
+              [disabled]="communitySearchLoading || !communitySearchHasMore"
+              (click)="changeCommunitySearchPage(1)">
+              {{ 'adminPlayers.next' | t }}
+            </button>
+          </nav>
+        }
+      </section>
+    }
+
     @if (errorMessage) {
       <div class="feedback error-feedback">{{ errorMessage }}</div>
     }
