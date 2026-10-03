@@ -49,6 +49,10 @@ export class CommunityGroupsService {
     return this.http.get<CommunitySearchResponse>(this.url + '/search', { params });
   }
 
+  presentation(id: number): Observable<CommunitySearchPresentation> {
+    return this.http.get<CommunitySearchPresentation>(this.url + '/' + id + '/presentation');
+  }
+
   get(id: number): Observable<CommunityGroup> {
     return this.http.get<CommunityGroup>(this.url + '/' + id);
   }

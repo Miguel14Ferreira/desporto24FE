@@ -61,6 +61,8 @@ export class CommunitiesComponent implements OnInit {
   communitySearchLoading = false;
   communitySearchPerformed = false;
   communitySearchError = '';
+  communityPresentation?: CommunitySearchPresentation;
+  presentationLoading = false;
 
   rankingsEnabledDraft = false;
   winPointsDraft = 3;
@@ -182,6 +184,28 @@ export class CommunitiesComponent implements OnInit {
     this.communitySearchError = '';
   }
 
+  openCommunityPresentation(community: CommunitySearchPresentation): void {
+    void this.router.navigate(['/menu/communities', community.id]);
+  }
+
+  private loadCommunityPresentation(id: number): void {
+    this.selected = undefined;
+    this.communityPresentation = undefined;
+    this.presentationLoading = true;
+    this.errorMessage = '';
+
+    this.communityService.presentation(id)
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        finalize(() => this.presentationLoading = false)
+      )
+      .subscribe({
+        next: presentation => this.communityPresentation = presentation,
+        error: () => this.errorMessage = t('feedback.communities.openError')
+      });
+  }
+
   reload(): void {
     this.loading = true;
     this.errorMessage = '';
@@ -201,7 +225,12 @@ export class CommunitiesComponent implements OnInit {
           if (requestedId && !Number.isNaN(requestedId)) {
             const requested = communities.find(item => item.id === requestedId);
             if (requested) {
+              this.communityPresentation = undefined;
               this.open(requested);
+              return;
+            }
+            if (this.detailMode()) {
+              this.loadCommunityPresentation(requestedId);
               return;
             }
           }

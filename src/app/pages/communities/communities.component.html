@@ -74,7 +74,10 @@
         @if (communitySearchPerformed && !communitySearchLoading && communitySearchResults.length > 0) {
           <div class="community-list">
             @for (community of communitySearchResults; track community.id) {
-              <article class="community-card">
+              <button
+                type="button"
+                class="community-card"
+                (click)="openCommunityPresentation(community)">
                 <div class="community-card-main">
                   <div class="community-avatar">
                     @if (community.photoUrl) {
@@ -94,7 +97,7 @@
                     ? ('communities.private' | t)
                     : ('communities.public' | t) }}
                 </span>
-              </article>
+              </button>
             }
           </div>
 
@@ -145,12 +148,12 @@
       </section>
     }
 
-    @if (loading) {
+    @if (loading || (detailMode() && presentationLoading)) {
       <div class="empty-state">
         <span class="empty-icon">◎</span>
         <strong>{{ 'communities.loading' | t }}</strong>
       </div>
-    } @else if (communities.length === 0 && invites.length === 0) {
+    } @else if (!detailMode() && communities.length === 0 && invites.length === 0) {
       <section class="empty-state">
         <span class="empty-icon">◎</span>
         <h2>{{ 'communities.emptyTitle' | t }}</h2>
@@ -159,7 +162,7 @@
           {{ 'communities.createFirst' | t }}
         </a>
       </section>
-    } @else if (communities.length > 0) {
+    } @else if (communities.length > 0 || detailMode()) {
       <div class="communities-layout">
         @if (!detailMode()) {
         <aside class="community-list">
@@ -198,7 +201,33 @@
         }
 
         <main class="community-detail">
-          @if (!selected) {
+          @if (!selected && communityPresentation) {
+            <div class="detail-header">
+              <div class="community-detail-identity">
+                <div class="community-avatar community-avatar--large">
+                  @if (communityPresentation.photoUrl) {
+                    <img [src]="communityPresentation.photoUrl" [alt]="communityPresentation.name">
+                  } @else {
+                    <span>{{ communityPresentation.name.charAt(0).toUpperCase() }}</span>
+                  }
+                </div>
+                <div class="community-detail-copy">
+                  <div class="community-title-meta">
+                    <span class="visibility">
+                      {{ communityPresentation.visibility === 'PRIVATE'
+                        ? ('communities.private' | t)
+                        : ('communities.public' | t) }}
+                    </span>
+                  </div>
+                  <h2>{{ communityPresentation.name }}</h2>
+                  <p>{{ communityPresentation.description || ('communities.noDescription' | t) }}</p>
+                  <p>{{ 'communities.sportLabel' | t }}:
+                    <strong>{{ communityPresentation.sport || ('communities.multiSport' | t) }}</strong>
+                  </p>
+                </div>
+              </div>
+            </div>
+          } @else if (!selected) {
             <div class="detail-placeholder">
               <h2>{{ 'communities.selectTitle' | t }}</h2>
               <p>{{ 'communities.selectText' | t }}</p>
