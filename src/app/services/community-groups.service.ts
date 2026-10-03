@@ -30,6 +30,15 @@ export interface CommunitySearchResponse {
   hasMore: boolean;
 }
 
+export interface CommunityJoinRequest {
+  id: number;
+  communityId: number;
+  communityName: string;
+  requesterUsername: string;
+  status: 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'CANCELLED';
+  createdAt: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class CommunityGroupsService {
   private readonly url = environment.apiUrl + '/api/communities';
@@ -51,6 +60,32 @@ export class CommunityGroupsService {
 
   presentation(id: number): Observable<CommunitySearchPresentation> {
     return this.http.get<CommunitySearchPresentation>(this.url + '/' + id + '/presentation');
+  }
+
+  joinPublic(id: number): Observable<CommunityGroup> {
+    return this.http.post<CommunityGroup>(this.url + '/' + id + '/join', null);
+  }
+
+  requestJoin(id: number): Observable<CommunityJoinRequest> {
+    return this.http.post<CommunityJoinRequest>(this.url + '/' + id + '/join-requests', null);
+  }
+
+  pendingJoinRequests(id: number): Observable<CommunityJoinRequest[]> {
+    return this.http.get<CommunityJoinRequest[]>(this.url + '/' + id + '/join-requests');
+  }
+
+  acceptJoinRequest(communityId: number, requestId: number): Observable<CommunityGroup> {
+    return this.http.post<CommunityGroup>(
+      this.url + '/' + communityId + '/join-requests/' + requestId + '/accept',
+      null
+    );
+  }
+
+  rejectJoinRequest(communityId: number, requestId: number): Observable<void> {
+    return this.http.post<void>(
+      this.url + '/' + communityId + '/join-requests/' + requestId + '/reject',
+      null
+    );
   }
 
   get(id: number): Observable<CommunityGroup> {
