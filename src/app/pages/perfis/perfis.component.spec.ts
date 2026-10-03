@@ -1,5 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of, Subject } from 'rxjs';
+import { of, Subject, BehaviorSubject } from 'rxjs';
+
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
 
 import { PerfisComponent } from './perfis.component';
 import { CommunityService } from '../../services/community.service';
@@ -26,7 +28,10 @@ describe('PerfisComponent', () => {
     joinDateDisplay: '2026-09-01'
   };
 
+  let routeParams: BehaviorSubject<ReturnType<typeof convertToParamMap>>;
+
   beforeEach(async () => {
+    routeParams = new BehaviorSubject(convertToParamMap({}));
     service = jasmine.createSpyObj<CommunityService>(
       'CommunityService',
       ['searchProfiles', 'findProfiles', 'sendFriendRequest', 'reportUser', 'userBlockStatus', 'blockUser', 'unblockUser', 'discoverProfiles', 'friends', 'publicProfile']
@@ -71,7 +76,8 @@ describe('PerfisComponent', () => {
       providers: [
         ...TEST_PROVIDERS,
         { provide: CommunityService, useValue: service },
-        { provide: SocialGraphService, useValue: socialGraphService }
+        { provide: SocialGraphService, useValue: socialGraphService },
+        { provide: ActivatedRoute, useValue: { paramMap: routeParams, snapshot: { params: {}, queryParams: {}, paramMap: convertToParamMap({}), queryParamMap: convertToParamMap({}) } } }
       ]
     }).compileComponents();
 
@@ -109,6 +115,35 @@ describe('PerfisComponent', () => {
     expect(component.profiles).toEqual([]);
     expect(component.loading).toBeFalse();
     expect(component.searched).toBeFalse();
+  });
+
+  it('should load a profile from its dedicated URL without searching', () => {
+    routeParams.next(convertToParamMap({ username: 'ana' }));
+    expect(service.publicProfile).toHaveBeenCalledWith('ana');
+    expect(component.profilePage).toBeTrue();
+    expect(component.selectedProfile?.username).toBe('ana');
+    expect(service.findProfiles).not.toHaveBeenCalled();
+    expect(service.discoverProfiles).not.toHaveBeenCalled();
+  });
+
+  it('should cancel an old profile request when the URL changes', () => {
+    const pending = new Subject<typeof profile>();
+    service.publicProfile.and.returnValue(pending);
+    routeParams.next(convertToParamMap({ username: 'ana' }));
+    service.publicProfile.and.returnValue(of({ ...profile, username: 'rui' }));
+    routeParams.next(convertToParamMap({ username: 'rui' }));
+    pending.next(profile);
+    expect(component.selectedProfile?.username).toBe('rui');
+  });
+
+  it('should show an error if a profile URL cannot be loaded', () => {
+    const pending = new Subject<typeof profile>();
+    service.publicProfile.and.returnValue(pending);
+    routeParams.next(convertToParamMap({ username: 'missing' }));
+    pending.error({ error: {} });
+    expect(component.selectedProfile).toBeUndefined();
+    expect(component.errorMessage).toBeTruthy();
+    expect(component.loading).toBeFalse();
   });
 
   it('should create', () => {

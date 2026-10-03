@@ -67,6 +67,7 @@ const routes: Routes = [
   {path:'login/resetPassword',component:ForgotpComponent},
   {path:'menu/perfis',component:PerfisComponent,canActivate:[AuthenticationGuard]},
   {path:'menu/perfis/menu',redirectTo:'menu',pathMatch:'full'},
+  {path:'menu/perfis/:username',component:PerfisComponent,canActivate:[AuthenticationGuard]},
   {path:'login/resetPassword/:token',component:Forgotp2Component, pathMatch:'full'},
   {path:'login/registerNewUser/confirmTokenRegistration/:token', component:ConfirmTokenRegistrationComponent, pathMatch:'full'},
   {path:'menu/dadosPerfil',component:PerfilDataComponent,canActivate:[AuthenticationGuard], pathMatch:'full'},

@@ -1,6 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { appTranslate as t } from '../../i18n/i18n.service';
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { catchError, finalize, forkJoin, of, retry, Subscription, timeout } from 'rxjs';
 
 import { environment } from 'src/environment/environment';
@@ -31,6 +32,10 @@ export class PerfisComponent implements OnInit, OnDestroy {
   readonly sportsCatalog = SPORTS_CATALOG;
 
   private searchSubscription?: Subscription;
+  private routeSubscription?: Subscription;
+  private profileSubscription?: Subscription;
+  private detailSubscription?: Subscription;
+  profilePage = false;
 
   profiles: CommunityProfile[] = [];
   selectedProfile?: CommunityProfile;
@@ -60,7 +65,8 @@ export class PerfisComponent implements OnInit, OnDestroy {
     private communityService: CommunityService,
     private authenticationService: AuthenticationService,
     private reliabilityService: ReliabilityService,
-    private socialGraphService: SocialGraphService
+    private socialGraphService: SocialGraphService,
+    private route: ActivatedRoute
   ) {
     this.authenticationService.isLoggedIn();
     this.currentUsername = this.authenticationService.loggedInPerfilname || '';
@@ -68,10 +74,20 @@ export class PerfisComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadFriendUsernames();
+    this.routeSubscription = this.route.paramMap.subscribe(params => {
+      const username = params.get('username');
+      this.profilePage = Boolean(username);
+      if (username) {
+        this.loadProfile(username);
+      }
+    });
   }
 
   ngOnDestroy(): void {
     this.searchSubscription?.unsubscribe();
+    this.routeSubscription?.unsubscribe();
+    this.profileSubscription?.unsubscribe();
+    this.detailSubscription?.unsubscribe();
   }
 
   private loadFriendUsernames(): void {
@@ -169,7 +185,25 @@ export class PerfisComponent implements OnInit, OnDestroy {
     this.actionSuccess = '';
   }
 
-  openProfile(profile: CommunityProfile): void {
+  private loadProfile(username: string): void {
+    this.profileSubscription?.unsubscribe();
+    this.detailSubscription?.unsubscribe();
+    this.closeProfile();
+    this.loading = true;
+    this.errorMessage = '';
+    this.actionError = '';
+    this.actionSuccess = '';
+    this.profileSubscription = this.communityService.publicProfile(username)
+      .pipe(timeout(10_000), finalize(() => this.loading = false))
+      .subscribe({
+        next: profile => this.showProfile(profile),
+        error: error => {
+          this.errorMessage = this.errorFrom(error, t('community.profileLoadError'));
+        }
+      });
+  }
+
+  private showProfile(profile: CommunityProfile): void {
     this.selectedProfile = profile;
     this.selectedReliability = undefined;
     this.selectedActivity = undefined;
@@ -180,7 +214,7 @@ export class PerfisComponent implements OnInit, OnDestroy {
     this.actionError = '';
     this.actionSuccess = '';
 
-    forkJoin({
+    this.detailSubscription = forkJoin({
       reliability: this.reliabilityService.summary(profile.username)
         .pipe(catchError(() => of(undefined))),
       activity: this.reliabilityService.activity(profile.username)
@@ -194,12 +228,17 @@ export class PerfisComponent implements OnInit, OnDestroy {
         timeout(10_000),
         retry({ count: 1 })
       )
-      .subscribe(({ reliability, activity, followStatus, blockStatus }) => {
-      this.selectedReliability = reliability;
-      this.selectedActivity = activity;
-      this.selectedFollowStatus = followStatus;
-      this.selectedBlocked = blockStatus.blocked;
-    });
+      .subscribe({
+        next: ({ reliability, activity, followStatus, blockStatus }) => {
+          this.selectedReliability = reliability;
+          this.selectedActivity = activity;
+          this.selectedFollowStatus = followStatus;
+          this.selectedBlocked = blockStatus.blocked;
+        },
+        error: () => {
+          this.actionError = t('community.profileDetailsError');
+        }
+      });
   }
 
   closeProfile(): void {

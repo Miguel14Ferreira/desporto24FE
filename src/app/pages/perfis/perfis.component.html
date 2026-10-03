@@ -1,5 +1,6 @@
 <section class="community-page">
   <div class="community-shell">
+    @if (!profilePage) {
     <header class="page-header">
       <div>
         <p class="eyebrow">Desporto24</p>
@@ -135,7 +136,7 @@
 
       <div class="profile-grid">
         @for (profile of profiles; track profile.username) {
-          <button type="button" class="profile-card" (click)="openProfile(profile)">
+          <a class="profile-card" [routerLink]="['/menu/perfis', profile.username]">
             <div class="avatar">
               @if (profileImage(profile); as image) {
                 <img [src]="image" [alt]="profile.username">
@@ -162,15 +163,29 @@
                 <small>{{ ('profile.level.' + profile.skillLevel) | t }}</small>
               }
             </div>
-          </button>
+          </a>
         }
       </div>
     }
 
-    @if (selectedProfile) {
-      <div class="profile-backdrop" (click)="closeProfile()">
-        <article class="profile-detail" (click)="$event.stopPropagation()">
-          <button type="button" class="close-detail" (click)="closeProfile()">×</button>
+    } @else {
+      <a class="secondary-action back-to-search" routerLink="/menu/perfis">← {{ 'community.backToSearch' | t }}</a>
+      @if (loading) {
+        <div class="state-card" role="status">{{ 'common.loading' | t }}</div>
+      }
+      @if (errorMessage) {
+        <div class="feedback error-feedback" role="alert">{{ errorMessage }}</div>
+      }
+      @if (actionSuccess) {
+        <div class="feedback success-feedback" role="status">{{ actionSuccess }}</div>
+      }
+      @if (actionError) {
+        <div class="feedback error-feedback" role="alert">{{ actionError }}</div>
+      }
+    }
+
+    @if (profilePage && selectedProfile) {
+        <article class="profile-detail">
 
           <div class="detail-heading">
             <div class="avatar large-avatar">
@@ -183,9 +198,54 @@
 
             <div>
               <p class="eyebrow">{{ 'community.profile' | t }}</p>
-              <h2>{{ selectedProfile.username }}</h2>
-              <p>{{ selectedProfile.nickname || selectedProfile.fullName || 'Jogador Desporto24' }}</p>
+              <h1>@{{ selectedProfile.username }}</h1>
+              <p>{{ selectedProfile.nickname || selectedProfile.fullName || ('community.player' | t) }}</p>
             </div>
+          </div>
+
+          <div class="detail-actions">
+            @if (!isOwnProfile(selectedProfile) && !selectedBlocked) {
+              <button
+                type="button"
+                class="follow-action"
+                [class.following]="selectedFollowStatus?.followedByMe"
+                [disabled]="followLoading"
+                (click)="toggleFollow(selectedProfile)">
+                @if (followLoading) {
+                  {{ 'common.processing' | t }}
+                } @else if (selectedFollowStatus?.followedByMe) {
+                  {{ 'social.following' | t }}
+                } @else {
+                  {{ 'social.follow' | t }}
+                }
+              </button>
+            }
+
+            @if (isOwnProfile(selectedProfile)) {
+              <span>{{ 'community.ownProfile' | t }}</span>
+            } @else if (selectedBlocked) {
+              <span>{{ 'community.blockedStatus' | t }}</span>
+            } @else if (isFriend(selectedProfile)) {
+              <button type="button" class="friend-status" disabled>✓ {{ 'friends.title' | t }}</button>
+              <a
+                class="primary-action"
+                [routerLink]="['/menu/friendList/chat', selectedProfile.username]">
+                {{ 'friends.openChat' | t }}
+              </a>
+            } @else {
+              <button
+                type="button"
+                class="primary-action"
+                [disabled]="actionLoading || friendRequestPending(selectedProfile)"
+                (click)="sendFriendRequest(selectedProfile)">
+                @if (friendRequestPending(selectedProfile)) {
+                  {{ 'community.requestPending' | t }}
+                } @else {
+                  {{ actionLoading ? ('contact.sending' | t) : ('community.sendRequest' | t) }}
+                }
+              </button>
+            }
+
           </div>
 
           @if (selectedProfile.bio) {
@@ -270,49 +330,10 @@
             </section>
           }
 
-          <div class="detail-actions">
-            @if (!isOwnProfile(selectedProfile) && !selectedBlocked) {
-              <button
-                type="button"
-                class="follow-action"
-                [class.following]="selectedFollowStatus?.followedByMe"
-                [disabled]="followLoading"
-                (click)="toggleFollow(selectedProfile)">
-                @if (followLoading) {
-                  {{ 'common.processing' | t }}
-                } @else if (selectedFollowStatus?.followedByMe) {
-                  {{ 'social.following' | t }}
-                } @else {
-                  {{ 'social.follow' | t }}
-                }
-              </button>
-            }
-
-            @if (isOwnProfile(selectedProfile)) {
-              <span>{{ 'community.ownProfile' | t }}</span>
-            } @else if (selectedBlocked) {
-              <span></span>
-            } @else if (isFriend(selectedProfile)) {
-              <span>Já são amigos</span>
-              <a
-                class="primary-action"
-                [routerLink]="['/menu/friendList/chat', selectedProfile.username]">
-                Abrir chat
-              </a>
-            } @else {
-              <button
-                type="button"
-                class="primary-action"
-                [disabled]="actionLoading || friendRequestPending(selectedProfile)"
-                (click)="sendFriendRequest(selectedProfile)">
-                @if (friendRequestPending(selectedProfile)) {
-                  {{ 'community.requestPending' | t }}
-                } @else {
-                  {{ actionLoading ? ('contact.sending' | t) : ('community.sendRequest' | t) }}
-                }
-              </button>
-            }
-
+          @if (!isOwnProfile(selectedProfile)) {
+          <details class="profile-safety">
+            <summary>{{ 'community.moreOptions' | t }}</summary>
+            <div class="safety-actions">
             @if (!isOwnProfile(selectedProfile)) {
               <button
                 type="button"
@@ -332,7 +353,9 @@
                 {{ reportOpen ? ('community.reportCancel' | t) : ('community.reportUser' | t) }}
               </button>
             }
-          </div>
+            </div>
+          </details>
+          }
 
           @if (reportOpen && !isOwnProfile(selectedProfile) && !selectedBlocked) {
             <section class="report-panel">
@@ -360,7 +383,6 @@
             </section>
           }
         </article>
-      </div>
     }
   </div>
 </section>
