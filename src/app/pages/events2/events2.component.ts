@@ -100,7 +100,7 @@ export class Events2Component implements OnInit {
           }
         },
         error: () => {
-          this.communityId = null;
+          this.errorMessage = t('feedback.communities.openError');
           this.communityName = '';
         }
       });
