@@ -153,6 +153,39 @@ export class NotificationsComponent implements OnInit {
     this.router.navigate(['/menu/events', notification.sessionId]);
   }
 
+  openCommunityInvite(notification: AppNotification): void {
+    if (notification.type !== 'COMMUNITY_INVITE') {
+      return;
+    }
+
+    this.router.navigate(['/menu/communities']);
+  }
+
+  notificationSubject(notification: AppNotification): string {
+    const community = this.invitedCommunityName(notification);
+    return community
+      ? t('notification.communityInviteSubject', { community })
+      : notification.subject;
+  }
+
+  notificationMessage(notification: AppNotification): string {
+    const community = this.invitedCommunityName(notification);
+    return community && notification.relatedUsername
+      ? t('notification.communityInviteMessage', {
+          username: notification.relatedUsername,
+          community
+        })
+      : notification.message;
+  }
+
+  private invitedCommunityName(notification: AppNotification): string | null {
+    // The current API includes the community name in the invitation subject.
+    const prefix = 'Convite para a comunidade ';
+    return notification.type === 'COMMUNITY_INVITE' && notification.subject.startsWith(prefix)
+      ? notification.subject.slice(prefix.length).trim() || null
+      : null;
+  }
+
   openChat(notification: AppNotification): void {
     if (!notification.relatedUsername) {
       return;
@@ -321,6 +354,8 @@ export class NotificationsComponent implements OnInit {
         return t('notification.session');
       case 'SESSION_CANCELLED':
         return t('notification.sessionCancelled');
+      case 'COMMUNITY_INVITE':
+        return t('notification.communityInvite');
       case 'CHAT_MESSAGE':
         return t('notification.chatMessage');
       default:

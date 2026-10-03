@@ -113,6 +113,58 @@ describe('NotificationsComponent', () => {
     fixture.detectChanges();
   });
 
+  it('should show the community invitation action and open pending invitations', () => {
+    const invitation = {
+      ...notificationFixture(),
+      type: 'COMMUNITY_INVITE',
+      subject: 'Convite para a comunidade CNG',
+      message: 'Mensagem do servidor',
+      relatedUsername: 'TMF14',
+      sessionId: null
+    };
+    component.notifications = [invitation];
+    component.selected = invitation;
+    fixture.detectChanges();
+
+    const button = Array.from(fixture.nativeElement.querySelectorAll('button'))
+      .find((element: any) => element.textContent.includes('Ver convite')) as HTMLButtonElement;
+    expect(button).toBeDefined();
+    button.click();
+    expect(router.navigate).toHaveBeenCalledWith(['/menu/communities']);
+  });
+
+  it('should translate invitation content while preserving community and inviter names', () => {
+    const previousLanguage = localStorage.getItem('d24-language');
+    const invitation = {
+      ...notificationFixture(),
+      type: 'COMMUNITY_INVITE',
+      subject: 'Convite para a comunidade CNG',
+      relatedUsername: 'TMF14',
+      sessionId: null
+    };
+    try {
+      localStorage.setItem('d24-language', 'pt');
+      expect(component.typeLabel(invitation)).toBe('Convite de comunidade');
+      expect(component.notificationSubject(invitation)).toBe('Convite para a comunidade CNG');
+      expect(component.notificationMessage(invitation)).toBe(
+        '@TMF14 convidou-te para a comunidade CNG. Abre o convite para aceitar ou rejeitar.');
+      localStorage.setItem('d24-language', 'en');
+      expect(component.typeLabel(invitation)).toBe('Community invitation');
+      expect(component.notificationSubject(invitation)).toBe('Invitation to the CNG community');
+      expect(component.notificationMessage(invitation)).toBe(
+        '@TMF14 invited you to the CNG community. Open the invitation to accept or reject.');
+      expect(component.notificationMessage(notificationFixture())).toBe('Foste promovido para participante.');
+      component.openCommunityInvite(notificationFixture());
+      expect(router.navigate).not.toHaveBeenCalled();
+    } finally {
+      if (previousLanguage === null) {
+        localStorage.removeItem('d24-language');
+      } else {
+        localStorage.setItem('d24-language', previousLanguage);
+      }
+    }
+  });
+
   it('should create and load notifications', () => {
     expect(component).toBeTruthy();
     expect(component.notifications.length).toBe(1);
