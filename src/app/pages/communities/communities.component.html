@@ -71,6 +71,13 @@
           <div class="feedback error-feedback">{{ communitySearchError }}</div>
         }
 
+        @if (communitySearchPerformed && !communitySearchLoading && communitySearchResults.length === 0 && !communitySearchError) {
+          <div class="empty-state compact">
+            <strong>{{ 'communities.searchEmptyTitle' | t }}</strong>
+            <p>{{ 'communities.searchEmptyText' | t }}</p>
+          </div>
+        }
+
         @if (communitySearchPerformed && !communitySearchLoading && communitySearchResults.length > 0) {
           <div class="community-list">
             @for (community of communitySearchResults; track community.id) {
