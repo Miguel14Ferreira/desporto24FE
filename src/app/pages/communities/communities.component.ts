@@ -14,7 +14,7 @@ import {
   CommunityRoundEntryDraft,
   CommunityStanding
 } from '../model/community-group';
-import { CommunityGroupsService } from '../../services/community-groups.service';
+import { CommunityGroupsService, CommunitySearchPresentation } from '../../services/community-groups.service';
 import { CommunityService } from '../../services/community.service';
 import { CommunityProfile } from '../model/community-profile';
 import { SessionSummary } from '../model/session-summary';
@@ -52,6 +52,15 @@ export class CommunitiesComponent implements OnInit {
   inviteMessage = '';
   ownershipUsername = '';
   photoUpdating = false;
+
+  communitySearchName = '';
+  communitySearchSport = '';
+  communitySearchResults: CommunitySearchPresentation[] = [];
+  communitySearchPage = 0;
+  communitySearchHasMore = false;
+  communitySearchLoading = false;
+  communitySearchPerformed = false;
+  communitySearchError = '';
 
   rankingsEnabledDraft = false;
   winPointsDraft = 3;
@@ -121,6 +130,56 @@ export class CommunitiesComponent implements OnInit {
 
   backToCommunities(): void {
     void this.router.navigate(['/menu/communities']);
+  }
+
+  searchCommunities(page = 0): void {
+    const name = this.communitySearchName.trim();
+    const sport = this.communitySearchSport.trim();
+    if (!name && !sport) {
+      this.clearCommunitySearch();
+      return;
+    }
+
+    this.communitySearchLoading = true;
+    this.communitySearchError = '';
+    this.communityService.search(name, sport, page)
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        finalize(() => this.communitySearchLoading = false)
+      )
+      .subscribe({
+        next: result => {
+          this.communitySearchResults = result.communities;
+          this.communitySearchPage = result.page;
+          this.communitySearchHasMore = result.hasMore;
+          this.communitySearchPerformed = true;
+        },
+        error: () => {
+          this.communitySearchResults = [];
+          this.communitySearchHasMore = false;
+          this.communitySearchPerformed = true;
+          this.communitySearchError = t('feedback.communities.searchError');
+        }
+      });
+  }
+
+  changeCommunitySearchPage(direction: number): void {
+    if (this.communitySearchLoading || (direction < 0 && this.communitySearchPage === 0)
+        || (direction > 0 && !this.communitySearchHasMore)) {
+      return;
+    }
+    this.searchCommunities(this.communitySearchPage + direction);
+  }
+
+  clearCommunitySearch(): void {
+    this.communitySearchName = '';
+    this.communitySearchSport = '';
+    this.communitySearchResults = [];
+    this.communitySearchPage = 0;
+    this.communitySearchHasMore = false;
+    this.communitySearchPerformed = false;
+    this.communitySearchError = '';
   }
 
   reload(): void {
