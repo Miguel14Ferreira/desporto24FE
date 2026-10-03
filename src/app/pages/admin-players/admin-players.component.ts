@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnDestroy } from '@angular/core';
 import { finalize, Subscription, timeout } from 'rxjs';
+import { AuthenticationService } from '../../services/authethication.service';
 import { AdminPlayer, AdminPlayersService } from '../../services/admin-players.service';
 
 @Component({
@@ -18,11 +19,65 @@ export class AdminPlayersComponent implements OnDestroy {
   loading = false;
   searched = false;
   errorKey = '';
+  pendingRole: { id: number; username: string; role: 'ROLE_ADMIN' | 'ROLE_USER'; expectedRole: string } | null = null;
+  changingRole = false;
+  roleErrorKey = '';
+  roleSuccessName = '';
+  private roleRequest?: Subscription;
   private request?: Subscription;
 
-  constructor(private service: AdminPlayersService) {}
+  constructor(private service: AdminPlayersService, private auth: AuthenticationService) {}
+
+  get canManageRoles(): boolean {
+    return this.auth.hasAnyRole('ROLE_SUPER_ADMIN');
+  }
+
+  canChangeRole(player: AdminPlayer): boolean {
+    return this.canManageRoles && (
+      player.role === 'ROLE_ADMIN'
+      || (player.role === 'ROLE_USER' && player.enabled === true && player.notLocked === true)
+    );
+  }
+
+  beginRoleChange(player: AdminPlayer): void {
+    if (this.changingRole || this.loading || !this.canChangeRole(player)) return;
+    this.roleErrorKey = '';
+    this.roleSuccessName = '';
+    this.pendingRole = {
+      id: player.id, username: player.username,
+      role: player.role === 'ROLE_ADMIN' ? 'ROLE_USER' : 'ROLE_ADMIN',
+      expectedRole: player.role!
+    };
+  }
+
+  cancelRoleChange(): void {
+    if (!this.changingRole) this.pendingRole = null;
+  }
+
+  confirmRoleChange(): void {
+    const pending = this.pendingRole;
+    if (!pending || this.changingRole || !this.canManageRoles) return;
+    this.changingRole = true;
+    this.roleErrorKey = '';
+    this.roleRequest = this.service.changeRole(pending.id, pending.role, pending.expectedRole)
+      .pipe(timeout(10_000), finalize(() => this.changingRole = false))
+      .subscribe({
+        next: result => {
+          this.players = this.players.map(player => player.id === result.id
+            ? { ...player, role: result.role } : player);
+          this.roleSuccessName = pending.username;
+          this.pendingRole = null;
+        },
+        error: error => {
+          this.pendingRole = null;
+          this.roleErrorKey = error.status === 409 ? 'adminPlayers.roleConflict'
+            : error.status === 403 ? 'adminPlayers.roleForbidden' : 'adminPlayers.roleError';
+        }
+      });
+  }
 
   search(): void {
+    if (this.changingRole) return;
     const name = this.name.trim();
     if (!name) {
       this.clear();
@@ -32,12 +87,16 @@ export class AdminPlayersComponent implements OnDestroy {
   }
 
   changePage(direction: number): void {
-    if (this.loading || !this.searchedName || (direction > 0 && !this.hasMore)) return;
+    if (this.loading || this.changingRole || !this.searchedName || (direction > 0 && !this.hasMore)) return;
     const page = this.page + direction;
     if (page >= 0) this.load(this.searchedName, page);
   }
 
   clear(): void {
+    if (this.changingRole) return;
+    this.pendingRole = null;
+    this.roleErrorKey = '';
+    this.roleSuccessName = '';
     this.request?.unsubscribe();
     this.name = '';
     this.searchedName = '';
@@ -50,6 +109,7 @@ export class AdminPlayersComponent implements OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.roleRequest?.unsubscribe();
     this.request?.unsubscribe();
   }
 
@@ -67,6 +127,9 @@ export class AdminPlayersComponent implements OnDestroy {
   }
 
   private load(name: string, page: number): void {
+    this.pendingRole = null;
+    this.roleErrorKey = '';
+    this.roleSuccessName = '';
     this.request?.unsubscribe();
     this.loading = true;
     this.errorKey = '';

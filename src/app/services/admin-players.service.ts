@@ -21,6 +21,11 @@ export interface AdminPlayerSearch {
 @Injectable({ providedIn: 'root' })
 export class AdminPlayersService {
   constructor(private http: HttpClient) {}
+  changeRole(id: number, role: string, expectedRole: string): Observable<{ id: number; role: string }> {
+    return this.http.put<{ id: number; role: string }>(
+      environment.apiUrl + '/api/admin/players/' + id + '/role', { role, expectedRole });
+  }
+
   search(name: string, page: number): Observable<AdminPlayerSearch> {
     const params = new HttpParams().set('name', name.trim()).set('page', String(page));
     return this.http.get<AdminPlayerSearch>(environment.apiUrl + '/api/admin/players', { params });
