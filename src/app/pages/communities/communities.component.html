@@ -1,5 +1,13 @@
 <section class="communities-page" [class.community-detail-page]="detailMode()">
   <div class="communities-shell">
+    <a
+      #mineView="routerLinkActive"
+      routerLink="/menu/communities"
+      [queryParams]="{ view: 'mine' }"
+      routerLinkActive="active"
+      [routerLinkActiveOptions]="{ exact: true }"
+      hidden
+      aria-hidden="true"></a>
     @if (!detailMode()) {
     <header class="page-header">
       <div>
@@ -7,9 +15,23 @@
         <h1>{{ 'communities.title' | t }}</h1>
         <p class="subtitle">{{ 'communities.subtitle' | t }}</p>
       </div>
-      <a class="primary-action header-action button-link" routerLink="/menu/communities/create">
-        {{ 'communities.create' | t }}
-      </a>
+      <div class="row-actions">
+        @if (mineView.isActive) {
+          <a class="secondary-action header-action button-link" routerLink="/menu/communities">
+            {{ 'communities.searchTitle' | t }}
+          </a>
+        } @else {
+          <a
+            class="secondary-action header-action button-link"
+            routerLink="/menu/communities"
+            [queryParams]="{ view: 'mine' }">
+            {{ 'communities.mine' | t }}
+          </a>
+        }
+        <a class="primary-action header-action button-link" routerLink="/menu/communities/create">
+          {{ 'communities.create' | t }}
+        </a>
+      </div>
     </header>
     } @else {
       <div class="detail-page-toolbar">
@@ -19,7 +41,7 @@
       </div>
     }
 
-    @if (!detailMode()) {
+    @if (!detailMode() && !mineView.isActive) {
       <section class="create-card">
         <div>
           <p class="eyebrow">{{ 'communities.title' | t }}</p>
@@ -133,7 +155,7 @@
       <div class="feedback error-feedback">{{ errorMessage }}</div>
     }
 
-    @if (invites.length > 0) {
+    @if (mineView.isActive && invites.length > 0) {
       <section class="invites-card">
         <h2>{{ 'communities.pendingInvites' | t }}</h2>
         @for (invite of invites; track invite.id) {
@@ -155,12 +177,12 @@
       </section>
     }
 
-    @if (loading || (detailMode() && presentationLoading)) {
+    @if ((mineView.isActive && loading) || (detailMode() && presentationLoading)) {
       <div class="empty-state">
         <span class="empty-icon">◎</span>
         <strong>{{ 'communities.loading' | t }}</strong>
       </div>
-    } @else if (!detailMode() && communities.length === 0 && invites.length === 0) {
+    } @else if (mineView.isActive && communities.length === 0 && invites.length === 0) {
       <section class="empty-state">
         <span class="empty-icon">◎</span>
         <h2>{{ 'communities.emptyTitle' | t }}</h2>
@@ -169,9 +191,9 @@
           {{ 'communities.createFirst' | t }}
         </a>
       </section>
-    } @else if (communities.length > 0 || detailMode()) {
+    } @else if ((mineView.isActive && communities.length > 0) || detailMode()) {
       <div class="communities-layout">
-        @if (!detailMode()) {
+        @if (mineView.isActive) {
         <aside class="community-list">
           <div class="list-heading">
             <strong>{{ 'communities.mine' | t }}</strong>
