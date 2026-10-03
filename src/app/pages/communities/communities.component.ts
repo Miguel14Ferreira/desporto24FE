@@ -14,7 +14,11 @@ import {
   CommunityRoundEntryDraft,
   CommunityStanding
 } from '../model/community-group';
-import { CommunityGroupsService, CommunitySearchPresentation } from '../../services/community-groups.service';
+import {
+  CommunityGroupsService,
+  CommunityJoinRequest,
+  CommunitySearchPresentation
+} from '../../services/community-groups.service';
 import { CommunityService } from '../../services/community.service';
 import { CommunityProfile } from '../model/community-profile';
 import { SessionSummary } from '../model/session-summary';
@@ -50,6 +54,8 @@ export class CommunitiesComponent implements OnInit {
   inviteSearchLoading = false;
   inviteSearchPerformed = false;
   inviteMessage = '';
+  pendingJoinRequests: CommunityJoinRequest[] = [];
+  pendingJoinRequestsLoading = false;
   ownershipUsername = '';
   photoUpdating = false;
 
@@ -332,6 +338,26 @@ export class CommunitiesComponent implements OnInit {
   setTab(tab: CommunityTab): void {
     this.activeTab = tab;
     this.errorMessage = '';
+
+    if (tab === 'members' && this.selected && this.canManage()) {
+      this.loadPendingJoinRequests(this.selected.id);
+    }
+  }
+
+  private loadPendingJoinRequests(communityId: number): void {
+    this.pendingJoinRequestsLoading = true;
+    this.communityService.pendingJoinRequests(communityId)
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.pendingJoinRequestsLoading = false)
+      )
+      .subscribe({
+        next: requests => this.pendingJoinRequests = requests,
+        error: () => {
+          this.pendingJoinRequests = [];
+          this.errorMessage = t('feedback.communities.joinRequestsLoadError');
+        }
+      });
   }
 
   loadCommunitySessions(community: CommunityGroup = this.selected as CommunityGroup): void {

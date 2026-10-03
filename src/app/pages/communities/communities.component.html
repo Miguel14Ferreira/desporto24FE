@@ -1224,6 +1224,38 @@
               <section class="community-tab-panel">
                 @if (canManage()) {
                   <section class="management-block first-block">
+                    <div class="section-heading">
+                      <div>
+                        <span class="section-kicker">{{ 'communities.joinRequestsKicker' | t }}</span>
+                        <h3>{{ 'communities.joinRequestsTitle' | t }}</h3>
+                      </div>
+                      @if (!pendingJoinRequestsLoading) {
+                        <span class="count-pill">{{ pendingJoinRequests.length }}</span>
+                      }
+                    </div>
+
+                    @if (pendingJoinRequestsLoading) {
+                      <p>{{ 'communities.joinRequestsLoading' | t }}</p>
+                    } @else if (pendingJoinRequests.length === 0) {
+                      <p>{{ 'communities.joinRequestsEmpty' | t }}</p>
+                    } @else {
+                      <div class="invite-search-results">
+                        @for (request of pendingJoinRequests; track request.id) {
+                          <div class="invite-profile-result">
+                            <span class="invite-profile-avatar">
+                              {{ request.requesterUsername.charAt(0).toUpperCase() }}
+                            </span>
+                            <span>
+                              <strong>@{{ request.requesterUsername }}</strong>
+                              <small>{{ request.createdAt | date:'short' }}</small>
+                            </span>
+                          </div>
+                        }
+                      </div>
+                    }
+                  </section>
+
+                  <section class="management-block">
                     <h3>{{ 'communities.invitePlayer' | t }}</h3>
                     <p>{{ 'communities.inviteSearchHint' | t }}</p>
 
