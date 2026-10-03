@@ -63,16 +63,6 @@
         </label>
 
         <label>
-          <span>{{ 'common.location' | t }} *</span>
-          <input
-            type="text"
-            name="city"
-            [(ngModel)]="city"
-            [disabled]="loading"
-            [placeholder]="'events.cityPlaceholder' | t">
-        </label>
-
-        <label>
           <span>{{ 'createSession.maxPlayers' | t }} *</span>
           <input
             type="number"
@@ -83,15 +73,6 @@
             [disabled]="loading">
         </label>
 
-        <label class="full-width">
-          <span>{{ 'createSession.address' | t }} *</span>
-          <input
-            type="text"
-            name="address"
-            [(ngModel)]="address"
-            [disabled]="loading"
-            [placeholder]="'createSession.addressPlaceholder' | t">
-        </label>
       </div>
 
       <section class="venue-section">
@@ -322,6 +303,30 @@
           </div>
         }
       </section>
+
+      @if (!selectedVenueId) {
+        <div class="form-grid venue-manual-location">
+          <label>
+            <span>{{ 'common.location' | t }} *</span>
+            <input
+              type="text"
+              name="city"
+              [(ngModel)]="city"
+              [disabled]="loading"
+              [placeholder]="'events.cityPlaceholder' | t">
+          </label>
+
+          <label>
+            <span>{{ 'createSession.address' | t }} *</span>
+            <input
+              type="text"
+              name="address"
+              [(ngModel)]="address"
+              [disabled]="loading"
+              [placeholder]="'createSession.addressPlaceholder' | t">
+          </label>
+        </div>
+      }
 
       <section class="location-section" [class.location-ready]="locationCaptured">
         <div>
