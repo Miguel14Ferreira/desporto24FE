@@ -56,6 +56,7 @@ export class CommunitiesComponent implements OnInit {
   inviteMessage = '';
   pendingJoinRequests: CommunityJoinRequest[] = [];
   pendingJoinRequestsLoading = false;
+  joinRequestActionId?: number;
   ownershipUsername = '';
   photoUpdating = false;
 
@@ -356,6 +357,55 @@ export class CommunitiesComponent implements OnInit {
         error: () => {
           this.pendingJoinRequests = [];
           this.errorMessage = t('feedback.communities.joinRequestsLoadError');
+        }
+      });
+  }
+
+  acceptPendingJoinRequest(request: CommunityJoinRequest): void {
+    if (!this.selected || this.joinRequestActionId !== undefined) {
+      return;
+    }
+
+    this.joinRequestActionId = request.id;
+    this.errorMessage = '';
+
+    this.communityService.acceptJoinRequest(this.selected.id, request.id)
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.joinRequestActionId = undefined)
+      )
+      .subscribe({
+        next: () => {
+          this.pendingJoinRequests = this.pendingJoinRequests.filter(item => item.id !== request.id);
+          this.refreshSelected();
+        },
+        error: error => {
+          this.errorMessage = error.error?.message
+            || t('feedback.communities.joinRequestActionError');
+        }
+      });
+  }
+
+  rejectPendingJoinRequest(request: CommunityJoinRequest): void {
+    if (!this.selected || this.joinRequestActionId !== undefined) {
+      return;
+    }
+
+    this.joinRequestActionId = request.id;
+    this.errorMessage = '';
+
+    this.communityService.rejectJoinRequest(this.selected.id, request.id)
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.joinRequestActionId = undefined)
+      )
+      .subscribe({
+        next: () => {
+          this.pendingJoinRequests = this.pendingJoinRequests.filter(item => item.id !== request.id);
+        },
+        error: error => {
+          this.errorMessage = error.error?.message
+            || t('feedback.communities.joinRequestActionError');
         }
       });
   }

@@ -1249,6 +1249,24 @@
                               <strong>@{{ request.requesterUsername }}</strong>
                               <small>{{ request.createdAt | date:'short' }}</small>
                             </span>
+                            <div class="row-actions">
+                              <button
+                                type="button"
+                                class="primary-action small"
+                                [disabled]="joinRequestActionId !== undefined"
+                                (click)="acceptPendingJoinRequest(request)">
+                                {{ joinRequestActionId === request.id
+                                  ? ('communities.processingJoinRequest' | t)
+                                  : ('communities.accept' | t) }}
+                              </button>
+                              <button
+                                type="button"
+                                class="secondary-action small"
+                                [disabled]="joinRequestActionId !== undefined"
+                                (click)="rejectPendingJoinRequest(request)">
+                                {{ 'communities.reject' | t }}
+                              </button>
+                            </div>
                           </div>
                         }
                       </div>
