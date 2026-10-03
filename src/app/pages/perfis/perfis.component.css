@@ -227,7 +227,7 @@ h1 {
   flex-basis: 84px;
 }
 
-.detail-heading p:last-child {
+.profile-identity > p:not(.eyebrow) {
   margin: .35rem 0 0;
   color: #94a3b8;
 }
@@ -412,12 +412,9 @@ h1 {
 .social-summary {
   display: flex;
   align-items: center;
-  gap: .7rem;
-  margin: .85rem 0 0;
-  padding: .7rem .8rem;
-  border: 1px solid rgba(255,255,255,.08);
-  border-radius: .8rem;
-  background: rgba(255,255,255,.035);
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin: 1rem 0 0;
 }
 
 .social-summary > div {
@@ -427,16 +424,16 @@ h1 {
 }
 
 .social-summary strong {
-  font-size: 1rem;
+  font-size: 1.2rem;
 }
 
 .social-summary span {
   color: #94a3b8;
-  font-size: .72rem;
+  font-size: .8rem;
 }
 
 .follows-you-badge {
-  margin-left: auto;
+  margin-left: 0;
   border-radius: 999px;
   padding: .3rem .55rem;
   background: rgba(125,211,252,.10);

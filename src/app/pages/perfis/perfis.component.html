@@ -196,10 +196,26 @@
               }
             </div>
 
-            <div>
+            <div class="profile-identity">
               <p class="eyebrow">{{ 'community.profile' | t }}</p>
               <h1>{{ selectedProfile.username }}</h1>
               <p>{{ selectedProfile.nickname || selectedProfile.fullName || ('community.player' | t) }}</p>
+
+              @if (selectedFollowStatus) {
+                <section class="social-summary">
+                  <div>
+                    <strong>{{ selectedFollowStatus.followers }}</strong>
+                    <span>{{ 'social.followers' | t }}</span>
+                  </div>
+                  <div>
+                    <strong>{{ selectedFollowStatus.following }}</strong>
+                    <span>{{ 'social.following' | t }}</span>
+                  </div>
+                  @if (!isOwnProfile(selectedProfile) && selectedFollowStatus.followsMe) {
+                    <span class="follows-you-badge">{{ 'social.followsYou' | t }}</span>
+                  }
+                </section>
+              }
             </div>
           </div>
 
@@ -286,22 +302,6 @@
               <strong>{{ selectedProfile.joinDateDisplay || ('common.noInfo' | t) }}</strong>
             </div>
           </div>
-
-          @if (selectedFollowStatus) {
-            <section class="social-summary">
-              <div>
-                <strong>{{ selectedFollowStatus.followers }}</strong>
-                <span>{{ 'social.followers' | t }}</span>
-              </div>
-              <div>
-                <strong>{{ selectedFollowStatus.following }}</strong>
-                <span>{{ 'social.following' | t }}</span>
-              </div>
-              @if (!isOwnProfile(selectedProfile) && selectedFollowStatus.followsMe) {
-                <span class="follows-you-badge">{{ 'social.followsYou' | t }}</span>
-              }
-            </section>
-          }
 
           @if (selectedActivity) {
             <section class="public-activity">
