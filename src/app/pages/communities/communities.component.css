@@ -1372,3 +1372,80 @@ input,textarea,select {
 
 .import-confirm { margin-top:14px; }
 .import-success { display:grid; gap:4px; margin-top:16px; padding:14px; border:1px solid rgba(22,163,74,.35); border-radius:12px; background:rgba(22,163,74,.08); }
+
+
+/* Communities overview layout polish */
+.communities-page:not(.community-detail-page) .create-card {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: none;
+  margin: 0 0 1.5rem;
+  padding: 1.25rem 1.35rem;
+}
+
+.communities-page:not(.community-detail-page) .create-card .form-grid {
+  grid-template-columns: minmax(220px, 1fr) minmax(220px, 1fr) auto;
+  align-items: end;
+  margin-bottom: 0;
+}
+
+.communities-page:not(.community-detail-page) .create-card .row-actions.full-width {
+  grid-column: auto;
+  align-self: end;
+  flex-wrap: nowrap;
+}
+
+.communities-page:not(.community-detail-page) .create-card .row-actions.full-width button {
+  min-height: 52px;
+}
+
+.communities-page:not(.community-detail-page) .communities-layout {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.communities-page:not(.community-detail-page) .communities-layout > .community-detail {
+  display: none;
+}
+
+.communities-page:not(.community-detail-page) .communities-layout > .community-list {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: .85rem;
+}
+
+.communities-page:not(.community-detail-page) .communities-layout > .community-list .list-heading {
+  grid-column: 1 / -1;
+}
+
+.communities-page:not(.community-detail-page) .communities-layout > .community-list .community-card {
+  min-height: 104px;
+  align-items: center;
+  background: rgba(15,23,42,.72);
+}
+
+@media (max-width: 900px) {
+  .communities-page:not(.community-detail-page) .create-card .form-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .communities-page:not(.community-detail-page) .create-card .row-actions.full-width {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 650px) {
+  .communities-page:not(.community-detail-page) .create-card {
+    padding: 1rem;
+  }
+
+  .communities-page:not(.community-detail-page) .create-card .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .communities-page:not(.community-detail-page) .create-card .row-actions.full-width {
+    grid-column: auto;
+  }
+
+  .communities-page:not(.community-detail-page) .create-card .row-actions.full-width button {
+    flex: 1 1 0;
+  }
+}
