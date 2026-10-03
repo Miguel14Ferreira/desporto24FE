@@ -63,6 +63,9 @@ export class CommunitiesComponent implements OnInit {
   communitySearchError = '';
   communityPresentation?: CommunitySearchPresentation;
   presentationLoading = false;
+  membershipActionLoading = false;
+  membershipActionMessage = '';
+  joinRequestSent = false;
 
   rankingsEnabledDraft = false;
   winPointsDraft = 3;
@@ -192,6 +195,8 @@ export class CommunitiesComponent implements OnInit {
     this.selected = undefined;
     this.communityPresentation = undefined;
     this.presentationLoading = true;
+    this.membershipActionMessage = '';
+    this.joinRequestSent = false;
     this.errorMessage = '';
 
     this.communityService.presentation(id)
@@ -203,6 +208,42 @@ export class CommunitiesComponent implements OnInit {
       .subscribe({
         next: presentation => this.communityPresentation = presentation,
         error: () => this.errorMessage = t('feedback.communities.openError')
+      });
+  }
+
+  joinPresentedCommunity(): void {
+    const community = this.communityPresentation;
+    if (!community || this.membershipActionLoading || this.joinRequestSent) {
+      return;
+    }
+
+    this.membershipActionLoading = true;
+    this.membershipActionMessage = '';
+    this.errorMessage = '';
+
+    const action = community.visibility === 'PUBLIC'
+      ? this.communityService.joinPublic(community.id)
+      : this.communityService.requestJoin(community.id);
+
+    action
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.membershipActionLoading = false)
+      )
+      .subscribe({
+        next: () => {
+          if (community.visibility === 'PUBLIC') {
+            this.reload();
+            return;
+          }
+
+          this.joinRequestSent = true;
+          this.membershipActionMessage = t('communities.joinRequestSent');
+        },
+        error: error => {
+          this.errorMessage = error.error?.message
+            || t('feedback.communities.joinError');
+        }
       });
   }
 

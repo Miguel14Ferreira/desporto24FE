@@ -224,6 +224,24 @@
                   <p>{{ 'communities.sportLabel' | t }}:
                     <strong>{{ communityPresentation.sport || ('communities.multiSport' | t) }}</strong>
                   </p>
+                  <div class="row-actions">
+                    <button
+                      type="button"
+                      class="primary-action"
+                      [disabled]="membershipActionLoading || joinRequestSent"
+                      (click)="joinPresentedCommunity()">
+                      @if (communityPresentation.visibility === 'PUBLIC') {
+                        {{ (membershipActionLoading ? 'communities.joining' : 'communities.joinPublic') | t }}
+                      } @else {
+                        {{ (membershipActionLoading
+                          ? 'communities.requestingJoin'
+                          : (joinRequestSent ? 'communities.joinRequestPending' : 'communities.requestJoin')) | t }}
+                      }
+                    </button>
+                  </div>
+                  @if (membershipActionMessage) {
+                    <div class="feedback">{{ membershipActionMessage }}</div>
+                  }
                 </div>
               </div>
             </div>
