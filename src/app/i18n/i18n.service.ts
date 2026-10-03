@@ -357,6 +357,7 @@ const PT: Dictionary = {
   'common.sessions': 'Sessões',
 
   'friends.title': 'Amigos',
+  'friends.backToFriends': 'Voltar aos amigos',
   'friends.subtitle': 'Encontra rapidamente os teus amigos e abre uma conversa direta.',
   'friends.findPlayers': 'Encontrar jogadores',
   'friends.filter': 'Filtrar amigos',
@@ -1650,6 +1651,7 @@ const EN: Dictionary = {
   'common.sessions': 'Sessions',
 
   'friends.title': 'Friends',
+  'friends.backToFriends': 'Back to friends',
   'friends.subtitle': 'Quickly find your friends and open a direct conversation.',
   'friends.findPlayers': 'Find players',
   'friends.filter': 'Filter friends',

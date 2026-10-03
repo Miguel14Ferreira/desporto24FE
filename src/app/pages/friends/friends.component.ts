@@ -1,14 +1,11 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { appTranslate as t } from '../../i18n/i18n.service';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
-import { finalize, forkJoin, retry, timeout } from 'rxjs';
+import { finalize, retry, timeout } from 'rxjs';
 
 import { environment } from 'src/environment/environment';
 import { FriendSummary } from '../model/friend-summary';
-import { CommunityProfile } from '../model/community-profile';
-import { ReliabilitySummary } from '../model/reliability-summary';
 import { CommunityService } from '../../services/community.service';
-import { ReliabilityService } from '../../services/reliability.service';
 
 @Component({
   selector: 'app-friends',
@@ -20,9 +17,6 @@ import { ReliabilityService } from '../../services/reliability.service';
 export class FriendsComponent implements OnInit {
   friends: FriendSummary[] = [];
   filter = '';
-  selectedProfile?: CommunityProfile;
-  selectedReliability?: ReliabilitySummary;
-  profileLoading = false;
 
   loading = false;
   actionLoadingUsername: string | null = null;
@@ -34,8 +28,7 @@ export class FriendsComponent implements OnInit {
   actionSuccess = '';
 
   constructor(
-    private communityService: CommunityService,
-    private reliabilityService: ReliabilityService
+    private communityService: CommunityService
   ) {}
 
   ngOnInit(): void {
@@ -72,43 +65,6 @@ export class FriendsComponent implements OnInit {
           this.errorMessage = t('feedback.friends.loadError');
         }
       });
-  }
-
-  openProfile(friend: FriendSummary): void {
-    this.profileLoading = true;
-    this.selectedProfile = undefined;
-    this.selectedReliability = undefined;
-
-    forkJoin({
-      profile: this.communityService.publicProfile(friend.username),
-      reliability: this.reliabilityService.summary(friend.username)
-    })
-      .pipe(
-        timeout(10_000),
-        retry({ count: 1 }),
-        finalize(() => this.profileLoading = false)
-      )
-      .subscribe({
-        next: result => {
-          this.selectedProfile = result.profile;
-          this.selectedReliability = result.reliability;
-        },
-        error: () => {
-          this.communityService.publicProfile(friend.username)
-            .pipe(
-              timeout(10_000),
-              retry({ count: 1 })
-            )
-            .subscribe({
-              next: profile => this.selectedProfile = profile
-            });
-        }
-      });
-  }
-
-  closeProfile(): void {
-    this.selectedProfile = undefined;
-    this.selectedReliability = undefined;
   }
 
   toggleActions(friend: FriendSummary): void {
@@ -219,7 +175,7 @@ export class FriendsComponent implements OnInit {
       });
   }
 
-  profileImage(friend: FriendSummary | CommunityProfile): string | null {
+  profileImage(friend: FriendSummary): string | null {
     const path = friend.profilePicUrl;
     if (!path) {
       return null;
@@ -232,7 +188,7 @@ export class FriendsComponent implements OnInit {
     return environment.apiUrl + (path.startsWith('/') ? path : '/' + path);
   }
 
-  initials(friend: FriendSummary | CommunityProfile): string {
+  initials(friend: FriendSummary): string {
     const source = ('nickname' in friend ? friend.nickname?.trim() : null)
       || friend.fullName?.trim()
       || friend.username;

@@ -146,7 +146,7 @@
             </div>
 
             <div class="profile-copy">
-              <strong>@{{ profile.username }}</strong>
+              <strong>{{ profile.username }}</strong>
               @if (profile.nickname || profile.fullName) {
                 <span>{{ profile.nickname || profile.fullName }}</span>
               }
@@ -169,7 +169,7 @@
     }
 
     } @else {
-      <a class="secondary-action back-to-search" routerLink="/menu/perfis">← {{ 'community.backToSearch' | t }}</a>
+      <a class="secondary-action back-to-search" [routerLink]="backToFriends ? '/menu/friendList' : '/menu/perfis'">← {{ (backToFriends ? 'friends.backToFriends' : 'community.backToSearch') | t }}</a>
       @if (loading) {
         <div class="state-card" role="status">{{ 'common.loading' | t }}</div>
       }
@@ -198,7 +198,7 @@
 
             <div>
               <p class="eyebrow">{{ 'community.profile' | t }}</p>
-              <h1>@{{ selectedProfile.username }}</h1>
+              <h1>{{ selectedProfile.username }}</h1>
               <p>{{ selectedProfile.nickname || selectedProfile.fullName || ('community.player' | t) }}</p>
             </div>
           </div>
@@ -285,13 +285,6 @@
               <span>{{ 'community.memberSince' | t }}</span>
               <strong>{{ selectedProfile.joinDateDisplay || ('common.noInfo' | t) }}</strong>
             </div>
-
-            @if (selectedReliability) {
-              <div>
-                <span>{{ 'profileData.attendanceRate' | t }}</span>
-                <strong>{{ selectedReliability.attendanceRate | number:'1.0-0' }}%</strong>
-              </div>
-            }
           </div>
 
           @if (selectedFollowStatus) {

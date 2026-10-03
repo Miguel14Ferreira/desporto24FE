@@ -6,7 +6,6 @@ import { catchError, finalize, forkJoin, of, retry, Subscription, timeout } from
 
 import { environment } from 'src/environment/environment';
 import { CommunityProfile } from '../model/community-profile';
-import { ReliabilitySummary } from '../model/reliability-summary';
 import { ProfileActivity } from '../model/my-profile';
 import { FollowStatus } from '../model/follow';
 import { CommunityService } from '../../services/community.service';
@@ -39,7 +38,6 @@ export class PerfisComponent implements OnInit, OnDestroy {
 
   profiles: CommunityProfile[] = [];
   selectedProfile?: CommunityProfile;
-  selectedReliability?: ReliabilitySummary;
   selectedActivity?: ProfileActivity;
   selectedFollowStatus?: FollowStatus;
 
@@ -70,6 +68,10 @@ export class PerfisComponent implements OnInit, OnDestroy {
   ) {
     this.authenticationService.isLoggedIn();
     this.currentUsername = this.authenticationService.loggedInPerfilname || '';
+  }
+
+  get backToFriends(): boolean {
+    return this.route.snapshot.queryParamMap.get('from') === 'friends';
   }
 
   ngOnInit(): void {
@@ -205,7 +207,6 @@ export class PerfisComponent implements OnInit, OnDestroy {
 
   private showProfile(profile: CommunityProfile): void {
     this.selectedProfile = profile;
-    this.selectedReliability = undefined;
     this.selectedActivity = undefined;
     this.selectedFollowStatus = undefined;
     this.selectedBlocked = false;
@@ -215,8 +216,6 @@ export class PerfisComponent implements OnInit, OnDestroy {
     this.actionSuccess = '';
 
     this.detailSubscription = forkJoin({
-      reliability: this.reliabilityService.summary(profile.username)
-        .pipe(catchError(() => of(undefined))),
       activity: this.reliabilityService.activity(profile.username)
         .pipe(catchError(() => of(undefined))),
       followStatus: this.socialGraphService.status(profile.username)
@@ -229,8 +228,7 @@ export class PerfisComponent implements OnInit, OnDestroy {
         retry({ count: 1 })
       )
       .subscribe({
-        next: ({ reliability, activity, followStatus, blockStatus }) => {
-          this.selectedReliability = reliability;
+        next: ({ activity, followStatus, blockStatus }) => {
           this.selectedActivity = activity;
           this.selectedFollowStatus = followStatus;
           this.selectedBlocked = blockStatus.blocked;
@@ -243,7 +241,6 @@ export class PerfisComponent implements OnInit, OnDestroy {
 
   closeProfile(): void {
     this.selectedProfile = undefined;
-    this.selectedReliability = undefined;
     this.selectedActivity = undefined;
     this.selectedFollowStatus = undefined;
     this.selectedBlocked = false;
