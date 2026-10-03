@@ -44,6 +44,13 @@ export class CommunityGroupsService {
     );
   }
 
+  openSessionToPublic(id: number, sessionId: number): Observable<SessionSummary> {
+    return this.http.post<SessionSummary>(
+      this.url + '/' + id + '/sessions/' + sessionId + '/open-public',
+      null
+    );
+  }
+
   competition(
     id: number,
     seasonId: number | null = null

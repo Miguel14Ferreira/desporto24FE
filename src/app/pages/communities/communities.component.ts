@@ -39,6 +39,7 @@ export class CommunitiesComponent implements OnInit {
   saving = false;
   competitionLoading = false;
   sessionsLoading = false;
+  openingSessionId?: number;
   competitionSaving = false;
   roundSaving = false;
   errorMessage = '';
@@ -222,6 +223,36 @@ export class CommunitiesComponent implements OnInit {
         error: () => {
           this.communitySessions = [];
           this.errorMessage = t('feedback.communities.sessionsLoadError');
+        }
+      });
+  }
+
+  openSessionToPublic(session: SessionSummary): void {
+    if (!this.selected || !this.canManage() || session.audience !== 'COMMUNITY_ONLY'
+        || this.openingSessionId !== undefined) {
+      return;
+    }
+
+    const communityId = this.selected.id;
+    this.openingSessionId = session.id;
+    this.errorMessage = '';
+    this.communityService.openSessionToPublic(communityId, session.id)
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.openingSessionId = undefined)
+      )
+      .subscribe({
+        next: updated => {
+          if (this.selected?.id === communityId) {
+            this.communitySessions = this.communitySessions.map(item =>
+              item.id === updated.id ? updated : item
+            );
+          }
+        },
+        error: () => {
+          if (this.selected?.id === communityId) {
+            this.errorMessage = t('feedback.communities.openPublicError');
+          }
         }
       });
   }

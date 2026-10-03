@@ -8,5 +8,6 @@ export interface SessionSummary {
   maxParticipants: number;
   priceAmount: number;
   privateGame: boolean;
+  audience?: 'COMMUNITY_ONLY' | 'PUBLIC';
   status: string;
 }

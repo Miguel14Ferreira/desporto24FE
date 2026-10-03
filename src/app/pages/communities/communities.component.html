@@ -409,6 +409,11 @@
                         </div>
                         <div class="community-session-meta">
                           <span>
+                            {{ session.audience === 'COMMUNITY_ONLY'
+                              ? ('communities.sessionMembersOnly' | t)
+                              : ('communities.sessionPublic' | t) }}
+                          </span>
+                          <span>
                             {{ session.participantCount }}/{{ session.maxParticipants }}
                             {{ 'communities.participantsShort' | t }}
                           </span>
@@ -419,6 +424,17 @@
                           }
                         </div>
                       </a>
+                      @if (canManage() && session.audience === 'COMMUNITY_ONLY') {
+                        <button
+                          type="button"
+                          class="secondary-action small"
+                          [disabled]="openingSessionId !== undefined"
+                          (click)="openSessionToPublic(session)">
+                          {{ openingSessionId === session.id
+                            ? ('communities.openingPublic' | t)
+                            : ('communities.openPublic' | t) }}
+                        </button>
+                      }
                     }
                   </div>
                 }
