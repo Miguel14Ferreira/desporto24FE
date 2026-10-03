@@ -57,6 +57,13 @@ export class LoginComponent implements OnInit, AfterViewInit {
     }
   }
 
+  get loginContextKey(): string {
+    const path = this.returnUrl.split(/[?#]/)[0];
+    return path === '/menu/notifications' || path.startsWith('/menu/notifications/')
+      ? 'login.viewRequest'
+      : '';
+  }
+
   ngAfterViewInit(): void {
     this.authenticationService.googleConfig()
       .pipe(timeout(10_000))

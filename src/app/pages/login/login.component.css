@@ -287,3 +287,13 @@
   display: flex;
   justify-content: center;
 }
+
+.login-context {
+  margin-bottom: 1rem;
+  border: 1px solid rgba(125,211,252,.3);
+  border-radius: .8rem;
+  padding: .8rem .9rem;
+  background: rgba(125,211,252,.08);
+  color: #bae6fd;
+  line-height: 1.5;
+}

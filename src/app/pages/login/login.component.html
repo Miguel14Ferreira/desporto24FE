@@ -12,6 +12,10 @@
         <h2>{{ 'login.title' | t }}</h2>
       </div>
 
+      @if (loginContextKey) {
+        <div class="login-context" role="status">{{ loginContextKey | t }}</div>
+      }
+
       @if (successMessage) {
         <div class="success-feedback">{{ successMessage }}</div>
       }
