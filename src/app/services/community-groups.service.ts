@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
@@ -15,6 +15,21 @@ import {
   CommunityVisibility
 } from '../pages/model/community-group';
 
+export interface CommunitySearchPresentation {
+  id: number;
+  name: string;
+  description: string | null;
+  sport: string | null;
+  photoUrl: string | null;
+  visibility: CommunityVisibility;
+}
+
+export interface CommunitySearchResponse {
+  communities: CommunitySearchPresentation[];
+  page: number;
+  hasMore: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class CommunityGroupsService {
   private readonly url = environment.apiUrl + '/api/communities';
@@ -23,6 +38,15 @@ export class CommunityGroupsService {
 
   mine(): Observable<CommunityGroup[]> {
     return this.http.get<CommunityGroup[]>(this.url + '/mine');
+  }
+
+  search(name: string, sport: string, page: number): Observable<CommunitySearchResponse> {
+    const params = new HttpParams()
+      .set('name', name.trim())
+      .set('sport', sport.trim())
+      .set('page', String(page));
+
+    return this.http.get<CommunitySearchResponse>(this.url + '/search', { params });
   }
 
   get(id: number): Observable<CommunityGroup> {
