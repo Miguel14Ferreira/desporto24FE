@@ -93,6 +93,17 @@
         </div>
 
         <label class="venue-select-field">
+          <span>{{ 'venue.search' | t }}</span>
+          <input
+            type="search"
+            name="venueSearch"
+            [(ngModel)]="venueSearch"
+            [disabled]="loading || venuesLoading"
+            [placeholder]="'venue.searchPlaceholder' | t">
+          <small class="venue-current-location">{{ 'venue.searchHint' | t }}</small>
+        </label>
+
+        <label class="venue-select-field">
           <span>{{ 'venue.savedVenue' | t }}</span>
           <select
             name="venueId"
