@@ -9,5 +9,6 @@ export interface SessionSummary {
   priceAmount: number;
   privateGame: boolean;
   audience?: 'COMMUNITY_ONLY' | 'PUBLIC';
+  joinedByViewer?: boolean;
   status: string;
 }
