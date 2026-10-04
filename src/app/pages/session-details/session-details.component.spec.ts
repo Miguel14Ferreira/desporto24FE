@@ -393,6 +393,22 @@ describe('SessionDetailsComponent', () => {
     expect(participant.attendanceStatus).toBe('PENDING');
   });
 
+  it('should keep post-session attendance management collapsed until requested', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session,
+      joined: true,
+      gameDate: '2020-10-01T18:00:00Z'
+    };
+
+    expect(component.canRecordAttendance()).toBeTrue();
+    expect(component.showAttendanceManager).toBeFalse();
+
+    component.toggleAttendanceManager();
+
+    expect(component.showAttendanceManager).toBeTrue();
+  });
+
   it('should record participant attendance after the 30 minute delay', () => {
     (component as any).currentUsername = 'creator-user';
     component.session = {

@@ -300,19 +300,43 @@
 
 
           @if (isCreator()) {
-            <section class="attendance-panel">
+            @if (canRecordAttendance() && !showAttendanceManager) {
+              <section class="participation-panel">
+                <div>
+                  <h2>{{ 'sessionDetail.attendance' | t }}</h2>
+                  <p>{{ 'sessionDetail.manageAttendanceText' | t }}</p>
+                </div>
+                <button
+                  type="button"
+                  class="secondary-action"
+                  (click)="toggleAttendanceManager()">
+                  {{ 'sessionDetail.manageAttendance' | t }}
+                </button>
+              </section>
+            } @else {
+              <section class="attendance-panel">
               <div class="attendance-header">
                 <div>
                   <h2>{{ 'sessionDetail.attendance' | t }}</h2>
                   <p>{{ 'sessionDetail.attendanceText' | t }}</p>
                 </div>
-                <button
-                  type="button"
-                  class="refresh-attendance"
-                  [disabled]="participantsLoading"
-                  (click)="loadParticipants()">
-                  {{ participantsLoading ? ('chat.refreshing' | t) : ('chat.refresh' | t) }}
-                </button>
+                <div class="attendance-actions">
+                  <button
+                    type="button"
+                    class="refresh-attendance"
+                    [disabled]="participantsLoading"
+                    (click)="loadParticipants()">
+                    {{ participantsLoading ? ('chat.refreshing' | t) : ('chat.refresh' | t) }}
+                  </button>
+                  @if (canRecordAttendance()) {
+                    <button
+                      type="button"
+                      class="secondary-action"
+                      (click)="toggleAttendanceManager()">
+                      {{ 'sessionDetail.hideAttendance' | t }}
+                    </button>
+                  }
+                </div>
               </div>
 
               @if (!canRecordAttendance()) {
@@ -408,6 +432,7 @@
                 </div>
               }
             </section>
+            }
           }
 
           @if (canAccessChat()) {

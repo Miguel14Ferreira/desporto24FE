@@ -39,6 +39,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
   showProblemReport = false;
   selectedProblemType: 'NOT_OCCURRED' | 'VENUE_PROBLEM' | 'OTHER' | '' = '';
   problemDetails = '';
+  showAttendanceManager = false;
 
   errorMessage = '';
   actionError = '';
@@ -354,6 +355,14 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
       default:
         return 'Por marcar';
     }
+  }
+
+  toggleAttendanceManager(): void {
+    if (!this.isCreator() || !this.canRecordAttendance()) {
+      return;
+    }
+
+    this.showAttendanceManager = !this.showAttendanceManager;
   }
 
   canRecordAttendance(): boolean {
