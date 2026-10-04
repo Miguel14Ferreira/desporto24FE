@@ -611,6 +611,18 @@
                           }
                         </div>
                       </a>
+                      @if (!session.privateGame
+                        && session.participantCount < session.maxParticipants) {
+                        <button
+                          type="button"
+                          class="primary-action small"
+                          [disabled]="joiningSessionId !== undefined"
+                          (click)="joinCommunitySession(session)">
+                          {{ joiningSessionId === session.id
+                            ? ('communities.joiningSession' | t)
+                            : ('communities.joinSession' | t) }}
+                        </button>
+                      }
                       @if (canManage()
                         && session.audience === 'COMMUNITY_ONLY'
                         && session.participantCount < session.maxParticipants) {
