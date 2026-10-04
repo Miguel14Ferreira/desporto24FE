@@ -93,6 +93,19 @@
         </div>
 
         <label class="venue-select-field">
+          <span>{{ 'venue.sportFilter' | t }}</span>
+          <select
+            name="venueSportFilter"
+            [(ngModel)]="venueSportFilter"
+            [disabled]="loading || venuesLoading">
+            <option value="">{{ 'venue.sportFilterAll' | t }}</option>
+            @for (sportOption of sportsCatalog; track sportOption) {
+              <option [value]="sportOption">{{ sportOption }}</option>
+            }
+          </select>
+        </label>
+
+        <label class="venue-select-field">
           <span>{{ 'venue.search' | t }}</span>
           <input
             type="search"
