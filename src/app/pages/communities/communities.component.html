@@ -615,8 +615,11 @@
                         <span class="competition-badge">
                           {{ 'communities.sessionConfirmed' | t }}
                         </span>
-                      } @else if (!session.privateGame
-                        && session.participantCount < session.maxParticipants) {
+                      } @else if (session.waitlistedByViewer) {
+                        <span class="competition-badge">
+                          {{ 'communities.sessionWaitlisted' | t }}
+                        </span>
+                      } @else if (!session.privateGame) {
                         <button
                           type="button"
                           class="primary-action small"
@@ -624,7 +627,9 @@
                           (click)="joinCommunitySession(session)">
                           {{ joiningSessionId === session.id
                             ? ('communities.joiningSession' | t)
-                            : ('communities.joinSession' | t) }}
+                            : (session.participantCount < session.maxParticipants
+                              ? ('communities.joinSession' | t)
+                              : ('communities.joinWaitlist' | t)) }}
                         </button>
                       }
                       @if (canManage()
