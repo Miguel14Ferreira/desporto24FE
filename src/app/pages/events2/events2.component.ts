@@ -51,7 +51,6 @@ export class Events2Component implements OnInit {
   readonly sportsCatalog = SPORTS_CATALOG;
   venues: Venue[] = [];
   venueSearch = '';
-  venueSportFilter = '';
   selectedVenueId: number | null = null;
   venuesLoading = false;
   venueSaving = false;
@@ -176,7 +175,7 @@ export class Events2Component implements OnInit {
 
   get venueOptions(): Venue[] {
     const city = this.city.trim().toLocaleLowerCase('pt');
-    const sport = this.venueSportFilter.trim().toLocaleLowerCase('pt');
+    const sport = this.sport.trim().toLocaleLowerCase('pt');
     const search = this.venueSearch.trim().toLocaleLowerCase('pt');
 
     const filtered = this.venues.filter(venue => {
