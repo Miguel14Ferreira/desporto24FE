@@ -611,7 +611,11 @@
                           }
                         </div>
                       </a>
-                      @if (!session.privateGame
+                      @if (session.joinedByViewer) {
+                        <span class="competition-badge">
+                          {{ 'communities.sessionConfirmed' | t }}
+                        </span>
+                      } @else if (!session.privateGame
                         && session.participantCount < session.maxParticipants) {
                         <button
                           type="button"
