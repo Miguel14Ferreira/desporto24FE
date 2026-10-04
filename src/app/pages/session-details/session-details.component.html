@@ -212,6 +212,16 @@
                         <option value="OTHER">{{ 'sessionDetail.otherProblem' | t }}</option>
                       </select>
                     </label>
+                    <label>
+                      <span>{{ 'sessionDetail.problemDetails' | t }}</span>
+                      <textarea
+                        [(ngModel)]="problemDetails"
+                        maxlength="500"
+                        rows="3"
+                        [disabled]="actionLoading"
+                        [placeholder]="'sessionDetail.problemDetailsPlaceholder' | t"></textarea>
+                      <small>{{ problemDetails.length }}/500</small>
+                    </label>
                     <button
                       type="button"
                       class="danger-action"

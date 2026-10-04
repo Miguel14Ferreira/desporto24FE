@@ -38,6 +38,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
   pendingRemovalId: number | null = null;
   showProblemReport = false;
   selectedProblemType: 'NOT_OCCURRED' | 'VENUE_PROBLEM' | 'OTHER' | '' = '';
+  problemDetails = '';
 
   errorMessage = '';
   actionError = '';
@@ -172,6 +173,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
     this.showProblemReport = !this.showProblemReport;
     if (!this.showProblemReport) {
       this.selectedProblemType = '';
+      this.problemDetails = '';
     }
     this.actionError = '';
     this.actionSuccess = '';
@@ -188,11 +190,18 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
     }
 
     const problemType = this.selectedProblemType;
+    const details = this.problemDetails.trim();
+
+    if (details.length > 500) {
+      this.actionError = t('feedback.session.problemDetailsLong');
+      this.actionSuccess = '';
+      return;
+    }
     this.actionLoading = true;
     this.actionError = '';
     this.actionSuccess = '';
 
-    this.sessionService.reportProblem(this.sessionId, problemType)
+    this.sessionService.reportProblem(this.sessionId, problemType, details)
       .pipe(
         timeout(10_000),
         finalize(() => this.actionLoading = false)
@@ -201,6 +210,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
         next: () => {
           this.showProblemReport = false;
           this.selectedProblemType = '';
+          this.problemDetails = '';
           this.actionSuccess = t('feedback.session.problemReported');
           this.loadSession(false);
         },

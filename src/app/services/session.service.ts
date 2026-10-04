@@ -119,10 +119,14 @@ export class SessionService {
     );
   }
 
-  reportProblem(id: number, type: 'NOT_OCCURRED' | 'VENUE_PROBLEM' | 'OTHER'): Observable<void> {
+  reportProblem(
+    id: number,
+    type: 'NOT_OCCURRED' | 'VENUE_PROBLEM' | 'OTHER',
+    details?: string
+  ): Observable<void> {
     return this.http.post<void>(
       this.baseUrl + '/' + id + '/problems',
-      { type }
+      { type, details: details?.trim() || null }
     );
   }
 

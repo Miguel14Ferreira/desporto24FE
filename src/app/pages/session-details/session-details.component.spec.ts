@@ -201,13 +201,36 @@ describe('SessionDetailsComponent', () => {
       gameDate: '2026-09-30T18:00:00Z'
     };
     component.selectedProblemType = 'VENUE_PROBLEM';
+    component.problemDetails = '  Campo sem iluminação  ';
 
     component.reportProblem();
 
-    expect(sessionService.reportProblem).toHaveBeenCalledWith(7, 'VENUE_PROBLEM');
+    expect(sessionService.reportProblem).toHaveBeenCalledWith(
+      7,
+      'VENUE_PROBLEM',
+      'Campo sem iluminação'
+    );
     expect(sessionService.detail).toHaveBeenCalledTimes(2);
     expect(component.showProblemReport).toBeFalse();
     expect(component.selectedProblemType).toBe('');
+    expect(component.problemDetails).toBe('');
+  });
+
+  it('should reject problem details longer than 500 characters', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session,
+      joined: true,
+      status: 'OPEN',
+      gameDate: '2026-09-30T18:00:00Z'
+    };
+    component.selectedProblemType = 'OTHER';
+    component.problemDetails = 'x'.repeat(501);
+
+    component.reportProblem();
+
+    expect(sessionService.reportProblem).not.toHaveBeenCalled();
+    expect(component.actionError).toContain('500');
   });
 
   it('should not allow problem reporting before the session starts', () => {
