@@ -112,6 +112,13 @@ export class SessionService {
     return this.http.post<void>(this.baseUrl + '/' + id + '/complete', null);
   }
 
+  reportDidNotOccur(id: number): Observable<void> {
+    return this.http.post<void>(
+      this.baseUrl + '/' + id + '/problems/not-occurred',
+      null
+    );
+  }
+
   messages(id: number): Observable<SessionMessage[]> {
     return this.http.get<SessionMessage[]>(this.baseUrl + '/' + id + '/messages');
   }

@@ -36,6 +36,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
   attendanceUpdatingId: number | null = null;
   removeLoadingId: number | null = null;
   pendingRemovalId: number | null = null;
+  showProblemReport = false;
 
   errorMessage = '';
   actionError = '';
@@ -162,8 +163,18 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
       });
   }
 
-  completeSession(): void {
-    if (!this.sessionId || !this.canCompleteSession() || this.actionLoading) {
+  toggleProblemReport(): void {
+    if (!this.canReportProblem() || this.actionLoading) {
+      return;
+    }
+
+    this.showProblemReport = !this.showProblemReport;
+    this.actionError = '';
+    this.actionSuccess = '';
+  }
+
+  reportDidNotOccur(): void {
+    if (!this.sessionId || !this.canReportProblem() || this.actionLoading) {
       return;
     }
 
@@ -171,18 +182,19 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
     this.actionError = '';
     this.actionSuccess = '';
 
-    this.sessionService.complete(this.sessionId)
+    this.sessionService.reportDidNotOccur(this.sessionId)
       .pipe(
         timeout(10_000),
         finalize(() => this.actionLoading = false)
       )
       .subscribe({
         next: () => {
-          this.actionSuccess = t('feedback.session.completed');
+          this.showProblemReport = false;
+          this.actionSuccess = t('feedback.session.problemReported');
           this.loadSession(false);
         },
         error: error => {
-          this.actionError = this.errorFrom(error, t('feedback.session.completeError'));
+          this.actionError = this.errorFrom(error, t('feedback.session.problemReportError'));
         }
       });
   }
@@ -471,7 +483,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
     return this.session.creatorUsername.toLowerCase() === this.currentUsername.toLowerCase();
   }
 
-  canCompleteSession(): boolean {
+  canReportProblem(): boolean {
     if (!this.session || !this.isCreator()) {
       return false;
     }

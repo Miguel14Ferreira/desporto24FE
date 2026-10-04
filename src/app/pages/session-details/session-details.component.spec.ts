@@ -41,7 +41,7 @@ describe('SessionDetailsComponent', () => {
   beforeEach(async () => {
     sessionService = jasmine.createSpyObj<SessionService>(
       'SessionService',
-      ['detail', 'join', 'leave', 'complete', 'messages', 'postMessage', 'participants', 'removeParticipant']
+      ['detail', 'join', 'leave', 'complete', 'reportDidNotOccur', 'messages', 'postMessage', 'participants', 'removeParticipant']
     );
     sessionService.detail.and.returnValue(of(session));
     sessionService.join.and.returnValue(of({
@@ -50,6 +50,7 @@ describe('SessionDetailsComponent', () => {
     }));
     sessionService.leave.and.returnValue(of(void 0));
     sessionService.complete.and.returnValue(of(void 0));
+    sessionService.reportDidNotOccur.and.returnValue(of(void 0));
     sessionService.removeParticipant.and.returnValue(of(void 0));
     sessionService.messages.and.returnValue(of([]));
     sessionService.participants.and.returnValue(of([
@@ -190,7 +191,7 @@ describe('SessionDetailsComponent', () => {
     expect(component.actionSuccess).toContain('lista de espera');
   });
 
-  it('should complete a started session as creator and refresh details', () => {
+  it('should report that a started session did not occur and refresh details', () => {
     (component as any).currentUsername = 'creator-user';
     component.session = {
       ...session,
@@ -199,14 +200,14 @@ describe('SessionDetailsComponent', () => {
       gameDate: '2026-09-30T18:00:00Z'
     };
 
-    component.completeSession();
+    component.reportDidNotOccur();
 
-    expect(sessionService.complete).toHaveBeenCalledWith(7);
+    expect(sessionService.reportDidNotOccur).toHaveBeenCalledWith(7);
     expect(sessionService.detail).toHaveBeenCalledTimes(2);
-    expect(component.actionSuccess).toContain('concluída');
+    expect(component.showProblemReport).toBeFalse();
   });
 
-  it('should not allow completion before the session starts', () => {
+  it('should not allow problem reporting before the session starts', () => {
     (component as any).currentUsername = 'creator-user';
     component.session = {
       ...session,
@@ -215,9 +216,9 @@ describe('SessionDetailsComponent', () => {
       gameDate: '2099-10-01T18:00:00Z'
     };
 
-    component.completeSession();
+    component.reportDidNotOccur();
 
-    expect(sessionService.complete).not.toHaveBeenCalled();
+    expect(sessionService.reportDidNotOccur).not.toHaveBeenCalled();
   });
 
   it('should require a password for private sessions', () => {

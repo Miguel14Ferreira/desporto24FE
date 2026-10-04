@@ -200,14 +200,33 @@
                 <h2>{{ 'sessionDetail.ownTitle' | t }}</h2>
                 <p>{{ 'sessionDetail.ownTextStart' | t }} <a routerLink="/menu/my-sessions">{{ 'mySessions.title' | t }}</a>.</p>
               </div>
-              @if (canCompleteSession()) {
-                <button
-                  type="button"
-                  class="primary-action"
-                  [disabled]="actionLoading"
-                  (click)="completeSession()">
-                  {{ actionLoading ? ('common.processing' | t) : ('sessionDetail.completeSession' | t) }}
-                </button>
+              @if (canReportProblem()) {
+                <div class="join-controls">
+                  @if (showProblemReport) {
+                    <button
+                      type="button"
+                      class="danger-action"
+                      [disabled]="actionLoading"
+                      (click)="reportDidNotOccur()">
+                      {{ actionLoading ? ('common.processing' | t) : ('sessionDetail.didNotOccur' | t) }}
+                    </button>
+                    <button
+                      type="button"
+                      class="secondary-action"
+                      [disabled]="actionLoading"
+                      (click)="toggleProblemReport()">
+                      {{ 'common.cancel' | t }}
+                    </button>
+                  } @else {
+                    <button
+                      type="button"
+                      class="secondary-action"
+                      [disabled]="actionLoading"
+                      (click)="toggleProblemReport()">
+                      {{ 'sessionDetail.reportProblem' | t }}
+                    </button>
+                  }
+                </div>
               }
             </section>
           } @else if (session.joined) {
