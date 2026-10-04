@@ -203,12 +203,21 @@
               @if (canReportProblem()) {
                 <div class="join-controls">
                   @if (showProblemReport) {
+                    <label>
+                      <span>{{ 'sessionDetail.problemType' | t }}</span>
+                      <select [(ngModel)]="selectedProblemType" [disabled]="actionLoading">
+                        <option value="">{{ 'sessionDetail.problemChoose' | t }}</option>
+                        <option value="NOT_OCCURRED">{{ 'sessionDetail.didNotOccur' | t }}</option>
+                        <option value="VENUE_PROBLEM">{{ 'sessionDetail.venueProblem' | t }}</option>
+                        <option value="OTHER">{{ 'sessionDetail.otherProblem' | t }}</option>
+                      </select>
+                    </label>
                     <button
                       type="button"
                       class="danger-action"
-                      [disabled]="actionLoading"
-                      (click)="reportDidNotOccur()">
-                      {{ actionLoading ? ('common.processing' | t) : ('sessionDetail.didNotOccur' | t) }}
+                      [disabled]="actionLoading || !selectedProblemType"
+                      (click)="reportProblem()">
+                      {{ actionLoading ? ('common.processing' | t) : ('sessionDetail.sendProblem' | t) }}
                     </button>
                     <button
                       type="button"

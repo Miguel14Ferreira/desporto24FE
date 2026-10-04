@@ -119,6 +119,13 @@ export class SessionService {
     );
   }
 
+  reportProblem(id: number, type: 'NOT_OCCURRED' | 'VENUE_PROBLEM' | 'OTHER'): Observable<void> {
+    return this.http.post<void>(
+      this.baseUrl + '/' + id + '/problems',
+      { type }
+    );
+  }
+
   messages(id: number): Observable<SessionMessage[]> {
     return this.http.get<SessionMessage[]>(this.baseUrl + '/' + id + '/messages');
   }

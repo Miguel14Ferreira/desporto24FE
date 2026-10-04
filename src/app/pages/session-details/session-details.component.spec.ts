@@ -41,7 +41,7 @@ describe('SessionDetailsComponent', () => {
   beforeEach(async () => {
     sessionService = jasmine.createSpyObj<SessionService>(
       'SessionService',
-      ['detail', 'join', 'leave', 'complete', 'reportDidNotOccur', 'messages', 'postMessage', 'participants', 'removeParticipant']
+      ['detail', 'join', 'leave', 'complete', 'reportDidNotOccur', 'reportProblem', 'messages', 'postMessage', 'participants', 'removeParticipant']
     );
     sessionService.detail.and.returnValue(of(session));
     sessionService.join.and.returnValue(of({
@@ -51,6 +51,7 @@ describe('SessionDetailsComponent', () => {
     sessionService.leave.and.returnValue(of(void 0));
     sessionService.complete.and.returnValue(of(void 0));
     sessionService.reportDidNotOccur.and.returnValue(of(void 0));
+    sessionService.reportProblem.and.returnValue(of(void 0));
     sessionService.removeParticipant.and.returnValue(of(void 0));
     sessionService.messages.and.returnValue(of([]));
     sessionService.participants.and.returnValue(of([
@@ -191,7 +192,7 @@ describe('SessionDetailsComponent', () => {
     expect(component.actionSuccess).toContain('lista de espera');
   });
 
-  it('should report that a started session did not occur and refresh details', () => {
+  it('should report a selected problem for a started session and refresh details', () => {
     (component as any).currentUsername = 'creator-user';
     component.session = {
       ...session,
@@ -199,12 +200,14 @@ describe('SessionDetailsComponent', () => {
       status: 'OPEN',
       gameDate: '2026-09-30T18:00:00Z'
     };
+    component.selectedProblemType = 'VENUE_PROBLEM';
 
-    component.reportDidNotOccur();
+    component.reportProblem();
 
-    expect(sessionService.reportDidNotOccur).toHaveBeenCalledWith(7);
+    expect(sessionService.reportProblem).toHaveBeenCalledWith(7, 'VENUE_PROBLEM');
     expect(sessionService.detail).toHaveBeenCalledTimes(2);
     expect(component.showProblemReport).toBeFalse();
+    expect(component.selectedProblemType).toBe('');
   });
 
   it('should not allow problem reporting before the session starts', () => {
@@ -216,9 +219,10 @@ describe('SessionDetailsComponent', () => {
       gameDate: '2099-10-01T18:00:00Z'
     };
 
-    component.reportDidNotOccur();
+    component.selectedProblemType = 'OTHER';
+    component.reportProblem();
 
-    expect(sessionService.reportDidNotOccur).not.toHaveBeenCalled();
+    expect(sessionService.reportProblem).not.toHaveBeenCalled();
   });
 
   it('should require a password for private sessions', () => {
