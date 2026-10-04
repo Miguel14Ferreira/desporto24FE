@@ -108,6 +108,22 @@
           </select>
         </label>
 
+        @if (selectedVenueId) {
+          <div class="venue-create-card">
+            <div>
+              <strong>{{ 'venue.mapLink.title' | t }}</strong>
+              <p class="venue-current-location">{{ 'venue.mapLink.hint' | t }}</p>
+            </div>
+            <button
+              type="button"
+              class="secondary-action"
+              [disabled]="loading"
+              (click)="useMapLinkVenue()">
+              {{ 'venue.mapLink.use' | t }}
+            </button>
+          </div>
+        }
+
         @if (!selectedVenueId) {
           <div class="venue-create-card">
             <div>
