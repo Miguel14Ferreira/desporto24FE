@@ -400,6 +400,7 @@
 
               @if (!sessionParticipantsLoading && !sessionParticipantsError) {
                 @if (hasConfirmedTeams()) {
+                  <p class="confirmed-teams-status">{{ 'sessionDetail.teamsConfirmed' | t }}</p>
                   <div class="confirmed-teams">
                     <div>
                       <strong>{{ 'sessionDetail.teamA' | t }}</strong>
