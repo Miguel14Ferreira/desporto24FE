@@ -41,7 +41,7 @@ describe('SessionDetailsComponent', () => {
   beforeEach(async () => {
     sessionService = jasmine.createSpyObj<SessionService>(
       'SessionService',
-      ['detail', 'join', 'leave', 'complete', 'reportDidNotOccur', 'reportProblem', 'messages', 'postMessage', 'participants', 'removeParticipant', 'teamSuggestion']
+      ['detail', 'join', 'leave', 'complete', 'reportDidNotOccur', 'reportProblem', 'messages', 'postMessage', 'participants', 'removeParticipant', 'teamSuggestion', 'confirmTeams']
     );
     sessionService.detail.and.returnValue(of(session));
     sessionService.join.and.returnValue(of({
@@ -63,6 +63,18 @@ describe('SessionDetailsComponent', () => {
       }
     ]));
     sessionService.teamSuggestion.and.returnValue(of({
+      teamA: [
+        { username: 'creator-user', strengthScore: 2.8, statsAvailable: true, games: 8, wins: 5, goals: 6, assists: 2 }
+      ],
+      teamB: [
+        { username: 'player-one', strengthScore: 2.7, statsAvailable: true, games: 8, wins: 4, goals: 7, assists: 1 }
+      ],
+      teamAScore: 2.8,
+      teamBScore: 2.7,
+      playersWithStats: 2,
+      totalPlayers: 2
+    }));
+    sessionService.confirmTeams.and.returnValue(of({
       teamA: [
         { username: 'creator-user', strengthScore: 2.8, statsAvailable: true, games: 8, wins: 5, goals: 6, assists: 2 }
       ],
@@ -434,6 +446,54 @@ describe('SessionDetailsComponent', () => {
     expect(sessionService.teamSuggestion).toHaveBeenCalledWith(7);
     expect(component.teamSuggestion?.teamA[0].username).toBe('creator-user');
     expect(component.teamSuggestion?.playersWithStats).toBe(2);
+  });
+
+  it('should confirm generated teams and refresh participant assignments', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session,
+      creatorUsername: 'creator-user',
+      joined: true,
+      communityId: 9,
+      participantCount: 4,
+      maxParticipants: 4,
+      status: 'FULL'
+    };
+    component.teamSuggestion = {
+      teamA: [
+        { username: 'creator-user', strengthScore: 2.8, statsAvailable: true, games: 8, wins: 5, goals: 6, assists: 2 }
+      ],
+      teamB: [
+        { username: 'player-one', strengthScore: 2.7, statsAvailable: true, games: 8, wins: 4, goals: 7, assists: 1 }
+      ],
+      teamAScore: 2.8,
+      teamBScore: 2.7,
+      playersWithStats: 2,
+      totalPlayers: 2
+    };
+    sessionService.participants.and.returnValue(of([
+      {
+        id: 1,
+        username: 'creator-user',
+        attendanceStatus: 'PENDING',
+        joinedAt: '2026-09-20T18:00:00Z',
+        teamCode: 'A'
+      },
+      {
+        id: 15,
+        username: 'player-one',
+        attendanceStatus: 'PENDING',
+        joinedAt: '2026-09-20T18:00:00Z',
+        teamCode: 'B'
+      }
+    ]));
+
+    component.confirmTeams();
+
+    expect(sessionService.confirmTeams).toHaveBeenCalledWith(7);
+    expect(component.teamsSuccess).toContain('confirmadas');
+    expect(component.hasConfirmedTeams()).toBeTrue();
+    expect(component.teamParticipants('A')[0].username).toBe('creator-user');
   });
 
   it('should not offer team generation outside community sessions', () => {

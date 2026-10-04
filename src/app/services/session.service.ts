@@ -170,6 +170,13 @@ export class SessionService {
     );
   }
 
+  confirmTeams(id: number): Observable<SessionTeamSuggestion> {
+    return this.http.post<SessionTeamSuggestion>(
+      this.baseUrl + '/' + id + '/teams/confirm',
+      null
+    );
+  }
+
   removeParticipant(id: number, participantId: number): Observable<void> {
     return this.http.delete<void>(
       this.baseUrl + '/' + id + '/participants/' + participantId

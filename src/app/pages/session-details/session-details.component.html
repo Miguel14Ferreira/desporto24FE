@@ -260,6 +260,16 @@
                   <p class="team-stats-note">
                     {{ 'sessionDetail.teamsStatsUsed' | t:{ known: teamSuggestion.playersWithStats, total: teamSuggestion.totalPlayers } }}
                   </p>
+                  <button
+                    type="button"
+                    class="primary-action"
+                    [disabled]="teamsConfirming"
+                    (click)="confirmTeams()">
+                    {{ teamsConfirming ? ('sessionDetail.confirmingTeams' | t) : ('sessionDetail.confirmTeams' | t) }}
+                  </button>
+                  @if (teamsSuccess) {
+                    <div class="action-message success-message">{{ teamsSuccess }}</div>
+                  }
                 }
               }
 
@@ -383,13 +393,34 @@
               }
 
               @if (!sessionParticipantsLoading && !sessionParticipantsError) {
-                <div class="session-participant-list">
-                  @for (participant of sessionParticipants; track participant.id) {
-                    <span>{{ '@' + participant.username }}</span>
-                  } @empty {
-                    <span class="session-participants-empty">{{ 'sessionDetail.noVisibleParticipants' | t }}</span>
-                  }
-                </div>
+                @if (hasConfirmedTeams()) {
+                  <div class="confirmed-teams">
+                    <div>
+                      <strong>{{ 'sessionDetail.teamA' | t }}</strong>
+                      <div class="session-participant-list">
+                        @for (participant of teamParticipants('A'); track participant.id) {
+                          <span>{{ '@' + participant.username }}</span>
+                        }
+                      </div>
+                    </div>
+                    <div>
+                      <strong>{{ 'sessionDetail.teamB' | t }}</strong>
+                      <div class="session-participant-list">
+                        @for (participant of teamParticipants('B'); track participant.id) {
+                          <span>{{ '@' + participant.username }}</span>
+                        }
+                      </div>
+                    </div>
+                  </div>
+                } @else {
+                  <div class="session-participant-list">
+                    @for (participant of sessionParticipants; track participant.id) {
+                      <span>{{ '@' + participant.username }}</span>
+                    } @empty {
+                      <span class="session-participants-empty">{{ 'sessionDetail.noVisibleParticipants' | t }}</span>
+                    }
+                  </div>
+                }
               }
             </section>
           }

@@ -44,7 +44,9 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
   showAttendanceManager = false;
   teamSuggestion?: SessionTeamSuggestion;
   teamsLoading = false;
+  teamsConfirming = false;
   teamsError = '';
+  teamsSuccess = '';
 
   errorMessage = '';
   actionError = '';
@@ -599,6 +601,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
 
     this.teamsLoading = true;
     this.teamsError = '';
+    this.teamsSuccess = '';
 
     this.sessionService.teamSuggestion(this.sessionId)
       .pipe(
@@ -612,6 +615,47 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
           this.teamsError = this.errorFrom(error, t('feedback.session.teamsError'));
         }
       });
+  }
+
+  confirmTeams(): void {
+    if (
+      !this.sessionId
+      || !this.teamSuggestion
+      || !this.canGenerateTeams()
+      || this.teamsConfirming
+    ) {
+      return;
+    }
+
+    this.teamsConfirming = true;
+    this.teamsError = '';
+    this.teamsSuccess = '';
+
+    this.sessionService.confirmTeams(this.sessionId)
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.teamsConfirming = false)
+      )
+      .subscribe({
+        next: suggestion => {
+          this.teamSuggestion = suggestion;
+          this.teamsSuccess = t('feedback.session.teamsConfirmed');
+          this.loadSessionParticipants();
+        },
+        error: error => {
+          this.teamsError = this.errorFrom(error, t('feedback.session.teamsConfirmError'));
+        }
+      });
+  }
+
+  teamParticipants(code: 'A' | 'B'): SessionParticipant[] {
+    return this.sessionParticipants.filter(participant => participant.teamCode === code);
+  }
+
+  hasConfirmedTeams(): boolean {
+    return this.sessionParticipants.some(
+      participant => participant.teamCode === 'A' || participant.teamCode === 'B'
+    );
   }
 
   joinButtonLabel(): string {
