@@ -108,6 +108,63 @@
           </select>
         </label>
 
+        @if (!selectedVenueId) {
+          <div class="venue-create-card">
+            <div>
+              <strong>{{ 'venue.mapLink.title' | t }}</strong>
+              <p class="venue-current-location">{{ 'venue.mapLink.hint' | t }}</p>
+            </div>
+
+            <label class="venue-select-field">
+              <span>{{ 'venue.mapLink.label' | t }}</span>
+              <input
+                type="text"
+                name="venueMapLink"
+                [(ngModel)]="venueMapLink"
+                [disabled]="loading || venueMapLinkLoading"
+                [placeholder]="'venue.mapLink.placeholder' | t">
+            </label>
+
+            <div class="header-actions">
+              <button
+                type="button"
+                class="secondary-action"
+                [disabled]="venueMapLinkLoading || !venueMapLink.trim()"
+                (click)="resolveVenueMapLink()">
+                {{ venueMapLinkLoading ? ('venue.mapLink.resolving' | t) : ('venue.mapLink.resolve' | t) }}
+              </button>
+
+              @if (venueMapCandidateResolvedUrl) {
+                <button
+                  type="button"
+                  class="secondary-action"
+                  (click)="clearVenueMapLinkCandidate()">
+                  {{ 'common.remove' | t }}
+                </button>
+              }
+            </div>
+
+            @if (venueMapLinkError) {
+              <div class="location-error">{{ venueMapLinkError }}</div>
+            }
+
+            @if (venueMapCandidateResolvedUrl && selectedVenueMapUrl && latitude !== null && longitude !== null) {
+              <div style="margin-top: .5rem;">
+                <iframe
+                  style="display:block;width:100%;height:260px;border:0;border-radius:14px;"
+                  [src]="selectedVenueMapUrl"
+                  [title]="'venue.mapLink.previewTitle' | t"
+                  loading="lazy"
+                  referrerpolicy="no-referrer-when-downgrade">
+                </iframe>
+                <p class="venue-current-location" style="margin-top:.6rem;">
+                  {{ 'venue.mapLink.found' | t }}
+                </p>
+              </div>
+            }
+          </div>
+        }
+
         @if (selectedVenue(); as venue) {
           <div class="venue-preview">
             <div>
