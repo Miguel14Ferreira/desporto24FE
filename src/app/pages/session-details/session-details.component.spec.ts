@@ -446,6 +446,7 @@ describe('SessionDetailsComponent', () => {
     expect(sessionService.teamSuggestion).toHaveBeenCalledWith(7);
     expect(component.teamSuggestion?.teamA[0].username).toBe('creator-user');
     expect(component.teamSuggestion?.playersWithStats).toBe(2);
+    expect(component.teamSuggestionPendingConfirmation).toBeTrue();
   });
 
   it('should confirm generated teams and refresh participant assignments', () => {
@@ -471,6 +472,7 @@ describe('SessionDetailsComponent', () => {
       playersWithStats: 2,
       totalPlayers: 2
     };
+    component.teamSuggestionPendingConfirmation = true;
     sessionService.participants.and.returnValue(of([
       {
         id: 1,
@@ -492,8 +494,35 @@ describe('SessionDetailsComponent', () => {
 
     expect(sessionService.confirmTeams).toHaveBeenCalledWith(7);
     expect(component.teamsSuccess).toContain('confirmadas');
+    expect(component.teamSuggestionPendingConfirmation).toBeFalse();
     expect(component.hasConfirmedTeams()).toBeTrue();
     expect(component.teamParticipants('A')[0].username).toBe('creator-user');
+  });
+
+  it('should not confirm the same team suggestion twice', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session,
+      creatorUsername: 'creator-user',
+      joined: true,
+      communityId: 9,
+      participantCount: 4,
+      maxParticipants: 4,
+      status: 'FULL'
+    };
+    component.teamSuggestion = {
+      teamA: [],
+      teamB: [],
+      teamAScore: 0,
+      teamBScore: 0,
+      playersWithStats: 0,
+      totalPlayers: 4
+    };
+    component.teamSuggestionPendingConfirmation = false;
+
+    component.confirmTeams();
+
+    expect(sessionService.confirmTeams).not.toHaveBeenCalled();
   });
 
   it('should not offer team generation outside community sessions', () => {

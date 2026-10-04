@@ -45,6 +45,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
   teamSuggestion?: SessionTeamSuggestion;
   teamsLoading = false;
   teamsConfirming = false;
+  teamSuggestionPendingConfirmation = false;
   teamsError = '';
   teamsSuccess = '';
 
@@ -609,9 +610,13 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
         finalize(() => this.teamsLoading = false)
       )
       .subscribe({
-        next: suggestion => this.teamSuggestion = suggestion,
+        next: suggestion => {
+          this.teamSuggestion = suggestion;
+          this.teamSuggestionPendingConfirmation = true;
+        },
         error: error => {
           this.teamSuggestion = undefined;
+          this.teamSuggestionPendingConfirmation = false;
           this.teamsError = this.errorFrom(error, t('feedback.session.teamsError'));
         }
       });
@@ -622,6 +627,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
       !this.sessionId
       || !this.teamSuggestion
       || !this.canGenerateTeams()
+      || !this.teamSuggestionPendingConfirmation
       || this.teamsConfirming
     ) {
       return;
@@ -639,6 +645,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
       .subscribe({
         next: suggestion => {
           this.teamSuggestion = suggestion;
+          this.teamSuggestionPendingConfirmation = false;
           this.teamsSuccess = t('feedback.session.teamsConfirmed');
           this.loadSessionParticipants();
         },

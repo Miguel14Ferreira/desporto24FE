@@ -263,9 +263,15 @@
                   <button
                     type="button"
                     class="primary-action"
-                    [disabled]="teamsConfirming"
+                    [disabled]="teamsConfirming || !teamSuggestionPendingConfirmation"
                     (click)="confirmTeams()">
-                    {{ teamsConfirming ? ('sessionDetail.confirmingTeams' | t) : ('sessionDetail.confirmTeams' | t) }}
+                    {{
+                      teamsConfirming
+                        ? ('sessionDetail.confirmingTeams' | t)
+                        : teamSuggestionPendingConfirmation
+                          ? ('sessionDetail.confirmTeams' | t)
+                          : ('sessionDetail.teamsConfirmed' | t)
+                    }}
                   </button>
                   @if (teamsSuccess) {
                     <div class="action-message success-message">{{ teamsSuccess }}</div>
