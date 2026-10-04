@@ -1,6 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { appTranslate as t } from '../../i18n/i18n.service';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { finalize, retry, timeout } from 'rxjs';
 
@@ -73,11 +74,13 @@ export class Events2Component implements OnInit {
   venueLighting = false;
   selectedVenuePhoto: VenuePhoto | null = null;
   venuePhotoLoading = false;
+  selectedVenueMapUrl: SafeResourceUrl | null = null;
 
   constructor(
     private sessionService: SessionService,
     private communityService: CommunityGroupsService,
     private venueService: VenueService,
+    private sanitizer: DomSanitizer,
     private route: ActivatedRoute,
     private router: Router
   ) {}
@@ -194,16 +197,25 @@ export class Events2Component implements OnInit {
     if (this.selectedVenueId === null) {
       this.selectedVenuePhoto = null;
       this.venuePhotoLoading = false;
+      this.selectedVenueMapUrl = null;
       return;
     }
 
     const venue = this.venues.find(item => item.id === this.selectedVenueId);
     if (!venue) {
       this.selectedVenuePhoto = null;
+      this.selectedVenueMapUrl = null;
       return;
     }
 
     this.loadVenuePhoto(venue.id);
+    this.selectedVenueMapUrl = venue.latitude !== null && venue.longitude !== null
+      ? this.sanitizer.bypassSecurityTrustResourceUrl(
+          'https://www.google.com/maps?q='
+          + venue.latitude + ',' + venue.longitude
+          + '&z=16&output=embed'
+        )
+      : null;
 
     this.city = venue.city;
     this.address = venue.address;
