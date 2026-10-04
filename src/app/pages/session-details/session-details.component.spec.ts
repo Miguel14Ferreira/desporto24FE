@@ -41,7 +41,7 @@ describe('SessionDetailsComponent', () => {
   beforeEach(async () => {
     sessionService = jasmine.createSpyObj<SessionService>(
       'SessionService',
-      ['detail', 'join', 'leave', 'complete', 'reportDidNotOccur', 'reportProblem', 'messages', 'postMessage', 'participants', 'removeParticipant']
+      ['detail', 'join', 'leave', 'complete', 'reportDidNotOccur', 'reportProblem', 'messages', 'postMessage', 'participants', 'removeParticipant', 'teamSuggestion']
     );
     sessionService.detail.and.returnValue(of(session));
     sessionService.join.and.returnValue(of({
@@ -62,6 +62,18 @@ describe('SessionDetailsComponent', () => {
         joinedAt: '2026-09-20T18:00:00Z'
       }
     ]));
+    sessionService.teamSuggestion.and.returnValue(of({
+      teamA: [
+        { username: 'creator-user', strengthScore: 2.8, statsAvailable: true, games: 8, wins: 5, goals: 6, assists: 2 }
+      ],
+      teamB: [
+        { username: 'player-one', strengthScore: 2.7, statsAvailable: true, games: 8, wins: 4, goals: 7, assists: 1 }
+      ],
+      teamAScore: 2.8,
+      teamBScore: 2.7,
+      playersWithStats: 2,
+      totalPlayers: 2
+    }));
     sessionService.postMessage.and.returnValue(of({
       id: 1,
       sessionId: 7,
@@ -373,6 +385,46 @@ describe('SessionDetailsComponent', () => {
 
     expect(sessionService.participants).toHaveBeenCalledWith(7);
     expect(component.participants.length).toBe(1);
+  });
+
+  it('should generate balanced teams for a full community session created by the viewer', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session,
+      creatorUsername: 'creator-user',
+      joined: true,
+      communityId: 9,
+      participantCount: 4,
+      maxParticipants: 4,
+      status: 'FULL'
+    };
+
+    expect(component.canGenerateTeams()).toBeTrue();
+
+    component.generateTeams();
+
+    expect(sessionService.teamSuggestion).toHaveBeenCalledWith(7);
+    expect(component.teamSuggestion?.teamA[0].username).toBe('creator-user');
+    expect(component.teamSuggestion?.playersWithStats).toBe(2);
+  });
+
+  it('should not offer team generation outside community sessions', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session,
+      creatorUsername: 'creator-user',
+      joined: true,
+      participantCount: 4,
+      maxParticipants: 4,
+      status: 'FULL',
+      communityId: null
+    };
+
+    expect(component.canGenerateTeams()).toBeFalse();
+
+    component.generateTeams();
+
+    expect(sessionService.teamSuggestion).not.toHaveBeenCalled();
   });
 
   it('should remove a non-creator participant and refresh the session', () => {

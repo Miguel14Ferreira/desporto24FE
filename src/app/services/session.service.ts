@@ -31,6 +31,25 @@ export interface JoinSessionResponse {
   waitlistPosition: number | null;
 }
 
+export interface SessionTeamPlayer {
+  username: string;
+  strengthScore: number;
+  statsAvailable: boolean;
+  games: number;
+  wins: number;
+  goals: number;
+  assists: number;
+}
+
+export interface SessionTeamSuggestion {
+  teamA: SessionTeamPlayer[];
+  teamB: SessionTeamPlayer[];
+  teamAScore: number;
+  teamBScore: number;
+  playersWithStats: number;
+  totalPlayers: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -143,6 +162,12 @@ export class SessionService {
 
   participants(id: number): Observable<SessionParticipant[]> {
     return this.http.get<SessionParticipant[]>(this.baseUrl + '/' + id + '/participants');
+  }
+
+  teamSuggestion(id: number): Observable<SessionTeamSuggestion> {
+    return this.http.get<SessionTeamSuggestion>(
+      this.baseUrl + '/' + id + '/teams/suggestion'
+    );
   }
 
   removeParticipant(id: number, participantId: number): Observable<void> {

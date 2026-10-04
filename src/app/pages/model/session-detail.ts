@@ -12,4 +12,5 @@ export interface SessionDetail extends SessionSummary {
   venue?: Venue | null;
   problemType?: 'NOT_OCCURRED' | 'VENUE_PROBLEM' | 'OTHER' | null;
   problemDetails?: string | null;
+  communityId?: number | null;
 }

@@ -10,7 +10,7 @@ import { appTranslate as t } from '../../i18n/i18n.service';
 import { SessionMessage } from '../model/session-message';
 import { ReliabilitySummary } from '../model/reliability-summary';
 import { SessionParticipant } from '../model/session-participant';
-import { JoinSessionResponse, SessionService } from '../../services/session.service';
+import { JoinSessionResponse, SessionService, SessionTeamSuggestion } from '../../services/session.service';
 import { ReliabilityService } from '../../services/reliability.service';
 import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.service';
 
@@ -40,6 +40,9 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
   selectedProblemType: 'NOT_OCCURRED' | 'VENUE_PROBLEM' | 'OTHER' | '' = '';
   problemDetails = '';
   showAttendanceManager = false;
+  teamSuggestion?: SessionTeamSuggestion;
+  teamsLoading = false;
+  teamsError = '';
 
   errorMessage = '';
   actionError = '';
@@ -549,6 +552,39 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
       && this.session.participantCount >= this.session.maxParticipants;
   }
 
+  canGenerateTeams(): boolean {
+    return Boolean(
+      this.session
+      && this.isCreator()
+      && this.session.communityId
+      && this.isFull()
+      && this.session.status !== 'CANCELLED'
+      && this.session.status !== 'COMPLETED'
+    );
+  }
+
+  generateTeams(): void {
+    if (!this.sessionId || !this.canGenerateTeams() || this.teamsLoading) {
+      return;
+    }
+
+    this.teamsLoading = true;
+    this.teamsError = '';
+
+    this.sessionService.teamSuggestion(this.sessionId)
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.teamsLoading = false)
+      )
+      .subscribe({
+        next: suggestion => this.teamSuggestion = suggestion,
+        error: error => {
+          this.teamSuggestion = undefined;
+          this.teamsError = this.errorFrom(error, t('feedback.session.teamsError'));
+        }
+      });
+  }
+
   joinButtonLabel(): string {
     if (this.actionLoading) {
       return t('session.joinProcessing');
@@ -722,6 +758,11 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
           if (!this.isCreator()) {
             this.participants = [];
             this.showAttendanceManager = false;
+          }
+
+          if (!this.canGenerateTeams()) {
+            this.teamSuggestion = undefined;
+            this.teamsError = '';
           }
 
           if (session.joined) {

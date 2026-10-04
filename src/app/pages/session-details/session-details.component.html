@@ -208,6 +208,61 @@
                   }
                 </div>
               }
+              @if (canGenerateTeams()) {
+                <div class="team-generator">
+                  <div>
+                    <strong>{{ 'sessionDetail.teamsTitle' | t }}</strong>
+                    <p>{{ 'sessionDetail.teamsText' | t }}</p>
+                  </div>
+                  <button
+                    type="button"
+                    class="secondary-action"
+                    [disabled]="teamsLoading"
+                    (click)="generateTeams()">
+                    {{ teamsLoading ? ('sessionDetail.generatingTeams' | t) : ('sessionDetail.generateTeams' | t) }}
+                  </button>
+                </div>
+
+                @if (teamsError) {
+                  <div class="action-message error-message">{{ teamsError }}</div>
+                }
+
+                @if (teamSuggestion) {
+                  <div class="team-suggestion">
+                    <div class="team-card">
+                      <h3>{{ 'sessionDetail.teamA' | t }} <span>{{ teamSuggestion.teamAScore }}</span></h3>
+                      @for (player of teamSuggestion.teamA; track player.username) {
+                        <div class="team-player">
+                          <span>{{ '@' + player.username }}</span>
+                          @if (player.statsAvailable) {
+                            <small>{{ 'sessionDetail.playerStats' | t:{ games: player.games, goals: player.goals, wins: player.wins } }}</small>
+                          } @else {
+                            <small>{{ 'sessionDetail.noStats' | t }}</small>
+                          }
+                        </div>
+                      }
+                    </div>
+
+                    <div class="team-card">
+                      <h3>{{ 'sessionDetail.teamB' | t }} <span>{{ teamSuggestion.teamBScore }}</span></h3>
+                      @for (player of teamSuggestion.teamB; track player.username) {
+                        <div class="team-player">
+                          <span>{{ '@' + player.username }}</span>
+                          @if (player.statsAvailable) {
+                            <small>{{ 'sessionDetail.playerStats' | t:{ games: player.games, goals: player.goals, wins: player.wins } }}</small>
+                          } @else {
+                            <small>{{ 'sessionDetail.noStats' | t }}</small>
+                          }
+                        </div>
+                      }
+                    </div>
+                  </div>
+                  <p class="team-stats-note">
+                    {{ 'sessionDetail.teamsStatsUsed' | t:{ known: teamSuggestion.playersWithStats, total: teamSuggestion.totalPlayers } }}
+                  </p>
+                }
+              }
+
               @if (canReportProblem()) {
                 <div class="join-controls">
                   @if (showProblemReport) {
