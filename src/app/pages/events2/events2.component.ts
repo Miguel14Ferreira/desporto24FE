@@ -252,6 +252,16 @@ export class Events2Component implements OnInit {
       });
   }
 
+  useMapLinkVenue(): void {
+    this.selectedVenueId = null;
+    this.selectedVenuePhoto = null;
+    this.venuePhotoLoading = false;
+    this.selectedVenueMapUrl = null;
+    this.city = '';
+    this.address = '';
+    this.clearLocation();
+  }
+
   resolveVenueMapLink(): void {
     const url = this.venueMapLink.trim();
     if (!url || this.venueMapLinkLoading) {
