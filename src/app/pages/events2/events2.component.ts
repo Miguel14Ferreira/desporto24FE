@@ -173,6 +173,12 @@ export class Events2Component implements OnInit {
       });
   }
 
+  get sportSelected(): boolean {
+    return this.sportsCatalog.some(
+      option => option.toLocaleLowerCase('pt') === this.sport.trim().toLocaleLowerCase('pt')
+    );
+  }
+
   get venueOptions(): Venue[] {
     const city = this.city.trim().toLocaleLowerCase('pt');
     const sport = this.sport.trim().toLocaleLowerCase('pt');
@@ -184,13 +190,22 @@ export class Events2Component implements OnInit {
 
       const venueSports = (venue.sports || '').toLocaleLowerCase('pt');
       const sportMatches = !sport
-        || (!!venueSports && venueSports.includes(sport));
+        || !venueSports
+        || venueSports.includes(sport);
+
+      const acronym = venue.name
+        .split(/\s+/)
+        .filter(part => part.length > 2)
+        .map(part => part[0])
+        .join('')
+        .toLocaleLowerCase('pt');
 
       const searchable = [
         venue.name,
         venue.city,
         venue.address,
-        venue.venueType || ''
+        venue.venueType || '',
+        acronym
       ].join(' ').toLocaleLowerCase('pt');
 
       const searchMatches = !search || searchable.includes(search);
@@ -198,7 +213,42 @@ export class Events2Component implements OnInit {
       return cityMatches && sportMatches && searchMatches;
     });
 
-    return search ? filtered : filtered.slice(0, 40);
+    return search ? filtered.slice(0, 40) : filtered.slice(0, 40);
+  }
+
+  confirmSportSelection(): void {
+    const selected = this.sportsCatalog.find(
+      option => option.toLocaleLowerCase('pt') === this.sport.trim().toLocaleLowerCase('pt')
+    );
+
+    if (!selected) {
+      this.sport = '';
+      this.venueSearch = '';
+      this.selectVenue(null);
+      return;
+    }
+
+    this.sport = selected;
+    this.venueSearch = '';
+    this.selectVenue(null);
+  }
+
+  onVenueSearchChange(value: string): void {
+    this.venueSearch = value;
+
+    const normalized = value.trim().toLocaleLowerCase('pt');
+    const match = this.venueOptions.find(
+      venue =>
+        venue.name.toLocaleLowerCase('pt') === normalized
+        || (venue.name + ' · ' + venue.city).toLocaleLowerCase('pt') === normalized
+    );
+
+    if (match) {
+      this.venueSearch = match.name + ' · ' + match.city;
+      this.selectVenue(match.id);
+    } else if (this.selectedVenueId !== null) {
+      this.selectVenue(null);
+    }
   }
 
   selectVenue(value: number | string | null): void {
@@ -471,8 +521,12 @@ export class Events2Component implements OnInit {
   }
 
   private validate(): string | null {
-    if (!this.sport.trim() || !this.gameDate || !this.city.trim() || !this.address.trim()) {
-      return 'Preenche o desporto, data, localidade e morada.';
+    if (!this.sportSelected) {
+      return 'Seleciona um desporto da lista.';
+    }
+
+    if (!this.gameDate || !this.city.trim() || !this.address.trim()) {
+      return 'Preenche a data, localidade e morada.';
     }
 
     const city = this.city.trim();
