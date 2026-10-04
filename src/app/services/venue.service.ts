@@ -16,6 +16,12 @@ export interface VenuePhoto {
   createdAt: string;
 }
 
+export interface ResolveVenueMapLinkResponse {
+  resolvedUrl: string;
+  latitude: number;
+  longitude: number;
+}
+
 export interface VenueSportCondition {
   id: number;
   sport: string;
@@ -53,6 +59,13 @@ export class VenueService {
 
   get(id: number): Observable<Venue> {
     return this.http.get<Venue>(this.baseUrl + '/' + id);
+  }
+
+  resolveMapLink(url: string): Observable<ResolveVenueMapLinkResponse> {
+    return this.http.post<ResolveVenueMapLinkResponse>(
+      this.baseUrl + '/resolve-map-link',
+      { url }
+    );
   }
 
   listPhotos(id: number): Observable<VenuePhoto[]> {
