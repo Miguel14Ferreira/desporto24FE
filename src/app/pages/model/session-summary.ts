@@ -10,5 +10,6 @@ export interface SessionSummary {
   privateGame: boolean;
   audience?: 'COMMUNITY_ONLY' | 'PUBLIC';
   joinedByViewer?: boolean;
+  waitlistedByViewer?: boolean;
   status: string;
 }
