@@ -20,6 +20,7 @@ import {
   CommunitySearchPresentation
 } from '../../services/community-groups.service';
 import { CommunityService } from '../../services/community.service';
+import { SessionService } from '../../services/session.service';
 import { CommunityProfile } from '../model/community-profile';
 import { SessionSummary } from '../model/session-summary';
 
@@ -44,6 +45,7 @@ export class CommunitiesComponent implements OnInit {
   competitionLoading = false;
   sessionsLoading = false;
   openingSessionId?: number;
+  joiningSessionId?: number;
   competitionSaving = false;
   roundSaving = false;
   errorMessage = '';
@@ -128,6 +130,7 @@ export class CommunitiesComponent implements OnInit {
   constructor(
     private communityService: CommunityGroupsService,
     private profileService: CommunityService,
+    private sessionService: SessionService,
     private route: ActivatedRoute,
     private router: Router
   ) {}
@@ -456,6 +459,37 @@ export class CommunitiesComponent implements OnInit {
         error: () => {
           this.communitySessions = [];
           this.errorMessage = t('feedback.communities.sessionsLoadError');
+        }
+      });
+  }
+
+  joinCommunitySession(session: SessionSummary): void {
+    if (!this.selected || this.joiningSessionId !== undefined
+        || session.participantCount >= session.maxParticipants
+        || session.privateGame) {
+      return;
+    }
+
+    const communityId = this.selected.id;
+    this.joiningSessionId = session.id;
+    this.errorMessage = '';
+
+    this.sessionService.join(session.id)
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.joiningSessionId = undefined)
+      )
+      .subscribe({
+        next: () => {
+          if (this.selected?.id === communityId) {
+            this.loadCommunitySessions(this.selected);
+          }
+        },
+        error: error => {
+          if (this.selected?.id === communityId) {
+            this.errorMessage = error.error?.message
+              || t('feedback.communities.joinSessionError');
+          }
         }
       });
   }
