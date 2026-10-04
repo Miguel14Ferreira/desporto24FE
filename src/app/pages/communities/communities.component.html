@@ -612,15 +612,20 @@
                         </div>
                       </a>
                       @if (canManage() && session.audience === 'COMMUNITY_ONLY') {
-                        <button
-                          type="button"
-                          class="secondary-action small"
-                          [disabled]="openingSessionId !== undefined"
-                          (click)="openSessionToPublic(session)">
-                          {{ openingSessionId === session.id
-                            ? ('communities.openingPublic' | t)
-                            : ('communities.openPublic' | t) }}
-                        </button>
+                        <div>
+                          <button
+                            type="button"
+                            class="secondary-action small"
+                            [disabled]="openingSessionId !== undefined"
+                            (click)="openSessionToPublic(session)">
+                            {{ openingSessionId === session.id
+                              ? ('communities.openingPublic' | t)
+                              : ('communities.openPublic' | t) }}
+                          </button>
+                          <p class="venue-current-location">
+                            {{ 'communities.openPublicHint' | t }}
+                          </p>
+                        </div>
                       }
                     }
                   </div>
