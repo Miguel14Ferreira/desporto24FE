@@ -11,5 +11,6 @@ export interface SessionSummary {
   audience?: 'COMMUNITY_ONLY' | 'PUBLIC';
   joinedByViewer?: boolean;
   waitlistedByViewer?: boolean;
+  recurrenceSeriesId?: string | null;
   status: string;
 }

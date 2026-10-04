@@ -593,6 +593,11 @@
                             {{ session.participantCount }}/{{ session.maxParticipants }}
                             {{ 'communities.participantsShort' | t }}
                           </span>
+                          @if (session.recurrenceSeriesId) {
+                            <span class="competition-badge">
+                              {{ 'communities.recurringSession' | t }}
+                            </span>
+                          }
                           @if (session.participantCount < session.maxParticipants) {
                             <span class="session-open-spots">
                               {{ 'communities.spotsMissing' | t:{
