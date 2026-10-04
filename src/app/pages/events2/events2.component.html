@@ -38,12 +38,13 @@
         <label>
           <span>{{ 'events.sport' | t }} *</span>
           <input
-            type="text"
+            type="search"
             name="sport"
             list="create-session-sports"
             [(ngModel)]="sport"
             autocomplete="off"
             [disabled]="loading"
+            (change)="confirmSportSelection()"
             [placeholder]="'events.sportPlaceholder' | t">
           <datalist id="create-session-sports">
             @for (sportOption of sportsCatalog; track sportOption) {
@@ -97,26 +98,24 @@
           <input
             type="search"
             name="venueSearch"
-            [(ngModel)]="venueSearch"
-            [disabled]="loading || venuesLoading"
-            [placeholder]="'venue.searchPlaceholder' | t">
-          <small class="venue-current-location">{{ 'venue.searchHint' | t }}</small>
-        </label>
-
-        <label class="venue-select-field">
-          <span>{{ 'venue.savedVenue' | t }}</span>
-          <select
-            name="venueId"
-            [ngModel]="selectedVenueId"
-            [disabled]="loading || venuesLoading"
-            (ngModelChange)="selectVenue($event)">
-            <option [ngValue]="null">
-              {{ venuesLoading ? ('venue.loading' | t) : ('venue.manualLocation' | t) }}
-            </option>
+            list="venue-search-options"
+            [ngModel]="venueSearch"
+            autocomplete="off"
+            [disabled]="loading || venuesLoading || !sportSelected"
+            (ngModelChange)="onVenueSearchChange($event)"
+            [placeholder]="sportSelected ? ('venue.searchPlaceholder' | t) : 'Seleciona primeiro o desporto'">
+          <datalist id="venue-search-options">
             @for (venue of venueOptions; track venue.id) {
-              <option [ngValue]="venue.id">{{ venue.name }} · {{ venue.city }}</option>
+              <option [value]="venue.name + ' · ' + venue.city"></option>
             }
-          </select>
+          </datalist>
+          <small class="venue-current-location">
+            @if (!sportSelected) {
+              Seleciona primeiro um desporto da lista.
+            } @else {
+              {{ 'venue.searchHint' | t }}
+            }
+          </small>
         </label>
 
         @if (selectedVenueId) {
