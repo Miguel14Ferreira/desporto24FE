@@ -514,7 +514,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
   }
 
   canReportProblem(): boolean {
-    if (!this.session || !this.isCreator()) {
+    if (!this.session || !this.isCreator() || this.session.problemType) {
       return false;
     }
 

@@ -10,4 +10,5 @@ export interface SessionDetail extends SessionSummary {
   waitlistPosition: number | null;
   gamePhoto: string | null;
   venue?: Venue | null;
+  problemType?: 'NOT_OCCURRED' | 'VENUE_PROBLEM' | 'OTHER' | null;
 }

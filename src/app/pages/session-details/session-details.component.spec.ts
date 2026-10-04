@@ -233,6 +233,24 @@ describe('SessionDetailsComponent', () => {
     expect(component.actionError).toContain('500');
   });
 
+  it('should not allow another problem report after one is already registered', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session,
+      joined: true,
+      status: 'OPEN',
+      gameDate: '2026-09-30T18:00:00Z',
+      problemType: 'VENUE_PROBLEM'
+    };
+
+    expect(component.canReportProblem()).toBeFalse();
+
+    component.selectedProblemType = 'OTHER';
+    component.reportProblem();
+
+    expect(sessionService.reportProblem).not.toHaveBeenCalled();
+  });
+
   it('should not allow problem reporting before the session starts', () => {
     (component as any).currentUsername = 'creator-user';
     component.session = {
