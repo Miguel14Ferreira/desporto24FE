@@ -76,6 +76,37 @@
 
       </div>
 
+      @if (communityId) {
+        <div class="form-grid">
+          <label>
+            <span>{{ 'createSession.recurrence' | t }}</span>
+            <select
+              name="recurrence"
+              [(ngModel)]="recurrence"
+              [disabled]="loading">
+              <option value="NONE">{{ 'createSession.recurrenceNone' | t }}</option>
+              <option value="WEEKLY">{{ 'createSession.recurrenceWeekly' | t }}</option>
+              <option value="BIWEEKLY">{{ 'createSession.recurrenceBiweekly' | t }}</option>
+            </select>
+            <small>{{ 'createSession.recurrenceHint' | t }}</small>
+          </label>
+
+          @if (recurrence !== 'NONE') {
+            <label>
+              <span>{{ 'createSession.recurrenceOccurrences' | t }}</span>
+              <input
+                type="number"
+                name="recurrenceOccurrences"
+                [(ngModel)]="recurrenceOccurrences"
+                min="2"
+                max="52"
+                [disabled]="loading">
+              <small>{{ 'createSession.recurrenceOccurrencesHint' | t }}</small>
+            </label>
+          }
+        </div>
+      }
+
       <section class="venue-section">
         <div class="venue-heading">
           <div>

@@ -47,6 +47,8 @@ export class Events2Component implements OnInit {
 
   communityId: number | null = null;
   communityName = '';
+  recurrence: 'NONE' | 'WEEKLY' | 'BIWEEKLY' = 'NONE';
+  recurrenceOccurrences = 4;
 
   readonly sportsCatalog = SPORTS_CATALOG;
   venues: Venue[] = [];
@@ -136,7 +138,11 @@ export class Events2Component implements OnInit {
       latitude: this.locationCaptured ? this.latitude : null,
       longitude: this.locationCaptured ? this.longitude : null,
       communityId: this.communityId,
-      venueId: this.selectedVenueId
+      venueId: this.selectedVenueId,
+      recurrence: this.communityId ? this.recurrence : 'NONE',
+      recurrenceOccurrences: this.communityId && this.recurrence !== 'NONE'
+        ? Number(this.recurrenceOccurrences)
+        : null
     };
 
     this.loading = true;

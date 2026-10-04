@@ -11,4 +11,6 @@ export interface CreateSessionRequest {
   longitude: number | null;
   communityId?: number | null;
   venueId?: number | null;
+  recurrence?: 'NONE' | 'WEEKLY' | 'BIWEEKLY';
+  recurrenceOccurrences?: number | null;
 }
