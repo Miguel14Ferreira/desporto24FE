@@ -7,7 +7,7 @@ import { finalize, retry, timeout } from 'rxjs';
 import { CreateSessionRequest } from '../model/create-session-request';
 import { SessionService } from '../../services/session.service';
 import { CommunityGroupsService } from '../../services/community-groups.service';
-import { VenueService } from '../../services/venue.service';
+import { VenuePhoto, VenueService } from '../../services/venue.service';
 import { Venue, VenueOwnershipType } from '../model/venue';
 import { SPORTS_CATALOG } from '../../shared/sports-catalog';
 
@@ -71,6 +71,8 @@ export class Events2Component implements OnInit {
   venuePriceInfo = '';
   venueParking = false;
   venueLighting = false;
+  selectedVenuePhoto: VenuePhoto | null = null;
+  venuePhotoLoading = false;
 
   constructor(
     private sessionService: SessionService,
@@ -190,13 +192,18 @@ export class Events2Component implements OnInit {
       : null;
 
     if (this.selectedVenueId === null) {
+      this.selectedVenuePhoto = null;
+      this.venuePhotoLoading = false;
       return;
     }
 
     const venue = this.venues.find(item => item.id === this.selectedVenueId);
     if (!venue) {
+      this.selectedVenuePhoto = null;
       return;
     }
+
+    this.loadVenuePhoto(venue.id);
 
     this.city = venue.city;
     this.address = venue.address;
@@ -212,6 +219,21 @@ export class Events2Component implements OnInit {
     } else {
       this.clearLocation();
     }
+  }
+
+  private loadVenuePhoto(venueId: number): void {
+    this.selectedVenuePhoto = null;
+    this.venuePhotoLoading = true;
+
+    this.venueService.listPhotos(venueId)
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.venuePhotoLoading = false)
+      )
+      .subscribe({
+        next: photos => this.selectedVenuePhoto = photos[0] ?? null,
+        error: () => this.selectedVenuePhoto = null
+      });
   }
 
   toggleVenueCreator(): void {
