@@ -465,7 +465,6 @@ export class CommunitiesComponent implements OnInit {
 
   joinCommunitySession(session: SessionSummary): void {
     if (!this.selected || this.joiningSessionId !== undefined
-        || session.participantCount >= session.maxParticipants
         || session.privateGame) {
       return;
     }
