@@ -304,8 +304,8 @@
           }
 
 
-          @if (isCreator()) {
-            @if (canRecordAttendance() && !showAttendanceManager) {
+          @if (isCreator() && canRecordAttendance()) {
+            @if (!showAttendanceManager) {
               <section class="participation-panel">
                 <div>
                   <h2>{{ 'sessionDetail.attendance' | t }}</h2>
@@ -333,22 +333,14 @@
                     (click)="loadParticipants()">
                     {{ participantsLoading ? ('chat.refreshing' | t) : ('chat.refresh' | t) }}
                   </button>
-                  @if (canRecordAttendance()) {
-                    <button
-                      type="button"
-                      class="secondary-action"
-                      (click)="toggleAttendanceManager()">
-                      {{ 'sessionDetail.hideAttendance' | t }}
-                    </button>
-                  }
+                  <button
+                    type="button"
+                    class="secondary-action"
+                    (click)="toggleAttendanceManager()">
+                    {{ 'sessionDetail.hideAttendance' | t }}
+                  </button>
                 </div>
               </div>
-
-              @if (!canRecordAttendance()) {
-                <div class="attendance-info">
-                  {{ 'sessionDetail.attendanceInfo' | t }}
-                </div>
-              }
 
               @if (attendanceSuccess) {
                 <div class="attendance-feedback attendance-success">{{ attendanceSuccess }}</div>

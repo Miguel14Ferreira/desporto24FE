@@ -417,6 +417,20 @@ describe('SessionDetailsComponent', () => {
     expect(participant.attendanceStatus).toBe('PENDING');
   });
 
+  it('should hide attendance management before the 30 minute delay', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session,
+      joined: true,
+      gameDate: new Date(Date.now() - (29 * 60 * 1000)).toISOString()
+    };
+
+    fixture.detectChanges();
+
+    expect(component.canRecordAttendance()).toBeFalse();
+    expect(fixture.nativeElement.querySelector('.attendance-panel')).toBeNull();
+  });
+
   it('should not load participants until attendance management is opened', () => {
     sessionService.participants.calls.reset();
     (component as any).currentUsername = 'creator-user';
