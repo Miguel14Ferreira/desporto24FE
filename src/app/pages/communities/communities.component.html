@@ -593,6 +593,17 @@
                             {{ session.participantCount }}/{{ session.maxParticipants }}
                             {{ 'communities.participantsShort' | t }}
                           </span>
+                          @if (session.participantCount < session.maxParticipants) {
+                            <span class="session-open-spots">
+                              {{ 'communities.spotsMissing' | t:{
+                                count: session.maxParticipants - session.participantCount
+                              } }}
+                            </span>
+                          } @else {
+                            <span class="session-full">
+                              {{ 'communities.sessionFull' | t }}
+                            </span>
+                          }
                           @if (session.priceAmount > 0) {
                             <span>{{ session.priceAmount }} €</span>
                           } @else {
