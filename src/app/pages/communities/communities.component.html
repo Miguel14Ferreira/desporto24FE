@@ -611,7 +611,9 @@
                           }
                         </div>
                       </a>
-                      @if (canManage() && session.audience === 'COMMUNITY_ONLY') {
+                      @if (canManage()
+                        && session.audience === 'COMMUNITY_ONLY'
+                        && session.participantCount < session.maxParticipants) {
                         <div>
                           <button
                             type="button"
