@@ -94,15 +94,19 @@
 
         <label class="venue-select-field">
           <span>{{ 'venue.sportFilter' | t }}</span>
-          <select
+          <input
+            type="search"
             name="venueSportFilter"
+            list="venue-sport-filter-options"
             [(ngModel)]="venueSportFilter"
-            [disabled]="loading || venuesLoading">
-            <option value="">{{ 'venue.sportFilterAll' | t }}</option>
+            autocomplete="off"
+            [disabled]="loading || venuesLoading"
+            [placeholder]="'venue.sportFilterPlaceholder' | t">
+          <datalist id="venue-sport-filter-options">
             @for (sportOption of sportsCatalog; track sportOption) {
-              <option [value]="sportOption">{{ sportOption }}</option>
+              <option [value]="sportOption"></option>
             }
-          </select>
+          </datalist>
         </label>
 
         <label class="venue-select-field">
