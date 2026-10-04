@@ -549,6 +549,13 @@ export class Events2Component implements OnInit {
       return t('feedback.create.playersRange');
     }
 
+    if (this.communityId && this.recurrence !== 'NONE') {
+      const occurrences = Number(this.recurrenceOccurrences);
+      if (!Number.isInteger(occurrences) || occurrences < 2 || occurrences > 52) {
+        return t('feedback.create.recurrenceOccurrencesRange');
+      }
+    }
+
     if (this.privateGame && !this.password.trim()) {
       return t('feedback.create.privatePassword');
     }
