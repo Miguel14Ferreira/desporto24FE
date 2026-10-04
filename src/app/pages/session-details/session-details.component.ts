@@ -516,6 +516,17 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
     return this.session.creatorUsername.toLowerCase() === this.currentUsername.toLowerCase();
   }
 
+  problemTypeLabel(type: 'NOT_OCCURRED' | 'VENUE_PROBLEM' | 'OTHER'): string {
+    switch (type) {
+      case 'NOT_OCCURRED':
+        return t('sessionDetail.didNotOccur');
+      case 'VENUE_PROBLEM':
+        return t('sessionDetail.venueProblem');
+      default:
+        return t('sessionDetail.otherProblem');
+    }
+  }
+
   canReportProblem(): boolean {
     if (!this.session || !this.isCreator() || this.session.problemType) {
       return false;

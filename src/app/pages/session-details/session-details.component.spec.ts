@@ -233,6 +233,12 @@ describe('SessionDetailsComponent', () => {
     expect(component.actionError).toContain('500');
   });
 
+  it('should label a previously reported session problem', () => {
+    expect(component.problemTypeLabel('NOT_OCCURRED')).toContain('não aconteceu');
+    expect(component.problemTypeLabel('VENUE_PROBLEM')).toContain('recinto');
+    expect(component.problemTypeLabel('OTHER')).toContain('Outro');
+  });
+
   it('should not allow another problem report after one is already registered', () => {
     (component as any).currentUsername = 'creator-user';
     component.session = {
