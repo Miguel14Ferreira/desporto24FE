@@ -417,6 +417,23 @@ describe('SessionDetailsComponent', () => {
     expect(participant.attendanceStatus).toBe('PENDING');
   });
 
+  it('should not allow attendance management for a cancelled session', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session,
+      status: 'CANCELLED',
+      joined: true,
+      gameDate: '2020-10-01T18:00:00Z'
+    };
+
+    expect(component.canRecordAttendance()).toBeFalse();
+
+    component.toggleAttendanceManager();
+
+    expect(component.showAttendanceManager).toBeFalse();
+    expect(sessionService.participants).not.toHaveBeenCalled();
+  });
+
   it('should hide attendance management before the 30 minute delay', () => {
     (component as any).currentUsername = 'creator-user';
     component.session = {

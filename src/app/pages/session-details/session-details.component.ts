@@ -369,7 +369,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
   }
 
   canRecordAttendance(): boolean {
-    if (!this.session?.gameDate) {
+    if (!this.session?.gameDate || this.session.status === 'CANCELLED') {
       return false;
     }
 
