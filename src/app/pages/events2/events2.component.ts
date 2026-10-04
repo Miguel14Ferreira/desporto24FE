@@ -50,6 +50,7 @@ export class Events2Component implements OnInit {
 
   readonly sportsCatalog = SPORTS_CATALOG;
   venues: Venue[] = [];
+  venueSearch = '';
   selectedVenueId: number | null = null;
   venuesLoading = false;
   venueSaving = false;
@@ -175,8 +176,9 @@ export class Events2Component implements OnInit {
   get venueOptions(): Venue[] {
     const city = this.city.trim().toLocaleLowerCase('pt');
     const sport = this.sport.trim().toLocaleLowerCase('pt');
+    const search = this.venueSearch.trim().toLocaleLowerCase('pt');
 
-    return this.venues.filter(venue => {
+    const filtered = this.venues.filter(venue => {
       const cityMatches = !city
         || venue.city.toLocaleLowerCase('pt').includes(city);
 
@@ -185,8 +187,19 @@ export class Events2Component implements OnInit {
         || !venueSports
         || venueSports.includes(sport);
 
-      return cityMatches && sportMatches;
+      const searchable = [
+        venue.name,
+        venue.city,
+        venue.address,
+        venue.venueType || ''
+      ].join(' ').toLocaleLowerCase('pt');
+
+      const searchMatches = !search || searchable.includes(search);
+
+      return cityMatches && sportMatches && searchMatches;
     });
+
+    return search ? filtered : filtered.slice(0, 40);
   }
 
   selectVenue(value: number | string | null): void {
