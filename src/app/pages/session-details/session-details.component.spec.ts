@@ -239,6 +239,22 @@ describe('SessionDetailsComponent', () => {
     expect(component.problemTypeLabel('OTHER')).toContain('Outro');
   });
 
+  it('should show reported problem details returned for the creator', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session,
+      joined: true,
+      problemType: 'OTHER',
+      problemDetails: 'Balneário sem água quente'
+    };
+
+    fixture.detectChanges();
+
+    const reportedState = fixture.nativeElement.querySelector('.reported-problem-state');
+    expect(reportedState?.textContent).toContain('Outro');
+    expect(reportedState?.textContent).toContain('Balneário sem água quente');
+  });
+
   it('should not allow another problem report after one is already registered', () => {
     (component as any).currentUsername = 'creator-user';
     component.session = {

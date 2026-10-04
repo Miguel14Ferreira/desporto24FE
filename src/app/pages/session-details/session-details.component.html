@@ -201,8 +201,11 @@
                 <p>{{ 'sessionDetail.ownTextStart' | t }} <a routerLink="/menu/my-sessions">{{ 'mySessions.title' | t }}</a>.</p>
               </div>
               @if (session.problemType) {
-                <div class="action-message success-message">
-                  {{ 'sessionDetail.problemAlreadyReported' | t:{ problem: problemTypeLabel(session.problemType) } }}
+                <div class="action-message success-message reported-problem-state">
+                  <strong>{{ 'sessionDetail.problemAlreadyReported' | t:{ problem: problemTypeLabel(session.problemType) } }}</strong>
+                  @if (session.problemDetails) {
+                    <p>{{ session.problemDetails }}</p>
+                  }
                 </div>
               }
               @if (canReportProblem()) {
