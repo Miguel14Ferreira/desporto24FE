@@ -219,7 +219,13 @@
                     class="secondary-action"
                     [disabled]="teamsLoading"
                     (click)="generateTeams()">
-                    {{ teamsLoading ? ('sessionDetail.generatingTeams' | t) : ('sessionDetail.generateTeams' | t) }}
+                    {{
+                      teamsLoading
+                        ? ('sessionDetail.generatingTeams' | t)
+                        : hasConfirmedTeams()
+                          ? ('sessionDetail.regenerateTeams' | t)
+                          : ('sessionDetail.generateTeams' | t)
+                    }}
                   </button>
                 </div>
 
