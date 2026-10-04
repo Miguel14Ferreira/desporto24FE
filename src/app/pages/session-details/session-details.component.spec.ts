@@ -374,6 +374,34 @@ describe('SessionDetailsComponent', () => {
     expect(component.messages).toEqual([message]);
   });
 
+  it('should let a joined non-creator view who is going', () => {
+    sessionService.participants.calls.reset();
+    (component as any).currentUsername = 'player-one';
+    component.session = {
+      ...session,
+      joined: true,
+      creatorUsername: 'creator-user'
+    };
+
+    component.loadSessionParticipants();
+
+    expect(sessionService.participants).toHaveBeenCalledWith(7);
+    expect(component.sessionParticipants.length).toBe(1);
+    expect(component.sessionParticipants[0].username).toBe('player-one');
+  });
+
+  it('should not load the visible participant list for outsiders', () => {
+    sessionService.participants.calls.reset();
+    component.session = {
+      ...session,
+      joined: false
+    };
+
+    component.loadSessionParticipants();
+
+    expect(sessionService.participants).not.toHaveBeenCalled();
+  });
+
   it('should allow the creator to load active participants', () => {
     (component as any).currentUsername = 'creator-user';
     component.session = {

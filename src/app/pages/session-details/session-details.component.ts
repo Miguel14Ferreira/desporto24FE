@@ -26,6 +26,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
   messages: SessionMessage[] = [];
   creatorReliability?: ReliabilitySummary;
   participants: SessionParticipant[] = [];
+  sessionParticipants: SessionParticipant[] = [];
 
   loading = false;
   actionLoading = false;
@@ -33,6 +34,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
   messageSending = false;
   reliabilityLoading = false;
   participantsLoading = false;
+  sessionParticipantsLoading = false;
   attendanceUpdatingId: number | null = null;
   removeLoadingId: number | null = null;
   pendingRemovalId: number | null = null;
@@ -53,6 +55,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
   attendanceSuccess = '';
   participantManagementError = '';
   participantManagementSuccess = '';
+  sessionParticipantsError = '';
 
   joinPassword = '';
   messageBody = '';
@@ -220,6 +223,32 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
         },
         error: error => {
           this.actionError = this.errorFrom(error, t('feedback.session.problemReportError'));
+        }
+      });
+  }
+
+  loadSessionParticipants(): void {
+    if (!this.sessionId || !this.session?.joined || this.sessionParticipantsLoading) {
+      return;
+    }
+
+    this.sessionParticipantsLoading = true;
+    this.sessionParticipantsError = '';
+
+    this.sessionService.participants(this.sessionId)
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        finalize(() => this.sessionParticipantsLoading = false)
+      )
+      .subscribe({
+        next: participants => this.sessionParticipants = participants,
+        error: error => {
+          this.sessionParticipants = [];
+          this.sessionParticipantsError = this.errorFrom(
+            error,
+            t('feedback.session.participantsError')
+          );
         }
       });
   }
@@ -766,8 +795,11 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
           }
 
           if (session.joined) {
+            this.loadSessionParticipants();
             this.refreshMessages();
           } else {
+            this.sessionParticipants = [];
+            this.sessionParticipantsError = '';
             this.messages = [];
             this.chatError = '';
           }

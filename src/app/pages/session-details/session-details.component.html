@@ -362,6 +362,38 @@
           }
 
 
+          @if (session.joined) {
+            <section class="session-participants-panel">
+              <div class="session-participants-header">
+                <div>
+                  <h2>{{ 'sessionDetail.whosGoing' | t }}</h2>
+                  <p>{{ 'sessionDetail.whosGoingText' | t:{ count: sessionParticipants.length } }}</p>
+                </div>
+                <button
+                  type="button"
+                  class="secondary-action"
+                  [disabled]="sessionParticipantsLoading"
+                  (click)="loadSessionParticipants()">
+                  {{ sessionParticipantsLoading ? ('chat.refreshing' | t) : ('chat.refresh' | t) }}
+                </button>
+              </div>
+
+              @if (sessionParticipantsError) {
+                <div class="action-message error-message">{{ sessionParticipantsError }}</div>
+              }
+
+              @if (!sessionParticipantsLoading && !sessionParticipantsError) {
+                <div class="session-participant-list">
+                  @for (participant of sessionParticipants; track participant.id) {
+                    <span>{{ '@' + participant.username }}</span>
+                  } @empty {
+                    <span class="session-participants-empty">{{ 'sessionDetail.noVisibleParticipants' | t }}</span>
+                  }
+                </div>
+              }
+            </section>
+          }
+
           @if (isCreator() && canRecordAttendance()) {
             @if (!showAttendanceManager) {
               <section class="participation-panel">
