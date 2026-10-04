@@ -122,6 +122,21 @@
               @if (venue.lighting) { <span>{{ 'venue.lighting' | t }}</span> }
             </div>
 
+            @if (venuePhotoLoading) {
+              <div style="margin-top: 1rem;color:#94a3b8;font-size:.8rem;">
+                A carregar fotografia do recinto...
+              </div>
+            }
+
+            @if (selectedVenuePhoto) {
+              <div style="margin-top: 1rem;">
+                <img
+                  style="display:block;width:100%;max-height:320px;object-fit:cover;border-radius:14px;"
+                  [src]="selectedVenuePhoto.photoUrl"
+                  [alt]="venue.name + ' · fotografia do recinto'">
+              </div>
+            }
+
             @if (venue.latitude !== null && venue.longitude !== null) {
               <div style="margin-top: 1rem;">
                 <img
