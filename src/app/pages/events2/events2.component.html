@@ -99,10 +99,10 @@
             type="search"
             name="venueSearch"
             list="venue-search-options"
-            [ngModel]="venueSearch"
+            [(ngModel)]="venueSearch"
             autocomplete="off"
             [disabled]="loading || venuesLoading || !sportSelected"
-            (ngModelChange)="onVenueSearchChange($event)"
+            (change)="confirmVenueSelection()"
             [placeholder]="sportSelected ? ('venue.searchPlaceholder' | t) : 'Seleciona primeiro o desporto'">
           <datalist id="venue-search-options">
             @for (venue of venueOptions; track venue.id) {
