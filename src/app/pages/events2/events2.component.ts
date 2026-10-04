@@ -233,22 +233,21 @@ export class Events2Component implements OnInit {
     this.selectVenue(null);
   }
 
-  onVenueSearchChange(value: string): void {
-    this.venueSearch = value;
-
-    const normalized = value.trim().toLocaleLowerCase('pt');
-    const match = this.venueOptions.find(
+  confirmVenueSelection(): void {
+    const normalized = this.venueSearch.trim().toLocaleLowerCase('pt');
+    const match = this.venues.find(
       venue =>
         venue.name.toLocaleLowerCase('pt') === normalized
         || (venue.name + ' · ' + venue.city).toLocaleLowerCase('pt') === normalized
     );
 
-    if (match) {
-      this.venueSearch = match.name + ' · ' + match.city;
-      this.selectVenue(match.id);
-    } else if (this.selectedVenueId !== null) {
+    if (!match) {
       this.selectVenue(null);
+      return;
     }
+
+    this.venueSearch = match.name + ' · ' + match.city;
+    this.selectVenue(match.id);
   }
 
   selectVenue(value: number | string | null): void {
