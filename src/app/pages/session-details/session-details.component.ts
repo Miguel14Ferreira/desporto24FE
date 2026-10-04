@@ -363,6 +363,9 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
     }
 
     this.showAttendanceManager = !this.showAttendanceManager;
+    if (this.showAttendanceManager && this.participants.length === 0) {
+      this.loadParticipants();
+    }
   }
 
   canRecordAttendance(): boolean {
@@ -705,10 +708,9 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
             this.loadCreatorReliability(session.creatorUsername);
           }
 
-          if (this.isCreator()) {
-            this.loadParticipants();
-          } else {
+          if (!this.isCreator()) {
             this.participants = [];
+            this.showAttendanceManager = false;
           }
 
           if (session.joined) {

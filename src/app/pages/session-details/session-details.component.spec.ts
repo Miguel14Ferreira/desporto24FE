@@ -411,6 +411,23 @@ describe('SessionDetailsComponent', () => {
     expect(participant.attendanceStatus).toBe('PENDING');
   });
 
+  it('should not load participants until attendance management is opened', () => {
+    sessionService.participants.calls.reset();
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session,
+      joined: true,
+      gameDate: '2020-10-01T18:00:00Z'
+    };
+    component.participants = [];
+
+    expect(sessionService.participants).not.toHaveBeenCalled();
+
+    component.toggleAttendanceManager();
+
+    expect(sessionService.participants).toHaveBeenCalledWith(7);
+  });
+
   it('should keep post-session attendance management collapsed until requested', () => {
     (component as any).currentUsername = 'creator-user';
     component.session = {
