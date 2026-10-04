@@ -75,6 +75,10 @@ export class Events2Component implements OnInit {
   selectedVenuePhoto: VenuePhoto | null = null;
   venuePhotoLoading = false;
   selectedVenueMapUrl: SafeResourceUrl | null = null;
+  venueMapLink = '';
+  venueMapLinkLoading = false;
+  venueMapLinkError = '';
+  venueMapCandidateResolvedUrl = '';
 
   constructor(
     private sessionService: SessionService,
@@ -246,6 +250,47 @@ export class Events2Component implements OnInit {
         next: photos => this.selectedVenuePhoto = photos[0] ?? null,
         error: () => this.selectedVenuePhoto = null
       });
+  }
+
+  resolveVenueMapLink(): void {
+    const url = this.venueMapLink.trim();
+    if (!url || this.venueMapLinkLoading) {
+      return;
+    }
+
+    this.venueMapLinkLoading = true;
+    this.venueMapLinkError = '';
+    this.venueMapCandidateResolvedUrl = '';
+
+    this.venueService.resolveMapLink(url)
+      .pipe(
+        timeout(12_000),
+        finalize(() => this.venueMapLinkLoading = false)
+      )
+      .subscribe({
+        next: candidate => {
+          this.latitude = candidate.latitude;
+          this.longitude = candidate.longitude;
+          this.locationCaptured = true;
+          this.venueMapCandidateResolvedUrl = candidate.resolvedUrl;
+          this.selectedVenueMapUrl = this.sanitizer.bypassSecurityTrustResourceUrl(
+            'https://www.google.com/maps?q='
+            + candidate.latitude + ',' + candidate.longitude
+            + '&z=16&output=embed'
+          );
+        },
+        error: () => {
+          this.venueMapLinkError = t('venue.mapLink.error');
+          this.venueMapCandidateResolvedUrl = '';
+        }
+      });
+  }
+
+  clearVenueMapLinkCandidate(): void {
+    this.venueMapCandidateResolvedUrl = '';
+    this.selectedVenueMapUrl = null;
+    this.venueMapLinkError = '';
+    this.clearLocation();
   }
 
   toggleVenueCreator(): void {
