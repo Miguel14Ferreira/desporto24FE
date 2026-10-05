@@ -156,28 +156,6 @@
           </select>
         </label>
 
-        <div class="full-width phone-field">
-          <span class="field-label">{{ 'register.phoneOptional' | t }}</span>
-          <div class="phone-row">
-            <select
-              class="calling-code"
-              name="indicativePhone"
-              [(ngModel)]="indicativePhone"
-              [disabled]="loading || !phone.trim()">
-              @for (item of countryOptions; track item.label) {
-                <option [value]="item.code">+{{ item.code }}</option>
-              }
-            </select>
-            <input
-              type="tel"
-              name="phone"
-              [(ngModel)]="phone"
-              autocomplete="tel-national"
-              [disabled]="loading"
-              placeholder="912 345 678">
-          </div>
-        </div>
-
         <label>
           <span>{{ 'common.gender' | t }}</span>
           <select name="gender" [(ngModel)]="gender" [disabled]="loading">
