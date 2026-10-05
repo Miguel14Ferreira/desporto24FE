@@ -21,8 +21,6 @@ export class CreateaccountComponent {
   nickname = '';
   dateOfBirth = '';
   country = 'Portugal';
-  indicativePhone = '351';
-  phone = '';
   gender = '';
   email = '';
   acceptedLegalTerms = false;
@@ -66,8 +64,8 @@ export class CreateaccountComponent {
       nickname: this.nickname.trim() || null,
       dateOfBirth: this.dateOfBirth,
       country: this.country.trim(),
-      indicativePhone: this.phone.trim() ? this.indicativePhone : null,
-      phone: this.phone.trim() ? this.phone.replace(/\D/g, '') : null,
+      indicativePhone: null,
+      phone: null,
       gender: this.gender || null,
       email: this.email.trim(),
       acceptedLegalTerms: this.acceptedLegalTerms
@@ -196,15 +194,6 @@ export class CreateaccountComponent {
 
     if (!this.email.includes('@')) {
       return t('feedback.contact.invalidEmail');
-    }
-
-    const normalizedPhone = this.phone.replace(/\D/g, '');
-    if (this.phone.trim() && (normalizedPhone.length < 4 || normalizedPhone.length > 15)) {
-      return t('feedback.register.invalidPhone');
-    }
-
-    if (this.phone.trim() && !this.indicativePhone.trim()) {
-      return t('feedback.register.invalidPhone');
     }
 
     if (!this.acceptedLegalTerms) {
