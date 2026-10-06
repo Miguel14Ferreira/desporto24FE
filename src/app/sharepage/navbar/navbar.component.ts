@@ -76,9 +76,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
       }
 
       this.realtimeService.connect();
-      this.loadUnreadNotifications();
 
       if (!this.notificationTimer) {
+        this.loadUnreadNotifications();
         this.notificationTimer = setInterval(
           () => this.loadUnreadNotifications(),
           60000
