@@ -15,6 +15,7 @@ import { SPORTS_CATALOG } from '../../shared/sports-catalog';
 })
 export class EventsComponent implements OnInit {
   sessions: SessionSummary[] = [];
+  citySuggestions: string[] = [];
   loading = false;
   locating = false;
   errorMessage = '';
@@ -92,9 +93,13 @@ export class EventsComponent implements OnInit {
       finalize(() => this.loading = false)
     )
     .subscribe({
-      next: sessions => this.sessions = sessions,
+      next: sessions => {
+        this.sessions = sessions;
+        this.updateCitySuggestions();
+      },
       error: () => {
         this.sessions = [];
+        this.citySuggestions = [];
         this.errorMessage = t('feedback.events.loadError');
       }
     });
@@ -142,14 +147,6 @@ export class EventsComponent implements OnInit {
     this.loadSessions();
   }
 
-  get citySuggestions(): string[] {
-    return [...new Set(
-      this.sessions
-        .map(session => session.city?.trim())
-        .filter((city): city is string => Boolean(city))
-    )].sort((a, b) => a.localeCompare(b, 'pt'));
-  }
-
   vacancies(session: SessionSummary): number {
     return Math.max(
       0,
@@ -179,6 +176,14 @@ export class EventsComponent implements OnInit {
     this.sort = this.nearbyActive ? 'distance' : 'date';
     this.errorMessage = '';
     this.loadSessions();
+  }
+
+  private updateCitySuggestions(): void {
+    this.citySuggestions = [...new Set(
+      this.sessions
+        .map(session => session.city?.trim())
+        .filter((city): city is string => Boolean(city))
+    )].sort((a, b) => a.localeCompare(b, 'pt'));
   }
 
   private toIsoOrUndefined(value: string): string | undefined {
