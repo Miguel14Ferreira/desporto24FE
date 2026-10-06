@@ -6,8 +6,8 @@
   place-items: center;
   padding: 7rem 1.25rem 4rem;
   background:
-    radial-gradient(circle at 12% 18%, rgba(14,165,233,.18), transparent 30rem),
-    radial-gradient(circle at 88% 30%, rgba(34,211,238,.08), transparent 28rem),
+    radial-gradient(circle at 12% 18%, rgba(0,230,118,.16), transparent 30rem),
+    radial-gradient(circle at 88% 30%, rgba(34,197,94,.08), transparent 28rem),
     linear-gradient(145deg, #07111f, #12334a);
   color: #f8fafc;
 }
@@ -21,9 +21,21 @@
   gap: clamp(2rem, 7vw, 5rem);
 }
 
+.brand-lockup {
+  margin: 0 0 .7rem;
+  color: #f8fafc;
+  font-size: clamp(1.35rem, 3vw, 1.8rem);
+  font-weight: 950;
+  letter-spacing: -.04em;
+}
+
+.brand-lockup span {
+  color: var(--d24-accent);
+}
+
 .eyebrow {
   margin: 0 0 .55rem;
-  color: #7dd3fc;
+  color: var(--d24-accent);
   font-size: .76rem;
   font-weight: 900;
   letter-spacing: .12em;
@@ -61,7 +73,10 @@
   text-decoration: none;
 }
 
-.primary-action { background: #f8fafc; color: #0f172a; }
+.primary-action {
+  background: var(--d24-accent);
+  color: #07111f;
+}
 
 .secondary-action {
   border: 1px solid rgba(255,255,255,.16);
@@ -74,7 +89,7 @@
   flex-wrap: wrap;
   gap: .45rem;
   margin-top: 1.35rem;
-  color: #bae6fd;
+  color: var(--d24-accent-soft);
   font-size: .8rem;
   font-weight: 850;
 }
@@ -113,8 +128,8 @@
   flex: 0 0 28px;
   place-items: center;
   border-radius: 50%;
-  background: rgba(125,211,252,.11);
-  color: #7dd3fc;
+  background: rgba(0,230,118,.11);
+  color: var(--d24-accent);
   font-size: .72rem;
   font-weight: 900;
 }
@@ -152,7 +167,7 @@
   height: 44px;
   place-items: center;
   border-radius: .85rem;
-  background: rgba(125,211,252,.08);
+  background: rgba(0,230,118,.08);
   font-size: 1.2rem;
 }
 
