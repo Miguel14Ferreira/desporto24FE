@@ -35,6 +35,10 @@ export class DirectChatComponent implements OnInit, OnDestroy {
   readonly emojis = ['😀', '😂', '😊', '😍', '🥳', '😎', '😉', '👍', '👏', '🙌', '🔥', '⚽', '🏀', '🎾', '🏓', '💪', '❤️', '✅'];
 
   private readonly jwtHelper = new JwtHelperService();
+  private readonly dateTimeFormatter = new Intl.DateTimeFormat('pt-PT', {
+    dateStyle: 'short',
+    timeStyle: 'short'
+  });
   private readonly realtimeSubscriptions = new Subscription();
 
   constructor(
@@ -271,10 +275,7 @@ export class DirectChatComponent implements OnInit, OnDestroy {
       return raw;
     }
 
-    return new Intl.DateTimeFormat('pt-PT', {
-      dateStyle: 'short',
-      timeStyle: 'short'
-    }).format(new Date(parsed));
+    return this.dateTimeFormatter.format(new Date(parsed));
   }
 
   private sorted(messages: DirectChatMessage[]): DirectChatMessage[] {
