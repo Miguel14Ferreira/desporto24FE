@@ -6,7 +6,7 @@
   place-items: center;
   padding: 2rem 1.25rem;
   background:
-    radial-gradient(circle at 15% 20%, rgba(14,165,233,.18), transparent 30rem),
+    radial-gradient(circle at 15% 20%, rgba(0,230,118,.16), transparent 30rem),
     linear-gradient(145deg, #07111f, #12334a);
   color: #f8fafc;
 }
@@ -36,7 +36,7 @@
 
 .eyebrow {
   margin: 0 0 .55rem;
-  color: #7dd3fc;
+  color: var(--d24-accent);
   font-size: .78rem;
   font-weight: 900;
   letter-spacing: .12em;
@@ -149,7 +149,7 @@
 }
 
 .login-links a {
-  color: #bae6fd;
+  color: var(--d24-accent-soft);
   font-size: .85rem;
   font-weight: 700;
   text-decoration: none;
