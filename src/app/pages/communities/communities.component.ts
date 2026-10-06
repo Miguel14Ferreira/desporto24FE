@@ -34,6 +34,14 @@ type CommunityTab = 'home' | 'sessions' | 'ranking' | 'stats' | 'members';
   standalone: false
 })
 export class CommunitiesComponent implements OnInit {
+  private readonly sessionDateFormatter = new Intl.DateTimeFormat('pt-PT', {
+    dateStyle: 'medium',
+    timeStyle: 'short'
+  });
+  private readonly roundDateFormatter = new Intl.DateTimeFormat('pt-PT', {
+    dateStyle: 'medium'
+  });
+
   communities: CommunityGroup[] = [];
   invites: CommunityInvite[] = [];
   selected?: CommunityGroup;
@@ -1252,10 +1260,7 @@ export class CommunitiesComponent implements OnInit {
       return value;
     }
 
-    return new Intl.DateTimeFormat('pt-PT', {
-      dateStyle: 'medium',
-      timeStyle: 'short'
-    }).format(new Date(parsed));
+    return this.sessionDateFormatter.format(new Date(parsed));
   }
 
   formatRoundDate(value: string): string {
@@ -1264,9 +1269,7 @@ export class CommunitiesComponent implements OnInit {
       return value;
     }
 
-    return new Intl.DateTimeFormat('pt-PT', {
-      dateStyle: 'medium'
-    }).format(new Date(parsed));
+    return this.roundDateFormatter.format(new Date(parsed));
   }
 
   resultLabel(result: CommunityMatchResult): string {
