@@ -20,11 +20,15 @@
 }
 
 .brand {
-  color: #7dd3fc;
-  font-size: .82rem;
+  color: #f8fafc;
+  font-size: 1.15rem;
   font-weight: 900;
-  letter-spacing: .12em;
+  letter-spacing: -.03em;
   text-decoration: none;
+}
+
+.brand span {
+  color: var(--d24-accent);
 }
 
 .site-nav__links {
