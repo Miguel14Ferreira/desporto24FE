@@ -17,6 +17,7 @@
       <input
         type="search"
         [(ngModel)]="filter"
+        (ngModelChange)="onFilterChange()"
         [placeholder]="'friends.filterPlaceholder' | t">
     </label>
 

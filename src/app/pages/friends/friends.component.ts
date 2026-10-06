@@ -16,6 +16,7 @@ import { CommunityService } from '../../services/community.service';
 })
 export class FriendsComponent implements OnInit {
   friends: FriendSummary[] = [];
+  filteredFriends: FriendSummary[] = [];
   filter = '';
 
   loading = false;
@@ -35,17 +36,8 @@ export class FriendsComponent implements OnInit {
     this.load();
   }
 
-  get filteredFriends(): FriendSummary[] {
-    const term = this.filter.trim().toLowerCase();
-    if (!term) {
-      return this.friends;
-    }
-
-    return this.friends.filter(friend =>
-      friend.username.toLowerCase().includes(term)
-      || (friend.nickname ?? '').toLowerCase().includes(term)
-      || (friend.fullName ?? '').toLowerCase().includes(term)
-    );
+  onFilterChange(): void {
+    this.applyFilter();
   }
 
   load(): void {
@@ -59,9 +51,13 @@ export class FriendsComponent implements OnInit {
         finalize(() => this.loading = false)
       )
       .subscribe({
-        next: friends => this.friends = friends,
+        next: friends => {
+          this.friends = friends;
+          this.applyFilter();
+        },
         error: () => {
           this.friends = [];
+          this.filteredFriends = [];
           this.errorMessage = t('feedback.friends.loadError');
         }
       });
@@ -162,6 +158,7 @@ export class FriendsComponent implements OnInit {
       .subscribe({
         next: () => {
           this.friends = this.friends.filter(item => item.username !== friend.username);
+          this.applyFilter();
           this.pendingRemovalUsername = null;
           this.openActionsUsername = null;
           this.actionSuccess = t('feedback.friends.removed', { username: friend.username });
@@ -198,6 +195,20 @@ export class FriendsComponent implements OnInit {
       .slice(0, 2)
       .map(value => value.charAt(0).toUpperCase())
       .join('');
+  }
+
+  private applyFilter(): void {
+    const term = this.filter.trim().toLowerCase();
+    if (!term) {
+      this.filteredFriends = this.friends;
+      return;
+    }
+
+    this.filteredFriends = this.friends.filter(friend =>
+      friend.username.toLowerCase().includes(term)
+      || (friend.nickname ?? '').toLowerCase().includes(term)
+      || (friend.fullName ?? '').toLowerCase().includes(term)
+    );
   }
 
   private errorFrom(error: HttpErrorResponse, fallback: string): string {
