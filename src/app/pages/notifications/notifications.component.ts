@@ -16,6 +16,11 @@ import { AuthenticationService } from '../../services/authethication.service';
   standalone: false
 })
 export class NotificationsComponent implements OnInit {
+  private readonly dateTimeFormatter = new Intl.DateTimeFormat('pt-PT', {
+    dateStyle: 'short',
+    timeStyle: 'short'
+  });
+
   notifications: AppNotification[] = [];
   selected?: AppNotification;
 
@@ -340,10 +345,7 @@ export class NotificationsComponent implements OnInit {
       return value;
     }
 
-    return new Intl.DateTimeFormat('pt-PT', {
-      dateStyle: 'short',
-      timeStyle: 'short'
-    }).format(new Date(timestamp));
+    return this.dateTimeFormatter.format(new Date(timestamp));
   }
 
   typeLabel(notification: AppNotification): string {
