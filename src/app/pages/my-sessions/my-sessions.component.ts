@@ -120,9 +120,16 @@ export class MySessionsComponent implements OnInit {
       )
       .subscribe({
         next: () => {
+          this.data = {
+            ...this.data,
+            created: this.data.created.map(session =>
+              session.id === sessionId
+                ? { ...session, status: 'CANCELLED' }
+                : session
+            )
+          };
           this.pendingCancelId = null;
           this.actionMessage = t('feedback.sessions.cancelled');
-          this.load();
         },
         error: error => {
           this.actionError = this.errorFrom(error, t('feedback.sessions.cancelError'));
