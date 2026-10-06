@@ -159,9 +159,6 @@ export class DiscoverComponent implements OnInit {
     return this.communityService.findProfiles({
       sport: sport || undefined,
       location: location || undefined
-    }).pipe(
-      catchError(() => this.communityService.discoverProfiles()
-        .pipe(catchError(() => of([]))))
-    );
+    });
   }
 }
