@@ -181,7 +181,13 @@ export class DirectChatComponent implements OnInit, OnDestroy {
       )
       .subscribe({
         next: message => {
-          this.messages = this.sorted([...this.messages, message]);
+          const alreadyPresent = message.id !== null
+            && this.messages.some(existing => existing.id === message.id);
+
+          if (!alreadyPresent) {
+            this.messages = this.sorted([...this.messages, message]);
+          }
+
           this.messageBody = '';
           this.showEmojiPicker = false;
         },
