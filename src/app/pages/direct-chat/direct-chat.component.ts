@@ -40,6 +40,7 @@ export class DirectChatComponent implements OnInit, OnDestroy {
     timeStyle: 'short'
   });
   private readonly realtimeSubscriptions = new Subscription();
+  private initialRealtimeConnection = true;
 
   constructor(
     private route: ActivatedRoute,
@@ -77,9 +78,16 @@ export class DirectChatComponent implements OnInit, OnDestroy {
 
     this.realtimeSubscriptions.add(
       this.realtimeService.connected$.subscribe(connected => {
-        if (connected) {
-          this.refreshMessages();
+        if (!connected) {
+          return;
         }
+
+        if (this.initialRealtimeConnection) {
+          this.initialRealtimeConnection = false;
+          return;
+        }
+
+        this.refreshMessages();
       })
     );
   }
