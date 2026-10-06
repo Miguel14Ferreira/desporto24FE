@@ -153,8 +153,7 @@ export class DiscoverComponent implements OnInit {
     location: string
   ): Observable<CommunityProfile[]> {
     if (!sport && !location) {
-      return this.communityService.discoverProfiles()
-        .pipe(catchError(() => of([])));
+      return of([]);
     }
 
     return this.communityService.findProfiles({
