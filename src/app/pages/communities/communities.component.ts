@@ -47,6 +47,7 @@ export class CommunitiesComponent implements OnInit {
   selected?: CommunityGroup;
   competition?: CommunityCompetitionOverview;
   maxStandingPoints = 0;
+  topGoalsStanding?: CommunityStanding;
   communitySessions: SessionSummary[] = [];
 
   loading = false;
@@ -554,6 +555,10 @@ export class CommunitiesComponent implements OnInit {
             0,
             ...competition.standings.map(item => item.points)
           );
+          this.topGoalsStanding = competition.standings.reduce<CommunityStanding | undefined>(
+            (best, row) => !best || row.goals > best.goals || (row.goals === best.goals && row.position < best.position) ? row : best,
+            undefined
+          );
           this.selectedSeasonId = competition.selectedSeasonId;
           this.rankingsEnabledDraft = competition.settings.rankingsEnabled;
           this.winPointsDraft = competition.settings.winPoints;
@@ -563,6 +568,7 @@ export class CommunitiesComponent implements OnInit {
         error: () => {
           this.competition = undefined;
           this.maxStandingPoints = 0;
+          this.topGoalsStanding = undefined;
           this.errorMessage = t('feedback.communities.competitionLoadError');
         }
       });
@@ -1161,6 +1167,7 @@ export class CommunitiesComponent implements OnInit {
         this.selected = undefined;
         this.competition = undefined;
         this.maxStandingPoints = 0;
+        this.topGoalsStanding = undefined;
         this.communitySessions = [];
       },
       error: error => this.errorMessage = error.error?.message || t('feedback.communities.leaveError')
@@ -1340,7 +1347,7 @@ export class CommunitiesComponent implements OnInit {
   }
 
   topGoals(): CommunityStanding | undefined {
-    return this.topBy('goals');
+    return this.topGoalsStanding;
   }
 
   topAssists(): CommunityStanding | undefined {
