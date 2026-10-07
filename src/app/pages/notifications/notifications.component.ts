@@ -22,6 +22,7 @@ export class NotificationsComponent implements OnInit {
   });
 
   notifications: AppNotification[] = [];
+  unreadCount = 0;
   selected?: AppNotification;
 
   loading = false;
@@ -45,10 +46,6 @@ export class NotificationsComponent implements OnInit {
     this.load();
   }
 
-  get unreadCount(): number {
-    return this.notifications.filter(notification => !notification.read).length;
-  }
-
   load(): void {
     this.loading = true;
     this.errorMessage = '';
@@ -64,6 +61,7 @@ export class NotificationsComponent implements OnInit {
           this.notifications = [...notifications].sort(
             (a, b) => this.timestamp(b.createdAt) - this.timestamp(a.createdAt)
           );
+          this.updateUnreadCount();
 
           const routeId = Number(this.route.snapshot.paramMap.get('id'));
           if (Number.isFinite(routeId) && routeId > 0) {
@@ -75,6 +73,7 @@ export class NotificationsComponent implements OnInit {
         },
         error: () => {
           this.notifications = [];
+          this.updateUnreadCount();
           this.errorMessage = t('feedback.notifications.loadError');
         }
       });
@@ -92,11 +91,13 @@ export class NotificationsComponent implements OnInit {
 
     if (!notification.read) {
       notification.read = true;
+      this.updateUnreadCount();
       this.notificationService.markRead(notification.id)
         .pipe(timeout(10_000))
         .subscribe({
           error: () => {
             notification.read = false;
+            this.updateUnreadCount();
           }
         });
     }
@@ -135,6 +136,7 @@ export class NotificationsComponent implements OnInit {
       .subscribe({
         next: () => {
           this.notifications = [];
+          this.updateUnreadCount();
           this.selected = undefined;
           this.clearAllConfirming = false;
           this.accountBlockConfirming = false;
@@ -270,6 +272,7 @@ export class NotificationsComponent implements OnInit {
       .subscribe({
         next: () => {
           this.notifications = this.notifications.filter(item => item.id !== notification.id);
+          this.updateUnreadCount();
           if (this.selected?.id === notification.id) {
             this.selected = undefined;
             this.router.navigate(['/menu/notifications']);
@@ -299,6 +302,7 @@ export class NotificationsComponent implements OnInit {
       .subscribe({
         next: () => {
           this.notifications = this.notifications.filter(item => item.id !== notification.id);
+          this.updateUnreadCount();
           this.selected = undefined;
           this.actionSuccess = t('feedback.notifications.friendAccepted');
           this.router.navigate(['/menu/notifications']);
@@ -326,6 +330,7 @@ export class NotificationsComponent implements OnInit {
       .subscribe({
         next: () => {
           this.notifications = this.notifications.filter(item => item.id !== notification.id);
+          this.updateUnreadCount();
           this.selected = undefined;
           this.actionSuccess = t('feedback.notifications.friendRejected');
           this.router.navigate(['/menu/notifications']);
@@ -363,6 +368,10 @@ export class NotificationsComponent implements OnInit {
       default:
         return notification.friendRequest ? t('notification.friendRequest') : t('notification.generic');
     }
+  }
+
+  private updateUnreadCount(): void {
+    this.unreadCount = this.notifications.filter(notification => !notification.read).length;
   }
 
   private timestamp(value: string): number {
