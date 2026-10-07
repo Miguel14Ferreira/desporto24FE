@@ -55,6 +55,7 @@ export class CommunitiesComponent implements OnInit {
   bestWinRateStanding?: CommunityStanding;
   bestWinStreakStanding?: CommunityStanding;
   standingsByUsername = new Map<string, CommunityStanding>();
+  activeCommunitySeason?: CommunitySeason;
   communitySessions: SessionSummary[] = [];
 
   loading = false;
@@ -593,6 +594,9 @@ export class CommunitiesComponent implements OnInit {
           this.standingsByUsername = new Map(
             competition.standings.map(row => [row.username, row])
           );
+          this.activeCommunitySeason = competition.seasons.find(
+            season => season.id === competition.activeSeasonId
+          );
           this.selectedSeasonId = competition.selectedSeasonId;
           this.rankingsEnabledDraft = competition.settings.rankingsEnabled;
           this.winPointsDraft = competition.settings.winPoints;
@@ -610,6 +614,7 @@ export class CommunitiesComponent implements OnInit {
           this.bestWinRateStanding = undefined;
           this.bestWinStreakStanding = undefined;
           this.standingsByUsername.clear();
+          this.activeCommunitySeason = undefined;
           this.errorMessage = t('feedback.communities.competitionLoadError');
         }
       });
@@ -1216,6 +1221,7 @@ export class CommunitiesComponent implements OnInit {
         this.bestWinRateStanding = undefined;
         this.bestWinStreakStanding = undefined;
         this.standingsByUsername.clear();
+        this.activeCommunitySeason = undefined;
         this.communitySessions = [];
       },
       error: error => this.errorMessage = error.error?.message || t('feedback.communities.leaveError')
@@ -1346,8 +1352,7 @@ export class CommunitiesComponent implements OnInit {
   }
 
   activeSeason(): CommunitySeason | undefined {
-    const activeId = this.competition?.activeSeasonId;
-    return this.competition?.seasons.find(season => season.id === activeId);
+    return this.activeCommunitySeason;
   }
 
   trophies(): CommunitySeason[] {
