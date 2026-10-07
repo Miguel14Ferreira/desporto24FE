@@ -22,6 +22,10 @@ import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.s
   standalone: false
 })
 export class SessionDetailsComponent implements OnInit, OnDestroy {
+  private readonly messageDateFormatter = new Intl.DateTimeFormat('pt-PT', {
+    dateStyle: 'short',
+    timeStyle: 'short'
+  });
   session?: SessionDetail;
   messages: SessionMessage[] = [];
   creatorReliability?: ReliabilitySummary;
@@ -510,10 +514,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
       return message.createdAt;
     }
 
-    return new Intl.DateTimeFormat('pt-PT', {
-      dateStyle: 'short',
-      timeStyle: 'short'
-    }).format(new Date(parsed));
+    return this.messageDateFormatter.format(new Date(parsed));
   }
 
   private appendMessageIfMissing(message: SessionMessage): void {
