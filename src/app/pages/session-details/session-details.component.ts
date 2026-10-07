@@ -254,6 +254,9 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
       .subscribe({
         next: participants => {
           this.sessionParticipants = participants;
+          if (this.isCreator()) {
+            this.participants = participants;
+          }
           this.teamAParticipants = participants.filter(participant => participant.teamCode === 'A');
           this.teamBParticipants = participants.filter(participant => participant.teamCode === 'B');
           this.confirmedTeams = this.teamAParticipants.length > 0 || this.teamBParticipants.length > 0;
