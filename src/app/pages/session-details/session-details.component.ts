@@ -31,6 +31,8 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
   creatorReliability?: ReliabilitySummary;
   participants: SessionParticipant[] = [];
   sessionParticipants: SessionParticipant[] = [];
+  teamAParticipants: SessionParticipant[] = [];
+  teamBParticipants: SessionParticipant[] = [];
 
   loading = false;
   actionLoading = false;
@@ -249,9 +251,15 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
         finalize(() => this.sessionParticipantsLoading = false)
       )
       .subscribe({
-        next: participants => this.sessionParticipants = participants,
+        next: participants => {
+          this.sessionParticipants = participants;
+          this.teamAParticipants = participants.filter(participant => participant.teamCode === 'A');
+          this.teamBParticipants = participants.filter(participant => participant.teamCode === 'B');
+        },
         error: error => {
           this.sessionParticipants = [];
+          this.teamAParticipants = [];
+          this.teamBParticipants = [];
           this.sessionParticipantsError = this.errorFrom(
             error,
             t('feedback.session.participantsError')
@@ -657,7 +665,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
   }
 
   teamParticipants(code: 'A' | 'B'): SessionParticipant[] {
-    return this.sessionParticipants.filter(participant => participant.teamCode === code);
+    return code === 'A' ? this.teamAParticipants : this.teamBParticipants;
   }
 
   hasConfirmedTeams(): boolean {
@@ -851,6 +859,8 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
             this.refreshMessages();
           } else {
             this.sessionParticipants = [];
+            this.teamAParticipants = [];
+            this.teamBParticipants = [];
             this.sessionParticipantsError = '';
             this.messages = [];
             this.chatError = '';
