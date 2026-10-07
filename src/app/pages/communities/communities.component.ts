@@ -46,6 +46,7 @@ export class CommunitiesComponent implements OnInit {
   invites: CommunityInvite[] = [];
   selected?: CommunityGroup;
   competition?: CommunityCompetitionOverview;
+  maxStandingPoints = 0;
   communitySessions: SessionSummary[] = [];
 
   loading = false;
@@ -549,6 +550,10 @@ export class CommunitiesComponent implements OnInit {
       .subscribe({
         next: competition => {
           this.competition = competition;
+          this.maxStandingPoints = Math.max(
+            0,
+            ...competition.standings.map(item => item.points)
+          );
           this.selectedSeasonId = competition.selectedSeasonId;
           this.rankingsEnabledDraft = competition.settings.rankingsEnabled;
           this.winPointsDraft = competition.settings.winPoints;
@@ -557,6 +562,7 @@ export class CommunitiesComponent implements OnInit {
         },
         error: () => {
           this.competition = undefined;
+          this.maxStandingPoints = 0;
           this.errorMessage = t('feedback.communities.competitionLoadError');
         }
       });
@@ -1154,6 +1160,7 @@ export class CommunitiesComponent implements OnInit {
         this.communities = this.communities.filter(item => item.id !== id);
         this.selected = undefined;
         this.competition = undefined;
+        this.maxStandingPoints = 0;
         this.communitySessions = [];
       },
       error: error => this.errorMessage = error.error?.message || t('feedback.communities.leaveError')
@@ -1319,12 +1326,13 @@ export class CommunitiesComponent implements OnInit {
   }
 
   pointsBarWidth(row: CommunityStanding): number {
-    const standings = this.competition?.standings || [];
-    const maxPoints = Math.max(0, ...standings.map(item => item.points));
-    if (maxPoints <= 0) {
+    if (this.maxStandingPoints <= 0) {
       return 0;
     }
-    return Math.max(4, Math.round((row.points / maxPoints) * 100));
+    return Math.max(
+      4,
+      Math.round((row.points / this.maxStandingPoints) * 100)
+    );
   }
 
   leader(): CommunityStanding | undefined {
