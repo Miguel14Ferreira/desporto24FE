@@ -31,14 +31,9 @@ import { MySessionsComponent } from './pages/my-sessions/my-sessions.component';
 import { NotificationsComponent } from './pages/notifications/notifications.component';
 import { FriendsComponent } from './pages/friends/friends.component';
 import { DirectChatComponent } from './pages/direct-chat/direct-chat.component';
-import { AdminDisputesComponent } from './pages/admin-disputes/admin-disputes.component';
-import { AdminPlayersComponent } from './pages/admin-players/admin-players.component';
-import { AdminDashboardComponent } from './pages/admin-dashboard/admin-dashboard.component';
 import { GoogleOnboardingComponent } from './pages/google-onboarding/google-onboarding.component';
 import { CommunitiesComponent } from './pages/communities/communities.component';
 import { CommunityCreateComponent } from './pages/community-create/community-create.component';
-import { AdminIdeasComponent } from './pages/admin-ideas/admin-ideas.component';
-import { AdminUserReportsComponent } from './pages/admin-user-reports/admin-user-reports.component';
 import { NotFoundComponent } from './pages/not-found/not-found.component';
 import { SocialFeedComponent } from './pages/social-feed/social-feed.component';
 import { DiscoverComponent } from './pages/discover/discover.component';
@@ -72,11 +67,6 @@ import { LegalPageComponent } from './pages/legal-page/legal-page.component';
         NotificationsComponent,
         FriendsComponent,
         DirectChatComponent,
-        AdminDisputesComponent,
-        AdminDashboardComponent,
-        AdminPlayersComponent,
-        AdminIdeasComponent,
-        AdminUserReportsComponent,
         GoogleOnboardingComponent,
         CommunitiesComponent,
         CommunityCreateComponent,
@@ -85,12 +75,12 @@ import { LegalPageComponent } from './pages/legal-page/legal-page.component';
         DiscoverComponent,
         VenueDetailsComponent,
         VenueCreateComponent,
-        LegalPageComponent,
-        TranslatePipe
+        LegalPageComponent
     ],
     bootstrap: [AppComponent], imports: [BrowserModule,
         AppRoutingModule,
         FormsModule,
         ReactiveFormsModule,
-        BrowserAnimationsModule], providers: [AuthenticationGuard, AuthenticationService, { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }, provideHttpClient(withXhr(), withInterceptorsFromDi())] })
+        BrowserAnimationsModule,
+        TranslatePipe], providers: [AuthenticationGuard, AuthenticationService, { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }, provideHttpClient(withXhr(), withInterceptorsFromDi())] })
 export class AppModule { }

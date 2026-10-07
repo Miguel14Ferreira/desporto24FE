@@ -22,14 +22,9 @@ import { FriendsComponent } from './pages/friends/friends.component';
 import { DirectChatComponent } from './pages/direct-chat/direct-chat.component';
 import { AuthenticationGuard } from './guard/authentication.guard';
 import { AdminGuard } from './guard/admin.guard';
-import { AdminDisputesComponent } from './pages/admin-disputes/admin-disputes.component';
-import { AdminPlayersComponent } from './pages/admin-players/admin-players.component';
-import { AdminDashboardComponent } from './pages/admin-dashboard/admin-dashboard.component';
 import { GoogleOnboardingComponent } from './pages/google-onboarding/google-onboarding.component';
 import { CommunitiesComponent } from './pages/communities/communities.component';
 import { CommunityCreateComponent } from './pages/community-create/community-create.component';
-import { AdminIdeasComponent } from './pages/admin-ideas/admin-ideas.component';
-import { AdminUserReportsComponent } from './pages/admin-user-reports/admin-user-reports.component';
 import { NotFoundComponent } from './pages/not-found/not-found.component';
 import { SocialFeedComponent } from './pages/social-feed/social-feed.component';
 import { DiscoverComponent } from './pages/discover/discover.component';
@@ -84,11 +79,7 @@ const routes: Routes = [
   {path:'menu/communities/create',component:CommunityCreateComponent,canActivate:[AuthenticationGuard]},
   {path:'menu/communities/:id',component:CommunitiesComponent,canActivate:[AuthenticationGuard]},
   {path:'menu/communities',component:CommunitiesComponent,canActivate:[AuthenticationGuard]},
-  {path:'menu/admin',component:AdminDashboardComponent,canActivate:[AuthenticationGuard,AdminGuard]},
-  {path:'menu/admin/players',component:AdminPlayersComponent,canActivate:[AuthenticationGuard,AdminGuard]},
-  {path:'menu/admin/attendance-disputes',component:AdminDisputesComponent,canActivate:[AuthenticationGuard,AdminGuard]},
-  {path:'menu/admin/ideas',component:AdminIdeasComponent,canActivate:[AuthenticationGuard,AdminGuard]},
-  {path:'menu/admin/reports',component:AdminUserReportsComponent,canActivate:[AuthenticationGuard,AdminGuard]},
+  {path:'menu/admin',loadChildren:() => import('./pages/admin/admin.module').then(m => m.AdminModule),canActivate:[AuthenticationGuard,AdminGuard]},
   {path:'menu/terminarSessao',redirectTo:'menu',pathMatch:'full'},
   {path:'**',component:NotFoundComponent}
 ];
