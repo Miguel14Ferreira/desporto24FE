@@ -24,6 +24,7 @@ export class PerfilDataComponent implements OnInit {
   loading = false;
   errorMessage = '';
   favoritesExpanded = false;
+  favoriteSports: string[] = [];
   readonly iconForSport = sportIcon;
 
   constructor(
@@ -48,6 +49,10 @@ export class PerfilDataComponent implements OnInit {
       .subscribe({
         next: profile => {
           this.profile = profile;
+          this.favoriteSports = (profile.favoriteSports || '')
+            .split(',')
+            .map(value => value.trim())
+            .filter(Boolean);
           this.loadReliability(profile.username);
           this.loadActivity(profile.username);
         },
@@ -61,13 +66,6 @@ export class PerfilDataComponent implements OnInit {
 
   get completionMissingPreview() {
     return this.profileCompletion.missing.slice(0, 3);
-  }
-
-  get favoriteSports(): string[] {
-    return (this.profile?.favoriteSports || '')
-      .split(',')
-      .map(value => value.trim())
-      .filter(Boolean);
   }
 
   get visibleFavoriteSports(): string[] {
