@@ -6,7 +6,6 @@ import { ChangepasswordComponent } from './pages/changepassword/changepassword.c
 import { ContactComponent } from './pages/contact/contact.component';
 import { CreateaccountComponent } from './pages/createaccount/createaccount.component';
 import { EventsComponent } from './pages/events/events.component';
-import { Events2Component } from './pages/events2/events2.component';
 import { ForgotpComponent } from './pages/forgotp/forgotp.component';
 import { HomeComponent } from './pages/home/home.component';
 import { LoginComponent } from './pages/login/login.component';
@@ -49,14 +48,14 @@ const routes: Routes = [
   {path:'login',component:LoginComponent},
   {path:'login/registerNewUser',component:CreateaccountComponent},
   {path:'login/google/complete-profile',component:GoogleOnboardingComponent},
-  {path:'menu/createEvent',component:Events2Component,canActivate:[AuthenticationGuard]},
+  {path:'menu/createEvent',loadChildren:() => import('./pages/events2/create-event.module').then(m => m.CreateEventModule),canActivate:[AuthenticationGuard]},
   {path:'menu/createEvent/menu', redirectTo:'menu',pathMatch:'full'},
   {path:'login/registerNewUser/login', redirectTo:'login',pathMatch:'full'},
   {path:'menu/alterardados',component:AlterardadosComponent,canActivate:[AuthenticationGuard]},
   {path:'menu/alterardados/menu', redirectTo:'menu',pathMatch:'full'},
   {path:'menu/alterarPassword/menu', redirectTo:'menu',pathMatch:'full'},
   {path:'menu/alterarPassword', component:ChangepasswordComponent,canActivate:[AuthenticationGuard]},
-  {path:'menu/createEvents',component:Events2Component,canActivate:[AuthenticationGuard]},
+  {path:'menu/createEvents',loadChildren:() => import('./pages/events2/create-event.module').then(m => m.CreateEventModule),canActivate:[AuthenticationGuard]},
   {path:'menu/createEvents/menu',redirectTo:'menu',pathMatch:'full'},
   {path:'login/resetPassword',component:ForgotpComponent},
   {path:'menu/perfis',component:PerfisComponent,canActivate:[AuthenticationGuard]},

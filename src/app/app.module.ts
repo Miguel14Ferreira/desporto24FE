@@ -11,7 +11,6 @@ import { MenuComponent } from './pages/menu/menu.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi, withXhr } from '@angular/common/http';
 import { CreateaccountComponent } from './pages/createaccount/createaccount.component';
-import { Events2Component } from './pages/events2/events2.component';
 import { AlterardadosComponent } from './pages/alterardados/alterardados.component';
 import { ChangepasswordComponent } from './pages/changepassword/changepassword.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -52,7 +51,6 @@ import { LegalPageComponent } from './pages/legal-page/legal-page.component';
         LoginMFAComponent,
         CreateaccountComponent,
         PerfisComponent,
-        Events2Component,
         AlterardadosComponent,
         ChangepasswordComponent,
         ContactComponent,

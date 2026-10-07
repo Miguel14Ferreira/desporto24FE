@@ -1,0 +1,17 @@
+import { CommonModule } from '@angular/common';
+import { NgModule } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { RouterModule, Routes } from '@angular/router';
+
+import { TranslatePipe } from '../../i18n/translate.pipe';
+import { Events2Component } from './events2.component';
+
+const routes: Routes = [
+  { path: '', component: Events2Component }
+];
+
+@NgModule({
+  declarations: [Events2Component],
+  imports: [CommonModule, FormsModule, RouterModule.forChild(routes), TranslatePipe]
+})
+export class CreateEventModule {}
