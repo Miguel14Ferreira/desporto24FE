@@ -1412,19 +1412,6 @@ export class CommunitiesComponent implements OnInit {
     return this.selected?.myRole === 'OWNER';
   }
 
-  private topBy(
-    field: 'games' | 'goals' | 'assists' | 'mvps' | 'cleanSheets' | 'winRate' | 'bestWinStreak'
-  ): CommunityStanding | undefined {
-    const rows = this.competition?.standings || [];
-    if (rows.length === 0) {
-      return undefined;
-    }
-
-    return [...rows].sort((a, b) =>
-      b[field] - a[field] || a.position - b.position
-    )[0];
-  }
-
   private refreshSelected(): void {
     if (!this.selected) {
       return;
