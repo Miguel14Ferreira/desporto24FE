@@ -19,6 +19,10 @@ export class AdminUserReportsComponent implements OnInit {
   loading = false;
   updatingId: number | null = null;
   errorMessage = '';
+  private readonly dateTimeFormatter = new Intl.DateTimeFormat('pt-PT', {
+    dateStyle: 'short',
+    timeStyle: 'short'
+  });
 
   constructor(private adminUserReportsService: AdminUserReportsService) {}
 
@@ -81,9 +85,6 @@ export class AdminUserReportsComponent implements OnInit {
       return value;
     }
 
-    return new Intl.DateTimeFormat('pt-PT', {
-      dateStyle: 'short',
-      timeStyle: 'short'
-    }).format(date);
+    return this.dateTimeFormatter.format(date);
   }
 }
