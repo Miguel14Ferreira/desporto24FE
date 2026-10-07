@@ -32,8 +32,6 @@ import { NotificationsComponent } from './pages/notifications/notifications.comp
 import { FriendsComponent } from './pages/friends/friends.component';
 import { DirectChatComponent } from './pages/direct-chat/direct-chat.component';
 import { GoogleOnboardingComponent } from './pages/google-onboarding/google-onboarding.component';
-import { CommunitiesComponent } from './pages/communities/communities.component';
-import { CommunityCreateComponent } from './pages/community-create/community-create.component';
 import { NotFoundComponent } from './pages/not-found/not-found.component';
 import { SocialFeedComponent } from './pages/social-feed/social-feed.component';
 import { DiscoverComponent } from './pages/discover/discover.component';
@@ -68,8 +66,6 @@ import { LegalPageComponent } from './pages/legal-page/legal-page.component';
         FriendsComponent,
         DirectChatComponent,
         GoogleOnboardingComponent,
-        CommunitiesComponent,
-        CommunityCreateComponent,
         NotFoundComponent,
         SocialFeedComponent,
         DiscoverComponent,
