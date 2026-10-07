@@ -275,6 +275,7 @@ export class AlterardadosComponent implements OnInit {
       this.addSport(exactMatch);
     } else {
       this.sportQuery = '';
+      this.updateSportSuggestions();
     }
   }
 
@@ -292,6 +293,7 @@ export class AlterardadosComponent implements OnInit {
       this.addSport(exactMatch);
     } else {
       this.sportQuery = '';
+      this.updateSportSuggestions();
     }
   }
 
