@@ -54,6 +54,7 @@ export class CommunitiesComponent implements OnInit {
   mostGamesStanding?: CommunityStanding;
   bestWinRateStanding?: CommunityStanding;
   bestWinStreakStanding?: CommunityStanding;
+  standingsByUsername = new Map<string, CommunityStanding>();
   communitySessions: SessionSummary[] = [];
 
   loading = false;
@@ -589,6 +590,9 @@ export class CommunitiesComponent implements OnInit {
             (best, row) => !best || row.bestWinStreak > best.bestWinStreak || (row.bestWinStreak === best.bestWinStreak && row.position < best.position) ? row : best,
             undefined
           );
+          this.standingsByUsername = new Map(
+            competition.standings.map(row => [row.username, row])
+          );
           this.selectedSeasonId = competition.selectedSeasonId;
           this.rankingsEnabledDraft = competition.settings.rankingsEnabled;
           this.winPointsDraft = competition.settings.winPoints;
@@ -605,6 +609,7 @@ export class CommunitiesComponent implements OnInit {
           this.mostGamesStanding = undefined;
           this.bestWinRateStanding = undefined;
           this.bestWinStreakStanding = undefined;
+          this.standingsByUsername.clear();
           this.errorMessage = t('feedback.communities.competitionLoadError');
         }
       });
@@ -1210,6 +1215,7 @@ export class CommunitiesComponent implements OnInit {
         this.mostGamesStanding = undefined;
         this.bestWinRateStanding = undefined;
         this.bestWinStreakStanding = undefined;
+        this.standingsByUsername.clear();
         this.communitySessions = [];
       },
       error: error => this.errorMessage = error.error?.message || t('feedback.communities.leaveError')
@@ -1363,15 +1369,11 @@ export class CommunitiesComponent implements OnInit {
   }
 
   comparePlayerA(): CommunityStanding | undefined {
-    return this.competition?.standings.find(
-      row => row.username === this.compareUsernameA
-    );
+    return this.standingsByUsername.get(this.compareUsernameA);
   }
 
   comparePlayerB(): CommunityStanding | undefined {
-    return this.competition?.standings.find(
-      row => row.username === this.compareUsernameB
-    );
+    return this.standingsByUsername.get(this.compareUsernameB);
   }
 
   pointsBarWidth(row: CommunityStanding): number {
