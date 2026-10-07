@@ -17,6 +17,10 @@ export class NotificationApiService {
     return this.http.get<AppNotification[]>(this.baseUrl + '/me');
   }
 
+  unreadCount(): Observable<number> {
+    return this.http.get<number>(this.baseUrl + '/me/unread-count');
+  }
+
   blockOwnAccount(): Observable<void> {
     return this.http.post<void>(
       this.baseUrl + '/me/block',

@@ -93,14 +93,14 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
 
     loadUnreadNotifications(): void {
-      this.notificationService.mine()
+      this.notificationService.unreadCount()
         .pipe(
           timeout(10_000),
           retry({ count: 1 })
         )
         .subscribe({
-        next: notifications => {
-          this.unreadNotifications = notifications.filter(notification => !notification.read).length;
+        next: unreadCount => {
+          this.unreadNotifications = unreadCount;
         },
         error: () => this.unreadNotifications = 0
       });
