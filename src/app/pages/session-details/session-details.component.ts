@@ -33,6 +33,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
   sessionParticipants: SessionParticipant[] = [];
   teamAParticipants: SessionParticipant[] = [];
   teamBParticipants: SessionParticipant[] = [];
+  confirmedTeams = false;
 
   loading = false;
   actionLoading = false;
@@ -255,11 +256,13 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
           this.sessionParticipants = participants;
           this.teamAParticipants = participants.filter(participant => participant.teamCode === 'A');
           this.teamBParticipants = participants.filter(participant => participant.teamCode === 'B');
+          this.confirmedTeams = this.teamAParticipants.length > 0 || this.teamBParticipants.length > 0;
         },
         error: error => {
           this.sessionParticipants = [];
           this.teamAParticipants = [];
           this.teamBParticipants = [];
+          this.confirmedTeams = false;
           this.sessionParticipantsError = this.errorFrom(
             error,
             t('feedback.session.participantsError')
@@ -669,9 +672,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
   }
 
   hasConfirmedTeams(): boolean {
-    return this.sessionParticipants.some(
-      participant => participant.teamCode === 'A' || participant.teamCode === 'B'
-    );
+    return this.confirmedTeams;
   }
 
   joinButtonLabel(): string {
@@ -861,6 +862,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
             this.sessionParticipants = [];
             this.teamAParticipants = [];
             this.teamBParticipants = [];
+            this.confirmedTeams = false;
             this.sessionParticipantsError = '';
             this.messages = [];
             this.chatError = '';
