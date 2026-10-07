@@ -26,6 +26,7 @@ export class DiscoverComponent implements OnInit {
   sessions: SessionSummary[] = [];
   topSessionResults: SessionSummary[] = [];
   people: CommunityProfile[] = [];
+  topPeopleResults: CommunityProfile[] = [];
 
   loading = false;
   initialized = false;
@@ -107,6 +108,7 @@ export class DiscoverComponent implements OnInit {
         this.sessions = sessions;
         this.topSessionResults = sessions.slice(0, 4);
         this.people = people;
+        this.topPeopleResults = people.slice(0, 4);
       });
   }
 
@@ -129,7 +131,7 @@ export class DiscoverComponent implements OnInit {
   }
 
   get topPeople(): CommunityProfile[] {
-    return this.people.slice(0, 4);
+    return this.topPeopleResults;
   }
 
   vacancies(session: SessionSummary): number {
