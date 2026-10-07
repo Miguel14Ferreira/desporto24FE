@@ -35,6 +35,7 @@ export class PerfisComponent implements OnInit, OnDestroy {
   private profileSubscription?: Subscription;
   private detailSubscription?: Subscription;
   profilePage = false;
+  backToFriends = false;
 
   profiles: CommunityProfile[] = [];
   selectedProfile?: CommunityProfile;
@@ -70,11 +71,8 @@ export class PerfisComponent implements OnInit, OnDestroy {
     this.currentUsername = this.authenticationService.loggedInPerfilname || '';
   }
 
-  get backToFriends(): boolean {
-    return this.route.snapshot.queryParamMap.get('from') === 'friends';
-  }
-
   ngOnInit(): void {
+    this.backToFriends = this.route.snapshot.queryParamMap.get('from') === 'friends';
     this.loadFriendUsernames();
     this.routeSubscription = this.route.paramMap.subscribe(params => {
       const username = params.get('username');
