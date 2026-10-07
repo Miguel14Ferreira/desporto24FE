@@ -42,6 +42,7 @@ export class AlterardadosComponent implements OnInit {
   toastMessage = '';
   sportQuery = '';
   selectedSports: string[] = [];
+  sportSuggestions: string[] = [];
   fieldErrors: Partial<Record<'email' | 'dateOfBirth' | 'country' | 'phone' | 'bio', string>> = {};
   readonly sportsCatalog = SPORTS_CATALOG;
   readonly iconForSport = sportIcon;
@@ -86,6 +87,7 @@ export class AlterardadosComponent implements OnInit {
             .map(value => value.trim())
             .filter(value => this.sportsCatalog.includes(value));
           this.syncFavoriteSports();
+          this.updateSportSuggestions();
         },
         error: () => this.errorMessage = t('feedback.profile.dataLoadError')
       });
@@ -233,9 +235,9 @@ export class AlterardadosComponent implements OnInit {
     return countryNameFromLabel(label);
   }
 
-  get sportSuggestions(): string[] {
+  updateSportSuggestions(): void {
     const query = this.sportQuery.trim().toLocaleLowerCase('pt');
-    return this.sportsCatalog
+    this.sportSuggestions = this.sportsCatalog
       .filter(sport => !this.selectedSports.includes(sport))
       .filter(sport => !query || sport.toLocaleLowerCase('pt').includes(query))
       .slice(0, 8);
@@ -249,11 +251,13 @@ export class AlterardadosComponent implements OnInit {
     this.selectedSports = [...this.selectedSports, sport];
     this.sportQuery = '';
     this.syncFavoriteSports();
+    this.updateSportSuggestions();
   }
 
   removeSport(sport: string): void {
     this.selectedSports = this.selectedSports.filter(item => item !== sport);
     this.syncFavoriteSports();
+    this.updateSportSuggestions();
   }
 
   onSportSearchKeydown(event: KeyboardEvent): void {
