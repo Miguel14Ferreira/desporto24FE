@@ -24,6 +24,7 @@ export class DiscoverComponent implements OnInit {
   location = '';
   venues: Venue[] = [];
   sessions: SessionSummary[] = [];
+  topSessionResults: SessionSummary[] = [];
   people: CommunityProfile[] = [];
 
   loading = false;
@@ -104,6 +105,7 @@ export class DiscoverComponent implements OnInit {
       .subscribe(({ venues, sessions, people }) => {
         this.venues = venues;
         this.sessions = sessions;
+        this.topSessionResults = sessions.slice(0, 4);
         this.people = people;
       });
   }
@@ -123,7 +125,7 @@ export class DiscoverComponent implements OnInit {
   }
 
   get topSessions(): SessionSummary[] {
-    return this.sessions.slice(0, 4);
+    return this.topSessionResults;
   }
 
   get topPeople(): CommunityProfile[] {
