@@ -239,6 +239,7 @@
               type="search"
               name="sportQuery"
               [(ngModel)]="sportQuery"
+              (ngModelChange)="updateSportSuggestions()"
               autocomplete="off"
               [disabled]="saving"
               (keydown)="onSportSearchKeydown($event)"
