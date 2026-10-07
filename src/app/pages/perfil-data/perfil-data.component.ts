@@ -8,7 +8,7 @@ import { ReliabilitySummary } from '../model/reliability-summary';
 import { MyProfileService } from '../../services/my-profile.service';
 import { ReliabilityService } from '../../services/reliability.service';
 import { sportIcon } from '../../shared/sports-catalog';
-import { calculateProfileCompletion } from '../../shared/profile-completion';
+import { calculateProfileCompletion, ProfileCompletion, ProfileCompletionItem } from '../../shared/profile-completion';
 
 @Component({
   selector: 'app-perfil-data',
@@ -25,6 +25,8 @@ export class PerfilDataComponent implements OnInit {
   errorMessage = '';
   favoritesExpanded = false;
   favoriteSports: string[] = [];
+  profileCompletion: ProfileCompletion = calculateProfileCompletion();
+  completionMissingPreview: ProfileCompletionItem[] = [];
   readonly iconForSport = sportIcon;
 
   constructor(
@@ -49,6 +51,8 @@ export class PerfilDataComponent implements OnInit {
       .subscribe({
         next: profile => {
           this.profile = profile;
+          this.profileCompletion = calculateProfileCompletion(profile);
+          this.completionMissingPreview = this.profileCompletion.missing.slice(0, 3);
           this.favoriteSports = (profile.favoriteSports || '')
             .split(',')
             .map(value => value.trim())
@@ -58,14 +62,6 @@ export class PerfilDataComponent implements OnInit {
         },
         error: () => this.errorMessage = t('feedback.profile.loadError')
       });
-  }
-
-  get profileCompletion() {
-    return calculateProfileCompletion(this.profile);
-  }
-
-  get completionMissingPreview() {
-    return this.profileCompletion.missing.slice(0, 3);
   }
 
   get visibleFavoriteSports(): string[] {
