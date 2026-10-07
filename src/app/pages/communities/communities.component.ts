@@ -51,6 +51,7 @@ export class CommunitiesComponent implements OnInit {
   topAssistsStanding?: CommunityStanding;
   topMvpsStanding?: CommunityStanding;
   topCleanSheetsStanding?: CommunityStanding;
+  mostGamesStanding?: CommunityStanding;
   communitySessions: SessionSummary[] = [];
 
   loading = false;
@@ -574,6 +575,10 @@ export class CommunitiesComponent implements OnInit {
             (best, row) => !best || row.cleanSheets > best.cleanSheets || (row.cleanSheets === best.cleanSheets && row.position < best.position) ? row : best,
             undefined
           );
+          this.mostGamesStanding = competition.standings.reduce<CommunityStanding | undefined>(
+            (best, row) => !best || row.games > best.games || (row.games === best.games && row.position < best.position) ? row : best,
+            undefined
+          );
           this.selectedSeasonId = competition.selectedSeasonId;
           this.rankingsEnabledDraft = competition.settings.rankingsEnabled;
           this.winPointsDraft = competition.settings.winPoints;
@@ -587,6 +592,7 @@ export class CommunitiesComponent implements OnInit {
           this.topAssistsStanding = undefined;
           this.topMvpsStanding = undefined;
           this.topCleanSheetsStanding = undefined;
+          this.mostGamesStanding = undefined;
           this.errorMessage = t('feedback.communities.competitionLoadError');
         }
       });
@@ -1189,6 +1195,7 @@ export class CommunitiesComponent implements OnInit {
         this.topAssistsStanding = undefined;
         this.topMvpsStanding = undefined;
         this.topCleanSheetsStanding = undefined;
+        this.mostGamesStanding = undefined;
         this.communitySessions = [];
       },
       error: error => this.errorMessage = error.error?.message || t('feedback.communities.leaveError')
@@ -1330,7 +1337,7 @@ export class CommunitiesComponent implements OnInit {
   }
 
   mostGames(): CommunityStanding | undefined {
-    return this.topBy('games');
+    return this.mostGamesStanding;
   }
 
   bestWinRate(): CommunityStanding | undefined {
