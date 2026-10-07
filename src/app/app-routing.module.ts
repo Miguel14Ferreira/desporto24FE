@@ -18,7 +18,6 @@ import { SessionDetailsComponent } from './pages/session-details/session-details
 import { MySessionsComponent } from './pages/my-sessions/my-sessions.component';
 import { NotificationsComponent } from './pages/notifications/notifications.component';
 import { FriendsComponent } from './pages/friends/friends.component';
-import { DirectChatComponent } from './pages/direct-chat/direct-chat.component';
 import { AuthenticationGuard } from './guard/authentication.guard';
 import { AdminGuard } from './guard/admin.guard';
 import { GoogleOnboardingComponent } from './pages/google-onboarding/google-onboarding.component';
@@ -69,8 +68,8 @@ const routes: Routes = [
   {path:'login/MFAauthentication', component: LoginMFAComponent},
   {path:'menu', redirectTo:'/menu/feed', pathMatch:'full'},
   {path:'menu/friendList',component:FriendsComponent,canActivate:[AuthenticationGuard]},
-  {path:'menu/friendList/chat/:username',component:DirectChatComponent,canActivate:[AuthenticationGuard]},
-  {path:'menu/friendList/chat/:username1/:username2',component:DirectChatComponent,canActivate:[AuthenticationGuard]},
+  {path:'menu/friendList/chat/:username',loadChildren:() => import('./pages/direct-chat/direct-chat.module').then(m => m.DirectChatModule),canActivate:[AuthenticationGuard]},
+  {path:'menu/friendList/chat/:username1/:username2',loadChildren:() => import('./pages/direct-chat/direct-chat.module').then(m => m.DirectChatModule),canActivate:[AuthenticationGuard]},
   {path:'menu/notifications',component:NotificationsComponent,canActivate:[AuthenticationGuard]},
   {path:'menu/notifications/:id',component:NotificationsComponent,canActivate:[AuthenticationGuard]},
   {path:'menu/communities',loadChildren:() => import('./pages/communities/communities.module').then(m => m.CommunitiesModule),canActivate:[AuthenticationGuard]},

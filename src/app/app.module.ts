@@ -29,7 +29,6 @@ import { SessionDetailsComponent } from './pages/session-details/session-details
 import { MySessionsComponent } from './pages/my-sessions/my-sessions.component';
 import { NotificationsComponent } from './pages/notifications/notifications.component';
 import { FriendsComponent } from './pages/friends/friends.component';
-import { DirectChatComponent } from './pages/direct-chat/direct-chat.component';
 import { GoogleOnboardingComponent } from './pages/google-onboarding/google-onboarding.component';
 import { NotFoundComponent } from './pages/not-found/not-found.component';
 import { SocialFeedComponent } from './pages/social-feed/social-feed.component';
@@ -62,7 +61,6 @@ import { LegalPageComponent } from './pages/legal-page/legal-page.component';
         MySessionsComponent,
         NotificationsComponent,
         FriendsComponent,
-        DirectChatComponent,
         GoogleOnboardingComponent,
         NotFoundComponent,
         SocialFeedComponent,
