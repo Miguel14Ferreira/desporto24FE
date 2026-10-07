@@ -53,6 +53,7 @@ export class CommunitiesComponent implements OnInit {
   topCleanSheetsStanding?: CommunityStanding;
   mostGamesStanding?: CommunityStanding;
   bestWinRateStanding?: CommunityStanding;
+  bestWinStreakStanding?: CommunityStanding;
   communitySessions: SessionSummary[] = [];
 
   loading = false;
@@ -584,6 +585,10 @@ export class CommunitiesComponent implements OnInit {
             (best, row) => !best || row.winRate > best.winRate || (row.winRate === best.winRate && row.position < best.position) ? row : best,
             undefined
           );
+          this.bestWinStreakStanding = competition.standings.reduce<CommunityStanding | undefined>(
+            (best, row) => !best || row.bestWinStreak > best.bestWinStreak || (row.bestWinStreak === best.bestWinStreak && row.position < best.position) ? row : best,
+            undefined
+          );
           this.selectedSeasonId = competition.selectedSeasonId;
           this.rankingsEnabledDraft = competition.settings.rankingsEnabled;
           this.winPointsDraft = competition.settings.winPoints;
@@ -599,6 +604,7 @@ export class CommunitiesComponent implements OnInit {
           this.topCleanSheetsStanding = undefined;
           this.mostGamesStanding = undefined;
           this.bestWinRateStanding = undefined;
+          this.bestWinStreakStanding = undefined;
           this.errorMessage = t('feedback.communities.competitionLoadError');
         }
       });
@@ -1203,6 +1209,7 @@ export class CommunitiesComponent implements OnInit {
         this.topCleanSheetsStanding = undefined;
         this.mostGamesStanding = undefined;
         this.bestWinRateStanding = undefined;
+        this.bestWinStreakStanding = undefined;
         this.communitySessions = [];
       },
       error: error => this.errorMessage = error.error?.message || t('feedback.communities.leaveError')
@@ -1352,7 +1359,7 @@ export class CommunitiesComponent implements OnInit {
   }
 
   bestWinStreak(): CommunityStanding | undefined {
-    return this.topBy('bestWinStreak');
+    return this.bestWinStreakStanding;
   }
 
   comparePlayerA(): CommunityStanding | undefined {
