@@ -23,6 +23,7 @@ export class DiscoverComponent implements OnInit {
   sport = '';
   location = '';
   venues: Venue[] = [];
+  topVenueResults: Venue[] = [];
   sessions: SessionSummary[] = [];
   topSessionResults: SessionSummary[] = [];
   people: CommunityProfile[] = [];
@@ -105,6 +106,7 @@ export class DiscoverComponent implements OnInit {
       }))
       .subscribe(({ venues, sessions, people }) => {
         this.venues = venues;
+        this.topVenueResults = venues.slice(0, 4);
         this.sessions = sessions;
         this.topSessionResults = sessions.slice(0, 4);
         this.people = people;
@@ -119,7 +121,7 @@ export class DiscoverComponent implements OnInit {
   }
 
   get topVenues(): Venue[] {
-    return this.showAllVenues ? this.venues : this.venues.slice(0, 4);
+    return this.showAllVenues ? this.venues : this.topVenueResults;
   }
 
   toggleAllVenues(): void {
