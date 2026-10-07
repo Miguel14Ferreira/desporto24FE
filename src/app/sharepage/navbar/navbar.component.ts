@@ -19,6 +19,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
   escuro:string = "escuro";
   claro:string = "claro";
   unreadNotifications = 0;
+  authenticated = false;
+  admin = false;
   loggingOut = false;
   private notificationTimer?: ReturnType<typeof setInterval>;
   private readonly subscriptions = new Subscription();
@@ -49,7 +51,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
       this.subscriptions.add(
         this.realtimeService.messages$.subscribe(() => {
-          if (this.isAuthenticated()) {
+          if (this.authenticated) {
             this.unreadNotifications += 1;
           }
         })
@@ -65,7 +67,11 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
 
     private syncAuthenticatedState(): void {
-      if (!this.isAuthenticated()) {
+      this.authenticated = this.authService.hasSessionCandidate();
+      this.admin = this.authenticated
+        && this.authService.hasAnyRole('ROLE_ADMIN', 'ROLE_SUPER_ADMIN');
+
+      if (!this.authenticated) {
         this.realtimeService.disconnect();
         this.unreadNotifications = 0;
         if (this.notificationTimer) {
@@ -128,13 +134,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
         ?.removeAttribute('open');
     }
 
-    isAuthenticated(): boolean {
-      return this.authService.hasSessionCandidate();
-    }
-
-    isAdmin(): boolean {
-      return this.authService.hasAnyRole('ROLE_ADMIN', 'ROLE_SUPER_ADMIN');
-    }
 
     logout(): void {
       if (this.loggingOut) {
