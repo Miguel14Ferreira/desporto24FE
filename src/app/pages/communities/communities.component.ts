@@ -58,6 +58,7 @@ export class CommunitiesComponent implements OnInit {
   activeCommunitySeason?: CommunitySeason;
   communityTrophies: CommunitySeason[] = [];
   communitySessions: SessionSummary[] = [];
+  isDetailMode = false;
 
   loading = false;
   saving = false;
@@ -155,11 +156,12 @@ export class CommunitiesComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.isDetailMode = Boolean(this.route.snapshot.paramMap.get('id'));
     this.reload();
   }
 
   detailMode(): boolean {
-    return Boolean(this.route.snapshot.paramMap.get('id'));
+    return this.isDetailMode;
   }
 
   backToCommunities(): void {
