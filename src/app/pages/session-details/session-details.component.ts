@@ -229,7 +229,6 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
           this.selectedProblemType = '';
           this.problemDetails = '';
           this.actionSuccess = t('feedback.session.problemReported');
-          this.loadSession(false);
         },
         error: error => {
           this.actionError = this.errorFrom(error, t('feedback.session.problemReportError'));
