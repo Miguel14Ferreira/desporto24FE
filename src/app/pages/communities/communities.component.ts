@@ -50,6 +50,7 @@ export class CommunitiesComponent implements OnInit {
   topGoalsStanding?: CommunityStanding;
   topAssistsStanding?: CommunityStanding;
   topMvpsStanding?: CommunityStanding;
+  topCleanSheetsStanding?: CommunityStanding;
   communitySessions: SessionSummary[] = [];
 
   loading = false;
@@ -569,6 +570,10 @@ export class CommunitiesComponent implements OnInit {
             (best, row) => !best || row.mvps > best.mvps || (row.mvps === best.mvps && row.position < best.position) ? row : best,
             undefined
           );
+          this.topCleanSheetsStanding = competition.standings.reduce<CommunityStanding | undefined>(
+            (best, row) => !best || row.cleanSheets > best.cleanSheets || (row.cleanSheets === best.cleanSheets && row.position < best.position) ? row : best,
+            undefined
+          );
           this.selectedSeasonId = competition.selectedSeasonId;
           this.rankingsEnabledDraft = competition.settings.rankingsEnabled;
           this.winPointsDraft = competition.settings.winPoints;
@@ -581,6 +586,7 @@ export class CommunitiesComponent implements OnInit {
           this.topGoalsStanding = undefined;
           this.topAssistsStanding = undefined;
           this.topMvpsStanding = undefined;
+          this.topCleanSheetsStanding = undefined;
           this.errorMessage = t('feedback.communities.competitionLoadError');
         }
       });
@@ -1182,6 +1188,7 @@ export class CommunitiesComponent implements OnInit {
         this.topGoalsStanding = undefined;
         this.topAssistsStanding = undefined;
         this.topMvpsStanding = undefined;
+        this.topCleanSheetsStanding = undefined;
         this.communitySessions = [];
       },
       error: error => this.errorMessage = error.error?.message || t('feedback.communities.leaveError')
@@ -1373,7 +1380,7 @@ export class CommunitiesComponent implements OnInit {
   }
 
   topCleanSheets(): CommunityStanding | undefined {
-    return this.topBy('cleanSheets');
+    return this.topCleanSheetsStanding;
   }
 
   canManage(): boolean {
