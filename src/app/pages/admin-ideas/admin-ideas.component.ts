@@ -17,6 +17,7 @@ export class AdminIdeasComponent implements OnInit {
   loading = false;
   updatingId: number | null = null;
   errorMessage = '';
+  newCount = 0;
   private readonly dateTimeFormatter = new Intl.DateTimeFormat('pt-PT', {
     dateStyle: 'short',
     timeStyle: 'short'
@@ -36,10 +37,6 @@ export class AdminIdeasComponent implements OnInit {
     this.load();
   }
 
-  get newCount(): number {
-    return this.ideas.filter(idea => idea.status === 'NEW').length;
-  }
-
   load(): void {
     this.loading = true;
     this.errorMessage = '';
@@ -53,12 +50,14 @@ export class AdminIdeasComponent implements OnInit {
       .subscribe({
         next: ideas => {
           this.ideas = ideas;
+          this.newCount = ideas.filter(idea => idea.status === 'NEW').length;
           if (this.selected) {
             this.selected = ideas.find(idea => idea.id === this.selected?.id);
           }
         },
         error: () => {
           this.ideas = [];
+          this.newCount = 0;
           this.errorMessage = 'Não foi possível carregar as ideias.';
         }
       });
@@ -88,6 +87,7 @@ export class AdminIdeasComponent implements OnInit {
       .subscribe({
         next: updated => {
           this.ideas = this.ideas.map(item => item.id === updated.id ? updated : item);
+          this.newCount = this.ideas.filter(item => item.status === 'NEW').length;
           if (this.selected?.id === updated.id) {
             this.selected = updated;
           }
