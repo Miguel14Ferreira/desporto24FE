@@ -383,9 +383,13 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
       .subscribe({
         next: () => {
           this.pendingRemovalId = null;
+          this.sessionParticipants = this.sessionParticipants.filter(item => item.id !== participant.id);
+          this.participants = this.participants.filter(item => item.id !== participant.id);
+          this.teamAParticipants = this.teamAParticipants.filter(item => item.id !== participant.id);
+          this.teamBParticipants = this.teamBParticipants.filter(item => item.id !== participant.id);
+          this.confirmedTeams = this.teamAParticipants.length > 0 || this.teamBParticipants.length > 0;
           this.participantManagementSuccess =
             t('feedback.session.removed', { username: participant.username });
-          this.loadSession(false);
         },
         error: error => {
           this.participantManagementError = this.errorFrom(
