@@ -50,6 +50,11 @@
 
       <section class="chat-card">
         <div class="message-list">
+          @if (hasOlderMessages) {
+            <button type="button" class="block-action" [disabled]="loadingOlder" (click)="loadOlderMessages()">
+              {{ loadingOlder ? 'A carregar...' : 'Carregar mensagens anteriores' }}
+            </button>
+          }
           @if (messages.length === 0) {
             <div class="empty-chat">{{ 'chat.empty' | t }}</div>
           }

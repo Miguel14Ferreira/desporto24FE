@@ -24,6 +24,9 @@ export class DirectChatComponent implements OnInit, OnDestroy {
   chatInfo?: DirectChatInfo;
 
   loading = false;
+  loadingOlder = false;
+  hasOlderMessages = false;
+  historyPage = 0;
   sending = false;
   friendshipActionLoading = false;
   errorMessage = '';
@@ -117,6 +120,8 @@ export class DirectChatComponent implements OnInit, OnDestroy {
         next: result => {
           this.messages = this.sorted(result.messages.content);
           this.chatInfo = result.info;
+          this.historyPage = 0;
+          this.hasOlderMessages = !result.messages.last;
         },
         error: error => {
           this.messages = [];
@@ -137,7 +142,28 @@ export class DirectChatComponent implements OnInit, OnDestroy {
       )
       .subscribe({
         next: page => {
-          this.messages = this.sorted(page.content);
+          this.messages = this.sorted([...this.messages.filter(message => !page.content.some(recent => recent.id === message.id)), ...page.content]);
+        }
+      });
+  }
+
+  loadOlderMessages(): void {
+    if (!this.recipientUsername || this.loadingOlder || !this.hasOlderMessages) {
+      return;
+    }
+
+    this.loadingOlder = true;
+    const nextPage = this.historyPage + 1;
+    this.chatService.recentHistory(this.recipientUsername, nextPage)
+      .pipe(timeout(10_000), finalize(() => this.loadingOlder = false))
+      .subscribe({
+        next: page => {
+          this.messages = this.sorted([...this.messages.filter(message => !page.content.some(older => older.id === message.id)), ...page.content]);
+          this.historyPage = nextPage;
+          this.hasOlderMessages = !page.last;
+        },
+        error: error => {
+          this.actionError = this.errorFrom(error, t('feedback.chat.loadError'));
         }
       });
   }

@@ -19,9 +19,9 @@ export class DirectChatService {
     );
   }
 
-  recentHistory(username: string): Observable<{ content: DirectChatMessage[] }> {
-    return this.http.get<{ content: DirectChatMessage[] }>(
-      this.baseUrl + '/' + encodeURIComponent(username) + '/page?page=0&size=30'
+  recentHistory(username: string, page = 0): Observable<{ content: DirectChatMessage[]; last: boolean }> {
+    return this.http.get<{ content: DirectChatMessage[]; last: boolean }>(
+      this.baseUrl + '/' + encodeURIComponent(username) + '/page?page=' + page + '&size=30'
     );
   }
 
