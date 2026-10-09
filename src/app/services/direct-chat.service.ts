@@ -19,6 +19,12 @@ export class DirectChatService {
     );
   }
 
+  recentHistory(username: string): Observable<{ content: DirectChatMessage[] }> {
+    return this.http.get<{ content: DirectChatMessage[] }>(
+      this.baseUrl + '/' + encodeURIComponent(username) + '/page?page=0&size=30'
+    );
+  }
+
   send(username: string, text: string): Observable<DirectChatMessage> {
     return this.http.post<DirectChatMessage>(
       this.baseUrl + '/' + encodeURIComponent(username),

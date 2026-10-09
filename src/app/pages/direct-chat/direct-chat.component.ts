@@ -105,7 +105,7 @@ export class DirectChatComponent implements OnInit, OnDestroy {
     this.errorMessage = '';
 
     forkJoin({
-      messages: this.chatService.history(this.recipientUsername),
+      messages: this.chatService.recentHistory(this.recipientUsername),
       info: this.chatService.info(this.recipientUsername)
     })
       .pipe(
@@ -115,7 +115,7 @@ export class DirectChatComponent implements OnInit, OnDestroy {
       )
       .subscribe({
         next: result => {
-          this.messages = this.sorted(result.messages);
+          this.messages = this.sorted(result.messages.content);
           this.chatInfo = result.info;
         },
         error: error => {
@@ -130,14 +130,14 @@ export class DirectChatComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.chatService.history(this.recipientUsername)
+    this.chatService.recentHistory(this.recipientUsername)
       .pipe(
         timeout(10_000),
         retry({ count: 1 })
       )
       .subscribe({
-        next: messages => {
-          this.messages = this.sorted(messages);
+        next: page => {
+          this.messages = this.sorted(page.content);
         }
       });
   }
