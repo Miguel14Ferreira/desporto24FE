@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { finalize } from 'rxjs';
+import { finalize, timeout } from 'rxjs';
 import { appTranslate as t } from '../../i18n/i18n.service';
 
 import { AuthenticationService } from '../../services/authethication.service';
@@ -28,6 +28,7 @@ export class GoogleOnboardingComponent implements OnInit {
   indicativePhone = '351';
   phone = '';
   gender = '';
+  acceptedLegalTerms = false;
 
   loading = false;
   errorMessage = '';
@@ -72,14 +73,18 @@ export class GoogleOnboardingComponent implements OnInit {
       country: this.country.trim(),
       indicativePhone: this.phone.trim() ? this.indicativePhone.replace(/\D/g, '') : null,
       phone: this.phone.trim() ? this.phone.replace(/\D/g, '') : null,
-      gender: this.gender || null
+      gender: this.gender || null,
+      acceptedLegalTerms: this.acceptedLegalTerms
     };
 
     this.loading = true;
     this.errorMessage = '';
 
     this.authenticationService.googleRegister(request)
-      .pipe(finalize(() => this.loading = false))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.loading = false)
+      )
       .subscribe({
         next: response => {
           if (!response.token) {
@@ -89,7 +94,7 @@ export class GoogleOnboardingComponent implements OnInit {
 
           this.authenticationService.saveToken(response.token);
           this.clearPendingGoogleRegistration();
-          this.router.navigate(['/menu']);
+          this.router.navigate(['/menu/feed']);
         },
         error: error => {
           this.errorMessage = this.errorFrom(
@@ -132,6 +137,10 @@ export class GoogleOnboardingComponent implements OnInit {
 
     if (this.phone.trim() && !indicative) {
       return t('feedback.register.invalidPhone');
+    }
+
+    if (!this.acceptedLegalTerms) {
+      return t('feedback.register.acceptLegal');
     }
 
     return null;

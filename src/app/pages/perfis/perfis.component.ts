@@ -1,17 +1,18 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { appTranslate as t } from '../../i18n/i18n.service';
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
-import { catchError, finalize, forkJoin, of } from 'rxjs';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { catchError, finalize, forkJoin, of, retry, Subscription, timeout } from 'rxjs';
 
 import { environment } from 'src/environment/environment';
 import { CommunityProfile } from '../model/community-profile';
-import { ReliabilitySummary } from '../model/reliability-summary';
 import { ProfileActivity } from '../model/my-profile';
 import { FollowStatus } from '../model/follow';
 import { CommunityService } from '../../services/community.service';
 import { AuthenticationService } from '../../services/authethication.service';
 import { ReliabilityService } from '../../services/reliability.service';
 import { SocialGraphService } from '../../services/social-graph.service';
+import { SPORTS_CATALOG } from '../../shared/sports-catalog';
 
 @Component({
   selector: 'app-perfis',
@@ -20,17 +21,35 @@ import { SocialGraphService } from '../../services/social-graph.service';
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false
 })
-export class PerfisComponent implements OnInit {
+export class PerfisComponent implements OnInit, OnDestroy {
   searchTerm = '';
+  sportFilter = '';
+  locationFilter = '';
+  minAge: number | null = null;
+  maxAge: number | null = null;
+  levelFilter = '';
+  readonly sportsCatalog = SPORTS_CATALOG;
+
+  private searchSubscription?: Subscription;
+  private routeSubscription?: Subscription;
+  private profileSubscription?: Subscription;
+  private detailSubscription?: Subscription;
+  profilePage = false;
+  backToFriends = false;
+
   profiles: CommunityProfile[] = [];
   selectedProfile?: CommunityProfile;
-  selectedReliability?: ReliabilitySummary;
   selectedActivity?: ProfileActivity;
   selectedFollowStatus?: FollowStatus;
 
   loading = false;
   actionLoading = false;
   followLoading = false;
+  reportLoading = false;
+  blockLoading = false;
+  selectedBlocked = false;
+  reportOpen = false;
+  reportReason = '';
   searched = false;
 
   errorMessage = '';
@@ -45,19 +64,39 @@ export class PerfisComponent implements OnInit {
     private communityService: CommunityService,
     private authenticationService: AuthenticationService,
     private reliabilityService: ReliabilityService,
-    private socialGraphService: SocialGraphService
+    private socialGraphService: SocialGraphService,
+    private route: ActivatedRoute
   ) {
     this.authenticationService.isLoggedIn();
     this.currentUsername = this.authenticationService.loggedInPerfilname || '';
   }
 
   ngOnInit(): void {
+    this.backToFriends = this.route.snapshot.queryParamMap.get('from') === 'friends';
     this.loadFriendUsernames();
-    this.loadDiscoverableProfiles();
+    this.routeSubscription = this.route.paramMap.subscribe(params => {
+      const username = params.get('username');
+      this.profilePage = Boolean(username);
+      if (username) {
+        this.loadProfile(username);
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.searchSubscription?.unsubscribe();
+    this.routeSubscription?.unsubscribe();
+    this.profileSubscription?.unsubscribe();
+    this.detailSubscription?.unsubscribe();
   }
 
   private loadFriendUsernames(): void {
-    this.communityService.friends().subscribe({
+    this.communityService.friends()
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 })
+      )
+      .subscribe({
       next: friends => {
         this.friendUsernames = new Set(
           friends.map(friend => friend.username.toLowerCase())
@@ -69,45 +108,49 @@ export class PerfisComponent implements OnInit {
     });
   }
 
-  private loadDiscoverableProfiles(): void {
-    this.loading = true;
-    this.errorMessage = '';
-
-    this.communityService.discoverProfiles()
-      .pipe(finalize(() => this.loading = false))
-      .subscribe({
-        next: profiles => {
-          this.profiles = profiles;
-          this.searched = false;
-        },
-        error: error => {
-          this.profiles = [];
-          this.errorMessage = this.errorFrom(
-            error,
-            t('feedback.community.searchError')
-          );
-        }
-      });
-  }
-
   search(): void {
-    const term = this.searchTerm.trim();
+    const hasFilters = Boolean(
+      this.searchTerm.trim()
+      || this.sportFilter.trim()
+      || this.locationFilter.trim()
+      || this.levelFilter.trim()
+      || this.minAge !== null
+      || this.maxAge !== null
+    );
 
-    if (!term) {
-      this.selectedProfile = undefined;
-      this.actionError = '';
-      this.actionSuccess = '';
-      this.loadDiscoverableProfiles();
+    if (!hasFilters) {
+      this.clearSearch();
       return;
     }
 
+    if (
+      this.minAge !== null
+      && this.maxAge !== null
+      && this.minAge > this.maxAge
+    ) {
+      this.errorMessage = t('feedback.community.invalidAgeRange');
+      return;
+    }
+
+    this.searchSubscription?.unsubscribe();
     this.loading = true;
     this.errorMessage = '';
     this.actionError = '';
     this.actionSuccess = '';
 
-    this.communityService.searchProfiles(term)
-      .pipe(finalize(() => this.loading = false))
+    this.searchSubscription = this.communityService.findProfiles({
+      name: this.searchTerm.trim() || undefined,
+      sport: this.sportFilter.trim() || undefined,
+      location: this.locationFilter.trim() || undefined,
+      minAge: this.minAge === null ? undefined : this.minAge,
+      maxAge: this.maxAge === null ? undefined : this.maxAge,
+      skillLevel: this.levelFilter || undefined
+    })
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        finalize(() => this.loading = false)
+      )
       .subscribe({
         next: profiles => {
           this.profiles = profiles;
@@ -125,39 +168,182 @@ export class PerfisComponent implements OnInit {
       });
   }
 
-  openProfile(profile: CommunityProfile): void {
+  clearSearch(): void {
+    this.searchSubscription?.unsubscribe();
+    this.loading = false;
+    this.profiles = [];
+    this.searched = false;
+    this.searchTerm = '';
+    this.sportFilter = '';
+    this.locationFilter = '';
+    this.minAge = null;
+    this.maxAge = null;
+    this.levelFilter = '';
+    this.selectedProfile = undefined;
+    this.errorMessage = '';
+    this.actionError = '';
+    this.actionSuccess = '';
+  }
+
+  private loadProfile(username: string): void {
+    this.profileSubscription?.unsubscribe();
+    this.detailSubscription?.unsubscribe();
+    this.closeProfile();
+    this.loading = true;
+    this.errorMessage = '';
+    this.actionError = '';
+    this.actionSuccess = '';
+    this.profileSubscription = this.communityService.publicProfile(username)
+      .pipe(timeout(10_000), finalize(() => this.loading = false))
+      .subscribe({
+        next: profile => this.showProfile(profile),
+        error: error => {
+          this.errorMessage = this.errorFrom(error, t('community.profileLoadError'));
+        }
+      });
+  }
+
+  private showProfile(profile: CommunityProfile): void {
     this.selectedProfile = profile;
-    this.selectedReliability = undefined;
     this.selectedActivity = undefined;
     this.selectedFollowStatus = undefined;
+    this.selectedBlocked = false;
+    this.reportOpen = false;
+    this.reportReason = '';
     this.actionError = '';
     this.actionSuccess = '';
 
-    forkJoin({
-      reliability: this.reliabilityService.summary(profile.username)
-        .pipe(catchError(() => of(undefined))),
+    this.detailSubscription = forkJoin({
       activity: this.reliabilityService.activity(profile.username)
         .pipe(catchError(() => of(undefined))),
       followStatus: this.socialGraphService.status(profile.username)
-        .pipe(catchError(() => of(undefined)))
-    }).subscribe(({ reliability, activity, followStatus }) => {
-      this.selectedReliability = reliability;
-      this.selectedActivity = activity;
-      this.selectedFollowStatus = followStatus;
-    });
+        .pipe(catchError(() => of(undefined))),
+      blockStatus: this.communityService.userBlockStatus(profile.username)
+        .pipe(catchError(() => of({ blocked: false })))
+    })
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 })
+      )
+      .subscribe({
+        next: ({ activity, followStatus, blockStatus }) => {
+          this.selectedActivity = activity;
+          this.selectedFollowStatus = followStatus;
+          this.selectedBlocked = blockStatus.blocked;
+        },
+        error: () => {
+          this.actionError = t('community.profileDetailsError');
+        }
+      });
   }
 
   closeProfile(): void {
     this.selectedProfile = undefined;
-    this.selectedReliability = undefined;
     this.selectedActivity = undefined;
     this.selectedFollowStatus = undefined;
+    this.selectedBlocked = false;
+    this.reportOpen = false;
+    this.reportReason = '';
+  }
+
+  toggleBlock(profile: CommunityProfile): void {
+    if (
+      this.blockLoading
+      || this.isOwnProfile(profile)
+    ) {
+      return;
+    }
+
+    this.blockLoading = true;
+    this.actionError = '';
+    this.actionSuccess = '';
+
+    const request$ = this.selectedBlocked
+      ? this.communityService.unblockUser(profile.username)
+      : this.communityService.blockUser(profile.username);
+
+    request$
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.blockLoading = false)
+      )
+      .subscribe({
+        next: status => {
+          this.selectedBlocked = status.blocked;
+
+          if (status.blocked) {
+            this.selectedFollowStatus = undefined;
+            this.friendUsernames.delete(profile.username.toLowerCase());
+            this.pendingFriendRequests.delete(profile.username);
+            this.reportOpen = false;
+            this.reportReason = '';
+          }
+
+          this.actionSuccess = status.blocked
+            ? t('feedback.community.blocked', { username: profile.username })
+            : t('feedback.community.unblocked', { username: profile.username });
+        },
+        error: error => {
+          this.actionError = this.errorFrom(
+            error,
+            t('feedback.community.blockError')
+          );
+        }
+      });
+  }
+
+  toggleReport(): void {
+    if (this.reportLoading) {
+      return;
+    }
+
+    this.reportOpen = !this.reportOpen;
+    this.reportReason = '';
+    this.actionError = '';
+    this.actionSuccess = '';
+  }
+
+  submitReport(profile: CommunityProfile): void {
+    const reason = this.reportReason.trim();
+
+    if (
+      this.reportLoading
+      || this.isOwnProfile(profile)
+      || this.selectedBlocked
+      || !reason
+    ) {
+      return;
+    }
+
+    this.reportLoading = true;
+    this.actionError = '';
+    this.actionSuccess = '';
+
+    this.communityService.reportUser(profile.username, reason)
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.reportLoading = false)
+      )
+      .subscribe({
+        next: () => {
+          this.reportOpen = false;
+          this.reportReason = '';
+          this.actionSuccess = t('feedback.community.reported', { username: profile.username });
+        },
+        error: error => {
+          this.actionError = this.errorFrom(
+            error,
+            t('feedback.community.reportError')
+          );
+        }
+      });
   }
 
   toggleFollow(profile: CommunityProfile): void {
     if (
       this.followLoading
       || this.isOwnProfile(profile)
+      || this.selectedBlocked
     ) {
       return;
     }
@@ -171,7 +357,10 @@ export class PerfisComponent implements OnInit {
       : this.socialGraphService.follow(profile.username);
 
     request$
-      .pipe(finalize(() => this.followLoading = false))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.followLoading = false)
+      )
       .subscribe({
         next: status => {
           this.selectedFollowStatus = status;
@@ -192,6 +381,7 @@ export class PerfisComponent implements OnInit {
     if (
       this.actionLoading
       || this.isOwnProfile(profile)
+      || this.selectedBlocked
       || this.isFriend(profile)
       || this.pendingFriendRequests.has(profile.username)
     ) {
@@ -203,7 +393,10 @@ export class PerfisComponent implements OnInit {
     this.actionSuccess = '';
 
     this.communityService.sendFriendRequest(profile.username)
-      .pipe(finalize(() => this.actionLoading = false))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.actionLoading = false)
+      )
       .subscribe({
         next: () => {
           this.pendingFriendRequests.add(profile.username);

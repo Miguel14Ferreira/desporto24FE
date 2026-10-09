@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Router } from '@angular/router';
-import { catchError, finalize, of, switchMap } from 'rxjs';
+import { catchError, finalize, of, switchMap, timeout } from 'rxjs';
 import { appTranslate as t } from '../../i18n/i18n.service';
 
 import { CommunityVisibility } from '../model/community-group';
@@ -48,10 +48,14 @@ export class CommunityCreateComponent {
       visibility: this.visibility
     })
       .pipe(
+        timeout(10_000),
         switchMap(community =>
           this.photo
             ? this.communityService.updatePhoto(community.id, this.photo)
-                .pipe(catchError(() => of(community)))
+                .pipe(
+                  timeout(10_000),
+                  catchError(() => of(community))
+                )
             : of(community)
         ),
         finalize(() => this.saving = false)

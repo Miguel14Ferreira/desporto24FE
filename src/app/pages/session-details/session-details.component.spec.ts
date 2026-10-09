@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { BehaviorSubject, Subject, of } from 'rxjs';
+import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
 
 import { SessionDetailsComponent } from './session-details.component';
 import { SessionService } from '../../services/session.service';
@@ -41,7 +41,7 @@ describe('SessionDetailsComponent', () => {
   beforeEach(async () => {
     sessionService = jasmine.createSpyObj<SessionService>(
       'SessionService',
-      ['detail', 'join', 'leave', 'messages', 'postMessage', 'participants', 'removeParticipant']
+      ['detail', 'join', 'leave', 'complete', 'reportDidNotOccur', 'reportProblem', 'messages', 'postMessage', 'participants', 'removeParticipant', 'teamSuggestion', 'confirmTeams']
     );
     sessionService.detail.and.returnValue(of(session));
     sessionService.join.and.returnValue(of({
@@ -49,6 +49,9 @@ describe('SessionDetailsComponent', () => {
       waitlistPosition: null
     }));
     sessionService.leave.and.returnValue(of(void 0));
+    sessionService.complete.and.returnValue(of(void 0));
+    sessionService.reportDidNotOccur.and.returnValue(of(void 0));
+    sessionService.reportProblem.and.returnValue(of(void 0));
     sessionService.removeParticipant.and.returnValue(of(void 0));
     sessionService.messages.and.returnValue(of([]));
     sessionService.participants.and.returnValue(of([
@@ -59,6 +62,30 @@ describe('SessionDetailsComponent', () => {
         joinedAt: '2026-09-20T18:00:00Z'
       }
     ]));
+    sessionService.teamSuggestion.and.returnValue(of({
+      teamA: [
+        { username: 'creator-user', strengthScore: 2.8, statsAvailable: true, games: 8, wins: 5, goals: 6, assists: 2 }
+      ],
+      teamB: [
+        { username: 'player-one', strengthScore: 2.7, statsAvailable: true, games: 8, wins: 4, goals: 7, assists: 1 }
+      ],
+      teamAScore: 2.8,
+      teamBScore: 2.7,
+      playersWithStats: 2,
+      totalPlayers: 2
+    }));
+    sessionService.confirmTeams.and.returnValue(of({
+      teamA: [
+        { username: 'creator-user', strengthScore: 2.8, statsAvailable: true, games: 8, wins: 5, goals: 6, assists: 2 }
+      ],
+      teamB: [
+        { username: 'player-one', strengthScore: 2.7, statsAvailable: true, games: 8, wins: 4, goals: 7, assists: 1 }
+      ],
+      teamAScore: 2.8,
+      teamBScore: 2.7,
+      playersWithStats: 2,
+      totalPlayers: 2
+    }));
     sessionService.postMessage.and.returnValue(of({
       id: 1,
       sessionId: 7,
@@ -189,6 +216,102 @@ describe('SessionDetailsComponent', () => {
     expect(component.actionSuccess).toContain('lista de espera');
   });
 
+  it('should report a selected problem for a started session and refresh details', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session,
+      joined: true,
+      status: 'OPEN',
+      gameDate: '2026-09-30T18:00:00Z'
+    };
+    component.selectedProblemType = 'VENUE_PROBLEM';
+    component.problemDetails = '  Campo sem iluminação  ';
+
+    component.reportProblem();
+
+    expect(sessionService.reportProblem).toHaveBeenCalledWith(
+      7,
+      'VENUE_PROBLEM',
+      'Campo sem iluminação'
+    );
+    expect(sessionService.detail).toHaveBeenCalledTimes(2);
+    expect(component.showProblemReport).toBeFalse();
+    expect(component.selectedProblemType).toBe('');
+    expect(component.problemDetails).toBe('');
+  });
+
+  it('should reject problem details longer than 500 characters', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session,
+      joined: true,
+      status: 'OPEN',
+      gameDate: '2026-09-30T18:00:00Z'
+    };
+    component.selectedProblemType = 'OTHER';
+    component.problemDetails = 'x'.repeat(501);
+
+    component.reportProblem();
+
+    expect(sessionService.reportProblem).not.toHaveBeenCalled();
+    expect(component.actionError).toContain('500');
+  });
+
+  it('should label a previously reported session problem', () => {
+    expect(component.problemTypeLabel('NOT_OCCURRED')).toContain('não aconteceu');
+    expect(component.problemTypeLabel('VENUE_PROBLEM')).toContain('recinto');
+    expect(component.problemTypeLabel('OTHER')).toContain('Outro');
+  });
+
+  it('should show reported problem details returned for the creator', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session,
+      joined: true,
+      problemType: 'OTHER',
+      problemDetails: 'Balneário sem água quente'
+    };
+
+    fixture.detectChanges();
+
+    const reportedState = fixture.nativeElement.querySelector('.reported-problem-state');
+    expect(reportedState?.textContent).toContain('Outro');
+    expect(reportedState?.textContent).toContain('Balneário sem água quente');
+  });
+
+  it('should not allow another problem report after one is already registered', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session,
+      joined: true,
+      status: 'OPEN',
+      gameDate: '2026-09-30T18:00:00Z',
+      problemType: 'VENUE_PROBLEM'
+    };
+
+    expect(component.canReportProblem()).toBeFalse();
+
+    component.selectedProblemType = 'OTHER';
+    component.reportProblem();
+
+    expect(sessionService.reportProblem).not.toHaveBeenCalled();
+  });
+
+  it('should not allow problem reporting before the session starts', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session,
+      joined: true,
+      status: 'OPEN',
+      gameDate: '2099-10-01T18:00:00Z'
+    };
+
+    component.selectedProblemType = 'OTHER';
+    component.reportProblem();
+
+    expect(sessionService.reportProblem).not.toHaveBeenCalled();
+  });
+
   it('should require a password for private sessions', () => {
     component.session = {
       ...session,
@@ -263,6 +386,34 @@ describe('SessionDetailsComponent', () => {
     expect(component.messages).toEqual([message]);
   });
 
+  it('should let a joined non-creator view who is going', () => {
+    sessionService.participants.calls.reset();
+    (component as any).currentUsername = 'player-one';
+    component.session = {
+      ...session,
+      joined: true,
+      creatorUsername: 'creator-user'
+    };
+
+    component.loadSessionParticipants();
+
+    expect(sessionService.participants).toHaveBeenCalledWith(7);
+    expect(component.sessionParticipants.length).toBe(1);
+    expect(component.sessionParticipants[0].username).toBe('player-one');
+  });
+
+  it('should not load the visible participant list for outsiders', () => {
+    sessionService.participants.calls.reset();
+    component.session = {
+      ...session,
+      joined: false
+    };
+
+    component.loadSessionParticipants();
+
+    expect(sessionService.participants).not.toHaveBeenCalled();
+  });
+
   it('should allow the creator to load active participants', () => {
     (component as any).currentUsername = 'creator-user';
     component.session = {
@@ -274,6 +425,123 @@ describe('SessionDetailsComponent', () => {
 
     expect(sessionService.participants).toHaveBeenCalledWith(7);
     expect(component.participants.length).toBe(1);
+  });
+
+  it('should generate balanced teams for a full community session created by the viewer', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session,
+      creatorUsername: 'creator-user',
+      joined: true,
+      communityId: 9,
+      participantCount: 4,
+      maxParticipants: 4,
+      status: 'FULL'
+    };
+
+    expect(component.canGenerateTeams()).toBeTrue();
+
+    component.generateTeams();
+
+    expect(sessionService.teamSuggestion).toHaveBeenCalledWith(7);
+    expect(component.teamSuggestion?.teamA[0].username).toBe('creator-user');
+    expect(component.teamSuggestion?.playersWithStats).toBe(2);
+    expect(component.teamSuggestionPendingConfirmation).toBeTrue();
+  });
+
+  it('should confirm generated teams and refresh participant assignments', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session,
+      creatorUsername: 'creator-user',
+      joined: true,
+      communityId: 9,
+      participantCount: 4,
+      maxParticipants: 4,
+      status: 'FULL'
+    };
+    component.teamSuggestion = {
+      teamA: [
+        { username: 'creator-user', strengthScore: 2.8, statsAvailable: true, games: 8, wins: 5, goals: 6, assists: 2 }
+      ],
+      teamB: [
+        { username: 'player-one', strengthScore: 2.7, statsAvailable: true, games: 8, wins: 4, goals: 7, assists: 1 }
+      ],
+      teamAScore: 2.8,
+      teamBScore: 2.7,
+      playersWithStats: 2,
+      totalPlayers: 2
+    };
+    component.teamSuggestionPendingConfirmation = true;
+    sessionService.participants.and.returnValue(of([
+      {
+        id: 1,
+        username: 'creator-user',
+        attendanceStatus: 'PENDING',
+        joinedAt: '2026-09-20T18:00:00Z',
+        teamCode: 'A'
+      },
+      {
+        id: 15,
+        username: 'player-one',
+        attendanceStatus: 'PENDING',
+        joinedAt: '2026-09-20T18:00:00Z',
+        teamCode: 'B'
+      }
+    ]));
+
+    component.confirmTeams();
+
+    expect(sessionService.confirmTeams).toHaveBeenCalledWith(7);
+    expect(component.teamsSuccess).toContain('confirmadas');
+    expect(component.teamSuggestionPendingConfirmation).toBeFalse();
+    expect(component.hasConfirmedTeams()).toBeTrue();
+    expect(component.teamParticipants('A')[0].username).toBe('creator-user');
+  });
+
+  it('should not confirm the same team suggestion twice', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session,
+      creatorUsername: 'creator-user',
+      joined: true,
+      communityId: 9,
+      participantCount: 4,
+      maxParticipants: 4,
+      status: 'FULL'
+    };
+    component.teamSuggestion = {
+      teamA: [],
+      teamB: [],
+      teamAScore: 0,
+      teamBScore: 0,
+      playersWithStats: 0,
+      totalPlayers: 4
+    };
+    component.teamSuggestionPendingConfirmation = false;
+
+    component.confirmTeams();
+
+    expect(sessionService.confirmTeams).not.toHaveBeenCalled();
+  });
+
+  it('should not offer team generation outside community sessions', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session,
+      creatorUsername: 'creator-user',
+      joined: true,
+      participantCount: 4,
+      maxParticipants: 4,
+      status: 'FULL',
+      communityId: null
+    };
+
+    expect(component.canGenerateTeams()).toBeFalse();
+
+    component.generateTeams();
+
+    expect(sessionService.teamSuggestion).not.toHaveBeenCalled();
   });
 
   it('should remove a non-creator participant and refresh the session', () => {
@@ -334,6 +602,70 @@ describe('SessionDetailsComponent', () => {
     expect(participant.attendanceStatus).toBe('PENDING');
   });
 
+  it('should not allow attendance management for a cancelled session', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session,
+      status: 'CANCELLED',
+      joined: true,
+      gameDate: '2020-10-01T18:00:00Z'
+    };
+
+    expect(component.canRecordAttendance()).toBeFalse();
+
+    component.toggleAttendanceManager();
+
+    expect(component.showAttendanceManager).toBeFalse();
+    expect(sessionService.participants).not.toHaveBeenCalled();
+  });
+
+  it('should hide attendance management before the 30 minute delay', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session,
+      joined: true,
+      gameDate: new Date(Date.now() - (29 * 60 * 1000)).toISOString()
+    };
+
+    fixture.detectChanges();
+
+    expect(component.canRecordAttendance()).toBeFalse();
+    expect(fixture.nativeElement.querySelector('.attendance-panel')).toBeNull();
+  });
+
+  it('should not load participants until attendance management is opened', () => {
+    sessionService.participants.calls.reset();
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session,
+      joined: true,
+      gameDate: '2020-10-01T18:00:00Z'
+    };
+    component.participants = [];
+
+    expect(sessionService.participants).not.toHaveBeenCalled();
+
+    component.toggleAttendanceManager();
+
+    expect(sessionService.participants).toHaveBeenCalledWith(7);
+  });
+
+  it('should keep post-session attendance management collapsed until requested', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session,
+      joined: true,
+      gameDate: '2020-10-01T18:00:00Z'
+    };
+
+    expect(component.canRecordAttendance()).toBeTrue();
+    expect(component.showAttendanceManager).toBeFalse();
+
+    component.toggleAttendanceManager();
+
+    expect(component.showAttendanceManager).toBeTrue();
+  });
+
   it('should record participant attendance after the 30 minute delay', () => {
     (component as any).currentUsername = 'creator-user';
     component.session = {
@@ -352,5 +684,26 @@ describe('SessionDetailsComponent', () => {
 
     expect(reliabilityService.recordAttendance).toHaveBeenCalledWith(7, 15, 'ATTENDED');
     expect(participant.attendanceStatus).toBe('ATTENDED');
+  });
+
+  it('should expose a recoverable error when session details fail to load', () => {
+    sessionService.detail.and.returnValue(
+      throwError(() => new Error('API unavailable'))
+    );
+
+    component.retrySessionLoad();
+
+    expect(component.loading).toBeFalse();
+    expect(component.errorMessage).toContain('detalhes');
+  });
+
+  it('should clear the load error when retrying session details successfully', () => {
+    component.errorMessage = 'temporary error';
+    sessionService.detail.and.returnValue(of(session));
+
+    component.retrySessionLoad();
+
+    expect(component.errorMessage).toBe('');
+    expect(component.session?.id).toBe(7);
   });
 });

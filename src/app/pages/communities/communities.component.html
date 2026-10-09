@@ -1,21 +1,161 @@
-<section class="communities-page">
+<section class="communities-page" [class.community-detail-page]="detailMode()">
   <div class="communities-shell">
+    <a
+      #mineView="routerLinkActive"
+      routerLink="/menu/communities"
+      [queryParams]="{ view: 'mine' }"
+      routerLinkActive="active"
+      [routerLinkActiveOptions]="{ exact: true }"
+      hidden
+      aria-hidden="true"></a>
+    @if (!detailMode()) {
     <header class="page-header">
       <div>
-        <p class="eyebrow">Desporto24</p>
+        <p class="eyebrow">Jynlo</p>
         <h1>{{ 'communities.title' | t }}</h1>
         <p class="subtitle">{{ 'communities.subtitle' | t }}</p>
       </div>
-      <a class="primary-action header-action button-link" routerLink="/menu/communities/create">
-        {{ 'communities.create' | t }}
-      </a>
+      <div class="row-actions">
+        @if (mineView.isActive) {
+          <a class="secondary-action header-action button-link" routerLink="/menu/communities">
+            {{ 'communities.searchTitle' | t }}
+          </a>
+        } @else {
+          <a
+            class="secondary-action header-action button-link"
+            routerLink="/menu/communities"
+            [queryParams]="{ view: 'mine' }">
+            {{ 'communities.mine' | t }}
+          </a>
+        }
+        <a class="primary-action header-action button-link" routerLink="/menu/communities/create">
+          {{ 'communities.create' | t }}
+        </a>
+      </div>
     </header>
+    } @else {
+      <div class="detail-page-toolbar">
+        <button type="button" class="secondary-action" (click)="backToCommunities()">
+          ← {{ 'communities.title' | t }}
+        </button>
+      </div>
+    }
+
+    @if (!detailMode() && !mineView.isActive) {
+      <section class="create-card">
+        <div>
+          <p class="eyebrow">{{ 'communities.title' | t }}</p>
+          <h2>{{ 'communities.searchTitle' | t }}</h2>
+          <p class="subtitle">{{ 'communities.searchHint' | t }}</p>
+        </div>
+
+        <form class="form-grid" (ngSubmit)="searchCommunities(0)">
+          <label>
+            <span>{{ 'community.nameOptional' | t }}</span>
+            <input
+              name="communitySearchName"
+              type="search"
+              maxlength="100"
+              autocomplete="off"
+              [(ngModel)]="communitySearchName"
+              [placeholder]="'communities.title' | t">
+          </label>
+
+          <label>
+            <span>{{ 'events.sport' | t }}</span>
+            <input
+              name="communitySearchSport"
+              type="search"
+              maxlength="100"
+              autocomplete="off"
+              [(ngModel)]="communitySearchSport"
+              [placeholder]="'events.sportPlaceholder' | t">
+          </label>
+
+          <div class="row-actions full-width">
+            <button
+              type="submit"
+              class="primary-action"
+              [disabled]="communitySearchLoading || (!communitySearchName.trim() && !communitySearchSport.trim())">
+              {{ (communitySearchLoading ? 'common.searching' : 'adminPlayers.search') | t }}
+            </button>
+            <button
+              type="button"
+              class="secondary-action"
+              [disabled]="communitySearchLoading"
+              (click)="clearCommunitySearch()">
+              {{ 'events.clear' | t }}
+            </button>
+          </div>
+        </form>
+
+        @if (communitySearchError) {
+          <div class="feedback error-feedback">{{ communitySearchError }}</div>
+        }
+
+        @if (communitySearchPerformed && !communitySearchLoading && communitySearchResults.length === 0 && !communitySearchError) {
+          <div class="empty-state compact">
+            <strong>{{ 'communities.searchEmptyTitle' | t }}</strong>
+            <p>{{ 'communities.searchEmptyText' | t }}</p>
+          </div>
+        }
+
+        @if (communitySearchPerformed && !communitySearchLoading && communitySearchResults.length > 0) {
+          <div class="community-list">
+            @for (community of communitySearchResults; track community.id) {
+              <button
+                type="button"
+                class="community-card"
+                (click)="openCommunityPresentation(community)">
+                <div class="community-card-main">
+                  <div class="community-avatar">
+                    @if (community.photoUrl) {
+                      <img [src]="community.photoUrl" [alt]="community.name">
+                    } @else {
+                      <span>{{ community.name.charAt(0).toUpperCase() }}</span>
+                    }
+                  </div>
+                  <div class="community-card-copy">
+                    <strong>{{ community.name }}</strong>
+                    <span>{{ community.sport || ('communities.multiSport' | t) }}</span>
+                    <small>{{ community.description || ('communities.noDescription' | t) }}</small>
+                  </div>
+                </div>
+                <span class="visibility">
+                  {{ community.visibility === 'PRIVATE'
+                    ? ('communities.private' | t)
+                    : ('communities.public' | t) }}
+                </span>
+              </button>
+            }
+          </div>
+
+          <nav class="row-actions" [attr.aria-label]="'communities.title' | t">
+            <button
+              type="button"
+              class="secondary-action"
+              [disabled]="communitySearchLoading || communitySearchPage === 0"
+              (click)="changeCommunitySearchPage(-1)">
+              {{ 'adminPlayers.previous' | t }}
+            </button>
+            <span>{{ 'adminPlayers.page' | t:{ page: communitySearchPage + 1 } }}</span>
+            <button
+              type="button"
+              class="secondary-action"
+              [disabled]="communitySearchLoading || !communitySearchHasMore"
+              (click)="changeCommunitySearchPage(1)">
+              {{ 'adminPlayers.next' | t }}
+            </button>
+          </nav>
+        }
+      </section>
+    }
 
     @if (errorMessage) {
       <div class="feedback error-feedback">{{ errorMessage }}</div>
     }
 
-    @if (invites.length > 0) {
+    @if (mineView.isActive && invites.length > 0) {
       <section class="invites-card">
         <h2>{{ 'communities.pendingInvites' | t }}</h2>
         @for (invite of invites; track invite.id) {
@@ -37,12 +177,12 @@
       </section>
     }
 
-    @if (loading) {
+    @if ((mineView.isActive && loading) || (detailMode() && presentationLoading)) {
       <div class="empty-state">
         <span class="empty-icon">◎</span>
         <strong>{{ 'communities.loading' | t }}</strong>
       </div>
-    } @else if (communities.length === 0 && invites.length === 0) {
+    } @else if (mineView.isActive && communities.length === 0 && invites.length === 0) {
       <section class="empty-state">
         <span class="empty-icon">◎</span>
         <h2>{{ 'communities.emptyTitle' | t }}</h2>
@@ -51,8 +191,9 @@
           {{ 'communities.createFirst' | t }}
         </a>
       </section>
-    } @else if (communities.length > 0) {
+    } @else if ((mineView.isActive && communities.length > 0) || detailMode()) {
       <div class="communities-layout">
+        @if (mineView.isActive) {
         <aside class="community-list">
           <div class="list-heading">
             <strong>{{ 'communities.mine' | t }}</strong>
@@ -86,9 +227,54 @@
             </button>
           }
         </aside>
+        }
 
         <main class="community-detail">
-          @if (!selected) {
+          @if (!selected && communityPresentation) {
+            <div class="detail-header">
+              <div class="community-detail-identity">
+                <div class="community-avatar community-avatar--large">
+                  @if (communityPresentation.photoUrl) {
+                    <img [src]="communityPresentation.photoUrl" [alt]="communityPresentation.name">
+                  } @else {
+                    <span>{{ communityPresentation.name.charAt(0).toUpperCase() }}</span>
+                  }
+                </div>
+                <div class="community-detail-copy">
+                  <div class="community-title-meta">
+                    <span class="visibility">
+                      {{ communityPresentation.visibility === 'PRIVATE'
+                        ? ('communities.private' | t)
+                        : ('communities.public' | t) }}
+                    </span>
+                  </div>
+                  <h2>{{ communityPresentation.name }}</h2>
+                  <p>{{ communityPresentation.description || ('communities.noDescription' | t) }}</p>
+                  <p>{{ 'communities.sportLabel' | t }}:
+                    <strong>{{ communityPresentation.sport || ('communities.multiSport' | t) }}</strong>
+                  </p>
+                  <div class="row-actions">
+                    <button
+                      type="button"
+                      class="primary-action"
+                      [disabled]="membershipActionLoading || joinRequestSent"
+                      (click)="joinPresentedCommunity()">
+                      @if (communityPresentation.visibility === 'PUBLIC') {
+                        {{ (membershipActionLoading ? 'communities.joining' : 'communities.joinPublic') | t }}
+                      } @else {
+                        {{ (membershipActionLoading
+                          ? 'communities.requestingJoin'
+                          : (joinRequestSent ? 'communities.joinRequestPending' : 'communities.requestJoin')) | t }}
+                      }
+                    </button>
+                  </div>
+                  @if (membershipActionMessage) {
+                    <div class="feedback">{{ membershipActionMessage }}</div>
+                  }
+                </div>
+              </div>
+            </div>
+          } @else if (!selected) {
             <div class="detail-placeholder">
               <h2>{{ 'communities.selectTitle' | t }}</h2>
               <p>{{ 'communities.selectText' | t }}</p>
@@ -98,26 +284,39 @@
           @if (selected) {
             <div class="detail-header">
               <div class="community-detail-identity">
-                <div class="community-avatar community-avatar--large">
-                  @if (selected.photoUrl) {
-                    <img [src]="selected.photoUrl" [alt]="selected.name">
-                  } @else {
-                    <span>{{ communityInitials(selected) }}</span>
-                  }
+                <div class="community-photo-block">
+                  <div class="community-avatar community-avatar--large">
+                    @if (selected.photoUrl) {
+                      <img [src]="selected.photoUrl" [alt]="selected.name">
+                    } @else {
+                      <span>{{ communityInitials(selected) }}</span>
+                    }
+                  </div>
 
                   @if (canManage()) {
-                    <label class="community-photo-edit" [class.disabled]="photoUpdating">
-                      <input
-                        type="file"
-                        accept="image/jpeg,image/png,image/webp"
-                        [disabled]="photoUpdating"
-                        (change)="onCommunityPhotoChange($event)">
-                      <span>{{ 'communities.changePhoto' | t }}</span>
-                    </label>
+                    <div class="community-photo-actions">
+                      <label class="community-photo-action" [class.disabled]="photoUpdating">
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp"
+                          [disabled]="photoUpdating"
+                          (change)="onCommunityPhotoChange($event)">
+                        <span>{{ 'communities.changePhoto' | t }}</span>
+                      </label>
+                      @if (selected.photoUrl) {
+                        <button
+                          type="button"
+                          class="community-photo-action community-photo-remove"
+                          [disabled]="photoUpdating"
+                          (click)="removeCommunityPhoto()">
+                          {{ 'communities.removePhoto' | t }}
+                        </button>
+                      }
+                    </div>
                   }
                 </div>
 
-                <div>
+                <div class="community-detail-copy">
                   <div class="community-title-meta">
                     <span class="visibility">
                       {{ selected.visibility === 'PRIVATE'
@@ -278,7 +477,7 @@
                           <button
                             type="button"
                             class="primary-action"
-                            [disabled]="seasonSaving || !seasonName.trim()"
+                            [disabled]="seasonSaving"
                             (click)="createSeason()">
                             {{ seasonSaving
                               ? ('communities.creatingSeason' | t)
@@ -386,9 +585,30 @@
                         </div>
                         <div class="community-session-meta">
                           <span>
+                            {{ session.audience === 'COMMUNITY_ONLY'
+                              ? ('communities.sessionMembersOnly' | t)
+                              : ('communities.sessionPublic' | t) }}
+                          </span>
+                          <span>
                             {{ session.participantCount }}/{{ session.maxParticipants }}
                             {{ 'communities.participantsShort' | t }}
                           </span>
+                          @if (session.recurrenceSeriesId) {
+                            <span class="competition-badge">
+                              {{ 'communities.recurringSession' | t }}
+                            </span>
+                          }
+                          @if (session.participantCount < session.maxParticipants) {
+                            <span class="session-open-spots">
+                              {{ 'communities.spotsMissing' | t:{
+                                count: session.maxParticipants - session.participantCount
+                              } }}
+                            </span>
+                          } @else {
+                            <span class="session-full">
+                              {{ 'communities.sessionFull' | t }}
+                            </span>
+                          }
                           @if (session.priceAmount > 0) {
                             <span>{{ session.priceAmount }} €</span>
                           } @else {
@@ -396,6 +616,45 @@
                           }
                         </div>
                       </a>
+                      @if (session.joinedByViewer) {
+                        <span class="competition-badge">
+                          {{ 'communities.sessionConfirmed' | t }}
+                        </span>
+                      } @else if (session.waitlistedByViewer) {
+                        <span class="competition-badge">
+                          {{ 'communities.sessionWaitlisted' | t }}
+                        </span>
+                      } @else if (!session.privateGame) {
+                        <button
+                          type="button"
+                          class="primary-action small"
+                          [disabled]="joiningSessionId !== undefined"
+                          (click)="joinCommunitySession(session)">
+                          {{ joiningSessionId === session.id
+                            ? ('communities.joiningSession' | t)
+                            : (session.participantCount < session.maxParticipants
+                              ? ('communities.joinSession' | t)
+                              : ('communities.joinWaitlist' | t)) }}
+                        </button>
+                      }
+                      @if (canManage()
+                        && session.audience === 'COMMUNITY_ONLY'
+                        && session.participantCount < session.maxParticipants) {
+                        <div>
+                          <button
+                            type="button"
+                            class="secondary-action small"
+                            [disabled]="openingSessionId !== undefined"
+                            (click)="openSessionToPublic(session)">
+                            {{ openingSessionId === session.id
+                              ? ('communities.openingPublic' | t)
+                              : ('communities.openPublic' | t) }}
+                          </button>
+                          <p class="venue-current-location">
+                            {{ 'communities.openPublicHint' | t }}
+                          </p>
+                        </div>
+                      }
                     }
                   </div>
                 }
@@ -430,6 +689,163 @@
                     </div>
                   } @else {
                     @if (canManage()) {
+                      <section class="import-panel">
+                        <div class="section-heading">
+                          <div>
+                            <span class="section-kicker">{{ 'communities.import.kicker' | t }}</span>
+                            <h3>{{ 'communities.import.title' | t }}</h3>
+                          </div>
+                        </div>
+                        <p>{{ 'communities.import.hint' | t }}</p>
+
+                        <div class="import-file-row">
+                          <label class="secondary-action import-file-picker">
+                            <input #importInput type="file" accept=".xlsx" (change)="onImportFileChange($event)">
+                            <span>{{ importFileName || ('communities.import.choose' | t) }}</span>
+                          </label>
+                          @if (importFile) {
+                            <button type="button" class="primary-action small"
+                              [disabled]="importPreviewLoading"
+                              (click)="inspectImportFile()">
+                              {{ importPreviewLoading
+                                ? ('communities.import.inspecting' | t)
+                                : ('communities.import.inspect' | t) }}
+                            </button>
+                            <button type="button" class="secondary-action small"
+                              [disabled]="importPreviewLoading"
+                              (click)="clearImportFile(importInput)">
+                              {{ 'communities.import.clear' | t }}
+                            </button>
+                          }
+                        </div>
+
+                        @if (importFileError) {
+                          <p class="import-error" role="alert">{{ importFileError }}</p>
+                        }
+
+                        @if (importPreview) {
+                          <div class="import-preview">
+                            <label class="import-sheet-select">
+                              <span>{{ 'communities.import.sheet' | t }}</span>
+                              <select [ngModel]="importSheetName" (ngModelChange)="selectImportSheet($event)">
+                                @for (sheet of importPreview.sheets; track sheet.name) {
+                                  <option [value]="sheet.name">
+                                    {{ sheet.name }} · {{ sheet.structure }} · {{ sheet.nonEmptyRows }} {{ 'communities.import.rows' | t }}
+                                  </option>
+                                }
+                              </select>
+                            </label>
+
+                            @if (importMappings.length) {
+                              <div class="import-mapping">
+                                <div class="import-mapping-head">
+                                  <strong>{{ 'communities.import.column' | t }}</strong>
+                                  <strong>{{ 'communities.import.meaning' | t }}</strong>
+                                </div>
+                                @for (mapping of importMappings; track mapping.columnIndex) {
+                                  <div class="import-mapping-row">
+                                    <div>
+                                      <strong>{{ mapping.header || ('communities.import.unnamed' | t) }}</strong>
+                                      @if (mapping.confidence > 0) {
+                                        <small>{{ 'communities.import.suggested' | t }} · {{ mapping.confidence * 100 | number:'1.0-0' }}%</small>
+                                      }
+                                    </div>
+                                    <select [ngModel]="mapping.field"
+                                      (ngModelChange)="setImportMapping(mapping.columnIndex, $event)">
+                                      @for (field of importFields; track field) {
+                                        <option [value]="field">{{ field }}</option>
+                                      }
+                                    </select>
+                                  </div>
+                                }
+                              </div>
+                              <button type="button" class="primary-action import-continue"
+                                [disabled]="importMappingLoading"
+                                (click)="validateImportMapping()">
+                                {{ importMappingLoading
+                                  ? ('communities.import.validating' | t)
+                                  : ('communities.import.previewData' | t) }}
+                              </button>
+                            }
+
+                            @if (importValidation && !importValidation.valid) {
+                              <div class="import-validation import-validation--error">
+                                <strong>{{ 'communities.import.mappingInvalid' | t }}</strong>
+                                @for (error of importValidation.errors; track error) { <span>{{ error }}</span> }
+                              </div>
+                            }
+
+                            @if (importNormalized) {
+                              <div class="import-normalized">
+                                <strong>{{ 'communities.import.understood' | t }}</strong>
+                                <span>{{ importNormalized.acceptedRows }} {{ 'communities.import.accepted' | t }} · {{ importNormalized.skippedRows }} {{ 'communities.import.skipped' | t }}</span>
+                                @for (row of importNormalized.rows.slice(0, 8); track row.sourceRow) {
+                                  <div class="import-normalized-row">
+                                    <b>{{ row.player }}</b>
+                                    <span>{{ row.date || '—' }}</span>
+                                    <span>{{ row.result || (row.win ? 'WIN' : (row.draw ? 'DRAW' : (row.loss ? 'LOSS' : '—'))) }}</span>
+                                  </div>
+                                }
+                              </div>
+
+                              <div class="import-context">
+                                <label>
+                                  <span>{{ 'communities.import.season' | t }}</span>
+                                  <select [(ngModel)]="selectedSeasonId" (ngModelChange)="invalidateImportPlan()">
+                                    <option [ngValue]="null">{{ 'communities.import.selectSeason' | t }}</option>
+                                    @for (season of competition?.seasons || []; track season.id) {
+                                      <option [ngValue]="season.id">{{ seasonOptionLabel(season) }}</option>
+                                    }
+                                  </select>
+                                </label>
+                                <label>
+                                  <span>{{ 'communities.import.defaultYear' | t }}</span>
+                                  <input type="number" min="1900" max="2100" [(ngModel)]="importDefaultYear" (ngModelChange)="invalidateImportPlan()">
+                                </label>
+                              </div>
+
+                              <button type="button" class="primary-action import-continue"
+                                [disabled]="importPlanLoading || !selectedSeasonId"
+                                (click)="buildImportFinalPlan()">
+                                {{ importPlanLoading
+                                  ? ('communities.import.planning' | t)
+                                  : ('communities.import.plan' | t) }}
+                              </button>
+
+                              @if (importFinalPlan) {
+                                <div class="import-final-plan">
+                                  <strong>{{ 'communities.import.planReady' | t }}</strong>
+                                  <span>{{ importFinalPlan.distinctRounds }} {{ 'communities.import.rounds' | t }} · {{ importFinalPlan.duplicateRounds }} {{ 'communities.import.duplicates' | t }}</span>
+                                  @for (round of importFinalPlan.rounds; track round.sourceDate) {
+                                    <div class="import-round-plan" [class.duplicate]="round.duplicate">
+                                      <b>{{ round.parsedDate || round.sourceDate }}</b>
+                                      <span>{{ round.players }} {{ 'communities.import.players' | t }}</span>
+                                      <span>{{ round.wins }}V · {{ round.draws }}E · {{ round.losses }}D</span>
+                                      @if (round.duplicate) { <span>{{ 'communities.import.duplicate' | t }}</span> }
+                                      @if (round.unresolvedResults > 0) { <span>{{ round.unresolvedResults }} {{ 'communities.import.unresolved' | t }}</span> }
+                                    </div>
+                                  }
+                                </div>
+                                @if (importFinalPlan.invalidDates === 0 && importFinalPlan.roundsNeedingYear === 0) {
+                                  <button type="button" class="primary-action import-confirm"
+                                    [disabled]="importConfirming"
+                                    (click)="confirmHistoricalImport()">
+                                    {{ importConfirming ? ('communities.import.importing' | t) : ('communities.import.confirm' | t) }}
+                                  </button>
+                                }
+                              }
+
+                              @if (importResult) {
+                                <div class="import-success" role="status">
+                                  <strong>{{ 'communities.import.success' | t }}</strong>
+                                  <span>{{ importResult.createdRounds }} {{ 'communities.import.roundsCreated' | t }} · {{ importResult.createdEntries }} {{ 'communities.import.entriesCreated' | t }} · {{ importResult.skippedDuplicateRounds }} {{ 'communities.import.duplicatesSkipped' | t }}</span>
+                                </div>
+                              }
+                            }
+                          </div>
+                        }
+                      </section>
+
                       <section class="round-editor">
                         <div class="section-heading">
                           <div>
@@ -881,13 +1297,106 @@
               <section class="community-tab-panel">
                 @if (canManage()) {
                   <section class="management-block first-block">
+                    <div class="section-heading">
+                      <div>
+                        <span class="section-kicker">{{ 'communities.joinRequestsKicker' | t }}</span>
+                        <h3>{{ 'communities.joinRequestsTitle' | t }}</h3>
+                      </div>
+                      @if (!pendingJoinRequestsLoading) {
+                        <span class="count-pill">{{ pendingJoinRequests.length }}</span>
+                      }
+                    </div>
+
+                    @if (pendingJoinRequestsLoading) {
+                      <p>{{ 'communities.joinRequestsLoading' | t }}</p>
+                    } @else if (pendingJoinRequests.length === 0) {
+                      <p>{{ 'communities.joinRequestsEmpty' | t }}</p>
+                    } @else {
+                      <div class="invite-search-results">
+                        @for (request of pendingJoinRequests; track request.id) {
+                          <div class="invite-profile-result">
+                            <span class="invite-profile-avatar">
+                              {{ request.requesterUsername.charAt(0).toUpperCase() }}
+                            </span>
+                            <span>
+                              <strong>@{{ request.requesterUsername }}</strong>
+                              <small>{{ request.createdAt | date:'short' }}</small>
+                            </span>
+                            <div class="row-actions">
+                              <button
+                                type="button"
+                                class="primary-action small"
+                                [disabled]="joinRequestActionId !== undefined"
+                                (click)="acceptPendingJoinRequest(request)">
+                                {{ joinRequestActionId === request.id
+                                  ? ('communities.processingJoinRequest' | t)
+                                  : ('communities.accept' | t) }}
+                              </button>
+                              <button
+                                type="button"
+                                class="secondary-action small"
+                                [disabled]="joinRequestActionId !== undefined"
+                                (click)="rejectPendingJoinRequest(request)">
+                                {{ 'communities.reject' | t }}
+                              </button>
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    }
+                  </section>
+
+                  <section class="management-block">
                     <h3>{{ 'communities.invitePlayer' | t }}</h3>
-                    <div class="inline-form">
-                      <input [(ngModel)]="inviteUsername" [placeholder]="'communities.usernamePlaceholder' | t">
-                      <button type="button" class="primary-action small" (click)="invite()">
-                        {{ 'communities.sendInvite' | t }}
+                    <p>{{ 'communities.inviteSearchHint' | t }}</p>
+
+                    <div class="inline-form invite-search-form">
+                      <input
+                        [(ngModel)]="inviteUsername"
+                        [placeholder]="'communities.usernamePlaceholder' | t"
+                        (keyup.enter)="searchInviteUsers()">
+                      <button
+                        type="button"
+                        class="secondary-action small"
+                        [disabled]="inviteSearchLoading || !inviteUsername.trim()"
+                        (click)="searchInviteUsers()">
+                        {{ inviteSearchLoading
+                          ? ('communities.searchingUsers' | t)
+                          : ('communities.searchUsers' | t) }}
+                      </button>
+                      <button
+                        type="button"
+                        class="primary-action small"
+                        [disabled]="saving || !inviteUsername.trim()"
+                        (click)="invite()">
+                        {{ saving ? ('communities.sendingInvite' | t) : ('communities.sendInvite' | t) }}
                       </button>
                     </div>
+
+                    @if (inviteMessage) {
+                      <p class="invite-success" role="status">{{ inviteMessage }}</p>
+                    }
+
+                    @if (inviteSearchResults.length > 0) {
+                      <div class="invite-search-results">
+                        @for (profile of inviteSearchResults; track profile.username) {
+                          <button
+                            type="button"
+                            class="invite-profile-result"
+                            (click)="selectInviteUser(profile)">
+                            <span class="invite-profile-avatar">
+                              {{ (profile.nickname || profile.fullName || profile.username).charAt(0).toUpperCase() }}
+                            </span>
+                            <span>
+                              <strong>{{ profile.nickname || profile.fullName || profile.username }}</strong>
+                              <small>@{{ profile.username }}@if (profile.location) { · {{ profile.location }} }</small>
+                            </span>
+                          </button>
+                        }
+                      </div>
+                    } @else if (inviteSearchPerformed && !inviteSearchLoading) {
+                      <p class="invite-search-empty">{{ 'communities.noInviteUsersFound' | t }}</p>
+                    }
                   </section>
                 }
 

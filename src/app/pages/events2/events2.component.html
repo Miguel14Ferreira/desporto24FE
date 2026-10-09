@@ -22,6 +22,7 @@
         <div>
           <span class="section-kicker">{{ 'createSession.communityKicker' | t }}</span>
           <strong>{{ communityName }}</strong>
+          <small>{{ 'createSession.communityAudienceHint' | t }}</small>
         </div>
         <a
           class="secondary-action"
@@ -37,12 +38,13 @@
         <label>
           <span>{{ 'events.sport' | t }} *</span>
           <input
-            type="text"
+            type="search"
             name="sport"
             list="create-session-sports"
             [(ngModel)]="sport"
             autocomplete="off"
             [disabled]="loading"
+            (change)="confirmSportSelection()"
             [placeholder]="'events.sportPlaceholder' | t">
           <datalist id="create-session-sports">
             @for (sportOption of sportsCatalog; track sportOption) {
@@ -62,16 +64,6 @@
         </label>
 
         <label>
-          <span>{{ 'common.location' | t }} *</span>
-          <input
-            type="text"
-            name="city"
-            [(ngModel)]="city"
-            [disabled]="loading"
-            [placeholder]="'events.cityPlaceholder' | t">
-        </label>
-
-        <label>
           <span>{{ 'createSession.maxPlayers' | t }} *</span>
           <input
             type="number"
@@ -82,16 +74,38 @@
             [disabled]="loading">
         </label>
 
-        <label class="full-width">
-          <span>{{ 'createSession.address' | t }} *</span>
-          <input
-            type="text"
-            name="address"
-            [(ngModel)]="address"
-            [disabled]="loading"
-            [placeholder]="'createSession.addressPlaceholder' | t">
-        </label>
       </div>
+
+      @if (communityId) {
+        <div class="form-grid">
+          <label>
+            <span>{{ 'createSession.recurrence' | t }}</span>
+            <select
+              name="recurrence"
+              [(ngModel)]="recurrence"
+              [disabled]="loading">
+              <option value="NONE">{{ 'createSession.recurrenceNone' | t }}</option>
+              <option value="WEEKLY">{{ 'createSession.recurrenceWeekly' | t }}</option>
+              <option value="BIWEEKLY">{{ 'createSession.recurrenceBiweekly' | t }}</option>
+            </select>
+            <small>{{ 'createSession.recurrenceHint' | t }}</small>
+          </label>
+
+          @if (recurrence !== 'NONE') {
+            <label>
+              <span>{{ 'createSession.recurrenceOccurrences' | t }}</span>
+              <input
+                type="number"
+                name="recurrenceOccurrences"
+                [(ngModel)]="recurrenceOccurrences"
+                min="2"
+                max="52"
+                [disabled]="loading">
+              <small>{{ 'createSession.recurrenceOccurrencesHint' | t }}</small>
+            </label>
+          }
+        </div>
+      }
 
       <section class="venue-section">
         <div class="venue-heading">
@@ -111,20 +125,102 @@
         </div>
 
         <label class="venue-select-field">
-          <span>{{ 'venue.savedVenue' | t }}</span>
-          <select
-            name="venueId"
-            [ngModel]="selectedVenueId"
-            [disabled]="loading || venuesLoading"
-            (ngModelChange)="selectVenue($event)">
-            <option [ngValue]="null">
-              {{ venuesLoading ? ('venue.loading' | t) : ('venue.manualLocation' | t) }}
-            </option>
+          <span>{{ 'venue.search' | t }}</span>
+          <input
+            type="search"
+            name="venueSearch"
+            list="venue-search-options"
+            [(ngModel)]="venueSearch"
+            autocomplete="off"
+            [disabled]="loading || venuesLoading || !sportSelected"
+            (change)="confirmVenueSelection()"
+            [placeholder]="sportSelected ? ('venue.searchPlaceholder' | t) : 'Seleciona primeiro o desporto'">
+          <datalist id="venue-search-options">
             @for (venue of venueOptions; track venue.id) {
-              <option [ngValue]="venue.id">{{ venue.name }} · {{ venue.city }}</option>
+              <option [value]="venue.name + ' · ' + venue.city"></option>
             }
-          </select>
+          </datalist>
+          <small class="venue-current-location">
+            @if (!sportSelected) {
+              Seleciona primeiro um desporto da lista.
+            } @else {
+              {{ 'venue.searchHint' | t }}
+            }
+          </small>
         </label>
+
+        @if (selectedVenueId) {
+          <div class="venue-create-card">
+            <div>
+              <strong>{{ 'venue.mapLink.title' | t }}</strong>
+              <p class="venue-current-location">{{ 'venue.mapLink.hint' | t }}</p>
+            </div>
+            <button
+              type="button"
+              class="secondary-action"
+              [disabled]="loading"
+              (click)="useMapLinkVenue()">
+              {{ 'venue.mapLink.use' | t }}
+            </button>
+          </div>
+        }
+
+        @if (!selectedVenueId) {
+          <div class="venue-create-card">
+            <div>
+              <strong>{{ 'venue.mapLink.title' | t }}</strong>
+              <p class="venue-current-location">{{ 'venue.mapLink.hint' | t }}</p>
+            </div>
+
+            <label class="venue-select-field">
+              <span>{{ 'venue.mapLink.label' | t }}</span>
+              <input
+                type="text"
+                name="venueMapLink"
+                [(ngModel)]="venueMapLink"
+                [disabled]="loading || venueMapLinkLoading"
+                [placeholder]="'venue.mapLink.placeholder' | t">
+            </label>
+
+            <div class="header-actions">
+              <button
+                type="button"
+                class="secondary-action"
+                [disabled]="venueMapLinkLoading || !venueMapLink.trim()"
+                (click)="resolveVenueMapLink()">
+                {{ venueMapLinkLoading ? ('venue.mapLink.resolving' | t) : ('venue.mapLink.resolve' | t) }}
+              </button>
+
+              @if (venueMapCandidateResolvedUrl) {
+                <button
+                  type="button"
+                  class="secondary-action"
+                  (click)="clearVenueMapLinkCandidate()">
+                  {{ 'common.remove' | t }}
+                </button>
+              }
+            </div>
+
+            @if (venueMapLinkError) {
+              <div class="location-error">{{ venueMapLinkError }}</div>
+            }
+
+            @if (venueMapCandidateResolvedUrl && selectedVenueMapUrl && latitude !== null && longitude !== null) {
+              <div style="margin-top: .5rem;">
+                <iframe
+                  style="display:block;width:100%;height:260px;border:0;border-radius:14px;"
+                  [src]="selectedVenueMapUrl"
+                  [title]="'venue.mapLink.previewTitle' | t"
+                  loading="lazy"
+                  referrerpolicy="no-referrer-when-downgrade">
+                </iframe>
+                <p class="venue-current-location" style="margin-top:.6rem;">
+                  {{ 'venue.mapLink.found' | t }}
+                </p>
+              </div>
+            }
+          </div>
+        }
 
         @if (selectedVenue(); as venue) {
           <div class="venue-preview">
@@ -139,6 +235,42 @@
               @if (venue.parking) { <span>{{ 'venue.parking' | t }}</span> }
               @if (venue.lighting) { <span>{{ 'venue.lighting' | t }}</span> }
             </div>
+
+            @if (venuePhotoLoading) {
+              <div style="margin-top: 1rem;color:#94a3b8;font-size:.8rem;">
+                A carregar fotografia do recinto...
+              </div>
+            }
+
+            @if (selectedVenuePhoto) {
+              <div style="margin-top: 1rem;">
+                <img
+                  style="display:block;width:100%;max-height:320px;object-fit:cover;border-radius:14px;"
+                  [src]="selectedVenuePhoto.photoUrl"
+                  [alt]="venue.name + ' · fotografia do recinto'">
+              </div>
+            }
+
+            @if (selectedVenueMapUrl && venue.latitude !== null && venue.longitude !== null) {
+              <div style="margin-top: 1rem;">
+                <iframe
+                  style="display:block;width:100%;height:260px;border:0;border-radius:14px;"
+                  [src]="selectedVenueMapUrl"
+                  [title]="venue.name + ' · localização no mapa'"
+                  loading="lazy"
+                  referrerpolicy="no-referrer-when-downgrade">
+                </iframe>
+                <a
+                  class="secondary-action"
+                  style="display:inline-flex;margin-top:.75rem;"
+                  [href]="'https://www.google.com/maps/search/?api=1&query='
+                    + venue.latitude + ',' + venue.longitude"
+                  target="_blank"
+                  rel="noopener noreferrer">
+                  Abrir no Maps
+                </a>
+              </div>
+            }
           </div>
         }
 
@@ -156,6 +288,28 @@
               </label>
 
               <label>
+                <span>{{ 'venue.type' | t }}</span>
+                <input
+                  name="venueType"
+                  [(ngModel)]="venueType"
+                  maxlength="80"
+                  [disabled]="venueSaving"
+                  [placeholder]="'venue.typePlaceholder' | t">
+              </label>
+
+              <label>
+                <span>{{ 'venue.ownership' | t }}</span>
+                <select
+                  name="venueOwnershipType"
+                  [(ngModel)]="venueOwnershipType"
+                  [disabled]="venueSaving">
+                  <option [ngValue]="null">{{ 'venue.ownership.none' | t }}</option>
+                  <option [ngValue]="'PUBLIC'">{{ 'venue.ownership.public' | t }}</option>
+                  <option [ngValue]="'PRIVATE'">{{ 'venue.ownership.private' | t }}</option>
+                </select>
+              </label>
+
+              <label>
                 <span>{{ 'venue.surface' | t }}</span>
                 <input
                   name="venueSurfaceType"
@@ -163,6 +317,46 @@
                   maxlength="80"
                   [disabled]="venueSaving"
                   [placeholder]="'venue.surfacePlaceholder' | t">
+              </label>
+
+              <label>
+                <span>{{ 'venue.services' | t }}</span>
+                <input
+                  name="venueServices"
+                  [(ngModel)]="venueServices"
+                  maxlength="500"
+                  [disabled]="venueSaving"
+                  [placeholder]="'venue.servicesPlaceholder' | t">
+              </label>
+
+              <label>
+                <span>{{ 'venue.transport' | t }}</span>
+                <input
+                  name="venueTransport"
+                  [(ngModel)]="venueTransport"
+                  maxlength="500"
+                  [disabled]="venueSaving"
+                  [placeholder]="'venue.transportPlaceholder' | t">
+              </label>
+
+              <label>
+                <span>{{ 'venue.openingHours' | t }}</span>
+                <input
+                  name="venueOpeningHours"
+                  [(ngModel)]="venueOpeningHours"
+                  maxlength="500"
+                  [disabled]="venueSaving"
+                  [placeholder]="'venue.openingHoursPlaceholder' | t">
+              </label>
+
+              <label>
+                <span>{{ 'venue.priceInfo' | t }}</span>
+                <input
+                  name="venuePriceInfo"
+                  [(ngModel)]="venuePriceInfo"
+                  maxlength="500"
+                  [disabled]="venueSaving"
+                  [placeholder]="'venue.priceInfoPlaceholder' | t">
               </label>
             </div>
 
@@ -178,6 +372,66 @@
               <label>
                 <input type="checkbox" name="venueChangingRooms" [(ngModel)]="venueChangingRooms">
                 <span>{{ 'venue.changingRooms' | t }}</span>
+              </label>
+              <label>
+                <span>{{ 'venue.toilets' | t }}</span>
+                <select
+                  name="venueToilets"
+                  [(ngModel)]="venueToilets">
+                  <option [ngValue]="null">{{ 'venue.boolean.none' | t }}</option>
+                  <option [ngValue]="true">{{ 'venue.boolean.yes' | t }}</option>
+                  <option [ngValue]="false">{{ 'venue.boolean.no' | t }}</option>
+                </select>
+              </label>
+              <label>
+                <span>{{ 'venue.lockers' | t }}</span>
+                <select
+                  name="venueLockers"
+                  [(ngModel)]="venueLockers">
+                  <option [ngValue]="null">{{ 'venue.boolean.none' | t }}</option>
+                  <option [ngValue]="true">{{ 'venue.boolean.yes' | t }}</option>
+                  <option [ngValue]="false">{{ 'venue.boolean.no' | t }}</option>
+                </select>
+              </label>
+              <label>
+                <span>{{ 'venue.accessible' | t }}</span>
+                <select
+                  name="venueAccessible"
+                  [(ngModel)]="venueAccessible">
+                  <option [ngValue]="null">{{ 'venue.boolean.none' | t }}</option>
+                  <option [ngValue]="true">{{ 'venue.boolean.yes' | t }}</option>
+                  <option [ngValue]="false">{{ 'venue.boolean.no' | t }}</option>
+                </select>
+              </label>
+              <label>
+                <span>{{ 'venue.firstAid' | t }}</span>
+                <select
+                  name="venueFirstAid"
+                  [(ngModel)]="venueFirstAid">
+                  <option [ngValue]="null">{{ 'venue.boolean.none' | t }}</option>
+                  <option [ngValue]="true">{{ 'venue.boolean.yes' | t }}</option>
+                  <option [ngValue]="false">{{ 'venue.boolean.no' | t }}</option>
+                </select>
+              </label>
+              <label>
+                <span>{{ 'venue.aed' | t }}</span>
+                <select
+                  name="venueAed"
+                  [(ngModel)]="venueAed">
+                  <option [ngValue]="null">{{ 'venue.boolean.none' | t }}</option>
+                  <option [ngValue]="true">{{ 'venue.boolean.yes' | t }}</option>
+                  <option [ngValue]="false">{{ 'venue.boolean.no' | t }}</option>
+                </select>
+              </label>
+              <label>
+                <span>{{ 'venue.cafe' | t }}</span>
+                <select
+                  name="venueCafe"
+                  [(ngModel)]="venueCafe">
+                  <option [ngValue]="null">{{ 'venue.boolean.none' | t }}</option>
+                  <option [ngValue]="true">{{ 'venue.boolean.yes' | t }}</option>
+                  <option [ngValue]="false">{{ 'venue.boolean.no' | t }}</option>
+                </select>
               </label>
               <label>
                 <input type="checkbox" name="venueParking" [(ngModel)]="venueParking">
@@ -199,6 +453,30 @@
           </div>
         }
       </section>
+
+      @if (!selectedVenueId) {
+        <div class="form-grid venue-manual-location">
+          <label>
+            <span>{{ 'common.location' | t }} *</span>
+            <input
+              type="text"
+              name="city"
+              [(ngModel)]="city"
+              [disabled]="loading"
+              [placeholder]="'events.cityPlaceholder' | t">
+          </label>
+
+          <label>
+            <span>{{ 'createSession.address' | t }} *</span>
+            <input
+              type="text"
+              name="address"
+              [(ngModel)]="address"
+              [disabled]="loading"
+              [placeholder]="'createSession.addressPlaceholder' | t">
+          </label>
+        </div>
+      }
 
       <section class="location-section" [class.location-ready]="locationCaptured">
         <div>

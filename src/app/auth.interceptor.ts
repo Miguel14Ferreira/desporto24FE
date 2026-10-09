@@ -40,7 +40,6 @@ export class AuthInterceptor implements HttpInterceptor {
       catchError((error: HttpErrorResponse) => {
         if (
           error.status !== 401
-          || !token
           || request.url.includes('/api/auth/login')
           || request.url.includes('/api/auth/mfa/')
           || request.url.includes('/api/auth/refresh')
@@ -62,7 +61,9 @@ export class AuthInterceptor implements HttpInterceptor {
             return next.handle(retryRequest);
           }),
           catchError(refreshError => {
-            this.clearSessionAndRedirect();
+            if (this.isRefreshRejected(refreshError)) {
+              this.clearSessionAndRedirect();
+            }
             return throwError(() => refreshError);
           })
         );
@@ -91,6 +92,14 @@ export class AuthInterceptor implements HttpInterceptor {
     }
 
     return this.refreshInFlight;
+  }
+
+  private isRefreshRejected(error: unknown): boolean {
+    if (!(error instanceof HttpErrorResponse)) {
+      return false;
+    }
+
+    return [400, 401, 403].includes(error.status);
   }
 
   private clearSessionAndRedirect(): void {

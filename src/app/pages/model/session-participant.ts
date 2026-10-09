@@ -5,4 +5,5 @@ export interface SessionParticipant {
   username: string;
   attendanceStatus: AttendanceStatus;
   joinedAt: string;
+  teamCode?: 'A' | 'B' | null;
 }

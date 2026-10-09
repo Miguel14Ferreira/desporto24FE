@@ -1,6 +1,6 @@
 import { appTranslate as t } from '../../i18n/i18n.service';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
-import { finalize } from 'rxjs';
+import { finalize, retry, timeout } from 'rxjs';
 
 import { environment } from 'src/environment/environment';
 import { AuthenticationService } from '../../services/authethication.service';
@@ -41,10 +41,15 @@ export class MenuComponent implements OnInit {
 
   loadAdminAccess(): void {
     this.isAdmin = false;
-    this.adminAccessService.check().subscribe({
-      next: () => this.isAdmin = true,
-      error: () => this.isAdmin = false
-    });
+    this.adminAccessService.check()
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 })
+      )
+      .subscribe({
+        next: () => this.isAdmin = true,
+        error: () => this.isAdmin = false
+      });
   }
 
   loadProfile(): void {
@@ -52,7 +57,11 @@ export class MenuComponent implements OnInit {
     this.errorMessage = '';
 
     this.myProfileService.get()
-      .pipe(finalize(() => this.loadingProfile = false))
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        finalize(() => this.loadingProfile = false)
+      )
       .subscribe({
         next: profile => this.profile = profile,
         error: () => this.errorMessage = t('feedback.profile.loadError')
@@ -63,7 +72,11 @@ export class MenuComponent implements OnInit {
     this.loadingNotifications = true;
 
     this.notificationService.mine()
-      .pipe(finalize(() => this.loadingNotifications = false))
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        finalize(() => this.loadingNotifications = false)
+      )
       .subscribe({
         next: notifications => {
           this.unreadNotifications = notifications.filter(notification => !notification.read).length;
@@ -80,6 +93,7 @@ export class MenuComponent implements OnInit {
     this.loggingOut = true;
 
     this.authenticationService.terminarSessao()
+      .pipe(timeout(10_000))
       .subscribe({
         next: () => this.authenticationService.logOut(),
         error: () => this.authenticationService.logOut()

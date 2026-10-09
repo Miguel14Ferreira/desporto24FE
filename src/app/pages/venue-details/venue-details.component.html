@@ -1,0 +1,260 @@
+<section class="venue-detail-page">
+  <div class="venue-detail-shell">
+    <a class="back-link" routerLink="/menu/discover">{{ 'venue.detail.back' | t }}</a>
+
+    @if (loading) {
+      <div class="venue-state">{{ 'venue.detail.loading' | t }}</div>
+    } @else if (loadError || !venue) {
+      <div class="venue-state venue-state-error">{{ 'venue.detail.error' | t }}</div>
+    } @else {
+      <header class="venue-header">
+        <span class="venue-kicker">{{ 'venue.detail.kicker' | t }}</span>
+        <h1>{{ venue.name }}</h1>
+
+        <div class="venue-provenance">
+          <span class="venue-source-badge">
+            {{ venue.informationSource === 'OFFICIAL'
+              ? ('venue.detail.sourceOfficial' | t)
+              : ('venue.detail.sourceCommunity' | t) }}
+          </span>
+
+          <span class="venue-created-by">
+            @if (venue.createdByUsername) {
+              {{ 'venue.detail.createdBy' | t }} <strong>@{{ venue.createdByUsername }}</strong> ·
+            }
+            {{ 'venue.detail.addedAt' | t }} {{ venue.createdAt | date:'short' }}
+          </span>
+        </div>
+      </header>
+
+      <div class="venue-basic-info">
+        <div>
+          <span>{{ 'venue.detail.city' | t }}</span>
+          <strong>{{ venue.city }}</strong>
+        </div>
+        <div>
+          <span>{{ 'venue.detail.address' | t }}</span>
+          <strong>{{ venue.address }}</strong>
+        </div>
+      </div>
+
+      @if (venue.latitude !== null && venue.longitude !== null) {
+        <a
+          class="venue-map-link"
+          [href]="'https://www.google.com/maps?q=' + venue.latitude + ',' + venue.longitude"
+          target="_blank"
+          rel="noopener noreferrer">
+          {{ 'venue.detail.viewMap' | t }}
+        </a>
+      }
+
+      <section class="venue-photos-section">
+        <div class="venue-photos-heading">
+          <h2>{{ 'venue.detail.photos' | t }}</h2>
+
+          <label class="venue-photo-upload" [class.is-disabled]="photoUploading">
+            <input
+              type="file"
+              accept="image/*"
+              [disabled]="photoUploading"
+              (change)="uploadPhoto($event)">
+            <span>
+              {{ photoUploading
+                ? ('venue.detail.photoUploading' | t)
+                : ('venue.detail.photoUpload' | t) }}
+            </span>
+          </label>
+        </div>
+
+        @if (photoUploadError) {
+          <div class="venue-photo-upload-error">
+            {{ 'venue.detail.photoUploadError' | t }}
+          </div>
+        }
+
+        @if (photosLoading) {
+          <div class="venue-photos-state">{{ 'venue.detail.photosLoading' | t }}</div>
+        } @else if (photosLoadError) {
+          <div class="venue-photos-state">
+            {{ 'venue.detail.photosError' | t }}
+            <button type="button" (click)="retryPhotos()">{{ 'common.retry' | t }}</button>
+          </div>
+        } @else if (photos.length === 0) {
+          <div class="venue-photos-state">{{ 'venue.detail.photosEmpty' | t }}</div>
+        } @else {
+          <div class="venue-photo-grid">
+            @for (photo of photos; track photo.id) {
+              <figure class="venue-photo-item">
+                <img
+                  [src]="photo.photoUrl"
+                  [alt]="'venue.detail.photoAlt' | t">
+
+                <figcaption>
+                  @if (photo.uploadedByUsername) {
+                    {{ 'venue.detail.createdBy' | t }} <strong>@{{ photo.uploadedByUsername }}</strong> ·
+                  }
+                  {{ 'venue.detail.addedAt' | t }} {{ photo.createdAt | date:'short' }}
+                </figcaption>
+              </figure>
+            }
+          </div>
+        }
+      </section>
+
+      <section class="venue-information-section">
+        <h2>{{ 'venue.detail.information' | t }}</h2>
+        <div class="venue-information-grid">
+          @if (venue.sports) {
+            <div>
+              <span>{{ 'venue.detail.sports' | t }}</span>
+              <strong>{{ venue.sports }}</strong>
+            </div>
+          }
+          @if (venue.venueType) {
+            <div>
+              <span>{{ 'venue.type' | t }}</span>
+              <strong>{{ venue.venueType }}</strong>
+            </div>
+          }
+          @if (venue.ownershipType) {
+            <div>
+              <span>{{ 'venue.ownership' | t }}</span>
+              <strong>
+                {{ venue.ownershipType === 'PUBLIC'
+                  ? ('venue.ownership.public' | t)
+                  : ('venue.ownership.private' | t) }}
+              </strong>
+            </div>
+          }
+          @if (venue.surfaceType) {
+            <div>
+              <span>{{ 'venue.surface' | t }}</span>
+              <strong>{{ venue.surfaceType }}</strong>
+            </div>
+          }
+          @if (venue.services) {
+            <div>
+              <span>{{ 'venue.services' | t }}</span>
+              <strong>{{ venue.services }}</strong>
+            </div>
+          }
+          @if (venue.transport) {
+            <div>
+              <span>{{ 'venue.transport' | t }}</span>
+              <strong>{{ venue.transport }}</strong>
+            </div>
+          }
+          @if (venue.openingHours) {
+            <div>
+              <span>{{ 'venue.openingHours' | t }}</span>
+              <strong>{{ venue.openingHours }}</strong>
+            </div>
+          }
+          @if (venue.priceInfo) {
+            <div>
+              <span>{{ 'venue.priceInfo' | t }}</span>
+              <strong>{{ venue.priceInfo }}</strong>
+            </div>
+          }
+        </div>
+      </section>
+
+      <section class="venue-sport-conditions-section">
+        <div class="venue-sport-conditions-heading">
+          <h2>{{ 'venue.detail.sportConditions' | t }}</h2>
+        </div>
+
+        <form class="venue-sport-condition-form" (ngSubmit)="addSportCondition()">
+          <label>
+            <span>{{ 'venue.detail.sportConditionSport' | t }}</span>
+            <input
+              name="sportConditionSport"
+              [(ngModel)]="sportConditionSport"
+              maxlength="80"
+              [disabled]="sportConditionSaving"
+              [placeholder]="'venue.detail.sportConditionSportPlaceholder' | t">
+          </label>
+
+          <label>
+            <span>{{ 'venue.detail.sportConditionText' | t }}</span>
+            <textarea
+              name="sportConditionText"
+              [(ngModel)]="sportConditionText"
+              maxlength="1500"
+              rows="4"
+              [disabled]="sportConditionSaving"
+              [placeholder]="'venue.detail.sportConditionTextPlaceholder' | t"></textarea>
+          </label>
+
+          @if (sportConditionSaveError) {
+            <div class="venue-sport-condition-save-error">
+              {{ 'venue.detail.sportConditionSaveError' | t }}
+            </div>
+          }
+
+          <button
+            type="submit"
+            class="venue-sport-condition-submit"
+            [disabled]="sportConditionSaving || !sportConditionSport.trim() || !sportConditionText.trim()">
+            {{ sportConditionSaving
+              ? ('venue.detail.sportConditionSaving' | t)
+              : ('venue.detail.sportConditionAdd' | t) }}
+          </button>
+        </form>
+
+        @if (sportConditionsLoading) {
+          <div class="venue-sport-conditions-state">
+            {{ 'venue.detail.sportConditionsLoading' | t }}
+          </div>
+        } @else if (sportConditionsLoadError) {
+          <div class="venue-sport-conditions-state">
+            {{ 'venue.detail.sportConditionsError' | t }}
+            <button type="button" (click)="retrySportConditions()">{{ 'common.retry' | t }}</button>
+          </div>
+        } @else if (sportConditions.length === 0) {
+          <div class="venue-sport-conditions-state">
+            {{ 'venue.detail.sportConditionsEmpty' | t }}
+          </div>
+        } @else {
+          <div class="venue-sport-conditions-list">
+            @for (condition of sportConditions; track condition.id) {
+              <article class="venue-sport-condition-card">
+                <div class="venue-sport-condition-heading">
+                  <strong>{{ condition.sport }}</strong>
+                  <span>
+                    {{ condition.informationSource === 'OFFICIAL'
+                      ? ('venue.detail.sourceOfficial' | t)
+                      : ('venue.detail.sourceCommunity' | t) }}
+                  </span>
+                </div>
+                <p>{{ condition.conditions }}</p>
+                <div class="venue-sport-condition-created-by">
+                  @if (condition.createdByUsername) {
+                    {{ 'venue.detail.createdBy' | t }} <strong>@{{ condition.createdByUsername }}</strong> ·
+                  }
+                  {{ 'venue.detail.addedAt' | t }} {{ condition.createdAt | date:'short' }}
+                </div>
+              </article>
+            }
+          </div>
+        }
+      </section>
+
+      <section class="venue-amenities-section">
+        <h2>{{ 'venue.detail.amenities' | t }}</h2>
+        <div class="venue-amenities-list">
+          <span>{{ venue.indoor ? ('venue.indoor' | t) : ('venue.outdoor' | t) }}</span>
+          @if (venue.changingRooms) { <span>{{ 'venue.changingRooms' | t }}</span> }
+          @if (venue.toilets) { <span>{{ 'venue.toilets' | t }}</span> }
+          @if (venue.lockers) { <span>{{ 'venue.lockers' | t }}</span> }
+          @if (venue.accessible) { <span>{{ 'venue.accessible' | t }}</span> }
+          @if (venue.firstAid) { <span>{{ 'venue.firstAid' | t }}</span> }
+          @if (venue.aed) { <span>{{ 'venue.aed' | t }}</span> }
+          @if (venue.cafe) { <span>{{ 'venue.cafe' | t }}</span> }
+          @if (venue.parking) { <span>{{ 'venue.parking' | t }}</span> }
+          @if (venue.lighting) { <span>{{ 'venue.lighting' | t }}</span> }
+        </div>
+      </section>
+    }
+  </div>
+</section>

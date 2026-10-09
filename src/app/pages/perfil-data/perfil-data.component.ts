@@ -1,12 +1,14 @@
 import { appTranslate as t } from '../../i18n/i18n.service';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
-import { forkJoin, finalize, of, catchError } from 'rxjs';
+import { finalize, of, catchError, retry, timeout } from 'rxjs';
 
 import { environment } from 'src/environment/environment';
 import { MyProfile, ProfileActivity } from '../model/my-profile';
 import { ReliabilitySummary } from '../model/reliability-summary';
 import { MyProfileService } from '../../services/my-profile.service';
 import { ReliabilityService } from '../../services/reliability.service';
+import { sportIcon } from '../../shared/sports-catalog';
+import { calculateProfileCompletion, ProfileCompletion, ProfileCompletionItem } from '../../shared/profile-completion';
 
 @Component({
   selector: 'app-perfil-data',
@@ -21,6 +23,11 @@ export class PerfilDataComponent implements OnInit {
   activity?: ProfileActivity;
   loading = false;
   errorMessage = '';
+  favoritesExpanded = false;
+  favoriteSports: string[] = [];
+  profileCompletion: ProfileCompletion = calculateProfileCompletion();
+  completionMissingPreview: ProfileCompletionItem[] = [];
+  readonly iconForSport = sportIcon;
 
   constructor(
     private myProfileService: MyProfileService,
@@ -36,15 +43,39 @@ export class PerfilDataComponent implements OnInit {
     this.errorMessage = '';
 
     this.myProfileService.get()
-      .pipe(finalize(() => this.loading = false))
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        finalize(() => this.loading = false)
+      )
       .subscribe({
         next: profile => {
           this.profile = profile;
+          this.profileCompletion = calculateProfileCompletion(profile);
+          this.completionMissingPreview = this.profileCompletion.missing.slice(0, 3);
+          this.favoriteSports = (profile.favoriteSports || '')
+            .split(',')
+            .map(value => value.trim())
+            .filter(Boolean);
           this.loadReliability(profile.username);
           this.loadActivity(profile.username);
         },
         error: () => this.errorMessage = t('feedback.profile.loadError')
       });
+  }
+
+  get visibleFavoriteSports(): string[] {
+    return this.favoritesExpanded
+      ? this.favoriteSports
+      : this.favoriteSports.slice(0, 5);
+  }
+
+  get hiddenFavoriteSportsCount(): number {
+    return Math.max(0, this.favoriteSports.length - 5);
+  }
+
+  toggleFavoriteSports(): void {
+    this.favoritesExpanded = !this.favoritesExpanded;
   }
 
   profileImage(): string | null {
@@ -72,13 +103,21 @@ export class PerfilDataComponent implements OnInit {
 
   private loadActivity(username: string): void {
     this.reliabilityService.activity(username)
-      .pipe(catchError(() => of(undefined)))
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        catchError(() => of(undefined))
+      )
       .subscribe(activity => this.activity = activity);
   }
 
   private loadReliability(username: string): void {
     this.reliabilityService.summary(username)
-      .pipe(catchError(() => of(undefined)))
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        catchError(() => of(undefined))
+      )
       .subscribe(summary => this.reliability = summary);
   }
 }

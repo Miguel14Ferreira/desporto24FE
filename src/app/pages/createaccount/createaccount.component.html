@@ -2,7 +2,7 @@
   <div class="register-shell">
     <header class="page-header">
       <div>
-        <p class="eyebrow">Desporto24</p>
+        <p class="eyebrow">Jynlo</p>
         <h1>{{ 'register.title' | t }}</h1>
         <p class="subtitle">{{ 'register.subtitle' | t }}</p>
       </div>
@@ -151,32 +151,10 @@
             [(ngModel)]="country"
             [disabled]="loading">
             @for (item of countryOptions; track item.label) {
-              <option [value]="countryName(item.label)">{{ item.label }}</option>
+              <option [value]="countryName(item.label)">{{ countryName(item.label) }}</option>
             }
           </select>
         </label>
-
-        <div class="full-width phone-field">
-          <span class="field-label">{{ 'register.phoneOptional' | t }}</span>
-          <div class="phone-row">
-            <select
-              class="calling-code"
-              name="indicativePhone"
-              [(ngModel)]="indicativePhone"
-              [disabled]="loading || !phone.trim()">
-              @for (item of countryOptions; track item.label) {
-                <option [value]="item.code">+{{ item.code }}</option>
-              }
-            </select>
-            <input
-              type="tel"
-              name="phone"
-              [(ngModel)]="phone"
-              autocomplete="tel-national"
-              [disabled]="loading"
-              placeholder="912 345 678">
-          </div>
-        </div>
 
         <label>
           <span>{{ 'common.gender' | t }}</span>
@@ -188,11 +166,28 @@
           </select>
         </label>
 
+        <div class="full-width legal-consent">
+          <label class="consent-row" for="legalConsent">
+            <input
+              id="legalConsent"
+              type="checkbox"
+              name="legalConsent"
+              [(ngModel)]="acceptedLegalTerms"
+              [disabled]="loading">
+            <span>
+              {{ 'register.legal.prefix' | t }}
+              <a routerLink="/terms" target="_blank" rel="noopener">{{ 'register.legal.terms' | t }}</a>
+              {{ 'register.legal.and' | t }}
+              <a routerLink="/privacy" target="_blank" rel="noopener">{{ 'register.legal.privacy' | t }}</a>.
+            </span>
+          </label>
+        </div>
+
       </div>
 
       <div class="form-actions">
         <a class="secondary-action" routerLink="/login">{{ 'common.cancel' | t }}</a>
-        <button type="submit" [disabled]="loading">
+        <button type="submit" [disabled]="loading || !acceptedLegalTerms">
           {{ loading ? ('register.creating' | t) : ('register.title' | t) }}
         </button>
       </div>

@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
@@ -15,6 +15,30 @@ import {
   CommunityVisibility
 } from '../pages/model/community-group';
 
+export interface CommunitySearchPresentation {
+  id: number;
+  name: string;
+  description: string | null;
+  sport: string | null;
+  photoUrl: string | null;
+  visibility: CommunityVisibility;
+}
+
+export interface CommunitySearchResponse {
+  communities: CommunitySearchPresentation[];
+  page: number;
+  hasMore: boolean;
+}
+
+export interface CommunityJoinRequest {
+  id: number;
+  communityId: number;
+  communityName: string;
+  requesterUsername: string;
+  status: 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'CANCELLED';
+  createdAt: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class CommunityGroupsService {
   private readonly url = environment.apiUrl + '/api/communities';
@@ -23,6 +47,49 @@ export class CommunityGroupsService {
 
   mine(): Observable<CommunityGroup[]> {
     return this.http.get<CommunityGroup[]>(this.url + '/mine');
+  }
+
+  search(name: string, sport: string, page: number): Observable<CommunitySearchResponse> {
+    const params = new HttpParams()
+      .set('name', name.trim())
+      .set('sport', sport.trim())
+      .set('page', String(page));
+
+    return this.http.get<CommunitySearchResponse>(this.url + '/search', { params });
+  }
+
+  presentation(id: number): Observable<CommunitySearchPresentation> {
+    return this.http.get<CommunitySearchPresentation>(this.url + '/' + id + '/presentation');
+  }
+
+  joinPublic(id: number): Observable<CommunityGroup> {
+    return this.http.post<CommunityGroup>(this.url + '/' + id + '/join', null);
+  }
+
+  requestJoin(id: number): Observable<CommunityJoinRequest> {
+    return this.http.post<CommunityJoinRequest>(this.url + '/' + id + '/join-requests', null);
+  }
+
+  pendingJoinRequests(id: number): Observable<CommunityJoinRequest[]> {
+    return this.http.get<CommunityJoinRequest[]>(this.url + '/' + id + '/join-requests');
+  }
+
+  myPendingJoinRequest(id: number): Observable<CommunityJoinRequest | null> {
+    return this.http.get<CommunityJoinRequest | null>(this.url + '/' + id + '/join-requests/me');
+  }
+
+  acceptJoinRequest(communityId: number, requestId: number): Observable<CommunityGroup> {
+    return this.http.post<CommunityGroup>(
+      this.url + '/' + communityId + '/join-requests/' + requestId + '/accept',
+      null
+    );
+  }
+
+  rejectJoinRequest(communityId: number, requestId: number): Observable<void> {
+    return this.http.post<void>(
+      this.url + '/' + communityId + '/join-requests/' + requestId + '/reject',
+      null
+    );
   }
 
   get(id: number): Observable<CommunityGroup> {
@@ -44,6 +111,13 @@ export class CommunityGroupsService {
     );
   }
 
+  openSessionToPublic(id: number, sessionId: number): Observable<SessionSummary> {
+    return this.http.post<SessionSummary>(
+      this.url + '/' + id + '/sessions/' + sessionId + '/open-public',
+      null
+    );
+  }
+
   competition(
     id: number,
     seasonId: number | null = null
@@ -52,6 +126,59 @@ export class CommunityGroupsService {
     return this.http.get<CommunityCompetitionOverview>(
       this.url + '/' + id + '/competition' + suffix
     );
+  }
+
+  importPreview(id: number, file: File): Observable<{
+    fileName: string;
+    sheets: Array<{
+      name: string;
+      nonEmptyRows: number;
+      structure: string;
+      headers: string[];
+      sampleRows: string[][];
+      columnSuggestions: Array<{
+        columnIndex: number;
+        header: string;
+        field: string;
+        confidence: number;
+      }>;
+    }>;
+  }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<any>(
+      this.url + '/' + id + '/competition/import/preview',
+      formData
+    );
+  }
+
+  validateImport(id: number, file: File, mapping: unknown): Observable<any> {
+    const formData = this.importForm(file, mapping);
+    return this.http.post<any>(this.url + '/' + id + '/competition/import/validate', formData);
+  }
+
+  normalizedImportPreview(id: number, file: File, mapping: unknown): Observable<any> {
+    const formData = this.importForm(file, mapping);
+    return this.http.post<any>(this.url + '/' + id + '/competition/import/normalized-preview', formData);
+  }
+
+  confirmImportRounds(id: number, file: File, mapping: unknown, context: unknown): Observable<any> {
+    const formData = this.importForm(file, mapping);
+    formData.append('context', new Blob([JSON.stringify(context)], { type: 'application/json' }));
+    return this.http.post<any>(this.url + '/' + id + '/competition/import/rounds/confirm', formData);
+  }
+
+  finalImportPlan(id: number, file: File, mapping: unknown, context: unknown): Observable<any> {
+    const formData = this.importForm(file, mapping);
+    formData.append('context', new Blob([JSON.stringify(context)], { type: 'application/json' }));
+    return this.http.post<any>(this.url + '/' + id + '/competition/import/rounds/final-plan', formData);
+  }
+
+  private importForm(file: File, mapping: unknown): FormData {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('mapping', new Blob([JSON.stringify(mapping)], { type: 'application/json' }));
+    return formData;
   }
 
   createSeason(
@@ -118,6 +245,10 @@ export class CommunityGroupsService {
     const formData = new FormData();
     formData.append('photo', photo);
     return this.http.put<CommunityGroup>(this.url + '/' + id + '/photo', formData);
+  }
+
+  removePhoto(id: number): Observable<CommunityGroup> {
+    return this.http.delete<CommunityGroup>(this.url + '/' + id + '/photo');
   }
 
   myInvites(): Observable<CommunityInvite[]> {

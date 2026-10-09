@@ -17,6 +17,7 @@
       <input
         type="search"
         [(ngModel)]="filter"
+        (ngModelChange)="onFilterChange()"
         [placeholder]="'friends.filterPlaceholder' | t">
     </label>
 
@@ -75,119 +76,85 @@
                 <span class="blocked-badge">{{ 'friends.blockedByFriend' | t }}</span>
               }
 
-              <button type="button" class="secondary-action" (click)="openProfile(friend)">Ver perfil</button>
-              <a [routerLink]="['/menu/friendList/chat', friend.username]">{{ 'friends.openChat' | t }}</a>
+              <a
+                class="friend-action friend-action--secondary"
+                [routerLink]="['/menu/perfis', friend.username]"
+                [queryParams]="{ from: 'friends' }">
+                <span>👤</span>
+                {{ 'friends.profileAction' | t }}
+              </a>
 
-              @if (!friend.chatBlocked || friend.blockedByMe) {
-                <button
-                  type="button"
-                  class="secondary-action"
-                  [disabled]="actionLoadingUsername !== null"
-                  (click)="toggleBlock(friend)">
-                  @if (actionLoadingUsername === friend.username) {
-                    {{ 'common.processing' | t }}
-                  } @else if (friend.chatBlocked) {
-                    {{ 'friends.unblockChat' | t }}
-                  } @else {
-                    {{ 'friends.blockChat' | t }}
-                  }
-                </button>
-              }
+              <a
+                class="friend-action friend-action--primary"
+                [routerLink]="['/menu/friendList/chat', friend.username]">
+                <span>💬</span>
+                {{ 'friends.chatAction' | t }}
+              </a>
 
-              @if (pendingRemovalUsername === friend.username) {
+              <div class="friend-more">
                 <button
                   type="button"
-                  class="secondary-action"
+                  class="friend-action friend-action--secondary friend-more__trigger"
+                  [attr.aria-expanded]="openActionsUsername === friend.username"
                   [disabled]="actionLoadingUsername !== null"
-                  (click)="confirmRemove(friend)">
-                  {{ actionLoadingUsername === friend.username ? ('friends.removing' | t) : ('friends.confirmRemoval' | t) }}
+                  (click)="toggleActions(friend)">
+                  <span>⋮</span>
+                  {{ 'friends.moreAction' | t }}
                 </button>
-                <button
-                  type="button"
-                  class="secondary-action"
-                  [disabled]="actionLoadingUsername !== null"
-                  (click)="cancelRemove()">
-                  Cancelar
-                </button>
-              } @else {
-                <button
-                  type="button"
-                  class="secondary-action"
-                  [disabled]="actionLoadingUsername !== null"
-                  (click)="requestRemove(friend)">
-                  {{ 'friends.removeFriend' | t }}
-                </button>
-              }
+
+                @if (openActionsUsername === friend.username) {
+                  <div class="friend-more__menu">
+                    @if (!friend.chatBlocked || friend.blockedByMe) {
+                      <button
+                        type="button"
+                        [disabled]="actionLoadingUsername !== null"
+                        (click)="toggleBlock(friend)">
+                        <span>🚫</span>
+                        @if (actionLoadingUsername === friend.username) {
+                          {{ 'common.processing' | t }}
+                        } @else if (friend.chatBlocked) {
+                          {{ 'friends.unblockChat' | t }}
+                        } @else {
+                          {{ 'friends.blockChat' | t }}
+                        }
+                      </button>
+                    }
+
+                    <div class="friend-more__divider"></div>
+
+                    @if (pendingRemovalUsername === friend.username) {
+                      <p class="remove-confirmation">{{ 'friends.removeConfirmQuestion' | t }}</p>
+                      <button
+                        type="button"
+                        class="danger-action"
+                        [disabled]="actionLoadingUsername !== null"
+                        (click)="confirmRemove(friend)">
+                        <span>👤✕</span>
+                        {{ actionLoadingUsername === friend.username
+                          ? ('friends.removing' | t)
+                          : ('friends.confirmRemoval' | t) }}
+                      </button>
+                      <button
+                        type="button"
+                        (click)="cancelRemove()">
+                        {{ 'common.cancel' | t }}
+                      </button>
+                    } @else {
+                      <button
+                        type="button"
+                        class="danger-action"
+                        [disabled]="actionLoadingUsername !== null"
+                        (click)="requestRemove(friend)">
+                        <span>👤✕</span>
+                        {{ 'friends.removeFriend' | t }}
+                      </button>
+                    }
+                  </div>
+                }
+              </div>
             </div>
           </article>
         }
-      </div>
-    }
-    @if (profileLoading) {
-      <div class="profile-backdrop">
-        <div class="profile-detail">A carregar perfil...</div>
-      </div>
-    }
-
-    @if (selectedProfile) {
-      <div class="profile-backdrop" (click)="closeProfile()">
-        <article class="profile-detail" (click)="$event.stopPropagation()">
-          <button type="button" class="close-detail" (click)="closeProfile()">×</button>
-
-          <div class="detail-heading">
-            <div class="avatar large-avatar">
-              @if (profileImage(selectedProfile); as image) {
-                <img [src]="image" [alt]="selectedProfile.username">
-              } @else {
-                <span>{{ initials(selectedProfile) }}</span>
-              }
-            </div>
-
-            <div>
-              <p class="eyebrow">Perfil</p>
-              <h2>{{ selectedProfile.username }}</h2>
-              <p>{{ selectedProfile.nickname || selectedProfile.fullName || ('friends.player' | t) }}</p>
-            </div>
-          </div>
-
-          <div class="profile-meta">
-            <div>
-              <span>{{ 'common.country' | t }}</span>
-              <strong>{{ selectedProfile.country || ('common.notProvided' | t) }}</strong>
-            </div>
-            <div>
-              <span>{{ 'community.memberSince' | t }}</span>
-              <strong>{{ selectedProfile.joinDateDisplay || ('common.noInfo' | t) }}</strong>
-            </div>
-
-            @if (selectedReliability) {
-              <div>
-                <span>Taxa de presença</span>
-                <strong>{{ selectedReliability.attendanceRate | number:'1.0-0' }}%</strong>
-              </div>
-              <div>
-                <span>Sessões concluídas</span>
-                <strong>{{ selectedReliability.completedSessions }}</strong>
-              </div>
-              <div>
-                <span>Faltas</span>
-                <strong>{{ selectedReliability.noShows }}</strong>
-              </div>
-              <div>
-                <span>Estado de fiabilidade</span>
-                <strong>
-                  {{ selectedReliability.joinRestricted
-                    ? 'Restrito'
-                    : (selectedReliability.warning ? 'Em observação' : 'Bom') }}
-                </strong>
-              </div>
-            }
-          </div>
-
-          <div class="detail-actions">
-            <a [routerLink]="['/menu/friendList/chat', selectedProfile.username]">Abrir chat</a>
-          </div>
-        </article>
       </div>
     }
   </div>

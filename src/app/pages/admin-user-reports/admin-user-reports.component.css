@@ -1,0 +1,134 @@
+:host { display: block; }
+
+.admin-reports-page {
+  min-height: 100vh;
+  padding: 7rem 1.25rem 4rem;
+  background: linear-gradient(145deg, #07111f, #12334a);
+  color: #f8fafc;
+}
+
+.admin-shell {
+  width: min(960px, 100%);
+  margin: 0 auto;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.eyebrow {
+  margin: 0 0 .4rem;
+  color: #7dd3fc;
+  font-size: .8rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+}
+
+h1 { margin: 0; }
+
+.subtitle {
+  margin: .7rem 0 0;
+  color: #cbd5e1;
+}
+
+.header-actions,
+.report-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .65rem;
+}
+
+.secondary-action,
+.report-actions button {
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: .8rem;
+  padding: .75rem .9rem;
+  background: rgba(255,255,255,.07);
+  color: #f8fafc;
+  font: inherit;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.report-list {
+  display: grid;
+  gap: .9rem;
+}
+
+.report-card,
+.state-card,
+.feedback {
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 1rem;
+  padding: 1rem;
+  background: rgba(15,23,42,.82);
+}
+
+.report-top,
+.report-people {
+  display: flex;
+  justify-content: space-between;
+  gap: .75rem;
+}
+
+.status-badge {
+  border-radius: 999px;
+  padding: .3rem .55rem;
+  background: rgba(250,204,21,.12);
+  color: #fde68a;
+  font-size: .75rem;
+  font-weight: 900;
+}
+
+.created-at,
+.report-people span {
+  color: #94a3b8;
+}
+
+.report-people {
+  margin-top: .9rem;
+}
+
+.reason {
+  margin: .9rem 0;
+  color: #e2e8f0;
+  white-space: pre-wrap;
+  line-height: 1.55;
+}
+
+.report-actions .dismiss {
+  border-color: rgba(248,113,113,.3);
+  color: #fecaca;
+}
+
+.report-actions button:disabled,
+.secondary-action:disabled {
+  opacity: .6;
+  cursor: wait;
+}
+
+.error-feedback {
+  margin-bottom: 1rem;
+  color: #fecaca;
+  border-color: rgba(248,113,113,.4);
+}
+
+.state-card p {
+  margin-bottom: 0;
+  color: #94a3b8;
+}
+
+@media (max-width: 760px) {
+  .page-header,
+  .report-top,
+  .report-people {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

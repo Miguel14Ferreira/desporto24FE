@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { appTranslate as t } from '../../i18n/i18n.service';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
-import { finalize } from 'rxjs';
+import { finalize, retry, timeout } from 'rxjs';
 
 import { AttendanceHistoryItem } from '../model/attendance-history';
 import { MySessionsResponse } from '../model/my-sessions-response';
@@ -55,7 +55,11 @@ export class MySessionsComponent implements OnInit {
     this.errorMessage = '';
 
     this.sessionService.mine()
-      .pipe(finalize(() => this.loading = false))
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        finalize(() => this.loading = false)
+      )
       .subscribe({
         next: data => this.data = data,
         error: () => this.errorMessage = t('feedback.sessions.loadError')
@@ -67,7 +71,11 @@ export class MySessionsComponent implements OnInit {
     this.attendanceError = '';
 
     this.reliabilityService.attendanceHistory()
-      .pipe(finalize(() => this.attendanceLoading = false))
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        finalize(() => this.attendanceLoading = false)
+      )
       .subscribe({
         next: history => this.attendanceHistory = history,
         error: () => {
@@ -106,12 +114,22 @@ export class MySessionsComponent implements OnInit {
     this.actionError = '';
 
     this.sessionService.cancel(sessionId)
-      .pipe(finalize(() => this.cancelLoading = false))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.cancelLoading = false)
+      )
       .subscribe({
         next: () => {
+          this.data = {
+            ...this.data,
+            created: this.data.created.map(session =>
+              session.id === sessionId
+                ? { ...session, status: 'CANCELLED' }
+                : session
+            )
+          };
           this.pendingCancelId = null;
           this.actionMessage = t('feedback.sessions.cancelled');
-          this.load();
         },
         error: error => {
           this.actionError = this.errorFrom(error, t('feedback.sessions.cancelError'));
@@ -129,7 +147,10 @@ export class MySessionsComponent implements OnInit {
     this.actionError = '';
 
     this.sessionService.leave(session.id)
-      .pipe(finalize(() => this.waitlistLeavingId = null))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.waitlistLeavingId = null)
+      )
       .subscribe({
         next: () => {
           this.data = {
@@ -192,7 +213,10 @@ export class MySessionsComponent implements OnInit {
     this.actionError = '';
 
     this.reliabilityService.createDispute(participantId, reason)
-      .pipe(finalize(() => this.disputeLoading = false))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.disputeLoading = false)
+      )
       .subscribe({
         next: () => {
           this.attendanceHistory = this.attendanceHistory.map(item =>

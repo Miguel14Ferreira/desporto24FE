@@ -134,6 +134,17 @@
                   <span>💬</span>
                   {{ item.commentCount }}
                 </button>
+
+                @if (item.authorUsername !== currentUsername) {
+                  <button
+                    type="button"
+                    [disabled]="reportingPostId !== null || (item.postId !== null && reportedPostIds.has(item.postId))"
+                    (click)="reportPost(item)">
+                    {{ item.postId !== null && reportedPostIds.has(item.postId)
+                      ? ('feed.reported' | t)
+                      : (reportingPostId === item.postId ? ('common.processing' | t) : ('feed.report' | t)) }}
+                  </button>
+                }
               </div>
 
               @if (item.postId !== null && openCommentPosts.has(item.postId)) {
@@ -168,6 +179,16 @@
                           (click)="deleteComment(item, comment)">
                           {{ deletingCommentId === comment.id ? ('common.processing' | t) : '×' }}
                         </button>
+                      } @else {
+                        <button
+                          type="button"
+                          class="delete-comment"
+                          [disabled]="reportingCommentId !== null || reportedCommentIds.has(comment.id)"
+                          (click)="reportComment(item, comment)">
+                          {{ reportedCommentIds.has(comment.id)
+                            ? ('feed.reported' | t)
+                            : (reportingCommentId === comment.id ? ('common.processing' | t) : ('feed.report' | t)) }}
+                        </button>
                       }
                     </div>
                   }
@@ -188,6 +209,31 @@
                   </div>
                 </section>
               }
+            }
+
+            @if (item.type === 'SESSION_ATTENDED') {
+              <div class="activity-copy">
+                <span class="activity-label">{{ 'feed.activity.sessionAttended' | t }}</span>
+                <p>
+                  {{ 'feed.activity.attendedSession' | t:{
+                    sport: item.sport || '',
+                    city: item.city || ''
+                  } }}
+                </p>
+              </div>
+
+              <a
+                class="session-preview"
+                [routerLink]="['/menu/events', item.sessionId]">
+                <div>
+                  <strong>{{ item.sport }}</strong>
+                  <span>{{ item.city }}</span>
+                </div>
+                <div>
+                  <span>{{ item.gameDate | date:'dd/MM/yyyy HH:mm' }}</span>
+                  <strong>{{ 'feed.viewSession' | t }}</strong>
+                </div>
+              </a>
             }
 
             @if (item.type === 'SESSION_CREATED') {

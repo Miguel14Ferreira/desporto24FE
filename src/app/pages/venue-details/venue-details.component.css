@@ -1,0 +1,393 @@
+.venue-detail-page {
+  min-height: 100%;
+  padding: 32px 20px 56px;
+}
+
+.venue-detail-shell {
+  width: min(960px, 100%);
+  margin: 0 auto;
+}
+
+.back-link {
+  display: inline-flex;
+  margin-bottom: 24px;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.venue-state {
+  padding: 24px;
+  border: 1px solid #d9d9d9;
+  border-radius: 16px;
+}
+
+.venue-state-error {
+  font-weight: 600;
+}
+
+.venue-header {
+  margin-bottom: 28px;
+}
+
+.venue-kicker {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.venue-header h1 {
+  margin: 0;
+}
+
+.venue-basic-info {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.venue-basic-info > div {
+  padding: 20px;
+  border: 1px solid #d9d9d9;
+  border-radius: 16px;
+}
+
+.venue-basic-info span,
+.venue-basic-info strong {
+  display: block;
+}
+
+.venue-basic-info span {
+  margin-bottom: 8px;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 640px) {
+  .venue-detail-page {
+    padding: 24px 16px 40px;
+  }
+
+  .venue-basic-info {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+.venue-amenities-section {
+  margin-top: 28px;
+}
+
+.venue-amenities-section h2 {
+  margin: 0 0 14px;
+  font-size: 1.1rem;
+}
+
+.venue-amenities-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.venue-amenities-list span {
+  padding: 8px 12px;
+  border: 1px solid #d9d9d9;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+
+.venue-information-section {
+  margin-top: 28px;
+}
+
+.venue-information-section h2 {
+  margin: 0 0 14px;
+  font-size: 1.1rem;
+}
+
+.venue-information-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.venue-information-grid > div {
+  padding: 18px;
+  border: 1px solid #d9d9d9;
+  border-radius: 16px;
+}
+
+.venue-information-grid span,
+.venue-information-grid strong {
+  display: block;
+}
+
+.venue-information-grid span {
+  margin-bottom: 8px;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 640px) {
+  .venue-information-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+.venue-photos-section {
+  margin-top: 28px;
+}
+
+.venue-photos-section h2 {
+  margin: 0 0 14px;
+  font-size: 1.1rem;
+}
+
+.venue-photo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.venue-photo-item {
+  margin: 0;
+}
+
+.venue-photo-grid img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 16px;
+  border: 1px solid #d9d9d9;
+}
+
+.venue-photo-item figcaption {
+  margin-top: 8px;
+  font-size: 0.82rem;
+}
+
+.venue-photos-state {
+  padding: 18px;
+  border: 1px solid #d9d9d9;
+  border-radius: 16px;
+}
+
+@media (max-width: 760px) {
+  .venue-photo-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .venue-photo-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+.venue-photos-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.venue-photos-heading h2 {
+  margin: 0;
+}
+
+.venue-photo-upload {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 9px 14px;
+  border: 1px solid #d9d9d9;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.venue-photo-upload input {
+  display: none;
+}
+
+.venue-photo-upload.is-disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.venue-photo-upload-error {
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  border: 1px solid #d9d9d9;
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+@media (max-width: 560px) {
+  .venue-photos-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+
+.venue-sport-conditions-section {
+  margin-top: 28px;
+}
+
+.venue-sport-conditions-section h2 {
+  margin: 0 0 14px;
+  font-size: 1.1rem;
+}
+
+.venue-sport-conditions-list {
+  display: grid;
+  gap: 12px;
+}
+
+.venue-sport-condition-card,
+.venue-sport-conditions-state {
+  padding: 18px;
+  border: 1px solid #d9d9d9;
+  border-radius: 16px;
+}
+
+.venue-sport-condition-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.venue-sport-condition-heading span {
+  padding: 5px 9px;
+  border: 1px solid #d9d9d9;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.venue-sport-condition-card p {
+  margin: 12px 0 0;
+  white-space: pre-line;
+}
+
+.venue-sport-condition-created-by {
+  margin-top: 10px;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 520px) {
+  .venue-sport-condition-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+
+.venue-sport-conditions-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.venue-sport-condition-form {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 18px;
+  border: 1px solid #d9d9d9;
+  border-radius: 16px;
+}
+
+.venue-sport-condition-form label {
+  display: grid;
+  gap: 7px;
+}
+
+.venue-sport-condition-form label > span {
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.venue-sport-condition-form input,
+.venue-sport-condition-form textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid #d9d9d9;
+  border-radius: 12px;
+  font: inherit;
+}
+
+.venue-sport-condition-form textarea {
+  resize: vertical;
+}
+
+.venue-sport-condition-submit {
+  justify-self: start;
+  padding: 9px 14px;
+  border: 1px solid #d9d9d9;
+  border-radius: 999px;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+}
+
+.venue-sport-condition-submit:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.venue-sport-condition-save-error {
+  font-weight: 600;
+}
+
+
+.venue-provenance {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.venue-source-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border: 1px solid #d9d9d9;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.venue-created-by {
+  font-size: 0.9rem;
+}
+
+@media (max-width: 520px) {
+  .venue-provenance {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+
+.venue-map-link {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 14px;
+  padding: 9px 14px;
+  border: 1px solid #d9d9d9;
+  border-radius: 999px;
+  text-decoration: none;
+  font-weight: 700;
+}

@@ -11,8 +11,8 @@
   --d24-text: #f8fafc;
   --d24-text-muted: #cbd5e1;
   --d24-text-subtle: #94a3b8;
-  --d24-accent: #7dd3fc;
-  --d24-accent-soft: #bae6fd;
+  --d24-accent: #00e676;
+  --d24-accent-soft: #86efac;
   --d24-danger: #fecaca;
   --d24-success: #bbf7d0;
   --d24-radius: 1rem;
@@ -66,12 +66,12 @@ button:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: 3px solid rgba(125, 211, 252, .32);
+  outline: 3px solid rgba(0, 230, 118, .32);
   outline-offset: 2px;
 }
 
 ::selection {
-  background: rgba(125, 211, 252, .25);
+  background: rgba(0, 230, 118, .25);
   color: var(--d24-text);
 }
 

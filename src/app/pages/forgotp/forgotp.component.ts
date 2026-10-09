@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { appTranslate as t } from '../../i18n/i18n.service';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { finalize } from 'rxjs';
+import { finalize, timeout } from 'rxjs';
 
 import { AuthenticationService } from '../../services/authethication.service';
 
@@ -38,7 +38,7 @@ export class ForgotpComponent {
     this.successMessage = '';
 
     this.authenticationService.initiatePasswordReset(email)
-      .pipe(finalize(() => this.loading = false))
+      .pipe(timeout(10_000), finalize(() => this.loading = false))
       .subscribe({
         next: response => {
           this.successMessage = t('feedback.reset.sent');

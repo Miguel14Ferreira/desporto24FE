@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
@@ -6,17 +6,60 @@ import { environment } from 'src/environment/environment';
 import { CommunityProfile } from '../pages/model/community-profile';
 import { FriendSummary } from '../pages/model/friend-summary';
 
+export interface UserBlockStatus {
+  blocked: boolean;
+}
+
+export interface ProfileSearchFilters {
+  name?: string;
+  sport?: string;
+  location?: string;
+  minAge?: number;
+  maxAge?: number;
+  skillLevel?: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class CommunityService {
   private readonly profileUrl = environment.apiUrl + '/api/profile';
   private readonly friendsUrl = environment.apiUrl + '/api/friends';
+  private readonly userReportsUrl = environment.apiUrl + '/api/reports/users';
+  private readonly userBlocksUrl = environment.apiUrl + '/api/blocks/users';
 
   constructor(private http: HttpClient) {}
 
   discoverProfiles(): Observable<CommunityProfile[]> {
     return this.http.get<CommunityProfile[]>(this.profileUrl + '/discover');
+  }
+
+  findProfiles(filters: ProfileSearchFilters): Observable<CommunityProfile[]> {
+    let params = new HttpParams();
+
+    if (filters.name?.trim()) {
+      params = params.set('name', filters.name.trim());
+    }
+    if (filters.sport?.trim()) {
+      params = params.set('sport', filters.sport.trim());
+    }
+    if (filters.location?.trim()) {
+      params = params.set('location', filters.location.trim());
+    }
+    if (filters.minAge !== undefined) {
+      params = params.set('minAge', String(filters.minAge));
+    }
+    if (filters.maxAge !== undefined) {
+      params = params.set('maxAge', String(filters.maxAge));
+    }
+    if (filters.skillLevel?.trim()) {
+      params = params.set('skillLevel', filters.skillLevel.trim());
+    }
+
+    return this.http.get<CommunityProfile[]>(
+      this.profileUrl + '/search',
+      { params }
+    );
   }
 
   searchProfiles(name: string): Observable<CommunityProfile[]> {
@@ -35,6 +78,32 @@ export class CommunityService {
     return this.http.post(
       this.friendsUrl + '/add/' + encodeURIComponent(username),
       null
+    );
+  }
+
+  reportUser(username: string, reason: string): Observable<void> {
+    return this.http.post<void>(
+      this.userReportsUrl + '/' + encodeURIComponent(username),
+      { reason: reason.trim() }
+    );
+  }
+
+  userBlockStatus(username: string): Observable<UserBlockStatus> {
+    return this.http.get<UserBlockStatus>(
+      this.userBlocksUrl + '/' + encodeURIComponent(username) + '/status'
+    );
+  }
+
+  blockUser(username: string): Observable<UserBlockStatus> {
+    return this.http.post<UserBlockStatus>(
+      this.userBlocksUrl + '/' + encodeURIComponent(username),
+      null
+    );
+  }
+
+  unblockUser(username: string): Observable<UserBlockStatus> {
+    return this.http.delete<UserBlockStatus>(
+      this.userBlocksUrl + '/' + encodeURIComponent(username)
     );
   }
 

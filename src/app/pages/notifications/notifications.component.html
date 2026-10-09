@@ -2,7 +2,7 @@
   <div class="notifications-shell">
     <header class="page-header">
       <div>
-        <p class="eyebrow">Desporto24</p>
+        <p class="eyebrow">Jynlo</p>
         <h1>{{ 'notifications.title' | t }}</h1>
         <p class="subtitle">
           {{ unreadCount === 1 ? ('notifications.unreadOne' | t:{ count: unreadCount }) : ('notifications.unreadMany' | t:{ count: unreadCount }) }}
@@ -89,8 +89,8 @@
                 }
               </div>
 
-              <strong>{{ notification.subject }}</strong>
-              <p>{{ notification.message }}</p>
+              <strong>{{ notificationSubject(notification) }}</strong>
+              <p>{{ notificationMessage(notification) }}</p>
               <span class="created-at">{{ formatCreatedAt(notification.createdAt) }}</span>
             </button>
           }
@@ -109,12 +109,12 @@
               <div class="detail-header">
                 <div>
                   <span class="type-badge">{{ typeLabel(selected) }}</span>
-                  <h2>{{ selected.subject }}</h2>
+                  <h2>{{ notificationSubject(selected) }}</h2>
                 </div>
                 <button type="button" class="close-detail" (click)="closeNotification()">×</button>
               </div>
 
-              <p class="detail-message">{{ selected.message }}</p>
+              <p class="detail-message">{{ notificationMessage(selected) }}</p>
 
               @if (selected.greeting) {
                 <p>{{ selected.greeting }}</p>
@@ -173,6 +173,12 @@
                 @if (selected.type === 'CHAT_MESSAGE' && selected.relatedUsername) {
                   <button type="button" class="primary-action" (click)="openChat(selected)">
                     {{ 'notifications.openChat' | t }}
+                  </button>
+                }
+
+                @if (selected.type === 'COMMUNITY_INVITE') {
+                  <button type="button" class="primary-action" (click)="openCommunityInvite(selected)">
+                    {{ 'notifications.openCommunityInvite' | t }}
                   </button>
                 }
 

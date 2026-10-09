@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
-import { finalize } from 'rxjs';
+import { finalize, retry, timeout } from 'rxjs';
 
 import { environment } from 'src/environment/environment';
 import { appTranslate as t } from '../../i18n/i18n.service';
@@ -25,6 +25,10 @@ export class SocialFeedComponent implements OnInit {
   deletingPostId: number | null = null;
   interactionLoadingPostId: number | null = null;
   deletingCommentId: number | null = null;
+  reportingCommentId: number | null = null;
+  reportedCommentIds = new Set<number>();
+  reportingPostId: number | null = null;
+  reportedPostIds = new Set<number>();
   openCommentPosts = new Set<number>();
   commentsByPost: Record<number, SocialComment[]> = {};
   commentDrafts: Record<number, string> = {};
@@ -50,7 +54,11 @@ export class SocialFeedComponent implements OnInit {
     this.errorMessage = '';
 
     this.feedService.feed()
-      .pipe(finalize(() => this.loading = false))
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        finalize(() => this.loading = false)
+      )
       .subscribe({
         next: items => this.items = items,
         error: () => {
@@ -70,7 +78,10 @@ export class SocialFeedComponent implements OnInit {
     this.actionError = '';
 
     this.feedService.createPost(content, this.postImageFile)
-      .pipe(finalize(() => this.posting = false))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.posting = false)
+      )
       .subscribe({
         next: item => {
           this.items = [item, ...this.items];
@@ -154,7 +165,10 @@ export class SocialFeedComponent implements OnInit {
       : this.feedService.likePost(item.postId);
 
     request$
-      .pipe(finalize(() => this.interactionLoadingPostId = null))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.interactionLoadingPostId = null)
+      )
       .subscribe({
         next: status => {
           item.likedByMe = status.likedByMe;
@@ -182,10 +196,15 @@ export class SocialFeedComponent implements OnInit {
       return;
     }
 
-    this.feedService.comments(postId).subscribe({
-      next: comments => this.commentsByPost[postId] = comments,
-      error: () => this.actionError = t('feedback.feed.commentsLoadError')
-    });
+    this.feedService.comments(postId)
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 })
+      )
+      .subscribe({
+        next: comments => this.commentsByPost[postId] = comments,
+        error: () => this.actionError = t('feedback.feed.commentsLoadError')
+      });
   }
 
   submitComment(item: FeedItem): void {
@@ -208,7 +227,10 @@ export class SocialFeedComponent implements OnInit {
     this.actionError = '';
 
     this.feedService.addComment(postId, content)
-      .pipe(finalize(() => this.interactionLoadingPostId = null))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.interactionLoadingPostId = null)
+      )
       .subscribe({
         next: comment => {
           this.commentsByPost[postId] = [
@@ -236,7 +258,10 @@ export class SocialFeedComponent implements OnInit {
     this.actionError = '';
 
     this.feedService.deleteComment(postId, comment.id)
-      .pipe(finalize(() => this.deletingCommentId = null))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.deletingCommentId = null)
+      )
       .subscribe({
         next: () => {
           this.commentsByPost[postId] = (this.commentsByPost[postId] || [])
@@ -244,6 +269,67 @@ export class SocialFeedComponent implements OnInit {
           item.commentCount = Math.max(0, item.commentCount - 1);
         },
         error: () => this.actionError = t('feedback.feed.commentDeleteError')
+      });
+  }
+
+  reportComment(item: FeedItem, comment: SocialComment): void {
+    if (
+      item.postId === null
+      || comment.authorUsername === this.currentUsername
+      || this.reportingCommentId !== null
+      || this.reportedCommentIds.has(comment.id)
+    ) {
+      return;
+    }
+
+    const reason = window.prompt(t('feed.reportCommentReasonPrompt'))?.trim();
+    if (!reason) {
+      return;
+    }
+
+    const postId = item.postId;
+    this.reportingCommentId = comment.id;
+    this.actionError = '';
+
+    this.feedService.reportComment(postId, comment.id, reason.slice(0, 1000))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.reportingCommentId = null)
+      )
+      .subscribe({
+        next: () => this.reportedCommentIds.add(comment.id),
+        error: () => this.actionError = t('feedback.feed.commentReportError')
+      });
+  }
+
+  reportPost(item: FeedItem): void {
+    if (
+      item.type !== 'POST'
+      || item.postId === null
+      || item.authorUsername === this.currentUsername
+      || this.reportingPostId !== null
+      || this.reportedPostIds.has(item.postId)
+    ) {
+      return;
+    }
+
+    const reason = window.prompt(t('feed.reportReasonPrompt'))?.trim();
+    if (!reason) {
+      return;
+    }
+
+    const postId = item.postId;
+    this.reportingPostId = postId;
+    this.actionError = '';
+
+    this.feedService.reportPost(postId, reason.slice(0, 1000))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.reportingPostId = null)
+      )
+      .subscribe({
+        next: () => this.reportedPostIds.add(postId),
+        error: () => this.actionError = t('feedback.feed.reportError')
       });
   }
 
@@ -261,7 +347,10 @@ export class SocialFeedComponent implements OnInit {
     this.actionError = '';
 
     this.feedService.deletePost(item.postId)
-      .pipe(finalize(() => this.deletingPostId = null))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.deletingPostId = null)
+      )
       .subscribe({
         next: () => {
           this.items = this.items.filter(

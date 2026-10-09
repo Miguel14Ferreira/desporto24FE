@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { appTranslate as t } from '../../i18n/i18n.service';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { finalize } from 'rxjs';
+import { finalize, retry, timeout } from 'rxjs';
 
 import { AppNotification } from '../model/app-notification';
 import { NotificationApiService } from '../../services/notification-api.service';
@@ -16,7 +16,13 @@ import { AuthenticationService } from '../../services/authethication.service';
   standalone: false
 })
 export class NotificationsComponent implements OnInit {
+  private readonly dateTimeFormatter = new Intl.DateTimeFormat('pt-PT', {
+    dateStyle: 'short',
+    timeStyle: 'short'
+  });
+
   notifications: AppNotification[] = [];
+  unreadCount = 0;
   selected?: AppNotification;
 
   loading = false;
@@ -40,21 +46,22 @@ export class NotificationsComponent implements OnInit {
     this.load();
   }
 
-  get unreadCount(): number {
-    return this.notifications.filter(notification => !notification.read).length;
-  }
-
   load(): void {
     this.loading = true;
     this.errorMessage = '';
 
     this.notificationService.mine()
-      .pipe(finalize(() => this.loading = false))
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        finalize(() => this.loading = false)
+      )
       .subscribe({
         next: notifications => {
           this.notifications = [...notifications].sort(
             (a, b) => this.timestamp(b.createdAt) - this.timestamp(a.createdAt)
           );
+          this.updateUnreadCount();
 
           const routeId = Number(this.route.snapshot.paramMap.get('id'));
           if (Number.isFinite(routeId) && routeId > 0) {
@@ -66,6 +73,7 @@ export class NotificationsComponent implements OnInit {
         },
         error: () => {
           this.notifications = [];
+          this.updateUnreadCount();
           this.errorMessage = t('feedback.notifications.loadError');
         }
       });
@@ -83,11 +91,15 @@ export class NotificationsComponent implements OnInit {
 
     if (!notification.read) {
       notification.read = true;
-      this.notificationService.markRead(notification.id).subscribe({
-        error: () => {
-          notification.read = false;
-        }
-      });
+      this.updateUnreadCount();
+      this.notificationService.markRead(notification.id)
+        .pipe(timeout(10_000))
+        .subscribe({
+          error: () => {
+            notification.read = false;
+            this.updateUnreadCount();
+          }
+        });
     }
   }
 
@@ -117,10 +129,14 @@ export class NotificationsComponent implements OnInit {
     this.actionSuccess = '';
 
     this.notificationService.deleteAll()
-      .pipe(finalize(() => this.clearAllLoading = false))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.clearAllLoading = false)
+      )
       .subscribe({
         next: () => {
           this.notifications = [];
+          this.updateUnreadCount();
           this.selected = undefined;
           this.clearAllConfirming = false;
           this.accountBlockConfirming = false;
@@ -142,6 +158,39 @@ export class NotificationsComponent implements OnInit {
     }
 
     this.router.navigate(['/menu/events', notification.sessionId]);
+  }
+
+  openCommunityInvite(notification: AppNotification): void {
+    if (notification.type !== 'COMMUNITY_INVITE') {
+      return;
+    }
+
+    this.router.navigate(['/menu/communities']);
+  }
+
+  notificationSubject(notification: AppNotification): string {
+    const community = this.invitedCommunityName(notification);
+    return community
+      ? t('notification.communityInviteSubject', { community })
+      : notification.subject;
+  }
+
+  notificationMessage(notification: AppNotification): string {
+    const community = this.invitedCommunityName(notification);
+    return community && notification.relatedUsername
+      ? t('notification.communityInviteMessage', {
+          username: notification.relatedUsername,
+          community
+        })
+      : notification.message;
+  }
+
+  private invitedCommunityName(notification: AppNotification): string | null {
+    // The current API includes the community name in the invitation subject.
+    const prefix = 'Convite para a comunidade ';
+    return notification.type === 'COMMUNITY_INVITE' && notification.subject.startsWith(prefix)
+      ? notification.subject.slice(prefix.length).trim() || null
+      : null;
   }
 
   openChat(notification: AppNotification): void {
@@ -189,7 +238,10 @@ export class NotificationsComponent implements OnInit {
     this.actionError = '';
 
     this.notificationService.blockOwnAccount()
-      .pipe(finalize(() => this.actionLoadingId = null))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.actionLoadingId = null)
+      )
       .subscribe({
         next: () => {
           this.authenticationService.logOut();
@@ -213,10 +265,14 @@ export class NotificationsComponent implements OnInit {
     this.actionSuccess = '';
 
     this.notificationService.delete(notification.id)
-      .pipe(finalize(() => this.actionLoadingId = null))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.actionLoadingId = null)
+      )
       .subscribe({
         next: () => {
           this.notifications = this.notifications.filter(item => item.id !== notification.id);
+          this.updateUnreadCount();
           if (this.selected?.id === notification.id) {
             this.selected = undefined;
             this.router.navigate(['/menu/notifications']);
@@ -239,10 +295,14 @@ export class NotificationsComponent implements OnInit {
     this.actionSuccess = '';
 
     this.notificationService.acceptFriendRequest(notification.id)
-      .pipe(finalize(() => this.actionLoadingId = null))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.actionLoadingId = null)
+      )
       .subscribe({
         next: () => {
           this.notifications = this.notifications.filter(item => item.id !== notification.id);
+          this.updateUnreadCount();
           this.selected = undefined;
           this.actionSuccess = t('feedback.notifications.friendAccepted');
           this.router.navigate(['/menu/notifications']);
@@ -263,10 +323,14 @@ export class NotificationsComponent implements OnInit {
     this.actionSuccess = '';
 
     this.notificationService.rejectFriendRequest(notification.id)
-      .pipe(finalize(() => this.actionLoadingId = null))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.actionLoadingId = null)
+      )
       .subscribe({
         next: () => {
           this.notifications = this.notifications.filter(item => item.id !== notification.id);
+          this.updateUnreadCount();
           this.selected = undefined;
           this.actionSuccess = t('feedback.notifications.friendRejected');
           this.router.navigate(['/menu/notifications']);
@@ -286,10 +350,7 @@ export class NotificationsComponent implements OnInit {
       return value;
     }
 
-    return new Intl.DateTimeFormat('pt-PT', {
-      dateStyle: 'short',
-      timeStyle: 'short'
-    }).format(new Date(timestamp));
+    return this.dateTimeFormatter.format(new Date(timestamp));
   }
 
   typeLabel(notification: AppNotification): string {
@@ -300,11 +361,17 @@ export class NotificationsComponent implements OnInit {
         return t('notification.session');
       case 'SESSION_CANCELLED':
         return t('notification.sessionCancelled');
+      case 'COMMUNITY_INVITE':
+        return t('notification.communityInvite');
       case 'CHAT_MESSAGE':
         return t('notification.chatMessage');
       default:
         return notification.friendRequest ? t('notification.friendRequest') : t('notification.generic');
     }
+  }
+
+  private updateUnreadCount(): void {
+    this.unreadCount = this.notifications.filter(notification => !notification.read).length;
   }
 
   private timestamp(value: string): number {

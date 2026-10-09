@@ -1,19 +1,31 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { JwtHelperService } from '@auth0/angular-jwt';
+import { of, throwError } from 'rxjs';
 
 import { AuthenticationGuard } from './authentication.guard';
+import { AuthenticationService } from '../services/authethication.service';
 import { TEST_IMPORTS } from '../testing/test-providers';
 
 describe('AuthenticationGuard', () => {
   let guard: AuthenticationGuard;
   let router: Router;
+  let authenticationService: jasmine.SpyObj<AuthenticationService>;
 
   beforeEach(() => {
     localStorage.clear();
+    authenticationService = jasmine.createSpyObj<AuthenticationService>(
+      'AuthenticationService',
+      ['refreshSession']
+    );
 
     TestBed.configureTestingModule({
-      imports: TEST_IMPORTS
+      imports: TEST_IMPORTS,
+      providers: [
+        AuthenticationGuard,
+        { provide: AuthenticationService, useValue: authenticationService }
+      ]
     });
 
     guard = TestBed.inject(AuthenticationGuard);
@@ -29,25 +41,63 @@ describe('AuthenticationGuard', () => {
     spyOn(JwtHelperService.prototype, 'isTokenExpired')
       .and.returnValue(Promise.resolve(false));
 
-    const result = await guard.canActivate({} as any, { url: '/menu/events' } as any);
+    const result = await guard.canActivate(
+      {} as any,
+      { url: '/menu/events' } as any
+    );
+
+    expect(result).toBeTrue();
+    expect(authenticationService.refreshSession).not.toHaveBeenCalled();
+  });
+
+  it('should recover an expired access token through refresh', async () => {
+    localStorage.setItem('t', 'header.payload.signature');
+    spyOn(JwtHelperService.prototype, 'isTokenExpired')
+      .and.returnValue(Promise.resolve(true));
+    authenticationService.refreshSession.and.returnValue(
+      of({ token: 'fresh-token' } as any)
+    );
+
+    const result = await guard.canActivate(
+      {} as any,
+      { url: '/menu/events' } as any
+    );
 
     expect(result).toBeTrue();
   });
 
-  it('should redirect unauthenticated users to login with returnUrl', async () => {
-    const result = await guard.canActivate({} as any, { url: '/menu/events' } as any);
-
-    expect(router.serializeUrl(result as any)).toContain('/login');
-    expect(router.serializeUrl(result as any)).toContain('returnUrl');
-  });
-
-  it('should redirect expired tokens', async () => {
+  it('should keep the route on a temporary refresh outage', async () => {
     localStorage.setItem('t', 'header.payload.signature');
     spyOn(JwtHelperService.prototype, 'isTokenExpired')
       .and.returnValue(Promise.resolve(true));
+    authenticationService.refreshSession.and.returnValue(
+      throwError(() => new HttpErrorResponse({ status: 503 }))
+    );
 
-    const result = await guard.canActivate({} as any, { url: '/menu' } as any);
+    const result = await guard.canActivate(
+      {} as any,
+      { url: '/menu/events' } as any
+    );
 
+    expect(result).toBeTrue();
+    expect(localStorage.getItem('t')).toBe('header.payload.signature');
+  });
+
+  it('should redirect when the refresh session is definitively rejected', async () => {
+    localStorage.setItem('t', 'header.payload.signature');
+    spyOn(JwtHelperService.prototype, 'isTokenExpired')
+      .and.returnValue(Promise.resolve(true));
+    authenticationService.refreshSession.and.returnValue(
+      throwError(() => new HttpErrorResponse({ status: 400 }))
+    );
+
+    const result = await guard.canActivate(
+      {} as any,
+      { url: '/menu/events' } as any
+    );
+
+    expect(localStorage.getItem('t')).toBeNull();
     expect(router.serializeUrl(result as any)).toContain('/login');
+    expect(router.serializeUrl(result as any)).toContain('sessionExpired=1');
   });
 });

@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { JwtHelperService } from '@auth0/angular-jwt';
-import { finalize, Subscription } from 'rxjs';
+import { finalize, retry, Subscription, timeout } from 'rxjs';
 
 import { environment } from 'src/environment/environment';
 import { SessionDetail } from '../model/session-detail';
@@ -10,7 +10,7 @@ import { appTranslate as t } from '../../i18n/i18n.service';
 import { SessionMessage } from '../model/session-message';
 import { ReliabilitySummary } from '../model/reliability-summary';
 import { SessionParticipant } from '../model/session-participant';
-import { JoinSessionResponse, SessionService } from '../../services/session.service';
+import { JoinSessionResponse, SessionService, SessionTeamSuggestion } from '../../services/session.service';
 import { ReliabilityService } from '../../services/reliability.service';
 import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.service';
 
@@ -22,10 +22,18 @@ import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.s
   standalone: false
 })
 export class SessionDetailsComponent implements OnInit, OnDestroy {
+  private readonly messageDateFormatter = new Intl.DateTimeFormat('pt-PT', {
+    dateStyle: 'short',
+    timeStyle: 'short'
+  });
   session?: SessionDetail;
   messages: SessionMessage[] = [];
   creatorReliability?: ReliabilitySummary;
   participants: SessionParticipant[] = [];
+  sessionParticipants: SessionParticipant[] = [];
+  teamAParticipants: SessionParticipant[] = [];
+  teamBParticipants: SessionParticipant[] = [];
+  confirmedTeams = false;
 
   loading = false;
   actionLoading = false;
@@ -33,9 +41,20 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
   messageSending = false;
   reliabilityLoading = false;
   participantsLoading = false;
+  sessionParticipantsLoading = false;
   attendanceUpdatingId: number | null = null;
   removeLoadingId: number | null = null;
   pendingRemovalId: number | null = null;
+  showProblemReport = false;
+  selectedProblemType: 'NOT_OCCURRED' | 'VENUE_PROBLEM' | 'OTHER' | '' = '';
+  problemDetails = '';
+  showAttendanceManager = false;
+  teamSuggestion?: SessionTeamSuggestion;
+  teamsLoading = false;
+  teamsConfirming = false;
+  teamSuggestionPendingConfirmation = false;
+  teamsError = '';
+  teamsSuccess = '';
 
   errorMessage = '';
   actionError = '';
@@ -46,6 +65,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
   attendanceSuccess = '';
   participantManagementError = '';
   participantManagementSuccess = '';
+  sessionParticipantsError = '';
 
   joinPassword = '';
   messageBody = '';
@@ -117,7 +137,10 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
     this.actionSuccess = '';
 
     this.sessionService.join(this.sessionId, this.joinPassword)
-      .pipe(finalize(() => this.actionLoading = false))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.actionLoading = false)
+      )
       .subscribe({
         next: response => {
           this.joinPassword = '';
@@ -142,7 +165,10 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
     this.actionSuccess = '';
 
     this.sessionService.leave(this.sessionId)
-      .pipe(finalize(() => this.actionLoading = false))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.actionLoading = false)
+      )
       .subscribe({
         next: () => {
           this.actionSuccess = wasWaitlisted
@@ -156,6 +182,97 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
       });
   }
 
+  toggleProblemReport(): void {
+    if (!this.canReportProblem() || this.actionLoading) {
+      return;
+    }
+
+    this.showProblemReport = !this.showProblemReport;
+    if (!this.showProblemReport) {
+      this.selectedProblemType = '';
+      this.problemDetails = '';
+    }
+    this.actionError = '';
+    this.actionSuccess = '';
+  }
+
+  reportProblem(): void {
+    if (
+      !this.sessionId
+      || !this.canReportProblem()
+      || this.actionLoading
+      || !this.selectedProblemType
+    ) {
+      return;
+    }
+
+    const problemType = this.selectedProblemType;
+    const details = this.problemDetails.trim();
+
+    if (details.length > 500) {
+      this.actionError = t('feedback.session.problemDetailsLong');
+      this.actionSuccess = '';
+      return;
+    }
+    this.actionLoading = true;
+    this.actionError = '';
+    this.actionSuccess = '';
+
+    this.sessionService.reportProblem(this.sessionId, problemType, details)
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.actionLoading = false)
+      )
+      .subscribe({
+        next: () => {
+          this.showProblemReport = false;
+          this.selectedProblemType = '';
+          this.problemDetails = '';
+          this.actionSuccess = t('feedback.session.problemReported');
+        },
+        error: error => {
+          this.actionError = this.errorFrom(error, t('feedback.session.problemReportError'));
+        }
+      });
+  }
+
+  loadSessionParticipants(): void {
+    if (!this.sessionId || !this.session?.joined || this.sessionParticipantsLoading) {
+      return;
+    }
+
+    this.sessionParticipantsLoading = true;
+    this.sessionParticipantsError = '';
+
+    this.sessionService.participants(this.sessionId)
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        finalize(() => this.sessionParticipantsLoading = false)
+      )
+      .subscribe({
+        next: participants => {
+          this.sessionParticipants = participants;
+          if (this.isCreator()) {
+            this.participants = participants;
+          }
+          this.teamAParticipants = participants.filter(participant => participant.teamCode === 'A');
+          this.teamBParticipants = participants.filter(participant => participant.teamCode === 'B');
+          this.confirmedTeams = this.teamAParticipants.length > 0 || this.teamBParticipants.length > 0;
+        },
+        error: error => {
+          this.sessionParticipants = [];
+          this.teamAParticipants = [];
+          this.teamBParticipants = [];
+          this.confirmedTeams = false;
+          this.sessionParticipantsError = this.errorFrom(
+            error,
+            t('feedback.session.participantsError')
+          );
+        }
+      });
+  }
+
   loadParticipants(): void {
     if (!this.sessionId || !this.isCreator() || this.participantsLoading) {
       return;
@@ -165,7 +282,11 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
     this.attendanceError = '';
 
     this.sessionService.participants(this.sessionId)
-      .pipe(finalize(() => this.participantsLoading = false))
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        finalize(() => this.participantsLoading = false)
+      )
       .subscribe({
         next: participants => this.participants = participants,
         error: error => {
@@ -194,7 +315,10 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
     this.attendanceSuccess = '';
 
     this.reliabilityService.recordAttendance(this.sessionId, participant.id, status)
-      .pipe(finalize(() => this.attendanceUpdatingId = null))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.attendanceUpdatingId = null)
+      )
       .subscribe({
         next: () => {
           participant.attendanceStatus = status;
@@ -252,13 +376,20 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
     this.participantManagementSuccess = '';
 
     this.sessionService.removeParticipant(this.sessionId, participant.id)
-      .pipe(finalize(() => this.removeLoadingId = null))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.removeLoadingId = null)
+      )
       .subscribe({
         next: () => {
           this.pendingRemovalId = null;
+          this.sessionParticipants = this.sessionParticipants.filter(item => item.id !== participant.id);
+          this.participants = this.participants.filter(item => item.id !== participant.id);
+          this.teamAParticipants = this.teamAParticipants.filter(item => item.id !== participant.id);
+          this.teamBParticipants = this.teamBParticipants.filter(item => item.id !== participant.id);
+          this.confirmedTeams = this.teamAParticipants.length > 0 || this.teamBParticipants.length > 0;
           this.participantManagementSuccess =
             t('feedback.session.removed', { username: participant.username });
-          this.loadSession(false);
         },
         error: error => {
           this.participantManagementError = this.errorFrom(
@@ -282,8 +413,19 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
     }
   }
 
+  toggleAttendanceManager(): void {
+    if (!this.isCreator() || !this.canRecordAttendance()) {
+      return;
+    }
+
+    this.showAttendanceManager = !this.showAttendanceManager;
+    if (this.showAttendanceManager && this.participants.length === 0) {
+      this.loadParticipants();
+    }
+  }
+
   canRecordAttendance(): boolean {
-    if (!this.session?.gameDate) {
+    if (!this.session?.gameDate || this.session.status === 'CANCELLED') {
       return false;
     }
 
@@ -304,11 +446,15 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
     this.chatError = '';
 
     this.sessionService.messages(this.sessionId)
-      .pipe(finalize(() => {
-        if (showLoading) {
-          this.chatLoading = false;
-        }
-      }))
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        finalize(() => {
+          if (showLoading) {
+            this.chatLoading = false;
+          }
+        })
+      )
       .subscribe({
         next: messages => this.messages = this.sortedMessages(messages),
         error: error => {
@@ -338,7 +484,10 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
     this.chatError = '';
 
     this.sessionService.postMessage(this.sessionId, body)
-      .pipe(finalize(() => this.messageSending = false))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.messageSending = false)
+      )
       .subscribe({
         next: message => {
           this.appendMessageIfMissing(message);
@@ -382,10 +531,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
       return message.createdAt;
     }
 
-    return new Intl.DateTimeFormat('pt-PT', {
-      dateStyle: 'short',
-      timeStyle: 'short'
-    }).format(new Date(parsed));
+    return this.messageDateFormatter.format(new Date(parsed));
   }
 
   private appendMessageIfMissing(message: SessionMessage): void {
@@ -423,6 +569,30 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
     return this.session.creatorUsername.toLowerCase() === this.currentUsername.toLowerCase();
   }
 
+  problemTypeLabel(type: 'NOT_OCCURRED' | 'VENUE_PROBLEM' | 'OTHER'): string {
+    switch (type) {
+      case 'NOT_OCCURRED':
+        return t('sessionDetail.didNotOccur');
+      case 'VENUE_PROBLEM':
+        return t('sessionDetail.venueProblem');
+      default:
+        return t('sessionDetail.otherProblem');
+    }
+  }
+
+  canReportProblem(): boolean {
+    if (!this.session || !this.isCreator() || this.session.problemType) {
+      return false;
+    }
+
+    if (this.session.status !== 'OPEN' && this.session.status !== 'FULL') {
+      return false;
+    }
+
+    const startTime = new Date(this.session.gameDate).getTime();
+    return Number.isFinite(startTime) && startTime <= Date.now();
+  }
+
   isFull(): boolean {
     if (!this.session) {
       return false;
@@ -430,6 +600,85 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
 
     return this.session.maxParticipants > 0
       && this.session.participantCount >= this.session.maxParticipants;
+  }
+
+  canGenerateTeams(): boolean {
+    return Boolean(
+      this.session
+      && this.isCreator()
+      && this.session.communityId
+      && this.isFull()
+      && this.session.status !== 'CANCELLED'
+      && this.session.status !== 'COMPLETED'
+    );
+  }
+
+  generateTeams(): void {
+    if (!this.sessionId || !this.canGenerateTeams() || this.teamsLoading) {
+      return;
+    }
+
+    this.teamsLoading = true;
+    this.teamsError = '';
+    this.teamsSuccess = '';
+
+    this.sessionService.teamSuggestion(this.sessionId)
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.teamsLoading = false)
+      )
+      .subscribe({
+        next: suggestion => {
+          this.teamSuggestion = suggestion;
+          this.teamSuggestionPendingConfirmation = true;
+        },
+        error: error => {
+          this.teamSuggestion = undefined;
+          this.teamSuggestionPendingConfirmation = false;
+          this.teamsError = this.errorFrom(error, t('feedback.session.teamsError'));
+        }
+      });
+  }
+
+  confirmTeams(): void {
+    if (
+      !this.sessionId
+      || !this.teamSuggestion
+      || !this.canGenerateTeams()
+      || !this.teamSuggestionPendingConfirmation
+      || this.teamsConfirming
+    ) {
+      return;
+    }
+
+    this.teamsConfirming = true;
+    this.teamsError = '';
+    this.teamsSuccess = '';
+
+    this.sessionService.confirmTeams(this.sessionId)
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.teamsConfirming = false)
+      )
+      .subscribe({
+        next: suggestion => {
+          this.teamSuggestion = suggestion;
+          this.teamSuggestionPendingConfirmation = false;
+          this.teamsSuccess = t('feedback.session.teamsConfirmed');
+          this.loadSessionParticipants();
+        },
+        error: error => {
+          this.teamsError = this.errorFrom(error, t('feedback.session.teamsConfirmError'));
+        }
+      });
+  }
+
+  teamParticipants(code: 'A' | 'B'): SessionParticipant[] {
+    return code === 'A' ? this.teamAParticipants : this.teamBParticipants;
+  }
+
+  hasConfirmedTeams(): boolean {
+    return this.confirmedTeams;
   }
 
   joinButtonLabel(): string {
@@ -570,6 +819,10 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
       .replace(/;/g, '\\;');
   }
 
+  retrySessionLoad(): void {
+    this.loadSession();
+  }
+
   private loadSession(showPageLoader = true): void {
     if (!this.sessionId) {
       return;
@@ -581,11 +834,15 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
     this.errorMessage = '';
 
     this.sessionService.detail(this.sessionId)
-      .pipe(finalize(() => {
-        if (showPageLoader) {
-          this.loading = false;
-        }
-      }))
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        finalize(() => {
+          if (showPageLoader) {
+            this.loading = false;
+          }
+        })
+      )
       .subscribe({
         next: session => {
           this.session = session;
@@ -594,15 +851,25 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
             this.loadCreatorReliability(session.creatorUsername);
           }
 
-          if (this.isCreator()) {
-            this.loadParticipants();
-          } else {
+          if (!this.isCreator()) {
             this.participants = [];
+            this.showAttendanceManager = false;
+          }
+
+          if (!this.canGenerateTeams()) {
+            this.teamSuggestion = undefined;
+            this.teamsError = '';
           }
 
           if (session.joined) {
+            this.loadSessionParticipants();
             this.refreshMessages();
           } else {
+            this.sessionParticipants = [];
+            this.teamAParticipants = [];
+            this.teamBParticipants = [];
+            this.confirmedTeams = false;
+            this.sessionParticipantsError = '';
             this.messages = [];
             this.chatError = '';
           }
@@ -616,7 +883,11 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
     this.reliabilityError = '';
 
     this.reliabilityService.summary(username)
-      .pipe(finalize(() => this.reliabilityLoading = false))
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        finalize(() => this.reliabilityLoading = false)
+      )
       .subscribe({
         next: summary => this.creatorReliability = summary,
         error: () => {

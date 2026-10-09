@@ -1,0 +1,71 @@
+<section class="admin-reports-page">
+  <div class="admin-shell">
+    <header class="page-header">
+      <div>
+        <p class="eyebrow">Administração</p>
+        <h1>Reports de utilizadores</h1>
+        <p class="subtitle">
+          Analisa denúncias abertas e encerra cada caso depois da revisão.
+        </p>
+      </div>
+
+      <div class="header-actions">
+        <button type="button" class="secondary-action" (click)="load()" [disabled]="loading">
+          Atualizar
+        </button>
+        <a class="secondary-action" routerLink="/menu/admin">Voltar ao Admin</a>
+      </div>
+    </header>
+
+    @if (errorMessage) {
+      <div class="feedback error-feedback">{{ errorMessage }}</div>
+    }
+
+    @if (loading) {
+      <div class="state-card">A carregar reports...</div>
+    }
+
+    @if (!loading && reports.length === 0 && !errorMessage) {
+      <div class="state-card">
+        <strong>Não existem reports abertos.</strong>
+        <p>Novas denúncias aparecem aqui para análise.</p>
+      </div>
+    }
+
+    @if (!loading && reports.length > 0) {
+      <div class="report-list">
+        @for (report of reports; track report.id) {
+          <article class="report-card">
+            <div class="report-top">
+              <span class="status-badge">OPEN</span>
+              <span class="created-at">{{ formatDate(report.createdAt) }}</span>
+            </div>
+
+            <div class="report-people">
+              <strong>@{{ report.reportedUsername }}</strong>
+              <span>Reportado por @{{ report.reporterUsername }}</span>
+            </div>
+
+            <p class="reason">{{ report.reason }}</p>
+
+            <div class="report-actions">
+              <button
+                type="button"
+                [disabled]="updatingId !== null"
+                (click)="closeReport(report, 'REVIEWED')">
+                Marcar analisado
+              </button>
+              <button
+                type="button"
+                class="dismiss"
+                [disabled]="updatingId !== null"
+                (click)="closeReport(report, 'DISMISSED')">
+                Dispensar
+              </button>
+            </div>
+          </article>
+        }
+      </div>
+    }
+  </div>
+</section>

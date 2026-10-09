@@ -1,0 +1,387 @@
+<section class="venue-create-page">
+  <div class="venue-create-shell">
+    <a class="back-link" routerLink="/menu/discover">{{ 'venue.detail.back' | t }}</a>
+    <span class="venue-kicker">{{ 'venue.kicker' | t }}</span>
+    <h1>{{ 'venue.saveNew' | t }}</h1>
+
+    <form class="venue-create-form" (ngSubmit)="save()">
+      <h2 class="venue-create-section-title">{{ 'venue.create.basicInfo' | t }}</h2>
+
+      <label>
+        <span>{{ 'venue.name' | t }}</span>
+        <input
+          type="text"
+          name="name"
+          [(ngModel)]="name"
+          required
+          [attr.aria-invalid]="validationError && !name.trim() ? 'true' : null"
+          [attr.aria-describedby]="validationError && !name.trim() ? 'venue-required-fields-error' : null"
+          [placeholder]="'venue.namePlaceholder' | t">
+      </label>
+
+      <label>
+        <span>{{ 'venue.detail.city' | t }}</span>
+        <input
+          type="text"
+          name="city"
+          [(ngModel)]="city"
+          required
+          [attr.aria-invalid]="validationError && !city.trim() ? 'true' : null"
+          [attr.aria-describedby]="validationError && !city.trim() ? 'venue-required-fields-error' : null"
+          autocomplete="address-level2"
+          [placeholder]="'events.cityPlaceholder' | t">
+      </label>
+
+      <label class="venue-create-wide">
+        <span>{{ 'common.address' | t }}</span>
+        <input
+          type="text"
+          name="address"
+          [(ngModel)]="address"
+          required
+          [attr.aria-invalid]="validationError && !address.trim() ? 'true' : null"
+          [attr.aria-describedby]="validationError && !address.trim() ? 'venue-required-fields-error' : null"
+          autocomplete="street-address"
+          [placeholder]="'createSession.addressPlaceholder' | t">
+      </label>
+
+      <h2 class="venue-create-section-title">{{ 'venue.create.characteristics' | t }}</h2>
+
+      <div class="venue-create-options venue-create-wide">
+        @for (sportOption of sportsCatalog; track sportOption) {
+          <label class="venue-create-option">
+            <input type="checkbox"
+              [name]="'sport-' + sportOption"
+              [checked]="isSportSelected(sportOption)"
+              (change)="toggleSport(sportOption, $any($event.target).checked)">
+            <span>{{ sportOption }}</span>
+          </label>
+        }
+      </div>
+
+      <label>
+        <span>{{ 'venue.type' | t }}</span>
+        <input type="text" name="venueType" [(ngModel)]="venueType"
+          [placeholder]="'venue.typePlaceholder' | t">
+      </label>
+
+      <label>
+        <span>{{ 'venue.ownership' | t }}</span>
+        <select name="ownershipType" [(ngModel)]="ownershipType">
+          <option [ngValue]="null">{{ 'venue.ownership.none' | t }}</option>
+          <option value="PUBLIC">{{ 'venue.ownership.public' | t }}</option>
+          <option value="PRIVATE">{{ 'venue.ownership.private' | t }}</option>
+        </select>
+      </label>
+
+      <label>
+        <span>{{ 'venue.surface' | t }}</span>
+        <input type="text" name="surfaceType" [(ngModel)]="surfaceType"
+          [placeholder]="'venue.surfacePlaceholder' | t">
+      </label>
+
+      <label>
+        <span>{{ 'venue.environment' | t }}</span>
+        <select name="environmentType" [(ngModel)]="environmentType">
+          <option value="INDOOR">{{ 'venue.environment.indoor' | t }}</option>
+          <option value="OUTDOOR">{{ 'venue.environment.outdoor' | t }}</option>
+          <option value="BOTH">{{ 'venue.environment.both' | t }}</option>
+        </select>
+      </label>
+
+      <h2 class="venue-create-section-title">{{ 'venue.create.amenities' | t }}</h2>
+
+      <div class="venue-create-options venue-create-wide">
+        <label class="venue-create-option">
+          <input type="checkbox" name="indoor" [(ngModel)]="indoor">
+          <span>{{ 'venue.indoor' | t }}</span>
+        </label>
+        <label class="venue-create-option">
+          <input type="checkbox" name="changingRooms" [(ngModel)]="changingRooms">
+          <span>{{ 'venue.changingRooms' | t }}</span>
+        </label>
+        @if (changingRooms) {
+          <div class="venue-create-wide">
+            <span>{{ 'venue.changingRoomTypes' | t }}</span>
+            <div class="venue-create-options">
+              @for (type of ['MALE', 'FEMALE', 'INDIVIDUAL', 'ADAPTED']; track type) {
+                <label class="venue-create-option">
+                  <input type="checkbox" [name]="'changingRoomType-' + type"
+                    [checked]="isChangingRoomTypeSelected(type)"
+                    (change)="toggleChangingRoomType(type, $any($event.target).checked)">
+                  <span>{{ ('venue.changingRoomType.' + type.toLowerCase()) | t }}</span>
+                </label>
+              }
+            </div>
+          </div>
+        }
+        <label class="venue-create-option">
+          <input type="checkbox" name="parking" [(ngModel)]="parking">
+          <span>{{ 'venue.parking' | t }}</span>
+        </label>
+        <label>
+          <span>{{ 'venue.freeParking' | t }}</span>
+          <select name="freeParking" [(ngModel)]="freeParking">
+            <option [ngValue]="null">{{ 'venue.boolean.none' | t }}</option>
+            <option [ngValue]="true">{{ 'venue.boolean.yes' | t }}</option>
+            <option [ngValue]="false">{{ 'venue.boolean.no' | t }}</option>
+          </select>
+        </label>
+        <label class="venue-create-option">
+          <input type="checkbox" name="lighting" [(ngModel)]="lighting">
+          <span>{{ 'venue.lighting' | t }}</span>
+        </label>
+        <label>
+          <span>{{ 'venue.toilets' | t }}</span>
+          <select name="toilets" [(ngModel)]="toilets">
+            <option [ngValue]="null">{{ 'venue.boolean.none' | t }}</option>
+            <option [ngValue]="true">{{ 'venue.boolean.yes' | t }}</option>
+            <option [ngValue]="false">{{ 'venue.boolean.no' | t }}</option>
+          </select>
+        </label>
+        <label>
+          <span>{{ 'venue.lockers' | t }}</span>
+          <select name="lockers" [(ngModel)]="lockers">
+            <option [ngValue]="null">{{ 'venue.boolean.none' | t }}</option>
+            <option [ngValue]="true">{{ 'venue.boolean.yes' | t }}</option>
+            <option [ngValue]="false">{{ 'venue.boolean.no' | t }}</option>
+          </select>
+        </label>
+        <label>
+          <span>{{ 'venue.showers' | t }}</span>
+          <select name="showers" [(ngModel)]="showers">
+            <option [ngValue]="null">{{ 'venue.boolean.none' | t }}</option>
+            <option [ngValue]="true">{{ 'venue.boolean.yes' | t }}</option>
+            <option [ngValue]="false">{{ 'venue.boolean.no' | t }}</option>
+          </select>
+        </label>
+        <label>
+          <span>{{ 'venue.stands' | t }}</span>
+          <select name="stands" [(ngModel)]="stands">
+            <option [ngValue]="null">{{ 'venue.boolean.none' | t }}</option>
+            <option [ngValue]="true">{{ 'venue.boolean.yes' | t }}</option>
+            <option [ngValue]="false">{{ 'venue.boolean.no' | t }}</option>
+          </select>
+        </label>
+        <label>
+          <span>{{ 'venue.drinkingFountain' | t }}</span>
+          <select name="drinkingFountain" [(ngModel)]="drinkingFountain">
+            <option [ngValue]="null">{{ 'venue.boolean.none' | t }}</option>
+            <option [ngValue]="true">{{ 'venue.boolean.yes' | t }}</option>
+            <option [ngValue]="false">{{ 'venue.boolean.no' | t }}</option>
+          </select>
+        </label>
+        <label>
+          <span>{{ 'venue.accessible' | t }}</span>
+          <select name="accessible" [(ngModel)]="accessible">
+            <option [ngValue]="null">{{ 'venue.boolean.none' | t }}</option>
+            <option [ngValue]="true">{{ 'venue.boolean.yes' | t }}</option>
+            <option [ngValue]="false">{{ 'venue.boolean.no' | t }}</option>
+          </select>
+        </label>
+        <label>
+          <span>{{ 'venue.firstAid' | t }}</span>
+          <select name="firstAid" [(ngModel)]="firstAid">
+            <option [ngValue]="null">{{ 'venue.boolean.none' | t }}</option>
+            <option [ngValue]="true">{{ 'venue.boolean.yes' | t }}</option>
+            <option [ngValue]="false">{{ 'venue.boolean.no' | t }}</option>
+          </select>
+        </label>
+        <label>
+          <span>{{ 'venue.aed' | t }}</span>
+          <select name="aed" [(ngModel)]="aed">
+            <option [ngValue]="null">{{ 'venue.boolean.none' | t }}</option>
+            <option [ngValue]="true">{{ 'venue.boolean.yes' | t }}</option>
+            <option [ngValue]="false">{{ 'venue.boolean.no' | t }}</option>
+          </select>
+        </label>
+        <label>
+          <span>{{ 'venue.medicalStation' | t }}</span>
+          <select name="medicalStation" [(ngModel)]="medicalStation">
+            <option [ngValue]="null">{{ 'venue.boolean.none' | t }}</option>
+            <option [ngValue]="true">{{ 'venue.boolean.yes' | t }}</option>
+            <option [ngValue]="false">{{ 'venue.boolean.no' | t }}</option>
+          </select>
+        </label>
+        <label>
+          <span>{{ 'venue.lifeguard' | t }}</span>
+          <select name="lifeguard" [(ngModel)]="lifeguard">
+            <option [ngValue]="null">{{ 'venue.boolean.none' | t }}</option>
+            <option [ngValue]="true">{{ 'venue.boolean.yes' | t }}</option>
+            <option [ngValue]="false">{{ 'venue.boolean.no' | t }}</option>
+          </select>
+        </label>
+        <label>
+          <span>{{ 'venue.staffOnSite' | t }}</span>
+          <select name="staffOnSite" [(ngModel)]="staffOnSite">
+            <option [ngValue]="null">{{ 'venue.boolean.none' | t }}</option>
+            <option [ngValue]="true">{{ 'venue.boolean.yes' | t }}</option>
+            <option [ngValue]="false">{{ 'venue.boolean.no' | t }}</option>
+          </select>
+        </label>
+        <label>
+          <span>{{ 'venue.securitySurveillance' | t }}</span>
+          <select name="securitySurveillance" [(ngModel)]="securitySurveillance">
+            <option [ngValue]="null">{{ 'venue.boolean.none' | t }}</option>
+            <option [ngValue]="true">{{ 'venue.boolean.yes' | t }}</option>
+            <option [ngValue]="false">{{ 'venue.boolean.no' | t }}</option>
+          </select>
+        </label>
+        <label>
+          <span>{{ 'venue.cafe' | t }}</span>
+          <select name="cafe" [(ngModel)]="cafe">
+            <option [ngValue]="null">{{ 'venue.boolean.none' | t }}</option>
+            <option [ngValue]="true">{{ 'venue.boolean.yes' | t }}</option>
+            <option [ngValue]="false">{{ 'venue.boolean.no' | t }}</option>
+          </select>
+        </label>
+        <label>
+          <span>{{ 'venue.restaurant' | t }}</span>
+          <select name="restaurant" [(ngModel)]="restaurant">
+            <option [ngValue]="null">{{ 'venue.boolean.none' | t }}</option>
+            <option [ngValue]="true">{{ 'venue.boolean.yes' | t }}</option>
+            <option [ngValue]="false">{{ 'venue.boolean.no' | t }}</option>
+          </select>
+        </label>
+        <label>
+          <span>{{ 'venue.vendingMachines' | t }}</span>
+          <select name="vendingMachines" [(ngModel)]="vendingMachines">
+            <option [ngValue]="null">{{ 'venue.boolean.none' | t }}</option>
+            <option [ngValue]="true">{{ 'venue.boolean.yes' | t }}</option>
+            <option [ngValue]="false">{{ 'venue.boolean.no' | t }}</option>
+          </select>
+        </label>
+        <label>
+          <span>{{ 'venue.sportsShop' | t }}</span>
+          <select name="sportsShop" [(ngModel)]="sportsShop">
+            <option [ngValue]="null">{{ 'venue.boolean.none' | t }}</option>
+            <option [ngValue]="true">{{ 'venue.boolean.yes' | t }}</option>
+            <option [ngValue]="false">{{ 'venue.boolean.no' | t }}</option>
+          </select>
+        </label>
+        <label>
+          <span>{{ 'venue.wifi' | t }}</span>
+          <select name="wifi" [(ngModel)]="wifi">
+            <option [ngValue]="null">{{ 'venue.boolean.none' | t }}</option>
+            <option [ngValue]="true">{{ 'venue.boolean.yes' | t }}</option>
+            <option [ngValue]="false">{{ 'venue.boolean.no' | t }}</option>
+          </select>
+        </label>
+        <label>
+          <span>{{ 'venue.phoneCharging' | t }}</span>
+          <select name="phoneCharging" [(ngModel)]="phoneCharging">
+            <option [ngValue]="null">{{ 'venue.boolean.none' | t }}</option>
+            <option [ngValue]="true">{{ 'venue.boolean.yes' | t }}</option>
+            <option [ngValue]="false">{{ 'venue.boolean.no' | t }}</option>
+          </select>
+        </label>
+      </div>
+
+      <h2 class="venue-create-section-title">{{ 'venue.nearby.title' | t }}</h2>
+
+      <label>
+        <span>{{ 'venue.nearby.radius' | t }}</span>
+        <select name="nearbyRadiusMeters" [(ngModel)]="nearbyRadiusMeters">
+          <option [ngValue]="250">250 m</option>
+          <option [ngValue]="500">500 m</option>
+          <option [ngValue]="1000">1 km</option>
+          <option [ngValue]="2000">2 km</option>
+        </select>
+      </label>
+
+      <label>
+        <span>{{ 'venue.nearby.pharmacy' | t }}</span>
+        <select name="nearbyPharmacy" [(ngModel)]="nearbyPharmacy">
+          <option [ngValue]="null">{{ 'venue.boolean.none' | t }}</option>
+          <option [ngValue]="true">{{ 'venue.boolean.yes' | t }}</option>
+          <option [ngValue]="false">{{ 'venue.boolean.no' | t }}</option>
+        </select>
+      </label>
+
+      <label>
+        <span>{{ 'venue.nearby.atm' | t }}</span>
+        <select name="nearbyAtm" [(ngModel)]="nearbyAtm">
+          <option [ngValue]="null">{{ 'venue.boolean.none' | t }}</option>
+          <option [ngValue]="true">{{ 'venue.boolean.yes' | t }}</option>
+          <option [ngValue]="false">{{ 'venue.boolean.no' | t }}</option>
+        </select>
+      </label>
+
+      <h2 class="venue-create-section-title">{{ 'venue.create.practicalInfo' | t }}</h2>
+
+      <label class="venue-create-wide">
+        <span>{{ 'venue.services' | t }}</span>
+        <textarea name="services" [(ngModel)]="services"
+          [placeholder]="'venue.servicesPlaceholder' | t"></textarea>
+      </label>
+
+      <label class="venue-create-wide">
+        <span>{{ 'venue.transport' | t }}</span>
+        <textarea name="transport" [(ngModel)]="transport"
+          [placeholder]="'venue.transportPlaceholder' | t"></textarea>
+      </label>
+
+      <label>
+        <span>{{ 'venue.openingHours' | t }}</span>
+        <input type="text" name="openingHours" [(ngModel)]="openingHours"
+          [placeholder]="'venue.openingHoursPlaceholder' | t">
+      </label>
+
+      <label>
+        <span>{{ 'venue.priceInfo' | t }}</span>
+        <input type="text" name="priceInfo" [(ngModel)]="priceInfo"
+          [placeholder]="'venue.priceInfoPlaceholder' | t">
+      </label>
+
+      <label>
+        <span>{{ 'venue.website' | t }}</span>
+        <input type="url" name="website" [(ngModel)]="website" maxlength="255"
+          [placeholder]="'venue.websitePlaceholder' | t">
+      </label>
+
+      <label>
+        <span>{{ 'venue.contact' | t }}</span>
+        <input type="text" name="contact" [(ngModel)]="contact" maxlength="255"
+          [placeholder]="'venue.contactPlaceholder' | t">
+      </label>
+
+      <h2 class="venue-create-section-title">{{ 'venue.create.location' | t }}</h2>
+
+      <label>
+        <span>{{ 'venue.latitude' | t }}</span>
+        <input type="number" name="latitude" [(ngModel)]="latitude"
+          min="-90" max="90" step="any" placeholder="38.7223">
+      </label>
+
+      <label>
+        <span>{{ 'venue.longitude' | t }}</span>
+        <input type="number" name="longitude" [(ngModel)]="longitude"
+          min="-180" max="180" step="any" placeholder="-9.1393">
+      </label>
+
+      <div class="venue-create-location venue-create-wide">
+        <button type="button" (click)="useCurrentLocation()" [disabled]="locating"
+          [attr.aria-describedby]="locationError ? 'venue-create-location-error' : null">
+          {{ (locating ? 'venue.locating' : 'venue.useCurrentLocation') | t }}
+        </button>
+        @if (locationError) {
+          <span id="venue-create-location-error" class="venue-create-error" role="alert" aria-live="assertive">{{ 'feedback.location.error' | t }}</span>
+        }
+      </div>
+
+      <div class="venue-create-actions venue-create-wide">
+        @if (validationError) {
+          <span id="venue-required-fields-error" class="venue-create-error" role="alert" aria-live="assertive">{{ 'venue.requiredFields' | t }}</span>
+        }
+        @if (saveError) {
+          <span id="venue-create-save-error" class="venue-create-error" role="alert" aria-live="assertive">{{ 'venue.createError' | t }}</span>
+        }
+        <a class="venue-create-cancel" routerLink="/menu/discover">{{ 'common.cancel' | t }}</a>
+        <button type="submit" [disabled]="saving"
+          [attr.aria-describedby]="saveError ? 'venue-create-save-error' : null">
+          {{ (saving ? 'venue.saving' : 'venue.save') | t }}
+        </button>
+      </div>
+    </form>
+  </div>
+</section>

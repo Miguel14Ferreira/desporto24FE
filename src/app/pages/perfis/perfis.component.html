@@ -1,5 +1,6 @@
 <section class="community-page">
   <div class="community-shell">
+    @if (!profilePage) {
     <header class="page-header">
       <div>
         <p class="eyebrow">Desporto24</p>
@@ -13,20 +14,91 @@
       </div>
     </header>
 
-    <form class="search-bar" (ngSubmit)="search()">
-      <label for="player-search">{{ 'login.username' | t }}</label>
+    <form class="search-bar partner-search" (ngSubmit)="search()">
+      <div class="search-intro">
+        <div>
+          <span class="section-kicker">{{ 'community.searchKicker' | t }}</span>
+          <h2>{{ 'community.searchTitle' | t }}</h2>
+          <p>{{ 'community.searchHint' | t }}</p>
+        </div>
+      </div>
 
-      <div class="search-row">
-        <input
-          id="player-search"
-          type="search"
-          name="searchTerm"
-          [(ngModel)]="searchTerm"
-          [placeholder]="'community.searchPlaceholder' | t"
-          autocomplete="off">
+      <div class="partner-filter-grid">
+        <label>
+          <span>{{ 'events.sport' | t }}</span>
+          <input
+            type="text"
+            name="sportFilter"
+            list="community-sport-options"
+            [(ngModel)]="sportFilter"
+            autocomplete="off"
+            [placeholder]="'community.sportPlaceholder' | t">
+          <datalist id="community-sport-options">
+            @for (sportOption of sportsCatalog; track sportOption) {
+              <option [value]="sportOption"></option>
+            }
+          </datalist>
+        </label>
 
+        <label>
+          <span>{{ 'common.location' | t }}</span>
+          <input
+            type="text"
+            name="locationFilter"
+            [(ngModel)]="locationFilter"
+            autocomplete="address-level2"
+            [placeholder]="'community.locationPlaceholder' | t">
+        </label>
+
+        <label>
+          <span>{{ 'community.minAge' | t }}</span>
+          <input
+            type="number"
+            name="minAge"
+            min="18"
+            max="99"
+            [(ngModel)]="minAge"
+            placeholder="25">
+        </label>
+
+        <label>
+          <span>{{ 'community.maxAge' | t }}</span>
+          <input
+            type="number"
+            name="maxAge"
+            min="18"
+            max="99"
+            [(ngModel)]="maxAge"
+            placeholder="45">
+        </label>
+
+        <label>
+          <span>{{ 'profile.skillLevel' | t }}</span>
+          <select name="levelFilter" [(ngModel)]="levelFilter">
+            <option value="">{{ 'community.anyLevel' | t }}</option>
+            <option value="BEGINNER">{{ 'profile.level.BEGINNER' | t }}</option>
+            <option value="INTERMEDIATE">{{ 'profile.level.INTERMEDIATE' | t }}</option>
+            <option value="ADVANCED">{{ 'profile.level.ADVANCED' | t }}</option>
+          </select>
+        </label>
+
+        <label>
+          <span>{{ 'community.nameOptional' | t }}</span>
+          <input
+            type="search"
+            name="searchTerm"
+            [(ngModel)]="searchTerm"
+            [placeholder]="'community.searchPlaceholder' | t"
+            autocomplete="off">
+        </label>
+      </div>
+
+      <div class="partner-search-actions">
+        <button type="button" class="clear-search" (click)="clearSearch()">
+          {{ 'events.clear' | t }}
+        </button>
         <button type="submit" [disabled]="loading">
-          {{ loading ? ('common.searching' | t) : ('common.search' | t) }}
+          {{ loading ? ('common.searching' | t) : ('community.findPeople' | t) }}
         </button>
       </div>
     </form>
@@ -43,6 +115,12 @@
       <div class="feedback error-feedback">{{ actionError }}</div>
     }
 
+    @if (!loading && !searched && !errorMessage) {
+      <div class="state-card search-ready">
+        <p>{{ 'community.searchReady' | t }}</p>
+      </div>
+    }
+
     @if (!loading && searched && profiles.length === 0 && !errorMessage) {
       <div class="state-card">
         <h2>{{ 'community.noneTitle' | t }}</h2>
@@ -51,16 +129,14 @@
     }
 
     @if (profiles.length > 0) {
-      @if (!searched) {
-        <div class="discovery-heading">
-          <h2>{{ 'community.discoverTitle' | t }}</h2>
-          <p>{{ 'community.discoverHint' | t }}</p>
-        </div>
-      }
+      <div class="discovery-heading">
+        <h2>{{ 'community.resultsTitle' | t:{ count: profiles.length } }}</h2>
+        <p>{{ 'community.resultsHint' | t }}</p>
+      </div>
 
       <div class="profile-grid">
         @for (profile of profiles; track profile.username) {
-          <button type="button" class="profile-card" (click)="openProfile(profile)">
+          <a class="profile-card" [routerLink]="['/menu/perfis', profile.username]">
             <div class="avatar">
               @if (profileImage(profile); as image) {
                 <img [src]="image" [alt]="profile.username">
@@ -71,17 +147,45 @@
 
             <div class="profile-copy">
               <strong>{{ profile.username }}</strong>
-              <span>{{ profile.nickname || profile.fullName || ('friends.player' | t) }}</span>
+              @if (profile.nickname || profile.fullName) {
+                <span>{{ profile.nickname || profile.fullName }}</span>
+              }
+              <small class="profile-match-line">
+                @if (profile.age !== null) {
+                  {{ profile.age }} {{ 'community.years' | t }} ·
+                }
+                {{ profile.location || ('common.notProvided' | t) }}
+              </small>
+              @if (profile.favoriteSports) {
+                <small class="profile-sports">{{ profile.favoriteSports }}</small>
+              }
+              @if (profile.skillLevel) {
+                <small>{{ ('profile.level.' + profile.skillLevel) | t }}</small>
+              }
             </div>
-          </button>
+          </a>
         }
       </div>
     }
 
-    @if (selectedProfile) {
-      <div class="profile-backdrop" (click)="closeProfile()">
-        <article class="profile-detail" (click)="$event.stopPropagation()">
-          <button type="button" class="close-detail" (click)="closeProfile()">×</button>
+    } @else {
+      <a class="secondary-action back-to-search" [routerLink]="backToFriends ? '/menu/friendList' : '/menu/perfis'">← {{ (backToFriends ? 'friends.backToFriends' : 'community.backToSearch') | t }}</a>
+      @if (loading) {
+        <div class="state-card" role="status">{{ 'common.loading' | t }}</div>
+      }
+      @if (errorMessage) {
+        <div class="feedback error-feedback" role="alert">{{ errorMessage }}</div>
+      }
+      @if (actionSuccess) {
+        <div class="feedback success-feedback" role="status">{{ actionSuccess }}</div>
+      }
+      @if (actionError) {
+        <div class="feedback error-feedback" role="alert">{{ actionError }}</div>
+      }
+    }
+
+    @if (profilePage && selectedProfile) {
+        <article class="profile-detail">
 
           <div class="detail-heading">
             <div class="avatar large-avatar">
@@ -92,11 +196,72 @@
               }
             </div>
 
-            <div>
+            <div class="profile-identity">
               <p class="eyebrow">{{ 'community.profile' | t }}</p>
-              <h2>{{ selectedProfile.username }}</h2>
-              <p>{{ selectedProfile.nickname || selectedProfile.fullName || 'Jogador Desporto24' }}</p>
+              <h1>{{ selectedProfile.username }}</h1>
+              <p>{{ selectedProfile.nickname || selectedProfile.fullName || ('community.player' | t) }}</p>
+
+              @if (selectedFollowStatus) {
+                <section class="social-summary">
+                  <div>
+                    <strong>{{ selectedFollowStatus.followers }}</strong>
+                    <span>{{ 'social.followers' | t }}</span>
+                  </div>
+                  <div>
+                    <strong>{{ selectedFollowStatus.following }}</strong>
+                    <span>{{ 'social.following' | t }}</span>
+                  </div>
+                  @if (!isOwnProfile(selectedProfile) && selectedFollowStatus.followsMe) {
+                    <span class="follows-you-badge">{{ 'social.followsYou' | t }}</span>
+                  }
+                </section>
+              }
             </div>
+          </div>
+
+          <div class="detail-actions">
+            @if (!isOwnProfile(selectedProfile) && !selectedBlocked) {
+              <button
+                type="button"
+                class="follow-action"
+                [class.following]="selectedFollowStatus?.followedByMe"
+                [disabled]="followLoading"
+                (click)="toggleFollow(selectedProfile)">
+                @if (followLoading) {
+                  {{ 'common.processing' | t }}
+                } @else if (selectedFollowStatus?.followedByMe) {
+                  {{ 'social.following' | t }}
+                } @else {
+                  {{ 'social.follow' | t }}
+                }
+              </button>
+            }
+
+            @if (isOwnProfile(selectedProfile)) {
+              <span>{{ 'community.ownProfile' | t }}</span>
+            } @else if (selectedBlocked) {
+              <span>{{ 'community.blockedStatus' | t }}</span>
+            } @else if (isFriend(selectedProfile)) {
+              <button type="button" class="friend-status" disabled>✓ {{ 'friends.title' | t }}</button>
+              <a
+                class="primary-action"
+                [routerLink]="['/menu/friendList/chat', selectedProfile.username]">
+                {{ 'friends.openChat' | t }}
+              </a>
+            } @else {
+              <button
+                type="button"
+                class="primary-action"
+                [disabled]="actionLoading || friendRequestPending(selectedProfile)"
+                (click)="sendFriendRequest(selectedProfile)">
+                @if (friendRequestPending(selectedProfile)) {
+                  {{ 'community.requestPending' | t }}
+                } @else {
+                  {{ actionLoading ? ('contact.sending' | t) : ('community.sendRequest' | t) }}
+                }
+              </button>
+            }
+
           </div>
 
           @if (selectedProfile.bio) {
@@ -107,6 +272,14 @@
             <div>
               <span>{{ 'common.country' | t }}</span>
               <strong>{{ selectedProfile.country || ('common.notProvided' | t) }}</strong>
+            </div>
+            <div>
+              <span>{{ 'community.age' | t }}</span>
+              <strong>
+                {{ selectedProfile.age !== null
+                  ? (selectedProfile.age + ' ' + ('community.years' | t))
+                  : ('common.notProvided' | t) }}
+              </strong>
             </div>
             <div>
               <span>{{ 'profileData.favoriteSports' | t }}</span>
@@ -128,30 +301,7 @@
               <span>{{ 'community.memberSince' | t }}</span>
               <strong>{{ selectedProfile.joinDateDisplay || ('common.noInfo' | t) }}</strong>
             </div>
-
-            @if (selectedReliability) {
-              <div>
-                <span>{{ 'profileData.attendanceRate' | t }}</span>
-                <strong>{{ selectedReliability.attendanceRate | number:'1.0-0' }}%</strong>
-              </div>
-            }
           </div>
-
-          @if (selectedFollowStatus) {
-            <section class="social-summary">
-              <div>
-                <strong>{{ selectedFollowStatus.followers }}</strong>
-                <span>{{ 'social.followers' | t }}</span>
-              </div>
-              <div>
-                <strong>{{ selectedFollowStatus.following }}</strong>
-                <span>{{ 'social.following' | t }}</span>
-              </div>
-              @if (!isOwnProfile(selectedProfile) && selectedFollowStatus.followsMe) {
-                <span class="follows-you-badge">{{ 'social.followsYou' | t }}</span>
-              }
-            </section>
-          }
 
           @if (selectedActivity) {
             <section class="public-activity">
@@ -173,49 +323,59 @@
             </section>
           }
 
-          <div class="detail-actions">
+          @if (!isOwnProfile(selectedProfile)) {
+          <details class="profile-safety">
+            <summary>{{ 'community.moreOptions' | t }}</summary>
+            <div class="safety-actions">
             @if (!isOwnProfile(selectedProfile)) {
               <button
                 type="button"
-                class="follow-action"
-                [class.following]="selectedFollowStatus?.followedByMe"
-                [disabled]="followLoading"
-                (click)="toggleFollow(selectedProfile)">
-                @if (followLoading) {
-                  {{ 'common.processing' | t }}
-                } @else if (selectedFollowStatus?.followedByMe) {
-                  {{ 'social.following' | t }}
-                } @else {
-                  {{ 'social.follow' | t }}
-                }
+                class="report-action"
+                [disabled]="blockLoading"
+                (click)="toggleBlock(selectedProfile)">
+                {{ selectedBlocked ? ('community.unblockUser' | t) : ('community.blockUser' | t) }}
               </button>
             }
 
-            @if (isOwnProfile(selectedProfile)) {
-              <span>{{ 'community.ownProfile' | t }}</span>
-            } @else if (isFriend(selectedProfile)) {
-              <span>Já são amigos</span>
-              <a
-                class="primary-action"
-                [routerLink]="['/menu/friendList/chat', selectedProfile.username]">
-                Abrir chat
-              </a>
-            } @else {
+            @if (!isOwnProfile(selectedProfile) && !selectedBlocked) {
               <button
                 type="button"
-                class="primary-action"
-                [disabled]="actionLoading || friendRequestPending(selectedProfile)"
-                (click)="sendFriendRequest(selectedProfile)">
-                @if (friendRequestPending(selectedProfile)) {
-                  {{ 'community.requestPending' | t }}
-                } @else {
-                  {{ actionLoading ? ('contact.sending' | t) : ('community.sendRequest' | t) }}
-                }
+                class="report-action"
+                [disabled]="reportLoading"
+                (click)="toggleReport()">
+                {{ reportOpen ? ('community.reportCancel' | t) : ('community.reportUser' | t) }}
               </button>
             }
-          </div>
+            </div>
+          </details>
+          }
+
+          @if (reportOpen && !isOwnProfile(selectedProfile) && !selectedBlocked) {
+            <section class="report-panel">
+              <label>
+                <span>{{ 'community.reportReason' | t }}</span>
+                <textarea
+                  name="reportReason"
+                  rows="4"
+                  maxlength="1000"
+                  [(ngModel)]="reportReason"
+                  [disabled]="reportLoading"
+                  [placeholder]="'community.reportPlaceholder' | t"></textarea>
+              </label>
+
+              <div class="report-actions">
+                <small>{{ reportReason.length }}/1000</small>
+                <button
+                  type="button"
+                  class="primary-action"
+                  [disabled]="reportLoading || !reportReason.trim()"
+                  (click)="submitReport(selectedProfile)">
+                  {{ reportLoading ? ('common.processing' | t) : ('community.reportSubmit' | t) }}
+                </button>
+              </div>
+            </section>
+          }
         </article>
-      </div>
     }
   </div>
 </section>

@@ -1,0 +1,476 @@
+import { ActivatedRoute } from '@angular/router';
+import { of, throwError } from 'rxjs';
+
+import { VenueService } from '../../services/venue.service';
+import { Venue } from '../model/venue';
+import { VenueDetailsComponent } from './venue-details.component';
+
+describe('VenueDetailsComponent', () => {
+  it('loads the venue, photos and sport conditions from the route id', () => {
+    const venue: Venue = {
+      id: 7,
+      name: 'Pavilhão Central',
+      city: 'Lisboa',
+      address: 'Rua do Desporto',
+      sports: 'Futsal',
+      venueType: 'Pavilhão',
+      ownershipType: 'PUBLIC',
+      surfaceType: 'Madeira',
+      indoor: true,
+      changingRooms: true,
+      toilets: true,
+      lockers: true,
+      accessible: true,
+      firstAid: true,
+      aed: true,
+      cafe: false,
+      services: null,
+      transport: null,
+      openingHours: null,
+      priceInfo: null,
+      parking: true,
+      lighting: true,
+      latitude: 38.7223,
+      longitude: -9.1393,
+      informationSource: 'COMMUNITY',
+      createdByUsername: 'miguel',
+      createdAt: '2026-09-29T20:00:00Z'
+    };
+
+    const route = {
+      snapshot: {
+        paramMap: {
+          get: () => '7'
+        }
+      }
+    } as unknown as ActivatedRoute;
+
+    const venueService = jasmine.createSpyObj<VenueService>('VenueService', [
+      'get',
+      'listPhotos',
+      'listSportConditions',
+      'addPhoto',
+      'addSportCondition'
+    ]);
+
+    venueService.get.and.returnValue(of(venue));
+    venueService.listPhotos.and.returnValue(of([]));
+    venueService.listSportConditions.and.returnValue(of([]));
+
+    const component = new VenueDetailsComponent(route, venueService);
+
+    component.ngOnInit();
+
+    expect(venueService.get).toHaveBeenCalledOnceWith(7);
+    expect(venueService.listPhotos).toHaveBeenCalledOnceWith(7);
+    expect(venueService.listSportConditions).toHaveBeenCalledOnceWith(7);
+    expect(component.venue).toEqual(venue);
+    expect(component.loading).toBeFalse();
+    expect(component.photosLoading).toBeFalse();
+    expect(component.sportConditionsLoading).toBeFalse();
+    expect(component.loadError).toBeFalse();
+  });
+
+  it('marks the page as failed when loading the venue errors', () => {
+    const route = {
+      snapshot: {
+        paramMap: {
+          get: () => '7'
+        }
+      }
+    } as unknown as ActivatedRoute;
+
+    const venueService = jasmine.createSpyObj<VenueService>('VenueService', [
+      'get',
+      'listPhotos',
+      'listSportConditions',
+      'addPhoto',
+      'addSportCondition'
+    ]);
+
+    venueService.get.and.returnValue(throwError(() => new Error('load failed')));
+    venueService.listPhotos.and.returnValue(of([]));
+    venueService.listSportConditions.and.returnValue(of([]));
+
+    const component = new VenueDetailsComponent(route, venueService);
+
+    component.ngOnInit();
+
+    expect(venueService.get).toHaveBeenCalledOnceWith(7);
+    expect(component.venue).toBeNull();
+    expect(component.loading).toBeFalse();
+    expect(component.loadError).toBeTrue();
+  });
+
+  it('marks sport conditions as failed when their loading errors', () => {
+    const venue: Venue = {
+      id: 7,
+      name: 'Pavilhão Central',
+      city: 'Lisboa',
+      address: 'Rua do Desporto',
+      sports: 'Futsal',
+      venueType: 'Pavilhão',
+      ownershipType: 'PUBLIC',
+      surfaceType: 'Madeira',
+      indoor: true,
+      changingRooms: true,
+      toilets: true,
+      lockers: true,
+      accessible: true,
+      firstAid: true,
+      aed: true,
+      cafe: false,
+      services: null,
+      transport: null,
+      openingHours: null,
+      priceInfo: null,
+      parking: true,
+      lighting: true,
+      latitude: 38.7223,
+      longitude: -9.1393,
+      informationSource: 'COMMUNITY',
+      createdByUsername: 'miguel',
+      createdAt: '2026-09-29T20:00:00Z'
+    };
+
+    const route = {
+      snapshot: {
+        paramMap: {
+          get: () => '7'
+        }
+      }
+    } as unknown as ActivatedRoute;
+
+    const venueService = jasmine.createSpyObj<VenueService>('VenueService', [
+      'get',
+      'listPhotos',
+      'listSportConditions',
+      'addPhoto',
+      'addSportCondition'
+    ]);
+
+    venueService.get.and.returnValue(of(venue));
+    venueService.listPhotos.and.returnValue(of([]));
+    venueService.listSportConditions.and.returnValue(
+      throwError(() => new Error('conditions failed'))
+    );
+
+    const component = new VenueDetailsComponent(route, venueService);
+
+    component.ngOnInit();
+
+    expect(component.venue).toEqual(venue);
+    expect(component.sportConditions).toEqual([]);
+    expect(component.sportConditionsLoading).toBeFalse();
+    expect(component.sportConditionsLoadError).toBeTrue();
+    expect(component.loadError).toBeFalse();
+  });
+
+  it('keeps the page usable when loading photos errors', () => {
+    const venue: Venue = {
+      id: 7,
+      name: 'Pavilhão Central',
+      city: 'Lisboa',
+      address: 'Rua do Desporto',
+      sports: 'Futsal',
+      venueType: 'Pavilhão',
+      ownershipType: 'PUBLIC',
+      surfaceType: 'Madeira',
+      indoor: true,
+      changingRooms: true,
+      toilets: true,
+      lockers: true,
+      accessible: true,
+      firstAid: true,
+      aed: true,
+      cafe: false,
+      services: null,
+      transport: null,
+      openingHours: null,
+      priceInfo: null,
+      parking: true,
+      lighting: true,
+      latitude: 38.7223,
+      longitude: -9.1393,
+      informationSource: 'COMMUNITY',
+      createdByUsername: 'miguel',
+      createdAt: '2026-09-29T20:00:00Z'
+    };
+
+    const route = {
+      snapshot: {
+        paramMap: {
+          get: () => '7'
+        }
+      }
+    } as unknown as ActivatedRoute;
+
+    const venueService = jasmine.createSpyObj<VenueService>('VenueService', [
+      'get',
+      'listPhotos',
+      'listSportConditions',
+      'addPhoto',
+      'addSportCondition'
+    ]);
+
+    venueService.get.and.returnValue(of(venue));
+    venueService.listPhotos.and.returnValue(
+      throwError(() => new Error('photos failed'))
+    );
+    venueService.listSportConditions.and.returnValue(of([]));
+
+    const component = new VenueDetailsComponent(route, venueService);
+
+    component.ngOnInit();
+
+    expect(component.venue).toEqual(venue);
+    expect(component.photos).toEqual([]);
+    expect(component.photosLoading).toBeFalse();
+    expect(component.photosLoadError).toBeTrue();
+    expect(component.loadError).toBeFalse();
+  });
+
+  it('retries loading photos after an error', () => {
+    const route = {} as ActivatedRoute;
+    const venueService = jasmine.createSpyObj<VenueService>('VenueService', [
+      'listPhotos'
+    ]);
+    const photo = {
+      id: 21,
+      photoUrl: 'https://cdn.example.com/venue.jpg',
+      uploadedByUsername: 'miguel',
+      createdAt: '2026-09-29T20:10:00Z'
+    };
+
+    venueService.listPhotos.and.returnValues(
+      throwError(() => new Error('photos failed')),
+      of([photo])
+    );
+
+    const component = new VenueDetailsComponent(route, venueService);
+    component.venue = { id: 7 } as Venue;
+
+    component.retryPhotos();
+    expect(component.photosLoadError).toBeTrue();
+
+    component.retryPhotos();
+
+    expect(venueService.listPhotos).toHaveBeenCalledTimes(2);
+    expect(venueService.listPhotos).toHaveBeenCalledWith(7);
+    expect(component.photos).toEqual([photo]);
+    expect(component.photosLoading).toBeFalse();
+    expect(component.photosLoadError).toBeFalse();
+  });
+
+  it('retries loading sport conditions after an error', () => {
+    const route = {} as ActivatedRoute;
+    const venueService = jasmine.createSpyObj<VenueService>('VenueService', [
+      'listSportConditions'
+    ]);
+    const condition = {
+      id: 12,
+      sport: 'Padel',
+      conditions: 'Piso rápido',
+      informationSource: 'COMMUNITY' as const,
+      createdByUsername: 'miguel',
+      createdAt: '2026-09-29T20:00:00Z'
+    };
+
+    venueService.listSportConditions.and.returnValues(
+      throwError(() => new Error('conditions failed')),
+      of([condition])
+    );
+
+    const component = new VenueDetailsComponent(route, venueService);
+    component.venue = { id: 7 } as Venue;
+
+    component.retrySportConditions();
+    expect(component.sportConditionsLoadError).toBeTrue();
+
+    component.retrySportConditions();
+
+    expect(venueService.listSportConditions).toHaveBeenCalledTimes(2);
+    expect(venueService.listSportConditions).toHaveBeenCalledWith(7);
+    expect(component.sportConditions).toEqual([condition]);
+    expect(component.sportConditionsLoading).toBeFalse();
+    expect(component.sportConditionsLoadError).toBeFalse();
+  });
+
+  it('adds a sport condition and resets the form on success', () => {
+    const route = {} as ActivatedRoute;
+    const venueService = jasmine.createSpyObj<VenueService>('VenueService', [
+      'addSportCondition'
+    ]);
+    const createdCondition = {
+      id: 12,
+      sport: 'Padel',
+      conditions: 'Piso rápido',
+      informationSource: 'COMMUNITY' as const,
+      createdByUsername: 'miguel',
+      createdAt: '2026-09-29T20:00:00Z'
+    };
+
+    venueService.addSportCondition.and.returnValue(of(createdCondition));
+
+    const component = new VenueDetailsComponent(route, venueService);
+    component.venue = { id: 7 } as Venue;
+    component.sportConditionSport = '  Padel  ';
+    component.sportConditionText = '  Piso rápido  ';
+    component.sportConditionsLoadError = true;
+
+    component.addSportCondition();
+
+    expect(venueService.addSportCondition).toHaveBeenCalledOnceWith(7, {
+      sport: 'Padel',
+      conditions: 'Piso rápido'
+    });
+    expect(component.sportConditions[0]).toEqual(createdCondition);
+    expect(component.sportConditionSport).toBe('');
+    expect(component.sportConditionText).toBe('');
+    expect(component.sportConditionSaving).toBeFalse();
+    expect(component.sportConditionSaveError).toBeFalse();
+    expect(component.sportConditionsLoadError).toBeFalse();
+  });
+
+  it('keeps the sport condition form filled when saving errors', () => {
+    const route = {} as ActivatedRoute;
+    const venueService = jasmine.createSpyObj<VenueService>('VenueService', [
+      'addSportCondition'
+    ]);
+
+    venueService.addSportCondition.and.returnValue(
+      throwError(() => new Error('save failed'))
+    );
+
+    const component = new VenueDetailsComponent(route, venueService);
+    component.venue = { id: 7 } as Venue;
+    component.sportConditionSport = 'Padel';
+    component.sportConditionText = 'Piso rápido';
+
+    component.addSportCondition();
+
+    expect(venueService.addSportCondition).toHaveBeenCalledOnceWith(7, {
+      sport: 'Padel',
+      conditions: 'Piso rápido'
+    });
+    expect(component.sportConditions).toEqual([]);
+    expect(component.sportConditionSport).toBe('Padel');
+    expect(component.sportConditionText).toBe('Piso rápido');
+    expect(component.sportConditionSaving).toBeFalse();
+    expect(component.sportConditionSaveError).toBeTrue();
+  });
+
+  it('uploads a photo and adds it to the gallery on success', () => {
+    const route = {} as ActivatedRoute;
+    const venueService = jasmine.createSpyObj<VenueService>('VenueService', [
+      'addPhoto'
+    ]);
+    const file = new File(['photo'], 'venue.jpg', { type: 'image/jpeg' });
+    const createdPhoto = {
+      id: 21,
+      photoUrl: 'https://cdn.example.com/venue.jpg',
+      uploadedByUsername: 'miguel',
+      createdAt: '2026-09-29T20:10:00Z'
+    };
+    const input = {
+      files: [file],
+      value: 'C:\\fakepath\\venue.jpg'
+    } as unknown as HTMLInputElement;
+
+    venueService.addPhoto.and.returnValue(of(createdPhoto));
+
+    const component = new VenueDetailsComponent(route, venueService);
+    component.venue = { id: 7 } as Venue;
+    component.photosLoadError = true;
+
+    component.uploadPhoto({ target: input } as unknown as Event);
+
+    expect(venueService.addPhoto).toHaveBeenCalledOnceWith(7, file);
+    expect(component.photos[0]).toEqual(createdPhoto);
+    expect(input.value).toBe('');
+    expect(component.photoUploading).toBeFalse();
+    expect(component.photoUploadError).toBeFalse();
+    expect(component.photosLoadError).toBeFalse();
+  });
+
+  it('marks the photo upload as failed when saving errors', () => {
+    const route = {} as ActivatedRoute;
+    const venueService = jasmine.createSpyObj<VenueService>('VenueService', [
+      'addPhoto'
+    ]);
+    const file = new File(['photo'], 'venue.jpg', { type: 'image/jpeg' });
+    const input = {
+      files: [file],
+      value: 'C:\\fakepath\\venue.jpg'
+    } as unknown as HTMLInputElement;
+
+    venueService.addPhoto.and.returnValue(
+      throwError(() => new Error('upload failed'))
+    );
+
+    const component = new VenueDetailsComponent(route, venueService);
+    component.venue = { id: 7 } as Venue;
+
+    component.uploadPhoto({ target: input } as unknown as Event);
+
+    expect(venueService.addPhoto).toHaveBeenCalledOnceWith(7, file);
+    expect(component.photos).toEqual([]);
+    expect(input.value).toBe('');
+    expect(component.photoUploading).toBeFalse();
+    expect(component.photoUploadError).toBeTrue();
+  });
+
+  it('rejects a non-image photo upload before calling the API', () => {
+    const route = {} as ActivatedRoute;
+    const venueService = jasmine.createSpyObj<VenueService>('VenueService', [
+      'addPhoto'
+    ]);
+    const file = new File(['document'], 'venue.txt', { type: 'text/plain' });
+    const input = {
+      files: [file],
+      value: 'C:\\fakepath\\venue.txt'
+    } as unknown as HTMLInputElement;
+
+    const component = new VenueDetailsComponent(route, venueService);
+    component.venue = { id: 7 } as Venue;
+
+    component.uploadPhoto({ target: input } as unknown as Event);
+
+    expect(venueService.addPhoto).not.toHaveBeenCalled();
+    expect(component.photos).toEqual([]);
+    expect(input.value).toBe('');
+    expect(component.photoUploading).toBeFalse();
+    expect(component.photoUploadError).toBeTrue();
+  });
+
+  it('rejects an invalid route id without calling the venue APIs', () => {
+    const route = {
+      snapshot: {
+        paramMap: {
+          get: () => 'invalid'
+        }
+      }
+    } as unknown as ActivatedRoute;
+
+    const venueService = jasmine.createSpyObj<VenueService>('VenueService', [
+      'get',
+      'listPhotos',
+      'listSportConditions',
+      'addPhoto',
+      'addSportCondition'
+    ]);
+
+    const component = new VenueDetailsComponent(route, venueService);
+
+    component.ngOnInit();
+
+    expect(venueService.get).not.toHaveBeenCalled();
+    expect(venueService.listPhotos).not.toHaveBeenCalled();
+    expect(venueService.listSportConditions).not.toHaveBeenCalled();
+    expect(component.venue).toBeNull();
+    expect(component.loading).toBeFalse();
+    expect(component.photosLoading).toBeFalse();
+    expect(component.sportConditionsLoading).toBeFalse();
+    expect(component.loadError).toBeTrue();
+  });
+});

@@ -2,7 +2,8 @@
   <div class="home-shell">
     <main class="hero">
       <div class="hero-copy">
-        <p class="eyebrow">Desporto24</p>
+        <p class="brand-lockup" aria-label="Jynlo">Jynl<span>o</span></p>
+        <p class="eyebrow">{{ 'home.eyebrow' | t }}</p>
         <h1>{{ 'home.hero.title' | t }}</h1>
         <p class="subtitle">{{ 'home.hero.subtitle' | t }}</p>
 
@@ -11,25 +12,54 @@
           <a class="secondary-action" routerLink="/login">{{ 'home.haveAccount' | t }}</a>
         </div>
 
-        <div class="feature-row" [attr.aria-label]="'home.features' | t">
-          <span>{{ 'home.localSessions' | t }}</span>
-          <span>{{ 'home.chat' | t }}</span>
-          <span>{{ 'home.community' | t }}</span>
-          <span>{{ 'home.reliability' | t }}</span>
+        <div class="promise-line">
+          <span>📍 {{ 'home.promise.where' | t }}</span>
+          <b>·</b>
+          <span>📅 {{ 'home.promise.when' | t }}</span>
+          <b>·</b>
+          <span>👥 {{ 'home.promise.who' | t }}</span>
         </div>
       </div>
 
-      <aside class="welcome-card">
-        <p class="eyebrow">{{ 'home.startHere' | t }}</p>
-        <h2>{{ 'home.playMore' | t }}</h2>
-        <p>{{ 'home.welcomeText' | t }}</p>
-
-        <div class="quick-links">
-          <a routerLink="/login">{{ 'home.enterCommunity' | t }} <span>→</span></a>
-          <a routerLink="/about">{{ 'home.aboutD24' | t }} <span>→</span></a>
-          <a routerLink="/contact">{{ 'home.contactUs' | t }} <span>→</span></a>
+      <aside class="flow-card">
+        <p class="eyebrow">{{ 'home.flow.eyebrow' | t }}</p>
+        <h2>{{ 'home.flow.title' | t }}</h2>
+        <div class="flow-steps">
+          <div><span>1</span><strong>📍 {{ 'home.flow.where' | t }}</strong></div>
+          <div><span>2</span><strong>👥 {{ 'home.flow.who' | t }}</strong></div>
+          <div><span>3</span><strong>📅 {{ 'home.flow.when' | t }}</strong></div>
+          <div class="flow-result"><span>✓</span><strong>{{ 'home.flow.go' | t }}</strong></div>
         </div>
       </aside>
     </main>
+
+    <section class="pillar-grid" [attr.aria-label]="'home.features' | t">
+      <article>
+        <span class="pillar-icon">📍</span>
+        <div>
+          <p>{{ 'home.pillar.where.kicker' | t }}</p>
+          <h2>{{ 'home.pillar.where.title' | t }}</h2>
+          <span>{{ 'home.pillar.where.text' | t }}</span>
+        </div>
+      </article>
+
+      <article>
+        <span class="pillar-icon">📅</span>
+        <div>
+          <p>{{ 'home.pillar.when.kicker' | t }}</p>
+          <h2>{{ 'home.pillar.when.title' | t }}</h2>
+          <span>{{ 'home.pillar.when.text' | t }}</span>
+        </div>
+      </article>
+
+      <article>
+        <span class="pillar-icon">👥</span>
+        <div>
+          <p>{{ 'home.pillar.who.kicker' | t }}</p>
+          <h2>{{ 'home.pillar.who.title' | t }}</h2>
+          <span>{{ 'home.pillar.who.text' | t }}</span>
+        </div>
+      </article>
+    </section>
   </div>
 </section>

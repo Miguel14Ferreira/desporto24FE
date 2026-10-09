@@ -146,8 +146,9 @@ h1 {
 
 .profile-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: .9rem;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+  max-width: 720px;
 }
 
 .profile-card {
@@ -155,12 +156,15 @@ h1 {
   align-items: center;
   gap: .9rem;
   width: 100%;
-  border: 1px solid rgba(255,255,255,.1);
-  border-radius: .9rem;
-  padding: .9rem;
-  background: rgba(15,23,42,.78);
+  box-sizing: border-box;
+  border: 0;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  border-radius: 0;
+  padding: .8rem .5rem;
+  background: transparent;
   color: inherit;
   text-align: left;
+  text-decoration: none;
   cursor: pointer;
 }
 
@@ -171,9 +175,9 @@ h1 {
 
 .avatar {
   display: grid;
-  width: 58px;
-  height: 58px;
-  flex: 0 0 58px;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
   place-items: center;
   overflow: hidden;
   border-radius: 50%;
@@ -199,35 +203,15 @@ h1 {
   color: #94a3b8;
 }
 
-.profile-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 2000;
-  display: grid;
-  place-items: center;
-  padding: 1rem;
-  background: rgba(2,6,23,.78);
-}
-
 .profile-detail {
   position: relative;
-  width: min(620px, 100%);
+  width: 100%;
+  box-sizing: border-box;
   border: 1px solid rgba(255,255,255,.12);
   border-radius: 1rem;
-  padding: 1.25rem;
+  padding: clamp(1.25rem, 4vw, 2.5rem);
   background: #0f172a;
   box-shadow: 0 24px 70px rgba(0,0,0,.35);
-}
-
-.close-detail {
-  position: absolute;
-  top: .8rem;
-  right: .8rem;
-  border: 0;
-  background: transparent;
-  color: #cbd5e1;
-  font-size: 1.6rem;
-  cursor: pointer;
 }
 
 .detail-heading {
@@ -243,7 +227,7 @@ h1 {
   flex-basis: 84px;
 }
 
-.detail-heading p:last-child {
+.profile-identity > p:not(.eyebrow) {
   margin: .35rem 0 0;
   color: #94a3b8;
 }
@@ -269,7 +253,59 @@ h1 {
 }
 
 .detail-actions {
-  justify-content: flex-end;
+  justify-content: flex-start;
+  align-items: center;
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(255,255,255,.08);
+}
+
+.friend-status {
+  border: 1px solid rgba(74,222,128,.25);
+  border-radius: .75rem;
+  padding: .75rem .9rem;
+  background: rgba(74,222,128,.08);
+  color: #bbf7d0;
+  font: inherit;
+  font-weight: 800;
+  opacity: 1;
+}
+
+.back-to-search {
+  display: inline-flex;
+  margin-bottom: 1.25rem;
+}
+
+.profile-safety {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255,255,255,.08);
+}
+
+.profile-safety summary {
+  width: fit-content;
+  color: #94a3b8;
+  cursor: pointer;
+}
+
+.safety-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .7rem;
+  padding-top: 1rem;
+}
+
+.profile-detail strong,
+.detail-heading h1 {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 560px) {
+  .detail-actions > button,
+  .detail-actions > a {
+    flex: 1 1 auto;
+    text-align: center;
+  }
 }
 
 @media (max-width: 700px) {
@@ -376,12 +412,9 @@ h1 {
 .social-summary {
   display: flex;
   align-items: center;
-  gap: .7rem;
-  margin: .85rem 0 0;
-  padding: .7rem .8rem;
-  border: 1px solid rgba(255,255,255,.08);
-  border-radius: .8rem;
-  background: rgba(255,255,255,.035);
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin: 1rem 0 0;
 }
 
 .social-summary > div {
@@ -391,16 +424,16 @@ h1 {
 }
 
 .social-summary strong {
-  font-size: 1rem;
+  font-size: 1.2rem;
 }
 
 .social-summary span {
   color: #94a3b8;
-  font-size: .72rem;
+  font-size: .8rem;
 }
 
 .follows-you-badge {
-  margin-left: auto;
+  margin-left: 0;
   border-radius: 999px;
   padding: .3rem .55rem;
   background: rgba(125,211,252,.10);
@@ -437,4 +470,165 @@ h1 {
   .follows-you-badge {
     margin-left: 0;
   }
+}
+
+
+.partner-search {
+  gap: 1rem;
+}
+
+.search-intro h2 {
+  margin: .2rem 0 .3rem;
+  font-size: 1.15rem;
+}
+
+.search-intro p {
+  margin: 0;
+  color: #94a3b8;
+}
+
+.partner-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .75rem;
+}
+
+.partner-filter-grid label {
+  display: grid;
+  gap: .4rem;
+}
+
+.partner-filter-grid label > span {
+  color: #cbd5e1;
+  font-size: .78rem;
+  font-weight: 800;
+}
+
+.partner-filter-grid input,
+.partner-filter-grid select {
+  width: 100%;
+  height: 48px;
+  box-sizing: border-box;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: .75rem;
+  padding: .7rem .8rem;
+  background: rgba(255,255,255,.055);
+  color: #f8fafc;
+  color-scheme: dark;
+  font: inherit;
+  outline: none;
+}
+
+.partner-filter-grid input:focus,
+.partner-filter-grid select:focus {
+  border-color: rgba(125,211,252,.5);
+}
+
+.partner-search-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: .55rem;
+}
+
+.partner-search-actions .clear-search {
+  border: 1px solid rgba(255,255,255,.14);
+  background: transparent;
+  color: #cbd5e1;
+}
+
+.profile-match-line {
+  margin-top: .2rem;
+}
+
+.profile-sports {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #bae6fd !important;
+}
+
+@media (max-width: 850px) {
+  .partner-filter-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .partner-filter-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .partner-search-actions {
+    align-items: stretch;
+    flex-direction: column-reverse;
+  }
+}
+
+
+.report-action {
+  border: 1px solid rgba(248,113,113,.32);
+  border-radius: .75rem;
+  padding: .75rem .9rem;
+  background: transparent;
+  color: #fecaca;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.report-action:disabled {
+  opacity: .6;
+  cursor: wait;
+}
+
+.report-panel {
+  margin-top: 1rem;
+  padding: .9rem;
+  border: 1px solid rgba(248,113,113,.22);
+  border-radius: .8rem;
+  background: rgba(127,29,29,.10);
+}
+
+.report-panel label {
+  display: grid;
+  gap: .45rem;
+}
+
+.report-panel label > span {
+  color: #fecaca;
+  font-size: .78rem;
+  font-weight: 800;
+}
+
+.report-panel textarea {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: .7rem;
+  padding: .75rem;
+  background: rgba(15,23,42,.82);
+  color: #f8fafc;
+  font: inherit;
+  outline: none;
+}
+
+.report-panel textarea:focus {
+  border-color: rgba(248,113,113,.5);
+}
+
+.report-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  margin-top: .65rem;
+}
+
+.report-actions small {
+  color: #94a3b8;
+}
+
+.search-ready p {
+  margin: 0;
+  color: #94a3b8;
 }

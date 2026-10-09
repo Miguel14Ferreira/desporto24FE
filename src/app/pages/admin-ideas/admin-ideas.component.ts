@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
-import { finalize } from 'rxjs';
+import { finalize, retry, timeout } from 'rxjs';
 
 import { AdminIdea, IdeaStatus } from '../model/admin-idea';
 import { AdminIdeasService } from '../../services/admin-ideas.service';
@@ -17,6 +17,11 @@ export class AdminIdeasComponent implements OnInit {
   loading = false;
   updatingId: number | null = null;
   errorMessage = '';
+  newCount = 0;
+  private readonly dateTimeFormatter = new Intl.DateTimeFormat('pt-PT', {
+    dateStyle: 'short',
+    timeStyle: 'short'
+  });
 
   readonly statuses: IdeaStatus[] = [
     'NEW',
@@ -32,25 +37,27 @@ export class AdminIdeasComponent implements OnInit {
     this.load();
   }
 
-  get newCount(): number {
-    return this.ideas.filter(idea => idea.status === 'NEW').length;
-  }
-
   load(): void {
     this.loading = true;
     this.errorMessage = '';
 
     this.adminIdeasService.list()
-      .pipe(finalize(() => this.loading = false))
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        finalize(() => this.loading = false)
+      )
       .subscribe({
         next: ideas => {
           this.ideas = ideas;
+          this.newCount = ideas.filter(idea => idea.status === 'NEW').length;
           if (this.selected) {
             this.selected = ideas.find(idea => idea.id === this.selected?.id);
           }
         },
         error: () => {
           this.ideas = [];
+          this.newCount = 0;
           this.errorMessage = 'Não foi possível carregar as ideias.';
         }
       });
@@ -73,10 +80,14 @@ export class AdminIdeasComponent implements OnInit {
     this.errorMessage = '';
 
     this.adminIdeasService.updateStatus(idea.id, status)
-      .pipe(finalize(() => this.updatingId = null))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.updatingId = null)
+      )
       .subscribe({
         next: updated => {
           this.ideas = this.ideas.map(item => item.id === updated.id ? updated : item);
+          this.newCount = this.ideas.filter(item => item.status === 'NEW').length;
           if (this.selected?.id === updated.id) {
             this.selected = updated;
           }
@@ -107,9 +118,6 @@ export class AdminIdeasComponent implements OnInit {
       return value;
     }
 
-    return new Intl.DateTimeFormat('pt-PT', {
-      dateStyle: 'short',
-      timeStyle: 'short'
-    }).format(date);
+    return this.dateTimeFormatter.format(date);
   }
 }

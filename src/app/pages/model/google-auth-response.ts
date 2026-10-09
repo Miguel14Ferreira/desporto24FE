@@ -21,4 +21,5 @@ export interface GoogleRegistrationRequest {
   indicativePhone: string | null;
   phone: string | null;
   gender: string | null;
+  acceptedLegalTerms: boolean;
 }

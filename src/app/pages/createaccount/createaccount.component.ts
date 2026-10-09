@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { appTranslate as t } from '../../i18n/i18n.service';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { finalize } from 'rxjs';
+import { finalize, timeout } from 'rxjs';
 
 import { RegistrationRequest } from '../model/registration-request';
 import { AuthenticationService } from '../../services/authethication.service';
@@ -21,10 +21,9 @@ export class CreateaccountComponent {
   nickname = '';
   dateOfBirth = '';
   country = 'Portugal';
-  indicativePhone = '351';
-  phone = '';
   gender = '';
   email = '';
+  acceptedLegalTerms = false;
 
   readonly maxBirthDate = this.dateYearsAgo(18);
   readonly minBirthDate = this.dateYearsAgo(120);
@@ -65,10 +64,11 @@ export class CreateaccountComponent {
       nickname: this.nickname.trim() || null,
       dateOfBirth: this.dateOfBirth,
       country: this.country.trim(),
-      indicativePhone: this.phone.trim() ? this.indicativePhone : null,
-      phone: this.phone.trim() ? this.phone.replace(/\D/g, '') : null,
+      indicativePhone: null,
+      phone: null,
       gender: this.gender || null,
-      email: this.email.trim()
+      email: this.email.trim(),
+      acceptedLegalTerms: this.acceptedLegalTerms
     };
 
     this.loading = true;
@@ -77,7 +77,7 @@ export class CreateaccountComponent {
     this.existingAccountRecovery = false;
 
     this.authenticationService.register(request, this.photo)
-      .pipe(finalize(() => this.loading = false))
+      .pipe(timeout(10_000), finalize(() => this.loading = false))
       .subscribe({
         next: response => {
           this.successMessage = t('feedback.register.created');
@@ -107,7 +107,7 @@ export class CreateaccountComponent {
     this.errorMessage = '';
 
     this.authenticationService.resendRegistrationConfirmation(username)
-      .pipe(finalize(() => this.resendLoading = false))
+      .pipe(timeout(10_000), finalize(() => this.resendLoading = false))
       .subscribe({
         next: response => {
           this.successMessage = t('feedback.register.resent');
@@ -196,13 +196,8 @@ export class CreateaccountComponent {
       return t('feedback.contact.invalidEmail');
     }
 
-    const normalizedPhone = this.phone.replace(/\D/g, '');
-    if (this.phone.trim() && (normalizedPhone.length < 4 || normalizedPhone.length > 15)) {
-      return t('feedback.register.invalidPhone');
-    }
-
-    if (this.phone.trim() && !this.indicativePhone.trim()) {
-      return t('feedback.register.invalidPhone');
+    if (!this.acceptedLegalTerms) {
+      return t('feedback.register.acceptLegal');
     }
 
     return null;

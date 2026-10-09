@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
-import { finalize } from 'rxjs';
+import { finalize, retry, timeout } from 'rxjs';
 
 import { SessionSummary } from '../model/session-summary';
 import { appTranslate as t } from '../../i18n/i18n.service';
@@ -15,6 +15,7 @@ import { SPORTS_CATALOG } from '../../shared/sports-catalog';
 })
 export class EventsComponent implements OnInit {
   sessions: SessionSummary[] = [];
+  citySuggestions: string[] = [];
   loading = false;
   locating = false;
   errorMessage = '';
@@ -86,11 +87,19 @@ export class EventsComponent implements OnInit {
         ? undefined
         : Math.max(0, Number(this.maxPrice))
     })
-    .pipe(finalize(() => this.loading = false))
+    .pipe(
+      timeout(10_000),
+      retry({ count: 1 }),
+      finalize(() => this.loading = false)
+    )
     .subscribe({
-      next: sessions => this.sessions = sessions,
+      next: sessions => {
+        this.sessions = sessions;
+        this.updateCitySuggestions();
+      },
       error: () => {
         this.sessions = [];
+        this.citySuggestions = [];
         this.errorMessage = t('feedback.events.loadError');
       }
     });
@@ -138,12 +147,17 @@ export class EventsComponent implements OnInit {
     this.loadSessions();
   }
 
-  get citySuggestions(): string[] {
-    return [...new Set(
-      this.sessions
-        .map(session => session.city?.trim())
-        .filter((city): city is string => Boolean(city))
-    )].sort((a, b) => a.localeCompare(b, 'pt'));
+  vacancies(session: SessionSummary): number {
+    return Math.max(
+      0,
+      session.maxParticipants - session.participantCount
+    );
+  }
+
+  canJoin(session: SessionSummary): boolean {
+    return !session.privateGame
+      && this.vacancies(session) > 0
+      && session.status?.toUpperCase() === 'OPEN';
   }
 
   toggleAdvancedFilters(): void {
@@ -162,6 +176,14 @@ export class EventsComponent implements OnInit {
     this.sort = this.nearbyActive ? 'distance' : 'date';
     this.errorMessage = '';
     this.loadSessions();
+  }
+
+  private updateCitySuggestions(): void {
+    this.citySuggestions = [...new Set(
+      this.sessions
+        .map(session => session.city?.trim())
+        .filter((city): city is string => Boolean(city))
+    )].sort((a, b) => a.localeCompare(b, 'pt'));
   }
 
   private toIsoOrUndefined(value: string): string | undefined {

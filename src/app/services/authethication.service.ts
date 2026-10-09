@@ -41,10 +41,20 @@ export class AuthenticationService {
   }
 
   googleRegister(request: GoogleRegistrationRequest): Observable<GoogleAuthResponse> {
+    const cohort = this.getPilotCohort();
+    const options: {
+      withCredentials: boolean;
+      params?: { cohort: string };
+    } = { withCredentials: true };
+
+    if (cohort) {
+      options.params = { cohort };
+    }
+
     return this.http.post<GoogleAuthResponse>(
       `${this.host}/api/auth/google/register`,
       request,
-      { withCredentials: true }
+      options
     );
   }
 
@@ -80,6 +90,11 @@ export class AuthenticationService {
 
     if (photo) {
       formData.append('photo', photo);
+    }
+
+    const cohort = this.getPilotCohort();
+    if (cohort) {
+      formData.append('cohort', cohort);
     }
 
     return this.http.post<CustomHttpResponse>(
@@ -139,6 +154,15 @@ export class AuthenticationService {
     );
   }
 
+  private getPilotCohort(): string | null {
+    try {
+      const cohort = localStorage.getItem('d24_pilot_cohort')?.trim();
+      return cohort ? cohort : null;
+    } catch {
+      return null;
+    }
+  }
+
   public logOut(): void {
     this.token = null;
     this.loggedInPerfilname = null;
@@ -170,6 +194,27 @@ export class AuthenticationService {
     localStorage.setItem('t', token);
   }
 
+  public hasSessionCandidate(): boolean {
+    const token = localStorage.getItem('t');
+    if (!token) {
+      this.token = null;
+      this.loggedInPerfilname = null;
+      return false;
+    }
+
+    try {
+      const payload = this.jwtHelper.decodeToken(token);
+      this.token = token;
+      this.loggedInPerfilname = payload?.sub ?? null;
+      return Boolean(this.loggedInPerfilname);
+    } catch {
+      localStorage.removeItem('t');
+      this.token = null;
+      this.loggedInPerfilname = null;
+      return false;
+    }
+  }
+
   public hasValidToken(): boolean {
     const token = localStorage.getItem('t');
     if (!token) {
@@ -178,12 +223,7 @@ export class AuthenticationService {
 
     try {
       const payload = this.jwtHelper.decodeToken(token);
-      const valid = Boolean(payload?.exp && payload.exp * 1000 > Date.now());
-      if (!valid) {
-        localStorage.removeItem('t');
-        this.token = null;
-      }
-      return valid;
+      return Boolean(payload?.exp && payload.exp * 1000 > Date.now());
     } catch {
       localStorage.removeItem('t');
       this.token = null;

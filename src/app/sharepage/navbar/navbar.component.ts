@@ -1,10 +1,10 @@
-import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ElementRef, HostListener, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { AuthenticationService } from 'src/app/services/authethication.service';
 import { AppLanguage, I18nService } from 'src/app/i18n/i18n.service';
 import { NotificationApiService } from 'src/app/services/notification-api.service';
 import { DirectChatRealtimeService } from 'src/app/services/direct-chat-realtime.service';
-import { Subscription, filter } from 'rxjs';
+import { Subscription, filter, retry, timeout } from 'rxjs';
 
 @Component({
     selector: 'app-navbar',
@@ -19,10 +19,14 @@ export class NavbarComponent implements OnInit, OnDestroy {
   escuro:string = "escuro";
   claro:string = "claro";
   unreadNotifications = 0;
+  authenticated = false;
+  admin = false;
+  loggingOut = false;
   private notificationTimer?: ReturnType<typeof setInterval>;
   private readonly subscriptions = new Subscription();
 
   constructor(
+    private elementRef: ElementRef<HTMLElement>,
     private router: Router,
     private authService: AuthenticationService,
     private notificationService: NotificationApiService,
@@ -47,7 +51,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
       this.subscriptions.add(
         this.realtimeService.messages$.subscribe(() => {
-          if (this.isAuthenticated()) {
+          if (this.authenticated) {
             this.unreadNotifications += 1;
           }
         })
@@ -63,7 +67,11 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
 
     private syncAuthenticatedState(): void {
-      if (!this.isAuthenticated()) {
+      this.authenticated = this.authService.hasSessionCandidate();
+      this.admin = this.authenticated
+        && this.authService.hasAnyRole('ROLE_ADMIN', 'ROLE_SUPER_ADMIN');
+
+      if (!this.authenticated) {
         this.realtimeService.disconnect();
         this.unreadNotifications = 0;
         if (this.notificationTimer) {
@@ -74,9 +82,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
       }
 
       this.realtimeService.connect();
-      this.loadUnreadNotifications();
 
       if (!this.notificationTimer) {
+        this.loadUnreadNotifications();
         this.notificationTimer = setInterval(
           () => this.loadUnreadNotifications(),
           60000
@@ -85,9 +93,14 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
 
     loadUnreadNotifications(): void {
-      this.notificationService.mine().subscribe({
-        next: notifications => {
-          this.unreadNotifications = notifications.filter(notification => !notification.read).length;
+      this.notificationService.unreadCount()
+        .pipe(
+          timeout(10_000),
+          retry({ count: 1 })
+        )
+        .subscribe({
+        next: unreadCount => {
+          this.unreadNotifications = unreadCount;
         },
         error: () => this.unreadNotifications = 0
       });
@@ -107,8 +120,33 @@ export class NavbarComponent implements OnInit, OnDestroy {
       this.i18n.setLanguage(language);
     }
 
-    isAuthenticated(): boolean {
-      return this.authService.isLoggedIn();
+    @HostListener('document:click', ['$event'])
+    closeAccountMenuOnOutsideClick(event: MouseEvent): void {
+      if (this.elementRef.nativeElement.contains(event.target as Node)) {
+        return;
+      }
+      this.closeAccountMenu();
+    }
+
+    closeAccountMenu(): void {
+      this.elementRef.nativeElement
+        .querySelector<HTMLDetailsElement>('.account-menu')
+        ?.removeAttribute('open');
+    }
+
+
+    logout(): void {
+      if (this.loggingOut) {
+        return;
+      }
+
+      this.loggingOut = true;
+      this.authService.terminarSessao()
+        .pipe(timeout(10_000))
+        .subscribe({
+        next: () => this.authService.logOut(),
+        error: () => this.authService.logOut()
+      });
     }
 
     remover(){

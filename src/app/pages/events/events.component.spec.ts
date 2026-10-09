@@ -74,6 +74,26 @@ describe('EventsComponent', () => {
     );
   });
 
+  it('should calculate vacancies and join eligibility', () => {
+    const openSession = {
+      id: 1,
+      sport: 'Padel',
+      city: 'Lisboa',
+      gameDate: '2026-10-02T18:00:00Z',
+      distanceKm: null,
+      participantCount: 2,
+      maxParticipants: 4,
+      priceAmount: 7.5,
+      privateGame: false,
+      status: 'OPEN'
+    };
+
+    expect(component.vacancies(openSession)).toBe(2);
+    expect(component.canJoin(openSession)).toBeTrue();
+    expect(component.canJoin({ ...openSession, privateGame: true })).toBeFalse();
+    expect(component.canJoin({ ...openSession, participantCount: 4 })).toBeFalse();
+  });
+
   it('should disable nearby search and clear coordinates', () => {
     component.nearbyActive = true;
     component.latitude = 38.72;

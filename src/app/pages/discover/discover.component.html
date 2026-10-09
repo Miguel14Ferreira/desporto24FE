@@ -1,0 +1,225 @@
+<section class="discover-page">
+  <div class="discover-shell">
+    <header class="discover-header">
+      <div>
+        <p class="eyebrow">{{ 'discover.eyebrow' | t }}</p>
+        <h1>{{ 'discover.title' | t }}</h1>
+        <p class="subtitle">{{ 'discover.subtitle' | t }}</p>
+      </div>
+    </header>
+
+    <form class="discover-search" (ngSubmit)="search()">
+      <div class="search-copy">
+        <strong>{{ 'discover.question' | t }}</strong>
+        <span>{{ 'discover.questionHint' | t }}</span>
+      </div>
+
+      <div class="search-fields">
+        <label>
+          <span>{{ 'events.sport' | t }}</span>
+          <input
+            type="text"
+            name="sport"
+            list="discover-sports"
+            [(ngModel)]="sport"
+            autocomplete="off"
+            [placeholder]="'discover.sportPlaceholder' | t">
+          <datalist id="discover-sports">
+            @for (sportOption of sportsCatalog; track sportOption) {
+              <option [value]="sportOption"></option>
+            }
+          </datalist>
+        </label>
+
+        <label>
+          <span>{{ 'common.location' | t }}</span>
+          <input
+            type="text"
+            name="location"
+            [(ngModel)]="location"
+            autocomplete="address-level2"
+            [placeholder]="'discover.locationPlaceholder' | t">
+        </label>
+
+        <button type="submit" [disabled]="loading">
+          {{ loading ? ('discover.searching' | t) : ('discover.search' | t) }}
+        </button>
+      </div>
+
+      @if (sport || location) {
+        <button type="button" class="clear-button" (click)="clear()">
+          {{ 'events.clear' | t }}
+        </button>
+      }
+    </form>
+
+    @if (loading) {
+      <div class="state-card">{{ 'discover.loading' | t }}</div>
+    }
+
+    @if (!loading && loadError) {
+      <div class="state-card discover-error" role="alert">
+        <div>
+          <strong>{{ 'discover.error.title' | t }}</strong>
+          <span>{{ 'discover.error.text' | t }}</span>
+        </div>
+        <button type="button" (click)="search()">
+          {{ 'discover.error.retry' | t }}
+        </button>
+      </div>
+    }
+
+
+    @if (!loading && initialized) {
+      <div class="discovery-grid">
+        <section class="pillar-panel">
+          <header class="pillar-heading">
+            <div class="pillar-icon">📍</div>
+            <div>
+              <p>{{ 'discover.where.kicker' | t }}</p>
+              <h2>{{ 'discover.where.title' | t }}</h2>
+            </div>
+            <span class="result-count">{{ venues.length }}</span>
+          </header>
+
+          @if (topVenues.length === 0) {
+            <div class="pillar-empty">
+              <strong>{{ 'discover.where.emptyTitle' | t }}</strong>
+              <span>{{ 'discover.where.emptyText' | t }}</span>
+            </div>
+          } @else {
+            <div class="result-list">
+              @for (venue of topVenues; track venue.id) {
+                <a class="result-card venue-card" [routerLink]="['/menu/venues', venue.id]">
+                  <div>
+                    <strong>{{ venue.name }}</strong>
+                    <span>{{ venue.city }}</span>
+                  </div>
+                  <div class="tags">
+                    @if (venue.venueType) {
+                      <span>{{ venue.venueType }}</span>
+                    }
+                    @if (venue.ownershipType) {
+                      <span>
+                        {{ venue.ownershipType === 'PUBLIC'
+                          ? ('venue.ownership.public' | t)
+                          : ('venue.ownership.private' | t) }}
+                      </span>
+                    }
+                    @if (venue.surfaceType) {
+                      <span>{{ venue.surfaceType }}</span>
+                    }
+                    <span>{{ venue.indoor ? ('venue.indoor' | t) : ('venue.outdoor' | t) }}</span>
+                    @if (venue.parking) {
+                      <span>🅿 {{ 'venue.parking' | t }}</span>
+                    }
+                  </div>
+                </a>
+              }
+            </div>
+          }
+
+          @if (venues.length > 4) {
+            <button type="button" class="pillar-action" (click)="toggleAllVenues()">
+              {{ (showAllVenues ? 'discover.where.showLess' : 'discover.where.showAll') | t }}
+              <span>{{ showAllVenues ? '↑' : '↓' }}</span>
+            </button>
+          }
+
+          <a class="pillar-action" routerLink="/menu/venues/new">
+            {{ 'discover.where.action' | t }} <span>→</span>
+          </a>
+        </section>
+
+        <section class="pillar-panel featured-panel">
+          <header class="pillar-heading">
+            <div class="pillar-icon">📅</div>
+            <div>
+              <p>{{ 'discover.when.kicker' | t }}</p>
+              <h2>{{ 'discover.when.title' | t }}</h2>
+            </div>
+            <span class="result-count">{{ sessions.length }}</span>
+          </header>
+
+          @if (topSessions.length === 0) {
+            <div class="pillar-empty">
+              <strong>{{ 'discover.when.emptyTitle' | t }}</strong>
+              <span>{{ 'discover.when.emptyText' | t }}</span>
+            </div>
+          } @else {
+            <div class="result-list">
+              @for (session of topSessions; track session.id) {
+                <a class="result-card session-card" [routerLink]="['/menu/events', session.id]">
+                  <div class="session-main">
+                    <strong>{{ session.sport }}</strong>
+                    <span>{{ session.city }} · {{ session.gameDate | date:'dd/MM HH:mm' }}</span>
+                  </div>
+                  <div class="session-side">
+                    <strong>{{ vacancies(session) }}</strong>
+                    <span>{{ 'discover.when.vacancies' | t }}</span>
+                  </div>
+                </a>
+              }
+            </div>
+          }
+
+          <a class="pillar-action" routerLink="/menu/events">
+            {{ 'discover.when.action' | t }} <span>→</span>
+          </a>
+        </section>
+
+        <section class="pillar-panel">
+          <header class="pillar-heading">
+            <div class="pillar-icon">👥</div>
+            <div>
+              <p>{{ 'discover.who.kicker' | t }}</p>
+              <h2>{{ 'discover.who.title' | t }}</h2>
+            </div>
+            <span class="result-count">{{ people.length }}</span>
+          </header>
+
+          @if (topPeople.length === 0) {
+            <div class="pillar-empty">
+              <strong>{{ 'discover.who.emptyTitle' | t }}</strong>
+              <span>{{ 'discover.who.emptyText' | t }}</span>
+            </div>
+          } @else {
+            <div class="result-list">
+              @for (profile of topPeople; track profile.username) {
+                <article class="result-card person-card">
+                  <div class="person-avatar">
+                    {{ (profile.nickname || profile.fullName || profile.username).charAt(0).toUpperCase() }}
+                  </div>
+                  <div>
+                    <strong>{{ profile.nickname || profile.fullName || profile.username }}</strong>
+                    <span>
+                      @{{ profile.username }}
+                      @if (profile.location) { · {{ profile.location }} }
+                    </span>
+                    @if (profile.skillLevel) {
+                      <small>{{ ('profile.level.' + profile.skillLevel) | t }}</small>
+                    }
+                  </div>
+                </article>
+              }
+            </div>
+          }
+
+          <a class="pillar-action" routerLink="/menu/perfis">
+            {{ 'discover.who.action' | t }} <span>→</span>
+          </a>
+        </section>
+      </div>
+
+      <section class="discover-flow">
+        <span>{{ 'discover.flow.find' | t }}</span>
+        <b>→</b>
+        <span>{{ 'discover.flow.play' | t }}</span>
+        <b>→</b>
+        <span>{{ 'discover.flow.record' | t }}</span>
+        <b>→</b>
+        <span>{{ 'discover.flow.evolve' | t }}</span>
+      </section>
+    }
+  </div>
+</section>

@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { appTranslate as t } from '../../i18n/i18n.service';
 import { AfterViewInit, ChangeDetectionStrategy, Component, NgZone, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { finalize } from 'rxjs';
+import { finalize, timeout } from 'rxjs';
 
 import { AuthenticationService } from '../../services/authethication.service';
 
@@ -35,7 +35,7 @@ export class LoginComponent implements OnInit, AfterViewInit {
 
   private resendCooldownTimer?: ReturnType<typeof setInterval>;
 
-  private returnUrl = '/menu';
+  private returnUrl = '/menu/feed';
 
   constructor(
     private router: Router,
@@ -45,7 +45,7 @@ export class LoginComponent implements OnInit, AfterViewInit {
   ) {}
 
   ngOnInit(): void {
-    this.returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') || '/menu';
+    this.returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') || '/menu/feed';
 
     this.successMessage = sessionStorage.getItem('auth-success-message') || '';
     this.errorMessage = sessionStorage.getItem('auth-error-message') || '';
@@ -57,8 +57,17 @@ export class LoginComponent implements OnInit, AfterViewInit {
     }
   }
 
+  get loginContextKey(): string {
+    const path = this.returnUrl.split(/[?#]/)[0];
+    return path === '/menu/notifications' || path.startsWith('/menu/notifications/')
+      ? 'login.viewRequest'
+      : '';
+  }
+
   ngAfterViewInit(): void {
-    this.authenticationService.googleConfig().subscribe({
+    this.authenticationService.googleConfig()
+      .pipe(timeout(10_000))
+      .subscribe({
       next: config => {
         if (!config.clientId?.trim()) {
           return;
@@ -130,7 +139,7 @@ export class LoginComponent implements OnInit, AfterViewInit {
     this.errorMessage = '';
 
     this.authenticationService.googleLogin(credential)
-      .pipe(finalize(() => this.googleLoading = false))
+      .pipe(timeout(10_000), finalize(() => this.googleLoading = false))
       .subscribe({
         next: response => {
           if (response.onboardingRequired) {
@@ -157,7 +166,7 @@ export class LoginComponent implements OnInit, AfterViewInit {
               sessionStorage.removeItem('mfa-expires-at');
             }
 
-            this.router.navigate(['/login/MFAauthentication', 'google']);
+            this.router.navigate(['/login/MFAauthentication']);
             return;
           }
 
@@ -195,7 +204,7 @@ export class LoginComponent implements OnInit, AfterViewInit {
     this.canResendConfirmation = false;
 
     this.authenticationService.login(username, this.password)
-      .pipe(finalize(() => this.loading = false))
+      .pipe(timeout(10_000), finalize(() => this.loading = false))
       .subscribe({
         next: response => {
           if (response.mfaRequired) {
@@ -213,7 +222,7 @@ export class LoginComponent implements OnInit, AfterViewInit {
               sessionStorage.removeItem('mfa-expires-at');
             }
 
-            this.router.navigate(['/login/MFAauthentication', username]);
+            this.router.navigate(['/login/MFAauthentication']);
             return;
           }
 
@@ -250,7 +259,7 @@ export class LoginComponent implements OnInit, AfterViewInit {
     this.successMessage = '';
 
     this.authenticationService.resendRegistrationConfirmation(username)
-      .pipe(finalize(() => this.resendLoading = false))
+      .pipe(timeout(10_000), finalize(() => this.resendLoading = false))
       .subscribe({
         next: response => {
           this.successMessage = t('feedback.register.resent');

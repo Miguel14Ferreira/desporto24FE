@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 
 import { PerfilDataComponent } from './perfil-data.component';
 import { MyProfileService } from '../../services/my-profile.service';
@@ -14,7 +14,7 @@ describe('PerfilDataComponent', () => {
 
   beforeEach(async () => {
     profileService = jasmine.createSpyObj<MyProfileService>('MyProfileService', ['get']);
-    reliabilityService = jasmine.createSpyObj<ReliabilityService>('ReliabilityService', ['summary']);
+    reliabilityService = jasmine.createSpyObj<ReliabilityService>('ReliabilityService', ['summary', 'activity']);
 
     profileService.get.and.returnValue(of({
       userId: 'u1',
@@ -29,7 +29,7 @@ describe('PerfilDataComponent', () => {
       phone: '912345678',
       gender: null,
       email: 'miguel@example.com',
-      favoriteSports: 'Padel',
+      favoriteSports: 'Padel, Futebol, Futsal, Corrida, Ténis, Natação',
       mfa: true,
       profilePicUrl: null,
       joinDateDisplay: null,
@@ -45,6 +45,15 @@ describe('PerfilDataComponent', () => {
       warning: false,
       reducedPriority: false,
       joinRestricted: false
+    }));
+    reliabilityService.activity.and.returnValue(of({
+      activitiesCompleted: 0,
+      peoplePlayedWith: 0,
+      sportsPractised: 0,
+      eventsCreated: 0,
+      participantsMobilized: 0,
+      communitiesJoined: 0,
+      achievements: []
     }));
 
     await TestBed.configureTestingModule({
@@ -68,8 +77,52 @@ describe('PerfilDataComponent', () => {
     expect(component.profile?.username).toBe('miguel');
   });
 
+  it('should collapse favorite sports after five', () => {
+    expect(component.favoriteSports.length).toBe(6);
+    expect(component.visibleFavoriteSports.length).toBe(5);
+    expect(component.hiddenFavoriteSportsCount).toBe(1);
+
+    component.toggleFavoriteSports();
+
+    expect(component.visibleFavoriteSports.length).toBe(6);
+  });
+
+  it('should expose profile completion', () => {
+    expect(component.profileCompletion.percentage).toBeGreaterThan(0);
+    expect(component.profileCompletion.missing.length).toBeGreaterThan(0);
+  });
+
   it('should load reliability after the profile', () => {
     expect(reliabilityService.summary).toHaveBeenCalledWith('miguel');
     expect(component.reliability?.attendanceRate).toBe(90);
   });
+
+  it('should expose a recoverable error when profile loading keeps failing', () => {
+    profileService.get.calls.reset();
+    profileService.get.and.returnValue(
+      throwError(() => new Error('service unavailable'))
+    );
+
+    component.load();
+
+    expect(profileService.get).toHaveBeenCalledTimes(2);
+    expect(component.loading).toBeFalse();
+    expect(component.errorMessage).toBeTruthy();
+  });
+
+  it('should recover profile loading after one automatic retry', () => {
+    const profile = component.profile!;
+    profileService.get.calls.reset();
+    profileService.get.and.returnValues(
+      throwError(() => new Error('temporary failure')),
+      of(profile)
+    );
+
+    component.load();
+
+    expect(profileService.get).toHaveBeenCalledTimes(2);
+    expect(component.errorMessage).toBe('');
+    expect(component.profile?.username).toBe('miguel');
+  });
+
 });

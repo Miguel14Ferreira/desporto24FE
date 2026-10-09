@@ -31,6 +31,25 @@ export interface JoinSessionResponse {
   waitlistPosition: number | null;
 }
 
+export interface SessionTeamPlayer {
+  username: string;
+  strengthScore: number;
+  statsAvailable: boolean;
+  games: number;
+  wins: number;
+  goals: number;
+  assists: number;
+}
+
+export interface SessionTeamSuggestion {
+  teamA: SessionTeamPlayer[];
+  teamB: SessionTeamPlayer[];
+  teamAScore: number;
+  teamBScore: number;
+  playersWithStats: number;
+  totalPlayers: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -108,6 +127,28 @@ export class SessionService {
     return this.http.post<void>(this.baseUrl + '/' + id + '/cancel', null);
   }
 
+  complete(id: number): Observable<void> {
+    return this.http.post<void>(this.baseUrl + '/' + id + '/complete', null);
+  }
+
+  reportDidNotOccur(id: number): Observable<void> {
+    return this.http.post<void>(
+      this.baseUrl + '/' + id + '/problems/not-occurred',
+      null
+    );
+  }
+
+  reportProblem(
+    id: number,
+    type: 'NOT_OCCURRED' | 'VENUE_PROBLEM' | 'OTHER',
+    details?: string
+  ): Observable<void> {
+    return this.http.post<void>(
+      this.baseUrl + '/' + id + '/problems',
+      { type, details: details?.trim() || null }
+    );
+  }
+
   messages(id: number): Observable<SessionMessage[]> {
     return this.http.get<SessionMessage[]>(this.baseUrl + '/' + id + '/messages');
   }
@@ -121,6 +162,19 @@ export class SessionService {
 
   participants(id: number): Observable<SessionParticipant[]> {
     return this.http.get<SessionParticipant[]>(this.baseUrl + '/' + id + '/participants');
+  }
+
+  teamSuggestion(id: number): Observable<SessionTeamSuggestion> {
+    return this.http.get<SessionTeamSuggestion>(
+      this.baseUrl + '/' + id + '/teams/suggestion'
+    );
+  }
+
+  confirmTeams(id: number): Observable<SessionTeamSuggestion> {
+    return this.http.post<SessionTeamSuggestion>(
+      this.baseUrl + '/' + id + '/teams/confirm',
+      null
+    );
   }
 
   removeParticipant(id: number, participantId: number): Observable<void> {

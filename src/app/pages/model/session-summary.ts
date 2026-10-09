@@ -8,5 +8,9 @@ export interface SessionSummary {
   maxParticipants: number;
   priceAmount: number;
   privateGame: boolean;
+  audience?: 'COMMUNITY_ONLY' | 'PUBLIC';
+  joinedByViewer?: boolean;
+  waitlistedByViewer?: boolean;
+  recurrenceSeriesId?: string | null;
   status: string;
 }

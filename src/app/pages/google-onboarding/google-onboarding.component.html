@@ -72,7 +72,7 @@
             [(ngModel)]="country"
             [disabled]="loading">
             @for (item of countryOptions; track item.label) {
-              <option [value]="countryName(item.label)">{{ item.label }}</option>
+              <option [value]="countryName(item.label)">{{ countryName(item.label) }}</option>
             }
           </select>
         </label>
@@ -109,6 +109,23 @@
           </select>
         </label>
 
+        <div class="full-width legal-consent">
+          <label class="consent-row" for="googleLegalConsent">
+            <input
+              id="googleLegalConsent"
+              type="checkbox"
+              name="googleLegalConsent"
+              [(ngModel)]="acceptedLegalTerms"
+              [disabled]="loading">
+            <span>
+              {{ 'register.legal.prefix' | t }}
+              <a routerLink="/terms" target="_blank" rel="noopener">{{ 'register.legal.terms' | t }}</a>
+              {{ 'register.legal.and' | t }}
+              <a routerLink="/privacy" target="_blank" rel="noopener">{{ 'register.legal.privacy' | t }}</a>.
+            </span>
+          </label>
+        </div>
+
       </div>
 
       <div class="privacy-note">
@@ -120,7 +137,7 @@
         <button type="button" class="secondary-action" (click)="cancel()" [disabled]="loading">
           {{ 'common.cancel' | t }}
         </button>
-        <button type="submit" class="primary-action" [disabled]="loading">
+        <button type="submit" class="primary-action" [disabled]="loading || !acceptedLegalTerms">
           {{ loading ? ('googleOnboarding.creating' | t) : ('googleOnboarding.finish' | t) }}
         </button>
       </div>

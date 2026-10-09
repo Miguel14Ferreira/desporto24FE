@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, ElementRef } from '@angular/core';
-import { finalize } from 'rxjs';
+import { finalize, timeout } from 'rxjs';
 
 import { appTranslate as t } from '../../i18n/i18n.service';
 import { FeedbackRequest, FeedbackService } from '../../services/feedback.service';
@@ -67,7 +67,7 @@ export class ContactComponent {
     this.successMessage = '';
 
     this.feedbackService.submit(request)
-      .pipe(finalize(() => this.loading = false))
+      .pipe(timeout(10_000), finalize(() => this.loading = false))
       .subscribe({
         next: response => {
           this.successMessage = response.message || t('feedback.contact.thanks');

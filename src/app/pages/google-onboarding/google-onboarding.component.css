@@ -274,3 +274,34 @@ button:disabled {
     grid-template-columns: 110px minmax(0, 1fr);
   }
 }
+
+
+.legal-consent {
+  margin-top: .25rem;
+  border-top: 1px solid rgba(255,255,255,.08);
+  padding-top: 1rem;
+}
+
+.consent-row {
+  display: flex !important;
+  align-items: flex-start;
+  gap: .7rem !important;
+  color: #cbd5e1;
+  line-height: 1.55;
+}
+
+.consent-row input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  margin-top: .15rem;
+  padding: 0;
+  accent-color: #38bdf8;
+}
+
+.consent-row a {
+  color: #7dd3fc;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}

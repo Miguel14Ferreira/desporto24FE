@@ -48,7 +48,6 @@ h1 {
 }
 
 .secondary-action,
-.friend-actions a,
 .state-card button,
 .state-card a {
   border: 1px solid rgba(255,255,255,.16);
@@ -134,9 +133,98 @@ h1 {
 }
 
 .friend-actions {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: .6rem;
+  gap: .45rem;
+}
+
+.friend-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .35rem;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: .7rem;
+  padding: .58rem .7rem;
+  font: inherit;
+  font-size: .76rem;
+  font-weight: 850;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.friend-action--primary {
+  border-color: transparent;
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.friend-action--secondary {
+  background: rgba(255,255,255,.055);
+  color: #f8fafc;
+}
+
+.friend-more {
+  position: relative;
+}
+
+.friend-more__trigger[aria-expanded='true'] {
+  border-color: rgba(125,211,252,.35);
+  background: rgba(125,211,252,.08);
+}
+
+.friend-more__menu {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + .4rem);
+  right: 0;
+  display: grid;
+  min-width: 220px;
+  gap: .3rem;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: .8rem;
+  padding: .45rem;
+  background: #0b1526;
+  box-shadow: 0 16px 42px rgba(0,0,0,.35);
+}
+
+.friend-more__menu button {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  width: 100%;
+  border: 0;
+  border-radius: .6rem;
+  padding: .65rem .7rem;
+  background: transparent;
+  color: #e2e8f0;
+  font: inherit;
+  font-size: .78rem;
+  font-weight: 800;
+  text-align: left;
+  cursor: pointer;
+}
+
+.friend-more__menu button:hover {
+  background: rgba(255,255,255,.06);
+}
+
+.friend-more__menu .danger-action {
+  color: #fecaca;
+}
+
+.friend-more__divider {
+  height: 1px;
+  margin: .15rem .2rem;
+  background: rgba(255,255,255,.08);
+}
+
+.remove-confirmation {
+  margin: .15rem .35rem;
+  color: #cbd5e1;
+  font-size: .72rem;
+  line-height: 1.35;
 }
 
 .blocked-badge {
@@ -162,112 +250,35 @@ h1 {
 
 @media (max-width: 720px) {
   .page-header,
-  .friend-card,
-  .friend-actions {
+  .friend-card {
     align-items: stretch;
     grid-template-columns: 1fr;
     flex-direction: column;
   }
 
+  .friend-actions {
+    flex-wrap: wrap;
+  }
+
+  .friend-action {
+    flex: 1 1 auto;
+  }
+
+  .friend-more {
+    flex: 1 1 auto;
+  }
+
+  .friend-more__trigger {
+    width: 100%;
+  }
+
+  .friend-more__menu {
+    left: 0;
+    right: auto;
+    width: min(280px, 80vw);
+  }
+
   .page-header {
     align-items: flex-start;
-  }
-}
-
-
-.profile-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 2000;
-  display: grid;
-  place-items: center;
-  padding: 1rem;
-  background: rgba(2,6,23,.78);
-}
-
-.profile-detail {
-  position: relative;
-  width: min(680px, 100%);
-  border: 1px solid rgba(255,255,255,.12);
-  border-radius: 1rem;
-  padding: 1.25rem;
-  background: #0f172a;
-  box-shadow: 0 24px 70px rgba(0,0,0,.35);
-}
-
-.close-detail {
-  position: absolute;
-  top: .8rem;
-  right: .8rem;
-  border: 0;
-  background: transparent;
-  color: #cbd5e1;
-  font-size: 1.6rem;
-  cursor: pointer;
-}
-
-.detail-heading {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding-right: 2rem;
-}
-
-.large-avatar {
-  width: 84px;
-  height: 84px;
-}
-
-.detail-heading h2 {
-  margin: 0;
-}
-
-.detail-heading p:last-child {
-  margin: .35rem 0 0;
-  color: #94a3b8;
-}
-
-.profile-meta {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: .75rem;
-  margin: 1.2rem 0;
-}
-
-.profile-meta div {
-  border-radius: .75rem;
-  padding: .8rem;
-  background: rgba(255,255,255,.05);
-}
-
-.profile-meta span {
-  display: block;
-  margin-bottom: .25rem;
-  color: #94a3b8;
-  font-size: .75rem;
-}
-
-.detail-actions {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.detail-actions a {
-  border-radius: .75rem;
-  padding: .75rem .9rem;
-  background: #f8fafc;
-  color: #0f172a;
-  font-weight: 800;
-  text-decoration: none;
-}
-
-@media (max-width: 700px) {
-  .detail-heading {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .profile-meta {
-    grid-template-columns: 1fr;
   }
 }

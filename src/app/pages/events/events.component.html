@@ -186,50 +186,57 @@
     }
 
     @if (!loading && !errorMessage && sessions.length > 0) {
-      <div class="session-grid">
+      <div class="session-list">
         @for (session of sessions; track session.id) {
-          <article class="session-card">
-            <div class="session-card__top">
-              <div>
-                <span class="sport-label">{{ session.sport }}</span>
-                <h2>{{ session.city }}</h2>
-              </div>
-              @if (session.privateGame) {
-                <span class="private-badge">{{ 'events.private' | t }}</span>
-              }
-            </div>
-
-            <dl class="session-meta">
-              <div>
-                <dt>{{ 'events.date' | t }}</dt>
-                <dd>{{ session.gameDate | date:'dd/MM/yyyy HH:mm' }}</dd>
-              </div>
-              <div>
-                <dt>{{ 'events.players' | t }}</dt>
-                <dd>{{ session.participantCount }}/{{ session.maxParticipants }}</dd>
-              </div>
-              <div>
-                <dt>{{ 'events.price' | t }}</dt>
-                <dd>
-                  @if (session.priceAmount > 0) {
-                    {{ session.priceAmount | number:'1.2-2' }} €
-                  } @else {
-                    {{ 'common.free' | t }}
-                  }
-                </dd>
-              </div>
+          <article class="session-row" [class.session-row--full]="vacancies(session) === 0">
+            <div class="session-identity">
+              <span class="sport-label">{{ session.sport }}</span>
+              <strong>{{ session.city }}</strong>
               @if (session.distanceKm !== null) {
-                <div>
-                  <dt>{{ 'events.distance' | t }}</dt>
-                  <dd>{{ session.distanceKm | number:'1.1-1' }} km</dd>
-                </div>
+                <small>📍 {{ session.distanceKm | number:'1.1-1' }} km</small>
               }
-            </dl>
-
-            <div class="session-card__footer">
-              <span class="status">{{ session.status }}</span>
-              <a [routerLink]="['/menu/events', session.id]">{{ 'mySessions.details' | t }}</a>
             </div>
+
+            <div class="session-fact">
+              <span>📅 {{ 'events.date' | t }}</span>
+              <strong>{{ session.gameDate | date:'dd/MM · HH:mm' }}</strong>
+            </div>
+
+            <div class="session-fact session-vacancies" [class.available]="vacancies(session) > 0">
+              <span>👥 {{ session.participantCount }}/{{ session.maxParticipants }}</span>
+              @if (vacancies(session) > 0) {
+                <strong>{{ 'events.vacanciesAvailable' | t:{ count: vacancies(session) } }}</strong>
+              } @else {
+                <strong>{{ 'events.full' | t }}</strong>
+              }
+            </div>
+
+            <div class="session-fact">
+              <span>💶 {{ 'events.price' | t }}</span>
+              <strong>
+                @if (session.priceAmount > 0) {
+                  {{ session.priceAmount | number:'1.2-2' }} €
+                } @else {
+                  {{ 'common.free' | t }}
+                }
+              </strong>
+            </div>
+
+            <div class="session-state">
+              @if (session.privateGame) {
+                <span class="private-badge">🔒 {{ 'events.private' | t }}</span>
+              } @else {
+                <span class="status">● {{ session.status }}</span>
+              }
+            </div>
+
+            <a
+              class="session-action"
+              [class.session-action--join]="canJoin(session)"
+              [routerLink]="['/menu/events', session.id]">
+              {{ canJoin(session) ? ('events.joinNow' | t) : ('mySessions.details' | t) }}
+              <span>→</span>
+            </a>
           </article>
         }
       </div>

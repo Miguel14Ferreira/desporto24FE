@@ -58,8 +58,18 @@ export class MyProfileService {
     );
   }
 
-  disableMfa(): Observable<MyProfile> {
-    return this.http.delete<MyProfile>(this.baseUrl + '/mfa');
+  disableMfa(code: string): Observable<MyProfile> {
+    return this.http.delete<MyProfile>(
+      this.baseUrl + '/mfa',
+      { body: { code } }
+    );
+  }
+
+  deleteAccount(): Observable<void> {
+    return this.http.delete<void>(
+      this.baseUrl,
+      { withCredentials: true }
+    );
   }
 
   changePassword(currentPassword: string, newPassword: string): Observable<unknown> {

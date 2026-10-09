@@ -460,3 +460,139 @@ textarea { resize: vertical; }
   border-color: rgba(248, 113, 113, .72);
   box-shadow: 0 0 0 2px rgba(248, 113, 113, .10);
 }
+
+
+.sport-chip,
+.sport-suggestions button {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+}
+
+.sport-chip__icon {
+  line-height: 1;
+}
+
+
+.profile-completion-card {
+  display: grid;
+  gap: .7rem;
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid rgba(125,211,252,.18);
+  border-radius: .9rem;
+  background: rgba(125,211,252,.045);
+}
+
+.profile-completion-card__heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.profile-completion-card__heading h2 {
+  margin: .2rem 0 0;
+  font-size: 1rem;
+}
+
+.profile-completion-card__heading > strong {
+  color: #bae6fd;
+  font-size: 1.1rem;
+}
+
+.profile-completion-track {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255,255,255,.08);
+}
+
+.profile-completion-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #38bdf8, #22d3ee);
+  transition: width .2s ease;
+}
+
+.profile-completion-card p {
+  margin: 0;
+  color: #94a3b8;
+  font-size: .78rem;
+  line-height: 1.45;
+}
+
+.profile-completion-missing {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .4rem;
+}
+
+.profile-completion-missing span {
+  border-radius: 999px;
+  padding: .3rem .5rem;
+  background: rgba(255,255,255,.05);
+  color: #cbd5e1;
+  font-size: .7rem;
+  font-weight: 750;
+}
+
+
+.danger-zone {
+  display: grid;
+  gap: .9rem;
+  margin-top: 1.2rem;
+  padding: 1rem;
+  border: 1px solid rgba(248,113,113,.35);
+  border-radius: .9rem;
+  background: rgba(127,29,29,.12);
+}
+
+.danger-zone__copy {
+  display: grid;
+  gap: .3rem;
+}
+
+.danger-zone__copy strong {
+  color: #fecaca;
+}
+
+.danger-zone__copy p,
+.danger-confirmation p {
+  margin: 0;
+  color: #cbd5e1;
+  line-height: 1.45;
+}
+
+.danger-action {
+  width: fit-content;
+  border: 1px solid rgba(248,113,113,.55);
+  border-radius: .8rem;
+  padding: .75rem 1rem;
+  background: rgba(127,29,29,.35);
+  color: #fee2e2;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.danger-action:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+.danger-confirmation {
+  display: grid;
+  gap: .75rem;
+}
+
+.danger-confirmation input {
+  max-width: 360px;
+}
+
+.danger-confirmation__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .6rem;
+}

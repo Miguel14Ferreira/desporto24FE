@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { finalize } from 'rxjs';
+import { ActivatedRoute, Router } from '@angular/router';
+import { finalize, Observable, retry, timeout } from 'rxjs';
 import { appTranslate as t } from '../../i18n/i18n.service';
 
 import {
@@ -14,7 +14,14 @@ import {
   CommunityRoundEntryDraft,
   CommunityStanding
 } from '../model/community-group';
-import { CommunityGroupsService } from '../../services/community-groups.service';
+import {
+  CommunityGroupsService,
+  CommunityJoinRequest,
+  CommunitySearchPresentation
+} from '../../services/community-groups.service';
+import { CommunityService } from '../../services/community.service';
+import { SessionService } from '../../services/session.service';
+import { CommunityProfile } from '../model/community-profile';
 import { SessionSummary } from '../model/session-summary';
 
 type CommunityTab = 'home' | 'sessions' | 'ranking' | 'stats' | 'members';
@@ -27,24 +34,67 @@ type CommunityTab = 'home' | 'sessions' | 'ranking' | 'stats' | 'members';
   standalone: false
 })
 export class CommunitiesComponent implements OnInit {
+  private readonly sessionDateFormatter = new Intl.DateTimeFormat('pt-PT', {
+    dateStyle: 'medium',
+    timeStyle: 'short'
+  });
+  private readonly roundDateFormatter = new Intl.DateTimeFormat('pt-PT', {
+    dateStyle: 'medium'
+  });
+
   communities: CommunityGroup[] = [];
   invites: CommunityInvite[] = [];
   selected?: CommunityGroup;
   competition?: CommunityCompetitionOverview;
+  maxStandingPoints = 0;
+  topGoalsStanding?: CommunityStanding;
+  topAssistsStanding?: CommunityStanding;
+  topMvpsStanding?: CommunityStanding;
+  topCleanSheetsStanding?: CommunityStanding;
+  mostGamesStanding?: CommunityStanding;
+  bestWinRateStanding?: CommunityStanding;
+  bestWinStreakStanding?: CommunityStanding;
+  standingsByUsername = new Map<string, CommunityStanding>();
+  activeCommunitySeason?: CommunitySeason;
+  communityTrophies: CommunitySeason[] = [];
   communitySessions: SessionSummary[] = [];
+  isDetailMode = false;
 
   loading = false;
   saving = false;
   competitionLoading = false;
   sessionsLoading = false;
+  openingSessionId?: number;
+  joiningSessionId?: number;
   competitionSaving = false;
   roundSaving = false;
   errorMessage = '';
 
   activeTab: CommunityTab = 'home';
   inviteUsername = '';
+  inviteSearchResults: CommunityProfile[] = [];
+  inviteSearchLoading = false;
+  inviteSearchPerformed = false;
+  inviteMessage = '';
+  pendingJoinRequests: CommunityJoinRequest[] = [];
+  pendingJoinRequestsLoading = false;
+  joinRequestActionId?: number;
   ownershipUsername = '';
   photoUpdating = false;
+
+  communitySearchName = '';
+  communitySearchSport = '';
+  communitySearchResults: CommunitySearchPresentation[] = [];
+  communitySearchPage = 0;
+  communitySearchHasMore = false;
+  communitySearchLoading = false;
+  communitySearchPerformed = false;
+  communitySearchError = '';
+  communityPresentation?: CommunitySearchPresentation;
+  presentationLoading = false;
+  membershipActionLoading = false;
+  membershipActionMessage = '';
+  joinRequestSent = false;
 
   rankingsEnabledDraft = false;
   winPointsDraft = 3;
@@ -62,16 +112,198 @@ export class CommunitiesComponent implements OnInit {
   seasonSaving = false;
   closeSeasonConfirming = false;
 
+  importFile?: File;
+  importFileName = '';
+  importFileError = '';
+  importPreviewLoading = false;
+  importSheetName = '';
+  importMappings: Array<{ columnIndex: number; header: string; field: string; confidence: number }> = [];
+  importValidation?: { valid: boolean; dataRows: number; validRows: number; errors: string[]; warnings: string[] };
+  importNormalized?: { acceptedRows: number; skippedRows: number; rows: any[]; skipped: any[] };
+  importMappingLoading = false;
+  importDefaultYear: number | null = new Date().getFullYear();
+  importPlanLoading = false;
+  importFinalPlan?: any;
+  importConfirming = false;
+  importResult?: { createdRounds: number; skippedDuplicateRounds: number; createdEntries: number };
+  readonly importFields = ['IGNORE', 'PLAYER', 'DATE', 'RESULT', 'WIN', 'DRAW', 'LOSS', 'GOALS', 'ASSISTS', 'POINTS', 'MVP'];
+  importPreview?: {
+    fileName: string;
+    sheets: Array<{
+      name: string;
+      nonEmptyRows: number;
+      structure: string;
+      headers: string[];
+      sampleRows: string[][];
+      columnSuggestions: Array<{
+        columnIndex: number;
+        header: string;
+        field: string;
+        confidence: number;
+      }>;
+    }>;
+  };
+
   compareUsernameA = '';
   compareUsernameB = '';
 
   constructor(
     private communityService: CommunityGroupsService,
-    private route: ActivatedRoute
+    private profileService: CommunityService,
+    private sessionService: SessionService,
+    private route: ActivatedRoute,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
+    this.isDetailMode = Boolean(this.route.snapshot.paramMap.get('id'));
     this.reload();
+  }
+
+  detailMode(): boolean {
+    return this.isDetailMode;
+  }
+
+  backToCommunities(): void {
+    void this.router.navigate(['/menu/communities']);
+  }
+
+  searchCommunities(page = 0): void {
+    const name = this.communitySearchName.trim();
+    const sport = this.communitySearchSport.trim();
+    if (!name && !sport) {
+      this.clearCommunitySearch();
+      return;
+    }
+
+    this.communitySearchLoading = true;
+    this.communitySearchError = '';
+    this.communityService.search(name, sport, page)
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        finalize(() => this.communitySearchLoading = false)
+      )
+      .subscribe({
+        next: result => {
+          this.communitySearchResults = result.communities;
+          this.communitySearchPage = result.page;
+          this.communitySearchHasMore = result.hasMore;
+          this.communitySearchPerformed = true;
+        },
+        error: () => {
+          this.communitySearchResults = [];
+          this.communitySearchHasMore = false;
+          this.communitySearchPerformed = true;
+          this.communitySearchError = t('feedback.communities.searchError');
+        }
+      });
+  }
+
+  changeCommunitySearchPage(direction: number): void {
+    if (this.communitySearchLoading || (direction < 0 && this.communitySearchPage === 0)
+        || (direction > 0 && !this.communitySearchHasMore)) {
+      return;
+    }
+    this.searchCommunities(this.communitySearchPage + direction);
+  }
+
+  clearCommunitySearch(): void {
+    this.communitySearchName = '';
+    this.communitySearchSport = '';
+    this.communitySearchResults = [];
+    this.communitySearchPage = 0;
+    this.communitySearchHasMore = false;
+    this.communitySearchPerformed = false;
+    this.communitySearchError = '';
+  }
+
+  openCommunityPresentation(community: CommunitySearchPresentation): void {
+    void this.router.navigate(['/menu/communities', community.id]);
+  }
+
+  private loadCommunityPresentation(id: number): void {
+    this.selected = undefined;
+    this.communityPresentation = undefined;
+    this.presentationLoading = true;
+    this.membershipActionMessage = '';
+    this.joinRequestSent = false;
+    this.errorMessage = '';
+
+    this.communityService.presentation(id)
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        finalize(() => this.presentationLoading = false)
+      )
+      .subscribe({
+        next: presentation => {
+          this.communityPresentation = presentation;
+          if (presentation.visibility === 'PRIVATE') {
+            this.loadMyPendingJoinRequest(presentation.id);
+          }
+        },
+        error: () => this.errorMessage = t('feedback.communities.openError')
+      });
+  }
+
+  private loadMyPendingJoinRequest(communityId: number): void {
+    this.communityService.myPendingJoinRequest(communityId)
+      .pipe(timeout(10_000))
+      .subscribe({
+        next: request => {
+          if (this.communityPresentation?.id !== communityId) {
+            return;
+          }
+
+          this.joinRequestSent = Boolean(request);
+          this.membershipActionMessage = request
+            ? t('communities.joinRequestSent')
+            : '';
+        },
+        error: () => {
+          if (this.communityPresentation?.id === communityId) {
+            this.joinRequestSent = false;
+            this.membershipActionMessage = '';
+          }
+        }
+      });
+  }
+
+  joinPresentedCommunity(): void {
+    const community = this.communityPresentation;
+    if (!community || this.membershipActionLoading || this.joinRequestSent) {
+      return;
+    }
+
+    this.membershipActionLoading = true;
+    this.membershipActionMessage = '';
+    this.errorMessage = '';
+
+    const action: Observable<unknown> = community.visibility === 'PUBLIC'
+      ? this.communityService.joinPublic(community.id)
+      : this.communityService.requestJoin(community.id);
+
+    action
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.membershipActionLoading = false)
+      )
+      .subscribe({
+        next: () => {
+          if (community.visibility === 'PUBLIC') {
+            this.reload();
+            return;
+          }
+
+          this.joinRequestSent = true;
+          this.membershipActionMessage = t('communities.joinRequestSent');
+        },
+        error: error => {
+          this.errorMessage = error.error?.message
+            || t('feedback.communities.joinError');
+        }
+      });
   }
 
   reload(): void {
@@ -79,16 +311,26 @@ export class CommunitiesComponent implements OnInit {
     this.errorMessage = '';
 
     this.communityService.mine()
-      .pipe(finalize(() => this.loading = false))
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        finalize(() => this.loading = false)
+      )
       .subscribe({
         next: communities => {
           this.communities = communities;
 
-          const requestedId = Number(this.route.snapshot.queryParamMap.get('community'));
+          const routeId = this.route.snapshot.paramMap.get('id');
+          const requestedId = Number(routeId || this.route.snapshot.queryParamMap.get('community'));
           if (requestedId && !Number.isNaN(requestedId)) {
             const requested = communities.find(item => item.id === requestedId);
             if (requested) {
+              this.communityPresentation = undefined;
               this.open(requested);
+              return;
+            }
+            if (this.detailMode()) {
+              this.loadCommunityPresentation(requestedId);
               return;
             }
           }
@@ -103,19 +345,38 @@ export class CommunitiesComponent implements OnInit {
         error: () => this.errorMessage = t('feedback.communities.loadError')
       });
 
-    this.communityService.myInvites().subscribe({
-      next: invites => this.invites = invites,
-      error: () => this.invites = []
-    });
+    this.communityService.myInvites()
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 })
+      )
+      .subscribe({
+        next: invites => this.invites = invites,
+        error: () => this.invites = []
+      });
   }
 
   open(community: CommunityGroup): void {
+    if (!this.detailMode()) {
+      void this.router.navigate(['/menu/communities', community.id]);
+      return;
+    }
+
     this.errorMessage = '';
 
-    this.communityService.get(community.id).subscribe({
+    this.communityService.get(community.id)
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 })
+      )
+      .subscribe({
       next: full => {
         this.selected = full;
         this.activeTab = 'home';
+        this.inviteUsername = '';
+        this.inviteSearchResults = [];
+        this.inviteSearchPerformed = false;
+        this.inviteMessage = '';
         this.roundDeleteConfirmId = undefined;
         this.selectedSeasonId = null;
         this.closeSeasonConfirming = false;
@@ -130,6 +391,75 @@ export class CommunitiesComponent implements OnInit {
   setTab(tab: CommunityTab): void {
     this.activeTab = tab;
     this.errorMessage = '';
+
+    if (tab === 'members' && this.selected && this.canManage()) {
+      this.loadPendingJoinRequests(this.selected.id);
+    }
+  }
+
+  private loadPendingJoinRequests(communityId: number): void {
+    this.pendingJoinRequestsLoading = true;
+    this.communityService.pendingJoinRequests(communityId)
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.pendingJoinRequestsLoading = false)
+      )
+      .subscribe({
+        next: requests => this.pendingJoinRequests = requests,
+        error: () => {
+          this.pendingJoinRequests = [];
+          this.errorMessage = t('feedback.communities.joinRequestsLoadError');
+        }
+      });
+  }
+
+  acceptPendingJoinRequest(request: CommunityJoinRequest): void {
+    if (!this.selected || this.joinRequestActionId !== undefined) {
+      return;
+    }
+
+    this.joinRequestActionId = request.id;
+    this.errorMessage = '';
+
+    this.communityService.acceptJoinRequest(this.selected.id, request.id)
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.joinRequestActionId = undefined)
+      )
+      .subscribe({
+        next: () => {
+          this.pendingJoinRequests = this.pendingJoinRequests.filter(item => item.id !== request.id);
+          this.refreshSelected();
+        },
+        error: error => {
+          this.errorMessage = error.error?.message
+            || t('feedback.communities.joinRequestActionError');
+        }
+      });
+  }
+
+  rejectPendingJoinRequest(request: CommunityJoinRequest): void {
+    if (!this.selected || this.joinRequestActionId !== undefined) {
+      return;
+    }
+
+    this.joinRequestActionId = request.id;
+    this.errorMessage = '';
+
+    this.communityService.rejectJoinRequest(this.selected.id, request.id)
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.joinRequestActionId = undefined)
+      )
+      .subscribe({
+        next: () => {
+          this.pendingJoinRequests = this.pendingJoinRequests.filter(item => item.id !== request.id);
+        },
+        error: error => {
+          this.errorMessage = error.error?.message
+            || t('feedback.communities.joinRequestActionError');
+        }
+      });
   }
 
   loadCommunitySessions(community: CommunityGroup = this.selected as CommunityGroup): void {
@@ -140,12 +470,76 @@ export class CommunitiesComponent implements OnInit {
 
     this.sessionsLoading = true;
     this.communityService.sessions(community.id)
-      .pipe(finalize(() => this.sessionsLoading = false))
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        finalize(() => this.sessionsLoading = false)
+      )
       .subscribe({
         next: sessions => this.communitySessions = sessions,
         error: () => {
           this.communitySessions = [];
           this.errorMessage = t('feedback.communities.sessionsLoadError');
+        }
+      });
+  }
+
+  joinCommunitySession(session: SessionSummary): void {
+    if (!this.selected || this.joiningSessionId !== undefined
+        || session.privateGame) {
+      return;
+    }
+
+    const communityId = this.selected.id;
+    this.joiningSessionId = session.id;
+    this.errorMessage = '';
+
+    this.sessionService.join(session.id)
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.joiningSessionId = undefined)
+      )
+      .subscribe({
+        next: () => {
+          if (this.selected?.id === communityId) {
+            this.loadCommunitySessions(this.selected);
+          }
+        },
+        error: error => {
+          if (this.selected?.id === communityId) {
+            this.errorMessage = error.error?.message
+              || t('feedback.communities.joinSessionError');
+          }
+        }
+      });
+  }
+
+  openSessionToPublic(session: SessionSummary): void {
+    if (!this.selected || !this.canManage() || session.audience !== 'COMMUNITY_ONLY'
+        || this.openingSessionId !== undefined) {
+      return;
+    }
+
+    const communityId = this.selected.id;
+    this.openingSessionId = session.id;
+    this.errorMessage = '';
+    this.communityService.openSessionToPublic(communityId, session.id)
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.openingSessionId = undefined)
+      )
+      .subscribe({
+        next: updated => {
+          if (this.selected?.id === communityId) {
+            this.communitySessions = this.communitySessions.map(item =>
+              item.id === updated.id ? updated : item
+            );
+          }
+        },
+        error: () => {
+          if (this.selected?.id === communityId) {
+            this.errorMessage = t('feedback.communities.openPublicError');
+          }
         }
       });
   }
@@ -160,10 +554,55 @@ export class CommunitiesComponent implements OnInit {
 
     this.competitionLoading = true;
     this.communityService.competition(community.id, seasonId)
-      .pipe(finalize(() => this.competitionLoading = false))
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        finalize(() => this.competitionLoading = false)
+      )
       .subscribe({
         next: competition => {
           this.competition = competition;
+          this.maxStandingPoints = Math.max(
+            0,
+            ...competition.standings.map(item => item.points)
+          );
+          this.topGoalsStanding = competition.standings.reduce<CommunityStanding | undefined>(
+            (best, row) => !best || row.goals > best.goals || (row.goals === best.goals && row.position < best.position) ? row : best,
+            undefined
+          );
+          this.topAssistsStanding = competition.standings.reduce<CommunityStanding | undefined>(
+            (best, row) => !best || row.assists > best.assists || (row.assists === best.assists && row.position < best.position) ? row : best,
+            undefined
+          );
+          this.topMvpsStanding = competition.standings.reduce<CommunityStanding | undefined>(
+            (best, row) => !best || row.mvps > best.mvps || (row.mvps === best.mvps && row.position < best.position) ? row : best,
+            undefined
+          );
+          this.topCleanSheetsStanding = competition.standings.reduce<CommunityStanding | undefined>(
+            (best, row) => !best || row.cleanSheets > best.cleanSheets || (row.cleanSheets === best.cleanSheets && row.position < best.position) ? row : best,
+            undefined
+          );
+          this.mostGamesStanding = competition.standings.reduce<CommunityStanding | undefined>(
+            (best, row) => !best || row.games > best.games || (row.games === best.games && row.position < best.position) ? row : best,
+            undefined
+          );
+          this.bestWinRateStanding = competition.standings.reduce<CommunityStanding | undefined>(
+            (best, row) => !best || row.winRate > best.winRate || (row.winRate === best.winRate && row.position < best.position) ? row : best,
+            undefined
+          );
+          this.bestWinStreakStanding = competition.standings.reduce<CommunityStanding | undefined>(
+            (best, row) => !best || row.bestWinStreak > best.bestWinStreak || (row.bestWinStreak === best.bestWinStreak && row.position < best.position) ? row : best,
+            undefined
+          );
+          this.standingsByUsername = new Map(
+            competition.standings.map(row => [row.username, row])
+          );
+          this.activeCommunitySeason = competition.seasons.find(
+            season => season.id === competition.activeSeasonId
+          );
+          this.communityTrophies = competition.seasons.filter(
+            season => !season.active && Boolean(season.championUsername)
+          );
           this.selectedSeasonId = competition.selectedSeasonId;
           this.rankingsEnabledDraft = competition.settings.rankingsEnabled;
           this.winPointsDraft = competition.settings.winPoints;
@@ -172,6 +611,17 @@ export class CommunitiesComponent implements OnInit {
         },
         error: () => {
           this.competition = undefined;
+          this.maxStandingPoints = 0;
+          this.topGoalsStanding = undefined;
+          this.topAssistsStanding = undefined;
+          this.topMvpsStanding = undefined;
+          this.topCleanSheetsStanding = undefined;
+          this.mostGamesStanding = undefined;
+          this.bestWinRateStanding = undefined;
+          this.bestWinStreakStanding = undefined;
+          this.standingsByUsername.clear();
+          this.activeCommunitySeason = undefined;
+          this.communityTrophies = [];
           this.errorMessage = t('feedback.communities.competitionLoadError');
         }
       });
@@ -190,7 +640,18 @@ export class CommunitiesComponent implements OnInit {
   }
 
   createSeason(): void {
-    if (!this.selected || !this.canManage() || this.seasonSaving || !this.seasonName.trim()) {
+    if (this.seasonSaving) {
+      return;
+    }
+
+    if (!this.selected || !this.canManage()) {
+      this.errorMessage = t('feedback.communities.seasonCreateError');
+      return;
+    }
+
+    const name = this.seasonName.trim();
+    if (!name) {
+      this.errorMessage = t('feedback.communities.seasonCreateError');
       return;
     }
 
@@ -209,10 +670,13 @@ export class CommunitiesComponent implements OnInit {
     }
 
     this.communityService.createSeason(this.selected.id, {
-      name: this.seasonName.trim(),
+      name,
       startsAt
     })
-      .pipe(finalize(() => this.seasonSaving = false))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.seasonSaving = false)
+      )
       .subscribe({
         next: season => {
           this.seasonName = '';
@@ -247,7 +711,10 @@ export class CommunitiesComponent implements OnInit {
     this.errorMessage = '';
 
     this.communityService.closeSeason(this.selected.id, active.id)
-      .pipe(finalize(() => this.seasonSaving = false))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.seasonSaving = false)
+      )
       .subscribe({
         next: season => {
           this.closeSeasonConfirming = false;
@@ -275,7 +742,10 @@ export class CommunitiesComponent implements OnInit {
       drawPoints: Math.max(0, Number(this.drawPointsDraft) || 0),
       lossPoints: Math.max(0, Number(this.lossPointsDraft) || 0)
     })
-      .pipe(finalize(() => this.competitionSaving = false))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.competitionSaving = false)
+      )
       .subscribe({
         next: settings => {
           if (this.competition) {
@@ -318,6 +788,210 @@ export class CommunitiesComponent implements OnInit {
     }));
   }
 
+  private resetImportAfterFile(): void {
+    this.importSheetName = '';
+    this.importMappings = [];
+    this.importValidation = undefined;
+    this.importNormalized = undefined;
+    this.importFinalPlan = undefined;
+    this.importResult = undefined;
+  }
+
+  private resetImportAfterMapping(): void {
+    this.importValidation = undefined;
+    this.importNormalized = undefined;
+    this.importFinalPlan = undefined;
+    this.importResult = undefined;
+  }
+
+  onImportFileChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    this.importFileError = '';
+
+    if (!file) {
+      this.importFile = undefined;
+      this.importFileName = '';
+      return;
+    }
+
+    if (!file.name.toLowerCase().endsWith('.xlsx')) {
+      this.importFile = undefined;
+      this.importFileName = '';
+      this.importFileError = t('communities.import.invalidFile');
+      input.value = '';
+      return;
+    }
+
+    this.importFile = file;
+    this.importFileName = file.name;
+    this.importPreview = undefined;
+    this.resetImportAfterFile();
+  }
+
+  clearImportFile(input: HTMLInputElement): void {
+    this.importFile = undefined;
+    this.importFileName = '';
+    this.importFileError = '';
+    this.importPreview = undefined;
+    this.resetImportAfterFile();
+    input.value = '';
+  }
+
+  inspectImportFile(): void {
+    if (!this.selected || !this.importFile || this.importPreviewLoading) {
+      return;
+    }
+
+    this.importPreviewLoading = true;
+    this.importFileError = '';
+    this.importPreview = undefined;
+
+    this.communityService.importPreview(this.selected.id, this.importFile)
+      .pipe(
+        timeout(20_000),
+        finalize(() => this.importPreviewLoading = false)
+      )
+      .subscribe({
+        next: preview => {
+          this.importPreview = preview;
+          const sheet = preview.sheets.find(item => item.structure === 'TABULAR') || preview.sheets[0];
+          this.selectImportSheet(sheet?.name || '');
+        },
+        error: error => {
+          this.importFileError = error.error?.message || t('communities.import.inspectError');
+        }
+      });
+  }
+
+  selectImportSheet(sheetName: string): void {
+    this.importSheetName = sheetName;
+    this.resetImportAfterMapping();
+    const sheet = this.importPreview?.sheets.find(item => item.name === sheetName);
+    if (!sheet) {
+      this.importMappings = [];
+      return;
+    }
+
+    const suggestions = new Map(
+      sheet.columnSuggestions.map(item => [item.columnIndex, item])
+    );
+    this.importMappings = sheet.headers.map((header, columnIndex) => {
+      const suggestion = suggestions.get(columnIndex);
+      return {
+        columnIndex,
+        header,
+        field: suggestion?.field || 'IGNORE',
+        confidence: suggestion?.confidence || 0
+      };
+    });
+  }
+
+  setImportMapping(columnIndex: number, field: string): void {
+    const mapping = this.importMappings.find(item => item.columnIndex === columnIndex);
+    if (mapping) {
+      mapping.field = field;
+      this.resetImportAfterMapping();
+    }
+  }
+
+  validateImportMapping(): void {
+    if (!this.selected || !this.importFile || !this.importSheetName || this.importMappingLoading) return;
+
+    const mapping = {
+      sheetName: this.importSheetName,
+      columns: this.importMappings.map(item => ({
+        columnIndex: item.columnIndex,
+        field: item.field
+      }))
+    };
+
+    this.importMappingLoading = true;
+    this.importFileError = '';
+    this.importValidation = undefined;
+    this.importNormalized = undefined;
+
+    this.communityService.validateImport(this.selected.id, this.importFile, mapping)
+      .pipe(timeout(20_000))
+      .subscribe({
+        next: validation => {
+          this.importValidation = validation;
+          if (!validation.valid) {
+            this.importMappingLoading = false;
+            return;
+          }
+          this.communityService.normalizedImportPreview(this.selected!.id, this.importFile!, mapping)
+            .pipe(
+              timeout(20_000),
+              finalize(() => this.importMappingLoading = false)
+            )
+            .subscribe({
+              next: preview => this.importNormalized = preview,
+              error: error => this.importFileError = error.error?.message || t('communities.import.normalizeError')
+            });
+        },
+        error: error => {
+          this.importMappingLoading = false;
+          this.importFileError = error.error?.message || t('communities.import.validateError');
+        }
+      });
+  }
+
+  invalidateImportPlan(): void {
+    this.importFinalPlan = undefined;
+    this.importResult = undefined;
+    this.importFileError = '';
+  }
+
+  buildImportFinalPlan(): void {
+    if (!this.selected || !this.importFile || !this.importSheetName || !this.selectedSeasonId || this.importPlanLoading) {
+      this.importFileError = t('communities.import.seasonRequired');
+      return;
+    }
+    const mapping = {
+      sheetName: this.importSheetName,
+      columns: this.importMappings.map(item => ({ columnIndex: item.columnIndex, field: item.field }))
+    };
+    const context = {
+      seasonId: this.selectedSeasonId,
+      defaultYear: this.importDefaultYear || null
+    };
+
+    this.importPlanLoading = true;
+    this.importFileError = '';
+    this.importFinalPlan = undefined;
+    this.importResult = undefined;
+    this.communityService.finalImportPlan(this.selected.id, this.importFile, mapping, context)
+      .pipe(timeout(20_000), finalize(() => this.importPlanLoading = false))
+      .subscribe({
+        next: plan => this.importFinalPlan = plan,
+        error: error => this.importFileError = error.error?.message || t('communities.import.planError')
+      });
+  }
+
+  confirmHistoricalImport(): void {
+    if (!this.selected || !this.importFile || !this.importSheetName || !this.selectedSeasonId || !this.importFinalPlan || this.importConfirming) return;
+    if (this.importFinalPlan.invalidDates > 0 || this.importFinalPlan.roundsNeedingYear > 0 ||
+        this.importFinalPlan.rounds.some((round: any) => round.unresolvedResults > 0)) {
+      this.importFileError = t('communities.import.notReady');
+      return;
+    }
+    const mapping = { sheetName: this.importSheetName, columns: this.importMappings.map(item => ({ columnIndex: item.columnIndex, field: item.field })) };
+    const context = { seasonId: this.selectedSeasonId, defaultYear: this.importDefaultYear || null };
+    this.importConfirming = true;
+    this.importFileError = '';
+    this.importResult = undefined;
+    this.communityService.confirmImportRounds(this.selected.id, this.importFile, mapping, context)
+      .pipe(timeout(30_000), finalize(() => this.importConfirming = false))
+      .subscribe({
+        next: result => {
+          this.importResult = result;
+          this.loadCompetition(this.selected!, this.selectedSeasonId);
+        },
+        error: error => this.importFileError = error.error?.message || t('communities.import.confirmError')
+      });
+  }
+
   createRound(): void {
     if (!this.selected || !this.canManage() || this.roundSaving) {
       return;
@@ -354,7 +1028,10 @@ export class CommunitiesComponent implements OnInit {
       playedAt: playedAt.toISOString(),
       entries
     })
-      .pipe(finalize(() => this.roundSaving = false))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.roundSaving = false)
+      )
       .subscribe({
         next: () => {
           this.roundName = '';
@@ -386,7 +1063,10 @@ export class CommunitiesComponent implements OnInit {
     this.errorMessage = '';
 
     this.communityService.deleteRound(this.selected.id, round.id)
-      .pipe(finalize(() => this.roundSaving = false))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.roundSaving = false)
+      )
       .subscribe({
         next: () => {
           this.roundDeleteConfirmId = undefined;
@@ -399,18 +1079,71 @@ export class CommunitiesComponent implements OnInit {
       });
   }
 
+  searchInviteUsers(): void {
+    const query = this.inviteUsername.trim();
+    if (!this.selected || !query || this.inviteSearchLoading) {
+      return;
+    }
+
+    this.inviteSearchLoading = true;
+    this.inviteSearchPerformed = false;
+    this.inviteSearchResults = [];
+    this.inviteMessage = '';
+    this.errorMessage = '';
+
+    this.profileService.findProfiles({ name: query })
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        finalize(() => this.inviteSearchLoading = false)
+      )
+      .subscribe({
+        next: profiles => {
+          const existingMembers = new Set(
+            this.selected?.members.map(member => member.username.toLowerCase()) || []
+          );
+
+          this.inviteSearchResults = profiles
+            .filter(profile => !existingMembers.has(profile.username.toLowerCase()))
+            .slice(0, 8);
+          this.inviteSearchPerformed = true;
+        },
+        error: () => {
+          this.inviteSearchPerformed = true;
+          this.errorMessage = t('feedback.communities.inviteSearchError');
+        }
+      });
+  }
+
+  selectInviteUser(profile: CommunityProfile): void {
+    this.inviteUsername = profile.username;
+    this.inviteSearchResults = [];
+    this.inviteSearchPerformed = false;
+    this.inviteMessage = '';
+  }
+
   invite(): void {
     if (!this.selected || !this.inviteUsername.trim() || this.saving) {
       return;
     }
 
+    const username = this.inviteUsername.trim();
     this.saving = true;
     this.errorMessage = '';
+    this.inviteMessage = '';
 
-    this.communityService.invite(this.selected.id, this.inviteUsername.trim())
-      .pipe(finalize(() => this.saving = false))
+    this.communityService.invite(this.selected.id, username)
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.saving = false)
+      )
       .subscribe({
-        next: () => this.inviteUsername = '',
+        next: () => {
+          this.inviteUsername = '';
+          this.inviteSearchResults = [];
+          this.inviteSearchPerformed = false;
+          this.inviteMessage = t('feedback.communities.inviteSent', { username });
+        },
         error: error => {
           this.errorMessage = error.error?.message || t('feedback.communities.inviteError');
         }
@@ -418,7 +1151,9 @@ export class CommunitiesComponent implements OnInit {
   }
 
   acceptInvite(invite: CommunityInvite): void {
-    this.communityService.acceptInvite(invite.id).subscribe({
+    this.communityService.acceptInvite(invite.id)
+      .pipe(timeout(10_000))
+      .subscribe({
       next: community => {
         this.invites = this.invites.filter(item => item.id !== invite.id);
         this.communities = [community, ...this.communities.filter(item => item.id !== community.id)];
@@ -433,7 +1168,9 @@ export class CommunitiesComponent implements OnInit {
   }
 
   rejectInvite(invite: CommunityInvite): void {
-    this.communityService.rejectInvite(invite.id).subscribe({
+    this.communityService.rejectInvite(invite.id)
+      .pipe(timeout(10_000))
+      .subscribe({
       next: () => this.invites = this.invites.filter(item => item.id !== invite.id),
       error: () => this.errorMessage = t('feedback.communities.rejectError')
     });
@@ -444,7 +1181,9 @@ export class CommunitiesComponent implements OnInit {
       return;
     }
 
-    this.communityService.updateRole(this.selected.id, username, role).subscribe({
+    this.communityService.updateRole(this.selected.id, username, role)
+      .pipe(timeout(10_000))
+      .subscribe({
       next: community => {
         this.selected = community;
         this.replaceCommunity(community);
@@ -459,7 +1198,9 @@ export class CommunitiesComponent implements OnInit {
       return;
     }
 
-    this.communityService.removeMember(this.selected.id, username).subscribe({
+    this.communityService.removeMember(this.selected.id, username)
+      .pipe(timeout(10_000))
+      .subscribe({
       next: () => this.refreshSelected(),
       error: () => this.errorMessage = t('feedback.communities.removeError')
     });
@@ -471,11 +1212,24 @@ export class CommunitiesComponent implements OnInit {
     }
 
     const id = this.selected.id;
-    this.communityService.leave(id).subscribe({
+    this.communityService.leave(id)
+      .pipe(timeout(10_000))
+      .subscribe({
       next: () => {
         this.communities = this.communities.filter(item => item.id !== id);
         this.selected = undefined;
         this.competition = undefined;
+        this.maxStandingPoints = 0;
+        this.topGoalsStanding = undefined;
+        this.topAssistsStanding = undefined;
+        this.topMvpsStanding = undefined;
+        this.topCleanSheetsStanding = undefined;
+        this.mostGamesStanding = undefined;
+        this.bestWinRateStanding = undefined;
+        this.bestWinStreakStanding = undefined;
+        this.standingsByUsername.clear();
+        this.activeCommunitySeason = undefined;
+        this.communityTrophies = [];
         this.communitySessions = [];
       },
       error: error => this.errorMessage = error.error?.message || t('feedback.communities.leaveError')
@@ -490,7 +1244,9 @@ export class CommunitiesComponent implements OnInit {
     this.communityService.transferOwnership(
       this.selected.id,
       this.ownershipUsername.trim()
-    ).subscribe({
+    )
+      .pipe(timeout(10_000))
+      .subscribe({
       next: community => {
         this.selected = community;
         this.replaceCommunity(community);
@@ -521,16 +1277,41 @@ export class CommunitiesComponent implements OnInit {
     this.errorMessage = '';
 
     this.communityService.updatePhoto(this.selected.id, file)
-      .pipe(finalize(() => {
-        this.photoUpdating = false;
-        input.value = '';
-      }))
+      .pipe(
+        timeout(10_000),
+        finalize(() => {
+          this.photoUpdating = false;
+          input.value = '';
+        })
+      )
       .subscribe({
         next: community => {
           this.selected = community;
           this.replaceCommunity(community);
         },
         error: () => this.errorMessage = t('feedback.communities.photoError')
+      });
+  }
+
+  removeCommunityPhoto(): void {
+    if (!this.selected || !this.selected.photoUrl || !this.canManage() || this.photoUpdating) {
+      return;
+    }
+
+    this.photoUpdating = true;
+    this.errorMessage = '';
+
+    this.communityService.removePhoto(this.selected.id)
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.photoUpdating = false)
+      )
+      .subscribe({
+        next: community => {
+          this.selected = community;
+          this.replaceCommunity(community);
+        },
+        error: () => this.errorMessage = t('feedback.communities.photoRemoveError')
       });
   }
 
@@ -555,10 +1336,7 @@ export class CommunitiesComponent implements OnInit {
       return value;
     }
 
-    return new Intl.DateTimeFormat('pt-PT', {
-      dateStyle: 'medium',
-      timeStyle: 'short'
-    }).format(new Date(parsed));
+    return this.sessionDateFormatter.format(new Date(parsed));
   }
 
   formatRoundDate(value: string): string {
@@ -567,9 +1345,7 @@ export class CommunitiesComponent implements OnInit {
       return value;
     }
 
-    return new Intl.DateTimeFormat('pt-PT', {
-      dateStyle: 'medium'
-    }).format(new Date(parsed));
+    return this.roundDateFormatter.format(new Date(parsed));
   }
 
   resultLabel(result: CommunityMatchResult): string {
@@ -584,47 +1360,41 @@ export class CommunitiesComponent implements OnInit {
   }
 
   activeSeason(): CommunitySeason | undefined {
-    const activeId = this.competition?.activeSeasonId;
-    return this.competition?.seasons.find(season => season.id === activeId);
+    return this.activeCommunitySeason;
   }
 
   trophies(): CommunitySeason[] {
-    return (this.competition?.seasons || []).filter(
-      season => !season.active && Boolean(season.championUsername)
-    );
+    return this.communityTrophies;
   }
 
   mostGames(): CommunityStanding | undefined {
-    return this.topBy('games');
+    return this.mostGamesStanding;
   }
 
   bestWinRate(): CommunityStanding | undefined {
-    return this.topBy('winRate');
+    return this.bestWinRateStanding;
   }
 
   bestWinStreak(): CommunityStanding | undefined {
-    return this.topBy('bestWinStreak');
+    return this.bestWinStreakStanding;
   }
 
   comparePlayerA(): CommunityStanding | undefined {
-    return this.competition?.standings.find(
-      row => row.username === this.compareUsernameA
-    );
+    return this.standingsByUsername.get(this.compareUsernameA);
   }
 
   comparePlayerB(): CommunityStanding | undefined {
-    return this.competition?.standings.find(
-      row => row.username === this.compareUsernameB
-    );
+    return this.standingsByUsername.get(this.compareUsernameB);
   }
 
   pointsBarWidth(row: CommunityStanding): number {
-    const standings = this.competition?.standings || [];
-    const maxPoints = Math.max(0, ...standings.map(item => item.points));
-    if (maxPoints <= 0) {
+    if (this.maxStandingPoints <= 0) {
       return 0;
     }
-    return Math.max(4, Math.round((row.points / maxPoints) * 100));
+    return Math.max(
+      4,
+      Math.round((row.points / this.maxStandingPoints) * 100)
+    );
   }
 
   leader(): CommunityStanding | undefined {
@@ -632,19 +1402,19 @@ export class CommunitiesComponent implements OnInit {
   }
 
   topGoals(): CommunityStanding | undefined {
-    return this.topBy('goals');
+    return this.topGoalsStanding;
   }
 
   topAssists(): CommunityStanding | undefined {
-    return this.topBy('assists');
+    return this.topAssistsStanding;
   }
 
   topMvps(): CommunityStanding | undefined {
-    return this.topBy('mvps');
+    return this.topMvpsStanding;
   }
 
   topCleanSheets(): CommunityStanding | undefined {
-    return this.topBy('cleanSheets');
+    return this.topCleanSheetsStanding;
   }
 
   canManage(): boolean {
@@ -655,25 +1425,17 @@ export class CommunitiesComponent implements OnInit {
     return this.selected?.myRole === 'OWNER';
   }
 
-  private topBy(
-    field: 'games' | 'goals' | 'assists' | 'mvps' | 'cleanSheets' | 'winRate' | 'bestWinStreak'
-  ): CommunityStanding | undefined {
-    const rows = this.competition?.standings || [];
-    if (rows.length === 0) {
-      return undefined;
-    }
-
-    return [...rows].sort((a, b) =>
-      b[field] - a[field] || a.position - b.position
-    )[0];
-  }
-
   private refreshSelected(): void {
     if (!this.selected) {
       return;
     }
 
-    this.communityService.get(this.selected.id).subscribe({
+    this.communityService.get(this.selected.id)
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 })
+      )
+      .subscribe({
       next: community => {
         this.selected = community;
         this.replaceCommunity(community);

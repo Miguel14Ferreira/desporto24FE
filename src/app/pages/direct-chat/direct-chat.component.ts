@@ -3,7 +3,7 @@ import { appTranslate as t } from '../../i18n/i18n.service';
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { JwtHelperService } from '@auth0/angular-jwt';
-import { Subscription, forkJoin, finalize } from 'rxjs';
+import { Subscription, forkJoin, finalize, retry, timeout } from 'rxjs';
 
 import { DirectChatInfo, DirectChatMessage } from '../model/direct-chat';
 import { DirectChatService } from '../../services/direct-chat.service';
@@ -24,6 +24,9 @@ export class DirectChatComponent implements OnInit, OnDestroy {
   chatInfo?: DirectChatInfo;
 
   loading = false;
+  loadingOlder = false;
+  hasOlderMessages = false;
+  historyPage = 0;
   sending = false;
   friendshipActionLoading = false;
   errorMessage = '';
@@ -35,7 +38,12 @@ export class DirectChatComponent implements OnInit, OnDestroy {
   readonly emojis = ['😀', '😂', '😊', '😍', '🥳', '😎', '😉', '👍', '👏', '🙌', '🔥', '⚽', '🏀', '🎾', '🏓', '💪', '❤️', '✅'];
 
   private readonly jwtHelper = new JwtHelperService();
+  private readonly dateTimeFormatter = new Intl.DateTimeFormat('pt-PT', {
+    dateStyle: 'short',
+    timeStyle: 'short'
+  });
   private readonly realtimeSubscriptions = new Subscription();
+  private initialRealtimeConnection = true;
 
   constructor(
     private route: ActivatedRoute,
@@ -73,9 +81,16 @@ export class DirectChatComponent implements OnInit, OnDestroy {
 
     this.realtimeSubscriptions.add(
       this.realtimeService.connected$.subscribe(connected => {
-        if (connected) {
-          this.refreshMessages();
+        if (!connected) {
+          return;
         }
+
+        if (this.initialRealtimeConnection) {
+          this.initialRealtimeConnection = false;
+          return;
+        }
+
+        this.refreshMessages();
       })
     );
   }
@@ -93,14 +108,20 @@ export class DirectChatComponent implements OnInit, OnDestroy {
     this.errorMessage = '';
 
     forkJoin({
-      messages: this.chatService.history(this.recipientUsername),
+      messages: this.chatService.recentHistory(this.recipientUsername),
       info: this.chatService.info(this.recipientUsername)
     })
-      .pipe(finalize(() => this.loading = false))
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        finalize(() => this.loading = false)
+      )
       .subscribe({
         next: result => {
-          this.messages = this.sorted(result.messages);
+          this.messages = this.sorted(result.messages.content);
           this.chatInfo = result.info;
+          this.historyPage = 0;
+          this.hasOlderMessages = !result.messages.last;
         },
         error: error => {
           this.messages = [];
@@ -114,11 +135,37 @@ export class DirectChatComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.chatService.history(this.recipientUsername).subscribe({
-      next: messages => {
-        this.messages = this.sorted(messages);
-      }
-    });
+    this.chatService.recentHistory(this.recipientUsername)
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 })
+      )
+      .subscribe({
+        next: page => {
+          this.messages = this.sorted([...this.messages.filter(message => !page.content.some(recent => recent.id === message.id)), ...page.content]);
+        }
+      });
+  }
+
+  loadOlderMessages(): void {
+    if (!this.recipientUsername || this.loadingOlder || !this.hasOlderMessages) {
+      return;
+    }
+
+    this.loadingOlder = true;
+    const nextPage = this.historyPage + 1;
+    this.chatService.recentHistory(this.recipientUsername, nextPage)
+      .pipe(timeout(10_000), finalize(() => this.loadingOlder = false))
+      .subscribe({
+        next: page => {
+          this.messages = this.sorted([...this.messages.filter(message => !page.content.some(older => older.id === message.id)), ...page.content]);
+          this.historyPage = nextPage;
+          this.hasOlderMessages = !page.last;
+        },
+        error: error => {
+          this.actionError = this.errorFrom(error, t('feedback.chat.loadError'));
+        }
+      });
   }
 
   onEnter(event: Event): void {
@@ -154,10 +201,19 @@ export class DirectChatComponent implements OnInit, OnDestroy {
     this.actionSuccess = '';
 
     this.chatService.send(this.recipientUsername, text)
-      .pipe(finalize(() => this.sending = false))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.sending = false)
+      )
       .subscribe({
         next: message => {
-          this.messages = this.sorted([...this.messages, message]);
+          const alreadyPresent = message.id !== null
+            && this.messages.some(existing => existing.id === message.id);
+
+          if (!alreadyPresent) {
+            this.messages = this.sorted([...this.messages, message]);
+          }
+
           this.messageBody = '';
           this.showEmojiPicker = false;
         },
@@ -214,7 +270,10 @@ export class DirectChatComponent implements OnInit, OnDestroy {
     this.actionSuccess = '';
 
     request$
-      .pipe(finalize(() => this.friendshipActionLoading = false))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.friendshipActionLoading = false)
+      )
       .subscribe({
         next: () => {
           this.chatInfo = shouldUnblock
@@ -256,10 +315,7 @@ export class DirectChatComponent implements OnInit, OnDestroy {
       return raw;
     }
 
-    return new Intl.DateTimeFormat('pt-PT', {
-      dateStyle: 'short',
-      timeStyle: 'short'
-    }).format(new Date(parsed));
+    return this.dateTimeFormatter.format(new Date(parsed));
   }
 
   private sorted(messages: DirectChatMessage[]): DirectChatMessage[] {

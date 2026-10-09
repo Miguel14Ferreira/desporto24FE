@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
     selector: 'app-footer',
@@ -7,16 +7,6 @@ import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
     changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
-export class FooterComponent implements OnInit {
-  dark!:boolean;
-  constructor() { }
-
-  ngOnInit(): void {
-    var theme = localStorage.getItem('theme');
-    if (theme == 'claro'){
-      this.dark = false
-    } else {
-      this.dark = true
-    }
-    }
-  }
+export class FooterComponent {
+  readonly currentYear = new Date().getFullYear();
+}

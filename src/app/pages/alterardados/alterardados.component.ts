@@ -1,13 +1,15 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { appTranslate as t } from '../../i18n/i18n.service';
 import { ChangeDetectionStrategy, Component, ElementRef, OnInit } from '@angular/core';
-import { finalize } from 'rxjs';
+import { finalize, retry, timeout } from 'rxjs';
 
 import { environment } from 'src/environment/environment';
 import { MyProfile, UpdateMyProfileRequest } from '../model/my-profile';
 import { MfaSetupResponse, MyProfileService } from '../../services/my-profile.service';
-import { SPORTS_CATALOG } from '../../shared/sports-catalog';
+import { AuthenticationService } from '../../services/authethication.service';
+import { SPORTS_CATALOG, sportIcon } from '../../shared/sports-catalog';
 import { COUNTRY_CALLING_CODES, countryNameFromLabel } from '../../shared/country-calling-codes';
+import { calculateProfileCompletion } from '../../shared/profile-completion';
 
 @Component({
   selector: 'app-alterardados',
@@ -30,13 +32,20 @@ export class AlterardadosComponent implements OnInit {
   mfaSetupLoading = false;
   mfaConfirming = false;
   mfaDisabling = false;
+  mfaDisablePending = false;
+  mfaDisableCode = '';
+  accountDeletionPending = false;
+  accountDeletionConfirmation = '';
+  deletingAccount = false;
   errorMessage = '';
   successMessage = '';
   toastMessage = '';
   sportQuery = '';
   selectedSports: string[] = [];
+  sportSuggestions: string[] = [];
   fieldErrors: Partial<Record<'email' | 'dateOfBirth' | 'country' | 'phone' | 'bio', string>> = {};
   readonly sportsCatalog = SPORTS_CATALOG;
+  readonly iconForSport = sportIcon;
   readonly countryOptions = COUNTRY_CALLING_CODES;
   private toastTimer?: ReturnType<typeof setTimeout>;
 
@@ -45,6 +54,7 @@ export class AlterardadosComponent implements OnInit {
 
   constructor(
     private myProfileService: MyProfileService,
+    private authenticationService: AuthenticationService,
     private host: ElementRef<HTMLElement>
   ) {}
 
@@ -57,7 +67,11 @@ export class AlterardadosComponent implements OnInit {
     this.errorMessage = '';
 
     this.myProfileService.get()
-      .pipe(finalize(() => this.loading = false))
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        finalize(() => this.loading = false)
+      )
       .subscribe({
         next: profile => {
           this.profile = { ...profile };
@@ -73,6 +87,7 @@ export class AlterardadosComponent implements OnInit {
             .map(value => value.trim())
             .filter(value => this.sportsCatalog.includes(value));
           this.syncFavoriteSports();
+          this.updateSportSuggestions();
         },
         error: () => this.errorMessage = t('feedback.profile.dataLoadError')
       });
@@ -118,7 +133,10 @@ export class AlterardadosComponent implements OnInit {
     this.successMessage = '';
 
     this.myProfileService.update(request)
-      .pipe(finalize(() => this.saving = false))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.saving = false)
+      )
       .subscribe({
         next: updated => {
           this.profile = { ...updated };
@@ -205,13 +223,21 @@ export class AlterardadosComponent implements OnInit {
     });
   }
 
+  get profileCompletion() {
+    return calculateProfileCompletion(this.profile);
+  }
+
+  get completionMissingPreview() {
+    return this.profileCompletion.missing.slice(0, 3);
+  }
+
   countryName(label: string): string {
     return countryNameFromLabel(label);
   }
 
-  get sportSuggestions(): string[] {
+  updateSportSuggestions(): void {
     const query = this.sportQuery.trim().toLocaleLowerCase('pt');
-    return this.sportsCatalog
+    this.sportSuggestions = this.sportsCatalog
       .filter(sport => !this.selectedSports.includes(sport))
       .filter(sport => !query || sport.toLocaleLowerCase('pt').includes(query))
       .slice(0, 8);
@@ -225,11 +251,13 @@ export class AlterardadosComponent implements OnInit {
     this.selectedSports = [...this.selectedSports, sport];
     this.sportQuery = '';
     this.syncFavoriteSports();
+    this.updateSportSuggestions();
   }
 
   removeSport(sport: string): void {
     this.selectedSports = this.selectedSports.filter(item => item !== sport);
     this.syncFavoriteSports();
+    this.updateSportSuggestions();
   }
 
   onSportSearchKeydown(event: KeyboardEvent): void {
@@ -247,6 +275,7 @@ export class AlterardadosComponent implements OnInit {
       this.addSport(exactMatch);
     } else {
       this.sportQuery = '';
+      this.updateSportSuggestions();
     }
   }
 
@@ -264,6 +293,7 @@ export class AlterardadosComponent implements OnInit {
       this.addSport(exactMatch);
     } else {
       this.sportQuery = '';
+      this.updateSportSuggestions();
     }
   }
 
@@ -281,7 +311,10 @@ export class AlterardadosComponent implements OnInit {
       return;
     }
 
-    this.disableMfa();
+    (event.target as HTMLInputElement).checked = true;
+    this.mfaDisablePending = true;
+    this.mfaDisableCode = '';
+    this.errorMessage = '';
   }
 
   startMfaSetup(): void {
@@ -293,7 +326,10 @@ export class AlterardadosComponent implements OnInit {
     this.errorMessage = '';
 
     this.myProfileService.setupMfa()
-      .pipe(finalize(() => this.mfaSetupLoading = false))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.mfaSetupLoading = false)
+      )
       .subscribe({
         next: setup => {
           this.mfaSetup = setup;
@@ -316,7 +352,10 @@ export class AlterardadosComponent implements OnInit {
     this.errorMessage = '';
 
     this.myProfileService.confirmMfa(code)
-      .pipe(finalize(() => this.mfaConfirming = false))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.mfaConfirming = false)
+      )
       .subscribe({
         next: updated => {
           this.profile = { ...updated };
@@ -336,31 +375,84 @@ export class AlterardadosComponent implements OnInit {
   }
 
   disableMfa(): void {
-    if (this.mfaDisabling) {
+    const code = this.mfaDisableCode.trim();
+
+    if (!/^\d{6}$/.test(code) || this.mfaDisabling) {
+      this.errorMessage = t('feedback.profile.mfaCodeRequired');
       return;
     }
 
     if (!this.profile?.mfa) {
-      this.cancelMfaSetup();
+      this.cancelMfaDisable();
       return;
     }
 
     this.mfaDisabling = true;
     this.errorMessage = '';
 
-    this.myProfileService.disableMfa()
-      .pipe(finalize(() => this.mfaDisabling = false))
+    this.myProfileService.disableMfa(code)
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.mfaDisabling = false)
+      )
       .subscribe({
         next: updated => {
           this.profile = { ...updated };
           this.mfaSetup = undefined;
           this.mfaSetupCode = '';
+          this.mfaDisablePending = false;
+          this.mfaDisableCode = '';
           this.showToast(t('feedback.profile.mfaDisabled'));
         },
         error: error => {
           this.errorMessage = this.errorFrom(
             error,
             t('feedback.profile.mfaDisableError')
+          );
+        }
+      });
+  }
+
+  cancelMfaDisable(): void {
+    this.mfaDisablePending = false;
+    this.mfaDisableCode = '';
+  }
+
+  openAccountDeletion(): void {
+    this.accountDeletionPending = true;
+    this.accountDeletionConfirmation = '';
+    this.errorMessage = '';
+  }
+
+  cancelAccountDeletion(): void {
+    this.accountDeletionPending = false;
+    this.accountDeletionConfirmation = '';
+  }
+
+  deleteAccount(): void {
+    if (!this.profile || this.deletingAccount) {
+      return;
+    }
+
+    if (this.accountDeletionConfirmation.trim() !== this.profile.username) {
+      this.errorMessage = t('feedback.profile.deleteConfirmationMismatch');
+      return;
+    }
+
+    this.deletingAccount = true;
+    this.errorMessage = '';
+
+    this.myProfileService.deleteAccount()
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.deletingAccount = false)
+      )
+      .subscribe({
+        next: () => this.authenticationService.logOut(),
+        error: error => {
+          this.errorMessage = this.errorFrom(
+            error,
+            t('feedback.profile.deleteError')
           );
         }
       });
@@ -389,7 +481,10 @@ export class AlterardadosComponent implements OnInit {
     this.successMessage = '';
 
     this.myProfileService.updatePhoto(this.photo)
-      .pipe(finalize(() => this.photoSaving = false))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.photoSaving = false)
+      )
       .subscribe({
         next: updated => {
           this.profile = { ...updated };

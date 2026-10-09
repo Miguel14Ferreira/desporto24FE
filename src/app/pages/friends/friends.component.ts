@@ -1,14 +1,11 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { appTranslate as t } from '../../i18n/i18n.service';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
-import { finalize, forkJoin } from 'rxjs';
+import { finalize, retry, timeout } from 'rxjs';
 
 import { environment } from 'src/environment/environment';
 import { FriendSummary } from '../model/friend-summary';
-import { CommunityProfile } from '../model/community-profile';
-import { ReliabilitySummary } from '../model/reliability-summary';
 import { CommunityService } from '../../services/community.service';
-import { ReliabilityService } from '../../services/reliability.service';
 
 @Component({
   selector: 'app-friends',
@@ -19,39 +16,28 @@ import { ReliabilityService } from '../../services/reliability.service';
 })
 export class FriendsComponent implements OnInit {
   friends: FriendSummary[] = [];
+  filteredFriends: FriendSummary[] = [];
   filter = '';
-  selectedProfile?: CommunityProfile;
-  selectedReliability?: ReliabilitySummary;
-  profileLoading = false;
 
   loading = false;
   actionLoadingUsername: string | null = null;
   pendingRemovalUsername: string | null = null;
+  openActionsUsername: string | null = null;
 
   errorMessage = '';
   actionError = '';
   actionSuccess = '';
 
   constructor(
-    private communityService: CommunityService,
-    private reliabilityService: ReliabilityService
+    private communityService: CommunityService
   ) {}
 
   ngOnInit(): void {
     this.load();
   }
 
-  get filteredFriends(): FriendSummary[] {
-    const term = this.filter.trim().toLowerCase();
-    if (!term) {
-      return this.friends;
-    }
-
-    return this.friends.filter(friend =>
-      friend.username.toLowerCase().includes(term)
-      || (friend.nickname ?? '').toLowerCase().includes(term)
-      || (friend.fullName ?? '').toLowerCase().includes(term)
-    );
+  onFilterChange(): void {
+    this.applyFilter();
   }
 
   load(): void {
@@ -59,42 +45,34 @@ export class FriendsComponent implements OnInit {
     this.errorMessage = '';
 
     this.communityService.friends()
-      .pipe(finalize(() => this.loading = false))
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        finalize(() => this.loading = false)
+      )
       .subscribe({
-        next: friends => this.friends = friends,
+        next: friends => {
+          this.friends = friends;
+          this.applyFilter();
+        },
         error: () => {
           this.friends = [];
+          this.filteredFriends = [];
           this.errorMessage = t('feedback.friends.loadError');
         }
       });
   }
 
-  openProfile(friend: FriendSummary): void {
-    this.profileLoading = true;
-    this.selectedProfile = undefined;
-    this.selectedReliability = undefined;
-
-    forkJoin({
-      profile: this.communityService.publicProfile(friend.username),
-      reliability: this.reliabilityService.summary(friend.username)
-    })
-      .pipe(finalize(() => this.profileLoading = false))
-      .subscribe({
-        next: result => {
-          this.selectedProfile = result.profile;
-          this.selectedReliability = result.reliability;
-        },
-        error: () => {
-          this.communityService.publicProfile(friend.username).subscribe({
-            next: profile => this.selectedProfile = profile
-          });
-        }
-      });
+  toggleActions(friend: FriendSummary): void {
+    this.openActionsUsername = this.openActionsUsername === friend.username
+      ? null
+      : friend.username;
+    this.pendingRemovalUsername = null;
   }
 
-  closeProfile(): void {
-    this.selectedProfile = undefined;
-    this.selectedReliability = undefined;
+  closeActions(): void {
+    this.openActionsUsername = null;
+    this.pendingRemovalUsername = null;
   }
 
   toggleBlock(friend: FriendSummary): void {
@@ -118,7 +96,10 @@ export class FriendsComponent implements OnInit {
     this.actionSuccess = '';
 
     request$
-      .pipe(finalize(() => this.actionLoadingUsername = null))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.actionLoadingUsername = null)
+      )
       .subscribe({
         next: () => {
           friend.chatBlocked = !shouldUnblock;
@@ -126,6 +107,7 @@ export class FriendsComponent implements OnInit {
           this.actionSuccess = shouldUnblock
             ? t('feedback.friends.unblockedUser', { username: friend.username })
             : t('feedback.friends.blockedUser', { username: friend.username });
+          this.openActionsUsername = null;
         },
         error: error => {
           this.actionError = this.errorFrom(
@@ -169,11 +151,16 @@ export class FriendsComponent implements OnInit {
     this.actionSuccess = '';
 
     this.communityService.removeFriend(friend.username)
-      .pipe(finalize(() => this.actionLoadingUsername = null))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.actionLoadingUsername = null)
+      )
       .subscribe({
         next: () => {
           this.friends = this.friends.filter(item => item.username !== friend.username);
+          this.applyFilter();
           this.pendingRemovalUsername = null;
+          this.openActionsUsername = null;
           this.actionSuccess = t('feedback.friends.removed', { username: friend.username });
         },
         error: error => {
@@ -185,7 +172,7 @@ export class FriendsComponent implements OnInit {
       });
   }
 
-  profileImage(friend: FriendSummary | CommunityProfile): string | null {
+  profileImage(friend: FriendSummary): string | null {
     const path = friend.profilePicUrl;
     if (!path) {
       return null;
@@ -198,7 +185,7 @@ export class FriendsComponent implements OnInit {
     return environment.apiUrl + (path.startsWith('/') ? path : '/' + path);
   }
 
-  initials(friend: FriendSummary | CommunityProfile): string {
+  initials(friend: FriendSummary): string {
     const source = ('nickname' in friend ? friend.nickname?.trim() : null)
       || friend.fullName?.trim()
       || friend.username;
@@ -208,6 +195,20 @@ export class FriendsComponent implements OnInit {
       .slice(0, 2)
       .map(value => value.charAt(0).toUpperCase())
       .join('');
+  }
+
+  private applyFilter(): void {
+    const term = this.filter.trim().toLowerCase();
+    if (!term) {
+      this.filteredFriends = this.friends;
+      return;
+    }
+
+    this.filteredFriends = this.friends.filter(friend =>
+      friend.username.toLowerCase().includes(term)
+      || (friend.nickname ?? '').toLowerCase().includes(term)
+      || (friend.fullName ?? '').toLowerCase().includes(term)
+    );
   }
 
   private errorFrom(error: HttpErrorResponse, fallback: string): string {

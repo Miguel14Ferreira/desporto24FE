@@ -126,6 +126,23 @@ describe('Events2Component', () => {
     expect(component.locationCaptured).toBeTrue();
   });
 
+  it('should reject an invalid recurring session occurrence count', () => {
+    component.sport = 'Padel';
+    component.gameDate = '2099-10-15T18:00';
+    component.city = 'Lisboa';
+    component.address = 'Rua do Campo';
+    component.maxParticipants = 4;
+    component.communityId = 12;
+    component.recurrence = 'WEEKLY';
+    component.recurrenceOccurrences = 1;
+
+    component.createSession();
+
+    expect(sessionService.create).not.toHaveBeenCalled();
+    expect(component.errorMessage).toContain('2');
+    expect(component.errorMessage).toContain('52');
+  });
+
   it('should require a password when the session is private', () => {
     component.sport = 'Padel';
     component.gameDate = '2099-10-15T18:00';

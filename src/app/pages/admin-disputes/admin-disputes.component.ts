@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { appTranslate as t } from '../../i18n/i18n.service';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
-import { finalize } from 'rxjs';
+import { finalize, retry, timeout } from 'rxjs';
 
 import {
   AttendanceDisputeItem,
@@ -38,7 +38,11 @@ export class AdminDisputesComponent implements OnInit {
     this.errorMessage = '';
 
     this.reliabilityService.disputes(this.statusFilter)
-      .pipe(finalize(() => this.loading = false))
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        finalize(() => this.loading = false)
+      )
       .subscribe({
         next: disputes => this.disputes = disputes,
         error: error => {
@@ -71,7 +75,10 @@ export class AdminDisputesComponent implements OnInit {
     this.actionError = '';
 
     this.reliabilityService.resolveDispute(dispute.id, status)
-      .pipe(finalize(() => this.resolvingId = null))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.resolvingId = null)
+      )
       .subscribe({
         next: () => {
           this.actionMessage = status === 'ACCEPTED'
