@@ -38,12 +38,25 @@
         </div>
       }
 
+      <label class="composer-session-select">
+        <span>Associar a uma sessão pública (opcional)</span>
+        <select [(ngModel)]="selectedSessionId" [disabled]="posting || !!postImageFile || loadingSessions">
+          <option [ngValue]="null">Sem sessão associada</option>
+          @for (session of availableSessions; track session.id) {
+            <option [ngValue]="session.id">{{ session.sport }} · {{ session.city }} · {{ session.gameDate | date:'dd/MM HH:mm' }}</option>
+          }
+        </select>
+      </label>
+      @if (selectedSessionId !== null) {
+        <p class="composer-hint">Publicações com sessão associada ainda não suportam fotografia.</p>
+      }
+
       <div class="composer-actions">
         <label class="image-picker" [class.disabled]="posting">
           <input
             type="file"
             accept="image/jpeg,image/png,image/webp"
-            [disabled]="posting"
+            [disabled]="posting || selectedSessionId !== null"
             (change)="onPostImageChange($event)">
           <span>{{ postImagePreview ? ('feed.changeImage' | t) : ('feed.addImage' | t) }}</span>
         </label>

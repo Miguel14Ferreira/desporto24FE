@@ -17,11 +17,11 @@ export class SocialFeedService {
     return this.http.get<FeedItem[]>(this.baseUrl);
   }
 
-  createPost(content: string, image?: File): Observable<FeedItem> {
+  createPost(content: string, image?: File, sessionId?: number): Observable<FeedItem> {
     if (!image) {
       return this.http.post<FeedItem>(
         this.baseUrl + '/posts',
-        { content }
+        { content, ...(sessionId == null ? {} : { sessionId }) }
       );
     }
 

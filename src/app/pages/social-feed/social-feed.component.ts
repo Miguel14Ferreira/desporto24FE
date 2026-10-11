@@ -5,6 +5,8 @@ import { environment } from 'src/environment/environment';
 import { appTranslate as t } from '../../i18n/i18n.service';
 import { AuthenticationService } from '../../services/authethication.service';
 import { SocialFeedService } from '../../services/social-feed.service';
+import { SessionService } from '../../services/session.service';
+import { SessionSummary } from '../model/session-summary';
 import { FeedItem, SocialComment } from '../model/feed-item';
 
 @Component({
@@ -19,6 +21,9 @@ export class SocialFeedComponent implements OnInit {
   postContent = '';
   postImageFile?: File;
   postImagePreview = '';
+  availableSessions: SessionSummary[] = [];
+  selectedSessionId: number | null = null;
+  loadingSessions = false;
 
   loading = false;
   posting = false;
@@ -39,6 +44,7 @@ export class SocialFeedComponent implements OnInit {
 
   constructor(
     private feedService: SocialFeedService,
+    private sessionService: SessionService,
     private authenticationService: AuthenticationService
   ) {
     this.authenticationService.isLoggedIn();
@@ -47,6 +53,17 @@ export class SocialFeedComponent implements OnInit {
 
   ngOnInit(): void {
     this.load();
+    this.loadAvailableSessions();
+  }
+
+  loadAvailableSessions(): void {
+    this.loadingSessions = true;
+    this.sessionService.discover({ privateGame: false, availability: 'available', sort: 'date' })
+      .pipe(timeout(10_000), finalize(() => this.loadingSessions = false))
+      .subscribe({
+        next: sessions => this.availableSessions = sessions.filter(session => session.audience !== 'COMMUNITY_ONLY'),
+        error: () => this.availableSessions = []
+      });
   }
 
   load(): void {
@@ -77,7 +94,7 @@ export class SocialFeedComponent implements OnInit {
     this.posting = true;
     this.actionError = '';
 
-    this.feedService.createPost(content, this.postImageFile)
+    this.feedService.createPost(content, this.postImageFile, this.selectedSessionId ?? undefined)
       .pipe(
         timeout(10_000),
         finalize(() => this.posting = false)
@@ -88,6 +105,7 @@ export class SocialFeedComponent implements OnInit {
           this.postContent = '';
           this.postImageFile = undefined;
           this.postImagePreview = '';
+          this.selectedSessionId = null;
         },
         error: () => this.actionError = t('feedback.feed.publishError')
       });
