@@ -1,5 +1,5 @@
 export type VenueOwnershipType = 'PUBLIC' | 'PRIVATE';
-export type VenueInformationSource = 'COMMUNITY' | 'OFFICIAL';
+export type VenueInformationSource = 'COMMUNITY' | 'OFFICIAL' | 'OPENSTREETMAP';
 export type VenueEnvironmentType = 'INDOOR' | 'OUTDOOR' | 'BOTH';
 
 export interface Venue {

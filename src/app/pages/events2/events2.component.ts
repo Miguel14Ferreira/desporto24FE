@@ -292,7 +292,7 @@ export class Events2Component implements OnInit {
     this.address = venue.address;
 
     if (!this.sport.trim() && venue.sports) {
-      this.sport = venue.sports.split(',')[0]?.trim() || '';
+      this.sport = venue.sports.split(/[;,]/)[0]?.trim() || '';
     }
 
     if (venue.latitude !== null && venue.longitude !== null) {
