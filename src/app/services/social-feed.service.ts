@@ -28,6 +28,9 @@ export class SocialFeedService {
     const formData = new FormData();
     formData.append('content', content);
     formData.append('image', image);
+    if (sessionId != null) {
+      formData.append('sessionId', String(sessionId));
+    }
 
     return this.http.post<FeedItem>(
       this.baseUrl + '/posts',
