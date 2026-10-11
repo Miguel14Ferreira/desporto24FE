@@ -29,6 +29,7 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
   get filteredSessions(): SessionSummary[] { return this.availableSessions; }
   selectedSessionId: number | null = null;
   loadingSessions = false;
+  sessionSearchError = false;
 
   loading = false;
   posting = false;
@@ -63,17 +64,25 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
       distinctUntilChanged(),
       switchMap(query => {
         this.loadingSessions = true;
+        this.sessionSearchError = false;
         return this.sessionService.discover({ query, privateGame: false, availability: 'available', sort: 'date' })
-          .pipe(timeout(10_000), catchError(() => of([] as SessionSummary[])));
+          .pipe(
+            timeout(10_000),
+            catchError(() => of(null as SessionSummary[] | null))
+          );
       }),
       takeUntil(this.destroyed)
     ).subscribe(sessions => {
+      this.loadingSessions = false;
+      if (sessions === null) {
+        this.sessionSearchError = true;
+        return;
+      }
       const selected = this.availableSessions.find(session => session.id === this.selectedSessionId);
       this.availableSessions = sessions.filter(session => session.audience !== 'COMMUNITY_ONLY');
       if (selected && !this.availableSessions.some(session => session.id === selected.id)) {
         this.availableSessions = [selected, ...this.availableSessions];
       }
-      this.loadingSessions = false;
     });
     this.onSessionSearchChange('');
   }

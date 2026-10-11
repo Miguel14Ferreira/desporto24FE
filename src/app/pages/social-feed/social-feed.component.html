@@ -40,13 +40,21 @@
 
       <label class="composer-session-select">
         <span>Associar a uma sessão pública (opcional)</span>
-        <input type="search" [ngModel]="sessionSearch" (ngModelChange)="onSessionSearchChange($event)" [disabled]="posting || loadingSessions" placeholder="Pesquisar modalidade ou localidade" aria-label="Pesquisar sessões públicas">
+        <input type="search" [ngModel]="sessionSearch" (ngModelChange)="onSessionSearchChange($event)" [disabled]="posting" placeholder="Pesquisar modalidade ou localidade" aria-label="Pesquisar sessões públicas">
         <select [(ngModel)]="selectedSessionId" [disabled]="posting || loadingSessions">
           <option [ngValue]="null">Sem sessão associada</option>
           @for (session of filteredSessions; track session.id) {
             <option [ngValue]="session.id">{{ session.sport }} · {{ session.city }} · {{ session.gameDate | date:'dd/MM HH:mm' }}</option>
           }
         </select>
+        @if (loadingSessions) {
+          <p role="status" class="composer-hint">A pesquisar sessões...</p>
+        } @else if (sessionSearchError) {
+          <p role="alert" class="composer-hint">Não foi possível pesquisar sessões. Tenta novamente.</p>
+          <button type="button" (click)="onSessionSearchChange(sessionSearch)">Tentar novamente</button>
+        } @else if (availableSessions.length === 0) {
+          <p role="status" class="composer-hint">Não foram encontradas sessões públicas disponíveis.</p>
+        }
       </label>
       <div class="composer-actions">
         <label class="image-picker" [class.disabled]="posting">
