@@ -118,6 +118,19 @@
                   [alt]="'feed.postImageAlt' | t:{ user: item.authorDisplayName }">
               }
 
+              @if (item.sessionId !== null) {
+                <a class="session-preview" [routerLink]="['/menu/events', item.sessionId]">
+                  <div>
+                    <strong>{{ item.sport }}</strong>
+                    <span>{{ item.city }}</span>
+                  </div>
+                  <div>
+                    <span>{{ item.gameDate | date:'dd/MM/yyyy HH:mm' }}</span>
+                    <strong>{{ 'feed.viewSession' | t }}</strong>
+                  </div>
+                </a>
+              }
+
               <div class="post-actions">
                 <button
                   type="button"
