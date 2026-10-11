@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
-import { Subject, catchError, debounceTime, distinctUntilChanged, finalize, of, retry, switchMap, takeUntil, timeout } from 'rxjs';
+import { Subject, catchError, debounceTime, finalize, of, retry, switchMap, takeUntil, timeout } from 'rxjs';
 
 import { environment } from 'src/environment/environment';
 import { appTranslate as t } from '../../i18n/i18n.service';
@@ -61,7 +61,6 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
     this.load();
     this.sessionSearchChanges.pipe(
       debounceTime(350),
-      distinctUntilChanged(),
       switchMap(query => {
         this.loadingSessions = true;
         this.sessionSearchError = false;
