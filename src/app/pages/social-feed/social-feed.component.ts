@@ -22,6 +22,16 @@ export class SocialFeedComponent implements OnInit {
   postImageFile?: File;
   postImagePreview = '';
   availableSessions: SessionSummary[] = [];
+  sessionSearch = '';
+
+  get filteredSessions(): SessionSummary[] {
+    const query = this.sessionSearch.trim().toLocaleLowerCase('pt-PT');
+    if (!query) return this.availableSessions;
+    return this.availableSessions.filter(session =>
+      `${session.sport} ${session.city}`.toLocaleLowerCase('pt-PT').includes(query)
+      || session.id === this.selectedSessionId
+    );
+  }
   selectedSessionId: number | null = null;
   loadingSessions = false;
 
