@@ -40,7 +40,7 @@
 
       <label class="composer-session-select">
         <span>Associar a uma sessão pública (opcional)</span>
-        <input type="search" [(ngModel)]="sessionSearch" [disabled]="posting || loadingSessions" placeholder="Pesquisar modalidade ou localidade" aria-label="Pesquisar sessões públicas">
+        <input type="search" [ngModel]="sessionSearch" (ngModelChange)="onSessionSearchChange($event)" [disabled]="posting || loadingSessions" placeholder="Pesquisar modalidade ou localidade" aria-label="Pesquisar sessões públicas">
         <select [(ngModel)]="selectedSessionId" [disabled]="posting || loadingSessions">
           <option [ngValue]="null">Sem sessão associada</option>
           @for (session of filteredSessions; track session.id) {

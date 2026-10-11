@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
-import { finalize, retry, timeout } from 'rxjs';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
+import { Subject, catchError, debounceTime, distinctUntilChanged, finalize, of, retry, switchMap, takeUntil, timeout } from 'rxjs';
 
 import { environment } from 'src/environment/environment';
 import { appTranslate as t } from '../../i18n/i18n.service';
@@ -16,7 +16,7 @@ import { FeedItem, SocialComment } from '../model/feed-item';
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false
 })
-export class SocialFeedComponent implements OnInit {
+export class SocialFeedComponent implements OnInit, OnDestroy {
   items: FeedItem[] = [];
   postContent = '';
   postImageFile?: File;
@@ -24,14 +24,9 @@ export class SocialFeedComponent implements OnInit {
   availableSessions: SessionSummary[] = [];
   sessionSearch = '';
 
-  get filteredSessions(): SessionSummary[] {
-    const query = this.sessionSearch.trim().toLocaleLowerCase('pt-PT');
-    if (!query) return this.availableSessions;
-    return this.availableSessions.filter(session =>
-      `${session.sport} ${session.city}`.toLocaleLowerCase('pt-PT').includes(query)
-      || session.id === this.selectedSessionId
-    );
-  }
+  private readonly sessionSearchChanges = new Subject<string>();
+  private readonly destroyed = new Subject<void>();
+  get filteredSessions(): SessionSummary[] { return this.availableSessions; }
   selectedSessionId: number | null = null;
   loadingSessions = false;
 
@@ -63,17 +58,34 @@ export class SocialFeedComponent implements OnInit {
 
   ngOnInit(): void {
     this.load();
-    this.loadAvailableSessions();
+    this.sessionSearchChanges.pipe(
+      debounceTime(350),
+      distinctUntilChanged(),
+      switchMap(query => {
+        this.loadingSessions = true;
+        return this.sessionService.discover({ query, privateGame: false, availability: 'available', sort: 'date' })
+          .pipe(timeout(10_000), catchError(() => of([] as SessionSummary[])));
+      }),
+      takeUntil(this.destroyed)
+    ).subscribe(sessions => {
+      const selected = this.availableSessions.find(session => session.id === this.selectedSessionId);
+      this.availableSessions = sessions.filter(session => session.audience !== 'COMMUNITY_ONLY');
+      if (selected && !this.availableSessions.some(session => session.id === selected.id)) {
+        this.availableSessions = [selected, ...this.availableSessions];
+      }
+      this.loadingSessions = false;
+    });
+    this.onSessionSearchChange('');
   }
 
-  loadAvailableSessions(): void {
-    this.loadingSessions = true;
-    this.sessionService.discover({ privateGame: false, availability: 'available', sort: 'date' })
-      .pipe(timeout(10_000), finalize(() => this.loadingSessions = false))
-      .subscribe({
-        next: sessions => this.availableSessions = sessions.filter(session => session.audience !== 'COMMUNITY_ONLY'),
-        error: () => this.availableSessions = []
-      });
+  onSessionSearchChange(query: string): void {
+    this.sessionSearch = query;
+    this.sessionSearchChanges.next(query.trim());
+  }
+
+  ngOnDestroy(): void {
+    this.destroyed.next();
+    this.destroyed.complete();
   }
 
   load(): void {

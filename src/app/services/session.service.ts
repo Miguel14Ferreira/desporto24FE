@@ -11,6 +11,7 @@ import { CreateSessionRequest } from '../pages/model/create-session-request';
 import { SessionParticipant } from '../pages/model/session-participant';
 
 export interface SessionSearchFilters {
+  query?: string;
   sport?: string;
   city?: string;
   availability?: string;
@@ -61,6 +62,9 @@ export class SessionService {
   discover(filters: SessionSearchFilters = {}): Observable<SessionSummary[]> {
     let params = new HttpParams();
 
+    if (filters.query?.trim()) {
+      params = params.set('query', filters.query.trim());
+    }
     if (filters.sport?.trim()) {
       params = params.set('sport', filters.sport.trim());
     }
