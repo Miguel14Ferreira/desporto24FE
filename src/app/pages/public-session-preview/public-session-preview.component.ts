@@ -92,7 +92,8 @@ export class PublicSessionPreviewComponent implements OnInit {
       },
       error: (error: unknown) => {
         const unavailable = error instanceof HttpErrorResponse
-          && error.status >= 400 && error.status < 500;
+          && error.status >= 400 && error.status < 500
+          && error.status !== 408 && error.status !== 429;
         this.canRetry = !unavailable;
         this.errorMessageKey = unavailable
           ? 'publicSession.unavailable'

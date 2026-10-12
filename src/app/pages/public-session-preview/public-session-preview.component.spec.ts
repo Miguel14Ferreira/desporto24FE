@@ -354,6 +354,45 @@ describe('PublicSessionPreviewComponent', () => {
     expect(page.querySelector('.join-panel .primary-action')).not.toBeNull();
   });
 
+  it('allows retry after a temporary HTTP 408 timeout', () => {
+    http.get.and.returnValue(throwError(() => new HttpErrorResponse({ status: 408 })));
+    fixture.detectChanges();
+    const page = fixture.nativeElement as HTMLElement;
+
+    expect(fixture.componentInstance.canRetry).toBeTrue();
+    expect(page.querySelector('.error-state p')?.textContent)
+      .toContain('Verifica a ligação e tenta novamente');
+    expect(page.querySelector('.retry-action')).not.toBeNull();
+  });
+
+  it('allows retry after HTTP 429 rate limiting without marking the session unavailable', () => {
+    http.get.and.returnValue(throwError(() => new HttpErrorResponse({ status: 429 })));
+    fixture.detectChanges();
+    const page = fixture.nativeElement as HTMLElement;
+
+    expect(fixture.componentInstance.canRetry).toBeTrue();
+    expect(fixture.componentInstance.errorMessageKey).toBe('publicSession.loadError');
+    const retry = page.querySelector('.retry-action') as HTMLButtonElement;
+    expect(retry).not.toBeNull();
+
+    http.get.and.returnValue(of({
+      id: 42,
+      sport: 'Padel',
+      city: 'Lisboa',
+      gameDate: new Date(Date.now() + 3600_000).toISOString(),
+      maxParticipants: 4,
+      priceAmount: 0,
+      status: 'OPEN',
+      gamePhoto: null
+    }) as any);
+    retry.click();
+    fixture.detectChanges();
+
+    expect(http.get).toHaveBeenCalledTimes(2);
+    expect(page.textContent).toContain('Padel');
+    expect(page.querySelector('.retry-action')).toBeNull();
+  });
+
   it('shows a retry action when the preview API is temporarily unavailable', () => {
     http.get.and.returnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
     fixture.detectChanges();
