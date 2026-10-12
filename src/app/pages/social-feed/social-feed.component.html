@@ -20,6 +20,14 @@
       </div>
       @if (postGameSessionId !== null && selectedSessionId === postGameSessionId) {
         <p class="composer-hint" role="status">{{ 'feed.postGameHint' | t }}</p>
+        <div class="postgame-prompts" role="group" [attr.aria-label]="'feed.postGamePromptsLabel' | t">
+          @for (promptKey of postGamePromptKeys; track promptKey) {
+            <button type="button" class="postgame-prompt"
+                    [disabled]="posting" (click)="applyPostGamePrompt(promptKey)">
+              {{ promptKey | t }}
+            </button>
+          }
+        </div>
       }
       <textarea
         [(ngModel)]="postContent"

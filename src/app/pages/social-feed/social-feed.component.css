@@ -104,6 +104,33 @@ h1 {
   font-size: .74rem;
 }
 
+.postgame-prompts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+}
+
+.composer .postgame-prompt {
+  border: 1px solid rgba(125, 211, 252, .38);
+  border-radius: 999px;
+  padding: .5rem .75rem;
+  background: rgba(125, 211, 252, .1);
+  color: #e0f2fe;
+  font: inherit;
+  font-size: .85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.composer .postgame-prompt:hover:not(:disabled) {
+  background: rgba(125, 211, 252, .2);
+}
+
+.composer .postgame-prompt:focus-visible {
+  outline: 2px solid #7dd3fc;
+  outline-offset: 3px;
+}
+
 .composer textarea {
   width: 100%;
   box-sizing: border-box;

@@ -30,6 +30,11 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
   get filteredSessions(): SessionSummary[] { return this.availableSessions; }
   selectedSessionId: number | null = null;
   postGameSessionId: number | null = null;
+  readonly postGamePromptKeys = [
+    'feed.postGamePrompt.bestMoment',
+    'feed.postGamePrompt.team',
+    'feed.postGamePrompt.nextGame'
+  ];
   loadingSessions = false;
   sessionSearchError = false;
 
@@ -122,6 +127,24 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
       this.selectedSessionId = id;
       this.availableSessions = [session, ...this.availableSessions.filter(item => item.id !== id)];
     });
+  }
+
+  applyPostGamePrompt(key: string): void {
+    if (this.postGameSessionId === null
+      || this.selectedSessionId !== this.postGameSessionId
+      || this.posting
+      || !this.postGamePromptKeys.includes(key)) {
+      return;
+    }
+    const suggestion = t(key);
+    const current = this.postContent.trim();
+    if (current.includes(suggestion)) {
+      return;
+    }
+    const next = current ? current + '\n' + suggestion : suggestion;
+    if (next.length <= 1000) {
+      this.postContent = next;
+    }
   }
 
   onSessionSearchChange(query: string): void {

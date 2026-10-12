@@ -129,6 +129,70 @@ describe('SocialFeedComponent post-game entry', () => {
     target.ngOnDestroy();
   });
 
+  it('starts an editable post-game draft from a suggestion without posting', () => {
+    const previousLanguage = localStorage.getItem('d24-language');
+    localStorage.setItem('d24-language', 'pt');
+    const { target } = openFromSession();
+    try {
+      target.applyPostGamePrompt('feed.postGamePrompt.bestMoment');
+      expect(target.postContent).toBe('O melhor momento foi…');
+
+      target.postContent = 'Que grande partida!';
+      target.applyPostGamePrompt('feed.postGamePrompt.nextGame');
+      expect(target.postContent).toBe('Que grande partida!\nQuem alinha na próxima? 🏃');
+
+      target.applyPostGamePrompt('feed.postGamePrompt.nextGame');
+      expect(target.postContent).toBe('Que grande partida!\nQuem alinha na próxima? 🏃');
+    } finally {
+      target.ngOnDestroy();
+      if (previousLanguage === null) {
+        localStorage.removeItem('d24-language');
+      } else {
+        localStorage.setItem('d24-language', previousLanguage);
+      }
+    }
+  });
+
+  it('uses an English prompt when the user has selected English', () => {
+    const previousLanguage = localStorage.getItem('d24-language');
+    localStorage.setItem('d24-language', 'en');
+    const { target } = openFromSession();
+    try {
+      target.applyPostGamePrompt('feed.postGamePrompt.team');
+      expect(target.postContent).toBe('Great game, everyone! 👏');
+    } finally {
+      target.ngOnDestroy();
+      if (previousLanguage === null) {
+        localStorage.removeItem('d24-language');
+      } else {
+        localStorage.setItem('d24-language', previousLanguage);
+      }
+    }
+  });
+
+  it('never replaces a draft or inserts prompts outside the active post-game flow', () => {
+    const { target } = openFromSession();
+    const prompt = 'feed.postGamePrompt.bestMoment';
+    target.postContent = 'x'.repeat(999);
+    target.applyPostGamePrompt(prompt);
+    expect(target.postContent).toBe('x'.repeat(999));
+
+    target.postContent = 'Meu texto';
+    target.selectedSessionId = null;
+    target.applyPostGamePrompt(prompt);
+    expect(target.postContent).toBe('Meu texto');
+
+    target.selectedSessionId = target.postGameSessionId;
+    target.posting = true;
+    target.applyPostGamePrompt(prompt);
+    expect(target.postContent).toBe('Meu texto');
+
+    target.posting = false;
+    target.applyPostGamePrompt('feed.postGamePrompt.unknown');
+    expect(target.postContent).toBe('Meu texto');
+    target.ngOnDestroy();
+  });
+
   it('does not preselect a private or unrelated completed session', () => {
     for (const overrides of [
       { canSharePublicly: false },
