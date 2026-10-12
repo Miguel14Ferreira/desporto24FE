@@ -55,6 +55,43 @@ describe('PublicSessionPreviewComponent', () => {
     return fixture.nativeElement as HTMLElement;
   }
 
+  it('translates public session facts into English without changing session data', () => {
+    const i18n = TestBed.inject(I18nService);
+    i18n.setLanguage('en');
+    const page = render();
+
+    const facts = Array.from(page.querySelectorAll('.session-facts .fact'));
+    const labels = facts.map(fact => fact.querySelector('.fact-label')?.textContent?.trim());
+    const values = facts.map(fact => fact.querySelector('strong')?.textContent?.trim());
+
+    expect(labels).toEqual(['Location', 'Date', 'Time', 'Price', 'Maximum capacity']);
+    expect(values[0]).toBe('Lisboa');
+    expect(values[3]).toBe('Free');
+    expect(values[4]).toBe('4 participants');
+    expect(fixture.componentInstance.session?.priceAmount).toBe(0);
+
+    i18n.setLanguage('pt');
+    fixture.detectChanges();
+    expect(facts[3].querySelector('strong')?.textContent?.trim()).toBe('Gratuito');
+  });
+
+  it('translates missing session details and omits unknown capacity', () => {
+    const i18n = TestBed.inject(I18nService);
+    i18n.setLanguage('en');
+    const page = render({
+      city: null, gameDate: null, priceAmount: null, maxParticipants: null
+    });
+    const facts = Array.from(page.querySelectorAll('.session-facts .fact'));
+    const values = () => facts.map(fact => fact.querySelector('strong')?.textContent?.trim());
+
+    expect(facts.length).toBe(4);
+    expect(values()).toEqual(['Not specified', 'Not specified', 'Not specified', 'Not specified']);
+
+    i18n.setLanguage('pt');
+    fixture.detectChanges();
+    expect(values()).toEqual(['Por indicar', 'Por indicar', 'Por indicar', 'Por indicar']);
+  });
+
   it('translates guest entry actions to English while preserving the session return URL', () => {
     TestBed.inject(I18nService).setLanguage('en');
     const page = render();

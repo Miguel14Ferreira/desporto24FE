@@ -22,25 +22,25 @@
 
           <div class="session-facts">
             <div class="fact">
-              <span class="fact-label">Localidade</span>
-              <strong>{{ details.city || 'Por indicar' }}</strong>
+              <span class="fact-label">{{ 'common.location' | t }}</span>
+              <strong>{{ details.city || ('publicSession.notSpecified' | t) }}</strong>
             </div>
             <div class="fact">
-              <span class="fact-label">Data</span>
-              <strong>{{ details.gameDate ? (details.gameDate | date:'dd/MM/yyyy') : 'Por indicar' }}</strong>
+              <span class="fact-label">{{ 'publicSession.date' | t }}</span>
+              <strong>{{ details.gameDate ? (details.gameDate | date:'dd/MM/yyyy') : ('publicSession.notSpecified' | t) }}</strong>
             </div>
             <div class="fact">
-              <span class="fact-label">Hora</span>
-              <strong>{{ details.gameDate ? (details.gameDate | date:'HH:mm') : 'Por indicar' }}</strong>
+              <span class="fact-label">{{ 'publicSession.time' | t }}</span>
+              <strong>{{ details.gameDate ? (details.gameDate | date:'HH:mm') : ('publicSession.notSpecified' | t) }}</strong>
             </div>
             <div class="fact">
-              <span class="fact-label">Preço</span>
-              <strong>{{ details.priceAmount == null ? 'Por indicar' : (details.priceAmount === 0 ? 'Gratuito' : ((details.priceAmount | number:'1.2-2') + ' €')) }}</strong>
+              <span class="fact-label">{{ 'publicSession.price' | t }}</span>
+              <strong>{{ details.priceAmount == null ? ('publicSession.notSpecified' | t) : (details.priceAmount === 0 ? ('publicSession.free' | t) : ((details.priceAmount | number:'1.2-2') + ' €')) }}</strong>
             </div>
             @if (details.maxParticipants != null) {
               <div class="fact">
-                <span class="fact-label">Lotação máxima</span>
-                <strong>{{ details.maxParticipants }} participantes</strong>
+                <span class="fact-label">{{ 'publicSession.capacity' | t }}</span>
+                <strong>{{ 'publicSession.participantCount' | t:{ count: details.maxParticipants } }}</strong>
               </div>
             }
           </div>
