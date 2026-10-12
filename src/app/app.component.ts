@@ -40,14 +40,7 @@ export class AppComponent implements OnInit {
           'auth-success-message',
           t('feedback.confirm.successLogin')
         );
-        const destinationFromEmail = registrationSessionReturnUrl(params.get('returnSessionId'));
-        const destinationFromBrowser = takeRegistrationDestination();
-        const destination = destinationFromEmail ?? destinationFromBrowser;
-        if (destination) {
-          this.router.navigate(['/login'], { queryParams: { returnUrl: destination } });
-        } else {
-          this.router.navigateByUrl('/login');
-        }
+        this.navigateToLoginAfterConfirmation(params);
       },
       error: error => {
         const apiMessage = error?.error?.message;
@@ -57,8 +50,19 @@ export class AppComponent implements OnInit {
             ? apiMessage
             : t('feedback.confirm.error')
         );
-        this.router.navigateByUrl('/login');
+        this.navigateToLoginAfterConfirmation(params);
       }
     });
+  }
+
+  private navigateToLoginAfterConfirmation(params: URLSearchParams): void {
+    const destinationFromEmail = registrationSessionReturnUrl(params.get('returnSessionId'));
+    const destinationFromBrowser = takeRegistrationDestination();
+    const destination = destinationFromEmail ?? destinationFromBrowser;
+    if (destination) {
+      this.router.navigate(['/login'], { queryParams: { returnUrl: destination } });
+    } else {
+      this.router.navigateByUrl('/login');
+    }
   }
 }

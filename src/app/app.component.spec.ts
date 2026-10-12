@@ -2,7 +2,7 @@ import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { Router } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { rememberRegistrationDestination, takeRegistrationDestination } from './shared/registration-return-url';
 import { AppComponent } from './app.component';
 import { AuthenticationService } from './services/authethication.service';
@@ -39,6 +39,8 @@ describe('AppComponent', () => {
 
   afterEach(() => {
     localStorage.removeItem('jynlo-registration-destination');
+    sessionStorage.removeItem('auth-success-message');
+    sessionStorage.removeItem('auth-error-message');
     window.history.replaceState({}, '', initialLocation);
   });
 
@@ -67,6 +69,52 @@ describe('AppComponent', () => {
 
   it('should ignore malformed session IDs in confirmation links', () => {
     window.history.pushState({}, '', '/?confirmRegistration=fixture-token&returnSessionId=bad-id');
+    const router = TestBed.inject(Router);
+    spyOn(router, 'navigateByUrl').and.returnValue(Promise.resolve(true));
+
+    TestBed.createComponent(AppComponent).detectChanges();
+
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/login');
+  });
+
+  it('preserves the session on the login page when email confirmation fails', () => {
+    authenticationService.confirmRegistration.and.returnValue(
+      throwError(() => ({ error: { message: 'Confirmação expirada' } }))
+    );
+    window.history.pushState({}, '', '/?confirmRegistration=expired-token&returnSessionId=42');
+    const router = TestBed.inject(Router);
+    spyOn(router, 'navigate').and.returnValue(Promise.resolve(true));
+
+    TestBed.createComponent(AppComponent).detectChanges();
+
+    expect(router.navigate).toHaveBeenCalledWith(
+      ['/login'], { queryParams: { returnUrl: '/menu/events/42' } }
+    );
+    expect(sessionStorage.getItem('auth-error-message')).toBe('Confirmação expirada');
+  });
+
+  it('keeps the remembered session if email confirmation fails without a session parameter', () => {
+    authenticationService.confirmRegistration.and.returnValue(
+      throwError(() => new Error('Temporary failure'))
+    );
+    rememberRegistrationDestination('/menu/events/7');
+    window.history.pushState({}, '', '/?confirmRegistration=fixture-token');
+    const router = TestBed.inject(Router);
+    spyOn(router, 'navigate').and.returnValue(Promise.resolve(true));
+
+    TestBed.createComponent(AppComponent).detectChanges();
+
+    expect(router.navigate).toHaveBeenCalledWith(
+      ['/login'], { queryParams: { returnUrl: '/menu/events/7' } }
+    );
+    expect(takeRegistrationDestination()).toBeNull();
+  });
+
+  it('does not forward malformed session IDs after failed confirmation', () => {
+    authenticationService.confirmRegistration.and.returnValue(
+      throwError(() => new Error('Confirmation unavailable'))
+    );
+    window.history.pushState({}, '', '/?confirmRegistration=fixture-token&returnSessionId=../login');
     const router = TestBed.inject(Router);
     spyOn(router, 'navigateByUrl').and.returnValue(Promise.resolve(true));
 
