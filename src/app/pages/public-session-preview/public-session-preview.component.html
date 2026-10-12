@@ -79,6 +79,10 @@
                     [disabled]="sharingSession" (click)="shareSession()">
               {{ (sharingSession ? 'publicSession.sharing' : 'publicSession.share') | t }}
             </button>
+            <a class="secondary-action whatsapp-share-action"
+               [href]="whatsappShareUrl()" target="_blank" rel="noopener noreferrer">
+              {{ 'publicSession.shareWhatsApp' | t }}
+            </a>
             @if (shareFeedbackKey) {
               <p class="share-feedback" role="status">{{ shareFeedbackKey | t }}</p>
             }

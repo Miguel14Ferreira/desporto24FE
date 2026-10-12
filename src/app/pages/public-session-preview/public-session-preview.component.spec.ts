@@ -93,6 +93,41 @@ describe('PublicSessionPreviewComponent', () => {
       .toBe(new URL('/sessions/42', window.location.origin).href);
   });
 
+  it('shares only the validated public session URL on WhatsApp in PT and EN', () => {
+    const i18n = TestBed.inject(I18nService);
+    const page = render();
+    const link = page.querySelector('.whatsapp-share-action') as HTMLAnchorElement;
+    const publicUrl = new URL('/sessions/42', window.location.origin).href;
+
+    expect(link).not.toBeNull();
+    expect(link.textContent?.trim()).toBe('Partilhar no WhatsApp');
+    expect(link.getAttribute('target')).toBe('_blank');
+    expect(link.getAttribute('rel')).toBe('noopener noreferrer');
+    expect(new URL(link.href).origin).toBe('https://wa.me');
+    expect(new URL(link.href).searchParams.get('text'))
+      .toBe('Vem jogar connosco na Jynlo!\n' + publicUrl);
+
+    i18n.setLanguage('en');
+    fixture.detectChanges();
+
+    expect(link.textContent?.trim()).toBe('Share on WhatsApp');
+    expect(new URL(link.href).searchParams.get('text'))
+      .toBe('Come play with us on Jynlo!\n' + publicUrl);
+    expect(link.href).not.toContain('menu/events');
+  });
+
+  it('does not offer WhatsApp sharing for sessions closed to participation', () => {
+    const page = render({ status: 'CANCELLED' });
+
+    expect(fixture.componentInstance.whatsappShareUrl()).toBeNull();
+    expect(page.querySelector('.whatsapp-share-action')).toBeNull();
+
+    fixture.componentInstance.session = null;
+    fixture.detectChanges();
+    expect(fixture.componentInstance.whatsappShareUrl()).toBeNull();
+    expect(page.querySelector('.whatsapp-share-action')).toBeNull();
+  });
+
   it('copies the public link when native sharing is unavailable', async () => {
     const page = render();
     if (typeof navigator.share === 'function') {

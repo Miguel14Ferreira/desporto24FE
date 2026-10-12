@@ -76,6 +76,15 @@ export class PublicSessionPreviewComponent implements OnInit {
       : null;
   }
 
+  whatsappShareUrl(): string | null {
+    const url = this.publicShareUrl();
+    if (!url) {
+      return null;
+    }
+    const message = this.i18n.translate('publicSession.shareMessage') + '\n' + url;
+    return 'https://wa.me/?text=' + encodeURIComponent(message);
+  }
+
   async shareSession(): Promise<void> {
     const url = this.publicShareUrl();
     if (!url || this.sharingSession) {
