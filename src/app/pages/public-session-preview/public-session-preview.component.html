@@ -1,0 +1,64 @@
+<section class="public-session-page">
+  <div class="public-session-shell">
+    <header class="public-header">
+      <a routerLink="/home" class="brand" aria-label="Jynlo — início">Jynlo<span>.</span></a>
+      <a routerLink="/login" class="header-login">Iniciar sessão</a>
+    </header>
+
+    @if (loading) {
+      <div class="state-card" role="status">A carregar a sessão...</div>
+    } @else if (session; as details) {
+      <main class="session-layout">
+        <div class="session-main">
+          <p class="eyebrow">Sessão pública · Jynlo</p>
+          <h1>{{ details.sport || 'Sessão desportiva' }}</h1>
+          <p class="intro">Descobre esta atividade e junta-te a quem quer praticar desporto.</p>
+
+          @if (photoUrl; as photo) {
+            <img class="session-photo" [src]="photo" [alt]="'Fotografia da sessão: ' + (details.sport || 'desporto')">
+          }
+
+          <div class="session-facts">
+            <div class="fact">
+              <span class="fact-label">Localidade</span>
+              <strong>{{ details.city || 'Por indicar' }}</strong>
+            </div>
+            <div class="fact">
+              <span class="fact-label">Data</span>
+              <strong>{{ details.gameDate ? (details.gameDate | date:'dd/MM/yyyy') : 'Por indicar' }}</strong>
+            </div>
+            <div class="fact">
+              <span class="fact-label">Hora</span>
+              <strong>{{ details.gameDate ? (details.gameDate | date:'HH:mm') : 'Por indicar' }}</strong>
+            </div>
+            <div class="fact">
+              <span class="fact-label">Preço</span>
+              <strong>{{ details.priceAmount == null ? 'Por indicar' : (details.priceAmount === 0 ? 'Gratuito' : ((details.priceAmount | number:'1.2-2') + ' €')) }}</strong>
+            </div>
+            @if (details.maxParticipants != null) {
+              <div class="fact">
+                <span class="fact-label">Lotação máxima</span>
+                <strong>{{ details.maxParticipants }} participantes</strong>
+              </div>
+            }
+          </div>
+          <p class="privacy-note">Esta pré-visualização mostra apenas informações públicas da sessão. Os detalhes de participação ficam disponíveis depois de entrares na Jynlo.</p>
+        </div>
+
+        <aside class="join-panel">
+          <span class="status" [class.closed]="details.status !== 'OPEN'">{{ statusLabel }}</span>
+          <h2>O próximo jogo pode ser teu.</h2>
+          <p>Cria uma conta gratuita para veres todos os detalhes e, quando disponível, participares nesta sessão.</p>
+          <a class="primary-action" routerLink="/login/registerNewUser">Criar conta</a>
+          <a class="secondary-action" routerLink="/login" [queryParams]="{returnUrl: '/menu/events/' + details.id}">Já tenho conta</a>
+        </aside>
+      </main>
+    } @else {
+      <main class="state-card error-state" role="alert">
+        <h1>Sessão indisponível</h1>
+        <p>{{ errorMessage }}</p>
+        <a routerLink="/home">Voltar ao início</a>
+      </main>
+    }
+  </div>
+</section>
