@@ -7,7 +7,7 @@ import { RegistrationRequest } from '../model/registration-request';
 import { AuthenticationService } from '../../services/authethication.service';
 import { COUNTRY_CALLING_CODES, countryNameFromLabel } from '../../shared/country-calling-codes';
 import { ActivatedRoute } from '@angular/router';
-import { rememberRegistrationDestination } from '../../shared/registration-return-url';
+import { registrationSessionId, rememberRegistrationDestination } from '../../shared/registration-return-url';
 
 @Component({
   selector: 'app-createaccount',
@@ -73,7 +73,8 @@ export class CreateaccountComponent {
       phone: null,
       gender: this.gender || null,
       email: this.email.trim(),
-      acceptedLegalTerms: this.acceptedLegalTerms
+      acceptedLegalTerms: this.acceptedLegalTerms,
+      returnSessionId: registrationSessionId(this.route.snapshot.queryParamMap.get('returnUrl'))
     };
 
     this.loading = true;

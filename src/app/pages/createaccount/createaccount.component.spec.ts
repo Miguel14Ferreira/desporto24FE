@@ -67,6 +67,18 @@ describe('CreateaccountComponent', () => {
     expect(component.successMessage).toContain('Conta criada');
   });
 
+  it('should send a shared session ID in the registration request', () => {
+    TestBed.inject(ActivatedRoute).snapshot.queryParamMap = convertToParamMap({ returnUrl: '/menu/events/42' });
+    fillValidForm();
+
+    component.register();
+
+    expect(auth.register).toHaveBeenCalledWith(
+      jasmine.objectContaining({ returnSessionId: 42 }),
+      undefined
+    );
+  });
+
   it('should keep the shared session destination after creating an account', () => {
     TestBed.inject(ActivatedRoute).snapshot.queryParamMap = convertToParamMap({ returnUrl: '/menu/events/42' });
     fillValidForm();
@@ -83,6 +95,10 @@ describe('CreateaccountComponent', () => {
     component.register();
 
     expect(takeRegistrationDestination()).toBeNull();
+    expect(auth.register).toHaveBeenCalledWith(
+      jasmine.objectContaining({ returnSessionId: null }),
+      undefined
+    );
   });
 
   it('should reject registration without legal acceptance', () => {

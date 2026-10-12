@@ -42,6 +42,39 @@ describe('AppComponent', () => {
     window.history.replaceState({}, '', initialLocation);
   });
 
+  it('should return to a shared session after email confirmation on another device', () => {
+    window.history.pushState({}, '', '/?confirmRegistration=fixture-token&returnSessionId=42');
+    const router = TestBed.inject(Router);
+    spyOn(router, 'navigate').and.returnValue(Promise.resolve(true));
+
+    TestBed.createComponent(AppComponent).detectChanges();
+
+    expect(authenticationService.confirmRegistration).toHaveBeenCalledWith('fixture-token');
+    expect(router.navigate).toHaveBeenCalledWith(['/login'], { queryParams: { returnUrl: '/menu/events/42' } });
+  });
+
+  it('should prioritize the session from the confirmation email over the current browser', () => {
+    rememberRegistrationDestination('/menu/events/7');
+    window.history.pushState({}, '', '/?confirmRegistration=fixture-token&returnSessionId=42');
+    const router = TestBed.inject(Router);
+    spyOn(router, 'navigate').and.returnValue(Promise.resolve(true));
+
+    TestBed.createComponent(AppComponent).detectChanges();
+
+    expect(router.navigate).toHaveBeenCalledWith(['/login'], { queryParams: { returnUrl: '/menu/events/42' } });
+    expect(takeRegistrationDestination()).toBeNull();
+  });
+
+  it('should ignore malformed session IDs in confirmation links', () => {
+    window.history.pushState({}, '', '/?confirmRegistration=fixture-token&returnSessionId=bad-id');
+    const router = TestBed.inject(Router);
+    spyOn(router, 'navigateByUrl').and.returnValue(Promise.resolve(true));
+
+    TestBed.createComponent(AppComponent).detectChanges();
+
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/login');
+  });
+
   it('should return to a shared session after email confirmation in the same browser', () => {
     rememberRegistrationDestination('/menu/events/42');
     window.history.pushState({}, '', '/?confirmRegistration=fixture-token');
