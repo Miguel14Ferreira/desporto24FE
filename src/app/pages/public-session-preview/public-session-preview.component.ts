@@ -76,20 +76,22 @@ export class PublicSessionPreviewComponent implements OnInit {
       : null;
   }
 
-  whatsappShareUrl(): string | null {
-    const url = this.publicShareUrl();
-    if (!url) {
-      return null;
-    }
+  private shareMessage(): string {
     const sport = this.session?.sport?.trim();
     const city = this.session?.city?.trim();
     const messageKey = sport && city ? 'publicSession.whatsappSportCity'
       : sport ? 'publicSession.whatsappSport'
       : city ? 'publicSession.whatsappCity'
       : 'publicSession.shareMessage';
-    const message = this.i18n.translate(messageKey, { sport: sport || '', city: city || '' })
-      + '\n' + url;
-    return 'https://wa.me/?text=' + encodeURIComponent(message);
+    return this.i18n.translate(messageKey, { sport: sport || '', city: city || '' });
+  }
+
+  whatsappShareUrl(): string | null {
+    const url = this.publicShareUrl();
+    if (!url) {
+      return null;
+    }
+    return 'https://wa.me/?text=' + encodeURIComponent(this.shareMessage() + '\n' + url);
   }
 
   async shareSession(): Promise<void> {
@@ -108,7 +110,7 @@ export class PublicSessionPreviewComponent implements OnInit {
             title: this.i18n.translate('publicSession.shareTitle', {
               sport: this.session?.sport || this.i18n.translate('publicSession.statusUnknown')
             }),
-            text: this.i18n.translate('publicSession.shareMessage'),
+            text: this.shareMessage(),
             url
           });
           this.shareFeedbackKey = 'publicSession.shared';

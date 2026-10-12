@@ -148,6 +148,52 @@ describe('PublicSessionPreviewComponent', () => {
     expect(page.querySelector('.whatsapp-share-action')).toBeNull();
   });
 
+  it('uses localized invitations consistently for native and WhatsApp sharing', async () => {
+    const i18n = TestBed.inject(I18nService);
+    const nativeShare = jasmine.createSpy('share').and.returnValue(Promise.resolve());
+    const prior = Object.getOwnPropertyDescriptor(navigator, 'share');
+    Object.defineProperty(navigator, 'share', { configurable: true, value: nativeShare });
+
+    try {
+      render();
+      const component = fixture.componentInstance;
+      const publicUrl = new URL('/sessions/42', window.location.origin).href;
+      const textForWhatsApp = () => new URL(component.whatsappShareUrl()!)
+        .searchParams.get('text');
+
+      await component.shareSession();
+      expect(nativeShare).toHaveBeenCalledWith(jasmine.objectContaining({
+        text: 'Bora jogar Padel em Lisboa? Junta-te a nós na Jynlo!',
+        url: publicUrl
+      }));
+      expect(textForWhatsApp()).toContain('Bora jogar Padel em Lisboa?');
+
+      i18n.setLanguage('en');
+      nativeShare.calls.reset();
+      await component.shareSession();
+      expect(nativeShare).toHaveBeenCalledWith(jasmine.objectContaining({
+        text: 'Want to play Padel in Lisboa? Join us on Jynlo!',
+        url: publicUrl
+      }));
+      expect(textForWhatsApp()).toContain('Want to play Padel in Lisboa?');
+
+      component.session!.sport = null;
+      component.session!.city = null;
+      nativeShare.calls.reset();
+      await component.shareSession();
+      expect(nativeShare).toHaveBeenCalledWith(jasmine.objectContaining({
+        text: 'Come play with us on Jynlo!',
+        url: publicUrl
+      }));
+    } finally {
+      if (prior) {
+        Object.defineProperty(navigator, 'share', prior);
+      } else {
+        Reflect.deleteProperty(navigator, 'share');
+      }
+    }
+  });
+
   it('copies the public link when native sharing is unavailable', async () => {
     const page = render();
     if (typeof navigator.share === 'function') {
