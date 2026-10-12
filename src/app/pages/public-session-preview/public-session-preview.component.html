@@ -2,7 +2,7 @@
   <div class="public-session-shell">
     <header class="public-header">
       <a routerLink="/home" class="brand" aria-label="Jynlo — início">Jynlo<span>.</span></a>
-      <a routerLink="/login" class="header-login">Iniciar sessão</a>
+      <a routerLink="/login" [queryParams]="returnUrl ? { returnUrl: returnUrl } : null" class="header-login">Iniciar sessão</a>
     </header>
 
     @if (loading) {

@@ -29,6 +29,7 @@ export class PublicSessionPreviewComponent implements OnInit {
   session: SessionPublicPreview | null = null;
   loading = true;
   errorMessage = '';
+  returnUrl: string | null = null;
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -42,6 +43,8 @@ export class PublicSessionPreviewComponent implements OnInit {
       this.errorMessage = 'Esta ligação de sessão não é válida.';
       return;
     }
+
+    this.returnUrl = '/menu/events/' + id;
 
     this.http.get<SessionPublicPreview>(
       environment.apiUrl + '/api/sessions/' + id + '/public-preview'
