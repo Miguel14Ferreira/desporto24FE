@@ -102,6 +102,30 @@ describe('LoginComponent', () => {
     expect(router.navigateByUrl).toHaveBeenCalledWith('/menu/notifications');
   });
 
+  it('explains the invitation when login is opened from a shared session', () => {
+    TestBed.inject(ActivatedRoute).snapshot.queryParamMap =
+      convertToParamMap({ returnUrl: '/menu/events/42' });
+    component.ngOnInit();
+    fixture.detectChanges();
+
+    expect(component.loginContextKey).toBe('login.viewSession');
+    const message = fixture.nativeElement.querySelector('.login-context') as HTMLElement;
+    expect(message).not.toBeNull();
+    expect(message.textContent).toContain('sessão desportiva');
+    expect(message.textContent).toContain('inscrever-te');
+  });
+
+  it('shows no invitation message for unrelated or malformed destinations', () => {
+    for (const returnUrl of ['/menu/feed', 'https://example.com', '/menu/events/not-a-number']) {
+      TestBed.inject(ActivatedRoute).snapshot.queryParamMap = convertToParamMap({ returnUrl });
+      component.ngOnInit();
+      fixture.detectChanges();
+
+      expect(component.loginContextKey).toBe('');
+      expect(fixture.nativeElement.querySelector('.login-context')).toBeNull();
+    }
+  });
+
   it('should preserve the request destination while MFA is required', () => {
     const route = TestBed.inject(ActivatedRoute);
     route.snapshot.queryParamMap = convertToParamMap({ returnUrl: '/menu/notifications' });

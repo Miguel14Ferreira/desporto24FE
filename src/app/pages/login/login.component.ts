@@ -63,6 +63,9 @@ export class LoginComponent implements OnInit, AfterViewInit {
 
   get loginContextKey(): string {
     const path = this.returnUrl.split(/[?#]/)[0];
+    if (registrationSessionId(path) !== null) {
+      return 'login.viewSession';
+    }
     return path === '/menu/notifications' || path.startsWith('/menu/notifications/')
       ? 'login.viewRequest'
       : '';
