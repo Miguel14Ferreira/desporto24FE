@@ -55,6 +55,15 @@ describe('PublicSessionPreviewComponent', () => {
     return fixture.nativeElement as HTMLElement;
   }
 
+  function shareWhen(locale: 'pt-PT' | 'en-GB'): string {
+    const start = Date.parse(fixture.componentInstance.session!.gameDate!);
+    const formatted = new Intl.DateTimeFormat(locale, {
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
+    }).format(start);
+    return (locale === 'pt-PT' ? 'Quando: ' : 'When: ') + formatted;
+  }
+
   it('localizes the session photo description without changing its source', () => {
     const i18n = TestBed.inject(I18nService);
     i18n.setLanguage('en');
@@ -105,14 +114,14 @@ describe('PublicSessionPreviewComponent', () => {
     expect(link.getAttribute('rel')).toBe('noopener noreferrer');
     expect(new URL(link.href).origin).toBe('https://wa.me');
     expect(new URL(link.href).searchParams.get('text'))
-      .toBe('Bora jogar Padel em Lisboa? Junta-te a nós na Jynlo!\n' + publicUrl);
+      .toBe('Bora jogar Padel em Lisboa? Junta-te a nós na Jynlo!\n' + shareWhen('pt-PT') + '\n' + publicUrl);
 
     i18n.setLanguage('en');
     fixture.detectChanges();
 
     expect(link.textContent?.trim()).toBe('Share on WhatsApp');
     expect(new URL(link.href).searchParams.get('text'))
-      .toBe('Want to play Padel in Lisboa? Join us on Jynlo!\n' + publicUrl);
+      .toBe('Want to play Padel in Lisboa? Join us on Jynlo!\n' + shareWhen('en-GB') + '\n' + publicUrl);
     expect(link.href).not.toContain('menu/events');
   });
 
@@ -123,17 +132,17 @@ describe('PublicSessionPreviewComponent', () => {
     const sharedText = () => new URL(fixture.componentInstance.whatsappShareUrl()!)
       .searchParams.get('text');
 
-    expect(sharedText()).toBe('Bora jogar Padel? Junta-te a nós na Jynlo!\n' + publicUrl);
+    expect(sharedText()).toBe('Bora jogar Padel? Junta-te a nós na Jynlo!\n' + shareWhen('pt-PT') + '\n' + publicUrl);
 
     fixture.componentInstance.session!.sport = null;
     fixture.componentInstance.session!.city = ' Porto ';
-    expect(sharedText()).toBe('Bora jogar em Porto? Junta-te a nós na Jynlo!\n' + publicUrl);
+    expect(sharedText()).toBe('Bora jogar em Porto? Junta-te a nós na Jynlo!\n' + shareWhen('pt-PT') + '\n' + publicUrl);
 
     fixture.componentInstance.session!.city = ' ';
-    expect(sharedText()).toBe('Vem jogar connosco na Jynlo!\n' + publicUrl);
+    expect(sharedText()).toBe('Vem jogar connosco na Jynlo!\n' + shareWhen('pt-PT') + '\n' + publicUrl);
 
     i18n.setLanguage('en');
-    expect(sharedText()).toBe('Come play with us on Jynlo!\n' + publicUrl);
+    expect(sharedText()).toBe('Come play with us on Jynlo!\n' + shareWhen('en-GB') + '\n' + publicUrl);
   });
 
   it('does not offer WhatsApp sharing for sessions closed to participation', () => {
@@ -163,7 +172,7 @@ describe('PublicSessionPreviewComponent', () => {
 
       await component.shareSession();
       expect(nativeShare).toHaveBeenCalledWith(jasmine.objectContaining({
-        text: 'Bora jogar Padel em Lisboa? Junta-te a nós na Jynlo!',
+        text: 'Bora jogar Padel em Lisboa? Junta-te a nós na Jynlo!\n' + shareWhen('pt-PT'),
         url: publicUrl
       }));
       expect(textForWhatsApp()).toContain('Bora jogar Padel em Lisboa?');
@@ -172,7 +181,7 @@ describe('PublicSessionPreviewComponent', () => {
       nativeShare.calls.reset();
       await component.shareSession();
       expect(nativeShare).toHaveBeenCalledWith(jasmine.objectContaining({
-        text: 'Want to play Padel in Lisboa? Join us on Jynlo!',
+        text: 'Want to play Padel in Lisboa? Join us on Jynlo!\n' + shareWhen('en-GB'),
         url: publicUrl
       }));
       expect(textForWhatsApp()).toContain('Want to play Padel in Lisboa?');
@@ -182,7 +191,7 @@ describe('PublicSessionPreviewComponent', () => {
       nativeShare.calls.reset();
       await component.shareSession();
       expect(nativeShare).toHaveBeenCalledWith(jasmine.objectContaining({
-        text: 'Come play with us on Jynlo!',
+        text: 'Come play with us on Jynlo!\n' + shareWhen('en-GB'),
         url: publicUrl
       }));
     } finally {

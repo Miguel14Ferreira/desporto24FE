@@ -142,6 +142,7 @@ const PT: Dictionary = {
   'publicSession.whatsappSportCity': 'Bora jogar {{sport}} em {{city}}? Junta-te a nós na Jynlo!',
   'publicSession.whatsappSport': 'Bora jogar {{sport}}? Junta-te a nós na Jynlo!',
   'publicSession.whatsappCity': 'Bora jogar em {{city}}? Junta-te a nós na Jynlo!',
+  'publicSession.shareWhen': 'Quando: {{date}}',
 
   'register.title': 'Criar conta',
   'register.subtitle': 'Cria o teu perfil e começa a encontrar pessoas para praticar desporto.',
@@ -1633,6 +1634,7 @@ const EN: Dictionary = {
   'publicSession.whatsappSportCity': 'Want to play {{sport}} in {{city}}? Join us on Jynlo!',
   'publicSession.whatsappSport': 'Want to play {{sport}}? Join us on Jynlo!',
   'publicSession.whatsappCity': 'Want to play in {{city}}? Join us on Jynlo!',
+  'publicSession.shareWhen': 'When: {{date}}',
 
   'register.title': 'Create account',
   'register.subtitle': 'Create your profile and start finding people to play sports with.',

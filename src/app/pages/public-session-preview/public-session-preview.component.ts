@@ -83,7 +83,17 @@ export class PublicSessionPreviewComponent implements OnInit {
       : sport ? 'publicSession.whatsappSport'
       : city ? 'publicSession.whatsappCity'
       : 'publicSession.shareMessage';
-    return this.i18n.translate(messageKey, { sport: sport || '', city: city || '' });
+    const invitation = this.i18n.translate(messageKey, { sport: sport || '', city: city || '' });
+    const start = Date.parse(this.session?.gameDate ?? '');
+    if (!Number.isFinite(start)) {
+      return invitation;
+    }
+    const locale = this.i18n.currentLanguage === 'en' ? 'en-GB' : 'pt-PT';
+    const date = new Intl.DateTimeFormat(locale, {
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
+    }).format(start);
+    return invitation + '\n' + this.i18n.translate('publicSession.shareWhen', { date });
   }
 
   whatsappShareUrl(): string | null {
