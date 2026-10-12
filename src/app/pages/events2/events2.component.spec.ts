@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
 
 import { Events2Component } from './events2.component';
@@ -58,6 +58,46 @@ describe('Events2Component', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('keeps the normal session-creation flow unchanged', () => {
+    expect(component.findPlayersMode).toBeFalse();
+    expect(fixture.nativeElement.querySelector('.page-header h1')?.textContent)
+      .toContain('Criar uma sessão');
+    expect(fixture.nativeElement.querySelector('input[name="privateGame"]')).not.toBeNull();
+  });
+
+  it('opens Find Players mode and creates a public session even if private state was set', () => {
+    const route = TestBed.inject(ActivatedRoute);
+    spyOn(route.snapshot.queryParamMap, 'get')
+      .and.callFake(name => name === 'intent' ? 'findPlayers' : null);
+    fixture.detectChanges();
+
+    expect(component.findPlayersMode).toBeTrue();
+    expect(fixture.nativeElement.querySelector('.page-header h1')?.textContent)
+      .toContain('Encontrar jogadores');
+    expect(fixture.nativeElement.querySelector('.recruit-context')?.textContent)
+      .toContain('total de jogadores');
+    expect(fixture.nativeElement.querySelector('input[name="privateGame"]')).toBeNull();
+
+    component.sport = 'Padel';
+    component.gameDate = '2099-10-15T18:00';
+    component.city = 'Lisboa';
+    component.address = 'Rua do Campo';
+    component.maxParticipants = 10;
+    component.privateGame = true;
+    component.password = '';
+
+    component.createSession();
+
+    expect(sessionService.create).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        privateGame: false,
+        password: null,
+        maxParticipants: 10
+      }),
+      undefined
+    );
   });
 
   it('should reject an incomplete session', () => {

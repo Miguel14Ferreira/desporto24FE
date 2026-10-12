@@ -92,6 +92,10 @@ export class Events2Component implements OnInit {
     private router: Router
   ) {}
 
+  get findPlayersMode(): boolean {
+    return this.route.snapshot.queryParamMap.get('intent') === 'findPlayers' && !this.communityId;
+  }
+
   ngOnInit(): void {
     this.minDate = this.toLocalDateTimeValue(new Date());
     this.loadVenues();
@@ -133,8 +137,8 @@ export class Events2Component implements OnInit {
       address: this.address.trim(),
       maxParticipants: Number(this.maxParticipants),
       priceAmount: this.hasPrice ? Number(this.priceAmount ?? 0) : 0,
-      privateGame: this.privateGame,
-      password: this.privateGame ? this.password.trim() : null,
+      privateGame: this.findPlayersMode ? false : this.privateGame,
+      password: this.findPlayersMode ? null : (this.privateGame ? this.password.trim() : null),
       latitude: this.locationCaptured ? this.latitude : null,
       longitude: this.locationCaptured ? this.longitude : null,
       communityId: this.communityId,
@@ -556,7 +560,7 @@ export class Events2Component implements OnInit {
       }
     }
 
-    if (this.privateGame && !this.password.trim()) {
+    if (!this.findPlayersMode && this.privateGame && !this.password.trim()) {
       return t('feedback.create.privatePassword');
     }
 

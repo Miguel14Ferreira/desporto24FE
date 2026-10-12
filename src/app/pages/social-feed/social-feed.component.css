@@ -58,6 +58,7 @@ h1 {
 
 .primary-action,
 .secondary-action,
+.recruit-action,
 .composer button,
 .state-card button,
 .state-card a {
@@ -70,6 +71,14 @@ h1 {
   text-decoration: none;
   cursor: pointer;
 }
+
+.recruit-action {
+  background: rgba(0, 230, 118, .12);
+  border-color: rgba(0, 230, 118, .5);
+  color: #a7f3d0;
+}
+.recruit-action:hover { background: rgba(0, 230, 118, .2); }
+.recruit-action:focus-visible { outline: 2px solid #00e676; outline-offset: 3px; }
 
 .primary-action,
 .composer button {

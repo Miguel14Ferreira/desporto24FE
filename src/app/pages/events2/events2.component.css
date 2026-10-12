@@ -50,6 +50,16 @@ h1 {
   gap: .7rem;
 }
 
+.recruit-context {
+  margin-bottom: 1rem;
+  padding: 1rem 1.15rem;
+  border: 1px solid rgba(0, 230, 118, .35);
+  border-radius: 1rem;
+  background: rgba(0, 230, 118, .08);
+}
+.recruit-context strong { color: #a7f3d0; }
+.recruit-context p { margin: .4rem 0 0; color: #e2e8f0; line-height: 1.5; }
+
 .create-card,
 .feedback {
   border: 1px solid rgba(255, 255, 255, .12);

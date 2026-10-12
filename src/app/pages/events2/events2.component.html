@@ -2,9 +2,9 @@
   <div class="create-shell">
     <header class="page-header">
       <div>
-        <p class="eyebrow">Desporto24</p>
-        <h1>{{ 'createSession.title' | t }}</h1>
-        <p class="subtitle">{{ 'createSession.subtitle' | t }}</p>
+        <p class="eyebrow">Jynlo</p>
+        <h1>{{ (findPlayersMode ? 'createSession.findPlayersTitle' : 'createSession.title') | t }}</h1>
+        <p class="subtitle">{{ (findPlayersMode ? 'createSession.findPlayersSubtitle' : 'createSession.subtitle') | t }}</p>
       </div>
 
       <div class="header-actions">
@@ -30,6 +30,13 @@
           [queryParams]="{ community: communityId }">
           {{ 'createSession.backCommunity' | t }}
         </a>
+      </div>
+    }
+
+    @if (findPlayersMode) {
+      <div class="recruit-context" role="note">
+        <strong>{{ 'createSession.findPlayersNoteTitle' | t }}</strong>
+        <p>{{ 'createSession.findPlayersNote' | t }}</p>
       </div>
     }
 
@@ -511,6 +518,7 @@
       </section>
 
       <div class="options-grid">
+        @if (!findPlayersMode) {
         <section class="option-card">
           <label class="toggle-row">
             <input
@@ -536,6 +544,7 @@
             </label>
           }
         </section>
+        }
 
         <section class="option-card">
           <label class="toggle-row">

@@ -8,7 +8,9 @@
       </div>
 
       <div class="header-actions">
-        <a class="secondary-action" routerLink="/menu/perfis">{{ 'feed.findPeople' | t }}</a>
+        <a class="secondary-action" routerLink="/menu/events">{{ 'feed.findSessions' | t }}</a>
+        <a class="recruit-action" routerLink="/menu/createEvent"
+           [queryParams]="{ intent: 'findPlayers' }">{{ 'feed.findPlayers' | t }}</a>
         <a class="primary-action" routerLink="/menu/createEvent">{{ 'feed.createSession' | t }}</a>
       </div>
     </header>
