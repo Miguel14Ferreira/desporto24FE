@@ -83,6 +83,28 @@
 
       </div>
 
+      @if (findPlayersMode) {
+        <div class="recruit-availability">
+          <label class="recruit-confirmed">
+            <span>{{ 'createSession.confirmedPlayers' | t }} *</span>
+            <input
+              type="number"
+              name="confirmedPlayers"
+              [(ngModel)]="confirmedPlayers"
+              min="1"
+              [max]="maxParticipants"
+              step="1"
+              [disabled]="loading">
+            <small>{{ 'createSession.confirmedPlayersHint' | t }}</small>
+          </label>
+          <div class="recruit-remaining" aria-live="polite">
+            <span>{{ 'createSession.availableSpots' | t }}</span>
+            <strong>{{ availablePlaces }}</strong>
+            <small>{{ 'createSession.availableSpotsHint' | t }}</small>
+          </div>
+        </div>
+      }
+
       @if (communityId) {
         <div class="form-grid">
           <label>

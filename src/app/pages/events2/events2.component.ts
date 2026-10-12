@@ -25,6 +25,8 @@ export class Events2Component implements OnInit {
   city = '';
   address = '';
   maxParticipants = 4;
+  // The organiser already has one reserved Jynlo place.
+  confirmedPlayers: number | null = 1;
 
   privateGame = false;
   password = '';
@@ -96,6 +98,16 @@ export class Events2Component implements OnInit {
     return this.route.snapshot.queryParamMap.get('intent') === 'findPlayers' && !this.communityId;
   }
 
+  get availablePlaces(): number {
+    const maximum = Number(this.maxParticipants);
+    const confirmed = Number(this.confirmedPlayers);
+    if (!Number.isInteger(maximum) || !Number.isInteger(confirmed)
+        || maximum < 2 || maximum > 100 || confirmed < 1 || confirmed > maximum) {
+      return 0;
+    }
+    return maximum - confirmed;
+  }
+
   ngOnInit(): void {
     this.minDate = this.toLocalDateTimeValue(new Date());
     this.loadVenues();
@@ -136,6 +148,9 @@ export class Events2Component implements OnInit {
       city: this.city.trim(),
       address: this.address.trim(),
       maxParticipants: Number(this.maxParticipants),
+      ...(this.findPlayersMode
+        ? { externalConfirmedParticipants: Number(this.confirmedPlayers) - 1 }
+        : {}),
       priceAmount: this.hasPrice ? Number(this.priceAmount ?? 0) : 0,
       privateGame: this.findPlayersMode ? false : this.privateGame,
       password: this.findPlayersMode ? null : (this.privateGame ? this.password.trim() : null),
@@ -551,6 +566,14 @@ export class Events2Component implements OnInit {
     const players = Number(this.maxParticipants);
     if (!Number.isInteger(players) || players < 2 || players > 100) {
       return t('feedback.create.playersRange');
+    }
+
+    if (this.findPlayersMode) {
+      const confirmed = Number(this.confirmedPlayers);
+      if (this.confirmedPlayers === null || !Number.isInteger(confirmed)
+          || confirmed < 1 || confirmed > players) {
+        return t('createSession.confirmedPlayersError');
+      }
     }
 
     if (this.communityId && this.recurrence !== 'NONE') {

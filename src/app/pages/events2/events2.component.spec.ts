@@ -100,6 +100,67 @@ describe('Events2Component', () => {
     );
   });
 
+  it('advertises exactly two places for eight confirmed players out of ten', () => {
+    const route = TestBed.inject(ActivatedRoute);
+    spyOn(route.snapshot.queryParamMap, 'get')
+      .and.callFake(name => name === 'intent' ? 'findPlayers' : null);
+    fixture.detectChanges();
+
+    component.sport = 'Padel';
+    component.gameDate = '2099-10-15T18:00';
+    component.city = 'Lisboa';
+    component.address = 'Rua do Campo';
+    component.maxParticipants = 10;
+    component.confirmedPlayers = 8;
+    fixture.detectChanges();
+
+    expect(component.availablePlaces).toBe(2);
+    expect(fixture.nativeElement.querySelector('input[name="confirmedPlayers"]')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.recruit-remaining strong')?.textContent?.trim()).toBe('2');
+
+    component.createSession();
+    expect(sessionService.create).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        maxParticipants: 10,
+        externalConfirmedParticipants: 7,
+        privateGame: false
+      }),
+      undefined
+    );
+  });
+
+  it('blocks invalid confirmed-player totals in Find Players mode', () => {
+    const route = TestBed.inject(ActivatedRoute);
+    spyOn(route.snapshot.queryParamMap, 'get')
+      .and.callFake(name => name === 'intent' ? 'findPlayers' : null);
+    component.sport = 'Padel';
+    component.gameDate = '2099-10-15T18:00';
+    component.city = 'Lisboa';
+    component.address = 'Rua do Campo';
+    component.maxParticipants = 10;
+
+    for (const invalid of [0, 11, 2.5, null]) {
+      component.confirmedPlayers = invalid;
+      component.createSession();
+      expect(sessionService.create).not.toHaveBeenCalled();
+      expect(component.errorMessage).toContain('confirmados');
+    }
+  });
+
+  it('does not send external confirmations from normal session creation', () => {
+    component.sport = 'Padel';
+    component.gameDate = '2099-10-15T18:00';
+    component.city = 'Lisboa';
+    component.address = 'Rua do Campo';
+    component.maxParticipants = 10;
+
+    component.createSession();
+
+    const request = sessionService.create.calls.mostRecent().args[0];
+    expect(request.externalConfirmedParticipants).toBeUndefined();
+    expect(fixture.nativeElement.querySelector('input[name="confirmedPlayers"]')).toBeNull();
+  });
+
   it('should reject an incomplete session', () => {
     component.createSession();
 
