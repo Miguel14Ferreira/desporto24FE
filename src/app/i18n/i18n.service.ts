@@ -124,6 +124,10 @@ const PT: Dictionary = {
   'publicSession.loadError': 'Não foi possível carregar a sessão. Verifica a ligação e tenta novamente.',
   'publicSession.retry': 'Tentar novamente',
   'publicSession.backHome': 'Voltar ao início',
+  'publicSession.brandHome': 'Jynlo — início',
+  'publicSession.eyebrow': 'Sessão pública · Jynlo',
+  'publicSession.intro': 'Descobre esta atividade e junta-te a quem quer praticar desporto.',
+  'publicSession.privacyNote': 'Esta pré-visualização mostra apenas informações públicas da sessão. Os detalhes de participação ficam disponíveis depois de entrares na Jynlo.',
 
   'register.title': 'Criar conta',
   'register.subtitle': 'Cria o teu perfil e começa a encontrar pessoas para praticar desporto.',
@@ -1597,6 +1601,10 @@ const EN: Dictionary = {
   'publicSession.loadError': 'Could not load the session. Check your connection and try again.',
   'publicSession.retry': 'Try again',
   'publicSession.backHome': 'Back to home',
+  'publicSession.brandHome': 'Jynlo — home',
+  'publicSession.eyebrow': 'Public session · Jynlo',
+  'publicSession.intro': 'Discover this activity and join others who love playing sports.',
+  'publicSession.privacyNote': 'This preview only shows public session information. Participation details are available after signing in to Jynlo.',
 
   'register.title': 'Create account',
   'register.subtitle': 'Create your profile and start finding people to play sports with.',

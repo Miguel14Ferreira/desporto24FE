@@ -55,6 +55,37 @@ describe('PublicSessionPreviewComponent', () => {
     return fixture.nativeElement as HTMLElement;
   }
 
+  it('translates the public session introduction and privacy notice into English', () => {
+    TestBed.inject(I18nService).setLanguage('en');
+    const page = render();
+
+    expect(page.querySelector('.brand')?.getAttribute('aria-label')).toBe('Jynlo — home');
+    expect(page.querySelector('.eyebrow')?.textContent?.trim()).toBe('Public session · Jynlo');
+    expect(page.querySelector('.session-main h1')?.textContent?.trim()).toBe('Padel');
+    expect(page.querySelector('.intro')?.textContent?.trim())
+      .toBe('Discover this activity and join others who love playing sports.');
+    expect(page.querySelector('.privacy-note')?.textContent?.trim())
+      .toBe('This preview only shows public session information. Participation details are available after signing in to Jynlo.');
+  });
+
+  it('translates the missing sport title and public introduction when language changes', () => {
+    const i18n = TestBed.inject(I18nService);
+    i18n.setLanguage('en');
+    const page = render({ sport: null });
+
+    expect(page.querySelector('.session-main h1')?.textContent?.trim()).toBe('Sports session');
+
+    i18n.setLanguage('pt');
+    fixture.detectChanges();
+
+    expect(page.querySelector('.session-main h1')?.textContent?.trim()).toBe('Sessão desportiva');
+    expect(page.querySelector('.eyebrow')?.textContent?.trim()).toBe('Sessão pública · Jynlo');
+    expect(page.querySelector('.intro')?.textContent?.trim())
+      .toBe('Descobre esta atividade e junta-te a quem quer praticar desporto.');
+    expect(page.querySelector('.privacy-note')?.textContent?.trim())
+      .toContain('informações públicas da sessão');
+  });
+
   it('translates public session facts into English without changing session data', () => {
     const i18n = TestBed.inject(I18nService);
     i18n.setLanguage('en');

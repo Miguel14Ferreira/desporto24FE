@@ -1,7 +1,7 @@
 <section class="public-session-page">
   <div class="public-session-shell">
     <header class="public-header">
-      <a routerLink="/home" class="brand" aria-label="Jynlo — início">Jynlo<span>.</span></a>
+      <a routerLink="/home" class="brand" [attr.aria-label]="'publicSession.brandHome' | t">Jynlo<span>.</span></a>
       <a [routerLink]="isAuthenticated ? (returnUrl || '/menu/feed') : '/login'"
          [queryParams]="!isAuthenticated && returnUrl ? { returnUrl: returnUrl } : null"
          class="header-login">{{ (isAuthenticated ? 'publicSession.openApp' : 'login.title') | t }}</a>
@@ -12,9 +12,9 @@
     } @else if (session; as details) {
       <main class="session-layout">
         <div class="session-main">
-          <p class="eyebrow">Sessão pública · Jynlo</p>
-          <h1>{{ details.sport || 'Sessão desportiva' }}</h1>
-          <p class="intro">Descobre esta atividade e junta-te a quem quer praticar desporto.</p>
+          <p class="eyebrow">{{ 'publicSession.eyebrow' | t }}</p>
+          <h1>{{ details.sport || ('publicSession.statusUnknown' | t) }}</h1>
+          <p class="intro">{{ 'publicSession.intro' | t }}</p>
 
           @if (photoUrl; as photo) {
             <img class="session-photo" [src]="photo" [alt]="'Fotografia da sessão: ' + (details.sport || 'desporto')">
@@ -44,7 +44,7 @@
               </div>
             }
           </div>
-          <p class="privacy-note">Esta pré-visualização mostra apenas informações públicas da sessão. Os detalhes de participação ficam disponíveis depois de entrares na Jynlo.</p>
+          <p class="privacy-note">{{ 'publicSession.privacyNote' | t }}</p>
         </div>
 
         <aside class="join-panel">
