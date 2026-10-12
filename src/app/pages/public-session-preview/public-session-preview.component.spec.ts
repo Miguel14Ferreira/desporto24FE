@@ -55,6 +55,34 @@ describe('PublicSessionPreviewComponent', () => {
     return fixture.nativeElement as HTMLElement;
   }
 
+  it('localizes the session photo description without changing its source', () => {
+    const i18n = TestBed.inject(I18nService);
+    i18n.setLanguage('en');
+    const page = render({ gamePhoto: '/uploads/padel.jpg' });
+    const photo = page.querySelector('.session-photo') as HTMLImageElement;
+
+    expect(photo).not.toBeNull();
+    expect(photo.getAttribute('alt')).toBe('Session photo: Padel');
+    expect(photo.getAttribute('src')).toContain('/uploads/padel.jpg');
+
+    i18n.setLanguage('pt');
+    fixture.detectChanges();
+    expect(photo.getAttribute('alt')).toBe('Fotografia da sessão: Padel');
+  });
+
+  it('uses a translated photo description when the sport is not specified', () => {
+    const i18n = TestBed.inject(I18nService);
+    i18n.setLanguage('en');
+    const page = render({ gamePhoto: '/uploads/fixture.jpg', sport: null });
+    const photo = page.querySelector('.session-photo') as HTMLImageElement;
+
+    expect(photo.getAttribute('alt')).toBe('Session photo: Sports session');
+
+    i18n.setLanguage('pt');
+    fixture.detectChanges();
+    expect(photo.getAttribute('alt')).toBe('Fotografia da sessão: Sessão desportiva');
+  });
+
   it('translates the public session introduction and privacy notice into English', () => {
     TestBed.inject(I18nService).setLanguage('en');
     const page = render();

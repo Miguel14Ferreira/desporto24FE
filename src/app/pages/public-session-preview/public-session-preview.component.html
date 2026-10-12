@@ -17,7 +17,7 @@
           <p class="intro">{{ 'publicSession.intro' | t }}</p>
 
           @if (photoUrl; as photo) {
-            <img class="session-photo" [src]="photo" [alt]="'Fotografia da sessão: ' + (details.sport || 'desporto')">
+            <img class="session-photo" [src]="photo" [alt]="'publicSession.photoAlt' | t:{ sport: details.sport || ('publicSession.statusUnknown' | t) }">
           }
 
           <div class="session-facts">

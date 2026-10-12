@@ -128,6 +128,7 @@ const PT: Dictionary = {
   'publicSession.eyebrow': 'Sessão pública · Jynlo',
   'publicSession.intro': 'Descobre esta atividade e junta-te a quem quer praticar desporto.',
   'publicSession.privacyNote': 'Esta pré-visualização mostra apenas informações públicas da sessão. Os detalhes de participação ficam disponíveis depois de entrares na Jynlo.',
+  'publicSession.photoAlt': 'Fotografia da sessão: {{sport}}',
 
   'register.title': 'Criar conta',
   'register.subtitle': 'Cria o teu perfil e começa a encontrar pessoas para praticar desporto.',
@@ -1605,6 +1606,7 @@ const EN: Dictionary = {
   'publicSession.eyebrow': 'Public session · Jynlo',
   'publicSession.intro': 'Discover this activity and join others who love playing sports.',
   'publicSession.privacyNote': 'This preview only shows public session information. Participation details are available after signing in to Jynlo.',
+  'publicSession.photoAlt': 'Session photo: {{sport}}',
 
   'register.title': 'Create account',
   'register.subtitle': 'Create your profile and start finding people to play sports with.',
