@@ -50,6 +50,29 @@ describe('CreateaccountComponent', () => {
     expect(component).toBeTruthy();
   });
 
+  it('explains the shared session invitation during account creation', () => {
+    TestBed.inject(ActivatedRoute).snapshot.queryParamMap =
+      convertToParamMap({ returnUrl: '/menu/events/42' });
+    fixture.detectChanges();
+
+    expect(component.hasSharedSessionInvitation).toBeTrue();
+    const message = fixture.nativeElement.querySelector('.invitation-context') as HTMLElement;
+    expect(message).not.toBeNull();
+    expect(message.textContent).toContain('sessão desportiva partilhada');
+    expect(message.textContent).toContain('confirmares o email');
+  });
+
+  it('does not show a shared session invitation without a valid session link', () => {
+    for (const returnUrl of [null, '/menu/feed', '/menu/events/not-a-number', 'https://example.com']) {
+      TestBed.inject(ActivatedRoute).snapshot.queryParamMap =
+        convertToParamMap(returnUrl === null ? {} : { returnUrl });
+      fixture.detectChanges();
+
+      expect(component.hasSharedSessionInvitation).toBeFalse();
+      expect(fixture.nativeElement.querySelector('.invitation-context')).toBeNull();
+    }
+  });
+
   it('should register using only the public registration contract', () => {
     fillValidForm();
 

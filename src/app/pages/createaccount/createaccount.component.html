@@ -10,6 +10,12 @@
       <a class="secondary-action" routerLink="/login" queryParamsHandling="preserve">{{ 'register.haveAccount' | t }}</a>
     </header>
 
+    @if (hasSharedSessionInvitation) {
+      <div class="invitation-context" role="status">
+        {{ 'register.sharedSessionInvitation' | t }}
+      </div>
+    }
+
     @if (errorMessage && !existingAccountRecovery) {
       <div class="feedback error-feedback">{{ errorMessage }}</div>
     }

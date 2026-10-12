@@ -55,6 +55,10 @@ export class CreateaccountComponent {
     return countryNameFromLabel(label);
   }
 
+  get hasSharedSessionInvitation(): boolean {
+    return registrationSessionId(this.route.snapshot.queryParamMap.get('returnUrl')) !== null;
+  }
+
   register(): void {
     const validation = this.validate();
     if (validation) {

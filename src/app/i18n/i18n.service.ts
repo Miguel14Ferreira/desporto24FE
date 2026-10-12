@@ -96,6 +96,7 @@ const PT: Dictionary = {
 
   'register.title': 'Criar conta',
   'register.subtitle': 'Cria o teu perfil e começa a encontrar pessoas para praticar desporto.',
+  'register.sharedSessionInvitation': 'Vieste de uma sessão desportiva partilhada. Depois de confirmares o email e iniciares sessão, abriremos os detalhes para poderes inscrever-te, se ainda houver vagas.',
   'register.haveAccount': 'Já tenho conta',
   'register.existing': 'Conta já existente',
   'register.mayNeedConfirmation': 'Esta conta pode estar por confirmar',
@@ -1537,6 +1538,7 @@ const EN: Dictionary = {
 
   'register.title': 'Create account',
   'register.subtitle': 'Create your profile and start finding people to play sports with.',
+  'register.sharedSessionInvitation': 'You followed a shared sports session. After confirming your email and signing in, we will open its details so you can join if places are available.',
   'register.haveAccount': 'I already have an account',
   'register.existing': 'Account already exists',
   'register.mayNeedConfirmation': 'This account may still need confirmation',
