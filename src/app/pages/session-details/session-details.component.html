@@ -38,6 +38,13 @@
             </div>
           </div>
 
+          @if (canJoinSession()) {
+            <a class="join-shortcut" href="#session-participation">
+              {{ isFull() ? ('sessionDetail.viewWaitlist' | t) : ('sessionDetail.viewJoin' | t) }}
+              <span aria-hidden="true">↓</span>
+            </a>
+          }
+
           <div class="detail-grid">
             <div>
               <span>{{ 'mySessions.date' | t }}</span>
@@ -355,7 +362,7 @@
               </div>
             </section>
           } @else {
-            <section class="participation-panel">
+            <section id="session-participation" class="participation-panel">
               <div>
                 <h2>{{ isFull() ? ('sessionDetail.full' | t) : ('sessionDetail.wantJoin' | t) }}</h2>
                 <p>

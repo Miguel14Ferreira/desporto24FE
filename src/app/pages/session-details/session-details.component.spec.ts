@@ -194,6 +194,48 @@ describe('SessionDetailsComponent', () => {
     expect(ics).toContain('LOCATION:Rua do Campo\\, 10');
   });
 
+  it('should show a shortcut to the join action for a future open session', () => {
+    component.session = {
+      ...session,
+      gameDate: new Date(Date.now() + 3600_000).toISOString()
+    };
+    fixture.detectChanges();
+
+    const shortcut = fixture.nativeElement.querySelector('.join-shortcut') as HTMLAnchorElement;
+    expect(shortcut).not.toBeNull();
+    expect(shortcut.getAttribute('href')).toBe('#session-participation');
+    expect(shortcut.textContent).toContain('Ver inscrição');
+    expect(fixture.nativeElement.querySelector('#session-participation .join-controls .primary-action')).not.toBeNull();
+    expect(sessionService.join).not.toHaveBeenCalled();
+  });
+
+  it('should point to the waitlist for a full session', () => {
+    component.session = {
+      ...session,
+      status: 'FULL',
+      participantCount: 4,
+      gameDate: new Date(Date.now() + 3600_000).toISOString()
+    };
+    fixture.detectChanges();
+
+    const shortcut = fixture.nativeElement.querySelector('.join-shortcut') as HTMLAnchorElement;
+    expect(shortcut.textContent).toContain('lista de espera');
+    expect(shortcut.getAttribute('href')).toBe('#session-participation');
+  });
+
+  it('should not show a join shortcut when a session is closed or already joined', () => {
+    const gameDate = new Date(Date.now() + 3600_000).toISOString();
+    for (const state of [
+      { status: 'CANCELLED', joined: false },
+      { status: 'COMPLETED', joined: false },
+      { status: 'OPEN', joined: true }
+    ]) {
+      component.session = { ...session, ...state, gameDate };
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('.join-shortcut')).toBeNull();
+    }
+  });
+
   it('should join the session and refresh its details', () => {
     component.session = { ...session, gameDate: new Date(Date.now() + 3600_000).toISOString() };
     component.joinSession();
