@@ -147,7 +147,9 @@ export class LoginComponent implements OnInit, AfterViewInit {
             sessionStorage.setItem('google-onboarding-email', response.email || '');
             sessionStorage.setItem('google-onboarding-name', response.fullName || '');
             sessionStorage.setItem('google-onboarding-picture', response.pictureUrl || '');
-            this.router.navigate(['/login/google/complete-profile']);
+            this.router.navigate(['/login/google/complete-profile'], {
+              queryParams: { returnUrl: this.returnUrl }
+            });
             return;
           }
 
