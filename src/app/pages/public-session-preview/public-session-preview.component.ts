@@ -6,6 +6,7 @@ import { finalize, timeout } from 'rxjs';
 
 import { environment } from 'src/environment/environment';
 import { AuthenticationService } from '../../services/authethication.service';
+import { TranslatePipe } from '../../i18n/translate.pipe';
 
 interface SessionPublicPreview {
   id: number;
@@ -21,7 +22,7 @@ interface SessionPublicPreview {
 @Component({
   selector: 'app-public-session-preview',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, TranslatePipe],
   templateUrl: './public-session-preview.component.html',
   styleUrls: ['./public-session-preview.component.css'],
   changeDetection: ChangeDetectionStrategy.Eager

@@ -6,6 +6,7 @@ import { of, throwError } from 'rxjs';
 
 import { PublicSessionPreviewComponent } from './public-session-preview.component';
 import { AuthenticationService } from '../../services/authethication.service';
+import { I18nService } from '../../i18n/i18n.service';
 
 describe('PublicSessionPreviewComponent', () => {
   let fixture: ComponentFixture<PublicSessionPreviewComponent>;
@@ -33,6 +34,11 @@ describe('PublicSessionPreviewComponent', () => {
     fixture = TestBed.createComponent(PublicSessionPreviewComponent);
   });
 
+  afterEach(() => {
+    TestBed.inject(I18nService).setLanguage('pt');
+    localStorage.removeItem('d24-language');
+  });
+
   function render(overrides: Record<string, unknown> = {}): HTMLElement {
     http.get.and.returnValue(of({
       id: 42,
@@ -48,6 +54,38 @@ describe('PublicSessionPreviewComponent', () => {
     fixture.detectChanges();
     return fixture.nativeElement as HTMLElement;
   }
+
+  it('translates guest entry actions to English while preserving the session return URL', () => {
+    TestBed.inject(I18nService).setLanguage('en');
+    const page = render();
+
+    expect(page.querySelector('.header-login')?.textContent?.trim()).toBe('Sign in');
+    expect(page.querySelector('.join-panel .primary-action')?.textContent?.trim()).toBe('Create account');
+    expect(page.querySelector('.join-panel .secondary-action')?.textContent?.trim())
+      .toBe('I already have an account');
+    const createAccount = page.querySelector('.join-panel .primary-action') as HTMLAnchorElement;
+    expect(createAccount.getAttribute('href')).toContain('returnUrl=');
+    expect(createAccount.getAttribute('href')).toContain('42');
+  });
+
+  it('translates available, full and closed session actions for authenticated players', () => {
+    TestBed.inject(I18nService).setLanguage('en');
+    authenticationService.isLoggedIn.and.returnValue(true);
+    const page = render();
+
+    const primary = () => page.querySelector('.join-panel .primary-action') as HTMLAnchorElement;
+    expect(page.querySelector('.header-login')?.textContent?.trim()).toBe('Open in Jynlo');
+    expect(primary().textContent?.trim()).toBe('View session and join');
+
+    fixture.componentInstance.session!.status = 'FULL';
+    fixture.detectChanges();
+    expect(primary().textContent?.trim()).toBe('View session and waitlist');
+
+    fixture.componentInstance.session!.status = 'CANCELLED';
+    fixture.detectChanges();
+    expect(primary().textContent?.trim()).toBe('View details');
+    expect(primary().getAttribute('href')).toBe('/menu/events/42');
+  });
 
   it('rejects malformed session IDs without requesting a different session', () => {
     const route = TestBed.inject(ActivatedRoute);

@@ -93,6 +93,10 @@ const PT: Dictionary = {
   'login.entering': 'A entrar...',
   'login.forgot': 'Esqueci-me da palavra-passe',
   'login.create': 'Criar nova conta',
+  'publicSession.openApp': 'Abrir na Jynlo',
+  'publicSession.viewJoin': 'Ver sessão e inscrever-me',
+  'publicSession.viewWaitlist': 'Ver sessão e lista de espera',
+  'publicSession.viewDetails': 'Ver detalhes',
 
   'register.title': 'Criar conta',
   'register.subtitle': 'Cria o teu perfil e começa a encontrar pessoas para praticar desporto.',
@@ -1535,6 +1539,10 @@ const EN: Dictionary = {
   'login.entering': 'Signing in...',
   'login.forgot': 'Forgot your password?',
   'login.create': 'Create new account',
+  'publicSession.openApp': 'Open in Jynlo',
+  'publicSession.viewJoin': 'View session and join',
+  'publicSession.viewWaitlist': 'View session and waitlist',
+  'publicSession.viewDetails': 'View details',
 
   'register.title': 'Create account',
   'register.subtitle': 'Create your profile and start finding people to play sports with.',

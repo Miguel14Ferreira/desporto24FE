@@ -4,7 +4,7 @@
       <a routerLink="/home" class="brand" aria-label="Jynlo — início">Jynlo<span>.</span></a>
       <a [routerLink]="isAuthenticated ? (returnUrl || '/menu/feed') : '/login'"
          [queryParams]="!isAuthenticated && returnUrl ? { returnUrl: returnUrl } : null"
-         class="header-login">{{ isAuthenticated ? 'Abrir na Jynlo' : 'Iniciar sessão' }}</a>
+         class="header-login">{{ (isAuthenticated ? 'publicSession.openApp' : 'login.title') | t }}</a>
     </header>
 
     @if (loading) {
@@ -59,20 +59,20 @@
             }
             @if (isAuthenticated) {
               <a class="primary-action" [routerLink]="['/menu/events', details.id]">
-                {{ details.status === 'FULL' ? 'Ver sessão e lista de espera' : 'Ver sessão e inscrever-me' }}
+                {{ (details.status === 'FULL' ? 'publicSession.viewWaitlist' : 'publicSession.viewJoin') | t }}
               </a>
             } @else {
-              <a class="primary-action" routerLink="/login/registerNewUser" [queryParams]="{ returnUrl: '/menu/events/' + details.id }">Criar conta</a>
+              <a class="primary-action" routerLink="/login/registerNewUser" [queryParams]="{ returnUrl: '/menu/events/' + details.id }">{{ 'nav.register' | t }}</a>
             }
           } @else {
             <h2>Esta sessão já não aceita inscrições.</h2>
             <p>Não é possível inscrever-te neste jogo, mas podes consultar os detalhes.</p>
             @if (isAuthenticated) {
-              <a class="primary-action" [routerLink]="['/menu/events', details.id]">Ver detalhes</a>
+              <a class="primary-action" [routerLink]="['/menu/events', details.id]">{{ 'publicSession.viewDetails' | t }}</a>
             }
           }
           @if (!isAuthenticated) {
-            <a class="secondary-action" routerLink="/login" [queryParams]="{returnUrl: '/menu/events/' + details.id}">Já tenho conta</a>
+            <a class="secondary-action" routerLink="/login" [queryParams]="{returnUrl: '/menu/events/' + details.id}">{{ 'register.haveAccount' | t }}</a>
           }
         </aside>
       </main>
