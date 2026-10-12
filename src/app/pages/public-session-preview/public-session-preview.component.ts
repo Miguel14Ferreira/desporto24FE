@@ -30,7 +30,7 @@ interface SessionPublicPreview {
 export class PublicSessionPreviewComponent implements OnInit {
   session: SessionPublicPreview | null = null;
   loading = true;
-  errorMessage = '';
+  errorMessageKey = '';
   canRetry = false;
   isAuthenticated = false;
   returnUrl: string | null = null;
@@ -50,7 +50,7 @@ export class PublicSessionPreviewComponent implements OnInit {
     const id = rawId !== null && /^[1-9]\d*$/.test(rawId) ? Number(rawId) : NaN;
     if (!Number.isSafeInteger(id)) {
       this.loading = false;
-      this.errorMessage = 'Esta ligação de sessão não é válida.';
+      this.errorMessageKey = 'publicSession.invalidLink';
       return;
     }
 
@@ -72,7 +72,7 @@ export class PublicSessionPreviewComponent implements OnInit {
 
     this.loading = true;
     this.session = null;
-    this.errorMessage = '';
+    this.errorMessageKey = '';
     this.canRetry = false;
 
     this.http.get<SessionPublicPreview>(
@@ -86,9 +86,9 @@ export class PublicSessionPreviewComponent implements OnInit {
         const unavailable = error instanceof HttpErrorResponse
           && error.status >= 400 && error.status < 500;
         this.canRetry = !unavailable;
-        this.errorMessage = unavailable
-          ? 'Esta sessão não está disponível para consulta pública.'
-          : 'Não foi possível carregar a sessão. Verifica a ligação e tenta novamente.';
+        this.errorMessageKey = unavailable
+          ? 'publicSession.unavailable'
+          : 'publicSession.loadError';
       }
     });
   }

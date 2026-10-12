@@ -206,6 +206,54 @@ describe('PublicSessionPreviewComponent', () => {
     expect(heading()).toBe('Esta sessão já não aceita inscrições.');
   });
 
+  it('shows a translated invalid-link error without calling the preview API', () => {
+    TestBed.inject(I18nService).setLanguage('en');
+    TestBed.inject(ActivatedRoute).snapshot.paramMap = convertToParamMap({ id: '1e2' });
+    fixture.detectChanges();
+    const page = fixture.nativeElement as HTMLElement;
+
+    expect(page.querySelector('.error-state h1')?.textContent?.trim()).toBe('Session unavailable');
+    expect(page.querySelector('.error-state p')?.textContent?.trim()).toBe('This session link is invalid.');
+    expect(page.querySelector('.retry-action')).toBeNull();
+    expect(page.querySelector('.error-state a')?.textContent?.trim()).toBe('Back to home');
+    expect(http.get).not.toHaveBeenCalled();
+  });
+
+  it('translates temporary preview failures and the retry action', () => {
+    TestBed.inject(I18nService).setLanguage('en');
+    http.get.and.returnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
+    fixture.detectChanges();
+    const page = fixture.nativeElement as HTMLElement;
+
+    expect(page.querySelector('.error-state p')?.textContent?.trim())
+      .toBe('Could not load the session. Check your connection and try again.');
+    const retry = page.querySelector('.retry-action') as HTMLButtonElement;
+    expect(retry.textContent?.trim()).toBe('Try again');
+
+    http.get.and.returnValue(of({
+      id: 42, sport: 'Padel', city: 'Lisboa',
+      gameDate: new Date(Date.now() + 3600_000).toISOString(),
+      maxParticipants: 4, priceAmount: 0, status: 'OPEN', gamePhoto: null
+    }) as any);
+    retry.click();
+    fixture.detectChanges();
+
+    expect(http.get).toHaveBeenCalledTimes(2);
+    expect(page.textContent).toContain('Padel');
+    expect(page.querySelector('.retry-action')).toBeNull();
+  });
+
+  it('translates permanent preview failures without offering a retry', () => {
+    TestBed.inject(I18nService).setLanguage('en');
+    http.get.and.returnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
+    fixture.detectChanges();
+    const page = fixture.nativeElement as HTMLElement;
+
+    expect(page.querySelector('.error-state p')?.textContent?.trim())
+      .toBe('This session is not available for public viewing.');
+    expect(page.querySelector('.retry-action')).toBeNull();
+  });
+
   it('rejects malformed session IDs without requesting a different session', () => {
     const route = TestBed.inject(ActivatedRoute);
     const invalidIds = ['1e2', '42.0', '+42', '00042', '-1', '0', 'abc', '9007199254740992'];

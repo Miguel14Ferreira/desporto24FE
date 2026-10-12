@@ -8,7 +8,7 @@
     </header>
 
     @if (loading) {
-      <div class="state-card" role="status">A carregar a sessão...</div>
+      <div class="state-card" role="status">{{ 'publicSession.loading' | t }}</div>
     } @else if (session; as details) {
       <main class="session-layout">
         <div class="session-main">
@@ -78,12 +78,12 @@
       </main>
     } @else {
       <main class="state-card error-state" role="alert">
-        <h1>Sessão indisponível</h1>
-        <p>{{ errorMessage }}</p>
+        <h1>{{ 'publicSession.errorTitle' | t }}</h1>
+        <p>{{ errorMessageKey | t }}</p>
         @if (canRetry) {
-          <button type="button" class="retry-action" (click)="retryLoad()">Tentar novamente</button>
+          <button type="button" class="retry-action" (click)="retryLoad()">{{ 'publicSession.retry' | t }}</button>
         }
-        <a routerLink="/home">Voltar ao início</a>
+        <a routerLink="/home">{{ 'publicSession.backHome' | t }}</a>
       </main>
     }
   </div>
