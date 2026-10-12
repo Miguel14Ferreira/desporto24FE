@@ -293,6 +293,18 @@
                   <strong>{{ 'feed.viewSession' | t }}</strong>
                 </div>
               </a>
+              @if (item.sessionId !== null) {
+                <div class="post-actions">
+                  <button
+                    type="button"
+                    [disabled]="copyingSessionId !== null"
+                    (click)="copySessionLink(item.sessionId)"
+                    [attr.aria-label]="copiedSessionId === item.sessionId ? 'Ligação da sessão copiada' : 'Copiar ligação da sessão'">
+                    <span aria-hidden="true">↗</span>
+                    {{ copiedSessionId === item.sessionId ? 'Ligação copiada' : 'Copiar ligação' }}
+                  </button>
+                </div>
+              }
             }
           </article>
         }

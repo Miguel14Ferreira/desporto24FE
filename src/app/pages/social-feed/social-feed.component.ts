@@ -45,6 +45,8 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
   commentDrafts: Record<number, string> = {};
   errorMessage = '';
   actionError = '';
+  copiedSessionId: number | null = null;
+  copyingSessionId: number | null = null;
 
   readonly currentUsername: string;
 
@@ -139,6 +141,26 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
         },
         error: () => this.actionError = t('feedback.feed.publishError')
       });
+  }
+
+  async copySessionLink(sessionId: number | null): Promise<void> {
+    if (sessionId === null || this.copyingSessionId !== null) {
+      return;
+    }
+
+    this.copyingSessionId = sessionId;
+    this.actionError = '';
+    this.copiedSessionId = null;
+
+    try {
+      const url = new URL('/menu/events/' + sessionId, window.location.origin).href;
+      await navigator.clipboard.writeText(url);
+      this.copiedSessionId = sessionId;
+    } catch {
+      this.actionError = 'Não foi possível copiar a ligação. Abre a sessão e copia o endereço.';
+    } finally {
+      this.copyingSessionId = null;
+    }
   }
 
   onPostImageChange(event: Event): void {
