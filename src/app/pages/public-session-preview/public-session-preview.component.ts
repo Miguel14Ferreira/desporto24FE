@@ -81,7 +81,15 @@ export class PublicSessionPreviewComponent implements OnInit {
       timeout(10000),
       finalize(() => this.loading = false)
     ).subscribe({
-      next: session => this.session = session,
+      next: session => {
+        // Never display or link to a different session than the shared URL.
+        if (session?.id !== this.sessionId) {
+          this.errorMessageKey = 'publicSession.unavailable';
+          this.canRetry = false;
+          return;
+        }
+        this.session = session;
+      },
       error: (error: unknown) => {
         const unavailable = error instanceof HttpErrorResponse
           && error.status >= 400 && error.status < 500;

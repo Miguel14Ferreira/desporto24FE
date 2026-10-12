@@ -302,6 +302,28 @@ describe('PublicSessionPreviewComponent', () => {
     }
   });
 
+  it('rejects preview data from a different session without showing join links', () => {
+    authenticationService.isLoggedIn.and.returnValue(true);
+    const page = render({ id: 99 });
+
+    expect(http.get).toHaveBeenCalledWith(jasmine.stringMatching(/\/api\/sessions\/42\/public-preview$/));
+    expect(fixture.componentInstance.session).toBeNull();
+    expect(fixture.componentInstance.returnUrl).toBe('/menu/events/42');
+    expect(page.querySelector('.join-panel')).toBeNull();
+    expect(page.querySelector('.error-state p')?.textContent)
+      .toContain('Esta sessão não está disponível para consulta pública');
+    expect(page.querySelector('.retry-action')).toBeNull();
+  });
+
+  it('rejects a public preview without a session ID', () => {
+    const page = render({ id: null });
+
+    expect(fixture.componentInstance.session).toBeNull();
+    expect(page.querySelector('.join-panel .primary-action')).toBeNull();
+    expect(page.querySelector('.error-state')).not.toBeNull();
+    expect(fixture.componentInstance.canRetry).toBeFalse();
+  });
+
   it('keeps a canonical positive session ID when loading its public preview', () => {
     const page = render();
 
