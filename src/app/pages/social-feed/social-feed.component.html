@@ -331,6 +331,17 @@
                 </div>
               }
             }
+            @if (manualShareItem === item && manualShareUrl) {
+              <div class="manual-share-link">
+                <label for="feed-share-link">Ligação pública da sessão</label>
+                <div class="manual-share-controls">
+                  <input id="feed-share-link" #shareLinkInput type="text"
+                         [value]="manualShareUrl" readonly
+                         aria-label="Ligação da sessão para copiar manualmente">
+                  <button type="button" (click)="shareLinkInput.select()">Selecionar ligação</button>
+                </div>
+              </div>
+            }
           </article>
         }
       </div>

@@ -418,6 +418,54 @@ h1 {
   cursor: wait;
 }
 
+.manual-share-link {
+  display: grid;
+  gap: .5rem;
+  margin-top: .75rem;
+  padding: .85rem;
+  border: 1px solid rgba(125, 211, 252, .2);
+  border-radius: .75rem;
+  background: rgba(125, 211, 252, .05);
+}
+
+.manual-share-link label {
+  color: #cbd5e1;
+  font-weight: 700;
+}
+
+.manual-share-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .55rem;
+}
+
+.manual-share-controls input {
+  flex: 1 1 220px;
+  min-width: 0;
+  padding: .65rem;
+  border: 1px solid rgba(125, 211, 252, .35);
+  border-radius: .6rem;
+  background: rgba(255, 255, 255, .06);
+  color: #f8fafc;
+}
+
+.manual-share-controls button {
+  padding: .65rem .85rem;
+  border: 1px solid rgba(125, 211, 252, .5);
+  border-radius: .6rem;
+  background: transparent;
+  color: #bae6fd;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.manual-share-controls button:focus-visible,
+.manual-share-controls input:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
 .comments-panel {
   margin-top: .6rem;
   padding-top: .65rem;

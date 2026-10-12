@@ -48,6 +48,8 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
   sharingSessionId: number | null = null;
   shareFeedbackSessionId: number | null = null;
   shareFeedbackMessage = '';
+  manualShareItem: FeedItem | null = null;
+  manualShareUrl = '';
 
   readonly currentUsername: string;
 
@@ -158,6 +160,8 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
 
     this.sharingSessionId = sessionId;
     this.shareFeedbackSessionId = null;
+    this.manualShareItem = null;
+    this.manualShareUrl = '';
     this.actionError = '';
 
     try {
@@ -176,14 +180,24 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
         }
       }
 
-      await navigator.clipboard.writeText(url);
+      await this.copyShareUrl(url);
       this.shareFeedbackSessionId = sessionId;
       this.shareFeedbackMessage = 'Ligação copiada';
     } catch {
-      this.actionError = 'Não foi possível partilhar. Abre a sessão e copia o endereço.';
+      this.manualShareItem = item;
+      this.manualShareUrl = url;
+      this.shareFeedbackSessionId = sessionId;
+      this.shareFeedbackMessage = 'Seleciona a ligação abaixo';
     } finally {
       this.sharingSessionId = null;
     }
+  }
+
+  private copyShareUrl(url: string): Promise<void> {
+    if (!navigator.clipboard?.writeText) {
+      return Promise.reject(new Error('Clipboard unavailable'));
+    }
+    return navigator.clipboard.writeText(url);
   }
 
   onPostImageChange(event: Event): void {
