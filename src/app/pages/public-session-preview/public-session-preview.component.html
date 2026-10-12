@@ -51,11 +51,11 @@
           <span class="status" [class.closed]="!canRequestParticipation">{{ statusKey | t }}</span>
           @if (canRequestParticipation) {
             @if (details.status === 'FULL') {
-              <h2>Ainda podes entrar na lista de espera.</h2>
-              <p>Esta sessão está cheia, mas podes juntar-te à lista de espera caso surja uma vaga.</p>
+              <h2>{{ 'publicSession.fullHeading' | t }}</h2>
+              <p>{{ 'publicSession.fullExplanation' | t }}</p>
             } @else {
-              <h2>O próximo jogo pode ser teu.</h2>
-              <p>{{ isAuthenticated ? 'Abre os detalhes para participares nesta sessão.' : 'Cria uma conta gratuita para veres todos os detalhes e participares nesta sessão.' }}</p>
+              <h2>{{ 'publicSession.openHeading' | t }}</h2>
+              <p>{{ (isAuthenticated ? 'publicSession.openLoggedIn' : 'publicSession.openGuest') | t }}</p>
             }
             @if (isAuthenticated) {
               <a class="primary-action" [routerLink]="['/menu/events', details.id]">
@@ -65,8 +65,8 @@
               <a class="primary-action" routerLink="/login/registerNewUser" [queryParams]="{ returnUrl: '/menu/events/' + details.id }">{{ 'nav.register' | t }}</a>
             }
           } @else {
-            <h2>Esta sessão já não aceita inscrições.</h2>
-            <p>Não é possível inscrever-te neste jogo, mas podes consultar os detalhes.</p>
+            <h2>{{ 'publicSession.closedHeading' | t }}</h2>
+            <p>{{ 'publicSession.closedExplanation' | t }}</p>
             @if (isAuthenticated) {
               <a class="primary-action" [routerLink]="['/menu/events', details.id]">{{ 'publicSession.viewDetails' | t }}</a>
             }

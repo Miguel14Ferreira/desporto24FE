@@ -125,6 +125,50 @@ describe('PublicSessionPreviewComponent', () => {
     expect(label()).toBe('Sessão desportiva');
   });
 
+  it('explains how to join an open session in English for guests and players', () => {
+    TestBed.inject(I18nService).setLanguage('en');
+    const page = render();
+    const heading = () => page.querySelector('.join-panel h2')?.textContent?.trim();
+    const description = () => page.querySelector('.join-panel p')?.textContent?.trim();
+
+    expect(heading()).toBe('Your next game starts here.');
+    expect(description()).toBe('Create a free account to see all the details and join this session.');
+
+    authenticationService.isLoggedIn.and.returnValue(true);
+    fixture.componentInstance.isAuthenticated = true;
+    fixture.detectChanges();
+
+    expect(heading()).toBe('Your next game starts here.');
+    expect(description()).toBe('Open the session details to join.');
+    expect(page.querySelector('.join-panel .primary-action')?.getAttribute('href'))
+      .toBe('/menu/events/42');
+  });
+
+  it('translates waitlist and closed-session explanations without changing signup options', () => {
+    const i18n = TestBed.inject(I18nService);
+    i18n.setLanguage('en');
+    authenticationService.isLoggedIn.and.returnValue(true);
+    const page = render({ status: 'FULL' });
+    const heading = () => page.querySelector('.join-panel h2')?.textContent?.trim();
+    const description = () => page.querySelector('.join-panel p')?.textContent?.trim();
+
+    expect(heading()).toBe('You can still join the waitlist.');
+    expect(description()).toContain('join the waitlist');
+    expect(page.querySelector('.join-panel .primary-action')?.getAttribute('href'))
+      .toBe('/menu/events/42');
+
+    fixture.componentInstance.session!.status = 'CANCELLED';
+    fixture.detectChanges();
+    expect(heading()).toBe('This session is no longer accepting registrations.');
+    expect(description()).toContain('cannot join this game');
+    expect(page.querySelector('.join-panel .primary-action')?.textContent?.trim())
+      .toBe('View details');
+
+    i18n.setLanguage('pt');
+    fixture.detectChanges();
+    expect(heading()).toBe('Esta sessão já não aceita inscrições.');
+  });
+
   it('rejects malformed session IDs without requesting a different session', () => {
     const route = TestBed.inject(ActivatedRoute);
     const invalidIds = ['1e2', '42.0', '+42', '00042', '-1', '0', 'abc', '9007199254740992'];
