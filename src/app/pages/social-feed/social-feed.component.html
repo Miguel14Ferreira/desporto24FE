@@ -157,7 +157,7 @@
                   <button
                     type="button"
                     class="share-session"
-                    [disabled]="sharingSessionId !== null || copyingSessionId !== null"
+                    [disabled]="sharingSessionId !== null"
                     (click)="shareSession(item)"
                     [attr.aria-label]="shareFeedbackSessionId === item.sessionId ? shareFeedbackMessage : 'Partilhar sessão'">
                     <span aria-hidden="true">↗</span>
@@ -287,7 +287,7 @@
                   <button
                                       type="button"
                                       class="share-session"
-                                      [disabled]="sharingSessionId !== null || copyingSessionId !== null"
+                                      [disabled]="sharingSessionId !== null"
                                       (click)="shareSession(item)"
                                       [attr.aria-label]="shareFeedbackSessionId === item.sessionId ? shareFeedbackMessage : 'Partilhar sessão'">
                                       <span aria-hidden="true">↗</span>
@@ -322,19 +322,11 @@
                   <button
                     type="button"
                     class="share-session"
-                    [disabled]="sharingSessionId !== null || copyingSessionId !== null"
+                    [disabled]="sharingSessionId !== null"
                     (click)="shareSession(item)"
                     [attr.aria-label]="shareFeedbackSessionId === item.sessionId ? shareFeedbackMessage : 'Partilhar sessão'">
                     <span aria-hidden="true">↗</span>
                     {{ shareFeedbackSessionId === item.sessionId ? shareFeedbackMessage : 'Partilhar' }}
-                  </button>
-                  <button
-                    type="button"
-                    [disabled]="copyingSessionId !== null || sharingSessionId !== null"
-                    (click)="copySessionLink(item.sessionId)"
-                    [attr.aria-label]="copiedSessionId === item.sessionId ? 'Ligação da sessão copiada' : 'Copiar ligação da sessão'">
-                    <span aria-hidden="true">↗</span>
-                    {{ copiedSessionId === item.sessionId ? 'Ligação copiada' : 'Copiar ligação' }}
                   </button>
                 </div>
               }
