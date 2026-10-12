@@ -67,6 +67,9 @@
       <main class="state-card error-state" role="alert">
         <h1>Sessão indisponível</h1>
         <p>{{ errorMessage }}</p>
+        @if (canRetry) {
+          <button type="button" class="retry-action" (click)="retryLoad()">Tentar novamente</button>
+        }
         <a routerLink="/home">Voltar ao início</a>
       </main>
     }

@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
@@ -29,7 +29,9 @@ export class PublicSessionPreviewComponent implements OnInit {
   session: SessionPublicPreview | null = null;
   loading = true;
   errorMessage = '';
+  canRetry = false;
   returnUrl: string | null = null;
+  private sessionId: number | null = null;
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -44,17 +46,41 @@ export class PublicSessionPreviewComponent implements OnInit {
       return;
     }
 
+    this.sessionId = id;
     this.returnUrl = '/menu/events/' + id;
+    this.loadPreview();
+  }
+
+  retryLoad(): void {
+    if (this.canRetry && !this.loading) {
+      this.loadPreview();
+    }
+  }
+
+  private loadPreview(): void {
+    if (this.sessionId === null) {
+      return;
+    }
+
+    this.loading = true;
+    this.session = null;
+    this.errorMessage = '';
+    this.canRetry = false;
 
     this.http.get<SessionPublicPreview>(
-      environment.apiUrl + '/api/sessions/' + id + '/public-preview'
+      environment.apiUrl + '/api/sessions/' + this.sessionId + '/public-preview'
     ).pipe(
       timeout(10000),
       finalize(() => this.loading = false)
     ).subscribe({
       next: session => this.session = session,
-      error: () => {
-        this.errorMessage = 'Esta sessão não está disponível para consulta pública.';
+      error: (error: unknown) => {
+        const unavailable = error instanceof HttpErrorResponse
+          && error.status >= 400 && error.status < 500;
+        this.canRetry = !unavailable;
+        this.errorMessage = unavailable
+          ? 'Esta sessão não está disponível para consulta pública.'
+          : 'Não foi possível carregar a sessão. Verifica a ligação e tenta novamente.';
       }
     });
   }

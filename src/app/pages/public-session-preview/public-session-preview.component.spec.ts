@@ -1,8 +1,8 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 
 import { PublicSessionPreviewComponent } from './public-session-preview.component';
 
@@ -40,6 +40,50 @@ describe('PublicSessionPreviewComponent', () => {
     fixture.detectChanges();
     return fixture.nativeElement as HTMLElement;
   }
+
+  it('shows a retry action when the preview API is temporarily unavailable', () => {
+    http.get.and.returnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
+    fixture.detectChanges();
+    const page = fixture.nativeElement as HTMLElement;
+
+    expect(page.textContent).toContain('Verifica a ligação e tenta novamente');
+    expect(page.querySelector('.retry-action')).not.toBeNull();
+    expect(page.querySelector('.error-state a')).not.toBeNull();
+  });
+
+  it('can reload the public preview after a temporary failure', () => {
+    http.get.and.returnValue(throwError(() => new HttpErrorResponse({ status: 0 })));
+    fixture.detectChanges();
+
+    http.get.and.returnValue(of({
+      id: 42,
+      sport: 'Padel',
+      city: 'Lisboa',
+      gameDate: new Date(Date.now() + 3600_000).toISOString(),
+      maxParticipants: 4,
+      priceAmount: 0,
+      status: 'OPEN',
+      gamePhoto: null
+    }) as any);
+
+    const button = (fixture.nativeElement as HTMLElement).querySelector('.retry-action') as HTMLButtonElement;
+    button.click();
+    fixture.detectChanges();
+
+    expect(http.get).toHaveBeenCalledTimes(2);
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Padel');
+    expect((fixture.nativeElement as HTMLElement).querySelector('.retry-action')).toBeNull();
+  });
+
+  it('does not offer retries for sessions that are not publicly available', () => {
+    http.get.and.returnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
+    fixture.detectChanges();
+    const page = fixture.nativeElement as HTMLElement;
+
+    expect(page.textContent).toContain('Esta sessão não está disponível para consulta pública');
+    expect(page.querySelector('.retry-action')).toBeNull();
+    expect(page.querySelector('.error-state a')).not.toBeNull();
+  });
 
   it('offers account creation for a future open session', () => {
     const page = render();
