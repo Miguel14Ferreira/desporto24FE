@@ -150,6 +150,38 @@ h1 {
 
 .secondary-action { border: 1px solid rgba(255, 255, 255, .18); }
 
+.share-session-action, .manual-share-link button {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, .24);
+  border-radius: .8rem;
+  padding: .85rem 1rem;
+  background: transparent;
+  color: #e0f2fe;
+  font: inherit;
+  font-weight: 750;
+  cursor: pointer;
+}
+.share-session-action:hover, .manual-share-link button:hover {
+  background: rgba(125, 211, 252, .1);
+}
+.share-session-action:disabled { cursor: wait; opacity: .7; }
+.share-session-action:focus-visible, .manual-share-link button:focus-visible,
+.manual-share-link input:focus-visible { outline: 2px solid #7dd3fc; outline-offset: 3px; }
+.share-feedback { color: #bae6fd; font-size: .9rem; }
+.manual-share-link { display: grid; gap: .5rem; min-width: 0; }
+.manual-share-link label { font-size: .85rem; color: #cbd5e1; }
+.manual-share-link input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: .75rem;
+  border: 1px solid rgba(255, 255, 255, .24);
+  border-radius: .7rem;
+  background: rgba(255, 255, 255, .08);
+  color: #f8fafc;
+  font: inherit;
+}
+
 .primary-action:hover { background: #dbeafe; }
 .primary-action:focus-visible, .secondary-action:focus-visible,
 .header-login:focus-visible, .brand:focus-visible {

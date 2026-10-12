@@ -74,6 +74,24 @@
           @if (!isAuthenticated) {
             <a class="secondary-action" routerLink="/login" [queryParams]="{returnUrl: returnUrl}">{{ 'register.haveAccount' | t }}</a>
           }
+          @if (canRequestParticipation) {
+            <button type="button" class="share-session-action"
+                    [disabled]="sharingSession" (click)="shareSession()">
+              {{ (sharingSession ? 'publicSession.sharing' : 'publicSession.share') | t }}
+            </button>
+            @if (shareFeedbackKey) {
+              <p class="share-feedback" role="status">{{ shareFeedbackKey | t }}</p>
+            }
+            @if (manualShareUrl) {
+              <div class="manual-share-link">
+                <label for="public-preview-share-url">{{ 'publicSession.shareLink' | t }}</label>
+                <input id="public-preview-share-url" #shareLinkInput type="text"
+                       [value]="manualShareUrl" readonly
+                       [attr.aria-label]="'publicSession.shareLink' | t">
+                <button type="button" (click)="shareLinkInput.select()">{{ 'publicSession.selectLink' | t }}</button>
+              </div>
+            }
+          }
         </aside>
       </main>
     } @else {

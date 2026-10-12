@@ -83,6 +83,68 @@ describe('PublicSessionPreviewComponent', () => {
     expect(photo.getAttribute('alt')).toBe('Fotografia da sessão: Sessão desportiva');
   });
 
+  it('lets a guest share a verified public session without signing in', () => {
+    const page = render();
+    const share = page.querySelector('.share-session-action') as HTMLButtonElement;
+
+    expect(share).not.toBeNull();
+    expect(share.textContent?.trim()).toBe('Partilhar sessão');
+    expect(fixture.componentInstance.publicShareUrl())
+      .toBe(new URL('/sessions/42', window.location.origin).href);
+  });
+
+  it('copies the public link when native sharing is unavailable', async () => {
+    const page = render();
+    if (typeof navigator.share === 'function') {
+      spyOn(navigator, 'share').and.returnValue(Promise.reject(new Error('Unavailable')));
+    }
+    const copy = spyOn<any>(fixture.componentInstance, 'copyShareUrl')
+      .and.returnValue(Promise.resolve());
+
+    (page.querySelector('.share-session-action') as HTMLButtonElement).click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(copy).toHaveBeenCalledWith(new URL('/sessions/42', window.location.origin).href);
+    expect(page.querySelector('.share-feedback')?.textContent?.trim()).toBe('Ligação copiada');
+    expect(page.querySelector('.manual-share-link')).toBeNull();
+  });
+
+  it('offers a selectable link if both native sharing and clipboard copying fail', async () => {
+    const i18n = TestBed.inject(I18nService);
+    i18n.setLanguage('en');
+    const page = render();
+    if (typeof navigator.share === 'function') {
+      spyOn(navigator, 'share').and.returnValue(Promise.reject(new Error('Unavailable')));
+    }
+    spyOn<any>(fixture.componentInstance, 'copyShareUrl')
+      .and.returnValue(Promise.reject(new Error('Clipboard blocked')));
+
+    (page.querySelector('.share-session-action') as HTMLButtonElement).click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const input = page.querySelector('#public-preview-share-url') as HTMLInputElement;
+    expect(input).not.toBeNull();
+    expect(input.readOnly).toBeTrue();
+    expect(input.value).toBe(new URL('/sessions/42', window.location.origin).href);
+    expect(page.querySelector('.share-feedback')?.textContent).toContain('Select the link');
+    const select = spyOn(input, 'select').and.callThrough();
+    (page.querySelector('.manual-share-link button') as HTMLButtonElement).click();
+    expect(select).toHaveBeenCalled();
+  });
+
+  it('never offers resharing for closed or invalid public sessions', () => {
+    const page = render({ status: 'CANCELLED' });
+    expect(fixture.componentInstance.publicShareUrl()).toBeNull();
+    expect(page.querySelector('.share-session-action')).toBeNull();
+
+    fixture.componentInstance.session = null;
+    fixture.detectChanges();
+    expect(fixture.componentInstance.publicShareUrl()).toBeNull();
+    expect(page.querySelector('.share-session-action')).toBeNull();
+  });
+
   it('translates the public session introduction and privacy notice into English', () => {
     TestBed.inject(I18nService).setLanguage('en');
     const page = render();

@@ -7,6 +7,7 @@ import { finalize, timeout } from 'rxjs';
 import { environment } from 'src/environment/environment';
 import { AuthenticationService } from '../../services/authethication.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
+import { I18nService } from '../../i18n/i18n.service';
 
 interface SessionPublicPreview {
   id: number;
@@ -32,6 +33,9 @@ export class PublicSessionPreviewComponent implements OnInit {
   loading = true;
   errorMessageKey = '';
   canRetry = false;
+  sharingSession = false;
+  shareFeedbackKey = '';
+  manualShareUrl = '';
   isAuthenticated = false;
   returnUrl: string | null = null;
   private sessionId: number | null = null;
@@ -39,7 +43,8 @@ export class PublicSessionPreviewComponent implements OnInit {
   constructor(
     private readonly route: ActivatedRoute,
     private readonly http: HttpClient,
-    private readonly authenticationService: AuthenticationService
+    private readonly authenticationService: AuthenticationService,
+    private readonly i18n: I18nService
   ) {}
 
   ngOnInit(): void {
@@ -63,6 +68,56 @@ export class PublicSessionPreviewComponent implements OnInit {
     if (this.canRetry && !this.loading) {
       this.loadPreview();
     }
+  }
+
+  publicShareUrl(): string | null {
+    return this.session && this.canRequestParticipation && this.sessionId !== null
+      ? new URL('/sessions/' + this.sessionId, window.location.origin).href
+      : null;
+  }
+
+  async shareSession(): Promise<void> {
+    const url = this.publicShareUrl();
+    if (!url || this.sharingSession) {
+      return;
+    }
+
+    this.sharingSession = true;
+    this.shareFeedbackKey = '';
+    this.manualShareUrl = '';
+    try {
+      if (typeof navigator.share === 'function') {
+        try {
+          await navigator.share({
+            title: this.i18n.translate('publicSession.shareTitle', {
+              sport: this.session?.sport || this.i18n.translate('publicSession.statusUnknown')
+            }),
+            text: this.i18n.translate('publicSession.shareMessage'),
+            url
+          });
+          this.shareFeedbackKey = 'publicSession.shared';
+          return;
+        } catch (error) {
+          if (error instanceof Error && error.name === 'AbortError') {
+            return;
+          }
+        }
+      }
+      await this.copyShareUrl(url);
+      this.shareFeedbackKey = 'publicSession.linkCopied';
+    } catch {
+      this.manualShareUrl = url;
+      this.shareFeedbackKey = 'publicSession.manualShare';
+    } finally {
+      this.sharingSession = false;
+    }
+  }
+
+  private copyShareUrl(url: string): Promise<void> {
+    if (!navigator.clipboard?.writeText) {
+      return Promise.reject(new Error('Clipboard unavailable'));
+    }
+    return navigator.clipboard.writeText(url);
   }
 
   private loadPreview(): void {
