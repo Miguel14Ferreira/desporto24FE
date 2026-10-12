@@ -2,7 +2,9 @@
   <div class="public-session-shell">
     <header class="public-header">
       <a routerLink="/home" class="brand" aria-label="Jynlo — início">Jynlo<span>.</span></a>
-      <a routerLink="/login" [queryParams]="returnUrl ? { returnUrl: returnUrl } : null" class="header-login">Iniciar sessão</a>
+      <a [routerLink]="isAuthenticated ? (returnUrl || '/menu/feed') : '/login'"
+         [queryParams]="!isAuthenticated && returnUrl ? { returnUrl: returnUrl } : null"
+         class="header-login">{{ isAuthenticated ? 'Abrir na Jynlo' : 'Iniciar sessão' }}</a>
     </header>
 
     @if (loading) {
@@ -53,14 +55,25 @@
               <p>Esta sessão está cheia, mas podes juntar-te à lista de espera caso surja uma vaga.</p>
             } @else {
               <h2>O próximo jogo pode ser teu.</h2>
-              <p>Cria uma conta gratuita para veres todos os detalhes e participares nesta sessão.</p>
+              <p>{{ isAuthenticated ? 'Abre os detalhes para participares nesta sessão.' : 'Cria uma conta gratuita para veres todos os detalhes e participares nesta sessão.' }}</p>
             }
-            <a class="primary-action" routerLink="/login/registerNewUser" [queryParams]="{ returnUrl: '/menu/events/' + details.id }">Criar conta</a>
+            @if (isAuthenticated) {
+              <a class="primary-action" [routerLink]="['/menu/events', details.id]">
+                {{ details.status === 'FULL' ? 'Ver sessão e lista de espera' : 'Ver sessão e inscrever-me' }}
+              </a>
+            } @else {
+              <a class="primary-action" routerLink="/login/registerNewUser" [queryParams]="{ returnUrl: '/menu/events/' + details.id }">Criar conta</a>
+            }
           } @else {
             <h2>Esta sessão já não aceita inscrições.</h2>
-            <p>Podes iniciar sessão para consultar os detalhes, mas não é possível inscrever-te neste jogo.</p>
+            <p>Não é possível inscrever-te neste jogo, mas podes consultar os detalhes.</p>
+            @if (isAuthenticated) {
+              <a class="primary-action" [routerLink]="['/menu/events', details.id]">Ver detalhes</a>
+            }
           }
-          <a class="secondary-action" routerLink="/login" [queryParams]="{returnUrl: '/menu/events/' + details.id}">Já tenho conta</a>
+          @if (!isAuthenticated) {
+            <a class="secondary-action" routerLink="/login" [queryParams]="{returnUrl: '/menu/events/' + details.id}">Já tenho conta</a>
+          }
         </aside>
       </main>
     } @else {

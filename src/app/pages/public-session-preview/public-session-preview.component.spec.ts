@@ -5,17 +5,22 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { of, throwError } from 'rxjs';
 
 import { PublicSessionPreviewComponent } from './public-session-preview.component';
+import { AuthenticationService } from '../../services/authethication.service';
 
 describe('PublicSessionPreviewComponent', () => {
   let fixture: ComponentFixture<PublicSessionPreviewComponent>;
   let http: jasmine.SpyObj<HttpClient>;
+  let authenticationService: jasmine.SpyObj<AuthenticationService>;
 
   beforeEach(async () => {
     http = jasmine.createSpyObj<HttpClient>('HttpClient', ['get']);
+    authenticationService = jasmine.createSpyObj<AuthenticationService>('AuthenticationService', ['isLoggedIn']);
+    authenticationService.isLoggedIn.and.returnValue(false);
     await TestBed.configureTestingModule({
       imports: [PublicSessionPreviewComponent, RouterTestingModule],
       providers: [
         { provide: HttpClient, useValue: http },
+        { provide: AuthenticationService, useValue: authenticationService },
         { provide: ActivatedRoute, useValue: {
           snapshot: { paramMap: convertToParamMap({ id: '42' }) }
         } }
@@ -83,6 +88,37 @@ describe('PublicSessionPreviewComponent', () => {
     expect(page.textContent).toContain('Esta sessão não está disponível para consulta pública');
     expect(page.querySelector('.retry-action')).toBeNull();
     expect(page.querySelector('.error-state a')).not.toBeNull();
+  });
+
+  it('lets an authenticated player open an available shared session directly', () => {
+    authenticationService.isLoggedIn.and.returnValue(true);
+    const page = render();
+
+    const action = page.querySelector('.join-panel .primary-action') as HTMLAnchorElement;
+    expect(action).not.toBeNull();
+    expect(action.getAttribute('href')).toBe('/menu/events/42');
+    expect(page.textContent).toContain('Ver sessão e inscrever-me');
+    expect(page.textContent).not.toContain('Criar conta');
+    expect(page.textContent).not.toContain('Já tenho conta');
+  });
+
+  it('lets an authenticated player open the waiting list for a full session', () => {
+    authenticationService.isLoggedIn.and.returnValue(true);
+    const page = render({ status: 'FULL' });
+
+    const action = page.querySelector('.join-panel .primary-action') as HTMLAnchorElement;
+    expect(action.getAttribute('href')).toBe('/menu/events/42');
+    expect(page.textContent).toContain('Ver sessão e lista de espera');
+  });
+
+  it('keeps closed shared session details accessible without a login prompt', () => {
+    authenticationService.isLoggedIn.and.returnValue(true);
+    const page = render({ status: 'CANCELLED' });
+
+    const action = page.querySelector('.join-panel .primary-action') as HTMLAnchorElement;
+    expect(action.getAttribute('href')).toBe('/menu/events/42');
+    expect(page.textContent).toContain('Ver detalhes');
+    expect(page.textContent).not.toContain('Já tenho conta');
   });
 
   it('offers account creation for a future open session', () => {

@@ -5,6 +5,7 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
 import { finalize, timeout } from 'rxjs';
 
 import { environment } from 'src/environment/environment';
+import { AuthenticationService } from '../../services/authethication.service';
 
 interface SessionPublicPreview {
   id: number;
@@ -30,15 +31,18 @@ export class PublicSessionPreviewComponent implements OnInit {
   loading = true;
   errorMessage = '';
   canRetry = false;
+  isAuthenticated = false;
   returnUrl: string | null = null;
   private sessionId: number | null = null;
 
   constructor(
     private readonly route: ActivatedRoute,
-    private readonly http: HttpClient
+    private readonly http: HttpClient,
+    private readonly authenticationService: AuthenticationService
   ) {}
 
   ngOnInit(): void {
+    this.isAuthenticated = this.authenticationService.isLoggedIn();
     const id = Number(this.route.snapshot.paramMap.get('id'));
     if (!Number.isSafeInteger(id) || id <= 0) {
       this.loading = false;
