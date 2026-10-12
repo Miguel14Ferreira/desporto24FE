@@ -560,19 +560,58 @@ h1 {
   line-height: 1.45;
 }
 
+/* Session secondary actions, including participant and attendance refresh. */
+.secondary-action,
 .refresh-attendance {
-  border: 1px solid rgba(255, 255, 255, .16);
-  border-radius: .7rem;
-  padding: .65rem .8rem;
-  background: rgba(255, 255, 255, .07);
-  color: #f8fafc;
-  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .4rem;
+  min-height: 42px;
+  box-sizing: border-box;
+  border: 1px solid rgba(125, 211, 252, .28);
+  border-radius: .75rem;
+  padding: .62rem .9rem;
+  background: rgba(125, 211, 252, .09);
+  color: #bae6fd;
+  font: inherit;
+  font-size: .85rem;
+  font-weight: 750;
+  line-height: 1.2;
+  text-align: center;
   cursor: pointer;
+  transition: background .15s ease, border-color .15s ease;
 }
 
+.secondary-action:hover:not(:disabled),
+.refresh-attendance:hover:not(:disabled) {
+  background: rgba(125, 211, 252, .17);
+  border-color: rgba(125, 211, 252, .5);
+}
+
+.secondary-action:focus-visible,
+.refresh-attendance:focus-visible {
+  outline: 2px solid #7dd3fc;
+  outline-offset: 3px;
+}
+
+.secondary-action:disabled,
 .refresh-attendance:disabled {
-  opacity: .6;
+  opacity: .55;
   cursor: wait;
+}
+
+.session-participants-header > .secondary-action::before,
+.refresh-attendance::before {
+  content: '↻';
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+@media (max-width: 760px) {
+  .session-participants-header > .secondary-action {
+    align-self: flex-start;
+  }
 }
 
 .attendance-info,
