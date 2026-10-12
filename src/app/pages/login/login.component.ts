@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { finalize, timeout } from 'rxjs';
 
 import { AuthenticationService } from '../../services/authethication.service';
+import { safeLoginReturnUrl } from '../../shared/safe-login-return-url';
 
 declare global {
   interface Window {
@@ -45,7 +46,7 @@ export class LoginComponent implements OnInit, AfterViewInit {
   ) {}
 
   ngOnInit(): void {
-    this.returnUrl = this.safeReturnUrl(this.route.snapshot.queryParamMap.get('returnUrl'));
+    this.returnUrl = safeLoginReturnUrl(this.route.snapshot.queryParamMap.get('returnUrl'));
 
     this.successMessage = sessionStorage.getItem('auth-success-message') || '';
     this.errorMessage = sessionStorage.getItem('auth-error-message') || '';
@@ -55,27 +56,6 @@ export class LoginComponent implements OnInit, AfterViewInit {
     if (this.authenticationService.hasValidToken()) {
       this.router.navigateByUrl(this.returnUrl);
     }
-  }
-
-  private safeReturnUrl(value: string | null): string {
-    if (!value) {
-      return '/menu/feed';
-    }
-
-    const path = value.split(/[?#]/)[0];
-    const validMenuPath = path === '/menu' || path.startsWith('/menu/');
-    const hasUnsafeSegments = path.split('/').some(segment =>
-      segment === '.' || segment === '..'
-    );
-    if (!validMenuPath
-        || path.includes('//')
-        || hasUnsafeSegments
-        || /[\\\u0000-\u001f\u007f]/.test(value)
-        || /%(?:2f|5c|2e|00|0a|0d)/i.test(path)) {
-      return '/menu/feed';
-    }
-
-    return value;
   }
 
   get loginContextKey(): string {

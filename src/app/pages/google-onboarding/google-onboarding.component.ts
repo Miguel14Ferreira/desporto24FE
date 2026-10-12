@@ -7,6 +7,7 @@ import { appTranslate as t } from '../../i18n/i18n.service';
 import { AuthenticationService } from '../../services/authethication.service';
 import { GoogleRegistrationRequest } from '../model/google-auth-response';
 import { COUNTRY_CALLING_CODES, countryNameFromLabel } from '../../shared/country-calling-codes';
+import { safeLoginReturnUrl } from '../../shared/safe-login-return-url';
 
 @Component({
   selector: 'app-google-onboarding',
@@ -112,10 +113,7 @@ export class GoogleOnboardingComponent implements OnInit {
   }
 
   private get returnUrl(): string {
-    const target = this.route.snapshot.queryParamMap.get('returnUrl');
-    return target && (target === '/menu' || target.startsWith('/menu/'))
-      ? target
-      : '/menu/feed';
+    return safeLoginReturnUrl(this.route.snapshot.queryParamMap.get('returnUrl'));
   }
 
   private validate(): string | null {
