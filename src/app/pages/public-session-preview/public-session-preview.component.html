@@ -58,21 +58,21 @@
               <p>{{ (isAuthenticated ? 'publicSession.openLoggedIn' : 'publicSession.openGuest') | t }}</p>
             }
             @if (isAuthenticated) {
-              <a class="primary-action" [routerLink]="['/menu/events', details.id]">
+              <a class="primary-action" [routerLink]="returnUrl">
                 {{ (details.status === 'FULL' ? 'publicSession.viewWaitlist' : 'publicSession.viewJoin') | t }}
               </a>
             } @else {
-              <a class="primary-action" routerLink="/login/registerNewUser" [queryParams]="{ returnUrl: '/menu/events/' + details.id }">{{ 'nav.register' | t }}</a>
+              <a class="primary-action" routerLink="/login/registerNewUser" [queryParams]="{ returnUrl: returnUrl }">{{ 'nav.register' | t }}</a>
             }
           } @else {
             <h2>{{ 'publicSession.closedHeading' | t }}</h2>
             <p>{{ 'publicSession.closedExplanation' | t }}</p>
             @if (isAuthenticated) {
-              <a class="primary-action" [routerLink]="['/menu/events', details.id]">{{ 'publicSession.viewDetails' | t }}</a>
+              <a class="primary-action" [routerLink]="returnUrl">{{ 'publicSession.viewDetails' | t }}</a>
             }
           }
           @if (!isAuthenticated) {
-            <a class="secondary-action" routerLink="/login" [queryParams]="{returnUrl: '/menu/events/' + details.id}">{{ 'register.haveAccount' | t }}</a>
+            <a class="secondary-action" routerLink="/login" [queryParams]="{returnUrl: returnUrl}">{{ 'register.haveAccount' | t }}</a>
           }
         </aside>
       </main>

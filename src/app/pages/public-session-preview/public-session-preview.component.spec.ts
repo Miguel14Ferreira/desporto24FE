@@ -324,6 +324,28 @@ describe('PublicSessionPreviewComponent', () => {
     expect(fixture.componentInstance.canRetry).toBeFalse();
   });
 
+  it('uses the validated shared-session destination for all entry links', () => {
+    const page = render();
+    const destination = fixture.componentInstance.returnUrl;
+    expect(destination).toBe('/menu/events/42');
+
+    const create = page.querySelector('.join-panel .primary-action') as HTMLAnchorElement;
+    const existing = page.querySelector('.join-panel .secondary-action') as HTMLAnchorElement;
+    expect(create.getAttribute('href')).toContain(encodeURIComponent(destination!));
+    expect(existing.getAttribute('href')).toContain(encodeURIComponent(destination!));
+
+    authenticationService.isLoggedIn.and.returnValue(true);
+    fixture.componentInstance.isAuthenticated = true;
+    fixture.detectChanges();
+    expect(page.querySelector('.join-panel .primary-action')?.getAttribute('href'))
+      .toBe(destination);
+
+    fixture.componentInstance.session!.status = 'CANCELLED';
+    fixture.detectChanges();
+    expect(page.querySelector('.join-panel .primary-action')?.getAttribute('href'))
+      .toBe(destination);
+  });
+
   it('keeps a canonical positive session ID when loading its public preview', () => {
     const page = render();
 
