@@ -1,4 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { takeRegistrationDestination } from '../../shared/registration-return-url';
 import { of } from 'rxjs';
 
 import { CreateaccountComponent } from './createaccount.component';
@@ -19,7 +21,8 @@ describe('CreateaccountComponent', () => {
       imports: TEST_IMPORTS,
       providers: [
         ...TEST_PROVIDERS,
-        { provide: AuthenticationService, useValue: auth }
+        { provide: AuthenticationService, useValue: auth },
+        { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: convertToParamMap({}) } } }
       ]
     }).compileComponents();
 
@@ -27,6 +30,8 @@ describe('CreateaccountComponent', () => {
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
+
+  afterEach(() => localStorage.removeItem('jynlo-registration-destination'));
 
   function fillValidForm(): void {
     component.username = 'miguel';
@@ -60,6 +65,24 @@ describe('CreateaccountComponent', () => {
       undefined
     );
     expect(component.successMessage).toContain('Conta criada');
+  });
+
+  it('should keep the shared session destination after creating an account', () => {
+    TestBed.inject(ActivatedRoute).snapshot.queryParamMap = convertToParamMap({ returnUrl: '/menu/events/42' });
+    fillValidForm();
+
+    component.register();
+
+    expect(takeRegistrationDestination()).toBe('/menu/events/42');
+  });
+
+  it('should discard external destinations after creating an account', () => {
+    TestBed.inject(ActivatedRoute).snapshot.queryParamMap = convertToParamMap({ returnUrl: 'https://example.com' });
+    fillValidForm();
+
+    component.register();
+
+    expect(takeRegistrationDestination()).toBeNull();
   });
 
   it('should reject registration without legal acceptance', () => {

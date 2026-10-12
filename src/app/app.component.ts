@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { AuthenticationService } from './services/authethication.service';
 import { PilotAnalyticsService } from './services/pilot-analytics.service';
 import { appTranslate as t } from './i18n/i18n.service';
+import { takeRegistrationDestination } from './shared/registration-return-url';
 
 @Component({
     selector: 'app-root',
@@ -39,7 +40,12 @@ export class AppComponent implements OnInit {
           'auth-success-message',
           t('feedback.confirm.successLogin')
         );
-        this.router.navigateByUrl('/login');
+        const destination = takeRegistrationDestination();
+        if (destination) {
+          this.router.navigate(['/login'], { queryParams: { returnUrl: destination } });
+        } else {
+          this.router.navigateByUrl('/login');
+        }
       },
       error: error => {
         const apiMessage = error?.error?.message;

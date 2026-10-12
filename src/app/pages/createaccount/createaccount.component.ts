@@ -6,6 +6,8 @@ import { finalize, timeout } from 'rxjs';
 import { RegistrationRequest } from '../model/registration-request';
 import { AuthenticationService } from '../../services/authethication.service';
 import { COUNTRY_CALLING_CODES, countryNameFromLabel } from '../../shared/country-calling-codes';
+import { ActivatedRoute } from '@angular/router';
+import { rememberRegistrationDestination } from '../../shared/registration-return-url';
 
 @Component({
   selector: 'app-createaccount',
@@ -44,7 +46,10 @@ export class CreateaccountComponent {
 
   private resendCooldownTimer?: ReturnType<typeof setInterval>;
 
-  constructor(private authenticationService: AuthenticationService) {}
+  constructor(
+    private authenticationService: AuthenticationService,
+    private route: ActivatedRoute
+  ) {}
 
   countryName(label: string): string {
     return countryNameFromLabel(label);
@@ -80,6 +85,7 @@ export class CreateaccountComponent {
       .pipe(timeout(10_000), finalize(() => this.loading = false))
       .subscribe({
         next: response => {
+          rememberRegistrationDestination(this.route.snapshot.queryParamMap.get('returnUrl'));
           this.successMessage = t('feedback.register.created');
           this.registrationComplete = true;
         },
