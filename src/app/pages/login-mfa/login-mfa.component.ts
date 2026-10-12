@@ -147,8 +147,9 @@ export class LoginMFAComponent implements OnInit, OnDestroy {
   }
 
   cancel(): void {
+    const returnUrl = sessionStorage.getItem('mfa-return-url') || '/menu/feed';
     this.clearChallenge();
-    this.router.navigate(['/login']);
+    this.router.navigate(['/login'], { queryParams: { returnUrl } });
   }
 
   countdownLabel(): string {
