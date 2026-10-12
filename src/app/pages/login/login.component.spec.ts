@@ -82,6 +82,72 @@ describe('LoginComponent', () => {
     expect(sessionStorage.getItem('mfa-return-url')).toBe('/menu/notifications');
   });
 
+  it('should preserve a shared session destination after login', () => {
+    TestBed.inject(ActivatedRoute).snapshot.queryParamMap =
+      convertToParamMap({ returnUrl: '/menu/events/42' });
+    component.ngOnInit();
+    component.username = 'fixture-user';
+    component.password = 'fixture-password';
+
+    component.onLogin();
+
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/menu/events/42');
+  });
+
+  it('should keep a legitimate internal destination with query parameters', () => {
+    TestBed.inject(ActivatedRoute).snapshot.queryParamMap =
+      convertToParamMap({ returnUrl: '/menu/notifications?view=requests' });
+    component.ngOnInit();
+    component.username = 'fixture-user';
+    component.password = 'fixture-password';
+
+    component.onLogin();
+
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/menu/notifications?view=requests');
+  });
+
+  it('should reject external and malformed login return URLs', () => {
+    const invalidTargets = [
+      'https://example.com',
+      '//example.com',
+      '/login',
+      '/menu/../login',
+      '/menu//events/42',
+      '/menu/%2e%2e/login',
+      '/menu/events%2f42',
+      '/menu/events\\42'
+    ];
+
+    for (const returnUrl of invalidTargets) {
+      TestBed.inject(ActivatedRoute).snapshot.queryParamMap =
+        convertToParamMap({ returnUrl });
+      component.ngOnInit();
+      component.username = 'fixture-user';
+      component.password = 'fixture-password';
+
+      component.onLogin();
+
+      expect(router.navigateByUrl).toHaveBeenCalledWith('/menu/feed');
+      (router.navigateByUrl as jasmine.Spy).calls.reset();
+    }
+  });
+
+  it('should store only a validated destination for MFA', () => {
+    TestBed.inject(ActivatedRoute).snapshot.queryParamMap =
+      convertToParamMap({ returnUrl: '//example.com' });
+    component.ngOnInit();
+    auth.login.and.returnValue(of({
+      mfaRequired: true, challengeId: 'fixture-challenge', challengeExpiresAt: null,
+      token: null, profile: null
+    }));
+    component.username = 'fixture-user';
+    component.password = 'fixture-password';
+
+    component.onLogin();
+
+    expect(sessionStorage.getItem('mfa-return-url')).toBe('/menu/feed');
+  });
+
   it('should not show the request message for a normal login', () => {
     expect(component.loginContextKey).toBe('');
     expect(fixture.nativeElement.querySelector('.login-context')).toBeNull();
