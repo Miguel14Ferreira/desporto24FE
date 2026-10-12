@@ -8,6 +8,7 @@ import { ReliabilityService } from '../../services/reliability.service';
 import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.service';
 import { SessionMessage } from '../model/session-message';
 import { TEST_IMPORTS, TEST_PROVIDERS } from '../../testing/test-providers';
+import { I18nService } from '../../i18n/i18n.service';
 
 describe('SessionDetailsComponent', () => {
   let component: SessionDetailsComponent;
@@ -280,6 +281,26 @@ describe('SessionDetailsComponent', () => {
     expect(link).not.toBeNull();
     expect(link.getAttribute('href')).toContain('/menu/feed?momentSession=7');
     expect(link.textContent).toContain('Partilhar momento');
+  });
+
+  it('translates the post-game sharing action in English and Portuguese', () => {
+    const i18n = TestBed.inject(I18nService);
+    component.session = {
+      ...session, status: 'COMPLETED', joined: true, canSharePublicly: true
+    };
+
+    try {
+      i18n.setLanguage('en');
+      fixture.detectChanges();
+      const link = fixture.nativeElement.querySelector('.postgame-action') as HTMLAnchorElement;
+      expect(link.textContent.trim()).toBe('Share a game moment');
+
+      i18n.setLanguage('pt');
+      fixture.detectChanges();
+      expect(link.textContent.trim()).toBe('Partilhar momento');
+    } finally {
+      i18n.setLanguage('pt');
+    }
   });
 
   it('does not offer post-game sharing for unrelated, private or unfinished sessions', () => {
