@@ -113,18 +113,18 @@ export class PublicSessionPreviewComponent implements OnInit {
     return Number.isFinite(startTime) && startTime > Date.now();
   }
 
-  get statusLabel(): string {
+  get statusKey(): string {
     if ((this.session?.status === 'OPEN' || this.session?.status === 'FULL')
         && !this.canRequestParticipation) {
-      return 'Inscrições encerradas';
+      return 'publicSession.statusClosed';
     }
 
     switch (this.session?.status) {
-      case 'OPEN': return 'Inscrições abertas';
-      case 'FULL': return 'Sessão completa';
-      case 'CANCELLED': return 'Sessão cancelada';
-      case 'COMPLETED': return 'Sessão concluída';
-      default: return 'Sessão desportiva';
+      case 'OPEN': return 'publicSession.statusOpen';
+      case 'FULL': return 'publicSession.statusFull';
+      case 'CANCELLED': return 'publicSession.statusCancelled';
+      case 'COMPLETED': return 'publicSession.statusCompleted';
+      default: return 'publicSession.statusUnknown';
     }
   }
 }

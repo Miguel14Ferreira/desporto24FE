@@ -87,6 +87,44 @@ describe('PublicSessionPreviewComponent', () => {
     expect(primary().getAttribute('href')).toBe('/menu/events/42');
   });
 
+  it('translates open, full, cancelled and completed session statuses to English', () => {
+    TestBed.inject(I18nService).setLanguage('en');
+    const page = render();
+    const label = () => page.querySelector('.join-panel .status')?.textContent?.trim();
+
+    expect(label()).toBe('Registration open');
+
+    fixture.componentInstance.session!.status = 'FULL';
+    fixture.detectChanges();
+    expect(label()).toBe('Session full');
+
+    fixture.componentInstance.session!.status = 'CANCELLED';
+    fixture.detectChanges();
+    expect(label()).toBe('Session cancelled');
+
+    fixture.componentInstance.session!.status = 'COMPLETED';
+    fixture.detectChanges();
+    expect(label()).toBe('Session completed');
+  });
+
+  it('translates closed and unknown statuses without changing participation rules', () => {
+    const i18n = TestBed.inject(I18nService);
+    i18n.setLanguage('en');
+    const page = render({ gameDate: new Date(Date.now() - 3600_000).toISOString() });
+    const label = () => page.querySelector('.join-panel .status')?.textContent?.trim();
+
+    expect(label()).toBe('Registration closed');
+    expect(fixture.componentInstance.canRequestParticipation).toBeFalse();
+
+    fixture.componentInstance.session!.status = null;
+    fixture.detectChanges();
+    expect(label()).toBe('Sports session');
+
+    i18n.setLanguage('pt');
+    fixture.detectChanges();
+    expect(label()).toBe('Sessão desportiva');
+  });
+
   it('rejects malformed session IDs without requesting a different session', () => {
     const route = TestBed.inject(ActivatedRoute);
     const invalidIds = ['1e2', '42.0', '+42', '00042', '-1', '0', 'abc', '9007199254740992'];

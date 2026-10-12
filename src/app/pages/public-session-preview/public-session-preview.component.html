@@ -48,7 +48,7 @@
         </div>
 
         <aside class="join-panel">
-          <span class="status" [class.closed]="!canRequestParticipation">{{ statusLabel }}</span>
+          <span class="status" [class.closed]="!canRequestParticipation">{{ statusKey | t }}</span>
           @if (canRequestParticipation) {
             @if (details.status === 'FULL') {
               <h2>Ainda podes entrar na lista de espera.</h2>
