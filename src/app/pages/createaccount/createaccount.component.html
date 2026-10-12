@@ -7,7 +7,7 @@
         <p class="subtitle">{{ 'register.subtitle' | t }}</p>
       </div>
 
-      <a class="secondary-action" routerLink="/login">{{ 'register.haveAccount' | t }}</a>
+      <a class="secondary-action" routerLink="/login" queryParamsHandling="preserve">{{ 'register.haveAccount' | t }}</a>
     </header>
 
     @if (errorMessage && !existingAccountRecovery) {
@@ -33,7 +33,7 @@
                   ? ('login.resendIn' | t:{ seconds: resendCooldownSeconds })
                   : ('login.resend' | t)) }}
           </button>
-          <a class="primary-link" routerLink="/login">{{ 'register.goLogin' | t }}</a>
+          <a class="primary-link" routerLink="/login" queryParamsHandling="preserve">{{ 'register.goLogin' | t }}</a>
         </div>
 
         @if (successMessage) {
@@ -63,7 +63,7 @@
                   ? ('login.resendIn' | t:{ seconds: resendCooldownSeconds })
                   : ('login.resend' | t)) }}
           </button>
-          <a class="primary-link" routerLink="/login">{{ 'register.goLogin' | t }}</a>
+          <a class="primary-link" routerLink="/login" queryParamsHandling="preserve">{{ 'register.goLogin' | t }}</a>
         </div>
       </section>
     } @else {
@@ -186,7 +186,7 @@
       </div>
 
       <div class="form-actions">
-        <a class="secondary-action" routerLink="/login">{{ 'common.cancel' | t }}</a>
+        <a class="secondary-action" routerLink="/login" queryParamsHandling="preserve">{{ 'common.cancel' | t }}</a>
         <button type="submit" [disabled]="loading || !acceptedLegalTerms">
           {{ loading ? ('register.creating' | t) : ('register.title' | t) }}
         </button>
