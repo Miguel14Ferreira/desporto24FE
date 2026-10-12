@@ -76,6 +76,35 @@ h1 {
   font-weight: 800;
 }
 
+.session-top-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .7rem;
+}
+
+.share-session-action {
+  margin-top: 1rem;
+  padding: .8rem 1.1rem;
+  border: 1px solid rgba(125, 211, 252, .55);
+  border-radius: .8rem;
+  background: transparent;
+  color: #bae6fd;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.share-session-action:hover:not(:disabled) { background: rgba(125, 211, 252, .12); }
+.share-session-action:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+.share-session-action:disabled { opacity: .65; cursor: wait; }
+
+.share-feedback {
+  margin-top: 1rem;
+  color: #bae6fd;
+  font-weight: 700;
+}
+
 .join-shortcut {
   display: inline-flex;
   align-items: center;

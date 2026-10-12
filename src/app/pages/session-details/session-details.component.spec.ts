@@ -229,6 +229,46 @@ describe('SessionDetailsComponent', () => {
     expect(fixture.nativeElement.querySelector('.membership-status')).toBeNull();
   });
 
+  it('offers a public share link only when the backend explicitly allows it', () => {
+    component.session = { ...session, canSharePublicly: true };
+    fixture.detectChanges();
+
+    const button = fixture.nativeElement.querySelector('.share-session-action') as HTMLButtonElement;
+    expect(button).not.toBeNull();
+    expect(button.textContent).toContain('Partilhar sessão');
+    expect(component.publicShareUrl()).toBe(new URL('/sessions/7', window.location.origin).href);
+  });
+
+  it('does not offer public sharing when the backend has not provided permission', () => {
+    fixture.detectChanges();
+
+    expect(component.publicShareUrl()).toBeNull();
+    expect(fixture.nativeElement.querySelector('.share-session-action')).toBeNull();
+  });
+
+  it('does not offer public sharing for private or community-only sessions', () => {
+    for (const detail of [
+      { privateGame: true, canSharePublicly: false },
+      { audience: 'COMMUNITY_ONLY' as const, communityId: 12, canSharePublicly: false },
+      { audience: 'PUBLIC' as const, canSharePublicly: false }
+    ]) {
+      component.session = { ...session, ...detail };
+      fixture.detectChanges();
+      expect(component.publicShareUrl()).toBeNull();
+      expect(fixture.nativeElement.querySelector('.share-session-action')).toBeNull();
+    }
+  });
+
+  it('allows sharing a community session explicitly made public by the backend', () => {
+    component.session = {
+      ...session, audience: 'PUBLIC', communityId: 12, canSharePublicly: true
+    };
+    fixture.detectChanges();
+
+    expect(component.publicShareUrl()).toBe(new URL('/sessions/7', window.location.origin).href);
+    expect(fixture.nativeElement.querySelector('.share-session-action')).not.toBeNull();
+  });
+
   it('should show a shortcut to the join action for a future open session', () => {
     component.session = {
       ...session,

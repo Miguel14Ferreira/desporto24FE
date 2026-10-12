@@ -59,6 +59,8 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
   errorMessage = '';
   actionError = '';
   actionSuccess = '';
+  sharingSession = false;
+  shareFeedback = '';
   chatError = '';
   reliabilityError = '';
   attendanceError = '';
@@ -679,6 +681,55 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
 
   hasConfirmedTeams(): boolean {
     return this.confirmedTeams;
+  }
+
+  canShareSession(): boolean {
+    const session = this.session;
+    return session?.canSharePublicly === true
+      && Number.isSafeInteger(session.id)
+      && session.id > 0;
+  }
+
+  publicShareUrl(): string | null {
+    return this.canShareSession()
+      ? new URL('/sessions/' + this.session!.id, window.location.origin).href
+      : null;
+  }
+
+  async shareSession(): Promise<void> {
+    const url = this.publicShareUrl();
+    if (!url || this.sharingSession) {
+      return;
+    }
+
+    this.sharingSession = true;
+    this.shareFeedback = '';
+
+    try {
+      if (typeof navigator.share === 'function') {
+        try {
+          await navigator.share({
+            title: 'Sessão de ' + this.session!.sport + ' na Jynlo',
+            text: 'Vem jogar connosco na Jynlo!',
+            url
+          });
+          this.shareFeedback = 'Partilhado';
+          return;
+        } catch (error) {
+          if (error instanceof Error && error.name === 'AbortError') {
+            return;
+          }
+          // The native share sheet may be unavailable on this device.
+        }
+      }
+
+      await navigator.clipboard.writeText(url);
+      this.shareFeedback = 'Ligação copiada';
+    } catch {
+      this.shareFeedback = 'Não foi possível partilhar a sessão. Tenta novamente.';
+    } finally {
+      this.sharingSession = false;
+    }
   }
 
   canJoinSession(): boolean {

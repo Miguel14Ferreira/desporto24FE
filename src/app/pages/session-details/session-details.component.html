@@ -52,12 +52,23 @@
             </div>
           }
 
-          @if (canJoinSession()) {
-            <a class="join-shortcut" href="#session-participation">
-              {{ isFull() ? ('sessionDetail.viewWaitlist' | t) : ('sessionDetail.viewJoin' | t) }}
-              <span aria-hidden="true">↓</span>
-            </a>
-          }
+          <div class="session-top-actions">
+            @if (canJoinSession()) {
+              <a class="join-shortcut" href="#session-participation">
+                {{ isFull() ? ('sessionDetail.viewWaitlist' | t) : ('sessionDetail.viewJoin' | t) }}
+                <span aria-hidden="true">↓</span>
+              </a>
+            }
+            @if (canShareSession()) {
+              <button type="button" class="share-session-action"
+                      [disabled]="sharingSession" (click)="shareSession()">
+                {{ sharingSession ? 'A partilhar...' : 'Partilhar sessão' }}
+              </button>
+              @if (shareFeedback) {
+                <span class="share-feedback" role="status">{{ shareFeedback }}</span>
+              }
+            }
+          </div>
 
           <div class="detail-grid">
             <div>
