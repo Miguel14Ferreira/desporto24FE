@@ -194,6 +194,41 @@ describe('SessionDetailsComponent', () => {
     expect(ics).toContain('LOCATION:Rua do Campo\\, 10');
   });
 
+  it('should show a confirmed membership status linking to the participant list', () => {
+    component.session = {
+      ...session,
+      joined: true,
+      gameDate: new Date(Date.now() + 3600_000).toISOString()
+    };
+    fixture.detectChanges();
+
+    const banner = fixture.nativeElement.querySelector('.membership-status') as HTMLElement;
+    const participantLink = banner.querySelector('a') as HTMLAnchorElement;
+    expect(banner.textContent).toContain('Já estás dentro');
+    expect(participantLink.getAttribute('href')).toBe('#session-participants');
+    expect(fixture.nativeElement.querySelector('#session-participants')).not.toBeNull();
+  });
+
+  it('should show the waitlist position in the membership status', () => {
+    component.session = {
+      ...session,
+      waitlisted: true,
+      waitlistPosition: 3,
+      gameDate: new Date(Date.now() + 3600_000).toISOString()
+    };
+    fixture.detectChanges();
+
+    const banner = fixture.nativeElement.querySelector('.membership-status.waitlisted') as HTMLElement;
+    expect(banner.textContent).toContain('Lista de espera');
+    expect(banner.textContent).toContain('na posição 3');
+    expect(banner.querySelector('a')).toBeNull();
+  });
+
+  it('should not show a membership status to someone who has not joined', () => {
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.membership-status')).toBeNull();
+  });
+
   it('should show a shortcut to the join action for a future open session', () => {
     component.session = {
       ...session,

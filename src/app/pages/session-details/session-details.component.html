@@ -38,6 +38,20 @@
             </div>
           </div>
 
+          @if (session.joined) {
+            <div class="membership-status" role="status">
+              <strong>{{ 'sessionDetail.joinedTitle' | t }}</strong>
+              <a href="#session-participants">{{ 'sessionDetail.whosGoing' | t }} ↓</a>
+            </div>
+          } @else if (session.waitlisted) {
+            <div class="membership-status waitlisted" role="status">
+              <strong>{{ 'mySessions.waitlist' | t }}</strong>
+              @if (session.waitlistPosition !== null) {
+                <span>{{ 'sessionDetail.position' | t:{ position: session.waitlistPosition } }}</span>
+              }
+            </div>
+          }
+
           @if (canJoinSession()) {
             <a class="join-shortcut" href="#session-participation">
               {{ isFull() ? ('sessionDetail.viewWaitlist' | t) : ('sessionDetail.viewJoin' | t) }}
@@ -399,7 +413,7 @@
 
 
           @if (session.joined) {
-            <section class="session-participants-panel">
+            <section id="session-participants" class="session-participants-panel">
               <div class="session-participants-header">
                 <div>
                   <h2>{{ 'sessionDetail.whosGoing' | t }}</h2>
