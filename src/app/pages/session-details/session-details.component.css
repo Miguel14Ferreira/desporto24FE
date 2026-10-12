@@ -105,6 +105,51 @@ h1 {
   font-weight: 700;
 }
 
+.manual-share-link {
+  flex-basis: 100%;
+  display: grid;
+  gap: .45rem;
+  padding: .8rem 0;
+}
+
+.manual-share-link label {
+  color: #cbd5e1;
+  font-weight: 700;
+}
+
+.manual-share-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+}
+
+.manual-share-controls input {
+  flex: 1 1 260px;
+  min-width: 0;
+  border: 1px solid rgba(125, 211, 252, .35);
+  border-radius: .6rem;
+  padding: .65rem;
+  background: rgba(255, 255, 255, .06);
+  color: #f8fafc;
+}
+
+.manual-share-controls button {
+  border: 1px solid rgba(125, 211, 252, .55);
+  border-radius: .6rem;
+  padding: .65rem .85rem;
+  background: transparent;
+  color: #bae6fd;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.manual-share-controls button:focus-visible,
+.manual-share-controls input:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
 .join-shortcut {
   display: inline-flex;
   align-items: center;

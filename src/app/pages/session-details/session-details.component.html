@@ -67,6 +67,17 @@
               @if (shareFeedback) {
                 <span class="share-feedback" role="status">{{ shareFeedback }}</span>
               }
+              @if (manualShareUrl) {
+                <div class="manual-share-link">
+                  <label for="session-share-url">Ligação pública da sessão</label>
+                  <div class="manual-share-controls">
+                    <input id="session-share-url" #shareLinkInput type="text"
+                           [value]="manualShareUrl" readonly
+                           aria-label="Ligação pública da sessão para copiar">
+                    <button type="button" (click)="shareLinkInput.select()">Selecionar ligação</button>
+                  </div>
+                </div>
+              }
             }
           </div>
 

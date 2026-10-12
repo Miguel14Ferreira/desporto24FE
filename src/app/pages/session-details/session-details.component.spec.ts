@@ -269,6 +269,43 @@ describe('SessionDetailsComponent', () => {
     expect(fixture.nativeElement.querySelector('.share-session-action')).not.toBeNull();
   });
 
+  it('shows a selectable public link if sharing and clipboard access both fail', async () => {
+    component.session = { ...session, canSharePublicly: true };
+    if (typeof navigator.share === 'function') {
+      spyOn(navigator, 'share').and.returnValue(Promise.reject(new Error('Not available')));
+    }
+    spyOn<any>(component, 'copyShareUrl').and.returnValue(Promise.reject(new Error('Clipboard denied')));
+
+    await component.shareSession();
+    fixture.detectChanges();
+
+    const input = fixture.nativeElement.querySelector('#session-share-url') as HTMLInputElement;
+    expect(input).not.toBeNull();
+    expect(input.readOnly).toBeTrue();
+    expect(input.value).toBe(new URL('/sessions/7', window.location.origin).href);
+    expect(component.shareFeedback).toContain('Seleciona a ligação');
+
+    const selectSpy = spyOn(input, 'select').and.callThrough();
+    const selectButton = fixture.nativeElement.querySelector('.manual-share-controls button') as HTMLButtonElement;
+    selectButton.click();
+    expect(selectSpy).toHaveBeenCalled();
+  });
+
+  it('confirms a successful copy without displaying the manual fallback', async () => {
+    component.session = { ...session, canSharePublicly: true };
+    if (typeof navigator.share === 'function') {
+      spyOn(navigator, 'share').and.returnValue(Promise.reject(new Error('Not available')));
+    }
+    spyOn<any>(component, 'copyShareUrl').and.returnValue(Promise.resolve());
+
+    await component.shareSession();
+    fixture.detectChanges();
+
+    expect(component.shareFeedback).toBe('Ligação copiada');
+    expect(component.manualShareUrl).toBe('');
+    expect(fixture.nativeElement.querySelector('.manual-share-link')).toBeNull();
+  });
+
   it('should show a shortcut to the join action for a future open session', () => {
     component.session = {
       ...session,

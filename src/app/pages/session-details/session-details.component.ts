@@ -61,6 +61,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
   actionSuccess = '';
   sharingSession = false;
   shareFeedback = '';
+  manualShareUrl = '';
   chatError = '';
   reliabilityError = '';
   attendanceError = '';
@@ -704,6 +705,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
 
     this.sharingSession = true;
     this.shareFeedback = '';
+    this.manualShareUrl = '';
 
     try {
       if (typeof navigator.share === 'function') {
@@ -723,13 +725,21 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
         }
       }
 
-      await navigator.clipboard.writeText(url);
+      await this.copyShareUrl(url);
       this.shareFeedback = 'Ligação copiada';
     } catch {
-      this.shareFeedback = 'Não foi possível partilhar a sessão. Tenta novamente.';
+      this.manualShareUrl = url;
+      this.shareFeedback = 'Não foi possível copiar automaticamente. Seleciona a ligação abaixo.';
     } finally {
       this.sharingSession = false;
     }
+  }
+
+  private copyShareUrl(url: string): Promise<void> {
+    if (!navigator.clipboard?.writeText) {
+      return Promise.reject(new Error('Clipboard unavailable'));
+    }
+    return navigator.clipboard.writeText(url);
   }
 
   canJoinSession(): boolean {
