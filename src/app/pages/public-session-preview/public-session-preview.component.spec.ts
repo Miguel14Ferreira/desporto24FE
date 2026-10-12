@@ -14,8 +14,11 @@ describe('PublicSessionPreviewComponent', () => {
 
   beforeEach(async () => {
     http = jasmine.createSpyObj<HttpClient>('HttpClient', ['get']);
-    authenticationService = jasmine.createSpyObj<AuthenticationService>('AuthenticationService', ['isLoggedIn']);
+    authenticationService = jasmine.createSpyObj<AuthenticationService>(
+      'AuthenticationService', ['isLoggedIn', 'hasSessionCandidate']
+    );
     authenticationService.isLoggedIn.and.returnValue(false);
+    authenticationService.hasSessionCandidate.and.returnValue(false);
     await TestBed.configureTestingModule({
       imports: [PublicSessionPreviewComponent, RouterTestingModule],
       providers: [
@@ -88,6 +91,27 @@ describe('PublicSessionPreviewComponent', () => {
     expect(page.textContent).toContain('Esta sessão não está disponível para consulta pública');
     expect(page.querySelector('.retry-action')).toBeNull();
     expect(page.querySelector('.error-state a')).not.toBeNull();
+  });
+
+  it('opens the protected session for a returning player whose access token can be refreshed', () => {
+    authenticationService.hasSessionCandidate.and.returnValue(true);
+    const page = render();
+
+    expect(authenticationService.hasSessionCandidate).toHaveBeenCalled();
+    expect(page.querySelector('.join-panel .primary-action')?.getAttribute('href'))
+      .toBe('/menu/events/42');
+    expect(page.textContent).not.toContain('Criar conta');
+    expect(page.textContent).not.toContain('Já tenho conta');
+  });
+
+  it('keeps account creation for a visitor with no recoverable session', () => {
+    const page = render();
+    const action = page.querySelector('.join-panel .primary-action') as HTMLAnchorElement;
+
+    expect(authenticationService.hasSessionCandidate).toHaveBeenCalled();
+    expect(action.getAttribute('href')).toContain('/login/registerNewUser');
+    expect(action.getAttribute('href')).toContain('returnUrl=');
+    expect(page.textContent).toContain('Criar conta');
   });
 
   it('lets an authenticated player open an available shared session directly', () => {

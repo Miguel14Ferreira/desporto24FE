@@ -42,7 +42,9 @@ export class PublicSessionPreviewComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.isAuthenticated = this.authenticationService.isLoggedIn();
+    // An expired access token may still be renewed by the protected route guard.
+    this.isAuthenticated = this.authenticationService.isLoggedIn()
+      || this.authenticationService.hasSessionCandidate();
     const id = Number(this.route.snapshot.paramMap.get('id'));
     if (!Number.isSafeInteger(id) || id <= 0) {
       this.loading = false;
