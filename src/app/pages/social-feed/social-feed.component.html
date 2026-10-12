@@ -143,7 +143,10 @@
                     <span>{{ item.city }}</span>
                   </div>
                   <div>
-                    <span>{{ item.gameDate | date:'dd/MM/yyyy HH:mm' }}</span>
+                    <div class="session-date-time">
+                    <span class="session-date">{{ item.gameDate | date:'dd/MM/yyyy' }}</span>
+                    <span class="session-hour">{{ item.gameDate | date:'HH:mm' }}</span>
+                  </div>
                     <strong>{{ 'feed.viewSession' | t }}</strong>
                   </div>
                 </a>
@@ -261,7 +264,10 @@
                   <span>{{ item.city }}</span>
                 </div>
                 <div>
-                  <span>{{ item.gameDate | date:'dd/MM/yyyy HH:mm' }}</span>
+                  <div class="session-date-time">
+                    <span class="session-date">{{ item.gameDate | date:'dd/MM/yyyy' }}</span>
+                    <span class="session-hour">{{ item.gameDate | date:'HH:mm' }}</span>
+                  </div>
                   <strong>{{ 'feed.viewSession' | t }}</strong>
                 </div>
               </a>
@@ -280,7 +286,10 @@
                   <span>{{ item.city }}</span>
                 </div>
                 <div>
-                  <span>{{ item.gameDate | date:'dd/MM/yyyy HH:mm' }}</span>
+                  <div class="session-date-time">
+                    <span class="session-date">{{ item.gameDate | date:'dd/MM/yyyy' }}</span>
+                    <span class="session-hour">{{ item.gameDate | date:'HH:mm' }}</span>
+                  </div>
                   <strong>{{ 'feed.viewSession' | t }}</strong>
                 </div>
               </a>

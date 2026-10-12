@@ -252,9 +252,18 @@ h1 {
 }
 
 .session-preview > div:first-child span::before {
-  content: '•';
+  content: '⌖';
   margin-right: .45rem;
-  color: #38bdf8;
+  color: #7dd3fc;
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.session-preview > div:first-child > span {
+  display: inline-flex;
+  align-items: center;
+  color: #cbd5e1;
+  font-weight: 650;
 }
 
 .session-preview > div:last-child {
@@ -282,6 +291,47 @@ h1 {
 .session-preview span {
   color: #cbd5e1;
   font-size: .8rem;
+}
+
+.session-date-time {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .4rem;
+}
+
+.session-date-time > span {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  padding: .3rem .55rem;
+  border: 1px solid rgba(125, 211, 252, .16);
+  border-radius: .5rem;
+  background: rgba(2, 6, 23, .23);
+  color: #e2e8f0;
+  font-size: .78rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.session-date::before {
+  content: '▦';
+  color: #7dd3fc;
+  font-size: .95rem;
+}
+
+.session-hour::before {
+  content: '◷';
+  color: #7dd3fc;
+  font-size: 1rem;
+}
+
+@media (max-width: 700px) {
+  .session-date-time {
+    justify-content: flex-start;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
