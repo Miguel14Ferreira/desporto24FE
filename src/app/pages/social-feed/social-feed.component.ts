@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { Subject, catchError, debounceTime, finalize, of, retry, switchMap, takeUntil, timeout } from 'rxjs';
 
 import { environment } from 'src/environment/environment';
@@ -28,6 +29,7 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
   private readonly destroyed = new Subject<void>();
   get filteredSessions(): SessionSummary[] { return this.availableSessions; }
   selectedSessionId: number | null = null;
+  postGameSessionId: number | null = null;
   loadingSessions = false;
   sessionSearchError = false;
 
@@ -56,7 +58,8 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
   constructor(
     private feedService: SocialFeedService,
     private sessionService: SessionService,
-    private authenticationService: AuthenticationService
+    private authenticationService: AuthenticationService,
+    private route: ActivatedRoute
   ) {
     this.authenticationService.isLoggedIn();
     this.currentUsername = this.authenticationService.loggedInPerfilname || '';
@@ -64,6 +67,7 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.load();
+    this.preparePostGameMoment();
     this.sessionSearchChanges.pipe(
       debounceTime(350),
       switchMap(query => {
@@ -89,6 +93,35 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
       }
     });
     this.onSessionSearchChange('');
+  }
+
+  private preparePostGameMoment(): void {
+    const raw = this.route.snapshot.queryParamMap.get('momentSession');
+    if (!raw || !/^[1-9]\d*$/.test(raw)) {
+      return;
+    }
+    const id = Number(raw);
+    if (!Number.isSafeInteger(id)) {
+      return;
+    }
+
+    this.sessionService.detail(id).pipe(
+      timeout(10_000),
+      catchError(() => of(null))
+    ).subscribe(session => {
+      if (!session || session.id !== id
+        || session.status !== 'COMPLETED'
+        || session.canSharePublicly !== true
+        || session.privateGame
+        || (!session.joined
+          && (!this.currentUsername
+            || session.creatorUsername?.toLowerCase() !== this.currentUsername.toLowerCase()))) {
+        return;
+      }
+      this.postGameSessionId = id;
+      this.selectedSessionId = id;
+      this.availableSessions = [session, ...this.availableSessions.filter(item => item.id !== id)];
+    });
   }
 
   onSessionSearchChange(query: string): void {
@@ -141,6 +174,7 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
           this.postImageFile = undefined;
           this.postImagePreview = '';
           this.selectedSessionId = null;
+          this.postGameSessionId = null;
         },
         error: () => this.actionError = t('feedback.feed.publishError')
       });

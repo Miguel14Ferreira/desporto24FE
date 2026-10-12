@@ -59,6 +59,10 @@
                 <span aria-hidden="true">↓</span>
               </a>
             }
+            @if (canSharePostGameMoment()) {
+              <a class="postgame-action" routerLink="/menu/feed"
+                 [queryParams]="{ momentSession: session.id }">{{ 'sessionDetail.sharePostGameMoment' | t }}</a>
+            }
             @if (canShareSession()) {
               <button type="button" class="share-session-action"
                       [disabled]="sharingSession" (click)="shareSession()">

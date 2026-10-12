@@ -269,6 +269,35 @@ describe('SessionDetailsComponent', () => {
     expect(fixture.nativeElement.querySelector('.share-session-action')).not.toBeNull();
   });
 
+  it('offers post-game sharing to a participant of a completed public session', () => {
+    component.session = {
+      ...session, status: 'COMPLETED', joined: true, canSharePublicly: true
+    };
+    fixture.detectChanges();
+
+    expect(component.canSharePostGameMoment()).toBeTrue();
+    const link = fixture.nativeElement.querySelector('.postgame-action') as HTMLAnchorElement;
+    expect(link).not.toBeNull();
+    expect(link.getAttribute('href')).toContain('/menu/feed?momentSession=7');
+    expect(link.textContent).toContain('Partilhar momento');
+  });
+
+  it('does not offer post-game sharing for unrelated, private or unfinished sessions', () => {
+    const cases = [
+      { status: 'OPEN', joined: true, canSharePublicly: true },
+      { status: 'CANCELLED', joined: true, canSharePublicly: true },
+      { status: 'COMPLETED', joined: false, canSharePublicly: true },
+      { status: 'COMPLETED', joined: true, canSharePublicly: false },
+      { status: 'COMPLETED', joined: true, canSharePublicly: undefined }
+    ];
+    for (const scenario of cases) {
+      component.session = { ...session, ...scenario };
+      fixture.detectChanges();
+      expect(component.canSharePostGameMoment()).withContext(JSON.stringify(scenario)).toBeFalse();
+      expect(fixture.nativeElement.querySelector('.postgame-action')).toBeNull();
+    }
+  });
+
   it('shows a selectable public link if sharing and clipboard access both fail', async () => {
     component.session = { ...session, canSharePublicly: true };
     if (typeof navigator.share === 'function') {

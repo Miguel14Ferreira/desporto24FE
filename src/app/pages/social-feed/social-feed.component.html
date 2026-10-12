@@ -18,6 +18,9 @@
         <strong>{{ 'feed.shareTitle' | t }}</strong>
         <span>{{ postContent.length }}/1000</span>
       </div>
+      @if (postGameSessionId !== null && selectedSessionId === postGameSessionId) {
+        <p class="composer-hint" role="status">{{ 'feed.postGameHint' | t }}</p>
+      }
       <textarea
         [(ngModel)]="postContent"
         maxlength="1000"

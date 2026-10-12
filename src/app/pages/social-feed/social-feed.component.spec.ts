@@ -1,4 +1,7 @@
 import { SocialFeedComponent } from './social-feed.component';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { of } from 'rxjs';
+import { SessionDetail } from '../model/session-detail';
 import { SocialFeedService } from '../../services/social-feed.service';
 import { SessionService } from '../../services/session.service';
 import { AuthenticationService } from '../../services/authethication.service';
@@ -14,7 +17,8 @@ describe('SocialFeedComponent session sharing fallback', () => {
     );
     auth.isLoggedIn.and.returnValue(true);
     component = new SocialFeedComponent(
-      {} as SocialFeedService, {} as SessionService, auth
+      {} as SocialFeedService, {} as SessionService, auth,
+      { snapshot: { queryParamMap: convertToParamMap({}) } } as unknown as ActivatedRoute
     );
     item = {
       type: 'POST',
@@ -86,5 +90,66 @@ describe('SocialFeedComponent session sharing fallback', () => {
 
     expect(copy).not.toHaveBeenCalled();
     expect(component.manualShareUrl).toBe('');
+  });
+});
+
+describe('SocialFeedComponent post-game entry', () => {
+  function openFromSession(overrides: Partial<SessionDetail> = {}, rawId = '42') {
+    const auth = jasmine.createSpyObj<AuthenticationService>('AuthenticationService', ['isLoggedIn']);
+    auth.isLoggedIn.and.returnValue(true);
+    Object.defineProperty(auth, 'loggedInPerfilname', { value: 'participant', configurable: true });
+
+    const feed = jasmine.createSpyObj<SocialFeedService>('SocialFeedService', ['feed']);
+    feed.feed.and.returnValue(of([]));
+    const sessions = jasmine.createSpyObj<SessionService>('SessionService', ['discover', 'detail']);
+    sessions.discover.and.returnValue(of([]));
+    sessions.detail.and.returnValue(of({
+      id: 42, sport: 'Padel', city: 'Lisboa',
+      gameDate: '2026-10-01T18:00:00Z', status: 'COMPLETED',
+      distanceKm: null, participantCount: 4, maxParticipants: 4, priceAmount: 0,
+      privateGame: false, canSharePublicly: true, joined: true,
+      waitlisted: false, waitlistPosition: null, creatorUsername: 'organizer',
+      address: null, canSeeExactAddress: false, gamePhoto: null,
+      ...overrides
+    } as SessionDetail));
+    const route = { snapshot: { queryParamMap: convertToParamMap({ momentSession: rawId }) } }
+      as unknown as ActivatedRoute;
+    const target = new SocialFeedComponent(feed, sessions, auth, route);
+    target.ngOnInit();
+    return { target, sessions };
+  }
+
+  it('prefills a completed public session without publishing a post', () => {
+    const { target, sessions } = openFromSession();
+    expect(sessions.detail).toHaveBeenCalledWith(42);
+    expect(target.selectedSessionId).toBe(42);
+    expect(target.postGameSessionId).toBe(42);
+    expect(target.filteredSessions.some(session => session.id === 42)).toBeTrue();
+    expect(target.postContent).toBe('');
+    target.ngOnDestroy();
+  });
+
+  it('does not preselect a private or unrelated completed session', () => {
+    for (const overrides of [
+      { canSharePublicly: false },
+      { privateGame: true },
+      { joined: false },
+      { status: 'CANCELLED' },
+      { id: 99 }
+    ]) {
+      const { target } = openFromSession(overrides);
+      expect(target.selectedSessionId).withContext(JSON.stringify(overrides)).toBeNull();
+      expect(target.postGameSessionId).toBeNull();
+      target.ngOnDestroy();
+    }
+  });
+
+  it('ignores invalid or noncanonical session IDs without calling the details API', () => {
+    for (const raw of ['0', '00042', '42.0', '-1', '1e2', '9007199254740992']) {
+      const { target, sessions } = openFromSession({}, raw);
+      expect(sessions.detail).withContext(raw).not.toHaveBeenCalled();
+      expect(target.postGameSessionId).toBeNull();
+      target.ngOnDestroy();
+    }
   });
 });

@@ -691,6 +691,12 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
       && session.id > 0;
   }
 
+  canSharePostGameMoment(): boolean {
+    return this.canShareSession()
+      && this.session?.status === 'COMPLETED'
+      && (this.session.joined || this.isCreator());
+  }
+
   publicShareUrl(): string | null {
     return this.canShareSession()
       ? new URL('/sessions/' + this.session!.id, window.location.origin).href
