@@ -49,6 +49,31 @@ describe('PublicSessionPreviewComponent', () => {
     return fixture.nativeElement as HTMLElement;
   }
 
+  it('rejects malformed session IDs without requesting a different session', () => {
+    const route = TestBed.inject(ActivatedRoute);
+    const invalidIds = ['1e2', '42.0', '+42', '00042', '-1', '0', 'abc', '9007199254740992'];
+
+    for (const id of invalidIds) {
+      route.snapshot.paramMap = convertToParamMap({ id });
+      const invalidFixture = TestBed.createComponent(PublicSessionPreviewComponent);
+      invalidFixture.detectChanges();
+
+      const page = invalidFixture.nativeElement as HTMLElement;
+      expect(page.textContent).withContext(id).toContain('Esta ligação de sessão não é válida');
+      expect(http.get).withContext(id).not.toHaveBeenCalled();
+      expect(invalidFixture.componentInstance.returnUrl).withContext(id).toBeNull();
+      invalidFixture.destroy();
+    }
+  });
+
+  it('keeps a canonical positive session ID when loading its public preview', () => {
+    const page = render();
+
+    expect(http.get).toHaveBeenCalledWith(jasmine.stringMatching(/\/api\/sessions\/42\/public-preview$/));
+    expect(fixture.componentInstance.returnUrl).toBe('/menu/events/42');
+    expect(page.querySelector('.join-panel .primary-action')).not.toBeNull();
+  });
+
   it('shows a retry action when the preview API is temporarily unavailable', () => {
     http.get.and.returnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
     fixture.detectChanges();

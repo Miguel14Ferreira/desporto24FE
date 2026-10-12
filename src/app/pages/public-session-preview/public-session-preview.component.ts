@@ -45,8 +45,9 @@ export class PublicSessionPreviewComponent implements OnInit {
     // An expired access token may still be renewed by the protected route guard.
     this.isAuthenticated = this.authenticationService.isLoggedIn()
       || this.authenticationService.hasSessionCandidate();
-    const id = Number(this.route.snapshot.paramMap.get('id'));
-    if (!Number.isSafeInteger(id) || id <= 0) {
+    const rawId = this.route.snapshot.paramMap.get('id');
+    const id = rawId !== null && /^[1-9]\d*$/.test(rawId) ? Number(rawId) : NaN;
+    if (!Number.isSafeInteger(id)) {
       this.loading = false;
       this.errorMessage = 'Esta ligação de sessão não é válida.';
       return;
