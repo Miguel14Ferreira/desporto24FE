@@ -401,6 +401,23 @@ h1 {
   color: #bae6fd;
 }
 
+.post-actions button.share-session {
+  border: 1px solid rgba(125, 211, 252, .22);
+  background: rgba(125, 211, 252, .09);
+  color: #bae6fd;
+  font-weight: 750;
+}
+
+.post-actions button.share-session:hover {
+  border-color: rgba(125, 211, 252, .55);
+  background: rgba(125, 211, 252, .16);
+}
+
+.post-actions button:disabled {
+  opacity: .55;
+  cursor: wait;
+}
+
 .comments-panel {
   margin-top: .6rem;
   padding-top: .65rem;

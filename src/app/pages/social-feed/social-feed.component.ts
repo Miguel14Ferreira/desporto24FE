@@ -47,6 +47,9 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
   actionError = '';
   copiedSessionId: number | null = null;
   copyingSessionId: number | null = null;
+  sharingSessionId: number | null = null;
+  shareFeedbackSessionId: number | null = null;
+  shareFeedbackMessage = '';
 
   readonly currentUsername: string;
 
@@ -153,13 +156,55 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
     this.copiedSessionId = null;
 
     try {
-      const url = new URL('/menu/events/' + sessionId, window.location.origin).href;
+      const url = new URL('/sessions/' + sessionId, window.location.origin).href;
       await navigator.clipboard.writeText(url);
       this.copiedSessionId = sessionId;
     } catch {
       this.actionError = 'Não foi possível copiar a ligação. Abre a sessão e copia o endereço.';
     } finally {
       this.copyingSessionId = null;
+    }
+  }
+
+  async shareSession(item: FeedItem): Promise<void> {
+    const sessionId = item.sessionId;
+    if (sessionId === null || this.sharingSessionId !== null || this.copyingSessionId !== null) {
+      return;
+    }
+
+    const url = new URL('/sessions/' + sessionId, window.location.origin).href;
+    const title = item.sport ? 'Sessão de ' + item.sport + ' na Jynlo' : 'Sessão na Jynlo';
+    const message = item.city
+      ? 'Vê esta sessão desportiva em ' + item.city + ' na Jynlo!'
+      : 'Vê esta sessão desportiva na Jynlo!';
+
+    this.sharingSessionId = sessionId;
+    this.shareFeedbackSessionId = null;
+    this.actionError = '';
+
+    try {
+      if (typeof navigator.share === 'function') {
+        try {
+          await navigator.share({ title, text: message, url });
+          this.shareFeedbackSessionId = sessionId;
+          this.shareFeedbackMessage = 'Partilhado';
+          return;
+        } catch (error) {
+          // Closing the native share sheet is not an error.
+          if (error instanceof Error && error.name === 'AbortError') {
+            return;
+          }
+          // Some desktop browsers expose share() but cannot complete it.
+        }
+      }
+
+      await navigator.clipboard.writeText(url);
+      this.shareFeedbackSessionId = sessionId;
+      this.shareFeedbackMessage = 'Ligação copiada';
+    } catch {
+      this.actionError = 'Não foi possível partilhar. Abre a sessão e copia o endereço.';
+    } finally {
+      this.sharingSessionId = null;
     }
   }
 
