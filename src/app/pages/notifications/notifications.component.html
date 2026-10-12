@@ -166,7 +166,9 @@
 
                 @if (selected.sessionId !== null) {
                   <button type="button" class="primary-action" (click)="openSession(selected)">
-                    {{ 'notifications.openSession' | t }}
+                    {{ (selected.type === 'SESSION_POST_GAME_REVIEW'
+                      ? 'notifications.reviewSession'
+                      : 'notifications.openSession') | t }}
                   </button>
                 }
 

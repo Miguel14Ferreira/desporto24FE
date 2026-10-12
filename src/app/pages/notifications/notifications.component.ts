@@ -361,6 +361,8 @@ export class NotificationsComponent implements OnInit {
         return t('notification.session');
       case 'SESSION_CANCELLED':
         return t('notification.sessionCancelled');
+      case 'SESSION_POST_GAME_REVIEW':
+        return t('notification.postGameReview');
       case 'COMMUNITY_INVITE':
         return t('notification.communityInvite');
       case 'CHAT_MESSAGE':

@@ -110,6 +110,27 @@
             </div>
           </div>
 
+          @if (canReviewPostGame()) {
+            <section id="post-game-review" class="post-game-review" aria-labelledby="post-game-review-title">
+              <div>
+                <span class="post-game-review-kicker">{{ 'sessionDetail.postGameKicker' | t }}</span>
+                <h2 id="post-game-review-title">{{ 'sessionDetail.postGameTitle' | t }}</h2>
+                <p>{{ 'sessionDetail.postGameDescription' | t }}</p>
+              </div>
+              <div class="post-game-review-actions">
+                <button type="button" class="primary-action"
+                        [disabled]="actionLoading" (click)="confirmGameHappened()">
+                  {{ 'sessionDetail.postGameYes' | t }}
+                </button>
+                <button type="button" class="secondary-action"
+                        [disabled]="actionLoading" (click)="confirmGameDidNotHappen()">
+                  {{ 'sessionDetail.postGameNo' | t }}
+                </button>
+              </div>
+              <small>{{ 'sessionDetail.postGameAttendanceHint' | t }}</small>
+            </section>
+          }
+
           @if (session.venue) {
             <section class="venue-detail-panel">
               <div class="venue-detail-heading">

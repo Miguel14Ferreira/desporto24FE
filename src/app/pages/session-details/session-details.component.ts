@@ -185,6 +185,60 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
       });
   }
 
+  canReviewPostGame(): boolean {
+    if (!this.session || !this.isCreator()
+        || (this.session.status !== 'OPEN' && this.session.status !== 'FULL')) {
+      return false;
+    }
+    const start = Date.parse(this.session.gameDate);
+    return Number.isFinite(start) && start + (2 * 60 * 60 * 1000) <= Date.now();
+  }
+
+  confirmGameHappened(): void {
+    if (!this.sessionId || !this.canReviewPostGame() || this.actionLoading) {
+      return;
+    }
+    this.actionLoading = true;
+    this.actionError = '';
+    this.actionSuccess = '';
+
+    this.sessionService.complete(this.sessionId)
+      .pipe(timeout(10_000), finalize(() => this.actionLoading = false))
+      .subscribe({
+        next: () => {
+          this.actionSuccess = t('feedback.session.completed');
+          this.showAttendanceManager = true;
+          this.loadParticipants();
+          this.loadSession(false);
+        },
+        error: error => {
+          this.actionError = this.errorFrom(error, t('feedback.session.completeError'));
+        }
+      });
+  }
+
+  confirmGameDidNotHappen(): void {
+    if (!this.sessionId || !this.canReviewPostGame() || this.actionLoading) {
+      return;
+    }
+    this.actionLoading = true;
+    this.actionError = '';
+    this.actionSuccess = '';
+
+    this.sessionService.reportDidNotOccur(this.sessionId)
+      .pipe(timeout(10_000), finalize(() => this.actionLoading = false))
+      .subscribe({
+        next: () => {
+          this.showAttendanceManager = false;
+          this.actionSuccess = t('sessionDetail.postGameDidNotHappenSaved');
+          this.loadSession(false);
+        },
+        error: error => {
+          this.actionError = this.errorFrom(error, t('feedback.session.problemReportError'));
+        }
+      });
+  }
+
   toggleProblemReport(): void {
     if (!this.canReportProblem() || this.actionLoading) {
       return;

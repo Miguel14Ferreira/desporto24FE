@@ -155,6 +155,54 @@ describe('SessionDetailsComponent', () => {
     fixture.detectChanges();
   });
 
+  it('offers post-game confirmation only to the organiser after two hours', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session, joined: true,
+      gameDate: new Date(Date.now() - 3 * 3600_000).toISOString()
+    };
+    fixture.detectChanges();
+    expect(component.canReviewPostGame()).toBeTrue();
+    expect(fixture.nativeElement.querySelector('#post-game-review')?.textContent)
+      .toContain('O jogo aconteceu?');
+
+    component.session = { ...component.session, status: 'COMPLETED' };
+    fixture.detectChanges();
+    expect(component.canReviewPostGame()).toBeFalse();
+    expect(fixture.nativeElement.querySelector('#post-game-review')).toBeNull();
+
+    component.session = { ...session, joined: true, gameDate: new Date().toISOString() };
+    expect(component.canReviewPostGame()).toBeFalse();
+    (component as any).currentUsername = 'another-user';
+    component.session = { ...session, joined: true, gameDate: '2020-10-01T18:00:00Z' };
+    expect(component.canReviewPostGame()).toBeFalse();
+  });
+
+  it('confirms a game and opens the existing attendance manager', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = { ...session, joined: true, gameDate: '2020-10-01T18:00:00Z' };
+    sessionService.detail.and.returnValue(of({ ...component.session, status: 'COMPLETED' as const }));
+
+    component.confirmGameHappened();
+
+    expect(sessionService.complete).toHaveBeenCalledWith(7);
+    expect(component.showAttendanceManager).toBeTrue();
+    expect(sessionService.participants).toHaveBeenCalledWith(7);
+    expect(component.session?.status).toBe('COMPLETED');
+  });
+
+  it('marks a game as not played without assigning absences', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = { ...session, joined: true, gameDate: '2020-10-01T18:00:00Z' };
+    sessionService.detail.and.returnValue(of({ ...component.session, status: 'CANCELLED' as const }));
+
+    component.confirmGameDidNotHappen();
+
+    expect(sessionService.reportDidNotOccur).toHaveBeenCalledWith(7);
+    expect(component.session?.status).toBe('CANCELLED');
+    expect(reliabilityService.recordAttendance).not.toHaveBeenCalled();
+  });
+
   it('should create', () => {
     expect(component).toBeTruthy();
   });

@@ -113,6 +113,23 @@ describe('NotificationsComponent', () => {
     fixture.detectChanges();
   });
 
+  it('labels a post-game reminder and links to its session', () => {
+    const reminder = {
+      ...notificationFixture(),
+      type: 'SESSION_POST_GAME_REVIEW',
+      subject: 'Como correu o teu jogo?'
+    };
+    component.selected = reminder;
+    fixture.detectChanges();
+
+    expect(component.typeLabel(reminder)).toBe('Pós-jogo');
+    const action = Array.from(fixture.nativeElement.querySelectorAll('button'))
+      .find((element: any) => element.textContent.includes('Confirmar jogo')) as HTMLButtonElement;
+    expect(action).toBeDefined();
+    action.click();
+    expect(router.navigate).toHaveBeenCalledWith(['/menu/events', 12]);
+  });
+
   it('should show the community invitation action and open pending invitations', () => {
     const invitation = {
       ...notificationFixture(),

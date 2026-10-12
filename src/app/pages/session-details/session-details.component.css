@@ -222,6 +222,20 @@ h1 {
   color: #bae6fd;
 }
 
+.post-game-review {
+  margin: 1.2rem 0;
+  padding: 1.3rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(0, 230, 118, .4);
+  background: rgba(0, 230, 118, .07);
+}
+.post-game-review h2 { margin: .3rem 0 .5rem; font-size: 1.3rem; }
+.post-game-review p { margin: 0; line-height: 1.55; }
+.post-game-review small { display: block; margin-top: .8rem; color: #cbd5e1; }
+.post-game-review-kicker { font-size: .8rem; font-weight: 800; color: #a7f3d0; }
+.post-game-review-actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1rem; }
+.post-game-review-actions button { min-width: 9rem; }
+
 .detail-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
