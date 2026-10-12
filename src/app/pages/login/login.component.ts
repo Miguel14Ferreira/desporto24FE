@@ -51,6 +51,8 @@ export class LoginComponent implements OnInit, AfterViewInit {
 
     this.successMessage = sessionStorage.getItem('auth-success-message') || '';
     this.errorMessage = sessionStorage.getItem('auth-error-message') || '';
+    // A failed registration email confirmation should allow resending immediately.
+    this.canResendConfirmation = Boolean(this.errorMessage);
     sessionStorage.removeItem('auth-success-message');
     sessionStorage.removeItem('auth-error-message');
 

@@ -55,6 +55,39 @@ describe('LoginComponent', () => {
 
   afterEach(() => sessionStorage.clear());
 
+  it('offers confirmation resend immediately after an expired email link', () => {
+    sessionStorage.setItem('auth-error-message', 'A ligação de confirmação expirou.');
+    TestBed.inject(ActivatedRoute).snapshot.queryParamMap =
+      convertToParamMap({ returnUrl: '/menu/events/42' });
+
+    component.ngOnInit();
+    fixture.detectChanges();
+
+    expect(component.canResendConfirmation).toBeTrue();
+    expect(fixture.nativeElement.querySelector('.confirmation-resend .resend-confirmation'))
+      .not.toBeNull();
+    expect(component.errorMessage).toContain('expirou');
+    expect(sessionStorage.getItem('auth-error-message')).toBeNull();
+
+    component.username = 'fixture-user';
+    spyOn<any>(component, 'startResendCooldown');
+    component.resendConfirmation();
+
+    expect(auth.resendRegistrationConfirmation).toHaveBeenCalledWith('fixture-user', 42);
+    expect(component.successMessage).toContain('novo email');
+  });
+
+  it('does not offer confirmation resend after a successful email confirmation', () => {
+    sessionStorage.setItem('auth-success-message', 'Email confirmado.');
+
+    component.ngOnInit();
+    fixture.detectChanges();
+
+    expect(component.canResendConfirmation).toBeFalse();
+    expect(fixture.nativeElement.querySelector('.confirmation-resend')).toBeNull();
+    expect(component.successMessage).toBe('Email confirmado.');
+  });
+
   it('should explain the request login and return to notifications after signing in', () => {
     const route = TestBed.inject(ActivatedRoute);
     route.snapshot.queryParamMap = convertToParamMap({ returnUrl: '/menu/notifications' });
