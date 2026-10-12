@@ -30,6 +30,21 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
   get filteredSessions(): SessionSummary[] { return this.availableSessions; }
   selectedSessionId: number | null = null;
   postGameSessionId: number | null = null;
+  get postGameSession(): SessionSummary | null {
+    if (this.postGameSessionId === null || this.selectedSessionId !== this.postGameSessionId) {
+      return null;
+    }
+    return this.availableSessions.find(session => session.id === this.postGameSessionId) ?? null;
+  }
+
+  detachPostGameSession(): void {
+    if (this.posting || !this.postGameSession) {
+      return;
+    }
+    this.selectedSessionId = null;
+    this.postGameSessionId = null;
+  }
+
   readonly postGamePromptKeys = [
     'feed.postGamePrompt.bestMoment',
     'feed.postGamePrompt.team',

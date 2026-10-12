@@ -129,6 +129,49 @@ describe('SocialFeedComponent post-game entry', () => {
     target.ngOnDestroy();
   });
 
+  it('shows only the verified session in the post-game draft summary', () => {
+    const { target } = openFromSession();
+    expect(target.postGameSession).toEqual(jasmine.objectContaining({
+      id: 42, sport: 'Padel', city: 'Lisboa', status: 'COMPLETED'
+    }));
+    target.selectedSessionId = 43;
+    expect(target.postGameSession).toBeNull();
+    target.ngOnDestroy();
+  });
+
+  it('detaches the completed session while preserving the draft and photo', () => {
+    const { target } = openFromSession();
+    target.postContent = 'O melhor momento foi o último ponto!';
+    target.postImagePreview = 'blob:my-photo';
+    target.postImageFile = new File(['photo'], 'jogo.jpg', { type: 'image/jpeg' });
+    const photo = target.postImageFile;
+
+    target.detachPostGameSession();
+
+    expect(target.selectedSessionId).toBeNull();
+    expect(target.postGameSessionId).toBeNull();
+    expect(target.postGameSession).toBeNull();
+    expect(target.postContent).toBe('O melhor momento foi o último ponto!');
+    expect(target.postImagePreview).toBe('blob:my-photo');
+    expect(target.postImageFile).toBe(photo);
+    target.ngOnDestroy();
+  });
+
+  it('does not detach the session during publication or if another is selected', () => {
+    const { target } = openFromSession();
+    target.posting = true;
+    target.detachPostGameSession();
+    expect(target.selectedSessionId).toBe(42);
+    expect(target.postGameSessionId).toBe(42);
+
+    target.posting = false;
+    target.selectedSessionId = 99;
+    target.detachPostGameSession();
+    expect(target.selectedSessionId).toBe(99);
+    expect(target.postGameSessionId).toBe(42);
+    target.ngOnDestroy();
+  });
+
   it('starts an editable post-game draft from a suggestion without posting', () => {
     const previousLanguage = localStorage.getItem('d24-language');
     localStorage.setItem('d24-language', 'pt');

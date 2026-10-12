@@ -18,7 +18,16 @@
         <strong>{{ 'feed.shareTitle' | t }}</strong>
         <span>{{ postContent.length }}/1000</span>
       </div>
-      @if (postGameSessionId !== null && selectedSessionId === postGameSessionId) {
+      @if (postGameSession; as completedSession) {
+        <div class="postgame-session-card">
+          <div class="postgame-session-summary">
+            <span class="postgame-session-kicker">{{ 'feed.postGameLinkedSession' | t }}</span>
+            <strong>{{ completedSession.sport }} · {{ completedSession.city }}</strong>
+            <span>{{ completedSession.gameDate | date:'dd/MM/yyyy HH:mm' }}</span>
+          </div>
+          <button type="button" class="postgame-detach" [disabled]="posting"
+                  (click)="detachPostGameSession()">{{ 'feed.postGameDetach' | t }}</button>
+        </div>
         <p class="composer-hint" role="status">{{ 'feed.postGameHint' | t }}</p>
         <div class="postgame-prompts" role="group" [attr.aria-label]="'feed.postGamePromptsLabel' | t">
           @for (promptKey of postGamePromptKeys; track promptKey) {

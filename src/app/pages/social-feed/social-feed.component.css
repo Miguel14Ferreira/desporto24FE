@@ -104,6 +104,50 @@ h1 {
   font-size: .74rem;
 }
 
+.postgame-session-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: .75rem;
+  padding: .8rem 1rem;
+  border: 1px solid rgba(0, 230, 118, .3);
+  border-radius: .85rem;
+  background: rgba(0, 230, 118, .06);
+}
+
+.postgame-session-summary {
+  display: grid;
+  gap: .2rem;
+  min-width: 0;
+}
+
+.postgame-session-summary > span:last-child {
+  color: #cbd5e1;
+  font-size: .85rem;
+}
+
+.postgame-session-kicker {
+  color: #86efac;
+  font-size: .76rem;
+  font-weight: 750;
+}
+
+.composer .postgame-detach {
+  padding: .55rem .75rem;
+  border: 1px solid rgba(255, 255, 255, .25);
+  border-radius: .7rem;
+  background: transparent;
+  color: #e2e8f0;
+  font: inherit;
+  font-size: .85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.composer .postgame-detach:hover:not(:disabled) { background: rgba(255, 255, 255, .08); }
+.composer .postgame-detach:focus-visible { outline: 2px solid #7dd3fc; outline-offset: 3px; }
+
 .postgame-prompts {
   display: flex;
   flex-wrap: wrap;
