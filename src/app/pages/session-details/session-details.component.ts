@@ -122,11 +122,11 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
   }
 
   joinSession(): void {
-    if (!this.session || !this.sessionId || this.actionLoading) {
+    if (!this.canJoinSession() || !this.sessionId || this.actionLoading) {
       return;
     }
 
-    if (this.session.privateGame && !this.joinPassword.trim()) {
+    if (this.session!.privateGame && !this.joinPassword.trim()) {
       this.actionError = t('feedback.session.privatePassword');
       this.actionSuccess = '';
       return;
@@ -679,6 +679,16 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
 
   hasConfirmedTeams(): boolean {
     return this.confirmedTeams;
+  }
+
+  canJoinSession(): boolean {
+    if (!this.session || this.session.joined || this.session.waitlisted
+      || (this.session.status !== 'OPEN' && this.session.status !== 'FULL')) {
+      return false;
+    }
+
+    const startTime = Date.parse(this.session.gameDate);
+    return Number.isFinite(startTime) && startTime > Date.now();
   }
 
   joinButtonLabel(): string {

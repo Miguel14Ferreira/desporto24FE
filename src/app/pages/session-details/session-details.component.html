@@ -347,6 +347,13 @@
                 {{ actionLoading ? ('common.processing' | t) : ('sessionDetail.leaveSession' | t) }}
               </button>
             </section>
+          } @else if (!canJoinSession()) {
+            <section class="participation-panel">
+              <div>
+                <h2>{{ 'sessionDetail.closed' | t }}</h2>
+                <p>{{ 'sessionDetail.closedText' | t }}</p>
+              </div>
+            </section>
           } @else {
             <section class="participation-panel">
               <div>

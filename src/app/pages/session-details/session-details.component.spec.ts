@@ -195,11 +195,57 @@ describe('SessionDetailsComponent', () => {
   });
 
   it('should join the session and refresh its details', () => {
+    component.session = { ...session, gameDate: new Date(Date.now() + 3600_000).toISOString() };
     component.joinSession();
 
     expect(sessionService.join).toHaveBeenCalledWith(7, '');
     expect(sessionService.detail).toHaveBeenCalledTimes(2);
     expect(component.actionSuccess).toContain('sucesso');
+  });
+
+  it('should allow joining the waitlist when a future session is full', () => {
+    component.session = {
+      ...session,
+      status: 'FULL',
+      participantCount: 4,
+      gameDate: new Date(Date.now() + 3600_000).toISOString()
+    };
+    sessionService.join.and.returnValue(of({ state: 'WAITLISTED', waitlistPosition: 1 }));
+
+    expect(component.canJoinSession()).toBeTrue();
+    expect(component.joinButtonLabel()).toContain('lista de espera');
+    component.joinSession();
+
+    expect(sessionService.join).toHaveBeenCalledWith(7, '');
+    expect(component.actionSuccess).toContain('lista de espera');
+  });
+
+  it('should hide new inscriptions for cancelled, completed and already started sessions', () => {
+    const futureDate = new Date(Date.now() + 3600_000).toISOString();
+    for (const closedCase of [
+      { status: 'CANCELLED', gameDate: futureDate },
+      { status: 'COMPLETED', gameDate: futureDate },
+      { status: 'OPEN', gameDate: new Date(Date.now() - 3600_000).toISOString() }
+    ]) {
+      component.session = { ...session, ...closedCase };
+      expect(component.canJoinSession()).toBeFalse();
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('.join-controls .primary-action')).toBeNull();
+      component.joinSession();
+    }
+
+    expect(sessionService.join).not.toHaveBeenCalled();
+  });
+
+  it('should not offer another inscription to an existing participant or waitlisted user', () => {
+    const gameDate = new Date(Date.now() + 3600_000).toISOString();
+    component.session = { ...session, joined: true, gameDate };
+    expect(component.canJoinSession()).toBeFalse();
+    component.joinSession();
+    component.session = { ...session, waitlisted: true, gameDate };
+    expect(component.canJoinSession()).toBeFalse();
+    component.joinSession();
+    expect(sessionService.join).not.toHaveBeenCalled();
   });
 
   it('should leave a waitlisted session and refresh details', () => {
@@ -315,6 +361,7 @@ describe('SessionDetailsComponent', () => {
   it('should require a password for private sessions', () => {
     component.session = {
       ...session,
+      gameDate: new Date(Date.now() + 3600_000).toISOString(),
       privateGame: true
     };
 
