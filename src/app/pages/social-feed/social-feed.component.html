@@ -270,12 +270,6 @@
             @if (item.type === 'SESSION_CREATED') {
               <div class="activity-copy">
                 <span class="activity-label">{{ 'feed.activity.sessionCreated' | t }}</span>
-                <p>
-                  {{ 'feed.activity.createdSession' | t:{
-                    sport: item.sport || '',
-                    city: item.city || ''
-                  } }}
-                </p>
               </div>
 
               <a
