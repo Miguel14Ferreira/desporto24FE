@@ -70,7 +70,21 @@ export class PublicSessionPreviewComponent implements OnInit {
     return environment.apiUrl + (photo.startsWith('/') ? photo : '/' + photo);
   }
 
+  get canRequestParticipation(): boolean {
+    if (!this.session || (this.session.status !== 'OPEN' && this.session.status !== 'FULL')) {
+      return false;
+    }
+
+    const startTime = Date.parse(this.session.gameDate ?? '');
+    return Number.isFinite(startTime) && startTime > Date.now();
+  }
+
   get statusLabel(): string {
+    if ((this.session?.status === 'OPEN' || this.session?.status === 'FULL')
+        && !this.canRequestParticipation) {
+      return 'Inscrições encerradas';
+    }
+
     switch (this.session?.status) {
       case 'OPEN': return 'Inscrições abertas';
       case 'FULL': return 'Sessão completa';

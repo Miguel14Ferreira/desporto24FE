@@ -46,10 +46,20 @@
         </div>
 
         <aside class="join-panel">
-          <span class="status" [class.closed]="details.status !== 'OPEN'">{{ statusLabel }}</span>
-          <h2>O próximo jogo pode ser teu.</h2>
-          <p>Cria uma conta gratuita para veres todos os detalhes e, quando disponível, participares nesta sessão.</p>
-          <a class="primary-action" routerLink="/login/registerNewUser" [queryParams]="{ returnUrl: '/menu/events/' + details.id }">Criar conta</a>
+          <span class="status" [class.closed]="!canRequestParticipation">{{ statusLabel }}</span>
+          @if (canRequestParticipation) {
+            @if (details.status === 'FULL') {
+              <h2>Ainda podes entrar na lista de espera.</h2>
+              <p>Esta sessão está cheia, mas podes juntar-te à lista de espera caso surja uma vaga.</p>
+            } @else {
+              <h2>O próximo jogo pode ser teu.</h2>
+              <p>Cria uma conta gratuita para veres todos os detalhes e participares nesta sessão.</p>
+            }
+            <a class="primary-action" routerLink="/login/registerNewUser" [queryParams]="{ returnUrl: '/menu/events/' + details.id }">Criar conta</a>
+          } @else {
+            <h2>Esta sessão já não aceita inscrições.</h2>
+            <p>Podes iniciar sessão para consultar os detalhes, mas não é possível inscrever-te neste jogo.</p>
+          }
           <a class="secondary-action" routerLink="/login" [queryParams]="{returnUrl: '/menu/events/' + details.id}">Já tenho conta</a>
         </aside>
       </main>
