@@ -211,30 +211,82 @@ h1 {
   color: #cbd5e1;
 }
 
+/* Sport-first session card: make the whole preview an inviting desktop CTA. */
 .session-preview {
   justify-content: space-between;
-  gap: 1rem;
-  margin-top: .75rem;
-  padding: .8rem .9rem;
-  border: 1px solid rgba(125,211,252,.15);
-  border-radius: .8rem;
-  background: rgba(125,211,252,.045);
-  color: inherit;
+  gap: 1.5rem;
+  margin-top: .85rem;
+  padding: 1.15rem 1.25rem;
+  min-width: 0;
+  border: 1px solid rgba(125, 211, 252, .24);
+  border-left: 3px solid #38bdf8;
+  border-radius: 1rem;
+  background: linear-gradient(110deg, rgba(14, 165, 233, .12), rgba(30, 41, 59, .55));
+  box-shadow: 0 9px 26px rgba(2, 6, 23, .13);
+  color: #f8fafc;
   text-decoration: none;
+  transition: border-color .16s ease, background .16s ease, transform .16s ease;
+}
+
+.session-preview:hover {
+  border-color: rgba(125, 211, 252, .6);
+  background: linear-gradient(110deg, rgba(14, 165, 233, .18), rgba(30, 41, 59, .7));
+  transform: translateY(-1px);
+}
+
+.session-preview:focus-visible {
+  outline: 2px solid #7dd3fc;
+  outline-offset: 3px;
 }
 
 .session-preview > div {
   display: grid;
-  gap: .15rem;
+  align-content: center;
+  min-width: 0;
+  gap: .45rem;
+}
+
+.session-preview > div:first-child strong {
+  font-size: 1.2rem;
+  line-height: 1.25;
+}
+
+.session-preview > div:first-child span::before {
+  content: '•';
+  margin-right: .45rem;
+  color: #38bdf8;
 }
 
 .session-preview > div:last-child {
   justify-items: end;
+  gap: .55rem;
+}
+
+.session-preview > div:last-child strong {
+  display: inline-flex;
+  align-items: center;
+  gap: .55rem;
+  border-radius: .7rem;
+  padding: .55rem .8rem;
+  background: #f8fafc;
+  color: #0f172a;
+  font-size: .8rem;
+  font-weight: 850;
+}
+
+.session-preview > div:last-child strong::after {
+  content: '→';
+  font-size: 1rem;
 }
 
 .session-preview span {
-  color: #94a3b8;
-  font-size: .76rem;
+  color: #cbd5e1;
+  font-size: .8rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .session-preview { transition: none; }
+  .session-preview:hover { transform: none; }
 }
 
 .state-card {
