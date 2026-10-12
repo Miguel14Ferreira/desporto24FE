@@ -464,3 +464,69 @@ h1 {
   object-fit: cover;
   background: rgba(2,6,23,.35);
 }
+
+
+/* Public-session picker: align with the feed composer and dark theme. */
+.composer-session-select {
+  display: grid;
+  gap: .55rem;
+  min-width: 0;
+}
+
+.composer-session-select > span {
+  display: block;
+  font-size: .85rem;
+  font-weight: 750;
+  color: #e2e8f0;
+}
+
+.composer-session-select input,
+.composer-session-select select {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: .75rem;
+  padding: .65rem .85rem;
+  background: #1e293b;
+  color: #f8fafc;
+  font: inherit;
+  outline: none;
+}
+
+.composer-session-select input::placeholder { color: #94a3b8; }
+
+.composer-session-select input:focus-visible,
+.composer-session-select select:focus-visible {
+  border-color: #7dd3fc;
+  box-shadow: 0 0 0 2px rgba(125,211,252,.13);
+}
+
+.composer-session-select select option {
+  background: #1e293b;
+  color: #f8fafc;
+}
+
+.composer-session-select .composer-hint {
+  margin: 0;
+  font-size: .8rem;
+  line-height: 1.45;
+  color: #94a3b8;
+}
+
+.composer-session-select [role="alert"] { color: #fca5a5; }
+
+.composer .composer-session-select > button {
+  justify-self: start;
+  border: 0;
+  border-radius: .4rem;
+  padding: .15rem 0;
+  background: transparent;
+  color: #7dd3fc;
+  font-size: .82rem;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: .2rem;
+}
