@@ -105,15 +105,35 @@ describe('PublicSessionPreviewComponent', () => {
     expect(link.getAttribute('rel')).toBe('noopener noreferrer');
     expect(new URL(link.href).origin).toBe('https://wa.me');
     expect(new URL(link.href).searchParams.get('text'))
-      .toBe('Vem jogar connosco na Jynlo!\n' + publicUrl);
+      .toBe('Bora jogar Padel em Lisboa? Junta-te a nós na Jynlo!\n' + publicUrl);
 
     i18n.setLanguage('en');
     fixture.detectChanges();
 
     expect(link.textContent?.trim()).toBe('Share on WhatsApp');
     expect(new URL(link.href).searchParams.get('text'))
-      .toBe('Come play with us on Jynlo!\n' + publicUrl);
+      .toBe('Want to play Padel in Lisboa? Join us on Jynlo!\n' + publicUrl);
     expect(link.href).not.toContain('menu/events');
+  });
+
+  it('keeps WhatsApp invitations useful when sport or city is missing', () => {
+    const i18n = TestBed.inject(I18nService);
+    render({ sport: '  Padel  ', city: null });
+    const publicUrl = new URL('/sessions/42', window.location.origin).href;
+    const sharedText = () => new URL(fixture.componentInstance.whatsappShareUrl()!)
+      .searchParams.get('text');
+
+    expect(sharedText()).toBe('Bora jogar Padel? Junta-te a nós na Jynlo!\n' + publicUrl);
+
+    fixture.componentInstance.session!.sport = null;
+    fixture.componentInstance.session!.city = ' Porto ';
+    expect(sharedText()).toBe('Bora jogar em Porto? Junta-te a nós na Jynlo!\n' + publicUrl);
+
+    fixture.componentInstance.session!.city = ' ';
+    expect(sharedText()).toBe('Vem jogar connosco na Jynlo!\n' + publicUrl);
+
+    i18n.setLanguage('en');
+    expect(sharedText()).toBe('Come play with us on Jynlo!\n' + publicUrl);
   });
 
   it('does not offer WhatsApp sharing for sessions closed to participation', () => {

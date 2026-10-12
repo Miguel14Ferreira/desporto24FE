@@ -81,7 +81,14 @@ export class PublicSessionPreviewComponent implements OnInit {
     if (!url) {
       return null;
     }
-    const message = this.i18n.translate('publicSession.shareMessage') + '\n' + url;
+    const sport = this.session?.sport?.trim();
+    const city = this.session?.city?.trim();
+    const messageKey = sport && city ? 'publicSession.whatsappSportCity'
+      : sport ? 'publicSession.whatsappSport'
+      : city ? 'publicSession.whatsappCity'
+      : 'publicSession.shareMessage';
+    const message = this.i18n.translate(messageKey, { sport: sport || '', city: city || '' })
+      + '\n' + url;
     return 'https://wa.me/?text=' + encodeURIComponent(message);
   }
 
