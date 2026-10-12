@@ -15,10 +15,11 @@ describe('LoginComponent', () => {
   beforeEach(async () => {
     auth = jasmine.createSpyObj<AuthenticationService>(
       'AuthenticationService',
-      ['login', 'hasValidToken', 'saveToken', 'googleConfig']
+      ['login', 'hasValidToken', 'saveToken', 'googleConfig', 'resendRegistrationConfirmation']
     );
     auth.hasValidToken.and.returnValue(false);
     auth.googleConfig.and.returnValue(of({ clientId: '' }));
+    auth.resendRegistrationConfirmation.and.returnValue(of({ message: 'Email reenviado' } as any));
     auth.login.and.returnValue(of({
       mfaRequired: false,
       challengeId: null,
@@ -146,6 +147,30 @@ describe('LoginComponent', () => {
     component.onLogin();
 
     expect(sessionStorage.getItem('mfa-return-url')).toBe('/menu/feed');
+  });
+
+  it('preserves a shared session when resending confirmation after failed login', () => {
+    TestBed.inject(ActivatedRoute).snapshot.queryParamMap =
+      convertToParamMap({ returnUrl: '/menu/events/42' });
+    component.ngOnInit();
+    component.username = 'fixture-user';
+    spyOn<any>(component, 'startResendCooldown');
+
+    component.resendConfirmation();
+
+    expect(auth.resendRegistrationConfirmation).toHaveBeenCalledWith('fixture-user', 42);
+  });
+
+  it('does not forward other login destinations as session IDs', () => {
+    TestBed.inject(ActivatedRoute).snapshot.queryParamMap =
+      convertToParamMap({ returnUrl: '/menu/notifications' });
+    component.ngOnInit();
+    component.username = 'fixture-user';
+    spyOn<any>(component, 'startResendCooldown');
+
+    component.resendConfirmation();
+
+    expect(auth.resendRegistrationConfirmation).toHaveBeenCalledWith('fixture-user', null);
   });
 
   it('should not show the request message for a normal login', () => {

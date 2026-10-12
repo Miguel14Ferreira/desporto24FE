@@ -93,6 +93,42 @@ describe('AuthenticationService pilot cohort attribution', () => {
     expect(formData.has('cohort')).toBeFalse();
   });
 
+  it('includes a valid session destination in the resend confirmation request', () => {
+    http.post.and.returnValue(of({ message: 'ok' } as any));
+
+    service.resendRegistrationConfirmation(' miguel ', 42).subscribe();
+
+    expect(http.post).toHaveBeenCalledWith(
+      jasmine.stringMatching(/\/api\/auth\/register\/resend-confirmation$/),
+      null,
+      { params: { username: 'miguel', returnSessionId: '42' } }
+    );
+  });
+
+  it('preserves legacy resends without a session destination', () => {
+    http.post.and.returnValue(of({ message: 'ok' } as any));
+
+    service.resendRegistrationConfirmation('miguel').subscribe();
+
+    expect(http.post).toHaveBeenCalledWith(
+      jasmine.stringMatching(/\/api\/auth\/register\/resend-confirmation$/),
+      null,
+      { params: { username: 'miguel' } }
+    );
+  });
+
+  it('does not send invalid session IDs to the backend', () => {
+    http.post.and.returnValue(of({ message: 'ok' } as any));
+
+    service.resendRegistrationConfirmation('miguel', -1).subscribe();
+
+    expect(http.post).toHaveBeenCalledWith(
+      jasmine.any(String),
+      null,
+      { params: { username: 'miguel' } }
+    );
+  });
+
   it('keeps an expired access token as a session candidate until refresh decides', () => {
     localStorage.setItem('t', 'expired.jwt.token');
     spyOn(JwtHelperService.prototype, 'decodeToken')

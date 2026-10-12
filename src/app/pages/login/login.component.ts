@@ -6,6 +6,7 @@ import { finalize, timeout } from 'rxjs';
 
 import { AuthenticationService } from '../../services/authethication.service';
 import { safeLoginReturnUrl } from '../../shared/safe-login-return-url';
+import { registrationSessionId } from '../../shared/registration-return-url';
 
 declare global {
   interface Window {
@@ -261,7 +262,8 @@ export class LoginComponent implements OnInit, AfterViewInit {
     this.resendLoading = true;
     this.successMessage = '';
 
-    this.authenticationService.resendRegistrationConfirmation(username)
+    const sessionId = registrationSessionId(this.returnUrl);
+    this.authenticationService.resendRegistrationConfirmation(username, sessionId)
       .pipe(timeout(10_000), finalize(() => this.resendLoading = false))
       .subscribe({
         next: response => {

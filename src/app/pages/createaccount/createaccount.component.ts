@@ -113,7 +113,8 @@ export class CreateaccountComponent {
     this.resendLoading = true;
     this.errorMessage = '';
 
-    this.authenticationService.resendRegistrationConfirmation(username)
+    const sessionId = registrationSessionId(this.route.snapshot.queryParamMap.get('returnUrl'));
+    this.authenticationService.resendRegistrationConfirmation(username, sessionId)
       .pipe(timeout(10_000), finalize(() => this.resendLoading = false))
       .subscribe({
         next: response => {

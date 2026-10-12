@@ -13,8 +13,9 @@ describe('CreateaccountComponent', () => {
   let auth: jasmine.SpyObj<AuthenticationService>;
 
   beforeEach(async () => {
-    auth = jasmine.createSpyObj<AuthenticationService>('AuthenticationService', ['register']);
+    auth = jasmine.createSpyObj<AuthenticationService>('AuthenticationService', ['register', 'resendRegistrationConfirmation']);
     auth.register.and.returnValue(of({ message: 'Conta criada' } as any));
+    auth.resendRegistrationConfirmation.and.returnValue(of({ message: 'Email reenviado' } as any));
 
     await TestBed.configureTestingModule({
       declarations: [CreateaccountComponent],
@@ -99,6 +100,26 @@ describe('CreateaccountComponent', () => {
       jasmine.objectContaining({ returnSessionId: null }),
       undefined
     );
+  });
+
+  it('keeps the shared session when resending the registration confirmation email', () => {
+    TestBed.inject(ActivatedRoute).snapshot.queryParamMap =
+      convertToParamMap({ returnUrl: '/menu/events/42' });
+    component.username = 'miguel';
+    spyOn<any>(component, 'startResendCooldown');
+
+    component.resendConfirmation();
+
+    expect(auth.resendRegistrationConfirmation).toHaveBeenCalledWith('miguel', 42);
+  });
+
+  it('does not attach a session when resending a normal registration', () => {
+    component.username = 'miguel';
+    spyOn<any>(component, 'startResendCooldown');
+
+    component.resendConfirmation();
+
+    expect(auth.resendRegistrationConfirmation).toHaveBeenCalledWith('miguel', null);
   });
 
   it('should reject registration without legal acceptance', () => {
