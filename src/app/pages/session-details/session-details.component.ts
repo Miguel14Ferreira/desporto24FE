@@ -66,6 +66,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
   ratingLoading = false;
   ratingSaving = false;
   ratingDismissed = false;
+  ratingCollapsedByExisting = false;
   ratingError = '';
   ratingSuccess = '';
   ratingLoadedSessionId: number | null = null;
@@ -239,6 +240,8 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
           this.ratingLoadedSessionId = sessionId;
           this.myOverallScore = rating?.overallScore ?? null;
           this.selectedOverallScore = this.myOverallScore;
+          // Already rated on a previous visit: don't prompt again by default.
+          this.ratingCollapsedByExisting = this.myOverallScore !== null;
         },
         error: () => {
           this.ratingError = t('feedback.session.overallRatingLoadError');
@@ -318,6 +321,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
       return;
     }
     this.ratingDismissed = false;
+    this.ratingCollapsedByExisting = false;
     const key = this.ratingDismissalKey();
     if (key) {
       try {

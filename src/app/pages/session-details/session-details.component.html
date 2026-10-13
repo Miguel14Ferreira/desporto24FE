@@ -63,10 +63,11 @@
               <a class="postgame-action" routerLink="/menu/feed"
                  [queryParams]="{ momentSession: session.id }">{{ 'sessionDetail.sharePostGameMoment' | t }}</a>
             }
-            @if (canRatePostGame() && ratingDismissed) {
+            @if (canRatePostGame() && (ratingDismissed || ratingCollapsedByExisting)) {
               <button type="button" class="share-session-action rating-reopen-action"
                       (click)="reopenOverallRating()">
-                {{ 'sessionDetail.overallRatingReopen' | t }}
+                {{ (myOverallScore !== null ? 'sessionDetail.overallRatingEdit'
+                                           : 'sessionDetail.overallRatingReopen') | t }}
               </button>
             }
             @if (canShareSession()) {
@@ -137,7 +138,7 @@
             </section>
           }
 
-          @if (canRatePostGame() && !ratingDismissed) {
+          @if (canRatePostGame() && !ratingDismissed && !ratingCollapsedByExisting) {
             <section class="overall-rating-panel" aria-labelledby="overall-rating-title">
               <div>
                 <span class="overall-rating-kicker">{{ 'sessionDetail.overallRatingKicker' | t }}</span>

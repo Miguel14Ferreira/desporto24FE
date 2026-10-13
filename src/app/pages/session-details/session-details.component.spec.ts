@@ -241,6 +241,14 @@ describe('SessionDetailsComponent', () => {
     expect(component.myOverallScore).toBe(3);
     expect(component.selectedOverallScore).toBe(3);
     expect(component.canSaveOverallRating()).toBeFalse();
+    expect(component.ratingCollapsedByExisting).toBeTrue();
+    expect(fixture.nativeElement.querySelector('.overall-rating-panel')).toBeNull();
+
+    const edit = fixture.nativeElement.querySelector('.rating-reopen-action') as HTMLButtonElement;
+    expect(edit.textContent).toContain('Editar avaliação');
+    edit.click();
+    fixture.detectChanges();
+    expect(component.ratingCollapsedByExisting).toBeFalse();
 
     const stars = fixture.nativeElement.querySelectorAll('.overall-rating-star') as NodeListOf<HTMLButtonElement>;
     stars.item(4).click();
@@ -252,6 +260,47 @@ describe('SessionDetailsComponent', () => {
     expect(component.myOverallScore).toBe(5);
     expect(component.ratingSuccess).toContain('atualizada');
     expect(component.canSaveOverallRating()).toBeFalse();
+  });
+
+  it('does not keep prompting after a previously saved rating', () => {
+    component.session = { ...session, joined: true, gameDate: '2020-10-01T18:00:00Z' };
+    sessionService.myOverallRating.and.returnValue(of({
+      overallScore: 4, updatedAt: '2026-10-13T10:00:00Z'
+    }));
+
+    component.loadMyOverallRating();
+    fixture.detectChanges();
+    expect(component.myOverallScore).toBe(4);
+    expect(component.ratingCollapsedByExisting).toBeTrue();
+    expect(fixture.nativeElement.querySelector('.overall-rating-panel')).toBeNull();
+    expect((fixture.nativeElement.querySelector('.rating-reopen-action') as HTMLButtonElement).textContent)
+      .toContain('Editar avaliação');
+    expect(sessionService.rateOverall).not.toHaveBeenCalled();
+
+    // Refreshing the same joined session doesn't turn the saved rating into a new prompt.
+    sessionService.detail.and.returnValue(of({ ...component.session, joined: true }));
+    (component as any).loadSession(false);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.overall-rating-panel')).toBeNull();
+    expect(sessionService.myOverallRating).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps first-time rating success visible on the visit where it was saved', () => {
+    component.session = { ...session, joined: true, gameDate: '2020-10-01T18:00:00Z' };
+    component.loadMyOverallRating();
+    fixture.detectChanges();
+    expect(component.myOverallScore).toBeNull();
+
+    (fixture.nativeElement.querySelectorAll('.overall-rating-star')[4] as HTMLButtonElement).click();
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('.overall-rating-actions .primary-action') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    expect(component.myOverallScore).toBe(5);
+    expect(component.ratingSuccess).toContain('guardada');
+    expect(component.ratingCollapsedByExisting).toBeFalse();
+    expect(fixture.nativeElement.querySelector('.overall-rating-panel')).not.toBeNull();
+    expect(sessionService.rateOverall).toHaveBeenCalledOnceWith(7, 5);
   });
 
   it('remembers not now for one user and session and allows manual re-opening', () => {
