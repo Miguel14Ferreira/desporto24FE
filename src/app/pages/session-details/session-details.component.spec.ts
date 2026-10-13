@@ -42,7 +42,7 @@ describe('SessionDetailsComponent', () => {
   beforeEach(async () => {
     sessionService = jasmine.createSpyObj<SessionService>(
       'SessionService',
-      ['detail', 'join', 'leave', 'complete', 'reportDidNotOccur', 'reportProblem', 'messages', 'postMessage', 'participants', 'removeParticipant', 'teamSuggestion', 'confirmTeams']
+      ['detail', 'join', 'leave', 'complete', 'reportDidNotOccur', 'reportProblem', 'messages', 'postMessage', 'participants', 'removeParticipant', 'teamSuggestion', 'confirmTeams', 'futureExclusionStatus', 'excludeFromFutureSessions', 'allowFutureSessions']
     );
     sessionService.detail.and.returnValue(of(session));
     sessionService.join.and.returnValue(of({
@@ -54,6 +54,9 @@ describe('SessionDetailsComponent', () => {
     sessionService.reportDidNotOccur.and.returnValue(of(void 0));
     sessionService.reportProblem.and.returnValue(of(void 0));
     sessionService.removeParticipant.and.returnValue(of(void 0));
+    sessionService.futureExclusionStatus.and.returnValue(of({ excluded: false }));
+    sessionService.excludeFromFutureSessions.and.returnValue(of({ excluded: true }));
+    sessionService.allowFutureSessions.and.returnValue(of({ excluded: false }));
     sessionService.messages.and.returnValue(of([]));
     sessionService.participants.and.returnValue(of([
       {
@@ -1042,6 +1045,69 @@ describe('SessionDetailsComponent', () => {
     component.session = { ...session, gameDate: '2020-10-01T18:00:00Z', joined: true };
     (component as any).currentUsername = 'someone-else';
     expect(component.canConfirmPendingAttendance()).toBeFalse();
+  });
+
+  it('offers an explicit choice only after a recorded absence and allows undo', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = { ...session, joined: true, gameDate: '2020-10-01T18:00:00Z' };
+    component.showAttendanceManager = true;
+    const absent = { id: 15, username: 'ana', attendanceStatus: 'NO_SHOW' as const,
+      joinedAt: '2026-09-20T18:00:00Z' };
+    sessionService.participants.and.returnValue(of([absent]));
+    component.loadParticipants();
+
+    expect(sessionService.futureExclusionStatus).toHaveBeenCalledWith(7, 15);
+    expect(component.futureExclusions[15]).toBeFalse();
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('.future-exclusion-request') as HTMLButtonElement).click();
+    expect(sessionService.excludeFromFutureSessions).not.toHaveBeenCalled();
+    expect(fixture.nativeElement.textContent).toContain('ana');
+
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('.future-exclusion-confirm') as HTMLButtonElement).click();
+    expect(sessionService.excludeFromFutureSessions).toHaveBeenCalledWith(7, 15);
+    expect(component.futureExclusions[15]).toBeTrue();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.future-exclusion-undo')).not.toBeNull();
+
+    // Undo remains accessible even if the attendance record is subsequently corrected.
+    absent.attendanceStatus = 'ATTENDED' as any;
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('.future-exclusion-undo') as HTMLButtonElement).click();
+    expect(sessionService.allowFutureSessions).toHaveBeenCalledWith(7, 15);
+    expect(component.futureExclusions[15]).toBeFalse();
+  });
+
+  it('does not create future exclusions without a recorded no-show or for outsiders', () => {
+    const participant = { id: 15, username: 'ana', attendanceStatus: 'PENDING' as const,
+      joinedAt: '2026-09-20T18:00:00Z' };
+    (component as any).currentUsername = 'creator-user';
+    component.session = { ...session, joined: true, gameDate: '2020-10-01T18:00:00Z' };
+    component.futureExclusions[15] = false;
+    component.requestFutureExclusion(participant);
+    component.confirmFutureExclusion(participant);
+    expect(sessionService.excludeFromFutureSessions).not.toHaveBeenCalled();
+
+    (component as any).currentUsername = 'outsider';
+    component.requestFutureExclusion({ ...participant, attendanceStatus: 'NO_SHOW' });
+    expect(component.pendingFutureExclusionId).toBeNull();
+    expect(sessionService.excludeFromFutureSessions).not.toHaveBeenCalled();
+  });
+
+  it('shows a recoverable error when restriction status cannot be loaded', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = { ...session, joined: true, gameDate: '2020-10-01T18:00:00Z' };
+    component.showAttendanceManager = true;
+    sessionService.futureExclusionStatus.and.returnValue(throwError(() => new Error('unavailable')));
+    sessionService.participants.and.returnValue(of([
+      { id: 15, username: 'ana', attendanceStatus: 'NO_SHOW', joinedAt: '2026-09-20T18:00:00Z' }
+    ]));
+    component.loadParticipants();
+    expect(component.futureExclusions[15]).toBeNull();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.future-exclusion-request')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.future-exclusion-undo')).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Não foi possível verificar');
   });
 
   it('should record participant attendance after the 30 minute delay', () => {

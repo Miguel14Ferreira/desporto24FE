@@ -649,6 +649,49 @@
                           }
                         }
                       </div>
+
+                      @if (canRemoveParticipant(participant)
+                           && (participant.attendanceStatus === 'NO_SHOW'
+                               || futureExclusions[participant.id] === true)) {
+                        <div class="future-exclusion-panel">
+                          @if (futureExclusions[participant.id] === true) {
+                            <span>{{ 'sessionDetail.futureExclusionActive' | t }}</span>
+                            <button type="button" class="future-exclusion-undo"
+                              [disabled]="futureExclusionUpdatingId !== null || attendanceBulkUpdating"
+                              (click)="allowFutureSessions(participant)">
+                              {{ 'sessionDetail.futureExclusionUndo' | t }}
+                            </button>
+                          } @else if (futureExclusions[participant.id] === false) {
+                            @if (pendingFutureExclusionId === participant.id) {
+                              <span>{{ 'sessionDetail.futureExclusionConfirm' | t:{ username: participant.username } }}</span>
+                              <button type="button" class="future-exclusion-confirm"
+                                [disabled]="futureExclusionUpdatingId !== null || attendanceUpdatingId !== null || attendanceBulkUpdating"
+                                (click)="confirmFutureExclusion(participant)">
+                                {{ 'sessionDetail.futureExclusionYes' | t }}
+                              </button>
+                              <button type="button" class="future-exclusion-cancel"
+                                [disabled]="futureExclusionUpdatingId !== null"
+                                (click)="cancelFutureExclusion()">
+                                {{ 'common.cancel' | t }}
+                              </button>
+                            } @else {
+                              <button type="button" class="future-exclusion-request"
+                                [disabled]="futureExclusionUpdatingId !== null || attendanceUpdatingId !== null || attendanceBulkUpdating"
+                                (click)="requestFutureExclusion(participant)">
+                                {{ 'sessionDetail.futureExclusionRequest' | t }}
+                              </button>
+                            }
+                          } @else if (futureExclusions[participant.id] === null) {
+                            <span>{{ 'sessionDetail.futureExclusionLoadError' | t }}</span>
+                            <button type="button" class="future-exclusion-undo"
+                              [disabled]="participantsLoading" (click)="loadParticipants()">
+                              {{ 'common.retry' | t }}
+                            </button>
+                          } @else {
+                            <span>{{ 'sessionDetail.futureExclusionChecking' | t }}</span>
+                          }
+                        </div>
+                      }
                     </article>
                   }
                 </div>

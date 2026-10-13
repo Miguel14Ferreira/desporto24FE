@@ -957,6 +957,40 @@ h1 {
   cursor: wait;
 }
 
+.future-exclusion-panel {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  flex-wrap: wrap;
+  margin-top: .15rem;
+  padding: .65rem .75rem;
+  border-radius: .75rem;
+  background: rgba(148, 163, 184, .09);
+  color: #e2e8f0;
+  font-size: .82rem;
+}
+.future-exclusion-panel span { flex: 1 1 12rem; line-height: 1.4; }
+.future-exclusion-panel button {
+  border-radius: .65rem;
+  padding: .55rem .75rem;
+  font: inherit;
+  font-weight: 750;
+  cursor: pointer;
+}
+.future-exclusion-request, .future-exclusion-confirm {
+  border: 1px solid rgba(251, 113, 133, .38);
+  background: rgba(251, 113, 133, .1);
+  color: #fecdd3;
+}
+.future-exclusion-undo, .future-exclusion-cancel {
+  border: 1px solid rgba(125, 211, 252, .28);
+  background: rgba(125, 211, 252, .08);
+  color: #bae6fd;
+}
+.future-exclusion-panel button:disabled { opacity: .55; cursor: wait; }
+.future-exclusion-panel button:focus-visible { outline: 2px solid #7dd3fc; outline-offset: 3px; }
+
 .removal-confirmation {
   display: flex;
   align-items: center;

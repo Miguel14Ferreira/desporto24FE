@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { JwtHelperService } from '@auth0/angular-jwt';
-import { catchError, concatMap, finalize, from, map, of, retry, Subscription, timeout, toArray } from 'rxjs';
+import { catchError, concatMap, finalize, from, map, mergeMap, of, retry, Subscription, timeout, toArray } from 'rxjs';
 
 import { environment } from 'src/environment/environment';
 import { SessionDetail } from '../model/session-detail';
@@ -46,6 +46,9 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
   attendanceBulkUpdating = false;
   removeLoadingId: number | null = null;
   pendingRemovalId: number | null = null;
+  pendingFutureExclusionId: number | null = null;
+  futureExclusionUpdatingId: number | null = null;
+  futureExclusions: Record<number, boolean | null> = {};
   showProblemReport = false;
   selectedProblemType: 'NOT_OCCURRED' | 'VENUE_PROBLEM' | 'OTHER' | '' = '';
   problemDetails = '';
@@ -346,7 +349,10 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
         finalize(() => this.participantsLoading = false)
       )
       .subscribe({
-        next: participants => this.participants = participants,
+        next: participants => {
+          this.participants = participants;
+          this.loadFutureExclusionStatuses(participants);
+        },
         error: error => {
           this.participants = [];
           this.attendanceError = this.errorFrom(
@@ -358,7 +364,8 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
   }
 
   recordAttendance(participant: SessionParticipant, status: 'ATTENDED' | 'NO_SHOW'): void {
-    if (!this.sessionId || !this.isCreator() || this.attendanceUpdatingId !== null || this.attendanceBulkUpdating) {
+    if (!this.sessionId || !this.isCreator() || this.attendanceUpdatingId !== null
+      || this.attendanceBulkUpdating || this.futureExclusionUpdatingId !== null) {
       return;
     }
 
@@ -404,6 +411,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
       && !this.attendanceBulkUpdating
       && this.attendanceUpdatingId === null
       && this.removeLoadingId === null
+      && this.futureExclusionUpdatingId === null
       && this.participants.some(participant => participant.attendanceStatus === 'PENDING');
   }
 
@@ -443,6 +451,96 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
     });
   }
 
+  private loadFutureExclusionStatuses(participants: SessionParticipant[]): void {
+    if (!this.sessionId || !this.isCreator()) {
+      return;
+    }
+    const sessionId = this.sessionId;
+    this.futureExclusions = {};
+
+    // Bounded concurrency: query only the participants, without a request for every render.
+    from(participants.filter(participant => this.canRemoveParticipant(participant))).pipe(
+      mergeMap(participant => this.sessionService.futureExclusionStatus(sessionId, participant.id).pipe(
+        timeout(10_000),
+        map(response => ({ id: participant.id, excluded: response.excluded as boolean | null })),
+        catchError(() => of({ id: participant.id, excluded: null }))
+      ), 4),
+      toArray()
+    ).subscribe(statuses => {
+      if (this.sessionId !== sessionId) {
+        return;
+      }
+      for (const result of statuses) {
+        this.futureExclusions[result.id] = result.excluded;
+      }
+    });
+  }
+
+  requestFutureExclusion(participant: SessionParticipant): void {
+    if (!this.isCreator() || !this.canRemoveParticipant(participant)
+      || participant.attendanceStatus !== 'NO_SHOW'
+      || this.futureExclusions[participant.id] !== false
+      || this.futureExclusionUpdatingId !== null) {
+      return;
+    }
+    this.pendingFutureExclusionId = participant.id;
+    this.participantManagementError = '';
+    this.participantManagementSuccess = '';
+  }
+
+  cancelFutureExclusion(): void {
+    if (this.futureExclusionUpdatingId === null) {
+      this.pendingFutureExclusionId = null;
+    }
+  }
+
+  confirmFutureExclusion(participant: SessionParticipant): void {
+    if (!this.sessionId || !this.isCreator() || !this.canRemoveParticipant(participant)
+      || participant.attendanceStatus !== 'NO_SHOW'
+      || this.pendingFutureExclusionId !== participant.id
+      || this.futureExclusions[participant.id] !== false
+      || this.futureExclusionUpdatingId !== null || this.attendanceUpdatingId !== null
+      || this.attendanceBulkUpdating || this.removeLoadingId !== null) {
+      return;
+    }
+    this.futureExclusionUpdatingId = participant.id;
+    this.participantManagementError = '';
+    this.sessionService.excludeFromFutureSessions(this.sessionId, participant.id)
+      .pipe(timeout(10_000), finalize(() => this.futureExclusionUpdatingId = null))
+      .subscribe({
+        next: result => {
+          this.futureExclusions[participant.id] = result.excluded;
+          this.pendingFutureExclusionId = null;
+          this.participantManagementSuccess =
+            t('feedback.session.futureExclusionSaved', { username: participant.username });
+        },
+        error: error => this.participantManagementError =
+          this.errorFrom(error, t('feedback.session.futureExclusionError'))
+      });
+  }
+
+  allowFutureSessions(participant: SessionParticipant): void {
+    if (!this.sessionId || !this.isCreator() || !this.canRemoveParticipant(participant)
+      || this.futureExclusions[participant.id] !== true
+      || this.futureExclusionUpdatingId !== null || this.attendanceUpdatingId !== null
+      || this.attendanceBulkUpdating || this.removeLoadingId !== null) {
+      return;
+    }
+    this.futureExclusionUpdatingId = participant.id;
+    this.participantManagementError = '';
+    this.sessionService.allowFutureSessions(this.sessionId, participant.id)
+      .pipe(timeout(10_000), finalize(() => this.futureExclusionUpdatingId = null))
+      .subscribe({
+        next: result => {
+          this.futureExclusions[participant.id] = result.excluded;
+          this.participantManagementSuccess =
+            t('feedback.session.futureExclusionRemoved', { username: participant.username });
+        },
+        error: error => this.participantManagementError =
+          this.errorFrom(error, t('feedback.session.futureExclusionError'))
+      });
+  }
+
   canRemoveParticipant(participant: SessionParticipant): boolean {
     if (!this.session?.creatorUsername) {
       return false;
@@ -452,7 +550,8 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
   }
 
   requestRemoveParticipant(participant: SessionParticipant): void {
-    if (!this.canRemoveParticipant(participant) || this.removeLoadingId !== null || this.attendanceBulkUpdating) {
+    if (!this.canRemoveParticipant(participant) || this.removeLoadingId !== null
+      || this.attendanceBulkUpdating || this.futureExclusionUpdatingId !== null) {
       return;
     }
 
@@ -476,6 +575,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
       || !this.canRemoveParticipant(participant)
       || this.removeLoadingId !== null
       || this.attendanceBulkUpdating
+      || this.futureExclusionUpdatingId !== null
     ) {
       return;
     }
@@ -528,7 +628,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
     }
 
     this.showAttendanceManager = !this.showAttendanceManager;
-    if (this.showAttendanceManager && this.participants.length === 0) {
+    if (this.showAttendanceManager) {
       this.loadParticipants();
     }
   }

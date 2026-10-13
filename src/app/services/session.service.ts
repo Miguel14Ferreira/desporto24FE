@@ -181,6 +181,24 @@ export class SessionService {
     );
   }
 
+  futureExclusionStatus(id: number, participantId: number): Observable<{ excluded: boolean }> {
+    return this.http.get<{ excluded: boolean }>(
+      this.baseUrl + '/' + id + '/participants/' + participantId + '/future-exclusion'
+    );
+  }
+
+  excludeFromFutureSessions(id: number, participantId: number): Observable<{ excluded: boolean }> {
+    return this.http.put<{ excluded: boolean }>(
+      this.baseUrl + '/' + id + '/participants/' + participantId + '/future-exclusion', null
+    );
+  }
+
+  allowFutureSessions(id: number, participantId: number): Observable<{ excluded: boolean }> {
+    return this.http.delete<{ excluded: boolean }>(
+      this.baseUrl + '/' + id + '/participants/' + participantId + '/future-exclusion'
+    );
+  }
+
   removeParticipant(id: number, participantId: number): Observable<void> {
     return this.http.delete<void>(
       this.baseUrl + '/' + id + '/participants/' + participantId
