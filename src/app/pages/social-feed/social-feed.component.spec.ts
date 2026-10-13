@@ -101,8 +101,9 @@ describe('SocialFeedComponent post-game entry', () => {
 
     const feed = jasmine.createSpyObj<SocialFeedService>('SocialFeedService', ['feed']);
     feed.feed.and.returnValue(of([]));
-    const sessions = jasmine.createSpyObj<SessionService>('SessionService', ['discover', 'detail']);
+    const sessions = jasmine.createSpyObj<SessionService>('SessionService', ['discover', 'detail', 'mine']);
     sessions.discover.and.returnValue(of([]));
+    sessions.mine.and.returnValue(of({ created: [], joined: [], waitlisted: [] }));
     sessions.detail.and.returnValue(of({
       id: 42, sport: 'Padel', city: 'Lisboa',
       gameDate: '2026-10-01T18:00:00Z', status: 'COMPLETED',
@@ -259,5 +260,61 @@ describe('SocialFeedComponent post-game entry', () => {
       expect(target.postGameSessionId).toBeNull();
       target.ngOnDestroy();
     }
+  });
+});
+
+describe('SocialFeedComponent completed session selection', () => {
+  const session = (id: number, status = 'COMPLETED', privateGame = false, audience: 'PUBLIC' | 'COMMUNITY_ONLY' = 'PUBLIC') => ({
+    id, sport: 'Futebol', city: 'Parede', gameDate: '2026-10-12T21:00:00Z',
+    distanceKm: null, participantCount: 8, maxParticipants: 10, priceAmount: 0,
+    privateGame, audience, status
+  });
+
+  function openFeed(created: ReturnType<typeof session>[], joined: ReturnType<typeof session>[] = [], waitlisted: ReturnType<typeof session>[] = []) {
+    const auth = jasmine.createSpyObj<AuthenticationService>('AuthenticationService', ['isLoggedIn']);
+    auth.isLoggedIn.and.returnValue(true);
+    const feed = jasmine.createSpyObj<SocialFeedService>('SocialFeedService', ['feed']);
+    feed.feed.and.returnValue(of([]));
+    const sessions = jasmine.createSpyObj<SessionService>('SessionService', ['discover', 'detail', 'mine']);
+    sessions.discover.and.returnValue(of([]));
+    sessions.mine.and.returnValue(of({ created, joined, waitlisted }));
+    const route = { snapshot: { queryParamMap: convertToParamMap({}) } } as unknown as ActivatedRoute;
+    const target = new SocialFeedComponent(feed, sessions, auth, route);
+    target.ngOnInit();
+    return { target, sessions };
+  }
+
+  it('lists completed public sessions the player created or joined without a deep link', () => {
+    const { target, sessions } = openFeed([session(2)], [session(3)]);
+    expect(sessions.mine).toHaveBeenCalledTimes(1);
+    expect(target.filteredSessions.map(s => s.id)).toEqual([2, 3]);
+
+    target.onLinkedSessionChange(2);
+    expect(target.postGameSessionId).toBe(2);
+    expect(target.postGameSession?.sport).toBe('Futebol');
+    target.ngOnDestroy();
+  });
+
+  it('excludes private, community-only, unfinished and waitlisted sessions', () => {
+    const { target } = openFeed([
+      session(2), session(4, 'COMPLETED', true),
+      session(5, 'COMPLETED', false, 'COMMUNITY_ONLY'),
+      session(6, 'CANCELLED'), session(7, 'OPEN')
+    ], [session(2)], [session(8)]);
+    expect(target.filteredSessions.map(s => s.id)).toEqual([2]);
+    target.ngOnDestroy();
+  });
+
+  it('filters completed sessions by sport or city and clears the post-game card on deselection', () => {
+    const { target } = openFeed([session(2)]);
+    target.onSessionSearchChange('basquetebol');
+    expect(target.filteredSessions).toEqual([]);
+    target.onSessionSearchChange('parede');
+    expect(target.filteredSessions.map(s => s.id)).toEqual([2]);
+    target.onLinkedSessionChange(2);
+    target.onLinkedSessionChange(null);
+    expect(target.postGameSessionId).toBeNull();
+    expect(target.selectedSessionId).toBeNull();
+    target.ngOnDestroy();
   });
 });

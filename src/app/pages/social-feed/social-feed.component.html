@@ -63,10 +63,10 @@
       <label class="composer-session-select">
         <span>Associar a uma sessão pública (opcional)</span>
         <input type="search" [ngModel]="sessionSearch" (ngModelChange)="onSessionSearchChange($event)" [disabled]="posting" placeholder="Pesquisar modalidade ou localidade" aria-label="Pesquisar sessões públicas">
-        <select [(ngModel)]="selectedSessionId" [disabled]="posting || loadingSessions">
+        <select [(ngModel)]="selectedSessionId" (ngModelChange)="onLinkedSessionChange($event)" [disabled]="posting || loadingSessions">
           <option [ngValue]="null">Sem sessão associada</option>
           @for (session of filteredSessions; track session.id) {
-            <option [ngValue]="session.id">{{ session.sport }} · {{ session.city }} · {{ session.gameDate | date:'dd/MM HH:mm' }}</option>
+            <option [ngValue]="session.id">{{ session.status === 'COMPLETED' ? (('publicSession.statusCompleted' | t) + ' · ') : '' }}{{ session.sport }} · {{ session.city }} · {{ session.gameDate | date:'dd/MM HH:mm' }}</option>
           }
         </select>
         @if (loadingSessions) {

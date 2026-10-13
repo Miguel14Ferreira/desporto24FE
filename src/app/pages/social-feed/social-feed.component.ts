@@ -24,6 +24,8 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
   postImagePreview = '';
   availableSessions: SessionSummary[] = [];
   sessionSearch = '';
+  private completedSessions: SessionSummary[] = [];
+  private discoveredSessions: SessionSummary[] = [];
 
   private readonly sessionSearchChanges = new Subject<string>();
   private readonly destroyed = new Subject<void>();
@@ -88,6 +90,7 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.load();
     this.preparePostGameMoment();
+    this.loadCompletedSessions();
     this.sessionSearchChanges.pipe(
       debounceTime(350),
       switchMap(query => {
@@ -106,13 +109,57 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
         this.sessionSearchError = true;
         return;
       }
-      const selected = this.availableSessions.find(session => session.id === this.selectedSessionId);
-      this.availableSessions = sessions.filter(session => session.audience !== 'COMMUNITY_ONLY');
-      if (selected && !this.availableSessions.some(session => session.id === selected.id)) {
-        this.availableSessions = [selected, ...this.availableSessions];
-      }
+      this.discoveredSessions = sessions.filter(session => session.audience !== 'COMMUNITY_ONLY');
+      this.refreshSelectableSessions();
     });
     this.onSessionSearchChange('');
+  }
+
+  private loadCompletedSessions(): void {
+    this.sessionService.mine().pipe(
+      timeout(10_000),
+      catchError(() => of(null)),
+      takeUntil(this.destroyed)
+    ).subscribe(mine => {
+      if (!mine) {
+        return;
+      }
+      const seen = new Set<number>();
+      this.completedSessions = [...mine.created, ...mine.joined]
+        .filter(session => {
+          if (session.status !== 'COMPLETED' || session.privateGame
+              || session.audience === 'COMMUNITY_ONLY' || seen.has(session.id)) {
+            return false;
+          }
+          seen.add(session.id);
+          return true;
+        })
+        .sort((a, b) => Date.parse(b.gameDate) - Date.parse(a.gameDate))
+        .slice(0, 20);
+      this.refreshSelectableSessions();
+    });
+  }
+
+  private refreshSelectableSessions(): void {
+    const query = this.sessionSearch.trim().toLocaleLowerCase();
+    const completed = this.completedSessions.filter(session =>
+      !query || (session.sport + ' ' + session.city).toLocaleLowerCase().includes(query)
+    );
+    const selected = this.availableSessions.find(session => session.id === this.selectedSessionId);
+    const byId = new Map<number, SessionSummary>();
+    [...(selected ? [selected] : []), ...completed, ...this.discoveredSessions]
+      .forEach(session => {
+        if (!byId.has(session.id)) {
+          byId.set(session.id, session);
+        }
+      });
+    this.availableSessions = [...byId.values()];
+  }
+
+  onLinkedSessionChange(sessionId: number | null): void {
+    this.selectedSessionId = sessionId;
+    this.postGameSessionId = this.availableSessions
+      .find(session => session.id === sessionId && session.status === 'COMPLETED')?.id ?? null;
   }
 
   private preparePostGameMoment(): void {
@@ -164,6 +211,7 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
 
   onSessionSearchChange(query: string): void {
     this.sessionSearch = query;
+    this.refreshSelectableSessions();
     this.sessionSearchChanges.next(query.trim());
   }
 
