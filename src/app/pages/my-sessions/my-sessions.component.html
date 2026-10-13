@@ -45,7 +45,7 @@
         @if (data.created.length === 0) {
           <div class="empty-card">
             <p>{{ 'mySessions.noneCreated' | t }}</p>
-            <a routerLink="/menu/createEvent">{{ 'mySessions.createFirst' | t }}</a>
+            <a class="jynlo-action jynlo-action--primary" routerLink="/menu/createEvent">{{ 'mySessions.createFirst' | t }}</a>
           </div>
         } @else {
           <div class="session-grid">
@@ -110,7 +110,7 @@
         @if (data.joined.length === 0) {
           <div class="empty-card">
             <p>{{ 'mySessions.noneJoined' | t }}</p>
-            <a routerLink="/menu/events">{{ 'mySessions.findSession' | t }}</a>
+            <a class="jynlo-action jynlo-action--neutral" routerLink="/menu/events">{{ 'mySessions.findSession' | t }}</a>
           </div>
         } @else {
           <div class="session-grid">

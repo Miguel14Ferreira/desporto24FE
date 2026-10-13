@@ -73,6 +73,21 @@ describe('MySessionsComponent', () => {
     fixture.detectChanges();
   });
 
+  it('uses consistent pills for empty creation and discovery states', () => {
+    const find = fixture.nativeElement.querySelector('.empty-card a[href="/menu/events"]') as HTMLAnchorElement;
+    expect(find).toBeTruthy();
+    expect(find.classList.contains('jynlo-action')).toBeTrue();
+    expect(find.classList.contains('jynlo-action--neutral')).toBeTrue();
+
+    component.data = { ...component.data, created: [] };
+    fixture.detectChanges();
+
+    const create = fixture.nativeElement.querySelector('.empty-card a[href="/menu/createEvent"]') as HTMLAnchorElement;
+    expect(create).toBeTruthy();
+    expect(create.classList.contains('jynlo-action')).toBeTrue();
+    expect(create.classList.contains('jynlo-action--primary')).toBeTrue();
+  });
+
   it('aligns created session details with the destructive cancellation action', () => {
     const actions: HTMLElement = fixture.nativeElement.querySelector('.session-card .card-actions');
     const details = actions.querySelector('a[href="/menu/events/11"]') as HTMLAnchorElement;
