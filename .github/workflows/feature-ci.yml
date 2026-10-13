@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - feature/desporto24-relaunch-develop
+      - preview/render-fullstack
   pull_request:
     branches:
       - develop
