@@ -61,6 +61,23 @@ describe('NavbarComponent', () => {
     expect(menu?.querySelector('.logout-action')).toBeTruthy();
   });
 
+  it('closes the account menu when Escape is pressed', () => {
+    component.authenticated = true;
+    fixture.detectChanges();
+
+    const menu = fixture.nativeElement.querySelector('details.account-menu') as HTMLDetailsElement;
+    expect(menu).toBeTruthy();
+    menu.open = true;
+
+    document.dispatchEvent(new KeyboardEvent('keydown', {
+      key: 'Escape',
+      bubbles: true
+    }));
+    fixture.detectChanges();
+
+    expect(menu.open).toBeFalse();
+  });
+
   it('should create without opening a chat connection when unauthenticated', () => {
     expect(component).toBeTruthy();
     expect(authService.hasSessionCandidate).toHaveBeenCalled();

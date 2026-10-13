@@ -128,6 +128,11 @@ export class NavbarComponent implements OnInit, OnDestroy {
       this.closeAccountMenu();
     }
 
+    @HostListener('document:keydown.escape')
+    closeAccountMenuOnEscape(): void {
+      this.closeAccountMenu();
+    }
+
     closeAccountMenu(): void {
       this.elementRef.nativeElement
         .querySelector<HTMLDetailsElement>('.account-menu')
