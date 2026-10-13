@@ -538,7 +538,7 @@
                   <button
                     type="button"
                     class="refresh-attendance"
-                    [disabled]="participantsLoading"
+                    [disabled]="participantsLoading || attendanceBulkUpdating"
                     (click)="loadParticipants()">
                     {{ participantsLoading ? ('chat.refreshing' | t) : ('chat.refresh' | t) }}
                   </button>
@@ -550,6 +550,22 @@
                   </button>
                 </div>
               </div>
+
+              @if (canConfirmPendingAttendance() || attendanceBulkUpdating) {
+                <div class="attendance-bulk-action">
+                  <button
+                    type="button"
+                    class="confirm-bulk-attendance"
+                    [disabled]="!canConfirmPendingAttendance()"
+                    (click)="confirmPendingAttendance()">
+                    {{ attendanceBulkUpdating ? ('profile.saving' | t)
+                       : ((hasRecordedNoShows()
+                         ? 'sessionDetail.confirmRemainingAttendance'
+                         : 'sessionDetail.confirmAllAttendance') | t) }}
+                  </button>
+                  <small>{{ 'sessionDetail.confirmAttendanceHint' | t }}</small>
+                </div>
+              }
 
               @if (attendanceSuccess) {
                 <div class="attendance-feedback attendance-success">{{ attendanceSuccess }}</div>
@@ -591,14 +607,14 @@
                         <button
                           type="button"
                           class="attended-action"
-                          [disabled]="!canRecordAttendance() || attendanceUpdatingId !== null || removeLoadingId !== null"
+                          [disabled]="!canRecordAttendance() || attendanceUpdatingId !== null || attendanceBulkUpdating || removeLoadingId !== null"
                           (click)="recordAttendance(participant, 'ATTENDED')">
                           {{ attendanceUpdatingId === participant.id ? ('profile.saving' | t) : ('sessionDetail.present' | t) }}
                         </button>
                         <button
                           type="button"
                           class="no-show-action"
-                          [disabled]="!canRecordAttendance() || attendanceUpdatingId !== null || removeLoadingId !== null"
+                          [disabled]="!canRecordAttendance() || attendanceUpdatingId !== null || attendanceBulkUpdating || removeLoadingId !== null"
                           (click)="recordAttendance(participant, 'NO_SHOW')">
                           {{ attendanceUpdatingId === participant.id ? ('profile.saving' | t) : ('sessionDetail.absent' | t) }}
                         </button>
@@ -610,14 +626,14 @@
                               <button
                                 type="button"
                                 class="confirm-remove-action"
-                                [disabled]="removeLoadingId !== null"
+                                [disabled]="removeLoadingId !== null || attendanceBulkUpdating"
                                 (click)="confirmRemoveParticipant(participant)">
                                 {{ removeLoadingId === participant.id ? ('friends.removing' | t) : ('common.confirm' | t) }}
                               </button>
                               <button
                                 type="button"
                                 class="cancel-remove-action"
-                                [disabled]="removeLoadingId !== null"
+                                [disabled]="removeLoadingId !== null || attendanceBulkUpdating"
                                 (click)="cancelRemoveParticipant()">
                                 {{ 'common.cancel' | t }}
                               </button>
@@ -626,7 +642,7 @@
                             <button
                               type="button"
                               class="remove-participant-action"
-                              [disabled]="removeLoadingId !== null || attendanceUpdatingId !== null"
+                              [disabled]="removeLoadingId !== null || attendanceUpdatingId !== null || attendanceBulkUpdating"
                               (click)="requestRemoveParticipant(participant)">
                               Remover
                             </button>

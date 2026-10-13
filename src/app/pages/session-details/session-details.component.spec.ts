@@ -970,6 +970,80 @@ describe('SessionDetailsComponent', () => {
     expect(component.showAttendanceManager).toBeTrue();
   });
 
+  it('confirms all pending players with one click', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = { ...session, gameDate: '2020-10-01T18:00:00Z', joined: true };
+    component.showAttendanceManager = true;
+    component.participants = [
+      { id: 15, username: 'ana', attendanceStatus: 'PENDING', joinedAt: '2026-09-20T18:00:00Z' },
+      { id: 16, username: 'rui', attendanceStatus: 'PENDING', joinedAt: '2026-09-20T18:00:00Z' }
+    ];
+    fixture.detectChanges();
+    const button = fixture.nativeElement.querySelector('.confirm-bulk-attendance') as HTMLButtonElement;
+    expect(button.textContent).toContain('Confirmar presença de todos');
+    button.click();
+
+    expect(reliabilityService.recordAttendance).toHaveBeenCalledWith(7, 15, 'ATTENDED');
+    expect(reliabilityService.recordAttendance).toHaveBeenCalledWith(7, 16, 'ATTENDED');
+    expect(component.participants.map(p => p.attendanceStatus)).toEqual(['ATTENDED', 'ATTENDED']);
+    expect(component.canConfirmPendingAttendance()).toBeFalse();
+  });
+
+  it('switches label after a no-show and preserves prior decisions', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = { ...session, gameDate: '2020-10-01T18:00:00Z', joined: true };
+    component.showAttendanceManager = true;
+    component.participants = [
+      { id: 15, username: 'ana', attendanceStatus: 'NO_SHOW', joinedAt: '2026-09-20T18:00:00Z' },
+      { id: 16, username: 'rui', attendanceStatus: 'PENDING', joinedAt: '2026-09-20T18:00:00Z' },
+      { id: 17, username: 'leo', attendanceStatus: 'ATTENDED', joinedAt: '2026-09-20T18:00:00Z' },
+      { id: 18, username: 'luis', attendanceStatus: 'LATE_CANCELLED', joinedAt: '2026-09-20T18:00:00Z' }
+    ];
+    fixture.detectChanges();
+    const button = fixture.nativeElement.querySelector('.confirm-bulk-attendance') as HTMLButtonElement;
+    expect(button.textContent).toContain('Confirmar presença dos restantes jogadores');
+    button.click();
+
+    expect(reliabilityService.recordAttendance).toHaveBeenCalledTimes(1);
+    expect(reliabilityService.recordAttendance).toHaveBeenCalledWith(7, 16, 'ATTENDED');
+    expect(component.participants.map(p => p.attendanceStatus))
+      .toEqual(['NO_SHOW', 'ATTENDED', 'ATTENDED', 'LATE_CANCELLED']);
+  });
+
+  it('keeps failed bulk updates pending and reports partial success', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = { ...session, gameDate: '2020-10-01T18:00:00Z', joined: true };
+    component.participants = [
+      { id: 15, username: 'ana', attendanceStatus: 'PENDING', joinedAt: '2026-09-20T18:00:00Z' },
+      { id: 16, username: 'rui', attendanceStatus: 'PENDING', joinedAt: '2026-09-20T18:00:00Z' }
+    ];
+    reliabilityService.recordAttendance.and.callFake((_sessionId, participantId) =>
+      participantId === 15 ? of(void 0) : throwError(() => new Error('failure'))
+    );
+    component.confirmPendingAttendance();
+    expect(component.participants.map(p => p.attendanceStatus)).toEqual(['ATTENDED', 'PENDING']);
+    expect(component.attendanceSuccess).toContain('1');
+    expect(component.attendanceError).toContain('1 de 2');
+    expect(component.canConfirmPendingAttendance()).toBeTrue();
+  });
+
+  it('blocks bulk attendance before the half-hour delay and for non-organisers', () => {
+    component.participants = [
+      { id: 15, username: 'ana', attendanceStatus: 'PENDING', joinedAt: '2026-09-20T18:00:00Z' }
+    ];
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session, gameDate: new Date(Date.now() - 29 * 60_000).toISOString(), joined: true
+    };
+    expect(component.canConfirmPendingAttendance()).toBeFalse();
+    component.confirmPendingAttendance();
+    expect(reliabilityService.recordAttendance).not.toHaveBeenCalled();
+
+    component.session = { ...session, gameDate: '2020-10-01T18:00:00Z', joined: true };
+    (component as any).currentUsername = 'someone-else';
+    expect(component.canConfirmPendingAttendance()).toBeFalse();
+  });
+
   it('should record participant attendance after the 30 minute delay', () => {
     (component as any).currentUsername = 'creator-user';
     component.session = {

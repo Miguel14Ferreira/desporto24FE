@@ -774,6 +774,29 @@ h1 {
   }
 }
 
+.attendance-bulk-action {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .7rem;
+  margin-bottom: 1rem;
+}
+.attendance-bulk-action small { color: #a5b4c8; line-height: 1.4; }
+.confirm-bulk-attendance {
+  min-height: 42px;
+  border: 1px solid rgba(74, 222, 128, .42);
+  border-radius: .75rem;
+  padding: .65rem 1rem;
+  background: rgba(74, 222, 128, .13);
+  color: #bbf7d0;
+  font: inherit;
+  font-size: .9rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+.confirm-bulk-attendance:disabled { opacity: .55; cursor: wait; }
+.confirm-bulk-attendance:focus-visible { outline: 2px solid #86efac; outline-offset: 3px; }
+
 .attendance-info,
 .attendance-feedback,
 .attendance-empty {

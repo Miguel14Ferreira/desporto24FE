@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { JwtHelperService } from '@auth0/angular-jwt';
-import { finalize, retry, Subscription, timeout } from 'rxjs';
+import { catchError, concatMap, finalize, from, map, of, retry, Subscription, timeout, toArray } from 'rxjs';
 
 import { environment } from 'src/environment/environment';
 import { SessionDetail } from '../model/session-detail';
@@ -43,6 +43,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
   participantsLoading = false;
   sessionParticipantsLoading = false;
   attendanceUpdatingId: number | null = null;
+  attendanceBulkUpdating = false;
   removeLoadingId: number | null = null;
   pendingRemovalId: number | null = null;
   showProblemReport = false;
@@ -331,7 +332,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
   }
 
   loadParticipants(): void {
-    if (!this.sessionId || !this.isCreator() || this.participantsLoading) {
+    if (!this.sessionId || !this.isCreator() || this.participantsLoading || this.attendanceBulkUpdating) {
       return;
     }
 
@@ -357,7 +358,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
   }
 
   recordAttendance(participant: SessionParticipant, status: 'ATTENDED' | 'NO_SHOW'): void {
-    if (!this.sessionId || !this.isCreator() || this.attendanceUpdatingId !== null) {
+    if (!this.sessionId || !this.isCreator() || this.attendanceUpdatingId !== null || this.attendanceBulkUpdating) {
       return;
     }
 
@@ -392,6 +393,56 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
       });
   }
 
+  hasRecordedNoShows(): boolean {
+    return this.participants.some(participant => participant.attendanceStatus === 'NO_SHOW');
+  }
+
+  canConfirmPendingAttendance(): boolean {
+    return this.isCreator()
+      && this.canRecordAttendance()
+      && !this.participantsLoading
+      && !this.attendanceBulkUpdating
+      && this.attendanceUpdatingId === null
+      && this.removeLoadingId === null
+      && this.participants.some(participant => participant.attendanceStatus === 'PENDING');
+  }
+
+  confirmPendingAttendance(): void {
+    if (!this.sessionId || !this.canConfirmPendingAttendance()) {
+      return;
+    }
+    const pending = this.participants.filter(participant => participant.attendanceStatus === 'PENDING');
+    const sessionId = this.sessionId;
+    this.attendanceBulkUpdating = true;
+    this.attendanceError = '';
+    this.attendanceSuccess = '';
+
+    from(pending).pipe(
+      concatMap(participant => this.reliabilityService.recordAttendance(
+        sessionId, participant.id, 'ATTENDED'
+      ).pipe(
+        timeout(10_000),
+        map(() => {
+          participant.attendanceStatus = 'ATTENDED';
+          return true;
+        }),
+        catchError(() => of(false))
+      )),
+      toArray(),
+      finalize(() => this.attendanceBulkUpdating = false)
+    ).subscribe(results => {
+      const confirmed = results.filter(Boolean).length;
+      if (confirmed > 0) {
+        this.attendanceSuccess = t('feedback.session.bulkAttendanceSuccess', { count: confirmed });
+      }
+      if (confirmed !== pending.length) {
+        this.attendanceError = t('feedback.session.bulkAttendancePartial', {
+          confirmed, total: pending.length
+        });
+      }
+    });
+  }
+
   canRemoveParticipant(participant: SessionParticipant): boolean {
     if (!this.session?.creatorUsername) {
       return false;
@@ -401,7 +452,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
   }
 
   requestRemoveParticipant(participant: SessionParticipant): void {
-    if (!this.canRemoveParticipant(participant) || this.removeLoadingId !== null) {
+    if (!this.canRemoveParticipant(participant) || this.removeLoadingId !== null || this.attendanceBulkUpdating) {
       return;
     }
 
@@ -424,6 +475,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
       || !this.isCreator()
       || !this.canRemoveParticipant(participant)
       || this.removeLoadingId !== null
+      || this.attendanceBulkUpdating
     ) {
       return;
     }
@@ -471,7 +523,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
   }
 
   toggleAttendanceManager(): void {
-    if (!this.isCreator() || !this.canRecordAttendance()) {
+    if (!this.isCreator() || !this.canRecordAttendance() || this.attendanceBulkUpdating) {
       return;
     }
 
