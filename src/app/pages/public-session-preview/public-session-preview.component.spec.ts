@@ -12,8 +12,10 @@ describe('PublicSessionPreviewComponent', () => {
   let fixture: ComponentFixture<PublicSessionPreviewComponent>;
   let http: jasmine.SpyObj<HttpClient>;
   let authenticationService: jasmine.SpyObj<AuthenticationService>;
+  let routeParamMap: ReturnType<typeof convertToParamMap>;
 
   beforeEach(async () => {
+    routeParamMap = convertToParamMap({ id: '42' });
     http = jasmine.createSpyObj<HttpClient>('HttpClient', ['get']);
     authenticationService = jasmine.createSpyObj<AuthenticationService>(
       'AuthenticationService', ['isLoggedIn', 'hasSessionCandidate']
@@ -26,7 +28,7 @@ describe('PublicSessionPreviewComponent', () => {
         { provide: HttpClient, useValue: http },
         { provide: AuthenticationService, useValue: authenticationService },
         { provide: ActivatedRoute, useValue: {
-          snapshot: { paramMap: convertToParamMap({ id: '42' }) }
+          snapshot: { get paramMap() { return routeParamMap; } }
         } }
       ]
     }).compileComponents();
@@ -439,7 +441,7 @@ describe('PublicSessionPreviewComponent', () => {
 
   it('shows a translated invalid-link error without calling the preview API', () => {
     TestBed.inject(I18nService).setLanguage('en');
-    TestBed.inject(ActivatedRoute).snapshot.paramMap = convertToParamMap({ id: '1e2' });
+    routeParamMap = convertToParamMap({ id: '1e2' });
     fixture.detectChanges();
     const page = fixture.nativeElement as HTMLElement;
 
@@ -486,11 +488,10 @@ describe('PublicSessionPreviewComponent', () => {
   });
 
   it('rejects malformed session IDs without requesting a different session', () => {
-    const route = TestBed.inject(ActivatedRoute);
     const invalidIds = ['1e2', '42.0', '+42', '00042', '-1', '0', 'abc', '9007199254740992'];
 
     for (const id of invalidIds) {
-      route.snapshot.paramMap = convertToParamMap({ id });
+      routeParamMap = convertToParamMap({ id });
       const invalidFixture = TestBed.createComponent(PublicSessionPreviewComponent);
       invalidFixture.detectChanges();
 
