@@ -337,6 +337,67 @@ describe('SessionDetailsComponent', () => {
     }
   });
 
+  it('reopens a saved rating after not now was remembered on an earlier visit', () => {
+    const key = 'jynlo.session-rating-dismissed:rating-return-test-user:7';
+    localStorage.setItem(key, '1');
+    try {
+      (component as any).currentUsername = 'rating-return-test-user';
+      component.session = { ...session, joined: true, gameDate: '2020-10-01T18:00:00Z' };
+      sessionService.myOverallRating.and.returnValue(of({
+        overallScore: 4, updatedAt: '2026-10-13T10:00:00Z'
+      }));
+      (component as any).restoreRatingDismissal();
+      fixture.detectChanges();
+
+      expect(component.ratingDismissed).toBeTrue();
+      expect(fixture.nativeElement.querySelector('.overall-rating-panel')).toBeNull();
+      expect(sessionService.myOverallRating).not.toHaveBeenCalled();
+
+      // The explicit reopen must stay open even when GET finds a prior rating.
+      (fixture.nativeElement.querySelector('.rating-reopen-action') as HTMLButtonElement).click();
+      fixture.detectChanges();
+
+      expect(sessionService.myOverallRating).toHaveBeenCalledOnceWith(7);
+      expect(component.myOverallScore).toBe(4);
+      expect(component.selectedOverallScore).toBe(4);
+      expect(component.ratingCollapsedByExisting).toBeFalse();
+      expect(fixture.nativeElement.querySelector('.overall-rating-panel')).not.toBeNull();
+      expect((fixture.nativeElement.querySelector('.overall-rating-actions .primary-action') as HTMLButtonElement).disabled)
+        .toBeTrue();
+      expect(localStorage.getItem(key)).toBeNull();
+      expect(sessionService.rateOverall).not.toHaveBeenCalled();
+    } finally {
+      localStorage.removeItem(key);
+    }
+  });
+
+  it('keeps a deliberately reopened editor visible while rating fetch is pending', () => {
+    const key = 'jynlo.session-rating-dismissed:rating-pending-test-user:7';
+    localStorage.setItem(key, '1');
+    try {
+      (component as any).currentUsername = 'rating-pending-test-user';
+      component.session = { ...session, joined: true, gameDate: '2020-10-01T18:00:00Z' };
+      const pending = new Subject<{ overallScore: number; updatedAt: string } | null>();
+      sessionService.myOverallRating.and.returnValue(pending.asObservable());
+      (component as any).restoreRatingDismissal();
+      fixture.detectChanges();
+
+      (fixture.nativeElement.querySelector('.rating-reopen-action') as HTMLButtonElement).click();
+      expect(component.ratingLoading).toBeTrue();
+      pending.next({ overallScore: 3, updatedAt: '2026-10-13T10:00:00Z' });
+      pending.complete();
+      fixture.detectChanges();
+
+      expect(component.ratingLoading).toBeFalse();
+      expect(component.myOverallScore).toBe(3);
+      expect(component.ratingCollapsedByExisting).toBeFalse();
+      expect(fixture.nativeElement.querySelector('.overall-rating-panel')).not.toBeNull();
+      expect(sessionService.rateOverall).not.toHaveBeenCalled();
+    } finally {
+      localStorage.removeItem(key);
+    }
+  });
+
   it('keeps dismissals separate for other users and other sessions', () => {
     const firstKey = 'jynlo.session-rating-dismissed:rating-dismiss-test-user:7';
     localStorage.removeItem(firstKey);
