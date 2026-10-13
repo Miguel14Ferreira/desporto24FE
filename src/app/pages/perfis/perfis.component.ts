@@ -36,6 +36,9 @@ export class PerfisComponent implements OnInit, OnDestroy {
   private detailSubscription?: Subscription;
   profilePage = false;
   backToFriends = false;
+  get backToFeed(): boolean {
+    return this.route.snapshot.queryParamMap.get('from') === 'feed';
+  }
 
   profiles: CommunityProfile[] = [];
   selectedProfile?: CommunityProfile;

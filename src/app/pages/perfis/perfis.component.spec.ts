@@ -4,6 +4,7 @@ import { of, Subject, BehaviorSubject } from 'rxjs';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 
 import { PerfisComponent } from './perfis.component';
+import { appTranslate as t } from '../../i18n/i18n.service';
 import { CommunityService } from '../../services/community.service';
 import { SocialGraphService } from '../../services/social-graph.service';
 import { TEST_IMPORTS, TEST_PROVIDERS } from '../../testing/test-providers';
@@ -116,6 +117,22 @@ describe('PerfisComponent', () => {
     expect(component.profiles).toEqual([]);
     expect(component.loading).toBeFalse();
     expect(component.searched).toBeFalse();
+  });
+
+  it('returns to the feed when a profile was opened from a feed link', () => {
+    const activatedRoute = TestBed.inject(ActivatedRoute);
+    Object.defineProperty(activatedRoute.snapshot, 'queryParamMap', {
+      value: convertToParamMap({ from: 'feed' }),
+      configurable: true
+    });
+    routeParams.next(convertToParamMap({ username: 'ana' }));
+    fixture.detectChanges();
+
+    expect(component.backToFeed).toBeTrue();
+    const back = fixture.nativeElement.querySelector('a.back-to-search') as HTMLAnchorElement;
+    expect(back).toBeTruthy();
+    expect(back.getAttribute('href')).toBe('/menu/feed');
+    expect(back.textContent).toContain(t('feed.backToFeed'));
   });
 
   it('should load a profile from its dedicated URL without searching', () => {

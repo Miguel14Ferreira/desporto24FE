@@ -169,7 +169,8 @@
     }
 
     } @else {
-      <a class="secondary-action back-to-search" [routerLink]="backToFriends ? '/menu/friendList' : '/menu/perfis'">← {{ (backToFriends ? 'friends.backToFriends' : 'community.backToSearch') | t }}</a>
+      <a class="secondary-action back-to-search"
+         [routerLink]="backToFriends ? '/menu/friendList' : (backToFeed ? '/menu/feed' : '/menu/perfis')">← {{ (backToFriends ? 'friends.backToFriends' : (backToFeed ? 'feed.backToFeed' : 'community.backToSearch')) | t }}</a>
       @if (loading) {
         <div class="state-card" role="status">{{ 'common.loading' | t }}</div>
       }
