@@ -112,6 +112,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
     }
 
     this.sessionId = id;
+    this.restoreRatingDismissal();
     this.loadSession();
     this.realtimeService.connect();
 
@@ -297,10 +298,55 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
   }
 
   dismissOverallRating(): void {
-    if (!this.ratingSaving) {
-      this.ratingDismissed = true;
-      this.ratingError = '';
+    if (this.ratingSaving) {
+      return;
     }
+    this.ratingDismissed = true;
+    this.ratingError = '';
+    const key = this.ratingDismissalKey();
+    if (key) {
+      try {
+        localStorage.setItem(key, '1');
+      } catch {
+        // Keep the panel dismissed for this visit if browser storage is unavailable.
+      }
+    }
+  }
+
+  reopenOverallRating(): void {
+    if (!this.canRatePostGame()) {
+      return;
+    }
+    this.ratingDismissed = false;
+    const key = this.ratingDismissalKey();
+    if (key) {
+      try {
+        localStorage.removeItem(key);
+      } catch {
+        // Re-opening still works if browser storage is unavailable.
+      }
+    }
+    this.loadMyOverallRating();
+  }
+
+  private restoreRatingDismissal(): void {
+    const key = this.ratingDismissalKey();
+    if (!key) {
+      return;
+    }
+    try {
+      this.ratingDismissed = localStorage.getItem(key) === '1';
+    } catch {
+      this.ratingDismissed = false;
+    }
+  }
+
+  private ratingDismissalKey(): string | null {
+    if (!this.sessionId || !this.currentUsername) {
+      return null;
+    }
+    return 'jynlo.session-rating-dismissed:'
+      + encodeURIComponent(this.currentUsername.toLowerCase()) + ':' + this.sessionId;
   }
 
   openPostGameAttendance(): void {
@@ -1248,7 +1294,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
       .subscribe({
         next: session => {
           this.session = session;
-          if (this.canRatePostGame()) {
+          if (this.canRatePostGame() && !this.ratingDismissed) {
             this.loadMyOverallRating();
           }
 

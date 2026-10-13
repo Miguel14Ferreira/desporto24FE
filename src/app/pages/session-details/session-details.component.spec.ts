@@ -254,6 +254,61 @@ describe('SessionDetailsComponent', () => {
     expect(component.canSaveOverallRating()).toBeFalse();
   });
 
+  it('remembers not now for one user and session and allows manual re-opening', () => {
+    const dismissedKey = 'jynlo.session-rating-dismissed:rating-dismiss-test-user:7';
+    localStorage.removeItem(dismissedKey);
+    try {
+      (component as any).currentUsername = 'rating-dismiss-test-user';
+      component.session = { ...session, joined: true, gameDate: '2020-10-01T18:00:00Z' };
+      component.loadMyOverallRating();
+      fixture.detectChanges();
+
+      (fixture.nativeElement.querySelector('.overall-rating-skip') as HTMLButtonElement).click();
+      fixture.detectChanges();
+
+      expect(localStorage.getItem(dismissedKey)).toBe('1');
+      expect(fixture.nativeElement.querySelector('.overall-rating-panel')).toBeNull();
+      expect(fixture.nativeElement.querySelector('.rating-reopen-action')).not.toBeNull();
+      expect(sessionService.rateOverall).not.toHaveBeenCalled();
+
+      // Mimic a new visit: the previously saved choice is respected.
+      component.ratingDismissed = false;
+      (component as any).restoreRatingDismissal();
+      expect(component.ratingDismissed).toBeTrue();
+
+      (fixture.nativeElement.querySelector('.rating-reopen-action') as HTMLButtonElement).click();
+      fixture.detectChanges();
+
+      expect(localStorage.getItem(dismissedKey)).toBeNull();
+      expect(component.ratingDismissed).toBeFalse();
+      expect(fixture.nativeElement.querySelector('.overall-rating-panel')).not.toBeNull();
+      expect(sessionService.rateOverall).not.toHaveBeenCalled();
+    } finally {
+      localStorage.removeItem(dismissedKey);
+    }
+  });
+
+  it('keeps dismissals separate for other users and other sessions', () => {
+    const firstKey = 'jynlo.session-rating-dismissed:rating-dismiss-test-user:7';
+    localStorage.removeItem(firstKey);
+    try {
+      (component as any).currentUsername = 'rating-dismiss-test-user';
+      component.dismissOverallRating();
+      expect(localStorage.getItem(firstKey)).toBe('1');
+
+      (component as any).currentUsername = 'another-rating-user';
+      (component as any).restoreRatingDismissal();
+      expect(component.ratingDismissed).toBeFalse();
+
+      (component as any).currentUsername = 'rating-dismiss-test-user';
+      (component as any).sessionId = 8;
+      (component as any).restoreRatingDismissal();
+      expect(component.ratingDismissed).toBeFalse();
+    } finally {
+      localStorage.removeItem(firstKey);
+    }
+  });
+
   it('can skip the rating without sending it or changing attendance', () => {
     component.session = { ...session, joined: true, gameDate: '2020-10-01T18:00:00Z' };
     component.loadMyOverallRating();

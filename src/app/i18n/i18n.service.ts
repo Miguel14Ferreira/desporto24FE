@@ -1276,6 +1276,7 @@ const PT: Dictionary = {
   'sessionDetail.overallRatingSave': 'Guardar avaliação',
   'sessionDetail.overallRatingUpdate': 'Atualizar avaliação',
   'sessionDetail.overallRatingSkip': 'Agora não',
+  'sessionDetail.overallRatingReopen': 'Avaliar jogo',
 
   'sessionDetail.problemType': 'O que aconteceu?',
   'sessionDetail.problemChoose': 'Escolher motivo',
@@ -2827,6 +2828,7 @@ const EN: Dictionary = {
   'sessionDetail.overallRatingSave': 'Save rating',
   'sessionDetail.overallRatingUpdate': 'Update rating',
   'sessionDetail.overallRatingSkip': 'Not now',
+  'sessionDetail.overallRatingReopen': 'Rate game',
 
   'sessionDetail.problemType': 'What happened?',
   'sessionDetail.problemChoose': 'Choose a reason',

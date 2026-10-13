@@ -63,6 +63,12 @@
               <a class="postgame-action" routerLink="/menu/feed"
                  [queryParams]="{ momentSession: session.id }">{{ 'sessionDetail.sharePostGameMoment' | t }}</a>
             }
+            @if (canRatePostGame() && ratingDismissed) {
+              <button type="button" class="share-session-action rating-reopen-action"
+                      (click)="reopenOverallRating()">
+                {{ 'sessionDetail.overallRatingReopen' | t }}
+              </button>
+            }
             @if (canShareSession()) {
               <button type="button" class="share-session-action"
                       [disabled]="sharingSession" (click)="shareSession()">
