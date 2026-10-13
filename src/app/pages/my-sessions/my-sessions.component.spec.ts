@@ -73,6 +73,18 @@ describe('MySessionsComponent', () => {
     fixture.detectChanges();
   });
 
+  it('aligns created session details with the destructive cancellation action', () => {
+    const actions: HTMLElement = fixture.nativeElement.querySelector('.session-card .card-actions');
+    const details = actions.querySelector('a[href="/menu/events/11"]') as HTMLAnchorElement;
+    const cancel = actions.querySelector('button.danger-action') as HTMLButtonElement;
+
+    expect(details).toBeTruthy();
+    expect(cancel).toBeTruthy();
+    expect(details.classList.contains('jynlo-action')).toBeTrue();
+    expect(details.classList.contains('jynlo-action--neutral')).toBeTrue();
+    expect(cancel.classList.contains('jynlo-action--danger')).toBeTrue();
+  });
+
   it('should create and load sessions and attendance history', () => {
     expect(component).toBeTruthy();
     expect(component.data.created.length).toBe(1);

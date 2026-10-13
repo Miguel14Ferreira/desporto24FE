@@ -85,7 +85,7 @@
                 </div>
 
                 <div class="card-actions">
-                  <a [routerLink]="['/menu/events', session.id]">{{ 'mySessions.details' | t }}</a>
+                  <a class="jynlo-action jynlo-action--neutral" [routerLink]="['/menu/events', session.id]">{{ 'mySessions.details' | t }}</a>
                   @if (canCancel(session)) {
                     <button type="button" class="danger-action jynlo-action jynlo-action--danger" (click)="requestCancel(session)">
                       {{ 'mySessions.cancelSession' | t }}
@@ -130,7 +130,7 @@
                 </div>
 
                 <div class="card-actions">
-                  <a [routerLink]="['/menu/events', session.id]">{{ 'mySessions.openSession' | t }}</a>
+                  <a class="jynlo-action jynlo-action--neutral" [routerLink]="['/menu/events', session.id]">{{ 'mySessions.openSession' | t }}</a>
                 </div>
               </article>
             }
@@ -169,7 +169,7 @@
                 </div>
 
                 <div class="card-actions">
-                  <a [routerLink]="['/menu/events', session.id]">{{ 'mySessions.viewStatus' | t }}</a>
+                  <a class="jynlo-action jynlo-action--neutral" [routerLink]="['/menu/events', session.id]">{{ 'mySessions.viewStatus' | t }}</a>
                   <button
                     type="button"
                     class="danger-action jynlo-action jynlo-action--danger"

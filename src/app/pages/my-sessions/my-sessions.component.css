@@ -60,9 +60,14 @@ h1 {
   gap: .7rem;
 }
 
+/* Details links and cancel actions share one height and wrap inside session cards. */
+.card-actions {
+  flex-wrap: wrap;
+  gap: .6rem;
+}
+
 .primary-action,
 .secondary-action,
-.card-actions a,
 .empty-card a,
 .state-card button,
 .secondary-button,
@@ -78,7 +83,6 @@ h1 {
 }
 
 .primary-action,
-.card-actions a,
 .empty-card a,
 .state-card button,
 .attendance-actions a {
