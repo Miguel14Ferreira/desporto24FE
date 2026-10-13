@@ -10,10 +10,10 @@
       </div>
 
       <div class="header-actions">
-        <button type="button" class="secondary-action" (click)="load()" [disabled]="loading">
+        <button type="button" class="secondary-action jynlo-action jynlo-action--neutral" (click)="load()" [disabled]="loading">
           Atualizar
         </button>
-        <a class="secondary-action" routerLink="/menu/admin">Voltar ao Admin</a>
+        <a class="secondary-action jynlo-action jynlo-action--neutral" routerLink="/menu/admin">Voltar ao Admin</a>
       </div>
     </header>
 
@@ -93,7 +93,7 @@
                 <span>Estado</span>
                 <div class="status-buttons">
                   @for (status of statuses; track status) {
-                    <button
+                    <button class="jynlo-action jynlo-action--neutral"
                       type="button"
                       [class.selected]="selected.status === status"
                       [disabled]="updatingId !== null"
@@ -104,7 +104,7 @@
                 </div>
               </div>
 
-              <a class="email-action" [href]="'mailto:' + selected.email + '?subject=DESPORTO24 - ' + selected.subject">
+              <a class="email-action jynlo-action jynlo-action--neutral" [href]="'mailto:' + selected.email + '?subject=DESPORTO24 - ' + selected.subject">
                 Responder por email
               </a>
             </div>

@@ -360,7 +360,7 @@
       </label>
 
       <div class="venue-create-location venue-create-wide">
-        <button type="button" (click)="useCurrentLocation()" [disabled]="locating"
+        <button class="jynlo-action jynlo-action--neutral" type="button" (click)="useCurrentLocation()" [disabled]="locating"
           [attr.aria-describedby]="locationError ? 'venue-create-location-error' : null">
           {{ (locating ? 'venue.locating' : 'venue.useCurrentLocation') | t }}
         </button>
@@ -377,7 +377,7 @@
           <span id="venue-create-save-error" class="venue-create-error" role="alert" aria-live="assertive">{{ 'venue.createError' | t }}</span>
         }
         <a class="venue-create-cancel" routerLink="/menu/discover">{{ 'common.cancel' | t }}</a>
-        <button type="submit" [disabled]="saving"
+        <button class="jynlo-action jynlo-action--primary" type="submit" [disabled]="saving"
           [attr.aria-describedby]="saveError ? 'venue-create-save-error' : null">
           {{ (saving ? 'venue.saving' : 'venue.save') | t }}
         </button>

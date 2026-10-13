@@ -24,7 +24,7 @@
             minlength="8"
             maxlength="128"
             [disabled]="loading || !token">
-          <button type="button" (click)="showPassword = !showPassword">
+          <button class="jynlo-action jynlo-action--neutral" type="button" (click)="showPassword = !showPassword">
             {{ showPassword ? ('common.hide' | t) : ('common.show' | t) }}
           </button>
         </div>
@@ -42,11 +42,11 @@
           [disabled]="loading || !token">
       </label>
 
-      <button type="submit" class="primary-action" [disabled]="loading || !token">
+      <button type="submit" class="primary-action jynlo-action jynlo-action--primary" [disabled]="loading || !token">
         {{ loading ? ('profile.saving' | t) : ('reset.save' | t) }}
       </button>
     </form>
 
-    <button type="button" class="back-action" (click)="goToLogin()">{{ 'reset.back' | t }}</button>
+    <button type="button" class="back-action jynlo-action jynlo-action--neutral" (click)="goToLogin()">{{ 'reset.back' | t }}</button>
   </div>
 </section>

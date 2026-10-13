@@ -58,28 +58,28 @@
               <p>{{ (isAuthenticated ? 'publicSession.openLoggedIn' : 'publicSession.openGuest') | t }}</p>
             }
             @if (isAuthenticated) {
-              <a class="primary-action" [routerLink]="returnUrl">
+              <a class="primary-action jynlo-action jynlo-action--primary" [routerLink]="returnUrl">
                 {{ (details.status === 'FULL' ? 'publicSession.viewWaitlist' : 'publicSession.viewJoin') | t }}
               </a>
             } @else {
-              <a class="primary-action" routerLink="/login/registerNewUser" [queryParams]="{ returnUrl: returnUrl }">{{ 'nav.register' | t }}</a>
+              <a class="primary-action jynlo-action jynlo-action--primary" routerLink="/login/registerNewUser" [queryParams]="{ returnUrl: returnUrl }">{{ 'nav.register' | t }}</a>
             }
           } @else {
             <h2>{{ 'publicSession.closedHeading' | t }}</h2>
             <p>{{ 'publicSession.closedExplanation' | t }}</p>
             @if (isAuthenticated) {
-              <a class="primary-action" [routerLink]="returnUrl">{{ 'publicSession.viewDetails' | t }}</a>
+              <a class="primary-action jynlo-action jynlo-action--primary" [routerLink]="returnUrl">{{ 'publicSession.viewDetails' | t }}</a>
             }
           }
           @if (!isAuthenticated) {
-            <a class="secondary-action" routerLink="/login" [queryParams]="{returnUrl: returnUrl}">{{ 'register.haveAccount' | t }}</a>
+            <a class="secondary-action jynlo-action jynlo-action--neutral" routerLink="/login" [queryParams]="{returnUrl: returnUrl}">{{ 'register.haveAccount' | t }}</a>
           }
           @if (canRequestParticipation) {
-            <button type="button" class="share-session-action"
+            <button type="button" class="share-session-action jynlo-action jynlo-action--neutral"
                     [disabled]="sharingSession" (click)="shareSession()">
               {{ (sharingSession ? 'publicSession.sharing' : 'publicSession.share') | t }}
             </button>
-            <a class="secondary-action whatsapp-share-action"
+            <a class="secondary-action whatsapp-share-action jynlo-action jynlo-action--neutral"
                [href]="whatsappShareUrl()" target="_blank" rel="noopener noreferrer">
               {{ 'publicSession.shareWhatsApp' | t }}
             </a>
@@ -92,7 +92,7 @@
                 <input id="public-preview-share-url" #shareLinkInput type="text"
                        [value]="manualShareUrl" readonly
                        [attr.aria-label]="'publicSession.shareLink' | t">
-                <button type="button" (click)="shareLinkInput.select()">{{ 'publicSession.selectLink' | t }}</button>
+                <button class="jynlo-action jynlo-action--neutral" type="button" (click)="shareLinkInput.select()">{{ 'publicSession.selectLink' | t }}</button>
               </div>
             }
           }
@@ -103,7 +103,7 @@
         <h1>{{ 'publicSession.errorTitle' | t }}</h1>
         <p>{{ errorMessageKey | t }}</p>
         @if (canRetry) {
-          <button type="button" class="retry-action" (click)="retryLoad()">{{ 'publicSession.retry' | t }}</button>
+          <button type="button" class="retry-action jynlo-action jynlo-action--neutral" (click)="retryLoad()">{{ 'publicSession.retry' | t }}</button>
         }
         <a routerLink="/home">{{ 'publicSession.backHome' | t }}</a>
       </main>

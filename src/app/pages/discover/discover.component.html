@@ -41,13 +41,13 @@
             [placeholder]="'discover.locationPlaceholder' | t">
         </label>
 
-        <button type="submit" [disabled]="loading">
+        <button class="jynlo-action jynlo-action--primary" type="submit" [disabled]="loading">
           {{ loading ? ('discover.searching' | t) : ('discover.search' | t) }}
         </button>
       </div>
 
       @if (sport || location) {
-        <button type="button" class="clear-button" (click)="clear()">
+        <button type="button" class="clear-button jynlo-action jynlo-action--neutral" (click)="clear()">
           {{ 'events.clear' | t }}
         </button>
       }
@@ -63,7 +63,7 @@
           <strong>{{ 'discover.error.title' | t }}</strong>
           <span>{{ 'discover.error.text' | t }}</span>
         </div>
-        <button type="button" (click)="search()">
+        <button class="jynlo-action jynlo-action--neutral" type="button" (click)="search()">
           {{ 'discover.error.retry' | t }}
         </button>
       </div>
@@ -120,13 +120,13 @@
           }
 
           @if (venues.length > 4) {
-            <button type="button" class="pillar-action" (click)="toggleAllVenues()">
+            <button type="button" class="pillar-action jynlo-action jynlo-action--neutral" (click)="toggleAllVenues()">
               {{ (showAllVenues ? 'discover.where.showLess' : 'discover.where.showAll') | t }}
               <span>{{ showAllVenues ? '↑' : '↓' }}</span>
             </button>
           }
 
-          <a class="pillar-action" routerLink="/menu/venues/new">
+          <a class="pillar-action jynlo-action jynlo-action--neutral" routerLink="/menu/venues/new">
             {{ 'discover.where.action' | t }} <span>→</span>
           </a>
         </section>
@@ -163,7 +163,7 @@
             </div>
           }
 
-          <a class="pillar-action" routerLink="/menu/events">
+          <a class="pillar-action jynlo-action jynlo-action--neutral" routerLink="/menu/events">
             {{ 'discover.when.action' | t }} <span>→</span>
           </a>
         </section>
@@ -205,7 +205,7 @@
             </div>
           }
 
-          <a class="pillar-action" routerLink="/menu/perfis">
+          <a class="pillar-action jynlo-action jynlo-action--neutral" routerLink="/menu/perfis">
             {{ 'discover.who.action' | t }} <span>→</span>
           </a>
         </section>

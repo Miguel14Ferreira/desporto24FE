@@ -9,7 +9,7 @@
         </p>
       </div>
 
-      <a class="secondary-action" routerLink="/menu">{{ 'adminHub.back' | t }}</a>
+      <a class="secondary-action jynlo-action jynlo-action--neutral" routerLink="/menu">{{ 'adminHub.back' | t }}</a>
     </header>
 
     <div class="admin-grid">
@@ -61,7 +61,7 @@
       <p>Pré-visualização apenas de leitura. Não cria ou altera recintos.</p>
       <textarea aria-label="JSON dos recintos" [(ngModel)]="venuePayload" rows="10"
         style="width:100%;margin-top:1rem;font-family:monospace;"></textarea>
-      <button type="button" (click)="previewVenues()" [disabled]="previewLoading"
+      <button class="jynlo-action jynlo-action--neutral" type="button" (click)="previewVenues()" [disabled]="previewLoading"
         style="margin-top:.75rem;padding:.65rem 1rem;">
         {{ previewLoading ? 'A verificar...' : 'Verificar duplicados' }}
       </button>

@@ -17,25 +17,25 @@
       </div>
       <div class="row-actions">
         @if (mineView.isActive) {
-          <a class="secondary-action header-action button-link" routerLink="/menu/communities">
+          <a class="secondary-action header-action button-link jynlo-action jynlo-action--neutral" routerLink="/menu/communities">
             {{ 'communities.searchTitle' | t }}
           </a>
         } @else {
           <a
-            class="secondary-action header-action button-link"
+            class="secondary-action header-action button-link jynlo-action jynlo-action--neutral"
             routerLink="/menu/communities"
             [queryParams]="{ view: 'mine' }">
             {{ 'communities.mine' | t }}
           </a>
         }
-        <a class="primary-action header-action button-link" routerLink="/menu/communities/create">
+        <a class="primary-action header-action button-link jynlo-action jynlo-action--primary" routerLink="/menu/communities/create">
           {{ 'communities.create' | t }}
         </a>
       </div>
     </header>
     } @else {
       <div class="detail-page-toolbar">
-        <button type="button" class="secondary-action" (click)="backToCommunities()">
+        <button type="button" class="secondary-action jynlo-action jynlo-action--neutral" (click)="backToCommunities()">
           ← {{ 'communities.title' | t }}
         </button>
       </div>
@@ -75,13 +75,13 @@
           <div class="row-actions full-width">
             <button
               type="submit"
-              class="primary-action"
+              class="primary-action jynlo-action jynlo-action--primary"
               [disabled]="communitySearchLoading || (!communitySearchName.trim() && !communitySearchSport.trim())">
               {{ (communitySearchLoading ? 'common.searching' : 'adminPlayers.search') | t }}
             </button>
             <button
               type="button"
-              class="secondary-action"
+              class="secondary-action jynlo-action jynlo-action--neutral"
               [disabled]="communitySearchLoading"
               (click)="clearCommunitySearch()">
               {{ 'events.clear' | t }}
@@ -133,7 +133,7 @@
           <nav class="row-actions" [attr.aria-label]="'communities.title' | t">
             <button
               type="button"
-              class="secondary-action"
+              class="secondary-action jynlo-action jynlo-action--neutral"
               [disabled]="communitySearchLoading || communitySearchPage === 0"
               (click)="changeCommunitySearchPage(-1)">
               {{ 'adminPlayers.previous' | t }}
@@ -141,7 +141,7 @@
             <span>{{ 'adminPlayers.page' | t:{ page: communitySearchPage + 1 } }}</span>
             <button
               type="button"
-              class="secondary-action"
+              class="secondary-action jynlo-action jynlo-action--neutral"
               [disabled]="communitySearchLoading || !communitySearchHasMore"
               (click)="changeCommunitySearchPage(1)">
               {{ 'adminPlayers.next' | t }}
@@ -165,10 +165,10 @@
               <span>{{ 'communities.invitedBy' | t:{ username: invite.invitedByUsername } }}</span>
             </div>
             <div class="row-actions">
-              <button type="button" class="primary-action small" (click)="acceptInvite(invite)">
+              <button type="button" class="primary-action small jynlo-action jynlo-action--primary jynlo-action--compact" (click)="acceptInvite(invite)">
                 {{ 'communities.accept' | t }}
               </button>
-              <button type="button" class="secondary-action small" (click)="rejectInvite(invite)">
+              <button type="button" class="secondary-action small jynlo-action jynlo-action--neutral jynlo-action--compact" (click)="rejectInvite(invite)">
                 {{ 'communities.reject' | t }}
               </button>
             </div>
@@ -187,7 +187,7 @@
         <span class="empty-icon">◎</span>
         <h2>{{ 'communities.emptyTitle' | t }}</h2>
         <p>{{ 'communities.emptyText' | t }}</p>
-        <a class="primary-action button-link" routerLink="/menu/communities/create">
+        <a class="primary-action button-link jynlo-action jynlo-action--primary" routerLink="/menu/communities/create">
           {{ 'communities.createFirst' | t }}
         </a>
       </section>
@@ -256,7 +256,7 @@
                   <div class="row-actions">
                     <button
                       type="button"
-                      class="primary-action"
+                      class="primary-action jynlo-action jynlo-action--primary"
                       [disabled]="membershipActionLoading || joinRequestSent"
                       (click)="joinPresentedCommunity()">
                       @if (communityPresentation.visibility === 'PUBLIC') {
@@ -295,7 +295,7 @@
 
                   @if (canManage()) {
                     <div class="community-photo-actions">
-                      <label class="community-photo-action" [class.disabled]="photoUpdating">
+                      <label class="community-photo-action jynlo-action jynlo-action--neutral" [class.disabled]="photoUpdating">
                         <input
                           type="file"
                           accept="image/jpeg,image/png,image/webp"
@@ -306,7 +306,7 @@
                       @if (selected.photoUrl) {
                         <button
                           type="button"
-                          class="community-photo-action community-photo-remove"
+                          class="community-photo-action community-photo-remove jynlo-action jynlo-action--danger"
                           [disabled]="photoUpdating"
                           (click)="removeCommunityPhoto()">
                           {{ 'communities.removePhoto' | t }}
@@ -437,7 +437,7 @@
 
                     <button
                       type="button"
-                      class="primary-action"
+                      class="primary-action jynlo-action jynlo-action--primary"
                       [disabled]="competitionSaving"
                       (click)="saveCompetitionSettings()">
                       {{ competitionSaving
@@ -476,7 +476,7 @@
                           </label>
                           <button
                             type="button"
-                            class="primary-action"
+                            class="primary-action jynlo-action jynlo-action--primary"
                             [disabled]="seasonSaving"
                             (click)="createSeason()">
                             {{ seasonSaving
@@ -494,7 +494,7 @@
                           @if (!closeSeasonConfirming) {
                             <button
                               type="button"
-                              class="danger-action small"
+                              class="danger-action small jynlo-action jynlo-action--danger jynlo-action--compact"
                               (click)="requestCloseSeason()">
                               {{ 'communities.closeSeason' | t }}
                             </button>
@@ -504,14 +504,14 @@
                               <div class="row-actions">
                                 <button
                                   type="button"
-                                  class="danger-action small"
+                                  class="danger-action small jynlo-action jynlo-action--danger jynlo-action--compact"
                                   [disabled]="seasonSaving"
                                   (click)="closeActiveSeason()">
                                   {{ 'communities.confirmCloseSeason' | t }}
                                 </button>
                                 <button
                                   type="button"
-                                  class="secondary-action small"
+                                  class="secondary-action small jynlo-action jynlo-action--neutral jynlo-action--compact"
                                   [disabled]="seasonSaving"
                                   (click)="cancelCloseSeason()">
                                   {{ 'common.cancel' | t }}
@@ -557,7 +557,7 @@
                     <h3>{{ 'communities.sessionsTitle' | t }}</h3>
                   </div>
                   <a
-                    class="primary-action button-link small"
+                    class="primary-action button-link small jynlo-action jynlo-action--primary jynlo-action--compact"
                     routerLink="/menu/createEvent"
                     [queryParams]="{ community: selected.id }">
                     {{ 'communities.createSession' | t }}
@@ -627,7 +627,7 @@
                       } @else if (!session.privateGame) {
                         <button
                           type="button"
-                          class="primary-action small"
+                          class="primary-action small jynlo-action jynlo-action--primary jynlo-action--compact"
                           [disabled]="joiningSessionId !== undefined"
                           (click)="joinCommunitySession(session)">
                           {{ joiningSessionId === session.id
@@ -643,7 +643,7 @@
                         <div>
                           <button
                             type="button"
-                            class="secondary-action small"
+                            class="secondary-action small jynlo-action jynlo-action--neutral jynlo-action--compact"
                             [disabled]="openingSessionId !== undefined"
                             (click)="openSessionToPublic(session)">
                             {{ openingSessionId === session.id
@@ -699,19 +699,19 @@
                         <p>{{ 'communities.import.hint' | t }}</p>
 
                         <div class="import-file-row">
-                          <label class="secondary-action import-file-picker">
+                          <label class="secondary-action import-file-picker jynlo-action jynlo-action--neutral">
                             <input #importInput type="file" accept=".xlsx" (change)="onImportFileChange($event)">
                             <span>{{ importFileName || ('communities.import.choose' | t) }}</span>
                           </label>
                           @if (importFile) {
-                            <button type="button" class="primary-action small"
+                            <button type="button" class="primary-action small jynlo-action jynlo-action--primary jynlo-action--compact"
                               [disabled]="importPreviewLoading"
                               (click)="inspectImportFile()">
                               {{ importPreviewLoading
                                 ? ('communities.import.inspecting' | t)
                                 : ('communities.import.inspect' | t) }}
                             </button>
-                            <button type="button" class="secondary-action small"
+                            <button type="button" class="secondary-action small jynlo-action jynlo-action--neutral jynlo-action--compact"
                               [disabled]="importPreviewLoading"
                               (click)="clearImportFile(importInput)">
                               {{ 'communities.import.clear' | t }}
@@ -759,7 +759,7 @@
                                   </div>
                                 }
                               </div>
-                              <button type="button" class="primary-action import-continue"
+                              <button type="button" class="primary-action import-continue jynlo-action jynlo-action--primary"
                                 [disabled]="importMappingLoading"
                                 (click)="validateImportMapping()">
                                 {{ importMappingLoading
@@ -804,7 +804,7 @@
                                 </label>
                               </div>
 
-                              <button type="button" class="primary-action import-continue"
+                              <button type="button" class="primary-action import-continue jynlo-action jynlo-action--primary"
                                 [disabled]="importPlanLoading || !selectedSeasonId"
                                 (click)="buildImportFinalPlan()">
                                 {{ importPlanLoading
@@ -827,7 +827,7 @@
                                   }
                                 </div>
                                 @if (importFinalPlan.invalidDates === 0 && importFinalPlan.roundsNeedingYear === 0) {
-                                  <button type="button" class="primary-action import-confirm"
+                                  <button type="button" class="primary-action import-confirm jynlo-action jynlo-action--primary"
                                     [disabled]="importConfirming"
                                     (click)="confirmHistoricalImport()">
                                     {{ importConfirming ? ('communities.import.importing' | t) : ('communities.import.confirm' | t) }}
@@ -925,7 +925,7 @@
 
                         <button
                           type="button"
-                          class="primary-action"
+                          class="primary-action jynlo-action jynlo-action--primary"
                           [disabled]="roundSaving"
                           (click)="createRound()">
                           {{ roundSaving
@@ -963,7 +963,7 @@
                               @if (roundDeleteConfirmId !== round.id) {
                                 <button
                                   type="button"
-                                  class="danger-action small"
+                                  class="danger-action small jynlo-action jynlo-action--danger jynlo-action--compact"
                                   (click)="askDeleteRound(round)">
                                   {{ 'communities.deleteRound' | t }}
                                 </button>
@@ -971,14 +971,14 @@
                                 <div class="row-actions">
                                   <button
                                     type="button"
-                                    class="danger-action small"
+                                    class="danger-action small jynlo-action jynlo-action--danger jynlo-action--compact"
                                     [disabled]="roundSaving"
                                     (click)="deleteRound(round)">
                                     {{ 'communities.confirmDeleteRound' | t }}
                                   </button>
                                   <button
                                     type="button"
-                                    class="secondary-action small"
+                                    class="secondary-action small jynlo-action jynlo-action--neutral jynlo-action--compact"
                                     [disabled]="roundSaving"
                                     (click)="cancelDeleteRound()">
                                     {{ 'common.cancel' | t }}
@@ -1325,7 +1325,7 @@
                             <div class="row-actions">
                               <button
                                 type="button"
-                                class="primary-action small"
+                                class="primary-action small jynlo-action jynlo-action--primary jynlo-action--compact"
                                 [disabled]="joinRequestActionId !== undefined"
                                 (click)="acceptPendingJoinRequest(request)">
                                 {{ joinRequestActionId === request.id
@@ -1334,7 +1334,7 @@
                               </button>
                               <button
                                 type="button"
-                                class="secondary-action small"
+                                class="secondary-action small jynlo-action jynlo-action--neutral jynlo-action--compact"
                                 [disabled]="joinRequestActionId !== undefined"
                                 (click)="rejectPendingJoinRequest(request)">
                                 {{ 'communities.reject' | t }}
@@ -1357,7 +1357,7 @@
                         (keyup.enter)="searchInviteUsers()">
                       <button
                         type="button"
-                        class="secondary-action small"
+                        class="secondary-action small jynlo-action jynlo-action--neutral jynlo-action--compact"
                         [disabled]="inviteSearchLoading || !inviteUsername.trim()"
                         (click)="searchInviteUsers()">
                         {{ inviteSearchLoading
@@ -1366,7 +1366,7 @@
                       </button>
                       <button
                         type="button"
-                        class="primary-action small"
+                        class="primary-action small jynlo-action jynlo-action--primary jynlo-action--compact"
                         [disabled]="saving || !inviteUsername.trim()"
                         (click)="invite()">
                         {{ saving ? ('communities.sendingInvite' | t) : ('communities.sendInvite' | t) }}
@@ -1416,20 +1416,20 @@
                       @if (isOwner() && member.role !== 'OWNER') {
                         <div class="row-actions">
                           @if (member.role === 'MEMBER') {
-                            <button type="button" class="secondary-action small" (click)="setRole(member.username, 'ADMIN')">
+                            <button type="button" class="secondary-action small jynlo-action jynlo-action--neutral jynlo-action--compact" (click)="setRole(member.username, 'ADMIN')">
                               {{ 'communities.makeAdmin' | t }}
                             </button>
                           } @else {
-                            <button type="button" class="secondary-action small" (click)="setRole(member.username, 'MEMBER')">
+                            <button type="button" class="secondary-action small jynlo-action jynlo-action--neutral jynlo-action--compact" (click)="setRole(member.username, 'MEMBER')">
                               {{ 'communities.removeAdmin' | t }}
                             </button>
                           }
-                          <button type="button" class="danger-action small" (click)="removeMember(member.username)">
+                          <button type="button" class="danger-action small jynlo-action jynlo-action--danger jynlo-action--compact" (click)="removeMember(member.username)">
                             {{ 'communities.removeMember' | t }}
                           </button>
                         </div>
                       } @else if (selected.myRole === 'ADMIN' && member.role === 'MEMBER') {
-                        <button type="button" class="danger-action small" (click)="removeMember(member.username)">
+                        <button type="button" class="danger-action small jynlo-action jynlo-action--danger jynlo-action--compact" (click)="removeMember(member.username)">
                           {{ 'communities.removeMember' | t }}
                         </button>
                       }
@@ -1443,14 +1443,14 @@
                     <p>{{ 'communities.transferOwnershipHint' | t }}</p>
                     <div class="inline-form">
                       <input [(ngModel)]="ownershipUsername" [placeholder]="'communities.newOwnerPlaceholder' | t">
-                      <button type="button" class="secondary-action small" (click)="transferOwnership()">
+                      <button type="button" class="secondary-action small jynlo-action jynlo-action--neutral jynlo-action--compact" (click)="transferOwnership()">
                         {{ 'communities.transfer' | t }}
                       </button>
                     </div>
                   </section>
                 } @else {
                   <section class="leave-block">
-                    <button type="button" class="danger-action" (click)="leave()">
+                    <button type="button" class="danger-action jynlo-action jynlo-action--danger" (click)="leave()">
                       {{ 'communities.leave' | t }}
                     </button>
                   </section>

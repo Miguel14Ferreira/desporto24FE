@@ -8,8 +8,8 @@
       </div>
 
       <div class="header-actions">
-        <a class="primary-action" routerLink="/menu/createEvent">{{ 'mySessions.create' | t }}</a>
-        <a class="secondary-action" routerLink="/menu/my-sessions">{{ 'mySessions.title' | t }}</a>
+        <a class="primary-action jynlo-action jynlo-action--primary" routerLink="/menu/createEvent">{{ 'mySessions.create' | t }}</a>
+        <a class="secondary-action jynlo-action jynlo-action--neutral" routerLink="/menu/my-sessions">{{ 'mySessions.title' | t }}</a>
       </div>
     </header>
 
@@ -37,9 +37,9 @@
               <option [ngValue]="100">100 km</option>
             </select>
           </label>
-          <button type="button" class="ghost-button" (click)="disableNearby()">{{ 'events.disable' | t }}</button>
+          <button type="button" class="ghost-button jynlo-action jynlo-action--neutral" (click)="disableNearby()">{{ 'events.disable' | t }}</button>
         } @else {
-          <button type="button" [disabled]="locating" (click)="useCurrentLocation()">
+          <button class="jynlo-action jynlo-action--neutral" type="button" [disabled]="locating" (click)="useCurrentLocation()">
             {{ locating ? ('events.locating' | t) : ('events.useLocation' | t) }}
           </button>
         }
@@ -156,8 +156,8 @@
       }
 
       <div class="filter-actions">
-        <button type="submit">{{ 'common.search' | t }}</button>
-        <button type="button" class="ghost-button" (click)="clearFilters()">{{ 'events.clear' | t }}</button>
+        <button class="jynlo-action jynlo-action--primary" type="submit">{{ 'common.search' | t }}</button>
+        <button type="button" class="ghost-button jynlo-action jynlo-action--neutral" (click)="clearFilters()">{{ 'events.clear' | t }}</button>
       </div>
     </form>
 
@@ -168,7 +168,7 @@
     @if (!loading && errorMessage) {
       <div class="state-card error-state">
         <p>{{ errorMessage }}</p>
-        <button type="button" (click)="loadSessions()">{{ 'common.retry' | t }}</button>
+        <button class="jynlo-action jynlo-action--neutral" type="button" (click)="loadSessions()">{{ 'common.retry' | t }}</button>
       </div>
     }
 
@@ -231,7 +231,7 @@
             </div>
 
             <a
-              class="session-action"
+              class="session-action jynlo-action jynlo-action--neutral"
               [class.session-action--join]="canJoin(session)"
               [routerLink]="['/menu/events', session.id]">
               {{ canJoin(session) ? ('events.joinNow' | t) : ('mySessions.details' | t) }}

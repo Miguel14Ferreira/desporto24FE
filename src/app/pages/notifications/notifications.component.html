@@ -14,7 +14,7 @@
           @if (!clearAllConfirming) {
             <button
               type="button"
-              class="clear-all-action"
+              class="clear-all-action jynlo-action jynlo-action--danger"
               [disabled]="clearAllLoading"
               (click)="requestClearAll()">
               {{ 'notifications.clearAll' | t }}
@@ -24,7 +24,7 @@
               <span>{{ 'notifications.clearAllQuestion' | t }}</span>
               <button
                 type="button"
-                class="danger-action"
+                class="danger-action jynlo-action jynlo-action--danger"
                 [disabled]="clearAllLoading"
                 (click)="clearAllNotifications()">
                 {{ clearAllLoading
@@ -33,7 +33,7 @@
               </button>
               <button
                 type="button"
-                class="secondary-button"
+                class="secondary-button jynlo-action jynlo-action--neutral"
                 [disabled]="clearAllLoading"
                 (click)="cancelClearAll()">
                 {{ 'common.cancel' | t }}
@@ -42,7 +42,7 @@
           }
         }
 
-        <a class="secondary-action" routerLink="/menu/events">{{ 'common.sessions' | t }}</a>
+        <a class="secondary-action jynlo-action jynlo-action--neutral" routerLink="/menu/events">{{ 'common.sessions' | t }}</a>
       </div>
     </header>
 
@@ -61,7 +61,7 @@
     @if (!loading && errorMessage) {
       <div class="state-card error-state">
         <p>{{ errorMessage }}</p>
-        <button type="button" (click)="load()">{{ 'common.retry' | t }}</button>
+        <button class="jynlo-action jynlo-action--neutral" type="button" (click)="load()">{{ 'common.retry' | t }}</button>
       </div>
     }
 
@@ -131,7 +131,7 @@
                   @if (!accountBlockConfirming) {
                     <button
                       type="button"
-                      class="security-action"
+                      class="security-action jynlo-action jynlo-action--neutral"
                       [disabled]="actionLoadingId !== null"
                       (click)="requestAccountBlock()">
                       {{ 'notifications.blockAccess' | t }}
@@ -144,7 +144,7 @@
                       <div class="security-confirmation__actions">
                         <button
                           type="button"
-                          class="danger-action"
+                          class="danger-action jynlo-action jynlo-action--danger"
                           [disabled]="actionLoadingId !== null"
                           (click)="blockAccountAccess()">
                           {{ actionLoadingId === selected.id
@@ -154,7 +154,7 @@
 
                         <button
                           type="button"
-                          class="secondary-button"
+                          class="secondary-button jynlo-action jynlo-action--neutral"
                           [disabled]="actionLoadingId !== null"
                           (click)="cancelAccountBlock()">
                           {{ 'common.cancel' | t }}
@@ -165,7 +165,7 @@
                 }
 
                 @if (selected.sessionId !== null) {
-                  <button type="button" class="primary-action" (click)="openSession(selected)">
+                  <button type="button" class="primary-action jynlo-action jynlo-action--primary" (click)="openSession(selected)">
                     {{ (selected.type === 'SESSION_POST_GAME_REVIEW'
                       ? 'notifications.reviewSession'
                       : 'notifications.openSession') | t }}
@@ -173,13 +173,13 @@
                 }
 
                 @if (selected.type === 'CHAT_MESSAGE' && selected.relatedUsername) {
-                  <button type="button" class="primary-action" (click)="openChat(selected)">
+                  <button type="button" class="primary-action jynlo-action jynlo-action--primary" (click)="openChat(selected)">
                     {{ 'notifications.openChat' | t }}
                   </button>
                 }
 
                 @if (selected.type === 'COMMUNITY_INVITE') {
-                  <button type="button" class="primary-action" (click)="openCommunityInvite(selected)">
+                  <button type="button" class="primary-action jynlo-action jynlo-action--primary" (click)="openCommunityInvite(selected)">
                     {{ 'notifications.openCommunityInvite' | t }}
                   </button>
                 }
@@ -187,7 +187,7 @@
                 @if (selected.friendRequest) {
                   <button
                     type="button"
-                    class="primary-action"
+                    class="primary-action jynlo-action jynlo-action--primary"
                     [disabled]="actionLoadingId !== null"
                     (click)="acceptFriendRequest(selected)">
                     {{ actionLoadingId === selected.id ? ('common.processing' | t) : ('notifications.acceptFriend' | t) }}
@@ -195,7 +195,7 @@
 
                   <button
                     type="button"
-                    class="secondary-button"
+                    class="secondary-button jynlo-action jynlo-action--neutral"
                     [disabled]="actionLoadingId !== null"
                     (click)="rejectFriendRequest(selected)">
                     Rejeitar
@@ -204,7 +204,7 @@
 
                 <button
                   type="button"
-                  class="danger-action"
+                  class="danger-action jynlo-action jynlo-action--danger"
                   [disabled]="actionLoadingId !== null"
                   (click)="deleteNotification(selected)">
                   {{ actionLoadingId === selected.id ? ('notifications.deleting' | t) : ('notifications.delete' | t) }}

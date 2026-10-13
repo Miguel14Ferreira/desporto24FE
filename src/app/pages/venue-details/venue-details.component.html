@@ -77,7 +77,7 @@
         } @else if (photosLoadError) {
           <div class="venue-photos-state">
             {{ 'venue.detail.photosError' | t }}
-            <button type="button" (click)="retryPhotos()">{{ 'common.retry' | t }}</button>
+            <button class="jynlo-action jynlo-action--neutral" type="button" (click)="retryPhotos()">{{ 'common.retry' | t }}</button>
           </div>
         } @else if (photos.length === 0) {
           <div class="venue-photos-state">{{ 'venue.detail.photosEmpty' | t }}</div>
@@ -194,7 +194,7 @@
 
           <button
             type="submit"
-            class="venue-sport-condition-submit"
+            class="venue-sport-condition-submit jynlo-action jynlo-action--primary"
             [disabled]="sportConditionSaving || !sportConditionSport.trim() || !sportConditionText.trim()">
             {{ sportConditionSaving
               ? ('venue.detail.sportConditionSaving' | t)
@@ -209,7 +209,7 @@
         } @else if (sportConditionsLoadError) {
           <div class="venue-sport-conditions-state">
             {{ 'venue.detail.sportConditionsError' | t }}
-            <button type="button" (click)="retrySportConditions()">{{ 'common.retry' | t }}</button>
+            <button class="jynlo-action jynlo-action--neutral" type="button" (click)="retrySportConditions()">{{ 'common.retry' | t }}</button>
           </div>
         } @else if (sportConditions.length === 0) {
           <div class="venue-sport-conditions-state">

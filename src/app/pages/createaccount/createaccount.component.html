@@ -7,7 +7,7 @@
         <p class="subtitle">{{ 'register.subtitle' | t }}</p>
       </div>
 
-      <a class="secondary-action" routerLink="/login" queryParamsHandling="preserve">{{ 'register.haveAccount' | t }}</a>
+      <a class="secondary-action jynlo-action jynlo-action--neutral" routerLink="/login" queryParamsHandling="preserve">{{ 'register.haveAccount' | t }}</a>
     </header>
 
     @if (hasSharedSessionInvitation) {
@@ -30,7 +30,7 @@
         <div class="confirmation-actions">
           <button
             type="button"
-            class="secondary-action resend-action"
+            class="secondary-action resend-action jynlo-action jynlo-action--neutral"
             [disabled]="resendLoading || resendCooldownSeconds > 0"
             (click)="resendConfirmation()">
             {{ resendLoading
@@ -60,7 +60,7 @@
         <div class="confirmation-actions">
           <button
             type="button"
-            class="secondary-action resend-action"
+            class="secondary-action resend-action jynlo-action jynlo-action--neutral"
             [disabled]="resendLoading || resendCooldownSeconds > 0"
             (click)="resendConfirmation()">
             {{ resendLoading
@@ -86,7 +86,7 @@
         <div>
           <strong>{{ 'register.photo' | t }}</strong>
           <p>{{ 'register.photoOptional' | t }}</p>
-          <label class="upload-action">
+          <label class="upload-action jynlo-action jynlo-action--neutral">
             <input
               type="file"
               accept="image/*"
@@ -133,7 +133,7 @@
               autocomplete="new-password"
               minlength="8"
               [disabled]="loading">
-            <button type="button" (click)="showPassword = !showPassword">
+            <button class="jynlo-action jynlo-action--neutral" type="button" (click)="showPassword = !showPassword">
               {{ showPassword ? ('common.hide' | t) : ('common.show' | t) }}
             </button>
           </div>
@@ -192,8 +192,8 @@
       </div>
 
       <div class="form-actions">
-        <a class="secondary-action" routerLink="/login" queryParamsHandling="preserve">{{ 'common.cancel' | t }}</a>
-        <button type="submit" [disabled]="loading || !acceptedLegalTerms">
+        <a class="secondary-action jynlo-action jynlo-action--neutral" routerLink="/login" queryParamsHandling="preserve">{{ 'common.cancel' | t }}</a>
+        <button class="jynlo-action jynlo-action--primary" type="submit" [disabled]="loading || !acceptedLegalTerms">
           {{ loading ? ('register.creating' | t) : ('register.title' | t) }}
         </button>
       </div>

@@ -8,7 +8,7 @@
       </div>
 
       <div class="header-actions">
-        <a class="secondary-action" routerLink="/menu/dadosPerfil">{{ 'profile.view' | t }}</a>
+        <a class="secondary-action jynlo-action jynlo-action--neutral" routerLink="/menu/dadosPerfil">{{ 'profile.view' | t }}</a>
       </div>
     </header>
 
@@ -37,14 +37,14 @@
             @if (!photoEditing) {
               <button
                 type="button"
-                class="upload-action"
+                class="upload-action jynlo-action jynlo-action--primary"
                 [disabled]="saving || photoSaving"
                 (click)="startPhotoEdit()">
                 {{ 'profile.changePhoto' | t }}
               </button>
             } @else {
               <div class="photo-edit-actions">
-                <label class="upload-action">
+                <label class="upload-action jynlo-action jynlo-action--neutral">
                   <input
                     type="file"
                     accept="image/jpeg,image/png,image/webp"
@@ -55,7 +55,7 @@
 
                 <button
                   type="button"
-                  class="photo-save-action"
+                  class="photo-save-action jynlo-action jynlo-action--primary"
                   [disabled]="photoSaving || !photo"
                   (click)="savePhoto()">
                   {{ photoSaving ? ('profile.saving' | t) : ('profile.savePhoto' | t) }}
@@ -63,7 +63,7 @@
 
                 <button
                   type="button"
-                  class="photo-cancel-action"
+                  class="photo-cancel-action jynlo-action jynlo-action--neutral"
                   [disabled]="photoSaving"
                   (click)="cancelPhotoEdit()">
                   {{ 'common.cancel' | t }}
@@ -249,7 +249,7 @@
             @if (sportSuggestions.length > 0) {
               <div class="sport-suggestions">
                 @for (sport of sportSuggestions; track sport) {
-                  <button
+                  <button class="jynlo-action jynlo-action--neutral"
                     type="button"
                     [disabled]="saving"
                     (click)="addSport(sport)">
@@ -340,7 +340,7 @@
             <div class="mfa-setup-actions">
               <button
                 type="button"
-                class="photo-save-action"
+                class="photo-save-action jynlo-action jynlo-action--primary"
                 [disabled]="mfaDisabling || mfaDisableCode.length !== 6"
                 (click)="disableMfa()">
                 {{ mfaDisabling ? ('profile.mfa.confirming' | t) : ('common.confirm' | t) }}
@@ -348,7 +348,7 @@
 
               <button
                 type="button"
-                class="photo-cancel-action"
+                class="photo-cancel-action jynlo-action jynlo-action--neutral"
                 [disabled]="mfaDisabling"
                 (click)="cancelMfaDisable()">
                 {{ 'common.cancel' | t }}
@@ -388,7 +388,7 @@
             <div class="mfa-setup-actions">
               <button
                 type="button"
-                class="photo-save-action"
+                class="photo-save-action jynlo-action jynlo-action--primary"
                 [disabled]="mfaConfirming || mfaSetupCode.length !== 6"
                 (click)="confirmMfaSetup()">
                 {{ mfaConfirming ? ('profile.mfa.confirming' | t) : ('profile.mfa.confirmEnable' | t) }}
@@ -396,7 +396,7 @@
 
               <button
                 type="button"
-                class="photo-cancel-action"
+                class="photo-cancel-action jynlo-action jynlo-action--neutral"
                 [disabled]="mfaConfirming"
                 (click)="cancelMfaSetup()">
                 {{ 'common.cancel' | t }}
@@ -414,7 +414,7 @@
           @if (!accountDeletionPending) {
             <button
               type="button"
-              class="danger-action"
+              class="danger-action jynlo-action jynlo-action--danger"
               [disabled]="deletingAccount"
               (click)="openAccountDeletion()">
               {{ 'profile.delete.action' | t }}
@@ -436,7 +436,7 @@
               <div class="danger-confirmation__actions">
                 <button
                   type="button"
-                  class="danger-action"
+                  class="danger-action jynlo-action jynlo-action--danger"
                   [disabled]="deletingAccount || accountDeletionConfirmation.trim() !== profile.username"
                   (click)="deleteAccount()">
                   {{ deletingAccount ? ('profile.delete.deleting' | t) : ('profile.delete.confirmAction' | t) }}
@@ -444,7 +444,7 @@
 
                 <button
                   type="button"
-                  class="photo-cancel-action"
+                  class="photo-cancel-action jynlo-action jynlo-action--neutral"
                   [disabled]="deletingAccount"
                   (click)="cancelAccountDeletion()">
                   {{ 'common.cancel' | t }}
@@ -455,8 +455,8 @@
         </section>
 
         <div class="form-actions">
-          <a class="secondary-action" routerLink="/menu/dadosPerfil">{{ 'common.cancel' | t }}</a>
-          <button type="submit" [disabled]="saving">
+          <a class="secondary-action jynlo-action jynlo-action--neutral" routerLink="/menu/dadosPerfil">{{ 'common.cancel' | t }}</a>
+          <button class="jynlo-action jynlo-action--primary" type="submit" [disabled]="saving">
             {{ saving ? ('profile.saving' | t) : ('profile.save' | t) }}
           </button>
         </div>

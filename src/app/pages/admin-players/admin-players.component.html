@@ -6,17 +6,17 @@
         <h1>{{ 'adminHub.players' | t }}</h1>
         <p class="subtitle">{{ 'adminPlayers.subtitle' | t }}</p>
       </div>
-      <a class="secondary-action" routerLink="/menu/admin">{{ 'admin.dashboard' | t }}</a>
+      <a class="secondary-action jynlo-action jynlo-action--neutral" routerLink="/menu/admin">{{ 'admin.dashboard' | t }}</a>
     </header>
     <form (ngSubmit)="search()" class="search-form">
       <label for="player-search">{{ 'adminPlayers.searchLabel' | t }}</label>
       <div class="search-row">
         <input id="player-search" name="name" type="search" [(ngModel)]="name"
           maxlength="100" autocomplete="off" [disabled]="changingRole" [placeholder]="'adminPlayers.placeholder' | t">
-        <button type="submit" [disabled]="loading || changingRole || !name.trim()">
+        <button class="jynlo-action jynlo-action--primary" type="submit" [disabled]="loading || changingRole || !name.trim()">
           {{ (loading ? 'common.searching' : 'adminPlayers.search') | t }}
         </button>
-        <button type="button" class="secondary-action" [disabled]="changingRole" (click)="clear()">{{ 'events.clear' | t }}</button>
+        <button type="button" class="secondary-action jynlo-action jynlo-action--neutral" [disabled]="changingRole" (click)="clear()">{{ 'events.clear' | t }}</button>
       </div>
     </form>
     @if (errorKey) {
@@ -39,10 +39,10 @@
         <h2 id="role-confirm-title">{{ (pendingRole.role === 'ROLE_ADMIN' ? 'adminPlayers.confirmPromote' : 'adminPlayers.confirmDemote') | t:{ name: pendingRole.username } }}</h2>
         <p>{{ 'adminPlayers.roleSessionNotice' | t }}</p>
         <div class="confirmation-actions">
-          <button type="button" (click)="confirmRoleChange()" [disabled]="changingRole">
+          <button class="jynlo-action jynlo-action--neutral" type="button" (click)="confirmRoleChange()" [disabled]="changingRole">
             {{ (changingRole ? 'adminPlayers.roleSaving' : 'adminPlayers.roleConfirm') | t }}
           </button>
-          <button type="button" class="secondary-action" (click)="cancelRoleChange()" [disabled]="changingRole">{{ 'adminPlayers.roleCancel' | t }}</button>
+          <button type="button" class="secondary-action jynlo-action jynlo-action--neutral" (click)="cancelRoleChange()" [disabled]="changingRole">{{ 'adminPlayers.roleCancel' | t }}</button>
         </div>
       </section>
     }
@@ -69,7 +69,7 @@
                 @if (canManageRoles) {
                   <td class="role-action">
                     @if (canChangeRole(player)) {
-                      <button type="button" class="secondary-action" [disabled]="changingRole" (click)="beginRoleChange(player)">
+                      <button type="button" class="secondary-action jynlo-action jynlo-action--neutral" [disabled]="changingRole" (click)="beginRoleChange(player)">
                         {{ (player.role === 'ROLE_ADMIN' ? 'adminPlayers.demote' : 'adminPlayers.promote') | t }}
                       </button>
                     } @else {
@@ -83,9 +83,9 @@
         </table>
       </div>
       <nav class="pagination" [attr.aria-label]="'adminPlayers.pagination' | t">
-        <button type="button" class="secondary-action" [disabled]="changingRole || page === 0" (click)="changePage(-1)">{{ 'adminPlayers.previous' | t }}</button>
+        <button type="button" class="secondary-action jynlo-action jynlo-action--neutral" [disabled]="changingRole || page === 0" (click)="changePage(-1)">{{ 'adminPlayers.previous' | t }}</button>
         <span>{{ 'adminPlayers.page' | t:{ page: page + 1 } }}</span>
-        <button type="button" class="secondary-action" [disabled]="changingRole || !hasMore" (click)="changePage(1)">{{ 'adminPlayers.next' | t }}</button>
+        <button type="button" class="secondary-action jynlo-action jynlo-action--neutral" [disabled]="changingRole || !hasMore" (click)="changePage(1)">{{ 'adminPlayers.next' | t }}</button>
       </nav>
     }
   </div>

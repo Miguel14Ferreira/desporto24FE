@@ -141,3 +141,57 @@ select option {
   --jynlo-action-bg: rgba(125, 211, 252, .15);
   --jynlo-action-hover: rgba(125, 211, 252, .25);
 }
+
+/* Explicit action controls use one geometry across Angular components and Bootstrap labels. */
+.jynlo-action:is(button, a, label) {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  vertical-align: middle !important;
+  box-sizing: border-box;
+  min-height: 40px !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  padding: .58rem .92rem !important;
+  border: 1px solid var(--jynlo-action-border) !important;
+  border-radius: 999px !important;
+  background: var(--jynlo-action-bg) !important;
+  color: var(--jynlo-action-text) !important;
+  font-size: .84rem !important;
+  font-weight: 750 !important;
+  line-height: 1.2 !important;
+  text-decoration: none !important;
+}
+
+.jynlo-action:is(button, a, label):hover:not(:disabled):not(.disabled) {
+  background: var(--jynlo-action-hover) !important;
+  color: var(--jynlo-action-text) !important;
+}
+
+.jynlo-action--danger {
+  --jynlo-action-text: #fecaca;
+  --jynlo-action-border: rgba(248, 113, 113, .4);
+  --jynlo-action-bg: rgba(248, 113, 113, .08);
+  --jynlo-action-hover: rgba(248, 113, 113, .18);
+}
+
+.jynlo-action--neutral {
+  --jynlo-action-text: #cbd5e1;
+  --jynlo-action-border: rgba(148, 163, 184, .3);
+  --jynlo-action-bg: rgba(148, 163, 184, .07);
+  --jynlo-action-hover: rgba(148, 163, 184, .15);
+}
+
+/* Smaller actions inside dense lists keep the same shape without inflating rows. */
+.jynlo-action--compact:is(button, a, label) {
+  min-height: 32px !important;
+  padding: .35rem .7rem !important;
+  font-size: .76rem !important;
+}
+
+@media (max-width: 600px) {
+  .jynlo-action:is(button, a, label) {
+    white-space: normal !important;
+    text-wrap: balance;
+  }
+}

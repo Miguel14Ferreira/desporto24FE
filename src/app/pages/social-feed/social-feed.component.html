@@ -25,13 +25,13 @@
             <strong>{{ completedSession.sport }} · {{ completedSession.city }}</strong>
             <span>{{ completedSession.gameDate | date:'dd/MM/yyyy HH:mm' }}</span>
           </div>
-          <button type="button" class="postgame-detach" [disabled]="posting"
+          <button type="button" class="postgame-detach jynlo-action jynlo-action--neutral" [disabled]="posting"
                   (click)="detachPostGameSession()">{{ 'feed.postGameDetach' | t }}</button>
         </div>
         <p class="composer-hint" role="status">{{ 'feed.postGameHint' | t }}</p>
         <div class="postgame-prompts" role="group" [attr.aria-label]="'feed.postGamePromptsLabel' | t">
           @for (promptKey of postGamePromptKeys; track promptKey) {
-            <button type="button" class="postgame-prompt"
+            <button type="button" class="postgame-prompt jynlo-action jynlo-action--neutral"
                     [disabled]="posting" (click)="applyPostGamePrompt(promptKey)">
               {{ promptKey | t }}
             </button>
@@ -71,7 +71,7 @@
           <p role="status" class="composer-hint">{{ 'feed.searchingSessions' | t }}</p>
         } @else if (sessionSearchError) {
           <p role="alert" class="composer-hint">{{ 'feed.sessionSearchError' | t }}</p>
-          <button type="button" (click)="onSessionSearchChange(sessionSearch)">{{ 'common.retry' | t }}</button>
+          <button class="jynlo-action jynlo-action--neutral" type="button" (click)="onSessionSearchChange(sessionSearch)">{{ 'common.retry' | t }}</button>
         } @else if (availableSessions.length === 0) {
           <p role="status" class="composer-hint">{{ 'feed.noPublicSessions' | t }}</p>
         }
@@ -106,7 +106,7 @@
     @if (!loading && errorMessage) {
       <div class="state-card error-state">
         <p>{{ errorMessage }}</p>
-        <button type="button" (click)="load()">{{ 'common.retry' | t }}</button>
+        <button class="jynlo-action jynlo-action--neutral" type="button" (click)="load()">{{ 'common.retry' | t }}</button>
       </div>
     }
 
@@ -146,7 +146,7 @@
                    && item.authorUsername === currentUsername) {
                 <button
                   type="button"
-                  class="delete-post"
+                  class="delete-post jynlo-action jynlo-action--danger"
                   [disabled]="hidingAttendanceSessionId !== null"
                   (click)="hideAttendanceActivity(item)">
                   {{ hidingAttendanceSessionId === item.sessionId
@@ -157,7 +157,7 @@
               @if (item.type === 'POST' && item.authorUsername === currentUsername) {
                 <button
                   type="button"
-                  class="delete-post"
+                  class="delete-post jynlo-action jynlo-action--danger"
                   [disabled]="deletingPostId !== null"
                   (click)="deletePost(item)">
                   {{ deletingPostId === item.postId ? ('common.processing' | t) : ('feed.delete' | t) }}
@@ -195,7 +195,7 @@
                 @if (item.sessionId !== null) {
                   <button
                     type="button"
-                    class="share-session"
+                    class="share-session jynlo-action jynlo-action--neutral"
                     [disabled]="sharingSessionId !== null"
                     (click)="shareSession(item)"
                     [attr.aria-label]="shareFeedbackSessionId === item.sessionId ? shareFeedbackMessage : 'Partilhar sessão'">
@@ -220,7 +220,7 @@
                 </button>
 
                 @if (item.authorUsername !== currentUsername) {
-                  <button
+                  <button class="jynlo-action jynlo-action--neutral"
                     type="button"
                     [disabled]="reportingPostId !== null || (item.postId !== null && reportedPostIds.has(item.postId))"
                     (click)="reportPost(item)">
@@ -291,7 +291,7 @@
                       [ngModel]="commentDrafts[item.postId] || ''"
                       (ngModelChange)="commentDrafts[item.postId] = $event"
                       [placeholder]="'feed.commentPlaceholder' | t">
-                    <button
+                    <button class="jynlo-action jynlo-action--neutral"
                       type="button"
                       [disabled]="interactionLoadingPostId !== null || !(commentDrafts[item.postId] || '').trim()"
                       (click)="submitComment(item)">
@@ -332,7 +332,7 @@
                 <div class="post-actions">
                   <button
                                       type="button"
-                                      class="share-session"
+                                      class="share-session jynlo-action jynlo-action--neutral"
                                       [disabled]="sharingSessionId !== null"
                                       (click)="shareSession(item)"
                                       [attr.aria-label]="shareFeedbackSessionId === item.sessionId ? shareFeedbackMessage : 'Partilhar sessão'">
@@ -367,7 +367,7 @@
                 <div class="post-actions">
                   <button
                     type="button"
-                    class="share-session"
+                    class="share-session jynlo-action jynlo-action--neutral"
                     [disabled]="sharingSessionId !== null"
                     (click)="shareSession(item)"
                     [attr.aria-label]="shareFeedbackSessionId === item.sessionId ? shareFeedbackMessage : 'Partilhar sessão'">
@@ -384,7 +384,7 @@
                   <input id="feed-share-link" #shareLinkInput type="text"
                          [value]="manualShareUrl" readonly
                          aria-label="Ligação da sessão para copiar manualmente">
-                  <button type="button" (click)="shareLinkInput.select()">Selecionar ligação</button>
+                  <button class="jynlo-action jynlo-action--neutral" type="button" (click)="shareLinkInput.select()">Selecionar ligação</button>
                 </div>
               </div>
             }

@@ -78,6 +78,23 @@ describe('NavbarComponent', () => {
     expect(menu.open).toBeFalse();
   });
 
+  it('keeps the main CTA and logout aligned without styling language toggles as pills', () => {
+    component.authenticated = true;
+    fixture.detectChanges();
+
+    const root: HTMLElement = fixture.nativeElement;
+    const createAction = root.querySelector('a.nav-create-action');
+    const logoutAction = root.querySelector('button.logout-action');
+    const languageToggles = root.querySelectorAll('.language-switch button');
+
+    expect(createAction?.classList.contains('jynlo-action')).toBeTrue();
+    expect(createAction?.classList.contains('jynlo-action--accent')).toBeTrue();
+    expect(logoutAction?.classList.contains('jynlo-action')).toBeTrue();
+    expect(logoutAction?.classList.contains('jynlo-action--danger')).toBeTrue();
+    expect(languageToggles.length).toBe(2);
+    languageToggles.forEach(button => expect(button.classList.contains('jynlo-action')).toBeFalse());
+  });
+
   it('should create without opening a chat connection when unauthenticated', () => {
     expect(component).toBeTruthy();
     expect(authService.hasSessionCandidate).toHaveBeenCalled();

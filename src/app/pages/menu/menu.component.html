@@ -30,7 +30,7 @@
 
         <button
           type="button"
-          class="logout-action"
+          class="logout-action jynlo-action jynlo-action--danger"
           [disabled]="loggingOut"
           (click)="logout()">
           {{ loggingOut ? ('menu.loggingOut' | t) : ('menu.logout' | t) }}
@@ -45,18 +45,18 @@
     @if (errorMessage) {
       <div class="status-card error-state">
         <span>{{ errorMessage }}</span>
-        <button type="button" (click)="loadProfile()">{{ 'menu.retry' | t }}</button>
+        <button class="jynlo-action jynlo-action--neutral" type="button" (click)="loadProfile()">{{ 'menu.retry' | t }}</button>
       </div>
     }
 
     <section class="primary-actions">
-      <a class="hero-action" routerLink="/menu/events">
+      <a class="hero-action jynlo-action jynlo-action--neutral" routerLink="/menu/events">
         <span class="action-kicker">{{ 'menu.discover' | t }}</span>
         <strong>{{ 'menu.findSessions' | t }}</strong>
         <p>{{ 'menu.findSessionsText' | t }}</p>
       </a>
 
-      <a class="hero-action" routerLink="/menu/createEvent">
+      <a class="hero-action jynlo-action jynlo-action--neutral" routerLink="/menu/createEvent">
         <span class="action-kicker">{{ 'menu.organize' | t }}</span>
         <strong>{{ 'menu.createSession' | t }}</strong>
         <p>{{ 'menu.createSessionText' | t }}</p>

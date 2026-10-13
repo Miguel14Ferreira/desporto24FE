@@ -9,7 +9,7 @@
         <a class="mobile-only-link" routerLink="/menu/my-sessions" routerLinkActive="active-link">{{ 'nav.activities' | t }}</a>
         <a class="mobile-only-link" routerLink="/menu/communities" routerLinkActive="active-link">{{ 'nav.communities' | t }}</a>
         <a class="mobile-only-link" routerLink="/menu/friendList" routerLinkActive="active-link">{{ 'nav.messages' | t }}</a>
-        <a class="desktop-primary-link nav-create-action" routerLink="/menu/createEvent" routerLinkActive="active-link">{{ 'feed.createSession' | t }}</a>
+        <a class="desktop-primary-link nav-create-action jynlo-action jynlo-action--accent" routerLink="/menu/createEvent" routerLinkActive="active-link">{{ 'feed.createSession' | t }}</a>
         <a class="notification-link" routerLink="/menu/notifications" routerLinkActive="active-link">
           {{ 'menu.notifications' | t }}
           @if (unreadNotifications > 0) {
@@ -33,7 +33,7 @@
               <span>/</span>
               <button type="button" [class.active-language]="i18n.currentLanguage === 'en'" (click)="setLanguage('en')">EN</button>
             </div>
-            <button type="button" class="logout-action" [disabled]="loggingOut" (click)="logout()">
+            <button type="button" class="logout-action jynlo-action jynlo-action--danger" [disabled]="loggingOut" (click)="logout()">
               {{ loggingOut ? ('menu.loggingOut' | t) : ('menu.logout' | t) }}
             </button>
           </div>

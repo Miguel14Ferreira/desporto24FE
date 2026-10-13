@@ -11,7 +11,7 @@
         <span>{{ errorMessage }}</span>
         <button
           type="button"
-          class="primary-action"
+          class="primary-action jynlo-action jynlo-action--primary"
           (click)="retrySessionLoad()">
           {{ 'sessionDetail.retry' | t }}
         </button>
@@ -60,7 +60,7 @@
               </a>
             }
             @if (canSharePostGameMoment()) {
-              <a class="postgame-action" routerLink="/menu/feed"
+              <a class="postgame-action jynlo-action jynlo-action--neutral" routerLink="/menu/feed"
                  [queryParams]="{ momentSession: session.id }">{{ 'sessionDetail.sharePostGameMoment' | t }}</a>
             }
             @if (canRatePostGame() && (ratingDismissed || ratingCollapsedByExisting)) {
@@ -71,7 +71,7 @@
               </button>
             }
             @if (canShareSession()) {
-              <button type="button" class="share-session-action"
+              <button type="button" class="share-session-action jynlo-action jynlo-action--neutral"
                       [disabled]="sharingSession" (click)="shareSession()">
                 {{ sharingSession ? 'A partilhar...' : 'Partilhar sessão' }}
               </button>
@@ -85,7 +85,7 @@
                     <input id="session-share-url" #shareLinkInput type="text"
                            [value]="manualShareUrl" readonly
                            aria-label="Ligação pública da sessão para copiar">
-                    <button type="button" (click)="shareLinkInput.select()">Selecionar ligação</button>
+                    <button class="jynlo-action jynlo-action--neutral" type="button" (click)="shareLinkInput.select()">Selecionar ligação</button>
                   </div>
                 </div>
               }
@@ -125,11 +125,11 @@
                 <p>{{ 'sessionDetail.postGameDescription' | t }}</p>
               </div>
               <div class="post-game-review-actions">
-                <button type="button" class="primary-action"
+                <button type="button" class="primary-action jynlo-action jynlo-action--primary"
                         [disabled]="actionLoading" (click)="openPostGameAttendance()">
                   {{ 'sessionDetail.postGameYes' | t }}
                 </button>
-                <button type="button" class="secondary-action"
+                <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
                         [disabled]="actionLoading" (click)="confirmGameDidNotHappen()">
                   {{ 'sessionDetail.postGameNo' | t }}
                 </button>
@@ -177,7 +177,7 @@
                 <p class="overall-rating-feedback overall-rating-success" role="status">{{ ratingSuccess }}</p>
               }
               <div class="overall-rating-actions">
-                <button type="button" class="primary-action"
+                <button type="button" class="primary-action jynlo-action jynlo-action--primary"
                         [disabled]="!canSaveOverallRating()"
                         (click)="saveOverallRating()">
                   {{ ratingSaving ? ('profile.saving' | t)
@@ -223,16 +223,16 @@
             </div>
             <div class="calendar-actions">
               @if (googleCalendarUrl(); as googleUrl) {
-                <a class="calendar-action" [href]="googleUrl" target="_blank" rel="noopener noreferrer">
+                <a class="calendar-action jynlo-action jynlo-action--neutral" [href]="googleUrl" target="_blank" rel="noopener noreferrer">
                   Google Calendar
                 </a>
               }
               @if (outlookCalendarUrl(); as outlookUrl) {
-                <a class="calendar-action" [href]="outlookUrl" target="_blank" rel="noopener noreferrer">
+                <a class="calendar-action jynlo-action jynlo-action--neutral" [href]="outlookUrl" target="_blank" rel="noopener noreferrer">
                   Outlook
                 </a>
               }
-              <button type="button" class="calendar-action" (click)="downloadIcs()">
+              <button type="button" class="calendar-action jynlo-action jynlo-action--neutral" (click)="downloadIcs()">
                 {{ 'sessionDetail.downloadIcs' | t }}
               </button>
             </div>
@@ -319,7 +319,7 @@
               </div>
               <button
                 type="button"
-                class="danger-action"
+                class="danger-action jynlo-action jynlo-action--danger"
                 [disabled]="actionLoading"
                 (click)="leaveSession()">
                 {{ actionLoading ? ('common.processing' | t) : ('mySessions.leaveWaitlist' | t) }}
@@ -347,7 +347,7 @@
                   </div>
                   <button
                     type="button"
-                    class="secondary-action"
+                    class="secondary-action jynlo-action jynlo-action--neutral"
                     [disabled]="teamsLoading"
                     (click)="generateTeams()">
                     {{
@@ -399,7 +399,7 @@
                   </p>
                   <button
                     type="button"
-                    class="primary-action"
+                    class="primary-action jynlo-action jynlo-action--primary"
                     [disabled]="teamsConfirming || !teamSuggestionPendingConfirmation"
                     (click)="confirmTeams()">
                     {{
@@ -440,14 +440,14 @@
                     </label>
                     <button
                       type="button"
-                      class="danger-action"
+                      class="danger-action jynlo-action jynlo-action--danger"
                       [disabled]="actionLoading || !selectedProblemType"
                       (click)="reportProblem()">
                       {{ actionLoading ? ('common.processing' | t) : ('sessionDetail.sendProblem' | t) }}
                     </button>
                     <button
                       type="button"
-                      class="secondary-action"
+                      class="secondary-action jynlo-action jynlo-action--neutral"
                       [disabled]="actionLoading"
                       (click)="toggleProblemReport()">
                       {{ 'common.cancel' | t }}
@@ -455,7 +455,7 @@
                   } @else {
                     <button
                       type="button"
-                      class="secondary-action"
+                      class="secondary-action jynlo-action jynlo-action--neutral"
                       [disabled]="actionLoading"
                       (click)="toggleProblemReport()">
                       {{ 'sessionDetail.reportProblem' | t }}
@@ -472,7 +472,7 @@
               </div>
               <button
                 type="button"
-                class="danger-action"
+                class="danger-action jynlo-action jynlo-action--danger"
                 [disabled]="actionLoading"
                 (click)="leaveSession()">
                 {{ actionLoading ? ('common.processing' | t) : ('sessionDetail.leaveSession' | t) }}
@@ -512,7 +512,7 @@
 
                 <button
                   type="button"
-                  class="primary-action"
+                  class="primary-action jynlo-action jynlo-action--primary"
                   [disabled]="actionLoading"
                   (click)="joinSession()">
                   {{ joinButtonLabel() }}
@@ -531,7 +531,7 @@
                 </div>
                 <button
                   type="button"
-                  class="secondary-action"
+                  class="secondary-action jynlo-action jynlo-action--neutral"
                   [disabled]="sessionParticipantsLoading"
                   (click)="loadSessionParticipants()">
                   {{ sessionParticipantsLoading ? ('chat.refreshing' | t) : ('chat.refresh' | t) }}
@@ -585,7 +585,7 @@
                 </div>
                 <button
                   type="button"
-                  class="secondary-action"
+                  class="secondary-action jynlo-action jynlo-action--neutral"
                   (click)="toggleAttendanceManager()">
                   {{ 'sessionDetail.manageAttendance' | t }}
                 </button>
@@ -600,14 +600,14 @@
                 <div class="attendance-actions">
                   <button
                     type="button"
-                    class="refresh-attendance"
+                    class="refresh-attendance jynlo-action jynlo-action--neutral"
                     [disabled]="participantsLoading || attendanceBulkUpdating"
                     (click)="loadParticipants()">
                     {{ participantsLoading ? ('chat.refreshing' | t) : ('chat.refresh' | t) }}
                   </button>
                   <button
                     type="button"
-                    class="secondary-action"
+                    class="secondary-action jynlo-action jynlo-action--neutral"
                     (click)="toggleAttendanceManager()">
                     {{ 'sessionDetail.hideAttendance' | t }}
                   </button>
@@ -618,7 +618,7 @@
                 <div class="attendance-bulk-action">
                   <button
                     type="button"
-                    class="confirm-bulk-attendance"
+                    class="confirm-bulk-attendance jynlo-action jynlo-action--primary"
                     [disabled]="!canConfirmPendingAttendance()"
                     (click)="confirmPendingAttendance()">
                     {{ attendanceBulkUpdating ? ('profile.saving' | t)
@@ -669,14 +669,14 @@
                       <div class="attendance-actions">
                         <button
                           type="button"
-                          class="attended-action"
+                          class="attended-action jynlo-action jynlo-action--neutral"
                           [disabled]="!canRecordAttendance() || attendanceUpdatingId !== null || attendanceBulkUpdating || removeLoadingId !== null"
                           (click)="recordAttendance(participant, 'ATTENDED')">
                           {{ attendanceUpdatingId === participant.id ? ('profile.saving' | t) : ('sessionDetail.present' | t) }}
                         </button>
                         <button
                           type="button"
-                          class="no-show-action"
+                          class="no-show-action jynlo-action jynlo-action--danger"
                           [disabled]="!canRecordAttendance() || attendanceUpdatingId !== null || attendanceBulkUpdating || removeLoadingId !== null"
                           (click)="recordAttendance(participant, 'NO_SHOW')">
                           {{ attendanceUpdatingId === participant.id ? ('profile.saving' | t) : ('sessionDetail.absent' | t) }}
@@ -688,14 +688,14 @@
                               <span>{{ 'sessionDetail.removeUser' | t:{ username: participant.username } }}</span>
                               <button
                                 type="button"
-                                class="confirm-remove-action"
+                                class="confirm-remove-action jynlo-action jynlo-action--danger"
                                 [disabled]="removeLoadingId !== null || attendanceBulkUpdating"
                                 (click)="confirmRemoveParticipant(participant)">
                                 {{ removeLoadingId === participant.id ? ('friends.removing' | t) : ('common.confirm' | t) }}
                               </button>
                               <button
                                 type="button"
-                                class="cancel-remove-action"
+                                class="cancel-remove-action jynlo-action jynlo-action--danger"
                                 [disabled]="removeLoadingId !== null || attendanceBulkUpdating"
                                 (click)="cancelRemoveParticipant()">
                                 {{ 'common.cancel' | t }}
@@ -704,7 +704,7 @@
                           } @else {
                             <button
                               type="button"
-                              class="remove-participant-action"
+                              class="remove-participant-action jynlo-action jynlo-action--danger"
                               [disabled]="removeLoadingId !== null || attendanceUpdatingId !== null || attendanceBulkUpdating"
                               (click)="requestRemoveParticipant(participant)">
                               Remover
@@ -719,7 +719,7 @@
                         <div class="future-exclusion-panel">
                           @if (futureExclusions[participant.id] === true) {
                             <span>{{ 'sessionDetail.futureExclusionActive' | t }}</span>
-                            <button type="button" class="future-exclusion-undo"
+                            <button type="button" class="future-exclusion-undo jynlo-action jynlo-action--neutral"
                               [disabled]="futureExclusionUpdatingId !== null || attendanceBulkUpdating"
                               (click)="allowFutureSessions(participant)">
                               {{ 'sessionDetail.futureExclusionUndo' | t }}
@@ -727,18 +727,18 @@
                           } @else if (futureExclusions[participant.id] === false) {
                             @if (pendingFutureExclusionId === participant.id) {
                               <span>{{ 'sessionDetail.futureExclusionConfirm' | t:{ username: participant.username } }}</span>
-                              <button type="button" class="future-exclusion-confirm"
+                              <button type="button" class="future-exclusion-confirm jynlo-action jynlo-action--primary"
                                 [disabled]="futureExclusionUpdatingId !== null || attendanceUpdatingId !== null || attendanceBulkUpdating"
                                 (click)="confirmFutureExclusion(participant)">
                                 {{ 'sessionDetail.futureExclusionYes' | t }}
                               </button>
-                              <button type="button" class="future-exclusion-cancel"
+                              <button type="button" class="future-exclusion-cancel jynlo-action jynlo-action--neutral"
                                 [disabled]="futureExclusionUpdatingId !== null"
                                 (click)="cancelFutureExclusion()">
                                 {{ 'common.cancel' | t }}
                               </button>
                             } @else {
-                              <button type="button" class="future-exclusion-request"
+                              <button type="button" class="future-exclusion-request jynlo-action jynlo-action--neutral"
                                 [disabled]="futureExclusionUpdatingId !== null || attendanceUpdatingId !== null || attendanceBulkUpdating"
                                 (click)="requestFutureExclusion(participant)">
                                 {{ 'sessionDetail.futureExclusionRequest' | t }}
@@ -746,7 +746,7 @@
                             }
                           } @else if (futureExclusions[participant.id] === null) {
                             <span>{{ 'sessionDetail.futureExclusionLoadError' | t }}</span>
-                            <button type="button" class="future-exclusion-undo"
+                            <button type="button" class="future-exclusion-undo jynlo-action jynlo-action--neutral"
                               [disabled]="participantsLoading" (click)="loadParticipants()">
                               {{ 'common.retry' | t }}
                             </button>
@@ -840,7 +840,7 @@
                   <span>{{ 'chat.autoRefreshHint' | t }}</span>
                   <button
                     type="submit"
-                    class="primary-action"
+                    class="primary-action jynlo-action jynlo-action--primary"
                     [disabled]="messageSending || !messageBody.trim()">
                     {{ messageSending ? ('chat.sending' | t) : ('chat.send' | t) }}
                   </button>

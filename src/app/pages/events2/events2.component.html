@@ -8,8 +8,8 @@
       </div>
 
       <div class="header-actions">
-        <a class="secondary-action" routerLink="/menu/events">{{ 'mySessions.discover' | t }}</a>
-        <a class="secondary-action" routerLink="/menu/my-sessions">{{ 'mySessions.title' | t }}</a>
+        <a class="secondary-action jynlo-action jynlo-action--neutral" routerLink="/menu/events">{{ 'mySessions.discover' | t }}</a>
+        <a class="secondary-action jynlo-action jynlo-action--neutral" routerLink="/menu/my-sessions">{{ 'mySessions.title' | t }}</a>
       </div>
     </header>
 
@@ -25,7 +25,7 @@
           <small>{{ 'createSession.communityAudienceHint' | t }}</small>
         </div>
         <a
-          class="secondary-action"
+          class="secondary-action jynlo-action jynlo-action--neutral"
           routerLink="/menu/communities"
           [queryParams]="{ community: communityId }">
           {{ 'createSession.backCommunity' | t }}
@@ -146,7 +146,7 @@
 
           <button
             type="button"
-            class="secondary-action"
+            class="secondary-action jynlo-action jynlo-action--neutral"
             [disabled]="loading || venueSaving"
             (click)="toggleVenueCreator()">
             {{ showVenueCreator ? ('common.cancel' | t) : ('venue.saveNew' | t) }}
@@ -186,7 +186,7 @@
             </div>
             <button
               type="button"
-              class="secondary-action"
+              class="secondary-action jynlo-action jynlo-action--neutral"
               [disabled]="loading"
               (click)="useMapLinkVenue()">
               {{ 'venue.mapLink.use' | t }}
@@ -214,7 +214,7 @@
             <div class="header-actions">
               <button
                 type="button"
-                class="secondary-action"
+                class="secondary-action jynlo-action jynlo-action--neutral"
                 [disabled]="venueMapLinkLoading || !venueMapLink.trim()"
                 (click)="resolveVenueMapLink()">
                 {{ venueMapLinkLoading ? ('venue.mapLink.resolving' | t) : ('venue.mapLink.resolve' | t) }}
@@ -223,7 +223,7 @@
               @if (venueMapCandidateResolvedUrl) {
                 <button
                   type="button"
-                  class="secondary-action"
+                  class="secondary-action jynlo-action jynlo-action--neutral"
                   (click)="clearVenueMapLinkCandidate()">
                   {{ 'common.remove' | t }}
                 </button>
@@ -290,7 +290,7 @@
                   referrerpolicy="no-referrer-when-downgrade">
                 </iframe>
                 <a
-                  class="secondary-action"
+                  class="secondary-action jynlo-action jynlo-action--neutral"
                   style="display:inline-flex;margin-top:.75rem;"
                   [href]="'https://www.google.com/maps/search/?api=1&query='
                     + venue.latitude + ',' + venue.longitude"
@@ -474,7 +474,7 @@
 
             <button
               type="button"
-              class="primary-action"
+              class="primary-action jynlo-action jynlo-action--primary"
               [disabled]="venueSaving"
               (click)="saveVenue()">
               {{ venueSaving ? ('venue.saving' | t) : ('venue.save' | t) }}
@@ -524,13 +524,13 @@
 
         <div class="location-actions">
           @if (locationCaptured) {
-            <button type="button" class="secondary-action" [disabled]="loading" (click)="clearLocation()">
+            <button type="button" class="secondary-action jynlo-action jynlo-action--neutral" [disabled]="loading" (click)="clearLocation()">
               {{ 'createSession.removeLocation' | t }}
             </button>
           } @else {
             <button
               type="button"
-              class="secondary-action"
+              class="secondary-action jynlo-action jynlo-action--neutral"
               [disabled]="loading || locating"
               (click)="captureCurrentLocation()">
               {{ locating ? ('events.locating' | t) : ('createSession.useLocation' | t) }}
@@ -617,15 +617,15 @@
             <img [src]="photoPreview" [alt]="'createSession.photoAlt' | t">
             <div>
               <strong>{{ photo?.name }}</strong>
-              <button type="button" [disabled]="loading" (click)="clearPhoto()">{{ 'common.remove' | t }}</button>
+              <button class="jynlo-action jynlo-action--neutral" type="button" [disabled]="loading" (click)="clearPhoto()">{{ 'common.remove' | t }}</button>
             </div>
           </div>
         }
       </section>
 
       <div class="form-actions">
-        <a class="secondary-action" routerLink="/menu/events">{{ 'common.cancel' | t }}</a>
-        <button type="submit" class="primary-action" [disabled]="loading">
+        <a class="secondary-action jynlo-action jynlo-action--neutral" routerLink="/menu/events">{{ 'common.cancel' | t }}</a>
+        <button type="submit" class="primary-action jynlo-action jynlo-action--primary" [disabled]="loading">
           {{ loading ? ('createSession.creating' | t) : ('mySessions.create' | t) }}
         </button>
       </div>

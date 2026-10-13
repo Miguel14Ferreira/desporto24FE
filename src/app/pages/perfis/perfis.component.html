@@ -9,8 +9,8 @@
       </div>
 
       <div class="header-actions">
-        <a class="secondary-action" routerLink="/menu/friendList">{{ 'friends.title' | t }}</a>
-        <a class="secondary-action" routerLink="/menu/events">{{ 'common.sessions' | t }}</a>
+        <a class="secondary-action jynlo-action jynlo-action--neutral" routerLink="/menu/friendList">{{ 'friends.title' | t }}</a>
+        <a class="secondary-action jynlo-action jynlo-action--neutral" routerLink="/menu/events">{{ 'common.sessions' | t }}</a>
       </div>
     </header>
 
@@ -94,10 +94,10 @@
       </div>
 
       <div class="partner-search-actions">
-        <button type="button" class="clear-search" (click)="clearSearch()">
+        <button type="button" class="clear-search jynlo-action jynlo-action--neutral" (click)="clearSearch()">
           {{ 'events.clear' | t }}
         </button>
-        <button type="submit" [disabled]="loading">
+        <button class="jynlo-action jynlo-action--primary" type="submit" [disabled]="loading">
           {{ loading ? ('common.searching' | t) : ('community.findPeople' | t) }}
         </button>
       </div>
@@ -169,7 +169,7 @@
     }
 
     } @else {
-      <a class="secondary-action back-to-search"
+      <a class="secondary-action back-to-search jynlo-action jynlo-action--neutral"
          [routerLink]="backToFriends ? '/menu/friendList' : (backToFeed ? '/menu/feed' : '/menu/perfis')">← {{ (backToFriends ? 'friends.backToFriends' : (backToFeed ? 'feed.backToFeed' : 'community.backToSearch')) | t }}</a>
       @if (loading) {
         <div class="state-card" role="status">{{ 'common.loading' | t }}</div>
@@ -224,7 +224,7 @@
             @if (!isOwnProfile(selectedProfile) && !selectedBlocked) {
               <button
                 type="button"
-                class="follow-action"
+                class="follow-action jynlo-action jynlo-action--primary"
                 [class.following]="selectedFollowStatus?.followedByMe"
                 [disabled]="followLoading"
                 (click)="toggleFollow(selectedProfile)">
@@ -243,16 +243,16 @@
             } @else if (selectedBlocked) {
               <span>{{ 'community.blockedStatus' | t }}</span>
             } @else if (isFriend(selectedProfile)) {
-              <button type="button" class="friend-status" disabled>✓ {{ 'friends.title' | t }}</button>
+              <button type="button" class="friend-status jynlo-action jynlo-action--neutral" disabled>✓ {{ 'friends.title' | t }}</button>
               <a
-                class="primary-action"
+                class="primary-action jynlo-action jynlo-action--primary"
                 [routerLink]="['/menu/friendList/chat', selectedProfile.username]">
                 {{ 'friends.openChat' | t }}
               </a>
             } @else {
               <button
                 type="button"
-                class="primary-action"
+                class="primary-action jynlo-action jynlo-action--primary"
                 [disabled]="actionLoading || friendRequestPending(selectedProfile)"
                 (click)="sendFriendRequest(selectedProfile)">
                 @if (friendRequestPending(selectedProfile)) {
@@ -331,7 +331,7 @@
             @if (!isOwnProfile(selectedProfile)) {
               <button
                 type="button"
-                class="report-action"
+                class="report-action jynlo-action jynlo-action--neutral"
                 [disabled]="blockLoading"
                 (click)="toggleBlock(selectedProfile)">
                 {{ selectedBlocked ? ('community.unblockUser' | t) : ('community.blockUser' | t) }}
@@ -341,7 +341,7 @@
             @if (!isOwnProfile(selectedProfile) && !selectedBlocked) {
               <button
                 type="button"
-                class="report-action"
+                class="report-action jynlo-action jynlo-action--neutral"
                 [disabled]="reportLoading"
                 (click)="toggleReport()">
                 {{ reportOpen ? ('community.reportCancel' | t) : ('community.reportUser' | t) }}
@@ -368,7 +368,7 @@
                 <small>{{ reportReason.length }}/1000</small>
                 <button
                   type="button"
-                  class="primary-action"
+                  class="primary-action jynlo-action jynlo-action--primary"
                   [disabled]="reportLoading || !reportReason.trim()"
                   (click)="submitReport(selectedProfile)">
                   {{ reportLoading ? ('common.processing' | t) : ('community.reportSubmit' | t) }}
