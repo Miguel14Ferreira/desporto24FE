@@ -34,6 +34,6 @@ describe('ForgotpComponent', () => {
     component.sendResetEmail();
 
     expect(auth.initiatePasswordReset).toHaveBeenCalledWith('miguel@example.com');
-    expect(component.successMessage).toContain('Email enviado');
+    expect(component.successMessage).toBe('Foi enviado um email com instruções para redefinir a palavra-passe.');
   });
 });
