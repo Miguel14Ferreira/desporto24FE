@@ -17,6 +17,7 @@ describe('PerfisComponent', () => {
   const profile = {
     username: 'ana',
     fullName: 'Ana Silva',
+    nickname: null,
     country: 'Portugal',
     location: 'Lisboa',
     favoriteSports: 'Padel',
