@@ -166,7 +166,7 @@ describe('Events2Component', () => {
     component.createSession();
 
     expect(sessionService.create).not.toHaveBeenCalled();
-    expect(component.errorMessage).toContain('Preenche');
+    expect(component.errorMessage).toBe('Seleciona um desporto da lista.');
   });
 
   it('should create a session through the new API and navigate to its details', () => {
