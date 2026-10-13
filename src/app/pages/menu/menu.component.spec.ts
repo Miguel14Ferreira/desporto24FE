@@ -28,6 +28,10 @@ describe('MenuComponent', () => {
       userId: 'u1',
       username: 'miguel',
       fullName: 'Miguel Ferreira',
+      nickname: null,
+      bio: null,
+      skillLevel: null,
+      availability: null,
       dateOfBirth: null,
       address: null,
       country: 'Portugal',
@@ -63,6 +67,7 @@ describe('MenuComponent', () => {
         token: null,
         type: null,
         sessionId: null,
+        relatedUsername: null,
         read: false,
         username: 'miguel'
       }
