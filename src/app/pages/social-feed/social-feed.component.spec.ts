@@ -112,8 +112,9 @@ describe('SocialFeedComponent post-game entry', () => {
       address: null, canSeeExactAddress: false, gamePhoto: null,
       ...overrides
     } as SessionDetail));
-    const route = { snapshot: { queryParamMap: convertToParamMap({ momentSession: rawId }) } }
-      as unknown as ActivatedRoute;
+    const route = ({
+      snapshot: { queryParamMap: convertToParamMap({ momentSession: rawId }) }
+    } as unknown as ActivatedRoute);
     const target = new SocialFeedComponent(feed, sessions, auth, route);
     target.ngOnInit();
     return { target, sessions };
