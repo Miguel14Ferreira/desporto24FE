@@ -163,7 +163,8 @@ describe('AlterardadosComponent', () => {
     component.save();
 
     expect(service.update).not.toHaveBeenCalled();
-    expect(component.errorMessage).toContain('email');
+    expect(component.errorMessage).toBe('Existem campos que precisam da tua atenção.');
+    expect(component.fieldErrors.email).toBe('Indica o teu email.');
   });
 
   it('should not delete the account when the confirmation username is wrong', () => {
