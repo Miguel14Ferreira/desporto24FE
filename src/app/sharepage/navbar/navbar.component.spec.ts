@@ -61,6 +61,26 @@ describe('NavbarComponent', () => {
     expect(menu?.querySelector('.logout-action')).toBeTruthy();
   });
 
+  it('uses the shared pill shape for the account menu without losing toggle behaviour', () => {
+    component.authenticated = true;
+    fixture.detectChanges();
+
+    const menu = fixture.nativeElement.querySelector('details.account-menu') as HTMLDetailsElement;
+    const trigger = menu.querySelector('summary') as HTMLElement;
+
+    expect(trigger.classList.contains('jynlo-action')).toBeTrue();
+    expect(trigger.classList.contains('jynlo-action--neutral')).toBeTrue();
+    expect(menu.open).toBeFalse();
+
+    trigger.click();
+    fixture.detectChanges();
+    expect(menu.open).toBeTrue();
+
+    trigger.click();
+    fixture.detectChanges();
+    expect(menu.open).toBeFalse();
+  });
+
   it('closes the account menu when Escape is pressed', () => {
     component.authenticated = true;
     fixture.detectChanges();
