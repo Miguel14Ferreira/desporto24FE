@@ -940,6 +940,8 @@ h1 {
 
 .attendance-actions {
   display: flex;
+  align-items: center;
+  flex-wrap: wrap;
   gap: .5rem;
 }
 
@@ -1056,6 +1058,7 @@ h1 {
 .removal-confirmation {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: .45rem;
   padding-left: .25rem;
 }
@@ -1064,13 +1067,6 @@ h1 {
   color: #fecaca;
   font-size: .75rem;
   font-weight: 700;
-}
-
-@media (max-width: 760px) {
-  .attendance-actions,
-  .removal-confirmation {
-    flex-wrap: wrap;
-  }
 }
 
 
