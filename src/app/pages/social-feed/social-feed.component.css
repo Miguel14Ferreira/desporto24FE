@@ -225,6 +225,27 @@ h1 {
   gap: .7rem;
 }
 
+.feed-author-link {
+  display: inline-flex;
+  align-items: center;
+  gap: .7rem;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+  border-radius: .5rem;
+}
+
+.feed-author-link:hover .author-copy strong,
+.feed-author-link:focus-visible .author-copy strong {
+  color: #7dd3fc;
+  text-decoration: underline;
+}
+
+.feed-author-link:focus-visible {
+  outline: 2px solid #7dd3fc;
+  outline-offset: 3px;
+}
+
 .avatar {
   display: grid;
   width: 46px;

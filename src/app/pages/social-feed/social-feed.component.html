@@ -124,18 +124,23 @@
         @for (item of items; track item.type + '-' + (item.postId || item.sessionId) + '-' + item.createdAt) {
           <article class="feed-card">
             <div class="feed-author">
-              <div class="avatar">
-                @if (profileImage(item); as image) {
-                  <img [src]="image" [alt]="item.authorUsername">
-                } @else {
-                  <span>{{ initials(item) }}</span>
-                }
-              </div>
+              <a
+                class="feed-author-link"
+                [routerLink]="['/menu/perfis', item.authorUsername]"
+                [attr.aria-label]="item.authorDisplayName + ' (@' + item.authorUsername + ')'">
+                <div class="avatar">
+                  @if (profileImage(item); as image) {
+                    <img [src]="image" [alt]="item.authorUsername">
+                  } @else {
+                    <span>{{ initials(item) }}</span>
+                  }
+                </div>
 
-              <div class="author-copy">
-                <strong>{{ item.authorDisplayName }}</strong>
-                <span>@{{ item.authorUsername }} · {{ item.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
-              </div>
+                <div class="author-copy">
+                  <strong>{{ item.authorDisplayName }}</strong>
+                  <span>@{{ item.authorUsername }} · {{ item.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
+                </div>
+              </a>
 
               @if (item.type === 'SESSION_ATTENDED' && item.sessionId !== null
                    && item.authorUsername === currentUsername) {
