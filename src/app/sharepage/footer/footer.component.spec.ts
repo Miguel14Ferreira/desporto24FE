@@ -10,8 +10,8 @@ describe('FooterComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [FooterComponent, TranslatePipe],
-      imports: [RouterModule.forRoot([])]
+      declarations: [FooterComponent],
+      imports: [RouterModule.forRoot([]), TranslatePipe]
     })
     .compileComponents();
   });
