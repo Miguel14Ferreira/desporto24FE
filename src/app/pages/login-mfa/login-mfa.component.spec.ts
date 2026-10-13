@@ -22,14 +22,14 @@ describe('LoginMFAComponent', () => {
     auth.confirmMfaChallenge.and.returnValue(of({
       mfaRequired: false,
       challengeId: null,
-      expiresAt: null,
+      challengeExpiresAt: null,
       token: 'jwt-token',
       profile: null
     }));
     auth.resendMfaChallenge.and.returnValue(of({
       mfaRequired: true,
       challengeId: 'challenge-456',
-      expiresAt: '2099-09-26T00:05:00Z',
+      challengeExpiresAt: '2099-09-26T00:05:00Z',
       token: null,
       profile: null
     }));
