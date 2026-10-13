@@ -56,6 +56,25 @@ describe('FriendsComponent', () => {
     expect(component.filteredFriends.length).toBe(1);
   });
 
+  it('keeps all friend-card actions on the same pill style and tracks expanded state', () => {
+    const root: HTMLElement = fixture.nativeElement;
+    const profile = root.querySelector('.friend-actions a[href*="/menu/perfis"]') as HTMLAnchorElement;
+    const chat = root.querySelector('.friend-actions a[href*="/menu/friendList/chat"]') as HTMLAnchorElement;
+    const more = root.querySelector('.friend-more__trigger') as HTMLButtonElement;
+
+    expect(profile.classList.contains('jynlo-action')).toBeTrue();
+    expect(chat.classList.contains('jynlo-action')).toBeTrue();
+    expect(more.classList.contains('jynlo-action')).toBeTrue();
+    expect(more.classList.contains('jynlo-action--neutral')).toBeTrue();
+    expect(more.getAttribute('aria-expanded')).toBe('false');
+
+    more.click();
+    fixture.detectChanges();
+
+    expect(more.getAttribute('aria-expanded')).toBe('true');
+    expect(root.querySelector('.friend-more__menu')).toBeTruthy();
+  });
+
   it('should toggle the compact more-actions menu', () => {
     const target = component.friends[0];
 

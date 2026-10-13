@@ -170,8 +170,10 @@ h1 {
 }
 
 .friend-more__trigger[aria-expanded='true'] {
-  border-color: rgba(125,211,252,.35);
-  background: rgba(125,211,252,.08);
+  --jynlo-action-text: #bae6fd;
+  --jynlo-action-border: rgba(125,211,252,.5);
+  --jynlo-action-bg: rgba(125,211,252,.12);
+  --jynlo-action-hover: rgba(125,211,252,.18);
 }
 
 .friend-more__menu {
