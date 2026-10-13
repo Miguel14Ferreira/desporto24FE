@@ -40,6 +40,27 @@ describe('NavbarComponent', () => {
     fixture.detectChanges();
   });
 
+  it('keeps the essential actions in the main nav and secondary actions in the menu', () => {
+    component.authenticated = true;
+    fixture.detectChanges();
+
+    const nav: HTMLElement = fixture.nativeElement.querySelector('.site-nav__links');
+    const primaryLinks = Array.from(nav.querySelectorAll<HTMLAnchorElement>(
+      ':scope > a.desktop-primary-link'
+    )).map(anchor => anchor.getAttribute('href'));
+    expect(primaryLinks).toEqual(['/menu/feed', '/menu/createEvent']);
+    expect(nav.querySelector('a[href="/menu/discover"]')).toBeTruthy();
+    expect(nav.querySelector('a[href="/menu/notifications"]')).toBeTruthy();
+
+    const menu = nav.querySelector('details.account-menu');
+    expect(menu?.querySelector('a[href="/menu/my-sessions"]')).toBeTruthy();
+    expect(menu?.querySelector('a[href="/menu/communities"]')).toBeTruthy();
+    expect(menu?.querySelector('a[href="/menu/friendList"]')).toBeTruthy();
+    expect(menu?.querySelector('a[href="/menu/dadosPerfil"]')).toBeTruthy();
+    expect(menu?.querySelector('.language-switch')).toBeTruthy();
+    expect(menu?.querySelector('.logout-action')).toBeTruthy();
+  });
+
   it('should create without opening a chat connection when unauthenticated', () => {
     expect(component).toBeTruthy();
     expect(authService.hasSessionCandidate).toHaveBeenCalled();
