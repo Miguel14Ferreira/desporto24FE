@@ -239,17 +239,22 @@
 
                   @for (comment of commentsByPost[item.postId] || []; track comment.id) {
                     <div class="comment-row">
-                      <div class="comment-avatar">
+                      <a
+                        class="comment-avatar"
+                        [routerLink]="['/menu/perfis', comment.authorUsername]"
+                        [attr.aria-label]="comment.authorDisplayName + ' (@' + comment.authorUsername + ')'">
                         @if (commentProfileImage(comment); as image) {
                           <img [src]="image" [alt]="comment.authorUsername">
                         } @else {
                           <span>{{ commentInitials(comment) }}</span>
                         }
-                      </div>
+                      </a>
 
                       <div class="comment-copy">
                         <div class="comment-heading">
-                          <strong>{{ comment.authorDisplayName }}</strong>
+                          <a class="comment-author-link" [routerLink]="['/menu/perfis', comment.authorUsername]">
+                            <strong>{{ comment.authorDisplayName }}</strong>
+                          </a>
                           <span>@{{ comment.authorUsername }} · {{ comment.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
                         </div>
                         <p>{{ comment.content }}</p>

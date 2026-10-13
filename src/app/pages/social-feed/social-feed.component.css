@@ -620,6 +620,28 @@ h1 {
   font-size: .82rem;
 }
 
+.comment-avatar,
+.comment-author-link {
+  text-decoration: none;
+}
+
+.comment-author-link {
+  color: inherit;
+  border-radius: .25rem;
+}
+
+.comment-author-link:hover strong,
+.comment-author-link:focus-visible strong {
+  color: #7dd3fc;
+  text-decoration: underline;
+}
+
+.comment-avatar:focus-visible,
+.comment-author-link:focus-visible {
+  outline: 2px solid #7dd3fc;
+  outline-offset: 3px;
+}
+
 .comment-heading span {
   color: #64748b;
   font-size: .68rem;
