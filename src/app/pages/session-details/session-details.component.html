@@ -707,7 +707,7 @@
                   <h2>{{ 'sessionDetail.sessionChat' | t }}</h2>
                   <p>{{ 'sessionDetail.sessionChatText' | t }}</p>
                 </div>
-                <span class="sync-status">{{ 'chat.autoRefresh' | t }}</span>
+                <span class="sync-status">{{ (canSendChat() ? 'chat.autoRefresh' : 'sessionDetail.chatClosedShort') | t }}</span>
               </div>
 
               @if (chatError) {
@@ -716,7 +716,9 @@
 
               <div class="message-list">
                 @if (!chatLoading && messages.length === 0) {
-                  <div class="empty-chat">{{ 'sessionDetail.emptyChat' | t }}</div>
+                  <div class="empty-chat">
+                    {{ (canSendChat() ? 'sessionDetail.emptyChat' : 'sessionDetail.emptyChatClosed') | t }}
+                  </div>
                 }
 
                 @for (message of messages; track message.id) {
@@ -732,6 +734,7 @@
                 }
               </div>
 
+              @if (canSendChat()) {
               <form class="message-composer" (ngSubmit)="sendMessage()">
                 <label>
                   <span>{{ 'sessionDetail.newMessage' | t }}</span>
@@ -780,6 +783,11 @@
                   </button>
                 </div>
               </form>
+              } @else {
+                <div class="chat-read-only" role="status">
+                  {{ 'sessionDetail.chatClosedDescription' | t }}
+                </div>
+              }
             </section>
           } @else if (!session.waitlisted) {
             <section class="chat-locked">

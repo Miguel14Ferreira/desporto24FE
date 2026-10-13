@@ -585,6 +585,16 @@ h1 {
   color: #cbd5e1;
 }
 
+.chat-read-only {
+  margin-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, .09);
+  padding: 1rem .85rem .25rem;
+  text-align: center;
+  color: #cbd5e1;
+  font-size: .87rem;
+  line-height: 1.5;
+}
+
 @media (max-width: 760px) {
   .chat-header,
   .composer-footer {

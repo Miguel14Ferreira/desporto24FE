@@ -643,10 +643,81 @@ describe('SessionDetailsComponent', () => {
     expect(component.messages).toEqual([]);
   });
 
+  it('keeps chat history visible but hides the composer after the game', () => {
+    const archived: SessionMessage = {
+      id: 7,
+      sessionId: 7,
+      senderUsername: 'player-one',
+      body: 'Até ao próximo jogo!',
+      createdAt: '2026-10-01T18:00:00Z'
+    };
+    component.session = { ...session, joined: true };
+    sessionService.messages.and.returnValue(of([archived]));
+
+    component.refreshMessages();
+    fixture.detectChanges();
+
+    expect(component.canAccessChat()).toBeTrue();
+    expect(component.canSendChat()).toBeFalse();
+    expect(fixture.nativeElement.querySelector('.chat-panel')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.message-list').textContent)
+      .toContain('Até ao próximo jogo!');
+    expect(fixture.nativeElement.querySelector('.message-composer')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.chat-read-only').textContent)
+      .toContain('chat está encerrado');
+    expect(fixture.nativeElement.textContent).toContain('Chat encerrado');
+
+    component.messageBody = 'Tentar enviar depois do jogo';
+    component.sendMessage();
+    expect(sessionService.postMessage).not.toHaveBeenCalled();
+  });
+
+  it('keeps the chat writable while a game is underway', () => {
+    component.session = {
+      ...session,
+      joined: true,
+      gameDate: new Date(Date.now() - 60 * 60_000).toISOString()
+    };
+    fixture.detectChanges();
+
+    expect(component.canSendChat()).toBeTrue();
+    expect(fixture.nativeElement.querySelector('.message-composer')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.chat-read-only')).toBeNull();
+  });
+
+  it('immediately closes chat when the game is completed, cancelled or did not occur', () => {
+    component.session = {
+      ...session,
+      joined: true,
+      gameDate: new Date(Date.now() + 4 * 60 * 60_000).toISOString()
+    };
+    expect(component.canSendChat()).toBeTrue();
+
+    component.session = { ...component.session, status: 'COMPLETED' };
+    expect(component.canSendChat()).toBeFalse();
+
+    component.session = { ...component.session, status: 'CANCELLED' };
+    expect(component.canSendChat()).toBeFalse();
+
+    component.session = { ...component.session, status: 'OPEN', problemType: 'NOT_OCCURRED' };
+    expect(component.canSendChat()).toBeFalse();
+  });
+
+  it('shows a closed empty state instead of suggesting a new chat', () => {
+    component.session = { ...session, joined: true };
+    component.messages = [];
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.empty-chat').textContent)
+      .toContain('terminou sem mensagens');
+    expect(fixture.nativeElement.querySelector('.message-composer')).toBeNull();
+  });
+
   it('should send a chat message and append it locally', () => {
     component.session = {
       ...session,
-      joined: true
+      joined: true,
+      gameDate: new Date(Date.now() + 4 * 60 * 60_000).toISOString()
     };
     component.messageBody = '  Bora jogar!  ';
 
@@ -682,7 +753,8 @@ describe('SessionDetailsComponent', () => {
     };
     component.session = {
       ...session,
-      joined: true
+      joined: true,
+      gameDate: new Date(Date.now() + 4 * 60 * 60_000).toISOString()
     };
     component.messageBody = 'Bora jogar!';
 

@@ -675,7 +675,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
   sendMessage(): void {
     const body = this.messageBody.trim();
 
-    if (!this.sessionId || !this.canAccessChat() || this.messageSending) {
+    if (!this.sessionId || !this.canSendChat() || this.messageSending) {
       return;
     }
 
@@ -761,6 +761,20 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
 
   canAccessChat(): boolean {
     return Boolean(this.session?.joined);
+  }
+
+  canSendChat(): boolean {
+    if (!this.canAccessChat() || !this.session
+        || this.session.status === 'COMPLETED'
+        || this.session.status === 'CANCELLED'
+        || this.session.problemType === 'NOT_OCCURRED') {
+      return false;
+    }
+
+    // Mirror the backend chat window; history remains readable after closure.
+    const kickoff = Date.parse(this.session.gameDate);
+    return Number.isFinite(kickoff)
+      && Date.now() < kickoff + (2 * 60 * 60 * 1000);
   }
 
   isOwnMessage(message: SessionMessage): boolean {
