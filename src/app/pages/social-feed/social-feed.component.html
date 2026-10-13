@@ -137,6 +137,18 @@
                 <span>@{{ item.authorUsername }} · {{ item.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
               </div>
 
+              @if (item.type === 'SESSION_ATTENDED' && item.sessionId !== null
+                   && item.authorUsername === currentUsername) {
+                <button
+                  type="button"
+                  class="delete-post"
+                  [disabled]="hidingAttendanceSessionId !== null"
+                  (click)="hideAttendanceActivity(item)">
+                  {{ hidingAttendanceSessionId === item.sessionId
+                    ? ('common.processing' | t) : ('feed.hideAttendance' | t) }}
+                </button>
+              }
+
               @if (item.type === 'POST' && item.authorUsername === currentUsername) {
                 <button
                   type="button"

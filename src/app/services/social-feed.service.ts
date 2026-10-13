@@ -84,6 +84,13 @@ export class SocialFeedService {
     );
   }
 
+  hideAttendanceActivity(sessionId: number): Observable<void> {
+    return this.http.put<void>(
+      this.baseUrl + '/attendance/' + sessionId + '/hide',
+      null
+    );
+  }
+
   deletePost(postId: number): Observable<void> {
     return this.http.delete<void>(
       this.baseUrl + '/posts/' + postId

@@ -58,6 +58,7 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
   loading = false;
   posting = false;
   deletingPostId: number | null = null;
+  hidingAttendanceSessionId: number | null = null;
   interactionLoadingPostId: number | null = null;
   deletingCommentId: number | null = null;
   reportingCommentId: number | null = null;
@@ -557,6 +558,37 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
       .subscribe({
         next: () => this.reportedPostIds.add(postId),
         error: () => this.actionError = t('feedback.feed.reportError')
+      });
+  }
+
+  hideAttendanceActivity(item: FeedItem): void {
+    if (
+      item.type !== 'SESSION_ATTENDED'
+      || item.sessionId === null
+      || item.authorUsername !== this.currentUsername
+      || this.hidingAttendanceSessionId !== null
+    ) {
+      return;
+    }
+
+    const sessionId = item.sessionId;
+    this.hidingAttendanceSessionId = sessionId;
+    this.actionError = '';
+
+    this.feedService.hideAttendanceActivity(sessionId)
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.hidingAttendanceSessionId = null)
+      )
+      .subscribe({
+        next: () => {
+          this.items = this.items.filter(current =>
+            !(current.type === 'SESSION_ATTENDED'
+              && current.sessionId === sessionId
+              && current.authorUsername === this.currentUsername)
+          );
+        },
+        error: () => this.actionError = t('feedback.feed.hideAttendanceError')
       });
   }
 

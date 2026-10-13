@@ -1,11 +1,12 @@
 import { SocialFeedComponent } from './social-feed.component';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { SessionDetail } from '../model/session-detail';
 import { SocialFeedService } from '../../services/social-feed.service';
 import { SessionService } from '../../services/session.service';
 import { AuthenticationService } from '../../services/authethication.service';
 import { FeedItem } from '../model/feed-item';
+import { appTranslate as t } from '../../i18n/i18n.service';
 
 describe('SocialFeedComponent session sharing fallback', () => {
   let component: SocialFeedComponent;
@@ -316,5 +317,70 @@ describe('SocialFeedComponent completed session selection', () => {
     expect(target.postGameSessionId).toBeNull();
     expect(target.selectedSessionId).toBeNull();
     target.ngOnDestroy();
+  });
+});
+
+describe('SocialFeedComponent attendance activity visibility', () => {
+  let component: SocialFeedComponent;
+  let feed: jasmine.SpyObj<SocialFeedService>;
+  let activity: FeedItem;
+
+  beforeEach(() => {
+    const auth = jasmine.createSpyObj<AuthenticationService>(
+      'AuthenticationService', ['isLoggedIn']
+    );
+    auth.isLoggedIn.and.returnValue(true);
+    Object.defineProperty(auth, 'loggedInPerfilname', { value: 'player', configurable: true });
+
+    feed = jasmine.createSpyObj<SocialFeedService>(
+      'SocialFeedService', ['hideAttendanceActivity']
+    );
+    feed.hideAttendanceActivity.and.returnValue(of(void 0));
+    component = new SocialFeedComponent(
+      feed, {} as SessionService, auth,
+      { snapshot: { queryParamMap: convertToParamMap({}) } } as unknown as ActivatedRoute
+    );
+    activity = {
+      type: 'SESSION_ATTENDED', postId: null,
+      authorUsername: 'player', authorDisplayName: 'Player',
+      authorProfilePicUrl: null, content: null, imageUrl: null,
+      createdAt: '2026-10-13T12:00:00Z', sessionId: 42,
+      sport: 'Padel', city: 'Lisboa', gameDate: '2026-10-12T18:00:00Z',
+      likeCount: 0, likedByMe: false, commentCount: 0
+    };
+  });
+
+  it('hides only the current player attendance activity after a successful request', () => {
+    const otherAuthor = { ...activity, authorUsername: 'friend' };
+    const anotherSession = { ...activity, sessionId: 43 };
+    const post: FeedItem = { ...activity, type: 'POST', postId: 7 };
+    component.items = [activity, otherAuthor, anotherSession, post];
+
+    component.hideAttendanceActivity(activity);
+
+    expect(feed.hideAttendanceActivity).toHaveBeenCalledOnceWith(42);
+    expect(component.items).toEqual([otherAuthor, anotherSession, post]);
+    expect(component.hidingAttendanceSessionId).toBeNull();
+  });
+
+  it('rejects hiding another player activity or non-attendance feed items', () => {
+    component.hideAttendanceActivity({ ...activity, authorUsername: 'friend' });
+    component.hideAttendanceActivity({ ...activity, type: 'SESSION_CREATED' });
+    component.hideAttendanceActivity({ ...activity, sessionId: null });
+
+    expect(feed.hideAttendanceActivity).not.toHaveBeenCalled();
+  });
+
+  it('keeps the activity visible and shows an error when hiding fails', () => {
+    feed.hideAttendanceActivity.and.returnValue(
+      throwError(() => new Error('offline'))
+    );
+    component.items = [activity];
+
+    component.hideAttendanceActivity(activity);
+
+    expect(component.items).toEqual([activity]);
+    expect(component.actionError).toBe(t('feedback.feed.hideAttendanceError'));
+    expect(component.hidingAttendanceSessionId).toBeNull();
   });
 });
