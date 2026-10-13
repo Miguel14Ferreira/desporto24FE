@@ -62,21 +62,21 @@
       }
 
       <label class="composer-session-select">
-        <span>Associar a uma sessão pública (opcional)</span>
-        <input type="search" [ngModel]="sessionSearch" (ngModelChange)="onSessionSearchChange($event)" [disabled]="posting" placeholder="Pesquisar modalidade ou localidade" aria-label="Pesquisar sessões públicas">
+        <span>{{ 'feed.linkPublicSession' | t }}</span>
+        <input type="search" [ngModel]="sessionSearch" (ngModelChange)="onSessionSearchChange($event)" [disabled]="posting" [placeholder]="'feed.sessionSearchPlaceholder' | t" [attr.aria-label]="'feed.sessionSearchAria' | t">
         <select [(ngModel)]="selectedSessionId" (ngModelChange)="onLinkedSessionChange($event)" [disabled]="posting || loadingSessions">
-          <option [ngValue]="null">Sem sessão associada</option>
+          <option [ngValue]="null">{{ 'feed.noLinkedSession' | t }}</option>
           @for (session of filteredSessions; track session.id) {
             <option [ngValue]="session.id">{{ session.status === 'COMPLETED' ? (('publicSession.statusCompleted' | t) + ' · ') : '' }}{{ session.sport }} · {{ session.city }} · {{ session.gameDate | date:'dd/MM HH:mm' }}</option>
           }
         </select>
         @if (loadingSessions) {
-          <p role="status" class="composer-hint">A pesquisar sessões...</p>
+          <p role="status" class="composer-hint">{{ 'feed.searchingSessions' | t }}</p>
         } @else if (sessionSearchError) {
-          <p role="alert" class="composer-hint">Não foi possível pesquisar sessões. Tenta novamente.</p>
-          <button type="button" (click)="onSessionSearchChange(sessionSearch)">Tentar novamente</button>
+          <p role="alert" class="composer-hint">{{ 'feed.sessionSearchError' | t }}</p>
+          <button type="button" (click)="onSessionSearchChange(sessionSearch)">{{ 'common.retry' | t }}</button>
         } @else if (availableSessions.length === 0) {
-          <p role="status" class="composer-hint">Não foram encontradas sessões públicas disponíveis.</p>
+          <p role="status" class="composer-hint">{{ 'feed.noPublicSessions' | t }}</p>
         }
       </label>
       <div class="composer-actions">
