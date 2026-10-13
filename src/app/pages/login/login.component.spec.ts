@@ -254,7 +254,7 @@ describe('LoginComponent', () => {
     auth.login.and.returnValue(of({
       mfaRequired: true,
       challengeId: 'challenge-123',
-      expiresAt: '2026-09-26T00:05:00Z',
+      challengeExpiresAt: '2026-09-26T00:05:00Z',
       token: null,
       profile: null
     }));
