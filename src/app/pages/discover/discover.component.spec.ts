@@ -99,10 +99,13 @@ describe('DiscoverComponent', () => {
   });
 
   it('expands and collapses venue results', () => {
-    component.venues = Array.from({ length: 6 }, (_, index) => ({
+    const venues = Array.from({ length: 6 }, (_, index) => ({
       id: index + 1
     } as any));
+    venueService.search.and.returnValue(of(venues));
+    component.search();
 
+    expect(component.venues).toEqual(venues);
     expect(component.topVenues.length).toBe(4);
 
     component.toggleAllVenues();
