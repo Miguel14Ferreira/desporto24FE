@@ -16,8 +16,9 @@ describe('Events2Component', () => {
 
   beforeEach(async () => {
     sessionService = jasmine.createSpyObj<SessionService>('SessionService', ['create']);
-    venueService = jasmine.createSpyObj<VenueService>('VenueService', ['search', 'create']);
+    venueService = jasmine.createSpyObj<VenueService>('VenueService', ['search', 'create', 'listPhotos']);
     venueService.search.and.returnValue(of([]));
+    venueService.listPhotos.and.returnValue(of([]));
 
     sessionService.create.and.returnValue(of({
       id: 42,
@@ -209,14 +210,48 @@ describe('Events2Component', () => {
       city: 'Lisboa',
       address: 'Rua do Desporto 10',
       sports: 'Futsal',
+      venueType: 'Pavilhão',
+      ownershipType: 'PUBLIC',
       surfaceType: 'Madeira',
+      environmentType: 'INDOOR',
       indoor: true,
       changingRooms: true,
+      changingRoomTypes: null,
+      toilets: null,
+      lockers: null,
+      showers: null,
+      stands: null,
+      drinkingFountain: null,
+      accessible: null,
+      firstAid: null,
+      aed: null,
+      medicalStation: null,
+      lifeguard: null,
+      staffOnSite: null,
+      securitySurveillance: null,
+      cafe: null,
+      restaurant: null,
+      vendingMachines: null,
+      sportsShop: null,
+      wifi: null,
+      phoneCharging: null,
+      nearbyRadiusMeters: null,
+      nearbyPharmacy: null,
+      nearbyAtm: null,
+      services: null,
+      transport: null,
+      openingHours: null,
+      priceInfo: null,
+      website: null,
+      contact: null,
       parking: true,
+      freeParking: null,
       lighting: true,
       latitude: 38.72,
       longitude: -9.14,
-      createdByUsername: 'fixture-user'
+      informationSource: 'COMMUNITY',
+      createdByUsername: 'fixture-user',
+      createdAt: '2026-10-13T00:00:00Z'
     }];
 
     component.selectVenue(5);
