@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { defer, of, throwError } from 'rxjs';
 
 import { MySessionsComponent } from './my-sessions.component';
 import { ReliabilityService } from '../../services/reliability.service';
@@ -86,7 +86,9 @@ describe('MySessionsComponent', () => {
     component.confirmCancel();
 
     expect(sessionService.cancel).toHaveBeenCalledWith(11);
-    expect(sessionService.mine).toHaveBeenCalledTimes(2);
+    expect(sessionService.mine).toHaveBeenCalledTimes(1);
+    expect(component.data.created[0].status).toBe('CANCELLED');
+    expect(component.pendingCancelId).toBeNull();
     expect(component.actionMessage).toContain('cancelada');
   });
 
@@ -139,44 +141,54 @@ describe('MySessionsComponent', () => {
 
   it('should expose a recoverable error when my sessions keep failing', () => {
     sessionService.mine.calls.reset();
-    sessionService.mine.and.returnValue(
-      throwError(() => new Error('service unavailable'))
-    );
+    let subscriptions = 0;
+    sessionService.mine.and.returnValue(defer(() => {
+      subscriptions++;
+      return throwError(() => new Error('service unavailable'));
+    }));
 
     component.load();
 
-    expect(sessionService.mine).toHaveBeenCalledTimes(2);
+    expect(sessionService.mine).toHaveBeenCalledTimes(1);
+    expect(subscriptions).toBe(2);
     expect(component.loading).toBeFalse();
     expect(component.errorMessage).toBeTruthy();
   });
 
   it('should recover my sessions after one automatic retry', () => {
     sessionService.mine.calls.reset();
-    sessionService.mine.and.returnValues(
-      throwError(() => new Error('temporary failure')),
-      of({
-        created: [createdSession],
-        joined: [],
-        waitlisted: []
-      })
-    );
+    let subscriptions = 0;
+    sessionService.mine.and.returnValue(defer(() => {
+      subscriptions++;
+      return subscriptions === 1
+        ? throwError(() => new Error('temporary failure'))
+        : of({
+            created: [createdSession],
+            joined: [],
+            waitlisted: []
+          });
+    }));
 
     component.load();
 
-    expect(sessionService.mine).toHaveBeenCalledTimes(2);
+    expect(sessionService.mine).toHaveBeenCalledTimes(1);
+    expect(subscriptions).toBe(2);
     expect(component.errorMessage).toBe('');
     expect(component.data.created.length).toBe(1);
   });
 
   it('should expose a recoverable error when attendance history keeps failing', () => {
     reliabilityService.attendanceHistory.calls.reset();
-    reliabilityService.attendanceHistory.and.returnValue(
-      throwError(() => new Error('service unavailable'))
-    );
+    let subscriptions = 0;
+    reliabilityService.attendanceHistory.and.returnValue(defer(() => {
+      subscriptions++;
+      return throwError(() => new Error('service unavailable'));
+    }));
 
     component.loadAttendanceHistory();
 
-    expect(reliabilityService.attendanceHistory).toHaveBeenCalledTimes(2);
+    expect(reliabilityService.attendanceHistory).toHaveBeenCalledTimes(1);
+    expect(subscriptions).toBe(2);
     expect(component.attendanceLoading).toBeFalse();
     expect(component.attendanceHistory).toEqual([]);
     expect(component.attendanceError).toBeTruthy();
