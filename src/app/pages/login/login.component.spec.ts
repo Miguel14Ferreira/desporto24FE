@@ -11,8 +11,10 @@ describe('LoginComponent', () => {
   let fixture: ComponentFixture<LoginComponent>;
   let auth: jasmine.SpyObj<AuthenticationService>;
   let router: Router;
+  let queryParamMap: ReturnType<typeof convertToParamMap>;
 
   beforeEach(async () => {
+    queryParamMap = convertToParamMap({});
     auth = jasmine.createSpyObj<AuthenticationService>(
       'AuthenticationService',
       ['login', 'hasValidToken', 'saveToken', 'googleConfig', 'resendRegistrationConfirmation']
@@ -37,7 +39,7 @@ describe('LoginComponent', () => {
           provide: ActivatedRoute,
           useValue: {
             snapshot: {
-              queryParamMap: convertToParamMap({})
+              get queryParamMap() { return queryParamMap; }
             }
           }
         },
@@ -57,7 +59,7 @@ describe('LoginComponent', () => {
 
   it('offers confirmation resend immediately after an expired email link', () => {
     sessionStorage.setItem('auth-error-message', 'A ligação de confirmação expirou.');
-    TestBed.inject(ActivatedRoute).snapshot.queryParamMap =
+    queryParamMap =
       convertToParamMap({ returnUrl: '/menu/events/42' });
 
     component.ngOnInit();
@@ -89,8 +91,7 @@ describe('LoginComponent', () => {
   });
 
   it('should explain the request login and return to notifications after signing in', () => {
-    const route = TestBed.inject(ActivatedRoute);
-    route.snapshot.queryParamMap = convertToParamMap({ returnUrl: '/menu/notifications' });
+    queryParamMap = convertToParamMap({ returnUrl: '/menu/notifications' });
     component.ngOnInit();
     fixture.detectChanges();
 
@@ -103,7 +104,7 @@ describe('LoginComponent', () => {
   });
 
   it('explains the invitation when login is opened from a shared session', () => {
-    TestBed.inject(ActivatedRoute).snapshot.queryParamMap =
+    queryParamMap =
       convertToParamMap({ returnUrl: '/menu/events/42' });
     component.ngOnInit();
     fixture.detectChanges();
@@ -117,7 +118,7 @@ describe('LoginComponent', () => {
 
   it('shows no invitation message for unrelated or malformed destinations', () => {
     for (const returnUrl of ['/menu/feed', 'https://example.com', '/menu/events/not-a-number']) {
-      TestBed.inject(ActivatedRoute).snapshot.queryParamMap = convertToParamMap({ returnUrl });
+      queryParamMap = convertToParamMap({ returnUrl });
       component.ngOnInit();
       fixture.detectChanges();
 
@@ -127,8 +128,7 @@ describe('LoginComponent', () => {
   });
 
   it('should preserve the request destination while MFA is required', () => {
-    const route = TestBed.inject(ActivatedRoute);
-    route.snapshot.queryParamMap = convertToParamMap({ returnUrl: '/menu/notifications' });
+    queryParamMap = convertToParamMap({ returnUrl: '/menu/notifications' });
     component.ngOnInit();
     auth.login.and.returnValue(of({
       mfaRequired: true, challengeId: 'fixture-challenge', challengeExpiresAt: null,
@@ -141,7 +141,7 @@ describe('LoginComponent', () => {
   });
 
   it('should preserve a shared session destination after login', () => {
-    TestBed.inject(ActivatedRoute).snapshot.queryParamMap =
+    queryParamMap =
       convertToParamMap({ returnUrl: '/menu/events/42' });
     component.ngOnInit();
     component.username = 'fixture-user';
@@ -153,7 +153,7 @@ describe('LoginComponent', () => {
   });
 
   it('should keep a legitimate internal destination with query parameters', () => {
-    TestBed.inject(ActivatedRoute).snapshot.queryParamMap =
+    queryParamMap =
       convertToParamMap({ returnUrl: '/menu/notifications?view=requests' });
     component.ngOnInit();
     component.username = 'fixture-user';
@@ -177,7 +177,7 @@ describe('LoginComponent', () => {
     ];
 
     for (const returnUrl of invalidTargets) {
-      TestBed.inject(ActivatedRoute).snapshot.queryParamMap =
+      queryParamMap =
         convertToParamMap({ returnUrl });
       component.ngOnInit();
       component.username = 'fixture-user';
@@ -191,7 +191,7 @@ describe('LoginComponent', () => {
   });
 
   it('should store only a validated destination for MFA', () => {
-    TestBed.inject(ActivatedRoute).snapshot.queryParamMap =
+    queryParamMap =
       convertToParamMap({ returnUrl: '//example.com' });
     component.ngOnInit();
     auth.login.and.returnValue(of({
@@ -207,7 +207,7 @@ describe('LoginComponent', () => {
   });
 
   it('preserves a shared session when resending confirmation after failed login', () => {
-    TestBed.inject(ActivatedRoute).snapshot.queryParamMap =
+    queryParamMap =
       convertToParamMap({ returnUrl: '/menu/events/42' });
     component.ngOnInit();
     component.username = 'fixture-user';
@@ -219,7 +219,7 @@ describe('LoginComponent', () => {
   });
 
   it('does not forward other login destinations as session IDs', () => {
-    TestBed.inject(ActivatedRoute).snapshot.queryParamMap =
+    queryParamMap =
       convertToParamMap({ returnUrl: '/menu/notifications' });
     component.ngOnInit();
     component.username = 'fixture-user';
