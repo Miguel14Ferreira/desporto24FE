@@ -42,7 +42,7 @@ describe('SessionDetailsComponent', () => {
   beforeEach(async () => {
     sessionService = jasmine.createSpyObj<SessionService>(
       'SessionService',
-      ['detail', 'join', 'leave', 'complete', 'reportDidNotOccur', 'reportProblem', 'messages', 'postMessage', 'participants', 'removeParticipant', 'teamSuggestion', 'confirmTeams', 'futureExclusionStatus', 'excludeFromFutureSessions', 'allowFutureSessions']
+      ['detail', 'join', 'leave', 'complete', 'reportDidNotOccur', 'reportProblem', 'messages', 'postMessage', 'participants', 'removeParticipant', 'teamSuggestion', 'confirmTeams', 'futureExclusionStatus', 'excludeFromFutureSessions', 'allowFutureSessions', 'myOverallRating', 'rateOverall']
     );
     sessionService.detail.and.returnValue(of(session));
     sessionService.join.and.returnValue(of({
@@ -57,6 +57,10 @@ describe('SessionDetailsComponent', () => {
     sessionService.futureExclusionStatus.and.returnValue(of({ excluded: false }));
     sessionService.excludeFromFutureSessions.and.returnValue(of({ excluded: true }));
     sessionService.allowFutureSessions.and.returnValue(of({ excluded: false }));
+    sessionService.myOverallRating.and.returnValue(of(null));
+    sessionService.rateOverall.and.returnValue(of({
+      overallScore: 5, updatedAt: '2026-10-13T10:00:00Z'
+    }));
     sessionService.messages.and.returnValue(of([]));
     sessionService.participants.and.returnValue(of([
       {
@@ -209,6 +213,101 @@ describe('SessionDetailsComponent', () => {
     expect(sessionService.reportDidNotOccur).toHaveBeenCalledWith(7);
     expect(component.session?.status).toBe('CANCELLED');
     expect(reliabilityService.recordAttendance).not.toHaveBeenCalled();
+  });
+
+  it('offers one optional overall rating only to registered participants after the game', () => {
+    component.session = { ...session, joined: true, gameDate: '2020-10-01T18:00:00Z' };
+    component.loadMyOverallRating();
+    fixture.detectChanges();
+
+    expect(component.canRatePostGame()).toBeTrue();
+    expect(fixture.nativeElement.querySelector('.overall-rating-panel')).not.toBeNull();
+    expect(fixture.nativeElement.querySelectorAll('.overall-rating-star').length).toBe(5);
+    expect(fixture.nativeElement.querySelector('.overall-rating-panel').textContent)
+      .toContain('Como foi o teu jogo?');
+    expect(sessionService.myOverallRating).toHaveBeenCalledWith(7);
+    expect(sessionService.rateOverall).not.toHaveBeenCalled();
+    expect(reliabilityService.recordAttendance).not.toHaveBeenCalled();
+  });
+
+  it('saves a selected star rating and permits editing a stored rating', () => {
+    component.session = { ...session, joined: true, gameDate: '2020-10-01T18:00:00Z' };
+    sessionService.myOverallRating.and.returnValue(of({
+      overallScore: 3, updatedAt: '2026-10-13T10:00:00Z'
+    }));
+    component.loadMyOverallRating();
+    fixture.detectChanges();
+
+    expect(component.myOverallScore).toBe(3);
+    expect(component.selectedOverallScore).toBe(3);
+    expect(component.canSaveOverallRating()).toBeFalse();
+
+    const stars = fixture.nativeElement.querySelectorAll('.overall-rating-star') as NodeListOf<HTMLButtonElement>;
+    stars.item(4).click();
+    fixture.detectChanges();
+    expect(component.selectedOverallScore).toBe(5);
+    (fixture.nativeElement.querySelector('.overall-rating-actions .primary-action') as HTMLButtonElement).click();
+
+    expect(sessionService.rateOverall).toHaveBeenCalledOnceWith(7, 5);
+    expect(component.myOverallScore).toBe(5);
+    expect(component.ratingSuccess).toContain('atualizada');
+    expect(component.canSaveOverallRating()).toBeFalse();
+  });
+
+  it('can skip the rating without sending it or changing attendance', () => {
+    component.session = { ...session, joined: true, gameDate: '2020-10-01T18:00:00Z' };
+    component.loadMyOverallRating();
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('.overall-rating-skip') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    expect(component.ratingDismissed).toBeTrue();
+    expect(fixture.nativeElement.querySelector('.overall-rating-panel')).toBeNull();
+    expect(sessionService.rateOverall).not.toHaveBeenCalled();
+    expect(reliabilityService.recordAttendance).not.toHaveBeenCalled();
+    expect(sessionService.complete).not.toHaveBeenCalled();
+  });
+
+  it('never offers ratings to outsiders or for a cancelled or not-occurred game', () => {
+    component.session = { ...session, joined: false, gameDate: '2020-10-01T18:00:00Z' };
+    expect(component.canRatePostGame()).toBeFalse();
+    component.session = { ...session, joined: true, gameDate: new Date().toISOString() };
+    expect(component.canRatePostGame()).toBeFalse();
+    component.session = { ...session, joined: true, gameDate: '2020-10-01T18:00:00Z', status: 'CANCELLED' };
+    expect(component.canRatePostGame()).toBeFalse();
+    component.session = { ...session, joined: true, gameDate: '2020-10-01T18:00:00Z', problemType: 'NOT_OCCURRED' };
+    expect(component.canRatePostGame()).toBeFalse();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.overall-rating-panel')).toBeNull();
+    expect(sessionService.rateOverall).not.toHaveBeenCalled();
+  });
+
+  it('does not save an invalid or missing rating', () => {
+    component.session = { ...session, joined: true, gameDate: '2020-10-01T18:00:00Z' };
+    component.loadMyOverallRating();
+    component.selectedOverallScore = null;
+    component.saveOverallRating();
+    component.selectOverallScore(0);
+    component.selectOverallScore(6);
+    component.selectOverallScore(2.5);
+    expect(component.selectedOverallScore).toBeNull();
+    expect(sessionService.rateOverall).not.toHaveBeenCalled();
+  });
+
+  it('can retry retrieving an existing rating without submitting a new one', () => {
+    component.session = { ...session, joined: true, gameDate: '2020-10-01T18:00:00Z' };
+    sessionService.myOverallRating.and.returnValue(throwError(() => new Error('offline')));
+    component.loadMyOverallRating();
+    fixture.detectChanges();
+
+    expect(component.ratingError).toContain('Não foi possível carregar');
+    expect(fixture.nativeElement.querySelector('.overall-rating-retry')).not.toBeNull();
+    sessionService.myOverallRating.and.returnValue(of(null));
+    (fixture.nativeElement.querySelector('.overall-rating-retry') as HTMLButtonElement).click();
+    expect(component.ratingError).toBe('');
+    expect(sessionService.myOverallRating).toHaveBeenCalledTimes(2);
+    expect(sessionService.rateOverall).not.toHaveBeenCalled();
   });
 
   it('should create', () => {

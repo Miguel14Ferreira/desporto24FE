@@ -32,6 +32,11 @@ export interface JoinSessionResponse {
   waitlistPosition: number | null;
 }
 
+export interface SessionOverallRating {
+  overallScore: number;
+  updatedAt: string;
+}
+
 export interface SessionTeamPlayer {
   username: string;
   strengthScore: number;
@@ -150,6 +155,19 @@ export class SessionService {
     return this.http.post<void>(
       this.baseUrl + '/' + id + '/problems',
       { type, details: details?.trim() || null }
+    );
+  }
+
+  myOverallRating(id: number): Observable<SessionOverallRating | null> {
+    return this.http.get<SessionOverallRating | null>(
+      this.baseUrl + '/' + id + '/ratings/me'
+    );
+  }
+
+  rateOverall(id: number, overallScore: number): Observable<SessionOverallRating> {
+    return this.http.put<SessionOverallRating>(
+      this.baseUrl + '/' + id + '/ratings/me',
+      { overallScore }
     );
   }
 

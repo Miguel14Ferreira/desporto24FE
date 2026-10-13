@@ -10,7 +10,7 @@ import { appTranslate as t } from '../../i18n/i18n.service';
 import { SessionMessage } from '../model/session-message';
 import { ReliabilitySummary } from '../model/reliability-summary';
 import { SessionParticipant } from '../model/session-participant';
-import { JoinSessionResponse, SessionService, SessionTeamSuggestion } from '../../services/session.service';
+import { JoinSessionResponse, SessionOverallRating, SessionService, SessionTeamSuggestion } from '../../services/session.service';
 import { ReliabilityService } from '../../services/reliability.service';
 import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.service';
 
@@ -59,6 +59,16 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
   teamSuggestionPendingConfirmation = false;
   teamsError = '';
   teamsSuccess = '';
+
+  readonly overallRatingStars = [1, 2, 3, 4, 5];
+  selectedOverallScore: number | null = null;
+  myOverallScore: number | null = null;
+  ratingLoading = false;
+  ratingSaving = false;
+  ratingDismissed = false;
+  ratingError = '';
+  ratingSuccess = '';
+  ratingLoadedSessionId: number | null = null;
 
   errorMessage = '';
   actionError = '';
@@ -196,6 +206,101 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
     }
     const start = Date.parse(this.session.gameDate);
     return Number.isFinite(start) && start + (2 * 60 * 60 * 1000) <= Date.now();
+  }
+
+  canRatePostGame(): boolean {
+    if (!this.session?.joined
+      || this.session.status === 'CANCELLED'
+      || this.session.problemType === 'NOT_OCCURRED') {
+      return false;
+    }
+    const kickoff = Date.parse(this.session.gameDate);
+    return Number.isFinite(kickoff)
+      && kickoff + (2 * 60 * 60 * 1000) <= Date.now();
+  }
+
+  loadMyOverallRating(): void {
+    if (!this.sessionId || !this.canRatePostGame()
+      || this.ratingLoading || this.ratingSaving
+      || this.ratingLoadedSessionId === this.sessionId) {
+      return;
+    }
+    const sessionId = this.sessionId;
+    this.ratingLoading = true;
+    this.ratingError = '';
+    this.sessionService.myOverallRating(sessionId)
+      .pipe(timeout(10_000), finalize(() => this.ratingLoading = false))
+      .subscribe({
+        next: rating => {
+          if (this.sessionId !== sessionId) {
+            return;
+          }
+          this.ratingLoadedSessionId = sessionId;
+          this.myOverallScore = rating?.overallScore ?? null;
+          this.selectedOverallScore = this.myOverallScore;
+        },
+        error: () => {
+          this.ratingError = t('feedback.session.overallRatingLoadError');
+        }
+      });
+  }
+
+  selectOverallScore(score: number): void {
+    if (!this.canRatePostGame() || this.ratingLoading || this.ratingSaving
+      || this.ratingLoadedSessionId !== this.sessionId
+      || !Number.isInteger(score) || score < 1 || score > 5) {
+      return;
+    }
+    this.selectedOverallScore = score;
+    this.ratingError = '';
+    this.ratingSuccess = '';
+  }
+
+  canSaveOverallRating(): boolean {
+    return this.canRatePostGame()
+      && !this.ratingLoading && !this.ratingSaving
+      && this.ratingLoadedSessionId === this.sessionId
+      && this.selectedOverallScore !== null
+      && this.selectedOverallScore >= 1 && this.selectedOverallScore <= 5
+      && this.selectedOverallScore !== this.myOverallScore;
+  }
+
+  saveOverallRating(): void {
+    if (!this.sessionId || !this.canSaveOverallRating() || this.selectedOverallScore === null) {
+      return;
+    }
+    const sessionId = this.sessionId;
+    const wasRated = this.myOverallScore !== null;
+    const score = this.selectedOverallScore;
+    this.ratingSaving = true;
+    this.ratingError = '';
+    this.ratingSuccess = '';
+
+    this.sessionService.rateOverall(sessionId, score)
+      .pipe(timeout(10_000), finalize(() => this.ratingSaving = false))
+      .subscribe({
+        next: (saved: SessionOverallRating) => {
+          if (this.sessionId !== sessionId) {
+            return;
+          }
+          this.myOverallScore = saved.overallScore;
+          this.selectedOverallScore = saved.overallScore;
+          this.ratingLoadedSessionId = sessionId;
+          this.ratingSuccess = t(wasRated
+            ? 'feedback.session.overallRatingUpdated'
+            : 'feedback.session.overallRatingSaved');
+        },
+        error: () => {
+          this.ratingError = t('feedback.session.overallRatingSaveError');
+        }
+      });
+  }
+
+  dismissOverallRating(): void {
+    if (!this.ratingSaving) {
+      this.ratingDismissed = true;
+      this.ratingError = '';
+    }
   }
 
   openPostGameAttendance(): void {
@@ -1143,6 +1248,9 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
       .subscribe({
         next: session => {
           this.session = session;
+          if (this.canRatePostGame()) {
+            this.loadMyOverallRating();
+          }
 
           if (session.creatorUsername) {
             this.loadCreatorReliability(session.creatorUsername);

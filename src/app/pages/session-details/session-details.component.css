@@ -236,6 +236,58 @@ h1 {
 .post-game-review-actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1rem; }
 .post-game-review-actions button { min-width: 9rem; }
 
+.overall-rating-panel {
+  margin: 1.2rem 0;
+  padding: 1.1rem 1.25rem;
+  border: 1px solid rgba(255, 255, 255, .13);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, .045);
+}
+.overall-rating-kicker {
+  color: #a7f3d0;
+  font-size: .8rem;
+  font-weight: 800;
+}
+.overall-rating-panel h2 { margin: .4rem 0; font-size: 1.2rem; }
+.overall-rating-panel p { margin: 0; color: #cbd5e1; line-height: 1.5; }
+.overall-rating-stars { display: flex; flex-wrap: wrap; gap: .25rem; margin: .85rem 0; }
+.overall-rating-star {
+  min-width: 44px;
+  min-height: 44px;
+  padding: .35rem;
+  border: 0;
+  border-radius: .6rem;
+  background: transparent;
+  color: #64748b;
+  font-size: 1.9rem;
+  cursor: pointer;
+}
+.overall-rating-star.is-selected { color: #fbbf24; }
+.overall-rating-star:hover:not(:disabled) { background: rgba(251, 191, 36, .11); }
+.overall-rating-star:focus-visible { outline: 2px solid #fbbf24; outline-offset: 2px; }
+.overall-rating-star:disabled { opacity: .6; cursor: wait; }
+.overall-rating-panel .overall-rating-existing { color: #a7f3d0; font-size: .87rem; }
+.overall-rating-panel .overall-rating-feedback { margin: .5rem 0; font-size: .85rem; }
+.overall-rating-panel .overall-rating-success { color: #86efac; }
+.overall-rating-panel .overall-rating-error { color: #fecaca; }
+.overall-rating-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .65rem; margin-top: .85rem; }
+.overall-rating-actions button { min-height: 42px; }
+.overall-rating-skip, .overall-rating-retry {
+  border: 1px solid rgba(148, 163, 184, .28);
+  border-radius: .7rem;
+  padding: .65rem .85rem;
+  background: rgba(148, 163, 184, .1);
+  color: #e2e8f0;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.overall-rating-skip:disabled, .overall-rating-retry:disabled { opacity: .55; cursor: wait; }
+.overall-rating-skip:focus-visible, .overall-rating-retry:focus-visible {
+  outline: 2px solid #94a3b8;
+  outline-offset: 2px;
+}
+
 .detail-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);

@@ -131,6 +131,62 @@
             </section>
           }
 
+          @if (canRatePostGame() && !ratingDismissed) {
+            <section class="overall-rating-panel" aria-labelledby="overall-rating-title">
+              <div>
+                <span class="overall-rating-kicker">{{ 'sessionDetail.overallRatingKicker' | t }}</span>
+                <h2 id="overall-rating-title">{{ 'sessionDetail.overallRatingTitle' | t }}</h2>
+                <p>{{ 'sessionDetail.overallRatingDescription' | t }}</p>
+              </div>
+              <div class="overall-rating-stars" role="group"
+                   [attr.aria-label]="'sessionDetail.overallRatingStarsLabel' | t">
+                @for (star of overallRatingStars; track star) {
+                  <button type="button" class="overall-rating-star"
+                          [class.is-selected]="star <= (selectedOverallScore ?? 0)"
+                          [attr.aria-label]="'sessionDetail.overallRatingStar' | t:{ count: star }"
+                          [attr.aria-pressed]="selectedOverallScore === star"
+                          [disabled]="ratingLoading || ratingSaving || ratingLoadedSessionId !== session.id"
+                          (click)="selectOverallScore(star)">★</button>
+                }
+              </div>
+              @if (myOverallScore !== null) {
+                <p class="overall-rating-existing">
+                  {{ 'sessionDetail.overallRatingExisting' | t:{ count: myOverallScore } }}
+                </p>
+              }
+              @if (ratingLoading) {
+                <p class="overall-rating-feedback">{{ 'sessionDetail.overallRatingLoading' | t }}</p>
+              }
+              @if (ratingError) {
+                <p class="overall-rating-feedback overall-rating-error" role="alert">{{ ratingError }}</p>
+                @if (ratingLoadedSessionId !== session.id) {
+                  <button type="button" class="overall-rating-retry"
+                          [disabled]="ratingLoading" (click)="loadMyOverallRating()">
+                    {{ 'sessionDetail.retry' | t }}
+                  </button>
+                }
+              }
+              @if (ratingSuccess) {
+                <p class="overall-rating-feedback overall-rating-success" role="status">{{ ratingSuccess }}</p>
+              }
+              <div class="overall-rating-actions">
+                <button type="button" class="primary-action"
+                        [disabled]="!canSaveOverallRating()"
+                        (click)="saveOverallRating()">
+                  {{ ratingSaving ? ('profile.saving' | t)
+                      : ((myOverallScore === null
+                           ? 'sessionDetail.overallRatingSave'
+                           : 'sessionDetail.overallRatingUpdate') | t) }}
+                </button>
+                <button type="button" class="overall-rating-skip"
+                        [disabled]="ratingSaving"
+                        (click)="dismissOverallRating()">
+                  {{ 'sessionDetail.overallRatingSkip' | t }}
+                </button>
+              </div>
+            </section>
+          }
+
           @if (session.venue) {
             <section class="venue-detail-panel">
               <div class="venue-detail-heading">
