@@ -699,7 +699,7 @@
                         <p>{{ 'communities.import.hint' | t }}</p>
 
                         <div class="import-file-row">
-                          <label class="secondary-action import-file-picker jynlo-action jynlo-action--neutral">
+                          <label class="secondary-action import-file-picker jynlo-action jynlo-action--neutral jynlo-action--compact">
                             <input #importInput type="file" accept=".xlsx" (change)="onImportFileChange($event)">
                             <span>{{ importFileName || ('communities.import.choose' | t) }}</span>
                           </label>
