@@ -71,7 +71,6 @@ h1 {
 .state-card button,
 .secondary-button,
 .danger-action,
-.attendance-actions a,
 .dispute-action {
   border: 0;
   border-radius: .8rem;
@@ -82,8 +81,7 @@ h1 {
 }
 
 .primary-action,
-.state-card button,
-.attendance-actions a {
+.state-card button {
   background: #f8fafc;
   color: #0f172a;
 }

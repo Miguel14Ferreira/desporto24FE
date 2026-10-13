@@ -141,6 +141,18 @@ describe('MySessionsComponent', () => {
     expect(component.vacancies(createdSession)).toBe(7);
   });
 
+  it('aligns attendance history session links with dispute actions', () => {
+    const actions: HTMLElement = fixture.nativeElement.querySelector('.attendance-card .attendance-actions');
+    const sessionLink = actions.querySelector('a[href="/menu/events/12"]') as HTMLAnchorElement;
+    const dispute = actions.querySelector('button.dispute-action') as HTMLButtonElement;
+
+    expect(sessionLink).toBeTruthy();
+    expect(sessionLink.classList.contains('jynlo-action')).toBeTrue();
+    expect(sessionLink.classList.contains('jynlo-action--neutral')).toBeTrue();
+    expect(dispute).toBeTruthy();
+    expect(dispute.classList.contains('jynlo-action')).toBeTrue();
+  });
+
   it('should dispute a no-show and update its local state', () => {
     component.requestDispute(component.attendanceHistory[0]);
     component.disputeReason = 'Estive presente nesta sessão.';
