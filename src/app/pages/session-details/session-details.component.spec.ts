@@ -786,7 +786,7 @@ describe('SessionDetailsComponent', () => {
     expect(component.actionSuccess).toContain('lista de espera');
   });
 
-  it('should report a selected problem for a started session and refresh details', () => {
+  it('should report a selected problem for a started session without reloading details', () => {
     (component as any).currentUsername = 'creator-user';
     component.session = {
       ...session,
@@ -804,7 +804,8 @@ describe('SessionDetailsComponent', () => {
       'VENUE_PROBLEM',
       'Campo sem iluminação'
     );
-    expect(sessionService.detail).toHaveBeenCalledTimes(2);
+    expect(sessionService.detail).toHaveBeenCalledTimes(1);
+    expect(component.actionSuccess).toBeTruthy();
     expect(component.showProblemReport).toBeFalse();
     expect(component.selectedProblemType).toBe('');
     expect(component.problemDetails).toBe('');
@@ -1442,8 +1443,14 @@ describe('SessionDetailsComponent', () => {
     expect(component.futureExclusions[15]).toBeNull();
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.future-exclusion-request')).toBeNull();
-    expect(fixture.nativeElement.querySelector('.future-exclusion-undo')).toBeNull();
+    const retryButton = fixture.nativeElement.querySelector('.future-exclusion-undo') as HTMLButtonElement;
+    expect(retryButton).not.toBeNull();
+    expect(retryButton.textContent).toContain('Tentar novamente');
     expect(fixture.nativeElement.textContent).toContain('Não foi possível verificar');
+
+    retryButton.click();
+    expect(sessionService.participants).toHaveBeenCalledTimes(2);
+    expect(sessionService.futureExclusionStatus).toHaveBeenCalledTimes(2);
   });
 
   it('should record participant attendance after the 30 minute delay', () => {
