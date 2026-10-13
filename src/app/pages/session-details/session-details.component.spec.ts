@@ -1188,6 +1188,34 @@ describe('SessionDetailsComponent', () => {
     expect(sessionService.teamSuggestion).not.toHaveBeenCalled();
   });
 
+  it('distinguishes cancelling removal from the destructive confirm action', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session,
+      creatorUsername: 'creator-user',
+      joined: true
+    };
+    const participant = {
+      id: 15,
+      username: 'player-one',
+      attendanceStatus: 'PENDING',
+      joinedAt: '2026-09-20T18:00:00Z'
+    } as any;
+
+    component.participants = [participant];
+    component.showAttendanceManager = true;
+    component.requestRemoveParticipant(participant);
+    fixture.detectChanges();
+
+    const confirm = fixture.nativeElement.querySelector('.confirm-remove-action') as HTMLButtonElement;
+    const cancel = fixture.nativeElement.querySelector('.cancel-remove-action') as HTMLButtonElement;
+    expect(confirm).toBeTruthy();
+    expect(cancel).toBeTruthy();
+    expect(confirm.classList.contains('jynlo-action--danger')).toBeTrue();
+    expect(cancel.classList.contains('jynlo-action--neutral')).toBeTrue();
+    expect(cancel.classList.contains('jynlo-action--danger')).toBeFalse();
+  });
+
   it('should remove a non-creator participant and refresh the session', () => {
     (component as any).currentUsername = 'creator-user';
     component.session = {
