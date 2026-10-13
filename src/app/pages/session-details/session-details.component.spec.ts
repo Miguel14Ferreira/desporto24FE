@@ -155,7 +155,7 @@ describe('SessionDetailsComponent', () => {
     fixture.detectChanges();
   });
 
-  it('offers post-game confirmation only to the organiser after two hours', () => {
+  it('offers optional post-game actions only to the organiser after two hours', () => {
     (component as any).currentUsername = 'creator-user';
     component.session = {
       ...session, joined: true,
@@ -164,7 +164,11 @@ describe('SessionDetailsComponent', () => {
     fixture.detectChanges();
     expect(component.canReviewPostGame()).toBeTrue();
     expect(fixture.nativeElement.querySelector('#post-game-review')?.textContent)
-      .toContain('O jogo aconteceu?');
+      .toContain('Depois do jogo');
+    expect(fixture.nativeElement.querySelector('#post-game-review')?.textContent)
+      .toContain('Registar presenças');
+    expect(fixture.nativeElement.querySelector('#post-game-review')?.textContent)
+      .not.toContain('Sim, aconteceu');
 
     component.session = { ...component.session, status: 'COMPLETED' };
     fixture.detectChanges();
@@ -178,12 +182,13 @@ describe('SessionDetailsComponent', () => {
     expect(component.canReviewPostGame()).toBeFalse();
   });
 
-  it('confirms a game and opens the existing attendance manager', () => {
+  it('only completes the session when the organiser chooses to register attendance', () => {
     (component as any).currentUsername = 'creator-user';
     component.session = { ...session, joined: true, gameDate: '2020-10-01T18:00:00Z' };
     sessionService.detail.and.returnValue(of({ ...component.session, status: 'COMPLETED' as const }));
 
-    component.confirmGameHappened();
+    expect(sessionService.complete).not.toHaveBeenCalled();
+    component.openPostGameAttendance();
 
     expect(sessionService.complete).toHaveBeenCalledWith(7);
     expect(component.showAttendanceManager).toBeTrue();

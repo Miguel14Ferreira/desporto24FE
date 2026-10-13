@@ -194,7 +194,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
     return Number.isFinite(start) && start + (2 * 60 * 60 * 1000) <= Date.now();
   }
 
-  confirmGameHappened(): void {
+  openPostGameAttendance(): void {
     if (!this.sessionId || !this.canReviewPostGame() || this.actionLoading) {
       return;
     }
