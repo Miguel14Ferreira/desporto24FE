@@ -9,7 +9,7 @@
 
       <div class="header-actions">
         <a class="recruit-action" routerLink="/menu/createEvent"
-           [queryParams]="{ intent: 'findPlayers' }">{{ 'feed.findPlayers' | t }}</a>
+           [queryParams]="{ intent: 'findPlayers' }">{{ 'feed.findPlayers' | t }} <span aria-hidden="true">↗</span></a>
       </div>
     </header>
 
@@ -41,7 +41,7 @@
       <textarea
         [(ngModel)]="postContent"
         maxlength="1000"
-        rows="4"
+        rows="3"
         [disabled]="posting"
         [placeholder]="'feed.sharePlaceholder' | t"></textarea>
 

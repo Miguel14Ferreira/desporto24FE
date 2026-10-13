@@ -28,8 +28,9 @@
 
 .page-header {
   justify-content: space-between;
+  align-items: flex-end;
   gap: 1.25rem;
-  margin-bottom: 1rem;
+  margin-bottom: 1.15rem;
 }
 
 .eyebrow {
@@ -47,11 +48,15 @@ h1 {
 }
 
 .subtitle {
+  max-width: 35rem;
   margin: .55rem 0 0;
   color: #cbd5e1;
+  font-size: .94rem;
+  line-height: 1.5;
 }
 
 .header-actions {
+  flex: 0 0 auto;
   flex-wrap: wrap;
   gap: .55rem;
 }
@@ -73,11 +78,20 @@ h1 {
 }
 
 .recruit-action {
-  background: rgba(0, 230, 118, .12);
-  border-color: rgba(0, 230, 118, .5);
-  color: #a7f3d0;
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+  white-space: nowrap;
+  padding: .62rem .9rem;
+  border-radius: 999px;
+  background: rgba(0, 230, 118, .07);
+  border-color: rgba(0, 230, 118, .38);
+  color: #86efac;
+  font-size: .84rem;
+  font-weight: 750;
 }
-.recruit-action:hover { background: rgba(0, 230, 118, .2); }
+.recruit-action span { font-size: 1rem; }
+.recruit-action:hover { background: rgba(0, 230, 118, .16); }
 .recruit-action:focus-visible { outline: 2px solid #00e676; outline-offset: 3px; }
 
 .primary-action,
@@ -97,8 +111,8 @@ h1 {
 
 .composer {
   display: grid;
-  gap: .7rem;
-  padding: 1rem;
+  gap: .72rem;
+  padding: 1.05rem 1.1rem;
   margin-bottom: 1rem;
 }
 
@@ -191,7 +205,7 @@ h1 {
   border: 1px solid rgba(255,255,255,.12);
   border-radius: .8rem;
   padding: .85rem .9rem;
-  background: rgba(255,255,255,.055);
+  background: rgba(2,6,23,.3);
   color: #f8fafc;
   font: inherit;
   line-height: 1.5;
@@ -759,11 +773,13 @@ h1 {
 /* Public-session picker: align with the feed composer and dark theme. */
 .composer-session-select {
   display: grid;
-  gap: .55rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .55rem .7rem;
   min-width: 0;
 }
 
 .composer-session-select > span {
+  grid-column: 1 / -1;
   display: block;
   font-size: .85rem;
   font-weight: 750;
@@ -780,7 +796,7 @@ h1 {
   border: 1px solid rgba(255,255,255,.14);
   border-radius: .75rem;
   padding: .65rem .85rem;
-  background: #1e293b;
+  background: rgba(2,6,23,.3);
   color: #f8fafc;
   font: inherit;
   outline: none;
@@ -800,6 +816,7 @@ h1 {
 }
 
 .composer-session-select .composer-hint {
+  grid-column: 1 / -1;
   margin: 0;
   font-size: .8rem;
   line-height: 1.45;
@@ -809,6 +826,7 @@ h1 {
 .composer-session-select [role="alert"] { color: #fca5a5; }
 
 .composer .composer-session-select > button {
+  grid-column: 1 / -1;
   justify-self: start;
   border: 0;
   border-radius: .4rem;
@@ -819,4 +837,14 @@ h1 {
   font-weight: 700;
   text-decoration: underline;
   text-underline-offset: .2rem;
+}
+
+@media (max-width: 700px) {
+  .composer-session-select {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .header-actions {
+    width: 100%;
+  }
 }
