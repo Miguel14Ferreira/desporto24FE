@@ -13,6 +13,7 @@ describe('FriendsComponent', () => {
   const friend = () => ({
     username: 'ana',
     fullName: 'Ana Silva',
+    nickname: null,
     location: 'Lisboa',
     favoriteSports: 'Padel',
     profilePicUrl: null,
