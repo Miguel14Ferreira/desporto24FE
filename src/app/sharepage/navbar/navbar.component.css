@@ -84,11 +84,6 @@
   border: 1px solid rgba(255,255,255,.14);
 }
 
-.site-nav__links .register-link {
-  background: #f8fafc;
-  color: #0f172a;
-}
-
 /* Desktop: keep frequent actions visible; move secondary sections to the account menu. */
 @media (min-width: 901px) {
   .site-nav__links .mobile-only-link {

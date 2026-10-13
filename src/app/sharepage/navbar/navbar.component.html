@@ -63,8 +63,8 @@
       }
 
       @if (!authenticated) {
-        <a class="register-link" routerLink="/login/registerNewUser">{{ 'nav.register' | t }}</a>
-        <a class="login-link" routerLink="/login" routerLinkActive="active-link">{{ 'nav.login' | t }}</a>
+        <a class="register-link jynlo-action jynlo-action--accent" routerLink="/login/registerNewUser">{{ 'nav.register' | t }}</a>
+        <a class="login-link jynlo-action jynlo-action--neutral" routerLink="/login" routerLinkActive="active-link">{{ 'nav.login' | t }}</a>
       }
     </div>
   </div>

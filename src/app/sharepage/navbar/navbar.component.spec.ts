@@ -115,6 +115,23 @@ describe('NavbarComponent', () => {
     languageToggles.forEach(button => expect(button.classList.contains('jynlo-action')).toBeFalse());
   });
 
+  it('uses matching pill geometry for register and login without changing language toggles', () => {
+    const root: HTMLElement = fixture.nativeElement;
+    const register = root.querySelector('a.register-link') as HTMLAnchorElement;
+    const login = root.querySelector('a.login-link') as HTMLAnchorElement;
+
+    expect(register.getAttribute('href')).toBe('/login/registerNewUser');
+    expect(login.getAttribute('href')).toBe('/login');
+    expect(register.classList.contains('jynlo-action')).toBeTrue();
+    expect(login.classList.contains('jynlo-action')).toBeTrue();
+    expect(register.classList.contains('jynlo-action--accent')).toBeTrue();
+    expect(login.classList.contains('jynlo-action--neutral')).toBeTrue();
+
+    const languageToggles = root.querySelectorAll('.language-switch button');
+    expect(languageToggles.length).toBe(2);
+    languageToggles.forEach(button => expect(button.classList.contains('jynlo-action')).toBeFalse());
+  });
+
   it('should create without opening a chat connection when unauthenticated', () => {
     expect(component).toBeTruthy();
     expect(authService.hasSessionCandidate).toHaveBeenCalled();
