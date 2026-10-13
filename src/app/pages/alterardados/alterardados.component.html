@@ -44,7 +44,7 @@
               </button>
             } @else {
               <div class="photo-edit-actions">
-                <label class="upload-action jynlo-action jynlo-action--neutral">
+                <label class="upload-action jynlo-action jynlo-action--neutral" [class.disabled]="photoSaving">
                   <input
                     type="file"
                     accept="image/jpeg,image/png,image/webp"

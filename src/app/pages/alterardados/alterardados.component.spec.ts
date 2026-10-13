@@ -56,6 +56,29 @@ describe('AlterardadosComponent', () => {
     fixture.detectChanges();
   });
 
+  it('keeps photo upload controls visually disabled while the photo is saving', () => {
+    component.photoEditing = true;
+    component.photoSaving = true;
+    fixture.detectChanges();
+
+    const picker: HTMLLabelElement = fixture.nativeElement.querySelector('.photo-edit-actions .upload-action');
+    const input: HTMLInputElement = picker.querySelector('input[type="file"]')!;
+    const save: HTMLButtonElement = fixture.nativeElement.querySelector('.photo-edit-actions .photo-save-action');
+    const cancel: HTMLButtonElement = fixture.nativeElement.querySelector('.photo-edit-actions .photo-cancel-action');
+
+    expect(picker.classList.contains('jynlo-action')).toBeTrue();
+    expect(picker.classList.contains('disabled')).toBeTrue();
+    expect(input.disabled).toBeTrue();
+    expect(save.disabled).toBeTrue();
+    expect(cancel.disabled).toBeTrue();
+
+    component.photoSaving = false;
+    fixture.detectChanges();
+
+    expect(picker.classList.contains('disabled')).toBeFalse();
+    expect(input.disabled).toBeFalse();
+  });
+
   it('should create and load the authenticated profile', () => {
     expect(component).toBeTruthy();
     expect(service.get).toHaveBeenCalled();

@@ -206,6 +206,7 @@ textarea { resize: vertical; }
 
 .photo-edit-actions {
   display: flex;
+  align-items: center;
   flex-wrap: wrap;
   gap: .6rem;
 }
