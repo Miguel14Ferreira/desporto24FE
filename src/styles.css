@@ -84,3 +84,60 @@ select option {
   background: #0f172a;
   color: #f8fafc;
 }
+
+/* Jynlo action system — shared pill shape, independent semantic palettes. */
+.jynlo-action {
+  --jynlo-action-text: #cbd5e1;
+  --jynlo-action-border: rgba(148, 163, 184, .34);
+  --jynlo-action-bg: rgba(148, 163, 184, .07);
+  --jynlo-action-hover: rgba(148, 163, 184, .15);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .45rem;
+  min-height: 38px;
+  padding: .58rem .92rem;
+  border: 1px solid var(--jynlo-action-border);
+  border-radius: 999px;
+  background: var(--jynlo-action-bg);
+  color: var(--jynlo-action-text);
+  font: inherit;
+  font-size: .84rem;
+  font-weight: 750;
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.jynlo-action:hover:not(:disabled):not(.disabled) {
+  background: var(--jynlo-action-hover);
+  color: var(--jynlo-action-text);
+  text-decoration: none;
+}
+
+.jynlo-action:focus-visible {
+  outline: 2px solid var(--d24-accent);
+  outline-offset: 3px;
+}
+
+.jynlo-action:disabled,
+.jynlo-action.disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+.jynlo-action--accent {
+  --jynlo-action-text: #86efac;
+  --jynlo-action-border: rgba(0, 230, 118, .38);
+  --jynlo-action-bg: rgba(0, 230, 118, .07);
+  --jynlo-action-hover: rgba(0, 230, 118, .16);
+}
+
+.jynlo-action--primary {
+  --jynlo-action-text: #e0f2fe;
+  --jynlo-action-border: rgba(125, 211, 252, .4);
+  --jynlo-action-bg: rgba(125, 211, 252, .15);
+  --jynlo-action-hover: rgba(125, 211, 252, .25);
+}

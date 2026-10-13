@@ -8,7 +8,7 @@
       </div>
 
       <div class="header-actions">
-        <a class="recruit-action" routerLink="/menu/createEvent"
+        <a class="recruit-action jynlo-action jynlo-action--accent" routerLink="/menu/createEvent"
            [queryParams]="{ intent: 'findPlayers' }">{{ 'feed.findPlayers' | t }} <span aria-hidden="true">↗</span></a>
       </div>
     </header>
@@ -77,7 +77,7 @@
         }
       </label>
       <div class="composer-actions">
-        <label class="image-picker" [class.disabled]="posting">
+        <label class="image-picker jynlo-action" [class.disabled]="posting">
           <input
             type="file"
             accept="image/jpeg,image/png,image/webp"
@@ -86,6 +86,7 @@
           <span>{{ postImagePreview ? ('feed.changeImage' | t) : ('feed.addImage' | t) }}</span>
         </label>
         <button
+          class="jynlo-action jynlo-action--primary"
           type="button"
           [disabled]="posting || !postContent.trim()"
           (click)="publish()">

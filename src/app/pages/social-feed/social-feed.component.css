@@ -63,8 +63,7 @@ h1 {
 
 .primary-action,
 .secondary-action,
-.recruit-action,
-.composer button,
+.composer button:where(:not(.jynlo-action)),
 .state-card button,
 .state-card a {
   border: 1px solid rgba(255,255,255,.14);
@@ -77,25 +76,10 @@ h1 {
   cursor: pointer;
 }
 
-.recruit-action {
-  display: inline-flex;
-  align-items: center;
-  gap: .45rem;
-  white-space: nowrap;
-  padding: .62rem .9rem;
-  border-radius: 999px;
-  background: rgba(0, 230, 118, .07);
-  border-color: rgba(0, 230, 118, .38);
-  color: #86efac;
-  font-size: .84rem;
-  font-weight: 750;
-}
 .recruit-action span { font-size: 1rem; }
-.recruit-action:hover { background: rgba(0, 230, 118, .16); }
-.recruit-action:focus-visible { outline: 2px solid #00e676; outline-offset: 3px; }
 
 .primary-action,
-.composer button {
+.composer button:where(:not(.jynlo-action)) {
   background: #f8fafc;
   color: #0f172a;
 }
@@ -735,19 +719,6 @@ h1 {
   background: rgba(2,6,23,.78) !important;
   color: #f8fafc !important;
   font-size: .76rem;
-}
-
-.image-picker {
-  display: inline-flex;
-  align-items: center;
-  border: 1px solid rgba(125,211,252,.2);
-  border-radius: .7rem;
-  padding: .55rem .7rem;
-  background: rgba(125,211,252,.06);
-  color: #bae6fd;
-  font-size: .8rem;
-  font-weight: 850;
-  cursor: pointer;
 }
 
 .image-picker input {
