@@ -121,25 +121,23 @@ describe('AlterardadosComponent', () => {
     );
   });
 
-  it('should silently close an unfinished MFA setup when the toggle is turned off', () => {
+  it('should require verification before disabling active MFA', () => {
     if (!component.profile) {
       fail('Profile should be loaded');
       return;
     }
 
-    component.profile.mfa = false;
-    component.mfaSetup = {
-      secret: 'secret',
-      qrCodeDataUrl: 'data:image/png;base64,test',
-      otpauthUri: 'otpauth://totp/desporto24'
-    };
-    component.mfaSetupCode = '123456';
+    expect(component.profile.mfa).toBeTrue();
+    component.mfaDisableCode = '123456';
+    const checkbox = { checked: false };
 
-    component.onMfaToggle({ target: { checked: false } } as unknown as Event);
+    component.onMfaToggle({ target: checkbox } as unknown as Event);
 
+    expect(checkbox.checked).toBeTrue();
+    expect(component.mfaDisablePending).toBeTrue();
+    expect(component.mfaDisableCode).toBe('');
+    expect(component.profile.mfa).toBeTrue();
     expect(service.disableMfa).not.toHaveBeenCalled();
-    expect(component.mfaSetup).toBeUndefined();
-    expect(component.mfaSetupCode).toBe('');
     expect(component.toastMessage).toBe('');
   });
 
