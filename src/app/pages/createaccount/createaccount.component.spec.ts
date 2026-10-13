@@ -11,8 +11,10 @@ describe('CreateaccountComponent', () => {
   let component: CreateaccountComponent;
   let fixture: ComponentFixture<CreateaccountComponent>;
   let auth: jasmine.SpyObj<AuthenticationService>;
+  let queryParamMap: ReturnType<typeof convertToParamMap>;
 
   beforeEach(async () => {
+    queryParamMap = convertToParamMap({});
     auth = jasmine.createSpyObj<AuthenticationService>('AuthenticationService', ['register', 'resendRegistrationConfirmation']);
     auth.register.and.returnValue(of({ message: 'Conta criada' } as any));
     auth.resendRegistrationConfirmation.and.returnValue(of({ message: 'Email reenviado' } as any));
@@ -23,7 +25,7 @@ describe('CreateaccountComponent', () => {
       providers: [
         ...TEST_PROVIDERS,
         { provide: AuthenticationService, useValue: auth },
-        { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: convertToParamMap({}) } } }
+        { provide: ActivatedRoute, useValue: { snapshot: { get queryParamMap() { return queryParamMap; } } } }
       ]
     }).compileComponents();
 
@@ -51,7 +53,7 @@ describe('CreateaccountComponent', () => {
   });
 
   it('explains the shared session invitation during account creation', () => {
-    TestBed.inject(ActivatedRoute).snapshot.queryParamMap =
+    queryParamMap =
       convertToParamMap({ returnUrl: '/menu/events/42' });
     fixture.detectChanges();
 
@@ -64,7 +66,7 @@ describe('CreateaccountComponent', () => {
 
   it('does not show a shared session invitation without a valid session link', () => {
     for (const returnUrl of [null, '/menu/feed', '/menu/events/not-a-number', 'https://example.com']) {
-      TestBed.inject(ActivatedRoute).snapshot.queryParamMap =
+      queryParamMap =
         convertToParamMap(returnUrl === null ? {} : { returnUrl });
       fixture.detectChanges();
 
@@ -92,7 +94,7 @@ describe('CreateaccountComponent', () => {
   });
 
   it('should send a shared session ID in the registration request', () => {
-    TestBed.inject(ActivatedRoute).snapshot.queryParamMap = convertToParamMap({ returnUrl: '/menu/events/42' });
+    queryParamMap = convertToParamMap({ returnUrl: '/menu/events/42' });
     fillValidForm();
 
     component.register();
@@ -104,7 +106,7 @@ describe('CreateaccountComponent', () => {
   });
 
   it('should keep the shared session destination after creating an account', () => {
-    TestBed.inject(ActivatedRoute).snapshot.queryParamMap = convertToParamMap({ returnUrl: '/menu/events/42' });
+    queryParamMap = convertToParamMap({ returnUrl: '/menu/events/42' });
     fillValidForm();
 
     component.register();
@@ -113,7 +115,7 @@ describe('CreateaccountComponent', () => {
   });
 
   it('should discard external destinations after creating an account', () => {
-    TestBed.inject(ActivatedRoute).snapshot.queryParamMap = convertToParamMap({ returnUrl: 'https://example.com' });
+    queryParamMap = convertToParamMap({ returnUrl: 'https://example.com' });
     fillValidForm();
 
     component.register();
@@ -126,7 +128,7 @@ describe('CreateaccountComponent', () => {
   });
 
   it('keeps the shared session when resending the registration confirmation email', () => {
-    TestBed.inject(ActivatedRoute).snapshot.queryParamMap =
+    queryParamMap =
       convertToParamMap({ returnUrl: '/menu/events/42' });
     component.username = 'miguel';
     spyOn<any>(component, 'startResendCooldown');
