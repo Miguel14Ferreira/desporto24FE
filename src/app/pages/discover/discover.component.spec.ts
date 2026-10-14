@@ -419,7 +419,7 @@ describe('DiscoverComponent', () => {
     fixture.detectChanges();
 
     const link: HTMLAnchorElement | null = fixture.nativeElement.querySelector('.session-card');
-    expect(link?.getAttribute('href')).toBe('/menu/events/31');
+    expect(link?.getAttribute('href')).toBe('/menu/events/31?join=1');
     expect(link?.textContent).toContain('Ver e participar');
     expect(link?.textContent).toMatch(/5[,.]00\s*€/);
     expect(link?.textContent).toMatch(/3[,.]4\s*km/);
@@ -438,6 +438,7 @@ describe('DiscoverComponent', () => {
     fixture.detectChanges();
     let link: HTMLAnchorElement = fixture.nativeElement.querySelector('.session-card');
     expect(link.textContent).toContain('Já estás inscrito');
+    expect(link.getAttribute('href')).toBe('/menu/events/32');
     expect(link.textContent).toContain('Grátis');
     expect(link.textContent).not.toContain('Ver e participar');
 
@@ -446,6 +447,7 @@ describe('DiscoverComponent', () => {
     fixture.detectChanges();
     link = fixture.nativeElement.querySelector('.session-card');
     expect(link.textContent).toContain('Em lista de espera');
+    expect(link.getAttribute('href')).toBe('/menu/events/32');
     expect(link.textContent).not.toContain('Ver e participar');
   });
 

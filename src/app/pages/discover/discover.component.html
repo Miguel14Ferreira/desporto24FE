@@ -205,7 +205,8 @@
           } @else {
             <div class="result-list">
               @for (session of topSessions; track session.id) {
-                <a class="result-card session-card" [routerLink]="['/menu/events', session.id]">
+                <a class="result-card session-card" [routerLink]="['/menu/events', session.id]"
+                   [queryParams]="session.joinedByViewer || session.waitlistedByViewer ? null : { join: '1' }">
                   <div class="session-main">
                     <strong>{{ session.sport }}</strong>
                     <span>{{ session.city }} · {{ session.gameDate | date:'dd/MM HH:mm' }}</span>

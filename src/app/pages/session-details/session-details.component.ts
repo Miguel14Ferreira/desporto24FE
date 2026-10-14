@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewChecked, ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { JwtHelperService } from '@auth0/angular-jwt';
 import { catchError, concatMap, finalize, from, map, mergeMap, of, retry, Subscription, timeout, toArray } from 'rxjs';
@@ -21,7 +21,7 @@ import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.s
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false
 })
-export class SessionDetailsComponent implements OnInit, OnDestroy {
+export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChecked {
   private readonly messageDateFormatter = new Intl.DateTimeFormat('pt-PT', {
     dateStyle: 'short',
     timeStyle: 'short'
@@ -94,6 +94,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
 
   private sessionId?: number;
   private currentUsername: string | null = null;
+  private pendingJoinScroll = false;
   private readonly jwtHelper = new JwtHelperService();
   private readonly realtimeSubscriptions = new Subscription();
 
@@ -105,6 +106,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    this.pendingJoinScroll = this.route.snapshot.queryParamMap?.get('join') === '1';
     this.currentUsername = this.readCurrentUsername();
 
     const id = Number(this.route.snapshot.paramMap.get('id'));
@@ -139,6 +141,22 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.realtimeSubscriptions.unsubscribe();
+  }
+
+  ngAfterViewChecked(): void {
+    if (!this.pendingJoinScroll || this.loading || !this.session) {
+      return;
+    }
+    if (!this.canJoinSession()) {
+      this.pendingJoinScroll = false;
+      return;
+    }
+
+    const participation = document.getElementById('session-participation');
+    if (participation) {
+      this.pendingJoinScroll = false;
+      participation.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   }
 
   scrollToParticipants(): void {

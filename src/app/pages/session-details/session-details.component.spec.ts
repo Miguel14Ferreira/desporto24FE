@@ -138,7 +138,8 @@ describe('SessionDetailsComponent', () => {
           provide: ActivatedRoute,
           useValue: {
             snapshot: {
-              paramMap: convertToParamMap({ id: '7' })
+              paramMap: convertToParamMap({ id: '7' }),
+              queryParamMap: convertToParamMap({})
             }
           }
         },
@@ -751,6 +752,63 @@ describe('SessionDetailsComponent', () => {
       fixture.detectChanges();
       expect(fixture.nativeElement.querySelector('.join-shortcut')).toBeNull();
     }
+  });
+
+  it('scrolls to participation after loading a future session from Discover', () => {
+    fixture.destroy();
+    const route = TestBed.inject(ActivatedRoute);
+    (route.snapshot as any).queryParamMap = convertToParamMap({ join: '1' });
+    const futureSession = {
+      ...session, gameDate: new Date(Date.now() + 3600_000).toISOString()
+    };
+    const delayedDetail = new Subject<typeof futureSession>();
+    sessionService.detail.and.returnValue(delayedDetail.asObservable());
+    const scroll = jasmine.createSpy('scrollIntoView');
+    const originalGetById = document.getElementById.bind(document);
+    spyOn(document, 'getElementById').and.callFake((id: string) => {
+      if (id === 'session-participation') {
+        return { scrollIntoView: scroll } as unknown as HTMLElement;
+      }
+      return originalGetById(id);
+    });
+
+    const page = TestBed.createComponent(SessionDetailsComponent);
+    page.detectChanges();
+    expect(scroll).not.toHaveBeenCalled();
+
+    delayedDetail.next(futureSession);
+    delayedDetail.complete();
+    page.detectChanges();
+
+    expect(scroll).toHaveBeenCalledOnceWith({ behavior: 'smooth', block: 'start' });
+    expect(sessionService.join).not.toHaveBeenCalled();
+    page.detectChanges();
+    expect(scroll).toHaveBeenCalledTimes(1);
+    page.destroy();
+  });
+
+  it('does not scroll to joining when the Discover visitor is already participating', () => {
+    fixture.destroy();
+    const route = TestBed.inject(ActivatedRoute);
+    (route.snapshot as any).queryParamMap = convertToParamMap({ join: '1' });
+    sessionService.detail.and.returnValue(of({
+      ...session, joined: true, gameDate: new Date(Date.now() + 3600_000).toISOString()
+    }));
+    const scroll = jasmine.createSpy('scrollIntoView');
+    const originalGetById = document.getElementById.bind(document);
+    spyOn(document, 'getElementById').and.callFake((id: string) => {
+      if (id === 'session-participation') {
+        return { scrollIntoView: scroll } as unknown as HTMLElement;
+      }
+      return originalGetById(id);
+    });
+
+    const page = TestBed.createComponent(SessionDetailsComponent);
+    page.detectChanges();
+
+    expect(scroll).not.toHaveBeenCalled();
+    expect(sessionService.join).not.toHaveBeenCalled();
+    page.destroy();
   });
 
   it('should join the session and refresh its details', () => {
