@@ -139,8 +139,11 @@ describe('AlterardadosComponent', () => {
     );
   });
 
-  it('disables locality editing while profile changes are being saved', () => {
+  it('disables locality editing while profile changes are being saved', async () => {
     component.saving = true;
+    fixture.detectChanges();
+    // NgModel applies its disabled state asynchronously.
+    await fixture.whenStable();
     fixture.detectChanges();
 
     const locationInput = fixture.nativeElement.querySelector('input[name="location"]') as HTMLInputElement;
