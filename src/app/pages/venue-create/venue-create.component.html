@@ -399,29 +399,36 @@
         </div>
       </details>
 
-      <h2 class="venue-create-section-title">{{ 'venue.create.location' | t }}</h2>
-
-      <label>
-        <span>{{ 'venue.latitude' | t }}</span>
-        <input type="number" name="latitude" [(ngModel)]="latitude"
-          min="-90" max="90" step="any" placeholder="38.7223">
-      </label>
-
-      <label>
-        <span>{{ 'venue.longitude' | t }}</span>
-        <input type="number" name="longitude" [(ngModel)]="longitude"
-          min="-180" max="180" step="any" placeholder="-9.1393">
-      </label>
-
-      <div class="venue-create-location venue-create-wide">
-        <button class="jynlo-action jynlo-action--neutral" type="button" (click)="useCurrentLocation()" [disabled]="locating"
-          [attr.aria-describedby]="locationError ? 'venue-create-location-error' : null">
-          {{ (locating ? 'venue.locating' : 'venue.useCurrentLocation') | t }}
-        </button>
-        @if (locationError) {
-          <span id="venue-create-location-error" class="venue-create-error" role="alert" aria-live="assertive">{{ 'feedback.location.error' | t }}</span>
-        }
-      </div>
+      <details class="venue-create-amenities venue-create-wide">
+        <summary class="venue-create-amenities-summary">
+          <strong>{{ 'venue.create.location' | t }}</strong>
+          <span class="venue-create-amenities-closed">{{ 'venue.create.addOptionalDetails' | t }}</span>
+          <span class="venue-create-amenities-open">{{ 'venue.create.hideOptionalDetails' | t }}</span>
+        </summary>
+        <div class="venue-create-options venue-create-wide">
+          <label>
+            <span>{{ 'venue.latitude' | t }}</span>
+            <input type="number" name="latitude" [(ngModel)]="latitude"
+              min="-90" max="90" step="any" placeholder="38.7223">
+          </label>
+    
+          <label>
+            <span>{{ 'venue.longitude' | t }}</span>
+            <input type="number" name="longitude" [(ngModel)]="longitude"
+              min="-180" max="180" step="any" placeholder="-9.1393">
+          </label>
+    
+          <div class="venue-create-location venue-create-wide">
+            <button class="jynlo-action jynlo-action--neutral" type="button" (click)="useCurrentLocation()" [disabled]="locating"
+              [attr.aria-describedby]="locationError ? 'venue-create-location-error' : null">
+              {{ (locating ? 'venue.locating' : 'venue.useCurrentLocation') | t }}
+            </button>
+            @if (locationError) {
+              <span id="venue-create-location-error" class="venue-create-error" role="alert" aria-live="assertive">{{ 'feedback.location.error' | t }}</span>
+            }
+          </div>
+        </div>
+      </details>
 
       <div class="venue-create-actions venue-create-wide">
         @if (validationError && (!name.trim() || !city.trim() || !address.trim())) {
