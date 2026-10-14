@@ -1,5 +1,5 @@
 import { SocialFeedComponent } from './social-feed.component';
-import { fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { SessionDetail } from '../model/session-detail';
@@ -8,6 +8,78 @@ import { SessionService } from '../../services/session.service';
 import { AuthenticationService } from '../../services/authethication.service';
 import { FeedItem } from '../model/feed-item';
 import { appTranslate as t } from '../../i18n/i18n.service';
+import { TEST_IMPORTS, TEST_PROVIDERS } from '../../testing/test-providers';
+
+describe('SocialFeedComponent discovery sidebar', () => {
+  let fixture: ComponentFixture<SocialFeedComponent>;
+  let component: SocialFeedComponent;
+  let feed: jasmine.SpyObj<SocialFeedService>;
+  let sessions: jasmine.SpyObj<SessionService>;
+
+  beforeEach(async () => {
+    feed = jasmine.createSpyObj<SocialFeedService>('SocialFeedService', ['feed']);
+    feed.feed.and.returnValue(of([]));
+    sessions = jasmine.createSpyObj<SessionService>('SessionService', ['discover', 'mine', 'detail']);
+    sessions.discover.and.returnValue(of([]));
+    sessions.mine.and.returnValue(of({ created: [], joined: [], waitlisted: [] }));
+
+    await TestBed.configureTestingModule({
+      declarations: [SocialFeedComponent],
+      imports: TEST_IMPORTS,
+      providers: [
+        ...TEST_PROVIDERS,
+        { provide: SocialFeedService, useValue: feed },
+        { provide: SessionService, useValue: sessions }
+      ]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(SocialFeedComponent);
+    component = fixture.componentInstance;
+  });
+
+  it('keeps the discovery sidebar available when the feed contains posts', fakeAsync(() => {
+    const post: FeedItem = {
+      type: 'POST', postId: 1, authorUsername: 'jogador',
+      authorDisplayName: 'Jogador', authorProfilePicUrl: null,
+      content: 'Bora jogar?', imageUrl: null,
+      createdAt: new Date().toISOString(), sessionId: null,
+      sport: null, city: null, gameDate: null,
+      likeCount: 0, likedByMe: false, commentCount: 0
+    };
+    feed.feed.and.returnValue(of([post]));
+    sessions.discover.and.returnValue(of([{
+      id: 24, sport: 'Padel', city: 'Lisboa',
+      gameDate: new Date(Date.now() + 86_400_000).toISOString(),
+      distanceKm: null, participantCount: 2, maxParticipants: 4,
+      priceAmount: 0, privateGame: false, status: 'OPEN', audience: 'PUBLIC'
+    }]));
+
+    fixture.detectChanges();
+    tick(351);
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('.feed-layout .feed-main .composer')).not.toBeNull();
+    expect(root.querySelector('.feed-main .feed-list .feed-card')).not.toBeNull();
+    const aside = root.querySelector('.feed-layout > .feed-sidebar') as HTMLElement;
+    expect(aside).not.toBeNull();
+    expect(aside.querySelector('.feed-suggested-session')?.getAttribute('href'))
+      .toBe('/menu/events/24');
+    expect(aside.querySelector('a[href="/menu/perfis"]')).not.toBeNull();
+  }));
+
+  it('keeps discovery links visible when no sessions are suggested', fakeAsync(() => {
+    fixture.detectChanges();
+    tick(351);
+    fixture.detectChanges();
+
+    const aside = fixture.nativeElement.querySelector('.feed-sidebar') as HTMLElement;
+    expect(aside).not.toBeNull();
+    expect(aside.querySelector('.feed-suggested-session')).toBeNull();
+    expect(aside.querySelector('a[href="/menu/events"]')).not.toBeNull();
+    expect(aside.querySelector('a[href="/menu/perfis"]')).not.toBeNull();
+  }));
+});
 
 describe('SocialFeedComponent session sharing fallback', () => {
   let component: SocialFeedComponent;

@@ -13,6 +13,8 @@
       </div>
     </header>
 
+    <div class="feed-layout">
+      <div class="feed-main">
     @if (!loading && !errorMessage && items.length === 0) {
       <div class="state-card feed-empty-state">
         <h2>{{ 'feed.emptyTitle' | t }}</h2>
@@ -22,21 +24,6 @@
           <a class="jynlo-action jynlo-action--neutral" routerLink="/menu/perfis">{{ 'feed.findPeople' | t }}</a>
           <a class="jynlo-action jynlo-action--neutral" routerLink="/menu/createEvent">{{ 'menu.createSession' | t }}</a>
         </nav>
-        @if (suggestedSessions.length > 0) {
-          <section class="feed-suggested-sessions" [attr.aria-label]="'feed.suggestedSessionsTitle' | t">
-            <h3>{{ 'feed.suggestedSessionsTitle' | t }}</h3>
-            @for (session of suggestedSessions; track session.id) {
-              <a class="feed-suggested-session" [routerLink]="['/menu/events', session.id]">
-                <span class="feed-suggested-details">
-                  <strong>{{ session.sport }}</strong>
-                  <span>{{ session.city }} · {{ session.gameDate | date:'dd/MM HH:mm' }}</span>
-                  <span>{{ session.maxParticipants - session.participantCount }} {{ 'discover.when.vacancies' | t }}</span>
-                </span>
-                <span class="feed-suggested-link-label">{{ 'feed.viewSession' | t }} →</span>
-              </a>
-            }
-          </section>
-        }
       </div>
     }
 
@@ -416,5 +403,37 @@
         }
       </div>
     }
+      </div>
+
+      <aside class="feed-sidebar" [attr.aria-label]="'discover.title' | t">
+        <section class="state-card feed-discovery-card">
+          <h2>{{ (suggestedSessions.length > 0 ? 'feed.suggestedSessionsTitle' : 'menu.findSessions') | t }}</h2>
+          @if (suggestedSessions.length > 0) {
+            <div class="feed-suggested-sessions">
+              @for (session of suggestedSessions; track session.id) {
+                <a class="feed-suggested-session" [routerLink]="['/menu/events', session.id]">
+                  <span class="feed-suggested-details">
+                    <strong>{{ session.sport }}</strong>
+                    <span>{{ session.city }} · {{ session.gameDate | date:'dd/MM HH:mm' }}</span>
+                    <span>{{ session.maxParticipants - session.participantCount }} {{ 'discover.when.vacancies' | t }}</span>
+                  </span>
+                  <span class="feed-suggested-link-label">{{ 'feed.viewSession' | t }} →</span>
+                </a>
+              }
+            </div>
+          }
+          <a class="jynlo-action jynlo-action--neutral feed-sidebar-link" routerLink="/menu/events">
+            {{ 'discover.when.action' | t }} →
+          </a>
+        </section>
+
+        <section class="state-card feed-discovery-card">
+          <h2>{{ 'discover.who.title' | t }}</h2>
+          <a class="jynlo-action jynlo-action--neutral feed-sidebar-link" routerLink="/menu/perfis">
+            {{ 'feed.findPeople' | t }} →
+          </a>
+        </section>
+      </aside>
+    </div>
   </div>
 </section>

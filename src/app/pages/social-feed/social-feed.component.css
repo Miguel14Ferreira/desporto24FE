@@ -12,8 +12,55 @@
 }
 
 .feed-shell {
-  width: min(780px, 100%);
+  width: min(1150px, 100%);
   margin: 0 auto;
+}
+
+.feed-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  align-items: start;
+  gap: 1.25rem;
+}
+
+.feed-main,
+.feed-sidebar {
+  min-width: 0;
+}
+
+.feed-sidebar {
+  display: grid;
+  gap: 1rem;
+}
+
+.feed-discovery-card {
+  display: grid;
+  gap: .85rem;
+}
+
+.feed-discovery-card h2 {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.35;
+}
+
+.feed-sidebar .feed-suggested-sessions {
+  margin-top: 0;
+}
+
+.feed-sidebar-link {
+  justify-content: center;
+  text-align: center;
+}
+
+@media (max-width: 960px) {
+  .feed-shell {
+    width: min(780px, 100%);
+  }
+
+  .feed-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .page-header,
