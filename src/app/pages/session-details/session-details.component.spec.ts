@@ -694,18 +694,28 @@ describe('SessionDetailsComponent', () => {
     expect(fixture.nativeElement.querySelector('.manual-share-link')).toBeNull();
   });
 
-  it('should show a shortcut to the join action for a future open session', () => {
+  it('scrolls to the join action without navigating away from the session', () => {
     component.session = {
       ...session,
       gameDate: new Date(Date.now() + 3600_000).toISOString()
     };
     fixture.detectChanges();
 
-    const shortcut = fixture.nativeElement.querySelector('.join-shortcut') as HTMLAnchorElement;
+    const shortcut = fixture.nativeElement.querySelector('.join-shortcut') as HTMLButtonElement;
+    const participation = fixture.nativeElement.querySelector('#session-participation') as HTMLElement;
+    const scroll = spyOn(participation, 'scrollIntoView');
+    const urlBefore = window.location.href;
+
     expect(shortcut).not.toBeNull();
-    expect(shortcut.getAttribute('href')).toBe('#session-participation');
+    expect(shortcut.type).toBe('button');
+    expect(shortcut.getAttribute('href')).toBeNull();
     expect(shortcut.textContent).toContain('Ver inscrição');
-    expect(fixture.nativeElement.querySelector('#session-participation .join-controls .primary-action')).not.toBeNull();
+    expect(participation.querySelector('.join-controls .primary-action')).not.toBeNull();
+
+    shortcut.click();
+
+    expect(scroll).toHaveBeenCalledOnceWith({ behavior: 'smooth', block: 'start' });
+    expect(window.location.href).toBe(urlBefore);
     expect(sessionService.join).not.toHaveBeenCalled();
   });
 
@@ -718,9 +728,16 @@ describe('SessionDetailsComponent', () => {
     };
     fixture.detectChanges();
 
-    const shortcut = fixture.nativeElement.querySelector('.join-shortcut') as HTMLAnchorElement;
+    const shortcut = fixture.nativeElement.querySelector('.join-shortcut') as HTMLButtonElement;
+    const participation = fixture.nativeElement.querySelector('#session-participation') as HTMLElement;
+    const scroll = spyOn(participation, 'scrollIntoView');
+    const urlBefore = window.location.href;
     expect(shortcut.textContent).toContain('lista de espera');
-    expect(shortcut.getAttribute('href')).toBe('#session-participation');
+
+    shortcut.click();
+
+    expect(scroll).toHaveBeenCalledOnceWith({ behavior: 'smooth', block: 'start' });
+    expect(window.location.href).toBe(urlBefore);
   });
 
   it('should not show a join shortcut when a session is closed or already joined', () => {

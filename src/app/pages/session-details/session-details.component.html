@@ -55,10 +55,10 @@
 
           <div class="session-top-actions">
             @if (canJoinSession()) {
-              <a class="join-shortcut" href="#session-participation">
+              <button type="button" class="join-shortcut" (click)="scrollToParticipation()">
                 {{ isFull() ? ('sessionDetail.viewWaitlist' | t) : ('sessionDetail.viewJoin' | t) }}
                 <span aria-hidden="true">↓</span>
-              </a>
+              </button>
             }
             @if (canSharePostGameMoment()) {
               <a class="postgame-action jynlo-action jynlo-action--neutral" routerLink="/menu/feed"

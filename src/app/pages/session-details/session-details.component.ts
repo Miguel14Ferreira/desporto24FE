@@ -150,6 +150,15 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
       ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
+  scrollToParticipation(): void {
+    if (!this.canJoinSession()) {
+      return;
+    }
+
+    document.getElementById('session-participation')
+      ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
   joinSession(): void {
     if (!this.canJoinSession() || !this.sessionId || this.actionLoading) {
       return;
