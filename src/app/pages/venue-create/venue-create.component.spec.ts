@@ -95,6 +95,33 @@ describe('VenueCreateComponent', () => {
     expect(component.saving).toBeFalse();
   });
 
+  it('derives the indoor flag consistently from the environment', () => {
+    const cases: { environment: 'INDOOR' | 'OUTDOOR' | 'BOTH'; indoor: boolean }[] = [
+      { environment: 'INDOOR', indoor: true },
+      { environment: 'OUTDOOR', indoor: false },
+      { environment: 'BOTH', indoor: true }
+    ];
+
+    for (const { environment, indoor } of cases) {
+      const venueService = jasmine.createSpyObj<VenueService>('VenueService', ['create']);
+      const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
+      venueService.create.and.returnValue(of({ id: 7 } as Venue));
+
+      const component = new VenueCreateComponent(venueService, router);
+      component.name = 'Recinto de teste';
+      component.city = 'Lisboa';
+      component.address = 'Rua do Desporto';
+      component.selectedSports = ['Futsal'];
+      component.environmentType = environment;
+
+      component.save();
+
+      expect(venueService.create).toHaveBeenCalledOnceWith(
+        jasmine.objectContaining({ environmentType: environment, indoor })
+      );
+    }
+  });
+
   it('adds and removes sports from the multi-selection', () => {
     const venueService = jasmine.createSpyObj<VenueService>('VenueService', ['create']);
     const router = jasmine.createSpyObj<Router>('Router', ['navigate']);

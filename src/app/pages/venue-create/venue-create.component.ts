@@ -40,7 +40,6 @@ export class VenueCreateComponent {
   ownershipType: VenueOwnershipType | null = null;
   surfaceType = '';
   environmentType: VenueEnvironmentType = 'OUTDOOR';
-  indoor = false;
   changingRooms = false;
   changingRoomTypes: string[] = [];
   parking = false;
