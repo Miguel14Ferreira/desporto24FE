@@ -557,6 +557,34 @@ describe('DiscoverComponent', () => {
     expect(component.loadError).toBeFalse();
   });
 
+  it('carries sport and locality into the full player search', () => {
+    const morePeople = (): HTMLAnchorElement =>
+      fixture.nativeElement.querySelector('a[routerLink="/menu/perfis"], a[href^="/menu/perfis?"]');
+
+    expect(morePeople().getAttribute('href'))
+      .toBe('/menu/perfis?from=discover&sport=Padel&city=Lisboa');
+
+    component.onSportChange('Ténis');
+    component.onLocationChange('Sintra');
+    component.search();
+    fixture.detectChanges();
+    expect(morePeople().getAttribute('href'))
+      .toBe('/menu/perfis?from=discover&sport=T%C3%A9nis&city=Sintra');
+
+    component.clear();
+    fixture.detectChanges();
+    expect(morePeople().getAttribute('href')).toBe('/menu/perfis?from=discover');
+  });
+
+  it('uses name-only filtering in full people search when a name was applied', () => {
+    component.playerName = '  Ana  ';
+    component.searchPlayers();
+    fixture.detectChanges();
+
+    const link: HTMLAnchorElement = fixture.nativeElement.querySelector('a[href^="/menu/perfis?"]');
+    expect(link.getAttribute('href')).toBe('/menu/perfis?from=discover&player=Ana');
+  });
+
   it('opens discovered people directly in their public profiles', () => {
     const profile = {
       username: 'teammate',

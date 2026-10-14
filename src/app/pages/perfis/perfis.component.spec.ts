@@ -88,6 +88,79 @@ describe('PerfisComponent', () => {
     fixture.detectChanges();
   });
 
+  it('applies Discover sport and locality to the advanced people search', () => {
+    const route = TestBed.inject(ActivatedRoute);
+    const oldQuery = route.snapshot.queryParamMap;
+    Object.defineProperty(route.snapshot, 'queryParamMap', {
+      configurable: true, value: convertToParamMap({ from: 'discover', sport: 'Ténis', city: 'Sintra' })
+    });
+    try {
+      const page = TestBed.createComponent(PerfisComponent);
+      page.detectChanges();
+
+      expect(page.componentInstance.sportFilter).toBe('Ténis');
+      expect(page.componentInstance.locationFilter).toBe('Sintra');
+      expect(page.componentInstance.searched).toBeTrue();
+      expect(service.findProfiles).toHaveBeenCalledWith({
+        name: undefined, sport: 'Ténis', location: 'Sintra',
+        minAge: undefined, maxAge: undefined, skillLevel: undefined
+      });
+      page.destroy();
+    } finally {
+      Object.defineProperty(route.snapshot, 'queryParamMap', {
+        configurable: true, value: oldQuery
+      });
+    }
+  });
+
+  it('applies only the name filter from a Discover name search', () => {
+    const route = TestBed.inject(ActivatedRoute);
+    const oldQuery = route.snapshot.queryParamMap;
+    Object.defineProperty(route.snapshot, 'queryParamMap', {
+      configurable: true, value: convertToParamMap({
+        from: 'discover', player: '  Ana  ', sport: 'Padel', city: 'Lisboa'
+      })
+    });
+    try {
+      const page = TestBed.createComponent(PerfisComponent);
+      page.detectChanges();
+
+      expect(page.componentInstance.searchTerm).toBe('Ana');
+      expect(page.componentInstance.sportFilter).toBe('');
+      expect(page.componentInstance.locationFilter).toBe('');
+      expect(service.findProfiles).toHaveBeenCalledWith({
+        name: 'Ana', sport: undefined, location: undefined,
+        minAge: undefined, maxAge: undefined, skillLevel: undefined
+      });
+      page.destroy();
+    } finally {
+      Object.defineProperty(route.snapshot, 'queryParamMap', {
+        configurable: true, value: oldQuery
+      });
+    }
+  });
+
+  it('keeps the advanced people search idle when Discover passed no filters', () => {
+    const route = TestBed.inject(ActivatedRoute);
+    const oldQuery = route.snapshot.queryParamMap;
+    Object.defineProperty(route.snapshot, 'queryParamMap', {
+      configurable: true, value: convertToParamMap({ from: 'discover' })
+    });
+    try {
+      const page = TestBed.createComponent(PerfisComponent);
+      page.detectChanges();
+
+      expect(page.componentInstance.searched).toBeFalse();
+      expect(page.componentInstance.profiles).toEqual([]);
+      expect(service.findProfiles).not.toHaveBeenCalled();
+      page.destroy();
+    } finally {
+      Object.defineProperty(route.snapshot, 'queryParamMap', {
+        configurable: true, value: oldQuery
+      });
+    }
+  });
+
   it('should start without requesting or showing discoverable profiles', () => {
     expect(service.discoverProfiles).not.toHaveBeenCalled();
     expect(service.findProfiles).not.toHaveBeenCalled();

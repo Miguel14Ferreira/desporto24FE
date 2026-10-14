@@ -92,8 +92,24 @@ export class PerfisComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.backToFriends = this.route.snapshot.queryParamMap.get('from') === 'friends';
+    const params = this.route.snapshot.queryParamMap;
+    this.backToFriends = params.get('from') === 'friends';
     this.loadFriendUsernames();
+
+    if (params.get('from') === 'discover' && !this.route.snapshot.paramMap.has('username')) {
+      this.searchTerm = (params.get('player') || '').trim();
+      if (this.searchTerm) {
+        // Discover name search ignores sport and locality; retain that behaviour.
+        this.sportFilter = '';
+        this.locationFilter = '';
+      } else {
+        this.sportFilter = (params.get('sport') || '').trim();
+        this.locationFilter = (params.get('city') || '').trim();
+      }
+      if (this.searchTerm || this.sportFilter || this.locationFilter) {
+        this.search();
+      }
+    }
     this.routeSubscription = this.route.paramMap.subscribe(params => {
       const username = params.get('username');
       this.profilePage = Boolean(username);

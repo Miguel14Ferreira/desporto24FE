@@ -330,7 +330,10 @@
             </button>
           }
 
-          <a class="pillar-action jynlo-action jynlo-action--neutral" routerLink="/menu/perfis">
+          <a class="pillar-action jynlo-action jynlo-action--neutral" routerLink="/menu/perfis"
+             [queryParams]="appliedPlayerName
+               ? { from: 'discover', player: appliedPlayerName }
+               : { from: 'discover', sport: sport.trim() || null, city: location.trim() || null }">
             {{ 'discover.who.action' | t }} <span>→</span>
           </a>
         </section>
