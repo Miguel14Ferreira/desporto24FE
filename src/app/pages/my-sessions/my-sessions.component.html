@@ -170,13 +170,15 @@
 
                 <div class="card-actions">
                   <a class="jynlo-action jynlo-action--neutral" [routerLink]="['/menu/events', session.id]">{{ 'mySessions.viewStatus' | t }}</a>
-                  <button
-                    type="button"
-                    class="danger-action jynlo-action jynlo-action--danger"
-                    [disabled]="waitlistLeavingId !== null"
-                    (click)="leaveWaitlist(session)">
-                    {{ waitlistLeavingId === session.id ? ('mySessions.leaving' | t) : ('mySessions.leaveWaitlist' | t) }}
-                  </button>
+                  @if (canLeaveWaitlist(session)) {
+                    <button
+                      type="button"
+                      class="danger-action jynlo-action jynlo-action--danger"
+                      [disabled]="waitlistLeavingId !== null"
+                      (click)="leaveWaitlist(session)">
+                      {{ waitlistLeavingId === session.id ? ('mySessions.leaving' | t) : ('mySessions.leaveWaitlist' | t) }}
+                    </button>
+                  }
                 </div>
               </article>
             }

@@ -137,6 +137,37 @@ describe('MySessionsComponent', () => {
     expect(component.actionMessage).toContain('lista de espera');
   });
 
+  it('hides waitlist withdrawal for completed and cancelled sessions', () => {
+    for (const status of ['COMPLETED', 'CANCELLED']) {
+      const waitlisted = { ...createdSession, id: 22, status };
+      component.data = { ...component.data, waitlisted: [waitlisted] };
+      fixture.detectChanges();
+
+      const waitlistCard: HTMLElement = fixture.nativeElement.querySelector('.waitlist-badge')
+        ?.closest('.session-card');
+      expect(waitlistCard.querySelector('a[href="/menu/events/22"]')).toBeTruthy();
+      expect(waitlistCard.querySelector('button.danger-action')).toBeNull();
+      expect(component.canLeaveWaitlist(waitlisted)).toBeFalse();
+
+      component.leaveWaitlist(waitlisted);
+    }
+
+    expect(sessionService.leave).not.toHaveBeenCalled();
+  });
+
+  it('keeps waitlist withdrawal available for open and full sessions', () => {
+    for (const status of ['OPEN', 'FULL']) {
+      const waitlisted = { ...createdSession, id: 22, status };
+      component.data = { ...component.data, waitlisted: [waitlisted] };
+      fixture.detectChanges();
+
+      const waitlistCard: HTMLElement = fixture.nativeElement.querySelector('.waitlist-badge')
+        ?.closest('.session-card');
+      expect(waitlistCard.querySelector('button.danger-action')).toBeTruthy();
+      expect(component.canLeaveWaitlist(waitlisted)).toBeTrue();
+    }
+  });
+
   it('should calculate remaining vacancies', () => {
     expect(component.vacancies(createdSession)).toBe(7);
   });
