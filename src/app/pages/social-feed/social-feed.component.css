@@ -475,6 +475,23 @@ h1 {
   justify-content: space-between;
   gap: .9rem;
   padding: .75rem .9rem;
+  border-color: rgba(125, 211, 252, .24);
+  background: rgba(14, 165, 233, .07);
+  transition: background .16s ease, border-color .16s ease;
+}
+
+.state-card .feed-suggested-session:hover {
+  border-color: rgba(125, 211, 252, .65);
+  background: rgba(14, 165, 233, .15);
+}
+
+.state-card .feed-suggested-session:focus-visible {
+  outline: 2px solid #7dd3fc;
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .state-card .feed-suggested-session { transition: none; }
 }
 
 .feed-suggested-details {
