@@ -417,6 +417,74 @@ describe('Events2Component', () => {
     expect(fixture.nativeElement.querySelector('.gps-accuracy')).toBeNull();
   });
 
+  it('waits for a pending Maps lookup before submitting the session', () => {
+    const pending = new Subject<{ resolvedUrl: string; latitude: number; longitude: number }>();
+    venueService.resolveMapLink.and.returnValue(pending.asObservable());
+    component.sport = 'Padel';
+    component.gameDate = '2099-10-15T18:00';
+    component.city = 'Lisboa';
+    component.address = 'Rua do Campo';
+    component.venueMapLink = 'https://maps.app.goo.gl/new';
+
+    component.resolveVenueMapLink();
+    fixture.detectChanges();
+
+    const submit = fixture.nativeElement.querySelector('button[type="submit"]') as HTMLButtonElement;
+    expect(component.venueMapLinkLoading).toBeTrue();
+    expect(submit.disabled).toBeTrue();
+
+    component.createSession();
+    expect(sessionService.create).not.toHaveBeenCalled();
+
+    pending.next({
+      resolvedUrl: 'https://www.google.com/maps/new',
+      latitude: 38.72, longitude: -9.14
+    });
+    pending.complete();
+    fixture.detectChanges();
+
+    expect(component.venueMapLinkLoading).toBeFalse();
+    expect(submit.disabled).toBeFalse();
+
+    component.createSession();
+    expect(sessionService.create).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        latitude: 38.72, longitude: -9.14
+      }),
+      undefined
+    );
+  });
+
+  it('re-enables session submission with a manual address after Maps lookup fails', () => {
+    const pending = new Subject<{ resolvedUrl: string; latitude: number; longitude: number }>();
+    venueService.resolveMapLink.and.returnValue(pending.asObservable());
+    component.sport = 'Padel';
+    component.gameDate = '2099-10-15T18:00';
+    component.city = 'Lisboa';
+    component.address = 'Rua do Campo';
+    component.venueMapLink = 'https://maps.app.goo.gl/broken';
+
+    component.resolveVenueMapLink();
+    component.createSession();
+    expect(sessionService.create).not.toHaveBeenCalled();
+
+    pending.error(new Error('Link unavailable'));
+    fixture.detectChanges();
+
+    const submit = fixture.nativeElement.querySelector('button[type="submit"]') as HTMLButtonElement;
+    expect(component.venueMapLinkLoading).toBeFalse();
+    expect(submit.disabled).toBeFalse();
+
+    component.createSession();
+    expect(sessionService.create).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        city: 'Lisboa', address: 'Rua do Campo',
+        latitude: null, longitude: null
+      }),
+      undefined
+    );
+  });
+
   it('ignores a delayed Maps success after the organiser removes the location', () => {
     const pending = new Subject<{ resolvedUrl: string; latitude: number; longitude: number }>();
     venueService.resolveMapLink.and.returnValue(pending.asObservable());
