@@ -108,6 +108,45 @@ describe('AlterardadosComponent', () => {
     expect(component.toastMessage).toContain('sucesso');
   });
 
+  it('allows editing the optional locality and sends it to the profile API', () => {
+    const locationInput = fixture.nativeElement.querySelector('input[name="location"]') as HTMLInputElement;
+    expect(locationInput).not.toBeNull();
+    expect(locationInput.value).toBe('Lisboa');
+    expect(locationInput.required).toBeFalse();
+    expect(locationInput.maxLength).toBe(120);
+    expect(locationInput.autocomplete).toBe('address-level2');
+
+    locationInput.value = '  Sintra  ';
+    locationInput.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    component.save();
+
+    expect(service.update).toHaveBeenCalledWith(
+      jasmine.objectContaining({ location: 'Sintra' })
+    );
+  });
+
+  it('allows removing the locality without sending a blank string', () => {
+    const locationInput = fixture.nativeElement.querySelector('input[name="location"]') as HTMLInputElement;
+    locationInput.value = '   ';
+    locationInput.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    component.save();
+
+    expect(service.update).toHaveBeenCalledWith(
+      jasmine.objectContaining({ location: null })
+    );
+  });
+
+  it('disables locality editing while profile changes are being saved', () => {
+    component.saving = true;
+    fixture.detectChanges();
+
+    const locationInput = fixture.nativeElement.querySelector('input[name="location"]') as HTMLInputElement;
+    expect(locationInput.disabled).toBeTrue();
+  });
+
   it('should treat the phone as optional and clear its calling code when empty', () => {
     if (!component.profile) {
       fail('Profile should be loaded');

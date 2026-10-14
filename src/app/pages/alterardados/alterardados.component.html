@@ -177,6 +177,19 @@
             }
           </label>
 
+          <label>
+            <span>{{ 'common.location' | t }}</span>
+            <input
+              type="text"
+              name="location"
+              [(ngModel)]="profile.location"
+              maxlength="120"
+              autocomplete="address-level2"
+              [disabled]="saving"
+              [placeholder]="'profile.locationPlaceholder' | t">
+            <small>{{ 'profile.locationHint' | t }}</small>
+          </label>
+
           <div class="full-width phone-field">
             <span class="field-label">{{ 'register.phoneOptional' | t }}</span>
             <div class="phone-row">
