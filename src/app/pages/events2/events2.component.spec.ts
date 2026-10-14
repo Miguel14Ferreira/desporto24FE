@@ -103,6 +103,78 @@ describe('Events2Component', () => {
     expect(fixture.nativeElement.querySelector('.venue-load-error')).toBeNull();
   });
 
+  it('keeps a newly saved venue when the initial catalog response arrives late', () => {
+    const pending = new Subject<Venue[]>();
+    venueService.search.and.returnValue(pending.asObservable());
+    component.loadVenues();
+    component.sport = 'Padel';
+    component.venueName = 'Campo Novo';
+    component.city = 'Lisboa';
+    component.address = 'Rua Nova';
+    venueService.create.and.returnValue(of({
+      id: 801, name: 'Campo Novo', city: 'Lisboa',
+      address: 'Rua Nova', sports: 'Padel', latitude: null, longitude: null
+    } as Venue));
+
+    component.saveVenue();
+    expect(component.selectedVenueId).toBe(801);
+
+    pending.next([{
+      id: 802, name: 'Campo Antigo', city: 'Porto',
+      address: 'Rua A', sports: 'Padel', latitude: null, longitude: null
+    } as Venue]);
+    pending.complete();
+
+    expect(component.venues.map(venue => venue.id)).toEqual([802, 801]);
+    expect(component.selectedVenueId).toBe(801);
+    expect(component.selectedVenue()?.name).toBe('Campo Novo');
+  });
+
+  it('retains saved venues if a pending catalog refresh fails', () => {
+    const pending = new Subject<Venue[]>();
+    venueService.search.and.returnValue(pending.asObservable());
+    component.loadVenues();
+    component.sport = 'Padel';
+    component.venueName = 'Campo Novo';
+    component.city = 'Lisboa';
+    component.address = 'Rua Nova';
+    venueService.create.and.returnValue(of({
+      id: 801, name: 'Campo Novo', city: 'Lisboa',
+      address: 'Rua Nova', sports: 'Padel', latitude: null, longitude: null
+    } as Venue));
+
+    component.saveVenue();
+    pending.error(new Error('Offline'));
+
+    expect(component.venuesLoadError).toBeTrue();
+    expect(component.venues.map(venue => venue.id)).toEqual([801]);
+    expect(component.selectedVenue()?.name).toBe('Campo Novo');
+  });
+
+  it('does not duplicate a saved venue if it is also in the catalog response', () => {
+    const pending = new Subject<Venue[]>();
+    venueService.search.and.returnValue(pending.asObservable());
+    component.loadVenues();
+    component.sport = 'Padel';
+    component.venueName = 'Campo Novo';
+    component.city = 'Lisboa';
+    component.address = 'Rua Nova';
+    venueService.create.and.returnValue(of({
+      id: 801, name: 'Campo Novo', city: 'Lisboa',
+      address: 'Rua Nova', sports: 'Padel', latitude: null, longitude: null
+    } as Venue));
+
+    component.saveVenue();
+    pending.next([{
+      id: 801, name: 'Campo Novo', city: 'Lisboa',
+      address: 'Rua Nova', sports: 'Padel', latitude: null, longitude: null
+    } as Venue]);
+    pending.complete();
+
+    expect(component.venues.filter(venue => venue.id === 801).length).toBe(1);
+    expect(component.selectedVenueId).toBe(801);
+  });
+
   it('keeps the normal session-creation flow unchanged', () => {
     expect(component.findPlayersMode).toBeFalse();
     expect(fixture.nativeElement.querySelector('.page-header h1')?.textContent)

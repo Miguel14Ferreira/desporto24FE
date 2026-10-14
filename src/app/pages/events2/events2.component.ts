@@ -68,6 +68,7 @@ export class Events2Component implements OnInit {
 
   readonly sportsCatalog = SPORTS_CATALOG;
   venues: Venue[] = [];
+  private newlyCreatedVenues: Venue[] = [];
   venueSearch = '';
   selectedVenueId: number | null = null;
   venuesLoading = false;
@@ -225,9 +226,17 @@ export class Events2Component implements OnInit {
         finalize(() => this.venuesLoading = false)
       )
       .subscribe({
-        next: venues => this.venues = venues,
+        next: venues => {
+          // A venue saved while the catalog was loading must remain selectable.
+          const createdIds = new Set(this.newlyCreatedVenues.map(venue => venue.id));
+          this.venues = [
+            ...venues.filter(venue => !createdIds.has(venue.id)),
+            ...this.newlyCreatedVenues
+          ].sort((a, b) => a.name.localeCompare(b.name, 'pt'));
+        },
         error: () => {
-          this.venues = [];
+          // Retain successfully saved venues even if refreshing the catalog fails.
+          this.venues = [...this.newlyCreatedVenues];
           this.venuesLoadError = true;
         }
       });
@@ -588,7 +597,11 @@ export class Events2Component implements OnInit {
       )
       .subscribe({
         next: venue => {
-          this.venues = [...this.venues, venue]
+          this.newlyCreatedVenues = [
+            ...this.newlyCreatedVenues.filter(item => item.id !== venue.id),
+            venue
+          ];
+          this.venues = [...this.venues.filter(item => item.id !== venue.id), venue]
             .sort((a, b) => a.name.localeCompare(b.name, 'pt'));
           // Newly saved venues must go through the same selection flow as existing ones.
           this.selectVenue(venue.id);
