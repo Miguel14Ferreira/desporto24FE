@@ -25,7 +25,7 @@ export class EventsComponent implements OnInit {
 
   sport = '';
   city = '';
-  availableOnly = true;
+  availableOnly = false;
   freeOnly = false;
   sort = 'date';
 
@@ -179,7 +179,7 @@ export class EventsComponent implements OnInit {
   clearFilters(): void {
     this.sport = '';
     this.city = '';
-    this.availableOnly = true;
+    this.availableOnly = false;
     this.freeOnly = false;
     this.fromDateTime = '';
     this.toDateTime = '';

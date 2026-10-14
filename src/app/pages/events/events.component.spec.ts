@@ -37,6 +37,23 @@ describe('EventsComponent', () => {
     expect(sessionService.discover).toHaveBeenCalled();
   });
 
+  it('shows full sessions by default while retaining the only-with-vacancies filter', () => {
+    expect(component.availableOnly).toBeFalse();
+    expect(sessionService.discover).toHaveBeenCalledWith(
+      jasmine.objectContaining({ availability: undefined })
+    );
+
+    component.availableOnly = true;
+    component.loadSessions();
+    expect(sessionService.discover).toHaveBeenCalledWith(
+      jasmine.objectContaining({ availability: 'available' })
+    );
+
+    component.clearFilters();
+    expect(component.availableOnly).toBeFalse();
+    expect(sessionService.discover.calls.mostRecent().args[0].availability).toBeUndefined();
+  });
+
   it('should send coordinates and radius when nearby search is active', () => {
     component.nearbyActive = true;
     component.latitude = 38.72;
