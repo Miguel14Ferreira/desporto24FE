@@ -170,7 +170,8 @@
 
     } @else {
       <a class="secondary-action back-to-search jynlo-action jynlo-action--neutral"
-         [routerLink]="backToFriends ? '/menu/friendList' : (backToFeed ? '/menu/feed' : (backToDiscover ? '/menu/discover' : '/menu/perfis'))">← {{ (backToFriends ? 'friends.backToFriends' : (backToFeed ? 'feed.backToFeed' : (backToDiscover ? 'discover.backFromProfile' : 'community.backToSearch'))) | t }}</a>
+         [routerLink]="backToFriends ? '/menu/friendList' : (backToFeed ? '/menu/feed' : (backToDiscover ? '/menu/discover' : '/menu/perfis'))"
+         [queryParams]="backToDiscover ? discoverReturnParams : null">← {{ (backToFriends ? 'friends.backToFriends' : (backToFeed ? 'feed.backToFeed' : (backToDiscover ? 'discover.backFromProfile' : 'community.backToSearch'))) | t }}</a>
       @if (loading) {
         <div class="state-card" role="status">{{ 'common.loading' | t }}</div>
       }

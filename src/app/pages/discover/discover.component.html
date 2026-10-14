@@ -300,7 +300,7 @@
             <div class="result-list">
               @for (profile of topPeople; track profile.username) {
                 <a class="result-card person-card" [routerLink]="['/menu/perfis', profile.username]"
-                   [queryParams]="{ from: 'discover' }">
+                   [queryParams]="{ from: 'discover', sport: sport.trim(), city: location.trim(), player: appliedPlayerName }">
                   <div class="person-avatar">
                     {{ (profile.nickname || profile.fullName || profile.username).charAt(0).toUpperCase() }}
                   </div>

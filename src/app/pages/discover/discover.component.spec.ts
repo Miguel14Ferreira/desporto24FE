@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of, Subject, throwError } from 'rxjs';
 
 import { DiscoverComponent } from './discover.component';
@@ -79,6 +80,63 @@ describe('DiscoverComponent', () => {
     });
     const locality: HTMLInputElement = fixture.nativeElement.querySelector('input[name="location"]');
     expect(locality.value).toBe('Lisboa');
+  });
+
+  it('restores sport, locality and player-name search after returning from a profile', () => {
+    const route = TestBed.inject(ActivatedRoute);
+    const previousParams = route.snapshot.queryParamMap;
+    Object.defineProperty(route.snapshot, 'queryParamMap', {
+      configurable: true,
+      value: convertToParamMap({ sport: 'Ténis', city: 'Sintra', player: 'Ana' })
+    });
+    try {
+      const player: CommunityProfile = {
+        username: 'ana', fullName: 'Ana Silva', nickname: null,
+        country: 'Portugal', location: 'Porto', favoriteSports: 'Futebol',
+        bio: null, skillLevel: null, availability: null, age: 30,
+        profilePicUrl: null, joinDateDisplay: null
+      };
+      communityService.findProfiles.and.returnValue(of([player]));
+      const page = TestBed.createComponent(DiscoverComponent);
+      page.detectChanges();
+
+      expect(page.componentInstance.sport).toBe('Ténis');
+      expect(page.componentInstance.location).toBe('Sintra');
+      expect(page.componentInstance.playerName).toBe('Ana');
+      expect(page.componentInstance.appliedPlayerName).toBe('Ana');
+      expect(venueService.search).toHaveBeenCalledWith('Sintra', 'Ténis');
+      expect(communityService.findProfiles).toHaveBeenCalledWith({ name: 'Ana' });
+      const link: HTMLAnchorElement = page.nativeElement.querySelector('.person-card');
+      expect(link.getAttribute('href'))
+        .toBe('/menu/perfis/ana?from=discover&sport=T%C3%A9nis&city=Sintra&player=Ana');
+      page.destroy();
+    } finally {
+      Object.defineProperty(route.snapshot, 'queryParamMap', {
+        configurable: true, value: previousParams
+      });
+    }
+  });
+
+  it('keeps explicitly cleared filters instead of repopulating profile suggestions', () => {
+    const route = TestBed.inject(ActivatedRoute);
+    const previousParams = route.snapshot.queryParamMap;
+    Object.defineProperty(route.snapshot, 'queryParamMap', {
+      configurable: true, value: convertToParamMap({ sport: '', city: '', player: '' })
+    });
+    try {
+      const page = TestBed.createComponent(DiscoverComponent);
+      page.detectChanges();
+
+      expect(page.componentInstance.sport).toBe('');
+      expect(page.componentInstance.location).toBe('');
+      expect(page.componentInstance.playerName).toBe('');
+      expect(venueService.search).toHaveBeenCalledWith(undefined, undefined);
+      page.destroy();
+    } finally {
+      Object.defineProperty(route.snapshot, 'queryParamMap', {
+        configurable: true, value: previousParams
+      });
+    }
   });
 
   it('keeps manually entered filters if the profile arrives after editing', () => {
@@ -520,7 +578,8 @@ describe('DiscoverComponent', () => {
     fixture.detectChanges();
 
     const link: HTMLAnchorElement | null = fixture.nativeElement.querySelector('.person-card');
-    expect(link?.getAttribute('href')).toBe('/menu/perfis/teammate?from=discover');
+    expect(link?.getAttribute('href'))
+      .toBe('/menu/perfis/teammate?from=discover&sport=Padel&city=Lisboa&player=');
     expect(link?.textContent).toContain('Teammate');
     expect(link?.textContent).toContain('Ver perfil e interagir');
   });

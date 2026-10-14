@@ -136,6 +136,30 @@ describe('PerfisComponent', () => {
     expect(socialGraphService.status).toHaveBeenCalledWith('ana');
   });
 
+  it('returns to Discover with its original sport, locality and name filters', () => {
+    const route = TestBed.inject(ActivatedRoute);
+    const previousParams = route.snapshot.queryParamMap;
+    Object.defineProperty(route.snapshot, 'queryParamMap', {
+      value: convertToParamMap({
+        from: 'discover', sport: 'Ténis', city: 'Sintra', player: 'Ana'
+      }),
+      configurable: true
+    });
+    try {
+      routeParams.next(convertToParamMap({ username: 'ana' }));
+      fixture.detectChanges();
+
+      expect(component.backToDiscover).toBeTrue();
+      const back: HTMLAnchorElement = fixture.nativeElement.querySelector('a.back-to-search');
+      expect(back.getAttribute('href'))
+        .toBe('/menu/discover?sport=T%C3%A9nis&city=Sintra&player=Ana');
+    } finally {
+      Object.defineProperty(route.snapshot, 'queryParamMap', {
+        value: previousParams, configurable: true
+      });
+    }
+  });
+
   it('returns to the feed when a profile was opened from a feed link', () => {
     const activatedRoute = TestBed.inject(ActivatedRoute);
     Object.defineProperty(activatedRoute.snapshot, 'queryParamMap', {

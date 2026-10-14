@@ -44,6 +44,19 @@ export class PerfisComponent implements OnInit, OnDestroy {
     return this.route.snapshot.queryParamMap.get('from') === 'discover';
   }
 
+  get discoverReturnParams(): { sport: string; city: string; player: string } | null {
+    const params = this.route.snapshot.queryParamMap;
+    if (!params.has('sport') && !params.has('city') && !params.has('player')) {
+      return null;
+    }
+
+    return {
+      sport: params.get('sport') || '',
+      city: params.get('city') || '',
+      player: params.get('player') || ''
+    };
+  }
+
   profiles: CommunityProfile[] = [];
   selectedProfile?: CommunityProfile;
   selectedActivity?: ProfileActivity;

@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { Observable, catchError, finalize, forkJoin, of, retry, timeout } from 'rxjs';
 
 import { AuthenticationService } from '../../services/authethication.service';
@@ -57,11 +58,24 @@ export class DiscoverComponent implements OnInit {
     private authenticationService: AuthenticationService,
     private venueService: VenueService,
     private sessionService: SessionService,
-    private communityService: CommunityService
+    private communityService: CommunityService,
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
     this.authenticationService.isLoggedIn();
+
+    // Explicit return filters take precedence over suggestions from the public profile.
+    const params = this.route.snapshot.queryParamMap;
+    if (params.has('sport') || params.has('city') || params.has('player')) {
+      this.sport = (params.get('sport') || '').trim();
+      this.location = (params.get('city') || '').trim();
+      this.playerName = (params.get('player') || '').trim();
+      this.appliedPlayerName = this.playerName;
+      this.sportEdited = true;
+      this.locationEdited = true;
+    }
+
     const username = this.authenticationService.loggedInPerfilname;
 
     if (!username) {
