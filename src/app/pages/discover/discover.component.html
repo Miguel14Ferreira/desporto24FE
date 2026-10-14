@@ -209,10 +209,27 @@
                   <div class="session-main">
                     <strong>{{ session.sport }}</strong>
                     <span>{{ session.city }} · {{ session.gameDate | date:'dd/MM HH:mm' }}</span>
+                    <span class="session-summary-meta">
+                      @if (session.priceAmount > 0) {
+                        {{ session.priceAmount | number:'1.2-2' }} €
+                      } @else {
+                        {{ 'common.free' | t }}
+                      }
+                      @if (session.distanceKm !== null && session.distanceKm !== undefined) {
+                        · {{ session.distanceKm | number:'1.0-1' }} km
+                      }
+                    </span>
                   </div>
                   <div class="session-side">
                     <strong>{{ vacancies(session) }}</strong>
                     <span>{{ 'discover.when.vacancies' | t }}</span>
+                    <span class="session-entry-hint"
+                      [class.session-entry-hint--member]="session.joinedByViewer || session.waitlistedByViewer">
+                      {{ (session.joinedByViewer ? 'discover.when.alreadyJoined'
+                        : session.waitlistedByViewer ? 'discover.when.waitlisted'
+                        : 'discover.when.viewJoin') | t }}
+                      <span aria-hidden="true">→</span>
+                    </span>
                   </div>
                 </a>
               }

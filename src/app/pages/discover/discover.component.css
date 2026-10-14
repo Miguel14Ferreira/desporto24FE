@@ -227,8 +227,33 @@
   gap: .7rem;
 }
 
-.session-side { display: grid; flex: 0 0 auto; justify-items: end; }
+.session-side { display: grid; flex: 0 0 auto; justify-items: end; gap: .1rem; }
 .session-side strong { color: #7dd3fc; font-size: 1.15rem; }
+
+.session-card .session-summary-meta {
+  margin-top: .2rem;
+  color: #cbd5e1;
+}
+
+.session-card .session-entry-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  margin-top: .35rem;
+  padding: .3rem .5rem;
+  border-radius: .6rem;
+  border: 1px solid rgba(125,211,252,.28);
+  background: rgba(125,211,252,.09);
+  color: #bae6fd;
+  font-size: .72rem;
+  font-weight: 800;
+}
+
+.session-card .session-entry-hint--member {
+  border-color: rgba(74,222,128,.24);
+  background: rgba(74,222,128,.08);
+  color: #bbf7d0;
+}
 
 .person-card {
   display: grid;

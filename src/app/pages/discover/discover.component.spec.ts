@@ -407,6 +407,48 @@ describe('DiscoverComponent', () => {
     expect(link?.textContent).toContain('Teammate');
   });
 
+  it('shows a clear participation link with price and distance without joining automatically', () => {
+    const session = {
+      id: 31, sport: 'Padel', city: 'Lisboa',
+      gameDate: '2026-10-20T18:00:00Z', distanceKm: 3.4,
+      participantCount: 2, maxParticipants: 4,
+      priceAmount: 5, privateGame: false, status: 'OPEN'
+    };
+    sessionService.discover.and.returnValue(of([session]));
+    component.search();
+    fixture.detectChanges();
+
+    const link: HTMLAnchorElement | null = fixture.nativeElement.querySelector('.session-card');
+    expect(link?.getAttribute('href')).toBe('/menu/events/31');
+    expect(link?.textContent).toContain('Ver e participar');
+    expect(link?.textContent).toMatch(/5[,.]00\s*€/);
+    expect(link?.textContent).toMatch(/3[,.]4\s*km/);
+  });
+
+  it('shows participation status instead of an invitation to join again', () => {
+    const baseSession = {
+      id: 32, sport: 'Padel', city: 'Lisboa',
+      gameDate: '2026-10-20T18:00:00Z', distanceKm: null,
+      participantCount: 2, maxParticipants: 4,
+      priceAmount: 0, privateGame: false, status: 'OPEN'
+    };
+
+    sessionService.discover.and.returnValue(of([{ ...baseSession, joinedByViewer: true }]));
+    component.search();
+    fixture.detectChanges();
+    let link: HTMLAnchorElement = fixture.nativeElement.querySelector('.session-card');
+    expect(link.textContent).toContain('Já estás inscrito');
+    expect(link.textContent).toContain('Grátis');
+    expect(link.textContent).not.toContain('Ver e participar');
+
+    sessionService.discover.and.returnValue(of([{ ...baseSession, waitlistedByViewer: true }]));
+    component.search();
+    fixture.detectChanges();
+    link = fixture.nativeElement.querySelector('.session-card');
+    expect(link.textContent).toContain('Em lista de espera');
+    expect(link.textContent).not.toContain('Ver e participar');
+  });
+
   it('should calculate session vacancies', () => {
     expect(component.vacancies({
       id: 1,
