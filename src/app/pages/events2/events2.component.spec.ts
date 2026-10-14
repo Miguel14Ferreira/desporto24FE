@@ -456,6 +456,55 @@ describe('Events2Component', () => {
     expect(component.address).toBe('');
   });
 
+  it('blocks submission if the sport changes after a venue was selected', () => {
+    component.venues = [{
+      id: 17, name: 'Pavilhão de Futsal', city: 'Lisboa',
+      address: 'Rua A', sports: 'Futsal', latitude: 38.73, longitude: -9.15
+    } as Venue];
+    component.sport = 'Futsal';
+    component.selectVenue(17);
+    component.gameDate = '2099-10-15T18:00';
+
+    component.sport = 'Padel'; // Model changed before the field blur event.
+    component.createSession();
+
+    expect(sessionService.create).not.toHaveBeenCalled();
+    expect(component.errorMessage).toContain('modalidade');
+    expect(component.selectedVenueId).toBe(17);
+  });
+
+  it('allows a session at a venue that supports the selected sport', () => {
+    component.venues = [{
+      id: 17, name: 'Pavilhão Municipal', city: 'Lisboa',
+      address: 'Rua A', sports: 'Futsal; Padel',
+      latitude: 38.73, longitude: -9.15
+    } as Venue];
+    component.sport = 'Futsal';
+    component.selectVenue(17);
+    component.gameDate = '2099-10-15T18:00';
+
+    component.sport = 'Padel';
+    component.createSession();
+
+    expect(sessionService.create).toHaveBeenCalledWith(
+      jasmine.objectContaining({ venueId: 17, sport: 'Padel' }),
+      undefined
+    );
+  });
+
+  it('blocks submission if the formerly selected venue is no longer loaded', () => {
+    component.sport = 'Padel';
+    component.gameDate = '2099-10-15T18:00';
+    component.city = 'Lisboa';
+    component.address = 'Rua A';
+    component.selectedVenueId = 999;
+
+    component.createSession();
+
+    expect(sessionService.create).not.toHaveBeenCalled();
+    expect(component.errorMessage).toContain('recinto');
+  });
+
   it('should apply a saved venue to the session form', () => {
     component.venues = [{
       id: 5,

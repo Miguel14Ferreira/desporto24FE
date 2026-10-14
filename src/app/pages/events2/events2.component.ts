@@ -645,6 +645,22 @@ export class Events2Component implements OnInit {
       return 'Seleciona um desporto da lista.';
     }
 
+    if (this.selectedVenueId !== null) {
+      const venue = this.venues.find(item => item.id === this.selectedVenueId);
+      if (!venue) {
+        return t('createSession.venueNoLongerAvailable');
+      }
+
+      // Match the server's semicolon-separated sport check before submitting.
+      const venueSports = venue.sports?.trim() || '';
+      if (venueSports && !venueSports.split(';').some(
+        venueSport => venueSport.trim().toLocaleLowerCase('pt')
+          === this.sport.trim().toLocaleLowerCase('pt')
+      )) {
+        return t('createSession.venueSportMismatch');
+      }
+    }
+
     if (!this.gameDate || !this.city.trim()
         || (!this.address.trim() && !this.hasCoordinates)) {
       return 'Preenche a data e a localidade. Sem localização no mapa, indica também a morada.';
