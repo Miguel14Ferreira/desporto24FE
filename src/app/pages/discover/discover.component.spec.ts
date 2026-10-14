@@ -313,6 +313,60 @@ describe('DiscoverComponent', () => {
     }
   });
 
+  it('offers recruiting players through a public session when no people match', () => {
+    expect(component.people).toEqual([]);
+    fixture.detectChanges();
+
+    const recruit: HTMLAnchorElement | null = fixture.nativeElement.querySelector('.people-empty-recruit');
+    expect(recruit?.getAttribute('href'))
+      .toBe('/menu/createEvent?intent=findPlayers&sport=Padel&city=Lisboa');
+    expect(recruit?.textContent).toContain('Encontrar jogadores');
+  });
+
+  it('passes changed discovery filters to the existing Find Players mode', () => {
+    component.onSportChange('Ténis');
+    component.onLocationChange('Sintra');
+    component.search();
+    fixture.detectChanges();
+
+    let recruit: HTMLAnchorElement | null = fixture.nativeElement.querySelector('.people-empty-recruit');
+    expect(recruit?.getAttribute('href'))
+      .toBe('/menu/createEvent?intent=findPlayers&sport=T%C3%A9nis&city=Sintra');
+
+    component.clear();
+    fixture.detectChanges();
+    recruit = fixture.nativeElement.querySelector('.people-empty-recruit');
+    expect(recruit?.getAttribute('href')).toBe('/menu/createEvent?intent=findPlayers');
+  });
+
+  it('explains unmatched name searches without suggesting a recruiting session', () => {
+    component.playerName = 'Utilizador inexistente';
+    component.searchPlayers();
+    fixture.detectChanges();
+
+    const empty: HTMLElement | null = fixture.nativeElement.querySelector('.people-empty');
+    expect(empty?.textContent).toContain('Não encontrámos nenhum jogador com esse nome');
+    expect(fixture.nativeElement.querySelector('.people-empty-recruit')).toBeNull();
+  });
+
+  it('does not show recruiting CTA when results exist or the player request fails', () => {
+    communityService.findProfiles.and.returnValue(of([{
+      username: 'joao', fullName: 'João', nickname: null,
+      location: 'Lisboa', country: 'Portugal', favoriteSports: 'Padel',
+      bio: null, skillLevel: null, availability: null, age: 25,
+      profilePicUrl: null, joinDateDisplay: null
+    }]));
+    component.search();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.people-empty-recruit')).toBeNull();
+
+    communityService.findProfiles.and.returnValue(throwError(() => new Error('Offline')));
+    component.search();
+    fixture.detectChanges();
+    expect(component.loadError).toBeTrue();
+    expect(fixture.nativeElement.querySelector('.people-empty-recruit')).toBeNull();
+  });
+
   it('searches for a player by name without restricting the request to profile defaults', () => {
     const teammate: CommunityProfile = {
       username: 'ana', fullName: 'Ana Silva', nickname: null,

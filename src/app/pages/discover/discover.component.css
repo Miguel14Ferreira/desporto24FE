@@ -289,7 +289,8 @@
   line-height: 1.45;
 }
 
-.session-empty .session-empty-create {
+.session-empty .session-empty-create,
+.people-empty .people-empty-recruit {
   display: inline-flex;
   justify-content: center;
   align-items: center;
@@ -299,7 +300,8 @@
   white-space: normal;
 }
 
-.session-empty .session-empty-create span {
+.session-empty .session-empty-create span,
+.people-empty .people-empty-recruit span {
   color: inherit;
 }
 
