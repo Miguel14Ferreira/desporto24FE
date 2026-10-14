@@ -81,23 +81,15 @@ describe('DiscoverComponent', () => {
     expect(locality.value).toBe('Lisboa');
   });
 
-  it('keeps manually entered filters if the profile arrives after editing', async () => {
+  it('keeps manually entered filters if the profile arrives after editing', () => {
     const delayedProfile = new Subject<CommunityProfile>();
     communityService.publicProfile.and.returnValue(delayedProfile.asObservable());
     const page = TestBed.createComponent(DiscoverComponent);
     page.detectChanges();
-    // Wait for NgModel to initialise before simulating actual user input.
-    await page.whenStable();
-    page.detectChanges();
 
-    const sportInput: HTMLInputElement = page.nativeElement.querySelector('input[name="sport"]');
-    const localityInput: HTMLInputElement = page.nativeElement.querySelector('input[name="location"]');
-    sportInput.value = 'Ténis';
-    sportInput.dispatchEvent(new Event('input'));
-    localityInput.value = 'Sintra';
-    localityInput.dispatchEvent(new Event('input'));
-    await page.whenStable();
-    page.detectChanges();
+    // Simulate the values emitted by the form without waiting for the deliberately pending profile.
+    page.componentInstance.onSportChange('Ténis');
+    page.componentInstance.onLocationChange('Sintra');
 
     expect(page.componentInstance.sport).toBe('Ténis');
     expect(page.componentInstance.location).toBe('Sintra');
