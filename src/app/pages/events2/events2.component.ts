@@ -97,6 +97,7 @@ export class Events2Component implements OnInit {
   selectedVenueMapUrl: SafeResourceUrl | null = null;
   venueMapLink = '';
   venueMapLinkLoading = false;
+  private venueMapRequestId = 0;
   venueMapLinkError = '';
   venueMapCandidateResolvedUrl = '';
 
@@ -313,6 +314,7 @@ export class Events2Component implements OnInit {
   }
 
   selectVenue(value: number | string | null): void {
+    this.invalidateVenueMapLinkRequest();
     // Changing venues also cancels an unfinished browser GPS request.
     this.gpsRequestId++;
     this.locating = false;
@@ -413,6 +415,7 @@ export class Events2Component implements OnInit {
   }
 
   useMapLinkVenue(): void {
+    this.invalidateVenueMapLinkRequest();
     this.venuePhotoRequestId++;
     this.selectedVenueId = null;
     this.selectedVenuePhoto = null;
@@ -430,6 +433,7 @@ export class Events2Component implements OnInit {
 
     this.venueMapLink = url;
     this.venueMapLinkError = '';
+    this.invalidateVenueMapLinkRequest();
     // Choosing a Maps link invalidates any pending browser GPS callback.
     this.gpsRequestId++;
     this.locating = false;
@@ -454,6 +458,11 @@ export class Events2Component implements OnInit {
 
     this.gpsRequestId++;
     this.locating = false;
+    const requestId = ++this.venueMapRequestId;
+    const isCurrentRequest = () =>
+      requestId === this.venueMapRequestId
+      && this.selectedVenueId === null
+      && this.venueMapLink.trim() === url;
     this.venueMapLinkLoading = true;
     this.venueMapLinkError = '';
     this.venueMapCandidateResolvedUrl = '';
@@ -461,12 +470,16 @@ export class Events2Component implements OnInit {
     this.venueService.resolveMapLink(url)
       .pipe(
         timeout(12_000),
-        finalize(() => this.venueMapLinkLoading = false)
+        finalize(() => {
+          if (requestId === this.venueMapRequestId) {
+            this.venueMapLinkLoading = false;
+          }
+        })
       )
       .subscribe({
         next: candidate => {
-          // Do not replace a venue or a newer manual selection with a late reply.
-          if (this.selectedVenueId !== null || this.venueMapLink.trim() !== url) {
+          // A removed or superseded Maps lookup must never restore old coordinates.
+          if (!isCurrentRequest()) {
             return;
           }
           this.latitude = candidate.latitude;
@@ -483,10 +496,17 @@ export class Events2Component implements OnInit {
           );
         },
         error: () => {
-          this.venueMapLinkError = t('venue.mapLink.error');
-          this.venueMapCandidateResolvedUrl = '';
+          if (isCurrentRequest()) {
+            this.venueMapLinkError = t('venue.mapLink.error');
+            this.venueMapCandidateResolvedUrl = '';
+          }
         }
       });
+  }
+
+  private invalidateVenueMapLinkRequest(): void {
+    this.venueMapRequestId++;
+    this.venueMapLinkLoading = false;
   }
 
   clearVenueMapLinkCandidate(): void {
@@ -592,6 +612,7 @@ export class Events2Component implements OnInit {
       return;
     }
 
+    this.invalidateVenueMapLinkRequest();
     const requestId = ++this.gpsRequestId;
     this.locating = true;
     navigator.geolocation.getCurrentPosition(
@@ -628,6 +649,7 @@ export class Events2Component implements OnInit {
       return;
     }
 
+    this.invalidateVenueMapLinkRequest();
     this.latitude = latitude;
     this.longitude = longitude;
     this.locationCaptured = true;
@@ -647,6 +669,7 @@ export class Events2Component implements OnInit {
   }
 
   clearLocation(): void {
+    this.invalidateVenueMapLinkRequest();
     this.gpsRequestId++;
     this.locating = false;
     this.locationCaptured = false;

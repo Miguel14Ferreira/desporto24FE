@@ -280,6 +280,84 @@ describe('Events2Component', () => {
     expect(fixture.nativeElement.querySelector('.gps-accuracy')).toBeNull();
   });
 
+  it('ignores a delayed Maps success after the organiser removes the location', () => {
+    const pending = new Subject<{ resolvedUrl: string; latitude: number; longitude: number }>();
+    venueService.resolveMapLink.and.returnValue(pending.asObservable());
+    component.venueMapLink = 'https://maps.app.goo.gl/old';
+    component.resolveVenueMapLink();
+    expect(component.venueMapLinkLoading).toBeTrue();
+
+    component.clearLocation();
+    expect(component.venueMapLinkLoading).toBeFalse();
+
+    pending.next({
+      resolvedUrl: 'https://www.google.com/maps/old',
+      latitude: 38.72, longitude: -9.14
+    });
+    pending.complete();
+    fixture.detectChanges();
+
+    expect(component.hasCoordinates).toBeFalse();
+    expect(component.latitude).toBeNull();
+    expect(component.longitude).toBeNull();
+    expect(component.venueMapCandidateResolvedUrl).toBe('');
+    expect(component.venueMapLinkError).toBe('');
+    expect(fixture.nativeElement.querySelector('.venue-create-card iframe')).toBeNull();
+  });
+
+  it('ignores a delayed Maps error after a saved venue is selected', () => {
+    const pending = new Subject<{ resolvedUrl: string; latitude: number; longitude: number }>();
+    venueService.resolveMapLink.and.returnValue(pending.asObservable());
+    component.venueMapLink = 'https://maps.app.goo.gl/old';
+    component.resolveVenueMapLink();
+
+    component.venues = [{
+      id: 101, name: 'Pavilhão', city: 'Lisboa', address: 'Rua A',
+      sports: 'Padel', latitude: 38.72, longitude: -9.14
+    } as Venue];
+    component.selectVenue(101);
+    pending.error(new Error('Old request timed out'));
+
+    expect(component.selectedVenueId).toBe(101);
+    expect(component.latitude).toBe(38.72);
+    expect(component.longitude).toBe(-9.14);
+    expect(component.venueMapLinkError).toBe('');
+    expect(component.venueMapLinkLoading).toBeFalse();
+  });
+
+  it('keeps a newer Maps request loading when an older lookup finishes', () => {
+    const first = new Subject<{ resolvedUrl: string; latitude: number; longitude: number }>();
+    const second = new Subject<{ resolvedUrl: string; latitude: number; longitude: number }>();
+    venueService.resolveMapLink.and.returnValues(first.asObservable(), second.asObservable());
+    component.venueMapLink = 'https://maps.app.goo.gl/old';
+    component.resolveVenueMapLink();
+
+    component.onVenueMapLinkChanged('https://maps.app.goo.gl/new');
+    component.resolveVenueMapLink();
+
+    first.next({
+      resolvedUrl: 'https://www.google.com/maps/old',
+      latitude: 38.72, longitude: -9.14
+    });
+    first.complete();
+
+    expect(component.venueMapLinkLoading).toBeTrue();
+    expect(component.hasCoordinates).toBeFalse();
+    expect(component.venueMapCandidateResolvedUrl).toBe('');
+
+    second.next({
+      resolvedUrl: 'https://www.google.com/maps/new',
+      latitude: 41.15, longitude: -8.61
+    });
+    second.complete();
+
+    expect(component.venueMapLinkLoading).toBeFalse();
+    expect(component.locationSource).toBe('map');
+    expect(component.latitude).toBe(41.15);
+    expect(component.longitude).toBe(-8.61);
+    expect(component.venueMapCandidateResolvedUrl).toBe('https://www.google.com/maps/new');
+  });
+
   it('invalidates an old Maps location when the user edits its link', () => {
     venueService.resolveMapLink.and.returnValues(
       of({ resolvedUrl: 'https://www.google.com/maps/old', latitude: 38.72, longitude: -9.14 }),
