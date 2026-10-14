@@ -266,7 +266,7 @@ describe('SocialFeedComponent post-game entry', () => {
 });
 
 describe('SocialFeedComponent empty-feed session suggestions', () => {
-  it('reuses available public sessions without suggesting private, full or completed games', fakeAsync(() => {
+  it('suggests only joinable public games, excluding ones already joined or waitlisted', fakeAsync(() => {
     const auth = jasmine.createSpyObj<AuthenticationService>('AuthenticationService', ['isLoggedIn']);
     auth.isLoggedIn.and.returnValue(true);
     const feed = jasmine.createSpyObj<SocialFeedService>('SocialFeedService', ['feed']);
@@ -281,6 +281,8 @@ describe('SocialFeedComponent empty-feed session suggestions', () => {
     sessions.discover.and.returnValue(of([
       candidate(1), candidate(2, 'CANCELLED'), candidate(3, 'OPEN', true),
       candidate(4, 'OPEN', false, 10), candidate(5, 'OPEN', false, 2, 'COMMUNITY_ONLY'),
+      { ...candidate(11), joinedByViewer: true },
+      { ...candidate(12), waitlistedByViewer: true },
       candidate(6), candidate(7), candidate(8),
       { ...candidate(9), gameDate: new Date(Date.now() - 86_400_000).toISOString() },
       { ...candidate(10), gameDate: 'invalid-date' }

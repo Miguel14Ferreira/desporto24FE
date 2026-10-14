@@ -116,6 +116,7 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
         this.suggestedSessions = this.discoveredSessions
           .filter(session => session.status?.toUpperCase() === 'OPEN'
             && !session.privateGame && session.participantCount < session.maxParticipants
+            && !session.joinedByViewer && !session.waitlistedByViewer
             && Date.parse(session.gameDate) > Date.now())
           .slice(0, 3);
       }
