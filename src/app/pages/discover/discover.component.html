@@ -186,7 +186,7 @@
           } @else {
             <div class="result-list">
               @for (profile of topPeople; track profile.username) {
-                <article class="result-card person-card">
+                <a class="result-card person-card" [routerLink]="['/menu/perfis', profile.username]">
                   <div class="person-avatar">
                     {{ (profile.nickname || profile.fullName || profile.username).charAt(0).toUpperCase() }}
                   </div>
@@ -200,7 +200,7 @@
                       <small>{{ ('profile.level.' + profile.skillLevel) | t }}</small>
                     }
                   </div>
-                </article>
+                </a>
               }
             </div>
           }

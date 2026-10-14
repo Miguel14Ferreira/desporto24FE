@@ -78,6 +78,31 @@ describe('DiscoverComponent', () => {
     });
   });
 
+  it('opens discovered people directly in their public profiles', () => {
+    const profile = {
+      username: 'teammate',
+      fullName: 'Teammate',
+      nickname: null,
+      country: 'Portugal',
+      location: 'Lisboa',
+      favoriteSports: 'Padel',
+      bio: null,
+      skillLevel: null,
+      availability: null,
+      age: 28,
+      profilePicUrl: null,
+      joinDateDisplay: null
+    };
+    component.people = [profile];
+    component.topPeopleResults = [profile];
+    component.initialized = true;
+    fixture.detectChanges();
+
+    const link: HTMLAnchorElement | null = fixture.nativeElement.querySelector('.person-card');
+    expect(link?.getAttribute('href')).toBe('/menu/perfis/teammate');
+    expect(link?.textContent).toContain('Teammate');
+  });
+
   it('should calculate session vacancies', () => {
     expect(component.vacancies({
       id: 1,
