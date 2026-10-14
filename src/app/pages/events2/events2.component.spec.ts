@@ -62,6 +62,47 @@ describe('Events2Component', () => {
     expect(component).toBeTruthy();
   });
 
+  it('shows a retry action instead of silently treating a failed venue load as empty', () => {
+    venueService.search.and.returnValue(throwError(() => new Error('Offline')));
+
+    component.loadVenues();
+    fixture.detectChanges();
+
+    expect(component.venuesLoadError).toBeTrue();
+    expect(component.venues).toEqual([]);
+    const alert = fixture.nativeElement.querySelector('.venue-load-error') as HTMLElement;
+    expect(alert).not.toBeNull();
+    expect(alert.textContent).toContain('Não foi possível carregar os recintos');
+    expect(alert.querySelector('button')?.textContent).toContain('Tentar novamente');
+  });
+
+  it('reloads venues after clicking retry and clears the loading error', () => {
+    venueService.search.and.returnValue(throwError(() => new Error('Offline')));
+    component.loadVenues();
+    fixture.detectChanges();
+
+    venueService.search.and.returnValue(of([{
+      id: 701, name: 'Campo Central', city: 'Lisboa',
+      address: 'Rua A', sports: 'Padel', latitude: null, longitude: null
+    } as Venue]));
+    const retryButton = fixture.nativeElement.querySelector('.venue-load-error button') as HTMLButtonElement;
+    retryButton.click();
+    fixture.detectChanges();
+
+    expect(component.venuesLoadError).toBeFalse();
+    expect(component.venues.map(venue => venue.id)).toEqual([701]);
+    expect(fixture.nativeElement.querySelector('.venue-load-error')).toBeNull();
+  });
+
+  it('does not display a loading error when the venue catalog is genuinely empty', () => {
+    component.loadVenues();
+    fixture.detectChanges();
+
+    expect(component.venues).toEqual([]);
+    expect(component.venuesLoadError).toBeFalse();
+    expect(fixture.nativeElement.querySelector('.venue-load-error')).toBeNull();
+  });
+
   it('keeps the normal session-creation flow unchanged', () => {
     expect(component.findPlayersMode).toBeFalse();
     expect(fixture.nativeElement.querySelector('.page-header h1')?.textContent)

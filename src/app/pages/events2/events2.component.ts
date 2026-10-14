@@ -71,6 +71,7 @@ export class Events2Component implements OnInit {
   venueSearch = '';
   selectedVenueId: number | null = null;
   venuesLoading = false;
+  venuesLoadError = false;
   venueSaving = false;
   showVenueCreator = false;
   venueName = '';
@@ -210,7 +211,12 @@ export class Events2Component implements OnInit {
   }
 
   loadVenues(): void {
+    if (this.venuesLoading) {
+      return;
+    }
+
     this.venuesLoading = true;
+    this.venuesLoadError = false;
 
     this.venueService.search()
       .pipe(
@@ -220,7 +226,10 @@ export class Events2Component implements OnInit {
       )
       .subscribe({
         next: venues => this.venues = venues,
-        error: () => this.venues = []
+        error: () => {
+          this.venues = [];
+          this.venuesLoadError = true;
+        }
       });
   }
 

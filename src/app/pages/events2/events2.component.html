@@ -179,6 +179,19 @@
           </small>
         </label>
 
+        @if (venuesLoadError) {
+          <div class="venue-load-error feedback error-feedback" role="alert">
+            <span>{{ 'venue.loadError' | t }}</span>
+            <button
+              type="button"
+              class="secondary-action jynlo-action jynlo-action--neutral"
+              [disabled]="venuesLoading || loading"
+              (click)="loadVenues()">
+              {{ 'common.retry' | t }}
+            </button>
+          </div>
+        }
+
         @if (selectedVenueId) {
           <div class="venue-create-card">
             <div>
