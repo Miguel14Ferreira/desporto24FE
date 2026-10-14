@@ -156,8 +156,11 @@ export class EventsComponent implements OnInit {
 
   canJoin(session: SessionSummary): boolean {
     return !session.privateGame
+      && !session.joinedByViewer
+      && !session.waitlistedByViewer
       && this.vacancies(session) > 0
-      && session.status?.toUpperCase() === 'OPEN';
+      && session.status?.toUpperCase() === 'OPEN'
+      && Date.parse(session.gameDate) > Date.now();
   }
 
   toggleAdvancedFilters(): void {

@@ -79,7 +79,7 @@ describe('EventsComponent', () => {
       id: 1,
       sport: 'Padel',
       city: 'Lisboa',
-      gameDate: '2026-10-02T18:00:00Z',
+      gameDate: new Date(Date.now() + 86_400_000).toISOString(),
       distanceKm: null,
       participantCount: 2,
       maxParticipants: 4,
@@ -92,6 +92,13 @@ describe('EventsComponent', () => {
     expect(component.canJoin(openSession)).toBeTrue();
     expect(component.canJoin({ ...openSession, privateGame: true })).toBeFalse();
     expect(component.canJoin({ ...openSession, participantCount: 4 })).toBeFalse();
+    expect(component.canJoin({ ...openSession, joinedByViewer: true })).toBeFalse();
+    expect(component.canJoin({ ...openSession, waitlistedByViewer: true })).toBeFalse();
+    expect(component.canJoin({ ...openSession, status: 'CANCELLED' })).toBeFalse();
+    expect(component.canJoin({
+      ...openSession, gameDate: new Date(Date.now() - 86_400_000).toISOString()
+    })).toBeFalse();
+    expect(component.canJoin({ ...openSession, gameDate: 'invalid-date' })).toBeFalse();
   });
 
   it('should disable nearby search and clear coordinates', () => {
