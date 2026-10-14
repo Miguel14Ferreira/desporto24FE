@@ -407,6 +407,24 @@ describe('DiscoverComponent', () => {
     expect(link?.textContent).toContain('Teammate');
   });
 
+  it('carries the selected sport and locality into venue creation', () => {
+    const addVenueLink = (): HTMLAnchorElement =>
+      fixture.nativeElement.querySelector('a[href^="/menu/venues/new"]');
+
+    // The initial values are suggested by the profile.
+    expect(addVenueLink().getAttribute('href')).toBe('/menu/venues/new?sport=Padel&city=Lisboa');
+
+    component.onSportChange('Ténis');
+    component.onLocationChange('Sintra');
+    fixture.detectChanges();
+    expect(addVenueLink().getAttribute('href')).toBe('/menu/venues/new?sport=T%C3%A9nis&city=Sintra');
+
+    // A cleared discovery search must not forward stale profile preferences.
+    component.clear();
+    fixture.detectChanges();
+    expect(addVenueLink().getAttribute('href')).toBe('/menu/venues/new');
+  });
+
   it('offers creating a session when no activities match the search', () => {
     expect(component.initialized).toBeTrue();
     expect(component.sessions).toEqual([]);

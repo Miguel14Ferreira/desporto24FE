@@ -155,7 +155,8 @@
             </button>
           }
 
-          <a class="pillar-action jynlo-action jynlo-action--neutral" routerLink="/menu/venues/new">
+          <a class="pillar-action jynlo-action jynlo-action--neutral" routerLink="/menu/venues/new"
+             [queryParams]="{ sport: sport.trim() || null, city: location.trim() || null }">
             {{ 'discover.where.action' | t }} <span>→</span>
           </a>
         </section>

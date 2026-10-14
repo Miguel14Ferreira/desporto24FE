@@ -1,4 +1,4 @@
-import { Router } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 
 import { VenueService } from '../../services/venue.service';
@@ -6,6 +6,43 @@ import { Venue } from '../model/venue';
 import { VenueCreateComponent } from './venue-create.component';
 
 describe('VenueCreateComponent', () => {
+  it('prefills a valid favorite sport and locality from Discover without auto-saving', () => {
+    const venueService = jasmine.createSpyObj<VenueService>('VenueService', ['create']);
+    const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
+    const route = {
+      snapshot: { queryParamMap: convertToParamMap({ sport: '  pAdEl  ', city: '  Lisboa  ' }) }
+    } as unknown as ActivatedRoute;
+    const component = new VenueCreateComponent(venueService, router, route);
+    component.ngOnInit();
+
+    expect(component.city).toBe('Lisboa');
+    expect(component.selectedSports).toEqual(['Padel']);
+    expect(component.isSportSelected('Padel')).toBeTrue();
+    expect(component.latitude).toBeNull();
+    expect(component.longitude).toBeNull();
+
+    // Both prefilled values remain editable.
+    component.toggleSport('Padel', false);
+    component.toggleSport('Ténis', true);
+    component.city = 'Sintra';
+    expect(component.selectedSports).toEqual(['Ténis']);
+    expect(component.city).toBe('Sintra');
+    expect(venueService.create).not.toHaveBeenCalled();
+  });
+
+  it('rejects an unknown sport without losing the locality passed from Discover', () => {
+    const venueService = jasmine.createSpyObj<VenueService>('VenueService', ['create']);
+    const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
+    const route = {
+      snapshot: { queryParamMap: convertToParamMap({ sport: 'Outro desporto', city: 'Porto' }) }
+    } as unknown as ActivatedRoute;
+    const component = new VenueCreateComponent(venueService, router, route);
+    component.ngOnInit();
+
+    expect(component.selectedSports).toEqual([]);
+    expect(component.city).toBe('Porto');
+  });
+
   it('does not submit when required fields are missing', () => {
     const venueService = jasmine.createSpyObj<VenueService>('VenueService', ['create']);
     const router = jasmine.createSpyObj<Router>('Router', ['navigate']);

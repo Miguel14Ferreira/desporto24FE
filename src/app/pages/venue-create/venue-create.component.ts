@@ -1,5 +1,5 @@
-import { Component } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, OnInit, Optional } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { finalize, timeout } from 'rxjs';
 
 import { VenueService } from '../../services/venue.service';
@@ -13,7 +13,7 @@ import { CreateVenueRequest, VenueEnvironmentType, VenueOwnershipType } from '..
   styleUrls: ['./venue-create.component.css'],
   standalone: false
 })
-export class VenueCreateComponent {
+export class VenueCreateComponent implements OnInit {
   readonly sportsCatalog = SPORTS_CATALOG;
   readonly popularSports = ['Futebol', 'Futsal', 'Padel', 'Ténis', 'Basquetebol', 'Natação', 'Voleibol', 'Musculação'];
   sportSearch = '';
@@ -80,7 +80,27 @@ export class VenueCreateComponent {
   locating = false;
   locationError = false;
 
-  constructor(private venueService: VenueService, private router: Router) {}
+  constructor(
+    private venueService: VenueService,
+    private router: Router,
+    @Optional() private route?: ActivatedRoute
+  ) {}
+
+  ngOnInit(): void {
+    const params = this.route?.snapshot.queryParamMap;
+    if (!params) {
+      return;
+    }
+
+    const requestedSport = (params.get('sport') || '').trim();
+    const matchedSport = this.sportsCatalog.find(
+      sport => sport.toLocaleLowerCase('pt') === requestedSport.toLocaleLowerCase('pt')
+    );
+    if (matchedSport) {
+      this.selectedSports = [matchedSport];
+    }
+    this.city = (params.get('city') || '').trim().slice(0, 120);
+  }
 
   useCurrentLocation(): void {
     if (!navigator.geolocation || this.locating) {
