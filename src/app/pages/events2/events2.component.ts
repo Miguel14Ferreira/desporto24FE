@@ -567,7 +567,9 @@ export class Events2Component implements OnInit {
         next: venue => {
           this.venues = [...this.venues, venue]
             .sort((a, b) => a.name.localeCompare(b.name, 'pt'));
-          this.selectedVenueId = venue.id;
+          // Newly saved venues must go through the same selection flow as existing ones.
+          this.selectVenue(venue.id);
+          this.venueSearch = venue.name + ' · ' + venue.city;
           this.showVenueCreator = false;
           this.venueName = '';
           this.venueType = '';

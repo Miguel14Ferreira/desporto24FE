@@ -776,6 +776,66 @@ describe('Events2Component', () => {
     expect(component.errorMessage).toContain('recinto');
   });
 
+  it('selects a newly created venue and refreshes its search, map and photograph', () => {
+    const venue = {
+      id: 301, name: 'Campo Novo', city: 'Lisboa', address: 'Rua A',
+      sports: 'Padel', latitude: 38.72, longitude: -9.14
+    } as Venue;
+    venueService.create.and.returnValue(of(venue));
+    venueService.listPhotos.and.returnValue(of([{
+      id: 8, photoUrl: '/new-venue.jpg', uploadedByUsername: null,
+      createdAt: '2026-10-14T00:00:00Z'
+    }]));
+    component.sport = 'Padel';
+    component.venueName = 'Campo Novo';
+    component.city = 'Lisboa';
+    component.address = 'Rua A';
+    component.showVenueCreator = true;
+    component.applyCurrentPosition(38.72, -9.14, 17);
+
+    component.saveVenue();
+    fixture.detectChanges();
+
+    expect(venueService.create).toHaveBeenCalledTimes(1);
+    expect(venueService.listPhotos).toHaveBeenCalledWith(301);
+    expect(component.selectedVenueId).toBe(301);
+    expect(component.venueSearch).toBe('Campo Novo · Lisboa');
+    expect(component.city).toBe('Lisboa');
+    expect(component.address).toBe('Rua A');
+    expect(component.latitude).toBe(38.72);
+    expect(component.longitude).toBe(-9.14);
+    expect(component.locationSource).toBeNull();
+    expect(component.selectedVenuePhoto?.photoUrl).toBe('/new-venue.jpg');
+    expect(component.showVenueCreator).toBeFalse();
+    expect(fixture.nativeElement.querySelector('.venue-preview img')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.venue-preview iframe')).not.toBeNull();
+  });
+
+  it('clears an obsolete map point when a newly saved venue has no coordinates', () => {
+    venueService.create.and.returnValue(of({
+      id: 302, name: 'Campo sem mapa', city: 'Lisboa', address: 'Rua B',
+      sports: 'Padel', latitude: null, longitude: null
+    } as Venue));
+    component.sport = 'Padel';
+    component.venueName = 'Campo sem mapa';
+    component.city = 'Lisboa';
+    component.address = 'Rua B';
+    component.applyCurrentPosition(38.72, -9.14);
+
+    component.saveVenue();
+    fixture.detectChanges();
+
+    expect(component.selectedVenueId).toBe(302);
+    expect(component.venueSearch).toBe('Campo sem mapa · Lisboa');
+    expect(component.city).toBe('Lisboa');
+    expect(component.address).toBe('Rua B');
+    expect(component.latitude).toBeNull();
+    expect(component.longitude).toBeNull();
+    expect(component.locationCaptured).toBeFalse();
+    expect(component.selectedVenueMapUrl).toBeNull();
+    expect(fixture.nativeElement.querySelector('.venue-preview iframe')).toBeNull();
+  });
+
   it('should apply a saved venue to the session form', () => {
     component.venues = [{
       id: 5,
