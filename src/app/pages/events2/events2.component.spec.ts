@@ -175,6 +175,38 @@ describe('Events2Component', () => {
     expect(component.selectedVenueId).toBe(801);
   });
 
+  it('prefills an editable sport and locality from Discover', () => {
+    const route = TestBed.inject(ActivatedRoute);
+    spyOn(route.snapshot.queryParamMap, 'get').and.callFake(name =>
+      ({ sport: '  pAdEl  ', city: '  Lisboa  ' } as Record<string, string>)[name] ?? null
+    );
+    const page = TestBed.createComponent(Events2Component);
+    page.detectChanges();
+
+    expect(page.componentInstance.sport).toBe('Padel');
+    expect(page.componentInstance.city).toBe('Lisboa');
+    expect(page.componentInstance.selectedVenueId).toBeNull();
+
+    page.componentInstance.sport = 'Futebol';
+    page.componentInstance.city = 'Sintra';
+    expect(page.componentInstance.sport).toBe('Futebol');
+    expect(page.componentInstance.city).toBe('Sintra');
+    page.destroy();
+  });
+
+  it('ignores an unknown sport and keeps the ordinary form defaults', () => {
+    const route = TestBed.inject(ActivatedRoute);
+    spyOn(route.snapshot.queryParamMap, 'get').and.callFake(name =>
+      ({ sport: 'Desporto Inexistente', city: 'Porto' } as Record<string, string>)[name] ?? null
+    );
+    const page = TestBed.createComponent(Events2Component);
+    page.detectChanges();
+
+    expect(page.componentInstance.sport).toBe('');
+    expect(page.componentInstance.city).toBe('Porto');
+    page.destroy();
+  });
+
   it('keeps the normal session-creation flow unchanged', () => {
     expect(component.findPlayersMode).toBeFalse();
     expect(fixture.nativeElement.querySelector('.page-header h1')?.textContent)

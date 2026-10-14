@@ -203,7 +203,8 @@
               <span>{{ 'discover.when.emptyText' | t }}</span>
               @if (!loadError) {
                 <a class="jynlo-action jynlo-action--primary session-empty-create"
-                  routerLink="/menu/createEvent">
+                  routerLink="/menu/createEvent"
+                  [queryParams]="{ sport: sport.trim() || null, city: location.trim() || null }">
                   {{ 'discover.when.createAction' | t }} <span aria-hidden="true">→</span>
                 </a>
               }

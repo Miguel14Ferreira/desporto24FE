@@ -129,9 +129,19 @@ export class Events2Component implements OnInit {
 
   ngOnInit(): void {
     this.minDate = this.toLocalDateTimeValue(new Date());
+
+    const params = this.route.snapshot.queryParamMap;
+    const communityId = Number(params.get('community'));
+    if (!Number.isFinite(communityId) || communityId <= 0) {
+      const requestedSport = (params.get('sport') || '').trim();
+      this.sport = this.sportsCatalog.find(
+        option => option.toLocaleLowerCase('pt') === requestedSport.toLocaleLowerCase('pt')
+      ) || '';
+      this.city = (params.get('city') || '').trim().slice(0, 120);
+    }
+
     this.loadVenues();
 
-    const communityId = Number(this.route.snapshot.queryParamMap.get('community'));
     if (Number.isFinite(communityId) && communityId > 0) {
       this.communityId = communityId;
       this.communityService.get(communityId)

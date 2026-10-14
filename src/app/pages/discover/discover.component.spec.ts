@@ -414,8 +414,28 @@ describe('DiscoverComponent', () => {
 
     const createLink: HTMLAnchorElement | null =
       fixture.nativeElement.querySelector('.session-empty-create');
-    expect(createLink?.getAttribute('href')).toBe('/menu/createEvent');
+    expect(createLink?.getAttribute('href')).toBe('/menu/createEvent?sport=Padel&city=Lisboa');
     expect(createLink?.textContent).toContain('Criar uma sessão');
+  });
+
+  it('passes the manually selected sport and locality to session creation', () => {
+    component.onSportChange('Ténis');
+    component.onLocationChange('Sintra');
+    component.search();
+    fixture.detectChanges();
+
+    const link: HTMLAnchorElement | null =
+      fixture.nativeElement.querySelector('.session-empty-create');
+    expect(link?.getAttribute('href')).toBe('/menu/createEvent?sport=T%C3%A9nis&city=Sintra');
+  });
+
+  it('does not add empty sport or locality query parameters to session creation', () => {
+    component.clear();
+    fixture.detectChanges();
+
+    const link: HTMLAnchorElement | null =
+      fixture.nativeElement.querySelector('.session-empty-create');
+    expect(link?.getAttribute('href')).toBe('/menu/createEvent');
   });
 
   it('hides the create-session empty action when activities are available', () => {
