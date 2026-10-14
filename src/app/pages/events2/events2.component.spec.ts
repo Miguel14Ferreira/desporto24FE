@@ -5,7 +5,7 @@ import { of, Subject, throwError } from 'rxjs';
 import { Events2Component } from './events2.component';
 import { Venue } from '../model/venue';
 import { SessionService } from '../../services/session.service';
-import { VenueService } from '../../services/venue.service';
+import { VenuePhoto, VenueService } from '../../services/venue.service';
 import { TEST_IMPORTS, TEST_PROVIDERS } from '../../testing/test-providers';
 
 describe('Events2Component', () => {
@@ -446,6 +446,71 @@ describe('Events2Component', () => {
     expect(component.latitude).toBe(38.7);
     expect(component.longitude).toBe(-9.4);
     expect(component.gpsAccuracyMeters).toBe(20);
+  });
+
+  it('keeps the latest venue photograph when photo responses arrive out of order', () => {
+    const firstPhotos = new Subject<VenuePhoto[]>();
+    const secondPhotos = new Subject<VenuePhoto[]>();
+    venueService.listPhotos.and.callFake(id =>
+      id === 101 ? firstPhotos.asObservable() : secondPhotos.asObservable()
+    );
+    component.venues = [
+      { id: 101, name: 'Primeiro Campo', city: 'Lisboa', address: 'Rua A',
+        sports: 'Padel', latitude: 38.72, longitude: -9.14 } as Venue,
+      { id: 102, name: 'Segundo Campo', city: 'Porto', address: 'Rua B',
+        sports: 'Padel', latitude: 41.15, longitude: -8.61 } as Venue
+    ];
+
+    component.selectVenue(101);
+    component.selectVenue(102);
+    expect(component.venuePhotoLoading).toBeTrue();
+
+    firstPhotos.next([{
+      id: 1, photoUrl: '/first.jpg', uploadedByUsername: null,
+      createdAt: '2026-10-14T00:00:00Z'
+    }]);
+    firstPhotos.complete();
+
+    expect(component.selectedVenuePhoto).toBeNull();
+    expect(component.venuePhotoLoading).toBeTrue();
+
+    secondPhotos.next([{
+      id: 2, photoUrl: '/second.jpg', uploadedByUsername: null,
+      createdAt: '2026-10-14T00:00:00Z'
+    }]);
+    secondPhotos.complete();
+    fixture.detectChanges();
+
+    expect(component.selectedVenueId).toBe(102);
+    expect(component.selectedVenuePhoto?.photoUrl).toBe('/second.jpg');
+    expect(component.venuePhotoLoading).toBeFalse();
+    const preview = fixture.nativeElement.querySelector('.venue-preview img') as HTMLImageElement;
+    expect(preview.getAttribute('src')).toBe('/second.jpg');
+  });
+
+  it('ignores a pending venue photograph after switching to the Maps option', () => {
+    const pending = new Subject<VenuePhoto[]>();
+    venueService.listPhotos.and.returnValue(pending.asObservable());
+    component.venues = [{
+      id: 101, name: 'Campo', city: 'Lisboa', address: 'Rua A',
+      sports: 'Padel', latitude: 38.72, longitude: -9.14
+    } as Venue];
+
+    component.selectVenue(101);
+    expect(component.venuePhotoLoading).toBeTrue();
+    component.useMapLinkVenue();
+
+    pending.next([{
+      id: 1, photoUrl: '/old.jpg', uploadedByUsername: null,
+      createdAt: '2026-10-14T00:00:00Z'
+    }]);
+    pending.complete();
+    fixture.detectChanges();
+
+    expect(component.selectedVenueId).toBeNull();
+    expect(component.selectedVenuePhoto).toBeNull();
+    expect(component.venuePhotoLoading).toBeFalse();
+    expect(fixture.nativeElement.querySelector('.venue-preview img')).toBeNull();
   });
 
   it('rejects a venue that is incompatible with the selected sport', () => {

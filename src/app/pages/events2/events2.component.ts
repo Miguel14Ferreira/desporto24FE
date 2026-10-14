@@ -92,6 +92,7 @@ export class Events2Component implements OnInit {
   venueLighting = false;
   selectedVenuePhoto: VenuePhoto | null = null;
   venuePhotoLoading = false;
+  private venuePhotoRequestId = 0;
   selectedVenueMapUrl: SafeResourceUrl | null = null;
   venueMapLink = '';
   venueMapLinkLoading = false;
@@ -311,6 +312,8 @@ export class Events2Component implements OnInit {
   }
 
   selectVenue(value: number | string | null): void {
+    // Invalidate outstanding photo requests before changing the selected venue.
+    this.venuePhotoRequestId++;
     const previousVenue = this.venues.find(venue => venue.id === this.selectedVenueId);
     const venueId = value === null || value === ''
       ? null
@@ -375,21 +378,38 @@ export class Events2Component implements OnInit {
   }
 
   private loadVenuePhoto(venueId: number): void {
+    const requestId = this.venuePhotoRequestId;
+    const isCurrentVenue = () =>
+      requestId === this.venuePhotoRequestId && this.selectedVenueId === venueId;
+
     this.selectedVenuePhoto = null;
     this.venuePhotoLoading = true;
 
     this.venueService.listPhotos(venueId)
       .pipe(
         timeout(10_000),
-        finalize(() => this.venuePhotoLoading = false)
+        finalize(() => {
+          if (isCurrentVenue()) {
+            this.venuePhotoLoading = false;
+          }
+        })
       )
       .subscribe({
-        next: photos => this.selectedVenuePhoto = photos[0] ?? null,
-        error: () => this.selectedVenuePhoto = null
+        next: photos => {
+          if (isCurrentVenue()) {
+            this.selectedVenuePhoto = photos[0] ?? null;
+          }
+        },
+        error: () => {
+          if (isCurrentVenue()) {
+            this.selectedVenuePhoto = null;
+          }
+        }
       });
   }
 
   useMapLinkVenue(): void {
+    this.venuePhotoRequestId++;
     this.selectedVenueId = null;
     this.selectedVenuePhoto = null;
     this.venuePhotoLoading = false;
