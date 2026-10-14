@@ -89,6 +89,36 @@
   font-weight: 700;
 }
 
+.venue-create-sports-search,
+.venue-create-sports-selected {
+  display: grid;
+  gap: 8px;
+}
+
+.venue-create-sports-search label,
+.venue-create-sports-selected strong,
+.venue-create-sports-tools strong {
+  font-weight: 700;
+}
+
+.venue-create-sports-chips,
+.venue-create-sports-tools {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.venue-create-sports-tools {
+  justify-content: space-between;
+}
+
+.venue-create-sports-empty {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #cbd5e1;
+}
+
 .venue-create-sports-error {
   margin: 0;
   color: #fecaca;

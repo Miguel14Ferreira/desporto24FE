@@ -50,11 +50,41 @@
       @if (validationError && selectedSports.length === 0) {
         <p class="venue-create-sports-error venue-create-wide" id="venue-create-sports-error" role="alert">{{ 'venue.create.sportsRequired' | t }}</p>
       }
+      <div class="venue-create-sports-search venue-create-wide">
+        <label for="venue-sport-search">{{ 'venue.create.sportsSearch' | t }}</label>
+        <input type="search" id="venue-sport-search" name="sportSearch"
+          [(ngModel)]="sportSearch" autocomplete="off"
+          [placeholder]="'venue.sportFilterPlaceholder' | t">
+      </div>
+      @if (selectedSports.length > 0) {
+        <div class="venue-create-sports-selected venue-create-wide">
+          <strong>{{ 'venue.create.sportsSelected' | t }}</strong>
+          <div class="venue-create-sports-chips">
+            @for (sport of selectedSports; track sport) {
+              <button type="button" class="jynlo-action jynlo-action--neutral jynlo-action--compact"
+                (click)="toggleSport(sport, false)"
+                [attr.aria-label]="('venue.create.removeSport' | t) + ': ' + sport">
+                {{ sport }} <span aria-hidden="true">×</span>
+              </button>
+            }
+          </div>
+        </div>
+      }
+      <div class="venue-create-sports-tools venue-create-wide">
+        <strong>{{ sportSearch.trim() ? ('venue.create.searchResults' | t) :
+          (showAllSports ? ('venue.create.allSports' | t) : ('venue.create.popularSports' | t)) }}</strong>
+        @if (!sportSearch.trim()) {
+          <button type="button" class="jynlo-action jynlo-action--neutral jynlo-action--compact"
+            (click)="showAllSports = !showAllSports">
+            {{ (showAllSports ? 'venue.create.showPopularSports' : 'venue.create.showAllSports') | t }}
+          </button>
+        }
+      </div>
       <div class="venue-create-options venue-create-wide" role="group"
            aria-labelledby="venue-create-sports-label"
            [attr.aria-invalid]="validationError && selectedSports.length === 0 ? 'true' : null"
            [attr.aria-describedby]="validationError && selectedSports.length === 0 ? 'venue-create-sports-error' : null">
-        @for (sportOption of sportsCatalog; track sportOption) {
+        @for (sportOption of visibleSports; track sportOption) {
           <label class="venue-create-option">
             <input type="checkbox"
               [name]="'sport-' + sportOption"
@@ -62,6 +92,9 @@
               (change)="toggleSport(sportOption, $any($event.target).checked)">
             <span>{{ sportOption }}</span>
           </label>
+        }
+        @if (visibleSports.length === 0) {
+          <p class="venue-create-sports-empty">{{ 'venue.create.noSportsFound' | t }}</p>
         }
       </div>
 

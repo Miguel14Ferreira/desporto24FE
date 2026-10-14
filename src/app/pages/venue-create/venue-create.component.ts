@@ -15,6 +15,23 @@ import { CreateVenueRequest, VenueEnvironmentType, VenueOwnershipType } from '..
 })
 export class VenueCreateComponent {
   readonly sportsCatalog = SPORTS_CATALOG;
+  readonly popularSports = ['Futebol', 'Futsal', 'Padel', 'Ténis', 'Basquetebol', 'Natação', 'Voleibol', 'Musculação'];
+  sportSearch = '';
+  showAllSports = false;
+
+  get visibleSports(): readonly string[] {
+    const query = this.normalizeSport(this.sportSearch.trim());
+    if (query) {
+      return this.sportsCatalog.filter(sport => this.normalizeSport(sport).includes(query));
+    }
+    return this.showAllSports
+      ? this.sportsCatalog
+      : this.popularSports.filter(sport => !this.isSportSelected(sport));
+  }
+
+  private normalizeSport(value: string): string {
+    return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase();
+  }
   name = '';
   city = '';
   address = '';

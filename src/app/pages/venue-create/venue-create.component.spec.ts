@@ -109,6 +109,42 @@ describe('VenueCreateComponent', () => {
     expect(component.isSportSelected('Futsal')).toBeFalse();
   });
 
+  it('starts with eight popular sports and gives access to the whole catalog', () => {
+    const service = jasmine.createSpyObj<VenueService>('VenueService', ['create']);
+    const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
+    const component = new VenueCreateComponent(service, router);
+
+    expect(component.visibleSports).toEqual([
+      'Futebol', 'Futsal', 'Padel', 'Ténis',
+      'Basquetebol', 'Natação', 'Voleibol', 'Musculação'
+    ]);
+
+    component.showAllSports = true;
+    expect(component.visibleSports).toEqual([...component.sportsCatalog]);
+  });
+
+  it('searches all sports without accents and preserves multiple selections', () => {
+    const service = jasmine.createSpyObj<VenueService>('VenueService', ['create']);
+    const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
+    const component = new VenueCreateComponent(service, router);
+
+    component.sportSearch = 'TENIS';
+    expect(component.visibleSports).toContain('Ténis');
+    component.toggleSport('Ténis', true);
+    component.sportSearch = 'natacao';
+    expect(component.visibleSports).toContain('Natação');
+    component.toggleSport('Natação', true);
+
+    expect(component.selectedSports).toEqual(['Ténis', 'Natação']);
+    component.sportSearch = '';
+    expect(component.visibleSports).not.toContain('Ténis');
+    component.toggleSport('Ténis', false);
+    expect(component.visibleSports).toContain('Ténis');
+
+    component.sportSearch = 'desporto inexistente';
+    expect(component.visibleSports).toEqual([]);
+  });
+
   it('shows an error and stays on the form when creation fails', () => {
     const venueService = jasmine.createSpyObj<VenueService>('VenueService', ['create']);
     const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
