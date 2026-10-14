@@ -110,7 +110,7 @@ export class VenueCreateComponent {
   save(): void {
     if (this.saving) return;
 
-    if (!this.name.trim() || !this.city.trim() || !this.address.trim()) {
+    if (!this.name.trim() || !this.city.trim() || !this.address.trim() || this.selectedSports.length === 0) {
       this.validationError = true;
       return;
     }
@@ -119,7 +119,7 @@ export class VenueCreateComponent {
 
     const request: CreateVenueRequest = {
       name: this.name.trim(), city: this.city.trim(), address: this.address.trim(),
-      sports: this.selectedSports.length ? this.selectedSports.join(';') : null, venueType: this.valueOrNull(this.venueType),
+      sports: this.selectedSports.join(';'), venueType: this.valueOrNull(this.venueType),
       ownershipType: this.ownershipType, surfaceType: this.valueOrNull(this.surfaceType),
       environmentType: this.environmentType, indoor: this.environmentType !== 'OUTDOOR', changingRooms: this.changingRooms,
       changingRoomTypes: this.changingRooms && this.changingRoomTypes.length ? this.changingRoomTypes.join(';') : null, toilets: this.toilets,

@@ -23,6 +23,31 @@ describe('VenueCreateComponent', () => {
     expect(component.saving).toBeFalse();
   });
 
+  it('requires a selected sport before creating a venue', () => {
+    const venueService = jasmine.createSpyObj<VenueService>('VenueService', ['create']);
+    const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
+    venueService.create.and.returnValue(of({ id: 9 } as Venue));
+    const component = new VenueCreateComponent(venueService, router);
+    component.name = 'Pavilhão Central';
+    component.city = 'Lisboa';
+    component.address = 'Rua do Desporto';
+
+    component.save();
+
+    expect(component.validationError).toBeTrue();
+    expect(component.saving).toBeFalse();
+    expect(venueService.create).not.toHaveBeenCalled();
+
+    component.toggleSport('Padel', true);
+    component.save();
+
+    expect(component.validationError).toBeFalse();
+    expect(venueService.create).toHaveBeenCalledOnceWith(
+      jasmine.objectContaining({ sports: 'Padel' })
+    );
+    expect(router.navigate).toHaveBeenCalledWith(['/menu/venues', 9]);
+  });
+
   it('creates the venue and navigates to its detail page', () => {
     const venueService = jasmine.createSpyObj<VenueService>('VenueService', ['create']);
     const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
@@ -93,6 +118,7 @@ describe('VenueCreateComponent', () => {
     component.name = 'Pavilhão Central';
     component.city = 'Lisboa';
     component.address = 'Rua do Desporto';
+    component.selectedSports = ['Futsal'];
 
     component.save();
 
@@ -147,6 +173,7 @@ describe('VenueCreateComponent', () => {
     component.name = 'Pavilhão Central';
     component.city = 'Lisboa';
     component.address = 'Rua do Desporto';
+    component.selectedSports = ['Futsal'];
     component.toilets = true;
     component.lockers = false;
 

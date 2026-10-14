@@ -46,8 +46,14 @@
       </label>
 
       <h2 class="venue-create-section-title">{{ 'venue.create.characteristics' | t }}</h2>
-
-      <div class="venue-create-options venue-create-wide">
+      <p class="venue-create-sports-label venue-create-wide" id="venue-create-sports-label">{{ 'venue.create.sportsLabel' | t }} *</p>
+      @if (validationError && selectedSports.length === 0) {
+        <p class="venue-create-sports-error venue-create-wide" id="venue-create-sports-error" role="alert">{{ 'venue.create.sportsRequired' | t }}</p>
+      }
+      <div class="venue-create-options venue-create-wide" role="group"
+           aria-labelledby="venue-create-sports-label"
+           [attr.aria-invalid]="validationError && selectedSports.length === 0 ? 'true' : null"
+           [attr.aria-describedby]="validationError && selectedSports.length === 0 ? 'venue-create-sports-error' : null">
         @for (sportOption of sportsCatalog; track sportOption) {
           <label class="venue-create-option">
             <input type="checkbox"
@@ -370,7 +376,7 @@
       </div>
 
       <div class="venue-create-actions venue-create-wide">
-        @if (validationError) {
+        @if (validationError && (!name.trim() || !city.trim() || !address.trim())) {
           <span id="venue-required-fields-error" class="venue-create-error" role="alert" aria-live="assertive">{{ 'venue.requiredFields' | t }}</span>
         }
         @if (saveError) {

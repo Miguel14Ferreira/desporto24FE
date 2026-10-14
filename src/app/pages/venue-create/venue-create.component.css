@@ -84,6 +84,22 @@
   gap: 12px;
 }
 
+.venue-create-sports-label {
+  margin: 0;
+  font-weight: 700;
+}
+
+.venue-create-sports-error {
+  margin: 0;
+  color: #fecaca;
+}
+
+.venue-create-options[aria-invalid='true'] {
+  outline: 2px solid #f87171;
+  outline-offset: 4px;
+  border-radius: 12px;
+}
+
 .venue-create-form .venue-create-option {
   display: flex;
   align-items: center;
