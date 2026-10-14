@@ -163,6 +163,15 @@ export class EventsComponent implements OnInit {
       && Date.parse(session.gameDate) > Date.now();
   }
 
+  canJoinWaitlist(session: SessionSummary): boolean {
+    return !session.privateGame
+      && !session.joinedByViewer
+      && !session.waitlistedByViewer
+      && this.vacancies(session) === 0
+      && session.status?.toUpperCase() === 'FULL'
+      && Date.parse(session.gameDate) > Date.now();
+  }
+
   toggleAdvancedFilters(): void {
     this.showAdvancedFilters = !this.showAdvancedFilters;
   }

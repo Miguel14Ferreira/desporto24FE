@@ -232,9 +232,10 @@
 
             <a
               class="session-action jynlo-action jynlo-action--neutral"
-              [class.session-action--join]="canJoin(session)"
+              [class.session-action--join]="canJoin(session) || canJoinWaitlist(session)"
               [routerLink]="['/menu/events', session.id]">
-              {{ canJoin(session) ? ('events.joinNow' | t) : ('mySessions.details' | t) }}
+              {{ (canJoin(session) ? 'events.joinNow'
+                : (canJoinWaitlist(session) ? 'session.joinWaitlist' : 'mySessions.details')) | t }}
               <span>→</span>
             </a>
           </article>
