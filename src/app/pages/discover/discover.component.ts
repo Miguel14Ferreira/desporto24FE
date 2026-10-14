@@ -22,6 +22,8 @@ export class DiscoverComponent implements OnInit {
 
   sport = '';
   location = '';
+  private sportEdited = false;
+  private locationEdited = false;
   venues: Venue[] = [];
   topVenueResults: Venue[] = [];
   sessions: SessionSummary[] = [];
@@ -58,15 +60,35 @@ export class DiscoverComponent implements OnInit {
       )
       .subscribe(profile => {
         if (profile) {
-          this.sport = profile.favoriteSports
-            ?.split(',')
-            .map(value => value.trim())
-            .find(Boolean) || '';
+          if (!this.sportEdited) {
+            const favorites = (profile.favoriteSports || '')
+              .split(',')
+              .map(value => value.trim().toLocaleLowerCase('pt'));
+            const preferred = favorites.find(value =>
+              this.sportsCatalog.some(sport => sport.toLocaleLowerCase('pt') === value)
+            );
+            this.sport = this.sportsCatalog.find(sport =>
+              sport.toLocaleLowerCase('pt') === preferred
+            ) || '';
+          }
 
+          if (!this.locationEdited) {
+            this.location = profile.location?.trim() || '';
+          }
         }
 
         this.search();
       });
+  }
+
+  onSportChange(value: string): void {
+    this.sport = value;
+    this.sportEdited = true;
+  }
+
+  onLocationChange(value: string): void {
+    this.location = value;
+    this.locationEdited = true;
   }
 
   search(): void {
@@ -117,6 +139,8 @@ export class DiscoverComponent implements OnInit {
   clear(): void {
     this.sport = '';
     this.location = '';
+    this.sportEdited = true;
+    this.locationEdited = true;
     this.search();
   }
 

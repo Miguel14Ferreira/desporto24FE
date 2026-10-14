@@ -1,11 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 
 import { DiscoverComponent } from './discover.component';
 import { TEST_IMPORTS, TEST_PROVIDERS } from '../../testing/test-providers';
 import { CommunityService } from '../../services/community.service';
 import { SessionService } from '../../services/session.service';
 import { VenueService } from '../../services/venue.service';
+import { CommunityProfile } from '../model/community-profile';
 
 describe('DiscoverComponent', () => {
   let component: DiscoverComponent;
@@ -61,21 +62,83 @@ describe('DiscoverComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should prefill only the sport and ignore legacy profile location', () => {
+  it('prefills sport and locality from the profile and uses both when searching', () => {
     expect(component.sport).toBe('Padel');
-    expect(component.location).toBe('');
-    expect(venueService.search).toHaveBeenCalledWith(undefined, 'Padel');
+    expect(component.location).toBe('Lisboa');
+    expect(venueService.search).toHaveBeenCalledWith('Lisboa', 'Padel');
     expect(sessionService.discover).toHaveBeenCalledWith(
       jasmine.objectContaining({
         sport: 'Padel',
-        city: undefined,
+        city: 'Lisboa',
         availability: 'available'
       })
     );
     expect(communityService.findProfiles).toHaveBeenCalledWith({
       sport: 'Padel',
-      location: undefined
+      location: 'Lisboa'
     });
+    const locality: HTMLInputElement = fixture.nativeElement.querySelector('input[name="location"]');
+    expect(locality.value).toBe('Lisboa');
+  });
+
+  it('keeps manually entered filters if the profile arrives after editing', () => {
+    const delayedProfile = new Subject<CommunityProfile>();
+    communityService.publicProfile.and.returnValue(delayedProfile.asObservable());
+    const page = TestBed.createComponent(DiscoverComponent);
+    page.detectChanges();
+
+    const sportInput: HTMLInputElement = page.nativeElement.querySelector('input[name="sport"]');
+    const localityInput: HTMLInputElement = page.nativeElement.querySelector('input[name="location"]');
+    sportInput.value = 'Ténis';
+    sportInput.dispatchEvent(new Event('input'));
+    localityInput.value = 'Sintra';
+    localityInput.dispatchEvent(new Event('input'));
+    page.detectChanges();
+
+    delayedProfile.next({
+      username: 'miguel', fullName: 'Miguel', nickname: null,
+      country: 'Portugal', location: 'Lisboa', favoriteSports: 'Padel, Futebol',
+      bio: null, skillLevel: null, availability: null, age: 37,
+      profilePicUrl: null, joinDateDisplay: null
+    });
+    delayedProfile.complete();
+
+    expect(page.componentInstance.sport).toBe('Ténis');
+    expect(page.componentInstance.location).toBe('Sintra');
+    expect(venueService.search).toHaveBeenCalledWith('Sintra', 'Ténis');
+    page.destroy();
+  });
+
+  it('uses only sports from the catalog when suggesting a favorite', () => {
+    communityService.publicProfile.and.returnValue(of({
+      username: 'miguel', fullName: 'Miguel', nickname: null,
+      country: 'Portugal', location: '  Porto  ', favoriteSports: 'Not a sport, pAdEl',
+      bio: null, skillLevel: null, availability: null, age: 37,
+      profilePicUrl: null, joinDateDisplay: null
+    }));
+    const page = TestBed.createComponent(DiscoverComponent);
+    page.detectChanges();
+
+    expect(page.componentInstance.sport).toBe('Padel');
+    expect(page.componentInstance.location).toBe('Porto');
+    expect(venueService.search).toHaveBeenCalledWith('Porto', 'Padel');
+    page.destroy();
+  });
+
+  it('keeps discovery broad when the profile has no preferences', () => {
+    communityService.publicProfile.and.returnValue(of({
+      username: 'miguel', fullName: 'Miguel', nickname: null,
+      country: 'Portugal', location: null, favoriteSports: null,
+      bio: null, skillLevel: null, availability: null, age: 37,
+      profilePicUrl: null, joinDateDisplay: null
+    }));
+    const page = TestBed.createComponent(DiscoverComponent);
+    page.detectChanges();
+
+    expect(page.componentInstance.sport).toBe('');
+    expect(page.componentInstance.location).toBe('');
+    expect(venueService.search).toHaveBeenCalledWith(undefined, undefined);
+    page.destroy();
   });
 
   it('opens discovered people directly in their public profiles', () => {

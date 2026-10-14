@@ -21,7 +21,8 @@
             type="text"
             name="sport"
             list="discover-sports"
-            [(ngModel)]="sport"
+            [ngModel]="sport"
+            (ngModelChange)="onSportChange($event)"
             autocomplete="off"
             [placeholder]="'discover.sportPlaceholder' | t">
           <datalist id="discover-sports">
@@ -36,7 +37,8 @@
           <input
             type="text"
             name="location"
-            [(ngModel)]="location"
+            [ngModel]="location"
+            (ngModelChange)="onLocationChange($event)"
             autocomplete="address-level2"
             [placeholder]="'discover.locationPlaceholder' | t">
         </label>
