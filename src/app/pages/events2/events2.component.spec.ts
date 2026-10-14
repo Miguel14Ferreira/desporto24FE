@@ -183,6 +183,41 @@ describe('Events2Component', () => {
     expect(router.navigate).toHaveBeenCalledWith(['/menu/events', 42]);
   });
 
+  it('does not submit the same session twice while creation is pending', () => {
+    const pending = new Subject<any>();
+    sessionService.create.and.returnValue(pending.asObservable());
+    component.sport = 'Padel';
+    component.gameDate = '2099-10-15T18:00';
+    component.city = 'Lisboa';
+    component.address = 'Rua do Campo';
+
+    component.createSession();
+    component.createSession();
+
+    expect(sessionService.create).toHaveBeenCalledTimes(1);
+    expect(component.loading).toBeTrue();
+
+    pending.error(new Error('Service unavailable'));
+    expect(component.loading).toBeFalse();
+  });
+
+  it('allows session creation to be retried after a failed request', () => {
+    const pending = new Subject<any>();
+    sessionService.create.and.returnValue(pending.asObservable());
+    component.sport = 'Padel';
+    component.gameDate = '2099-10-15T18:00';
+    component.city = 'Lisboa';
+    component.address = 'Rua do Campo';
+
+    component.createSession();
+    pending.error(new Error('Service unavailable'));
+
+    expect(component.loading).toBeFalse();
+    component.createSession();
+
+    expect(sessionService.create).toHaveBeenCalledTimes(2);
+  });
+
   it('ignores late GPS success after switching to a venue and back', () => {
     let onSuccess: PositionCallback | undefined;
     spyOn(navigator.geolocation, 'getCurrentPosition').and.callFake(success => {

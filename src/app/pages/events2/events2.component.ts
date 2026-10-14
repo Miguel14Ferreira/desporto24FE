@@ -153,6 +153,10 @@ export class Events2Component implements OnInit {
   }
 
   createSession(): void {
+    if (this.loading) {
+      return;
+    }
+
     const validationError = this.validate();
     if (validationError) {
       this.errorMessage = validationError;
