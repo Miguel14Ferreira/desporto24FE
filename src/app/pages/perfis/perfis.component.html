@@ -143,7 +143,8 @@
 
       <div class="profile-grid">
         @for (profile of profiles; track profile.username) {
-          <a class="profile-card" [routerLink]="['/menu/perfis', profile.username]">
+          <a class="profile-card" [routerLink]="['/menu/perfis', profile.username]"
+             [queryParams]="peopleProfileParams">
             <div class="avatar">
               @if (profileImage(profile); as image) {
                 <img [src]="image" [alt]="profile.username">
@@ -177,8 +178,8 @@
 
     } @else {
       <a class="secondary-action back-to-search jynlo-action jynlo-action--neutral"
-         [routerLink]="backToFriends ? '/menu/friendList' : (backToFeed ? '/menu/feed' : (backToDiscover ? '/menu/discover' : '/menu/perfis'))"
-         [queryParams]="backToDiscover ? discoverReturnParams : null">← {{ (backToFriends ? 'friends.backToFriends' : (backToFeed ? 'feed.backToFeed' : (backToDiscover ? 'discover.backFromProfile' : 'community.backToSearch'))) | t }}</a>
+         [routerLink]="backToFriends ? '/menu/friendList' : (backToFeed ? '/menu/feed' : (backToPeopleSearch ? '/menu/perfis' : (backToDiscover ? '/menu/discover' : '/menu/perfis')))"
+         [queryParams]="backToPeopleSearch ? peopleSearchReturnParams : (backToDiscover ? discoverReturnParams : null)">← {{ (backToFriends ? 'friends.backToFriends' : (backToFeed ? 'feed.backToFeed' : (backToPeopleSearch ? 'community.backToSearch' : (backToDiscover ? 'discover.backFromProfile' : 'community.backToSearch')))) | t }}</a>
       @if (loading) {
         <div class="state-card" role="status">{{ 'common.loading' | t }}</div>
       }

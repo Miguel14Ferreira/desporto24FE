@@ -41,7 +41,40 @@ export class PerfisComponent implements OnInit, OnDestroy {
   }
 
   get backToDiscover(): boolean {
-    return this.route.snapshot.queryParamMap.get('from') === 'discover';
+    const params = this.route.snapshot.queryParamMap;
+    return params.get('from') === 'discover'
+      || (params.get('from') === 'people' && params.get('via') === 'discover');
+  }
+
+  get backToPeopleSearch(): boolean {
+    return this.route.snapshot.queryParamMap.get('from') === 'people';
+  }
+
+  get peopleProfileParams() {
+    return {
+      from: 'people',
+      player: this.searchTerm.trim() || null,
+      sport: this.sportFilter.trim() || null,
+      city: this.locationFilter.trim() || null,
+      minAge: this.minAge,
+      maxAge: this.maxAge,
+      level: this.levelFilter || null,
+      via: this.backToDiscover ? 'discover' : null
+    };
+  }
+
+  get peopleSearchReturnParams() {
+    const params = this.route.snapshot.queryParamMap;
+    return {
+      from: 'people',
+      player: params.get('player'),
+      sport: params.get('sport'),
+      city: params.get('city'),
+      minAge: params.get('minAge'),
+      maxAge: params.get('maxAge'),
+      level: params.get('level'),
+      via: params.get('via')
+    };
   }
 
   get discoverReturnParams(): { sport: string; city: string; player: string } | null {
@@ -96,9 +129,11 @@ export class PerfisComponent implements OnInit, OnDestroy {
     this.backToFriends = params.get('from') === 'friends';
     this.loadFriendUsernames();
 
-    if (params.get('from') === 'discover' && !this.route.snapshot.paramMap.has('username')) {
+    const source = params.get('from');
+    if ((source === 'discover' || source === 'people')
+        && !this.route.snapshot.paramMap.has('username')) {
       this.searchTerm = (params.get('player') || '').trim();
-      if (this.searchTerm) {
+      if (source === 'discover' && this.searchTerm) {
         // Discover name search ignores sport and locality; retain that behaviour.
         this.sportFilter = '';
         this.locationFilter = '';
@@ -106,7 +141,14 @@ export class PerfisComponent implements OnInit, OnDestroy {
         this.sportFilter = (params.get('sport') || '').trim();
         this.locationFilter = (params.get('city') || '').trim();
       }
-      if (this.searchTerm || this.sportFilter || this.locationFilter) {
+      if (source === 'people') {
+        this.minAge = this.ageFromQuery(params.get('minAge'));
+        this.maxAge = this.ageFromQuery(params.get('maxAge'));
+        const level = params.get('level') || '';
+        this.levelFilter = ['BEGINNER', 'INTERMEDIATE', 'ADVANCED'].includes(level) ? level : '';
+      }
+      if (this.searchTerm || this.sportFilter || this.locationFilter
+          || this.minAge !== null || this.maxAge !== null || this.levelFilter) {
         this.search();
       }
     }
@@ -124,6 +166,14 @@ export class PerfisComponent implements OnInit, OnDestroy {
     this.routeSubscription?.unsubscribe();
     this.profileSubscription?.unsubscribe();
     this.detailSubscription?.unsubscribe();
+  }
+
+  private ageFromQuery(value: string | null): number | null {
+    if (value === null || !/^\d+$/.test(value)) {
+      return null;
+    }
+    const age = Number(value);
+    return Number.isInteger(age) && age >= 18 && age <= 99 ? age : null;
   }
 
   private loadFriendUsernames(): void {

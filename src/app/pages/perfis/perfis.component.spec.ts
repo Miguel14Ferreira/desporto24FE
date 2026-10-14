@@ -88,6 +88,138 @@ describe('PerfisComponent', () => {
     fixture.detectChanges();
   });
 
+  it('carries all active advanced-search filters into a player profile', () => {
+    component.searchTerm = 'Ana';
+    component.sportFilter = 'Ténis';
+    component.locationFilter = 'Sintra';
+    component.minAge = 25;
+    component.maxAge = 40;
+    component.levelFilter = 'INTERMEDIATE';
+    component.search();
+    fixture.detectChanges();
+
+    const link: HTMLAnchorElement | null = fixture.nativeElement.querySelector('a.profile-card');
+    expect(link?.getAttribute('href'))
+      .toBe('/menu/perfis/ana?from=people&player=Ana&sport=T%C3%A9nis&city=Sintra&minAge=25&maxAge=40&level=INTERMEDIATE');
+  });
+
+  it('returns from a player profile to the advanced search with its filters', () => {
+    const route = TestBed.inject(ActivatedRoute);
+    const previous = route.snapshot.queryParamMap;
+    Object.defineProperty(route.snapshot, 'queryParamMap', {
+      configurable: true,
+      value: convertToParamMap({
+        from: 'people', player: 'Ana', sport: 'Ténis', city: 'Sintra',
+        minAge: '25', maxAge: '40', level: 'INTERMEDIATE'
+      })
+    });
+    try {
+      routeParams.next(convertToParamMap({ username: 'ana' }));
+      fixture.detectChanges();
+
+      const link: HTMLAnchorElement | null = fixture.nativeElement.querySelector('a.back-to-search');
+      expect(link?.textContent).toContain(t('community.backToSearch'));
+      expect(link?.getAttribute('href'))
+        .toBe('/menu/perfis?from=people&player=Ana&sport=T%C3%A9nis&city=Sintra&minAge=25&maxAge=40&level=INTERMEDIATE');
+    } finally {
+      Object.defineProperty(route.snapshot, 'queryParamMap', {
+        configurable: true, value: previous
+      });
+    }
+  });
+
+  it('restores and reruns advanced people search after returning from a profile', () => {
+    const route = TestBed.inject(ActivatedRoute);
+    const previous = route.snapshot.queryParamMap;
+    Object.defineProperty(route.snapshot, 'queryParamMap', {
+      configurable: true,
+      value: convertToParamMap({
+        from: 'people', player: 'Ana', sport: 'Ténis', city: 'Sintra',
+        minAge: '25', maxAge: '40', level: 'INTERMEDIATE'
+      })
+    });
+    try {
+      const page = TestBed.createComponent(PerfisComponent);
+      page.detectChanges();
+
+      expect(page.componentInstance.searchTerm).toBe('Ana');
+      expect(page.componentInstance.sportFilter).toBe('Ténis');
+      expect(page.componentInstance.locationFilter).toBe('Sintra');
+      expect(page.componentInstance.minAge).toBe(25);
+      expect(page.componentInstance.maxAge).toBe(40);
+      expect(page.componentInstance.levelFilter).toBe('INTERMEDIATE');
+      expect(service.findProfiles).toHaveBeenCalledWith({
+        name: 'Ana', sport: 'Ténis', location: 'Sintra',
+        minAge: 25, maxAge: 40, skillLevel: 'INTERMEDIATE'
+      });
+      expect(page.componentInstance.searched).toBeTrue();
+      page.destroy();
+    } finally {
+      Object.defineProperty(route.snapshot, 'queryParamMap', {
+        configurable: true, value: previous
+      });
+    }
+  });
+
+  it('retains a route back to Discover after a profile round trip', () => {
+    const route = TestBed.inject(ActivatedRoute);
+    const previous = route.snapshot.queryParamMap;
+    Object.defineProperty(route.snapshot, 'queryParamMap', {
+      configurable: true,
+      value: convertToParamMap({ from: 'discover', sport: 'Padel', city: 'Lisboa' })
+    });
+    try {
+      component.sportFilter = 'Padel';
+      component.locationFilter = 'Lisboa';
+      component.search();
+      fixture.detectChanges();
+      const profileLink: HTMLAnchorElement | null = fixture.nativeElement.querySelector('a.profile-card');
+      expect(profileLink?.getAttribute('href'))
+        .toBe('/menu/perfis/ana?from=people&sport=Padel&city=Lisboa&via=discover');
+
+      Object.defineProperty(route.snapshot, 'queryParamMap', {
+        configurable: true,
+        value: convertToParamMap({ from: 'people', sport: 'Padel', city: 'Lisboa', via: 'discover' })
+      });
+      const page = TestBed.createComponent(PerfisComponent);
+      page.detectChanges();
+      const back: HTMLAnchorElement | null = page.nativeElement.querySelector('.discover-return-link');
+      expect(back?.getAttribute('href')).toBe('/menu/discover?sport=Padel&city=Lisboa&player=');
+      page.destroy();
+    } finally {
+      Object.defineProperty(route.snapshot, 'queryParamMap', {
+        configurable: true, value: previous
+      });
+    }
+  });
+
+  it('ignores invalid query filter values when returning to advanced people search', () => {
+    const route = TestBed.inject(ActivatedRoute);
+    const previous = route.snapshot.queryParamMap;
+    Object.defineProperty(route.snapshot, 'queryParamMap', {
+      configurable: true,
+      value: convertToParamMap({
+        from: 'people', sport: 'Padel', minAge: '-2', maxAge: '9999', level: 'UNKNOWN'
+      })
+    });
+    try {
+      const page = TestBed.createComponent(PerfisComponent);
+      page.detectChanges();
+      expect(page.componentInstance.minAge).toBeNull();
+      expect(page.componentInstance.maxAge).toBeNull();
+      expect(page.componentInstance.levelFilter).toBe('');
+      expect(service.findProfiles).toHaveBeenCalledWith({
+        name: undefined, sport: 'Padel', location: undefined,
+        minAge: undefined, maxAge: undefined, skillLevel: undefined
+      });
+      page.destroy();
+    } finally {
+      Object.defineProperty(route.snapshot, 'queryParamMap', {
+        configurable: true, value: previous
+      });
+    }
+  });
+
   it('shows a return to Discover preserving the filters of the advanced search', () => {
     const route = TestBed.inject(ActivatedRoute);
     const previous = route.snapshot.queryParamMap;
