@@ -41,7 +41,8 @@
           @if (session.joined) {
             <div class="membership-status" role="status">
               <strong>{{ 'sessionDetail.joinedTitle' | t }}</strong>
-              <a href="#session-participants">{{ 'sessionDetail.whosGoing' | t }} ↓</a>
+              <button type="button" class="participants-shortcut"
+                      (click)="scrollToParticipants()">{{ 'sessionDetail.whosGoing' | t }} ↓</button>
             </div>
           } @else if (session.waitlisted) {
             <div class="membership-status waitlisted" role="status">

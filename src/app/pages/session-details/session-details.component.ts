@@ -141,6 +141,15 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
     this.realtimeSubscriptions.unsubscribe();
   }
 
+  scrollToParticipants(): void {
+    if (!this.session?.joined) {
+      return;
+    }
+
+    document.getElementById('session-participants')
+      ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
   joinSession(): void {
     if (!this.canJoinSession() || !this.sessionId || this.actionLoading) {
       return;

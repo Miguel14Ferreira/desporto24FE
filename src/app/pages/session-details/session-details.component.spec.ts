@@ -515,7 +515,7 @@ describe('SessionDetailsComponent', () => {
     expect(ics).toContain('LOCATION:Rua do Campo\\, 10');
   });
 
-  it('should show a confirmed membership status linking to the participant list', () => {
+  it('scrolls to the participant list without navigating away from the session', () => {
     component.session = {
       ...session,
       joined: true,
@@ -524,10 +524,28 @@ describe('SessionDetailsComponent', () => {
     fixture.detectChanges();
 
     const banner = fixture.nativeElement.querySelector('.membership-status') as HTMLElement;
-    const participantLink = banner.querySelector('a') as HTMLAnchorElement;
+    const participantSection = fixture.nativeElement.querySelector('#session-participants') as HTMLElement;
+    const button = banner.querySelector('.participants-shortcut') as HTMLButtonElement;
+    const scroll = spyOn(participantSection, 'scrollIntoView');
+    const urlBefore = window.location.href;
+
     expect(banner.textContent).toContain('Já estás dentro');
-    expect(participantLink.getAttribute('href')).toBe('#session-participants');
-    expect(fixture.nativeElement.querySelector('#session-participants')).not.toBeNull();
+    expect(button.type).toBe('button');
+    expect(banner.querySelector('a[href="#session-participants"]')).toBeNull();
+
+    button.click();
+
+    expect(scroll).toHaveBeenCalledOnceWith({ behavior: 'smooth', block: 'start' });
+    expect(window.location.href).toBe(urlBefore);
+  });
+
+  it('does not show participant navigation to someone who has not joined', () => {
+    component.session = { ...session, joined: false };
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.participants-shortcut')).toBeNull();
+    component.scrollToParticipants();
+    expect(fixture.nativeElement.querySelector('#session-participants')).toBeNull();
   });
 
   it('should show the waitlist position in the membership status', () => {
