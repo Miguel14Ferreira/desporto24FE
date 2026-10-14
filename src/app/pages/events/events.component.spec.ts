@@ -51,7 +51,7 @@ describe('EventsComponent', () => {
 
     component.clearFilters();
     expect(component.availableOnly).toBeFalse();
-    expect(sessionService.discover.calls.mostRecent().args[0].availability).toBeUndefined();
+    expect(sessionService.discover.calls.mostRecent().args[0]?.availability).toBeUndefined();
   });
 
   it('should send coordinates and radius when nearby search is active', () => {
