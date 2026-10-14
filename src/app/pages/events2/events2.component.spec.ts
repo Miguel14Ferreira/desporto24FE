@@ -770,6 +770,51 @@ describe('Events2Component', () => {
     expect(preview.getAttribute('src')).toBe('/second.jpg');
   });
 
+  it('clears the previous venue search label when switching to a Maps location', () => {
+    component.sport = 'Padel';
+    component.venues = [{
+      id: 101, name: 'Pavilhão Municipal', city: 'Lisboa',
+      address: 'Rua A', sports: 'Padel', latitude: 38.73, longitude: -9.15
+    } as Venue];
+    component.selectVenue(101);
+    component.venueSearch = 'Pavilhão Municipal · Lisboa';
+
+    component.useMapLinkVenue();
+    fixture.detectChanges();
+
+    expect(component.selectedVenueId).toBeNull();
+    expect(component.venueSearch).toBe('');
+    expect(component.city).toBe('');
+    expect(component.address).toBe('');
+    expect(component.latitude).toBeNull();
+    expect(component.longitude).toBeNull();
+    expect((fixture.nativeElement.querySelector('input[name="venueSearch"]') as HTMLInputElement).value).toBe('');
+  });
+
+  it('submits a manual location without the previously selected venue after switching', () => {
+    component.sport = 'Padel';
+    component.gameDate = '2099-10-15T18:00';
+    component.venues = [{
+      id: 101, name: 'Pavilhão Municipal', city: 'Lisboa',
+      address: 'Rua A', sports: 'Padel', latitude: 38.73, longitude: -9.15
+    } as Venue];
+    component.selectVenue(101);
+    component.venueSearch = 'Pavilhão Municipal · Lisboa';
+
+    component.useMapLinkVenue();
+    component.city = 'Porto';
+    component.address = 'Campo novo';
+    component.createSession();
+
+    expect(sessionService.create).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        venueId: null, city: 'Porto', address: 'Campo novo',
+        latitude: null, longitude: null
+      }),
+      undefined
+    );
+  });
+
   it('ignores a pending venue photograph after switching to the Maps option', () => {
     const pending = new Subject<VenuePhoto[]>();
     venueService.listPhotos.and.returnValue(pending.asObservable());

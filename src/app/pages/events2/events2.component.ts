@@ -435,6 +435,7 @@ export class Events2Component implements OnInit {
     this.invalidateVenueMapLinkRequest();
     this.venuePhotoRequestId++;
     this.selectedVenueId = null;
+    this.venueSearch = '';
     this.selectedVenuePhoto = null;
     this.venuePhotoLoading = false;
     this.selectedVenueMapUrl = null;
