@@ -268,6 +268,15 @@
                 <p class="venue-current-location" style="margin-top:.6rem;">
                   {{ (locationSource === 'gps' ? 'createSession.gpsLocationFound' : 'venue.mapLink.found') | t }}
                 </p>
+                @if (locationSource === 'gps' && gpsAccuracyMeters !== null) {
+                  <p class="gps-accuracy" [class.gps-accuracy-warning]="gpsAccuracyIsLow"
+                     [attr.role]="gpsAccuracyIsLow ? 'status' : null">
+                    {{ 'createSession.gpsAccuracy' | t:{ meters: gpsAccuracyMeters } }}
+                    @if (gpsAccuracyIsLow) {
+                      <span>{{ 'createSession.gpsAccuracyWarning' | t }}</span>
+                    }
+                  </p>
+                }
               </div>
             }
           </div>

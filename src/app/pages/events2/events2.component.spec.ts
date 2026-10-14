@@ -182,6 +182,36 @@ describe('Events2Component', () => {
     expect(router.navigate).toHaveBeenCalledWith(['/menu/events', 42]);
   });
 
+  it('shows the browser-reported GPS accuracy and warns when it exceeds 100 metres', () => {
+    component.applyCurrentPosition(38.72, -9.14, 245.7);
+    fixture.detectChanges();
+
+    expect(component.gpsAccuracyMeters).toBe(246);
+    expect(component.gpsAccuracyIsLow).toBeTrue();
+
+    const accuracy = fixture.nativeElement.querySelector('.gps-accuracy') as HTMLElement;
+    expect(accuracy.textContent).toContain('246');
+    expect(accuracy.textContent).toContain('aproximada');
+    expect(accuracy.classList.contains('gps-accuracy-warning')).toBeTrue();
+  });
+
+  it('shows precise GPS estimates without warning and clears them on removal', () => {
+    component.applyCurrentPosition(38.72, -9.14, 19.4);
+    fixture.detectChanges();
+
+    expect(component.gpsAccuracyMeters).toBe(19);
+    expect(component.gpsAccuracyIsLow).toBeFalse();
+
+    const accuracy = fixture.nativeElement.querySelector('.gps-accuracy') as HTMLElement;
+    expect(accuracy.textContent).toContain('19');
+    expect(accuracy.textContent).not.toContain('aproximada');
+
+    component.clearLocation();
+    fixture.detectChanges();
+    expect(component.gpsAccuracyMeters).toBeNull();
+    expect(fixture.nativeElement.querySelector('.gps-accuracy')).toBeNull();
+  });
+
   it('offers GPS beside the optional Maps link without requiring a link', () => {
     const card = fixture.nativeElement.querySelector('.venue-create-card') as HTMLElement;
     const button = card.querySelector('.gps-location-action') as HTMLButtonElement;

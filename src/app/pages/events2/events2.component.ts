@@ -44,6 +44,11 @@ export class Events2Component implements OnInit {
   locationCaptured = false;
   locationError = '';
   locationSource: 'gps' | 'map' | null = null;
+  gpsAccuracyMeters: number | null = null;
+
+  get gpsAccuracyIsLow(): boolean {
+    return this.gpsAccuracyMeters !== null && this.gpsAccuracyMeters > 100;
+  }
 
   get hasCoordinates(): boolean {
     return this.locationCaptured
@@ -313,6 +318,7 @@ export class Events2Component implements OnInit {
     }
 
     this.locationSource = null;
+    this.gpsAccuracyMeters = null;
     this.venueMapCandidateResolvedUrl = '';
     this.venueMapLink = '';
     this.loadVenuePhoto(venue.id);
@@ -386,6 +392,7 @@ export class Events2Component implements OnInit {
           this.longitude = candidate.longitude;
           this.locationCaptured = true;
           this.locationSource = 'map';
+          this.gpsAccuracyMeters = null;
           this.locationError = '';
           this.venueMapCandidateResolvedUrl = candidate.resolvedUrl;
           this.selectedVenueMapUrl = this.sanitizer.bypassSecurityTrustResourceUrl(
@@ -507,7 +514,8 @@ export class Events2Component implements OnInit {
     this.locating = true;
     navigator.geolocation.getCurrentPosition(
       position => this.ngZone.run(() =>
-        this.applyCurrentPosition(position.coords.latitude, position.coords.longitude)),
+        this.applyCurrentPosition(
+          position.coords.latitude, position.coords.longitude, position.coords.accuracy)),
       () => this.ngZone.run(() => {
         this.locating = false;
         this.locationError = t('feedback.location.error');
@@ -520,7 +528,7 @@ export class Events2Component implements OnInit {
     );
   }
 
-  applyCurrentPosition(latitude: number, longitude: number): void {
+  applyCurrentPosition(latitude: number, longitude: number, accuracyMeters?: number): void {
     if (this.selectedVenueId !== null || !Number.isFinite(latitude)
         || !Number.isFinite(longitude) || Math.abs(latitude) > 90
         || Math.abs(longitude) > 180) {
@@ -533,6 +541,10 @@ export class Events2Component implements OnInit {
     this.longitude = longitude;
     this.locationCaptured = true;
     this.locationSource = 'gps';
+    this.gpsAccuracyMeters = accuracyMeters !== undefined
+      && Number.isFinite(accuracyMeters) && accuracyMeters >= 0
+        ? Math.max(1, Math.round(accuracyMeters))
+        : null;
     this.locating = false;
     this.locationError = '';
     this.venueMapLink = '';
@@ -548,6 +560,7 @@ export class Events2Component implements OnInit {
     this.latitude = null;
     this.longitude = null;
     this.locationSource = null;
+    this.gpsAccuracyMeters = null;
     this.locationError = '';
     if (this.selectedVenueId === null) {
       this.selectedVenueMapUrl = null;
