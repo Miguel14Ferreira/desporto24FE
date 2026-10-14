@@ -119,6 +119,20 @@
           <a class="jynlo-action jynlo-action--neutral" routerLink="/menu/perfis">{{ 'feed.findPeople' | t }}</a>
           <a class="jynlo-action jynlo-action--neutral" routerLink="/menu/createEvent">{{ 'menu.createSession' | t }}</a>
         </nav>
+        @if (suggestedSessions.length > 0) {
+          <section class="feed-suggested-sessions" [attr.aria-label]="'feed.suggestedSessionsTitle' | t">
+            <h3>{{ 'feed.suggestedSessionsTitle' | t }}</h3>
+            @for (session of suggestedSessions; track session.id) {
+              <a class="feed-suggested-session" [routerLink]="['/menu/events', session.id]">
+                <span class="feed-suggested-details">
+                  <strong>{{ session.sport }}</strong>
+                  <span>{{ session.city }} · {{ session.gameDate | date:'dd/MM HH:mm' }}</span>
+                </span>
+                <span class="feed-suggested-link-label">{{ 'feed.viewSession' | t }} →</span>
+              </a>
+            }
+          </section>
+        }
       </div>
     }
 

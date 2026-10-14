@@ -30,6 +30,7 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
   private readonly sessionSearchChanges = new Subject<string>();
   private readonly destroyed = new Subject<void>();
   get filteredSessions(): SessionSummary[] { return this.availableSessions; }
+  suggestedSessions: SessionSummary[] = [];
   selectedSessionId: number | null = null;
   postGameSessionId: number | null = null;
   get postGameSession(): SessionSummary | null {
@@ -111,6 +112,12 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
         return;
       }
       this.discoveredSessions = sessions.filter(session => session.audience !== 'COMMUNITY_ONLY');
+      if (!this.sessionSearch.trim()) {
+        this.suggestedSessions = this.discoveredSessions
+          .filter(session => session.status?.toUpperCase() === 'OPEN'
+            && !session.privateGame && session.participantCount < session.maxParticipants)
+          .slice(0, 3);
+      }
       this.refreshSelectableSessions();
     });
     this.onSessionSearchChange('');

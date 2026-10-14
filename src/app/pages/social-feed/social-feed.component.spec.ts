@@ -1,4 +1,5 @@
 import { SocialFeedComponent } from './social-feed.component';
+import { fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { SessionDetail } from '../model/session-detail';
@@ -262,6 +263,38 @@ describe('SocialFeedComponent post-game entry', () => {
       target.ngOnDestroy();
     }
   });
+});
+
+describe('SocialFeedComponent empty-feed session suggestions', () => {
+  it('reuses available public sessions without suggesting private, full or completed games', fakeAsync(() => {
+    const auth = jasmine.createSpyObj<AuthenticationService>('AuthenticationService', ['isLoggedIn']);
+    auth.isLoggedIn.and.returnValue(true);
+    const feed = jasmine.createSpyObj<SocialFeedService>('SocialFeedService', ['feed']);
+    feed.feed.and.returnValue(of([]));
+    const sessions = jasmine.createSpyObj<SessionService>('SessionService', ['discover', 'mine', 'detail']);
+    const candidate = (id: number, status = 'OPEN', privateGame = false, count = 2,
+      audience: 'PUBLIC' | 'COMMUNITY_ONLY' = 'PUBLIC') => ({
+      id, status, privateGame, audience, sport: 'Futebol', city: 'Lisboa',
+      gameDate: '2026-11-10T18:00:00Z', distanceKm: null,
+      participantCount: count, maxParticipants: 10, priceAmount: 0
+    });
+    sessions.discover.and.returnValue(of([
+      candidate(1), candidate(2, 'CANCELLED'), candidate(3, 'OPEN', true),
+      candidate(4, 'OPEN', false, 10), candidate(5, 'OPEN', false, 2, 'COMMUNITY_ONLY'),
+      candidate(6), candidate(7), candidate(8)
+    ]));
+    sessions.mine.and.returnValue(of({ created: [], joined: [], waitlisted: [] }));
+    const route = { snapshot: { queryParamMap: convertToParamMap({}) } } as unknown as ActivatedRoute;
+    const target = new SocialFeedComponent(feed, sessions, auth, route);
+
+    target.ngOnInit();
+    tick(351);
+
+    expect(target.suggestedSessions.map(session => session.id)).toEqual([1, 6, 7]);
+    expect(sessions.discover).toHaveBeenCalledTimes(1);
+    expect(target.items).toEqual([]);
+    target.ngOnDestroy();
+  }));
 });
 
 describe('SocialFeedComponent completed session selection', () => {

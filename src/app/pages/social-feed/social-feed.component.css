@@ -458,6 +458,43 @@ h1 {
   font-weight: 750;
 }
 
+.feed-suggested-sessions {
+  display: grid;
+  gap: .6rem;
+  margin-top: 1.3rem;
+}
+
+.feed-suggested-sessions h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.state-card .feed-suggested-session {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .9rem;
+  padding: .75rem .9rem;
+}
+
+.feed-suggested-details {
+  display: grid;
+  gap: .2rem;
+  min-width: 0;
+}
+
+.feed-suggested-details span {
+  color: #cbd5e1;
+  font-size: .82rem;
+  font-weight: 500;
+}
+
+.feed-suggested-link-label {
+  color: #7dd3fc;
+  font-size: .8rem;
+  white-space: nowrap;
+}
+
 .error-state,
 .error-feedback {
   color: #fecaca;
