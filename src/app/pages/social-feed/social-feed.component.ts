@@ -115,7 +115,8 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
       if (!this.sessionSearch.trim()) {
         this.suggestedSessions = this.discoveredSessions
           .filter(session => session.status?.toUpperCase() === 'OPEN'
-            && !session.privateGame && session.participantCount < session.maxParticipants)
+            && !session.privateGame && session.participantCount < session.maxParticipants
+            && Date.parse(session.gameDate) > Date.now())
           .slice(0, 3);
       }
       this.refreshSelectableSessions();

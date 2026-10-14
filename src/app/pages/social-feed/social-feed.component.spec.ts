@@ -275,13 +275,15 @@ describe('SocialFeedComponent empty-feed session suggestions', () => {
     const candidate = (id: number, status = 'OPEN', privateGame = false, count = 2,
       audience: 'PUBLIC' | 'COMMUNITY_ONLY' = 'PUBLIC') => ({
       id, status, privateGame, audience, sport: 'Futebol', city: 'Lisboa',
-      gameDate: '2026-11-10T18:00:00Z', distanceKm: null,
+      gameDate: new Date(Date.now() + 86_400_000).toISOString(), distanceKm: null,
       participantCount: count, maxParticipants: 10, priceAmount: 0
     });
     sessions.discover.and.returnValue(of([
       candidate(1), candidate(2, 'CANCELLED'), candidate(3, 'OPEN', true),
       candidate(4, 'OPEN', false, 10), candidate(5, 'OPEN', false, 2, 'COMMUNITY_ONLY'),
-      candidate(6), candidate(7), candidate(8)
+      candidate(6), candidate(7), candidate(8),
+      { ...candidate(9), gameDate: new Date(Date.now() - 86_400_000).toISOString() },
+      { ...candidate(10), gameDate: 'invalid-date' }
     ]));
     sessions.mine.and.returnValue(of({ created: [], joined: [], waitlisted: [] }));
     const route = { snapshot: { queryParamMap: convertToParamMap({}) } } as unknown as ActivatedRoute;
