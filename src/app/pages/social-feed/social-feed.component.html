@@ -226,15 +226,20 @@
                   type="button"
                   [class.active]="item.likedByMe"
                   [disabled]="interactionLoadingPostId !== null"
+                  [attr.aria-label]="item.likedByMe ? ('feed.unlikeAction' | t) : ('feed.likeAction' | t)"
+                  [attr.aria-pressed]="item.likedByMe"
                   (click)="toggleLike(item)">
-                  <span>{{ item.likedByMe ? '♥' : '♡' }}</span>
+                  <span aria-hidden="true">{{ item.likedByMe ? '♥' : '♡' }}</span>
                   {{ item.likeCount }}
                 </button>
 
                 <button
                   type="button"
+                  [attr.aria-label]="item.postId !== null && openCommentPosts.has(item.postId)
+                    ? ('feed.hideCommentsAction' | t) : ('feed.showCommentsAction' | t)"
+                  [attr.aria-expanded]="item.postId !== null && openCommentPosts.has(item.postId)"
                   (click)="toggleComments(item)">
-                  <span>💬</span>
+                  <span aria-hidden="true">💬</span>
                   {{ item.commentCount }}
                 </button>
 
