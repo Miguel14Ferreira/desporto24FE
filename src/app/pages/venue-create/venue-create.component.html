@@ -354,43 +354,50 @@
         </div>
       </details>
 
-      <h2 class="venue-create-section-title">{{ 'venue.create.practicalInfo' | t }}</h2>
-
-      <label class="venue-create-wide">
-        <span>{{ 'venue.services' | t }}</span>
-        <textarea name="services" [(ngModel)]="services"
-          [placeholder]="'venue.servicesPlaceholder' | t"></textarea>
-      </label>
-
-      <label class="venue-create-wide">
-        <span>{{ 'venue.transport' | t }}</span>
-        <textarea name="transport" [(ngModel)]="transport"
-          [placeholder]="'venue.transportPlaceholder' | t"></textarea>
-      </label>
-
-      <label>
-        <span>{{ 'venue.openingHours' | t }}</span>
-        <input type="text" name="openingHours" [(ngModel)]="openingHours"
-          [placeholder]="'venue.openingHoursPlaceholder' | t">
-      </label>
-
-      <label>
-        <span>{{ 'venue.priceInfo' | t }}</span>
-        <input type="text" name="priceInfo" [(ngModel)]="priceInfo"
-          [placeholder]="'venue.priceInfoPlaceholder' | t">
-      </label>
-
-      <label>
-        <span>{{ 'venue.website' | t }}</span>
-        <input type="url" name="website" [(ngModel)]="website" maxlength="255"
-          [placeholder]="'venue.websitePlaceholder' | t">
-      </label>
-
-      <label>
-        <span>{{ 'venue.contact' | t }}</span>
-        <input type="text" name="contact" [(ngModel)]="contact" maxlength="255"
-          [placeholder]="'venue.contactPlaceholder' | t">
-      </label>
+      <details class="venue-create-amenities venue-create-wide">
+        <summary class="venue-create-amenities-summary">
+          <strong>{{ 'venue.create.practicalInfo' | t }}</strong>
+          <span class="venue-create-amenities-closed">{{ 'venue.create.addOptionalDetails' | t }}</span>
+          <span class="venue-create-amenities-open">{{ 'venue.create.hideOptionalDetails' | t }}</span>
+        </summary>
+        <div class="venue-create-options venue-create-wide">
+          <label class="venue-create-wide">
+            <span>{{ 'venue.services' | t }}</span>
+            <textarea name="services" [(ngModel)]="services"
+              [placeholder]="'venue.servicesPlaceholder' | t"></textarea>
+          </label>
+    
+          <label class="venue-create-wide">
+            <span>{{ 'venue.transport' | t }}</span>
+            <textarea name="transport" [(ngModel)]="transport"
+              [placeholder]="'venue.transportPlaceholder' | t"></textarea>
+          </label>
+    
+          <label>
+            <span>{{ 'venue.openingHours' | t }}</span>
+            <input type="text" name="openingHours" [(ngModel)]="openingHours"
+              [placeholder]="'venue.openingHoursPlaceholder' | t">
+          </label>
+    
+          <label>
+            <span>{{ 'venue.priceInfo' | t }}</span>
+            <input type="text" name="priceInfo" [(ngModel)]="priceInfo"
+              [placeholder]="'venue.priceInfoPlaceholder' | t">
+          </label>
+    
+          <label>
+            <span>{{ 'venue.website' | t }}</span>
+            <input type="url" name="website" [(ngModel)]="website" maxlength="255"
+              [placeholder]="'venue.websitePlaceholder' | t">
+          </label>
+    
+          <label>
+            <span>{{ 'venue.contact' | t }}</span>
+            <input type="text" name="contact" [(ngModel)]="contact" maxlength="255"
+              [placeholder]="'venue.contactPlaceholder' | t">
+          </label>
+        </div>
+      </details>
 
       <h2 class="venue-create-section-title">{{ 'venue.create.location' | t }}</h2>
 
