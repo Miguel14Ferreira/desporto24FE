@@ -114,7 +114,11 @@
       <div class="state-card">
         <h2>{{ 'feed.emptyTitle' | t }}</h2>
         <p>{{ 'feed.emptyText' | t }}</p>
-        <a routerLink="/menu/perfis">{{ 'feed.findPeople' | t }}</a>
+        <nav class="feed-empty-actions" [attr.aria-label]="'feed.emptyTitle' | t">
+          <a class="jynlo-action jynlo-action--primary" routerLink="/menu/discover">{{ 'menu.findSessions' | t }}</a>
+          <a class="jynlo-action jynlo-action--neutral" routerLink="/menu/perfis">{{ 'feed.findPeople' | t }}</a>
+          <a class="jynlo-action jynlo-action--neutral" routerLink="/menu/createEvent">{{ 'menu.createSession' | t }}</a>
+        </nav>
       </div>
     }
 

@@ -442,6 +442,22 @@ h1 {
   padding: 1rem;
 }
 
+.feed-empty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .65rem;
+  margin-top: 1rem;
+}
+
+.state-card .feed-empty-actions .jynlo-action {
+  border-color: var(--jynlo-action-border);
+  border-radius: 999px;
+  padding: .58rem .92rem;
+  background: var(--jynlo-action-bg);
+  color: var(--jynlo-action-text);
+  font-weight: 750;
+}
+
 .error-state,
 .error-feedback {
   color: #fecaca;
