@@ -264,7 +264,7 @@ describe('SocialFeedComponent post-game entry', () => {
     } as unknown as ActivatedRoute);
     const target = new SocialFeedComponent(
       feed, sessions, auth, route,
-      { discoverProfiles: () => of([]) } as CommunityService
+      { discoverProfiles: () => of([]) } as unknown as CommunityService
     );
     target.ngOnInit();
     return { target, sessions };
@@ -440,7 +440,7 @@ describe('SocialFeedComponent empty-feed session suggestions', () => {
     const route = { snapshot: { queryParamMap: convertToParamMap({}) } } as unknown as ActivatedRoute;
     const target = new SocialFeedComponent(
       feed, sessions, auth, route,
-      { discoverProfiles: () => of([]) } as CommunityService
+      { discoverProfiles: () => of([]) } as unknown as CommunityService
     );
 
     target.ngOnInit();
@@ -471,7 +471,7 @@ describe('SocialFeedComponent completed session selection', () => {
     const route = { snapshot: { queryParamMap: convertToParamMap({}) } } as unknown as ActivatedRoute;
     const target = new SocialFeedComponent(
       feed, sessions, auth, route,
-      { discoverProfiles: () => of([]) } as CommunityService
+      { discoverProfiles: () => of([]) } as unknown as CommunityService
     );
     target.ngOnInit();
     return { target, sessions };
