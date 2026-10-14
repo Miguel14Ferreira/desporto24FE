@@ -387,6 +387,67 @@ describe('Events2Component', () => {
     );
   });
 
+  it('lets the organiser replace a selected venue with another in a different city', () => {
+    component.venues = [
+      {
+        id: 101, name: 'Campo de Lisboa', city: 'Lisboa',
+        address: 'Rua A', sports: 'Padel', latitude: 38.72, longitude: -9.14
+      } as Venue,
+      {
+        id: 102, name: 'Campo do Porto', city: 'Porto',
+        address: 'Rua B', sports: 'Padel', latitude: 41.15, longitude: -8.61
+      } as Venue
+    ];
+    component.sport = 'Padel';
+    component.selectVenue(101);
+    component.venueSearch = 'Campo de Lisboa · Lisboa';
+    fixture.detectChanges();
+
+    expect(component.selectedVenueId).toBe(101);
+    expect(component.city).toBe('Lisboa');
+    expect(component.venueOptions.map(venue => venue.id)).toEqual([101]);
+
+    const search = fixture.nativeElement.querySelector('input[name="venueSearch"]') as HTMLInputElement;
+    search.value = 'Campo do Porto · Porto';
+    search.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    expect(component.venueSearch).toBe('Campo do Porto · Porto');
+    expect(component.selectedVenueId).toBeNull();
+    expect(component.city).toBe('');
+    expect(component.address).toBe('');
+    expect(component.latitude).toBeNull();
+    expect(component.longitude).toBeNull();
+    expect(component.venueOptions.map(venue => venue.id)).toEqual([102]);
+
+    search.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+
+    expect(component.selectedVenueId).toBe(102);
+    expect(component.city).toBe('Porto');
+    expect(component.address).toBe('Rua B');
+    expect(component.latitude).toBe(41.15);
+    expect(component.longitude).toBe(-8.61);
+  });
+
+  it('keeps manually entered location when searching without a selected venue', () => {
+    component.sport = 'Padel';
+    component.city = 'Lisboa';
+    component.address = 'Campo de treino';
+    component.applyCurrentPosition(38.7, -9.4, 20);
+
+    component.onVenueSearchChanged('Outro campo');
+
+    expect(component.selectedVenueId).toBeNull();
+    expect(component.venueSearch).toBe('Outro campo');
+    expect(component.city).toBe('Lisboa');
+    expect(component.address).toBe('Campo de treino');
+    expect(component.locationSource).toBe('gps');
+    expect(component.latitude).toBe(38.7);
+    expect(component.longitude).toBe(-9.4);
+    expect(component.gpsAccuracyMeters).toBe(20);
+  });
+
   it('rejects a venue that is incompatible with the selected sport', () => {
     component.venues = [{
       id: 101, name: 'Campo de Futsal', city: 'Lisboa',

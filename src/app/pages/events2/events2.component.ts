@@ -278,6 +278,18 @@ export class Events2Component implements OnInit {
     this.selectVenue(null);
   }
 
+  onVenueSearchChanged(value: string): void {
+    if (this.venueSearch === value) {
+      return;
+    }
+
+    this.venueSearch = value;
+    if (this.selectedVenueId !== null) {
+      // Stop filtering suggestions by the city inherited from the old venue.
+      this.selectVenue(null);
+    }
+  }
+
   confirmVenueSelection(): void {
     const normalized = this.venueSearch.trim().toLocaleLowerCase('pt');
     // Only allow venues compatible with the current sport, city and search.
