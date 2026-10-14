@@ -128,9 +128,13 @@
         </select>
       </label>
 
-      <h2 class="venue-create-section-title">{{ 'venue.create.amenities' | t }}</h2>
-
-      <div class="venue-create-options venue-create-wide">
+      <details class="venue-create-amenities venue-create-wide">
+        <summary class="venue-create-amenities-summary">
+          <strong>{{ 'venue.create.amenities' | t }}</strong>
+          <span class="venue-create-amenities-closed">{{ 'venue.create.addOptionalDetails' | t }}</span>
+          <span class="venue-create-amenities-open">{{ 'venue.create.hideOptionalDetails' | t }}</span>
+        </summary>
+        <div class="venue-create-options venue-create-wide">
         <label class="venue-create-option">
           <input type="checkbox" name="changingRooms" [(ngModel)]="changingRooms">
           <span>{{ 'venue.changingRooms' | t }}</span>
@@ -310,7 +314,8 @@
             <option [ngValue]="false">{{ 'venue.boolean.no' | t }}</option>
           </select>
         </label>
-      </div>
+        </div>
+      </details>
 
       <h2 class="venue-create-section-title">{{ 'venue.nearby.title' | t }}</h2>
 

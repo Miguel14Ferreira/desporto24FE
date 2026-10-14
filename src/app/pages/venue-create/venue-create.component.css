@@ -130,6 +130,53 @@
   border-radius: 12px;
 }
 
+.venue-create-amenities {
+  min-width: 0;
+}
+
+.venue-create-amenities-summary {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  cursor: pointer;
+  padding: 14px 16px;
+  border: 1px solid #64748b;
+  border-radius: 12px;
+  background: rgba(148, 163, 184, .09);
+}
+
+.venue-create-amenities-summary::before {
+  content: '▸';
+}
+
+.venue-create-amenities[open] .venue-create-amenities-summary::before {
+  content: '▾';
+}
+
+.venue-create-amenities-summary:focus-visible {
+  outline: 2px solid #7dd3fc;
+  outline-offset: 3px;
+}
+
+.venue-create-amenities-summary span {
+  font-size: .85rem;
+  color: #cbd5e1;
+}
+
+.venue-create-amenities-open,
+.venue-create-amenities[open] .venue-create-amenities-closed {
+  display: none;
+}
+
+.venue-create-amenities[open] .venue-create-amenities-open {
+  display: inline;
+}
+
+.venue-create-amenities > .venue-create-options {
+  margin-top: 14px;
+}
+
 .venue-create-form .venue-create-option {
   display: flex;
   align-items: center;
