@@ -285,7 +285,9 @@ describe('SocialFeedComponent empty-feed session suggestions', () => {
       { ...candidate(12), waitlistedByViewer: true },
       candidate(6), candidate(7), candidate(8),
       { ...candidate(9), gameDate: new Date(Date.now() - 86_400_000).toISOString() },
-      { ...candidate(10), gameDate: 'invalid-date' }
+      { ...candidate(10), gameDate: 'invalid-date' },
+      { ...candidate(13), gameDate: new Date(Date.now() + 3_600_000).toISOString() },
+      { ...candidate(14), gameDate: new Date(Date.now() + 3 * 86_400_000).toISOString() }
     ]));
     sessions.mine.and.returnValue(of({ created: [], joined: [], waitlisted: [] }));
     const route = { snapshot: { queryParamMap: convertToParamMap({}) } } as unknown as ActivatedRoute;
@@ -294,7 +296,7 @@ describe('SocialFeedComponent empty-feed session suggestions', () => {
     target.ngOnInit();
     tick(351);
 
-    expect(target.suggestedSessions.map(session => session.id)).toEqual([1, 6, 7]);
+    expect(target.suggestedSessions.map(session => session.id)).toEqual([13, 1, 6]);
     expect(sessions.discover).toHaveBeenCalledTimes(1);
     expect(target.items).toEqual([]);
     target.ngOnDestroy();

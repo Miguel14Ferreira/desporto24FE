@@ -118,6 +118,7 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
             && !session.privateGame && session.participantCount < session.maxParticipants
             && !session.joinedByViewer && !session.waitlistedByViewer
             && Date.parse(session.gameDate) > Date.now())
+          .sort((first, second) => Date.parse(first.gameDate) - Date.parse(second.gameDate))
           .slice(0, 3);
       }
       this.refreshSelectableSessions();
