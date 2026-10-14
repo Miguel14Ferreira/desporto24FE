@@ -140,6 +140,92 @@ describe('DiscoverComponent', () => {
     page.destroy();
   });
 
+  it('searches nearby venues by device position without changing sessions or people', () => {
+    const original = Object.getOwnPropertyDescriptor(navigator, 'geolocation');
+    Object.defineProperty(navigator, 'geolocation', {
+      configurable: true,
+      value: {
+        getCurrentPosition: (success: PositionCallback) =>
+          success({ coords: { latitude: 38.72, longitude: -9.14 } } as unknown as GeolocationPosition)
+      }
+    });
+    try {
+      component.enableNearbyVenues();
+      expect(component.nearbyVenuePosition).toEqual({ latitude: 38.72, longitude: -9.14 });
+      expect(venueService.search).toHaveBeenCalledWith(undefined, 'Padel', 38.72, -9.14, 25);
+      expect(sessionService.discover).toHaveBeenCalledWith(jasmine.objectContaining({
+        city: 'Lisboa', latitude: undefined, radiusKm: undefined, sort: 'date'
+      }));
+      expect(communityService.findProfiles).toHaveBeenCalledWith({
+        sport: 'Padel', location: 'Lisboa'
+      });
+    } finally {
+      if (original) {
+        Object.defineProperty(navigator, 'geolocation', original);
+      } else {
+        delete (navigator as any).geolocation;
+      }
+    }
+  });
+
+  it('updates nearby venue radius and restores city filtering when the location changes', () => {
+    component.nearbyVenuePosition = { latitude: 38.72, longitude: -9.14 };
+    component.changeNearbyVenueRadius(50);
+    expect(venueService.search).toHaveBeenCalledWith(undefined, 'Padel', 38.72, -9.14, 50);
+
+    component.onLocationChange('Sintra');
+    component.search();
+    expect(component.nearbyVenuePosition).toBeNull();
+    expect(venueService.search).toHaveBeenCalledWith('Sintra', 'Padel');
+  });
+
+  it('keeps the normal venue search when location permission is denied', () => {
+    const original = Object.getOwnPropertyDescriptor(navigator, 'geolocation');
+    Object.defineProperty(navigator, 'geolocation', {
+      configurable: true,
+      value: {
+        getCurrentPosition: (_success: PositionCallback, error: PositionErrorCallback) =>
+          error({} as unknown as GeolocationPositionError)
+      }
+    });
+    try {
+      component.enableNearbyVenues();
+      fixture.detectChanges();
+      expect(component.nearbyVenuePosition).toBeNull();
+      expect(component.nearbyVenueError).toBe('unavailable');
+      expect(fixture.nativeElement.querySelector('.discover-nearby--venues [role="alert"]')).not.toBeNull();
+      expect(venueService.search).toHaveBeenCalledWith('Lisboa', 'Padel');
+    } finally {
+      if (original) {
+        Object.defineProperty(navigator, 'geolocation', original);
+      } else {
+        delete (navigator as any).geolocation;
+      }
+    }
+  });
+
+  it('ignores a late venue GPS response after the user edits their locality', () => {
+    const original = Object.getOwnPropertyDescriptor(navigator, 'geolocation');
+    let resolvePosition: PositionCallback | undefined;
+    Object.defineProperty(navigator, 'geolocation', {
+      configurable: true,
+      value: { getCurrentPosition: (success: PositionCallback) => { resolvePosition = success; } }
+    });
+    try {
+      component.enableNearbyVenues();
+      component.onLocationChange('Sintra');
+      resolvePosition?.({ coords: { latitude: 38.72, longitude: -9.14 } } as unknown as GeolocationPosition);
+      expect(component.nearbyVenuePosition).toBeNull();
+      expect(component.locatingVenues).toBeFalse();
+    } finally {
+      if (original) {
+        Object.defineProperty(navigator, 'geolocation', original);
+      } else {
+        delete (navigator as any).geolocation;
+      }
+    }
+  });
+
   it('uses the requested device position for nearby sessions only', () => {
     const original = Object.getOwnPropertyDescriptor(navigator, 'geolocation');
     Object.defineProperty(navigator, 'geolocation', {

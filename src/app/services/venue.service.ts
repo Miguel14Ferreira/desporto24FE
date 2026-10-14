@@ -44,7 +44,7 @@ export class VenueService {
 
   constructor(private http: HttpClient) {}
 
-  search(city?: string, sport?: string): Observable<Venue[]> {
+  search(city?: string, sport?: string, latitude?: number, longitude?: number, radiusKm?: number): Observable<Venue[]> {
     let params = new HttpParams();
 
     if (city?.trim()) {
@@ -52,6 +52,15 @@ export class VenueService {
     }
     if (sport?.trim()) {
       params = params.set('sport', sport.trim());
+    }
+    if (latitude !== undefined) {
+      params = params.set('latitude', String(latitude));
+    }
+    if (longitude !== undefined) {
+      params = params.set('longitude', String(longitude));
+    }
+    if (radiusKm !== undefined) {
+      params = params.set('radiusKm', String(radiusKm));
     }
 
     return this.http.get<Venue[]>(this.baseUrl, { params });

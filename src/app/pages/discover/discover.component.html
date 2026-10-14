@@ -84,6 +84,33 @@
             <span class="result-count">{{ venues.length }}</span>
           </header>
 
+          <div class="discover-nearby discover-nearby--venues">
+            @if (!nearbyVenuePosition) {
+              <button type="button" class="jynlo-action jynlo-action--neutral"
+                (click)="enableNearbyVenues()" [disabled]="locatingVenues">
+                {{ (locatingVenues ? 'discover.nearby.locating' : 'discover.venuesNearby.action') | t }}
+              </button>
+            } @else {
+              <label>
+                <span>{{ 'discover.nearby.radius' | t }}</span>
+                <select [value]="nearbyVenueRadiusKm" (change)="changeNearbyVenueRadius(+$any($event.target).value)">
+                  <option [value]="10">10 km</option>
+                  <option [value]="25">25 km</option>
+                  <option [value]="50">50 km</option>
+                </select>
+              </label>
+              <button type="button" class="jynlo-action jynlo-action--neutral"
+                (click)="disableNearbyVenues(); search()">
+                {{ 'discover.nearby.back' | t }}
+              </button>
+            }
+            <small>{{ 'discover.venuesNearby.hint' | t }}</small>
+            @if (nearbyVenueError) {
+              <p role="alert">{{ (nearbyVenueError === 'unsupported'
+                ? 'feedback.location.unsupported' : 'feedback.location.error') | t }}</p>
+            }
+          </div>
+
           @if (topVenues.length === 0) {
             <div class="pillar-empty">
               <strong>{{ 'discover.where.emptyTitle' | t }}</strong>

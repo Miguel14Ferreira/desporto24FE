@@ -31,6 +31,12 @@ export class DiscoverComponent implements OnInit {
   people: CommunityProfile[] = [];
   topPeopleResults: CommunityProfile[] = [];
 
+  locatingVenues = false;
+  nearbyVenueError = '';
+  nearbyVenueRadiusKm = 25;
+  nearbyVenuePosition: { latitude: number; longitude: number } | null = null;
+  private nearbyVenueRequestId = 0;
+
   locatingSessions = false;
   nearbySessionError = '';
   nearbyRadiusKm = 25;
@@ -96,6 +102,60 @@ export class DiscoverComponent implements OnInit {
     this.location = value;
     this.locationEdited = true;
     this.disableNearbySessions();
+    this.disableNearbyVenues();
+  }
+
+  enableNearbyVenues(): void {
+    if (this.locatingVenues) {
+      return;
+    }
+    this.nearbyVenueError = '';
+    if (!navigator.geolocation) {
+      this.nearbyVenueError = 'unsupported';
+      return;
+    }
+
+    this.locatingVenues = true;
+    const requestId = ++this.nearbyVenueRequestId;
+    navigator.geolocation.getCurrentPosition(
+      position => {
+        if (requestId !== this.nearbyVenueRequestId) {
+          return;
+        }
+        this.locatingVenues = false;
+        const { latitude, longitude } = position.coords;
+        if (!Number.isFinite(latitude) || !Number.isFinite(longitude)
+          || Math.abs(latitude) > 90 || Math.abs(longitude) > 180) {
+          this.nearbyVenueError = 'unavailable';
+          return;
+        }
+        this.nearbyVenuePosition = { latitude, longitude };
+        this.search();
+      },
+      () => {
+        if (requestId !== this.nearbyVenueRequestId) {
+          return;
+        }
+        this.locatingVenues = false;
+        this.nearbyVenueError = 'unavailable';
+      },
+      { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
+    );
+  }
+
+  changeNearbyVenueRadius(radiusKm: number): void {
+    if (!this.nearbyVenuePosition || ![10, 25, 50].includes(radiusKm)) {
+      return;
+    }
+    this.nearbyVenueRadiusKm = radiusKm;
+    this.search();
+  }
+
+  disableNearbyVenues(): void {
+    ++this.nearbyVenueRequestId;
+    this.nearbyVenuePosition = null;
+    this.locatingVenues = false;
+    this.nearbyVenueError = '';
   }
 
   enableNearbySessions(): void {
@@ -162,10 +222,12 @@ export class DiscoverComponent implements OnInit {
 
     forkJoin({
       venues: this.withRecovery(
-        this.venueService.search(
-          location || undefined,
-          sport || undefined
-        ),
+        this.nearbyVenuePosition
+          ? this.venueService.search(
+              undefined, sport || undefined,
+              this.nearbyVenuePosition.latitude, this.nearbyVenuePosition.longitude,
+              this.nearbyVenueRadiusKm)
+          : this.venueService.search(location || undefined, sport || undefined),
         [] as Venue[]
       ),
       sessions: this.withRecovery(
@@ -201,6 +263,7 @@ export class DiscoverComponent implements OnInit {
 
   clear(): void {
     this.disableNearbySessions();
+    this.disableNearbyVenues();
     this.sport = '';
     this.location = '';
     this.sportEdited = true;
