@@ -9,6 +9,13 @@
       </div>
 
       <div class="header-actions">
+        @if (backToDiscover) {
+          <a class="secondary-action jynlo-action jynlo-action--neutral discover-return-link"
+             routerLink="/menu/discover"
+             [queryParams]="discoverReturnParams || { sport: '', city: '', player: '' }">
+            ← {{ 'discover.backFromProfile' | t }}
+          </a>
+        }
         <a class="secondary-action jynlo-action jynlo-action--neutral" routerLink="/menu/friendList">{{ 'friends.title' | t }}</a>
         <a class="secondary-action jynlo-action jynlo-action--neutral" routerLink="/menu/events">{{ 'common.sessions' | t }}</a>
       </div>

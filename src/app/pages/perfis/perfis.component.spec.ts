@@ -88,6 +88,66 @@ describe('PerfisComponent', () => {
     fixture.detectChanges();
   });
 
+  it('shows a return to Discover preserving the filters of the advanced search', () => {
+    const route = TestBed.inject(ActivatedRoute);
+    const previous = route.snapshot.queryParamMap;
+    Object.defineProperty(route.snapshot, 'queryParamMap', {
+      configurable: true,
+      value: convertToParamMap({ from: 'discover', sport: 'Ténis', city: 'Sintra' })
+    });
+    try {
+      fixture.detectChanges();
+      const back: HTMLAnchorElement | null = fixture.nativeElement.querySelector('.discover-return-link');
+      expect(back).not.toBeNull();
+      expect(back?.textContent).toContain(t('discover.backFromProfile'));
+      expect(back?.getAttribute('href')).toBe('/menu/discover?sport=T%C3%A9nis&city=Sintra&player=');
+    } finally {
+      Object.defineProperty(route.snapshot, 'queryParamMap', {
+        configurable: true, value: previous
+      });
+    }
+  });
+
+  it('preserves an applied name when returning from the advanced player search', () => {
+    const route = TestBed.inject(ActivatedRoute);
+    const previous = route.snapshot.queryParamMap;
+    Object.defineProperty(route.snapshot, 'queryParamMap', {
+      configurable: true,
+      value: convertToParamMap({ from: 'discover', player: 'Ana' })
+    });
+    try {
+      fixture.detectChanges();
+      const back: HTMLAnchorElement | null = fixture.nativeElement.querySelector('.discover-return-link');
+      expect(back?.getAttribute('href')).toBe('/menu/discover?sport=&city=&player=Ana');
+    } finally {
+      Object.defineProperty(route.snapshot, 'queryParamMap', {
+        configurable: true, value: previous
+      });
+    }
+  });
+
+  it('keeps cleared Discover filters cleared on return from advanced search', () => {
+    const route = TestBed.inject(ActivatedRoute);
+    const previous = route.snapshot.queryParamMap;
+    Object.defineProperty(route.snapshot, 'queryParamMap', {
+      configurable: true,
+      value: convertToParamMap({ from: 'discover' })
+    });
+    try {
+      fixture.detectChanges();
+      const back: HTMLAnchorElement | null = fixture.nativeElement.querySelector('.discover-return-link');
+      expect(back?.getAttribute('href')).toBe('/menu/discover?sport=&city=&player=');
+    } finally {
+      Object.defineProperty(route.snapshot, 'queryParamMap', {
+        configurable: true, value: previous
+      });
+    }
+  });
+
+  it('does not show a Discover return on an unrelated player search', () => {
+    expect(fixture.nativeElement.querySelector('.discover-return-link')).toBeNull();
+  });
+
   it('applies Discover sport and locality to the advanced people search', () => {
     const route = TestBed.inject(ActivatedRoute);
     const oldQuery = route.snapshot.queryParamMap;
