@@ -772,6 +772,38 @@ describe('SessionDetailsComponent', () => {
     expect(sessionService.join).not.toHaveBeenCalled();
   });
 
+  it('does not offer leaving a completed or cancelled session', () => {
+    for (const status of ['COMPLETED', 'CANCELLED']) {
+      for (const membership of [{ joined: true }, { waitlisted: true }]) {
+        component.session = { ...session, ...membership, status };
+        fixture.detectChanges();
+
+        expect(component.canLeaveSession()).toBeFalse();
+        expect(fixture.nativeElement.querySelector('.participation-panel button.danger-action')).toBeNull();
+
+        component.leaveSession();
+      }
+    }
+
+    expect(sessionService.leave).not.toHaveBeenCalled();
+  });
+
+  it('allows an active participant to leave an open session', () => {
+    component.session = {
+      ...session,
+      joined: true,
+      gameDate: new Date(Date.now() + 3600_000).toISOString()
+    };
+    fixture.detectChanges();
+
+    expect(component.canLeaveSession()).toBeTrue();
+    expect(fixture.nativeElement.querySelector('.participation-panel button.danger-action')).not.toBeNull();
+
+    component.leaveSession();
+
+    expect(sessionService.leave).toHaveBeenCalledOnceWith(7);
+  });
+
   it('should leave a waitlisted session and refresh details', () => {
     component.session = {
       ...session,

@@ -174,7 +174,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
   }
 
   leaveSession(): void {
-    if (!this.sessionId || this.actionLoading || this.isCreator()) {
+    if (!this.canLeaveSession() || !this.sessionId || this.actionLoading) {
       return;
     }
 
@@ -1126,6 +1126,14 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
       return Promise.reject(new Error('Clipboard unavailable'));
     }
     return navigator.clipboard.writeText(url);
+  }
+
+  canLeaveSession(): boolean {
+    const session = this.session;
+    return !!session
+      && (session.joined || session.waitlisted)
+      && !this.isCreator()
+      && (session.status === 'OPEN' || session.status === 'FULL');
   }
 
   canJoinSession(): boolean {

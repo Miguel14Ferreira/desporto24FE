@@ -317,13 +317,15 @@
                   }.
                 </p>
               </div>
-              <button
-                type="button"
-                class="danger-action jynlo-action jynlo-action--danger"
-                [disabled]="actionLoading"
-                (click)="leaveSession()">
-                {{ actionLoading ? ('common.processing' | t) : ('mySessions.leaveWaitlist' | t) }}
-              </button>
+              @if (canLeaveSession()) {
+                <button
+                  type="button"
+                  class="danger-action jynlo-action jynlo-action--danger"
+                  [disabled]="actionLoading"
+                  (click)="leaveSession()">
+                  {{ actionLoading ? ('common.processing' | t) : ('mySessions.leaveWaitlist' | t) }}
+                </button>
+              }
             </section>
           } @else if (session.joined && isCreator()) {
             <section class="participation-panel">
@@ -470,13 +472,15 @@
                 <h2>{{ 'sessionDetail.joinedTitle' | t }}</h2>
                 <p>{{ 'sessionDetail.joinedText' | t }}</p>
               </div>
-              <button
-                type="button"
-                class="danger-action jynlo-action jynlo-action--danger"
-                [disabled]="actionLoading"
-                (click)="leaveSession()">
-                {{ actionLoading ? ('common.processing' | t) : ('sessionDetail.leaveSession' | t) }}
-              </button>
+              @if (canLeaveSession()) {
+                <button
+                  type="button"
+                  class="danger-action jynlo-action jynlo-action--danger"
+                  [disabled]="actionLoading"
+                  (click)="leaveSession()">
+                  {{ actionLoading ? ('common.processing' | t) : ('sessionDetail.leaveSession' | t) }}
+                </button>
+              }
             </section>
           } @else if (!canJoinSession()) {
             <section class="participation-panel">
