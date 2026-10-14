@@ -235,7 +235,7 @@ export class Events2Component implements OnInit {
       const venueSports = (venue.sports || '').toLocaleLowerCase('pt');
       const sportMatches = !sport
         || !venueSports
-        || venueSports.includes(sport);
+        || venueSports.split(/[;,]/).some(venueSport => venueSport.trim() === sport);
 
       const acronym = venue.name
         .split(/\s+/)
@@ -247,6 +247,7 @@ export class Events2Component implements OnInit {
       const searchable = [
         venue.name,
         venue.city,
+        venue.name + ' · ' + venue.city,
         venue.address,
         venue.venueType || '',
         acronym
@@ -279,11 +280,14 @@ export class Events2Component implements OnInit {
 
   confirmVenueSelection(): void {
     const normalized = this.venueSearch.trim().toLocaleLowerCase('pt');
-    const match = this.venues.find(
-      venue =>
-        venue.name.toLocaleLowerCase('pt') === normalized
-        || (venue.name + ' · ' + venue.city).toLocaleLowerCase('pt') === normalized
-    );
+    // Only allow venues compatible with the current sport, city and search.
+    const match = this.sportSelected
+      ? this.venueOptions.find(
+          venue =>
+            venue.name.toLocaleLowerCase('pt') === normalized
+            || (venue.name + ' · ' + venue.city).toLocaleLowerCase('pt') === normalized
+        )
+      : undefined;
 
     if (!match) {
       this.selectVenue(null);

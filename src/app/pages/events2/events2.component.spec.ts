@@ -3,6 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { of, Subject, throwError } from 'rxjs';
 
 import { Events2Component } from './events2.component';
+import { Venue } from '../model/venue';
 import { SessionService } from '../../services/session.service';
 import { VenueService } from '../../services/venue.service';
 import { TEST_IMPORTS, TEST_PROVIDERS } from '../../testing/test-providers';
@@ -384,6 +385,75 @@ describe('Events2Component', () => {
       }),
       undefined
     );
+  });
+
+  it('rejects a venue that is incompatible with the selected sport', () => {
+    component.venues = [{
+      id: 101, name: 'Campo de Futsal', city: 'Lisboa',
+      address: 'Rua A', sports: 'Futsal',
+      latitude: 38.73, longitude: -9.15
+    } as Venue];
+    component.sport = 'Padel';
+    component.venueSearch = 'Campo de Futsal · Lisboa';
+
+    component.confirmVenueSelection();
+
+    expect(component.selectedVenueId).toBeNull();
+    expect(component.city).toBe('');
+    expect(component.address).toBe('');
+    expect(component.latitude).toBeNull();
+    expect(component.longitude).toBeNull();
+  });
+
+  it('does not confuse Futebol with Futebol Americano when checking venue sports', () => {
+    component.venues = [{
+      id: 102, name: 'Campo de Futebol Americano', city: 'Lisboa',
+      address: 'Rua B', sports: 'Futebol Americano',
+      latitude: 38.74, longitude: -9.16
+    } as Venue];
+    component.sport = 'Futebol';
+    component.venueSearch = 'Campo de Futebol Americano · Lisboa';
+
+    expect(component.venueOptions).toEqual([]);
+    component.confirmVenueSelection();
+
+    expect(component.selectedVenueId).toBeNull();
+  });
+
+  it('accepts a compatible venue using its full autocomplete label', () => {
+    component.venues = [{
+      id: 101, name: 'Pavilhão Municipal', city: 'Lisboa',
+      address: 'Rua A', sports: 'Padel;Futsal',
+      latitude: 38.73, longitude: -9.15
+    } as Venue];
+    component.sport = 'Padel';
+    component.venueSearch = 'Pavilhão Municipal · Lisboa';
+
+    expect(component.venueOptions.map(venue => venue.id)).toEqual([101]);
+    component.confirmVenueSelection();
+
+    expect(component.selectedVenueId).toBe(101);
+    expect(component.city).toBe('Lisboa');
+    expect(component.address).toBe('Rua A');
+    expect(component.latitude).toBe(38.73);
+    expect(component.longitude).toBe(-9.15);
+  });
+
+  it('does not accept a venue excluded by the city filter', () => {
+    component.venues = [{
+      id: 101, name: 'Pavilhão Municipal', city: 'Porto',
+      address: 'Rua A', sports: 'Padel',
+      latitude: 41.15, longitude: -8.61
+    } as Venue];
+    component.sport = 'Padel';
+    component.city = 'Lisboa';
+    component.venueSearch = 'Pavilhão Municipal · Porto';
+
+    component.confirmVenueSelection();
+
+    expect(component.selectedVenueId).toBeNull();
+    expect(component.city).toBe('Lisboa');
+    expect(component.address).toBe('');
   });
 
   it('should apply a saved venue to the session form', () => {
