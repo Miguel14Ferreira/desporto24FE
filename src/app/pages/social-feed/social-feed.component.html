@@ -127,6 +127,7 @@
                 <span class="feed-suggested-details">
                   <strong>{{ session.sport }}</strong>
                   <span>{{ session.city }} · {{ session.gameDate | date:'dd/MM HH:mm' }}</span>
+                  <span>{{ session.maxParticipants - session.participantCount }} {{ 'discover.when.vacancies' | t }}</span>
                 </span>
                 <span class="feed-suggested-link-label">{{ 'feed.viewSession' | t }} →</span>
               </a>
