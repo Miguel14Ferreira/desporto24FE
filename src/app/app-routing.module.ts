@@ -18,6 +18,7 @@ import { MySessionsComponent } from './pages/my-sessions/my-sessions.component';
 import { NotificationsComponent } from './pages/notifications/notifications.component';
 import { FriendsComponent } from './pages/friends/friends.component';
 import { AuthenticationGuard } from './guard/authentication.guard';
+import { GuestOnlyGuard } from './guard/guest-only.guard';
 import { AdminGuard } from './guard/admin.guard';
 import { GoogleOnboardingComponent } from './pages/google-onboarding/google-onboarding.component';
 import { NotFoundComponent } from './pages/not-found/not-found.component';
@@ -46,7 +47,7 @@ const routes: Routes = [
   {path:'menu/events',component:EventsComponent,canActivate:[AuthenticationGuard]},
   {path:'menu/login',redirectTo:'/login', pathMatch:'full'},
   {path:'login',component:LoginComponent},
-  {path:'login/registerNewUser',component:CreateaccountComponent},
+  {path:'login/registerNewUser',component:CreateaccountComponent,canActivate:[GuestOnlyGuard]},
   {path:'login/google/complete-profile',component:GoogleOnboardingComponent},
   {path:'menu/createEvent',loadChildren:() => import('./pages/events2/create-event.module').then(m => m.CreateEventModule),canActivate:[AuthenticationGuard]},
   {path:'menu/createEvent/menu', redirectTo:'menu',pathMatch:'full'},
