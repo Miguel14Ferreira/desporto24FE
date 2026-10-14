@@ -51,6 +51,19 @@ describe('FriendsComponent', () => {
     expect(component.friends.length).toBe(1);
   });
 
+  it('uses the shared primary action when the friends list is empty', () => {
+    service.friends.and.returnValue(of([]));
+    component.load();
+    fixture.detectChanges();
+
+    const findPlayers: HTMLAnchorElement = fixture.nativeElement.querySelector(
+      '.state-card a[href="/menu/perfis"]'
+    );
+    expect(findPlayers).toBeTruthy();
+    expect(findPlayers.classList.contains('jynlo-action')).toBeTrue();
+    expect(findPlayers.classList.contains('jynlo-action--primary')).toBeTrue();
+  });
+
   it('should filter friends locally', () => {
     component.filter = 'lisboa';
     expect(component.filteredFriends.length).toBe(1);
