@@ -153,7 +153,7 @@ export class Events2Component implements OnInit {
   }
 
   createSession(): void {
-    if (this.loading) {
+    if (this.loading || this.venueSaving) {
       return;
     }
 

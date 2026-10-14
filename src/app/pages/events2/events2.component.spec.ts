@@ -183,6 +183,67 @@ describe('Events2Component', () => {
     expect(router.navigate).toHaveBeenCalledWith(['/menu/events', 42]);
   });
 
+  it('waits for a newly created venue before submitting the session', () => {
+    const pending = new Subject<Venue>();
+    venueService.create.and.returnValue(pending.asObservable());
+    component.sport = 'Padel';
+    component.gameDate = '2099-10-15T18:00';
+    component.city = 'Lisboa';
+    component.address = 'Rua A';
+    component.venueName = 'Campo Novo';
+
+    component.saveVenue();
+    fixture.detectChanges();
+
+    const submit = fixture.nativeElement.querySelector('button[type="submit"]') as HTMLButtonElement;
+    expect(component.venueSaving).toBeTrue();
+    expect(submit.disabled).toBeTrue();
+
+    component.createSession();
+    expect(sessionService.create).not.toHaveBeenCalled();
+
+    pending.next({
+      id: 303, name: 'Campo Novo', city: 'Lisboa',
+      address: 'Rua A', sports: 'Padel', latitude: null, longitude: null
+    } as Venue);
+    pending.complete();
+    fixture.detectChanges();
+
+    expect(component.venueSaving).toBeFalse();
+    expect(component.selectedVenueId).toBe(303);
+    expect(submit.disabled).toBeFalse();
+
+    component.createSession();
+    expect(sessionService.create).toHaveBeenCalledWith(
+      jasmine.objectContaining({ venueId: 303, sport: 'Padel' }),
+      undefined
+    );
+  });
+
+  it('re-enables session submission after venue creation fails', () => {
+    const pending = new Subject<Venue>();
+    venueService.create.and.returnValue(pending.asObservable());
+    component.sport = 'Padel';
+    component.gameDate = '2099-10-15T18:00';
+    component.city = 'Lisboa';
+    component.address = 'Rua A';
+    component.venueName = 'Campo Novo';
+
+    component.saveVenue();
+    component.createSession();
+    expect(sessionService.create).not.toHaveBeenCalled();
+
+    pending.error(new Error('Service unavailable'));
+    fixture.detectChanges();
+
+    const submit = fixture.nativeElement.querySelector('button[type="submit"]') as HTMLButtonElement;
+    expect(component.venueSaving).toBeFalse();
+    expect(submit.disabled).toBeFalse();
+
+    component.createSession();
+    expect(sessionService.create).toHaveBeenCalledTimes(1);
+  });
+
   it('does not submit the same session twice while creation is pending', () => {
     const pending = new Subject<any>();
     sessionService.create.and.returnValue(pending.asObservable());
