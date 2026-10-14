@@ -295,6 +295,7 @@ export class Events2Component implements OnInit {
   }
 
   selectVenue(value: number | string | null): void {
+    const previousVenue = this.venues.find(venue => venue.id === this.selectedVenueId);
     const venueId = value === null || value === ''
       ? null
       : Number(value);
@@ -307,6 +308,17 @@ export class Events2Component implements OnInit {
       this.selectedVenuePhoto = null;
       this.venuePhotoLoading = false;
       this.selectedVenueMapUrl = null;
+
+      if (previousVenue) {
+        // Do not silently reuse a deselected venue's location for another sport.
+        if (this.city === previousVenue.city) {
+          this.city = '';
+        }
+        if (this.address === previousVenue.address) {
+          this.address = '';
+        }
+        this.clearLocation();
+      }
       return;
     }
 

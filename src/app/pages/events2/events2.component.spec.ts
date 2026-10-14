@@ -350,6 +350,33 @@ describe('Events2Component', () => {
     expect(component.city).toBe('Lisboa');
     expect(component.address).toBe('Rua do Desporto 10');
     expect(component.locationCaptured).toBeTrue();
+
+    component.sport = 'Padel';
+    component.confirmSportSelection();
+
+    expect(component.selectedVenueId).toBeNull();
+    expect(component.city).toBe('');
+    expect(component.address).toBe('');
+    expect(component.locationCaptured).toBeFalse();
+    expect(component.latitude).toBeNull();
+    expect(component.longitude).toBeNull();
+    expect(component.selectedVenueMapUrl).toBeNull();
+  });
+
+  it('preserves manual or GPS location when there was no previously selected venue', () => {
+    component.city = 'Cascais';
+    component.address = 'Campo junto à praia';
+    component.applyCurrentPosition(38.7, -9.4, 18);
+
+    component.selectVenue(null);
+
+    expect(component.city).toBe('Cascais');
+    expect(component.address).toBe('Campo junto à praia');
+    expect(component.locationSource).toBe('gps');
+    expect(component.locationCaptured).toBeTrue();
+    expect(component.latitude).toBe(38.7);
+    expect(component.longitude).toBe(-9.4);
+    expect(component.gpsAccuracyMeters).toBe(18);
   });
 
   it('should reject an invalid recurring session occurrence count', () => {
