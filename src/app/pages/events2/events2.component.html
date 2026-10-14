@@ -215,7 +215,7 @@
               <button
                 type="button"
                 class="secondary-action jynlo-action jynlo-action--neutral"
-                [disabled]="venueMapLinkLoading || !venueMapLink.trim()"
+                [disabled]="venueMapLinkLoading || !venueMapLink.trim() || locating"
                 (click)="resolveVenueMapLink()">
                 {{ venueMapLinkLoading ? ('venue.mapLink.resolving' | t) : ('venue.mapLink.resolve' | t) }}
               </button>
@@ -230,11 +230,33 @@
               }
             </div>
 
+            <div class="gps-location-option">
+              <p class="venue-current-location">{{ 'createSession.gpsLocationHint' | t }}</p>
+              <div class="header-actions">
+                <button
+                  type="button"
+                  class="secondary-action jynlo-action jynlo-action--neutral gps-location-action"
+                  [disabled]="loading || locating || venueMapLinkLoading"
+                  (click)="captureCurrentLocation()">
+                  {{ locating ? ('events.locating' | t) : ('createSession.useLocation' | t) }}
+                </button>
+                @if (locationSource === 'gps') {
+                  <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
+                          [disabled]="loading || locating" (click)="clearLocation()">
+                    {{ 'createSession.removeLocation' | t }}
+                  </button>
+                }
+              </div>
+              @if (locationError) {
+                <div class="location-error" role="alert">{{ locationError }}</div>
+              }
+            </div>
+
             @if (venueMapLinkError) {
-              <div class="location-error">{{ venueMapLinkError }}</div>
+              <div class="location-error" role="alert">{{ venueMapLinkError }}</div>
             }
 
-            @if (venueMapCandidateResolvedUrl && selectedVenueMapUrl && latitude !== null && longitude !== null) {
+            @if (hasCoordinates && selectedVenueMapUrl) {
               <div style="margin-top: .5rem;">
                 <iframe
                   style="display:block;width:100%;height:260px;border:0;border-radius:14px;"
@@ -244,7 +266,7 @@
                   referrerpolicy="no-referrer-when-downgrade">
                 </iframe>
                 <p class="venue-current-location" style="margin-top:.6rem;">
-                  {{ 'venue.mapLink.found' | t }}
+                  {{ (locationSource === 'gps' ? 'createSession.gpsLocationFound' : 'venue.mapLink.found') | t }}
                 </p>
               </div>
             }
@@ -496,48 +518,19 @@
           </label>
 
           <label>
-            <span>{{ 'createSession.address' | t }} *</span>
+            <span>{{ 'createSession.address' | t }} @if (!hasCoordinates) { * }</span>
             <input
               type="text"
               name="address"
               [(ngModel)]="address"
               [disabled]="loading"
               [placeholder]="'createSession.addressPlaceholder' | t">
+            @if (hasCoordinates) {
+              <small class="venue-current-location">{{ 'createSession.addressOptionalWithMapPoint' | t }}</small>
+            }
           </label>
         </div>
       }
-
-      <section class="location-section" [class.location-ready]="locationCaptured">
-        <div>
-          <h2>{{ 'createSession.locationTitle' | t }}</h2>
-          <p>
-            @if (locationCaptured) {
-              {{ 'createSession.locationSaved' | t }}
-            } @else {
-              {{ 'createSession.locationOptional' | t }}
-            }
-          </p>
-          @if (locationError) {
-            <div class="location-error">{{ locationError }}</div>
-          }
-        </div>
-
-        <div class="location-actions">
-          @if (locationCaptured) {
-            <button type="button" class="secondary-action jynlo-action jynlo-action--neutral" [disabled]="loading" (click)="clearLocation()">
-              {{ 'createSession.removeLocation' | t }}
-            </button>
-          } @else {
-            <button
-              type="button"
-              class="secondary-action jynlo-action jynlo-action--neutral"
-              [disabled]="loading || locating"
-              (click)="captureCurrentLocation()">
-              {{ locating ? ('events.locating' | t) : ('createSession.useLocation' | t) }}
-            </button>
-          }
-        </div>
-      </section>
 
       <div class="options-grid">
         @if (!findPlayersMode) {

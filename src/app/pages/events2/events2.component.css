@@ -531,3 +531,12 @@ input[type='datetime-local'] {
     grid-template-columns: 1fr;
   }
 }
+
+/* Keep device GPS next to the alternative Google Maps link. */
+.gps-location-option {
+  display: grid;
+  gap: .7rem;
+  padding-top: .8rem;
+  border-top: 1px solid rgba(255,255,255,.1);
+}
+.gps-location-option .header-actions { flex-wrap: wrap; }

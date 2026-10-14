@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { appTranslate as t } from '../../i18n/i18n.service';
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, NgZone, OnInit } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { finalize, retry, timeout } from 'rxjs';
@@ -43,6 +43,14 @@ export class Events2Component implements OnInit {
   locating = false;
   locationCaptured = false;
   locationError = '';
+  locationSource: 'gps' | 'map' | null = null;
+
+  get hasCoordinates(): boolean {
+    return this.locationCaptured
+      && this.latitude !== null && this.longitude !== null
+      && Number.isFinite(this.latitude) && Number.isFinite(this.longitude)
+      && Math.abs(this.latitude) <= 90 && Math.abs(this.longitude) <= 180;
+  }
 
   loading = false;
   errorMessage = '';
@@ -91,7 +99,8 @@ export class Events2Component implements OnInit {
     private venueService: VenueService,
     private sanitizer: DomSanitizer,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private ngZone: NgZone
   ) {}
 
   get findPlayersMode(): boolean {
@@ -146,7 +155,12 @@ export class Events2Component implements OnInit {
       sport: this.sport.trim(),
       gameDate: new Date(this.gameDate).toISOString(),
       city: this.city.trim(),
-      address: this.address.trim(),
+      address: this.address.trim() || (this.hasCoordinates
+        ? t('createSession.mapPointAddress', {
+            latitude: this.latitude!.toFixed(6),
+            longitude: this.longitude!.toFixed(6)
+          })
+        : ''),
       maxParticipants: Number(this.maxParticipants),
       ...(this.findPlayersMode
         ? { externalConfirmedParticipants: Number(this.confirmedPlayers) - 1 }
@@ -154,8 +168,8 @@ export class Events2Component implements OnInit {
       priceAmount: this.hasPrice ? Number(this.priceAmount ?? 0) : 0,
       privateGame: this.findPlayersMode ? false : this.privateGame,
       password: this.findPlayersMode ? null : (this.privateGame ? this.password.trim() : null),
-      latitude: this.locationCaptured ? this.latitude : null,
-      longitude: this.locationCaptured ? this.longitude : null,
+      latitude: this.hasCoordinates ? this.latitude : null,
+      longitude: this.hasCoordinates ? this.longitude : null,
       communityId: this.communityId,
       venueId: this.selectedVenueId,
       recurrence: this.communityId ? this.recurrence : 'NONE',
@@ -298,6 +312,9 @@ export class Events2Component implements OnInit {
       return;
     }
 
+    this.locationSource = null;
+    this.venueMapCandidateResolvedUrl = '';
+    this.venueMapLink = '';
     this.loadVenuePhoto(venue.id);
     this.selectedVenueMapUrl = venue.latitude !== null && venue.longitude !== null
       ? this.sanitizer.bypassSecurityTrustResourceUrl(
@@ -368,6 +385,8 @@ export class Events2Component implements OnInit {
           this.latitude = candidate.latitude;
           this.longitude = candidate.longitude;
           this.locationCaptured = true;
+          this.locationSource = 'map';
+          this.locationError = '';
           this.venueMapCandidateResolvedUrl = candidate.resolvedUrl;
           this.selectedVenueMapUrl = this.sanitizer.bypassSecurityTrustResourceUrl(
             'https://www.google.com/maps?q='
@@ -475,34 +494,52 @@ export class Events2Component implements OnInit {
   }
 
   captureCurrentLocation(): void {
-    this.locationError = '';
+    if (this.locating || this.loading || this.selectedVenueId !== null) {
+      return;
+    }
 
+    this.locationError = '';
     if (!navigator.geolocation) {
       this.locationError = t('feedback.location.unsupported');
       return;
     }
 
     this.locating = true;
-
     navigator.geolocation.getCurrentPosition(
-      position => {
-        this.latitude = position.coords.latitude;
-        this.longitude = position.coords.longitude;
-        this.locationCaptured = true;
-        this.locating = false;
-      },
-      () => {
-        this.locationCaptured = false;
-        this.latitude = null;
-        this.longitude = null;
+      position => this.ngZone.run(() =>
+        this.applyCurrentPosition(position.coords.latitude, position.coords.longitude)),
+      () => this.ngZone.run(() => {
         this.locating = false;
         this.locationError = t('feedback.location.error');
-      },
+      }),
       {
-        enableHighAccuracy: false,
-        timeout: 10000,
-        maximumAge: 300000
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0
       }
+    );
+  }
+
+  applyCurrentPosition(latitude: number, longitude: number): void {
+    if (this.selectedVenueId !== null || !Number.isFinite(latitude)
+        || !Number.isFinite(longitude) || Math.abs(latitude) > 90
+        || Math.abs(longitude) > 180) {
+      this.locating = false;
+      this.locationError = t('feedback.location.error');
+      return;
+    }
+
+    this.latitude = latitude;
+    this.longitude = longitude;
+    this.locationCaptured = true;
+    this.locationSource = 'gps';
+    this.locating = false;
+    this.locationError = '';
+    this.venueMapLink = '';
+    this.venueMapLinkError = '';
+    this.venueMapCandidateResolvedUrl = '';
+    this.selectedVenueMapUrl = this.sanitizer.bypassSecurityTrustResourceUrl(
+      'https://www.google.com/maps?q=' + latitude + ',' + longitude + '&z=17&output=embed'
     );
   }
 
@@ -510,7 +547,13 @@ export class Events2Component implements OnInit {
     this.locationCaptured = false;
     this.latitude = null;
     this.longitude = null;
+    this.locationSource = null;
     this.locationError = '';
+    if (this.selectedVenueId === null) {
+      this.selectedVenueMapUrl = null;
+      this.venueMapCandidateResolvedUrl = '';
+      this.venueMapLinkError = '';
+    }
   }
 
   onPhotoChange(event: Event): void {
@@ -549,8 +592,9 @@ export class Events2Component implements OnInit {
       return 'Seleciona um desporto da lista.';
     }
 
-    if (!this.gameDate || !this.city.trim() || !this.address.trim()) {
-      return 'Preenche a data, localidade e morada.';
+    if (!this.gameDate || !this.city.trim()
+        || (!this.address.trim() && !this.hasCoordinates)) {
+      return 'Preenche a data e a localidade. Sem localização no mapa, indica também a morada.';
     }
 
     const city = this.city.trim();

@@ -182,6 +182,66 @@ describe('Events2Component', () => {
     expect(router.navigate).toHaveBeenCalledWith(['/menu/events', 42]);
   });
 
+  it('offers GPS beside the optional Maps link without requiring a link', () => {
+    const card = fixture.nativeElement.querySelector('.venue-create-card') as HTMLElement;
+    const button = card.querySelector('.gps-location-action') as HTMLButtonElement;
+    expect(button).not.toBeNull();
+    expect(button.textContent).toContain('Usar localização atual');
+    const capture = spyOn(component, 'captureCurrentLocation');
+    button.click();
+    expect(capture).toHaveBeenCalledTimes(1);
+    expect(component.venueMapLink).toBe('');
+    expect(fixture.nativeElement.querySelector('.location-section')).toBeNull();
+  });
+
+  it('saves shared GPS coordinates without requiring an invented street address', () => {
+    component.sport = 'Padel';
+    component.gameDate = '2099-10-15T18:00';
+    component.city = 'Lisboa';
+    component.address = '';
+    component.venueMapLink = 'https://maps.app.goo.gl/test';
+    component.venueMapCandidateResolvedUrl = 'https://maps.google.com/old';
+
+    component.applyCurrentPosition(38.72, -9.14);
+    fixture.detectChanges();
+
+    expect(component.hasCoordinates).toBeTrue();
+    expect(component.locationSource).toBe('gps');
+    expect(component.venueMapLink).toBe('');
+    expect(component.venueMapCandidateResolvedUrl).toBe('');
+    expect(fixture.nativeElement.querySelector('.venue-create-card iframe')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('input[name="address"]')?.closest('label')?.textContent)
+      .toContain('opcional');
+
+    component.createSession();
+    const request = sessionService.create.calls.mostRecent().args[0];
+    expect(request).toEqual(jasmine.objectContaining({
+      venueId: null, latitude: 38.72, longitude: -9.14, city: 'Lisboa'
+    }));
+    expect(request.address).toContain('38.720000');
+    expect(request.address).toContain('-9.140000');
+  });
+
+  it('requires locality and allows the user to remove a shared GPS point', () => {
+    component.sport = 'Padel';
+    component.gameDate = '2099-10-15T18:00';
+    component.applyCurrentPosition(38.72, -9.14);
+
+    component.createSession();
+    expect(sessionService.create).not.toHaveBeenCalled();
+
+    component.clearLocation();
+    fixture.detectChanges();
+
+    expect(component.hasCoordinates).toBeFalse();
+    expect(component.latitude).toBeNull();
+    expect(component.longitude).toBeNull();
+    expect(component.selectedVenueMapUrl).toBeNull();
+    expect(fixture.nativeElement.querySelector('.venue-create-card iframe')).toBeNull();
+    expect(fixture.nativeElement.querySelector('input[name="address"]')?.closest('label')?.textContent)
+      .not.toContain('opcional');
+  });
+
   it('should include captured coordinates when creating a session', () => {
     component.sport = 'Padel';
     component.gameDate = '2099-10-15T18:00';
