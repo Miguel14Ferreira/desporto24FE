@@ -442,6 +442,10 @@ h1 {
   padding: 1rem;
 }
 
+.feed-empty-state {
+  margin-bottom: 1rem;
+}
+
 .feed-empty-actions {
   display: flex;
   flex-wrap: wrap;
