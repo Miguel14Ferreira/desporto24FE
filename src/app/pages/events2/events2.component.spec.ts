@@ -754,6 +754,52 @@ describe('Events2Component', () => {
     expect(fixture.nativeElement.querySelector('.venue-preview img')).toBeNull();
   });
 
+  it('finds venues by name, address and city without accents', () => {
+    component.sport = 'Padel';
+    component.venues = [{
+      id: 201, name: 'Pavilhão Municipal', city: 'Évora',
+      address: 'Rua da República', sports: 'Padel',
+      latitude: null, longitude: null
+    } as Venue];
+
+    for (const search of ['pavilhao', 'REPUBLICA', 'evora']) {
+      component.venueSearch = search;
+      expect(component.venueOptions.map(venue => venue.id)).toEqual([201]);
+    }
+  });
+
+  it('accepts a venue selection without accents and keeps its official label', () => {
+    component.sport = 'Padel';
+    component.city = 'Evora';
+    component.venues = [{
+      id: 201, name: 'Pavilhão Municipal', city: 'Évora',
+      address: 'Rua da República', sports: 'Padel',
+      latitude: null, longitude: null
+    } as Venue];
+    component.venueSearch = 'PAVILHAO MUNICIPAL · EVORA';
+
+    expect(component.venueOptions.map(venue => venue.id)).toEqual([201]);
+    component.confirmVenueSelection();
+
+    expect(component.selectedVenueId).toBe(201);
+    expect(component.city).toBe('Évora');
+    expect(component.venueSearch).toBe('Pavilhão Municipal · Évora');
+  });
+
+  it('still rejects an incompatible sport when searching without accents', () => {
+    component.sport = 'Padel';
+    component.venues = [{
+      id: 201, name: 'Pavilhão Municipal', city: 'Évora',
+      address: 'Rua da República', sports: 'Futsal',
+      latitude: null, longitude: null
+    } as Venue];
+    component.venueSearch = 'pavilhao municipal · evora';
+
+    expect(component.venueOptions).toEqual([]);
+    component.confirmVenueSelection();
+    expect(component.selectedVenueId).toBeNull();
+  });
+
   it('rejects a venue that is incompatible with the selected sport', () => {
     component.venues = [{
       id: 101, name: 'Campo de Futsal', city: 'Lisboa',

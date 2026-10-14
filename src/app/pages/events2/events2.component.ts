@@ -231,13 +231,13 @@ export class Events2Component implements OnInit {
   }
 
   get venueOptions(): Venue[] {
-    const city = this.city.trim().toLocaleLowerCase('pt');
+    const city = this.normalizeVenueSearch(this.city.trim());
     const sport = this.sport.trim().toLocaleLowerCase('pt');
-    const search = this.venueSearch.trim().toLocaleLowerCase('pt');
+    const search = this.normalizeVenueSearch(this.venueSearch.trim());
 
     const filtered = this.venues.filter(venue => {
       const cityMatches = !city
-        || venue.city.toLocaleLowerCase('pt').includes(city);
+        || this.normalizeVenueSearch(venue.city).includes(city);
 
       const venueSports = (venue.sports || '').toLocaleLowerCase('pt');
       const sportMatches = !sport
@@ -258,9 +258,9 @@ export class Events2Component implements OnInit {
         venue.address,
         venue.venueType || '',
         acronym
-      ].join(' ').toLocaleLowerCase('pt');
-
-      const searchMatches = !search || searchable.includes(search);
+      ].join(' ');
+      const searchMatches = !search
+        || this.normalizeVenueSearch(searchable).includes(search);
 
       return cityMatches && sportMatches && searchMatches;
     });
@@ -285,6 +285,10 @@ export class Events2Component implements OnInit {
     this.selectVenue(null);
   }
 
+  private normalizeVenueSearch(value: string): string {
+    return value.normalize('NFD').replace(/\p{M}/gu, '').toLocaleLowerCase('pt');
+  }
+
   onVenueSearchChanged(value: string): void {
     if (this.venueSearch === value) {
       return;
@@ -298,13 +302,13 @@ export class Events2Component implements OnInit {
   }
 
   confirmVenueSelection(): void {
-    const normalized = this.venueSearch.trim().toLocaleLowerCase('pt');
+    const normalized = this.normalizeVenueSearch(this.venueSearch.trim());
     // Only allow venues compatible with the current sport, city and search.
     const match = this.sportSelected
       ? this.venueOptions.find(
           venue =>
-            venue.name.toLocaleLowerCase('pt') === normalized
-            || (venue.name + ' · ' + venue.city).toLocaleLowerCase('pt') === normalized
+            this.normalizeVenueSearch(venue.name) === normalized
+            || this.normalizeVenueSearch(venue.name + ' · ' + venue.city) === normalized
         )
       : undefined;
 
