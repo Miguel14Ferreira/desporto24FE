@@ -217,9 +217,9 @@
                     class="share-session jynlo-action jynlo-action--neutral"
                     [disabled]="sharingSessionId !== null"
                     (click)="shareSession(item)"
-                    [attr.aria-label]="shareFeedbackSessionId === item.sessionId ? shareFeedbackMessage : 'Partilhar sessão'">
+                    [attr.aria-label]="shareFeedbackSessionId === item.sessionId ? shareFeedbackMessage : ('publicSession.share' | t)">
                     <span aria-hidden="true">↗</span>
-                    {{ shareFeedbackSessionId === item.sessionId ? shareFeedbackMessage : 'Partilhar' }}
+                    {{ shareFeedbackSessionId === item.sessionId ? shareFeedbackMessage : ('publicSession.share' | t) }}
                   </button>
                 }
                 <button
@@ -354,9 +354,9 @@
                                       class="share-session jynlo-action jynlo-action--neutral"
                                       [disabled]="sharingSessionId !== null"
                                       (click)="shareSession(item)"
-                                      [attr.aria-label]="shareFeedbackSessionId === item.sessionId ? shareFeedbackMessage : 'Partilhar sessão'">
+                                      [attr.aria-label]="shareFeedbackSessionId === item.sessionId ? shareFeedbackMessage : ('publicSession.share' | t)">
                                       <span aria-hidden="true">↗</span>
-                                      {{ shareFeedbackSessionId === item.sessionId ? shareFeedbackMessage : 'Partilhar' }}
+                                      {{ shareFeedbackSessionId === item.sessionId ? shareFeedbackMessage : ('publicSession.share' | t) }}
                                     </button>
                 </div>
               }
@@ -389,21 +389,21 @@
                     class="share-session jynlo-action jynlo-action--neutral"
                     [disabled]="sharingSessionId !== null"
                     (click)="shareSession(item)"
-                    [attr.aria-label]="shareFeedbackSessionId === item.sessionId ? shareFeedbackMessage : 'Partilhar sessão'">
+                    [attr.aria-label]="shareFeedbackSessionId === item.sessionId ? shareFeedbackMessage : ('publicSession.share' | t)">
                     <span aria-hidden="true">↗</span>
-                    {{ shareFeedbackSessionId === item.sessionId ? shareFeedbackMessage : 'Partilhar' }}
+                    {{ shareFeedbackSessionId === item.sessionId ? shareFeedbackMessage : ('publicSession.share' | t) }}
                   </button>
                 </div>
               }
             }
             @if (manualShareItem === item && manualShareUrl) {
               <div class="manual-share-link">
-                <label for="feed-share-link">Ligação pública da sessão</label>
+                <label for="feed-share-link">{{ 'publicSession.shareLink' | t }}</label>
                 <div class="manual-share-controls">
                   <input id="feed-share-link" #shareLinkInput type="text"
                          [value]="manualShareUrl" readonly
-                         aria-label="Ligação da sessão para copiar manualmente">
-                  <button class="jynlo-action jynlo-action--neutral" type="button" (click)="shareLinkInput.select()">Selecionar ligação</button>
+                         [attr.aria-label]="'publicSession.shareLink' | t">
+                  <button class="jynlo-action jynlo-action--neutral" type="button" (click)="shareLinkInput.select()">{{ 'publicSession.selectLink' | t }}</button>
                 </div>
               </div>
             }

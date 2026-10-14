@@ -55,7 +55,7 @@ describe('SocialFeedComponent session sharing fallback', () => {
 
     expect(component.manualShareItem).toBe(item);
     expect(component.manualShareUrl).toBe(new URL('/sessions/42', window.location.origin).href);
-    expect(component.shareFeedbackMessage).toContain('Seleciona a ligação');
+    expect(component.shareFeedbackMessage).toBe(t('publicSession.selectLink'));
     expect(component.sharingSessionId).toBeNull();
   });
 
@@ -66,9 +66,28 @@ describe('SocialFeedComponent session sharing fallback', () => {
     await component.shareSession(item);
 
     expect(copy).toHaveBeenCalledWith(new URL('/sessions/42', window.location.origin).href);
-    expect(component.shareFeedbackMessage).toBe('Ligação copiada');
+    expect(component.shareFeedbackMessage).toBe(t('publicSession.linkCopied'));
     expect(component.manualShareItem).toBeNull();
     expect(component.manualShareUrl).toBe('');
+  });
+
+  it('localizes clipboard sharing feedback in English', async () => {
+    const previousLanguage = localStorage.getItem('d24-language');
+    try {
+      localStorage.setItem('d24-language', 'en');
+      makeNativeSharingUnavailable();
+      spyOn<any>(component, 'copyShareUrl').and.returnValue(Promise.resolve());
+
+      await component.shareSession(item);
+
+      expect(component.shareFeedbackMessage).toBe('Link copied');
+    } finally {
+      if (previousLanguage === null) {
+        localStorage.removeItem('d24-language');
+      } else {
+        localStorage.setItem('d24-language', previousLanguage);
+      }
+    }
   });
 
   it('clears an earlier manual link when sharing another session', async () => {

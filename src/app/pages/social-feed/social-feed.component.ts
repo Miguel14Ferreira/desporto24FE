@@ -284,10 +284,16 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
     }
 
     const url = new URL('/sessions/' + sessionId, window.location.origin).href;
-    const title = item.sport ? 'Sessão de ' + item.sport + ' na Jynlo' : 'Sessão na Jynlo';
-    const message = item.city
-      ? 'Vê esta sessão desportiva em ' + item.city + ' na Jynlo!'
-      : 'Vê esta sessão desportiva na Jynlo!';
+    const title = item.sport
+      ? t('publicSession.shareTitle', { sport: item.sport })
+      : t('publicSession.share');
+    const message = item.sport && item.city
+      ? t('publicSession.whatsappSportCity', { sport: item.sport, city: item.city })
+      : item.sport
+        ? t('publicSession.whatsappSport', { sport: item.sport })
+        : item.city
+          ? t('publicSession.whatsappCity', { city: item.city })
+          : t('publicSession.shareMessage');
 
     this.sharingSessionId = sessionId;
     this.shareFeedbackSessionId = null;
@@ -300,7 +306,7 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
         try {
           await navigator.share({ title, text: message, url });
           this.shareFeedbackSessionId = sessionId;
-          this.shareFeedbackMessage = 'Partilhado';
+          this.shareFeedbackMessage = t('publicSession.shared');
           return;
         } catch (error) {
           // Closing the native share sheet is not an error.
@@ -313,12 +319,12 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
 
       await this.copyShareUrl(url);
       this.shareFeedbackSessionId = sessionId;
-      this.shareFeedbackMessage = 'Ligação copiada';
+      this.shareFeedbackMessage = t('publicSession.linkCopied');
     } catch {
       this.manualShareItem = item;
       this.manualShareUrl = url;
       this.shareFeedbackSessionId = sessionId;
-      this.shareFeedbackMessage = 'Seleciona a ligação abaixo';
+      this.shareFeedbackMessage = t('publicSession.selectLink');
     } finally {
       this.sharingSessionId = null;
     }
