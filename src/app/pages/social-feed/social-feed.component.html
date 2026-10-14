@@ -72,7 +72,8 @@
         </div>
       }
 
-      <label class="composer-session-select">
+      @if (showSessionPicker) {
+      <label class="composer-session-select" id="feed-session-picker">
         <span>{{ 'feed.linkPublicSession' | t }}</span>
         <input type="search" [ngModel]="sessionSearch" (ngModelChange)="onSessionSearchChange($event)" [disabled]="posting" [placeholder]="'feed.sessionSearchPlaceholder' | t" [attr.aria-label]="'feed.sessionSearchAria' | t">
         <select [(ngModel)]="selectedSessionId" (ngModelChange)="onLinkedSessionChange($event)" [disabled]="posting || loadingSessions">
@@ -90,6 +91,7 @@
           <p role="status" class="composer-hint">{{ 'feed.noPublicSessions' | t }}</p>
         }
       </label>
+      }
       <div class="composer-actions">
         <label class="image-picker jynlo-action" [class.disabled]="posting">
           <input
@@ -99,6 +101,17 @@
             (change)="onPostImageChange($event)">
           <span>{{ postImagePreview ? ('feed.changeImage' | t) : ('feed.addImage' | t) }}</span>
         </label>
+        @if (selectedSessionId === null) {
+          <button
+            class="composer-session-toggle jynlo-action jynlo-action--neutral"
+            type="button"
+            [disabled]="posting"
+            [attr.aria-expanded]="showSessionPicker"
+            [attr.aria-controls]="showSessionPicker ? 'feed-session-picker' : null"
+            (click)="sessionPickerExpanded = !sessionPickerExpanded">
+            {{ (showSessionPicker ? 'feed.hideSessionPicker' : 'feed.associateSession') | t }}
+          </button>
+        }
         <button
           class="jynlo-action jynlo-action--primary"
           type="button"

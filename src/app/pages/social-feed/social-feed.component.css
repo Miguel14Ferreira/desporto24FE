@@ -211,6 +211,14 @@ h1 {
   font-size: .74rem;
 }
 
+.composer-actions {
+  flex-wrap: wrap;
+}
+
+.composer-session-toggle {
+  flex: 0 1 auto;
+}
+
 .postgame-session-card {
   display: flex;
   align-items: center;

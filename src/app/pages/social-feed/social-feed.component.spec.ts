@@ -19,7 +19,7 @@ describe('SocialFeedComponent discovery sidebar', () => {
   let community: jasmine.SpyObj<CommunityService>;
 
   beforeEach(async () => {
-    feed = jasmine.createSpyObj<SocialFeedService>('SocialFeedService', ['feed']);
+    feed = jasmine.createSpyObj<SocialFeedService>('SocialFeedService', ['feed', 'createPost']);
     feed.feed.and.returnValue(of([]));
     sessions = jasmine.createSpyObj<SessionService>('SessionService', ['discover', 'mine', 'detail']);
     sessions.discover.and.returnValue(of([]));
@@ -41,6 +41,80 @@ describe('SocialFeedComponent discovery sidebar', () => {
     fixture = TestBed.createComponent(SocialFeedComponent);
     component = fixture.componentInstance;
   });
+
+  it('keeps the composer compact until the player opens session selection', fakeAsync(() => {
+    fixture.detectChanges();
+    tick(351);
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    const button = root.querySelector<HTMLButtonElement>('.composer-session-toggle');
+    expect(button).not.toBeNull();
+    expect(root.querySelector('.composer-session-select')).toBeNull();
+    expect(button?.getAttribute('aria-expanded')).toBe('false');
+
+    component.postContent = 'Treino de padel amanhã';
+    button?.click();
+    fixture.detectChanges();
+
+    expect(component.showSessionPicker).toBeTrue();
+    expect(root.querySelector('#feed-session-picker select')).not.toBeNull();
+    expect(button?.getAttribute('aria-expanded')).toBe('true');
+    expect(component.postContent).toBe('Treino de padel amanhã');
+
+    button?.click();
+    fixture.detectChanges();
+
+    expect(component.showSessionPicker).toBeFalse();
+    expect(root.querySelector('.composer-session-select')).toBeNull();
+    expect(component.postContent).toBe('Treino de padel amanhã');
+  }));
+
+  it('keeps linked-session selection visible even when the optional picker is collapsed', fakeAsync(() => {
+    fixture.detectChanges();
+    tick(351);
+
+    component.selectedSessionId = 42;
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    expect(component.showSessionPicker).toBeTrue();
+    expect(root.querySelector('.composer-session-select')).not.toBeNull();
+    expect(root.querySelector('.composer-session-toggle')).toBeNull();
+
+    component.onLinkedSessionChange(null);
+    fixture.detectChanges();
+    expect(component.showSessionPicker).toBeFalse();
+    expect(root.querySelector('.composer-session-toggle')).not.toBeNull();
+  }));
+
+  it('resets optional session selection after publishing a linked post', fakeAsync(() => {
+    const posted: FeedItem = {
+      type: 'POST', postId: 7, authorUsername: 'miguel',
+      authorDisplayName: 'Miguel', authorProfilePicUrl: null,
+      content: 'Bora jogar?', imageUrl: null,
+      createdAt: new Date().toISOString(), sessionId: 42,
+      sport: 'Padel', city: 'Lisboa', gameDate: new Date().toISOString(),
+      likeCount: 0, likedByMe: false, commentCount: 0
+    };
+    feed.createPost.and.returnValue(of(posted));
+
+    fixture.detectChanges();
+    tick(351);
+    component.postContent = 'Bora jogar?';
+    component.sessionPickerExpanded = true;
+    component.selectedSessionId = 42;
+
+    component.publish();
+    fixture.detectChanges();
+
+    expect(feed.createPost).toHaveBeenCalledOnceWith('Bora jogar?', undefined, 42);
+    expect(component.postContent).toBe('');
+    expect(component.selectedSessionId).toBeNull();
+    expect(component.sessionPickerExpanded).toBeFalse();
+    expect(component.showSessionPicker).toBeFalse();
+    expect((fixture.nativeElement as HTMLElement).querySelector('.composer-session-select')).toBeNull();
+  }));
 
   it('keeps the discovery sidebar available when the feed contains posts', fakeAsync(() => {
     const post: FeedItem = {
@@ -275,6 +349,7 @@ describe('SocialFeedComponent post-game entry', () => {
     expect(sessions.detail).toHaveBeenCalledWith(42);
     expect(target.selectedSessionId).toBe(42);
     expect(target.postGameSessionId).toBe(42);
+    expect(target.showSessionPicker).toBeTrue();
     expect(target.filteredSessions.some(session => session.id === 42)).toBeTrue();
     expect(target.postContent).toBe('');
     target.ngOnDestroy();

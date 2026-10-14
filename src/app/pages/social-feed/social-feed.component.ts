@@ -26,6 +26,11 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
   postImagePreview = '';
   availableSessions: SessionSummary[] = [];
   sessionSearch = '';
+  sessionPickerExpanded = false;
+  get showSessionPicker(): boolean {
+    return this.sessionPickerExpanded || this.selectedSessionId !== null;
+  }
+
   private completedSessions: SessionSummary[] = [];
   private discoveredSessions: SessionSummary[] = [];
 
@@ -305,6 +310,7 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
           this.postImagePreview = '';
           this.selectedSessionId = null;
           this.postGameSessionId = null;
+          this.sessionPickerExpanded = false;
         },
         error: () => this.actionError = t('feedback.feed.publishError')
       });
