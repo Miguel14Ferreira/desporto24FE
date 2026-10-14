@@ -249,6 +249,10 @@ export class Events2Component implements OnInit {
   }
 
   get venueOptions(): Venue[] {
+    return this.matchingVenues().slice(0, 40);
+  }
+
+  private matchingVenues(): Venue[] {
     const city = this.normalizeVenueSearch(this.city.trim());
     const sport = this.sport.trim().toLocaleLowerCase('pt');
     const search = this.normalizeVenueSearch(this.venueSearch.trim());
@@ -283,7 +287,7 @@ export class Events2Component implements OnInit {
       return cityMatches && sportMatches && searchMatches;
     });
 
-    return search ? filtered.slice(0, 40) : filtered.slice(0, 40);
+    return filtered;
   }
 
   confirmSportSelection(): void {
@@ -321,20 +325,22 @@ export class Events2Component implements OnInit {
 
   confirmVenueSelection(): void {
     const normalized = this.normalizeVenueSearch(this.venueSearch.trim());
-    // Only allow venues compatible with the current sport, city and search.
-    const match = this.sportSelected
-      ? this.venueOptions.find(
+    // Check every compatible venue, not just the first 40 autocomplete suggestions.
+    // A repeated name must never silently select an arbitrary venue.
+    const matches = this.sportSelected
+      ? this.matchingVenues().filter(
           venue =>
             this.normalizeVenueSearch(venue.name) === normalized
             || this.normalizeVenueSearch(venue.name + ' · ' + venue.city) === normalized
         )
-      : undefined;
+      : [];
 
-    if (!match) {
+    if (matches.length !== 1) {
       this.selectVenue(null);
       return;
     }
 
+    const match = matches[0];
     this.venueSearch = match.name + ' · ' + match.city;
     this.selectVenue(match.id);
   }

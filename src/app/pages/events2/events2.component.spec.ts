@@ -1078,6 +1078,81 @@ describe('Events2Component', () => {
     expect(component.longitude).toBe(-9.15);
   });
 
+  it('does not select the first venue when two venues share the same name', () => {
+    component.sport = 'Padel';
+    component.venues = [
+      { id: 201, name: 'Pavilhão Municipal', city: 'Lisboa', address: 'Rua A',
+        sports: 'Padel', latitude: null, longitude: null } as Venue,
+      { id: 202, name: 'Pavilhão Municipal', city: 'Porto', address: 'Rua B',
+        sports: 'Padel', latitude: null, longitude: null } as Venue
+    ];
+    component.venueSearch = 'pavilhao municipal';
+
+    component.confirmVenueSelection();
+
+    expect(component.selectedVenueId).toBeNull();
+    expect(component.city).toBe('');
+    expect(component.address).toBe('');
+  });
+
+  it('selects the intended venue using the full name and city when names are repeated', () => {
+    component.sport = 'Padel';
+    component.venues = [
+      { id: 201, name: 'Pavilhão Municipal', city: 'Lisboa', address: 'Rua A',
+        sports: 'Padel', latitude: null, longitude: null } as Venue,
+      { id: 202, name: 'Pavilhão Municipal', city: 'Évora', address: 'Rua B',
+        sports: 'Padel', latitude: null, longitude: null } as Venue
+    ];
+    component.venueSearch = 'PAVILHAO MUNICIPAL · EVORA';
+
+    component.confirmVenueSelection();
+
+    expect(component.selectedVenueId).toBe(202);
+    expect(component.city).toBe('Évora');
+    expect(component.address).toBe('Rua B');
+    expect(component.venueSearch).toBe('Pavilhão Municipal · Évora');
+  });
+
+  it('still selects a venue by its name alone when that name is unique', () => {
+    component.sport = 'Padel';
+    component.venues = [{
+      id: 203, name: 'Pavilhão de Cascais', city: 'Cascais', address: 'Rua C',
+      sports: 'Padel', latitude: null, longitude: null
+    } as Venue];
+    component.venueSearch = 'pavilhao de cascais';
+
+    component.confirmVenueSelection();
+
+    expect(component.selectedVenueId).toBe(203);
+    expect(component.venueSearch).toBe('Pavilhão de Cascais · Cascais');
+  });
+
+  it('detects duplicate venue names even if one is beyond the first 40 suggestions', () => {
+    component.sport = 'Padel';
+    component.venues = [
+      { id: 201, name: 'Pavilhão Municipal', city: 'Lisboa', address: 'Rua A',
+        sports: 'Padel', latitude: null, longitude: null } as Venue,
+      ...Array.from({ length: 39 }, (_, index) => ({
+        id: 300 + index, name: 'Pavilhão Municipal - Campo ' + index,
+        city: 'Lisboa', address: 'Rua B', sports: 'Padel',
+        latitude: null, longitude: null
+      } as Venue)),
+      { id: 202, name: 'Pavilhão Municipal', city: 'Porto', address: 'Rua C',
+        sports: 'Padel', latitude: null, longitude: null } as Venue
+    ];
+    component.venueSearch = 'Pavilhão Municipal';
+
+    expect(component.venueOptions.length).toBe(40);
+    expect(component.venueOptions.some(venue => venue.id === 202)).toBeFalse();
+
+    component.confirmVenueSelection();
+    expect(component.selectedVenueId).toBeNull();
+
+    component.venueSearch = 'Pavilhão Municipal · Porto';
+    component.confirmVenueSelection();
+    expect(component.selectedVenueId).toBe(202);
+  });
+
   it('does not accept a venue excluded by the city filter', () => {
     component.venues = [{
       id: 101, name: 'Pavilhão Municipal', city: 'Porto',
