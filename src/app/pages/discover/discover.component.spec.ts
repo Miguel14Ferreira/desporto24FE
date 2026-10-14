@@ -140,6 +140,93 @@ describe('DiscoverComponent', () => {
     page.destroy();
   });
 
+  it('uses the requested device position for nearby sessions only', () => {
+    const original = Object.getOwnPropertyDescriptor(navigator, 'geolocation');
+    Object.defineProperty(navigator, 'geolocation', {
+      configurable: true,
+      value: {
+        getCurrentPosition: (success: PositionCallback) => {
+          success({ coords: { latitude: 38.72, longitude: -9.14 } } as unknown as GeolocationPosition);
+        }
+      }
+    });
+    try {
+      component.enableNearbySessions();
+      expect(component.nearbyPosition).toEqual({ latitude: 38.72, longitude: -9.14 });
+      expect(sessionService.discover).toHaveBeenCalledWith(jasmine.objectContaining({
+        sport: 'Padel', city: undefined, latitude: 38.72, longitude: -9.14,
+        radiusKm: 25, sort: 'distance'
+      }));
+      expect(venueService.search).toHaveBeenCalledWith('Lisboa', 'Padel');
+      expect(communityService.findProfiles).toHaveBeenCalledWith({ sport: 'Padel', location: 'Lisboa' });
+    } finally {
+      if (original) {
+        Object.defineProperty(navigator, 'geolocation', original);
+      } else {
+        delete (navigator as any).geolocation;
+      }
+    }
+  });
+
+  it('updates nearby radius and reverts to city search when locality is edited', () => {
+    component.nearbyPosition = { latitude: 38.72, longitude: -9.14 };
+    component.changeNearbyRadius(50);
+    expect(sessionService.discover).toHaveBeenCalledWith(jasmine.objectContaining({
+      radiusKm: 50, sort: 'distance', city: undefined
+    }));
+    component.onLocationChange('Sintra');
+    component.search();
+    expect(component.nearbyPosition).toBeNull();
+    expect(sessionService.discover).toHaveBeenCalledWith(jasmine.objectContaining({
+      city: 'Sintra', latitude: undefined, longitude: undefined,
+      radiusKm: undefined, sort: 'date'
+    }));
+  });
+
+  it('does not enable nearby mode when location permission is denied', () => {
+    const original = Object.getOwnPropertyDescriptor(navigator, 'geolocation');
+    Object.defineProperty(navigator, 'geolocation', {
+      configurable: true,
+      value: { getCurrentPosition: (_success: PositionCallback, error: PositionErrorCallback) => error({} as unknown as GeolocationPositionError) }
+    });
+    try {
+      component.enableNearbySessions();
+      fixture.detectChanges();
+      expect(component.nearbyPosition).toBeNull();
+      expect(component.nearbySessionError).toBe('unavailable');
+      expect(fixture.nativeElement.querySelector('.discover-nearby [role="alert"]')).not.toBeNull();
+      expect(sessionService.discover).not.toHaveBeenCalledWith(jasmine.objectContaining({ sort: 'distance' }));
+    } finally {
+      if (original) {
+        Object.defineProperty(navigator, 'geolocation', original);
+      } else {
+        delete (navigator as any).geolocation;
+      }
+    }
+  });
+
+  it('ignores a late GPS result after the locality was changed', () => {
+    const original = Object.getOwnPropertyDescriptor(navigator, 'geolocation');
+    let resolvePosition: PositionCallback | undefined;
+    Object.defineProperty(navigator, 'geolocation', {
+      configurable: true,
+      value: { getCurrentPosition: (success: PositionCallback) => { resolvePosition = success; } }
+    });
+    try {
+      component.enableNearbySessions();
+      component.onLocationChange('Sintra');
+      resolvePosition?.({ coords: { latitude: 38.72, longitude: -9.14 } } as unknown as GeolocationPosition);
+      expect(component.nearbyPosition).toBeNull();
+      expect(component.locatingSessions).toBeFalse();
+    } finally {
+      if (original) {
+        Object.defineProperty(navigator, 'geolocation', original);
+      } else {
+        delete (navigator as any).geolocation;
+      }
+    }
+  });
+
   it('opens discovered people directly in their public profiles', () => {
     const profile = {
       username: 'teammate',

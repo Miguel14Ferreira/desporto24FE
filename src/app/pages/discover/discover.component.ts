@@ -31,6 +31,12 @@ export class DiscoverComponent implements OnInit {
   people: CommunityProfile[] = [];
   topPeopleResults: CommunityProfile[] = [];
 
+  locatingSessions = false;
+  nearbySessionError = '';
+  nearbyRadiusKm = 25;
+  nearbyPosition: { latitude: number; longitude: number } | null = null;
+  private nearbyRequestId = 0;
+
   loading = false;
   initialized = false;
   loadError = false;
@@ -89,6 +95,60 @@ export class DiscoverComponent implements OnInit {
   onLocationChange(value: string): void {
     this.location = value;
     this.locationEdited = true;
+    this.disableNearbySessions();
+  }
+
+  enableNearbySessions(): void {
+    if (this.locatingSessions) {
+      return;
+    }
+    this.nearbySessionError = '';
+    if (!navigator.geolocation) {
+      this.nearbySessionError = 'unsupported';
+      return;
+    }
+
+    this.locatingSessions = true;
+    const requestId = ++this.nearbyRequestId;
+    navigator.geolocation.getCurrentPosition(
+      position => {
+        if (requestId !== this.nearbyRequestId) {
+          return;
+        }
+        this.locatingSessions = false;
+        const { latitude, longitude } = position.coords;
+        if (!Number.isFinite(latitude) || !Number.isFinite(longitude)
+          || Math.abs(latitude) > 90 || Math.abs(longitude) > 180) {
+          this.nearbySessionError = 'unavailable';
+          return;
+        }
+        this.nearbyPosition = { latitude, longitude };
+        this.search();
+      },
+      () => {
+        if (requestId !== this.nearbyRequestId) {
+          return;
+        }
+        this.locatingSessions = false;
+        this.nearbySessionError = 'unavailable';
+      },
+      { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
+    );
+  }
+
+  changeNearbyRadius(radiusKm: number): void {
+    if (!this.nearbyPosition || ![10, 25, 50].includes(radiusKm)) {
+      return;
+    }
+    this.nearbyRadiusKm = radiusKm;
+    this.search();
+  }
+
+  disableNearbySessions(): void {
+    ++this.nearbyRequestId;
+    this.nearbyPosition = null;
+    this.locatingSessions = false;
+    this.nearbySessionError = '';
   }
 
   search(): void {
@@ -111,9 +171,12 @@ export class DiscoverComponent implements OnInit {
       sessions: this.withRecovery(
         this.sessionService.discover({
           sport: sport || undefined,
-          city: location || undefined,
+          city: this.nearbyPosition ? undefined : location || undefined,
+          latitude: this.nearbyPosition?.latitude,
+          longitude: this.nearbyPosition?.longitude,
+          radiusKm: this.nearbyPosition ? this.nearbyRadiusKm : undefined,
           availability: 'available',
-          sort: 'date'
+          sort: this.nearbyPosition ? 'distance' : 'date'
         }),
         [] as SessionSummary[]
       ),
@@ -137,6 +200,7 @@ export class DiscoverComponent implements OnInit {
   }
 
   clear(): void {
+    this.disableNearbySessions();
     this.sport = '';
     this.location = '';
     this.sportEdited = true;

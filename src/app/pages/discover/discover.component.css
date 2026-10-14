@@ -298,6 +298,43 @@ button.pillar-action {
 
 .discover-flow b { color: #38bdf8; }
 
+.discover-nearby {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .5rem;
+  margin: .6rem 0 1rem;
+}
+
+.discover-nearby label {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  font-size: .8rem;
+  color: #cbd5e1;
+}
+
+.discover-nearby select {
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: .55rem;
+  padding: .4rem;
+  background: #0f172a;
+  color: #f8fafc;
+}
+
+.discover-nearby small {
+  flex-basis: 100%;
+  color: #94a3b8;
+  line-height: 1.4;
+}
+
+.discover-nearby p {
+  flex-basis: 100%;
+  margin: 0;
+  color: #fecaca;
+  font-size: .8rem;
+}
+
 @media (max-width: 920px) {
   .discovery-grid { grid-template-columns: 1fr; }
 }

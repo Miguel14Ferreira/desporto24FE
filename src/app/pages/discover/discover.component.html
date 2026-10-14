@@ -143,6 +143,33 @@
             <span class="result-count">{{ sessions.length }}</span>
           </header>
 
+          <div class="discover-nearby">
+            @if (!nearbyPosition) {
+              <button type="button" class="jynlo-action jynlo-action--neutral"
+                (click)="enableNearbySessions()" [disabled]="locatingSessions">
+                {{ (locatingSessions ? 'discover.nearby.locating' : 'discover.nearby.action') | t }}
+              </button>
+            } @else {
+              <label>
+                <span>{{ 'discover.nearby.radius' | t }}</span>
+                <select [value]="nearbyRadiusKm" (change)="changeNearbyRadius(+$any($event.target).value)">
+                  <option [value]="10">10 km</option>
+                  <option [value]="25">25 km</option>
+                  <option [value]="50">50 km</option>
+                </select>
+              </label>
+              <button type="button" class="jynlo-action jynlo-action--neutral"
+                (click)="disableNearbySessions(); search()">
+                {{ 'discover.nearby.back' | t }}
+              </button>
+            }
+            <small>{{ 'discover.nearby.hint' | t }}</small>
+            @if (nearbySessionError) {
+              <p role="alert">{{ (nearbySessionError === 'unsupported'
+                ? 'feedback.location.unsupported' : 'feedback.location.error') | t }}</p>
+            }
+          </div>
+
           @if (topSessions.length === 0) {
             <div class="pillar-empty">
               <strong>{{ 'discover.when.emptyTitle' | t }}</strong>
