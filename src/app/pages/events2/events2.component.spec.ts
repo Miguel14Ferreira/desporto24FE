@@ -776,6 +776,49 @@ describe('Events2Component', () => {
     expect(component.errorMessage).toContain('recinto');
   });
 
+  it('does not create a venue without a selected sport', () => {
+    component.sport = '';
+    component.venueName = 'Campo Novo';
+    component.city = 'Lisboa';
+    component.address = 'Rua A';
+
+    component.saveVenue();
+
+    expect(venueService.create).not.toHaveBeenCalled();
+    expect(component.venueSaving).toBeFalse();
+    expect(component.errorMessage).toContain('modalidade');
+  });
+
+  it('does not create a venue with a sport outside the catalog', () => {
+    component.sport = 'Modalidade inventada';
+    component.venueName = 'Campo Novo';
+    component.city = 'Lisboa';
+    component.address = 'Rua A';
+
+    component.saveVenue();
+
+    expect(venueService.create).not.toHaveBeenCalled();
+    expect(component.errorMessage).toContain('modalidade');
+  });
+
+  it('sends the selected catalog sport when saving a venue', () => {
+    venueService.create.and.returnValue(of({
+      id: 303, name: 'Campo Novo', city: 'Lisboa', address: 'Rua A',
+      sports: 'Padel', latitude: null, longitude: null
+    } as Venue));
+    component.sport = 'Padel';
+    component.venueName = 'Campo Novo';
+    component.city = 'Lisboa';
+    component.address = 'Rua A';
+
+    component.saveVenue();
+
+    expect(venueService.create).toHaveBeenCalledWith(
+      jasmine.objectContaining({ sports: 'Padel', name: 'Campo Novo' })
+    );
+    expect(component.selectedVenueId).toBe(303);
+  });
+
   it('selects a newly created venue and refreshes its search, map and photograph', () => {
     const venue = {
       id: 301, name: 'Campo Novo', city: 'Lisboa', address: 'Rua A',

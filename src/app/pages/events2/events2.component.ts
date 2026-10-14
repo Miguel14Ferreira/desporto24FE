@@ -526,6 +526,11 @@ export class Events2Component implements OnInit {
       return;
     }
 
+    if (!this.sportSelected) {
+      this.errorMessage = t('venue.create.sportsRequired');
+      return;
+    }
+
     if (!this.venueName.trim() || !this.city.trim() || !this.address.trim()) {
       this.errorMessage = t('feedback.venue.required');
       return;
@@ -538,7 +543,7 @@ export class Events2Component implements OnInit {
       name: this.venueName.trim(),
       city: this.city.trim(),
       address: this.address.trim(),
-      sports: this.sport.trim() || null,
+      sports: this.sport.trim(),
       venueType: this.venueType.trim() || null,
       ownershipType: this.venueOwnershipType,
       surfaceType: this.venueSurfaceType.trim() || null,
