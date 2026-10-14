@@ -22,6 +22,10 @@ export class DiscoverComponent implements OnInit {
 
   sport = '';
   location = '';
+  playerName = '';
+  appliedPlayerName = '';
+  loadingPeople = false;
+  playerSearchError = false;
   private sportEdited = false;
   private locationEdited = false;
   venues: Venue[] = [];
@@ -96,11 +100,15 @@ export class DiscoverComponent implements OnInit {
   onSportChange(value: string): void {
     this.sport = value;
     this.sportEdited = true;
+    this.playerName = '';
+    this.appliedPlayerName = '';
   }
 
   onLocationChange(value: string): void {
     this.location = value;
     this.locationEdited = true;
+    this.playerName = '';
+    this.appliedPlayerName = '';
     this.disableNearbySessions();
     this.disableNearbyVenues();
   }
@@ -261,7 +269,39 @@ export class DiscoverComponent implements OnInit {
       });
   }
 
+  searchPlayers(): void {
+    if (this.loading || this.loadingPeople) {
+      return;
+    }
+
+    this.loadingPeople = true;
+    this.playerSearchError = false;
+    this.appliedPlayerName = this.playerName.trim();
+    this.peopleRequest(this.sport.trim(), this.location.trim())
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        catchError(() => {
+          this.playerSearchError = true;
+          return of([] as CommunityProfile[]);
+        }),
+        finalize(() => { this.loadingPeople = false; })
+      )
+      .subscribe(people => {
+        this.people = people;
+        this.topPeopleResults = people.slice(0, 4);
+      });
+  }
+
+  clearPlayerName(): void {
+    this.playerName = '';
+    this.searchPlayers();
+  }
+
   clear(): void {
+    this.playerName = '';
+    this.appliedPlayerName = '';
+    this.playerSearchError = false;
     this.disableNearbySessions();
     this.disableNearbyVenues();
     this.sport = '';
@@ -284,7 +324,7 @@ export class DiscoverComponent implements OnInit {
   }
 
   get topPeople(): CommunityProfile[] {
-    return this.topPeopleResults;
+    return this.appliedPlayerName ? this.people : this.topPeopleResults;
   }
 
   vacancies(session: SessionSummary): number {
@@ -309,6 +349,10 @@ export class DiscoverComponent implements OnInit {
     sport: string,
     location: string
   ): Observable<CommunityProfile[]> {
+    const name = this.playerName.trim();
+    if (name) {
+      return this.communityService.findProfiles({ name });
+    }
     if (!sport && !location) {
       return of([]);
     }

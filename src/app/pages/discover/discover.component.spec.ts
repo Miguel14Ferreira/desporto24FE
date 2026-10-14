@@ -313,6 +313,75 @@ describe('DiscoverComponent', () => {
     }
   });
 
+  it('searches for a player by name without restricting the request to profile defaults', () => {
+    const teammate: CommunityProfile = {
+      username: 'ana', fullName: 'Ana Silva', nickname: null,
+      country: 'Portugal', location: 'Porto', favoriteSports: 'Futebol',
+      bio: null, skillLevel: null, availability: null, age: 30,
+      profilePicUrl: null, joinDateDisplay: null
+    };
+    communityService.findProfiles.and.returnValue(of([teammate]));
+    const venueCalls = venueService.search.calls.count();
+    const sessionCalls = sessionService.discover.calls.count();
+
+    component.playerName = '  Ana  ';
+    component.searchPlayers();
+
+    expect(communityService.findProfiles).toHaveBeenCalledWith({ name: 'Ana' });
+    expect(component.people).toEqual([teammate]);
+    expect(component.topPeople).toEqual([teammate]);
+    expect(component.appliedPlayerName).toBe('Ana');
+    expect(venueService.search.calls.count()).toBe(venueCalls);
+    expect(sessionService.discover.calls.count()).toBe(sessionCalls);
+  });
+
+  it('restores sport and locality filtering after clearing player name', () => {
+    component.playerName = 'Ana';
+    component.searchPlayers();
+    component.clearPlayerName();
+
+    expect(component.playerName).toBe('');
+    expect(component.appliedPlayerName).toBe('');
+    expect(communityService.findProfiles).toHaveBeenCalledWith({
+      sport: 'Padel', location: 'Lisboa'
+    });
+  });
+
+  it('allows name-only player searches when no sport or location is selected', () => {
+    component.clear();
+    component.playerName = 'Miguel';
+    component.searchPlayers();
+
+    expect(communityService.findProfiles).toHaveBeenCalledWith({ name: 'Miguel' });
+  });
+
+  it('shows all matching players after a name search instead of only four suggestions', () => {
+    const people = Array.from({ length: 6 }, (_, index) => ({
+      username: 'ana' + index, fullName: 'Ana ' + index, nickname: null,
+      country: 'Portugal', location: 'Porto', favoriteSports: null,
+      bio: null, skillLevel: null, availability: null, age: null,
+      profilePicUrl: null, joinDateDisplay: null
+    } as CommunityProfile));
+    communityService.findProfiles.and.returnValue(of(people));
+    component.playerName = 'Ana';
+    component.searchPlayers();
+
+    expect(component.topPeople).toEqual(people);
+    component.clearPlayerName();
+    expect(component.topPeople.length).toBe(4);
+  });
+
+  it('shows a player-only error when name search fails', () => {
+    communityService.findProfiles.and.returnValue(throwError(() => new Error('API unavailable')));
+    component.playerName = 'Ana';
+    component.searchPlayers();
+
+    expect(component.playerSearchError).toBeTrue();
+    expect(component.people).toEqual([]);
+    expect(component.loadingPeople).toBeFalse();
+    expect(component.loadError).toBeFalse();
+  });
+
   it('opens discovered people directly in their public profiles', () => {
     const profile = {
       username: 'teammate',

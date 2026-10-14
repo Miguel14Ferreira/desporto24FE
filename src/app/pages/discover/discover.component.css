@@ -335,6 +335,50 @@ button.pillar-action {
   font-size: .8rem;
 }
 
+.discover-people-search {
+  display: grid;
+  gap: .45rem;
+  margin: .6rem 0 1rem;
+}
+
+.discover-people-search > label {
+  font-size: .8rem;
+  font-weight: 700;
+  color: #cbd5e1;
+}
+
+.discover-people-search-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+}
+
+.discover-people-search-controls input {
+  flex: 1 1 130px;
+  min-width: 0;
+  padding: .6rem .7rem;
+  border-radius: .7rem;
+  border: 1px solid rgba(255,255,255,.16);
+  background: rgba(255,255,255,.055);
+  color: #f8fafc;
+  font: inherit;
+}
+
+.discover-people-search-controls button {
+  flex: 0 0 auto;
+}
+
+.discover-people-search small {
+  color: #94a3b8;
+  line-height: 1.4;
+}
+
+.discover-people-search p {
+  margin: 0;
+  color: #fecaca;
+  font-size: .8rem;
+}
+
 @media (max-width: 920px) {
   .discovery-grid { grid-template-columns: 1fr; }
 }

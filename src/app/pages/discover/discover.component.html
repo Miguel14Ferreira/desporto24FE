@@ -234,6 +234,30 @@
             <span class="result-count">{{ people.length }}</span>
           </header>
 
+          <form class="discover-people-search" (ngSubmit)="searchPlayers()">
+            <label for="discover-player-name">{{ 'discover.who.searchLabel' | t }}</label>
+            <div class="discover-people-search-controls">
+              <input id="discover-player-name" name="playerName" type="search"
+                [(ngModel)]="playerName"
+                [placeholder]="'discover.who.searchPlaceholder' | t"
+                autocomplete="off">
+              <button type="submit" class="jynlo-action jynlo-action--neutral"
+                [disabled]="loading || loadingPeople">
+                {{ (loadingPeople ? 'discover.who.searching' : 'discover.who.search') | t }}
+              </button>
+              @if (playerName) {
+                <button type="button" class="jynlo-action jynlo-action--neutral"
+                  (click)="clearPlayerName()" [disabled]="loading || loadingPeople">
+                  {{ 'events.clear' | t }}
+                </button>
+              }
+            </div>
+            <small>{{ 'discover.who.searchHint' | t }}</small>
+            @if (playerSearchError) {
+              <p role="alert">{{ 'discover.who.searchError' | t }}</p>
+            }
+          </form>
+
           @if (topPeople.length === 0) {
             <div class="pillar-empty">
               <strong>{{ 'discover.who.emptyTitle' | t }}</strong>
