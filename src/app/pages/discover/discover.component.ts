@@ -51,6 +51,7 @@ export class DiscoverComponent implements OnInit {
   initialized = false;
   loadError = false;
   showAllVenues = false;
+  showAllPeople = false;
 
   constructor(
     private authenticationService: AuthenticationService,
@@ -221,6 +222,7 @@ export class DiscoverComponent implements OnInit {
 
   search(): void {
     this.showAllVenues = false;
+    this.showAllPeople = false;
 
     const sport = this.sport.trim();
     const location = this.location.trim();
@@ -275,6 +277,7 @@ export class DiscoverComponent implements OnInit {
     }
 
     this.loadingPeople = true;
+    this.showAllPeople = false;
     this.playerSearchError = false;
     this.appliedPlayerName = this.playerName.trim();
     this.peopleRequest(this.sport.trim(), this.location.trim())
@@ -324,7 +327,11 @@ export class DiscoverComponent implements OnInit {
   }
 
   get topPeople(): CommunityProfile[] {
-    return this.appliedPlayerName ? this.people : this.topPeopleResults;
+    return this.appliedPlayerName || this.showAllPeople ? this.people : this.topPeopleResults;
+  }
+
+  toggleAllPeople(): void {
+    this.showAllPeople = !this.showAllPeople;
   }
 
   vacancies(session: SessionSummary): number {

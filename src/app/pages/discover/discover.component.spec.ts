@@ -409,6 +409,69 @@ describe('DiscoverComponent', () => {
     expect(communityService.findProfiles).toHaveBeenCalledWith({ name: 'Miguel' });
   });
 
+  it('expands and collapses suggested players directly in Discover', () => {
+    const players: CommunityProfile[] = Array.from({ length: 6 }, (_, index) => ({
+      username: 'player' + index, fullName: 'Jogador ' + index, nickname: null,
+      country: 'Portugal', location: 'Lisboa', favoriteSports: 'Padel',
+      bio: null, skillLevel: null, availability: null, age: null,
+      profilePicUrl: null, joinDateDisplay: null
+    }));
+    communityService.findProfiles.and.returnValue(of(players));
+    component.search();
+    fixture.detectChanges();
+
+    expect(component.topPeople.length).toBe(4);
+    expect(fixture.nativeElement.querySelectorAll('.person-card').length).toBe(4);
+
+    const toggle = (): HTMLButtonElement => fixture.nativeElement.querySelector('.people-toggle');
+    expect(toggle().textContent).toContain('Ver todos os jogadores');
+    toggle().click();
+    fixture.detectChanges();
+
+    expect(component.topPeople).toEqual(players);
+    expect(fixture.nativeElement.querySelectorAll('.person-card').length).toBe(6);
+    expect(toggle().textContent).toContain('Ver menos');
+
+    toggle().click();
+    fixture.detectChanges();
+    expect(component.topPeople.length).toBe(4);
+    expect(fixture.nativeElement.querySelectorAll('.person-card').length).toBe(4);
+  });
+
+  it('collapses expanded player suggestions on a new general search', () => {
+    communityService.findProfiles.and.returnValue(of(Array.from({ length: 6 }, (_, index) => ({
+      username: 'player' + index, fullName: 'Jogador ' + index,
+      nickname: null, country: 'Portugal', location: 'Lisboa',
+      favoriteSports: 'Padel', bio: null, skillLevel: null,
+      availability: null, age: null, profilePicUrl: null, joinDateDisplay: null
+    } as CommunityProfile))));
+    component.search();
+    component.toggleAllPeople();
+    expect(component.topPeople.length).toBe(6);
+
+    component.onLocationChange('Sintra');
+    component.search();
+    expect(component.showAllPeople).toBeFalse();
+    expect(component.topPeople.length).toBe(4);
+  });
+
+  it('shows every matching name-search result without an expand button', () => {
+    const players: CommunityProfile[] = Array.from({ length: 6 }, (_, index) => ({
+      username: 'ana' + index, fullName: 'Ana ' + index, nickname: null,
+      country: 'Portugal', location: 'Porto', favoriteSports: null,
+      bio: null, skillLevel: null, availability: null, age: null,
+      profilePicUrl: null, joinDateDisplay: null
+    }));
+    communityService.findProfiles.and.returnValue(of(players));
+    component.playerName = 'Ana';
+    component.searchPlayers();
+    fixture.detectChanges();
+
+    expect(component.topPeople).toEqual(players);
+    expect(fixture.nativeElement.querySelectorAll('.person-card').length).toBe(6);
+    expect(fixture.nativeElement.querySelector('.people-toggle')).toBeNull();
+  });
+
   it('shows all matching players after a name search instead of only four suggestions', () => {
     const people = Array.from({ length: 6 }, (_, index) => ({
       username: 'ana' + index, fullName: 'Ana ' + index, nickname: null,

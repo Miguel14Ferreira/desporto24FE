@@ -318,6 +318,14 @@
             </div>
           }
 
+          @if (people.length > 4 && !appliedPlayerName) {
+            <button type="button" class="pillar-action jynlo-action jynlo-action--neutral people-toggle"
+              (click)="toggleAllPeople()">
+              {{ (showAllPeople ? 'discover.who.showLess' : 'discover.who.showAll') | t }}
+              <span aria-hidden="true">{{ showAllPeople ? '↑' : '↓' }}</span>
+            </button>
+          }
+
           <a class="pillar-action jynlo-action jynlo-action--neutral" routerLink="/menu/perfis">
             {{ 'discover.who.action' | t }} <span>→</span>
           </a>
