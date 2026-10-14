@@ -407,6 +407,43 @@ describe('DiscoverComponent', () => {
     expect(link?.textContent).toContain('Teammate');
   });
 
+  it('offers creating a session when no activities match the search', () => {
+    expect(component.initialized).toBeTrue();
+    expect(component.sessions).toEqual([]);
+    fixture.detectChanges();
+
+    const createLink: HTMLAnchorElement | null =
+      fixture.nativeElement.querySelector('.session-empty-create');
+    expect(createLink?.getAttribute('href')).toBe('/menu/createEvent');
+    expect(createLink?.textContent).toContain('Criar uma sessão');
+  });
+
+  it('hides the create-session empty action when activities are available', () => {
+    sessionService.discover.and.returnValue(of([{
+      id: 34, sport: 'Padel', city: 'Lisboa',
+      gameDate: '2026-10-20T18:00:00Z', distanceKm: null,
+      participantCount: 2, maxParticipants: 4,
+      priceAmount: 0, privateGame: false, status: 'OPEN'
+    }]));
+    component.search();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.session-empty-create')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.session-card')).not.toBeNull();
+  });
+
+  it('does not suggest creating a session when session discovery fails', () => {
+    sessionService.discover.and.returnValue(
+      throwError(() => new Error('API unavailable'))
+    );
+    component.search();
+    fixture.detectChanges();
+
+    expect(component.loadError).toBeTrue();
+    expect(fixture.nativeElement.querySelector('.discover-error')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.session-empty-create')).toBeNull();
+  });
+
   it('shows a clear participation link with price and distance without joining automatically', () => {
     const session = {
       id: 31, sport: 'Padel', city: 'Lisboa',

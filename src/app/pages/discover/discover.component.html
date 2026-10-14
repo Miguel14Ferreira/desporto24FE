@@ -198,9 +198,15 @@
           </div>
 
           @if (topSessions.length === 0) {
-            <div class="pillar-empty">
+            <div class="pillar-empty session-empty">
               <strong>{{ 'discover.when.emptyTitle' | t }}</strong>
               <span>{{ 'discover.when.emptyText' | t }}</span>
+              @if (!loadError) {
+                <a class="jynlo-action jynlo-action--primary session-empty-create"
+                  routerLink="/menu/createEvent">
+                  {{ 'discover.when.createAction' | t }} <span aria-hidden="true">→</span>
+                </a>
+              }
             </div>
           } @else {
             <div class="result-list">
