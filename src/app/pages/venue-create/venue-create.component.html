@@ -99,27 +99,6 @@
       </div>
 
       <label>
-        <span>{{ 'venue.type' | t }}</span>
-        <input type="text" name="venueType" [(ngModel)]="venueType"
-          [placeholder]="'venue.typePlaceholder' | t">
-      </label>
-
-      <label>
-        <span>{{ 'venue.ownership' | t }}</span>
-        <select name="ownershipType" [(ngModel)]="ownershipType">
-          <option [ngValue]="null">{{ 'venue.ownership.none' | t }}</option>
-          <option value="PUBLIC">{{ 'venue.ownership.public' | t }}</option>
-          <option value="PRIVATE">{{ 'venue.ownership.private' | t }}</option>
-        </select>
-      </label>
-
-      <label>
-        <span>{{ 'venue.surface' | t }}</span>
-        <input type="text" name="surfaceType" [(ngModel)]="surfaceType"
-          [placeholder]="'venue.surfacePlaceholder' | t">
-      </label>
-
-      <label>
         <span>{{ 'venue.environment' | t }}</span>
         <select name="environmentType" [(ngModel)]="environmentType">
           <option value="INDOOR">{{ 'venue.environment.indoor' | t }}</option>
@@ -127,6 +106,36 @@
           <option value="BOTH">{{ 'venue.environment.both' | t }}</option>
         </select>
       </label>
+
+      <details class="venue-create-amenities venue-create-wide">
+        <summary class="venue-create-amenities-summary">
+          <strong>{{ 'venue.create.additionalCharacteristics' | t }}</strong>
+          <span class="venue-create-amenities-closed">{{ 'venue.create.addOptionalDetails' | t }}</span>
+          <span class="venue-create-amenities-open">{{ 'venue.create.hideOptionalDetails' | t }}</span>
+        </summary>
+        <div class="venue-create-options venue-create-wide">
+          <label>
+            <span>{{ 'venue.type' | t }}</span>
+            <input type="text" name="venueType" [(ngModel)]="venueType"
+              [placeholder]="'venue.typePlaceholder' | t">
+          </label>
+
+          <label>
+            <span>{{ 'venue.ownership' | t }}</span>
+            <select name="ownershipType" [(ngModel)]="ownershipType">
+              <option [ngValue]="null">{{ 'venue.ownership.none' | t }}</option>
+              <option value="PUBLIC">{{ 'venue.ownership.public' | t }}</option>
+              <option value="PRIVATE">{{ 'venue.ownership.private' | t }}</option>
+            </select>
+          </label>
+
+          <label>
+            <span>{{ 'venue.surface' | t }}</span>
+            <input type="text" name="surfaceType" [(ngModel)]="surfaceType"
+              [placeholder]="'venue.surfacePlaceholder' | t">
+          </label>
+        </div>
+      </details>
 
       <details class="venue-create-amenities venue-create-wide">
         <summary class="venue-create-amenities-summary">
