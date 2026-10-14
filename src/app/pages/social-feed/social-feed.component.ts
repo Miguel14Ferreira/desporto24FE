@@ -6,9 +6,11 @@ import { environment } from 'src/environment/environment';
 import { appTranslate as t } from '../../i18n/i18n.service';
 import { AuthenticationService } from '../../services/authethication.service';
 import { SocialFeedService } from '../../services/social-feed.service';
+import { CommunityService } from '../../services/community.service';
 import { SessionService } from '../../services/session.service';
 import { SessionSummary } from '../model/session-summary';
 import { FeedItem, SocialComment } from '../model/feed-item';
+import { CommunityProfile } from '../model/community-profile';
 
 @Component({
   selector: 'app-social-feed',
@@ -31,6 +33,7 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
   private readonly destroyed = new Subject<void>();
   get filteredSessions(): SessionSummary[] { return this.availableSessions; }
   suggestedSessions: SessionSummary[] = [];
+  suggestedPeople: CommunityProfile[] = [];
   selectedSessionId: number | null = null;
   postGameSessionId: number | null = null;
   get postGameSession(): SessionSummary | null {
@@ -83,7 +86,8 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
     private feedService: SocialFeedService,
     private sessionService: SessionService,
     private authenticationService: AuthenticationService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private communityService: CommunityService
   ) {
     this.authenticationService.isLoggedIn();
     this.currentUsername = this.authenticationService.loggedInPerfilname || '';
@@ -91,6 +95,7 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.load();
+    this.loadSuggestedPeople();
     this.preparePostGameMoment();
     this.loadCompletedSessions();
     this.sessionSearchChanges.pipe(
@@ -124,6 +129,34 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
       this.refreshSelectableSessions();
     });
     this.onSessionSearchChange('');
+  }
+
+  private loadSuggestedPeople(): void {
+    this.communityService.discoverProfiles()
+      .pipe(
+        timeout(10_000),
+        catchError(() => of([] as CommunityProfile[])),
+        takeUntil(this.destroyed)
+      )
+      .subscribe(profiles => {
+        this.suggestedPeople = profiles
+          .filter(profile => profile.username?.trim()
+            && profile.username.toLowerCase() !== this.currentUsername.toLowerCase())
+          .slice(0, 3);
+      });
+  }
+
+  suggestedProfileImage(profile: CommunityProfile): string | null {
+    const path = profile.profilePicUrl;
+    if (!path) {
+      return null;
+    }
+
+    if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('data:')) {
+      return path;
+    }
+
+    return environment.apiUrl + (path.startsWith('/') ? path : '/' + path);
   }
 
   private loadCompletedSessions(): void {

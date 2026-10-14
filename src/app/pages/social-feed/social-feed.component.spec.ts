@@ -5,6 +5,7 @@ import { of, throwError } from 'rxjs';
 import { SessionDetail } from '../model/session-detail';
 import { SocialFeedService } from '../../services/social-feed.service';
 import { SessionService } from '../../services/session.service';
+import { CommunityService } from '../../services/community.service';
 import { AuthenticationService } from '../../services/authethication.service';
 import { FeedItem } from '../model/feed-item';
 import { appTranslate as t } from '../../i18n/i18n.service';
@@ -15,6 +16,7 @@ describe('SocialFeedComponent discovery sidebar', () => {
   let component: SocialFeedComponent;
   let feed: jasmine.SpyObj<SocialFeedService>;
   let sessions: jasmine.SpyObj<SessionService>;
+  let community: jasmine.SpyObj<CommunityService>;
 
   beforeEach(async () => {
     feed = jasmine.createSpyObj<SocialFeedService>('SocialFeedService', ['feed']);
@@ -22,6 +24,8 @@ describe('SocialFeedComponent discovery sidebar', () => {
     sessions = jasmine.createSpyObj<SessionService>('SessionService', ['discover', 'mine', 'detail']);
     sessions.discover.and.returnValue(of([]));
     sessions.mine.and.returnValue(of({ created: [], joined: [], waitlisted: [] }));
+    community = jasmine.createSpyObj<CommunityService>('CommunityService', ['discoverProfiles']);
+    community.discoverProfiles.and.returnValue(of([]));
 
     await TestBed.configureTestingModule({
       declarations: [SocialFeedComponent],
@@ -29,7 +33,8 @@ describe('SocialFeedComponent discovery sidebar', () => {
       providers: [
         ...TEST_PROVIDERS,
         { provide: SocialFeedService, useValue: feed },
-        { provide: SessionService, useValue: sessions }
+        { provide: SessionService, useValue: sessions },
+        { provide: CommunityService, useValue: community }
       ]
     }).compileComponents();
 
@@ -68,6 +73,53 @@ describe('SocialFeedComponent discovery sidebar', () => {
     expect(aside.querySelector('a[href="/menu/perfis"]')).not.toBeNull();
   }));
 
+  it('shows up to three genuine public profiles and excludes the current player', fakeAsync(() => {
+    const candidate = (username: string) => ({
+      username, nickname: null, fullName: username, country: 'Portugal',
+      location: 'Lisboa', favoriteSports: 'Padel', bio: null,
+      skillLevel: null, availability: null, age: null,
+      profilePicUrl: null, joinDateDisplay: null
+    });
+    community.discoverProfiles.and.returnValue(of([
+      candidate('miguel'), candidate('ana'), candidate('bruno'),
+      candidate('carla'), candidate('diogo')
+    ]));
+
+    fixture.detectChanges();
+    tick(351);
+    fixture.detectChanges();
+
+    expect(community.discoverProfiles).toHaveBeenCalledTimes(1);
+    expect(component.suggestedPeople.map(person => person.username))
+      .toEqual(['ana', 'bruno', 'carla']);
+    const links = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLAnchorElement>(
+        '.feed-sidebar .feed-suggested-person'
+      )
+    );
+    expect(links.map(link => link.getAttribute('href')))
+      .toEqual([
+        '/menu/perfis/ana?from=feed',
+        '/menu/perfis/bruno?from=feed',
+        '/menu/perfis/carla?from=feed'
+      ]);
+    expect(links[0].textContent).toContain('Padel');
+  }));
+
+  it('keeps the people search available if profile discovery fails', fakeAsync(() => {
+    community.discoverProfiles.and.returnValue(
+      throwError(() => new Error('Profiles unavailable'))
+    );
+    fixture.detectChanges();
+    tick(351);
+    fixture.detectChanges();
+
+    const aside = fixture.nativeElement.querySelector('.feed-sidebar') as HTMLElement;
+    expect(component.suggestedPeople).toEqual([]);
+    expect(aside.querySelector('.feed-suggested-person')).toBeNull();
+    expect(aside.querySelector('a[href="/menu/perfis"]')).not.toBeNull();
+  }));
+
   it('keeps discovery links visible when no sessions are suggested', fakeAsync(() => {
     fixture.detectChanges();
     tick(351);
@@ -92,7 +144,8 @@ describe('SocialFeedComponent session sharing fallback', () => {
     auth.isLoggedIn.and.returnValue(true);
     component = new SocialFeedComponent(
       {} as SocialFeedService, {} as SessionService, auth,
-      { snapshot: { queryParamMap: convertToParamMap({}) } } as unknown as ActivatedRoute
+      { snapshot: { queryParamMap: convertToParamMap({}) } } as unknown as ActivatedRoute,
+      {} as CommunityService
     );
     item = {
       type: 'POST',
@@ -209,7 +262,10 @@ describe('SocialFeedComponent post-game entry', () => {
     const route = ({
       snapshot: { queryParamMap: convertToParamMap({ momentSession: rawId }) }
     } as unknown as ActivatedRoute);
-    const target = new SocialFeedComponent(feed, sessions, auth, route);
+    const target = new SocialFeedComponent(
+      feed, sessions, auth, route,
+      { discoverProfiles: () => of([]) } as CommunityService
+    );
     target.ngOnInit();
     return { target, sessions };
   }
@@ -382,7 +438,10 @@ describe('SocialFeedComponent empty-feed session suggestions', () => {
     ]));
     sessions.mine.and.returnValue(of({ created: [], joined: [], waitlisted: [] }));
     const route = { snapshot: { queryParamMap: convertToParamMap({}) } } as unknown as ActivatedRoute;
-    const target = new SocialFeedComponent(feed, sessions, auth, route);
+    const target = new SocialFeedComponent(
+      feed, sessions, auth, route,
+      { discoverProfiles: () => of([]) } as CommunityService
+    );
 
     target.ngOnInit();
     tick(351);
@@ -410,7 +469,10 @@ describe('SocialFeedComponent completed session selection', () => {
     sessions.discover.and.returnValue(of([]));
     sessions.mine.and.returnValue(of({ created, joined, waitlisted }));
     const route = { snapshot: { queryParamMap: convertToParamMap({}) } } as unknown as ActivatedRoute;
-    const target = new SocialFeedComponent(feed, sessions, auth, route);
+    const target = new SocialFeedComponent(
+      feed, sessions, auth, route,
+      { discoverProfiles: () => of([]) } as CommunityService
+    );
     target.ngOnInit();
     return { target, sessions };
   }
@@ -468,7 +530,8 @@ describe('SocialFeedComponent attendance activity visibility', () => {
     feed.hideAttendanceActivity.and.returnValue(of(void 0));
     component = new SocialFeedComponent(
       feed, {} as SessionService, auth,
-      { snapshot: { queryParamMap: convertToParamMap({}) } } as unknown as ActivatedRoute
+      { snapshot: { queryParamMap: convertToParamMap({}) } } as unknown as ActivatedRoute,
+      {} as CommunityService
     );
     activity = {
       type: 'SESSION_ATTENDED', postId: null,

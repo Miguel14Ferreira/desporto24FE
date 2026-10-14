@@ -429,6 +429,30 @@
 
         <section class="state-card feed-discovery-card">
           <h2>{{ 'discover.who.title' | t }}</h2>
+          @if (suggestedPeople.length > 0) {
+            <div class="feed-suggested-people">
+              @for (profile of suggestedPeople; track profile.username) {
+                <a class="feed-suggested-person"
+                   [routerLink]="['/menu/perfis', profile.username]"
+                   [queryParams]="{ from: 'feed' }">
+                  <span class="avatar feed-suggested-avatar" aria-hidden="true">
+                    @if (suggestedProfileImage(profile); as picture) {
+                      <img [src]="picture" alt="">
+                    } @else {
+                      <span>{{ profile.username.charAt(0).toUpperCase() }}</span>
+                    }
+                  </span>
+                  <span class="feed-suggested-person-details">
+                    <strong>{{ profile.nickname || profile.fullName || profile.username }}</strong>
+                    <small>@{{ profile.username }}</small>
+                    @if (profile.favoriteSports) {
+                      <small>{{ profile.favoriteSports }}</small>
+                    }
+                  </span>
+                </a>
+              }
+            </div>
+          }
           <a class="jynlo-action jynlo-action--neutral feed-sidebar-link" routerLink="/menu/perfis">
             {{ 'feed.findPeople' | t }} →
           </a>
