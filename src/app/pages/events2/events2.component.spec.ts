@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
-import { of } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 
 import { Events2Component } from './events2.component';
 import { SessionService } from '../../services/session.service';
@@ -16,7 +16,7 @@ describe('Events2Component', () => {
 
   beforeEach(async () => {
     sessionService = jasmine.createSpyObj<SessionService>('SessionService', ['create']);
-    venueService = jasmine.createSpyObj<VenueService>('VenueService', ['search', 'create', 'listPhotos']);
+    venueService = jasmine.createSpyObj<VenueService>('VenueService', ['search', 'create', 'listPhotos', 'resolveMapLink']);
     venueService.search.and.returnValue(of([]));
     venueService.listPhotos.and.returnValue(of([]));
 
@@ -210,6 +210,99 @@ describe('Events2Component', () => {
     fixture.detectChanges();
     expect(component.gpsAccuracyMeters).toBeNull();
     expect(fixture.nativeElement.querySelector('.gps-accuracy')).toBeNull();
+  });
+
+  it('invalidates an old Maps location when the user edits its link', () => {
+    venueService.resolveMapLink.and.returnValues(
+      of({ resolvedUrl: 'https://www.google.com/maps/old', latitude: 38.72, longitude: -9.14 }),
+      of({ resolvedUrl: 'https://www.google.com/maps/new', latitude: 38.71, longitude: -9.13 })
+    );
+    component.venueMapLink = 'https://maps.app.goo.gl/old';
+    component.resolveVenueMapLink();
+    fixture.detectChanges();
+
+    expect(component.hasCoordinates).toBeTrue();
+    expect(component.latitude).toBe(38.72);
+    expect(fixture.nativeElement.querySelector('.venue-create-card iframe')).not.toBeNull();
+
+    const linkInput = fixture.nativeElement.querySelector('input[name="venueMapLink"]') as HTMLInputElement;
+    linkInput.value = 'https://maps.app.goo.gl/new';
+    linkInput.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    expect(component.venueMapLink).toBe('https://maps.app.goo.gl/new');
+    expect(component.hasCoordinates).toBeFalse();
+    expect(component.latitude).toBeNull();
+    expect(component.longitude).toBeNull();
+    expect(component.venueMapCandidateResolvedUrl).toBe('');
+    expect(fixture.nativeElement.querySelector('.venue-create-card iframe')).toBeNull();
+
+    component.sport = 'Padel';
+    component.gameDate = '2099-10-15T18:00';
+    component.city = 'Lisboa';
+    component.address = '';
+    component.createSession();
+    expect(sessionService.create).not.toHaveBeenCalled();
+
+    component.resolveVenueMapLink();
+    expect(component.hasCoordinates).toBeTrue();
+    expect(component.latitude).toBe(38.71);
+    expect(component.longitude).toBe(-9.13);
+  });
+
+  it('does not submit stale Maps coordinates after a failed link revalidation', () => {
+    venueService.resolveMapLink.and.returnValues(
+      of({ resolvedUrl: 'https://www.google.com/maps/old', latitude: 38.72, longitude: -9.14 }),
+      throwError(() => new Error('Invalid Maps link'))
+    );
+    component.venueMapLink = 'https://maps.app.goo.gl/old';
+    component.resolveVenueMapLink();
+    expect(component.hasCoordinates).toBeTrue();
+
+    // A programmatic change must be just as safe as user typing.
+    component.venueMapLink = 'https://maps.app.goo.gl/invalid';
+    component.resolveVenueMapLink();
+
+    expect(component.hasCoordinates).toBeFalse();
+    expect(component.latitude).toBeNull();
+    expect(component.longitude).toBeNull();
+    expect(component.venueMapLinkError).toBeTruthy();
+  });
+
+  it('ignores a late Maps response after another venue is chosen', () => {
+    const pending = new Subject<{ resolvedUrl: string; latitude: number; longitude: number }>();
+    venueService.resolveMapLink.and.returnValue(pending.asObservable());
+
+    component.venueMapLink = 'https://maps.app.goo.gl/old';
+    component.resolveVenueMapLink();
+
+    component.selectedVenueId = 10;
+    component.latitude = 40.5;
+    component.longitude = -8.5;
+    component.locationCaptured = true;
+
+    pending.next({
+      resolvedUrl: 'https://www.google.com/maps/late',
+      latitude: 38.72,
+      longitude: -9.14
+    });
+    pending.complete();
+
+    expect(component.selectedVenueId).toBe(10);
+    expect(component.latitude).toBe(40.5);
+    expect(component.longitude).toBe(-8.5);
+    expect(component.venueMapCandidateResolvedUrl).toBe('');
+  });
+
+  it('keeps a separately shared GPS location when editing a Maps link', () => {
+    component.applyCurrentPosition(38.72, -9.14, 15);
+    component.onVenueMapLinkChanged('https://maps.app.goo.gl/another');
+
+    expect(component.locationSource).toBe('gps');
+    expect(component.hasCoordinates).toBeTrue();
+    expect(component.latitude).toBe(38.72);
+    expect(component.longitude).toBe(-9.14);
+    expect(component.gpsAccuracyMeters).toBe(15);
   });
 
   it('offers GPS beside the optional Maps link without requiring a link', () => {

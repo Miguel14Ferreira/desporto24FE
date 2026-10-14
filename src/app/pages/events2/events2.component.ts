@@ -383,10 +383,30 @@ export class Events2Component implements OnInit {
     this.clearLocation();
   }
 
+  onVenueMapLinkChanged(url: string): void {
+    if (this.venueMapLink === url) {
+      return;
+    }
+
+    this.venueMapLink = url;
+    this.venueMapLinkError = '';
+
+    // A previously confirmed link must not leave its old map coordinates behind.
+    if (this.locationSource === 'map') {
+      this.clearLocation();
+    }
+  }
+
   resolveVenueMapLink(): void {
     const url = this.venueMapLink.trim();
     if (!url || this.venueMapLinkLoading) {
       return;
+    }
+
+    // Revalidating a link invalidates the previous Maps point, even if the
+    // field was changed programmatically rather than through the template.
+    if (this.locationSource === 'map') {
+      this.clearLocation();
     }
 
     this.venueMapLinkLoading = true;
@@ -400,6 +420,10 @@ export class Events2Component implements OnInit {
       )
       .subscribe({
         next: candidate => {
+          // Do not replace a venue or a newer manual selection with a late reply.
+          if (this.selectedVenueId !== null || this.venueMapLink.trim() !== url) {
+            return;
+          }
           this.latitude = candidate.latitude;
           this.longitude = candidate.longitude;
           this.locationCaptured = true;
