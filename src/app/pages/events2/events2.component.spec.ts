@@ -183,6 +183,73 @@ describe('Events2Component', () => {
     expect(router.navigate).toHaveBeenCalledWith(['/menu/events', 42]);
   });
 
+  it('ignores late GPS success after switching to a venue and back', () => {
+    let onSuccess: PositionCallback | undefined;
+    spyOn(navigator.geolocation, 'getCurrentPosition').and.callFake(success => {
+      onSuccess = success;
+    });
+    component.venues = [{
+      id: 101, name: 'Pavilhão', city: 'Lisboa', address: 'Rua A',
+      sports: 'Padel', latitude: 38.72, longitude: -9.14
+    } as Venue];
+
+    component.captureCurrentLocation();
+    expect(component.locating).toBeTrue();
+
+    component.selectVenue(101);
+    component.selectVenue(null);
+    expect(component.locating).toBeFalse();
+
+    onSuccess!({
+      coords: { latitude: 41.15, longitude: -8.61, accuracy: 30 }
+    } as unknown as GeolocationPosition);
+
+    expect(component.selectedVenueId).toBeNull();
+    expect(component.hasCoordinates).toBeFalse();
+    expect(component.latitude).toBeNull();
+    expect(component.longitude).toBeNull();
+    expect(component.locationSource).toBeNull();
+    expect(component.locationError).toBe('');
+  });
+
+  it('does not show a stale GPS error after switching to a Maps link', () => {
+    let onError: PositionErrorCallback | null | undefined;
+    spyOn(navigator.geolocation, 'getCurrentPosition').and.callFake((_success, error) => {
+      onError = error;
+    });
+
+    component.captureCurrentLocation();
+    expect(component.locating).toBeTrue();
+
+    component.onVenueMapLinkChanged('https://maps.app.goo.gl/new');
+    expect(component.locating).toBeFalse();
+
+    onError!({ code: 1, message: 'Permission denied' } as unknown as GeolocationPositionError);
+
+    expect(component.venueMapLink).toBe('https://maps.app.goo.gl/new');
+    expect(component.locationError).toBe('');
+    expect(component.locationSource).toBeNull();
+  });
+
+  it('still accepts GPS coordinates from the current browser request', () => {
+    let onSuccess: PositionCallback | undefined;
+    spyOn(navigator.geolocation, 'getCurrentPosition').and.callFake(success => {
+      onSuccess = success;
+    });
+
+    component.captureCurrentLocation();
+    onSuccess!({
+      coords: { latitude: 38.72, longitude: -9.14, accuracy: 24 }
+    } as unknown as GeolocationPosition);
+
+    expect(component.locating).toBeFalse();
+    expect(component.locationSource).toBe('gps');
+    expect(component.hasCoordinates).toBeTrue();
+    expect(component.latitude).toBe(38.72);
+    expect(component.longitude).toBe(-9.14);
+    expect(component.gpsAccuracyMeters).toBe(24);
+  });
+
   it('shows the browser-reported GPS accuracy and warns when it exceeds 100 metres', () => {
     component.applyCurrentPosition(38.72, -9.14, 245.7);
     fixture.detectChanges();

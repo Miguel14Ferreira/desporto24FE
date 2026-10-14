@@ -45,6 +45,7 @@ export class Events2Component implements OnInit {
   locationError = '';
   locationSource: 'gps' | 'map' | null = null;
   gpsAccuracyMeters: number | null = null;
+  private gpsRequestId = 0;
 
   get gpsAccuracyIsLow(): boolean {
     return this.gpsAccuracyMeters !== null && this.gpsAccuracyMeters > 100;
@@ -312,6 +313,9 @@ export class Events2Component implements OnInit {
   }
 
   selectVenue(value: number | string | null): void {
+    // Changing venues also cancels an unfinished browser GPS request.
+    this.gpsRequestId++;
+    this.locating = false;
     // Invalidate outstanding photo requests before changing the selected venue.
     this.venuePhotoRequestId++;
     const previousVenue = this.venues.find(venue => venue.id === this.selectedVenueId);
@@ -426,6 +430,9 @@ export class Events2Component implements OnInit {
 
     this.venueMapLink = url;
     this.venueMapLinkError = '';
+    // Choosing a Maps link invalidates any pending browser GPS callback.
+    this.gpsRequestId++;
+    this.locating = false;
 
     // A previously confirmed link must not leave its old map coordinates behind.
     if (this.locationSource === 'map') {
@@ -445,6 +452,8 @@ export class Events2Component implements OnInit {
       this.clearLocation();
     }
 
+    this.gpsRequestId++;
+    this.locating = false;
     this.venueMapLinkLoading = true;
     this.venueMapLinkError = '';
     this.venueMapCandidateResolvedUrl = '';
@@ -583,12 +592,20 @@ export class Events2Component implements OnInit {
       return;
     }
 
+    const requestId = ++this.gpsRequestId;
     this.locating = true;
     navigator.geolocation.getCurrentPosition(
-      position => this.ngZone.run(() =>
+      position => this.ngZone.run(() => {
+        if (requestId !== this.gpsRequestId) {
+          return;
+        }
         this.applyCurrentPosition(
-          position.coords.latitude, position.coords.longitude, position.coords.accuracy)),
+          position.coords.latitude, position.coords.longitude, position.coords.accuracy);
+      }),
       () => this.ngZone.run(() => {
+        if (requestId !== this.gpsRequestId) {
+          return;
+        }
         this.locating = false;
         this.locationError = t('feedback.location.error');
       }),
@@ -601,6 +618,8 @@ export class Events2Component implements OnInit {
   }
 
   applyCurrentPosition(latitude: number, longitude: number, accuracyMeters?: number): void {
+    // A location chosen directly supersedes an older browser request too.
+    this.gpsRequestId++;
     if (this.selectedVenueId !== null || !Number.isFinite(latitude)
         || !Number.isFinite(longitude) || Math.abs(latitude) > 90
         || Math.abs(longitude) > 180) {
@@ -628,6 +647,8 @@ export class Events2Component implements OnInit {
   }
 
   clearLocation(): void {
+    this.gpsRequestId++;
+    this.locating = false;
     this.locationCaptured = false;
     this.latitude = null;
     this.longitude = null;
