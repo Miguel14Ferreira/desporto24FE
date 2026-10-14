@@ -119,6 +119,23 @@ describe('PerfisComponent', () => {
     expect(component.searched).toBeFalse();
   });
 
+  it('returns to Discover after opening a player from Discover', () => {
+    const activatedRoute = TestBed.inject(ActivatedRoute);
+    Object.defineProperty(activatedRoute.snapshot, 'queryParamMap', {
+      value: convertToParamMap({ from: 'discover' }),
+      configurable: true
+    });
+    routeParams.next(convertToParamMap({ username: 'ana' }));
+    fixture.detectChanges();
+
+    expect(component.backToDiscover).toBeTrue();
+    expect(component.selectedProfile?.username).toBe('ana');
+    const back = fixture.nativeElement.querySelector('a.back-to-search') as HTMLAnchorElement;
+    expect(back.getAttribute('href')).toBe('/menu/discover');
+    expect(back.textContent).toContain(t('discover.backFromProfile'));
+    expect(socialGraphService.status).toHaveBeenCalledWith('ana');
+  });
+
   it('returns to the feed when a profile was opened from a feed link', () => {
     const activatedRoute = TestBed.inject(ActivatedRoute);
     Object.defineProperty(activatedRoute.snapshot, 'queryParamMap', {

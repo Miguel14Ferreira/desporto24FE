@@ -299,7 +299,8 @@
           } @else {
             <div class="result-list">
               @for (profile of topPeople; track profile.username) {
-                <a class="result-card person-card" [routerLink]="['/menu/perfis', profile.username]">
+                <a class="result-card person-card" [routerLink]="['/menu/perfis', profile.username]"
+                   [queryParams]="{ from: 'discover' }">
                   <div class="person-avatar">
                     {{ (profile.nickname || profile.fullName || profile.username).charAt(0).toUpperCase() }}
                   </div>
@@ -312,6 +313,9 @@
                     @if (profile.skillLevel) {
                       <small>{{ ('profile.level.' + profile.skillLevel) | t }}</small>
                     }
+                    <span class="person-entry-hint">
+                      {{ 'discover.who.profileAction' | t }} <span aria-hidden="true">→</span>
+                    </span>
                   </div>
                 </a>
               }

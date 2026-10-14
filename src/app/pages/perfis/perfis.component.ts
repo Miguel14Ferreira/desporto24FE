@@ -40,6 +40,10 @@ export class PerfisComponent implements OnInit, OnDestroy {
     return this.route.snapshot.queryParamMap.get('from') === 'feed';
   }
 
+  get backToDiscover(): boolean {
+    return this.route.snapshot.queryParamMap.get('from') === 'discover';
+  }
+
   profiles: CommunityProfile[] = [];
   selectedProfile?: CommunityProfile;
   selectedActivity?: ProfileActivity;

@@ -520,8 +520,9 @@ describe('DiscoverComponent', () => {
     fixture.detectChanges();
 
     const link: HTMLAnchorElement | null = fixture.nativeElement.querySelector('.person-card');
-    expect(link?.getAttribute('href')).toBe('/menu/perfis/teammate');
+    expect(link?.getAttribute('href')).toBe('/menu/perfis/teammate?from=discover');
     expect(link?.textContent).toContain('Teammate');
+    expect(link?.textContent).toContain('Ver perfil e interagir');
   });
 
   it('carries the selected sport and locality into venue creation', () => {

@@ -262,6 +262,16 @@
   gap: .6rem;
 }
 
+.person-card .person-entry-hint {
+  margin-top: .3rem;
+  color: #bae6fd;
+  font-weight: 800;
+}
+
+.person-card .person-entry-hint span {
+  color: inherit;
+}
+
 .person-avatar {
   display: grid;
   width: 38px;
