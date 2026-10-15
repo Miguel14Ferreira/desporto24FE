@@ -8,7 +8,7 @@ import { environment } from 'src/environment/environment';
 import { CommunityProfile } from '../model/community-profile';
 import { ProfileActivity } from '../model/my-profile';
 import { FollowStatus } from '../model/follow';
-import { CommunityService } from '../../services/community.service';
+import { CommunityService, ProfileSearchFilters } from '../../services/community.service';
 import { AuthenticationService } from '../../services/authethication.service';
 import { ReliabilityService } from '../../services/reliability.service';
 import { SocialGraphService } from '../../services/social-graph.service';
@@ -30,6 +30,7 @@ export class PerfisComponent implements OnInit, OnDestroy {
   levelFilter = '';
   readonly sportsCatalog = SPORTS_CATALOG;
 
+  private appliedSearchFilters: ProfileSearchFilters | null = null;
   private searchSubscription?: Subscription;
   private routeSubscription?: Subscription;
   private profileSubscription?: Subscription;
@@ -51,14 +52,15 @@ export class PerfisComponent implements OnInit, OnDestroy {
   }
 
   get peopleProfileParams() {
+    const filters = this.appliedSearchFilters;
     return {
       from: 'people',
-      player: this.searchTerm.trim() || null,
-      sport: this.sportFilter.trim() || null,
-      city: this.locationFilter.trim() || null,
-      minAge: this.minAge,
-      maxAge: this.maxAge,
-      level: this.levelFilter || null,
+      player: filters?.name || null,
+      sport: filters?.sport || null,
+      city: filters?.location || null,
+      minAge: filters?.minAge ?? null,
+      maxAge: filters?.maxAge ?? null,
+      level: filters?.skillLevel || null,
       via: this.backToDiscover ? 'discover' : null
     };
   }
@@ -224,14 +226,15 @@ export class PerfisComponent implements OnInit, OnDestroy {
     this.actionError = '';
     this.actionSuccess = '';
 
-    this.searchSubscription = this.communityService.findProfiles({
+    const filters: ProfileSearchFilters = {
       name: this.searchTerm.trim() || undefined,
       sport: this.sportFilter.trim() || undefined,
       location: this.locationFilter.trim() || undefined,
       minAge: this.minAge === null ? undefined : this.minAge,
       maxAge: this.maxAge === null ? undefined : this.maxAge,
       skillLevel: this.levelFilter || undefined
-    })
+    };
+    this.searchSubscription = this.communityService.findProfiles(filters)
       .pipe(
         timeout(10_000),
         retry({ count: 1 }),
@@ -239,11 +242,13 @@ export class PerfisComponent implements OnInit, OnDestroy {
       )
       .subscribe({
         next: profiles => {
+          this.appliedSearchFilters = { ...filters };
           this.profiles = profiles;
           this.searched = true;
           this.selectedProfile = undefined;
         },
         error: error => {
+          this.appliedSearchFilters = null;
           this.profiles = [];
           this.searched = true;
           this.errorMessage = this.errorFrom(
@@ -256,6 +261,7 @@ export class PerfisComponent implements OnInit, OnDestroy {
 
   clearSearch(): void {
     this.searchSubscription?.unsubscribe();
+    this.appliedSearchFilters = null;
     this.loading = false;
     this.profiles = [];
     this.searched = false;

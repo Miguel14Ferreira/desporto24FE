@@ -88,6 +88,74 @@ describe('PerfisComponent', () => {
     fixture.detectChanges();
   });
 
+  it('keeps the applied filters on profile links when the form is edited without searching', () => {
+    component.searchTerm = 'Ana';
+    component.sportFilter = 'Padel';
+    component.locationFilter = 'Lisboa';
+    component.minAge = 20;
+    component.maxAge = 40;
+    component.levelFilter = 'BEGINNER';
+    component.search();
+    fixture.detectChanges();
+
+    const link = (): HTMLAnchorElement => fixture.nativeElement.querySelector('a.profile-card');
+    const originalHref = '/menu/perfis/ana?from=people&player=Ana&sport=Padel&city=Lisboa&minAge=20&maxAge=40&level=BEGINNER';
+    expect(link().getAttribute('href')).toBe(originalHref);
+
+    component.searchTerm = 'Rui';
+    component.sportFilter = 'Ténis';
+    component.locationFilter = 'Sintra';
+    component.minAge = 30;
+    component.maxAge = 50;
+    component.levelFilter = 'ADVANCED';
+    fixture.detectChanges();
+
+    expect(link().getAttribute('href')).toBe(originalHref);
+  });
+
+  it('keeps previous result filters during a pending search and captures the submitted values on success', () => {
+    component.sportFilter = 'Padel';
+    component.locationFilter = 'Lisboa';
+    component.search();
+    fixture.detectChanges();
+
+    const link = (): HTMLAnchorElement => fixture.nativeElement.querySelector('a.profile-card');
+    expect(link().getAttribute('href')).toBe('/menu/perfis/ana?from=people&sport=Padel&city=Lisboa');
+
+    const pending = new Subject<typeof profile[]>();
+    service.findProfiles.and.returnValue(pending);
+    component.sportFilter = 'Ténis';
+    component.search();
+    component.locationFilter = 'Sintra';
+    fixture.detectChanges();
+
+    expect(link().getAttribute('href')).toBe('/menu/perfis/ana?from=people&sport=Padel&city=Lisboa');
+
+    pending.next([profile]);
+    pending.complete();
+    fixture.detectChanges();
+
+    expect(link().getAttribute('href')).toBe('/menu/perfis/ana?from=people&sport=T%C3%A9nis&city=Lisboa');
+  });
+
+  it('resets applied filters after clearing the player search', () => {
+    component.sportFilter = 'Padel';
+    component.search();
+    fixture.detectChanges();
+    expect(component.peopleProfileParams.sport).toBe('Padel');
+
+    component.clearSearch();
+    fixture.detectChanges();
+    expect(component.peopleProfileParams.sport).toBeNull();
+    expect(fixture.nativeElement.querySelector('a.profile-card')).toBeNull();
+
+    component.locationFilter = 'Sintra';
+    component.search();
+    fixture.detectChanges();
+    expect(component.peopleProfileParams.sport).toBeNull();
+    expect(component.peopleProfileParams.city).toBe('Sintra');
+  });
+
   it('carries all active advanced-search filters into a player profile', () => {
     component.searchTerm = 'Ana';
     component.sportFilter = 'Ténis';
