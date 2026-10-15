@@ -94,6 +94,25 @@ describe('PublicSessionPreviewComponent', () => {
     expect(photo.getAttribute('alt')).toBe('Fotografia da sessão: Sessão desportiva');
   });
 
+  it('directs a signed-in player to the participation section', () => {
+    authenticationService.isLoggedIn.and.returnValue(true);
+    const page = render();
+    const joinAction = page.querySelector('.join-panel .primary-action') as HTMLAnchorElement;
+
+    expect(joinAction).not.toBeNull();
+    expect(new URL(joinAction.href).pathname).toBe('/menu/events/42');
+    expect(new URL(joinAction.href).searchParams.get('join')).toBe('1');
+  });
+
+  it('does not add join focus to closed session details', () => {
+    authenticationService.isLoggedIn.and.returnValue(true);
+    const page = render({ status: 'CANCELLED' });
+    const detailsAction = page.querySelector('.join-panel .primary-action') as HTMLAnchorElement;
+
+    expect(detailsAction).not.toBeNull();
+    expect(new URL(detailsAction.href).searchParams.has('join')).toBeFalse();
+  });
+
   it('lets a guest share a verified public session without signing in', () => {
     const page = render();
     const share = page.querySelector('.share-session-action') as HTMLButtonElement;
@@ -411,7 +430,7 @@ describe('PublicSessionPreviewComponent', () => {
     expect(heading()).toBe('Your next game starts here.');
     expect(description()).toBe('Open the session details to join.');
     expect(page.querySelector('.join-panel .primary-action')?.getAttribute('href'))
-      .toBe('/menu/events/42');
+      .toBe('/menu/events/42?join=1');
   });
 
   it('translates waitlist and closed-session explanations without changing signup options', () => {
@@ -425,7 +444,7 @@ describe('PublicSessionPreviewComponent', () => {
     expect(heading()).toBe('You can still join the waitlist.');
     expect(description()).toContain('join the waitlist');
     expect(page.querySelector('.join-panel .primary-action')?.getAttribute('href'))
-      .toBe('/menu/events/42');
+      .toBe('/menu/events/42?join=1');
 
     fixture.componentInstance.session!.status = 'CANCELLED';
     fixture.detectChanges();
@@ -539,7 +558,7 @@ describe('PublicSessionPreviewComponent', () => {
     fixture.componentInstance.isAuthenticated = true;
     fixture.detectChanges();
     expect(page.querySelector('.join-panel .primary-action')?.getAttribute('href'))
-      .toBe(destination);
+      .toBe(destination + '?join=1');
 
     fixture.componentInstance.session!.status = 'CANCELLED';
     fixture.detectChanges();
@@ -644,7 +663,7 @@ describe('PublicSessionPreviewComponent', () => {
 
     expect(authenticationService.hasSessionCandidate).toHaveBeenCalled();
     expect(page.querySelector('.join-panel .primary-action')?.getAttribute('href'))
-      .toBe('/menu/events/42');
+      .toBe('/menu/events/42?join=1');
     expect(page.textContent).not.toContain('Criar conta');
     expect(page.textContent).not.toContain('Já tenho conta');
   });
@@ -665,7 +684,7 @@ describe('PublicSessionPreviewComponent', () => {
 
     const action = page.querySelector('.join-panel .primary-action') as HTMLAnchorElement;
     expect(action).not.toBeNull();
-    expect(action.getAttribute('href')).toBe('/menu/events/42');
+    expect(action.getAttribute('href')).toBe('/menu/events/42?join=1');
     expect(page.textContent).toContain('Ver sessão e inscrever-me');
     expect(page.textContent).not.toContain('Criar conta');
     expect(page.textContent).not.toContain('Já tenho conta');
@@ -676,7 +695,7 @@ describe('PublicSessionPreviewComponent', () => {
     const page = render({ status: 'FULL' });
 
     const action = page.querySelector('.join-panel .primary-action') as HTMLAnchorElement;
-    expect(action.getAttribute('href')).toBe('/menu/events/42');
+    expect(action.getAttribute('href')).toBe('/menu/events/42?join=1');
     expect(page.textContent).toContain('Ver sessão e lista de espera');
   });
 
