@@ -137,18 +137,45 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
   }
 
   private loadSuggestedPeople(): void {
-    this.communityService.discoverProfiles()
+    if (!this.currentUsername) {
+      return;
+    }
+    this.communityService.publicProfile(this.currentUsername)
       .pipe(
         timeout(10_000),
-        catchError(() => of([] as CommunityProfile[])),
+        catchError(() => of(null as CommunityProfile | null)),
+        switchMap(me => this.communityService.discoverProfiles().pipe(
+          timeout(10_000),
+          catchError(() => of([] as CommunityProfile[])),
+          // Missing profile preferences should not prevent suggestions.
+          switchMap(profiles => of(this.rankSuggestedPeople(profiles, me)))
+        )),
         takeUntil(this.destroyed)
       )
-      .subscribe(profiles => {
-        this.suggestedPeople = profiles
-          .filter(profile => profile.username?.trim()
-            && profile.username.toLowerCase() !== this.currentUsername.toLowerCase())
-          .slice(0, 3);
-      });
+      .subscribe(profiles => this.suggestedPeople = profiles);
+  }
+
+  private rankSuggestedPeople(profiles: CommunityProfile[], me: CommunityProfile | null): CommunityProfile[] {
+    const sports = new Set((me?.favoriteSports || '').split(/[,;|]/)
+      .map(value => this.normalizeSuggestion(value)).filter(Boolean));
+    const location = this.normalizeSuggestion(me?.location || '');
+    return profiles
+      .filter(profile => profile.username?.trim()
+        && profile.username.toLowerCase() !== this.currentUsername.toLowerCase())
+      .map((profile, index) => {
+        const theirSports = (profile.favoriteSports || '').split(/[,;|]/)
+          .map(value => this.normalizeSuggestion(value));
+        const sameSport = sports.size > 0 && theirSports.some(sport => sports.has(sport));
+        const sameLocation = Boolean(location && this.normalizeSuggestion(profile.location || '') === location);
+        return { profile, index, score: Number(sameSport) * 2 + Number(sameLocation) };
+      })
+      .sort((a, b) => b.score - a.score || a.index - b.index)
+      .slice(0, 3)
+      .map(item => item.profile);
+  }
+
+  private normalizeSuggestion(value: string): string {
+    return value.trim().toLocaleLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '');
   }
 
   suggestedProfileImage(profile: CommunityProfile): string | null {
