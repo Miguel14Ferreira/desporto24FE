@@ -1,0 +1,21 @@
+name: Validate public session participation
+on:
+  pull_request:
+    branches: [preview/render-fullstack]
+    paths:
+      - 'src/app/pages/public-session-preview/**'
+      - '.github/workflows/public-session-join-ci.yml'
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm test -- --watch=false --browsers=ChromeHeadless --include=src/app/pages/public-session-preview/public-session-preview.component.spec.ts
+      - run: npm run build
