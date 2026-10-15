@@ -79,6 +79,10 @@ export class VenueCreateComponent implements OnInit {
   validationError = false;
   locating = false;
   locationError = false;
+  mapLink = '';
+  resolvingMapLink = false;
+  mapLinkError = false;
+  mapLinkResolved = false;
 
   constructor(
     private venueService: VenueService,
@@ -100,6 +104,29 @@ export class VenueCreateComponent implements OnInit {
       this.selectedSports = [matchedSport];
     }
     this.city = (params.get('city') || '').trim().slice(0, 120);
+  }
+
+  resolveMapLink(): void {
+    const url = this.mapLink.trim();
+    if (!url || this.resolvingMapLink || this.saving) return;
+    this.resolvingMapLink = true;
+    this.mapLinkError = false;
+    this.mapLinkResolved = false;
+    this.venueService.resolveMapLink(url)
+      .pipe(timeout(10_000), finalize(() => this.resolvingMapLink = false))
+      .subscribe({
+        next: result => {
+          if (!Number.isFinite(result.latitude) || !Number.isFinite(result.longitude)
+              || Math.abs(result.latitude) > 90 || Math.abs(result.longitude) > 180) {
+            this.mapLinkError = true;
+            return;
+          }
+          this.latitude = result.latitude;
+          this.longitude = result.longitude;
+          this.mapLinkResolved = true;
+        },
+        error: () => this.mapLinkError = true
+      });
   }
 
   useCurrentLocation(): void {
