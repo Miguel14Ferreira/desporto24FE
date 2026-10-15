@@ -53,6 +53,9 @@ export class PerfisComponent implements OnInit, OnDestroy {
 
   get peopleProfileParams() {
     const filters = this.appliedSearchFilters;
+    const originalDiscover = this.backToDiscover
+      ? (this.discoverReturnParams || { sport: '', city: '', player: '' })
+      : null;
     return {
       from: 'people',
       player: filters?.name || null,
@@ -61,7 +64,10 @@ export class PerfisComponent implements OnInit, OnDestroy {
       minAge: filters?.minAge ?? null,
       maxAge: filters?.maxAge ?? null,
       level: filters?.skillLevel || null,
-      via: this.backToDiscover ? 'discover' : null
+      via: originalDiscover ? 'discover' : null,
+      discoverSport: originalDiscover?.sport ?? null,
+      discoverCity: originalDiscover?.city ?? null,
+      discoverPlayer: originalDiscover?.player ?? null
     };
   }
 
@@ -75,20 +81,29 @@ export class PerfisComponent implements OnInit, OnDestroy {
       minAge: params.get('minAge'),
       maxAge: params.get('maxAge'),
       level: params.get('level'),
-      via: params.get('via')
+      via: params.get('via'),
+      discoverSport: params.get('discoverSport'),
+      discoverCity: params.get('discoverCity'),
+      discoverPlayer: params.get('discoverPlayer')
     };
   }
 
   get discoverReturnParams(): { sport: string; city: string; player: string } | null {
     const params = this.route.snapshot.queryParamMap;
-    if (!params.has('sport') && !params.has('city') && !params.has('player')) {
+    const hasOriginalDiscoverFilters = params.get('from') === 'people'
+      && params.get('via') === 'discover'
+      && (params.has('discoverSport') || params.has('discoverCity') || params.has('discoverPlayer'));
+    const sportKey = hasOriginalDiscoverFilters ? 'discoverSport' : 'sport';
+    const cityKey = hasOriginalDiscoverFilters ? 'discoverCity' : 'city';
+    const playerKey = hasOriginalDiscoverFilters ? 'discoverPlayer' : 'player';
+    if (!params.has(sportKey) && !params.has(cityKey) && !params.has(playerKey)) {
       return null;
     }
 
     return {
-      sport: params.get('sport') || '',
-      city: params.get('city') || '',
-      player: params.get('player') || ''
+      sport: params.get(sportKey) || '',
+      city: params.get(cityKey) || '',
+      player: params.get(playerKey) || ''
     };
   }
 

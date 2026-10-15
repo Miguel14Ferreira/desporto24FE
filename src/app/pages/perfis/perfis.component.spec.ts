@@ -229,6 +229,93 @@ describe('PerfisComponent', () => {
     }
   });
 
+  it('preserves original Discover filters separately when advanced search filters change', () => {
+    const route = TestBed.inject(ActivatedRoute);
+    const previous = route.snapshot.queryParamMap;
+    Object.defineProperty(route.snapshot, 'queryParamMap', {
+      configurable: true,
+      value: convertToParamMap({ from: 'discover', sport: 'Padel', city: 'Lisboa', player: '' })
+    });
+    try {
+      component.sportFilter = 'Ténis';
+      component.locationFilter = 'Sintra';
+      component.search();
+      fixture.detectChanges();
+
+      const profileLink: HTMLAnchorElement = fixture.nativeElement.querySelector('a.profile-card');
+      expect(profileLink.getAttribute('href')).toBe(
+        '/menu/perfis/ana?from=people&sport=T%C3%A9nis&city=Sintra&via=discover&discoverSport=Padel&discoverCity=Lisboa&discoverPlayer='
+      );
+      expect(component.discoverReturnParams).toEqual({
+        sport: 'Padel', city: 'Lisboa', player: ''
+      });
+    } finally {
+      Object.defineProperty(route.snapshot, 'queryParamMap', {
+        configurable: true, value: previous
+      });
+    }
+  });
+
+  it('returns through advanced search to the original Discover filters, not the edited search', () => {
+    const route = TestBed.inject(ActivatedRoute);
+    const previous = route.snapshot.queryParamMap;
+    Object.defineProperty(route.snapshot, 'queryParamMap', {
+      configurable: true,
+      value: convertToParamMap({
+        from: 'people', sport: 'Ténis', city: 'Sintra', via: 'discover',
+        discoverSport: 'Padel', discoverCity: 'Lisboa', discoverPlayer: 'Ana'
+      })
+    });
+    try {
+      routeParams.next(convertToParamMap({ username: 'ana' }));
+      fixture.detectChanges();
+
+      const profileBack: HTMLAnchorElement = fixture.nativeElement.querySelector('a.back-to-search');
+      expect(profileBack.getAttribute('href')).toBe(
+        '/menu/perfis?from=people&sport=T%C3%A9nis&city=Sintra&via=discover&discoverSport=Padel&discoverCity=Lisboa&discoverPlayer=Ana'
+      );
+
+      routeParams.next(convertToParamMap({}));
+      const advanced = TestBed.createComponent(PerfisComponent);
+      advanced.detectChanges();
+      expect(advanced.componentInstance.sportFilter).toBe('Ténis');
+      expect(advanced.componentInstance.locationFilter).toBe('Sintra');
+      expect(service.findProfiles).toHaveBeenCalledWith({
+        name: undefined, sport: 'Ténis', location: 'Sintra',
+        minAge: undefined, maxAge: undefined, skillLevel: undefined
+      });
+      const discoverBack: HTMLAnchorElement = advanced.nativeElement.querySelector('.discover-return-link');
+      expect(discoverBack.getAttribute('href'))
+        .toBe('/menu/discover?sport=Padel&city=Lisboa&player=Ana');
+      advanced.destroy();
+    } finally {
+      Object.defineProperty(route.snapshot, 'queryParamMap', {
+        configurable: true, value: previous
+      });
+    }
+  });
+
+  it('keeps cleared Discover filters cleared after editing the advanced search', () => {
+    const route = TestBed.inject(ActivatedRoute);
+    const previous = route.snapshot.queryParamMap;
+    Object.defineProperty(route.snapshot, 'queryParamMap', {
+      configurable: true, value: convertToParamMap({ from: 'discover' })
+    });
+    try {
+      component.sportFilter = 'Ténis';
+      component.search();
+      fixture.detectChanges();
+
+      const profileLink: HTMLAnchorElement = fixture.nativeElement.querySelector('a.profile-card');
+      expect(profileLink.getAttribute('href'))
+        .toBe('/menu/perfis/ana?from=people&sport=T%C3%A9nis&via=discover&discoverSport=&discoverCity=&discoverPlayer=');
+    } finally {
+      Object.defineProperty(route.snapshot, 'queryParamMap', {
+        configurable: true, value: previous
+      });
+    }
+  });
+
   it('retains a route back to Discover after a profile round trip', () => {
     const route = TestBed.inject(ActivatedRoute);
     const previous = route.snapshot.queryParamMap;
@@ -243,7 +330,7 @@ describe('PerfisComponent', () => {
       fixture.detectChanges();
       const profileLink: HTMLAnchorElement | null = fixture.nativeElement.querySelector('a.profile-card');
       expect(profileLink?.getAttribute('href'))
-        .toBe('/menu/perfis/ana?from=people&sport=Padel&city=Lisboa&via=discover');
+        .toBe('/menu/perfis/ana?from=people&sport=Padel&city=Lisboa&via=discover&discoverSport=Padel&discoverCity=Lisboa&discoverPlayer=');
 
       Object.defineProperty(route.snapshot, 'queryParamMap', {
         configurable: true,
