@@ -624,7 +624,7 @@
                         <span class="competition-badge">
                           {{ 'communities.sessionWaitlisted' | t }}
                         </span>
-                      } @else if (!session.privateGame) {
+                      } @else if (canJoinCommunitySession(session)) {
                         <button
                           type="button"
                           class="primary-action small jynlo-action jynlo-action--primary jynlo-action--compact"
