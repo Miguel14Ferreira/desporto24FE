@@ -93,6 +93,16 @@
             }
           </div>
 
+          @if (canFindPlayers()) {
+            <div class="session-player-search" role="region" aria-label="Procurar jogadores">
+              <strong>Faltam {{ missingPlayers() }} jogadores</strong>
+              <a class="jynlo-action jynlo-action--primary" routerLink="/menu/perfis"
+                 [queryParams]="{ from: 'people', sport: session.sport, city: session.city }">
+                Procurar jogadores
+              </a>
+            </div>
+          }
+
           <div class="detail-grid">
             <div>
               <span>{{ 'mySessions.date' | t }}</span>

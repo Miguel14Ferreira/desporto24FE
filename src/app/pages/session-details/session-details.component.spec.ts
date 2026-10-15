@@ -609,6 +609,34 @@ describe('SessionDetailsComponent', () => {
     expect(fixture.nativeElement.querySelector('.share-session-action')).not.toBeNull();
   });
 
+  it('offers a filtered player search to the creator of a future public session with vacancies', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = { ...session, gameDate: '2099-10-01T18:00:00Z' };
+    fixture.detectChanges();
+
+    expect(component.missingPlayers()).toBe(2);
+    expect(component.canFindPlayers()).toBeTrue();
+    const action = fixture.nativeElement.querySelector('.session-player-search a') as HTMLAnchorElement;
+    expect(action.textContent).toContain('Procurar jogadores');
+    expect(action.getAttribute('href')).toBe('/menu/perfis?from=people&sport=Padel&city=Lisboa');
+  });
+
+  it('does not suggest finding players for private, full, past or other peoples sessions', () => {
+    (component as any).currentUsername = 'creator-user';
+    const future = '2099-10-01T18:00:00Z';
+    component.session = { ...session, gameDate: future, privateGame: true };
+    expect(component.canFindPlayers()).toBeFalse();
+    component.session = { ...session, gameDate: future, participantCount: 4 };
+    expect(component.canFindPlayers()).toBeFalse();
+    component.session = { ...session, gameDate: '2020-10-01T18:00:00Z' };
+    expect(component.canFindPlayers()).toBeFalse();
+    component.session = { ...session, gameDate: future };
+    (component as any).currentUsername = 'other-user';
+    expect(component.canFindPlayers()).toBeFalse();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.session-player-search')).toBeNull();
+  });
+
   it('offers post-game sharing to a participant of a completed public session', () => {
     component.session = {
       ...session, status: 'COMPLETED', joined: true, canSharePublicly: true

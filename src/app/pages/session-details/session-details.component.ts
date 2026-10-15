@@ -1012,6 +1012,22 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     return Number.isFinite(startTime) && startTime <= Date.now();
   }
 
+  missingPlayers(): number {
+    if (!this.session) {
+      return 0;
+    }
+    return Math.max(0, this.session.maxParticipants - this.session.participantCount);
+  }
+
+  canFindPlayers(): boolean {
+    if (!this.session || !this.isCreator() || this.session.privateGame
+        || this.session.status !== 'OPEN' || this.missingPlayers() === 0) {
+      return false;
+    }
+    const start = Date.parse(this.session.gameDate);
+    return Number.isFinite(start) && start > Date.now();
+  }
+
   isFull(): boolean {
     if (!this.session) {
       return false;
