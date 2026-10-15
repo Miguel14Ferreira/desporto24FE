@@ -263,9 +263,11 @@ export class PerfisComponent implements OnInit, OnDestroy {
           this.selectedProfile = undefined;
         },
         error: error => {
-          this.appliedSearchFilters = null;
-          this.profiles = [];
-          this.searched = true;
+          // Keep the last successful result set and its navigation context.
+          if (!this.appliedSearchFilters) {
+            this.profiles = [];
+            this.searched = true;
+          }
           this.errorMessage = this.errorFrom(
             error,
             t('feedback.community.searchError')

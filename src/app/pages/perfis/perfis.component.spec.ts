@@ -88,6 +88,47 @@ describe('PerfisComponent', () => {
     fixture.detectChanges();
   });
 
+  it('preserves successful player results and their profile links if a later search fails', () => {
+    component.sportFilter = 'Padel';
+    component.locationFilter = 'Lisboa';
+    component.search();
+    fixture.detectChanges();
+
+    const originalHref = '/menu/perfis/ana?from=people&sport=Padel&city=Lisboa';
+    expect(fixture.nativeElement.querySelector('a.profile-card').getAttribute('href')).toBe(originalHref);
+
+    const pending = new Subject<typeof profile[]>();
+    service.findProfiles.and.returnValue(pending);
+    component.sportFilter = 'Ténis';
+    component.locationFilter = 'Sintra';
+    component.search();
+    pending.error({ error: {} });
+    fixture.detectChanges();
+
+    expect(component.profiles).toEqual([profile]);
+    expect(component.searched).toBeTrue();
+    expect(component.errorMessage).toBeTruthy();
+    expect(component.peopleProfileParams.sport).toBe('Padel');
+    expect(fixture.nativeElement.querySelector('a.profile-card').getAttribute('href')).toBe(originalHref);
+  });
+
+  it('keeps an initial failed search empty and shows its error', () => {
+    service.findProfiles.and.returnValue(new Subject<typeof profile[]>());
+    component.sportFilter = 'Padel';
+    component.search();
+    // A failed first request must not pretend there was a successful result.
+    component.clearSearch();
+    const failing = new Subject<typeof profile[]>();
+    service.findProfiles.and.returnValue(failing);
+    component.sportFilter = 'Padel';
+    component.search();
+    failing.error({ error: {} });
+    fixture.detectChanges();
+    expect(component.profiles).toEqual([]);
+    expect(component.searched).toBeTrue();
+    expect(component.errorMessage).toBeTruthy();
+  });
+
   it('keeps the applied filters on profile links when the form is edited without searching', () => {
     component.searchTerm = 'Ana';
     component.sportFilter = 'Padel';
