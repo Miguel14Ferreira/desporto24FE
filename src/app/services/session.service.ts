@@ -64,6 +64,10 @@ export class SessionService {
 
   constructor(private http: HttpClient) {}
 
+  invitePlayer(sessionId: number, username: string): Observable<{ id: number }> {
+    return this.http.post<{ id: number }>(`${this.baseUrl}/${sessionId}/invites`, { username });
+  }
+
   discover(filters: SessionSearchFilters = {}): Observable<SessionSummary[]> {
     let params = new HttpParams();
 
