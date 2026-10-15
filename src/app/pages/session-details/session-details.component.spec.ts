@@ -875,6 +875,20 @@ describe('SessionDetailsComponent', () => {
     page.destroy();
   });
 
+  it('rejects non-integer session IDs without requesting details', () => {
+    fixture.destroy();
+    const route = TestBed.inject(ActivatedRoute);
+    (route.snapshot as any).paramMap = convertToParamMap({ id: '7.5' });
+    sessionService.detail.calls.reset();
+
+    const page = TestBed.createComponent(SessionDetailsComponent);
+    page.detectChanges();
+
+    expect(page.componentInstance.errorMessage).toBeTruthy();
+    expect(sessionService.detail).not.toHaveBeenCalled();
+    page.destroy();
+  });
+
   it('should join the session and refresh its details', () => {
     component.session = { ...session, gameDate: new Date(Date.now() + 3600_000).toISOString() };
     component.joinSession();
