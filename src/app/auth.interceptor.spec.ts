@@ -41,6 +41,38 @@ describe('AuthInterceptor', () => {
     interceptor.intercept(request, next).subscribe(() => done());
   });
 
+  it('should not refresh the session when Google login returns 401', (done) => {
+    const request = new HttpRequest('POST', '/api/auth/google/login', { credential: 'invalid' });
+    const next = {
+      handle: () => throwError(() => new HttpErrorResponse({ status: 401 }))
+    } as HttpHandler;
+
+    interceptor.intercept(request, next).subscribe({
+      error: error => {
+        expect(error.status).toBe(401);
+        expect(backend.handle).not.toHaveBeenCalled();
+        expect(router.navigate).not.toHaveBeenCalled();
+        done();
+      }
+    });
+  });
+
+  it('should not refresh the session when Google registration returns 401', (done) => {
+    const request = new HttpRequest('POST', '/api/auth/google/register', {});
+    const next = {
+      handle: () => throwError(() => new HttpErrorResponse({ status: 401 }))
+    } as HttpHandler;
+
+    interceptor.intercept(request, next).subscribe({
+      error: error => {
+        expect(error.status).toBe(401);
+        expect(backend.handle).not.toHaveBeenCalled();
+        expect(router.navigate).not.toHaveBeenCalled();
+        done();
+      }
+    });
+  });
+
   it('should keep the session on a temporary refresh outage', (done) => {
     localStorage.setItem('t', 'expired-token');
     const request = new HttpRequest('GET', '/api/sessions/1');
