@@ -310,7 +310,11 @@
                 <a class="result-card person-card" [routerLink]="['/menu/perfis', profile.username]"
                    [queryParams]="{ from: 'discover', sport: sport.trim(), city: location.trim(), player: appliedPlayerName }">
                   <div class="person-avatar">
-                    {{ (profile.nickname || profile.fullName || profile.username).charAt(0).toUpperCase() }}
+                    @if (playerPhotoUrl(profile); as photo) {
+                      <img [src]="photo" alt="" loading="lazy">
+                    } @else {
+                      {{ (profile.nickname || profile.fullName || profile.username).charAt(0).toUpperCase() }}
+                    }
                   </div>
                   <div>
                     <strong>{{ profile.nickname || profile.fullName || profile.username }}</strong>
