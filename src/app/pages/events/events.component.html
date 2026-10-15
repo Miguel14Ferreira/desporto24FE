@@ -233,7 +233,8 @@
             <a
               class="session-action jynlo-action jynlo-action--neutral"
               [class.session-action--join]="canJoin(session) || canJoinWaitlist(session)"
-              [routerLink]="['/menu/events', session.id]">
+              [routerLink]="['/menu/events', session.id]"
+                [queryParams]="canJoin(session) || canJoinWaitlist(session) ? { join: 1 } : null">
               {{ (canJoin(session) ? 'events.joinNow'
                 : (canJoinWaitlist(session) ? 'session.joinWaitlist' : 'mySessions.details')) | t }}
               <span>→</span>
