@@ -8,6 +8,7 @@ import { SessionService } from '../../services/session.service';
 import { VenueService } from '../../services/venue.service';
 import { SPORTS_CATALOG } from '../../shared/sports-catalog';
 import { CommunityProfile } from '../model/community-profile';
+import { environment } from 'src/environment/environment';
 import { SessionSummary } from '../model/session-summary';
 import { Venue } from '../model/venue';
 
@@ -352,6 +353,17 @@ export class DiscoverComponent implements OnInit {
 
   toggleAllPeople(): void {
     this.showAllPeople = !this.showAllPeople;
+  }
+
+  playerPhotoUrl(profile: CommunityProfile): string | null {
+    const photo = profile.profilePicUrl;
+    if (!photo) {
+      return null;
+    }
+    if (/^(https?:|data:)/i.test(photo)) {
+      return photo;
+    }
+    return environment.apiUrl + (photo.startsWith('/') ? photo : '/' + photo);
   }
 
   vacancies(session: SessionSummary): number {
