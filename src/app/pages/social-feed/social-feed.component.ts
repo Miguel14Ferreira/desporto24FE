@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { Subject, catchError, debounceTime, finalize, of, retry, switchMap, takeUntil, timeout } from 'rxjs';
+import { Subject, catchError, debounceTime, finalize, forkJoin, of, retry, switchMap, takeUntil, timeout } from 'rxjs';
 
 import { environment } from 'src/environment/environment';
 import { appTranslate as t } from '../../i18n/i18n.service';
@@ -137,18 +137,53 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
   }
 
   private loadSuggestedPeople(): void {
-    this.communityService.discoverProfiles()
+    if (!this.currentUsername) {
+      return;
+    }
+    this.communityService.publicProfile(this.currentUsername)
       .pipe(
         timeout(10_000),
-        catchError(() => of([] as CommunityProfile[])),
+        catchError(() => of(null as CommunityProfile | null)),
+        switchMap(me => forkJoin({
+          profiles: this.communityService.discoverProfiles().pipe(
+            timeout(10_000),
+            catchError(() => of([] as CommunityProfile[]))
+          ),
+          friends: this.communityService.friends().pipe(timeout(10_000))
+        }).pipe(
+          // Without the friends list, do not risk recommending existing friends.
+          catchError(() => of({ profiles: [] as CommunityProfile[], friends: [] })),
+          switchMap(({ profiles, friends }) => of(this.rankSuggestedPeople(
+            profiles, me, new Set(friends.map(friend => friend.username.toLowerCase()))
+          )))
+        )),
         takeUntil(this.destroyed)
       )
-      .subscribe(profiles => {
-        this.suggestedPeople = profiles
-          .filter(profile => profile.username?.trim()
-            && profile.username.toLowerCase() !== this.currentUsername.toLowerCase())
-          .slice(0, 3);
-      });
+      .subscribe(profiles => this.suggestedPeople = profiles);
+  }
+
+  private rankSuggestedPeople(profiles: CommunityProfile[], me: CommunityProfile | null, friends: Set<string>): CommunityProfile[] {
+    const sports = new Set((me?.favoriteSports || '').split(/[,;|]/)
+      .map(value => this.normalizeSuggestion(value)).filter(Boolean));
+    const location = this.normalizeSuggestion(me?.location || '');
+    return profiles
+      .filter(profile => profile.username?.trim()
+        && profile.username.toLowerCase() !== this.currentUsername.toLowerCase()
+        && !friends.has(profile.username.toLowerCase()))
+      .map((profile, index) => {
+        const theirSports = (profile.favoriteSports || '').split(/[,;|]/)
+          .map(value => this.normalizeSuggestion(value));
+        const sameSport = sports.size > 0 && theirSports.some(sport => sports.has(sport));
+        const sameLocation = Boolean(location && this.normalizeSuggestion(profile.location || '') === location);
+        return { profile, index, score: Number(sameSport) * 2 + Number(sameLocation) };
+      })
+      .sort((a, b) => b.score - a.score || a.index - b.index)
+      .slice(0, 3)
+      .map(item => item.profile);
+  }
+
+  private normalizeSuggestion(value: string): string {
+    return value.trim().toLocaleLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   }
 
   suggestedProfileImage(profile: CommunityProfile): string | null {
