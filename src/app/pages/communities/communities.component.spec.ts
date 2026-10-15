@@ -23,6 +23,31 @@ describe('CommunitiesComponent public session eligibility', () => {
     };
   });
 
+  it('allows joining an upcoming open community session', () => {
+    expect(component.canJoinCommunitySession(session)).toBeTrue();
+  });
+
+  it('hides joining when a community session has started or ended', () => {
+    session.gameDate = new Date(Date.now() - 60_000).toISOString();
+    expect(component.canJoinCommunitySession(session)).toBeFalse();
+    session.gameDate = new Date(Date.now() + 3_600_000).toISOString();
+    for (const status of ['CANCELLED', 'COMPLETED']) {
+      session.status = status;
+      expect(component.canJoinCommunitySession(session)).toBeFalse();
+    }
+  });
+
+  it('hides joining for private games or existing participation', () => {
+    session.privateGame = true;
+    expect(component.canJoinCommunitySession(session)).toBeFalse();
+    session.privateGame = false;
+    session.joinedByViewer = true;
+    expect(component.canJoinCommunitySession(session)).toBeFalse();
+    session.joinedByViewer = false;
+    session.waitlistedByViewer = true;
+    expect(component.canJoinCommunitySession(session)).toBeFalse();
+  });
+
   it('allows opening an upcoming community-only session', () => {
     expect(component.canOpenSessionToPublic(session)).toBeTrue();
   });
