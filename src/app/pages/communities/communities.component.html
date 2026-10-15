@@ -637,9 +637,7 @@
                               : ('communities.joinWaitlist' | t)) }}
                         </button>
                       }
-                      @if (canManage()
-                        && session.audience === 'COMMUNITY_ONLY'
-                        && session.participantCount < session.maxParticipants) {
+                      @if (canOpenSessionToPublic(session)) {
                         <div>
                           <button
                             type="button"
