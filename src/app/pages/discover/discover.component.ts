@@ -248,6 +248,7 @@ export class DiscoverComponent implements OnInit {
   search(): void {
     const requestId = ++this.searchRequestId;
     const peopleRequestId = ++this.peopleRequestId;
+    this.loadingPeople = false;
     this.showAllVenues = false;
     this.showAllSessions = false;
     this.showAllPeople = false;
