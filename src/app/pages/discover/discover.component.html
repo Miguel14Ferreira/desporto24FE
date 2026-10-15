@@ -59,11 +59,16 @@
       <div class="state-card">{{ 'discover.loading' | t }}</div>
     }
 
-    @if (!loading && loadError) {
+    @if (!loading && (venuesLoadError || sessionsLoadError || peopleLoadError)) {
       <div class="state-card discover-error" role="alert">
         <div>
           <strong>{{ 'discover.error.title' | t }}</strong>
           <span>{{ 'discover.error.text' | t }}</span>
+          <span>
+            @if (venuesLoadError) { Recintos indisponíveis. }
+            @if (sessionsLoadError) { Sessões indisponíveis. }
+            @if (peopleLoadError) { Jogadores indisponíveis. }
+          </span>
         </div>
         <button class="jynlo-action jynlo-action--neutral" type="button" (click)="search()">
           {{ 'discover.error.retry' | t }}
