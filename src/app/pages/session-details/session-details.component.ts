@@ -123,7 +123,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     this.currentUsername = this.readCurrentUsername();
 
     const rawId = this.route.snapshot.paramMap.get('id');
-    const id = rawId && /^[1-9]\\d*$/.test(rawId) ? Number(rawId) : NaN;
+    const id = rawId && /^[1-9]\d*$/.test(rawId) ? Number(rawId) : NaN;
     if (!Number.isSafeInteger(id)) {
       this.errorMessage = t('feedback.session.invalid');
       return;
