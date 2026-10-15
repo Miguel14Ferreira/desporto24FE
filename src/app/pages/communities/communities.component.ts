@@ -484,9 +484,18 @@ export class CommunitiesComponent implements OnInit {
       });
   }
 
+  canJoinCommunitySession(session: SessionSummary): boolean {
+    const start = Date.parse(session.gameDate);
+    return !session.privateGame
+      && !session.joinedByViewer
+      && !session.waitlistedByViewer
+      && (session.status === 'OPEN' || session.status === 'FULL')
+      && Number.isFinite(start) && start > Date.now();
+  }
+
   joinCommunitySession(session: SessionSummary): void {
     if (!this.selected || this.joiningSessionId !== undefined
-        || session.privateGame) {
+        || !this.canJoinCommunitySession(session)) {
       return;
     }
 
