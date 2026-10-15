@@ -106,6 +106,26 @@ describe('LoginMFAComponent', () => {
     expect(sessionStorage.getItem('mfa-return-url')).toBeNull();
   });
 
+  it('should reject an unsafe destination after successful MFA', () => {
+    sessionStorage.setItem('mfa-return-url', 'https://example.com/phishing');
+    component.code = 'ABC12345';
+
+    component.confirmCode();
+
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/menu/feed');
+    expect(sessionStorage.getItem('mfa-return-url')).toBeNull();
+  });
+
+  it('should reject an unsafe destination when cancelling MFA', () => {
+    sessionStorage.setItem('mfa-return-url', '//example.com');
+
+    component.cancel();
+
+    expect(router.navigate).toHaveBeenCalledWith(['/login'], {
+      queryParams: { returnUrl: '/menu/feed' }
+    });
+  });
+
   it('should replace the challenge when resending', () => {
     component.resendCode();
 
