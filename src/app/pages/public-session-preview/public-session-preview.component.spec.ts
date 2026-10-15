@@ -430,7 +430,7 @@ describe('PublicSessionPreviewComponent', () => {
     expect(heading()).toBe('Your next game starts here.');
     expect(description()).toBe('Open the session details to join.');
     expect(page.querySelector('.join-panel .primary-action')?.getAttribute('href'))
-      .toBe('/menu/events/42');
+      .toBe('/menu/events/42?join=1');
   });
 
   it('translates waitlist and closed-session explanations without changing signup options', () => {
@@ -444,7 +444,7 @@ describe('PublicSessionPreviewComponent', () => {
     expect(heading()).toBe('You can still join the waitlist.');
     expect(description()).toContain('join the waitlist');
     expect(page.querySelector('.join-panel .primary-action')?.getAttribute('href'))
-      .toBe('/menu/events/42');
+      .toBe('/menu/events/42?join=1');
 
     fixture.componentInstance.session!.status = 'CANCELLED';
     fixture.detectChanges();
@@ -558,7 +558,7 @@ describe('PublicSessionPreviewComponent', () => {
     fixture.componentInstance.isAuthenticated = true;
     fixture.detectChanges();
     expect(page.querySelector('.join-panel .primary-action')?.getAttribute('href'))
-      .toBe(destination);
+      .toBe(destination + '?join=1');
 
     fixture.componentInstance.session!.status = 'CANCELLED';
     fixture.detectChanges();
@@ -663,7 +663,7 @@ describe('PublicSessionPreviewComponent', () => {
 
     expect(authenticationService.hasSessionCandidate).toHaveBeenCalled();
     expect(page.querySelector('.join-panel .primary-action')?.getAttribute('href'))
-      .toBe('/menu/events/42');
+      .toBe('/menu/events/42?join=1');
     expect(page.textContent).not.toContain('Criar conta');
     expect(page.textContent).not.toContain('Já tenho conta');
   });
@@ -684,7 +684,7 @@ describe('PublicSessionPreviewComponent', () => {
 
     const action = page.querySelector('.join-panel .primary-action') as HTMLAnchorElement;
     expect(action).not.toBeNull();
-    expect(action.getAttribute('href')).toBe('/menu/events/42');
+    expect(action.getAttribute('href')).toBe('/menu/events/42?join=1');
     expect(page.textContent).toContain('Ver sessão e inscrever-me');
     expect(page.textContent).not.toContain('Criar conta');
     expect(page.textContent).not.toContain('Já tenho conta');
@@ -695,7 +695,7 @@ describe('PublicSessionPreviewComponent', () => {
     const page = render({ status: 'FULL' });
 
     const action = page.querySelector('.join-panel .primary-action') as HTMLAnchorElement;
-    expect(action.getAttribute('href')).toBe('/menu/events/42');
+    expect(action.getAttribute('href')).toBe('/menu/events/42?join=1');
     expect(page.textContent).toContain('Ver sessão e lista de espera');
   });
 
