@@ -2,9 +2,10 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { appTranslate as t } from '../../i18n/i18n.service';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { finalize, retry, timeout } from 'rxjs';
+import { finalize, forkJoin, map, Observable, retry, timeout } from 'rxjs';
 
 import { AppNotification } from '../model/app-notification';
+import { JoinSessionResponse, PendingSessionInvite, SessionService } from '../../services/session.service';
 import { NotificationApiService } from '../../services/notification-api.service';
 import { AuthenticationService } from '../../services/authethication.service';
 
@@ -22,6 +23,7 @@ export class NotificationsComponent implements OnInit {
   });
 
   notifications: AppNotification[] = [];
+  pendingInvites: PendingSessionInvite[] = [];
   unreadCount = 0;
   selected?: AppNotification;
 
@@ -37,6 +39,7 @@ export class NotificationsComponent implements OnInit {
 
   constructor(
     private notificationService: NotificationApiService,
+    private sessionService: SessionService,
     private authenticationService: AuthenticationService,
     private route: ActivatedRoute,
     private router: Router
@@ -50,14 +53,15 @@ export class NotificationsComponent implements OnInit {
     this.loading = true;
     this.errorMessage = '';
 
-    this.notificationService.mine()
+    forkJoin({ notifications: this.notificationService.mine(), pendingInvites: this.sessionService.pendingInvites() })
       .pipe(
         timeout(10_000),
         retry({ count: 1 }),
         finalize(() => this.loading = false)
       )
       .subscribe({
-        next: notifications => {
+        next: ({ notifications, pendingInvites }) => {
+          this.pendingInvites = pendingInvites;
           this.notifications = [...notifications].sort(
             (a, b) => this.timestamp(b.createdAt) - this.timestamp(a.createdAt)
           );
@@ -73,6 +77,7 @@ export class NotificationsComponent implements OnInit {
         },
         error: () => {
           this.notifications = [];
+          this.pendingInvites = [];
           this.updateUnreadCount();
           this.errorMessage = t('feedback.notifications.loadError');
         }
@@ -150,6 +155,49 @@ export class NotificationsComponent implements OnInit {
           );
         }
       });
+  }
+
+
+  pendingInviteFor(notification: AppNotification): PendingSessionInvite | undefined {
+    if (notification.type !== 'SESSION_INVITE' || notification.sessionId === null) {
+      return undefined;
+    }
+    return this.pendingInvites.find(invite =>
+      invite.sessionId === notification.sessionId &&
+      invite.inviterUsername.toLowerCase() === notification.relatedUsername?.toLowerCase() &&
+      // Don't present a newer pending invitation as an action on an old notification.
+      Math.abs(Date.parse(invite.createdAt) - Date.parse(notification.createdAt)) < 60_000
+    );
+  }
+
+  respondToInvite(notification: AppNotification, accept: boolean): void {
+    const invite = this.pendingInviteFor(notification);
+    if (!invite || this.actionLoadingId !== null) {
+      return;
+    }
+    this.actionLoadingId = notification.id;
+    this.actionError = '';
+    this.actionSuccess = '';
+    const operation: Observable<JoinSessionResponse | null> = accept
+      ? this.sessionService.acceptInvite(invite.sessionId, invite.id)
+      : this.sessionService.declineInvite(invite.sessionId, invite.id).pipe(map(() => null));
+    operation.pipe(timeout(10_000), finalize(() => this.actionLoadingId = null)).subscribe({
+      next: result => {
+        this.pendingInvites = this.pendingInvites.filter(item => item.id !== invite.id);
+        this.actionSuccess = accept
+          ? ((result && 'state' in result && result.state === 'WAITLISTED')
+              ? 'Convite aceite. Ficaste na lista de espera.'
+              : 'Convite aceite. Estás inscrito na sessão.')
+          : 'Convite recusado.';
+      },
+      error: (error: HttpErrorResponse) => {
+        this.actionError = this.errorFrom(error, 'Não foi possível responder ao convite.');
+        if (error.status === 404 || error.status === 409) {
+          this.sessionService.pendingInvites().pipe(timeout(10_000))
+            .subscribe({ next: invites => this.pendingInvites = invites });
+        }
+      }
+    });
   }
 
   openSession(notification: AppNotification): void {
@@ -363,6 +411,8 @@ export class NotificationsComponent implements OnInit {
         return t('notification.sessionCancelled');
       case 'SESSION_POST_GAME_REVIEW':
         return t('notification.postGameReview');
+      case 'SESSION_INVITE':
+        return 'Convite para sessão';
       case 'COMMUNITY_INVITE':
         return t('notification.communityInvite');
       case 'CHAT_MESSAGE':
