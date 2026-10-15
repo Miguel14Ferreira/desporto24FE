@@ -13,6 +13,7 @@ import { Observable, finalize, shareReplay, switchMap, catchError, throwError } 
 
 import { environment } from '../environment/environment';
 import { LoginResponse } from './pages/model/login-response';
+import { safeLoginReturnUrl } from './shared/safe-login-return-url';
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
@@ -114,8 +115,9 @@ export class AuthInterceptor implements HttpInterceptor {
     sessionStorage.removeItem('mfa-expires-at');
     sessionStorage.removeItem('mfa-return-url');
 
+    const returnUrl = safeLoginReturnUrl(this.router.url);
     void this.router.navigate(['/login'], {
-      queryParams: { sessionExpired: '1' }
+      queryParams: { sessionExpired: '1', returnUrl }
     });
   }
 }
