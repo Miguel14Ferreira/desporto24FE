@@ -27,6 +27,13 @@ export interface SessionSearchFilters {
   maxPrice?: number;
 }
 
+export interface PendingSessionInvite {
+  id: number;
+  sessionId: number;
+  inviterUsername: string;
+  createdAt: string;
+}
+
 export interface JoinSessionResponse {
   state: 'PARTICIPANT' | 'WAITLISTED';
   waitlistPosition: number | null;
@@ -63,6 +70,18 @@ export class SessionService {
   private readonly baseUrl = environment.apiUrl + '/api/sessions';
 
   constructor(private http: HttpClient) {}
+
+  pendingInvites(): Observable<PendingSessionInvite[]> {
+    return this.http.get<PendingSessionInvite[]>(environment.apiUrl + '/api/session-invites/pending');
+  }
+
+  acceptInvite(sessionId: number, inviteId: number): Observable<JoinSessionResponse> {
+    return this.http.post<JoinSessionResponse>(`${this.baseUrl}/${sessionId}/invites/${inviteId}/accept`, null);
+  }
+
+  declineInvite(sessionId: number, inviteId: number): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/${sessionId}/invites/${inviteId}/decline`, null);
+  }
 
   invitePlayer(sessionId: number, username: string): Observable<{ id: number }> {
     return this.http.post<{ id: number }>(`${this.baseUrl}/${sessionId}/invites`, { username });
