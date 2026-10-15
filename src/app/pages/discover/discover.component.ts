@@ -52,6 +52,7 @@ export class DiscoverComponent implements OnInit {
   initialized = false;
   loadError = false;
   showAllVenues = false;
+  showAllSessions = false;
   showAllPeople = false;
 
   constructor(
@@ -236,6 +237,7 @@ export class DiscoverComponent implements OnInit {
 
   search(): void {
     this.showAllVenues = false;
+    this.showAllSessions = false;
     this.showAllPeople = false;
 
     const sport = this.sport.trim();
@@ -337,7 +339,11 @@ export class DiscoverComponent implements OnInit {
   }
 
   get topSessions(): SessionSummary[] {
-    return this.topSessionResults;
+    return this.showAllSessions ? this.sessions : this.topSessionResults;
+  }
+
+  toggleAllSessions(): void {
+    this.showAllSessions = !this.showAllSessions;
   }
 
   get topPeople(): CommunityProfile[] {
