@@ -1,4 +1,5 @@
 import { Component, OnInit, Optional } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { finalize, timeout } from 'rxjs';
 
@@ -76,6 +77,7 @@ export class VenueCreateComponent implements OnInit {
   longitude: number | null = null;
   saving = false;
   saveError = false;
+  duplicateVenueError = false;
   validationError = false;
   locating = false;
   locationError = false;
@@ -195,6 +197,7 @@ export class VenueCreateComponent implements OnInit {
 
     this.saving = true;
     this.saveError = false;
+    this.duplicateVenueError = false;
     this.venueService.create(request)
       .pipe(
         timeout(10_000),
@@ -202,7 +205,10 @@ export class VenueCreateComponent implements OnInit {
       )
       .subscribe({
       next: venue => this.router.navigate(['/menu/venues', venue.id]),
-      error: () => this.saveError = true
+      error: (error: HttpErrorResponse) => {
+        this.duplicateVenueError = error.status === 409;
+        this.saveError = !this.duplicateVenueError;
+      }
     });
   }
 

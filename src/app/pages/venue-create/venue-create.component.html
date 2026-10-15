@@ -459,12 +459,15 @@
         @if (validationError && (!name.trim() || !city.trim() || !address.trim())) {
           <span id="venue-required-fields-error" class="venue-create-error" role="alert" aria-live="assertive">{{ 'venue.requiredFields' | t }}</span>
         }
+        @if (duplicateVenueError) {
+          <span id="venue-create-duplicate-error" class="venue-create-error" role="alert" aria-live="assertive">Já existe um recinto com este nome, cidade e morada. Confirma os dados antes de voltar a guardar.</span>
+        }
         @if (saveError) {
           <span id="venue-create-save-error" class="venue-create-error" role="alert" aria-live="assertive">{{ 'venue.createError' | t }}</span>
         }
         <a class="venue-create-cancel" routerLink="/menu/discover">{{ 'common.cancel' | t }}</a>
         <button class="jynlo-action jynlo-action--primary" type="submit" [disabled]="saving"
-          [attr.aria-describedby]="saveError ? 'venue-create-save-error' : null">
+          [attr.aria-describedby]="duplicateVenueError ? 'venue-create-duplicate-error' : (saveError ? 'venue-create-save-error' : null)">
           {{ (saving ? 'venue.saving' : 'venue.save') | t }}
         </button>
       </div>
