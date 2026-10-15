@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { appTranslate as t } from '../../i18n/i18n.service';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { finalize, forkJoin, retry, timeout } from 'rxjs';
+import { finalize, forkJoin, map, retry, timeout } from 'rxjs';
 
 import { AppNotification } from '../model/app-notification';
 import { PendingSessionInvite, SessionService } from '../../services/session.service';
@@ -180,7 +180,7 @@ export class NotificationsComponent implements OnInit {
     this.actionSuccess = '';
     const operation = accept
       ? this.sessionService.acceptInvite(invite.sessionId, invite.id)
-      : this.sessionService.declineInvite(invite.sessionId, invite.id);
+      : this.sessionService.declineInvite(invite.sessionId, invite.id).pipe(map(() => null));
     operation.pipe(timeout(10_000), finalize(() => this.actionLoadingId = null)).subscribe({
       next: result => {
         this.pendingInvites = this.pendingInvites.filter(item => item.id !== invite.id);
