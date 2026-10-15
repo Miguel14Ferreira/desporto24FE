@@ -514,8 +514,17 @@ export class CommunitiesComponent implements OnInit {
       });
   }
 
+  canOpenSessionToPublic(session: SessionSummary): boolean {
+    const start = Date.parse(session.gameDate);
+    return this.canManage()
+      && session.audience === 'COMMUNITY_ONLY'
+      && (session.status === 'OPEN' || session.status === 'FULL')
+      && Number.isFinite(start) && start > Date.now()
+      && session.participantCount < session.maxParticipants;
+  }
+
   openSessionToPublic(session: SessionSummary): void {
-    if (!this.selected || !this.canManage() || session.audience !== 'COMMUNITY_ONLY'
+    if (!this.selected || !this.canOpenSessionToPublic(session)
         || this.openingSessionId !== undefined) {
       return;
     }
