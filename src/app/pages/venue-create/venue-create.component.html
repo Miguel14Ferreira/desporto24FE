@@ -415,6 +415,22 @@
           <span class="venue-create-amenities-open">{{ 'venue.create.hideOptionalDetails' | t }}</span>
         </summary>
         <div class="venue-create-options venue-create-wide">
+          <div class="venue-create-wide">
+            <label for="venue-map-link">Link do Google Maps (opcional)</label>
+            <input id="venue-map-link" name="mapLink" type="url"
+              [(ngModel)]="mapLink" placeholder="https://maps.app.goo.gl/..."
+              (ngModelChange)="mapLinkError = false; mapLinkResolved = false">
+            <button type="button" class="jynlo-action jynlo-action--neutral"
+              [disabled]="!mapLink.trim() || resolvingMapLink || saving" (click)="resolveMapLink()">
+              {{ resolvingMapLink ? 'A obter coordenadas...' : 'Obter coordenadas do link' }}
+            </button>
+            @if (mapLinkError) {
+              <p role="alert">Não foi possível obter a localização deste link. Verifica-o ou introduz as coordenadas manualmente.</p>
+            }
+            @if (mapLinkResolved) {
+              <p role="status">Coordenadas preenchidas. Confirma a localização antes de guardar.</p>
+            }
+          </div>
           <label>
             <span>{{ 'venue.latitude' | t }}</span>
             <input type="number" name="latitude" [(ngModel)]="latitude"
