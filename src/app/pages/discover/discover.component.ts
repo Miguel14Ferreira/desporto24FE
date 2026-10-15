@@ -95,13 +95,11 @@ export class DiscoverComponent implements OnInit {
         if (profile) {
           if (!this.sportEdited) {
             const favorites = (profile.favoriteSports || '')
-              .split(',')
-              .map(value => value.trim().toLocaleLowerCase('pt'));
-            const preferred = favorites.find(value =>
-              this.sportsCatalog.some(sport => sport.toLocaleLowerCase('pt') === value)
-            );
+              .split(/[,;|]/)
+              .map(value => this.normalizeFavoriteSport(value))
+              .filter(Boolean);
             this.sport = this.sportsCatalog.find(sport =>
-              sport.toLocaleLowerCase('pt') === preferred
+              favorites.includes(this.normalizeFavoriteSport(sport))
             ) || '';
           }
 
@@ -112,6 +110,11 @@ export class DiscoverComponent implements OnInit {
 
         this.search();
       });
+  }
+
+  private normalizeFavoriteSport(value: string): string {
+    return value.trim().toLocaleLowerCase('pt').normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
   }
 
   onSportChange(value: string): void {
