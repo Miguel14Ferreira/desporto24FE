@@ -3,6 +3,8 @@ import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
 
 import { SessionDetailsComponent } from './session-details.component';
+import { CommunityService } from '../../services/community.service';
+import { DirectChatService } from '../../services/direct-chat.service';
 import { SessionService } from '../../services/session.service';
 import { ReliabilityService } from '../../services/reliability.service';
 import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.service';
@@ -14,6 +16,8 @@ describe('SessionDetailsComponent', () => {
   let component: SessionDetailsComponent;
   let fixture: ComponentFixture<SessionDetailsComponent>;
   let sessionService: jasmine.SpyObj<SessionService>;
+  let communityService: jasmine.SpyObj<CommunityService>;
+  let directChatService: jasmine.SpyObj<DirectChatService>;
   let reliabilityService: jasmine.SpyObj<ReliabilityService>;
   let realtimeService: jasmine.SpyObj<DirectChatRealtimeService>;
   let realtimeSessionMessages: Subject<SessionMessage>;
@@ -40,6 +44,10 @@ describe('SessionDetailsComponent', () => {
   };
 
   beforeEach(async () => {
+    communityService = jasmine.createSpyObj<CommunityService>('CommunityService', ['friends']);
+    communityService.friends.and.returnValue(of([{username:'player-two', fullName: 'Player Two', nickname: null, profilePicUrl: null, chatBlocked: false, blockedByMe: false}]));
+    directChatService = jasmine.createSpyObj<DirectChatService>('DirectChatService', ['send']);
+    directChatService.send.and.returnValue(of({} as any));
     sessionService = jasmine.createSpyObj<SessionService>(
       'SessionService',
       ['detail', 'join', 'leave', 'complete', 'reportDidNotOccur', 'reportProblem', 'messages', 'postMessage', 'participants', 'removeParticipant', 'teamSuggestion', 'confirmTeams', 'futureExclusionStatus', 'excludeFromFutureSessions', 'allowFutureSessions', 'myOverallRating', 'rateOverall']
@@ -147,6 +155,8 @@ describe('SessionDetailsComponent', () => {
           provide: SessionService,
           useValue: sessionService
         },
+        { provide: CommunityService, useValue: communityService },
+        { provide: DirectChatService, useValue: directChatService },
         {
           provide: ReliabilityService,
           useValue: reliabilityService
@@ -161,6 +171,32 @@ describe('SessionDetailsComponent', () => {
     fixture = TestBed.createComponent(SessionDetailsComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
+  });
+
+  it('sends a public session link to a selected friend only on explicit action', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {...session, gameDate:'2099-10-01T18:00:00Z', canSharePublicly: true};
+    fixture.detectChanges();
+    const open = fixture.nativeElement.querySelector('.session-player-search button') as HTMLButtonElement;
+    expect(open).not.toBeNull();
+    open.click();
+    fixture.detectChanges();
+    expect(directChatService.send).not.toHaveBeenCalled();
+    const send = fixture.nativeElement.querySelector('.session-friend-invites button') as HTMLButtonElement;
+    send.click();
+    expect(directChatService.send).toHaveBeenCalledOnceWith('player-two',
+      'Queres juntar-te ao nosso jogo de Padel? ' + new URL('/sessions/7', window.location.origin).href);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.session-friend-invites [role="status"]').textContent).toContain('player-two');
+  });
+
+  it('does not expose invitations on full or private sessions', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {...session, gameDate:'2099-10-01T18:00:00Z', privateGame:true, canSharePublicly: true};
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.session-friend-invites')).toBeNull();
+    component.sendSessionInvite('player-two');
+    expect(directChatService.send).not.toHaveBeenCalled();
   });
 
   it('offers optional post-game actions only to the organiser after two hours', () => {

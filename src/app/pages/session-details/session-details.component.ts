@@ -5,6 +5,9 @@ import { JwtHelperService } from '@auth0/angular-jwt';
 import { catchError, concatMap, finalize, from, map, mergeMap, of, retry, Subscription, timeout, toArray } from 'rxjs';
 
 import { environment } from 'src/environment/environment';
+import { CommunityService } from '../../services/community.service';
+import { DirectChatService } from '../../services/direct-chat.service';
+import { FriendSummary } from '../model/friend-summary';
 import { SessionDetail } from '../model/session-detail';
 import { appTranslate as t } from '../../i18n/i18n.service';
 import { SessionMessage } from '../model/session-message';
@@ -75,6 +78,12 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   errorMessage = '';
   actionError = '';
   actionSuccess = '';
+  inviteFriendsOpen = false;
+  inviteFriendsLoading = false;
+  inviteSendingTo: string | null = null;
+  inviteFriends: FriendSummary[] = [];
+  inviteFeedback = '';
+  inviteError = '';
   sharingSession = false;
   shareFeedback = '';
   manualShareUrl = '';
@@ -101,6 +110,8 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   constructor(
     private route: ActivatedRoute,
     private sessionService: SessionService,
+    private communityService: CommunityService,
+    private directChatService: DirectChatService,
     private reliabilityService: ReliabilityService,
     private realtimeService: DirectChatRealtimeService
   ) {}
@@ -1010,6 +1021,48 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
 
     const startTime = new Date(this.session.gameDate).getTime();
     return Number.isFinite(startTime) && startTime <= Date.now();
+  }
+
+  toggleFriendInvites(): void {
+    if (!this.canFindPlayers()) {
+      return;
+    }
+    this.inviteFriendsOpen = !this.inviteFriendsOpen;
+    this.inviteFeedback = '';
+    this.inviteError = '';
+    if (!this.inviteFriendsOpen) {
+      return;
+    }
+    this.inviteFriendsLoading = true;
+    this.communityService.friends()
+      .pipe(timeout(10_000), finalize(() => this.inviteFriendsLoading = false))
+      .subscribe({
+        next: friends => this.inviteFriends = friends.filter(friend =>
+          !friend.chatBlocked && !friend.blockedByMe
+          && friend.username.toLowerCase() !== this.currentUsername?.toLowerCase()
+        ),
+        error: () => this.inviteError = 'Não foi possível carregar os amigos.'
+      });
+  }
+
+  sendSessionInvite(username: string): void {
+    if (!this.canFindPlayers() || this.inviteSendingTo || !this.canShareSession()
+        || !this.inviteFriends.some(friend => friend.username === username)) {
+      return;
+    }
+    const url = this.publicShareUrl();
+    if (!url) {
+      return;
+    }
+    this.inviteSendingTo = username;
+    this.inviteFeedback = '';
+    this.inviteError = '';
+    this.directChatService.send(username, `Queres juntar-te ao nosso jogo de ${this.session!.sport}? ${url}`)
+      .pipe(timeout(10_000), finalize(() => this.inviteSendingTo = null))
+      .subscribe({
+        next: () => this.inviteFeedback = `Mensagem enviada a @${username}.`,
+        error: () => this.inviteError = `Não foi possível enviar a mensagem a @${username}.`
+      });
   }
 
   missingPlayers(): number {

@@ -96,6 +96,28 @@
           @if (canFindPlayers()) {
             <div class="session-player-search" role="region" aria-label="Procurar jogadores">
               <strong>Faltam {{ missingPlayers() }} jogadores</strong>
+              @if (canShareSession()) {
+                <button type="button" class="jynlo-action jynlo-action--neutral"
+                        (click)="toggleFriendInvites()">Convidar amigos por mensagem</button>
+                @if (inviteFriendsOpen) {
+                  <div class="session-friend-invites">
+                    @if (inviteFriendsLoading) { <p>A carregar amigos...</p> }
+                    @if (!inviteFriendsLoading && inviteFriends.length === 0 && !inviteError) {
+                      <p>Não tens amigos disponíveis para convidar por mensagem.</p>
+                    }
+                    @for (friend of inviteFriends; track friend.username) {
+                      <div>
+                        <span>@{{ friend.username }}</span>
+                        <button type="button" class="jynlo-action jynlo-action--neutral"
+                          [disabled]="inviteSendingTo !== null"
+                          (click)="sendSessionInvite(friend.username)">Enviar mensagem</button>
+                      </div>
+                    }
+                    @if (inviteFeedback) { <p role="status">{{ inviteFeedback }}</p> }
+                    @if (inviteError) { <p role="alert">{{ inviteError }}</p> }
+                  </div>
+                }
+              }
               <a class="jynlo-action jynlo-action--primary" routerLink="/menu/perfis"
                  [queryParams]="{ from: 'people', sport: session.sport, city: session.city }">
                 Procurar jogadores
