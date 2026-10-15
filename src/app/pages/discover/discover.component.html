@@ -245,6 +245,14 @@
             </div>
           }
 
+          @if (sessions.length > topSessionResults.length) {
+            <button type="button" class="jynlo-action jynlo-action--neutral"
+              [attr.aria-expanded]="showAllSessions"
+              (click)="toggleAllSessions()">
+              {{ showAllSessions ? 'Ver menos sessões' : 'Ver todas as ' + sessions.length + ' sessões' }}
+            </button>
+          }
+
           <a class="pillar-action jynlo-action jynlo-action--neutral" routerLink="/menu/events">
             {{ 'discover.when.action' | t }} <span>→</span>
           </a>
