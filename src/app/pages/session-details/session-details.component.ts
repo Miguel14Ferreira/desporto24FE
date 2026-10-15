@@ -1262,10 +1262,14 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
 
   canLeaveSession(): boolean {
     const session = this.session;
-    return !!session
-      && (session.joined || session.waitlisted)
-      && !this.isCreator()
-      && (session.status === 'OPEN' || session.status === 'FULL');
+    if (!session || !(session.joined || session.waitlisted)
+      || this.isCreator()
+      || (session.status !== 'OPEN' && session.status !== 'FULL')) {
+      return false;
+    }
+
+    const startTime = Date.parse(session.gameDate);
+    return Number.isFinite(startTime) && startTime > Date.now();
   }
 
   canJoinSession(): boolean {
