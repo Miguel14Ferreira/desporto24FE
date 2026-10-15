@@ -81,6 +81,8 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   inviteFriendsOpen = false;
   inviteFriendsLoading = false;
   inviteSendingTo: string | null = null;
+  formalInviteSendingTo: string | null = null;
+  formalInvitedFriends = new Set<string>();
   inviteFriends: FriendSummary[] = [];
   inviteFeedback = '';
   inviteError = '';
@@ -1042,6 +1044,30 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
           && friend.username.toLowerCase() !== this.currentUsername?.toLowerCase()
         ),
         error: () => this.inviteError = 'Não foi possível carregar os amigos.'
+      });
+  }
+
+  sendFormalSessionInvite(username: string): void {
+    if (!this.sessionId || !this.canFindPlayers() || !this.canShareSession()
+        || this.formalInviteSendingTo || this.formalInvitedFriends.has(username)
+        || !this.inviteFriends.some(friend => friend.username === username)) {
+      return;
+    }
+    this.formalInviteSendingTo = username;
+    this.inviteError = '';
+    this.inviteFeedback = '';
+    this.sessionService.invitePlayer(this.sessionId, username)
+      .pipe(timeout(10_000), finalize(() => this.formalInviteSendingTo = null))
+      .subscribe({
+        next: () => {
+          this.formalInvitedFriends.add(username);
+          this.inviteFeedback = `Convite enviado a @${username}.`;
+        },
+        error: (error: HttpErrorResponse) => {
+          this.inviteError = error.status === 409
+            ? `@${username} já está inscrito, em espera ou tem um convite pendente.`
+            : `Não foi possível convidar @${username}.`;
+        }
       });
   }
 

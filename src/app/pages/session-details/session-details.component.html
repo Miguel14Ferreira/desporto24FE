@@ -98,12 +98,12 @@
               <strong>Faltam {{ missingPlayers() }} jogadores</strong>
               @if (canShareSession()) {
                 <button type="button" class="jynlo-action jynlo-action--neutral"
-                        (click)="toggleFriendInvites()">Convidar amigos por mensagem</button>
+                        (click)="toggleFriendInvites()">Convidar amigos</button>
                 @if (inviteFriendsOpen) {
                   <div class="session-friend-invites">
                     @if (inviteFriendsLoading) { <p>A carregar amigos...</p> }
                     @if (!inviteFriendsLoading && inviteFriends.length === 0 && !inviteError) {
-                      <p>Não tens amigos disponíveis para convidar por mensagem.</p>
+                      <p>Não tens amigos disponíveis para convidar.</p>
                     }
                     @for (friend of inviteFriends; track friend.username) {
                       <div>
@@ -111,6 +111,9 @@
                         <button type="button" class="jynlo-action jynlo-action--neutral"
                           [disabled]="inviteSendingTo !== null"
                           (click)="sendSessionInvite(friend.username)">Enviar mensagem</button>
+                        <button type="button" class="jynlo-action jynlo-action--neutral"
+                          [disabled]="formalInviteSendingTo !== null || formalInvitedFriends.has(friend.username)"
+                          (click)="sendFormalSessionInvite(friend.username)">{{ formalInvitedFriends.has(friend.username) ? 'Convite enviado' : 'Enviar convite' }}</button>
                       </div>
                     }
                     @if (inviteFeedback) { <p role="status">{{ inviteFeedback }}</p> }
