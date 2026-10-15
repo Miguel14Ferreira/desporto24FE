@@ -389,14 +389,12 @@ export class DiscoverComponent implements OnInit {
     location: string
   ): Observable<CommunityProfile[]> {
     const name = this.playerName.trim();
-    if (name) {
-      return this.communityService.findProfiles({ name });
-    }
-    if (!sport && !location) {
+    if (!name && !sport && !location) {
       return of([]);
     }
 
     return this.communityService.findProfiles({
+      name: name || undefined,
       sport: sport || undefined,
       location: location || undefined
     });
