@@ -164,6 +164,17 @@
                   }
                 }
 
+                @if (pendingInviteFor(selected); as invite) {
+                  <button type="button" class="primary-action jynlo-action jynlo-action--primary"
+                    [disabled]="actionLoadingId !== null" (click)="respondToInvite(selected, true)">
+                    {{ actionLoadingId === selected.id ? 'A processar...' : 'Aceitar convite' }}
+                  </button>
+                  <button type="button" class="secondary-button jynlo-action jynlo-action--neutral"
+                    [disabled]="actionLoadingId !== null" (click)="respondToInvite(selected, false)">
+                    Recusar convite
+                  </button>
+                }
+
                 @if (selected.sessionId !== null) {
                   <button type="button" class="primary-action jynlo-action jynlo-action--primary" (click)="openSession(selected)">
                     {{ (selected.type === 'SESSION_POST_GAME_REVIEW'
