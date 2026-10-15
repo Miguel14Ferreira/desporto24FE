@@ -122,8 +122,9 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     this.pendingJoinScroll = this.route.snapshot.queryParamMap?.get('join') === '1';
     this.currentUsername = this.readCurrentUsername();
 
-    const id = Number(this.route.snapshot.paramMap.get('id'));
-    if (!Number.isFinite(id) || id <= 0) {
+    const rawId = this.route.snapshot.paramMap.get('id');
+    const id = rawId && /^[1-9]\\d*$/.test(rawId) ? Number(rawId) : NaN;
+    if (!Number.isSafeInteger(id)) {
       this.errorMessage = t('feedback.session.invalid');
       return;
     }
