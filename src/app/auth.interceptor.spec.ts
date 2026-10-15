@@ -18,6 +18,7 @@ describe('AuthInterceptor', () => {
   beforeEach(() => {
     router = jasmine.createSpyObj<Router>('Router', ['navigate']);
     backend = jasmine.createSpyObj<HttpBackend>('HttpBackend', ['handle']);
+    Object.defineProperty(router, 'url', { configurable: true, value: '/menu/events/42?join=1' });
     interceptor = new AuthInterceptor(router, backend);
     localStorage.clear();
   });
@@ -76,7 +77,9 @@ describe('AuthInterceptor', () => {
     interceptor.intercept(request, next).subscribe({
       error: () => {
         expect(localStorage.getItem('t')).toBeNull();
-        expect(router.navigate).toHaveBeenCalled();
+        expect(router.navigate).toHaveBeenCalledWith(['/login'], {
+          queryParams: { sessionExpired: '1', returnUrl: '/menu/events/42?join=1' }
+        });
         done();
       }
     });
