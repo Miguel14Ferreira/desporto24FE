@@ -55,6 +55,8 @@ export class DiscoverComponent implements OnInit {
   venuesLoadError = false;
   sessionsLoadError = false;
   peopleLoadError = false;
+  private searchRequestId = 0;
+  private peopleRequestId = 0;
   showAllVenues = false;
   showAllSessions = false;
   showAllPeople = false;
@@ -244,6 +246,8 @@ export class DiscoverComponent implements OnInit {
   }
 
   search(): void {
+    const requestId = ++this.searchRequestId;
+    const peopleRequestId = ++this.peopleRequestId;
     this.showAllVenues = false;
     this.showAllSessions = false;
     this.showAllPeople = false;
@@ -265,7 +269,7 @@ export class DiscoverComponent implements OnInit {
               this.nearbyVenuePosition.latitude, this.nearbyVenuePosition.longitude,
               this.nearbyVenueRadiusKm)
           : this.venueService.search(location || undefined, sport || undefined),
-        [] as Venue[], 'venues'
+        [] as Venue[], 'venues', requestId
       ),
       sessions: this.withRecovery(
         this.sessionService.discover({
@@ -277,24 +281,29 @@ export class DiscoverComponent implements OnInit {
           availability: 'available',
           sort: this.nearbyPosition ? 'distance' : 'date'
         }),
-        [] as SessionSummary[], 'sessions'
+        [] as SessionSummary[], 'sessions', requestId
       ),
       people: this.withRecovery(
         this.peopleRequest(sport, location),
-        [] as CommunityProfile[], 'people'
+        [] as CommunityProfile[], 'people', requestId
       )
     })
       .pipe(finalize(() => {
-        this.loading = false;
-        this.initialized = true;
+        if (requestId === this.searchRequestId) {
+          this.loading = false;
+          this.initialized = true;
+        }
       }))
       .subscribe(({ venues, sessions, people }) => {
+        if (requestId !== this.searchRequestId) return;
         this.venues = venues;
         this.topVenueResults = venues.slice(0, 4);
         this.sessions = sessions;
         this.topSessionResults = sessions.slice(0, 4);
-        this.people = people;
-        this.topPeopleResults = people.slice(0, 4);
+        if (peopleRequestId === this.peopleRequestId) {
+          this.people = people;
+          this.topPeopleResults = people.slice(0, 4);
+        }
       });
   }
 
@@ -303,6 +312,7 @@ export class DiscoverComponent implements OnInit {
       return;
     }
 
+    const requestId = ++this.peopleRequestId;
     this.loadingPeople = true;
     this.showAllPeople = false;
     this.playerSearchError = false;
@@ -312,12 +322,15 @@ export class DiscoverComponent implements OnInit {
         timeout(10_000),
         retry({ count: 1 }),
         catchError(() => {
-          this.playerSearchError = true;
+          if (requestId === this.peopleRequestId) this.playerSearchError = true;
           return of([] as CommunityProfile[]);
         }),
-        finalize(() => { this.loadingPeople = false; })
+        finalize(() => {
+          if (requestId === this.peopleRequestId) this.loadingPeople = false;
+        })
       )
       .subscribe(people => {
+        if (requestId !== this.peopleRequestId) return;
         this.people = people;
         this.topPeopleResults = people.slice(0, 4);
       });
@@ -383,12 +396,14 @@ export class DiscoverComponent implements OnInit {
   private withRecovery<T>(
     request$: Observable<T>,
     fallback: T,
-    area: 'venues' | 'sessions' | 'people'
+    area: 'venues' | 'sessions' | 'people',
+    requestId: number
   ): Observable<T> {
     return request$.pipe(
       timeout(10_000),
       retry({ count: 1 }),
       catchError(() => {
+        if (requestId !== this.searchRequestId) return of(fallback);
         if (area === 'venues') this.venuesLoadError = true;
         if (area === 'sessions') this.sessionsLoadError = true;
         if (area === 'people') this.peopleLoadError = true;
