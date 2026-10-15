@@ -58,7 +58,7 @@
               <p>{{ (isAuthenticated ? 'publicSession.openLoggedIn' : 'publicSession.openGuest') | t }}</p>
             }
             @if (isAuthenticated) {
-              <a class="primary-action jynlo-action jynlo-action--primary" [routerLink]="returnUrl">
+              <a class="primary-action jynlo-action jynlo-action--primary" [routerLink]="returnUrl" [queryParams]="{ join: 1 }">
                 {{ (details.status === 'FULL' ? 'publicSession.viewWaitlist' : 'publicSession.viewJoin') | t }}
               </a>
             } @else {
