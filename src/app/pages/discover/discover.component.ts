@@ -52,6 +52,9 @@ export class DiscoverComponent implements OnInit {
   loading = false;
   initialized = false;
   loadError = false;
+  venuesLoadError = false;
+  sessionsLoadError = false;
+  peopleLoadError = false;
   showAllVenues = false;
   showAllSessions = false;
   showAllPeople = false;
@@ -250,6 +253,9 @@ export class DiscoverComponent implements OnInit {
 
     this.loading = true;
     this.loadError = false;
+    this.venuesLoadError = false;
+    this.sessionsLoadError = false;
+    this.peopleLoadError = false;
 
     forkJoin({
       venues: this.withRecovery(
@@ -259,7 +265,7 @@ export class DiscoverComponent implements OnInit {
               this.nearbyVenuePosition.latitude, this.nearbyVenuePosition.longitude,
               this.nearbyVenueRadiusKm)
           : this.venueService.search(location || undefined, sport || undefined),
-        [] as Venue[]
+        [] as Venue[], 'venues'
       ),
       sessions: this.withRecovery(
         this.sessionService.discover({
@@ -271,11 +277,11 @@ export class DiscoverComponent implements OnInit {
           availability: 'available',
           sort: this.nearbyPosition ? 'distance' : 'date'
         }),
-        [] as SessionSummary[]
+        [] as SessionSummary[], 'sessions'
       ),
       people: this.withRecovery(
         this.peopleRequest(sport, location),
-        [] as CommunityProfile[]
+        [] as CommunityProfile[], 'people'
       )
     })
       .pipe(finalize(() => {
@@ -376,13 +382,17 @@ export class DiscoverComponent implements OnInit {
 
   private withRecovery<T>(
     request$: Observable<T>,
-    fallback: T
+    fallback: T,
+    area: 'venues' | 'sessions' | 'people'
   ): Observable<T> {
     return request$.pipe(
       timeout(10_000),
       retry({ count: 1 }),
       catchError(() => {
-        this.loadError = true;
+        if (area === 'venues') this.venuesLoadError = true;
+        if (area === 'sessions') this.sessionsLoadError = true;
+        if (area === 'people') this.peopleLoadError = true;
+        this.loadError = this.venuesLoadError && this.sessionsLoadError && this.peopleLoadError;
         return of(fallback);
       })
     );
