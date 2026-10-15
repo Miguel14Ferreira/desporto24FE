@@ -1,0 +1,24 @@
+name: Validate notification invite actions
+
+on:
+  pull_request:
+    branches: [preview/render-fullstack]
+    paths:
+      - 'src/app/pages/notifications/**'
+      - 'src/app/services/session.service.ts'
+      - '.github/workflows/session-invite-notification-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  angular-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run build
