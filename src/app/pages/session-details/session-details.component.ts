@@ -1065,7 +1065,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
         },
         error: (error: HttpErrorResponse) => {
           this.inviteError = error.status === 409
-            ? `@ ${username} já está inscrito, em espera ou tem um convite pendente.`
+            ? `@${username} já está inscrito, em espera ou tem um convite pendente.`
             : `Não foi possível convidar @${username}.`;
         }
       });
