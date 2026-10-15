@@ -94,6 +94,25 @@ describe('PublicSessionPreviewComponent', () => {
     expect(photo.getAttribute('alt')).toBe('Fotografia da sessão: Sessão desportiva');
   });
 
+  it('directs a signed-in player to the participation section', () => {
+    authenticationService.isLoggedIn.and.returnValue(true);
+    const page = render();
+    const joinAction = page.querySelector('.join-panel .primary-action') as HTMLAnchorElement;
+
+    expect(joinAction).not.toBeNull();
+    expect(new URL(joinAction.href).pathname).toBe('/menu/events/42');
+    expect(new URL(joinAction.href).searchParams.get('join')).toBe('1');
+  });
+
+  it('does not add join focus to closed session details', () => {
+    authenticationService.isLoggedIn.and.returnValue(true);
+    const page = render({ status: 'CANCELLED' });
+    const detailsAction = page.querySelector('.join-panel .primary-action') as HTMLAnchorElement;
+
+    expect(detailsAction).not.toBeNull();
+    expect(new URL(detailsAction.href).searchParams.has('join')).toBeFalse();
+  });
+
   it('lets a guest share a verified public session without signing in', () => {
     const page = render();
     const share = page.querySelector('.share-session-action') as HTMLButtonElement;
