@@ -42,6 +42,8 @@ export class AuthInterceptor implements HttpInterceptor {
         if (
           error.status !== 401
           || request.url.includes('/api/auth/login')
+          || request.url.includes('/api/auth/google/login')
+          || request.url.includes('/api/auth/google/register')
           || request.url.includes('/api/auth/mfa/')
           || request.url.includes('/api/auth/refresh')
         ) {
