@@ -98,9 +98,10 @@ export class DiscoverComponent implements OnInit {
               .split(/[,;|]/)
               .map(value => this.normalizeFavoriteSport(value))
               .filter(Boolean);
-            this.sport = this.sportsCatalog.find(sport =>
-              favorites.includes(this.normalizeFavoriteSport(sport))
-            ) || '';
+            this.sport = favorites
+              .map(favorite => this.sportsCatalog.find(sport =>
+                this.normalizeFavoriteSport(sport) === favorite))
+              .find((sport): sport is string => Boolean(sport)) || '';
           }
 
           if (!this.locationEdited) {
