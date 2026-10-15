@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { appTranslate as t } from '../../i18n/i18n.service';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { finalize, forkJoin, map, Observable, retry, timeout } from 'rxjs';
+import { finalize, map, Observable, retry, timeout } from 'rxjs';
 
 import { AppNotification } from '../model/app-notification';
 import { JoinSessionResponse, PendingSessionInvite, SessionService } from '../../services/session.service';
@@ -53,15 +53,19 @@ export class NotificationsComponent implements OnInit {
     this.loading = true;
     this.errorMessage = '';
 
-    forkJoin({ notifications: this.notificationService.mine(), pendingInvites: this.sessionService.pendingInvites() })
+    this.sessionService.pendingInvites().pipe(timeout(10_000)).subscribe({
+      next: invites => this.pendingInvites = invites,
+      error: () => this.pendingInvites = []
+    });
+
+    this.notificationService.mine()
       .pipe(
         timeout(10_000),
         retry({ count: 1 }),
         finalize(() => this.loading = false)
       )
       .subscribe({
-        next: ({ notifications, pendingInvites }) => {
-          this.pendingInvites = pendingInvites;
+        next: notifications => {
           this.notifications = [...notifications].sort(
             (a, b) => this.timestamp(b.createdAt) - this.timestamp(a.createdAt)
           );
