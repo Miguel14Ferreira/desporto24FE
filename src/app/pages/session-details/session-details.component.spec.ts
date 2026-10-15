@@ -1010,7 +1010,8 @@ describe('SessionDetailsComponent', () => {
     component.session = {
       ...session,
       waitlisted: true,
-      waitlistPosition: 2
+      waitlistPosition: 2,
+      gameDate: new Date(Date.now() + 3600_000).toISOString()
     };
 
     component.leaveSession();
