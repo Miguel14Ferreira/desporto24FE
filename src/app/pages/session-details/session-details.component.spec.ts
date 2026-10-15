@@ -959,6 +959,37 @@ describe('SessionDetailsComponent', () => {
     expect(sessionService.leave).not.toHaveBeenCalled();
   });
 
+  it('does not offer leaving after the session starts', () => {
+    component.session = {
+      ...session,
+      joined: true,
+      status: 'OPEN',
+      gameDate: new Date(Date.now() - 3600_000).toISOString()
+    };
+    fixture.detectChanges();
+
+    expect(component.canLeaveSession()).toBeFalse();
+    expect(fixture.nativeElement.querySelector('.participation-panel button.danger-action')).toBeNull();
+
+    component.leaveSession();
+    expect(sessionService.leave).not.toHaveBeenCalled();
+  });
+
+  it('does not offer leaving a waitlist after the session starts', () => {
+    component.session = {
+      ...session,
+      joined: false,
+      waitlisted: true,
+      status: 'FULL',
+      gameDate: new Date(Date.now() - 3600_000).toISOString()
+    };
+    fixture.detectChanges();
+
+    expect(component.canLeaveSession()).toBeFalse();
+    component.leaveSession();
+    expect(sessionService.leave).not.toHaveBeenCalled();
+  });
+
   it('allows an active participant to leave an open session', () => {
     component.session = {
       ...session,
@@ -979,7 +1010,8 @@ describe('SessionDetailsComponent', () => {
     component.session = {
       ...session,
       waitlisted: true,
-      waitlistPosition: 2
+      waitlistPosition: 2,
+      gameDate: new Date(Date.now() + 3600_000).toISOString()
     };
 
     component.leaveSession();
