@@ -66,6 +66,22 @@ describe('AuthenticationGuard', () => {
     expect(result).toBeTrue();
   });
 
+  it('should redirect when refresh succeeds without an access token', async () => {
+    authenticationService.refreshSession.and.returnValue(
+      of({ token: null } as any)
+    );
+
+    const result = await guard.canActivate(
+      {} as any,
+      { url: '/menu/events/42?join=1' } as any
+    );
+
+    expect(result).not.toBeTrue();
+    expect(router.serializeUrl(result as any)).toContain('/login');
+    expect(router.serializeUrl(result as any)).toContain('returnUrl=');
+    expect(router.serializeUrl(result as any)).toContain('sessionExpired=1');
+  });
+
   it('should keep the route on a temporary refresh outage', async () => {
     localStorage.setItem('t', 'header.payload.signature');
     spyOn(JwtHelperService.prototype, 'isTokenExpired')
