@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { finalize, Observable, retry, timeout } from 'rxjs';
+import { finalize, firstValueFrom, Observable, retry, timeout } from 'rxjs';
 import { appTranslate as t } from '../../i18n/i18n.service';
 import { buildCommunityGroupInviteUrl, buildWhatsAppGroupShareUrl } from './community-group-invite';
 
@@ -81,6 +81,12 @@ export class CommunitiesComponent implements OnInit {
   pendingJoinRequests: CommunityJoinRequest[] = [];
   pendingJoinRequestsLoading = false;
   joinRequestActionId?: number;
+  selectedJoinRequestIds = new Set<number>();
+  confirmingBatchJoin = false;
+  batchJoining = false;
+  batchJoinProcessed = 0;
+  batchJoinTotal = 0;
+  batchJoinFeedback = '';
   ownershipUsername = '';
   photoUpdating = false;
 
@@ -380,6 +386,9 @@ export class CommunitiesComponent implements OnInit {
         this.inviteSearchPerformed = false;
         this.inviteMessage = '';
         this.groupInviteFeedback = '';
+        this.selectedJoinRequestIds.clear();
+        this.confirmingBatchJoin = false;
+        this.batchJoinFeedback = '';
         this.roundDeleteConfirmId = undefined;
         this.selectedSeasonId = null;
         this.closeSeasonConfirming = false;
@@ -408,16 +417,101 @@ export class CommunitiesComponent implements OnInit {
         finalize(() => this.pendingJoinRequestsLoading = false)
       )
       .subscribe({
-        next: requests => this.pendingJoinRequests = requests,
+        next: requests => {
+          this.pendingJoinRequests = requests;
+          this.selectedJoinRequestIds.clear();
+          this.confirmingBatchJoin = false;
+        },
         error: () => {
           this.pendingJoinRequests = [];
+          this.selectedJoinRequestIds.clear();
+          this.confirmingBatchJoin = false;
           this.errorMessage = t('feedback.communities.joinRequestsLoadError');
         }
       });
   }
 
+  selectedJoinRequestCount(): number {
+    return this.pendingJoinRequests.filter(request => this.selectedJoinRequestIds.has(request.id)).length;
+  }
+
+  allJoinRequestsSelected(): boolean {
+    return this.pendingJoinRequests.length > 0
+      && this.selectedJoinRequestCount() === this.pendingJoinRequests.length;
+  }
+
+  selectJoinRequest(id: number, checked: boolean): void {
+    if (this.batchJoining || this.joinRequestActionId !== undefined) return;
+    if (checked) this.selectedJoinRequestIds.add(id);
+    else this.selectedJoinRequestIds.delete(id);
+    this.confirmingBatchJoin = false;
+    this.batchJoinFeedback = '';
+  }
+
+  toggleAllJoinRequests(): void {
+    if (this.batchJoining || this.joinRequestActionId !== undefined) return;
+    this.selectedJoinRequestIds = this.allJoinRequestsSelected()
+      ? new Set<number>()
+      : new Set(this.pendingJoinRequests.map(request => request.id));
+    this.confirmingBatchJoin = false;
+    this.batchJoinFeedback = '';
+  }
+
+  beginBatchApproval(): void {
+    if (!this.selected || !this.canManage() || this.batchJoining
+        || this.joinRequestActionId !== undefined || this.selectedJoinRequestCount() === 0) return;
+    this.confirmingBatchJoin = true;
+    this.batchJoinFeedback = '';
+  }
+
+  cancelBatchApproval(): void {
+    this.confirmingBatchJoin = false;
+  }
+
+  async confirmBatchApproval(): Promise<void> {
+    const communityId = this.selected?.id;
+    if (!communityId || !this.canManage() || !this.confirmingBatchJoin
+        || this.batchJoining || this.joinRequestActionId !== undefined) return;
+    const requests = this.pendingJoinRequests.filter(request => this.selectedJoinRequestIds.has(request.id));
+    this.confirmingBatchJoin = false;
+    if (!requests.length) return;
+
+    this.batchJoining = true;
+    this.batchJoinFeedback = '';
+    this.batchJoinTotal = requests.length;
+    this.batchJoinProcessed = 0;
+    let approved = 0;
+    let failed = 0;
+
+    try {
+      for (const request of requests) {
+        try {
+          await firstValueFrom(
+            this.communityService.acceptJoinRequest(communityId, request.id).pipe(timeout(10_000))
+          );
+          approved++;
+          this.selectedJoinRequestIds.delete(request.id);
+          if (this.selected?.id === communityId) {
+            this.pendingJoinRequests = this.pendingJoinRequests.filter(item => item.id !== request.id);
+          }
+        } catch {
+          failed++;
+        }
+        this.batchJoinProcessed++;
+      }
+    } finally {
+      this.batchJoining = false;
+    }
+    if (this.selected?.id === communityId) {
+      if (approved) this.refreshSelected();
+      this.batchJoinFeedback = failed
+        ? t('communities.batchApprovalPartial', { approved, failed })
+        : t('communities.batchApprovalSuccess', { count: approved });
+    }
+  }
+
   acceptPendingJoinRequest(request: CommunityJoinRequest): void {
-    if (!this.selected || this.joinRequestActionId !== undefined) {
+    if (!this.selected || this.joinRequestActionId !== undefined || this.batchJoining) {
       return;
     }
 
@@ -432,6 +526,8 @@ export class CommunitiesComponent implements OnInit {
       .subscribe({
         next: () => {
           this.pendingJoinRequests = this.pendingJoinRequests.filter(item => item.id !== request.id);
+          this.selectedJoinRequestIds.delete(request.id);
+          this.confirmingBatchJoin = false;
           this.refreshSelected();
         },
         error: error => {
@@ -442,7 +538,7 @@ export class CommunitiesComponent implements OnInit {
   }
 
   rejectPendingJoinRequest(request: CommunityJoinRequest): void {
-    if (!this.selected || this.joinRequestActionId !== undefined) {
+    if (!this.selected || this.joinRequestActionId !== undefined || this.batchJoining) {
       return;
     }
 
@@ -457,6 +553,8 @@ export class CommunitiesComponent implements OnInit {
       .subscribe({
         next: () => {
           this.pendingJoinRequests = this.pendingJoinRequests.filter(item => item.id !== request.id);
+          this.selectedJoinRequestIds.delete(request.id);
+          this.confirmingBatchJoin = false;
         },
         error: error => {
           this.errorMessage = error.error?.message

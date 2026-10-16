@@ -1465,3 +1465,22 @@ input,textarea,select {
 .whatsapp-group-share-note { font-size: .875rem; }
 .whatsapp-group-share-feedback { font-size: .875rem; }
 .whatsapp-group-share .row-actions { align-items: center; }
+
+/* Review and confirm selected join requests without an unreviewed mass approval. */
+.bulk-approval-actions { margin: .65rem 0; }
+.bulk-approval-confirm {
+  padding: .85rem;
+  margin: .65rem 0;
+  border: 1px solid rgba(125,211,252,.3);
+  border-radius: .75rem;
+  background: rgba(125,211,252,.08);
+}
+.bulk-approval-confirm p { color: #e2e8f0; margin: 0 0 .7rem; }
+.bulk-approval-confirm .row-actions { align-items: center; }
+.join-request-checkbox { display: flex; align-items: center; cursor: pointer; }
+.join-request-checkbox input {
+  width: 1.1rem;
+  height: 1.1rem;
+  cursor: pointer;
+  accent-color: #00e676;
+}
