@@ -21,6 +21,10 @@ export class CommunityInviteStepComponent implements OnInit {
   loadError = false;
   inviteLink = '';
   copyFeedback = '';
+  step: 'invite' | 'competition' = 'invite';
+  competitionChoice: boolean | null = null;
+  competitionSaving = false;
+  competitionError = '';
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -75,6 +79,45 @@ export class CommunityInviteStepComponent implements OnInit {
     } catch {
       this.copyFeedback = t('communityInviteStep.copyError');
     }
+  }
+
+  continueAfterInvite(): void {
+    if (!this.community || !this.canGenerate()) {
+      this.continueToCommunity();
+      return;
+    }
+    this.competitionError = '';
+    this.step = 'competition';
+  }
+
+  backToInvite(): void {
+    if (!this.competitionSaving) {
+      this.step = 'invite';
+    }
+  }
+
+  selectCompetition(enabled: boolean): void {
+    if (this.competitionSaving || !this.canGenerate()) return;
+    this.competitionChoice = enabled;
+    this.competitionError = '';
+  }
+
+  saveCompetitionAndContinue(): void {
+    if (!this.community || !this.canGenerate() || this.competitionChoice === null
+        || this.competitionSaving) return;
+
+    this.competitionSaving = true;
+    this.competitionError = '';
+    this.groups.updateCompetitionSettings(this.community.id, {
+      rankingsEnabled: this.competitionChoice,
+      winPoints: null,
+      drawPoints: null,
+      lossPoints: null
+    }).pipe(timeout(10_000), finalize(() => this.competitionSaving = false))
+      .subscribe({
+        next: () => this.continueToCommunity(),
+        error: () => this.competitionError = t('communityInviteStep.competitionSaveError')
+      });
   }
 
   continueToCommunity(): void {
