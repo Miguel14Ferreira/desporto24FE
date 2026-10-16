@@ -5,7 +5,7 @@ import { of, Subject, throwError } from 'rxjs';
 import { Events2Component } from './events2.component';
 import { Venue } from '../model/venue';
 import { SessionService } from '../../services/session.service';
-import { VenuePhoto, VenueService } from '../../services/venue.service';
+import { VenuePhoto, VenueService, VenueSuggestionPage } from '../../services/venue.service';
 import { TEST_IMPORTS, TEST_PROVIDERS } from '../../testing/test-providers';
 
 describe('Events2Component', () => {
@@ -17,8 +17,8 @@ describe('Events2Component', () => {
 
   beforeEach(async () => {
     sessionService = jasmine.createSpyObj<SessionService>('SessionService', ['create']);
-    venueService = jasmine.createSpyObj<VenueService>('VenueService', ['search', 'create', 'listPhotos', 'resolveMapLink']);
-    venueService.search.and.returnValue(of([]));
+    venueService = jasmine.createSpyObj<VenueService>('VenueService', ['search', 'suggest', 'create', 'listPhotos', 'resolveMapLink']);
+    venueService.suggest.and.returnValue(of({ venues: [], page: 0, hasMore: false }));
     venueService.listPhotos.and.returnValue(of([]));
 
     sessionService.create.and.returnValue(of({
@@ -63,7 +63,7 @@ describe('Events2Component', () => {
   });
 
   it('shows a retry action instead of silently treating a failed venue load as empty', () => {
-    venueService.search.and.returnValue(throwError(() => new Error('Offline')));
+    venueService.suggest.and.returnValue(throwError(() => new Error('Offline')));
 
     component.loadVenues();
     fixture.detectChanges();
@@ -77,14 +77,14 @@ describe('Events2Component', () => {
   });
 
   it('reloads venues after clicking retry and clears the loading error', () => {
-    venueService.search.and.returnValue(throwError(() => new Error('Offline')));
+    venueService.suggest.and.returnValue(throwError(() => new Error('Offline')));
     component.loadVenues();
     fixture.detectChanges();
 
-    venueService.search.and.returnValue(of([{
+    venueService.suggest.and.returnValue(of({ venues: [{
       id: 701, name: 'Campo Central', city: 'Lisboa',
       address: 'Rua A', sports: 'Padel', latitude: null, longitude: null
-    } as Venue]));
+    } as Venue], page: 0, hasMore: false }));
     const retryButton = fixture.nativeElement.querySelector('.venue-load-error button') as HTMLButtonElement;
     retryButton.click();
     fixture.detectChanges();
@@ -104,8 +104,8 @@ describe('Events2Component', () => {
   });
 
   it('keeps a newly saved venue when the initial catalog response arrives late', () => {
-    const pending = new Subject<Venue[]>();
-    venueService.search.and.returnValue(pending.asObservable());
+    const pending = new Subject<VenueSuggestionPage>();
+    venueService.suggest.and.returnValue(pending.asObservable());
     component.loadVenues();
     component.sport = 'Padel';
     component.venueName = 'Campo Novo';
@@ -119,10 +119,10 @@ describe('Events2Component', () => {
     component.saveVenue();
     expect(component.selectedVenueId).toBe(801);
 
-    pending.next([{
+    pending.next({ venues: [{
       id: 802, name: 'Campo Antigo', city: 'Porto',
       address: 'Rua A', sports: 'Padel', latitude: null, longitude: null
-    } as Venue]);
+    } as Venue], page: 0, hasMore: false });
     pending.complete();
 
     expect(component.venues.map(venue => venue.id)).toEqual([802, 801]);
@@ -131,8 +131,8 @@ describe('Events2Component', () => {
   });
 
   it('retains saved venues if a pending catalog refresh fails', () => {
-    const pending = new Subject<Venue[]>();
-    venueService.search.and.returnValue(pending.asObservable());
+    const pending = new Subject<VenueSuggestionPage>();
+    venueService.suggest.and.returnValue(pending.asObservable());
     component.loadVenues();
     component.sport = 'Padel';
     component.venueName = 'Campo Novo';
@@ -152,8 +152,8 @@ describe('Events2Component', () => {
   });
 
   it('does not duplicate a saved venue if it is also in the catalog response', () => {
-    const pending = new Subject<Venue[]>();
-    venueService.search.and.returnValue(pending.asObservable());
+    const pending = new Subject<VenueSuggestionPage>();
+    venueService.suggest.and.returnValue(pending.asObservable());
     component.loadVenues();
     component.sport = 'Padel';
     component.venueName = 'Campo Novo';
@@ -165,10 +165,10 @@ describe('Events2Component', () => {
     } as Venue));
 
     component.saveVenue();
-    pending.next([{
+    pending.next({ venues: [{
       id: 801, name: 'Campo Novo', city: 'Lisboa',
       address: 'Rua Nova', sports: 'Padel', latitude: null, longitude: null
-    } as Venue]);
+    } as Venue], page: 0, hasMore: false });
     pending.complete();
 
     expect(component.venues.filter(venue => venue.id === 801).length).toBe(1);

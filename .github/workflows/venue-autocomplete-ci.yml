@@ -1,0 +1,25 @@
+name: Validate paged venue autocomplete
+on:
+  pull_request:
+    branches: [preview/render-fullstack]
+    paths:
+      - 'src/app/pages/events2/**'
+      - 'src/app/services/venue.service.ts'
+      - 'src/app/services/venue.service.spec.ts'
+      - 'src/app/i18n/i18n.service.ts'
+      - '.github/workflows/venue-autocomplete-ci.yml'
+permissions:
+  contents: read
+jobs:
+  frontend-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Validate venue autocomplete and existing creation flows
+        run: npm test -- --watch=false --browsers=ChromeHeadless --include=src/app/pages/events2/events2.component.spec.ts --include=src/app/pages/events2/venue-server-autocomplete.spec.ts --include=src/app/services/venue.service.spec.ts --include=src/app/pages/venue-create/venue-map-link-consistency.spec.ts
+      - run: npm run build

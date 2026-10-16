@@ -20,6 +20,26 @@ describe('VenueService search HTTP contract', () => {
 
   afterEach(() => http.verify());
 
+  it('requests only a bounded venue suggestion page with validated filters', () => {
+    service.suggest('  Pavilhão ', ' Porto ', ' Futsal ', 2).subscribe(result => {
+      expect(result.page).toBe(2);
+    });
+    const req = http.expectOne(request => request.url === url + '/suggest');
+    expect(req.request.method).toBe('GET');
+    expect(req.request.params.get('name')).toBe('Pavilhão');
+    expect(req.request.params.get('city')).toBe('Porto');
+    expect(req.request.params.get('sport')).toBe('Futsal');
+    expect(req.request.params.get('page')).toBe('2');
+    req.flush({ venues: [], page: 2, hasMore: false });
+  });
+
+  it('keeps optional filters empty on an initial suggestion page', () => {
+    service.suggest('', '   ').subscribe();
+    const req = http.expectOne(request => request.url === url + '/suggest');
+    expect(req.request.params.keys()).toEqual(['page']);
+    req.flush({ venues: [], page: 0, hasMore: false });
+  });
+
   it('preserves existing city and sport query parameters', () => {
     service.search(' Lisboa ', ' Padel ').subscribe();
     const request = http.expectOne(req => req.url === url);
