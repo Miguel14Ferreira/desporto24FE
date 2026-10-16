@@ -100,6 +100,7 @@ export class CommunitiesComponent implements OnInit {
   communitySearchLoading = false;
   communitySearchPerformed = false;
   communitySearchError = '';
+  private communitySearchRequestVersion = 0;
   communityPresentation?: CommunitySearchPresentation;
   presentationLoading = false;
   membershipActionLoading = false;
@@ -191,6 +192,9 @@ export class CommunitiesComponent implements OnInit {
   searchCommunities(page = 0): void {
     const name = this.communitySearchName.trim();
     const sport = this.communitySearchSport.trim();
+    // A slower, older response must not replace a newer search or its loading state.
+    const requestVersion = (this.communitySearchRequestVersion ?? 0) + 1;
+    this.communitySearchRequestVersion = requestVersion;
 
     this.communitySearchLoading = true;
     this.communitySearchError = '';
@@ -198,16 +202,22 @@ export class CommunitiesComponent implements OnInit {
       .pipe(
         timeout(10_000),
         retry({ count: 1 }),
-        finalize(() => this.communitySearchLoading = false)
+        finalize(() => {
+          if (requestVersion === this.communitySearchRequestVersion) {
+            this.communitySearchLoading = false;
+          }
+        })
       )
       .subscribe({
         next: result => {
+          if (requestVersion !== this.communitySearchRequestVersion) return;
           this.communitySearchResults = result.communities;
           this.communitySearchPage = result.page;
           this.communitySearchHasMore = result.hasMore;
           this.communitySearchPerformed = true;
         },
         error: () => {
+          if (requestVersion !== this.communitySearchRequestVersion) return;
           this.communitySearchResults = [];
           this.communitySearchHasMore = false;
           this.communitySearchPerformed = true;
