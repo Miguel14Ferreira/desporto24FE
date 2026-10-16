@@ -3,6 +3,7 @@ import { safeLoginReturnUrl } from './safe-login-return-url';
 describe('safeLoginReturnUrl', () => {
   it('preserves valid internal session links and query parameters', () => {
     expect(safeLoginReturnUrl('/menu/events/42')).toBe('/menu/events/42');
+    expect(safeLoginReturnUrl('/menu/communities/42')).toBe('/menu/communities/42');
     expect(safeLoginReturnUrl('/menu/notifications?view=requests'))
       .toBe('/menu/notifications?view=requests');
   });
