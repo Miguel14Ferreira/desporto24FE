@@ -38,7 +38,7 @@
         <h4>Os torneios</h4>
         <span>{{ tournaments.length }}</span>
       </div>
-      @if (!loading && !tournaments.length) {
+      @if (!loading && !tournaments.length && !error) {
         <p class="t-muted">Esta comunidade ainda não tem torneios. @if (!canManage) {O organizador poderá criá-los aqui.}</p>
       }
       @for (tournament of tournaments; track tournament.id) {
