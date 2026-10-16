@@ -678,3 +678,83 @@ test('torneios mantêm-se dentro do ecrã e classificação permite scroll horiz
     }
   }
 });
+
+test('nome inválido mostra ajuda acessível e impede criar torneio', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'empty');
+  await page.goto('/menu/communities/7?tab=tournaments');
+
+  const name = page.getByRole('textbox', { name: 'Nome do torneio' });
+  const submit = page.getByRole('button', { name: 'Criar torneio' });
+  await name.fill('L');
+  await expect(name).toHaveAttribute('aria-invalid', 'true');
+  await expect(name).toHaveAttribute('aria-describedby', 'tournament-name-hint');
+  await expect(page.getByText('O nome deve ter pelo menos 2 caracteres.')).toBeVisible();
+  await expect(submit).toBeDisabled();
+  expect(fixture.tournaments).toHaveLength(0);
+
+  await name.fill('Liga de Inverno');
+  await expect(name).not.toHaveAttribute('aria-invalid', 'true');
+  await expect(page.getByText('O nome deve ter pelo menos 2 caracteres.')).toHaveCount(0);
+  await expect(submit).toBeEnabled();
+  await submit.click();
+  await expect(page.getByText('Torneio criado.')).toBeVisible();
+  expect(fixture.tournaments).toHaveLength(1);
+});
+
+test('marcador inválido explica erro junto ao confronto e impede guardar', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'draft');
+  await page.goto('/menu/communities/7?tab=tournaments');
+  await expect(page.locator('.tournament-heading h4')).toHaveText('Liga de Outono');
+  await page.getByRole('button', { name: 'Gerar jornadas' }).click();
+  await page.getByRole('button', { name: 'Sim, publicar calendário' }).click();
+
+  const game = page.locator('.match-card').first();
+  const home = game.getByRole('spinbutton', { name: 'Golos de organizador' });
+  const away = game.getByRole('spinbutton', { name: 'Golos de participante' });
+  const submit = game.getByRole('button', { name: 'Guardar' });
+  await home.fill('-1');
+  await expect(home).toHaveAttribute('aria-invalid', 'true');
+  await expect(game.getByText('Indica dois marcadores inteiros entre 0 e 999.')).toBeVisible();
+  await expect(submit).toBeDisabled();
+  await home.fill('2');
+  await away.fill('1');
+  await expect(home).not.toHaveAttribute('aria-invalid', 'true');
+  await expect(game.getByText('Indica dois marcadores inteiros entre 0 e 999.')).toHaveCount(0);
+  await expect(submit).toBeEnabled();
+  await submit.click();
+  await expect(game.getByRole('button', { name: 'Corrigir' })).toBeVisible();
+  expect(fixture.matches[0].homeScore).toBe(2);
+});
+
+test('falha do backend foca o alerta para navegação só com teclado', async ({ page }) => {
+  await mockCommunityApi(page, 'OWNER', 'complete-rejected');
+  await page.goto('/menu/communities/7?tab=tournaments');
+  await expect(page.locator('.tournament-heading h4')).toHaveText('Liga de Outono');
+  await page.getByRole('button', { name: 'Gerar jornadas' }).click();
+  await page.getByRole('button', { name: 'Sim, publicar calendário' }).click();
+  const game = page.locator('.match-card').first();
+  await game.getByRole('spinbutton', { name: 'Golos de organizador' }).fill('1');
+  await game.getByRole('spinbutton', { name: 'Golos de participante' }).fill('0');
+  await game.getByRole('button', { name: 'Guardar' }).click();
+  await page.getByRole('button', { name: 'Encerrar torneio' }).click();
+  await page.getByRole('button', { name: 'Sim, encerrar' }).click();
+
+  const error = page.getByRole('alert');
+  await expect(error).toContainText('Todos os confrontos da liga precisam de estar concluídos');
+  await expect(error).toBeFocused();
+  await expect(page.getByRole('button', { name: 'Encerrar torneio' })).toBeEnabled();
+});
+
+test('após aprovação ou remoção o foco regressa à secção Jogadores', async ({ page }) => {
+  await mockCommunityApi(page, 'OWNER', 'management');
+  await page.goto('/menu/communities/7?tab=tournaments');
+  await expect(page.locator('.tournament-heading h4')).toHaveText('Liga de Outono');
+  const heading = page.getByRole('heading', { name: 'Jogadores', exact: true });
+  await page.getByRole('button', { name: 'Confirmar inscrição de Mariana' }).click();
+  await expect(page.locator('.player-item').filter({ hasText: '@mariana' })).toContainText('Confirmado');
+  await expect(heading).toBeFocused();
+
+  await page.getByRole('button', { name: 'Remover Pedro do torneio' }).click();
+  await expect(page.locator('.player-item').filter({ hasText: '@pedro' })).toHaveCount(0);
+  await expect(heading).toBeFocused();
+});

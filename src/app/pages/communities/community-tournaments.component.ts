@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, Input, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
 import { finalize, firstValueFrom, forkJoin, Observable, timeout } from 'rxjs';
 import { CommunityGroup } from '../model/community-group';
 import {
@@ -37,6 +37,49 @@ export class CommunityTournamentsComponent implements OnChanges {
   feedback = '';
   confirmAction: 'schedule' | 'complete' | null = null;
   scoreDrafts: Record<number, { home: number | null; away: number | null }> = {};
+  scoreTouched = new Set<number>();
+
+  private focusErrorAfterRender = false;
+  private focusPlayersAfterReload = false;
+
+  // Angular 22 is zoneless; query setters focus controls when @if renders them.
+  @ViewChild('errorNotice')
+  set errorNotice(element: ElementRef<HTMLElement> | undefined) {
+    if (element && this.focusErrorAfterRender) {
+      this.focusErrorAfterRender = false;
+      element.nativeElement.focus();
+    }
+  }
+
+  @ViewChild('playersHeading')
+  set playersHeading(element: ElementRef<HTMLElement> | undefined) {
+    if (element && this.focusPlayersAfterReload) {
+      this.focusPlayersAfterReload = false;
+      element.nativeElement.focus();
+    }
+  }
+
+  get nameTooShort(): boolean {
+    const len = this.nameDraft.trim().length;
+    return len > 0 && len < 2;
+  }
+
+  isScoreInvalid(match: TournamentMatch): boolean {
+    const score = this.scoreDraft(match);
+    return this.scoreTouched.has(match.id)
+      && (!this.validScore(score.home) || !this.validScore(score.away));
+  }
+
+  private showError(message: string): void {
+    this.error = message;
+    this.focusErrorAfterRender = true;
+    this.changeDetector.markForCheck();
+  }
+
+  private refreshRosterAndFocus(): void {
+    this.focusPlayersAfterReload = true;
+    this.loadDetails();
+  }
 
   private listRevision = 0;
   private detailRevision = 0;
@@ -66,6 +109,9 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.error = '';
       this.feedback = '';
       this.confirmAction = null;
+      this.focusErrorAfterRender = false;
+      this.focusPlayersAfterReload = false;
+      this.scoreTouched.clear();
       this.loadTournaments(true);
     }
   }
@@ -133,7 +179,7 @@ export class CommunityTournamentsComponent implements OnChanges {
         }
       },
       error: () => {
-        if (revision === this.listRevision) this.error = 'Não foi possível carregar os torneios. Tenta novamente.';
+        if (revision === this.listRevision) this.showError('Não foi possível carregar os torneios. Tenta novamente.');
       }
     });
   }
@@ -156,6 +202,8 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.matches = [];
     this.standings = undefined;
     this.scoreDrafts = {};
+    this.scoreTouched.clear();
+    this.focusPlayersAfterReload = false;
     if (this.isMember) {
       this.loadDetails();
     }
@@ -195,7 +243,10 @@ export class CommunityTournamentsComponent implements OnChanges {
         this.updateDraftScores(games.matches);
       },
       error: () => {
-        if (revision === this.detailRevision) this.error = 'Não foi possível carregar os dados do torneio.';
+        if (revision === this.detailRevision) {
+          this.focusPlayersAfterReload = false;
+          this.showError('Não foi possível carregar os dados do torneio.');
+        }
       }
     });
   }
@@ -220,7 +271,7 @@ export class CommunityTournamentsComponent implements OnChanges {
       },
       error: () => {
         if (revision === this.detailRevision && this.selected?.id === tid && this.community.id === cid) {
-          this.error = 'Não foi possível carregar mais participantes.';
+          this.showError('Não foi possível carregar mais participantes.');
         }
       }
     });
@@ -247,7 +298,7 @@ export class CommunityTournamentsComponent implements OnChanges {
       },
       error: () => {
         if (revision === this.detailRevision && this.selected?.id === tid && this.community.id === cid) {
-          this.error = 'Não foi possível carregar mais jogos.';
+          this.showError('Não foi possível carregar mais jogos.');
         }
       }
     });
@@ -266,6 +317,7 @@ export class CommunityTournamentsComponent implements OnChanges {
   setScore(match: TournamentMatch, side: 'home' | 'away', value: number | null): void {
     if (!this.scoreDrafts[match.id]) this.scoreDrafts[match.id] = this.scoreDraft(match);
     this.scoreDrafts[match.id][side] = value;
+    this.scoreTouched.add(match.id);
   }
 
   validScore(value: number | null): boolean {
@@ -275,7 +327,7 @@ export class CommunityTournamentsComponent implements OnChanges {
   async create(): Promise<void> {
     const name = this.nameDraft.trim();
     if (!this.canManage || this.busy || name.length < 2 || name.length > 120) {
-      this.error = 'Indica um nome entre 2 e 120 caracteres.';
+      this.showError('Indica um nome entre 2 e 120 caracteres.');
       return;
     }
     await this.mutate(this.api.create(this.community.id, name), 'Torneio criado.', result => {
@@ -290,26 +342,26 @@ export class CommunityTournamentsComponent implements OnChanges {
     if (!this.selected || !this.isMember || this.selected.status !== 'DRAFT'
         || this.myEnrollment || this.participantsHasMore) return;
     await this.mutate(this.api.join(this.community.id, this.selected.id),
-      'Inscrição atualizada.', () => this.loadDetails());
+      'Inscrição atualizada.', () => this.refreshRosterAndFocus());
   }
 
   async leave(): Promise<void> {
     if (!this.selected || !this.isMember || this.selected.status !== 'DRAFT'
         || !this.myEnrollment) return;
     await this.mutate(this.api.leave(this.community.id, this.selected.id),
-      'Inscrição cancelada.', () => this.loadDetails());
+      'Inscrição cancelada.', () => this.refreshRosterAndFocus());
   }
 
   async confirm(participant: TournamentParticipant): Promise<void> {
     if (!this.selected || !this.canManage || this.selected.status !== 'DRAFT') return;
     await this.mutate(this.api.confirm(this.community.id, this.selected.id, participant.profileId),
-      'Participante confirmado.', () => this.loadDetails());
+      'Participante confirmado.', () => this.refreshRosterAndFocus());
   }
 
   async remove(participant: TournamentParticipant): Promise<void> {
     if (!this.selected || !this.canManage || this.selected.status !== 'DRAFT') return;
     await this.mutate(this.api.removeParticipant(this.community.id, this.selected.id, participant.profileId),
-      'Participante removido.', () => this.loadDetails());
+      'Participante removido.', () => this.refreshRosterAndFocus());
   }
 
   async publishSchedule(): Promise<void> {
@@ -328,7 +380,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     if (!this.selected || !this.canManage || this.selected.status !== 'IN_PROGRESS') return;
     const score = this.scoreDraft(match);
     if (!this.validScore(score.home) || !this.validScore(score.away)) {
-      this.error = 'Os resultados devem ser números inteiros entre 0 e 999.';
+      this.showError('Os resultados devem ser números inteiros entre 0 e 999.');
       return;
     }
     await this.mutate(
@@ -337,6 +389,7 @@ export class CommunityTournamentsComponent implements OnChanges {
         // Keep the already-loaded fixture pages visible, including distant rounds.
         this.matches = this.matches.map(game => game.id === saved.id ? saved : game);
         this.scoreDrafts[saved.id] = { home: saved.homeScore, away: saved.awayScore };
+        this.scoreTouched.delete(saved.id);
         this.refreshStandings();
       }
     );
@@ -370,8 +423,7 @@ export class CommunityTournamentsComponent implements OnChanges {
         if (revision === this.standingsRevision && this.community.id === communityId
             && this.selected?.id === tournament.id) {
           this.standings = undefined;
-          this.error = 'Resultado guardado, mas não foi possível atualizar a classificação. Usa Atualizar para tentar novamente.';
-          this.changeDetector.markForCheck();
+          this.showError('Resultado guardado, mas não foi possível atualizar a classificação. Usa Atualizar para tentar novamente.');
         }
       }
     });
@@ -401,8 +453,8 @@ export class CommunityTournamentsComponent implements OnChanges {
       if (mutationRevision !== this.mutationRevision || this.community.id !== cid
           || (tid !== undefined && this.selected?.id !== tid)) return;
       const detail: unknown = error?.error?.detail || error?.error?.message;
-      this.error = typeof detail === 'string' && detail.length <= 180
-        ? detail : 'Não foi possível concluir a operação. Verifica os dados e tenta novamente.';
+      this.showError(typeof detail === 'string' && detail.length <= 180
+        ? detail : 'Não foi possível concluir a operação. Verifica os dados e tenta novamente.');
     } finally {
       if (mutationRevision === this.mutationRevision) {
         this.busy = false;
