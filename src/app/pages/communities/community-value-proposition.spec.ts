@@ -37,6 +37,19 @@ describe('Community value proposition copy', () => {
     });
   }
 
+  it('does not advertise standalone tournaments as a completed feature', () => {
+    for (const language of ['pt', 'en']) {
+      localStorage.setItem('d24-language', language);
+      const heading = t('communities.pitchSeasonsTitle').toLowerCase();
+      const lead = t('communities.pitchLead').toLowerCase();
+      expect(heading).not.toContain('torneios');
+      expect(heading).not.toContain('tournaments');
+      expect(lead).not.toContain('torneios');
+      expect(lead).not.toContain('tournaments');
+      expect(t('communityInviteStep.tournamentNotice')).not.toBe('communityInviteStep.tournamentNotice');
+    }
+  });
+
   it('describes invitation by link without promising WhatsApp contact import', () => {
     localStorage.setItem('d24-language', 'pt');
     expect(t('communities.pitchLead')).toContain('WhatsApp');
