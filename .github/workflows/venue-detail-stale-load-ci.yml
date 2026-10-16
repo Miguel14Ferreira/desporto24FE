@@ -1,0 +1,23 @@
+name: Validate venue detail async consistency
+on:
+  pull_request:
+    branches: [preview/render-fullstack]
+    paths:
+      - 'src/app/pages/venue-details/venue-details.component.ts'
+      - 'src/app/pages/venue-details/venue-detail-stale-load.spec.ts'
+      - '.github/workflows/venue-detail-stale-load-ci.yml'
+permissions:
+  contents: read
+jobs:
+  frontend-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Venue gallery and session selection regressions
+        run: npm test -- --watch=false --browsers=ChromeHeadless --include=src/app/pages/venue-details/venue-details.component.spec.ts --include=src/app/pages/venue-details/venue-detail-stale-load.spec.ts --include=src/app/pages/venue-create/venue-map-link-consistency.spec.ts --include=src/app/pages/events2/events2.component.spec.ts
+      - run: npm run build
