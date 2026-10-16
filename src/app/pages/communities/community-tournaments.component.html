@@ -1,0 +1,284 @@
+<section class="tournaments" aria-label="Torneios da comunidade">
+  <div class="tournament-hero">
+    <div>
+      <p class="tournament-eyebrow">Competição entre membros</p>
+      <h3>Torneios da comunidade</h3>
+      <p>Cria uma liga, confirma os jogadores, organiza jornadas e acompanha a classificação.</p>
+    </div>
+    <span class="tournament-type">Liga · Todos contra todos</span>
+  </div>
+
+  @if (error) {
+    <div class="notice notice-error" role="alert">{{ error }}</div>
+  }
+  @if (feedback) {
+    <div class="notice notice-success" role="status">{{ feedback }}</div>
+  }
+
+  @if (canManage) {
+    <div class="create-tournament">
+      <div>
+        <h4>Criar um torneio</h4>
+        <p>Começa pelas inscrições. O calendário só é publicado depois da confirmação dos jogadores.</p>
+      </div>
+      <div class="create-controls">
+        <label for="new-tournament-name">Nome do torneio</label>
+        <input id="new-tournament-name" [(ngModel)]="nameDraft" maxlength="120"
+          placeholder="Ex.: Liga de Outono" autocomplete="off">
+        <button type="button" class="t-btn t-btn-primary"
+          [disabled]="busy || !nameDraft.trim()"
+          (click)="create()">Criar torneio</button>
+      </div>
+    </div>
+  }
+
+  <div class="tournament-browser">
+    <aside class="tournament-sidebar" aria-label="Lista de torneios">
+      <div class="sidebar-title">
+        <h4>Os torneios</h4>
+        <span>{{ tournaments.length }}</span>
+      </div>
+      @if (!loading && !tournaments.length) {
+        <p class="t-muted">Esta comunidade ainda não tem torneios. @if (!canManage) {O organizador poderá criá-los aqui.}</p>
+      }
+      @for (tournament of tournaments; track tournament.id) {
+        <button type="button" class="tournament-option"
+          [class.is-active]="selected?.id === tournament.id"
+          [attr.aria-pressed]="selected?.id === tournament.id"
+          (click)="selectTournament(tournament)">
+          <strong>{{ tournament.name }}</strong>
+          <small>{{ formatStatus(tournament.status) }}</small>
+        </button>
+      }
+      @if (loading) { <p class="t-muted">A carregar torneios…</p> }
+      @if (tournamentsHasMore) {
+        <button class="t-btn t-btn-secondary t-btn-wide" type="button"
+          [disabled]="loading" (click)="loadTournaments()">Ver mais torneios</button>
+      }
+      @if (!tournaments.length && error) {
+        <button class="t-btn t-btn-secondary" type="button" [disabled]="loading"
+          (click)="loadTournaments(true)">Tentar novamente</button>
+      }
+    </aside>
+
+    <div class="tournament-detail">
+      @if (!selected) {
+        <div class="empty-tournament">Seleciona um torneio para veres os jogadores, jogos e classificação.</div>
+      } @else {
+        <header class="tournament-heading">
+          <div>
+            <span class="tournament-state" [class.is-finished]="selected.status === 'COMPLETED'">
+              {{ formatStatus(selected.status) }}
+            </span>
+            <h4>{{ selected.name }}</h4>
+            <p>Vitória {{ selected.winPoints }} · Empate {{ selected.drawPoints }} · Derrota {{ selected.lossPoints }} pontos</p>
+          </div>
+          <button type="button" class="t-btn t-btn-secondary" (click)="loadDetails()"
+            [disabled]="detailsLoading || busy">Atualizar</button>
+        </header>
+
+        @if (selected.status === 'COMPLETED') {
+          <div class="champion" role="status">
+            <span aria-hidden="true">🏆</span>
+            <div>
+              @if (selected.championTied) {
+                <strong>Empate no primeiro lugar</strong>
+                <p>O torneio terminou com igualdade nos critérios de desempate.</p>
+              } @else {
+                <strong>Campeão: {{ selected.championDisplayName || selected.championUsername }}</strong>
+                <p>{{ selected.championPoints }} pontos · Torneio concluído</p>
+              }
+            </div>
+          </div>
+        }
+
+        @if (detailsLoading) {
+          <p class="t-muted" role="status">A carregar participantes, jornadas e classificação…</p>
+        } @else {
+          <section class="t-section" aria-label="Inscrições">
+            <div class="t-section-heading">
+              <div>
+                <h5>Jogadores</h5>
+                <p>{{ confirmedCount }} confirmados nesta lista · {{ participants.length }} inscrições apresentadas</p>
+              </div>
+              @if (selected.status === 'DRAFT') {
+                @if (myEnrollment) {
+                  <button type="button" class="t-btn t-btn-secondary"
+                    [disabled]="busy" (click)="leave()">Cancelar a minha inscrição</button>
+                } @else {
+                  <button type="button" class="t-btn t-btn-primary"
+                    [disabled]="busy" (click)="join()">Pedir inscrição</button>
+                }
+              }
+            </div>
+            @if (!participants.length) {
+              <p class="t-muted">Ainda não existem inscrições neste torneio.</p>
+            }
+            <div class="players-list">
+              @for (person of participants; track person.profileId) {
+                <div class="player-item">
+                  <div>
+                    <strong>{{ person.displayName || person.username }}</strong>
+                    <small>&#64;{{ person.username }} · {{ formatStatus(person.status) }}</small>
+                  </div>
+                  @if (canManage && selected.status === 'DRAFT') {
+                    <div class="player-actions">
+                      @if (person.status === 'PENDING') {
+                        <button type="button" class="t-btn t-btn-primary t-btn-small"
+                          [disabled]="busy" (click)="confirm(person)">Confirmar</button>
+                      }
+                      <button type="button" class="t-btn t-btn-secondary t-btn-small"
+                        [disabled]="busy" (click)="remove(person)">Remover</button>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+            @if (participantsHasMore) {
+              <button type="button" class="t-btn t-btn-secondary"
+                [disabled]="busy" (click)="loadMoreParticipants()">Ver mais jogadores</button>
+            }
+            @if (canManage && selected.status === 'DRAFT') {
+              <div class="schedule-action">
+                <div>
+                  <strong>Pronto para começar?</strong>
+                  <p>Publicar o calendário fecha as inscrições e cria todos os confrontos da liga.</p>
+                </div>
+                @if (confirmAction === 'schedule') {
+                  <div class="confirm-actions">
+                    <button type="button" class="t-btn t-btn-primary"
+                      [disabled]="busy" (click)="publishSchedule()">Sim, publicar calendário</button>
+                    <button type="button" class="t-btn t-btn-secondary" (click)="confirmAction = null">Cancelar</button>
+                  </div>
+                } @else {
+                  <button type="button" class="t-btn t-btn-primary"
+                    [disabled]="busy || confirmedCount < 2"
+                    (click)="confirmAction = 'schedule'">Gerar jornadas</button>
+                }
+              </div>
+            }
+          </section>
+
+          @if (selected.status !== 'DRAFT') {
+            <section class="t-section" aria-label="Jornadas">
+              <div class="t-section-heading">
+                <div>
+                  <h5>Jornadas e resultados</h5>
+                  <p>Resultados atualizados pelos organizadores da comunidade.</p>
+                </div>
+              </div>
+              @if (!matches.length) { <p class="t-muted">Não existem jogos para apresentar.</p> }
+              <div class="match-list">
+                @for (match of matches; track match.id) {
+                  <article class="match-card">
+                    <span class="match-round">Jornada {{ match.roundNumber }}</span>
+                    <div class="match-teams">
+                      <strong>&#64;{{ match.homeUsername }}</strong>
+                      <span class="vs">VS</span>
+                      <strong>&#64;{{ match.awayUsername }}</strong>
+                    </div>
+                    @if (canManage && selected.status === 'IN_PROGRESS') {
+                      <div class="score-edit">
+                        <label>
+                          <span>Casa</span>
+                          <input type="number" min="0" max="999" step="1"
+                            [ngModel]="scoreDraft(match).home"
+                            (ngModelChange)="setScore(match, 'home', $event)"
+                            [disabled]="busy" [attr.aria-label]="'Golos de ' + match.homeUsername">
+                        </label>
+                        <span class="score-separator">:</span>
+                        <label>
+                          <span>Fora</span>
+                          <input type="number" min="0" max="999" step="1"
+                            [ngModel]="scoreDraft(match).away"
+                            (ngModelChange)="setScore(match, 'away', $event)"
+                            [disabled]="busy" [attr.aria-label]="'Golos de ' + match.awayUsername">
+                        </label>
+                        <button class="t-btn t-btn-primary t-btn-small" type="button"
+                          [disabled]="busy || !validScore(scoreDraft(match).home) || !validScore(scoreDraft(match).away)"
+                          (click)="saveScore(match)">{{ match.status === 'COMPLETED' ? 'Corrigir' : 'Guardar' }}</button>
+                      </div>
+                    } @else {
+                      <strong class="match-score">
+                        {{ match.status === 'COMPLETED' ? match.homeScore + ' : ' + match.awayScore : 'Por disputar' }}
+                      </strong>
+                    }
+                  </article>
+                }
+              </div>
+              @if (matchesHasMore) {
+                <button type="button" class="t-btn t-btn-secondary"
+                  [disabled]="busy" (click)="loadMoreMatches()">Carregar mais jogos</button>
+              }
+            </section>
+          }
+
+          <section class="t-section" aria-label="Classificação do torneio">
+            <div class="t-section-heading">
+              <div>
+                <h5>Classificação</h5>
+                <p>Ordem: pontos, diferença de golos, golos marcados e vitórias.</p>
+              </div>
+              @if (standings) {
+                <span class="tournament-state">{{ standings.completedMatches }} / {{ standings.totalMatches }} jogos</span>
+              }
+            </div>
+            @if (standings?.standings?.length) {
+              <div class="standings-scroll">
+                <table class="standings-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">#</th><th scope="col">Jogador</th>
+                      <th scope="col" title="Jogos">J</th>
+                      <th scope="col" title="Vitórias">V</th>
+                      <th scope="col" title="Empates">E</th>
+                      <th scope="col" title="Derrotas">D</th>
+                      <th scope="col" title="Golos marcados">GM</th>
+                      <th scope="col" title="Golos sofridos">GS</th>
+                      <th scope="col" title="Diferença">DG</th>
+                      <th scope="col">Pts</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (row of standings?.standings || []; track row.profileId) {
+                      <tr>
+                        <td>{{ row.position }}</td>
+                        <th scope="row">{{ playerLabel(row) }}</th>
+                        <td>{{ row.played }}</td><td>{{ row.won }}</td>
+                        <td>{{ row.drawn }}</td><td>{{ row.lost }}</td>
+                        <td>{{ row.goalsFor }}</td><td>{{ row.goalsAgainst }}</td>
+                        <td>{{ row.goalDifference }}</td><td class="points-cell">{{ row.points }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            } @else {
+              <p class="t-muted">A classificação aparece quando houver jogadores confirmados.</p>
+            }
+          </section>
+
+          @if (canManage && selected.status === 'IN_PROGRESS') {
+            <div class="complete-action">
+              <div>
+                <h5>Encerrar torneio</h5>
+                <p>Depois de concluído, os resultados ficam bloqueados e o campeão é registado.</p>
+              </div>
+              @if (confirmAction === 'complete') {
+                <div class="confirm-actions">
+                  <button type="button" class="t-btn t-btn-primary" [disabled]="busy || !canComplete"
+                    (click)="complete()">Sim, encerrar</button>
+                  <button type="button" class="t-btn t-btn-secondary" (click)="confirmAction = null">Cancelar</button>
+                </div>
+              } @else {
+                <button type="button" class="t-btn t-btn-secondary"
+                  [disabled]="busy || !canComplete"
+                  (click)="confirmAction = 'complete'">Encerrar torneio</button>
+              }
+            </div>
+          }
+        }
+      }
+    </div>
+  </div>
+</section>

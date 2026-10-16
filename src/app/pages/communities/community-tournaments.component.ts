@@ -1,0 +1,338 @@
+import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { finalize, firstValueFrom, forkJoin, Observable, timeout } from 'rxjs';
+import { CommunityGroup } from '../model/community-group';
+import {
+  CommunityTournament, TournamentMatch, TournamentParticipant, TournamentStandingRow,
+  TournamentStandings
+} from '../model/community-tournament';
+import { CommunityTournamentsService } from '../../services/community-tournaments.service';
+import { AuthenticationService } from '../../services/authethication.service';
+
+@Component({
+  selector: 'app-community-tournaments',
+  templateUrl: './community-tournaments.component.html',
+  styleUrls: ['./community-tournaments.component.css'],
+  standalone: false
+})
+export class CommunityTournamentsComponent implements OnChanges {
+  @Input({ required: true }) community!: CommunityGroup;
+
+  tournaments: CommunityTournament[] = [];
+  selected?: CommunityTournament;
+  tournamentsPage = 0;
+  tournamentsHasMore = false;
+  participants: TournamentParticipant[] = [];
+  participantsPage = 0;
+  participantsHasMore = false;
+  matches: TournamentMatch[] = [];
+  matchesPage = 0;
+  matchesHasMore = false;
+  standings?: TournamentStandings;
+
+  nameDraft = '';
+  loading = false;
+  detailsLoading = false;
+  busy = false;
+  error = '';
+  feedback = '';
+  confirmAction: 'schedule' | 'complete' | null = null;
+  scoreDrafts: Record<number, { home: number | null; away: number | null }> = {};
+
+  private listRevision = 0;
+  private detailRevision = 0;
+
+  constructor(
+    private readonly api: CommunityTournamentsService,
+    private readonly authentication: AuthenticationService
+  ) {}
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['community'] && this.community?.id) {
+      ++this.listRevision;
+      ++this.detailRevision;
+      this.selected = undefined;
+      this.loading = false;
+      this.detailsLoading = false;
+      this.tournaments = [];
+      this.participants = [];
+      this.matches = [];
+      this.standings = undefined;
+      this.error = '';
+      this.feedback = '';
+      this.confirmAction = null;
+      this.loadTournaments(true);
+    }
+  }
+
+  get canManage(): boolean {
+    return this.community?.myRole === 'OWNER' || this.community?.myRole === 'ADMIN';
+  }
+
+  get myUsername(): string {
+    if (!this.authentication.loggedInPerfilname) {
+      this.authentication.isLoggedIn();
+    }
+    return (this.authentication.loggedInPerfilname || '').toLowerCase();
+  }
+
+  get myEnrollment(): TournamentParticipant | undefined {
+    return this.participants.find(p => p.username.toLowerCase() === this.myUsername);
+  }
+
+  get confirmedCount(): number {
+    return this.participants.filter(p => p.status === 'CONFIRMED').length;
+  }
+
+  get canComplete(): boolean {
+    return this.selected?.status === 'IN_PROGRESS'
+      && !!this.standings
+      && this.standings.totalMatches > 0
+      && this.standings.completedMatches === this.standings.totalMatches;
+  }
+
+  loadTournaments(reset = false): void {
+    if (!this.community?.id || this.loading) return;
+    const communityId = this.community.id;
+    const revision = ++this.listRevision;
+    const page = reset ? 0 : this.tournamentsPage + 1;
+    this.loading = true;
+    this.error = '';
+    this.api.list(communityId, page).pipe(
+      timeout(12000),
+      finalize(() => { if (revision === this.listRevision) this.loading = false; })
+    ).subscribe({
+      next: result => {
+        if (revision !== this.listRevision || this.community.id !== communityId) return;
+        this.tournaments = reset ? result.tournaments : [...this.tournaments, ...result.tournaments];
+        this.tournamentsPage = page;
+        this.tournamentsHasMore = result.hasMore;
+        if (reset && !this.selected && result.tournaments.length) {
+          this.selectTournament(result.tournaments[0]);
+        }
+      },
+      error: () => {
+        if (revision === this.listRevision) this.error = 'Não foi possível carregar os torneios. Tenta novamente.';
+      }
+    });
+  }
+
+  selectTournament(tournament: CommunityTournament): void {
+    if (this.selected?.id === tournament.id && !this.error) return;
+    ++this.detailRevision;
+    this.detailsLoading = false;
+    this.selected = tournament;
+    this.confirmAction = null;
+    this.feedback = '';
+    this.error = '';
+    this.participantsPage = 0;
+    this.matchesPage = 0;
+    this.participants = [];
+    this.matches = [];
+    this.standings = undefined;
+    this.scoreDrafts = {};
+    this.loadDetails();
+  }
+
+  loadDetails(): void {
+    const tournament = this.selected;
+    if (!tournament || this.detailsLoading) return;
+    const communityId = this.community.id;
+    const revision = ++this.detailRevision;
+    this.detailsLoading = true;
+    this.error = '';
+    forkJoin({
+      members: this.api.participants(communityId, tournament.id, 0),
+      games: this.api.matches(communityId, tournament.id, 0),
+      table: this.api.standings(communityId, tournament.id)
+    }).pipe(
+      timeout(12000),
+      finalize(() => { if (revision === this.detailRevision) this.detailsLoading = false; })
+    ).subscribe({
+      next: ({ members, games, table }) => {
+        if (revision !== this.detailRevision || this.community.id !== communityId
+            || this.selected?.id !== tournament.id) return;
+        this.participants = members.participants;
+        this.participantsPage = 0;
+        this.participantsHasMore = members.hasMore;
+        this.matches = games.matches;
+        this.matchesPage = 0;
+        this.matchesHasMore = games.hasMore;
+        this.standings = table;
+        this.updateDraftScores(games.matches);
+      },
+      error: () => {
+        if (revision === this.detailRevision) this.error = 'Não foi possível carregar os dados do torneio.';
+      }
+    });
+  }
+
+  loadMoreParticipants(): void {
+    if (!this.selected || this.busy || !this.participantsHasMore) return;
+    const cid = this.community.id, tid = this.selected.id, revision = this.detailRevision;
+    this.busy = true;
+    this.api.participants(cid, tid, this.participantsPage + 1).pipe(
+      timeout(12000), finalize(() => this.busy = false)
+    ).subscribe({
+      next: result => {
+        if (revision !== this.detailRevision || this.selected?.id !== tid || this.community.id !== cid) return;
+        this.participants = [...this.participants, ...result.participants];
+        this.participantsPage = result.page;
+        this.participantsHasMore = result.hasMore;
+      },
+      error: () => this.error = 'Não foi possível carregar mais participantes.'
+    });
+  }
+
+  loadMoreMatches(): void {
+    if (!this.selected || this.busy || !this.matchesHasMore) return;
+    const cid = this.community.id, tid = this.selected.id, revision = this.detailRevision;
+    this.busy = true;
+    this.api.matches(cid, tid, this.matchesPage + 1).pipe(
+      timeout(12000), finalize(() => this.busy = false)
+    ).subscribe({
+      next: result => {
+        if (revision !== this.detailRevision || this.selected?.id !== tid || this.community.id !== cid) return;
+        this.matches = [...this.matches, ...result.matches];
+        this.matchesPage = result.page;
+        this.matchesHasMore = result.hasMore;
+        this.updateDraftScores(result.matches);
+      },
+      error: () => this.error = 'Não foi possível carregar mais jogos.'
+    });
+  }
+
+  private updateDraftScores(matches: TournamentMatch[]): void {
+    for (const match of matches) {
+      this.scoreDrafts[match.id] = { home: match.homeScore, away: match.awayScore };
+    }
+  }
+
+  scoreDraft(match: TournamentMatch): { home: number | null; away: number | null } {
+    return this.scoreDrafts[match.id] || { home: match.homeScore, away: match.awayScore };
+  }
+
+  setScore(match: TournamentMatch, side: 'home' | 'away', value: number | null): void {
+    if (!this.scoreDrafts[match.id]) this.scoreDrafts[match.id] = this.scoreDraft(match);
+    this.scoreDrafts[match.id][side] = value;
+  }
+
+  validScore(value: number | null): boolean {
+    return typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= 999;
+  }
+
+  async create(): Promise<void> {
+    const name = this.nameDraft.trim();
+    if (!this.canManage || this.busy || name.length < 2 || name.length > 120) {
+      this.error = 'Indica um nome entre 2 e 120 caracteres.';
+      return;
+    }
+    await this.mutate(this.api.create(this.community.id, name), 'Torneio criado.', result => {
+      this.nameDraft = '';
+      this.selected = undefined;
+      this.selectTournament(result);
+      this.tournaments = [result, ...this.tournaments.filter(item => item.id !== result.id)];
+    });
+  }
+
+  async join(): Promise<void> {
+    if (!this.selected || this.selected.status !== 'DRAFT') return;
+    await this.mutate(this.api.join(this.community.id, this.selected.id),
+      'Inscrição enviada para aprovação.', () => this.loadDetails());
+  }
+
+  async leave(): Promise<void> {
+    if (!this.selected || this.selected.status !== 'DRAFT') return;
+    await this.mutate(this.api.leave(this.community.id, this.selected.id),
+      'Inscrição cancelada.', () => this.loadDetails());
+  }
+
+  async confirm(participant: TournamentParticipant): Promise<void> {
+    if (!this.selected || !this.canManage || this.selected.status !== 'DRAFT') return;
+    await this.mutate(this.api.confirm(this.community.id, this.selected.id, participant.profileId),
+      'Participante confirmado.', () => this.loadDetails());
+  }
+
+  async remove(participant: TournamentParticipant): Promise<void> {
+    if (!this.selected || !this.canManage || this.selected.status !== 'DRAFT') return;
+    await this.mutate(this.api.removeParticipant(this.community.id, this.selected.id, participant.profileId),
+      'Participante removido.', () => this.loadDetails());
+  }
+
+  async publishSchedule(): Promise<void> {
+    if (!this.selected || !this.canManage || this.selected.status !== 'DRAFT'
+        || this.confirmAction !== 'schedule') return;
+    const tournamentId = this.selected.id;
+    this.confirmAction = null;
+    await this.mutate(this.api.generateSchedule(this.community.id, tournamentId),
+      'Calendário publicado. O torneio começou.', () => {
+        this.updateSelected({ ...this.selected!, status: 'IN_PROGRESS' });
+        this.loadDetails();
+      });
+  }
+
+  async saveScore(match: TournamentMatch): Promise<void> {
+    if (!this.selected || !this.canManage || this.selected.status !== 'IN_PROGRESS') return;
+    const score = this.scoreDraft(match);
+    if (!this.validScore(score.home) || !this.validScore(score.away)) {
+      this.error = 'Os resultados devem ser números inteiros entre 0 e 999.';
+      return;
+    }
+    await this.mutate(
+      this.api.recordResult(this.community.id, this.selected.id, match.id, score.home!, score.away!),
+      'Resultado guardado.', () => this.loadDetails()
+    );
+  }
+
+  async complete(): Promise<void> {
+    if (!this.selected || !this.canManage || !this.canComplete || this.confirmAction !== 'complete') return;
+    const tournamentId = this.selected.id;
+    this.confirmAction = null;
+    await this.mutate(this.api.complete(this.community.id, tournamentId),
+      'Torneio encerrado.', tournament => {
+        this.updateSelected(tournament);
+        this.loadDetails();
+      });
+  }
+
+  private updateSelected(tournament: CommunityTournament): void {
+    this.selected = tournament;
+    this.tournaments = this.tournaments.map(item => item.id === tournament.id ? tournament : item);
+  }
+
+  private async mutate<T>(operation: Observable<T>, success: string, after: (result: T) => void): Promise<void> {
+    if (this.busy) return;
+    this.busy = true;
+    this.error = '';
+    this.feedback = '';
+    const cid = this.community.id, tid = this.selected?.id;
+    try {
+      const result = await firstValueFrom(operation.pipe(timeout(12000)));
+      if (this.community.id !== cid || (tid !== undefined && this.selected?.id !== tid)) return;
+      this.feedback = success;
+      after(result);
+    } catch (error: any) {
+      if (this.community.id !== cid) return;
+      const detail: unknown = error?.error?.detail || error?.error?.message;
+      this.error = typeof detail === 'string' && detail.length <= 180
+        ? detail : 'Não foi possível concluir a operação. Verifica os dados e tenta novamente.';
+    } finally {
+      this.busy = false;
+    }
+  }
+
+  formatStatus(status: string): string {
+    switch (status) {
+      case 'DRAFT': return 'Inscrições abertas';
+      case 'IN_PROGRESS': return 'Em curso';
+      case 'COMPLETED': return 'Terminado';
+      case 'PENDING': return 'A aguardar aprovação';
+      case 'CONFIRMED': return 'Confirmado';
+      case 'SCHEDULED': return 'Por disputar';
+      default: return status;
+    }
+  }
+
+  playerLabel(row: TournamentStandingRow): string {
+    return row.displayName || row.username;
+  }
+}

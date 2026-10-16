@@ -1,0 +1,26 @@
+name: Validate community tournament UI
+on:
+  pull_request:
+    branches: [preview/render-fullstack]
+    paths:
+      - 'src/app/pages/communities/community-tournaments.component.*'
+      - 'src/app/pages/communities/communities.component.*'
+      - 'src/app/pages/communities/communities.module.ts'
+      - 'src/app/pages/model/community-tournament.ts'
+      - 'src/app/services/community-tournaments.service.*'
+      - '.github/workflows/community-tournaments-ui-ci.yml'
+permissions:
+  contents: read
+jobs:
+  frontend-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm test -- --watch=false --browsers=ChromeHeadless --include=src/app/pages/communities/community-tournaments.component.spec.ts --include=src/app/services/community-tournaments.service.spec.ts
+      - run: npm run build

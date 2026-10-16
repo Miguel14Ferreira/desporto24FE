@@ -405,6 +405,9 @@
               <button type="button" [class.active]="activeTab === 'sessions'" (click)="setTab('sessions')">
                 {{ 'communities.tab.sessions' | t }}
               </button>
+              <button type="button" [class.active]="activeTab === 'tournaments'" (click)="setTab('tournaments')">
+                Torneios
+              </button>
               <button type="button" [class.active]="activeTab === 'ranking'" (click)="setTab('ranking')">
                 {{ 'communities.tab.ranking' | t }}
               </button>
@@ -443,7 +446,13 @@
               </section>
             }
 
-            @if (competitionLoading) {
+            @if (activeTab === 'tournaments') {
+              <section class="community-tab-panel">
+                <app-community-tournaments [community]="selected"></app-community-tournaments>
+              </section>
+            }
+
+            @if (competitionLoading && activeTab !== 'tournaments') {
               <div class="tab-state">{{ 'communities.competitionLoading' | t }}</div>
             }
 
