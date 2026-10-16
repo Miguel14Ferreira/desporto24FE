@@ -430,7 +430,7 @@ export class CommunitiesComponent implements OnInit {
 
   addCommunitySport(value: string): void {
     if (!this.editingSports || this.savingSports || this.sportsDraft.length >= 128
-        || !this.sportsCatalog.includes(value)
+        || !SPORTS_CATALOG.includes(value)
         || this.sportsDraft.some(sport => sport.toLowerCase() === value.toLowerCase())) return;
     this.sportsDraft = [...this.sportsDraft, value];
     this.sportsSearch = '';
