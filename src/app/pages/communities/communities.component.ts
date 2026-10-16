@@ -105,6 +105,9 @@ export class CommunitiesComponent implements OnInit {
   membershipActionLoading = false;
   membershipActionMessage = '';
   joinRequestSent = false;
+  pendingJoinLookupLoading = false;
+  private pendingJoinLookupVersion = 0;
+  private pendingRequestsLookupVersion = 0;
 
   rankingsEnabledDraft = false;
   winPointsDraft = 3;
@@ -232,6 +235,9 @@ export class CommunitiesComponent implements OnInit {
   }
 
   private loadCommunityPresentation(id: number): void {
+    // Invalidate checks for a previously opened community.
+    ++this.pendingJoinLookupVersion;
+    this.pendingJoinLookupLoading = false;
     this.selected = undefined;
     this.communityPresentation = undefined;
     this.presentationLoading = true;
@@ -257,34 +263,45 @@ export class CommunitiesComponent implements OnInit {
   }
 
   private loadMyPendingJoinRequest(communityId: number): void {
+    const lookupVersion = ++this.pendingJoinLookupVersion;
+    this.pendingJoinLookupLoading = true;
     this.communityService.myPendingJoinRequest(communityId)
-      .pipe(timeout(10_000))
+      .pipe(
+        timeout(10_000),
+        finalize(() => {
+          if (lookupVersion === this.pendingJoinLookupVersion) {
+            this.pendingJoinLookupLoading = false;
+          }
+        })
+      )
       .subscribe({
         next: request => {
-          if (this.communityPresentation?.id !== communityId) {
-            return;
-          }
-
+          if (lookupVersion !== this.pendingJoinLookupVersion
+              || this.communityPresentation?.id !== communityId) return;
           this.joinRequestSent = Boolean(request);
           this.membershipActionMessage = request
             ? t('communities.joinRequestSent')
             : '';
         },
         error: () => {
-          if (this.communityPresentation?.id === communityId) {
-            this.joinRequestSent = false;
-            this.membershipActionMessage = '';
-          }
+          if (lookupVersion !== this.pendingJoinLookupVersion
+              || this.communityPresentation?.id !== communityId) return;
+          this.joinRequestSent = false;
+          this.membershipActionMessage = '';
         }
       });
   }
 
   joinPresentedCommunity(): void {
     const community = this.communityPresentation;
-    if (!community || this.membershipActionLoading || this.joinRequestSent) {
+    if (!community || this.membershipActionLoading || this.joinRequestSent
+        || (community.visibility === 'PRIVATE' && this.pendingJoinLookupLoading)) {
       return;
     }
 
+    // Older GET responses must never undo a submitted join request.
+    ++this.pendingJoinLookupVersion;
+    this.pendingJoinLookupLoading = false;
     this.membershipActionLoading = true;
     this.membershipActionMessage = '';
     this.errorMessage = '';
@@ -300,6 +317,7 @@ export class CommunitiesComponent implements OnInit {
       )
       .subscribe({
         next: () => {
+          if (this.communityPresentation?.id !== community.id) return;
           if (community.visibility === 'PUBLIC') {
             this.reload();
             return;
@@ -309,6 +327,7 @@ export class CommunitiesComponent implements OnInit {
           this.membershipActionMessage = t('communities.joinRequestSent');
         },
         error: error => {
+          if (this.communityPresentation?.id !== community.id) return;
           this.errorMessage = error.error?.message
             || t('feedback.communities.joinError');
         }
@@ -371,6 +390,10 @@ export class CommunitiesComponent implements OnInit {
       return;
     }
 
+    // A response for the previous community must not replace this one's requests.
+    ++this.pendingRequestsLookupVersion;
+    this.pendingJoinRequestsLoading = false;
+    this.pendingJoinRequests = [];
     this.errorMessage = '';
 
     this.communityService.get(community.id)
@@ -416,19 +439,28 @@ export class CommunitiesComponent implements OnInit {
   }
 
   private loadPendingJoinRequests(communityId: number): void {
+    const lookupVersion = ++this.pendingRequestsLookupVersion;
     this.pendingJoinRequestsLoading = true;
     this.communityService.pendingJoinRequests(communityId)
       .pipe(
         timeout(10_000),
-        finalize(() => this.pendingJoinRequestsLoading = false)
+        finalize(() => {
+          if (lookupVersion === this.pendingRequestsLookupVersion) {
+            this.pendingJoinRequestsLoading = false;
+          }
+        })
       )
       .subscribe({
         next: requests => {
+          if (lookupVersion !== this.pendingRequestsLookupVersion
+              || this.selected?.id !== communityId) return;
           this.pendingJoinRequests = requests;
           this.selectedJoinRequestIds.clear();
           this.confirmingBatchJoin = false;
         },
         error: () => {
+          if (lookupVersion !== this.pendingRequestsLookupVersion
+              || this.selected?.id !== communityId) return;
           this.pendingJoinRequests = [];
           this.selectedJoinRequestIds.clear();
           this.confirmingBatchJoin = false;
@@ -482,6 +514,9 @@ export class CommunitiesComponent implements OnInit {
     this.confirmingBatchJoin = false;
     if (!requests.length) return;
 
+    // An earlier pending-list GET must not resurrect approved requests.
+    ++this.pendingRequestsLookupVersion;
+    this.pendingJoinRequestsLoading = false;
     this.batchJoining = true;
     this.batchJoinFeedback = '';
     this.batchJoinTotal = requests.length;
@@ -521,6 +556,8 @@ export class CommunitiesComponent implements OnInit {
       return;
     }
 
+    ++this.pendingRequestsLookupVersion;
+    this.pendingJoinRequestsLoading = false;
     this.joinRequestActionId = request.id;
     this.errorMessage = '';
 
@@ -548,6 +585,8 @@ export class CommunitiesComponent implements OnInit {
       return;
     }
 
+    ++this.pendingRequestsLookupVersion;
+    this.pendingJoinRequestsLoading = false;
     this.joinRequestActionId = request.id;
     this.errorMessage = '';
 
