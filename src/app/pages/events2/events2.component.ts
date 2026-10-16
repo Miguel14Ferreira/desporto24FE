@@ -63,6 +63,15 @@ export class Events2Component implements OnInit, OnDestroy {
 
   communityId: number | null = null;
   communityName = '';
+  communitySports: string[] = [];
+  communitySportLoaded = false;
+
+  /** Community sports are suggestions, not a restriction: organizers may pick any sport. */
+  chooseCommunitySport(sport: string): void {
+    if (this.loading || !this.communitySports.includes(sport) || this.sport === sport) return;
+    this.sport = sport;
+    this.confirmSportSelection();
+  }
   recurrence: 'NONE' | 'WEEKLY' | 'BIWEEKLY' = 'NONE';
   recurrenceOccurrences = 4;
 
@@ -161,14 +170,22 @@ export class Events2Component implements OnInit, OnDestroy {
         .subscribe({
         next: community => {
           this.communityName = community.name;
-          if (!this.sport.trim() && community.sport) {
-            this.sport = community.sport;
+          const list = community.sports?.length ? community.sports
+            : (community.sport ? [community.sport] : []);
+          // Older communities expose just `sport`; multi-sport ones must not
+          // silently pick the first modality on behalf of the organiser.
+          this.communitySports = [...new Set(list.filter(value => this.sportsCatalog.includes(value)))];
+          this.communitySportLoaded = true;
+          if (!this.sport.trim() && this.communitySports.length === 1) {
+            this.sport = this.communitySports[0];
             if (this.sportSelected) this.loadVenues();
           }
         },
         error: () => {
           this.errorMessage = t('feedback.communities.openError');
           this.communityName = '';
+          this.communitySports = [];
+          this.communitySportLoaded = false;
         }
       });
     }

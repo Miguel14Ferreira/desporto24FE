@@ -65,14 +65,14 @@ type FixtureMode = 'empty' | 'draft' | 'paged' | 'forbidden' | 'switch'
   | 'management' | 'complete-rejected' | 'list-network-error'
   | 'paged-enrollment' | 'draw-tie' | 'schedule-roster-paged' | 'schedule-roster-oversize';
 
-async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode, sport: string | null = 'Futebol') {
+async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode, sport: string | null = 'Futebol', sports?: string[]) {
   const username = role === 'OWNER' ? 'organizador' : 'participante';
   const token = fixtureToken(username);
   await page.addInitScript(value => localStorage.setItem('t', value), token);
 
   const community = {
     id: 7, name: 'Jogadores de Lisboa', description: 'Liga dos amigos',
-    sport, sports: sport ? [sport] : [], photoUrl: null, visibility: 'PRIVATE',
+    sport, sports: sports ?? (sport ? [sport] : []), photoUrl: null, visibility: 'PRIVATE',
     rankingsEnabled: true, ownerUsername: 'organizador',
     myRole: role, memberCount: 3, createdAt: '2026-10-16T12:00:00Z',
     members: [
@@ -908,4 +908,37 @@ test('gestores editam várias modalidades e atualizam a comunidade sem afetar a 
   await expect(page.getByText('Modalidades atualizadas.')).toBeVisible();
   expect(fixture.updatedCommunitySports).toEqual(['Padel']);
   await expect(page.getByRole('heading', { name: 'Desportos desta comunidade' })).toBeVisible();
+});
+
+test('comunidade multidesporto leva à criação da sessão e permite escolher a modalidade', async ({ page }) => {
+  await mockCommunityApi(page, 'OWNER', 'draft', 'Futebol', ['Futebol', 'Padel']);
+  await page.goto('/menu/communities/7?tab=sessions');
+  await expect(page.locator('.community-tab-panel')).toBeVisible();
+  const createLink = page.locator('.community-tab-panel')
+    .getByRole('link', { name: /Criar sessão/ });
+  await expect(createLink).toHaveAttribute('href', '/menu/createEvent?community=7');
+  await createLink.click();
+
+  await expect(page).toHaveURL(/\/menu\/createEvent\?community=7/);
+  await expect(page.getByText('Modalidades do grupo')).toBeVisible();
+  const futbol = page.getByRole('button', { name: 'Futebol', exact: true });
+  const padel = page.getByRole('button', { name: 'Padel', exact: true });
+  await expect(futbol).toHaveAttribute('aria-pressed', 'false');
+  await expect(padel).toHaveAttribute('aria-pressed', 'false');
+  await padel.click();
+  await expect(padel).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('input[name="sport"]')).toHaveValue('Padel');
+  await expect(page.getByRole('link', { name: /Voltar.*comunidade/i })).toHaveAttribute(
+    'href', '/menu/communities/7'
+  );
+});
+
+test('comunidade com modalidade única preenche a modalidade automaticamente', async ({ page }) => {
+  await mockCommunityApi(page, 'OWNER', 'draft', 'Futebol', ['Futebol']);
+  await page.goto('/menu/createEvent?community=7');
+
+  await expect(page.getByText('Modalidades do grupo')).toBeVisible();
+  await expect(page.locator('input[name="sport"]')).toHaveValue('Futebol');
+  await expect(page.getByRole('button', { name: 'Futebol', exact: true }))
+    .toHaveAttribute('aria-pressed', 'true');
 });

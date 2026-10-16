@@ -556,3 +556,15 @@ input[type='datetime-local'] {
   display: block;
   margin-top: .3rem;
 }
+
+/* Community members can start their next game directly in the group's sport. */
+.community-sport-choices { display: grid; gap: .55rem; grid-column: 1 / -1; min-width: 0; }
+.community-sport-label { color: #e2e8f0; font-size: .85rem; font-weight: 700; }
+.community-sport-choices > small { color: #94a3b8; font-size: .78rem; }
+.community-sport-options { display: flex; flex-wrap: wrap; gap: .5rem; }
+.community-sport-option { min-height: 42px; border: 1px solid rgba(255,255,255,.18);
+  border-radius: 999px; background: rgba(255,255,255,.07); color: #e2e8f0;
+  font: inherit; font-size: .84rem; padding: .5rem .85rem; cursor: pointer; }
+.community-sport-option.active { border-color: #4ade80; background: rgba(74,222,128,.14);
+  color: #bbf7d0; }
+.community-sport-option:focus-visible { outline: 2px solid #86efac; outline-offset: 3px; }

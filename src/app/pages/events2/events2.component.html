@@ -26,8 +26,7 @@
         </div>
         <a
           class="secondary-action jynlo-action jynlo-action--neutral"
-          routerLink="/menu/communities"
-          [queryParams]="{ community: communityId }">
+          [routerLink]="['/menu/communities', communityId]">
           {{ 'createSession.backCommunity' | t }}
         </a>
       </div>
@@ -42,6 +41,20 @@
 
     <form class="create-card" (ngSubmit)="createSession()">
       <div class="form-grid">
+        @if (communityId && communitySportLoaded && communitySports.length) {
+          <div class="community-sport-choices">
+            <span class="community-sport-label">Modalidades do grupo</span>
+            <div class="community-sport-options" role="group" aria-label="Escolher modalidade da comunidade">
+              @for (item of communitySports; track item) {
+                <button type="button" class="community-sport-option"
+                  [class.active]="sport === item"
+                  [attr.aria-pressed]="sport === item"
+                  [disabled]="loading" (click)="chooseCommunitySport(item)">{{ item }}</button>
+              }
+            </div>
+            <small>Também podes escolher outra modalidade no campo abaixo.</small>
+          </div>
+        }
         <label>
           <span>{{ 'events.sport' | t }} *</span>
           <input
