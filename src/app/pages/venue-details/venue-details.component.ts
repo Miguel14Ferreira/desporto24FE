@@ -27,6 +27,8 @@ export class VenueDetailsComponent implements OnInit {
   sportConditionSaving = false;
   sportConditionSaveError = false;
   loadError = false;
+  private photosLoadVersion = 0;
+  private sportConditionsLoadVersion = 0;
 
   constructor(
     private route: ActivatedRoute,
@@ -89,8 +91,11 @@ export class VenueDetailsComponent implements OnInit {
       )
       .subscribe({
         next: condition => {
+          // An earlier GET must not wipe the newly saved condition.
+          ++this.sportConditionsLoadVersion;
+          this.sportConditionsLoading = false;
           this.sportConditionsLoadError = false;
-          this.sportConditions = [condition, ...this.sportConditions];
+          this.sportConditions = [condition, ...this.sportConditions.filter(item => item.id !== condition.id)];
           this.sportConditionSport = '';
           this.sportConditionText = '';
         },
@@ -99,6 +104,7 @@ export class VenueDetailsComponent implements OnInit {
   }
 
   private loadSportConditions(venueId: number): void {
+    const version = ++this.sportConditionsLoadVersion;
     this.sportConditionsLoading = true;
     this.sportConditionsLoadError = false;
 
@@ -106,11 +112,17 @@ export class VenueDetailsComponent implements OnInit {
       .pipe(
         timeout(10_000),
         retry({ count: 1 }),
-        finalize(() => this.sportConditionsLoading = false)
+        finalize(() => {
+          if (version === this.sportConditionsLoadVersion) this.sportConditionsLoading = false;
+        })
       )
       .subscribe({
-        next: conditions => this.sportConditions = conditions,
+        next: conditions => {
+          if (version !== this.sportConditionsLoadVersion) return;
+          this.sportConditions = conditions;
+        },
         error: () => {
+          if (version !== this.sportConditionsLoadVersion) return;
           this.sportConditions = [];
           this.sportConditionsLoadError = true;
         }
@@ -118,6 +130,7 @@ export class VenueDetailsComponent implements OnInit {
   }
 
   private loadPhotos(venueId: number): void {
+    const version = ++this.photosLoadVersion;
     this.photosLoading = true;
     this.photosLoadError = false;
 
@@ -125,11 +138,17 @@ export class VenueDetailsComponent implements OnInit {
       .pipe(
         timeout(10_000),
         retry({ count: 1 }),
-        finalize(() => this.photosLoading = false)
+        finalize(() => {
+          if (version === this.photosLoadVersion) this.photosLoading = false;
+        })
       )
       .subscribe({
-        next: photos => this.photos = photos,
+        next: photos => {
+          if (version !== this.photosLoadVersion) return;
+          this.photos = photos;
+        },
         error: () => {
+          if (version !== this.photosLoadVersion) return;
           this.photos = [];
           this.photosLoadError = true;
         }
@@ -161,8 +180,11 @@ export class VenueDetailsComponent implements OnInit {
       )
       .subscribe({
         next: photo => {
+          // Preserve the new photo even if an older initial listing finishes later.
+          ++this.photosLoadVersion;
+          this.photosLoading = false;
           this.photosLoadError = false;
-          this.photos = [photo, ...this.photos];
+          this.photos = [photo, ...this.photos.filter(item => item.id !== photo.id)];
           input.value = '';
         },
         error: () => {
