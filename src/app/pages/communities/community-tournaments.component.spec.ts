@@ -1,5 +1,5 @@
 import { of, Subject } from 'rxjs';
-import { SimpleChange } from '@angular/core';
+import { ChangeDetectorRef, SimpleChange } from '@angular/core';
 import { AuthenticationService } from '../../services/authethication.service';
 import { CommunityTournamentsService } from '../../services/community-tournaments.service';
 import { CommunityGroup } from '../model/community-group';
@@ -37,7 +37,8 @@ describe('Community tournaments management', () => {
     const auth = {
       loggedInPerfilname: 'owner', isLoggedIn: () => true
     } as unknown as AuthenticationService;
-    component = new CommunityTournamentsComponent(api, auth);
+    const cdr = { markForCheck: jasmine.createSpy('markForCheck') } as unknown as ChangeDetectorRef;
+    component = new CommunityTournamentsComponent(api, auth, cdr);
     component.community = { ...community };
     component.ngOnChanges({ community: new SimpleChange(undefined, community, true) });
   });

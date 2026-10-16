@@ -1,0 +1,55 @@
+name: Validate tournament browser flows
+on:
+  pull_request:
+    branches: [preview/render-fullstack]
+    paths:
+      - 'e2e/**'
+      - 'playwright.config.ts'
+      - 'src/app/pages/communities/community-tournaments.component.*'
+      - 'src/app/pages/communities/communities.component.*'
+      - 'src/app/pages/communities/communities.module.ts'
+      - 'src/app/services/community-tournaments.service.*'
+      - 'src/app/pages/model/community-tournament.ts'
+      - 'src/app/guard/authentication.guard.ts'
+      - 'src/app/auth.interceptor.ts'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/community-tournament-browser-ci.yml'
+permissions:
+  contents: read
+jobs:
+  browser-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      CI: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install project dependencies
+        run: npm ci
+      # Pin the browser-test runner without changing the application's production
+      # dependency graph or the existing npm ci lockfile for this first E2E phase.
+      - name: Install pinned Playwright runner
+        run: npm install --no-save --package-lock=false @playwright/test@1.56.1
+      - name: Install Chromium and OS dependencies
+        run: npx playwright install --with-deps chromium
+      - name: Run browser tests with a mocked API
+        run: npx playwright test --config=playwright.config.ts
+      - name: Print browser error context on failure
+        if: failure()
+        run: |
+          find test-results -name error-context.md -type f -print -exec sed -n '1,160p' {} \; || true
+      - name: Upload browser screenshots and traces
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: jynlo-tournament-browser-report
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 14
