@@ -83,6 +83,11 @@ describe('Community tournaments management', () => {
     api.generateSchedule.and.returnValue(of({
       tournamentId: 9, participantCount: 2, matchCount: 1, roundCount: 1, status: 'IN_PROGRESS'
     }));
+    component.rosterReady = true;
+    component.participants = [1, 2].map(id => ({
+      profileId: id, username: 'p' + id, displayName: 'Jogador ' + id,
+      status: 'CONFIRMED' as const, joinedAt: '2026-10-16T12:00:00Z'
+    }));
     await component.publishSchedule();
     expect(api.generateSchedule).not.toHaveBeenCalled();
     component.confirmAction = 'schedule';
@@ -295,6 +300,40 @@ describe('Community tournaments management', () => {
     component.setScore(game, 'home', 2);
     component.setScore(game, 'away', 1);
     expect(component.isScoreInvalid(game)).toBeFalse();
+  });
+
+  it('blocks scheduling while the roster has more pages or detail did not load', async () => {
+    component.participants = [1, 2].map(id => ({
+      profileId: id, username: 'p' + id, displayName: 'Jogador ' + id,
+      status: 'CONFIRMED' as const, joinedAt: '2026-10-16T12:00:00Z'
+    }));
+    component.confirmAction = 'schedule';
+    component.rosterReady = false;
+    expect(component.canPublishSchedule).toBeFalse();
+    await component.publishSchedule();
+    expect(api.generateSchedule).not.toHaveBeenCalled();
+
+    component.rosterReady = true;
+    component.participantsHasMore = true;
+    expect(component.canPublishSchedule).toBeFalse();
+    await component.publishSchedule();
+    expect(api.generateSchedule).not.toHaveBeenCalled();
+
+    component.participantsHasMore = false;
+    expect(component.canPublishSchedule).toBeTrue();
+  });
+
+  it('refuses scheduling with more than 32 confirmed players', async () => {
+    component.rosterReady = true;
+    component.participants = Array.from({ length: 33 }, (_, i) => ({
+      profileId: i + 1, username: 'p' + (i + 1), displayName: 'Jogador ' + (i + 1),
+      status: 'CONFIRMED' as const, joinedAt: '2026-10-16T12:00:00Z'
+    }));
+    component.confirmAction = 'schedule';
+    expect(component.confirmedCount).toBe(33);
+    expect(component.canPublishSchedule).toBeFalse();
+    await component.publishSchedule();
+    expect(api.generateSchedule).not.toHaveBeenCalled();
   });
 
 });
