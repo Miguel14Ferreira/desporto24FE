@@ -432,7 +432,7 @@
               <button type="button" [class.active]="activeTab === 'tournaments'"
                 [attr.aria-current]="activeTab === 'tournaments' ? 'true' : null"
                 (click)="setTab('tournaments')">
-                Torneios
+                Competições
               </button>
               <button type="button" [class.active]="activeTab === 'ranking'"
                 [attr.aria-current]="activeTab === 'ranking' ? 'true' : null"
@@ -1204,6 +1204,7 @@
                     <p>{{ 'communities.competitionDisabledText' | t }}</p>
                   </div>
                 } @else {
+                  <p class="competition-context-hint" role="note">Classificação dos jogos habituais e jornadas registadas na comunidade. Os torneios têm resultados próprios.</p>
                   <div class="section-heading">
                     <div>
                       <span class="section-kicker">{{ 'communities.rankingKicker' | t }}</span>
@@ -1284,6 +1285,7 @@
                     <p>{{ 'communities.competitionDisabledText' | t }}</p>
                   </div>
                 } @else {
+                  <p class="competition-context-hint" role="note">Estatísticas das jornadas regulares da comunidade, incluindo histórico importado por Excel. Não incluem automaticamente os torneios.</p>
                   @if ((competition?.seasons?.length || 0) > 0) {
                     <div class="stats-filter-row">
                       <label class="season-filter">
