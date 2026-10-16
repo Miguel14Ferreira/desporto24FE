@@ -14,6 +14,10 @@
       <div class="invitation-context" role="status">
         {{ 'register.sharedSessionInvitation' | t }}
       </div>
+    } @else if (hasSharedCommunityInvitation) {
+      <div class="invitation-context" role="status">
+        {{ 'register.sharedCommunityInvitation' | t }}
+      </div>
     }
 
     @if (errorMessage && !existingAccountRecovery) {

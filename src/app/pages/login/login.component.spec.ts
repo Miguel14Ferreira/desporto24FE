@@ -116,6 +116,41 @@ describe('LoginComponent', () => {
     expect(message.textContent).toContain('inscrever-te');
   });
 
+  it('welcomes people with a community invitation and returns to the group after login', () => {
+    queryParamMap = convertToParamMap({ returnUrl: '/menu/communities/42' });
+    component.ngOnInit();
+    fixture.detectChanges();
+    expect(component.loginContextKey).toBe('login.viewCommunity');
+    expect((fixture.nativeElement.querySelector('.login-context') as HTMLElement).textContent)
+      .toContain('convite para uma comunidade');
+    component.username = 'fixture-user';
+    component.password = 'fixture-password';
+    component.onLogin();
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/menu/communities/42');
+  });
+
+  it('preserves a community invite through MFA', () => {
+    queryParamMap = convertToParamMap({ returnUrl: '/menu/communities/42' });
+    component.ngOnInit();
+    auth.login.and.returnValue(of({
+      mfaRequired: true, challengeId: 'challenge', challengeExpiresAt: null,
+      token: null, profile: null
+    }));
+    component.username = 'fixture-user';
+    component.password = 'fixture-password';
+    component.onLogin();
+    expect(sessionStorage.getItem('mfa-return-url')).toBe('/menu/communities/42');
+  });
+
+  it('resends an expired community confirmation link with its ID', () => {
+    queryParamMap = convertToParamMap({ returnUrl: '/menu/communities/42' });
+    component.ngOnInit();
+    component.username = 'fixture-user';
+    spyOn<any>(component, 'startResendCooldown');
+    component.resendConfirmation();
+    expect(auth.resendRegistrationConfirmation).toHaveBeenCalledWith('fixture-user', null, 42);
+  });
+
   it('shows no invitation message for unrelated or malformed destinations', () => {
     for (const returnUrl of ['/menu/feed', 'https://example.com', '/menu/events/not-a-number']) {
       queryParamMap = convertToParamMap({ returnUrl });

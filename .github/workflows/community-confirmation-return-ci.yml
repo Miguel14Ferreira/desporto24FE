@@ -1,0 +1,34 @@
+name: Validate WhatsApp community invitation onboarding
+on:
+  pull_request:
+    branches: [preview/render-fullstack]
+    paths:
+      - 'src/app/shared/registration-return-url.ts'
+      - 'src/app/shared/registration-return-url.spec.ts'
+      - 'src/app/pages/model/registration-request.ts'
+      - 'src/app/app.component.ts'
+      - 'src/app/app.component.spec.ts'
+      - 'src/app/pages/createaccount/createaccount.component.ts'
+      - 'src/app/pages/createaccount/createaccount.component.html'
+      - 'src/app/pages/createaccount/createaccount.component.spec.ts'
+      - 'src/app/pages/login/login.component.ts'
+      - 'src/app/pages/login/login.component.spec.ts'
+      - 'src/app/services/authethication.service.ts'
+      - 'src/app/services/authethication.service.spec.ts'
+      - 'src/app/i18n/i18n.service.ts'
+      - '.github/workflows/community-confirmation-return-ci.yml'
+permissions:
+  contents: read
+jobs:
+  frontend-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Invitation, login, registration and auth tests
+        run: npm test -- --watch=false --browsers=ChromeHeadless --include=src/app/shared/registration-return-url.spec.ts --include=src/app/shared/safe-login-return-url.spec.ts --include=src/app/app.component.spec.ts --include=src/app/pages/createaccount/createaccount.component.spec.ts --include=src/app/pages/login/login.component.spec.ts --include=src/app/services/authethication.service.spec.ts
+      - run: npm run build

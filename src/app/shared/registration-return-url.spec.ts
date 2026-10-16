@@ -1,6 +1,6 @@
 import {
   rememberRegistrationDestination, takeRegistrationDestination,
-  registrationSessionId, registrationSessionReturnUrl
+  registrationSessionId, registrationSessionReturnUrl, registrationCommunityId, registrationCommunityReturnUrl
 } from './registration-return-url';
 
 describe('registration invitation return URLs', () => {
@@ -10,6 +10,15 @@ describe('registration invitation return URLs', () => {
     rememberRegistrationDestination('/menu/communities/42');
     expect(takeRegistrationDestination()).toBe('/menu/communities/42');
     expect(takeRegistrationDestination()).toBeNull();
+  });
+
+  it('validates community invitation IDs from emailed confirmation links', () => {
+    expect(registrationCommunityId('/menu/communities/42')).toBe(42);
+    expect(registrationCommunityReturnUrl('42')).toBe('/menu/communities/42');
+    for (const raw of ['0', '../login', '42/invite', '9007199254740993', '%34%32']) {
+      expect(registrationCommunityReturnUrl(raw)).withContext(raw).toBeNull();
+    }
+    expect(registrationCommunityId('/menu/events/42')).toBeNull();
   });
 
   it('keeps session return IDs for confirmation emails unchanged', () => {

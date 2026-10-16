@@ -23,6 +23,19 @@ export function registrationSessionId(returnUrl: string | null): number | null {
   return Number.isSafeInteger(id) && id > 0 ? id : null;
 }
 
+export function registrationCommunityId(returnUrl: string | null): number | null {
+  const match = returnUrl?.match(COMMUNITY_DESTINATION_PATTERN);
+  if (!match) return null;
+  const id = Number(match[1]);
+  return Number.isSafeInteger(id) && id > 0 ? id : null;
+}
+
+export function registrationCommunityReturnUrl(rawId: string | null): string | null {
+  if (!rawId || !/^[1-9]\d*$/.test(rawId)) return null;
+  const url = '/menu/communities/' + rawId;
+  return registrationCommunityId(url) === null ? null : url;
+}
+
 export function registrationSessionReturnUrl(rawSessionId: string | null): string | null {
   if (!rawSessionId || !/^[1-9]\d*$/.test(rawSessionId)) {
     return null;

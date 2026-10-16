@@ -110,12 +110,14 @@ export class AuthenticationService {
     );
   }
 
-  resendRegistrationConfirmation(username: string, returnSessionId?: number | null): Observable<CustomHttpResponse> {
-    const params: { username: string; returnSessionId?: string } = {
+  resendRegistrationConfirmation(username: string, returnSessionId?: number | null, returnCommunityId?: number | null): Observable<CustomHttpResponse> {
+    const params: { username: string; returnSessionId?: string; returnCommunityId?: string } = {
       username: username.trim()
     };
     if (returnSessionId != null && Number.isSafeInteger(returnSessionId) && returnSessionId > 0) {
       params.returnSessionId = String(returnSessionId);
+    } else if (returnCommunityId != null && Number.isSafeInteger(returnCommunityId) && returnCommunityId > 0) {
+      params.returnCommunityId = String(returnCommunityId);
     }
 
     return this.http.post<CustomHttpResponse>(

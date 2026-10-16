@@ -10,4 +10,5 @@ export interface RegistrationRequest {
   email: string;
   acceptedLegalTerms: boolean;
   returnSessionId?: number | null;
+  returnCommunityId?: number | null;
 }

@@ -7,7 +7,7 @@ import { RegistrationRequest } from '../model/registration-request';
 import { AuthenticationService } from '../../services/authethication.service';
 import { COUNTRY_CALLING_CODES, countryNameFromLabel } from '../../shared/country-calling-codes';
 import { ActivatedRoute } from '@angular/router';
-import { registrationSessionId, rememberRegistrationDestination } from '../../shared/registration-return-url';
+import { registrationSessionId, registrationCommunityId, rememberRegistrationDestination } from '../../shared/registration-return-url';
 
 @Component({
   selector: 'app-createaccount',
@@ -59,6 +59,10 @@ export class CreateaccountComponent {
     return registrationSessionId(this.route.snapshot.queryParamMap.get('returnUrl')) !== null;
   }
 
+  get hasSharedCommunityInvitation(): boolean {
+    return registrationCommunityId(this.route.snapshot.queryParamMap.get('returnUrl')) !== null;
+  }
+
   register(): void {
     const validation = this.validate();
     if (validation) {
@@ -78,7 +82,8 @@ export class CreateaccountComponent {
       gender: this.gender || null,
       email: this.email.trim(),
       acceptedLegalTerms: this.acceptedLegalTerms,
-      returnSessionId: registrationSessionId(this.route.snapshot.queryParamMap.get('returnUrl'))
+      returnSessionId: registrationSessionId(this.route.snapshot.queryParamMap.get('returnUrl')),
+      returnCommunityId: registrationCommunityId(this.route.snapshot.queryParamMap.get('returnUrl'))
     };
 
     this.loading = true;
@@ -117,19 +122,29 @@ export class CreateaccountComponent {
     this.resendLoading = true;
     this.errorMessage = '';
 
-    const sessionId = registrationSessionId(this.route.snapshot.queryParamMap.get('returnUrl'));
-    this.authenticationService.resendRegistrationConfirmation(username, sessionId)
+    const destination = this.route.snapshot.queryParamMap.get('returnUrl');
+    const sessionId = registrationSessionId(destination);
+    const communityId = registrationCommunityId(destination);
+    if (communityId !== null) {
+      this.sendCommunityConfirmation(username, sessionId, communityId);
+      return;
+    }
+    this.sendCommunityConfirmation(username, sessionId, null);
+  }
+
+  private sendCommunityConfirmation(username: string, sessionId: number | null, communityId: number | null): void {
+    const request = communityId !== null
+      ? this.authenticationService.resendRegistrationConfirmation(username, sessionId, communityId)
+      : this.authenticationService.resendRegistrationConfirmation(username, sessionId);
+    request
       .pipe(timeout(10_000), finalize(() => this.resendLoading = false))
       .subscribe({
-        next: response => {
+        next: () => {
           this.successMessage = t('feedback.register.resent');
           this.startResendCooldown();
         },
         error: error => {
-          this.errorMessage = this.errorFrom(
-            error,
-            t('feedback.register.resendError')
-          );
+          this.errorMessage = this.errorFrom(error, t('feedback.register.resendError'));
         }
       });
   }
