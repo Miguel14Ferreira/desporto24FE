@@ -81,3 +81,5 @@
   .tournament-heading .t-btn { align-self: flex-start; }
   .t-btn { padding: .55rem .75rem; }
 }
+
+.notice-info { background: rgba(56,189,248,.1); border: 1px solid rgba(56,189,248,.32); color: #bae6fd; }

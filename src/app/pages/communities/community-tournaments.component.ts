@@ -40,6 +40,7 @@ export class CommunityTournamentsComponent implements OnChanges {
 
   private listRevision = 0;
   private detailRevision = 0;
+  private mutationRevision = 0;
 
   constructor(
     private readonly api: CommunityTournamentsService,
@@ -50,6 +51,8 @@ export class CommunityTournamentsComponent implements OnChanges {
     if (changes['community'] && this.community?.id) {
       ++this.listRevision;
       ++this.detailRevision;
+      ++this.mutationRevision;
+      this.busy = false;
       this.selected = undefined;
       this.loading = false;
       this.detailsLoading = false;
@@ -68,6 +71,12 @@ export class CommunityTournamentsComponent implements OnChanges {
     return this.community?.myRole === 'OWNER' || this.community?.myRole === 'ADMIN';
   }
 
+  get isMember(): boolean {
+    return this.community?.myRole === 'OWNER'
+      || this.community?.myRole === 'ADMIN'
+      || this.community?.myRole === 'MEMBER';
+  }
+
   get myUsername(): string {
     if (!this.authentication.loggedInPerfilname) {
       this.authentication.isLoggedIn();
@@ -84,10 +93,15 @@ export class CommunityTournamentsComponent implements OnChanges {
   }
 
   get canComplete(): boolean {
-    return this.selected?.status === 'IN_PROGRESS'
-      && !!this.standings
-      && this.standings.totalMatches > 0
-      && this.standings.completedMatches === this.standings.totalMatches;
+    if (this.selected?.status !== 'IN_PROGRESS' || !this.isMember || !this.standings) {
+      return false;
+    }
+    const players = this.standings.standings.length;
+    const expected = players * (players - 1) / 2;
+    return players >= 2 && players <= 32
+      && this.standings.totalMatches === expected
+      && this.standings.completedMatches === expected
+      && this.standings.standings.every(row => row.played === players - 1);
   }
 
   loadTournaments(reset = false): void {
@@ -130,12 +144,14 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.matches = [];
     this.standings = undefined;
     this.scoreDrafts = {};
-    this.loadDetails();
+    if (this.isMember) {
+      this.loadDetails();
+    }
   }
 
   loadDetails(): void {
     const tournament = this.selected;
-    if (!tournament || this.detailsLoading) return;
+    if (!tournament || !this.isMember || this.detailsLoading) return;
     const communityId = this.community.id;
     const revision = ++this.detailRevision;
     this.detailsLoading = true;
@@ -167,11 +183,15 @@ export class CommunityTournamentsComponent implements OnChanges {
   }
 
   loadMoreParticipants(): void {
-    if (!this.selected || this.busy || !this.participantsHasMore) return;
+    if (!this.selected || !this.isMember || this.busy || !this.participantsHasMore) return;
     const cid = this.community.id, tid = this.selected.id, revision = this.detailRevision;
     this.busy = true;
     this.api.participants(cid, tid, this.participantsPage + 1).pipe(
-      timeout(12000), finalize(() => this.busy = false)
+      timeout(12000), finalize(() => {
+        if (revision === this.detailRevision && this.selected?.id === tid && this.community.id === cid) {
+          this.busy = false;
+        }
+      })
     ).subscribe({
       next: result => {
         if (revision !== this.detailRevision || this.selected?.id !== tid || this.community.id !== cid) return;
@@ -179,16 +199,24 @@ export class CommunityTournamentsComponent implements OnChanges {
         this.participantsPage = result.page;
         this.participantsHasMore = result.hasMore;
       },
-      error: () => this.error = 'Não foi possível carregar mais participantes.'
+      error: () => {
+        if (revision === this.detailRevision && this.selected?.id === tid && this.community.id === cid) {
+          this.error = 'Não foi possível carregar mais participantes.';
+        }
+      }
     });
   }
 
   loadMoreMatches(): void {
-    if (!this.selected || this.busy || !this.matchesHasMore) return;
+    if (!this.selected || !this.isMember || this.busy || !this.matchesHasMore) return;
     const cid = this.community.id, tid = this.selected.id, revision = this.detailRevision;
     this.busy = true;
     this.api.matches(cid, tid, this.matchesPage + 1).pipe(
-      timeout(12000), finalize(() => this.busy = false)
+      timeout(12000), finalize(() => {
+        if (revision === this.detailRevision && this.selected?.id === tid && this.community.id === cid) {
+          this.busy = false;
+        }
+      })
     ).subscribe({
       next: result => {
         if (revision !== this.detailRevision || this.selected?.id !== tid || this.community.id !== cid) return;
@@ -197,7 +225,11 @@ export class CommunityTournamentsComponent implements OnChanges {
         this.matchesHasMore = result.hasMore;
         this.updateDraftScores(result.matches);
       },
-      error: () => this.error = 'Não foi possível carregar mais jogos.'
+      error: () => {
+        if (revision === this.detailRevision && this.selected?.id === tid && this.community.id === cid) {
+          this.error = 'Não foi possível carregar mais jogos.';
+        }
+      }
     });
   }
 
@@ -235,13 +267,15 @@ export class CommunityTournamentsComponent implements OnChanges {
   }
 
   async join(): Promise<void> {
-    if (!this.selected || this.selected.status !== 'DRAFT') return;
+    if (!this.selected || !this.isMember || this.selected.status !== 'DRAFT'
+        || this.myEnrollment || this.participantsHasMore) return;
     await this.mutate(this.api.join(this.community.id, this.selected.id),
-      'Inscrição enviada para aprovação.', () => this.loadDetails());
+      'Inscrição atualizada.', () => this.loadDetails());
   }
 
   async leave(): Promise<void> {
-    if (!this.selected || this.selected.status !== 'DRAFT') return;
+    if (!this.selected || !this.isMember || this.selected.status !== 'DRAFT'
+        || !this.myEnrollment) return;
     await this.mutate(this.api.leave(this.community.id, this.selected.id),
       'Inscrição cancelada.', () => this.loadDetails());
   }
@@ -305,6 +339,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.error = '';
     this.feedback = '';
     const cid = this.community.id, tid = this.selected?.id;
+    const mutationRevision = ++this.mutationRevision;
     try {
       const result = await firstValueFrom(operation.pipe(timeout(12000)));
       if (this.community.id !== cid || (tid !== undefined && this.selected?.id !== tid)) return;
@@ -316,7 +351,9 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.error = typeof detail === 'string' && detail.length <= 180
         ? detail : 'Não foi possível concluir a operação. Verifica os dados e tenta novamente.';
     } finally {
-      this.busy = false;
+      if (mutationRevision === this.mutationRevision) {
+        this.busy = false;
+      }
     }
   }
 
