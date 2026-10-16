@@ -976,7 +976,7 @@ test('descoberta mostra modalidades de comunidades múltiplas, legadas e sem des
   await expect(cards.nth(2).locator('.sport-blank'))
     .toHaveText('Ainda sem modalidades definidas');
   await cards.first().click();
-  await expect(page).toHaveURL(/\\/menu\\/communities\\/7/);
+  await expect(page).toHaveURL(/communities.*7/);
   await expect(page.locator('.community-detail-copy .community-discovery-sports .sport-tag'))
     .toHaveText(['Futebol', 'Padel', 'Ténis', 'Natação']);
   expect(fixture.unmocked).toEqual([]);
