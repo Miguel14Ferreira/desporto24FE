@@ -195,6 +195,18 @@
                   </button>
                 }
 
+                @if ((selected.type === 'COMMUNITY_JOIN_REQUEST'
+                        || selected.type === 'COMMUNITY_JOIN_ACCEPTED'
+                        || selected.type === 'COMMUNITY_JOIN_REJECTED')
+                    && selected.communityId !== null && selected.communityId !== undefined) {
+                  <button type="button" class="primary-action jynlo-action jynlo-action--primary"
+                    (click)="openJoinCommunity(selected)">
+                    {{ (selected.type === 'COMMUNITY_JOIN_REQUEST'
+                      ? 'notifications.manageCommunityRequests'
+                      : 'notifications.openJoinedCommunity') | t }}
+                  </button>
+                }
+
                 @if (selected.friendRequest) {
                   <button
                     type="button"

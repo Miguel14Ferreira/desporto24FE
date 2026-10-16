@@ -381,7 +381,9 @@ export class CommunitiesComponent implements OnInit {
       .subscribe({
       next: full => {
         this.selected = full;
-        this.activeTab = 'home';
+        const openJoinRequests = this.route.snapshot.queryParamMap.get('tab') === 'members'
+          && (full.myRole === 'OWNER' || full.myRole === 'ADMIN');
+        this.activeTab = openJoinRequests ? 'members' : 'home';
         this.inviteUsername = '';
         this.inviteSearchResults = [];
         this.inviteSearchPerformed = false;
@@ -396,6 +398,9 @@ export class CommunitiesComponent implements OnInit {
         this.prepareRoundEntries(full);
         this.loadCompetition(full);
         this.loadCommunitySessions(full);
+        if (openJoinRequests) {
+          this.loadPendingJoinRequests(full.id);
+        }
       },
       error: () => this.errorMessage = t('feedback.communities.openError')
     });
