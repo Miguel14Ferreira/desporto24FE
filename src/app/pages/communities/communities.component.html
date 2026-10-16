@@ -312,14 +312,16 @@
                     <button
                       type="button"
                       class="primary-action jynlo-action jynlo-action--primary"
-                      [disabled]="membershipActionLoading || joinRequestSent"
+                      [disabled]="membershipActionLoading || joinRequestSent || pendingJoinLookupLoading"
                       (click)="joinPresentedCommunity()">
                       @if (communityPresentation.visibility === 'PUBLIC') {
                         {{ (membershipActionLoading ? 'communities.joining' : 'communities.joinPublic') | t }}
                       } @else {
-                        {{ (membershipActionLoading
-                          ? 'communities.requestingJoin'
-                          : (joinRequestSent ? 'communities.joinRequestPending' : 'communities.requestJoin')) | t }}
+                        {{ (pendingJoinLookupLoading
+                          ? 'communities.checkingJoinRequest'
+                          : (membershipActionLoading
+                            ? 'communities.requestingJoin'
+                            : (joinRequestSent ? 'communities.joinRequestPending' : 'communities.requestJoin'))) | t }}
                       }
                     </button>
                   </div>

@@ -1,0 +1,25 @@
+name: Validate community join request race guards
+on:
+  pull_request:
+    branches: [preview/render-fullstack]
+    paths:
+      - 'src/app/pages/communities/communities.component.ts'
+      - 'src/app/pages/communities/communities.component.html'
+      - 'src/app/pages/communities/community-join-request-race.spec.ts'
+      - 'src/app/i18n/i18n.service.ts'
+      - '.github/workflows/community-join-request-race-ci.yml'
+permissions:
+  contents: read
+jobs:
+  frontend-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Community membership and previous regression tests
+        run: npm test -- --watch=false --browsers=ChromeHeadless --include=src/app/pages/communities/community-join-request-race.spec.ts --include=src/app/pages/communities/community-join-deep-link.spec.ts --include=src/app/pages/communities/community-bulk-approval.spec.ts --include=src/app/pages/communities/community-discovery-action.spec.ts --include=src/app/pages/communities/communities.component.spec.ts
+      - run: npm run build
