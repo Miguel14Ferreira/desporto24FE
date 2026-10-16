@@ -5,6 +5,7 @@ import { of, Subject, throwError } from 'rxjs';
 import { Events2Component } from './events2.component';
 import { Venue } from '../model/venue';
 import { SessionService } from '../../services/session.service';
+import { CommunityGroupsService } from '../../services/community-groups.service';
 import { VenuePhoto, VenueService, VenueSuggestionPage } from '../../services/venue.service';
 import { TEST_IMPORTS, TEST_PROVIDERS } from '../../testing/test-providers';
 
@@ -1471,4 +1472,74 @@ describe('Events2Component', () => {
     expect(sessionService.create).not.toHaveBeenCalled();
     expect(component.errorMessage).toContain('palavra-passe');
   });
+  it('keeps multi-sport communities unselected until organiser chooses a sport', () => {
+    const route = TestBed.inject(ActivatedRoute);
+    spyOn(route.snapshot.queryParamMap, 'get')
+      .and.callFake(name => name === 'community' ? '7' : null);
+    const communities = TestBed.inject(CommunityGroupsService);
+    spyOn(communities, 'get').and.returnValue(of({
+      id: 7, name: 'Desportistas de Lisboa', sport: 'Futebol',
+      sports: ['Futebol', 'Padel']
+    } as any));
+
+    const page = TestBed.createComponent(Events2Component);
+    page.detectChanges();
+    const current = page.componentInstance;
+    expect(current.communityId).toBe(7);
+    expect(current.communityName).toBe('Desportistas de Lisboa');
+    expect(current.communitySports).toEqual(['Futebol', 'Padel']);
+    expect(current.sport).toBe('');
+    const options = page.nativeElement.querySelectorAll('.community-sport-option');
+    expect(options.length).toBe(2);
+    expect(page.nativeElement.querySelector('.community-context a')?.getAttribute('href'))
+      .toBe('/menu/communities/7');
+
+    (options[1] as HTMLButtonElement).click();
+    page.detectChanges();
+    expect(current.sport).toBe('Padel');
+    expect(venueService.suggest).toHaveBeenCalledWith('', '', 'Padel', 0);
+    current.gameDate = '2099-10-15T18:00';
+    current.city = 'Lisboa';
+    current.address = 'Campo Central';
+    current.maxParticipants = 4;
+    current.createSession();
+    expect(sessionService.create).toHaveBeenCalledWith(
+      jasmine.objectContaining({ sport: 'Padel', communityId: 7 }), undefined
+    );
+    page.destroy();
+  });
+
+  it('prefills the only sport for older single-sport communities', () => {
+    const route = TestBed.inject(ActivatedRoute);
+    spyOn(route.snapshot.queryParamMap, 'get')
+      .and.callFake(name => name === 'community' ? '8' : null);
+    const communities = TestBed.inject(CommunityGroupsService);
+    spyOn(communities, 'get').and.returnValue(of({
+      id: 8, name: 'Futebol de Bairro', sport: 'Futebol'
+    } as any));
+    const page = TestBed.createComponent(Events2Component);
+    page.detectChanges();
+    expect(page.componentInstance.communitySports).toEqual(['Futebol']);
+    expect(page.componentInstance.sport).toBe('Futebol');
+    page.destroy();
+  });
+
+  it('keeps sport freedom and requires manual choice for sportless communities', () => {
+    const route = TestBed.inject(ActivatedRoute);
+    spyOn(route.snapshot.queryParamMap, 'get')
+      .and.callFake(name => name === 'community' ? '9' : null);
+    const communities = TestBed.inject(CommunityGroupsService);
+    spyOn(communities, 'get').and.returnValue(of({
+      id: 9, name: 'Desporto Livre', sport: null, sports: []
+    } as any));
+    const page = TestBed.createComponent(Events2Component);
+    page.detectChanges();
+    expect(page.componentInstance.sport).toBe('');
+    expect(page.nativeElement.querySelector('.community-sport-choices')).toBeNull();
+    page.componentInstance.sport = 'Basquetebol';
+    page.componentInstance.confirmSportSelection();
+    expect(page.componentInstance.sport).toBe('Basquetebol');
+    page.destroy();
+  });
+
 });
