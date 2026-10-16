@@ -15,7 +15,6 @@ describe('Community WhatsApp group invites', () => {
     const message = 'Junta-te ao Futebol das Quintas!\nhttps://d24sports.com/menu/communities/42';
     const url = buildWhatsAppGroupShareUrl(message);
     expect(url).toBe('https://wa.me/?text=' + encodeURIComponent(message));
-    expect(decodeURIComponent(new URL(url).searchParams.get('text') || ''))
-      .not.toContain('javascript:');
+    expect(new URL(url).searchParams.get('text')).toBe(message);
   });
 });
