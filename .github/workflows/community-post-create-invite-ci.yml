@@ -1,0 +1,28 @@
+name: Validate community post-create invite step
+on:
+  pull_request:
+    branches: [preview/render-fullstack]
+    paths:
+      - 'src/app/pages/community-create/community-create.component.ts'
+      - 'src/app/pages/community-create/community-create.component.spec.ts'
+      - 'src/app/pages/community-create/community-invite-step.component.ts'
+      - 'src/app/pages/community-create/community-invite-step.component.html'
+      - 'src/app/pages/community-create/community-invite-step.component.css'
+      - 'src/app/pages/community-create/community-invite-step.component.spec.ts'
+      - 'src/app/pages/communities/communities.module.ts'
+      - 'src/app/i18n/i18n.service.ts'
+      - '.github/workflows/community-post-create-invite-ci.yml'
+permissions:
+  contents: read
+jobs:
+  frontend-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm test -- --watch=false --browsers=ChromeHeadless --include=src/app/pages/community-create/community-create.component.spec.ts --include=src/app/pages/community-create/community-invite-step.component.spec.ts
+      - run: npm run build

@@ -1,0 +1,63 @@
+<section class="invite-step-page">
+  <div class="invite-step-shell">
+    <p class="step-eyebrow">{{ 'communityInviteStep.eyebrow' | t }}</p>
+    <div class="invite-step-panel">
+      <div class="invite-step-icon" aria-hidden="true">🤝</div>
+      <h1>{{ 'communityInviteStep.title' | t }}</h1>
+      <p class="invite-step-lead">{{ 'communityInviteStep.subtitle' | t }}</p>
+
+      @if (loading) {
+        <p role="status">{{ 'communityInviteStep.loading' | t }}</p>
+      } @else if (loadError) {
+        <p class="invite-step-message" role="alert">{{ 'communityInviteStep.error' | t }}</p>
+      } @else if (!canGenerate()) {
+        <p class="invite-step-message" role="alert">{{ 'communityInviteStep.noPermission' | t }}</p>
+      } @else {
+        <div class="invite-step-community">
+          <span class="invite-step-community-avatar" aria-hidden="true">{{ (community?.name || '?').charAt(0).toUpperCase() }}</span>
+          <div>
+            <strong>{{ community?.name }}</strong>
+            <span>{{ community?.sport || ('communities.multiSport' | t) }}</span>
+          </div>
+        </div>
+
+        @if (!inviteLink) {
+          <button type="button" class="primary-action jynlo-action jynlo-action--primary"
+                  (click)="generateLink()">
+            {{ 'communityInviteStep.generate' | t }}
+          </button>
+        } @else {
+          <label class="invite-step-link">
+            <span>{{ 'communityInviteStep.linkLabel' | t }}</span>
+            <input type="text" [value]="inviteLink" readonly (click)="$any($event.target).select()">
+          </label>
+          <div class="invite-step-share-actions">
+            <a class="primary-action button-link jynlo-action jynlo-action--primary"
+               [href]="whatsAppShareUrl()" target="_blank" rel="noopener noreferrer">
+              {{ 'communityInviteStep.share' | t }}
+            </a>
+            <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
+                    (click)="copyLink()">
+              {{ 'communityInviteStep.copy' | t }}
+            </button>
+          </div>
+          @if (copyFeedback) {
+            <p class="invite-step-message" role="status">{{ copyFeedback }}</p>
+          }
+        }
+
+        <p class="invite-step-note">
+          {{ (community?.visibility === 'PRIVATE'
+            ? 'communityInviteStep.privateHint' : 'communityInviteStep.publicHint') | t }}
+        </p>
+      }
+
+      <div class="invite-step-footer">
+        <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
+                (click)="continueToCommunity()">
+          {{ (inviteLink ? 'communityInviteStep.continue' : 'communityInviteStep.skip') | t }}
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
