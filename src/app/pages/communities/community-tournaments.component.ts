@@ -377,8 +377,9 @@ export class CommunityTournamentsComponent implements OnChanges {
   }
 
   async publishSchedule(): Promise<void> {
-    if (!this.canPublishSchedule || this.confirmAction !== 'schedule') return;
-    const tournamentId = this.selected.id;
+    const tournament = this.selected;
+    if (!tournament || !this.canPublishSchedule || this.confirmAction !== 'schedule') return;
+    const tournamentId = tournament.id;
     this.confirmAction = null;
     await this.mutate(this.api.generateSchedule(this.community.id, tournamentId),
       'Calendário publicado. O torneio começou.', () => {
