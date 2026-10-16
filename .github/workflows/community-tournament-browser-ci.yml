@@ -39,6 +39,10 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Run browser tests with a mocked API
         run: npx playwright test --config=playwright.config.ts
+      - name: Print browser error context on failure
+        if: failure()
+        run: |
+          find test-results -name error-context.md -type f -print -exec sed -n '1,160p' {} \; || true
       - name: Upload browser screenshots and traces
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4

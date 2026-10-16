@@ -236,6 +236,12 @@ async function mockCommunityApi(page: Page, role: Role, mode: 'empty' | 'draft')
   return { tournaments, participants, matches, unmocked };
 }
 
+test.afterEach(async ({ page }, info) => {
+  if (info.status === info.expectedStatus) return;
+  console.log('[E2E diagnostics] url:', page.url());
+  console.log('[E2E diagnostics] page:', (await page.locator('body').innerText().catch(() => '')).slice(0, 3200));
+});
+
 test('organizador abre Torneios e cria uma liga no navegador', async ({ page }) => {
   const state = await mockCommunityApi(page, 'OWNER', 'empty');
   await page.goto('/menu/communities/7?tab=tournaments');
