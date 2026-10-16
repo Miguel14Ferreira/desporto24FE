@@ -63,9 +63,49 @@ describe('Community tournaments management', () => {
     api.create.and.returnValue(of(created));
     component.nameDraft = ' Liga de Inverno ';
     await component.create();
-    expect(api.create).toHaveBeenCalledWith(7, 'Liga de Inverno');
+    expect(api.create).toHaveBeenCalledWith(7, 'Liga de Inverno', 'Futebol');
     expect(component.selected?.id).toBe(12);
     expect(component.tournaments[0].id).toBe(12);
+  });
+
+
+  it('requires a sport when a community has several before a tournament can be created', async () => {
+    api.list.and.returnValue(of({ tournaments: [], page: 0, hasMore: false }));
+    component.community = { ...community, sports: ['Futebol', 'Padel'] };
+    component.ngOnChanges({ community: new SimpleChange(community, component.community, false) });
+    expect(component.sportDraft).toBe('');
+    component.nameDraft = 'Liga de outono';
+    await component.create();
+    expect(api.create).not.toHaveBeenCalled();
+    expect(component.error).toContain('modalidade');
+
+    component.chooseSport('Padel');
+    api.create.and.returnValue(of({ ...draft, id: 14, sport: 'Padel' }));
+    await component.create();
+    expect(api.create).toHaveBeenCalledWith(7, 'Liga de outono', 'Padel');
+  });
+
+  it('supports a tournament sport outside the community without changing it', async () => {
+    component.community = { ...community, sports: ['Futebol', 'Padel'] };
+    component.ngOnChanges({ community: new SimpleChange(community, component.community, false) });
+    component.sportSearch = 'natação';
+    expect(component.suggestedSports).toContain('Natação');
+    component.chooseSport('Natação');
+    component.nameDraft = 'Liga de natação';
+    api.create.and.returnValue(of({ ...draft, id: 22, sport: 'Natação' }));
+    await component.create();
+    expect(api.create).toHaveBeenCalledWith(7, 'Liga de natação', 'Natação');
+    expect(component.scoring.scoreInput).toBe('Marcador de');
+    expect(component.community.sport).toBe('Futebol');
+  });
+
+  it('uses the selected tournament sport for scoring rather than the community primary sport', () => {
+    component.selected = { ...draft, sport: 'Padel' };
+    expect(component.scoring.scoreInput).toContain('Sets');
+    component.selected = { ...draft, sport: 'Basquetebol' };
+    expect(component.scoring.scoreInput).toContain('Pontos');
+    component.selected = { ...draft, sport: null };
+    expect(component.scoring.scoreInput).toContain('Marcador');
   });
 
   it('enrolls only the current player and requests updated roster', async () => {

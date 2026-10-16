@@ -100,3 +100,20 @@
   line-height: 1.35;
   margin: .15rem 0 .2rem;
 }
+
+/* Sport is a tournament property; selection is explicit for multi-sport groups. */
+.sport-choice-hint { font-size: .76rem; color: #b6c7d7 !important; }
+.t-community-sports, .t-sport-suggestions { display: flex; gap: .4rem; flex-wrap: wrap; }
+.t-sport-chip { min-height: 40px; border-radius: 999px; border: 1px solid rgba(148,163,184,.28);
+  background: rgba(148,163,184,.09); color: #f8fafc; padding: .42rem .75rem;
+  cursor: pointer; font: inherit; font-size: .8rem; overflow-wrap: anywhere; }
+.t-sport-chip[aria-pressed="true"] { border-color: #00cf71; background: rgba(16,185,129,.18); }
+.t-sport-chip:focus-visible { outline: 2px solid #86efac; outline-offset: 2px; }
+.t-sport-chip:disabled { opacity: .5; cursor: not-allowed; }
+.t-sport-muted { font-size: .78rem; color: #a7b4c6; padding: .4rem 0; }
+.chosen-sport { display: flex; justify-content: space-between; align-items: center;
+  flex-wrap: wrap; gap: .5rem; padding: .45rem .7rem;
+  border: 1px solid rgba(16,185,129,.35); background: rgba(16,185,129,.08);
+  border-radius: .7rem; color: #bbf7d0; font-weight: 700; }
+.t-tournament-sport { display: inline-flex; width: fit-content;
+  font-size: .78rem; font-weight: 750; color: #a7f3d0; }
