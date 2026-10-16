@@ -7,6 +7,7 @@ import { TranslatePipe } from '../../i18n/translate.pipe';
 import { CommunityCreateComponent } from '../community-create/community-create.component';
 import { CommunityInviteStepComponent } from '../community-create/community-invite-step.component';
 import { CommunitiesComponent } from './communities.component';
+import { CommunityTournamentsComponent } from './community-tournaments.component';
 
 const routes: Routes = [
   { path: '', component: CommunitiesComponent },
@@ -16,7 +17,10 @@ const routes: Routes = [
 ];
 
 @NgModule({
-  declarations: [CommunitiesComponent, CommunityCreateComponent, CommunityInviteStepComponent],
+  declarations: [
+    CommunitiesComponent, CommunityCreateComponent, CommunityInviteStepComponent,
+    CommunityTournamentsComponent
+  ],
   imports: [CommonModule, FormsModule, RouterModule.forChild(routes), TranslatePipe]
 })
 export class CommunitiesModule {}

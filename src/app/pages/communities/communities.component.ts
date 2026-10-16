@@ -25,7 +25,7 @@ import { SessionService } from '../../services/session.service';
 import { CommunityProfile } from '../model/community-profile';
 import { SessionSummary } from '../model/session-summary';
 
-type CommunityTab = 'home' | 'sessions' | 'ranking' | 'stats' | 'members';
+type CommunityTab = 'home' | 'sessions' | 'tournaments' | 'ranking' | 'stats' | 'members';
 
 @Component({
   selector: 'app-communities',
@@ -414,9 +414,11 @@ export class CommunitiesComponent implements OnInit {
       .subscribe({
       next: full => {
         this.selected = full;
-        const openJoinRequests = this.route.snapshot.queryParamMap.get('tab') === 'members'
+        const requestedTab = this.route.snapshot.queryParamMap.get('tab');
+        const openJoinRequests = requestedTab === 'members'
           && (full.myRole === 'OWNER' || full.myRole === 'ADMIN');
-        this.activeTab = openJoinRequests ? 'members' : 'home';
+        this.activeTab = openJoinRequests ? 'members'
+          : requestedTab === 'tournaments' ? 'tournaments' : 'home';
         this.inviteUsername = '';
         this.inviteSearchResults = [];
         this.inviteSearchPerformed = false;
