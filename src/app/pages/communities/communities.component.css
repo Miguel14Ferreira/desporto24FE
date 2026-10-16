@@ -1575,3 +1575,16 @@ input,textarea,select {
 .sport-suggestions > button:focus-visible { outline: 2px solid #86efac; }
 .sport-edit-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
 .sport-success { color: #86efac; }
+
+/* Compact discovery tags; do not increase the height of browse cards excessively. */
+.community-discovery-sports { margin-top: .25rem; min-width: 0; }
+.community-discovery-sports .sport-tag {
+  padding: .2rem .52rem;
+  font-size: .75rem;
+  overflow-wrap: anywhere;
+}
+.community-discovery-sports .sport-tag--overflow {
+  background: rgba(148,163,184,.12);
+  border-color: rgba(148,163,184,.24);
+  color: #cbd5e1;
+}
