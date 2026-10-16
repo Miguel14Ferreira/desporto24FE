@@ -61,7 +61,9 @@ function fixtureToken(username: string): string {
     encode({ sub: username, exp: Math.floor(Date.now() / 1000) + 3600 }), 'fixture'].join('.');
 }
 
-async function mockCommunityApi(page: Page, role: Role, mode: 'empty' | 'draft') {
+type FixtureMode = 'empty' | 'draft' | 'paged' | 'forbidden' | 'switch';
+
+async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode) {
   const username = role === 'OWNER' ? 'organizador' : 'participante';
   const token = fixtureToken(username);
   await page.addInitScript(value => localStorage.setItem('t', value), token);
@@ -79,14 +81,25 @@ async function mockCommunityApi(page: Page, role: Role, mode: 'empty' | 'draft')
     ]
   };
 
-  const tournaments: Tournament[] = mode === 'draft' ? [tournament(9, 'Liga de Outono')] : [];
-  const participants: Participant[] = role === 'OWNER' && mode === 'draft' ? [
+  const tournaments: Tournament[] = mode === 'empty' ? [] : [tournament(9, 'Liga de Outono')];
+  if (mode === 'switch') tournaments.push(tournament(11, 'Liga alternativa'));
+  if (mode === 'paged') tournaments[0].status = 'IN_PROGRESS';
+  const participants: Participant[] = role === 'OWNER' && mode !== 'empty' ? [
     { profileId: 1, username: 'organizador', displayName: 'Organizador',
       joinedAt: '2026-10-16T12:01:00Z', status: 'CONFIRMED' },
     { profileId: 2, username: 'participante', displayName: 'Participante',
       joinedAt: '2026-10-16T12:02:00Z', status: 'CONFIRMED' }
   ] : [];
-  const matches: Match[] = [];
+  const matches: Match[] = mode === 'paged' ? [
+    { id: 30, roundNumber: 1, homeProfileId: 1, homeUsername: 'organizador',
+      awayProfileId: 2, awayUsername: 'participante', status: 'SCHEDULED',
+      homeScore: null, awayScore: null },
+    { id: 31, roundNumber: 2, homeProfileId: 1, homeUsername: 'organizador',
+      awayProfileId: 2, awayUsername: 'participante', status: 'SCHEDULED',
+      homeScore: null, awayScore: null }
+  ] : [];
+  const requestedMatchPages: number[] = [];
+  const pendingDetailResponses: Array<() => void> = [];
   const unmocked: string[] = [];
   page.on('pageerror', error => console.log('[E2E PAGE ERROR]', error.stack || error.message));
   page.on('console', message => {
@@ -177,7 +190,12 @@ async function mockCommunityApi(page: Page, role: Role, mode: 'empty' | 'draft')
       }
     }
     if (path === '/api/communities/7/tournaments/9/participants') {
-      if (method === 'GET') return send({ participants, page: 0, hasMore: false });
+      if (method === 'GET') {
+        if (mode === 'switch') {
+          await new Promise<void>(resolve => pendingDetailResponses.push(resolve));
+        }
+        return send({ participants, page: 0, hasMore: false });
+      }
     }
     if (path === '/api/communities/7/tournaments/11/participants') {
       if (method === 'GET') return send({ participants: [], page: 0, hasMore: false });
@@ -209,18 +227,27 @@ async function mockCommunityApi(page: Page, role: Role, mode: 'empty' | 'draft')
         participantCount: 2, roundCount: 1, matchCount: 1
       });
     }
-    const scorePath = '/api/communities/7/tournaments/9/matches/30/result';
-    if (path === scorePath && method === 'PUT') {
+    const scoreId = /^\/api\/communities\/7\/tournaments\/9\/matches\/(\d+)\/result$/.exec(path);
+    if (scoreId && method === 'PUT') {
+      const game = matches.find(match => match.id === Number(scoreId[1]));
+      if (!game) return send({ message: 'Confronto não encontrado' }, 404);
       const body = req.postDataJSON() as { homeScore: number; awayScore: number };
-      Object.assign(matches[0], {
+      Object.assign(game, {
         status: 'COMPLETED', homeScore: body.homeScore, awayScore: body.awayScore
       });
-      return send(matches[0]);
+      return send(game);
     }
     if (/^\/api\/communities\/7\/tournaments\/(9|11)\/matches$/.test(path) && method === 'GET') {
-      return send({ matches, page: Number(url.searchParams.get('page') || 0), hasMore: false });
+      const pageNumber = Number(url.searchParams.get('page') || 0);
+      requestedMatchPages.push(pageNumber);
+      if (mode === 'paged') {
+        return send({ matches: matches.slice(pageNumber, pageNumber + 1),
+          page: pageNumber, hasMore: pageNumber < matches.length - 1 });
+      }
+      return send({ matches, page: pageNumber, hasMore: false });
     }
     if (/^\/api\/communities\/7\/tournaments\/(9|11)\/standings$/.test(path) && method === 'GET') {
+      if (mode === 'forbidden') return send({ message: 'Acesso negado' }, 403);
       return send(standings());
     }
     if (path === '/api/communities/7/tournaments/9/complete' && method === 'POST') {
@@ -241,7 +268,13 @@ async function mockCommunityApi(page: Page, role: Role, mode: 'empty' | 'draft')
     await send({ message: 'Unmocked browser-test endpoint' }, 404);
   });
 
-  return { tournaments, participants, matches, unmocked };
+  return {
+    tournaments, participants, matches, unmocked, requestedMatchPages,
+    get pendingDetails(): number { return pendingDetailResponses.length; },
+    releaseDetails(): void {
+      pendingDetailResponses.splice(0).forEach(resolve => resolve());
+    }
+  };
 }
 
 test.afterEach(async ({ page }, info) => {
@@ -313,4 +346,50 @@ test('organizador publica jornada, regista resultado e encerra a liga', async ({
   await expect(page.getByRole('button', { name: 'Corrigir' })).toHaveCount(0);
   expect(state.tournaments[0].status).toBe('COMPLETED');
   expect(state.tournaments[0].championUsername).toBe('organizador');
+});
+
+test('carrega outra página de jogos e preserva ambas ao registar um resultado', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'paged');
+  await page.goto('/menu/communities/7?tab=tournaments');
+
+  await expect(page.locator('.tournament-heading h4')).toHaveText('Liga de Outono');
+  await expect(page.locator('.match-card')).toHaveCount(1);
+  await page.getByRole('button', { name: 'Carregar mais jogos' }).click();
+  await expect(page.locator('.match-card')).toHaveCount(2);
+
+  const secondRound = page.locator('.match-card').filter({ hasText: 'Jornada 2' });
+  await secondRound.getByRole('spinbutton', { name: 'Golos de organizador' }).fill('4');
+  await secondRound.getByRole('spinbutton', { name: 'Golos de participante' }).fill('2');
+  await secondRound.getByRole('button', { name: 'Guardar' }).click();
+
+  await expect(secondRound.getByRole('button', { name: 'Corrigir' })).toBeVisible();
+  await expect(page.locator('.match-card')).toHaveCount(2);
+  expect(fixture.requestedMatchPages).toEqual([0, 1]);
+  expect(fixture.matches[1].homeScore).toBe(4);
+  expect(fixture.matches[1].awayScore).toBe(2);
+});
+
+test('rejeição de acesso ao detalhe apresenta erro e permite tentar novamente', async ({ page }) => {
+  await mockCommunityApi(page, 'OWNER', 'forbidden');
+  await page.goto('/menu/communities/7?tab=tournaments');
+
+  await expect(page.locator('.tournament-heading h4')).toHaveText('Liga de Outono');
+  await expect(page.getByRole('alert')).toContainText('Não foi possível carregar os dados do torneio.');
+  await expect(page.getByRole('button', { name: 'Atualizar' })).toBeEnabled();
+});
+
+test('ignora resposta antiga após selecionar outro torneio', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'switch');
+  await page.goto('/menu/communities/7?tab=tournaments');
+
+  await expect(page.locator('.tournament-heading h4')).toHaveText('Liga de Outono');
+  await expect.poll(() => fixture.pendingDetails).toBe(1);
+  await page.getByRole('button', { name: /Liga alternativa/ }).click();
+  await expect(page.locator('.tournament-heading h4')).toHaveText('Liga alternativa');
+  await expect(page.getByText('Ainda não existem inscrições neste torneio.')).toBeVisible();
+
+  fixture.releaseDetails();
+  await expect(page.locator('.tournament-heading h4')).toHaveText('Liga alternativa');
+  await expect(page.getByText('Ainda não existem inscrições neste torneio.')).toBeVisible();
+  await expect(page.getByRole('alert')).toHaveCount(0);
 });
