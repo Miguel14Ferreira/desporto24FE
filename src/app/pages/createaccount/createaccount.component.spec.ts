@@ -114,6 +114,19 @@ describe('CreateaccountComponent', () => {
     expect(takeRegistrationDestination()).toBe('/menu/events/42');
   });
 
+  it('keeps an invited community when a user registers with a WhatsApp link', () => {
+    queryParamMap = convertToParamMap({ returnUrl: '/menu/communities/42' });
+    fillValidForm();
+
+    component.register();
+
+    expect(takeRegistrationDestination()).toBe('/menu/communities/42');
+    expect(auth.register).toHaveBeenCalledWith(
+      jasmine.objectContaining({ returnSessionId: null }),
+      undefined
+    );
+  });
+
   it('should discard external destinations after creating an account', () => {
     queryParamMap = convertToParamMap({ returnUrl: 'https://example.com' });
     fillValidForm();

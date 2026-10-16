@@ -136,6 +136,21 @@ describe('AppComponent', () => {
     expect(takeRegistrationDestination()).toBeNull();
   });
 
+  it('restores a WhatsApp community invitation after email confirmation in the same browser', () => {
+    rememberRegistrationDestination('/menu/communities/42');
+    window.history.pushState({}, '', '/?confirmRegistration=fixture-token');
+    const router = TestBed.inject(Router);
+    spyOn(router, 'navigate').and.returnValue(Promise.resolve(true));
+
+    TestBed.createComponent(AppComponent).detectChanges();
+
+    expect(authenticationService.confirmRegistration).toHaveBeenCalledWith('fixture-token');
+    expect(router.navigate).toHaveBeenCalledWith(
+      ['/login'], { queryParams: { returnUrl: '/menu/communities/42' } }
+    );
+    expect(takeRegistrationDestination()).toBeNull();
+  });
+
   it('should create the app', () => {
     const fixture = TestBed.createComponent(AppComponent);
     expect(fixture.componentInstance).toBeTruthy();

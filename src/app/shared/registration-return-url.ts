@@ -1,6 +1,17 @@
 const REGISTRATION_DESTINATION_KEY = 'jynlo-registration-destination';
 const REGISTRATION_DESTINATION_TTL_MS = 24 * 60 * 60 * 1000;
 const SESSION_DESTINATION_PATTERN = /^\/menu\/events\/([1-9]\d*)$/;
+const COMMUNITY_DESTINATION_PATTERN = /^\/menu\/communities\/([1-9]\d*)$/;
+
+/** Keep only ID-based internal invitation destinations, never external URLs or setup routes. */
+function isAllowedRegistrationDestination(value: unknown): value is string {
+  if (typeof value !== 'string') return false;
+  const idText = value.match(SESSION_DESTINATION_PATTERN)?.[1]
+    ?? value.match(COMMUNITY_DESTINATION_PATTERN)?.[1];
+  if (!idText) return false;
+  const id = Number(idText);
+  return Number.isSafeInteger(id) && id > 0;
+}
 
 export function registrationSessionId(returnUrl: string | null): number | null {
   const match = returnUrl?.match(SESSION_DESTINATION_PATTERN);
@@ -24,7 +35,7 @@ export function registrationSessionReturnUrl(rawSessionId: string | null): strin
 export function rememberRegistrationDestination(value: string | null): void {
   try {
     localStorage.removeItem(REGISTRATION_DESTINATION_KEY);
-    if (value && registrationSessionId(value) !== null) {
+    if (isAllowedRegistrationDestination(value)) {
       localStorage.setItem(REGISTRATION_DESTINATION_KEY, JSON.stringify({
         url: value,
         expiresAt: Date.now() + REGISTRATION_DESTINATION_TTL_MS
@@ -44,8 +55,7 @@ export function takeRegistrationDestination(): string | null {
     }
 
     const destination = JSON.parse(saved);
-    return typeof destination.url === 'string'
-      && registrationSessionId(destination.url) !== null
+    return isAllowedRegistrationDestination(destination.url)
       && typeof destination.expiresAt === 'number'
       && Number.isFinite(destination.expiresAt)
       && destination.expiresAt > Date.now()
