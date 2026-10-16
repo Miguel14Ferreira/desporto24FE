@@ -1,0 +1,24 @@
+name: Validate community value proposition
+on:
+  pull_request:
+    branches: [preview/render-fullstack]
+    paths:
+      - 'src/app/pages/communities/communities.component.html'
+      - 'src/app/pages/communities/communities.component.css'
+      - 'src/app/pages/communities/community-value-proposition.spec.ts'
+      - 'src/app/i18n/i18n.service.ts'
+      - '.github/workflows/community-value-proposition-ci.yml'
+permissions:
+  contents: read
+jobs:
+  frontend-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm test -- --watch=false --browsers=ChromeHeadless --include=src/app/pages/communities/community-value-proposition.spec.ts
+      - run: npm run build
