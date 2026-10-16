@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { finalize, firstValueFrom, Observable, retry, timeout } from 'rxjs';
 import { appTranslate as t } from '../../i18n/i18n.service';
@@ -35,6 +35,8 @@ type CommunityTab = 'home' | 'sessions' | 'ranking' | 'stats' | 'members';
   standalone: false
 })
 export class CommunitiesComponent implements OnInit {
+  @ViewChild('communitySearchSection') communitySearchSection?: ElementRef<HTMLElement>;
+
   private readonly sessionDateFormatter = new Intl.DateTimeFormat('pt-PT', {
     dateStyle: 'medium',
     timeStyle: 'short'
@@ -176,13 +178,16 @@ export class CommunitiesComponent implements OnInit {
     void this.router.navigate(['/menu/communities']);
   }
 
+  exploreCommunities(): void {
+    this.communitySearchName = '';
+    this.communitySearchSport = '';
+    this.searchCommunities(0);
+    this.communitySearchSection?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
   searchCommunities(page = 0): void {
     const name = this.communitySearchName.trim();
     const sport = this.communitySearchSport.trim();
-    if (!name && !sport) {
-      this.clearCommunitySearch();
-      return;
-    }
 
     this.communitySearchLoading = true;
     this.communitySearchError = '';
@@ -219,11 +224,7 @@ export class CommunitiesComponent implements OnInit {
   clearCommunitySearch(): void {
     this.communitySearchName = '';
     this.communitySearchSport = '';
-    this.communitySearchResults = [];
-    this.communitySearchPage = 0;
-    this.communitySearchHasMore = false;
-    this.communitySearchPerformed = false;
-    this.communitySearchError = '';
+    this.searchCommunities(0);
   }
 
   openCommunityPresentation(community: CommunitySearchPresentation): void {

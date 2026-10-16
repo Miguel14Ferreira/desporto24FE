@@ -56,10 +56,10 @@
                routerLink="/menu/communities/create">
               {{ 'communities.pitchCreate' | t }}
             </a>
-            <a class="secondary-action button-link jynlo-action jynlo-action--neutral"
-               href="#community-search">
+            <button type="button" class="secondary-action button-link jynlo-action jynlo-action--neutral"
+               [disabled]="communitySearchLoading" (click)="exploreCommunities()">
               {{ 'communities.pitchExplore' | t }}
-            </a>
+            </button>
           </div>
           <p class="community-pitch-onboarding">{{ 'communities.pitchOnboarding' | t }}</p>
         </div>
@@ -97,7 +97,7 @@
         </div>
       </section>
 
-      <section class="create-card" id="community-search">
+      <section class="create-card" id="community-search" #communitySearchSection>
         <div>
           <p class="eyebrow">{{ 'communities.title' | t }}</p>
           <h2>{{ 'communities.searchTitle' | t }}</h2>
@@ -131,7 +131,7 @@
             <button
               type="submit"
               class="primary-action jynlo-action jynlo-action--primary"
-              [disabled]="communitySearchLoading || (!communitySearchName.trim() && !communitySearchSport.trim())">
+              [disabled]="communitySearchLoading">
               {{ (communitySearchLoading ? 'common.searching' : 'adminPlayers.search') | t }}
             </button>
             <button

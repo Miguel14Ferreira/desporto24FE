@@ -45,6 +45,100 @@ describe('CommunityInviteStepComponent', () => {
     expect(decodeURIComponent(component.whatsAppShareUrl())).toContain('pede adesão');
   });
 
+  it('asks about competitions after inviting without updating settings', () => {
+    const { component, router } = setup();
+    component.continueAfterInvite();
+    expect(component.step).toBe('competition');
+    expect(component.competitionChoice).toBeNull();
+    expect(router.navigate).not.toHaveBeenCalled();
+  });
+
+  it('enables competition only after a positive explicit choice', () => {
+    const { component, router } = setup();
+    const update = jasmine.createSpy('updateCompetitionSettings')
+      .and.returnValue(of({ rankingsEnabled: true }));
+    (component as any).groups.updateCompetitionSettings = update;
+
+    component.continueAfterInvite();
+    component.selectCompetition(true);
+    component.saveCompetitionAndContinue();
+
+    expect(update).toHaveBeenCalledWith(42, {
+      rankingsEnabled: true,
+      winPoints: null,
+      drawPoints: null,
+      lossPoints: null
+    });
+    expect(router.navigate).toHaveBeenCalledWith(['/menu/communities', 42]);
+    expect(component.competitionSaving).toBeFalse();
+  });
+
+  it('supports disabling the rankings module explicitly', () => {
+    const { component, router } = setup();
+    const update = jasmine.createSpy('updateCompetitionSettings')
+      .and.returnValue(of({ rankingsEnabled: false }));
+    (component as any).groups.updateCompetitionSettings = update;
+    component.continueAfterInvite();
+    component.selectCompetition(false);
+    component.saveCompetitionAndContinue();
+
+    expect(update).toHaveBeenCalledWith(42, {
+      rankingsEnabled: false,
+      winPoints: null,
+      drawPoints: null,
+      lossPoints: null
+    });
+    expect(router.navigate).toHaveBeenCalled();
+  });
+
+  it('does not save without choosing an option', () => {
+    const { component, router } = setup();
+    const update = jasmine.createSpy('updateCompetitionSettings');
+    (component as any).groups.updateCompetitionSettings = update;
+    component.continueAfterInvite();
+    component.saveCompetitionAndContinue();
+    expect(update).not.toHaveBeenCalled();
+    expect(router.navigate).not.toHaveBeenCalled();
+  });
+
+  it('does not let ordinary members configure competition', () => {
+    const { component, router } = setup('MEMBER');
+    component.selectCompetition(true);
+    expect(component.competitionChoice).toBeNull();
+    component.continueAfterInvite();
+    expect(component.step).toBe('invite');
+    expect(router.navigate).toHaveBeenCalledWith(['/menu/communities', 42]);
+  });
+
+  it('shows errors on failed saving and supports retrying', () => {
+    const { component, router } = setup();
+    const update = jasmine.createSpy('updateCompetitionSettings')
+      .and.returnValue(throwError(() => new Error('network')));
+    (component as any).groups.updateCompetitionSettings = update;
+    component.continueAfterInvite();
+    component.selectCompetition(true);
+    component.saveCompetitionAndContinue();
+
+    expect(router.navigate).not.toHaveBeenCalled();
+    expect(component.competitionError).toBeTruthy();
+    expect(component.competitionSaving).toBeFalse();
+    expect(component.step).toBe('competition');
+
+    update.and.returnValue(of({ rankingsEnabled: true }));
+    component.saveCompetitionAndContinue();
+    expect(router.navigate).toHaveBeenCalledWith(['/menu/communities', 42]);
+  });
+
+  it('lets people decide later without changing settings', () => {
+    const { component, router } = setup();
+    const update = jasmine.createSpy('updateCompetitionSettings');
+    (component as any).groups.updateCompetitionSettings = update;
+    component.continueAfterInvite();
+    component.continueToCommunity();
+    expect(update).not.toHaveBeenCalled();
+    expect(router.navigate).toHaveBeenCalledWith(['/menu/communities', 42]);
+  });
+
   it('continues to the new community even when its details could not be loaded', () => {
     const { component, groups, router } = setup();
     groups.get.and.returnValue(throwError(() => new Error('unavailable')));

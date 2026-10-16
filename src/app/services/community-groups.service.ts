@@ -202,9 +202,9 @@ export class CommunityGroupsService {
     id: number,
     request: {
       rankingsEnabled: boolean;
-      winPoints: number;
-      drawPoints: number;
-      lossPoints: number;
+      winPoints: number | null;
+      drawPoints: number | null;
+      lossPoints: number | null;
     }
   ): Observable<CommunityCompetitionSettings> {
     return this.http.put<CommunityCompetitionSettings>(
