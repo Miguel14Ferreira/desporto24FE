@@ -92,16 +92,6 @@ async function mockCommunityApi(page: Page, role: Role, mode: 'empty' | 'draft')
   page.on('console', message => {
     if (message.type() === 'error') console.log('[E2E BROWSER CONSOLE]', message.text());
   });
-  page.on('request', request => {
-    if (request.url().includes('/api/communities/')) {
-      console.log('[E2E request]', request.method(), request.url());
-    }
-  });
-  page.on('response', response => {
-    if (response.url().includes('/api/communities/')) {
-      console.log('[E2E response]', response.status(), response.url());
-    }
-  });
   page.on('requestfailed', request => {
     console.log('[E2E request failed]', request.method(), request.url(), request.failure()?.errorText);
   });
@@ -147,7 +137,6 @@ async function mockCommunityApi(page: Page, role: Role, mode: 'empty' | 'draft')
     const url = new URL(req.url());
     const path = url.pathname;
     const method = req.method();
-    if (path.includes('/api/communities/')) console.log('[E2E intercepted]', method, path, url.search);
     const headers = {
       'access-control-allow-origin': '*',
       'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',

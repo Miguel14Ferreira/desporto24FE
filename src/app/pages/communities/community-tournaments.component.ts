@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { finalize, firstValueFrom, forkJoin, Observable, timeout } from 'rxjs';
 import { CommunityGroup } from '../model/community-group';
 import {
@@ -45,7 +45,8 @@ export class CommunityTournamentsComponent implements OnChanges {
 
   constructor(
     private readonly api: CommunityTournamentsService,
-    private readonly authentication: AuthenticationService
+    private readonly authentication: AuthenticationService,
+    private readonly changeDetector: ChangeDetectorRef
   ) {}
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -115,7 +116,12 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.error = '';
     this.api.list(communityId, page).pipe(
       timeout(12000),
-      finalize(() => { if (revision === this.listRevision) this.loading = false; })
+      finalize(() => {
+        if (revision === this.listRevision) {
+          this.loading = false;
+          this.changeDetector.markForCheck();
+        }
+      })
     ).subscribe({
       next: result => {
         if (revision !== this.listRevision || this.community.id !== communityId) return;
@@ -169,7 +175,12 @@ export class CommunityTournamentsComponent implements OnChanges {
       table: this.api.standings(communityId, tournament.id)
     }).pipe(
       timeout(12000),
-      finalize(() => { if (revision === this.detailRevision) this.detailsLoading = false; })
+      finalize(() => {
+        if (revision === this.detailRevision) {
+          this.detailsLoading = false;
+          this.changeDetector.markForCheck();
+        }
+      })
     ).subscribe({
       next: ({ members, games, table }) => {
         if (revision !== this.detailRevision || this.community.id !== communityId
@@ -197,6 +208,7 @@ export class CommunityTournamentsComponent implements OnChanges {
       timeout(12000), finalize(() => {
         if (revision === this.detailRevision && this.selected?.id === tid && this.community.id === cid) {
           this.busy = false;
+          this.changeDetector.markForCheck();
         }
       })
     ).subscribe({
@@ -222,6 +234,7 @@ export class CommunityTournamentsComponent implements OnChanges {
       timeout(12000), finalize(() => {
         if (revision === this.detailRevision && this.selected?.id === tid && this.community.id === cid) {
           this.busy = false;
+          this.changeDetector.markForCheck();
         }
       })
     ).subscribe({
@@ -350,6 +363,7 @@ export class CommunityTournamentsComponent implements OnChanges {
         if (revision === this.standingsRevision && this.community.id === communityId
             && this.selected?.id === tournament.id) {
           this.standings = table;
+          this.changeDetector.markForCheck();
         }
       },
       error: () => {
@@ -357,6 +371,7 @@ export class CommunityTournamentsComponent implements OnChanges {
             && this.selected?.id === tournament.id) {
           this.standings = undefined;
           this.error = 'Resultado guardado, mas não foi possível atualizar a classificação. Usa Atualizar para tentar novamente.';
+          this.changeDetector.markForCheck();
         }
       }
     });
@@ -391,6 +406,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     } finally {
       if (mutationRevision === this.mutationRevision) {
         this.busy = false;
+        this.changeDetector.markForCheck();
       }
     }
   }
