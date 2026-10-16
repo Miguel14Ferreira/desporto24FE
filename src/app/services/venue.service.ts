@@ -9,6 +9,12 @@ import {
   VenueInformationSource
 } from '../pages/model/venue';
 
+export interface VenueSuggestionPage {
+  venues: Venue[];
+  page: number;
+  hasMore: boolean;
+}
+
 export interface VenuePhoto {
   id: number;
   photoUrl: string;
@@ -64,6 +70,15 @@ export class VenueService {
     }
 
     return this.http.get<Venue[]>(this.baseUrl, { params });
+  }
+
+  /** Bounded server-side autocomplete; keeps the legacy search contract unchanged. */
+  suggest(name?: string, city?: string, sport?: string, page = 0): Observable<VenueSuggestionPage> {
+    let params = new HttpParams().set('page', String(page));
+    if (name?.trim()) params = params.set('name', name.trim());
+    if (city?.trim()) params = params.set('city', city.trim());
+    if (sport?.trim()) params = params.set('sport', sport.trim());
+    return this.http.get<VenueSuggestionPage>(this.baseUrl + '/suggest', { params });
   }
 
   get(id: number): Observable<Venue> {
