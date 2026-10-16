@@ -3,7 +3,7 @@ import { SimpleChange } from '@angular/core';
 import { AuthenticationService } from '../../services/authethication.service';
 import { CommunityTournamentsService } from '../../services/community-tournaments.service';
 import { CommunityGroup } from '../model/community-group';
-import { CommunityTournament, TournamentMatch, TournamentPage } from '../model/community-tournament';
+import { CommunityTournament, TournamentMatch, TournamentPage, TournamentParticipant, TournamentParticipantPage } from '../model/community-tournament';
 import { CommunityTournamentsComponent } from './community-tournaments.component';
 
 describe('Community tournaments management', () => {
@@ -178,6 +178,78 @@ describe('Community tournaments management', () => {
     expect(component.tournaments).toEqual([]);
     expect(component.loading).toBeFalse();
     expect(api.list).toHaveBeenCalledWith(12, 0);
+  });
+
+  it('keeps previously loaded fixture pages after saving a result and refreshes standings', async () => {
+    const match: TournamentMatch = {
+      id: 84, roundNumber: 9, homeProfileId: 1, homeUsername: 'ana',
+      awayProfileId: 2, awayUsername: 'rui', status: 'SCHEDULED',
+      homeScore: null, awayScore: null
+    };
+    component.selected = { ...draft, status: 'IN_PROGRESS' };
+    component.matches = [match];
+    component.matchesPage = 3;
+    component.matchesHasMore = true;
+    component.setScore(match, 'home', 2);
+    component.setScore(match, 'away', 1);
+    api.recordResult.and.returnValue(of({
+      ...match, status: 'COMPLETED', homeScore: 2, awayScore: 1
+    }));
+    api.participants.calls.reset();
+    api.matches.calls.reset();
+    api.standings.calls.reset();
+
+    await component.saveScore(match);
+
+    expect(api.recordResult).toHaveBeenCalledWith(7, 9, 84, 2, 1);
+    expect(component.matchesPage).toBe(3);
+    expect(component.matchesHasMore).toBeTrue();
+    expect(component.matches.length).toBe(1);
+    expect(component.matches[0].status).toBe('COMPLETED');
+    expect(component.scoreDraft(match)).toEqual({ home: 2, away: 1 });
+    expect(api.matches).not.toHaveBeenCalled();
+    expect(api.participants).not.toHaveBeenCalled();
+    expect(api.standings).toHaveBeenCalledWith(7, 9);
+  });
+
+  it('releases the busy state on tournament switch while an old participants page is loading', () => {
+    const pendingPage = new Subject<TournamentParticipantPage>();
+    api.participants.and.returnValue(pendingPage);
+    component.participantsHasMore = true;
+    component.loadMoreParticipants();
+    expect(component.busy).toBeTrue();
+
+    api.participants.and.returnValue(of({ participants: [], page: 0, hasMore: false }));
+    component.selectTournament({ ...draft, id: 21, name: 'Outra liga' });
+    expect(component.busy).toBeFalse();
+    expect(component.selected?.id).toBe(21);
+
+    pendingPage.next({
+      participants: [{ profileId: 100, username: 'stale', displayName: 'Antigo',
+        joinedAt: '2026-10-16T12:00:00Z', status: 'CONFIRMED' }],
+      page: 1, hasMore: false
+    });
+    pendingPage.complete();
+    expect(component.participants).toEqual([]);
+    expect(component.busy).toBeFalse();
+    expect(component.error).toBe('');
+  });
+
+  it('discards a previous tournament mutation error after selecting a different tournament', async () => {
+    const pendingJoin = new Subject<TournamentParticipant>();
+    api.join.and.returnValue(pendingJoin);
+    const joining = component.join();
+    expect(component.busy).toBeTrue();
+
+    component.selectTournament({ ...draft, id: 22, name: 'Liga nova' });
+    expect(component.busy).toBeFalse();
+    pendingJoin.error(new Error('A operação anterior falhou'));
+    await joining;
+
+    expect(component.selected?.id).toBe(22);
+    expect(component.error).toBe('');
+    expect(component.feedback).toBe('');
+    expect(component.busy).toBeFalse();
   });
 
 });
