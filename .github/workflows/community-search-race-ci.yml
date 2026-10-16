@@ -1,0 +1,23 @@
+name: Validate community search race protection
+on:
+  pull_request:
+    branches: [preview/render-fullstack]
+    paths:
+      - 'src/app/pages/communities/communities.component.ts'
+      - 'src/app/pages/communities/community-search-race.spec.ts'
+      - '.github/workflows/community-search-race-ci.yml'
+permissions:
+  contents: read
+jobs:
+  frontend-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Test community discovery, membership and pagination
+        run: npm test -- --watch=false --browsers=ChromeHeadless --include=src/app/pages/communities/community-search-race.spec.ts --include=src/app/pages/communities/community-discovery-action.spec.ts --include=src/app/pages/communities/community-join-request-race.spec.ts --include=src/app/pages/communities/community-join-deep-link.spec.ts
+      - run: npm run build
