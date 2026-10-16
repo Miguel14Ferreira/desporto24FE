@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { AuthenticationService } from './services/authethication.service';
 import { PilotAnalyticsService } from './services/pilot-analytics.service';
 import { appTranslate as t } from './i18n/i18n.service';
-import { registrationSessionReturnUrl, takeRegistrationDestination } from './shared/registration-return-url';
+import { registrationSessionReturnUrl, registrationCommunityReturnUrl, takeRegistrationDestination } from './shared/registration-return-url';
 
 @Component({
     selector: 'app-root',
@@ -56,7 +56,8 @@ export class AppComponent implements OnInit {
   }
 
   private navigateToLoginAfterConfirmation(params: URLSearchParams): void {
-    const destinationFromEmail = registrationSessionReturnUrl(params.get('returnSessionId'));
+    const destinationFromEmail = registrationSessionReturnUrl(params.get('returnSessionId'))
+      ?? registrationCommunityReturnUrl(params.get('returnCommunityId'));
     const destinationFromBrowser = takeRegistrationDestination();
     const destination = destinationFromEmail ?? destinationFromBrowser;
     if (destination) {

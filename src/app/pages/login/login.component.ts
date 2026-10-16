@@ -6,7 +6,7 @@ import { finalize, timeout } from 'rxjs';
 
 import { AuthenticationService } from '../../services/authethication.service';
 import { safeLoginReturnUrl } from '../../shared/safe-login-return-url';
-import { registrationSessionId } from '../../shared/registration-return-url';
+import { registrationSessionId, registrationCommunityId } from '../../shared/registration-return-url';
 
 declare global {
   interface Window {
@@ -66,6 +66,7 @@ export class LoginComponent implements OnInit, AfterViewInit {
     if (registrationSessionId(path) !== null) {
       return 'login.viewSession';
     }
+    if (registrationCommunityId(path) !== null) return 'login.viewCommunity';
     return path === '/menu/notifications' || path.startsWith('/menu/notifications/')
       ? 'login.viewRequest'
       : '';
@@ -268,7 +269,11 @@ export class LoginComponent implements OnInit, AfterViewInit {
     this.successMessage = '';
 
     const sessionId = registrationSessionId(this.returnUrl);
-    this.authenticationService.resendRegistrationConfirmation(username, sessionId)
+    const communityId = registrationCommunityId(this.returnUrl);
+    const request = communityId !== null
+      ? this.authenticationService.resendRegistrationConfirmation(username, sessionId, communityId)
+      : this.authenticationService.resendRegistrationConfirmation(username, sessionId);
+    request
       .pipe(timeout(10_000), finalize(() => this.resendLoading = false))
       .subscribe({
         next: response => {
