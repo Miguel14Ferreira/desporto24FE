@@ -273,4 +273,28 @@ describe('Community tournaments management', () => {
     expect(component.busy).toBeFalse();
   });
 
+  it('rejects one-character tournament names before calling the API', async () => {
+    component.nameDraft = ' A ';
+    expect(component.nameTooShort).toBeTrue();
+    await component.create();
+    expect(api.create).not.toHaveBeenCalled();
+    expect(component.error).toContain('2 e 120');
+    component.nameDraft = 'Liga';
+    expect(component.nameTooShort).toBeFalse();
+  });
+
+  it('shows marker validation only after the match inputs are touched', () => {
+    const game: TournamentMatch = {
+      id: 50, roundNumber: 1, homeProfileId: 1, homeUsername: 'owner',
+      awayProfileId: 2, awayUsername: 'rui', status: 'SCHEDULED',
+      homeScore: null, awayScore: null
+    };
+    expect(component.isScoreInvalid(game)).toBeFalse();
+    component.setScore(game, 'home', -1);
+    expect(component.isScoreInvalid(game)).toBeTrue();
+    component.setScore(game, 'home', 2);
+    component.setScore(game, 'away', 1);
+    expect(component.isScoreInvalid(game)).toBeFalse();
+  });
+
 });

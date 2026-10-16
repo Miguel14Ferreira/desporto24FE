@@ -9,7 +9,7 @@
   </div>
 
   @if (error) {
-    <div class="notice notice-error" role="alert">{{ error }}</div>
+    <div #errorNotice class="notice notice-error" role="alert" tabindex="-1">{{ error }}</div>
   }
   @if (feedback) {
     <div class="notice notice-success" role="status">{{ feedback }}</div>
@@ -24,9 +24,16 @@
       <div class="create-controls">
         <label for="new-tournament-name">Nome do torneio</label>
         <input id="new-tournament-name" [(ngModel)]="nameDraft" maxlength="120"
+          [attr.aria-invalid]="nameTooShort ? 'true' : null"
+          [attr.aria-describedby]="nameTooShort ? 'tournament-name-hint' : null"
           placeholder="Ex.: Liga de Outono" autocomplete="off">
+        @if (nameTooShort) {
+          <p id="tournament-name-hint" class="field-validation" role="status">
+            O nome deve ter pelo menos 2 caracteres.
+          </p>
+        }
         <button type="button" class="t-btn t-btn-primary"
-          [disabled]="busy || !nameDraft.trim()"
+          [disabled]="busy || nameDraft.trim().length < 2"
           (click)="create()">Criar torneio</button>
       </div>
     </div>
@@ -105,7 +112,7 @@
           <section class="t-section" aria-label="Inscrições">
             <div class="t-section-heading">
               <div>
-                <h5>Jogadores</h5>
+                <h5 #playersHeading tabindex="-1">Jogadores</h5>
                 <p>{{ confirmedCount }} confirmados nesta lista · {{ participants.length }} inscrições apresentadas</p>
               </div>
               @if (selected.status === 'DRAFT') {
@@ -195,6 +202,8 @@
                           <input type="number" min="0" max="999" step="1"
                             [ngModel]="scoreDraft(match).home"
                             (ngModelChange)="setScore(match, 'home', $event)"
+                            [attr.aria-invalid]="scoreTouched.has(match.id) && !validScore(scoreDraft(match).home) ? 'true' : null"
+                            [attr.aria-describedby]="isScoreInvalid(match) ? 'match-score-error-' + match.id : null"
                             [disabled]="busy" [attr.aria-label]="'Golos de ' + match.homeUsername">
                         </label>
                         <span class="score-separator">:</span>
@@ -203,6 +212,8 @@
                           <input type="number" min="0" max="999" step="1"
                             [ngModel]="scoreDraft(match).away"
                             (ngModelChange)="setScore(match, 'away', $event)"
+                            [attr.aria-invalid]="scoreTouched.has(match.id) && !validScore(scoreDraft(match).away) ? 'true' : null"
+                            [attr.aria-describedby]="isScoreInvalid(match) ? 'match-score-error-' + match.id : null"
                             [disabled]="busy" [attr.aria-label]="'Golos de ' + match.awayUsername">
                         </label>
                         <button class="t-btn t-btn-primary t-btn-small" type="button"
@@ -210,6 +221,11 @@
                           [disabled]="busy || !validScore(scoreDraft(match).home) || !validScore(scoreDraft(match).away)"
                           (click)="saveScore(match)">{{ match.status === 'COMPLETED' ? 'Corrigir' : 'Guardar' }}</button>
                       </div>
+                      @if (isScoreInvalid(match)) {
+                        <p class="field-validation" [id]="'match-score-error-' + match.id" role="status">
+                          Indica dois marcadores inteiros entre 0 e 999.
+                        </p>
+                      }
                     } @else {
                       <strong class="match-score">
                         {{ match.status === 'COMPLETED' ? match.homeScore + ' : ' + match.awayScore : 'Por disputar' }}

@@ -83,3 +83,15 @@
 }
 
 .notice-info { background: rgba(56,189,248,.1); border: 1px solid rgba(56,189,248,.32); color: #bae6fd; }
+
+/* Keyboard focus must remain visible after a live-region error or roster update. */
+.notice-error:focus, .t-section-heading h5:focus {
+  outline: 2px solid #86efac;
+  outline-offset: 4px;
+}
+.field-validation {
+  font-size: .78rem;
+  color: #fecaca !important;
+  line-height: 1.35;
+  margin: .15rem 0 .2rem;
+}
