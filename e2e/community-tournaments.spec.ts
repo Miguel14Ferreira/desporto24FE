@@ -61,7 +61,8 @@ function fixtureToken(username: string): string {
     encode({ sub: username, exp: Math.floor(Date.now() / 1000) + 3600 }), 'fixture'].join('.');
 }
 
-type FixtureMode = 'empty' | 'draft' | 'paged' | 'forbidden' | 'switch';
+type FixtureMode = 'empty' | 'draft' | 'paged' | 'forbidden' | 'switch'
+  | 'management' | 'complete-rejected';
 
 async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode) {
   const username = role === 'OWNER' ? 'organizador' : 'participante';
@@ -90,6 +91,14 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode) {
     { profileId: 2, username: 'participante', displayName: 'Participante',
       joinedAt: '2026-10-16T12:02:00Z', status: 'CONFIRMED' }
   ] : [];
+  if (mode === 'management') {
+    participants.push(
+      { profileId: 3, username: 'mariana', displayName: 'Mariana',
+        joinedAt: '2026-10-16T12:03:00Z', status: 'PENDING' },
+      { profileId: 4, username: 'pedro', displayName: 'Pedro',
+        joinedAt: '2026-10-16T12:04:00Z', status: 'PENDING' }
+    );
+  }
   const matches: Match[] = mode === 'paged' ? [
     { id: 30, roundNumber: 1, homeProfileId: 1, homeUsername: 'organizador',
       awayProfileId: 2, awayUsername: 'participante', status: 'SCHEDULED',
@@ -100,6 +109,8 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode) {
   ] : [];
   const requestedMatchPages: number[] = [];
   const pendingDetailResponses: Array<() => void> = [];
+  let completeAttempts = 0;
+  const organizerMutations: string[] = [];
   const unmocked: string[] = [];
   page.on('pageerror', error => console.log('[E2E PAGE ERROR]', error.stack || error.message));
   page.on('console', message => {
@@ -200,6 +211,22 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode) {
     if (path === '/api/communities/7/tournaments/11/participants') {
       if (method === 'GET') return send({ participants: [], page: 0, hasMore: false });
     }
+    const manageParticipant = /^\/api\/communities\/7\/tournaments\/9\/participants\/(\d+)(\/confirm)?$/.exec(path);
+    if (manageParticipant && method === 'PUT' && manageParticipant[2] === '/confirm') {
+      const participant = participants.find(p => p.profileId === Number(manageParticipant[1]));
+      if (!participant) return send({ message: 'Participante não encontrado' }, 404);
+      organizerMutations.push('confirm:' + participant.profileId);
+      participant.status = 'CONFIRMED';
+      return send(participant);
+    }
+    if (manageParticipant && method === 'DELETE' && !manageParticipant[2]) {
+      const profileId = Number(manageParticipant[1]);
+      organizerMutations.push('remove:' + profileId);
+      const position = participants.findIndex(p => p.profileId === profileId);
+      if (position < 0) return send({ message: 'Participante não encontrado' }, 404);
+      participants.splice(position, 1);
+      return send(null, 204);
+    }
     if (path === '/api/communities/7/tournaments/9/participants/me') {
       if (method === 'PUT') {
         const entry: Participant = {
@@ -251,6 +278,10 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode) {
       return send(standings());
     }
     if (path === '/api/communities/7/tournaments/9/complete' && method === 'POST') {
+      completeAttempts++;
+      if (mode === 'complete-rejected' && completeAttempts === 1) {
+        return send({ detail: 'Todos os confrontos da liga precisam de estar concluídos' }, 409);
+      }
       const top = standings().standings[0];
       const t = tournaments[0];
       t.status = 'COMPLETED';
@@ -269,7 +300,8 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode) {
   });
 
   return {
-    tournaments, participants, matches, unmocked, requestedMatchPages,
+    tournaments, participants, matches, unmocked, requestedMatchPages, organizerMutations,
+    get completeAttempts(): number { return completeAttempts; },
     get pendingDetails(): number { return pendingDetailResponses.length; },
     releaseDetails(): void {
       pendingDetailResponses.splice(0).forEach(resolve => resolve());
@@ -392,4 +424,83 @@ test('ignora resposta antiga após selecionar outro torneio', async ({ page }) =
   await expect(page.locator('.tournament-heading h4')).toHaveText('Liga alternativa');
   await expect(page.getByText('Ainda não existem inscrições neste torneio.')).toBeVisible();
   await expect(page.getByRole('alert')).toHaveCount(0);
+});
+
+test('organizador aprova uma inscrição e remove outra sem perder os jogadores confirmados', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'management');
+  await page.goto('/menu/communities/7?tab=tournaments');
+
+  await expect(page.locator('.tournament-heading h4')).toHaveText('Liga de Outono');
+  await expect(page.getByText('2 confirmados nesta lista')).toBeVisible();
+
+  const mariana = page.locator('.player-item').filter({ hasText: '@mariana' });
+  await expect(mariana.getByText('A aguardar aprovação')).toBeVisible();
+  await mariana.getByRole('button', { name: 'Confirmar' }).click();
+  await expect(mariana.getByText('Confirmado')).toBeVisible();
+  await expect(page.getByText('3 confirmados nesta lista')).toBeVisible();
+
+  const pedro = page.locator('.player-item').filter({ hasText: '@pedro' });
+  await expect(pedro).toBeVisible();
+  await pedro.getByRole('button', { name: 'Remover' }).click();
+  await expect(pedro).toHaveCount(0);
+  await expect(page.getByText('3 confirmados nesta lista')).toBeVisible();
+
+  expect(fixture.organizerMutations).toEqual(['confirm:3', 'remove:4']);
+  expect(fixture.participants.map(p => p.username)).toEqual(
+    ['organizador', 'participante', 'mariana']
+  );
+  await expect(page.locator('.standings-table tbody tr')).toHaveCount(3);
+});
+
+test('correção de resultado altera os pontos e a ordem da classificação', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'draft');
+  await page.goto('/menu/communities/7?tab=tournaments');
+  await expect(page.locator('.tournament-heading h4')).toHaveText('Liga de Outono');
+
+  await page.getByRole('button', { name: 'Gerar jornadas' }).click();
+  await page.getByRole('button', { name: 'Sim, publicar calendário' }).click();
+
+  const match = page.locator('.match-card').first();
+  await expect(match).toBeVisible();
+  await match.getByRole('spinbutton', { name: 'Golos de organizador' }).fill('2');
+  await match.getByRole('spinbutton', { name: 'Golos de participante' }).fill('1');
+  await match.getByRole('button', { name: 'Guardar' }).click();
+  await expect(page.locator('.standings-table tbody tr').first()).toContainText('Organizador');
+
+  await match.getByRole('spinbutton', { name: 'Golos de organizador' }).fill('0');
+  await match.getByRole('spinbutton', { name: 'Golos de participante' }).fill('3');
+  await match.getByRole('button', { name: 'Corrigir' }).click();
+  await expect(page.locator('.standings-table tbody tr').first()).toContainText('Participante');
+  await expect(page.locator('.standings-table tbody tr').first()).toContainText('3');
+  await expect(page.getByText('1 / 1 jogos')).toBeVisible();
+  expect(fixture.matches[0].homeScore).toBe(0);
+  expect(fixture.matches[0].awayScore).toBe(3);
+});
+
+test('erro HTTP 409 ao encerrar não bloqueia a liga e permite tentar de novo', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'complete-rejected');
+  await page.goto('/menu/communities/7?tab=tournaments');
+  await expect(page.locator('.tournament-heading h4')).toHaveText('Liga de Outono');
+
+  await page.getByRole('button', { name: 'Gerar jornadas' }).click();
+  await page.getByRole('button', { name: 'Sim, publicar calendário' }).click();
+  const game = page.locator('.match-card').first();
+  await game.getByRole('spinbutton', { name: 'Golos de organizador' }).fill('1');
+  await game.getByRole('spinbutton', { name: 'Golos de participante' }).fill('0');
+  await game.getByRole('button', { name: 'Guardar' }).click();
+
+  await page.getByRole('button', { name: 'Encerrar torneio' }).click();
+  await page.getByRole('button', { name: 'Sim, encerrar' }).click();
+  await expect(page.getByRole('alert')).toContainText(
+    'Todos os confrontos da liga precisam de estar concluídos'
+  );
+  await expect(page.getByRole('button', { name: 'Encerrar torneio' })).toBeEnabled();
+  expect(fixture.tournaments[0].status).toBe('IN_PROGRESS');
+  expect(fixture.completeAttempts).toBe(1);
+
+  await page.getByRole('button', { name: 'Encerrar torneio' }).click();
+  await page.getByRole('button', { name: 'Sim, encerrar' }).click();
+  await expect(page.getByText('Campeão: Organizador')).toBeVisible();
+  expect(fixture.completeAttempts).toBe(2);
+  expect(fixture.tournaments[0].status).toBe('COMPLETED');
 });
