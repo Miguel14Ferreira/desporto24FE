@@ -162,7 +162,7 @@
             [ngModel]="venueSearch"
             (ngModelChange)="onVenueSearchChanged($event)"
             autocomplete="off"
-            [disabled]="loading || venuesLoading || !sportSelected"
+            [disabled]="loading || !sportSelected"
             (change)="confirmVenueSelection()"
             [placeholder]="sportSelected ? ('venue.searchPlaceholder' | t) : 'Seleciona primeiro o desporto'">
           <datalist id="venue-search-options">
@@ -170,14 +170,23 @@
               <option [value]="venue.name + ' · ' + venue.city"></option>
             }
           </datalist>
-          <small class="venue-current-location">
-            @if (!sportSelected) {
+          <small class="venue-current-location" aria-live="polite">
+            @if (venuesLoading) {
+              {{ 'venue.searching' | t }}
+            } @else if (!sportSelected) {
               Seleciona primeiro um desporto da lista.
             } @else {
               {{ 'venue.searchHint' | t }}
             }
           </small>
         </label>
+
+        @if (venuesHasMore && sportSelected) {
+          <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
+            [disabled]="venuesLoading || loading" (click)="loadMoreVenues()">
+            {{ 'venue.showMore' | t }}
+          </button>
+        }
 
         @if (venuesLoadError) {
           <div class="venue-load-error feedback error-feedback" role="alert">
@@ -536,7 +545,8 @@
             <input
               type="text"
               name="city"
-              [(ngModel)]="city"
+              [ngModel]="city"
+              (ngModelChange)="onCityChanged($event)"
               [disabled]="loading"
               [placeholder]="'events.cityPlaceholder' | t">
           </label>

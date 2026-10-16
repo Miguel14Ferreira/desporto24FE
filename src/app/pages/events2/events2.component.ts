@@ -1,9 +1,9 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { appTranslate as t } from '../../i18n/i18n.service';
-import { ChangeDetectionStrategy, Component, NgZone, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, NgZone, OnDestroy, OnInit } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
-import { finalize, retry, timeout } from 'rxjs';
+import { debounceTime, finalize, retry, Subject, timeout } from 'rxjs';
 
 import { CreateSessionRequest } from '../model/create-session-request';
 import { SessionService } from '../../services/session.service';
@@ -19,7 +19,7 @@ import { SPORTS_CATALOG } from '../../shared/sports-catalog';
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false
 })
-export class Events2Component implements OnInit {
+export class Events2Component implements OnInit, OnDestroy {
   sport = '';
   gameDate = '';
   city = '';
@@ -73,6 +73,15 @@ export class Events2Component implements OnInit {
   selectedVenueId: number | null = null;
   venuesLoading = false;
   venuesLoadError = false;
+  venuesHasMore = false;
+  venuePage = 0;
+  private venueLookupVersion = 0;
+  private readonly venueSearchChanged = new Subject<void>();
+  private readonly venueSearchSubscription = this.venueSearchChanged
+    .pipe(debounceTime(300))
+    .subscribe(() => {
+      if (this.sportSelected) this.loadVenues();
+    });
   venueSaving = false;
   showVenueCreator = false;
   venueName = '';
@@ -140,7 +149,7 @@ export class Events2Component implements OnInit {
       this.city = (params.get('city') || '').trim().slice(0, 120);
     }
 
-    this.loadVenues();
+    if (this.sportSelected) this.loadVenues();
 
     if (Number.isFinite(communityId) && communityId > 0) {
       this.communityId = communityId;
@@ -154,6 +163,7 @@ export class Events2Component implements OnInit {
           this.communityName = community.name;
           if (!this.sport.trim() && community.sport) {
             this.sport = community.sport;
+            if (this.sportSelected) this.loadVenues();
           }
         },
         error: () => {
@@ -162,6 +172,12 @@ export class Events2Component implements OnInit {
         }
       });
     }
+  }
+
+  ngOnDestroy(): void {
+    ++this.venueLookupVersion;
+    this.venueSearchSubscription.unsubscribe();
+    this.venueSearchChanged.complete();
   }
 
   createSession(): void {
@@ -221,35 +237,64 @@ export class Events2Component implements OnInit {
       });
   }
 
-  loadVenues(): void {
-    if (this.venuesLoading) {
-      return;
-    }
-
+  /** Query only the current suggestion page instead of fetching the national catalog. */
+  loadVenues(page = 0): void {
+    if (page > 0 && (this.venuesLoading || !this.venuesHasMore || page !== this.venuePage + 1)) return;
+    const typed = this.venueSearch.trim();
+    const separator = typed.lastIndexOf(' · ');
+    const name = separator < 0 ? typed : typed.slice(0, separator).trim();
+    const city = separator < 0 ? this.city.trim() : typed.slice(separator + 3).trim();
+    const version = ++this.venueLookupVersion;
     this.venuesLoading = true;
     this.venuesLoadError = false;
 
-    this.venueService.search()
+    this.venueService.suggest(name, city, this.sportSelected ? this.sport.trim() : '', page)
       .pipe(
         timeout(10_000),
         retry({ count: 1 }),
-        finalize(() => this.venuesLoading = false)
+        finalize(() => {
+          if (version === this.venueLookupVersion) this.venuesLoading = false;
+        })
       )
       .subscribe({
-        next: venues => {
-          // A venue saved while the catalog was loading must remain selectable.
-          const createdIds = new Set(this.newlyCreatedVenues.map(venue => venue.id));
-          this.venues = [
-            ...venues.filter(venue => !createdIds.has(venue.id)),
-            ...this.newlyCreatedVenues
-          ].sort((a, b) => a.name.localeCompare(b.name, 'pt'));
+        next: result => {
+          if (version !== this.venueLookupVersion) return;
+          const merged = new Map<number, Venue>();
+          for (const venue of [...(page > 0 ? this.venues : []), ...result.venues, ...this.newlyCreatedVenues]) {
+            merged.set(venue.id, venue);
+          }
+          this.venues = [...merged.values()].sort((a, b) =>
+            a.name.localeCompare(b.name, 'pt') || a.city.localeCompare(b.city, 'pt') || a.id - b.id
+          );
+          this.venuePage = result.page;
+          this.venuesHasMore = result.hasMore;
         },
         error: () => {
-          // Retain successfully saved venues even if refreshing the catalog fails.
-          this.venues = [...this.newlyCreatedVenues];
+          if (version !== this.venueLookupVersion) return;
+          if (page === 0) this.venues = [...this.newlyCreatedVenues];
+          this.venuesHasMore = false;
           this.venuesLoadError = true;
         }
       });
+  }
+
+  loadMoreVenues(): void {
+    if (this.venuesHasMore) this.loadVenues(this.venuePage + 1);
+  }
+
+  private queueVenueLookup(): void {
+    // Reject in-flight responses immediately, not after the debounce delay.
+    ++this.venueLookupVersion;
+    this.venuesLoading = false;
+    this.venuesLoadError = false;
+    this.venuesHasMore = false;
+    this.venuePage = 0;
+    this.venueSearchChanged.next();
+  }
+
+  onCityChanged(value: string): void {
+    this.city = value;
+    if (this.sportSelected && this.selectedVenueId === null) this.queueVenueLookup();
   }
 
   get sportSelected(): boolean {
@@ -259,7 +304,7 @@ export class Events2Component implements OnInit {
   }
 
   get venueOptions(): Venue[] {
-    return this.matchingVenues().slice(0, 40);
+    return this.matchingVenues();
   }
 
   private matchingVenues(): Venue[] {
@@ -309,12 +354,16 @@ export class Events2Component implements OnInit {
       this.sport = '';
       this.venueSearch = '';
       this.selectVenue(null);
+      ++this.venueLookupVersion;
+      this.venues = [...this.newlyCreatedVenues];
+      this.venuesHasMore = false;
       return;
     }
 
     this.sport = selected;
     this.venueSearch = '';
     this.selectVenue(null);
+    this.loadVenues();
   }
 
   private normalizeVenueSearch(value: string): string {
@@ -331,6 +380,7 @@ export class Events2Component implements OnInit {
       // Stop filtering suggestions by the city inherited from the old venue.
       this.selectVenue(null);
     }
+    if (this.sportSelected) this.queueVenueLookup();
   }
 
   confirmVenueSelection(): void {
@@ -345,7 +395,9 @@ export class Events2Component implements OnInit {
         )
       : [];
 
-    if (matches.length !== 1) {
+    // A name-only result may have duplicates on later server pages.
+    if (matches.length !== 1 || (this.venuesHasMore
+        && this.normalizeVenueSearch(matches[0].name) === normalized)) {
       this.selectVenue(null);
       return;
     }
