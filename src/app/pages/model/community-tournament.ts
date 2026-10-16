@@ -5,6 +5,8 @@ export type TournamentMatchStatus = 'SCHEDULED' | 'COMPLETED';
 export interface CommunityTournament {
   id: number;
   name: string;
+  // Optional for cached responses from old API versions; new API always supplies it.
+  sport?: string | null;
   format: 'LEAGUE';
   status: TournamentStatus;
   winPoints: number;

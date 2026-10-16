@@ -8,6 +8,7 @@ type ParticipantStatus = 'PENDING' | 'CONFIRMED';
 interface Tournament {
   id: number;
   name: string;
+  sport?: string | null;
   format: 'LEAGUE';
   status: TournamentStatus;
   winPoints: number;
@@ -85,6 +86,8 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode, sport
   };
 
   const tournaments: Tournament[] = mode === 'empty' ? [] : [tournament(9, 'Liga de Outono')];
+  // The sport is a snapshot on the tournament, not inferred by the component.
+  tournaments.forEach(item => item.sport = sport);
   if (mode === 'switch') tournaments.push(tournament(11, 'Liga alternativa'));
   if (mode === 'paged') tournaments[0].status = 'IN_PROGRESS';
   const participants: Participant[] = role === 'OWNER' && mode !== 'empty' ? [
@@ -252,8 +255,8 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode, sport
         return send({ tournaments, page: Number(url.searchParams.get('page') || 0), hasMore: false });
       }
       if (method === 'POST') {
-        const body = req.postDataJSON() as { name: string };
-        const next = tournament(11, body.name);
+        const body = req.postDataJSON() as { name: string; sport: string };
+        const next = { ...tournament(11, body.name), sport: body.sport };
         tournaments.unshift(next);
         return send(next, 201);
       }
@@ -980,4 +983,20 @@ test('descoberta mostra modalidades de comunidades múltiplas, legadas e sem des
   await expect(page.locator('.community-detail-copy .community-discovery-sports .sport-tag'))
     .toHaveText(['Futebol', 'Padel', 'Ténis', 'Natação']);
   expect(fixture.unmocked.filter(request => request.includes('/api/communities/'))).toEqual([]);
+});
+
+test('torneio multidesporto exige escolha explícita e aceita modalidade fora da comunidade', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'empty', 'Futebol', ['Futebol', 'Padel']);
+  await page.goto('/menu/communities/7?tab=tournaments');
+  await page.getByLabel('Nome do torneio').fill('Liga de Natação');
+  await expect(page.getByRole('button', { name: 'Criar torneio' })).toBeDisabled();
+
+  await page.getByLabel('Modalidade do torneio').fill('natacao');
+  await page.getByRole('button', { name: 'Natação', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Criar torneio' })).toBeEnabled();
+  await page.getByRole('button', { name: 'Criar torneio' }).click();
+
+  await expect(page.locator('.tournament-heading h4')).toHaveText('Liga de Natação');
+  await expect(page.locator('.t-tournament-sport')).toHaveText('Natação');
+  expect(fixture.tournaments[0].sport).toBe('Natação');
 });

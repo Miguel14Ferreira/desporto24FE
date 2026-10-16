@@ -8,6 +8,7 @@ import {
 import { CommunityTournamentsService } from '../../services/community-tournaments.service';
 import { AuthenticationService } from '../../services/authethication.service';
 import { tournamentScoreTerminology } from './community-tournament-scoring';
+import { SPORTS_CATALOG } from '../../shared/sports-catalog';
 
 @Component({
   selector: 'app-community-tournaments',
@@ -32,6 +33,29 @@ export class CommunityTournamentsComponent implements OnChanges {
   standings?: TournamentStandings;
 
   nameDraft = '';
+  sportDraft = '';
+  sportSearch = '';
+  get communitySportOptions(): string[] {
+    const selected = this.community?.sports;
+    return selected?.length ? selected : (this.community?.sport ? [this.community.sport] : []);
+  }
+
+  get suggestedSports(): string[] {
+    const normalized = this.sportSearch.normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+    if (!normalized) return [];
+    // Search the canonical catalog and the group's imported/legacy modalities.
+    return [...new Set([...this.communitySportOptions, ...SPORTS_CATALOG])]
+      .filter(item => item.normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '').toLowerCase().includes(normalized)).slice(0, 8);
+  }
+
+  chooseSport(sport: string): void {
+    if (this.busy || !(SPORTS_CATALOG.includes(sport) || this.communitySportOptions.includes(sport))) return;
+    this.sportDraft = sport;
+    this.sportSearch = '';
+  }
+
   loading = false;
   detailsLoading = false;
   busy = false;
@@ -101,6 +125,11 @@ export class CommunityTournamentsComponent implements OnChanges {
       ++this.mutationRevision;
       ++this.standingsRevision;
       this.busy = false;
+      // A sole community sport is convenient; multi-sport requires an explicit choice.
+      const sports = this.community.sports;
+      this.sportDraft = sports?.length === 1
+        ? sports[0] : (!sports?.length ? this.community.sport || '' : '');
+      this.sportSearch = '';
       this.selected = undefined;
       this.loading = false;
       this.detailsLoading = false;
@@ -141,7 +170,7 @@ export class CommunityTournamentsComponent implements OnChanges {
   }
 
   get scoring() {
-    return tournamentScoreTerminology(this.community?.sport);
+    return tournamentScoreTerminology(this.selected?.sport);
   }
 
   get confirmedCount(): number {
@@ -347,7 +376,13 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.showError('Indica um nome entre 2 e 120 caracteres.');
       return;
     }
-    await this.mutate(this.api.create(this.community.id, name), 'Torneio criado.', result => {
+    if (!this.sportDraft || !(SPORTS_CATALOG.includes(this.sportDraft)
+      || this.communitySportOptions.includes(this.sportDraft))) {
+      this.showError('Escolhe uma modalidade válida para o torneio.');
+      return;
+    }
+    await this.mutate(this.api.create(this.community.id, name, this.sportDraft),
+      'Torneio criado.', result => {
       this.nameDraft = '';
       this.selected = undefined;
       this.selectTournament(result);

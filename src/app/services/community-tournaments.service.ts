@@ -30,8 +30,8 @@ export class CommunityTournamentsService {
     });
   }
 
-  create(communityId: number, name: string): Observable<CommunityTournament> {
-    return this.http.post<CommunityTournament>(this.url(communityId), { name });
+  create(communityId: number, name: string, sport: string): Observable<CommunityTournament> {
+    return this.http.post<CommunityTournament>(this.url(communityId), { name, sport });
   }
 
   participants(communityId: number, tournamentId: number, page: number): Observable<TournamentParticipantPage> {
