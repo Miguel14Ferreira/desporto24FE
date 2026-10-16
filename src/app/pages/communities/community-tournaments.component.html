@@ -50,7 +50,7 @@
           <small>{{ formatStatus(tournament.status) }}</small>
         </button>
       }
-      @if (loading) { <p class="t-muted">A carregar torneios…</p> }
+      @if (loading) { <p class="t-muted" role="status">A carregar torneios…</p> }
       @if (tournamentsHasMore) {
         <button class="t-btn t-btn-secondary t-btn-wide" type="button"
           [disabled]="loading" (click)="loadTournaments()">Ver mais torneios</button>
@@ -134,9 +134,11 @@
                     <div class="player-actions">
                       @if (person.status === 'PENDING') {
                         <button type="button" class="t-btn t-btn-primary t-btn-small"
+                          [attr.aria-label]="'Confirmar inscrição de ' + (person.displayName || person.username)"
                           [disabled]="busy" (click)="confirm(person)">Confirmar</button>
                       }
                       <button type="button" class="t-btn t-btn-secondary t-btn-small"
+                        [attr.aria-label]="'Remover ' + (person.displayName || person.username) + ' do torneio'"
                         [disabled]="busy" (click)="remove(person)">Remover</button>
                     </div>
                   }
@@ -204,6 +206,7 @@
                             [disabled]="busy" [attr.aria-label]="'Golos de ' + match.awayUsername">
                         </label>
                         <button class="t-btn t-btn-primary t-btn-small" type="button"
+                          [attr.aria-label]="(match.status === 'COMPLETED' ? 'Corrigir' : 'Guardar') + ' resultado da jornada ' + match.roundNumber + ' entre ' + match.homeUsername + ' e ' + match.awayUsername"
                           [disabled]="busy || !validScore(scoreDraft(match).home) || !validScore(scoreDraft(match).away)"
                           (click)="saveScore(match)">{{ match.status === 'COMPLETED' ? 'Corrigir' : 'Guardar' }}</button>
                       </div>
@@ -234,7 +237,7 @@
             </div>
             @if (standings?.standings?.length) {
               <div class="standings-scroll">
-                <table class="standings-table">
+                <table class="standings-table" aria-label="Classificação do torneio">
                   <thead>
                     <tr>
                       <th scope="col">#</th><th scope="col">Jogador</th>
