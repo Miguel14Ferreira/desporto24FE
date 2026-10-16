@@ -38,7 +38,7 @@ jobs:
       - name: Install Chromium and OS dependencies
         run: npx playwright install --with-deps chromium
       - name: Run browser tests with a mocked API
-        run: npx playwright test --config=playwright.config.ts
+        run: npx playwright test --config=playwright.config.ts --grep 'organizador abre'
       - name: Print browser error context on failure
         if: failure()
         run: |

@@ -88,6 +88,19 @@ async function mockCommunityApi(page: Page, role: Role, mode: 'empty' | 'draft')
   ] : [];
   const matches: Match[] = [];
   const unmocked: string[] = [];
+  page.on('request', request => {
+    if (request.url().includes('/api/communities/')) {
+      console.log('[E2E request]', request.method(), request.url());
+    }
+  });
+  page.on('response', response => {
+    if (response.url().includes('/api/communities/')) {
+      console.log('[E2E response]', response.status(), response.url());
+    }
+  });
+  page.on('requestfailed', request => {
+    console.log('[E2E request failed]', request.method(), request.url(), request.failure()?.errorText);
+  });
 
   function standings() {
     const confirmed = participants.filter(p => p.status === 'CONFIRMED');
@@ -130,6 +143,7 @@ async function mockCommunityApi(page: Page, role: Role, mode: 'empty' | 'draft')
     const url = new URL(req.url());
     const path = url.pathname;
     const method = req.method();
+    if (path.includes('/api/communities/')) console.log('[E2E intercepted]', method, path, url.search);
     const headers = {
       'access-control-allow-origin': '*',
       'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
@@ -229,6 +243,7 @@ async function mockCommunityApi(page: Page, role: Role, mode: 'empty' | 'draft')
     }
     if (path === '/api/notifications/unread-count' && method === 'GET') return send(0);
 
+    console.log('[E2E unmocked]', method, path);
     unmocked.push(method + ' ' + path);
     await send({ message: 'Unmocked browser-test endpoint' }, 404);
   });
