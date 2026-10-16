@@ -76,4 +76,40 @@ describe('CommunitiesComponent public session eligibility', () => {
     (component.canManage as jasmine.Spy).and.returnValue(false);
     expect(component.canOpenSessionToPublic(session)).toBeFalse();
   });
+  it('reads both legacy single-sport groups and the new sports array', () => {
+    const group = {
+      id: 7, name: 'CNG', description: null, sport: 'Futebol',
+      visibility: 'PRIVATE', myRole: 'OWNER', memberCount: 2
+    } as any;
+    expect(component.communitySports(group)).toEqual(['Futebol']);
+    group.sports = ['Futebol', 'Padel'];
+    expect(component.communitySports(group)).toEqual(['Futebol', 'Padel']);
+    group.sport = null;
+    group.sports = [];
+    expect(component.communitySports(group)).toEqual([]);
+  });
+
+  it('lets organizers edit sport lists but prevents members changing them', () => {
+    const group = {
+      id: 7, name: 'CNG', sport: 'Futebol', sports: ['Futebol'],
+      myRole: 'OWNER'
+    } as any;
+    component.selected = group;
+    (component.canManage as jasmine.Spy).and.returnValue(true);
+    component.editSports();
+    expect(component.editingSports).toBeTrue();
+    component.sportsSearch = 'pad';
+    expect(component.availableSportSuggestions).toContain('Padel');
+    component.addCommunitySport('Padel');
+    component.addCommunitySport('Padel');
+    expect(component.sportsDraft).toEqual(['Futebol', 'Padel']);
+    component.removeCommunitySport('Futebol');
+    expect(component.sportsDraft).toEqual(['Padel']);
+    component.cancelSportsEdit();
+    expect(component.editingSports).toBeFalse();
+    (component.canManage as jasmine.Spy).and.returnValue(false);
+    component.editSports();
+    expect(component.editingSports).toBeFalse();
+  });
+
 });

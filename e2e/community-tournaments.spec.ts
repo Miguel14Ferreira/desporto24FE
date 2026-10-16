@@ -72,7 +72,7 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode, sport
 
   const community = {
     id: 7, name: 'Jogadores de Lisboa', description: 'Liga dos amigos',
-    sport, photoUrl: null, visibility: 'PRIVATE',
+    sport, sports: sport ? [sport] : [], photoUrl: null, visibility: 'PRIVATE',
     rankingsEnabled: true, ownerUsername: 'organizador',
     myRole: role, memberCount: 3, createdAt: '2026-10-16T12:00:00Z',
     members: [
@@ -131,6 +131,8 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode, sport
   let scheduleAttempts = 0;
   let listAttempts = 0;
   let joinAttempts = 0;
+  let createCommunityRequest: unknown = null;
+  let updatedCommunitySports: string[] | null = null;
   const requestedParticipantPages: number[] = [];
   const organizerMutations: string[] = [];
   const unmocked: string[] = [];
@@ -199,6 +201,17 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode, sport
       return;
     }
 
+    if (method === 'POST' && path === '/api/communities') {
+      createCommunityRequest = req.postDataJSON();
+      return send({ ...community, ...(createCommunityRequest as object), id: 7 }, 201);
+    }
+    if (method === 'PUT' && path === '/api/communities/7/sports') {
+      const body = req.postDataJSON() as { sports: string[] };
+      updatedCommunitySports = body.sports;
+      community.sports = body.sports;
+      community.sport = body.sports[0] || '';
+      return send(community);
+    }
     if (method === 'GET' && path === '/api/communities/mine') return send([community]);
     if (method === 'GET' && path === '/api/communities/invites/me') return send([]);
     if (method === 'GET' && path === '/api/communities/7') return send(community);
@@ -355,6 +368,8 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode, sport
     requestedParticipantPages, organizerMutations,
     get completeAttempts(): number { return completeAttempts; },
     get scheduleAttempts(): number { return scheduleAttempts; },
+    get createCommunityRequest(): unknown { return createCommunityRequest; },
+    get updatedCommunitySports(): string[] | null { return updatedCommunitySports; },
     get listAttempts(): number { return listAttempts; },
     get joinAttempts(): number { return joinAttempts; },
     get pendingDetails(): number { return pendingDetailResponses.length; },
@@ -859,4 +874,38 @@ test('modalidade sem perfil de pontuação não é apresentada como futebol', as
   await expect(page.getByRole('columnheader', { name: 'MC' })).toBeVisible();
   await expect(page.getByRole('columnheader', { name: 'DM' })).toBeVisible();
   await expect(page.getByRole('columnheader', { name: 'GM' })).toHaveCount(0);
+});
+
+test('cria comunidade com várias modalidades e abre convites após guardar', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'empty');
+  await page.goto('/menu/communities/create');
+
+  await page.locator('input[name="name"]').fill('Amigos de Lisboa');
+  await page.locator('input[name="sportSearch"]').fill('pad');
+  await page.getByRole('button', { name: /Padel/ }).click();
+  await page.locator('input[name="sportSearch"]').fill('basquet');
+  await page.getByRole('button', { name: /Basquetebol$/ }).click();
+  await expect(page.getByRole('button', { name: 'Remover Padel' })).toBeVisible();
+  await page.locator('button[type="submit"]').click();
+
+  await expect.poll(() => fixture.createCommunityRequest).toMatchObject({
+    name: 'Amigos de Lisboa', sport: 'Padel', sports: ['Padel', 'Basquetebol']
+  });
+  await expect(page).toHaveURL(/\/menu\/communities\/7\/invite/);
+});
+
+test('gestores editam várias modalidades e atualizam a comunidade sem afetar a navegação', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'draft');
+  await page.goto('/menu/communities/7?tab=home');
+  await expect(page.getByRole('heading', { name: 'Desportos desta comunidade' })).toBeVisible();
+  await page.getByRole('button', { name: 'Editar modalidades' }).click();
+
+  await page.locator('input[name="editCommunitySports"]').fill('pad');
+  await page.getByRole('button', { name: 'Padel +' }).click();
+  await page.getByRole('button', { name: 'Remover Futebol' }).click();
+  await page.getByRole('button', { name: 'Guardar modalidades' }).click();
+
+  await expect(page.getByText('Modalidades atualizadas.')).toBeVisible();
+  expect(fixture.updatedCommunitySports).toEqual(['Padel']);
+  await expect(page.getByRole('heading', { name: 'Desportos desta comunidade' })).toBeVisible();
 });

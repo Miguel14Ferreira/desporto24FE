@@ -100,9 +100,14 @@ export class CommunityGroupsService {
     name: string;
     description: string | null;
     sport: string | null;
+    sports?: string[];
     visibility: CommunityVisibility;
   }): Observable<CommunityGroup> {
     return this.http.post<CommunityGroup>(this.url, request);
+  }
+
+  updateSports(id: number, sports: string[]): Observable<CommunityGroup> {
+    return this.http.put<CommunityGroup>(this.url + '/' + id + '/sports', { sports });
   }
 
   sessions(id: number): Observable<SessionSummary[]> {

@@ -24,6 +24,7 @@ import { CommunityService } from '../../services/community.service';
 import { SessionService } from '../../services/session.service';
 import { CommunityProfile } from '../model/community-profile';
 import { SessionSummary } from '../model/session-summary';
+import { SPORTS_CATALOG } from '../../shared/sports-catalog';
 
 type CommunityTab = 'home' | 'sessions' | 'tournaments' | 'ranking' | 'stats' | 'members';
 
@@ -48,6 +49,12 @@ export class CommunitiesComponent implements OnInit {
   communities: CommunityGroup[] = [];
   invites: CommunityInvite[] = [];
   selected?: CommunityGroup;
+  readonly sportsCatalog = SPORTS_CATALOG;
+  sportsDraft: string[] = [];
+  sportsSearch = '';
+  editingSports = false;
+  savingSports = false;
+  sportsMessage = '';
   competition?: CommunityCompetitionOverview;
   maxStandingPoints = 0;
   topGoalsStanding?: CommunityStanding;
@@ -394,6 +401,68 @@ export class CommunitiesComponent implements OnInit {
       });
   }
 
+  get availableSportSuggestions(): string[] {
+    const query = this.sportsSearch.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+    if (!query) return [];
+    return this.sportsCatalog.filter(value =>
+      value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().includes(query)
+      && !this.sportsDraft.some(current => current.toLowerCase() === value.toLowerCase())
+    ).slice(0, 8);
+  }
+
+  communitySports(group: CommunityGroup): string[] {
+    return group.sports?.length ? group.sports : (group.sport ? [group.sport] : []);
+  }
+
+  editSports(): void {
+    if (!this.selected || !this.canManage() || this.savingSports) return;
+    this.sportsDraft = [...this.communitySports(this.selected)];
+    this.sportsSearch = '';
+    this.sportsMessage = '';
+    this.editingSports = true;
+  }
+
+  cancelSportsEdit(): void {
+    if (this.savingSports) return;
+    this.editingSports = false;
+    this.sportsSearch = '';
+  }
+
+  addCommunitySport(value: string): void {
+    if (!this.editingSports || this.savingSports || this.sportsDraft.length >= 128
+        || !this.sportsCatalog.includes(value)
+        || this.sportsDraft.some(sport => sport.toLowerCase() === value.toLowerCase())) return;
+    this.sportsDraft = [...this.sportsDraft, value];
+    this.sportsSearch = '';
+  }
+
+  removeCommunitySport(value: string): void {
+    if (this.savingSports) return;
+    this.sportsDraft = this.sportsDraft.filter(sport => sport !== value);
+  }
+
+  saveCommunitySports(): void {
+    if (!this.selected || !this.canManage() || !this.editingSports || this.savingSports) return;
+    const id = this.selected.id;
+    this.savingSports = true;
+    this.errorMessage = '';
+    this.sportsMessage = '';
+    this.communityService.updateSports(id, [...this.sportsDraft])
+      .pipe(timeout(10_000), finalize(() => this.savingSports = false))
+      .subscribe({
+        next: group => {
+          if (this.selected?.id !== id) return;
+          this.selected = group;
+          this.replaceCommunity(group);
+          this.editingSports = false;
+          this.sportsMessage = 'Modalidades atualizadas.';
+        },
+        error: () => {
+          if (this.selected?.id === id) this.errorMessage = 'Não foi possível atualizar as modalidades.';
+        }
+      });
+  }
+
   open(community: CommunityGroup): void {
     if (!this.detailMode()) {
       void this.router.navigate(['/menu/communities', community.id]);
@@ -402,6 +471,8 @@ export class CommunitiesComponent implements OnInit {
 
     // A response for the previous community must not replace this one's requests.
     ++this.pendingRequestsLookupVersion;
+    this.editingSports = false;
+    this.sportsMessage = '';
     this.pendingJoinRequestsLoading = false;
     this.pendingJoinRequests = [];
     this.errorMessage = '';
