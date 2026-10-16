@@ -419,7 +419,7 @@
             <label for="venue-map-link">Link do Google Maps (opcional)</label>
             <input id="venue-map-link" name="mapLink" type="url"
               [(ngModel)]="mapLink" placeholder="https://maps.app.goo.gl/..."
-              (ngModelChange)="mapLinkError = false; mapLinkResolved = false">
+              (ngModelChange)="onMapLinkChanged()">
             <button type="button" class="jynlo-action jynlo-action--neutral"
               [disabled]="!mapLink.trim() || resolvingMapLink || saving" (click)="resolveMapLink()">
               {{ resolvingMapLink ? 'A obter coordenadas...' : 'Obter coordenadas do link' }}
@@ -434,13 +434,13 @@
           <label>
             <span>{{ 'venue.latitude' | t }}</span>
             <input type="number" name="latitude" [(ngModel)]="latitude"
-              min="-90" max="90" step="any" placeholder="38.7223">
+              (ngModelChange)="onManualCoordinatesChanged()" min="-90" max="90" step="any" placeholder="38.7223">
           </label>
     
           <label>
             <span>{{ 'venue.longitude' | t }}</span>
             <input type="number" name="longitude" [(ngModel)]="longitude"
-              min="-180" max="180" step="any" placeholder="-9.1393">
+              (ngModelChange)="onManualCoordinatesChanged()" min="-180" max="180" step="any" placeholder="-9.1393">
           </label>
     
           <div class="venue-create-location venue-create-wide">
