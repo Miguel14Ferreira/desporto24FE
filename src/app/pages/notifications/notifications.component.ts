@@ -221,6 +221,15 @@ export class NotificationsComponent implements OnInit {
   }
 
   notificationSubject(notification: AppNotification): string {
+    const joinCommunity = this.joinNotificationCommunityName(notification);
+    if (joinCommunity) {
+      const subjectKeys: Record<string, string> = {
+        COMMUNITY_JOIN_REQUEST: 'notification.communityJoinRequestSubject',
+        COMMUNITY_JOIN_ACCEPTED: 'notification.communityJoinAcceptedSubject',
+        COMMUNITY_JOIN_REJECTED: 'notification.communityJoinRejectedSubject'
+      };
+      return t(subjectKeys[notification.type!] || '', { community: joinCommunity });
+    }
     const community = this.invitedCommunityName(notification);
     return community
       ? t('notification.communityInviteSubject', { community })
@@ -228,6 +237,20 @@ export class NotificationsComponent implements OnInit {
   }
 
   notificationMessage(notification: AppNotification): string {
+    const joinCommunity = this.joinNotificationCommunityName(notification);
+    if (joinCommunity) {
+      if (notification.type === 'COMMUNITY_JOIN_REQUEST' && notification.relatedUsername) {
+        return t('notification.communityJoinRequestMessage', {
+          community: joinCommunity, username: notification.relatedUsername
+        });
+      }
+      if (notification.type === 'COMMUNITY_JOIN_ACCEPTED') {
+        return t('notification.communityJoinAcceptedMessage', { community: joinCommunity });
+      }
+      if (notification.type === 'COMMUNITY_JOIN_REJECTED') {
+        return t('notification.communityJoinRejectedMessage', { community: joinCommunity });
+      }
+    }
     const community = this.invitedCommunityName(notification);
     return community && notification.relatedUsername
       ? t('notification.communityInviteMessage', {
@@ -237,12 +260,42 @@ export class NotificationsComponent implements OnInit {
       : notification.message;
   }
 
+  private joinNotificationCommunityName(notification: AppNotification): string | null {
+    const prefixes: Record<string, string> = {
+      COMMUNITY_JOIN_REQUEST: 'Novo pedido para a comunidade ',
+      COMMUNITY_JOIN_ACCEPTED: 'Pedido aceite na comunidade ',
+      COMMUNITY_JOIN_REJECTED: 'Pedido recusado na comunidade '
+    };
+    const prefix = prefixes[notification.type || ''];
+    return prefix && notification.subject.startsWith(prefix)
+      ? notification.subject.slice(prefix.length).trim() || null
+      : null;
+  }
+
   private invitedCommunityName(notification: AppNotification): string | null {
     // The current API includes the community name in the invitation subject.
     const prefix = 'Convite para a comunidade ';
     return notification.type === 'COMMUNITY_INVITE' && notification.subject.startsWith(prefix)
       ? notification.subject.slice(prefix.length).trim() || null
       : null;
+  }
+
+  openJoinCommunity(notification: AppNotification): void {
+    if (!['COMMUNITY_JOIN_REQUEST', 'COMMUNITY_JOIN_ACCEPTED', 'COMMUNITY_JOIN_REJECTED']
+            .includes(notification.type || '')
+        || typeof notification.communityId !== 'number'
+        || !Number.isSafeInteger(notification.communityId)
+        || notification.communityId <= 0) {
+      return;
+    }
+
+    if (notification.type === 'COMMUNITY_JOIN_REQUEST') {
+      void this.router.navigate(['/menu/communities', notification.communityId], {
+        queryParams: { tab: 'members' }
+      });
+    } else {
+      void this.router.navigate(['/menu/communities', notification.communityId]);
+    }
   }
 
   openChat(notification: AppNotification): void {
@@ -419,6 +472,12 @@ export class NotificationsComponent implements OnInit {
         return 'Convite para sessão';
       case 'COMMUNITY_INVITE':
         return t('notification.communityInvite');
+      case 'COMMUNITY_JOIN_REQUEST':
+        return t('notification.communityJoinRequest');
+      case 'COMMUNITY_JOIN_ACCEPTED':
+        return t('notification.communityJoinAccepted');
+      case 'COMMUNITY_JOIN_REJECTED':
+        return t('notification.communityJoinRejected');
       case 'CHAT_MESSAGE':
         return t('notification.chatMessage');
       default:

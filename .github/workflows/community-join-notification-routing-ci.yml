@@ -1,0 +1,28 @@
+name: Validate community join notification actions
+on:
+  pull_request:
+    branches: [preview/render-fullstack]
+    paths:
+      - 'src/app/pages/notifications/notifications.component.ts'
+      - 'src/app/pages/notifications/notifications.component.html'
+      - 'src/app/pages/notifications/notifications.component.spec.ts'
+      - 'src/app/pages/model/app-notification.ts'
+      - 'src/app/pages/communities/communities.component.ts'
+      - 'src/app/pages/communities/community-join-deep-link.spec.ts'
+      - 'src/app/i18n/i18n.service.ts'
+      - '.github/workflows/community-join-notification-routing-ci.yml'
+permissions:
+  contents: read
+jobs:
+  frontend-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Test notification actions and community request permissions
+        run: npm test -- --watch=false --browsers=ChromeHeadless --include=src/app/pages/notifications/notifications.component.spec.ts --include=src/app/pages/communities/community-join-deep-link.spec.ts --include=src/app/pages/communities/community-bulk-approval.spec.ts --include=src/app/pages/communities/community-discovery-action.spec.ts
+      - run: npm run build
