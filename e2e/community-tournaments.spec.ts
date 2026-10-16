@@ -62,7 +62,8 @@ function fixtureToken(username: string): string {
 }
 
 type FixtureMode = 'empty' | 'draft' | 'paged' | 'forbidden' | 'switch'
-  | 'management' | 'complete-rejected';
+  | 'management' | 'complete-rejected' | 'list-network-error'
+  | 'paged-enrollment' | 'draw-tie';
 
 async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode) {
   const username = role === 'OWNER' ? 'organizador' : 'participante';
@@ -91,6 +92,14 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode) {
     { profileId: 2, username: 'participante', displayName: 'Participante',
       joinedAt: '2026-10-16T12:02:00Z', status: 'CONFIRMED' }
   ] : [];
+  if (mode === 'paged-enrollment') {
+    participants.push(
+      { profileId: 1, username: 'organizador', displayName: 'Organizador',
+        joinedAt: '2026-10-16T12:01:00Z', status: 'CONFIRMED' },
+      { profileId: 2, username: 'participante', displayName: 'Participante',
+        joinedAt: '2026-10-16T12:02:00Z', status: 'PENDING' }
+    );
+  }
   if (mode === 'management') {
     participants.push(
       { profileId: 3, username: 'mariana', displayName: 'Mariana',
@@ -110,6 +119,9 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode) {
   const requestedMatchPages: number[] = [];
   const pendingDetailResponses: Array<() => void> = [];
   let completeAttempts = 0;
+  let listAttempts = 0;
+  let joinAttempts = 0;
+  const requestedParticipantPages: number[] = [];
   const organizerMutations: string[] = [];
   const unmocked: string[] = [];
   page.on('pageerror', error => console.log('[E2E PAGE ERROR]', error.stack || error.message));
@@ -191,6 +203,10 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode) {
 
     if (path === '/api/communities/7/tournaments') {
       if (method === 'GET') {
+        listAttempts++;
+        if (mode === 'list-network-error' && listAttempts === 1) {
+          return route.abort('failed');
+        }
         return send({ tournaments, page: Number(url.searchParams.get('page') || 0), hasMore: false });
       }
       if (method === 'POST') {
@@ -204,6 +220,14 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode) {
       if (method === 'GET') {
         if (mode === 'switch') {
           await new Promise<void>(resolve => pendingDetailResponses.push(resolve));
+        }
+        const requestedPage = Number(url.searchParams.get('page') || 0);
+        requestedParticipantPages.push(requestedPage);
+        if (mode === 'paged-enrollment') {
+          return send({
+            participants: participants.slice(requestedPage, requestedPage + 1),
+            page: requestedPage, hasMore: requestedPage < participants.length - 1
+          });
         }
         return send({ participants, page: 0, hasMore: false });
       }
@@ -229,6 +253,7 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode) {
     }
     if (path === '/api/communities/7/tournaments/9/participants/me') {
       if (method === 'PUT') {
+        joinAttempts++;
         const entry: Participant = {
           profileId: 2, username: 'participante', displayName: 'Participante',
           joinedAt: '2026-10-16T13:00:00Z', status: 'PENDING'
@@ -286,10 +311,15 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode) {
       const t = tournaments[0];
       t.status = 'COMPLETED';
       t.completedAt = '2026-10-16T14:00:00Z';
-      t.championProfileId = top.profileId;
-      t.championUsername = top.username;
-      t.championDisplayName = top.displayName;
-      t.championPoints = top.points;
+      const second = standings().standings[1];
+      const isTie = Boolean(second &&
+        top.points === second.points && top.goalDifference === second.goalDifference &&
+        top.goalsFor === second.goalsFor && top.won === second.won);
+      t.championTied = isTie;
+      t.championProfileId = isTie ? null : top.profileId;
+      t.championUsername = isTie ? null : top.username;
+      t.championDisplayName = isTie ? null : top.displayName;
+      t.championPoints = isTie ? null : top.points;
       return send(t);
     }
     if (path === '/api/notifications/unread-count' && method === 'GET') return send(0);
@@ -300,8 +330,11 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode) {
   });
 
   return {
-    tournaments, participants, matches, unmocked, requestedMatchPages, organizerMutations,
+    tournaments, participants, matches, unmocked, requestedMatchPages,
+    requestedParticipantPages, organizerMutations,
     get completeAttempts(): number { return completeAttempts; },
+    get listAttempts(): number { return listAttempts; },
+    get joinAttempts(): number { return joinAttempts; },
     get pendingDetails(): number { return pendingDetailResponses.length; },
     releaseDetails(): void {
       pendingDetailResponses.splice(0).forEach(resolve => resolve());
@@ -503,4 +536,61 @@ test('erro HTTP 409 ao encerrar não bloqueia a liga e permite tentar de novo', 
   await expect(page.getByText('Campeão: Organizador')).toBeVisible();
   expect(fixture.completeAttempts).toBe(2);
   expect(fixture.tournaments[0].status).toBe('COMPLETED');
+});
+
+test('falha de rede ao listar torneios informa o utilizador e recupera sem falsos estados vazios', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'list-network-error');
+  await page.goto('/menu/communities/7?tab=tournaments');
+
+  await expect(page.getByRole('alert')).toContainText('Não foi possível carregar os torneios.');
+  await expect(page.getByText('Esta comunidade ainda não tem torneios.')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Tentar novamente' })).toBeEnabled();
+  await page.getByRole('button', { name: 'Tentar novamente' }).click();
+
+  await expect(page.locator('.tournament-heading h4')).toHaveText('Liga de Outono');
+  await expect(page.getByRole('alert')).toHaveCount(0);
+  expect(fixture.listAttempts).toBe(2);
+  expect(fixture.tournaments).toHaveLength(1);
+});
+
+test('inscrição na segunda página impede pedidos duplicados antes de carregar a lista inteira', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'MEMBER', 'paged-enrollment');
+  await page.goto('/menu/communities/7?tab=tournaments');
+
+  await expect(page.locator('.tournament-heading h4')).toHaveText('Liga de Outono');
+  await expect(page.getByText('Consulta as restantes inscrições para verificar se já estás inscrito.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Pedir inscrição' })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Ver mais jogadores' }).click();
+
+  const mine = page.locator('.player-item').filter({ hasText: '@participante' });
+  await expect(mine.getByText('A aguardar aprovação')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Cancelar a minha inscrição' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Pedir inscrição' })).toHaveCount(0);
+  expect(fixture.requestedParticipantPages).toEqual([0, 1]);
+  expect(fixture.joinAttempts).toBe(0);
+});
+
+test('empate desportivo no primeiro lugar não atribui campeão arbitrário', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'draw-tie');
+  await page.goto('/menu/communities/7?tab=tournaments');
+  await expect(page.locator('.tournament-heading h4')).toHaveText('Liga de Outono');
+
+  await page.getByRole('button', { name: 'Gerar jornadas' }).click();
+  await page.getByRole('button', { name: 'Sim, publicar calendário' }).click();
+  const game = page.locator('.match-card').first();
+  await game.getByRole('spinbutton', { name: 'Golos de organizador' }).fill('1');
+  await game.getByRole('spinbutton', { name: 'Golos de participante' }).fill('1');
+  await game.getByRole('button', { name: 'Guardar' }).click();
+
+  await expect(page.getByText('1 / 1 jogos')).toBeVisible();
+  await page.getByRole('button', { name: 'Encerrar torneio' }).click();
+  await page.getByRole('button', { name: 'Sim, encerrar' }).click();
+
+  await expect(page.getByText('Empate no primeiro lugar')).toBeVisible();
+  await expect(page.getByText('O torneio terminou com igualdade nos critérios de desempate.')).toBeVisible();
+  await expect(page.getByText(/Campeão:/)).toHaveCount(0);
+  await expect(page.locator('.standings-table tbody tr')).toHaveCount(2);
+  expect(fixture.tournaments[0].status).toBe('COMPLETED');
+  expect(fixture.tournaments[0].championTied).toBe(true);
+  expect(fixture.tournaments[0].championProfileId).toBeNull();
 });
