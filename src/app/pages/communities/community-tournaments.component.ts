@@ -41,6 +41,7 @@ export class CommunityTournamentsComponent implements OnChanges {
   private listRevision = 0;
   private detailRevision = 0;
   private mutationRevision = 0;
+  private standingsRevision = 0;
 
   constructor(
     private readonly api: CommunityTournamentsService,
@@ -52,6 +53,7 @@ export class CommunityTournamentsComponent implements OnChanges {
       ++this.listRevision;
       ++this.detailRevision;
       ++this.mutationRevision;
+      ++this.standingsRevision;
       this.busy = false;
       this.selected = undefined;
       this.loading = false;
@@ -133,6 +135,10 @@ export class CommunityTournamentsComponent implements OnChanges {
   selectTournament(tournament: CommunityTournament): void {
     if (this.selected?.id === tournament.id && !this.error) return;
     ++this.detailRevision;
+    ++this.mutationRevision;
+    ++this.standingsRevision;
+    // A request for the previous tournament must not leave this one disabled.
+    this.busy = false;
     this.detailsLoading = false;
     this.selected = tournament;
     this.confirmAction = null;
@@ -154,6 +160,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     if (!tournament || !this.isMember || this.detailsLoading) return;
     const communityId = this.community.id;
     const revision = ++this.detailRevision;
+    ++this.standingsRevision;
     this.detailsLoading = true;
     this.error = '';
     forkJoin({
@@ -313,7 +320,12 @@ export class CommunityTournamentsComponent implements OnChanges {
     }
     await this.mutate(
       this.api.recordResult(this.community.id, this.selected.id, match.id, score.home!, score.away!),
-      'Resultado guardado.', () => this.loadDetails()
+      'Resultado guardado.', saved => {
+        // Keep the already-loaded fixture pages visible, including distant rounds.
+        this.matches = this.matches.map(game => game.id === saved.id ? saved : game);
+        this.scoreDrafts[saved.id] = { home: saved.homeScore, away: saved.awayScore };
+        this.refreshStandings();
+      }
     );
   }
 
@@ -326,6 +338,28 @@ export class CommunityTournamentsComponent implements OnChanges {
         this.updateSelected(tournament);
         this.loadDetails();
       });
+  }
+
+  private refreshStandings(): void {
+    const tournament = this.selected;
+    if (!tournament || !this.isMember) return;
+    const communityId = this.community.id;
+    const revision = ++this.standingsRevision;
+    this.api.standings(communityId, tournament.id).pipe(timeout(12000)).subscribe({
+      next: table => {
+        if (revision === this.standingsRevision && this.community.id === communityId
+            && this.selected?.id === tournament.id) {
+          this.standings = table;
+        }
+      },
+      error: () => {
+        if (revision === this.standingsRevision && this.community.id === communityId
+            && this.selected?.id === tournament.id) {
+          this.standings = undefined;
+          this.error = 'Resultado guardado, mas não foi possível atualizar a classificação. Usa Atualizar para tentar novamente.';
+        }
+      }
+    });
   }
 
   private updateSelected(tournament: CommunityTournament): void {
@@ -342,11 +376,13 @@ export class CommunityTournamentsComponent implements OnChanges {
     const mutationRevision = ++this.mutationRevision;
     try {
       const result = await firstValueFrom(operation.pipe(timeout(12000)));
-      if (this.community.id !== cid || (tid !== undefined && this.selected?.id !== tid)) return;
+      if (mutationRevision !== this.mutationRevision || this.community.id !== cid
+          || (tid !== undefined && this.selected?.id !== tid)) return;
       this.feedback = success;
       after(result);
     } catch (error: any) {
-      if (this.community.id !== cid) return;
+      if (mutationRevision !== this.mutationRevision || this.community.id !== cid
+          || (tid !== undefined && this.selected?.id !== tid)) return;
       const detail: unknown = error?.error?.detail || error?.error?.message;
       this.error = typeof detail === 'string' && detail.length <= 180
         ? detail : 'Não foi possível concluir a operação. Verifica os dados e tenta novamente.';
