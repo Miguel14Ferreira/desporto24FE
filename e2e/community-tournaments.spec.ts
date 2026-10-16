@@ -913,8 +913,10 @@ test('gestores editam várias modalidades e atualizam a comunidade sem afetar a 
 test('comunidade multidesporto leva à criação da sessão e permite escolher a modalidade', async ({ page }) => {
   await mockCommunityApi(page, 'OWNER', 'draft', 'Futebol', ['Futebol', 'Padel']);
   await page.goto('/menu/communities/7?tab=sessions');
-  const createLink = page.getByRole('link', { name: /Criar sessão/ });
-  await expect(createLink).toBeVisible();
+  await expect(page.locator('.community-tab-panel')).toBeVisible();
+  const createLink = page.locator('.community-tab-panel')
+    .getByRole('link', { name: /Criar sessão/ });
+  await expect(createLink).toHaveAttribute('href', '/menu/createEvent?community=7');
   await createLink.click();
 
   await expect(page).toHaveURL(/\/menu\/createEvent\?community=7/);

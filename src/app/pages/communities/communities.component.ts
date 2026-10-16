@@ -489,7 +489,9 @@ export class CommunitiesComponent implements OnInit {
         const openJoinRequests = requestedTab === 'members'
           && (full.myRole === 'OWNER' || full.myRole === 'ADMIN');
         this.activeTab = openJoinRequests ? 'members'
-          : requestedTab === 'tournaments' ? 'tournaments' : 'home';
+          : requestedTab === 'tournaments' ? 'tournaments'
+          : requestedTab === 'sessions' ? 'sessions'
+          : 'home';
         this.inviteUsername = '';
         this.inviteSearchResults = [];
         this.inviteSearchPerformed = false;
