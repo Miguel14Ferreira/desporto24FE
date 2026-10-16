@@ -104,6 +104,13 @@ describe('Create session venue server autocomplete', () => {
     expect(component.venuesLoading).toBeFalse();
   }));
 
+  it('queries the chosen city field separately from the venue name', fakeAsync(() => {
+    component.sport = 'Padel';
+    component.onCityChanged('Porto');
+    tick(300);
+    expect(venues.suggest).toHaveBeenCalledWith('', 'Porto', 'Padel', 0);
+  }));
+
   it('separates a selected datalist label into venue name and city', fakeAsync(() => {
     component.sport = 'Padel';
     component.onVenueSearchChanged('Pavilhão Municipal · Évora');
