@@ -63,7 +63,7 @@ function fixtureToken(username: string): string {
 
 type FixtureMode = 'empty' | 'draft' | 'paged' | 'forbidden' | 'switch'
   | 'management' | 'complete-rejected' | 'list-network-error'
-  | 'paged-enrollment' | 'draw-tie';
+  | 'paged-enrollment' | 'draw-tie' | 'schedule-roster-paged' | 'schedule-roster-oversize';
 
 async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode) {
   const username = role === 'OWNER' ? 'organizador' : 'participante';
@@ -100,6 +100,15 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode) {
         joinedAt: '2026-10-16T12:02:00Z', status: 'PENDING' }
     );
   }
+  if (mode === 'schedule-roster-paged' || mode === 'schedule-roster-oversize') {
+    const max = mode === 'schedule-roster-oversize' ? 33 : 21;
+    for (let id = 3; id <= max; id++) {
+      participants.push({
+        profileId: id, username: 'player' + id, displayName: 'Jogador ' + id,
+        joinedAt: '2026-10-16T12:03:00Z', status: 'CONFIRMED'
+      });
+    }
+  }
   if (mode === 'management') {
     participants.push(
       { profileId: 3, username: 'mariana', displayName: 'Mariana',
@@ -119,6 +128,7 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode) {
   const requestedMatchPages: number[] = [];
   const pendingDetailResponses: Array<() => void> = [];
   let completeAttempts = 0;
+  let scheduleAttempts = 0;
   let listAttempts = 0;
   let joinAttempts = 0;
   const requestedParticipantPages: number[] = [];
@@ -229,6 +239,13 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode) {
             page: requestedPage, hasMore: requestedPage < participants.length - 1
           });
         }
+        if (mode === 'schedule-roster-paged' || mode === 'schedule-roster-oversize') {
+          const offset = requestedPage * 20;
+          return send({
+            participants: participants.slice(offset, offset + 20),
+            page: requestedPage, hasMore: offset + 20 < participants.length
+          });
+        }
         return send({ participants, page: 0, hasMore: false });
       }
     }
@@ -267,6 +284,10 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode) {
       }
     }
     if (path === '/api/communities/7/tournaments/9/schedule' && method === 'POST') {
+      scheduleAttempts++;
+      if (participants.filter(p => p.status === 'CONFIRMED').length > 32) {
+        return send({ message: 'Esta versão suporta no máximo 32 jogadores confirmados' }, 422);
+      }
       tournaments[0].status = 'IN_PROGRESS';
       tournaments[0].startedAt = '2026-10-16T13:00:00Z';
       matches.push({
@@ -333,6 +354,7 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode) {
     tournaments, participants, matches, unmocked, requestedMatchPages,
     requestedParticipantPages, organizerMutations,
     get completeAttempts(): number { return completeAttempts; },
+    get scheduleAttempts(): number { return scheduleAttempts; },
     get listAttempts(): number { return listAttempts; },
     get joinAttempts(): number { return joinAttempts; },
     get pendingDetails(): number { return pendingDetailResponses.length; },
@@ -757,4 +779,38 @@ test('após aprovação ou remoção o foco regressa à secção Jogadores', asy
   await page.getByRole('button', { name: 'Remover Pedro do torneio' }).click();
   await expect(page.locator('.player-item').filter({ hasText: '@pedro' })).toHaveCount(0);
   await expect(heading).toBeFocused();
+});
+
+test('não permite publicar calendário sem consultar todas as páginas de inscrições', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'schedule-roster-paged');
+  await page.goto('/menu/communities/7?tab=tournaments');
+  await expect(page.locator('.tournament-heading h4')).toHaveText('Liga de Outono');
+
+  const generate = page.getByRole('button', { name: 'Gerar jornadas' });
+  await expect(page.getByText('20 confirmados nesta lista')).toBeVisible();
+  await expect(generate).toBeDisabled();
+  await expect(page.getByText('Carrega todas as inscrições antes de publicar o calendário.')).toBeVisible();
+  expect(fixture.scheduleAttempts).toBe(0);
+
+  await page.getByRole('button', { name: 'Ver mais jogadores' }).click();
+  await expect(page.getByText('21 confirmados nesta lista')).toBeVisible();
+  await expect(page.getByText('Carrega todas as inscrições antes de publicar o calendário.')).toHaveCount(0);
+  await expect(generate).toBeEnabled();
+  expect(fixture.requestedParticipantPages).toEqual([0, 1]);
+  expect(fixture.scheduleAttempts).toBe(0);
+});
+
+test('não permite gerar jornadas com mais de 32 jogadores confirmados', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'schedule-roster-oversize');
+  await page.goto('/menu/communities/7?tab=tournaments');
+  await expect(page.locator('.tournament-heading h4')).toHaveText('Liga de Outono');
+
+  const generate = page.getByRole('button', { name: 'Gerar jornadas' });
+  await expect(generate).toBeDisabled();
+  await page.getByRole('button', { name: 'Ver mais jogadores' }).click();
+  await expect(page.getByText('33 confirmados nesta lista')).toBeVisible();
+  await expect(generate).toBeDisabled();
+  await expect(page.getByText('Esta versão permite no máximo 32 jogadores confirmados.')).toBeVisible();
+  expect(fixture.requestedParticipantPages).toEqual([0, 1]);
+  expect(fixture.scheduleAttempts).toBe(0);
 });

@@ -161,16 +161,27 @@
                 <div>
                   <strong>Pronto para começar?</strong>
                   <p>Publicar o calendário fecha as inscrições e cria todos os confrontos da liga.</p>
+                  @if (participantsHasMore) {
+                    <p class="field-validation" role="status">
+                      Carrega todas as inscrições antes de publicar o calendário.
+                    </p>
+                  } @else if (rosterReady && confirmedCount > 32) {
+                    <p class="field-validation" role="status">
+                      Esta versão permite no máximo 32 jogadores confirmados. Remove jogadores antes de continuar.
+                    </p>
+                  } @else if (rosterReady && confirmedCount < 2) {
+                    <p class="t-muted">Confirma pelo menos dois jogadores para iniciar a liga.</p>
+                  }
                 </div>
                 @if (confirmAction === 'schedule') {
                   <div class="confirm-actions">
                     <button type="button" class="t-btn t-btn-primary"
-                      [disabled]="busy" (click)="publishSchedule()">Sim, publicar calendário</button>
+                      [disabled]="!canPublishSchedule" (click)="publishSchedule()">Sim, publicar calendário</button>
                     <button type="button" class="t-btn t-btn-secondary" (click)="confirmAction = null">Cancelar</button>
                   </div>
                 } @else {
                   <button type="button" class="t-btn t-btn-primary"
-                    [disabled]="busy || confirmedCount < 2"
+                    [disabled]="!canPublishSchedule"
                     (click)="confirmAction = 'schedule'">Gerar jornadas</button>
                 }
               </div>

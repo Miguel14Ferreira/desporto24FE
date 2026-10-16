@@ -24,6 +24,7 @@ export class CommunityTournamentsComponent implements OnChanges {
   participants: TournamentParticipant[] = [];
   participantsPage = 0;
   participantsHasMore = false;
+  rosterReady = false;
   matches: TournamentMatch[] = [];
   matchesPage = 0;
   matchesHasMore = false;
@@ -104,6 +105,7 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.detailsLoading = false;
       this.tournaments = [];
       this.participants = [];
+      this.rosterReady = false;
       this.matches = [];
       this.standings = undefined;
       this.error = '';
@@ -139,6 +141,13 @@ export class CommunityTournamentsComponent implements OnChanges {
 
   get confirmedCount(): number {
     return this.participants.filter(p => p.status === 'CONFIRMED').length;
+  }
+
+  get canPublishSchedule(): boolean {
+    return this.canManage && this.selected?.status === 'DRAFT'
+      && this.rosterReady && !this.detailsLoading && !this.busy
+      && !this.participantsHasMore
+      && this.confirmedCount >= 2 && this.confirmedCount <= 32;
   }
 
   get canComplete(): boolean {
@@ -199,6 +208,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.participantsPage = 0;
     this.matchesPage = 0;
     this.participants = [];
+    this.rosterReady = false;
     this.matches = [];
     this.standings = undefined;
     this.scoreDrafts = {};
@@ -216,6 +226,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     const revision = ++this.detailRevision;
     ++this.standingsRevision;
     this.detailsLoading = true;
+    this.rosterReady = false;
     this.error = '';
     forkJoin({
       members: this.api.participants(communityId, tournament.id, 0),
@@ -234,6 +245,7 @@ export class CommunityTournamentsComponent implements OnChanges {
         if (revision !== this.detailRevision || this.community.id !== communityId
             || this.selected?.id !== tournament.id) return;
         this.participants = members.participants;
+        this.rosterReady = true;
         this.participantsPage = 0;
         this.participantsHasMore = members.hasMore;
         this.matches = games.matches;
@@ -365,9 +377,9 @@ export class CommunityTournamentsComponent implements OnChanges {
   }
 
   async publishSchedule(): Promise<void> {
-    if (!this.selected || !this.canManage || this.selected.status !== 'DRAFT'
-        || this.confirmAction !== 'schedule') return;
-    const tournamentId = this.selected.id;
+    const tournament = this.selected;
+    if (!tournament || !this.canPublishSchedule || this.confirmAction !== 'schedule') return;
+    const tournamentId = tournament.id;
     this.confirmAction = null;
     await this.mutate(this.api.generateSchedule(this.community.id, tournamentId),
       'Calendário publicado. O torneio começou.', () => {
