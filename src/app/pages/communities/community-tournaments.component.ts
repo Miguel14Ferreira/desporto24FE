@@ -32,6 +32,8 @@ export class CommunityTournamentsComponent implements OnChanges {
   matchesHasMore = false;
   standings?: TournamentStandings;
 
+  showGuide = false;
+  showIndividualCreate = false;
   nameDraft = '';
   sportDraft = '';
   sportSearch = '';
@@ -61,7 +63,7 @@ export class CommunityTournamentsComponent implements OnChanges {
   busy = false;
   error = '';
   feedback = '';
-  confirmAction: 'schedule' | 'complete' | null = null;
+  confirmAction: 'schedule' | 'complete' | 'delete' | null = null;
   scoreDrafts: Record<number, { home: number | null; away: number | null }> = {};
   scoreTouched = new Set<number>();
 
@@ -125,6 +127,8 @@ export class CommunityTournamentsComponent implements OnChanges {
       ++this.mutationRevision;
       ++this.standingsRevision;
       this.busy = false;
+      this.showGuide = false;
+      this.showIndividualCreate = false;
       // A sole community sport is convenient; multi-sport requires an explicit choice.
       const sports = this.community.sports;
       this.sportDraft = sports?.length === 1
@@ -217,6 +221,7 @@ export class CommunityTournamentsComponent implements OnChanges {
         this.tournaments = reset ? result.tournaments : [...this.tournaments, ...result.tournaments];
         this.tournamentsPage = page;
         this.tournamentsHasMore = result.hasMore;
+        if (reset && !result.tournaments.length && !this.showIndividualCreate) this.showGuide = true;
         if (reset && !this.selected && result.tournaments.length) {
           this.selectTournament(result.tournaments[0]);
         }
@@ -370,9 +375,16 @@ export class CommunityTournamentsComponent implements OnChanges {
     return typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= 999;
   }
 
+  startIndividualCreation(): void {
+    if (!this.canManage || this.busy) return;
+    this.showGuide = false;
+    this.showIndividualCreate = true;
+    this.error = '';
+  }
+
   async create(): Promise<void> {
     const name = this.nameDraft.trim();
-    if (!this.canManage || this.busy || name.length < 2 || name.length > 120) {
+    if (!this.canManage || !this.showIndividualCreate || this.busy || name.length < 2 || name.length > 120) {
       this.showError('Indica um nome entre 2 e 120 caracteres.');
       return;
     }
@@ -384,10 +396,30 @@ export class CommunityTournamentsComponent implements OnChanges {
     await this.mutate(this.api.create(this.community.id, name, this.sportDraft),
       'Torneio criado.', result => {
       this.nameDraft = '';
+      this.showIndividualCreate = false;
       this.selected = undefined;
       this.selectTournament(result);
       this.tournaments = [result, ...this.tournaments.filter(item => item.id !== result.id)];
     });
+  }
+
+
+  async deleteSelected(): Promise<void> {
+    if (!this.canManage || !this.selected || this.selected.status === 'COMPLETED'
+        || this.confirmAction !== 'delete' || this.busy) return;
+    const tournamentId = this.selected.id;
+    this.confirmAction = null;
+    await this.mutate(this.api.delete(this.community.id, tournamentId),
+      'Competição eliminada.', () => {
+        this.selected = undefined;
+        this.tournaments = this.tournaments.filter(item => item.id !== tournamentId);
+        this.participants = [];
+        this.matches = [];
+        this.standings = undefined;
+        ++this.detailRevision;
+        ++this.standingsRevision;
+        this.loadTournaments(true);
+      });
   }
 
   async join(): Promise<void> {

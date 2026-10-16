@@ -26,7 +26,7 @@ describe('Community tournaments management', () => {
   beforeEach(() => {
     api = jasmine.createSpyObj<CommunityTournamentsService>('CommunityTournamentsService', [
       'list', 'create', 'participants', 'join', 'leave', 'confirm', 'removeParticipant',
-      'generateSchedule', 'matches', 'recordResult', 'standings', 'complete'
+      'generateSchedule', 'matches', 'recordResult', 'standings', 'complete', 'delete'
     ]);
     api.list.and.returnValue(of({ tournaments: [draft], page: 0, hasMore: false }));
     api.participants.and.returnValue(of({ participants: [], page: 0, hasMore: false }));
@@ -61,6 +61,7 @@ describe('Community tournaments management', () => {
   it('creates a tournament, chooses it and reloads its details', async () => {
     const created = { ...draft, id: 12, name: 'Liga de Inverno' };
     api.create.and.returnValue(of(created));
+    component.startIndividualCreation();
     component.nameDraft = ' Liga de Inverno ';
     await component.create();
     expect(api.create).toHaveBeenCalledWith(7, 'Liga de Inverno', 'Futebol');
@@ -74,6 +75,7 @@ describe('Community tournaments management', () => {
     component.community = { ...community, sports: ['Futebol', 'Padel'] };
     component.ngOnChanges({ community: new SimpleChange(community, component.community, false) });
     expect(component.sportDraft).toBe('');
+    component.startIndividualCreation();
     component.nameDraft = 'Liga de outono';
     await component.create();
     expect(api.create).not.toHaveBeenCalled();
@@ -91,6 +93,7 @@ describe('Community tournaments management', () => {
     component.sportSearch = 'natação';
     expect(component.suggestedSports).toContain('Natação');
     component.chooseSport('Natação');
+    component.startIndividualCreation();
     component.nameDraft = 'Liga de natação';
     api.create.and.returnValue(of({ ...draft, id: 22, sport: 'Natação' }));
     await component.create();
@@ -105,6 +108,7 @@ describe('Community tournaments management', () => {
     component.sportSearch = 'tradicional';
     expect(component.suggestedSports).toContain('Desporto local tradicional');
     component.chooseSport('Desporto local tradicional');
+    component.startIndividualCreation();
     component.nameDraft = 'Torneio local';
     api.create.and.returnValue(of({ ...draft, id: 23, sport: 'Desporto local tradicional' }));
     await component.create();
@@ -118,6 +122,35 @@ describe('Community tournaments management', () => {
     expect(component.scoring.scoreInput).toContain('Pontos');
     component.selected = { ...draft, sport: null };
     expect(component.scoring.scoreInput).toContain('Marcador');
+  });
+
+
+  it('shows onboarding for an empty community and leaves team creation unavailable', () => {
+    api.list.and.returnValue(of({ tournaments: [], page: 0, hasMore: false }));
+    component.ngOnChanges({ community: new SimpleChange(community, community, false) });
+    expect(component.showGuide).toBeTrue();
+    expect(component.showIndividualCreate).toBeFalse();
+    expect(api.create).not.toHaveBeenCalled();
+  });
+
+  it('removes the selected trial only after explicit confirmation and resets the view', async () => {
+    api.delete.and.returnValue(of(void 0));
+    api.list.and.returnValue(of({ tournaments: [], page: 0, hasMore: false }));
+    component.confirmAction = 'delete';
+    await component.deleteSelected();
+    expect(api.delete).toHaveBeenCalledWith(7, 9);
+    expect(component.selected).toBeUndefined();
+    expect(component.tournaments).toEqual([]);
+    expect(component.feedback).toBe('Competição eliminada.');
+  });
+
+  it('does not delete without confirmation or management rights', async () => {
+    await component.deleteSelected();
+    expect(api.delete).not.toHaveBeenCalled();
+    component.confirmAction = 'delete';
+    component.community = { ...community, myRole: 'MEMBER' };
+    await component.deleteSelected();
+    expect(api.delete).not.toHaveBeenCalled();
   });
 
   it('enrolls only the current player and requests updated roster', async () => {
