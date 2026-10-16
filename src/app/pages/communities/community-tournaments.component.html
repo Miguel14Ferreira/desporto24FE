@@ -73,8 +73,10 @@
             <h4>{{ selected.name }}</h4>
             <p>Vitória {{ selected.winPoints }} · Empate {{ selected.drawPoints }} · Derrota {{ selected.lossPoints }} pontos</p>
           </div>
-          <button type="button" class="t-btn t-btn-secondary" (click)="loadDetails()"
-            [disabled]="detailsLoading || busy">Atualizar</button>
+          @if (isMember) {
+            <button type="button" class="t-btn t-btn-secondary" (click)="loadDetails()"
+              [disabled]="detailsLoading || busy">Atualizar</button>
+          }
         </header>
 
         @if (selected.status === 'COMPLETED') {
@@ -92,7 +94,12 @@
           </div>
         }
 
-        @if (detailsLoading) {
+        @if (!isMember) {
+          <div class="notice notice-info" role="status">
+            Para consultar jogadores, jornadas e classificações, adere primeiro a esta comunidade.
+            Podes fazê-lo na área de apresentação da comunidade.
+          </div>
+        } @else if (detailsLoading) {
           <p class="t-muted" role="status">A carregar participantes, jornadas e classificação…</p>
         } @else {
           <section class="t-section" aria-label="Inscrições">
@@ -105,6 +112,8 @@
                 @if (myEnrollment) {
                   <button type="button" class="t-btn t-btn-secondary"
                     [disabled]="busy" (click)="leave()">Cancelar a minha inscrição</button>
+                } @else if (participantsHasMore) {
+                  <span class="t-muted">Consulta as restantes inscrições para verificar se já estás inscrito.</span>
                 } @else {
                   <button type="button" class="t-btn t-btn-primary"
                     [disabled]="busy" (click)="join()">Pedir inscrição</button>

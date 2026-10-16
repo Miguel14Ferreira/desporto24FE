@@ -1,9 +1,9 @@
-import { of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 import { SimpleChange } from '@angular/core';
 import { AuthenticationService } from '../../services/authethication.service';
 import { CommunityTournamentsService } from '../../services/community-tournaments.service';
 import { CommunityGroup } from '../model/community-group';
-import { CommunityTournament, TournamentMatch } from '../model/community-tournament';
+import { CommunityTournament, TournamentMatch, TournamentPage } from '../model/community-tournament';
 import { CommunityTournamentsComponent } from './community-tournaments.component';
 
 describe('Community tournaments management', () => {
@@ -119,4 +119,65 @@ describe('Community tournaments management', () => {
     expect(component.selected).toBeUndefined();
     expect(component.participants.length).toBe(0);
   });
+  it('allows public tournament previews without requesting private rosters or standings', () => {
+    api.participants.calls.reset();
+    api.matches.calls.reset();
+    api.standings.calls.reset();
+    component.community = { ...community, id: 8, myRole: null, visibility: 'PUBLIC' };
+    component.ngOnChanges({ community: new SimpleChange(community, component.community, false) });
+
+    expect(component.selected?.id).toBe(9);
+    expect(component.isMember).toBeFalse();
+    expect(component.canManage).toBeFalse();
+    expect(api.list).toHaveBeenCalledWith(8, 0);
+    expect(api.participants).not.toHaveBeenCalled();
+    expect(api.matches).not.toHaveBeenCalled();
+    expect(api.standings).not.toHaveBeenCalled();
+    expect(component.error).toBe('');
+  });
+
+  it('requires a full round-robin calendar and one game per player before enabling completion', () => {
+    component.selected = { ...draft, status: 'IN_PROGRESS' };
+    component.standings = {
+      tournamentId: 9, status: 'IN_PROGRESS', totalMatches: 2, completedMatches: 2,
+      winPoints: 3, drawPoints: 1, lossPoints: 0,
+      standings: [1, 2, 3].map(id => ({
+        position: id, profileId: id, username: 'p' + id, displayName: 'Player ' + id,
+        played: 2, won: 1, drawn: 0, lost: 1, goalsFor: 1, goalsAgainst: 1,
+        goalDifference: 0, points: 3
+      }))
+    };
+    expect(component.canComplete).toBeFalse();
+    component.standings.totalMatches = 3;
+    component.standings.completedMatches = 3;
+    expect(component.canComplete).toBeTrue();
+    component.standings.standings[0].played = 1;
+    expect(component.canComplete).toBeFalse();
+  });
+
+  it('does not suggest another registration when the roster is not fully loaded', async () => {
+    component.participantsHasMore = true;
+    expect(component.myEnrollment).toBeUndefined();
+    await component.join();
+    expect(api.join).not.toHaveBeenCalled();
+  });
+
+  it('ignores a previous community list response after switching communities', () => {
+    const oldResponse = new Subject<TournamentPage>();
+    api.list.and.returnValue(oldResponse);
+    component.community = { ...community, id: 11 };
+    component.ngOnChanges({ community: new SimpleChange(community, component.community, false) });
+    api.list.and.returnValue(of({ tournaments: [], page: 0, hasMore: false }));
+    component.community = { ...community, id: 12 };
+    component.ngOnChanges({ community: new SimpleChange(community, component.community, false) });
+
+    oldResponse.next({ tournaments: [draft], page: 0, hasMore: false });
+    oldResponse.complete();
+
+    expect(component.selected).toBeUndefined();
+    expect(component.tournaments).toEqual([]);
+    expect(component.loading).toBeFalse();
+    expect(api.list).toHaveBeenCalledWith(12, 0);
+  });
+
 });
