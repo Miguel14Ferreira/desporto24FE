@@ -88,6 +88,10 @@ async function mockCommunityApi(page: Page, role: Role, mode: 'empty' | 'draft')
   ] : [];
   const matches: Match[] = [];
   const unmocked: string[] = [];
+  page.on('pageerror', error => console.log('[E2E PAGE ERROR]', error.stack || error.message));
+  page.on('console', message => {
+    if (message.type() === 'error') console.log('[E2E BROWSER CONSOLE]', message.text());
+  });
   page.on('request', request => {
     if (request.url().includes('/api/communities/')) {
       console.log('[E2E request]', request.method(), request.url());
@@ -254,6 +258,20 @@ async function mockCommunityApi(page: Page, role: Role, mode: 'empty' | 'draft')
 test.afterEach(async ({ page }, info) => {
   if (info.status === info.expectedStatus) return;
   console.log('[E2E diagnostics] url:', page.url());
+  console.log('[E2E component state]', await page.evaluate(() => {
+    try {
+      const ng = (window as any).ng;
+      const element = document.querySelector('app-community-tournaments');
+      const instance = ng?.getComponent?.(element);
+      return element && instance ? {
+        loading: instance.loading,
+        detailsLoading: instance.detailsLoading,
+        tournamentsLength: instance.tournaments?.length,
+        selected: instance.selected?.id,
+        error: instance.error
+      } : { ngAvailable: !!ng, elementFound: !!element };
+    } catch(e) { return { error: String(e) }; }
+  }));
   console.log('[E2E diagnostics] page:', (await page.locator('body').innerText().catch(() => '')).slice(0, 3200));
 });
 
