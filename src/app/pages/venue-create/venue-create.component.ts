@@ -85,6 +85,8 @@ export class VenueCreateComponent implements OnInit {
   resolvingMapLink = false;
   mapLinkError = false;
   mapLinkResolved = false;
+  private mapLinkRequestVersion = 0;
+  private coordinatesFromResolvedMapLink = false;
 
   constructor(
     private venueService: VenueService,
@@ -108,16 +110,46 @@ export class VenueCreateComponent implements OnInit {
     this.city = (params.get('city') || '').trim().slice(0, 120);
   }
 
+  onMapLinkChanged(): void {
+    // A changed Maps link must never silently retain coordinates from the previous link.
+    ++this.mapLinkRequestVersion;
+    if (this.coordinatesFromResolvedMapLink) {
+      this.latitude = null;
+      this.longitude = null;
+      this.coordinatesFromResolvedMapLink = false;
+    }
+    this.mapLinkResolved = false;
+    this.mapLinkError = false;
+    this.resolvingMapLink = false;
+  }
+
+  onManualCoordinatesChanged(): void {
+    // Explicitly edited coordinates belong to the user, not to a Maps URL.
+    ++this.mapLinkRequestVersion;
+    this.coordinatesFromResolvedMapLink = false;
+    this.mapLinkResolved = false;
+    this.resolvingMapLink = false;
+  }
+
   resolveMapLink(): void {
     const url = this.mapLink.trim();
     if (!url || this.resolvingMapLink || this.saving) return;
+    const requestVersion = ++this.mapLinkRequestVersion;
     this.resolvingMapLink = true;
     this.mapLinkError = false;
     this.mapLinkResolved = false;
     this.venueService.resolveMapLink(url)
-      .pipe(timeout(10_000), finalize(() => this.resolvingMapLink = false))
+      .pipe(
+        timeout(10_000),
+        finalize(() => {
+          if (requestVersion === this.mapLinkRequestVersion) {
+            this.resolvingMapLink = false;
+          }
+        })
+      )
       .subscribe({
         next: result => {
+          if (requestVersion !== this.mapLinkRequestVersion || url !== this.mapLink.trim()) return;
           if (!Number.isFinite(result.latitude) || !Number.isFinite(result.longitude)
               || Math.abs(result.latitude) > 90 || Math.abs(result.longitude) > 180) {
             this.mapLinkError = true;
@@ -125,9 +157,12 @@ export class VenueCreateComponent implements OnInit {
           }
           this.latitude = result.latitude;
           this.longitude = result.longitude;
+          this.coordinatesFromResolvedMapLink = true;
           this.mapLinkResolved = true;
         },
-        error: () => this.mapLinkError = true
+        error: () => {
+          if (requestVersion === this.mapLinkRequestVersion) this.mapLinkError = true;
+        }
       });
   }
 
@@ -143,6 +178,7 @@ export class VenueCreateComponent implements OnInit {
       position => {
         this.latitude = position.coords.latitude;
         this.longitude = position.coords.longitude;
+        this.onManualCoordinatesChanged();
         this.locating = false;
       },
       () => {
