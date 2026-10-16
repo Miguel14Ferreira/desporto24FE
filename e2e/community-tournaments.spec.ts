@@ -63,7 +63,8 @@ function fixtureToken(username: string): string {
 
 type FixtureMode = 'empty' | 'draft' | 'paged' | 'forbidden' | 'switch'
   | 'management' | 'complete-rejected' | 'list-network-error'
-  | 'paged-enrollment' | 'draw-tie' | 'schedule-roster-paged' | 'schedule-roster-oversize';
+  | 'paged-enrollment' | 'draw-tie' | 'schedule-roster-paged' | 'schedule-roster-oversize'
+  | 'discovery';
 
 async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode, sport: string | null = 'Futebol', sports?: string[]) {
   const username = role === 'OWNER' ? 'organizador' : 'participante';
@@ -212,7 +213,25 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode, sport
       community.sport = body.sports[0] || '';
       return send(community);
     }
-    if (method === 'GET' && path === '/api/communities/mine') return send([community]);
+    if (method === 'GET' && path === '/api/communities/mine') {
+      return send(mode === 'discovery' ? [] : [community]);
+    }
+    if (method === 'GET' && path === '/api/communities/search' && mode === 'discovery') {
+      return send({
+        communities: [
+          { ...community, visibility: 'PUBLIC',
+            sports: ['Futebol', 'Padel', 'Ténis', 'Natação'] },
+          { id: 8, name: 'Padel clássico', description: null, sport: 'Padel',
+            visibility: 'PUBLIC', photoUrl: null },
+          { id: 9, name: 'Comunidade aberta', description: null, sport: null,
+            sports: [], visibility: 'PUBLIC', photoUrl: null }
+        ], page: 0, hasMore: false
+      });
+    }
+    if (method === 'GET' && path === '/api/communities/7/presentation' && mode === 'discovery') {
+      return send({ ...community, visibility: 'PUBLIC',
+        sports: ['Futebol', 'Padel', 'Ténis', 'Natação'] });
+    }
     if (method === 'GET' && path === '/api/communities/invites/me') return send([]);
     if (method === 'GET' && path === '/api/communities/7') return send(community);
     if (method === 'GET' && path === '/api/communities/7/sessions') return send([]);
@@ -941,4 +960,24 @@ test('comunidade com modalidade única preenche a modalidade automaticamente', a
   await expect(page.locator('input[name="sport"]')).toHaveValue('Futebol');
   await expect(page.getByRole('button', { name: 'Futebol', exact: true }))
     .toHaveAttribute('aria-pressed', 'true');
+});
+
+test('descoberta mostra modalidades de comunidades múltiplas, legadas e sem desporto', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'MEMBER', 'discovery');
+  await page.goto('/menu/communities');
+  await page.locator('.community-pitch-actions button').click();
+
+  const cards = page.locator('#community-search .community-card');
+  await expect(cards).toHaveCount(3);
+  await expect(cards.first().locator('.sport-tag')).toHaveText([
+    'Futebol', 'Padel', 'Ténis', '+1'
+  ]);
+  await expect(cards.nth(1).locator('.sport-tag')).toHaveText(['Padel']);
+  await expect(cards.nth(2).locator('.sport-blank'))
+    .toHaveText('Ainda sem modalidades definidas');
+  await cards.first().click();
+  await expect(page).toHaveURL(/communities.*7/);
+  await expect(page.locator('.community-detail-copy .community-discovery-sports .sport-tag'))
+    .toHaveText(['Futebol', 'Padel', 'Ténis', 'Natação']);
+  expect(fixture.unmocked.filter(request => request.includes('/api/communities/'))).toEqual([]);
 });

@@ -76,6 +76,14 @@ describe('CommunitiesComponent public session eligibility', () => {
     (component.canManage as jasmine.Spy).and.returnValue(false);
     expect(component.canOpenSessionToPublic(session)).toBeFalse();
   });
+  it('shows discovery sports with legacy and no-sport fallback', () => {
+    expect(component.communitySports({
+      sport: 'Futebol', sports: ['Futebol', 'Padel', 'Natação']
+    })).toEqual(['Futebol', 'Padel', 'Natação']);
+    expect(component.communitySports({ sport: 'Ténis' })).toEqual(['Ténis']);
+    expect(component.communitySports({ sport: null, sports: [] })).toEqual([]);
+  });
+
   it('reads both legacy single-sport groups and the new sports array', () => {
     const group = {
       id: 7, name: 'CNG', description: null, sport: 'Futebol',

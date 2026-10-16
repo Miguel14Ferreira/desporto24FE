@@ -410,7 +410,7 @@ export class CommunitiesComponent implements OnInit {
     ).slice(0, 8);
   }
 
-  communitySports(group: CommunityGroup): string[] {
+  communitySports(group: Pick<CommunityGroup, 'sport' | 'sports'>): string[] {
     return group.sports?.length ? group.sports : (group.sport ? [group.sport] : []);
   }
 

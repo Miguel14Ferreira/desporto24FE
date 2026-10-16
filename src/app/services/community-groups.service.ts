@@ -20,6 +20,7 @@ export interface CommunitySearchPresentation {
   name: string;
   description: string | null;
   sport: string | null;
+  sports?: string[];
   photoUrl: string | null;
   visibility: CommunityVisibility;
 }

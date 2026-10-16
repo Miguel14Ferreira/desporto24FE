@@ -172,7 +172,22 @@
                   </div>
                   <div class="community-card-copy">
                     <strong>{{ community.name }}</strong>
-                    <span>{{ community.sport || ('communities.multiSport' | t) }}</span>
+                    <div class="sport-tags community-discovery-sports" role="list"
+                      [attr.aria-label]="('communities.sportLabel' | t) + ': ' + communitySports(community).join(', ')">
+                      @for (item of communitySports(community).slice(0, 3); track item) {
+                        <span class="sport-tag" role="listitem">{{ item }}</span>
+                      } @empty {
+                        <span class="sport-blank">{{ 'communities.noSportsSelected' | t }}</span>
+                      }
+                      @if (communitySports(community).length > 3) {
+                        <span class="sport-tag sport-tag--overflow"
+                          role="listitem"
+                          [title]="communitySports(community).slice(3).join(', ')"
+                          [attr.aria-label]="communitySports(community).slice(3).join(', ')">
+                          +{{ communitySports(community).length - 3 }}
+                        </span>
+                      }
+                    </div>
                     <small>{{ community.description || ('communities.noDescription' | t) }}</small>
                   </div>
                 </div>
@@ -305,9 +320,14 @@
                   </div>
                   <h2>{{ communityPresentation.name }}</h2>
                   <p>{{ communityPresentation.description || ('communities.noDescription' | t) }}</p>
-                  <p>{{ 'communities.sportLabel' | t }}:
-                    <strong>{{ communityPresentation.sport || ('communities.multiSport' | t) }}</strong>
-                  </p>
+                  <div class="sport-tags community-discovery-sports" role="list"
+                    [attr.aria-label]="'communities.sportLabel' | t">
+                    @for (item of communitySports(communityPresentation); track item) {
+                      <span class="sport-tag" role="listitem">{{ item }}</span>
+                    } @empty {
+                      <span class="sport-blank">{{ 'communities.noSportsSelected' | t }}</span>
+                    }
+                  </div>
                   <div class="row-actions">
                     <button
                       type="button"
