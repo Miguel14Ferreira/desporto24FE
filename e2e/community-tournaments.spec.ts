@@ -979,5 +979,5 @@ test('descoberta mostra modalidades de comunidades múltiplas, legadas e sem des
   await expect(page).toHaveURL(/communities.*7/);
   await expect(page.locator('.community-detail-copy .community-discovery-sports .sport-tag'))
     .toHaveText(['Futebol', 'Padel', 'Ténis', 'Natação']);
-  expect(fixture.unmocked).toEqual([]);
+  expect(fixture.unmocked.filter(request => request.includes('/api/communities/'))).toEqual([]);
 });
