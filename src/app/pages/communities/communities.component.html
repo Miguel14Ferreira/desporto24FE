@@ -1337,9 +1337,49 @@
                     } @else if (pendingJoinRequests.length === 0) {
                       <p>{{ 'communities.joinRequestsEmpty' | t }}</p>
                     } @else {
+                      <div class="row-actions bulk-approval-actions">
+                        <button type="button"
+                          class="secondary-action small jynlo-action jynlo-action--neutral jynlo-action--compact"
+                          [disabled]="batchJoining || joinRequestActionId !== undefined"
+                          (click)="toggleAllJoinRequests()">
+                          {{ (allJoinRequestsSelected() ? 'communities.batchDeselect' : 'communities.batchSelectAll') | t }}
+                        </button>
+                        <button type="button"
+                          class="primary-action small jynlo-action jynlo-action--primary jynlo-action--compact"
+                          [disabled]="selectedJoinRequestCount() === 0 || batchJoining || joinRequestActionId !== undefined"
+                          (click)="beginBatchApproval()">
+                          {{ 'communities.batchApprove' | t:{ count: selectedJoinRequestCount() } }}
+                        </button>
+                      </div>
+                      @if (confirmingBatchJoin) {
+                        <div class="bulk-approval-confirm">
+                          <p>{{ 'communities.batchConfirmHint' | t:{ count: selectedJoinRequestCount() } }}</p>
+                          <div class="row-actions">
+                            <button type="button"
+                              class="primary-action small jynlo-action jynlo-action--primary jynlo-action--compact"
+                              (click)="confirmBatchApproval()">{{ 'communities.batchConfirm' | t }}</button>
+                            <button type="button"
+                              class="secondary-action small jynlo-action jynlo-action--neutral jynlo-action--compact"
+                              (click)="cancelBatchApproval()">{{ 'common.cancel' | t }}</button>
+                          </div>
+                        </div>
+                      }
+                      @if (batchJoining) {
+                        <p role="status">{{ 'communities.batchProgress' | t:{ done: batchJoinProcessed, total: batchJoinTotal } }}</p>
+                      }
+                      @if (batchJoinFeedback) {
+                        <p role="status">{{ batchJoinFeedback }}</p>
+                      }
                       <div class="invite-search-results">
                         @for (request of pendingJoinRequests; track request.id) {
                           <div class="invite-profile-result">
+                            <label class="join-request-checkbox">
+                              <input type="checkbox"
+                                [checked]="selectedJoinRequestIds.has(request.id)"
+                                [disabled]="batchJoining || joinRequestActionId !== undefined"
+                                [attr.aria-label]="'communities.batchSelectRequest' | t:{ username: request.requesterUsername }"
+                                (change)="selectJoinRequest(request.id, $any($event.target).checked)">
+                            </label>
                             <span class="invite-profile-avatar">
                               {{ request.requesterUsername.charAt(0).toUpperCase() }}
                             </span>
@@ -1351,7 +1391,7 @@
                               <button
                                 type="button"
                                 class="primary-action small jynlo-action jynlo-action--primary jynlo-action--compact"
-                                [disabled]="joinRequestActionId !== undefined"
+                                [disabled]="joinRequestActionId !== undefined || batchJoining"
                                 (click)="acceptPendingJoinRequest(request)">
                                 {{ joinRequestActionId === request.id
                                   ? ('communities.processingJoinRequest' | t)
@@ -1360,7 +1400,7 @@
                               <button
                                 type="button"
                                 class="secondary-action small jynlo-action jynlo-action--neutral jynlo-action--compact"
-                                [disabled]="joinRequestActionId !== undefined"
+                                [disabled]="joinRequestActionId !== undefined || batchJoining"
                                 (click)="rejectPendingJoinRequest(request)">
                                 {{ 'communities.reject' | t }}
                               </button>
