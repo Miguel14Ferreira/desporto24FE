@@ -388,7 +388,8 @@ describe('Community tournaments management', () => {
     expect(tournamentScoreTerminology('Basquetebol 3x3').forAbbrev).toBe('PM');
     expect(tournamentScoreTerminology('Rugby').againstTitle).toBe('Pontos sofridos');
     expect(tournamentScoreTerminology('Futebol Americano').forAbbrev).toBe('PM');
-    component.community = { ...community, sport: 'Basquetebol' };
+    component.community = { ...community, sport: 'Futebol' };
+    component.selected = { ...draft, sport: 'Basquetebol' };
     expect(component.scoring.scoreInput).toBe('Pontos de');
   });
 
