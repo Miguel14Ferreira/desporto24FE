@@ -594,3 +594,87 @@ test('empate desportivo no primeiro lugar não atribui campeão arbitrário', as
   expect(fixture.tournaments[0].championTied).toBe(true);
   expect(fixture.tournaments[0].championProfileId).toBeNull();
 });
+
+test('separadores têm indicação acessível e funcionam por teclado', async ({ page }) => {
+  await mockCommunityApi(page, 'OWNER', 'draft');
+  await page.goto('/menu/communities/7');
+
+  const nav = page.locator('.community-tabs');
+  const tournamentsTab = nav.getByRole('button', { name: 'Torneios' });
+  const sessionsTab = nav.getByRole('button', { name: /Sessões|Sessions/ });
+
+  await expect(tournamentsTab).toBeVisible();
+  await expect(tournamentsTab).not.toHaveAttribute('aria-current', 'true');
+  await tournamentsTab.focus();
+  await expect(tournamentsTab).toBeFocused();
+  await tournamentsTab.press('Enter');
+
+  await expect(tournamentsTab).toHaveAttribute('aria-current', 'true');
+  await expect(page.getByRole('heading', { name: 'Torneios da comunidade' })).toBeVisible();
+  await expect(page.locator('.tournament-heading h4')).toHaveText('Liga de Outono');
+
+  await sessionsTab.focus();
+  await sessionsTab.press('Space');
+  await expect(sessionsTab).toHaveAttribute('aria-current', 'true');
+  await expect(tournamentsTab).not.toHaveAttribute('aria-current', 'true');
+  await expect(page.getByRole('heading', { name: 'Torneios da comunidade' })).toHaveCount(0);
+
+  await tournamentsTab.focus();
+  await tournamentsTab.press('Enter');
+  await expect(tournamentsTab).toHaveAttribute('aria-current', 'true');
+  await expect(page.locator('.tournament-heading h4')).toHaveText('Liga de Outono');
+});
+
+test('ações repetidas de participantes têm nomes únicos para tecnologias de apoio', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'management');
+  await page.goto('/menu/communities/7?tab=tournaments');
+
+  const confirmMariana = page.getByRole('button', { name: 'Confirmar inscrição de Mariana' });
+  const removePedro = page.getByRole('button', { name: 'Remover Pedro do torneio' });
+  const removeMariana = page.getByRole('button', { name: 'Remover Mariana do torneio' });
+
+  await expect(confirmMariana).toBeVisible();
+  await expect(removePedro).toBeVisible();
+  await expect(removeMariana).toBeVisible();
+  await confirmMariana.focus();
+  await confirmMariana.press('Enter');
+  await expect(page.locator('.player-item').filter({ hasText: '@mariana' }))
+    .toContainText('Confirmado');
+
+  await removePedro.focus();
+  await removePedro.press('Space');
+  await expect(removePedro).toHaveCount(0);
+  await expect(page.getByRole('table', { name: 'Classificação do torneio' })).toBeVisible();
+  expect(fixture.organizerMutations).toEqual(['confirm:3', 'remove:4']);
+});
+
+test('torneios mantêm-se dentro do ecrã e classificação permite scroll horizontal', async ({ page }) => {
+  await mockCommunityApi(page, 'OWNER', 'draft');
+
+  for (const width of [360, 768, 1280]) {
+    await page.setViewportSize({ width, height: 850 });
+    await page.goto('/menu/communities/7?tab=tournaments');
+    await expect(page.locator('.tournament-heading h4')).toHaveText('Liga de Outono');
+
+    const geometry = await page.locator('.tournaments').evaluate(element => {
+      const bounds = element.getBoundingClientRect();
+      return { left: bounds.left, right: bounds.right, viewport: window.innerWidth };
+    });
+    expect(geometry.left).toBeGreaterThanOrEqual(-1);
+    expect(geometry.right).toBeLessThanOrEqual(geometry.viewport + 1);
+
+    const table = page.getByRole('table', { name: 'Classificação do torneio' });
+    await expect(table).toBeVisible();
+    const scroll = page.locator('.standings-scroll');
+    await expect(scroll).toBeVisible();
+    if (width === 360) {
+      const distances = await scroll.evaluate(element => {
+        const available = element.scrollWidth - element.clientWidth;
+        element.scrollLeft = element.scrollWidth;
+        return { available, actual: element.scrollLeft };
+      });
+      expect(distances.available).toBeGreaterThan(0);
+      expect(distances.actual).toBeGreaterThan(0);
+    }
+  }
+});

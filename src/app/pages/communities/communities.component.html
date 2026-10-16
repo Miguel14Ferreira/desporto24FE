@@ -399,22 +399,34 @@
             </div>
 
             <nav class="community-tabs" [attr.aria-label]="'communities.tabsLabel' | t">
-              <button type="button" [class.active]="activeTab === 'home'" (click)="setTab('home')">
+              <button type="button" [class.active]="activeTab === 'home'"
+                [attr.aria-current]="activeTab === 'home' ? 'true' : null"
+                (click)="setTab('home')">
                 {{ 'communities.tab.home' | t }}
               </button>
-              <button type="button" [class.active]="activeTab === 'sessions'" (click)="setTab('sessions')">
+              <button type="button" [class.active]="activeTab === 'sessions'"
+                [attr.aria-current]="activeTab === 'sessions' ? 'true' : null"
+                (click)="setTab('sessions')">
                 {{ 'communities.tab.sessions' | t }}
               </button>
-              <button type="button" [class.active]="activeTab === 'tournaments'" (click)="setTab('tournaments')">
+              <button type="button" [class.active]="activeTab === 'tournaments'"
+                [attr.aria-current]="activeTab === 'tournaments' ? 'true' : null"
+                (click)="setTab('tournaments')">
                 Torneios
               </button>
-              <button type="button" [class.active]="activeTab === 'ranking'" (click)="setTab('ranking')">
+              <button type="button" [class.active]="activeTab === 'ranking'"
+                [attr.aria-current]="activeTab === 'ranking' ? 'true' : null"
+                (click)="setTab('ranking')">
                 {{ 'communities.tab.ranking' | t }}
               </button>
-              <button type="button" [class.active]="activeTab === 'stats'" (click)="setTab('stats')">
+              <button type="button" [class.active]="activeTab === 'stats'"
+                [attr.aria-current]="activeTab === 'stats' ? 'true' : null"
+                (click)="setTab('stats')">
                 {{ 'communities.tab.stats' | t }}
               </button>
-              <button type="button" [class.active]="activeTab === 'members'" (click)="setTab('members')">
+              <button type="button" [class.active]="activeTab === 'members'"
+                [attr.aria-current]="activeTab === 'members' ? 'true' : null"
+                (click)="setTab('members')">
                 {{ 'communities.tab.members' | t }}
               </button>
             </nav>
