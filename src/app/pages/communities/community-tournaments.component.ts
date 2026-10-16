@@ -35,8 +35,6 @@ export class CommunityTournamentsComponent implements OnChanges {
   nameDraft = '';
   sportDraft = '';
   sportSearch = '';
-  readonly sportsCatalog = SPORTS_CATALOG;
-
   get communitySportOptions(): string[] {
     const selected = this.community?.sports;
     return selected?.length ? selected : (this.community?.sport ? [this.community.sport] : []);
@@ -46,12 +44,14 @@ export class CommunityTournamentsComponent implements OnChanges {
     const normalized = this.sportSearch.normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
     if (!normalized) return [];
-    return SPORTS_CATALOG.filter(item => item.normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '').toLowerCase().includes(normalized)).slice(0, 8);
+    // Search the canonical catalog and the group's imported/legacy modalities.
+    return [...new Set([...this.communitySportOptions, ...SPORTS_CATALOG])]
+      .filter(item => item.normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '').toLowerCase().includes(normalized)).slice(0, 8);
   }
 
   chooseSport(sport: string): void {
-    if (this.busy || !SPORTS_CATALOG.includes(sport)) return;
+    if (this.busy || !(SPORTS_CATALOG.includes(sport) || this.communitySportOptions.includes(sport))) return;
     this.sportDraft = sport;
     this.sportSearch = '';
   }
@@ -376,7 +376,8 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.showError('Indica um nome entre 2 e 120 caracteres.');
       return;
     }
-    if (!this.sportDraft || !SPORTS_CATALOG.includes(this.sportDraft)) {
+    if (!this.sportDraft || !(SPORTS_CATALOG.includes(this.sportDraft)
+      || this.communitySportOptions.includes(this.sportDraft))) {
       this.showError('Escolhe uma modalidade válida para o torneio.');
       return;
     }

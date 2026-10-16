@@ -99,6 +99,18 @@ describe('Community tournaments management', () => {
     expect(component.community.sport).toBe('Futebol');
   });
 
+  it('keeps legacy community modalities selectable even if they are outside the catalog', async () => {
+    component.community = { ...community, sports: ['Desporto local tradicional', 'Futebol'] };
+    component.ngOnChanges({ community: new SimpleChange(community, component.community, false) });
+    component.sportSearch = 'tradicional';
+    expect(component.suggestedSports).toContain('Desporto local tradicional');
+    component.chooseSport('Desporto local tradicional');
+    component.nameDraft = 'Torneio local';
+    api.create.and.returnValue(of({ ...draft, id: 23, sport: 'Desporto local tradicional' }));
+    await component.create();
+    expect(api.create).toHaveBeenCalledWith(7, 'Torneio local', 'Desporto local tradicional');
+  });
+
   it('uses the selected tournament sport for scoring rather than the community primary sport', () => {
     component.selected = { ...draft, sport: 'Padel' };
     expect(component.scoring.scoreInput).toContain('Sets');
