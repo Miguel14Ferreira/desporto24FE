@@ -29,4 +29,37 @@ describe('Community creation onboarding', () => {
     expect(service.updatePhoto).toHaveBeenCalled();
     expect(router.navigate).toHaveBeenCalledWith(['/menu/communities', 42, 'invite']);
   });
+  it('submits multiple sports with the first as the legacy primary sport', () => {
+    const service = { create: jasmine.createSpy('create').and.returnValue(of({ id: 42 })) };
+    const router = { navigate: jasmine.createSpy('navigate').and.resolveTo(true) };
+    const component = new CommunityCreateComponent(service as any, router as any);
+    component.name = 'Desporto entre amigos';
+    component.sportSearch = 'pa';
+    expect(component.sportSuggestions).toContain('Padel');
+    component.addSport('Padel');
+    component.addSport('Basquetebol');
+    component.addSport('Padel');
+    expect(component.sports).toEqual(['Padel', 'Basquetebol']);
+
+    component.create();
+    expect(service.create).toHaveBeenCalledWith(jasmine.objectContaining({
+      sport: 'Padel', sports: ['Padel', 'Basquetebol']
+    }));
+    expect(router.navigate).toHaveBeenCalledWith(['/menu/communities', 42, 'invite']);
+  });
+
+  it('supports sportless communities and removable selections', () => {
+    const service = { create: jasmine.createSpy('create').and.returnValue(of({ id: 43 })) };
+    const router = { navigate: jasmine.createSpy('navigate').and.resolveTo(true) };
+    const component = new CommunityCreateComponent(service as any, router as any);
+    component.name = 'Atividades ao ar livre';
+    component.addSport('Corrida');
+    component.removeSport('Corrida');
+    expect(component.sports).toEqual([]);
+    component.create();
+    expect(service.create).toHaveBeenCalledWith(jasmine.objectContaining({
+      sport: null, sports: []
+    }));
+  });
+
 });
