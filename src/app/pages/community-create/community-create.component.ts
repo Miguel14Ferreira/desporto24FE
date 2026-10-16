@@ -62,10 +62,7 @@ export class CommunityCreateComponent {
       )
       .subscribe({
         next: community => {
-          void this.router.navigate(
-            ['/menu/communities'],
-            { queryParams: { community: community.id } }
-          );
+          void this.router.navigate(['/menu/communities', community.id, 'invite']);
         },
         error: error => {
           this.errorMessage =
