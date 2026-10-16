@@ -378,8 +378,10 @@ export class CommunityTournamentsComponent implements OnChanges {
       const result = await firstValueFrom(operation.pipe(timeout(12000)));
       if (mutationRevision !== this.mutationRevision || this.community.id !== cid
           || (tid !== undefined && this.selected?.id !== tid)) return;
-      this.feedback = success;
       after(result);
+      // Selection of a newly created tournament clears old notices: set the
+      // current operation's success message only after switching views.
+      this.feedback = success;
     } catch (error: any) {
       if (mutationRevision !== this.mutationRevision || this.community.id !== cid
           || (tid !== undefined && this.selected?.id !== tid)) return;
