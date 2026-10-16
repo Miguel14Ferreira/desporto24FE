@@ -122,9 +122,25 @@ describe('CreateaccountComponent', () => {
 
     expect(takeRegistrationDestination()).toBe('/menu/communities/42');
     expect(auth.register).toHaveBeenCalledWith(
-      jasmine.objectContaining({ returnSessionId: null }),
+      jasmine.objectContaining({ returnSessionId: null, returnCommunityId: 42 }),
       undefined
     );
+  });
+
+  it('shows the community invitation context while registering', () => {
+    queryParamMap = convertToParamMap({ returnUrl: '/menu/communities/42' });
+    fixture.detectChanges();
+    expect(component.hasSharedCommunityInvitation).toBeTrue();
+    const message = fixture.nativeElement.querySelector('.invitation-context') as HTMLElement;
+    expect(message.textContent).toContain('convite para uma comunidade');
+  });
+
+  it('resends community confirmation emails with the invitation ID', () => {
+    queryParamMap = convertToParamMap({ returnUrl: '/menu/communities/42' });
+    component.username = 'miguel';
+    spyOn<any>(component, 'startResendCooldown');
+    component.resendConfirmation();
+    expect(auth.resendRegistrationConfirmation).toHaveBeenCalledWith('miguel', null, 42);
   });
 
   it('should discard external destinations after creating an account', () => {

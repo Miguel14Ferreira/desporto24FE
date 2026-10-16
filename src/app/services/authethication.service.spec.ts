@@ -105,6 +105,23 @@ describe('AuthenticationService pilot cohort attribution', () => {
     );
   });
 
+  it('sends the community ID without a session ID for registration resend', () => {
+    http.post.and.returnValue(of({ message: 'ok' } as any));
+    service.resendRegistrationConfirmation('miguel', null, 42).subscribe();
+    expect(http.post).toHaveBeenCalledWith(
+      jasmine.stringMatching(/\/api\/auth\/register\/resend-confirmation$/),
+      null, { params: { username: 'miguel', returnCommunityId: '42' } }
+    );
+  });
+
+  it('prioritizes session ID when both destinations are supplied', () => {
+    http.post.and.returnValue(of({ message: 'ok' } as any));
+    service.resendRegistrationConfirmation('miguel', 9, 42).subscribe();
+    expect(http.post).toHaveBeenCalledWith(
+      jasmine.any(String), null, { params: { username: 'miguel', returnSessionId: '9' } }
+    );
+  });
+
   it('preserves legacy resends without a session destination', () => {
     http.post.and.returnValue(of({ message: 'ok' } as any));
 

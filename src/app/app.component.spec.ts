@@ -151,6 +151,46 @@ describe('AppComponent', () => {
     expect(takeRegistrationDestination()).toBeNull();
   });
 
+  it('returns to an emailed community invitation after confirmation on a different device', () => {
+    window.history.pushState({}, '', '/?confirmRegistration=fixture-token&returnCommunityId=42');
+    const router = TestBed.inject(Router);
+    spyOn(router, 'navigate').and.returnValue(Promise.resolve(true));
+    TestBed.createComponent(AppComponent).detectChanges();
+    expect(router.navigate).toHaveBeenCalledWith(
+      ['/login'], { queryParams: { returnUrl: '/menu/communities/42' } }
+    );
+  });
+
+  it('uses the emailed invitation instead of stale local storage', () => {
+    rememberRegistrationDestination('/menu/events/7');
+    window.history.pushState({}, '', '/?confirmRegistration=fixture-token&returnCommunityId=42');
+    const router = TestBed.inject(Router);
+    spyOn(router, 'navigate').and.returnValue(Promise.resolve(true));
+    TestBed.createComponent(AppComponent).detectChanges();
+    expect(router.navigate).toHaveBeenCalledWith(
+      ['/login'], { queryParams: { returnUrl: '/menu/communities/42' } }
+    );
+    expect(takeRegistrationDestination()).toBeNull();
+  });
+
+  it('still prioritizes the session invitation if both IDs occur in an email', () => {
+    window.history.pushState({}, '', '/?confirmRegistration=fixture-token&returnSessionId=9&returnCommunityId=42');
+    const router = TestBed.inject(Router);
+    spyOn(router, 'navigate').and.returnValue(Promise.resolve(true));
+    TestBed.createComponent(AppComponent).detectChanges();
+    expect(router.navigate).toHaveBeenCalledWith(
+      ['/login'], { queryParams: { returnUrl: '/menu/events/9' } }
+    );
+  });
+
+  it('rejects malformed community destinations in confirmation emails', () => {
+    window.history.pushState({}, '', '/?confirmRegistration=fixture-token&returnCommunityId=../login');
+    const router = TestBed.inject(Router);
+    spyOn(router, 'navigateByUrl').and.returnValue(Promise.resolve(true));
+    TestBed.createComponent(AppComponent).detectChanges();
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/login');
+  });
+
   it('should create the app', () => {
     const fixture = TestBed.createComponent(AppComponent);
     expect(fixture.componentInstance).toBeTruthy();
