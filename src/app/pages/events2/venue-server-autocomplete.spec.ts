@@ -53,6 +53,9 @@ describe('Create session venue server autocomplete', () => {
     const pending = new Subject<VenueSuggestionPage>();
     venues.suggest.and.returnValue(pending.asObservable());
     component.sport = 'Padel';
+    fixture.detectChanges();
+    tick();
+    expect(component.sportSelected).toBeTrue();
     component.onVenueSearchChanged('Pavilhão');
     tick(299);
     expect(venues.suggest).not.toHaveBeenCalled();

@@ -1174,8 +1174,9 @@ describe('Events2Component', () => {
     ];
     component.venueSearch = 'Pavilhão Municipal';
 
-    expect(component.venueOptions.length).toBe(40);
-    expect(component.venueOptions.some(venue => venue.id === 202)).toBeFalse();
+    // Loaded pages can now be displayed beyond the legacy 40-item local cap.
+    expect(component.venueOptions.length).toBe(41);
+    expect(component.venueOptions.some(venue => venue.id === 202)).toBeTrue();
 
     component.confirmVenueSelection();
     expect(component.selectedVenueId).toBeNull();
