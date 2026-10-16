@@ -252,4 +252,24 @@ describe('Community tournaments management', () => {
     expect(component.busy).toBeFalse();
   });
 
+  it('ignores a stale success even if the user returns to the same tournament', async () => {
+    const pendingJoin = new Subject<TournamentParticipant>();
+    api.join.and.returnValue(pendingJoin);
+    const joining = component.join();
+
+    component.selectTournament({ ...draft, id: 25 });
+    component.selectTournament({ ...draft });
+    pendingJoin.next({
+      profileId: 1, username: 'owner', displayName: 'Owner',
+      joinedAt: '2026-10-16T12:00:00Z', status: 'PENDING'
+    });
+    pendingJoin.complete();
+    await joining;
+
+    expect(component.selected?.id).toBe(9);
+    expect(component.feedback).toBe('');
+    expect(component.error).toBe('');
+    expect(component.busy).toBeFalse();
+  });
+
 });

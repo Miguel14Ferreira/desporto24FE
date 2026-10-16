@@ -376,7 +376,8 @@ export class CommunityTournamentsComponent implements OnChanges {
     const mutationRevision = ++this.mutationRevision;
     try {
       const result = await firstValueFrom(operation.pipe(timeout(12000)));
-      if (this.community.id !== cid || (tid !== undefined && this.selected?.id !== tid)) return;
+      if (mutationRevision !== this.mutationRevision || this.community.id !== cid
+          || (tid !== undefined && this.selected?.id !== tid)) return;
       this.feedback = success;
       after(result);
     } catch (error: any) {
