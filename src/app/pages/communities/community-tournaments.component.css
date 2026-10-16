@@ -7,6 +7,11 @@
 .tournaments p { color: #cbd5e1; line-height: 1.5; }
 .tournament-hero { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem; padding: 1.25rem; border: 1px solid rgba(125,211,252,.17); border-radius: 1.1rem; background: linear-gradient(110deg,rgba(16,185,129,.14),rgba(14,116,144,.10)); }
 .tournament-hero > div { display: grid; gap: .35rem; max-width: 38rem; }
+.tournament-hero .t-sport-note {
+  font-size: .78rem; color: #a7f3d0; max-width: 48rem;
+  line-height: 1.45;
+}
+.tournament-type { overflow-wrap: anywhere; }
 .tournament-eyebrow { font-size: .74rem; letter-spacing: .11em; text-transform: uppercase; font-weight: 800; color: #86efac !important; }
 .tournament-type,.tournament-state { padding: .36rem .68rem; border-radius: 999px; background: rgba(16,185,129,.13); color: #86efac; font-size: .75rem; font-weight: 800; }
 .tournament-state.is-finished { color: #fde68a; background: rgba(251,191,36,.12); }

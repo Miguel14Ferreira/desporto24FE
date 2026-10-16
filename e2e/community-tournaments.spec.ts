@@ -65,14 +65,14 @@ type FixtureMode = 'empty' | 'draft' | 'paged' | 'forbidden' | 'switch'
   | 'management' | 'complete-rejected' | 'list-network-error'
   | 'paged-enrollment' | 'draw-tie' | 'schedule-roster-paged' | 'schedule-roster-oversize';
 
-async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode) {
+async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode, sport: string | null = 'Futebol') {
   const username = role === 'OWNER' ? 'organizador' : 'participante';
   const token = fixtureToken(username);
   await page.addInitScript(value => localStorage.setItem('t', value), token);
 
   const community = {
     id: 7, name: 'Jogadores de Lisboa', description: 'Liga dos amigos',
-    sport: 'Futebol', photoUrl: null, visibility: 'PRIVATE',
+    sport, photoUrl: null, visibility: 'PRIVATE',
     rankingsEnabled: true, ownerUsername: 'organizador',
     myRole: role, memberCount: 3, createdAt: '2026-10-16T12:00:00Z',
     members: [
@@ -813,4 +813,50 @@ test('não permite gerar jornadas com mais de 32 jogadores confirmados', async (
   await expect(page.getByText('Esta versão permite no máximo 32 jogadores confirmados.')).toBeVisible();
   expect(fixture.requestedParticipantPages).toEqual([0, 1]);
   expect(fixture.scheduleAttempts).toBe(0);
+});
+
+test('basquetebol apresenta pontos no marcador e na classificação, sem golos', async ({ page }) => {
+  await mockCommunityApi(page, 'OWNER', 'draft', 'Basquetebol');
+  await page.goto('/menu/communities/7?tab=tournaments');
+  await expect(page.getByText('Basquetebol · Liga individual')).toBeVisible();
+  await expect(page.getByText(/Formato atual: confrontos entre participantes individuais/)).toBeVisible();
+  await expect(page.getByRole('columnheader', { name: 'PM' })).toBeVisible();
+  await expect(page.getByRole('columnheader', { name: 'PS' })).toBeVisible();
+  await expect(page.getByRole('columnheader', { name: 'DP' })).toBeVisible();
+  await expect(page.getByText('Ordem: pontos de classificação, diferença de pontos, pontos marcados e vitórias.')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Gerar jornadas' }).click();
+  await page.getByRole('button', { name: 'Sim, publicar calendário' }).click();
+  await expect(page.getByRole('spinbutton', { name: 'Pontos de organizador' })).toBeVisible();
+  await expect(page.getByRole('spinbutton', { name: 'Pontos de participante' })).toBeVisible();
+  await expect(page.getByRole('spinbutton', { name: 'Golos de organizador' })).toHaveCount(0);
+});
+
+test('padel mostra sets e esclarece que ainda não regista resultados set a set', async ({ page }) => {
+  await mockCommunityApi(page, 'OWNER', 'draft', 'Pádel');
+  await page.goto('/menu/communities/7?tab=tournaments');
+  await expect(page.getByText('Pádel · Liga individual')).toBeVisible();
+  await expect(page.getByText(/Não regista o resultado de cada set nem organiza pares/)).toBeVisible();
+  await expect(page.getByRole('columnheader', { name: 'SG' })).toBeVisible();
+  await expect(page.getByRole('columnheader', { name: 'SP' })).toBeVisible();
+  await expect(page.getByRole('columnheader', { name: 'DS' })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Gerar jornadas' }).click();
+  await page.getByRole('button', { name: 'Sim, publicar calendário' }).click();
+  await page.getByRole('spinbutton', { name: 'Sets ganhos de organizador' }).fill('2');
+  await page.getByRole('spinbutton', { name: 'Sets ganhos de participante' }).fill('1');
+  await page.getByRole('button', { name: 'Guardar' }).click();
+  await expect(page.getByText('1 / 1 jogos')).toBeVisible();
+  await expect(page.getByRole('columnheader', { name: 'SG' })).toBeVisible();
+});
+
+test('modalidade sem perfil de pontuação não é apresentada como futebol', async ({ page }) => {
+  await mockCommunityApi(page, 'OWNER', 'draft', 'Ciclismo');
+  await page.goto('/menu/communities/7?tab=tournaments');
+  await expect(page.getByText('Ciclismo · Liga individual')).toBeVisible();
+  await expect(page.getByText(/Ainda não suporta pares, equipas nem provas por tempos ou distâncias/)).toBeVisible();
+  await expect(page.getByRole('columnheader', { name: 'MF' })).toBeVisible();
+  await expect(page.getByRole('columnheader', { name: 'MC' })).toBeVisible();
+  await expect(page.getByRole('columnheader', { name: 'DM' })).toBeVisible();
+  await expect(page.getByRole('columnheader', { name: 'GM' })).toHaveCount(0);
 });

@@ -5,6 +5,7 @@ import { CommunityTournamentsService } from '../../services/community-tournament
 import { CommunityGroup } from '../model/community-group';
 import { CommunityTournament, TournamentMatch, TournamentPage, TournamentParticipant, TournamentParticipantPage } from '../model/community-tournament';
 import { CommunityTournamentsComponent } from './community-tournaments.component';
+import { tournamentScoreTerminology } from './community-tournament-scoring';
 
 describe('Community tournaments management', () => {
   let api: jasmine.SpyObj<CommunityTournamentsService>;
@@ -334,6 +335,39 @@ describe('Community tournaments management', () => {
     expect(component.canPublishSchedule).toBeFalse();
     await component.publishSchedule();
     expect(api.generateSchedule).not.toHaveBeenCalled();
+  });
+
+  it('shows goal terminology only for goal-based sports', () => {
+    expect(tournamentScoreTerminology('Futebol').scoreInput).toBe('Golos de');
+    expect(tournamentScoreTerminology('Andebol').forAbbrev).toBe('GM');
+    expect(tournamentScoreTerminology('Futsal').differenceTitle).toBe('Diferença de golos');
+  });
+
+  it('uses points for basketball, rugby and American football instead of goals', () => {
+    expect(tournamentScoreTerminology('Basquetebol').scoreInput).toBe('Pontos de');
+    expect(tournamentScoreTerminology('Basquetebol 3x3').forAbbrev).toBe('PM');
+    expect(tournamentScoreTerminology('Rugby').againstTitle).toBe('Pontos sofridos');
+    expect(tournamentScoreTerminology('Futebol Americano').forAbbrev).toBe('PM');
+    component.community = { ...community, sport: 'Basquetebol' };
+    expect(component.scoring.scoreInput).toBe('Pontos de');
+  });
+
+  it('uses sets terminology without implying full per-set scoring or pairs', () => {
+    for (const sport of ['Pádel', 'Ténis', 'Voleibol', 'Badminton', 'Ténis de mesa']) {
+      const terms = tournamentScoreTerminology(sport);
+      expect(terms.scoreInput).toBe('Sets ganhos de');
+      expect(terms.differenceAbbrev).toBe('DS');
+      expect(terms.note).toContain('Não regista o resultado de cada set');
+    }
+  });
+
+  it('does not call unknown sports football by default', () => {
+    for (const sport of [null, 'Ciclismo', 'Natação', 'Atletismo']) {
+      const terms = tournamentScoreTerminology(sport);
+      expect(terms.scoreInput).toBe('Marcador de');
+      expect(terms.forAbbrev).toBe('MF');
+      expect(terms.note).toContain('não suporta pares');
+    }
   });
 
 });

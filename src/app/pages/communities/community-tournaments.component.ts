@@ -7,6 +7,7 @@ import {
 } from '../model/community-tournament';
 import { CommunityTournamentsService } from '../../services/community-tournaments.service';
 import { AuthenticationService } from '../../services/authethication.service';
+import { tournamentScoreTerminology } from './community-tournament-scoring';
 
 @Component({
   selector: 'app-community-tournaments',
@@ -137,6 +138,10 @@ export class CommunityTournamentsComponent implements OnChanges {
 
   get myEnrollment(): TournamentParticipant | undefined {
     return this.participants.find(p => p.username.toLowerCase() === this.myUsername);
+  }
+
+  get scoring() {
+    return tournamentScoreTerminology(this.community?.sport);
   }
 
   get confirmedCount(): number {
