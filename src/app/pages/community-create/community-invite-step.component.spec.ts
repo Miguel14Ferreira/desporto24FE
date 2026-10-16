@@ -3,6 +3,16 @@ import { CommunityInviteStepComponent } from './community-invite-step.component'
 import { CommunityGroup } from '../model/community-group';
 
 describe('CommunityInviteStepComponent', () => {
+  let previousLanguage: string | null;
+  beforeEach(() => {
+    previousLanguage = localStorage.getItem('d24-language');
+    localStorage.setItem('d24-language', 'pt');
+  });
+  afterEach(() => {
+    if (previousLanguage === null) localStorage.removeItem('d24-language');
+    else localStorage.setItem('d24-language', previousLanguage);
+  });
+
   function setup(role: 'OWNER' | 'ADMIN' | 'MEMBER' = 'OWNER', visibility: 'PRIVATE' | 'PUBLIC' = 'PRIVATE') {
     const community = { id: 42, name: 'Futebol das Quintas', sport: 'Futebol',
       myRole: role, visibility } as CommunityGroup;
