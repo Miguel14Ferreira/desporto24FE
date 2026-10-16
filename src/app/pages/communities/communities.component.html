@@ -359,6 +359,33 @@
               </button>
             </nav>
 
+            @if (canManage() && (activeTab === 'home' || activeTab === 'members')) {
+              <section class="whatsapp-group-share" [attr.aria-label]="'communities.whatsappGroupTitle' | t">
+                <div>
+                  <h3>{{ 'communities.whatsappGroupTitle' | t }}</h3>
+                  <p>{{ 'communities.whatsappGroupHint' | t }}</p>
+                  @if (selected.visibility === 'PRIVATE') {
+                    <p class="whatsapp-group-share-note">{{ 'communities.whatsappPrivateHint' | t }}</p>
+                  }
+                </div>
+                <div class="row-actions">
+                  <button type="button"
+                    class="primary-action jynlo-action jynlo-action--primary jynlo-action--compact"
+                    (click)="shareWhatsAppGroup()">
+                    {{ 'communities.whatsappShareButton' | t }}
+                  </button>
+                  <button type="button"
+                    class="secondary-action jynlo-action jynlo-action--neutral jynlo-action--compact"
+                    (click)="copyWhatsAppGroupLink()">
+                    {{ 'communities.whatsappCopyButton' | t }}
+                  </button>
+                </div>
+                @if (groupInviteFeedback) {
+                  <p class="whatsapp-group-share-feedback" role="status">{{ groupInviteFeedback }}</p>
+                }
+              </section>
+            }
+
             @if (competitionLoading) {
               <div class="tab-state">{{ 'communities.competitionLoading' | t }}</div>
             }

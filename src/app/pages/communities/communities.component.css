@@ -1449,3 +1449,19 @@ input,textarea,select {
     flex: 1 1 0;
   }
 }
+
+/* Low-friction group onboarding via a single WhatsApp share link. */
+.whatsapp-group-share {
+  display: grid;
+  gap: .75rem;
+  padding: 1rem;
+  margin-top: 1rem;
+  border: 1px solid rgba(125,211,252,.22);
+  border-radius: .85rem;
+  background: rgba(125,211,252,.055);
+}
+.whatsapp-group-share h3 { margin: 0 0 .35rem; }
+.whatsapp-group-share p { margin: 0; color: #cbd5e1; }
+.whatsapp-group-share-note { font-size: .875rem; }
+.whatsapp-group-share-feedback { font-size: .875rem; }
+.whatsapp-group-share .row-actions { align-items: center; }

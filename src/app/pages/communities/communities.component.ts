@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { finalize, Observable, retry, timeout } from 'rxjs';
 import { appTranslate as t } from '../../i18n/i18n.service';
+import { buildCommunityGroupInviteUrl, buildWhatsAppGroupShareUrl } from './community-group-invite';
 
 import {
   CommunityCompetitionOverview,
@@ -76,6 +77,7 @@ export class CommunitiesComponent implements OnInit {
   inviteSearchLoading = false;
   inviteSearchPerformed = false;
   inviteMessage = '';
+  groupInviteFeedback = '';
   pendingJoinRequests: CommunityJoinRequest[] = [];
   pendingJoinRequestsLoading = false;
   joinRequestActionId?: number;
@@ -377,6 +379,7 @@ export class CommunitiesComponent implements OnInit {
         this.inviteSearchResults = [];
         this.inviteSearchPerformed = false;
         this.inviteMessage = '';
+        this.groupInviteFeedback = '';
         this.roundDeleteConfirmId = undefined;
         this.selectedSeasonId = null;
         this.closeSeasonConfirming = false;
@@ -1138,6 +1141,40 @@ export class CommunitiesComponent implements OnInit {
     this.inviteSearchResults = [];
     this.inviteSearchPerformed = false;
     this.inviteMessage = '';
+  }
+
+  shareWhatsAppGroup(): void {
+    const community = this.selected;
+    if (!community || !this.canManage()) {
+      return;
+    }
+
+    const url = buildCommunityGroupInviteUrl(window.location.origin, community.id);
+    const message = [
+      t('communities.whatsappShareMessage', { name: community.name }),
+      t(community.visibility === 'PRIVATE'
+        ? 'communities.whatsappSharePrivate'
+        : 'communities.whatsappSharePublic'),
+      url
+    ].join('\n\n');
+
+    window.open(buildWhatsAppGroupShareUrl(message), '_blank', 'noopener,noreferrer');
+  }
+
+  async copyWhatsAppGroupLink(): Promise<void> {
+    const community = this.selected;
+    if (!community || !this.canManage()) {
+      return;
+    }
+
+    this.groupInviteFeedback = '';
+    const url = buildCommunityGroupInviteUrl(window.location.origin, community.id);
+    try {
+      await navigator.clipboard.writeText(url);
+      this.groupInviteFeedback = t('communities.whatsappCopied');
+    } catch {
+      this.groupInviteFeedback = t('communities.whatsappCopyFailed');
+    }
   }
 
   invite(): void {
