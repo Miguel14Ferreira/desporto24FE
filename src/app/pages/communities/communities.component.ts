@@ -404,9 +404,9 @@ export class CommunitiesComponent implements OnInit {
   get availableSportSuggestions(): string[] {
     const query = this.sportsSearch.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
     if (!query) return [];
-    return this.sportsCatalog.filter(value =>
+    return SPORTS_CATALOG.filter(value =>
       value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().includes(query)
-      && !this.sportsDraft.some(current => current.toLowerCase() === value.toLowerCase())
+      && !(this.sportsDraft || []).some(current => current.toLowerCase() === value.toLowerCase())
     ).slice(0, 8);
   }
 
