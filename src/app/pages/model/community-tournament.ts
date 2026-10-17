@@ -21,7 +21,7 @@ export interface CommunityTournament {
   playersPerTeam?: number | null;
   roundRobinLegs?: 1 | 2;
   teamTieBreakPriority?: TeamTieBreakPriority;
-  format: 'LEAGUE';
+  format: 'LEAGUE' | 'KNOCKOUT';
   status: TournamentStatus;
   winPoints: number;
   drawPoints: number;
