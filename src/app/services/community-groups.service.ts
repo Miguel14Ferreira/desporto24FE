@@ -93,6 +93,19 @@ export interface HistoricalMatchPreview {
   }>;
 }
 
+
+export interface HistoricalMatchArchiveSummary {
+  id: number;
+  title: string;
+  entryType: 'INDIVIDUAL' | 'TEAM';
+  sourceFilename: string;
+  createdAt: string;
+}
+
+export interface HistoricalMatchArchive extends HistoricalMatchArchiveSummary {
+  rows: HistoricalMatchPreview['rows'];
+}
+
 @Injectable({ providedIn: 'root' })
 export class CommunityGroupsService {
   private readonly url = environment.apiUrl + '/api/communities';
@@ -245,6 +258,29 @@ export class CommunityGroupsService {
     return this.http.post<HistoricalMatchPreview>(
       this.url + '/' + id + '/competition/import/matches/preview',
       this.importForm(file, mapping)
+    );
+  }
+
+  confirmHistoricalMatches(id: number, file: File, mapping: unknown, context: {
+    title: string;
+    entryType: 'INDIVIDUAL' | 'TEAM';
+  }): Observable<HistoricalMatchArchive> {
+    const form = this.importForm(file, mapping);
+    form.append('context', new Blob([JSON.stringify(context)], { type: 'application/json' }));
+    return this.http.post<HistoricalMatchArchive>(
+      this.url + '/' + id + '/competition/import/matches/confirm', form
+    );
+  }
+
+  listHistoricalMatches(id: number): Observable<HistoricalMatchArchiveSummary[]> {
+    return this.http.get<HistoricalMatchArchiveSummary[]>(
+      this.url + '/' + id + '/competition/match-archives'
+    );
+  }
+
+  historicalMatchDetails(id: number, archiveId: number): Observable<HistoricalMatchArchive> {
+    return this.http.get<HistoricalMatchArchive>(
+      this.url + '/' + id + '/competition/match-archives/' + archiveId
     );
   }
 

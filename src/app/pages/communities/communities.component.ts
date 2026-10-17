@@ -22,7 +22,9 @@ import {
   HistoricalStandingPreview,
   HistoricalStandingSummary,
   HistoricalStandingArchive,
-  HistoricalMatchPreview
+  HistoricalMatchPreview,
+  HistoricalMatchArchive,
+  HistoricalMatchArchiveSummary
 } from '../../services/community-groups.service';
 import { CommunityService } from '../../services/community.service';
 import { SessionService } from '../../services/session.service';
@@ -195,6 +197,17 @@ export class CommunitiesComponent implements OnInit {
   importMode: 'ROUNDS' | 'STANDINGS' | 'MATCHES' = 'ROUNDS';
   matchPreviewLoading = false;
   matchPreview?: HistoricalMatchPreview;
+  matchArchiveTitle = '';
+  matchArchiveEntryType: 'INDIVIDUAL' | 'TEAM' = 'INDIVIDUAL';
+  matchArchiveAcknowledged = false;
+  matchArchiveConfirming = false;
+  matchArchiveConfirmed?: HistoricalMatchArchive;
+  matchArchivesLoading = false;
+  matchArchivesError = '';
+  matchArchiveSummaries: HistoricalMatchArchiveSummary[] = [];
+  matchArchiveOpen?: HistoricalMatchArchive;
+  matchArchiveOpeningId?: number;
+  matchArchivePage = 0;
   archiveTitle = '';
   archiveEntryType: 'INDIVIDUAL' | 'TEAM' = 'INDIVIDUAL';
   archiveSeasonId: number | null = null;
@@ -595,6 +608,11 @@ export class CommunitiesComponent implements OnInit {
         this.archiveSummaries = [];
         this.archiveOpen = undefined;
         this.archiveConfirmed = undefined;
+        this.matchArchiveSummaries = [];
+        this.matchArchiveOpen = undefined;
+        this.matchArchiveConfirmed = undefined;
+        this.resetArchiveDraft();
+        this.loadMatchArchives(full.id);
         this.loadArchivedStandings(full.id);
         this.loadCompetition(full);
         this.loadCommunitySessions(full);
@@ -1145,6 +1163,8 @@ export class CommunitiesComponent implements OnInit {
 
   private resetArchiveDraft(): void {
     this.matchPreview = undefined;
+    this.matchArchiveConfirmed = undefined;
+    this.matchArchiveAcknowledged = false;
     this.archivePreview = undefined;
     this.archiveConfirmed = undefined;
     this.archiveAcknowledged = false;
@@ -1298,6 +1318,8 @@ export class CommunitiesComponent implements OnInit {
     const file = this.importFile;
     const mapping = this.historicalMapping();
     this.matchPreview = undefined;
+    this.matchArchiveConfirmed = undefined;
+    this.matchArchiveAcknowledged = false;
     this.importFileError = '';
     this.matchPreviewLoading = true;
     this.communityService.previewHistoricalMatches(communityId, file, mapping)
@@ -1314,6 +1336,80 @@ export class CommunitiesComponent implements OnInit {
               && this.importFile === file) {
             this.importFileError = error.error?.message || t('communities.matches.previewError');
           }
+        }
+      });
+  }
+
+  confirmMatchArchive(): void {
+    if (!this.selected || !this.canManage() || this.importMode !== 'MATCHES' ||
+        !this.importFile || !this.importSheetName || !this.matchPreview ||
+        this.matchPreview.acceptedRows < 1 || this.matchArchiveConfirming || this.matchPreviewLoading) return;
+    if (this.matchArchiveTitle.trim().length < 2 || this.matchArchiveTitle.trim().length > 120 ||
+        !this.matchArchiveAcknowledged) {
+      this.importFileError = t('communities.matches.confirmRequired');
+      return;
+    }
+    const communityId = this.selected.id;
+    const file = this.importFile;
+    const mapping = this.historicalMapping();
+    const context = { title: this.matchArchiveTitle.trim(), entryType: this.matchArchiveEntryType };
+    this.matchArchiveConfirming = true;
+    this.importFileError = '';
+    this.communityService.confirmHistoricalMatches(communityId, file, mapping, context)
+      .pipe(timeout(30_000), finalize(() => this.matchArchiveConfirming = false))
+      .subscribe({
+        next: archive => {
+          if (this.selected?.id !== communityId) return;
+          this.matchArchiveConfirmed = archive;
+          this.matchArchiveOpen = archive;
+          this.matchArchivePage = 0;
+          this.matchPreview = undefined;
+          this.matchArchiveAcknowledged = false;
+          this.loadMatchArchives(communityId);
+        },
+        error: error => {
+          if (this.selected?.id === communityId) {
+            this.importFileError = error.error?.message || t('communities.matches.confirmError');
+          }
+        }
+      });
+  }
+
+  loadMatchArchives(communityId: number): void {
+    this.matchArchivesLoading = true;
+    this.matchArchivesError = '';
+    this.communityService.listHistoricalMatches(communityId)
+      .pipe(timeout(15_000), finalize(() => this.matchArchivesLoading = false))
+      .subscribe({
+        next: archives => {
+          if (this.selected?.id === communityId) this.matchArchiveSummaries = archives;
+        },
+        error: () => {
+          if (this.selected?.id === communityId) this.matchArchivesError = t('communities.matches.listError');
+        }
+      });
+  }
+
+  openMatchArchive(archiveId: number): void {
+    if (!this.selected || this.matchArchiveOpeningId !== undefined) return;
+    const communityId = this.selected.id;
+    if (this.matchArchiveOpen?.id === archiveId) {
+      this.matchArchiveOpen = undefined;
+      return;
+    }
+    this.matchArchiveOpeningId = archiveId;
+    this.matchArchivesError = '';
+    this.communityService.historicalMatchDetails(communityId, archiveId)
+      .pipe(timeout(15_000), finalize(() => this.matchArchiveOpeningId = undefined))
+      .subscribe({
+        next: archive => {
+          if (this.selected?.id === communityId) {
+            this.matchArchiveOpen = archive;
+            this.matchArchivePage = 0;
+          }
+        },
+        error: () => {
+          if (this.selected?.id === communityId) this.matchArchivesError = t('communities.matches.detailError');
         }
       });
   }

@@ -181,6 +181,83 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(confirmStandings).not.toHaveBeenCalled();
   });
 
+
+  it('saves tournament matches only after reviewing title and explicit acknowledgement', () => {
+    component.selected = { id: 7 } as any;
+    component.importMode = 'MATCHES';
+    component.importFile = new File(['data'], 'jogos.tsv');
+    component.importSheetName = 'Dados';
+    component.importMappings = [{ columnIndex: 0, header: 'Casa', field: 'HOME', confidence: 1 }];
+    component.matchPreview = {
+      sheetName: 'Dados', sourceRows: 2, acceptedRows: 2, potentialDuplicates: 1, warnings: [],
+      rows: [{ sourceRow: 2, home: 'Águias', away: 'Lobos', homeScore: 2, awayScore: 1,
+        sourceDate: '01/10/2022', sourceRound: 'Final', potentialDuplicate: true }]
+    };
+    const confirmed = { id: 12, title: 'Taça antiga', entryType: 'TEAM' as const,
+      sourceFilename: 'jogos.tsv', createdAt: '2026-10-17T20:00:00Z', rows: component.matchPreview.rows };
+    const confirm = jasmine.createSpy('confirmHistoricalMatches').and.returnValue(of(confirmed));
+    const list = jasmine.createSpy('listHistoricalMatches').and.returnValue(of([confirmed]));
+    (component as any).communityService = { confirmHistoricalMatches: confirm, listHistoricalMatches: list };
+    component.matchArchiveTitle = 'Taça antiga';
+    component.matchArchiveEntryType = 'TEAM';
+    component.matchArchiveAcknowledged = false;
+    component.confirmMatchArchive();
+    expect(confirm).not.toHaveBeenCalled();
+    component.matchArchiveAcknowledged = true;
+    component.confirmMatchArchive();
+    expect(confirm).toHaveBeenCalledOnceWith(7, jasmine.any(File), {
+      sheetName: 'Dados', columns: [{ columnIndex: 0, field: 'HOME' }]
+    }, { title: 'Taça antiga', entryType: 'TEAM' });
+    expect(component.matchArchiveOpen?.rows[0].potentialDuplicate).toBeTrue();
+    expect(component.matchArchiveOpen?.rows[0].sourceDate).toBe('01/10/2022');
+    expect(component.matchPreview).toBeUndefined();
+    expect(component.matchArchiveAcknowledged).toBeFalse();
+    expect(list).toHaveBeenCalledWith(7);
+  });
+
+  it('does not confirm an empty preview or allow non-managers to save historical matches', () => {
+    component.selected = { id: 7 } as any;
+    component.importMode = 'MATCHES';
+    component.importFile = new File(['x'], 'jogos.xlsx');
+    component.importSheetName = 'Folha1';
+    component.matchPreview = { sheetName: 'Folha1', sourceRows: 0, acceptedRows: 0,
+      potentialDuplicates: 0, warnings: [], rows: [] };
+    component.matchArchiveTitle = 'Torneio 2020';
+    component.matchArchiveAcknowledged = true;
+    const confirm = jasmine.createSpy('confirmHistoricalMatches');
+    (component as any).communityService = { confirmHistoricalMatches: confirm };
+    component.confirmMatchArchive();
+    expect(confirm).not.toHaveBeenCalled();
+    component.matchPreview.acceptedRows = 1;
+    (component.canManage as jasmine.Spy).and.returnValue(false);
+    component.confirmMatchArchive();
+    expect(confirm).not.toHaveBeenCalled();
+  });
+
+  it('only displays match archives from the selected community and keeps repeated rows', () => {
+    component.selected = { id: 9 } as any;
+    const archive = { id: 50, title: '2021', entryType: 'INDIVIDUAL' as const,
+      sourceFilename: 'jogos.csv', createdAt: '2026-10-17T20:00:00Z',
+      rows: [
+        { sourceRow: 4, home: 'A', away: 'B', homeScore: 1, awayScore: 0,
+          sourceDate: '1/5/2021', sourceRound: '2', potentialDuplicate: false },
+        { sourceRow: 5, home: 'A', away: 'B', homeScore: 1, awayScore: 0,
+          sourceDate: '1/5/2021', sourceRound: '2', potentialDuplicate: true }
+      ] };
+    (component as any).communityService = {
+      listHistoricalMatches: () => of([archive]),
+      historicalMatchDetails: jasmine.createSpy().and.returnValue(of(archive))
+    };
+    component.loadMatchArchives(9);
+    component.openMatchArchive(50);
+    expect(component.matchArchiveSummaries.length).toBe(1);
+    expect(component.matchArchiveOpen?.rows.length).toBe(2);
+    expect(component.matchArchiveOpen?.rows[1].potentialDuplicate).toBeTrue();
+    component.selected = { id: 10 } as any;
+    component.openMatchArchive(50);
+    expect(component.matchArchiveOpen).toBeUndefined();
+  });
+
   it('requires review and a title before writing final standings', () => {
     component.selected = { id: 7 } as any;
     component.importMode = 'STANDINGS';
