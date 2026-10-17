@@ -1,4 +1,5 @@
 import { CommunitiesComponent } from './communities.component';
+import { of } from 'rxjs';
 import { SessionSummary } from '../model/session-summary';
 
 describe('CommunitiesComponent public session eligibility', () => {
@@ -95,6 +96,49 @@ describe('CommunitiesComponent public session eligibility', () => {
     group.sport = null;
     group.sports = [];
     expect(component.communitySports(group)).toEqual([]);
+  });
+
+
+  it('preserves all optional modules for legacy responses but hides disabled ones', () => {
+    const group = { id: 7, rankingsEnabled: false } as any;
+    expect(component.hasCompetitions(group)).toBeTrue();
+    group.individualTournamentsEnabled = false;
+    group.teamTournamentsEnabled = false;
+    expect(component.hasCompetitions(group)).toBeFalse();
+    group.teamTournamentsEnabled = true;
+    expect(component.hasCompetitions(group)).toBeTrue();
+    component.selected = group;
+    component.setTab('ranking');
+    expect(component.activeTab).not.toBe('ranking');
+    group.rankingsEnabled = true;
+    component.setTab('ranking');
+    expect(component.activeTab).toBe('ranking');
+  });
+
+  it('allows manager to configure independent modules and saves without clearing history', () => {
+    const original = { id: 7, rankingsEnabled: true,
+      individualTournamentsEnabled: true, teamTournamentsEnabled: false } as any;
+    component.selected = original;
+    (component.canManage as jasmine.Spy).and.returnValue(true);
+    const update = jasmine.createSpy('updateFeatures').and.returnValue(
+      of({ ...original, rankingsEnabled: false,
+        individualTournamentsEnabled: false, teamTournamentsEnabled: true }));
+    const groups = { updateFeatures: update } as any;
+    (component as any).communityService = groups;
+    component.communities = [original];
+    spyOn(component as any, 'loadCompetition');
+    component.editFeatures();
+    expect(component.featuresEditing).toBeTrue();
+    component.featuresDraft.rankingsEnabled = false;
+    component.featuresDraft.individualTournamentsEnabled = false;
+    component.featuresDraft.teamTournamentsEnabled = true;
+    component.saveFeatures();
+    expect(update).toHaveBeenCalledWith(7, {
+      rankingsEnabled: false, individualTournamentsEnabled: false,
+      teamTournamentsEnabled: true
+    });
+    expect(component.selected?.teamTournamentsEnabled).toBeTrue();
+    expect(component.featuresEditing).toBeFalse();
   });
 
   it('lets organizers edit sport lists but prevents members changing them', () => {
