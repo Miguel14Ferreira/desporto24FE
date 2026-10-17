@@ -1,0 +1,45 @@
+# One complete Angular verification per pull request instead of overlapping
+# npm installs, test subsets and production builds from feature-specific jobs.
+name: Jynlo FE PR validation
+
+on:
+  pull_request:
+    branches: [preview/render-fullstack]
+    paths:
+      - 'src/**'
+      - 'e2e/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'angular.json'
+      - 'tsconfig*.json'
+      - 'playwright.config.ts'
+      - 'Dockerfile'
+      - '.github/workflows/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fe-pr-validation-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-and-build:
+    name: Angular tests and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      CI: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install dependencies once
+        run: npm ci
+      - name: Run all Angular unit and regression tests
+        run: npm test -- --watch=false --browsers=ChromeHeadless
+      - name: Build frontend once
+        run: npm run build

@@ -1,12 +1,8 @@
 name: Validate Discover session expansion
 
+# Manual diagnostic job; pull requests use the consolidated pr-validation.yml.
 on:
-  pull_request:
-    branches: [preview/render-fullstack]
-    paths:
-      - 'src/app/pages/discover/**'
-      - '.github/workflows/discover-sessions-ci.yml'
-
+  workflow_dispatch:
 permissions:
   contents: read
 

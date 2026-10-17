@@ -17,6 +17,12 @@ on:
       - '.github/workflows/community-tournament-browser-ci.yml'
 permissions:
   contents: read
+
+# Avoid paying for outdated Playwright runs after a PR is updated.
+concurrency:
+  group: fe-browser-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   browser-tests:
     runs-on: ubuntu-latest

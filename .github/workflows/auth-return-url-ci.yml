@@ -1,12 +1,7 @@
 name: Validate auth return URL
+# Manual diagnostic job; pull requests use the consolidated pr-validation.yml.
 on:
-  pull_request:
-    branches: [preview/render-fullstack]
-    paths:
-      - 'src/app/auth.interceptor.ts'
-      - 'src/app/auth.interceptor.spec.ts'
-      - 'src/app/shared/safe-login-return-url.ts'
-      - '.github/workflows/auth-return-url-ci.yml'
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:

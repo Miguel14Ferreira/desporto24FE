@@ -1,13 +1,7 @@
 name: Validate community bulk join approvals
+# Manual diagnostic job; pull requests use the consolidated pr-validation.yml.
 on:
-  pull_request:
-    branches: [preview/render-fullstack]
-    paths:
-      - 'src/app/pages/communities/communities.component.ts'
-      - 'src/app/pages/communities/communities.component.html'
-      - 'src/app/pages/communities/community-bulk-approval.spec.ts'
-      - 'src/app/i18n/i18n.service.ts'
-      - '.github/workflows/community-bulk-approval-ci.yml'
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:

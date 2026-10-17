@@ -141,7 +141,7 @@ describe('EventsComponent', () => {
     const action = fixture.nativeElement.querySelector(
       '.session-row .session-action'
     ) as HTMLAnchorElement;
-    expect(action.getAttribute('href')).toBe('/menu/events/22');
+    expect(action.getAttribute('href')).toBe('/menu/events/22?join=1');
     expect(action.textContent).toContain('lista de espera');
     expect(action.classList.contains('session-action--join')).toBeTrue();
 

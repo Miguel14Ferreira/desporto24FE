@@ -1,10 +1,7 @@
 name: Validate community public session action
+# Manual diagnostic job; pull requests use the consolidated pr-validation.yml.
 on:
-  pull_request:
-    branches: [preview/render-fullstack]
-    paths:
-      - 'src/app/pages/communities/**'
-      - '.github/workflows/community-public-session-action-ci.yml'
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:
