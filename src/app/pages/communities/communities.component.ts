@@ -1119,25 +1119,27 @@ export class CommunitiesComponent implements OnInit {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     this.importFileError = '';
+    // Clear the previous import plan even when a replacement file is rejected.
+    this.importFile = undefined;
+    this.importFileName = '';
+    this.importPreview = undefined;
+    this.resetImportAfterFile();
 
-    if (!file) {
-      this.importFile = undefined;
-      this.importFileName = '';
+    if (!file) return;
+
+    if (!/\.(xlsx|xls|csv|tsv)$/i.test(file.name)) {
+      this.importFileError = t('communities.import.invalidFile');
+      input.value = '';
       return;
     }
-
-    if (!file.name.toLowerCase().endsWith('.xlsx')) {
-      this.importFile = undefined;
-      this.importFileName = '';
-      this.importFileError = t('communities.import.invalidFile');
+    if (file.size > 10 * 1024 * 1024) {
+      this.importFileError = t('communities.import.tooLarge');
       input.value = '';
       return;
     }
 
     this.importFile = file;
     this.importFileName = file.name;
-    this.importPreview = undefined;
-    this.resetImportAfterFile();
   }
 
   clearImportFile(input: HTMLInputElement): void {
