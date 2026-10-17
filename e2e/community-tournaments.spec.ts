@@ -1238,7 +1238,10 @@ test('organizador publica jornadas apenas com duas equipas completas e vê confr
   await page.getByRole('button', { name: 'Sim, publicar jornadas por equipas' }).click();
   await expect(page.getByRole('heading', { name: 'Jornadas e confrontos entre equipas' })).toBeVisible();
   await expect(page.getByText('Jornada 1', { exact: true })).toBeVisible();
-  await expect(page.locator('.team-fixture')).toContainText(['AzuisvsVerdesPor disputar']);
+  await expect(page.locator('.team-fixture')).toHaveCount(1);
+  await expect(page.locator('.team-fixture')).toContainText('Azuis');
+  await expect(page.locator('.team-fixture')).toContainText('Verdes');
+  await expect(page.locator('.team-fixture')).toContainText('Por disputar');
   await expect(page.getByRole('button', { name: 'Gerar jornadas entre equipas' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Adicionar equipa' })).toHaveCount(0);
   await expect(page.getByRole('table', { name: 'Classificação do torneio' })).toHaveCount(0);
