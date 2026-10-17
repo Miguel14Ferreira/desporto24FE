@@ -37,6 +37,7 @@ export class CommunityTournamentsComponent implements OnChanges {
   showTeamCreate = false;
   teamSizeDraft = 5;
   roundRobinLegsDraft: 1 | 2 = 1;
+  teamFormatDraft: 'LEAGUE' | 'KNOCKOUT' = 'LEAGUE';
   teamTieBreakPriorityDraft: TeamTieBreakPriority = 'GOAL_DIFFERENCE_FIRST';
   winPointsDraft = 3;
   drawPointsDraft = 1;
@@ -194,6 +195,7 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.showIndividualCreate = false;
       this.showTeamCreate = false;
       this.roundRobinLegsDraft = 1;
+      this.teamFormatDraft = 'LEAGUE';
       this.teamTieBreakPriorityDraft = 'GOAL_DIFFERENCE_FIRST';
       this.resetPointRules();
       this.teamNameDraft = '';
@@ -266,6 +268,29 @@ export class CommunityTournamentsComponent implements OnChanges {
     return (this.community.members || []).filter(member => !assigned.has(member.profileId));
   }
 
+  get isKnockout(): boolean {
+    return this.isTeamCompetition && this.selected?.format === 'KNOCKOUT';
+  }
+
+  get knockoutTotalRounds(): number {
+    return this.teams.length >= 2 ? Math.ceil(Math.log2(this.teams.length)) : 0;
+  }
+
+  get currentKnockoutRound(): number {
+    return this.teamMatches.reduce((latest, game) => Math.max(latest, game.roundNumber), 1);
+  }
+
+  isPastKnockoutRound(match: TournamentTeamMatch): boolean {
+    return this.isKnockout && match.roundNumber < this.currentKnockoutRound;
+  }
+
+  get knockoutFirstRoundByes(): TournamentTeam[] {
+    if (!this.isKnockout || !this.teamMatches.length) return [];
+    const competing = new Set(this.teamMatches.filter(game => game.roundNumber === 1)
+      .flatMap(game => [game.homeTeamId, game.awayTeamId]));
+    return this.teams.filter(team => !competing.has(team.id));
+  }
+
   get canManageTeamRoster(): boolean {
     return this.canManage && this.isTeamCompetition && this.selected?.status === 'DRAFT' && !this.busy;
   }
@@ -283,6 +308,7 @@ export class CommunityTournamentsComponent implements OnChanges {
   get canCompleteTeam(): boolean {
     const table = this.teamStandings;
     if (!table || !this.canManage || this.selected?.entryType !== 'TEAM'
+        || this.selected.format === 'KNOCKOUT'
         || this.selected.status !== 'IN_PROGRESS' || this.teamStandingsLoading
         || this.teamStandingsError || this.busy) return false;
     const size = table.standings.length;
@@ -548,7 +574,7 @@ export class CommunityTournamentsComponent implements OnChanges {
         this.teamPlayerDraft = {};
         if (tournament.status !== 'DRAFT') {
           this.loadTeamMatches(true);
-          this.loadTeamStandings();
+          if (tournament.format !== 'KNOCKOUT') this.loadTeamStandings();
         }
       },
       error: () => {
@@ -602,7 +628,8 @@ export class CommunityTournamentsComponent implements OnChanges {
   loadTeamStandings(): void {
     const tournament = this.selected;
     if (!tournament || tournament.entryType !== 'TEAM'
-        || tournament.status === 'DRAFT' || !this.isMember) return;
+        || tournament.status === 'DRAFT' || tournament.format === 'KNOCKOUT'
+        || !this.isMember) return;
     const communityId = this.community.id;
     const revision = ++this.teamStandingsRevision;
     this.teamStandingsLoading = true;
@@ -646,15 +673,20 @@ export class CommunityTournamentsComponent implements OnChanges {
   isTeamScoreInvalid(match: TournamentTeamMatch): boolean {
     const score = this.teamScoreDraft(match);
     return this.teamScoreTouched.has(match.id)
-      && (!this.validScore(score.home) || !this.validScore(score.away));
+      && (!this.validScore(score.home) || !this.validScore(score.away)
+        || (this.isKnockout && score.home === score.away));
   }
 
   async saveTeamScore(match: TournamentTeamMatch): Promise<void> {
     if (!this.selected || !this.canManage || this.selected.entryType !== 'TEAM'
-        || this.selected.status !== 'IN_PROGRESS') return;
+        || this.selected.status !== 'IN_PROGRESS' || this.isPastKnockoutRound(match)) return;
     const score = this.teamScoreDraft(match);
     if (!this.validScore(score.home) || !this.validScore(score.away)) {
       this.showError('Os resultados devem ser números inteiros entre 0 e 999.');
+      return;
+    }
+    if (this.isKnockout && score.home === score.away) {
+      this.showError('Nas eliminatórias, o resultado tem de definir um vencedor.');
       return;
     }
     await this.mutate(this.api.recordTeamResult(this.community.id, this.selected.id, match.id,
@@ -662,7 +694,20 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.teamMatches = this.teamMatches.map(game => game.id === saved.id ? saved : game);
       this.teamScoreDrafts[saved.id] = { home: saved.homeScore ?? null, away: saved.awayScore ?? null };
       this.teamScoreTouched.delete(saved.id);
-      this.loadTeamStandings();
+      if (this.isKnockout) {
+        if (saved.roundNumber === this.knockoutTotalRounds && saved.homeScore !== saved.awayScore) {
+          const homeWins = saved.homeScore! > saved.awayScore!;
+          this.updateSelected({
+            ...this.selected!, status: 'COMPLETED',
+            championTeamId: homeWins ? saved.homeTeamId : saved.awayTeamId,
+            championTeamName: homeWins ? saved.homeTeamName : saved.awayTeamName,
+            championTied: false, championPoints: null
+          });
+        }
+        this.loadTeamMatches(true);
+      } else {
+        this.loadTeamStandings();
+      }
     });
   }
 
@@ -695,23 +740,27 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.showError('Indica entre 1 e 30 jogadores por equipa.');
       return;
     }
-    if (this.roundRobinLegsDraft !== 1 && this.roundRobinLegsDraft !== 2) {
+    if (this.teamFormatDraft === 'LEAGUE'
+        && this.roundRobinLegsDraft !== 1 && this.roundRobinLegsDraft !== 2) {
       this.showError('Escolhe uma ou duas voltas.');
       return;
     }
-    if (!this.validPointRules) {
+    if (this.teamFormatDraft === 'LEAGUE' && !this.validPointRules) {
       this.showError('Define pontos inteiros entre 0 e 100 para vitória, empate e derrota.');
       return;
     }
-    if (!this.teamTieBreakChoices.some(choice => choice.value === this.teamTieBreakPriorityDraft)) {
+    if (this.teamFormatDraft === 'LEAGUE'
+        && !this.teamTieBreakChoices.some(choice => choice.value === this.teamTieBreakPriorityDraft)) {
       this.showError('Escolhe um critério de desempate válido.');
       return;
     }
     await this.mutate(this.api.createTeamTournament(this.community.id, name, this.sportDraft,
-      size, this.roundRobinLegsDraft, this.pointRulesDraft, this.teamTieBreakPriorityDraft),
+      size, this.roundRobinLegsDraft, this.pointRulesDraft, this.teamTieBreakPriorityDraft,
+      this.teamFormatDraft),
       'Competição por equipas criada. Agora podes preparar os plantéis.', result => {
         this.nameDraft = '';
         this.roundRobinLegsDraft = 1;
+        this.teamFormatDraft = 'LEAGUE';
         this.teamTieBreakPriorityDraft = 'GOAL_DIFFERENCE_FIRST';
         this.resetPointRules();
         this.showTeamCreate = false;

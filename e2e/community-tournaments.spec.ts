@@ -9,7 +9,7 @@ interface Tournament {
   id: number;
   name: string;
   sport?: string | null;
-  format: 'LEAGUE';
+  format: 'LEAGUE' | 'KNOCKOUT';
   status: TournamentStatus;
   winPoints: number;
   drawPoints: number;
@@ -73,7 +73,8 @@ type FixtureMode = 'empty' | 'draft' | 'paged' | 'forbidden' | 'switch'
   | 'teams-schedule';
 
 async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
-  sport: string | null = 'Futebol', sports?: string[], roundRobinLegs: 1 | 2 = 1) {
+  sport: string | null = 'Futebol', sports?: string[], roundRobinLegs: 1 | 2 = 1,
+  format: 'LEAGUE' | 'KNOCKOUT' = 'LEAGUE') {
   const username = role === 'OWNER' ? 'organizador' : 'participante';
   const token = fixtureToken(username);
   await page.addInitScript(value => localStorage.setItem('t', value), token);
@@ -104,7 +105,7 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
   tournaments.forEach(item => item.sport = sport);
   if (mode === 'teams-view' || mode === 'teams-schedule') Object.assign(tournaments[0], {
     entryType: 'TEAM', playersPerTeam: 2, name: 'Torneio da comunidade',
-    roundRobinLegs
+    roundRobinLegs, format
   });
   type MockTeam = { id: number; name: string; playersPerTeam: number; createdAt: string;
     players: { profileId: number; username: string; displayName: string }[] };
@@ -305,9 +306,11 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
           name: string; sport: string; entryType?: 'TEAM'; playersPerTeam?: number;
           roundRobinLegs?: 1 | 2; winPoints?: number; drawPoints?: number; lossPoints?: number;
           teamTieBreakPriority?: 'GOAL_DIFFERENCE_FIRST' | 'GOALS_SCORED_FIRST' | 'WINS_FIRST';
+          format?: 'LEAGUE' | 'KNOCKOUT';
         };
         const next = {
           ...tournament(11, body.name), sport: body.sport,
+          format: body.format || 'LEAGUE',
           entryType: body.entryType || 'INDIVIDUAL',
           playersPerTeam: body.playersPerTeam || null, roundRobinLegs: body.roundRobinLegs || 1,
           winPoints: body.winPoints ?? 3, drawPoints: body.drawPoints ?? 1,
@@ -344,6 +347,7 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
       return send({ matches: page === 0 ? teamFixtures : [], page, hasMore: false });
     }
     if (path === '/api/communities/7/tournaments/11/teams/standings' && method === 'GET') {
+      if (tournaments[0].format === 'KNOCKOUT') return send({ message: 'Só liga' }, 409);
       const rows = teams.map(t => ({ teamId: t.id, teamName: t.name,
         played: 0, won: 0, drawn: 0, lost: 0, goalsFor: 0, goalsAgainst: 0,
         goalDifference: 0, points: 0, position: 0 }));
@@ -379,6 +383,16 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
       match.homeScore = body.homeScore;
       match.awayScore = body.awayScore;
       match.status = 'COMPLETED';
+      if (tournaments[0].format === 'KNOCKOUT') {
+        if (body.homeScore === body.awayScore) return send({ message: 'Necessário vencedor' }, 422);
+        const winnerId = body.homeScore > body.awayScore ? match.homeTeamId : match.awayTeamId;
+        Object.assign(tournaments[0], {
+          status: 'COMPLETED', completedAt: '2026-10-17T14:00:00Z',
+          championTeamId: winnerId,
+          championTeamName: teams.find(t => t.id === winnerId)?.name,
+          championTied: false, championPoints: null
+        });
+      }
       return send(match);
     }
     if (path === '/api/communities/7/tournaments/11/teams/complete' && method === 'POST') {
@@ -1408,6 +1422,44 @@ test('duas voltas criam jornadas com casa e fora e obrigam ambos os resultados',
   await expect(page.getByText('Equipa campeã: Azuis')).toBeVisible();
   expect(fixture.teamFixtures.map(m => [m.homeTeamId, m.awayTeamId])).toEqual([[40, 41], [41, 40]]);
   expect(fixture.unmocked.filter(path => path.includes('/tournaments/'))).toEqual([]);
+});
+
+test('organizador escolhe taça no início sem regras de liga', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'teams');
+  await page.goto('/menu/communities/7?tab=tournaments');
+  await page.getByRole('button', { name: 'Preparar torneio por equipas' }).click();
+  const knockout = page.getByRole('button', { name: 'Eliminatórias (taça)' });
+  await knockout.click();
+  await expect(knockout).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('group', { name: 'Número de voltas' })).toHaveCount(0);
+  await page.getByLabel('Nome do torneio').fill('Taça da comunidade');
+  await page.getByLabel('Jogadores por equipa').fill('2');
+  await page.getByRole('button', { name: 'Criar e preparar equipas' }).click();
+  await expect(page.locator('.tournament-heading')).toContainText('Eliminatórias');
+  expect(fixture.tournaments[0].format).toBe('KNOCKOUT');
+  expect(fixture.unmocked.filter(url => url.includes('/tournaments/'))).toEqual([]);
+});
+
+test('sorteio e final de taça não usam tabela da liga nem permitem empate', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'teams-schedule',
+    'Futebol', undefined, 1, 'KNOCKOUT');
+  await page.goto('/menu/communities/7?tab=tournaments');
+  await page.getByRole('button', { name: 'Sortear eliminatórias' }).click();
+  await page.getByRole('button', { name: 'Sim, sortear eliminatórias' }).click();
+  await expect(page.getByRole('heading', { name: 'Quadro de eliminatórias' })).toBeVisible();
+  await expect(page.getByRole('table', { name: 'Classificação por equipas' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Encerrar campeonato por equipas' })).toHaveCount(0);
+  const game = page.locator('.team-fixture');
+  await game.getByRole('spinbutton', { name: 'Golos de Azuis' }).fill('1');
+  await game.getByRole('spinbutton', { name: 'Golos de Verdes' }).fill('1');
+  await expect(game.getByRole('button', { name: 'Guardar resultado entre Azuis e Verdes' })).toBeDisabled();
+  await game.getByRole('spinbutton', { name: 'Golos de Verdes' }).fill('0');
+  await game.getByRole('button', { name: 'Guardar resultado entre Azuis e Verdes' }).click();
+  await expect(page.getByText('Equipa campeã: Azuis')).toBeVisible();
+  await expect(page.getByText('Taça concluída', { exact: false })).toBeVisible();
+  await expect(game.getByRole('spinbutton')).toHaveCount(0);
+  expect(fixture.tournaments[0].status).toBe('COMPLETED');
+  expect(fixture.unmocked.filter(url => url.includes('/tournaments/'))).toEqual([]);
 });
 
 test('o organizador escolhe duas voltas na criação do torneio', async ({ page }) => {

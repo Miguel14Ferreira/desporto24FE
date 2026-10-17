@@ -73,7 +73,7 @@ describe('Community tournaments management', () => {
       component.nameDraft = ' Torneio CNG 5x5 ';
       component.teamSizeDraft = 5;
       await component.createTeamCompetition();
-      expect(api.createTeamTournament).toHaveBeenCalledWith(7, 'Torneio CNG 5x5', 'Futebol', 5, 1, { winPoints: 3, drawPoints: 1, lossPoints: 0 }, 'GOAL_DIFFERENCE_FIRST');
+      expect(api.createTeamTournament).toHaveBeenCalledWith(7, 'Torneio CNG 5x5', 'Futebol', 5, 1, { winPoints: 3, drawPoints: 1, lossPoints: 0 }, 'GOAL_DIFFERENCE_FIRST', 'LEAGUE');
       expect(api.create).not.toHaveBeenCalled();
       expect(component.selected?.entryType).toBe('TEAM');
       expect(api.teams).toHaveBeenCalledWith(7, 19);
@@ -88,7 +88,7 @@ describe('Community tournaments management', () => {
       component.nameDraft = 'Liga casa e fora';
       component.roundRobinLegsDraft = 2;
       await component.createTeamCompetition();
-      expect(api.createTeamTournament).toHaveBeenCalledWith(7, 'Liga casa e fora', 'Futebol', 5, 2, { winPoints: 3, drawPoints: 1, lossPoints: 0 }, 'GOAL_DIFFERENCE_FIRST');
+      expect(api.createTeamTournament).toHaveBeenCalledWith(7, 'Liga casa e fora', 'Futebol', 5, 2, { winPoints: 3, drawPoints: 1, lossPoints: 0 }, 'GOAL_DIFFERENCE_FIRST', 'LEAGUE');
       expect(component.selected?.roundRobinLegs).toBe(2);
       expect(Number(component.roundRobinLegsDraft)).toBe(1);
       expect(api.create).not.toHaveBeenCalled();
@@ -106,7 +106,7 @@ describe('Community tournaments management', () => {
       await component.createTeamCompetition();
       expect(api.createTeamTournament).toHaveBeenCalledWith(
         7, 'Torneio pontos', 'Futebol', 5, 1,
-        { winPoints: 2, drawPoints: 0, lossPoints: 0 }, 'GOAL_DIFFERENCE_FIRST');
+        { winPoints: 2, drawPoints: 0, lossPoints: 0 }, 'GOAL_DIFFERENCE_FIRST', 'LEAGUE');
       expect(component.selected?.winPoints).toBe(2);
       expect(component.winPointsDraft).toBe(3);
       expect(component.drawPointsDraft).toBe(1);
@@ -125,7 +125,7 @@ describe('Community tournaments management', () => {
       await component.createTeamCompetition();
       expect(api.createTeamTournament).toHaveBeenCalledWith(
         7, 'Liga de vitórias', 'Futebol', 5, 1,
-        { winPoints: 3, drawPoints: 1, lossPoints: 0 }, 'WINS_FIRST');
+        { winPoints: 3, drawPoints: 1, lossPoints: 0 }, 'WINS_FIRST', 'LEAGUE');
       expect(component.selected?.teamTieBreakPriority).toBe('WINS_FIRST');
       expect(component.teamTieBreakLabel(component.selected?.teamTieBreakPriority)).toBe('Mais vitórias');
       expect(component.teamTieBreakPriorityDraft).toBe('GOAL_DIFFERENCE_FIRST');
@@ -139,6 +139,45 @@ describe('Community tournaments management', () => {
       await component.createTeamCompetition();
       expect(component.error).toContain('desempate');
       expect(api.createTeamTournament).not.toHaveBeenCalled();
+    });
+
+    it('creates knockout cup without league rules or standings', async () => {
+      api.createTeamTournament.and.returnValue(of({ ...teamDraft, format: 'KNOCKOUT' }));
+      component.startTeamCreation();
+      component.nameDraft = 'Taça entre amigos';
+      component.teamFormatDraft = 'KNOCKOUT';
+      component.roundRobinLegsDraft = 2;
+      component.teamTieBreakPriorityDraft = 'WINS_FIRST';
+      component.winPointsDraft = -1;
+      await component.createTeamCompetition();
+      expect(api.createTeamTournament).toHaveBeenCalledWith(
+        7, 'Taça entre amigos', 'Futebol', 5, 2,
+        { winPoints: -1, drawPoints: 1, lossPoints: 0 }, 'WINS_FIRST', 'KNOCKOUT');
+      expect(component.selected?.format).toBe('KNOCKOUT');
+      expect(component.teamFormatDraft).toBe('LEAGUE');
+      expect(api.teamStandings).not.toHaveBeenCalled();
+    });
+
+    it('rejects cup draws and snapshots final winner', async () => {
+      const cup = { ...teamDraft, format: 'KNOCKOUT' as const, status: 'IN_PROGRESS' as const };
+      const match = { id: 65, roundNumber: 1, homeTeamId: 40, homeTeamName: 'Verdes',
+        awayTeamId: 41, awayTeamName: 'Azuis', status: 'SCHEDULED' as const };
+      api.teams.and.returnValue(of([team, { ...team, id: 41, name: 'Azuis' }]));
+      api.teamMatches.and.returnValue(of({ matches: [match], page: 0, hasMore: false }));
+      component.selectTournament(cup);
+      expect(component.knockoutTotalRounds).toBe(1);
+      expect(api.teamStandings).not.toHaveBeenCalled();
+      component.setTeamScore(match, 'home', 1);
+      component.setTeamScore(match, 'away', 1);
+      await component.saveTeamScore(match);
+      expect(api.recordTeamResult).not.toHaveBeenCalled();
+      component.setTeamScore(match, 'away', 0);
+      api.recordTeamResult.and.returnValue(of({ ...match,
+        homeScore: 1, awayScore: 0, status: 'COMPLETED' as const }));
+      await component.saveTeamScore(match);
+      expect(component.selected?.status).toBe('COMPLETED');
+      expect(component.selected?.championTeamName).toBe('Verdes');
+      expect(api.teamStandings).not.toHaveBeenCalled();
     });
 
     it('requires the return leg before enabling team completion', () => {

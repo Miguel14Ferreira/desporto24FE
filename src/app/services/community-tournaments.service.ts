@@ -43,11 +43,14 @@ export class CommunityTournamentsService {
   createTeamTournament(communityId: number, name: string, sport: string,
                        playersPerTeam: number, roundRobinLegs: 1 | 2 = 1,
                        rules: TournamentPointRules = { winPoints: 3, drawPoints: 1, lossPoints: 0 },
-                       teamTieBreakPriority: TeamTieBreakPriority = 'GOAL_DIFFERENCE_FIRST'
+                       teamTieBreakPriority: TeamTieBreakPriority = 'GOAL_DIFFERENCE_FIRST',
+                       format: 'LEAGUE' | 'KNOCKOUT' = 'LEAGUE'
   ): Observable<CommunityTournament> {
-    return this.http.post<CommunityTournament>(this.url(communityId), {
-      name, sport, entryType: 'TEAM', playersPerTeam, roundRobinLegs, teamTieBreakPriority, ...rules
-    });
+    const config = format === 'KNOCKOUT'
+      ? { name, sport, entryType: 'TEAM', playersPerTeam, format }
+      : { name, sport, entryType: 'TEAM', playersPerTeam, format,
+          roundRobinLegs, teamTieBreakPriority, ...rules };
+    return this.http.post<CommunityTournament>(this.url(communityId), config);
   }
 
   teams(communityId: number, tournamentId: number): Observable<TournamentTeam[]> {

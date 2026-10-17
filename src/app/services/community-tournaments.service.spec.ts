@@ -38,8 +38,17 @@ describe('CommunityTournamentsService API contract', () => {
     expect(http.post).toHaveBeenCalledWith(
       environment.apiUrl + '/api/communities/7/tournaments',
       { name: 'Liga Equipas', sport: 'Futebol', entryType: 'TEAM',
-        playersPerTeam: 5, roundRobinLegs: 2, teamTieBreakPriority: 'WINS_FIRST',
+        playersPerTeam: 5, format: 'LEAGUE', roundRobinLegs: 2, teamTieBreakPriority: 'WINS_FIRST',
         winPoints: 4, drawPoints: 2, lossPoints: 0 });
+  });
+
+  it('sends knockout format without league-only settings', () => {
+    service.createTeamTournament(7, 'Taça', 'Futebol', 3, 2,
+      { winPoints: 4, drawPoints: 1, lossPoints: 0 }, 'WINS_FIRST', 'KNOCKOUT').subscribe();
+    expect(http.post).toHaveBeenCalledWith(
+      environment.apiUrl + '/api/communities/7/tournaments',
+      { name: 'Taça', sport: 'Futebol', entryType: 'TEAM',
+        playersPerTeam: 3, format: 'KNOCKOUT' });
   });
 
   it('never supplies another user identity when requesting self-enrollment', () => {
