@@ -153,3 +153,17 @@
 .team-player-assign { display: grid; gap: .5rem; }
 .team-player-assign select { width: 100%; min-height: 42px; border: 1px solid #425267; border-radius: .65rem; background: #14283a; color: #f8fafc; padding: .55rem .7rem; }
 .team-player-assign select:focus-visible { outline: 2px solid #86efac; outline-offset: 2px; }
+
+.team-schedule-action { margin-top: 1rem; border: 1px solid rgba(134,239,172,.22);
+  border-radius: .9rem; padding: 1rem; display: grid; gap: .8rem; }
+.team-schedule-action strong { display: block; margin-bottom: .25rem; }
+.team-schedule-action p { margin: .3rem 0; font-size: .85rem; }
+.team-fixtures-section { display: grid; gap: .9rem; margin-top: 1rem; }
+.team-fixtures-list { display: grid; gap: .55rem; }
+.team-fixtures-list h6 { margin: .8rem 0 .15rem; color: #a7f3d0; font-size: .9rem; }
+.team-fixture { display: flex; flex-wrap: wrap; gap: .55rem; align-items: center;
+  background: rgba(148,163,184,.06); border: 1px solid rgba(148,163,184,.17);
+  padding: .85rem; border-radius: .7rem; }
+.team-fixture strong { min-width: 5rem; overflow-wrap: anywhere; }
+.team-versus { color: #94a3b8; font-size: .78rem; font-weight: 800; }
+.team-fixture .tournament-state { margin-left: auto; }
