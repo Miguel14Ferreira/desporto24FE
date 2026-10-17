@@ -131,6 +131,35 @@ describe('SocialFeedComponent discovery sidebar', () => {
     expect(groups.mine).toHaveBeenCalledTimes(1);
   }));
 
+  it('offers a share shortcut only on my upcoming public games with vacancies', fakeAsync(() => {
+    const future = new Date(Date.now() + 36_000_000).toISOString();
+    const game = (id: number, override: Partial<SessionSummary> = {}): SessionSummary => ({
+      id, sport: 'Futebol', city: 'Lisboa', gameDate: future,
+      distanceKm: null, participantCount: 7, maxParticipants: 10,
+      priceAmount: 0, status: 'OPEN', privateGame: false, audience: 'PUBLIC', ...override
+    });
+    sessions.mine.and.returnValue(of({
+      created: [
+        game(10), game(11, { privateGame: true }), game(12, { audience: 'COMMUNITY_ONLY' }),
+        game(13, { participantCount: 10 }), game(14, { status: 'CANCELLED' })
+      ],
+      joined: [game(15)], waitlisted: []
+    }));
+    fixture.detectChanges();
+    tick(351);
+    fixture.detectChanges();
+
+    const shortcuts = (fixture.nativeElement as HTMLElement)
+      .querySelectorAll<HTMLAnchorElement>('.week-share-action');
+    expect(shortcuts.length).toBe(1);
+    expect(shortcuts[0].getAttribute('href')).toBe('/menu/events/10?promote=1');
+    expect(shortcuts[0].textContent).toContain('3');
+    expect(component.canPromoteWeekGame(game(15))).toBeFalse();
+    expect(component.canPromoteWeekGame(game(10, { gameDate: '2020-01-01T10:00:00Z' }))).toBeFalse();
+    expect(component.canPromoteWeekGame(game(11, { privateGame: true }))).toBeFalse();
+    expect(component.canPromoteWeekGame(game(12, { audience: 'COMMUNITY_ONLY' }))).toBeFalse();
+  }));
+
   it('shows independent empty states when there are no sessions or communities', fakeAsync(() => {
     fixture.detectChanges();
     tick(351);

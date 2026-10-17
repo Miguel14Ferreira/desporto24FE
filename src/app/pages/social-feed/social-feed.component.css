@@ -1043,6 +1043,13 @@ h1 {
 .week-item small.week-waitlist { color: #fcd34d; }
 .week-item:hover strong, .week-item:focus-visible strong { color: var(--d24-accent); }
 .week-item:focus-visible, .week-card-link:focus-visible { outline: 2px solid #86efac; outline-offset: 3px; }
+.week-share-action {
+  align-self: flex-start;
+  margin: .15rem 0 .55rem;
+  font-size: .76rem;
+  text-decoration: none;
+}
+.week-share-action:focus-visible { outline: 2px solid #86efac; outline-offset: 3px; }
 .week-muted { margin: .25rem 0 .8rem; color: #cbd5e1; font-size: .83rem;
   line-height: 1.55; flex: 1; }
 .week-card-link { margin-top: auto; padding-top: .9rem; color: #86efac;

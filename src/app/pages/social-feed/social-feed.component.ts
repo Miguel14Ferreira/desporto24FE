@@ -46,6 +46,18 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
 
   // A minha semana: all entries come from existing, permission-checked APIs.
   myWeekGames: SessionSummary[] = [];
+
+  // Only a session in the current user's created list may be promoted.
+  // The detail view rechecks ownership and canSharePublicly from the backend.
+  canPromoteWeekGame(session: SessionSummary): boolean {
+    return !!this.myWeekMine?.created.some(created => created.id === session.id)
+      && session.audience === 'PUBLIC'
+      && !session.privateGame
+      && session.status === 'OPEN'
+      && session.maxParticipants > session.participantCount
+      && Number.isFinite(Date.parse(session.gameDate))
+      && Date.parse(session.gameDate) > Date.now();
+  }
   myWeekWaitlist: SessionSummary[] = [];
   myWeekOffers: SessionSummary[] = [];
   myWeekCommunities: CommunityGroup[] = [];

@@ -122,6 +122,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
 
   ngOnInit(): void {
     this.pendingJoinScroll = this.route.snapshot.queryParamMap?.get('join') === '1';
+    this.promotionOpen = this.route.snapshot.queryParamMap?.get('promote') === '1';
     this.currentUsername = this.readCurrentUsername();
 
     const rawId = this.route.snapshot.paramMap.get('id');
