@@ -18,6 +18,8 @@ export interface CommunityGroup {
   photoUrl: string | null;
   visibility: CommunityVisibility;
   rankingsEnabled: boolean;
+  individualTournamentsEnabled?: boolean;
+  teamTournamentsEnabled?: boolean;
   ownerUsername: string;
   myRole: CommunityRole | null;
   memberCount: number;

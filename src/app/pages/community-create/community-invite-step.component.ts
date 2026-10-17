@@ -22,7 +22,10 @@ export class CommunityInviteStepComponent implements OnInit {
   inviteLink = '';
   copyFeedback = '';
   step: 'invite' | 'competition' = 'invite';
-  competitionChoice: boolean | null = null;
+  // Sessions are always available; these three optional features can be combined.
+  readonly activityOptions = ['individual', 'teams', 'statistics'] as const;
+  selectedActivities = new Set<'individual' | 'teams' | 'statistics'>();
+  activityChoiceMade = false;
   competitionSaving = false;
   competitionError = '';
 
@@ -96,23 +99,37 @@ export class CommunityInviteStepComponent implements OnInit {
     }
   }
 
-  selectCompetition(enabled: boolean): void {
+  chooseActivity(activity: 'individual' | 'teams' | 'statistics'): void {
     if (this.competitionSaving || !this.canGenerate()) return;
-    this.competitionChoice = enabled;
+    const next = new Set(this.selectedActivities);
+    if (next.has(activity)) next.delete(activity);
+    else next.add(activity);
+    this.selectedActivities = next;
+    this.activityChoiceMade = true;
     this.competitionError = '';
   }
 
+  chooseSessionsOnly(): void {
+    if (this.competitionSaving || !this.canGenerate()) return;
+    this.selectedActivities = new Set();
+    this.activityChoiceMade = true;
+    this.competitionError = '';
+  }
+
+  activitySelected(activity: 'individual' | 'teams' | 'statistics'): boolean {
+    return this.selectedActivities.has(activity);
+  }
+
   saveCompetitionAndContinue(): void {
-    if (!this.community || !this.canGenerate() || this.competitionChoice === null
+    if (!this.community || !this.canGenerate() || !this.activityChoiceMade
         || this.competitionSaving) return;
 
     this.competitionSaving = true;
     this.competitionError = '';
-    this.groups.updateCompetitionSettings(this.community.id, {
-      rankingsEnabled: this.competitionChoice,
-      winPoints: null,
-      drawPoints: null,
-      lossPoints: null
+    this.groups.updateFeatures(this.community.id, {
+      rankingsEnabled: this.selectedActivities.has('statistics'),
+      individualTournamentsEnabled: this.selectedActivities.has('individual'),
+      teamTournamentsEnabled: this.selectedActivities.has('teams')
     }).pipe(timeout(10_000), finalize(() => this.competitionSaving = false))
       .subscribe({
         next: () => this.continueToCommunity(),
