@@ -70,7 +70,7 @@ type FixtureMode = 'empty' | 'draft' | 'paged' | 'forbidden' | 'switch'
   | 'management' | 'complete-rejected' | 'list-network-error'
   | 'paged-enrollment' | 'draw-tie' | 'schedule-roster-paged' | 'schedule-roster-oversize'
   | 'discovery' | 'trial' | 'modules-off' | 'teams-only' | 'teams' | 'teams-view'
-  | 'teams-schedule';
+  | 'teams-schedule' | 'history';
 
 async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
   sport: string | null = 'Futebol', sports?: string[], roundRobinLegs: 1 | 2 = 1,
@@ -182,6 +182,16 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
   let scheduleAttempts = 0;
   let listAttempts = 0;
   let joinAttempts = 0;
+  let archivePreviewCalls = 0;
+  let archiveConfirmCalls = 0;
+  const historicalRows = [
+    { position: 1, name: 'Águias', played: 10, wins: 8, draws: 1, losses: 1, points: 25, goalsFor: 21, goalsAgainst: 9 },
+    { position: 2, name: 'Lobos', played: 10, wins: 6, draws: 2, losses: 2, points: 20, goalsFor: 16, goalsAgainst: 12 }
+  ];
+  const historicalArchives = mode === 'history'
+    ? [{ id: 71, title: 'Liga de 2022', entryType: 'TEAM', seasonId: null,
+        sourceFilename: '2022.csv', createdAt: '2026-10-16T12:00:00Z', rows: historicalRows }]
+    : [];
   let createCommunityRequest: unknown = null;
   let updatedCommunitySports: string[] | null = null;
   const requestedParticipantPages: number[] = [];
@@ -293,6 +303,40 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
       });
     }
 
+    if (path === '/api/communities/7/competition/standings-archives' && method === 'GET') {
+      return send(historicalArchives.map(({ rows: _rows, ...summary }) => summary));
+    }
+    const archiveId = /^\/api\/communities\/7\/competition\/standings-archives\/(\d+)$/.exec(path);
+    if (archiveId && method === 'GET') {
+      const item = historicalArchives.find(value => value.id === Number(archiveId[1]));
+      return item ? send(item) : send({ message: 'Arquivo não encontrado' }, 404);
+    }
+    if (path === '/api/communities/7/competition/import/preview' && method === 'POST') {
+      if (role !== 'OWNER') return send({ message: 'Sem permissão' }, 403);
+      return send({
+        fileName: 'tabela.csv',
+        sheets: [{ name: 'Dados', nonEmptyRows: 3, structure: 'TABULAR',
+          headers: ['Pos', 'Equipa', 'J', 'V', 'E', 'D', 'Pts', 'GM', 'GS'],
+          sampleRows: [['1', 'Águias', '10', '8', '1', '1', '25', '21', '9']],
+          columnSuggestions: [] }]
+      });
+    }
+    if (path === '/api/communities/7/competition/import/standings/preview' && method === 'POST') {
+      if (role !== 'OWNER') return send({ message: 'Sem permissão' }, 403);
+      archivePreviewCalls++;
+      return send({ sheetName: 'Dados', sourceRows: 3, acceptedRows: 2,
+        duplicateRows: 1, warnings: ['Linha 4: ÁGUIAS repetido; mantém-se apenas a primeira ocorrência'],
+        rows: historicalRows });
+    }
+    if (path === '/api/communities/7/competition/import/standings/confirm' && method === 'POST') {
+      if (role !== 'OWNER' || archivePreviewCalls === 0)
+        return send({ message: 'Confirmação inválida' }, 403);
+      archiveConfirmCalls++;
+      const item = { id: 72, title: 'Liga de 2020', entryType: 'TEAM', seasonId: null,
+        sourceFilename: 'tabela.csv', createdAt: '2026-10-17T20:00:00Z', rows: historicalRows };
+      historicalArchives.unshift(item);
+      return send(item);
+    }
     if (path === '/api/communities/7/tournaments') {
       if (method === 'GET') {
         listAttempts++;
@@ -602,11 +646,70 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
     get listAttempts(): number { return listAttempts; },
     get joinAttempts(): number { return joinAttempts; },
     get pendingDetails(): number { return pendingDetailResponses.length; },
+    get archivePreviewCalls(): number { return archivePreviewCalls; },
+    get archiveConfirmCalls(): number { return archiveConfirmCalls; },
+    historicalArchives,
     releaseDetails(): void {
       pendingDetailResponses.splice(0).forEach(resolve => resolve());
     }
   };
 }
+
+
+test('organizador importa classificação histórica sem criar partidas e vê estatísticas completas', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'history');
+  await page.goto('/menu/communities/7?tab=ranking');
+  await expect(page.getByRole('heading', { name: 'Classificações arquivadas' })).toBeVisible();
+
+  const original = page.getByRole('button', { name: /Liga de 2022/ });
+  await original.click();
+  const historyTable = page.locator('.archive-standings-table').first();
+  await expect(historyTable.getByRole('columnheader', { name: 'Golos marcados' })).toBeVisible();
+  await expect(historyTable.getByRole('columnheader', { name: 'Vitórias' })).toBeVisible();
+  await expect(historyTable.locator('tbody tr')).toHaveCount(2);
+  await expect(historyTable.locator('tbody tr').first()).toContainText('Águias');
+  await expect(historyTable.locator('tbody tr').first()).toContainText('21');
+  await expect(historyTable.locator('tbody tr').first()).toContainText('25');
+
+  await page.getByRole('button', { name: 'Classificação final' }).click();
+  const input = page.locator('input[accept=".xlsx,.xls,.csv,.tsv"]');
+  await input.setInputFiles({ name: 'tabela.csv', mimeType: 'text/csv',
+    buffer: Buffer.from('Pos;Equipa;J;V;E;D;Pts;GM;GS\n1;Águias;10;8;1;1;25;21;9\n') });
+  await page.getByRole('button', { name: 'Analisar ficheiro' }).click();
+  await expect(page.getByText('Folha ou conjunto de dados')).toBeVisible();
+  await page.getByRole('button', { name: 'Validar e ver dados' }).click();
+  await expect(page.getByText('Pré-visualização da classificação final')).toBeVisible();
+  await expect(page.getByText(/Linha 4: ÁGUIAS repetido/)).toBeVisible();
+  expect(fixture.archivePreviewCalls).toBe(1);
+  expect(fixture.archiveConfirmCalls).toBe(0);
+
+  await page.getByLabel('Nome do histórico').fill('Liga de 2020');
+  await page.getByLabel('Classificação de').selectOption('TEAM');
+  const confirm = page.getByRole('button', { name: 'Guardar classificação histórica' });
+  await expect(confirm).toBeDisabled();
+  await page.getByRole('checkbox', { name: /Confirmo que esta tabela corresponde/ }).check();
+  await confirm.click();
+  await expect(page.getByText('Classificação histórica guardada')).toBeVisible();
+  await expect(page.getByRole('button', { name: /Liga de 2020/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Liga de 2022/ })).toBeVisible();
+  expect(fixture.archiveConfirmCalls).toBe(1);
+  expect(fixture.historicalArchives).toHaveLength(2);
+  expect(fixture.unmocked.filter(x => x.includes('/competition/standings-archives') ||
+    x.includes('/competition/import/standings'))).toEqual([]);
+});
+
+test('membro consulta classificação arquivada mas não pode importar outra', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'MEMBER', 'history');
+  await page.goto('/menu/communities/7?tab=ranking');
+  await expect(page.getByRole('heading', { name: 'Classificações arquivadas' })).toBeVisible();
+  await page.getByRole('button', { name: /Liga de 2022/ }).click();
+  const table = page.locator('.archive-standings-table');
+  await expect(table.getByRole('row')).toHaveCount(3);
+  await expect(table.locator('tbody tr').first()).toContainText('Águias');
+  await expect(page.getByRole('button', { name: 'Classificação final' })).toHaveCount(0);
+  expect(fixture.archiveConfirmCalls).toBe(0);
+  expect(fixture.unmocked.filter(x => x.includes('/competition/standings-archives'))).toEqual([]);
+});
 
 test.afterEach(async ({ page }, info) => {
   if (info.status === info.expectedStatus) return;

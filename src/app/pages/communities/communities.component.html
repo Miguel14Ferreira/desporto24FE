@@ -919,18 +919,36 @@
                       <div class="import-final-plan">
                         <strong>{{ archiveOpen.title }}</strong>
                         <p>{{ 'communities.archive.originalPoints' | t }}</p>
-                        <div class="import-mapping-head">
-                          <strong>{{ 'communities.archive.position' | t }}</strong>
-                          <strong>{{ 'communities.archive.playerOrTeam' | t }}</strong>
-                          <strong>{{ 'communities.archive.points' | t }}</strong>
-                        </div>
-                        @for (entry of archiveOpen.rows; track $index) {
-                          <div class="import-mapping-row">
-                            <span>{{ entry.position }}</span>
-                            <strong>{{ entry.name }}</strong>
-                            <span>{{ entry.points }}</span>
-                          </div>
-                        }
+<div class="archive-standings-scroll" role="region" [attr.aria-label]="'communities.archive.listTitle' | t" tabindex="0">
+                      <table class="archive-standings-table">
+                        <thead><tr>
+                          <th scope="col">{{ 'communities.archive.position' | t }}</th>
+                      <th scope="col">{{ 'communities.archive.playerOrTeam' | t }}</th>
+                      <th scope="col">{{ 'communities.archive.played' | t }}</th>
+                      <th scope="col">{{ 'communities.archive.wins' | t }}</th>
+                      <th scope="col">{{ 'communities.archive.draws' | t }}</th>
+                      <th scope="col">{{ 'communities.archive.losses' | t }}</th>
+                      <th scope="col">{{ 'communities.archive.points' | t }}</th>
+                      <th scope="col">{{ 'communities.archive.goalsFor' | t }}</th>
+                      <th scope="col">{{ 'communities.archive.goalsAgainst' | t }}</th>
+                        </tr></thead>
+                        <tbody>
+                          @for (entry of archiveOpen.rows; track $index) {
+                            <tr>
+                              <td>{{ entry.position }}</td>
+                        <td><strong>{{ entry.name }}</strong></td>
+                        <td>{{ entry.played ?? '—' }}</td>
+                        <td>{{ entry.wins ?? '—' }}</td>
+                        <td>{{ entry.draws ?? '—' }}</td>
+                        <td>{{ entry.losses ?? '—' }}</td>
+                        <td>{{ entry.points }}</td>
+                        <td>{{ entry.goalsFor ?? '—' }}</td>
+                        <td>{{ entry.goalsAgainst ?? '—' }}</td>
+                            </tr>
+                          }
+                        </tbody>
+                      </table>
+                    </div>
                       </div>
                     }
                   </section>
@@ -1060,17 +1078,36 @@
                                 @for (warning of archivePreview.warnings.slice(0, 8); track $index) {
                                   <p class="venue-current-location">{{ warning }}</p>
                                 }
-                                <div class="import-mapping-head">
-                                  <strong>{{ 'communities.archive.position' | t }}</strong>
-                                  <strong>{{ 'communities.archive.playerOrTeam' | t }}</strong>
-                                  <strong>{{ 'communities.archive.points' | t }}</strong>
-                                </div>
-                                @for (entry of archivePreview.rows.slice(0, 25); track $index) {
-                                  <div class="import-mapping-row">
-                                    <span>{{ entry.position }}</span><strong>{{ entry.name }}</strong>
-                                    <span>{{ entry.points }}</span>
-                                  </div>
-                                }
+<div class="archive-standings-scroll" role="region" [attr.aria-label]="'communities.archive.listTitle' | t" tabindex="0">
+                      <table class="archive-standings-table">
+                        <thead><tr>
+                          <th scope="col">{{ 'communities.archive.position' | t }}</th>
+                      <th scope="col">{{ 'communities.archive.playerOrTeam' | t }}</th>
+                      <th scope="col">{{ 'communities.archive.played' | t }}</th>
+                      <th scope="col">{{ 'communities.archive.wins' | t }}</th>
+                      <th scope="col">{{ 'communities.archive.draws' | t }}</th>
+                      <th scope="col">{{ 'communities.archive.losses' | t }}</th>
+                      <th scope="col">{{ 'communities.archive.points' | t }}</th>
+                      <th scope="col">{{ 'communities.archive.goalsFor' | t }}</th>
+                      <th scope="col">{{ 'communities.archive.goalsAgainst' | t }}</th>
+                        </tr></thead>
+                        <tbody>
+                          @for (entry of archivePreview.rows.slice(0, 25); track $index) {
+                            <tr>
+                              <td>{{ entry.position }}</td>
+                        <td><strong>{{ entry.name }}</strong></td>
+                        <td>{{ entry.played ?? '—' }}</td>
+                        <td>{{ entry.wins ?? '—' }}</td>
+                        <td>{{ entry.draws ?? '—' }}</td>
+                        <td>{{ entry.losses ?? '—' }}</td>
+                        <td>{{ entry.points }}</td>
+                        <td>{{ entry.goalsFor ?? '—' }}</td>
+                        <td>{{ entry.goalsAgainst ?? '—' }}</td>
+                            </tr>
+                          }
+                        </tbody>
+                      </table>
+                    </div>
                                 @if (archivePreview.rows.length > 25) {
                                   <p>{{ 'communities.archive.previewTruncated' | t }}</p>
                                 }

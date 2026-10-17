@@ -1368,6 +1368,17 @@ input,textarea,select {
 .import-final-plan { display: grid; gap: 7px; margin-top: 16px; padding: 14px; border-radius: 12px; background: rgba(127,127,127,.08); }
 .import-round-plan { display: grid; grid-template-columns: minmax(110px,.8fr) repeat(3,minmax(90px,.5fr)); gap: 8px; padding: 8px 0; border-top: 1px solid var(--border-color,#e5e7eb); }
 .import-round-plan.duplicate { opacity: .65; }
+.archive-standings-scroll { max-width: 100%; overflow-x: auto; border: 1px solid var(--border-color, #e5e7eb); border-radius: 10px; }
+.archive-standings-table { border-collapse: collapse; width: 100%; min-width: 790px; font-variant-numeric: tabular-nums; }
+.archive-standings-table th, .archive-standings-table td {
+  padding: 10px 12px; border-bottom: 1px solid var(--border-color, #e5e7eb);
+  text-align: right; white-space: nowrap;
+}
+.archive-standings-table thead { background: rgba(127,127,127,.08); }
+.archive-standings-table th:nth-child(2), .archive-standings-table td:nth-child(2) {
+  text-align: left; min-width: 160px; white-space: normal;
+}
+.archive-standings-table tbody tr:last-child td { border-bottom: 0; }
 @media (max-width:640px){ .import-context,.import-round-plan { grid-template-columns:1fr; } }
 
 .import-confirm { margin-top:14px; }
