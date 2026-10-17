@@ -1,11 +1,7 @@
 name: Validate community search race protection
+# Manual diagnostic job; pull requests use the consolidated pr-validation.yml.
 on:
-  pull_request:
-    branches: [preview/render-fullstack]
-    paths:
-      - 'src/app/pages/communities/communities.component.ts'
-      - 'src/app/pages/communities/community-search-race.spec.ts'
-      - '.github/workflows/community-search-race-ci.yml'
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:

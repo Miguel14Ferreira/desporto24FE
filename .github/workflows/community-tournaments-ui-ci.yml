@@ -1,14 +1,7 @@
 name: Validate community tournament UI
+# Manual diagnostic job; pull requests use the consolidated pr-validation.yml.
 on:
-  pull_request:
-    branches: [preview/render-fullstack]
-    paths:
-      - 'src/app/pages/communities/community-tournaments.component.*'
-      - 'src/app/pages/communities/communities.component.*'
-      - 'src/app/pages/communities/communities.module.ts'
-      - 'src/app/pages/model/community-tournament.ts'
-      - 'src/app/services/community-tournaments.service.*'
-      - '.github/workflows/community-tournaments-ui-ci.yml'
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:

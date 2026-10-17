@@ -1,13 +1,7 @@
 name: Validate community value proposition
+# Manual diagnostic job; pull requests use the consolidated pr-validation.yml.
 on:
-  pull_request:
-    branches: [preview/render-fullstack]
-    paths:
-      - 'src/app/pages/communities/communities.component.html'
-      - 'src/app/pages/communities/communities.component.css'
-      - 'src/app/pages/communities/community-value-proposition.spec.ts'
-      - 'src/app/i18n/i18n.service.ts'
-      - '.github/workflows/community-value-proposition-ci.yml'
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:

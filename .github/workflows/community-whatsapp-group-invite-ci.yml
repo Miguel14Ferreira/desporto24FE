@@ -1,16 +1,7 @@
 name: Validate community WhatsApp group sharing
+# Manual diagnostic job; pull requests use the consolidated pr-validation.yml.
 on:
-  pull_request:
-    branches: [preview/render-fullstack]
-    paths:
-      - 'src/app/pages/communities/communities.component.ts'
-      - 'src/app/pages/communities/communities.component.html'
-      - 'src/app/pages/communities/communities.component.css'
-      - 'src/app/pages/communities/community-group-invite.ts'
-      - 'src/app/pages/communities/community-group-invite.spec.ts'
-      - 'src/app/pages/community-create/community-create.component.html'
-      - 'src/app/i18n/i18n.service.ts'
-      - '.github/workflows/community-whatsapp-group-invite-ci.yml'
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:
