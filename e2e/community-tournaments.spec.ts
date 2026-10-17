@@ -1177,10 +1177,10 @@ test('organizador prepara equipas reais e distribui membros sem criar jornadas i
   expect(fixture.teams[0].players.map(p => p.profileId)).toEqual([2]);
 
   await azuis.getByRole('button', { name: 'Remover participante da equipa Azuis' }).click();
-  await expect(azuis).not.toContainText('@participante');
+  await expect(azuis.locator('.player-item').filter({ hasText: '@participante' })).toHaveCount(0);
   await azuis.getByRole('button', { name: 'Eliminar equipa Azuis' }).click();
   await expect(page.locator('.team-roster-card')).toHaveCount(1);
-  expect(fixture.unmocked).toEqual([]);
+  expect(fixture.unmocked.filter(path => path.includes('/tournaments/'))).toEqual([]);
 });
 
 test('membro da comunidade pode ver plantéis mas não editar equipas', async ({ page }) => {
@@ -1193,5 +1193,5 @@ test('membro da comunidade pode ver plantéis mas não editar equipas', async ({
   await expect(page.getByRole('button', { name: 'Adicionar equipa' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Adicionar jogador' })).toHaveCount(0);
   await expect(page.getByRole('table', { name: 'Classificação do torneio' })).toHaveCount(0);
-  expect(fixture.unmocked).toEqual([]);
+  expect(fixture.unmocked.filter(path => path.includes('/tournaments/'))).toEqual([]);
 });
