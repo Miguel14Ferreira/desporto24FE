@@ -43,6 +43,14 @@
                 <strong>{{ 'publicSession.participantCount' | t:{ count: details.maxParticipants } }}</strong>
               </div>
             }
+            @if (remainingPlaces !== null) {
+              <div class="fact fact-availability" role="status">
+                <span class="fact-label">{{ 'publicSession.availableSpots' | t }}</span>
+                <strong>{{ (remainingPlaces === 0 ? 'publicSession.noSpots' :
+                             remainingPlaces === 1 ? 'publicSession.oneSpot' : 'publicSession.manySpots')
+                             | t:{ count: remainingPlaces } }}</strong>
+              </div>
+            }
           </div>
           <p class="privacy-note">{{ 'publicSession.privacyNote' | t }}</p>
         </div>
