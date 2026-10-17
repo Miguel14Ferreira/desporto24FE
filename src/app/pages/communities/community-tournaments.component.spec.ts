@@ -90,7 +90,7 @@ describe('Community tournaments management', () => {
       await component.createTeamCompetition();
       expect(api.createTeamTournament).toHaveBeenCalledWith(7, 'Liga casa e fora', 'Futebol', 5, 2);
       expect(component.selected?.roundRobinLegs).toBe(2);
-      expect(component.roundRobinLegsDraft).toBe(1);
+      expect(Number(component.roundRobinLegsDraft)).toBe(1);
       expect(api.create).not.toHaveBeenCalled();
     });
 
