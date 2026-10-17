@@ -1,11 +1,7 @@
 name: Validate venue detail async consistency
+# Manual diagnostic job; pull requests use the consolidated pr-validation.yml.
 on:
-  pull_request:
-    branches: [preview/render-fullstack]
-    paths:
-      - 'src/app/pages/venue-details/venue-details.component.ts'
-      - 'src/app/pages/venue-details/venue-detail-stale-load.spec.ts'
-      - '.github/workflows/venue-detail-stale-load-ci.yml'
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:

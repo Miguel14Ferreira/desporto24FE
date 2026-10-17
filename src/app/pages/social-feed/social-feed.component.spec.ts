@@ -24,8 +24,12 @@ describe('SocialFeedComponent discovery sidebar', () => {
     sessions = jasmine.createSpyObj<SessionService>('SessionService', ['discover', 'mine', 'detail']);
     sessions.discover.and.returnValue(of([]));
     sessions.mine.and.returnValue(of({ created: [], joined: [], waitlisted: [] }));
-    community = jasmine.createSpyObj<CommunityService>('CommunityService', ['discoverProfiles']);
+    community = jasmine.createSpyObj<CommunityService>(
+      'CommunityService', ['discoverProfiles', 'publicProfile', 'friends']
+    );
     community.discoverProfiles.and.returnValue(of([]));
+    community.publicProfile.and.returnValue(of(null as any));
+    community.friends.and.returnValue(of([]));
 
     await TestBed.configureTestingModule({
       declarations: [SocialFeedComponent],
@@ -338,7 +342,8 @@ describe('SocialFeedComponent post-game entry', () => {
     } as unknown as ActivatedRoute);
     const target = new SocialFeedComponent(
       feed, sessions, auth, route,
-      { discoverProfiles: () => of([]) } as unknown as CommunityService
+      { discoverProfiles: () => of([]), publicProfile: () => of(null),
+        friends: () => of([]) } as unknown as CommunityService
     );
     target.ngOnInit();
     return { target, sessions };

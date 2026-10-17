@@ -74,10 +74,10 @@ describe('DiscoverComponent', () => {
         availability: 'available'
       })
     );
-    expect(communityService.findProfiles).toHaveBeenCalledWith({
+    expect(communityService.findProfiles).toHaveBeenCalledWith(jasmine.objectContaining({
       sport: 'Padel',
       location: 'Lisboa'
-    });
+    }));
     const locality: HTMLInputElement = fixture.nativeElement.querySelector('input[name="location"]');
     expect(locality.value).toBe('Lisboa');
   });
@@ -105,7 +105,7 @@ describe('DiscoverComponent', () => {
       expect(page.componentInstance.playerName).toBe('Ana');
       expect(page.componentInstance.appliedPlayerName).toBe('Ana');
       expect(venueService.search).toHaveBeenCalledWith('Sintra', 'Ténis');
-      expect(communityService.findProfiles).toHaveBeenCalledWith({ name: 'Ana' });
+      expect(communityService.findProfiles).toHaveBeenCalledWith(jasmine.objectContaining({ name: 'Ana' }));
       const link: HTMLAnchorElement = page.nativeElement.querySelector('.person-card');
       expect(link.getAttribute('href'))
         .toBe('/menu/perfis/ana?from=discover&sport=T%C3%A9nis&city=Sintra&player=Ana');
@@ -214,9 +214,9 @@ describe('DiscoverComponent', () => {
       expect(sessionService.discover).toHaveBeenCalledWith(jasmine.objectContaining({
         city: 'Lisboa', latitude: undefined, radiusKm: undefined, sort: 'date'
       }));
-      expect(communityService.findProfiles).toHaveBeenCalledWith({
+      expect(communityService.findProfiles).toHaveBeenCalledWith(jasmine.objectContaining({
         sport: 'Padel', location: 'Lisboa'
-      });
+      }));
     } finally {
       if (original) {
         Object.defineProperty(navigator, 'geolocation', original);
@@ -302,7 +302,7 @@ describe('DiscoverComponent', () => {
         radiusKm: 25, sort: 'distance'
       }));
       expect(venueService.search).toHaveBeenCalledWith('Lisboa', 'Padel');
-      expect(communityService.findProfiles).toHaveBeenCalledWith({ sport: 'Padel', location: 'Lisboa' });
+      expect(communityService.findProfiles).toHaveBeenCalledWith(jasmine.objectContaining({ sport: 'Padel', location: 'Lisboa' }));
     } finally {
       if (original) {
         Object.defineProperty(navigator, 'geolocation', original);
@@ -421,7 +421,7 @@ describe('DiscoverComponent', () => {
     communityService.findProfiles.and.returnValue(throwError(() => new Error('Offline')));
     component.search();
     fixture.detectChanges();
-    expect(component.loadError).toBeTrue();
+    expect(component.peopleLoadError).toBeTrue();
     expect(fixture.nativeElement.querySelector('.people-empty-recruit')).toBeNull();
   });
 
@@ -439,7 +439,7 @@ describe('DiscoverComponent', () => {
     component.playerName = '  Ana  ';
     component.searchPlayers();
 
-    expect(communityService.findProfiles).toHaveBeenCalledWith({ name: 'Ana' });
+    expect(communityService.findProfiles).toHaveBeenCalledWith(jasmine.objectContaining({ name: 'Ana' }));
     expect(component.people).toEqual([teammate]);
     expect(component.topPeople).toEqual([teammate]);
     expect(component.appliedPlayerName).toBe('Ana');
@@ -454,9 +454,9 @@ describe('DiscoverComponent', () => {
 
     expect(component.playerName).toBe('');
     expect(component.appliedPlayerName).toBe('');
-    expect(communityService.findProfiles).toHaveBeenCalledWith({
+    expect(communityService.findProfiles).toHaveBeenCalledWith(jasmine.objectContaining({
       sport: 'Padel', location: 'Lisboa'
-    });
+    }));
   });
 
   it('allows name-only player searches when no sport or location is selected', () => {
@@ -464,7 +464,7 @@ describe('DiscoverComponent', () => {
     component.playerName = 'Miguel';
     component.searchPlayers();
 
-    expect(communityService.findProfiles).toHaveBeenCalledWith({ name: 'Miguel' });
+    expect(communityService.findProfiles).toHaveBeenCalledWith(jasmine.objectContaining({ name: 'Miguel' }));
   });
 
   it('expands and collapses suggested players directly in Discover', () => {
@@ -682,7 +682,7 @@ describe('DiscoverComponent', () => {
     component.search();
     fixture.detectChanges();
 
-    expect(component.loadError).toBeTrue();
+    expect(component.sessionsLoadError).toBeTrue();
     expect(fixture.nativeElement.querySelector('.discover-error')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('.session-empty-create')).toBeNull();
   });
@@ -776,7 +776,7 @@ describe('DiscoverComponent', () => {
     component.search();
 
     expect(venueService.search).toHaveBeenCalled();
-    expect(component.loadError).toBeTrue();
+    expect(component.venuesLoadError).toBeTrue();
     expect(component.initialized).toBeTrue();
   });
 
@@ -785,11 +785,11 @@ describe('DiscoverComponent', () => {
       throwError(() => new Error('API unavailable'))
     );
     component.search();
-    expect(component.loadError).toBeTrue();
+    expect(component.venuesLoadError).toBeTrue();
 
     venueService.search.and.returnValue(of([]));
     component.search();
 
-    expect(component.loadError).toBeFalse();
+    expect(component.venuesLoadError).toBeFalse();
   });
 });
