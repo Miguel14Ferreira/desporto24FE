@@ -3,7 +3,7 @@ import { ChangeDetectorRef, SimpleChange } from '@angular/core';
 import { AuthenticationService } from '../../services/authethication.service';
 import { CommunityTournamentsService } from '../../services/community-tournaments.service';
 import { CommunityGroup } from '../model/community-group';
-import { CommunityTournament, TournamentMatch, TournamentPage, TournamentParticipant, TournamentParticipantPage } from '../model/community-tournament';
+import { CommunityTournament, TournamentMatch, TournamentPage, TournamentParticipant, TournamentParticipantPage, TournamentTeam } from '../model/community-tournament';
 import { CommunityTournamentsComponent } from './community-tournaments.component';
 import { tournamentScoreTerminology } from './community-tournament-scoring';
 
@@ -26,11 +26,13 @@ describe('Community tournaments management', () => {
   beforeEach(() => {
     api = jasmine.createSpyObj<CommunityTournamentsService>('CommunityTournamentsService', [
       'list', 'create', 'participants', 'join', 'leave', 'confirm', 'removeParticipant',
-      'generateSchedule', 'matches', 'recordResult', 'standings', 'complete', 'delete'
+      'generateSchedule', 'matches', 'recordResult', 'standings', 'complete', 'delete',
+      'createTeamTournament', 'teams', 'createTeam', 'addTeamPlayer', 'removeTeamPlayer', 'deleteTeam'
     ]);
     api.list.and.returnValue(of({ tournaments: [draft], page: 0, hasMore: false }));
     api.participants.and.returnValue(of({ participants: [], page: 0, hasMore: false }));
     api.matches.and.returnValue(of({ matches: [], page: 0, hasMore: false }));
+    api.teams.and.returnValue(of([]));
     api.standings.and.returnValue(of({
       tournamentId: 9, status: 'DRAFT', totalMatches: 0, completedMatches: 0,
       winPoints: 3, drawPoints: 1, lossPoints: 0, standings: []
@@ -42,6 +44,135 @@ describe('Community tournaments management', () => {
     component = new CommunityTournamentsComponent(api, auth, cdr);
     component.community = { ...community };
     component.ngOnChanges({ community: new SimpleChange(undefined, community, true) });
+  });
+
+
+  describe('real team competitions', () => {
+    const teamDraft: CommunityTournament = {
+      ...draft, id: 19, name: 'Torneio CNG 5x5', sport: 'Futebol',
+      entryType: 'TEAM', playersPerTeam: 5
+    };
+    const team: TournamentTeam = {
+      id: 40, name: 'Verdes', playersPerTeam: 5, createdAt: '2026-10-17T12:00:00Z', players: []
+    };
+    const members = [
+      { profileId: 1, username: 'owner', fullName: 'Organizador', profilePicUrl: null, role: 'OWNER' as const },
+      { profileId: 2, username: 'ana', fullName: 'Ana', profilePicUrl: null, role: 'MEMBER' as const },
+      { profileId: 3, username: 'bruno', fullName: 'Bruno', profilePicUrl: null, role: 'MEMBER' as const }
+    ];
+
+    it('creates a team draft with independent sport and squad size', async () => {
+      api.createTeamTournament.and.returnValue(of(teamDraft));
+      component.startTeamCreation();
+      component.nameDraft = ' Torneio CNG 5x5 ';
+      component.teamSizeDraft = 5;
+      await component.createTeamCompetition();
+      expect(api.createTeamTournament).toHaveBeenCalledWith(7, 'Torneio CNG 5x5', 'Futebol', 5);
+      expect(api.create).not.toHaveBeenCalled();
+      expect(component.selected?.entryType).toBe('TEAM');
+      expect(api.teams).toHaveBeenCalledWith(7, 19);
+      expect(api.participants).toHaveBeenCalledTimes(1); // initial legacy league only
+      expect(api.matches).toHaveBeenCalledTimes(1);
+      expect(api.standings).toHaveBeenCalledTimes(1);
+    });
+
+    it('validates team size before making a request', async () => {
+      component.startTeamCreation();
+      component.nameDraft = 'Liga por equipas';
+      component.teamSizeDraft = 31;
+      await component.createTeamCompetition();
+      expect(component.error).toContain('1 e 30');
+      expect(api.createTeamTournament).not.toHaveBeenCalled();
+      component.teamSizeDraft = 2.5;
+      await component.createTeamCompetition();
+      expect(api.createTeamTournament).not.toHaveBeenCalled();
+    });
+
+    it('loads only teams for team tournaments, without individual standings or fixtures', () => {
+      const oldParticipantCalls = api.participants.calls.count();
+      const oldMatchCalls = api.matches.calls.count();
+      const oldStandingCalls = api.standings.calls.count();
+      api.teams.and.returnValue(of([team]));
+      component.selectTournament(teamDraft);
+      expect(component.teams).toEqual([team]);
+      expect(api.teams).toHaveBeenCalledWith(7, 19);
+      expect(api.participants.calls.count()).toBe(oldParticipantCalls);
+      expect(api.matches.calls.count()).toBe(oldMatchCalls);
+      expect(api.standings.calls.count()).toBe(oldStandingCalls);
+      expect(component.canPublishSchedule).toBeFalse();
+    });
+
+    it('creates teams and assigns only free community members', async () => {
+      component.community = { ...community, members, memberCount: 3 };
+      component.selectTournament(teamDraft);
+      api.createTeam.and.returnValue(of(team));
+      api.teams.and.returnValue(of([team]));
+      component.teamNameDraft = '  Verdes  ';
+      await component.createTournamentTeam();
+      expect(api.createTeam).toHaveBeenCalledWith(7, 19, 'Verdes');
+      expect(component.teams[0].name).toBe('Verdes');
+
+      const updated = { ...team, players: [{ profileId: 2, username: 'ana', displayName: 'Ana' }] };
+      api.addTeamPlayer.and.returnValue(of(updated));
+      api.teams.and.returnValue(of([updated]));
+      component.teamPlayerDraft[40] = 2;
+      await component.assignTeamPlayer(team);
+      expect(api.addTeamPlayer).toHaveBeenCalledWith(7, 19, 40, 2);
+      expect(component.availableTeamMembers.map(x => x.profileId)).toEqual([1, 3]);
+
+      component.teamPlayerDraft[40] = 2;
+      await component.assignTeamPlayer(updated);
+      expect(api.addTeamPlayer).toHaveBeenCalledTimes(1);
+    });
+
+    it('can remove players, then delete only an empty team', async () => {
+      const occupied = { ...team, players: [{ profileId: 2, username: 'ana', displayName: 'Ana' }] };
+      component.community = { ...community, members, memberCount: 3 };
+      api.teams.and.returnValue(of([occupied]));
+      component.selectTournament(teamDraft);
+      await component.deleteTournamentTeam(occupied);
+      expect(api.deleteTeam).not.toHaveBeenCalled();
+      api.removeTeamPlayer.and.returnValue(of(void 0));
+      api.teams.and.returnValue(of([team]));
+      await component.removeTeamPlayer(occupied, 2);
+      expect(api.removeTeamPlayer).toHaveBeenCalledWith(7, 19, 40, 2);
+      api.deleteTeam.and.returnValue(of(void 0));
+      api.teams.and.returnValue(of([]));
+      await component.deleteTournamentTeam(team);
+      expect(api.deleteTeam).toHaveBeenCalledWith(7, 19, 40);
+    });
+
+    it('prevents members from editing any squad', async () => {
+      component.community = { ...community, myRole: 'MEMBER', members };
+      component.selectTournament(teamDraft);
+      component.teamNameDraft = 'Tentativa';
+      component.teamPlayerDraft[40] = 2;
+      await component.createTournamentTeam();
+      await component.assignTeamPlayer(team);
+      await component.deleteTournamentTeam(team);
+      expect(api.createTeam).not.toHaveBeenCalled();
+      expect(api.addTeamPlayer).not.toHaveBeenCalled();
+      expect(api.deleteTeam).not.toHaveBeenCalled();
+      expect(component.teams).toEqual([]);
+    });
+
+    it('ignores delayed team responses when a different competition is selected', () => {
+      const delayed = new Subject<TournamentTeam[]>();
+      api.teams.and.returnValue(delayed.asObservable());
+      component.selectTournament(teamDraft);
+      component.selectTournament(draft);
+      delayed.next([team]);
+      delayed.complete();
+      expect(component.selected?.id).toBe(9);
+      expect(component.teams).toEqual([]);
+    });
+
+    it('respects the module switch for team competition creation', () => {
+      component.community = { ...community, teamTournamentsEnabled: false };
+      component.startTeamCreation();
+      expect(component.showTeamCreate).toBeFalse();
+      expect(api.createTeamTournament).not.toHaveBeenCalled();
+    });
   });
 
   it('loads tournament list, roster, fixtures and standings for the selected community', () => {

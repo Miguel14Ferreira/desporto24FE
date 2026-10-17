@@ -3,7 +3,7 @@ import { finalize, firstValueFrom, forkJoin, Observable, timeout } from 'rxjs';
 import { CommunityGroup } from '../model/community-group';
 import {
   CommunityTournament, TournamentMatch, TournamentParticipant, TournamentStandingRow,
-  TournamentStandings
+  TournamentStandings, TournamentTeam
 } from '../model/community-tournament';
 import { CommunityTournamentsService } from '../../services/community-tournaments.service';
 import { AuthenticationService } from '../../services/authethication.service';
@@ -34,6 +34,12 @@ export class CommunityTournamentsComponent implements OnChanges {
 
   showGuide = false;
   showIndividualCreate = false;
+  showTeamCreate = false;
+  teamSizeDraft = 5;
+  teamNameDraft = '';
+  teamPlayerDraft: Record<number, number | null> = {};
+  teams: TournamentTeam[] = [];
+  teamsLoadError = false;
   nameDraft = '';
   sportDraft = '';
   sportSearch = '';
@@ -129,6 +135,11 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.busy = false;
       this.showGuide = false;
       this.showIndividualCreate = false;
+      this.showTeamCreate = false;
+      this.teamNameDraft = '';
+      this.teamPlayerDraft = {};
+      this.teams = [];
+      this.teamsLoadError = false;
       // A sole community sport is convenient; multi-sport requires an explicit choice.
       const sports = this.community.sports;
       this.sportDraft = sports?.length === 1
@@ -174,7 +185,24 @@ export class CommunityTournamentsComponent implements OnChanges {
   }
 
   get scoring() {
-    return tournamentScoreTerminology(this.selected?.sport);
+    return tournamentScoreTerminology(this.selected?.entryType === 'TEAM' ? null : this.selected?.sport);
+  }
+
+  get isTeamCompetition(): boolean {
+    return this.selected?.entryType === 'TEAM';
+  }
+
+  get availableTeamMembers() {
+    const assigned = new Set(this.teams.flatMap(team => team.players.map(player => player.profileId)));
+    return (this.community.members || []).filter(member => !assigned.has(member.profileId));
+  }
+
+  get canManageTeamRoster(): boolean {
+    return this.canManage && this.isTeamCompetition && this.selected?.status === 'DRAFT' && !this.busy;
+  }
+
+  get readyTeamCount(): number {
+    return this.teams.filter(t => t.players.length === t.playersPerTeam).length;
   }
 
   get confirmedCount(): number {
@@ -221,7 +249,7 @@ export class CommunityTournamentsComponent implements OnChanges {
         this.tournaments = reset ? result.tournaments : [...this.tournaments, ...result.tournaments];
         this.tournamentsPage = page;
         this.tournamentsHasMore = result.hasMore;
-        if (reset && !result.tournaments.length && !this.showIndividualCreate) this.showGuide = true;
+        if (reset && !result.tournaments.length && !this.showIndividualCreate && !this.showTeamCreate) this.showGuide = true;
         if (reset && !this.selected && result.tournaments.length) {
           this.selectTournament(result.tournaments[0]);
         }
@@ -250,6 +278,9 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.rosterReady = false;
     this.matches = [];
     this.standings = undefined;
+    this.teams = [];
+    this.teamPlayerDraft = {};
+    this.teamsLoadError = false;
     this.scoreDrafts = {};
     this.scoreTouched.clear();
     this.focusPlayersAfterReload = false;
@@ -261,6 +292,10 @@ export class CommunityTournamentsComponent implements OnChanges {
   loadDetails(): void {
     const tournament = this.selected;
     if (!tournament || !this.isMember || this.detailsLoading) return;
+    if (tournament.entryType === 'TEAM') {
+      this.loadTeams();
+      return;
+    }
     const communityId = this.community.id;
     const revision = ++this.detailRevision;
     ++this.standingsRevision;
@@ -378,8 +413,114 @@ export class CommunityTournamentsComponent implements OnChanges {
   startIndividualCreation(): void {
     if (!this.canManage || this.community?.individualTournamentsEnabled === false || this.busy) return;
     this.showGuide = false;
+    this.showTeamCreate = false;
     this.showIndividualCreate = true;
     this.error = '';
+  }
+
+  startTeamCreation(): void {
+    if (!this.canManage || this.community?.teamTournamentsEnabled === false || this.busy) return;
+    this.showGuide = false;
+    this.showIndividualCreate = false;
+    this.showTeamCreate = true;
+    this.error = '';
+  }
+
+  /** A roster is independent of the older individual participant/fixture endpoints. */
+  loadTeams(): void {
+    const tournament = this.selected;
+    if (!tournament || tournament.entryType !== 'TEAM' || !this.isMember || this.detailsLoading) return;
+    const communityId = this.community.id;
+    const revision = ++this.detailRevision;
+    this.detailsLoading = true;
+    this.teamsLoadError = false;
+    this.api.teams(communityId, tournament.id).pipe(
+      timeout(12000),
+      finalize(() => {
+        if (revision === this.detailRevision) {
+          this.detailsLoading = false;
+          this.changeDetector.markForCheck();
+        }
+      })
+    ).subscribe({
+      next: teams => {
+        if (revision !== this.detailRevision || this.community.id !== communityId
+            || this.selected?.id !== tournament.id) return;
+        this.teams = teams;
+        this.teamPlayerDraft = {};
+      },
+      error: () => {
+        if (revision === this.detailRevision && this.community.id === communityId
+            && this.selected?.id === tournament.id) {
+          this.teamsLoadError = true;
+          this.showError('Não foi possível carregar as equipas. Usa Atualizar para tentar novamente.');
+        }
+      }
+    });
+  }
+
+  async createTeamCompetition(): Promise<void> {
+    const name = this.nameDraft.trim();
+    const size = this.teamSizeDraft;
+    if (!this.canManage || this.community.teamTournamentsEnabled === false || !this.showTeamCreate || this.busy) return;
+    if (name.length < 2 || name.length > 120) {
+      this.showError('Indica um nome entre 2 e 120 caracteres.');
+      return;
+    }
+    if (!this.sportDraft || !(SPORTS_CATALOG.includes(this.sportDraft)
+        || this.communitySportOptions.includes(this.sportDraft))) {
+      this.showError('Escolhe uma modalidade válida para o torneio.');
+      return;
+    }
+    if (!Number.isInteger(size) || size < 1 || size > 30) {
+      this.showError('Indica entre 1 e 30 jogadores por equipa.');
+      return;
+    }
+    await this.mutate(this.api.createTeamTournament(this.community.id, name, this.sportDraft, size),
+      'Competição por equipas criada. Agora podes preparar os plantéis.', result => {
+        this.nameDraft = '';
+        this.showTeamCreate = false;
+        this.selected = undefined;
+        this.selectTournament(result);
+        this.tournaments = [result, ...this.tournaments.filter(item => item.id !== result.id)];
+      });
+  }
+
+  async createTournamentTeam(): Promise<void> {
+    if (!this.canManageTeamRoster || !this.selected) return;
+    const name = this.teamNameDraft.trim().replace(/\s+/g, ' ');
+    if (!name || name.length > 100) {
+      this.showError('Indica o nome da equipa (até 100 caracteres).');
+      return;
+    }
+    if (this.teams.length >= 32) {
+      this.showError('Esta versão permite até 32 equipas.');
+      return;
+    }
+    await this.mutate(this.api.createTeam(this.community.id, this.selected.id, name),
+      'Equipa criada.', () => { this.teamNameDraft = ''; this.loadTeams(); });
+  }
+
+  async assignTeamPlayer(team: TournamentTeam): Promise<void> {
+    const id = this.teamPlayerDraft[team.id];
+    if (!this.canManageTeamRoster || !this.selected || id == null || !Number.isInteger(id)
+        || team.players.length >= team.playersPerTeam
+        || !this.availableTeamMembers.some(member => member.profileId === id)) return;
+    await this.mutate(this.api.addTeamPlayer(this.community.id, this.selected.id, team.id, id),
+      'Jogador adicionado à equipa.', () => this.loadTeams());
+  }
+
+  async removeTeamPlayer(team: TournamentTeam, profileId: number): Promise<void> {
+    if (!this.canManageTeamRoster || !this.selected
+        || !team.players.some(p => p.profileId === profileId)) return;
+    await this.mutate(this.api.removeTeamPlayer(this.community.id, this.selected.id, team.id, profileId),
+      'Jogador removido do plantel.', () => this.loadTeams());
+  }
+
+  async deleteTournamentTeam(team: TournamentTeam): Promise<void> {
+    if (!this.canManageTeamRoster || !this.selected || team.players.length > 0) return;
+    await this.mutate(this.api.deleteTeam(this.community.id, this.selected.id, team.id),
+      'Equipa eliminada.', () => this.loadTeams());
   }
 
   async create(): Promise<void> {

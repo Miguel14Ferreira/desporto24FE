@@ -10,7 +10,7 @@ import {
   TournamentParticipant,
   TournamentParticipantPage,
   TournamentScheduleSummary,
-  TournamentStandings
+  TournamentStandings, TournamentTeam
 } from '../pages/model/community-tournament';
 
 @Injectable({ providedIn: 'root' })
@@ -32,6 +32,39 @@ export class CommunityTournamentsService {
 
   create(communityId: number, name: string, sport: string): Observable<CommunityTournament> {
     return this.http.post<CommunityTournament>(this.url(communityId), { name, sport });
+  }
+
+
+  /** Team tournaments have their own draft, roster and match lifecycle. */
+  createTeamTournament(communityId: number, name: string, sport: string,
+                       playersPerTeam: number): Observable<CommunityTournament> {
+    return this.http.post<CommunityTournament>(this.url(communityId), {
+      name, sport, entryType: 'TEAM', playersPerTeam
+    });
+  }
+
+  teams(communityId: number, tournamentId: number): Observable<TournamentTeam[]> {
+    return this.http.get<TournamentTeam[]>(this.url(communityId, tournamentId) + '/teams');
+  }
+
+  createTeam(communityId: number, tournamentId: number, name: string): Observable<TournamentTeam> {
+    return this.http.post<TournamentTeam>(this.url(communityId, tournamentId) + '/teams', { name });
+  }
+
+  addTeamPlayer(communityId: number, tournamentId: number, teamId: number,
+                profileId: number): Observable<TournamentTeam> {
+    return this.http.post<TournamentTeam>(
+      this.url(communityId, tournamentId) + '/teams/' + teamId + '/players', { profileId });
+  }
+
+  removeTeamPlayer(communityId: number, tournamentId: number, teamId: number,
+                   profileId: number): Observable<void> {
+    return this.http.delete<void>(
+      this.url(communityId, tournamentId) + '/teams/' + teamId + '/players/' + profileId);
+  }
+
+  deleteTeam(communityId: number, tournamentId: number, teamId: number): Observable<void> {
+    return this.http.delete<void>(this.url(communityId, tournamentId) + '/teams/' + teamId);
   }
 
   delete(communityId: number, tournamentId: number): Observable<void> {

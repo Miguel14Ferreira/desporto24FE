@@ -22,6 +22,8 @@ interface Tournament {
   championDisplayName: string | null;
   championPoints: number | null;
   championTied: boolean;
+  entryType?: 'INDIVIDUAL' | 'TEAM';
+  playersPerTeam?: number | null;
 }
 
 interface Participant {
@@ -65,7 +67,7 @@ function fixtureToken(username: string): string {
 type FixtureMode = 'empty' | 'draft' | 'paged' | 'forbidden' | 'switch'
   | 'management' | 'complete-rejected' | 'list-network-error'
   | 'paged-enrollment' | 'draw-tie' | 'schedule-roster-paged' | 'schedule-roster-oversize'
-  | 'discovery' | 'trial' | 'modules-off' | 'teams-only';
+  | 'discovery' | 'trial' | 'modules-off' | 'teams-only' | 'teams' | 'teams-view';
 
 async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode, sport: string | null = 'Futebol', sports?: string[]) {
   const username = role === 'OWNER' ? 'organizador' : 'participante';
@@ -84,13 +86,25 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode, sport
       { profileId: 1, username: 'organizador', fullName: 'Organizador',
         role: 'OWNER', profilePicUrl: null },
       { profileId: 2, username: 'participante', fullName: 'Participante',
+        role: 'MEMBER', profilePicUrl: null },
+      { profileId: 3, username: 'mariana', fullName: 'Mariana',
         role: 'MEMBER', profilePicUrl: null }
     ]
   };
 
-  const tournaments: Tournament[] = mode === 'empty' ? [] : [tournament(9, 'Liga de Outono')];
+  const tournaments: Tournament[] = mode === 'empty' || mode === 'teams' ? []
+    : [tournament(mode === 'teams-view' ? 11 : 9, 'Liga de Outono')];
   // The sport is a snapshot on the tournament, not inferred by the component.
   tournaments.forEach(item => item.sport = sport);
+  if (mode === 'teams-view') Object.assign(tournaments[0], {
+    entryType: 'TEAM', playersPerTeam: 2, name: 'Torneio da comunidade'
+  });
+  type MockTeam = { id: number; name: string; playersPerTeam: number; createdAt: string;
+    players: { profileId: number; username: string; displayName: string }[] };
+  const teams: MockTeam[] = mode === 'teams-view' ? [{
+    id: 40, name: 'Azuis', playersPerTeam: 2, createdAt: '2026-10-17T12:00:00Z',
+    players: [{ profileId: 2, username: 'participante', displayName: 'Participante' }]
+  }] : [];
   if (mode === 'switch') tournaments.push(tournament(11, 'Liga alternativa'));
   if (mode === 'paged') tournaments[0].status = 'IN_PROGRESS';
   if (mode === 'trial') {
@@ -267,10 +281,59 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode, sport
         return send({ tournaments, page: Number(url.searchParams.get('page') || 0), hasMore: false });
       }
       if (method === 'POST') {
-        const body = req.postDataJSON() as { name: string; sport: string };
-        const next = { ...tournament(11, body.name), sport: body.sport };
+        const body = req.postDataJSON() as {
+          name: string; sport: string; entryType?: 'TEAM'; playersPerTeam?: number;
+        };
+        const next = {
+          ...tournament(11, body.name), sport: body.sport,
+          entryType: body.entryType || 'INDIVIDUAL', playersPerTeam: body.playersPerTeam || null
+        };
         tournaments.unshift(next);
         return send(next, 201);
+      }
+    }
+
+    if (path === '/api/communities/7/tournaments/11/teams') {
+      if (method === 'GET') return send(teams);
+      if (method === 'POST') {
+        const body = req.postDataJSON() as { name: string };
+        const trimmed = body.name.trim();
+        if (!trimmed || teams.some(t => t.name.toLowerCase() === trimmed.toLowerCase()))
+          return send({ message: 'Equipa duplicada' }, 409);
+        const created: MockTeam = {
+          id: 40 + teams.length, name: trimmed,
+          playersPerTeam: tournaments[0]?.playersPerTeam || 2,
+          createdAt: '2026-10-17T12:00:00Z', players: []
+        };
+        teams.push(created);
+        return send(created, 201);
+      }
+    }
+    const teamDelete = /^\/api\/communities\/7\/tournaments\/11\/teams\/(\d+)$/.exec(path);
+    if (teamDelete && method === 'DELETE') {
+      const t = teams.find(x => x.id === Number(teamDelete[1]));
+      if (!t) return send({ message: 'Equipa não encontrada' }, 404);
+      if (t.players.length) return send({ message: 'Retira os jogadores primeiro' }, 409);
+      teams.splice(teams.indexOf(t), 1);
+      return send(null, 204);
+    }
+    const teamPlayer = /^\/api\/communities\/7\/tournaments\/11\/teams\/(\d+)\/players(?:\/(\d+))?$/.exec(path);
+    if (teamPlayer) {
+      const t = teams.find(x => x.id === Number(teamPlayer[1]));
+      if (!t) return send({ message: 'Equipa não encontrada' }, 404);
+      if (method === 'POST' && !teamPlayer[2]) {
+        const body = req.postDataJSON() as { profileId: number };
+        const member = community.members.find(m => m.profileId === body.profileId);
+        if (!member || teams.some(x => x.players.some(p => p.profileId === body.profileId))
+            || t.players.length >= t.playersPerTeam)
+          return send({ message: 'Jogador indisponível' }, 409);
+        t.players.push({ profileId: member.profileId, username: member.username,
+          displayName: member.fullName });
+        return send(t, 201);
+      }
+      if (method === 'DELETE' && teamPlayer[2]) {
+        t.players = t.players.filter(p => p.profileId !== Number(teamPlayer[2]));
+        return send(null, 204);
       }
     }
 
@@ -410,7 +473,7 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode, sport
   });
 
   return {
-    tournaments, participants, matches, unmocked, requestedMatchPages,
+    tournaments, teams, participants, matches, unmocked, requestedMatchPages,
     requestedParticipantPages, organizerMutations,
     get completeAttempts(): number { return completeAttempts; },
     get scheduleAttempts(): number { return scheduleAttempts; },
@@ -1078,4 +1141,57 @@ test('organizador remove torneio experimental sem resultados depois de confirmar
   await expect(page.getByText('Competição eliminada.')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Como querem competir?' })).toBeVisible();
   expect(fixture.tournaments).toHaveLength(0);
+});
+
+test('organizador prepara equipas reais e distribui membros sem criar jornadas individuais', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'teams');
+  await page.goto('/menu/communities/7?tab=tournaments');
+
+  await expect(page.getByRole('heading', { name: 'Como querem competir?' })).toBeVisible();
+  await page.getByRole('button', { name: 'Preparar torneio por equipas' }).click();
+  await page.getByLabel('Nome do torneio').fill('Torneio CNG 2x2');
+  await page.getByLabel('Jogadores por equipa').fill('2');
+  await page.getByRole('button', { name: 'Criar e preparar equipas' }).click();
+
+  await expect(page.getByRole('heading', { name: 'Equipas e plantéis' })).toBeVisible();
+  await expect(page.locator('.tournament-heading h4')).toHaveText('Torneio CNG 2x2');
+  await expect(page.getByRole('table', { name: 'Classificação do torneio' })).toHaveCount(0);
+  expect(fixture.tournaments[0].entryType).toBe('TEAM');
+  expect(fixture.tournaments[0].playersPerTeam).toBe(2);
+
+  await page.getByLabel('Nome da nova equipa').fill('Azuis');
+  await page.getByRole('button', { name: 'Adicionar equipa' }).click();
+  await expect(page.locator('.team-roster-card')).toHaveCount(1);
+
+  await page.getByLabel('Nome da nova equipa').fill('Verdes');
+  await page.getByRole('button', { name: 'Adicionar equipa' }).click();
+  await expect(page.locator('.team-roster-card')).toHaveCount(2);
+
+  const azuis = page.locator('.team-roster-card').filter({ hasText: 'Azuis' });
+  const verdes = page.locator('.team-roster-card').filter({ hasText: 'Verdes' });
+  await azuis.getByLabel('Adicionar membro à equipa Azuis').selectOption({ label: 'Participante (@participante)' });
+  await azuis.getByRole('button', { name: 'Adicionar jogador' }).click();
+  await expect(azuis).toContainText('@participante');
+  await expect(verdes.getByLabel('Adicionar membro à equipa Verdes')
+    .locator('option', { hasText: '@participante' })).toHaveCount(0);
+  expect(fixture.teams[0].players.map(p => p.profileId)).toEqual([2]);
+
+  await azuis.getByRole('button', { name: 'Remover participante da equipa Azuis' }).click();
+  await expect(azuis.locator('.player-item').filter({ hasText: '@participante' })).toHaveCount(0);
+  await azuis.getByRole('button', { name: 'Eliminar equipa Azuis' }).click();
+  await expect(page.locator('.team-roster-card')).toHaveCount(1);
+  expect(fixture.unmocked.filter(path => path.includes('/tournaments/'))).toEqual([]);
+});
+
+test('membro da comunidade pode ver plantéis mas não editar equipas', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'MEMBER', 'teams-view');
+  await page.goto('/menu/communities/7?tab=tournaments');
+
+  await expect(page.getByRole('heading', { name: 'Equipas e plantéis' })).toBeVisible();
+  await expect(page.locator('.team-roster-card')).toContainText(['Azuis']);
+  await expect(page.locator('.team-roster-card')).toContainText(['@participante']);
+  await expect(page.getByRole('button', { name: 'Adicionar equipa' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Adicionar jogador' })).toHaveCount(0);
+  await expect(page.getByRole('table', { name: 'Classificação do torneio' })).toHaveCount(0);
+  expect(fixture.unmocked.filter(path => path.includes('/tournaments/'))).toEqual([]);
 });
