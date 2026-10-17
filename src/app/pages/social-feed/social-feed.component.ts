@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, Optional } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Subject, catchError, debounceTime, finalize, forkJoin, of, retry, switchMap, takeUntil, timeout } from 'rxjs';
 
@@ -7,6 +7,10 @@ import { appTranslate as t } from '../../i18n/i18n.service';
 import { AuthenticationService } from '../../services/authethication.service';
 import { SocialFeedService } from '../../services/social-feed.service';
 import { CommunityService } from '../../services/community.service';
+import { CommunityGroupsService } from '../../services/community-groups.service';
+import { CommunityGroup } from '../model/community-group';
+import { MySessionsResponse } from '../model/my-sessions-response';
+import { nextWeekGames, nextWeekWaitlist, weekOffers } from './my-sports-week';
 import { SessionService } from '../../services/session.service';
 import { SessionSummary } from '../model/session-summary';
 import { FeedItem, SocialComment } from '../model/feed-item';
@@ -39,6 +43,19 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
   get filteredSessions(): SessionSummary[] { return this.availableSessions; }
   suggestedSessions: SessionSummary[] = [];
   suggestedPeople: CommunityProfile[] = [];
+
+  // A minha semana: all entries come from existing, permission-checked APIs.
+  myWeekGames: SessionSummary[] = [];
+  myWeekWaitlist: SessionSummary[] = [];
+  myWeekOffers: SessionSummary[] = [];
+  myWeekCommunities: CommunityGroup[] = [];
+  myWeekGamesLoading = true;
+  myWeekGamesError = false;
+  myWeekCommunitiesLoading = true;
+  myWeekCommunitiesError = false;
+  private myWeekMine: MySessionsResponse | null = null;
+  private myWeekDiscovered: SessionSummary[] = [];
+  private myWeekProfile: CommunityProfile | null = null;
   selectedSessionId: number | null = null;
   postGameSessionId: number | null = null;
   get postGameSession(): SessionSummary | null {
@@ -92,7 +109,8 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
     private sessionService: SessionService,
     private authenticationService: AuthenticationService,
     private route: ActivatedRoute,
-    private communityService: CommunityService
+    private communityService: CommunityService,
+    @Optional() private communityGroupsService: CommunityGroupsService | null = null
   ) {
     this.authenticationService.isLoggedIn();
     this.currentUsername = this.authenticationService.loggedInPerfilname || '';
@@ -103,6 +121,7 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
     this.loadSuggestedPeople();
     this.preparePostGameMoment();
     this.loadCompletedSessions();
+    this.loadMyWeekCommunities();
     this.sessionSearchChanges.pipe(
       debounceTime(350),
       switchMap(query => {
@@ -123,6 +142,8 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
       }
       this.discoveredSessions = sessions.filter(session => session.audience !== 'COMMUNITY_ONLY');
       if (!this.sessionSearch.trim()) {
+        this.myWeekDiscovered = this.discoveredSessions;
+        this.refreshMyWeekOffers();
         this.suggestedSessions = this.discoveredSessions
           .filter(session => session.status?.toUpperCase() === 'OPEN'
             && !session.privateGame && session.participantCount < session.maxParticipants
@@ -144,7 +165,10 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
       .pipe(
         timeout(10_000),
         catchError(() => of(null as CommunityProfile | null)),
-        switchMap(me => forkJoin({
+        switchMap(me => {
+          this.myWeekProfile = me;
+          this.refreshMyWeekOffers();
+          return forkJoin({
           profiles: this.communityService.discoverProfiles().pipe(
             timeout(10_000),
             catchError(() => of([] as CommunityProfile[]))
@@ -156,10 +180,37 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
           switchMap(({ profiles, friends }) => of(this.rankSuggestedPeople(
             profiles, me, new Set(friends.map(friend => friend.username.toLowerCase()))
           )))
-        )),
+        );
+        }),
         takeUntil(this.destroyed)
       )
       .subscribe(profiles => this.suggestedPeople = profiles);
+  }
+
+  private loadMyWeekCommunities(): void {
+    if (!this.communityGroupsService) {
+      this.myWeekCommunitiesLoading = false;
+      return;
+    }
+    this.communityGroupsService.mine().pipe(
+      timeout(10_000), catchError(() => {
+        this.myWeekCommunitiesError = true;
+        return of([] as CommunityGroup[]);
+      }), takeUntil(this.destroyed)
+    ).subscribe(groups => {
+      this.myWeekCommunities = groups.slice(0, 3);
+      this.myWeekCommunitiesLoading = false;
+    });
+  }
+
+  private refreshMyWeekOffers(): void {
+    if (!this.myWeekMine) {
+      this.myWeekOffers = [];
+      return;
+    }
+    this.myWeekOffers = weekOffers(
+      this.myWeekDiscovered, this.myWeekMine, this.myWeekProfile
+    );
   }
 
   private rankSuggestedPeople(profiles: CommunityProfile[], me: CommunityProfile | null, friends: Set<string>): CommunityProfile[] {
@@ -205,9 +256,15 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
       catchError(() => of(null)),
       takeUntil(this.destroyed)
     ).subscribe(mine => {
+      this.myWeekGamesLoading = false;
       if (!mine) {
+        this.myWeekGamesError = true;
         return;
       }
+      this.myWeekMine = mine;
+      this.myWeekGames = nextWeekGames(mine);
+      this.myWeekWaitlist = nextWeekWaitlist(mine);
+      this.refreshMyWeekOffers();
       const seen = new Set<number>();
       this.completedSessions = [...mine.created, ...mine.joined]
         .filter(session => {
