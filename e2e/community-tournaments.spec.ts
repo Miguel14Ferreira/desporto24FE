@@ -1180,16 +1180,18 @@ test('grupo que optou só por equipas não oferece criação individual', async 
   await page.getByRole('button', { name: 'Como funciona?' }).click();
   await expect(page.getByRole('button', { name: 'Criar liga individual' })).toHaveCount(0);
   await expect(page.getByText(/Para permitir ligas individuais/)).toBeVisible();
-  await expect(page.getByText('Em desenvolvimento')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Preparar torneio por equipas' })).toBeVisible();
+  await expect(page.getByText('Plantéis disponíveis')).toBeVisible();
 });
 
-test('guia distingue competições das estatísticas habituais e explica equipas sem prometer criação', async ({ page }) => {
+test('guia distingue competições das estatísticas habituais e explica o torneio por equipas', async ({ page }) => {
   await mockCommunityApi(page, 'OWNER', 'empty');
   await page.goto('/menu/communities/7?tab=tournaments');
 
   await expect(page.getByRole('heading', { name: 'Como querem competir?' })).toBeVisible();
   await expect(page.getByText('Por equipas', { exact: true })).toBeVisible();
-  await expect(page.getByText('Em desenvolvimento')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Preparar torneio por equipas' })).toBeVisible();
+  await expect(page.getByText('Plantéis disponíveis')).toBeVisible();
   await expect(page.getByText(/histórico Excel/)).toBeVisible();
   await expect(page.getByRole('button', { name: 'Criar liga individual' })).toBeVisible();
   await expect(page.getByLabel('Nome do torneio')).toHaveCount(0);
