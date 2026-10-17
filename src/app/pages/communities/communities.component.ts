@@ -21,7 +21,8 @@ import {
   CommunitySearchPresentation,
   HistoricalStandingPreview,
   HistoricalStandingSummary,
-  HistoricalStandingArchive
+  HistoricalStandingArchive,
+  HistoricalMatchPreview
 } from '../../services/community-groups.service';
 import { CommunityService } from '../../services/community.service';
 import { SessionService } from '../../services/session.service';
@@ -191,7 +192,9 @@ export class CommunitiesComponent implements OnInit {
   seasonSaving = false;
   closeSeasonConfirming = false;
 
-  importMode: 'ROUNDS' | 'STANDINGS' = 'ROUNDS';
+  importMode: 'ROUNDS' | 'STANDINGS' | 'MATCHES' = 'ROUNDS';
+  matchPreviewLoading = false;
+  matchPreview?: HistoricalMatchPreview;
   archiveTitle = '';
   archiveEntryType: 'INDIVIDUAL' | 'TEAM' = 'INDIVIDUAL';
   archiveSeasonId: number | null = null;
@@ -220,9 +223,13 @@ export class CommunitiesComponent implements OnInit {
   importConfirming = false;
   importResult?: { createdRounds: number; skippedDuplicateRounds: number; createdEntries: number };
   get importFields(): string[] {
-    return this.importMode === 'STANDINGS'
-      ? ['IGNORE', 'NAME', 'POSITION', 'POINTS', 'PLAYED', 'WINS', 'DRAWS', 'LOSSES', 'GOALS_FOR', 'GOALS_AGAINST']
-      : ['IGNORE', 'PLAYER', 'DATE', 'RESULT', 'WIN', 'DRAW', 'LOSS', 'GOALS', 'ASSISTS', 'POINTS', 'MVP'];
+    if (this.importMode === 'STANDINGS') {
+      return ['IGNORE', 'NAME', 'POSITION', 'POINTS', 'PLAYED', 'WINS', 'DRAWS', 'LOSSES', 'GOALS_FOR', 'GOALS_AGAINST'];
+    }
+    if (this.importMode === 'MATCHES') {
+      return ['IGNORE', 'HOME', 'AWAY', 'SCORE', 'HOME_SCORE', 'AWAY_SCORE', 'DATE', 'ROUND'];
+    }
+    return ['IGNORE', 'PLAYER', 'DATE', 'RESULT', 'WIN', 'DRAW', 'LOSS', 'GOALS', 'ASSISTS', 'POINTS', 'MVP'];
   }
   importPreview?: {
     fileName: string;
@@ -1128,7 +1135,7 @@ export class CommunitiesComponent implements OnInit {
     return this.importMappings?.some(mapping => mapping.field === 'POINTS') ?? false;
   }
 
-  selectImportMode(mode: 'ROUNDS' | 'STANDINGS'): void {
+  selectImportMode(mode: 'ROUNDS' | 'STANDINGS' | 'MATCHES'): void {
     if (this.importMode === mode) return;
     this.importMode = mode;
     this.importFileError = '';
@@ -1137,6 +1144,7 @@ export class CommunitiesComponent implements OnInit {
   }
 
   private resetArchiveDraft(): void {
+    this.matchPreview = undefined;
     this.archivePreview = undefined;
     this.archiveConfirmed = undefined;
     this.archiveAcknowledged = false;
@@ -1243,7 +1251,9 @@ export class CommunitiesComponent implements OnInit {
         header,
         field: this.importMode === 'STANDINGS'
           ? this.suggestArchiveField(header, suggestion?.field || 'IGNORE')
-          : (suggestion?.field || 'IGNORE'),
+          : this.importMode === 'MATCHES'
+            ? this.suggestMatchField(header, suggestion?.field || 'IGNORE')
+            : (suggestion?.field || 'IGNORE'),
         confidence: suggestion?.confidence || 0
       };
     });
@@ -1264,6 +1274,48 @@ export class CommunitiesComponent implements OnInit {
     if (suggestion === 'PLAYER') return 'NAME';
     if (suggestion === 'GOALS') return 'GOALS_FOR';
     return this.importFields.includes(suggestion) ? suggestion : 'IGNORE';
+  }
+
+  private suggestMatchField(header: string, suggestion: string): string {
+    const normalized = header.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .trim().toLowerCase().replace(/[\s._-]+/g, '');
+    if (/^(casa|home|mandante|equipa1|equipaa|jogador1|jogadora|team1|teama|player1|playera)$/.test(normalized)) return 'HOME';
+    if (/^(fora|away|visitante|equipa2|equipab|jogador2|jogadorb|team2|teamb|player2|playerb)$/.test(normalized)) return 'AWAY';
+    if (/^(resultadocasa|golescasa|goloscasa|golos1|golosde1|homescore|scorehome|score1)$/.test(normalized)) return 'HOME_SCORE';
+    if (/^(resultadofora|golesfora|golosfora|golos2|golosde2|awayscore|scoreaway|score2)$/.test(normalized)) return 'AWAY_SCORE';
+    if (/^(resultado|result|score|placar|marcador)$/.test(normalized)) return 'SCORE';
+    if (/^(data|date|datadojogo|matchdate)$/.test(normalized)) return 'DATE';
+    if (/^(jornada|round|ronda|rodada|matchday)$/.test(normalized)) return 'ROUND';
+    if (suggestion === 'DATE') return 'DATE';
+    if (suggestion === 'RESULT') return 'SCORE';
+    return 'IGNORE';
+  }
+
+  previewHistoricalMatches(): void {
+    if (!this.selected || !this.canManage() || !this.importFile || !this.importSheetName
+        || this.importMode !== 'MATCHES' || this.matchPreviewLoading) return;
+    const communityId = this.selected.id;
+    const file = this.importFile;
+    const mapping = this.historicalMapping();
+    this.matchPreview = undefined;
+    this.importFileError = '';
+    this.matchPreviewLoading = true;
+    this.communityService.previewHistoricalMatches(communityId, file, mapping)
+      .pipe(timeout(20_000), finalize(() => this.matchPreviewLoading = false))
+      .subscribe({
+        next: preview => {
+          if (this.selected?.id === communityId && this.importMode === 'MATCHES'
+              && this.importFile === file && this.importSheetName === mapping.sheetName) {
+            this.matchPreview = preview;
+          }
+        },
+        error: error => {
+          if (this.selected?.id === communityId && this.importMode === 'MATCHES'
+              && this.importFile === file) {
+            this.importFileError = error.error?.message || t('communities.matches.previewError');
+          }
+        }
+      });
   }
 
   private historicalMapping(): { sheetName: string; columns: Array<{ columnIndex: number; field: string }> } {
