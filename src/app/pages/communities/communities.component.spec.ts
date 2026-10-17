@@ -309,6 +309,10 @@ describe('CommunitiesComponent public session eligibility', () => {
     component.importFile = new File(['dummy'], 'group.xlsx');
     component.importSheetName = 'Sheet1';
     component.selectedSeasonId = 19;
+    component.importMappings = [
+      { columnIndex: 0, field: 'DATE', header: 'Data', confidence: 1 },
+      { columnIndex: 1, field: 'PLAYER', header: 'Cepo', confidence: 1 }
+    ];
     component.sourceDatesNeedYear = true;
     component.importDefaultYear = null;
     const plan = jasmine.createSpy('finalImportPlan');
