@@ -22,7 +22,9 @@ import {
   HistoricalStandingPreview,
   HistoricalStandingSummary,
   HistoricalStandingArchive,
-  HistoricalMatchPreview
+  HistoricalMatchPreview,
+  HistoricalMatchArchive,
+  HistoricalMatchArchiveSummary
 } from '../../services/community-groups.service';
 import { CommunityService } from '../../services/community.service';
 import { SessionService } from '../../services/session.service';
@@ -195,6 +197,17 @@ export class CommunitiesComponent implements OnInit {
   importMode: 'ROUNDS' | 'STANDINGS' | 'MATCHES' = 'ROUNDS';
   matchPreviewLoading = false;
   matchPreview?: HistoricalMatchPreview;
+  matchArchiveTitle = '';
+  matchArchiveEntryType: 'INDIVIDUAL' | 'TEAM' = 'INDIVIDUAL';
+  matchArchiveAcknowledged = false;
+  matchArchiveConfirming = false;
+  matchArchiveConfirmed?: HistoricalMatchArchive;
+  matchArchivesLoading = false;
+  matchArchivesError = '';
+  matchArchiveSummaries: HistoricalMatchArchiveSummary[] = [];
+  matchArchiveOpen?: HistoricalMatchArchive;
+  matchArchiveOpeningId?: number;
+  matchArchivePage = 0;
   archiveTitle = '';
   archiveEntryType: 'INDIVIDUAL' | 'TEAM' = 'INDIVIDUAL';
   archiveSeasonId: number | null = null;
@@ -210,6 +223,8 @@ export class CommunitiesComponent implements OnInit {
   importFile?: File;
   importFileName = '';
   importFileError = '';
+  importRevision = 0;
+  sourceDatesNeedYear = false;
   importPointsAcknowledged = false;
   importPreviewLoading = false;
   importSheetName = '';
@@ -595,6 +610,11 @@ export class CommunitiesComponent implements OnInit {
         this.archiveSummaries = [];
         this.archiveOpen = undefined;
         this.archiveConfirmed = undefined;
+        this.matchArchiveSummaries = [];
+        this.matchArchiveOpen = undefined;
+        this.matchArchiveConfirmed = undefined;
+        this.resetArchiveDraft();
+        this.loadMatchArchives(full.id);
         this.loadArchivedStandings(full.id);
         this.loadCompetition(full);
         this.loadCommunitySessions(full);
@@ -1139,18 +1159,61 @@ export class CommunitiesComponent implements OnInit {
     if (this.importMode === mode) return;
     this.importMode = mode;
     this.importFileError = '';
-    this.importPreview = undefined;
-    this.resetImportAfterFile();
+    // The uploaded file has already been inspected: reuse it when changing the chosen kind of history.
+    if (this.importPreview) this.selectImportSheet(this.importSheetName);
+    else this.resetImportAfterFile();
+  }
+
+  private normalizedHeader(header: string): string {
+    return header.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .trim().toLowerCase().replace(/[\s._-]+/g, '');
+  }
+
+  get recommendedImportMode(): 'ROUNDS' | 'STANDINGS' | 'MATCHES' | null {
+    const sheet = this.importPreview?.sheets.find(item => item.name === this.importSheetName);
+    if (!sheet) return null;
+    const headers = new Set(sheet.headers.map(header => this.normalizedHeader(header)));
+    const has = (...names: string[]) => names.some(name => headers.has(name));
+    const player = has('cepo', 'jogador', 'player', 'nome', 'name', 'atleta', 'participante');
+    if (player && has('data', 'date', 'dia') &&
+      has('v', 'w', 'win', 'wins', 'd', 'derrota', 'derrotas', 'resultado')) return 'ROUNDS';
+    if (has('casa', 'home', 'equipa1', 'equipaa', 'jogador1') &&
+      has('fora', 'away', 'equipa2', 'equipab', 'jogador2') &&
+      has('resultado', 'score', 'homescore', 'goloscasa', 'golosfora')) return 'MATCHES';
+    if (player && has('pontos', 'pts', 'points')) return 'STANDINGS';
+    return null;
+  }
+
+  get importSheetLooksLikePivot(): boolean {
+    const sheet = this.importPreview?.sheets.find(item => item.name === this.importSheetName);
+    return !!sheet && (sheet.structure === 'PIVOT' ||
+      sheet.headers.some(header => /^(sum of|column labels|row labels|grand total)/i.test(header)));
+  }
+
+  importFieldLabel(field: string): string {
+    return t('communities.import.field.' + field);
+  }
+
+  private validImportFields(mode: 'ROUNDS' | 'STANDINGS' | 'MATCHES'): boolean {
+    const fields = new Set(this.importMappings.map(mapping => mapping.field));
+    if (mode === 'ROUNDS') return fields.has('PLAYER');
+    if (mode === 'STANDINGS') return fields.has('NAME') && fields.has('POINTS');
+    return fields.has('HOME') && fields.has('AWAY') &&
+      (fields.has('SCORE') || (fields.has('HOME_SCORE') && fields.has('AWAY_SCORE')));
   }
 
   private resetArchiveDraft(): void {
     this.matchPreview = undefined;
+    this.matchArchiveConfirmed = undefined;
+    this.matchArchiveAcknowledged = false;
     this.archivePreview = undefined;
     this.archiveConfirmed = undefined;
     this.archiveAcknowledged = false;
   }
 
   private resetImportAfterFile(): void {
+    ++this.importRevision;
+    this.sourceDatesNeedYear = false;
     this.resetArchiveDraft();
     this.importPointsAcknowledged = false;
     this.importSheetName = '';
@@ -1162,6 +1225,7 @@ export class CommunitiesComponent implements OnInit {
   }
 
   private resetImportAfterMapping(): void {
+    ++this.importRevision;
     this.resetArchiveDraft();
     this.importPointsAcknowledged = false;
     this.importValidation = undefined;
@@ -1234,6 +1298,7 @@ export class CommunitiesComponent implements OnInit {
 
   selectImportSheet(sheetName: string): void {
     this.importSheetName = sheetName;
+    this.importFileError = '';
     this.resetImportAfterMapping();
     const sheet = this.importPreview?.sheets.find(item => item.name === sheetName);
     if (!sheet) {
@@ -1253,10 +1318,27 @@ export class CommunitiesComponent implements OnInit {
           ? this.suggestArchiveField(header, suggestion?.field || 'IGNORE')
           : this.importMode === 'MATCHES'
             ? this.suggestMatchField(header, suggestion?.field || 'IGNORE')
-            : (suggestion?.field || 'IGNORE'),
+            : this.suggestRoundsField(header, suggestion?.field || 'IGNORE'),
         confidence: suggestion?.confidence || 0
       };
     });
+    const dateIndex = this.importMappings.find(item => item.field === 'DATE')?.columnIndex;
+    const dates = dateIndex === undefined ? [] : sheet.sampleRows
+      .map(row => row[dateIndex]?.trim() || '').filter(Boolean);
+    this.sourceDatesNeedYear = this.importMode === 'ROUNDS' &&
+      dates.some(date => /^\d{1,2}\s+[\p{L}.]+$/u.test(date) || /^\d{1,2}[-/.]\d{1,2}$/.test(date));
+    if (this.sourceDatesNeedYear) this.importDefaultYear = null;
+  }
+
+  private suggestRoundsField(header: string, suggestion: string): string {
+    const normalized = this.normalizedHeader(header);
+    if (/^(cepo|jogador|jogadores|player|players|atleta|participante|nome|name)$/.test(normalized)) return 'PLAYER';
+    if (/^(d|der|derrota|derrotas|loss|losses)$/.test(normalized)) return 'LOSS';
+    if (/^(v|vit|vitoria|vitorias|win|wins)$/.test(normalized)) return 'WIN';
+    if (/^(e|empate|empates|draw|draws)$/.test(normalized)) return 'DRAW';
+    if (/^(pontos|pts|points|pontuacao)$/.test(normalized)) return 'POINTS';
+    if (/^(data|date|dia|jornada)$/.test(normalized)) return 'DATE';
+    return this.importFields.includes(suggestion) ? suggestion : 'IGNORE';
   }
 
   private suggestArchiveField(header: string, suggestion: string): string {
@@ -1294,10 +1376,17 @@ export class CommunitiesComponent implements OnInit {
   previewHistoricalMatches(): void {
     if (!this.selected || !this.canManage() || !this.importFile || !this.importSheetName
         || this.importMode !== 'MATCHES' || this.matchPreviewLoading) return;
+    if (!this.validImportFields('MATCHES')) {
+      this.importFileError = t('communities.matches.fieldsRequired');
+      return;
+    }
     const communityId = this.selected.id;
     const file = this.importFile;
     const mapping = this.historicalMapping();
+    const revision = this.importRevision;
     this.matchPreview = undefined;
+    this.matchArchiveConfirmed = undefined;
+    this.matchArchiveAcknowledged = false;
     this.importFileError = '';
     this.matchPreviewLoading = true;
     this.communityService.previewHistoricalMatches(communityId, file, mapping)
@@ -1305,15 +1394,90 @@ export class CommunitiesComponent implements OnInit {
       .subscribe({
         next: preview => {
           if (this.selected?.id === communityId && this.importMode === 'MATCHES'
-              && this.importFile === file && this.importSheetName === mapping.sheetName) {
+              && this.importFile === file && this.importSheetName === mapping.sheetName
+              && this.importRevision === revision) {
             this.matchPreview = preview;
           }
         },
         error: error => {
           if (this.selected?.id === communityId && this.importMode === 'MATCHES'
-              && this.importFile === file) {
+              && this.importFile === file && this.importRevision === revision) {
             this.importFileError = error.error?.message || t('communities.matches.previewError');
           }
+        }
+      });
+  }
+
+  confirmMatchArchive(): void {
+    if (!this.selected || !this.canManage() || this.importMode !== 'MATCHES' ||
+        !this.importFile || !this.importSheetName || !this.matchPreview ||
+        this.matchPreview.acceptedRows < 1 || this.matchArchiveConfirming || this.matchPreviewLoading) return;
+    if (this.matchArchiveTitle.trim().length < 2 || this.matchArchiveTitle.trim().length > 120 ||
+        !this.matchArchiveAcknowledged) {
+      this.importFileError = t('communities.matches.confirmRequired');
+      return;
+    }
+    const communityId = this.selected.id;
+    const file = this.importFile;
+    const mapping = this.historicalMapping();
+    const context = { title: this.matchArchiveTitle.trim(), entryType: this.matchArchiveEntryType };
+    this.matchArchiveConfirming = true;
+    this.importFileError = '';
+    this.communityService.confirmHistoricalMatches(communityId, file, mapping, context)
+      .pipe(timeout(30_000), finalize(() => this.matchArchiveConfirming = false))
+      .subscribe({
+        next: archive => {
+          if (this.selected?.id !== communityId) return;
+          this.matchArchiveConfirmed = archive;
+          this.matchArchiveOpen = archive;
+          this.matchArchivePage = 0;
+          this.matchPreview = undefined;
+          this.matchArchiveAcknowledged = false;
+          this.loadMatchArchives(communityId);
+        },
+        error: error => {
+          if (this.selected?.id === communityId) {
+            this.importFileError = error.error?.message || t('communities.matches.confirmError');
+          }
+        }
+      });
+  }
+
+  loadMatchArchives(communityId: number): void {
+    this.matchArchivesLoading = true;
+    this.matchArchivesError = '';
+    this.communityService.listHistoricalMatches(communityId)
+      .pipe(timeout(15_000), finalize(() => this.matchArchivesLoading = false))
+      .subscribe({
+        next: archives => {
+          if (this.selected?.id === communityId) this.matchArchiveSummaries = archives;
+        },
+        error: () => {
+          if (this.selected?.id === communityId) this.matchArchivesError = t('communities.matches.listError');
+        }
+      });
+  }
+
+  openMatchArchive(archiveId: number): void {
+    if (!this.selected || this.matchArchiveOpeningId !== undefined) return;
+    const communityId = this.selected.id;
+    if (this.matchArchiveOpen?.id === archiveId) {
+      this.matchArchiveOpen = undefined;
+      return;
+    }
+    this.matchArchiveOpeningId = archiveId;
+    this.matchArchivesError = '';
+    this.communityService.historicalMatchDetails(communityId, archiveId)
+      .pipe(timeout(15_000), finalize(() => this.matchArchiveOpeningId = undefined))
+      .subscribe({
+        next: archive => {
+          if (this.selected?.id === communityId) {
+            this.matchArchiveOpen = archive;
+            this.matchArchivePage = 0;
+          }
+        },
+        error: () => {
+          if (this.selected?.id === communityId) this.matchArchivesError = t('communities.matches.detailError');
         }
       });
   }
@@ -1326,6 +1490,10 @@ export class CommunitiesComponent implements OnInit {
   previewArchiveImport(): void {
     if (!this.selected || !this.canManage() || !this.importFile || !this.importSheetName ||
         this.importMode !== 'STANDINGS' || this.archivePreviewLoading) return;
+    if (!this.validImportFields('STANDINGS')) {
+      this.importFileError = t('communities.archive.fieldsRequired');
+      return;
+    }
     const communityId = this.selected.id;
     this.resetArchiveDraft();
     this.importFileError = '';
@@ -1429,6 +1597,10 @@ export class CommunitiesComponent implements OnInit {
 
   validateImportMapping(): void {
     if (!this.selected || !this.importFile || !this.importSheetName || this.importMappingLoading) return;
+    if (!this.validImportFields('ROUNDS')) {
+      this.importFileError = t('communities.import.playerRequired');
+      return;
+    }
 
     const mapping = {
       sheetName: this.importSheetName,
@@ -1479,6 +1651,11 @@ export class CommunitiesComponent implements OnInit {
   buildImportFinalPlan(): void {
     if (!this.selected || !this.importFile || !this.importSheetName || !this.selectedSeasonId || this.importPlanLoading) {
       this.importFileError = t('communities.import.seasonRequired');
+      return;
+    }
+    if (this.sourceDatesNeedYear && (!Number.isInteger(this.importDefaultYear) ||
+        (this.importDefaultYear ?? 0) < 1900 || (this.importDefaultYear ?? 0) > 2100)) {
+      this.importFileError = t('communities.import.explicitYearRequired');
       return;
     }
     const mapping = {

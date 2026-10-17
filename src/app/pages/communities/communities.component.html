@@ -1135,6 +1135,87 @@
                     }
                   </section>
 
+                  <section class="import-panel" [attr.aria-label]="'communities.matches.archivesTitle' | t">
+                    <div class="section-heading">
+                      <div>
+                        <span class="section-kicker">{{ 'communities.import.kicker' | t }}</span>
+                        <h3>{{ 'communities.matches.archivesTitle' | t }}</h3>
+                      </div>
+                    </div>
+                    <p>{{ 'communities.matches.archivesHint' | t }}</p>
+                    @if (matchArchivesLoading) {
+                      <p role="status">{{ 'communities.archive.loading' | t }}</p>
+                    }
+                    @if (matchArchivesError) {
+                      <p class="import-error" role="alert">{{ matchArchivesError }}</p>
+                    }
+                    @if (!matchArchivesLoading && !matchArchivesError && matchArchiveSummaries.length === 0) {
+                      <p>{{ 'communities.matches.noArchives' | t }}</p>
+                    }
+                    @for (archive of matchArchiveSummaries; track archive.id) {
+                      <div class="import-round-plan">
+                        <button type="button"
+                          class="secondary-action small jynlo-action jynlo-action--neutral jynlo-action--compact"
+                          [attr.aria-expanded]="matchArchiveOpen?.id === archive.id"
+                          [disabled]="matchArchiveOpeningId !== undefined"
+                          (click)="openMatchArchive(archive.id)">
+                          {{ archive.title }} · {{ archive.entryType === 'TEAM'
+                            ? ('communities.archive.teams' | t) : ('communities.archive.individual' | t) }}
+                        </button>
+                        <span>{{ archive.sourceFilename }}</span>
+                      </div>
+                    }
+                    @if (matchArchiveOpen) {
+                      <div class="import-final-plan">
+                        <strong>{{ matchArchiveOpen.title }}</strong>
+                        <p role="note">{{ 'communities.matches.savedNote' | t }}</p>
+                        <div class="archive-standings-scroll" role="region" tabindex="0"
+                          [attr.aria-label]="'communities.matches.archivesTitle' | t">
+                          <table class="archive-standings-table">
+                            <thead><tr>
+                              <th scope="col">{{ 'communities.matches.sourceRow' | t }}</th>
+                              <th scope="col">{{ 'communities.matches.home' | t }}</th>
+                              <th scope="col">{{ 'communities.matches.score' | t }}</th>
+                              <th scope="col">{{ 'communities.matches.away' | t }}</th>
+                              <th scope="col">{{ 'communities.matches.date' | t }}</th>
+                              <th scope="col">{{ 'communities.matches.round' | t }}</th>
+                              <th scope="col">{{ 'communities.matches.review' | t }}</th>
+                            </tr></thead>
+                            <tbody>
+                              @for (match of matchArchiveOpen.rows.slice(matchArchivePage * 50, (matchArchivePage + 1) * 50); track $index) {
+                                <tr>
+                                  <td>{{ match.sourceRow }}</td>
+                                  <td><strong>{{ match.home }}</strong></td>
+                                  <td>{{ match.homeScore }}–{{ match.awayScore }}</td>
+                                  <td><strong>{{ match.away }}</strong></td>
+                                  <td>{{ match.sourceDate || '—' }}</td>
+                                  <td>{{ match.sourceRound || '—' }}</td>
+                                  <td>{{ match.potentialDuplicate ? ('communities.matches.possibleRepeat' | t) : '—' }}</td>
+                                </tr>
+                              }
+                            </tbody>
+                          </table>
+                        </div>
+                        @if (matchArchiveOpen.rows.length > 50) {
+                          <div class="import-file-row">
+                            <button type="button" class="secondary-action small jynlo-action jynlo-action--neutral jynlo-action--compact"
+                              [disabled]="matchArchivePage === 0"
+                              (click)="matchArchivePage = matchArchivePage - 1">
+                              {{ 'communities.matches.previous' | t }}
+                            </button>
+                            <span>{{ matchArchivePage * 50 + 1 }}–{{ (matchArchivePage + 1) * 50 < matchArchiveOpen.rows.length ? (matchArchivePage + 1) * 50 : matchArchiveOpen.rows.length }}
+                              / {{ matchArchiveOpen.rows.length }}</span>
+                            <button type="button" class="secondary-action small jynlo-action jynlo-action--neutral jynlo-action--compact"
+                              [disabled]="(matchArchivePage + 1) * 50 >= matchArchiveOpen.rows.length"
+                              (click)="matchArchivePage = matchArchivePage + 1">
+                              {{ 'communities.matches.next' | t }}
+                            </button>
+                          </div>
+                        }
+                      </div>
+                    }
+                  </section>
+
                 @if (!competition?.settings?.rankingsEnabled) {
                   <div class="module-empty">
                     <span>🏆</span>
@@ -1166,6 +1247,10 @@
                             [attr.aria-pressed]="importMode === 'MATCHES'"
                             (click)="selectImportMode('MATCHES')">{{ 'communities.matches.mode' | t }}</button>
                         </div>
+                        <p role="note">{{ 'communities.import.chooseModeHint' | t }}</p>
+                        @if (importMode === 'ROUNDS') {
+                          <p class="import-validation" role="note">{{ 'communities.import.roundsAffectRankings' | t }}</p>
+                        }
                         @if (importMode === 'STANDINGS') {
                           <p>{{ 'communities.archive.hint' | t }}</p>
                         } @else if (importMode === 'MATCHES') {
@@ -1210,6 +1295,28 @@
                               </select>
                             </label>
 
+                            @if (recommendedImportMode && recommendedImportMode !== importMode) {
+                              <div class="import-validation" role="note">
+                                <p>{{ 'communities.import.suggestMode' | t }}
+                                  <strong>{{ recommendedImportMode === 'ROUNDS'
+                                    ? ('communities.archive.rounds' | t)
+                                    : recommendedImportMode === 'STANDINGS'
+                                      ? ('communities.archive.finalStandings' | t)
+                                      : ('communities.matches.mode' | t) }}</strong>
+                                </p>
+                                <button type="button"
+                                  class="secondary-action small jynlo-action jynlo-action--neutral jynlo-action--compact"
+                                  (click)="selectImportMode(recommendedImportMode)">
+                                  {{ 'communities.import.applySuggestion' | t }}
+                                </button>
+                              </div>
+                            }
+                            @if (importSheetLooksLikePivot) {
+                              <p class="import-validation" role="note">{{ 'communities.import.pivotWarning' | t }}</p>
+                            }
+                            @if (sourceDatesNeedYear && importMode === 'ROUNDS') {
+                              <p class="import-validation" role="note">{{ 'communities.import.yearlessDates' | t }}</p>
+                            }
                             @if (importMappings.length) {
                               <div class="import-mapping">
                                 <div class="import-mapping-head">
@@ -1227,7 +1334,7 @@
                                     <select [ngModel]="mapping.field"
                                       (ngModelChange)="setImportMapping(mapping.columnIndex, $event)">
                                       @for (field of importFields; track field) {
-                                        <option [value]="field">{{ field }}</option>
+                                        <option [value]="field">{{ importFieldLabel(field) }}</option>
                                       }
                                     </select>
                                   </div>
@@ -1312,6 +1419,35 @@
                                 }
                                 <p role="note">{{ 'communities.matches.readOnly' | t }}</p>
                               </div>
+                              <div class="import-context">
+                                <label>
+                                  <span>{{ 'communities.archive.title' | t }}</span>
+                                  <input [ngModel]="matchArchiveTitle"
+                                    (ngModelChange)="matchArchiveTitle = $event; matchArchiveAcknowledged = false"
+                                    [placeholder]="'communities.archive.titlePlaceholder' | t"
+                                    maxlength="120">
+                                </label>
+                                <label>
+                                  <span>{{ 'communities.matches.entryType' | t }}</span>
+                                  <select [ngModel]="matchArchiveEntryType"
+                                    (ngModelChange)="matchArchiveEntryType = $event; matchArchiveAcknowledged = false">
+                                    <option value="INDIVIDUAL">{{ 'communities.archive.individual' | t }}</option>
+                                    <option value="TEAM">{{ 'communities.archive.teams' | t }}</option>
+                                  </select>
+                                </label>
+                              </div>
+                              <label class="check-stat">
+                                <input type="checkbox" [(ngModel)]="matchArchiveAcknowledged">
+                                <span>{{ 'communities.matches.acknowledge' | t }}</span>
+                              </label>
+                              <button type="button" class="primary-action import-confirm jynlo-action jynlo-action--primary"
+                                [disabled]="matchArchiveConfirming || !matchArchiveAcknowledged || matchArchiveTitle.trim().length < 2 || matchArchiveTitle.trim().length > 120"
+                                (click)="confirmMatchArchive()">
+                                {{ matchArchiveConfirming ? ('communities.import.importing' | t) : ('communities.matches.confirm' | t) }}
+                              </button>
+                            }
+                            @if (matchArchiveConfirmed) {
+                              <p class="import-success" role="status">{{ 'communities.matches.saved' | t }} · {{ matchArchiveConfirmed.title }}</p>
                             }
 
                             @if (importMode === 'STANDINGS' && archivePreview) {
@@ -1418,12 +1554,16 @@
                                 </label>
                                 <label>
                                   <span>{{ 'communities.import.defaultYear' | t }}</span>
-                                  <input type="number" min="1900" max="2100" [(ngModel)]="importDefaultYear" (ngModelChange)="invalidateImportPlan()">
+                                  <input type="number" min="1900" max="2100" [(ngModel)]="importDefaultYear"
+                                     (ngModelChange)="invalidateImportPlan()" [attr.aria-required]="sourceDatesNeedYear ? 'true' : null">
+                                   @if (sourceDatesNeedYear) {
+                                     <small>{{ 'communities.import.explicitYearRequired' | t }}</small>
+                                   }
                                 </label>
                               </div>
 
                               <button type="button" class="primary-action import-continue jynlo-action jynlo-action--primary"
-                                [disabled]="importPlanLoading || !selectedSeasonId"
+                                [disabled]="importPlanLoading || !selectedSeasonId || (sourceDatesNeedYear && !importDefaultYear)"
                                 (click)="buildImportFinalPlan()">
                                 {{ importPlanLoading
                                   ? ('communities.import.planning' | t)

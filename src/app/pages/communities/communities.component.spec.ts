@@ -118,7 +118,7 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(component.importFields).toContain('POINTS');
     expect(component.importFields).toContain('NAME');
     expect(component.importFields).not.toContain('DATE');
-    expect(component.importPreview).toBeUndefined();
+    expect(component.importPreview).toEqual({ fileName: 'historico.csv', sheets: [] });
     expect(component.importMappings).toEqual([]);
     expect(component.importFile?.name).toBe('historico.csv');
     expect(component['suggestArchiveField']('Pts', 'POINTS')).toBe('POINTS');
@@ -179,6 +179,151 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(component.matchPreview?.rows[0].homeScore).toBe(2);
     expect(component.matchPreview?.potentialDuplicates).toBe(1);
     expect(confirmStandings).not.toHaveBeenCalled();
+  });
+
+
+  it('saves tournament matches only after reviewing title and explicit acknowledgement', () => {
+    component.selected = { id: 7 } as any;
+    component.importMode = 'MATCHES';
+    component.importFile = new File(['data'], 'jogos.tsv');
+    component.importSheetName = 'Dados';
+    component.importMappings = [{ columnIndex: 0, header: 'Casa', field: 'HOME', confidence: 1 }];
+    component.matchPreview = {
+      sheetName: 'Dados', sourceRows: 2, acceptedRows: 2, potentialDuplicates: 1, warnings: [],
+      rows: [{ sourceRow: 2, home: 'Águias', away: 'Lobos', homeScore: 2, awayScore: 1,
+        sourceDate: '01/10/2022', sourceRound: 'Final', potentialDuplicate: true }]
+    };
+    const confirmed = { id: 12, title: 'Taça antiga', entryType: 'TEAM' as const,
+      sourceFilename: 'jogos.tsv', createdAt: '2026-10-17T20:00:00Z', rows: component.matchPreview.rows };
+    const confirm = jasmine.createSpy('confirmHistoricalMatches').and.returnValue(of(confirmed));
+    const list = jasmine.createSpy('listHistoricalMatches').and.returnValue(of([confirmed]));
+    (component as any).communityService = { confirmHistoricalMatches: confirm, listHistoricalMatches: list };
+    component.matchArchiveTitle = 'Taça antiga';
+    component.matchArchiveEntryType = 'TEAM';
+    component.matchArchiveAcknowledged = false;
+    component.confirmMatchArchive();
+    expect(confirm).not.toHaveBeenCalled();
+    component.matchArchiveAcknowledged = true;
+    component.confirmMatchArchive();
+    expect(confirm).toHaveBeenCalledOnceWith(7, jasmine.any(File), {
+      sheetName: 'Dados', columns: [{ columnIndex: 0, field: 'HOME' }]
+    }, { title: 'Taça antiga', entryType: 'TEAM' });
+    expect(component.matchArchiveOpen?.rows[0].potentialDuplicate).toBeTrue();
+    expect(component.matchArchiveOpen?.rows[0].sourceDate).toBe('01/10/2022');
+    expect(component.matchPreview).toBeUndefined();
+    expect(component.matchArchiveAcknowledged).toBeFalse();
+    expect(list).toHaveBeenCalledWith(7);
+  });
+
+  it('does not confirm an empty preview or allow non-managers to save historical matches', () => {
+    component.selected = { id: 7 } as any;
+    component.importMode = 'MATCHES';
+    component.importFile = new File(['x'], 'jogos.xlsx');
+    component.importSheetName = 'Folha1';
+    component.matchPreview = { sheetName: 'Folha1', sourceRows: 0, acceptedRows: 0,
+      potentialDuplicates: 0, warnings: [], rows: [] };
+    component.matchArchiveTitle = 'Torneio 2020';
+    component.matchArchiveAcknowledged = true;
+    const confirm = jasmine.createSpy('confirmHistoricalMatches');
+    (component as any).communityService = { confirmHistoricalMatches: confirm };
+    component.confirmMatchArchive();
+    expect(confirm).not.toHaveBeenCalled();
+    component.matchPreview.acceptedRows = 1;
+    (component.canManage as jasmine.Spy).and.returnValue(false);
+    component.confirmMatchArchive();
+    expect(confirm).not.toHaveBeenCalled();
+  });
+
+  it('only displays match archives from the selected community and keeps repeated rows', () => {
+    component.selected = { id: 9 } as any;
+    const archive = { id: 50, title: '2021', entryType: 'INDIVIDUAL' as const,
+      sourceFilename: 'jogos.csv', createdAt: '2026-10-17T20:00:00Z',
+      rows: [
+        { sourceRow: 4, home: 'A', away: 'B', homeScore: 1, awayScore: 0,
+          sourceDate: '1/5/2021', sourceRound: '2', potentialDuplicate: false },
+        { sourceRow: 5, home: 'A', away: 'B', homeScore: 1, awayScore: 0,
+          sourceDate: '1/5/2021', sourceRound: '2', potentialDuplicate: true }
+      ] };
+    (component as any).communityService = {
+      listHistoricalMatches: () => of([archive]),
+      historicalMatchDetails: jasmine.createSpy().and.returnValue(of(archive))
+    };
+    component.loadMatchArchives(9);
+    component.openMatchArchive(50);
+    expect(component.matchArchiveSummaries.length).toBe(1);
+    expect(component.matchArchiveOpen?.rows.length).toBe(2);
+    expect(component.matchArchiveOpen?.rows[1].potentialDuplicate).toBeTrue();
+    component.selected = { id: 10 } as any;
+    component.openMatchArchive(50);
+    expect(component.matchArchiveOpen).toBeUndefined();
+  });
+
+
+  it('recognizes player results from a CNG-like sheet and suggests rounds without forcing the choice', () => {
+    component.importMode = 'MATCHES';
+    component.importPreview = { fileName: 'grupo.xlsx', sheets: [{
+      name: 'Sheet1', structure: 'TABULAR', nonEmptyRows: 41,
+      headers: ['Data', 'Cepo', 'V', 'D', 'Pontos'],
+      sampleRows: [['31 Ago', 'Jogador A', '1', '', '3'], ['7 Set', 'Jogador B', '', '1', '0']],
+      columnSuggestions: [
+        { columnIndex: 0, header: 'Data', field: 'DATE', confidence: 0.95 },
+        { columnIndex: 1, header: 'Cepo', field: 'UNKNOWN', confidence: 0 },
+        { columnIndex: 2, header: 'V', field: 'WIN', confidence: 0.9 },
+        { columnIndex: 3, header: 'D', field: 'UNKNOWN', confidence: 0 },
+        { columnIndex: 4, header: 'Pontos', field: 'POINTS', confidence: 0.9 }
+      ]
+    }] };
+    component.selectImportSheet('Sheet1');
+    expect(component.recommendedImportMode).toBe('ROUNDS');
+    expect(component.importMode).toBe('MATCHES');
+    const cachedInspection = component.importPreview;
+    component.selectImportMode('ROUNDS');
+    expect(component.importPreview).toBe(cachedInspection);
+    expect(component.importMappings.map(x => x.field)).toEqual(['DATE', 'PLAYER', 'WIN', 'LOSS', 'POINTS']);
+    expect(component.sourceDatesNeedYear).toBeTrue();
+    expect(component.importDefaultYear).toBeNull();
+  });
+
+  it('gives helpful errors rather than calling the API with fields meant for a different history type', () => {
+    component.selected = { id: 7 } as any;
+    component.importFile = new File(['dummy'], 'group.xlsx');
+    component.importSheetName = 'Sheet1';
+    component.importMappings = [{ columnIndex: 0, field: 'DATE', header: 'Data', confidence: 1 }];
+    const matches = jasmine.createSpy('previewHistoricalMatches');
+    const standings = jasmine.createSpy('previewHistoricalStandings');
+    (component as any).communityService = {
+      previewHistoricalMatches: matches, previewHistoricalStandings: standings
+    };
+    component.importMode = 'MATCHES';
+    component.previewHistoricalMatches();
+    expect(matches).not.toHaveBeenCalled();
+    expect(component.importFileError).toContain('Casa');
+    component.importMode = 'STANDINGS';
+    component.previewArchiveImport();
+    expect(standings).not.toHaveBeenCalled();
+    expect(component.importFileError).toContain('Nome');
+  });
+
+  it('requires the organizer to provide the year for dates such as 31 Ago', () => {
+    component.selected = { id: 7 } as any;
+    component.importFile = new File(['dummy'], 'group.xlsx');
+    component.importSheetName = 'Sheet1';
+    component.selectedSeasonId = 19;
+    component.importMappings = [
+      { columnIndex: 0, field: 'DATE', header: 'Data', confidence: 1 },
+      { columnIndex: 1, field: 'PLAYER', header: 'Cepo', confidence: 1 }
+    ];
+    component.sourceDatesNeedYear = true;
+    component.importDefaultYear = null;
+    const plan = jasmine.createSpy('finalImportPlan');
+    (component as any).communityService = { finalImportPlan: plan };
+    component.buildImportFinalPlan();
+    expect(plan).not.toHaveBeenCalled();
+    expect(component.importFileError).not.toBe('');
+    component.importDefaultYear = 2025;
+    plan.and.returnValue(of({ rounds: [] }));
+    component.buildImportFinalPlan();
+    expect(plan).toHaveBeenCalled();
   });
 
   it('requires review and a title before writing final standings', () => {
