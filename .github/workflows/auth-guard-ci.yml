@@ -1,11 +1,7 @@
 name: Validate authentication guard
+# Manual diagnostic job; pull requests use the consolidated pr-validation.yml.
 on:
-  pull_request:
-    branches: [preview/render-fullstack]
-    paths:
-      - 'src/app/guard/authentication.guard.ts'
-      - 'src/app/guard/authentication.guard.spec.ts'
-      - '.github/workflows/auth-guard-ci.yml'
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:

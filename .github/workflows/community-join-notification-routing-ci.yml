@@ -1,16 +1,7 @@
 name: Validate community join notification actions
+# Manual diagnostic job; pull requests use the consolidated pr-validation.yml.
 on:
-  pull_request:
-    branches: [preview/render-fullstack]
-    paths:
-      - 'src/app/pages/notifications/notifications.component.ts'
-      - 'src/app/pages/notifications/notifications.component.html'
-      - 'src/app/pages/notifications/notifications.component.spec.ts'
-      - 'src/app/pages/model/app-notification.ts'
-      - 'src/app/pages/communities/communities.component.ts'
-      - 'src/app/pages/communities/community-join-deep-link.spec.ts'
-      - 'src/app/i18n/i18n.service.ts'
-      - '.github/workflows/community-join-notification-routing-ci.yml'
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:
