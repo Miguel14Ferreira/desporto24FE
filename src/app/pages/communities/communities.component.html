@@ -896,6 +896,7 @@
                       <p>{{ 'communities.competitionSessionsHint' | t }}</p>
                     </div>
                   } @else {
+                    @if (canManage()) {
                       <section class="round-editor">
                         <div class="section-heading">
                           <div>
@@ -1411,7 +1412,7 @@
                           </div>
                         }
                       </section>
-
+                    }
 
                   <div class="section-heading">
                     <div>
