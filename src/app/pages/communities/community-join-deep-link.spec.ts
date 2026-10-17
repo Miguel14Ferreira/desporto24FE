@@ -16,7 +16,10 @@ describe('Community join request deep links', () => {
       id: 42, myRole: 'OWNER', members: [], rankingsEnabled: false
     } as unknown as CommunityGroup));
     pendingJoinRequests = jasmine.createSpy('pendingJoinRequests').and.returnValue(of([]));
-    (component as any).communityService = { get: getCommunity, pendingJoinRequests };
+    (component as any).communityService = {
+      get: getCommunity, pendingJoinRequests,
+      listHistoricalStandings: () => of([])
+    };
     (component as any).route = {
       snapshot: { queryParamMap: convertToParamMap({ tab: 'members' }) }
     };
