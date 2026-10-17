@@ -25,6 +25,23 @@
         }
 
         <div class="detail-content">
+          @if (showCreationSharePanel()) {
+            <section class="session-created-share" [attr.aria-label]="'sessionDetail.createdTitle' | t">
+              <strong>{{ 'sessionDetail.createdTitle' | t }}</strong>
+              <p>{{ 'sessionDetail.createdShareHint' | t }}</p>
+              <div class="session-created-actions">
+                <a class="jynlo-action jynlo-action--primary" [href]="whatsappShareUrl()"
+                   target="_blank" rel="noopener noreferrer">{{ 'publicSession.shareWhatsApp' | t }}</a>
+                <button class="jynlo-action jynlo-action--neutral" type="button" (click)="copyPublicShareLink()"
+                        [disabled]="sharingSession">{{ 'sessionDetail.copyLink' | t }}</button>
+                <a class="jynlo-action jynlo-action--neutral" routerLink="/menu/feed"
+                   [queryParams]="{ shareSession: session.id }">{{ 'sessionDetail.publishFeed' | t }}</a>
+                <button class="jynlo-action jynlo-action--neutral" type="button"
+                        (click)="dismissCreationShare()">{{ 'sessionDetail.continueDetails' | t }}</button>
+              </div>
+              @if (shareFeedback) { <p class="share-feedback" role="status">{{ shareFeedback }}</p> }
+            </section>
+          }
           <div class="title-row">
             <div>
               <p class="eyebrow">{{ session.sport }}</p>
@@ -76,7 +93,7 @@
                       [disabled]="sharingSession" (click)="shareSession()">
                 {{ sharingSession ? 'A partilhar...' : 'Partilhar sessão' }}
               </button>
-              @if (shareFeedback) {
+              @if (shareFeedback && !showCreationSharePanel()) {
                 <span class="share-feedback" role="status">{{ shareFeedback }}</span>
               }
               @if (manualShareUrl) {

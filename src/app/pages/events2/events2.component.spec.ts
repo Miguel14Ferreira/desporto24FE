@@ -39,7 +39,8 @@ describe('Events2Component', () => {
       joined: true,
       waitlisted: false,
       waitlistPosition: null,
-      gamePhoto: null
+      gamePhoto: null,
+      canSharePublicly: true
     }));
 
     await TestBed.configureTestingModule({
@@ -373,7 +374,25 @@ describe('Events2Component', () => {
     component.createSession();
 
     expect(sessionService.create).toHaveBeenCalled();
-    expect(router.navigate).toHaveBeenCalledWith(['/menu/events', 42]);
+    expect(router.navigate).toHaveBeenCalledWith(['/menu/events', 42], { queryParams: { created: 1 } });
+  });
+
+  it('does not advertise private sessions after creation', () => {
+    sessionService.create.and.returnValue(of({
+      id: 42, sport: 'Padel', city: 'Lisboa', gameDate: '2099-10-15T18:00:00Z',
+      distanceKm: null, participantCount: 1, maxParticipants: 4, priceAmount: 0,
+      privateGame: true, status: 'OPEN', creatorUsername: 'fixture-user',
+      address: null, canSeeExactAddress: true, joined: true, waitlisted: false,
+      waitlistPosition: null, gamePhoto: null, canSharePublicly: false
+    }));
+    component.sport = 'Padel';
+    component.gameDate = '2099-10-15T18:00';
+    component.city = 'Lisboa';
+    component.address = 'Rua do Campo';
+    component.privateGame = true;
+    component.password = 'secret';
+    component.createSession();
+    expect(router.navigate).toHaveBeenCalledWith(['/menu/events', 42], {});
   });
 
   it('waits for a newly created venue before submitting the session', () => {
