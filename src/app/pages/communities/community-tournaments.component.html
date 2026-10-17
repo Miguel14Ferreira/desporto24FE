@@ -152,6 +152,26 @@
             Duas voltas: joga-se também o confronto inverso, com casa e fora trocados.
             A escolha fica definida ao criar o torneio e não muda depois de publicares as jornadas.</p>
         }
+        @if (showTeamCreate) {
+          <fieldset class="t-points-rules t-tiebreak-rules" aria-describedby="t-tiebreak-help">
+            <legend>Critério de desempate</legend>
+            <p id="t-tiebreak-help" class="sport-choice-hint">
+              Em igualdade de pontos, escolhe o primeiro critério usado na classificação.
+              Os restantes critérios também se aplicam. A regra é definida na criação.
+            </p>
+            <div class="t-tiebreak-choices">
+              @for (choice of teamTieBreakChoices; track choice.value) {
+                <button type="button" class="t-sport-chip t-tiebreak-choice"
+                  [disabled]="busy"
+                  [attr.aria-pressed]="teamTieBreakPriorityDraft === choice.value"
+                  (click)="teamTieBreakPriorityDraft = choice.value">
+                  <strong>{{ choice.title }}</strong>
+                  <span>{{ choice.explanation }}</span>
+                </button>
+              }
+            </div>
+          </fieldset>
+        }
         <fieldset class="t-points-rules" aria-describedby="t-points-rules-help">
           <legend>Regras de pontuação</legend>
           <p id="t-points-rules-help" class="sport-choice-hint">
@@ -239,6 +259,7 @@
               <p>Torneio por equipas · {{ selected.playersPerTeam }} jogadores por equipa ·
                 {{ (selected.roundRobinLegs ?? 1) === 2 ? 'Duas voltas (casa e fora)' : 'Uma volta' }}</p>
               <p>Vitória {{ selected.winPoints }} · Empate {{ selected.drawPoints }} · Derrota {{ selected.lossPoints }} pontos</p>
+              <p>Desempate prioritário: {{ teamTieBreakLabel(selected.teamTieBreakPriority) }}</p>
             } @else {
               <p>Vitória {{ selected.winPoints }} · Empate {{ selected.drawPoints }} · Derrota {{ selected.lossPoints }} pontos</p>
             }
@@ -491,6 +512,7 @@
                     <p>Vitória: {{ teamStandings?.winPoints ?? selected.winPoints }} ·
                       Empate: {{ teamStandings?.drawPoints ?? selected.drawPoints }} ·
                       Derrota: {{ teamStandings?.lossPoints ?? selected.lossPoints }} pontos</p>
+                    <p>Desempate: {{ teamTieBreakLabel(selected.teamTieBreakPriority) }} primeiro</p>
                   </div>
                   <button type="button" class="t-btn t-btn-secondary t-btn-small"
                     [disabled]="teamStandingsLoading" (click)="loadTeamStandings()">Atualizar</button>

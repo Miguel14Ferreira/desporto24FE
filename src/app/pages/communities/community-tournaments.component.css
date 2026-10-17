@@ -185,3 +185,9 @@
 .t-points-fields label { display: grid; gap: .28rem; min-width: 0; }
 .t-points-fields input { width: 100%; min-width: 0; }
 @media (max-width: 380px) { .t-points-fields { grid-template-columns: 1fr; } }
+
+/* Responsive selection of existing team championship tiebreak priorities. */
+.t-tiebreak-choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr)); gap: .55rem; }
+.t-tiebreak-choice { display: grid; gap: .3rem; text-align: left; border-radius: .75rem; padding: .75rem; min-width: 0; }
+.t-tiebreak-choice strong { font-size: .82rem; }
+.t-tiebreak-choice span { font-size: .74rem; line-height: 1.4; color: #cbd5e1; }

@@ -1,5 +1,8 @@
 export type TournamentStatus = 'DRAFT' | 'IN_PROGRESS' | 'COMPLETED';
 
+export type TeamTieBreakPriority =
+  'GOAL_DIFFERENCE_FIRST' | 'GOALS_SCORED_FIRST' | 'WINS_FIRST';
+
 export interface TournamentPointRules {
   winPoints: number;
   drawPoints: number;
@@ -17,6 +20,7 @@ export interface CommunityTournament {
   entryType?: 'INDIVIDUAL' | 'TEAM';
   playersPerTeam?: number | null;
   roundRobinLegs?: 1 | 2;
+  teamTieBreakPriority?: TeamTieBreakPriority;
   format: 'LEAGUE';
   status: TournamentStatus;
   winPoints: number;

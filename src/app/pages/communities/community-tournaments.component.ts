@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Component, ElementRef, Input, OnChanges, SimpleChang
 import { finalize, firstValueFrom, forkJoin, Observable, timeout } from 'rxjs';
 import { CommunityGroup } from '../model/community-group';
 import {
-  CommunityTournament, TournamentPointRules, TournamentMatch, TournamentParticipant, TournamentStandingRow,
+  CommunityTournament, TournamentPointRules, TeamTieBreakPriority, TournamentMatch, TournamentParticipant, TournamentStandingRow,
   TournamentStandings, TournamentTeam, TournamentTeamMatch, TournamentTeamStandings
 } from '../model/community-tournament';
 import { CommunityTournamentsService } from '../../services/community-tournaments.service';
@@ -37,6 +37,7 @@ export class CommunityTournamentsComponent implements OnChanges {
   showTeamCreate = false;
   teamSizeDraft = 5;
   roundRobinLegsDraft: 1 | 2 = 1;
+  teamTieBreakPriorityDraft: TeamTieBreakPriority = 'GOAL_DIFFERENCE_FIRST';
   winPointsDraft = 3;
   drawPointsDraft = 1;
   lossPointsDraft = 0;
@@ -109,6 +110,25 @@ export class CommunityTournamentsComponent implements OnChanges {
     }
   }
 
+  readonly teamTieBreakChoices: ReadonlyArray<{
+    value: TeamTieBreakPriority;
+    title: string;
+    explanation: string;
+  }> = [
+    { value: 'GOAL_DIFFERENCE_FIRST', title: 'Diferença do marcador',
+      explanation: 'Primeiro a diferença entre o que cada equipa marcou e sofreu.' },
+    { value: 'GOALS_SCORED_FIRST', title: 'Marcador a favor',
+      explanation: 'Primeiro quem marcou mais ao longo do campeonato.' },
+    { value: 'WINS_FIRST', title: 'Mais vitórias',
+      explanation: 'Primeiro quem ganhou mais confrontos.' }
+  ];
+
+  teamTieBreakLabel(priority: TeamTieBreakPriority | null | undefined): string {
+    return this.teamTieBreakChoices.find(choice =>
+      choice.value === (priority ?? 'GOAL_DIFFERENCE_FIRST'))?.title
+      ?? 'Diferença do marcador';
+  }
+
   get pointRulesDraft(): TournamentPointRules {
     return {
       winPoints: this.winPointsDraft,
@@ -174,6 +194,7 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.showIndividualCreate = false;
       this.showTeamCreate = false;
       this.roundRobinLegsDraft = 1;
+      this.teamTieBreakPriorityDraft = 'GOAL_DIFFERENCE_FIRST';
       this.resetPointRules();
       this.teamNameDraft = '';
       this.teamPlayerDraft = {};
@@ -682,11 +703,16 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.showError('Define pontos inteiros entre 0 e 100 para vitória, empate e derrota.');
       return;
     }
+    if (!this.teamTieBreakChoices.some(choice => choice.value === this.teamTieBreakPriorityDraft)) {
+      this.showError('Escolhe um critério de desempate válido.');
+      return;
+    }
     await this.mutate(this.api.createTeamTournament(this.community.id, name, this.sportDraft,
-      size, this.roundRobinLegsDraft, this.pointRulesDraft),
+      size, this.roundRobinLegsDraft, this.pointRulesDraft, this.teamTieBreakPriorityDraft),
       'Competição por equipas criada. Agora podes preparar os plantéis.', result => {
         this.nameDraft = '';
         this.roundRobinLegsDraft = 1;
+        this.teamTieBreakPriorityDraft = 'GOAL_DIFFERENCE_FIRST';
         this.resetPointRules();
         this.showTeamCreate = false;
         this.selected = undefined;

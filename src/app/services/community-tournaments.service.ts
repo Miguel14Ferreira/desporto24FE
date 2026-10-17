@@ -5,6 +5,7 @@ import { environment } from 'src/environment/environment';
 import {
   CommunityTournament,
   TournamentPointRules,
+  TeamTieBreakPriority,
   TournamentMatch,
   TournamentMatchPage,
   TournamentPage,
@@ -41,9 +42,11 @@ export class CommunityTournamentsService {
   /** Team tournaments have their own draft, roster and match lifecycle. */
   createTeamTournament(communityId: number, name: string, sport: string,
                        playersPerTeam: number, roundRobinLegs: 1 | 2 = 1,
-                       rules: TournamentPointRules = { winPoints: 3, drawPoints: 1, lossPoints: 0 }): Observable<CommunityTournament> {
+                       rules: TournamentPointRules = { winPoints: 3, drawPoints: 1, lossPoints: 0 },
+                       teamTieBreakPriority: TeamTieBreakPriority = 'GOAL_DIFFERENCE_FIRST'
+  ): Observable<CommunityTournament> {
     return this.http.post<CommunityTournament>(this.url(communityId), {
-      name, sport, entryType: 'TEAM', playersPerTeam, roundRobinLegs, ...rules
+      name, sport, entryType: 'TEAM', playersPerTeam, roundRobinLegs, teamTieBreakPriority, ...rules
     });
   }
 
