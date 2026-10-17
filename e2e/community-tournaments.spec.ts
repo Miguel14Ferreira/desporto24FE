@@ -483,7 +483,7 @@ test('organizador publica jornada, regista resultado e encerra a liga', async ({
   await page.getByRole('spinbutton', { name: 'Golos de organizador' }).fill('2');
   await page.getByRole('spinbutton', { name: 'Golos de participante' }).fill('1');
   await page.getByRole('button', { name: 'Guardar' }).click();
-  await expect(page.getByText('1 / 1 jogos')).toBeVisible();
+  await expect(page.getByText('1 / 1 confrontos concluídos')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Corrigir' })).toBeVisible();
 
   await page.getByRole('button', { name: 'Encerrar torneio' }).click();
@@ -586,7 +586,7 @@ test('correção de resultado altera os pontos e a ordem da classificação', as
   await match.getByRole('button', { name: 'Corrigir' }).click();
   await expect(page.locator('.standings-table tbody tr').first()).toContainText('Participante');
   await expect(page.locator('.standings-table tbody tr').first()).toContainText('3');
-  await expect(page.getByText('1 / 1 jogos')).toBeVisible();
+  await expect(page.getByText('1 / 1 confrontos concluídos')).toBeVisible();
   expect(fixture.matches[0].homeScore).toBe(0);
   expect(fixture.matches[0].awayScore).toBe(3);
 });
@@ -663,7 +663,7 @@ test('empate desportivo no primeiro lugar não atribui campeão arbitrário', as
   await game.getByRole('spinbutton', { name: 'Golos de participante' }).fill('1');
   await game.getByRole('button', { name: 'Guardar' }).click();
 
-  await expect(page.getByText('1 / 1 jogos')).toBeVisible();
+  await expect(page.getByText('1 / 1 confrontos concluídos')).toBeVisible();
   await page.getByRole('button', { name: 'Encerrar torneio' }).click();
   await page.getByRole('button', { name: 'Sim, encerrar' }).click();
 
@@ -906,7 +906,7 @@ test('padel mostra sets e esclarece que ainda não regista resultados set a set'
   await page.getByRole('spinbutton', { name: 'Sets ganhos de organizador' }).fill('2');
   await page.getByRole('spinbutton', { name: 'Sets ganhos de participante' }).fill('1');
   await page.getByRole('button', { name: 'Guardar' }).click();
-  await expect(page.getByText('1 / 1 jogos')).toBeVisible();
+  await expect(page.getByText('1 / 1 confrontos concluídos')).toBeVisible();
   await expect(page.getByRole('columnheader', { name: 'SG' })).toBeVisible();
 });
 
