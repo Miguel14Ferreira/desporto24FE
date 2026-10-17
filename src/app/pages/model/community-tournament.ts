@@ -23,6 +23,8 @@ export interface CommunityTournament {
   championDisplayName: string | null;
   championPoints: number | null;
   championTied: boolean;
+  championTeamId?: number | null;
+  championTeamName?: string | null;
 }
 
 export interface TournamentPage {

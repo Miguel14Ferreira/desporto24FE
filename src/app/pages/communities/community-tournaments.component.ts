@@ -81,7 +81,7 @@ export class CommunityTournamentsComponent implements OnChanges {
   busy = false;
   error = '';
   feedback = '';
-  confirmAction: 'schedule' | 'complete' | 'delete' | null = null;
+  confirmAction: 'schedule' | 'complete' | 'completeTeam' | 'delete' | null = null;
   scoreDrafts: Record<number, { home: number | null; away: number | null }> = {};
   scoreTouched = new Set<number>();
 
@@ -232,6 +232,18 @@ export class CommunityTournamentsComponent implements OnChanges {
     return this.canManageTeamRoster && !this.detailsLoading && !this.teamsLoadError
       && this.teams.length >= 2 && this.teams.length <= 32
       && this.readyTeamCount === this.teams.length;
+  }
+
+  get canCompleteTeam(): boolean {
+    const table = this.teamStandings;
+    if (!table || !this.canManage || this.selected?.entryType !== 'TEAM'
+        || this.selected.status !== 'IN_PROGRESS' || this.teamStandingsLoading
+        || this.teamStandingsError || this.busy) return false;
+    const size = table.standings.length;
+    const expected = size * (size - 1) / 2;
+    return size >= 2 && size <= 32
+      && table.totalMatches === expected && table.completedMatches === expected
+      && table.standings.every(row => row.played === size - 1);
   }
 
   get confirmedCount(): number {
@@ -780,6 +792,17 @@ export class CommunityTournamentsComponent implements OnChanges {
         this.refreshStandings();
       }
     );
+  }
+
+  async completeTeam(): Promise<void> {
+    if (!this.selected || !this.canCompleteTeam || this.confirmAction !== 'completeTeam') return;
+    const tournamentId = this.selected.id;
+    this.confirmAction = null;
+    await this.mutate(this.api.completeTeam(this.community.id, tournamentId),
+      'Campeonato por equipas encerrado.', tournament => {
+        this.updateSelected(tournament);
+        this.loadDetails();
+      });
   }
 
   async complete(): Promise<void> {

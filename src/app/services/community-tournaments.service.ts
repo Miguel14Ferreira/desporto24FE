@@ -89,6 +89,11 @@ export class CommunityTournamentsService {
       this.url(communityId, tournamentId) + '/teams/standings');
   }
 
+  completeTeam(communityId: number, tournamentId: number): Observable<CommunityTournament> {
+    return this.http.post<CommunityTournament>(
+      this.url(communityId, tournamentId) + '/teams/complete', null);
+  }
+
   deleteTeam(communityId: number, tournamentId: number, teamId: number): Observable<void> {
     return this.http.delete<void>(this.url(communityId, tournamentId) + '/teams/' + teamId);
   }
