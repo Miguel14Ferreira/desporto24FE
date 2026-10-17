@@ -654,6 +654,56 @@ describe('SessionDetailsComponent', () => {
     expect(fixture.nativeElement.querySelector('.session-created-share')).toBeNull();
   });
 
+  it('lets the organizer reopen WhatsApp, link and Feed options on a later visit', async () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = { ...session, gameDate: '2099-10-01T18:00:00Z', canSharePublicly: true };
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.session-created-share')).toBeNull();
+    const toggle = fixture.nativeElement.querySelector('.open-promotion-button') as HTMLButtonElement;
+    expect(toggle).not.toBeNull();
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    toggle.click();
+    fixture.detectChanges();
+
+    const panel = fixture.nativeElement.querySelector('.session-created-share') as HTMLElement;
+    expect(panel.textContent).toContain('Divulgar jogo');
+    expect(panel.querySelector('a[href^="https://wa.me/"]')).not.toBeNull();
+    expect((panel.querySelector('a[href^="/menu/feed"]') as HTMLAnchorElement)
+      .getAttribute('href')).toContain('shareSession=7');
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+
+    const copy = spyOn<any>(component, 'copyShareUrl').and.returnValue(Promise.reject(new Error('Denied')));
+    await component.copyPublicShareLink();
+    fixture.detectChanges();
+    expect(copy).toHaveBeenCalled();
+    expect((panel.querySelector('#session-share-url') as HTMLInputElement).value)
+      .toBe(new URL('/sessions/7', window.location.origin).href);
+    toggle.click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.session-created-share')).toBeNull();
+  });
+
+  it('never offers re-promotion for private, community-only, past, or other users games', () => {
+    (component as any).currentUsername = 'creator-user';
+    for (const detail of [
+      { privateGame: true, canSharePublicly: false },
+      { audience: 'COMMUNITY_ONLY' as const, canSharePublicly: false },
+      { status: 'CANCELLED' as const, canSharePublicly: true },
+      { gameDate: '2020-10-01T18:00:00Z', canSharePublicly: true }
+    ]) {
+      component.session = {
+        ...session, gameDate: '2099-10-01T18:00:00Z', ...detail
+      };
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('.open-promotion-button')).toBeNull();
+    }
+    (component as any).currentUsername = 'someone-else';
+    component.session = { ...session, gameDate: '2099-10-01T18:00:00Z', canSharePublicly: true };
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.open-promotion-button')).toBeNull();
+  });
+
   it('does not offer public sharing when the backend has not provided permission', () => {
     fixture.detectChanges();
 
