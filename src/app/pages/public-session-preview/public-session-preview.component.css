@@ -102,6 +102,8 @@ h1 {
 
 .fact-label { color: #94a3b8; font-size: .78rem; }
 .fact strong { color: #f8fafc; overflow-wrap: anywhere; }
+.fact-availability { border-color: rgba(0,230,118,.28); background: rgba(0,230,118,.08); }
+.fact-availability .fact-label, .fact-availability strong { color: #bbf7d0; }
 
 .privacy-note {
   margin: 1.5rem 0 0;

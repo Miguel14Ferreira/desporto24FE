@@ -15,6 +15,8 @@ interface SessionPublicPreview {
   city: string | null;
   gameDate: string | null;
   maxParticipants: number | null;
+  // Aggregate public count; individual participants are never exposed.
+  participantCount?: number | null;
   priceAmount: number | null;
   status: 'OPEN' | 'FULL' | 'CANCELLED' | 'COMPLETED' | null;
   gamePhoto: string | null;
@@ -194,6 +196,18 @@ export class PublicSessionPreviewComponent implements OnInit {
       return photo;
     }
     return environment.apiUrl + (photo.startsWith('/') ? photo : '/' + photo);
+  }
+
+  get remainingPlaces(): number | null {
+    const session = this.session;
+    const maximum = session?.maxParticipants;
+    const confirmed = session?.participantCount;
+    if (!session || session.status !== 'OPEN' || !this.canRequestParticipation
+        || typeof maximum !== 'number' || !Number.isSafeInteger(maximum) || maximum <= 0
+        || typeof confirmed !== 'number' || !Number.isSafeInteger(confirmed) || confirmed < 0) {
+      return null;
+    }
+    return Math.max(0, maximum - confirmed);
   }
 
   get canRequestParticipation(): boolean {

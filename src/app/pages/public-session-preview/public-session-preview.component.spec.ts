@@ -327,6 +327,61 @@ describe('PublicSessionPreviewComponent', () => {
     expect(facts[3].querySelector('strong')?.textContent?.trim()).toBe('Gratuito');
   });
 
+  it('displays publicly available places in Portuguese and English', () => {
+    const i18n = TestBed.inject(I18nService);
+    const page = render({ maxParticipants: 10, participantCount: 8 });
+    const fact = page.querySelector('.fact-availability') as HTMLElement;
+    expect(fact).not.toBeNull();
+    expect(fact.querySelector('.fact-label')?.textContent?.trim()).toBe('Vagas disponíveis');
+    expect(fact.querySelector('strong')?.textContent?.trim()).toBe('2 vagas disponíveis');
+    expect(fixture.componentInstance.remainingPlaces).toBe(2);
+
+    i18n.setLanguage('en');
+    fixture.detectChanges();
+    expect(fact.querySelector('.fact-label')?.textContent?.trim()).toBe('Available places');
+    expect(fact.querySelector('strong')?.textContent?.trim()).toBe('2 places available');
+  });
+
+  it('distinguishes last place and full capacity without showing participant identities', () => {
+    const page = render({ maxParticipants: 10, participantCount: 9 });
+    const label = () => page.querySelector('.fact-availability strong')?.textContent?.trim();
+    expect(label()).toBe('Última vaga disponível');
+
+    fixture.componentInstance.session!.participantCount = 10;
+    fixture.detectChanges();
+    expect(label()).toBe('Sem vagas disponíveis');
+
+    fixture.componentInstance.session!.participantCount = 12;
+    fixture.detectChanges();
+    expect(label()).toBe('Sem vagas disponíveis');
+    expect(page.querySelector('.session-facts')?.textContent).not.toContain('username');
+  });
+
+  it('hides availability for missing or invalid counts and closed games', () => {
+    const page = render({ maxParticipants: 10, participantCount: null });
+    const visible = () => page.querySelector('.fact-availability');
+    expect(visible()).toBeNull();
+
+    fixture.componentInstance.session!.participantCount = -1;
+    fixture.detectChanges();
+    expect(visible()).toBeNull();
+    fixture.componentInstance.session!.participantCount = 2.5;
+    fixture.detectChanges();
+    expect(visible()).toBeNull();
+
+    fixture.componentInstance.session!.participantCount = 8;
+    fixture.componentInstance.session!.status = 'FULL';
+    fixture.detectChanges();
+    expect(visible()).toBeNull();
+    fixture.componentInstance.session!.status = 'CANCELLED';
+    fixture.detectChanges();
+    expect(visible()).toBeNull();
+    fixture.componentInstance.session!.status = 'OPEN';
+    fixture.componentInstance.session!.gameDate = '2020-10-01T18:00:00Z';
+    fixture.detectChanges();
+    expect(visible()).toBeNull();
+  });
+
   it('translates missing session details and omits unknown capacity', () => {
     const i18n = TestBed.inject(I18nService);
     i18n.setLanguage('en');
