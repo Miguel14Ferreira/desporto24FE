@@ -167,3 +167,12 @@
 .team-fixture strong { min-width: 5rem; overflow-wrap: anywhere; }
 .team-versus { color: #94a3b8; font-size: .78rem; font-weight: 800; }
 .team-fixture .tournament-state { margin-left: auto; }
+
+/* Team scores and standings are separate from individual tournament views. */
+.team-score-edit { display: flex; flex: 1 1 100%; align-items: end; gap: .6rem; flex-wrap: wrap;
+  padding-top: .7rem; margin-top: .2rem; border-top: 1px solid rgba(148,163,184,.18); }
+.team-score-edit label { display: grid; gap: .25rem; min-width: 5rem; flex: 0 1 8rem; font-size: .78rem; }
+.team-score-edit input { width: 100%; min-width: 0; }
+.team-score-edit .field-validation { flex: 1 1 100%; }
+.team-standings-section { display: grid; gap: .75rem; margin-top: 1rem; }
+.team-standings-table th[scope="row"] { text-align: left; overflow-wrap: anywhere; }

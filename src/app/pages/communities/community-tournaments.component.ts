@@ -3,7 +3,7 @@ import { finalize, firstValueFrom, forkJoin, Observable, timeout } from 'rxjs';
 import { CommunityGroup } from '../model/community-group';
 import {
   CommunityTournament, TournamentMatch, TournamentParticipant, TournamentStandingRow,
-  TournamentStandings, TournamentTeam, TournamentTeamMatch
+  TournamentStandings, TournamentTeam, TournamentTeamMatch, TournamentTeamStandings
 } from '../model/community-tournament';
 import { CommunityTournamentsService } from '../../services/community-tournaments.service';
 import { AuthenticationService } from '../../services/authethication.service';
@@ -46,6 +46,12 @@ export class CommunityTournamentsComponent implements OnChanges {
   teamMatchesLoading = false;
   teamMatchesError = false;
   private teamMatchesRevision = 0;
+  teamStandings?: TournamentTeamStandings;
+  teamStandingsLoading = false;
+  teamStandingsError = false;
+  private teamStandingsRevision = 0;
+  teamScoreDrafts: Record<number, { home: number | null; away: number | null }> = {};
+  teamScoreTouched = new Set<number>();
   nameDraft = '';
   sportDraft = '';
   sportSearch = '';
@@ -139,6 +145,7 @@ export class CommunityTournamentsComponent implements OnChanges {
       ++this.mutationRevision;
       ++this.standingsRevision;
       ++this.teamMatchesRevision;
+      ++this.teamStandingsRevision;
       this.busy = false;
       this.showGuide = false;
       this.showIndividualCreate = false;
@@ -151,6 +158,11 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.teamMatchesHasMore = false;
       this.teamMatchesLoading = false;
       this.teamMatchesError = false;
+      this.teamStandings = undefined;
+      this.teamStandingsLoading = false;
+      this.teamStandingsError = false;
+      this.teamScoreDrafts = {};
+      this.teamScoreTouched.clear();
       // A sole community sport is convenient; multi-sport requires an explicit choice.
       const sports = this.community.sports;
       this.sportDraft = sports?.length === 1
@@ -283,6 +295,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     ++this.mutationRevision;
     ++this.standingsRevision;
     ++this.teamMatchesRevision;
+    ++this.teamStandingsRevision;
     // A request for the previous tournament must not leave this one disabled.
     this.busy = false;
     this.detailsLoading = false;
@@ -303,6 +316,11 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.teamMatchesHasMore = false;
     this.teamMatchesLoading = false;
     this.teamMatchesError = false;
+    this.teamStandings = undefined;
+    this.teamStandingsLoading = false;
+    this.teamStandingsError = false;
+    this.teamScoreDrafts = {};
+    this.teamScoreTouched.clear();
     this.scoreDrafts = {};
     this.scoreTouched.clear();
     this.focusPlayersAfterReload = false;
@@ -470,7 +488,10 @@ export class CommunityTournamentsComponent implements OnChanges {
             || this.selected?.id !== tournament.id) return;
         this.teams = teams;
         this.teamPlayerDraft = {};
-        if (tournament.status !== 'DRAFT') this.loadTeamMatches(true);
+        if (tournament.status !== 'DRAFT') {
+          this.loadTeamMatches(true);
+          this.loadTeamStandings();
+        }
       },
       error: () => {
         if (revision === this.detailRevision && this.community.id === communityId
@@ -506,6 +527,9 @@ export class CommunityTournamentsComponent implements OnChanges {
         this.teamMatches = reset ? result.matches : [...this.teamMatches, ...result.matches];
         this.teamMatchesPage = page;
         this.teamMatchesHasMore = result.hasMore;
+        for (const game of result.matches) {
+          this.teamScoreDrafts[game.id] = { home: game.homeScore ?? null, away: game.awayScore ?? null };
+        }
       },
       error: () => {
         if (revision !== this.teamMatchesRevision || this.community.id !== cid
@@ -513,6 +537,74 @@ export class CommunityTournamentsComponent implements OnChanges {
         this.teamMatchesError = true;
         this.showError('Não foi possível carregar os confrontos por equipas. Tenta novamente.');
       }
+    });
+  }
+
+
+  loadTeamStandings(): void {
+    const tournament = this.selected;
+    if (!tournament || tournament.entryType !== 'TEAM'
+        || tournament.status === 'DRAFT' || !this.isMember) return;
+    const communityId = this.community.id;
+    const revision = ++this.teamStandingsRevision;
+    this.teamStandingsLoading = true;
+    this.teamStandingsError = false;
+    this.api.teamStandings(communityId, tournament.id).pipe(
+      timeout(12000),
+      finalize(() => {
+        if (revision === this.teamStandingsRevision) {
+          this.teamStandingsLoading = false;
+          this.changeDetector.markForCheck();
+        }
+      })
+    ).subscribe({
+      next: table => {
+        if (revision !== this.teamStandingsRevision || this.community.id !== communityId
+            || this.selected?.id !== tournament.id) return;
+        this.teamStandings = table;
+      },
+      error: () => {
+        if (revision !== this.teamStandingsRevision || this.community.id !== communityId
+            || this.selected?.id !== tournament.id) return;
+        this.teamStandings = undefined;
+        this.teamStandingsError = true;
+      }
+    });
+  }
+
+  teamScoreDraft(match: TournamentTeamMatch): { home: number | null; away: number | null } {
+    return this.teamScoreDrafts[match.id]
+      || { home: match.homeScore ?? null, away: match.awayScore ?? null };
+  }
+
+  setTeamScore(match: TournamentTeamMatch, side: 'home' | 'away', value: number | null): void {
+    if (!this.teamScoreDrafts[match.id]) {
+      this.teamScoreDrafts[match.id] = { ...this.teamScoreDraft(match) };
+    }
+    this.teamScoreDrafts[match.id][side] = value;
+    this.teamScoreTouched.add(match.id);
+  }
+
+  isTeamScoreInvalid(match: TournamentTeamMatch): boolean {
+    const score = this.teamScoreDraft(match);
+    return this.teamScoreTouched.has(match.id)
+      && (!this.validScore(score.home) || !this.validScore(score.away));
+  }
+
+  async saveTeamScore(match: TournamentTeamMatch): Promise<void> {
+    if (!this.selected || !this.canManage || this.selected.entryType !== 'TEAM'
+        || this.selected.status !== 'IN_PROGRESS') return;
+    const score = this.teamScoreDraft(match);
+    if (!this.validScore(score.home) || !this.validScore(score.away)) {
+      this.showError('Os resultados devem ser números inteiros entre 0 e 999.');
+      return;
+    }
+    await this.mutate(this.api.recordTeamResult(this.community.id, this.selected.id, match.id,
+      score.home!, score.away!), 'Resultado por equipas guardado.', saved => {
+      this.teamMatches = this.teamMatches.map(game => game.id === saved.id ? saved : game);
+      this.teamScoreDrafts[saved.id] = { home: saved.homeScore ?? null, away: saved.awayScore ?? null };
+      this.teamScoreTouched.delete(saved.id);
+      this.loadTeamStandings();
     });
   }
 

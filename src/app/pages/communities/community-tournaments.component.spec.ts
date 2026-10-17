@@ -28,13 +28,17 @@ describe('Community tournaments management', () => {
       'list', 'create', 'participants', 'join', 'leave', 'confirm', 'removeParticipant',
       'generateSchedule', 'matches', 'recordResult', 'standings', 'complete', 'delete',
       'createTeamTournament', 'teams', 'createTeam', 'addTeamPlayer', 'removeTeamPlayer', 'deleteTeam',
-      'generateTeamSchedule', 'teamMatches'
+      'generateTeamSchedule', 'teamMatches', 'recordTeamResult', 'teamStandings'
     ]);
     api.list.and.returnValue(of({ tournaments: [draft], page: 0, hasMore: false }));
     api.participants.and.returnValue(of({ participants: [], page: 0, hasMore: false }));
     api.matches.and.returnValue(of({ matches: [], page: 0, hasMore: false }));
     api.teams.and.returnValue(of([]));
     api.teamMatches.and.returnValue(of({ matches: [], page: 0, hasMore: false }));
+    api.teamStandings.and.returnValue(of({
+      tournamentId: 19, status: 'IN_PROGRESS', totalMatches: 0, completedMatches: 0,
+      winPoints: 3, drawPoints: 1, lossPoints: 0, standings: []
+    }));
     api.standings.and.returnValue(of({
       tournamentId: 9, status: 'DRAFT', totalMatches: 0, completedMatches: 0,
       winPoints: 3, drawPoints: 1, lossPoints: 0, standings: []
@@ -262,6 +266,27 @@ describe('Community tournaments management', () => {
       expect(api.teamMatches).toHaveBeenCalledWith(7, 19, 1);
       expect(component.teamMatches.length).toBe(2);
       expect(component.teamMatchesHasMore).toBeFalse();
+    });
+
+    it('saves real team results and refreshes only team standings', async () => {
+      const fixture = { id: 75, roundNumber: 1, homeTeamId: 40, homeTeamName: 'Azuis',
+        awayTeamId: 41, awayTeamName: 'Verdes', status: 'SCHEDULED' as const,
+        homeScore: null, awayScore: null };
+      api.teams.and.returnValue(of([team]));
+      api.teamMatches.and.returnValue(of({ matches: [fixture], page: 0, hasMore: false }));
+      api.recordTeamResult.and.returnValue(of({ ...fixture, status: 'COMPLETED',
+        homeScore: 2, awayScore: 1 }));
+      component.selectTournament({ ...teamDraft, status: 'IN_PROGRESS' });
+      component.setTeamScore(fixture, 'home', 2);
+      component.setTeamScore(fixture, 'away', 1);
+      const previousIndividualStandingsCalls = api.standings.calls.count();
+      await component.saveTeamScore(fixture);
+      expect(api.recordTeamResult).toHaveBeenCalledWith(7, 19, 75, 2, 1);
+      expect(component.teamMatches[0].status).toBe('COMPLETED');
+      expect(component.teamMatches[0].homeScore).toBe(2);
+      expect(api.teamStandings).toHaveBeenCalledWith(7, 19);
+      expect(api.standings.calls.count()).toBe(previousIndividualStandingsCalls);
+      expect(api.recordResult).not.toHaveBeenCalled();
     });
 
     it('respects the module switch for team competition creation', () => {
