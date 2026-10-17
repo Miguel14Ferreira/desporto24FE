@@ -3,7 +3,7 @@ import { finalize, firstValueFrom, forkJoin, Observable, timeout } from 'rxjs';
 import { CommunityGroup } from '../model/community-group';
 import {
   CommunityTournament, TournamentMatch, TournamentParticipant, TournamentStandingRow,
-  TournamentStandings, TournamentTeam
+  TournamentStandings, TournamentTeam, TournamentTeamMatch
 } from '../model/community-tournament';
 import { CommunityTournamentsService } from '../../services/community-tournaments.service';
 import { AuthenticationService } from '../../services/authethication.service';
@@ -40,6 +40,12 @@ export class CommunityTournamentsComponent implements OnChanges {
   teamPlayerDraft: Record<number, number | null> = {};
   teams: TournamentTeam[] = [];
   teamsLoadError = false;
+  teamMatches: TournamentTeamMatch[] = [];
+  teamMatchesPage = 0;
+  teamMatchesHasMore = false;
+  teamMatchesLoading = false;
+  teamMatchesError = false;
+  private teamMatchesRevision = 0;
   nameDraft = '';
   sportDraft = '';
   sportSearch = '';
@@ -132,6 +138,7 @@ export class CommunityTournamentsComponent implements OnChanges {
       ++this.detailRevision;
       ++this.mutationRevision;
       ++this.standingsRevision;
+      ++this.teamMatchesRevision;
       this.busy = false;
       this.showGuide = false;
       this.showIndividualCreate = false;
@@ -140,6 +147,10 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.teamPlayerDraft = {};
       this.teams = [];
       this.teamsLoadError = false;
+      this.teamMatches = [];
+      this.teamMatchesHasMore = false;
+      this.teamMatchesLoading = false;
+      this.teamMatchesError = false;
       // A sole community sport is convenient; multi-sport requires an explicit choice.
       const sports = this.community.sports;
       this.sportDraft = sports?.length === 1
@@ -205,6 +216,12 @@ export class CommunityTournamentsComponent implements OnChanges {
     return this.teams.filter(t => t.players.length === t.playersPerTeam).length;
   }
 
+  get canPublishTeamSchedule(): boolean {
+    return this.canManageTeamRoster && !this.detailsLoading && !this.teamsLoadError
+      && this.teams.length >= 2 && this.teams.length <= 32
+      && this.readyTeamCount === this.teams.length;
+  }
+
   get confirmedCount(): number {
     return this.participants.filter(p => p.status === 'CONFIRMED').length;
   }
@@ -265,6 +282,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     ++this.detailRevision;
     ++this.mutationRevision;
     ++this.standingsRevision;
+    ++this.teamMatchesRevision;
     // A request for the previous tournament must not leave this one disabled.
     this.busy = false;
     this.detailsLoading = false;
@@ -281,6 +299,10 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.teams = [];
     this.teamPlayerDraft = {};
     this.teamsLoadError = false;
+    this.teamMatches = [];
+    this.teamMatchesHasMore = false;
+    this.teamMatchesLoading = false;
+    this.teamMatchesError = false;
     this.scoreDrafts = {};
     this.scoreTouched.clear();
     this.focusPlayersAfterReload = false;
@@ -448,6 +470,7 @@ export class CommunityTournamentsComponent implements OnChanges {
             || this.selected?.id !== tournament.id) return;
         this.teams = teams;
         this.teamPlayerDraft = {};
+        if (tournament.status !== 'DRAFT') this.loadTeamMatches(true);
       },
       error: () => {
         if (revision === this.detailRevision && this.community.id === communityId
@@ -457,6 +480,52 @@ export class CommunityTournamentsComponent implements OnChanges {
         }
       }
     });
+  }
+
+  loadTeamMatches(reset = false): void {
+    const tournament = this.selected;
+    if (!tournament || tournament.entryType !== 'TEAM'
+        || tournament.status === 'DRAFT' || !this.isMember || this.teamMatchesLoading) return;
+    const cid = this.community.id;
+    const revision = ++this.teamMatchesRevision;
+    const page = reset ? 0 : this.teamMatchesPage + 1;
+    this.teamMatchesLoading = true;
+    this.teamMatchesError = false;
+    this.api.teamMatches(cid, tournament.id, page).pipe(
+      timeout(12000),
+      finalize(() => {
+        if (revision === this.teamMatchesRevision) {
+          this.teamMatchesLoading = false;
+          this.changeDetector.markForCheck();
+        }
+      })
+    ).subscribe({
+      next: result => {
+        if (revision !== this.teamMatchesRevision || this.community.id !== cid
+            || this.selected?.id !== tournament.id) return;
+        this.teamMatches = reset ? result.matches : [...this.teamMatches, ...result.matches];
+        this.teamMatchesPage = page;
+        this.teamMatchesHasMore = result.hasMore;
+      },
+      error: () => {
+        if (revision !== this.teamMatchesRevision || this.community.id !== cid
+            || this.selected?.id !== tournament.id) return;
+        this.teamMatchesError = true;
+        this.showError('Não foi possível carregar os confrontos por equipas. Tenta novamente.');
+      }
+    });
+  }
+
+  async publishTeamSchedule(): Promise<void> {
+    const tournament = this.selected;
+    if (!tournament || !this.canPublishTeamSchedule || this.confirmAction !== 'schedule') return;
+    this.confirmAction = null;
+    await this.mutate(this.api.generateTeamSchedule(this.community.id, tournament.id),
+      'Calendário por equipas publicado. Os plantéis estão agora fechados.', () => {
+        this.updateSelected({ ...tournament, status: 'IN_PROGRESS' });
+        this.teamMatches = [];
+        this.loadDetails();
+      });
   }
 
   async createTeamCompetition(): Promise<void> {

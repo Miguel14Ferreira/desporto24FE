@@ -58,7 +58,7 @@
           </div>
           <p>Escolham a modalidade e os jogadores por equipa. Criem equipas reais com os membros da comunidade.</p>
           <p class="guide-example">Ex.: 20 membros divididos em quatro equipas de cinco.</p>
-          <p class="guide-coming">Nesta fase já podem preparar os plantéis. Os calendários, confrontos e classificações por equipas continuam em desenvolvimento.</p>
+          <p class="guide-coming">Podem criar equipas e publicar jornadas numa liga de todos contra todos. Resultados, classificações por equipas e eliminatórias continuam em desenvolvimento.</p>
           @if (canManage && community.teamTournamentsEnabled !== false) {
             <button type="button" class="t-btn t-btn-primary" (click)="startTeamCreation()">Preparar torneio por equipas</button>
           } @else if (canManage) {
@@ -80,7 +80,7 @@
         <h4>{{ showTeamCreate ? 'Preparar torneio por equipas' : 'Criar liga individual' }}</h4>
         @if (showTeamCreate) {
           <p>Define a modalidade e quantos jogadores terá cada equipa. Depois podes criar equipas e escolher os membros de cada plantel.</p>
-          <p class="sport-choice-hint">Os jogos e classificações entre equipas ainda não estão disponíveis.</p>
+          <p class="sport-choice-hint">Formato disponível: campeonato todos contra todos. Os resultados e classificações ficam para a próxima etapa.</p>
         } @else {
           <p>Competição individual sem equipas: cada participante compete por si. Os resultados não alteram o histórico de jogos habituais da comunidade.</p>
         }
@@ -250,9 +250,11 @@
                 </div>
               </div>
               <div class="guide-community-note" role="note">
-                <strong>Primeiro organizamos as equipas.</strong>
+                <strong>{{ selected.status === 'DRAFT' ? 'Primeiro organizamos as equipas.' : 'Calendário publicado.' }}</strong>
                 <p>Todos os jogadores são membros reais da comunidade. Um membro só pode integrar uma equipa nesta competição.
-                  As jornadas e classificações por equipas serão disponibilizadas numa fase seguinte.</p>
+                  {{ selected.status === 'DRAFT'
+                    ? 'Quando todas as equipas estiverem completas, publica o calendário do campeonato.'
+                    : 'Os plantéis estão fechados. Os resultados e classificações por equipas serão implementados na próxima fase.' }}</p>
               </div>
               @if (teamsLoadError) {
                 <p class="field-validation" role="alert">Não foi possível carregar os plantéis. Usa Atualizar para tentar novamente.</p>
@@ -323,7 +325,71 @@
                   </article>
                 }
               </div>
+              @if (canManage && selected.status === 'DRAFT') {
+                <div class="team-schedule-action">
+                  <div>
+                    <strong>Prontos para começar o campeonato?</strong>
+                    <p>Gera uma jornada por ronda, com todos os confrontos entre equipas.
+                      A publicação fecha os plantéis e não pode ser repetida.</p>
+                    @if (teams.length < 2) {
+                      <p class="field-validation" role="status">Cria pelo menos duas equipas.</p>
+                    } @else if (readyTeamCount !== teams.length) {
+                      <p class="field-validation" role="status">
+                        Completa os plantéis das {{ teams.length - readyTeamCount }} equipas em falta.
+                      </p>
+                    }
+                  </div>
+                  @if (confirmAction === 'schedule') {
+                    <div class="confirm-actions">
+                      <button type="button" class="t-btn t-btn-primary" [disabled]="!canPublishTeamSchedule"
+                        (click)="publishTeamSchedule()">Sim, publicar jornadas por equipas</button>
+                      <button type="button" class="t-btn t-btn-secondary" [disabled]="busy"
+                        (click)="confirmAction = null">Cancelar</button>
+                    </div>
+                  } @else {
+                    <button type="button" class="t-btn t-btn-primary" [disabled]="!canPublishTeamSchedule"
+                      (click)="confirmAction = 'schedule'">Gerar jornadas entre equipas</button>
+                  }
+                </div>
+              }
             </section>
+            @if (selected.status !== 'DRAFT') {
+              <section class="t-section team-fixtures-section" aria-label="Jornadas entre equipas">
+                <div class="t-section-heading">
+                  <div>
+                    <h5>Jornadas e confrontos entre equipas</h5>
+                    <p>Campeonato todos contra todos. A pontuação e classificação por equipas estarão disponíveis numa próxima fase.</p>
+                  </div>
+                </div>
+                @if (teamMatchesError) {
+                  <p class="field-validation" role="alert">Não foi possível consultar os confrontos. Tenta novamente.</p>
+                  <button class="t-btn t-btn-secondary" type="button" (click)="loadTeamMatches(true)">Tentar novamente</button>
+                }
+                @if (teamMatchesLoading) {
+                  <p class="t-muted" role="status">A carregar jornadas…</p>
+                }
+                @if (!teamMatchesLoading && !teamMatches.length && !teamMatchesError) {
+                  <p class="t-muted">Ainda não existem confrontos.</p>
+                }
+                <div class="team-fixtures-list">
+                  @for (game of teamMatches; track game.id; let index = $index) {
+                    @if (index === 0 || teamMatches[index - 1].roundNumber !== game.roundNumber) {
+                      <h6>Jornada {{ game.roundNumber }}</h6>
+                    }
+                    <div class="team-fixture">
+                      <strong>{{ game.homeTeamName }}</strong>
+                      <span class="team-versus">vs</span>
+                      <strong>{{ game.awayTeamName }}</strong>
+                      <span class="tournament-state">Por disputar</span>
+                    </div>
+                  }
+                </div>
+                @if (teamMatchesHasMore) {
+                  <button type="button" class="t-btn t-btn-secondary" [disabled]="teamMatchesLoading || busy"
+                    (click)="loadTeamMatches()">Ver mais confrontos</button>
+                }
+              </section>
+            }
           }
         } @else if (!isMember) {
           <div class="notice notice-info" role="status">

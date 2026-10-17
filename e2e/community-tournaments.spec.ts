@@ -67,7 +67,8 @@ function fixtureToken(username: string): string {
 type FixtureMode = 'empty' | 'draft' | 'paged' | 'forbidden' | 'switch'
   | 'management' | 'complete-rejected' | 'list-network-error'
   | 'paged-enrollment' | 'draw-tie' | 'schedule-roster-paged' | 'schedule-roster-oversize'
-  | 'discovery' | 'trial' | 'modules-off' | 'teams-only' | 'teams' | 'teams-view';
+  | 'discovery' | 'trial' | 'modules-off' | 'teams-only' | 'teams' | 'teams-view'
+  | 'teams-schedule';
 
 async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode, sport: string | null = 'Futebol', sports?: string[]) {
   const username = role === 'OWNER' ? 'organizador' : 'participante';
@@ -88,23 +89,37 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode, sport
       { profileId: 2, username: 'participante', fullName: 'Participante',
         role: 'MEMBER', profilePicUrl: null },
       { profileId: 3, username: 'mariana', fullName: 'Mariana',
+        role: 'MEMBER', profilePicUrl: null },
+      { profileId: 4, username: 'joao', fullName: 'João',
         role: 'MEMBER', profilePicUrl: null }
     ]
   };
 
   const tournaments: Tournament[] = mode === 'empty' || mode === 'teams' ? []
-    : [tournament(mode === 'teams-view' ? 11 : 9, 'Liga de Outono')];
+    : [tournament(mode === 'teams-view' || mode === 'teams-schedule' ? 11 : 9, 'Liga de Outono')];
   // The sport is a snapshot on the tournament, not inferred by the component.
   tournaments.forEach(item => item.sport = sport);
-  if (mode === 'teams-view') Object.assign(tournaments[0], {
+  if (mode === 'teams-view' || mode === 'teams-schedule') Object.assign(tournaments[0], {
     entryType: 'TEAM', playersPerTeam: 2, name: 'Torneio da comunidade'
   });
   type MockTeam = { id: number; name: string; playersPerTeam: number; createdAt: string;
     players: { profileId: number; username: string; displayName: string }[] };
-  const teams: MockTeam[] = mode === 'teams-view' ? [{
+  const teams: MockTeam[] = mode === 'teams-view' || mode === 'teams-schedule' ? [{
     id: 40, name: 'Azuis', playersPerTeam: 2, createdAt: '2026-10-17T12:00:00Z',
     players: [{ profileId: 2, username: 'participante', displayName: 'Participante' }]
   }] : [];
+  if (mode === 'teams-schedule') {
+    teams[0].players.push({ profileId: 1, username: 'organizador', displayName: 'Organizador' });
+    teams.push({ id: 41, name: 'Verdes', playersPerTeam: 2,
+      createdAt: '2026-10-17T12:00:00Z', players: [
+        { profileId: 3, username: 'mariana', displayName: 'Mariana' },
+        { profileId: 4, username: 'joao', displayName: 'João' }
+      ] });
+  }
+  let publishedTeamSchedule = false;
+  const teamFixtures: Array<{ id: number; roundNumber: number;
+    homeTeamId: number; homeTeamName: string; awayTeamId: number;
+    awayTeamName: string; status: 'SCHEDULED' }> = [];
   if (mode === 'switch') tournaments.push(tournament(11, 'Liga alternativa'));
   if (mode === 'paged') tournaments[0].status = 'IN_PROGRESS';
   if (mode === 'trial') {
@@ -293,6 +308,22 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode, sport
       }
     }
 
+    if (path === '/api/communities/7/tournaments/11/teams/schedule' && method === 'POST') {
+      if (publishedTeamSchedule || teams.length < 2
+          || teams.some(t => t.players.length !== t.playersPerTeam)) {
+        return send({ message: 'Plantéis incompletos ou calendário existente' }, 409);
+      }
+      publishedTeamSchedule = true;
+      tournaments[0].status = 'IN_PROGRESS';
+      teamFixtures.push({ id: 75, roundNumber: 1, homeTeamId: 40, homeTeamName: 'Azuis',
+        awayTeamId: 41, awayTeamName: 'Verdes', status: 'SCHEDULED' });
+      return send({ tournamentId: 11, status: 'IN_PROGRESS',
+        teamCount: teams.length, roundCount: 1, matchCount: teamFixtures.length });
+    }
+    if (path === '/api/communities/7/tournaments/11/teams/matches' && method === 'GET') {
+      const page = Number(url.searchParams.get('page') || 0);
+      return send({ matches: page === 0 ? teamFixtures : [], page, hasMore: false });
+    }
     if (path === '/api/communities/7/tournaments/11/teams') {
       if (method === 'GET') return send(teams);
       if (method === 'POST') {
@@ -473,7 +504,7 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode, sport
   });
 
   return {
-    tournaments, teams, participants, matches, unmocked, requestedMatchPages,
+    tournaments, teams, teamFixtures, participants, matches, unmocked, requestedMatchPages,
     requestedParticipantPages, organizerMutations,
     get completeAttempts(): number { return completeAttempts; },
     get scheduleAttempts(): number { return scheduleAttempts; },
@@ -1194,4 +1225,35 @@ test('membro da comunidade pode ver plantéis mas não editar equipas', async ({
   await expect(page.getByRole('button', { name: 'Adicionar jogador' })).toHaveCount(0);
   await expect(page.getByRole('table', { name: 'Classificação do torneio' })).toHaveCount(0);
   expect(fixture.unmocked.filter(path => path.includes('/tournaments/'))).toEqual([]);
+});
+
+test('organizador publica jornadas apenas com duas equipas completas e vê confrontos reais', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'teams-schedule');
+  await page.goto('/menu/communities/7?tab=tournaments');
+  await expect(page.getByRole('heading', { name: 'Equipas e plantéis' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Gerar jornadas entre equipas' })).toBeEnabled();
+  await page.getByRole('button', { name: 'Gerar jornadas entre equipas' }).click();
+  await expect(page.getByRole('button', { name: 'Sim, publicar jornadas por equipas' })).toBeVisible();
+  expect(fixture.teamFixtures).toHaveLength(0);
+  await page.getByRole('button', { name: 'Sim, publicar jornadas por equipas' }).click();
+  await expect(page.getByRole('heading', { name: 'Jornadas e confrontos entre equipas' })).toBeVisible();
+  await expect(page.getByText('Jornada 1', { exact: true })).toBeVisible();
+  await expect(page.locator('.team-fixture')).toHaveCount(1);
+  await expect(page.locator('.team-fixture')).toContainText('Azuis');
+  await expect(page.locator('.team-fixture')).toContainText('Verdes');
+  await expect(page.locator('.team-fixture')).toContainText('Por disputar');
+  await expect(page.getByRole('button', { name: 'Gerar jornadas entre equipas' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Adicionar equipa' })).toHaveCount(0);
+  await expect(page.getByRole('table', { name: 'Classificação do torneio' })).toHaveCount(0);
+  expect(fixture.teamFixtures).toHaveLength(1);
+  expect(fixture.matches).toHaveLength(0); // no fake participant fixture
+  expect(fixture.unmocked.filter(p => p.includes('/tournaments/'))).toEqual([]);
+});
+
+test('torneio com plantéis incompletos não permite gerar jornadas entre equipas', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'teams-view');
+  await page.goto('/menu/communities/7?tab=tournaments');
+  await expect(page.getByRole('button', { name: 'Gerar jornadas entre equipas' })).toBeDisabled();
+  await expect(page.getByText('Cria pelo menos duas equipas.')).toBeVisible();
+  expect(fixture.teamFixtures).toHaveLength(0);
 });
