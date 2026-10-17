@@ -58,7 +58,7 @@
           </div>
           <p>Escolham a modalidade e os jogadores por equipa. Criem equipas reais com os membros da comunidade.</p>
           <p class="guide-example">Ex.: 20 membros divididos em quatro equipas de cinco.</p>
-          <p class="guide-coming">Podem criar equipas e publicar jornadas numa liga de todos contra todos. Resultados, classificações por equipas e eliminatórias continuam em desenvolvimento.</p>
+          <p class="guide-coming">Podem criar equipas e publicar jornadas numa liga de todos contra todos. Eliminatórias e fases de grupos chegarão noutras etapas.</p>
           @if (canManage && community.teamTournamentsEnabled !== false) {
             <button type="button" class="t-btn t-btn-primary" (click)="startTeamCreation()">Preparar torneio por equipas</button>
           } @else if (canManage) {
@@ -80,7 +80,7 @@
         <h4>{{ showTeamCreate ? 'Preparar torneio por equipas' : 'Criar liga individual' }}</h4>
         @if (showTeamCreate) {
           <p>Define a modalidade e quantos jogadores terá cada equipa. Depois podes criar equipas e escolher os membros de cada plantel.</p>
-          <p class="sport-choice-hint">Formato disponível: campeonato todos contra todos. Os resultados e classificações ficam para a próxima etapa.</p>
+          <p class="sport-choice-hint">Formato disponível: campeonato todos contra todos. Depois de publicar as jornadas, podes registar resultados e acompanhar a classificação.</p>
         } @else {
           <p>Competição individual sem equipas: cada participante compete por si. Os resultados não alteram o histórico de jogos habituais da comunidade.</p>
         }
@@ -254,7 +254,7 @@
                 <p>Todos os jogadores são membros reais da comunidade. Um membro só pode integrar uma equipa nesta competição.
                   {{ selected.status === 'DRAFT'
                     ? 'Quando todas as equipas estiverem completas, publica o calendário do campeonato.'
-                    : 'Os plantéis estão fechados. Os resultados e classificações por equipas serão implementados na próxima fase.' }}</p>
+                    : 'Os plantéis estão fechados. Regista os resultados nas jornadas e acompanha a tabela classificativa.' }}</p>
               </div>
               @if (teamsLoadError) {
                 <p class="field-validation" role="alert">Não foi possível carregar os plantéis. Usa Atualizar para tentar novamente.</p>
@@ -358,7 +358,7 @@
                 <div class="t-section-heading">
                   <div>
                     <h5>Jornadas e confrontos entre equipas</h5>
-                    <p>Campeonato todos contra todos. A pontuação e classificação por equipas estarão disponíveis numa próxima fase.</p>
+                    <p>Campeonato todos contra todos. Os resultados dos confrontos atualizam automaticamente a classificação deste torneio.</p>
                   </div>
                 </div>
                 @if (teamMatchesError) {
@@ -377,16 +377,93 @@
                       <h6>Jornada {{ game.roundNumber }}</h6>
                     }
                     <div class="team-fixture">
-                      <strong>{{ game.homeTeamName }}</strong>
-                      <span class="team-versus">vs</span>
-                      <strong>{{ game.awayTeamName }}</strong>
-                      <span class="tournament-state">Por disputar</span>
-                    </div>
+                       <strong>{{ game.homeTeamName }}</strong>
+                       <span class="team-versus">vs</span>
+                       <strong>{{ game.awayTeamName }}</strong>
+                       <span class="tournament-state">
+                         {{ game.status === 'COMPLETED'
+                           ? game.homeScore + ' : ' + game.awayScore : 'Por disputar' }}
+                       </span>
+                       @if (canManage && selected.status === 'IN_PROGRESS') {
+                         <div class="team-score-edit">
+                           <label>
+                             <span>{{ game.homeTeamName }}</span>
+                             <input type="number" min="0" max="999" step="1"
+                               [ngModel]="teamScoreDraft(game).home"
+                               (ngModelChange)="setTeamScore(game, 'home', $event)"
+                               [attr.aria-label]="'Golos de ' + game.homeTeamName"
+                               [attr.aria-invalid]="isTeamScoreInvalid(game) && !validScore(teamScoreDraft(game).home) ? 'true' : null"
+                               [disabled]="busy">
+                           </label>
+                           <span class="team-versus">:</span>
+                           <label>
+                             <span>{{ game.awayTeamName }}</span>
+                             <input type="number" min="0" max="999" step="1"
+                               [ngModel]="teamScoreDraft(game).away"
+                               (ngModelChange)="setTeamScore(game, 'away', $event)"
+                               [attr.aria-label]="'Golos de ' + game.awayTeamName"
+                               [attr.aria-invalid]="isTeamScoreInvalid(game) && !validScore(teamScoreDraft(game).away) ? 'true' : null"
+                               [disabled]="busy">
+                           </label>
+                           <button type="button" class="t-btn t-btn-primary t-btn-small"
+                             [disabled]="busy || !validScore(teamScoreDraft(game).home) || !validScore(teamScoreDraft(game).away)"
+                             [attr.aria-label]="(game.status === 'COMPLETED' ? 'Corrigir' : 'Guardar') + ' resultado entre ' + game.homeTeamName + ' e ' + game.awayTeamName"
+                             (click)="saveTeamScore(game)">
+                             {{ game.status === 'COMPLETED' ? 'Corrigir' : 'Guardar' }}
+                           </button>
+                           @if (isTeamScoreInvalid(game)) {
+                             <p class="field-validation" role="status">Indica dois marcadores inteiros entre 0 e 999.</p>
+                           }
+                         </div>
+                       }
+                     </div>
                   }
                 </div>
                 @if (teamMatchesHasMore) {
                   <button type="button" class="t-btn t-btn-secondary" [disabled]="teamMatchesLoading || busy"
                     (click)="loadTeamMatches()">Ver mais confrontos</button>
+                }
+              </section>
+              <section class="t-section team-standings-section" aria-label="Classificação por equipas">
+                <div class="t-section-heading">
+                  <div>
+                    <h5>Classificação por equipas</h5>
+                    <p>Vitória: {{ teamStandings?.winPoints ?? selected.winPoints }} ·
+                      Empate: {{ teamStandings?.drawPoints ?? selected.drawPoints }} ·
+                      Derrota: {{ teamStandings?.lossPoints ?? selected.lossPoints }} pontos</p>
+                  </div>
+                  <button type="button" class="t-btn t-btn-secondary t-btn-small"
+                    [disabled]="teamStandingsLoading" (click)="loadTeamStandings()">Atualizar</button>
+                </div>
+                @if (teamStandingsLoading) {
+                  <p class="t-muted" role="status">A atualizar classificação…</p>
+                }
+                @if (teamStandingsError) {
+                  <p class="field-validation" role="alert">Não foi possível carregar a classificação por equipas.</p>
+                }
+                @if (teamStandings; as table) {
+                  <p class="t-muted">{{ table.completedMatches }} / {{ table.totalMatches }} confrontos concluídos</p>
+                  <div class="standings-scroll">
+                    <table class="standings-table team-standings-table" aria-label="Classificação por equipas">
+                      <thead>
+                        <tr><th scope="col">#</th><th scope="col">Equipa</th>
+                          <th scope="col">J</th><th scope="col">V</th><th scope="col">E</th>
+                          <th scope="col">D</th><th scope="col">GM</th><th scope="col">GS</th>
+                          <th scope="col">DG</th><th scope="col">Pts</th></tr>
+                      </thead>
+                      <tbody>
+                        @for (row of table.standings; track row.teamId) {
+                          <tr>
+                            <td>{{ row.position }}</td><th scope="row">{{ row.teamName }}</th>
+                            <td>{{ row.played }}</td><td>{{ row.won }}</td>
+                            <td>{{ row.drawn }}</td><td>{{ row.lost }}</td>
+                            <td>{{ row.goalsFor }}</td><td>{{ row.goalsAgainst }}</td>
+                            <td>{{ row.goalDifference }}</td><td><strong>{{ row.points }}</strong></td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
                 }
               </section>
             }

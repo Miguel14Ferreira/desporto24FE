@@ -119,7 +119,8 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode, sport
   let publishedTeamSchedule = false;
   const teamFixtures: Array<{ id: number; roundNumber: number;
     homeTeamId: number; homeTeamName: string; awayTeamId: number;
-    awayTeamName: string; status: 'SCHEDULED' }> = [];
+    awayTeamName: string; status: 'SCHEDULED' | 'COMPLETED';
+    homeScore: number | null; awayScore: number | null }> = [];
   if (mode === 'switch') tournaments.push(tournament(11, 'Liga alternativa'));
   if (mode === 'paged') tournaments[0].status = 'IN_PROGRESS';
   if (mode === 'trial') {
@@ -316,13 +317,52 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode, sport
       publishedTeamSchedule = true;
       tournaments[0].status = 'IN_PROGRESS';
       teamFixtures.push({ id: 75, roundNumber: 1, homeTeamId: 40, homeTeamName: 'Azuis',
-        awayTeamId: 41, awayTeamName: 'Verdes', status: 'SCHEDULED' });
+        awayTeamId: 41, awayTeamName: 'Verdes', status: 'SCHEDULED',
+        homeScore: null, awayScore: null });
       return send({ tournamentId: 11, status: 'IN_PROGRESS',
         teamCount: teams.length, roundCount: 1, matchCount: teamFixtures.length });
     }
     if (path === '/api/communities/7/tournaments/11/teams/matches' && method === 'GET') {
       const page = Number(url.searchParams.get('page') || 0);
       return send({ matches: page === 0 ? teamFixtures : [], page, hasMore: false });
+    }
+    if (path === '/api/communities/7/tournaments/11/teams/standings' && method === 'GET') {
+      const rows = teams.map(t => ({ teamId: t.id, teamName: t.name,
+        played: 0, won: 0, drawn: 0, lost: 0, goalsFor: 0, goalsAgainst: 0,
+        goalDifference: 0, points: 0, position: 0 }));
+      for (const match of teamFixtures.filter(m => m.status === 'COMPLETED')) {
+        const home = rows.find(t => t.teamId === match.homeTeamId)!;
+        const away = rows.find(t => t.teamId === match.awayTeamId)!;
+        const h = match.homeScore!, a = match.awayScore!;
+        home.played++; away.played++;
+        home.goalsFor += h; home.goalsAgainst += a;
+        away.goalsFor += a; away.goalsAgainst += h;
+        if (h > a) { home.won++; away.lost++; home.points += 3; }
+        else if (h < a) { away.won++; home.lost++; away.points += 3; }
+        else { home.drawn++; away.drawn++; home.points++; away.points++; }
+      }
+      rows.forEach(t => t.goalDifference = t.goalsFor - t.goalsAgainst);
+      rows.sort((a, b) => b.points - a.points || b.goalDifference - a.goalDifference
+        || b.goalsFor - a.goalsFor || b.won - a.won || a.teamId - b.teamId);
+      rows.forEach((row, i) => row.position = i + 1);
+      return send({ tournamentId: 11, status: tournaments[0].status,
+        totalMatches: teamFixtures.length,
+        completedMatches: teamFixtures.filter(m => m.status === 'COMPLETED').length,
+        winPoints: 3, drawPoints: 1, lossPoints: 0, standings: rows });
+    }
+    if (/^\/api\/communities\/7\/tournaments\/11\/teams\/matches\/\d+\/result$/.test(path)
+        && method === 'POST') {
+      if (role !== 'OWNER' && role !== 'ADMIN') return send({ message: 'Sem permissão' }, 403);
+      const match = teamFixtures.find(m => path.endsWith('/' + m.id + '/result'));
+      const body = req.postDataJSON() as { homeScore: number; awayScore: number };
+      if (!match || !Number.isInteger(body.homeScore) || !Number.isInteger(body.awayScore)
+          || body.homeScore < 0 || body.awayScore < 0 || body.homeScore > 999 || body.awayScore > 999) {
+        return send({ message: 'Resultado inválido' }, 400);
+      }
+      match.homeScore = body.homeScore;
+      match.awayScore = body.awayScore;
+      match.status = 'COMPLETED';
+      return send(match);
     }
     if (path === '/api/communities/7/tournaments/11/teams') {
       if (method === 'GET') return send(teams);
@@ -1140,16 +1180,18 @@ test('grupo que optou só por equipas não oferece criação individual', async 
   await page.getByRole('button', { name: 'Como funciona?' }).click();
   await expect(page.getByRole('button', { name: 'Criar liga individual' })).toHaveCount(0);
   await expect(page.getByText(/Para permitir ligas individuais/)).toBeVisible();
-  await expect(page.getByText('Em desenvolvimento')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Preparar torneio por equipas' })).toBeVisible();
+  await expect(page.getByText('Plantéis disponíveis')).toBeVisible();
 });
 
-test('guia distingue competições das estatísticas habituais e explica equipas sem prometer criação', async ({ page }) => {
+test('guia distingue competições das estatísticas habituais e explica o torneio por equipas', async ({ page }) => {
   await mockCommunityApi(page, 'OWNER', 'empty');
   await page.goto('/menu/communities/7?tab=tournaments');
 
   await expect(page.getByRole('heading', { name: 'Como querem competir?' })).toBeVisible();
   await expect(page.getByText('Por equipas', { exact: true })).toBeVisible();
-  await expect(page.getByText('Em desenvolvimento')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Preparar torneio por equipas' })).toBeVisible();
+  await expect(page.getByText('Plantéis disponíveis')).toBeVisible();
   await expect(page.getByText(/histórico Excel/)).toBeVisible();
   await expect(page.getByRole('button', { name: 'Criar liga individual' })).toBeVisible();
   await expect(page.getByLabel('Nome do torneio')).toHaveCount(0);
@@ -1256,4 +1298,28 @@ test('torneio com plantéis incompletos não permite gerar jornadas entre equipa
   await expect(page.getByRole('button', { name: 'Gerar jornadas entre equipas' })).toBeDisabled();
   await expect(page.getByText('Cria pelo menos duas equipas.')).toBeVisible();
   expect(fixture.teamFixtures).toHaveLength(0);
+});
+
+test('resultados e classificação por equipas mudam após corrigir um confronto', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'teams-schedule');
+  await page.goto('/menu/communities/7?tab=tournaments');
+  await page.getByRole('button', { name: 'Gerar jornadas entre equipas' }).click();
+  await page.getByRole('button', { name: 'Sim, publicar jornadas por equipas' }).click();
+  const game = page.locator('.team-fixture');
+  await expect(game).toHaveCount(1);
+  await game.getByRole('spinbutton', { name: 'Golos de Azuis' }).fill('2');
+  await game.getByRole('spinbutton', { name: 'Golos de Verdes' }).fill('1');
+  await game.getByRole('button', { name: 'Guardar resultado entre Azuis e Verdes' }).click();
+  await expect(game).toContainText('2 : 1');
+  const table = page.getByRole('table', { name: 'Classificação por equipas' });
+  await expect(table.locator('tbody tr').first()).toContainText('Azuis');
+  await expect(table.locator('tbody tr').first()).toContainText('3');
+  await game.getByRole('spinbutton', { name: 'Golos de Azuis' }).fill('0');
+  await game.getByRole('spinbutton', { name: 'Golos de Verdes' }).fill('3');
+  await game.getByRole('button', { name: 'Corrigir resultado entre Azuis e Verdes' }).click();
+  await expect(game).toContainText('0 : 3');
+  await expect(table.locator('tbody tr').first()).toContainText('Verdes');
+  expect(fixture.teamFixtures[0].status).toBe('COMPLETED');
+  expect(fixture.matches).toHaveLength(0);
+  expect(fixture.unmocked.filter(path => path.includes('/tournaments/'))).toEqual([]);
 });

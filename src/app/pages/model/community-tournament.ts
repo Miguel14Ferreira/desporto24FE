@@ -121,6 +121,8 @@ export interface TournamentTeamMatch {
   awayTeamId: number;
   awayTeamName: string;
   status: TournamentMatchStatus;
+  homeScore?: number | null;
+  awayScore?: number | null;
 }
 
 export interface TournamentTeamMatchPage {
@@ -135,4 +137,29 @@ export interface TournamentTeamScheduleSummary {
   teamCount: number;
   roundCount: number;
   matchCount: number;
+}
+
+export interface TournamentTeamStandingRow {
+  position: number;
+  teamId: number;
+  teamName: string;
+  played: number;
+  won: number;
+  drawn: number;
+  lost: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  goalDifference: number;
+  points: number;
+}
+
+export interface TournamentTeamStandings {
+  tournamentId: number;
+  status: TournamentStatus;
+  totalMatches: number;
+  completedMatches: number;
+  winPoints: number;
+  drawPoints: number;
+  lossPoints: number;
+  standings: TournamentTeamStandingRow[];
 }
