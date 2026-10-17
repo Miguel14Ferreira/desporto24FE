@@ -75,6 +75,39 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(component.importPreview).toBeUndefined();
   });
 
+  it('requires explicit confirmation when mapped spreadsheet points will not be persisted', () => {
+    component.importMappings = [{ columnIndex: 2, header: 'Pontos', field: 'POINTS', confidence: 0.9 }];
+    component.importPointsAcknowledged = false;
+    expect(component.importIncludesPoints).toBeTrue();
+
+    component.selected = { id: 9 } as any;
+    component.importFile = new File(['history'], 'historico.csv');
+    component.importSheetName = 'Dados';
+    component.selectedSeasonId = 21;
+    component.importFinalPlan = { invalidDates: 0, roundsNeedingYear: 0, rounds: [] };
+    component.confirmHistoricalImport();
+
+    expect(component.importFileError).not.toBe('');
+    expect(component.importConfirming).toBeFalsy();
+
+    component.importPointsAcknowledged = true;
+    component.setImportMapping(2, 'IGNORE');
+    expect(component.importIncludesPoints).toBeFalse();
+    expect(component.importPointsAcknowledged).toBeFalse();
+  });
+
+  it('resets points acknowledgement when import planning context changes', () => {
+    component.importMappings = [{ columnIndex: 1, header: 'Points', field: 'POINTS', confidence: 0.9 }];
+    component.importPointsAcknowledged = true;
+    component.invalidateImportPlan();
+    expect(component.importPointsAcknowledged).toBeFalse();
+    component.importPointsAcknowledged = true;
+    component.onImportFileChange({ target: {
+      files: [new File(['x'], 'season.xlsx')], value: 'season.xlsx'
+    } as unknown as HTMLInputElement } as unknown as Event);
+    expect(component.importPointsAcknowledged).toBeFalse();
+  });
+
   it('allows joining an upcoming open community session', () => {
     expect(component.canJoinCommunitySession(session)).toBeTrue();
   });

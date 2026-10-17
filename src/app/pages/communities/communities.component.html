@@ -1034,9 +1034,18 @@
                                     </div>
                                   }
                                 </div>
+                                @if (importIncludesPoints) {
+                                  <div class="import-validation" role="note">
+                                    <p>{{ 'communities.import.pointsNotStored' | t }}</p>
+                                    <label>
+                                      <input type="checkbox" [(ngModel)]="importPointsAcknowledged">
+                                      <span>{{ 'communities.import.pointsAcknowledgement' | t }}</span>
+                                    </label>
+                                  </div>
+                                }
                                 @if (importFinalPlan.invalidDates === 0 && importFinalPlan.roundsNeedingYear === 0) {
                                   <button type="button" class="primary-action import-confirm jynlo-action jynlo-action--primary"
-                                    [disabled]="importConfirming"
+                                    [disabled]="importConfirming || (importIncludesPoints && !importPointsAcknowledged)"
                                     (click)="confirmHistoricalImport()">
                                     {{ importConfirming ? ('communities.import.importing' | t) : ('communities.import.confirm' | t) }}
                                   </button>
