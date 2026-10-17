@@ -87,6 +87,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   inviteFeedback = '';
   inviteError = '';
   sharingSession = false;
+  creationShareDismissed = false;
   shareFeedback = '';
   manualShareUrl = '';
   chatError = '';
@@ -1194,6 +1195,57 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
 
   hasConfirmedTeams(): boolean {
     return this.confirmedTeams;
+  }
+
+  showCreationSharePanel(): boolean {
+    return !this.creationShareDismissed
+      && this.route.snapshot.queryParamMap?.get('created') === '1'
+      && this.isCreator() && this.canShareSession()
+      && this.session?.privateGame === false
+      && this.session?.audience !== 'COMMUNITY_ONLY'
+      && (this.session?.status === 'OPEN' || this.session?.status === 'FULL')
+      && Date.parse(this.session.gameDate) > Date.now();
+  }
+
+  dismissCreationShare(): void {
+    this.creationShareDismissed = true;
+  }
+
+  whatsappShareUrl(): string | null {
+    const url = this.publicShareUrl();
+    if (!url || !this.session || !this.showCreationSharePanel()) {
+      return null;
+    }
+    const invitation = t('publicSession.whatsappSportCity', {
+      sport: this.session.sport, city: this.session.city
+    });
+    const date = new Date(this.session.gameDate);
+    const when = Number.isFinite(date.getTime())
+      ? '\n' + t('publicSession.shareWhen', {
+          date: new Intl.DateTimeFormat(document.documentElement.lang === 'en' ? 'en-GB' : 'pt-PT', {
+            dateStyle: 'short', timeStyle: 'short'
+          }).format(date)
+        }) : '';
+    return 'https://wa.me/?text=' + encodeURIComponent(invitation + when + '\n' + url);
+  }
+
+  async copyPublicShareLink(): Promise<void> {
+    const url = this.publicShareUrl();
+    if (!url || this.sharingSession) {
+      return;
+    }
+    this.sharingSession = true;
+    this.shareFeedback = '';
+    this.manualShareUrl = '';
+    try {
+      await this.copyShareUrl(url);
+      this.shareFeedback = t('publicSession.linkCopied');
+    } catch {
+      this.manualShareUrl = url;
+      this.shareFeedback = t('publicSession.manualShare');
+    } finally {
+      this.sharingSession = false;
+    }
   }
 
   canShareSession(): boolean {

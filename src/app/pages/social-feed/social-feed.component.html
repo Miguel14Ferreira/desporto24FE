@@ -143,6 +143,18 @@
         <strong>{{ 'feed.shareTitle' | t }}</strong>
         <span>{{ postContent.length }}/1000</span>
       </div>
+      @if (newSessionForFeed; as newSession) {
+        <div class="postgame-session-card">
+          <div class="postgame-session-summary">
+            <span class="postgame-session-kicker">{{ 'feed.newSessionLinked' | t }}</span>
+            <strong>{{ newSession.sport }} · {{ newSession.city }}</strong>
+            <span>{{ newSession.gameDate | date:'dd/MM/yyyy HH:mm' }}</span>
+          </div>
+          <button type="button" class="postgame-detach jynlo-action jynlo-action--neutral"
+                  [disabled]="posting" (click)="detachNewSession()">{{ 'feed.postGameDetach' | t }}</button>
+        </div>
+        <p class="composer-hint" role="status">{{ 'feed.newSessionHint' | t }}</p>
+      }
       @if (postGameSession; as completedSession) {
         <div class="postgame-session-card">
           <div class="postgame-session-summary">

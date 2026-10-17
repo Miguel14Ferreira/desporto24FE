@@ -261,7 +261,11 @@ export class Events2Component implements OnInit, OnDestroy {
         finalize(() => this.loading = false)
       )
       .subscribe({
-        next: session => this.router.navigate(['/menu/events', session.id]),
+        next: session => this.router.navigate(
+          ['/menu/events', session.id],
+          !session.privateGame && session.canSharePublicly === true
+            ? { queryParams: { created: 1 } } : {}
+        ),
         error: error => {
           this.errorMessage = this.errorFrom(
             error,

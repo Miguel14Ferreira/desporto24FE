@@ -414,6 +414,61 @@ describe('SocialFeedComponent session sharing fallback', () => {
   });
 });
 
+describe('SocialFeedComponent new session promotion', () => {
+  function openNewSession(overrides: Partial<SessionDetail> = {}, rawId = '42') {
+    const auth = jasmine.createSpyObj<AuthenticationService>('AuthenticationService', ['isLoggedIn']);
+    auth.isLoggedIn.and.returnValue(true);
+    Object.defineProperty(auth, 'loggedInPerfilname', { value: 'organizer', configurable: true });
+    const feed = jasmine.createSpyObj<SocialFeedService>('SocialFeedService', ['feed', 'createPost']);
+    feed.feed.and.returnValue(of([]));
+    const sessions = jasmine.createSpyObj<SessionService>('SessionService', ['discover', 'detail', 'mine']);
+    sessions.discover.and.returnValue(of([]));
+    sessions.mine.and.returnValue(of({ created: [], joined: [], waitlisted: [] }));
+    sessions.detail.and.returnValue(of({
+      id: 42, sport: 'Padel', city: 'Lisboa',
+      gameDate: '2099-10-01T18:00:00Z', status: 'OPEN',
+      distanceKm: null, participantCount: 2, maxParticipants: 4, priceAmount: 0,
+      privateGame: false, canSharePublicly: true, joined: true,
+      waitlisted: false, waitlistPosition: null, creatorUsername: 'organizer',
+      address: null, canSeeExactAddress: true, gamePhoto: null, ...overrides
+    } as SessionDetail));
+    const route = { snapshot: { queryParamMap: convertToParamMap({ shareSession: rawId }) } } as unknown as ActivatedRoute;
+    const target = new SocialFeedComponent(
+      feed, sessions, auth, route,
+      { discoverProfiles: () => of([]), publicProfile: () => of(null), friends: () => of([]) } as unknown as CommunityService
+    );
+    target.ngOnInit();
+    return { target, sessions, feed };
+  }
+
+  it('preselects a public game but never publishes automatically', () => {
+    const { target, sessions, feed } = openNewSession();
+    expect(sessions.detail).toHaveBeenCalledWith(42);
+    expect(target.newSessionForFeed?.id).toBe(42);
+    expect(target.postContent).toContain('Padel');
+    expect(target.selectedSessionId).toBe(42);
+    expect(feed.createPost).not.toHaveBeenCalled();
+    target.detachNewSession();
+    expect(target.selectedSessionId).toBeNull();
+    target.ngOnDestroy();
+  });
+
+  it('rejects private, non-owned, or invalid deep links', () => {
+    for (const scenario of [
+      { privateGame: true, canSharePublicly: false },
+      { audience: 'COMMUNITY_ONLY' as const, canSharePublicly: false },
+      { creatorUsername: 'stranger' }, { canSharePublicly: false }
+    ]) {
+      const { target } = openNewSession(scenario);
+      expect(target.selectedSessionId).toBeNull();
+      target.ngOnDestroy();
+    }
+    const { target, sessions } = openNewSession({}, '../5');
+    expect(sessions.detail).not.toHaveBeenCalled();
+    target.ngOnDestroy();
+  });
+});
+
 describe('SocialFeedComponent post-game entry', () => {
   function openFromSession(overrides: Partial<SessionDetail> = {}, rawId = '42') {
     const auth = jasmine.createSpyObj<AuthenticationService>('AuthenticationService', ['isLoggedIn']);

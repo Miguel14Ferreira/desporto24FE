@@ -58,6 +58,19 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
   private myWeekProfile: CommunityProfile | null = null;
   selectedSessionId: number | null = null;
   postGameSessionId: number | null = null;
+  newSessionShareId: number | null = null;
+  get newSessionForFeed(): SessionSummary | null {
+    return this.newSessionShareId !== null && this.selectedSessionId === this.newSessionShareId
+      ? this.availableSessions.find(session => session.id === this.newSessionShareId) ?? null
+      : null;
+  }
+
+  detachNewSession(): void {
+    if (this.posting || !this.newSessionForFeed) return;
+    this.selectedSessionId = null;
+    this.newSessionShareId = null;
+  }
+
   get postGameSession(): SessionSummary | null {
     if (this.postGameSessionId === null || this.selectedSessionId !== this.postGameSessionId) {
       return null;
@@ -133,6 +146,7 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
     this.load();
     this.loadSuggestedPeople();
     this.preparePostGameMoment();
+    this.prepareNewSessionShare();
     this.loadCompletedSessions();
     this.loadMyWeekCommunities();
     this.sessionSearchChanges.pipe(
@@ -316,6 +330,33 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
       .find(session => session.id === sessionId && session.status === 'COMPLETED')?.id ?? null;
   }
 
+  private prepareNewSessionShare(): void {
+    const raw = this.route.snapshot.queryParamMap.get('shareSession');
+    if (!raw || !/^[1-9][0-9]*$/.test(raw)) return;
+    const id = Number(raw);
+    if (!Number.isSafeInteger(id)) return;
+
+    this.sessionService.detail(id).pipe(
+      timeout(10_000), catchError(() => of(null)), takeUntil(this.destroyed)
+    ).subscribe(session => {
+      if (!session || session.id !== id || session.canSharePublicly !== true
+          || session.privateGame || session.audience === 'COMMUNITY_ONLY'
+          || !this.currentUsername
+          || session.creatorUsername?.toLowerCase() !== this.currentUsername.toLowerCase()
+          || (session.status !== 'OPEN' && session.status !== 'FULL')
+          || Date.parse(session.gameDate) <= Date.now()) return;
+      this.newSessionShareId = id;
+      this.selectedSessionId = id;
+      this.availableSessions = [session, ...this.availableSessions.filter(item => item.id !== id)];
+      this.sessionPickerExpanded = true;
+      if (!this.postContent.trim()) {
+        this.postContent = t('feed.newSessionInvitation', {
+          sport: session.sport, city: session.city
+        });
+      }
+    });
+  }
+
   private preparePostGameMoment(): void {
     const raw = this.route.snapshot.queryParamMap.get('momentSession');
     if (!raw || !/^[1-9]\d*$/.test(raw)) {
@@ -415,6 +456,7 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
           this.postImagePreview = '';
           this.selectedSessionId = null;
           this.postGameSessionId = null;
+          this.newSessionShareId = null;
           this.sessionPickerExpanded = false;
         },
         error: () => this.actionError = t('feedback.feed.publishError')

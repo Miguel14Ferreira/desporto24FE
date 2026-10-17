@@ -42,6 +42,20 @@
   padding: clamp(1.25rem, 4vw, 2.25rem);
 }
 
+.session-created-share {
+  display: grid;
+  gap: .7rem;
+  padding: 1rem;
+  margin-bottom: 1.25rem;
+  border: 1px solid rgba(0,230,118,.4);
+  border-radius: .9rem;
+  background: rgba(0,230,118,.08);
+}
+.session-created-share strong { color: #a7f3d0; font-size: 1.1rem; }
+.session-created-share p { margin: 0; color: #cbd5e1; }
+.session-created-actions { display: flex; flex-wrap: wrap; gap: .6rem; }
+.session-created-actions .jynlo-action { text-decoration: none; }
+
 .title-row {
   display: flex;
   justify-content: space-between;

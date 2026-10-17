@@ -615,6 +615,45 @@ describe('SessionDetailsComponent', () => {
     expect(component.publicShareUrl()).toBe(new URL('/sessions/7', window.location.origin).href);
   });
 
+  it('offers opt-in sharing after the creator makes a public game', async () => {
+    const route = TestBed.inject(ActivatedRoute);
+    spyOn(route.snapshot.queryParamMap, 'get').and.callFake(key => key === 'created' ? '1' : null);
+    (component as any).currentUsername = 'creator-user';
+    component.session = { ...session, gameDate: '2099-10-01T18:00:00Z', canSharePublicly: true };
+    fixture.detectChanges();
+    const panel = fixture.nativeElement.querySelector('.session-created-share') as HTMLElement;
+    expect(panel).not.toBeNull();
+    const whatsapp = panel.querySelector('a[href^="https://wa.me/"]') as HTMLAnchorElement;
+    expect(decodeURIComponent(whatsapp.href)).toContain('/sessions/7');
+    const feedLink = panel.querySelector('a[href^="/menu/feed"]') as HTMLAnchorElement;
+    expect(feedLink.getAttribute('href')).toContain('shareSession=7');
+    const copy = spyOn<any>(component, 'copyShareUrl').and.returnValue(Promise.resolve());
+    await component.copyPublicShareLink();
+    expect(copy).toHaveBeenCalledWith(new URL('/sessions/7', window.location.origin).href);
+    panel.querySelectorAll('button')[1].click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.session-created-share')).toBeNull();
+  });
+
+  it('never promotes private, community-only or other peoples games', () => {
+    const route = TestBed.inject(ActivatedRoute);
+    spyOn(route.snapshot.queryParamMap, 'get').and.returnValue('1');
+    (component as any).currentUsername = 'creator-user';
+    for (const detail of [
+      { privateGame: true, canSharePublicly: false },
+      { audience: 'COMMUNITY_ONLY' as const, canSharePublicly: false },
+      { canSharePublicly: false }
+    ]) {
+      component.session = { ...session, gameDate: '2099-10-01T18:00:00Z', ...detail };
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('.session-created-share')).toBeNull();
+    }
+    (component as any).currentUsername = 'someone-else';
+    component.session = { ...session, gameDate: '2099-10-01T18:00:00Z', canSharePublicly: true };
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.session-created-share')).toBeNull();
+  });
+
   it('does not offer public sharing when the backend has not provided permission', () => {
     fixture.detectChanges();
 
