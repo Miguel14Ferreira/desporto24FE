@@ -684,6 +684,30 @@ describe('SessionDetailsComponent', () => {
     expect(fixture.nativeElement.querySelector('.session-created-share')).toBeNull();
   });
 
+  it('opens sharing from My Sports Week only when the viewer owns a public game', () => {
+    const route = TestBed.inject(ActivatedRoute);
+    spyOn(route.snapshot.queryParamMap, 'get')
+      .and.callFake(key => key === 'promote' ? '1' : null);
+    component.ngOnInit();
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session, canSharePublicly: true, gameDate: '2099-10-01T18:00:00Z'
+    };
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.session-created-share')).not.toBeNull();
+
+    component.session = { ...component.session, privateGame: true, canSharePublicly: false };
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.session-created-share')).toBeNull();
+
+    component.session = {
+      ...session, canSharePublicly: true, gameDate: '2099-10-01T18:00:00Z'
+    };
+    (component as any).currentUsername = 'different-user';
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.session-created-share')).toBeNull();
+  });
+
   it('never offers re-promotion for private, community-only, past, or other users games', () => {
     (component as any).currentUsername = 'creator-user';
     for (const detail of [

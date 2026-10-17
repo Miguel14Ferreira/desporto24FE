@@ -70,6 +70,16 @@
                 <span>{{ session.city }} · {{ session.gameDate | date:'dd/MM HH:mm' }}</span>
                 <small>{{ 'week.confirmed' | t }}</small>
               </a>
+              @if (canPromoteWeekGame(session)) {
+                <a class="week-share-action jynlo-action jynlo-action--neutral"
+                   [routerLink]="['/menu/events', session.id]"
+                   [queryParams]="{ promote: '1' }">
+                  {{ 'week.promoteVacancies' | t:{
+                    count: session.maxParticipants - session.participantCount
+                  } }}
+                  <span aria-hidden="true">↗</span>
+                </a>
+              }
             }
             @for (session of myWeekWaitlist; track session.id) {
               <a class="week-item" [routerLink]="['/menu/events', session.id]">
