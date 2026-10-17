@@ -107,6 +107,14 @@ export class CommunityGroupsService {
     return this.http.post<CommunityGroup>(this.url, request);
   }
 
+  updateFeatures(id: number, request: {
+    rankingsEnabled: boolean;
+    individualTournamentsEnabled: boolean;
+    teamTournamentsEnabled: boolean;
+  }): Observable<CommunityGroup> {
+    return this.http.put<CommunityGroup>(this.url + '/' + id + '/features', request);
+  }
+
   updateSports(id: number, sports: string[]): Observable<CommunityGroup> {
     return this.http.put<CommunityGroup>(this.url + '/' + id + '/sports', { sports });
   }

@@ -429,27 +429,59 @@
                 (click)="setTab('sessions')">
                 {{ 'communities.tab.sessions' | t }}
               </button>
-              <button type="button" [class.active]="activeTab === 'tournaments'"
-                [attr.aria-current]="activeTab === 'tournaments' ? 'true' : null"
-                (click)="setTab('tournaments')">
-                Competições
-              </button>
-              <button type="button" [class.active]="activeTab === 'ranking'"
-                [attr.aria-current]="activeTab === 'ranking' ? 'true' : null"
-                (click)="setTab('ranking')">
-                {{ 'communities.tab.ranking' | t }}
-              </button>
-              <button type="button" [class.active]="activeTab === 'stats'"
-                [attr.aria-current]="activeTab === 'stats' ? 'true' : null"
-                (click)="setTab('stats')">
-                {{ 'communities.tab.stats' | t }}
-              </button>
+              @if (hasCompetitions(selected)) {
+                <button type="button" [class.active]="activeTab === 'tournaments'"
+                  [attr.aria-current]="activeTab === 'tournaments' ? 'true' : null"
+                  (click)="setTab('tournaments')">Competições</button>
+              }
+              @if (selected.rankingsEnabled) {
+                <button type="button" [class.active]="activeTab === 'ranking'"
+                  [attr.aria-current]="activeTab === 'ranking' ? 'true' : null"
+                  (click)="setTab('ranking')">{{ 'communities.tab.ranking' | t }}</button>
+                <button type="button" [class.active]="activeTab === 'stats'"
+                  [attr.aria-current]="activeTab === 'stats' ? 'true' : null"
+                  (click)="setTab('stats')">{{ 'communities.tab.stats' | t }}</button>
+              }
               <button type="button" [class.active]="activeTab === 'members'"
                 [attr.aria-current]="activeTab === 'members' ? 'true' : null"
                 (click)="setTab('members')">
                 {{ 'communities.tab.members' | t }}
               </button>
             </nav>
+
+            @if (canManage() && activeTab === 'home') {
+              <section class="community-feature-settings" aria-label="Gerir funcionalidades da comunidade">
+                <div class="community-feature-settings-title">
+                  <div>
+                    <h3>Funcionalidades da comunidade</h3>
+                    <p>As sessões estão sempre disponíveis. Podes ativar outras formas de jogar quando quiseres, sem apagar resultados ou históricos anteriores.</p>
+                  </div>
+                  @if (!featuresEditing) {
+                    <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
+                      (click)="editFeatures()">Gerir funcionalidades</button>
+                  }
+                </div>
+                @if (featuresFeedback) { <p role="status" class="feature-settings-success">{{ featuresFeedback }}</p> }
+                @if (featuresError) { <p role="alert" class="feature-settings-error">{{ featuresError }}</p> }
+                @if (featuresEditing) {
+                  <div class="feature-settings-choices" role="group" aria-label="Funcionalidades opcionais">
+                    <label><input type="checkbox" [(ngModel)]="featuresDraft.individualTournamentsEnabled"
+                      [disabled]="featuresSaving"> Torneios individuais</label>
+                    <label><input type="checkbox" [(ngModel)]="featuresDraft.teamTournamentsEnabled"
+                      [disabled]="featuresSaving"> Torneios por equipas <small>(calendários em desenvolvimento)</small></label>
+                    <label><input type="checkbox" [(ngModel)]="featuresDraft.rankingsEnabled"
+                      [disabled]="featuresSaving"> Classificações e estatísticas dos jogos habituais</label>
+                  </div>
+                  <p class="feature-settings-caption">Sem nenhuma opção ativa: apenas sessões e respetivo histórico. Desativar uma opção oculta o módulo, mas não elimina os dados.</p>
+                  <div class="feature-settings-actions">
+                    <button type="button" class="primary-action jynlo-action jynlo-action--primary"
+                      [disabled]="featuresSaving" (click)="saveFeatures()">Guardar funcionalidades</button>
+                    <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
+                      [disabled]="featuresSaving" (click)="cancelFeaturesEdit()">Cancelar</button>
+                  </div>
+                }
+              </section>
+            }
 
             @if (canManage() && (activeTab === 'home' || activeTab === 'members')) {
               <section class="whatsapp-group-share" [attr.aria-label]="'communities.whatsappGroupTitle' | t">

@@ -44,9 +44,11 @@
           </div>
           <p>Cada participante compete por si numa liga de todos contra todos. Indicada para pequenos desafios e modalidades individuais.</p>
           <p class="guide-example">Ex.: 6 amigos numa liga de ténis.</p>
-          @if (canManage) {
+          @if (canManage && community.individualTournamentsEnabled !== false) {
             <button type="button" class="t-btn t-btn-primary"
               (click)="startIndividualCreation()">Criar liga individual</button>
+          } @else if (canManage) {
+            <p class="guide-coming">Para permitir ligas individuais, ativa esta funcionalidade no início da comunidade.</p>
           }
         </article>
         <article class="guide-option">

@@ -122,3 +122,13 @@ h1 { margin: 1rem 0 .65rem; font-size: clamp(1.9rem, 5vw, 2.8rem); line-height: 
   .invite-step-footer-options > * { width: 100%; }
   .invite-step-footer-options .primary-action { margin-left: 0; }
 }
+
+/* Flexible community setup: four cards, multiple optional modules. */
+.competition-onboarding-options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.competition-onboarding-option { min-height: 205px; }
+.competition-onboarding-option small { margin-top: auto; color: #9eb2c3; font-size: .76rem; line-height: 1.4; }
+.competition-onboarding-option.selected::after {
+  content: "Selecionado"; margin-top: .15rem; color: #86efac;
+  font-size: .78rem; font-weight: 800;
+}
+@media (max-width: 560px) { .competition-onboarding-option { min-height: 0; } }

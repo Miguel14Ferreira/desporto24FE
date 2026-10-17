@@ -376,7 +376,7 @@ export class CommunityTournamentsComponent implements OnChanges {
   }
 
   startIndividualCreation(): void {
-    if (!this.canManage || this.busy) return;
+    if (!this.canManage || this.community?.individualTournamentsEnabled === false || this.busy) return;
     this.showGuide = false;
     this.showIndividualCreate = true;
     this.error = '';
@@ -384,7 +384,8 @@ export class CommunityTournamentsComponent implements OnChanges {
 
   async create(): Promise<void> {
     const name = this.nameDraft.trim();
-    if (!this.canManage || !this.showIndividualCreate || this.busy || name.length < 2 || name.length > 120) {
+    if (!this.canManage || this.community?.individualTournamentsEnabled === false
+        || !this.showIndividualCreate || this.busy || name.length < 2 || name.length > 120) {
       this.showError('Indica um nome entre 2 e 120 caracteres.');
       return;
     }

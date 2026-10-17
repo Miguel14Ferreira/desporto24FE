@@ -65,7 +65,7 @@ function fixtureToken(username: string): string {
 type FixtureMode = 'empty' | 'draft' | 'paged' | 'forbidden' | 'switch'
   | 'management' | 'complete-rejected' | 'list-network-error'
   | 'paged-enrollment' | 'draw-tie' | 'schedule-roster-paged' | 'schedule-roster-oversize'
-  | 'discovery' | 'trial';
+  | 'discovery' | 'trial' | 'modules-off' | 'teams-only';
 
 async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode, sport: string | null = 'Futebol', sports?: string[]) {
   const username = role === 'OWNER' ? 'organizador' : 'participante';
@@ -75,7 +75,10 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode, sport
   const community = {
     id: 7, name: 'Jogadores de Lisboa', description: 'Liga dos amigos',
     sport, sports: sports ?? (sport ? [sport] : []), photoUrl: null, visibility: 'PRIVATE',
-    rankingsEnabled: true, ownerUsername: 'organizador',
+    rankingsEnabled: mode !== 'modules-off' && mode !== 'teams-only',
+    individualTournamentsEnabled: mode !== 'modules-off' && mode !== 'teams-only',
+    teamTournamentsEnabled: mode !== 'modules-off',
+    ownerUsername: 'organizador',
     myRole: role, memberCount: 3, createdAt: '2026-10-16T12:00:00Z',
     members: [
       { profileId: 1, username: 'organizador', fullName: 'Organizador',
@@ -1023,6 +1026,27 @@ test('torneio multidesporto exige escolha explícita e aceita modalidade fora da
   await expect(page.locator('.tournament-heading h4')).toHaveText('Liga de Natação');
   await expect(page.locator('.t-tournament-sport')).toHaveText('Natação');
   expect(fixture.tournaments[0].sport).toBe('Natação');
+});
+
+test('comunidade apenas com sessões oculta módulos e pode reativá-los no início', async ({ page }) => {
+  await mockCommunityApi(page, 'OWNER', 'modules-off');
+  await page.goto('/menu/communities/7?tab=tournaments');
+  const nav = page.locator('.community-tabs');
+  await expect(nav.getByRole('button', { name: 'Competições' })).toHaveCount(0);
+  await expect(nav.getByRole('button', { name: /Classificação/ })).toHaveCount(0);
+  await expect(nav.getByRole('button', { name: /Estatísticas/ })).toHaveCount(0);
+  await expect(nav.getByRole('button', { name: /Sessões/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Gerir funcionalidades' }).click();
+  await expect(page.getByRole('group', { name: 'Funcionalidades opcionais' })).toBeVisible();
+});
+
+test('grupo que optou só por equipas não oferece criação individual', async ({ page }) => {
+  await mockCommunityApi(page, 'OWNER', 'teams-only');
+  await page.goto('/menu/communities/7?tab=tournaments');
+  await page.getByRole('button', { name: 'Como funciona?' }).click();
+  await expect(page.getByRole('button', { name: 'Criar liga individual' })).toHaveCount(0);
+  await expect(page.getByText(/Para permitir ligas individuais/)).toBeVisible();
+  await expect(page.getByText('Em desenvolvimento')).toBeVisible();
 });
 
 test('guia distingue competições das estatísticas habituais e explica equipas sem prometer criação', async ({ page }) => {

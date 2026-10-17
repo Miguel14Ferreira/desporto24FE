@@ -49,52 +49,49 @@ describe('CommunityInviteStepComponent', () => {
     const { component, router } = setup();
     component.continueAfterInvite();
     expect(component.step).toBe('competition');
-    expect(component.competitionChoice).toBeNull();
+    expect(component.activityChoiceMade).toBeFalse();
+    expect(component.selectedActivities.size).toBe(0);
     expect(router.navigate).not.toHaveBeenCalled();
   });
 
-  it('enables competition only after a positive explicit choice', () => {
-    const { component, router } = setup();
-    const update = jasmine.createSpy('updateCompetitionSettings')
-      .and.returnValue(of({ rankingsEnabled: true }));
-    (component as any).groups.updateCompetitionSettings = update;
-
+  it('lets organizer combine individual leagues and regular statistics', () => {
+    const { component, groups, router } = setup();
+    const update = jasmine.createSpy('updateFeatures').and.returnValue(of({}));
+    (groups as any).updateFeatures = update;
     component.continueAfterInvite();
-    component.selectCompetition(true);
-    component.saveCompetitionAndContinue();
+    component.chooseActivity('individual');
+    component.chooseActivity('statistics');
+    expect(component.selectedActivities.size).toBe(2);
 
+    component.saveCompetitionAndContinue();
     expect(update).toHaveBeenCalledWith(42, {
-      rankingsEnabled: true,
-      winPoints: null,
-      drawPoints: null,
-      lossPoints: null
+      rankingsEnabled: true, individualTournamentsEnabled: true, teamTournamentsEnabled: false
     });
     expect(router.navigate).toHaveBeenCalledWith(['/menu/communities', 42]);
-    expect(component.competitionSaving).toBeFalse();
   });
 
-  it('supports disabling the rankings module explicitly', () => {
-    const { component, router } = setup();
-    const update = jasmine.createSpy('updateCompetitionSettings')
-      .and.returnValue(of({ rankingsEnabled: false }));
-    (component as any).groups.updateCompetitionSettings = update;
+  it('supports all four paths, including sessions-only and the future teams module', () => {
+    const { component, groups } = setup();
+    const update = jasmine.createSpy('updateFeatures').and.returnValue(of({}));
+    (groups as any).updateFeatures = update;
     component.continueAfterInvite();
-    component.selectCompetition(false);
+    component.chooseActivity('teams');
+    component.chooseActivity('statistics');
+    component.chooseActivity('individual');
+    expect(component.selectedActivities.size).toBe(3);
+    component.chooseSessionsOnly();
+    expect(component.selectedActivities.size).toBe(0);
+    expect(component.activityChoiceMade).toBeTrue();
     component.saveCompetitionAndContinue();
-
     expect(update).toHaveBeenCalledWith(42, {
-      rankingsEnabled: false,
-      winPoints: null,
-      drawPoints: null,
-      lossPoints: null
+      rankingsEnabled: false, individualTournamentsEnabled: false, teamTournamentsEnabled: false
     });
-    expect(router.navigate).toHaveBeenCalled();
   });
 
-  it('does not save without choosing an option', () => {
-    const { component, router } = setup();
-    const update = jasmine.createSpy('updateCompetitionSettings');
-    (component as any).groups.updateCompetitionSettings = update;
+  it('does not save without selecting an explicit path', () => {
+    const { component, groups, router } = setup();
+    const update = jasmine.createSpy('updateFeatures');
+    (groups as any).updateFeatures = update;
     component.continueAfterInvite();
     component.saveCompetitionAndContinue();
     expect(update).not.toHaveBeenCalled();
@@ -103,8 +100,8 @@ describe('CommunityInviteStepComponent', () => {
 
   it('does not let ordinary members configure competition', () => {
     const { component, router } = setup('MEMBER');
-    component.selectCompetition(true);
-    expect(component.competitionChoice).toBeNull();
+    component.chooseActivity('statistics');
+    expect(component.selectedActivities.size).toBe(0);
     component.continueAfterInvite();
     expect(component.step).toBe('invite');
     expect(router.navigate).toHaveBeenCalledWith(['/menu/communities', 42]);
@@ -112,11 +109,11 @@ describe('CommunityInviteStepComponent', () => {
 
   it('shows errors on failed saving and supports retrying', () => {
     const { component, router } = setup();
-    const update = jasmine.createSpy('updateCompetitionSettings')
+    const update = jasmine.createSpy('updateFeatures')
       .and.returnValue(throwError(() => new Error('network')));
-    (component as any).groups.updateCompetitionSettings = update;
+    (component as any).groups.updateFeatures = update;
     component.continueAfterInvite();
-    component.selectCompetition(true);
+    component.chooseActivity('statistics');
     component.saveCompetitionAndContinue();
 
     expect(router.navigate).not.toHaveBeenCalled();
@@ -131,8 +128,8 @@ describe('CommunityInviteStepComponent', () => {
 
   it('lets people decide later without changing settings', () => {
     const { component, router } = setup();
-    const update = jasmine.createSpy('updateCompetitionSettings');
-    (component as any).groups.updateCompetitionSettings = update;
+    const update = jasmine.createSpy('updateFeatures');
+    (component as any).groups.updateFeatures = update;
     component.continueAfterInvite();
     component.continueToCommunity();
     expect(update).not.toHaveBeenCalled();

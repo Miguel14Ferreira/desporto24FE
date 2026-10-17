@@ -117,6 +117,61 @@ export class CommunitiesComponent implements OnInit {
   private pendingJoinLookupVersion = 0;
   private pendingRequestsLookupVersion = 0;
 
+  featuresEditing = false;
+  featuresSaving = false;
+  featuresFeedback = '';
+  featuresError = '';
+  featuresDraft = {
+    rankingsEnabled: false,
+    individualTournamentsEnabled: false,
+    teamTournamentsEnabled: false
+  };
+
+  hasCompetitions(group: CommunityGroup | undefined): boolean {
+    return !!group && (group.individualTournamentsEnabled !== false
+      || group.teamTournamentsEnabled !== false);
+  }
+
+  editFeatures(): void {
+    if (!this.canManage() || !this.selected || this.featuresSaving) return;
+    this.featuresDraft = {
+      rankingsEnabled: this.selected.rankingsEnabled,
+      individualTournamentsEnabled: this.selected.individualTournamentsEnabled !== false,
+      teamTournamentsEnabled: this.selected.teamTournamentsEnabled !== false
+    };
+    this.featuresError = '';
+    this.featuresFeedback = '';
+    this.featuresEditing = true;
+  }
+
+  cancelFeaturesEdit(): void {
+    if (!this.featuresSaving) this.featuresEditing = false;
+  }
+
+  saveFeatures(): void {
+    if (!this.canManage() || !this.selected || !this.featuresEditing || this.featuresSaving) return;
+    const communityId = this.selected.id;
+    const request = { ...this.featuresDraft };
+    this.featuresSaving = true;
+    this.featuresError = '';
+    this.featuresFeedback = '';
+    this.communityService.updateFeatures(communityId, request)
+      .pipe(timeout(10_000), finalize(() => this.featuresSaving = false))
+      .subscribe({
+        next: updated => {
+          if (this.selected?.id !== communityId) return;
+          this.selected = updated;
+          this.communities = this.communities.map(item => item.id === communityId ? updated : item);
+          this.featuresEditing = false;
+          this.featuresFeedback = 'Funcionalidades atualizadas. O histórico foi preservado.';
+          this.activeTab = 'home';
+          this.loadCompetition(updated);
+        },
+        error: () => { if (this.selected?.id === communityId)
+          this.featuresError = 'Não foi possível atualizar as funcionalidades. Tenta novamente.'; }
+      });
+  }
+
   rankingsEnabledDraft = false;
   winPointsDraft = 3;
   drawPointsDraft = 1;
@@ -473,6 +528,9 @@ export class CommunitiesComponent implements OnInit {
     ++this.pendingRequestsLookupVersion;
     this.editingSports = false;
     this.sportsMessage = '';
+    this.featuresEditing = false;
+    this.featuresFeedback = '';
+    this.featuresError = '';
     this.pendingJoinRequestsLoading = false;
     this.pendingJoinRequests = [];
     this.errorMessage = '';
@@ -489,7 +547,9 @@ export class CommunitiesComponent implements OnInit {
         const openJoinRequests = requestedTab === 'members'
           && (full.myRole === 'OWNER' || full.myRole === 'ADMIN');
         this.activeTab = openJoinRequests ? 'members'
-          : requestedTab === 'tournaments' ? 'tournaments'
+          : requestedTab === 'tournaments' && this.hasCompetitions(full) ? 'tournaments'
+          : requestedTab === 'ranking' && full.rankingsEnabled ? 'ranking'
+          : requestedTab === 'stats' && full.rankingsEnabled ? 'stats'
           : requestedTab === 'sessions' ? 'sessions'
           : 'home';
         this.inviteUsername = '';
@@ -515,6 +575,8 @@ export class CommunitiesComponent implements OnInit {
   }
 
   setTab(tab: CommunityTab): void {
+    if ((tab === 'tournaments' && !this.hasCompetitions(this.selected))
+        || ((tab === 'ranking' || tab === 'stats') && !this.selected?.rankingsEnabled)) return;
     this.activeTab = tab;
     this.errorMessage = '';
 
