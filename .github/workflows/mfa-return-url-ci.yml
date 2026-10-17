@@ -1,11 +1,7 @@
 name: Validate MFA return URL
+# Manual diagnostic job; pull requests use the consolidated pr-validation.yml.
 on:
-  pull_request:
-    branches: [preview/render-fullstack]
-    paths:
-      - 'src/app/pages/login-mfa/**'
-      - 'src/app/shared/safe-login-return-url.ts'
-      - '.github/workflows/mfa-return-url-ci.yml'
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:
