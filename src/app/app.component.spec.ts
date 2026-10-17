@@ -7,10 +7,12 @@ import { rememberRegistrationDestination, takeRegistrationDestination } from './
 import { AppComponent } from './app.component';
 import { AuthenticationService } from './services/authethication.service';
 import { PilotAnalyticsService } from './services/pilot-analytics.service';
+import { OnlinePresenceService } from './services/online-presence.service';
 
 describe('AppComponent', () => {
   let authenticationService: jasmine.SpyObj<AuthenticationService>;
   let pilotAnalyticsService: jasmine.SpyObj<PilotAnalyticsService>;
+  let onlinePresenceService: jasmine.SpyObj<OnlinePresenceService>;
   let initialLocation: string;
 
   beforeEach(async () => {
@@ -26,12 +28,16 @@ describe('AppComponent', () => {
       ['recordFirstAccess']
     );
 
+    onlinePresenceService = jasmine.createSpyObj<OnlinePresenceService>(
+      'OnlinePresenceService', ['start', 'stop']
+    );
     await TestBed.configureTestingModule({
       imports: [RouterTestingModule],
       declarations: [AppComponent],
       providers: [
         { provide: AuthenticationService, useValue: authenticationService },
-        { provide: PilotAnalyticsService, useValue: pilotAnalyticsService }
+        { provide: PilotAnalyticsService, useValue: pilotAnalyticsService },
+        { provide: OnlinePresenceService, useValue: onlinePresenceService }
       ],
       schemas: [CUSTOM_ELEMENTS_SCHEMA]
     }).compileComponents();
@@ -202,6 +208,7 @@ describe('AppComponent', () => {
     fixture.detectChanges();
 
     expect(pilotAnalyticsService.recordFirstAccess).toHaveBeenCalledTimes(1);
+    expect(onlinePresenceService.start).toHaveBeenCalledTimes(1);
   });
 
   it('should expose the Desporto24 title', () => {

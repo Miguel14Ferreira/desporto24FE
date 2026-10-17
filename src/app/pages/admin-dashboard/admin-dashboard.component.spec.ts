@@ -8,7 +8,7 @@ describe('AdminDashboardComponent — platform overview', () => {
   let component: AdminDashboardComponent;
   const summary: AdminPlatformOverview = {
     registeredUsers: 125, enabledUsers: 120, registrationsLast7Days: 8,
-    loginsLast15Minutes: 14, onlineUsers: null,
+    loginsLast15Minutes: 14, onlineUsers: 6,
     totalSessions: 90, upcomingSessions: 16, sessionsNext7Days: 5,
     completedSessions: 50, cancelledSessions: 7,
     communities: 12, tournaments: 4, activeTournaments: 2,
@@ -31,7 +31,7 @@ describe('AdminDashboardComponent — platform overview', () => {
     expect(component.overview?.registeredUsers).toBe(125);
     expect(component.overview?.upcomingSessions).toBe(16);
     expect(component.overview?.communities).toBe(12);
-    expect(component.overview?.onlineUsers).toBeNull();
+    expect(component.overview?.onlineUsers).toBe(6);
     expect(component.overviewLoading).toBeFalse();
   });
 
