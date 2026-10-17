@@ -1,17 +1,7 @@
 name: Validate community post-create invite step
+# Manual diagnostic job; pull requests use the consolidated pr-validation.yml.
 on:
-  pull_request:
-    branches: [preview/render-fullstack]
-    paths:
-      - 'src/app/pages/community-create/community-create.component.ts'
-      - 'src/app/pages/community-create/community-create.component.spec.ts'
-      - 'src/app/pages/community-create/community-invite-step.component.ts'
-      - 'src/app/pages/community-create/community-invite-step.component.html'
-      - 'src/app/pages/community-create/community-invite-step.component.css'
-      - 'src/app/pages/community-create/community-invite-step.component.spec.ts'
-      - 'src/app/pages/communities/communities.module.ts'
-      - 'src/app/i18n/i18n.service.ts'
-      - '.github/workflows/community-post-create-invite-ci.yml'
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:
