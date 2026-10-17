@@ -165,3 +165,31 @@ h1 {
 .overview-card--unavailable { border-style: dashed; }
 .overview-error { margin: 1rem 0; color: #fecaca; }
 @media (max-width: 540px) { .overview-heading button { width: 100%; } }
+
+/* Eight-week admin growth charts: no dependency on external graph libraries. */
+.growth-trends { margin-top: 1.9rem; padding-top: 1.3rem; border-top: 1px solid rgba(255,255,255,.12); }
+.growth-trends-heading { display: flex; align-items: start; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.growth-trends-heading h3 { margin: 0 0 .35rem; font-size: 1.1rem; }
+.growth-trends-heading p { margin: 0; color: #cbd5e1; font-size: .85rem; line-height: 1.5; }
+.growth-tz { color: #94a3b8; font-size: .75rem; white-space: nowrap; }
+.growth-charts { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: .85rem; margin-top: 1rem; }
+.growth-chart { min-width: 0; padding: 1rem; border: 1px solid rgba(255,255,255,.1);
+  border-radius: .8rem; background: rgba(15,23,42,.82); }
+.growth-chart-title { display: flex; align-items: flex-start; flex-direction: column; gap: .3rem; }
+.growth-chart-title strong { color: #f1f5f9; font-size: .94rem; }
+.growth-chart-title span { color: #a5b4fc; font-size: .78rem; font-weight: 700; }
+.growth-plot { display: grid; grid-template-columns: repeat(8, minmax(0,1fr));
+  gap: .35rem; margin-top: 1.2rem; }
+.growth-point { display: flex; flex-direction: column; align-items: stretch; gap: .35rem; min-width: 0; }
+.growth-value, .growth-week { font-size: .66rem; font-variant-numeric: tabular-nums;
+  text-align: center; overflow-wrap: anywhere; }
+.growth-value { color: #e2e8f0; font-weight: 700; }
+.growth-week { color: #94a3b8; }
+.growth-bar-track { display: flex; align-items: flex-end; height: 118px;
+  border-bottom: 1px solid rgba(255,255,255,.18); }
+.growth-bar { width: 100%; min-height: 0; border-radius: .3rem .3rem 0 0; background: #818cf8; }
+.growth-bar--sessions { background: #34d399; }
+.growth-bar--communities { background: #38bdf8; }
+@media (max-width: 900px) { .growth-charts { grid-template-columns: 1fr; } }
+@media (max-width: 450px) { .growth-chart { padding: .8rem; }
+  .growth-plot { gap: .18rem; } .growth-week, .growth-value { font-size: .6rem; } }

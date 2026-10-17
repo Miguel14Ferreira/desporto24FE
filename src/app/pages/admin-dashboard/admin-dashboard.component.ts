@@ -22,6 +22,28 @@ export interface AdminPlatformOverview {
   generatedAt: string;
 }
 
+export interface AdminGrowthWeek {
+  weekStart: string;
+  users: number;
+  sessions: number;
+  communities: number;
+}
+
+export interface AdminGrowthTrends {
+  generatedAt: string;
+  timezone: 'UTC';
+  metric: 'CREATED_PER_WEEK';
+  weeks: AdminGrowthWeek[];
+}
+
+interface GrowthChart {
+  key: 'users' | 'sessions' | 'communities';
+  title: string;
+  total: number;
+  max: number;
+  bars: { weekStart: string; value: number; height: number }[];
+}
+
 interface VenuePreviewResult {
   sourceReference: string;
   name: string;
@@ -40,13 +62,62 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   overviewLoading = false;
   overviewError = '';
   private overviewRequest?: Subscription;
+  private growthRequest?: Subscription;
+  growth: AdminGrowthTrends | null = null;
+  growthLoading = false;
+  growthError = '';
 
   ngOnInit(): void {
-    this.loadOverview();
+    this.refreshIndicators();
   }
 
   ngOnDestroy(): void {
     this.overviewRequest?.unsubscribe();
+    this.growthRequest?.unsubscribe();
+  }
+
+  refreshIndicators(): void {
+    this.loadOverview();
+    this.loadGrowth();
+  }
+
+  get growthCharts(): GrowthChart[] {
+    if (!this.growth?.weeks?.length) return [];
+    const series: { key: GrowthChart['key']; title: string }[] = [
+      { key: 'users', title: 'Novos utilizadores' },
+      { key: 'sessions', title: 'Sessões criadas' },
+      { key: 'communities', title: 'Comunidades criadas' }
+    ];
+    return series.map(({ key, title }) => {
+      const values = this.growth!.weeks.map(week => week[key]);
+      const max = Math.max(1, ...values);
+      return {
+        key, title, max,
+        total: values.reduce((sum, value) => sum + value, 0),
+        bars: this.growth!.weeks.map(week => ({
+          weekStart: week.weekStart, value: week[key],
+          height: Math.round(100 * week[key] / max)
+        }))
+      };
+    });
+  }
+
+  loadGrowth(): void {
+    this.growthRequest?.unsubscribe();
+    this.growthLoading = true;
+    this.growthError = '';
+    this.growthRequest = this.http.get<AdminGrowthTrends>(
+      environment.apiUrl + '/api/admin/overview/trends'
+    ).subscribe({
+      next: history => {
+        this.growth = history;
+        this.growthLoading = false;
+      },
+      error: () => {
+        this.growthError = 'Não foi possível atualizar a evolução semanal.';
+        this.growthLoading = false;
+      }
+    });
   }
 
   loadOverview(): void {
