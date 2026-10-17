@@ -3,6 +3,7 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { SessionDetail } from '../model/session-detail';
+import { SessionSummary } from '../model/session-summary';
 import { SocialFeedService } from '../../services/social-feed.service';
 import { SessionService } from '../../services/session.service';
 import { CommunityService } from '../../services/community.service';
@@ -81,7 +82,7 @@ describe('SocialFeedComponent discovery sidebar', () => {
     const root = fixture.nativeElement as HTMLElement;
     const hub = root.querySelector<HTMLElement>('.week-hub');
     expect(hub).not.toBeNull();
-    expect(root.querySelector('.feed-layout')?.compareDocumentPosition(hub!) & Node.DOCUMENT_POSITION_PRECEDING)
+    expect((root.querySelector('.feed-layout')!.compareDocumentPosition(hub!)) & Node.DOCUMENT_POSITION_PRECEDING)
       .toBeTruthy();
     expect(hub?.querySelector('a[href="/menu/events/4"]')).not.toBeNull();
     expect(hub?.querySelector('a[href="/menu/events/5"]')).not.toBeNull();
