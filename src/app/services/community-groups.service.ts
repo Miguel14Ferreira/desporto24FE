@@ -40,6 +40,41 @@ export interface CommunityJoinRequest {
   createdAt: string;
 }
 
+
+export interface HistoricalStandingRow {
+  position: number;
+  name: string;
+  played: number | null;
+  wins: number | null;
+  draws: number | null;
+  losses: number | null;
+  points: number;
+  goalsFor: number | null;
+  goalsAgainst: number | null;
+}
+
+export interface HistoricalStandingPreview {
+  sheetName: string;
+  sourceRows: number;
+  acceptedRows: number;
+  duplicateRows: number;
+  warnings: string[];
+  rows: HistoricalStandingRow[];
+}
+
+export interface HistoricalStandingSummary {
+  id: number;
+  title: string;
+  entryType: 'INDIVIDUAL' | 'TEAM';
+  seasonId: number | null;
+  sourceFilename: string;
+  createdAt: string;
+}
+
+export interface HistoricalStandingArchive extends HistoricalStandingSummary {
+  rows: HistoricalStandingRow[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class CommunityGroupsService {
   private readonly url = environment.apiUrl + '/api/communities';
@@ -186,6 +221,37 @@ export class CommunityGroupsService {
     const formData = this.importForm(file, mapping);
     formData.append('context', new Blob([JSON.stringify(context)], { type: 'application/json' }));
     return this.http.post<any>(this.url + '/' + id + '/competition/import/rounds/final-plan', formData);
+  }
+
+  previewHistoricalStandings(id: number, file: File, mapping: unknown): Observable<HistoricalStandingPreview> {
+    return this.http.post<HistoricalStandingPreview>(
+      this.url + '/' + id + '/competition/import/standings/preview',
+      this.importForm(file, mapping)
+    );
+  }
+
+  confirmHistoricalStandings(id: number, file: File, mapping: unknown, context: {
+    title: string;
+    entryType: 'INDIVIDUAL' | 'TEAM';
+    seasonId: number | null;
+  }): Observable<HistoricalStandingArchive> {
+    const form = this.importForm(file, mapping);
+    form.append('context', new Blob([JSON.stringify(context)], { type: 'application/json' }));
+    return this.http.post<HistoricalStandingArchive>(
+      this.url + '/' + id + '/competition/import/standings/confirm', form
+    );
+  }
+
+  listHistoricalStandings(id: number): Observable<HistoricalStandingSummary[]> {
+    return this.http.get<HistoricalStandingSummary[]>(
+      this.url + '/' + id + '/competition/standings-archives'
+    );
+  }
+
+  historicalStandingDetails(id: number, archiveId: number): Observable<HistoricalStandingArchive> {
+    return this.http.get<HistoricalStandingArchive>(
+      this.url + '/' + id + '/competition/standings-archives/' + archiveId
+    );
   }
 
   private importForm(file: File, mapping: unknown): FormData {

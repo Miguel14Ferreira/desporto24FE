@@ -108,6 +108,60 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(component.importPointsAcknowledged).toBeFalse();
   });
 
+  it('supports distinct history types and clears stale preview on mode change', () => {
+    component.importMode = 'ROUNDS';
+    component.importFile = new File(['dummy'], 'historico.csv');
+    component.importPreview = { fileName: 'historico.csv', sheets: [] };
+    component.importMappings = [{ columnIndex: 0, header: 'Jogador', field: 'PLAYER', confidence: 0.9 }];
+    component.selectImportMode('STANDINGS');
+    expect(component.importMode).toBe('STANDINGS');
+    expect(component.importFields).toContain('POINTS');
+    expect(component.importFields).toContain('NAME');
+    expect(component.importFields).not.toContain('DATE');
+    expect(component.importPreview).toBeUndefined();
+    expect(component.importMappings).toEqual([]);
+    expect(component.importFile?.name).toBe('historico.csv');
+    expect(component['suggestArchiveField']('Pts', 'POINTS')).toBe('POINTS');
+    expect(component['suggestArchiveField']('Equipa', 'IGNORE')).toBe('NAME');
+  });
+
+  it('requires review and a title before writing final standings', () => {
+    component.selected = { id: 7 } as any;
+    component.importMode = 'STANDINGS';
+    component.importFile = new File(['data'], 'tabela.csv');
+    component.importSheetName = 'Dados';
+    component.importMappings = [
+      { columnIndex: 0, header: 'Equipa', field: 'NAME', confidence: 1 },
+      { columnIndex: 1, header: 'Pts', field: 'POINTS', confidence: 1 }
+    ];
+    component.archivePreview = {
+      sheetName: 'Dados', sourceRows: 1, acceptedRows: 1, duplicateRows: 0,
+      warnings: [], rows: [{ position: 1, name: 'Águias', played: null,
+        wins: null, draws: null, losses: null, points: 8, goalsFor: null, goalsAgainst: null }]
+    };
+    component.archiveTitle = 'Época antiga';
+    component.archiveAcknowledged = false;
+    const confirm = jasmine.createSpy('confirmHistoricalStandings');
+    (component as any).communityService = { confirmHistoricalStandings: confirm };
+    component.confirmArchiveImport();
+    expect(confirm).not.toHaveBeenCalled();
+    expect(component.importFileError).not.toBe('');
+
+    component.archiveAcknowledged = true;
+    confirm.and.returnValue(of({ id: 15, title: 'Época antiga', entryType: 'TEAM', seasonId: null,
+      sourceFilename: 'tabela.csv', createdAt: '2026-10-17T20:00:00Z', rows: component.archivePreview.rows }));
+    (component as any).communityService.listHistoricalStandings = () => of([]);
+    component.archiveEntryType = 'TEAM';
+    component.archiveSeasonId = null;
+    component.confirmArchiveImport();
+    expect(confirm).toHaveBeenCalledWith(7, jasmine.any(File), {
+      sheetName: 'Dados',
+      columns: [{ columnIndex: 0, field: 'NAME' }, { columnIndex: 1, field: 'POINTS' }]
+    }, { title: 'Época antiga', entryType: 'TEAM', seasonId: null });
+    expect(component.archiveConfirmed?.rows[0].points).toBe(8);
+    expect(component.archivePreview).toBeUndefined();
+  });
+
   it('allows joining an upcoming open community session', () => {
     expect(component.canJoinCommunitySession(session)).toBeTrue();
   });

@@ -890,6 +890,51 @@
                     }
                   </div>
 
+                  <section class="import-panel" aria-label="{{ 'communities.archive.listTitle' | t }}">
+                    <div class="section-heading">
+                      <div>
+                        <span class="section-kicker">{{ 'communities.import.kicker' | t }}</span>
+                        <h3>{{ 'communities.archive.listTitle' | t }}</h3>
+                      </div>
+                    </div>
+                    <p>{{ 'communities.archive.listHint' | t }}</p>
+                    @if (archivesLoading) {
+                      <p role="status">{{ 'communities.archive.loading' | t }}</p>
+                    }
+                    @if (archivesError) {
+                      <p class="import-error" role="alert">{{ archivesError }}</p>
+                    }
+                    @for (archive of archiveSummaries; track archive.id) {
+                      <div class="import-round-plan">
+                        <button type="button" class="secondary-action small jynlo-action jynlo-action--neutral jynlo-action--compact"
+                          [attr.aria-expanded]="archiveOpen?.id === archive.id"
+                          (click)="openArchivedStanding(archive.id)">
+                          {{ archive.title }} · {{ archive.entryType === 'TEAM'
+                            ? ('communities.archive.teams' | t) : ('communities.archive.individual' | t) }}
+                        </button>
+                        <span>{{ archive.sourceFilename }}</span>
+                      </div>
+                    }
+                    @if (archiveOpen) {
+                      <div class="import-final-plan">
+                        <strong>{{ archiveOpen.title }}</strong>
+                        <p>{{ 'communities.archive.originalPoints' | t }}</p>
+                        <div class="import-mapping-head">
+                          <strong>{{ 'communities.archive.position' | t }}</strong>
+                          <strong>{{ 'communities.archive.playerOrTeam' | t }}</strong>
+                          <strong>{{ 'communities.archive.points' | t }}</strong>
+                        </div>
+                        @for (entry of archiveOpen.rows; track $index) {
+                          <div class="import-mapping-row">
+                            <span>{{ entry.position }}</span>
+                            <strong>{{ entry.name }}</strong>
+                            <span>{{ entry.points }}</span>
+                          </div>
+                        }
+                      </div>
+                    }
+                  </section>
+
                   @if (!competition?.settings?.rankingsEnabled) {
                     <div class="module-empty compact">
                       <h3>{{ 'communities.competitionDisabledTitle' | t }}</h3>
@@ -905,6 +950,19 @@
                           </div>
                         </div>
                         <p>{{ 'communities.import.hint' | t }}</p>
+                        <div class="import-file-row" role="group" [attr.aria-label]="'communities.archive.importType' | t">
+                          <button type="button" class="secondary-action small jynlo-action jynlo-action--neutral jynlo-action--compact"
+                            [class.active]="importMode === 'ROUNDS'"
+                            [attr.aria-pressed]="importMode === 'ROUNDS'"
+                            (click)="selectImportMode('ROUNDS')">{{ 'communities.archive.rounds' | t }}</button>
+                          <button type="button" class="secondary-action small jynlo-action jynlo-action--neutral jynlo-action--compact"
+                            [class.active]="importMode === 'STANDINGS'"
+                            [attr.aria-pressed]="importMode === 'STANDINGS'"
+                            (click)="selectImportMode('STANDINGS')">{{ 'communities.archive.finalStandings' | t }}</button>
+                        </div>
+                        @if (importMode === 'STANDINGS') {
+                          <p>{{ 'communities.archive.hint' | t }}</p>
+                        }
 
                         <div class="import-file-row">
                           <label class="secondary-action import-file-picker jynlo-action jynlo-action--neutral jynlo-action--compact">
@@ -967,13 +1025,23 @@
                                   </div>
                                 }
                               </div>
-                              <button type="button" class="primary-action import-continue jynlo-action jynlo-action--primary"
-                                [disabled]="importMappingLoading"
-                                (click)="validateImportMapping()">
-                                {{ importMappingLoading
-                                  ? ('communities.import.validating' | t)
-                                  : ('communities.import.previewData' | t) }}
-                              </button>
+                              @if (importMode === 'ROUNDS') {
+                                <button type="button" class="primary-action import-continue jynlo-action jynlo-action--primary"
+                                  [disabled]="importMappingLoading"
+                                  (click)="validateImportMapping()">
+                                  {{ importMappingLoading
+                                    ? ('communities.import.validating' | t)
+                                    : ('communities.import.previewData' | t) }}
+                                </button>
+                              } @else {
+                                <button type="button" class="primary-action import-continue jynlo-action jynlo-action--primary"
+                                  [disabled]="archivePreviewLoading"
+                                  (click)="previewArchiveImport()">
+                                  {{ archivePreviewLoading
+                                    ? ('communities.import.validating' | t)
+                                    : ('communities.import.previewData' | t) }}
+                                </button>
+                              }
                             }
 
                             @if (importValidation && !importValidation.valid) {
@@ -983,7 +1051,68 @@
                               </div>
                             }
 
-                            @if (importNormalized) {
+
+                            @if (importMode === 'STANDINGS' && archivePreview) {
+                              <div class="import-final-plan">
+                                <strong>{{ 'communities.archive.previewTitle' | t }}</strong>
+                                <p>{{ archivePreview.acceptedRows }} {{ 'communities.import.accepted' | t }}
+                                  · {{ archivePreview.duplicateRows }} {{ 'communities.import.duplicates' | t }}</p>
+                                @for (warning of archivePreview.warnings.slice(0, 8); track $index) {
+                                  <p class="venue-current-location">{{ warning }}</p>
+                                }
+                                <div class="import-mapping-head">
+                                  <strong>{{ 'communities.archive.position' | t }}</strong>
+                                  <strong>{{ 'communities.archive.playerOrTeam' | t }}</strong>
+                                  <strong>{{ 'communities.archive.points' | t }}</strong>
+                                </div>
+                                @for (entry of archivePreview.rows.slice(0, 25); track $index) {
+                                  <div class="import-mapping-row">
+                                    <span>{{ entry.position }}</span><strong>{{ entry.name }}</strong>
+                                    <span>{{ entry.points }}</span>
+                                  </div>
+                                }
+                                @if (archivePreview.rows.length > 25) {
+                                  <p>{{ 'communities.archive.previewTruncated' | t }}</p>
+                                }
+                              </div>
+                              <div class="import-context">
+                                <label>
+                                  <span>{{ 'communities.archive.title' | t }}</span>
+                                  <input [ngModel]="archiveTitle" (ngModelChange)="archiveTitle = $event; archiveAcknowledged = false"
+                                    [placeholder]="'communities.archive.titlePlaceholder' | t" maxlength="120">
+                                </label>
+                                <label>
+                                  <span>{{ 'communities.archive.entryType' | t }}</span>
+                                  <select [ngModel]="archiveEntryType" (ngModelChange)="archiveEntryType = $event; archiveAcknowledged = false">
+                                    <option value="INDIVIDUAL">{{ 'communities.archive.individual' | t }}</option>
+                                    <option value="TEAM">{{ 'communities.archive.teams' | t }}</option>
+                                  </select>
+                                </label>
+                                <label>
+                                  <span>{{ 'communities.archive.optionalSeason' | t }}</span>
+                                  <select [ngModel]="archiveSeasonId" (ngModelChange)="archiveSeasonId = $event; archiveAcknowledged = false">
+                                    <option [ngValue]="null">{{ 'communities.archive.noSeason' | t }}</option>
+                                    @for (season of competition?.seasons || []; track season.id) {
+                                      <option [ngValue]="season.id">{{ seasonOptionLabel(season) }}</option>
+                                    }
+                                  </select>
+                                </label>
+                              </div>
+                              <label class="check-stat">
+                                <input type="checkbox" [(ngModel)]="archiveAcknowledged">
+                                <span>{{ 'communities.archive.acknowledge' | t }}</span>
+                              </label>
+                              <button type="button" class="primary-action import-confirm jynlo-action jynlo-action--primary"
+                                [disabled]="importConfirming || !archiveAcknowledged || archiveTitle.trim().length < 2"
+                                (click)="confirmArchiveImport()">
+                                {{ importConfirming ? ('communities.import.importing' | t) : ('communities.archive.confirm' | t) }}
+                              </button>
+                            }
+                            @if (archiveConfirmed) {
+                              <p class="import-success" role="status">{{ 'communities.archive.saved' | t }} · {{ archiveConfirmed.title }}</p>
+                            }
+
+                            @if (importMode === 'ROUNDS' && importNormalized) {
                               <div class="import-normalized">
                                 <strong>{{ 'communities.import.understood' | t }}</strong>
                                 <span>{{ importNormalized.acceptedRows }} {{ 'communities.import.accepted' | t }} · {{ importNormalized.skippedRows }} {{ 'communities.import.skipped' | t }}</span>
