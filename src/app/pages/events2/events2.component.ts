@@ -163,8 +163,8 @@ export class Events2Component implements OnInit, OnDestroy {
         const confirmedRaw = params.get('confirmed');
         const missingRaw = params.get('missing');
         if (confirmedRaw !== null && missingRaw !== null
-            && /^[1-9]\\d{0,2}$/.test(confirmedRaw)
-            && /^[1-9]\\d{0,2}$/.test(missingRaw)) {
+            && /^[1-9]\d{0,2}$/.test(confirmedRaw)
+            && /^[1-9]\d{0,2}$/.test(missingRaw)) {
           const confirmed = Number(confirmedRaw);
           const missing = Number(missingRaw);
           if (confirmed + missing <= 100) {
