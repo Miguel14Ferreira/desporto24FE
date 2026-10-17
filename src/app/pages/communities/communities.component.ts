@@ -191,6 +191,7 @@ export class CommunitiesComponent implements OnInit {
   importFile?: File;
   importFileName = '';
   importFileError = '';
+  importPointsAcknowledged = false;
   importPreviewLoading = false;
   importSheetName = '';
   importMappings: Array<{ columnIndex: number; header: string; field: string; confidence: number }> = [];
@@ -1099,7 +1100,12 @@ export class CommunitiesComponent implements OnInit {
     }));
   }
 
+  get importIncludesPoints(): boolean {
+    return this.importMappings?.some(mapping => mapping.field === 'POINTS') ?? false;
+  }
+
   private resetImportAfterFile(): void {
+    this.importPointsAcknowledged = false;
     this.importSheetName = '';
     this.importMappings = [];
     this.importValidation = undefined;
@@ -1109,6 +1115,7 @@ export class CommunitiesComponent implements OnInit {
   }
 
   private resetImportAfterMapping(): void {
+    this.importPointsAcknowledged = false;
     this.importValidation = undefined;
     this.importNormalized = undefined;
     this.importFinalPlan = undefined;
@@ -1251,6 +1258,7 @@ export class CommunitiesComponent implements OnInit {
   }
 
   invalidateImportPlan(): void {
+    this.importPointsAcknowledged = false;
     this.importFinalPlan = undefined;
     this.importResult = undefined;
     this.importFileError = '';
@@ -1284,6 +1292,10 @@ export class CommunitiesComponent implements OnInit {
 
   confirmHistoricalImport(): void {
     if (!this.selected || !this.importFile || !this.importSheetName || !this.selectedSeasonId || !this.importFinalPlan || this.importConfirming) return;
+    if (this.importIncludesPoints && !this.importPointsAcknowledged) {
+      this.importFileError = t('communities.import.pointsAcknowledgementRequired');
+      return;
+    }
     if (this.importFinalPlan.invalidDates > 0 || this.importFinalPlan.roundsNeedingYear > 0 ||
         this.importFinalPlan.rounds.some((round: any) => round.unresolvedResults > 0)) {
       this.importFileError = t('communities.import.notReady');
