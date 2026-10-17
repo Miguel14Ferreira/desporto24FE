@@ -693,7 +693,7 @@ describe('SessionDetailsComponent', () => {
       { gameDate: '2020-10-01T18:00:00Z', canSharePublicly: true }
     ]) {
       component.session = {
-        ...session, gameDate: '2099-10-01T18:00:00Z', canSharePublicly: true, ...detail
+        ...session, gameDate: '2099-10-01T18:00:00Z', ...detail
       };
       fixture.detectChanges();
       expect(fixture.nativeElement.querySelector('.open-promotion-button')).toBeNull();
