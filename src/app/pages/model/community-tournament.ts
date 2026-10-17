@@ -7,6 +7,9 @@ export interface CommunityTournament {
   name: string;
   // Optional for cached responses from old API versions; new API always supplies it.
   sport?: string | null;
+  // Older individual competitions may omit these fields in cached responses.
+  entryType?: 'INDIVIDUAL' | 'TEAM';
+  playersPerTeam?: number | null;
   format: 'LEAGUE';
   status: TournamentStatus;
   winPoints: number;
@@ -92,4 +95,19 @@ export interface TournamentStandings {
   drawPoints: number;
   lossPoints: number;
   standings: TournamentStandingRow[];
+}
+
+/** Real teams are independent from individual tournament participants and community statistics. */
+export interface TournamentTeamPlayer {
+  profileId: number;
+  username: string;
+  displayName: string;
+}
+
+export interface TournamentTeam {
+  id: number;
+  name: string;
+  playersPerTeam: number;
+  createdAt: string;
+  players: TournamentTeamPlayer[];
 }
