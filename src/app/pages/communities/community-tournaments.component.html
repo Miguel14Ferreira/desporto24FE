@@ -79,7 +79,7 @@
       <div>
         <h4>{{ showTeamCreate ? 'Preparar torneio por equipas' : 'Criar liga individual' }}</h4>
         @if (showTeamCreate) {
-          <p>Define a modalidade e quantos jogadores terá cada equipa. Depois podes criar equipas e escolher os membros de cada plantel.</p>
+          <p>Define a modalidade, o número de jogadores por equipa e se o campeonato terá uma ou duas voltas. Depois podes organizar os plantéis.</p>
           <p class="sport-choice-hint">Formato disponível: campeonato todos contra todos. Depois de publicar as jornadas, podes registar resultados e acompanhar a classificação.</p>
         } @else {
           <p>Competição individual sem equipas: cada participante compete por si. Os resultados não alteram o histórico de jogos habituais da comunidade.</p>
@@ -139,6 +139,18 @@
           <input id="new-team-size" type="number" min="1" max="30" step="1"
             [(ngModel)]="teamSizeDraft" [disabled]="busy" aria-describedby="team-size-hint">
           <p id="team-size-hint" class="sport-choice-hint">De 1 a 30 jogadores por equipa. Podes criar até 32 equipas.</p>
+          <label id="tournament-legs-label">Número de voltas</label>
+          <div class="t-community-sports" role="group" aria-labelledby="tournament-legs-label">
+            <button type="button" class="t-sport-chip" [disabled]="busy"
+              [attr.aria-pressed]="roundRobinLegsDraft === 1"
+              (click)="roundRobinLegsDraft = 1">Uma volta</button>
+            <button type="button" class="t-sport-chip" [disabled]="busy"
+              [attr.aria-pressed]="roundRobinLegsDraft === 2"
+              (click)="roundRobinLegsDraft = 2">Duas voltas (casa e fora)</button>
+          </div>
+          <p class="sport-choice-hint">Uma volta: cada par de equipas joga uma vez.
+            Duas voltas: joga-se também o confronto inverso, com casa e fora trocados.
+            A escolha fica definida ao criar o torneio e não muda depois de publicares as jornadas.</p>
         }
         <button type="button" class="t-btn t-btn-primary"
           [disabled]="busy || nameDraft.trim().length < 2 || !sportDraft
@@ -194,7 +206,8 @@
             <h4>{{ selected.name }}</h4>
             <span class="t-tournament-sport">{{ selected.sport || 'Modalidade não definida' }}</span>
             @if (isTeamCompetition) {
-              <p>Torneio por equipas · {{ selected.playersPerTeam }} jogadores por equipa</p>
+              <p>Torneio por equipas · {{ selected.playersPerTeam }} jogadores por equipa ·
+                {{ (selected.roundRobinLegs ?? 1) === 2 ? 'Duas voltas (casa e fora)' : 'Uma volta' }}</p>
             } @else {
               <p>Vitória {{ selected.winPoints }} · Empate {{ selected.drawPoints }} · Derrota {{ selected.lossPoints }} pontos</p>
             }
@@ -344,8 +357,9 @@
                 <div class="team-schedule-action">
                   <div>
                     <strong>Prontos para começar o campeonato?</strong>
-                    <p>Gera uma jornada por ronda, com todos os confrontos entre equipas.
-                      A publicação fecha os plantéis e não pode ser repetida.</p>
+                    <p>Gera o calendário de {{ (selected.roundRobinLegs ?? 1) === 2
+                      ? 'duas voltas, com jogos em casa e fora' : 'uma volta entre todas as equipas' }}.
+                      A publicação fecha os plantéis e fixa as regras da competição.</p>
                     @if (teams.length < 2) {
                       <p class="field-validation" role="status">Cria pelo menos duas equipas.</p>
                     } @else if (readyTeamCount !== teams.length) {

@@ -10,6 +10,7 @@ export interface CommunityTournament {
   // Older individual competitions may omit these fields in cached responses.
   entryType?: 'INDIVIDUAL' | 'TEAM';
   playersPerTeam?: number | null;
+  roundRobinLegs?: 1 | 2;
   format: 'LEAGUE';
   status: TournamentStatus;
   winPoints: number;

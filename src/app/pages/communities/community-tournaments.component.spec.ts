@@ -73,13 +73,44 @@ describe('Community tournaments management', () => {
       component.nameDraft = ' Torneio CNG 5x5 ';
       component.teamSizeDraft = 5;
       await component.createTeamCompetition();
-      expect(api.createTeamTournament).toHaveBeenCalledWith(7, 'Torneio CNG 5x5', 'Futebol', 5);
+      expect(api.createTeamTournament).toHaveBeenCalledWith(7, 'Torneio CNG 5x5', 'Futebol', 5, 1);
       expect(api.create).not.toHaveBeenCalled();
       expect(component.selected?.entryType).toBe('TEAM');
       expect(api.teams).toHaveBeenCalledWith(7, 19);
       expect(api.participants).toHaveBeenCalledTimes(1); // initial legacy league only
       expect(api.matches).toHaveBeenCalledTimes(1);
       expect(api.standings).toHaveBeenCalledTimes(1);
+    });
+
+    it('passes home-and-away rule at creation and resets the selection afterward', async () => {
+      api.createTeamTournament.and.returnValue(of({ ...teamDraft, roundRobinLegs: 2 }));
+      component.startTeamCreation();
+      component.nameDraft = 'Liga casa e fora';
+      component.roundRobinLegsDraft = 2;
+      await component.createTeamCompetition();
+      expect(api.createTeamTournament).toHaveBeenCalledWith(7, 'Liga casa e fora', 'Futebol', 5, 2);
+      expect(component.selected?.roundRobinLegs).toBe(2);
+      expect(component.roundRobinLegsDraft).toBe(1);
+      expect(api.create).not.toHaveBeenCalled();
+    });
+
+    it('requires the return leg before enabling team completion', () => {
+      const twoLegs = { ...teamDraft, status: 'IN_PROGRESS' as const, roundRobinLegs: 2 as const };
+      api.teamStandings.and.returnValue(of({
+        tournamentId: 19, status: 'IN_PROGRESS', totalMatches: 2, completedMatches: 1,
+        winPoints: 3, drawPoints: 1, lossPoints: 0,
+        standings: [
+          { position: 1, teamId: 40, teamName: 'Verdes', played: 1, won: 1,
+            drawn: 0, lost: 0, goalsFor: 1, goalsAgainst: 0, goalDifference: 1, points: 3 },
+          { position: 2, teamId: 41, teamName: 'Azuis', played: 1, won: 0,
+            drawn: 0, lost: 1, goalsFor: 0, goalsAgainst: 1, goalDifference: -1, points: 0 }
+        ]
+      }));
+      component.selectTournament(twoLegs);
+      expect(component.canCompleteTeam).toBeFalse();
+      component.teamStandings!.completedMatches = 2;
+      component.teamStandings!.standings.forEach(row => row.played = 2);
+      expect(component.canCompleteTeam).toBeTrue();
     });
 
     it('validates team size before making a request', async () => {
