@@ -1281,7 +1281,7 @@ export class CommunitiesComponent implements OnInit {
       .trim().toLowerCase().replace(/[\s._-]+/g, '');
     if (/^(casa|home|mandante|equipa1|equipaa|jogador1|jogadora|team1|teama|player1|playera)$/.test(normalized)) return 'HOME';
     if (/^(fora|away|visitante|equipa2|equipab|jogador2|jogadorb|team2|teamb|player2|playerb)$/.test(normalized)) return 'AWAY';
-    if (/^(resultadocasa|golescasa|golos1|golosde1|homescore|scorehome|score1)$/.test(normalized)) return 'HOME_SCORE';
+    if (/^(resultadocasa|golescasa|goloscasa|golos1|golosde1|homescore|scorehome|score1)$/.test(normalized)) return 'HOME_SCORE';
     if (/^(resultadofora|golesfora|golosfora|golos2|golosde2|awayscore|scoreaway|score2)$/.test(normalized)) return 'AWAY_SCORE';
     if (/^(resultado|result|score|placar|marcador)$/.test(normalized)) return 'SCORE';
     if (/^(data|date|datadojogo|matchdate)$/.test(normalized)) return 'DATE';
