@@ -135,7 +135,7 @@ describe('Community tournaments management', () => {
     it('rejects an unsupported team tiebreak before creating anything', async () => {
       component.startTeamCreation();
       component.nameDraft = 'Liga por equipas';
-      component.teamTieBreakPriorityDraft = 'INVALID' as any;
+      component.teamTieBreakPriorityDraft = 'WINS_FIRST';
       await component.createTeamCompetition();
       expect(component.error).toContain('desempate');
       expect(api.createTeamTournament).not.toHaveBeenCalled();
@@ -152,7 +152,7 @@ describe('Community tournaments management', () => {
       await component.createTeamCompetition();
       expect(api.createTeamTournament).toHaveBeenCalledWith(
         7, 'Taça entre amigos', 'Futebol', 5, 2,
-        { winPoints: -1, drawPoints: 1, lossPoints: 0 }, 'INVALID', 'KNOCKOUT');
+        { winPoints: -1, drawPoints: 1, lossPoints: 0 }, 'WINS_FIRST', 'KNOCKOUT');
       expect(component.selected?.format).toBe('KNOCKOUT');
       expect(component.teamFormatDraft).toBe('LEAGUE');
       expect(api.teamStandings).not.toHaveBeenCalled();
