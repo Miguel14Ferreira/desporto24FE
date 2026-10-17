@@ -111,3 +111,28 @@ export interface TournamentTeam {
   createdAt: string;
   players: TournamentTeamPlayer[];
 }
+
+/** Team fixtures never use individual tournament participant IDs. */
+export interface TournamentTeamMatch {
+  id: number;
+  roundNumber: number;
+  homeTeamId: number;
+  homeTeamName: string;
+  awayTeamId: number;
+  awayTeamName: string;
+  status: TournamentMatchStatus;
+}
+
+export interface TournamentTeamMatchPage {
+  matches: TournamentTeamMatch[];
+  page: number;
+  hasMore: boolean;
+}
+
+export interface TournamentTeamScheduleSummary {
+  tournamentId: number;
+  status: TournamentStatus;
+  teamCount: number;
+  roundCount: number;
+  matchCount: number;
+}

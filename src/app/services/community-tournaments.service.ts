@@ -10,7 +10,7 @@ import {
   TournamentParticipant,
   TournamentParticipantPage,
   TournamentScheduleSummary,
-  TournamentStandings, TournamentTeam
+  TournamentStandings, TournamentTeam, TournamentTeamMatchPage, TournamentTeamScheduleSummary
 } from '../pages/model/community-tournament';
 
 @Injectable({ providedIn: 'root' })
@@ -61,6 +61,18 @@ export class CommunityTournamentsService {
                    profileId: number): Observable<void> {
     return this.http.delete<void>(
       this.url(communityId, tournamentId) + '/teams/' + teamId + '/players/' + profileId);
+  }
+
+  generateTeamSchedule(communityId: number, tournamentId: number): Observable<TournamentTeamScheduleSummary> {
+    return this.http.post<TournamentTeamScheduleSummary>(
+      this.url(communityId, tournamentId) + '/teams/schedule', null);
+  }
+
+  teamMatches(communityId: number, tournamentId: number, page: number): Observable<TournamentTeamMatchPage> {
+    return this.http.get<TournamentTeamMatchPage>(
+      this.url(communityId, tournamentId) + '/teams/matches', {
+        params: new HttpParams().set('page', String(page))
+      });
   }
 
   deleteTeam(communityId: number, tournamentId: number, teamId: number): Observable<void> {
