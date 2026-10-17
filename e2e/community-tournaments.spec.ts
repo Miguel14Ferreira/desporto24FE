@@ -309,7 +309,7 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode, sport
         return send(created, 201);
       }
     }
-    const teamDelete = /^\\/api\\/communities\\/7\\/tournaments\\/11\\/teams\\/(\\d+)$/.exec(path);
+    const teamDelete = /^\/api\/communities\/7\/tournaments\/11\/teams\/(\d+)$/.exec(path);
     if (teamDelete && method === 'DELETE') {
       const t = teams.find(x => x.id === Number(teamDelete[1]));
       if (!t) return send({ message: 'Equipa não encontrada' }, 404);
@@ -317,7 +317,7 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode, sport
       teams.splice(teams.indexOf(t), 1);
       return send(null, 204);
     }
-    const teamPlayer = /^\\/api\\/communities\\/7\\/tournaments\\/11\\/teams\\/(\\d+)\\/players(?:\\/(\\d+))?$/.exec(path);
+    const teamPlayer = /^\/api\/communities\/7\/tournaments\/11\/teams\/(\d+)\/players(?:\/(\d+))?$/.exec(path);
     if (teamPlayer) {
       const t = teams.find(x => x.id === Number(teamPlayer[1]));
       if (!t) return send({ message: 'Equipa não encontrada' }, 404);
@@ -1172,8 +1172,8 @@ test('organizador prepara equipas reais e distribui membros sem criar jornadas i
   await azuis.getByLabel('Adicionar membro à equipa Azuis').selectOption({ label: 'Participante (@participante)' });
   await azuis.getByRole('button', { name: 'Adicionar jogador' }).click();
   await expect(azuis).toContainText('@participante');
-  await expect(verdes.getByLabel('Adicionar membro à equipa Verdes').locator('option'))
-    .not.toContainText(['Participante (@participante)']);
+  await expect(verdes.getByLabel('Adicionar membro à equipa Verdes')
+    .locator('option', { hasText: '@participante' })).toHaveCount(0);
   expect(fixture.teams[0].players.map(p => p.profileId)).toEqual([2]);
 
   await azuis.getByRole('button', { name: 'Remover participante da equipa Azuis' }).click();
