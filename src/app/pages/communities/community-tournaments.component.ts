@@ -36,6 +36,7 @@ export class CommunityTournamentsComponent implements OnChanges {
   showIndividualCreate = false;
   showTeamCreate = false;
   teamSizeDraft = 5;
+  roundRobinLegsDraft: 1 | 2 = 1;
   teamNameDraft = '';
   teamPlayerDraft: Record<number, number | null> = {};
   teams: TournamentTeam[] = [];
@@ -150,6 +151,7 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.showGuide = false;
       this.showIndividualCreate = false;
       this.showTeamCreate = false;
+      this.roundRobinLegsDraft = 1;
       this.teamNameDraft = '';
       this.teamPlayerDraft = {};
       this.teams = [];
@@ -240,10 +242,10 @@ export class CommunityTournamentsComponent implements OnChanges {
         || this.selected.status !== 'IN_PROGRESS' || this.teamStandingsLoading
         || this.teamStandingsError || this.busy) return false;
     const size = table.standings.length;
-    const expected = size * (size - 1) / 2;
+    const expected = size * (size - 1) / 2 * (this.selected.roundRobinLegs ?? 1);
     return size >= 2 && size <= 32
       && table.totalMatches === expected && table.completedMatches === expected
-      && table.standings.every(row => row.played === size - 1);
+      && table.standings.every(row => row.played === (size - 1) * (this.selected?.roundRobinLegs ?? 1));
   }
 
   get confirmedCount(): number {
@@ -649,9 +651,15 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.showError('Indica entre 1 e 30 jogadores por equipa.');
       return;
     }
-    await this.mutate(this.api.createTeamTournament(this.community.id, name, this.sportDraft, size),
+    if (this.roundRobinLegsDraft !== 1 && this.roundRobinLegsDraft !== 2) {
+      this.showError('Escolhe uma ou duas voltas.');
+      return;
+    }
+    await this.mutate(this.api.createTeamTournament(this.community.id, name, this.sportDraft,
+      size, this.roundRobinLegsDraft),
       'Competição por equipas criada. Agora podes preparar os plantéis.', result => {
         this.nameDraft = '';
+        this.roundRobinLegsDraft = 1;
         this.showTeamCreate = false;
         this.selected = undefined;
         this.selectTournament(result);

@@ -38,9 +38,9 @@ export class CommunityTournamentsService {
 
   /** Team tournaments have their own draft, roster and match lifecycle. */
   createTeamTournament(communityId: number, name: string, sport: string,
-                       playersPerTeam: number): Observable<CommunityTournament> {
+                       playersPerTeam: number, roundRobinLegs: 1 | 2 = 1): Observable<CommunityTournament> {
     return this.http.post<CommunityTournament>(this.url(communityId), {
-      name, sport, entryType: 'TEAM', playersPerTeam
+      name, sport, entryType: 'TEAM', playersPerTeam, roundRobinLegs
     });
   }
 
