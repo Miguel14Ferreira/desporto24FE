@@ -1052,3 +1052,29 @@ h1 {
   .week-hub-card { padding: .9rem 1rem; } }
 @media (max-width: 450px) { .week-hub { padding: .95rem; }
   .week-hub-create { width: 100%; text-align: center; } }
+
+/* Short public recruitment path, deliberately reusing session creation. */
+.week-recruit { display: flex; align-items: flex-end; justify-content: space-between;
+  flex-wrap: wrap; gap: 1rem; padding: 1rem; margin-top: 1rem; border-radius: .95rem;
+  border: 1px solid rgba(0,230,118,.23); background: rgba(0,230,118,.07); }
+.week-recruit-copy { flex: 1 1 210px; display: grid; gap: .3rem; }
+.week-recruit-label { text-transform: uppercase; font-size: .69rem; letter-spacing: .09em;
+  color: #86efac; font-weight: 800; }
+.week-recruit-copy strong { font-size: 1.1rem; color: #f8fafc; }
+.week-recruit-copy p { margin: 0; max-width: 410px; color: #cbd5e1; font-size: .8rem; line-height: 1.45; }
+.week-recruit-actions { display: flex; align-items: flex-end; flex-wrap: wrap; gap: .65rem; }
+.week-recruit-field { display: grid; gap: .3rem; font-size: .74rem; color: #cbd5e1; }
+.week-recruit-field input { width: 92px; min-height: 41px; border-radius: .55rem;
+  border: 1px solid rgba(148,163,184,.35); padding: .4rem .65rem;
+  color: #f8fafc; background: rgba(15,23,42,.88); font: inherit; font-size: .9rem; }
+.week-recruit-field input:focus-visible { outline: 2px solid #86efac; outline-offset: 2px; }
+.week-recruit-cta { min-height: 41px; display: inline-flex; align-items: center;
+  justify-content: center; gap: .4rem; text-decoration: none; white-space: nowrap; }
+.week-recruit-disabled { opacity: .45; pointer-events: none; }
+.week-recruit-error { flex-basis: 100%; font-size: .76rem; color: #fcd34d; }
+@media (max-width: 480px) {
+  .week-recruit-actions { width: 100%; }
+  .week-recruit-field { flex: 1; }
+  .week-recruit-field input { width: 100%; }
+  .week-recruit-cta { width: 100%; }
+}

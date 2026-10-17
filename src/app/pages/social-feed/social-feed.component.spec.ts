@@ -52,6 +52,41 @@ describe('SocialFeedComponent discovery sidebar', () => {
     component = fixture.componentInstance;
   });
 
+  it('links a missing-two-players request to the existing public recruitment flow', fakeAsync(() => {
+    fixture.detectChanges();
+    tick(351);
+    component.quickConfirmedPlayers = 8;
+    component.quickMissingPlayers = 2;
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    const link = root.querySelector<HTMLAnchorElement>('.week-recruit-cta')!;
+    expect(component.quickRecruitValid).toBeTrue();
+    expect(link.getAttribute('href')).toContain('intent=findPlayers');
+    expect(link.getAttribute('href')).toContain('confirmed=8');
+    expect(link.getAttribute('href')).toContain('missing=2');
+    expect(root.querySelector('input[name="weekMissing"]')).not.toBeNull();
+    expect(sessions.discover).toHaveBeenCalledWith(
+      { query: '', privateGame: false, availability: 'available', sort: 'date' });
+  }));
+
+  it('disables the quick-recruit shortcut for impossible or fractional team sizes', fakeAsync(() => {
+    fixture.detectChanges();
+    tick(351);
+    for (const [confirmed, missing] of [[0, 2], [8, 0], [99, 2], [2.5, 2]]) {
+      component.quickConfirmedPlayers = confirmed;
+      component.quickMissingPlayers = missing;
+      fixture.detectChanges();
+      const link = (fixture.nativeElement as HTMLElement)
+        .querySelector<HTMLAnchorElement>('.week-recruit-cta')!;
+      expect(component.quickRecruitValid).toBeFalse();
+      expect(link.hasAttribute('href')).toBeFalse();
+      expect(link.getAttribute('aria-disabled')).toBe('true');
+      expect((fixture.nativeElement as HTMLElement).textContent)
+        .toContain(t('week.recruitValidation'));
+    }
+  }));
+
   it('shows my sports week before the feed using real session and community links', fakeAsync(() => {
     const at = Date.now() + 86_400_000;
     const upcoming = (id: number, other: Partial<SessionSummary> = {}): SessionSummary => ({

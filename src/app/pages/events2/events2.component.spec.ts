@@ -248,6 +248,53 @@ describe('Events2Component', () => {
     );
   });
 
+  it('prefills exactly two missing players from the quick-recruit shortcut', () => {
+    const route = TestBed.inject(ActivatedRoute);
+    spyOn(route.snapshot.queryParamMap, 'get').and.callFake(name =>
+      ({ intent: 'findPlayers', confirmed: '8', missing: '2' } as Record<string, string>)[name] ?? null);
+    component.ngOnInit();
+    fixture.detectChanges();
+
+    expect(component.findPlayersMode).toBeTrue();
+    expect(component.confirmedPlayers).toBe(8);
+    expect(component.maxParticipants).toBe(10);
+    expect(component.availablePlaces).toBe(2);
+    expect((fixture.nativeElement as HTMLElement)
+      .querySelector('.recruit-remaining strong')?.textContent?.trim()).toBe('2');
+    component.sport = 'Padel';
+    component.gameDate = '2099-10-15T18:00';
+    component.city = 'Lisboa';
+    component.address = 'Rua do Campo';
+    component.createSession();
+    expect(sessionService.create).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        maxParticipants: 10,
+        externalConfirmedParticipants: 7,
+        privateGame: false, password: null
+      }), undefined);
+  });
+
+  it('ignores malicious or invalid vacancy prefill values', () => {
+    const route = TestBed.inject(ActivatedRoute);
+    const query = { intent: 'findPlayers', confirmed: '99', missing: '2' };
+    const get = spyOn(route.snapshot.queryParamMap, 'get')
+      .and.callFake(name => (query as Record<string, string>)[name] ?? null);
+    component.ngOnInit();
+    expect(component.confirmedPlayers).toBe(1);
+    expect(component.maxParticipants).toBe(4);
+    get.and.callFake(name => ({
+      intent: 'findPlayers', confirmed: '3.5', missing: '2'
+    } as Record<string, string>)[name] ?? null);
+    component.ngOnInit();
+    expect(component.maxParticipants).toBe(4);
+    get.and.callFake(name => ({
+      confirmed: '8', missing: '2'
+    } as Record<string, string>)[name] ?? null);
+    component.ngOnInit();
+    expect(component.findPlayersMode).toBeFalse();
+    expect(component.maxParticipants).toBe(4);
+  });
+
   it('advertises exactly two places for eight confirmed players out of ten', () => {
     const route = TestBed.inject(ActivatedRoute);
     spyOn(route.snapshot.queryParamMap, 'get')
