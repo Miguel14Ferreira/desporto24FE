@@ -121,7 +121,9 @@ describe('SocialFeedComponent discovery sidebar', () => {
       .toBeTruthy();
     expect(hub?.querySelector('a[href="/menu/events/4"]')).not.toBeNull();
     expect(hub?.querySelector('a[href="/menu/events/5"]')).not.toBeNull();
-    expect(hub?.querySelector('a[href="/menu/events/6"]')).not.toBeNull();
+    const openGame = hub?.querySelector<HTMLAnchorElement>('a[href^="/menu/events/6?"]');
+    expect(openGame).not.toBeNull();
+    expect(openGame?.getAttribute('href')).toContain('join=1');
     expect(hub?.querySelector('a[href="/menu/communities/13"]')).not.toBeNull();
     expect(hub?.querySelector('a[href="/menu/events/7"]')).toBeNull();
     expect(hub?.querySelector('a[href="/menu/events/8"]')).toBeNull();
