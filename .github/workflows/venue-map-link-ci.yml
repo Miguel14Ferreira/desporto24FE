@@ -1,12 +1,8 @@
 name: Validate venue map link creation
 
+# Manual diagnostic job; pull requests use the consolidated pr-validation.yml.
 on:
-  pull_request:
-    branches: [preview/render-fullstack]
-    paths:
-      - 'src/app/pages/venue-create/**'
-      - '.github/workflows/venue-map-link-ci.yml'
-
+  workflow_dispatch:
 permissions:
   contents: read
 
