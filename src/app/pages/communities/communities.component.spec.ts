@@ -118,7 +118,7 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(component.importFields).toContain('POINTS');
     expect(component.importFields).toContain('NAME');
     expect(component.importFields).not.toContain('DATE');
-    expect(component.importPreview).toBeUndefined();
+    expect(component.importPreview).toEqual({ fileName: 'historico.csv', sheets: [] });
     expect(component.importMappings).toEqual([]);
     expect(component.importFile?.name).toBe('historico.csv');
     expect(component['suggestArchiveField']('Pts', 'POINTS')).toBe('POINTS');
@@ -256,6 +256,70 @@ describe('CommunitiesComponent public session eligibility', () => {
     component.selected = { id: 10 } as any;
     component.openMatchArchive(50);
     expect(component.matchArchiveOpen).toBeUndefined();
+  });
+
+
+  it('recognizes player results from a CNG-like sheet and suggests rounds without forcing the choice', () => {
+    component.importMode = 'MATCHES';
+    component.importPreview = { fileName: 'grupo.xlsx', sheets: [{
+      name: 'Sheet1', structure: 'TABULAR', nonEmptyRows: 41,
+      headers: ['Data', 'Cepo', 'V', 'D', 'Pontos'],
+      sampleRows: [['31 Ago', 'Jogador A', '1', '', '3'], ['7 Set', 'Jogador B', '', '1', '0']],
+      columnSuggestions: [
+        { columnIndex: 0, header: 'Data', field: 'DATE', confidence: 0.95 },
+        { columnIndex: 1, header: 'Cepo', field: 'UNKNOWN', confidence: 0 },
+        { columnIndex: 2, header: 'V', field: 'WIN', confidence: 0.9 },
+        { columnIndex: 3, header: 'D', field: 'UNKNOWN', confidence: 0 },
+        { columnIndex: 4, header: 'Pontos', field: 'POINTS', confidence: 0.9 }
+      ]
+    }] };
+    component.selectImportSheet('Sheet1');
+    expect(component.recommendedImportMode).toBe('ROUNDS');
+    expect(component.importMode).toBe('MATCHES');
+    const cachedInspection = component.importPreview;
+    component.selectImportMode('ROUNDS');
+    expect(component.importPreview).toBe(cachedInspection);
+    expect(component.importMappings.map(x => x.field)).toEqual(['DATE', 'PLAYER', 'WIN', 'LOSS', 'POINTS']);
+    expect(component.sourceDatesNeedYear).toBeTrue();
+    expect(component.importDefaultYear).toBeNull();
+  });
+
+  it('gives helpful errors rather than calling the API with fields meant for a different history type', () => {
+    component.selected = { id: 7 } as any;
+    component.importFile = new File(['dummy'], 'group.xlsx');
+    component.importSheetName = 'Sheet1';
+    component.importMappings = [{ columnIndex: 0, field: 'DATE', header: 'Data', confidence: 1 }];
+    const matches = jasmine.createSpy('previewHistoricalMatches');
+    const standings = jasmine.createSpy('previewHistoricalStandings');
+    (component as any).communityService = {
+      previewHistoricalMatches: matches, previewHistoricalStandings: standings
+    };
+    component.importMode = 'MATCHES';
+    component.previewHistoricalMatches();
+    expect(matches).not.toHaveBeenCalled();
+    expect(component.importFileError).toContain('Casa');
+    component.importMode = 'STANDINGS';
+    component.previewArchiveImport();
+    expect(standings).not.toHaveBeenCalled();
+    expect(component.importFileError).toContain('Nome');
+  });
+
+  it('requires the organizer to provide the year for dates such as 31 Ago', () => {
+    component.selected = { id: 7 } as any;
+    component.importFile = new File(['dummy'], 'group.xlsx');
+    component.importSheetName = 'Sheet1';
+    component.selectedSeasonId = 19;
+    component.sourceDatesNeedYear = true;
+    component.importDefaultYear = null;
+    const plan = jasmine.createSpy('finalImportPlan');
+    (component as any).communityService = { finalImportPlan: plan };
+    component.buildImportFinalPlan();
+    expect(plan).not.toHaveBeenCalled();
+    expect(component.importFileError).not.toBe('');
+    component.importDefaultYear = 2025;
+    plan.and.returnValue(of({ rounds: [] }));
+    component.buildImportFinalPlan();
+    expect(plan).toHaveBeenCalled();
   });
 
   it('requires review and a title before writing final standings', () => {
