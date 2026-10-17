@@ -1,4 +1,10 @@
 export type TournamentStatus = 'DRAFT' | 'IN_PROGRESS' | 'COMPLETED';
+
+export interface TournamentPointRules {
+  winPoints: number;
+  drawPoints: number;
+  lossPoints: number;
+}
 export type TournamentParticipantStatus = 'PENDING' | 'CONFIRMED';
 export type TournamentMatchStatus = 'SCHEDULED' | 'COMPLETED';
 
