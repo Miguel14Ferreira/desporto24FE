@@ -1247,6 +1247,7 @@
                             [attr.aria-pressed]="importMode === 'MATCHES'"
                             (click)="selectImportMode('MATCHES')">{{ 'communities.matches.mode' | t }}</button>
                         </div>
+                        <p role="note">{{ 'communities.import.chooseModeHint' | t }}</p>
                         @if (importMode === 'STANDINGS') {
                           <p>{{ 'communities.archive.hint' | t }}</p>
                         } @else if (importMode === 'MATCHES') {
@@ -1291,6 +1292,28 @@
                               </select>
                             </label>
 
+                            @if (recommendedImportMode && recommendedImportMode !== importMode) {
+                              <div class="import-validation" role="note">
+                                <p>{{ 'communities.import.suggestMode' | t }}
+                                  <strong>{{ recommendedImportMode === 'ROUNDS'
+                                    ? ('communities.archive.rounds' | t)
+                                    : recommendedImportMode === 'STANDINGS'
+                                      ? ('communities.archive.finalStandings' | t)
+                                      : ('communities.matches.mode' | t) }}</strong>
+                                </p>
+                                <button type="button"
+                                  class="secondary-action small jynlo-action jynlo-action--neutral jynlo-action--compact"
+                                  (click)="selectImportMode(recommendedImportMode)">
+                                  {{ 'communities.import.applySuggestion' | t }}
+                                </button>
+                              </div>
+                            }
+                            @if (importSheetLooksLikePivot) {
+                              <p class="import-validation" role="note">{{ 'communities.import.pivotWarning' | t }}</p>
+                            }
+                            @if (sourceDatesNeedYear && importMode === 'ROUNDS') {
+                              <p class="import-validation" role="note">{{ 'communities.import.yearlessDates' | t }}</p>
+                            }
                             @if (importMappings.length) {
                               <div class="import-mapping">
                                 <div class="import-mapping-head">
@@ -1308,7 +1331,7 @@
                                     <select [ngModel]="mapping.field"
                                       (ngModelChange)="setImportMapping(mapping.columnIndex, $event)">
                                       @for (field of importFields; track field) {
-                                        <option [value]="field">{{ field }}</option>
+                                        <option [value]="field">{{ importFieldLabel(field) }}</option>
                                       }
                                     </select>
                                   </div>
@@ -1528,12 +1551,16 @@
                                 </label>
                                 <label>
                                   <span>{{ 'communities.import.defaultYear' | t }}</span>
-                                  <input type="number" min="1900" max="2100" [(ngModel)]="importDefaultYear" (ngModelChange)="invalidateImportPlan()">
+                                  <input type="number" min="1900" max="2100" [(ngModel)]="importDefaultYear"
+                                     (ngModelChange)="invalidateImportPlan()" [attr.aria-required]="sourceDatesNeedYear ? 'true' : null">
+                                   @if (sourceDatesNeedYear) {
+                                     <small>{{ 'communities.import.explicitYearRequired' | t }}</small>
+                                   }
                                 </label>
                               </div>
 
                               <button type="button" class="primary-action import-continue jynlo-action jynlo-action--primary"
-                                [disabled]="importPlanLoading || !selectedSeasonId"
+                                [disabled]="importPlanLoading || !selectedSeasonId || (sourceDatesNeedYear && !importDefaultYear)"
                                 (click)="buildImportFinalPlan()">
                                 {{ importPlanLoading
                                   ? ('communities.import.planning' | t)
