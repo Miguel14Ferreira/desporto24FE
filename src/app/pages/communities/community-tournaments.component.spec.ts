@@ -27,12 +27,14 @@ describe('Community tournaments management', () => {
     api = jasmine.createSpyObj<CommunityTournamentsService>('CommunityTournamentsService', [
       'list', 'create', 'participants', 'join', 'leave', 'confirm', 'removeParticipant',
       'generateSchedule', 'matches', 'recordResult', 'standings', 'complete', 'delete',
-      'createTeamTournament', 'teams', 'createTeam', 'addTeamPlayer', 'removeTeamPlayer', 'deleteTeam'
+      'createTeamTournament', 'teams', 'createTeam', 'addTeamPlayer', 'removeTeamPlayer', 'deleteTeam',
+      'generateTeamSchedule', 'teamMatches'
     ]);
     api.list.and.returnValue(of({ tournaments: [draft], page: 0, hasMore: false }));
     api.participants.and.returnValue(of({ participants: [], page: 0, hasMore: false }));
     api.matches.and.returnValue(of({ matches: [], page: 0, hasMore: false }));
     api.teams.and.returnValue(of([]));
+    api.teamMatches.and.returnValue(of({ matches: [], page: 0, hasMore: false }));
     api.standings.and.returnValue(of({
       tournamentId: 9, status: 'DRAFT', totalMatches: 0, completedMatches: 0,
       winPoints: 3, drawPoints: 1, lossPoints: 0, standings: []
@@ -165,6 +167,101 @@ describe('Community tournaments management', () => {
       delayed.complete();
       expect(component.selected?.id).toBe(9);
       expect(component.teams).toEqual([]);
+    });
+
+
+    it('only enables publication when at least two teams have complete squads', () => {
+      component.selectTournament(teamDraft);
+      expect(component.canPublishTeamSchedule).toBeFalse();
+      const complete = (id: number, name: string) => ({
+        ...team, id, name, players: Array.from({ length: 5 }, (_, i) => ({
+          profileId: id * 10 + i, username: 'player' + (id * 10 + i),
+          displayName: 'Jogador ' + (i + 1)
+        }))
+      });
+      component.teams = [complete(40, 'Verdes'), complete(41, 'Azuis')];
+      expect(component.canPublishTeamSchedule).toBeTrue();
+      component.teams[1].players.pop();
+      expect(component.canPublishTeamSchedule).toBeFalse();
+      component.teams[1].players.push({
+        profileId: 999, username: 'extra', displayName: 'Extra'
+      });
+      component.community = { ...community, myRole: 'MEMBER' };
+      expect(component.canPublishTeamSchedule).toBeFalse();
+    });
+
+    it('publishes real team fixtures without using the individual match endpoint', async () => {
+      const competition = { ...teamDraft };
+      const teamA: TournamentTeam = {
+        ...team, players: Array.from({ length: 5 }, (_, i) => ({
+          profileId: i + 1, username: 'green-' + i, displayName: 'Verde ' + i
+        }))
+      };
+      const teamB: TournamentTeam = {
+        ...teamA, id: 41, name: 'Azuis',
+        players: teamA.players.map((p, i) => ({
+          ...p, profileId: i + 20, username: 'blue-' + i
+        }))
+      };
+      api.teams.and.returnValue(of([teamA, teamB]));
+      api.generateTeamSchedule.and.returnValue(of({
+        tournamentId: 19, status: 'IN_PROGRESS', teamCount: 2, roundCount: 1, matchCount: 1
+      }));
+      api.teamMatches.and.returnValue(of({ matches: [{
+        id: 65, roundNumber: 1, homeTeamId: 40, homeTeamName: 'Verdes',
+        awayTeamId: 41, awayTeamName: 'Azuis', status: 'SCHEDULED'
+      }], page: 0, hasMore: false }));
+      component.selectTournament(competition);
+      expect(component.canPublishTeamSchedule).toBeTrue();
+      component.confirmAction = 'schedule';
+      await component.publishTeamSchedule();
+      expect(api.generateTeamSchedule).toHaveBeenCalledWith(7, 19);
+      expect(api.generateSchedule).not.toHaveBeenCalled();
+      expect(component.selected?.status).toBe('IN_PROGRESS');
+      expect(component.teamMatches.length).toBe(1);
+      expect(component.teamMatches[0].homeTeamName).toBe('Verdes');
+      expect(component.canManageTeamRoster).toBeFalse();
+    });
+
+    it('does not publish team fixtures before explicit confirmation', async () => {
+      component.selectTournament(teamDraft);
+      await component.publishTeamSchedule();
+      expect(api.generateTeamSchedule).not.toHaveBeenCalled();
+    });
+
+    it('ignores stale fixture pages when another tournament is selected', () => {
+      const loading = new Subject<any>();
+      api.teams.and.returnValue(of([team]));
+      api.teamMatches.and.returnValue(loading.asObservable());
+      component.selectTournament({ ...teamDraft, status: 'IN_PROGRESS' });
+      expect(api.teamMatches).toHaveBeenCalledWith(7, 19, 0);
+      component.selectTournament(draft);
+      loading.next({ matches: [{
+        id: 77, roundNumber: 1, homeTeamId: 40, homeTeamName: 'A',
+        awayTeamId: 41, awayTeamName: 'B', status: 'SCHEDULED'
+      }], page: 0, hasMore: false });
+      loading.complete();
+      expect(component.teamMatches).toEqual([]);
+    });
+
+    it('allows pagination of real team fixtures', () => {
+      api.teams.and.returnValue(of([team]));
+      api.teamMatches.and.returnValues(
+        of({ matches: [{
+          id: 70, roundNumber: 1, homeTeamId: 40, homeTeamName: 'Verdes',
+          awayTeamId: 41, awayTeamName: 'Azuis', status: 'SCHEDULED' as const
+        }], page: 0, hasMore: true }),
+        of({ matches: [{
+          id: 71, roundNumber: 2, homeTeamId: 41, homeTeamName: 'Azuis',
+          awayTeamId: 42, awayTeamName: 'Brancos', status: 'SCHEDULED' as const
+        }], page: 1, hasMore: false })
+      );
+      component.selectTournament({ ...teamDraft, status: 'IN_PROGRESS' });
+      expect(component.teamMatchesHasMore).toBeTrue();
+      component.loadTeamMatches();
+      expect(api.teamMatches).toHaveBeenCalledWith(7, 19, 1);
+      expect(component.teamMatches.length).toBe(2);
+      expect(component.teamMatchesHasMore).toBeFalse();
     });
 
     it('respects the module switch for team competition creation', () => {
