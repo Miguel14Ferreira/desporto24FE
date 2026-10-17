@@ -302,12 +302,14 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
       if (method === 'POST') {
         const body = req.postDataJSON() as {
           name: string; sport: string; entryType?: 'TEAM'; playersPerTeam?: number;
-          roundRobinLegs?: 1 | 2;
+          roundRobinLegs?: 1 | 2; winPoints?: number; drawPoints?: number; lossPoints?: number;
         };
         const next = {
           ...tournament(11, body.name), sport: body.sport,
           entryType: body.entryType || 'INDIVIDUAL',
-          playersPerTeam: body.playersPerTeam || null, roundRobinLegs: body.roundRobinLegs || 1
+          playersPerTeam: body.playersPerTeam || null, roundRobinLegs: body.roundRobinLegs || 1,
+          winPoints: body.winPoints ?? 3, drawPoints: body.drawPoints ?? 1,
+          lossPoints: body.lossPoints ?? 0
         };
         tournaments.unshift(next);
         return send(next, 201);
@@ -1244,6 +1246,45 @@ test('organizador remove torneio experimental sem resultados depois de confirmar
   await expect(page.getByText('Competição eliminada.')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Como querem competir?' })).toBeVisible();
   expect(fixture.tournaments).toHaveLength(0);
+});
+
+test('organizador define a pontuação inicial de um torneio por equipas', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'teams');
+  await page.goto('/menu/communities/7?tab=tournaments');
+  await page.getByRole('button', { name: 'Preparar torneio por equipas' }).click();
+  const rules = page.getByRole('group', { name: 'Regras de pontuação' });
+  await expect(rules.getByRole('spinbutton', { name: 'Vitória' })).toHaveValue('3');
+  await expect(rules.getByRole('spinbutton', { name: 'Empate' })).toHaveValue('1');
+  await expect(rules.getByRole('spinbutton', { name: 'Derrota' })).toHaveValue('0');
+  await rules.getByRole('spinbutton', { name: 'Vitória' }).fill('-1');
+  await page.getByLabel('Nome do torneio').fill('Liga pontos');
+  await page.getByLabel('Jogadores por equipa').fill('2');
+  await expect(page.getByRole('button', { name: 'Criar e preparar equipas' })).toBeDisabled();
+  await rules.getByRole('spinbutton', { name: 'Vitória' }).fill('2');
+  await rules.getByRole('spinbutton', { name: 'Empate' }).fill('0');
+  await rules.getByRole('spinbutton', { name: 'Derrota' }).fill('0');
+  await page.getByRole('button', { name: 'Criar e preparar equipas' }).click();
+  await expect(page.locator('.tournament-heading')).toContainText('Vitória 2');
+  expect(fixture.tournaments[0].winPoints).toBe(2);
+  expect(fixture.tournaments[0].drawPoints).toBe(0);
+  expect(fixture.tournaments[0].lossPoints).toBe(0);
+  expect(fixture.unmocked.filter(path => path.includes('/tournaments/'))).toEqual([]);
+});
+
+test('regras de pontos personalizadas também se aplicam à liga individual', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'empty');
+  await page.goto('/menu/communities/7?tab=tournaments');
+  await page.getByRole('button', { name: 'Criar liga individual' }).click();
+  await page.getByLabel('Nome do torneio').fill('Liga dos amigos');
+  const rules = page.getByRole('group', { name: 'Regras de pontuação' });
+  await rules.getByRole('spinbutton', { name: 'Vitória' }).fill('5');
+  await rules.getByRole('spinbutton', { name: 'Empate' }).fill('2');
+  await page.getByRole('button', { name: 'Confirmar liga individual' }).click();
+  expect(fixture.tournaments[0].entryType).toBe('INDIVIDUAL');
+  expect(fixture.tournaments[0].winPoints).toBe(5);
+  expect(fixture.tournaments[0].drawPoints).toBe(2);
+  await expect(page.locator('.tournament-heading')).toContainText('Vitória 5');
+  expect(fixture.unmocked.filter(path => path.includes('/tournaments/'))).toEqual([]);
 });
 
 test('organizador prepara equipas reais e distribui membros sem criar jornadas individuais', async ({ page }) => {

@@ -176,3 +176,12 @@
 .team-score-edit .field-validation { flex: 1 1 100%; }
 .team-standings-section { display: grid; gap: .75rem; margin-top: 1rem; }
 .team-standings-table th[scope="row"] { text-align: left; overflow-wrap: anywhere; }
+
+/* Shared points rules in both team and individual tournament setup. */
+.t-points-rules { display: grid; gap: .55rem; margin: .65rem 0; min-width: 0; padding: .8rem;
+  border: 1px solid rgba(148,163,184,.25); border-radius: .75rem; }
+.t-points-rules legend { font-size: .85rem; font-weight: 800; color: #e2e8f0; padding: 0 .3rem; }
+.t-points-fields { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: .55rem; }
+.t-points-fields label { display: grid; gap: .28rem; min-width: 0; }
+.t-points-fields input { width: 100%; min-width: 0; }
+@media (max-width: 380px) { .t-points-fields { grid-template-columns: 1fr; } }

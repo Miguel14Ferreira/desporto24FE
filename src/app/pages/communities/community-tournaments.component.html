@@ -152,8 +152,38 @@
             Duas voltas: joga-se também o confronto inverso, com casa e fora trocados.
             A escolha fica definida ao criar o torneio e não muda depois de publicares as jornadas.</p>
         }
+        <fieldset class="t-points-rules" aria-describedby="t-points-rules-help">
+          <legend>Regras de pontuação</legend>
+          <p id="t-points-rules-help" class="sport-choice-hint">
+            Define os pontos atribuídos na classificação por cada resultado. Valor inicial: 3 / 1 / 0.
+            Estas regras ficam associadas ao torneio.
+          </p>
+          <div class="t-points-fields">
+            <label for="tournament-win-points">
+              Vitória
+              <input id="tournament-win-points" type="number" min="0" max="100" step="1"
+                [(ngModel)]="winPointsDraft" [disabled]="busy"
+                [attr.aria-invalid]="!validPointRules ? 'true' : null">
+            </label>
+            <label for="tournament-draw-points">
+              Empate
+              <input id="tournament-draw-points" type="number" min="0" max="100" step="1"
+                [(ngModel)]="drawPointsDraft" [disabled]="busy"
+                [attr.aria-invalid]="!validPointRules ? 'true' : null">
+            </label>
+            <label for="tournament-loss-points">
+              Derrota
+              <input id="tournament-loss-points" type="number" min="0" max="100" step="1"
+                [(ngModel)]="lossPointsDraft" [disabled]="busy"
+                [attr.aria-invalid]="!validPointRules ? 'true' : null">
+            </label>
+          </div>
+          @if (!validPointRules) {
+            <p class="field-validation" role="status">Introduz valores inteiros entre 0 e 100.</p>
+          }
+        </fieldset>
         <button type="button" class="t-btn t-btn-primary"
-          [disabled]="busy || nameDraft.trim().length < 2 || !sportDraft
+          [disabled]="busy || !validPointRules || nameDraft.trim().length < 2 || !sportDraft
             || (showTeamCreate && (!teamSizeDraft || teamSizeDraft < 1 || teamSizeDraft > 30))"
           (click)="showTeamCreate ? createTeamCompetition() : create()">
           {{ showTeamCreate ? 'Criar e preparar equipas' : 'Confirmar liga individual' }}
@@ -208,6 +238,7 @@
             @if (isTeamCompetition) {
               <p>Torneio por equipas · {{ selected.playersPerTeam }} jogadores por equipa ·
                 {{ (selected.roundRobinLegs ?? 1) === 2 ? 'Duas voltas (casa e fora)' : 'Uma volta' }}</p>
+              <p>Vitória {{ selected.winPoints }} · Empate {{ selected.drawPoints }} · Derrota {{ selected.lossPoints }} pontos</p>
             } @else {
               <p>Vitória {{ selected.winPoints }} · Empate {{ selected.drawPoints }} · Derrota {{ selected.lossPoints }} pontos</p>
             }

@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from 'src/environment/environment';
 import {
   CommunityTournament,
+  TournamentPointRules,
   TournamentMatch,
   TournamentMatchPage,
   TournamentPage,
@@ -31,16 +32,18 @@ export class CommunityTournamentsService {
     });
   }
 
-  create(communityId: number, name: string, sport: string): Observable<CommunityTournament> {
-    return this.http.post<CommunityTournament>(this.url(communityId), { name, sport });
+  create(communityId: number, name: string, sport: string,
+         rules: TournamentPointRules = { winPoints: 3, drawPoints: 1, lossPoints: 0 }): Observable<CommunityTournament> {
+    return this.http.post<CommunityTournament>(this.url(communityId), { name, sport, ...rules });
   }
 
 
   /** Team tournaments have their own draft, roster and match lifecycle. */
   createTeamTournament(communityId: number, name: string, sport: string,
-                       playersPerTeam: number, roundRobinLegs: 1 | 2 = 1): Observable<CommunityTournament> {
+                       playersPerTeam: number, roundRobinLegs: 1 | 2 = 1,
+                       rules: TournamentPointRules = { winPoints: 3, drawPoints: 1, lossPoints: 0 }): Observable<CommunityTournament> {
     return this.http.post<CommunityTournament>(this.url(communityId), {
-      name, sport, entryType: 'TEAM', playersPerTeam, roundRobinLegs
+      name, sport, entryType: 'TEAM', playersPerTeam, roundRobinLegs, ...rules
     });
   }
 

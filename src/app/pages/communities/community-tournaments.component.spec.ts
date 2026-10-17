@@ -73,7 +73,7 @@ describe('Community tournaments management', () => {
       component.nameDraft = ' Torneio CNG 5x5 ';
       component.teamSizeDraft = 5;
       await component.createTeamCompetition();
-      expect(api.createTeamTournament).toHaveBeenCalledWith(7, 'Torneio CNG 5x5', 'Futebol', 5, 1);
+      expect(api.createTeamTournament).toHaveBeenCalledWith(7, 'Torneio CNG 5x5', 'Futebol', 5, 1, { winPoints: 3, drawPoints: 1, lossPoints: 0 });
       expect(api.create).not.toHaveBeenCalled();
       expect(component.selected?.entryType).toBe('TEAM');
       expect(api.teams).toHaveBeenCalledWith(7, 19);
@@ -88,10 +88,31 @@ describe('Community tournaments management', () => {
       component.nameDraft = 'Liga casa e fora';
       component.roundRobinLegsDraft = 2;
       await component.createTeamCompetition();
-      expect(api.createTeamTournament).toHaveBeenCalledWith(7, 'Liga casa e fora', 'Futebol', 5, 2);
+      expect(api.createTeamTournament).toHaveBeenCalledWith(7, 'Liga casa e fora', 'Futebol', 5, 2, { winPoints: 3, drawPoints: 1, lossPoints: 0 });
       expect(component.selected?.roundRobinLegs).toBe(2);
       expect(Number(component.roundRobinLegsDraft)).toBe(1);
       expect(api.create).not.toHaveBeenCalled();
+    });
+
+    it('stores custom team points without changing the community rankings', async () => {
+      api.createTeamTournament.and.returnValue(of({
+        ...teamDraft, winPoints: 2, drawPoints: 0, lossPoints: 0
+      }));
+      component.startTeamCreation();
+      component.nameDraft = 'Torneio pontos';
+      component.winPointsDraft = 2;
+      component.drawPointsDraft = 0;
+      component.lossPointsDraft = 0;
+      await component.createTeamCompetition();
+      expect(api.createTeamTournament).toHaveBeenCalledWith(
+        7, 'Torneio pontos', 'Futebol', 5, 1,
+        { winPoints: 2, drawPoints: 0, lossPoints: 0 });
+      expect(component.selected?.winPoints).toBe(2);
+      expect(component.winPointsDraft).toBe(3);
+      expect(component.drawPointsDraft).toBe(1);
+      expect(component.lossPointsDraft).toBe(0);
+      expect(api.create).not.toHaveBeenCalled();
+      expect(api.standings).toHaveBeenCalledTimes(1);
     });
 
     it('requires the return leg before enabling team completion', () => {
@@ -378,11 +399,44 @@ describe('Community tournaments management', () => {
     component.startIndividualCreation();
     component.nameDraft = ' Liga de Inverno ';
     await component.create();
-    expect(api.create).toHaveBeenCalledWith(7, 'Liga de Inverno', 'Futebol');
+    expect(api.create).toHaveBeenCalledWith(7, 'Liga de Inverno', 'Futebol', { winPoints: 3, drawPoints: 1, lossPoints: 0 });
     expect(component.selected?.id).toBe(12);
     expect(component.tournaments[0].id).toBe(12);
   });
 
+
+  it('sends custom points on individual creation and resets after success', async () => {
+    api.create.and.returnValue(of({ ...draft, id: 14,
+      winPoints: 5, drawPoints: 2, lossPoints: 0 }));
+    component.startIndividualCreation();
+    component.nameDraft = 'Liga personalizada';
+    component.winPointsDraft = 5;
+    component.drawPointsDraft = 2;
+    await component.create();
+    expect(api.create).toHaveBeenCalledWith(7, 'Liga personalizada', 'Futebol',
+      { winPoints: 5, drawPoints: 2, lossPoints: 0 });
+    expect(component.selected?.winPoints).toBe(5);
+    expect(component.winPointsDraft).toBe(3);
+    expect(component.drawPointsDraft).toBe(1);
+  });
+
+  it('rejects negative, fractional and excessive points without sending a request', async () => {
+    component.startIndividualCreation();
+    component.nameDraft = 'Liga incompleta';
+    component.winPointsDraft = -1;
+    expect(component.validPointRules).toBeFalse();
+    await component.create();
+    expect(api.create).not.toHaveBeenCalled();
+    expect(component.error).toContain('pontos inteiros');
+    component.winPointsDraft = 2.5;
+    expect(component.validPointRules).toBeFalse();
+    component.winPointsDraft = 101;
+    expect(component.validPointRules).toBeFalse();
+    component.winPointsDraft = 0;
+    component.drawPointsDraft = 0;
+    component.lossPointsDraft = 0;
+    expect(component.validPointRules).toBeTrue();
+  });
 
   it('requires a sport when a community has several before a tournament can be created', async () => {
     api.list.and.returnValue(of({ tournaments: [], page: 0, hasMore: false }));
@@ -398,7 +452,7 @@ describe('Community tournaments management', () => {
     component.chooseSport('Padel');
     api.create.and.returnValue(of({ ...draft, id: 14, sport: 'Padel' }));
     await component.create();
-    expect(api.create).toHaveBeenCalledWith(7, 'Liga de outono', 'Padel');
+    expect(api.create).toHaveBeenCalledWith(7, 'Liga de outono', 'Padel', { winPoints: 3, drawPoints: 1, lossPoints: 0 });
   });
 
   it('supports a tournament sport outside the community without changing it', async () => {
@@ -411,7 +465,7 @@ describe('Community tournaments management', () => {
     component.nameDraft = 'Liga de natação';
     api.create.and.returnValue(of({ ...draft, id: 22, sport: 'Natação' }));
     await component.create();
-    expect(api.create).toHaveBeenCalledWith(7, 'Liga de natação', 'Natação');
+    expect(api.create).toHaveBeenCalledWith(7, 'Liga de natação', 'Natação', { winPoints: 3, drawPoints: 1, lossPoints: 0 });
     expect(component.scoring.scoreInput).toBe('Marcador de');
     expect(component.community.sport).toBe('Futebol');
   });
@@ -426,7 +480,7 @@ describe('Community tournaments management', () => {
     component.nameDraft = 'Torneio local';
     api.create.and.returnValue(of({ ...draft, id: 23, sport: 'Desporto local tradicional' }));
     await component.create();
-    expect(api.create).toHaveBeenCalledWith(7, 'Torneio local', 'Desporto local tradicional');
+    expect(api.create).toHaveBeenCalledWith(7, 'Torneio local', 'Desporto local tradicional', { winPoints: 3, drawPoints: 1, lossPoints: 0 });
   });
 
   it('uses the selected tournament sport for scoring rather than the community primary sport', () => {

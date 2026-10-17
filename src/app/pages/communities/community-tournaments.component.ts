@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Component, ElementRef, Input, OnChanges, SimpleChang
 import { finalize, firstValueFrom, forkJoin, Observable, timeout } from 'rxjs';
 import { CommunityGroup } from '../model/community-group';
 import {
-  CommunityTournament, TournamentMatch, TournamentParticipant, TournamentStandingRow,
+  CommunityTournament, TournamentPointRules, TournamentMatch, TournamentParticipant, TournamentStandingRow,
   TournamentStandings, TournamentTeam, TournamentTeamMatch, TournamentTeamStandings
 } from '../model/community-tournament';
 import { CommunityTournamentsService } from '../../services/community-tournaments.service';
@@ -37,6 +37,9 @@ export class CommunityTournamentsComponent implements OnChanges {
   showTeamCreate = false;
   teamSizeDraft = 5;
   roundRobinLegsDraft: 1 | 2 = 1;
+  winPointsDraft = 3;
+  drawPointsDraft = 1;
+  lossPointsDraft = 0;
   teamNameDraft = '';
   teamPlayerDraft: Record<number, number | null> = {};
   teams: TournamentTeam[] = [];
@@ -106,6 +109,25 @@ export class CommunityTournamentsComponent implements OnChanges {
     }
   }
 
+  get pointRulesDraft(): TournamentPointRules {
+    return {
+      winPoints: this.winPointsDraft,
+      drawPoints: this.drawPointsDraft,
+      lossPoints: this.lossPointsDraft
+    };
+  }
+
+  get validPointRules(): boolean {
+    return Object.values(this.pointRulesDraft)
+      .every(value => Number.isInteger(value) && value >= 0 && value <= 100);
+  }
+
+  private resetPointRules(): void {
+    this.winPointsDraft = 3;
+    this.drawPointsDraft = 1;
+    this.lossPointsDraft = 0;
+  }
+
   get nameTooShort(): boolean {
     const len = this.nameDraft.trim().length;
     return len > 0 && len < 2;
@@ -152,6 +174,7 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.showIndividualCreate = false;
       this.showTeamCreate = false;
       this.roundRobinLegsDraft = 1;
+      this.resetPointRules();
       this.teamNameDraft = '';
       this.teamPlayerDraft = {};
       this.teams = [];
@@ -655,11 +678,16 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.showError('Escolhe uma ou duas voltas.');
       return;
     }
+    if (!this.validPointRules) {
+      this.showError('Define pontos inteiros entre 0 e 100 para vitória, empate e derrota.');
+      return;
+    }
     await this.mutate(this.api.createTeamTournament(this.community.id, name, this.sportDraft,
-      size, this.roundRobinLegsDraft),
+      size, this.roundRobinLegsDraft, this.pointRulesDraft),
       'Competição por equipas criada. Agora podes preparar os plantéis.', result => {
         this.nameDraft = '';
         this.roundRobinLegsDraft = 1;
+        this.resetPointRules();
         this.showTeamCreate = false;
         this.selected = undefined;
         this.selectTournament(result);
@@ -716,9 +744,14 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.showError('Escolhe uma modalidade válida para o torneio.');
       return;
     }
-    await this.mutate(this.api.create(this.community.id, name, this.sportDraft),
+    if (!this.validPointRules) {
+      this.showError('Define pontos inteiros entre 0 e 100 para vitória, empate e derrota.');
+      return;
+    }
+    await this.mutate(this.api.create(this.community.id, name, this.sportDraft, this.pointRulesDraft),
       'Torneio criado.', result => {
       this.nameDraft = '';
+      this.resetPointRules();
       this.showIndividualCreate = false;
       this.selected = undefined;
       this.selectTournament(result);

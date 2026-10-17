@@ -25,6 +25,23 @@ describe('CommunityTournamentsService API contract', () => {
     expect((options as any).params.get('page')).toBe('2');
   });
 
+  it('sends competition points in both team and individual creation requests', () => {
+    service.create(7, 'Liga Individual', 'Ténis', {
+      winPoints: 2, drawPoints: 1, lossPoints: 0
+    }).subscribe();
+    expect(http.post).toHaveBeenCalledWith(
+      environment.apiUrl + '/api/communities/7/tournaments',
+      { name: 'Liga Individual', sport: 'Ténis', winPoints: 2, drawPoints: 1, lossPoints: 0 });
+    service.createTeamTournament(7, 'Liga Equipas', 'Futebol', 5, 2, {
+      winPoints: 4, drawPoints: 2, lossPoints: 0
+    }).subscribe();
+    expect(http.post).toHaveBeenCalledWith(
+      environment.apiUrl + '/api/communities/7/tournaments',
+      { name: 'Liga Equipas', sport: 'Futebol', entryType: 'TEAM',
+        playersPerTeam: 5, roundRobinLegs: 2,
+        winPoints: 4, drawPoints: 2, lossPoints: 0 });
+  });
+
   it('never supplies another user identity when requesting self-enrollment', () => {
     service.join(7, 9).subscribe();
     expect(http.put).toHaveBeenCalledWith(base + '/participants/me', null);
