@@ -6,6 +6,7 @@ import { SessionDetail } from '../model/session-detail';
 import { SocialFeedService } from '../../services/social-feed.service';
 import { SessionService } from '../../services/session.service';
 import { CommunityService } from '../../services/community.service';
+import { CommunityGroupsService } from '../../services/community-groups.service';
 import { AuthenticationService } from '../../services/authethication.service';
 import { FeedItem } from '../model/feed-item';
 import { appTranslate as t } from '../../i18n/i18n.service';
@@ -17,6 +18,7 @@ describe('SocialFeedComponent discovery sidebar', () => {
   let feed: jasmine.SpyObj<SocialFeedService>;
   let sessions: jasmine.SpyObj<SessionService>;
   let community: jasmine.SpyObj<CommunityService>;
+  let groups: jasmine.SpyObj<CommunityGroupsService>;
 
   beforeEach(async () => {
     feed = jasmine.createSpyObj<SocialFeedService>('SocialFeedService', ['feed', 'createPost']);
@@ -30,6 +32,8 @@ describe('SocialFeedComponent discovery sidebar', () => {
     community.discoverProfiles.and.returnValue(of([]));
     community.publicProfile.and.returnValue(of(null as any));
     community.friends.and.returnValue(of([]));
+    groups = jasmine.createSpyObj<CommunityGroupsService>('CommunityGroupsService', ['mine']);
+    groups.mine.and.returnValue(of([]));
 
     await TestBed.configureTestingModule({
       declarations: [SocialFeedComponent],
@@ -38,13 +42,68 @@ describe('SocialFeedComponent discovery sidebar', () => {
         ...TEST_PROVIDERS,
         { provide: SocialFeedService, useValue: feed },
         { provide: SessionService, useValue: sessions },
-        { provide: CommunityService, useValue: community }
+        { provide: CommunityService, useValue: community },
+        { provide: CommunityGroupsService, useValue: groups }
       ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(SocialFeedComponent);
     component = fixture.componentInstance;
   });
+
+  it('shows my sports week before the feed using real session and community links', fakeAsync(() => {
+    const at = Date.now() + 86_400_000;
+    const upcoming = (id: number, other: Partial<SessionSummary> = {}): SessionSummary => ({
+      id, sport: 'Padel', city: 'Lisboa', gameDate: new Date(at).toISOString(),
+      distanceKm: null, participantCount: 3, maxParticipants: 4,
+      priceAmount: 0, privateGame: false, audience: 'PUBLIC', status: 'OPEN', ...other
+    });
+    sessions.mine.and.returnValue(of({
+      created: [upcoming(4, { privateGame: true, audience: 'COMMUNITY_ONLY' })],
+      joined: [upcoming(4)],
+      waitlisted: [upcoming(5)]
+    }));
+    sessions.discover.and.returnValue(of([
+      upcoming(4), upcoming(5), upcoming(6), upcoming(7, { privateGame: true }),
+      upcoming(8, { audience: 'COMMUNITY_ONLY' }), upcoming(9, { participantCount: 4 })
+    ]));
+    groups.mine.and.returnValue(of([{
+      id: 13, name: 'Amigos de desporto', description: null, sport: 'Futebol', sports: ['Futebol'],
+      photoUrl: null, visibility: 'PRIVATE', rankingsEnabled: false,
+      ownerUsername: 'ana', myRole: 'MEMBER', memberCount: 12,
+      createdAt: '2026-10-01T09:00:00Z', members: []
+    }]));
+
+    fixture.detectChanges();
+    tick(351);
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    const hub = root.querySelector<HTMLElement>('.week-hub');
+    expect(hub).not.toBeNull();
+    expect(root.querySelector('.feed-layout')?.compareDocumentPosition(hub!) & Node.DOCUMENT_POSITION_PRECEDING)
+      .toBeTruthy();
+    expect(hub?.querySelector('a[href="/menu/events/4"]')).not.toBeNull();
+    expect(hub?.querySelector('a[href="/menu/events/5"]')).not.toBeNull();
+    expect(hub?.querySelector('a[href="/menu/events/6"]')).not.toBeNull();
+    expect(hub?.querySelector('a[href="/menu/communities/13"]')).not.toBeNull();
+    expect(hub?.querySelector('a[href="/menu/events/7"]')).toBeNull();
+    expect(hub?.querySelector('a[href="/menu/events/8"]')).toBeNull();
+    expect(hub?.querySelector('a[href="/menu/events/9"]')).toBeNull();
+    expect(groups.mine).toHaveBeenCalledTimes(1);
+  }));
+
+  it('shows independent empty states when there are no sessions or communities', fakeAsync(() => {
+    fixture.detectChanges();
+    tick(351);
+    fixture.detectChanges();
+    const hub = (fixture.nativeElement as HTMLElement).querySelector('.week-hub');
+    expect(hub?.textContent).toContain(t('week.noUpcoming'));
+    expect(hub?.textContent).toContain(t('week.noOpenSlots'));
+    expect(hub?.textContent).toContain(t('week.noCommunities'));
+    expect(hub?.querySelector('a[href="/menu/discover"]')).not.toBeNull();
+    expect(hub?.querySelector('a[href="/menu/createEvent"]')).not.toBeNull();
+  }));
 
   it('keeps the composer compact until the player opens session selection', fakeAsync(() => {
     fixture.detectChanges();
