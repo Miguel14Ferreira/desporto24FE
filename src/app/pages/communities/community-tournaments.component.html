@@ -4,19 +4,19 @@
       <p class="tournament-eyebrow">Competição entre membros</p>
       <h3>Competições da comunidade</h3>
       <p>Organizem desafios individuais ou torneios por equipas. Os jogos semanais e as estatísticas habituais continuam independentes das competições.</p>
-      @if (selected) {
+      @if (selected && !isTeamCompetition) {
         <p class="t-sport-note" role="note">{{ scoring.note }}</p>
       }
     </div>
     <div class="competition-hero-actions">
-      @if (canManage && !showGuide && !showIndividualCreate) {
+      @if (canManage && !showGuide && !showIndividualCreate && !showTeamCreate) {
         <button type="button" class="t-btn t-btn-primary" (click)="showGuide = true">Criar competição</button>
       }
       @if (!showGuide) {
         <button type="button" class="t-btn t-btn-secondary" (click)="showGuide = true">Como funciona?</button>
       }
       @if (selected) {
-        <span class="tournament-type">{{ selected.sport || 'Modalidade por definir' }} · Liga individual</span>
+        <span class="tournament-type">{{ selected.sport || 'Modalidade por definir' }} · {{ isTeamCompetition ? 'Por equipas' : 'Liga individual' }}</span>
       }
     </div>
   </div>
@@ -54,11 +54,16 @@
         <article class="guide-option">
           <div class="guide-option-top">
             <span aria-hidden="true">👥</span><strong>Por equipas</strong>
-            <span class="guide-tag guide-tag-pending">Em desenvolvimento</span>
+            <span class="guide-tag">Plantéis disponíveis</span>
           </div>
-          <p>Criar equipas com membros da comunidade, escolher jogadores por equipa e organizar campeonatos ou eliminatórias.</p>
+          <p>Escolham a modalidade e os jogadores por equipa. Criem equipas reais com os membros da comunidade.</p>
           <p class="guide-example">Ex.: 20 membros divididos em quatro equipas de cinco.</p>
-          <p class="guide-coming">A organização por equipas ainda não está disponível. Não vamos fingir que uma conta de utilizador representa uma equipa.</p>
+          <p class="guide-coming">Nesta fase já podem preparar os plantéis. Os calendários, confrontos e classificações por equipas continuam em desenvolvimento.</p>
+          @if (canManage && community.teamTournamentsEnabled !== false) {
+            <button type="button" class="t-btn t-btn-primary" (click)="startTeamCreation()">Preparar torneio por equipas</button>
+          } @else if (canManage) {
+            <p class="guide-coming">Ativa primeiro os torneios por equipas nas funcionalidades da comunidade.</p>
+          }
         </article>
       </div>
       <div class="guide-community-note" role="note">
@@ -69,13 +74,18 @@
     </section>
   }
 
-  @if (canManage && showIndividualCreate) {
+  @if (canManage && (showIndividualCreate || showTeamCreate)) {
     <div class="create-tournament">
       <div>
-        <h4>Criar liga individual</h4>
-        <p>Competição individual sem equipas: cada participante compete por si. Os resultados não alteram o histórico de jogos habituais da comunidade.</p>
+        <h4>{{ showTeamCreate ? 'Preparar torneio por equipas' : 'Criar liga individual' }}</h4>
+        @if (showTeamCreate) {
+          <p>Define a modalidade e quantos jogadores terá cada equipa. Depois podes criar equipas e escolher os membros de cada plantel.</p>
+          <p class="sport-choice-hint">Os jogos e classificações entre equipas ainda não estão disponíveis.</p>
+        } @else {
+          <p>Competição individual sem equipas: cada participante compete por si. Os resultados não alteram o histórico de jogos habituais da comunidade.</p>
+        }
         <button type="button" class="t-btn t-btn-secondary"
-          (click)="showIndividualCreate = false; showGuide = true">Voltar às opções</button>
+          (click)="showIndividualCreate = false; showTeamCreate = false; showGuide = true">Voltar às opções</button>
       </div>
       <div class="create-controls">
         <label for="new-tournament-name">Nome do torneio</label>
@@ -124,9 +134,18 @@
         } @else if (sportSearch.trim()) {
           <p class="sport-choice-hint">Não foram encontradas modalidades. Tenta outra pesquisa.</p>
         }
+        @if (showTeamCreate) {
+          <label for="new-team-size">Jogadores por equipa</label>
+          <input id="new-team-size" type="number" min="1" max="30" step="1"
+            [(ngModel)]="teamSizeDraft" [disabled]="busy" aria-describedby="team-size-hint">
+          <p id="team-size-hint" class="sport-choice-hint">De 1 a 30 jogadores por equipa. Podes criar até 32 equipas.</p>
+        }
         <button type="button" class="t-btn t-btn-primary"
-          [disabled]="busy || nameDraft.trim().length < 2 || !sportDraft"
-          (click)="create()">Confirmar liga individual</button>
+          [disabled]="busy || nameDraft.trim().length < 2 || !sportDraft
+            || (showTeamCreate && (!teamSizeDraft || teamSizeDraft < 1 || teamSizeDraft > 30))"
+          (click)="showTeamCreate ? createTeamCompetition() : create()">
+          {{ showTeamCreate ? 'Criar e preparar equipas' : 'Confirmar liga individual' }}
+        </button>
       </div>
     </div>
   }
@@ -146,7 +165,10 @@
           [attr.aria-pressed]="selected?.id === tournament.id"
           (click)="selectTournament(tournament)">
           <strong>{{ tournament.name }}</strong>
-          <small>{{ tournament.sport || 'Sem modalidade definida' }} · {{ formatStatus(tournament.status) }}</small>
+          <small>{{ tournament.sport || 'Sem modalidade definida' }} ·
+              {{ tournament.entryType === 'TEAM' ? 'Por equipas' : 'Individual' }} ·
+              {{ tournament.entryType === 'TEAM' && tournament.status === 'DRAFT'
+                  ? 'Em preparação' : formatStatus(tournament.status) }}</small>
         </button>
       }
       @if (loading) { <p class="t-muted" role="status">A carregar torneios…</p> }
@@ -167,11 +189,15 @@
         <header class="tournament-heading">
           <div>
             <span class="tournament-state" [class.is-finished]="selected.status === 'COMPLETED'">
-              {{ formatStatus(selected.status) }}
+              {{ isTeamCompetition && selected.status === 'DRAFT' ? 'Em preparação' : formatStatus(selected.status) }}
             </span>
             <h4>{{ selected.name }}</h4>
             <span class="t-tournament-sport">{{ selected.sport || 'Modalidade não definida' }}</span>
-            <p>Vitória {{ selected.winPoints }} · Empate {{ selected.drawPoints }} · Derrota {{ selected.lossPoints }} pontos</p>
+            @if (isTeamCompetition) {
+              <p>Torneio por equipas · {{ selected.playersPerTeam }} jogadores por equipa</p>
+            } @else {
+              <p>Vitória {{ selected.winPoints }} · Empate {{ selected.drawPoints }} · Derrota {{ selected.lossPoints }} pontos</p>
+            }
           </div>
           <div class="tournament-heading-actions">
             @if (isMember) {
@@ -195,7 +221,7 @@
           </div>
         </header>
 
-        @if (selected.status === 'COMPLETED') {
+        @if (!isTeamCompetition && selected.status === 'COMPLETED') {
           <div class="champion" role="status">
             <span aria-hidden="true">🏆</span>
             <div>
@@ -210,7 +236,96 @@
           </div>
         }
 
-        @if (!isMember) {
+        @if (isTeamCompetition) {
+          @if (!isMember) {
+            <div class="notice notice-info" role="status">Adere à comunidade para consultar os plantéis desta competição.</div>
+          } @else if (detailsLoading) {
+            <p class="t-muted" role="status">A carregar equipas e plantéis…</p>
+          } @else {
+            <section class="t-section team-roster-section" aria-label="Equipas da competição">
+              <div class="t-section-heading">
+                <div>
+                  <h5>Equipas e plantéis</h5>
+                  <p>{{ teams.length }} equipas criadas · {{ readyTeamCount }} com o plantel completo</p>
+                </div>
+              </div>
+              <div class="guide-community-note" role="note">
+                <strong>Primeiro organizamos as equipas.</strong>
+                <p>Todos os jogadores são membros reais da comunidade. Um membro só pode integrar uma equipa nesta competição.
+                  As jornadas e classificações por equipas serão disponibilizadas numa fase seguinte.</p>
+              </div>
+              @if (teamsLoadError) {
+                <p class="field-validation" role="alert">Não foi possível carregar os plantéis. Usa Atualizar para tentar novamente.</p>
+              }
+              @if (canManage && selected.status === 'DRAFT') {
+                <div class="team-create-row">
+                  <label for="new-team-name">Nome da nova equipa</label>
+                  <div class="team-create-actions">
+                    <input id="new-team-name" [(ngModel)]="teamNameDraft" maxlength="100"
+                      autocomplete="off" placeholder="Ex.: Equipa Verde" [disabled]="busy || detailsLoading">
+                    <button type="button" class="t-btn t-btn-primary" (click)="createTournamentTeam()"
+                      [disabled]="busy || detailsLoading || !teamNameDraft.trim() || teams.length >= 32">
+                      Adicionar equipa
+                    </button>
+                  </div>
+                </div>
+              }
+              @if (teams.length === 0 && !teamsLoadError) {
+                <p class="t-muted">Ainda não existem equipas. O organizador pode começar por criar a primeira.</p>
+              }
+              <div class="team-roster-grid">
+                @for (team of teams; track team.id) {
+                  <article class="team-roster-card">
+                    <div class="team-roster-heading">
+                      <div>
+                        <h6>{{ team.name }}</h6>
+                        <span class="tournament-state">{{ team.players.length }} / {{ team.playersPerTeam }} jogadores</span>
+                      </div>
+                      @if (canManageTeamRoster && team.players.length === 0) {
+                        <button type="button" class="t-btn t-btn-danger-outline t-btn-small"
+                          [disabled]="detailsLoading" [attr.aria-label]="'Eliminar equipa ' + team.name"
+                          (click)="deleteTournamentTeam(team)">Eliminar equipa vazia</button>
+                      }
+                    </div>
+                    @if (!team.players.length) {
+                      <p class="t-muted">Ainda não foram adicionados jogadores.</p>
+                    }
+                    <div class="players-list">
+                      @for (player of team.players; track player.profileId) {
+                        <div class="player-item">
+                          <div><strong>{{ player.displayName || player.username }}</strong>
+                            <small>&#64;{{ player.username }}</small></div>
+                          @if (canManageTeamRoster) {
+                            <button type="button" class="t-btn t-btn-secondary t-btn-small"
+                              [attr.aria-label]="'Remover ' + player.username + ' da equipa ' + team.name"
+                              (click)="removeTeamPlayer(team, player.profileId)">Remover</button>
+                          }
+                        </div>
+                      }
+                    </div>
+                    @if (canManageTeamRoster && team.players.length < team.playersPerTeam) {
+                      <div class="team-player-assign">
+                        <label [for]="'team-player-' + team.id">Adicionar membro à equipa {{ team.name }}</label>
+                        <select [id]="'team-player-' + team.id" [(ngModel)]="teamPlayerDraft[team.id]" [disabled]="busy || detailsLoading">
+                          <option [ngValue]="null">Seleciona um membro</option>
+                          @for (member of availableTeamMembers; track member.profileId) {
+                            <option [ngValue]="member.profileId">{{ member.fullName || member.username }} (&#64;{{ member.username }})</option>
+                          }
+                        </select>
+                        <button type="button" class="t-btn t-btn-primary"
+                          [disabled]="busy || detailsLoading || !teamPlayerDraft[team.id]"
+                          (click)="assignTeamPlayer(team)">Adicionar jogador</button>
+                        @if (!availableTeamMembers.length) {
+                          <p class="t-muted">Não há mais membros disponíveis para atribuir.</p>
+                        }
+                      </div>
+                    }
+                  </article>
+                }
+              </div>
+            </section>
+          }
+        } @else if (!isMember) {
           <div class="notice notice-info" role="status">
             Para consultar jogadores, jornadas e classificações, adere primeiro a esta comunidade.
             Podes fazê-lo na área de apresentação da comunidade.

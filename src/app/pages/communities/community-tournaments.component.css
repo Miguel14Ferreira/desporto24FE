@@ -139,3 +139,17 @@
 .competition-delete-confirm { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; max-width: 23rem; padding: .8rem; border: 1px solid rgba(239,68,68,.4); border-radius: .75rem; }
 .competition-delete-confirm p { width: 100%; color: #fecaca; font-size: .78rem; }
 @media (max-width: 750px) { .guide-options { grid-template-columns: 1fr; } }
+
+/* Real team rosters are distinct from the old individual round-robin table. */
+.team-roster-section { display: grid; gap: 1rem; }
+.team-create-row { display: grid; gap: .5rem; padding: 1rem; background: rgba(148,163,184,.04); border-radius: .8rem; }
+.team-create-row label, .team-player-assign label { font-weight: 700; font-size: .84rem; }
+.team-create-actions { display: flex; flex-wrap: wrap; gap: .6rem; }
+.team-create-actions input { flex: 1 1 15rem; }
+.team-roster-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); gap: .85rem; }
+.team-roster-card { display: grid; align-content: start; gap: .85rem; border: 1px solid rgba(148,163,184,.22); border-radius: .9rem; padding: 1rem; background: rgba(148,163,184,.04); }
+.team-roster-heading { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: .55rem; }
+.team-roster-heading h6 { margin: 0 0 .5rem; font-size: 1rem; }
+.team-player-assign { display: grid; gap: .5rem; }
+.team-player-assign select { width: 100%; min-height: 42px; border: 1px solid #425267; border-radius: .65rem; background: #14283a; color: #f8fafc; padding: .55rem .7rem; }
+.team-player-assign select:focus-visible { outline: 2px solid #86efac; outline-offset: 2px; }
