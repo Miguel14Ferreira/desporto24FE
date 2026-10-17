@@ -1230,7 +1230,7 @@ test('grupo que optou só por equipas não oferece criação individual', async 
   await expect(page.getByRole('button', { name: 'Criar liga individual' })).toHaveCount(0);
   await expect(page.getByText(/Para permitir ligas individuais/)).toBeVisible();
   await expect(page.getByRole('button', { name: 'Preparar torneio por equipas' })).toBeVisible();
-  await expect(page.getByText('Plantéis disponíveis')).toBeVisible();
+  await expect(page.getByText('Ligas e taças disponíveis')).toBeVisible();
 });
 
 test('guia distingue competições das estatísticas habituais e explica o torneio por equipas', async ({ page }) => {
@@ -1240,8 +1240,10 @@ test('guia distingue competições das estatísticas habituais e explica o torne
   await expect(page.getByRole('heading', { name: 'Como querem competir?' })).toBeVisible();
   await expect(page.getByText('Por equipas', { exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Preparar torneio por equipas' })).toBeVisible();
-  await expect(page.getByText('Plantéis disponíveis')).toBeVisible();
-  await expect(page.getByText(/histórico Excel/)).toBeVisible();
+  await expect(page.getByText('Ligas e taças disponíveis')).toBeVisible();
+  await expect(page.getByText(/histórico importado de Excel, CSV ou TSV/)).toBeVisible();
+  await expect(page.getByText(/taças por eliminatórias, com plantéis e resultados registados/)).toBeVisible();
+  await expect(page.getByText(/As fases de grupos ainda não estão disponíveis/)).toBeVisible();
   await expect(page.getByRole('button', { name: 'Criar liga individual' })).toBeVisible();
   await expect(page.getByLabel('Nome do torneio')).toHaveCount(0);
 });
