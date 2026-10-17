@@ -65,7 +65,7 @@ function fixtureToken(username: string): string {
 type FixtureMode = 'empty' | 'draft' | 'paged' | 'forbidden' | 'switch'
   | 'management' | 'complete-rejected' | 'list-network-error'
   | 'paged-enrollment' | 'draw-tie' | 'schedule-roster-paged' | 'schedule-roster-oversize'
-  | 'discovery';
+  | 'discovery' | 'trial';
 
 async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode, sport: string | null = 'Futebol', sports?: string[]) {
   const username = role === 'OWNER' ? 'organizador' : 'participante';
@@ -90,6 +90,10 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode, sport
   tournaments.forEach(item => item.sport = sport);
   if (mode === 'switch') tournaments.push(tournament(11, 'Liga alternativa'));
   if (mode === 'paged') tournaments[0].status = 'IN_PROGRESS';
+  if (mode === 'trial') {
+    tournaments[0].status = 'IN_PROGRESS';
+    tournaments[0].name = 'lol';
+  }
   const participants: Participant[] = role === 'OWNER' && mode !== 'empty' ? [
     { profileId: 1, username: 'organizador', displayName: 'Organizador',
       joinedAt: '2026-10-16T12:01:00Z', status: 'CONFIRMED' },
@@ -129,6 +133,11 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode, sport
       awayProfileId: 2, awayUsername: 'participante', status: 'SCHEDULED',
       homeScore: null, awayScore: null }
   ] : [];
+  if (mode === 'trial') {
+    matches.push({ id: 40, roundNumber: 1, homeProfileId: 1, homeUsername: 'organizador',
+      awayProfileId: 2, awayUsername: 'participante', status: 'SCHEDULED',
+      homeScore: null, awayScore: null });
+  }
   const requestedMatchPages: number[] = [];
   const pendingDetailResponses: Array<() => void> = [];
   let completeAttempts = 0;
@@ -260,6 +269,18 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode, sport
         tournaments.unshift(next);
         return send(next, 201);
       }
+    }
+
+    if (method === 'DELETE' && path === '/api/communities/7/tournaments/9') {
+      const target = tournaments.find(t => t.id === 9);
+      if (!target) return send({ message: 'Não encontrado' }, 404);
+      if (target.status === 'COMPLETED' || matches.some(m => m.status === 'COMPLETED')) {
+        return send({ message: 'Resultados já registados' }, 409);
+      }
+      tournaments.splice(tournaments.indexOf(target), 1);
+      participants.splice(0, participants.length);
+      matches.splice(0, matches.length);
+      return send(null, 204);
     }
     if (path === '/api/communities/7/tournaments/9/participants') {
       if (method === 'GET') {
@@ -425,10 +446,11 @@ test('organizador abre Torneios e cria uma liga no navegador', async ({ page }) 
   const state = await mockCommunityApi(page, 'OWNER', 'empty');
   await page.goto('/menu/communities/7?tab=tournaments');
 
-  await expect(page.getByRole('heading', { name: 'Torneios da comunidade' })).toBeVisible();
-  await expect(page.getByText('Esta comunidade ainda não tem torneios.')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Competições da comunidade' })).toBeVisible();
+  await expect(page.getByText('Esta comunidade ainda não tem competições.')).toBeVisible();
+  await page.getByRole('button', { name: 'Criar liga individual' }).click();
   await page.getByLabel('Nome do torneio').fill('Liga de Inverno');
-  await page.getByRole('button', { name: 'Criar torneio' }).click();
+  await page.getByRole('button', { name: 'Confirmar liga individual' }).click();
   await expect(page.getByRole('heading', { name: 'Liga de Inverno' })).toBeVisible();
   await expect(page.getByText('Torneio criado.')).toBeVisible();
   expect(state.tournaments).toHaveLength(1);
@@ -440,7 +462,7 @@ test('membro pede inscrição sem conseguir gerir torneios', async ({ page }) =>
   await page.goto('/menu/communities/7?tab=tournaments');
 
   await expect(page.getByRole('heading', { name: 'Liga de Outono' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Criar torneio' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Confirmar liga individual' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Gerar jornadas' })).toHaveCount(0);
   await page.getByRole('button', { name: 'Pedir inscrição' }).click();
   await expect(page.getByRole('button', { name: 'Cancelar a minha inscrição' })).toBeVisible();
@@ -456,12 +478,12 @@ test('organizador publica jornada, regista resultado e encerra a liga', async ({
   await expect(page.getByRole('heading', { name: 'Liga de Outono' })).toBeVisible();
   await page.getByRole('button', { name: 'Gerar jornadas' }).click();
   await page.getByRole('button', { name: 'Sim, publicar calendário' }).click();
-  await expect(page.getByText('Jornadas e resultados')).toBeVisible();
+  await expect(page.getByText('Confrontos e resultados')).toBeVisible();
 
   await page.getByRole('spinbutton', { name: 'Golos de organizador' }).fill('2');
   await page.getByRole('spinbutton', { name: 'Golos de participante' }).fill('1');
   await page.getByRole('button', { name: 'Guardar' }).click();
-  await expect(page.getByText('1 / 1 jogos')).toBeVisible();
+  await expect(page.getByText('1 / 1 confrontos concluídos')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Corrigir' })).toBeVisible();
 
   await page.getByRole('button', { name: 'Encerrar torneio' }).click();
@@ -564,7 +586,7 @@ test('correção de resultado altera os pontos e a ordem da classificação', as
   await match.getByRole('button', { name: 'Corrigir' }).click();
   await expect(page.locator('.standings-table tbody tr').first()).toContainText('Participante');
   await expect(page.locator('.standings-table tbody tr').first()).toContainText('3');
-  await expect(page.getByText('1 / 1 jogos')).toBeVisible();
+  await expect(page.getByText('1 / 1 confrontos concluídos')).toBeVisible();
   expect(fixture.matches[0].homeScore).toBe(0);
   expect(fixture.matches[0].awayScore).toBe(3);
 });
@@ -602,7 +624,7 @@ test('falha de rede ao listar torneios informa o utilizador e recupera sem falso
   await page.goto('/menu/communities/7?tab=tournaments');
 
   await expect(page.getByRole('alert')).toContainText('Não foi possível carregar os torneios.');
-  await expect(page.getByText('Esta comunidade ainda não tem torneios.')).toHaveCount(0);
+  await expect(page.getByText('Esta comunidade ainda não tem competições.')).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Tentar novamente' })).toBeEnabled();
   await page.getByRole('button', { name: 'Tentar novamente' }).click();
 
@@ -641,7 +663,7 @@ test('empate desportivo no primeiro lugar não atribui campeão arbitrário', as
   await game.getByRole('spinbutton', { name: 'Golos de participante' }).fill('1');
   await game.getByRole('button', { name: 'Guardar' }).click();
 
-  await expect(page.getByText('1 / 1 jogos')).toBeVisible();
+  await expect(page.getByText('1 / 1 confrontos concluídos')).toBeVisible();
   await page.getByRole('button', { name: 'Encerrar torneio' }).click();
   await page.getByRole('button', { name: 'Sim, encerrar' }).click();
 
@@ -659,7 +681,7 @@ test('separadores têm indicação acessível e funcionam por teclado', async ({
   await page.goto('/menu/communities/7');
 
   const nav = page.locator('.community-tabs');
-  const tournamentsTab = nav.getByRole('button', { name: 'Torneios' });
+  const tournamentsTab = nav.getByRole('button', { name: 'Competições' });
   const sessionsTab = nav.getByRole('button', { name: /Sessões|Sessions/ });
 
   await expect(tournamentsTab).toBeVisible();
@@ -669,14 +691,14 @@ test('separadores têm indicação acessível e funcionam por teclado', async ({
   await tournamentsTab.press('Enter');
 
   await expect(tournamentsTab).toHaveAttribute('aria-current', 'true');
-  await expect(page.getByRole('heading', { name: 'Torneios da comunidade' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Competições da comunidade' })).toBeVisible();
   await expect(page.locator('.tournament-heading h4')).toHaveText('Liga de Outono');
 
   await sessionsTab.focus();
   await sessionsTab.press('Space');
   await expect(sessionsTab).toHaveAttribute('aria-current', 'true');
   await expect(tournamentsTab).not.toHaveAttribute('aria-current', 'true');
-  await expect(page.getByRole('heading', { name: 'Torneios da comunidade' })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Competições da comunidade' })).toHaveCount(0);
 
   await tournamentsTab.focus();
   await tournamentsTab.press('Enter');
@@ -742,8 +764,9 @@ test('nome inválido mostra ajuda acessível e impede criar torneio', async ({ p
   const fixture = await mockCommunityApi(page, 'OWNER', 'empty');
   await page.goto('/menu/communities/7?tab=tournaments');
 
+  await page.getByRole('button', { name: 'Criar liga individual' }).click();
   const name = page.getByRole('textbox', { name: 'Nome do torneio' });
-  const submit = page.getByRole('button', { name: 'Criar torneio' });
+  const submit = page.getByRole('button', { name: 'Confirmar liga individual' });
   await name.fill('L');
   await expect(name).toHaveAttribute('aria-invalid', 'true');
   await expect(name).toHaveAttribute('aria-describedby', 'tournament-name-hint');
@@ -808,7 +831,7 @@ test('após aprovação ou remoção o foco regressa à secção Jogadores', asy
   await mockCommunityApi(page, 'OWNER', 'management');
   await page.goto('/menu/communities/7?tab=tournaments');
   await expect(page.locator('.tournament-heading h4')).toHaveText('Liga de Outono');
-  const heading = page.getByRole('heading', { name: 'Jogadores', exact: true });
+  const heading = page.getByRole('heading', { name: 'Participantes', exact: true });
   await page.getByRole('button', { name: 'Confirmar inscrição de Mariana' }).click();
   await expect(page.locator('.player-item').filter({ hasText: '@mariana' })).toContainText('Confirmado');
   await expect(heading).toBeFocused();
@@ -860,7 +883,7 @@ test('basquetebol apresenta pontos no marcador e na classificação, sem golos',
   await expect(page.getByRole('columnheader', { name: 'PM' })).toBeVisible();
   await expect(page.getByRole('columnheader', { name: 'PS' })).toBeVisible();
   await expect(page.getByRole('columnheader', { name: 'DP' })).toBeVisible();
-  await expect(page.getByText('Ordem: pontos de classificação, diferença de pontos, pontos marcados e vitórias.')).toBeVisible();
+  await expect(page.getByText('Classificação apenas desta competição: pontos, diferença de pontos, pontos marcados e vitórias.')).toBeVisible();
 
   await page.getByRole('button', { name: 'Gerar jornadas' }).click();
   await page.getByRole('button', { name: 'Sim, publicar calendário' }).click();
@@ -883,7 +906,7 @@ test('padel mostra sets e esclarece que ainda não regista resultados set a set'
   await page.getByRole('spinbutton', { name: 'Sets ganhos de organizador' }).fill('2');
   await page.getByRole('spinbutton', { name: 'Sets ganhos de participante' }).fill('1');
   await page.getByRole('button', { name: 'Guardar' }).click();
-  await expect(page.getByText('1 / 1 jogos')).toBeVisible();
+  await expect(page.getByText('1 / 1 confrontos concluídos')).toBeVisible();
   await expect(page.getByRole('columnheader', { name: 'SG' })).toBeVisible();
 });
 
@@ -988,15 +1011,47 @@ test('descoberta mostra modalidades de comunidades múltiplas, legadas e sem des
 test('torneio multidesporto exige escolha explícita e aceita modalidade fora da comunidade', async ({ page }) => {
   const fixture = await mockCommunityApi(page, 'OWNER', 'empty', 'Futebol', ['Futebol', 'Padel']);
   await page.goto('/menu/communities/7?tab=tournaments');
+  await page.getByRole('button', { name: 'Criar liga individual' }).click();
   await page.getByLabel('Nome do torneio').fill('Liga de Natação');
-  await expect(page.getByRole('button', { name: 'Criar torneio' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Confirmar liga individual' })).toBeDisabled();
 
   await page.getByLabel('Modalidade do torneio').fill('natacao');
   await page.getByRole('button', { name: 'Natação', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Criar torneio' })).toBeEnabled();
-  await page.getByRole('button', { name: 'Criar torneio' }).click();
+  await expect(page.getByRole('button', { name: 'Confirmar liga individual' })).toBeEnabled();
+  await page.getByRole('button', { name: 'Confirmar liga individual' }).click();
 
   await expect(page.locator('.tournament-heading h4')).toHaveText('Liga de Natação');
   await expect(page.locator('.t-tournament-sport')).toHaveText('Natação');
   expect(fixture.tournaments[0].sport).toBe('Natação');
+});
+
+test('guia distingue competições das estatísticas habituais e explica equipas sem prometer criação', async ({ page }) => {
+  await mockCommunityApi(page, 'OWNER', 'empty');
+  await page.goto('/menu/communities/7?tab=tournaments');
+
+  await expect(page.getByRole('heading', { name: 'Como querem competir?' })).toBeVisible();
+  await expect(page.getByText('Por equipas', { exact: true })).toBeVisible();
+  await expect(page.getByText('Em desenvolvimento')).toBeVisible();
+  await expect(page.getByText(/histórico Excel/)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Criar liga individual' })).toBeVisible();
+  await expect(page.getByLabel('Nome do torneio')).toHaveCount(0);
+});
+
+test('organizador remove torneio experimental sem resultados depois de confirmar o nome', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'trial');
+  await page.goto('/menu/communities/7?tab=tournaments');
+
+  await expect(page.locator('.tournament-heading h4')).toHaveText('lol');
+  await expect(page.getByRole('button', { name: 'Eliminar competição' })).toBeVisible();
+  await page.getByRole('button', { name: 'Eliminar competição' }).click();
+  await expect(page.getByText('Eliminar “lol”?', { exact: false })).toBeVisible();
+  expect(fixture.tournaments).toHaveLength(1);
+  await page.getByRole('button', { name: 'Cancelar', exact: true }).click();
+  expect(fixture.tournaments).toHaveLength(1);
+
+  await page.getByRole('button', { name: 'Eliminar competição' }).click();
+  await page.getByRole('button', { name: 'Sim, eliminar competição' }).click();
+  await expect(page.getByText('Competição eliminada.')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Como querem competir?' })).toBeVisible();
+  expect(fixture.tournaments).toHaveLength(0);
 });

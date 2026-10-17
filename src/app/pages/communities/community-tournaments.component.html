@@ -2,13 +2,23 @@
   <div class="tournament-hero">
     <div>
       <p class="tournament-eyebrow">Competição entre membros</p>
-      <h3>Torneios da comunidade</h3>
-      <p>Cria uma liga, confirma os participantes, organiza jornadas e acompanha a classificação.</p>
+      <h3>Competições da comunidade</h3>
+      <p>Organizem desafios individuais ou torneios por equipas. Os jogos semanais e as estatísticas habituais continuam independentes das competições.</p>
       @if (selected) {
         <p class="t-sport-note" role="note">{{ scoring.note }}</p>
       }
     </div>
-    <span class="tournament-type">{{ selected?.sport || 'Modalidade por definir' }} · Liga individual</span>
+    <div class="competition-hero-actions">
+      @if (canManage && !showGuide && !showIndividualCreate) {
+        <button type="button" class="t-btn t-btn-primary" (click)="showGuide = true">Criar competição</button>
+      }
+      @if (!showGuide) {
+        <button type="button" class="t-btn t-btn-secondary" (click)="showGuide = true">Como funciona?</button>
+      }
+      @if (selected) {
+        <span class="tournament-type">{{ selected.sport || 'Modalidade por definir' }} · Liga individual</span>
+      }
+    </div>
   </div>
 
   @if (error) {
@@ -18,11 +28,52 @@
     <div class="notice notice-success" role="status">{{ feedback }}</div>
   }
 
-  @if (canManage) {
+
+  @if (showGuide) {
+    <section class="competition-guide" aria-label="Como funcionam as competições">
+      <div class="guide-intro">
+        <span class="tournament-eyebrow">Antes de começar</span>
+        <h4>Como querem competir?</h4>
+        <p>Não há um tamanho mínimo obrigatório para organizar uma competição. Escolham o formato que combina convosco.</p>
+      </div>
+      <div class="guide-options">
+        <article class="guide-option">
+          <div class="guide-option-top">
+            <span aria-hidden="true">👤</span><strong>Individual</strong>
+            <span class="guide-tag">Disponível</span>
+          </div>
+          <p>Cada participante compete por si numa liga de todos contra todos. Indicada para pequenos desafios e modalidades individuais.</p>
+          <p class="guide-example">Ex.: 6 amigos numa liga de ténis.</p>
+          @if (canManage) {
+            <button type="button" class="t-btn t-btn-primary"
+              (click)="startIndividualCreation()">Criar liga individual</button>
+          }
+        </article>
+        <article class="guide-option">
+          <div class="guide-option-top">
+            <span aria-hidden="true">👥</span><strong>Por equipas</strong>
+            <span class="guide-tag guide-tag-pending">Em desenvolvimento</span>
+          </div>
+          <p>Criar equipas com membros da comunidade, escolher jogadores por equipa e organizar campeonatos ou eliminatórias.</p>
+          <p class="guide-example">Ex.: 20 membros divididos em quatro equipas de cinco.</p>
+          <p class="guide-coming">A organização por equipas ainda não está disponível. Não vamos fingir que uma conta de utilizador representa uma equipa.</p>
+        </article>
+      </div>
+      <div class="guide-community-note" role="note">
+        <strong>Jogam sempre com a mesma malta?</strong>
+        <p>Usem Classificação e Estatísticas para guardar as jornadas semanais, épocas e o histórico Excel. Não é preciso criar um torneio. E mesmo com 10 ou 11 pessoas, podem criar uma competição quando quiserem.</p>
+      </div>
+      <button type="button" class="t-btn t-btn-secondary" (click)="showGuide = false">Fechar explicação</button>
+    </section>
+  }
+
+  @if (canManage && showIndividualCreate) {
     <div class="create-tournament">
       <div>
-        <h4>Criar um torneio</h4>
-        <p>Começa pelas inscrições. O calendário só é publicado depois da confirmação dos jogadores.</p>
+        <h4>Criar liga individual</h4>
+        <p>Competição individual sem equipas: cada participante compete por si. Os resultados não alteram o histórico de jogos habituais da comunidade.</p>
+        <button type="button" class="t-btn t-btn-secondary"
+          (click)="showIndividualCreate = false; showGuide = true">Voltar às opções</button>
       </div>
       <div class="create-controls">
         <label for="new-tournament-name">Nome do torneio</label>
@@ -73,7 +124,7 @@
         }
         <button type="button" class="t-btn t-btn-primary"
           [disabled]="busy || nameDraft.trim().length < 2 || !sportDraft"
-          (click)="create()">Criar torneio</button>
+          (click)="create()">Confirmar liga individual</button>
       </div>
     </div>
   }
@@ -81,11 +132,11 @@
   <div class="tournament-browser">
     <aside class="tournament-sidebar" aria-label="Lista de torneios">
       <div class="sidebar-title">
-        <h4>Os torneios</h4>
+        <h4>Competições existentes</h4>
         <span>{{ tournaments.length }}</span>
       </div>
       @if (!loading && !tournaments.length && !error) {
-        <p class="t-muted">Esta comunidade ainda não tem torneios. @if (!canManage) {O organizador poderá criá-los aqui.}</p>
+        <p class="t-muted">Esta comunidade ainda não tem competições. @if (!canManage) {O organizador poderá criá-los aqui.}</p>
       }
       @for (tournament of tournaments; track tournament.id) {
         <button type="button" class="tournament-option"
@@ -109,7 +160,7 @@
 
     <div class="tournament-detail">
       @if (!selected) {
-        <div class="empty-tournament">Seleciona um torneio para veres os jogadores, jogos e classificação.</div>
+        <div class="empty-tournament">Seleciona uma competição para veres participantes, confrontos e classificação.</div>
       } @else {
         <header class="tournament-heading">
           <div>
@@ -120,10 +171,26 @@
             <span class="t-tournament-sport">{{ selected.sport || 'Modalidade não definida' }}</span>
             <p>Vitória {{ selected.winPoints }} · Empate {{ selected.drawPoints }} · Derrota {{ selected.lossPoints }} pontos</p>
           </div>
-          @if (isMember) {
-            <button type="button" class="t-btn t-btn-secondary" (click)="loadDetails()"
-              [disabled]="detailsLoading || busy">Atualizar</button>
-          }
+          <div class="tournament-heading-actions">
+            @if (isMember) {
+              <button type="button" class="t-btn t-btn-secondary" (click)="loadDetails()"
+                [disabled]="detailsLoading || busy">Atualizar</button>
+            }
+            @if (canManage && selected.status !== 'COMPLETED') {
+              @if (confirmAction === 'delete') {
+                <div class="competition-delete-confirm" role="group" aria-label="Confirmar eliminação">
+                  <p>Eliminar “{{ selected.name }}”? As inscrições e confrontos sem resultados serão apagados. As estatísticas gerais da comunidade não serão afetadas.</p>
+                  <button type="button" class="t-btn t-btn-danger"
+                    [disabled]="busy" (click)="deleteSelected()">Sim, eliminar competição</button>
+                  <button type="button" class="t-btn t-btn-secondary"
+                    [disabled]="busy" (click)="confirmAction = null">Cancelar</button>
+                </div>
+              } @else {
+                <button type="button" class="t-btn t-btn-danger-outline"
+                  [disabled]="busy" (click)="confirmAction = 'delete'">Eliminar competição</button>
+              }
+            }
+          </div>
         </header>
 
         @if (selected.status === 'COMPLETED') {
@@ -152,7 +219,7 @@
           <section class="t-section" aria-label="Inscrições">
             <div class="t-section-heading">
               <div>
-                <h5 #playersHeading tabindex="-1">Jogadores</h5>
+                <h5 #playersHeading tabindex="-1">Participantes</h5>
                 <p>{{ confirmedCount }} confirmados nesta lista · {{ participants.length }} inscrições apresentadas</p>
               </div>
               @if (selected.status === 'DRAFT') {
@@ -232,8 +299,8 @@
             <section class="t-section" aria-label="Jornadas">
               <div class="t-section-heading">
                 <div>
-                  <h5>Jornadas e resultados</h5>
-                  <p>Resultados atualizados pelos organizadores da comunidade.</p>
+                  <h5>Confrontos e resultados</h5>
+                  <p>Os resultados destes confrontos atualizam a classificação individual desta competição.</p>
                 </div>
               </div>
               @if (!matches.length) { <p class="t-muted">Não existem jogos para apresentar.</p> }
@@ -296,10 +363,10 @@
             <div class="t-section-heading">
               <div>
                 <h5>Classificação</h5>
-                <p>Ordem: pontos de classificação, {{ scoring.differenceTitle.toLowerCase() }}, {{ scoring.forTitle.toLowerCase() }} e vitórias.</p>
+                <p>Classificação apenas desta competição: pontos, {{ scoring.differenceTitle.toLowerCase() }}, {{ scoring.forTitle.toLowerCase() }} e vitórias.</p>
               </div>
               @if (standings) {
-                <span class="tournament-state">{{ standings.completedMatches }} / {{ standings.totalMatches }} jogos</span>
+                <span class="tournament-state">{{ standings.completedMatches }} / {{ standings.totalMatches }} confrontos concluídos</span>
               }
             </div>
             @if (standings?.standings?.length) {
@@ -307,7 +374,7 @@
                 <table class="standings-table" aria-label="Classificação do torneio">
                   <thead>
                     <tr>
-                      <th scope="col">#</th><th scope="col">Jogador</th>
+                      <th scope="col">#</th><th scope="col">Participante</th>
                       <th scope="col" title="Jogos">J</th>
                       <th scope="col" title="Vitórias">V</th>
                       <th scope="col" title="Empates">E</th>

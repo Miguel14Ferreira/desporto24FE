@@ -34,6 +34,10 @@ export class CommunityTournamentsService {
     return this.http.post<CommunityTournament>(this.url(communityId), { name, sport });
   }
 
+  delete(communityId: number, tournamentId: number): Observable<void> {
+    return this.http.delete<void>(this.url(communityId, tournamentId));
+  }
+
   participants(communityId: number, tournamentId: number, page: number): Observable<TournamentParticipantPage> {
     return this.http.get<TournamentParticipantPage>(this.url(communityId, tournamentId) + '/participants', {
       params: { page: String(page) }
