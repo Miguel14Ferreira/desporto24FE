@@ -54,11 +54,11 @@
         <article class="guide-option">
           <div class="guide-option-top">
             <span aria-hidden="true">👥</span><strong>Por equipas</strong>
-            <span class="guide-tag">Plantéis disponíveis</span>
+            <span class="guide-tag">Ligas e taças disponíveis</span>
           </div>
           <p>Escolham a modalidade e os jogadores por equipa. Criem equipas reais com os membros da comunidade.</p>
           <p class="guide-example">Ex.: 20 membros divididos em quatro equipas de cinco.</p>
-          <p class="guide-coming">Podem criar equipas e publicar jornadas numa liga de todos contra todos. Eliminatórias e fases de grupos chegarão noutras etapas.</p>
+          <p>Podem organizar ligas de todos contra todos ou taças por eliminatórias, com plantéis e resultados registados. As fases de grupos ainda não estão disponíveis.</p>
           @if (canManage && community.teamTournamentsEnabled !== false) {
             <button type="button" class="t-btn t-btn-primary" (click)="startTeamCreation()">Preparar torneio por equipas</button>
           } @else if (canManage) {
@@ -68,7 +68,7 @@
       </div>
       <div class="guide-community-note" role="note">
         <strong>Jogam sempre com a mesma malta?</strong>
-        <p>Usem Classificação e Estatísticas para guardar as jornadas semanais, épocas e o histórico Excel. Não é preciso criar um torneio. E mesmo com 10 ou 11 pessoas, podem criar uma competição quando quiserem.</p>
+        <p>Usem Classificação e Estatísticas para guardar jornadas semanais, épocas e histórico importado de Excel, CSV ou TSV. Não é preciso criar um torneio. E mesmo com 10 ou 11 pessoas, podem criar uma competição quando quiserem.</p>
       </div>
       <button type="button" class="t-btn t-btn-secondary" (click)="showGuide = false">Fechar explicação</button>
     </section>
