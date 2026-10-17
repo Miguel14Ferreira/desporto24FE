@@ -24,6 +24,57 @@ describe('CommunitiesComponent public session eligibility', () => {
     };
   });
 
+  it('accepts Excel, CSV and TSV history files regardless of extension casing', () => {
+    for (const name of ['histórico.xlsx', 'antigo.XLS', 'jornadas.csv', 'resultados.TSV']) {
+      const file = new File(['Jogador;Golos\\nAna;2'], name, { type: 'application/octet-stream' });
+      const input = { files: [file], value: name } as unknown as HTMLInputElement;
+      component.onImportFileChange({ target: input } as unknown as Event);
+      expect(component.importFile).toBe(file);
+      expect(component.importFileName).toBe(name);
+      expect(component.importFileError).toBe('');
+    }
+  });
+
+  it('rejects unsupported formats and oversized imports without keeping old previews', () => {
+    const previous = new File(['data'], 'jornadas.xlsx');
+    const select = (file: File) => {
+      const input = { files: [file], value: file.name } as unknown as HTMLInputElement;
+      component.onImportFileChange({ target: input } as unknown as Event);
+      return input;
+    };
+    select(previous);
+    component.importPreview = { fileName: previous.name, sheets: [] };
+    component.importFinalPlan = { rounds: [] };
+    component.importResult = { createdRounds: 1, skippedDuplicateRounds: 0, createdEntries: 2 };
+
+    const invalid = select(new File(['content'], 'historico.pdf'));
+    expect(invalid.value).toBe('');
+    expect(component.importFile).toBeUndefined();
+    expect(component.importFileName).toBe('');
+    expect(component.importFileError).toContain('.csv');
+    expect(component.importPreview).toBeUndefined();
+    expect(component.importFinalPlan).toBeUndefined();
+    expect(component.importResult).toBeUndefined();
+
+    const large = select(new File([new Uint8Array(10 * 1024 * 1024 + 1)], 'grande.csv'));
+    expect(large.value).toBe('');
+    expect(component.importFile).toBeUndefined();
+    expect(component.importFileError).toContain('10 MB');
+  });
+
+  it('clears stale import data when file selection is cancelled', () => {
+    component.importFile = new File(['data'], 'jornadas.csv');
+    component.importFileName = 'jornadas.csv';
+    component.importPreview = { fileName: 'jornadas.csv', sheets: [] };
+    component.onImportFileChange({
+      target: { files: [], value: '' } as unknown as HTMLInputElement
+    } as unknown as Event);
+
+    expect(component.importFile).toBeUndefined();
+    expect(component.importFileName).toBe('');
+    expect(component.importPreview).toBeUndefined();
+  });
+
   it('allows joining an upcoming open community session', () => {
     expect(component.canJoinCommunitySession(session)).toBeTrue();
   });

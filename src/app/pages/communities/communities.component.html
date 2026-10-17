@@ -908,7 +908,7 @@
 
                         <div class="import-file-row">
                           <label class="secondary-action import-file-picker jynlo-action jynlo-action--neutral jynlo-action--compact">
-                            <input #importInput type="file" accept=".xlsx" (change)="onImportFileChange($event)">
+                            <input #importInput type="file" accept=".xlsx,.xls,.csv,.tsv" (change)="onImportFileChange($event)">
                             <span>{{ importFileName || ('communities.import.choose' | t) }}</span>
                           </label>
                           @if (importFile) {
