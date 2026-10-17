@@ -19,8 +19,8 @@
           <p>Acompanhamento da utilização e das operações da plataforma, baseado nos registos atuais.</p>
         </div>
         <button type="button" class="jynlo-action jynlo-action--neutral"
-          (click)="loadOverview()" [disabled]="overviewLoading">
-          {{ overviewLoading ? 'A atualizar…' : 'Atualizar indicadores' }}
+          (click)="refreshIndicators()" [disabled]="overviewLoading || growthLoading">
+          {{ overviewLoading || growthLoading ? 'A atualizar…' : 'Atualizar indicadores' }}
         </button>
       </div>
 
@@ -121,6 +121,44 @@
           </article>
         </div>
       </ng-container>
+
+      <div class="growth-trends" aria-label="Evolução semanal da Jynlo">
+        <div class="growth-trends-heading">
+          <div>
+            <h3>Evolução nas últimas 8 semanas</h3>
+            <p>Novos registos, sessões e comunidades criadas por semana — não são totais acumulados.</p>
+          </div>
+          <span *ngIf="growth" class="growth-tz">Semanas de segunda a domingo · UTC</span>
+        </div>
+        <p *ngIf="growthLoading && !growth" role="status" class="overview-status">A carregar gráficos de crescimento…</p>
+        <p *ngIf="growthError" role="alert" class="overview-error">{{ growthError }}</p>
+        <div *ngIf="growth as history" class="growth-charts">
+          <article *ngFor="let chart of growthCharts" class="growth-chart"
+            [attr.aria-label]="chart.title + ' nas últimas oito semanas'">
+            <div class="growth-chart-title">
+              <strong>{{ chart.title }}</strong>
+              <span>{{ chart.total | number }} em 8 semanas</span>
+            </div>
+            <div class="growth-plot" role="list" [attr.aria-label]="chart.title + ' por semana'">
+              <div *ngFor="let point of chart.bars" class="growth-point" role="listitem"
+                [attr.aria-label]="(point.weekStart | date:'dd/MM/yyyy') + ': ' + point.value">
+                <span class="growth-value">{{ point.value | number }}</span>
+                <div class="growth-bar-track">
+                  <div class="growth-bar" [class.growth-bar--users]="chart.key === 'users'"
+                    [class.growth-bar--sessions]="chart.key === 'sessions'"
+                    [class.growth-bar--communities]="chart.key === 'communities'"
+                    [style.height.%]="point.height"></div>
+                </div>
+                <span class="growth-week">{{ point.weekStart | date:'dd/MM' }}</span>
+              </div>
+            </div>
+          </article>
+        </div>
+        <p *ngIf="growth" class="overview-updated">
+          Atualizado: {{ growth.generatedAt | date:'dd/MM/yyyy HH:mm' }} ·
+          Semanas sem criações são apresentadas como zero.
+        </p>
+      </div>
     </section>
 
     <div class="admin-grid">
