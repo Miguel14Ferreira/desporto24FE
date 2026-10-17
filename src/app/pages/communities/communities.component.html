@@ -1248,6 +1248,9 @@
                             (click)="selectImportMode('MATCHES')">{{ 'communities.matches.mode' | t }}</button>
                         </div>
                         <p role="note">{{ 'communities.import.chooseModeHint' | t }}</p>
+                        @if (importMode === 'ROUNDS') {
+                          <p class="import-validation" role="note">{{ 'communities.import.roundsAffectRankings' | t }}</p>
+                        }
                         @if (importMode === 'STANDINGS') {
                           <p>{{ 'communities.archive.hint' | t }}</p>
                         } @else if (importMode === 'MATCHES') {
