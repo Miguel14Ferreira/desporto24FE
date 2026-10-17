@@ -1161,9 +1161,15 @@
                             [class.active]="importMode === 'STANDINGS'"
                             [attr.aria-pressed]="importMode === 'STANDINGS'"
                             (click)="selectImportMode('STANDINGS')">{{ 'communities.archive.finalStandings' | t }}</button>
+                          <button type="button" class="secondary-action small jynlo-action jynlo-action--neutral jynlo-action--compact"
+                            [class.active]="importMode === 'MATCHES'"
+                            [attr.aria-pressed]="importMode === 'MATCHES'"
+                            (click)="selectImportMode('MATCHES')">{{ 'communities.matches.mode' | t }}</button>
                         </div>
                         @if (importMode === 'STANDINGS') {
                           <p>{{ 'communities.archive.hint' | t }}</p>
+                        } @else if (importMode === 'MATCHES') {
+                          <p role="note">{{ 'communities.matches.hint' | t }}</p>
                         }
 
                         <div class="import-file-row">
@@ -1235,13 +1241,21 @@
                                     ? ('communities.import.validating' | t)
                                     : ('communities.import.previewData' | t) }}
                                 </button>
-                              } @else {
+                              } @else if (importMode === 'STANDINGS') {
                                 <button type="button" class="primary-action import-continue jynlo-action jynlo-action--primary"
                                   [disabled]="archivePreviewLoading"
                                   (click)="previewArchiveImport()">
                                   {{ archivePreviewLoading
                                     ? ('communities.import.validating' | t)
                                     : ('communities.import.previewData' | t) }}
+                                </button>
+                              } @else {
+                                <button type="button" class="primary-action import-continue jynlo-action jynlo-action--primary"
+                                  [disabled]="matchPreviewLoading"
+                                  (click)="previewHistoricalMatches()">
+                                  {{ matchPreviewLoading
+                                    ? ('communities.import.validating' | t)
+                                    : ('communities.matches.previewAction' | t) }}
                                 </button>
                               }
                             }
@@ -1253,6 +1267,52 @@
                               </div>
                             }
 
+
+
+                            @if (importMode === 'MATCHES' && matchPreview) {
+                              <div class="import-final-plan" role="region"
+                                [attr.aria-label]="'communities.matches.title' | t">
+                                <strong>{{ 'communities.matches.title' | t }}</strong>
+                                <p>{{ matchPreview.acceptedRows }} {{ 'communities.matches.matchesCount' | t }}
+                                  · {{ matchPreview.potentialDuplicates }} {{ 'communities.matches.possibleDuplicates' | t }}</p>
+                                @for (warning of matchPreview.warnings.slice(0, 10); track $index) {
+                                  <p class="import-validation" role="note">{{ warning }}</p>
+                                }
+                                <div class="archive-standings-scroll" role="region" tabindex="0"
+                                  [attr.aria-label]="'communities.matches.title' | t">
+                                  <table class="archive-standings-table">
+                                    <thead>
+                                      <tr>
+                                        <th scope="col">{{ 'communities.matches.sourceRow' | t }}</th>
+                                        <th scope="col">{{ 'communities.matches.home' | t }}</th>
+                                        <th scope="col">{{ 'communities.matches.score' | t }}</th>
+                                        <th scope="col">{{ 'communities.matches.away' | t }}</th>
+                                        <th scope="col">{{ 'communities.matches.date' | t }}</th>
+                                        <th scope="col">{{ 'communities.matches.round' | t }}</th>
+                                        <th scope="col">{{ 'communities.matches.review' | t }}</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      @for (match of matchPreview.rows.slice(0, 25); track match.sourceRow) {
+                                        <tr>
+                                          <td>{{ match.sourceRow }}</td>
+                                          <td><strong>{{ match.home }}</strong></td>
+                                          <td>{{ match.homeScore }}–{{ match.awayScore }}</td>
+                                          <td><strong>{{ match.away }}</strong></td>
+                                          <td>{{ match.sourceDate || '—' }}</td>
+                                          <td>{{ match.sourceRound || '—' }}</td>
+                                          <td>{{ match.potentialDuplicate ? ('communities.matches.possibleRepeat' | t) : '—' }}</td>
+                                        </tr>
+                                      }
+                                    </tbody>
+                                  </table>
+                                </div>
+                                @if (matchPreview.rows.length > 25) {
+                                  <p>{{ 'communities.matches.truncated' | t }}</p>
+                                }
+                                <p role="note">{{ 'communities.matches.readOnly' | t }}</p>
+                              </div>
+                            }
 
                             @if (importMode === 'STANDINGS' && archivePreview) {
                               <div class="import-final-plan">

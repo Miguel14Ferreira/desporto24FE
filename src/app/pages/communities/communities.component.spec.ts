@@ -125,6 +125,62 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(component['suggestArchiveField']('Equipa', 'IGNORE')).toBe('NAME');
   });
 
+  it('maps tournament match headers and clears stale previews on mapping and mode changes', () => {
+    component.importMode = 'MATCHES';
+    expect(component.importFields).toEqual(
+      ['IGNORE', 'HOME', 'AWAY', 'SCORE', 'HOME_SCORE', 'AWAY_SCORE', 'DATE', 'ROUND']);
+    expect(component['suggestMatchField']('Equipa A', 'PLAYER')).toBe('HOME');
+    expect(component['suggestMatchField']('Equipa B', 'PLAYER')).toBe('AWAY');
+    expect(component['suggestMatchField']('Resultado', 'RESULT')).toBe('SCORE');
+    expect(component['suggestMatchField']('Golos Casa', 'IGNORE')).toBe('HOME_SCORE');
+    expect(component['suggestMatchField']('Golos Fora', 'IGNORE')).toBe('AWAY_SCORE');
+    expect(component['suggestMatchField']('Jornada', 'IGNORE')).toBe('ROUND');
+    expect(component['suggestMatchField']('Equipa', 'PLAYER')).toBe('IGNORE');
+    component.importMappings = [{ columnIndex: 0, header: 'Equipa A', field: 'HOME', confidence: 1 }];
+    component.matchPreview = { sheetName: 'Dados', sourceRows: 1, acceptedRows: 1,
+      potentialDuplicates: 0, warnings: [], rows: [] };
+    component.setImportMapping(0, 'AWAY');
+    expect(component.matchPreview).toBeUndefined();
+    component.matchPreview = { sheetName: 'Dados', sourceRows: 1, acceptedRows: 1,
+      potentialDuplicates: 0, warnings: [], rows: [] };
+    component.selectImportMode('STANDINGS');
+    expect(component.matchPreview).toBeUndefined();
+    expect(component.importMode).toBe('STANDINGS');
+  });
+
+  it('only previews historical matches and never invokes any persistence endpoint', () => {
+    component.selected = { id: 7 } as any;
+    component.importMode = 'MATCHES';
+    component.importFile = new File(['data'], 'jogos.csv');
+    component.importSheetName = 'Dados';
+    component.importMappings = [
+      { columnIndex: 0, header: 'Casa', field: 'HOME', confidence: 1 },
+      { columnIndex: 1, header: 'Fora', field: 'AWAY', confidence: 1 },
+      { columnIndex: 2, header: 'Resultado', field: 'SCORE', confidence: 1 }
+    ];
+    const preview = { sheetName: 'Dados', sourceRows: 2, acceptedRows: 2, potentialDuplicates: 1,
+      warnings: ['Linha 3: confronto potencialmente repetido'], rows: [
+        { sourceRow: 2, home: 'Águias', away: 'Lobos', homeScore: 2, awayScore: 1,
+          sourceDate: '2020-10-01', sourceRound: '1', potentialDuplicate: false }
+      ] };
+    const fetchMatches = jasmine.createSpy('previewHistoricalMatches').and.returnValue(of(preview));
+    const confirmStandings = jasmine.createSpy('confirmHistoricalStandings');
+    (component as any).communityService = {
+      previewHistoricalMatches: fetchMatches, confirmHistoricalStandings: confirmStandings
+    };
+    component.previewHistoricalMatches();
+    expect(fetchMatches).toHaveBeenCalledWith(7, jasmine.any(File), {
+      sheetName: 'Dados',
+      columns: [
+        { columnIndex: 0, field: 'HOME' }, { columnIndex: 1, field: 'AWAY' },
+        { columnIndex: 2, field: 'SCORE' }
+      ]
+    });
+    expect(component.matchPreview?.rows[0].homeScore).toBe(2);
+    expect(component.matchPreview?.potentialDuplicates).toBe(1);
+    expect(confirmStandings).not.toHaveBeenCalled();
+  });
+
   it('requires review and a title before writing final standings', () => {
     component.selected = { id: 7 } as any;
     component.importMode = 'STANDINGS';

@@ -75,6 +75,24 @@ export interface HistoricalStandingArchive extends HistoricalStandingSummary {
   rows: HistoricalStandingRow[];
 }
 
+export interface HistoricalMatchPreview {
+  sheetName: string;
+  sourceRows: number;
+  acceptedRows: number;
+  potentialDuplicates: number;
+  warnings: string[];
+  rows: Array<{
+    sourceRow: number;
+    home: string;
+    away: string;
+    homeScore: number;
+    awayScore: number;
+    sourceDate: string;
+    sourceRound: string;
+    potentialDuplicate: boolean;
+  }>;
+}
+
 @Injectable({ providedIn: 'root' })
 export class CommunityGroupsService {
   private readonly url = environment.apiUrl + '/api/communities';
@@ -221,6 +239,13 @@ export class CommunityGroupsService {
     const formData = this.importForm(file, mapping);
     formData.append('context', new Blob([JSON.stringify(context)], { type: 'application/json' }));
     return this.http.post<any>(this.url + '/' + id + '/competition/import/rounds/final-plan', formData);
+  }
+
+  previewHistoricalMatches(id: number, file: File, mapping: unknown): Observable<HistoricalMatchPreview> {
+    return this.http.post<HistoricalMatchPreview>(
+      this.url + '/' + id + '/competition/import/matches/preview',
+      this.importForm(file, mapping)
+    );
   }
 
   previewHistoricalStandings(id: number, file: File, mapping: unknown): Observable<HistoricalStandingPreview> {
