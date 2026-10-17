@@ -1,8 +1,9 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { AuthenticationService } from './services/authethication.service';
 import { PilotAnalyticsService } from './services/pilot-analytics.service';
+import { OnlinePresenceService } from './services/online-presence.service';
 import { appTranslate as t } from './i18n/i18n.service';
 import { registrationSessionReturnUrl, registrationCommunityReturnUrl, takeRegistrationDestination } from './shared/registration-return-url';
 
@@ -13,18 +14,20 @@ import { registrationSessionReturnUrl, registrationCommunityReturnUrl, takeRegis
     changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
-export class AppComponent implements OnInit {
+export class AppComponent implements OnInit, OnDestroy {
   title = 'desporto24';
 
   constructor(
     private router: Router,
     private authenticationService: AuthenticationService,
-    private pilotAnalyticsService: PilotAnalyticsService
+    private pilotAnalyticsService: PilotAnalyticsService,
+    private onlinePresence: OnlinePresenceService
   ) {}
 
   ngOnInit(): void {
     const params = new URLSearchParams(window.location.search);
     this.pilotAnalyticsService.recordFirstAccess(params.get('cohort'));
+    this.onlinePresence.start();
 
     const token = params.get('confirmRegistration');
 
@@ -53,6 +56,10 @@ export class AppComponent implements OnInit {
         this.navigateToLoginAfterConfirmation(params);
       }
     });
+  }
+
+  ngOnDestroy(): void {
+    this.onlinePresence.stop();
   }
 
   private navigateToLoginAfterConfirmation(params: URLSearchParams): void {
