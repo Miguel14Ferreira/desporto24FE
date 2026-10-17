@@ -25,6 +25,7 @@ interface Tournament {
   entryType?: 'INDIVIDUAL' | 'TEAM';
   playersPerTeam?: number | null;
   roundRobinLegs?: 1 | 2;
+  teamTieBreakPriority?: 'GOAL_DIFFERENCE_FIRST' | 'GOALS_SCORED_FIRST' | 'WINS_FIRST';
 }
 
 interface Participant {
@@ -303,13 +304,15 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
         const body = req.postDataJSON() as {
           name: string; sport: string; entryType?: 'TEAM'; playersPerTeam?: number;
           roundRobinLegs?: 1 | 2; winPoints?: number; drawPoints?: number; lossPoints?: number;
+          teamTieBreakPriority?: 'GOAL_DIFFERENCE_FIRST' | 'GOALS_SCORED_FIRST' | 'WINS_FIRST';
         };
         const next = {
           ...tournament(11, body.name), sport: body.sport,
           entryType: body.entryType || 'INDIVIDUAL',
           playersPerTeam: body.playersPerTeam || null, roundRobinLegs: body.roundRobinLegs || 1,
           winPoints: body.winPoints ?? 3, drawPoints: body.drawPoints ?? 1,
-          lossPoints: body.lossPoints ?? 0
+          lossPoints: body.lossPoints ?? 0,
+          teamTieBreakPriority: body.teamTieBreakPriority || 'GOAL_DIFFERENCE_FIRST'
         };
         tournaments.unshift(next);
         return send(next, 201);
@@ -1284,6 +1287,25 @@ test('regras de pontos personalizadas também se aplicam à liga individual', as
   expect(fixture.tournaments[0].winPoints).toBe(5);
   expect(fixture.tournaments[0].drawPoints).toBe(2);
   await expect(page.locator('.tournament-heading')).toContainText('Vitória 5');
+  expect(fixture.unmocked.filter(path => path.includes('/tournaments/'))).toEqual([]);
+});
+
+test('critério de desempate fica guardado na configuração inicial por equipas', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'teams');
+  await page.goto('/menu/communities/7?tab=tournaments');
+  await page.getByRole('button', { name: 'Preparar torneio por equipas' }).click();
+  const priorities = page.getByRole('group', { name: 'Critério de desempate' });
+  const difference = priorities.getByRole('button', { name: /Diferença do marcador/ });
+  const wins = priorities.getByRole('button', { name: /Mais vitórias/ });
+  await expect(difference).toHaveAttribute('aria-pressed', 'true');
+  await wins.click();
+  await expect(wins).toHaveAttribute('aria-pressed', 'true');
+  await page.getByLabel('Nome do torneio').fill('Liga personalizada');
+  await page.getByLabel('Jogadores por equipa').fill('2');
+  await page.getByRole('button', { name: 'Criar e preparar equipas' }).click();
+  await expect(page.locator('.tournament-heading'))
+    .toContainText('Desempate prioritário: Mais vitórias');
+  expect(fixture.tournaments[0].teamTieBreakPriority).toBe('WINS_FIRST');
   expect(fixture.unmocked.filter(path => path.includes('/tournaments/'))).toEqual([]);
 });
 

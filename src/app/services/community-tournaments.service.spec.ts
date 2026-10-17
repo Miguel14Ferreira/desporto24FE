@@ -34,11 +34,11 @@ describe('CommunityTournamentsService API contract', () => {
       { name: 'Liga Individual', sport: 'Ténis', winPoints: 2, drawPoints: 1, lossPoints: 0 });
     service.createTeamTournament(7, 'Liga Equipas', 'Futebol', 5, 2, {
       winPoints: 4, drawPoints: 2, lossPoints: 0
-    }).subscribe();
+    }, 'WINS_FIRST').subscribe();
     expect(http.post).toHaveBeenCalledWith(
       environment.apiUrl + '/api/communities/7/tournaments',
       { name: 'Liga Equipas', sport: 'Futebol', entryType: 'TEAM',
-        playersPerTeam: 5, roundRobinLegs: 2,
+        playersPerTeam: 5, roundRobinLegs: 2, teamTieBreakPriority: 'WINS_FIRST',
         winPoints: 4, drawPoints: 2, lossPoints: 0 });
   });
 
