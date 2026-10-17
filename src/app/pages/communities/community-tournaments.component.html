@@ -236,6 +236,21 @@
           </div>
         }
 
+        @if (isTeamCompetition && selected.status === 'COMPLETED') {
+          <div class="champion" role="status">
+            <span aria-hidden="true">🏆</span>
+            <div>
+              @if (selected.championTied) {
+                <strong>Empate no primeiro lugar entre equipas</strong>
+                <p>O campeonato terminou empatado nos critérios desportivos.</p>
+              } @else {
+                <strong>Equipa campeã: {{ selected.championTeamName }}</strong>
+                <p>{{ selected.championPoints }} pontos · Campeonato concluído</p>
+              }
+            </div>
+          </div>
+        }
+
         @if (isTeamCompetition) {
           @if (!isMember) {
             <div class="notice notice-info" role="status">Adere à comunidade para consultar os plantéis desta competição.</div>
@@ -466,6 +481,29 @@
                   </div>
                 }
               </section>
+              @if (canManage && selected.status === 'IN_PROGRESS') {
+                <div class="complete-action">
+                  <div>
+                    <h5>Encerrar campeonato por equipas</h5>
+                    <p>É necessário concluir todos os confrontos.
+                      Depois de encerrado, os resultados ficam bloqueados
+                      e a equipa campeã é registada.</p>
+                  </div>
+                  @if (confirmAction === 'completeTeam') {
+                    <div class="confirm-actions">
+                      <button type="button" class="t-btn t-btn-primary"
+                        [disabled]="busy || !canCompleteTeam"
+                        (click)="completeTeam()">Sim, encerrar campeonato</button>
+                      <button type="button" class="t-btn t-btn-secondary"
+                        (click)="confirmAction = null">Cancelar</button>
+                    </div>
+                  } @else {
+                    <button type="button" class="t-btn t-btn-secondary"
+                      [disabled]="!canCompleteTeam"
+                      (click)="confirmAction = 'completeTeam'">Encerrar campeonato por equipas</button>
+                  }
+                </div>
+              }
             }
           }
         } @else if (!isMember) {

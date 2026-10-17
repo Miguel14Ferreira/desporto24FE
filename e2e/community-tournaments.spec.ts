@@ -364,6 +364,24 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode, sport
       match.status = 'COMPLETED';
       return send(match);
     }
+    if (path === '/api/communities/7/tournaments/11/teams/complete' && method === 'POST') {
+      if (role !== 'OWNER' && role !== 'ADMIN') return send({ message: 'Sem permissão' }, 403);
+      if (tournaments[0].status !== 'IN_PROGRESS'
+          || !teamFixtures.length || teamFixtures.some(game => game.status !== 'COMPLETED')) {
+        return send({ message: 'Ainda existem confrontos por concluir' }, 409);
+      }
+      const game = teamFixtures[0];
+      const tied = game.homeScore === game.awayScore;
+      const winnerId = tied ? null : game.homeScore! > game.awayScore!
+        ? game.homeTeamId : game.awayTeamId;
+      Object.assign(tournaments[0], {
+        status: 'COMPLETED', completedAt: '2026-10-17T13:00:00Z',
+        championTeamId: winnerId,
+        championTeamName: winnerId == null ? null : teams.find(t => t.id === winnerId)?.name,
+        championTied: tied, championPoints: tied ? null : 3
+      });
+      return send(tournaments[0]);
+    }
     if (path === '/api/communities/7/tournaments/11/teams') {
       if (method === 'GET') return send(teams);
       if (method === 'POST') {
@@ -1319,7 +1337,30 @@ test('resultados e classificação por equipas mudam após corrigir um confronto
   await game.getByRole('button', { name: 'Corrigir resultado entre Azuis e Verdes' }).click();
   await expect(game).toContainText('0 : 3');
   await expect(table.locator('tbody tr').first()).toContainText('Verdes');
+  await expect(page.getByRole('button', { name: 'Encerrar campeonato por equipas' })).toBeEnabled();
+  await page.getByRole('button', { name: 'Encerrar campeonato por equipas' }).click();
+  await page.getByRole('button', { name: 'Sim, encerrar campeonato' }).click();
+  await expect(page.getByText('Equipa campeã: Verdes')).toBeVisible();
+  await expect(page.getByRole('spinbutton', { name: 'Golos de Azuis' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Encerrar campeonato por equipas' })).toHaveCount(0);
   expect(fixture.teamFixtures[0].status).toBe('COMPLETED');
   expect(fixture.matches).toHaveLength(0);
   expect(fixture.unmocked.filter(path => path.includes('/tournaments/'))).toEqual([]);
+});
+
+test('empate real fecha o campeonato sem inventar equipa vencedora', async ({ page }) => {
+  await mockCommunityApi(page, 'OWNER', 'teams-schedule');
+  await page.goto('/menu/communities/7?tab=tournaments');
+  await page.getByRole('button', { name: 'Gerar jornadas entre equipas' }).click();
+  await page.getByRole('button', { name: 'Sim, publicar jornadas por equipas' }).click();
+  const game = page.locator('.team-fixture');
+  await expect(page.getByRole('button', { name: 'Encerrar campeonato por equipas' })).toBeDisabled();
+  await game.getByRole('spinbutton', { name: 'Golos de Azuis' }).fill('0');
+  await game.getByRole('spinbutton', { name: 'Golos de Verdes' }).fill('0');
+  await game.getByRole('button', { name: 'Guardar resultado entre Azuis e Verdes' }).click();
+  await expect(page.getByRole('button', { name: 'Encerrar campeonato por equipas' })).toBeEnabled();
+  await page.getByRole('button', { name: 'Encerrar campeonato por equipas' }).click();
+  await page.getByRole('button', { name: 'Sim, encerrar campeonato' }).click();
+  await expect(page.getByText('Empate no primeiro lugar entre equipas')).toBeVisible();
+  await expect(page.getByText('Equipa campeã:', { exact: false })).toHaveCount(0);
 });

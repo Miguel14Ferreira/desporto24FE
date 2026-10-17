@@ -28,7 +28,7 @@ describe('Community tournaments management', () => {
       'list', 'create', 'participants', 'join', 'leave', 'confirm', 'removeParticipant',
       'generateSchedule', 'matches', 'recordResult', 'standings', 'complete', 'delete',
       'createTeamTournament', 'teams', 'createTeam', 'addTeamPlayer', 'removeTeamPlayer', 'deleteTeam',
-      'generateTeamSchedule', 'teamMatches', 'recordTeamResult', 'teamStandings'
+      'generateTeamSchedule', 'teamMatches', 'recordTeamResult', 'teamStandings', 'completeTeam'
     ]);
     api.list.and.returnValue(of({ tournaments: [draft], page: 0, hasMore: false }));
     api.participants.and.returnValue(of({ participants: [], page: 0, hasMore: false }));
@@ -287,6 +287,36 @@ describe('Community tournaments management', () => {
       expect(api.teamStandings).toHaveBeenCalledWith(7, 19);
       expect(api.standings.calls.count()).toBe(previousIndividualStandingsCalls);
       expect(api.recordResult).not.toHaveBeenCalled();
+    });
+
+    it('only enables team closing once every real fixture is scored', async () => {
+      api.teams.and.returnValue(of([team, { ...team, id: 41, name: 'Azuis' }]));
+      api.teamStandings.and.returnValue(of({
+        tournamentId: 19, status: 'IN_PROGRESS', totalMatches: 1, completedMatches: 0,
+        winPoints: 3, drawPoints: 1, lossPoints: 0,
+        standings: [
+          { position: 1, teamId: 40, teamName: 'Verdes', played: 0, won: 0,
+            drawn: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, goalDifference: 0, points: 0 },
+          { position: 2, teamId: 41, teamName: 'Azuis', played: 0, won: 0,
+            drawn: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, goalDifference: 0, points: 0 }
+        ]
+      }));
+      component.selectTournament({ ...teamDraft, status: 'IN_PROGRESS' });
+      expect(component.canCompleteTeam).toBeFalse();
+      const table = component.teamStandings!;
+      table.completedMatches = 1;
+      table.standings.forEach(row => row.played = 1);
+      expect(component.canCompleteTeam).toBeTrue();
+      component.confirmAction = 'completeTeam';
+      api.completeTeam.and.returnValue(of({ ...teamDraft, status: 'COMPLETED',
+        championTeamId: 40, championTeamName: 'Verdes', championPoints: 3,
+        completedAt: '2026-10-17T12:00:00Z' }));
+      await component.completeTeam();
+      expect(api.completeTeam).toHaveBeenCalledWith(7, 19);
+      expect(api.complete).not.toHaveBeenCalled();
+      expect(component.selected?.championTeamName).toBe('Verdes');
+      expect(component.selected?.status).toBe('COMPLETED');
+      expect(component.canCompleteTeam).toBeFalse();
     });
 
     it('respects the module switch for team competition creation', () => {
