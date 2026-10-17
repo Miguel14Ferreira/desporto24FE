@@ -25,10 +25,10 @@
         }
 
         <div class="detail-content">
-          @if (showCreationSharePanel()) {
-            <section class="session-created-share" [attr.aria-label]="'sessionDetail.createdTitle' | t">
-              <strong>{{ 'sessionDetail.createdTitle' | t }}</strong>
-              <p>{{ 'sessionDetail.createdShareHint' | t }}</p>
+          @if (showCreationSharePanel() || (promotionOpen && canPromoteSession())) {
+            <section class="session-created-share" [attr.aria-label]="(showCreationSharePanel() ? 'sessionDetail.createdTitle' : 'sessionDetail.promoteGame') | t">
+              <strong>{{ (showCreationSharePanel() ? 'sessionDetail.createdTitle' : 'sessionDetail.promoteGame') | t }}</strong>
+              <p>{{ (showCreationSharePanel() ? 'sessionDetail.createdShareHint' : 'sessionDetail.promotionHint') | t }}</p>
               <div class="session-created-actions">
                 <a class="jynlo-action jynlo-action--primary" [href]="whatsappShareUrl()"
                    target="_blank" rel="noopener noreferrer">{{ 'publicSession.shareWhatsApp' | t }}</a>
@@ -36,10 +36,24 @@
                         [disabled]="sharingSession">{{ 'sessionDetail.copyLink' | t }}</button>
                 <a class="jynlo-action jynlo-action--neutral" routerLink="/menu/feed"
                    [queryParams]="{ shareSession: session.id }">{{ 'sessionDetail.publishFeed' | t }}</a>
-                <button class="jynlo-action jynlo-action--neutral" type="button"
-                        (click)="dismissCreationShare()">{{ 'sessionDetail.continueDetails' | t }}</button>
+                @if (showCreationSharePanel()) {
+                  <button class="jynlo-action jynlo-action--neutral" type="button"
+                          (click)="dismissCreationShare()">{{ 'sessionDetail.continueDetails' | t }}</button>
+                }
+
               </div>
               @if (shareFeedback) { <p class="share-feedback" role="status">{{ shareFeedback }}</p> }
+              @if (manualShareUrl) {
+                <div class="manual-share-link">
+                  <label for="session-share-url">Ligação pública da sessão</label>
+                  <div class="manual-share-controls">
+                    <input id="session-share-url" #shareLinkInput type="text" [value]="manualShareUrl"
+                           readonly aria-label="Ligação pública da sessão para copiar">
+                    <button class="jynlo-action jynlo-action--neutral" type="button"
+                            (click)="shareLinkInput.select()">Selecionar ligação</button>
+                  </div>
+                </div>
+              }
             </section>
           }
           <div class="title-row">
@@ -88,7 +102,13 @@
                                            : 'sessionDetail.overallRatingReopen') | t }}
               </button>
             }
-            @if (canShareSession()) {
+            @if (canPromoteSession() && !showCreationSharePanel()) {
+              <button type="button" class="share-session-action open-promotion-button jynlo-action jynlo-action--neutral"
+                      [attr.aria-expanded]="promotionOpen" (click)="togglePromotionPanel()">
+                {{ (promotionOpen ? 'sessionDetail.hidePromotion' : 'sessionDetail.promoteGame') | t }}
+              </button>
+            }
+            @if (canShareSession() && !canPromoteSession()) {
               <button type="button" class="share-session-action jynlo-action jynlo-action--neutral"
                       [disabled]="sharingSession" (click)="shareSession()">
                 {{ sharingSession ? 'A partilhar...' : 'Partilhar sessão' }}
@@ -96,7 +116,7 @@
               @if (shareFeedback && !showCreationSharePanel()) {
                 <span class="share-feedback" role="status">{{ shareFeedback }}</span>
               }
-              @if (manualShareUrl) {
+              @if (manualShareUrl && !canPromoteSession()) {
                 <div class="manual-share-link">
                   <label for="session-share-url">Ligação pública da sessão</label>
                   <div class="manual-share-controls">

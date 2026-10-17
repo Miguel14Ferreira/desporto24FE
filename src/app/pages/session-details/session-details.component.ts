@@ -88,6 +88,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   inviteError = '';
   sharingSession = false;
   creationShareDismissed = false;
+  promotionOpen = false;
   shareFeedback = '';
   manualShareUrl = '';
   chatError = '';
@@ -1197,14 +1198,25 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     return this.confirmedTeams;
   }
 
+  canPromoteSession(): boolean {
+    const session = this.session;
+    return !!session && this.isCreator() && this.canShareSession()
+      && session.privateGame === false
+      && session.audience !== 'COMMUNITY_ONLY'
+      && (session.status === 'OPEN' || session.status === 'FULL')
+      && Date.parse(session.gameDate) > Date.now();
+  }
+
   showCreationSharePanel(): boolean {
     return !this.creationShareDismissed
       && this.route.snapshot.queryParamMap?.get('created') === '1'
-      && this.isCreator() && this.canShareSession()
-      && this.session?.privateGame === false
-      && this.session?.audience !== 'COMMUNITY_ONLY'
-      && (this.session?.status === 'OPEN' || this.session?.status === 'FULL')
-      && Date.parse(this.session.gameDate) > Date.now();
+      && this.canPromoteSession();
+  }
+
+  togglePromotionPanel(): void {
+    if (this.canPromoteSession()) {
+      this.promotionOpen = !this.promotionOpen;
+    }
   }
 
   dismissCreationShare(): void {
@@ -1213,7 +1225,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
 
   whatsappShareUrl(): string | null {
     const url = this.publicShareUrl();
-    if (!url || !this.session || !this.showCreationSharePanel()) {
+    if (!url || !this.session || !this.canPromoteSession()) {
       return null;
     }
     const invitation = t('publicSession.whatsappSportCity', {
