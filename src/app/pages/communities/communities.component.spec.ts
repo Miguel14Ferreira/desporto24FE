@@ -563,12 +563,12 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(component.canBrowseHistoricalArchives).toBeTrue();
     component.setTab('ranking');
     expect(component.activeTab).toBe('ranking');
-    expect(component.selected.rankingsEnabled).toBeFalse();
+    expect(component.selected?.rankingsEnabled).toBeFalse();
     component.setTab('stats');
     expect(component.activeTab).toBe('ranking');
     component.matchArchiveSummaries = [];
     component.archiveSummaries = [{
-      id: 11, title: 'Época 2021', entryType: 'INDIVIDUAL',
+      id: 11, title: 'Época 2021', entryType: 'INDIVIDUAL', seasonId: null,
       sourceFilename: 'table.xlsx', createdAt: '2026-10-17T20:00:00Z'
     }];
     expect(component.canBrowseHistoricalArchives).toBeTrue();
