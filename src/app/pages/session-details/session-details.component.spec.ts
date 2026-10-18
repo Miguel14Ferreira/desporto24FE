@@ -1197,6 +1197,9 @@ describe('SessionDetailsComponent', () => {
     expect(component.actionSuccess).toBe('');
     expect(sessionService.join).toHaveBeenCalledTimes(1);
     sessionService.join.and.returnValue(of({ state: 'PARTICIPANT', waitlistPosition: null }));
+    // After the successful retry, the detail fixture must reflect that committed
+    // membership instead of returning the previous pre-join snapshot.
+    sessionService.detail.and.returnValue(of({ ...component.session!, joined: true }));
     component.joinSession();
     expect(sessionService.join).toHaveBeenCalledTimes(2);
     expect(component.joinStatusMessage).toBe('');
