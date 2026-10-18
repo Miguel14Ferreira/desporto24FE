@@ -1,5 +1,5 @@
 import { CommunitiesComponent } from './communities.component';
-import { of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 import { SessionSummary } from '../model/session-summary';
 
 describe('CommunitiesComponent public session eligibility', () => {
@@ -361,6 +361,72 @@ describe('CommunitiesComponent public session eligibility', () => {
     }, { title: 'Época antiga', entryType: 'TEAM', seasonId: null });
     expect(component.archiveConfirmed?.rows[0].points).toBe(8);
     expect(component.archivePreview).toBeUndefined();
+  });
+
+
+  it('keeps non-participants out of rankings by default but allows showing every member', () => {
+    component.competition = { standings: [
+      { profileId: null, username: null, fullName: 'Ferreirinha', games: 3, points: 6 },
+      { profileId: 17, username: 'TMF14', fullName: 'Miguel Ferreira', games: 0, points: 0 }
+    ] } as any;
+    expect(component.rankingParticipants.map(row => row.fullName)).toEqual(['Ferreirinha']);
+    expect(component.displayedRankings).toHaveSize(1);
+    component.showAllStandings = true;
+    expect(component.displayedRankings).toHaveSize(2);
+  });
+
+  it('lets managers propose a player link only to an existing community member', () => {
+    component.selected = { id: 7, myRole: 'OWNER',
+      members: [{ profileId: 17, username: 'TMF14', fullName: 'Miguel Ferreira' }] } as any;
+    component.historicalPlayers = [{ playerId: 5, historicalName: 'Ferreirinha',
+      linkedUsername: null, linkStatus: 'UNLINKED' }];
+    component.historicalPlayerId = 5;
+    component.historicalTargetUsername = 'outside';
+    const propose = jasmine.createSpy('proposeHistoricalPlayerLink').and.returnValue(of({
+      id: 60, playerId: 5, historicalName: 'Ferreirinha', targetUsername: 'TMF14', status: 'PENDING'
+    }));
+    (component as any).communityService = { proposeHistoricalPlayerLink: propose };
+    component.proposeHistoricalLink();
+    expect(propose).not.toHaveBeenCalled();
+
+    component.historicalTargetUsername = 'TMF14';
+    spyOn(component, 'loadHistoricalLinks');
+    component.proposeHistoricalLink();
+    expect(propose).toHaveBeenCalledOnceWith(7, 5, 'TMF14');
+    expect(component.historicalPlayerId).toBeNull();
+    expect(component.historicalTargetUsername).toBe('');
+    expect(component.historicalProposalMessage).not.toBe('');
+  });
+
+  it('requires an existing pending request to accept a historical identity, then refreshes rankings', () => {
+    component.selected = { id: 7, myRole: 'MEMBER' } as any;
+    const link = { id: 60, playerId: 5, historicalName: 'Ferreirinha',
+      targetUsername: 'TMF14', status: 'PENDING' as const };
+    component.historicalPendingLinks = [];
+    component.historicalDecisionId = null;
+    const decide = jasmine.createSpy('decideHistoricalPlayerLink').and.returnValue(of({ ...link, status: 'ACCEPTED' }));
+    (component as any).communityService = { decideHistoricalPlayerLink: decide };
+    component.decideHistoricalLink(link, true);
+    expect(decide).not.toHaveBeenCalled();
+    component.historicalPendingLinks = [link];
+    spyOn(component, 'loadHistoricalLinks');
+    spyOn(component, 'loadCompetition');
+    component.decideHistoricalLink(link, true);
+    expect(decide).toHaveBeenCalledOnceWith(7, 60, true);
+    expect(component.historicalPendingLinks).toEqual([]);
+    expect(component.loadCompetition).toHaveBeenCalled();
+  });
+
+  it('discards historical identity responses after navigating to another community', () => {
+    const pending = new Subject<any[]>();
+    component.selected = { id: 7, myRole: 'MEMBER' } as any;
+    component.historicalPendingLinks = [];
+    (component as any).communityService = { pendingHistoricalPlayerLinks: () => pending.asObservable() };
+    component.loadHistoricalLinks(7);
+    component.selected = { id: 8, myRole: 'MEMBER' } as any;
+    pending.next([{ id: 60, playerId: 5, historicalName: 'Ferreirinha',
+      targetUsername: 'TMF14', status: 'PENDING' }]);
+    expect(component.historicalPendingLinks).toEqual([]);
   });
 
   it('allows joining an upcoming open community session', () => {
