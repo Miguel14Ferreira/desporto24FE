@@ -1,4 +1,5 @@
 import { HttpClient } from '@angular/common/http';
+import { ChangeDetectorRef } from '@angular/core';
 import { fakeAsync, tick } from '@angular/core/testing';
 import { of, Subject, throwError } from 'rxjs';
 import { environment } from 'src/environment/environment';
@@ -7,10 +8,12 @@ import { AdminVenueToolsComponent } from './admin-venue-tools.component';
 describe('AdminVenueToolsComponent', () => {
   let http: jasmine.SpyObj<HttpClient>;
   let component: AdminVenueToolsComponent;
+  let cdr: jasmine.SpyObj<ChangeDetectorRef>;
 
   beforeEach(() => {
     http = jasmine.createSpyObj<HttpClient>('HttpClient', ['post']);
-    component = new AdminVenueToolsComponent(http);
+    cdr = jasmine.createSpyObj<ChangeDetectorRef>('ChangeDetectorRef', ['markForCheck']);
+    component = new AdminVenueToolsComponent(http, cdr);
   });
   afterEach(() => component.ngOnDestroy());
 
@@ -23,6 +26,7 @@ describe('AdminVenueToolsComponent', () => {
       .toBe(environment.apiUrl + '/api/admin/venues/imports/openstreetmap/preview');
     expect(component.previewDone).toBeTrue();
     expect(component.previewLoading).toBeFalse();
+    expect(cdr.markForCheck).toHaveBeenCalled();
   });
 
   it('rejects invalid JSON and empty lists without calling the API', () => {

@@ -2,12 +2,14 @@ import { HttpClient } from '@angular/common/http';
 import { of, Subject, throwError } from 'rxjs';
 import { fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
+import { ChangeDetectorRef } from '@angular/core';
 import { environment } from 'src/environment/environment';
 import { AdminDashboardComponent, AdminPlatformOverview, AdminGrowthTrends } from './admin-dashboard.component';
 
 describe('AdminDashboardComponent — platform overview', () => {
   let http: jasmine.SpyObj<HttpClient>;
   let component: AdminDashboardComponent;
+  let cdr: jasmine.SpyObj<ChangeDetectorRef>;
   const summary: AdminPlatformOverview = {
     registeredUsers: 125, enabledUsers: 120, registrationsLast7Days: 8,
     loginsLast15Minutes: 14, onlineUsers: 6,
@@ -34,7 +36,9 @@ describe('AdminDashboardComponent — platform overview', () => {
 
   beforeEach(() => {
     http = jasmine.createSpyObj<HttpClient>('HttpClient', ['get', 'post']);
-    component = new AdminDashboardComponent(http, { snapshot: { data: { statisticsPage: true } } } as unknown as ActivatedRoute);
+    cdr = jasmine.createSpyObj<ChangeDetectorRef>('ChangeDetectorRef', ['markForCheck']);
+    component = new AdminDashboardComponent(http,
+      { snapshot: { data: { statisticsPage: true } } } as unknown as ActivatedRoute, cdr);
   });
 
   afterEach(() => component.ngOnDestroy());
@@ -78,6 +82,7 @@ describe('AdminDashboardComponent — platform overview', () => {
       environment.apiUrl + '/api/admin/overview/trends');
     expect(http.get).toHaveBeenCalledTimes(2);
     expect(component.overview?.registeredUsers).toBe(125);
+    expect(cdr.markForCheck).toHaveBeenCalled();
     expect(component.overview?.upcomingSessions).toBe(16);
     expect(component.overview?.communities).toBe(12);
     expect(component.overview?.onlineUsers).toBe(6);

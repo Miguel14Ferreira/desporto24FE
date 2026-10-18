@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Component, OnDestroy } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy } from '@angular/core';
 import { finalize, Subscription, timeout } from 'rxjs';
 import { environment } from 'src/environment/environment';
 
@@ -24,7 +24,7 @@ export class AdminVenueToolsComponent implements OnDestroy {
   previewDone = false;
   private request?: Subscription;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private changeDetector: ChangeDetectorRef) {}
 
   ngOnDestroy(): void {
     this.request?.unsubscribe();
@@ -53,14 +53,19 @@ export class AdminVenueToolsComponent implements OnDestroy {
       payload
     ).pipe(
       timeout(12_000),
-      finalize(() => this.previewLoading = false)
+      finalize(() => {
+        this.previewLoading = false;
+        this.changeDetector.markForCheck();
+      })
     ).subscribe({
       next: results => {
         this.previewResults = results;
         this.previewDone = true;
+        this.changeDetector.markForCheck();
       },
       error: () => {
         this.previewError = 'Não foi possível verificar os recintos. Tenta novamente.';
+        this.changeDetector.markForCheck();
       }
     });
   }
