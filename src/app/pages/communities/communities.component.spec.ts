@@ -421,6 +421,7 @@ describe('CommunitiesComponent public session eligibility', () => {
     const release = jasmine.createSpy('releaseHistoricalClaim').and.returnValue(of(undefined));
     (component as any).communityService = { releaseHistoricalClaim: release };
     component.historicalClaims = [];
+    component.historicalReleaseId = null;
     component.releaseHistoricalName(item);
     expect(release).not.toHaveBeenCalled();
     component.historicalClaims = [item];
