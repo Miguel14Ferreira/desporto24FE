@@ -194,7 +194,3 @@ h1 {
 @media (max-width: 450px) { .growth-chart { padding: .8rem; }
   .growth-plot { gap: .18rem; } .growth-week, .growth-value { font-size: .6rem; } }
 
-/* Compact home snapshot; charts and complete indicators live on /statistics. */
-.platform-overview--summary .overview-card { min-height: 100px; }
-.platform-overview--summary .overview-heading { margin-bottom: 1rem; align-items: center; }
-.overview-retry { margin-top: .9rem; padding: .6rem 1rem; }

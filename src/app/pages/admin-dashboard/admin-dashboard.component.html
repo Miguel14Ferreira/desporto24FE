@@ -15,26 +15,6 @@
       </a>
     </header>
 
-    <section *ngIf="!isStatisticsPage" class="platform-overview platform-overview--summary" aria-label="Resumo da plataforma">
-      <div class="overview-heading">
-        <div><h2>A Jynlo em números</h2><p>Principais indicadores da plataforma.</p></div>
-        <a class="secondary-action jynlo-action jynlo-action--neutral" routerLink="/menu/admin/statistics">Ver todas as estatísticas</a>
-      </div>
-      <p *ngIf="overviewLoading && !overview" class="overview-status" role="status">A carregar resumo…</p>
-      <p *ngIf="overviewError" class="overview-error" role="alert">{{ overviewError }}</p>
-      <div *ngIf="overview as stats" class="overview-grid">
-        <article class="overview-card"><span>Utilizadores registados</span><strong>{{ stats.registeredUsers | number }}</strong></article>
-        <article class="overview-card"><span>Sessões futuras</span><strong>{{ stats.upcomingSessions | number }}</strong></article>
-        <article class="overview-card"><span>Comunidades</span><strong>{{ stats.communities | number }}</strong></article>
-        <article class="overview-card"><span>Recintos</span><strong>{{ stats.venues | number }}</strong></article>
-      </div>
-      <p *ngIf="overview" class="overview-updated">Atualizado: {{ overview.generatedAt | date:'dd/MM/yyyy HH:mm' }}</p>
-      <button type="button" class="jynlo-action jynlo-action--neutral overview-retry"
-        (click)="loadOverview()" [disabled]="overviewLoading">
-        {{ overviewLoading ? 'A atualizar…' : (overviewError ? 'Tentar novamente' : 'Atualizar resumo') }}
-      </button>
-    </section>
-
     <section *ngIf="isStatisticsPage" class="platform-overview" aria-label="Indicadores gerais da plataforma">
       <div class="overview-heading">
         <div>

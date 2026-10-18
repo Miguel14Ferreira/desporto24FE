@@ -39,13 +39,13 @@ describe('AdminDashboardComponent — platform overview', () => {
 
   afterEach(() => component.ngOnDestroy());
 
-  it('loads only the lighter overview on the administration home page', () => {
+  it('keeps the administration hub as navigation without any statistics API call', () => {
     const dashboard = new AdminDashboardComponent(http);
-    http.get.and.returnValue(of(summary));
     dashboard.ngOnInit();
+    dashboard.refreshIndicators();
     expect(dashboard.isStatisticsPage).toBeFalse();
-    expect(http.get).toHaveBeenCalledOnceWith(environment.apiUrl + '/api/admin/overview');
-    expect(dashboard.overview?.registeredUsers).toBe(125);
+    expect(http.get).not.toHaveBeenCalled();
+    expect(dashboard.overview).toBeNull();
     dashboard.ngOnDestroy();
   });
 

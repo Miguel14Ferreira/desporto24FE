@@ -75,7 +75,8 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   growthError = '';
 
   ngOnInit(): void {
-    this.refreshIndicators();
+    // The administration hub is a navigation screen: no dashboard queries here.
+    if (this.isStatisticsPage) this.refreshIndicators();
   }
 
   ngOnDestroy(): void {
@@ -86,9 +87,9 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   }
 
   refreshIndicators(): void {
+    if (!this.isStatisticsPage) return;
     this.loadOverview();
-    // Avoid an unnecessary chart query on the administration home screen.
-    if (this.isStatisticsPage) this.loadGrowth();
+    this.loadGrowth();
   }
 
   get growthCharts(): GrowthChart[] {

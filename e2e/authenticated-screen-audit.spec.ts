@@ -67,6 +67,40 @@ test.describe('Jynlo protected-screen offline resilience', () => {
   }
 });
 
+test('desktop administration keeps all operational metrics on a separate statistics page', async ({ page }) => {
+  await isolateBackend(page, true);
+  let overviewCalls = 0;
+  await page.route('**/api/admin/overview', route => {
+    overviewCalls++;
+    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({
+      registeredUsers: 5, enabledUsers: 5, registrationsLast7Days: 1,
+      loginsLast15Minutes: 1, onlineUsers: 1, totalSessions: 3,
+      upcomingSessions: 1, sessionsNext7Days: 1, completedSessions: 2,
+      cancelledSessions: 0, communities: 2, tournaments: 0, activeTournaments: 0,
+      venues: 228, openUserReports: 0, generatedAt: '2026-10-18T20:09:19Z'
+    }) });
+  });
+  await page.route('**/api/admin/overview/trends', route =>
+    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({
+      generatedAt: '2026-10-18T20:09:19Z', timezone: 'UTC',
+      metric: 'CREATED_PER_WEEK', weeks: [
+        {weekStart:'2026-09-28',users:2,sessions:0,communities:1},
+        {weekStart:'2026-10-05',users:0,sessions:0,communities:0},
+        {weekStart:'2026-10-12',users:1,sessions:3,communities:1}
+      ]
+    }) }));
+  await page.goto('/menu/admin');
+  await expect(page.getByRole('heading', { name: 'Centro de administração' })).toBeVisible();
+  await expect(page.locator('.platform-overview')).toHaveCount(0);
+  expect(overviewCalls).toBe(0);
+  await page.locator('.admin-grid a[href="/menu/admin/statistics"]').click();
+  await expect(page).toHaveURL(/\/menu\/admin\/statistics$/);
+  await expect(page.getByRole('heading', { name: 'Estatísticas da Jynlo' })).toBeVisible();
+  await expect(page.getByText('228', { exact: true })).toBeVisible();
+  await expect(page.getByText('Evolução nas últimas 8 semanas')).toBeVisible();
+  expect(overviewCalls).toBe(1);
+});
+
 test.describe('Jynlo administrator offline-screen audit', () => {
   test.beforeEach(async ({ page }) => {
     await isolateBackend(page, true);
