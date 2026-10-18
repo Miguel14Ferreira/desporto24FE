@@ -84,6 +84,11 @@
   border: 1px solid rgba(255,255,255,.14);
 }
 
+.site-nav__links > .compact-feed-link,
+.site-nav__links > .guest-nav-menu {
+  display: none;
+}
+
 /* Desktop: keep frequent actions visible; move secondary sections to the account menu. */
 @media (min-width: 901px) {
   .site-nav__links .mobile-only-link {
@@ -103,7 +108,7 @@
 }
 
 @media (max-width: 900px) {
-  .site-nav__links .desktop-primary-link {
+  .site-nav__links > .desktop-primary-link {
     display: none;
   }
   .site-nav__shell {
@@ -125,26 +130,67 @@
 }
 
 @media (max-width: 620px) {
+  /* The top bar shows primary links without horizontal scrolling.
+     Everything else remains reachable through an accessible Menu. */
   .site-nav__shell {
+    flex-direction: row;
+    align-items: center;
+    gap: .25rem;
     min-height: 58px;
+    width: calc(100% - 1rem);
+    padding: .4rem 0;
   }
 
   .site-nav__links {
-    gap: .2rem;
+    flex: 1;
+    min-width: 0;
+    width: auto;
+    justify-content: flex-end;
+    gap: .15rem;
+    padding-bottom: 0;
+    overflow: visible;
+  }
+
+  .site-nav__links > a:not(.compact-primary),
+  .site-nav__links > .language-switch {
+    display: none;
+  }
+
+  .site-nav__links > .compact-feed-link {
+    display: inline-flex;
+  }
+
+  .site-nav__links > .guest-nav-menu {
+    display: block;
   }
 
   .site-nav__links a {
-    padding: .5rem .6rem;
-    font-size: .8rem;
+    padding: .45rem .5rem;
+    font-size: .76rem;
+    white-space: nowrap;
   }
 
+  .site-nav__links .account-menu summary {
+    min-height: 36px;
+    padding: .45rem .6rem;
+    font-size: .78rem;
+  }
+
+  .site-nav__links .account-menu__panel {
+    position: absolute;
+    top: calc(100% + .5rem);
+    right: 0;
+    width: max-content;
+    max-width: calc(100vw - 1rem);
+    max-height: calc(100dvh - 5rem);
+    overflow-y: auto;
+  }
 
   .site-nav__links .logout-action {
-    padding: .5rem .6rem;
-    font-size: .8rem;
+    padding: .45rem .5rem;
+    font-size: .76rem;
   }
 }
-
 
 .language-switch {
   display: inline-flex;

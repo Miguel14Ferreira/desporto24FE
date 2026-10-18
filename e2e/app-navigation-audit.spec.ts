@@ -75,3 +75,21 @@ test.describe('Jynlo public-screen audit', () => {
     }
   });
 });
+
+test('mobile guest navigation exposes primary links and a menu for secondary pages', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-chromium', 'Mobile-only navigation');
+  await isolateProductionApi(page);
+  await page.goto('/home');
+  const nav = page.locator('app-navbar .site-nav');
+  await expect(nav.locator('a.register-link')).toBeVisible();
+  await expect(nav.locator('a.login-link')).toBeVisible();
+  const menu = nav.locator('details.guest-nav-menu');
+  await expect(menu.locator('summary')).toBeVisible();
+  const right = await menu.locator('summary').evaluate(el => el.getBoundingClientRect().right);
+  expect(right).toBeLessThanOrEqual(page.viewportSize()!.width + 1);
+
+  await menu.locator('summary').click();
+  await expect(menu.locator('a[href="/about"]')).toBeVisible();
+  await expect(menu.locator('a[href="/contact"]')).toBeVisible();
+  await expect(menu.locator('.language-switch button').first()).toBeVisible();
+});

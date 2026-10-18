@@ -93,3 +93,22 @@ test.describe('Jynlo administrator offline-screen audit', () => {
       });
   }
 });
+
+test('mobile signed-in navigation keeps Feed, Discover and the secondary Menu accessible', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-chromium', 'Mobile-only navigation');
+  await isolateBackend(page);
+  await page.goto('/menu/feed');
+  const nav = page.locator('app-navbar .site-nav');
+  await expect(nav.locator('a.compact-feed-link')).toBeVisible();
+  await expect(nav.locator('a[href="/menu/discover"].compact-primary')).toBeVisible();
+  const menu = nav.locator('details.account-menu');
+  await expect(menu.locator('summary')).toBeVisible();
+  const right = await menu.locator('summary').evaluate(el => el.getBoundingClientRect().right);
+  expect(right).toBeLessThanOrEqual(page.viewportSize()!.width + 1);
+
+  await menu.locator('summary').click();
+  await expect(menu.locator('a[href="/menu/communities"]')).toBeVisible();
+  await expect(menu.locator('a[href="/menu/friendList"]')).toBeVisible();
+  await expect(menu.locator('a[href="/menu/notifications"]')).toBeVisible();
+  await expect(menu.locator('a[href="/menu/createEvent"]')).toBeVisible();
+});

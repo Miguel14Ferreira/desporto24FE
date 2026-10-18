@@ -5,7 +5,8 @@
     <div class="site-nav__links">
       @if (authenticated) {
         <a class="desktop-primary-link" routerLink="/menu/feed" routerLinkActive="active-link">{{ 'nav.feed' | t }}</a>
-        <a routerLink="/menu/discover" routerLinkActive="active-link">{{ 'nav.discover' | t }}</a>
+        <a class="compact-primary compact-feed-link" routerLink="/menu/feed" routerLinkActive="active-link">{{ 'nav.feed' | t }}</a>
+        <a class="compact-primary" routerLink="/menu/discover" routerLinkActive="active-link">{{ 'nav.discover' | t }}</a>
         <a class="mobile-only-link" routerLink="/menu/my-sessions" routerLinkActive="active-link">{{ 'nav.activities' | t }}</a>
         <a class="mobile-only-link" routerLink="/menu/communities" routerLinkActive="active-link">{{ 'nav.communities' | t }}</a>
         <a class="mobile-only-link" routerLink="/menu/friendList" routerLinkActive="active-link">{{ 'nav.messages' | t }}</a>
@@ -24,6 +25,8 @@
             <a class="desktop-primary-link" routerLink="/menu/my-sessions" routerLinkActive="active-link" (click)="closeAccountMenu()">{{ 'nav.activities' | t }}</a>
             <a class="desktop-primary-link" routerLink="/menu/communities" routerLinkActive="active-link" (click)="closeAccountMenu()">{{ 'nav.communities' | t }}</a>
             <a class="desktop-primary-link" routerLink="/menu/friendList" routerLinkActive="active-link" (click)="closeAccountMenu()">{{ 'nav.messages' | t }}</a>
+            <a class="mobile-only-link" routerLink="/menu/createEvent" routerLinkActive="active-link" (click)="closeAccountMenu()">{{ 'feed.createSession' | t }}</a>
+            <a class="mobile-only-link" routerLink="/menu/notifications" routerLinkActive="active-link" (click)="closeAccountMenu()">{{ 'menu.notifications' | t }}</a>
             <a routerLink="/menu/dadosPerfil" routerLinkActive="active-link" (click)="closeAccountMenu()">{{ 'nav.profile' | t }}</a>
             @if (admin) {
               <a routerLink="/menu/admin" routerLinkActive="active-link" (click)="closeAccountMenu()">{{ 'admin.eyebrow' | t }}</a>
@@ -63,8 +66,21 @@
       }
 
       @if (!authenticated) {
-        <a class="register-link jynlo-action jynlo-action--accent" routerLink="/login/registerNewUser">{{ 'nav.register' | t }}</a>
-        <a class="login-link jynlo-action jynlo-action--neutral" routerLink="/login" routerLinkActive="active-link">{{ 'nav.login' | t }}</a>
+        <a class="register-link compact-primary jynlo-action jynlo-action--accent" routerLink="/login/registerNewUser">{{ 'nav.register' | t }}</a>
+        <a class="login-link compact-primary jynlo-action jynlo-action--neutral" routerLink="/login" routerLinkActive="active-link">{{ 'nav.login' | t }}</a>
+        <details class="account-menu guest-nav-menu">
+          <summary class="jynlo-action jynlo-action--neutral"><span aria-hidden="true">☰</span> Menu</summary>
+          <div class="account-menu__panel">
+            <a routerLink="/home" (click)="closeAccountMenu()">{{ 'nav.home' | t }}</a>
+            <a routerLink="/about" (click)="closeAccountMenu()">{{ 'nav.about' | t }}</a>
+            <a routerLink="/contact" (click)="closeAccountMenu()">{{ 'nav.contact' | t }}</a>
+            <div class="language-switch" aria-label="Language selector">
+              <button type="button" [class.active-language]="i18n.currentLanguage === 'pt'" (click)="setLanguage('pt')">PT</button>
+              <span>/</span>
+              <button type="button" [class.active-language]="i18n.currentLanguage === 'en'" (click)="setLanguage('en')">EN</button>
+            </div>
+          </div>
+        </details>
       }
     </div>
   </div>
