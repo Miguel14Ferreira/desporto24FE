@@ -1,5 +1,5 @@
 import { CommunitiesComponent } from './communities.component';
-import { of, Subject } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { SessionSummary } from '../model/session-summary';
 
 describe('CommunitiesComponent public session eligibility', () => {
@@ -735,6 +735,87 @@ describe('CommunitiesComponent public session eligibility', () => {
 
     expect(page.loading).toBeFalse();
     expect(page.errorMessage).toBeTruthy();
+  });
+
+  it('does not mistake a pending-join lookup outage for no existing request', () => {
+    const service = {
+      myPendingJoinRequest: jasmine.createSpy('myPendingJoinRequest')
+        .and.returnValue(throwError(() => ({ status: 503 }))),
+      requestJoin: jasmine.createSpy('requestJoin').and.returnValue(of({ id: 1 }))
+    };
+    const page = new CommunitiesComponent(service as any, {} as any, {} as any,
+      {} as any, {} as any);
+    page.communityPresentation = {
+      id: 19, name: 'Comunidade Fechada', description: null,
+      sport: 'Futebol', photoUrl: null, visibility: 'PRIVATE'
+    };
+    page.retryPendingJoinLookup();
+    expect(page.pendingJoinLookupLoading).toBeFalse();
+    expect(page.pendingJoinLookupError).toBeTrue();
+    expect(page.membershipActionMessage).toContain('verificar');
+    page.joinPresentedCommunity();
+    expect(service.requestJoin).not.toHaveBeenCalled();
+
+    service.myPendingJoinRequest.and.returnValue(of({
+      id: 33, communityId: 19, communityName: 'Comunidade Fechada',
+      requesterUsername: 'player', status: 'PENDING', createdAt: '2026-10-18'
+    }));
+    page.retryPendingJoinLookup();
+    expect(page.pendingJoinLookupError).toBeFalse();
+    expect(page.joinRequestSent).toBeTrue();
+    expect(page.membershipActionMessage).toContain('enviado');
+    page.joinPresentedCommunity();
+    expect(service.requestJoin).not.toHaveBeenCalled();
+  });
+
+  it('interprets HTTP 404 from the pending-join endpoint as no pending request', () => {
+    const service = {
+      myPendingJoinRequest: jasmine.createSpy('myPendingJoinRequest')
+        .and.returnValue(throwError(() => ({ status: 404 }))),
+      requestJoin: jasmine.createSpy('requestJoin').and.returnValue(of({
+        id: 35, communityId: 19, communityName: 'Comunidade Fechada',
+        requesterUsername: 'player', status: 'PENDING', createdAt: '2026-10-18'
+      }))
+    };
+    const page = new CommunitiesComponent(service as any, {} as any, {} as any,
+      {} as any, {} as any);
+    page.communityPresentation = {
+      id: 19, name: 'Comunidade Fechada', description: null,
+      sport: 'Futebol', photoUrl: null, visibility: 'PRIVATE'
+    };
+    page.retryPendingJoinLookup();
+    expect(page.pendingJoinLookupError).toBeFalse();
+    expect(page.joinRequestSent).toBeFalse();
+    page.joinPresentedCommunity();
+    expect(service.requestJoin).toHaveBeenCalledOnceWith(19);
+    expect(page.joinRequestSent).toBeTrue();
+    expect(page.membershipActionMessage).toContain('enviado');
+  });
+
+  it('does not let an old pending lookup error block a newer successful lookup', () => {
+    const delayed = new Subject<any>();
+    const service = {
+      myPendingJoinRequest: jasmine.createSpy('myPendingJoinRequest')
+        .and.returnValues(delayed.asObservable(), of(null)),
+      requestJoin: jasmine.createSpy('requestJoin').and.returnValue(of({}))
+    };
+    const page = new CommunitiesComponent(service as any, {} as any, {} as any,
+      {} as any, {} as any);
+    page.communityPresentation = {
+      id: 19, name: 'Comunidade Fechada', description: null,
+      sport: 'Futebol', photoUrl: null, visibility: 'PRIVATE'
+    };
+    page.retryPendingJoinLookup();
+    expect(page.pendingJoinLookupLoading).toBeTrue();
+    // Simulate opening a different community while the old lookup is in flight.
+    page.communityPresentation = {
+      ...page.communityPresentation, id: 20
+    };
+    (page as any).loadMyPendingJoinRequest(20);
+    expect(page.pendingJoinLookupLoading).toBeFalse();
+    delayed.error({ status: 503 });
+    expect(page.pendingJoinLookupError).toBeFalse();
+    expect(page.membershipActionMessage).toBe('');
   });
 
   it('allows joining an upcoming open community session', () => {

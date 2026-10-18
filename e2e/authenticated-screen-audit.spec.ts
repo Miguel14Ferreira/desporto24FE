@@ -133,3 +133,78 @@ test('desktop opens an explored community despite failure loading private member
     await expect(page.getByRole('button', { name: /Aderir|Entrar/i }).first()).toBeVisible();
     await expect(page.locator('app-navbar .site-nav')).toBeVisible();
   });
+
+test('desktop private-community join blocks duplicate requests until membership status is verified',
+  async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'desktop-chromium', 'Desktop community audit');
+    await isolateBackend(page);
+    let lookupRecovered = false;
+    let requestsSubmitted = 0;
+    await page.route('**/api/communities/19/presentation', route => route.fulfill({
+      status: 200, contentType: 'application/json',
+      body: JSON.stringify({
+        id: 19, name: 'Grupo do Bairro', description: 'Comunidade privada',
+        sport: 'Futebol', sports: ['Futebol'], photoUrl: null, visibility: 'PRIVATE'
+      })
+    }));
+    await page.route('**/api/communities/19/join-requests/me', route => route.fulfill({
+      status: lookupRecovered ? 200 : 503, contentType: 'application/json',
+      body: JSON.stringify(lookupRecovered ? {
+        id: 55, communityId: 19, communityName: 'Grupo do Bairro',
+        requesterUsername: 'auditor-ficticio', status: 'PENDING',
+        createdAt: '2026-10-18T12:00:00Z'
+      } : { message: 'Temporary outage' })
+    }));
+    await page.route('**/api/communities/19/join-requests', route => {
+      requestsSubmitted++;
+      return route.fulfill({ status: 503, body: 'No real action executed' });
+    });
+
+    await page.goto('/menu/communities/19');
+    await expect(page.locator('.community-detail-identity h2')).toHaveText('Grupo do Bairro');
+    await expect(page.getByText('Não foi possível verificar se já tens um pedido pendente.')).toBeVisible();
+    const requestButton = page.getByRole('button', { name: 'Pedir para aderir' });
+    await expect(requestButton).toBeDisabled();
+    expect(requestsSubmitted).toBe(0);
+
+    lookupRecovered = true;
+    await page.getByRole('button', { name: 'Tentar novamente' }).click();
+    await expect(page.getByRole('button', { name: 'Pedido enviado' })).toBeDisabled();
+    await expect(page.getByText('Pedido de adesão enviado.', { exact: false })).toBeVisible();
+    expect(requestsSubmitted).toBe(0);
+  });
+
+test('desktop allows requesting a private-community join after 404 confirms no pending request',
+  async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'desktop-chromium', 'Desktop community audit');
+    await isolateBackend(page);
+    let submitted = 0;
+    await page.route('**/api/communities/19/presentation', route => route.fulfill({
+      status: 200, contentType: 'application/json',
+      body: JSON.stringify({
+        id: 19, name: 'Grupo do Bairro', description: null,
+        sport: 'Futebol', sports: ['Futebol'], photoUrl: null, visibility: 'PRIVATE'
+      })
+    }));
+    await page.route('**/api/communities/19/join-requests/me', route =>
+      route.fulfill({ status: 404, body: '' }));
+    await page.route('**/api/communities/19/join-requests', route => {
+      submitted++;
+      return route.fulfill({
+        status: 200, contentType: 'application/json',
+        body: JSON.stringify({
+          id: 56, communityId: 19, communityName: 'Grupo do Bairro',
+          requesterUsername: 'auditor-ficticio', status: 'PENDING',
+          createdAt: '2026-10-18T12:00:00Z'
+        })
+      });
+    });
+
+    await page.goto('/menu/communities/19');
+    const requestButton = page.getByRole('button', { name: 'Pedir para aderir' });
+    await expect(requestButton).toBeEnabled();
+    expect(submitted).toBe(0);
+    await requestButton.click();
+    await expect(page.getByRole('button', { name: 'Pedido enviado' })).toBeDisabled();
+    expect(submitted).toBe(1);
+  });

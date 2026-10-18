@@ -152,6 +152,7 @@ export class CommunitiesComponent implements OnInit {
   membershipActionMessage = '';
   joinRequestSent = false;
   pendingJoinLookupLoading = false;
+  pendingJoinLookupError = false;
   private pendingJoinLookupVersion = 0;
   private pendingRequestsLookupVersion = 0;
   private communityOpenRequestVersion = 0;
@@ -408,6 +409,7 @@ export class CommunitiesComponent implements OnInit {
     this.communitySessionsRequestVersion = (this.communitySessionsRequestVersion || 0) + 1;
     ++this.pendingJoinLookupVersion;
     this.pendingJoinLookupLoading = false;
+    this.pendingJoinLookupError = false;
     this.selected = undefined;
     this.communityPresentation = undefined;
     this.presentationLoading = true;
@@ -435,6 +437,8 @@ export class CommunitiesComponent implements OnInit {
   private loadMyPendingJoinRequest(communityId: number): void {
     const lookupVersion = ++this.pendingJoinLookupVersion;
     this.pendingJoinLookupLoading = true;
+    this.pendingJoinLookupError = false;
+    this.membershipActionMessage = '';
     this.communityService.myPendingJoinRequest(communityId)
       .pipe(
         timeout(10_000),
@@ -453,19 +457,36 @@ export class CommunitiesComponent implements OnInit {
             ? t('communities.joinRequestSent')
             : '';
         },
-        error: () => {
+        error: error => {
           if (lookupVersion !== this.pendingJoinLookupVersion
               || this.communityPresentation?.id !== communityId) return;
-          this.joinRequestSent = false;
-          this.membershipActionMessage = '';
+          // GET /join-requests/me returns HTTP 404 when there is no pending
+          // request. A network/5xx failure, however, leaves its state unknown.
+          if (error?.status === 404) {
+            this.joinRequestSent = false;
+            this.membershipActionMessage = '';
+            return;
+          }
+          this.pendingJoinLookupError = true;
+          this.membershipActionMessage = t('communities.joinCheckFailed');
         }
       });
+  }
+
+  retryPendingJoinLookup(): void {
+    const presentation = this.communityPresentation;
+    if (!presentation || presentation.visibility !== 'PRIVATE'
+        || this.pendingJoinLookupLoading || this.membershipActionLoading) {
+      return;
+    }
+    this.loadMyPendingJoinRequest(presentation.id);
   }
 
   joinPresentedCommunity(): void {
     const community = this.communityPresentation;
     if (!community || this.membershipActionLoading || this.joinRequestSent
-        || (community.visibility === 'PRIVATE' && this.pendingJoinLookupLoading)) {
+        || (community.visibility === 'PRIVATE'
+          && (this.pendingJoinLookupLoading || this.pendingJoinLookupError))) {
       return;
     }
 
