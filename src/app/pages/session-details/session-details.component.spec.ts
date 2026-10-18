@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
+import { BehaviorSubject, Subject, TimeoutError, of, throwError } from 'rxjs';
 
 import { SessionDetailsComponent } from './session-details.component';
 import { CommunityService } from '../../services/community.service';
@@ -171,6 +172,34 @@ describe('SessionDetailsComponent', () => {
     fixture = TestBed.createComponent(SessionDetailsComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
+  });
+
+  it('returns to discovery preserving the original search filters and not joining automatically', () => {
+    const route = TestBed.inject(ActivatedRoute);
+    (route.snapshot as any).queryParamMap = convertToParamMap({
+      from: 'discover', sport: 'Padel', city: 'Lisboa', player: 'Ana', join: '1'
+    });
+    fixture.detectChanges();
+    const back = (fixture.nativeElement as HTMLElement).querySelector<HTMLAnchorElement>('.back-link')!;
+    const url = new URL(back.getAttribute('href')!, 'https://jynlo.test');
+    expect(url.pathname).toBe('/menu/discover');
+    expect(url.searchParams.get('sport')).toBe('Padel');
+    expect(url.searchParams.get('city')).toBe('Lisboa');
+    expect(url.searchParams.get('player')).toBe('Ana');
+    expect(url.searchParams.has('join')).toBeFalse();
+    expect(back.textContent).toContain('Voltar ao Descobrir');
+    expect(sessionService.join).not.toHaveBeenCalled();
+  });
+
+  it('uses the sessions list for ordinary or untrusted back-link origins', () => {
+    const route = TestBed.inject(ActivatedRoute);
+    (route.snapshot as any).queryParamMap = convertToParamMap({
+      from: 'https://untrusted.example/', sport: 'Padel', join: '1'
+    });
+    fixture.detectChanges();
+    const back = (fixture.nativeElement as HTMLElement).querySelector<HTMLAnchorElement>('.back-link')!;
+    expect(back.getAttribute('href')).toBe('/menu/events');
+    expect(back.textContent).toContain('Voltar às sessões');
   });
 
   it('sends a public session link to a selected friend only on explicit action', () => {
@@ -549,7 +578,7 @@ describe('SessionDetailsComponent', () => {
 
     expect(ics).toContain('DTSTART:20261001T180000Z');
     expect(ics).toContain('SUMMARY:Jynlo — Padel');
-    // Keep the legacy event UID stable to avoid duplicate calendar entries.
+    // Keep the original ICS UID stable, preventing duplicate calendar entries.
     expect(ics).toContain(`UID:session-${session.id}@desporto24`);
     expect(ics).toContain('PRODID:-//Jynlo//Session Calendar//PT');
     expect(ics).toContain('LOCATION:Rua do Campo\\, 10');
@@ -1014,6 +1043,172 @@ describe('SessionDetailsComponent', () => {
     expect(component.actionSuccess).toContain('sucesso');
   });
 
+  it('keeps confirmed membership and blocks duplicate joins if refreshing details fails', () => {
+    component.session = {
+      ...session, gameDate: new Date(Date.now() + 3600_000).toISOString()
+    };
+    sessionService.detail.and.returnValue(throwError(() => new Error('Refresh offline')));
+
+    component.joinSession();
+    fixture.detectChanges();
+
+    expect(sessionService.join).toHaveBeenCalledOnceWith(7, '');
+    expect(component.session?.joined).toBeTrue();
+    expect(component.session?.waitlisted).toBeFalse();
+    expect(component.errorMessage).toBe('');
+    expect(component.detailRefreshWarning).toContain('operação foi aceite');
+    expect(component.actionSuccess).toContain('sucesso');
+    expect(fixture.nativeElement.querySelector('.join-controls')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.session-load-error')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.refresh-warning')).not.toBeNull();
+
+    component.joinSession();
+    expect(sessionService.join).toHaveBeenCalledTimes(1);
+
+    sessionService.detail.and.returnValue(of({ ...component.session!, joined: true }));
+    component.retrySessionLoad();
+    fixture.detectChanges();
+    expect(component.detailRefreshWarning).toBe('');
+    expect(fixture.nativeElement.querySelector('.refresh-warning')).toBeNull();
+  });
+
+  it('keeps a confirmed waitlist position when the subsequent details GET is unavailable', () => {
+    component.session = {
+      ...session, status: 'FULL', participantCount: 4,
+      gameDate: new Date(Date.now() + 3600_000).toISOString()
+    };
+    sessionService.join.and.returnValue(of({ state: 'WAITLISTED', waitlistPosition: 2 }));
+    sessionService.detail.and.returnValue(throwError(() => new Error('Refresh offline')));
+
+    component.joinSession();
+    fixture.detectChanges();
+
+    expect(component.session?.joined).toBeFalse();
+    expect(component.session?.waitlisted).toBeTrue();
+    expect(component.session?.waitlistPosition).toBe(2);
+    expect(component.actionSuccess).toContain('posição 2');
+    expect(fixture.nativeElement.querySelector('.participation-panel')?.textContent)
+      .toContain('lista de espera');
+    expect(fixture.nativeElement.querySelector('.refresh-warning')).not.toBeNull();
+    component.joinSession();
+    expect(sessionService.join).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not mark a rejected join as successful', () => {
+    component.session = {
+      ...session, gameDate: new Date(Date.now() + 3600_000).toISOString()
+    };
+    sessionService.join.and.returnValue(throwError(() => new HttpErrorResponse({
+      status: 403, error: { message: 'Inscrição não autorizada' }
+    })));
+
+    component.joinSession();
+    fixture.detectChanges();
+
+    expect(component.session?.joined).toBeFalse();
+    expect(component.session?.waitlisted).toBeFalse();
+    expect(component.actionSuccess).toBe('');
+    expect(component.detailRefreshWarning).toBe('');
+    expect(component.actionError).toContain('não autorizada');
+    expect(sessionService.detail).toHaveBeenCalledTimes(1);
+  });
+
+  it('verifies a timed-out join before allowing a second POST', () => {
+    component.session = {
+      ...session, gameDate: new Date(Date.now() + 3600_000).toISOString()
+    };
+    const pendingVerification = new Subject<typeof session>();
+    sessionService.join.and.returnValue(throwError(() => new TimeoutError()));
+    sessionService.detail.and.returnValue(pendingVerification.asObservable());
+
+    component.joinSession();
+    fixture.detectChanges();
+
+    expect(sessionService.join).toHaveBeenCalledTimes(1);
+    expect(component.joinOutcomeUnknown).toBeTrue();
+    expect(component.joinStatusChecking).toBeTrue();
+    expect(component.actionError).toBe('');
+    expect(component.canJoinSession()).toBeFalse();
+    expect(fixture.nativeElement.querySelector('.join-verification')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.join-controls')).toBeNull();
+    component.joinSession();
+    component.verifyJoinOutcome();
+    expect(sessionService.join).toHaveBeenCalledTimes(1);
+    expect(sessionService.detail).toHaveBeenCalledTimes(2);
+
+    pendingVerification.next({ ...session, joined: true });
+    pendingVerification.complete();
+    fixture.detectChanges();
+
+    expect(component.joinOutcomeUnknown).toBeFalse();
+    expect(component.actionSuccess).toContain('sucesso');
+    expect(component.session?.joined).toBeTrue();
+    expect(component.joinStatusMessage).toBe('');
+    expect(fixture.nativeElement.querySelector('.join-verification')).toBeNull();
+    component.joinSession();
+    expect(sessionService.join).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps retry disabled after an ambiguous POST while verification is unavailable', () => {
+    component.session = {
+      ...session, gameDate: new Date(Date.now() + 3600_000).toISOString()
+    };
+    sessionService.join.and.returnValue(throwError(() => new HttpErrorResponse({
+      status: 504, error: { message: 'Gateway timeout' }
+    })));
+    sessionService.detail.and.returnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
+
+    component.joinSession();
+    fixture.detectChanges();
+
+    expect(component.joinOutcomeUnknown).toBeTrue();
+    expect(component.joinStatusChecking).toBeFalse();
+    expect(component.joinStatusMessage).toContain('não foi possível confirmar');
+    expect(component.actionSuccess).toBe('');
+    expect(component.actionError).toBe('');
+    expect(fixture.nativeElement.querySelector('.join-verification')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.join-controls')).toBeNull();
+    component.joinSession();
+    expect(sessionService.join).toHaveBeenCalledTimes(1);
+
+    sessionService.detail.and.returnValue(of({
+      ...session, joined: false, waitlisted: true, waitlistPosition: 3,
+      gameDate: new Date(Date.now() + 3600_000).toISOString()
+    }));
+    component.verifyJoinOutcome();
+    fixture.detectChanges();
+    expect(component.joinOutcomeUnknown).toBeFalse();
+    expect(component.session?.waitlisted).toBeTrue();
+    expect(component.actionSuccess).toContain('posição 3');
+    expect(component.joinStatusMessage).toBe('');
+    expect(sessionService.join).toHaveBeenCalledTimes(1);
+  });
+
+  it('allows a deliberate retry after verification finds no registration', () => {
+    component.session = {
+      ...session, gameDate: new Date(Date.now() + 3600_000).toISOString()
+    };
+    sessionService.join.and.returnValue(throwError(() => new HttpErrorResponse({ status: 502 })));
+    sessionService.detail.and.returnValue(of({ ...component.session }));
+
+    component.joinSession();
+    fixture.detectChanges();
+
+    expect(component.joinOutcomeUnknown).toBeFalse();
+    expect(component.canJoinSession()).toBeTrue();
+    expect(component.joinStatusMessage).toContain('não mostra uma inscrição confirmada');
+    expect(component.actionSuccess).toBe('');
+    expect(sessionService.join).toHaveBeenCalledTimes(1);
+    sessionService.join.and.returnValue(of({ state: 'PARTICIPANT', waitlistPosition: null }));
+    // After the successful retry, the detail fixture must reflect that committed
+    // membership instead of returning the previous pre-join snapshot.
+    sessionService.detail.and.returnValue(of({ ...component.session!, joined: true }));
+    component.joinSession();
+    expect(sessionService.join).toHaveBeenCalledTimes(2);
+    expect(component.joinStatusMessage).toBe('');
+    expect(component.session?.joined).toBeTrue();
+  });
+
   it('should allow joining the waitlist when a future session is full', () => {
     component.session = {
       ...session,
@@ -1120,6 +1315,22 @@ describe('SessionDetailsComponent', () => {
     component.leaveSession();
 
     expect(sessionService.leave).toHaveBeenCalledOnceWith(7);
+  });
+
+  it('does not offer leaving twice after confirmed departure if detail refresh fails', () => {
+    component.session = {
+      ...session, joined: true, gameDate: new Date(Date.now() + 3600_000).toISOString()
+    };
+    sessionService.detail.and.returnValue(throwError(() => new Error('Refresh offline')));
+
+    component.leaveSession();
+    fixture.detectChanges();
+
+    expect(component.session?.joined).toBeFalse();
+    expect(component.actionSuccess).toContain('Saíste');
+    expect(component.detailRefreshWarning).toBeTruthy();
+    component.leaveSession();
+    expect(sessionService.leave).toHaveBeenCalledTimes(1);
   });
 
   it('should leave a waitlisted session and refresh details', () => {

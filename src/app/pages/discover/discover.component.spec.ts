@@ -439,7 +439,7 @@ describe('DiscoverComponent', () => {
     component.playerName = '  Ana  ';
     component.searchPlayers();
 
-    expect(communityService.findProfiles).toHaveBeenCalledWith(jasmine.objectContaining({ name: 'Ana' }));
+    expect(communityService.findProfiles).toHaveBeenCalledWith({ name: 'Ana' });
     expect(component.people).toEqual([teammate]);
     expect(component.topPeople).toEqual([teammate]);
     expect(component.appliedPlayerName).toBe('Ana');
@@ -544,6 +544,89 @@ describe('DiscoverComponent', () => {
     expect(component.topPeople).toEqual(people);
     component.clearPlayerName();
     expect(component.topPeople.length).toBe(4);
+  });
+
+  it('replaces a failed general player search with a successful name search', () => {
+    communityService.findProfiles.and.returnValue(throwError(() => new Error('People API unavailable')));
+    component.search();
+    fixture.detectChanges();
+    expect(component.peopleLoadError).toBeTrue();
+    expect(fixture.nativeElement.querySelector('.pillar-error--people')).not.toBeNull();
+
+    const ana: CommunityProfile = {
+      username: 'ana', fullName: 'Ana Lisboa', nickname: null,
+      country: 'Portugal', location: 'Porto', favoriteSports: 'Futebol',
+      bio: null, skillLevel: null, availability: null, age: 30,
+      profilePicUrl: null, joinDateDisplay: null
+    };
+    communityService.findProfiles.and.returnValue(of([ana]));
+    component.playerName = 'Ana';
+    component.searchPlayers();
+    fixture.detectChanges();
+
+    expect(component.peopleLoadError).toBeFalse();
+    expect(component.playerSearchError).toBeFalse();
+    expect(communityService.findProfiles).toHaveBeenCalledWith({ name: 'Ana' });
+    expect(component.people).toEqual([ana]);
+    expect(fixture.nativeElement.querySelector('.pillar-error--people')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.discover-error')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.person-card')?.textContent).toContain('Ana Lisboa');
+  });
+
+  it('clears an old name-search failure when a new global search succeeds', () => {
+    communityService.findProfiles.and.returnValue(throwError(() => new Error('Name search offline')));
+    component.playerName = 'Ana';
+    component.searchPlayers();
+    fixture.detectChanges();
+    expect(component.playerSearchError).toBeTrue();
+
+    const bruno: CommunityProfile = {
+      username: 'bruno', fullName: 'Bruno Silva', nickname: null,
+      country: 'Portugal', location: 'Porto', favoriteSports: 'Futebol',
+      bio: null, skillLevel: null, availability: null, age: 25,
+      profilePicUrl: null, joinDateDisplay: null
+    };
+    communityService.findProfiles.and.returnValue(of([bruno]));
+    component.playerName = 'Bruno';
+    component.search();
+    fixture.detectChanges();
+
+    expect(component.playerSearchError).toBeFalse();
+    expect(component.appliedPlayerName).toBe('Bruno');
+    expect(communityService.findProfiles).toHaveBeenCalledWith({ name: 'Bruno' });
+    expect(component.people).toEqual([bruno]);
+    expect(fixture.nativeElement.querySelector('.pillar-error--people')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.person-card')?.textContent).toContain('Bruno Silva');
+    const profileLink: HTMLAnchorElement = fixture.nativeElement.querySelector('.person-card');
+    expect(new URL(profileLink.getAttribute('href')!, 'https://jynlo.test')
+      .searchParams.get('player')).toBe('Bruno');
+  });
+
+  it('ignores a late name-search result after the user changes filters and searches again', () => {
+    const pending = new Subject<CommunityProfile[]>();
+    communityService.findProfiles.and.returnValue(pending.asObservable());
+    component.playerName = 'Ana';
+    component.searchPlayers();
+    expect(component.loadingPeople).toBeTrue();
+
+    component.onLocationChange('Sintra');
+    communityService.findProfiles.and.returnValue(of([]));
+    component.search();
+    fixture.detectChanges();
+    expect(component.appliedPlayerName).toBe('');
+    expect(component.loadingPeople).toBeFalse();
+
+    pending.next([{
+      username: 'ana', fullName: 'Ana Antiga', nickname: null,
+      country: 'Portugal', location: 'Porto', favoriteSports: 'Futebol',
+      bio: null, skillLevel: null, availability: null, age: 30,
+      profilePicUrl: null, joinDateDisplay: null
+    }]);
+    pending.complete();
+    fixture.detectChanges();
+    expect(component.people).toEqual([]);
+    expect(fixture.nativeElement.querySelector('.person-card')).toBeNull();
+    expect(component.playerSearchError).toBeFalse();
   });
 
   it('shows a player-only error when name search fails', () => {
@@ -675,6 +758,43 @@ describe('DiscoverComponent', () => {
     expect(fixture.nativeElement.querySelector('.session-card')).not.toBeNull();
   });
 
+  it('distinguishes an unavailable session search from zero results without hiding venues', () => {
+    venueService.search.and.returnValue(of([{
+      id: 12, name: 'Recinto de Lisboa', city: 'Lisboa'
+    } as any]));
+    sessionService.discover.and.returnValue(throwError(() => new Error('Sessions offline')));
+    component.search();
+    fixture.detectChanges();
+
+    const page = fixture.nativeElement as HTMLElement;
+    expect(page.querySelector('.venue-card')?.textContent).toContain('Recinto de Lisboa');
+    expect(page.querySelector('.pillar-error--sessions')?.textContent)
+      .toContain('Não foi possível procurar sessões.');
+    expect(page.querySelector('.session-empty')).toBeNull();
+    expect(page.querySelector('.session-empty-create')).toBeNull();
+    expect(page.querySelector('.discover-error')).not.toBeNull();
+  });
+
+  it('does not report zero venues when their API fails but sessions are available', () => {
+    venueService.search.and.returnValue(throwError(() => new Error('Venues offline')));
+    sessionService.discover.and.returnValue(of([{
+      id: 33, sport: 'Padel', city: 'Lisboa',
+      gameDate: '2026-10-20T18:00:00Z', distanceKm: null,
+      participantCount: 2, maxParticipants: 4, priceAmount: 0,
+      privateGame: false, status: 'OPEN'
+    }]));
+    component.search();
+    fixture.detectChanges();
+
+    const page = fixture.nativeElement as HTMLElement;
+    expect(page.querySelector('.pillar-error--venues')?.textContent)
+      .toContain('Não foi possível procurar recintos.');
+    expect(page.querySelector('.pillar-error--venues')?.textContent)
+      .not.toContain('Ainda não encontrámos locais');
+    expect(page.querySelector('.venue-card')).toBeNull();
+    expect(page.querySelector('.session-card')).not.toBeNull();
+  });
+
   it('does not suggest creating a session when session discovery fails', () => {
     sessionService.discover.and.returnValue(
       throwError(() => new Error('API unavailable'))
@@ -699,7 +819,12 @@ describe('DiscoverComponent', () => {
     fixture.detectChanges();
 
     const link: HTMLAnchorElement | null = fixture.nativeElement.querySelector('.session-card');
-    expect(link?.getAttribute('href')).toBe('/menu/events/31?join=1');
+    const target = new URL(link!.getAttribute('href')!, 'https://jynlo.test');
+    expect(target.pathname).toBe('/menu/events/31');
+    expect(target.searchParams.get('join')).toBe('1');
+    expect(target.searchParams.get('from')).toBe('discover');
+    expect(target.searchParams.get('sport')).toBe('Padel');
+    expect(target.searchParams.get('city')).toBe('Lisboa');
     expect(link?.textContent).toContain('Ver e participar');
     expect(link?.textContent).toMatch(/5[,.]00\s*€/);
     expect(link?.textContent).toMatch(/3[,.]4\s*km/);
@@ -718,7 +843,10 @@ describe('DiscoverComponent', () => {
     fixture.detectChanges();
     let link: HTMLAnchorElement = fixture.nativeElement.querySelector('.session-card');
     expect(link.textContent).toContain('Já estás inscrito');
-    expect(link.getAttribute('href')).toBe('/menu/events/32');
+    const joinedLink = new URL(link.getAttribute('href')!, 'https://jynlo.test');
+    expect(joinedLink.pathname).toBe('/menu/events/32');
+    expect(joinedLink.searchParams.get('from')).toBe('discover');
+    expect(joinedLink.searchParams.has('join')).toBeFalse();
     expect(link.textContent).toContain('Grátis');
     expect(link.textContent).not.toContain('Ver e participar');
 
@@ -727,7 +855,10 @@ describe('DiscoverComponent', () => {
     fixture.detectChanges();
     link = fixture.nativeElement.querySelector('.session-card');
     expect(link.textContent).toContain('Em lista de espera');
-    expect(link.getAttribute('href')).toBe('/menu/events/32');
+    const waitingLink = new URL(link.getAttribute('href')!, 'https://jynlo.test');
+    expect(waitingLink.pathname).toBe('/menu/events/32');
+    expect(waitingLink.searchParams.get('from')).toBe('discover');
+    expect(waitingLink.searchParams.has('join')).toBeFalse();
     expect(link.textContent).not.toContain('Ver e participar');
   });
 

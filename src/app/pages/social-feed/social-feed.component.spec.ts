@@ -131,6 +131,33 @@ describe('SocialFeedComponent discovery sidebar', () => {
     expect(groups.mine).toHaveBeenCalledTimes(1);
   }));
 
+  it('keeps discoverable vacancies visible when my sessions cannot load', fakeAsync(() => {
+    const upcoming = (id: number, overrides: Partial<SessionSummary> = {}): SessionSummary => ({
+      id, sport: 'Futebol', city: 'Lisboa',
+      gameDate: new Date(Date.now() + 86_400_000).toISOString(),
+      distanceKm: null, participantCount: 4, maxParticipants: 10, priceAmount: 0,
+      status: 'OPEN', privateGame: false, audience: 'PUBLIC', ...overrides
+    });
+    sessions.mine.and.returnValue(throwError(() => new Error('My sessions unavailable')));
+    sessions.discover.and.returnValue(of([
+      upcoming(30), upcoming(31, { joinedByViewer: true }),
+      upcoming(32, { waitlistedByViewer: true }),
+      upcoming(33, { privateGame: true, audience: 'COMMUNITY_ONLY' })
+    ]));
+
+    fixture.detectChanges();
+    tick(351);
+    fixture.detectChanges();
+
+    const hub = (fixture.nativeElement as HTMLElement).querySelector('.week-hub');
+    expect(component.myWeekGamesError).toBeTrue();
+    expect(component.myWeekOffers.map(session => session.id)).toEqual([30]);
+    expect(hub?.querySelector('a[href="/menu/events/30?join=1"]')).not.toBeNull();
+    expect(hub?.querySelector('a[href="/menu/events/31?join=1"]')).toBeNull();
+    expect(hub?.querySelector('a[href="/menu/events/32?join=1"]')).toBeNull();
+    expect(hub?.textContent).not.toContain(t('week.noOpenSlots'));
+  }));
+
   it('offers a share shortcut only on my upcoming public games with vacancies', fakeAsync(() => {
     const future = new Date(Date.now() + 36_000_000).toISOString();
     const game = (id: number, override: Partial<SessionSummary> = {}): SessionSummary => ({
