@@ -164,6 +164,14 @@ export class CommunitiesComponent implements OnInit {
       || group.teamTournamentsEnabled !== false);
   }
 
+  // Saved archives remain useful when a community turns off live standings.
+  get canBrowseHistoricalArchives(): boolean {
+    return !!this.selected && (this.selected.rankingsEnabled
+      || this.hasCompetitions(this.selected)
+      || (this.archiveSummaries?.length ?? 0) > 0
+      || (this.matchArchiveSummaries?.length ?? 0) > 0);
+  }
+
   editFeatures(): void {
     if (!this.canManage() || !this.selected || this.featuresSaving) return;
     this.featuresDraft = {
@@ -618,7 +626,7 @@ export class CommunitiesComponent implements OnInit {
           && (full.myRole === 'OWNER' || full.myRole === 'ADMIN');
         this.activeTab = openJoinRequests ? 'members'
           : requestedTab === 'tournaments' && this.hasCompetitions(full) ? 'tournaments'
-          : requestedTab === 'ranking' && full.rankingsEnabled ? 'ranking'
+          : requestedTab === 'ranking' && (full.rankingsEnabled || this.hasCompetitions(full)) ? 'ranking'
           : requestedTab === 'stats' && full.rankingsEnabled ? 'stats'
           : requestedTab === 'sessions' ? 'sessions'
           : 'home';
@@ -654,7 +662,8 @@ export class CommunitiesComponent implements OnInit {
 
   setTab(tab: CommunityTab): void {
     if ((tab === 'tournaments' && !this.hasCompetitions(this.selected))
-        || ((tab === 'ranking' || tab === 'stats') && !this.selected?.rankingsEnabled)) return;
+        || (tab === 'ranking' && !this.canBrowseHistoricalArchives)
+        || (tab === 'stats' && !this.selected?.rankingsEnabled)) return;
     this.activeTab = tab;
     this.errorMessage = '';
 

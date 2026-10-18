@@ -434,10 +434,13 @@
                   [attr.aria-current]="activeTab === 'tournaments' ? 'true' : null"
                   (click)="setTab('tournaments')">Competições</button>
               }
-              @if (selected.rankingsEnabled) {
+              @if (canBrowseHistoricalArchives) {
                 <button type="button" [class.active]="activeTab === 'ranking'"
                   [attr.aria-current]="activeTab === 'ranking' ? 'true' : null"
-                  (click)="setTab('ranking')">{{ 'communities.tab.ranking' | t }}</button>
+                  (click)="setTab('ranking')">{{ selected.rankingsEnabled
+                    ? ('communities.tab.ranking' | t) : ('communities.archive.tabTitle' | t) }}</button>
+              }
+              @if (selected.rankingsEnabled) {
                 <button type="button" [class.active]="activeTab === 'stats'"
                   [attr.aria-current]="activeTab === 'stats' ? 'true' : null"
                   (click)="setTab('stats')">{{ 'communities.tab.stats' | t }}</button>
