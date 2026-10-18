@@ -258,11 +258,55 @@ describe('Community tournaments management', () => {
       api.removeTeamPlayer.and.returnValue(of(void 0));
       api.teams.and.returnValue(of([team]));
       await component.removeTeamPlayer(occupied, 2);
+      expect(api.removeTeamPlayer).not.toHaveBeenCalled();
+      component.requestTeamPlayerRemoval(occupied, 2);
+      await component.removeTeamPlayer(occupied, 2);
       expect(api.removeTeamPlayer).toHaveBeenCalledWith(7, 19, 40, 2);
+      expect(component.pendingTeamPlayerRemoval).toBeNull();
       api.deleteTeam.and.returnValue(of(void 0));
       api.teams.and.returnValue(of([]));
       await component.deleteTournamentTeam(team);
       expect(api.deleteTeam).toHaveBeenCalledWith(7, 19, 40);
+    });
+
+    it('cancels a team player removal without mutating the roster', async () => {
+      const occupied = { ...team, players: [{ profileId: 2, username: 'ana', displayName: 'Ana' }] };
+      api.teams.and.returnValue(of([occupied]));
+      component.selectTournament(teamDraft);
+      component.requestTeamPlayerRemoval(occupied, 2);
+      expect(component.pendingTeamPlayerRemoval).toEqual({ teamId: 40, profileId: 2 });
+      component.cancelTeamPlayerRemoval();
+      await component.removeTeamPlayer(occupied, 2);
+      expect(api.removeTeamPlayer).not.toHaveBeenCalled();
+    });
+
+    it('clears a pending team player removal after switching competitions', async () => {
+      const occupied = { ...team, players: [{ profileId: 2, username: 'ana', displayName: 'Ana' }] };
+      api.teams.and.returnValue(of([occupied]));
+      component.selectTournament(teamDraft);
+      component.requestTeamPlayerRemoval(occupied, 2);
+      component.selectTournament({ ...draft, id: 27 });
+      expect(component.pendingTeamPlayerRemoval).toBeNull();
+      await component.removeTeamPlayer(occupied, 2);
+      expect(api.removeTeamPlayer).not.toHaveBeenCalled();
+    });
+
+    it('blocks duplicate removal requests for the same team player', async () => {
+      const occupied = { ...team, players: [{ profileId: 2, username: 'ana', displayName: 'Ana' }] };
+      api.teams.and.returnValue(of([occupied]));
+      component.selectTournament(teamDraft);
+      const pending = new Subject<void>();
+      api.removeTeamPlayer.and.returnValue(pending);
+      component.requestTeamPlayerRemoval(occupied, 2);
+      const running = component.removeTeamPlayer(occupied, 2);
+      await component.removeTeamPlayer(occupied, 2);
+      expect(api.removeTeamPlayer).toHaveBeenCalledTimes(1);
+      expect(component.busy).toBeTrue();
+      pending.next();
+      pending.complete();
+      await running;
+      expect(component.busy).toBeFalse();
+      expect(component.pendingTeamPlayerRemoval).toBeNull();
     });
 
     it('prevents members from editing any squad', async () => {

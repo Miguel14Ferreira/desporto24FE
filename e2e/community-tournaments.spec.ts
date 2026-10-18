@@ -1492,6 +1492,13 @@ test('organizador prepara equipas reais e distribui membros sem criar jornadas i
   expect(fixture.teams[0].players.map(p => p.profileId)).toEqual([2]);
 
   await azuis.getByRole('button', { name: 'Remover participante da equipa Azuis' }).click();
+  await expect(azuis.getByRole('group', { name: 'Remoção de participante da equipa Azuis' })).toBeVisible();
+  expect(fixture.teams[0].players.map(p => p.profileId)).toEqual([2]);
+  await azuis.getByRole('button', { name: 'Cancelar remoção de participante da equipa Azuis' }).click();
+  await expect(azuis.locator('.player-item').filter({ hasText: '@participante' })).toBeVisible();
+  expect(fixture.teams[0].players.map(p => p.profileId)).toEqual([2]);
+  await azuis.getByRole('button', { name: 'Remover participante da equipa Azuis' }).click();
+  await azuis.getByRole('button', { name: 'Confirmar remoção de participante da equipa Azuis' }).click();
   await expect(azuis.locator('.player-item').filter({ hasText: '@participante' })).toHaveCount(0);
   await azuis.getByRole('button', { name: 'Eliminar equipa Azuis' }).click();
   await expect(page.locator('.team-roster-card')).toHaveCount(1);

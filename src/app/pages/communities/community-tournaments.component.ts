@@ -45,6 +45,7 @@ export class CommunityTournamentsComponent implements OnChanges {
   lossPointsDraft = 0;
   teamNameDraft = '';
   teamPlayerDraft: Record<number, number | null> = {};
+  pendingTeamPlayerRemoval: { teamId: number; profileId: number } | null = null;
   teams: TournamentTeam[] = [];
   teamsLoadError = false;
   teamMatches: TournamentTeamMatch[] = [];
@@ -387,6 +388,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.selected = tournament;
     this.confirmAction = null;
     this.pendingParticipantRemovalId = null;
+    this.pendingTeamPlayerRemoval = null;
     this.feedback = '';
     this.error = '';
     this.participantsPage = 0;
@@ -796,11 +798,28 @@ export class CommunityTournamentsComponent implements OnChanges {
       'Jogador adicionado à equipa.', () => this.loadTeams());
   }
 
+  requestTeamPlayerRemoval(team: TournamentTeam, profileId: number): void {
+    if (!this.canManageTeamRoster || this.detailsLoading
+        || !this.teams.some(item => item.id === team.id
+          && item.players.some(player => player.profileId === profileId))) return;
+    this.pendingTeamPlayerRemoval = { teamId: team.id, profileId };
+  }
+
+  cancelTeamPlayerRemoval(): void {
+    if (!this.busy) this.pendingTeamPlayerRemoval = null;
+  }
+
   async removeTeamPlayer(team: TournamentTeam, profileId: number): Promise<void> {
-    if (!this.canManageTeamRoster || !this.selected
-        || !team.players.some(p => p.profileId === profileId)) return;
+    if (!this.canManageTeamRoster || !this.selected || this.detailsLoading
+        || this.pendingTeamPlayerRemoval?.teamId !== team.id
+        || this.pendingTeamPlayerRemoval?.profileId !== profileId
+        || !this.teams.some(item => item.id === team.id
+          && item.players.some(player => player.profileId === profileId))) return;
     await this.mutate(this.api.removeTeamPlayer(this.community.id, this.selected.id, team.id, profileId),
-      'Jogador removido do plantel.', () => this.loadTeams());
+      'Jogador removido do plantel.', () => {
+        this.pendingTeamPlayerRemoval = null;
+        this.loadTeams();
+      });
   }
 
   async deleteTournamentTeam(team: TournamentTeam): Promise<void> {

@@ -405,10 +405,27 @@
                         <div class="player-item">
                           <div><strong>{{ player.displayName || player.username }}</strong>
                             <small>&#64;{{ player.username }}</small></div>
-                          @if (canManageTeamRoster) {
-                            <button type="button" class="t-btn t-btn-secondary t-btn-small"
-                              [attr.aria-label]="'Remover ' + player.username + ' da equipa ' + team.name"
-                              (click)="removeTeamPlayer(team, player.profileId)">Remover</button>
+                          @if (canManageTeamRoster || (busy && pendingTeamPlayerRemoval?.teamId === team.id && pendingTeamPlayerRemoval?.profileId === player.profileId)) {
+                            @if (pendingTeamPlayerRemoval?.teamId === team.id && pendingTeamPlayerRemoval?.profileId === player.profileId) {
+                              <div class="player-removal-confirmation" role="group"
+                                [attr.aria-label]="'Remoção de ' + player.username + ' da equipa ' + team.name">
+                                <span class="t-muted">Remover {{ player.displayName || player.username }} da equipa {{ team.name }}?</span>
+                                <div class="confirm-actions">
+                                  <button type="button" class="t-btn t-btn-danger t-btn-small"
+                                    [attr.aria-label]="'Confirmar remoção de ' + player.username + ' da equipa ' + team.name"
+                                    [disabled]="busy || detailsLoading"
+                                    (click)="removeTeamPlayer(team, player.profileId)">Sim, remover</button>
+                                  <button type="button" class="t-btn t-btn-secondary t-btn-small"
+                                    [attr.aria-label]="'Cancelar remoção de ' + player.username + ' da equipa ' + team.name"
+                                    [disabled]="busy" (click)="cancelTeamPlayerRemoval()">Cancelar</button>
+                                </div>
+                              </div>
+                            } @else {
+                              <button type="button" class="t-btn t-btn-secondary t-btn-small"
+                                [attr.aria-label]="'Remover ' + player.username + ' da equipa ' + team.name"
+                                [disabled]="busy || detailsLoading"
+                                (click)="requestTeamPlayerRemoval(team, player.profileId)">Remover</button>
+                            }
                           }
                         </div>
                       }
