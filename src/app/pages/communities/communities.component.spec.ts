@@ -63,6 +63,8 @@ describe('CommunitiesComponent public session eligibility', () => {
   });
 
   it('clears stale import data when file selection is cancelled', () => {
+    component.importSourceCompetition = 'Taça antiga';
+    component.importSourceRound = 'Jornada 4';
     component.importFile = new File(['data'], 'jornadas.csv');
     component.importFileName = 'jornadas.csv';
     component.importPreview = { fileName: 'jornadas.csv', sheets: [] };
@@ -73,6 +75,8 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(component.importFile).toBeUndefined();
     expect(component.importFileName).toBe('');
     expect(component.importPreview).toBeUndefined();
+    expect(component.importSourceCompetition).toBe('');
+    expect(component.importSourceRound).toBe('');
   });
 
   it('requires explicit confirmation when mapped spreadsheet points will not be persisted', () => {
@@ -234,6 +238,125 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(confirm).not.toHaveBeenCalled();
   });
 
+  it('clears another community\'s history and reloads it after accepting an invitation', () => {
+    component.selected = { id: 7 } as any;
+    component.selectedSeasonId = 99;
+    component.competition = { selectedSeasonId: 99 } as any;
+    component.communities = [{ id: 7 } as any];
+    component.invites = [{ id: 10 } as any];
+    component.archiveSummaries = [{ id: 51 } as any];
+    component.matchArchiveSummaries = [{ id: 52 } as any];
+    component.archiveOpen = { id: 51 } as any;
+    component.matchArchiveOpen = { id: 52 } as any;
+    const standings = jasmine.createSpy('listHistoricalStandings').and.returnValue(of([]));
+    const matches = jasmine.createSpy('listHistoricalMatches').and.returnValue(of([]));
+    (component as any).communityService = {
+      acceptInvite: () => of({ id: 8, members: [] }),
+      listHistoricalStandings: standings,
+      listHistoricalMatches: matches
+    };
+    spyOn<any>(component, 'prepareRoundEntries');
+    spyOn(component, 'loadCompetition');
+    spyOn(component, 'loadCommunitySessions');
+
+    component.acceptInvite({ id: 10 } as any);
+
+    expect(component.selected?.id).toBe(8);
+    expect(component.selectedSeasonId).toBeNull();
+    expect(component.competition).toBeUndefined();
+    expect(component.archiveSummaries).toEqual([]);
+    expect(component.matchArchiveSummaries).toEqual([]);
+    expect(component.archiveOpen).toBeUndefined();
+    expect(component.matchArchiveOpen).toBeUndefined();
+    expect(standings).toHaveBeenCalledWith(8);
+    expect(matches).toHaveBeenCalledWith(8);
+  });
+
+  it('shows only the latest match archive list and ignores stale errors and loading completion', () => {
+    component.selected = { id: 7 } as any;
+    const first = new Subject<any[]>();
+    const second = new Subject<any[]>();
+    (component as any).communityService = {
+      listHistoricalMatches: jasmine.createSpy('listHistoricalMatches')
+        .and.returnValues(first.asObservable(), second.asObservable())
+    };
+    component.loadMatchArchives(7);
+    component.loadMatchArchives(7);
+    const newest = [{ id: 51, title: 'Recentes' }];
+    second.next(newest);
+    first.error(new Error('stale'));
+    expect(component.matchArchiveSummaries).toEqual(newest as any);
+    expect(component.matchArchivesError).toBe('');
+    expect(component.matchArchivesLoading).toBeTrue();
+    second.complete();
+    expect(component.matchArchivesLoading).toBeFalse();
+  });
+
+  it('shows only the latest historical standings list when requests finish out of order', () => {
+    component.selected = { id: 7 } as any;
+    const first = new Subject<any[]>();
+    const second = new Subject<any[]>();
+    (component as any).communityService = {
+      listHistoricalStandings: jasmine.createSpy('listHistoricalStandings')
+        .and.returnValues(first.asObservable(), second.asObservable())
+    };
+    component.loadArchivedStandings(7);
+    component.loadArchivedStandings(7);
+    second.next([{ id: 60, title: 'Época 2026' }]);
+    first.next([{ id: 59, title: 'Época antiga' }]);
+    first.complete();
+    expect(component.archiveSummaries.map(item => item.id)).toEqual([60]);
+    expect(component.archivesLoading).toBeTrue();
+    second.complete();
+    expect(component.archivesLoading).toBeFalse();
+  });
+
+  it('ignores old match details after navigating and unblocks the new community', () => {
+    const older = new Subject<any>();
+    const newer = new Subject<any>();
+    const details = jasmine.createSpy('historicalMatchDetails')
+      .and.returnValues(older.asObservable(), newer.asObservable());
+    (component as any).communityService = { historicalMatchDetails: details };
+    component.selected = { id: 7 } as any;
+    component.openMatchArchive(50);
+    expect(component.matchArchiveOpeningId).toBe(50);
+    (component as any).invalidateArchiveRequests();
+    component.selected = { id: 8 } as any;
+    component.matchArchiveOpen = undefined;
+    component.openMatchArchive(51);
+    older.next({ id: 50, rows: [] });
+    older.complete();
+    expect(component.matchArchiveOpen).toBeUndefined();
+    expect(component.matchArchiveOpeningId).toBe(51);
+    newer.next({ id: 51, rows: [] });
+    newer.complete();
+    expect((component as any).matchArchiveOpen?.id).toBe(51);
+    expect(component.matchArchiveOpeningId).toBeUndefined();
+    expect(details).toHaveBeenCalledWith(8, 51);
+  });
+
+  it('ignores stale standings detail errors and allows opening a new archive', () => {
+    const older = new Subject<any>();
+    const newer = new Subject<any>();
+    (component as any).communityService = {
+      historicalStandingDetails: jasmine.createSpy('historicalStandingDetails')
+        .and.returnValues(older.asObservable(), newer.asObservable())
+    };
+    component.selected = { id: 7 } as any;
+    component.openArchivedStanding(50);
+    (component as any).invalidateArchiveRequests();
+    component.selected = { id: 8 } as any;
+    component.archiveOpen = undefined;
+    component.openArchivedStanding(51);
+    older.error(new Error('old request'));
+    expect(component.archivesError).toBe('');
+    expect(component.archiveOpeningId).toBe(51);
+    newer.next({ id: 51, rows: [] });
+    newer.complete();
+    expect((component as any).archiveOpen?.id).toBe(51);
+    expect(component.archiveOpeningId).toBeUndefined();
+  });
+
   it('only displays match archives from the selected community and keeps repeated rows', () => {
     component.selected = { id: 9 } as any;
     const archive = { id: 50, title: '2021', entryType: 'INDIVIDUAL' as const,
@@ -326,6 +449,41 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(plan).toHaveBeenCalled();
   });
 
+  it('sends optional source competition and round identifiers to both plan and confirmation', () => {
+    component.selected = { id: 7 } as any;
+    component.importFile = new File(['data'], 'single-round.csv');
+    component.importSheetName = 'Dados';
+    component.selectedSeasonId = 19;
+    component.importDefaultYear = 2026;
+    component.importSourceCompetition = ' Liga de Verão ';
+    component.importSourceRound = ' Jornada 2 ';
+    component.importMappings = [
+      { columnIndex: 0, field: 'PLAYER', header: 'Jogador', confidence: 1 },
+      { columnIndex: 1, field: 'DATE', header: 'Data', confidence: 1 }
+    ];
+    const plan = jasmine.createSpy('finalImportPlan').and.returnValue(of({
+      invalidDates: 0, roundsNeedingYear: 0, rounds: []
+    }));
+    const confirm = jasmine.createSpy('confirmImportRounds').and.returnValue(of({
+      createdRounds: 1, skippedDuplicateRounds: 0, createdEntries: 2
+    }));
+    (component as any).communityService = { finalImportPlan: plan, confirmImportRounds: confirm };
+    spyOn(component, 'loadCompetition');
+    component.buildImportFinalPlan();
+    expect(plan).toHaveBeenCalledWith(7, component.importFile, jasmine.anything(), {
+      seasonId: 19, defaultYear: 2026,
+      sourceCompetition: 'Liga de Verão', sourceRound: 'Jornada 2'
+    });
+    component.confirmHistoricalImport();
+    expect(confirm).toHaveBeenCalledWith(7, component.importFile, jasmine.anything(), {
+      seasonId: 19, defaultYear: 2026,
+      sourceCompetition: 'Liga de Verão', sourceRound: 'Jornada 2'
+    });
+    component.importSourceRound = 'Jornada 3';
+    component.invalidateImportPlan();
+    expect(component.importFinalPlan).toBeUndefined();
+  });
+
   it('requires review and a title before writing final standings', () => {
     component.selected = { id: 7 } as any;
     component.importMode = 'STANDINGS';
@@ -363,6 +521,62 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(component.archivePreview).toBeUndefined();
   });
 
+
+  it('ignores older season responses and keeps the latest competition loading state', () => {
+    const earlier = new Subject<any>();
+    const latest = new Subject<any>();
+    component.selected = { id: 7 } as any;
+    (component as any).communityService = {
+      competition: jasmine.createSpy('competition').and.returnValues(
+        earlier.asObservable(), latest.asObservable())
+    };
+    const overview = (winPoints: number) => ({
+      standings: [], seasons: [], selectedSeasonId: null, activeSeasonId: null,
+      settings: { rankingsEnabled: true, winPoints, drawPoints: 1, lossPoints: 0 },
+      rounds: []
+    });
+    component.loadCompetition(component.selected, 11);
+    component.loadCompetition(component.selected, 12);
+    earlier.next(overview(3));
+    earlier.complete();
+    expect(component.competition).toBeUndefined();
+    expect(component.competitionLoading).toBeTrue();
+    latest.next(overview(4));
+    latest.complete();
+    expect(component.competition?.settings.winPoints).toBe(4);
+    expect(component.competitionLoading).toBeFalse();
+  });
+
+  it('never displays sessions from another community after navigation', () => {
+    const earlier = new Subject<SessionSummary[]>();
+    const latest = new Subject<SessionSummary[]>();
+    const a = { id: 7 } as any;
+    const b = { id: 8 } as any;
+    (component as any).communityService = {
+      sessions: jasmine.createSpy('sessions').and.returnValues(
+        earlier.asObservable(), latest.asObservable())
+    };
+    component.selected = a;
+    component.loadCommunitySessions(a);
+    component.selected = b;
+    component.loadCommunitySessions(b);
+    latest.next([{ ...session, id: 80 }]);
+    earlier.next([{ ...session, id: 70 }]);
+    expect(component.communitySessions.map(item => item.id)).toEqual([80]);
+    earlier.complete();
+    expect(component.sessionsLoading).toBeTrue();
+    latest.complete();
+    expect(component.sessionsLoading).toBeFalse();
+  });
+
+  it('renders imported names without @null and displays verified handles', () => {
+    const imported = { profileId: null, username: null, fullName: 'Ferreirinha' };
+    expect(component.roundEntryHandle(imported)).not.toContain('@null');
+    expect(component.roundEntryHandle(imported)).not.toContain('@undefined');
+    expect(component.roundEntryHandle(imported)).not.toBe('');
+    expect(component.roundEntryHandle({ username: 'TMF14' }))
+      .toBe('@TMF14');
+  });
 
   it('keeps non-participants out of rankings by default but allows showing every member', () => {
     component.competition = { standings: [

@@ -12,6 +12,7 @@ import {
   CommunityRole,
   CommunitySeason,
   CommunityRound,
+  CommunityRoundEntry,
   CommunityRoundEntryDraft,
   CommunityStanding
 } from '../model/community-group';
@@ -110,6 +111,11 @@ export class CommunitiesComponent implements OnInit {
     return this.showAllStandings ? (this.competition?.standings || []) : this.rankingParticipants;
   }
 
+  // Imported rounds retain the source name; handle exists only for a verified profile.
+  roundEntryHandle(entry: Pick<CommunityRoundEntry, 'username'>): string {
+    return entry.username ? '@' + entry.username : t('communities.identity.unlinked');
+  }
+
   get availableHistoricalPlayers(): HistoricalPlayerCandidate[] {
     return this.historicalPlayers.filter(candidate => candidate.linkStatus === 'UNLINKED');
   }
@@ -148,6 +154,14 @@ export class CommunitiesComponent implements OnInit {
   pendingJoinLookupLoading = false;
   private pendingJoinLookupVersion = 0;
   private pendingRequestsLookupVersion = 0;
+  private communityOpenRequestVersion = 0;
+  private competitionRequestVersion = 0;
+  private communitySessionsRequestVersion = 0;
+  private matchArchiveListRequestVersion = 0;
+  private matchArchiveDetailRequestVersion = 0;
+  private standingArchiveListRequestVersion = 0;
+  private standingArchiveDetailRequestVersion = 0;
+  private pendingArchiveDeepLinkCommunityId: number | null = null;
 
   featuresEditing = false;
   featuresSaving = false;
@@ -267,6 +281,8 @@ export class CommunitiesComponent implements OnInit {
   importNormalized?: { acceptedRows: number; skippedRows: number; rows: any[]; skipped: any[] };
   importMappingLoading = false;
   importDefaultYear: number | null = new Date().getFullYear();
+  importSourceCompetition = '';
+  importSourceRound = '';
   importPlanLoading = false;
   importFinalPlan?: any;
   importConfirming = false;
@@ -384,7 +400,12 @@ export class CommunitiesComponent implements OnInit {
   }
 
   private loadCommunityPresentation(id: number): void {
-    // Invalidate checks for a previously opened community.
+    this.pendingArchiveDeepLinkCommunityId = null;
+    this.invalidateArchiveRequests();
+    // Public presentation navigation invalidates still-pending private community reads.
+    this.communityOpenRequestVersion = (this.communityOpenRequestVersion || 0) + 1;
+    this.competitionRequestVersion = (this.competitionRequestVersion || 0) + 1;
+    this.communitySessionsRequestVersion = (this.communitySessionsRequestVersion || 0) + 1;
     ++this.pendingJoinLookupVersion;
     this.pendingJoinLookupLoading = false;
     this.selected = undefined;
@@ -601,7 +622,13 @@ export class CommunitiesComponent implements OnInit {
       return;
     }
 
-    // A response for the previous community must not replace this one's requests.
+    this.pendingArchiveDeepLinkCommunityId = null;
+    this.invalidateArchiveRequests();
+    // A slower response from an earlier navigation must never replace the latest group.
+    const openVersion = (this.communityOpenRequestVersion || 0) + 1;
+    this.communityOpenRequestVersion = openVersion;
+    this.competitionRequestVersion = (this.competitionRequestVersion || 0) + 1;
+    this.communitySessionsRequestVersion = (this.communitySessionsRequestVersion || 0) + 1;
     ++this.pendingRequestsLookupVersion;
     this.editingSports = false;
     this.sportsMessage = '';
@@ -619,17 +646,22 @@ export class CommunitiesComponent implements OnInit {
       )
       .subscribe({
       next: full => {
+        if (openVersion !== this.communityOpenRequestVersion) return;
         this.selected = full;
         this.resetHistoricalLinks();
         const requestedTab = this.route.snapshot.queryParamMap.get('tab');
-        const openJoinRequests = requestedTab === 'members'
+        const requestedMembers = requestedTab === 'members';
+        const openJoinRequests = requestedMembers
           && (full.myRole === 'OWNER' || full.myRole === 'ADMIN');
-        this.activeTab = openJoinRequests ? 'members'
+        this.activeTab = requestedMembers ? 'members'
           : requestedTab === 'tournaments' && this.hasCompetitions(full) ? 'tournaments'
           : requestedTab === 'ranking' && (full.rankingsEnabled || this.hasCompetitions(full)) ? 'ranking'
           : requestedTab === 'stats' && full.rankingsEnabled ? 'stats'
           : requestedTab === 'sessions' ? 'sessions'
           : 'home';
+        // Archive-only communities reveal the History tab after the async lists load.
+        this.pendingArchiveDeepLinkCommunityId = requestedTab === 'ranking' && this.activeTab === 'home'
+          ? full.id : null;
         this.inviteUsername = '';
         this.inviteSearchResults = [];
         this.inviteSearchPerformed = false;
@@ -656,7 +688,11 @@ export class CommunitiesComponent implements OnInit {
         if (this.activeTab === 'members') this.loadHistoricalLinks(full.id);
         if (openJoinRequests) this.loadPendingJoinRequests(full.id);
       },
-      error: () => this.errorMessage = t('feedback.communities.openError')
+      error: () => {
+        if (openVersion === this.communityOpenRequestVersion) {
+          this.errorMessage = t('feedback.communities.openError');
+        }
+      }
     });
   }
 
@@ -665,6 +701,7 @@ export class CommunitiesComponent implements OnInit {
         || (tab === 'ranking' && !this.canBrowseHistoricalArchives)
         || (tab === 'stats' && !this.selected?.rankingsEnabled)) return;
     this.activeTab = tab;
+    this.pendingArchiveDeepLinkCommunityId = null;
     this.errorMessage = '';
 
     if (tab === 'members' && this.selected) {
@@ -944,6 +981,8 @@ export class CommunitiesComponent implements OnInit {
   }
 
   loadCommunitySessions(community: CommunityGroup = this.selected as CommunityGroup): void {
+    const requestVersion = (this.communitySessionsRequestVersion || 0) + 1;
+    this.communitySessionsRequestVersion = requestVersion;
     if (!community) {
       this.communitySessions = [];
       return;
@@ -954,11 +993,19 @@ export class CommunitiesComponent implements OnInit {
       .pipe(
         timeout(10_000),
         retry({ count: 1 }),
-        finalize(() => this.sessionsLoading = false)
+        finalize(() => {
+          if (requestVersion === this.communitySessionsRequestVersion) this.sessionsLoading = false;
+        })
       )
       .subscribe({
-        next: sessions => this.communitySessions = sessions,
+        next: sessions => {
+          if (requestVersion !== this.communitySessionsRequestVersion ||
+              this.selected?.id !== community.id) return;
+          this.communitySessions = sessions;
+        },
         error: () => {
+          if (requestVersion !== this.communitySessionsRequestVersion ||
+              this.selected?.id !== community.id) return;
           this.communitySessions = [];
           this.errorMessage = t('feedback.communities.sessionsLoadError');
         }
@@ -1051,15 +1098,21 @@ export class CommunitiesComponent implements OnInit {
       return;
     }
 
+    const requestVersion = (this.competitionRequestVersion || 0) + 1;
+    this.competitionRequestVersion = requestVersion;
     this.competitionLoading = true;
     this.communityService.competition(community.id, seasonId)
       .pipe(
         timeout(10_000),
         retry({ count: 1 }),
-        finalize(() => this.competitionLoading = false)
+        finalize(() => {
+          if (requestVersion === this.competitionRequestVersion) this.competitionLoading = false;
+        })
       )
       .subscribe({
         next: competition => {
+          if (requestVersion !== this.competitionRequestVersion ||
+              this.selected?.id !== community.id) return;
           this.competition = competition;
           this.maxStandingPoints = Math.max(
             0,
@@ -1110,6 +1163,8 @@ export class CommunitiesComponent implements OnInit {
           this.lossPointsDraft = competition.settings.lossPoints;
         },
         error: () => {
+          if (requestVersion !== this.competitionRequestVersion ||
+              this.selected?.id !== community.id) return;
           this.competition = undefined;
           this.maxStandingPoints = 0;
           this.topGoalsStanding = undefined;
@@ -1354,6 +1409,8 @@ export class CommunitiesComponent implements OnInit {
     this.resetArchiveDraft();
     this.importPointsAcknowledged = false;
     this.importSheetName = '';
+    this.importSourceCompetition = '';
+    this.importSourceRound = '';
     this.importMappings = [];
     this.importValidation = undefined;
     this.importNormalized = undefined;
@@ -1580,17 +1637,50 @@ export class CommunitiesComponent implements OnInit {
       });
   }
 
+  private openPendingArchiveDeepLink(communityId: number): void {
+    if (this.pendingArchiveDeepLinkCommunityId !== communityId
+        || this.selected?.id !== communityId || !this.canBrowseHistoricalArchives) return;
+    this.activeTab = 'ranking';
+    this.pendingArchiveDeepLinkCommunityId = null;
+  }
+
+  // A navigation or a newer request supersedes responses from previously viewed
+  // archives. Reset the busy flags so an old detail request cannot block a new group.
+  private invalidateArchiveRequests(): void {
+    this.matchArchiveListRequestVersion = (this.matchArchiveListRequestVersion || 0) + 1;
+    this.matchArchiveDetailRequestVersion = (this.matchArchiveDetailRequestVersion || 0) + 1;
+    this.standingArchiveListRequestVersion = (this.standingArchiveListRequestVersion || 0) + 1;
+    this.standingArchiveDetailRequestVersion = (this.standingArchiveDetailRequestVersion || 0) + 1;
+    this.matchArchivesLoading = false;
+    this.archivesLoading = false;
+    this.matchArchiveOpeningId = undefined;
+    this.archiveOpeningId = undefined;
+  }
+
   loadMatchArchives(communityId: number): void {
+    const requestVersion = (this.matchArchiveListRequestVersion || 0) + 1;
+    this.matchArchiveListRequestVersion = requestVersion;
     this.matchArchivesLoading = true;
     this.matchArchivesError = '';
     this.communityService.listHistoricalMatches(communityId)
-      .pipe(timeout(15_000), finalize(() => this.matchArchivesLoading = false))
+      .pipe(timeout(15_000), finalize(() => {
+        if (requestVersion === this.matchArchiveListRequestVersion) {
+          this.matchArchivesLoading = false;
+        }
+      }))
       .subscribe({
         next: archives => {
-          if (this.selected?.id === communityId) this.matchArchiveSummaries = archives;
+          if (requestVersion === this.matchArchiveListRequestVersion
+              && this.selected?.id === communityId) {
+            this.matchArchiveSummaries = archives;
+            this.openPendingArchiveDeepLink(communityId);
+          }
         },
         error: () => {
-          if (this.selected?.id === communityId) this.matchArchivesError = t('communities.matches.listError');
+          if (requestVersion === this.matchArchiveListRequestVersion
+              && this.selected?.id === communityId) {
+            this.matchArchivesError = t('communities.matches.listError');
+          }
         }
       });
   }
@@ -1602,19 +1692,28 @@ export class CommunitiesComponent implements OnInit {
       this.matchArchiveOpen = undefined;
       return;
     }
+    const requestVersion = (this.matchArchiveDetailRequestVersion || 0) + 1;
+    this.matchArchiveDetailRequestVersion = requestVersion;
     this.matchArchiveOpeningId = archiveId;
     this.matchArchivesError = '';
     this.communityService.historicalMatchDetails(communityId, archiveId)
-      .pipe(timeout(15_000), finalize(() => this.matchArchiveOpeningId = undefined))
+      .pipe(timeout(15_000), finalize(() => {
+        if (requestVersion === this.matchArchiveDetailRequestVersion) {
+          this.matchArchiveOpeningId = undefined;
+        }
+      }))
       .subscribe({
         next: archive => {
-          if (this.selected?.id === communityId) {
-            this.matchArchiveOpen = archive;
-            this.matchArchivePage = 0;
-          }
+          if (requestVersion !== this.matchArchiveDetailRequestVersion
+              || this.selected?.id !== communityId) return;
+          this.matchArchiveOpen = archive;
+          this.matchArchivePage = 0;
         },
         error: () => {
-          if (this.selected?.id === communityId) this.matchArchivesError = t('communities.matches.detailError');
+          if (requestVersion === this.matchArchiveDetailRequestVersion
+              && this.selected?.id === communityId) {
+            this.matchArchivesError = t('communities.matches.detailError');
+          }
         }
       });
   }
@@ -1689,37 +1788,60 @@ export class CommunitiesComponent implements OnInit {
   }
 
   loadArchivedStandings(communityId: number): void {
+    const requestVersion = (this.standingArchiveListRequestVersion || 0) + 1;
+    this.standingArchiveListRequestVersion = requestVersion;
     this.archivesLoading = true;
     this.archivesError = '';
     this.communityService.listHistoricalStandings(communityId)
-      .pipe(timeout(15_000), finalize(() => this.archivesLoading = false))
+      .pipe(timeout(15_000), finalize(() => {
+        if (requestVersion === this.standingArchiveListRequestVersion) {
+          this.archivesLoading = false;
+        }
+      }))
       .subscribe({
         next: archives => {
-          if (this.selected?.id === communityId) this.archiveSummaries = archives;
+          if (requestVersion === this.standingArchiveListRequestVersion
+              && this.selected?.id === communityId) {
+            this.archiveSummaries = archives;
+            this.openPendingArchiveDeepLink(communityId);
+          }
         },
         error: () => {
-          if (this.selected?.id === communityId) this.archivesError = t('communities.archive.listError');
+          if (requestVersion === this.standingArchiveListRequestVersion
+              && this.selected?.id === communityId) {
+            this.archivesError = t('communities.archive.listError');
+          }
         }
       });
   }
 
   openArchivedStanding(archiveId: number): void {
-    if (!this.selected || this.archiveOpeningId) return;
+    if (!this.selected || this.archiveOpeningId !== undefined) return;
     const communityId = this.selected.id;
     if (this.archiveOpen?.id === archiveId) {
       this.archiveOpen = undefined;
       return;
     }
+    const requestVersion = (this.standingArchiveDetailRequestVersion || 0) + 1;
+    this.standingArchiveDetailRequestVersion = requestVersion;
     this.archiveOpeningId = archiveId;
     this.archivesError = '';
     this.communityService.historicalStandingDetails(communityId, archiveId)
-      .pipe(timeout(15_000), finalize(() => this.archiveOpeningId = undefined))
+      .pipe(timeout(15_000), finalize(() => {
+        if (requestVersion === this.standingArchiveDetailRequestVersion) {
+          this.archiveOpeningId = undefined;
+        }
+      }))
       .subscribe({
         next: archive => {
-          if (this.selected?.id === communityId) this.archiveOpen = archive;
+          if (requestVersion === this.standingArchiveDetailRequestVersion
+              && this.selected?.id === communityId) this.archiveOpen = archive;
         },
         error: () => {
-          if (this.selected?.id === communityId) this.archivesError = t('communities.archive.detailError');
+          if (requestVersion === this.standingArchiveDetailRequestVersion
+              && this.selected?.id === communityId) {
+            this.archivesError = t('communities.archive.detailError');
+          }
         }
       });
   }
@@ -1801,7 +1923,9 @@ export class CommunitiesComponent implements OnInit {
     };
     const context = {
       seasonId: this.selectedSeasonId,
-      defaultYear: this.importDefaultYear || null
+      defaultYear: this.importDefaultYear || null,
+      sourceCompetition: this.importSourceCompetition?.trim() || null,
+      sourceRound: this.importSourceRound?.trim() || null
     };
 
     this.importPlanLoading = true;
@@ -1828,7 +1952,12 @@ export class CommunitiesComponent implements OnInit {
       return;
     }
     const mapping = { sheetName: this.importSheetName, columns: this.importMappings.map(item => ({ columnIndex: item.columnIndex, field: item.field })) };
-    const context = { seasonId: this.selectedSeasonId, defaultYear: this.importDefaultYear || null };
+    const context = {
+      seasonId: this.selectedSeasonId,
+      defaultYear: this.importDefaultYear || null,
+      sourceCompetition: this.importSourceCompetition?.trim() || null,
+      sourceRound: this.importSourceRound?.trim() || null
+    };
     this.importConfirming = true;
     this.importFileError = '';
     this.importResult = undefined;
@@ -2042,9 +2171,29 @@ export class CommunitiesComponent implements OnInit {
       next: community => {
         this.invites = this.invites.filter(item => item.id !== invite.id);
         this.communities = [community, ...this.communities.filter(item => item.id !== community.id)];
+        // Switching through an invitation must not reuse another community's archives.
+        this.communityOpenRequestVersion = (this.communityOpenRequestVersion || 0) + 1;
+        this.invalidateArchiveRequests();
+        this.competitionRequestVersion = (this.competitionRequestVersion || 0) + 1;
+        this.communitySessionsRequestVersion = (this.communitySessionsRequestVersion || 0) + 1;
         this.selected = community;
         this.activeTab = 'home';
+        this.pendingArchiveDeepLinkCommunityId = null;
+        this.selectedSeasonId = null;
+        this.competition = undefined;
+        this.communitySessions = [];
+        this.resetHistoricalLinks();
+        this.archiveSummaries = [];
+        this.matchArchiveSummaries = [];
+        this.archiveOpen = undefined;
+        this.matchArchiveOpen = undefined;
+        this.archiveConfirmed = undefined;
+        this.matchArchiveConfirmed = undefined;
+        this.archivesError = '';
+        this.matchArchivesError = '';
         this.prepareRoundEntries(community);
+        this.loadArchivedStandings(community.id);
+        this.loadMatchArchives(community.id);
         this.loadCompetition(community);
         this.loadCommunitySessions(community);
       },
@@ -2103,6 +2252,7 @@ export class CommunitiesComponent implements OnInit {
       next: () => {
         this.communities = this.communities.filter(item => item.id !== id);
         this.selected = undefined;
+        this.pendingArchiveDeepLinkCommunityId = null;
         this.resetHistoricalLinks();
         this.competition = undefined;
         this.maxStandingPoints = 0;
