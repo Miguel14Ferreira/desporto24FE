@@ -299,6 +299,7 @@ export class CommunitiesComponent implements OnInit {
   importSourceCompetition = '';
   importSourceRound = '';
   importPlanLoading = false;
+  private importPlanRequestVersion = 0;
   importFinalPlan?: any;
   importConfirming = false;
   importResult?: { createdRounds: number; skippedDuplicateRounds: number; createdEntries: number };
@@ -1523,6 +1524,8 @@ export class CommunitiesComponent implements OnInit {
     this.importNormalized = undefined;
     this.importFinalPlan = undefined;
     this.importResult = undefined;
+    this.importPlanRequestVersion = (this.importPlanRequestVersion || 0) + 1;
+    this.importPlanLoading = false;
   }
 
   private resetImportAfterMapping(): void {
@@ -1534,6 +1537,8 @@ export class CommunitiesComponent implements OnInit {
     this.importMappingLoading = false;
     this.importFinalPlan = undefined;
     this.importResult = undefined;
+    this.importPlanRequestVersion = (this.importPlanRequestVersion || 0) + 1;
+    this.importPlanLoading = false;
   }
 
   onImportFileChange(event: Event): void {
@@ -2038,6 +2043,8 @@ export class CommunitiesComponent implements OnInit {
   }
 
   invalidateImportPlan(): void {
+    this.importPlanRequestVersion = (this.importPlanRequestVersion || 0) + 1;
+    this.importPlanLoading = false;
     this.importPointsAcknowledged = false;
     this.importFinalPlan = undefined;
     this.importResult = undefined;
@@ -2054,26 +2061,45 @@ export class CommunitiesComponent implements OnInit {
       this.importFileError = t('communities.import.explicitYearRequired');
       return;
     }
+    const communityId = this.selected.id;
+    const file = this.importFile;
+    const sheetName = this.importSheetName;
+    const seasonId = this.selectedSeasonId;
+    const year = this.importDefaultYear || null;
+    const sourceCompetition = this.importSourceCompetition?.trim() || null;
+    const sourceRound = this.importSourceRound?.trim() || null;
+    const mappingRevision = this.importRevision;
+    const importMode = this.importMode;
+    const requestVersion = (this.importPlanRequestVersion || 0) + 1;
+    this.importPlanRequestVersion = requestVersion;
+    const stillCurrent = () => this.importPlanRequestVersion === requestVersion
+      && this.importRevision === mappingRevision && this.selected?.id === communityId
+      && this.importFile === file && this.importSheetName === sheetName
+      && this.selectedSeasonId === seasonId && this.importMode === importMode
+      && (this.importDefaultYear || null) === year
+      && (this.importSourceCompetition?.trim() || null) === sourceCompetition
+      && (this.importSourceRound?.trim() || null) === sourceRound;
     const mapping = {
-      sheetName: this.importSheetName,
+      sheetName,
       columns: this.importMappings.map(item => ({ columnIndex: item.columnIndex, field: item.field }))
     };
-    const context = {
-      seasonId: this.selectedSeasonId,
-      defaultYear: this.importDefaultYear || null,
-      sourceCompetition: this.importSourceCompetition?.trim() || null,
-      sourceRound: this.importSourceRound?.trim() || null
-    };
+    const context = { seasonId, defaultYear: year, sourceCompetition, sourceRound };
 
     this.importPlanLoading = true;
     this.importFileError = '';
     this.importFinalPlan = undefined;
     this.importResult = undefined;
-    this.communityService.finalImportPlan(this.selected.id, this.importFile, mapping, context)
-      .pipe(timeout(20_000), finalize(() => this.importPlanLoading = false))
+    this.communityService.finalImportPlan(communityId, file, mapping, context)
+      .pipe(timeout(20_000), finalize(() => {
+        if (this.importPlanRequestVersion === requestVersion) this.importPlanLoading = false;
+      }))
       .subscribe({
-        next: plan => this.importFinalPlan = plan,
-        error: error => this.importFileError = error.error?.message || t('communities.import.planError')
+        next: plan => {
+          if (stillCurrent()) this.importFinalPlan = plan;
+        },
+        error: error => {
+          if (stillCurrent()) this.importFileError = error.error?.message || t('communities.import.planError');
+        }
       });
   }
 

@@ -704,6 +704,57 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(plan).toHaveBeenCalled();
   });
 
+  it('discards an Excel import plan after its source context changes', () => {
+    component.selected = { id: 7 } as any;
+    component.importFile = new File(['data'], 'jornadas.xlsx');
+    component.importSheetName = 'Dados';
+    component.selectedSeasonId = 19;
+    component.importDefaultYear = 2026;
+    component.importRevision = 0;
+    component.importMappings = [{ columnIndex: 0, header: 'Jogador', field: 'PLAYER', confidence: 1 }];
+    component.importSourceRound = 'Jornada 2';
+    const old = new Subject<any>();
+    const latest = new Subject<any>();
+    const request = jasmine.createSpy('finalImportPlan').and.returnValues(old, latest);
+    (component as any).communityService = { finalImportPlan: request };
+    component.buildImportFinalPlan();
+    expect(component.importPlanLoading).toBeTrue();
+    component.importSourceRound = 'Jornada 3';
+    component.invalidateImportPlan();
+    expect(component.importPlanLoading).toBeFalse();
+    component.buildImportFinalPlan();
+    expect(request).toHaveBeenCalledTimes(2);
+    old.next({ invalidDates: 0, roundsNeedingYear: 0, rounds: [{ old: true }] });
+    old.complete();
+    expect(component.importFinalPlan).toBeUndefined();
+    expect(component.importPlanLoading).toBeTrue();
+    latest.next({ invalidDates: 0, roundsNeedingYear: 0, rounds: [{ current: true }] });
+    latest.complete();
+    expect(component.importFinalPlan?.rounds[0].current).toBeTrue();
+    expect(component.importPlanLoading).toBeFalse();
+  });
+
+  it('rejects a delayed import plan after a season change without allowing confirmation', () => {
+    component.selected = { id: 7 } as any;
+    component.importFile = new File(['data'], 'historico.csv');
+    component.importSheetName = 'Dados';
+    component.selectedSeasonId = 10;
+    component.importDefaultYear = 2026;
+    component.importRevision = 0;
+    const pending = new Subject<any>();
+    const request = jasmine.createSpy('finalImportPlan').and.returnValue(pending);
+    const confirm = jasmine.createSpy('confirmImportRounds');
+    (component as any).communityService = { finalImportPlan: request, confirmImportRounds: confirm };
+    component.buildImportFinalPlan();
+    component.selectedSeasonId = 11;
+    pending.next({ invalidDates: 0, roundsNeedingYear: 0, rounds: [] });
+    pending.complete();
+    expect(component.importFinalPlan).toBeUndefined();
+    expect(component.importPlanLoading).toBeFalse();
+    component.confirmHistoricalImport();
+    expect(confirm).not.toHaveBeenCalled();
+  });
+
   it('sends optional source competition and round identifiers to both plan and confirmation', () => {
     component.selected = { id: 7 } as any;
     component.importFile = new File(['data'], 'single-round.csv');
