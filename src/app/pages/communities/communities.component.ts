@@ -628,9 +628,10 @@ export class CommunitiesComponent implements OnInit {
         this.selected = full;
         this.resetHistoricalLinks();
         const requestedTab = this.route.snapshot.queryParamMap.get('tab');
-        const openJoinRequests = requestedTab === 'members'
+        const requestedMembers = requestedTab === 'members';
+        const openJoinRequests = requestedMembers
           && (full.myRole === 'OWNER' || full.myRole === 'ADMIN');
-        this.activeTab = openJoinRequests ? 'members'
+        this.activeTab = requestedMembers ? 'members'
           : requestedTab === 'tournaments' && this.hasCompetitions(full) ? 'tournaments'
           : requestedTab === 'ranking' && (full.rankingsEnabled || this.hasCompetitions(full)) ? 'ranking'
           : requestedTab === 'stats' && full.rankingsEnabled ? 'stats'

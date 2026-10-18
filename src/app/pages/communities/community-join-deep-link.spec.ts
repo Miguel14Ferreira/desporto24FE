@@ -7,6 +7,7 @@ describe('Community join request deep links', () => {
   let component: CommunitiesComponent;
   let getCommunity: jasmine.Spy;
   let pendingJoinRequests: jasmine.Spy;
+  let myHistoricalClaims: jasmine.Spy;
 
   beforeEach(() => {
     component = Object.create(CommunitiesComponent.prototype) as CommunitiesComponent;
@@ -16,11 +17,12 @@ describe('Community join request deep links', () => {
       id: 42, myRole: 'OWNER', members: [], rankingsEnabled: false
     } as unknown as CommunityGroup));
     pendingJoinRequests = jasmine.createSpy('pendingJoinRequests').and.returnValue(of([]));
+    myHistoricalClaims = jasmine.createSpy('myHistoricalClaims').and.returnValue(of([]));
     (component as any).communityService = {
       get: getCommunity, pendingJoinRequests,
       listHistoricalStandings: () => of([]),
       listHistoricalMatches: () => of([]),
-      myHistoricalClaims: () => of([]),
+      myHistoricalClaims,
       historicalPlayerCandidates: () => of([])
     };
     (component as any).route = {
@@ -47,12 +49,13 @@ describe('Community join request deep links', () => {
     expect(pendingJoinRequests).toHaveBeenCalledWith(42);
   });
 
-  it('does not load join requests when an ordinary member follows the same link', () => {
+  it('opens identity self-service for ordinary members without exposing manager join requests', () => {
     getCommunity.and.returnValue(of({
       id: 42, myRole: 'MEMBER', members: []
     } as unknown as CommunityGroup));
     component.open({ id: 42 } as CommunityGroup);
-    expect(component.activeTab).toBe('home');
+    expect(component.activeTab).toBe('members');
+    expect(myHistoricalClaims).toHaveBeenCalledWith(42);
     expect(pendingJoinRequests).not.toHaveBeenCalled();
   });
 });
