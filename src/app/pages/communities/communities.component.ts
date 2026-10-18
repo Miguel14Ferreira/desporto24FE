@@ -1511,6 +1511,7 @@ export class CommunitiesComponent implements OnInit {
     // Allow a newly selected file to be inspected immediately, even if the
     // previous preview HTTP request is still completing.
     this.importPreviewLoading = false;
+    this.importMappingLoading = false;
     this.sourceDatesNeedYear = false;
     this.resetArchiveDraft();
     this.importPointsAcknowledged = false;
@@ -1530,6 +1531,7 @@ export class CommunitiesComponent implements OnInit {
     this.importPointsAcknowledged = false;
     this.importValidation = undefined;
     this.importNormalized = undefined;
+    this.importMappingLoading = false;
     this.importFinalPlan = undefined;
     this.importResult = undefined;
   }
@@ -1979,9 +1981,15 @@ export class CommunitiesComponent implements OnInit {
       this.importFileError = t('communities.import.playerRequired');
       return;
     }
-
+    const communityId = this.selected.id;
+    const file = this.importFile;
+    const sheetName = this.importSheetName;
+    const revision = this.importRevision;
+    const stillCurrent = () => this.importRevision === revision
+      && this.selected?.id === communityId && this.importFile === file
+      && this.importSheetName === sheetName && this.importMode === 'ROUNDS';
     const mapping = {
-      sheetName: this.importSheetName,
+      sheetName,
       columns: this.importMappings.map(item => ({
         columnIndex: item.columnIndex,
         field: item.field
@@ -1993,26 +2001,36 @@ export class CommunitiesComponent implements OnInit {
     this.importValidation = undefined;
     this.importNormalized = undefined;
 
-    this.communityService.validateImport(this.selected.id, this.importFile, mapping)
+    this.communityService.validateImport(communityId, file, mapping)
       .pipe(timeout(20_000))
       .subscribe({
         next: validation => {
+          if (!stillCurrent()) return;
           this.importValidation = validation;
           if (!validation.valid) {
             this.importMappingLoading = false;
             return;
           }
-          this.communityService.normalizedImportPreview(this.selected!.id, this.importFile!, mapping)
+          this.communityService.normalizedImportPreview(communityId, file, mapping)
             .pipe(
               timeout(20_000),
-              finalize(() => this.importMappingLoading = false)
+              finalize(() => {
+                if (stillCurrent()) this.importMappingLoading = false;
+              })
             )
             .subscribe({
-              next: preview => this.importNormalized = preview,
-              error: error => this.importFileError = error.error?.message || t('communities.import.normalizeError')
+              next: preview => {
+                if (stillCurrent()) this.importNormalized = preview;
+              },
+              error: error => {
+                if (stillCurrent()) {
+                  this.importFileError = error.error?.message || t('communities.import.normalizeError');
+                }
+              }
             });
         },
         error: error => {
+          if (!stillCurrent()) return;
           this.importMappingLoading = false;
           this.importFileError = error.error?.message || t('communities.import.validateError');
         }

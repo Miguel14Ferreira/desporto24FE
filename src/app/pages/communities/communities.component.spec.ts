@@ -125,6 +125,62 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(component.importPreviewLoading).toBeFalse();
   });
 
+  it('does not normalize an outdated mapping validation after selecting a new file', () => {
+    const oldValidation = new Subject<any>();
+    const currentValidation = new Subject<any>();
+    const validate = jasmine.createSpy('validateImport').and.returnValues(oldValidation, currentValidation);
+    const normalize = jasmine.createSpy('normalizedImportPreview').and.returnValue(of({ acceptedRows: 1, skippedRows: 0, rows: [], skipped: [] }));
+    (component as any).communityService = { validateImport: validate, normalizedImportPreview: normalize };
+    component.selected = { id: 7 } as any;
+    const first = new File(['a'], 'primeiro.xlsx');
+    const second = new File(['b'], 'segundo.xlsx');
+    const choose = (file: File) => {
+      component.onImportFileChange({ target: { files: [file], value: file.name } } as unknown as Event);
+      component.importSheetName = 'Dados';
+      component.importMode = 'ROUNDS';
+      component.importMappings = [{ columnIndex: 0, header: 'Jogador', field: 'PLAYER', confidence: 1 }];
+    };
+    choose(first);
+    component.validateImportMapping();
+    expect(component.importMappingLoading).toBeTrue();
+    choose(second);
+    expect(component.importMappingLoading).toBeFalse();
+    component.validateImportMapping();
+    oldValidation.next({ valid: true, dataRows: 5, validRows: 5, errors: [], warnings: [] });
+    oldValidation.complete();
+    expect(normalize).not.toHaveBeenCalled();
+    expect(component.importValidation).toBeUndefined();
+    expect(component.importMappingLoading).toBeTrue();
+    currentValidation.next({ valid: true, dataRows: 2, validRows: 2, errors: [], warnings: [] });
+    currentValidation.complete();
+    expect(normalize).toHaveBeenCalledOnceWith(7, second, jasmine.anything());
+    expect(component.importNormalized?.acceptedRows).toBe(1);
+    expect(component.importMappingLoading).toBeFalse();
+  });
+
+  it('ignores a late normalized Excel preview after column mappings change', () => {
+    const pendingNormalization = new Subject<any>();
+    const normalize = jasmine.createSpy('normalizedImportPreview').and.returnValue(pendingNormalization);
+    (component as any).communityService = {
+      validateImport: () => of({ valid: true, dataRows: 1, validRows: 1, errors: [], warnings: [] }),
+      normalizedImportPreview: normalize
+    };
+    component.selected = { id: 7 } as any;
+    component.importFile = new File(['a'], 'jornadas.xlsx');
+    component.importSheetName = 'Dados';
+    component.importMode = 'ROUNDS';
+    component.importMappings = [{ columnIndex: 0, header: 'Jogador', field: 'PLAYER', confidence: 1 }];
+    component.validateImportMapping();
+    expect(component.importMappingLoading).toBeTrue();
+    component.setImportMapping(0, 'IGNORE');
+    expect(component.importMappingLoading).toBeFalse();
+    pendingNormalization.next({ acceptedRows: 100, skippedRows: 0, rows: [], skipped: [] });
+    pendingNormalization.complete();
+    expect(component.importValidation).toBeUndefined();
+    expect(component.importNormalized).toBeUndefined();
+    expect(component.importMappingLoading).toBeFalse();
+  });
+
   it('requires explicit confirmation when mapped spreadsheet points will not be persisted', () => {
     component.importMappings = [{ columnIndex: 2, header: 'Pontos', field: 'POINTS', confidence: 0.9 }];
     component.importPointsAcknowledged = false;
