@@ -238,39 +238,86 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(confirm).not.toHaveBeenCalled();
   });
 
-  it('clears another community\'s history and reloads it after accepting an invitation', () => {
+  it('accepts an invitation once and opens the correct community route', () => {
+    const pending = new Subject<any>();
+    const accept = jasmine.createSpy('acceptInvite').and.returnValue(pending.asObservable());
+    const reject = jasmine.createSpy('rejectInvite').and.returnValue(of(undefined));
+    const router = { navigate: jasmine.createSpy('navigate').and.returnValue(Promise.resolve(true)) };
+    (component as any).communityService = { acceptInvite: accept, rejectInvite: reject };
+    (component as any).router = router;
+    component.inviteAction = null;
+    component.invites = [
+      { id: 10, communityId: 8, communityName: 'Grupo Novo' },
+      { id: 11, communityId: 9, communityName: 'Outro Grupo' }
+    ] as any;
     component.selected = { id: 7 } as any;
-    component.selectedSeasonId = 99;
-    component.competition = { selectedSeasonId: 99 } as any;
-    component.communities = [{ id: 7 } as any];
-    component.invites = [{ id: 10 } as any];
-    component.archiveSummaries = [{ id: 51 } as any];
-    component.matchArchiveSummaries = [{ id: 52 } as any];
-    component.archiveOpen = { id: 51 } as any;
-    component.matchArchiveOpen = { id: 52 } as any;
-    const standings = jasmine.createSpy('listHistoricalStandings').and.returnValue(of([]));
-    const matches = jasmine.createSpy('listHistoricalMatches').and.returnValue(of([]));
-    (component as any).communityService = {
-      acceptInvite: () => of({ id: 8, members: [] }),
-      listHistoricalStandings: standings,
-      listHistoricalMatches: matches
-    };
-    spyOn<any>(component, 'prepareRoundEntries');
-    spyOn(component, 'loadCompetition');
-    spyOn(component, 'loadCommunitySessions');
 
-    component.acceptInvite({ id: 10 } as any);
+    component.acceptInvite(component.invites[0]);
+    expect(component.inviteAction).toEqual({ id: 10, kind: 'accept' });
+    component.acceptInvite(component.invites[0]);
+    component.rejectInvite(component.invites[0]);
+    component.acceptInvite(component.invites[1]);
+    expect(accept).toHaveBeenCalledOnceWith(10);
+    expect(reject).not.toHaveBeenCalled();
+    expect(router.navigate).not.toHaveBeenCalled();
 
-    expect(component.selected?.id).toBe(8);
-    expect(component.selectedSeasonId).toBeNull();
-    expect(component.competition).toBeUndefined();
-    expect(component.archiveSummaries).toEqual([]);
-    expect(component.matchArchiveSummaries).toEqual([]);
-    expect(component.archiveOpen).toBeUndefined();
-    expect(component.matchArchiveOpen).toBeUndefined();
-    expect(standings).toHaveBeenCalledWith(8);
-    expect(matches).toHaveBeenCalledWith(8);
+    pending.next({ id: 8, name: 'Grupo Novo', members: [] });
+    pending.complete();
+
+    expect(component.inviteAction).toBeNull();
+    expect(component.invites.map(invite => invite.id)).toEqual([11]);
+    expect(component.communities.map(item => item.id)).toEqual([8]);
+    expect(router.navigate).toHaveBeenCalledOnceWith(['/menu/communities', 8]);
   });
+
+  it('rejects an invitation once, stays on the current page and keeps other invites', () => {
+    const pending = new Subject<void>();
+    const accept = jasmine.createSpy('acceptInvite').and.returnValue(of({ id: 8 }));
+    const reject = jasmine.createSpy('rejectInvite').and.returnValue(pending.asObservable());
+    const router = { navigate: jasmine.createSpy('navigate').and.returnValue(Promise.resolve(true)) };
+    (component as any).communityService = { acceptInvite: accept, rejectInvite: reject };
+    (component as any).router = router;
+    component.inviteAction = null;
+    component.invites = [
+      { id: 10, communityId: 8 }, { id: 11, communityId: 9 }
+    ] as any;
+
+    component.rejectInvite(component.invites[0]);
+    expect(component.inviteAction).toEqual({ id: 10, kind: 'reject' });
+    component.rejectInvite(component.invites[0]);
+    component.acceptInvite(component.invites[1]);
+    expect(reject).toHaveBeenCalledOnceWith(10);
+    expect(accept).not.toHaveBeenCalled();
+
+    pending.next();
+    pending.complete();
+    expect(component.inviteAction).toBeNull();
+    expect(component.invites.map(invite => invite.id)).toEqual([11]);
+    expect(router.navigate).not.toHaveBeenCalled();
+  });
+
+  it('retains an invitation after a rejected action and allows retry', () => {
+    const accept = jasmine.createSpy('acceptInvite')
+      .and.returnValues(throwError(() => new Error('Service unavailable')), of({ id: 8 }));
+    const router = { navigate: jasmine.createSpy('navigate').and.returnValue(Promise.resolve(true)) };
+    (component as any).communityService = { acceptInvite: accept };
+    (component as any).router = router;
+    component.inviteAction = null;
+    component.invites = [{ id: 10, communityId: 8 }] as any;
+
+    component.acceptInvite(component.invites[0]);
+    expect(component.inviteAction).toBeNull();
+    expect(component.invites).toHaveSize(1);
+    expect(component.errorMessage).not.toBe('');
+    expect(router.navigate).not.toHaveBeenCalled();
+
+    component.acceptInvite(component.invites[0]);
+    expect(accept).toHaveBeenCalledTimes(2);
+    expect(component.invites).toEqual([]);
+    expect(component.errorMessage).toBe('');
+    expect(router.navigate).toHaveBeenCalledOnceWith(['/menu/communities', 8]);
+  });
+
 
   it('shows only the latest match archive list and ignores stale errors and loading completion', () => {
     component.selected = { id: 7 } as any;

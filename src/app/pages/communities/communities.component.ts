@@ -57,6 +57,7 @@ export class CommunitiesComponent implements OnInit {
 
   communities: CommunityGroup[] = [];
   invites: CommunityInvite[] = [];
+  inviteAction: { id: number; kind: 'accept' | 'reject' } | null = null;
   selected?: CommunityGroup;
   readonly sportsCatalog = SPORTS_CATALOG;
   sportsDraft: string[] = [];
@@ -2244,49 +2245,41 @@ export class CommunitiesComponent implements OnInit {
   }
 
   acceptInvite(invite: CommunityInvite): void {
+    if (this.inviteAction || !this.invites.some(item => item.id === invite.id)) return;
+
+    this.inviteAction = { id: invite.id, kind: 'accept' };
+    this.errorMessage = '';
     this.communityService.acceptInvite(invite.id)
-      .pipe(timeout(10_000))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.inviteAction = null)
+      )
       .subscribe({
-      next: community => {
-        this.invites = this.invites.filter(item => item.id !== invite.id);
-        this.communities = [community, ...this.communities.filter(item => item.id !== community.id)];
-        // Switching through an invitation must not reuse another community's archives.
-        this.communityOpenRequestVersion = (this.communityOpenRequestVersion || 0) + 1;
-        this.invalidateArchiveRequests();
-        this.competitionRequestVersion = (this.competitionRequestVersion || 0) + 1;
-        this.communitySessionsRequestVersion = (this.communitySessionsRequestVersion || 0) + 1;
-        this.selected = community;
-        this.activeTab = 'home';
-        this.pendingArchiveDeepLinkCommunityId = null;
-        this.selectedSeasonId = null;
-        this.competition = undefined;
-        this.communitySessions = [];
-        this.resetHistoricalLinks();
-        this.archiveSummaries = [];
-        this.matchArchiveSummaries = [];
-        this.archiveOpen = undefined;
-        this.matchArchiveOpen = undefined;
-        this.archiveConfirmed = undefined;
-        this.matchArchiveConfirmed = undefined;
-        this.archivesError = '';
-        this.matchArchivesError = '';
-        this.prepareRoundEntries(community);
-        this.loadArchivedStandings(community.id);
-        this.loadMatchArchives(community.id);
-        this.loadCompetition(community);
-        this.loadCommunitySessions(community);
-      },
-      error: () => this.errorMessage = t('feedback.communities.acceptError')
-    });
+        next: community => {
+          this.invites = this.invites.filter(item => item.id !== invite.id);
+          this.communities = [community, ...this.communities.filter(item => item.id !== community.id)];
+          // The canonical detail route reloads the accepted community with
+          // fresh data; stale tabs and archives from another group are not reused.
+          void this.router.navigate(['/menu/communities', community.id]);
+        },
+        error: () => this.errorMessage = t('feedback.communities.acceptError')
+      });
   }
 
   rejectInvite(invite: CommunityInvite): void {
+    if (this.inviteAction || !this.invites.some(item => item.id === invite.id)) return;
+
+    this.inviteAction = { id: invite.id, kind: 'reject' };
+    this.errorMessage = '';
     this.communityService.rejectInvite(invite.id)
-      .pipe(timeout(10_000))
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.inviteAction = null)
+      )
       .subscribe({
-      next: () => this.invites = this.invites.filter(item => item.id !== invite.id),
-      error: () => this.errorMessage = t('feedback.communities.rejectError')
-    });
+        next: () => this.invites = this.invites.filter(item => item.id !== invite.id),
+        error: () => this.errorMessage = t('feedback.communities.rejectError')
+      });
   }
 
   setRole(username: string, role: Exclude<CommunityRole, 'OWNER'>): void {

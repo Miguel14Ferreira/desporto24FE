@@ -270,3 +270,65 @@ test('desktop restores community search filters and page after detail and browse
     expect(observed.filter(x => x.name === 'Liga' && x.sport === 'Futebol' && x.page === '1').length)
       .toBeGreaterThanOrEqual(3);
   });
+
+test('desktop accepts an invitation and opens the accepted community, not the previous one',
+  async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'desktop-chromium', 'Desktop invitation audit');
+    await isolateBackend(page);
+    const group = {
+      id: 19, name: 'Desporto da Vila', description: 'Jogos do bairro',
+      sport: 'Futebol', sports: ['Futebol'], photoUrl: null, visibility: 'PUBLIC',
+      myRole: 'MEMBER', members: [], memberCount: 1, rankingsEnabled: false,
+      individualTournamentsEnabled: false, teamTournamentsEnabled: false
+    };
+    let accepted = 0;
+    await page.route('**/api/communities/mine', route =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }));
+    await page.route('**/api/communities/invites/me', route => route.fulfill({
+      status: 200, contentType: 'application/json',
+      body: JSON.stringify([{ id: 10, communityId: 19, communityName: group.name,
+        invitedByUsername: 'organizador', createdAt: '2026-10-18T12:00:00Z' }])
+    }));
+    await page.route('**/api/communities/invites/10/accept', async route => {
+      accepted++;
+      await route.fulfill({ status: 200, contentType: 'application/json',
+        body: JSON.stringify(group) });
+    });
+    await page.route('**/api/communities/19/presentation', route => route.fulfill({
+      status: 200, contentType: 'application/json', body: JSON.stringify(group)
+    }));
+
+    await page.goto('/menu/communities?view=mine');
+    await expect(page.locator('.invites-card .invite-row')).toHaveCount(1);
+    await page.locator('.invites-card .invite-row')
+      .getByRole('button', { name: 'Aceitar' }).click();
+    await expect(page).toHaveURL(/\/menu\/communities\/19$/);
+    await expect(page.locator('.community-detail-identity h2')).toHaveText(group.name);
+    expect(accepted).toBe(1);
+  });
+
+test('desktop rejects an invitation without switching communities',
+  async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'desktop-chromium', 'Desktop invitation audit');
+    await isolateBackend(page);
+    let rejected = 0;
+    await page.route('**/api/communities/mine', route =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }));
+    await page.route('**/api/communities/invites/me', route => route.fulfill({
+      status: 200, contentType: 'application/json',
+      body: JSON.stringify([{ id: 10, communityId: 19, communityName: 'Desporto da Vila',
+        invitedByUsername: 'organizador', createdAt: '2026-10-18T12:00:00Z' }])
+    }));
+    await page.route('**/api/communities/invites/10/reject', route => {
+      rejected++;
+      return route.fulfill({ status: 204 });
+    });
+
+    await page.goto('/menu/communities?view=mine');
+    await expect(page.locator('.invites-card .invite-row')).toHaveCount(1);
+    await page.locator('.invites-card .invite-row')
+      .getByRole('button', { name: 'Rejeitar' }).click();
+    await expect(page.locator('.invites-card .invite-row')).toHaveCount(0);
+    await expect(page).toHaveURL(/\/menu\/communities\?view=mine$/);
+    expect(rejected).toBe(1);
+  });

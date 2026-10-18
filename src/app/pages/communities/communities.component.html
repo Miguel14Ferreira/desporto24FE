@@ -235,11 +235,15 @@
               <span>{{ 'communities.invitedBy' | t:{ username: invite.invitedByUsername } }}</span>
             </div>
             <div class="row-actions">
-              <button type="button" class="primary-action small jynlo-action jynlo-action--primary jynlo-action--compact" (click)="acceptInvite(invite)">
-                {{ 'communities.accept' | t }}
+              <button type="button" class="primary-action small jynlo-action jynlo-action--primary jynlo-action--compact"
+                [disabled]="inviteAction !== null" (click)="acceptInvite(invite)">
+                {{ (inviteAction?.id === invite.id && inviteAction?.kind === 'accept'
+                  ? 'communities.acceptingInvite' : 'communities.accept') | t }}
               </button>
-              <button type="button" class="secondary-action small jynlo-action jynlo-action--neutral jynlo-action--compact" (click)="rejectInvite(invite)">
-                {{ 'communities.reject' | t }}
+              <button type="button" class="secondary-action small jynlo-action jynlo-action--neutral jynlo-action--compact"
+                [disabled]="inviteAction !== null" (click)="rejectInvite(invite)">
+                {{ (inviteAction?.id === invite.id && inviteAction?.kind === 'reject'
+                  ? 'communities.rejectingInvite' : 'communities.reject') | t }}
               </button>
             </div>
           </div>
