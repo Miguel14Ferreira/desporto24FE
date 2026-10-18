@@ -157,6 +157,10 @@ export class CommunitiesComponent implements OnInit {
   private communityOpenRequestVersion = 0;
   private competitionRequestVersion = 0;
   private communitySessionsRequestVersion = 0;
+  private matchArchiveListRequestVersion = 0;
+  private matchArchiveDetailRequestVersion = 0;
+  private standingArchiveListRequestVersion = 0;
+  private standingArchiveDetailRequestVersion = 0;
 
   featuresEditing = false;
   featuresSaving = false;
@@ -393,6 +397,7 @@ export class CommunitiesComponent implements OnInit {
   }
 
   private loadCommunityPresentation(id: number): void {
+    this.invalidateArchiveRequests();
     // Public presentation navigation invalidates still-pending private community reads.
     this.communityOpenRequestVersion = (this.communityOpenRequestVersion || 0) + 1;
     this.competitionRequestVersion = (this.competitionRequestVersion || 0) + 1;
@@ -613,6 +618,7 @@ export class CommunitiesComponent implements OnInit {
       return;
     }
 
+    this.invalidateArchiveRequests();
     // A slower response from an earlier navigation must never replace the latest group.
     const openVersion = (this.communityOpenRequestVersion || 0) + 1;
     this.communityOpenRequestVersion = openVersion;
@@ -1620,17 +1626,40 @@ export class CommunitiesComponent implements OnInit {
       });
   }
 
+  // A navigation or a newer request supersedes responses from previously viewed
+  // archives. Reset the busy flags so an old detail request cannot block a new group.
+  private invalidateArchiveRequests(): void {
+    this.matchArchiveListRequestVersion = (this.matchArchiveListRequestVersion || 0) + 1;
+    this.matchArchiveDetailRequestVersion = (this.matchArchiveDetailRequestVersion || 0) + 1;
+    this.standingArchiveListRequestVersion = (this.standingArchiveListRequestVersion || 0) + 1;
+    this.standingArchiveDetailRequestVersion = (this.standingArchiveDetailRequestVersion || 0) + 1;
+    this.matchArchivesLoading = false;
+    this.archivesLoading = false;
+    this.matchArchiveOpeningId = undefined;
+    this.archiveOpeningId = undefined;
+  }
+
   loadMatchArchives(communityId: number): void {
+    const requestVersion = (this.matchArchiveListRequestVersion || 0) + 1;
+    this.matchArchiveListRequestVersion = requestVersion;
     this.matchArchivesLoading = true;
     this.matchArchivesError = '';
     this.communityService.listHistoricalMatches(communityId)
-      .pipe(timeout(15_000), finalize(() => this.matchArchivesLoading = false))
+      .pipe(timeout(15_000), finalize(() => {
+        if (requestVersion === this.matchArchiveListRequestVersion) {
+          this.matchArchivesLoading = false;
+        }
+      }))
       .subscribe({
         next: archives => {
-          if (this.selected?.id === communityId) this.matchArchiveSummaries = archives;
+          if (requestVersion === this.matchArchiveListRequestVersion
+              && this.selected?.id === communityId) this.matchArchiveSummaries = archives;
         },
         error: () => {
-          if (this.selected?.id === communityId) this.matchArchivesError = t('communities.matches.listError');
+          if (requestVersion === this.matchArchiveListRequestVersion
+              && this.selected?.id === communityId) {
+            this.matchArchivesError = t('communities.matches.listError');
+          }
         }
       });
   }
@@ -1642,19 +1671,28 @@ export class CommunitiesComponent implements OnInit {
       this.matchArchiveOpen = undefined;
       return;
     }
+    const requestVersion = (this.matchArchiveDetailRequestVersion || 0) + 1;
+    this.matchArchiveDetailRequestVersion = requestVersion;
     this.matchArchiveOpeningId = archiveId;
     this.matchArchivesError = '';
     this.communityService.historicalMatchDetails(communityId, archiveId)
-      .pipe(timeout(15_000), finalize(() => this.matchArchiveOpeningId = undefined))
+      .pipe(timeout(15_000), finalize(() => {
+        if (requestVersion === this.matchArchiveDetailRequestVersion) {
+          this.matchArchiveOpeningId = undefined;
+        }
+      }))
       .subscribe({
         next: archive => {
-          if (this.selected?.id === communityId) {
-            this.matchArchiveOpen = archive;
-            this.matchArchivePage = 0;
-          }
+          if (requestVersion !== this.matchArchiveDetailRequestVersion
+              || this.selected?.id !== communityId) return;
+          this.matchArchiveOpen = archive;
+          this.matchArchivePage = 0;
         },
         error: () => {
-          if (this.selected?.id === communityId) this.matchArchivesError = t('communities.matches.detailError');
+          if (requestVersion === this.matchArchiveDetailRequestVersion
+              && this.selected?.id === communityId) {
+            this.matchArchivesError = t('communities.matches.detailError');
+          }
         }
       });
   }
@@ -1729,37 +1767,57 @@ export class CommunitiesComponent implements OnInit {
   }
 
   loadArchivedStandings(communityId: number): void {
+    const requestVersion = (this.standingArchiveListRequestVersion || 0) + 1;
+    this.standingArchiveListRequestVersion = requestVersion;
     this.archivesLoading = true;
     this.archivesError = '';
     this.communityService.listHistoricalStandings(communityId)
-      .pipe(timeout(15_000), finalize(() => this.archivesLoading = false))
+      .pipe(timeout(15_000), finalize(() => {
+        if (requestVersion === this.standingArchiveListRequestVersion) {
+          this.archivesLoading = false;
+        }
+      }))
       .subscribe({
         next: archives => {
-          if (this.selected?.id === communityId) this.archiveSummaries = archives;
+          if (requestVersion === this.standingArchiveListRequestVersion
+              && this.selected?.id === communityId) this.archiveSummaries = archives;
         },
         error: () => {
-          if (this.selected?.id === communityId) this.archivesError = t('communities.archive.listError');
+          if (requestVersion === this.standingArchiveListRequestVersion
+              && this.selected?.id === communityId) {
+            this.archivesError = t('communities.archive.listError');
+          }
         }
       });
   }
 
   openArchivedStanding(archiveId: number): void {
-    if (!this.selected || this.archiveOpeningId) return;
+    if (!this.selected || this.archiveOpeningId !== undefined) return;
     const communityId = this.selected.id;
     if (this.archiveOpen?.id === archiveId) {
       this.archiveOpen = undefined;
       return;
     }
+    const requestVersion = (this.standingArchiveDetailRequestVersion || 0) + 1;
+    this.standingArchiveDetailRequestVersion = requestVersion;
     this.archiveOpeningId = archiveId;
     this.archivesError = '';
     this.communityService.historicalStandingDetails(communityId, archiveId)
-      .pipe(timeout(15_000), finalize(() => this.archiveOpeningId = undefined))
+      .pipe(timeout(15_000), finalize(() => {
+        if (requestVersion === this.standingArchiveDetailRequestVersion) {
+          this.archiveOpeningId = undefined;
+        }
+      }))
       .subscribe({
         next: archive => {
-          if (this.selected?.id === communityId) this.archiveOpen = archive;
+          if (requestVersion === this.standingArchiveDetailRequestVersion
+              && this.selected?.id === communityId) this.archiveOpen = archive;
         },
         error: () => {
-          if (this.selected?.id === communityId) this.archivesError = t('communities.archive.detailError');
+          if (requestVersion === this.standingArchiveDetailRequestVersion
+              && this.selected?.id === communityId) {
+            this.archivesError = t('communities.archive.detailError');
+          }
         }
       });
   }
