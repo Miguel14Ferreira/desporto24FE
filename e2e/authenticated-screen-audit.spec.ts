@@ -429,3 +429,96 @@ test('desktop blocks a repeated reject until pending invitations can be verified
       .toBeEnabled();
     expect(submitted).toBe(1);
   });
+
+test('desktop member removal requires confirmation and cannot be dispatched twice',
+  async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'desktop-chromium', 'Desktop member-management audit');
+    await isolateBackend(page);
+    const group = {
+      id: 19, name: 'Grupo da Vila', description: 'Jogos de futebol',
+      sport: 'Futebol', sports: ['Futebol'], visibility: 'PRIVATE', photoUrl: null,
+      myRole: 'OWNER', ownerUsername: 'dona', rankingsEnabled: false,
+      memberCount: 2, createdAt: '2026-10-18T12:00:00Z',
+      members: [
+        { profileId: 1, username: 'dona', fullName: 'Dona',
+          profilePicUrl: null, role: 'OWNER' },
+        { profileId: 2, username: 'joao', fullName: 'João',
+          profilePicUrl: null, role: 'MEMBER' }
+      ]
+    };
+    let removals = 0;
+    await page.route('**/api/communities/mine', route => route.fulfill({
+      status: 200, contentType: 'application/json', body: JSON.stringify([group])
+    }));
+    await page.route('**/api/communities/19', route => route.fulfill({
+      status: 200, contentType: 'application/json', body: JSON.stringify(group)
+    }));
+    await page.route('**/api/communities/19/members/joao', route => {
+      if (route.request().method() === 'DELETE') {
+        removals++;
+        return route.fulfill({ status: 204 });
+      }
+      return route.fulfill({ status: 405 });
+    });
+
+    await page.goto('/menu/communities/19');
+    await page.locator('.community-tabs').getByRole('button', { name: 'Membros' }).click();
+    const row = page.locator('.member-row').filter({ hasText: '@joao' });
+    await expect(row).toBeVisible();
+    await row.getByRole('button', { name: 'Remover', exact: true }).click();
+    await expect(row.getByText('Remover este membro da comunidade?')).toBeVisible();
+    expect(removals).toBe(0);
+
+    await row.getByRole('button', { name: 'Cancelar' }).click();
+    await expect(row.getByRole('button', { name: 'Remover', exact: true })).toBeVisible();
+    expect(removals).toBe(0);
+
+    await row.getByRole('button', { name: 'Remover', exact: true }).click();
+    await row.getByRole('button', { name: 'Confirmar remoção' }).click();
+    await expect(row).toHaveCount(0);
+    expect(removals).toBe(1);
+    await expect(page.locator('.members-block .count-pill')).toContainText('1');
+  });
+
+test('desktop administrator cannot change member roles or expel another administrator',
+  async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'desktop-chromium', 'Desktop member-management audit');
+    await isolateBackend(page);
+    const group = {
+      id: 19, name: 'Grupo da Vila', description: 'Jogos',
+      sport: 'Futebol', sports: ['Futebol'], visibility: 'PRIVATE', photoUrl: null,
+      myRole: 'ADMIN', ownerUsername: 'dona', rankingsEnabled: false,
+      memberCount: 3, createdAt: '2026-10-18T12:00:00Z',
+      members: [
+        { profileId: 1, username: 'dona', fullName: 'Dona',
+          profilePicUrl: null, role: 'OWNER' },
+        { profileId: 2, username: 'ana', fullName: 'Ana',
+          profilePicUrl: null, role: 'ADMIN' },
+        { profileId: 3, username: 'joao', fullName: 'João',
+          profilePicUrl: null, role: 'MEMBER' }
+      ]
+    };
+    let mutations = 0;
+    await page.route('**/api/communities/mine', route => route.fulfill({
+      status: 200, contentType: 'application/json', body: JSON.stringify([group])
+    }));
+    await page.route('**/api/communities/19', route => route.fulfill({
+      status: 200, contentType: 'application/json', body: JSON.stringify(group)
+    }));
+    await page.route('**/api/communities/19/members/**', route => {
+      mutations++;
+      return route.fulfill({ status: 403 });
+    });
+
+    await page.goto('/menu/communities/19');
+    await page.locator('.community-tabs').getByRole('button', { name: 'Membros' }).click();
+    const adminRow = page.locator('.member-row').filter({ hasText: '@ana' });
+    await expect(adminRow).toBeVisible();
+    await expect(adminRow.getByRole('button')).toHaveCount(0);
+    const ownerRow = page.locator('.member-row').filter({ hasText: '@dona' });
+    await expect(ownerRow.getByRole('button')).toHaveCount(0);
+    const memberRow = page.locator('.member-row').filter({ hasText: '@joao' });
+    await expect(memberRow.getByRole('button', { name: 'Remover', exact: true })).toBeVisible();
+    await expect(memberRow.getByRole('button', { name: 'Tornar admin' })).toHaveCount(0);
+    expect(mutations).toBe(0);
+  });

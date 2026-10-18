@@ -1612,3 +1612,20 @@ input,textarea,select {
 .feature-settings-actions { display: flex; flex-wrap: wrap; gap: .65rem; margin-top: .8rem; }
 .feature-settings-success { margin-top: .7rem; color: #86efac; }
 .feature-settings-error { margin-top: .7rem; color: #fecaca; }
+
+/* Destructive community member actions require a clear, inline confirmation. */
+.member-removal-confirmation {
+  display: grid;
+  justify-items: start;
+  gap: .45rem;
+  border: 1px solid rgba(248, 113, 113, .35);
+  border-radius: .75rem;
+  background: rgba(248, 113, 113, .08);
+  padding: .65rem .8rem;
+}
+.member-removal-confirmation p {
+  margin: 0;
+  color: #fecaca;
+  font-size: .85rem;
+}
+.member-removal-confirmation .row-actions { align-items: center; }

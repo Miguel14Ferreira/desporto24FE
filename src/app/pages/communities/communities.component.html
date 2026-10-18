@@ -2168,22 +2168,42 @@
                       @if (isOwner() && member.role !== 'OWNER') {
                         <div class="row-actions">
                           @if (member.role === 'MEMBER') {
-                            <button type="button" class="secondary-action small jynlo-action jynlo-action--neutral jynlo-action--compact" (click)="setRole(member.username, 'ADMIN')">
+                            <button type="button" class="secondary-action small jynlo-action jynlo-action--neutral jynlo-action--compact"
+                              [disabled]="memberAction !== null" (click)="setRole(member.username, 'ADMIN')">
                               {{ 'communities.makeAdmin' | t }}
                             </button>
                           } @else {
-                            <button type="button" class="secondary-action small jynlo-action jynlo-action--neutral jynlo-action--compact" (click)="setRole(member.username, 'MEMBER')">
+                            <button type="button" class="secondary-action small jynlo-action jynlo-action--neutral jynlo-action--compact"
+                              [disabled]="memberAction !== null" (click)="setRole(member.username, 'MEMBER')">
                               {{ 'communities.removeAdmin' | t }}
                             </button>
                           }
-                          <button type="button" class="danger-action small jynlo-action jynlo-action--danger jynlo-action--compact" (click)="removeMember(member.username)">
+                        </div>
+                      }
+                      @if ((isOwner() && member.role !== 'OWNER')
+                        || (selected.myRole === 'ADMIN' && member.role === 'MEMBER')) {
+                        @if (memberRemovalConfirmation?.communityId === selected.id
+                          && memberRemovalConfirmation?.username === member.username) {
+                          <div class="member-removal-confirmation" role="group"
+                            [attr.aria-label]="'communities.confirmRemoveMember' | t">
+                            <p>{{ 'communities.confirmRemoveMember' | t }} <strong>@{{ member.username }}</strong></p>
+                            <div class="row-actions">
+                              <button type="button" class="danger-action small jynlo-action jynlo-action--danger jynlo-action--compact"
+                                [disabled]="memberAction !== null" (click)="removeMember(member.username)">
+                                {{ 'communities.confirmRemoveAction' | t }}
+                              </button>
+                              <button type="button" class="secondary-action small jynlo-action jynlo-action--neutral jynlo-action--compact"
+                                [disabled]="memberAction !== null" (click)="cancelMemberRemoval()">
+                                {{ 'common.cancel' | t }}
+                              </button>
+                            </div>
+                          </div>
+                        } @else {
+                          <button type="button" class="danger-action small jynlo-action jynlo-action--danger jynlo-action--compact"
+                            [disabled]="memberAction !== null" (click)="requestMemberRemoval(member.username)">
                             {{ 'communities.removeMember' | t }}
                           </button>
-                        </div>
-                      } @else if (selected.myRole === 'ADMIN' && member.role === 'MEMBER') {
-                        <button type="button" class="danger-action small jynlo-action jynlo-action--danger jynlo-action--compact" (click)="removeMember(member.username)">
-                          {{ 'communities.removeMember' | t }}
-                        </button>
+                        }
                       }
                     </div>
                   }

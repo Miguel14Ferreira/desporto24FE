@@ -62,6 +62,8 @@ export class CommunitiesComponent implements OnInit {
   inviteVerifyLoading = false;
   inviteVerificationMessage = '';
   selected?: CommunityGroup;
+  memberAction: { communityId: number; username: string; kind: 'role' | 'remove' } | null = null;
+  memberRemovalConfirmation: { communityId: number; username: string } | null = null;
   readonly sportsCatalog = SPORTS_CATALOG;
   sportsDraft: string[] = [];
   sportsSearch = '';
@@ -2359,34 +2361,89 @@ export class CommunitiesComponent implements OnInit {
       });
   }
 
-  setRole(username: string, role: Exclude<CommunityRole, 'OWNER'>): void {
-    if (!this.selected) {
-      return;
-    }
+  canRemoveMember(username: string): boolean {
+    const community = this.selected;
+    const member = community?.members.find(item => item.username === username);
+    return Boolean(member && (community?.myRole === 'OWNER'
+      ? member.role !== 'OWNER'
+      : community?.myRole === 'ADMIN' && member.role === 'MEMBER'));
+  }
 
-    this.communityService.updateRole(this.selected.id, username, role)
-      .pipe(timeout(10_000))
+  requestMemberRemoval(username: string): void {
+    if (this.memberAction || !this.selected || !this.canRemoveMember(username)) return;
+    this.errorMessage = '';
+    this.memberRemovalConfirmation = { communityId: this.selected.id, username };
+  }
+
+  cancelMemberRemoval(): void {
+    if (!this.memberAction) this.memberRemovalConfirmation = null;
+  }
+
+  setRole(username: string, role: Exclude<CommunityRole, 'OWNER'>): void {
+    const community = this.selected;
+    if (!community || community.myRole !== 'OWNER' || this.memberAction) return;
+    const member = community.members.find(item => item.username === username);
+    if (!member || member.role === 'OWNER' || member.role === role) return;
+
+    const action = { communityId: community.id, username, kind: 'role' as const };
+    this.memberAction = action;
+    this.memberRemovalConfirmation = null;
+    this.errorMessage = '';
+    this.communityService.updateRole(community.id, username, role)
+      .pipe(
+        timeout(10_000),
+        finalize(() => { if (this.memberAction === action) this.memberAction = null; })
+      )
       .subscribe({
-      next: community => {
-        this.selected = community;
-        this.replaceCommunity(community);
-        this.prepareRoundEntries(community);
-      },
-      error: () => this.errorMessage = t('feedback.communities.roleError')
-    });
+        next: updated => {
+          if (this.selected?.id !== action.communityId) return;
+          this.selected = updated;
+          this.replaceCommunity(updated);
+          this.prepareRoundEntries(updated);
+        },
+        error: () => {
+          if (this.selected?.id === action.communityId) {
+            this.errorMessage = t('feedback.communities.roleError');
+          }
+        }
+      });
   }
 
   removeMember(username: string): void {
-    if (!this.selected) {
-      return;
-    }
+    const community = this.selected;
+    if (!community || this.memberAction || !this.canRemoveMember(username)
+      || this.memberRemovalConfirmation?.communityId !== community.id
+      || this.memberRemovalConfirmation?.username !== username) return;
 
-    this.communityService.removeMember(this.selected.id, username)
-      .pipe(timeout(10_000))
+    const action = { communityId: community.id, username, kind: 'remove' as const };
+    this.memberAction = action;
+    this.errorMessage = '';
+    this.communityService.removeMember(community.id, username)
+      .pipe(
+        timeout(10_000),
+        finalize(() => { if (this.memberAction === action) this.memberAction = null; })
+      )
       .subscribe({
-      next: () => this.refreshSelected(),
-      error: () => this.errorMessage = t('feedback.communities.removeError')
-    });
+        next: () => {
+          if (this.selected?.id !== action.communityId) return;
+          const members = this.selected.members.filter(item => item.username !== username);
+          const updated: CommunityGroup = {
+            ...this.selected,
+            members,
+            memberCount: members.length
+          };
+          // DELETE succeeded authoritatively: remove from the UI immediately,
+          // without requiring a second GET before showing the correct count.
+          this.selected = updated;
+          this.replaceCommunity(updated);
+          this.memberRemovalConfirmation = null;
+        },
+        error: () => {
+          if (this.selected?.id === action.communityId) {
+            this.errorMessage = t('feedback.communities.removeError');
+          }
+        }
+      });
   }
 
   leave(): void {
