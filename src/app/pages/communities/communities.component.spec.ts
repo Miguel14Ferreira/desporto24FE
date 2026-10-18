@@ -364,6 +364,53 @@ describe('CommunitiesComponent public session eligibility', () => {
   });
 
 
+  it('ignores older season responses and keeps the latest competition loading state', () => {
+    const earlier = new Subject<any>();
+    const latest = new Subject<any>();
+    component.selected = { id: 7 } as any;
+    (component as any).communityService = {
+      competition: jasmine.createSpy('competition').and.returnValues(
+        earlier.asObservable(), latest.asObservable())
+    };
+    const overview = (winPoints: number) => ({
+      standings: [], seasons: [], selectedSeasonId: null, activeSeasonId: null,
+      settings: { rankingsEnabled: true, winPoints, drawPoints: 1, lossPoints: 0 },
+      rounds: []
+    });
+    component.loadCompetition(component.selected, 11);
+    component.loadCompetition(component.selected, 12);
+    earlier.next(overview(3));
+    earlier.complete();
+    expect(component.competition).toBeUndefined();
+    expect(component.competitionLoading).toBeTrue();
+    latest.next(overview(4));
+    latest.complete();
+    expect(component.competition?.settings.winPoints).toBe(4);
+    expect(component.competitionLoading).toBeFalse();
+  });
+
+  it('never displays sessions from another community after navigation', () => {
+    const earlier = new Subject<SessionSummary[]>();
+    const latest = new Subject<SessionSummary[]>();
+    const a = { id: 7 } as any;
+    const b = { id: 8 } as any;
+    (component as any).communityService = {
+      sessions: jasmine.createSpy('sessions').and.returnValues(
+        earlier.asObservable(), latest.asObservable())
+    };
+    component.selected = a;
+    component.loadCommunitySessions(a);
+    component.selected = b;
+    component.loadCommunitySessions(b);
+    latest.next([{ ...session, id: 80 }]);
+    earlier.next([{ ...session, id: 70 }]);
+    expect(component.communitySessions.map(item => item.id)).toEqual([80]);
+    earlier.complete();
+    expect(component.sessionsLoading).toBeTrue();
+    latest.complete();
+    expect(component.sessionsLoading).toBeFalse();
+  });
+
   it('renders imported names without @null and displays verified handles', () => {
     const imported = { profileId: null, username: null, fullName: 'Ferreirinha' };
     expect(component.roundEntryHandle(imported)).not.toContain('@null');
