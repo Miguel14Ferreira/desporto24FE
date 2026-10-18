@@ -1,4 +1,4 @@
-import { provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 
@@ -38,6 +38,82 @@ describe('VenueService search HTTP contract', () => {
     const req = http.expectOne(request => request.url === url + '/suggest');
     expect(req.request.params.keys()).toEqual(['page']);
     req.flush({ venues: [], page: 0, hasMore: false });
+  });
+
+  it('falls back only on 404 and pages the existing catalog without repeating its HTTP request', () => {
+    const found: any[] = Array.from({ length: 85 }, (_, i) => ({
+      id: i + 1, name: 'Pavilhão', city: 'Porto', address: 'Rua ' + (i + 1), sports: 'Padel'
+    }));
+    let first: number[] = [];
+    let second: number[] = [];
+    service.suggest('Pavilhão', 'Porto', 'Padel', 0).subscribe(result => {
+      first = result.venues.map(venue => venue.id);
+      expect(result.hasMore).toBeTrue();
+      expect(result.page).toBe(0);
+    });
+    const missing = http.expectOne(req => req.url === url + '/suggest');
+    missing.flush({ message: 'Not Found' }, { status: 404, statusText: 'Not Found' });
+    const legacy = http.expectOne(req => req.url === url);
+    expect(legacy.request.params.get('city')).toBe('Porto');
+    expect(legacy.request.params.get('sport')).toBe('Padel');
+    legacy.flush(found);
+    expect(first).toHaveSize(40);
+    service.suggest('Pavilhão', 'Porto', 'Padel', 1).subscribe(result => {
+      second = result.venues.map(venue => venue.id);
+      expect(result.hasMore).toBeTrue();
+      expect(result.page).toBe(1);
+    });
+    expect(second).toHaveSize(40);
+    expect(first.some(id => second.includes(id))).toBeFalse();
+    http.expectNone(req => req.url === url || req.url === url + '/suggest');
+  });
+
+  it('matches accent-free names and acronyms when the old API is used', () => {
+    let names: string[] = [];
+    service.suggest('pavilhao', 'Porto', 'Padel').subscribe(result => {
+      names = result.venues.map(v => v.name);
+    });
+    http.expectOne(req => req.url === url + '/suggest')
+      .flush({}, { status: 404, statusText: 'Not Found' });
+    http.expectOne(req => req.url === url).flush([
+      { id: 1, name: 'Pavilhão Municipal', city: 'Porto', address: 'Rua 1', sports: 'Padel' },
+      { id: 2, name: 'Clube Nacional de Ginástica', city: 'Porto', address: 'Rua 2', sports: 'Padel' }
+    ]);
+    expect(names).toEqual(['Pavilhão Municipal']);
+
+    service.suggest('cng', 'Porto', 'Padel').subscribe(result => {
+      expect(result.venues.map(v => v.id)).toEqual([2]);
+      expect(result.hasMore).toBeFalse();
+    });
+    http.expectNone(req => req.url === url || req.url === url + '/suggest');
+  });
+
+  it('does not download the full catalog for authentication failures or server errors', () => {
+    for (const status of [401, 403, 500]) {
+      let observed = 0;
+      service.suggest('Campo', '', 'Padel').subscribe({
+        error: (error: HttpErrorResponse) => observed = error.status
+      });
+      http.expectOne(req => req.url === url + '/suggest')
+        .flush({}, { status, statusText: 'Error' });
+      expect(observed).toBe(status);
+      http.expectNone(req => req.url === url);
+    }
+  });
+
+  it('invalidates the temporary cached catalog when a new venue is created', () => {
+    service.suggest('', '', 'Padel').subscribe();
+    http.expectOne(req => req.url === url + '/suggest')
+      .flush({}, { status: 404, statusText: 'Not Found' });
+    http.expectOne(req => req.url === url).flush([]);
+    service.create({ name: 'Novo recinto' } as any).subscribe();
+    http.expectOne(req => req.url === url && req.method === 'POST').flush({
+      id: 99, name: 'Novo recinto', city: 'Lisboa', address: 'Rua Nova', sports: 'Padel'
+    });
+    service.suggest('', '', 'Padel').subscribe();
+    http.expectOne(req => req.url === url && req.method === 'GET').flush([
+      { id: 99, name: 'Novo recinto', city: 'Lisboa', address: 'Rua Nova', sports: 'Padel' }
+    ]);
   });
 
   it('preserves existing city and sport query parameters', () => {

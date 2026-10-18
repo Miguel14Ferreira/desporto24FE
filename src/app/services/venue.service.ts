@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, catchError, map, shareReplay, tap, throwError } from 'rxjs';
 
 import { environment } from 'src/environment/environment';
 import {
@@ -47,6 +47,10 @@ export interface CreateVenueSportConditionRequest {
 })
 export class VenueService {
   private readonly baseUrl = environment.apiUrl + '/api/venues';
+  // Compatibility bridge until /suggest is deployed. The national catalog
+  // must use the paged endpoint: legacy GET /venues fetches a complete list.
+  private legacySuggestionsOnly = false;
+  private readonly legacyCatalog = new Map<string, Observable<Venue[]>>();
 
   constructor(private http: HttpClient) {}
 
@@ -72,13 +76,61 @@ export class VenueService {
     return this.http.get<Venue[]>(this.baseUrl, { params });
   }
 
-  /** Bounded server-side autocomplete; keeps the legacy search contract unchanged. */
+  /**
+   * Prefer bounded server-side results. A 404 means the new /suggest endpoint
+   * has not been deployed yet: temporarily fall back to the existing legacy
+   * city/sport API. Never fall back for 401/403/5xx responses.
+   */
   suggest(name?: string, city?: string, sport?: string, page = 0): Observable<VenueSuggestionPage> {
+    if (this.legacySuggestionsOnly) return this.legacySuggest(name, city, sport, page);
     let params = new HttpParams().set('page', String(page));
     if (name?.trim()) params = params.set('name', name.trim());
     if (city?.trim()) params = params.set('city', city.trim());
     if (sport?.trim()) params = params.set('sport', sport.trim());
-    return this.http.get<VenueSuggestionPage>(this.baseUrl + '/suggest', { params });
+    return this.http.get<VenueSuggestionPage>(this.baseUrl + '/suggest', { params })
+      .pipe(catchError(error => {
+        if (error?.status !== 404) return throwError(() => error);
+        this.legacySuggestionsOnly = true;
+        return this.legacySuggest(name, city, sport, page);
+      }));
+  }
+
+  private legacySuggest(name?: string, city?: string, sport?: string, page = 0): Observable<VenueSuggestionPage> {
+    const key = [this.normalizeVenueText(city), this.normalizeVenueText(sport)].join('|');
+    let catalog = this.legacyCatalog.get(key);
+    if (!catalog) {
+      catalog = this.search(city, sport).pipe(
+        catchError(error => {
+          this.legacyCatalog.delete(key); // a failed fallback can be retried
+          return throwError(() => error);
+        }),
+        shareReplay({ bufferSize: 1, refCount: false })
+      );
+      this.legacyCatalog.set(key, catalog);
+    }
+    return catalog.pipe(map(venues => {
+      const query = this.normalizeVenueText(name);
+      const filtered = query ? venues.filter(venue => {
+        const acronym = venue.name.split(/\s+/).filter(word => word.length > 2)
+          .map(word => word[0]).join('');
+        return this.normalizeVenueText([
+          venue.name, venue.city, venue.address, venue.venueType || '', acronym
+        ].join(' ')).includes(query);
+      }) : venues;
+      const sorted = [...filtered].sort((a, b) =>
+        a.name.localeCompare(b.name, 'pt') || a.city.localeCompare(b.city, 'pt') || a.id - b.id
+      );
+      const offset = Math.max(0, page) * 40;
+      return {
+        venues: sorted.slice(offset, offset + 40),
+        page,
+        hasMore: sorted.length > offset + 40
+      };
+    }));
+  }
+
+  private normalizeVenueText(value?: string): string {
+    return (value || '').normalize('NFD').replace(/\p{M}/gu, '').toLocaleLowerCase('pt').trim();
   }
 
   get(id: number): Observable<Venue> {
@@ -123,6 +175,8 @@ export class VenueService {
   }
 
   create(request: CreateVenueRequest): Observable<Venue> {
-    return this.http.post<Venue>(this.baseUrl, request);
+    return this.http.post<Venue>(this.baseUrl, request).pipe(
+      tap(() => this.legacyCatalog.clear())
+    );
   }
 }
