@@ -1,5 +1,7 @@
 import { HttpClient } from '@angular/common/http';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
+import { fakeAsync, tick } from '@angular/core/testing';
+import { ActivatedRoute } from '@angular/router';
 import { environment } from 'src/environment/environment';
 import { AdminDashboardComponent, AdminPlatformOverview, AdminGrowthTrends } from './admin-dashboard.component';
 
@@ -32,10 +34,40 @@ describe('AdminDashboardComponent — platform overview', () => {
 
   beforeEach(() => {
     http = jasmine.createSpyObj<HttpClient>('HttpClient', ['get', 'post']);
-    component = new AdminDashboardComponent(http);
+    component = new AdminDashboardComponent(http, { snapshot: { data: { statisticsPage: true } } } as unknown as ActivatedRoute);
   });
 
   afterEach(() => component.ngOnDestroy());
+
+  it('loads only the lighter overview on the administration home page', () => {
+    const dashboard = new AdminDashboardComponent(http);
+    http.get.and.returnValue(of(summary));
+    dashboard.ngOnInit();
+    expect(dashboard.isStatisticsPage).toBeFalse();
+    expect(http.get).toHaveBeenCalledOnceWith(environment.apiUrl + '/api/admin/overview');
+    expect(dashboard.overview?.registeredUsers).toBe(125);
+    dashboard.ngOnDestroy();
+  });
+
+  it('finishes loading with an error when the API never responds', fakeAsync(() => {
+    const pending = new Subject<AdminPlatformOverview>();
+    http.get.and.returnValue(pending);
+    component.loadOverview();
+    expect(component.overviewLoading).toBeTrue();
+    tick(12_100);
+    expect(component.overviewLoading).toBeFalse();
+    expect(component.overviewError).toContain('Não foi possível');
+  }));
+
+  it('keeps fresh values after a request is replaced', () => {
+    const stale = new Subject<AdminPlatformOverview>();
+    http.get.and.returnValues(stale, of(summary));
+    component.loadOverview();
+    component.loadOverview();
+    stale.next({ ...summary, registeredUsers: 999 });
+    expect(component.overview?.registeredUsers).toBe(125);
+    expect(component.overviewLoading).toBeFalse();
+  });
 
   it('loads admin counters and eight-week trends on entering the dashboard', () => {
     http.get.and.returnValues(of(summary), of(trends));

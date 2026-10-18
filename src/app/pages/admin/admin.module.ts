@@ -13,6 +13,7 @@ import { AdminUserReportsComponent } from '../admin-user-reports/admin-user-repo
 const routes: Routes = [
   { path: '', component: AdminDashboardComponent },
   { path: 'players', component: AdminPlayersComponent },
+  { path: 'statistics', component: AdminDashboardComponent, data: { statisticsPage: true } },
   { path: 'attendance-disputes', component: AdminDisputesComponent },
   { path: 'ideas', component: AdminIdeasComponent },
   { path: 'reports', component: AdminUserReportsComponent }

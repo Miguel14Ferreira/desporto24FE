@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { Component, OnDestroy, OnInit, Optional } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { finalize, Subscription, timeout } from 'rxjs';
 import { environment } from 'src/environment/environment';
 
 export interface AdminPlatformOverview {
@@ -62,6 +63,12 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   overviewLoading = false;
   overviewError = '';
   private overviewRequest?: Subscription;
+  private overviewRequestVersion = 0;
+  private growthRequestVersion = 0;
+
+  get isStatisticsPage(): boolean {
+    return this.route?.snapshot?.data?.['statisticsPage'] === true;
+  }
   private growthRequest?: Subscription;
   growth: AdminGrowthTrends | null = null;
   growthLoading = false;
@@ -72,13 +79,16 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    ++this.overviewRequestVersion;
+    ++this.growthRequestVersion;
     this.overviewRequest?.unsubscribe();
     this.growthRequest?.unsubscribe();
   }
 
   refreshIndicators(): void {
     this.loadOverview();
-    this.loadGrowth();
+    // Avoid an unnecessary chart query on the administration home screen.
+    if (this.isStatisticsPage) this.loadGrowth();
   }
 
   get growthCharts(): GrowthChart[] {
@@ -104,36 +114,49 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
 
   loadGrowth(): void {
     this.growthRequest?.unsubscribe();
+    const version = ++this.growthRequestVersion;
     this.growthLoading = true;
     this.growthError = '';
     this.growthRequest = this.http.get<AdminGrowthTrends>(
       environment.apiUrl + '/api/admin/overview/trends'
+    ).pipe(
+      timeout(12_000),
+      finalize(() => {
+        if (version === this.growthRequestVersion) this.growthLoading = false;
+      })
     ).subscribe({
       next: history => {
-        this.growth = history;
-        this.growthLoading = false;
+        if (version === this.growthRequestVersion) this.growth = history;
       },
       error: () => {
-        this.growthError = 'Não foi possível atualizar a evolução semanal.';
-        this.growthLoading = false;
+        if (version === this.growthRequestVersion) {
+          this.growthError = 'Não foi possível atualizar os gráficos. O servidor pode estar indisponível ou demorar demasiado tempo.';
+        }
       }
     });
   }
 
   loadOverview(): void {
     this.overviewRequest?.unsubscribe();
+    const version = ++this.overviewRequestVersion;
     this.overviewLoading = true;
     this.overviewError = '';
     this.overviewRequest = this.http.get<AdminPlatformOverview>(
       environment.apiUrl + '/api/admin/overview'
+    ).pipe(
+      timeout(12_000),
+      finalize(() => {
+        if (version === this.overviewRequestVersion) this.overviewLoading = false;
+      })
     ).subscribe({
       next: summary => {
-        this.overview = summary;
-        this.overviewLoading = false;
+        if (version === this.overviewRequestVersion) this.overview = summary;
       },
-      error: () => {
-        this.overviewError = 'Não foi possível carregar os indicadores. Verifica a ligação e tenta novamente.';
-        this.overviewLoading = false;
+      error: error => {
+        if (version !== this.overviewRequestVersion) return;
+        this.overviewError = error?.status === 401 || error?.status === 403
+          ? 'A tua sessão não tem acesso aos indicadores. Confirma as permissões de administrador.'
+          : 'Não foi possível obter os indicadores. O servidor pode estar indisponível ou demorar demasiado tempo.';
       }
     });
   }
@@ -144,7 +167,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   previewError = '';
   previewLoading = false;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, @Optional() private route?: ActivatedRoute) {}
 
   previewVenues(): void {
     let payload: unknown;
