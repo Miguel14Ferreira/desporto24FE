@@ -161,6 +161,7 @@ export class CommunitiesComponent implements OnInit {
   private matchArchiveDetailRequestVersion = 0;
   private standingArchiveListRequestVersion = 0;
   private standingArchiveDetailRequestVersion = 0;
+  private pendingArchiveDeepLinkCommunityId: number | null = null;
 
   featuresEditing = false;
   featuresSaving = false;
@@ -397,6 +398,7 @@ export class CommunitiesComponent implements OnInit {
   }
 
   private loadCommunityPresentation(id: number): void {
+    this.pendingArchiveDeepLinkCommunityId = null;
     this.invalidateArchiveRequests();
     // Public presentation navigation invalidates still-pending private community reads.
     this.communityOpenRequestVersion = (this.communityOpenRequestVersion || 0) + 1;
@@ -618,6 +620,7 @@ export class CommunitiesComponent implements OnInit {
       return;
     }
 
+    this.pendingArchiveDeepLinkCommunityId = null;
     this.invalidateArchiveRequests();
     // A slower response from an earlier navigation must never replace the latest group.
     const openVersion = (this.communityOpenRequestVersion || 0) + 1;
@@ -654,6 +657,9 @@ export class CommunitiesComponent implements OnInit {
           : requestedTab === 'stats' && full.rankingsEnabled ? 'stats'
           : requestedTab === 'sessions' ? 'sessions'
           : 'home';
+        // Archive-only communities reveal the History tab after the async lists load.
+        this.pendingArchiveDeepLinkCommunityId = requestedTab === 'ranking' && this.activeTab === 'home'
+          ? full.id : null;
         this.inviteUsername = '';
         this.inviteSearchResults = [];
         this.inviteSearchPerformed = false;
@@ -693,6 +699,7 @@ export class CommunitiesComponent implements OnInit {
         || (tab === 'ranking' && !this.canBrowseHistoricalArchives)
         || (tab === 'stats' && !this.selected?.rankingsEnabled)) return;
     this.activeTab = tab;
+    this.pendingArchiveDeepLinkCommunityId = null;
     this.errorMessage = '';
 
     if (tab === 'members' && this.selected) {
@@ -1626,6 +1633,13 @@ export class CommunitiesComponent implements OnInit {
       });
   }
 
+  private openPendingArchiveDeepLink(communityId: number): void {
+    if (this.pendingArchiveDeepLinkCommunityId !== communityId
+        || this.selected?.id !== communityId || !this.canBrowseHistoricalArchives) return;
+    this.activeTab = 'ranking';
+    this.pendingArchiveDeepLinkCommunityId = null;
+  }
+
   // A navigation or a newer request supersedes responses from previously viewed
   // archives. Reset the busy flags so an old detail request cannot block a new group.
   private invalidateArchiveRequests(): void {
@@ -1653,7 +1667,10 @@ export class CommunitiesComponent implements OnInit {
       .subscribe({
         next: archives => {
           if (requestVersion === this.matchArchiveListRequestVersion
-              && this.selected?.id === communityId) this.matchArchiveSummaries = archives;
+              && this.selected?.id === communityId) {
+            this.matchArchiveSummaries = archives;
+            this.openPendingArchiveDeepLink(communityId);
+          }
         },
         error: () => {
           if (requestVersion === this.matchArchiveListRequestVersion
@@ -1780,7 +1797,10 @@ export class CommunitiesComponent implements OnInit {
       .subscribe({
         next: archives => {
           if (requestVersion === this.standingArchiveListRequestVersion
-              && this.selected?.id === communityId) this.archiveSummaries = archives;
+              && this.selected?.id === communityId) {
+            this.archiveSummaries = archives;
+            this.openPendingArchiveDeepLink(communityId);
+          }
         },
         error: () => {
           if (requestVersion === this.standingArchiveListRequestVersion
@@ -2147,6 +2167,7 @@ export class CommunitiesComponent implements OnInit {
         this.communitySessionsRequestVersion = (this.communitySessionsRequestVersion || 0) + 1;
         this.selected = community;
         this.activeTab = 'home';
+        this.pendingArchiveDeepLinkCommunityId = null;
         this.selectedSeasonId = null;
         this.competition = undefined;
         this.communitySessions = [];
@@ -2220,6 +2241,7 @@ export class CommunitiesComponent implements OnInit {
       next: () => {
         this.communities = this.communities.filter(item => item.id !== id);
         this.selected = undefined;
+        this.pendingArchiveDeepLinkCommunityId = null;
         this.resetHistoricalLinks();
         this.competition = undefined;
         this.maxStandingPoints = 0;
