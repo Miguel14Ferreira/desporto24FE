@@ -72,6 +72,7 @@ describe('Create session venue server autocomplete', () => {
   it('offers a deliberate fallback when old backend routes /suggest to /{id} and fails', () => {
     venues.suggest.and.returnValues(
       throwError(() => ({ status: 500 })),
+      throwError(() => ({ status: 500 })), // component retries once
       of(page([venue(2, 'Pavilhão Municipal')]))
     );
     component.sport = 'Padel';
