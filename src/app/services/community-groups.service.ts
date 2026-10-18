@@ -106,6 +106,22 @@ export interface HistoricalMatchArchive extends HistoricalMatchArchiveSummary {
   rows: HistoricalMatchPreview['rows'];
 }
 
+
+export interface HistoricalPlayerCandidate {
+  playerId: number;
+  historicalName: string;
+  linkedUsername: string | null;
+  linkStatus: 'UNLINKED' | 'PENDING' | 'ACCEPTED';
+}
+
+export interface HistoricalPlayerLink {
+  id: number;
+  playerId: number;
+  historicalName: string;
+  targetUsername: string;
+  status: 'PENDING' | 'ACCEPTED' | 'REJECTED';
+}
+
 @Injectable({ providedIn: 'root' })
 export class CommunityGroupsService {
   private readonly url = environment.apiUrl + '/api/communities';
@@ -206,6 +222,25 @@ export class CommunityGroupsService {
     return this.http.get<CommunityCompetitionOverview>(
       this.url + '/' + id + '/competition' + suffix
     );
+  }
+
+  historicalPlayerCandidates(id: number): Observable<HistoricalPlayerCandidate[]> {
+    return this.http.get<HistoricalPlayerCandidate[]>(this.url + '/' + id + '/competition/historical-players');
+  }
+
+  proposeHistoricalPlayerLink(id: number, playerId: number, targetUsername: string): Observable<HistoricalPlayerLink> {
+    return this.http.post<HistoricalPlayerLink>(
+      this.url + '/' + id + '/competition/historical-player-links', { playerId, targetUsername });
+  }
+
+  pendingHistoricalPlayerLinks(id: number): Observable<HistoricalPlayerLink[]> {
+    return this.http.get<HistoricalPlayerLink[]>(this.url + '/' + id + '/competition/historical-player-links/me');
+  }
+
+  decideHistoricalPlayerLink(id: number, linkId: number, accept: boolean): Observable<HistoricalPlayerLink> {
+    return this.http.post<HistoricalPlayerLink>(
+      this.url + '/' + id + '/competition/historical-player-links/' + linkId +
+        (accept ? '/accept' : '/reject'), null);
   }
 
   importPreview(id: number, file: File): Observable<{

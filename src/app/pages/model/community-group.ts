@@ -78,8 +78,8 @@ export interface CommunitySeason {
 
 export interface CommunityStanding {
   position: number;
-  profileId: number;
-  username: string;
+  profileId: number | null;
+  username: string | null;
   fullName: string | null;
   profilePicUrl: string | null;
   games: number;
