@@ -298,7 +298,7 @@ describe('CommunitiesComponent public session eligibility', () => {
 
   it('retains an invitation after a rejected action and allows retry', () => {
     const accept = jasmine.createSpy('acceptInvite')
-      .and.returnValues(throwError(() => new Error('Service unavailable')), of({ id: 8 }));
+      .and.returnValues(throwError(() => ({ status: 403 })), of({ id: 8 }));
     const router = { navigate: jasmine.createSpy('navigate').and.returnValue(Promise.resolve(true)) };
     (component as any).communityService = { acceptInvite: accept };
     (component as any).router = router;
@@ -318,6 +318,107 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(router.navigate).toHaveBeenCalledOnceWith(['/menu/communities', 8]);
   });
 
+
+  it('verifies an ambiguous accept via GET and navigates after confirmed membership', () => {
+    const accept = jasmine.createSpy('acceptInvite')
+      .and.returnValue(throwError(() => ({ status: 504 })));
+    const mine = jasmine.createSpy('mine').and.returnValue(of([{ id: 8, name: 'Grupo Novo' }]));
+    const invites = jasmine.createSpy('myInvites').and.returnValue(of([]));
+    const router = { navigate: jasmine.createSpy('navigate').and.returnValue(Promise.resolve(true)) };
+    (component as any).communityService = { acceptInvite: accept, mine, myInvites: invites };
+    (component as any).router = router;
+    component.inviteAction = null;
+    component.inviteOutcomeUnknown = null;
+    component.invites = [{ id: 10, communityId: 8, communityName: 'Grupo Novo' }] as any;
+
+    component.acceptInvite(component.invites[0]);
+
+    expect(accept).toHaveBeenCalledOnceWith(10);
+    expect(invites).toHaveBeenCalledTimes(1);
+    expect(mine).toHaveBeenCalledTimes(1);
+    expect(component.inviteOutcomeUnknown).toBeNull();
+    expect(component.invites).toEqual([]);
+    expect(component.inviteVerifyLoading).toBeFalse();
+    expect(router.navigate).toHaveBeenCalledOnceWith(['/menu/communities', 8]);
+  });
+
+  it('rechecks a failed reject and allows a new decision only after confirming pending', () => {
+    const reject = jasmine.createSpy('rejectInvite')
+      .and.returnValues(throwError(() => ({ status: 503 })), of(undefined));
+    const pending = new Subject<any[]>();
+    const invites = jasmine.createSpy('myInvites')
+      .and.returnValue(pending.asObservable());
+    const mine = jasmine.createSpy('mine').and.returnValue(of([]));
+    const router = { navigate: jasmine.createSpy('navigate').and.returnValue(Promise.resolve(true)) };
+    (component as any).communityService = { rejectInvite: reject, myInvites: invites, mine };
+    (component as any).router = router;
+    component.inviteAction = null;
+    component.inviteOutcomeUnknown = null;
+    component.invites = [{ id: 10, communityId: 8, communityName: 'Grupo' }] as any;
+
+    component.rejectInvite(component.invites[0]);
+    expect(component.inviteOutcomeUnknown).toEqual({ id: 10, communityId: 8, kind: 'reject' });
+    expect(component.inviteVerifyLoading).toBeTrue();
+
+    component.rejectInvite(component.invites[0]);
+    expect(reject).toHaveBeenCalledTimes(1);
+    pending.next([{ id: 10, communityId: 8, communityName: 'Grupo' }]);
+    pending.complete();
+
+    expect(component.inviteOutcomeUnknown).toBeNull();
+    expect(component.inviteVerificationMessage).toContain('pendente');
+    component.rejectInvite(component.invites[0]);
+    expect(reject).toHaveBeenCalledTimes(2);
+    expect(component.invites).toEqual([]);
+    expect(router.navigate).not.toHaveBeenCalled();
+  });
+
+  it('keeps ambiguous invitations blocked when verification fails and provides a retry', () => {
+    const accept = jasmine.createSpy('acceptInvite')
+      .and.returnValue(throwError(() => ({ name: 'TimeoutError' })));
+    const invites = jasmine.createSpy('myInvites')
+      .and.returnValues(throwError(() => ({ status: 503 })), of([]));
+    const mine = jasmine.createSpy('mine').and.returnValue(of([]));
+    const router = { navigate: jasmine.createSpy('navigate').and.returnValue(Promise.resolve(true)) };
+    (component as any).communityService = { acceptInvite: accept, myInvites: invites, mine };
+    (component as any).router = router;
+    component.inviteAction = null;
+    component.inviteOutcomeUnknown = null;
+    component.invites = [{ id: 10, communityId: 8, communityName: 'Grupo' }] as any;
+
+    component.acceptInvite(component.invites[0]);
+    expect(component.inviteOutcomeUnknown).toEqual({ id: 10, communityId: 8, kind: 'accept' });
+    expect(component.inviteVerificationMessage).toContain('verificar');
+    component.acceptInvite(component.invites[0]);
+    expect(accept).toHaveBeenCalledTimes(1);
+
+    component.verifyInviteOutcome();
+    expect(invites).toHaveBeenCalledTimes(2);
+    expect(component.inviteOutcomeUnknown).toBeNull();
+    expect(component.invites).toEqual([]);
+    expect(component.inviteVerificationMessage).toContain('já não está pendente');
+    expect(router.navigate).not.toHaveBeenCalled();
+  });
+
+  it('retains a pending invite after an uncertain accept and a successful verification', () => {
+    const accept = jasmine.createSpy('acceptInvite')
+      .and.returnValue(throwError(() => ({ status: 0 })));
+    const invite = { id: 10, communityId: 8, communityName: 'Grupo' };
+    (component as any).communityService = {
+      acceptInvite: accept,
+      myInvites: jasmine.createSpy('myInvites').and.returnValue(of([invite])),
+      mine: jasmine.createSpy('mine').and.returnValue(of([]))
+    };
+    component.inviteAction = null;
+    component.inviteOutcomeUnknown = null;
+    component.invites = [invite] as any;
+
+    component.acceptInvite(component.invites[0]);
+    expect(component.inviteOutcomeUnknown).toBeNull();
+    expect(component.inviteVerificationMessage).toContain('continua pendente');
+    expect(component.invites.map(item => item.id)).toEqual([10]);
+    expect(accept).toHaveBeenCalledTimes(1);
+  });
 
   it('shows only the latest match archive list and ignores stale errors and loading completion', () => {
     component.selected = { id: 7 } as any;

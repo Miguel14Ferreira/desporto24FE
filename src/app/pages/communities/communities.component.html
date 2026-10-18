@@ -225,8 +225,19 @@
       <div class="feedback error-feedback">{{ errorMessage }}</div>
     }
 
-    @if (mineView.isActive && invites.length > 0) {
+    @if (mineView.isActive && (invites.length > 0 || inviteOutcomeUnknown || inviteVerificationMessage)) {
       <section class="invites-card">
+        @if (inviteVerificationMessage || inviteVerifyLoading) {
+          <div class="feedback" [attr.role]="inviteOutcomeUnknown ? 'alert' : 'status'">
+            {{ inviteVerifyLoading ? ('communities.inviteVerifying' | t) : inviteVerificationMessage }}
+            @if (inviteOutcomeUnknown && !inviteVerifyLoading) {
+              <button type="button" class="secondary-action small jynlo-action jynlo-action--neutral"
+                (click)="verifyInviteOutcome()">
+                {{ 'common.retry' | t }}
+              </button>
+            }
+          </div>
+        }
         <h2>{{ 'communities.pendingInvites' | t }}</h2>
         @for (invite of invites; track invite.id) {
           <div class="invite-row">
@@ -236,12 +247,12 @@
             </div>
             <div class="row-actions">
               <button type="button" class="primary-action small jynlo-action jynlo-action--primary jynlo-action--compact"
-                [disabled]="inviteAction !== null" (click)="acceptInvite(invite)">
+                [disabled]="inviteAction !== null || inviteOutcomeUnknown !== null || inviteVerifyLoading" (click)="acceptInvite(invite)">
                 {{ (inviteAction?.id === invite.id && inviteAction?.kind === 'accept'
                   ? 'communities.acceptingInvite' : 'communities.accept') | t }}
               </button>
               <button type="button" class="secondary-action small jynlo-action jynlo-action--neutral jynlo-action--compact"
-                [disabled]="inviteAction !== null" (click)="rejectInvite(invite)">
+                [disabled]="inviteAction !== null || inviteOutcomeUnknown !== null || inviteVerifyLoading" (click)="rejectInvite(invite)">
                 {{ (inviteAction?.id === invite.id && inviteAction?.kind === 'reject'
                   ? 'communities.rejectingInvite' : 'communities.reject') | t }}
               </button>

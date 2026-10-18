@@ -332,3 +332,95 @@ test('desktop rejects an invitation without switching communities',
     await expect(page).toHaveURL(/\/menu\/communities\?view=mine$/);
     expect(rejected).toBe(1);
   });
+
+test('desktop resolves an ambiguous accepted invite via membership verification without another POST',
+  async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'desktop-chromium', 'Desktop invitation audit');
+    await isolateBackend(page);
+    const group = {
+      id: 19, name: 'Comunidade Confirmada', description: 'Jogos abertos',
+      sport: 'Futebol', sports: ['Futebol'], visibility: 'PUBLIC', photoUrl: null,
+      myRole: 'MEMBER', members: [], memberCount: 1, rankingsEnabled: false
+    };
+    let invitesRead = 0;
+    let membershipRead = 0;
+    let submitted = 0;
+    await page.route('**/api/communities/invites/me', route => {
+      invitesRead++;
+      return route.fulfill({
+        status: 200, contentType: 'application/json',
+        body: JSON.stringify(invitesRead === 1 ? [{
+          id: 10, communityId: 19, communityName: group.name,
+          invitedByUsername: 'organizador', createdAt: '2026-10-18T12:00:00Z'
+        }] : [])
+      });
+    });
+    await page.route('**/api/communities/mine', route => {
+      membershipRead++;
+      return route.fulfill({
+        status: 200, contentType: 'application/json',
+        body: JSON.stringify(membershipRead === 1 ? [] : [group])
+      });
+    });
+    await page.route('**/api/communities/invites/10/accept', route => {
+      submitted++;
+      return route.fulfill({ status: 504, contentType: 'application/json',
+        body: '{"message":"Gateway timeout"}' });
+    });
+    await page.route('**/api/communities/19/presentation', route => route.fulfill({
+      status: 200, contentType: 'application/json', body: JSON.stringify(group)
+    }));
+
+    await page.goto('/menu/communities?view=mine');
+    await expect(page.locator('.invites-card .invite-row')).toHaveCount(1);
+    await page.locator('.invites-card .invite-row').getByRole('button', { name: 'Aceitar' }).click();
+    await expect(page).toHaveURL(/\/menu\/communities\/19$/);
+    await expect(page.locator('.community-detail-identity h2')).toHaveText(group.name);
+    expect(submitted).toBe(1);
+    expect(invitesRead).toBeGreaterThanOrEqual(2);
+    expect(membershipRead).toBeGreaterThanOrEqual(2);
+  });
+
+test('desktop blocks a repeated reject until pending invitations can be verified',
+  async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'desktop-chromium', 'Desktop invitation audit');
+    await isolateBackend(page);
+    const invite = {
+      id: 10, communityId: 19, communityName: 'Grupo Pendente',
+      invitedByUsername: 'organizador', createdAt: '2026-10-18T12:00:00Z'
+    };
+    let inviteReads = 0;
+    let verificationRecovered = false;
+    let submitted = 0;
+    await page.route('**/api/communities/invites/me', route => {
+      inviteReads++;
+      return route.fulfill({
+        status: inviteReads === 1 || verificationRecovered ? 200 : 503,
+        contentType: 'application/json',
+        body: JSON.stringify(inviteReads === 1 || verificationRecovered ? [invite] : {
+          message: 'Membership check unavailable'
+        })
+      });
+    });
+    await page.route('**/api/communities/mine', route =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }));
+    await page.route('**/api/communities/invites/10/reject', route => {
+      submitted++;
+      return route.fulfill({ status: 503, body: 'Unknown outcome' });
+    });
+
+    await page.goto('/menu/communities?view=mine');
+    await expect(page.locator('.invites-card .invite-row')).toHaveCount(1);
+    await page.locator('.invites-card .invite-row').getByRole('button', { name: 'Rejeitar' }).click();
+    await expect(page.getByText('Não foi possível confirmar o resultado.', { exact: false })).toBeVisible();
+    await expect(page.locator('.invites-card .invite-row').getByRole('button', { name: 'Rejeitar' }))
+      .toBeDisabled();
+    expect(submitted).toBe(1);
+
+    verificationRecovered = true;
+    await page.locator('.invites-card').getByRole('button', { name: 'Tentar novamente' }).click();
+    await expect(page.getByText('O convite continua pendente.', { exact: false })).toBeVisible();
+    await expect(page.locator('.invites-card .invite-row').getByRole('button', { name: 'Rejeitar' }))
+      .toBeEnabled();
+    expect(submitted).toBe(1);
+  });

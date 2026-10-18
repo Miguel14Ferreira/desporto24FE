@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { finalize, firstValueFrom, Observable, retry, timeout } from 'rxjs';
+import { finalize, firstValueFrom, forkJoin, Observable, retry, timeout } from 'rxjs';
 import { appTranslate as t } from '../../i18n/i18n.service';
 import { buildCommunityGroupInviteUrl, buildWhatsAppGroupShareUrl } from './community-group-invite';
 
@@ -58,6 +58,9 @@ export class CommunitiesComponent implements OnInit {
   communities: CommunityGroup[] = [];
   invites: CommunityInvite[] = [];
   inviteAction: { id: number; kind: 'accept' | 'reject' } | null = null;
+  inviteOutcomeUnknown: { id: number; communityId: number; kind: 'accept' | 'reject' } | null = null;
+  inviteVerifyLoading = false;
+  inviteVerificationMessage = '';
   selected?: CommunityGroup;
   readonly sportsCatalog = SPORTS_CATALOG;
   sportsDraft: string[] = [];
@@ -2244,41 +2247,115 @@ export class CommunitiesComponent implements OnInit {
       });
   }
 
+  private isAmbiguousInviteError(error: any): boolean {
+    const status = error?.status;
+    return error?.name === 'TimeoutError' || status === 0 || status === 408
+      || status === 429 || (typeof status === 'number' && status >= 500)
+      || typeof status !== 'number';
+  }
+
+  private handleInviteError(
+    error: unknown,
+    invite: CommunityInvite,
+    kind: 'accept' | 'reject'
+  ): void {
+    if (!this.isAmbiguousInviteError(error)) {
+      this.errorMessage = t(kind === 'accept'
+        ? 'feedback.communities.acceptError' : 'feedback.communities.rejectError');
+      return;
+    }
+
+    // A timed-out POST may have committed. Never send another POST before
+    // checking both pending invitations and confirmed memberships.
+    this.inviteOutcomeUnknown = { id: invite.id, communityId: invite.communityId, kind };
+    this.inviteVerificationMessage = t('communities.inviteOutcomeUnknown');
+    // The POST finalizer starts verification after the action lock is cleared.
+  }
+
+  verifyInviteOutcome(): void {
+    const outcome = this.inviteOutcomeUnknown;
+    if (!outcome || this.inviteVerifyLoading || this.inviteAction) return;
+
+    this.inviteVerifyLoading = true;
+    this.inviteVerificationMessage = '';
+    forkJoin({
+      invites: this.communityService.myInvites(),
+      memberships: this.communityService.mine()
+    })
+      .pipe(
+        timeout(10_000),
+        finalize(() => this.inviteVerifyLoading = false)
+      )
+      .subscribe({
+        next: ({ invites, memberships }) => {
+          if (this.inviteOutcomeUnknown !== outcome) return;
+          this.invites = invites;
+          this.communities = memberships;
+          this.inviteOutcomeUnknown = null;
+
+          const accepted = memberships.find(group => group.id === outcome.communityId);
+          if (accepted) {
+            this.inviteVerificationMessage = '';
+            void this.router.navigate(['/menu/communities', accepted.id]);
+          } else if (invites.some(invite => invite.id === outcome.id)) {
+            this.inviteVerificationMessage = t('communities.inviteStillPending');
+          } else {
+            // Not in pending invites or memberships: no longer actionable.
+            // Do not assert rejected: it could have expired or been revoked.
+            this.inviteVerificationMessage = t('communities.inviteNoLongerPending');
+          }
+        },
+        error: () => {
+          if (this.inviteOutcomeUnknown !== outcome) return;
+          this.inviteVerificationMessage = t('communities.inviteVerifyFailed');
+        }
+      });
+  }
+
   acceptInvite(invite: CommunityInvite): void {
-    if (this.inviteAction || !this.invites.some(item => item.id === invite.id)) return;
+    if (this.inviteAction || this.inviteOutcomeUnknown
+        || !this.invites.some(item => item.id === invite.id)) return;
 
     this.inviteAction = { id: invite.id, kind: 'accept' };
+    this.inviteVerificationMessage = '';
     this.errorMessage = '';
     this.communityService.acceptInvite(invite.id)
       .pipe(
         timeout(10_000),
-        finalize(() => this.inviteAction = null)
+        finalize(() => {
+          this.inviteAction = null;
+          if (this.inviteOutcomeUnknown) this.verifyInviteOutcome();
+        })
       )
       .subscribe({
         next: community => {
           this.invites = this.invites.filter(item => item.id !== invite.id);
           this.communities = [community, ...this.communities.filter(item => item.id !== community.id)];
-          // The canonical detail route reloads the accepted community with
-          // fresh data; stale tabs and archives from another group are not reused.
+          // Canonical detail route prevents stale tabs and archives.
           void this.router.navigate(['/menu/communities', community.id]);
         },
-        error: () => this.errorMessage = t('feedback.communities.acceptError')
+        error: error => this.handleInviteError(error, invite, 'accept')
       });
   }
 
   rejectInvite(invite: CommunityInvite): void {
-    if (this.inviteAction || !this.invites.some(item => item.id === invite.id)) return;
+    if (this.inviteAction || this.inviteOutcomeUnknown
+        || !this.invites.some(item => item.id === invite.id)) return;
 
     this.inviteAction = { id: invite.id, kind: 'reject' };
+    this.inviteVerificationMessage = '';
     this.errorMessage = '';
     this.communityService.rejectInvite(invite.id)
       .pipe(
         timeout(10_000),
-        finalize(() => this.inviteAction = null)
+        finalize(() => {
+          this.inviteAction = null;
+          if (this.inviteOutcomeUnknown) this.verifyInviteOutcome();
+        })
       )
       .subscribe({
         next: () => this.invites = this.invites.filter(item => item.id !== invite.id),
-        error: () => this.errorMessage = t('feedback.communities.rejectError')
+        error: error => this.handleInviteError(error, invite, 'reject')
       });
   }
 
