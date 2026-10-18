@@ -675,6 +675,43 @@ describe('DiscoverComponent', () => {
     expect(fixture.nativeElement.querySelector('.session-card')).not.toBeNull();
   });
 
+  it('distinguishes an unavailable session search from zero results without hiding venues', () => {
+    venueService.search.and.returnValue(of([{
+      id: 12, name: 'Recinto de Lisboa', city: 'Lisboa'
+    } as any]));
+    sessionService.discover.and.returnValue(throwError(() => new Error('Sessions offline')));
+    component.search();
+    fixture.detectChanges();
+
+    const page = fixture.nativeElement as HTMLElement;
+    expect(page.querySelector('.venue-card')?.textContent).toContain('Recinto de Lisboa');
+    expect(page.querySelector('.pillar-error--sessions')?.textContent)
+      .toContain('Não foi possível procurar sessões.');
+    expect(page.querySelector('.session-empty')).toBeNull();
+    expect(page.querySelector('.session-empty-create')).toBeNull();
+    expect(page.querySelector('.discover-error')).not.toBeNull();
+  });
+
+  it('does not report zero venues when their API fails but sessions are available', () => {
+    venueService.search.and.returnValue(throwError(() => new Error('Venues offline')));
+    sessionService.discover.and.returnValue(of([{
+      id: 33, sport: 'Padel', city: 'Lisboa',
+      gameDate: '2026-10-20T18:00:00Z', distanceKm: null,
+      participantCount: 2, maxParticipants: 4, priceAmount: 0,
+      privateGame: false, status: 'OPEN'
+    }]));
+    component.search();
+    fixture.detectChanges();
+
+    const page = fixture.nativeElement as HTMLElement;
+    expect(page.querySelector('.pillar-error--venues')?.textContent)
+      .toContain('Não foi possível procurar recintos.');
+    expect(page.querySelector('.pillar-error--venues')?.textContent)
+      .not.toContain('Ainda não encontrámos locais');
+    expect(page.querySelector('.venue-card')).toBeNull();
+    expect(page.querySelector('.session-card')).not.toBeNull();
+  });
+
   it('does not suggest creating a session when session discovery fails', () => {
     sessionService.discover.and.returnValue(
       throwError(() => new Error('API unavailable'))
