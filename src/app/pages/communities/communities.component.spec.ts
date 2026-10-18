@@ -234,6 +234,91 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(confirm).not.toHaveBeenCalled();
   });
 
+  it('shows only the latest match archive list and ignores stale errors and loading completion', () => {
+    component.selected = { id: 7 } as any;
+    const first = new Subject<any[]>();
+    const second = new Subject<any[]>();
+    (component as any).communityService = {
+      listHistoricalMatches: jasmine.createSpy('listHistoricalMatches')
+        .and.returnValues(first.asObservable(), second.asObservable())
+    };
+    component.loadMatchArchives(7);
+    component.loadMatchArchives(7);
+    const newest = [{ id: 51, title: 'Recentes' }];
+    second.next(newest);
+    first.error(new Error('stale'));
+    expect(component.matchArchiveSummaries).toEqual(newest as any);
+    expect(component.matchArchivesError).toBe('');
+    expect(component.matchArchivesLoading).toBeTrue();
+    second.complete();
+    expect(component.matchArchivesLoading).toBeFalse();
+  });
+
+  it('shows only the latest historical standings list when requests finish out of order', () => {
+    component.selected = { id: 7 } as any;
+    const first = new Subject<any[]>();
+    const second = new Subject<any[]>();
+    (component as any).communityService = {
+      listHistoricalStandings: jasmine.createSpy('listHistoricalStandings')
+        .and.returnValues(first.asObservable(), second.asObservable())
+    };
+    component.loadArchivedStandings(7);
+    component.loadArchivedStandings(7);
+    second.next([{ id: 60, title: 'Época 2026' }]);
+    first.next([{ id: 59, title: 'Época antiga' }]);
+    first.complete();
+    expect(component.archiveSummaries.map(item => item.id)).toEqual([60]);
+    expect(component.archivesLoading).toBeTrue();
+    second.complete();
+    expect(component.archivesLoading).toBeFalse();
+  });
+
+  it('ignores old match details after navigating and unblocks the new community', () => {
+    const older = new Subject<any>();
+    const newer = new Subject<any>();
+    const details = jasmine.createSpy('historicalMatchDetails')
+      .and.returnValues(older.asObservable(), newer.asObservable());
+    (component as any).communityService = { historicalMatchDetails: details };
+    component.selected = { id: 7 } as any;
+    component.openMatchArchive(50);
+    expect(component.matchArchiveOpeningId).toBe(50);
+    (component as any).invalidateArchiveRequests();
+    component.selected = { id: 8 } as any;
+    component.matchArchiveOpen = undefined;
+    component.openMatchArchive(51);
+    older.next({ id: 50, rows: [] });
+    older.complete();
+    expect(component.matchArchiveOpen).toBeUndefined();
+    expect(component.matchArchiveOpeningId).toBe(51);
+    newer.next({ id: 51, rows: [] });
+    newer.complete();
+    expect(component.matchArchiveOpen?.id).toBe(51);
+    expect(component.matchArchiveOpeningId).toBeUndefined();
+    expect(details).toHaveBeenCalledWith(8, 51);
+  });
+
+  it('ignores stale standings detail errors and allows opening a new archive', () => {
+    const older = new Subject<any>();
+    const newer = new Subject<any>();
+    (component as any).communityService = {
+      historicalStandingDetails: jasmine.createSpy('historicalStandingDetails')
+        .and.returnValues(older.asObservable(), newer.asObservable())
+    };
+    component.selected = { id: 7 } as any;
+    component.openArchivedStanding(50);
+    (component as any).invalidateArchiveRequests();
+    component.selected = { id: 8 } as any;
+    component.archiveOpen = undefined;
+    component.openArchivedStanding(51);
+    older.error(new Error('old request'));
+    expect(component.archivesError).toBe('');
+    expect(component.archiveOpeningId).toBe(51);
+    newer.next({ id: 51, rows: [] });
+    newer.complete();
+    expect(component.archiveOpen?.id).toBe(51);
+    expect(component.archiveOpeningId).toBeUndefined();
+  });
+
   it('only displays match archives from the selected community and keeps repeated rows', () => {
     component.selected = { id: 9 } as any;
     const archive = { id: 50, title: '2021', entryType: 'INDIVIDUAL' as const,
