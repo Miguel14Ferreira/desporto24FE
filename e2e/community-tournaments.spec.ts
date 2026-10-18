@@ -863,6 +863,9 @@ test('organizador aprova uma inscrição e remove outra sem perder os jogadores 
   const pedro = page.locator('.player-item').filter({ hasText: '@pedro' });
   await expect(pedro).toBeVisible();
   await pedro.getByRole('button', { name: 'Remover' }).click();
+  await expect(page.getByRole('group', { name: 'Remoção de Pedro' })).toBeVisible();
+  expect(fixture.organizerMutations).toEqual(['confirm:3']);
+  await page.getByRole('button', { name: 'Confirmar remoção de Pedro' }).click();
   await expect(pedro).toHaveCount(0);
   await expect(page.getByText('3 confirmados nesta lista')).toBeVisible();
 
