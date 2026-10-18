@@ -830,6 +830,31 @@ describe('CommunitiesComponent public session eligibility', () => {
   });
 
 
+  it('invalidates a previously prepared Excel plan when another season is selected from rankings', () => {
+    component.selected = { id: 7 } as any;
+    component.selectedSeasonId = 10;
+    component.importPlanLoading = true;
+    component.importFinalPlan = { invalidDates: 0, roundsNeedingYear: 0, rounds: [] };
+    component.importPointsAcknowledged = true;
+    const reload = spyOn(component, 'loadCompetition');
+    component.selectSeason('11');
+    expect(component.selectedSeasonId).toBe(11);
+    expect(component.importFinalPlan).toBeUndefined();
+    expect(component.importPlanLoading).toBeFalse();
+    expect(component.importPointsAcknowledged).toBeFalse();
+    expect(reload).toHaveBeenCalledWith(component.selected, 11);
+  });
+
+  it('keeps the current import plan if a season selector is set to the same season', () => {
+    component.selected = { id: 7 } as any;
+    component.selectedSeasonId = 10;
+    const existingPlan = { invalidDates: 0, roundsNeedingYear: 0, rounds: [] };
+    component.importFinalPlan = existingPlan;
+    spyOn(component, 'loadCompetition');
+    component.selectSeason('10');
+    expect(component.importFinalPlan).toBe(existingPlan);
+  });
+
   it('ignores older season responses and keeps the latest competition loading state', () => {
     const earlier = new Subject<any>();
     const latest = new Subject<any>();

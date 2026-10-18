@@ -1292,9 +1292,13 @@ export class CommunitiesComponent implements OnInit {
     }
 
     const seasonId = value === '' ? null : Number(value);
-    this.selectedSeasonId = seasonId !== null && Number.isFinite(seasonId)
-      ? seasonId
-      : null;
+    const nextSeasonId = seasonId !== null && Number.isFinite(seasonId) ? seasonId : null;
+    if (nextSeasonId !== this.selectedSeasonId) {
+      // Season selectors on the rankings, matches and rounds screens share
+      // this state with Excel imports: an old import plan is no longer valid.
+      this.invalidateImportPlan();
+    }
+    this.selectedSeasonId = nextSeasonId;
     this.loadCompetition(this.selected, this.selectedSeasonId);
   }
 
