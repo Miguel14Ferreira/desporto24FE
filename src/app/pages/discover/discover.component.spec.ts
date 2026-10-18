@@ -736,7 +736,12 @@ describe('DiscoverComponent', () => {
     fixture.detectChanges();
 
     const link: HTMLAnchorElement | null = fixture.nativeElement.querySelector('.session-card');
-    expect(link?.getAttribute('href')).toBe('/menu/events/31?join=1');
+    const target = new URL(link!.getAttribute('href')!, 'https://jynlo.test');
+    expect(target.pathname).toBe('/menu/events/31');
+    expect(target.searchParams.get('join')).toBe('1');
+    expect(target.searchParams.get('from')).toBe('discover');
+    expect(target.searchParams.get('sport')).toBe('Padel');
+    expect(target.searchParams.get('city')).toBe('Lisboa');
     expect(link?.textContent).toContain('Ver e participar');
     expect(link?.textContent).toMatch(/5[,.]00\s*€/);
     expect(link?.textContent).toMatch(/3[,.]4\s*km/);
@@ -755,7 +760,10 @@ describe('DiscoverComponent', () => {
     fixture.detectChanges();
     let link: HTMLAnchorElement = fixture.nativeElement.querySelector('.session-card');
     expect(link.textContent).toContain('Já estás inscrito');
-    expect(link.getAttribute('href')).toBe('/menu/events/32');
+    const joinedLink = new URL(link.getAttribute('href')!, 'https://jynlo.test');
+    expect(joinedLink.pathname).toBe('/menu/events/32');
+    expect(joinedLink.searchParams.get('from')).toBe('discover');
+    expect(joinedLink.searchParams.has('join')).toBeFalse();
     expect(link.textContent).toContain('Grátis');
     expect(link.textContent).not.toContain('Ver e participar');
 
@@ -764,7 +772,10 @@ describe('DiscoverComponent', () => {
     fixture.detectChanges();
     link = fixture.nativeElement.querySelector('.session-card');
     expect(link.textContent).toContain('Em lista de espera');
-    expect(link.getAttribute('href')).toBe('/menu/events/32');
+    const waitingLink = new URL(link.getAttribute('href')!, 'https://jynlo.test');
+    expect(waitingLink.pathname).toBe('/menu/events/32');
+    expect(waitingLink.searchParams.get('from')).toBe('discover');
+    expect(waitingLink.searchParams.has('join')).toBeFalse();
     expect(link.textContent).not.toContain('Ver e participar');
   });
 

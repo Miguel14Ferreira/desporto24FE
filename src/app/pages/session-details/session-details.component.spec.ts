@@ -173,6 +173,34 @@ describe('SessionDetailsComponent', () => {
     fixture.detectChanges();
   });
 
+  it('returns to discovery preserving the original search filters and not joining automatically', () => {
+    const route = TestBed.inject(ActivatedRoute);
+    (route.snapshot as any).queryParamMap = convertToParamMap({
+      from: 'discover', sport: 'Padel', city: 'Lisboa', player: 'Ana', join: '1'
+    });
+    fixture.detectChanges();
+    const back = (fixture.nativeElement as HTMLElement).querySelector<HTMLAnchorElement>('.back-link')!;
+    const url = new URL(back.getAttribute('href')!, 'https://jynlo.test');
+    expect(url.pathname).toBe('/menu/discover');
+    expect(url.searchParams.get('sport')).toBe('Padel');
+    expect(url.searchParams.get('city')).toBe('Lisboa');
+    expect(url.searchParams.get('player')).toBe('Ana');
+    expect(url.searchParams.has('join')).toBeFalse();
+    expect(back.textContent).toContain('Voltar ao Descobrir');
+    expect(sessionService.join).not.toHaveBeenCalled();
+  });
+
+  it('uses the sessions list for ordinary or untrusted back-link origins', () => {
+    const route = TestBed.inject(ActivatedRoute);
+    (route.snapshot as any).queryParamMap = convertToParamMap({
+      from: 'https://untrusted.example/', sport: 'Padel', join: '1'
+    });
+    fixture.detectChanges();
+    const back = (fixture.nativeElement as HTMLElement).querySelector<HTMLAnchorElement>('.back-link')!;
+    expect(back.getAttribute('href')).toBe('/menu/events');
+    expect(back.textContent).toContain('Voltar às sessões');
+  });
+
   it('sends a public session link to a selected friend only on explicit action', () => {
     (component as any).currentUsername = 'creator-user';
     component.session = {...session, gameDate:'2099-10-01T18:00:00Z', canSharePublicly: true};

@@ -54,6 +54,15 @@ async function mockDiscovery(page: Page, initiallyFailSessions: boolean, emptyRe
           priceAmount: 0, privateGame: false, audience: 'PUBLIC', status: 'OPEN'
         }]);
     }
+    if (req.method() === 'GET' && path === '/api/sessions/19') {
+      return reply({
+        id: 19, sport: 'Padel', city: 'Lisboa', gameDate: futureDate,
+        distanceKm: null, participantCount: 2, maxParticipants: 4, priceAmount: 0,
+        privateGame: false, audience: 'PUBLIC', status: 'OPEN',
+        joined: false, waitlisted: false, waitlistPosition: null,
+        creatorUsername: null, canSeeExactAddress: false, gamePhoto: null, address: null
+      });
+    }
     if (req.method() === 'GET' && path === '/api/profile/search') {
       return reply(emptyResults ? [] : [{
         username: 'ana-teste', fullName: 'Ana Teste', location: 'Lisboa',
@@ -87,7 +96,11 @@ test('Descobrir keeps successful categories visible when sessions fail and recov
   await page.getByRole('button', { name: 'Tentar novamente' }).click();
   const session = page.locator('.session-card');
   await expect(session).toContainText('Padel');
-  await expect(session).toHaveAttribute('href', '/menu/events/19?join=1');
+  await expect(session).toHaveAttribute('href', /\/menu\/events\/19\?/);
+  const sessionHref = new URL((await session.getAttribute('href'))!, 'https://jynlo.test');
+  expect(sessionHref.searchParams.get('join')).toBe('1');
+  expect(sessionHref.searchParams.get('from')).toBe('discover');
+  expect(sessionHref.searchParams.get('city')).toBe('Lisboa');
   await expect(error).toHaveCount(0);
   await expect(page.locator('.discover-error')).toHaveCount(0);
 });
@@ -100,4 +113,30 @@ test('Descobrir only shows no-result copy when the search succeeds with no match
   await expect(page.locator('.session-empty')).toContainText('Sem atividades abertas');
   await expect(page.locator('.people-empty')).toContainText('Ainda sem correspondências');
   await expect(page.locator('.pillar-panel').first()).toContainText('Ainda não encontrámos locais');
+});
+
+test('Descobrir opens a session without auto-joining and returns to the same search', async ({ page }) => {
+  await mockDiscovery(page, false);
+  let joinRequests = 0;
+  await page.route('**/api/sessions/19/join', async route => {
+    joinRequests++;
+    await route.fulfill({
+      status: 403, contentType: 'application/json',
+      headers: { 'access-control-allow-origin': '*' }, body: '{"message":"Not allowed in E2E"}'
+    });
+  });
+  await page.goto('/menu/discover?sport=Padel&city=Lisboa');
+  await page.locator('.session-card').click();
+  await expect(page).toHaveURL(/\/menu\/events\/19\?/);
+  const back = page.locator('.back-link');
+  await expect(back).toContainText('Voltar ao Descobrir');
+  await expect(back).toHaveAttribute('href', '/menu/discover?sport=Padel&city=Lisboa');
+  expect(joinRequests).toBe(0);
+
+  await back.click();
+  await expect(page).toHaveURL(/\/menu\/discover\?sport=Padel&city=Lisboa/);
+  await expect(page.locator('input[name="sport"]')).toHaveValue('Padel');
+  await expect(page.locator('input[name="location"]')).toHaveValue('Lisboa');
+  await expect(page.locator('.session-card')).toContainText('Padel');
+  expect(joinRequests).toBe(0);
 });

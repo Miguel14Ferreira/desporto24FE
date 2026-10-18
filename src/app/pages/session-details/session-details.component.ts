@@ -156,6 +156,30 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     );
   }
 
+  // Trust only a known navigation source; never redirect through an arbitrary URL.
+  get backToPath(): string {
+    return this.route.snapshot.queryParamMap?.get('from') === 'discover'
+      ? '/menu/discover' : '/menu/events';
+  }
+
+  get backQueryParams(): { sport: string; city: string; player?: string } | null {
+    const params = this.route.snapshot.queryParamMap;
+    if (params?.get('from') !== 'discover') {
+      return null;
+    }
+    const player = params.get('player')?.trim();
+    return {
+      sport: params.get('sport') ?? '',
+      city: params.get('city') ?? '',
+      ...(player ? { player } : {})
+    };
+  }
+
+  get backLabelKey(): string {
+    return this.backToPath === '/menu/discover'
+      ? 'discover.backFromProfile' : 'sessionDetail.back';
+  }
+
   ngOnDestroy(): void {
     this.realtimeSubscriptions.unsubscribe();
   }
