@@ -34,7 +34,7 @@ describe('Community join request deep links', () => {
   });
 
   it('opens member management and loads pending requests for the owner', () => {
-    component.open({ id: 42 } as CommunityGroup);
+    component.open({ id: 42 } as unknown as CommunityGroup);
     expect(getCommunity).toHaveBeenCalledWith(42);
     expect(component.activeTab).toBe('members');
     expect(pendingJoinRequests).toHaveBeenCalledWith(42);
@@ -44,7 +44,7 @@ describe('Community join request deep links', () => {
     getCommunity.and.returnValue(of({
       id: 42, myRole: 'ADMIN', members: []
     } as unknown as CommunityGroup));
-    component.open({ id: 42 } as CommunityGroup);
+    component.open({ id: 42 } as unknown as CommunityGroup);
     expect(component.activeTab).toBe('members');
     expect(pendingJoinRequests).toHaveBeenCalledWith(42);
   });
@@ -54,13 +54,13 @@ describe('Community join request deep links', () => {
     const second = new Subject<CommunityGroup>();
     getCommunity.and.returnValues(first.asObservable(), second.asObservable());
 
-    component.open({ id: 42 } as CommunityGroup);
-    component.open({ id: 43 } as CommunityGroup);
+    component.open({ id: 42 } as unknown as CommunityGroup);
+    component.open({ id: 43 } as unknown as CommunityGroup);
 
-    second.next({ id: 43, myRole: 'MEMBER', members: [], rankingsEnabled: true } as CommunityGroup);
+    second.next({ id: 43, myRole: 'MEMBER', members: [], rankingsEnabled: true } as unknown as CommunityGroup);
     expect(component.selected?.id).toBe(43);
     expect(component.activeTab).toBe('members');
-    first.next({ id: 42, myRole: 'OWNER', members: [], rankingsEnabled: true } as CommunityGroup);
+    first.next({ id: 42, myRole: 'OWNER', members: [], rankingsEnabled: true } as unknown as CommunityGroup);
     expect(component.selected?.id).toBe(43);
     expect(pendingJoinRequests).not.toHaveBeenCalled();
   });
@@ -70,9 +70,9 @@ describe('Community join request deep links', () => {
     const second = new Subject<CommunityGroup>();
     getCommunity.and.returnValues(first.asObservable(), second.asObservable());
 
-    component.open({ id: 42 } as CommunityGroup);
-    component.open({ id: 43 } as CommunityGroup);
-    second.next({ id: 43, myRole: 'MEMBER', members: [] } as CommunityGroup);
+    component.open({ id: 42 } as unknown as CommunityGroup);
+    component.open({ id: 43 } as unknown as CommunityGroup);
+    second.next({ id: 43, myRole: 'MEMBER', members: [] } as unknown as CommunityGroup);
     first.error(new Error('Request superseded'));
     expect(component.selected?.id).toBe(43);
     expect(component.errorMessage).toBe('');
@@ -83,13 +83,13 @@ describe('Community join request deep links', () => {
     getCommunity.and.returnValue(of({
       id: 42, myRole: 'MEMBER', members: [], rankingsEnabled: false,
       individualTournamentsEnabled: false, teamTournamentsEnabled: false
-    } as CommunityGroup));
+    } as unknown as CommunityGroup));
     (component as any).route = {
       snapshot: { queryParamMap: convertToParamMap({ tab: 'ranking' }) }
     };
     (component as any).communityService.listHistoricalStandings = () => archiveList.asObservable();
 
-    component.open({ id: 42 } as CommunityGroup);
+    component.open({ id: 42 } as unknown as CommunityGroup);
     expect(component.activeTab).toBe('home');
     archiveList.next([{ id: 15, title: 'Época antiga' }]);
     expect(component.activeTab).toBe('ranking');
@@ -100,13 +100,13 @@ describe('Community join request deep links', () => {
     getCommunity.and.returnValue(of({
       id: 42, myRole: 'MEMBER', members: [], rankingsEnabled: false,
       individualTournamentsEnabled: false, teamTournamentsEnabled: false
-    } as CommunityGroup));
+    } as unknown as CommunityGroup));
     (component as any).route = {
       snapshot: { queryParamMap: convertToParamMap({ tab: 'ranking' }) }
     };
     (component as any).communityService.listHistoricalStandings = () => archiveList.asObservable();
 
-    component.open({ id: 42 } as CommunityGroup);
+    component.open({ id: 42 } as unknown as CommunityGroup);
     component.setTab('members');
     archiveList.next([{ id: 15, title: 'Época antiga' }]);
     expect(component.activeTab).toBe('members');
@@ -116,7 +116,7 @@ describe('Community join request deep links', () => {
     getCommunity.and.returnValue(of({
       id: 42, myRole: 'MEMBER', members: []
     } as unknown as CommunityGroup));
-    component.open({ id: 42 } as CommunityGroup);
+    component.open({ id: 42 } as unknown as CommunityGroup);
     expect(component.activeTab).toBe('members');
     expect(myHistoricalClaims).toHaveBeenCalledWith(42);
     expect(pendingJoinRequests).not.toHaveBeenCalled();

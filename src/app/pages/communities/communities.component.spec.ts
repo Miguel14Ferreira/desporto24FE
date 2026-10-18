@@ -330,7 +330,7 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(component.matchArchiveOpeningId).toBe(51);
     newer.next({ id: 51, rows: [] });
     newer.complete();
-    expect(component.matchArchiveOpen?.id).toBe(51);
+    expect((component as any).matchArchiveOpen?.id).toBe(51);
     expect(component.matchArchiveOpeningId).toBeUndefined();
     expect(details).toHaveBeenCalledWith(8, 51);
   });
@@ -353,7 +353,7 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(component.archiveOpeningId).toBe(51);
     newer.next({ id: 51, rows: [] });
     newer.complete();
-    expect(component.archiveOpen?.id).toBe(51);
+    expect((component as any).archiveOpen?.id).toBe(51);
     expect(component.archiveOpeningId).toBeUndefined();
   });
 
@@ -574,7 +574,7 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(component.roundEntryHandle(imported)).not.toContain('@null');
     expect(component.roundEntryHandle(imported)).not.toContain('@undefined');
     expect(component.roundEntryHandle(imported)).not.toBe('');
-    expect(component.roundEntryHandle({ ...imported, profileId: 12, username: 'TMF14' }))
+    expect(component.roundEntryHandle({ username: 'TMF14' }))
       .toBe('@TMF14');
   });
 
