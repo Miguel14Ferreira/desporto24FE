@@ -4,12 +4,58 @@
       <div>
         <p class="eyebrow">ADMINISTRAÇÃO</p>
         <h1>Ferramentas de recintos</h1>
-        <p class="subtitle">Verifica possíveis duplicados antes de adicionares novos recintos à Jynlo.</p>
+        <p class="subtitle">Acompanha a qualidade do catálogo por distrito e verifica recintos antes de os adicionares.</p>
       </div>
       <a class="secondary-action jynlo-action jynlo-action--neutral" routerLink="/menu/admin">
         Voltar à administração
       </a>
     </header>
+
+    <section class="platform-overview venue-coverage" aria-label="Cobertura do catálogo por distrito">
+      <div class="venue-coverage-heading">
+        <div>
+          <h2>Catálogo de recintos por distrito</h2>
+          <p>Contagem dos registos existentes na Jynlo. Não representa o total de recintos de Portugal.</p>
+        </div>
+        <button type="button" class="jynlo-action jynlo-action--neutral"
+          [disabled]="coverageLoading" (click)="loadCoverage()">
+          {{ coverageLoading ? 'A atualizar…' : 'Atualizar contagens' }}
+        </button>
+      </div>
+      <p *ngIf="coverageLoading && !coverage" role="status">A carregar cobertura…</p>
+      <p *ngIf="coverageError" role="alert" class="overview-error">{{ coverageError }}</p>
+      <ng-container *ngIf="coverage as report">
+        <div class="venue-coverage-totals">
+          <div><span>Recintos registados</span><strong>{{ report.totalVenues | number }}</strong></div>
+          <div><span>Sem distrito</span><strong>{{ report.withoutDistrict | number }}</strong></div>
+          <div><span>Sem coordenadas</span><strong>{{ report.withoutCoordinates | number }}</strong></div>
+          <div><span>Sem modalidades</span><strong>{{ report.withoutSports | number }}</strong></div>
+        </div>
+        <div class="venue-coverage-table-wrap">
+          <table class="venue-coverage-table">
+            <caption>Registos agrupados pelo distrito indicado na base de dados</caption>
+            <thead><tr>
+              <th scope="col">Distrito / região registada</th>
+              <th scope="col">Recintos</th>
+              <th scope="col">Sem coordenadas</th>
+              <th scope="col">Sem modalidades</th>
+              <th scope="col">Origem OSM</th>
+            </tr></thead>
+            <tbody>
+              <tr *ngFor="let district of report.districts">
+                <th scope="row">{{ district.district }}</th>
+                <td>{{ district.venues | number }}</td>
+                <td>{{ district.missingCoordinates | number }}</td>
+                <td>{{ district.missingSports | number }}</td>
+                <td>{{ district.openStreetMapVenues | number }}</td>
+              </tr>
+            </tbody>
+          </table>
+          <p *ngIf="!report.districts.length" role="status">Não existem recintos registados no catálogo.</p>
+        </div>
+        <p class="venue-help">Os recintos sem distrito ficam numa categoria própria; esta tabela não certifica cobertura geográfica completa.</p>
+      </ng-container>
+    </section>
 
     <section class="platform-overview venue-tool-panel" aria-label="Pré-visualização de recintos">
       <h2>Verificar duplicados de recintos</h2>

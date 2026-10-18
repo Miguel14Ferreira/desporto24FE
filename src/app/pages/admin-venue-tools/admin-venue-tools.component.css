@@ -10,3 +10,18 @@
 .venue-actions button { padding: .7rem 1rem; }
 .venue-help { color: #cbd5e1; font-size: .87rem; }
 .venue-results { padding-left: 1.4rem; line-height: 1.65; }
+
+.venue-coverage { margin-bottom: 1.2rem; }
+.venue-coverage-heading { display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; flex-wrap:wrap; }
+.venue-coverage-heading h2 { margin:0; }
+.venue-coverage-heading p { color:#cbd5e1; line-height:1.5; }
+.venue-coverage-heading button { padding:.6rem 1rem; }
+.venue-coverage-totals { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:.75rem; margin:1.25rem 0; }
+.venue-coverage-totals>div { border:1px solid rgba(165,180,252,.2); border-radius:.7rem; padding:.85rem; display:grid; gap:.35rem; }
+.venue-coverage-totals span { color:#cbd5e1; font-size:.82rem; }
+.venue-coverage-totals strong { font-size:1.6rem; }
+.venue-coverage-table-wrap { overflow-x:auto; }
+.venue-coverage-table { width:100%; border-collapse:collapse; text-align:left; }
+.venue-coverage-table caption { text-align:left; color:#cbd5e1; padding-bottom:.7rem; }
+.venue-coverage-table th,.venue-coverage-table td { padding:.75rem .6rem; border-bottom:1px solid rgba(165,180,252,.15); white-space:nowrap; }
+.venue-coverage-table th { font-weight:650; }

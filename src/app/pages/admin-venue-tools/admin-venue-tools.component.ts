@@ -1,7 +1,21 @@
 import { HttpClient } from '@angular/common/http';
-import { ChangeDetectorRef, Component, OnDestroy } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { finalize, Subscription, timeout } from 'rxjs';
 import { environment } from 'src/environment/environment';
+
+export interface VenueCoverage {
+  totalVenues: number;
+  withoutDistrict: number;
+  withoutCoordinates: number;
+  withoutSports: number;
+  districts: Array<{
+    district: string;
+    venues: number;
+    missingCoordinates: number;
+    missingSports: number;
+    openStreetMapVenues: number;
+  }>;
+}
 
 interface VenuePreviewResult {
   sourceReference: string;
@@ -16,17 +30,59 @@ interface VenuePreviewResult {
   styleUrls: ['../admin-dashboard/admin-dashboard.component.css', './admin-venue-tools.component.css'],
   standalone: false
 })
-export class AdminVenueToolsComponent implements OnDestroy {
+export class AdminVenueToolsComponent implements OnInit, OnDestroy {
   venuePayload = '[\n  {\n    "sourceReference": "OSM:WAY:305711614",\n    "name": "Piscina Municipal da Constituição",\n    "city": "Porto",\n    "address": "Rua do Almirante Leote do Rêgo, 4200-260 Porto",\n    "sports": "Natação",\n    "venueType": "Piscina",\n    "environmentType": "INDOOR",\n    "latitude": 41.16518,\n    "longitude": -8.61414\n  },\n  {\n    "sourceReference": "OSM:WAY:58257179",\n    "name": "Pavilhão Municipal Multidesportos Mário Mexia",\n    "city": "Coimbra",\n    "address": "Praça Heróis do Ultramar, 3030-327 Coimbra",\n    "sports": "Andebol;Basquetebol;Voleibol;Futsal;Patinagem;Ginástica",\n    "venueType": "Pavilhão Desportivo",\n    "environmentType": "INDOOR",\n    "latitude": 40.20540,\n    "longitude": -8.40816\n  }\n]';
   previewResults: VenuePreviewResult[] = [];
   previewError = '';
   previewLoading = false;
   previewDone = false;
+  coverage: VenueCoverage | null = null;
+  coverageLoading = false;
+  coverageError = '';
+  private coverageRequestVersion = 0;
+  private coverageRequest?: Subscription;
   private request?: Subscription;
 
   constructor(private http: HttpClient, private changeDetector: ChangeDetectorRef) {}
 
+  ngOnInit(): void {
+    this.loadCoverage();
+  }
+
+  loadCoverage(): void {
+    const version = ++this.coverageRequestVersion;
+    this.coverageRequest?.unsubscribe();
+    this.coverageLoading = true;
+    this.coverageError = '';
+    this.coverageRequest = this.http.get<VenueCoverage>(
+      environment.apiUrl + '/api/admin/venues/coverage'
+    ).pipe(
+      timeout(12_000),
+      finalize(() => {
+        if (version === this.coverageRequestVersion) {
+          this.coverageLoading = false;
+          this.changeDetector.markForCheck();
+        }
+      })
+    ).subscribe({
+      next: result => {
+        if (version !== this.coverageRequestVersion) return;
+        this.coverage = result;
+        this.changeDetector.markForCheck();
+      },
+      error: err => {
+        if (version !== this.coverageRequestVersion) return;
+        this.coverageError = err?.status === 404
+          ? 'O relatório por distrito ainda não está disponível nesta versão da API.'
+          : 'Não foi possível carregar os dados dos recintos. Tenta novamente.';
+        this.changeDetector.markForCheck();
+      }
+    });
+  }
+
   ngOnDestroy(): void {
+    ++this.coverageRequestVersion;
+    this.coverageRequest?.unsubscribe();
     this.request?.unsubscribe();
   }
 
