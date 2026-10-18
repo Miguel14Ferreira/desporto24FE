@@ -63,6 +63,8 @@ describe('CommunitiesComponent public session eligibility', () => {
   });
 
   it('clears stale import data when file selection is cancelled', () => {
+    component.importSourceCompetition = 'Taça antiga';
+    component.importSourceRound = 'Jornada 4';
     component.importFile = new File(['data'], 'jornadas.csv');
     component.importFileName = 'jornadas.csv';
     component.importPreview = { fileName: 'jornadas.csv', sheets: [] };
@@ -73,6 +75,8 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(component.importFile).toBeUndefined();
     expect(component.importFileName).toBe('');
     expect(component.importPreview).toBeUndefined();
+    expect(component.importSourceCompetition).toBe('');
+    expect(component.importSourceRound).toBe('');
   });
 
   it('requires explicit confirmation when mapped spreadsheet points will not be persisted', () => {
