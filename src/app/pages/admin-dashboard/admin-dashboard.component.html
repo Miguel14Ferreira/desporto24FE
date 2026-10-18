@@ -169,6 +169,13 @@
         <span class="card-icon" aria-hidden="true">▥</span>
         <div><strong>Estatísticas</strong><p>Indicadores reais da Jynlo e evolução nas últimas 8 semanas.</p></div>
       </a>
+      <a class="admin-card" routerLink="/menu/admin/venue-tools">
+        <span class="card-icon" aria-hidden="true">⌖</span>
+        <div>
+          <strong>Ferramentas de recintos</strong>
+          <p>Verifica possíveis duplicados antes de acrescentar recintos ao catálogo.</p>
+        </div>
+      </a>
       <a class="admin-card" routerLink="/menu/admin/attendance-disputes">
         <span class="card-icon">⚑</span>
         <div>
@@ -211,28 +218,6 @@
         </div>
       </div>
     </div>
-
-    <details *ngIf="!isStatisticsPage" class="security-note" aria-label="Pré-visualização de recintos">
-      <summary><strong>Ferramentas avançadas: verificar duplicados de recintos</strong></summary>
-      <p>Ferramenta técnica para administradores. Pré-visualização apenas de leitura: não cria ou altera recintos.</p>
-      <textarea aria-label="JSON dos recintos" [(ngModel)]="venuePayload" rows="10"
-        style="width:100%;margin-top:1rem;font-family:monospace;"></textarea>
-      <button class="jynlo-action jynlo-action--neutral" type="button" (click)="previewVenues()" [disabled]="previewLoading"
-        style="margin-top:.75rem;padding:.65rem 1rem;">
-        {{ previewLoading ? 'A verificar...' : 'Verificar duplicados' }}
-      </button>
-      <p *ngIf="previewError" role="alert">{{ previewError }}</p>
-      <ul *ngIf="previewResults.length">
-        <li *ngFor="let result of previewResults">
-          <strong>{{ result.name }}</strong>: {{ result.status }}
-          <ul *ngIf="result.candidates.length">
-            <li *ngFor="let candidate of result.candidates">
-              #{{ candidate.id }} — {{ candidate.name }} ({{ candidate.city }})
-            </li>
-          </ul>
-        </li>
-      </ul>
-    </details>
 
     <div *ngIf="!isStatisticsPage" class="security-note">
       <strong>{{ 'adminHub.protected' | t }}</strong>

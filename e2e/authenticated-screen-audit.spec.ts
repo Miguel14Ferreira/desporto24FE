@@ -101,6 +101,25 @@ test('desktop administration keeps all operational metrics on a separate statist
   expect(overviewCalls).toBe(1);
 });
 
+test('venue duplicate preview is separate from the administration hub and makes no request on entry', async ({ page }) => {
+  await isolateBackend(page, true);
+  let previewCalls = 0;
+  await page.route('**/api/admin/venues/imports/openstreetmap/preview', route => {
+    previewCalls++;
+    return route.fulfill({ status: 200, contentType: 'application/json', body: '[]' });
+  });
+  await page.goto('/menu/admin');
+  await expect(page.getByRole('heading', { name: 'Centro de administração' })).toBeVisible();
+  await expect(page.getByLabel('JSON dos recintos')).toHaveCount(0);
+  await page.locator('.admin-grid a[href="/menu/admin/venue-tools"]').click();
+  await expect(page.getByRole('heading', { name: 'Ferramentas de recintos' })).toBeVisible();
+  await expect(page.getByLabel('JSON dos recintos')).toBeVisible();
+  expect(previewCalls).toBe(0);
+  await page.getByRole('button', { name: 'Verificar duplicados' }).click();
+  await expect.poll(() => previewCalls).toBe(1);
+  await expect(page.getByText('Não foram encontrados duplicados')).toBeVisible();
+});
+
 test.describe('Jynlo administrator offline-screen audit', () => {
   test.beforeEach(async ({ page }) => {
     await isolateBackend(page, true);

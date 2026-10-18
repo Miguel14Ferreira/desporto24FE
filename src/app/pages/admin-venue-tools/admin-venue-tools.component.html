@@ -1,0 +1,44 @@
+<section class="admin-page">
+  <div class="admin-shell">
+    <header class="page-header">
+      <div>
+        <p class="eyebrow">ADMINISTRAÇÃO</p>
+        <h1>Ferramentas de recintos</h1>
+        <p class="subtitle">Verifica possíveis duplicados antes de adicionares novos recintos à Jynlo.</p>
+      </div>
+      <a class="secondary-action jynlo-action jynlo-action--neutral" routerLink="/menu/admin">
+        Voltar à administração
+      </a>
+    </header>
+
+    <section class="platform-overview venue-tool-panel" aria-label="Pré-visualização de recintos">
+      <h2>Verificar duplicados de recintos</h2>
+      <p>Cola uma lista JSON com 1 a 25 recintos. Esta verificação é só de leitura:
+        <strong>não adiciona, elimina ou altera recintos.</strong></p>
+      <label class="venue-input-label" for="venue-json">JSON dos recintos</label>
+      <textarea id="venue-json" aria-label="JSON dos recintos" [(ngModel)]="venuePayload"
+        rows="10" [disabled]="previewLoading" class="venue-json"></textarea>
+      <div class="venue-actions">
+        <button type="button" class="jynlo-action jynlo-action--neutral"
+          (click)="previewVenues()" [disabled]="previewLoading">
+          {{ previewLoading ? 'A verificar…' : 'Verificar duplicados' }}
+        </button>
+        <span class="venue-help">Nenhuma importação será executada.</span>
+      </div>
+      <p *ngIf="previewLoading" role="status">A analisar possíveis duplicados…</p>
+      <p *ngIf="previewError" role="alert" class="overview-error">{{ previewError }}</p>
+      <p *ngIf="previewDone && !previewResults.length" role="status">Não foram encontrados duplicados na resposta da API.</p>
+      <ul *ngIf="previewResults.length" class="venue-results">
+        <li *ngFor="let result of previewResults">
+          <strong>{{ result.name }}</strong> — {{ result.status }}
+          <ul *ngIf="result.candidates.length">
+            <li *ngFor="let candidate of result.candidates">
+              #{{ candidate.id }} — {{ candidate.name }} ({{ candidate.city }})
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </section>
+    <p class="venue-help">A cobertura nacional de recintos continua em auditoria e será tratada por distrito e região autónoma.</p>
+  </div>
+</section>

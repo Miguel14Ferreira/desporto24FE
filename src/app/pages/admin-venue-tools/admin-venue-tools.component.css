@@ -1,0 +1,12 @@
+.venue-tool-panel { max-width: 920px; }
+.venue-tool-panel h2 { margin-top: 0; }
+.venue-tool-panel p { color: #cbd5e1; line-height: 1.5; }
+.venue-input-label { display: block; margin: 1.1rem 0 .5rem; font-weight: 700; }
+.venue-json { display: block; width: 100%; box-sizing: border-box; background: #0b1628;
+  color: #f8fafc; border: 1px solid rgba(165,180,252,.35); border-radius: .75rem;
+  padding: .85rem; font: .85rem/1.5 monospace; resize: vertical; }
+.venue-json:focus-visible { outline: 2px solid #a5b4fc; outline-offset: 2px; }
+.venue-actions { margin-top: .8rem; display: flex; gap: .9rem; align-items: center; flex-wrap: wrap; }
+.venue-actions button { padding: .7rem 1rem; }
+.venue-help { color: #cbd5e1; font-size: .87rem; }
+.venue-results { padding-left: 1.4rem; line-height: 1.65; }
