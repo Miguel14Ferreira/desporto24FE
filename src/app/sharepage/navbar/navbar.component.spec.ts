@@ -127,9 +127,15 @@ describe('NavbarComponent', () => {
     expect(register.classList.contains('jynlo-action--accent')).toBeTrue();
     expect(login.classList.contains('jynlo-action--neutral')).toBeTrue();
 
-    const languageToggles = root.querySelectorAll('.language-switch button');
-    expect(languageToggles.length).toBe(2);
-    languageToggles.forEach(button => expect(button.classList.contains('jynlo-action')).toBeFalse());
+    // Desktop/top-bar switch and the compact guest menu have independent controls.
+    // The menu switch is intentionally hidden by CSS outside the mobile viewport.
+    const headerToggles = root.querySelectorAll('.site-nav__links > .language-switch button');
+    const menuToggles = root.querySelectorAll('.guest-nav-menu .language-switch button');
+    expect(headerToggles.length).toBe(2);
+    expect(menuToggles.length).toBe(2);
+    [...headerToggles, ...menuToggles].forEach(button =>
+      expect(button.classList.contains('jynlo-action')).toBeFalse()
+    );
   });
 
   it('should create without opening a chat connection when unauthenticated', () => {
