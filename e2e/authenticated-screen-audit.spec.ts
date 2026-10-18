@@ -669,7 +669,8 @@ test('desktop ownership transfer requires a member selection and explicit confir
     await transfer.locator('select').selectOption('ana');
     await transfer.getByRole('button', { name: 'Continuar' }).click();
     await expect(transfer.getByText('Confirmar transferência de propriedade')).toBeVisible();
-    await expect(transfer.getByText('Passarás a administrador.', { exact: false })).toBeVisible();
+    await expect(transfer.locator('.ownership-transfer-confirmation'))
+      .toContainText('Passarás a administrador.');
     expect(transfers).toBe(0);
 
     await transfer.getByRole('button', { name: 'Cancelar' }).click();
