@@ -11,14 +11,14 @@ import { AuthenticationService } from '../../services/authethication.service';
 })
 export class NotFoundComponent implements OnInit {
   destination = '/home';
-  actionLabel = 'Voltar ao início';
+  actionKey = 'notFound.home';
 
   constructor(private authenticationService: AuthenticationService) {}
 
   ngOnInit(): void {
     if (this.authenticationService.hasValidToken()) {
-      this.destination = '/menu';
-      this.actionLabel = 'Voltar ao dashboard';
+      this.destination = '/menu/feed';
+      this.actionKey = 'notFound.feed';
     }
   }
 }

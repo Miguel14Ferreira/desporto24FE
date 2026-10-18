@@ -423,6 +423,7 @@ const PT: Dictionary = {
   'notFound.title': 'Página não encontrada',
   'notFound.text': 'A página que procuras não existe ou foi movida.',
   'notFound.home': 'Voltar ao início',
+  'notFound.feed': 'Voltar ao Feed',
 
   'common.retry': 'Tentar novamente',
   'common.search': 'Pesquisar',
@@ -2321,6 +2322,7 @@ const EN: Dictionary = {
   'notFound.title': 'Page not found',
   'notFound.text': 'The page you are looking for does not exist or has been moved.',
   'notFound.home': 'Back to home',
+  'notFound.feed': 'Back to the feed',
 
   'common.retry': 'Try again',
   'common.search': 'Search',
