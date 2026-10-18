@@ -741,6 +741,8 @@ describe('CommunitiesComponent public session eligibility', () => {
     component.selectedSeasonId = 10;
     component.importDefaultYear = 2026;
     component.importRevision = 0;
+    // This suite bypasses property initializers with Object.create().
+    component.importMappings = [];
     const pending = new Subject<any>();
     const request = jasmine.createSpy('finalImportPlan').and.returnValue(pending);
     const confirm = jasmine.createSpy('confirmImportRounds');
