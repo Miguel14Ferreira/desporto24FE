@@ -131,6 +131,8 @@ describe('CommunitiesComponent public session eligibility', () => {
     const validate = jasmine.createSpy('validateImport').and.returnValues(oldValidation, currentValidation);
     const normalize = jasmine.createSpy('normalizedImportPreview').and.returnValue(of({ acceptedRows: 1, skippedRows: 0, rows: [], skipped: [] }));
     (component as any).communityService = { validateImport: validate, normalizedImportPreview: normalize };
+    // This suite bypasses the constructor with Object.create(): restore field initializers.
+    component.importRevision = 0;
     component.selected = { id: 7 } as any;
     const first = new File(['a'], 'primeiro.xlsx');
     const second = new File(['b'], 'segundo.xlsx');
@@ -165,6 +167,7 @@ describe('CommunitiesComponent public session eligibility', () => {
       validateImport: () => of({ valid: true, dataRows: 1, validRows: 1, errors: [], warnings: [] }),
       normalizedImportPreview: normalize
     };
+    component.importRevision = 0;
     component.selected = { id: 7 } as any;
     component.importFile = new File(['a'], 'jornadas.xlsx');
     component.importSheetName = 'Dados';
