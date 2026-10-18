@@ -234,6 +234,36 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(confirm).not.toHaveBeenCalled();
   });
 
+  it('clears another community\'s history and reloads it after accepting an invitation', () => {
+    component.selected = { id: 7 } as any;
+    component.communities = [{ id: 7 } as any];
+    component.invites = [{ id: 10 } as any];
+    component.archiveSummaries = [{ id: 51 } as any];
+    component.matchArchiveSummaries = [{ id: 52 } as any];
+    component.archiveOpen = { id: 51 } as any;
+    component.matchArchiveOpen = { id: 52 } as any;
+    const standings = jasmine.createSpy('listHistoricalStandings').and.returnValue(of([]));
+    const matches = jasmine.createSpy('listHistoricalMatches').and.returnValue(of([]));
+    (component as any).communityService = {
+      acceptInvite: () => of({ id: 8, members: [] }),
+      listHistoricalStandings: standings,
+      listHistoricalMatches: matches
+    };
+    spyOn<any>(component, 'prepareRoundEntries');
+    spyOn(component, 'loadCompetition');
+    spyOn(component, 'loadCommunitySessions');
+
+    component.acceptInvite({ id: 10 } as any);
+
+    expect(component.selected?.id).toBe(8);
+    expect(component.archiveSummaries).toEqual([]);
+    expect(component.matchArchiveSummaries).toEqual([]);
+    expect(component.archiveOpen).toBeUndefined();
+    expect(component.matchArchiveOpen).toBeUndefined();
+    expect(standings).toHaveBeenCalledWith(8);
+    expect(matches).toHaveBeenCalledWith(8);
+  });
+
   it('shows only the latest match archive list and ignores stale errors and loading completion', () => {
     component.selected = { id: 7 } as any;
     const first = new Subject<any[]>();
