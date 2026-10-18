@@ -531,11 +531,47 @@ describe('CommunitiesComponent public session eligibility', () => {
     group.teamTournamentsEnabled = true;
     expect(component.hasCompetitions(group)).toBeTrue();
     component.selected = group;
+    expect(component.canBrowseHistoricalArchives).toBeTrue();
     component.setTab('ranking');
-    expect(component.activeTab).not.toBe('ranking');
+    expect(component.activeTab).toBe('ranking');
+    component.setTab('stats');
+    expect(component.activeTab).toBe('ranking');
+    group.individualTournamentsEnabled = false;
+    group.teamTournamentsEnabled = false;
+    component.setTab('home');
+    expect(component.canBrowseHistoricalArchives).toBeFalse();
+    component.setTab('ranking');
+    expect(component.activeTab).toBe('home');
     group.rankingsEnabled = true;
     component.setTab('ranking');
     expect(component.activeTab).toBe('ranking');
+  });
+
+  it('shows archived history without enabling live standings or tournament features', () => {
+    component.selected = {
+      id: 7, rankingsEnabled: false, individualTournamentsEnabled: false,
+      teamTournamentsEnabled: false
+    } as any;
+    component.archiveSummaries = [];
+    component.matchArchiveSummaries = [];
+    component.activeTab = 'home';
+    expect(component.canBrowseHistoricalArchives).toBeFalse();
+    component.matchArchiveSummaries = [{
+      id: 10, title: 'Taça 2020', entryType: 'TEAM',
+      sourceFilename: 'games.csv', createdAt: '2026-10-17T20:00:00Z'
+    }];
+    expect(component.canBrowseHistoricalArchives).toBeTrue();
+    component.setTab('ranking');
+    expect(component.activeTab).toBe('ranking');
+    expect(component.selected.rankingsEnabled).toBeFalse();
+    component.setTab('stats');
+    expect(component.activeTab).toBe('ranking');
+    component.matchArchiveSummaries = [];
+    component.archiveSummaries = [{
+      id: 11, title: 'Época 2021', entryType: 'INDIVIDUAL',
+      sourceFilename: 'table.xlsx', createdAt: '2026-10-17T20:00:00Z'
+    }];
+    expect(component.canBrowseHistoricalArchives).toBeTrue();
   });
 
   it('allows manager to configure independent modules and saves without clearing history', () => {
