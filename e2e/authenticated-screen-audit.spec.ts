@@ -3,22 +3,28 @@ import { expect, test, type Page } from '@playwright/test';
 
 // Use a deliberately unsigned fixture token against a local Angular server only.
 // Every backend call is intercepted; no production user or database is accessed.
-function isolatedToken(): string {
+function isolatedToken(admin = false): string {
   const encode = (value: object) => Buffer.from(JSON.stringify(value)).toString('base64url');
   return [
     encode({ alg: 'none', typ: 'JWT' }),
-    encode({ sub: 'auditor-ficticio', exp: Math.floor(Date.now() / 1000) + 3600 }),
+    encode({ sub: 'auditor-ficticio', exp: Math.floor(Date.now() / 1000) + 3600,
+      Authorities: admin ? ['ROLE_ADMIN'] : [] }),
     'fixture-only'
   ].join('.');
 }
 
-async function isolateBackend(page: Page): Promise<void> {
-  await page.addInitScript(token => localStorage.setItem('t', token), isolatedToken());
+async function isolateBackend(page: Page, admin = false): Promise<void> {
+  await page.addInitScript(token => localStorage.setItem('t', token), isolatedToken(admin));
   await page.route('**/api/**', route => route.fulfill({
     status: 503,
     contentType: 'application/json',
     body: JSON.stringify({ message: 'The audit is testing an unavailable API, not production.' })
   }));
+  if (admin) {
+    // Only the authorization probe succeeds; all admin page data remains mocked
+    // as temporarily unavailable, so no real user information is accessed.
+    await page.route('**/api/admin/access', route => route.fulfill({ status: 204 }));
+  }
   // The authenticated navbar normally connects to realtime chat. Never connect
   // a fixture token to a real production WebSocket endpoint.
   await page.routeWebSocket('**/ws/chat', socket => socket.close());
@@ -54,6 +60,33 @@ test.describe('Jynlo protected-screen offline resilience', () => {
         await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible();
         await page.screenshot({
           path: `test-results/screen-audit/${testInfo.project.name}-offline-${screen.name}.png`,
+          fullPage: true
+        });
+      });
+  }
+});
+
+test.describe('Jynlo administrator offline-screen audit', () => {
+  test.beforeEach(async ({ page }) => {
+    await isolateBackend(page, true);
+  });
+
+  const screens = [
+    { path: '/menu/admin', name: 'dashboard' },
+    { path: '/menu/admin/players', name: 'players' },
+    { path: '/menu/admin/attendance-disputes', name: 'attendance-disputes' },
+    { path: '/menu/admin/ideas', name: 'ideas' },
+    { path: '/menu/admin/reports', name: 'reports' }
+  ] as const;
+
+  for (const screen of screens) {
+    test(`admin ${screen.name} remains readable on API failure`,
+      async ({ page }, testInfo) => {
+        await page.goto(screen.path);
+        await expect(page).toHaveURL(new RegExp(screen.path + '$'));
+        await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible();
+        await page.screenshot({
+          path: `test-results/screen-audit/${testInfo.project.name}-admin-${screen.name}.png`,
           fullPage: true
         });
       });
