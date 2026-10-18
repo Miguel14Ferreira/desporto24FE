@@ -24,7 +24,9 @@ import {
   HistoricalStandingArchive,
   HistoricalMatchPreview,
   HistoricalMatchArchive,
-  HistoricalMatchArchiveSummary
+  HistoricalMatchArchiveSummary,
+  HistoricalPlayerCandidate,
+  HistoricalPlayerLink
 } from '../../services/community-groups.service';
 import { CommunityService } from '../../services/community.service';
 import { SessionService } from '../../services/session.service';
@@ -87,6 +89,30 @@ export class CommunitiesComponent implements OnInit {
   errorMessage = '';
 
   activeTab: CommunityTab = 'home';
+  showAllStandings = false;
+  historicalPlayers: HistoricalPlayerCandidate[] = [];
+  historicalPlayersLoading = false;
+  historicalPlayersError = '';
+  historicalPlayerId: number | null = null;
+  historicalTargetUsername = '';
+  historicalProposalSaving = false;
+  historicalProposalMessage = '';
+  historicalPendingLinks: HistoricalPlayerLink[] = [];
+  historicalPendingLoading = false;
+  historicalPendingError = '';
+  historicalDecisionId: number | null = null;
+
+  get rankingParticipants(): CommunityStanding[] {
+    return (this.competition?.standings || []).filter(row => row.games > 0);
+  }
+
+  get displayedRankings(): CommunityStanding[] {
+    return this.showAllStandings ? (this.competition?.standings || []) : this.rankingParticipants;
+  }
+
+  get availableHistoricalPlayers(): HistoricalPlayerCandidate[] {
+    return this.historicalPlayers.filter(candidate => candidate.linkStatus === 'UNLINKED');
+  }
   inviteUsername = '';
   inviteSearchResults: CommunityProfile[] = [];
   inviteSearchLoading = false;
@@ -586,6 +612,7 @@ export class CommunitiesComponent implements OnInit {
       .subscribe({
       next: full => {
         this.selected = full;
+        this.resetHistoricalLinks();
         const requestedTab = this.route.snapshot.queryParamMap.get('tab');
         const openJoinRequests = requestedTab === 'members'
           && (full.myRole === 'OWNER' || full.myRole === 'ADMIN');
@@ -618,9 +645,8 @@ export class CommunitiesComponent implements OnInit {
         this.loadArchivedStandings(full.id);
         this.loadCompetition(full);
         this.loadCommunitySessions(full);
-        if (openJoinRequests) {
-          this.loadPendingJoinRequests(full.id);
-        }
+        if (this.activeTab === 'members') this.loadHistoricalLinks(full.id);
+        if (openJoinRequests) this.loadPendingJoinRequests(full.id);
       },
       error: () => this.errorMessage = t('feedback.communities.openError')
     });
@@ -632,9 +658,113 @@ export class CommunitiesComponent implements OnInit {
     this.activeTab = tab;
     this.errorMessage = '';
 
-    if (tab === 'members' && this.selected && this.canManage()) {
-      this.loadPendingJoinRequests(this.selected.id);
+    if (tab === 'members' && this.selected) {
+      this.loadHistoricalLinks(this.selected.id);
+      if (this.canManage()) this.loadPendingJoinRequests(this.selected.id);
     }
+  }
+
+  private resetHistoricalLinks(): void {
+    this.historicalPlayers = [];
+    this.historicalPlayersLoading = false;
+    this.historicalPlayersError = '';
+    this.historicalPlayerId = null;
+    this.historicalTargetUsername = '';
+    this.historicalProposalSaving = false;
+    this.historicalProposalMessage = '';
+    this.historicalPendingLinks = [];
+    this.historicalPendingLoading = false;
+    this.historicalPendingError = '';
+    this.historicalDecisionId = null;
+  }
+
+  loadHistoricalLinks(communityId: number): void {
+    if (this.selected?.id !== communityId) return;
+    this.historicalPendingLoading = true;
+    this.historicalPendingError = '';
+    this.communityService.pendingHistoricalPlayerLinks(communityId)
+      .pipe(timeout(10_000), finalize(() => {
+        if (this.selected?.id === communityId) this.historicalPendingLoading = false;
+      }))
+      .subscribe({
+        next: pending => {
+          if (this.selected?.id === communityId) this.historicalPendingLinks = pending;
+        },
+        error: () => {
+          if (this.selected?.id === communityId) this.historicalPendingError = t('communities.identity.loadError');
+        }
+      });
+    if (!this.canManage()) return;
+    this.historicalPlayersLoading = true;
+    this.historicalPlayersError = '';
+    this.communityService.historicalPlayerCandidates(communityId)
+      .pipe(timeout(10_000), finalize(() => {
+        if (this.selected?.id === communityId) this.historicalPlayersLoading = false;
+      }))
+      .subscribe({
+        next: players => {
+          if (this.selected?.id === communityId) this.historicalPlayers = players;
+        },
+        error: () => {
+          if (this.selected?.id === communityId) this.historicalPlayersError = t('communities.identity.loadError');
+        }
+      });
+  }
+
+  proposeHistoricalLink(): void {
+    if (!this.selected || !this.canManage() || this.historicalProposalSaving ||
+        this.historicalPlayerId === null || !this.historicalTargetUsername ||
+        !this.availableHistoricalPlayers.some(item => item.playerId === this.historicalPlayerId) ||
+        !this.selected.members.some(member => member.username.toLowerCase() ===
+          this.historicalTargetUsername.toLowerCase())) return;
+    const communityId = this.selected.id;
+    this.historicalProposalSaving = true;
+    this.historicalPlayersError = '';
+    this.historicalProposalMessage = '';
+    this.communityService.proposeHistoricalPlayerLink(
+      communityId, this.historicalPlayerId, this.historicalTargetUsername.trim())
+      .pipe(timeout(10_000), finalize(() => {
+        if (this.selected?.id === communityId) this.historicalProposalSaving = false;
+      }))
+      .subscribe({
+        next: () => {
+          if (this.selected?.id !== communityId) return;
+          this.historicalProposalMessage = t('communities.identity.sent');
+          this.historicalPlayerId = null;
+          this.historicalTargetUsername = '';
+          this.loadHistoricalLinks(communityId);
+        },
+        error: error => {
+          if (this.selected?.id === communityId) {
+            this.historicalPlayersError = error.error?.message || t('communities.identity.proposeError');
+          }
+        }
+      });
+  }
+
+  decideHistoricalLink(link: HistoricalPlayerLink, accept: boolean): void {
+    if (!this.selected || this.historicalDecisionId !== null ||
+        !this.historicalPendingLinks.some(item => item.id === link.id)) return;
+    const communityId = this.selected.id;
+    this.historicalDecisionId = link.id;
+    this.historicalPendingError = '';
+    this.communityService.decideHistoricalPlayerLink(communityId, link.id, accept)
+      .pipe(timeout(10_000), finalize(() => {
+        if (this.selected?.id === communityId) this.historicalDecisionId = null;
+      }))
+      .subscribe({
+        next: () => {
+          if (this.selected?.id !== communityId) return;
+          this.historicalPendingLinks = this.historicalPendingLinks.filter(item => item.id !== link.id);
+          this.loadHistoricalLinks(communityId);
+          if (accept) this.loadCompetition(this.selected, this.selectedSeasonId);
+        },
+        error: error => {
+          if (this.selected?.id === communityId) {
+            this.historicalPendingError = error.error?.message || t('communities.identity.decisionError');
+          }
+        }
+      });
   }
 
   private loadPendingJoinRequests(communityId: number): void {
@@ -1966,6 +2096,7 @@ export class CommunitiesComponent implements OnInit {
       next: () => {
         this.communities = this.communities.filter(item => item.id !== id);
         this.selected = undefined;
+        this.resetHistoricalLinks();
         this.competition = undefined;
         this.maxStandingPoints = 0;
         this.topGoalsStanding = undefined;
