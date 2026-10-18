@@ -421,6 +421,7 @@ describe('CommunitiesComponent public session eligibility', () => {
     const pending = new Subject<any[]>();
     component.selected = { id: 7, myRole: 'MEMBER' } as any;
     component.historicalPendingLinks = [];
+    (component.canManage as jasmine.Spy).and.returnValue(false);
     (component as any).communityService = { pendingHistoricalPlayerLinks: () => pending.asObservable() };
     component.loadHistoricalLinks(7);
     component.selected = { id: 8, myRole: 'MEMBER' } as any;
