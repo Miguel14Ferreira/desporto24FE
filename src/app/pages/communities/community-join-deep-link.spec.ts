@@ -78,6 +78,40 @@ describe('Community join request deep links', () => {
     expect(component.errorMessage).toBe('');
   });
 
+  it('resolves an archive-only history deep link once the saved archives load', () => {
+    const archiveList = new Subject<any[]>();
+    getCommunity.and.returnValue(of({
+      id: 42, myRole: 'MEMBER', members: [], rankingsEnabled: false,
+      individualTournamentsEnabled: false, teamTournamentsEnabled: false
+    } as CommunityGroup));
+    (component as any).route = {
+      snapshot: { queryParamMap: convertToParamMap({ tab: 'ranking' }) }
+    };
+    (component as any).communityService.listHistoricalStandings = () => archiveList.asObservable();
+
+    component.open({ id: 42 } as CommunityGroup);
+    expect(component.activeTab).toBe('home');
+    archiveList.next([{ id: 15, title: 'Época antiga' }]);
+    expect(component.activeTab).toBe('ranking');
+  });
+
+  it('does not override manual navigation when a deferred archive deep link finishes', () => {
+    const archiveList = new Subject<any[]>();
+    getCommunity.and.returnValue(of({
+      id: 42, myRole: 'MEMBER', members: [], rankingsEnabled: false,
+      individualTournamentsEnabled: false, teamTournamentsEnabled: false
+    } as CommunityGroup));
+    (component as any).route = {
+      snapshot: { queryParamMap: convertToParamMap({ tab: 'ranking' }) }
+    };
+    (component as any).communityService.listHistoricalStandings = () => archiveList.asObservable();
+
+    component.open({ id: 42 } as CommunityGroup);
+    component.setTab('members');
+    archiveList.next([{ id: 15, title: 'Época antiga' }]);
+    expect(component.activeTab).toBe('members');
+  });
+
   it('opens identity self-service for ordinary members without exposing manager join requests', () => {
     getCommunity.and.returnValue(of({
       id: 42, myRole: 'MEMBER', members: []
