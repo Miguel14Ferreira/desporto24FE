@@ -1087,8 +1087,9 @@ export class CommunitiesComponent implements OnInit {
             (best, row) => !best || row.bestWinStreak > best.bestWinStreak || (row.bestWinStreak === best.bestWinStreak && row.position < best.position) ? row : best,
             undefined
           );
-          this.standingsByUsername = new Map(
-            competition.standings.map(row => [row.username, row])
+          this.standingsByUsername = new Map<string, CommunityStanding>(
+            competition.standings.filter(row => row.username !== null)
+              .map(row => [row.username!, row])
           );
           this.activeCommunitySeason = competition.seasons.find(
             season => season.id === competition.activeSeasonId
