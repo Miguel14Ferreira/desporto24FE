@@ -41,6 +41,9 @@ export class AuthInterceptor implements HttpInterceptor {
       catchError((error: HttpErrorResponse) => {
         if (
           error.status !== 401
+          // An anonymous 401 is not an expired session: never redirect visitors
+          // away from public pages or unknown routes because of background APIs.
+          || (!token && !request.headers.has('Authorization'))
           || request.url.includes('/api/auth/login')
           || request.url.includes('/api/auth/google/login')
           || request.url.includes('/api/auth/google/register')

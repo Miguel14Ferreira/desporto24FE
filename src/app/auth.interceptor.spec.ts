@@ -73,6 +73,26 @@ describe('AuthInterceptor', () => {
     });
   });
 
+  it('keeps visitors on public routes when an anonymous API request returns 401', (done) => {
+    Object.defineProperty(router, 'url', {
+      configurable: true, value: '/this-route-does-not-exist'
+    });
+    const request = new HttpRequest('GET', '/api/profile/public-preview');
+    const next = {
+      handle: () => throwError(() => new HttpErrorResponse({ status: 401 }))
+    } as HttpHandler;
+
+    interceptor.intercept(request, next).subscribe({
+      error: error => {
+        expect(error.status).toBe(401);
+        expect(backend.handle).not.toHaveBeenCalled();
+        expect(router.navigate).not.toHaveBeenCalled();
+        expect(localStorage.getItem('t')).toBeNull();
+        done();
+      }
+    });
+  });
+
   it('should keep the session on a temporary refresh outage', (done) => {
     localStorage.setItem('t', 'expired-token');
     const request = new HttpRequest('GET', '/api/sessions/1');

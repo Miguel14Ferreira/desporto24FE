@@ -211,9 +211,9 @@ describe('AppComponent', () => {
     expect(onlinePresenceService.start).toHaveBeenCalledTimes(1);
   });
 
-  it('should expose the Desporto24 title', () => {
+  it('should expose the Jynlo title', () => {
     const fixture = TestBed.createComponent(AppComponent);
-    expect(fixture.componentInstance.title).toEqual('desporto24');
+    expect(fixture.componentInstance.title).toEqual('Jynlo');
   });
 
   it('should render the application shell', () => {

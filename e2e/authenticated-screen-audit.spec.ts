@@ -56,7 +56,8 @@ test.describe('Jynlo protected-screen offline resilience', () => {
       async ({ page }, testInfo) => {
         await page.goto(screen.path);
         await expect(page).toHaveURL(new RegExp(screen.path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$'));
-        await expect(page.locator('app-navbar')).toBeVisible();
+        // The navbar host has zero height because its inner <nav> is fixed.
+        await expect(page.locator('app-navbar .site-nav')).toBeVisible();
         await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible();
         await page.screenshot({
           path: `test-results/screen-audit/${testInfo.project.name}-offline-${screen.name}.png`,

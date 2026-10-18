@@ -32,7 +32,8 @@ test.describe('Jynlo public-screen audit', () => {
       async ({ page }, testInfo) => {
         await page.goto(screen.path);
         await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible();
-        await expect(page.locator('app-navbar')).toBeVisible();
+        // The Angular host has no layout box: the fixed <nav> is the visible UI.
+        await expect(page.locator('app-navbar .site-nav')).toBeVisible();
         const overflow = await page.evaluate(() =>
           document.documentElement.scrollWidth - window.innerWidth);
         expect(overflow, `Horizontal overflow on ${screen.path}`).toBeLessThanOrEqual(4);
@@ -50,8 +51,9 @@ test.describe('Jynlo public-screen audit', () => {
     await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible();
   });
 
-  test('unknown path returns a localized, useful recovery link', async ({ page }) => {
+  test('unknown path stays public even when background requests return 401', async ({ page }) => {
     await page.goto('/this-route-does-not-exist');
+    await expect(page).toHaveURL(/\/this-route-does-not-exist$/);
     await expect(page.locator('.not-found-card a[href="/home"]')).toBeVisible();
     await page.locator('.not-found-card a[href="/home"]').click();
     await expect(page).toHaveURL(/\/home$/);
