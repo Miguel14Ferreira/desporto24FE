@@ -25,6 +25,7 @@ export class CommunityTournamentsComponent implements OnChanges {
   tournamentsHasMore = false;
   participants: TournamentParticipant[] = [];
   participantsPage = 0;
+  pendingParticipantRemovalId: number | null = null;
   participantsHasMore = false;
   rosterReady = false;
   matches: TournamentMatch[] = [];
@@ -385,6 +386,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.detailsLoading = false;
     this.selected = tournament;
     this.confirmAction = null;
+    this.pendingParticipantRemovalId = null;
     this.feedback = '';
     this.error = '';
     this.participantsPage = 0;
@@ -873,10 +875,25 @@ export class CommunityTournamentsComponent implements OnChanges {
       'Participante confirmado.', () => this.refreshRosterAndFocus());
   }
 
+  requestParticipantRemoval(participant: TournamentParticipant): void {
+    if (!this.selected || !this.canManage || this.selected.status !== 'DRAFT' || this.busy
+      || !this.participants.some(person => person.profileId === participant.profileId)) return;
+    this.pendingParticipantRemovalId = participant.profileId;
+  }
+
+  cancelParticipantRemoval(): void {
+    if (!this.busy) this.pendingParticipantRemovalId = null;
+  }
+
   async remove(participant: TournamentParticipant): Promise<void> {
-    if (!this.selected || !this.canManage || this.selected.status !== 'DRAFT') return;
+    if (!this.selected || !this.canManage || this.selected.status !== 'DRAFT' || this.busy
+        || this.pendingParticipantRemovalId !== participant.profileId
+        || !this.participants.some(person => person.profileId === participant.profileId)) return;
     await this.mutate(this.api.removeParticipant(this.community.id, this.selected.id, participant.profileId),
-      'Participante removido.', () => this.refreshRosterAndFocus());
+      'Participante removido.', () => {
+        this.pendingParticipantRemovalId = null;
+        this.refreshRosterAndFocus();
+      });
   }
 
   async publishSchedule(): Promise<void> {

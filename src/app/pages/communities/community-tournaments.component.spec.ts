@@ -737,6 +737,59 @@ describe('Community tournaments management', () => {
     expect(api.standings).toHaveBeenCalledWith(7, 9);
   });
 
+  it('requires explicit confirmation before removing a tournament participant', async () => {
+    const person: TournamentParticipant = {
+      profileId: 4, username: 'pedro', displayName: 'Pedro',
+      joinedAt: '2026-10-16T12:00:00Z', status: 'CONFIRMED'
+    };
+    component.participants = [person];
+    api.removeParticipant.and.returnValue(of(void 0));
+    await component.remove(person);
+    expect(api.removeParticipant).not.toHaveBeenCalled();
+    component.requestParticipantRemoval(person);
+    expect(component.pendingParticipantRemovalId).toBe(4);
+    await component.remove(person);
+    expect(api.removeParticipant).toHaveBeenCalledOnceWith(7, 9, 4);
+    expect(component.pendingParticipantRemovalId).toBeNull();
+  });
+
+  it('allows cancellation and clears confirmation on tournament switch', async () => {
+    const person: TournamentParticipant = {
+      profileId: 4, username: 'pedro', displayName: 'Pedro',
+      joinedAt: '2026-10-16T12:00:00Z', status: 'CONFIRMED'
+    };
+    component.participants = [person];
+    component.requestParticipantRemoval(person);
+    component.cancelParticipantRemoval();
+    await component.remove(person);
+    expect(api.removeParticipant).not.toHaveBeenCalled();
+    component.requestParticipantRemoval(person);
+    component.selectTournament({ ...draft, id: 21 });
+    expect(component.pendingParticipantRemovalId).toBeNull();
+    await component.remove(person);
+    expect(api.removeParticipant).not.toHaveBeenCalled();
+  });
+
+  it('blocks duplicate confirmation while a removal request is pending', async () => {
+    const person: TournamentParticipant = {
+      profileId: 4, username: 'pedro', displayName: 'Pedro',
+      joinedAt: '2026-10-16T12:00:00Z', status: 'CONFIRMED'
+    };
+    component.participants = [person];
+    const pending = new Subject<void>();
+    api.removeParticipant.and.returnValue(pending);
+    component.requestParticipantRemoval(person);
+    const running = component.remove(person);
+    await component.remove(person);
+    expect(api.removeParticipant).toHaveBeenCalledTimes(1);
+    expect(component.busy).toBeTrue();
+    pending.next();
+    pending.complete();
+    await running;
+    expect(component.busy).toBeFalse();
+    expect(component.pendingParticipantRemovalId).toBeNull();
+  });
+
   it('releases the busy state on tournament switch while an old participants page is loading', () => {
     const pendingPage = new Subject<TournamentParticipantPage>();
     api.participants.and.returnValue(pendingPage);

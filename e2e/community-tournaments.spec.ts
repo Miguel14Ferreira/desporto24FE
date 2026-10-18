@@ -1031,7 +1031,15 @@ test('ações repetidas de participantes têm nomes únicos para tecnologias de 
 
   await removePedro.focus();
   await removePedro.press('Space');
+  await expect(page.getByRole('group', { name: 'Remoção de Pedro' })).toBeVisible();
+  expect(fixture.organizerMutations).toEqual(['confirm:3']);
+  await page.getByRole('button', { name: 'Cancelar remoção de Pedro' }).click();
+  await expect(removePedro).toBeVisible();
+  expect(fixture.organizerMutations).toEqual(['confirm:3']);
+  await removePedro.click();
+  await page.getByRole('button', { name: 'Confirmar remoção de Pedro' }).click();
   await expect(removePedro).toHaveCount(0);
+  await expect(removeMariana).toBeVisible();
   await expect(page.getByRole('table', { name: 'Classificação do torneio' })).toBeVisible();
   expect(fixture.organizerMutations).toEqual(['confirm:3', 'remove:4']);
 });
@@ -1144,6 +1152,7 @@ test('após aprovação ou remoção o foco regressa à secção Jogadores', asy
   await expect(heading).toBeFocused();
 
   await page.getByRole('button', { name: 'Remover Pedro do torneio' }).click();
+  await page.getByRole('button', { name: 'Confirmar remoção de Pedro' }).click();
   await expect(page.locator('.player-item').filter({ hasText: '@pedro' })).toHaveCount(0);
   await expect(heading).toBeFocused();
 });
