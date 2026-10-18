@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { AfterViewChecked, ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { JwtHelperService } from '@auth0/angular-jwt';
-import { catchError, concatMap, finalize, from, map, mergeMap, of, retry, Subscription, timeout, toArray } from 'rxjs';
+import { catchError, concatMap, finalize, from, map, mergeMap, of, retry, Subscription, TimeoutError, timeout, toArray } from 'rxjs';
 
 import { environment } from 'src/environment/environment';
 import { CommunityService } from '../../services/community.service';
@@ -79,6 +79,9 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   actionError = '';
   actionSuccess = '';
   detailRefreshWarning = '';
+  joinOutcomeUnknown = false;
+  joinStatusChecking = false;
+  joinStatusMessage = '';
   inviteFriendsOpen = false;
   inviteFriendsLoading = false;
   inviteSendingTo: string | null = null;
@@ -233,6 +236,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     this.actionLoading = true;
     this.actionError = '';
     this.actionSuccess = '';
+    this.joinStatusMessage = '';
 
     this.sessionService.join(this.sessionId, this.joinPassword)
       .pipe(
@@ -257,9 +261,69 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
           this.loadSession(false);
         },
         error: error => {
-          this.actionError = this.errorFrom(error, t('feedback.session.joinError'));
+          if (this.isUncertainJoinError(error)) {
+            // No response is not proof that the transaction was rolled back.
+            this.joinOutcomeUnknown = true;
+            this.joinStatusMessage = t('feedback.session.joinChecking');
+            this.verifyJoinOutcome();
+          } else {
+            this.actionError = this.errorFrom(error, t('feedback.session.joinError'));
+          }
         }
       });
+  }
+
+  verifyJoinOutcome(): void {
+    if (!this.joinOutcomeUnknown || this.joinStatusChecking || !this.sessionId) {
+      return;
+    }
+    this.joinStatusChecking = true;
+    this.joinStatusMessage = t('feedback.session.joinChecking');
+    this.sessionService.detail(this.sessionId)
+      .pipe(
+        timeout(10_000),
+        retry({ count: 1 }),
+        finalize(() => this.joinStatusChecking = false)
+      )
+      .subscribe({
+        next: session => {
+          this.session = session;
+          if (session.joined || session.waitlisted) {
+            this.joinOutcomeUnknown = false;
+            this.joinStatusMessage = '';
+            this.actionSuccess = this.joinSuccessMessage({
+              state: session.waitlisted ? 'WAITLISTED' : 'PARTICIPANT',
+              waitlistPosition: session.waitlisted ? session.waitlistPosition : null
+            });
+            this.actionError = '';
+            if (session.joined) {
+              this.loadSessionParticipants();
+              this.refreshMessages();
+            }
+          } else {
+            // This GET sees no membership; further POST attempts remain user-initiated.
+            // The backend already makes repeat joins idempotent for active membership.
+            this.joinOutcomeUnknown = false;
+            this.joinStatusMessage = t('feedback.session.joinNotConfirmed');
+          }
+        },
+        error: () => {
+          // Preserve uncertainty and disable another POST until status can be checked.
+          this.joinStatusMessage = t('feedback.session.joinVerificationUnavailable');
+        }
+      });
+  }
+
+  private isUncertainJoinError(error: unknown): boolean {
+    if (error instanceof TimeoutError) {
+      return true;
+    }
+    if (error instanceof HttpErrorResponse) {
+      return error.status === 0 || error.status === 408 || error.status === 429
+        || error.status >= 500;
+    }
+    // Unknown client-side failures must not be treated as authoritative rejections.
+    return true;
   }
 
   leaveSession(): void {
@@ -1379,7 +1443,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   }
 
   canJoinSession(): boolean {
-    if (!this.session || this.session.joined || this.session.waitlisted
+    if (this.joinOutcomeUnknown || !this.session || this.session.joined || this.session.waitlisted
       || (this.session.status !== 'OPEN' && this.session.status !== 'FULL')) {
       return false;
     }

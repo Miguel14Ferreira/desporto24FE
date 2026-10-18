@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
+import { BehaviorSubject, Subject, TimeoutError, of, throwError } from 'rxjs';
 
 import { SessionDetailsComponent } from './session-details.component';
 import { CommunityService } from '../../services/community.service';
@@ -1094,8 +1095,8 @@ describe('SessionDetailsComponent', () => {
     component.session = {
       ...session, gameDate: new Date(Date.now() + 3600_000).toISOString()
     };
-    sessionService.join.and.returnValue(throwError(() => ({
-      error: { message: 'Inscrição não autorizada' }
+    sessionService.join.and.returnValue(throwError(() => new HttpErrorResponse({
+      status: 403, error: { message: 'Inscrição não autorizada' }
     })));
 
     component.joinSession();
@@ -1107,6 +1108,99 @@ describe('SessionDetailsComponent', () => {
     expect(component.detailRefreshWarning).toBe('');
     expect(component.actionError).toContain('não autorizada');
     expect(sessionService.detail).toHaveBeenCalledTimes(1);
+  });
+
+  it('verifies a timed-out join before allowing a second POST', () => {
+    component.session = {
+      ...session, gameDate: new Date(Date.now() + 3600_000).toISOString()
+    };
+    const pendingVerification = new Subject<typeof session>();
+    sessionService.join.and.returnValue(throwError(() => new TimeoutError()));
+    sessionService.detail.and.returnValue(pendingVerification.asObservable());
+
+    component.joinSession();
+    fixture.detectChanges();
+
+    expect(sessionService.join).toHaveBeenCalledTimes(1);
+    expect(component.joinOutcomeUnknown).toBeTrue();
+    expect(component.joinStatusChecking).toBeTrue();
+    expect(component.actionError).toBe('');
+    expect(component.canJoinSession()).toBeFalse();
+    expect(fixture.nativeElement.querySelector('.join-verification')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.join-controls')).toBeNull();
+    component.joinSession();
+    component.verifyJoinOutcome();
+    expect(sessionService.join).toHaveBeenCalledTimes(1);
+    expect(sessionService.detail).toHaveBeenCalledTimes(2);
+
+    pendingVerification.next({ ...session, joined: true });
+    pendingVerification.complete();
+    fixture.detectChanges();
+
+    expect(component.joinOutcomeUnknown).toBeFalse();
+    expect(component.actionSuccess).toContain('sucesso');
+    expect(component.session?.joined).toBeTrue();
+    expect(component.joinStatusMessage).toBe('');
+    expect(fixture.nativeElement.querySelector('.join-verification')).toBeNull();
+    component.joinSession();
+    expect(sessionService.join).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps retry disabled after an ambiguous POST while verification is unavailable', () => {
+    component.session = {
+      ...session, gameDate: new Date(Date.now() + 3600_000).toISOString()
+    };
+    sessionService.join.and.returnValue(throwError(() => new HttpErrorResponse({
+      status: 504, error: { message: 'Gateway timeout' }
+    })));
+    sessionService.detail.and.returnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
+
+    component.joinSession();
+    fixture.detectChanges();
+
+    expect(component.joinOutcomeUnknown).toBeTrue();
+    expect(component.joinStatusChecking).toBeFalse();
+    expect(component.joinStatusMessage).toContain('não foi possível confirmar');
+    expect(component.actionSuccess).toBe('');
+    expect(component.actionError).toBe('');
+    expect(fixture.nativeElement.querySelector('.join-verification')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.join-controls')).toBeNull();
+    component.joinSession();
+    expect(sessionService.join).toHaveBeenCalledTimes(1);
+
+    sessionService.detail.and.returnValue(of({
+      ...session, joined: false, waitlisted: true, waitlistPosition: 3,
+      gameDate: new Date(Date.now() + 3600_000).toISOString()
+    }));
+    component.verifyJoinOutcome();
+    fixture.detectChanges();
+    expect(component.joinOutcomeUnknown).toBeFalse();
+    expect(component.session?.waitlisted).toBeTrue();
+    expect(component.actionSuccess).toContain('posição 3');
+    expect(component.joinStatusMessage).toBe('');
+    expect(sessionService.join).toHaveBeenCalledTimes(1);
+  });
+
+  it('allows a deliberate retry after verification finds no registration', () => {
+    component.session = {
+      ...session, gameDate: new Date(Date.now() + 3600_000).toISOString()
+    };
+    sessionService.join.and.returnValue(throwError(() => new HttpErrorResponse({ status: 502 })));
+    sessionService.detail.and.returnValue(of({ ...component.session }));
+
+    component.joinSession();
+    fixture.detectChanges();
+
+    expect(component.joinOutcomeUnknown).toBeFalse();
+    expect(component.canJoinSession()).toBeTrue();
+    expect(component.joinStatusMessage).toContain('não mostra uma inscrição confirmada');
+    expect(component.actionSuccess).toBe('');
+    expect(sessionService.join).toHaveBeenCalledTimes(1);
+    sessionService.join.and.returnValue(of({ state: 'PARTICIPANT', waitlistPosition: null }));
+    component.joinSession();
+    expect(sessionService.join).toHaveBeenCalledTimes(2);
+    expect(component.joinStatusMessage).toBe('');
+    expect(component.session?.joined).toBeTrue();
   });
 
   it('should allow joining the waitlist when a future session is full', () => {

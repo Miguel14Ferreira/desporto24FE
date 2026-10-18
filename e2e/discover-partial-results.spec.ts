@@ -192,3 +192,71 @@ test('A rejected registration leaves the join action available without success f
   await expect(page.locator('.action-message.success-message')).toHaveCount(0);
   expect(fixture.joinRequests).toBe(1);
 });
+
+test('When the join response is lost, a fresh detail check confirms membership', async ({ page }) => {
+  await mockDiscovery(page, false);
+  let submissions = 0;
+  await page.route('**/api/sessions/19/join', async route => {
+    submissions++;
+    await route.fulfill({ status: 504, contentType: 'application/json',
+      headers: { 'access-control-allow-origin': '*' },
+      body: JSON.stringify({ message: 'Gateway timeout' }) });
+  });
+  await page.route('**/api/sessions/19', async route => {
+    const start = new Date(Date.now() + 86_400_000).toISOString();
+    await route.fulfill({ status: 200, contentType: 'application/json',
+      headers: { 'access-control-allow-origin': '*' },
+      body: JSON.stringify({ id: 19, sport: 'Padel', city: 'Lisboa', gameDate: start,
+        participantCount: 3, maxParticipants: 4, priceAmount: 0, privateGame: false,
+        status: 'OPEN', joined: submissions > 0, waitlisted: false,
+        waitlistPosition: null, creatorUsername: null, address: null,
+        canSeeExactAddress: false, gamePhoto: null }) });
+  });
+  await page.goto('/menu/discover?city=Lisboa');
+  await page.locator('.session-card').click();
+  await page.locator('#session-participation .join-controls button').click();
+  await expect(page.locator('.action-message.success-message')).toContainText('sucesso');
+  await expect(page.locator('.join-controls')).toHaveCount(0);
+  expect(submissions).toBe(1);
+});
+
+test('An unresolved request blocks retry until a separate status verification succeeds', async ({ page }) => {
+  await mockDiscovery(page, false);
+  let submissions = 0;
+  let detailUnavailable = true;
+  await page.route('**/api/sessions/19/join', async route => {
+    submissions++;
+    await route.fulfill({ status: 504, contentType: 'application/json',
+      headers: { 'access-control-allow-origin': '*' },
+      body: JSON.stringify({ message: 'Gateway timeout' }) });
+  });
+  await page.route('**/api/sessions/19', async route => {
+    if (submissions > 0 && detailUnavailable) {
+      await route.fulfill({ status: 503, contentType: 'application/json',
+        headers: { 'access-control-allow-origin': '*' },
+        body: JSON.stringify({ message: 'Detail unavailable' }) });
+      return;
+    }
+    await route.fulfill({ status: 200, contentType: 'application/json',
+      headers: { 'access-control-allow-origin': '*' },
+      body: JSON.stringify({
+        id: 19, sport: 'Padel', city: 'Lisboa',
+        gameDate: new Date(Date.now() + 86_400_000).toISOString(),
+        participantCount: 3, maxParticipants: 4, priceAmount: 0, privateGame: false,
+        status: 'OPEN', joined: submissions > 0, waitlisted: false,
+        waitlistPosition: null, creatorUsername: null, address: null,
+        canSeeExactAddress: false, gamePhoto: null
+      }) });
+  });
+  await page.goto('/menu/discover?city=Lisboa');
+  await page.locator('.session-card').click();
+  await page.locator('#session-participation .join-controls button').click();
+  await expect(page.locator('.join-verification')).toContainText('não foi possível confirmar');
+  await expect(page.locator('.join-controls')).toHaveCount(0);
+  expect(submissions).toBe(1);
+  detailUnavailable = false;
+  await page.locator('.join-verification button').click();
+  await expect(page.locator('.action-message.success-message')).toContainText('sucesso');
+  await expect(page.locator('.join-verification')).toHaveCount(0);
+  expect(submissions).toBe(1);
+});

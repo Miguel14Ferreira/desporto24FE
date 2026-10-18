@@ -386,6 +386,9 @@
                       (click)="retrySessionLoad()">{{ 'common.retry' | t }}</button>
             </div>
           }
+          @if (joinStatusMessage && !joinOutcomeUnknown) {
+            <div class="action-message refresh-warning" role="status">{{ joinStatusMessage }}</div>
+          }
 
           @if (session.waitlisted) {
             <section class="participation-panel">
@@ -562,6 +565,17 @@
                   {{ actionLoading ? ('common.processing' | t) : ('sessionDetail.leaveSession' | t) }}
                 </button>
               }
+            </section>
+          } @else if (joinOutcomeUnknown) {
+            <section class="participation-panel join-verification" role="status">
+              <div>
+                <h2>{{ 'sessionDetail.joinVerificationTitle' | t }}</h2>
+                <p>{{ joinStatusMessage }}</p>
+              </div>
+              <button type="button" class="jynlo-action jynlo-action--neutral"
+                      [disabled]="joinStatusChecking" (click)="verifyJoinOutcome()">
+                {{ (joinStatusChecking ? 'sessionDetail.joinVerifying' : 'sessionDetail.joinVerify') | t }}
+              </button>
             </section>
           } @else if (!canJoinSession()) {
             <section class="participation-panel">
