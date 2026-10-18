@@ -1707,7 +1707,7 @@
                               <div class="ranking-player">
                                 <strong>{{ row.fullName || row.username }}</strong>
                                 @if (row.username) {
-                                   <span>@{{ row.username }}</span>
+                                   <span>→ @{{ row.username }}</span>
                                  } @else {
                                    <span>{{ 'communities.identity.unlinked' | t }}</span>
                                  }
@@ -1914,7 +1914,7 @@
                               <div class="ranking-player">
                                 <strong>{{ row.fullName || row.username }}</strong>
                                 @if (row.username) {
-                                     <span>@{{ row.username }}</span>
+                                     <span>→ @{{ row.username }}</span>
                                    } @else {
                                      <span>{{ 'communities.identity.unlinked' | t }}</span>
                                    }

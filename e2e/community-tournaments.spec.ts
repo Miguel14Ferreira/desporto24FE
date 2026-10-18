@@ -70,7 +70,7 @@ type FixtureMode = 'empty' | 'draft' | 'paged' | 'forbidden' | 'switch'
   | 'management' | 'complete-rejected' | 'list-network-error'
   | 'paged-enrollment' | 'draw-tie' | 'schedule-roster-paged' | 'schedule-roster-oversize'
   | 'discovery' | 'trial' | 'modules-off' | 'teams-only' | 'teams' | 'teams-view'
-  | 'teams-schedule' | 'history';
+  | 'teams-schedule' | 'history' | 'identity';
 
 async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
   sport: string | null = 'Futebol', sports?: string[], roundRobinLegs: 1 | 2 = 1,
@@ -299,7 +299,14 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
       return send({
         settings: { rankingsEnabled: true, winPoints: 3, drawPoints: 1, lossPoints: 0 },
         seasons: [], selectedSeasonId: null, activeSeasonId: null,
-        rounds: [], standings: []
+        rounds: [], standings: mode === 'identity' ? [
+          { position: 1, profileId: 2, username: 'TMF14', fullName: 'Ferreirinha', profilePicUrl: null,
+            games: 3, wins: 2, draws: 0, losses: 1, points: 6, goals: 2, assists: 1,
+            mvps: 0, cleanSheets: 0, winRate: 66.67, currentStreak: 'W2', bestWinStreak: 2 },
+          { position: 2, profileId: null, username: null, fullName: 'Vasquinho', profilePicUrl: null,
+            games: 1, wins: 0, draws: 0, losses: 1, points: 0, goals: 0, assists: 0,
+            mvps: 0, cleanSheets: 0, winRate: 0, currentStreak: 'L1', bestWinStreak: 0 }
+        ] : []
       });
     }
 
@@ -696,6 +703,17 @@ test('organizador importa classificação histórica sem criar partidas e vê es
   expect(fixture.historicalArchives).toHaveLength(2);
   expect(fixture.unmocked.filter(x => x.includes('/competition/standings-archives') ||
     x.includes('/competition/import/standings'))).toEqual([]);
+});
+
+test('classificação mostra nome desportivo e username do perfil associado', async ({ page }) => {
+  await mockCommunityApi(page, 'OWNER', 'identity');
+  await page.goto('/menu/communities/7?tab=ranking');
+  const ranking = page.locator('.ranking-table');
+  await expect(ranking).toContainText('Ferreirinha');
+  await expect(ranking).toContainText('→ @TMF14');
+  await expect(ranking).toContainText('Vasquinho');
+  await page.getByRole('button', { name: 'Estatísticas' }).click();
+  await expect(page.locator('.stats-table')).toContainText('→ @TMF14');
 });
 
 test('membro consulta classificação arquivada mas não pode importar outra', async ({ page }) => {
