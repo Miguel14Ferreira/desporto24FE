@@ -1629,3 +1629,13 @@ input,textarea,select {
   font-size: .85rem;
 }
 .member-removal-confirmation .row-actions { align-items: center; }
+
+.member-removal-verification {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .65rem;
+  color: #fecaca;
+  font-size: .85rem;
+}
+.member-removal-verification button { margin-left: auto; }

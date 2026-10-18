@@ -64,6 +64,9 @@ export class CommunitiesComponent implements OnInit {
   selected?: CommunityGroup;
   memberAction: { communityId: number; username: string; kind: 'role' | 'remove' } | null = null;
   memberRemovalConfirmation: { communityId: number; username: string } | null = null;
+  memberRemovalOutcomeUnknown: { communityId: number; username: string } | null = null;
+  memberRemovalVerificationLoading = false;
+  memberRemovalVerificationMessage = '';
   readonly sportsCatalog = SPORTS_CATALOG;
   sportsDraft: string[] = [];
   sportsSearch = '';
@@ -732,6 +735,12 @@ export class CommunitiesComponent implements OnInit {
       .subscribe({
       next: full => {
         if (openVersion !== this.communityOpenRequestVersion) return;
+        if (this.selected?.id !== full.id) {
+          // A confirmation or unresolved DELETE belongs to one community only.
+          this.memberRemovalConfirmation = null;
+          this.memberRemovalOutcomeUnknown = null;
+          this.memberRemovalVerificationMessage = '';
+        }
         this.selected = full;
         this.resetHistoricalLinks();
         const requestedTab = this.route.snapshot.queryParamMap.get('tab');
@@ -2370,18 +2379,69 @@ export class CommunitiesComponent implements OnInit {
   }
 
   requestMemberRemoval(username: string): void {
-    if (this.memberAction || !this.selected || !this.canRemoveMember(username)) return;
+    if (this.memberAction || this.memberRemovalOutcomeUnknown || this.memberRemovalVerificationLoading
+      || !this.selected || !this.canRemoveMember(username)) return;
     this.errorMessage = '';
+    this.memberRemovalVerificationMessage = '';
     this.memberRemovalConfirmation = { communityId: this.selected.id, username };
   }
 
   cancelMemberRemoval(): void {
-    if (!this.memberAction) this.memberRemovalConfirmation = null;
+    if (!this.memberAction && !this.memberRemovalOutcomeUnknown
+      && !this.memberRemovalVerificationLoading) {
+      this.memberRemovalConfirmation = null;
+      this.memberRemovalVerificationMessage = '';
+    }
+  }
+
+  private isAmbiguousMemberRemovalError(error: any): boolean {
+    const status = error?.status;
+    return error?.name === 'TimeoutError' || status === 0 || status === 408
+      || status === 429 || (typeof status === 'number' && status >= 500)
+      || typeof status !== 'number';
+  }
+
+  verifyMemberRemoval(): void {
+    const outcome = this.memberRemovalOutcomeUnknown;
+    if (!outcome || this.memberAction || this.memberRemovalVerificationLoading
+      || this.selected?.id !== outcome.communityId) return;
+
+    this.memberRemovalVerificationLoading = true;
+    this.memberRemovalVerificationMessage = '';
+    this.communityService.get(outcome.communityId)
+      .pipe(
+        timeout(10_000),
+        finalize(() => { this.memberRemovalVerificationLoading = false; })
+      )
+      .subscribe({
+        next: community => {
+          if (this.memberRemovalOutcomeUnknown !== outcome
+            || this.selected?.id !== outcome.communityId) return;
+          const stillMember = community.members.some(member => member.username === outcome.username);
+          this.selected = community;
+          this.replaceCommunity(community);
+          this.memberRemovalOutcomeUnknown = null;
+          if (stillMember) {
+            this.memberRemovalVerificationMessage = t('communities.memberStillPresent');
+            // Reconfirming stays explicit; never automatically repeat the DELETE.
+            if (!this.canRemoveMember(outcome.username)) this.memberRemovalConfirmation = null;
+          } else {
+            this.memberRemovalVerificationMessage = '';
+            this.memberRemovalConfirmation = null;
+          }
+        },
+        error: () => {
+          if (this.memberRemovalOutcomeUnknown !== outcome
+            || this.selected?.id !== outcome.communityId) return;
+          this.memberRemovalVerificationMessage = t('communities.memberVerifyFailed');
+        }
+      });
   }
 
   setRole(username: string, role: Exclude<CommunityRole, 'OWNER'>): void {
     const community = this.selected;
-    if (!community || community.myRole !== 'OWNER' || this.memberAction) return;
+    if (!community || community.myRole !== 'OWNER' || this.memberAction
+      || this.memberRemovalOutcomeUnknown || this.memberRemovalVerificationLoading) return;
     const member = community.members.find(item => item.username === username);
     if (!member || member.role === 'OWNER' || member.role === role) return;
 
@@ -2411,17 +2471,26 @@ export class CommunitiesComponent implements OnInit {
 
   removeMember(username: string): void {
     const community = this.selected;
-    if (!community || this.memberAction || !this.canRemoveMember(username)
+    if (!community || this.memberAction || this.memberRemovalOutcomeUnknown
+      || this.memberRemovalVerificationLoading || !this.canRemoveMember(username)
       || this.memberRemovalConfirmation?.communityId !== community.id
       || this.memberRemovalConfirmation?.username !== username) return;
 
     const action = { communityId: community.id, username, kind: 'remove' as const };
     this.memberAction = action;
+    this.memberRemovalVerificationMessage = '';
     this.errorMessage = '';
     this.communityService.removeMember(community.id, username)
       .pipe(
         timeout(10_000),
-        finalize(() => { if (this.memberAction === action) this.memberAction = null; })
+        finalize(() => {
+          if (this.memberAction === action) this.memberAction = null;
+          // The POST/DELETE lock must be released before reconciliation starts.
+          if (this.memberRemovalOutcomeUnknown?.communityId === action.communityId
+            && this.memberRemovalOutcomeUnknown?.username === username) {
+            this.verifyMemberRemoval();
+          }
+        })
       )
       .subscribe({
         next: () => {
@@ -2438,8 +2507,12 @@ export class CommunitiesComponent implements OnInit {
           this.replaceCommunity(updated);
           this.memberRemovalConfirmation = null;
         },
-        error: () => {
-          if (this.selected?.id === action.communityId) {
+        error: error => {
+          if (this.selected?.id !== action.communityId) return;
+          if (this.isAmbiguousMemberRemovalError(error)) {
+            this.memberRemovalOutcomeUnknown = { communityId: action.communityId, username };
+            this.memberRemovalVerificationMessage = t('communities.memberOutcomeUnknown');
+          } else {
             this.errorMessage = t('feedback.communities.removeError');
           }
         }

@@ -27,12 +27,16 @@ describe('Community member management permissions and confirmations', () => {
     const group = baseGroup(myRole);
     const api = {
       updateRole: jasmine.createSpy('updateRole').and.returnValue(of(group)),
-      removeMember: jasmine.createSpy('removeMember').and.returnValue(of(void 0))
+      removeMember: jasmine.createSpy('removeMember').and.returnValue(of(void 0)),
+      get: jasmine.createSpy('get').and.returnValue(of(group))
     };
     page.selected = group;
     page.communities = [group];
     page.memberAction = null;
     page.memberRemovalConfirmation = null;
+    page.memberRemovalOutcomeUnknown = null;
+    page.memberRemovalVerificationLoading = false;
+    page.memberRemovalVerificationMessage = '';
     page.errorMessage = '';
     (page as any).communityService = api;
     spyOn(page, 'prepareRoundEntries');
@@ -128,6 +132,88 @@ describe('Community member management permissions and confirmations', () => {
     expect(page.selected?.id).toBe(20);
     expect(page.communities[0].id).toBe(20);
     expect(page.prepareRoundEntries).not.toHaveBeenCalled();
+  });
+
+  it('confirms removal with GET after an ambiguous DELETE without submitting twice', () => {
+    const { page, group, api } = setup();
+    api.removeMember.and.returnValue(throwError(() => ({ status: 504 })));
+    api.get.and.returnValue(of({
+      ...group,
+      memberCount: 2,
+      members: group.members.filter(m => m.username !== 'joao')
+    }));
+
+    page.requestMemberRemoval('joao');
+    page.removeMember('joao');
+
+    expect(api.removeMember).toHaveBeenCalledOnceWith(19, 'joao');
+    expect(api.get).toHaveBeenCalledOnceWith(19);
+    expect(page.memberAction).toBeNull();
+    expect(page.memberRemovalVerificationLoading).toBeFalse();
+    expect(page.memberRemovalOutcomeUnknown).toBeNull();
+    expect(page.memberRemovalConfirmation).toBeNull();
+    expect(page.selected?.members.map(m => m.username)).toEqual(['dona', 'ana']);
+    expect(page.selected?.memberCount).toBe(2);
+    page.removeMember('joao');
+    expect(api.removeMember).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the destructive action blocked if the DELETE and verification both fail', () => {
+    const { page, group, api } = setup();
+    api.removeMember.and.returnValue(throwError(() => ({ status: 503 })));
+    api.get.and.returnValues(
+      throwError(() => ({ status: 503 })),
+      of(group)
+    );
+
+    page.requestMemberRemoval('joao');
+    page.removeMember('joao');
+
+    expect(page.memberRemovalOutcomeUnknown).toEqual(
+      jasmine.objectContaining({ communityId: 19, username: 'joao' }));
+    expect(page.memberRemovalVerificationMessage).toContain('Não foi possível');
+    expect(page.memberRemovalVerificationLoading).toBeFalse();
+    page.removeMember('joao');
+    page.cancelMemberRemoval();
+    page.requestMemberRemoval('ana');
+    page.setRole('joao', 'ADMIN');
+    expect(api.removeMember).toHaveBeenCalledTimes(1);
+    expect(api.updateRole).not.toHaveBeenCalled();
+    expect(page.memberRemovalConfirmation?.username).toBe('joao');
+
+    page.verifyMemberRemoval();
+    expect(api.get).toHaveBeenCalledTimes(2);
+    expect(page.memberRemovalOutcomeUnknown).toBeNull();
+    expect(page.memberRemovalVerificationMessage).toContain('continua');
+    expect(page.memberRemovalConfirmation?.username).toBe('joao');
+    // A retry of DELETE is a separate, explicit confirmation.
+    expect(api.removeMember).toHaveBeenCalledTimes(1);
+  });
+
+  it('leaves a member actionable only after GET confirms they are still present', () => {
+    const { page, group, api } = setup();
+    const pending = new Subject<CommunityGroup>();
+    api.removeMember.and.returnValues(
+      throwError(() => ({ name: 'TimeoutError' })),
+      of(void 0)
+    );
+    api.get.and.returnValue(pending.asObservable());
+
+    page.requestMemberRemoval('joao');
+    page.removeMember('joao');
+    expect(page.memberRemovalVerificationLoading).toBeTrue();
+    page.removeMember('joao');
+    expect(api.removeMember).toHaveBeenCalledTimes(1);
+
+    pending.next(group);
+    pending.complete();
+    expect(page.memberRemovalOutcomeUnknown).toBeNull();
+    expect(page.memberRemovalVerificationMessage).toContain('continua');
+    expect(page.memberRemovalConfirmation?.username).toBe('joao');
+    page.removeMember('joao');
+    expect(api.removeMember).toHaveBeenCalledTimes(2);
+    expect(page.selected?.members.some(m => m.username === 'joao')).toBeFalse();
+    expect(page.memberRemovalConfirmation).toBeNull();
   });
 
   it('keeps the confirmation available after a definitive remove failure', () => {

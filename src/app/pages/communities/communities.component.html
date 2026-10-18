@@ -2169,12 +2169,12 @@
                         <div class="row-actions">
                           @if (member.role === 'MEMBER') {
                             <button type="button" class="secondary-action small jynlo-action jynlo-action--neutral jynlo-action--compact"
-                              [disabled]="memberAction !== null" (click)="setRole(member.username, 'ADMIN')">
+                              [disabled]="memberAction !== null || memberRemovalOutcomeUnknown !== null || memberRemovalVerificationLoading" (click)="setRole(member.username, 'ADMIN')">
                               {{ 'communities.makeAdmin' | t }}
                             </button>
                           } @else {
                             <button type="button" class="secondary-action small jynlo-action jynlo-action--neutral jynlo-action--compact"
-                              [disabled]="memberAction !== null" (click)="setRole(member.username, 'MEMBER')">
+                              [disabled]="memberAction !== null || memberRemovalOutcomeUnknown !== null || memberRemovalVerificationLoading" (click)="setRole(member.username, 'MEMBER')">
                               {{ 'communities.removeAdmin' | t }}
                             </button>
                           }
@@ -2187,20 +2187,35 @@
                           <div class="member-removal-confirmation" role="group"
                             [attr.aria-label]="'communities.confirmRemoveMember' | t">
                             <p>{{ 'communities.confirmRemoveMember' | t }} <strong>@{{ member.username }}</strong></p>
+                            @if (memberRemovalVerificationMessage || memberRemovalVerificationLoading) {
+                              <div class="member-removal-verification"
+                                [attr.role]="memberRemovalOutcomeUnknown ? 'alert' : 'status'">
+                                {{ memberRemovalVerificationLoading
+                                  ? ('communities.memberVerifying' | t)
+                                  : memberRemovalVerificationMessage }}
+                                @if (memberRemovalOutcomeUnknown && !memberRemovalVerificationLoading) {
+                                  <button type="button"
+                                    class="secondary-action small jynlo-action jynlo-action--neutral jynlo-action--compact"
+                                    (click)="verifyMemberRemoval()">
+                                    {{ 'common.retry' | t }}
+                                  </button>
+                                }
+                              </div>
+                            }
                             <div class="row-actions">
                               <button type="button" class="danger-action small jynlo-action jynlo-action--danger jynlo-action--compact"
-                                [disabled]="memberAction !== null" (click)="removeMember(member.username)">
+                                [disabled]="memberAction !== null || memberRemovalOutcomeUnknown !== null || memberRemovalVerificationLoading" (click)="removeMember(member.username)">
                                 {{ 'communities.confirmRemoveAction' | t }}
                               </button>
                               <button type="button" class="secondary-action small jynlo-action jynlo-action--neutral jynlo-action--compact"
-                                [disabled]="memberAction !== null" (click)="cancelMemberRemoval()">
+                                [disabled]="memberAction !== null || memberRemovalOutcomeUnknown !== null || memberRemovalVerificationLoading" (click)="cancelMemberRemoval()">
                                 {{ 'common.cancel' | t }}
                               </button>
                             </div>
                           </div>
                         } @else {
                           <button type="button" class="danger-action small jynlo-action jynlo-action--danger jynlo-action--compact"
-                            [disabled]="memberAction !== null" (click)="requestMemberRemoval(member.username)">
+                            [disabled]="memberAction !== null || memberRemovalOutcomeUnknown !== null || memberRemovalVerificationLoading" (click)="requestMemberRemoval(member.username)">
                             {{ 'communities.removeMember' | t }}
                           </button>
                         }

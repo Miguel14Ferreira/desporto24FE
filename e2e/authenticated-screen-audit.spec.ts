@@ -522,3 +522,105 @@ test('desktop administrator cannot change member roles or expel another administ
     await expect(memberRow.getByRole('button', { name: 'Tornar admin' })).toHaveCount(0);
     expect(mutations).toBe(0);
   });
+
+test('desktop confirms a timed-out removal through GET without repeating DELETE',
+  async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'desktop-chromium', 'Desktop member-management audit');
+    await isolateBackend(page);
+    const group = {
+      id: 19, name: 'Grupo da Vila', description: 'Jogos',
+      sport: 'Futebol', sports: ['Futebol'], visibility: 'PRIVATE', photoUrl: null,
+      myRole: 'OWNER', ownerUsername: 'dona', rankingsEnabled: false,
+      memberCount: 2, createdAt: '2026-10-18T12:00:00Z',
+      members: [
+        { profileId: 1, username: 'dona', fullName: 'Dona',
+          profilePicUrl: null, role: 'OWNER' },
+        { profileId: 2, username: 'joao', fullName: 'João',
+          profilePicUrl: null, role: 'MEMBER' }
+      ]
+    };
+    let reads = 0;
+    let deletions = 0;
+    await page.route('**/api/communities/mine', route => route.fulfill({
+      status: 200, contentType: 'application/json', body: JSON.stringify([group])
+    }));
+    await page.route('**/api/communities/19', route => {
+      reads++;
+      const current = reads === 1 ? group : {
+        ...group, memberCount: 1,
+        members: group.members.filter(member => member.username !== 'joao')
+      };
+      return route.fulfill({
+        status: 200, contentType: 'application/json', body: JSON.stringify(current)
+      });
+    });
+    await page.route('**/api/communities/19/members/joao', route => {
+      deletions++;
+      return route.fulfill({ status: 504, contentType: 'application/json',
+        body: '{"message":"Gateway timeout after removal"}' });
+    });
+
+    await page.goto('/menu/communities/19');
+    await page.locator('.community-tabs').getByRole('button', { name: 'Membros' }).click();
+    const memberRow = page.locator('.member-row').filter({ hasText: '@joao' });
+    await memberRow.getByRole('button', { name: 'Remover', exact: true }).click();
+    await memberRow.getByRole('button', { name: 'Confirmar remoção' }).click();
+
+    await expect(memberRow).toHaveCount(0);
+    await expect(page.locator('.members-block .count-pill')).toContainText('1');
+    expect(reads).toBeGreaterThanOrEqual(2);
+    expect(deletions).toBe(1);
+  });
+
+test('desktop blocks another removal when the verification GET fails, then offers GET retry',
+  async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'desktop-chromium', 'Desktop member-management audit');
+    await isolateBackend(page);
+    const group = {
+      id: 19, name: 'Grupo da Vila', description: 'Jogos',
+      sport: 'Futebol', sports: ['Futebol'], visibility: 'PRIVATE', photoUrl: null,
+      myRole: 'OWNER', ownerUsername: 'dona', rankingsEnabled: false,
+      memberCount: 2, createdAt: '2026-10-18T12:00:00Z',
+      members: [
+        { profileId: 1, username: 'dona', fullName: 'Dona',
+          profilePicUrl: null, role: 'OWNER' },
+        { profileId: 2, username: 'joao', fullName: 'João',
+          profilePicUrl: null, role: 'MEMBER' }
+      ]
+    };
+    let reads = 0;
+    let deletions = 0;
+    await page.route('**/api/communities/mine', route => route.fulfill({
+      status: 200, contentType: 'application/json', body: JSON.stringify([group])
+    }));
+    await page.route('**/api/communities/19', route => {
+      reads++;
+      return route.fulfill({
+        status: reads === 2 ? 503 : 200,
+        contentType: 'application/json',
+        body: JSON.stringify(reads === 2 ? { message: 'Unavailable' } : group)
+      });
+    });
+    await page.route('**/api/communities/19/members/joao', route => {
+      deletions++;
+      return route.fulfill({ status: 503, body: 'Unknown outcome' });
+    });
+
+    await page.goto('/menu/communities/19');
+    await page.locator('.community-tabs').getByRole('button', { name: 'Membros' }).click();
+    const memberRow = page.locator('.member-row').filter({ hasText: '@joao' });
+    await memberRow.getByRole('button', { name: 'Remover', exact: true }).click();
+    await memberRow.getByRole('button', { name: 'Confirmar remoção' }).click();
+
+    await expect(memberRow.getByText('Não foi possível confirmar a remoção.', { exact: false }))
+      .toBeVisible();
+    await expect(memberRow.getByRole('button', { name: 'Confirmar remoção' })).toBeDisabled();
+    expect(deletions).toBe(1);
+
+    await memberRow.getByRole('button', { name: 'Tentar novamente' }).click();
+    await expect(memberRow.getByText('O membro continua na comunidade.', { exact: false }))
+      .toBeVisible();
+    await expect(memberRow.getByRole('button', { name: 'Confirmar remoção' })).toBeEnabled();
+    expect(deletions).toBe(1);
+    expect(reads).toBeGreaterThanOrEqual(3);
+  });
