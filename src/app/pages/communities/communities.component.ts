@@ -168,8 +168,8 @@ export class CommunitiesComponent implements OnInit {
   get canBrowseHistoricalArchives(): boolean {
     return !!this.selected && (this.selected.rankingsEnabled
       || this.hasCompetitions(this.selected)
-      || this.archiveSummaries.length > 0
-      || this.matchArchiveSummaries.length > 0);
+      || (this.archiveSummaries?.length ?? 0) > 0
+      || (this.matchArchiveSummaries?.length ?? 0) > 0);
   }
 
   editFeatures(): void {
