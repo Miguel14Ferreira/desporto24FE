@@ -51,6 +51,16 @@ describe('A minha semana desportiva — dados reais e privacidade', () => {
       .map(game => game.id)).toEqual([11, 10]);
   });
 
+  it('filters public vacancies using viewer membership even without a my-sessions response', () => {
+    const candidates = [
+      session(1, 5), session(2, 6, { joinedByViewer: true }),
+      session(3, 7, { waitlistedByViewer: true }),
+      session(4, 8, { privateGame: true }),
+      session(5, 9, { audience: 'COMMUNITY_ONLY' })
+    ];
+    expect(weekOffers(candidates, null, null, now).map(game => game.id)).toEqual([1]);
+  });
+
   it('prioritizes favourite sports and home city without exposing private sessions', () => {
     const me = {
       username: 'test', favoriteSports: 'Padel, Futébol', location: 'Lisboa'

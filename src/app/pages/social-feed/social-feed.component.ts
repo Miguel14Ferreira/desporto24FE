@@ -243,10 +243,8 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
   }
 
   private refreshMyWeekOffers(): void {
-    if (!this.myWeekMine) {
-      this.myWeekOffers = [];
-      return;
-    }
+    // Keep public opportunities visible even if loading the player's own sessions fails.
+    // Discovery still excludes joined/waitlisted games using the viewer flags it returns.
     this.myWeekOffers = weekOffers(
       this.myWeekDiscovered, this.myWeekMine, this.myWeekProfile
     );
