@@ -251,6 +251,7 @@ describe('CommunitiesComponent public session eligibility', () => {
       { id: 11, communityId: 9, communityName: 'Outro Grupo' }
     ] as any;
     component.selected = { id: 7 } as any;
+    component.communities = [];
 
     component.acceptInvite(component.invites[0]);
     expect(component.inviteAction).toEqual(jasmine.objectContaining({ id: 10, kind: 'accept' }));
@@ -303,6 +304,7 @@ describe('CommunitiesComponent public session eligibility', () => {
     (component as any).communityService = { acceptInvite: accept };
     (component as any).router = router;
     component.inviteAction = null;
+    component.communities = [];
     component.invites = [{ id: 10, communityId: 8 }] as any;
 
     component.acceptInvite(component.invites[0]);
@@ -388,7 +390,7 @@ describe('CommunitiesComponent public session eligibility', () => {
 
     component.acceptInvite(component.invites[0]);
     expect(component.inviteOutcomeUnknown).toEqual(jasmine.objectContaining({ id: 10, communityId: 8, kind: 'accept' }));
-    expect(component.inviteVerificationMessage).toContain('verificar');
+    expect(component.inviteVerificationMessage).toContain('Não foi possível confirmar');
     component.acceptInvite(component.invites[0]);
     expect(accept).toHaveBeenCalledTimes(1);
 
