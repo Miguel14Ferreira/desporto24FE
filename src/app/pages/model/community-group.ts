@@ -46,8 +46,8 @@ export interface CommunityCompetitionSettings {
 }
 
 export interface CommunityRoundEntry {
-  profileId: number;
-  username: string;
+  profileId: number | null;
+  username: string | null;
   fullName: string | null;
   profilePicUrl: string | null;
   team: string | null;

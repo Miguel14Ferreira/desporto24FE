@@ -12,6 +12,7 @@ import {
   CommunityRole,
   CommunitySeason,
   CommunityRound,
+  CommunityRoundEntry,
   CommunityRoundEntryDraft,
   CommunityStanding
 } from '../model/community-group';
@@ -108,6 +109,11 @@ export class CommunitiesComponent implements OnInit {
 
   get displayedRankings(): CommunityStanding[] {
     return this.showAllStandings ? (this.competition?.standings || []) : this.rankingParticipants;
+  }
+
+  // Imported rounds retain the source name; handle exists only for a verified profile.
+  roundEntryHandle(entry: Pick<CommunityRoundEntry, 'username'>): string {
+    return entry.username ? '@' + entry.username : t('communities.identity.unlinked');
   }
 
   get availableHistoricalPlayers(): HistoricalPlayerCandidate[] {

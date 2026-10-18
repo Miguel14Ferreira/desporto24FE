@@ -364,6 +364,15 @@ describe('CommunitiesComponent public session eligibility', () => {
   });
 
 
+  it('renders imported names without @null and displays verified handles', () => {
+    const imported = { profileId: null, username: null, fullName: 'Ferreirinha' };
+    expect(component.roundEntryHandle(imported)).not.toContain('@null');
+    expect(component.roundEntryHandle(imported)).not.toContain('@undefined');
+    expect(component.roundEntryHandle(imported)).not.toBe('');
+    expect(component.roundEntryHandle({ ...imported, profileId: 12, username: 'TMF14' }))
+      .toBe('@TMF14');
+  });
+
   it('keeps non-participants out of rankings by default but allows showing every member', () => {
     component.competition = { standings: [
       { profileId: null, username: null, fullName: 'Ferreirinha', games: 3, points: 6 },
