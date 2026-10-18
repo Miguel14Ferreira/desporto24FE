@@ -624,3 +624,118 @@ test('desktop blocks another removal when the verification GET fails, then offer
     expect(deletions).toBe(1);
     expect(reads).toBeGreaterThanOrEqual(3);
   });
+
+test('desktop ownership transfer requires a member selection and explicit confirmation',
+  async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'desktop-chromium', 'Desktop ownership audit');
+    await isolateBackend(page);
+    const group = {
+      id: 19, name: 'Grupo da Vila', description: 'Jogos',
+      sport: 'Futebol', sports: ['Futebol'], visibility: 'PRIVATE', photoUrl: null,
+      myRole: 'OWNER', ownerUsername: 'dona', rankingsEnabled: false,
+      memberCount: 2, createdAt: '2026-10-18T12:00:00Z',
+      members: [
+        { profileId: 1, username: 'dona', fullName: 'Dona', profilePicUrl: null, role: 'OWNER' },
+        { profileId: 2, username: 'ana', fullName: 'Ana', profilePicUrl: null, role: 'MEMBER' }
+      ]
+    };
+    const updated = {
+      ...group, ownerUsername: 'ana', myRole: 'ADMIN',
+      members: [
+        { ...group.members[0], role: 'ADMIN' },
+        { ...group.members[1], role: 'OWNER' }
+      ]
+    };
+    let transfers = 0;
+    await page.route('**/api/communities/mine', route => route.fulfill({
+      status: 200, contentType: 'application/json', body: JSON.stringify([group])
+    }));
+    await page.route('**/api/communities/19', route => route.fulfill({
+      status: 200, contentType: 'application/json', body: JSON.stringify(group)
+    }));
+    await page.route('**/api/communities/19/owner', route => {
+      transfers++;
+      return route.fulfill({
+        status: 200, contentType: 'application/json', body: JSON.stringify(updated)
+      });
+    });
+    await page.goto('/menu/communities/19');
+    await page.locator('.community-tabs').getByRole('button', { name: 'Membros' }).click();
+
+    const transfer = page.locator('.management-block').filter({ hasText: 'Transferir propriedade' });
+    await expect(transfer).toBeVisible();
+    await expect(transfer.locator('select')).toHaveValue('');
+    await expect(transfer.getByRole('button', { name: 'Continuar' })).toBeDisabled();
+    await transfer.locator('select').selectOption('ana');
+    await transfer.getByRole('button', { name: 'Continuar' }).click();
+    await expect(transfer.getByText('Confirmar transferência de propriedade')).toBeVisible();
+    await expect(transfer.getByText('Passarás a administrador.', { exact: false })).toBeVisible();
+    expect(transfers).toBe(0);
+
+    await transfer.getByRole('button', { name: 'Cancelar' }).click();
+    expect(transfers).toBe(0);
+    await transfer.getByRole('button', { name: 'Continuar' }).click();
+    await transfer.getByRole('button', { name: 'Confirmar transferência' }).click();
+
+    await expect(transfer).toHaveCount(0);
+    await expect(page.getByText('A propriedade foi transferida com sucesso.')).toBeVisible();
+    expect(transfers).toBe(1);
+  });
+
+test('desktop ownership transfer checks the current owner after timeout before allowing another action',
+  async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'desktop-chromium', 'Desktop ownership audit');
+    await isolateBackend(page);
+    const group = {
+      id: 19, name: 'Grupo da Vila', description: 'Jogos',
+      sport: 'Futebol', sports: ['Futebol'], visibility: 'PRIVATE', photoUrl: null,
+      myRole: 'OWNER', ownerUsername: 'dona', rankingsEnabled: false,
+      memberCount: 2, createdAt: '2026-10-18T12:00:00Z',
+      members: [
+        { profileId: 1, username: 'dona', fullName: 'Dona', profilePicUrl: null, role: 'OWNER' },
+        { profileId: 2, username: 'ana', fullName: 'Ana', profilePicUrl: null, role: 'MEMBER' }
+      ]
+    };
+    const updated = {
+      ...group, myRole: 'ADMIN', ownerUsername: 'ana',
+      members: [
+        { ...group.members[0], role: 'ADMIN' },
+        { ...group.members[1], role: 'OWNER' }
+      ]
+    };
+    let reads = 0;
+    let transfers = 0;
+    await page.route('**/api/communities/mine', route => route.fulfill({
+      status: 200, contentType: 'application/json', body: JSON.stringify([group])
+    }));
+    await page.route('**/api/communities/19', route => {
+      reads++;
+      return route.fulfill({
+        status: reads === 2 ? 503 : 200,
+        contentType: 'application/json',
+        body: JSON.stringify(reads >= 3 ? updated : group)
+      });
+    });
+    await page.route('**/api/communities/19/owner', route => {
+      transfers++;
+      return route.fulfill({ status: 504, contentType: 'application/json',
+        body: '{"message":"Gateway timeout after transfer"}' });
+    });
+    await page.goto('/menu/communities/19');
+    await page.locator('.community-tabs').getByRole('button', { name: 'Membros' }).click();
+    const transfer = page.locator('.management-block').filter({ hasText: 'Transferir propriedade' });
+    await transfer.locator('select').selectOption('ana');
+    await transfer.getByRole('button', { name: 'Continuar' }).click();
+    await transfer.getByRole('button', { name: 'Confirmar transferência' }).click();
+
+    await expect(transfer.getByText('Não foi possível confirmar a transferência.', { exact: false }))
+      .toBeVisible();
+    await expect(transfer.getByRole('button', { name: 'Confirmar transferência' })).toBeDisabled();
+    expect(transfers).toBe(1);
+
+    await transfer.getByRole('button', { name: 'Tentar novamente' }).click();
+    await expect(transfer).toHaveCount(0);
+    await expect(page.getByText('A propriedade foi transferida com sucesso.')).toBeVisible();
+    expect(reads).toBeGreaterThanOrEqual(3);
+    expect(transfers).toBe(1);
+  });

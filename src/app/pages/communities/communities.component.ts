@@ -144,6 +144,11 @@ export class CommunitiesComponent implements OnInit {
   batchJoinTotal = 0;
   batchJoinFeedback = '';
   ownershipUsername = '';
+  ownershipConfirmation: { communityId: number; username: string; previousOwner: string } | null = null;
+  ownershipActionLoading = false;
+  ownershipOutcomeUnknown: { communityId: number; username: string; previousOwner: string } | null = null;
+  ownershipVerificationLoading = false;
+  ownershipFeedback = '';
   photoUpdating = false;
 
   communitySearchName = '';
@@ -736,10 +741,14 @@ export class CommunitiesComponent implements OnInit {
       next: full => {
         if (openVersion !== this.communityOpenRequestVersion) return;
         if (this.selected?.id !== full.id) {
-          // A confirmation or unresolved DELETE belongs to one community only.
+          // Destructive confirmations belong to one community only.
           this.memberRemovalConfirmation = null;
           this.memberRemovalOutcomeUnknown = null;
           this.memberRemovalVerificationMessage = '';
+          this.ownershipUsername = '';
+          this.ownershipConfirmation = null;
+          this.ownershipOutcomeUnknown = null;
+          this.ownershipFeedback = '';
         }
         this.selected = full;
         this.resetHistoricalLinks();
@@ -2380,6 +2389,7 @@ export class CommunitiesComponent implements OnInit {
 
   requestMemberRemoval(username: string): void {
     if (this.memberAction || this.memberRemovalOutcomeUnknown || this.memberRemovalVerificationLoading
+      || this.ownershipActionLoading || this.ownershipOutcomeUnknown || this.ownershipVerificationLoading
       || !this.selected || !this.canRemoveMember(username)) return;
     this.errorMessage = '';
     this.memberRemovalVerificationMessage = '';
@@ -2441,7 +2451,8 @@ export class CommunitiesComponent implements OnInit {
   setRole(username: string, role: Exclude<CommunityRole, 'OWNER'>): void {
     const community = this.selected;
     if (!community || community.myRole !== 'OWNER' || this.memberAction
-      || this.memberRemovalOutcomeUnknown || this.memberRemovalVerificationLoading) return;
+      || this.memberRemovalOutcomeUnknown || this.memberRemovalVerificationLoading
+      || this.ownershipActionLoading || this.ownershipOutcomeUnknown || this.ownershipVerificationLoading) return;
     const member = community.members.find(item => item.username === username);
     if (!member || member.role === 'OWNER' || member.role === role) return;
 
@@ -2472,7 +2483,9 @@ export class CommunitiesComponent implements OnInit {
   removeMember(username: string): void {
     const community = this.selected;
     if (!community || this.memberAction || this.memberRemovalOutcomeUnknown
-      || this.memberRemovalVerificationLoading || !this.canRemoveMember(username)
+      || this.memberRemovalVerificationLoading || this.ownershipActionLoading
+      || this.ownershipOutcomeUnknown || this.ownershipVerificationLoading
+      || !this.canRemoveMember(username)
       || this.memberRemovalConfirmation?.communityId !== community.id
       || this.memberRemovalConfirmation?.username !== username) return;
 
@@ -2551,24 +2564,138 @@ export class CommunitiesComponent implements OnInit {
     });
   }
 
-  transferOwnership(): void {
-    if (!this.selected || !this.ownershipUsername.trim()) {
+  onOwnershipCandidateChange(): void {
+    if (!this.ownershipActionLoading && !this.ownershipOutcomeUnknown) {
+      this.ownershipConfirmation = null;
+      this.ownershipFeedback = '';
+    }
+  }
+
+  requestOwnershipTransfer(): void {
+    const community = this.selected;
+    const username = this.ownershipUsername.trim();
+    if (!community || community.myRole !== 'OWNER' || this.ownershipActionLoading
+      || this.ownershipOutcomeUnknown || this.ownershipVerificationLoading
+      || this.memberAction || this.memberRemovalOutcomeUnknown
+      || this.memberRemovalVerificationLoading) return;
+
+    const candidate = community.members.find(m => m.username === username && m.role !== 'OWNER');
+    if (!candidate) {
+      this.ownershipFeedback = t('communities.ownerChooseMember');
       return;
     }
+    this.ownershipConfirmation = {
+      communityId: community.id, username: candidate.username, previousOwner: community.ownerUsername
+    };
+    this.ownershipFeedback = '';
+    this.errorMessage = '';
+  }
 
-    this.communityService.transferOwnership(
-      this.selected.id,
-      this.ownershipUsername.trim()
-    )
-      .pipe(timeout(10_000))
+  cancelOwnershipTransfer(): void {
+    if (!this.ownershipActionLoading && !this.ownershipOutcomeUnknown
+      && !this.ownershipVerificationLoading) {
+      this.ownershipConfirmation = null;
+      this.ownershipFeedback = '';
+    }
+  }
+
+  private isAmbiguousOwnershipError(error: any): boolean {
+    const status = error?.status;
+    return error?.name === 'TimeoutError' || status === 0 || status === 408
+      || status === 429 || (typeof status === 'number' && status >= 500)
+      || typeof status !== 'number';
+  }
+
+  verifyOwnershipTransfer(): void {
+    const outcome = this.ownershipOutcomeUnknown;
+    if (!outcome || this.ownershipActionLoading || this.ownershipVerificationLoading
+      || this.selected?.id !== outcome.communityId) return;
+
+    this.ownershipVerificationLoading = true;
+    this.ownershipFeedback = '';
+    this.communityService.get(outcome.communityId)
+      .pipe(
+        timeout(10_000),
+        finalize(() => { this.ownershipVerificationLoading = false; })
+      )
       .subscribe({
-      next: community => {
-        this.selected = community;
-        this.replaceCommunity(community);
-        this.ownershipUsername = '';
-      },
-      error: error => this.errorMessage = error.error?.message || t('feedback.communities.transferError')
-    });
+        next: updated => {
+          if (this.ownershipOutcomeUnknown !== outcome
+            || this.selected?.id !== outcome.communityId) return;
+          this.selected = updated;
+          this.replaceCommunity(updated);
+          this.ownershipOutcomeUnknown = null;
+          if (updated.ownerUsername === outcome.username) {
+            // The server confirms the transfer. Never send a second PUT.
+            this.ownershipConfirmation = null;
+            this.ownershipUsername = '';
+            this.ownershipFeedback = t('communities.ownerTransferConfirmed');
+          } else if (updated.ownerUsername === outcome.previousOwner
+            && updated.myRole === 'OWNER'
+            && updated.members.some(m => m.username === outcome.username && m.role !== 'OWNER')) {
+            // Still owner: user may confirm a new attempt deliberately.
+            this.ownershipFeedback = t('communities.ownerStillUnchanged');
+          } else {
+            // Another owner or the intended recipient left the community.
+            this.ownershipConfirmation = null;
+            this.ownershipUsername = '';
+            this.ownershipFeedback = t('communities.ownerChangedElsewhere');
+          }
+        },
+        error: () => {
+          if (this.ownershipOutcomeUnknown !== outcome
+            || this.selected?.id !== outcome.communityId) return;
+          this.ownershipFeedback = t('communities.ownerVerifyFailed');
+        }
+      });
+  }
+
+  transferOwnership(): void {
+    const community = this.selected;
+    const confirmation = this.ownershipConfirmation;
+    if (!community || community.myRole !== 'OWNER' || !confirmation
+      || confirmation.communityId !== community.id
+      || confirmation.previousOwner !== community.ownerUsername
+      || confirmation.username !== this.ownershipUsername.trim()
+      || !community.members.some(m => m.username === confirmation.username && m.role !== 'OWNER')
+      || this.ownershipActionLoading || this.ownershipOutcomeUnknown
+      || this.ownershipVerificationLoading || this.memberAction
+      || this.memberRemovalOutcomeUnknown || this.memberRemovalVerificationLoading) return;
+
+    this.ownershipActionLoading = true;
+    this.ownershipFeedback = '';
+    this.errorMessage = '';
+    this.communityService.transferOwnership(community.id, confirmation.username)
+      .pipe(
+        timeout(10_000),
+        finalize(() => {
+          this.ownershipActionLoading = false;
+          if (this.ownershipOutcomeUnknown === confirmation
+            || (this.ownershipOutcomeUnknown?.communityId === confirmation.communityId
+              && this.ownershipOutcomeUnknown?.username === confirmation.username)) {
+            this.verifyOwnershipTransfer();
+          }
+        })
+      )
+      .subscribe({
+        next: updated => {
+          if (this.selected?.id !== confirmation.communityId) return;
+          this.selected = updated;
+          this.replaceCommunity(updated);
+          this.ownershipUsername = '';
+          this.ownershipConfirmation = null;
+          this.ownershipFeedback = t('communities.ownerTransferConfirmed');
+        },
+        error: error => {
+          if (this.selected?.id !== confirmation.communityId) return;
+          if (this.isAmbiguousOwnershipError(error)) {
+            this.ownershipOutcomeUnknown = confirmation;
+            this.ownershipFeedback = t('communities.ownerOutcomeUnknown');
+          } else {
+            this.errorMessage = error.error?.message || t('feedback.communities.transferError');
+          }
+        }
+      });
   }
 
   onCommunityPhotoChange(event: Event): void {
