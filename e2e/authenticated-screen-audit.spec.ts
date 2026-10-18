@@ -112,3 +112,24 @@ test('mobile signed-in navigation keeps Feed, Discover and the secondary Menu ac
   await expect(menu.locator('a[href="/menu/notifications"]')).toBeVisible();
   await expect(menu.locator('a[href="/menu/createEvent"]')).toBeVisible();
 });
+
+test('desktop opens an explored community despite failure loading private memberships',
+  async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'desktop-chromium', 'Desktop discovery audit');
+    await isolateBackend(page);
+    await page.route('**/api/communities/19/presentation', route => route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        id: 19, name: 'Desporto da Vila', description: 'Jogos abertos',
+        sport: 'Futebol', sports: ['Futebol'], photoUrl: null, visibility: 'PUBLIC'
+      })
+    }));
+
+    await page.goto('/menu/communities/19');
+    await expect(page).toHaveURL(/\/menu\/communities\/19$/);
+    await expect(page.locator('.community-detail-identity h2')).toHaveText('Desporto da Vila');
+    await expect(page.locator('.community-detail-identity')).toContainText('Jogos abertos');
+    await expect(page.getByRole('button', { name: /Aderir|Entrar/i }).first()).toBeVisible();
+    await expect(page.locator('app-navbar .site-nav')).toBeVisible();
+  });

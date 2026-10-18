@@ -661,6 +661,82 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(component.historicalClaims).toEqual([]);
   });
 
+  it('opens a non-member community detail if the private memberships API fails', () => {
+    const presentation = {
+      id: 19, name: 'Desporto da Vila', description: 'Futebol para todos',
+      sport: 'Futebol', sports: ['Futebol'],
+      photoUrl: null, visibility: 'PUBLIC'
+    } as const;
+    const service = {
+      mine: jasmine.createSpy('mine').and.returnValue(throwError(() => new Error('Private API offline'))),
+      myInvites: jasmine.createSpy('myInvites').and.returnValue(of([])),
+      presentation: jasmine.createSpy('presentation').and.returnValue(of(presentation))
+    };
+    const route = {
+      snapshot: {
+        paramMap: { get: (key: string) => key === 'id' ? '19' : null },
+        queryParamMap: { get: () => null }
+      }
+    };
+    const page = new CommunitiesComponent(service as any, {} as any, {} as any, route as any, {} as any);
+    page.isDetailMode = true;
+    page.reload();
+
+    expect(service.mine).toHaveBeenCalled();
+    expect(service.presentation).toHaveBeenCalledOnceWith(19);
+    expect(page.loading).toBeFalse();
+    expect(page.presentationLoading).toBeFalse();
+    expect(page.communityPresentation?.name).toBe('Desporto da Vila');
+    expect(page.errorMessage).toBe('');
+  });
+
+  it('keeps community exploration usable when the private memberships API fails', () => {
+    const service = {
+      mine: jasmine.createSpy('mine').and.returnValue(throwError(() => new Error('Private API offline'))),
+      myInvites: jasmine.createSpy('myInvites').and.returnValue(of([])),
+      search: jasmine.createSpy('search').and.returnValue(of({
+        communities: [{
+          id: 25, name: 'Jogos Lisboa', description: null,
+          sport: 'Padel', sports: ['Padel'], photoUrl: null, visibility: 'PUBLIC'
+        }], page: 0, hasMore: false
+      }))
+    };
+    const route = {
+      snapshot: {
+        paramMap: { get: () => null },
+        queryParamMap: { get: () => null }
+      }
+    };
+    const page = new CommunitiesComponent(service as any, {} as any, {} as any, route as any, {} as any);
+    page.reload();
+    page.communitySearchName = 'Jogos';
+    page.searchCommunities();
+
+    expect(page.errorMessage).toBe('');
+    expect(page.loading).toBeFalse();
+    expect(page.communitySearchError).toBe('');
+    expect(page.communitySearchResults.map(group => group.name)).toEqual(['Jogos Lisboa']);
+    expect(service.search).toHaveBeenCalledOnceWith('Jogos', '', 0);
+  });
+
+  it('still reports failed private memberships on My communities', () => {
+    const service = {
+      mine: jasmine.createSpy('mine').and.returnValue(throwError(() => new Error('Private API offline'))),
+      myInvites: jasmine.createSpy('myInvites').and.returnValue(of([]))
+    };
+    const route = {
+      snapshot: {
+        paramMap: { get: () => null },
+        queryParamMap: { get: (key: string) => key === 'view' ? 'mine' : null }
+      }
+    };
+    const page = new CommunitiesComponent(service as any, {} as any, {} as any, route as any, {} as any);
+    page.reload();
+
+    expect(page.loading).toBeFalse();
+    expect(page.errorMessage).toBeTruthy();
+  });
+
   it('allows joining an upcoming open community session', () => {
     expect(component.canJoinCommunitySession(session)).toBeTrue();
   });

@@ -540,7 +540,20 @@ export class CommunitiesComponent implements OnInit {
             }
           }
         },
-        error: () => this.errorMessage = t('feedback.communities.loadError')
+        error: () => {
+          // A temporary failure loading private memberships must not block a
+          // community presentation opened from Explore or a shared deep link.
+          const routeId = Number(this.route.snapshot.paramMap.get('id'));
+          if (this.detailMode() && Number.isSafeInteger(routeId) && routeId > 0) {
+            this.loadCommunityPresentation(routeId);
+            return;
+          }
+          // The Explore screen uses /search independently of /mine.
+          // Only "My communities" needs an error for this private request.
+          if (this.detailMode() || this.route.snapshot.queryParamMap.get('view') === 'mine') {
+            this.errorMessage = t('feedback.communities.loadError');
+          }
+        }
       });
 
     this.communityService.myInvites()
