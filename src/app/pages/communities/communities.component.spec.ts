@@ -79,6 +79,52 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(component.importSourceRound).toBe('');
   });
 
+  it('ignores a stale Excel preview after replacing the file while allowing the new inspection', () => {
+    const old = new Subject<any>();
+    const latest = new Subject<any>();
+    const preview = jasmine.createSpy('importPreview').and.returnValues(old, latest);
+    (component as any).communityService = { importPreview: preview };
+    component.importRevision = 0;
+    component.selected = { id: 7 } as any;
+    const oldFile = new File(['first'], 'antigo.xlsx');
+    const newFile = new File(['second'], 'novo.csv');
+    component.onImportFileChange({ target: { files: [oldFile], value: oldFile.name } } as unknown as Event);
+    component.inspectImportFile();
+    expect(component.importPreviewLoading).toBeTrue();
+
+    component.onImportFileChange({ target: { files: [newFile], value: newFile.name } } as unknown as Event);
+    expect(component.importPreviewLoading).toBeFalse();
+    component.inspectImportFile();
+    expect(preview).toHaveBeenCalledTimes(2);
+
+    old.next({ fileName: oldFile.name, sheets: [] });
+    old.complete();
+    expect(component.importPreview).toBeUndefined();
+    expect(component.importPreviewLoading).toBeTrue();
+
+    latest.next({ fileName: newFile.name, sheets: [] });
+    latest.complete();
+    expect(component.importPreview?.fileName).toBe(newFile.name);
+    expect(component.importPreviewLoading).toBeFalse();
+    expect(component.importFileError).toBe('');
+  });
+
+  it('ignores a late preview error after the user clears their Excel selection', () => {
+    const old = new Subject<any>();
+    (component as any).communityService = { importPreview: () => old };
+    component.importRevision = 0;
+    component.selected = { id: 7 } as any;
+    const file = new File(['data'], 'histórico.xlsx');
+    component.onImportFileChange({ target: { files: [file], value: file.name } } as unknown as Event);
+    component.inspectImportFile();
+    component.onImportFileChange({ target: { files: [], value: '' } } as unknown as Event);
+    old.error({ error: { message: 'Erro do ficheiro anterior' } });
+    expect(component.importFile).toBeUndefined();
+    expect(component.importPreview).toBeUndefined();
+    expect(component.importFileError).toBe('');
+    expect(component.importPreviewLoading).toBeFalse();
+  });
+
   it('requires explicit confirmation when mapped spreadsheet points will not be persisted', () => {
     component.importMappings = [{ columnIndex: 2, header: 'Pontos', field: 'POINTS', confidence: 0.9 }];
     component.importPointsAcknowledged = false;

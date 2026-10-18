@@ -1508,6 +1508,9 @@ export class CommunitiesComponent implements OnInit {
 
   private resetImportAfterFile(): void {
     ++this.importRevision;
+    // Allow a newly selected file to be inspected immediately, even if the
+    // previous preview HTTP request is still completing.
+    this.importPreviewLoading = false;
     this.sourceDatesNeedYear = false;
     this.resetArchiveDraft();
     this.importPointsAcknowledged = false;
@@ -1572,23 +1575,33 @@ export class CommunitiesComponent implements OnInit {
       return;
     }
 
+    const communityId = this.selected.id;
+    const file = this.importFile;
+    const revision = this.importRevision;
     this.importPreviewLoading = true;
     this.importFileError = '';
     this.importPreview = undefined;
 
-    this.communityService.importPreview(this.selected.id, this.importFile)
+    this.communityService.importPreview(communityId, file)
       .pipe(
         timeout(20_000),
-        finalize(() => this.importPreviewLoading = false)
+        finalize(() => {
+          if (this.importRevision === revision) this.importPreviewLoading = false;
+        })
       )
       .subscribe({
         next: preview => {
+          if (this.importRevision !== revision || this.selected?.id !== communityId
+              || this.importFile !== file) return;
           this.importPreview = preview;
           const sheet = preview.sheets.find(item => item.structure === 'TABULAR') || preview.sheets[0];
           this.selectImportSheet(sheet?.name || '');
         },
         error: error => {
-          this.importFileError = error.error?.message || t('communities.import.inspectError');
+          if (this.importRevision === revision && this.selected?.id === communityId
+              && this.importFile === file) {
+            this.importFileError = error.error?.message || t('communities.import.inspectError');
+          }
         }
       });
   }
