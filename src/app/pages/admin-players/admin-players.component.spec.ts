@@ -13,11 +13,48 @@ describe('AdminPlayersComponent role changes', () => {
   });
 
   beforeEach(() => {
-    service = jasmine.createSpyObj('AdminPlayersService', ['search', 'changeRole']);
+    service = jasmine.createSpyObj('AdminPlayersService', ['search', 'changeRole', 'statistics']);
     auth = jasmine.createSpyObj('AuthenticationService', ['hasAnyRole']);
     auth.hasAnyRole.and.returnValue(true);
     component = new AdminPlayersComponent(service, auth);
     component.players = [player()];
+  });
+
+  it('loads player statistics only when requested and supports closing the panel', () => {
+    service.statistics.and.returnValue(of({
+      playerId: 2, games: 3, wins: 1, draws: 1, losses: 1,
+      goals: 2, assists: 4, mvps: 1, cleanSheets: 0, winRate: 33.33
+    }));
+    component.toggleStatistics(player());
+    expect(service.statistics).toHaveBeenCalledOnceWith(2);
+    expect(component.stats?.goals).toBe(2);
+    component.toggleStatistics(player());
+    expect(component.stats).toBeNull();
+    expect(component.statsPlayer).toBeNull();
+  });
+
+  it('ignores a previous players statistics request after switching profile', () => {
+    const delayed = new Subject<any>();
+    service.statistics.and.returnValues(delayed, of({
+      playerId: 3, games: 0, wins: 0, draws: 0, losses: 0,
+      goals: 0, assists: 0, mvps: 0, cleanSheets: 0, winRate: 0
+    }));
+    component.toggleStatistics(player());
+    component.toggleStatistics({ ...player(), id: 3, username: 'rui' });
+    delayed.next({ playerId: 2, games: 99 });
+    delayed.complete();
+    expect(component.statsPlayer?.id).toBe(3);
+    expect(component.stats?.games).toBe(0);
+    expect(component.statsLoading).toBeFalse();
+  });
+
+  it('shows statistics errors and clears the panel when searching again', () => {
+    service.statistics.and.returnValue(throwError(() => ({ status: 503 })));
+    component.toggleStatistics(player());
+    expect(component.statsErrorKey).toBe('adminPlayers.statsError');
+    component.clear();
+    expect(component.statsPlayer).toBeNull();
+    expect(component.statsErrorKey).toBe('');
   });
 
   it('waits for confirmation and cancellation leaves the role unchanged', () => {

@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnDestroy } from '@angular/core';
 import { finalize, Subscription, timeout } from 'rxjs';
 import { AuthenticationService } from '../../services/authethication.service';
-import { AdminPlayer, AdminPlayersService } from '../../services/admin-players.service';
+import { AdminPlayer, AdminPlayerStats, AdminPlayersService } from '../../services/admin-players.service';
 
 @Component({
   selector: 'app-admin-players',
@@ -25,6 +25,45 @@ export class AdminPlayersComponent implements OnDestroy {
   roleSuccessName = '';
   private roleRequest?: Subscription;
   private request?: Subscription;
+  statsPlayer: AdminPlayer | null = null;
+  stats: AdminPlayerStats | null = null;
+  statsLoading = false;
+  statsErrorKey = '';
+  private statsRequest?: Subscription;
+
+  toggleStatistics(player: AdminPlayer): void {
+    if (this.loading || this.changingRole) return;
+    if (this.statsPlayer?.id === player.id) {
+      this.resetStatistics();
+      return;
+    }
+    this.resetStatistics();
+    this.statsPlayer = player;
+    this.statsLoading = true;
+    this.statsRequest = this.service.statistics(player.id)
+      .pipe(timeout(10_000), finalize(() => {
+        if (this.statsPlayer?.id === player.id) this.statsLoading = false;
+      }))
+      .subscribe({
+        next: result => {
+          if (this.statsPlayer?.id === player.id && result.playerId === player.id) {
+            this.stats = result;
+          }
+        },
+        error: () => {
+          if (this.statsPlayer?.id === player.id) this.statsErrorKey = 'adminPlayers.statsError';
+        }
+      });
+  }
+
+  private resetStatistics(): void {
+    this.statsPlayer = null;
+    this.statsRequest?.unsubscribe();
+    this.statsRequest = undefined;
+    this.stats = null;
+    this.statsErrorKey = '';
+    this.statsLoading = false;
+  }
 
   constructor(private service: AdminPlayersService, private auth: AuthenticationService) {}
 
@@ -98,6 +137,7 @@ export class AdminPlayersComponent implements OnDestroy {
     this.roleErrorKey = '';
     this.roleSuccessName = '';
     this.request?.unsubscribe();
+    this.resetStatistics();
     this.name = '';
     this.searchedName = '';
     this.players = [];
@@ -111,6 +151,7 @@ export class AdminPlayersComponent implements OnDestroy {
   ngOnDestroy(): void {
     this.roleRequest?.unsubscribe();
     this.request?.unsubscribe();
+    this.resetStatistics();
   }
 
   statusKey(player: AdminPlayer): string {
@@ -131,6 +172,7 @@ export class AdminPlayersComponent implements OnDestroy {
     this.roleErrorKey = '';
     this.roleSuccessName = '';
     this.request?.unsubscribe();
+    this.resetStatistics();
     this.loading = true;
     this.errorKey = '';
     this.request = this.service.search(name, page)

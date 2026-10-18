@@ -54,6 +54,7 @@
             <th scope="col">{{ 'adminPlayers.player' | t }}</th>
             <th scope="col">{{ 'adminPlayers.role' | t }}</th>
             <th scope="col">{{ 'adminPlayers.status' | t }}</th>
+            <th scope="col">{{ 'adminPlayers.stats' | t }}</th>
             @if (canManageRoles) { <th scope="col">{{ 'adminPlayers.actions' | t }}</th> }
           </tr></thead>
           <tbody>
@@ -66,6 +67,14 @@
                 </td>
                 <td>{{ roleKey(player) | t }}</td>
                 <td><span class="status" [class.status--active]="player.enabled === true && player.notLocked === true">{{ statusKey(player) | t }}</span></td>
+                <td>
+                  <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
+                    [attr.aria-expanded]="statsPlayer?.id === player.id"
+                    [attr.aria-label]="'adminPlayers.statsFor' | t:{ name: player.nickname || player.fullName || player.username }"
+                    [disabled]="changingRole" (click)="toggleStatistics(player)">
+                    {{ (statsPlayer?.id === player.id ? 'adminPlayers.hideStats' : 'adminPlayers.viewStats') | t }}
+                  </button>
+                </td>
                 @if (canManageRoles) {
                   <td class="role-action">
                     @if (canChangeRole(player)) {
@@ -82,6 +91,34 @@
           </tbody>
         </table>
       </div>
+      @if (statsPlayer) {
+        <section class="player-stats-panel" [attr.aria-label]="'adminPlayers.statsTitle' | t:{ name: statsPlayer.username }">
+          <div class="stats-panel-heading">
+            <h2>{{ 'adminPlayers.statsTitle' | t:{ name: statsPlayer.username } }}</h2>
+            <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
+              (click)="toggleStatistics(statsPlayer)">{{ 'adminPlayers.hideStats' | t }}</button>
+          </div>
+          @if (statsLoading) {
+            <p role="status">{{ 'common.loading' | t }}</p>
+          } @else if (statsErrorKey) {
+            <p role="alert" class="state error">{{ statsErrorKey | t }}</p>
+          } @else if (stats) {
+            <div class="player-stats-grid">
+              <div><span>{{ 'adminPlayers.games' | t }}</span><strong>{{ stats.games }}</strong></div>
+              <div><span>{{ 'adminPlayers.wins' | t }}</span><strong>{{ stats.wins }}</strong></div>
+              <div><span>{{ 'adminPlayers.draws' | t }}</span><strong>{{ stats.draws }}</strong></div>
+              <div><span>{{ 'adminPlayers.losses' | t }}</span><strong>{{ stats.losses }}</strong></div>
+              <div><span>{{ 'adminPlayers.goals' | t }}</span><strong>{{ stats.goals }}</strong></div>
+              <div><span>{{ 'adminPlayers.assists' | t }}</span><strong>{{ stats.assists }}</strong></div>
+              <div><span>{{ 'adminPlayers.mvps' | t }}</span><strong>{{ stats.mvps }}</strong></div>
+              <div><span>{{ 'adminPlayers.cleanSheets' | t }}</span><strong>{{ stats.cleanSheets }}</strong></div>
+              <div><span>{{ 'adminPlayers.winRate' | t }}</span><strong>{{ stats.winRate }}%</strong></div>
+            </div>
+            <p class="stats-note">{{ 'adminPlayers.statsScope' | t }}</p>
+            @if (stats.games === 0) { <p role="status">{{ 'adminPlayers.noStats' | t }}</p> }
+          }
+        </section>
+      }
       <nav class="pagination" [attr.aria-label]="'adminPlayers.pagination' | t">
         <button type="button" class="secondary-action jynlo-action jynlo-action--neutral" [disabled]="changingRole || page === 0" (click)="changePage(-1)">{{ 'adminPlayers.previous' | t }}</button>
         <span>{{ 'adminPlayers.page' | t:{ page: page + 1 } }}</span>

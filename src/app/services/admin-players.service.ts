@@ -12,6 +12,19 @@ export interface AdminPlayer {
   enabled: boolean | null;
   notLocked: boolean | null;
 }
+export interface AdminPlayerStats {
+  playerId: number;
+  games: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  goals: number;
+  assists: number;
+  mvps: number;
+  cleanSheets: number;
+  winRate: number;
+}
+
 export interface AdminPlayerSearch {
   players: AdminPlayer[];
   page: number;
@@ -24,6 +37,10 @@ export class AdminPlayersService {
   changeRole(id: number, role: string, expectedRole: string): Observable<{ id: number; role: string }> {
     return this.http.put<{ id: number; role: string }>(
       environment.apiUrl + '/api/admin/players/' + id + '/role', { role, expectedRole });
+  }
+
+  statistics(id: number): Observable<AdminPlayerStats> {
+    return this.http.get<AdminPlayerStats>(environment.apiUrl + '/api/admin/players/' + id + '/stats');
   }
 
   search(name: string, page: number): Observable<AdminPlayerSearch> {
