@@ -2140,9 +2140,25 @@ export class CommunitiesComponent implements OnInit {
       next: community => {
         this.invites = this.invites.filter(item => item.id !== invite.id);
         this.communities = [community, ...this.communities.filter(item => item.id !== community.id)];
+        // Switching through an invitation must not reuse another community's archives.
+        this.communityOpenRequestVersion = (this.communityOpenRequestVersion || 0) + 1;
+        this.invalidateArchiveRequests();
+        this.competitionRequestVersion = (this.competitionRequestVersion || 0) + 1;
+        this.communitySessionsRequestVersion = (this.communitySessionsRequestVersion || 0) + 1;
         this.selected = community;
         this.activeTab = 'home';
+        this.resetHistoricalLinks();
+        this.archiveSummaries = [];
+        this.matchArchiveSummaries = [];
+        this.archiveOpen = undefined;
+        this.matchArchiveOpen = undefined;
+        this.archiveConfirmed = undefined;
+        this.matchArchiveConfirmed = undefined;
+        this.archivesError = '';
+        this.matchArchivesError = '';
         this.prepareRoundEntries(community);
+        this.loadArchivedStandings(community.id);
+        this.loadMatchArchives(community.id);
         this.loadCompetition(community);
         this.loadCommunitySessions(community);
       },
