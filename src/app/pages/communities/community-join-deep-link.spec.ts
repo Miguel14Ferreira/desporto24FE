@@ -20,7 +20,7 @@ describe('Community join request deep links', () => {
       get: getCommunity, pendingJoinRequests,
       listHistoricalStandings: () => of([]),
       listHistoricalMatches: () => of([]),
-      pendingHistoricalPlayerLinks: () => of([]),
+      myHistoricalClaims: () => of([]),
       historicalPlayerCandidates: () => of([])
     };
     (component as any).route = {

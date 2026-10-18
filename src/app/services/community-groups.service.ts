@@ -228,19 +228,19 @@ export class CommunityGroupsService {
     return this.http.get<HistoricalPlayerCandidate[]>(this.url + '/' + id + '/competition/historical-players');
   }
 
-  proposeHistoricalPlayerLink(id: number, playerId: number, targetUsername: string): Observable<HistoricalPlayerLink> {
+  claimHistoricalPlayer(id: number, playerId: number): Observable<HistoricalPlayerLink> {
     return this.http.post<HistoricalPlayerLink>(
-      this.url + '/' + id + '/competition/historical-player-links', { playerId, targetUsername });
+      this.url + '/' + id + '/competition/historical-player-links/claim', { playerId });
   }
 
-  pendingHistoricalPlayerLinks(id: number): Observable<HistoricalPlayerLink[]> {
-    return this.http.get<HistoricalPlayerLink[]>(this.url + '/' + id + '/competition/historical-player-links/me');
+  myHistoricalClaims(id: number): Observable<HistoricalPlayerLink[]> {
+    return this.http.get<HistoricalPlayerLink[]>(
+      this.url + '/' + id + '/competition/historical-player-links/my-claims');
   }
 
-  decideHistoricalPlayerLink(id: number, linkId: number, accept: boolean): Observable<HistoricalPlayerLink> {
-    return this.http.post<HistoricalPlayerLink>(
-      this.url + '/' + id + '/competition/historical-player-links/' + linkId +
-        (accept ? '/accept' : '/reject'), null);
+  releaseHistoricalClaim(id: number, linkId: number): Observable<void> {
+    return this.http.delete<void>(
+      this.url + '/' + id + '/competition/historical-player-links/my-claims/' + linkId);
   }
 
   importPreview(id: number, file: File): Observable<{

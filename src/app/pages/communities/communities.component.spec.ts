@@ -375,59 +375,76 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(component.displayedRankings).toHaveSize(2);
   });
 
-  it('lets managers propose a player link only to an existing community member', () => {
-    component.selected = { id: 7, myRole: 'OWNER',
-      members: [{ profileId: 17, username: 'TMF14', fullName: 'Miguel Ferreira' }] } as any;
+
+  it('allows an ordinary member to claim their own unlinked historical name only after confirmation', () => {
+    component.selected = { id: 7, myRole: 'MEMBER' } as any;
     component.historicalPlayers = [{ playerId: 5, historicalName: 'Ferreirinha',
       linkedUsername: null, linkStatus: 'UNLINKED' }];
     component.historicalPlayerId = 5;
-    component.historicalTargetUsername = 'outside';
-    const propose = jasmine.createSpy('proposeHistoricalPlayerLink').and.returnValue(of({
-      id: 60, playerId: 5, historicalName: 'Ferreirinha', targetUsername: 'TMF14', status: 'PENDING'
+    component.historicalClaimAcknowledged = false;
+    const claim = jasmine.createSpy('claimHistoricalPlayer').and.returnValue(of({
+      id: 60, playerId: 5, historicalName: 'Ferreirinha', targetUsername: 'TMF14', status: 'ACCEPTED'
     }));
-    (component as any).communityService = { proposeHistoricalPlayerLink: propose };
-    component.proposeHistoricalLink();
-    expect(propose).not.toHaveBeenCalled();
-
-    component.historicalTargetUsername = 'TMF14';
-    spyOn(component, 'loadHistoricalLinks');
-    component.proposeHistoricalLink();
-    expect(propose).toHaveBeenCalledOnceWith(7, 5, 'TMF14');
-    expect(component.historicalPlayerId).toBeNull();
-    expect(component.historicalTargetUsername).toBe('');
-    expect(component.historicalProposalMessage).not.toBe('');
-  });
-
-  it('requires an existing pending request to accept a historical identity, then refreshes rankings', () => {
-    component.selected = { id: 7, myRole: 'MEMBER' } as any;
-    const link = { id: 60, playerId: 5, historicalName: 'Ferreirinha',
-      targetUsername: 'TMF14', status: 'PENDING' as const };
-    component.historicalPendingLinks = [];
-    component.historicalDecisionId = null;
-    const decide = jasmine.createSpy('decideHistoricalPlayerLink').and.returnValue(of({ ...link, status: 'ACCEPTED' }));
-    (component as any).communityService = { decideHistoricalPlayerLink: decide };
-    component.decideHistoricalLink(link, true);
-    expect(decide).not.toHaveBeenCalled();
-    component.historicalPendingLinks = [link];
+    (component as any).communityService = { claimHistoricalPlayer: claim };
+    component.claimHistoricalName();
+    expect(claim).not.toHaveBeenCalled();
+    component.historicalClaimAcknowledged = true;
     spyOn(component, 'loadHistoricalLinks');
     spyOn(component, 'loadCompetition');
-    component.decideHistoricalLink(link, true);
-    expect(decide).toHaveBeenCalledOnceWith(7, 60, true);
-    expect(component.historicalPendingLinks).toEqual([]);
+    component.claimHistoricalName();
+    expect(claim).toHaveBeenCalledOnceWith(7, 5);
+    expect(component.historicalPlayerId).toBeNull();
+    expect(component.historicalClaimAcknowledged).toBeFalse();
     expect(component.loadCompetition).toHaveBeenCalled();
   });
 
-  it('discards historical identity responses after navigating to another community', () => {
+  it('does not allow linked or pending names to be claimed', () => {
+    component.selected = { id: 7, myRole: 'MEMBER' } as any;
+    component.historicalPlayers = [
+      { playerId: 5, historicalName: 'Ferreirinha', linkedUsername: null, linkStatus: 'ACCEPTED' },
+      { playerId: 6, historicalName: 'Outro', linkedUsername: null, linkStatus: 'PENDING' }
+    ];
+    component.historicalClaimAcknowledged = true;
+    const claim = jasmine.createSpy('claimHistoricalPlayer');
+    (component as any).communityService = { claimHistoricalPlayer: claim };
+    for (const id of [5, 6]) {
+      component.historicalPlayerId = id;
+      component.claimHistoricalName();
+    }
+    expect(claim).not.toHaveBeenCalled();
+  });
+
+  it('allows an owner to unlink only a claim already loaded as their own', () => {
+    component.selected = { id: 7, myRole: 'MEMBER' } as any;
+    const item = { id: 60, playerId: 5, historicalName: 'Ferreirinha',
+      targetUsername: 'TMF14', status: 'ACCEPTED' as const };
+    const release = jasmine.createSpy('releaseHistoricalClaim').and.returnValue(of(undefined));
+    (component as any).communityService = { releaseHistoricalClaim: release };
+    component.historicalClaims = [];
+    component.historicalReleaseId = null;
+    component.releaseHistoricalName(item);
+    expect(release).not.toHaveBeenCalled();
+    component.historicalClaims = [item];
+    spyOn(component, 'loadHistoricalLinks');
+    spyOn(component, 'loadCompetition');
+    component.releaseHistoricalName(item);
+    expect(release).toHaveBeenCalledOnceWith(7, 60);
+    expect(component.loadCompetition).toHaveBeenCalled();
+  });
+
+  it('does not show historical claims from another community after navigation', () => {
     const pending = new Subject<any[]>();
     component.selected = { id: 7, myRole: 'MEMBER' } as any;
-    component.historicalPendingLinks = [];
-    (component.canManage as jasmine.Spy).and.returnValue(false);
-    (component as any).communityService = { pendingHistoricalPlayerLinks: () => pending.asObservable() };
+    component.historicalClaims = [];
+    (component as any).communityService = {
+      myHistoricalClaims: () => pending.asObservable(),
+      historicalPlayerCandidates: () => of([])
+    };
     component.loadHistoricalLinks(7);
     component.selected = { id: 8, myRole: 'MEMBER' } as any;
     pending.next([{ id: 60, playerId: 5, historicalName: 'Ferreirinha',
-      targetUsername: 'TMF14', status: 'PENDING' }]);
-    expect(component.historicalPendingLinks).toEqual([]);
+      targetUsername: 'TMF14', status: 'ACCEPTED' }]);
+    expect(component.historicalClaims).toEqual([]);
   });
 
   it('allows joining an upcoming open community session', () => {
