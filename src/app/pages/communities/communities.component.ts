@@ -1594,6 +1594,9 @@ export class CommunitiesComponent implements OnInit {
           if (this.importRevision !== revision || this.selected?.id !== communityId
               || this.importFile !== file) return;
           this.importPreview = preview;
+          // Selecting the inspected sheet increments the import revision.
+          // Finish the successful preview before that intentional change.
+          this.importPreviewLoading = false;
           const sheet = preview.sheets.find(item => item.structure === 'TABULAR') || preview.sheets[0];
           this.selectImportSheet(sheet?.name || '');
         },
