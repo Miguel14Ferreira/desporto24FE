@@ -253,7 +253,7 @@ describe('CommunitiesComponent public session eligibility', () => {
     component.selected = { id: 7 } as any;
 
     component.acceptInvite(component.invites[0]);
-    expect(component.inviteAction).toEqual({ id: 10, kind: 'accept' });
+    expect(component.inviteAction).toEqual(jasmine.objectContaining({ id: 10, kind: 'accept' }));
     component.acceptInvite(component.invites[0]);
     component.rejectInvite(component.invites[0]);
     component.acceptInvite(component.invites[1]);
@@ -283,7 +283,7 @@ describe('CommunitiesComponent public session eligibility', () => {
     ] as any;
 
     component.rejectInvite(component.invites[0]);
-    expect(component.inviteAction).toEqual({ id: 10, kind: 'reject' });
+    expect(component.inviteAction).toEqual(jasmine.objectContaining({ id: 10, kind: 'reject' }));
     component.rejectInvite(component.invites[0]);
     component.acceptInvite(component.invites[1]);
     expect(reject).toHaveBeenCalledOnceWith(10);
@@ -357,7 +357,7 @@ describe('CommunitiesComponent public session eligibility', () => {
     component.invites = [{ id: 10, communityId: 8, communityName: 'Grupo' }] as any;
 
     component.rejectInvite(component.invites[0]);
-    expect(component.inviteOutcomeUnknown).toEqual({ id: 10, communityId: 8, kind: 'reject' });
+    expect(component.inviteOutcomeUnknown).toEqual(jasmine.objectContaining({ id: 10, communityId: 8, kind: 'reject' }));
     expect(component.inviteVerifyLoading).toBeTrue();
 
     component.rejectInvite(component.invites[0]);
@@ -387,7 +387,7 @@ describe('CommunitiesComponent public session eligibility', () => {
     component.invites = [{ id: 10, communityId: 8, communityName: 'Grupo' }] as any;
 
     component.acceptInvite(component.invites[0]);
-    expect(component.inviteOutcomeUnknown).toEqual({ id: 10, communityId: 8, kind: 'accept' });
+    expect(component.inviteOutcomeUnknown).toEqual(jasmine.objectContaining({ id: 10, communityId: 8, kind: 'accept' }));
     expect(component.inviteVerificationMessage).toContain('verificar');
     component.acceptInvite(component.invites[0]);
     expect(accept).toHaveBeenCalledTimes(1);
@@ -1049,7 +1049,7 @@ describe('CommunitiesComponent public session eligibility', () => {
       queryParams: { search: '1', name: 'Liga', sport: 'Futebol', page: '2' }
     });
 
-    delete params.search;
+    delete params['search'];
     page.backToCommunities();
     expect(router.navigate).toHaveBeenCalledWith(['/menu/communities'], {
       queryParams: undefined

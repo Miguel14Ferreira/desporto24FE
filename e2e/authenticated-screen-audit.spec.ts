@@ -370,6 +370,11 @@ test('desktop resolves an ambiguous accepted invite via membership verification 
     await page.route('**/api/communities/19/presentation', route => route.fulfill({
       status: 200, contentType: 'application/json', body: JSON.stringify(group)
     }));
+    // Confirmed members load their full community through GET /19, not the
+    // public presentation endpoint. Mock both to test the actual route switch.
+    await page.route('**/api/communities/19', route => route.fulfill({
+      status: 200, contentType: 'application/json', body: JSON.stringify(group)
+    }));
 
     await page.goto('/menu/communities?view=mine');
     await expect(page.locator('.invites-card .invite-row')).toHaveCount(1);
