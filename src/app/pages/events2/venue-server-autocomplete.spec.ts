@@ -70,9 +70,10 @@ describe('Create session venue server autocomplete', () => {
   }));
 
   it('offers a deliberate fallback when old backend routes /suggest to /{id} and fails', () => {
+    // RxJS retry re-subscribes to the same observable; it does not call
+    // venueService.suggest a second time. The next spy return is the manual retry.
     venues.suggest.and.returnValues(
       throwError(() => ({ status: 500 })),
-      throwError(() => ({ status: 500 })), // component retries once
       of(page([venue(2, 'Pavilhão Municipal')]))
     );
     component.sport = 'Padel';
