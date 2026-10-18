@@ -1297,6 +1297,8 @@ export class CommunitiesComponent implements OnInit {
       // Season selectors on the rankings, matches and rounds screens share
       // this state with Excel imports: an old import plan is no longer valid.
       this.invalidateImportPlan();
+      this.roundDeleteConfirmId = undefined;
+      this.closeSeasonConfirming = false;
     }
     this.selectedSeasonId = nextSeasonId;
     this.loadCompetition(this.selected, this.selectedSeasonId);
@@ -1355,7 +1357,8 @@ export class CommunitiesComponent implements OnInit {
   }
 
   requestCloseSeason(): void {
-    if (this.activeSeason()) {
+    if (this.selected && this.canManage() && !this.seasonSaving && !this.competitionLoading
+        && this.activeSeason()) {
       this.closeSeasonConfirming = true;
     }
   }
@@ -1366,7 +1369,8 @@ export class CommunitiesComponent implements OnInit {
 
   closeActiveSeason(): void {
     const active = this.activeSeason();
-    if (!this.selected || !active || !this.canManage() || this.seasonSaving) {
+    if (!this.selected || !active || !this.canManage() || this.seasonSaving
+        || !this.closeSeasonConfirming || this.competitionLoading) {
       return;
     }
 
@@ -2194,6 +2198,8 @@ export class CommunitiesComponent implements OnInit {
   }
 
   askDeleteRound(round: CommunityRound): void {
+    if (!this.selected || !this.canManage() || this.roundSaving || this.competitionLoading
+        || !this.competition?.rounds.some(item => item.id === round.id)) return;
     this.roundDeleteConfirmId = round.id;
   }
 
@@ -2202,7 +2208,9 @@ export class CommunitiesComponent implements OnInit {
   }
 
   deleteRound(round: CommunityRound): void {
-    if (!this.selected || !this.canManage() || this.roundSaving) {
+    if (!this.selected || !this.canManage() || this.roundSaving || this.competitionLoading
+        || this.roundDeleteConfirmId !== round.id
+        || !this.competition?.rounds.some(item => item.id === round.id)) {
       return;
     }
 

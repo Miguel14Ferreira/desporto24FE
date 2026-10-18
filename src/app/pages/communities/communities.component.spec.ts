@@ -855,6 +855,68 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(component.importFinalPlan).toBe(existingPlan);
   });
 
+  it('requires the selected jornada to be explicitly confirmed before deletion', () => {
+    const round = { id: 40, name: 'Jornada 1', playedAt: '2026-10-01T10:00:00Z' } as any;
+    component.selected = { id: 7 } as any;
+    component.selectedSeasonId = 10;
+    component.competition = { rounds: [round] } as any;
+    const remove = jasmine.createSpy('deleteRound').and.returnValue(of(void 0));
+    (component as any).communityService = { deleteRound: remove };
+    spyOn(component, 'loadCompetition');
+    component.deleteRound(round);
+    expect(remove).not.toHaveBeenCalled();
+    component.askDeleteRound(round);
+    expect(component.roundDeleteConfirmId).toBe(40);
+    component.cancelDeleteRound();
+    component.deleteRound(round);
+    expect(remove).not.toHaveBeenCalled();
+    component.askDeleteRound(round);
+    component.deleteRound(round);
+    expect(remove).toHaveBeenCalledOnceWith(7, 40);
+    expect(component.roundDeleteConfirmId).toBeUndefined();
+  });
+
+  it('does not reuse a jornada or season confirmation after navigating to another season', () => {
+    const round = { id: 40, name: 'Jornada 1' } as any;
+    component.selected = { id: 7 } as any;
+    component.selectedSeasonId = 10;
+    component.competition = { rounds: [round] } as any;
+    component.activeCommunitySeason = { id: 10, name: 'Época 1' } as any;
+    const remove = jasmine.createSpy('deleteRound');
+    const close = jasmine.createSpy('closeSeason');
+    (component as any).communityService = { deleteRound: remove, closeSeason: close };
+    spyOn(component, 'loadCompetition');
+    component.askDeleteRound(round);
+    component.requestCloseSeason();
+    expect(component.closeSeasonConfirming).toBeTrue();
+    component.selectSeason('11');
+    expect(component.roundDeleteConfirmId).toBeUndefined();
+    expect(component.closeSeasonConfirming).toBeFalse();
+    component.deleteRound(round);
+    component.closeActiveSeason();
+    expect(remove).not.toHaveBeenCalled();
+    expect(close).not.toHaveBeenCalled();
+  });
+
+  it('requires explicit acknowledgement before closing the active season', () => {
+    const active = { id: 10, name: '2026', active: true } as any;
+    component.selected = { id: 7 } as any;
+    component.activeCommunitySeason = active;
+    const close = jasmine.createSpy('closeSeason').and.returnValue(of({ ...active, active: false }));
+    (component as any).communityService = { closeSeason: close };
+    spyOn(component, 'loadCompetition');
+    component.closeActiveSeason();
+    expect(close).not.toHaveBeenCalled();
+    component.requestCloseSeason();
+    component.cancelCloseSeason();
+    component.closeActiveSeason();
+    expect(close).not.toHaveBeenCalled();
+    component.requestCloseSeason();
+    component.closeActiveSeason();
+    expect(close).toHaveBeenCalledOnceWith(7, 10);
+    expect(component.closeSeasonConfirming).toBeFalse();
+  });
+
   it('ignores older season responses and keeps the latest competition loading state', () => {
     const earlier = new Subject<any>();
     const latest = new Subject<any>();
