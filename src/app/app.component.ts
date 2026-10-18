@@ -15,7 +15,7 @@ import { registrationSessionReturnUrl, registrationCommunityReturnUrl, takeRegis
     standalone: false
 })
 export class AppComponent implements OnInit, OnDestroy {
-  title = 'desporto24';
+  title = 'Jynlo';
 
   constructor(
     private router: Router,

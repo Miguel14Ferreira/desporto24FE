@@ -1410,7 +1410,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     return [
       'BEGIN:VCALENDAR',
       'VERSION:2.0',
-      'PRODID:-//Desporto24//Session Calendar//PT',
+      'PRODID:-//Jynlo//Session Calendar//PT',
       'CALSCALE:GREGORIAN',
       'BEGIN:VEVENT',
       `UID:${uid}`,
@@ -1439,14 +1439,14 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     const anchor = document.createElement('a');
 
     anchor.href = url;
-    anchor.download = `desporto24-session-${this.session.id}.ics`;
+    anchor.download = `jynlo-session-${this.session.id}.ics`;
     anchor.click();
 
     URL.revokeObjectURL(url);
   }
 
   private calendarTitle(): string {
-    return `Desporto24 — ${this.session?.sport ?? 'Sessão'}`;
+    return `Jynlo — ${this.session?.sport ?? 'Sessão'}`;
   }
 
   private calendarDescription(): string {
@@ -1454,7 +1454,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
       ? ` Criada por ${this.session.creatorUsername}.`
       : '';
 
-    return `Sessão de ${this.session?.sport ?? 'desporto'} no Desporto24.${creator}`;
+    return `Sessão de ${this.session?.sport ?? 'desporto'} na Jynlo.${creator}`;
   }
 
   private calendarLocation(): string {

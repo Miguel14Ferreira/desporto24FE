@@ -33,15 +33,16 @@ describe('NotFoundComponent', () => {
   it('should send anonymous users to home', () => {
     expect(component).toBeTruthy();
     expect(component.destination).toBe('/home');
+    expect(component.actionKey).toBe('notFound.home');
   });
 
-  it('should send authenticated users to dashboard', () => {
+  it('should send authenticated users back to the feed', () => {
     auth.hasValidToken.and.returnValue(true);
 
     const authenticated = TestBed.createComponent(NotFoundComponent);
     authenticated.detectChanges();
 
-    expect(authenticated.componentInstance.destination).toBe('/menu');
-    expect(authenticated.componentInstance.actionLabel).toContain('dashboard');
+    expect(authenticated.componentInstance.destination).toBe('/menu/feed');
+    expect(authenticated.componentInstance.actionKey).toBe('notFound.feed');
   });
 });

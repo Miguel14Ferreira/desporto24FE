@@ -548,7 +548,10 @@ describe('SessionDetailsComponent', () => {
     const ics = component.calendarIcsContent();
 
     expect(ics).toContain('DTSTART:20261001T180000Z');
-    expect(ics).toContain('SUMMARY:Desporto24 — Padel');
+    expect(ics).toContain('SUMMARY:Jynlo — Padel');
+    // Keep the legacy event UID stable to avoid duplicate calendar entries.
+    expect(ics).toContain(`UID:session-${session.id}@desporto24`);
+    expect(ics).toContain('PRODID:-//Jynlo//Session Calendar//PT');
     expect(ics).toContain('LOCATION:Rua do Campo\\, 10');
   });
 
