@@ -445,6 +445,41 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(plan).toHaveBeenCalled();
   });
 
+  it('sends optional source competition and round identifiers to both plan and confirmation', () => {
+    component.selected = { id: 7 } as any;
+    component.importFile = new File(['data'], 'single-round.csv');
+    component.importSheetName = 'Dados';
+    component.selectedSeasonId = 19;
+    component.importDefaultYear = 2026;
+    component.importSourceCompetition = ' Liga de Verão ';
+    component.importSourceRound = ' Jornada 2 ';
+    component.importMappings = [
+      { columnIndex: 0, field: 'PLAYER', header: 'Jogador', confidence: 1 },
+      { columnIndex: 1, field: 'DATE', header: 'Data', confidence: 1 }
+    ];
+    const plan = jasmine.createSpy('finalImportPlan').and.returnValue(of({
+      invalidDates: 0, roundsNeedingYear: 0, rounds: []
+    }));
+    const confirm = jasmine.createSpy('confirmImportRounds').and.returnValue(of({
+      createdRounds: 1, skippedDuplicateRounds: 0, createdEntries: 2
+    }));
+    (component as any).communityService = { finalImportPlan: plan, confirmImportRounds: confirm };
+    spyOn(component, 'loadCompetition');
+    component.buildImportFinalPlan();
+    expect(plan).toHaveBeenCalledWith(7, component.importFile, jasmine.anything(), {
+      seasonId: 19, defaultYear: 2026,
+      sourceCompetition: 'Liga de Verão', sourceRound: 'Jornada 2'
+    });
+    component.confirmHistoricalImport();
+    expect(confirm).toHaveBeenCalledWith(7, component.importFile, jasmine.anything(), {
+      seasonId: 19, defaultYear: 2026,
+      sourceCompetition: 'Liga de Verão', sourceRound: 'Jornada 2'
+    });
+    component.importSourceRound = 'Jornada 3';
+    component.invalidateImportPlan();
+    expect(component.importFinalPlan).toBeUndefined();
+  });
+
   it('requires review and a title before writing final standings', () => {
     component.selected = { id: 7 } as any;
     component.importMode = 'STANDINGS';

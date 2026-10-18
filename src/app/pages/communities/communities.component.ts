@@ -281,6 +281,8 @@ export class CommunitiesComponent implements OnInit {
   importNormalized?: { acceptedRows: number; skippedRows: number; rows: any[]; skipped: any[] };
   importMappingLoading = false;
   importDefaultYear: number | null = new Date().getFullYear();
+  importSourceCompetition = '';
+  importSourceRound = '';
   importPlanLoading = false;
   importFinalPlan?: any;
   importConfirming = false;
@@ -1407,6 +1409,8 @@ export class CommunitiesComponent implements OnInit {
     this.resetArchiveDraft();
     this.importPointsAcknowledged = false;
     this.importSheetName = '';
+    this.importSourceCompetition = '';
+    this.importSourceRound = '';
     this.importMappings = [];
     this.importValidation = undefined;
     this.importNormalized = undefined;
@@ -1919,7 +1923,9 @@ export class CommunitiesComponent implements OnInit {
     };
     const context = {
       seasonId: this.selectedSeasonId,
-      defaultYear: this.importDefaultYear || null
+      defaultYear: this.importDefaultYear || null,
+      sourceCompetition: this.importSourceCompetition?.trim() || null,
+      sourceRound: this.importSourceRound?.trim() || null
     };
 
     this.importPlanLoading = true;
@@ -1946,7 +1952,12 @@ export class CommunitiesComponent implements OnInit {
       return;
     }
     const mapping = { sheetName: this.importSheetName, columns: this.importMappings.map(item => ({ columnIndex: item.columnIndex, field: item.field })) };
-    const context = { seasonId: this.selectedSeasonId, defaultYear: this.importDefaultYear || null };
+    const context = {
+      seasonId: this.selectedSeasonId,
+      defaultYear: this.importDefaultYear || null,
+      sourceCompetition: this.importSourceCompetition?.trim() || null,
+      sourceRound: this.importSourceRound?.trim() || null
+    };
     this.importConfirming = true;
     this.importFileError = '';
     this.importResult = undefined;

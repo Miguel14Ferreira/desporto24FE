@@ -1563,6 +1563,19 @@
                                      <small>{{ 'communities.import.explicitYearRequired' | t }}</small>
                                    }
                                 </label>
+                                <label>
+                                  <span>{{ 'communities.import.sourceCompetition' | t }}</span>
+                                  <input type="text" maxlength="60" [(ngModel)]="importSourceCompetition"
+                                    (ngModelChange)="invalidateImportPlan()"
+                                    [placeholder]="'communities.import.sourceCompetitionPlaceholder' | t">
+                                </label>
+                                <label>
+                                  <span>{{ 'communities.import.sourceRound' | t }}</span>
+                                  <input type="text" maxlength="40" [(ngModel)]="importSourceRound"
+                                    (ngModelChange)="invalidateImportPlan()"
+                                    [placeholder]="'communities.import.sourceRoundPlaceholder' | t">
+                                  <small>{{ 'communities.import.sourceRoundHelp' | t }}</small>
+                                </label>
                               </div>
 
                               <button type="button" class="primary-action import-continue jynlo-action jynlo-action--primary"
