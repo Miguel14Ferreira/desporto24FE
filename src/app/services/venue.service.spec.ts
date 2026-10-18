@@ -127,6 +127,39 @@ describe('VenueService search HTTP contract', () => {
     request.flush([]);
   });
 
+  it('shows only venues inside the requested radius, ordered by actual distance', () => {
+    let result: any[] = [];
+    service.search(undefined, 'Padel', 38.72, -9.14, 25)
+      .subscribe(venues => result = venues);
+    const request = http.expectOne(req => req.url === url);
+    request.flush([
+      { id: 3, name: 'Fora do raio', latitude: 39.25, longitude: -9.14 },
+      { id: 2, name: 'Mais longe', latitude: 38.81, longitude: -9.14 },
+      { id: 4, name: 'Sem coordenadas', latitude: null, longitude: null },
+      { id: 1, name: 'Mais perto', latitude: 38.721, longitude: -9.14 },
+      { id: 5, name: 'Coordenadas inválidas', latitude: 900, longitude: -9.14 }
+    ]);
+    expect(result.map(venue => venue.id)).toEqual([1, 2]);
+  });
+
+  it('updates the radius correctly and never filters ordinary city searches by distance', () => {
+    let insideTen: any[] = [];
+    service.search(undefined, undefined, 38.72, -9.14, 10)
+      .subscribe(venues => insideTen = venues);
+    http.expectOne(req => req.url === url).flush([
+      { id: 1, name: 'Próximo', latitude: 38.73, longitude: -9.14 },
+      { id: 2, name: 'A 15 km', latitude: 38.855, longitude: -9.14 }
+    ]);
+    expect(insideTen.map(venue => venue.id)).toEqual([1]);
+
+    let allCity: any[] = [];
+    service.search('Lisboa', 'Padel').subscribe(venues => allCity = venues);
+    http.expectOne(req => req.url === url).flush([
+      { id: 3, name: 'Sem ponto no mapa', latitude: null, longitude: null }
+    ]);
+    expect(allCity.map(venue => venue.id)).toEqual([3]);
+  });
+
   it('serializes the coordinates and radius for nearby venue search', () => {
     service.search(undefined, 'Padel', 38.72, -9.14, 25).subscribe();
     const request = http.expectOne(req => req.url === url);

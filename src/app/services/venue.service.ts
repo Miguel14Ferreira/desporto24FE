@@ -82,7 +82,35 @@ export class VenueService {
       params = params.set('radiusKm', String(radiusKm));
     }
 
-    return this.http.get<Venue[]>(this.baseUrl, { params });
+    return this.http.get<Venue[]>(this.baseUrl, { params }).pipe(
+      map(venues => {
+        // The currently deployed GET /api/venues accepts only city/sport.
+        // It ignores latitude/longitude/radiusKm. Until a scalable spatial
+        // endpoint exists, apply the geographic filter before presenting
+        // any venue as "Perto de mim" to avoid misleading distance results.
+        if (latitude === undefined || longitude === undefined || radiusKm === undefined
+            || !Number.isFinite(latitude) || !Number.isFinite(longitude)
+            || Math.abs(latitude) > 90 || Math.abs(longitude) > 180
+            || !Number.isFinite(radiusKm) || radiusKm <= 0) {
+          return venues;
+        }
+
+        return venues
+          .filter(venue => venue.latitude !== null && venue.longitude !== null
+            && Number.isFinite(venue.latitude) && Number.isFinite(venue.longitude)
+            && Math.abs(venue.latitude) <= 90 && Math.abs(venue.longitude) <= 180)
+          .map(venue => ({
+            venue,
+            distanceKm: this.distanceKm(
+              latitude, longitude, venue.latitude!, venue.longitude!)
+          }))
+          .filter(item => item.distanceKm <= radiusKm)
+          .sort((a, b) => a.distanceKm - b.distanceKm
+            || a.venue.name.localeCompare(b.venue.name, 'pt')
+            || a.venue.id - b.venue.id)
+          .map(item => item.venue);
+      })
+    );
   }
 
   /**
@@ -136,6 +164,16 @@ export class VenueService {
         hasMore: sorted.length > offset + 40
       };
     }));
+  }
+
+  private distanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    const radians = Math.PI / 180;
+    const deltaLat = (lat2 - lat1) * radians;
+    const deltaLon = (lon2 - lon1) * radians;
+    const a = Math.sin(deltaLat / 2) ** 2
+      + Math.cos(lat1 * radians) * Math.cos(lat2 * radians)
+      * Math.sin(deltaLon / 2) ** 2;
+    return 2 * 6371.0088 * Math.asin(Math.min(1, Math.sqrt(a)));
   }
 
   private normalizeVenueText(value?: string): string {
