@@ -23,6 +23,17 @@ describe('Community discovery entry point', () => {
     }));
     scrollIntoView = jasmine.createSpy('scrollIntoView');
     (component as any).communityService = { search };
+    // Search updates the current URL; these prototype-only tests need a
+    // router fixture even though they exercise search results, not routing.
+    (component as any).route = {
+      snapshot: {
+        paramMap: { get: () => null },
+        queryParamMap: { get: () => null }
+      }
+    };
+    (component as any).router = {
+      navigate: jasmine.createSpy('navigate').and.returnValue(Promise.resolve(true))
+    };
     component.communitySearchSection = {
       nativeElement: { scrollIntoView }
     } as any;
