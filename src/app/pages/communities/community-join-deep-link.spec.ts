@@ -19,7 +19,9 @@ describe('Community join request deep links', () => {
     (component as any).communityService = {
       get: getCommunity, pendingJoinRequests,
       listHistoricalStandings: () => of([]),
-      listHistoricalMatches: () => of([])
+      listHistoricalMatches: () => of([]),
+      pendingHistoricalPlayerLinks: () => of([]),
+      historicalPlayerCandidates: () => of([])
     };
     (component as any).route = {
       snapshot: { queryParamMap: convertToParamMap({ tab: 'members' }) }
