@@ -2147,6 +2147,9 @@ export class CommunitiesComponent implements OnInit {
         this.communitySessionsRequestVersion = (this.communitySessionsRequestVersion || 0) + 1;
         this.selected = community;
         this.activeTab = 'home';
+        this.selectedSeasonId = null;
+        this.competition = undefined;
+        this.communitySessions = [];
         this.resetHistoricalLinks();
         this.archiveSummaries = [];
         this.matchArchiveSummaries = [];
