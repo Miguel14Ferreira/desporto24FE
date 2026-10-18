@@ -1641,7 +1641,11 @@
                     </div>
                   </div>
 
-                  <div class="ranking-table-wrap">
+                  <label class="season-filter">
+                     <input type="checkbox" [(ngModel)]="showAllStandings">
+                     <span>{{ 'communities.identity.showAll' | t }}</span>
+                   </label>
+                   <div class="ranking-table-wrap">
                     <table class="ranking-table">
                       <thead>
                         <tr>
@@ -1655,13 +1659,17 @@
                         </tr>
                       </thead>
                       <tbody>
-                        @for (row of competition?.standings || []; track row.profileId) {
-                          <tr [class.podium]="row.position <= 3">
-                            <td><strong>{{ row.position }}</strong></td>
+                        @for (row of displayedRankings; track $index) {
+                          <tr [class.podium]="$index < 3">
+                            <td><strong>{{ $index + 1 }}</strong></td>
                             <td>
                               <div class="ranking-player">
                                 <strong>{{ row.fullName || row.username }}</strong>
-                                <span>@{{ row.username }}</span>
+                                @if (row.username) {
+                                   <span>@{{ row.username }}</span>
+                                 } @else {
+                                   <span>{{ 'communities.identity.unlinked' | t }}</span>
+                                 }
                               </div>
                             </td>
                             <td>{{ row.games }}</td>
@@ -1675,7 +1683,7 @@
                     </table>
                   </div>
 
-                  @if (!(competition?.standings?.length)) {
+                  @if (!displayedRankings.length) {
                     <div class="module-empty compact">
                       <h3>{{ 'communities.noRanking' | t }}</h3>
                       <p>{{ 'communities.noRankingText' | t }}</p>
@@ -1777,7 +1785,7 @@
                     </div>
 
                     <div class="points-chart">
-                      @for (row of (competition?.standings || []).slice(0, 10); track row.profileId) {
+                      @for (row of rankingParticipants.slice(0, 10); track row.profileId) {
                         <div class="points-chart-row">
                           <div class="points-chart-label">
                             <strong>{{ row.fullName || row.username }}</strong>
@@ -1804,8 +1812,10 @@
                         <span>{{ 'communities.playerA' | t }}</span>
                         <select [(ngModel)]="compareUsernameA">
                           <option value="">{{ 'communities.selectPlayer' | t }}</option>
-                          @for (row of competition?.standings || []; track row.profileId) {
-                            <option [value]="row.username">{{ row.fullName || row.username }}</option>
+                          @for (row of rankingParticipants; track $index) {
+                            @if (row.username) {
+                               <option [value]="row.username">{{ row.fullName || row.username }}</option>
+                             }
                           }
                         </select>
                       </label>
@@ -1814,8 +1824,10 @@
                         <span>{{ 'communities.playerB' | t }}</span>
                         <select [(ngModel)]="compareUsernameB">
                           <option value="">{{ 'communities.selectPlayer' | t }}</option>
-                          @for (row of competition?.standings || []; track row.profileId) {
-                            <option [value]="row.username">{{ row.fullName || row.username }}</option>
+                          @for (row of rankingParticipants; track $index) {
+                            @if (row.username) {
+                               <option [value]="row.username">{{ row.fullName || row.username }}</option>
+                             }
                           }
                         </select>
                       </label>
@@ -1855,12 +1867,16 @@
                         </tr>
                       </thead>
                       <tbody>
-                        @for (row of competition?.standings || []; track row.profileId) {
+                        @for (row of rankingParticipants; track $index) {
                           <tr>
                             <td>
                               <div class="ranking-player">
                                 <strong>{{ row.fullName || row.username }}</strong>
-                                <span>@{{ row.username }}</span>
+                                @if (row.username) {
+                                     <span>@{{ row.username }}</span>
+                                   } @else {
+                                     <span>{{ 'communities.identity.unlinked' | t }}</span>
+                                   }
                               </div>
                             </td>
                             <td>{{ row.games }}</td>
@@ -1882,6 +1898,87 @@
 
             @if (!competitionLoading && activeTab === 'members') {
               <section class="community-tab-panel">
+
+                <section class="management-block">
+                  <div class="section-heading">
+                    <div>
+                      <span class="section-kicker">{{ 'communities.identity.kicker' | t }}</span>
+                      <h3>{{ 'communities.identity.title' | t }}</h3>
+                    </div>
+                  </div>
+                  <p>{{ 'communities.identity.description' | t }}</p>
+                  @if (historicalPendingLoading) {
+                    <p role="status">{{ 'communities.identity.loading' | t }}</p>
+                  }
+                  @if (historicalPendingError) {
+                    <p class="import-error" role="alert">{{ historicalPendingError }}</p>
+                  }
+                  @for (link of historicalPendingLinks; track link.id) {
+                    <div class="invite-profile-result">
+                      <div class="ranking-player">
+                        <strong>{{ link.historicalName }} → @{{ link.targetUsername }}</strong>
+                        <small>{{ 'communities.identity.confirmHint' | t }}</small>
+                      </div>
+                      <div class="row-actions">
+                        <button type="button"
+                          class="primary-action small jynlo-action jynlo-action--primary jynlo-action--compact"
+                          [disabled]="historicalDecisionId !== null"
+                          (click)="decideHistoricalLink(link, true)">
+                          {{ 'communities.identity.accept' | t }}
+                        </button>
+                        <button type="button"
+                          class="secondary-action small jynlo-action jynlo-action--neutral jynlo-action--compact"
+                          [disabled]="historicalDecisionId !== null"
+                          (click)="decideHistoricalLink(link, false)">
+                          {{ 'communities.identity.reject' | t }}
+                        </button>
+                      </div>
+                    </div>
+                  }
+                  @if (canManage()) {
+                    <p>{{ 'communities.identity.managerHint' | t }}</p>
+                    @if (historicalPlayersLoading) {
+                      <p role="status">{{ 'communities.identity.loading' | t }}</p>
+                    }
+                    @if (historicalPlayersError) {
+                      <p class="import-error" role="alert">{{ historicalPlayersError }}</p>
+                    }
+                    @if (historicalProposalMessage) {
+                      <p class="import-success" role="status">{{ historicalProposalMessage }}</p>
+                    }
+                    @if (!historicalPlayersLoading && availableHistoricalPlayers.length === 0) {
+                      <p>{{ 'communities.identity.none' | t }}</p>
+                    }
+                    @if (availableHistoricalPlayers.length > 0) {
+                      <div class="import-context">
+                        <label>
+                          <span>{{ 'communities.identity.historical' | t }}</span>
+                          <select [(ngModel)]="historicalPlayerId">
+                            <option [ngValue]="null">{{ 'communities.identity.selectHistorical' | t }}</option>
+                            @for (player of availableHistoricalPlayers; track player.playerId) {
+                              <option [ngValue]="player.playerId">{{ player.historicalName }}</option>
+                            }
+                          </select>
+                        </label>
+                        <label>
+                          <span>{{ 'communities.identity.account' | t }}</span>
+                          <select [(ngModel)]="historicalTargetUsername">
+                            <option value="">{{ 'communities.identity.selectAccount' | t }}</option>
+                            @for (member of selected.members; track member.profileId) {
+                              <option [value]="member.username">{{ member.fullName || member.username }} (@{{ member.username }})</option>
+                            }
+                          </select>
+                        </label>
+                      </div>
+                      <button type="button"
+                        class="primary-action small jynlo-action jynlo-action--primary jynlo-action--compact"
+                        [disabled]="historicalProposalSaving || historicalPlayerId === null || !historicalTargetUsername"
+                        (click)="proposeHistoricalLink()">
+                        {{ historicalProposalSaving ? ('communities.identity.sending' | t) : ('communities.identity.propose' | t) }}
+                      </button>
+                    }
+                  }
+                </section>
                 @if (canManage()) {
                   <section class="management-block first-block">
                     <div class="section-heading">
