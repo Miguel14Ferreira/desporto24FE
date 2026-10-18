@@ -46,6 +46,7 @@ export class CommunityTournamentsComponent implements OnChanges {
   teamNameDraft = '';
   teamPlayerDraft: Record<number, number | null> = {};
   pendingTeamPlayerRemoval: { teamId: number; profileId: number } | null = null;
+  pendingTeamDeletionId: number | null = null;
   teams: TournamentTeam[] = [];
   teamsLoadError = false;
   teamMatches: TournamentTeamMatch[] = [];
@@ -389,6 +390,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.confirmAction = null;
     this.pendingParticipantRemovalId = null;
     this.pendingTeamPlayerRemoval = null;
+    this.pendingTeamDeletionId = null;
     this.feedback = '';
     this.error = '';
     this.participantsPage = 0;
@@ -822,10 +824,25 @@ export class CommunityTournamentsComponent implements OnChanges {
       });
   }
 
+  requestTeamDeletion(team: TournamentTeam): void {
+    if (!this.canManageTeamRoster || this.detailsLoading
+        || !this.teams.some(item => item.id === team.id && item.players.length === 0)) return;
+    this.pendingTeamDeletionId = team.id;
+  }
+
+  cancelTeamDeletion(): void {
+    if (!this.busy) this.pendingTeamDeletionId = null;
+  }
+
   async deleteTournamentTeam(team: TournamentTeam): Promise<void> {
-    if (!this.canManageTeamRoster || !this.selected || team.players.length > 0) return;
+    if (!this.canManageTeamRoster || !this.selected || this.detailsLoading
+        || this.pendingTeamDeletionId !== team.id
+        || !this.teams.some(item => item.id === team.id && item.players.length === 0)) return;
     await this.mutate(this.api.deleteTeam(this.community.id, this.selected.id, team.id),
-      'Equipa eliminada.', () => this.loadTeams());
+      'Equipa eliminada.', () => {
+        this.pendingTeamDeletionId = null;
+        this.loadTeams();
+      });
   }
 
   async create(): Promise<void> {

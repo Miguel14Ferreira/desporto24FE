@@ -1501,6 +1501,12 @@ test('organizador prepara equipas reais e distribui membros sem criar jornadas i
   await azuis.getByRole('button', { name: 'Confirmar remoção de participante da equipa Azuis' }).click();
   await expect(azuis.locator('.player-item').filter({ hasText: '@participante' })).toHaveCount(0);
   await azuis.getByRole('button', { name: 'Eliminar equipa Azuis' }).click();
+  await expect(azuis.getByRole('group', { name: 'Eliminar equipa Azuis' })).toBeVisible();
+  await expect(page.locator('.team-roster-card')).toHaveCount(2);
+  await azuis.getByRole('button', { name: 'Cancelar eliminação da equipa Azuis' }).click();
+  await expect(page.locator('.team-roster-card')).toHaveCount(2);
+  await azuis.getByRole('button', { name: 'Eliminar equipa Azuis' }).click();
+  await azuis.getByRole('button', { name: 'Confirmar eliminação da equipa Azuis' }).click();
   await expect(page.locator('.team-roster-card')).toHaveCount(1);
   expect(fixture.unmocked.filter(path => path.includes('/tournaments/'))).toEqual([]);
 });

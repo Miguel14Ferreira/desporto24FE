@@ -266,7 +266,11 @@ describe('Community tournaments management', () => {
       api.deleteTeam.and.returnValue(of(void 0));
       api.teams.and.returnValue(of([]));
       await component.deleteTournamentTeam(team);
+      expect(api.deleteTeam).not.toHaveBeenCalled();
+      component.requestTeamDeletion(team);
+      await component.deleteTournamentTeam(team);
       expect(api.deleteTeam).toHaveBeenCalledWith(7, 19, 40);
+      expect(component.pendingTeamDeletionId).toBeNull();
     });
 
     it('cancels a team player removal without mutating the roster', async () => {
@@ -307,6 +311,21 @@ describe('Community tournaments management', () => {
       await running;
       expect(component.busy).toBeFalse();
       expect(component.pendingTeamPlayerRemoval).toBeNull();
+    });
+
+    it('requires confirmation to delete an empty team and cancellation never mutates it', async () => {
+      api.teams.and.returnValue(of([team]));
+      component.selectTournament(teamDraft);
+      component.requestTeamDeletion(team);
+      expect(component.pendingTeamDeletionId).toBe(40);
+      component.cancelTeamDeletion();
+      await component.deleteTournamentTeam(team);
+      expect(api.deleteTeam).not.toHaveBeenCalled();
+      component.requestTeamDeletion(team);
+      component.selectTournament(draft);
+      expect(component.pendingTeamDeletionId).toBeNull();
+      await component.deleteTournamentTeam(team);
+      expect(api.deleteTeam).not.toHaveBeenCalled();
     });
 
     it('prevents members from editing any squad', async () => {
