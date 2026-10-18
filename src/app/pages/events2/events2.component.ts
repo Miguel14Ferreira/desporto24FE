@@ -82,6 +82,7 @@ export class Events2Component implements OnInit, OnDestroy {
   selectedVenueId: number | null = null;
   venuesLoading = false;
   venuesLoadError = false;
+  legacyVenueRetryAvailable = false;
   venuesHasMore = false;
   venuePage = 0;
   private venueLookupVersion = 0;
@@ -285,6 +286,7 @@ export class Events2Component implements OnInit, OnDestroy {
     const version = ++this.venueLookupVersion;
     this.venuesLoading = true;
     this.venuesLoadError = false;
+    this.legacyVenueRetryAvailable = false;
 
     this.venueService.suggest(name, city, this.sportSelected ? this.sport.trim() : '', page)
       .pipe(
@@ -307,13 +309,23 @@ export class Events2Component implements OnInit, OnDestroy {
           this.venuePage = result.page;
           this.venuesHasMore = result.hasMore;
         },
-        error: () => {
+        error: error => {
           if (version !== this.venueLookupVersion) return;
           if (page === 0) this.venues = [...this.newlyCreatedVenues];
           this.venuesHasMore = false;
           this.venuesLoadError = true;
+          // On the old backend /suggest may be mistaken for /{id}.
+          // Its global exception handler can return 500. Degraded mode
+          // requires a deliberate user action, never silent full-catalog IO.
+          this.legacyVenueRetryAvailable = error?.status === 400 || error?.status === 500;
         }
       });
+  }
+
+  useLegacyVenueSearch(): void {
+    if (!this.legacyVenueRetryAvailable || this.venuesLoading || !this.sportSelected) return;
+    this.venueService.enableLegacySuggestions();
+    this.loadVenues();
   }
 
   loadMoreVenues(): void {
@@ -325,6 +337,7 @@ export class Events2Component implements OnInit, OnDestroy {
     ++this.venueLookupVersion;
     this.venuesLoading = false;
     this.venuesLoadError = false;
+    this.legacyVenueRetryAvailable = false;
     this.venuesHasMore = false;
     this.venuePage = 0;
     this.venueSearchChanged.next();

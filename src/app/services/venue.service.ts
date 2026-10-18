@@ -54,6 +54,15 @@ export class VenueService {
 
   constructor(private http: HttpClient) {}
 
+  /**
+   * Explicit user choice when the old backend accidentally routes /suggest
+   * to /{id} and returns 400/500, rather than the expected 404.
+   * Never turn an arbitrary server error into an automatic full-catalog fetch.
+   */
+  enableLegacySuggestions(): void {
+    this.legacySuggestionsOnly = true;
+  }
+
   search(city?: string, sport?: string, latitude?: number, longitude?: number, radiusKm?: number): Observable<Venue[]> {
     let params = new HttpParams();
 

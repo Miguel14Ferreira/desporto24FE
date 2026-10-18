@@ -211,6 +211,16 @@
               (click)="loadVenues()">
               {{ 'common.retry' | t }}
             </button>
+            @if (legacyVenueRetryAvailable) {
+              <button
+                type="button"
+                class="secondary-action jynlo-action jynlo-action--neutral"
+                [disabled]="venuesLoading || loading"
+                (click)="useLegacyVenueSearch()">
+                Usar pesquisa de compatibilidade
+              </button>
+              <small>Modo temporário: pode carregar mais recintos enquanto a pesquisa paginada não estiver disponível.</small>
+            }
           </div>
         }
 
