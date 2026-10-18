@@ -205,9 +205,9 @@
       </div>
     </div>
 
-    <section class="security-note" aria-label="Pré-visualização de recintos">
-      <strong>Verificar duplicados de recintos (sem importar)</strong>
-      <p>Pré-visualização apenas de leitura. Não cria ou altera recintos.</p>
+    <details class="security-note" aria-label="Pré-visualização de recintos">
+      <summary><strong>Ferramentas avançadas: verificar duplicados de recintos</strong></summary>
+      <p>Ferramenta técnica para administradores. Pré-visualização apenas de leitura: não cria ou altera recintos.</p>
       <textarea aria-label="JSON dos recintos" [(ngModel)]="venuePayload" rows="10"
         style="width:100%;margin-top:1rem;font-family:monospace;"></textarea>
       <button class="jynlo-action jynlo-action--neutral" type="button" (click)="previewVenues()" [disabled]="previewLoading"
@@ -225,7 +225,7 @@
           </ul>
         </li>
       </ul>
-    </section>
+    </details>
 
     <div class="security-note">
       <strong>{{ 'adminHub.protected' | t }}</strong>
