@@ -15,6 +15,8 @@ function fixtureToken(username: string): string {
 async function mockDiscovery(page: Page, initiallyFailSessions: boolean, emptyResults = false) {
   await page.addInitScript(token => localStorage.setItem('t', token), fixtureToken('browser-tester'));
   let failSessions = initiallyFailSessions;
+  let failProfiles = false;
+  let lastProfileSearch = '';
   let joinOutcome: 'PARTICIPANT' | 'WAITLISTED' | 'REJECT' = 'REJECT';
   let failDetailRefresh = false;
   let joinRequests = 0;
@@ -79,6 +81,10 @@ async function mockDiscovery(page: Page, initiallyFailSessions: boolean, emptyRe
       });
     }
     if (req.method() === 'GET' && path === '/api/profile/search') {
+      lastProfileSearch = new URL(req.url()).search;
+      if (failProfiles) {
+        return reply({ message: 'Players temporarily unavailable' }, 503);
+      }
       return reply(emptyResults ? [] : [{
         username: 'ana-teste', fullName: 'Ana Teste', location: 'Lisboa',
         favoriteSports: 'Padel', profilePicUrl: null
@@ -94,6 +100,8 @@ async function mockDiscovery(page: Page, initiallyFailSessions: boolean, emptyRe
 
   return {
     recoverSessions: () => { failSessions = false; },
+    failPlayerSearch: (value: boolean) => { failProfiles = value; },
+    get lastProfileSearch() { return lastProfileSearch; },
     configureJoin: (outcome: 'PARTICIPANT' | 'WAITLISTED' | 'REJECT', failRefresh = false) => {
       joinOutcome = outcome;
       failDetailRefresh = failRefresh;
@@ -259,4 +267,43 @@ test('An unresolved request blocks retry until a separate status verification su
   await expect(page.locator('.action-message.success-message')).toContainText('sucesso');
   await expect(page.locator('.join-verification')).toHaveCount(0);
   expect(submissions).toBe(1);
+});
+
+test('A name search recovers the players panel after a failed general discovery', async ({ page }) => {
+  const fixture = await mockDiscovery(page, false);
+  fixture.failPlayerSearch(true);
+  await page.goto('/menu/discover?city=Lisboa');
+  await expect(page.locator('.pillar-error--people')).toBeVisible();
+
+  fixture.failPlayerSearch(false);
+  await page.locator('#discover-player-name').fill('Ana');
+  await page.locator('.discover-people-search button[type="submit"]').click();
+
+  await expect(page.locator('.person-card')).toContainText('Ana Teste');
+  await expect(page.locator('.pillar-error--people')).toHaveCount(0);
+  await expect(page.locator('.discover-error')).toHaveCount(0);
+  const params = new URLSearchParams(fixture.lastProfileSearch);
+  expect(params.get('name')).toBe('Ana');
+  expect(params.has('sport')).toBe(false);
+  expect(params.has('location')).toBe(false);
+});
+
+test('General discovery recovers after a failed name search without reusing stale errors', async ({ page }) => {
+  const fixture = await mockDiscovery(page, false);
+  await page.goto('/menu/discover?city=Lisboa');
+  await expect(page.locator('.person-card')).toContainText('Ana Teste');
+
+  fixture.failPlayerSearch(true);
+  await page.locator('#discover-player-name').fill('Ana');
+  await page.locator('.discover-people-search button[type="submit"]').click();
+  await expect(page.locator('.pillar-error--people')).toContainText('Não foi possível procurar jogadores');
+
+  fixture.failPlayerSearch(false);
+  await page.locator('.discover-search button[type="submit"]').click();
+  await expect(page.locator('.person-card')).toContainText('Ana Teste');
+  await expect(page.locator('.pillar-error--people')).toHaveCount(0);
+  await expect(page.locator('.discover-error')).toHaveCount(0);
+  const profile = new URL((await page.locator('.person-card').getAttribute('href'))!, 'https://jynlo.test');
+  expect(profile.searchParams.get('player')).toBe('Ana');
+  expect(new URLSearchParams(fixture.lastProfileSearch).get('name')).toBe('Ana');
 });

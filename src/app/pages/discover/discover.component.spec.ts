@@ -439,7 +439,7 @@ describe('DiscoverComponent', () => {
     component.playerName = '  Ana  ';
     component.searchPlayers();
 
-    expect(communityService.findProfiles).toHaveBeenCalledWith(jasmine.objectContaining({ name: 'Ana' }));
+    expect(communityService.findProfiles).toHaveBeenCalledWith({ name: 'Ana' });
     expect(component.people).toEqual([teammate]);
     expect(component.topPeople).toEqual([teammate]);
     expect(component.appliedPlayerName).toBe('Ana');
@@ -544,6 +544,89 @@ describe('DiscoverComponent', () => {
     expect(component.topPeople).toEqual(people);
     component.clearPlayerName();
     expect(component.topPeople.length).toBe(4);
+  });
+
+  it('replaces a failed general player search with a successful name search', () => {
+    communityService.findProfiles.and.returnValue(throwError(() => new Error('People API unavailable')));
+    component.search();
+    fixture.detectChanges();
+    expect(component.peopleLoadError).toBeTrue();
+    expect(fixture.nativeElement.querySelector('.pillar-error--people')).not.toBeNull();
+
+    const ana: CommunityProfile = {
+      username: 'ana', fullName: 'Ana Lisboa', nickname: null,
+      country: 'Portugal', location: 'Porto', favoriteSports: 'Futebol',
+      bio: null, skillLevel: null, availability: null, age: 30,
+      profilePicUrl: null, joinDateDisplay: null
+    };
+    communityService.findProfiles.and.returnValue(of([ana]));
+    component.playerName = 'Ana';
+    component.searchPlayers();
+    fixture.detectChanges();
+
+    expect(component.peopleLoadError).toBeFalse();
+    expect(component.playerSearchError).toBeFalse();
+    expect(communityService.findProfiles).toHaveBeenCalledWith({ name: 'Ana' });
+    expect(component.people).toEqual([ana]);
+    expect(fixture.nativeElement.querySelector('.pillar-error--people')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.discover-error')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.person-card')?.textContent).toContain('Ana Lisboa');
+  });
+
+  it('clears an old name-search failure when a new global search succeeds', () => {
+    communityService.findProfiles.and.returnValue(throwError(() => new Error('Name search offline')));
+    component.playerName = 'Ana';
+    component.searchPlayers();
+    fixture.detectChanges();
+    expect(component.playerSearchError).toBeTrue();
+
+    const bruno: CommunityProfile = {
+      username: 'bruno', fullName: 'Bruno Silva', nickname: null,
+      country: 'Portugal', location: 'Porto', favoriteSports: 'Futebol',
+      bio: null, skillLevel: null, availability: null, age: 25,
+      profilePicUrl: null, joinDateDisplay: null
+    };
+    communityService.findProfiles.and.returnValue(of([bruno]));
+    component.playerName = 'Bruno';
+    component.search();
+    fixture.detectChanges();
+
+    expect(component.playerSearchError).toBeFalse();
+    expect(component.appliedPlayerName).toBe('Bruno');
+    expect(communityService.findProfiles).toHaveBeenCalledWith({ name: 'Bruno' });
+    expect(component.people).toEqual([bruno]);
+    expect(fixture.nativeElement.querySelector('.pillar-error--people')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.person-card')?.textContent).toContain('Bruno Silva');
+    const profileLink: HTMLAnchorElement = fixture.nativeElement.querySelector('.person-card');
+    expect(new URL(profileLink.getAttribute('href')!, 'https://jynlo.test')
+      .searchParams.get('player')).toBe('Bruno');
+  });
+
+  it('ignores a late name-search result after the user changes filters and searches again', () => {
+    const pending = new Subject<CommunityProfile[]>();
+    communityService.findProfiles.and.returnValue(pending.asObservable());
+    component.playerName = 'Ana';
+    component.searchPlayers();
+    expect(component.loadingPeople).toBeTrue();
+
+    component.onLocationChange('Sintra');
+    communityService.findProfiles.and.returnValue(of([]));
+    component.search();
+    fixture.detectChanges();
+    expect(component.appliedPlayerName).toBe('');
+    expect(component.loadingPeople).toBeFalse();
+
+    pending.next([{
+      username: 'ana', fullName: 'Ana Antiga', nickname: null,
+      country: 'Portugal', location: 'Porto', favoriteSports: 'Futebol',
+      bio: null, skillLevel: null, availability: null, age: 30,
+      profilePicUrl: null, joinDateDisplay: null
+    }]);
+    pending.complete();
+    fixture.detectChanges();
+    expect(component.people).toEqual([]);
+    expect(fixture.nativeElement.querySelector('.person-card')).toBeNull();
+    expect(component.playerSearchError).toBeFalse();
   });
 
   it('shows a player-only error when name search fails', () => {
