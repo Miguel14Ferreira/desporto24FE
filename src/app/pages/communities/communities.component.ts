@@ -154,6 +154,9 @@ export class CommunitiesComponent implements OnInit {
   pendingJoinLookupLoading = false;
   private pendingJoinLookupVersion = 0;
   private pendingRequestsLookupVersion = 0;
+  private communityOpenRequestVersion = 0;
+  private competitionRequestVersion = 0;
+  private communitySessionsRequestVersion = 0;
 
   featuresEditing = false;
   featuresSaving = false;
@@ -390,7 +393,10 @@ export class CommunitiesComponent implements OnInit {
   }
 
   private loadCommunityPresentation(id: number): void {
-    // Invalidate checks for a previously opened community.
+    // Public presentation navigation invalidates still-pending private community reads.
+    this.communityOpenRequestVersion = (this.communityOpenRequestVersion || 0) + 1;
+    this.competitionRequestVersion = (this.competitionRequestVersion || 0) + 1;
+    this.communitySessionsRequestVersion = (this.communitySessionsRequestVersion || 0) + 1;
     ++this.pendingJoinLookupVersion;
     this.pendingJoinLookupLoading = false;
     this.selected = undefined;
@@ -607,7 +613,11 @@ export class CommunitiesComponent implements OnInit {
       return;
     }
 
-    // A response for the previous community must not replace this one's requests.
+    // A slower response from an earlier navigation must never replace the latest group.
+    const openVersion = (this.communityOpenRequestVersion || 0) + 1;
+    this.communityOpenRequestVersion = openVersion;
+    this.competitionRequestVersion = (this.competitionRequestVersion || 0) + 1;
+    this.communitySessionsRequestVersion = (this.communitySessionsRequestVersion || 0) + 1;
     ++this.pendingRequestsLookupVersion;
     this.editingSports = false;
     this.sportsMessage = '';
@@ -625,6 +635,7 @@ export class CommunitiesComponent implements OnInit {
       )
       .subscribe({
       next: full => {
+        if (openVersion !== this.communityOpenRequestVersion) return;
         this.selected = full;
         this.resetHistoricalLinks();
         const requestedTab = this.route.snapshot.queryParamMap.get('tab');
@@ -663,7 +674,11 @@ export class CommunitiesComponent implements OnInit {
         if (this.activeTab === 'members') this.loadHistoricalLinks(full.id);
         if (openJoinRequests) this.loadPendingJoinRequests(full.id);
       },
-      error: () => this.errorMessage = t('feedback.communities.openError')
+      error: () => {
+        if (openVersion === this.communityOpenRequestVersion) {
+          this.errorMessage = t('feedback.communities.openError');
+        }
+      }
     });
   }
 
@@ -951,6 +966,8 @@ export class CommunitiesComponent implements OnInit {
   }
 
   loadCommunitySessions(community: CommunityGroup = this.selected as CommunityGroup): void {
+    const requestVersion = (this.communitySessionsRequestVersion || 0) + 1;
+    this.communitySessionsRequestVersion = requestVersion;
     if (!community) {
       this.communitySessions = [];
       return;
@@ -961,11 +978,19 @@ export class CommunitiesComponent implements OnInit {
       .pipe(
         timeout(10_000),
         retry({ count: 1 }),
-        finalize(() => this.sessionsLoading = false)
+        finalize(() => {
+          if (requestVersion === this.communitySessionsRequestVersion) this.sessionsLoading = false;
+        })
       )
       .subscribe({
-        next: sessions => this.communitySessions = sessions,
+        next: sessions => {
+          if (requestVersion !== this.communitySessionsRequestVersion ||
+              this.selected?.id !== community.id) return;
+          this.communitySessions = sessions;
+        },
         error: () => {
+          if (requestVersion !== this.communitySessionsRequestVersion ||
+              this.selected?.id !== community.id) return;
           this.communitySessions = [];
           this.errorMessage = t('feedback.communities.sessionsLoadError');
         }
@@ -1058,15 +1083,21 @@ export class CommunitiesComponent implements OnInit {
       return;
     }
 
+    const requestVersion = (this.competitionRequestVersion || 0) + 1;
+    this.competitionRequestVersion = requestVersion;
     this.competitionLoading = true;
     this.communityService.competition(community.id, seasonId)
       .pipe(
         timeout(10_000),
         retry({ count: 1 }),
-        finalize(() => this.competitionLoading = false)
+        finalize(() => {
+          if (requestVersion === this.competitionRequestVersion) this.competitionLoading = false;
+        })
       )
       .subscribe({
         next: competition => {
+          if (requestVersion !== this.competitionRequestVersion ||
+              this.selected?.id !== community.id) return;
           this.competition = competition;
           this.maxStandingPoints = Math.max(
             0,
@@ -1117,6 +1148,8 @@ export class CommunitiesComponent implements OnInit {
           this.lossPointsDraft = competition.settings.lossPoints;
         },
         error: () => {
+          if (requestVersion !== this.competitionRequestVersion ||
+              this.selected?.id !== community.id) return;
           this.competition = undefined;
           this.maxStandingPoints = 0;
           this.topGoalsStanding = undefined;
