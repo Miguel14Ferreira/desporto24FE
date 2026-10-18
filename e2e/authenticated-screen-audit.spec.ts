@@ -208,3 +208,65 @@ test('desktop allows requesting a private-community join after 404 confirms no p
     await expect(page.getByRole('button', { name: 'Pedido enviado' })).toBeDisabled();
     expect(submitted).toBe(1);
   });
+
+test('desktop restores community search filters and page after detail and browser Back',
+  async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'desktop-chromium', 'Desktop community discovery');
+    await isolateBackend(page);
+    const observed: Array<{ name: string; sport: string; page: string }> = [];
+    await page.route('**/api/communities/mine', route =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }));
+    await page.route('**/api/communities/search**', route => {
+      const params = new URL(route.request().url()).searchParams;
+      observed.push({
+        name: params.get('name') ?? '',
+        sport: params.get('sport') ?? '',
+        page: params.get('page') ?? ''
+      });
+      const resultPage = Number(params.get('page') ?? 0);
+      return route.fulfill({
+        status: 200, contentType: 'application/json',
+        body: JSON.stringify({
+          page: resultPage, hasMore: resultPage === 0,
+          communities: [{
+            id: 19, name: resultPage === 0 ? 'Liga Inicial' : 'Liga Final',
+            description: 'Jogos da comunidade', sport: 'Futebol',
+            sports: ['Futebol'], visibility: 'PUBLIC', photoUrl: null
+          }]
+        })
+      });
+    });
+    await page.route('**/api/communities/19/presentation', route => route.fulfill({
+      status: 200, contentType: 'application/json',
+      body: JSON.stringify({
+        id: 19, name: 'Liga Final', description: 'Jogos da comunidade',
+        sport: 'Futebol', sports: ['Futebol'], visibility: 'PUBLIC', photoUrl: null
+      })
+    }));
+
+    await page.goto('/menu/communities');
+    await page.locator('#community-search input[name="communitySearchName"]').fill('Liga');
+    await page.locator('#community-search input[name="communitySearchSport"]').fill('Futebol');
+    await page.locator('#community-search button[type="submit"]').click();
+    await expect(page.locator('#community-search .community-card')).toContainText('Liga Inicial');
+    await page.locator('#community-search nav button').last().click();
+    await expect(page.locator('#community-search .community-card')).toContainText('Liga Final');
+    await expect(page).toHaveURL(/search=1.*page=1/);
+
+    await page.locator('#community-search .community-card').click();
+    await expect(page.locator('.community-detail-identity h2')).toHaveText('Liga Final');
+    await page.locator('.detail-page-toolbar button').click();
+    await expect(page.locator('#community-search input[name="communitySearchName"]')).toHaveValue('Liga');
+    await expect(page.locator('#community-search input[name="communitySearchSport"]')).toHaveValue('Futebol');
+    await expect(page.locator('#community-search .community-card')).toContainText('Liga Final');
+    await expect(page).toHaveURL(/search=1.*page=1/);
+
+    await page.locator('#community-search .community-card').click();
+    await expect(page.locator('.community-detail-identity h2')).toHaveText('Liga Final');
+    await page.goBack();
+    await expect(page.locator('#community-search .community-card')).toContainText('Liga Final');
+    await expect(page.locator('#community-search input[name="communitySearchName"]')).toHaveValue('Liga');
+    await expect(page.locator('#community-search input[name="communitySearchSport"]')).toHaveValue('Futebol');
+    expect(observed.filter(x => x.name === 'Liga' && x.sport === 'Futebol' && x.page === '1').length)
+      .toBeGreaterThanOrEqual(3);
+  });

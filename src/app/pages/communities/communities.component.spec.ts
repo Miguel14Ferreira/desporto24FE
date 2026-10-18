@@ -818,6 +818,117 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(page.membershipActionMessage).toBe('');
   });
 
+  it('keeps community name, sport and result page in the URL and detail navigation', () => {
+    const service = {
+      search: jasmine.createSpy('search').and.returnValue(of({
+        communities: [{
+          id: 42, name: 'Liga de Bairro', description: null,
+          sport: 'Futebol', photoUrl: null, visibility: 'PUBLIC'
+        }], page: 2, hasMore: false
+      }))
+    };
+    const router = { navigate: jasmine.createSpy('navigate').and.returnValue(Promise.resolve(true)) };
+    const route = {
+      snapshot: { paramMap: { get: () => null }, queryParamMap: { get: () => null } }
+    };
+    const page = new CommunitiesComponent(service as any, {} as any, {} as any,
+      route as any, router as any);
+    page.communitySearchName = ' Liga ';
+    page.communitySearchSport = ' Futebol ';
+    page.searchCommunities(2);
+
+    expect(service.search).toHaveBeenCalledOnceWith('Liga', 'Futebol', 2);
+    expect(router.navigate).toHaveBeenCalledWith([], jasmine.objectContaining({
+      relativeTo: route,
+      queryParams: { search: '1', name: 'Liga', sport: 'Futebol', page: 2 },
+      queryParamsHandling: 'merge', replaceUrl: true
+    }));
+    page.openCommunityPresentation(page.communitySearchResults[0]);
+    expect(router.navigate).toHaveBeenCalledWith(['/menu/communities', 42], {
+      queryParams: { search: '1', name: 'Liga', sport: 'Futebol', page: 2 }
+    });
+  });
+
+  it('restores the filtered results from a bookmark or browser Back without changing URL', () => {
+    const service = {
+      mine: jasmine.createSpy('mine').and.returnValue(of([])),
+      myInvites: jasmine.createSpy('myInvites').and.returnValue(of([])),
+      search: jasmine.createSpy('search').and.returnValue(of({
+        communities: [{
+          id: 42, name: 'Liga de Bairro', description: null,
+          sport: 'Futebol', photoUrl: null, visibility: 'PUBLIC'
+        }], page: 1, hasMore: false
+      }))
+    };
+    const params: Record<string, string> = {
+      search: '1', name: 'Liga', sport: 'Futebol', page: '1'
+    };
+    const router = { navigate: jasmine.createSpy('navigate').and.returnValue(Promise.resolve(true)) };
+    const route = {
+      snapshot: {
+        paramMap: { get: () => null },
+        queryParamMap: { get: (k: string) => params[k] ?? null }
+      }
+    };
+    const page = new CommunitiesComponent(service as any, {} as any, {} as any,
+      route as any, router as any);
+    page.ngOnInit();
+
+    expect(page.communitySearchName).toBe('Liga');
+    expect(page.communitySearchSport).toBe('Futebol');
+    expect(page.communitySearchPage).toBe(1);
+    expect(page.communitySearchPerformed).toBeTrue();
+    expect(page.communitySearchResults.map(c => c.name)).toEqual(['Liga de Bairro']);
+    expect(service.search).toHaveBeenCalledOnceWith('Liga', 'Futebol', 1);
+    // Rehydrating the URL never creates another history entry.
+    expect(router.navigate).not.toHaveBeenCalled();
+  });
+
+  it('takes the detail Back button to the same search and handles direct links without context', () => {
+    const params: Record<string, string> = {
+      search: '1', name: 'Liga', sport: 'Futebol', page: '2'
+    };
+    const router = { navigate: jasmine.createSpy('navigate').and.returnValue(Promise.resolve(true)) };
+    const route = {
+      snapshot: { queryParamMap: { get: (k: string) => params[k] ?? null } }
+    };
+    const page = new CommunitiesComponent({} as any, {} as any, {} as any,
+      route as any, router as any);
+    page.backToCommunities();
+    expect(router.navigate).toHaveBeenCalledWith(['/menu/communities'], {
+      queryParams: { search: '1', name: 'Liga', sport: 'Futebol', page: '2' }
+    });
+
+    delete params.search;
+    page.backToCommunities();
+    expect(router.navigate).toHaveBeenCalledWith(['/menu/communities'], {
+      queryParams: undefined
+    });
+  });
+
+  it('ignores invalid or negative community search page parameters', () => {
+    const service = {
+      mine: jasmine.createSpy('mine').and.returnValue(of([])),
+      myInvites: jasmine.createSpy('myInvites').and.returnValue(of([])),
+      search: jasmine.createSpy('search').and.returnValue(of({
+        communities: [], page: 0, hasMore: false
+      }))
+    };
+    const params: Record<string, string> = {
+      search: '1', name: 'Liga', sport: 'Futebol', page: '-100'
+    };
+    const route = {
+      snapshot: {
+        paramMap: { get: () => null },
+        queryParamMap: { get: (k: string) => params[k] ?? null }
+      }
+    };
+    const page = new CommunitiesComponent(service as any, {} as any, {} as any,
+      route as any, {} as any);
+    page.ngOnInit();
+    expect(service.search).toHaveBeenCalledOnceWith('Liga', 'Futebol', 0);
+  });
+
   it('allows joining an upcoming open community session', () => {
     expect(component.canJoinCommunitySession(session)).toBeTrue();
   });

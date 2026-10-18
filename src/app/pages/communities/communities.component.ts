@@ -327,6 +327,15 @@ export class CommunitiesComponent implements OnInit {
 
   ngOnInit(): void {
     this.isDetailMode = Boolean(this.route.snapshot.paramMap.get('id'));
+    // Keep a search reproducible after navigation, browser Back and page refresh.
+    // A URL without search=1 is the ordinary, unfiltered community landing page.
+    if (!this.isDetailMode && this.route.snapshot.queryParamMap.get('search') === '1') {
+      this.communitySearchName = this.route.snapshot.queryParamMap.get('name') ?? '';
+      this.communitySearchSport = this.route.snapshot.queryParamMap.get('sport') ?? '';
+      const requestedPage = Number(this.route.snapshot.queryParamMap.get('page') ?? '0');
+      this.searchCommunities(Number.isSafeInteger(requestedPage) && requestedPage >= 0
+        ? Math.min(requestedPage, 1000) : 0, false);
+    }
     this.reload();
   }
 
@@ -335,7 +344,16 @@ export class CommunitiesComponent implements OnInit {
   }
 
   backToCommunities(): void {
-    void this.router.navigate(['/menu/communities']);
+    const params = this.route.snapshot.queryParamMap;
+    const fromSearch = params.get('search') === '1';
+    void this.router.navigate(['/menu/communities'], {
+      queryParams: fromSearch ? {
+        search: '1',
+        name: params.get('name'),
+        sport: params.get('sport'),
+        page: params.get('page')
+      } : undefined
+    });
   }
 
   exploreCommunities(): void {
@@ -345,9 +363,30 @@ export class CommunitiesComponent implements OnInit {
     this.communitySearchSection?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
-  searchCommunities(page = 0): void {
+  private communitySearchParams(page: number): {
+    search: string; name: string | null; sport: string | null; page: number | null
+  } {
+    return {
+      search: '1',
+      name: this.communitySearchName.trim() || null,
+      sport: this.communitySearchSport.trim() || null,
+      page: page > 0 ? page : null
+    };
+  }
+
+  searchCommunities(page = 0, syncUrl = true): void {
     const name = this.communitySearchName.trim();
     const sport = this.communitySearchSport.trim();
+    if (syncUrl && !this.detailMode()) {
+      // replaceUrl records the current search in the existing history entry;
+      // navigating into a community then browser-Back restores the same search.
+      void this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: this.communitySearchParams(page),
+        queryParamsHandling: 'merge',
+        replaceUrl: true
+      });
+    }
     // A slower, older response must not replace a newer search or its loading state.
     const requestVersion = (this.communitySearchRequestVersion ?? 0) + 1;
     this.communitySearchRequestVersion = requestVersion;
@@ -397,7 +436,13 @@ export class CommunitiesComponent implements OnInit {
   }
 
   openCommunityPresentation(community: CommunitySearchPresentation): void {
-    void this.router.navigate(['/menu/communities', community.id]);
+    // Pass the search context to the detail so its own Back button can restore
+    // the filters and results page, even when the detail is refreshed.
+    void this.router.navigate(['/menu/communities', community.id], {
+      queryParams: this.communitySearchPerformed
+        ? this.communitySearchParams(this.communitySearchPage)
+        : undefined
+    });
   }
 
   private loadCommunityPresentation(id: number): void {
