@@ -236,6 +236,8 @@ describe('CommunitiesComponent public session eligibility', () => {
 
   it('clears another community\'s history and reloads it after accepting an invitation', () => {
     component.selected = { id: 7 } as any;
+    component.selectedSeasonId = 99;
+    component.competition = { selectedSeasonId: 99 } as any;
     component.communities = [{ id: 7 } as any];
     component.invites = [{ id: 10 } as any];
     component.archiveSummaries = [{ id: 51 } as any];
@@ -256,6 +258,8 @@ describe('CommunitiesComponent public session eligibility', () => {
     component.acceptInvite({ id: 10 } as any);
 
     expect(component.selected?.id).toBe(8);
+    expect(component.selectedSeasonId).toBeNull();
+    expect(component.competition).toBeUndefined();
     expect(component.archiveSummaries).toEqual([]);
     expect(component.matchArchiveSummaries).toEqual([]);
     expect(component.archiveOpen).toBeUndefined();
