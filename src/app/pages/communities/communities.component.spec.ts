@@ -707,7 +707,9 @@ describe('CommunitiesComponent public session eligibility', () => {
         queryParamMap: { get: () => null }
       }
     };
-    const page = new CommunitiesComponent(service as any, {} as any, {} as any, route as any, {} as any);
+    const router = { navigate: jasmine.createSpy('navigate').and.returnValue(Promise.resolve(true)) };
+    const page = new CommunitiesComponent(service as any, {} as any, {} as any,
+      route as any, router as any);
     page.reload();
     page.communitySearchName = 'Jogos';
     page.searchCommunities();
