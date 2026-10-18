@@ -94,13 +94,13 @@ export class CommunitiesComponent implements OnInit {
   historicalPlayersLoading = false;
   historicalPlayersError = '';
   historicalPlayerId: number | null = null;
-  historicalTargetUsername = '';
-  historicalProposalSaving = false;
-  historicalProposalMessage = '';
-  historicalPendingLinks: HistoricalPlayerLink[] = [];
-  historicalPendingLoading = false;
-  historicalPendingError = '';
-  historicalDecisionId: number | null = null;
+  historicalClaimAcknowledged = false;
+  historicalClaimSaving = false;
+  historicalClaimMessage = '';
+  historicalClaims: HistoricalPlayerLink[] = [];
+  historicalClaimsLoading = false;
+  historicalClaimsError = '';
+  historicalReleaseId: number | null = null;
 
   get rankingParticipants(): CommunityStanding[] {
     return (this.competition?.standings || []).filter(row => row.games > 0);
@@ -669,32 +669,31 @@ export class CommunitiesComponent implements OnInit {
     this.historicalPlayersLoading = false;
     this.historicalPlayersError = '';
     this.historicalPlayerId = null;
-    this.historicalTargetUsername = '';
-    this.historicalProposalSaving = false;
-    this.historicalProposalMessage = '';
-    this.historicalPendingLinks = [];
-    this.historicalPendingLoading = false;
-    this.historicalPendingError = '';
-    this.historicalDecisionId = null;
+    this.historicalClaimAcknowledged = false;
+    this.historicalClaimSaving = false;
+    this.historicalClaimMessage = '';
+    this.historicalClaims = [];
+    this.historicalClaimsLoading = false;
+    this.historicalClaimsError = '';
+    this.historicalReleaseId = null;
   }
 
   loadHistoricalLinks(communityId: number): void {
     if (this.selected?.id !== communityId) return;
-    this.historicalPendingLoading = true;
-    this.historicalPendingError = '';
-    this.communityService.pendingHistoricalPlayerLinks(communityId)
+    this.historicalClaimsLoading = true;
+    this.historicalClaimsError = '';
+    this.communityService.myHistoricalClaims(communityId)
       .pipe(timeout(10_000), finalize(() => {
-        if (this.selected?.id === communityId) this.historicalPendingLoading = false;
+        if (this.selected?.id === communityId) this.historicalClaimsLoading = false;
       }))
       .subscribe({
-        next: pending => {
-          if (this.selected?.id === communityId) this.historicalPendingLinks = pending;
+        next: claims => {
+          if (this.selected?.id === communityId) this.historicalClaims = claims;
         },
         error: () => {
-          if (this.selected?.id === communityId) this.historicalPendingError = t('communities.identity.loadError');
+          if (this.selected?.id === communityId) this.historicalClaimsError = t('communities.identity.loadError');
         }
       });
-    if (!this.canManage()) return;
     this.historicalPlayersLoading = true;
     this.historicalPlayersError = '';
     this.communityService.historicalPlayerCandidates(communityId)
@@ -711,57 +710,55 @@ export class CommunitiesComponent implements OnInit {
       });
   }
 
-  proposeHistoricalLink(): void {
-    if (!this.selected || !this.canManage() || this.historicalProposalSaving ||
-        this.historicalPlayerId === null || !this.historicalTargetUsername ||
-        !this.availableHistoricalPlayers.some(item => item.playerId === this.historicalPlayerId) ||
-        !this.selected.members.some(member => member.username.toLowerCase() ===
-          this.historicalTargetUsername.toLowerCase())) return;
+  claimHistoricalName(): void {
+    if (!this.selected || this.historicalClaimSaving || !this.historicalClaimAcknowledged ||
+        this.historicalPlayerId === null ||
+        !this.availableHistoricalPlayers.some(player => player.playerId === this.historicalPlayerId)) return;
     const communityId = this.selected.id;
-    this.historicalProposalSaving = true;
+    this.historicalClaimSaving = true;
+    this.historicalClaimMessage = '';
     this.historicalPlayersError = '';
-    this.historicalProposalMessage = '';
-    this.communityService.proposeHistoricalPlayerLink(
-      communityId, this.historicalPlayerId, this.historicalTargetUsername.trim())
+    this.communityService.claimHistoricalPlayer(communityId, this.historicalPlayerId)
       .pipe(timeout(10_000), finalize(() => {
-        if (this.selected?.id === communityId) this.historicalProposalSaving = false;
+        if (this.selected?.id === communityId) this.historicalClaimSaving = false;
       }))
       .subscribe({
         next: () => {
           if (this.selected?.id !== communityId) return;
-          this.historicalProposalMessage = t('communities.identity.sent');
           this.historicalPlayerId = null;
-          this.historicalTargetUsername = '';
+          this.historicalClaimAcknowledged = false;
+          this.historicalClaimMessage = t('communities.identity.claimed');
           this.loadHistoricalLinks(communityId);
+          this.loadCompetition(this.selected, this.selectedSeasonId);
         },
         error: error => {
           if (this.selected?.id === communityId) {
-            this.historicalPlayersError = error.error?.message || t('communities.identity.proposeError');
+            this.historicalPlayersError = error.error?.message || t('communities.identity.claimError');
           }
         }
       });
   }
 
-  decideHistoricalLink(link: HistoricalPlayerLink, accept: boolean): void {
-    if (!this.selected || this.historicalDecisionId !== null ||
-        !this.historicalPendingLinks.some(item => item.id === link.id)) return;
+  releaseHistoricalName(link: HistoricalPlayerLink): void {
+    if (!this.selected || this.historicalReleaseId !== null ||
+        !this.historicalClaims.some(claim => claim.id === link.id)) return;
     const communityId = this.selected.id;
-    this.historicalDecisionId = link.id;
-    this.historicalPendingError = '';
-    this.communityService.decideHistoricalPlayerLink(communityId, link.id, accept)
+    this.historicalReleaseId = link.id;
+    this.historicalClaimsError = '';
+    this.communityService.releaseHistoricalClaim(communityId, link.id)
       .pipe(timeout(10_000), finalize(() => {
-        if (this.selected?.id === communityId) this.historicalDecisionId = null;
+        if (this.selected?.id === communityId) this.historicalReleaseId = null;
       }))
       .subscribe({
         next: () => {
           if (this.selected?.id !== communityId) return;
-          this.historicalPendingLinks = this.historicalPendingLinks.filter(item => item.id !== link.id);
+          this.historicalClaimMessage = t('communities.identity.released');
           this.loadHistoricalLinks(communityId);
-          if (accept) this.loadCompetition(this.selected, this.selectedSeasonId);
+          this.loadCompetition(this.selected, this.selectedSeasonId);
         },
         error: error => {
           if (this.selected?.id === communityId) {
-            this.historicalPendingError = error.error?.message || t('communities.identity.decisionError');
+            this.historicalClaimsError = error.error?.message || t('communities.identity.releaseError');
           }
         }
       });

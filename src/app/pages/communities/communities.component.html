@@ -1907,76 +1907,63 @@
                     </div>
                   </div>
                   <p>{{ 'communities.identity.description' | t }}</p>
-                  @if (historicalPendingLoading) {
+                  @if (historicalClaimsLoading || historicalPlayersLoading) {
                     <p role="status">{{ 'communities.identity.loading' | t }}</p>
                   }
-                  @if (historicalPendingError) {
-                    <p class="import-error" role="alert">{{ historicalPendingError }}</p>
+                  @if (historicalClaimsError) {
+                    <p class="import-error" role="alert">{{ historicalClaimsError }}</p>
                   }
-                  @for (link of historicalPendingLinks; track link.id) {
+                  @for (claim of historicalClaims; track claim.id) {
                     <div class="invite-profile-result">
                       <div class="ranking-player">
-                        <strong>{{ link.historicalName }} → @{{ link.targetUsername }}</strong>
-                        <small>{{ 'communities.identity.confirmHint' | t }}</small>
-                      </div>
-                      <div class="row-actions">
-                        <button type="button"
-                          class="primary-action small jynlo-action jynlo-action--primary jynlo-action--compact"
-                          [disabled]="historicalDecisionId !== null"
-                          (click)="decideHistoricalLink(link, true)">
-                          {{ 'communities.identity.accept' | t }}
-                        </button>
-                        <button type="button"
-                          class="secondary-action small jynlo-action jynlo-action--neutral jynlo-action--compact"
-                          [disabled]="historicalDecisionId !== null"
-                          (click)="decideHistoricalLink(link, false)">
-                          {{ 'communities.identity.reject' | t }}
-                        </button>
-                      </div>
-                    </div>
-                  }
-                  @if (canManage()) {
-                    <p>{{ 'communities.identity.managerHint' | t }}</p>
-                    @if (historicalPlayersLoading) {
-                      <p role="status">{{ 'communities.identity.loading' | t }}</p>
-                    }
-                    @if (historicalPlayersError) {
-                      <p class="import-error" role="alert">{{ historicalPlayersError }}</p>
-                    }
-                    @if (historicalProposalMessage) {
-                      <p class="import-success" role="status">{{ historicalProposalMessage }}</p>
-                    }
-                    @if (!historicalPlayersLoading && availableHistoricalPlayers.length === 0) {
-                      <p>{{ 'communities.identity.none' | t }}</p>
-                    }
-                    @if (availableHistoricalPlayers.length > 0) {
-                      <div class="import-context">
-                        <label>
-                          <span>{{ 'communities.identity.historical' | t }}</span>
-                          <select [(ngModel)]="historicalPlayerId">
-                            <option [ngValue]="null">{{ 'communities.identity.selectHistorical' | t }}</option>
-                            @for (player of availableHistoricalPlayers; track player.playerId) {
-                              <option [ngValue]="player.playerId">{{ player.historicalName }}</option>
-                            }
-                          </select>
-                        </label>
-                        <label>
-                          <span>{{ 'communities.identity.account' | t }}</span>
-                          <select [(ngModel)]="historicalTargetUsername">
-                            <option value="">{{ 'communities.identity.selectAccount' | t }}</option>
-                            @for (member of selected.members; track member.profileId) {
-                              <option [value]="member.username">{{ member.fullName || member.username }} (@{{ member.username }})</option>
-                            }
-                          </select>
-                        </label>
+                        <strong>{{ claim.historicalName }} → @{{ claim.targetUsername }}</strong>
+                        <small>{{ 'communities.identity.linked' | t }}</small>
                       </div>
                       <button type="button"
-                        class="primary-action small jynlo-action jynlo-action--primary jynlo-action--compact"
-                        [disabled]="historicalProposalSaving || historicalPlayerId === null || !historicalTargetUsername"
-                        (click)="proposeHistoricalLink()">
-                        {{ historicalProposalSaving ? ('communities.identity.sending' | t) : ('communities.identity.propose' | t) }}
+                        class="secondary-action small jynlo-action jynlo-action--neutral jynlo-action--compact"
+                        [disabled]="historicalReleaseId !== null || historicalClaimSaving"
+                        (click)="releaseHistoricalName(claim)">
+                        {{ historicalReleaseId === claim.id
+                           ? ('communities.identity.releasing' | t)
+                           : ('communities.identity.release' | t) }}
                       </button>
-                    }
+                    </div>
+                  }
+                  @if (historicalPlayersError) {
+                    <p class="import-error" role="alert">{{ historicalPlayersError }}</p>
+                  }
+                  @if (historicalClaimMessage) {
+                    <p class="import-success" role="status">{{ historicalClaimMessage }}</p>
+                  }
+                  @if (!historicalPlayersLoading && availableHistoricalPlayers.length === 0) {
+                    <p>{{ 'communities.identity.none' | t }}</p>
+                  }
+                  @if (availableHistoricalPlayers.length > 0) {
+                    <div class="import-context">
+                      <label>
+                        <span>{{ 'communities.identity.historical' | t }}</span>
+                        <select [(ngModel)]="historicalPlayerId"
+                          (ngModelChange)="historicalClaimAcknowledged = false">
+                          <option [ngValue]="null">{{ 'communities.identity.selectHistorical' | t }}</option>
+                          @for (player of availableHistoricalPlayers; track player.playerId) {
+                            <option [ngValue]="player.playerId">{{ player.historicalName }}</option>
+                          }
+                        </select>
+                      </label>
+                    </div>
+                    <label class="check-stat">
+                      <input type="checkbox" [(ngModel)]="historicalClaimAcknowledged"
+                        [disabled]="historicalPlayerId === null">
+                      <span>{{ 'communities.identity.acknowledge' | t }}</span>
+                    </label>
+                    <button type="button"
+                      class="primary-action small jynlo-action jynlo-action--primary jynlo-action--compact"
+                      [disabled]="historicalClaimSaving || historicalPlayerId === null || !historicalClaimAcknowledged"
+                      (click)="claimHistoricalName()">
+                      {{ historicalClaimSaving
+                        ? ('communities.identity.claiming' | t)
+                        : ('communities.identity.claim' | t) }}
+                    </button>
                   }
                 </section>
                 @if (canManage()) {
