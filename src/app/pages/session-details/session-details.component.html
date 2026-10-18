@@ -376,7 +376,15 @@
           }
 
           @if (actionError) {
-            <div class="action-message error-message">{{ actionError }}</div>
+            <div class="action-message error-message" role="alert">{{ actionError }}</div>
+          }
+
+          @if (detailRefreshWarning) {
+            <div class="action-message refresh-warning" role="status">
+              <span>{{ detailRefreshWarning }}</span>
+              <button type="button" class="jynlo-action jynlo-action--neutral"
+                      (click)="retrySessionLoad()">{{ 'common.retry' | t }}</button>
+            </div>
           }
 
           @if (session.waitlisted) {

@@ -1039,6 +1039,76 @@ describe('SessionDetailsComponent', () => {
     expect(component.actionSuccess).toContain('sucesso');
   });
 
+  it('keeps confirmed membership and blocks duplicate joins if refreshing details fails', () => {
+    component.session = {
+      ...session, gameDate: new Date(Date.now() + 3600_000).toISOString()
+    };
+    sessionService.detail.and.returnValue(throwError(() => new Error('Refresh offline')));
+
+    component.joinSession();
+    fixture.detectChanges();
+
+    expect(sessionService.join).toHaveBeenCalledOnceWith(7, '');
+    expect(component.session?.joined).toBeTrue();
+    expect(component.session?.waitlisted).toBeFalse();
+    expect(component.errorMessage).toBe('');
+    expect(component.detailRefreshWarning).toContain('operação foi aceite');
+    expect(component.actionSuccess).toContain('sucesso');
+    expect(fixture.nativeElement.querySelector('.join-controls')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.session-load-error')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.refresh-warning')).not.toBeNull();
+
+    component.joinSession();
+    expect(sessionService.join).toHaveBeenCalledTimes(1);
+
+    sessionService.detail.and.returnValue(of({ ...component.session!, joined: true }));
+    component.retrySessionLoad();
+    fixture.detectChanges();
+    expect(component.detailRefreshWarning).toBe('');
+    expect(fixture.nativeElement.querySelector('.refresh-warning')).toBeNull();
+  });
+
+  it('keeps a confirmed waitlist position when the subsequent details GET is unavailable', () => {
+    component.session = {
+      ...session, status: 'FULL', participantCount: 4,
+      gameDate: new Date(Date.now() + 3600_000).toISOString()
+    };
+    sessionService.join.and.returnValue(of({ state: 'WAITLISTED', waitlistPosition: 2 }));
+    sessionService.detail.and.returnValue(throwError(() => new Error('Refresh offline')));
+
+    component.joinSession();
+    fixture.detectChanges();
+
+    expect(component.session?.joined).toBeFalse();
+    expect(component.session?.waitlisted).toBeTrue();
+    expect(component.session?.waitlistPosition).toBe(2);
+    expect(component.actionSuccess).toContain('posição 2');
+    expect(fixture.nativeElement.querySelector('.participation-panel')?.textContent)
+      .toContain('lista de espera');
+    expect(fixture.nativeElement.querySelector('.refresh-warning')).not.toBeNull();
+    component.joinSession();
+    expect(sessionService.join).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not mark a rejected join as successful', () => {
+    component.session = {
+      ...session, gameDate: new Date(Date.now() + 3600_000).toISOString()
+    };
+    sessionService.join.and.returnValue(throwError(() => ({
+      error: { message: 'Inscrição não autorizada' }
+    })));
+
+    component.joinSession();
+    fixture.detectChanges();
+
+    expect(component.session?.joined).toBeFalse();
+    expect(component.session?.waitlisted).toBeFalse();
+    expect(component.actionSuccess).toBe('');
+    expect(component.detailRefreshWarning).toBe('');
+    expect(component.actionError).toContain('não autorizada');
+    expect(sessionService.detail).toHaveBeenCalledTimes(1);
+  });
+
   it('should allow joining the waitlist when a future session is full', () => {
     component.session = {
       ...session,
@@ -1145,6 +1215,22 @@ describe('SessionDetailsComponent', () => {
     component.leaveSession();
 
     expect(sessionService.leave).toHaveBeenCalledOnceWith(7);
+  });
+
+  it('does not offer leaving twice after confirmed departure if detail refresh fails', () => {
+    component.session = {
+      ...session, joined: true, gameDate: new Date(Date.now() + 3600_000).toISOString()
+    };
+    sessionService.detail.and.returnValue(throwError(() => new Error('Refresh offline')));
+
+    component.leaveSession();
+    fixture.detectChanges();
+
+    expect(component.session?.joined).toBeFalse();
+    expect(component.actionSuccess).toContain('Saíste');
+    expect(component.detailRefreshWarning).toBeTruthy();
+    component.leaveSession();
+    expect(sessionService.leave).toHaveBeenCalledTimes(1);
   });
 
   it('should leave a waitlisted session and refresh details', () => {

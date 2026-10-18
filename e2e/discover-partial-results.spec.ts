@@ -15,6 +15,9 @@ function fixtureToken(username: string): string {
 async function mockDiscovery(page: Page, initiallyFailSessions: boolean, emptyResults = false) {
   await page.addInitScript(token => localStorage.setItem('t', token), fixtureToken('browser-tester'));
   let failSessions = initiallyFailSessions;
+  let joinOutcome: 'PARTICIPANT' | 'WAITLISTED' | 'REJECT' = 'REJECT';
+  let failDetailRefresh = false;
+  let joinRequests = 0;
   const futureDate = new Date(Date.now() + 3 * 86_400_000).toISOString();
   const cors = {
     'access-control-allow-origin': '*',
@@ -54,7 +57,19 @@ async function mockDiscovery(page: Page, initiallyFailSessions: boolean, emptyRe
           priceAmount: 0, privateGame: false, audience: 'PUBLIC', status: 'OPEN'
         }]);
     }
+    if (req.method() === 'POST' && path === '/api/sessions/19/join') {
+      joinRequests++;
+      return joinOutcome === 'REJECT'
+        ? reply({ message: 'Join rejected in fixture' }, 409)
+        : reply({
+          state: joinOutcome,
+          waitlistPosition: joinOutcome === 'WAITLISTED' ? 2 : null
+        });
+    }
     if (req.method() === 'GET' && path === '/api/sessions/19') {
+      if (failDetailRefresh && joinRequests > 0) {
+        return reply({ message: 'Detail refresh unavailable in fixture' }, 503);
+      }
       return reply({
         id: 19, sport: 'Padel', city: 'Lisboa', gameDate: futureDate,
         distanceKm: null, participantCount: 2, maxParticipants: 4, priceAmount: 0,
@@ -77,7 +92,14 @@ async function mockDiscovery(page: Page, initiallyFailSessions: boolean, emptyRe
     return reply({ message: 'Unmocked E2E endpoint' }, 404);
   });
 
-  return { recoverSessions: () => { failSessions = false; } };
+  return {
+    recoverSessions: () => { failSessions = false; },
+    configureJoin: (outcome: 'PARTICIPANT' | 'WAITLISTED' | 'REJECT', failRefresh = false) => {
+      joinOutcome = outcome;
+      failDetailRefresh = failRefresh;
+    },
+    get joinRequests() { return joinRequests; }
+  };
 }
 
 test('Descobrir keeps successful categories visible when sessions fail and recovers on retry', async ({ page }) => {
@@ -139,4 +161,34 @@ test('Descobrir opens a session without auto-joining and returns to the same sea
   await expect(page.locator('input[name="location"]')).toHaveValue('Lisboa');
   await expect(page.locator('.session-card')).toContainText('Padel');
   expect(joinRequests).toBe(0);
+});
+
+test('A waitlist confirmation is shown even when the following detail refresh fails', async ({ page }) => {
+  const fixture = await mockDiscovery(page, false);
+  fixture.configureJoin('WAITLISTED', true);
+  await page.goto('/menu/discover?city=Lisboa');
+  await page.locator('.session-card').click();
+  await expect(page.locator('#session-participation .join-controls button')).toBeVisible();
+  expect(fixture.joinRequests).toBe(0);
+
+  await page.locator('#session-participation .join-controls button').click();
+  await expect(page.locator('.participation-panel')).toContainText('lista de espera');
+  await expect(page.locator('.participation-panel')).toContainText('posição 2');
+  await expect(page.locator('.refresh-warning')).toContainText('operação foi aceite');
+  await expect(page.locator('.session-load-error')).toHaveCount(0);
+  await expect(page.locator('.join-controls')).toHaveCount(0);
+  expect(fixture.joinRequests).toBe(1);
+});
+
+test('A rejected registration leaves the join action available without success feedback', async ({ page }) => {
+  const fixture = await mockDiscovery(page, false);
+  fixture.configureJoin('REJECT');
+  await page.goto('/menu/discover?city=Lisboa');
+  await page.locator('.session-card').click();
+
+  await page.locator('#session-participation .join-controls button').click();
+  await expect(page.locator('.action-message.error-message')).toContainText('Join rejected in fixture');
+  await expect(page.locator('#session-participation .join-controls button')).toBeVisible();
+  await expect(page.locator('.action-message.success-message')).toHaveCount(0);
+  expect(fixture.joinRequests).toBe(1);
 });

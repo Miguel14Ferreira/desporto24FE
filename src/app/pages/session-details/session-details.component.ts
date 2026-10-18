@@ -78,6 +78,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   errorMessage = '';
   actionError = '';
   actionSuccess = '';
+  detailRefreshWarning = '';
   inviteFriendsOpen = false;
   inviteFriendsLoading = false;
   inviteSendingTo: string | null = null;
@@ -242,6 +243,17 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
         next: response => {
           this.joinPassword = '';
           this.actionSuccess = this.joinSuccessMessage(response);
+          // The POST response is authoritative even when the subsequent detail GET fails.
+          // Apply membership immediately to prevent a duplicate registration attempt.
+          if (this.session) {
+            this.session = {
+              ...this.session,
+              joined: response.state === 'PARTICIPANT',
+              waitlisted: response.state === 'WAITLISTED',
+              waitlistPosition: response.state === 'WAITLISTED'
+                ? response.waitlistPosition : null
+            };
+          }
           this.loadSession(false);
         },
         error: error => {
@@ -271,6 +283,11 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
           this.actionSuccess = wasWaitlisted
             ? t('feedback.session.leftWaitlist')
             : t('feedback.session.left');
+          if (this.session) {
+            this.session = {
+              ...this.session, joined: false, waitlisted: false, waitlistPosition: null
+            };
+          }
           this.loadSession(false);
         },
         error: error => {
@@ -1522,6 +1539,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
       this.loading = true;
     }
     this.errorMessage = '';
+    this.detailRefreshWarning = '';
 
     this.sessionService.detail(this.sessionId)
       .pipe(
@@ -1567,7 +1585,14 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
             this.chatError = '';
           }
         },
-        error: () => this.errorMessage = t('feedback.session.detailsError')
+        error: () => {
+          if (showPageLoader) {
+            this.errorMessage = t('feedback.session.detailsError');
+          } else {
+            // Keep the server-confirmed action visible; only refreshing details failed.
+            this.detailRefreshWarning = t('feedback.session.detailsRefreshError');
+          }
+        }
       });
   }
 
