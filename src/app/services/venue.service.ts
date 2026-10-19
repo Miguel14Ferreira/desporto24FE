@@ -73,11 +73,12 @@ export class VenueService {
   }
 
   /** Bounded server-side autocomplete; keeps the legacy search contract unchanged. */
-  suggest(name?: string, city?: string, sport?: string, page = 0): Observable<VenueSuggestionPage> {
+  suggest(name?: string, city?: string, sport?: string, page = 0, district?: string): Observable<VenueSuggestionPage> {
     let params = new HttpParams().set('page', String(page));
     if (name?.trim()) params = params.set('name', name.trim());
     if (city?.trim()) params = params.set('city', city.trim());
     if (sport?.trim()) params = params.set('sport', sport.trim());
+    if (district?.trim()) params = params.set('district', district.trim());
     return this.http.get<VenueSuggestionPage>(this.baseUrl + '/suggest', { params });
   }
 

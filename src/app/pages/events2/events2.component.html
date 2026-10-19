@@ -167,6 +167,19 @@
         </div>
 
         <label class="venue-select-field">
+          <span>{{ 'venue.district' | t }}</span>
+          <select name="venueDistrict" [ngModel]="venueDistrict"
+                  (ngModelChange)="onDistrictChanged($event)" [disabled]="loading || venueSaving">
+            <option value="">{{ 'venue.districtPlaceholder' | t }}</option>
+            @for (district of districts; track district) {
+              <option [value]="district">{{ district }}</option>
+            }
+            <option [value]="allDistrictsOption">{{ 'venue.searchAllDistricts' | t }}</option>
+          </select>
+          <small class="venue-current-location">{{ 'venue.districtHint' | t }}</small>
+        </label>
+
+        <label class="venue-select-field">
           <span>{{ 'venue.search' | t }}</span>
           <input
             type="search"
@@ -175,9 +188,10 @@
             [ngModel]="venueSearch"
             (ngModelChange)="onVenueSearchChanged($event)"
             autocomplete="off"
-            [disabled]="loading || !sportSelected"
+            [disabled]="loading || !sportSelected || !venueDistrict"
             (change)="confirmVenueSelection()"
-            [placeholder]="sportSelected ? ('venue.searchPlaceholder' | t) : 'Seleciona primeiro o desporto'">
+            [placeholder]="!sportSelected ? ('venue.chooseSportFirst' | t)
+              : !venueDistrict ? ('venue.districtPlaceholder' | t) : ('venue.searchPlaceholder' | t)">
           <datalist id="venue-search-options">
             @for (venue of venueOptions; track venue.id) {
               <option [value]="venue.name + ' · ' + venue.city"></option>
@@ -187,14 +201,18 @@
             @if (venuesLoading) {
               {{ 'venue.searching' | t }}
             } @else if (!sportSelected) {
-              Seleciona primeiro um desporto da lista.
+              {{ 'venue.chooseSportFirst' | t }}
+            } @else if (!venueDistrict) {
+              {{ 'venue.chooseDistrictFirst' | t }}
+            } @else if (venueDistrict === allDistrictsOption) {
+              {{ 'venue.nationwideHint' | t }}
             } @else {
               {{ 'venue.searchHint' | t }}
             }
           </small>
         </label>
 
-        @if (venuesHasMore && sportSelected) {
+        @if (venuesHasMore && sportSelected && venueDistrict) {
           <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
             [disabled]="venuesLoading || loading" (click)="loadMoreVenues()">
             {{ 'venue.showMore' | t }}

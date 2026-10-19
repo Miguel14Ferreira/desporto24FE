@@ -55,6 +55,7 @@ describe('Events2Component', () => {
 
     fixture = TestBed.createComponent(Events2Component);
     component = fixture.componentInstance;
+    component.venueDistrict = 'Lisboa';
     router = TestBed.inject(Router);
     spyOn(router, 'navigate').and.returnValue(Promise.resolve(true));
     fixture.detectChanges();

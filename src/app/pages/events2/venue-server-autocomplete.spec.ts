@@ -36,16 +36,54 @@ describe('Create session venue server autocomplete', () => {
     }).compileComponents();
     fixture = TestBed.createComponent(Events2Component);
     component = fixture.componentInstance;
+    component.venueDistrict = 'Porto';
     spyOn(TestBed.inject(Router), 'navigate').and.returnValue(Promise.resolve(true));
     fixture.detectChanges();
   });
+
+  it('waits for district selection before requesting venues', () => {
+    component.venueDistrict = '';
+    component.sport = 'Padel';
+    component.confirmSportSelection();
+    expect(venues.suggest).not.toHaveBeenCalled();
+    component.onDistrictChanged('Porto');
+    expect(venues.suggest).toHaveBeenCalledWith('', '', 'Padel', 0, 'Porto');
+  });
+
+  it('clears previous selections and ignores stale district responses', () => {
+    const pending = new Subject<VenueSuggestionPage>();
+    venues.suggest.and.returnValues(pending.asObservable(), of(page([venue(2,'Campo Setúbal','Setúbal')])));
+    component.sport = 'Padel';
+    component.loadVenues();
+    component.venues = [venue(1, 'Campo Porto')];
+    component.selectVenue(1);
+    component.onDistrictChanged('Setúbal');
+    expect(component.selectedVenueId).toBeNull();
+    expect(component.venueDistrict).toBe('Setúbal');
+    expect(venues.suggest).toHaveBeenCalledWith('', '', 'Padel', 0, 'Setúbal');
+    pending.next(page([venue(1,'Campo Porto')]));
+    pending.complete();
+    expect(component.venues.map(v => v.id)).toEqual([2]);
+  });
+
+  it('requires a three-letter name for unclassified nationwide search', fakeAsync(() => {
+    component.sport = 'Padel';
+    component.onDistrictChanged('ALL');
+    expect(venues.suggest).not.toHaveBeenCalled();
+    component.onVenueSearchChanged('Ca');
+    tick(300);
+    expect(venues.suggest).not.toHaveBeenCalled();
+    component.onVenueSearchChanged('Campo');
+    tick(300);
+    expect(venues.suggest).toHaveBeenCalledWith('Campo', '', 'Padel', 0, undefined);
+  }));
 
   it('does not download all venues before the user picks a sport', () => {
     expect(venues.search).not.toHaveBeenCalled();
     expect(venues.suggest).not.toHaveBeenCalled();
     component.sport = 'Padel';
     component.confirmSportSelection();
-    expect(venues.suggest).toHaveBeenCalledWith('', '', 'Padel', 0);
+    expect(venues.suggest).toHaveBeenCalledWith('', '', 'Padel', 0, 'Porto');
     expect(venues.search).not.toHaveBeenCalled();
   });
 
@@ -60,7 +98,7 @@ describe('Create session venue server autocomplete', () => {
     tick(299);
     expect(venues.suggest).not.toHaveBeenCalled();
     tick(1);
-    expect(venues.suggest).toHaveBeenCalledWith('Pavilhão', '', 'Padel', 0);
+    expect(venues.suggest).toHaveBeenCalledWith('Pavilhão', '', 'Padel', 0, 'Porto');
     fixture.detectChanges();
     expect((fixture.nativeElement.querySelector('input[name="venueSearch"]') as HTMLInputElement).disabled)
       .toBeFalse();
@@ -80,7 +118,7 @@ describe('Create session venue server autocomplete', () => {
       .find((item: any) => item.textContent.includes('Mostrar mais recintos')) as HTMLButtonElement;
     expect(more).toBeDefined();
     more.click();
-    expect(venues.suggest).toHaveBeenCalledWith('', '', 'Padel', 1);
+    expect(venues.suggest).toHaveBeenCalledWith('', '', 'Padel', 1, 'Porto');
     expect(component.venueOptions.some(v => v.id === 101)).toBeTrue();
     component.venueSearch = 'Campo Porto · Porto';
     component.confirmVenueSelection();
@@ -108,14 +146,14 @@ describe('Create session venue server autocomplete', () => {
     component.sport = 'Padel';
     component.onCityChanged('Porto');
     tick(300);
-    expect(venues.suggest).toHaveBeenCalledWith('', 'Porto', 'Padel', 0);
+    expect(venues.suggest).toHaveBeenCalledWith('', 'Porto', 'Padel', 0, 'Porto');
   }));
 
   it('separates a selected datalist label into venue name and city', fakeAsync(() => {
     component.sport = 'Padel';
     component.onVenueSearchChanged('Pavilhão Municipal · Évora');
     tick(300);
-    expect(venues.suggest).toHaveBeenCalledWith('Pavilhão Municipal', 'Évora', 'Padel', 0);
+    expect(venues.suggest).toHaveBeenCalledWith('Pavilhão Municipal', 'Évora', 'Padel', 0, 'Porto');
   }));
 
   it('does not select a name-only result if more matches may be on later pages', () => {
