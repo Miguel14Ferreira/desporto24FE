@@ -5,6 +5,7 @@ import { RouterModule, Routes } from '@angular/router';
 
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import { AdminDashboardComponent } from '../admin-dashboard/admin-dashboard.component';
+import { AdminAuditComponent } from '../admin-audit/admin-audit.component';
 import { AdminDisputesComponent } from '../admin-disputes/admin-disputes.component';
 import { AdminIdeasComponent } from '../admin-ideas/admin-ideas.component';
 import { AdminPlayersComponent } from '../admin-players/admin-players.component';
@@ -12,6 +13,7 @@ import { AdminUserReportsComponent } from '../admin-user-reports/admin-user-repo
 
 const routes: Routes = [
   { path: '', component: AdminDashboardComponent },
+  { path: 'audit-log', component: AdminAuditComponent },
   { path: 'players', component: AdminPlayersComponent },
   { path: 'attendance-disputes', component: AdminDisputesComponent },
   { path: 'ideas', component: AdminIdeasComponent },
@@ -21,6 +23,7 @@ const routes: Routes = [
 @NgModule({
   declarations: [
     AdminDashboardComponent,
+    AdminAuditComponent,
     AdminDisputesComponent,
     AdminIdeasComponent,
     AdminPlayersComponent,
