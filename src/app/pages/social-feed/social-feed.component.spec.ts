@@ -52,6 +52,42 @@ describe('SocialFeedComponent discovery sidebar', () => {
     component = fixture.componentInstance;
   });
 
+  it('allows video selection, limits its size and keeps photo/video mutually exclusive', fakeAsync(() => {
+    fixture.detectChanges();
+    tick(351);
+    const url = spyOn(URL, 'createObjectURL').and.returnValue('blob:test-video');
+    const revoke = spyOn(URL, 'revokeObjectURL');
+    const video = new File(['video bytes'], 'clip.mp4', { type: 'video/mp4' });
+    const input = document.createElement('input');
+    Object.defineProperty(input, 'files', { value: [video], configurable: true });
+    component.onPostVideoChange({ target: input } as unknown as Event);
+    fixture.detectChanges();
+    expect(url).toHaveBeenCalledOnceWith(video);
+    expect(component.postVideoFile).toBe(video);
+    expect(component.postImageFile).toBeUndefined();
+    expect((fixture.nativeElement as HTMLElement).querySelector('.composer-image-preview video')).not.toBeNull();
+    component.removePostVideo();
+    expect(revoke).toHaveBeenCalledWith('blob:test-video');
+    expect(component.postVideoFile).toBeUndefined();
+    component.ngOnDestroy();
+  }));
+
+  it('rejects oversized and unsupported video files', fakeAsync(() => {
+    fixture.detectChanges();
+    tick(351);
+    for (const video of [
+      new File(['fake'], 'example.mov', { type: 'video/quicktime' }),
+      new File([new Uint8Array(20 * 1024 * 1024 + 1)], 'large.mp4', { type: 'video/mp4' })
+    ]) {
+      const input = document.createElement('input');
+      Object.defineProperty(input, 'files', { value: [video], configurable: true });
+      component.onPostVideoChange({ target: input } as unknown as Event);
+      expect(component.postVideoFile).toBeUndefined();
+      expect(component.actionError).toBeTruthy();
+    }
+    component.ngOnDestroy();
+  }));
+
   it('links a missing-two-players request to the existing public recruitment flow', fakeAsync(() => {
     fixture.detectChanges();
     tick(351);
@@ -241,7 +277,7 @@ describe('SocialFeedComponent discovery sidebar', () => {
     component.publish();
     fixture.detectChanges();
 
-    expect(feed.createPost).toHaveBeenCalledOnceWith('Bora jogar?', undefined, 42);
+    expect(feed.createPost).toHaveBeenCalledOnceWith('Bora jogar?', undefined, 42, undefined);
     expect(component.postContent).toBe('');
     expect(component.selectedSessionId).toBeNull();
     expect(component.sessionPickerExpanded).toBeFalse();
