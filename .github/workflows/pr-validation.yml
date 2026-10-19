@@ -1,20 +1,20 @@
 # One complete Angular verification per pull request instead of overlapping
 # npm installs, test subsets and production builds from feature-specific jobs.
+# Draft PRs remain inexpensive; validate once they are ready for review.
 name: Jynlo FE PR validation
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     branches: [preview/render-fullstack]
     paths:
       - 'src/**'
-      - 'e2e/**'
       - 'package.json'
       - 'package-lock.json'
       - 'angular.json'
       - 'tsconfig*.json'
-      - 'playwright.config.ts'
       - 'Dockerfile'
-      - '.github/workflows/**'
+      - '.github/workflows/pr-validation.yml'
   workflow_dispatch:
 
 permissions:
@@ -27,6 +27,7 @@ concurrency:
 jobs:
   test-and-build:
     name: Angular tests and build
+    if: ${{ github.event_name == 'workflow_dispatch' || !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
