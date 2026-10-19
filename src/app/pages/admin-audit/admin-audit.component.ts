@@ -1,6 +1,6 @@
-import { HttpClient } from '@angular/common/http';
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, Optional } from '@angular/core';
+import { Subscription, TimeoutError, finalize, timeout } from 'rxjs';
 import { environment } from 'src/environment/environment';
 
 export interface AdminPlatformOverview {
@@ -56,6 +56,9 @@ export class AdminAuditComponent implements OnInit, OnDestroy {
   overviewError = '';
   private overviewRequest?: Subscription;
   private growthRequest?: Subscription;
+  private overviewRequestVersion = 0;
+  private growthRequestVersion = 0;
+  private readonly requestTimeoutMs = 12_000;
   growth: AdminGrowthTrends | null = null;
   growthLoading = false;
   growthError = '';
@@ -65,6 +68,8 @@ export class AdminAuditComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    ++this.overviewRequestVersion;
+    ++this.growthRequestVersion;
     this.overviewRequest?.unsubscribe();
     this.growthRequest?.unsubscribe();
   }
@@ -95,43 +100,82 @@ export class AdminAuditComponent implements OnInit, OnDestroy {
     });
   }
 
+  /** A stalled network request (including token refresh) must not freeze this screen. */
   loadGrowth(): void {
+    const version = ++this.growthRequestVersion;
     this.growthRequest?.unsubscribe();
     this.growthLoading = true;
     this.growthError = '';
     this.growthRequest = this.http.get<AdminGrowthTrends>(
       environment.apiUrl + '/api/admin/overview/trends'
+    ).pipe(
+      timeout(this.requestTimeoutMs),
+      finalize(() => {
+        if (version !== this.growthRequestVersion) return;
+        this.growthLoading = false;
+        this.changeDetector?.markForCheck();
+      })
     ).subscribe({
       next: history => {
+        if (version !== this.growthRequestVersion) return;
         this.growth = history;
-        this.growthLoading = false;
+        this.changeDetector?.markForCheck();
       },
-      error: () => {
-        this.growthError = 'Não foi possível atualizar a evolução semanal.';
-        this.growthLoading = false;
+      error: error => {
+        if (version !== this.growthRequestVersion) return;
+        this.growthError = this.requestError(error, 'gráficos');
+        this.changeDetector?.markForCheck();
       }
     });
   }
 
   loadOverview(): void {
+    const version = ++this.overviewRequestVersion;
     this.overviewRequest?.unsubscribe();
     this.overviewLoading = true;
     this.overviewError = '';
     this.overviewRequest = this.http.get<AdminPlatformOverview>(
       environment.apiUrl + '/api/admin/overview'
+    ).pipe(
+      timeout(this.requestTimeoutMs),
+      finalize(() => {
+        if (version !== this.overviewRequestVersion) return;
+        this.overviewLoading = false;
+        this.changeDetector?.markForCheck();
+      })
     ).subscribe({
       next: summary => {
+        if (version !== this.overviewRequestVersion) return;
         this.overview = summary;
-        this.overviewLoading = false;
+        this.changeDetector?.markForCheck();
       },
-      error: () => {
-        this.overviewError = 'Não foi possível carregar os indicadores. Verifica a ligação e tenta novamente.';
-        this.overviewLoading = false;
+      error: error => {
+        if (version !== this.overviewRequestVersion) return;
+        this.overviewError = this.requestError(error, 'indicadores');
+        this.changeDetector?.markForCheck();
       }
     });
   }
 
+  private requestError(error: unknown, subject: 'indicadores' | 'gráficos'): string {
+    if (error instanceof TimeoutError) {
+      return `O pedido de ${subject} demorou demasiado tempo (12 segundos). Tenta novamente.`;
+    }
+    if (error instanceof HttpErrorResponse) {
+      if (error.status === 401 || error.status === 403) {
+        return 'A sessão não tem acesso às estatísticas. Verifica a autenticação e as permissões de administrador.';
+      }
+      if (error.status === 0) {
+        return 'Não foi possível estabelecer ligação à API. Verifica a ligação e tenta novamente.';
+      }
+      return `Não foi possível carregar os ${subject} (HTTP ${error.status}). Tenta novamente.`;
+    }
+    return `Não foi possível carregar os ${subject}. Tenta novamente.`;
+  }
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    @Optional() private readonly changeDetector?: ChangeDetectorRef
+  ) {}
 
 }
