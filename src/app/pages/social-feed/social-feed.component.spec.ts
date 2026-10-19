@@ -232,7 +232,7 @@ describe('SocialFeedComponent discovery sidebar', () => {
     expect(component.selectedSessionId).toBeNull();
   }));
 
-  it('resets optional session selection after publishing a linked post', fakeAsync(() => {
+  it('clears a contextual session link after a successful post', fakeAsync(() => {
     const posted: FeedItem = {
       type: 'POST', postId: 7, authorUsername: 'miguel',
       authorDisplayName: 'Miguel', authorProfilePicUrl: null,
