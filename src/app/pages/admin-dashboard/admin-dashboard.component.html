@@ -205,27 +205,6 @@
       </div>
     </div>
 
-    <section class="security-note" aria-label="Pré-visualização de recintos">
-      <strong>Verificar duplicados de recintos (sem importar)</strong>
-      <p>Pré-visualização apenas de leitura. Não cria ou altera recintos.</p>
-      <textarea aria-label="JSON dos recintos" [(ngModel)]="venuePayload" rows="10"
-        style="width:100%;margin-top:1rem;font-family:monospace;"></textarea>
-      <button class="jynlo-action jynlo-action--neutral" type="button" (click)="previewVenues()" [disabled]="previewLoading"
-        style="margin-top:.75rem;padding:.65rem 1rem;">
-        {{ previewLoading ? 'A verificar...' : 'Verificar duplicados' }}
-      </button>
-      <p *ngIf="previewError" role="alert">{{ previewError }}</p>
-      <ul *ngIf="previewResults.length">
-        <li *ngFor="let result of previewResults">
-          <strong>{{ result.name }}</strong>: {{ result.status }}
-          <ul *ngIf="result.candidates.length">
-            <li *ngFor="let candidate of result.candidates">
-              #{{ candidate.id }} — {{ candidate.name }} ({{ candidate.city }})
-            </li>
-          </ul>
-        </li>
-      </ul>
-    </section>
 
     <div class="security-note">
       <strong>{{ 'adminHub.protected' | t }}</strong>
