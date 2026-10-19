@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
-import { finalize, retry, timeout } from 'rxjs';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
+import { finalize, retry, Subscription, timeout } from 'rxjs';
 
 import { SessionSummary } from '../model/session-summary';
 import { appTranslate as t } from '../../i18n/i18n.service';
@@ -13,7 +13,7 @@ import { SPORTS_CATALOG } from '../../shared/sports-catalog';
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false
 })
-export class EventsComponent implements OnInit {
+export class EventsComponent implements OnInit, OnDestroy {
   sessions: SessionSummary[] = [];
   citySuggestions: string[] = [];
   loading = false;
@@ -40,13 +40,29 @@ export class EventsComponent implements OnInit {
   latitude: number | null = null;
   longitude: number | null = null;
 
+  private searchRequestId = 0;
+  private locationRequestId = 0;
+  private currentSearch?: Subscription;
+  private destroyed = false;
+
   constructor(private sessionService: SessionService) {}
 
   ngOnInit(): void {
     this.loadSessions();
   }
 
+  ngOnDestroy(): void {
+    this.destroyed = true;
+    ++this.searchRequestId;
+    ++this.locationRequestId;
+    this.currentSearch?.unsubscribe();
+  }
+
   loadSessions(): void {
+    if (this.destroyed) return;
+    const requestId = ++this.searchRequestId;
+    // Only the most recent filters are allowed to update the screen.
+    this.currentSearch?.unsubscribe();
     this.loading = true;
     this.errorMessage = '';
 
@@ -55,6 +71,8 @@ export class EventsComponent implements OnInit {
 
     if (from && to && new Date(from).getTime() > new Date(to).getTime()) {
       this.loading = false;
+      this.sessions = [];
+      this.citySuggestions = [];
       this.errorMessage = t('feedback.events.invalidDateRange');
       return;
     }
@@ -65,11 +83,13 @@ export class EventsComponent implements OnInit {
       && this.minPrice > this.maxPrice
     ) {
       this.loading = false;
+      this.sessions = [];
+      this.citySuggestions = [];
       this.errorMessage = t('feedback.events.invalidPriceRange');
       return;
     }
 
-    this.sessionService.discover({
+    this.currentSearch = this.sessionService.discover({
       sport: this.sport,
       city: this.city,
       availability: this.availableOnly ? 'available' : undefined,
@@ -90,14 +110,20 @@ export class EventsComponent implements OnInit {
     .pipe(
       timeout(10_000),
       retry({ count: 1 }),
-      finalize(() => this.loading = false)
+      finalize(() => {
+        if (requestId === this.searchRequestId && !this.destroyed) {
+          this.loading = false;
+        }
+      })
     )
     .subscribe({
       next: sessions => {
+        if (requestId !== this.searchRequestId || this.destroyed) return;
         this.sessions = sessions;
         this.updateCitySuggestions();
       },
       error: () => {
+        if (requestId !== this.searchRequestId || this.destroyed) return;
         this.sessions = [];
         this.citySuggestions = [];
         this.errorMessage = t('feedback.events.loadError');
@@ -106,6 +132,7 @@ export class EventsComponent implements OnInit {
   }
 
   useCurrentLocation(): void {
+    if (this.locating || this.destroyed) return;
     this.locationError = '';
 
     if (!navigator.geolocation) {
@@ -114,9 +141,11 @@ export class EventsComponent implements OnInit {
     }
 
     this.locating = true;
+    const requestId = ++this.locationRequestId;
 
     navigator.geolocation.getCurrentPosition(
       position => {
+        if (requestId !== this.locationRequestId || this.destroyed) return;
         this.latitude = position.coords.latitude;
         this.longitude = position.coords.longitude;
         this.nearbyActive = true;
@@ -125,6 +154,7 @@ export class EventsComponent implements OnInit {
         this.loadSessions();
       },
       () => {
+        if (requestId !== this.locationRequestId || this.destroyed) return;
         this.locating = false;
         this.locationError = t('feedback.location.error');
       },
@@ -137,6 +167,8 @@ export class EventsComponent implements OnInit {
   }
 
   disableNearby(): void {
+    ++this.locationRequestId;
+    this.locating = false;
     this.nearbyActive = false;
     this.latitude = null;
     this.longitude = null;

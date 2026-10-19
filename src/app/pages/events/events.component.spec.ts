@@ -1,9 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 
 import { EventsComponent } from './events.component';
 import { TEST_IMPORTS, TEST_PROVIDERS } from '../../testing/test-providers';
 import { SessionService } from '../../services/session.service';
+import { SessionSummary } from '../model/session-summary';
 
 describe('EventsComponent', () => {
   let component: EventsComponent;
@@ -153,6 +154,78 @@ describe('EventsComponent', () => {
     expect(component.canJoinWaitlist({
       ...fullSession, gameDate: new Date(Date.now() - 86_400_000).toISOString()
     })).toBeFalse();
+  });
+
+  it('keeps only the newest session search results when responses arrive out of order', () => {
+    const earlier = new Subject<SessionSummary[]>();
+    const latest = new Subject<SessionSummary[]>();
+    sessionService.discover.and.returnValues(earlier.asObservable(), latest.asObservable());
+    component.city = 'Lisboa';
+    component.loadSessions();
+    expect(component.loading).toBeTrue();
+
+    component.city = 'Porto';
+    component.loadSessions();
+    const porto = { id: 101, city: 'Porto', sport: 'Futsal' } as SessionSummary;
+    earlier.next([{ id: 100, city: 'Lisboa', sport: 'Padel' } as SessionSummary]);
+    earlier.error(new Error('stale request failed'));
+    expect(component.loading).toBeTrue();
+    expect(component.errorMessage).toBe('');
+
+    latest.next([porto]);
+    latest.complete();
+    expect(component.sessions).toEqual([porto]);
+    expect(component.citySuggestions).toEqual(['Porto']);
+    expect(component.loading).toBeFalse();
+    expect(component.errorMessage).toBe('');
+    expect(sessionService.discover.calls.mostRecent().args[0].city).toBe('Porto');
+  });
+
+  it('invalidates an in-flight search when the user enters an invalid date range', () => {
+    const pending = new Subject<SessionSummary[]>();
+    sessionService.discover.and.returnValue(pending.asObservable());
+    component.city = 'Lisboa';
+    component.loadSessions();
+    expect(component.loading).toBeTrue();
+
+    component.fromDateTime = '2026-11-02T20:00';
+    component.toDateTime = '2026-11-02T19:00';
+    component.loadSessions();
+    expect(component.loading).toBeFalse();
+    expect(component.errorMessage).toBeTruthy();
+    pending.next([{ id: 52, city: 'Lisboa' } as SessionSummary]);
+    pending.complete();
+    expect(component.sessions).toEqual([]);
+    expect(component.citySuggestions).toEqual([]);
+    expect(component.errorMessage).toBeTruthy();
+  });
+
+  it('ignores an outdated geolocation success after nearby mode was disabled', () => {
+    const geolocation = spyOn(navigator.geolocation, 'getCurrentPosition');
+    let respond: PositionCallback | undefined;
+    geolocation.and.callFake(success => { respond = success; });
+    component.useCurrentLocation();
+    expect(component.locating).toBeTrue();
+    component.disableNearby();
+    const requests = sessionService.discover.calls.count();
+
+    respond?.({ coords: { latitude: 38.7, longitude: -9.3 } } as GeolocationPosition);
+    expect(component.locating).toBeFalse();
+    expect(component.nearbyActive).toBeFalse();
+    expect(component.latitude).toBeNull();
+    expect(component.longitude).toBeNull();
+    expect(sessionService.discover.calls.count()).toBe(requests);
+  });
+
+  it('unsubscribes from pending session results on destroy', () => {
+    const pending = new Subject<SessionSummary[]>();
+    sessionService.discover.and.returnValue(pending.asObservable());
+    component.loadSessions();
+    component.ngOnDestroy();
+    pending.next([{ id: 81, city: 'Porto' } as SessionSummary]);
+    pending.complete();
+    expect(component.sessions).toEqual([]);
+    expect(component.errorMessage).toBe('');
   });
 
   it('should disable nearby search and clear coordinates', () => {
