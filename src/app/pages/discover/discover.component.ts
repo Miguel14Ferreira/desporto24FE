@@ -419,12 +419,16 @@ export class DiscoverComponent implements OnInit {
     location: string
   ): Observable<CommunityProfile[]> {
     const name = this.playerName.trim();
-    if (!name && !sport && !location) {
+    // A name search must not inherit Discover's sport or locality filters.
+    if (name) {
+      return name.length < 2
+        ? of([])
+        : this.communityService.findProfiles({ name });
+    }
+    if (!sport && !location) {
       return of([]);
     }
-
     return this.communityService.findProfiles({
-      name: name || undefined,
       sport: sport || undefined,
       location: location || undefined
     });

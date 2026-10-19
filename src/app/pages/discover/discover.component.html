@@ -281,7 +281,7 @@
                 [placeholder]="'discover.who.searchPlaceholder' | t"
                 autocomplete="off">
               <button type="submit" class="jynlo-action jynlo-action--neutral"
-                [disabled]="loading || loadingPeople">
+                [disabled]="loading || loadingPeople || playerName.trim().length === 1">
                 {{ (loadingPeople ? 'discover.who.searching' : 'discover.who.search') | t }}
               </button>
               @if (playerName) {
@@ -292,6 +292,9 @@
               }
             </div>
             <small>{{ 'discover.who.searchHint' | t }}</small>
+            @if (playerName.trim().length === 1) {
+              <small class="discover-name-min-length" role="status">{{ 'discover.who.nameMinLength' | t }}</small>
+            }
             @if (playerSearchError) {
               <p role="alert">{{ 'discover.who.searchError' | t }}</p>
             }
