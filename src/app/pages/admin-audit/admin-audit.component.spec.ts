@@ -1,11 +1,13 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { fakeAsync, tick } from '@angular/core/testing';
+import { ChangeDetectorRef } from '@angular/core';
+import { fakeAsync, flushMicrotasks, TestBed, tick } from '@angular/core/testing';
 import { NEVER, Subject, of, throwError } from 'rxjs';
 import { environment } from 'src/environment/environment';
 import { AdminAuditComponent, AdminPlatformOverview, AdminGrowthTrends } from './admin-audit.component';
 
 describe('AdminAuditComponent — platform overview in audit page', () => {
   let http: jasmine.SpyObj<HttpClient>;
+  let changeDetector: jasmine.SpyObj<ChangeDetectorRef>;
   let component: AdminAuditComponent;
   const summary: AdminPlatformOverview = {
     registeredUsers: 125, enabledUsers: 120, registrationsLast7Days: 8,
@@ -33,7 +35,8 @@ describe('AdminAuditComponent — platform overview in audit page', () => {
 
   beforeEach(() => {
     http = jasmine.createSpyObj<HttpClient>('HttpClient', ['get', 'post']);
-    component = new AdminAuditComponent(http);
+    changeDetector = jasmine.createSpyObj<ChangeDetectorRef>('ChangeDetectorRef', ['markForCheck', 'detectChanges']);
+    component = new AdminAuditComponent(http, changeDetector);
   });
 
   afterEach(() => component.ngOnDestroy());
@@ -161,5 +164,54 @@ describe('AdminAuditComponent — platform overview in audit page', () => {
     tick(12_001);
     expect(component.overviewError).toBe('');
     expect(component.growthError).toBe('');
+  }));
+
+  it('rerenders the actual template when overview and trends return 200 without any user click', fakeAsync(() => {
+    const overviewResponse = new Subject<AdminPlatformOverview>();
+    const growthResponse = new Subject<AdminGrowthTrends>();
+    http.get.and.returnValues(overviewResponse.asObservable(), growthResponse.asObservable());
+
+    TestBed.configureTestingModule({
+      declarations: [AdminAuditComponent],
+      providers: [{ provide: HttpClient, useValue: http }]
+    });
+    TestBed.overrideComponent(AdminAuditComponent, {
+      set: {
+        template: `
+          <div id="overview">{{ overviewLoading ? 'A carregar' : (overview?.registeredUsers ?? 'Sem dados') }}</div>
+          <div id="growth">{{ growthLoading ? 'A carregar' : (growth?.weeks?.length ?? 'Sem dados') }}</div>
+        `
+      }
+    });
+    const fixture = TestBed.createComponent(AdminAuditComponent);
+    fixture.detectChanges();
+    const overviewElement: HTMLElement = fixture.nativeElement.querySelector('#overview');
+    const growthElement: HTMLElement = fixture.nativeElement.querySelector('#growth');
+    expect(overviewElement.textContent).toContain('A carregar');
+    expect(growthElement.textContent).toContain('A carregar');
+
+    overviewResponse.next(summary);
+    overviewResponse.complete();
+    growthResponse.next(trends);
+    growthResponse.complete();
+    flushMicrotasks();
+
+    // Deliberately no fixture.detectChanges(): the component must refresh itself.
+    expect(overviewElement.textContent).toContain('125');
+    expect(growthElement.textContent).toContain('8');
+    fixture.destroy();
+  }));
+
+  it('coalesces view refreshes after both requests and skips rendering after destroy', fakeAsync(() => {
+    http.get.and.returnValues(of(summary), of(trends));
+    component.ngOnInit();
+    expect(changeDetector.markForCheck).toHaveBeenCalled();
+    flushMicrotasks();
+    expect(changeDetector.detectChanges).toHaveBeenCalledTimes(1);
+
+    component.ngOnDestroy();
+    component.loadOverview();
+    flushMicrotasks();
+    expect(changeDetector.detectChanges).toHaveBeenCalledTimes(1);
   }));
 });

@@ -9,7 +9,7 @@ import {
   HttpRequest
 } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, finalize, shareReplay, switchMap, catchError, throwError, timeout } from 'rxjs';
+import { Observable, finalize, shareReplay, switchMap, catchError, throwError } from 'rxjs';
 
 import { environment } from '../environment/environment';
 import { LoginResponse } from './pages/model/login-response';
@@ -81,8 +81,6 @@ export class AuthInterceptor implements HttpInterceptor {
         null,
         { withCredentials: true }
       ).pipe(
-        // Do not keep every authenticated request pending if the refresh endpoint stalls.
-        timeout(10_000),
         switchMap(response => {
           if (!response.token) {
             return throwError(() => new Error('Refresh response did not include an access token'));
@@ -92,8 +90,7 @@ export class AuthInterceptor implements HttpInterceptor {
           return [response];
         }),
         finalize(() => this.refreshInFlight = undefined),
-        // Cancel the underlying refresh if all callers leave; allow a future retry.
-        shareReplay({ bufferSize: 1, refCount: true })
+        shareReplay(1)
       );
     }
 

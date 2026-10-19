@@ -1,5 +1,5 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectorRef, Component, OnDestroy, OnInit, Optional } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { Subscription, TimeoutError, finalize, timeout } from 'rxjs';
 import { environment } from 'src/environment/environment';
 
@@ -59,6 +59,8 @@ export class AdminAuditComponent implements OnInit, OnDestroy {
   private overviewRequestVersion = 0;
   private growthRequestVersion = 0;
   private readonly requestTimeoutMs = 12_000;
+  private destroyed = false;
+  private viewUpdateScheduled = false;
   growth: AdminGrowthTrends | null = null;
   growthLoading = false;
   growthError = '';
@@ -68,6 +70,7 @@ export class AdminAuditComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.destroyed = true;
     ++this.overviewRequestVersion;
     ++this.growthRequestVersion;
     this.overviewRequest?.unsubscribe();
@@ -113,18 +116,18 @@ export class AdminAuditComponent implements OnInit, OnDestroy {
       finalize(() => {
         if (version !== this.growthRequestVersion) return;
         this.growthLoading = false;
-        this.changeDetector?.markForCheck();
+        this.refreshView();
       })
     ).subscribe({
       next: history => {
         if (version !== this.growthRequestVersion) return;
         this.growth = history;
-        this.changeDetector?.markForCheck();
+        this.refreshView();
       },
       error: error => {
         if (version !== this.growthRequestVersion) return;
         this.growthError = this.requestError(error, 'gráficos');
-        this.changeDetector?.markForCheck();
+        this.refreshView();
       }
     });
   }
@@ -141,19 +144,35 @@ export class AdminAuditComponent implements OnInit, OnDestroy {
       finalize(() => {
         if (version !== this.overviewRequestVersion) return;
         this.overviewLoading = false;
-        this.changeDetector?.markForCheck();
+        this.refreshView();
       })
     ).subscribe({
       next: summary => {
         if (version !== this.overviewRequestVersion) return;
         this.overview = summary;
-        this.changeDetector?.markForCheck();
+        this.refreshView();
       },
       error: error => {
         if (version !== this.overviewRequestVersion) return;
         this.overviewError = this.requestError(error, 'indicadores');
-        this.changeDetector?.markForCheck();
+        this.refreshView();
       }
+    });
+  }
+
+  /**
+   * The admin page is also reached from code paths outside Angular's CD turn.
+   * markForCheck alone can leave the DOM displaying its initial loading state.
+   * Coalesce notifications and render after the current HTTP callback completes.
+   */
+  private refreshView(): void {
+    if (this.destroyed) return;
+    this.changeDetector.markForCheck();
+    if (this.viewUpdateScheduled) return;
+    this.viewUpdateScheduled = true;
+    queueMicrotask(() => {
+      this.viewUpdateScheduled = false;
+      if (!this.destroyed) this.changeDetector.detectChanges();
     });
   }
 
@@ -175,7 +194,7 @@ export class AdminAuditComponent implements OnInit, OnDestroy {
 
   constructor(
     private http: HttpClient,
-    @Optional() private readonly changeDetector?: ChangeDetectorRef
+    private readonly changeDetector: ChangeDetectorRef
   ) {}
 
 }
