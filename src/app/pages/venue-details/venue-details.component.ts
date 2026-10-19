@@ -62,6 +62,31 @@ export class VenueDetailsComponent implements OnInit {
     this.loadSportConditions(venueId);
   }
 
+  get hasConfirmedMapCoordinates(): boolean {
+    const latitude = this.venue?.latitude;
+    const longitude = this.venue?.longitude;
+    return latitude !== null && latitude !== undefined
+      && longitude !== null && longitude !== undefined
+      && Number.isFinite(latitude) && Number.isFinite(longitude)
+      && latitude >= -90 && latitude <= 90
+      && longitude >= -180 && longitude <= 180;
+  }
+
+  get mapUrl(): string | null {
+    const venue = this.venue;
+    if (!venue) return null;
+
+    if (this.hasConfirmedMapCoordinates) {
+      return `https://www.google.com/maps?q=${venue.latitude},${venue.longitude}`;
+    }
+
+    // A search link is useful but never claims to pinpoint a venue without GPS.
+    const query = [venue.name, venue.address, venue.city, venue.district, 'Portugal']
+      .filter((part): part is string => typeof part === 'string' && part.trim().length > 0)
+      .join(', ');
+    return query ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}` : null;
+  }
+
   retryPhotos(): void {
     if (!this.venue) return;
     this.loadPhotos(this.venue.id);

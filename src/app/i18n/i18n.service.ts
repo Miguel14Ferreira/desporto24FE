@@ -1452,6 +1452,8 @@ const PT: Dictionary = {
   'venue.detail.city': 'Localidade',
   'venue.detail.address': 'Morada',
   'venue.detail.viewMap': 'Ver no mapa',
+  'venue.detail.searchMap': 'Pesquisar localização no Google Maps',
+  'venue.detail.searchMapHint': 'A localização ainda não tem coordenadas confirmadas. Confirma a morada no mapa.'
   'venue.detail.amenities': 'Comodidades',
   'venue.detail.information': 'Informação',
   'venue.detail.sports': 'Modalidades',
@@ -3409,6 +3411,8 @@ const EN: Dictionary = {
   'venue.detail.city': 'City',
   'venue.detail.address': 'Address',
   'venue.detail.viewMap': 'View on map',
+  'venue.detail.searchMap': 'Search location on Google Maps',
+  'venue.detail.searchMapHint': 'This venue has no confirmed coordinates yet. Check the address on the map.'
   'venue.detail.amenities': 'Amenities',
   'venue.detail.information': 'Information',
   'venue.detail.sports': 'Sports',
