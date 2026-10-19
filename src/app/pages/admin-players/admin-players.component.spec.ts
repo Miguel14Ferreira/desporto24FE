@@ -121,7 +121,7 @@ describe('AdminPlayersComponent account moderation', () => {
     const otherAdmin = { ...player(), role: 'ROLE_ADMIN' };
     expect(component.canSuspend(otherAdmin)).toBeFalse();
     expect(component.canDelete(otherAdmin)).toBeFalse();
-    auth.hasAnyRole.and.callFake((...roles) => roles.includes('ROLE_ADMIN') && !roles.includes('ROLE_SUPER_ADMIN'));
+    auth.hasAnyRole.and.callFake((...roles) => roles.includes('ROLE_ADMIN'));
     expect(component.canSuspend(player())).toBeTrue();
     expect(component.canDelete(player())).toBeFalse();
     component.ngOnDestroy();
