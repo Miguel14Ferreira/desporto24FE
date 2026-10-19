@@ -11,6 +11,7 @@ import { CommunityGroupsService } from '../../services/community-groups.service'
 import { VenuePhoto, VenueService } from '../../services/venue.service';
 import { Venue, VenueOwnershipType } from '../model/venue';
 import { SPORTS_CATALOG } from '../../shared/sports-catalog';
+import { MAINLAND_PORTUGAL_DISTRICTS, SEARCH_ALL_DISTRICTS } from '../../shared/portugal-districts';
 
 @Component({
   selector: 'app-events2',
@@ -76,6 +77,9 @@ export class Events2Component implements OnInit, OnDestroy {
   recurrenceOccurrences = 4;
 
   readonly sportsCatalog = SPORTS_CATALOG;
+  readonly districts = MAINLAND_PORTUGAL_DISTRICTS;
+  readonly allDistrictsOption = SEARCH_ALL_DISTRICTS;
+  venueDistrict = '';
   venues: Venue[] = [];
   private newlyCreatedVenues: Venue[] = [];
   venueSearch = '';
@@ -275,8 +279,18 @@ export class Events2Component implements OnInit, OnDestroy {
       });
   }
 
-  /** Query only the current suggestion page instead of fetching the national catalog. */
+  /** Query by district on the server; never download the national catalog. */
   loadVenues(page = 0): void {
+    if (!this.venueDistrict || (this.venueDistrict === SEARCH_ALL_DISTRICTS
+        && this.venueSearch.trim().split(' · ')[0].trim().length < 3)) {
+      ++this.venueLookupVersion;
+      this.venuesLoading = false;
+      this.venuesHasMore = false;
+      this.venuesLoadError = false;
+      this.venuePage = 0;
+      this.venues = [...this.newlyCreatedVenues];
+      return;
+    }
     if (page > 0 && (this.venuesLoading || !this.venuesHasMore || page !== this.venuePage + 1)) return;
     const typed = this.venueSearch.trim();
     const separator = typed.lastIndexOf(' · ');
@@ -286,7 +300,8 @@ export class Events2Component implements OnInit, OnDestroy {
     this.venuesLoading = true;
     this.venuesLoadError = false;
 
-    this.venueService.suggest(name, city, this.sportSelected ? this.sport.trim() : '', page)
+    this.venueService.suggest(name, city, this.sportSelected ? this.sport.trim() : '', page,
+        this.venueDistrict === SEARCH_ALL_DISTRICTS ? undefined : this.venueDistrict)
       .pipe(
         timeout(10_000),
         retry({ count: 1 }),
@@ -330,9 +345,28 @@ export class Events2Component implements OnInit, OnDestroy {
     this.venueSearchChanged.next();
   }
 
+  onDistrictChanged(value: string): void {
+    const chosen = this.districts.find(district => district === value)
+      ?? (value === SEARCH_ALL_DISTRICTS ? SEARCH_ALL_DISTRICTS : '');
+    if (chosen === this.venueDistrict) return;
+    const previous = this.venueDistrict;
+    this.selectVenue(null);
+    this.venueDistrict = chosen;
+    this.venueSearch = '';
+    this.newlyCreatedVenues = [];
+    this.venues = [];
+    if (previous && previous !== chosen) this.city = '';
+    ++this.venueLookupVersion;
+    this.venuesLoading = false;
+    this.venuesHasMore = false;
+    this.venuesLoadError = false;
+    this.venuePage = 0;
+    if (this.sportSelected && chosen !== SEARCH_ALL_DISTRICTS && chosen) this.loadVenues();
+  }
+
   onCityChanged(value: string): void {
     this.city = value;
-    if (this.sportSelected && this.selectedVenueId === null) this.queueVenueLookup();
+    if (this.sportSelected && this.venueDistrict && this.selectedVenueId === null) this.queueVenueLookup();
   }
 
   get sportSelected(): boolean {
@@ -418,7 +452,7 @@ export class Events2Component implements OnInit, OnDestroy {
       // Stop filtering suggestions by the city inherited from the old venue.
       this.selectVenue(null);
     }
-    if (this.sportSelected) this.queueVenueLookup();
+    if (this.sportSelected && this.venueDistrict) this.queueVenueLookup();
   }
 
   confirmVenueSelection(): void {
@@ -664,6 +698,10 @@ export class Events2Component implements OnInit, OnDestroy {
       return;
     }
 
+    if (!this.venueDistrict || this.venueDistrict === SEARCH_ALL_DISTRICTS) {
+      this.errorMessage = t('venue.districtRequiredToSave');
+      return;
+    }
     if (!this.venueName.trim() || !this.city.trim() || !this.address.trim()) {
       this.errorMessage = t('feedback.venue.required');
       return;
@@ -675,6 +713,7 @@ export class Events2Component implements OnInit, OnDestroy {
     this.venueService.create({
       name: this.venueName.trim(),
       city: this.city.trim(),
+      district: this.venueDistrict,
       address: this.address.trim(),
       sports: this.sport.trim(),
       venueType: this.venueType.trim() || null,

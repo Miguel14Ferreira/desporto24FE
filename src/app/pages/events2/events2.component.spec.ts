@@ -55,6 +55,7 @@ describe('Events2Component', () => {
 
     fixture = TestBed.createComponent(Events2Component);
     component = fixture.componentInstance;
+    component.venueDistrict = 'Lisboa';
     router = TestBed.inject(Router);
     spyOn(router, 'navigate').and.returnValue(Promise.resolve(true));
     fixture.detectChanges();
@@ -1563,7 +1564,9 @@ describe('Events2Component', () => {
     (options[1] as HTMLButtonElement).click();
     page.detectChanges();
     expect(current.sport).toBe('Padel');
-    expect(venueService.suggest).toHaveBeenCalledWith('', '', 'Padel', 0);
+    expect(venueService.suggest).not.toHaveBeenCalled();
+    current.onDistrictChanged('Lisboa');
+    expect(venueService.suggest).toHaveBeenCalledWith('', '', 'Padel', 0, 'Lisboa');
     current.gameDate = '2099-10-15T18:00';
     current.city = 'Lisboa';
     current.address = 'Campo Central';

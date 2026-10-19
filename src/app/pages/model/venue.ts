@@ -6,6 +6,7 @@ export interface Venue {
   id: number;
   name: string;
   city: string;
+  district?: string | null;
   address: string;
   sports: string | null;
   venueType: string | null;
@@ -55,6 +56,7 @@ export interface Venue {
 export interface CreateVenueRequest {
   name: string;
   city: string;
+  district?: string | null;
   address: string;
   sports: string | null;
   venueType?: string | null;
