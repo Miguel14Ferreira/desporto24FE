@@ -205,6 +205,15 @@
         </div>
       }
 
+      @if (postVideoPreview) {
+        <div class="composer-image-preview">
+          <video [src]="postVideoPreview" controls preload="metadata" playsinline
+            [attr.aria-label]="'feed.videoPreviewAlt' | t"></video>
+          <button type="button" class="remove-image" [disabled]="posting"
+            (click)="removePostVideo()">{{ 'feed.removeVideo' | t }}</button>
+        </div>
+      }
+
       @if (showSessionPicker) {
       <label class="composer-session-select" id="feed-session-picker">
         <span>{{ 'feed.linkPublicSession' | t }}</span>
@@ -233,6 +242,11 @@
             [disabled]="posting"
             (change)="onPostImageChange($event)">
           <span>{{ postImagePreview ? ('feed.changeImage' | t) : ('feed.addImage' | t) }}</span>
+        </label>
+        <label class="image-picker jynlo-action" [class.disabled]="posting">
+          <input type="file" accept="video/mp4,video/webm" [disabled]="posting"
+            (change)="onPostVideoChange($event)">
+          <span>{{ postVideoPreview ? ('feed.changeVideo' | t) : ('feed.addVideo' | t) }}</span>
         </label>
         @if (selectedSessionId === null) {
           <button
@@ -344,7 +358,12 @@
               }
 
               <div class="post-actions">
-                @if (item.sessionId !== null) {
+                @if (postVideo(item); as video) {
+                 <video class="post-video" [src]="video" controls playsinline preload="none"
+                   [attr.aria-label]="'feed.postVideoAlt' | t:{ user: item.authorDisplayName }"></video>
+               }
+
+               @if (item.sessionId !== null) {
                   <button
                     type="button"
                     class="share-session jynlo-action jynlo-action--neutral"

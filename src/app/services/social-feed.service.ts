@@ -17,8 +17,11 @@ export class SocialFeedService {
     return this.http.get<FeedItem[]>(this.baseUrl);
   }
 
-  createPost(content: string, image?: File, sessionId?: number): Observable<FeedItem> {
-    if (!image) {
+  createPost(content: string, image?: File, sessionId?: number, video?: File): Observable<FeedItem> {
+    if (image && video) {
+      throw new Error('A post can contain either a photo or a video, not both');
+    }
+    if (!image && !video) {
       return this.http.post<FeedItem>(
         this.baseUrl + '/posts',
         { content, ...(sessionId == null ? {} : { sessionId }) }
@@ -27,7 +30,8 @@ export class SocialFeedService {
 
     const formData = new FormData();
     formData.append('content', content);
-    formData.append('image', image);
+    if (image) formData.append('image', image);
+    if (video) formData.append('video', video);
     if (sessionId != null) {
       formData.append('sessionId', String(sessionId));
     }

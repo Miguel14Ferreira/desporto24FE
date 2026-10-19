@@ -894,7 +894,8 @@ h1 {
   background: rgba(2,6,23,.35);
 }
 
-.composer-image-preview img {
+.composer-image-preview img,
+.composer-image-preview video {
   display: block;
   width: 100%;
   max-height: 460px;
@@ -922,7 +923,8 @@ h1 {
   cursor: wait;
 }
 
-.post-image {
+.post-image,
+.post-video {
   display: block;
   width: 100%;
   max-height: 620px;
@@ -931,6 +933,7 @@ h1 {
   object-fit: cover;
   background: rgba(2,6,23,.35);
 }
+.post-video { aspect-ratio: 16 / 9; object-fit: contain; }
 
 
 /* Public-session picker: align with the feed composer and dark theme. */

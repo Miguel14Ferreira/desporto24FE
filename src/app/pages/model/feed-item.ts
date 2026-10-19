@@ -8,6 +8,7 @@ export interface FeedItem {
   authorProfilePicUrl: string | null;
   content: string | null;
   imageUrl: string | null;
+  videoUrl?: string | null;
   createdAt: string;
   sessionId: number | null;
   sport: string | null;

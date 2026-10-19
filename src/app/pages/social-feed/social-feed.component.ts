@@ -28,6 +28,8 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
   postContent = '';
   postImageFile?: File;
   postImagePreview = '';
+  postVideoFile?: File;
+  postVideoPreview = '';
   availableSessions: SessionSummary[] = [];
   sessionSearch = '';
   sessionPickerExpanded = false;
@@ -423,6 +425,7 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.removePostVideo();
     this.destroyed.next();
     this.destroyed.complete();
   }
@@ -455,9 +458,9 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
     this.posting = true;
     this.actionError = '';
 
-    this.feedService.createPost(content, this.postImageFile, this.selectedSessionId ?? undefined)
+    this.feedService.createPost(content, this.postImageFile, this.selectedSessionId ?? undefined, this.postVideoFile)
       .pipe(
-        timeout(10_000),
+        timeout(this.postVideoFile ? 90_000 : 30_000),
         finalize(() => this.posting = false)
       )
       .subscribe({
@@ -466,6 +469,7 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
           this.postContent = '';
           this.postImageFile = undefined;
           this.postImagePreview = '';
+          this.removePostVideo();
           this.selectedSessionId = null;
           this.postGameSessionId = null;
           this.newSessionShareId = null;
@@ -556,6 +560,7 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
       return;
     }
 
+    this.removePostVideo();
     this.postImageFile = file;
     this.actionError = '';
 
@@ -573,8 +578,43 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
     this.postImagePreview = '';
   }
 
+  onPostVideoChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    if (!['video/mp4', 'video/webm'].includes(file.type)) {
+      this.actionError = t('feedback.feed.videoType');
+      input.value = '';
+      return;
+    }
+    if (file.size === 0 || file.size > 20 * 1024 * 1024) {
+      this.actionError = t('feedback.feed.videoSize');
+      input.value = '';
+      return;
+    }
+    this.removePostVideo();
+    this.removePostImage();
+    this.postVideoFile = file;
+    this.postVideoPreview = URL.createObjectURL(file);
+    this.actionError = '';
+    input.value = '';
+  }
+
+  removePostVideo(): void {
+    if (this.postVideoPreview) URL.revokeObjectURL(this.postVideoPreview);
+    this.postVideoPreview = '';
+    this.postVideoFile = undefined;
+  }
+
+  postVideo(item: FeedItem): string | null {
+    return this.resolvePostMedia(item.videoUrl);
+  }
+
   postImage(item: FeedItem): string | null {
-    const path = item.imageUrl;
+    return this.resolvePostMedia(item.imageUrl);
+  }
+
+  private resolvePostMedia(path: string | null | undefined): string | null {
     if (!path) {
       return null;
     }
