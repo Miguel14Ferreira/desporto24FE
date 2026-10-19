@@ -11,11 +11,20 @@ export interface AdminPlayer {
   role: string | null;
   enabled: boolean | null;
   notLocked: boolean | null;
+  moderationSuspendedAt?: string | null;
 }
 export interface AdminPlayerSearch {
   players: AdminPlayer[];
   page: number;
   hasMore: boolean;
+}
+
+export type ModerationAction = 'SUSPEND' | 'REINSTATE' | 'DELETE';
+export interface ModerationResult {
+  id: number;
+  action: ModerationAction;
+  moderationSuspendedAt: string | null;
+  notLocked: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -24,6 +33,13 @@ export class AdminPlayersService {
   changeRole(id: number, role: string, expectedRole: string): Observable<{ id: number; role: string }> {
     return this.http.put<{ id: number; role: string }>(
       environment.apiUrl + '/api/admin/players/' + id + '/role', { role, expectedRole });
+  }
+
+  moderate(id: number, action: ModerationAction, expectedUsername: string,
+           expectedSuspended: boolean, reason: string): Observable<ModerationResult> {
+    return this.http.post<ModerationResult>(
+      environment.apiUrl + '/api/admin/players/' + id + '/moderation',
+      { action, expectedUsername, expectedSuspended, reason });
   }
 
   search(name: string, page: number): Observable<AdminPlayerSearch> {
