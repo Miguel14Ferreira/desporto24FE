@@ -61,6 +61,9 @@ describe('SocialFeedComponent discovery sidebar', () => {
 
     const root = fixture.nativeElement as HTMLElement;
     const link = root.querySelector<HTMLAnchorElement>('.week-recruit-cta')!;
+    // Only the action next to the prefilled player counts remains in the Feed.
+    expect(root.querySelector('.header-actions')).toBeNull();
+    expect(root.querySelectorAll('.week-recruit-cta')).toHaveSize(1);
     expect(component.quickRecruitValid).toBeTrue();
     expect(link.getAttribute('href')).toContain('intent=findPlayers');
     expect(link.getAttribute('href')).toContain('confirmed=8');
