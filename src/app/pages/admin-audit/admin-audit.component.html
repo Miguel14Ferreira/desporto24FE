@@ -3,8 +3,8 @@
     <header class="page-header">
       <div>
         <p class="eyebrow">{{ 'admin.eyebrow' | t }}</p>
-        <h1>{{ 'adminHub.audit' | t }}</h1>
-        <p class="subtitle">{{ 'adminAudit.subtitle' | t }}</p>
+        <h1>{{ 'adminHub.statistics' | t }}</h1>
+        <p class="subtitle">{{ 'adminStatistics.subtitle' | t }}</p>
       </div>
       <a class="secondary-action jynlo-action jynlo-action--neutral" routerLink="/menu/admin">{{ 'admin.dashboard' | t }}</a>
     </header>
@@ -24,7 +24,11 @@
       <p *ngIf="overviewLoading && !overview" role="status" class="overview-status">
         A carregar indicadores…
       </p>
-      <p *ngIf="overviewError" role="alert" class="overview-error">{{ overviewError }}</p>
+      <div *ngIf="overviewError" class="overview-error" role="alert">
+        <p>{{ overviewError }}</p>
+        <button type="button" class="jynlo-action jynlo-action--neutral"
+          [disabled]="overviewLoading" (click)="loadOverview()">Tentar novamente</button>
+      </div>
 
       <ng-container *ngIf="overview as stats">
         <p class="overview-updated">Atualizado: {{ stats.generatedAt | date:'dd/MM/yyyy HH:mm' }} · Dados da base de dados</p>
@@ -128,7 +132,11 @@
           <span *ngIf="growth" class="growth-tz">Semanas de segunda a domingo · UTC</span>
         </div>
         <p *ngIf="growthLoading && !growth" role="status" class="overview-status">A carregar gráficos de crescimento…</p>
-        <p *ngIf="growthError" role="alert" class="overview-error">{{ growthError }}</p>
+        <div *ngIf="growthError" class="overview-error" role="alert">
+          <p>{{ growthError }}</p>
+          <button type="button" class="jynlo-action jynlo-action--neutral"
+            [disabled]="growthLoading" (click)="loadGrowth()">Tentar novamente</button>
+        </div>
         <div *ngIf="growth as history" class="growth-charts">
           <article *ngFor="let chart of growthCharts" class="growth-chart"
             [attr.aria-label]="chart.title + ' nas últimas oito semanas'">
