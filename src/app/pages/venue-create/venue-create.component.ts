@@ -36,6 +36,13 @@ export class VenueCreateComponent implements OnInit {
   }
   name = '';
   city = '';
+  district: string | null = null;
+  // The current backend validates only continental district names.
+  readonly continentalDistricts = [
+    'Aveiro', 'Beja', 'Braga', 'Bragança', 'Castelo Branco', 'Coimbra',
+    'Évora', 'Faro', 'Guarda', 'Leiria', 'Lisboa', 'Portalegre',
+    'Porto', 'Santarém', 'Setúbal', 'Viana do Castelo', 'Vila Real', 'Viseu'
+  ] as const;
   address = '';
   selectedSports: string[] = [];
   venueType = '';
@@ -116,6 +123,10 @@ export class VenueCreateComponent implements OnInit {
       this.selectedSports = [matchedSport];
     }
     this.city = (params.get('city') || '').trim().slice(0, 120);
+    const requestedDistrict = (params.get('district') || '').trim();
+    this.district = this.continentalDistricts.find(
+      district => district.toLocaleLowerCase('pt') === requestedDistrict.toLocaleLowerCase('pt')
+    ) ?? null;
   }
 
   resetSimilarVenueCheck(): void {
@@ -270,7 +281,8 @@ export class VenueCreateComponent implements OnInit {
     this.validationError = false;
 
     const request: CreateVenueRequest = {
-      name: this.name.trim(), city: this.city.trim(), address: this.address.trim(),
+      name: this.name.trim(), city: this.city.trim(), district: this.district,
+      address: this.address.trim(),
       sports: this.selectedSports.join(';'), venueType: this.valueOrNull(this.venueType),
       ownershipType: this.ownershipType, surfaceType: this.valueOrNull(this.surfaceType),
       environmentType: this.environmentType, indoor: this.environmentType !== 'OUTDOOR', changingRooms: this.changingRooms,

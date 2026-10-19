@@ -34,6 +34,17 @@
           [placeholder]="'events.cityPlaceholder' | t">
       </label>
 
+      <label>
+        <span>{{ 'venue.create.districtLabel' | t }}</span>
+        <select name="district" [(ngModel)]="district">
+          <option [ngValue]="null">{{ 'venue.create.districtUnknown' | t }}</option>
+          @for (districtOption of continentalDistricts; track districtOption) {
+            <option [ngValue]="districtOption">{{ districtOption }}</option>
+          }
+        </select>
+        <small class="venue-create-district-hint">{{ 'venue.create.districtHint' | t }}</small>
+      </label>
+
       <label class="venue-create-wide">
         <span>{{ 'common.address' | t }}</span>
         <input
@@ -47,7 +58,7 @@
           [placeholder]="'createSession.addressPlaceholder' | t">
       </label>
 
-      <div class="venue-create-similar venue-create-wide" aria-label="Recintos semelhantes">
+      <div class="venue-create-similar venue-create-wide" [attr.aria-label]="'venue.create.similarTitle' | t">
         <div class="venue-create-similar-intro">
           <div>
             <strong>{{ 'venue.create.similarTitle' | t }}</strong>

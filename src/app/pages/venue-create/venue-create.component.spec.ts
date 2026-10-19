@@ -16,6 +16,7 @@ describe('VenueCreateComponent', () => {
     component.ngOnInit();
 
     expect(component.city).toBe('Lisboa');
+    expect(component.district).toBeNull();
     expect(component.selectedSports).toEqual(['Padel']);
     expect(component.isSportSelected('Padel')).toBeTrue();
     expect(component.latitude).toBeNull();
@@ -28,6 +29,46 @@ describe('VenueCreateComponent', () => {
     expect(component.selectedSports).toEqual(['Ténis']);
     expect(component.city).toBe('Sintra');
     expect(venueService.create).not.toHaveBeenCalled();
+  });
+
+  it('passes a valid mainland district through to the existing backend contract', () => {
+    const service = jasmine.createSpyObj<VenueService>('VenueService', ['create']);
+    const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
+    service.create.and.returnValue(of({ id: 18 } as Venue));
+    const component = new VenueCreateComponent(service, router);
+    component.name = 'Campo Municipal';
+    component.city = 'Cascais';
+    component.district = 'Lisboa';
+    component.address = 'Rua A';
+    component.selectedSports = ['Futebol'];
+
+    component.save();
+
+    expect(service.create).toHaveBeenCalledOnceWith(
+      jasmine.objectContaining({ district: 'Lisboa' })
+    );
+  });
+
+  it('prefills only a known district from Discover without assuming one from city', () => {
+    const service = jasmine.createSpyObj<VenueService>('VenueService', ['create']);
+    const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
+    const route = {
+      snapshot: { queryParamMap: convertToParamMap({
+        city: 'Sintra', district: 'Lisboa'
+      }) }
+    } as unknown as ActivatedRoute;
+    const component = new VenueCreateComponent(service, router, route);
+    component.ngOnInit();
+    expect(component.district).toBe('Lisboa');
+
+    const routeInvalid = {
+      snapshot: { queryParamMap: convertToParamMap({
+        city: 'Santa Cruz', district: 'Madeira'
+      }) }
+    } as unknown as ActivatedRoute;
+    const invalid = new VenueCreateComponent(service, router, routeInvalid);
+    invalid.ngOnInit();
+    expect(invalid.district).toBeNull();
   });
 
   it('rejects an unknown sport without losing the locality passed from Discover', () => {
