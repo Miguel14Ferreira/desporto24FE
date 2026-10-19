@@ -249,6 +249,9 @@ export class DiscoverComponent implements OnInit {
     const requestId = ++this.searchRequestId;
     const peopleRequestId = ++this.peopleRequestId;
     this.loadingPeople = false;
+    this.playerSearchError = false;
+    // Match the displayed name filter to the actual global search request.
+    this.appliedPlayerName = this.playerName.trim();
     this.showAllVenues = false;
     this.showAllSessions = false;
     this.showAllPeople = false;
@@ -317,6 +320,9 @@ export class DiscoverComponent implements OnInit {
     this.loadingPeople = true;
     this.showAllPeople = false;
     this.playerSearchError = false;
+    // A successful targeted search replaces an earlier global people-search error.
+    this.peopleLoadError = false;
+    this.loadError = false;
     this.appliedPlayerName = this.playerName.trim();
     this.peopleRequest(this.sport.trim(), this.location.trim())
       .pipe(
@@ -419,12 +425,16 @@ export class DiscoverComponent implements OnInit {
     location: string
   ): Observable<CommunityProfile[]> {
     const name = this.playerName.trim();
-    if (!name && !sport && !location) {
+    // Searching by name means searching for people everywhere, not limiting
+    // results to profile-suggested sports or the user's locality.
+    if (name) {
+      return this.communityService.findProfiles({ name });
+    }
+    if (!sport && !location) {
       return of([]);
     }
 
     return this.communityService.findProfiles({
-      name: name || undefined,
       sport: sport || undefined,
       location: location || undefined
     });

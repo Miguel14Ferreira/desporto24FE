@@ -1,6 +1,6 @@
 <section class="detail-page">
   <div class="detail-shell">
-    <a class="back-link" routerLink="/menu/events">← {{ 'sessionDetail.back' | t }}</a>
+    <a class="back-link" [routerLink]="backToPath" [queryParams]="backQueryParams">← {{ backLabelKey | t }}</a>
 
     @if (loading) {
       <div class="state-card">{{ 'sessionDetail.loading' | t }}</div>
@@ -376,7 +376,18 @@
           }
 
           @if (actionError) {
-            <div class="action-message error-message">{{ actionError }}</div>
+            <div class="action-message error-message" role="alert">{{ actionError }}</div>
+          }
+
+          @if (detailRefreshWarning) {
+            <div class="action-message refresh-warning" role="status">
+              <span>{{ detailRefreshWarning }}</span>
+              <button type="button" class="jynlo-action jynlo-action--neutral"
+                      (click)="retrySessionLoad()">{{ 'common.retry' | t }}</button>
+            </div>
+          }
+          @if (joinStatusMessage && !joinOutcomeUnknown) {
+            <div class="action-message refresh-warning" role="status">{{ joinStatusMessage }}</div>
           }
 
           @if (session.waitlisted) {
@@ -554,6 +565,17 @@
                   {{ actionLoading ? ('common.processing' | t) : ('sessionDetail.leaveSession' | t) }}
                 </button>
               }
+            </section>
+          } @else if (joinOutcomeUnknown) {
+            <section class="participation-panel join-verification" role="status">
+              <div>
+                <h2>{{ 'sessionDetail.joinVerificationTitle' | t }}</h2>
+                <p>{{ joinStatusMessage }}</p>
+              </div>
+              <button type="button" class="jynlo-action jynlo-action--neutral"
+                      [disabled]="joinStatusChecking" (click)="verifyJoinOutcome()">
+                {{ (joinStatusChecking ? 'sessionDetail.joinVerifying' : 'sessionDetail.joinVerify') | t }}
+              </button>
             </section>
           } @else if (!canJoinSession()) {
             <section class="participation-panel">

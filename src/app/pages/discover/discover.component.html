@@ -65,9 +65,9 @@
           <strong>{{ 'discover.error.title' | t }}</strong>
           <span>{{ 'discover.error.text' | t }}</span>
           <span>
-            @if (venuesLoadError) { Recintos indisponíveis. }
-            @if (sessionsLoadError) { Sessões indisponíveis. }
-            @if (peopleLoadError) { Jogadores indisponíveis. }
+            @if (venuesLoadError) { {{ 'discover.error.venues' | t }} }
+            @if (sessionsLoadError) { {{ 'discover.error.sessions' | t }} }
+            @if (peopleLoadError) { {{ 'discover.error.people' | t }} }
           </span>
         </div>
         <button class="jynlo-action jynlo-action--neutral" type="button" (click)="search()">
@@ -86,7 +86,7 @@
               <p>{{ 'discover.where.kicker' | t }}</p>
               <h2>{{ 'discover.where.title' | t }}</h2>
             </div>
-            <span class="result-count">{{ venues.length }}</span>
+            <span class="result-count">{{ venuesLoadError ? '—' : venues.length }}</span>
           </header>
 
           <div class="discover-nearby discover-nearby--venues">
@@ -116,7 +116,11 @@
             }
           </div>
 
-          @if (topVenues.length === 0) {
+          @if (venuesLoadError) {
+            <div class="pillar-empty pillar-error--venues" role="status">
+              <strong>{{ 'discover.error.venues' | t }}</strong>
+            </div>
+          } @else if (topVenues.length === 0) {
             <div class="pillar-empty">
               <strong>{{ 'discover.where.emptyTitle' | t }}</strong>
               <span>{{ 'discover.where.emptyText' | t }}</span>
@@ -173,7 +177,7 @@
               <p>{{ 'discover.when.kicker' | t }}</p>
               <h2>{{ 'discover.when.title' | t }}</h2>
             </div>
-            <span class="result-count">{{ sessions.length }}</span>
+            <span class="result-count">{{ sessionsLoadError ? '—' : sessions.length }}</span>
           </header>
 
           <div class="discover-nearby">
@@ -203,7 +207,11 @@
             }
           </div>
 
-          @if (topSessions.length === 0) {
+          @if (sessionsLoadError) {
+            <div class="pillar-empty pillar-error--sessions" role="status">
+              <strong>{{ 'discover.error.sessions' | t }}</strong>
+            </div>
+          } @else if (topSessions.length === 0) {
             <div class="pillar-empty session-empty">
               <strong>{{ 'discover.when.emptyTitle' | t }}</strong>
               <span>{{ 'discover.when.emptyText' | t }}</span>
@@ -219,7 +227,9 @@
             <div class="result-list">
               @for (session of topSessions; track session.id) {
                 <a class="result-card session-card" [routerLink]="['/menu/events', session.id]"
-                   [queryParams]="session.joinedByViewer || session.waitlistedByViewer ? null : { join: '1' }">
+                   [queryParams]="{ from: 'discover', sport: sport.trim(), city: location.trim(),
+                     player: appliedPlayerName.trim() || null,
+                     join: session.joinedByViewer || session.waitlistedByViewer ? null : '1' }">
                   <div class="session-main">
                     <strong>{{ session.sport }}</strong>
                     <span>{{ session.city }} · {{ session.gameDate | date:'dd/MM HH:mm' }}</span>
@@ -270,7 +280,7 @@
               <p>{{ 'discover.who.kicker' | t }}</p>
               <h2>{{ 'discover.who.title' | t }}</h2>
             </div>
-            <span class="result-count">{{ people.length }}</span>
+            <span class="result-count">{{ peopleLoadError || playerSearchError ? '—' : people.length }}</span>
           </header>
 
           <form class="discover-people-search" (ngSubmit)="searchPlayers()">
@@ -297,7 +307,11 @@
             }
           </form>
 
-          @if (topPeople.length === 0) {
+          @if (peopleLoadError || playerSearchError) {
+            <div class="pillar-empty pillar-error--people" role="status">
+              <strong>{{ (playerSearchError ? 'discover.who.searchError' : 'discover.error.people') | t }}</strong>
+            </div>
+          } @else if (topPeople.length === 0) {
             <div class="pillar-empty people-empty">
               <strong>{{ 'discover.who.emptyTitle' | t }}</strong>
               <span>{{ (appliedPlayerName ? 'discover.who.emptyNameText' : 'discover.who.emptyText') | t }}</span>
