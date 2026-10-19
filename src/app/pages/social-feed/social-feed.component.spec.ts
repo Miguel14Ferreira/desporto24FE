@@ -274,7 +274,7 @@ describe('SocialFeedComponent discovery sidebar', () => {
     component.publish();
     fixture.detectChanges();
 
-    expect(feed.createPost).toHaveBeenCalledOnceWith('Bora jogar?', undefined, 42);
+    expect(feed.createPost).toHaveBeenCalledOnceWith('Bora jogar?', undefined, 42, undefined);
     expect(component.postContent).toBe('');
     expect(component.selectedSessionId).toBeNull();
     expect(component.sessionPickerExpanded).toBeFalse();
