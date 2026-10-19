@@ -15,9 +15,17 @@
           <span class="venue-source-badge">
             {{ venue.informationSource === 'OFFICIAL'
               ? ('venue.detail.sourceOfficial' | t)
-              : ('venue.detail.sourceCommunity' | t) }}
+              : venue.informationSource === 'OPENSTREETMAP'
+                ? ('venue.detail.sourceOpenStreetMap' | t)
+                : ('venue.detail.sourceCommunity' | t) }}
           </span>
 
+          @if (venue.informationSource === 'OPENSTREETMAP') {
+            <a class="venue-created-by" href="https://www.openstreetmap.org/copyright"
+               target="_blank" rel="noopener noreferrer">
+              {{ 'venue.detail.osmAttribution' | t }}
+            </a>
+          }
           <span class="venue-created-by">
             @if (venue.createdByUsername) {
               {{ 'venue.detail.createdBy' | t }} <strong>@{{ venue.createdByUsername }}</strong> ·
