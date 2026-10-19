@@ -252,3 +252,53 @@
   text-decoration: none;
   font-weight: 700;
 }
+
+.venue-create-similar {
+  padding: 16px;
+  border: 1px solid #64748b;
+  border-radius: 14px;
+  background: rgba(148, 163, 184, .06);
+}
+
+.venue-create-similar-intro {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.venue-create-similar-intro p,
+.venue-create-similar-results p,
+.venue-create-similar-note {
+  margin: 6px 0 0;
+  font-size: .9rem;
+}
+
+.venue-create-similar-intro button {
+  flex-shrink: 0;
+  padding: 10px 14px;
+}
+
+.venue-create-similar-intro button:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+.venue-create-similar-results {
+  margin-top: 12px;
+}
+
+.venue-create-similar-results ul {
+  margin: 8px 0 0;
+  padding-left: 22px;
+}
+
+.venue-create-similar-results li + li {
+  margin-top: 6px;
+}
+
+.venue-create-similar-results a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}

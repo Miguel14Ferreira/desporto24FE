@@ -4,6 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { finalize, timeout } from 'rxjs';
 
 import { VenueService } from '../../services/venue.service';
+import { Venue } from '../model/venue';
 
 import { SPORTS_CATALOG } from '../../shared/sports-catalog';
 import { CreateVenueRequest, VenueEnvironmentType, VenueOwnershipType } from '../model/venue';
@@ -85,6 +86,13 @@ export class VenueCreateComponent implements OnInit {
   resolvingMapLink = false;
   mapLinkError = false;
   mapLinkResolved = false;
+  // Similar venues are a hint, never an authorization decision or a save blocker.
+  checkingSimilarVenues = false;
+  similarVenueCheckComplete = false;
+  similarVenueCheckError = false;
+  similarVenues: Venue[] = [];
+  private similarVenueRequestVersion = 0;
+
   private mapLinkRequestVersion = 0;
   private coordinatesFromResolvedMapLink = false;
 
@@ -108,6 +116,49 @@ export class VenueCreateComponent implements OnInit {
       this.selectedSports = [matchedSport];
     }
     this.city = (params.get('city') || '').trim().slice(0, 120);
+  }
+
+  resetSimilarVenueCheck(): void {
+    ++this.similarVenueRequestVersion;
+    this.checkingSimilarVenues = false;
+    this.similarVenueCheckComplete = false;
+    this.similarVenueCheckError = false;
+    this.similarVenues = [];
+  }
+
+  checkSimilarVenues(): void {
+    const name = this.name.trim();
+    const city = this.city.trim();
+    if (!name || !city || this.checkingSimilarVenues || this.saving) return;
+
+    const version = ++this.similarVenueRequestVersion;
+    this.checkingSimilarVenues = true;
+    this.similarVenueCheckComplete = false;
+    this.similarVenueCheckError = false;
+    this.similarVenues = [];
+
+    // A single bounded, explicit lookup: never download the whole catalogue
+    // or issue a network request on every typed character.
+    this.venueService.suggest(name, city, undefined, 0)
+      .pipe(
+        timeout(8_000),
+        finalize(() => {
+          if (version === this.similarVenueRequestVersion) {
+            this.checkingSimilarVenues = false;
+          }
+        })
+      )
+      .subscribe({
+        next: result => {
+          if (version !== this.similarVenueRequestVersion) return;
+          this.similarVenues = result.venues.slice(0, 5);
+          this.similarVenueCheckComplete = true;
+        },
+        error: () => {
+          if (version !== this.similarVenueRequestVersion) return;
+          this.similarVenueCheckError = true;
+        }
+      });
   }
 
   onMapLinkChanged(): void {

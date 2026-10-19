@@ -13,6 +13,7 @@
           type="text"
           name="name"
           [(ngModel)]="name"
+          (ngModelChange)="resetSimilarVenueCheck()"
           required
           [attr.aria-invalid]="validationError && !name.trim() ? 'true' : null"
           [attr.aria-describedby]="validationError && !name.trim() ? 'venue-required-fields-error' : null"
@@ -25,6 +26,7 @@
           type="text"
           name="city"
           [(ngModel)]="city"
+          (ngModelChange)="resetSimilarVenueCheck()"
           required
           [attr.aria-invalid]="validationError && !city.trim() ? 'true' : null"
           [attr.aria-describedby]="validationError && !city.trim() ? 'venue-required-fields-error' : null"
@@ -44,6 +46,40 @@
           autocomplete="street-address"
           [placeholder]="'createSession.addressPlaceholder' | t">
       </label>
+
+      <div class="venue-create-similar venue-create-wide" aria-label="Recintos semelhantes">
+        <div class="venue-create-similar-intro">
+          <div>
+            <strong>{{ 'venue.create.similarTitle' | t }}</strong>
+            <p>{{ 'venue.create.similarHint' | t }}</p>
+          </div>
+          <button type="button" class="jynlo-action jynlo-action--neutral"
+            (click)="checkSimilarVenues()"
+            [disabled]="!name.trim() || !city.trim() || checkingSimilarVenues || saving">
+            {{ (checkingSimilarVenues ? 'venue.create.similarChecking' : 'venue.create.similarAction') | t }}
+          </button>
+        </div>
+        @if (similarVenueCheckComplete && similarVenues.length) {
+          <div class="venue-create-similar-results" role="status">
+            <p>{{ 'venue.create.similarFound' | t }}</p>
+            <ul>
+              @for (venue of similarVenues; track venue.id) {
+                <li>
+                  <a [routerLink]="['/menu/venues', venue.id]" target="_blank" rel="noopener noreferrer">
+                    {{ venue.name }} — {{ venue.city }}
+                  </a>
+                </li>
+              }
+            </ul>
+          </div>
+        }
+        @if (similarVenueCheckComplete && !similarVenues.length) {
+          <p class="venue-create-similar-note" role="status">{{ 'venue.create.similarNone' | t }}</p>
+        }
+        @if (similarVenueCheckError) {
+          <p class="venue-create-similar-note" role="alert">{{ 'venue.create.similarError' | t }}</p>
+        }
+      </div>
 
       <h2 class="venue-create-section-title">{{ 'venue.create.characteristics' | t }}</h2>
       <p class="venue-create-sports-label venue-create-wide" id="venue-create-sports-label">{{ 'venue.create.sportsLabel' | t }} *</p>
