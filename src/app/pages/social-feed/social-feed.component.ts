@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, Optional } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { Subject, catchError, debounceTime, finalize, forkJoin, of, retry, switchMap, takeUntil, timeout } from 'rxjs';
+import { Subject, catchError, finalize, forkJoin, of, retry, switchMap, takeUntil, timeout } from 'rxjs';
 
 import { environment } from 'src/environment/environment';
 import { appTranslate as t } from '../../i18n/i18n.service';
@@ -30,19 +30,9 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
   postImagePreview = '';
   postVideoFile?: File;
   postVideoPreview = '';
+  // Populated only by verified deep links from session details.
   availableSessions: SessionSummary[] = [];
-  sessionSearch = '';
-  sessionPickerExpanded = false;
-  get showSessionPicker(): boolean {
-    return this.sessionPickerExpanded || this.selectedSessionId !== null;
-  }
-
-  private completedSessions: SessionSummary[] = [];
-  private discoveredSessions: SessionSummary[] = [];
-
-  private readonly sessionSearchChanges = new Subject<string>();
   private readonly destroyed = new Subject<void>();
-  get filteredSessions(): SessionSummary[] { return this.availableSessions; }
   suggestedSessions: SessionSummary[] = [];
   suggestedPeople: CommunityProfile[] = [];
 
@@ -163,17 +153,13 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
     this.prepareNewSessionShare();
     this.loadCompletedSessions();
     this.loadMyWeekCommunities();
-    this.sessionSearchChanges.pipe(
-      debounceTime(350),
-      switchMap(query => {
-        this.loadingSessions = true;
-        this.sessionSearchError = false;
-        return this.sessionService.discover({ query, privateGame: false, availability: 'available', sort: 'date' })
-          .pipe(
-            timeout(10_000),
-            catchError(() => of(null as SessionSummary[] | null))
-          );
-      }),
+    // Suggestions and weekly vacancies still need discovery; the composer does not.
+    this.loadingSessions = true;
+    this.sessionService.discover({
+      query: '', privateGame: false, availability: 'available', sort: 'date'
+    }).pipe(
+      timeout(10_000),
+      catchError(() => of(null as SessionSummary[] | null)),
       takeUntil(this.destroyed)
     ).subscribe(sessions => {
       this.loadingSessions = false;
@@ -181,21 +167,16 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
         this.sessionSearchError = true;
         return;
       }
-      this.discoveredSessions = sessions.filter(session => session.audience !== 'COMMUNITY_ONLY');
-      if (!this.sessionSearch.trim()) {
-        this.myWeekDiscovered = this.discoveredSessions;
-        this.refreshMyWeekOffers();
-        this.suggestedSessions = this.discoveredSessions
-          .filter(session => session.status?.toUpperCase() === 'OPEN'
-            && !session.privateGame && session.participantCount < session.maxParticipants
-            && !session.joinedByViewer && !session.waitlistedByViewer
-            && Date.parse(session.gameDate) > Date.now())
-          .sort((first, second) => Date.parse(first.gameDate) - Date.parse(second.gameDate))
-          .slice(0, 3);
-      }
-      this.refreshSelectableSessions();
+      this.myWeekDiscovered = sessions.filter(session => session.audience !== 'COMMUNITY_ONLY');
+      this.refreshMyWeekOffers();
+      this.suggestedSessions = this.myWeekDiscovered
+        .filter(session => session.status?.toUpperCase() === 'OPEN'
+          && !session.privateGame && session.participantCount < session.maxParticipants
+          && !session.joinedByViewer && !session.waitlistedByViewer
+          && Date.parse(session.gameDate) > Date.now())
+        .sort((first, second) => Date.parse(first.gameDate) - Date.parse(second.gameDate))
+        .slice(0, 3);
     });
-    this.onSessionSearchChange('');
   }
 
   private loadSuggestedPeople(): void {
@@ -306,45 +287,10 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
       this.myWeekGames = nextWeekGames(mine);
       this.myWeekWaitlist = nextWeekWaitlist(mine);
       this.refreshMyWeekOffers();
-      const seen = new Set<number>();
-      this.completedSessions = [...mine.created, ...mine.joined]
-        .filter(session => {
-          if (session.status !== 'COMPLETED' || session.privateGame
-              || session.audience === 'COMMUNITY_ONLY' || seen.has(session.id)) {
-            return false;
-          }
-          seen.add(session.id);
-          return true;
-        })
-        .sort((a, b) => Date.parse(b.gameDate) - Date.parse(a.gameDate))
-        .slice(0, 20);
-      this.refreshSelectableSessions();
     });
   }
 
-  private refreshSelectableSessions(): void {
-    const query = this.sessionSearch.trim().toLocaleLowerCase();
-    const completed = this.completedSessions.filter(session =>
-      !query || (session.sport + ' ' + session.city).toLocaleLowerCase().includes(query)
-    );
-    const selected = this.availableSessions.find(session => session.id === this.selectedSessionId);
-    const byId = new Map<number, SessionSummary>();
-    [...(selected ? [selected] : []), ...completed, ...this.discoveredSessions]
-      .forEach(session => {
-        if (!byId.has(session.id)) {
-          byId.set(session.id, session);
-        }
-      });
-    this.availableSessions = [...byId.values()];
-  }
-
-  onLinkedSessionChange(sessionId: number | null): void {
-    this.selectedSessionId = sessionId;
-    this.postGameSessionId = this.availableSessions
-      .find(session => session.id === sessionId && session.status === 'COMPLETED')?.id ?? null;
-  }
-
-  private prepareNewSessionShare(): void {
+    private prepareNewSessionShare(): void {
     const raw = this.route.snapshot.queryParamMap.get('shareSession');
     if (!raw || !/^[1-9][0-9]*$/.test(raw)) return;
     const id = Number(raw);
@@ -362,7 +308,6 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
       this.newSessionShareId = id;
       this.selectedSessionId = id;
       this.availableSessions = [session, ...this.availableSessions.filter(item => item.id !== id)];
-      this.sessionPickerExpanded = true;
       if (!this.postContent.trim()) {
         this.postContent = t('feed.newSessionInvitation', {
           sport: session.sport, city: session.city
@@ -418,12 +363,6 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
     }
   }
 
-  onSessionSearchChange(query: string): void {
-    this.sessionSearch = query;
-    this.refreshSelectableSessions();
-    this.sessionSearchChanges.next(query.trim());
-  }
-
   ngOnDestroy(): void {
     this.removePostVideo();
     this.destroyed.next();
@@ -473,7 +412,6 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
           this.selectedSessionId = null;
           this.postGameSessionId = null;
           this.newSessionShareId = null;
-          this.sessionPickerExpanded = false;
         },
         error: () => this.actionError = t('feedback.feed.publishError')
       });

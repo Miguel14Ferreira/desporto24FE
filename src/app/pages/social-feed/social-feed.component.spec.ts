@@ -97,7 +97,6 @@ describe('SocialFeedComponent discovery sidebar', () => {
 
     const root = fixture.nativeElement as HTMLElement;
     const link = root.querySelector<HTMLAnchorElement>('.week-recruit-cta')!;
-    // Only the action next to the prefilled player counts remains in the Feed.
     expect(root.querySelector('.header-actions')).toBeNull();
     expect(root.querySelectorAll('.week-recruit-cta')).toHaveSize(1);
     expect(component.quickRecruitValid).toBeTrue();
@@ -211,53 +210,31 @@ describe('SocialFeedComponent discovery sidebar', () => {
     expect(hub?.querySelector('a[href="/menu/createEvent"]')).not.toBeNull();
   }));
 
-  it('keeps the composer compact until the player opens session selection', fakeAsync(() => {
+  it('keeps normal publications simple, without manual session selection', fakeAsync(() => {
     fixture.detectChanges();
     tick(351);
     fixture.detectChanges();
+    const composer = (fixture.nativeElement as HTMLElement).querySelector('.composer')!;
+    expect(composer.querySelector('.composer-session-toggle')).toBeNull();
+    expect(composer.querySelector('.composer-session-select')).toBeNull();
+    expect(composer.querySelector('select')).toBeNull();
+    expect(composer.textContent).not.toContain(t('feed.linkPublicSession'));
+    expect(composer.querySelector('input[accept="image/jpeg,image/png,image/webp"]')).not.toBeNull();
+    expect(composer.querySelector('input[accept="video/mp4,video/webm"]')).not.toBeNull();
 
-    const root = fixture.nativeElement as HTMLElement;
-    const button = root.querySelector<HTMLButtonElement>('.composer-session-toggle');
-    expect(button).not.toBeNull();
-    expect(root.querySelector('.composer-session-select')).toBeNull();
-    expect(button?.getAttribute('aria-expanded')).toBe('false');
-
-    component.postContent = 'Treino de padel amanhã';
-    button?.click();
-    fixture.detectChanges();
-
-    expect(component.showSessionPicker).toBeTrue();
-    expect(root.querySelector('#feed-session-picker select')).not.toBeNull();
-    expect(button?.getAttribute('aria-expanded')).toBe('true');
-    expect(component.postContent).toBe('Treino de padel amanhã');
-
-    button?.click();
-    fixture.detectChanges();
-
-    expect(component.showSessionPicker).toBeFalse();
-    expect(root.querySelector('.composer-session-select')).toBeNull();
-    expect(component.postContent).toBe('Treino de padel amanhã');
+    component.postContent = 'Hoje foi dia de treino!';
+    feed.createPost.and.returnValue(of({
+      type: 'POST', postId: 17, authorUsername: 'jogador', authorDisplayName: 'Jogador',
+      authorProfilePicUrl: null, content: 'Hoje foi dia de treino!', imageUrl: null,
+      createdAt: new Date().toISOString(), sessionId: null, sport: null,
+      city: null, gameDate: null, likeCount: 0, likedByMe: false, commentCount: 0
+    }));
+    component.publish();
+    expect(feed.createPost).toHaveBeenCalledOnceWith('Hoje foi dia de treino!', undefined, undefined, undefined);
+    expect(component.selectedSessionId).toBeNull();
   }));
 
-  it('keeps linked-session selection visible even when the optional picker is collapsed', fakeAsync(() => {
-    fixture.detectChanges();
-    tick(351);
-
-    component.selectedSessionId = 42;
-    fixture.detectChanges();
-
-    const root = fixture.nativeElement as HTMLElement;
-    expect(component.showSessionPicker).toBeTrue();
-    expect(root.querySelector('.composer-session-select')).not.toBeNull();
-    expect(root.querySelector('.composer-session-toggle')).toBeNull();
-
-    component.onLinkedSessionChange(null);
-    fixture.detectChanges();
-    expect(component.showSessionPicker).toBeFalse();
-    expect(root.querySelector('.composer-session-toggle')).not.toBeNull();
-  }));
-
-  it('resets optional session selection after publishing a linked post', fakeAsync(() => {
+  it('clears a contextual session link after a successful post', fakeAsync(() => {
     const posted: FeedItem = {
       type: 'POST', postId: 7, authorUsername: 'miguel',
       authorDisplayName: 'Miguel', authorProfilePicUrl: null,
@@ -271,7 +248,6 @@ describe('SocialFeedComponent discovery sidebar', () => {
     fixture.detectChanges();
     tick(351);
     component.postContent = 'Bora jogar?';
-    component.sessionPickerExpanded = true;
     component.selectedSessionId = 42;
 
     component.publish();
@@ -280,8 +256,6 @@ describe('SocialFeedComponent discovery sidebar', () => {
     expect(feed.createPost).toHaveBeenCalledOnceWith('Bora jogar?', undefined, 42, undefined);
     expect(component.postContent).toBe('');
     expect(component.selectedSessionId).toBeNull();
-    expect(component.sessionPickerExpanded).toBeFalse();
-    expect(component.showSessionPicker).toBeFalse();
     expect((fixture.nativeElement as HTMLElement).querySelector('.composer-session-select')).toBeNull();
   }));
 
@@ -574,8 +548,7 @@ describe('SocialFeedComponent post-game entry', () => {
     expect(sessions.detail).toHaveBeenCalledWith(42);
     expect(target.selectedSessionId).toBe(42);
     expect(target.postGameSessionId).toBe(42);
-    expect(target.showSessionPicker).toBeTrue();
-    expect(target.filteredSessions.some(session => session.id === 42)).toBeTrue();
+    expect(target.availableSessions.map(session => session.id)).toEqual([42]);
     expect(target.postContent).toBe('');
     target.ngOnDestroy();
   });
@@ -753,62 +726,32 @@ describe('SocialFeedComponent empty-feed session suggestions', () => {
   }));
 });
 
-describe('SocialFeedComponent completed session selection', () => {
-  const session = (id: number, status = 'COMPLETED', privateGame = false, audience: 'PUBLIC' | 'COMMUNITY_ONLY' = 'PUBLIC') => ({
-    id, sport: 'Futebol', city: 'Parede', gameDate: '2026-10-12T21:00:00Z',
-    distanceKm: null, participantCount: 8, maxParticipants: 10, priceAmount: 0,
-    privateGame, audience, status
-  });
-
-  function openFeed(created: ReturnType<typeof session>[], joined: ReturnType<typeof session>[] = [], waitlisted: ReturnType<typeof session>[] = []) {
+describe('SocialFeedComponent session association restrictions', () => {
+  it('never auto-attaches owned history or discoveries to a normal post', () => {
     const auth = jasmine.createSpyObj<AuthenticationService>('AuthenticationService', ['isLoggedIn']);
     auth.isLoggedIn.and.returnValue(true);
     const feed = jasmine.createSpyObj<SocialFeedService>('SocialFeedService', ['feed']);
     feed.feed.and.returnValue(of([]));
     const sessions = jasmine.createSpyObj<SessionService>('SessionService', ['discover', 'detail', 'mine']);
-    sessions.discover.and.returnValue(of([]));
-    sessions.mine.and.returnValue(of({ created, joined, waitlisted }));
+    const historical: SessionSummary = {
+      id: 2, sport: 'Futebol', city: 'Parede', gameDate: '2026-10-12T21:00:00Z',
+      distanceKm: null, participantCount: 8, maxParticipants: 10, priceAmount: 0,
+      privateGame: false, audience: 'PUBLIC', status: 'COMPLETED'
+    };
+    sessions.mine.and.returnValue(of({ created: [historical], joined: [], waitlisted: [] }));
+    sessions.discover.and.returnValue(of([historical]));
     const route = { snapshot: { queryParamMap: convertToParamMap({}) } } as unknown as ActivatedRoute;
-    const target = new SocialFeedComponent(
+    const component = new SocialFeedComponent(
       feed, sessions, auth, route,
       { discoverProfiles: () => of([]) } as unknown as CommunityService
     );
-    target.ngOnInit();
-    return { target, sessions };
-  }
-
-  it('lists completed public sessions the player created or joined without a deep link', () => {
-    const { target, sessions } = openFeed([session(2)], [session(3)]);
+    component.ngOnInit();
     expect(sessions.mine).toHaveBeenCalledTimes(1);
-    expect(target.filteredSessions.map(s => s.id)).toEqual([2, 3]);
-
-    target.onLinkedSessionChange(2);
-    expect(target.postGameSessionId).toBe(2);
-    expect(target.postGameSession?.sport).toBe('Futebol');
-    target.ngOnDestroy();
-  });
-
-  it('excludes private, community-only, unfinished and waitlisted sessions', () => {
-    const { target } = openFeed([
-      session(2), session(4, 'COMPLETED', true),
-      session(5, 'COMPLETED', false, 'COMMUNITY_ONLY'),
-      session(6, 'CANCELLED'), session(7, 'OPEN')
-    ], [session(2)], [session(8)]);
-    expect(target.filteredSessions.map(s => s.id)).toEqual([2]);
-    target.ngOnDestroy();
-  });
-
-  it('filters completed sessions by sport or city and clears the post-game card on deselection', () => {
-    const { target } = openFeed([session(2)]);
-    target.onSessionSearchChange('basquetebol');
-    expect(target.filteredSessions).toEqual([]);
-    target.onSessionSearchChange('parede');
-    expect(target.filteredSessions.map(s => s.id)).toEqual([2]);
-    target.onLinkedSessionChange(2);
-    target.onLinkedSessionChange(null);
-    expect(target.postGameSessionId).toBeNull();
-    expect(target.selectedSessionId).toBeNull();
-    target.ngOnDestroy();
+    expect(sessions.detail).not.toHaveBeenCalled();
+    expect(component.selectedSessionId).toBeNull();
+    expect(component.availableSessions).toEqual([]);
+    expect(component.postGameSession).toBeNull();
+    component.ngOnDestroy();
   });
 });
 
