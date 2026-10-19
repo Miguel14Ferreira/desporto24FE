@@ -439,12 +439,32 @@ describe('DiscoverComponent', () => {
     component.playerName = '  Ana  ';
     component.searchPlayers();
 
-    expect(communityService.findProfiles).toHaveBeenCalledWith(jasmine.objectContaining({ name: 'Ana' }));
+    expect(communityService.findProfiles.calls.mostRecent().args[0]).toEqual({ name: 'Ana' });
     expect(component.people).toEqual([teammate]);
     expect(component.topPeople).toEqual([teammate]);
     expect(component.appliedPlayerName).toBe('Ana');
     expect(venueService.search.calls.count()).toBe(venueCalls);
     expect(sessionService.discover.calls.count()).toBe(sessionCalls);
+  });
+
+  it('searches globally by name even when sport and location filters are active', () => {
+    component.onSportChange('Padel');
+    component.onLocationChange('Lisboa');
+    component.playerName = 'Maria';
+    component.searchPlayers();
+    expect(communityService.findProfiles.calls.mostRecent().args[0]).toEqual({name: 'Maria'});
+  });
+
+  it('rejects a one-character name search and displays an explanation', () => {
+    const previousCalls = communityService.findProfiles.calls.count();
+    component.playerName = 'M';
+    fixture.detectChanges();
+    const button: HTMLButtonElement = fixture.nativeElement.querySelector('.discover-people-search button[type="submit"]');
+    expect(button.disabled).toBeTrue();
+    expect(fixture.nativeElement.querySelector('.discover-name-min-length')?.textContent)
+      .toContain('Escreve pelo menos 2 caracteres');
+    component.searchPlayers();
+    expect(communityService.findProfiles.calls.count()).toBe(previousCalls);
   });
 
   it('restores sport and locality filtering after clearing player name', () => {
