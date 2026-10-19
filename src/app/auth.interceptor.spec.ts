@@ -6,7 +6,8 @@ import {
   HttpResponse
 } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { fakeAsync, tick } from '@angular/core/testing';
+import { NEVER, of, throwError } from 'rxjs';
 
 import { AuthInterceptor } from './auth.interceptor';
 
@@ -116,4 +117,33 @@ describe('AuthInterceptor', () => {
       }
     });
   });
+
+  it('times out a stuck refresh without logging out and can retry a later request', fakeAsync(() => {
+    localStorage.setItem('t', 'expired-token');
+    const request = new HttpRequest('GET', '/api/admin/overview');
+    const next = {
+      handle: (req: HttpRequest<unknown>) => req.headers.get('Authorization') === 'Bearer valid-token'
+        ? of(new HttpResponse({ status: 200 }))
+        : throwError(() => new HttpErrorResponse({ status: 401 }))
+    } as HttpHandler;
+    backend.handle.and.returnValues(
+      NEVER,
+      of(new HttpResponse({ status: 200, body: { token: 'valid-token' } }))
+    );
+
+    let firstError: unknown;
+    interceptor.intercept(request, next).subscribe({ error: error => firstError = error });
+    tick(10_001);
+
+    expect(firstError).toBeTruthy();
+    expect(localStorage.getItem('t')).toBe('expired-token');
+    expect(router.navigate).not.toHaveBeenCalled();
+    expect(backend.handle).toHaveBeenCalledTimes(1);
+
+    let success = false;
+    interceptor.intercept(request, next).subscribe({ next: () => success = true });
+    expect(success).toBeTrue();
+    expect(localStorage.getItem('t')).toBe('valid-token');
+    expect(backend.handle).toHaveBeenCalledTimes(2);
+  }));
 });
