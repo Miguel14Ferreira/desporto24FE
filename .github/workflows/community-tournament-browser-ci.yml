@@ -1,20 +1,10 @@
 name: Validate tournament browser flows
+# E2E is expensive (Chromium OS dependencies + browser install).
+# Opt in explicitly instead of starting a second npm install on each PR commit.
+# workflow_dispatch is available from the Actions UI after the workflow
+# exists on the repository's default branch; otherwise run Playwright locally.
 on:
-  pull_request:
-    branches: [preview/render-fullstack]
-    paths:
-      - 'e2e/**'
-      - 'playwright.config.ts'
-      - 'src/app/pages/communities/community-tournaments.component.*'
-      - 'src/app/pages/communities/communities.component.*'
-      - 'src/app/pages/communities/communities.module.ts'
-      - 'src/app/services/community-tournaments.service.*'
-      - 'src/app/pages/model/community-tournament.ts'
-      - 'src/app/guard/authentication.guard.ts'
-      - 'src/app/auth.interceptor.ts'
-      - 'package.json'
-      - 'package-lock.json'
-      - '.github/workflows/community-tournament-browser-ci.yml'
+  workflow_dispatch:
 permissions:
   contents: read
 
