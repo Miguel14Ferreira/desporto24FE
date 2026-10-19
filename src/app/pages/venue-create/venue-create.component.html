@@ -463,19 +463,19 @@
         </summary>
         <div class="venue-create-options venue-create-wide">
           <div class="venue-create-wide">
-            <label for="venue-map-link">Link do Google Maps (opcional)</label>
+            <label for="venue-map-link">{{ 'venue.create.mapsLabel' | t }}</label>
             <input id="venue-map-link" name="mapLink" type="url"
               [(ngModel)]="mapLink" placeholder="https://maps.app.goo.gl/..."
               (ngModelChange)="onMapLinkChanged()">
             <button type="button" class="jynlo-action jynlo-action--neutral"
               [disabled]="!mapLink.trim() || resolvingMapLink || saving" (click)="resolveMapLink()">
-              {{ resolvingMapLink ? 'A obter coordenadas...' : 'Obter coordenadas do link' }}
+              {{ (resolvingMapLink ? 'venue.create.mapsResolving' : 'venue.create.mapsAction') | t }}
             </button>
             @if (mapLinkError) {
-              <p role="alert">Não foi possível obter a localização deste link. Verifica-o ou introduz as coordenadas manualmente.</p>
+              <p role="alert">{{ 'venue.create.mapsError' | t }}</p>
             }
             @if (mapLinkResolved) {
-              <p role="status">Coordenadas preenchidas. Confirma a localização antes de guardar.</p>
+              <p role="status">{{ 'venue.create.mapsSuccess' | t }}</p>
             }
           </div>
           <label>
@@ -507,7 +507,7 @@
           <span id="venue-required-fields-error" class="venue-create-error" role="alert" aria-live="assertive">{{ 'venue.requiredFields' | t }}</span>
         }
         @if (duplicateVenueError) {
-          <span id="venue-create-duplicate-error" class="venue-create-error" role="alert" aria-live="assertive">Já existe um recinto com este nome, cidade e morada. Confirma os dados antes de voltar a guardar.</span>
+          <span id="venue-create-duplicate-error" class="venue-create-error" role="alert" aria-live="assertive">{{ 'venue.create.duplicateError' | t }}</span>
         }
         @if (saveError) {
           <span id="venue-create-save-error" class="venue-create-error" role="alert" aria-live="assertive">{{ 'venue.createError' | t }}</span>
