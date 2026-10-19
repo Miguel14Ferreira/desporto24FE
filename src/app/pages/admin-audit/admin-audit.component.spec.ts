@@ -202,16 +202,19 @@ describe('AdminAuditComponent — platform overview in audit page', () => {
     fixture.destroy();
   }));
 
-  it('coalesces view refreshes after both requests and skips rendering after destroy', fakeAsync(() => {
+  it('coalesces both completed requests into a single view refresh', fakeAsync(() => {
     http.get.and.returnValues(of(summary), of(trends));
     component.ngOnInit();
     expect(changeDetector.markForCheck).toHaveBeenCalled();
     flushMicrotasks();
     expect(changeDetector.detectChanges).toHaveBeenCalledTimes(1);
+  }));
 
+  it('does not update a destroyed view when a notification is already scheduled', fakeAsync(() => {
+    http.get.and.returnValues(of(summary), of(trends));
+    component.ngOnInit();
     component.ngOnDestroy();
-    component.loadOverview();
     flushMicrotasks();
-    expect(changeDetector.detectChanges).toHaveBeenCalledTimes(1);
+    expect(changeDetector.detectChanges).not.toHaveBeenCalled();
   }));
 });
