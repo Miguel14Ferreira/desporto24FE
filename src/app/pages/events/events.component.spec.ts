@@ -228,6 +228,33 @@ describe('EventsComponent', () => {
     expect(component.errorMessage).toBe('');
   });
 
+  it('offers to create a session with the selected sport and city when no sessions match', () => {
+    component.sport = 'Futsal';
+    component.city = 'Lisboa';
+    component.loadSessions();
+    fixture.detectChanges();
+    const create = fixture.nativeElement.querySelector('.session-empty-create') as HTMLAnchorElement;
+    expect(create).not.toBeNull();
+    expect(create.getAttribute('href')).toContain('/menu/createEvent?');
+    expect(create.getAttribute('href')).toContain('sport=Futsal');
+    expect(create.getAttribute('href')).toContain('city=Lisboa');
+  });
+
+  it('lets users clear filters directly from the empty state', () => {
+    component.sport = 'Padel';
+    component.city = 'Sintra';
+    component.availableOnly = true;
+    component.loadSessions();
+    fixture.detectChanges();
+    const clear = fixture.nativeElement.querySelector('.session-empty-clear') as HTMLButtonElement;
+    expect(clear).not.toBeNull();
+    clear.click();
+    expect(component.sport).toBe('');
+    expect(component.city).toBe('');
+    expect(component.availableOnly).toBeFalse();
+    expect(sessionService.discover.calls.mostRecent().args[0].availability).toBeUndefined();
+  });
+
   it('should disable nearby search and clear coordinates', () => {
     component.nearbyActive = true;
     component.latitude = 38.72;
