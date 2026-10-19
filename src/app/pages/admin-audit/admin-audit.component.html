@@ -1,0 +1,161 @@
+<section class="admin-page">
+  <div class="admin-shell">
+    <header class="page-header">
+      <div>
+        <p class="eyebrow">{{ 'admin.eyebrow' | t }}</p>
+        <h1>{{ 'adminHub.audit' | t }}</h1>
+        <p class="subtitle">{{ 'adminAudit.subtitle' | t }}</p>
+      </div>
+      <a class="secondary-action jynlo-action jynlo-action--neutral" routerLink="/menu/admin">{{ 'admin.dashboard' | t }}</a>
+    </header>
+
+    <section class="platform-overview" aria-label="Indicadores gerais da plataforma">
+      <div class="overview-heading">
+        <div>
+          <h2>A Jynlo em números</h2>
+          <p>Acompanhamento da utilização e das operações da plataforma, baseado nos registos atuais.</p>
+        </div>
+        <button type="button" class="jynlo-action jynlo-action--neutral"
+          (click)="refreshIndicators()" [disabled]="overviewLoading || growthLoading">
+          {{ overviewLoading || growthLoading ? 'A atualizar…' : 'Atualizar indicadores' }}
+        </button>
+      </div>
+
+      <p *ngIf="overviewLoading && !overview" role="status" class="overview-status">
+        A carregar indicadores…
+      </p>
+      <p *ngIf="overviewError" role="alert" class="overview-error">{{ overviewError }}</p>
+
+      <ng-container *ngIf="overview as stats">
+        <p class="overview-updated">Atualizado: {{ stats.generatedAt | date:'dd/MM/yyyy HH:mm' }} · Dados da base de dados</p>
+
+        <h3>Utilizadores</h3>
+        <div class="overview-grid">
+          <article class="overview-card">
+            <span>Registados</span>
+            <strong>{{ stats.registeredUsers | number }}</strong>
+            <small>Contas existentes, excluindo as eliminadas</small>
+          </article>
+          <article class="overview-card">
+            <span>Contas ativas</span>
+            <strong>{{ stats.enabledUsers | number }}</strong>
+            <small>Contas com acesso ativo</small>
+          </article>
+          <article class="overview-card">
+            <span>Novos nos últimos 7 dias</span>
+            <strong>{{ stats.registrationsLast7Days | number }}</strong>
+            <small>Registos desta semana</small>
+          </article>
+          <article class="overview-card">
+            <span>Logins nos últimos 15 min</span>
+            <strong>{{ stats.loginsLast15Minutes | number }}</strong>
+            <small>Utilizadores que iniciaram sessão recentemente</small>
+          </article>
+          <article class="overview-card overview-card--unavailable">
+            <span>Online agora</span>
+            <strong>{{ stats.onlineUsers === null ? '—' : (stats.onlineUsers | number) }}</strong>
+            <small>{{ stats.onlineUsers === null
+              ? 'A recolha de presença ainda não está disponível.'
+              : 'Contas com aplicação visível e sinal recebido nos últimos 150 segundos. Valor aproximado.' }}</small>
+          </article>
+        </div>
+
+        <h3>Sessões desportivas</h3>
+        <div class="overview-grid">
+          <article class="overview-card">
+            <span>Agendadas para o futuro</span>
+            <strong>{{ stats.upcomingSessions | number }}</strong>
+            <small>Sessões abertas ou completas com data futura</small>
+          </article>
+          <article class="overview-card">
+            <span>Nos próximos 7 dias</span>
+            <strong>{{ stats.sessionsNext7Days | number }}</strong>
+            <small>Sessões a realizar durante esta semana</small>
+          </article>
+          <article class="overview-card">
+            <span>Total de sessões</span>
+            <strong>{{ stats.totalSessions | number }}</strong>
+            <small>Histórico de todos os estados</small>
+          </article>
+          <article class="overview-card">
+            <span>Concluídas</span>
+            <strong>{{ stats.completedSessions | number }}</strong>
+            <small>Sessões marcadas como concluídas</small>
+          </article>
+          <article class="overview-card">
+            <span>Canceladas</span>
+            <strong>{{ stats.cancelledSessions | number }}</strong>
+            <small>Sessões marcadas como canceladas</small>
+          </article>
+        </div>
+
+        <h3>Comunidades e operações</h3>
+        <div class="overview-grid">
+          <article class="overview-card">
+            <span>Comunidades</span>
+            <strong>{{ stats.communities | number }}</strong>
+            <small>Comunidades criadas</small>
+          </article>
+          <article class="overview-card">
+            <span>Torneios</span>
+            <strong>{{ stats.tournaments | number }}</strong>
+            <small>Competições criadas</small>
+          </article>
+          <article class="overview-card">
+            <span>Torneios em curso</span>
+            <strong>{{ stats.activeTournaments | number }}</strong>
+            <small>Competições iniciadas e por terminar</small>
+          </article>
+          <article class="overview-card">
+            <span>Recintos</span>
+            <strong>{{ stats.venues | number }}</strong>
+            <small>Recintos registados no catálogo</small>
+          </article>
+          <article class="overview-card">
+            <span>Denúncias por analisar</span>
+            <strong>{{ stats.openUserReports | number }}</strong>
+            <small>Relatórios de utilizadores com estado aberto</small>
+          </article>
+        </div>
+      </ng-container>
+
+      <div class="growth-trends" aria-label="Evolução semanal da Jynlo">
+        <div class="growth-trends-heading">
+          <div>
+            <h3>Evolução nas últimas 8 semanas</h3>
+            <p>Novos registos, sessões e comunidades criadas por semana — não são totais acumulados.</p>
+          </div>
+          <span *ngIf="growth" class="growth-tz">Semanas de segunda a domingo · UTC</span>
+        </div>
+        <p *ngIf="growthLoading && !growth" role="status" class="overview-status">A carregar gráficos de crescimento…</p>
+        <p *ngIf="growthError" role="alert" class="overview-error">{{ growthError }}</p>
+        <div *ngIf="growth as history" class="growth-charts">
+          <article *ngFor="let chart of growthCharts" class="growth-chart"
+            [attr.aria-label]="chart.title + ' nas últimas oito semanas'">
+            <div class="growth-chart-title">
+              <strong>{{ chart.title }}</strong>
+              <span>{{ chart.total | number }} em 8 semanas</span>
+            </div>
+            <div class="growth-plot" role="list" [attr.aria-label]="chart.title + ' por semana'">
+              <div *ngFor="let point of chart.bars" class="growth-point" role="listitem"
+                [attr.aria-label]="(point.weekStart | date:'dd/MM/yyyy') + ': ' + point.value">
+                <span class="growth-value">{{ point.value | number }}</span>
+                <div class="growth-bar-track">
+                  <div class="growth-bar" [class.growth-bar--users]="chart.key === 'users'"
+                    [class.growth-bar--sessions]="chart.key === 'sessions'"
+                    [class.growth-bar--communities]="chart.key === 'communities'"
+                    [style.height.%]="point.height"></div>
+                </div>
+                <span class="growth-week">{{ point.weekStart | date:'dd/MM' }}</span>
+              </div>
+            </div>
+          </article>
+        </div>
+        <p *ngIf="growth" class="overview-updated">
+          Atualizado: {{ growth.generatedAt | date:'dd/MM/yyyy HH:mm' }} ·
+          Semanas sem criações são apresentadas como zero.
+        </p>
+      </div>
+    </section>
+  </div>
+</section>
