@@ -13,7 +13,9 @@ import { AdminUserReportsComponent } from '../admin-user-reports/admin-user-repo
 
 const routes: Routes = [
   { path: '', component: AdminDashboardComponent },
-  { path: 'audit-log', component: AdminAuditComponent },
+  { path: 'statistics', component: AdminAuditComponent },
+  // Keep existing links valid while reserving audit-log for a future action history.
+  { path: 'audit-log', redirectTo: 'statistics', pathMatch: 'full' },
   { path: 'players', component: AdminPlayersComponent },
   { path: 'attendance-disputes', component: AdminDisputesComponent },
   { path: 'ideas', component: AdminIdeasComponent },
