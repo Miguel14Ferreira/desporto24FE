@@ -222,7 +222,7 @@
                    [queryParams]="sessionEntryAction(session) === 'details' ? null : { join: '1' }">
                   <div class="session-main">
                     <strong>{{ session.sport }}</strong>
-                    <span>{{ session.city }} · {{ session.gameDate | date:'dd/MM HH:mm' }}</span>
+                    <span>{{ session.city }} · {{ (sessionDisplayDate(session) | date:'dd/MM HH:mm') || ('publicSession.notSpecified' | t) }}</span>
                     <span class="session-summary-meta">
                       @if (session.priceAmount > 0) {
                         {{ session.priceAmount | number:'1.2-2' }} €
