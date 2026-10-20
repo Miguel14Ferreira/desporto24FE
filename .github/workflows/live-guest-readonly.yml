@@ -1,0 +1,40 @@
+name: Jynlo anonymous LIVE browser check (read-only)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [preview/render-fullstack]
+    paths:
+      - '.github/workflows/live-guest-readonly.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live-guest:
+    if: ${{ github.event_name == 'workflow_dispatch' || !github.event.pull_request.draft }}
+    name: Check LIVE homepage and login without submitting
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install isolated Playwright and Chromium
+        run: |
+          mkdir -p "$RUNNER_TEMP/jynlo-browser-qa"
+          npm install --prefix "$RUNNER_TEMP/jynlo-browser-qa" --no-fund --no-audit --no-save playwright@1.56.1
+          "$RUNNER_TEMP/jynlo-browser-qa/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Inspect public LIVE site (read-only; no credentials)
+        run: |
+          NODE_PATH="$RUNNER_TEMP/jynlo-browser-qa/node_modules" node scripts/ci-browser/live_guest_readonly.cjs
+      - name: Keep screenshots for manual QA
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jynlo-live-guest-readonly
+          path: artifacts/live-guest/*.png
+          if-no-files-found: warn
+          retention-days: 2
