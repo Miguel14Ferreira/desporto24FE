@@ -606,8 +606,9 @@ describe('PublicSessionPreviewComponent', () => {
 
     const create = page.querySelector('.join-panel .primary-action') as HTMLAnchorElement;
     const existing = page.querySelector('.join-panel .secondary-action') as HTMLAnchorElement;
-    expect(create.getAttribute('href')).toContain(encodeURIComponent(destination!));
-    expect(existing.getAttribute('href')).toContain(encodeURIComponent(destination!));
+    expect(create.getAttribute('href')).toContain(encodeURIComponent(destination + '?join=1'));
+    expect(existing.getAttribute('href')).toContain(encodeURIComponent(destination + '?join=1'));
+    expect(fixture.componentInstance.participationReturnUrl).toBe('/menu/events/42?join=1');
 
     authenticationService.isLoggedIn.and.returnValue(true);
     fixture.componentInstance.isAuthenticated = true;
@@ -619,6 +620,24 @@ describe('PublicSessionPreviewComponent', () => {
     fixture.detectChanges();
     expect(page.querySelector('.join-panel .primary-action')?.getAttribute('href'))
       .toBe(destination);
+  });
+
+  it('keeps the join/waitlist focus for guest entry but not for closed sessions', () => {
+    const page = render({ status: 'FULL' });
+    const registration = page.querySelector('.join-panel .primary-action') as HTMLAnchorElement;
+    const existing = page.querySelector('.join-panel .secondary-action') as HTMLAnchorElement;
+    const header = page.querySelector('.header-login') as HTMLAnchorElement;
+    for (const link of [registration, existing, header]) {
+      expect(new URL(link.href).searchParams.get('returnUrl'))
+        .toBe('/menu/events/42?join=1');
+    }
+
+    fixture.componentInstance.session!.status = 'CANCELLED';
+    fixture.detectChanges();
+    expect(fixture.componentInstance.participationReturnUrl).toBe('/menu/events/42');
+    const closedLogin = page.querySelector('.join-panel .secondary-action') as HTMLAnchorElement;
+    expect(new URL(closedLogin.href).searchParams.get('returnUrl'))
+      .toBe('/menu/events/42');
   });
 
   it('keeps a canonical positive session ID when loading its public preview', () => {
