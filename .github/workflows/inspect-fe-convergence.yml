@@ -1,0 +1,34 @@
+name: Temporary inspect FE develop branch convergence
+on:
+  push:
+    branches: ['integration/inspect-fe-develop-20261020']
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Inspect overlap and three-way merge conflicts, read-only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'Jynlo CI'
+          git config user.email 'ci@example.invalid'
+          git fetch origin develop audit/venue-autocomplete-legacy-fallback-20261018 release/desktop-discovery-venue-ux-20261019 feature/public-home-discovery-20261020 feature/pestana-auth-form-ux-20261020
+          for source in \
+            audit/venue-autocomplete-legacy-fallback-20261018 \
+            release/desktop-discovery-venue-ux-20261019 \
+            feature/public-home-discovery-20261020 \
+            feature/pestana-auth-form-ux-20261020; do
+            echo "=== CANDIDATE $source ==="
+            git checkout --detach origin/develop
+            git merge --no-commit --no-ff origin/"$source" || true
+            echo "=== CONFLICTING FILES: $source ==="
+            git diff --name-only --diff-filter=U || true
+            git merge --abort || true
+          done
+          echo "No remote ref modified."
