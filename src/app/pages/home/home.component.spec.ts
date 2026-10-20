@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 
 import { HomeComponent } from './home.component';
 import { TranslatePipe } from '../../i18n/translate.pipe';
@@ -109,6 +109,59 @@ describe('HomeComponent public discovery', () => {
     expect(fixture.componentInstance.featuredVenues.map(value => value.id)).toEqual([34]);
     expect(fixture.componentInstance.venuesLoadError).toBeFalse();
     expect(fixture.componentInstance.venuesLoading).toBeFalse();
+  });
+
+  it('searches sessions and bounded venues by the selected sport and locality', () => {
+    const fixture = render();
+    const element = fixture.nativeElement as HTMLElement;
+    const sport = element.querySelector('input[name="sport"]') as HTMLInputElement;
+    const city = element.querySelector('input[name="city"]') as HTMLInputElement;
+    sport.value = 'Padel';
+    city.value = 'Lisboa';
+
+    const form = element.querySelector('form.preview-search') as HTMLFormElement;
+    form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+
+    expect(sessions.discover).toHaveBeenCalledWith(jasmine.objectContaining({
+      sport: 'Padel', city: 'Lisboa', privateGame: false
+    }));
+    expect(venues.suggest).toHaveBeenCalledWith(undefined, 'Lisboa', 'Padel', 0);
+    expect(form.getAttribute('action')).toBeNull();
+  });
+
+  it('clears public filters and requests the unfiltered catalogue again', () => {
+    const fixture = render();
+    const element = fixture.nativeElement as HTMLElement;
+    const sport = element.querySelector('input[name="sport"]') as HTMLInputElement;
+    const city = element.querySelector('input[name="city"]') as HTMLInputElement;
+    sport.value = 'Futebol';
+    city.value = 'Cascais';
+    (element.querySelector('button[type="button"]') as HTMLButtonElement).click();
+
+    expect(sport.value).toBe('');
+    expect(city.value).toBe('');
+    expect(sessions.discover).toHaveBeenCalledTimes(2);
+    expect(sessions.discover).toHaveBeenCalledWith(jasmine.objectContaining({
+      sport: '', city: '', privateGame: false
+    }));
+    expect(venues.suggest).toHaveBeenCalledWith(undefined, undefined, undefined, 0);
+  });
+
+  it('ignores results from a superseded public search', () => {
+    const first = new Subject<SessionSummary[]>();
+    const second = new Subject<SessionSummary[]>();
+    sessions.discover.and.returnValues(first.asObservable(), second.asObservable());
+
+    const fixture = render();
+    fixture.componentInstance.searchPublic(new Event('submit'), 'Padel', 'Lisboa');
+
+    second.next([session(42, { sport: 'Padel', city: 'Lisboa' })]);
+    first.next([session(88)]);
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.featuredSessions.map(value => value.id)).toEqual([42]);
+    expect(fixture.componentInstance.sessionsLoading).toBeFalse();
+    expect((fixture.nativeElement as HTMLElement).querySelectorAll('a.preview-item').length).toBe(1);
   });
 
   it('degrades gracefully when a public request fails', () => {
