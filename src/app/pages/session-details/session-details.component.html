@@ -70,13 +70,13 @@
           </div>
 
           @if (session.joined) {
-            <div class="membership-status" role="status">
+            <div id="session-membership" class="membership-status" role="status">
               <strong>{{ 'sessionDetail.joinedTitle' | t }}</strong>
               <button type="button" class="participants-shortcut"
                       (click)="scrollToParticipants()">{{ 'sessionDetail.whosGoing' | t }} ↓</button>
             </div>
           } @else if (session.waitlisted) {
-            <div class="membership-status waitlisted" role="status">
+            <div id="session-membership" class="membership-status waitlisted" role="status">
               <strong>{{ 'mySessions.waitlist' | t }}</strong>
               @if (session.waitlistPosition !== null) {
                 <span>{{ 'sessionDetail.position' | t:{ position: session.waitlistPosition } }}</span>
