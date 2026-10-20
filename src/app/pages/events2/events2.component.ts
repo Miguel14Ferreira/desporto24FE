@@ -45,6 +45,7 @@ export class Events2Component implements OnInit, OnDestroy {
   locationCaptured = false;
   locationError = '';
   locationSource: 'gps' | 'map' | null = null;
+  locationMethod: 'venue' | 'maps' | 'gps' = 'venue';
   gpsAccuracyMeters: number | null = null;
   private gpsRequestId = 0;
 
@@ -494,6 +495,7 @@ export class Events2Component implements OnInit, OnDestroy {
     this.selectedVenueId = venueId !== null && Number.isFinite(venueId)
       ? venueId
       : null;
+    if (this.selectedVenueId !== null) this.locationMethod = 'venue';
 
     if (this.selectedVenueId === null) {
       this.selectedVenuePhoto = null;
@@ -580,7 +582,27 @@ export class Events2Component implements OnInit, OnDestroy {
       });
   }
 
+  chooseLocationMethod(method: 'venue' | 'maps' | 'gps'): void {
+    if (this.loading || this.venueSaving || method === this.locationMethod) return;
+
+    if (method === 'venue') {
+      this.invalidateVenueMapLinkRequest();
+      this.gpsRequestId++;
+      this.clearLocation();
+      this.venueMapLink = '';
+      this.venueMapCandidateResolvedUrl = '';
+      this.locationMethod = 'venue';
+      return;
+    }
+
+    this.useMapLinkVenue();
+    this.venueMapLink = '';
+    this.venueMapLinkError = '';
+    this.locationMethod = method;
+  }
+
   useMapLinkVenue(): void {
+    this.locationMethod = 'maps';
     this.invalidateVenueMapLinkRequest();
     this.venuePhotoRequestId++;
     this.selectedVenueId = null;
@@ -599,6 +621,7 @@ export class Events2Component implements OnInit, OnDestroy {
     }
 
     this.venueMapLink = url;
+    this.locationMethod = 'maps';
     this.venueMapLinkError = '';
     this.invalidateVenueMapLinkRequest();
     // Choosing a Maps link invalidates any pending browser GPS callback.
@@ -833,6 +856,7 @@ export class Events2Component implements OnInit, OnDestroy {
     }
 
     this.invalidateVenueMapLinkRequest();
+    this.locationMethod = 'gps';
     this.latitude = latitude;
     this.longitude = longitude;
     this.locationCaptured = true;
@@ -902,6 +926,12 @@ export class Events2Component implements OnInit, OnDestroy {
   private validate(): string | null {
     if (!this.sportSelected) {
       return 'Seleciona um desporto da lista.';
+    }
+    if (this.locationMethod === 'maps' && !(this.hasCoordinates && this.locationSource === 'map')) {
+      return 'Resolve primeiro a ligação do Google Maps para confirmar o ponto do recinto.';
+    }
+    if (this.locationMethod === 'gps' && !(this.hasCoordinates && this.locationSource === 'gps')) {
+      return 'Autoriza e confirma primeiro a tua localização atual.';
     }
 
     if (this.selectedVenueId !== null) {
