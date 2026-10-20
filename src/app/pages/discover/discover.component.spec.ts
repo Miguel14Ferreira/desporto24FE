@@ -811,6 +811,9 @@ describe('DiscoverComponent', () => {
       expect(card.getAttribute('href')).withContext(JSON.stringify(overrides))
         .toBe('/menu/events/34');
       expect(card.textContent).not.toContain('Entrar na lista de espera');
+      if (overrides.gameDate === 'invalid') {
+        expect(card.textContent).toContain('Por indicar');
+      }
     }
   });
 
