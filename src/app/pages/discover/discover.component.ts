@@ -281,7 +281,9 @@ export class DiscoverComponent implements OnInit {
           latitude: this.nearbyPosition?.latitude,
           longitude: this.nearbyPosition?.longitude,
           radiusKm: this.nearbyPosition ? this.nearbyRadiusKm : undefined,
-          availability: 'available',
+          // Include FULL sessions so players can discover their waitlists.
+          // The card only shows a join shortcut when participation is viable.
+          availability: undefined,
           sort: this.nearbyPosition ? 'distance' : 'date'
         }),
         [] as SessionSummary[], 'sessions', requestId
