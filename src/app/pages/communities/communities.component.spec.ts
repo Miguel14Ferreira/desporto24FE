@@ -272,6 +272,53 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(matches).toHaveBeenCalledWith(8);
   });
 
+  it('ignores an obsolete community presentation and keeps the latest one loading', () => {
+    const older = new Subject<any>();
+    const newer = new Subject<any>();
+    (component as any).pendingJoinLookupVersion = 0;
+    (component as any).communityService = {
+      presentation: jasmine.createSpy('presentation')
+        .and.returnValues(older.asObservable(), newer.asObservable())
+    };
+    const lookup = spyOn<any>(component, 'loadMyPendingJoinRequest');
+    (component as any).loadCommunityPresentation(901);
+    (component as any).loadCommunityPresentation(902);
+
+    older.next({ id: 901, name: 'Antiga', visibility: 'PRIVATE' });
+    older.complete();
+    expect(component.communityPresentation).toBeUndefined();
+    expect(component.presentationLoading).toBeTrue();
+    expect(lookup).not.toHaveBeenCalled();
+
+    newer.next({ id: 902, name: 'Atual', visibility: 'PRIVATE' });
+    newer.complete();
+    expect(component.communityPresentation?.id).toBe(902);
+    expect(component.presentationLoading).toBeFalse();
+    expect(lookup).toHaveBeenCalledOnceWith(902);
+  });
+
+  it('ignores an earlier presentation failure while a newer community loads', () => {
+    const older = new Subject<any>();
+    const newer = new Subject<any>();
+    (component as any).pendingJoinLookupVersion = 0;
+    (component as any).communityService = {
+      presentation: jasmine.createSpy('presentation')
+        .and.returnValues(older.asObservable(), newer.asObservable())
+    };
+    (component as any).loadCommunityPresentation(901);
+    (component as any).loadCommunityPresentation(902);
+
+    older.error(new Error('stale'));
+    expect(component.errorMessage).toBe('');
+    expect(component.presentationLoading).toBeTrue();
+
+    newer.next({ id: 902, name: 'Atual', visibility: 'PUBLIC' });
+    newer.complete();
+    expect(component.communityPresentation?.id).toBe(902);
+    expect(component.errorMessage).toBe('');
+    expect(component.presentationLoading).toBeFalse();
+  });
+
   it('shows only the latest match archive list and ignores stale errors and loading completion', () => {
     component.selected = { id: 7 } as any;
     const first = new Subject<any[]>();

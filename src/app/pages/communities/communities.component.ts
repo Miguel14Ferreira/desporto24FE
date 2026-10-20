@@ -402,8 +402,9 @@ export class CommunitiesComponent implements OnInit {
   private loadCommunityPresentation(id: number): void {
     this.pendingArchiveDeepLinkCommunityId = null;
     this.invalidateArchiveRequests();
-    // Public presentation navigation invalidates still-pending private community reads.
-    this.communityOpenRequestVersion = (this.communityOpenRequestVersion || 0) + 1;
+    // Only the most recent presentation request may change this view.
+    const presentationVersion = (this.communityOpenRequestVersion || 0) + 1;
+    this.communityOpenRequestVersion = presentationVersion;
     this.competitionRequestVersion = (this.competitionRequestVersion || 0) + 1;
     this.communitySessionsRequestVersion = (this.communitySessionsRequestVersion || 0) + 1;
     ++this.pendingJoinLookupVersion;
@@ -419,16 +420,25 @@ export class CommunitiesComponent implements OnInit {
       .pipe(
         timeout(10_000),
         retry({ count: 1 }),
-        finalize(() => this.presentationLoading = false)
+        finalize(() => {
+          if (presentationVersion === this.communityOpenRequestVersion) {
+            this.presentationLoading = false;
+          }
+        })
       )
       .subscribe({
         next: presentation => {
+          if (presentationVersion !== this.communityOpenRequestVersion) return;
           this.communityPresentation = presentation;
           if (presentation.visibility === 'PRIVATE') {
             this.loadMyPendingJoinRequest(presentation.id);
           }
         },
-        error: () => this.errorMessage = t('feedback.communities.openError')
+        error: () => {
+          if (presentationVersion === this.communityOpenRequestVersion) {
+            this.errorMessage = t('feedback.communities.openError');
+          }
+        }
       });
   }
 
@@ -630,6 +640,7 @@ export class CommunitiesComponent implements OnInit {
     this.competitionRequestVersion = (this.competitionRequestVersion || 0) + 1;
     this.communitySessionsRequestVersion = (this.communitySessionsRequestVersion || 0) + 1;
     ++this.pendingRequestsLookupVersion;
+    this.presentationLoading = false;
     this.editingSports = false;
     this.sportsMessage = '';
     this.featuresEditing = false;
