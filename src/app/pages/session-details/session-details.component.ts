@@ -108,6 +108,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   private sessionId?: number;
   private currentUsername: string | null = null;
   private pendingJoinScroll = false;
+  private pendingMembershipScroll = false;
   private readonly jwtHelper = new JwtHelperService();
   private readonly realtimeSubscriptions = new Subscription();
 
@@ -122,6 +123,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
 
   ngOnInit(): void {
     this.pendingJoinScroll = this.route.snapshot.queryParamMap?.get('join') === '1';
+    this.pendingMembershipScroll = this.route.snapshot.queryParamMap?.get('membership') === '1';
     this.promotionOpen = this.route.snapshot.queryParamMap?.get('promote') === '1';
     this.currentUsername = this.readCurrentUsername();
 
@@ -161,7 +163,21 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   }
 
   ngAfterViewChecked(): void {
-    if (!this.pendingJoinScroll || this.loading || !this.session) {
+    if (this.loading || !this.session) {
+      return;
+    }
+
+    if (this.pendingMembershipScroll) {
+      // A historical promotion notification may be opened after the membership
+      // changes again. Only scroll if the current session confirms membership.
+      this.pendingMembershipScroll = false;
+      if (this.session.joined || this.session.waitlisted) {
+        document.getElementById('session-membership')
+          ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+
+    if (!this.pendingJoinScroll) {
       return;
     }
     if (!this.canJoinSession()) {
