@@ -354,7 +354,6 @@
                 }
               </div>
             }
-          </div>
         }
 
         @if (selectedVenue(); as venue) {
@@ -600,6 +599,9 @@
               (ngModelChange)="onCityChanged($event)"
               [disabled]="loading"
               [placeholder]="'events.cityPlaceholder' | t">
+            @if (locationMethod !== 'venue') {
+              <small class="venue-current-location">{{ 'createSession.locationCityHint' | t }}</small>
+            }
           </label>
 
           <label>
