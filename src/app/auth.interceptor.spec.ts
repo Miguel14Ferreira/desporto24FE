@@ -175,6 +175,46 @@ describe('AuthInterceptor', () => {
     });
   });
 
+  it('keeps the renewed session when a retried community request is forbidden', (done) => {
+    localStorage.setItem('t', 'expired-token');
+    const request = new HttpRequest('GET',
+      environment.apiUrl + '/api/communities/42/join-requests');
+    let attempt = 0;
+    const next = { handle: (req: HttpRequest<unknown>) => {
+      attempt++;
+      if (attempt === 1) {
+        expect(req.headers.get('Authorization')).toBe('Bearer expired-token');
+        return throwError(() => new HttpErrorResponse({
+          status: 403,
+          error: {
+            httpStatusCode: 403,
+            message: 'Tu percisas de efetuar o login para aceder a esta página'
+          }
+        }));
+      }
+      expect(req.headers.get('Authorization')).toBe('Bearer renewed-token');
+      return throwError(() => new HttpErrorResponse({
+        status: 403,
+        error: { httpStatusCode: 403, message: 'NOT_ENOUGH_PERMISSION' }
+      }));
+    } } as HttpHandler;
+    backend.handle.and.returnValue(of(new HttpResponse({
+      status: 200, body: { token: 'renewed-token' }
+    })));
+
+    interceptor.intercept(request, next).subscribe({
+      next: () => done.fail('An unauthorized community action must remain forbidden'),
+      error: error => {
+        expect(error.status).toBe(403);
+        expect(attempt).toBe(2);
+        expect(backend.handle).toHaveBeenCalledTimes(1);
+        expect(localStorage.getItem('t')).toBe('renewed-token');
+        expect(router.navigate).not.toHaveBeenCalled();
+        done();
+      }
+    });
+  });
+
   it('clears the session if the backend authentication 403 is followed by rejected refresh', (done) => {
     localStorage.setItem('t', 'expired-token');
     const next = { handle: () => throwError(() => new HttpErrorResponse({

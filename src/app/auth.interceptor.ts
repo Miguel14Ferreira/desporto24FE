@@ -58,6 +58,14 @@ export class AuthInterceptor implements HttpInterceptor {
         }
 
         return this.refreshAccessToken().pipe(
+          // Handle only errors from the refresh call. A forbidden response from
+          // the retried request means insufficient permissions, not a lost session.
+          catchError(refreshError => {
+            if (this.isRefreshRejected(refreshError)) {
+              this.clearSessionAndRedirect();
+            }
+            return throwError(() => refreshError);
+          }),
           switchMap(response => {
             if (!response.token) {
               return throwError(() => error);
@@ -69,12 +77,6 @@ export class AuthInterceptor implements HttpInterceptor {
               }
             });
             return next.handle(retryRequest);
-          }),
-          catchError(refreshError => {
-            if (this.isRefreshRejected(refreshError)) {
-              this.clearSessionAndRedirect();
-            }
-            return throwError(() => refreshError);
           })
         );
       })
