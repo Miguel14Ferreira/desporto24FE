@@ -1118,13 +1118,42 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     return Math.max(0, this.session.maxParticipants - this.session.participantCount);
   }
 
-  canFindPlayers(): boolean {
-    if (!this.session || !this.isCreator() || this.session.privateGame
-        || this.session.status !== 'OPEN' || this.missingPlayers() === 0) {
-      return false;
+  organizerPreparation(): { confirmed: number; capacity: number; missing: number; full: boolean } | null {
+    const session = this.session;
+    if (!session || !this.isCreator() || (session.status !== 'OPEN' && session.status !== 'FULL')) {
+      return null;
     }
-    const start = Date.parse(this.session.gameDate);
-    return Number.isFinite(start) && start > Date.now();
+    const kickoff = Date.parse(session.gameDate);
+    if (!Number.isFinite(kickoff) || kickoff <= Date.now()
+        || !Number.isSafeInteger(session.maxParticipants) || session.maxParticipants <= 0
+        || !Number.isSafeInteger(session.participantCount) || session.participantCount < 0
+        || session.participantCount > session.maxParticipants) {
+      return null;
+    }
+
+    // FULL from the backend takes precedence over a potentially delayed count.
+    const full = session.status === 'FULL' || session.participantCount === session.maxParticipants;
+    return {
+      confirmed: session.participantCount,
+      capacity: session.maxParticipants,
+      missing: full ? 0 : session.maxParticipants - session.participantCount,
+      full
+    };
+  }
+
+  canFindPlayers(): boolean {
+    const preparation = this.organizerPreparation();
+    return !!preparation && !preparation.full
+      && this.session?.status === 'OPEN'
+      && this.session.privateGame === false
+      && this.session.audience !== 'COMMUNITY_ONLY';
+  }
+
+  scrollToPlayerSearch(): void {
+    if (this.canFindPlayers()) {
+      document.getElementById('session-player-search')
+        ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   }
 
   isFull(): boolean {
