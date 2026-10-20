@@ -148,7 +148,7 @@
                     : 'sessionDetail.organizerMissing') | t:{ count: preparation.missing } }}
               </p>
               <div class="organizer-preparation-actions">
-                @if (session.joined) {
+                @if (session.joined || isCreator()) {
                   <button type="button" class="jynlo-action jynlo-action--neutral"
                           (click)="scrollToParticipants()">{{ 'sessionDetail.whosGoing' | t }} ↓</button>
                 }
@@ -629,7 +629,7 @@
           }
 
 
-          @if (session.joined) {
+          @if (session.joined || isCreator()) {
             <section id="session-participants" class="session-participants-panel">
               <div class="session-participants-header">
                 <div>
@@ -645,8 +645,11 @@
                 </button>
               </div>
 
+              @if (sessionParticipantsLoading) {
+                <p class="session-participants-loading" role="status">{{ 'sessionDetail.loadingParticipants' | t }}</p>
+              }
               @if (sessionParticipantsError) {
-                <div class="action-message error-message">{{ sessionParticipantsError }}</div>
+                <div class="action-message error-message" role="alert">{{ sessionParticipantsError }}</div>
               }
 
               @if (!sessionParticipantsLoading && !sessionParticipantsError) {
