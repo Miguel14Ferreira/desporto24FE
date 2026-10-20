@@ -109,6 +109,12 @@
               <a class="preview-item" [routerLink]="['/sessions', session.id]">
                 <strong>{{ session.sport }} · {{ session.city }}</strong>
                 <span>{{ session.gameDate | date:'dd/MM/yyyy, HH:mm' }}</span>
+                @let spots = remainingSpots(session);
+                @if (spots !== null) {
+                  <span class="preview-availability" [class.preview-availability--full]="spots === 0">
+                    {{ (spots === 0 ? 'home.preview.full' : spots === 1 ? 'home.preview.oneSpot' : 'home.preview.manySpots') | t:{count: spots} }}
+                  </span>
+                }
                 <small>{{ 'home.preview.viewSession' | t }} ↗</small>
               </a>
             }
