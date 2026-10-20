@@ -1,0 +1,63 @@
+name: Temporary consolidate FE PR chains safely
+on:
+  push:
+    branches: ['integration/inspect-fe-develop-20261020']
+    paths: ['.github/workflows/consolidate-fe-develop.yml']
+permissions:
+  contents: write
+jobs:
+  consolidate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      CI: 'true'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Merge overlapping older PR chains into newer develop without force
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'Jynlo CI integrator'
+          git config user.email 'ci@example.invalid'
+          git fetch origin develop \
+            audit/venue-autocomplete-legacy-fallback-20261018 \
+            release/desktop-discovery-venue-ux-20261019 \
+            feature/public-home-discovery-20261020 \
+            feature/pestana-auth-form-ux-20261020
+          test "$(git rev-parse origin/develop)" = "8e98facc814cb793ef5543a1f4dd1d6863d0997e"
+          test "$(git rev-parse origin/audit/venue-autocomplete-legacy-fallback-20261018)" = "ee64bc5f070dc2e082bcb093bf7e609809d40ec7"
+          test "$(git rev-parse origin/release/desktop-discovery-venue-ux-20261019)" = "02d487ee0c946646ac7861309766d4d0f75f7222"
+          test "$(git rev-parse origin/feature/public-home-discovery-20261020)" = "df41b630635da54d3145299fdfbb530020951aa2"
+          test "$(git rev-parse origin/feature/pestana-auth-form-ux-20261020)" = "92517d93bc62dc899594cd942abb4cc5a3887ba5"
+          git checkout -B integration/validated-fe-consolidation-20261020 origin/develop
+          # Keep newer develop for overlapping hunks; nonconflicting audit UX
+          # improvements, test cases and docs are merged normally by Git.
+          for source in \
+            audit/venue-autocomplete-legacy-fallback-20261018 \
+            release/desktop-discovery-venue-ux-20261019 \
+            feature/public-home-discovery-20261020 \
+            feature/pestana-auth-form-ux-20261020; do
+            echo "Merging $source..."
+            git merge --no-edit --no-ff -X ours origin/"$source"
+            test -z "$(git ls-files -u)"
+          done
+          git status --porcelain
+          git log -5 --format='%h %s'
+      - name: Full Angular regression suite on exact combined tree
+        run: |
+          npm ci --no-audit --no-fund
+          npm test -- --watch=false --browsers=ChromeHeadless
+      - name: Production frontend build
+        run: npm run build
+      - name: Publish tested integration to scratch branch only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git push origin HEAD:refs/heads/integration/validated-fe-consolidation-20261020
+          echo 'Combined branch tested and published, develop and Render untouched.'
