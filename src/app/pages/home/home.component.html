@@ -8,8 +8,9 @@
         <p class="subtitle">{{ 'home.hero.subtitle' | t }}</p>
 
         <div class="hero-actions">
-          <a class="primary-action jynlo-action jynlo-action--primary" routerLink="/login/registerNewUser">{{ 'home.createAccount' | t }}</a>
-          <a class="secondary-action jynlo-action jynlo-action--neutral" routerLink="/login">{{ 'home.haveAccount' | t }}</a>
+          <a class="primary-action jynlo-action jynlo-action--primary" href="#jynlo-public-discovery">{{ 'home.hero.explore' | t }}</a>
+          <a class="secondary-action jynlo-action jynlo-action--neutral" routerLink="/login/registerNewUser">{{ 'home.createAccount' | t }}</a>
+          <a class="hero-login-link" routerLink="/login">{{ 'home.haveAccount' | t }}</a>
         </div>
 
         <div class="promise-line">
@@ -62,7 +63,17 @@
       </article>
     </section>
 
-    <section class="public-discovery" aria-label="{{ 'home.preview.title' | t }}">
+    <section class="community-teaser" aria-labelledby="home-community-title">
+      <div class="community-teaser-copy">
+        <p class="eyebrow">{{ 'home.groups.eyebrow' | t }}</p>
+        <h2 id="home-community-title">{{ 'home.groups.title' | t }}</h2>
+        <p>{{ 'home.groups.description' | t }}</p>
+      </div>
+      <a class="secondary-action jynlo-action jynlo-action--neutral community-teaser-cta"
+         routerLink="/login/registerNewUser">{{ 'home.groups.cta' | t }}</a>
+    </section>
+
+    <section class="public-discovery" id="jynlo-public-discovery" aria-label="{{ 'home.preview.title' | t }}">
       <div class="preview-heading">
         <p class="eyebrow">{{ 'home.preview.eyebrow' | t }}</p>
         <h2>{{ 'home.preview.title' | t }}</h2>
