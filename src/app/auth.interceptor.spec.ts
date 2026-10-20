@@ -118,6 +118,86 @@ describe('AuthInterceptor', () => {
     });
   });
 
+  it('recovers an expired backend JWT signalled by its authentication-specific 403', (done) => {
+    localStorage.setItem('t', 'old-token');
+    const request = new HttpRequest('GET', environment.apiUrl + '/api/communities/mine');
+    const sent: string[] = [];
+    const next = { handle: (req: HttpRequest<unknown>) => {
+      const bearer = req.headers.get('Authorization') ?? '';
+      sent.push(bearer);
+      return bearer === 'Bearer old-token'
+        ? throwError(() => new HttpErrorResponse({
+            status: 403,
+            error: {
+              httpStatusCode: 403,
+              message: 'Tu percisas de efetuar o login para aceder a esta página'
+            }
+          }))
+        : of(new HttpResponse({ status: 200, body: [] }));
+    } } as HttpHandler;
+    backend.handle.and.returnValue(of(new HttpResponse({
+      status: 200, body: { token: 'fresh-token' }
+    })));
+
+    interceptor.intercept(request, next).subscribe({
+      next: response => {
+        expect(response instanceof HttpResponse).toBeTrue();
+        expect(sent).toEqual(['Bearer old-token', 'Bearer fresh-token']);
+        expect(localStorage.getItem('t')).toBe('fresh-token');
+        expect(backend.handle).toHaveBeenCalledTimes(1);
+        expect(router.navigate).not.toHaveBeenCalled();
+        done();
+      },
+      error: done.fail
+    });
+  });
+
+  it('does not refresh genuine forbidden community access even with a valid local token', (done) => {
+    localStorage.setItem('t', 'member-token');
+    const error = new HttpErrorResponse({
+      status: 403,
+      error: { httpStatusCode: 403, message: 'Não tens permissões suficientes.' }
+    });
+    const next = { handle: (req: HttpRequest<unknown>) => {
+      expect(req.headers.get('Authorization')).toBe('Bearer member-token');
+      return throwError(() => error);
+    } } as HttpHandler;
+
+    interceptor.intercept(new HttpRequest('GET',
+      environment.apiUrl + '/api/communities/42/join-requests'), next).subscribe({
+      error: received => {
+        expect(received).toBe(error);
+        expect(backend.handle).not.toHaveBeenCalled();
+        expect(router.navigate).not.toHaveBeenCalled();
+        expect(localStorage.getItem('t')).toBe('member-token');
+        done();
+      }
+    });
+  });
+
+  it('clears the session if the backend authentication 403 is followed by rejected refresh', (done) => {
+    localStorage.setItem('t', 'expired-token');
+    const next = { handle: () => throwError(() => new HttpErrorResponse({
+      status: 403,
+      error: {
+        httpStatusCode: 403,
+        message: 'Tu percisas de efetuar o login para aceder a esta página'
+      }
+    })) } as HttpHandler;
+    backend.handle.and.returnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
+
+    interceptor.intercept(new HttpRequest('GET',
+      environment.apiUrl + '/api/communities/mine'), next).subscribe({
+      error: () => {
+        expect(localStorage.getItem('t')).toBeNull();
+        expect(router.navigate).toHaveBeenCalledWith(['/login'], {
+          queryParams: { sessionExpired: '1', returnUrl: '/menu/events/42?join=1' }
+        });
+        done();
+      }
+    });
+  });
+
   it('should keep the session on a temporary refresh outage', (done) => {
     localStorage.setItem('t', 'expired-token');
     const request = new HttpRequest('GET', '/api/sessions/1');
