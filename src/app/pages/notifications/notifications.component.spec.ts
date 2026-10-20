@@ -293,10 +293,30 @@ describe('NotificationsComponent', () => {
     expect(router.navigate).toHaveBeenCalledWith(['/menu/notifications']);
   });
 
-  it('should navigate to the related session', () => {
-    component.openSession(component.notifications[0]);
+  it('opens a promoted waitlist notification at the current membership status', () => {
+    const promoted = component.notifications[0];
+    component.selected = promoted;
+    fixture.detectChanges();
 
+    const action = Array.from(fixture.nativeElement.querySelectorAll('button'))
+      .find((element: any) => element.textContent.includes('Ver estado da inscrição')) as HTMLButtonElement;
+    expect(action).toBeDefined();
+    action.click();
+
+    expect(router.navigate).toHaveBeenCalledWith(['/menu/events', 12], {
+      queryParams: { membership: '1' }
+    });
+  });
+
+  it('keeps ordinary session notifications pointing to session details', () => {
+    component.openSession({ ...notificationFixture(), type: 'SESSION_CANCELLED' });
     expect(router.navigate).toHaveBeenCalledWith(['/menu/events', 12]);
+  });
+
+  it('does not navigate from a promotion notification with no session ID', () => {
+    (router.navigate as jasmine.Spy).calls.reset();
+    component.openSession({ ...notificationFixture(), sessionId: null });
+    expect(router.navigate).not.toHaveBeenCalled();
   });
 
   it('should accept a friend request without exposing its token', () => {
