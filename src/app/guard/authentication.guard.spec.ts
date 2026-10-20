@@ -99,6 +99,24 @@ describe('AuthenticationGuard', () => {
     expect(localStorage.getItem('t')).toBe('header.payload.signature');
   });
 
+  it('must not admit a new guest to protected pages during a refresh outage', async () => {
+    expect(localStorage.getItem('t')).toBeNull();
+    authenticationService.refreshSession.and.returnValue(
+      throwError(() => new HttpErrorResponse({ status: 503 }))
+    );
+
+    const result = await guard.canActivate(
+      {} as any, { url: '/menu/events/42?join=1' } as any
+    );
+
+    expect(result).not.toBeTrue();
+    const redirect = router.serializeUrl(result as any);
+    expect(redirect).toContain('/login?');
+    expect(redirect).toContain('sessionExpired=1');
+    expect(redirect).toContain('returnUrl=');
+    expect(authenticationService.refreshSession).toHaveBeenCalledTimes(1);
+  });
+
   it('should redirect when the refresh session is definitively rejected', async () => {
     localStorage.setItem('t', 'header.payload.signature');
     spyOn(JwtHelperService.prototype, 'isTokenExpired')

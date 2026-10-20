@@ -39,9 +39,10 @@ export class AuthenticationGuard {
       }
       // A successful refresh response without a token cannot authenticate a user.
     } catch (error) {
-      if (!this.isRefreshRejected(error)) {
-        // Keep the current route during temporary API/network outages.
-        // The next protected request can try the refresh cookie again.
+      if (!this.isRefreshRejected(error) && token) {
+        // Only preserve an already-existing local session candidate during
+        // temporary outages. A new guest with no token must never pass
+        // an authenticated route guard just because refresh is unavailable.
         return true;
       }
     }
