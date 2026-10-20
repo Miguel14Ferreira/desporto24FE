@@ -644,6 +644,11 @@ export class Events2Component implements OnInit, OnDestroy {
       return;
     }
 
+    // Programmatic and direct resolutions must select the Maps source too.
+    // Never display coordinates from a prior GPS choice during this request.
+    if (this.locationMethod === 'gps') this.clearLocation();
+    this.locationMethod = 'maps';
+
     // Revalidating a link invalidates the previous Maps point, even if the
     // field was changed programmatically rather than through the template.
     if (this.locationSource === 'map') {
