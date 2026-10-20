@@ -85,6 +85,22 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.loadFeaturedVenues(0, [], sport, city);
   }
 
+  remainingSpots(session: SessionSummary): number | null {
+    // FULL is authoritative even if a participant-count snapshot is delayed.
+    if (session.status === 'FULL') {
+      return 0;
+    }
+
+    const { participantCount, maxParticipants } = session;
+    if (!Number.isSafeInteger(participantCount)
+        || !Number.isSafeInteger(maxParticipants)
+        || participantCount < 0 || maxParticipants <= 0) {
+      return null; // Do not invent availability for incomplete public data.
+    }
+
+    return Math.max(0, maxParticipants - participantCount);
+  }
+
   private loadFeaturedVenues(page: number, selected: Venue[], sport: string, city: string): void {
     this.venueService.suggest(undefined, city || undefined, sport || undefined, page)
       .pipe(timeout(8000), takeUntil(this.searchReset$), takeUntil(this.destroy$))
