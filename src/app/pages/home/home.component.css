@@ -194,6 +194,47 @@
   .hero h1 { font-size: clamp(2.9rem, 12vw, 4.7rem); }
 }
 
+.hero-login-link {
+  align-self: center;
+  color: #cbd5e1;
+  font-size: .88rem;
+  font-weight: 750;
+  text-underline-offset: .18rem;
+}
+.hero-login-link:hover, .hero-login-link:focus-visible { color: #f8fafc; }
+
+.community-teaser {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.5rem;
+  margin-top: clamp(2rem, 5vw, 3.5rem);
+  padding: clamp(1.25rem, 3vw, 2rem);
+  border: 1px solid rgba(0,230,118,.22);
+  border-radius: 1.2rem;
+  background: rgba(0,230,118,.06);
+}
+.community-teaser-copy { max-width: 680px; }
+.community-teaser h2 { margin: 0; font-size: clamp(1.4rem, 3vw, 2rem); }
+.community-teaser-copy > p:last-child {
+  margin: .75rem 0 0;
+  color: #cbd5e1;
+  line-height: 1.55;
+}
+.community-teaser-cta {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  white-space: normal;
+  text-align: center;
+}
+#jynlo-public-discovery { scroll-margin-top: 6rem; }
+@media (max-width: 850px) {
+  .community-teaser { align-items: stretch; flex-direction: column; }
+  .community-teaser-cta { align-self: flex-start; }
+}
+
 /* Public proof of activity, using only already-public summaries. */
 .public-discovery {
   margin-top: clamp(2.5rem, 6vw, 4rem);

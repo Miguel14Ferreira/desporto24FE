@@ -49,6 +49,21 @@ describe('HomeComponent public discovery', () => {
     return fixture;
   }
 
+  it('makes public sessions discoverable without signing up and explains communities', () => {
+    const fixture = render();
+    const root = fixture.nativeElement as HTMLElement;
+    const exploreLink = root.querySelector<HTMLAnchorElement>('a[href="#jynlo-public-discovery"]');
+    const publicResults = root.querySelector<HTMLElement>('section#jynlo-public-discovery');
+    const communitySection = root.querySelector<HTMLElement>('section.community-teaser');
+    const communityCta = root.querySelector<HTMLAnchorElement>('a.community-teaser-cta');
+
+    expect(exploreLink).not.toBeNull();
+    expect(publicResults).not.toBeNull();
+    expect(communitySection?.querySelector('h2')?.textContent?.trim()).toBeTruthy();
+    expect(communityCta?.getAttribute('href')).toBe('/login/registerNewUser');
+    expect(root.querySelectorAll('.hero-actions a[href="/login/registerNewUser"]').length).toBe(1);
+  });
+
   it('shows real upcoming public sessions and no private, closed or community-only activities', () => {
     sessions.discover.and.returnValue(of([
       session(1), session(2, { privateGame: true }),
