@@ -123,7 +123,8 @@ describe('MySessionsComponent', () => {
     const waitlisted = {
       ...createdSession,
       id: 22,
-      status: 'FULL'
+      status: 'FULL',
+      gameDate: new Date(Date.now() + 86_400_000).toISOString()
     };
     component.data = {
       ...component.data,
@@ -139,7 +140,10 @@ describe('MySessionsComponent', () => {
 
   it('hides waitlist withdrawal for completed and cancelled sessions', () => {
     for (const status of ['COMPLETED', 'CANCELLED']) {
-      const waitlisted = { ...createdSession, id: 22, status };
+      const waitlisted = {
+        ...createdSession, id: 22, status,
+        gameDate: new Date(Date.now() + 86_400_000).toISOString()
+      };
       component.data = { ...component.data, waitlisted: [waitlisted] };
       fixture.detectChanges();
 
@@ -157,7 +161,10 @@ describe('MySessionsComponent', () => {
 
   it('keeps waitlist withdrawal available for open and full sessions', () => {
     for (const status of ['OPEN', 'FULL']) {
-      const waitlisted = { ...createdSession, id: 22, status };
+      const waitlisted = {
+        ...createdSession, id: 22, status,
+        gameDate: new Date(Date.now() + 86_400_000).toISOString()
+      };
       component.data = { ...component.data, waitlisted: [waitlisted] };
       fixture.detectChanges();
 
@@ -166,6 +173,72 @@ describe('MySessionsComponent', () => {
       expect(waitlistCard.querySelector('button.danger-action')).toBeTruthy();
       expect(component.canLeaveWaitlist(waitlisted)).toBeTrue();
     }
+  });
+
+  it('highlights only the earliest future confirmed game, not a waitlist or historical session', () => {
+    const inHours = (hours: number) => new Date(Date.now() + hours * 3600_000).toISOString();
+    const later = { ...createdSession, id: 31, status: 'OPEN', gameDate: inHours(72) };
+    const next = { ...createdSession, id: 32, status: 'FULL', gameDate: inHours(2) };
+    component.data = {
+      created: [],
+      joined: [
+        later,
+        { ...createdSession, id: 33, gameDate: inHours(-24) },
+        { ...createdSession, id: 34, gameDate: 'not-a-date' },
+        { ...createdSession, id: 35, status: 'CANCELLED', gameDate: inHours(1) },
+        next
+      ],
+      waitlisted: [{ ...createdSession, id: 36, gameDate: inHours(1) }]
+    };
+    fixture.detectChanges();
+
+    expect(component.nextJoinedSession?.id).toBe(32);
+    const highlight = fixture.nativeElement.querySelector('.next-session-highlight') as HTMLElement;
+    expect(highlight.textContent).toContain('Próximo jogo confirmado');
+    expect(highlight.textContent).toContain('Futebol');
+    expect(highlight.querySelector('a')?.getAttribute('href'))
+      .toBe('/menu/events/32?membership=1');
+
+    const joinedLinks = fixture.nativeElement.querySelectorAll('.session-section a[href*="membership=1"]');
+    expect(joinedLinks.length).toBeGreaterThan(0);
+    expect(component.data.joined[0].id).toBe(31); // No in-place sorting of API data.
+  });
+
+  it('does not promise a confirmed upcoming game for past, cancelled or waitlisted sessions', () => {
+    const tomorrow = new Date(Date.now() + 86_400_000).toISOString();
+    component.data = {
+      created: [],
+      joined: [
+        { ...createdSession, id: 40, gameDate: tomorrow, status: 'COMPLETED' },
+        { ...createdSession, id: 41, gameDate: 'invalid-date', status: 'OPEN' },
+        { ...createdSession, id: 42, gameDate: new Date(Date.now() - 1000).toISOString(), status: 'OPEN' }
+      ],
+      waitlisted: [{ ...createdSession, id: 43, gameDate: tomorrow, status: 'FULL' }]
+    };
+    fixture.detectChanges();
+
+    expect(component.nextJoinedSession).toBeNull();
+    expect(fixture.nativeElement.querySelector('.next-session-highlight')).toBeNull();
+    const waitlistLink = fixture.nativeElement.querySelector('.waitlist-badge')
+      ?.closest('.session-card')?.querySelector('a') as HTMLAnchorElement;
+    expect(waitlistLink.getAttribute('href')).toBe('/menu/events/43?membership=1');
+  });
+
+  it('prevents withdrawing from a waitlist after the session begins or with invalid dates', () => {
+    for (const gameDate of [
+      new Date(Date.now() - 60_000).toISOString(),
+      'invalid-date'
+    ]) {
+      const waitlisted = { ...createdSession, id: 44, status: 'FULL', gameDate };
+      component.data = { ...component.data, waitlisted: [waitlisted] };
+      fixture.detectChanges();
+
+      const card = fixture.nativeElement.querySelector('.waitlist-badge')?.closest('.session-card') as HTMLElement;
+      expect(card.querySelector('button.danger-action')).toBeNull();
+      expect(component.canLeaveWaitlist(waitlisted)).toBeFalse();
+      component.leaveWaitlist(waitlisted);
+    }
+    expect(sessionService.leave).not.toHaveBeenCalled();
   });
 
   it('should calculate remaining vacancies', () => {
