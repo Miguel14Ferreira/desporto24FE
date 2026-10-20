@@ -138,7 +138,9 @@ export class MySessionsComponent implements OnInit {
   }
 
   canLeaveWaitlist(session: SessionSummary): boolean {
-    return session.status === 'OPEN' || session.status === 'FULL';
+    const start = Date.parse(session.gameDate);
+    return (session.status === 'OPEN' || session.status === 'FULL')
+      && Number.isFinite(start) && start > Date.now();
   }
 
   leaveWaitlist(session: SessionSummary): void {
@@ -247,6 +249,23 @@ export class MySessionsComponent implements OnInit {
 
   vacancies(session: SessionSummary): number {
     return Math.max(session.maxParticipants - session.participantCount, 0);
+  }
+
+  /** The next confirmed upcoming game, never a waitlist or expired session. */
+  get nextJoinedSession(): SessionSummary | null {
+    const now = Date.now();
+    return this.data.joined
+      .filter(session =>
+        (session.status === 'OPEN' || session.status === 'FULL')
+        && Number.isFinite(Date.parse(session.gameDate))
+        && Date.parse(session.gameDate) > now
+      )
+      .reduce<SessionSummary | null>((next, session) =>
+        !next || Date.parse(session.gameDate) < Date.parse(next.gameDate)
+          ? session
+          : next,
+        null
+      );
   }
 
   attendanceLabel(item: AttendanceHistoryItem): string {
