@@ -398,6 +398,10 @@ export class DiscoverComponent implements OnInit {
     return Math.max(0, session.maxParticipants - session.participantCount);
   }
 
+  sessionDisplayDate(session: SessionSummary): string | null {
+    return Number.isFinite(Date.parse(session.gameDate)) ? session.gameDate : null;
+  }
+
   sessionEntryAction(session: SessionSummary): 'join' | 'waitlist' | 'details' {
     const startsAt = Date.parse(session.gameDate);
     if (session.privateGame || session.audience === 'COMMUNITY_ONLY'
