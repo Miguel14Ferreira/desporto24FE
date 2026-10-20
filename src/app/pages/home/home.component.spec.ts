@@ -1,27 +1,90 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { of, throwError } from 'rxjs';
 
 import { HomeComponent } from './home.component';
 import { TranslatePipe } from '../../i18n/translate.pipe';
+import { SessionService } from '../../services/session.service';
+import { VenueService } from '../../services/venue.service';
+import { SessionSummary } from '../model/session-summary';
+import { Venue } from '../model/venue';
 
-describe('HomeComponent', () => {
-  let component: HomeComponent;
-  let fixture: ComponentFixture<HomeComponent>;
+describe('HomeComponent public discovery', () => {
+  let sessions: jasmine.SpyObj<SessionService>;
+  let venues: jasmine.SpyObj<VenueService>;
+
+  const session = (id: number, overrides: Partial<SessionSummary> = {}): SessionSummary => ({
+    id, sport: 'Futebol', city: 'Cascais',
+    gameDate: new Date(Date.now() + 86_400_000).toISOString(),
+    distanceKm: null, participantCount: 3, maxParticipants: 10,
+    priceAmount: 0, privateGame: false, audience: 'PUBLIC',
+    status: 'OPEN', ...overrides
+  });
+
+  const venue = (id: number, sports: string | null): Venue =>
+    ({ id, name: 'Campo ' + id, city: 'Cascais', address: 'Rua Central',
+       sports, informationSource: 'OFFICIAL' } as Venue);
 
   beforeEach(async () => {
+    sessions = jasmine.createSpyObj<SessionService>('SessionService', ['discover']);
+    venues = jasmine.createSpyObj<VenueService>('VenueService', ['suggest']);
+    sessions.discover.and.returnValue(of([]));
+    venues.suggest.and.returnValue(of({ venues: [], page: 0, hasMore: false }));
+
     await TestBed.configureTestingModule({
-      declarations: [ HomeComponent ],
-      imports: [TranslatePipe]
-    })
-    .compileComponents();
+      declarations: [HomeComponent],
+      imports: [TranslatePipe],
+      providers: [
+        { provide: SessionService, useValue: sessions },
+        { provide: VenueService, useValue: venues }
+      ]
+    }).compileComponents();
   });
 
-  beforeEach(() => {
-    fixture = TestBed.createComponent(HomeComponent);
-    component = fixture.componentInstance;
+  function render(): ComponentFixture<HomeComponent> {
+    const fixture = TestBed.createComponent(HomeComponent);
     fixture.detectChanges();
+    return fixture;
+  }
+
+  it('shows real upcoming public sessions and no private, closed or community-only activities', () => {
+    sessions.discover.and.returnValue(of([
+      session(1), session(2, { privateGame: true }),
+      session(3, { audience: 'COMMUNITY_ONLY' }),
+      session(4, { status: 'CANCELLED' }),
+      session(5, { gameDate: new Date(Date.now() - 86_400_000).toISOString() }),
+      session(6, { status: 'FULL' })
+    ]));
+    venues.suggest.and.returnValue(of({ venues: [venue(10, 'Futebol'), venue(11, null)], page: 0, hasMore: false }));
+
+    const fixture = render();
+    const component = fixture.componentInstance;
+    expect(sessions.discover).toHaveBeenCalledWith(jasmine.objectContaining({
+      privateGame: false,
+      from: jasmine.any(String)
+    }));
+    expect(component.featuredSessions.map(value => value.id)).toEqual([1, 6]);
+    expect(component.featuredVenues.map(value => value.id)).toEqual([10]);
+    expect((fixture.nativeElement as HTMLElement).querySelectorAll('a.preview-item').length).toBe(2);
+    expect((fixture.nativeElement as HTMLElement).querySelectorAll('.preview-venue').length).toBe(1);
   });
 
-  it('should create', () => {
-    expect(component).toBeTruthy();
+  it('does not invent sessions or venues when the public catalogue is empty', () => {
+    const fixture = render();
+    expect(fixture.componentInstance.featuredSessions).toEqual([]);
+    expect(fixture.componentInstance.featuredVenues).toEqual([]);
+    expect((fixture.nativeElement as HTMLElement).querySelectorAll('.preview-state').length).toBe(2);
+    expect((fixture.nativeElement as HTMLElement).querySelector('.preview-cta')).not.toBeNull();
+  });
+
+  it('degrades gracefully when a public request fails', () => {
+    sessions.discover.and.returnValue(throwError(() => new Error('backend offline')));
+    venues.suggest.and.returnValue(throwError(() => new Error('backend offline')));
+
+    const fixture = render();
+    expect(fixture.componentInstance.sessionsLoading).toBeFalse();
+    expect(fixture.componentInstance.venuesLoading).toBeFalse();
+    expect(fixture.componentInstance.sessionsLoadError).toBeTrue();
+    expect(fixture.componentInstance.venuesLoadError).toBeTrue();
+    expect((fixture.nativeElement as HTMLElement).querySelectorAll('.preview-state').length).toBe(2);
   });
 });
