@@ -5,6 +5,7 @@ import { SessionSummary } from '../model/session-summary';
 import { Venue } from '../model/venue';
 import { SessionService } from '../../services/session.service';
 import { VenueService } from '../../services/venue.service';
+import { SPORTS_CATALOG } from '../../shared/sports-catalog';
 
 @Component({
     selector: 'app-home',
@@ -15,6 +16,7 @@ import { VenueService } from '../../services/venue.service';
 })
 export class HomeComponent implements OnInit, OnDestroy {
   dark = true;
+  readonly sportsCatalog = SPORTS_CATALOG;
   featuredSessions: SessionSummary[] = [];
   featuredVenues: Venue[] = [];
   sessionsLoading = true;
@@ -23,6 +25,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   venuesLoadError = false;
 
   private readonly destroy$ = new Subject<void>();
+  private readonly searchReset$ = new Subject<void>();
 
   constructor(
     private readonly sessionService: SessionService,
@@ -31,9 +34,34 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.dark = localStorage.getItem('theme') !== 'claro';
-    // Public discovery only: never expose private or community-only sessions.
-    this.sessionService.discover({ privateGame: false, from: new Date().toISOString() })
-      .pipe(timeout(8000), takeUntil(this.destroy$))
+    this.loadPublicDiscovery('', '');
+  }
+
+  searchPublic(event: Event, sport: string, city: string): void {
+    event.preventDefault();
+    this.loadPublicDiscovery(sport.trim(), city.trim());
+  }
+
+  clearPublicSearch(sportInput: HTMLInputElement, cityInput: HTMLInputElement): void {
+    sportInput.value = '';
+    cityInput.value = '';
+    this.loadPublicDiscovery('', '');
+  }
+
+  private loadPublicDiscovery(sport: string, city: string): void {
+    // A later search wins: ignore responses from previous filters.
+    this.searchReset$.next();
+    this.sessionsLoading = true;
+    this.venuesLoading = true;
+    this.sessionsLoadError = false;
+    this.venuesLoadError = false;
+    this.featuredSessions = [];
+    this.featuredVenues = [];
+
+    this.sessionService.discover({
+      privateGame: false, from: new Date().toISOString(), sport, city
+    })
+      .pipe(timeout(8000), takeUntil(this.searchReset$), takeUntil(this.destroy$))
       .subscribe({
         next: sessions => {
           const now = Date.now();
@@ -54,14 +82,12 @@ export class HomeComponent implements OnInit, OnDestroy {
         }
       });
 
-    // Browse at most three bounded pages: a page with missing sports must not
-    // hide valid facilities further down the public catalogue.
-    this.loadFeaturedVenues(0, []);
+    this.loadFeaturedVenues(0, [], sport, city);
   }
 
-  private loadFeaturedVenues(page: number, selected: Venue[]): void {
-    this.venueService.suggest(undefined, undefined, undefined, page)
-      .pipe(timeout(8000), takeUntil(this.destroy$))
+  private loadFeaturedVenues(page: number, selected: Venue[], sport: string, city: string): void {
+    this.venueService.suggest(undefined, city || undefined, sport || undefined, page)
+      .pipe(timeout(8000), takeUntil(this.searchReset$), takeUntil(this.destroy$))
       .subscribe({
         next: response => {
           const valid = (response?.venues ?? [])
@@ -71,7 +97,7 @@ export class HomeComponent implements OnInit, OnDestroy {
           const found = [...selected, ...valid].slice(0, 4);
 
           if (found.length < 4 && response?.hasMore && page < 2) {
-            this.loadFeaturedVenues(page + 1, found);
+            this.loadFeaturedVenues(page + 1, found, sport, city);
             return;
           }
 
@@ -88,6 +114,8 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.searchReset$.next();
+    this.searchReset$.complete();
     this.destroy$.next();
     this.destroy$.complete();
   }
