@@ -219,7 +219,7 @@
             <div class="result-list">
               @for (session of topSessions; track session.id) {
                 <a class="result-card session-card" [routerLink]="['/menu/events', session.id]"
-                   [queryParams]="session.joinedByViewer || session.waitlistedByViewer ? null : { join: '1' }">
+                   [queryParams]="sessionEntryAction(session) === 'details' ? null : { join: '1' }">
                   <div class="session-main">
                     <strong>{{ session.sport }}</strong>
                     <span>{{ session.city }} · {{ session.gameDate | date:'dd/MM HH:mm' }}</span>
@@ -235,13 +235,19 @@
                     </span>
                   </div>
                   <div class="session-side">
-                    <strong>{{ vacancies(session) }}</strong>
-                    <span>{{ 'discover.when.vacancies' | t }}</span>
+                    @if (session.status?.toUpperCase() === 'FULL') {
+                      <strong>{{ 'events.full' | t }}</strong>
+                    } @else {
+                      <strong>{{ vacancies(session) }}</strong>
+                      <span>{{ 'discover.when.vacancies' | t }}</span>
+                    }
                     <span class="session-entry-hint"
                       [class.session-entry-hint--member]="session.joinedByViewer || session.waitlistedByViewer">
                       {{ (session.joinedByViewer ? 'discover.when.alreadyJoined'
                         : session.waitlistedByViewer ? 'discover.when.waitlisted'
-                        : 'discover.when.viewJoin') | t }}
+                        : sessionEntryAction(session) === 'waitlist' ? 'session.joinWaitlist'
+                        : sessionEntryAction(session) === 'join' ? 'discover.when.viewJoin'
+                        : 'mySessions.details') | t }}
                       <span aria-hidden="true">→</span>
                     </span>
                   </div>
