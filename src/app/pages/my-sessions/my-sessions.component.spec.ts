@@ -149,7 +149,7 @@ describe('MySessionsComponent', () => {
 
       const waitlistCard: HTMLElement = fixture.nativeElement.querySelector('.waitlist-badge')
         ?.closest('.session-card');
-      expect(waitlistCard.querySelector('a[href="/menu/events/22"]')).toBeTruthy();
+      expect(waitlistCard.querySelector('a[href="/menu/events/22?membership=1"]')).toBeTruthy();
       expect(waitlistCard.querySelector('button.danger-action')).toBeNull();
       expect(component.canLeaveWaitlist(waitlisted)).toBeFalse();
 
