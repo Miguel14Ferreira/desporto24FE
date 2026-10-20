@@ -50,15 +50,27 @@ describe('NavbarComponent', () => {
     )).map(anchor => anchor.getAttribute('href'));
     expect(primaryLinks).toEqual(['/menu/feed', '/menu/createEvent']);
     expect(nav.querySelector('a[href="/menu/discover"]')).toBeTruthy();
+    expect(nav.querySelector(':scope > a.nav-communities-link[href="/menu/communities"]')).toBeTruthy();
     expect(nav.querySelector('a[href="/menu/notifications"]')).toBeTruthy();
 
     const menu = nav.querySelector('details.account-menu');
     expect(menu?.querySelector('a[href="/menu/my-sessions"]')).toBeTruthy();
-    expect(menu?.querySelector('a[href="/menu/communities"]')).toBeTruthy();
+    expect(menu?.querySelector('a[href="/menu/communities"]')).toBeFalsy();
     expect(menu?.querySelector('a[href="/menu/friendList"]')).toBeTruthy();
     expect(menu?.querySelector('a[href="/menu/dadosPerfil"]')).toBeTruthy();
     expect(menu?.querySelector('.language-switch')).toBeTruthy();
     expect(menu?.querySelector('.logout-action')).toBeTruthy();
+  });
+
+  it('keeps a single direct Communities link when authenticated', () => {
+    component.authenticated = true;
+    fixture.detectChanges();
+
+    const nav: HTMLElement = fixture.nativeElement.querySelector('.site-nav__links');
+    const links = Array.from(nav.querySelectorAll<HTMLAnchorElement>('a[href="/menu/communities"]'));
+    expect(links.length).toBe(1);
+    expect(links[0].classList.contains('nav-communities-link')).toBeTrue();
+    expect(links[0].closest('.account-menu')).toBeNull();
   });
 
   it('uses the shared pill shape for the account menu without losing toggle behaviour', () => {

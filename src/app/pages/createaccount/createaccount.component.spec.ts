@@ -48,6 +48,17 @@ describe('CreateaccountComponent', () => {
     component.acceptedLegalTerms = true;
   }
 
+  it('allows submitting to show missing required fields', () => {
+    const form = fixture.nativeElement.querySelector('form.register-card') as HTMLFormElement;
+    const submit = form.querySelector('button[type="submit"]') as HTMLButtonElement;
+    expect(form.getAttribute('method')).toBe('post');
+    expect(submit.disabled).toBeFalse();
+    submit.click();
+    fixture.detectChanges();
+    expect(auth.register).not.toHaveBeenCalled();
+    expect(component.errorMessage).toBeTruthy();
+  });
+
   it('should create', () => {
     expect(component).toBeTruthy();
   });

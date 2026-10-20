@@ -56,6 +56,48 @@
 .session-created-actions { display: flex; flex-wrap: wrap; gap: .6rem; }
 .session-created-actions .jynlo-action { text-decoration: none; }
 
+.organizer-preparation {
+  display: grid;
+  gap: .7rem;
+  margin-top: 1.1rem;
+  padding: 1rem;
+  border: 1px solid rgba(0, 230, 118, .32);
+  border-radius: .9rem;
+  background: rgba(0, 230, 118, .055);
+}
+
+.organizer-preparation-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .65rem;
+}
+
+.organizer-preparation h2 {
+  margin: .2rem 0 0;
+  font-size: 1.15rem;
+}
+
+.organizer-preparation-count {
+  color: #a7f3d0;
+}
+
+.organizer-preparation p {
+  margin: 0;
+  color: #cbd5e1;
+}
+
+.organizer-preparation-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .65rem;
+}
+
+.organizer-preparation-actions button {
+  cursor: pointer;
+}
+
 .title-row {
   display: flex;
   justify-content: space-between;

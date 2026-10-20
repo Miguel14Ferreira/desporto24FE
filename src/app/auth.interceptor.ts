@@ -28,6 +28,13 @@ export class AuthInterceptor implements HttpInterceptor {
   }
 
   intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
+    // Never forward access tokens to other origins, even when third-party
+    // requests happen through Angular HttpClient. The refresh/401 recovery
+    // logic must also stay confined to our own backend API.
+    if (!this.isTrustedApiRequest(request.url)) {
+      return next.handle(request);
+    }
+
     const token = localStorage.getItem('t');
     const authenticatedRequest = token && !request.headers.has('Authorization')
       ? request.clone({
@@ -40,7 +47,7 @@ export class AuthInterceptor implements HttpInterceptor {
     return next.handle(authenticatedRequest).pipe(
       catchError((error: HttpErrorResponse) => {
         if (
-          error.status !== 401
+          !this.isAuthenticationFailure(error)
           || request.url.includes('/api/auth/login')
           || request.url.includes('/api/auth/google/login')
           || request.url.includes('/api/auth/google/register')
@@ -51,6 +58,14 @@ export class AuthInterceptor implements HttpInterceptor {
         }
 
         return this.refreshAccessToken().pipe(
+          // Handle only errors from the refresh call. A forbidden response from
+          // the retried request means insufficient permissions, not a lost session.
+          catchError(refreshError => {
+            if (this.isRefreshRejected(refreshError)) {
+              this.clearSessionAndRedirect();
+            }
+            return throwError(() => refreshError);
+          }),
           switchMap(response => {
             if (!response.token) {
               return throwError(() => error);
@@ -62,16 +77,39 @@ export class AuthInterceptor implements HttpInterceptor {
               }
             });
             return next.handle(retryRequest);
-          }),
-          catchError(refreshError => {
-            if (this.isRefreshRejected(refreshError)) {
-              this.clearSessionAndRedirect();
-            }
-            return throwError(() => refreshError);
           })
         );
       })
     );
+  }
+
+  private isAuthenticationFailure(error: HttpErrorResponse): boolean {
+    if (error.status === 401) {
+      return true;
+    }
+
+    // The current backend uses HTTP 403 both for expired/invalid JWTs and
+    // genuine community permission denials. Retry only the authentication
+    // entry-point response; refreshing on every 403 would mask permission
+    // failures and could unnecessarily rotate the refresh cookie.
+    const body = error.error;
+    return error.status === 403
+      && Boolean(localStorage.getItem('t'))
+      && body?.httpStatusCode === 403
+      && body?.message === 'Tu percisas de efetuar o login para aceder a esta página';
+  }
+
+  private isTrustedApiRequest(url: string): boolean {
+    try {
+      const api = new URL(environment.apiUrl);
+      // Angular callers use either absolute backend URLs or relative /api paths.
+      // Both must resolve to our configured backend origin and API namespace.
+      const target = new URL(url, api.origin);
+      return target.origin === api.origin
+        && (target.pathname === '/api' || target.pathname.startsWith('/api/'));
+    } catch {
+      return false;
+    }
   }
 
   private refreshAccessToken(): Observable<LoginResponse> {

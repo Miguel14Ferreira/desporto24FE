@@ -71,7 +71,7 @@ describe('DiscoverComponent', () => {
       jasmine.objectContaining({
         sport: 'Padel',
         city: 'Lisboa',
-        availability: 'available'
+        availability: undefined
       })
     );
     expect(communityService.findProfiles).toHaveBeenCalledWith(jasmine.objectContaining({
@@ -439,12 +439,32 @@ describe('DiscoverComponent', () => {
     component.playerName = '  Ana  ';
     component.searchPlayers();
 
-    expect(communityService.findProfiles).toHaveBeenCalledWith(jasmine.objectContaining({ name: 'Ana' }));
+    expect(communityService.findProfiles.calls.mostRecent().args[0]).toEqual({ name: 'Ana' });
     expect(component.people).toEqual([teammate]);
     expect(component.topPeople).toEqual([teammate]);
     expect(component.appliedPlayerName).toBe('Ana');
     expect(venueService.search.calls.count()).toBe(venueCalls);
     expect(sessionService.discover.calls.count()).toBe(sessionCalls);
+  });
+
+  it('searches globally by name even when sport and location filters are active', () => {
+    component.onSportChange('Padel');
+    component.onLocationChange('Lisboa');
+    component.playerName = 'Maria';
+    component.searchPlayers();
+    expect(communityService.findProfiles.calls.mostRecent().args[0]).toEqual({name: 'Maria'});
+  });
+
+  it('rejects a one-character name search and displays an explanation', () => {
+    const previousCalls = communityService.findProfiles.calls.count();
+    component.playerName = 'M';
+    fixture.detectChanges();
+    const button: HTMLButtonElement = fixture.nativeElement.querySelector('.discover-people-search button[type="submit"]');
+    expect(button.disabled).toBeTrue();
+    expect(fixture.nativeElement.querySelector('.discover-name-min-length')?.textContent)
+      .toContain('Escreve pelo menos 2 caracteres');
+    component.searchPlayers();
+    expect(communityService.findProfiles.calls.count()).toBe(previousCalls);
   });
 
   it('restores sport and locality filtering after clearing player name', () => {
@@ -664,7 +684,7 @@ describe('DiscoverComponent', () => {
   it('hides the create-session empty action when activities are available', () => {
     sessionService.discover.and.returnValue(of([{
       id: 34, sport: 'Padel', city: 'Lisboa',
-      gameDate: '2026-10-20T18:00:00Z', distanceKm: null,
+      gameDate: new Date(Date.now() + 86_400_000).toISOString(), distanceKm: null,
       participantCount: 2, maxParticipants: 4,
       priceAmount: 0, privateGame: false, status: 'OPEN'
     }]));
@@ -690,7 +710,7 @@ describe('DiscoverComponent', () => {
   it('shows a clear participation link with price and distance without joining automatically', () => {
     const session = {
       id: 31, sport: 'Padel', city: 'Lisboa',
-      gameDate: '2026-10-20T18:00:00Z', distanceKm: 3.4,
+      gameDate: new Date(Date.now() + 86_400_000).toISOString(), distanceKm: 3.4,
       participantCount: 2, maxParticipants: 4,
       priceAmount: 5, privateGame: false, status: 'OPEN'
     };
@@ -708,7 +728,7 @@ describe('DiscoverComponent', () => {
   it('shows participation status instead of an invitation to join again', () => {
     const baseSession = {
       id: 32, sport: 'Padel', city: 'Lisboa',
-      gameDate: '2026-10-20T18:00:00Z', distanceKm: null,
+      gameDate: new Date(Date.now() + 86_400_000).toISOString(), distanceKm: null,
       participantCount: 2, maxParticipants: 4,
       priceAmount: 0, privateGame: false, status: 'OPEN'
     };
@@ -729,6 +749,72 @@ describe('DiscoverComponent', () => {
     expect(link.textContent).toContain('Em lista de espera');
     expect(link.getAttribute('href')).toBe('/menu/events/32');
     expect(link.textContent).not.toContain('Ver e participar');
+  });
+
+  it('shows the waitlist instead of promising spots when a future public session is FULL', () => {
+    const full = {
+      id: 33, sport: 'Futsal', city: 'Porto',
+      gameDate: new Date(Date.now() + 86_400_000).toISOString(),
+      distanceKm: null, participantCount: 3, maxParticipants: 4,
+      priceAmount: 0, privateGame: false, status: 'FULL'
+    };
+    sessionService.discover.and.returnValue(of([full]));
+    component.search();
+    fixture.detectChanges();
+
+    const link: HTMLAnchorElement = fixture.nativeElement.querySelector('.session-card');
+    expect(link.getAttribute('href')).toBe('/menu/events/33?join=1');
+    expect(link.textContent).toContain('Entrar na lista de espera');
+    expect(link.textContent).toContain('Lotado');
+    expect(link.textContent).not.toContain('1 vagas');
+    expect(link.textContent).not.toContain('Ver e participar');
+    expect(sessionService.discover).toHaveBeenCalledWith(jasmine.objectContaining({
+      availability: undefined
+    }));
+  });
+
+  it('only opens the join area for future public sessions with verified availability', () => {
+    const base = {
+      id: 34, sport: 'Padel', city: 'Lisboa',
+      gameDate: new Date(Date.now() + 86_400_000).toISOString(),
+      distanceKm: null, participantCount: 2, maxParticipants: 4,
+      priceAmount: 0, privateGame: false, status: 'OPEN'
+    };
+    const renderCard = (overrides: Record<string, unknown>) => {
+      const session = { ...base, ...overrides };
+      component.sessions = [session];
+      component.topSessionResults = [session];
+      fixture.detectChanges();
+      return fixture.nativeElement.querySelector('.session-card') as HTMLAnchorElement;
+    };
+
+    expect(renderCard({}).getAttribute('href')).toBe('/menu/events/34?join=1');
+    expect(renderCard({ status: 'FULL', joinedByViewer: true }).textContent)
+      .toContain('Já estás inscrito');
+    expect(renderCard({ status: 'FULL', waitlistedByViewer: true }).textContent)
+      .toContain('Em lista de espera');
+
+    for (const overrides of [
+      { status: 'CANCELLED' },
+      { status: 'COMPLETED' },
+      { privateGame: true },
+      { audience: 'COMMUNITY_ONLY' },
+      { joinedByViewer: true },
+      { waitlistedByViewer: true },
+      { participantCount: 4 },
+      { participantCount: Number.NaN },
+      { maxParticipants: 0 },
+      { gameDate: 'invalid' },
+      { gameDate: new Date(Date.now() - 86_400_000).toISOString() }
+    ]) {
+      const card = renderCard(overrides);
+      expect(card.getAttribute('href')).withContext(JSON.stringify(overrides))
+        .toBe('/menu/events/34');
+      expect(card.textContent).not.toContain('Entrar na lista de espera');
+      if (overrides.gameDate === 'invalid') {
+        expect(card.textContent).toContain('Por indicar');
+      }
+    }
   });
 
   it('should calculate session vacancies', () => {

@@ -27,6 +27,29 @@ describe('registration invitation return URLs', () => {
     expect(registrationSessionReturnUrl('42')).toBe('/menu/events/42');
   });
 
+  it('preserves a single validated join hint without weakening session ID checks', () => {
+    expect(registrationSessionId('/menu/events/42?join=1')).toBe(42);
+    rememberRegistrationDestination('/menu/events/42?join=1');
+    expect(takeRegistrationDestination()).toBe('/menu/events/42?join=1');
+    expect(takeRegistrationDestination()).toBeNull();
+
+    // Confirmation emails still use canonical positive IDs.
+    expect(registrationSessionReturnUrl('42')).toBe('/menu/events/42');
+    for (const unsafe of [
+      '/menu/events/42?join=0',
+      '/menu/events/42?join=1&redirect=//evil.test',
+      '/menu/events/42?join=1#redirect',
+      '/menu/events/42?JOIN=1',
+      '/menu/events/42?join=%31',
+      '/menu/events/0?join=1',
+      '/menu/events/9007199254740993?join=1'
+    ]) {
+      expect(registrationSessionId(unsafe)).withContext(unsafe).toBeNull();
+      rememberRegistrationDestination(unsafe);
+      expect(takeRegistrationDestination()).withContext(unsafe).toBeNull();
+    }
+  });
+
   it('rejects malicious, malformed and non-invitation destinations', () => {
     const bad = [
       'https://example.test/menu/communities/42',

@@ -12,7 +12,7 @@ export interface Venue {
   venueType: string | null;
   ownershipType: VenueOwnershipType | null;
   surfaceType: string | null;
-  environmentType: VenueEnvironmentType;
+  environmentType: VenueEnvironmentType | null;
   indoor: boolean;
   changingRooms: boolean;
   changingRoomTypes: string | null;

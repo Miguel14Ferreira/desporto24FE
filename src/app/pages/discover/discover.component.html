@@ -143,7 +143,7 @@
                     @if (venue.surfaceType) {
                       <span>{{ venue.surfaceType }}</span>
                     }
-                    <span>{{ venue.indoor ? ('venue.indoor' | t) : ('venue.outdoor' | t) }}</span>
+                    <span>{{ venueEnvironmentTranslationKey(venue) | t }}</span>
                     @if (venue.parking) {
                       <span>🅿 {{ 'venue.parking' | t }}</span>
                     }
@@ -219,10 +219,10 @@
             <div class="result-list">
               @for (session of topSessions; track session.id) {
                 <a class="result-card session-card" [routerLink]="['/menu/events', session.id]"
-                   [queryParams]="session.joinedByViewer || session.waitlistedByViewer ? null : { join: '1' }">
+                   [queryParams]="sessionEntryAction(session) === 'details' ? null : { join: '1' }">
                   <div class="session-main">
                     <strong>{{ session.sport }}</strong>
-                    <span>{{ session.city }} · {{ session.gameDate | date:'dd/MM HH:mm' }}</span>
+                    <span>{{ session.city }} · {{ (sessionDisplayDate(session) | date:'dd/MM HH:mm') || ('publicSession.notSpecified' | t) }}</span>
                     <span class="session-summary-meta">
                       @if (session.priceAmount > 0) {
                         {{ session.priceAmount | number:'1.2-2' }} €
@@ -235,13 +235,19 @@
                     </span>
                   </div>
                   <div class="session-side">
-                    <strong>{{ vacancies(session) }}</strong>
-                    <span>{{ 'discover.when.vacancies' | t }}</span>
+                    @if (session.status?.toUpperCase() === 'FULL') {
+                      <strong>{{ 'events.full' | t }}</strong>
+                    } @else {
+                      <strong>{{ vacancies(session) }}</strong>
+                      <span>{{ 'discover.when.vacancies' | t }}</span>
+                    }
                     <span class="session-entry-hint"
                       [class.session-entry-hint--member]="session.joinedByViewer || session.waitlistedByViewer">
                       {{ (session.joinedByViewer ? 'discover.when.alreadyJoined'
                         : session.waitlistedByViewer ? 'discover.when.waitlisted'
-                        : 'discover.when.viewJoin') | t }}
+                        : sessionEntryAction(session) === 'waitlist' ? 'session.joinWaitlist'
+                        : sessionEntryAction(session) === 'join' ? 'discover.when.viewJoin'
+                        : 'mySessions.details') | t }}
                       <span aria-hidden="true">→</span>
                     </span>
                   </div>
@@ -281,7 +287,7 @@
                 [placeholder]="'discover.who.searchPlaceholder' | t"
                 autocomplete="off">
               <button type="submit" class="jynlo-action jynlo-action--neutral"
-                [disabled]="loading || loadingPeople">
+                [disabled]="loading || loadingPeople || playerName.trim().length === 1">
                 {{ (loadingPeople ? 'discover.who.searching' : 'discover.who.search') | t }}
               </button>
               @if (playerName) {
@@ -292,6 +298,9 @@
               }
             </div>
             <small>{{ 'discover.who.searchHint' | t }}</small>
+            @if (playerName.trim().length === 1) {
+              <small class="discover-name-min-length" role="status">{{ 'discover.who.nameMinLength' | t }}</small>
+            }
             @if (playerSearchError) {
               <p role="alert">{{ 'discover.who.searchError' | t }}</p>
             }

@@ -758,6 +758,92 @@ describe('SessionDetailsComponent', () => {
     expect(fixture.nativeElement.querySelector('.share-session-action')).not.toBeNull();
   });
 
+  it('shows the organiser confirmed players and remaining slots before a future game', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session, joined: true, status: 'OPEN',
+      gameDate: new Date(Date.now() + 86_400_000).toISOString()
+    };
+    fixture.detectChanges();
+
+    const panel = fixture.nativeElement.querySelector('.organizer-preparation') as HTMLElement;
+    expect(panel).not.toBeNull();
+    expect(panel.textContent).toContain('Preparação do jogo');
+    expect(panel.textContent).toContain('2/4');
+    expect(panel.textContent).toContain('Faltam 2 jogadores');
+    expect(panel.querySelectorAll('button').length).toBe(2);
+    expect(fixture.nativeElement.querySelector('#session-player-search')).not.toBeNull();
+
+    const scroll = spyOn(fixture.nativeElement.querySelector('#session-player-search'), 'scrollIntoView');
+    const findButton = Array.from(panel.querySelectorAll('button'))
+      .find((button: any) => button.textContent.includes('Encontrar jogadores')) as HTMLButtonElement;
+    findButton.click();
+    expect(scroll).toHaveBeenCalledOnceWith({ behavior: 'smooth', block: 'start' });
+    expect(sessionService.join).not.toHaveBeenCalled();
+  });
+
+  it('respects a FULL backend status even if its count has not refreshed', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session, status: 'FULL', participantCount: 3, maxParticipants: 4,
+      gameDate: new Date(Date.now() + 86_400_000).toISOString()
+    };
+    fixture.detectChanges();
+
+    const panel = fixture.nativeElement.querySelector('.organizer-preparation') as HTMLElement;
+    expect(panel.textContent).toContain('3/4');
+    expect(panel.textContent).toContain('marcada como cheia');
+    expect(panel.textContent).not.toContain('Faltam 1 jogadores');
+    // A full game must not invite more players, but its creator can inspect the roster.
+    expect(panel.querySelector('button')?.textContent).toContain('Quem vai');
+    expect(panel.textContent).not.toContain('Encontrar jogadores');
+    expect(component.canFindPlayers()).toBeFalse();
+    expect(fixture.nativeElement.querySelector('#session-player-search')).toBeNull();
+  });
+
+  it('does not expose public player-search actions for private or community-only sessions', () => {
+    (component as any).currentUsername = 'creator-user';
+    const future = new Date(Date.now() + 86_400_000).toISOString();
+    for (const partial of [
+      { privateGame: true },
+      { audience: 'COMMUNITY_ONLY' as const }
+    ]) {
+      component.session = { ...session, gameDate: future, ...partial };
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('.organizer-preparation')).not.toBeNull();
+      expect(component.canFindPlayers()).toBeFalse();
+      expect(fixture.nativeElement.querySelector('#session-player-search')).toBeNull();
+    }
+  });
+
+  it('does not invent organiser readiness for another user or invalid and ended games', () => {
+    const future = new Date(Date.now() + 86_400_000).toISOString();
+    (component as any).currentUsername = 'other-user';
+    component.session = { ...session, gameDate: future };
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.organizer-preparation')).toBeNull();
+
+    (component as any).currentUsername = 'creator-user';
+    for (const state of [
+      { status: 'CANCELLED' },
+      { status: 'COMPLETED' },
+      { gameDate: new Date(Date.now() - 60000).toISOString() },
+      { gameDate: 'invalid' },
+      { participantCount: Number.NaN },
+      { participantCount: -1 },
+      { participantCount: 5 },
+      { maxParticipants: 0 },
+      { maxParticipants: Number.NaN }
+    ]) {
+      component.session = { ...session, gameDate: future, ...state };
+      expect(component.organizerPreparation()).withContext(JSON.stringify(state)).toBeNull();
+      expect(component.canFindPlayers()).withContext(JSON.stringify(state)).toBeFalse();
+    }
+    component.session = { ...session, gameDate: future, participantCount: 4 };
+    expect(component.organizerPreparation()?.full).toBeTrue();
+    expect(component.canFindPlayers()).toBeFalse();
+  });
+
   it('offers a filtered player search to the creator of a future public session with vacancies', () => {
     (component as any).currentUsername = 'creator-user';
     component.session = { ...session, gameDate: '2099-10-01T18:00:00Z' };
@@ -961,6 +1047,94 @@ describe('SessionDetailsComponent', () => {
     expect(sessionService.join).not.toHaveBeenCalled();
     page.detectChanges();
     expect(scroll).toHaveBeenCalledTimes(1);
+    page.destroy();
+  });
+
+  it('focuses current membership once after a promoted waitlist notification loads', () => {
+    fixture.destroy();
+    const route = TestBed.inject(ActivatedRoute);
+    (route.snapshot as any).queryParamMap = convertToParamMap({ membership: '1' });
+    const promoted = {
+      ...session, joined: true, waitlisted: false,
+      gameDate: new Date(Date.now() + 3600_000).toISOString()
+    };
+    const delayedDetail = new Subject<typeof promoted>();
+    sessionService.detail.and.returnValue(delayedDetail.asObservable());
+
+    const scroll = jasmine.createSpy('scrollIntoView');
+    const originalGetById = document.getElementById.bind(document);
+    spyOn(document, 'getElementById').and.callFake((id: string) => {
+      if (id === 'session-membership') {
+        return { scrollIntoView: scroll } as unknown as HTMLElement;
+      }
+      return originalGetById(id);
+    });
+
+    const page = TestBed.createComponent(SessionDetailsComponent);
+    page.detectChanges();
+    expect(scroll).not.toHaveBeenCalled();
+    delayedDetail.next(promoted);
+    delayedDetail.complete();
+    page.detectChanges();
+
+    expect(page.nativeElement.querySelector('#session-membership')).not.toBeNull();
+    expect(scroll).toHaveBeenCalledOnceWith({ behavior: 'smooth', block: 'start' });
+    expect(sessionService.join).not.toHaveBeenCalled();
+    page.detectChanges();
+    expect(scroll).toHaveBeenCalledTimes(1);
+    page.destroy();
+  });
+
+  it('shows the current waitlist position when a historical promotion no longer applies', () => {
+    fixture.destroy();
+    const route = TestBed.inject(ActivatedRoute);
+    (route.snapshot as any).queryParamMap = convertToParamMap({ membership: '1' });
+    sessionService.detail.and.returnValue(of({
+      ...session, joined: false, waitlisted: true, waitlistPosition: 2,
+      gameDate: new Date(Date.now() + 3600_000).toISOString()
+    }));
+    const scroll = jasmine.createSpy('scrollIntoView');
+    const originalGetById = document.getElementById.bind(document);
+    spyOn(document, 'getElementById').and.callFake((id: string) => {
+      if (id === 'session-membership') {
+        return { scrollIntoView: scroll } as unknown as HTMLElement;
+      }
+      return originalGetById(id);
+    });
+
+    const page = TestBed.createComponent(SessionDetailsComponent);
+    page.detectChanges();
+
+    const status = page.nativeElement.querySelector('#session-membership') as HTMLElement;
+    expect(status.classList.contains('waitlisted')).toBeTrue();
+    expect(status.textContent).toContain('na posição 2');
+    expect(scroll).toHaveBeenCalledOnceWith({ behavior: 'smooth', block: 'start' });
+    expect(sessionService.join).not.toHaveBeenCalled();
+    page.destroy();
+  });
+
+  it('does not show a stale promotion as confirmed membership after leaving', () => {
+    fixture.destroy();
+    const route = TestBed.inject(ActivatedRoute);
+    (route.snapshot as any).queryParamMap = convertToParamMap({ membership: '1' });
+    sessionService.detail.and.returnValue(of({
+      ...session, joined: false, waitlisted: false,
+      gameDate: new Date(Date.now() + 3600_000).toISOString()
+    }));
+    const scroll = jasmine.createSpy('scrollIntoView');
+    const originalGetById = document.getElementById.bind(document);
+    spyOn(document, 'getElementById').and.callFake((id: string) => {
+      if (id === 'session-membership') {
+        return { scrollIntoView: scroll } as unknown as HTMLElement;
+      }
+      return originalGetById(id);
+    });
+
+    const page = TestBed.createComponent(SessionDetailsComponent);
+    page.detectChanges();
+    expect(page.nativeElement.querySelector('#session-membership')).toBeNull();
+    expect(scroll).not.toHaveBeenCalled();
+    expect(sessionService.join).not.toHaveBeenCalled();
     page.destroy();
   });
 
@@ -1376,6 +1550,89 @@ describe('SessionDetailsComponent', () => {
 
     expect(sessionService.postMessage).toHaveBeenCalledWith(7, 'Bora jogar!');
     expect(component.messages).toEqual([message]);
+  });
+
+  it('lets the creator see confirmed player profiles without taking a playing spot', () => {
+    sessionService.participants.calls.reset();
+    sessionService.messages.calls.reset();
+    (component as any).currentUsername = 'creator-user';
+    sessionService.detail.and.returnValue(of({
+      ...session,
+      joined: false,
+      gameDate: new Date(Date.now() + 86_400_000).toISOString()
+    }));
+
+    component.retrySessionLoad();
+    fixture.detectChanges();
+
+    expect(sessionService.participants).toHaveBeenCalledWith(7);
+    expect(component.sessionParticipants.map(p => p.username)).toEqual(['player-one']);
+    expect(component.session?.joined).toBeFalse();
+    expect(sessionService.join).not.toHaveBeenCalled();
+    expect(sessionService.messages).not.toHaveBeenCalled();
+    expect(fixture.nativeElement.querySelector('.message-composer')).toBeNull();
+
+    const section = fixture.nativeElement.querySelector('#session-participants') as HTMLElement;
+    expect(section).not.toBeNull();
+    expect(section.textContent).toContain('@player-one');
+    expect(section.textContent).toContain('perfis de jogadores visíveis');
+    const summary = fixture.nativeElement.querySelector('.organizer-preparation') as HTMLElement;
+    const button = Array.from(summary.querySelectorAll('button'))
+      .find((candidate: any) => candidate.textContent.includes('Quem vai')) as HTMLButtonElement;
+    expect(button).toBeDefined();
+    const scroll = spyOn(section, 'scrollIntoView');
+    button.click();
+    expect(scroll).toHaveBeenCalledOnceWith({ behavior: 'smooth', block: 'start' });
+  });
+
+  it('shows creator roster loading and never equates its size with total confirmed places', () => {
+    sessionService.participants.calls.reset();
+    (component as any).currentUsername = 'creator-user';
+    const pending = new Subject<any[]>();
+    sessionService.participants.and.returnValue(pending.asObservable());
+    sessionService.detail.and.returnValue(of({
+      ...session,
+      joined: false,
+      participantCount: 4,
+      maxParticipants: 5
+    }));
+
+    component.retrySessionLoad();
+    fixture.detectChanges();
+    const section = fixture.nativeElement.querySelector('#session-participants') as HTMLElement;
+    expect(section.textContent).toContain('A carregar jogadores confirmados');
+    expect(section.textContent).not.toContain('4 perfis');
+    pending.next([{
+      id: 15, username: 'player-one', attendanceStatus: 'PENDING',
+      joinedAt: '2026-09-20T18:00:00Z'
+    }]);
+    pending.complete();
+    fixture.detectChanges();
+
+    expect(sessionService.participants).toHaveBeenCalledTimes(1);
+    expect(section.textContent).toContain('1 perfis de jogadores visíveis');
+    expect(section.textContent).not.toContain('A carregar jogadores confirmados');
+  });
+
+  it('keeps the participant roster inaccessible to non-participants who are not creators', () => {
+    sessionService.participants.calls.reset();
+    (component as any).currentUsername = 'outsider';
+    component.session = {
+      ...session,
+      joined: false,
+      creatorUsername: 'creator-user'
+    };
+    component.sessionParticipants = [{
+      id: 15, username: 'player-one', attendanceStatus: 'PENDING',
+      joinedAt: '2026-09-20T18:00:00Z'
+    }];
+
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('#session-participants')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.organizer-preparation')).toBeNull();
+    component.loadSessionParticipants();
+    component.scrollToParticipants();
+    expect(sessionService.participants).not.toHaveBeenCalled();
   });
 
   it('should let a joined non-creator view who is going', () => {

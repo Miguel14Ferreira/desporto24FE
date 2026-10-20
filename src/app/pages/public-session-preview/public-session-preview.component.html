@@ -2,8 +2,8 @@
   <div class="public-session-shell">
     <header class="public-header">
       <a routerLink="/home" class="brand" [attr.aria-label]="'publicSession.brandHome' | t">Jynlo<span>.</span></a>
-      <a [routerLink]="isAuthenticated ? (returnUrl || '/menu/feed') : '/login'"
-         [queryParams]="!isAuthenticated && returnUrl ? { returnUrl: returnUrl } : null"
+      <a [routerLink]="isAuthenticated ? (participationReturnUrl || '/menu/feed') : '/login'"
+         [queryParams]="!isAuthenticated && participationReturnUrl ? { returnUrl: participationReturnUrl } : null"
          class="header-login">{{ (isAuthenticated ? 'publicSession.openApp' : 'login.title') | t }}</a>
     </header>
 
@@ -27,11 +27,11 @@
             </div>
             <div class="fact">
               <span class="fact-label">{{ 'publicSession.date' | t }}</span>
-              <strong>{{ details.gameDate ? (details.gameDate | date:'dd/MM/yyyy') : ('publicSession.notSpecified' | t) }}</strong>
+              <strong>{{ displayGameDate ? (displayGameDate | date:'dd/MM/yyyy') : ('publicSession.notSpecified' | t) }}</strong>
             </div>
             <div class="fact">
               <span class="fact-label">{{ 'publicSession.time' | t }}</span>
-              <strong>{{ details.gameDate ? (details.gameDate | date:'HH:mm') : ('publicSession.notSpecified' | t) }}</strong>
+              <strong>{{ displayGameDate ? (displayGameDate | date:'HH:mm') : ('publicSession.notSpecified' | t) }}</strong>
             </div>
             <div class="fact">
               <span class="fact-label">{{ 'publicSession.price' | t }}</span>
@@ -70,7 +70,7 @@
                 {{ (details.status === 'FULL' ? 'publicSession.viewWaitlist' : 'publicSession.viewJoin') | t }}
               </a>
             } @else {
-              <a class="primary-action jynlo-action jynlo-action--primary" routerLink="/login/registerNewUser" [queryParams]="{ returnUrl: returnUrl }">{{ 'nav.register' | t }}</a>
+              <a class="primary-action jynlo-action jynlo-action--primary" routerLink="/login/registerNewUser" [queryParams]="{ returnUrl: participationReturnUrl }">{{ 'nav.register' | t }}</a>
             }
           } @else {
             <h2>{{ 'publicSession.closedHeading' | t }}</h2>
@@ -80,7 +80,7 @@
             }
           }
           @if (!isAuthenticated) {
-            <a class="secondary-action jynlo-action jynlo-action--neutral" routerLink="/login" [queryParams]="{returnUrl: returnUrl}">{{ 'register.haveAccount' | t }}</a>
+            <a class="secondary-action jynlo-action jynlo-action--neutral" routerLink="/login" [queryParams]="{returnUrl: participationReturnUrl}">{{ 'register.haveAccount' | t }}</a>
           }
           @if (canRequestParticipation) {
             <button type="button" class="share-session-action jynlo-action jynlo-action--neutral"

@@ -272,6 +272,125 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(matches).toHaveBeenCalledWith(8);
   });
 
+  it('ignores older reload groups and invites while preserving the latest loading state', () => {
+    const firstMine = new Subject<any[]>();
+    const secondMine = new Subject<any[]>();
+    const firstInvites = new Subject<any[]>();
+    const secondInvites = new Subject<any[]>();
+    (component as any).communityService = {
+      mine: jasmine.createSpy('mine')
+        .and.returnValues(firstMine.asObservable(), secondMine.asObservable()),
+      myInvites: jasmine.createSpy('myInvites')
+        .and.returnValues(firstInvites.asObservable(), secondInvites.asObservable())
+    };
+    (component as any).route = {
+      snapshot: { paramMap: { get: () => null }, queryParamMap: { get: () => null } }
+    };
+    component.selected = undefined;
+    component.communities = [];
+    component.invites = [];
+
+    component.reload();
+    component.reload();
+    firstMine.next([{ id: 7 }]);
+    firstMine.complete();
+    firstInvites.next([{ id: 70 }]);
+    firstInvites.complete();
+    expect(component.communities).toEqual([]);
+    expect(component.invites).toEqual([]);
+    expect(component.loading).toBeTrue();
+
+    secondMine.next([{ id: 8 }]);
+    secondMine.complete();
+    secondInvites.next([{ id: 80 }]);
+    secondInvites.complete();
+    expect(component.communities.map(group => group.id)).toEqual([8]);
+    expect(component.invites.map(invite => invite.id)).toEqual([80]);
+    expect(component.loading).toBeFalse();
+  });
+
+  it('ignores stale reload failures without hiding current group or invite results', () => {
+    const firstMine = new Subject<any[]>();
+    const secondMine = new Subject<any[]>();
+    const firstInvites = new Subject<any[]>();
+    const secondInvites = new Subject<any[]>();
+    (component as any).communityService = {
+      mine: jasmine.createSpy('mine')
+        .and.returnValues(firstMine.asObservable(), secondMine.asObservable()),
+      myInvites: jasmine.createSpy('myInvites')
+        .and.returnValues(firstInvites.asObservable(), secondInvites.asObservable())
+    };
+    (component as any).route = {
+      snapshot: { paramMap: { get: () => null }, queryParamMap: { get: () => null } }
+    };
+    component.selected = undefined;
+    component.invites = [{ id: 4 } as any];
+
+    component.reload();
+    component.reload();
+    firstMine.error(new Error('stale groups failure'));
+    firstInvites.error(new Error('stale invites failure'));
+    expect(component.errorMessage).toBe('');
+    expect(component.invites.map(invite => invite.id)).toEqual([4]);
+    expect(component.loading).toBeTrue();
+
+    secondMine.next([{ id: 9 }]);
+    secondMine.complete();
+    secondInvites.next([{ id: 90 }]);
+    secondInvites.complete();
+    expect(component.errorMessage).toBe('');
+    expect(component.communities.map(group => group.id)).toEqual([9]);
+    expect(component.invites.map(invite => invite.id)).toEqual([90]);
+    expect(component.loading).toBeFalse();
+  });
+
+  it('ignores an obsolete community presentation and keeps the latest one loading', () => {
+    const older = new Subject<any>();
+    const newer = new Subject<any>();
+    (component as any).pendingJoinLookupVersion = 0;
+    (component as any).communityService = {
+      presentation: jasmine.createSpy('presentation')
+        .and.returnValues(older.asObservable(), newer.asObservable())
+    };
+    const lookup = spyOn<any>(component, 'loadMyPendingJoinRequest');
+    (component as any).loadCommunityPresentation(901);
+    (component as any).loadCommunityPresentation(902);
+
+    older.next({ id: 901, name: 'Antiga', visibility: 'PRIVATE' });
+    older.complete();
+    expect(component.communityPresentation).toBeUndefined();
+    expect(component.presentationLoading).toBeTrue();
+    expect(lookup).not.toHaveBeenCalled();
+
+    newer.next({ id: 902, name: 'Atual', visibility: 'PRIVATE' });
+    newer.complete();
+    expect(component.communityPresentation?.id).toBe(902);
+    expect(component.presentationLoading).toBeFalse();
+    expect(lookup).toHaveBeenCalledOnceWith(902);
+  });
+
+  it('ignores an earlier presentation failure while a newer community loads', () => {
+    const older = new Subject<any>();
+    const newer = new Subject<any>();
+    (component as any).pendingJoinLookupVersion = 0;
+    (component as any).communityService = {
+      presentation: jasmine.createSpy('presentation')
+        .and.returnValues(older.asObservable(), newer.asObservable())
+    };
+    (component as any).loadCommunityPresentation(901);
+    (component as any).loadCommunityPresentation(902);
+
+    older.error(new Error('stale'));
+    expect(component.errorMessage).toBe('');
+    expect(component.presentationLoading).toBeTrue();
+
+    newer.next({ id: 902, name: 'Atual', visibility: 'PUBLIC' });
+    newer.complete();
+    expect(component.communityPresentation?.id).toBe(902);
+    expect(component.errorMessage).toBe('');
+    expect(component.presentationLoading).toBeFalse();
+  });
+
   it('shows only the latest match archive list and ignores stale errors and loading completion', () => {
     component.selected = { id: 7 } as any;
     const first = new Subject<any[]>();

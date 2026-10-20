@@ -56,6 +56,49 @@ describe('VenueDetailsComponent', () => {
     createdAt: '2026-09-29T20:00:00Z'
   });
 
+  it('links to precise coordinates when valid GPS data is present', () => {
+    const component = new VenueDetailsComponent({} as ActivatedRoute, {} as VenueService);
+    component.venue = createVenue();
+
+    expect(component.hasConfirmedMapCoordinates).toBeTrue();
+    expect(component.mapUrl).toBe('https://www.google.com/maps?q=38.7223,-9.1393');
+
+    component.venue = { ...createVenue(), latitude: 0, longitude: 0 };
+    expect(component.hasConfirmedMapCoordinates).toBeTrue();
+    expect(component.mapUrl).toBe('https://www.google.com/maps?q=0,0');
+  });
+
+  it('offers an explicit approximate address search when the venue lacks GPS coordinates', () => {
+    const component = new VenueDetailsComponent({} as ActivatedRoute, {} as VenueService);
+    component.venue = {
+      ...createVenue(),
+      name: 'Polidesportivo Municipal',
+      city: 'Porto',
+      district: 'Porto',
+      address: 'Rua do Jogo 12',
+      latitude: null,
+      longitude: null
+    };
+
+    expect(component.hasConfirmedMapCoordinates).toBeFalse();
+    const expected = encodeURIComponent('Polidesportivo Municipal, Rua do Jogo 12, Porto, Porto, Portugal');
+    expect(component.mapUrl).toBe(`https://www.google.com/maps/search/?api=1&query=${expected}`);
+  });
+
+  it('never generates a coordinate link from invalid or incomplete GPS values', () => {
+    const component = new VenueDetailsComponent({} as ActivatedRoute, {} as VenueService);
+    component.venue = { ...createVenue(), latitude: 102, longitude: -9 };
+    expect(component.hasConfirmedMapCoordinates).toBeFalse();
+    expect(component.mapUrl).toContain('/maps/search/?api=1&query=');
+
+    component.venue = { ...createVenue(), latitude: 38.72, longitude: null };
+    expect(component.hasConfirmedMapCoordinates).toBeFalse();
+    expect(component.mapUrl).toContain('/maps/search/?api=1&query=');
+
+    component.venue = null;
+    expect(component.mapUrl).toBeNull();
+  });
+
   it('loads the venue, photos and sport conditions from the route id', () => {
     const venue = createVenue();
 

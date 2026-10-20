@@ -70,13 +70,13 @@
           </div>
 
           @if (session.joined) {
-            <div class="membership-status" role="status">
+            <div id="session-membership" class="membership-status" role="status">
               <strong>{{ 'sessionDetail.joinedTitle' | t }}</strong>
               <button type="button" class="participants-shortcut"
                       (click)="scrollToParticipants()">{{ 'sessionDetail.whosGoing' | t }} ↓</button>
             </div>
           } @else if (session.waitlisted) {
-            <div class="membership-status waitlisted" role="status">
+            <div id="session-membership" class="membership-status waitlisted" role="status">
               <strong>{{ 'mySessions.waitlist' | t }}</strong>
               @if (session.waitlistPosition !== null) {
                 <span>{{ 'sessionDetail.position' | t:{ position: session.waitlistPosition } }}</span>
@@ -130,8 +130,38 @@
             }
           </div>
 
+          @if (organizerPreparation(); as preparation) {
+            <section class="organizer-preparation" aria-labelledby="organizer-preparation-title">
+              <div class="organizer-preparation-heading">
+                <div>
+                  <span class="section-kicker">{{ 'sessionDetail.organizerKicker' | t }}</span>
+                  <h2 id="organizer-preparation-title">{{ 'sessionDetail.organizerTitle' | t }}</h2>
+                </div>
+                <strong class="organizer-preparation-count">{{ preparation.confirmed }}/{{ preparation.capacity }}
+                  {{ 'sessionDetail.organizerConfirmed' | t }}</strong>
+              </div>
+              <p>
+                {{ (preparation.full
+                    ? (session.status === 'FULL' && preparation.confirmed < preparation.capacity
+                        ? 'sessionDetail.organizerFull'
+                        : 'sessionDetail.organizerReady')
+                    : 'sessionDetail.organizerMissing') | t:{ count: preparation.missing } }}
+              </p>
+              <div class="organizer-preparation-actions">
+                @if (session.joined || isCreator()) {
+                  <button type="button" class="jynlo-action jynlo-action--neutral"
+                          (click)="scrollToParticipants()">{{ 'sessionDetail.whosGoing' | t }} ↓</button>
+                }
+                @if (canFindPlayers()) {
+                  <button type="button" class="jynlo-action jynlo-action--primary"
+                          (click)="scrollToPlayerSearch()">{{ 'sessionDetail.organizerFindPlayers' | t }} ↓</button>
+                }
+              </div>
+            </section>
+          }
+
           @if (canFindPlayers()) {
-            <div class="session-player-search" role="region" aria-label="Procurar jogadores">
+            <div id="session-player-search" class="session-player-search" role="region" aria-label="Procurar jogadores">
               <strong>Faltam {{ missingPlayers() }} jogadores</strong>
               @if (canShareSession()) {
                 <button type="button" class="jynlo-action jynlo-action--neutral"
@@ -599,7 +629,7 @@
           }
 
 
-          @if (session.joined) {
+          @if (session.joined || isCreator()) {
             <section id="session-participants" class="session-participants-panel">
               <div class="session-participants-header">
                 <div>
@@ -615,8 +645,11 @@
                 </button>
               </div>
 
+              @if (sessionParticipantsLoading) {
+                <p class="session-participants-loading" role="status">{{ 'sessionDetail.loadingParticipants' | t }}</p>
+              }
               @if (sessionParticipantsError) {
-                <div class="action-message error-message">{{ sessionParticipantsError }}</div>
+                <div class="action-message error-message" role="alert">{{ sessionParticipantsError }}</div>
               }
 
               @if (!sessionParticipantsLoading && !sessionParticipantsError) {

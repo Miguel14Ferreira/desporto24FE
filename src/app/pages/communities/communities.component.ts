@@ -146,6 +146,7 @@ export class CommunitiesComponent implements OnInit {
   communitySearchPerformed = false;
   communitySearchError = '';
   private communitySearchRequestVersion = 0;
+  private reloadRequestVersion = 0;
   communityPresentation?: CommunitySearchPresentation;
   presentationLoading = false;
   membershipActionLoading = false;
@@ -402,8 +403,9 @@ export class CommunitiesComponent implements OnInit {
   private loadCommunityPresentation(id: number): void {
     this.pendingArchiveDeepLinkCommunityId = null;
     this.invalidateArchiveRequests();
-    // Public presentation navigation invalidates still-pending private community reads.
-    this.communityOpenRequestVersion = (this.communityOpenRequestVersion || 0) + 1;
+    // Only the most recent presentation request may change this view.
+    const presentationVersion = (this.communityOpenRequestVersion || 0) + 1;
+    this.communityOpenRequestVersion = presentationVersion;
     this.competitionRequestVersion = (this.competitionRequestVersion || 0) + 1;
     this.communitySessionsRequestVersion = (this.communitySessionsRequestVersion || 0) + 1;
     ++this.pendingJoinLookupVersion;
@@ -419,16 +421,25 @@ export class CommunitiesComponent implements OnInit {
       .pipe(
         timeout(10_000),
         retry({ count: 1 }),
-        finalize(() => this.presentationLoading = false)
+        finalize(() => {
+          if (presentationVersion === this.communityOpenRequestVersion) {
+            this.presentationLoading = false;
+          }
+        })
       )
       .subscribe({
         next: presentation => {
+          if (presentationVersion !== this.communityOpenRequestVersion) return;
           this.communityPresentation = presentation;
           if (presentation.visibility === 'PRIVATE') {
             this.loadMyPendingJoinRequest(presentation.id);
           }
         },
-        error: () => this.errorMessage = t('feedback.communities.openError')
+        error: () => {
+          if (presentationVersion === this.communityOpenRequestVersion) {
+            this.errorMessage = t('feedback.communities.openError');
+          }
+        }
       });
   }
 
@@ -505,6 +516,9 @@ export class CommunitiesComponent implements OnInit {
   }
 
   reload(): void {
+    // Only the latest reload can update the groups, invites or loading state.
+    const reloadVersion = (this.reloadRequestVersion || 0) + 1;
+    this.reloadRequestVersion = reloadVersion;
     this.loading = true;
     this.errorMessage = '';
 
@@ -512,10 +526,13 @@ export class CommunitiesComponent implements OnInit {
       .pipe(
         timeout(10_000),
         retry({ count: 1 }),
-        finalize(() => this.loading = false)
+        finalize(() => {
+          if (reloadVersion === this.reloadRequestVersion) this.loading = false;
+        })
       )
       .subscribe({
         next: communities => {
+          if (reloadVersion !== this.reloadRequestVersion) return;
           this.communities = communities;
 
           const routeId = this.route.snapshot.paramMap.get('id');
@@ -540,7 +557,11 @@ export class CommunitiesComponent implements OnInit {
             }
           }
         },
-        error: () => this.errorMessage = t('feedback.communities.loadError')
+        error: () => {
+          if (reloadVersion === this.reloadRequestVersion) {
+            this.errorMessage = t('feedback.communities.loadError');
+          }
+        }
       });
 
     this.communityService.myInvites()
@@ -549,8 +570,12 @@ export class CommunitiesComponent implements OnInit {
         retry({ count: 1 })
       )
       .subscribe({
-        next: invites => this.invites = invites,
-        error: () => this.invites = []
+        next: invites => {
+          if (reloadVersion === this.reloadRequestVersion) this.invites = invites;
+        },
+        error: () => {
+          if (reloadVersion === this.reloadRequestVersion) this.invites = [];
+        }
       });
   }
 
@@ -630,6 +655,7 @@ export class CommunitiesComponent implements OnInit {
     this.competitionRequestVersion = (this.competitionRequestVersion || 0) + 1;
     this.communitySessionsRequestVersion = (this.communitySessionsRequestVersion || 0) + 1;
     ++this.pendingRequestsLookupVersion;
+    this.presentationLoading = false;
     this.editingSports = false;
     this.sportsMessage = '';
     this.featuresEditing = false;

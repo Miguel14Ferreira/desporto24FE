@@ -9,6 +9,7 @@ import { Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 
 import { AuthInterceptor } from './auth.interceptor';
+import { environment } from '../environment/environment';
 
 describe('AuthInterceptor', () => {
   let interceptor: AuthInterceptor;
@@ -41,6 +42,50 @@ describe('AuthInterceptor', () => {
     interceptor.intercept(request, next).subscribe(() => done());
   });
 
+  it('limits bearer tokens to the configured Jynlo API origin', () => {
+    localStorage.setItem('t', 'sensitive-fixture-token');
+    const seen: HttpRequest<unknown>[] = [];
+    const next = { handle: (req: HttpRequest<unknown>) => {
+      seen.push(req);
+      return of(new HttpResponse({ status: 200 }));
+    } } as HttpHandler;
+
+    for (const url of [
+      'https://example.org/image',
+      'https://api.d24sports.com.attacker.invalid/api/sessions',
+      'https://maps.googleapis.com/maps/api/place/details',
+      environment.apiUrl + '/other-service',
+      '/assets/sport.svg',
+      '//untrusted.invalid/api/sessions'
+    ]) {
+      interceptor.intercept(new HttpRequest('GET', url), next).subscribe();
+    }
+
+    expect(seen.length).toBe(6);
+    expect(seen.every(req => !req.headers.has('Authorization'))).toBeTrue();
+    expect(backend.handle).not.toHaveBeenCalled();
+
+    interceptor.intercept(new HttpRequest('GET',
+      environment.apiUrl + '/api/sessions/42'), next).subscribe();
+    expect(seen[6].headers.get('Authorization')).toBe('Bearer sensitive-fixture-token');
+  });
+
+  it('does not refresh or redirect for a third-party HTTP 401', (done) => {
+    localStorage.setItem('t', 'fixture-token');
+    const next = { handle: (req: HttpRequest<unknown>) => {
+      expect(req.headers.has('Authorization')).toBeFalse();
+      return throwError(() => new HttpErrorResponse({ status: 401 }));
+    } } as HttpHandler;
+    interceptor.intercept(new HttpRequest('GET', 'https://cdn.example.org/private.png'), next)
+      .subscribe({ error: error => {
+        expect(error.status).toBe(401);
+        expect(backend.handle).not.toHaveBeenCalled();
+        expect(router.navigate).not.toHaveBeenCalled();
+        expect(localStorage.getItem('t')).toBe('fixture-token');
+        done();
+      } });
+  });
+
   it('should not refresh the session when Google login returns 401', (done) => {
     const request = new HttpRequest('POST', '/api/auth/google/login', { credential: 'invalid' });
     const next = {
@@ -68,6 +113,126 @@ describe('AuthInterceptor', () => {
         expect(error.status).toBe(401);
         expect(backend.handle).not.toHaveBeenCalled();
         expect(router.navigate).not.toHaveBeenCalled();
+        done();
+      }
+    });
+  });
+
+  it('recovers an expired backend JWT signalled by its authentication-specific 403', (done) => {
+    localStorage.setItem('t', 'old-token');
+    const request = new HttpRequest('GET', environment.apiUrl + '/api/communities/mine');
+    const sent: string[] = [];
+    const next = { handle: (req: HttpRequest<unknown>) => {
+      const bearer = req.headers.get('Authorization') ?? '';
+      sent.push(bearer);
+      return bearer === 'Bearer old-token'
+        ? throwError(() => new HttpErrorResponse({
+            status: 403,
+            error: {
+              httpStatusCode: 403,
+              message: 'Tu percisas de efetuar o login para aceder a esta página'
+            }
+          }))
+        : of(new HttpResponse({ status: 200, body: [] }));
+    } } as HttpHandler;
+    backend.handle.and.returnValue(of(new HttpResponse({
+      status: 200, body: { token: 'fresh-token' }
+    })));
+
+    interceptor.intercept(request, next).subscribe({
+      next: response => {
+        expect(response instanceof HttpResponse).toBeTrue();
+        expect(sent).toEqual(['Bearer old-token', 'Bearer fresh-token']);
+        expect(localStorage.getItem('t')).toBe('fresh-token');
+        expect(backend.handle).toHaveBeenCalledTimes(1);
+        expect(router.navigate).not.toHaveBeenCalled();
+        done();
+      },
+      error: done.fail
+    });
+  });
+
+  it('does not refresh genuine forbidden community access even with a valid local token', (done) => {
+    localStorage.setItem('t', 'member-token');
+    const error = new HttpErrorResponse({
+      status: 403,
+      error: { httpStatusCode: 403, message: 'Não tens permissões suficientes.' }
+    });
+    const next = { handle: (req: HttpRequest<unknown>) => {
+      expect(req.headers.get('Authorization')).toBe('Bearer member-token');
+      return throwError(() => error);
+    } } as HttpHandler;
+
+    interceptor.intercept(new HttpRequest('GET',
+      environment.apiUrl + '/api/communities/42/join-requests'), next).subscribe({
+      error: received => {
+        expect(received).toBe(error);
+        expect(backend.handle).not.toHaveBeenCalled();
+        expect(router.navigate).not.toHaveBeenCalled();
+        expect(localStorage.getItem('t')).toBe('member-token');
+        done();
+      }
+    });
+  });
+
+  it('keeps the renewed session when a retried community request is forbidden', (done) => {
+    localStorage.setItem('t', 'expired-token');
+    const request = new HttpRequest('GET',
+      environment.apiUrl + '/api/communities/42/join-requests');
+    let attempt = 0;
+    const next = { handle: (req: HttpRequest<unknown>) => {
+      attempt++;
+      if (attempt === 1) {
+        expect(req.headers.get('Authorization')).toBe('Bearer expired-token');
+        return throwError(() => new HttpErrorResponse({
+          status: 403,
+          error: {
+            httpStatusCode: 403,
+            message: 'Tu percisas de efetuar o login para aceder a esta página'
+          }
+        }));
+      }
+      expect(req.headers.get('Authorization')).toBe('Bearer renewed-token');
+      return throwError(() => new HttpErrorResponse({
+        status: 403,
+        error: { httpStatusCode: 403, message: 'NOT_ENOUGH_PERMISSION' }
+      }));
+    } } as HttpHandler;
+    backend.handle.and.returnValue(of(new HttpResponse({
+      status: 200, body: { token: 'renewed-token' }
+    })));
+
+    interceptor.intercept(request, next).subscribe({
+      next: () => done.fail('An unauthorized community action must remain forbidden'),
+      error: error => {
+        expect(error.status).toBe(403);
+        expect(attempt).toBe(2);
+        expect(backend.handle).toHaveBeenCalledTimes(1);
+        expect(localStorage.getItem('t')).toBe('renewed-token');
+        expect(router.navigate).not.toHaveBeenCalled();
+        done();
+      }
+    });
+  });
+
+  it('clears the session if the backend authentication 403 is followed by rejected refresh', (done) => {
+    localStorage.setItem('t', 'expired-token');
+    const next = { handle: () => throwError(() => new HttpErrorResponse({
+      status: 403,
+      error: {
+        httpStatusCode: 403,
+        message: 'Tu percisas de efetuar o login para aceder a esta página'
+      }
+    })) } as HttpHandler;
+    backend.handle.and.returnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
+
+    interceptor.intercept(new HttpRequest('GET',
+      environment.apiUrl + '/api/communities/mine'), next).subscribe({
+      error: () => {
+        expect(localStorage.getItem('t')).toBeNull();
+        expect(router.navigate).toHaveBeenCalledWith(['/login'], {
+          queryParams: { sessionExpired: '1', returnUrl: '/menu/events/42?join=1' }
+        });
         done();
       }
     });

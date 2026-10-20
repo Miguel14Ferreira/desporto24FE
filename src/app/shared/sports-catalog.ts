@@ -14,6 +14,7 @@ export const SPORTS_CATALOG: readonly string[] = [
   "Bilhar",
   "BMX",
   "Bodyboard",
+  "Bowling",
   "Boxe",
   "Breaking",
   "Bridge",
@@ -30,6 +31,7 @@ export const SPORTS_CATALOG: readonly string[] = [
   "Columbofilia",
   "Corfebol",
   "Corrida",
+  "Corrida de obstáculos",
   "Cricket",
   "Curling",
   "Damas",
@@ -52,6 +54,7 @@ export const SPORTS_CATALOG: readonly string[] = [
   "Ginástica Rítmica",
   "Golfe",
   "Halterofilismo",
+  "Hipismo",
   "Hóquei",
   "Hóquei em Campo",
   "Hóquei em Patins",
@@ -101,8 +104,10 @@ export const SPORTS_CATALOG: readonly string[] = [
   "Squash",
   "Stand Up Paddle",
   "Surf",
+  "Teqball",
   "Taekwondo",
   "Ténis",
+  "Ténis de praia",
   "Ténis de mesa",
   "Tiro",
   "Tiro com Arco",
@@ -124,6 +129,9 @@ export function sportIcon(sport: string): string {
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase();
 
+  if (value.includes('bowling')) return '🎳';
+  if (value.includes('hipismo')) return '🐎';
+  if (value.includes('teqball')) return '⚽';
   if (value.includes('badminton')) return '🏸';
   if (value.includes('basquetebol')) return '🏀';
   if (value.includes('andebol')) return '🤾';

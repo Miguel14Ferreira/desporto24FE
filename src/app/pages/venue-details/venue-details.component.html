@@ -46,14 +46,16 @@
         </div>
       </div>
 
-      @if (venue.latitude !== null && venue.longitude !== null) {
-        <a
-          class="venue-map-link"
-          [href]="'https://www.google.com/maps?q=' + venue.latitude + ',' + venue.longitude"
-          target="_blank"
-          rel="noopener noreferrer">
-          {{ 'venue.detail.viewMap' | t }}
+      @if (mapUrl; as venueMapUrl) {
+        <a class="venue-map-link"
+           [href]="venueMapUrl"
+           target="_blank"
+           rel="noopener noreferrer">
+          {{ (hasConfirmedMapCoordinates ? 'venue.detail.viewMap' : 'venue.detail.searchMap') | t }}
         </a>
+        @if (!hasConfirmedMapCoordinates) {
+          <small class="venue-map-approximate-hint">{{ 'venue.detail.searchMapHint' | t }}</small>
+        }
       }
 
       <section class="venue-photos-section">
@@ -251,7 +253,7 @@
       <section class="venue-amenities-section">
         <h2>{{ 'venue.detail.amenities' | t }}</h2>
         <div class="venue-amenities-list">
-          <span>{{ venue.indoor ? ('venue.indoor' | t) : ('venue.outdoor' | t) }}</span>
+          <span>{{ venueEnvironmentTranslationKey(venue) | t }}</span>
           @if (venue.changingRooms) { <span>{{ 'venue.changingRooms' | t }}</span> }
           @if (venue.toilets) { <span>{{ 'venue.toilets' | t }}</span> }
           @if (venue.lockers) { <span>{{ 'venue.lockers' | t }}</span> }

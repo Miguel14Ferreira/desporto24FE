@@ -66,6 +66,14 @@ export class PublicSessionPreviewComponent implements OnInit {
     this.loadPreview();
   }
 
+  // Keep the join/waitlist section in view after sign-in or registration.
+  // This never submits a join request automatically.
+  get participationReturnUrl(): string | null {
+    return this.returnUrl && this.canRequestParticipation
+      ? this.returnUrl + '?join=1'
+      : this.returnUrl;
+  }
+
   retryLoad(): void {
     if (this.canRetry && !this.loading) {
       this.loadPreview();
@@ -196,6 +204,12 @@ export class PublicSessionPreviewComponent implements OnInit {
       return photo;
     }
     return environment.apiUrl + (photo.startsWith('/') ? photo : '/' + photo);
+  }
+
+  get displayGameDate(): string | null {
+    const rawDate = this.session?.gameDate;
+    // Legacy or incomplete public API records must never crash Angular DatePipe.
+    return rawDate && Number.isFinite(Date.parse(rawDate)) ? rawDate : null;
   }
 
   get remainingPlaces(): number | null {

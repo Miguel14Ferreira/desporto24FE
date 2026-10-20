@@ -94,6 +94,34 @@ describe('PublicSessionPreviewComponent', () => {
     expect(photo.getAttribute('alt')).toBe('Fotografia da sessão: Sessão desportiva');
   });
 
+  it('renders malformed or missing dates without crashing or promising participation', () => {
+    const page = render({ gameDate: 'invalid-api-date', status: 'OPEN' });
+    const facts = page.querySelectorAll('.session-facts .fact strong');
+    expect(fixture.componentInstance.displayGameDate).toBeNull();
+    expect(facts[1].textContent?.trim()).toBe('Por indicar');
+    expect(facts[2].textContent?.trim()).toBe('Por indicar');
+    expect(fixture.componentInstance.canRequestParticipation).toBeFalse();
+    expect(page.querySelector('.join-panel .primary-action')).toBeNull();
+    expect(page.querySelector('.share-session-action')).toBeNull();
+
+    fixture.componentInstance.session!.gameDate = null;
+    fixture.detectChanges();
+    expect(facts[1].textContent?.trim()).toBe('Por indicar');
+    expect(facts[2].textContent?.trim()).toBe('Por indicar');
+  });
+
+  it('shows localized unknown date and time while keeping the session identifiable', () => {
+    const i18n = TestBed.inject(I18nService);
+    i18n.setLanguage('en');
+    const page = render({ gameDate: 'bad-date', status: 'FULL' });
+    const facts = page.querySelectorAll('.session-facts .fact strong');
+    expect(page.querySelector('main.session-layout h1')?.textContent).toContain('Padel');
+    expect(facts[1].textContent?.trim()).toBe('Not specified');
+    expect(facts[2].textContent?.trim()).toBe('Not specified');
+    expect(fixture.componentInstance.canRequestParticipation).toBeFalse();
+    expect(page.querySelector('.join-panel .primary-action')).toBeNull();
+  });
+
   it('directs a signed-in player to the participation section', () => {
     authenticationService.isLoggedIn.and.returnValue(true);
     const page = render();
@@ -606,8 +634,9 @@ describe('PublicSessionPreviewComponent', () => {
 
     const create = page.querySelector('.join-panel .primary-action') as HTMLAnchorElement;
     const existing = page.querySelector('.join-panel .secondary-action') as HTMLAnchorElement;
-    expect(create.getAttribute('href')).toContain(encodeURIComponent(destination!));
-    expect(existing.getAttribute('href')).toContain(encodeURIComponent(destination!));
+    expect(create.getAttribute('href')).toContain(encodeURIComponent(destination + '?join=1'));
+    expect(existing.getAttribute('href')).toContain(encodeURIComponent(destination + '?join=1'));
+    expect(fixture.componentInstance.participationReturnUrl).toBe('/menu/events/42?join=1');
 
     authenticationService.isLoggedIn.and.returnValue(true);
     fixture.componentInstance.isAuthenticated = true;
@@ -619,6 +648,24 @@ describe('PublicSessionPreviewComponent', () => {
     fixture.detectChanges();
     expect(page.querySelector('.join-panel .primary-action')?.getAttribute('href'))
       .toBe(destination);
+  });
+
+  it('keeps the join/waitlist focus for guest entry but not for closed sessions', () => {
+    const page = render({ status: 'FULL' });
+    const registration = page.querySelector('.join-panel .primary-action') as HTMLAnchorElement;
+    const existing = page.querySelector('.join-panel .secondary-action') as HTMLAnchorElement;
+    const header = page.querySelector('.header-login') as HTMLAnchorElement;
+    for (const link of [registration, existing, header]) {
+      expect(new URL(link.href).searchParams.get('returnUrl'))
+        .toBe('/menu/events/42?join=1');
+    }
+
+    fixture.componentInstance.session!.status = 'CANCELLED';
+    fixture.detectChanges();
+    expect(fixture.componentInstance.participationReturnUrl).toBe('/menu/events/42');
+    const closedLogin = page.querySelector('.join-panel .secondary-action') as HTMLAnchorElement;
+    expect(new URL(closedLogin.href).searchParams.get('returnUrl'))
+      .toBe('/menu/events/42');
   });
 
   it('keeps a canonical positive session ID when loading its public preview', () => {

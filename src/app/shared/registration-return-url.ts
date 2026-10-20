@@ -1,6 +1,6 @@
 const REGISTRATION_DESTINATION_KEY = 'jynlo-registration-destination';
 const REGISTRATION_DESTINATION_TTL_MS = 24 * 60 * 60 * 1000;
-const SESSION_DESTINATION_PATTERN = /^\/menu\/events\/([1-9]\d*)$/;
+const SESSION_DESTINATION_PATTERN = /^\/menu\/events\/([1-9]\d*)(?:\?join=1)?$/;
 const COMMUNITY_DESTINATION_PATTERN = /^\/menu\/communities\/([1-9]\d*)$/;
 
 /** Keep only ID-based internal invitation destinations, never external URLs or setup routes. */

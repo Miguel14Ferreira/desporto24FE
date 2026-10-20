@@ -74,6 +74,27 @@ describe('LoginMFAComponent', () => {
     expect(component.errorMessage).toContain('expirou');
   });
 
+  it('lets users renew an expired challenge directly from the MFA screen', () => {
+    component.expiresAt = new Date(Date.now() - 1000).toISOString();
+    fixture.detectChanges();
+
+    const submit = fixture.nativeElement.querySelector('form button[type="submit"]') as HTMLButtonElement;
+    const renew = Array.from(fixture.nativeElement.querySelectorAll('.secondary-actions button'))
+      .find((button: any) => button.textContent.includes('Renovar desafio')) as HTMLButtonElement;
+    expect(submit.disabled).toBeTrue();
+    expect(renew).toBeDefined();
+    renew.click();
+    fixture.detectChanges();
+
+    expect(auth.resendMfaChallenge).toHaveBeenCalledOnceWith('challenge-123');
+    expect(component.challengeId).toBe('challenge-456');
+    expect(component.isChallengeExpired()).toBeFalse();
+    expect(submit.disabled).toBeFalse();
+    expect(component.successMessage).toContain('Desafio renovado');
+    expect(component.resendCooldownSeconds).toBe(60);
+    expect(fixture.nativeElement.textContent).not.toContain('enviado um novo código por SMS');
+  });
+
   it('should confirm MFA and save the returned JWT', () => {
     component.code = 'ABC12345';
 

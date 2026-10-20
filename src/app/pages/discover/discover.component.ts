@@ -7,6 +7,7 @@ import { CommunityService } from '../../services/community.service';
 import { SessionService } from '../../services/session.service';
 import { VenueService } from '../../services/venue.service';
 import { SPORTS_CATALOG } from '../../shared/sports-catalog';
+import { venueEnvironmentTranslationKey } from '../../shared/venue-environment';
 import { CommunityProfile } from '../model/community-profile';
 import { environment } from 'src/environment/environment';
 import { SessionSummary } from '../model/session-summary';
@@ -21,6 +22,7 @@ import { Venue } from '../model/venue';
 })
 export class DiscoverComponent implements OnInit {
   readonly sportsCatalog = SPORTS_CATALOG;
+  readonly venueEnvironmentTranslationKey = venueEnvironmentTranslationKey;
 
   sport = '';
   location = '';
@@ -279,7 +281,9 @@ export class DiscoverComponent implements OnInit {
           latitude: this.nearbyPosition?.latitude,
           longitude: this.nearbyPosition?.longitude,
           radiusKm: this.nearbyPosition ? this.nearbyRadiusKm : undefined,
-          availability: 'available',
+          // Include FULL sessions so players can discover their waitlists.
+          // The card only shows a join shortcut when participation is viable.
+          availability: undefined,
           sort: this.nearbyPosition ? 'distance' : 'date'
         }),
         [] as SessionSummary[], 'sessions', requestId
@@ -394,6 +398,35 @@ export class DiscoverComponent implements OnInit {
     return Math.max(0, session.maxParticipants - session.participantCount);
   }
 
+  sessionDisplayDate(session: SessionSummary): string | null {
+    return Number.isFinite(Date.parse(session.gameDate)) ? session.gameDate : null;
+  }
+
+  sessionEntryAction(session: SessionSummary): 'join' | 'waitlist' | 'details' {
+    const startsAt = Date.parse(session.gameDate);
+    if (session.privateGame || session.audience === 'COMMUNITY_ONLY'
+        || session.joinedByViewer || session.waitlistedByViewer
+        || !Number.isFinite(startsAt) || startsAt <= Date.now()) {
+      return 'details';
+    }
+
+    // FULL is authoritative even if the participant-count snapshot is delayed.
+    if (session.status?.toUpperCase() === 'FULL') {
+      return 'waitlist';
+    }
+
+    if (session.status?.toUpperCase() === 'OPEN'
+        && Number.isSafeInteger(session.participantCount)
+        && Number.isSafeInteger(session.maxParticipants)
+        && session.participantCount >= 0 && session.maxParticipants > 0
+        && this.vacancies(session) > 0) {
+      return 'join';
+    }
+
+    // Never promise an available spot from unknown counts or closed sessions.
+    return 'details';
+  }
+
   private withRecovery<T>(
     request$: Observable<T>,
     fallback: T,
@@ -419,12 +452,16 @@ export class DiscoverComponent implements OnInit {
     location: string
   ): Observable<CommunityProfile[]> {
     const name = this.playerName.trim();
-    if (!name && !sport && !location) {
+    // A name search must not inherit Discover's sport or locality filters.
+    if (name) {
+      return name.length < 2
+        ? of([])
+        : this.communityService.findProfiles({ name });
+    }
+    if (!sport && !location) {
       return of([]);
     }
-
     return this.communityService.findProfiles({
-      name: name || undefined,
       sport: sport || undefined,
       location: location || undefined
     });

@@ -391,3 +391,10 @@
   text-decoration: none;
   font-weight: 700;
 }
+
+.venue-map-approximate-hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.85rem;
+  color: #696969;
+}

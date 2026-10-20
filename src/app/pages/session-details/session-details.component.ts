@@ -108,6 +108,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   private sessionId?: number;
   private currentUsername: string | null = null;
   private pendingJoinScroll = false;
+  private pendingMembershipScroll = false;
   private readonly jwtHelper = new JwtHelperService();
   private readonly realtimeSubscriptions = new Subscription();
 
@@ -122,6 +123,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
 
   ngOnInit(): void {
     this.pendingJoinScroll = this.route.snapshot.queryParamMap?.get('join') === '1';
+    this.pendingMembershipScroll = this.route.snapshot.queryParamMap?.get('membership') === '1';
     this.promotionOpen = this.route.snapshot.queryParamMap?.get('promote') === '1';
     this.currentUsername = this.readCurrentUsername();
 
@@ -161,7 +163,21 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   }
 
   ngAfterViewChecked(): void {
-    if (!this.pendingJoinScroll || this.loading || !this.session) {
+    if (this.loading || !this.session) {
+      return;
+    }
+
+    if (this.pendingMembershipScroll) {
+      // A historical promotion notification may be opened after the membership
+      // changes again. Only scroll if the current session confirms membership.
+      this.pendingMembershipScroll = false;
+      if (this.session.joined || this.session.waitlisted) {
+        document.getElementById('session-membership')
+          ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+
+    if (!this.pendingJoinScroll) {
       return;
     }
     if (!this.canJoinSession()) {
@@ -177,7 +193,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   }
 
   scrollToParticipants(): void {
-    if (!this.session?.joined) {
+    if (!this.session || (!this.session.joined && !this.isCreator())) {
       return;
     }
 
@@ -511,7 +527,8 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   }
 
   loadSessionParticipants(): void {
-    if (!this.sessionId || !this.session?.joined || this.sessionParticipantsLoading) {
+    if (!this.sessionId || !this.session
+        || (!this.session.joined && !this.isCreator()) || this.sessionParticipantsLoading) {
       return;
     }
 
@@ -1102,13 +1119,42 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     return Math.max(0, this.session.maxParticipants - this.session.participantCount);
   }
 
-  canFindPlayers(): boolean {
-    if (!this.session || !this.isCreator() || this.session.privateGame
-        || this.session.status !== 'OPEN' || this.missingPlayers() === 0) {
-      return false;
+  organizerPreparation(): { confirmed: number; capacity: number; missing: number; full: boolean } | null {
+    const session = this.session;
+    if (!session || !this.isCreator() || (session.status !== 'OPEN' && session.status !== 'FULL')) {
+      return null;
     }
-    const start = Date.parse(this.session.gameDate);
-    return Number.isFinite(start) && start > Date.now();
+    const kickoff = Date.parse(session.gameDate);
+    if (!Number.isFinite(kickoff) || kickoff <= Date.now()
+        || !Number.isSafeInteger(session.maxParticipants) || session.maxParticipants <= 0
+        || !Number.isSafeInteger(session.participantCount) || session.participantCount < 0
+        || session.participantCount > session.maxParticipants) {
+      return null;
+    }
+
+    // FULL from the backend takes precedence over a potentially delayed count.
+    const full = session.status === 'FULL' || session.participantCount === session.maxParticipants;
+    return {
+      confirmed: session.participantCount,
+      capacity: session.maxParticipants,
+      missing: full ? 0 : session.maxParticipants - session.participantCount,
+      full
+    };
+  }
+
+  canFindPlayers(): boolean {
+    const preparation = this.organizerPreparation();
+    return !!preparation && !preparation.full
+      && this.session?.status === 'OPEN'
+      && this.session.privateGame === false
+      && this.session.audience !== 'COMMUNITY_ONLY';
+  }
+
+  scrollToPlayerSearch(): void {
+    if (this.canFindPlayers()) {
+      document.getElementById('session-player-search')
+        ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   }
 
   isFull(): boolean {
@@ -1530,15 +1576,22 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
             this.teamsError = '';
           }
 
-          if (session.joined) {
+          if (session.joined || this.isCreator()) {
+            // The existing backend endpoint authorizes the creator independently
+            // of membership. Do not require the organiser to reserve a playing spot.
             this.loadSessionParticipants();
-            this.refreshMessages();
           } else {
             this.sessionParticipants = [];
             this.teamAParticipants = [];
             this.teamBParticipants = [];
             this.confirmedTeams = false;
             this.sessionParticipantsError = '';
+          }
+
+          if (session.joined) {
+            this.refreshMessages();
+          } else {
+            // Roster visibility does not confer chat access.
             this.messages = [];
             this.chatError = '';
           }
