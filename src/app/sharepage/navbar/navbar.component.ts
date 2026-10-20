@@ -72,6 +72,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
         && this.authService.hasAnyRole('ROLE_ADMIN', 'ROLE_SUPER_ADMIN');
 
       if (!this.authenticated) {
+        // The navbar persists across SPA logout -> login navigation. A previous
+        // pending logout must not disable the button in the next session.
+        this.loggingOut = false;
         this.realtimeService.disconnect();
         this.unreadNotifications = 0;
         if (this.notificationTimer) {

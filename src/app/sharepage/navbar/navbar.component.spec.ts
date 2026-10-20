@@ -1,9 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { EMPTY } from 'rxjs';
+import { EMPTY, of, Subject } from 'rxjs';
 
 import { NavbarComponent } from './navbar.component';
 import { AuthenticationService } from '../../services/authethication.service';
 import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.service';
+import { NotificationApiService } from '../../services/notification-api.service';
 import { TEST_IMPORTS, TEST_PROVIDERS } from '../../testing/test-providers';
 
 describe('NavbarComponent', () => {
@@ -11,13 +12,15 @@ describe('NavbarComponent', () => {
   let fixture: ComponentFixture<NavbarComponent>;
   let authService: jasmine.SpyObj<AuthenticationService>;
   let realtimeService: jasmine.SpyObj<DirectChatRealtimeService>;
+  let notificationService: jasmine.SpyObj<NotificationApiService>;
 
   beforeEach(async () => {
     authService = jasmine.createSpyObj<AuthenticationService>(
       'AuthenticationService',
-      ['hasSessionCandidate', 'hasAnyRole']
+      ['hasSessionCandidate', 'hasAnyRole', 'terminarSessao', 'logOut']
     );
     authService.hasSessionCandidate.and.returnValue(false);
+    authService.terminarSessao.and.returnValue(of(undefined));
 
     realtimeService = jasmine.createSpyObj<DirectChatRealtimeService>(
       'DirectChatRealtimeService',
@@ -25,13 +28,19 @@ describe('NavbarComponent', () => {
       { messages$: EMPTY }
     );
 
+    notificationService = jasmine.createSpyObj<NotificationApiService>(
+      'NotificationApiService', ['unreadCount']
+    );
+    notificationService.unreadCount.and.returnValue(of(0));
+
     await TestBed.configureTestingModule({
       declarations: [NavbarComponent],
       imports: TEST_IMPORTS,
       providers: [
         ...TEST_PROVIDERS,
         { provide: AuthenticationService, useValue: authService },
-        { provide: DirectChatRealtimeService, useValue: realtimeService }
+        { provide: DirectChatRealtimeService, useValue: realtimeService },
+        { provide: NotificationApiService, useValue: notificationService }
       ]
     }).compileComponents();
 
@@ -142,6 +151,43 @@ describe('NavbarComponent', () => {
     const languageToggles = root.querySelectorAll('.language-switch button');
     expect(languageToggles.length).toBe(2);
     languageToggles.forEach(button => expect(button.classList.contains('jynlo-action')).toBeFalse());
+  });
+
+  it('enables logout again after logging out and signing in without refreshing the SPA', () => {
+    const logoutResponse = new Subject<void>();
+    authService.terminarSessao.and.returnValue(logoutResponse.asObservable());
+
+    // The app keeps the same NavbarComponent mounted across route changes.
+    component.authenticated = true;
+    fixture.detectChanges();
+
+    let button = fixture.nativeElement.querySelector('.logout-action') as HTMLButtonElement;
+    expect(button.disabled).toBeFalse();
+
+    button.click();
+    fixture.detectChanges();
+    expect(button.disabled).toBeTrue();
+    expect(component.loggingOut).toBeTrue();
+    expect(authService.terminarSessao).toHaveBeenCalledTimes(1);
+
+    logoutResponse.next();
+    logoutResponse.complete();
+    expect(authService.logOut).toHaveBeenCalledTimes(1);
+
+    // The router reaches /login after AuthenticationService has cleared the JWT.
+    authService.hasSessionCandidate.and.returnValue(false);
+    (component as any).syncAuthenticatedState();
+    expect(component.loggingOut).toBeFalse();
+
+    // A new login arrives without refreshing or replacing the navbar instance.
+    authService.hasSessionCandidate.and.returnValue(true);
+    (component as any).syncAuthenticatedState();
+    fixture.detectChanges();
+
+    button = fixture.nativeElement.querySelector('.logout-action') as HTMLButtonElement;
+    expect(button).toBeTruthy();
+    expect(button.disabled).toBeFalse();
+    expect(component.loggingOut).toBeFalse();
   });
 
   it('should create without opening a chat connection when unauthenticated', () => {
