@@ -1550,6 +1550,89 @@ describe('SessionDetailsComponent', () => {
     expect(component.messages).toEqual([message]);
   });
 
+  it('lets the creator see confirmed player profiles without taking a playing spot', () => {
+    sessionService.participants.calls.reset();
+    sessionService.messages.calls.reset();
+    (component as any).currentUsername = 'creator-user';
+    sessionService.detail.and.returnValue(of({
+      ...session,
+      joined: false,
+      gameDate: new Date(Date.now() + 86_400_000).toISOString()
+    }));
+
+    component.retrySessionLoad();
+    fixture.detectChanges();
+
+    expect(sessionService.participants).toHaveBeenCalledWith(7);
+    expect(component.sessionParticipants.map(p => p.username)).toEqual(['player-one']);
+    expect(component.session?.joined).toBeFalse();
+    expect(sessionService.join).not.toHaveBeenCalled();
+    expect(sessionService.messages).not.toHaveBeenCalled();
+    expect(fixture.nativeElement.querySelector('.message-composer')).toBeNull();
+
+    const section = fixture.nativeElement.querySelector('#session-participants') as HTMLElement;
+    expect(section).not.toBeNull();
+    expect(section.textContent).toContain('@player-one');
+    expect(section.textContent).toContain('perfis de jogadores visíveis');
+    const summary = fixture.nativeElement.querySelector('.organizer-preparation') as HTMLElement;
+    const button = Array.from(summary.querySelectorAll('button'))
+      .find((candidate: any) => candidate.textContent.includes('Quem vai')) as HTMLButtonElement;
+    expect(button).toBeDefined();
+    const scroll = spyOn(section, 'scrollIntoView');
+    button.click();
+    expect(scroll).toHaveBeenCalledOnceWith({ behavior: 'smooth', block: 'start' });
+  });
+
+  it('shows creator roster loading and never equates its size with total confirmed places', () => {
+    sessionService.participants.calls.reset();
+    (component as any).currentUsername = 'creator-user';
+    const pending = new Subject<any[]>();
+    sessionService.participants.and.returnValue(pending.asObservable());
+    sessionService.detail.and.returnValue(of({
+      ...session,
+      joined: false,
+      participantCount: 4,
+      maxParticipants: 5
+    }));
+
+    component.retrySessionLoad();
+    fixture.detectChanges();
+    const section = fixture.nativeElement.querySelector('#session-participants') as HTMLElement;
+    expect(section.textContent).toContain('A carregar jogadores confirmados');
+    expect(section.textContent).not.toContain('4 perfis');
+    pending.next([{
+      id: 15, username: 'player-one', attendanceStatus: 'PENDING',
+      joinedAt: '2026-09-20T18:00:00Z'
+    }]);
+    pending.complete();
+    fixture.detectChanges();
+
+    expect(sessionService.participants).toHaveBeenCalledTimes(1);
+    expect(section.textContent).toContain('1 perfis de jogadores visíveis');
+    expect(section.textContent).not.toContain('A carregar jogadores confirmados');
+  });
+
+  it('keeps the participant roster inaccessible to non-participants who are not creators', () => {
+    sessionService.participants.calls.reset();
+    (component as any).currentUsername = 'outsider';
+    component.session = {
+      ...session,
+      joined: false,
+      creatorUsername: 'creator-user'
+    };
+    component.sessionParticipants = [{
+      id: 15, username: 'player-one', attendanceStatus: 'PENDING',
+      joinedAt: '2026-09-20T18:00:00Z'
+    }];
+
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('#session-participants')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.organizer-preparation')).toBeNull();
+    component.loadSessionParticipants();
+    component.scrollToParticipants();
+    expect(sessionService.participants).not.toHaveBeenCalled();
+  });
+
   it('should let a joined non-creator view who is going', () => {
     sessionService.participants.calls.reset();
     (component as any).currentUsername = 'player-one';
