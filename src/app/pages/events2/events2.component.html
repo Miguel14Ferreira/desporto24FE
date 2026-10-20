@@ -157,15 +157,29 @@
             <p>{{ 'venue.chooseHint' | t }}</p>
           </div>
 
-          <button
-            type="button"
-            class="secondary-action jynlo-action jynlo-action--neutral"
-            [disabled]="loading || venueSaving"
-            (click)="toggleVenueCreator()">
-            {{ showVenueCreator ? ('common.cancel' | t) : ('venue.saveNew' | t) }}
-          </button>
+          @if (locationMethod === 'venue') {
+            <button
+              type="button"
+              class="secondary-action jynlo-action jynlo-action--neutral"
+              [disabled]="loading || venueSaving"
+              (click)="toggleVenueCreator()">
+              {{ showVenueCreator ? ('common.cancel' | t) : ('venue.saveNew' | t) }}
+            </button>
+          }
         </div>
 
+        <div class="location-methods" role="group" [attr.aria-label]="'createSession.locationMethods' | t">
+          <button type="button" class="location-method" [class.active]="locationMethod === 'venue'"
+                  [attr.aria-pressed]="locationMethod === 'venue'" [disabled]="loading || venueSaving"
+                  (click)="chooseLocationMethod('venue')">{{ 'createSession.locationMethod.venue' | t }}</button>
+          <button type="button" class="location-method" [class.active]="locationMethod === 'maps'"
+                  [attr.aria-pressed]="locationMethod === 'maps'" [disabled]="loading || venueSaving"
+                  (click)="chooseLocationMethod('maps')">{{ 'createSession.locationMethod.maps' | t }}</button>
+          <button type="button" class="location-method" [class.active]="locationMethod === 'gps'"
+                  [attr.aria-pressed]="locationMethod === 'gps'" [disabled]="loading || venueSaving"
+                  (click)="chooseLocationMethod('gps')">{{ 'createSession.locationMethod.gps' | t }}</button>
+        </div>
+        @if (locationMethod === 'venue') {
         <label class="venue-select-field">
           <span>{{ 'venue.district' | t }}</span>
           <select name="venueDistrict" [ngModel]="venueDistrict"
@@ -247,8 +261,10 @@
             </button>
           </div>
         }
+        }
 
-        @if (!selectedVenueId) {
+        @if (locationMethod !== 'venue') {
+          @if (locationMethod === 'maps') {
           <div class="venue-create-card">
             <div>
               <strong>{{ 'venue.mapLink.title' | t }}</strong>
@@ -285,7 +301,10 @@
               }
             </div>
 
-            <div class="gps-location-option">
+          </div>
+          }
+          @if (locationMethod === 'gps') {
+            <div class="venue-create-card gps-location-option">
               <p class="venue-current-location">{{ 'createSession.gpsLocationHint' | t }}</p>
               <div class="header-actions">
                 <button
@@ -306,8 +325,9 @@
                 <div class="location-error" role="alert">{{ locationError }}</div>
               }
             </div>
+          }
 
-            @if (venueMapLinkError) {
+          @if (locationMethod === 'maps' && venueMapLinkError) {
               <div class="location-error" role="alert">{{ venueMapLinkError }}</div>
             }
 
@@ -389,7 +409,7 @@
           </div>
         }
 
-        @if (showVenueCreator) {
+        @if (showVenueCreator && locationMethod === 'venue') {
           <div class="venue-create-card">
             <div class="venue-create-grid">
               <label>
