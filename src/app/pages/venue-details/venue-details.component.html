@@ -253,7 +253,7 @@
       <section class="venue-amenities-section">
         <h2>{{ 'venue.detail.amenities' | t }}</h2>
         <div class="venue-amenities-list">
-          <span>{{ venue.indoor ? ('venue.indoor' | t) : ('venue.outdoor' | t) }}</span>
+          <span>{{ venueEnvironmentTranslationKey(venue) | t }}</span>
           @if (venue.changingRooms) { <span>{{ 'venue.changingRooms' | t }}</span> }
           @if (venue.toilets) { <span>{{ 'venue.toilets' | t }}</span> }
           @if (venue.lockers) { <span>{{ 'venue.lockers' | t }}</span> }
