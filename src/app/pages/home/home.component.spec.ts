@@ -76,6 +76,41 @@ describe('HomeComponent public discovery', () => {
     expect((fixture.nativeElement as HTMLElement).querySelector('.preview-cta')).not.toBeNull();
   });
 
+  it('finds complete venues after an incomplete first page without downloading the whole catalogue', () => {
+    venues.suggest.and.callFake((_name?: string, _city?: string, _sport?: string, page = 0) =>
+      of(page === 0
+        ? { venues: [venue(11, null)], page: 0, hasMore: true }
+        : { venues: [venue(12, 'Basquetebol'), venue(13, 'Futebol')], page, hasMore: false }));
+
+    const fixture = render();
+    expect(venues.suggest).toHaveBeenCalledTimes(2);
+    expect(fixture.componentInstance.featuredVenues.map(value => value.id)).toEqual([12, 13]);
+    expect(fixture.componentInstance.venuesLoading).toBeFalse();
+    expect(fixture.componentInstance.venuesLoadError).toBeFalse();
+  });
+
+  it('limits public venue discovery to three pages even when no venue has a sport', () => {
+    venues.suggest.and.callFake((_name?: string, _city?: string, _sport?: string, page = 0) =>
+      of({ venues: [venue(20 + page, '  ')], page, hasMore: true }));
+
+    const fixture = render();
+    expect(venues.suggest).toHaveBeenCalledTimes(3);
+    expect(fixture.componentInstance.featuredVenues).toEqual([]);
+    expect(fixture.componentInstance.venuesLoading).toBeFalse();
+  });
+
+  it('keeps usable venues if loading a subsequent page fails', () => {
+    venues.suggest.and.callFake((_name?: string, _city?: string, _sport?: string, page = 0) =>
+      page === 0
+        ? of({ venues: [venue(34, 'Andebol')], page, hasMore: true })
+        : throwError(() => new Error('temporary server error')));
+
+    const fixture = render();
+    expect(fixture.componentInstance.featuredVenues.map(value => value.id)).toEqual([34]);
+    expect(fixture.componentInstance.venuesLoadError).toBeFalse();
+    expect(fixture.componentInstance.venuesLoading).toBeFalse();
+  });
+
   it('degrades gracefully when a public request fails', () => {
     sessions.discover.and.returnValue(throwError(() => new Error('backend offline')));
     venues.suggest.and.returnValue(throwError(() => new Error('backend offline')));
