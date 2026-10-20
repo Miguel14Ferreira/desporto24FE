@@ -794,7 +794,9 @@ describe('SessionDetailsComponent', () => {
     expect(panel.textContent).toContain('3/4');
     expect(panel.textContent).toContain('marcada como cheia');
     expect(panel.textContent).not.toContain('Faltam 1 jogadores');
-    expect(panel.querySelector('button')).toBeNull();
+    // A full game must not invite more players, but its creator can inspect the roster.
+    expect(panel.querySelector('button')?.textContent).toContain('Quem vai');
+    expect(panel.textContent).not.toContain('Encontrar jogadores');
     expect(component.canFindPlayers()).toBeFalse();
     expect(fixture.nativeElement.querySelector('#session-player-search')).toBeNull();
   });
