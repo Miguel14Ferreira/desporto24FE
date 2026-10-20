@@ -65,6 +65,89 @@ describe('Events2Component', () => {
     expect(component).toBeTruthy();
   });
 
+  it('offers three exclusive location methods without requiring a venue in the catalogue', () => {
+    const buttons = Array.from(fixture.nativeElement.querySelectorAll<HTMLButtonElement>(
+      '.location-methods .location-method'
+    ));
+    expect(buttons.length).toBe(3);
+    expect(buttons[0].getAttribute('aria-pressed')).toBe('true');
+    expect(fixture.nativeElement.querySelector('input[name="venueSearch"]')).toBeTruthy();
+
+    buttons[1].click();
+    fixture.detectChanges();
+    expect(component.locationMethod).toBe('maps');
+    expect(fixture.nativeElement.querySelector('input[name="venueSearch"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('input[name="venueMapLink"]')).toBeTruthy();
+
+    fixture.nativeElement.querySelectorAll('.location-method')[2].click();
+    fixture.detectChanges();
+    expect(component.locationMethod).toBe('gps');
+    expect(fixture.nativeElement.querySelector('input[name="venueMapLink"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.gps-location-action')).toBeTruthy();
+
+    fixture.nativeElement.querySelectorAll('.location-method')[0].click();
+    fixture.detectChanges();
+    expect(component.locationMethod).toBe('venue');
+    expect(fixture.nativeElement.querySelector('input[name="venueSearch"]')).toBeTruthy();
+  });
+
+  it('requires resolving a Maps URL before creating a session without a saved venue', () => {
+    component.sport = 'Padel';
+    component.gameDate = '2099-10-15T18:00';
+    component.city = 'Lisboa';
+    component.chooseLocationMethod('maps');
+    component.createSession();
+    expect(sessionService.create).not.toHaveBeenCalled();
+    expect(component.errorMessage).toContain('Google Maps');
+
+    venueService.resolveMapLink.and.returnValue(of({
+      resolvedUrl: 'https://www.google.com/maps?q=38.7,-9.1',
+      latitude: 38.7, longitude: -9.1
+    }));
+    component.onVenueMapLinkChanged('https://www.google.com/maps?q=38.7,-9.1');
+    component.resolveVenueMapLink();
+    expect(component.locationSource).toBe('map');
+    component.createSession();
+    expect(sessionService.create).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        latitude: 38.7, longitude: -9.1, venueId: null, city: 'Lisboa'
+      }), undefined
+    );
+  });
+
+  it('replaces Maps coordinates with current GPS and never reuses them on switching source', () => {
+    component.chooseLocationMethod('maps');
+    venueService.resolveMapLink.and.returnValue(of({
+      resolvedUrl: 'https://www.google.com/maps?q=38.7,-9.1',
+      latitude: 38.7, longitude: -9.1
+    }));
+    component.onVenueMapLinkChanged('https://www.google.com/maps?q=38.7,-9.1');
+    component.resolveVenueMapLink();
+    expect(component.hasCoordinates).toBeTrue();
+
+    component.chooseLocationMethod('gps');
+    expect(component.hasCoordinates).toBeFalse();
+    expect(component.venueMapLink).toBe('');
+    component.sport = 'Padel';
+    component.city = 'Lisboa';
+    component.gameDate = '2099-10-15T18:00';
+    component.createSession();
+    expect(sessionService.create).not.toHaveBeenCalled();
+    expect(component.errorMessage).toContain('localização atual');
+
+    component.applyCurrentPosition(38.72, -9.14, 14);
+    component.createSession();
+    expect(sessionService.create).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        latitude: 38.72, longitude: -9.14, venueId: null
+      }), undefined
+    );
+
+    component.chooseLocationMethod('venue');
+    expect(component.hasCoordinates).toBeFalse();
+    expect(component.locationSource).toBeNull();
+  });
+
   it('shows a retry action instead of silently treating a failed venue load as empty', () => {
     venueService.suggest.and.returnValue(throwError(() => new Error('Offline')));
 
