@@ -86,6 +86,9 @@ async function main() {
           'access-control-allow-headers': '*'
         } });
       }
+      // Best-effort telemetry and heartbeat: acknowledge only in this isolated mock.
+      if (endpoint === 'POST /api/pilot/events/access') return json(route, 200, {});
+      if (endpoint === 'POST /api/presence/heartbeat') return json(route, 200, {});
       if (endpoint === 'GET /api/auth/google/config') return json(route, 200, { clientId: '' });
       if (endpoint === 'POST /api/auth/refresh') return json(route, 401, { message: 'Synthetic refresh rejected' });
       if (endpoint === 'POST /api/auth/login') {
