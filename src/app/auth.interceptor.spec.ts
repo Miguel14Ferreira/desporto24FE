@@ -9,6 +9,7 @@ import { Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 
 import { AuthInterceptor } from './auth.interceptor';
+import { environment } from '../environment/environment';
 
 describe('AuthInterceptor', () => {
   let interceptor: AuthInterceptor;
@@ -39,6 +40,50 @@ describe('AuthInterceptor', () => {
     } as HttpHandler;
 
     interceptor.intercept(request, next).subscribe(() => done());
+  });
+
+  it('limits bearer tokens to the configured Jynlo API origin', () => {
+    localStorage.setItem('t', 'sensitive-fixture-token');
+    const seen: HttpRequest<unknown>[] = [];
+    const next = { handle: (req: HttpRequest<unknown>) => {
+      seen.push(req);
+      return of(new HttpResponse({ status: 200 }));
+    } } as HttpHandler;
+
+    for (const url of [
+      'https://example.org/image',
+      'https://api.d24sports.com.attacker.invalid/api/sessions',
+      'https://maps.googleapis.com/maps/api/place/details',
+      environment.apiUrl + '/other-service',
+      '/assets/sport.svg',
+      '//untrusted.invalid/api/sessions'
+    ]) {
+      interceptor.intercept(new HttpRequest('GET', url), next).subscribe();
+    }
+
+    expect(seen.length).toBe(6);
+    expect(seen.every(req => !req.headers.has('Authorization'))).toBeTrue();
+    expect(backend.handle).not.toHaveBeenCalled();
+
+    interceptor.intercept(new HttpRequest('GET',
+      environment.apiUrl + '/api/sessions/42'), next).subscribe();
+    expect(seen[6].headers.get('Authorization')).toBe('Bearer sensitive-fixture-token');
+  });
+
+  it('does not refresh or redirect for a third-party HTTP 401', (done) => {
+    localStorage.setItem('t', 'fixture-token');
+    const next = { handle: (req: HttpRequest<unknown>) => {
+      expect(req.headers.has('Authorization')).toBeFalse();
+      return throwError(() => new HttpErrorResponse({ status: 401 }));
+    } } as HttpHandler;
+    interceptor.intercept(new HttpRequest('GET', 'https://cdn.example.org/private.png'), next)
+      .subscribe({ error: error => {
+        expect(error.status).toBe(401);
+        expect(backend.handle).not.toHaveBeenCalled();
+        expect(router.navigate).not.toHaveBeenCalled();
+        expect(localStorage.getItem('t')).toBe('fixture-token');
+        done();
+      } });
   });
 
   it('should not refresh the session when Google login returns 401', (done) => {
