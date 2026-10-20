@@ -206,6 +206,12 @@ export class PublicSessionPreviewComponent implements OnInit {
     return environment.apiUrl + (photo.startsWith('/') ? photo : '/' + photo);
   }
 
+  get displayGameDate(): string | null {
+    const rawDate = this.session?.gameDate;
+    // Legacy or incomplete public API records must never crash Angular DatePipe.
+    return rawDate && Number.isFinite(Date.parse(rawDate)) ? rawDate : null;
+  }
+
   get remainingPlaces(): number | null {
     const session = this.session;
     const maximum = session?.maxParticipants;
