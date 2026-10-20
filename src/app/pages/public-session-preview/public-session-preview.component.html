@@ -27,11 +27,11 @@
             </div>
             <div class="fact">
               <span class="fact-label">{{ 'publicSession.date' | t }}</span>
-              <strong>{{ details.gameDate ? (details.gameDate | date:'dd/MM/yyyy') : ('publicSession.notSpecified' | t) }}</strong>
+              <strong>{{ displayGameDate ? (displayGameDate | date:'dd/MM/yyyy') : ('publicSession.notSpecified' | t) }}</strong>
             </div>
             <div class="fact">
               <span class="fact-label">{{ 'publicSession.time' | t }}</span>
-              <strong>{{ details.gameDate ? (details.gameDate | date:'HH:mm') : ('publicSession.notSpecified' | t) }}</strong>
+              <strong>{{ displayGameDate ? (displayGameDate | date:'HH:mm') : ('publicSession.notSpecified' | t) }}</strong>
             </div>
             <div class="fact">
               <span class="fact-label">{{ 'publicSession.price' | t }}</span>

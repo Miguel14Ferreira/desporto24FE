@@ -193,7 +193,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   }
 
   scrollToParticipants(): void {
-    if (!this.session?.joined) {
+    if (!this.session || (!this.session.joined && !this.isCreator())) {
       return;
     }
 
@@ -527,7 +527,8 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   }
 
   loadSessionParticipants(): void {
-    if (!this.sessionId || !this.session?.joined || this.sessionParticipantsLoading) {
+    if (!this.sessionId || !this.session
+        || (!this.session.joined && !this.isCreator()) || this.sessionParticipantsLoading) {
       return;
     }
 
@@ -1575,15 +1576,22 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
             this.teamsError = '';
           }
 
-          if (session.joined) {
+          if (session.joined || this.isCreator()) {
+            // The existing backend endpoint authorizes the creator independently
+            // of membership. Do not require the organiser to reserve a playing spot.
             this.loadSessionParticipants();
-            this.refreshMessages();
           } else {
             this.sessionParticipants = [];
             this.teamAParticipants = [];
             this.teamBParticipants = [];
             this.confirmedTeams = false;
             this.sessionParticipantsError = '';
+          }
+
+          if (session.joined) {
+            this.refreshMessages();
+          } else {
+            // Roster visibility does not confer chat access.
             this.messages = [];
             this.chatError = '';
           }
