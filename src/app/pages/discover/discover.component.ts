@@ -7,6 +7,7 @@ import { CommunityService } from '../../services/community.service';
 import { SessionService } from '../../services/session.service';
 import { VenueService } from '../../services/venue.service';
 import { SPORTS_CATALOG } from '../../shared/sports-catalog';
+import { venueEnvironmentTranslationKey } from '../../shared/venue-environment';
 import { CommunityProfile } from '../model/community-profile';
 import { environment } from 'src/environment/environment';
 import { SessionSummary } from '../model/session-summary';
@@ -21,6 +22,7 @@ import { Venue } from '../model/venue';
 })
 export class DiscoverComponent implements OnInit {
   readonly sportsCatalog = SPORTS_CATALOG;
+  readonly venueEnvironmentTranslationKey = venueEnvironmentTranslationKey;
 
   sport = '';
   location = '';
