@@ -94,8 +94,8 @@ describe('Events2Component', () => {
   it('requires resolving a Maps URL before creating a session without a saved venue', () => {
     component.sport = 'Padel';
     component.gameDate = '2099-10-15T18:00';
-    component.city = 'Lisboa';
     component.chooseLocationMethod('maps');
+    component.city = 'Lisboa';
     component.createSession();
     expect(sessionService.create).not.toHaveBeenCalled();
     expect(component.errorMessage).toContain('Google Maps');
@@ -900,18 +900,21 @@ describe('Events2Component', () => {
     expect(component.venueMapCandidateResolvedUrl).toBe('');
   });
 
-  it('keeps a separately shared GPS location when editing a Maps link', () => {
+  it('clears GPS coordinates when changing to a Maps link', () => {
     component.applyCurrentPosition(38.72, -9.14, 15);
     component.onVenueMapLinkChanged('https://maps.app.goo.gl/another');
 
-    expect(component.locationSource).toBe('gps');
-    expect(component.hasCoordinates).toBeTrue();
-    expect(component.latitude).toBe(38.72);
-    expect(component.longitude).toBe(-9.14);
-    expect(component.gpsAccuracyMeters).toBe(15);
+    expect(component.locationMethod).toBe('maps');
+    expect(component.locationSource).toBeNull();
+    expect(component.hasCoordinates).toBeFalse();
+    expect(component.latitude).toBeNull();
+    expect(component.longitude).toBeNull();
+    expect(component.gpsAccuracyMeters).toBeNull();
   });
 
-  it('offers GPS beside the optional Maps link without requiring a link', () => {
+  it('offers GPS without requiring a Maps link', () => {
+    component.chooseLocationMethod('gps');
+    fixture.detectChanges();
     const card = fixture.nativeElement.querySelector('.venue-create-card') as HTMLElement;
     const button = card.querySelector('.gps-location-action') as HTMLButtonElement;
     expect(button).not.toBeNull();
@@ -1111,7 +1114,8 @@ describe('Events2Component', () => {
     expect(component.address).toBe('');
     expect(component.latitude).toBeNull();
     expect(component.longitude).toBeNull();
-    expect((fixture.nativeElement.querySelector('input[name="venueSearch"]') as HTMLInputElement).value).toBe('');
+    expect(fixture.nativeElement.querySelector('input[name="venueSearch"]')).toBeNull();
+    expect(component.venueSearch).toBe('');
   });
 
   it('submits a manual location without the previously selected venue after switching', () => {
@@ -1125,6 +1129,9 @@ describe('Events2Component', () => {
     component.venueSearch = 'Pavilhão Municipal · Lisboa';
 
     component.useMapLinkVenue();
+    // A free address is permitted in the known-venue/manual-location mode,
+    // not as a substitute for an unresolved Google Maps link.
+    component.chooseLocationMethod('venue');
     component.city = 'Porto';
     component.address = 'Campo novo';
     component.createSession();
