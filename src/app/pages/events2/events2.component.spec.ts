@@ -65,6 +65,89 @@ describe('Events2Component', () => {
     expect(component).toBeTruthy();
   });
 
+  it('offers three exclusive location methods without requiring a venue in the catalogue', () => {
+    const buttons = Array.from(
+      fixture.nativeElement.querySelectorAll('.location-methods .location-method')
+    ) as HTMLButtonElement[];
+    expect(buttons.length).toBe(3);
+    expect(buttons[0].getAttribute('aria-pressed')).toBe('true');
+    expect(fixture.nativeElement.querySelector('input[name="venueSearch"]')).toBeTruthy();
+
+    buttons[1].click();
+    fixture.detectChanges();
+    expect(component.locationMethod).toBe('maps');
+    expect(fixture.nativeElement.querySelector('input[name="venueSearch"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('input[name="venueMapLink"]')).toBeTruthy();
+
+    fixture.nativeElement.querySelectorAll('.location-method')[2].click();
+    fixture.detectChanges();
+    expect(component.locationMethod).toBe('gps');
+    expect(fixture.nativeElement.querySelector('input[name="venueMapLink"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.gps-location-action')).toBeTruthy();
+
+    fixture.nativeElement.querySelectorAll('.location-method')[0].click();
+    fixture.detectChanges();
+    expect(component.locationMethod).toBe('venue');
+    expect(fixture.nativeElement.querySelector('input[name="venueSearch"]')).toBeTruthy();
+  });
+
+  it('requires resolving a Maps URL before creating a session without a saved venue', () => {
+    component.sport = 'Padel';
+    component.gameDate = '2099-10-15T18:00';
+    component.chooseLocationMethod('maps');
+    component.city = 'Lisboa';
+    component.createSession();
+    expect(sessionService.create).not.toHaveBeenCalled();
+    expect(component.errorMessage).toContain('Google Maps');
+
+    venueService.resolveMapLink.and.returnValue(of({
+      resolvedUrl: 'https://www.google.com/maps?q=38.7,-9.1',
+      latitude: 38.7, longitude: -9.1
+    }));
+    component.onVenueMapLinkChanged('https://www.google.com/maps?q=38.7,-9.1');
+    component.resolveVenueMapLink();
+    expect(component.locationSource).toBe('map');
+    component.createSession();
+    expect(sessionService.create).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        latitude: 38.7, longitude: -9.1, venueId: null, city: 'Lisboa'
+      }), undefined
+    );
+  });
+
+  it('replaces Maps coordinates with current GPS and never reuses them on switching source', () => {
+    component.chooseLocationMethod('maps');
+    venueService.resolveMapLink.and.returnValue(of({
+      resolvedUrl: 'https://www.google.com/maps?q=38.7,-9.1',
+      latitude: 38.7, longitude: -9.1
+    }));
+    component.onVenueMapLinkChanged('https://www.google.com/maps?q=38.7,-9.1');
+    component.resolveVenueMapLink();
+    expect(component.hasCoordinates).toBeTrue();
+
+    component.chooseLocationMethod('gps');
+    expect(component.hasCoordinates).toBeFalse();
+    expect(component.venueMapLink).toBe('');
+    component.sport = 'Padel';
+    component.city = 'Lisboa';
+    component.gameDate = '2099-10-15T18:00';
+    component.createSession();
+    expect(sessionService.create).not.toHaveBeenCalled();
+    expect(component.errorMessage).toContain('localização atual');
+
+    component.applyCurrentPosition(38.72, -9.14, 14);
+    component.createSession();
+    expect(sessionService.create).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        latitude: 38.72, longitude: -9.14, venueId: null
+      }), undefined
+    );
+
+    component.chooseLocationMethod('venue');
+    expect(component.hasCoordinates).toBeFalse();
+    expect(component.locationSource).toBeNull();
+  });
+
   it('shows a retry action instead of silently treating a failed venue load as empty', () => {
     venueService.suggest.and.returnValue(throwError(() => new Error('Offline')));
 
@@ -647,6 +730,10 @@ describe('Events2Component', () => {
     expect(component.venueMapLinkLoading).toBeFalse();
     expect(submit.disabled).toBeFalse();
 
+    // Explicitly switch back to a manual/saved venue after an unresolved Maps link.
+    component.chooseLocationMethod('venue');
+    component.city = 'Lisboa';
+    component.address = 'Rua do Campo';
     component.createSession();
     expect(sessionService.create).toHaveBeenCalledWith(
       jasmine.objectContaining({
@@ -740,6 +827,8 @@ describe('Events2Component', () => {
       of({ resolvedUrl: 'https://www.google.com/maps/old', latitude: 38.72, longitude: -9.14 }),
       of({ resolvedUrl: 'https://www.google.com/maps/new', latitude: 38.71, longitude: -9.13 })
     );
+    component.chooseLocationMethod('maps');
+    fixture.detectChanges();
     component.venueMapLink = 'https://maps.app.goo.gl/old';
     component.resolveVenueMapLink();
     fixture.detectChanges();
@@ -817,18 +906,21 @@ describe('Events2Component', () => {
     expect(component.venueMapCandidateResolvedUrl).toBe('');
   });
 
-  it('keeps a separately shared GPS location when editing a Maps link', () => {
+  it('clears GPS coordinates when changing to a Maps link', () => {
     component.applyCurrentPosition(38.72, -9.14, 15);
     component.onVenueMapLinkChanged('https://maps.app.goo.gl/another');
 
-    expect(component.locationSource).toBe('gps');
-    expect(component.hasCoordinates).toBeTrue();
-    expect(component.latitude).toBe(38.72);
-    expect(component.longitude).toBe(-9.14);
-    expect(component.gpsAccuracyMeters).toBe(15);
+    expect(component.locationMethod).toBe('maps');
+    expect(component.locationSource).toBeNull();
+    expect(component.hasCoordinates).toBeFalse();
+    expect(component.latitude).toBeNull();
+    expect(component.longitude).toBeNull();
+    expect(component.gpsAccuracyMeters).toBeNull();
   });
 
-  it('offers GPS beside the optional Maps link without requiring a link', () => {
+  it('offers GPS without requiring a Maps link', () => {
+    component.chooseLocationMethod('gps');
+    fixture.detectChanges();
     const card = fixture.nativeElement.querySelector('.venue-create-card') as HTMLElement;
     const button = card.querySelector('.gps-location-action') as HTMLButtonElement;
     expect(button).not.toBeNull();
@@ -1028,7 +1120,8 @@ describe('Events2Component', () => {
     expect(component.address).toBe('');
     expect(component.latitude).toBeNull();
     expect(component.longitude).toBeNull();
-    expect((fixture.nativeElement.querySelector('input[name="venueSearch"]') as HTMLInputElement).value).toBe('');
+    expect(fixture.nativeElement.querySelector('input[name="venueSearch"]')).toBeNull();
+    expect(component.venueSearch).toBe('');
   });
 
   it('submits a manual location without the previously selected venue after switching', () => {
@@ -1042,6 +1135,9 @@ describe('Events2Component', () => {
     component.venueSearch = 'Pavilhão Municipal · Lisboa';
 
     component.useMapLinkVenue();
+    // A free address is permitted in the known-venue/manual-location mode,
+    // not as a substitute for an unresolved Google Maps link.
+    component.chooseLocationMethod('venue');
     component.city = 'Porto';
     component.address = 'Campo novo';
     component.createSession();
