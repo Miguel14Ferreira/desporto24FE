@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { RouterModule } from '@angular/router';
 import { Subject, of, throwError } from 'rxjs';
 
 import { HomeComponent } from './home.component';
@@ -33,7 +34,7 @@ describe('HomeComponent public discovery', () => {
 
     await TestBed.configureTestingModule({
       declarations: [HomeComponent],
-      imports: [TranslatePipe],
+      imports: [TranslatePipe, RouterModule.forRoot([])],
       providers: [
         { provide: SessionService, useValue: sessions },
         { provide: VenueService, useValue: venues }
