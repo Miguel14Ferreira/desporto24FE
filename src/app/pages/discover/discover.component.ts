@@ -396,6 +396,31 @@ export class DiscoverComponent implements OnInit {
     return Math.max(0, session.maxParticipants - session.participantCount);
   }
 
+  sessionEntryAction(session: SessionSummary): 'join' | 'waitlist' | 'details' {
+    const startsAt = Date.parse(session.gameDate);
+    if (session.privateGame || session.audience === 'COMMUNITY_ONLY'
+        || session.joinedByViewer || session.waitlistedByViewer
+        || !Number.isFinite(startsAt) || startsAt <= Date.now()) {
+      return 'details';
+    }
+
+    // FULL is authoritative even if the participant-count snapshot is delayed.
+    if (session.status?.toUpperCase() === 'FULL') {
+      return 'waitlist';
+    }
+
+    if (session.status?.toUpperCase() === 'OPEN'
+        && Number.isSafeInteger(session.participantCount)
+        && Number.isSafeInteger(session.maxParticipants)
+        && session.participantCount >= 0 && session.maxParticipants > 0
+        && this.vacancies(session) > 0) {
+      return 'join';
+    }
+
+    // Never promise an available spot from unknown counts or closed sessions.
+    return 'details';
+  }
+
   private withRecovery<T>(
     request$: Observable<T>,
     fallback: T,
