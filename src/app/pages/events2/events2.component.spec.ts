@@ -730,6 +730,10 @@ describe('Events2Component', () => {
     expect(component.venueMapLinkLoading).toBeFalse();
     expect(submit.disabled).toBeFalse();
 
+    // Explicitly switch back to a manual/saved venue after an unresolved Maps link.
+    component.chooseLocationMethod('venue');
+    component.city = 'Lisboa';
+    component.address = 'Rua do Campo';
     component.createSession();
     expect(sessionService.create).toHaveBeenCalledWith(
       jasmine.objectContaining({
@@ -823,6 +827,8 @@ describe('Events2Component', () => {
       of({ resolvedUrl: 'https://www.google.com/maps/old', latitude: 38.72, longitude: -9.14 }),
       of({ resolvedUrl: 'https://www.google.com/maps/new', latitude: 38.71, longitude: -9.13 })
     );
+    component.chooseLocationMethod('maps');
+    fixture.detectChanges();
     component.venueMapLink = 'https://maps.app.goo.gl/old';
     component.resolveVenueMapLink();
     fixture.detectChanges();
