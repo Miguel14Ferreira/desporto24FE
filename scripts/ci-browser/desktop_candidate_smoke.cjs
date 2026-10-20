@@ -99,6 +99,14 @@ async function main() {
         const item = previews[Number(m[1])];
         return json(route, item ? 200 : 404, item || { message: 'Not found' });
       }
+      if (url.pathname === '/api/pilot/events/access' && request.method() === 'POST') {
+        // Anonymous public analytics event: discard it in the synthetic backend.
+        return json(route, 200, {});
+      }
+      if (url.pathname === '/api/auth/refresh' && request.method() === 'POST') {
+        // A guest has no refresh cookie; a 401 is normal and must not sign in.
+        return json(route, 401, { message: 'Guest' });
+      }
       if (url.pathname === '/api/auth/google/config' && request.method() === 'GET') {
         return json(route, 200, { clientId: '' });
       }
@@ -167,8 +175,8 @@ async function main() {
     checkNoRuntimeErrors('registration navigation');
 
     await go('/sessions/42');
-    await page.locator('.join-panel .secondary-action').waitFor();
-    await page.locator('.join-panel .secondary-action').click();
+    await page.locator('.join-panel a[routerlink="/login"]').waitFor();
+    await page.locator('.join-panel a[routerlink="/login"]').click();
     await page.waitForURL(u => u.pathname === '/login');
     assert.equal(hrefReturnUrl(), '/menu/events/42?join=1',
       'existing-player login preserves safe internal session return URL');
