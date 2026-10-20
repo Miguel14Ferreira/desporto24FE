@@ -4,6 +4,7 @@ import { finalize, retry, timeout } from 'rxjs';
 
 import { VenuePhoto, VenueService, VenueSportCondition } from '../../services/venue.service';
 import { Venue } from '../model/venue';
+import { venueEnvironmentTranslationKey } from '../../shared/venue-environment';
 
 @Component({
   selector: 'app-venue-details',
@@ -12,6 +13,7 @@ import { Venue } from '../model/venue';
   standalone: false
 })
 export class VenueDetailsComponent implements OnInit {
+  readonly venueEnvironmentTranslationKey = venueEnvironmentTranslationKey;
   venue: Venue | null = null;
   photos: VenuePhoto[] = [];
   sportConditions: VenueSportCondition[] = [];
