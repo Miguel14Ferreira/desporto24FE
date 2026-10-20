@@ -130,8 +130,36 @@
             }
           </div>
 
+          @if (organizerPreparation(); as preparation) {
+            <section class="organizer-preparation" aria-labelledby="organizer-preparation-title">
+              <div class="organizer-preparation-heading">
+                <div>
+                  <span class="section-kicker">{{ 'sessionDetail.organizerKicker' | t }}</span>
+                  <h2 id="organizer-preparation-title">{{ 'sessionDetail.organizerTitle' | t }}</h2>
+                </div>
+                <strong class="organizer-preparation-count">{{ preparation.confirmed }}/{{ preparation.capacity }}
+                  {{ 'sessionDetail.organizerConfirmed' | t }}</strong>
+              </div>
+              <p>
+                {{ (preparation.full
+                    ? 'sessionDetail.organizerReady'
+                    : 'sessionDetail.organizerMissing') | t:{ count: preparation.missing } }}
+              </p>
+              <div class="organizer-preparation-actions">
+                @if (session.joined) {
+                  <button type="button" class="jynlo-action jynlo-action--neutral"
+                          (click)="scrollToParticipants()">{{ 'sessionDetail.whosGoing' | t }} ↓</button>
+                }
+                @if (canFindPlayers()) {
+                  <button type="button" class="jynlo-action jynlo-action--primary"
+                          (click)="scrollToPlayerSearch()">{{ 'sessionDetail.organizerFindPlayers' | t }} ↓</button>
+                }
+              </div>
+            </section>
+          }
+
           @if (canFindPlayers()) {
-            <div class="session-player-search" role="region" aria-label="Procurar jogadores">
+            <div id="session-player-search" class="session-player-search" role="region" aria-label="Procurar jogadores">
               <strong>Faltam {{ missingPlayers() }} jogadores</strong>
               @if (canShareSession()) {
                 <button type="button" class="jynlo-action jynlo-action--neutral"
