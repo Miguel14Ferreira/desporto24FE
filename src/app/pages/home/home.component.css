@@ -252,6 +252,21 @@
 a.preview-item:hover, a.preview-item:focus-visible { border-color: var(--d24-accent); }
 .preview-item span { color: #cbd5e1; font-size: .84rem; overflow-wrap: anywhere; }
 .preview-item small { color: var(--d24-accent-soft); font-weight: 800; }
+.preview-item .preview-availability {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  border-radius: .5rem;
+  padding: .3rem .55rem;
+  background: rgba(0,230,118,.11);
+  color: #86efac;
+  font-size: .8rem;
+  font-weight: 800;
+}
+.preview-item .preview-availability--full {
+  background: rgba(148,163,184,.15);
+  color: #cbd5e1;
+}
 .preview-state { min-height: 3rem; color: #cbd5e1; line-height: 1.6; }
 .preview-cta {
   display: inline-block; margin-top: 1rem; padding: .85rem 1.1rem;
