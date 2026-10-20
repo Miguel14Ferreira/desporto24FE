@@ -72,6 +72,7 @@ jobs:
             exit 1
           fi
           node scripts/ci-browser/desktop_candidate_smoke.cjs
+          node scripts/ci-browser/desktop_auth_smoke.cjs
       - name: Check live public API response contracts (GET only)
         if: ${{ github.head_ref == 'integration/desktop-pestana-20261020' }}
         # No credentials, POST, writes, production E2E actions or database access.
