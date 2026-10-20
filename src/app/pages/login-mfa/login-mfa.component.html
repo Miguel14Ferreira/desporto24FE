@@ -46,6 +46,13 @@
     </form>
 
     <div class="secondary-actions">
+      @if (isChallengeExpired() && challengeId) {
+        <button class="jynlo-action jynlo-action--neutral" type="button"
+                [disabled]="resending || resendCooldownSeconds > 0"
+                (click)="resendCode()">
+          {{ (resending ? 'mfa.renewingChallenge' : 'mfa.renewChallenge') | t }}
+        </button>
+      }
       <button class="jynlo-action jynlo-action--neutral" type="button" (click)="cancel()">{{ 'mfa.back' | t }}</button>
     </div>
   </div>
