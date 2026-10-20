@@ -209,6 +209,15 @@ export class NotificationsComponent implements OnInit {
       return;
     }
 
+    if (notification.type === 'WAITLIST_PROMOTED') {
+      // Promotion is already handled by the backend. Show the current membership
+      // state rather than inviting the user to join a second time.
+      this.router.navigate(['/menu/events', notification.sessionId], {
+        queryParams: { membership: '1' }
+      });
+      return;
+    }
+
     this.router.navigate(['/menu/events', notification.sessionId]);
   }
 
