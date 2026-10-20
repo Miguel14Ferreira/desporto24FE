@@ -66,9 +66,9 @@ describe('Events2Component', () => {
   });
 
   it('offers three exclusive location methods without requiring a venue in the catalogue', () => {
-    const buttons = Array.from(fixture.nativeElement.querySelectorAll<HTMLButtonElement>(
-      '.location-methods .location-method'
-    ));
+    const buttons = Array.from(
+      fixture.nativeElement.querySelectorAll('.location-methods .location-method')
+    ) as HTMLButtonElement[];
     expect(buttons.length).toBe(3);
     expect(buttons[0].getAttribute('aria-pressed')).toBe('true');
     expect(fixture.nativeElement.querySelector('input[name="venueSearch"]')).toBeTruthy();
