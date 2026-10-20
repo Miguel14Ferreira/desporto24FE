@@ -214,6 +214,58 @@ describe('HomeComponent public discovery', () => {
     expect((fixture.nativeElement as HTMLElement).querySelectorAll('.preview-availability--full').length).toBe(1);
   });
 
+  it('allows a guest to retry a failed public request without login', () => {
+    sessions.discover.and.returnValues(
+      throwError(() => new Error('temporary outage')),
+      of([session(201)])
+    );
+
+    const fixture = render();
+    const retry = (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLButtonElement>('button.preview-retry');
+    expect(retry).not.toBeNull();
+    expect(retry?.type).toBe('button');
+
+    retry?.click();
+    fixture.detectChanges();
+
+    expect(sessions.discover).toHaveBeenCalledTimes(2);
+    expect(fixture.componentInstance.featuredSessions.map(item => item.id)).toEqual([201]);
+    expect((fixture.nativeElement as HTMLElement).querySelector('button.preview-retry')).toBeNull();
+  });
+
+  it('retries the last applied filters rather than unsubmitted input edits', () => {
+    sessions.discover.and.returnValues(
+      of([]),
+      throwError(() => new Error('temporary outage')),
+      of([session(202, { sport: 'Padel', city: 'Lisboa' })])
+    );
+
+    const fixture = render();
+    const root = fixture.nativeElement as HTMLElement;
+    const sportInput = root.querySelector<HTMLInputElement>('input[name="sport"]')!;
+    const cityInput = root.querySelector<HTMLInputElement>('input[name="city"]')!;
+    sportInput.value = 'Padel';
+    cityInput.value = 'Lisboa';
+    root.querySelector<HTMLFormElement>('form.preview-search')!.dispatchEvent(
+      new Event('submit', { bubbles: true, cancelable: true })
+    );
+    fixture.detectChanges();
+
+    // Editing without submitting must not silently change the retry criteria.
+    sportInput.value = 'Futebol';
+    cityInput.value = 'Porto';
+    root.querySelector<HTMLButtonElement>('button.preview-retry')!.click();
+
+    expect(sessions.discover).toHaveBeenCalledTimes(3);
+    expect(sessions.discover.calls.mostRecent().args[0]).toEqual(
+      jasmine.objectContaining({ sport: 'Padel', city: 'Lisboa', privateGame: false })
+    );
+    expect(venues.suggest.calls.mostRecent().args).toEqual([
+      undefined, 'Lisboa', 'Padel', 0
+    ]);
+  });
+
   it('degrades gracefully when a public request fails', () => {
     sessions.discover.and.returnValue(throwError(() => new Error('backend offline')));
     venues.suggest.and.returnValue(throwError(() => new Error('backend offline')));
