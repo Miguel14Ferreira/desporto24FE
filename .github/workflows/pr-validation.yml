@@ -47,12 +47,12 @@ jobs:
       # Candidate-only browser verification. No additional job, second npm ci,
       # Render deployment, production credentials or production API requests.
       - name: Install Chromium for integrated desktop smoke
-        if: ${{ github.head_ref == 'integration/desktop-pestana-20261020' }}
+        if: ${{ (github.head_ref == 'integration/desktop-pestana-20261020' || github.head_ref == 'validation/desktop-ux-20261020') }}
         run: |
           npm install --no-save --package-lock=false playwright@1.56.1
           npx playwright install --with-deps chromium
       - name: Exercise built Angular candidate in desktop Chromium
-        if: ${{ github.head_ref == 'integration/desktop-pestana-20261020' }}
+        if: ${{ (github.head_ref == 'integration/desktop-pestana-20261020' || github.head_ref == 'validation/desktop-ux-20261020') }}
         shell: bash
         run: |
           set -euo pipefail
@@ -73,7 +73,7 @@ jobs:
           fi
           node scripts/ci-browser/desktop_candidate_smoke.cjs
       - name: Save isolated candidate screenshots
-        if: ${{ always() && github.head_ref == 'integration/desktop-pestana-20261020' }}
+        if: ${{ always() && (github.head_ref == 'integration/desktop-pestana-20261020' || github.head_ref == 'validation/desktop-ux-20261020') }}
         uses: actions/upload-artifact@v4
         with:
           name: jynlo-desktop-candidate-screenshots
