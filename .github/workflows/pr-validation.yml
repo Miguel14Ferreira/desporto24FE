@@ -72,6 +72,11 @@ jobs:
             exit 1
           fi
           node scripts/ci-browser/desktop_candidate_smoke.cjs
+      - name: Check live public API response contracts (GET only)
+        if: ${{ github.head_ref == 'integration/desktop-pestana-20261020' }}
+        # No credentials, POST, writes, production E2E actions or database access.
+        # This checks only the existing public API, with bounded responses.
+        run: node scripts/ci-browser/public_api_contract_READONLY.cjs
       - name: Save isolated candidate screenshots
         if: ${{ always() && github.head_ref == 'integration/desktop-pestana-20261020' }}
         uses: actions/upload-artifact@v4
