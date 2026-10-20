@@ -179,7 +179,9 @@
                   <button type="button" class="primary-action jynlo-action jynlo-action--primary" (click)="openSession(selected)">
                     {{ (selected.type === 'SESSION_POST_GAME_REVIEW'
                       ? 'notifications.reviewSession'
-                      : 'notifications.openSession') | t }}
+                      : selected.type === 'WAITLIST_PROMOTED'
+                        ? 'notifications.viewParticipationStatus'
+                        : 'notifications.openSession') | t }}
                   </button>
                 }
 
