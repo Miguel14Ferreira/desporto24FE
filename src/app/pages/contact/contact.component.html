@@ -29,7 +29,7 @@
       <div class="feedback success-feedback">{{ successMessage }}</div>
     }
 
-    <form class="contact-card" (ngSubmit)="submit()" novalidate>
+    <form class="contact-card" method="post" (ngSubmit)="submit()" novalidate>
       <div class="form-grid">
         <label>
           <span>{{ 'contact.name' | t }} *</span>

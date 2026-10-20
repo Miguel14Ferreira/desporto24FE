@@ -1,5 +1,5 @@
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 
 import { VenueService } from '../../services/venue.service';
 import { Venue } from '../model/venue';
@@ -16,6 +16,7 @@ describe('VenueCreateComponent', () => {
     component.ngOnInit();
 
     expect(component.city).toBe('Lisboa');
+    expect(component.district).toBeNull();
     expect(component.selectedSports).toEqual(['Padel']);
     expect(component.isSportSelected('Padel')).toBeTrue();
     expect(component.latitude).toBeNull();
@@ -30,6 +31,46 @@ describe('VenueCreateComponent', () => {
     expect(venueService.create).not.toHaveBeenCalled();
   });
 
+  it('passes a valid mainland district through to the existing backend contract', () => {
+    const service = jasmine.createSpyObj<VenueService>('VenueService', ['create']);
+    const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
+    service.create.and.returnValue(of({ id: 18 } as Venue));
+    const component = new VenueCreateComponent(service, router);
+    component.name = 'Campo Municipal';
+    component.city = 'Cascais';
+    component.district = 'Lisboa';
+    component.address = 'Rua A';
+    component.selectedSports = ['Futebol'];
+
+    component.save();
+
+    expect(service.create).toHaveBeenCalledOnceWith(
+      jasmine.objectContaining({ district: 'Lisboa' })
+    );
+  });
+
+  it('prefills only a known district from Discover without assuming one from city', () => {
+    const service = jasmine.createSpyObj<VenueService>('VenueService', ['create']);
+    const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
+    const route = {
+      snapshot: { queryParamMap: convertToParamMap({
+        city: 'Sintra', district: 'Lisboa'
+      }) }
+    } as unknown as ActivatedRoute;
+    const component = new VenueCreateComponent(service, router, route);
+    component.ngOnInit();
+    expect(component.district).toBe('Lisboa');
+
+    const routeInvalid = {
+      snapshot: { queryParamMap: convertToParamMap({
+        city: 'Santa Cruz', district: 'Madeira'
+      }) }
+    } as unknown as ActivatedRoute;
+    const invalid = new VenueCreateComponent(service, router, routeInvalid);
+    invalid.ngOnInit();
+    expect(invalid.district).toBeNull();
+  });
+
   it('rejects an unknown sport without losing the locality passed from Discover', () => {
     const venueService = jasmine.createSpyObj<VenueService>('VenueService', ['create']);
     const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
@@ -41,6 +82,71 @@ describe('VenueCreateComponent', () => {
 
     expect(component.selectedSports).toEqual([]);
     expect(component.city).toBe('Porto');
+  });
+
+  it('uses bounded autocomplete only after the user explicitly asks to check for duplicates', () => {
+    const service = jasmine.createSpyObj<VenueService>('VenueService', ['create', 'suggest']);
+    const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
+    service.suggest.and.returnValue(of({
+      venues: [{ id: 33, name: 'Pavilhão Norte', city: 'Cascais' } as Venue],
+      page: 0, hasMore: false
+    }));
+    const component = new VenueCreateComponent(service, router);
+    component.name = 'Pavilhão';
+    component.city = 'Cascais';
+
+    expect(service.suggest).not.toHaveBeenCalled();
+    component.checkSimilarVenues();
+
+    expect(service.suggest).toHaveBeenCalledOnceWith('Pavilhão', 'Cascais', undefined, 0);
+    expect(component.similarVenueCheckComplete).toBeTrue();
+    expect(component.similarVenues.map(venue => venue.id)).toEqual([33]);
+    expect(component.checkingSimilarVenues).toBeFalse();
+    expect(service.create).not.toHaveBeenCalled();
+  });
+
+  it('ignores a stale autocomplete response after the name or city changes', () => {
+    const service = jasmine.createSpyObj<VenueService>('VenueService', ['create', 'suggest']);
+    const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
+    const oldRequest = new Subject<{ venues: Venue[]; page: number; hasMore: boolean }>();
+    service.suggest.and.returnValue(oldRequest.asObservable());
+    const component = new VenueCreateComponent(service, router);
+    component.name = 'Campo';
+    component.city = 'Sintra';
+    component.checkSimilarVenues();
+    expect(component.checkingSimilarVenues).toBeTrue();
+
+    component.city = 'Cascais';
+    component.resetSimilarVenueCheck();
+    oldRequest.next({
+      venues: [{ id: 99, name: 'Campo antigo', city: 'Sintra' } as Venue],
+      page: 0, hasMore: false
+    });
+    oldRequest.complete();
+
+    expect(component.similarVenues).toEqual([]);
+    expect(component.similarVenueCheckComplete).toBeFalse();
+    expect(component.checkingSimilarVenues).toBeFalse();
+  });
+
+  it('does not block saving when the optional duplicate check fails', () => {
+    const service = jasmine.createSpyObj<VenueService>('VenueService', ['create', 'suggest']);
+    const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
+    service.suggest.and.returnValue(throwError(() => new Error('search unavailable')));
+    service.create.and.returnValue(of({ id: 8 } as Venue));
+    const component = new VenueCreateComponent(service, router);
+    component.name = 'Campo Novo';
+    component.city = 'Lisboa';
+    component.address = 'Rua Nova';
+    component.selectedSports = ['Futsal'];
+
+    component.checkSimilarVenues();
+    expect(component.similarVenueCheckError).toBeTrue();
+    expect(component.checkingSimilarVenues).toBeFalse();
+    component.save();
+
+    expect(service.create).toHaveBeenCalled();
+    expect(router.navigate).toHaveBeenCalledWith(['/menu/venues', 8]);
   });
 
   it('does not submit when required fields are missing', () => {

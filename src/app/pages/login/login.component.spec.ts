@@ -57,6 +57,16 @@ describe('LoginComponent', () => {
 
   afterEach(() => sessionStorage.clear());
 
+  it('declares POST and accessible password toggle', () => {
+    const form = fixture.nativeElement.querySelector('.login-card form') as HTMLFormElement;
+    const toggle = form.querySelector('.password-field button') as HTMLButtonElement;
+    expect(form.getAttribute('method')).toBe('post');
+    expect(toggle.getAttribute('aria-controls')).toBe('login-password');
+    toggle.click();
+    fixture.detectChanges();
+    expect((form.querySelector('[name="password"]') as HTMLInputElement).type).toBe('text');
+  });
+
   it('offers confirmation resend immediately after an expired email link', () => {
     sessionStorage.setItem('auth-error-message', 'A ligação de confirmação expirou.');
     queryParamMap =

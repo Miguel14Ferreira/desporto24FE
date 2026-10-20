@@ -13,6 +13,7 @@
           type="text"
           name="name"
           [(ngModel)]="name"
+          (ngModelChange)="resetSimilarVenueCheck()"
           required
           [attr.aria-invalid]="validationError && !name.trim() ? 'true' : null"
           [attr.aria-describedby]="validationError && !name.trim() ? 'venue-required-fields-error' : null"
@@ -25,11 +26,23 @@
           type="text"
           name="city"
           [(ngModel)]="city"
+          (ngModelChange)="resetSimilarVenueCheck()"
           required
           [attr.aria-invalid]="validationError && !city.trim() ? 'true' : null"
           [attr.aria-describedby]="validationError && !city.trim() ? 'venue-required-fields-error' : null"
           autocomplete="address-level2"
           [placeholder]="'events.cityPlaceholder' | t">
+      </label>
+
+      <label>
+        <span>{{ 'venue.create.districtLabel' | t }}</span>
+        <select name="district" [(ngModel)]="district">
+          <option [ngValue]="null">{{ 'venue.create.districtUnknown' | t }}</option>
+          @for (districtOption of continentalDistricts; track districtOption) {
+            <option [ngValue]="districtOption">{{ districtOption }}</option>
+          }
+        </select>
+        <small class="venue-create-district-hint">{{ 'venue.create.districtHint' | t }}</small>
       </label>
 
       <label class="venue-create-wide">
@@ -44,6 +57,40 @@
           autocomplete="street-address"
           [placeholder]="'createSession.addressPlaceholder' | t">
       </label>
+
+      <div class="venue-create-similar venue-create-wide" [attr.aria-label]="'venue.create.similarTitle' | t">
+        <div class="venue-create-similar-intro">
+          <div>
+            <strong>{{ 'venue.create.similarTitle' | t }}</strong>
+            <p>{{ 'venue.create.similarHint' | t }}</p>
+          </div>
+          <button type="button" class="jynlo-action jynlo-action--neutral"
+            (click)="checkSimilarVenues()"
+            [disabled]="!name.trim() || !city.trim() || checkingSimilarVenues || saving">
+            {{ (checkingSimilarVenues ? 'venue.create.similarChecking' : 'venue.create.similarAction') | t }}
+          </button>
+        </div>
+        @if (similarVenueCheckComplete && similarVenues.length) {
+          <div class="venue-create-similar-results" role="status">
+            <p>{{ 'venue.create.similarFound' | t }}</p>
+            <ul>
+              @for (venue of similarVenues; track venue.id) {
+                <li>
+                  <a [routerLink]="['/menu/venues', venue.id]" target="_blank" rel="noopener noreferrer">
+                    {{ venue.name }} — {{ venue.city }}
+                  </a>
+                </li>
+              }
+            </ul>
+          </div>
+        }
+        @if (similarVenueCheckComplete && !similarVenues.length) {
+          <p class="venue-create-similar-note" role="status">{{ 'venue.create.similarNone' | t }}</p>
+        }
+        @if (similarVenueCheckError) {
+          <p class="venue-create-similar-note" role="alert">{{ 'venue.create.similarError' | t }}</p>
+        }
+      </div>
 
       <h2 class="venue-create-section-title">{{ 'venue.create.characteristics' | t }}</h2>
       <p class="venue-create-sports-label venue-create-wide" id="venue-create-sports-label">{{ 'venue.create.sportsLabel' | t }} *</p>
@@ -416,19 +463,19 @@
         </summary>
         <div class="venue-create-options venue-create-wide">
           <div class="venue-create-wide">
-            <label for="venue-map-link">Link do Google Maps (opcional)</label>
+            <label for="venue-map-link">{{ 'venue.create.mapsLabel' | t }}</label>
             <input id="venue-map-link" name="mapLink" type="url"
               [(ngModel)]="mapLink" placeholder="https://maps.app.goo.gl/..."
               (ngModelChange)="onMapLinkChanged()">
             <button type="button" class="jynlo-action jynlo-action--neutral"
               [disabled]="!mapLink.trim() || resolvingMapLink || saving" (click)="resolveMapLink()">
-              {{ resolvingMapLink ? 'A obter coordenadas...' : 'Obter coordenadas do link' }}
+              {{ (resolvingMapLink ? 'venue.create.mapsResolving' : 'venue.create.mapsAction') | t }}
             </button>
             @if (mapLinkError) {
-              <p role="alert">Não foi possível obter a localização deste link. Verifica-o ou introduz as coordenadas manualmente.</p>
+              <p role="alert">{{ 'venue.create.mapsError' | t }}</p>
             }
             @if (mapLinkResolved) {
-              <p role="status">Coordenadas preenchidas. Confirma a localização antes de guardar.</p>
+              <p role="status">{{ 'venue.create.mapsSuccess' | t }}</p>
             }
           </div>
           <label>
@@ -460,7 +507,7 @@
           <span id="venue-required-fields-error" class="venue-create-error" role="alert" aria-live="assertive">{{ 'venue.requiredFields' | t }}</span>
         }
         @if (duplicateVenueError) {
-          <span id="venue-create-duplicate-error" class="venue-create-error" role="alert" aria-live="assertive">Já existe um recinto com este nome, cidade e morada. Confirma os dados antes de voltar a guardar.</span>
+          <span id="venue-create-duplicate-error" class="venue-create-error" role="alert" aria-live="assertive">{{ 'venue.create.duplicateError' | t }}</span>
         }
         @if (saveError) {
           <span id="venue-create-save-error" class="venue-create-error" role="alert" aria-live="assertive">{{ 'venue.createError' | t }}</span>

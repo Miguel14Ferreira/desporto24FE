@@ -61,5 +61,91 @@
         </div>
       </article>
     </section>
+
+    <section class="public-discovery" aria-label="{{ 'home.preview.title' | t }}">
+      <div class="preview-heading">
+        <p class="eyebrow">{{ 'home.preview.eyebrow' | t }}</p>
+        <h2>{{ 'home.preview.title' | t }}</h2>
+        <p>{{ 'home.preview.subtitle' | t }}</p>
+      </div>
+      <form class="preview-search" (submit)="searchPublic($event, sportInput.value, cityInput.value)">
+        <label>
+          <span>{{ 'home.preview.sportLabel' | t }}</span>
+          <input #sportInput type="search" name="sport" list="home-sports"
+                 maxlength="80" autocomplete="off"
+                 [placeholder]="'events.sportPlaceholder' | t">
+          <datalist id="home-sports">
+            @for (sport of sportsCatalog; track sport) {
+              <option [value]="sport"></option>
+            }
+          </datalist>
+        </label>
+        <label>
+          <span>{{ 'home.preview.cityLabel' | t }}</span>
+          <input #cityInput type="search" name="city" maxlength="80"
+                 [placeholder]="'events.cityPlaceholder' | t">
+        </label>
+        <div class="preview-search-actions">
+          <button type="submit" class="jynlo-action jynlo-action--primary">
+            {{ 'home.preview.search' | t }}
+          </button>
+          <button type="button" class="jynlo-action jynlo-action--neutral"
+                  (click)="clearPublicSearch(sportInput, cityInput)">
+            {{ 'home.preview.clear' | t }}
+          </button>
+        </div>
+      </form>
+      <div class="preview-columns">
+        <div class="preview-panel">
+          <h3>{{ 'home.preview.sessionsTitle' | t }}</h3>
+          @if (sessionsLoading) {
+            <p class="preview-state" role="status">{{ 'home.preview.loading' | t }}</p>
+          } @else if (sessionsLoadError) {
+            <p class="preview-state">{{ 'home.preview.loadError' | t }}</p>
+          } @else if (featuredSessions.length === 0) {
+            <p class="preview-state">{{ 'home.preview.emptySessions' | t }}</p>
+          } @else {
+            @for (session of featuredSessions; track session.id) {
+              <a class="preview-item" [routerLink]="['/sessions', session.id]">
+                <strong>{{ session.sport }} · {{ session.city }}</strong>
+                <span>{{ session.gameDate | date:'dd/MM/yyyy, HH:mm' }}</span>
+                @let spots = remainingSpots(session);
+                @if (spots !== null) {
+                  <span class="preview-availability" [class.preview-availability--full]="spots === 0">
+                    {{ (spots === 0 ? 'home.preview.full' : spots === 1 ? 'home.preview.oneSpot' : 'home.preview.manySpots') | t:{count: spots} }}
+                  </span>
+                }
+                <small>{{ 'home.preview.viewSession' | t }} ↗</small>
+              </a>
+            }
+          }
+        </div>
+        <div class="preview-panel">
+          <h3>{{ 'home.preview.venuesTitle' | t }}</h3>
+          @if (venuesLoading) {
+            <p class="preview-state" role="status">{{ 'home.preview.loading' | t }}</p>
+          } @else if (venuesLoadError) {
+            <p class="preview-state">{{ 'home.preview.loadError' | t }}</p>
+          } @else if (featuredVenues.length === 0) {
+            <p class="preview-state">{{ 'home.preview.emptyVenues' | t }}</p>
+          } @else {
+            @for (venue of featuredVenues; track venue.id) {
+              <article class="preview-item preview-venue">
+                <strong>{{ venue.name }}</strong>
+                <span>{{ venue.city }} · {{ venue.sports }}</span>
+              </article>
+            }
+          }
+        </div>
+      </div>
+      @if ((sessionsLoadError || venuesLoadError) && !sessionsLoading && !venuesLoading) {
+        <button class="preview-retry jynlo-action jynlo-action--neutral"
+                type="button" (click)="retryPublicDiscovery()">
+          {{ 'home.preview.retry' | t }}
+        </button>
+      }
+      <a class="preview-cta jynlo-action jynlo-action--primary"
+         routerLink="/login/registerNewUser">{{ 'home.preview.join' | t }}</a>
+    </section>
   </div>
 </section>
