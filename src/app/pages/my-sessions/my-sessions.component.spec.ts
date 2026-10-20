@@ -219,6 +219,7 @@ describe('MySessionsComponent', () => {
 
     expect(component.nextJoinedSession).toBeNull();
     expect(fixture.nativeElement.querySelector('.next-session-highlight')).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Por indicar');
     const waitlistLink = fixture.nativeElement.querySelector('.waitlist-badge')
       ?.closest('.session-card')?.querySelector('a') as HTMLAnchorElement;
     expect(waitlistLink.getAttribute('href')).toBe('/menu/events/43?membership=1');
