@@ -28,6 +28,13 @@ export class AuthInterceptor implements HttpInterceptor {
   }
 
   intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
+    // Never forward access tokens to other origins, even when third-party
+    // requests happen through Angular HttpClient. The refresh/401 recovery
+    // logic must also stay confined to our own backend API.
+    if (!this.isTrustedApiRequest(request.url)) {
+      return next.handle(request);
+    }
+
     const token = localStorage.getItem('t');
     const authenticatedRequest = token && !request.headers.has('Authorization')
       ? request.clone({
@@ -72,6 +79,19 @@ export class AuthInterceptor implements HttpInterceptor {
         );
       })
     );
+  }
+
+  private isTrustedApiRequest(url: string): boolean {
+    try {
+      const api = new URL(environment.apiUrl);
+      // Angular callers use either absolute backend URLs or relative /api paths.
+      // Both must resolve to our configured backend origin and API namespace.
+      const target = new URL(url, api.origin);
+      return target.origin === api.origin
+        && (target.pathname === '/api' || target.pathname.startsWith('/api/'));
+    } catch {
+      return false;
+    }
   }
 
   private refreshAccessToken(): Observable<LoginResponse> {
