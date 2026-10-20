@@ -161,8 +161,14 @@ async function main() {
     assert.equal(await page.locator('.home-page .preview-venue').count(), 1);
     checkNoRuntimeErrors('public search');
 
+    // Reproduce navigation from a scrolled home: route changes must reset
+    // scroll position, or the fixed navbar hides the public session header.
+    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+    assert.ok(await page.evaluate(() => window.scrollY) > 0,
+      'home page should be scrolled before navigating to the public preview');
     await page.locator('.home-page a.preview-item').first().click();
     await page.locator('.public-session-page .join-panel .primary-action').waitFor();
+    await page.waitForFunction(() => window.scrollY <= 1, null, { timeout: 4000 });
     assert.equal(new URL(page.url()).pathname, '/sessions/42');
     assert.match(await page.locator('.session-facts').innerText(), /Lisboa/);
     await snapshot('02-open-session');
