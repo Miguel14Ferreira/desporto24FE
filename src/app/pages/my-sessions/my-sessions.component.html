@@ -38,7 +38,7 @@
           <div>
             <span class="section-kicker">{{ 'mySessions.nextConfirmed' | t }}</span>
             <h2 id="next-joined-session-title">{{ session.sport }} · {{ session.city }}</h2>
-            <p>{{ session.gameDate | date:'dd/MM/yyyy HH:mm' }} · {{ 'mySessions.players' | t:{ count: session.participantCount + '/' + session.maxParticipants } }}</p>
+            <p>{{ (sessionDisplayDate(session) | date:'dd/MM/yyyy HH:mm') || ('publicSession.notSpecified' | t) }} · {{ 'mySessions.players' | t:{ count: session.participantCount + '/' + session.maxParticipants } }}</p>
           </div>
           <a class="jynlo-action jynlo-action--primary" [routerLink]="['/menu/events', session.id]"
              [queryParams]="{ membership: '1' }">{{ 'mySessions.viewParticipation' | t }} →</a>
@@ -73,7 +73,7 @@
                 <div class="meta-grid">
                   <div>
                     <span>{{ 'mySessions.date' | t }}</span>
-                    <strong>{{ session.gameDate | date:'dd/MM/yyyy HH:mm' }}</strong>
+                    <strong>{{ (sessionDisplayDate(session) | date:'dd/MM/yyyy HH:mm') || ('publicSession.notSpecified' | t) }}</strong>
                   </div>
                   <div>
                     <span>{{ 'mySessions.participants' | t }}</span>
@@ -136,7 +136,7 @@
                 </div>
 
                 <div class="compact-meta">
-                  <span>{{ session.gameDate | date:'dd/MM/yyyy HH:mm' }}</span>
+                  <span>{{ (sessionDisplayDate(session) | date:'dd/MM/yyyy HH:mm') || ('publicSession.notSpecified' | t) }}</span>
                   <span>{{ 'mySessions.players' | t:{ count: session.participantCount + '/' + session.maxParticipants } }}</span>
                 </div>
 
@@ -176,7 +176,7 @@
                 </div>
 
                 <div class="compact-meta">
-                  <span>{{ session.gameDate | date:'dd/MM/yyyy HH:mm' }}</span>
+                  <span>{{ (sessionDisplayDate(session) | date:'dd/MM/yyyy HH:mm') || ('publicSession.notSpecified' | t) }}</span>
                   <span>{{ session.participantCount }}/{{ session.maxParticipants }} jogadores</span>
                 </div>
 
