@@ -964,6 +964,94 @@ describe('SessionDetailsComponent', () => {
     page.destroy();
   });
 
+  it('focuses current membership once after a promoted waitlist notification loads', () => {
+    fixture.destroy();
+    const route = TestBed.inject(ActivatedRoute);
+    (route.snapshot as any).queryParamMap = convertToParamMap({ membership: '1' });
+    const promoted = {
+      ...session, joined: true, waitlisted: false,
+      gameDate: new Date(Date.now() + 3600_000).toISOString()
+    };
+    const delayedDetail = new Subject<typeof promoted>();
+    sessionService.detail.and.returnValue(delayedDetail.asObservable());
+
+    const scroll = jasmine.createSpy('scrollIntoView');
+    const originalGetById = document.getElementById.bind(document);
+    spyOn(document, 'getElementById').and.callFake((id: string) => {
+      if (id === 'session-membership') {
+        return { scrollIntoView: scroll } as unknown as HTMLElement;
+      }
+      return originalGetById(id);
+    });
+
+    const page = TestBed.createComponent(SessionDetailsComponent);
+    page.detectChanges();
+    expect(scroll).not.toHaveBeenCalled();
+    delayedDetail.next(promoted);
+    delayedDetail.complete();
+    page.detectChanges();
+
+    expect(page.nativeElement.querySelector('#session-membership')).not.toBeNull();
+    expect(scroll).toHaveBeenCalledOnceWith({ behavior: 'smooth', block: 'start' });
+    expect(sessionService.join).not.toHaveBeenCalled();
+    page.detectChanges();
+    expect(scroll).toHaveBeenCalledTimes(1);
+    page.destroy();
+  });
+
+  it('shows the current waitlist position when a historical promotion no longer applies', () => {
+    fixture.destroy();
+    const route = TestBed.inject(ActivatedRoute);
+    (route.snapshot as any).queryParamMap = convertToParamMap({ membership: '1' });
+    sessionService.detail.and.returnValue(of({
+      ...session, joined: false, waitlisted: true, waitlistPosition: 2,
+      gameDate: new Date(Date.now() + 3600_000).toISOString()
+    }));
+    const scroll = jasmine.createSpy('scrollIntoView');
+    const originalGetById = document.getElementById.bind(document);
+    spyOn(document, 'getElementById').and.callFake((id: string) => {
+      if (id === 'session-membership') {
+        return { scrollIntoView: scroll } as unknown as HTMLElement;
+      }
+      return originalGetById(id);
+    });
+
+    const page = TestBed.createComponent(SessionDetailsComponent);
+    page.detectChanges();
+
+    const status = page.nativeElement.querySelector('#session-membership') as HTMLElement;
+    expect(status.classList.contains('waitlisted')).toBeTrue();
+    expect(status.textContent).toContain('na posição 2');
+    expect(scroll).toHaveBeenCalledOnceWith({ behavior: 'smooth', block: 'start' });
+    expect(sessionService.join).not.toHaveBeenCalled();
+    page.destroy();
+  });
+
+  it('does not show a stale promotion as confirmed membership after leaving', () => {
+    fixture.destroy();
+    const route = TestBed.inject(ActivatedRoute);
+    (route.snapshot as any).queryParamMap = convertToParamMap({ membership: '1' });
+    sessionService.detail.and.returnValue(of({
+      ...session, joined: false, waitlisted: false,
+      gameDate: new Date(Date.now() + 3600_000).toISOString()
+    }));
+    const scroll = jasmine.createSpy('scrollIntoView');
+    const originalGetById = document.getElementById.bind(document);
+    spyOn(document, 'getElementById').and.callFake((id: string) => {
+      if (id === 'session-membership') {
+        return { scrollIntoView: scroll } as unknown as HTMLElement;
+      }
+      return originalGetById(id);
+    });
+
+    const page = TestBed.createComponent(SessionDetailsComponent);
+    page.detectChanges();
+    expect(page.nativeElement.querySelector('#session-membership')).toBeNull();
+    expect(scroll).not.toHaveBeenCalled();
+    expect(sessionService.join).not.toHaveBeenCalled();
+    page.destroy();
+  });
+
   it('does not scroll to joining when the Discover visitor is already participating', () => {
     fixture.destroy();
     const route = TestBed.inject(ActivatedRoute);
