@@ -277,6 +277,10 @@ const PT: Dictionary = {
   'home.preview.emptyVenues': 'Estamos a preparar os recintos disponíveis para explorar.',
   'home.preview.viewSession': 'Ver sessão',
   'home.preview.join': 'Começar na Jynlo',
+  'home.preview.sportLabel': 'Modalidade',
+  'home.preview.cityLabel': 'Localidade',
+  'home.preview.search': 'Pesquisar',
+  'home.preview.clear': 'Limpar filtros',
 
   'home.localSessions': 'Sessões locais',
   'home.chat': 'Chat',
@@ -2231,6 +2235,10 @@ const EN: Dictionary = {
   'home.preview.emptyVenues': 'We are preparing venues for you to explore.',
   'home.preview.viewSession': 'View session',
   'home.preview.join': 'Get started on Jynlo',
+  'home.preview.sportLabel': 'Sport',
+  'home.preview.cityLabel': 'Location',
+  'home.preview.search': 'Search',
+  'home.preview.clear': 'Clear filters',
 
   'home.localSessions': 'Local sessions',
   'home.chat': 'Chat',
