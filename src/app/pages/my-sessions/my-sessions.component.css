@@ -93,6 +93,32 @@ h1 {
   border: 1px solid rgba(255, 255, 255, .16);
 }
 
+.next-session-highlight {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1.25rem;
+  border: 1px solid rgba(125, 211, 252, .4);
+  border-radius: 1rem;
+  background: rgba(125, 211, 252, .09);
+}
+
+.next-session-highlight h2 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.next-session-highlight p {
+  margin: .45rem 0 0;
+  color: #cbd5e1;
+}
+
+.next-session-highlight a {
+  white-space: normal;
+}
+
 .session-section {
   margin-top: 2rem;
 }
