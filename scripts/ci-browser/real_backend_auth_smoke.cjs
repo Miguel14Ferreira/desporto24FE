@@ -52,7 +52,7 @@ async function main() {
     const loginToken = await page.evaluate(() => localStorage.getItem('t'));
     assert.ok(loginToken && loginToken.split('.').length === 3, 'real login must issue access JWT');
 
-    const cookies = (await context.cookies(API)).filter(c => c.name === 'desporto24_refresh');
+    const cookies = (await context.cookies()).filter(c => c.name === 'desporto24_refresh');
     assert.equal(cookies.length, 1, 'Chromium must retain the refresh cookie');
     assert.equal(cookies[0].httpOnly, true, 'cookie must be HttpOnly');
     assert.equal(cookies[0].secure, true, 'cookie must be Secure');
