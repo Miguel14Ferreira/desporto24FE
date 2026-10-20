@@ -1,0 +1,162 @@
+# Validation only: FE source + combined BE running against disposable PostgreSQL.
+name: Jynlo isolated FE BE authentication
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review, synchronize]
+    branches: [preview/render-fullstack]
+    paths:
+      - '.github/workflows/isolated-auth-browser-ci.yml'
+      - 'scripts/ci-browser/real_backend_auth_smoke.cjs'
+permissions:
+  contents: read
+concurrency:
+  group: jynlo-isolated-auth-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  isolated-browser:
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: jynlo_auth_ci
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: local_test_only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d jynlo_auth_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      CI: 'true'
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGDATABASE: jynlo_auth_ci
+      PGUSER: postgres
+      PGPASSWORD: local_test_only
+      POSTGRES_HOST: 127.0.0.1
+      POSTGRES_PORT: '5432'
+      POSTGRES_DATABASE: jynlo_auth_ci
+      POSTGRES_USERNAME: postgres
+      POSTGRES_PASSWORD: local_test_only
+      POSTGRES_SCHEMA: desporto24
+      ACTIVE_PROFILE: dev
+      SPRING_LIQUIBASE_ENABLED: 'false'
+      HIBERNATE_DDL_AUTO: create
+      SPRING_JPA_PROPERTIES_HIBERNATE_DEFAULT_SCHEMA: desporto24
+      UI_APP_URL: http://127.0.0.1:4173
+      CORS_ALLOWED_ORIGINS: http://127.0.0.1:4173
+      VERIFY_EMAIL_HOST: http://127.0.0.1:4173
+      PORT: '8080'
+      JWT_SECRET: ci-fixture-hmac512-secret-not-reused-outside-disposable-action-12345678
+      JWT_EXPIRATION_MS: '1800000'
+      AES_ENCRYPTION_KEY: ciKey1
+      MEDIA_PROVIDER: local
+      SMTP_USERNAME: ci@example.invalid
+      SMTP_PASSWORD: synthetic-only
+      SMTP_FROM_EMAIL: ci@example.invalid
+      TWILIO_ACCOUNT_SID: AC00000000000000000000000000000000
+      TWILIO_AUTH_TOKEN: synthetic-only
+      TWILIO_FROM_NUMBER: '+10000000000'
+      TEST_USERNAME: fixture-auth-player
+      TEST_PASSWORD: synthetic-local-only
+    steps:
+      - name: Checkout exact FE candidate
+        uses: actions/checkout@v4
+        with:
+          path: frontend
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Checkout tested combination BE candidate
+        uses: actions/checkout@v4
+        with:
+          repository: Miguel14Ferreira/desporto24BE
+          ref: d886063010b7db239e47435d745ceb535fc34c67
+          path: backend
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: backend/pom.xml
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Initialize disposable PostgreSQL schema
+        run: |
+          psql -v ON_ERROR_STOP=1 -c 'CREATE SCHEMA desporto24'
+          psql -v ON_ERROR_STOP=1 -c 'CREATE EXTENSION pgcrypto'
+      - name: Package actual backend (previous full Java suite already passed)
+        working-directory: backend
+        run: bash ./mvnw -B -ntp -DskipTests package
+      - name: Boot isolated backend with JPA-created test schema
+        shell: bash
+        run: |
+          set -euo pipefail
+          java -jar backend/target/*.jar > /tmp/jynlo-backend.log 2>&1 &
+          echo $! > /tmp/jynlo-backend.pid
+          ready=0
+          for attempt in $(seq 1 120); do
+            if curl -fsS --max-time 2 http://127.0.0.1:8080/actuator/health > /dev/null; then ready=1; break; fi
+            if ! kill -0 "$(cat /tmp/jynlo-backend.pid)" 2>/dev/null; then break; fi
+            sleep 2
+          done
+          if [ "$ready" != 1 ]; then
+            echo 'Isolated backend did not become healthy.'
+            grep -E 'ERROR|Caused by:|Exception|Failed to' /tmp/jynlo-backend.log | tail -n 25 || true
+            exit 1
+          fi
+      - name: Seed synthetic test-only profile
+        shell: bash
+        run: |
+          set -euo pipefail
+          psql -v ON_ERROR_STOP=1 <<'SQL'
+          INSERT INTO desporto24.profile
+            (id, user_id, username, password, email, enabled, not_locked, mfa,
+             role, authorities, token_version, login_attempts)
+          VALUES
+            (9000001, 'CI00000001', 'fixture-auth-player',
+             crypt('synthetic-local-only', gen_salt('bf', 10)),
+             'fixture-auth-player@example.invalid', true, true, false,
+             'ROLE_USER', ARRAY['ROLE_USER'], 0, 0);
+          SQL
+      - name: Build frontend for local isolated API (workspace-only URL substitution)
+        working-directory: frontend
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('src/environment/environment.prod.ts')
+          src = p.read_text()
+          assert src.count('https://api.d24sports.com') == 1
+          p.write_text(src.replace('https://api.d24sports.com', 'http://127.0.0.1:8080'))
+          PY
+          npm run build
+          npm install --no-save --package-lock=false --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Exercise real login and refresh in Chromium
+        working-directory: frontend
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/ci-browser/spa_server.py dist/desporto24 4173 > /tmp/jynlo-spa.log 2>&1 &
+          spa_pid=$!
+          trap 'kill "$spa_pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 30); do
+            if curl -fsS --max-time 2 http://127.0.0.1:4173/ > /dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/ci-browser/real_backend_auth_smoke.cjs
+      - name: Shut down disposable backend
+        if: always()
+        run: |
+          if test -f /tmp/jynlo-backend.pid; then kill "$(cat /tmp/jynlo-backend.pid)" 2>/dev/null || true; fi
