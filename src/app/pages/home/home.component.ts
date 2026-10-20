@@ -26,6 +26,7 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   private readonly destroy$ = new Subject<void>();
   private readonly searchReset$ = new Subject<void>();
+  private lastPublicFilters = { sport: '', city: '' };
 
   constructor(
     private readonly sessionService: SessionService,
@@ -42,6 +43,10 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.loadPublicDiscovery(sport.trim(), city.trim());
   }
 
+  retryPublicDiscovery(): void {
+    this.loadPublicDiscovery(this.lastPublicFilters.sport, this.lastPublicFilters.city);
+  }
+
   clearPublicSearch(sportInput: HTMLInputElement, cityInput: HTMLInputElement): void {
     sportInput.value = '';
     cityInput.value = '';
@@ -49,6 +54,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   private loadPublicDiscovery(sport: string, city: string): void {
+    this.lastPublicFilters = { sport, city };
     // A later search wins: ignore responses from previous filters.
     this.searchReset$.next();
     this.sessionsLoading = true;
