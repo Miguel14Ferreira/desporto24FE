@@ -54,19 +54,34 @@ export class HomeComponent implements OnInit, OnDestroy {
         }
       });
 
-    // One bounded public page: no unbounded 228+ venue download for the landing page.
-    this.venueService.suggest(undefined, undefined, undefined, 0)
+    // Browse at most three bounded pages: a page with missing sports must not
+    // hide valid facilities further down the public catalogue.
+    this.loadFeaturedVenues(0, []);
+  }
+
+  private loadFeaturedVenues(page: number, selected: Venue[]): void {
+    this.venueService.suggest(undefined, undefined, undefined, page)
       .pipe(timeout(8000), takeUntil(this.destroy$))
       .subscribe({
         next: response => {
-          this.featuredVenues = (response?.venues ?? [])
+          const valid = (response?.venues ?? [])
             .filter(item => item && item.name?.trim()
-              && item.city?.trim() && item.sports?.trim())
-            .slice(0, 4);
+              && item.city?.trim() && item.sports?.trim()
+              && !selected.some(existing => existing.id === item.id));
+          const found = [...selected, ...valid].slice(0, 4);
+
+          if (found.length < 4 && response?.hasMore && page < 2) {
+            this.loadFeaturedVenues(page + 1, found);
+            return;
+          }
+
+          this.featuredVenues = found;
           this.venuesLoading = false;
         },
         error: () => {
-          this.venuesLoadError = true;
+          // Keep valid results collected from earlier pages if a later page fails.
+          this.featuredVenues = selected;
+          this.venuesLoadError = selected.length === 0;
           this.venuesLoading = false;
         }
       });
