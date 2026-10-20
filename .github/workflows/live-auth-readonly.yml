@@ -1,4 +1,4 @@
-# Authenticated access and member/manager authorization checks (read-only).
+# Additional private-community privacy checks via read-only API requests.
 name: Jynlo LIVE authenticated QA (read-only)
 
 on:

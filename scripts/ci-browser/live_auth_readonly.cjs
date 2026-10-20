@@ -190,6 +190,72 @@ async function testAccount(browser, index) {
     if (checked === 0) {
       console.log(label + ': NO_COMMUNITY_MEMBERSHIP; role controls not exercised.');
     }
+    // A nonmember should see only a limited private-community presentation,
+    // never a full membership list or the pending approval queue.
+    const discovery = await page.evaluate(async ({ api, joinedIds }) => {
+      const token = localStorage.getItem('t');
+      if (!token) return { result: 'NO_TOKEN' };
+      const options = {
+        headers: { Authorization: 'Bearer ' + token },
+        credentials: 'include', cache: 'no-store'
+      };
+      try {
+        const search = await fetch(api
+          + '/api/communities/search?name=&sport=&page=0', options);
+        if (!search.ok) return { result: 'SEARCH_HTTP_' + search.status };
+        const body = await search.json();
+        if (!Array.isArray(body.communities)) return { result: 'INVALID_SEARCH' };
+        const eligible = body.communities.filter(item =>
+          item.visibility === 'PRIVATE'
+          && Number.isSafeInteger(item.id)
+          && !joinedIds.includes(item.id));
+        if (!eligible.length) return {
+          result: 'NO_UNJOINED_PRIVATE_ON_FIRST_PAGE',
+          found: body.communities.length
+        };
+        const target = eligible[0];
+        // No private details are returned to the runner; only HTTP statuses
+        // and whether restricted fields appeared in the public presentation.
+        const [presentation, details, approvals] = await Promise.all([
+          fetch(api + '/api/communities/' + target.id + '/presentation', options),
+          fetch(api + '/api/communities/' + target.id, options),
+          fetch(api + '/api/communities/' + target.id + '/join-requests', options)
+        ]);
+        let leakedFields = false;
+        if (presentation.ok) {
+          const publicData = await presentation.json();
+          leakedFields = ['members', 'joinRequests', 'pendingJoinRequests',
+            'invites', 'email', 'phone'].some(key =>
+              Object.prototype.hasOwnProperty.call(publicData, key));
+        }
+        return {
+          result: 'PRIVATE_FOUND',
+          presentationStatus: presentation.status,
+          detailsStatus: details.status,
+          approvalsStatus: approvals.status,
+          leakedFields
+        };
+      } catch {
+        return { result: 'DISCOVERY_NETWORK_ERROR' };
+      }
+    }, { api: API, joinedIds: mine.groups.map(group => group.id) });
+    if (discovery.result === 'PRIVATE_FOUND') {
+      if (discovery.presentationStatus !== 200
+          || ![401, 403, 404].includes(discovery.detailsStatus)
+          || ![401, 403, 404].includes(discovery.approvalsStatus)
+          || discovery.leakedFields) {
+        console.log(label + ': PRIVATE_COMMUNITY_PRIVACY_FAIL; statuses='
+          + discovery.presentationStatus + '/'
+          + discovery.detailsStatus + '/'
+          + discovery.approvalsStatus + '; no record details logged.');
+        return 'FAIL';
+      }
+      console.log(label + ': PRIVATE_COMMUNITY_PRIVACY_PASS; public preview readable,'
+        + ' member details and join-request queues denied.');
+    } else {
+      console.log(label + ': PRIVATE_COMMUNITY_PRIVACY_NOT_TESTED; reason='
+        + discovery.result + '; no personal data logged.');
+    }
     await page.goto(SITE + '/menu/createEvent', {
       waitUntil: 'domcontentloaded', timeout: 35000
     });
