@@ -758,6 +758,90 @@ describe('SessionDetailsComponent', () => {
     expect(fixture.nativeElement.querySelector('.share-session-action')).not.toBeNull();
   });
 
+  it('shows the organiser confirmed players and remaining slots before a future game', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session, joined: true, status: 'OPEN',
+      gameDate: new Date(Date.now() + 86_400_000).toISOString()
+    };
+    fixture.detectChanges();
+
+    const panel = fixture.nativeElement.querySelector('.organizer-preparation') as HTMLElement;
+    expect(panel).not.toBeNull();
+    expect(panel.textContent).toContain('Preparação do jogo');
+    expect(panel.textContent).toContain('2/4');
+    expect(panel.textContent).toContain('Faltam 2 jogadores');
+    expect(panel.querySelectorAll('button').length).toBe(2);
+    expect(fixture.nativeElement.querySelector('#session-player-search')).not.toBeNull();
+
+    const scroll = spyOn(fixture.nativeElement.querySelector('#session-player-search'), 'scrollIntoView');
+    const findButton = Array.from(panel.querySelectorAll('button'))
+      .find((button: any) => button.textContent.includes('Encontrar jogadores')) as HTMLButtonElement;
+    findButton.click();
+    expect(scroll).toHaveBeenCalledOnceWith({ behavior: 'smooth', block: 'start' });
+    expect(sessionService.join).not.toHaveBeenCalled();
+  });
+
+  it('respects a FULL backend status even if its count has not refreshed', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session, status: 'FULL', participantCount: 3, maxParticipants: 4,
+      gameDate: new Date(Date.now() + 86_400_000).toISOString()
+    };
+    fixture.detectChanges();
+
+    const panel = fixture.nativeElement.querySelector('.organizer-preparation') as HTMLElement;
+    expect(panel.textContent).toContain('3/4');
+    expect(panel.textContent).toContain('marcada como cheia');
+    expect(panel.textContent).not.toContain('Faltam 1 jogadores');
+    expect(panel.querySelector('button')).toBeNull();
+    expect(component.canFindPlayers()).toBeFalse();
+    expect(fixture.nativeElement.querySelector('#session-player-search')).toBeNull();
+  });
+
+  it('does not expose public player-search actions for private or community-only sessions', () => {
+    (component as any).currentUsername = 'creator-user';
+    const future = new Date(Date.now() + 86_400_000).toISOString();
+    for (const partial of [
+      { privateGame: true },
+      { audience: 'COMMUNITY_ONLY' as const }
+    ]) {
+      component.session = { ...session, gameDate: future, ...partial };
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('.organizer-preparation')).not.toBeNull();
+      expect(component.canFindPlayers()).toBeFalse();
+      expect(fixture.nativeElement.querySelector('#session-player-search')).toBeNull();
+    }
+  });
+
+  it('does not invent organiser readiness for another user or invalid and ended games', () => {
+    const future = new Date(Date.now() + 86_400_000).toISOString();
+    (component as any).currentUsername = 'other-user';
+    component.session = { ...session, gameDate: future };
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.organizer-preparation')).toBeNull();
+
+    (component as any).currentUsername = 'creator-user';
+    for (const state of [
+      { status: 'CANCELLED' },
+      { status: 'COMPLETED' },
+      { gameDate: new Date(Date.now() - 60000).toISOString() },
+      { gameDate: 'invalid' },
+      { participantCount: Number.NaN },
+      { participantCount: -1 },
+      { participantCount: 5 },
+      { maxParticipants: 0 },
+      { maxParticipants: Number.NaN }
+    ]) {
+      component.session = { ...session, gameDate: future, ...state };
+      expect(component.organizerPreparation()).withContext(JSON.stringify(state)).toBeNull();
+      expect(component.canFindPlayers()).withContext(JSON.stringify(state)).toBeFalse();
+    }
+    component.session = { ...session, gameDate: future, participantCount: 4 };
+    expect(component.organizerPreparation()?.full).toBeTrue();
+    expect(component.canFindPlayers()).toBeFalse();
+  });
+
   it('offers a filtered player search to the creator of a future public session with vacancies', () => {
     (component as any).currentUsername = 'creator-user';
     component.session = { ...session, gameDate: '2099-10-01T18:00:00Z' };
