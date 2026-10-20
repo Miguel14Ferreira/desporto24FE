@@ -3,6 +3,7 @@ import { Subject, of, throwError } from 'rxjs';
 
 import { HomeComponent } from './home.component';
 import { TranslatePipe } from '../../i18n/translate.pipe';
+import { I18nService } from '../../i18n/i18n.service';
 import { SessionService } from '../../services/session.service';
 import { VenueService } from '../../services/venue.service';
 import { SessionSummary } from '../model/session-summary';
@@ -162,6 +163,54 @@ describe('HomeComponent public discovery', () => {
     expect(fixture.componentInstance.featuredSessions.map(value => value.id)).toEqual([42]);
     expect(fixture.componentInstance.sessionsLoading).toBeFalse();
     expect((fixture.nativeElement as HTMLElement).querySelectorAll('a.preview-item').length).toBe(1);
+  });
+
+  it('shows truthful one, many and full availability states in public session cards', () => {
+    sessions.discover.and.returnValue(of([
+      session(101, { participantCount: 9, maxParticipants: 10 }),
+      session(102, { participantCount: 6, maxParticipants: 10 }),
+      session(103, { status: 'FULL', participantCount: 4, maxParticipants: 10 })
+    ]));
+
+    const fixture = render();
+    const i18n = TestBed.inject(I18nService);
+    const cards = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLAnchorElement>('a.preview-item')
+    );
+    expect(cards.length).toBe(3);
+    expect(cards[0].querySelector('.preview-availability')?.textContent?.trim())
+      .toBe(i18n.translate('home.preview.oneSpot', { count: 1 }));
+    expect(cards[1].querySelector('.preview-availability')?.textContent?.trim())
+      .toBe(i18n.translate('home.preview.manySpots', { count: 4 }));
+    expect(cards[2].querySelector('.preview-availability')?.textContent?.trim())
+      .toBe(i18n.translate('home.preview.full'));
+    expect(cards[2].querySelector('.preview-availability--full')).not.toBeNull();
+    expect(cards[2].getAttribute('href')).toContain('/sessions/103');
+  });
+
+  it('does not invent available places from invalid or absent public counts', () => {
+    sessions.discover.and.returnValue(of([
+      session(104, { maxParticipants: 0 }),
+      session(105, { participantCount: -1 }),
+      session(106, { participantCount: Number.NaN })
+    ]));
+
+    const fixture = render();
+    expect((fixture.nativeElement as HTMLElement).querySelectorAll('a.preview-item').length).toBe(3);
+    expect((fixture.nativeElement as HTMLElement).querySelectorAll('.preview-availability').length).toBe(0);
+    expect(fixture.componentInstance.remainingSpots(session(107, { maxParticipants: 0 }))).toBeNull();
+  });
+
+  it('shows a full state when a public session has reached its valid capacity', () => {
+    sessions.discover.and.returnValue(of([
+      session(108, { status: 'OPEN', participantCount: 10, maxParticipants: 10 })
+    ]));
+
+    const fixture = render();
+    expect(fixture.componentInstance.remainingSpots(session(109, {
+      status: 'OPEN', participantCount: 11, maxParticipants: 10
+    }))).toBe(0);
+    expect((fixture.nativeElement as HTMLElement).querySelectorAll('.preview-availability--full').length).toBe(1);
   });
 
   it('degrades gracefully when a public request fails', () => {
