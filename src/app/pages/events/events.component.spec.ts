@@ -178,7 +178,9 @@ describe('EventsComponent', () => {
     expect(component.citySuggestions).toEqual(['Porto']);
     expect(component.loading).toBeFalse();
     expect(component.errorMessage).toBe('');
-    expect(sessionService.discover.calls.mostRecent().args[0].city).toBe('Porto');
+    const mostRecentFilters = sessionService.discover.calls.mostRecent().args[0];
+    expect(mostRecentFilters).toBeDefined();
+    expect(mostRecentFilters?.city).toBe('Porto');
   });
 
   it('invalidates an in-flight search when the user enters an invalid date range', () => {
@@ -252,7 +254,9 @@ describe('EventsComponent', () => {
     expect(component.sport).toBe('');
     expect(component.city).toBe('');
     expect(component.availableOnly).toBeFalse();
-    expect(sessionService.discover.calls.mostRecent().args[0].availability).toBeUndefined();
+    const mostRecentFilters = sessionService.discover.calls.mostRecent().args[0];
+    expect(mostRecentFilters).toBeDefined();
+    expect(mostRecentFilters?.availability).toBeUndefined();
   });
 
   it('should disable nearby search and clear coordinates', () => {
