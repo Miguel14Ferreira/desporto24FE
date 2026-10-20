@@ -1,4 +1,4 @@
-# Re-run after owner configured the four repository QA secrets; no values logged.
+# Authenticated access and member/manager authorization checks (read-only).
 name: Jynlo LIVE authenticated QA (read-only)
 
 on:

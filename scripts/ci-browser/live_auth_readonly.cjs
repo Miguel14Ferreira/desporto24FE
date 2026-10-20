@@ -101,6 +101,95 @@ async function testAccount(browser, index) {
       return 'UNEXPECTED_AUTH_STATE';
     }
     await page.locator('.communities-page').waitFor({ timeout: 15000 });
+    // Authorization evidence is kept only inside the disposable browser
+    // and this runner process. Never log community identifiers or names.
+    const mine = await page.evaluate(async api => {
+      const token = localStorage.getItem('t');
+      if (!token) return { status: 'NO_TOKEN', groups: [] };
+      try {
+        const response = await fetch(api + '/api/communities/mine', {
+          headers: { Authorization: 'Bearer ' + token },
+          credentials: 'include', cache: 'no-store'
+        });
+        if (!response.ok) return { status: 'HTTP_' + response.status, groups: [] };
+        const body = await response.json();
+        if (!Array.isArray(body)) return { status: 'INVALID_SHAPE', groups: [] };
+        const roles = ['OWNER', 'ADMIN', 'MEMBER'];
+        return {
+          status: 'OK',
+          groups: body
+            .filter(g => Number.isSafeInteger(g.id) && g.id > 0
+              && roles.includes(g.myRole))
+            .map(g => ({ id: g.id, role: g.myRole, visibility: g.visibility }))
+        };
+      } catch {
+        return { status: 'READ_FAILED', groups: [] };
+      }
+    }, API);
+    if (mine.status !== 'OK') {
+      console.log(label + ': GROUPS_READ_FAILED_' + mine.status);
+      return 'FAIL';
+    }
+    const roles = { OWNER: 0, ADMIN: 0, MEMBER: 0 };
+    for (const group of mine.groups) roles[group.role]++;
+
+    // Limit extra browser requests to three existing QA-owned/member groups.
+    let checked = 0;
+    let deniedMemberRequests = 0;
+    for (const group of mine.groups.slice(0, 3)) {
+      await page.goto(SITE + '/menu/communities/' + group.id + '?tab=members', {
+        waitUntil: 'domcontentloaded', timeout: 35000
+      });
+      await page.locator('.community-detail .role-badge').waitFor({ timeout: 15000 });
+      const controls = await page.evaluate(() => ({
+        managerSharing: Boolean(document.querySelector('.whatsapp-group-share')),
+        pendingJoinManagement: Boolean(document.querySelector(
+          '.community-tab-panel .management-block.first-block'))
+      }));
+      const manager = group.role === 'OWNER' || group.role === 'ADMIN';
+      if (manager !== controls.managerSharing
+          || manager !== controls.pendingJoinManagement) {
+        console.log(label + ': ROLE_UI_MISMATCH; role=' + group.role
+          + '; no community details logged.');
+        return 'FAIL';
+      }
+      // Server-side authorization check: a basic member must not read
+      // the management-only pending join requests. Do not read the body.
+      const joinRequestsStatus = await page.evaluate(async ({ api, id }) => {
+        const token = localStorage.getItem('t');
+        if (!token) return 0;
+        try {
+          const response = await fetch(api + '/api/communities/' + id
+            + '/join-requests', {
+            headers: { Authorization: 'Bearer ' + token },
+            credentials: 'include', cache: 'no-store'
+          });
+          return response.status;
+        } catch {
+          return 0;
+        }
+      }, { api: API, id: group.id });
+      if (!manager) {
+        if (![401, 403, 404].includes(joinRequestsStatus)) {
+          console.log(label + ': MEMBER_AUTHORIZATION_MISMATCH; status='
+            + joinRequestsStatus + '; group details withheld.');
+          return 'FAIL';
+        }
+        deniedMemberRequests++;
+      } else if (joinRequestsStatus !== 200) {
+        console.log(label + ': MANAGER_JOIN_REQUESTS_UNAVAILABLE; status='
+          + joinRequestsStatus + '; group details withheld.');
+        return 'FAIL';
+      }
+      checked++;
+    }
+    console.log(label + ': ROLES_OK; owned=' + roles.OWNER
+      + ', admins=' + roles.ADMIN + ', members=' + roles.MEMBER
+      + ', UI-checked=' + checked
+      + ', member-access-denials=' + deniedMemberRequests);
+    if (checked === 0) {
+      console.log(label + ': NO_COMMUNITY_MEMBERSHIP; role controls not exercised.');
+    }
     await page.goto(SITE + '/menu/createEvent', {
       waitUntil: 'domcontentloaded', timeout: 35000
     });
