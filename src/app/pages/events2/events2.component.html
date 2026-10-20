@@ -277,7 +277,7 @@
                 type="text"
                 name="venueMapLink"
                 [ngModel]="venueMapLink"
-                (ngModelChange)="onVenueMapLinkChanged($event)"
+                (input)="onVenueMapLinkChanged($any($event.target).value)"
                 [disabled]="loading || venueMapLinkLoading"
                 [placeholder]="'venue.mapLink.placeholder' | t">
             </label>
