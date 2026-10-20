@@ -1,0 +1,57 @@
+name: Jynlo LIVE authenticated QA (read-only)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [preview/render-fullstack]
+    paths:
+      - '.github/workflows/live-auth-readonly.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  live-auth:
+    # Same-repository QA branch only; never accept a fork PR.
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'qa/live-auth-readonly-20261020' && !github.event.pull_request.draft }}
+    name: Two QA accounts (no application writes)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check secret availability without printing values
+        id: prerequisites
+        shell: bash
+        env:
+          JYNLO_QA1_USERNAME: ${{ secrets.JYNLO_QA1_USERNAME }}
+          JYNLO_QA1_PASSWORD: ${{ secrets.JYNLO_QA1_PASSWORD }}
+          JYNLO_QA2_USERNAME: ${{ secrets.JYNLO_QA2_USERNAME }}
+          JYNLO_QA2_PASSWORD: ${{ secrets.JYNLO_QA2_PASSWORD }}
+        run: |
+          if [[ -n "$JYNLO_QA1_USERNAME" && -n "$JYNLO_QA1_PASSWORD" && -n "$JYNLO_QA2_USERNAME" && -n "$JYNLO_QA2_PASSWORD" ]]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+            echo "QA secrets detected. Values withheld."
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "SKIPPED: four JYNLO_QA GitHub Actions Secrets are required."
+          fi
+      - name: Install isolated Playwright and Chromium
+        if: steps.prerequisites.outputs.ready == 'true'
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/jynlo-browser-qa"
+          npm install --prefix "$RUNNER_TEMP/jynlo-browser-qa" --no-fund --no-audit --no-save playwright@1.56.1
+          "$RUNNER_TEMP/jynlo-browser-qa/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Inspect LIVE with disposable authenticated sessions
+        if: steps.prerequisites.outputs.ready == 'true'
+        shell: bash
+        env:
+          JYNLO_QA1_USERNAME: ${{ secrets.JYNLO_QA1_USERNAME }}
+          JYNLO_QA1_PASSWORD: ${{ secrets.JYNLO_QA1_PASSWORD }}
+          JYNLO_QA2_USERNAME: ${{ secrets.JYNLO_QA2_USERNAME }}
+          JYNLO_QA2_PASSWORD: ${{ secrets.JYNLO_QA2_PASSWORD }}
+        run: |
+          NODE_PATH="$RUNNER_TEMP/jynlo-browser-qa/node_modules" node scripts/ci-browser/live_auth_readonly.cjs
