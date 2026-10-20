@@ -82,6 +82,17 @@ async function main() {
           }
           return respond(401, { message: 'Fixture account not configured' });
         }
+        if (url.pathname === '/api/auth/mfa/resend' && req.method() === 'POST') {
+          actions.push('mfa-resend');
+          const body = JSON.parse(req.postData() || '{}');
+          assert.equal(body.challengeId, 'synthetic-challenge');
+          return respond(202, {
+            mfaRequired: true,
+            challengeId: 'synthetic-challenge-renewed',
+            challengeExpiresAt: new Date(Date.now() + 300000).toISOString(),
+            token: null, profile: null
+          });
+        }
         if (url.pathname === '/api/auth/mfa/confirm' && req.method() === 'POST') {
           actions.push('mfa-confirm');
           const body = JSON.parse(req.postData() || '{}');
@@ -203,17 +214,26 @@ async function main() {
       await page.locator('.mfa-page button[type="submit"]').waitFor();
       assert.equal(await page.locator('.mfa-page button[type="submit"]').isDisabled(), true);
       const before = actions.filter(a => a === 'mfa-confirm').length;
-      await page.locator('.mfa-page .secondary-actions button').click();
+      const renew = page.locator('.mfa-page .secondary-actions button')
+        .filter({ hasText: 'Renovar desafio' });
+      await renew.waitFor();
+      await renew.click();
+      await page.waitForFunction(() =>
+        sessionStorage.getItem('mfa-challenge-id') === 'synthetic-challenge-renewed');
+      assert.equal(await page.locator('.mfa-page button[type="submit"]').isDisabled(), false);
+      assert.equal(actions.filter(a => a === 'mfa-resend').length, 1);
+      assert.equal(before, actions.filter(a => a === 'mfa-confirm').length);
+      await page.locator('.mfa-page .secondary-actions button')
+        .filter({ hasText: 'Voltar ao login' }).click();
       await page.waitForURL(u => u.pathname === '/login');
       assert.equal(new URL(page.url()).searchParams.get('returnUrl'), '/menu/feed');
-      assert.equal(before, actions.filter(a => a === 'mfa-confirm').length);
       assert.equal(await page.evaluate(() => sessionStorage.getItem('mfa-challenge-id')), null);
       await context.close();
     }
 
     await assertNoLeak();
     console.log('PASS: 5 synthetic authenticated-browser scenarios; no JS runtime errors.');
-    console.log('PASS: empty/invalid login, direct JWT, MFA reject and confirm, expired MFA safe return.');
+    console.log('PASS: empty/invalid login, direct JWT, MFA reject/confirm, expired MFA renewal and safe return.');
     console.log('PASS: zero real credentials, external auth calls or production API writes.');
   } finally {
     await browser.close();
