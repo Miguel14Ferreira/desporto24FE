@@ -620,6 +620,10 @@ export class Events2Component implements OnInit, OnDestroy {
       return;
     }
 
+    // Editing a Maps link switches sources; never keep coordinates from GPS.
+    if (this.locationMethod !== 'maps' && this.locationSource === 'gps') {
+      this.clearLocation();
+    }
     this.venueMapLink = url;
     this.locationMethod = 'maps';
     this.venueMapLinkError = '';
