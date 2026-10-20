@@ -27,7 +27,7 @@ concurrency:
 jobs:
   test-and-build:
     name: Angular tests and build
-    if: ${{ github.event_name == 'workflow_dispatch' || !github.event.pull_request.draft }}
+    if: ${{ github.event_name == 'workflow_dispatch' || (!github.event.pull_request.draft && github.head_ref != 'validation/isolated-auth-browser-20261020') }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:

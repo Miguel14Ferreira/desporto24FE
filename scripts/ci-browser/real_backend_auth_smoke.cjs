@@ -9,8 +9,8 @@ const assert = require('node:assert/strict');
 const crypto = require('node:crypto');
 const { chromium } = require('playwright');
 
-const SITE = 'http://127.0.0.1:4173';
-const API = 'http://127.0.0.1:8080';
+const SITE = 'http://localhost:4173';
+const API = 'http://localhost:8080';
 const USER = process.env.TEST_USERNAME;
 const PASSWORD = process.env.TEST_PASSWORD;
 const SECRET = process.env.JWT_SECRET;
