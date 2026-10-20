@@ -11,6 +11,7 @@ import { CreateSessionRequest } from '../pages/model/create-session-request';
 import { SessionParticipant } from '../pages/model/session-participant';
 
 export interface SessionSearchFilters {
+  query?: string;
   sport?: string;
   city?: string;
   availability?: string;
@@ -26,9 +27,21 @@ export interface SessionSearchFilters {
   maxPrice?: number;
 }
 
+export interface PendingSessionInvite {
+  id: number;
+  sessionId: number;
+  inviterUsername: string;
+  createdAt: string;
+}
+
 export interface JoinSessionResponse {
   state: 'PARTICIPANT' | 'WAITLISTED';
   waitlistPosition: number | null;
+}
+
+export interface SessionOverallRating {
+  overallScore: number;
+  updatedAt: string;
 }
 
 export interface SessionTeamPlayer {
@@ -58,9 +71,28 @@ export class SessionService {
 
   constructor(private http: HttpClient) {}
 
+  pendingInvites(): Observable<PendingSessionInvite[]> {
+    return this.http.get<PendingSessionInvite[]>(environment.apiUrl + '/api/session-invites/pending');
+  }
+
+  acceptInvite(sessionId: number, inviteId: number): Observable<JoinSessionResponse> {
+    return this.http.post<JoinSessionResponse>(`${this.baseUrl}/${sessionId}/invites/${inviteId}/accept`, null);
+  }
+
+  declineInvite(sessionId: number, inviteId: number): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/${sessionId}/invites/${inviteId}/decline`, null);
+  }
+
+  invitePlayer(sessionId: number, username: string): Observable<{ id: number }> {
+    return this.http.post<{ id: number }>(`${this.baseUrl}/${sessionId}/invites`, { username });
+  }
+
   discover(filters: SessionSearchFilters = {}): Observable<SessionSummary[]> {
     let params = new HttpParams();
 
+    if (filters.query?.trim()) {
+      params = params.set('query', filters.query.trim());
+    }
     if (filters.sport?.trim()) {
       params = params.set('sport', filters.sport.trim());
     }
@@ -149,6 +181,19 @@ export class SessionService {
     );
   }
 
+  myOverallRating(id: number): Observable<SessionOverallRating | null> {
+    return this.http.get<SessionOverallRating | null>(
+      this.baseUrl + '/' + id + '/ratings/me'
+    );
+  }
+
+  rateOverall(id: number, overallScore: number): Observable<SessionOverallRating> {
+    return this.http.put<SessionOverallRating>(
+      this.baseUrl + '/' + id + '/ratings/me',
+      { overallScore }
+    );
+  }
+
   messages(id: number): Observable<SessionMessage[]> {
     return this.http.get<SessionMessage[]>(this.baseUrl + '/' + id + '/messages');
   }
@@ -174,6 +219,24 @@ export class SessionService {
     return this.http.post<SessionTeamSuggestion>(
       this.baseUrl + '/' + id + '/teams/confirm',
       null
+    );
+  }
+
+  futureExclusionStatus(id: number, participantId: number): Observable<{ excluded: boolean }> {
+    return this.http.get<{ excluded: boolean }>(
+      this.baseUrl + '/' + id + '/participants/' + participantId + '/future-exclusion'
+    );
+  }
+
+  excludeFromFutureSessions(id: number, participantId: number): Observable<{ excluded: boolean }> {
+    return this.http.put<{ excluded: boolean }>(
+      this.baseUrl + '/' + id + '/participants/' + participantId + '/future-exclusion', null
+    );
+  }
+
+  allowFutureSessions(id: number, participantId: number): Observable<{ excluded: boolean }> {
+    return this.http.delete<{ excluded: boolean }>(
+      this.baseUrl + '/' + id + '/participants/' + participantId + '/future-exclusion'
     );
   }
 

@@ -4,6 +4,7 @@ import { of } from 'rxjs';
 
 import { DirectChatComponent } from './direct-chat.component';
 import { DirectChatService } from '../../services/direct-chat.service';
+import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.service';
 import { CommunityService } from '../../services/community.service';
 import { TEST_IMPORTS, TEST_PROVIDERS } from '../../testing/test-providers';
 
@@ -16,9 +17,9 @@ describe('DirectChatComponent', () => {
   beforeEach(async () => {
     service = jasmine.createSpyObj<DirectChatService>(
       'DirectChatService',
-      ['history', 'send', 'info']
+      ['recentHistory', 'send', 'info']
     );
-    service.history.and.returnValue(of([]));
+    service.recentHistory.and.returnValue(of({ content: [], last: true }));
     service.info.and.returnValue(of({
       chatBlocked: false,
       whoBlocked: null
@@ -53,6 +54,14 @@ describe('DirectChatComponent', () => {
           }
         },
         { provide: DirectChatService, useValue: service },
+        {
+          provide: DirectChatRealtimeService,
+          useValue: {
+            connect: jasmine.createSpy('connect'),
+            messages$: of(),
+            connected$: of(false)
+          }
+        },
         { provide: CommunityService, useValue: communityService }
       ]
     }).compileComponents();
@@ -65,7 +74,7 @@ describe('DirectChatComponent', () => {
   it('should create and load chat history', () => {
     expect(component).toBeTruthy();
     expect(component.recipientUsername).toBe('ana');
-    expect(service.history).toHaveBeenCalledWith('ana');
+    expect(service.recentHistory).toHaveBeenCalledWith('ana');
     expect(service.info).toHaveBeenCalledWith('ana');
   });
 

@@ -40,6 +40,6 @@ describe('Forgotp2Component', () => {
     component.resetPassword();
 
     expect(auth.confirmPasswordReset).toHaveBeenCalledWith('reset-token', 'new-password-123');
-    expect(component.successMessage).toContain('Atualizada');
+    expect(component.successMessage).toBe('Palavra-passe alterada com sucesso.');
   });
 });

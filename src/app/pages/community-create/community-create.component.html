@@ -7,7 +7,7 @@
         <p>{{ 'communityCreate.subtitle' | t }}</p>
       </div>
 
-      <button type="button" class="secondary-action" (click)="cancel()">
+      <button type="button" class="secondary-action jynlo-action jynlo-action--neutral" (click)="cancel()">
         {{ 'communityCreate.back' | t }}
       </button>
     </header>
@@ -49,7 +49,7 @@
             </label>
 
             @if (photoPreview) {
-              <button type="button" class="secondary-action" [disabled]="saving" (click)="removePhoto()">
+              <button type="button" class="secondary-action jynlo-action jynlo-action--neutral" [disabled]="saving" (click)="removePhoto()">
                 {{ 'communityCreate.removePhoto' | t }}
               </button>
             }
@@ -68,19 +68,32 @@
             required>
         </label>
 
-        <div class="field-group paired-field">
-          <label for="community-sport">{{ 'communityCreate.sport' | t }}</label>
-          <select
-            id="community-sport"
-            name="sport"
-            [(ngModel)]="sport"
-            [disabled]="saving">
-            <option value="">{{ 'communityCreate.multiSport' | t }}</option>
-            @for (item of sportsCatalog; track item) {
-              <option [value]="item">{{ item }}</option>
-            }
-          </select>
-          <small class="field-help field-help--empty" aria-hidden="true">&nbsp;</small>
+        <div class="field-group sport-selection full-width">
+          <label for="community-sport-search">Modalidades da comunidade (opcional)</label>
+          <p class="field-help">Escolhe uma ou várias modalidades. Também podes começar sem nenhuma e adicionar mais tarde.</p>
+          @if (sports.length) {
+            <div class="sport-tags" aria-label="Modalidades selecionadas">
+              @for (item of sports; track item) {
+                <span class="sport-tag">{{ item }}
+                  <button type="button" [disabled]="saving"
+                    [attr.aria-label]="'Remover ' + item" (click)="removeSport(item)">×</button>
+                </span>
+              }
+            </div>
+          }
+          <input id="community-sport-search" name="sportSearch"
+            [(ngModel)]="sportSearch" autocomplete="off"
+            [disabled]="saving || sports.length >= 128"
+            placeholder="Pesquisar modalidade, ex.: padel">
+          @if (sportSuggestions.length) {
+            <div class="sport-suggestions" role="group" aria-label="Sugestões de modalidades">
+              @for (item of sportSuggestions; track item) {
+                <button type="button" [disabled]="saving" (click)="addSport(item)">
+                  <span>{{ item }}</span><span aria-hidden="true">+</span>
+                </button>
+              }
+            </div>
+          }
         </div>
 
         <div class="field-group paired-field">
@@ -117,14 +130,15 @@
         <div>
           <strong>{{ 'communityCreate.ownerTitle' | t }}</strong>
           <p>{{ 'communityCreate.ownerHint' | t }}</p>
+          <p>{{ 'communityCreate.whatsappHint' | t }}</p>
         </div>
       </div>
 
       <div class="form-actions">
-        <button type="button" class="secondary-action" [disabled]="saving" (click)="cancel()">
+        <button type="button" class="secondary-action jynlo-action jynlo-action--neutral" [disabled]="saving" (click)="cancel()">
           {{ 'common.cancel' | t }}
         </button>
-        <button type="submit" class="primary-action" [disabled]="saving || !name.trim()">
+        <button type="submit" class="primary-action jynlo-action jynlo-action--primary" [disabled]="saving || !name.trim()">
           {{ saving ? ('communityCreate.creating' | t) : ('communityCreate.create' | t) }}
         </button>
       </div>

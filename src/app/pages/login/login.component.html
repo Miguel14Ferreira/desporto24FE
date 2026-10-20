@@ -29,7 +29,7 @@
           <span>{{ 'login.noEmail' | t }}</span>
           <button
             type="button"
-            class="resend-confirmation"
+            class="resend-confirmation jynlo-action jynlo-action--primary"
             [disabled]="resendLoading || resendCooldownSeconds > 0"
             (click)="resendConfirmation()">
             {{ resendLoading
@@ -62,13 +62,13 @@
               autocomplete="current-password"
               [disabled]="loading"
               [placeholder]="'login.passwordPlaceholder' | t">
-            <button type="button" (click)="showPassword = !showPassword">
+            <button class="jynlo-action jynlo-action--neutral" type="button" (click)="showPassword = !showPassword">
               {{ showPassword ? ('common.hide' | t) : ('common.show' | t) }}
             </button>
           </div>
         </label>
 
-        <button type="submit" class="primary-action" [disabled]="loading">
+        <button type="submit" class="primary-action jynlo-action jynlo-action--primary" [disabled]="loading">
           {{ loading ? ('login.entering' | t) : ('login.enter' | t) }}
         </button>
       </form>
@@ -92,7 +92,7 @@
 
       <div class="login-links">
         <a routerLink="/login/resetPassword">{{ 'login.forgot' | t }}</a>
-        <a routerLink="/login/registerNewUser">{{ 'login.create' | t }}</a>
+        <a routerLink="/login/registerNewUser" queryParamsHandling="preserve">{{ 'login.create' | t }}</a>
       </div>
     </div>
   </div>

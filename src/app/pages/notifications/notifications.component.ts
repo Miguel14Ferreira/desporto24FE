@@ -2,9 +2,10 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { appTranslate as t } from '../../i18n/i18n.service';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { finalize, retry, timeout } from 'rxjs';
+import { finalize, map, Observable, retry, timeout } from 'rxjs';
 
 import { AppNotification } from '../model/app-notification';
+import { JoinSessionResponse, PendingSessionInvite, SessionService } from '../../services/session.service';
 import { NotificationApiService } from '../../services/notification-api.service';
 import { AuthenticationService } from '../../services/authethication.service';
 
@@ -22,6 +23,7 @@ export class NotificationsComponent implements OnInit {
   });
 
   notifications: AppNotification[] = [];
+  pendingInvites: PendingSessionInvite[] = [];
   unreadCount = 0;
   selected?: AppNotification;
 
@@ -37,6 +39,7 @@ export class NotificationsComponent implements OnInit {
 
   constructor(
     private notificationService: NotificationApiService,
+    private sessionService: SessionService,
     private authenticationService: AuthenticationService,
     private route: ActivatedRoute,
     private router: Router
@@ -49,6 +52,11 @@ export class NotificationsComponent implements OnInit {
   load(): void {
     this.loading = true;
     this.errorMessage = '';
+
+    this.sessionService.pendingInvites().pipe(timeout(10_000)).subscribe({
+      next: invites => this.pendingInvites = invites,
+      error: () => this.pendingInvites = []
+    });
 
     this.notificationService.mine()
       .pipe(
@@ -73,6 +81,7 @@ export class NotificationsComponent implements OnInit {
         },
         error: () => {
           this.notifications = [];
+          this.pendingInvites = [];
           this.updateUnreadCount();
           this.errorMessage = t('feedback.notifications.loadError');
         }
@@ -152,6 +161,49 @@ export class NotificationsComponent implements OnInit {
       });
   }
 
+
+  pendingInviteFor(notification: AppNotification): PendingSessionInvite | undefined {
+    if (notification.type !== 'SESSION_INVITE' || notification.sessionId === null) {
+      return undefined;
+    }
+    return this.pendingInvites.find(invite =>
+      invite.sessionId === notification.sessionId &&
+      invite.inviterUsername.toLowerCase() === notification.relatedUsername?.toLowerCase() &&
+      // Don't present a newer pending invitation as an action on an old notification.
+      Math.abs(Date.parse(invite.createdAt) - Date.parse(notification.createdAt)) < 60_000
+    );
+  }
+
+  respondToInvite(notification: AppNotification, accept: boolean): void {
+    const invite = this.pendingInviteFor(notification);
+    if (!invite || this.actionLoadingId !== null) {
+      return;
+    }
+    this.actionLoadingId = notification.id;
+    this.actionError = '';
+    this.actionSuccess = '';
+    const operation: Observable<JoinSessionResponse | null> = accept
+      ? this.sessionService.acceptInvite(invite.sessionId, invite.id)
+      : this.sessionService.declineInvite(invite.sessionId, invite.id).pipe(map(() => null));
+    operation.pipe(timeout(10_000), finalize(() => this.actionLoadingId = null)).subscribe({
+      next: result => {
+        this.pendingInvites = this.pendingInvites.filter(item => item.id !== invite.id);
+        this.actionSuccess = accept
+          ? ((result && 'state' in result && result.state === 'WAITLISTED')
+              ? 'Convite aceite. Ficaste na lista de espera.'
+              : 'Convite aceite. Estás inscrito na sessão.')
+          : 'Convite recusado.';
+      },
+      error: (error: HttpErrorResponse) => {
+        this.actionError = this.errorFrom(error, 'Não foi possível responder ao convite.');
+        if (error.status === 404 || error.status === 409) {
+          this.sessionService.pendingInvites().pipe(timeout(10_000))
+            .subscribe({ next: invites => this.pendingInvites = invites });
+        }
+      }
+    });
+  }
+
   openSession(notification: AppNotification): void {
     if (notification.sessionId === null) {
       return;
@@ -169,6 +221,15 @@ export class NotificationsComponent implements OnInit {
   }
 
   notificationSubject(notification: AppNotification): string {
+    const joinCommunity = this.joinNotificationCommunityName(notification);
+    if (joinCommunity) {
+      const subjectKeys: Record<string, string> = {
+        COMMUNITY_JOIN_REQUEST: 'notification.communityJoinRequestSubject',
+        COMMUNITY_JOIN_ACCEPTED: 'notification.communityJoinAcceptedSubject',
+        COMMUNITY_JOIN_REJECTED: 'notification.communityJoinRejectedSubject'
+      };
+      return t(subjectKeys[notification.type!] || '', { community: joinCommunity });
+    }
     const community = this.invitedCommunityName(notification);
     return community
       ? t('notification.communityInviteSubject', { community })
@@ -176,6 +237,20 @@ export class NotificationsComponent implements OnInit {
   }
 
   notificationMessage(notification: AppNotification): string {
+    const joinCommunity = this.joinNotificationCommunityName(notification);
+    if (joinCommunity) {
+      if (notification.type === 'COMMUNITY_JOIN_REQUEST' && notification.relatedUsername) {
+        return t('notification.communityJoinRequestMessage', {
+          community: joinCommunity, username: notification.relatedUsername
+        });
+      }
+      if (notification.type === 'COMMUNITY_JOIN_ACCEPTED') {
+        return t('notification.communityJoinAcceptedMessage', { community: joinCommunity });
+      }
+      if (notification.type === 'COMMUNITY_JOIN_REJECTED') {
+        return t('notification.communityJoinRejectedMessage', { community: joinCommunity });
+      }
+    }
     const community = this.invitedCommunityName(notification);
     return community && notification.relatedUsername
       ? t('notification.communityInviteMessage', {
@@ -185,12 +260,42 @@ export class NotificationsComponent implements OnInit {
       : notification.message;
   }
 
+  private joinNotificationCommunityName(notification: AppNotification): string | null {
+    const prefixes: Record<string, string> = {
+      COMMUNITY_JOIN_REQUEST: 'Novo pedido para a comunidade ',
+      COMMUNITY_JOIN_ACCEPTED: 'Pedido aceite na comunidade ',
+      COMMUNITY_JOIN_REJECTED: 'Pedido recusado na comunidade '
+    };
+    const prefix = prefixes[notification.type || ''];
+    return prefix && notification.subject.startsWith(prefix)
+      ? notification.subject.slice(prefix.length).trim() || null
+      : null;
+  }
+
   private invitedCommunityName(notification: AppNotification): string | null {
     // The current API includes the community name in the invitation subject.
     const prefix = 'Convite para a comunidade ';
     return notification.type === 'COMMUNITY_INVITE' && notification.subject.startsWith(prefix)
       ? notification.subject.slice(prefix.length).trim() || null
       : null;
+  }
+
+  openJoinCommunity(notification: AppNotification): void {
+    if (!['COMMUNITY_JOIN_REQUEST', 'COMMUNITY_JOIN_ACCEPTED', 'COMMUNITY_JOIN_REJECTED']
+            .includes(notification.type || '')
+        || typeof notification.communityId !== 'number'
+        || !Number.isSafeInteger(notification.communityId)
+        || notification.communityId <= 0) {
+      return;
+    }
+
+    if (notification.type === 'COMMUNITY_JOIN_REQUEST') {
+      void this.router.navigate(['/menu/communities', notification.communityId], {
+        queryParams: { tab: 'members' }
+      });
+    } else {
+      void this.router.navigate(['/menu/communities', notification.communityId]);
+    }
   }
 
   openChat(notification: AppNotification): void {
@@ -361,8 +466,18 @@ export class NotificationsComponent implements OnInit {
         return t('notification.session');
       case 'SESSION_CANCELLED':
         return t('notification.sessionCancelled');
+      case 'SESSION_POST_GAME_REVIEW':
+        return t('notification.postGameReview');
+      case 'SESSION_INVITE':
+        return 'Convite para sessão';
       case 'COMMUNITY_INVITE':
         return t('notification.communityInvite');
+      case 'COMMUNITY_JOIN_REQUEST':
+        return t('notification.communityJoinRequest');
+      case 'COMMUNITY_JOIN_ACCEPTED':
+        return t('notification.communityJoinAccepted');
+      case 'COMMUNITY_JOIN_REJECTED':
+        return t('notification.communityJoinRejected');
       case 'CHAT_MESSAGE':
         return t('notification.chatMessage');
       default:

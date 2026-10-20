@@ -9,7 +9,7 @@
         </p>
       </div>
 
-      <a class="secondary-action" routerLink="/menu">{{ 'adminHub.back' | t }}</a>
+      <a class="secondary-action jynlo-action jynlo-action--neutral" routerLink="/menu">{{ 'adminHub.back' | t }}</a>
     </header>
 
     <div class="admin-grid">
@@ -46,21 +46,15 @@
       </a>
 
 
-      <div class="admin-card admin-card--planned">
+      <a class="admin-card" routerLink="/menu/admin/statistics">
         <span class="card-icon">◇</span>
         <div>
-          <strong>{{ 'adminHub.audit' | t }}</strong>
-          <p>{{ 'adminHub.auditText' | t }}</p>
-          <span class="planned-badge">{{ 'adminHub.planned' | t }}</span>
+          <strong>{{ 'adminHub.statistics' | t }}</strong>
+          <p>{{ 'adminHub.statisticsText' | t }}</p>
         </div>
-      </div>
+      </a>
     </div>
 
-    <div class="security-note">
-      <strong>{{ 'adminHub.protected' | t }}</strong>
-      <p>
-        {{ 'adminHub.security' | t }}
-      </p>
-    </div>
+
   </div>
 </section>

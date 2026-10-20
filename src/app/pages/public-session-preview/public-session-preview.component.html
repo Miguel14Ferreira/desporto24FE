@@ -1,0 +1,120 @@
+<section class="public-session-page">
+  <div class="public-session-shell">
+    <header class="public-header">
+      <a routerLink="/home" class="brand" [attr.aria-label]="'publicSession.brandHome' | t">Jynlo<span>.</span></a>
+      <a [routerLink]="isAuthenticated ? (returnUrl || '/menu/feed') : '/login'"
+         [queryParams]="!isAuthenticated && returnUrl ? { returnUrl: returnUrl } : null"
+         class="header-login">{{ (isAuthenticated ? 'publicSession.openApp' : 'login.title') | t }}</a>
+    </header>
+
+    @if (loading) {
+      <div class="state-card" role="status">{{ 'publicSession.loading' | t }}</div>
+    } @else if (session; as details) {
+      <main class="session-layout">
+        <div class="session-main">
+          <p class="eyebrow">{{ 'publicSession.eyebrow' | t }}</p>
+          <h1>{{ details.sport || ('publicSession.statusUnknown' | t) }}</h1>
+          <p class="intro">{{ 'publicSession.intro' | t }}</p>
+
+          @if (photoUrl; as photo) {
+            <img class="session-photo" [src]="photo" [alt]="'publicSession.photoAlt' | t:{ sport: details.sport || ('publicSession.statusUnknown' | t) }">
+          }
+
+          <div class="session-facts">
+            <div class="fact">
+              <span class="fact-label">{{ 'common.location' | t }}</span>
+              <strong>{{ details.city || ('publicSession.notSpecified' | t) }}</strong>
+            </div>
+            <div class="fact">
+              <span class="fact-label">{{ 'publicSession.date' | t }}</span>
+              <strong>{{ details.gameDate ? (details.gameDate | date:'dd/MM/yyyy') : ('publicSession.notSpecified' | t) }}</strong>
+            </div>
+            <div class="fact">
+              <span class="fact-label">{{ 'publicSession.time' | t }}</span>
+              <strong>{{ details.gameDate ? (details.gameDate | date:'HH:mm') : ('publicSession.notSpecified' | t) }}</strong>
+            </div>
+            <div class="fact">
+              <span class="fact-label">{{ 'publicSession.price' | t }}</span>
+              <strong>{{ details.priceAmount == null ? ('publicSession.notSpecified' | t) : (details.priceAmount === 0 ? ('publicSession.free' | t) : ((details.priceAmount | number:'1.2-2') + ' €')) }}</strong>
+            </div>
+            @if (details.maxParticipants != null) {
+              <div class="fact">
+                <span class="fact-label">{{ 'publicSession.capacity' | t }}</span>
+                <strong>{{ 'publicSession.participantCount' | t:{ count: details.maxParticipants } }}</strong>
+              </div>
+            }
+            @if (remainingPlaces !== null) {
+              <div class="fact fact-availability" role="status">
+                <span class="fact-label">{{ 'publicSession.availableSpots' | t }}</span>
+                <strong>{{ (remainingPlaces === 0 ? 'publicSession.noSpots' :
+                             remainingPlaces === 1 ? 'publicSession.oneSpot' : 'publicSession.manySpots')
+                             | t:{ count: remainingPlaces } }}</strong>
+              </div>
+            }
+          </div>
+          <p class="privacy-note">{{ 'publicSession.privacyNote' | t }}</p>
+        </div>
+
+        <aside class="join-panel">
+          <span class="status" [class.closed]="!canRequestParticipation">{{ statusKey | t }}</span>
+          @if (canRequestParticipation) {
+            @if (details.status === 'FULL') {
+              <h2>{{ 'publicSession.fullHeading' | t }}</h2>
+              <p>{{ 'publicSession.fullExplanation' | t }}</p>
+            } @else {
+              <h2>{{ 'publicSession.openHeading' | t }}</h2>
+              <p>{{ (isAuthenticated ? 'publicSession.openLoggedIn' : 'publicSession.openGuest') | t }}</p>
+            }
+            @if (isAuthenticated) {
+              <a class="primary-action jynlo-action jynlo-action--primary" [routerLink]="returnUrl" [queryParams]="{ join: 1 }">
+                {{ (details.status === 'FULL' ? 'publicSession.viewWaitlist' : 'publicSession.viewJoin') | t }}
+              </a>
+            } @else {
+              <a class="primary-action jynlo-action jynlo-action--primary" routerLink="/login/registerNewUser" [queryParams]="{ returnUrl: returnUrl }">{{ 'nav.register' | t }}</a>
+            }
+          } @else {
+            <h2>{{ 'publicSession.closedHeading' | t }}</h2>
+            <p>{{ 'publicSession.closedExplanation' | t }}</p>
+            @if (isAuthenticated) {
+              <a class="primary-action jynlo-action jynlo-action--primary" [routerLink]="returnUrl">{{ 'publicSession.viewDetails' | t }}</a>
+            }
+          }
+          @if (!isAuthenticated) {
+            <a class="secondary-action jynlo-action jynlo-action--neutral" routerLink="/login" [queryParams]="{returnUrl: returnUrl}">{{ 'register.haveAccount' | t }}</a>
+          }
+          @if (canRequestParticipation) {
+            <button type="button" class="share-session-action jynlo-action jynlo-action--neutral"
+                    [disabled]="sharingSession" (click)="shareSession()">
+              {{ (sharingSession ? 'publicSession.sharing' : 'publicSession.share') | t }}
+            </button>
+            <a class="secondary-action whatsapp-share-action jynlo-action jynlo-action--neutral"
+               [href]="whatsappShareUrl()" target="_blank" rel="noopener noreferrer">
+              {{ 'publicSession.shareWhatsApp' | t }}
+            </a>
+            @if (shareFeedbackKey) {
+              <p class="share-feedback" role="status">{{ shareFeedbackKey | t }}</p>
+            }
+            @if (manualShareUrl) {
+              <div class="manual-share-link">
+                <label for="public-preview-share-url">{{ 'publicSession.shareLink' | t }}</label>
+                <input id="public-preview-share-url" #shareLinkInput type="text"
+                       [value]="manualShareUrl" readonly
+                       [attr.aria-label]="'publicSession.shareLink' | t">
+                <button class="jynlo-action jynlo-action--neutral" type="button" (click)="shareLinkInput.select()">{{ 'publicSession.selectLink' | t }}</button>
+              </div>
+            }
+          }
+        </aside>
+      </main>
+    } @else {
+      <main class="state-card error-state" role="alert">
+        <h1>{{ 'publicSession.errorTitle' | t }}</h1>
+        <p>{{ errorMessageKey | t }}</p>
+        @if (canRetry) {
+          <button type="button" class="retry-action jynlo-action jynlo-action--neutral" (click)="retryLoad()">{{ 'publicSession.retry' | t }}</button>
+        }
+        <a routerLink="/home">{{ 'publicSession.backHome' | t }}</a>
+      </main>
+    }
+  </div>
+</section>

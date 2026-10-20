@@ -1,16 +1,19 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewChecked, ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { JwtHelperService } from '@auth0/angular-jwt';
-import { finalize, retry, Subscription, timeout } from 'rxjs';
+import { catchError, concatMap, finalize, from, map, mergeMap, of, retry, Subscription, timeout, toArray } from 'rxjs';
 
 import { environment } from 'src/environment/environment';
+import { CommunityService } from '../../services/community.service';
+import { DirectChatService } from '../../services/direct-chat.service';
+import { FriendSummary } from '../model/friend-summary';
 import { SessionDetail } from '../model/session-detail';
 import { appTranslate as t } from '../../i18n/i18n.service';
 import { SessionMessage } from '../model/session-message';
 import { ReliabilitySummary } from '../model/reliability-summary';
 import { SessionParticipant } from '../model/session-participant';
-import { JoinSessionResponse, SessionService, SessionTeamSuggestion } from '../../services/session.service';
+import { JoinSessionResponse, SessionOverallRating, SessionService, SessionTeamSuggestion } from '../../services/session.service';
 import { ReliabilityService } from '../../services/reliability.service';
 import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.service';
 
@@ -21,7 +24,7 @@ import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.s
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false
 })
-export class SessionDetailsComponent implements OnInit, OnDestroy {
+export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChecked {
   private readonly messageDateFormatter = new Intl.DateTimeFormat('pt-PT', {
     dateStyle: 'short',
     timeStyle: 'short'
@@ -43,8 +46,12 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
   participantsLoading = false;
   sessionParticipantsLoading = false;
   attendanceUpdatingId: number | null = null;
+  attendanceBulkUpdating = false;
   removeLoadingId: number | null = null;
   pendingRemovalId: number | null = null;
+  pendingFutureExclusionId: number | null = null;
+  futureExclusionUpdatingId: number | null = null;
+  futureExclusions: Record<number, boolean | null> = {};
   showProblemReport = false;
   selectedProblemType: 'NOT_OCCURRED' | 'VENUE_PROBLEM' | 'OTHER' | '' = '';
   problemDetails = '';
@@ -56,9 +63,34 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
   teamsError = '';
   teamsSuccess = '';
 
+  readonly overallRatingStars = [1, 2, 3, 4, 5];
+  selectedOverallScore: number | null = null;
+  myOverallScore: number | null = null;
+  ratingLoading = false;
+  ratingSaving = false;
+  ratingDismissed = false;
+  ratingCollapsedByExisting = false;
+  private ratingReopenedByUser = false;
+  ratingError = '';
+  ratingSuccess = '';
+  ratingLoadedSessionId: number | null = null;
+
   errorMessage = '';
   actionError = '';
   actionSuccess = '';
+  inviteFriendsOpen = false;
+  inviteFriendsLoading = false;
+  inviteSendingTo: string | null = null;
+  formalInviteSendingTo: string | null = null;
+  formalInvitedFriends = new Set<string>();
+  inviteFriends: FriendSummary[] = [];
+  inviteFeedback = '';
+  inviteError = '';
+  sharingSession = false;
+  creationShareDismissed = false;
+  promotionOpen = false;
+  shareFeedback = '';
+  manualShareUrl = '';
   chatError = '';
   reliabilityError = '';
   attendanceError = '';
@@ -75,26 +107,33 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
 
   private sessionId?: number;
   private currentUsername: string | null = null;
+  private pendingJoinScroll = false;
   private readonly jwtHelper = new JwtHelperService();
   private readonly realtimeSubscriptions = new Subscription();
 
   constructor(
     private route: ActivatedRoute,
     private sessionService: SessionService,
+    private communityService: CommunityService,
+    private directChatService: DirectChatService,
     private reliabilityService: ReliabilityService,
     private realtimeService: DirectChatRealtimeService
   ) {}
 
   ngOnInit(): void {
+    this.pendingJoinScroll = this.route.snapshot.queryParamMap?.get('join') === '1';
+    this.promotionOpen = this.route.snapshot.queryParamMap?.get('promote') === '1';
     this.currentUsername = this.readCurrentUsername();
 
-    const id = Number(this.route.snapshot.paramMap.get('id'));
-    if (!Number.isFinite(id) || id <= 0) {
+    const rawId = this.route.snapshot.paramMap.get('id');
+    const id = rawId && /^[1-9]\d*$/.test(rawId) ? Number(rawId) : NaN;
+    if (!Number.isSafeInteger(id)) {
       this.errorMessage = t('feedback.session.invalid');
       return;
     }
 
     this.sessionId = id;
+    this.restoreRatingDismissal();
     this.loadSession();
     this.realtimeService.connect();
 
@@ -121,12 +160,46 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
     this.realtimeSubscriptions.unsubscribe();
   }
 
-  joinSession(): void {
-    if (!this.session || !this.sessionId || this.actionLoading) {
+  ngAfterViewChecked(): void {
+    if (!this.pendingJoinScroll || this.loading || !this.session) {
+      return;
+    }
+    if (!this.canJoinSession()) {
+      this.pendingJoinScroll = false;
       return;
     }
 
-    if (this.session.privateGame && !this.joinPassword.trim()) {
+    const participation = document.getElementById('session-participation');
+    if (participation) {
+      this.pendingJoinScroll = false;
+      participation.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  scrollToParticipants(): void {
+    if (!this.session?.joined) {
+      return;
+    }
+
+    document.getElementById('session-participants')
+      ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  scrollToParticipation(): void {
+    if (!this.canJoinSession()) {
+      return;
+    }
+
+    document.getElementById('session-participation')
+      ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  joinSession(): void {
+    if (!this.canJoinSession() || !this.sessionId || this.actionLoading) {
+      return;
+    }
+
+    if (this.session!.privateGame && !this.joinPassword.trim()) {
       this.actionError = t('feedback.session.privatePassword');
       this.actionSuccess = '';
       return;
@@ -154,7 +227,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
   }
 
   leaveSession(): void {
-    if (!this.sessionId || this.actionLoading || this.isCreator()) {
+    if (!this.canLeaveSession() || !this.sessionId || this.actionLoading) {
       return;
     }
 
@@ -178,6 +251,207 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
         },
         error: error => {
           this.actionError = this.errorFrom(error, t('feedback.session.leaveError'));
+        }
+      });
+  }
+
+  canReviewPostGame(): boolean {
+    if (!this.session || !this.isCreator()
+        || (this.session.status !== 'OPEN' && this.session.status !== 'FULL')) {
+      return false;
+    }
+    const start = Date.parse(this.session.gameDate);
+    return Number.isFinite(start) && start + (2 * 60 * 60 * 1000) <= Date.now();
+  }
+
+  canRatePostGame(): boolean {
+    if (!this.session?.joined
+      || this.session.status === 'CANCELLED'
+      || this.session.problemType === 'NOT_OCCURRED') {
+      return false;
+    }
+    const kickoff = Date.parse(this.session.gameDate);
+    return Number.isFinite(kickoff)
+      && kickoff + (2 * 60 * 60 * 1000) <= Date.now();
+  }
+
+  loadMyOverallRating(): void {
+    if (!this.sessionId || !this.canRatePostGame()
+      || this.ratingLoading || this.ratingSaving
+      || this.ratingLoadedSessionId === this.sessionId) {
+      return;
+    }
+    const sessionId = this.sessionId;
+    this.ratingLoading = true;
+    this.ratingError = '';
+    this.sessionService.myOverallRating(sessionId)
+      .pipe(timeout(10_000), finalize(() => this.ratingLoading = false))
+      .subscribe({
+        next: rating => {
+          if (this.sessionId !== sessionId) {
+            return;
+          }
+          this.ratingLoadedSessionId = sessionId;
+          this.myOverallScore = rating?.overallScore ?? null;
+          this.selectedOverallScore = this.myOverallScore;
+          // Keep existing ratings collapsed by default, except when the user
+          // explicitly chose to reopen the panel before this response arrived.
+          this.ratingCollapsedByExisting =
+            this.myOverallScore !== null && !this.ratingReopenedByUser;
+        },
+        error: () => {
+          this.ratingError = t('feedback.session.overallRatingLoadError');
+        }
+      });
+  }
+
+  selectOverallScore(score: number): void {
+    if (!this.canRatePostGame() || this.ratingLoading || this.ratingSaving
+      || this.ratingLoadedSessionId !== this.sessionId
+      || !Number.isInteger(score) || score < 1 || score > 5) {
+      return;
+    }
+    this.selectedOverallScore = score;
+    this.ratingError = '';
+    this.ratingSuccess = '';
+  }
+
+  canSaveOverallRating(): boolean {
+    return this.canRatePostGame()
+      && !this.ratingLoading && !this.ratingSaving
+      && this.ratingLoadedSessionId === this.sessionId
+      && this.selectedOverallScore !== null
+      && this.selectedOverallScore >= 1 && this.selectedOverallScore <= 5
+      && this.selectedOverallScore !== this.myOverallScore;
+  }
+
+  saveOverallRating(): void {
+    if (!this.sessionId || !this.canSaveOverallRating() || this.selectedOverallScore === null) {
+      return;
+    }
+    const sessionId = this.sessionId;
+    const wasRated = this.myOverallScore !== null;
+    const score = this.selectedOverallScore;
+    this.ratingSaving = true;
+    this.ratingError = '';
+    this.ratingSuccess = '';
+
+    this.sessionService.rateOverall(sessionId, score)
+      .pipe(timeout(10_000), finalize(() => this.ratingSaving = false))
+      .subscribe({
+        next: (saved: SessionOverallRating) => {
+          if (this.sessionId !== sessionId) {
+            return;
+          }
+          this.myOverallScore = saved.overallScore;
+          this.selectedOverallScore = saved.overallScore;
+          this.ratingLoadedSessionId = sessionId;
+          this.ratingSuccess = t(wasRated
+            ? 'feedback.session.overallRatingUpdated'
+            : 'feedback.session.overallRatingSaved');
+        },
+        error: () => {
+          this.ratingError = t('feedback.session.overallRatingSaveError');
+        }
+      });
+  }
+
+  dismissOverallRating(): void {
+    if (this.ratingSaving) {
+      return;
+    }
+    this.ratingDismissed = true;
+    this.ratingReopenedByUser = false;
+    this.ratingError = '';
+    const key = this.ratingDismissalKey();
+    if (key) {
+      try {
+        localStorage.setItem(key, '1');
+      } catch {
+        // Keep the panel dismissed for this visit if browser storage is unavailable.
+      }
+    }
+  }
+
+  reopenOverallRating(): void {
+    if (!this.canRatePostGame()) {
+      return;
+    }
+    this.ratingDismissed = false;
+    this.ratingCollapsedByExisting = false;
+    this.ratingReopenedByUser = true;
+    const key = this.ratingDismissalKey();
+    if (key) {
+      try {
+        localStorage.removeItem(key);
+      } catch {
+        // Re-opening still works if browser storage is unavailable.
+      }
+    }
+    this.loadMyOverallRating();
+  }
+
+  private restoreRatingDismissal(): void {
+    const key = this.ratingDismissalKey();
+    if (!key) {
+      return;
+    }
+    try {
+      this.ratingDismissed = localStorage.getItem(key) === '1';
+    } catch {
+      this.ratingDismissed = false;
+    }
+  }
+
+  private ratingDismissalKey(): string | null {
+    if (!this.sessionId || !this.currentUsername) {
+      return null;
+    }
+    return 'jynlo.session-rating-dismissed:'
+      + encodeURIComponent(this.currentUsername.toLowerCase()) + ':' + this.sessionId;
+  }
+
+  openPostGameAttendance(): void {
+    if (!this.sessionId || !this.canReviewPostGame() || this.actionLoading) {
+      return;
+    }
+    this.actionLoading = true;
+    this.actionError = '';
+    this.actionSuccess = '';
+
+    this.sessionService.complete(this.sessionId)
+      .pipe(timeout(10_000), finalize(() => this.actionLoading = false))
+      .subscribe({
+        next: () => {
+          this.actionSuccess = t('feedback.session.completed');
+          this.showAttendanceManager = true;
+          this.loadParticipants();
+          this.loadSession(false);
+        },
+        error: error => {
+          this.actionError = this.errorFrom(error, t('feedback.session.completeError'));
+        }
+      });
+  }
+
+  confirmGameDidNotHappen(): void {
+    if (!this.sessionId || !this.canReviewPostGame() || this.actionLoading) {
+      return;
+    }
+    this.actionLoading = true;
+    this.actionError = '';
+    this.actionSuccess = '';
+
+    this.sessionService.reportDidNotOccur(this.sessionId)
+      .pipe(timeout(10_000), finalize(() => this.actionLoading = false))
+      .subscribe({
+        next: () => {
+          this.showAttendanceManager = false;
+          this.actionSuccess = t('sessionDetail.postGameDidNotHappenSaved');
+          this.loadSession(false);
+        },
+        error: error => {
+          this.actionError = this.errorFrom(error, t('feedback.session.problemReportError'));
         }
       });
   }
@@ -274,7 +548,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
   }
 
   loadParticipants(): void {
-    if (!this.sessionId || !this.isCreator() || this.participantsLoading) {
+    if (!this.sessionId || !this.isCreator() || this.participantsLoading || this.attendanceBulkUpdating) {
       return;
     }
 
@@ -288,7 +562,10 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
         finalize(() => this.participantsLoading = false)
       )
       .subscribe({
-        next: participants => this.participants = participants,
+        next: participants => {
+          this.participants = participants;
+          this.loadFutureExclusionStatuses(participants);
+        },
         error: error => {
           this.participants = [];
           this.attendanceError = this.errorFrom(
@@ -300,7 +577,8 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
   }
 
   recordAttendance(participant: SessionParticipant, status: 'ATTENDED' | 'NO_SHOW'): void {
-    if (!this.sessionId || !this.isCreator() || this.attendanceUpdatingId !== null) {
+    if (!this.sessionId || !this.isCreator() || this.attendanceUpdatingId !== null
+      || this.attendanceBulkUpdating || this.futureExclusionUpdatingId !== null) {
       return;
     }
 
@@ -335,6 +613,147 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
       });
   }
 
+  hasRecordedNoShows(): boolean {
+    return this.participants.some(participant => participant.attendanceStatus === 'NO_SHOW');
+  }
+
+  canConfirmPendingAttendance(): boolean {
+    return this.isCreator()
+      && this.canRecordAttendance()
+      && !this.participantsLoading
+      && !this.attendanceBulkUpdating
+      && this.attendanceUpdatingId === null
+      && this.removeLoadingId === null
+      && this.futureExclusionUpdatingId === null
+      && this.participants.some(participant => participant.attendanceStatus === 'PENDING');
+  }
+
+  confirmPendingAttendance(): void {
+    if (!this.sessionId || !this.canConfirmPendingAttendance()) {
+      return;
+    }
+    const pending = this.participants.filter(participant => participant.attendanceStatus === 'PENDING');
+    const sessionId = this.sessionId;
+    this.attendanceBulkUpdating = true;
+    this.attendanceError = '';
+    this.attendanceSuccess = '';
+
+    from(pending).pipe(
+      concatMap(participant => this.reliabilityService.recordAttendance(
+        sessionId, participant.id, 'ATTENDED'
+      ).pipe(
+        timeout(10_000),
+        map(() => {
+          participant.attendanceStatus = 'ATTENDED';
+          return true;
+        }),
+        catchError(() => of(false))
+      )),
+      toArray(),
+      finalize(() => this.attendanceBulkUpdating = false)
+    ).subscribe(results => {
+      const confirmed = results.filter(Boolean).length;
+      if (confirmed > 0) {
+        this.attendanceSuccess = t('feedback.session.bulkAttendanceSuccess', { count: confirmed });
+      }
+      if (confirmed !== pending.length) {
+        this.attendanceError = t('feedback.session.bulkAttendancePartial', {
+          confirmed, total: pending.length
+        });
+      }
+    });
+  }
+
+  private loadFutureExclusionStatuses(participants: SessionParticipant[]): void {
+    if (!this.sessionId || !this.isCreator()) {
+      return;
+    }
+    const sessionId = this.sessionId;
+    this.futureExclusions = {};
+
+    // Bounded concurrency: query only the participants, without a request for every render.
+    from(participants.filter(participant => this.canRemoveParticipant(participant))).pipe(
+      mergeMap(participant => this.sessionService.futureExclusionStatus(sessionId, participant.id).pipe(
+        timeout(10_000),
+        map(response => ({ id: participant.id, excluded: response.excluded as boolean | null })),
+        catchError(() => of({ id: participant.id, excluded: null }))
+      ), 4),
+      toArray()
+    ).subscribe(statuses => {
+      if (this.sessionId !== sessionId) {
+        return;
+      }
+      for (const result of statuses) {
+        this.futureExclusions[result.id] = result.excluded;
+      }
+    });
+  }
+
+  requestFutureExclusion(participant: SessionParticipant): void {
+    if (!this.isCreator() || !this.canRemoveParticipant(participant)
+      || participant.attendanceStatus !== 'NO_SHOW'
+      || this.futureExclusions[participant.id] !== false
+      || this.futureExclusionUpdatingId !== null) {
+      return;
+    }
+    this.pendingFutureExclusionId = participant.id;
+    this.participantManagementError = '';
+    this.participantManagementSuccess = '';
+  }
+
+  cancelFutureExclusion(): void {
+    if (this.futureExclusionUpdatingId === null) {
+      this.pendingFutureExclusionId = null;
+    }
+  }
+
+  confirmFutureExclusion(participant: SessionParticipant): void {
+    if (!this.sessionId || !this.isCreator() || !this.canRemoveParticipant(participant)
+      || participant.attendanceStatus !== 'NO_SHOW'
+      || this.pendingFutureExclusionId !== participant.id
+      || this.futureExclusions[participant.id] !== false
+      || this.futureExclusionUpdatingId !== null || this.attendanceUpdatingId !== null
+      || this.attendanceBulkUpdating || this.removeLoadingId !== null) {
+      return;
+    }
+    this.futureExclusionUpdatingId = participant.id;
+    this.participantManagementError = '';
+    this.sessionService.excludeFromFutureSessions(this.sessionId, participant.id)
+      .pipe(timeout(10_000), finalize(() => this.futureExclusionUpdatingId = null))
+      .subscribe({
+        next: result => {
+          this.futureExclusions[participant.id] = result.excluded;
+          this.pendingFutureExclusionId = null;
+          this.participantManagementSuccess =
+            t('feedback.session.futureExclusionSaved', { username: participant.username });
+        },
+        error: error => this.participantManagementError =
+          this.errorFrom(error, t('feedback.session.futureExclusionError'))
+      });
+  }
+
+  allowFutureSessions(participant: SessionParticipant): void {
+    if (!this.sessionId || !this.isCreator() || !this.canRemoveParticipant(participant)
+      || this.futureExclusions[participant.id] !== true
+      || this.futureExclusionUpdatingId !== null || this.attendanceUpdatingId !== null
+      || this.attendanceBulkUpdating || this.removeLoadingId !== null) {
+      return;
+    }
+    this.futureExclusionUpdatingId = participant.id;
+    this.participantManagementError = '';
+    this.sessionService.allowFutureSessions(this.sessionId, participant.id)
+      .pipe(timeout(10_000), finalize(() => this.futureExclusionUpdatingId = null))
+      .subscribe({
+        next: result => {
+          this.futureExclusions[participant.id] = result.excluded;
+          this.participantManagementSuccess =
+            t('feedback.session.futureExclusionRemoved', { username: participant.username });
+        },
+        error: error => this.participantManagementError =
+          this.errorFrom(error, t('feedback.session.futureExclusionError'))
+      });
+  }
+
   canRemoveParticipant(participant: SessionParticipant): boolean {
     if (!this.session?.creatorUsername) {
       return false;
@@ -344,7 +763,8 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
   }
 
   requestRemoveParticipant(participant: SessionParticipant): void {
-    if (!this.canRemoveParticipant(participant) || this.removeLoadingId !== null) {
+    if (!this.canRemoveParticipant(participant) || this.removeLoadingId !== null
+      || this.attendanceBulkUpdating || this.futureExclusionUpdatingId !== null) {
       return;
     }
 
@@ -367,6 +787,8 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
       || !this.isCreator()
       || !this.canRemoveParticipant(participant)
       || this.removeLoadingId !== null
+      || this.attendanceBulkUpdating
+      || this.futureExclusionUpdatingId !== null
     ) {
       return;
     }
@@ -414,12 +836,12 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
   }
 
   toggleAttendanceManager(): void {
-    if (!this.isCreator() || !this.canRecordAttendance()) {
+    if (!this.isCreator() || !this.canRecordAttendance() || this.attendanceBulkUpdating) {
       return;
     }
 
     this.showAttendanceManager = !this.showAttendanceManager;
-    if (this.showAttendanceManager && this.participants.length === 0) {
+    if (this.showAttendanceManager) {
       this.loadParticipants();
     }
   }
@@ -466,7 +888,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
   sendMessage(): void {
     const body = this.messageBody.trim();
 
-    if (!this.sessionId || !this.canAccessChat() || this.messageSending) {
+    if (!this.sessionId || !this.canSendChat() || this.messageSending) {
       return;
     }
 
@@ -554,6 +976,20 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
     return Boolean(this.session?.joined);
   }
 
+  canSendChat(): boolean {
+    if (!this.canAccessChat() || !this.session
+        || this.session.status === 'COMPLETED'
+        || this.session.status === 'CANCELLED'
+        || this.session.problemType === 'NOT_OCCURRED') {
+      return false;
+    }
+
+    // Mirror the backend chat window; history remains readable after closure.
+    const kickoff = Date.parse(this.session.gameDate);
+    return Number.isFinite(kickoff)
+      && Date.now() < kickoff + (2 * 60 * 60 * 1000);
+  }
+
   isOwnMessage(message: SessionMessage): boolean {
     return Boolean(
       this.currentUsername
@@ -591,6 +1027,88 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
 
     const startTime = new Date(this.session.gameDate).getTime();
     return Number.isFinite(startTime) && startTime <= Date.now();
+  }
+
+  toggleFriendInvites(): void {
+    if (!this.canFindPlayers()) {
+      return;
+    }
+    this.inviteFriendsOpen = !this.inviteFriendsOpen;
+    this.inviteFeedback = '';
+    this.inviteError = '';
+    if (!this.inviteFriendsOpen) {
+      return;
+    }
+    this.inviteFriendsLoading = true;
+    this.communityService.friends()
+      .pipe(timeout(10_000), finalize(() => this.inviteFriendsLoading = false))
+      .subscribe({
+        next: friends => this.inviteFriends = friends.filter(friend =>
+          !friend.chatBlocked && !friend.blockedByMe
+          && friend.username.toLowerCase() !== this.currentUsername?.toLowerCase()
+        ),
+        error: () => this.inviteError = 'Não foi possível carregar os amigos.'
+      });
+  }
+
+  sendFormalSessionInvite(username: string): void {
+    if (!this.sessionId || !this.canFindPlayers() || !this.canShareSession()
+        || this.formalInviteSendingTo || this.formalInvitedFriends.has(username)
+        || !this.inviteFriends.some(friend => friend.username === username)) {
+      return;
+    }
+    this.formalInviteSendingTo = username;
+    this.inviteError = '';
+    this.inviteFeedback = '';
+    this.sessionService.invitePlayer(this.sessionId, username)
+      .pipe(timeout(10_000), finalize(() => this.formalInviteSendingTo = null))
+      .subscribe({
+        next: () => {
+          this.formalInvitedFriends.add(username);
+          this.inviteFeedback = `Convite enviado a @${username}.`;
+        },
+        error: (error: HttpErrorResponse) => {
+          this.inviteError = error.status === 409
+            ? `@${username} já está inscrito, em espera ou tem um convite pendente.`
+            : `Não foi possível convidar @${username}.`;
+        }
+      });
+  }
+
+  sendSessionInvite(username: string): void {
+    if (!this.canFindPlayers() || this.inviteSendingTo || !this.canShareSession()
+        || !this.inviteFriends.some(friend => friend.username === username)) {
+      return;
+    }
+    const url = this.publicShareUrl();
+    if (!url) {
+      return;
+    }
+    this.inviteSendingTo = username;
+    this.inviteFeedback = '';
+    this.inviteError = '';
+    this.directChatService.send(username, `Queres juntar-te ao nosso jogo de ${this.session!.sport}? ${url}`)
+      .pipe(timeout(10_000), finalize(() => this.inviteSendingTo = null))
+      .subscribe({
+        next: () => this.inviteFeedback = `Mensagem enviada a @${username}.`,
+        error: () => this.inviteError = `Não foi possível enviar a mensagem a @${username}.`
+      });
+  }
+
+  missingPlayers(): number {
+    if (!this.session) {
+      return 0;
+    }
+    return Math.max(0, this.session.maxParticipants - this.session.participantCount);
+  }
+
+  canFindPlayers(): boolean {
+    if (!this.session || !this.isCreator() || this.session.privateGame
+        || this.session.status !== 'OPEN' || this.missingPlayers() === 0) {
+      return false;
+    }
+    const start = Date.parse(this.session.gameDate);
+    return Number.isFinite(start) && start > Date.now();
   }
 
   isFull(): boolean {
@@ -679,6 +1197,154 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
 
   hasConfirmedTeams(): boolean {
     return this.confirmedTeams;
+  }
+
+  canPromoteSession(): boolean {
+    const session = this.session;
+    return !!session && this.isCreator() && this.canShareSession()
+      && session.privateGame === false
+      && session.audience !== 'COMMUNITY_ONLY'
+      && (session.status === 'OPEN' || session.status === 'FULL')
+      && Date.parse(session.gameDate) > Date.now();
+  }
+
+  showCreationSharePanel(): boolean {
+    return !this.creationShareDismissed
+      && this.route.snapshot.queryParamMap?.get('created') === '1'
+      && this.canPromoteSession();
+  }
+
+  togglePromotionPanel(): void {
+    if (this.canPromoteSession()) {
+      this.promotionOpen = !this.promotionOpen;
+    }
+  }
+
+  dismissCreationShare(): void {
+    this.creationShareDismissed = true;
+  }
+
+  whatsappShareUrl(): string | null {
+    const url = this.publicShareUrl();
+    if (!url || !this.session || !this.canPromoteSession()) {
+      return null;
+    }
+    const invitation = t('publicSession.whatsappSportCity', {
+      sport: this.session.sport, city: this.session.city
+    });
+    const date = new Date(this.session.gameDate);
+    const when = Number.isFinite(date.getTime())
+      ? '\n' + t('publicSession.shareWhen', {
+          date: new Intl.DateTimeFormat(document.documentElement.lang === 'en' ? 'en-GB' : 'pt-PT', {
+            dateStyle: 'short', timeStyle: 'short'
+          }).format(date)
+        }) : '';
+    return 'https://wa.me/?text=' + encodeURIComponent(invitation + when + '\n' + url);
+  }
+
+  async copyPublicShareLink(): Promise<void> {
+    const url = this.publicShareUrl();
+    if (!url || this.sharingSession) {
+      return;
+    }
+    this.sharingSession = true;
+    this.shareFeedback = '';
+    this.manualShareUrl = '';
+    try {
+      await this.copyShareUrl(url);
+      this.shareFeedback = t('publicSession.linkCopied');
+    } catch {
+      this.manualShareUrl = url;
+      this.shareFeedback = t('publicSession.manualShare');
+    } finally {
+      this.sharingSession = false;
+    }
+  }
+
+  canShareSession(): boolean {
+    const session = this.session;
+    return session?.canSharePublicly === true
+      && Number.isSafeInteger(session.id)
+      && session.id > 0;
+  }
+
+  canSharePostGameMoment(): boolean {
+    return this.canShareSession()
+      && this.session?.status === 'COMPLETED'
+      && (this.session.joined || this.isCreator());
+  }
+
+  publicShareUrl(): string | null {
+    return this.canShareSession()
+      ? new URL('/sessions/' + this.session!.id, window.location.origin).href
+      : null;
+  }
+
+  async shareSession(): Promise<void> {
+    const url = this.publicShareUrl();
+    if (!url || this.sharingSession) {
+      return;
+    }
+
+    this.sharingSession = true;
+    this.shareFeedback = '';
+    this.manualShareUrl = '';
+
+    try {
+      if (typeof navigator.share === 'function') {
+        try {
+          await navigator.share({
+            title: 'Sessão de ' + this.session!.sport + ' na Jynlo',
+            text: 'Vem jogar connosco na Jynlo!',
+            url
+          });
+          this.shareFeedback = 'Partilhado';
+          return;
+        } catch (error) {
+          if (error instanceof Error && error.name === 'AbortError') {
+            return;
+          }
+          // The native share sheet may be unavailable on this device.
+        }
+      }
+
+      await this.copyShareUrl(url);
+      this.shareFeedback = 'Ligação copiada';
+    } catch {
+      this.manualShareUrl = url;
+      this.shareFeedback = 'Não foi possível copiar automaticamente. Seleciona a ligação abaixo.';
+    } finally {
+      this.sharingSession = false;
+    }
+  }
+
+  private copyShareUrl(url: string): Promise<void> {
+    if (!navigator.clipboard?.writeText) {
+      return Promise.reject(new Error('Clipboard unavailable'));
+    }
+    return navigator.clipboard.writeText(url);
+  }
+
+  canLeaveSession(): boolean {
+    const session = this.session;
+    if (!session || !(session.joined || session.waitlisted)
+      || this.isCreator()
+      || (session.status !== 'OPEN' && session.status !== 'FULL')) {
+      return false;
+    }
+
+    const startTime = Date.parse(session.gameDate);
+    return Number.isFinite(startTime) && startTime > Date.now();
+  }
+
+  canJoinSession(): boolean {
+    if (!this.session || this.session.joined || this.session.waitlisted
+      || (this.session.status !== 'OPEN' && this.session.status !== 'FULL')) {
+      return false;
+    }
+
+    const startTime = Date.parse(this.session.gameDate);
+    return Number.isFinite(startTime) && startTime > Date.now();
   }
 
   joinButtonLabel(): string {
@@ -846,6 +1512,9 @@ export class SessionDetailsComponent implements OnInit, OnDestroy {
       .subscribe({
         next: session => {
           this.session = session;
+          if (this.canRatePostGame() && !this.ratingDismissed) {
+            this.loadMyOverallRating();
+          }
 
           if (session.creatorUsername) {
             this.loadCreatorReliability(session.creatorUsername);

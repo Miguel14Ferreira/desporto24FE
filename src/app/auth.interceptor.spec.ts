@@ -18,6 +18,7 @@ describe('AuthInterceptor', () => {
   beforeEach(() => {
     router = jasmine.createSpyObj<Router>('Router', ['navigate']);
     backend = jasmine.createSpyObj<HttpBackend>('HttpBackend', ['handle']);
+    Object.defineProperty(router, 'url', { configurable: true, value: '/menu/events/42?join=1' });
     interceptor = new AuthInterceptor(router, backend);
     localStorage.clear();
   });
@@ -38,6 +39,38 @@ describe('AuthInterceptor', () => {
     } as HttpHandler;
 
     interceptor.intercept(request, next).subscribe(() => done());
+  });
+
+  it('should not refresh the session when Google login returns 401', (done) => {
+    const request = new HttpRequest('POST', '/api/auth/google/login', { credential: 'invalid' });
+    const next = {
+      handle: () => throwError(() => new HttpErrorResponse({ status: 401 }))
+    } as HttpHandler;
+
+    interceptor.intercept(request, next).subscribe({
+      error: error => {
+        expect(error.status).toBe(401);
+        expect(backend.handle).not.toHaveBeenCalled();
+        expect(router.navigate).not.toHaveBeenCalled();
+        done();
+      }
+    });
+  });
+
+  it('should not refresh the session when Google registration returns 401', (done) => {
+    const request = new HttpRequest('POST', '/api/auth/google/register', {});
+    const next = {
+      handle: () => throwError(() => new HttpErrorResponse({ status: 401 }))
+    } as HttpHandler;
+
+    interceptor.intercept(request, next).subscribe({
+      error: error => {
+        expect(error.status).toBe(401);
+        expect(backend.handle).not.toHaveBeenCalled();
+        expect(router.navigate).not.toHaveBeenCalled();
+        done();
+      }
+    });
   });
 
   it('should keep the session on a temporary refresh outage', (done) => {
@@ -76,7 +109,9 @@ describe('AuthInterceptor', () => {
     interceptor.intercept(request, next).subscribe({
       error: () => {
         expect(localStorage.getItem('t')).toBeNull();
-        expect(router.navigate).toHaveBeenCalled();
+        expect(router.navigate).toHaveBeenCalledWith(['/login'], {
+          queryParams: { sessionExpired: '1', returnUrl: '/menu/events/42?join=1' }
+        });
         done();
       }
     });

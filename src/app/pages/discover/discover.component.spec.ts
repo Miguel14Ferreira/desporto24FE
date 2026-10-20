@@ -1,11 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { of, Subject, throwError } from 'rxjs';
 
 import { DiscoverComponent } from './discover.component';
 import { TEST_IMPORTS, TEST_PROVIDERS } from '../../testing/test-providers';
 import { CommunityService } from '../../services/community.service';
 import { SessionService } from '../../services/session.service';
 import { VenueService } from '../../services/venue.service';
+import { CommunityProfile } from '../model/community-profile';
 
 describe('DiscoverComponent', () => {
   let component: DiscoverComponent;
@@ -61,21 +63,672 @@ describe('DiscoverComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should prefill only the sport and ignore legacy profile location', () => {
+  it('prefills sport and locality from the profile and uses both when searching', () => {
     expect(component.sport).toBe('Padel');
-    expect(component.location).toBe('');
-    expect(venueService.search).toHaveBeenCalledWith(undefined, 'Padel');
+    expect(component.location).toBe('Lisboa');
+    expect(venueService.search).toHaveBeenCalledWith('Lisboa', 'Padel');
     expect(sessionService.discover).toHaveBeenCalledWith(
       jasmine.objectContaining({
         sport: 'Padel',
-        city: undefined,
+        city: 'Lisboa',
         availability: 'available'
       })
     );
-    expect(communityService.findProfiles).toHaveBeenCalledWith({
+    expect(communityService.findProfiles).toHaveBeenCalledWith(jasmine.objectContaining({
       sport: 'Padel',
-      location: undefined
+      location: 'Lisboa'
+    }));
+    const locality: HTMLInputElement = fixture.nativeElement.querySelector('input[name="location"]');
+    expect(locality.value).toBe('Lisboa');
+  });
+
+  it('restores sport, locality and player-name search after returning from a profile', () => {
+    const route = TestBed.inject(ActivatedRoute);
+    const previousParams = route.snapshot.queryParamMap;
+    Object.defineProperty(route.snapshot, 'queryParamMap', {
+      configurable: true,
+      value: convertToParamMap({ sport: 'Ténis', city: 'Sintra', player: 'Ana' })
     });
+    try {
+      const player: CommunityProfile = {
+        username: 'ana', fullName: 'Ana Silva', nickname: null,
+        country: 'Portugal', location: 'Porto', favoriteSports: 'Futebol',
+        bio: null, skillLevel: null, availability: null, age: 30,
+        profilePicUrl: null, joinDateDisplay: null
+      };
+      communityService.findProfiles.and.returnValue(of([player]));
+      const page = TestBed.createComponent(DiscoverComponent);
+      page.detectChanges();
+
+      expect(page.componentInstance.sport).toBe('Ténis');
+      expect(page.componentInstance.location).toBe('Sintra');
+      expect(page.componentInstance.playerName).toBe('Ana');
+      expect(page.componentInstance.appliedPlayerName).toBe('Ana');
+      expect(venueService.search).toHaveBeenCalledWith('Sintra', 'Ténis');
+      expect(communityService.findProfiles).toHaveBeenCalledWith(jasmine.objectContaining({ name: 'Ana' }));
+      const link: HTMLAnchorElement = page.nativeElement.querySelector('.person-card');
+      expect(link.getAttribute('href'))
+        .toBe('/menu/perfis/ana?from=discover&sport=T%C3%A9nis&city=Sintra&player=Ana');
+      page.destroy();
+    } finally {
+      Object.defineProperty(route.snapshot, 'queryParamMap', {
+        configurable: true, value: previousParams
+      });
+    }
+  });
+
+  it('keeps explicitly cleared filters instead of repopulating profile suggestions', () => {
+    const route = TestBed.inject(ActivatedRoute);
+    const previousParams = route.snapshot.queryParamMap;
+    Object.defineProperty(route.snapshot, 'queryParamMap', {
+      configurable: true, value: convertToParamMap({ sport: '', city: '', player: '' })
+    });
+    try {
+      const page = TestBed.createComponent(DiscoverComponent);
+      page.detectChanges();
+
+      expect(page.componentInstance.sport).toBe('');
+      expect(page.componentInstance.location).toBe('');
+      expect(page.componentInstance.playerName).toBe('');
+      expect(venueService.search).toHaveBeenCalledWith(undefined, undefined);
+      page.destroy();
+    } finally {
+      Object.defineProperty(route.snapshot, 'queryParamMap', {
+        configurable: true, value: previousParams
+      });
+    }
+  });
+
+  it('keeps manually entered filters if the profile arrives after editing', () => {
+    const delayedProfile = new Subject<CommunityProfile>();
+    communityService.publicProfile.and.returnValue(delayedProfile.asObservable());
+    const page = TestBed.createComponent(DiscoverComponent);
+    page.detectChanges();
+
+    // Simulate the values emitted by the form without waiting for the deliberately pending profile.
+    page.componentInstance.onSportChange('Ténis');
+    page.componentInstance.onLocationChange('Sintra');
+
+    expect(page.componentInstance.sport).toBe('Ténis');
+    expect(page.componentInstance.location).toBe('Sintra');
+
+    delayedProfile.next({
+      username: 'miguel', fullName: 'Miguel', nickname: null,
+      country: 'Portugal', location: 'Lisboa', favoriteSports: 'Padel, Futebol',
+      bio: null, skillLevel: null, availability: null, age: 37,
+      profilePicUrl: null, joinDateDisplay: null
+    });
+    delayedProfile.complete();
+
+    expect(page.componentInstance.sport).toBe('Ténis');
+    expect(page.componentInstance.location).toBe('Sintra');
+    expect(venueService.search).toHaveBeenCalledWith('Sintra', 'Ténis');
+    page.destroy();
+  });
+
+  it('uses only sports from the catalog when suggesting a favorite', () => {
+    communityService.publicProfile.and.returnValue(of({
+      username: 'miguel', fullName: 'Miguel', nickname: null,
+      country: 'Portugal', location: '  Porto  ', favoriteSports: 'Not a sport, pAdEl',
+      bio: null, skillLevel: null, availability: null, age: 37,
+      profilePicUrl: null, joinDateDisplay: null
+    }));
+    const page = TestBed.createComponent(DiscoverComponent);
+    page.detectChanges();
+
+    expect(page.componentInstance.sport).toBe('Padel');
+    expect(page.componentInstance.location).toBe('Porto');
+    expect(venueService.search).toHaveBeenCalledWith('Porto', 'Padel');
+    page.destroy();
+  });
+
+  it('keeps discovery broad when the profile has no preferences', () => {
+    communityService.publicProfile.and.returnValue(of({
+      username: 'miguel', fullName: 'Miguel', nickname: null,
+      country: 'Portugal', location: null, favoriteSports: null,
+      bio: null, skillLevel: null, availability: null, age: 37,
+      profilePicUrl: null, joinDateDisplay: null
+    }));
+    const page = TestBed.createComponent(DiscoverComponent);
+    page.detectChanges();
+
+    expect(page.componentInstance.sport).toBe('');
+    expect(page.componentInstance.location).toBe('');
+    expect(venueService.search).toHaveBeenCalledWith(undefined, undefined);
+    page.destroy();
+  });
+
+  it('searches nearby venues by device position without changing sessions or people', () => {
+    const original = Object.getOwnPropertyDescriptor(navigator, 'geolocation');
+    Object.defineProperty(navigator, 'geolocation', {
+      configurable: true,
+      value: {
+        getCurrentPosition: (success: PositionCallback) =>
+          success({ coords: { latitude: 38.72, longitude: -9.14 } } as unknown as GeolocationPosition)
+      }
+    });
+    try {
+      component.enableNearbyVenues();
+      expect(component.nearbyVenuePosition).toEqual({ latitude: 38.72, longitude: -9.14 });
+      expect(venueService.search).toHaveBeenCalledWith(undefined, 'Padel', 38.72, -9.14, 25);
+      expect(sessionService.discover).toHaveBeenCalledWith(jasmine.objectContaining({
+        city: 'Lisboa', latitude: undefined, radiusKm: undefined, sort: 'date'
+      }));
+      expect(communityService.findProfiles).toHaveBeenCalledWith(jasmine.objectContaining({
+        sport: 'Padel', location: 'Lisboa'
+      }));
+    } finally {
+      if (original) {
+        Object.defineProperty(navigator, 'geolocation', original);
+      } else {
+        delete (navigator as any).geolocation;
+      }
+    }
+  });
+
+  it('updates nearby venue radius and restores city filtering when the location changes', () => {
+    component.nearbyVenuePosition = { latitude: 38.72, longitude: -9.14 };
+    component.changeNearbyVenueRadius(50);
+    expect(venueService.search).toHaveBeenCalledWith(undefined, 'Padel', 38.72, -9.14, 50);
+
+    component.onLocationChange('Sintra');
+    component.search();
+    expect(component.nearbyVenuePosition).toBeNull();
+    expect(venueService.search).toHaveBeenCalledWith('Sintra', 'Padel');
+  });
+
+  it('keeps the normal venue search when location permission is denied', () => {
+    const original = Object.getOwnPropertyDescriptor(navigator, 'geolocation');
+    Object.defineProperty(navigator, 'geolocation', {
+      configurable: true,
+      value: {
+        getCurrentPosition: (_success: PositionCallback, error: PositionErrorCallback) =>
+          error({} as unknown as GeolocationPositionError)
+      }
+    });
+    try {
+      component.enableNearbyVenues();
+      fixture.detectChanges();
+      expect(component.nearbyVenuePosition).toBeNull();
+      expect(component.nearbyVenueError).toBe('unavailable');
+      expect(fixture.nativeElement.querySelector('.discover-nearby--venues [role="alert"]')).not.toBeNull();
+      expect(venueService.search).toHaveBeenCalledWith('Lisboa', 'Padel');
+    } finally {
+      if (original) {
+        Object.defineProperty(navigator, 'geolocation', original);
+      } else {
+        delete (navigator as any).geolocation;
+      }
+    }
+  });
+
+  it('ignores a late venue GPS response after the user edits their locality', () => {
+    const original = Object.getOwnPropertyDescriptor(navigator, 'geolocation');
+    let resolvePosition: PositionCallback | undefined;
+    Object.defineProperty(navigator, 'geolocation', {
+      configurable: true,
+      value: { getCurrentPosition: (success: PositionCallback) => { resolvePosition = success; } }
+    });
+    try {
+      component.enableNearbyVenues();
+      component.onLocationChange('Sintra');
+      resolvePosition?.({ coords: { latitude: 38.72, longitude: -9.14 } } as unknown as GeolocationPosition);
+      expect(component.nearbyVenuePosition).toBeNull();
+      expect(component.locatingVenues).toBeFalse();
+    } finally {
+      if (original) {
+        Object.defineProperty(navigator, 'geolocation', original);
+      } else {
+        delete (navigator as any).geolocation;
+      }
+    }
+  });
+
+  it('uses the requested device position for nearby sessions only', () => {
+    const original = Object.getOwnPropertyDescriptor(navigator, 'geolocation');
+    Object.defineProperty(navigator, 'geolocation', {
+      configurable: true,
+      value: {
+        getCurrentPosition: (success: PositionCallback) => {
+          success({ coords: { latitude: 38.72, longitude: -9.14 } } as unknown as GeolocationPosition);
+        }
+      }
+    });
+    try {
+      component.enableNearbySessions();
+      expect(component.nearbyPosition).toEqual({ latitude: 38.72, longitude: -9.14 });
+      expect(sessionService.discover).toHaveBeenCalledWith(jasmine.objectContaining({
+        sport: 'Padel', city: undefined, latitude: 38.72, longitude: -9.14,
+        radiusKm: 25, sort: 'distance'
+      }));
+      expect(venueService.search).toHaveBeenCalledWith('Lisboa', 'Padel');
+      expect(communityService.findProfiles).toHaveBeenCalledWith(jasmine.objectContaining({ sport: 'Padel', location: 'Lisboa' }));
+    } finally {
+      if (original) {
+        Object.defineProperty(navigator, 'geolocation', original);
+      } else {
+        delete (navigator as any).geolocation;
+      }
+    }
+  });
+
+  it('updates nearby radius and reverts to city search when locality is edited', () => {
+    component.nearbyPosition = { latitude: 38.72, longitude: -9.14 };
+    component.changeNearbyRadius(50);
+    expect(sessionService.discover).toHaveBeenCalledWith(jasmine.objectContaining({
+      radiusKm: 50, sort: 'distance', city: undefined
+    }));
+    component.onLocationChange('Sintra');
+    component.search();
+    expect(component.nearbyPosition).toBeNull();
+    expect(sessionService.discover).toHaveBeenCalledWith(jasmine.objectContaining({
+      city: 'Sintra', latitude: undefined, longitude: undefined,
+      radiusKm: undefined, sort: 'date'
+    }));
+  });
+
+  it('does not enable nearby mode when location permission is denied', () => {
+    const original = Object.getOwnPropertyDescriptor(navigator, 'geolocation');
+    Object.defineProperty(navigator, 'geolocation', {
+      configurable: true,
+      value: { getCurrentPosition: (_success: PositionCallback, error: PositionErrorCallback) => error({} as unknown as GeolocationPositionError) }
+    });
+    try {
+      component.enableNearbySessions();
+      fixture.detectChanges();
+      expect(component.nearbyPosition).toBeNull();
+      expect(component.nearbySessionError).toBe('unavailable');
+      expect(fixture.nativeElement.querySelector('.discover-nearby [role="alert"]')).not.toBeNull();
+      expect(sessionService.discover).not.toHaveBeenCalledWith(jasmine.objectContaining({ sort: 'distance' }));
+    } finally {
+      if (original) {
+        Object.defineProperty(navigator, 'geolocation', original);
+      } else {
+        delete (navigator as any).geolocation;
+      }
+    }
+  });
+
+  it('ignores a late GPS result after the locality was changed', () => {
+    const original = Object.getOwnPropertyDescriptor(navigator, 'geolocation');
+    let resolvePosition: PositionCallback | undefined;
+    Object.defineProperty(navigator, 'geolocation', {
+      configurable: true,
+      value: { getCurrentPosition: (success: PositionCallback) => { resolvePosition = success; } }
+    });
+    try {
+      component.enableNearbySessions();
+      component.onLocationChange('Sintra');
+      resolvePosition?.({ coords: { latitude: 38.72, longitude: -9.14 } } as unknown as GeolocationPosition);
+      expect(component.nearbyPosition).toBeNull();
+      expect(component.locatingSessions).toBeFalse();
+    } finally {
+      if (original) {
+        Object.defineProperty(navigator, 'geolocation', original);
+      } else {
+        delete (navigator as any).geolocation;
+      }
+    }
+  });
+
+  it('offers recruiting players through a public session when no people match', () => {
+    expect(component.people).toEqual([]);
+    fixture.detectChanges();
+
+    const recruit: HTMLAnchorElement | null = fixture.nativeElement.querySelector('.people-empty-recruit');
+    expect(recruit?.getAttribute('href'))
+      .toBe('/menu/createEvent?intent=findPlayers&sport=Padel&city=Lisboa');
+    expect(recruit?.textContent).toContain('Encontrar jogadores');
+  });
+
+  it('passes changed discovery filters to the existing Find Players mode', () => {
+    component.onSportChange('Ténis');
+    component.onLocationChange('Sintra');
+    component.search();
+    fixture.detectChanges();
+
+    let recruit: HTMLAnchorElement | null = fixture.nativeElement.querySelector('.people-empty-recruit');
+    expect(recruit?.getAttribute('href'))
+      .toBe('/menu/createEvent?intent=findPlayers&sport=T%C3%A9nis&city=Sintra');
+
+    component.clear();
+    fixture.detectChanges();
+    recruit = fixture.nativeElement.querySelector('.people-empty-recruit');
+    expect(recruit?.getAttribute('href')).toBe('/menu/createEvent?intent=findPlayers');
+  });
+
+  it('explains unmatched name searches without suggesting a recruiting session', () => {
+    component.playerName = 'Utilizador inexistente';
+    component.searchPlayers();
+    fixture.detectChanges();
+
+    const empty: HTMLElement | null = fixture.nativeElement.querySelector('.people-empty');
+    expect(empty?.textContent).toContain('Não encontrámos nenhum jogador com esse nome');
+    expect(fixture.nativeElement.querySelector('.people-empty-recruit')).toBeNull();
+  });
+
+  it('does not show recruiting CTA when results exist or the player request fails', () => {
+    communityService.findProfiles.and.returnValue(of([{
+      username: 'joao', fullName: 'João', nickname: null,
+      location: 'Lisboa', country: 'Portugal', favoriteSports: 'Padel',
+      bio: null, skillLevel: null, availability: null, age: 25,
+      profilePicUrl: null, joinDateDisplay: null
+    }]));
+    component.search();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.people-empty-recruit')).toBeNull();
+
+    communityService.findProfiles.and.returnValue(throwError(() => new Error('Offline')));
+    component.search();
+    fixture.detectChanges();
+    expect(component.peopleLoadError).toBeTrue();
+    expect(fixture.nativeElement.querySelector('.people-empty-recruit')).toBeNull();
+  });
+
+  it('searches for a player by name without restricting the request to profile defaults', () => {
+    const teammate: CommunityProfile = {
+      username: 'ana', fullName: 'Ana Silva', nickname: null,
+      country: 'Portugal', location: 'Porto', favoriteSports: 'Futebol',
+      bio: null, skillLevel: null, availability: null, age: 30,
+      profilePicUrl: null, joinDateDisplay: null
+    };
+    communityService.findProfiles.and.returnValue(of([teammate]));
+    const venueCalls = venueService.search.calls.count();
+    const sessionCalls = sessionService.discover.calls.count();
+
+    component.playerName = '  Ana  ';
+    component.searchPlayers();
+
+    expect(communityService.findProfiles).toHaveBeenCalledWith(jasmine.objectContaining({ name: 'Ana' }));
+    expect(component.people).toEqual([teammate]);
+    expect(component.topPeople).toEqual([teammate]);
+    expect(component.appliedPlayerName).toBe('Ana');
+    expect(venueService.search.calls.count()).toBe(venueCalls);
+    expect(sessionService.discover.calls.count()).toBe(sessionCalls);
+  });
+
+  it('restores sport and locality filtering after clearing player name', () => {
+    component.playerName = 'Ana';
+    component.searchPlayers();
+    component.clearPlayerName();
+
+    expect(component.playerName).toBe('');
+    expect(component.appliedPlayerName).toBe('');
+    expect(communityService.findProfiles).toHaveBeenCalledWith(jasmine.objectContaining({
+      sport: 'Padel', location: 'Lisboa'
+    }));
+  });
+
+  it('allows name-only player searches when no sport or location is selected', () => {
+    component.clear();
+    component.playerName = 'Miguel';
+    component.searchPlayers();
+
+    expect(communityService.findProfiles).toHaveBeenCalledWith(jasmine.objectContaining({ name: 'Miguel' }));
+  });
+
+  it('expands and collapses suggested players directly in Discover', () => {
+    const players: CommunityProfile[] = Array.from({ length: 6 }, (_, index) => ({
+      username: 'player' + index, fullName: 'Jogador ' + index, nickname: null,
+      country: 'Portugal', location: 'Lisboa', favoriteSports: 'Padel',
+      bio: null, skillLevel: null, availability: null, age: null,
+      profilePicUrl: null, joinDateDisplay: null
+    }));
+    communityService.findProfiles.and.returnValue(of(players));
+    component.search();
+    fixture.detectChanges();
+
+    expect(component.topPeople.length).toBe(4);
+    expect(fixture.nativeElement.querySelectorAll('.person-card').length).toBe(4);
+
+    const toggle = (): HTMLButtonElement => fixture.nativeElement.querySelector('.people-toggle');
+    expect(toggle().textContent).toContain('Ver todos os jogadores');
+    toggle().click();
+    fixture.detectChanges();
+
+    expect(component.topPeople).toEqual(players);
+    expect(fixture.nativeElement.querySelectorAll('.person-card').length).toBe(6);
+    expect(toggle().textContent).toContain('Ver menos');
+
+    toggle().click();
+    fixture.detectChanges();
+    expect(component.topPeople.length).toBe(4);
+    expect(fixture.nativeElement.querySelectorAll('.person-card').length).toBe(4);
+  });
+
+  it('collapses expanded player suggestions on a new general search', () => {
+    communityService.findProfiles.and.returnValue(of(Array.from({ length: 6 }, (_, index) => ({
+      username: 'player' + index, fullName: 'Jogador ' + index,
+      nickname: null, country: 'Portugal', location: 'Lisboa',
+      favoriteSports: 'Padel', bio: null, skillLevel: null,
+      availability: null, age: null, profilePicUrl: null, joinDateDisplay: null
+    } as CommunityProfile))));
+    component.search();
+    component.toggleAllPeople();
+    expect(component.topPeople.length).toBe(6);
+
+    component.onLocationChange('Sintra');
+    component.search();
+    expect(component.showAllPeople).toBeFalse();
+    expect(component.topPeople.length).toBe(4);
+  });
+
+  it('shows every matching name-search result without an expand button', () => {
+    const players: CommunityProfile[] = Array.from({ length: 6 }, (_, index) => ({
+      username: 'ana' + index, fullName: 'Ana ' + index, nickname: null,
+      country: 'Portugal', location: 'Porto', favoriteSports: null,
+      bio: null, skillLevel: null, availability: null, age: null,
+      profilePicUrl: null, joinDateDisplay: null
+    }));
+    communityService.findProfiles.and.returnValue(of(players));
+    component.playerName = 'Ana';
+    component.searchPlayers();
+    fixture.detectChanges();
+
+    expect(component.topPeople).toEqual(players);
+    expect(fixture.nativeElement.querySelectorAll('.person-card').length).toBe(6);
+    expect(fixture.nativeElement.querySelector('.people-toggle')).toBeNull();
+  });
+
+  it('shows all matching players after a name search instead of only four suggestions', () => {
+    const people = Array.from({ length: 6 }, (_, index) => ({
+      username: 'ana' + index, fullName: 'Ana ' + index, nickname: null,
+      country: 'Portugal', location: 'Porto', favoriteSports: null,
+      bio: null, skillLevel: null, availability: null, age: null,
+      profilePicUrl: null, joinDateDisplay: null
+    } as CommunityProfile));
+    communityService.findProfiles.and.returnValue(of(people));
+    component.playerName = 'Ana';
+    component.searchPlayers();
+
+    expect(component.topPeople).toEqual(people);
+    component.clearPlayerName();
+    expect(component.topPeople.length).toBe(4);
+  });
+
+  it('shows a player-only error when name search fails', () => {
+    communityService.findProfiles.and.returnValue(throwError(() => new Error('API unavailable')));
+    component.playerName = 'Ana';
+    component.searchPlayers();
+
+    expect(component.playerSearchError).toBeTrue();
+    expect(component.people).toEqual([]);
+    expect(component.loadingPeople).toBeFalse();
+    expect(component.loadError).toBeFalse();
+  });
+
+  it('carries sport and locality into the full player search', () => {
+    const morePeople = (): HTMLAnchorElement =>
+      fixture.nativeElement.querySelector('a[routerLink="/menu/perfis"], a[href^="/menu/perfis?"]');
+
+    expect(morePeople().getAttribute('href'))
+      .toBe('/menu/perfis?from=discover&sport=Padel&city=Lisboa');
+
+    component.onSportChange('Ténis');
+    component.onLocationChange('Sintra');
+    component.search();
+    fixture.detectChanges();
+    expect(morePeople().getAttribute('href'))
+      .toBe('/menu/perfis?from=discover&sport=T%C3%A9nis&city=Sintra');
+
+    component.clear();
+    fixture.detectChanges();
+    expect(morePeople().getAttribute('href')).toBe('/menu/perfis?from=discover');
+  });
+
+  it('uses name-only filtering in full people search when a name was applied', () => {
+    component.playerName = '  Ana  ';
+    component.searchPlayers();
+    fixture.detectChanges();
+
+    const link: HTMLAnchorElement = fixture.nativeElement.querySelector('a[href^="/menu/perfis?"]');
+    expect(link.getAttribute('href')).toBe('/menu/perfis?from=discover&player=Ana');
+  });
+
+  it('opens discovered people directly in their public profiles', () => {
+    const profile = {
+      username: 'teammate',
+      fullName: 'Teammate',
+      nickname: null,
+      country: 'Portugal',
+      location: 'Lisboa',
+      favoriteSports: 'Padel',
+      bio: null,
+      skillLevel: null,
+      availability: null,
+      age: 28,
+      profilePicUrl: null,
+      joinDateDisplay: null
+    };
+    component.people = [profile];
+    component.topPeopleResults = [profile];
+    component.initialized = true;
+    fixture.detectChanges();
+
+    const link: HTMLAnchorElement | null = fixture.nativeElement.querySelector('.person-card');
+    expect(link?.getAttribute('href'))
+      .toBe('/menu/perfis/teammate?from=discover&sport=Padel&city=Lisboa&player=');
+    expect(link?.textContent).toContain('Teammate');
+    expect(link?.textContent).toContain('Ver perfil e interagir');
+  });
+
+  it('carries the selected sport and locality into venue creation', () => {
+    const addVenueLink = (): HTMLAnchorElement =>
+      fixture.nativeElement.querySelector('a[href^="/menu/venues/new"]');
+
+    // The initial values are suggested by the profile.
+    expect(addVenueLink().getAttribute('href')).toBe('/menu/venues/new?sport=Padel&city=Lisboa');
+
+    component.onSportChange('Ténis');
+    component.onLocationChange('Sintra');
+    fixture.detectChanges();
+    expect(addVenueLink().getAttribute('href')).toBe('/menu/venues/new?sport=T%C3%A9nis&city=Sintra');
+
+    // A cleared discovery search must not forward stale profile preferences.
+    component.clear();
+    fixture.detectChanges();
+    expect(addVenueLink().getAttribute('href')).toBe('/menu/venues/new');
+  });
+
+  it('offers creating a session when no activities match the search', () => {
+    expect(component.initialized).toBeTrue();
+    expect(component.sessions).toEqual([]);
+    fixture.detectChanges();
+
+    const createLink: HTMLAnchorElement | null =
+      fixture.nativeElement.querySelector('.session-empty-create');
+    expect(createLink?.getAttribute('href')).toBe('/menu/createEvent?sport=Padel&city=Lisboa');
+    expect(createLink?.textContent).toContain('Criar uma sessão');
+  });
+
+  it('passes the manually selected sport and locality to session creation', () => {
+    component.onSportChange('Ténis');
+    component.onLocationChange('Sintra');
+    component.search();
+    fixture.detectChanges();
+
+    const link: HTMLAnchorElement | null =
+      fixture.nativeElement.querySelector('.session-empty-create');
+    expect(link?.getAttribute('href')).toBe('/menu/createEvent?sport=T%C3%A9nis&city=Sintra');
+  });
+
+  it('does not add empty sport or locality query parameters to session creation', () => {
+    component.clear();
+    fixture.detectChanges();
+
+    const link: HTMLAnchorElement | null =
+      fixture.nativeElement.querySelector('.session-empty-create');
+    expect(link?.getAttribute('href')).toBe('/menu/createEvent');
+  });
+
+  it('hides the create-session empty action when activities are available', () => {
+    sessionService.discover.and.returnValue(of([{
+      id: 34, sport: 'Padel', city: 'Lisboa',
+      gameDate: '2026-10-20T18:00:00Z', distanceKm: null,
+      participantCount: 2, maxParticipants: 4,
+      priceAmount: 0, privateGame: false, status: 'OPEN'
+    }]));
+    component.search();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.session-empty-create')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.session-card')).not.toBeNull();
+  });
+
+  it('does not suggest creating a session when session discovery fails', () => {
+    sessionService.discover.and.returnValue(
+      throwError(() => new Error('API unavailable'))
+    );
+    component.search();
+    fixture.detectChanges();
+
+    expect(component.sessionsLoadError).toBeTrue();
+    expect(fixture.nativeElement.querySelector('.discover-error')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.session-empty-create')).toBeNull();
+  });
+
+  it('shows a clear participation link with price and distance without joining automatically', () => {
+    const session = {
+      id: 31, sport: 'Padel', city: 'Lisboa',
+      gameDate: '2026-10-20T18:00:00Z', distanceKm: 3.4,
+      participantCount: 2, maxParticipants: 4,
+      priceAmount: 5, privateGame: false, status: 'OPEN'
+    };
+    sessionService.discover.and.returnValue(of([session]));
+    component.search();
+    fixture.detectChanges();
+
+    const link: HTMLAnchorElement | null = fixture.nativeElement.querySelector('.session-card');
+    expect(link?.getAttribute('href')).toBe('/menu/events/31?join=1');
+    expect(link?.textContent).toContain('Ver e participar');
+    expect(link?.textContent).toMatch(/5[,.]00\s*€/);
+    expect(link?.textContent).toMatch(/3[,.]4\s*km/);
+  });
+
+  it('shows participation status instead of an invitation to join again', () => {
+    const baseSession = {
+      id: 32, sport: 'Padel', city: 'Lisboa',
+      gameDate: '2026-10-20T18:00:00Z', distanceKm: null,
+      participantCount: 2, maxParticipants: 4,
+      priceAmount: 0, privateGame: false, status: 'OPEN'
+    };
+
+    sessionService.discover.and.returnValue(of([{ ...baseSession, joinedByViewer: true }]));
+    component.search();
+    fixture.detectChanges();
+    let link: HTMLAnchorElement = fixture.nativeElement.querySelector('.session-card');
+    expect(link.textContent).toContain('Já estás inscrito');
+    expect(link.getAttribute('href')).toBe('/menu/events/32');
+    expect(link.textContent).toContain('Grátis');
+    expect(link.textContent).not.toContain('Ver e participar');
+
+    sessionService.discover.and.returnValue(of([{ ...baseSession, waitlistedByViewer: true }]));
+    component.search();
+    fixture.detectChanges();
+    link = fixture.nativeElement.querySelector('.session-card');
+    expect(link.textContent).toContain('Em lista de espera');
+    expect(link.getAttribute('href')).toBe('/menu/events/32');
+    expect(link.textContent).not.toContain('Ver e participar');
   });
 
   it('should calculate session vacancies', () => {
@@ -99,10 +752,13 @@ describe('DiscoverComponent', () => {
   });
 
   it('expands and collapses venue results', () => {
-    component.venues = Array.from({ length: 6 }, (_, index) => ({
+    const venues = Array.from({ length: 6 }, (_, index) => ({
       id: index + 1
     } as any));
+    venueService.search.and.returnValue(of(venues));
+    component.search();
 
+    expect(component.venues).toEqual(venues);
     expect(component.topVenues.length).toBe(4);
 
     component.toggleAllVenues();
@@ -120,7 +776,7 @@ describe('DiscoverComponent', () => {
     component.search();
 
     expect(venueService.search).toHaveBeenCalled();
-    expect(component.loadError).toBeTrue();
+    expect(component.venuesLoadError).toBeTrue();
     expect(component.initialized).toBeTrue();
   });
 
@@ -129,11 +785,11 @@ describe('DiscoverComponent', () => {
       throwError(() => new Error('API unavailable'))
     );
     component.search();
-    expect(component.loadError).toBeTrue();
+    expect(component.venuesLoadError).toBeTrue();
 
     venueService.search.and.returnValue(of([]));
     component.search();
 
-    expect(component.loadError).toBeFalse();
+    expect(component.venuesLoadError).toBeFalse();
   });
 });

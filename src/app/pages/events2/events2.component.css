@@ -50,6 +50,51 @@ h1 {
   gap: .7rem;
 }
 
+.recruit-context {
+  margin-bottom: 1rem;
+  padding: 1rem 1.15rem;
+  border: 1px solid rgba(0, 230, 118, .35);
+  border-radius: 1rem;
+  background: rgba(0, 230, 118, .08);
+}
+.recruit-context strong { color: #a7f3d0; }
+.recruit-context p { margin: .4rem 0 0; color: #e2e8f0; line-height: 1.5; }
+
+.recruit-availability {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin: 1rem 0;
+}
+.recruit-confirmed, .recruit-remaining {
+  display: grid;
+  gap: .4rem;
+  padding: 1rem;
+  border: 1px solid rgba(255, 255, 255, .12);
+  border-radius: .9rem;
+}
+.recruit-confirmed > span, .recruit-remaining > span {
+  color: #cbd5e1;
+  font-size: .85rem;
+  font-weight: 800;
+}
+.recruit-confirmed small, .recruit-remaining small {
+  color: #cbd5e1;
+  line-height: 1.4;
+}
+.recruit-remaining {
+  background: rgba(0, 230, 118, .08);
+  border-color: rgba(0, 230, 118, .35);
+}
+.recruit-remaining strong {
+  font-size: 2rem;
+  color: #a7f3d0;
+}
+
+@media (max-width: 700px) {
+  .recruit-availability { grid-template-columns: 1fr; }
+}
+
 .create-card,
 .feedback {
   border: 1px solid rgba(255, 255, 255, .12);
@@ -486,3 +531,40 @@ input[type='datetime-local'] {
     grid-template-columns: 1fr;
   }
 }
+
+/* Keep device GPS next to the alternative Google Maps link. */
+.gps-location-option {
+  display: grid;
+  gap: .7rem;
+  padding-top: .8rem;
+  border-top: 1px solid rgba(255,255,255,.1);
+}
+.gps-location-option .header-actions { flex-wrap: wrap; }
+
+.gps-accuracy {
+  margin: .5rem 0 0;
+  color: #cbd5e1;
+  font-size: .82rem;
+  line-height: 1.45;
+}
+
+.gps-accuracy-warning {
+  color: #fde68a;
+}
+
+.gps-accuracy-warning span {
+  display: block;
+  margin-top: .3rem;
+}
+
+/* Community members can start their next game directly in the group's sport. */
+.community-sport-choices { display: grid; gap: .55rem; grid-column: 1 / -1; min-width: 0; }
+.community-sport-label { color: #e2e8f0; font-size: .85rem; font-weight: 700; }
+.community-sport-choices > small { color: #94a3b8; font-size: .78rem; }
+.community-sport-options { display: flex; flex-wrap: wrap; gap: .5rem; }
+.community-sport-option { min-height: 42px; border: 1px solid rgba(255,255,255,.18);
+  border-radius: 999px; background: rgba(255,255,255,.07); color: #e2e8f0;
+  font: inherit; font-size: .84rem; padding: .5rem .85rem; cursor: pointer; }
+.community-sport-option.active { border-color: #4ade80; background: rgba(74,222,128,.14);
+  color: #bbf7d0; }
+.community-sport-option:focus-visible { outline: 2px solid #86efac; outline-offset: 3px; }

@@ -6,36 +6,58 @@ import { Venue } from '../model/venue';
 import { VenueDetailsComponent } from './venue-details.component';
 
 describe('VenueDetailsComponent', () => {
+  const createVenue = (): Venue => ({
+    id: 7,
+    name: 'Pavilhão Central',
+    city: 'Lisboa',
+    address: 'Rua do Desporto',
+    sports: 'Futsal',
+    venueType: 'Pavilhão',
+    ownershipType: 'PUBLIC',
+    surfaceType: 'Madeira',
+    environmentType: 'INDOOR',
+    indoor: true,
+    changingRooms: true,
+    changingRoomTypes: null,
+    toilets: true,
+    lockers: true,
+    showers: null,
+    stands: null,
+    drinkingFountain: null,
+    accessible: true,
+    firstAid: true,
+    aed: true,
+    medicalStation: null,
+    lifeguard: null,
+    staffOnSite: null,
+    securitySurveillance: null,
+    cafe: false,
+    restaurant: null,
+    vendingMachines: null,
+    sportsShop: null,
+    wifi: null,
+    phoneCharging: null,
+    nearbyRadiusMeters: null,
+    nearbyPharmacy: null,
+    nearbyAtm: null,
+    services: null,
+    transport: null,
+    openingHours: null,
+    priceInfo: null,
+    website: null,
+    contact: null,
+    parking: true,
+    freeParking: null,
+    lighting: true,
+    latitude: 38.7223,
+    longitude: -9.1393,
+    informationSource: 'COMMUNITY',
+    createdByUsername: 'miguel',
+    createdAt: '2026-09-29T20:00:00Z'
+  });
+
   it('loads the venue, photos and sport conditions from the route id', () => {
-    const venue: Venue = {
-      id: 7,
-      name: 'Pavilhão Central',
-      city: 'Lisboa',
-      address: 'Rua do Desporto',
-      sports: 'Futsal',
-      venueType: 'Pavilhão',
-      ownershipType: 'PUBLIC',
-      surfaceType: 'Madeira',
-      indoor: true,
-      changingRooms: true,
-      toilets: true,
-      lockers: true,
-      accessible: true,
-      firstAid: true,
-      aed: true,
-      cafe: false,
-      services: null,
-      transport: null,
-      openingHours: null,
-      priceInfo: null,
-      parking: true,
-      lighting: true,
-      latitude: 38.7223,
-      longitude: -9.1393,
-      informationSource: 'COMMUNITY',
-      createdByUsername: 'miguel',
-      createdAt: '2026-09-29T20:00:00Z'
-    };
+    const venue = createVenue();
 
     const route = {
       snapshot: {
@@ -103,35 +125,7 @@ describe('VenueDetailsComponent', () => {
   });
 
   it('marks sport conditions as failed when their loading errors', () => {
-    const venue: Venue = {
-      id: 7,
-      name: 'Pavilhão Central',
-      city: 'Lisboa',
-      address: 'Rua do Desporto',
-      sports: 'Futsal',
-      venueType: 'Pavilhão',
-      ownershipType: 'PUBLIC',
-      surfaceType: 'Madeira',
-      indoor: true,
-      changingRooms: true,
-      toilets: true,
-      lockers: true,
-      accessible: true,
-      firstAid: true,
-      aed: true,
-      cafe: false,
-      services: null,
-      transport: null,
-      openingHours: null,
-      priceInfo: null,
-      parking: true,
-      lighting: true,
-      latitude: 38.7223,
-      longitude: -9.1393,
-      informationSource: 'COMMUNITY',
-      createdByUsername: 'miguel',
-      createdAt: '2026-09-29T20:00:00Z'
-    };
+    const venue = createVenue();
 
     const route = {
       snapshot: {
@@ -167,35 +161,7 @@ describe('VenueDetailsComponent', () => {
   });
 
   it('keeps the page usable when loading photos errors', () => {
-    const venue: Venue = {
-      id: 7,
-      name: 'Pavilhão Central',
-      city: 'Lisboa',
-      address: 'Rua do Desporto',
-      sports: 'Futsal',
-      venueType: 'Pavilhão',
-      ownershipType: 'PUBLIC',
-      surfaceType: 'Madeira',
-      indoor: true,
-      changingRooms: true,
-      toilets: true,
-      lockers: true,
-      accessible: true,
-      firstAid: true,
-      aed: true,
-      cafe: false,
-      services: null,
-      transport: null,
-      openingHours: null,
-      priceInfo: null,
-      parking: true,
-      lighting: true,
-      latitude: 38.7223,
-      longitude: -9.1393,
-      informationSource: 'COMMUNITY',
-      createdByUsername: 'miguel',
-      createdAt: '2026-09-29T20:00:00Z'
-    };
+    const venue = createVenue();
 
     const route = {
       snapshot: {

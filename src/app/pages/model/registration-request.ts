@@ -9,4 +9,6 @@ export interface RegistrationRequest {
   gender: string | null;
   email: string;
   acceptedLegalTerms: boolean;
+  returnSessionId?: number | null;
+  returnCommunityId?: number | null;
 }

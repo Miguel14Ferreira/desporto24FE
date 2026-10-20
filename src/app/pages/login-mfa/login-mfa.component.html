@@ -39,14 +39,14 @@
 
       <button
         type="submit"
-        class="primary-action"
+        class="primary-action jynlo-action jynlo-action--primary"
         [disabled]="confirming || !challengeId || isChallengeExpired()">
         {{ confirming ? ('mfa.confirming' | t) : ('mfa.confirm' | t) }}
       </button>
     </form>
 
     <div class="secondary-actions">
-      <button type="button" (click)="cancel()">{{ 'mfa.back' | t }}</button>
+      <button class="jynlo-action jynlo-action--neutral" type="button" (click)="cancel()">{{ 'mfa.back' | t }}</button>
     </div>
   </div>
 </section>

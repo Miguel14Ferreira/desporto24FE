@@ -18,6 +18,7 @@ import { MySessionsComponent } from './pages/my-sessions/my-sessions.component';
 import { NotificationsComponent } from './pages/notifications/notifications.component';
 import { FriendsComponent } from './pages/friends/friends.component';
 import { AuthenticationGuard } from './guard/authentication.guard';
+import { GuestOnlyGuard } from './guard/guest-only.guard';
 import { AdminGuard } from './guard/admin.guard';
 import { GoogleOnboardingComponent } from './pages/google-onboarding/google-onboarding.component';
 import { NotFoundComponent } from './pages/not-found/not-found.component';
@@ -26,6 +27,7 @@ import { DiscoverComponent } from './pages/discover/discover.component';
 import { VenueDetailsComponent } from './pages/venue-details/venue-details.component';
 import { VenueCreateComponent } from './pages/venue-create/venue-create.component';
 import { LegalPageComponent } from './pages/legal-page/legal-page.component';
+import { PublicSessionPreviewComponent } from './pages/public-session-preview/public-session-preview.component';
 
 const routes: Routes = [
   {path:'', redirectTo:'home',pathMatch:'full'},
@@ -34,6 +36,7 @@ const routes: Routes = [
   {path:'contact',component:ContactComponent},
   {path:'privacy',component:LegalPageComponent,data:{document:'privacy'}},
   {path:'terms',component:LegalPageComponent,data:{document:'terms'}},
+  {path:'sessions/:id',component:PublicSessionPreviewComponent},
   {path:'menu/events/menu',redirectTo:'/menu', pathMatch:'full'},
   {path:'menu/my-sessions',component:MySessionsComponent,canActivate:[AuthenticationGuard]},
   {path:'menu/events/:id',loadChildren:() => import('./pages/session-details/session-details.module').then(m => m.SessionDetailsModule),canActivate:[AuthenticationGuard]},
@@ -44,8 +47,8 @@ const routes: Routes = [
   {path:'menu/events',component:EventsComponent,canActivate:[AuthenticationGuard]},
   {path:'menu/login',redirectTo:'/login', pathMatch:'full'},
   {path:'login',component:LoginComponent},
-  {path:'login/registerNewUser',component:CreateaccountComponent},
-  {path:'login/google/complete-profile',component:GoogleOnboardingComponent},
+  {path:'login/registerNewUser',component:CreateaccountComponent,canActivate:[GuestOnlyGuard]},
+  {path:'login/google/complete-profile',component:GoogleOnboardingComponent,canActivate:[GuestOnlyGuard]},
   {path:'menu/createEvent',loadChildren:() => import('./pages/events2/create-event.module').then(m => m.CreateEventModule),canActivate:[AuthenticationGuard]},
   {path:'menu/createEvent/menu', redirectTo:'menu',pathMatch:'full'},
   {path:'login/registerNewUser/login', redirectTo:'login',pathMatch:'full'},

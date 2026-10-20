@@ -15,9 +15,17 @@
           <span class="venue-source-badge">
             {{ venue.informationSource === 'OFFICIAL'
               ? ('venue.detail.sourceOfficial' | t)
-              : ('venue.detail.sourceCommunity' | t) }}
+              : venue.informationSource === 'OPENSTREETMAP'
+                ? ('venue.detail.sourceOpenStreetMap' | t)
+                : ('venue.detail.sourceCommunity' | t) }}
           </span>
 
+          @if (venue.informationSource === 'OPENSTREETMAP') {
+            <a class="venue-created-by" href="https://www.openstreetmap.org/copyright"
+               target="_blank" rel="noopener noreferrer">
+              {{ 'venue.detail.osmAttribution' | t }}
+            </a>
+          }
           <span class="venue-created-by">
             @if (venue.createdByUsername) {
               {{ 'venue.detail.createdBy' | t }} <strong>@{{ venue.createdByUsername }}</strong> ·
@@ -77,7 +85,7 @@
         } @else if (photosLoadError) {
           <div class="venue-photos-state">
             {{ 'venue.detail.photosError' | t }}
-            <button type="button" (click)="retryPhotos()">{{ 'common.retry' | t }}</button>
+            <button class="jynlo-action jynlo-action--neutral" type="button" (click)="retryPhotos()">{{ 'common.retry' | t }}</button>
           </div>
         } @else if (photos.length === 0) {
           <div class="venue-photos-state">{{ 'venue.detail.photosEmpty' | t }}</div>
@@ -194,7 +202,7 @@
 
           <button
             type="submit"
-            class="venue-sport-condition-submit"
+            class="venue-sport-condition-submit jynlo-action jynlo-action--primary"
             [disabled]="sportConditionSaving || !sportConditionSport.trim() || !sportConditionText.trim()">
             {{ sportConditionSaving
               ? ('venue.detail.sportConditionSaving' | t)
@@ -209,7 +217,7 @@
         } @else if (sportConditionsLoadError) {
           <div class="venue-sport-conditions-state">
             {{ 'venue.detail.sportConditionsError' | t }}
-            <button type="button" (click)="retrySportConditions()">{{ 'common.retry' | t }}</button>
+            <button class="jynlo-action jynlo-action--neutral" type="button" (click)="retrySportConditions()">{{ 'common.retry' | t }}</button>
           </div>
         } @else if (sportConditions.length === 0) {
           <div class="venue-sport-conditions-state">

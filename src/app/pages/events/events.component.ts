@@ -25,7 +25,7 @@ export class EventsComponent implements OnInit {
 
   sport = '';
   city = '';
-  availableOnly = true;
+  availableOnly = false;
   freeOnly = false;
   sort = 'date';
 
@@ -156,8 +156,20 @@ export class EventsComponent implements OnInit {
 
   canJoin(session: SessionSummary): boolean {
     return !session.privateGame
+      && !session.joinedByViewer
+      && !session.waitlistedByViewer
       && this.vacancies(session) > 0
-      && session.status?.toUpperCase() === 'OPEN';
+      && session.status?.toUpperCase() === 'OPEN'
+      && Date.parse(session.gameDate) > Date.now();
+  }
+
+  canJoinWaitlist(session: SessionSummary): boolean {
+    return !session.privateGame
+      && !session.joinedByViewer
+      && !session.waitlistedByViewer
+      && this.vacancies(session) === 0
+      && session.status?.toUpperCase() === 'FULL'
+      && Date.parse(session.gameDate) > Date.now();
   }
 
   toggleAdvancedFilters(): void {
@@ -167,7 +179,7 @@ export class EventsComponent implements OnInit {
   clearFilters(): void {
     this.sport = '';
     this.city = '';
-    this.availableOnly = true;
+    this.availableOnly = false;
     this.freeOnly = false;
     this.fromDateTime = '';
     this.toDateTime = '';

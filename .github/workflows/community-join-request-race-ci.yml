@@ -1,0 +1,19 @@
+name: Validate community join request race guards
+# Manual diagnostic job; pull requests use the consolidated pr-validation.yml.
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  frontend-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Community membership and previous regression tests
+        run: npm test -- --watch=false --browsers=ChromeHeadless --include=src/app/pages/communities/community-join-request-race.spec.ts --include=src/app/pages/communities/community-join-deep-link.spec.ts --include=src/app/pages/communities/community-bulk-approval.spec.ts --include=src/app/pages/communities/community-discovery-action.spec.ts --include=src/app/pages/communities/communities.component.spec.ts
+      - run: npm run build

@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { defer, of, throwError } from 'rxjs';
 
 import { PerfilDataComponent } from './perfil-data.component';
 import { MyProfileService } from '../../services/my-profile.service';
@@ -20,6 +20,10 @@ describe('PerfilDataComponent', () => {
       userId: 'u1',
       username: 'miguel',
       fullName: 'Miguel Ferreira',
+      nickname: null,
+      bio: null,
+      skillLevel: null,
+      availability: null,
       dateOfBirth: null,
       address: null,
       country: 'Portugal',
@@ -99,13 +103,16 @@ describe('PerfilDataComponent', () => {
 
   it('should expose a recoverable error when profile loading keeps failing', () => {
     profileService.get.calls.reset();
-    profileService.get.and.returnValue(
-      throwError(() => new Error('service unavailable'))
-    );
+    let subscriptions = 0;
+    profileService.get.and.returnValue(defer(() => {
+      subscriptions++;
+      return throwError(() => new Error('service unavailable'));
+    }));
 
     component.load();
 
-    expect(profileService.get).toHaveBeenCalledTimes(2);
+    expect(profileService.get).toHaveBeenCalledTimes(1);
+    expect(subscriptions).toBe(2);
     expect(component.loading).toBeFalse();
     expect(component.errorMessage).toBeTruthy();
   });
@@ -113,14 +120,18 @@ describe('PerfilDataComponent', () => {
   it('should recover profile loading after one automatic retry', () => {
     const profile = component.profile!;
     profileService.get.calls.reset();
-    profileService.get.and.returnValues(
-      throwError(() => new Error('temporary failure')),
-      of(profile)
-    );
+    let subscriptions = 0;
+    profileService.get.and.returnValue(defer(() => {
+      subscriptions++;
+      return subscriptions === 1
+        ? throwError(() => new Error('temporary failure'))
+        : of(profile);
+    }));
 
     component.load();
 
-    expect(profileService.get).toHaveBeenCalledTimes(2);
+    expect(profileService.get).toHaveBeenCalledTimes(1);
+    expect(subscriptions).toBe(2);
     expect(component.errorMessage).toBe('');
     expect(component.profile?.username).toBe('miguel');
   });

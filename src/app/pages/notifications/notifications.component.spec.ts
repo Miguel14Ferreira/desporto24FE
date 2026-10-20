@@ -113,6 +113,23 @@ describe('NotificationsComponent', () => {
     fixture.detectChanges();
   });
 
+  it('labels a post-game reminder and links to its session', () => {
+    const reminder = {
+      ...notificationFixture(),
+      type: 'SESSION_POST_GAME_REVIEW',
+      subject: 'Como correu o teu jogo?'
+    };
+    component.selected = reminder;
+    fixture.detectChanges();
+
+    expect(component.typeLabel(reminder)).toBe('Pós-jogo');
+    const action = Array.from(fixture.nativeElement.querySelectorAll('button'))
+      .find((element: any) => element.textContent.includes('Ver pós-jogo')) as HTMLButtonElement;
+    expect(action).toBeDefined();
+    action.click();
+    expect(router.navigate).toHaveBeenCalledWith(['/menu/events', 12]);
+  });
+
   it('should show the community invitation action and open pending invitations', () => {
     const invitation = {
       ...notificationFixture(),
@@ -162,6 +179,81 @@ describe('NotificationsComponent', () => {
       } else {
         localStorage.setItem('d24-language', previousLanguage);
       }
+    }
+  });
+
+  it('opens a new join request notification directly in member management', () => {
+    const joinRequest = {
+      ...notificationFixture(), id: 91, type: 'COMMUNITY_JOIN_REQUEST', communityId: 42,
+      subject: 'Novo pedido para a comunidade Futsal', relatedUsername: 'ana', sessionId: null
+    };
+    component.selected = joinRequest;
+    fixture.detectChanges();
+    const button = Array.from(fixture.nativeElement.querySelectorAll('button'))
+      .find((element: any) => element.textContent.includes('Gerir pedidos de adesão')) as HTMLButtonElement;
+    expect(button).toBeDefined();
+    expect(component.typeLabel(joinRequest)).toBe('Pedido de adesão');
+    expect(component.notificationMessage(joinRequest)).toContain('@ana');
+    button.click();
+    expect(router.navigate).toHaveBeenCalledWith(
+      ['/menu/communities', 42], { queryParams: { tab: 'members' } }
+    );
+  });
+
+  it('opens an accepted community without giving additional permissions', () => {
+    const approved = {
+      ...notificationFixture(), id: 92, type: 'COMMUNITY_JOIN_ACCEPTED', communityId: 42,
+      subject: 'Pedido aceite na comunidade Futsal', sessionId: null
+    };
+    component.selected = approved;
+    fixture.detectChanges();
+    expect(component.typeLabel(approved)).toBe('Adesão aprovada');
+    const button = Array.from(fixture.nativeElement.querySelectorAll('button'))
+      .find((element: any) => element.textContent.includes('Ver comunidade')) as HTMLButtonElement;
+    expect(button).toBeDefined();
+    button.click();
+    expect(router.navigate).toHaveBeenCalledWith(['/menu/communities', 42]);
+  });
+
+  it('handles refused requests without granting access', () => {
+    const refused = {
+      ...notificationFixture(), id: 93, type: 'COMMUNITY_JOIN_REJECTED', communityId: 42,
+      subject: 'Pedido recusado na comunidade Futsal', sessionId: null
+    };
+    component.selected = refused;
+    fixture.detectChanges();
+    expect(component.typeLabel(refused)).toBe('Adesão recusada');
+    component.openJoinCommunity(refused);
+    expect(router.navigate).toHaveBeenCalledWith(['/menu/communities', 42]);
+  });
+
+  it('ignores join notifications without safe community IDs', () => {
+    for (const communityId of [null, undefined, 0, -2, 1.5, Number.MAX_SAFE_INTEGER + 1]) {
+      component.openJoinCommunity({
+        ...notificationFixture(), type: 'COMMUNITY_JOIN_REQUEST', communityId
+      });
+    }
+    component.openJoinCommunity({ ...notificationFixture(), type: 'CHAT_MESSAGE', communityId: 42 });
+    expect(router.navigate).not.toHaveBeenCalled();
+  });
+
+  it('shows new membership notification content in both languages', () => {
+    const previousLanguage = localStorage.getItem('d24-language');
+    const pending = { ...notificationFixture(), type: 'COMMUNITY_JOIN_REQUEST',
+      subject: 'Novo pedido para a comunidade Futsal', relatedUsername: 'ana' };
+    const accepted = { ...notificationFixture(), type: 'COMMUNITY_JOIN_ACCEPTED',
+      subject: 'Pedido aceite na comunidade Futsal' };
+    try {
+      localStorage.setItem('d24-language', 'pt');
+      expect(component.notificationSubject(pending)).toBe('Novo pedido: Futsal');
+      expect(component.notificationSubject(accepted)).toBe('Pedido aprovado: Futsal');
+      localStorage.setItem('d24-language', 'en');
+      expect(component.typeLabel(pending)).toBe('Membership request');
+      expect(component.notificationSubject(pending)).toBe('New request: Futsal');
+      expect(component.notificationMessage(accepted)).toContain('was approved');
+    } finally {
+      if (previousLanguage === null) localStorage.removeItem('d24-language');
+      else localStorage.setItem('d24-language', previousLanguage);
     }
   });
 

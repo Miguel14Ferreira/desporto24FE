@@ -5,6 +5,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { finalize, timeout } from 'rxjs';
 
 import { AuthenticationService } from '../../services/authethication.service';
+import { safeLoginReturnUrl } from '../../shared/safe-login-return-url';
+import { registrationSessionId, registrationCommunityId } from '../../shared/registration-return-url';
 
 declare global {
   interface Window {
@@ -45,10 +47,12 @@ export class LoginComponent implements OnInit, AfterViewInit {
   ) {}
 
   ngOnInit(): void {
-    this.returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') || '/menu/feed';
+    this.returnUrl = safeLoginReturnUrl(this.route.snapshot.queryParamMap.get('returnUrl'));
 
     this.successMessage = sessionStorage.getItem('auth-success-message') || '';
     this.errorMessage = sessionStorage.getItem('auth-error-message') || '';
+    // A failed registration email confirmation should allow resending immediately.
+    this.canResendConfirmation = Boolean(this.errorMessage);
     sessionStorage.removeItem('auth-success-message');
     sessionStorage.removeItem('auth-error-message');
 
@@ -59,6 +63,10 @@ export class LoginComponent implements OnInit, AfterViewInit {
 
   get loginContextKey(): string {
     const path = this.returnUrl.split(/[?#]/)[0];
+    if (registrationSessionId(path) !== null) {
+      return 'login.viewSession';
+    }
+    if (registrationCommunityId(path) !== null) return 'login.viewCommunity';
     return path === '/menu/notifications' || path.startsWith('/menu/notifications/')
       ? 'login.viewRequest'
       : '';
@@ -147,7 +155,9 @@ export class LoginComponent implements OnInit, AfterViewInit {
             sessionStorage.setItem('google-onboarding-email', response.email || '');
             sessionStorage.setItem('google-onboarding-name', response.fullName || '');
             sessionStorage.setItem('google-onboarding-picture', response.pictureUrl || '');
-            this.router.navigate(['/login/google/complete-profile']);
+            this.router.navigate(['/login/google/complete-profile'], {
+              queryParams: { returnUrl: this.returnUrl }
+            });
             return;
           }
 
@@ -258,7 +268,12 @@ export class LoginComponent implements OnInit, AfterViewInit {
     this.resendLoading = true;
     this.successMessage = '';
 
-    this.authenticationService.resendRegistrationConfirmation(username)
+    const sessionId = registrationSessionId(this.returnUrl);
+    const communityId = registrationCommunityId(this.returnUrl);
+    const request = communityId !== null
+      ? this.authenticationService.resendRegistrationConfirmation(username, sessionId, communityId)
+      : this.authenticationService.resendRegistrationConfirmation(username, sessionId);
+    request
       .pipe(timeout(10_000), finalize(() => this.resendLoading = false))
       .subscribe({
         next: response => {

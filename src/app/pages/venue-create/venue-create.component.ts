@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, OnInit, Optional } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ActivatedRoute, Router } from '@angular/router';
 import { finalize, timeout } from 'rxjs';
 
 import { VenueService } from '../../services/venue.service';
@@ -13,8 +14,25 @@ import { CreateVenueRequest, VenueEnvironmentType, VenueOwnershipType } from '..
   styleUrls: ['./venue-create.component.css'],
   standalone: false
 })
-export class VenueCreateComponent {
+export class VenueCreateComponent implements OnInit {
   readonly sportsCatalog = SPORTS_CATALOG;
+  readonly popularSports = ['Futebol', 'Futsal', 'Padel', 'Ténis', 'Basquetebol', 'Natação', 'Voleibol', 'Musculação'];
+  sportSearch = '';
+  showAllSports = false;
+
+  get visibleSports(): readonly string[] {
+    const query = this.normalizeSport(this.sportSearch.trim());
+    if (query) {
+      return this.sportsCatalog.filter(sport => this.normalizeSport(sport).includes(query));
+    }
+    return this.showAllSports
+      ? this.sportsCatalog
+      : this.popularSports.filter(sport => !this.isSportSelected(sport));
+  }
+
+  private normalizeSport(value: string): string {
+    return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase();
+  }
   name = '';
   city = '';
   address = '';
@@ -23,7 +41,6 @@ export class VenueCreateComponent {
   ownershipType: VenueOwnershipType | null = null;
   surfaceType = '';
   environmentType: VenueEnvironmentType = 'OUTDOOR';
-  indoor = false;
   changingRooms = false;
   changingRoomTypes: string[] = [];
   parking = false;
@@ -60,11 +77,94 @@ export class VenueCreateComponent {
   longitude: number | null = null;
   saving = false;
   saveError = false;
+  duplicateVenueError = false;
   validationError = false;
   locating = false;
   locationError = false;
+  mapLink = '';
+  resolvingMapLink = false;
+  mapLinkError = false;
+  mapLinkResolved = false;
+  private mapLinkRequestVersion = 0;
+  private coordinatesFromResolvedMapLink = false;
 
-  constructor(private venueService: VenueService, private router: Router) {}
+  constructor(
+    private venueService: VenueService,
+    private router: Router,
+    @Optional() private route?: ActivatedRoute
+  ) {}
+
+  ngOnInit(): void {
+    const params = this.route?.snapshot.queryParamMap;
+    if (!params) {
+      return;
+    }
+
+    const requestedSport = (params.get('sport') || '').trim();
+    const matchedSport = this.sportsCatalog.find(
+      sport => sport.toLocaleLowerCase('pt') === requestedSport.toLocaleLowerCase('pt')
+    );
+    if (matchedSport) {
+      this.selectedSports = [matchedSport];
+    }
+    this.city = (params.get('city') || '').trim().slice(0, 120);
+  }
+
+  onMapLinkChanged(): void {
+    // A changed Maps link must never silently retain coordinates from the previous link.
+    ++this.mapLinkRequestVersion;
+    if (this.coordinatesFromResolvedMapLink) {
+      this.latitude = null;
+      this.longitude = null;
+      this.coordinatesFromResolvedMapLink = false;
+    }
+    this.mapLinkResolved = false;
+    this.mapLinkError = false;
+    this.resolvingMapLink = false;
+  }
+
+  onManualCoordinatesChanged(): void {
+    // Explicitly edited coordinates belong to the user, not to a Maps URL.
+    ++this.mapLinkRequestVersion;
+    this.coordinatesFromResolvedMapLink = false;
+    this.mapLinkResolved = false;
+    this.resolvingMapLink = false;
+  }
+
+  resolveMapLink(): void {
+    const url = this.mapLink.trim();
+    if (!url || this.resolvingMapLink || this.saving) return;
+    const requestVersion = ++this.mapLinkRequestVersion;
+    this.resolvingMapLink = true;
+    this.mapLinkError = false;
+    this.mapLinkResolved = false;
+    this.venueService.resolveMapLink(url)
+      .pipe(
+        timeout(10_000),
+        finalize(() => {
+          if (requestVersion === this.mapLinkRequestVersion) {
+            this.resolvingMapLink = false;
+          }
+        })
+      )
+      .subscribe({
+        next: result => {
+          if (requestVersion !== this.mapLinkRequestVersion || url !== this.mapLink.trim()) return;
+          if (!Number.isFinite(result.latitude) || !Number.isFinite(result.longitude)
+              || Math.abs(result.latitude) > 90 || Math.abs(result.longitude) > 180) {
+            this.mapLinkError = true;
+            return;
+          }
+          this.latitude = result.latitude;
+          this.longitude = result.longitude;
+          this.coordinatesFromResolvedMapLink = true;
+          this.mapLinkResolved = true;
+        },
+        error: () => {
+          if (requestVersion === this.mapLinkRequestVersion) this.mapLinkError = true;
+        }
+      });
+  }
 
   useCurrentLocation(): void {
     if (!navigator.geolocation || this.locating) {
@@ -78,6 +178,7 @@ export class VenueCreateComponent {
       position => {
         this.latitude = position.coords.latitude;
         this.longitude = position.coords.longitude;
+        this.onManualCoordinatesChanged();
         this.locating = false;
       },
       () => {
@@ -110,7 +211,7 @@ export class VenueCreateComponent {
   save(): void {
     if (this.saving) return;
 
-    if (!this.name.trim() || !this.city.trim() || !this.address.trim()) {
+    if (!this.name.trim() || !this.city.trim() || !this.address.trim() || this.selectedSports.length === 0) {
       this.validationError = true;
       return;
     }
@@ -119,7 +220,7 @@ export class VenueCreateComponent {
 
     const request: CreateVenueRequest = {
       name: this.name.trim(), city: this.city.trim(), address: this.address.trim(),
-      sports: this.selectedSports.length ? this.selectedSports.join(';') : null, venueType: this.valueOrNull(this.venueType),
+      sports: this.selectedSports.join(';'), venueType: this.valueOrNull(this.venueType),
       ownershipType: this.ownershipType, surfaceType: this.valueOrNull(this.surfaceType),
       environmentType: this.environmentType, indoor: this.environmentType !== 'OUTDOOR', changingRooms: this.changingRooms,
       changingRoomTypes: this.changingRooms && this.changingRoomTypes.length ? this.changingRoomTypes.join(';') : null, toilets: this.toilets,
@@ -132,6 +233,7 @@ export class VenueCreateComponent {
 
     this.saving = true;
     this.saveError = false;
+    this.duplicateVenueError = false;
     this.venueService.create(request)
       .pipe(
         timeout(10_000),
@@ -139,7 +241,10 @@ export class VenueCreateComponent {
       )
       .subscribe({
       next: venue => this.router.navigate(['/menu/venues', venue.id]),
-      error: () => this.saveError = true
+      error: (error: HttpErrorResponse) => {
+        this.duplicateVenueError = error.status === 409;
+        this.saveError = !this.duplicateVenueError;
+      }
     });
   }
 

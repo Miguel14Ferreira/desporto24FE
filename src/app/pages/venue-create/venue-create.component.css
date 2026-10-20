@@ -84,6 +84,99 @@
   gap: 12px;
 }
 
+.venue-create-sports-label {
+  margin: 0;
+  font-weight: 700;
+}
+
+.venue-create-sports-search,
+.venue-create-sports-selected {
+  display: grid;
+  gap: 8px;
+}
+
+.venue-create-sports-search label,
+.venue-create-sports-selected strong,
+.venue-create-sports-tools strong {
+  font-weight: 700;
+}
+
+.venue-create-sports-chips,
+.venue-create-sports-tools {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.venue-create-sports-tools {
+  justify-content: space-between;
+}
+
+.venue-create-sports-empty {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #cbd5e1;
+}
+
+.venue-create-sports-error {
+  margin: 0;
+  color: #fecaca;
+}
+
+.venue-create-options[aria-invalid='true'] {
+  outline: 2px solid #f87171;
+  outline-offset: 4px;
+  border-radius: 12px;
+}
+
+.venue-create-amenities {
+  min-width: 0;
+}
+
+.venue-create-amenities-summary {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  cursor: pointer;
+  padding: 14px 16px;
+  border: 1px solid #64748b;
+  border-radius: 12px;
+  background: rgba(148, 163, 184, .09);
+}
+
+.venue-create-amenities-summary::before {
+  content: '▸';
+}
+
+.venue-create-amenities[open] .venue-create-amenities-summary::before {
+  content: '▾';
+}
+
+.venue-create-amenities-summary:focus-visible {
+  outline: 2px solid #7dd3fc;
+  outline-offset: 3px;
+}
+
+.venue-create-amenities-summary span {
+  font-size: .85rem;
+  color: #cbd5e1;
+}
+
+.venue-create-amenities-open,
+.venue-create-amenities[open] .venue-create-amenities-closed {
+  display: none;
+}
+
+.venue-create-amenities[open] .venue-create-amenities-open {
+  display: inline;
+}
+
+.venue-create-amenities > .venue-create-options {
+  margin-top: 14px;
+}
+
 .venue-create-form .venue-create-option {
   display: flex;
   align-items: center;

@@ -22,14 +22,14 @@ describe('LoginMFAComponent', () => {
     auth.confirmMfaChallenge.and.returnValue(of({
       mfaRequired: false,
       challengeId: null,
-      expiresAt: null,
+      challengeExpiresAt: null,
       token: 'jwt-token',
       profile: null
     }));
     auth.resendMfaChallenge.and.returnValue(of({
       mfaRequired: true,
       challengeId: 'challenge-456',
-      expiresAt: '2099-09-26T00:05:00Z',
+      challengeExpiresAt: '2099-09-26T00:05:00Z',
       token: null,
       profile: null
     }));
@@ -81,7 +81,49 @@ describe('LoginMFAComponent', () => {
 
     expect(auth.confirmMfaChallenge).toHaveBeenCalledWith('challenge-123', 'ABC12345');
     expect(auth.saveToken).toHaveBeenCalledWith('jwt-token');
-    expect(router.navigateByUrl).toHaveBeenCalledWith('/menu');
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/menu/feed');
+  });
+
+  it('should resume a shared session after successful MFA', () => {
+    sessionStorage.setItem('mfa-return-url', '/menu/events/42');
+    component.code = 'ABC12345';
+
+    component.confirmCode();
+
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/menu/events/42');
+    expect(sessionStorage.getItem('mfa-return-url')).toBeNull();
+  });
+
+  it('should preserve a shared session when cancelling MFA and returning to login', () => {
+    sessionStorage.setItem('mfa-return-url', '/menu/events/42');
+
+    component.cancel();
+
+    expect(router.navigate).toHaveBeenCalledWith(['/login'], {
+      queryParams: { returnUrl: '/menu/events/42' }
+    });
+    expect(sessionStorage.getItem('mfa-challenge-id')).toBeNull();
+    expect(sessionStorage.getItem('mfa-return-url')).toBeNull();
+  });
+
+  it('should reject an unsafe destination after successful MFA', () => {
+    sessionStorage.setItem('mfa-return-url', 'https://example.com/phishing');
+    component.code = 'ABC12345';
+
+    component.confirmCode();
+
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/menu/feed');
+    expect(sessionStorage.getItem('mfa-return-url')).toBeNull();
+  });
+
+  it('should reject an unsafe destination when cancelling MFA', () => {
+    sessionStorage.setItem('mfa-return-url', '//example.com');
+
+    component.cancel();
+
+    expect(router.navigate).toHaveBeenCalledWith(['/login'], {
+      queryParams: { returnUrl: '/menu/feed' }
+    });
   });
 
   it('should replace the challenge when resending', () => {

@@ -4,6 +4,7 @@ export interface CreateSessionRequest {
   city: string;
   address: string;
   maxParticipants: number;
+  externalConfirmedParticipants?: number;
   priceAmount: number;
   privateGame: boolean;
   password: string | null;

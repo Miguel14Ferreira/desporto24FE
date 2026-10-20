@@ -17,7 +17,8 @@ import { SPORTS_CATALOG } from '../../shared/sports-catalog';
 export class CommunityCreateComponent {
   name = '';
   description = '';
-  sport = '';
+  sports: string[] = [];
+  sportSearch = '';
   visibility: CommunityVisibility = 'PRIVATE';
 
   photo?: File;
@@ -27,6 +28,27 @@ export class CommunityCreateComponent {
 
   saving = false;
   errorMessage = '';
+
+  get sportSuggestions(): string[] {
+    const query = this.sportSearch.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+    if (!query) return [];
+    return this.sportsCatalog.filter(sport =>
+      sport.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().includes(query)
+      && !this.sports.includes(sport)
+    ).slice(0, 8);
+  }
+
+  addSport(sport: string): void {
+    if (this.saving || this.sports.length >= 128 || !this.sportsCatalog.includes(sport)
+        || this.sports.includes(sport)) return;
+    this.sports = [...this.sports, sport];
+    this.sportSearch = '';
+  }
+
+  removeSport(sport: string): void {
+    if (this.saving) return;
+    this.sports = this.sports.filter(value => value !== sport);
+  }
 
   constructor(
     private communityService: CommunityGroupsService,
@@ -44,7 +66,8 @@ export class CommunityCreateComponent {
     this.communityService.create({
       name: this.name.trim(),
       description: this.description.trim() || null,
-      sport: this.sport || null,
+      sport: this.sports[0] || null,
+      sports: [...this.sports],
       visibility: this.visibility
     })
       .pipe(
@@ -62,10 +85,7 @@ export class CommunityCreateComponent {
       )
       .subscribe({
         next: community => {
-          void this.router.navigate(
-            ['/menu/communities'],
-            { queryParams: { community: community.id } }
-          );
+          void this.router.navigate(['/menu/communities', community.id, 'invite']);
         },
         error: error => {
           this.errorMessage =

@@ -4,10 +4,12 @@
 
     <div class="site-nav__links">
       @if (authenticated) {
+        <a class="desktop-primary-link" routerLink="/menu/feed" routerLinkActive="active-link">{{ 'nav.feed' | t }}</a>
         <a routerLink="/menu/discover" routerLinkActive="active-link">{{ 'nav.discover' | t }}</a>
-        <a routerLink="/menu/my-sessions" routerLinkActive="active-link">{{ 'nav.activities' | t }}</a>
-        <a routerLink="/menu/communities" routerLinkActive="active-link">{{ 'nav.communities' | t }}</a>
-        <a routerLink="/menu/friendList" routerLinkActive="active-link">{{ 'nav.messages' | t }}</a>
+        <a class="mobile-only-link" routerLink="/menu/my-sessions" routerLinkActive="active-link">{{ 'nav.activities' | t }}</a>
+        <a class="mobile-only-link" routerLink="/menu/communities" routerLinkActive="active-link">{{ 'nav.communities' | t }}</a>
+        <a class="mobile-only-link" routerLink="/menu/friendList" routerLinkActive="active-link">{{ 'nav.messages' | t }}</a>
+        <a class="desktop-primary-link nav-create-action jynlo-action jynlo-action--accent" routerLink="/menu/createEvent" routerLinkActive="active-link">{{ 'feed.createSession' | t }}</a>
         <a class="notification-link" routerLink="/menu/notifications" routerLinkActive="active-link">
           {{ 'menu.notifications' | t }}
           @if (unreadNotifications > 0) {
@@ -16,9 +18,12 @@
         </a>
 
         <details class="account-menu">
-          <summary>Menu</summary>
+          <summary class="jynlo-action jynlo-action--neutral"><span aria-hidden="true">☰</span> Menu</summary>
           <div class="account-menu__panel">
-            <a routerLink="/menu/feed" routerLinkActive="active-link" (click)="closeAccountMenu()">{{ 'nav.feed' | t }}</a>
+            <a class="mobile-only-link" routerLink="/menu/feed" routerLinkActive="active-link" (click)="closeAccountMenu()">{{ 'nav.feed' | t }}</a>
+            <a class="desktop-primary-link" routerLink="/menu/my-sessions" routerLinkActive="active-link" (click)="closeAccountMenu()">{{ 'nav.activities' | t }}</a>
+            <a class="desktop-primary-link" routerLink="/menu/communities" routerLinkActive="active-link" (click)="closeAccountMenu()">{{ 'nav.communities' | t }}</a>
+            <a class="desktop-primary-link" routerLink="/menu/friendList" routerLinkActive="active-link" (click)="closeAccountMenu()">{{ 'nav.messages' | t }}</a>
             <a routerLink="/menu/dadosPerfil" routerLinkActive="active-link" (click)="closeAccountMenu()">{{ 'nav.profile' | t }}</a>
             @if (admin) {
               <a routerLink="/menu/admin" routerLinkActive="active-link" (click)="closeAccountMenu()">{{ 'admin.eyebrow' | t }}</a>
@@ -28,7 +33,7 @@
               <span>/</span>
               <button type="button" [class.active-language]="i18n.currentLanguage === 'en'" (click)="setLanguage('en')">EN</button>
             </div>
-            <button type="button" class="logout-action" [disabled]="loggingOut" (click)="logout()">
+            <button type="button" class="logout-action jynlo-action jynlo-action--danger" [disabled]="loggingOut" (click)="logout()">
               {{ loggingOut ? ('menu.loggingOut' | t) : ('menu.logout' | t) }}
             </button>
           </div>
@@ -58,8 +63,8 @@
       }
 
       @if (!authenticated) {
-        <a class="register-link" routerLink="/login/registerNewUser">{{ 'nav.register' | t }}</a>
-        <a class="login-link" routerLink="/login" routerLinkActive="active-link">{{ 'nav.login' | t }}</a>
+        <a class="register-link jynlo-action jynlo-action--accent" routerLink="/login/registerNewUser">{{ 'nav.register' | t }}</a>
+        <a class="login-link jynlo-action jynlo-action--neutral" routerLink="/login" routerLinkActive="active-link">{{ 'nav.login' | t }}</a>
       }
     </div>
   </div>

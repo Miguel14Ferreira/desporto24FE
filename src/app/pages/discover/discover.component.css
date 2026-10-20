@@ -227,14 +227,49 @@
   gap: .7rem;
 }
 
-.session-side { display: grid; flex: 0 0 auto; justify-items: end; }
+.session-side { display: grid; flex: 0 0 auto; justify-items: end; gap: .1rem; }
 .session-side strong { color: #7dd3fc; font-size: 1.15rem; }
+
+.session-card .session-summary-meta {
+  margin-top: .2rem;
+  color: #cbd5e1;
+}
+
+.session-card .session-entry-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  margin-top: .35rem;
+  padding: .3rem .5rem;
+  border-radius: .6rem;
+  border: 1px solid rgba(125,211,252,.28);
+  background: rgba(125,211,252,.09);
+  color: #bae6fd;
+  font-size: .72rem;
+  font-weight: 800;
+}
+
+.session-card .session-entry-hint--member {
+  border-color: rgba(74,222,128,.24);
+  background: rgba(74,222,128,.08);
+  color: #bbf7d0;
+}
 
 .person-card {
   display: grid;
   grid-template-columns: auto minmax(0,1fr);
   align-items: center;
   gap: .6rem;
+}
+
+.person-card .person-entry-hint {
+  margin-top: .3rem;
+  color: #bae6fd;
+  font-weight: 800;
+}
+
+.person-card .person-entry-hint span {
+  color: inherit;
 }
 
 .person-avatar {
@@ -262,6 +297,22 @@
   color: #64748b;
   font-size: .8rem;
   line-height: 1.45;
+}
+
+.session-empty .session-empty-create,
+.people-empty .people-empty-recruit {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: .4rem;
+  margin: .65rem auto 0;
+  text-decoration: none;
+  white-space: normal;
+}
+
+.session-empty .session-empty-create span,
+.people-empty .people-empty-recruit span {
+  color: inherit;
 }
 
 .pillar-action {
@@ -297,6 +348,87 @@ button.pillar-action {
 }
 
 .discover-flow b { color: #38bdf8; }
+
+.discover-nearby {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .5rem;
+  margin: .6rem 0 1rem;
+}
+
+.discover-nearby label {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  font-size: .8rem;
+  color: #cbd5e1;
+}
+
+.discover-nearby select {
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: .55rem;
+  padding: .4rem;
+  background: #0f172a;
+  color: #f8fafc;
+}
+
+.discover-nearby small {
+  flex-basis: 100%;
+  color: #94a3b8;
+  line-height: 1.4;
+}
+
+.discover-nearby p {
+  flex-basis: 100%;
+  margin: 0;
+  color: #fecaca;
+  font-size: .8rem;
+}
+
+.discover-people-search {
+  display: grid;
+  gap: .45rem;
+  margin: .6rem 0 1rem;
+}
+
+.discover-people-search > label {
+  font-size: .8rem;
+  font-weight: 700;
+  color: #cbd5e1;
+}
+
+.discover-people-search-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+}
+
+.discover-people-search-controls input {
+  flex: 1 1 130px;
+  min-width: 0;
+  padding: .6rem .7rem;
+  border-radius: .7rem;
+  border: 1px solid rgba(255,255,255,.16);
+  background: rgba(255,255,255,.055);
+  color: #f8fafc;
+  font: inherit;
+}
+
+.discover-people-search-controls button {
+  flex: 0 0 auto;
+}
+
+.discover-people-search small {
+  color: #94a3b8;
+  line-height: 1.4;
+}
+
+.discover-people-search p {
+  margin: 0;
+  color: #fecaca;
+  font-size: .8rem;
+}
 
 @media (max-width: 920px) {
   .discovery-grid { grid-template-columns: 1fr; }
@@ -353,4 +485,12 @@ button.pillar-action {
   .discover-error button {
     width: 100%;
   }
+}
+
+.person-avatar img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  border-radius: inherit;
 }

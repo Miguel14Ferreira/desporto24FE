@@ -20,6 +20,7 @@ export interface CommunitySearchPresentation {
   name: string;
   description: string | null;
   sport: string | null;
+  sports?: string[];
   photoUrl: string | null;
   visibility: CommunityVisibility;
 }
@@ -37,6 +38,88 @@ export interface CommunityJoinRequest {
   requesterUsername: string;
   status: 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'CANCELLED';
   createdAt: string;
+}
+
+
+export interface HistoricalStandingRow {
+  position: number;
+  name: string;
+  played: number | null;
+  wins: number | null;
+  draws: number | null;
+  losses: number | null;
+  points: number;
+  goalsFor: number | null;
+  goalsAgainst: number | null;
+}
+
+export interface HistoricalStandingPreview {
+  sheetName: string;
+  sourceRows: number;
+  acceptedRows: number;
+  duplicateRows: number;
+  warnings: string[];
+  rows: HistoricalStandingRow[];
+}
+
+export interface HistoricalStandingSummary {
+  id: number;
+  title: string;
+  entryType: 'INDIVIDUAL' | 'TEAM';
+  seasonId: number | null;
+  sourceFilename: string;
+  createdAt: string;
+}
+
+export interface HistoricalStandingArchive extends HistoricalStandingSummary {
+  rows: HistoricalStandingRow[];
+}
+
+export interface HistoricalMatchPreview {
+  sheetName: string;
+  sourceRows: number;
+  acceptedRows: number;
+  potentialDuplicates: number;
+  warnings: string[];
+  rows: Array<{
+    sourceRow: number;
+    home: string;
+    away: string;
+    homeScore: number;
+    awayScore: number;
+    sourceDate: string;
+    sourceRound: string;
+    potentialDuplicate: boolean;
+  }>;
+}
+
+
+export interface HistoricalMatchArchiveSummary {
+  id: number;
+  title: string;
+  entryType: 'INDIVIDUAL' | 'TEAM';
+  sourceFilename: string;
+  createdAt: string;
+}
+
+export interface HistoricalMatchArchive extends HistoricalMatchArchiveSummary {
+  rows: HistoricalMatchPreview['rows'];
+}
+
+
+export interface HistoricalPlayerCandidate {
+  playerId: number;
+  historicalName: string;
+  linkedUsername: string | null;
+  linkStatus: 'UNLINKED' | 'PENDING' | 'ACCEPTED';
+}
+
+export interface HistoricalPlayerLink {
+  id: number;
+  playerId: number;
+  historicalName: string;
+  targetUsername: string;
+  status: 'PENDING' | 'ACCEPTED' | 'REJECTED';
 }
 
 @Injectable({ providedIn: 'root' })
@@ -100,9 +183,22 @@ export class CommunityGroupsService {
     name: string;
     description: string | null;
     sport: string | null;
+    sports?: string[];
     visibility: CommunityVisibility;
   }): Observable<CommunityGroup> {
     return this.http.post<CommunityGroup>(this.url, request);
+  }
+
+  updateFeatures(id: number, request: {
+    rankingsEnabled: boolean;
+    individualTournamentsEnabled: boolean;
+    teamTournamentsEnabled: boolean;
+  }): Observable<CommunityGroup> {
+    return this.http.put<CommunityGroup>(this.url + '/' + id + '/features', request);
+  }
+
+  updateSports(id: number, sports: string[]): Observable<CommunityGroup> {
+    return this.http.put<CommunityGroup>(this.url + '/' + id + '/sports', { sports });
   }
 
   sessions(id: number): Observable<SessionSummary[]> {
@@ -126,6 +222,25 @@ export class CommunityGroupsService {
     return this.http.get<CommunityCompetitionOverview>(
       this.url + '/' + id + '/competition' + suffix
     );
+  }
+
+  historicalPlayerCandidates(id: number): Observable<HistoricalPlayerCandidate[]> {
+    return this.http.get<HistoricalPlayerCandidate[]>(this.url + '/' + id + '/competition/historical-players');
+  }
+
+  claimHistoricalPlayer(id: number, playerId: number): Observable<HistoricalPlayerLink> {
+    return this.http.post<HistoricalPlayerLink>(
+      this.url + '/' + id + '/competition/historical-player-links/claim', { playerId });
+  }
+
+  myHistoricalClaims(id: number): Observable<HistoricalPlayerLink[]> {
+    return this.http.get<HistoricalPlayerLink[]>(
+      this.url + '/' + id + '/competition/historical-player-links/my-claims');
+  }
+
+  releaseHistoricalClaim(id: number, linkId: number): Observable<void> {
+    return this.http.delete<void>(
+      this.url + '/' + id + '/competition/historical-player-links/my-claims/' + linkId);
   }
 
   importPreview(id: number, file: File): Observable<{
@@ -174,6 +289,67 @@ export class CommunityGroupsService {
     return this.http.post<any>(this.url + '/' + id + '/competition/import/rounds/final-plan', formData);
   }
 
+  previewHistoricalMatches(id: number, file: File, mapping: unknown): Observable<HistoricalMatchPreview> {
+    return this.http.post<HistoricalMatchPreview>(
+      this.url + '/' + id + '/competition/import/matches/preview',
+      this.importForm(file, mapping)
+    );
+  }
+
+  confirmHistoricalMatches(id: number, file: File, mapping: unknown, context: {
+    title: string;
+    entryType: 'INDIVIDUAL' | 'TEAM';
+  }): Observable<HistoricalMatchArchive> {
+    const form = this.importForm(file, mapping);
+    form.append('context', new Blob([JSON.stringify(context)], { type: 'application/json' }));
+    return this.http.post<HistoricalMatchArchive>(
+      this.url + '/' + id + '/competition/import/matches/confirm', form
+    );
+  }
+
+  listHistoricalMatches(id: number): Observable<HistoricalMatchArchiveSummary[]> {
+    return this.http.get<HistoricalMatchArchiveSummary[]>(
+      this.url + '/' + id + '/competition/match-archives'
+    );
+  }
+
+  historicalMatchDetails(id: number, archiveId: number): Observable<HistoricalMatchArchive> {
+    return this.http.get<HistoricalMatchArchive>(
+      this.url + '/' + id + '/competition/match-archives/' + archiveId
+    );
+  }
+
+  previewHistoricalStandings(id: number, file: File, mapping: unknown): Observable<HistoricalStandingPreview> {
+    return this.http.post<HistoricalStandingPreview>(
+      this.url + '/' + id + '/competition/import/standings/preview',
+      this.importForm(file, mapping)
+    );
+  }
+
+  confirmHistoricalStandings(id: number, file: File, mapping: unknown, context: {
+    title: string;
+    entryType: 'INDIVIDUAL' | 'TEAM';
+    seasonId: number | null;
+  }): Observable<HistoricalStandingArchive> {
+    const form = this.importForm(file, mapping);
+    form.append('context', new Blob([JSON.stringify(context)], { type: 'application/json' }));
+    return this.http.post<HistoricalStandingArchive>(
+      this.url + '/' + id + '/competition/import/standings/confirm', form
+    );
+  }
+
+  listHistoricalStandings(id: number): Observable<HistoricalStandingSummary[]> {
+    return this.http.get<HistoricalStandingSummary[]>(
+      this.url + '/' + id + '/competition/standings-archives'
+    );
+  }
+
+  historicalStandingDetails(id: number, archiveId: number): Observable<HistoricalStandingArchive> {
+    return this.http.get<HistoricalStandingArchive>(
+      this.url + '/' + id + '/competition/standings-archives/' + archiveId
+    );
+  }
+
   private importForm(file: File, mapping: unknown): FormData {
     const formData = new FormData();
     formData.append('file', file);
@@ -202,9 +378,9 @@ export class CommunityGroupsService {
     id: number,
     request: {
       rankingsEnabled: boolean;
-      winPoints: number;
-      drawPoints: number;
-      lossPoints: number;
+      winPoints: number | null;
+      drawPoints: number | null;
+      lossPoints: number | null;
     }
   ): Observable<CommunityCompetitionSettings> {
     return this.http.put<CommunityCompetitionSettings>(

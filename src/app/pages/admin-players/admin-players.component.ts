@@ -1,7 +1,14 @@
 import { ChangeDetectionStrategy, Component, OnDestroy } from '@angular/core';
 import { finalize, Subscription, timeout } from 'rxjs';
 import { AuthenticationService } from '../../services/authethication.service';
-import { AdminPlayer, AdminPlayersService } from '../../services/admin-players.service';
+import { AdminPlayer, AdminPlayersService, ModerationAction } from '../../services/admin-players.service';
+
+interface PendingModeration {
+  id: number;
+  username: string;
+  action: ModerationAction;
+  expectedSuspended: boolean;
+}
 
 @Component({
   selector: 'app-admin-players',
@@ -19,11 +26,22 @@ export class AdminPlayersComponent implements OnDestroy {
   loading = false;
   searched = false;
   errorKey = '';
+  expandedPlayerId: number | null = null;
+
   pendingRole: { id: number; username: string; role: 'ROLE_ADMIN' | 'ROLE_USER'; expectedRole: string } | null = null;
   changingRole = false;
   roleErrorKey = '';
   roleSuccessName = '';
   private roleRequest?: Subscription;
+
+  pendingModeration: PendingModeration | null = null;
+  moderationReason = '';
+  deleteConfirmation = '';
+  moderating = false;
+  moderationErrorKey = '';
+  moderationSuccessKey = '';
+  moderationSuccessName = '';
+  private moderationRequest?: Subscription;
   private request?: Subscription;
 
   constructor(private service: AdminPlayersService, private auth: AuthenticationService) {}
@@ -32,15 +50,49 @@ export class AdminPlayersComponent implements OnDestroy {
     return this.auth.hasAnyRole('ROLE_SUPER_ADMIN');
   }
 
+  get canModerate(): boolean {
+    return this.auth.hasAnyRole('ROLE_ADMIN', 'ROLE_SUPER_ADMIN');
+  }
+
+  get working(): boolean {
+    return this.changingRole || this.moderating;
+  }
+
   canChangeRole(player: AdminPlayer): boolean {
     return this.canManageRoles && (
       player.role === 'ROLE_ADMIN'
-      || (player.role === 'ROLE_USER' && player.enabled === true && player.notLocked === true)
+      || (player.role === 'ROLE_USER' && player.enabled === true && player.notLocked === true
+        && !player.moderationSuspendedAt)
     );
   }
 
+  canSuspend(player: AdminPlayer): boolean {
+    return this.canModerate && player.role === 'ROLE_USER'
+      && player.enabled === true && player.notLocked === true && !player.moderationSuspendedAt;
+  }
+
+  canReinstate(player: AdminPlayer): boolean {
+    return this.canModerate && player.role === 'ROLE_USER'
+      && player.enabled === true && !!player.moderationSuspendedAt;
+  }
+
+  canDelete(player: AdminPlayer): boolean {
+    return this.canManageRoles && player.role === 'ROLE_USER';
+  }
+
+  canManagePlayer(player: AdminPlayer): boolean {
+    return this.canChangeRole(player) || this.canSuspend(player)
+      || this.canReinstate(player) || this.canDelete(player);
+  }
+
+  toggleActions(player: AdminPlayer): void {
+    if (this.working || !this.canManagePlayer(player)) return;
+    this.expandedPlayerId = this.expandedPlayerId === player.id ? null : player.id;
+  }
+
   beginRoleChange(player: AdminPlayer): void {
-    if (this.changingRole || this.loading || !this.canChangeRole(player)) return;
+    if (this.working || this.loading || !this.canChangeRole(player)) return;
+    this.pendingModeration = null;
     this.roleErrorKey = '';
     this.roleSuccessName = '';
     this.pendingRole = {
@@ -56,7 +108,7 @@ export class AdminPlayersComponent implements OnDestroy {
 
   confirmRoleChange(): void {
     const pending = this.pendingRole;
-    if (!pending || this.changingRole || !this.canManageRoles) return;
+    if (!pending || this.working || !this.canManageRoles) return;
     this.changingRole = true;
     this.roleErrorKey = '';
     this.roleRequest = this.service.changeRole(pending.id, pending.role, pending.expectedRole)
@@ -65,6 +117,7 @@ export class AdminPlayersComponent implements OnDestroy {
         next: result => {
           this.players = this.players.map(player => player.id === result.id
             ? { ...player, role: result.role } : player);
+          this.expandedPlayerId = null;
           this.roleSuccessName = pending.username;
           this.pendingRole = null;
         },
@@ -76,27 +129,94 @@ export class AdminPlayersComponent implements OnDestroy {
       });
   }
 
+  beginModeration(player: AdminPlayer, action: ModerationAction): void {
+    if (this.working || this.loading) return;
+    if ((action === 'SUSPEND' && !this.canSuspend(player))
+        || (action === 'REINSTATE' && !this.canReinstate(player))
+        || (action === 'DELETE' && !this.canDelete(player))) return;
+    this.pendingRole = null;
+    this.pendingModeration = {
+      id: player.id, username: player.username, action,
+      expectedSuspended: !!player.moderationSuspendedAt
+    };
+    this.moderationReason = '';
+    this.deleteConfirmation = '';
+    this.moderationErrorKey = '';
+    this.moderationSuccessKey = '';
+  }
+
+  cancelModeration(): void {
+    if (!this.moderating) this.pendingModeration = null;
+  }
+
+  get canConfirmModeration(): boolean {
+    const pending = this.pendingModeration;
+    if (!pending || this.working || this.moderationReason.trim().length < 10
+        || this.moderationReason.trim().length > 500) return false;
+    return pending.action !== 'DELETE' || this.deleteConfirmation === pending.username;
+  }
+
+  confirmModeration(): void {
+    const pending = this.pendingModeration;
+    if (!pending || !this.canConfirmModeration) return;
+    const player = this.players.find(item => item.id === pending.id);
+    if (!player
+      || (pending.action === 'SUSPEND' && !this.canSuspend(player))
+      || (pending.action === 'REINSTATE' && !this.canReinstate(player))
+      || (pending.action === 'DELETE' && !this.canDelete(player))) return;
+
+    this.moderating = true;
+    this.moderationErrorKey = '';
+    this.moderationRequest = this.service.moderate(
+      pending.id, pending.action, pending.username, pending.expectedSuspended, this.moderationReason.trim())
+      .pipe(timeout(15_000), finalize(() => this.moderating = false))
+      .subscribe({
+        next: result => {
+          this.players = result.action === 'DELETE'
+            ? this.players.filter(item => item.id !== result.id)
+            : this.players.map(item => item.id === result.id
+              ? { ...item, notLocked: result.notLocked,
+                  moderationSuspendedAt: result.moderationSuspendedAt } : item);
+          this.moderationSuccessKey = 'adminPlayers.success.' + result.action;
+          this.moderationSuccessName = pending.username;
+          this.pendingModeration = null;
+          this.expandedPlayerId = null;
+          this.moderationReason = '';
+          this.deleteConfirmation = '';
+        },
+        error: error => {
+          this.pendingModeration = null;
+          this.moderationErrorKey = error.status === 409
+            ? (error.error?.code === 'COMMUNITY_OWNERSHIP_BLOCKS_DELETION'
+              ? 'adminPlayers.deletionBlocked' : 'adminPlayers.moderationConflict')
+            : error.status === 403 ? 'adminPlayers.moderationForbidden'
+            : 'adminPlayers.moderationError';
+        }
+      });
+  }
+
   search(): void {
-    if (this.changingRole) return;
+    if (this.working) return;
     const name = this.name.trim();
-    if (!name) {
-      this.clear();
-      return;
-    }
+    if (!name) { this.clear(); return; }
     this.load(name, 0);
   }
 
   changePage(direction: number): void {
-    if (this.loading || this.changingRole || !this.searchedName || (direction > 0 && !this.hasMore)) return;
+    if (this.loading || this.working || !this.searchedName || (direction > 0 && !this.hasMore)) return;
     const page = this.page + direction;
     if (page >= 0) this.load(this.searchedName, page);
   }
 
   clear(): void {
-    if (this.changingRole) return;
+    if (this.working) return;
     this.pendingRole = null;
+    this.pendingModeration = null;
     this.roleErrorKey = '';
     this.roleSuccessName = '';
+    this.moderationErrorKey = '';
+    this.moderationSuccessKey = '';
+    this.expandedPlayerId = null;
     this.request?.unsubscribe();
     this.name = '';
     this.searchedName = '';
@@ -110,10 +230,12 @@ export class AdminPlayersComponent implements OnDestroy {
 
   ngOnDestroy(): void {
     this.roleRequest?.unsubscribe();
+    this.moderationRequest?.unsubscribe();
     this.request?.unsubscribe();
   }
 
   statusKey(player: AdminPlayer): string {
+    if (player.moderationSuspendedAt) return 'adminPlayers.suspended';
     if (player.enabled === false) return 'adminPlayers.inactive';
     if (player.notLocked === false) return 'adminPlayers.locked';
     if (player.enabled === true && player.notLocked === true) return 'adminPlayers.active';
@@ -122,14 +244,17 @@ export class AdminPlayersComponent implements OnDestroy {
 
   roleKey(player: AdminPlayer): string {
     return ['ROLE_USER', 'ROLE_HR', 'ROLE_MANAGER', 'ROLE_ADMIN', 'ROLE_SUPER_ADMIN'].includes(player.role || '')
-      ? 'adminPlayers.role.' + player.role
-      : 'common.notProvided';
+      ? 'adminPlayers.role.' + player.role : 'common.notProvided';
   }
 
   private load(name: string, page: number): void {
     this.pendingRole = null;
+    this.pendingModeration = null;
+    this.expandedPlayerId = null;
     this.roleErrorKey = '';
     this.roleSuccessName = '';
+    this.moderationErrorKey = '';
+    this.moderationSuccessKey = '';
     this.request?.unsubscribe();
     this.loading = true;
     this.errorKey = '';

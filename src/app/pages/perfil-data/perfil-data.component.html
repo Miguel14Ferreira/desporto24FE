@@ -8,7 +8,7 @@
       </div>
 
       <div class="header-actions">
-        <a class="primary-action" routerLink="/menu/alterardados">{{ 'menu.editProfile' | t }}</a>
+        <a class="primary-action jynlo-action jynlo-action--primary" routerLink="/menu/alterardados">{{ 'menu.editProfile' | t }}</a>
       </div>
     </header>
 
@@ -19,7 +19,7 @@
     @if (!loading && errorMessage) {
       <div class="state-card error-state">
         <p>{{ errorMessage }}</p>
-        <button type="button" (click)="load()">{{ 'common.retry' | t }}</button>
+        <button class="jynlo-action jynlo-action--neutral" type="button" (click)="load()">{{ 'common.retry' | t }}</button>
       </div>
     }
 
@@ -63,11 +63,11 @@
                   }
 
                   @if (!favoritesExpanded && hiddenFavoriteSportsCount > 0) {
-                    <button type="button" (click)="toggleFavoriteSports()">
+                    <button class="jynlo-action jynlo-action--neutral" type="button" (click)="toggleFavoriteSports()">
                       +{{ hiddenFavoriteSportsCount }}
                     </button>
                   } @else if (favoritesExpanded && hiddenFavoriteSportsCount > 0) {
-                    <button type="button" (click)="toggleFavoriteSports()">
+                    <button class="jynlo-action jynlo-action--neutral" type="button" (click)="toggleFavoriteSports()">
                       {{ 'profileData.showLess' | t }}
                     </button>
                   }

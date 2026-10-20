@@ -11,14 +11,17 @@ describe('LoginComponent', () => {
   let fixture: ComponentFixture<LoginComponent>;
   let auth: jasmine.SpyObj<AuthenticationService>;
   let router: Router;
+  let queryParamMap: ReturnType<typeof convertToParamMap>;
 
   beforeEach(async () => {
+    queryParamMap = convertToParamMap({});
     auth = jasmine.createSpyObj<AuthenticationService>(
       'AuthenticationService',
-      ['login', 'hasValidToken', 'saveToken', 'googleConfig']
+      ['login', 'hasValidToken', 'saveToken', 'googleConfig', 'resendRegistrationConfirmation']
     );
     auth.hasValidToken.and.returnValue(false);
     auth.googleConfig.and.returnValue(of({ clientId: '' }));
+    auth.resendRegistrationConfirmation.and.returnValue(of({ message: 'Email reenviado' } as any));
     auth.login.and.returnValue(of({
       mfaRequired: false,
       challengeId: null,
@@ -36,7 +39,7 @@ describe('LoginComponent', () => {
           provide: ActivatedRoute,
           useValue: {
             snapshot: {
-              queryParamMap: convertToParamMap({})
+              get queryParamMap() { return queryParamMap; }
             }
           }
         },
@@ -54,9 +57,41 @@ describe('LoginComponent', () => {
 
   afterEach(() => sessionStorage.clear());
 
+  it('offers confirmation resend immediately after an expired email link', () => {
+    sessionStorage.setItem('auth-error-message', 'A ligação de confirmação expirou.');
+    queryParamMap =
+      convertToParamMap({ returnUrl: '/menu/events/42' });
+
+    component.ngOnInit();
+    fixture.detectChanges();
+
+    expect(component.canResendConfirmation).toBeTrue();
+    expect(fixture.nativeElement.querySelector('.confirmation-resend .resend-confirmation'))
+      .not.toBeNull();
+    expect(component.errorMessage).toContain('expirou');
+    expect(sessionStorage.getItem('auth-error-message')).toBeNull();
+
+    component.username = 'fixture-user';
+    spyOn<any>(component, 'startResendCooldown');
+    component.resendConfirmation();
+
+    expect(auth.resendRegistrationConfirmation).toHaveBeenCalledWith('fixture-user', 42);
+    expect(component.successMessage).toContain('novo email');
+  });
+
+  it('does not offer confirmation resend after a successful email confirmation', () => {
+    sessionStorage.setItem('auth-success-message', 'Email confirmado.');
+
+    component.ngOnInit();
+    fixture.detectChanges();
+
+    expect(component.canResendConfirmation).toBeFalse();
+    expect(fixture.nativeElement.querySelector('.confirmation-resend')).toBeNull();
+    expect(component.successMessage).toBe('Email confirmado.');
+  });
+
   it('should explain the request login and return to notifications after signing in', () => {
-    const route = TestBed.inject(ActivatedRoute);
-    route.snapshot.queryParamMap = convertToParamMap({ returnUrl: '/menu/notifications' });
+    queryParamMap = convertToParamMap({ returnUrl: '/menu/notifications' });
     component.ngOnInit();
     fixture.detectChanges();
 
@@ -68,9 +103,67 @@ describe('LoginComponent', () => {
     expect(router.navigateByUrl).toHaveBeenCalledWith('/menu/notifications');
   });
 
+  it('explains the invitation when login is opened from a shared session', () => {
+    queryParamMap =
+      convertToParamMap({ returnUrl: '/menu/events/42' });
+    component.ngOnInit();
+    fixture.detectChanges();
+
+    expect(component.loginContextKey).toBe('login.viewSession');
+    const message = fixture.nativeElement.querySelector('.login-context') as HTMLElement;
+    expect(message).not.toBeNull();
+    expect(message.textContent).toContain('sessão desportiva');
+    expect(message.textContent).toContain('inscrever-te');
+  });
+
+  it('welcomes people with a community invitation and returns to the group after login', () => {
+    queryParamMap = convertToParamMap({ returnUrl: '/menu/communities/42' });
+    component.ngOnInit();
+    fixture.detectChanges();
+    expect(component.loginContextKey).toBe('login.viewCommunity');
+    expect((fixture.nativeElement.querySelector('.login-context') as HTMLElement).textContent)
+      .toContain('convite para uma comunidade');
+    component.username = 'fixture-user';
+    component.password = 'fixture-password';
+    component.onLogin();
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/menu/communities/42');
+  });
+
+  it('preserves a community invite through MFA', () => {
+    queryParamMap = convertToParamMap({ returnUrl: '/menu/communities/42' });
+    component.ngOnInit();
+    auth.login.and.returnValue(of({
+      mfaRequired: true, challengeId: 'challenge', challengeExpiresAt: null,
+      token: null, profile: null
+    }));
+    component.username = 'fixture-user';
+    component.password = 'fixture-password';
+    component.onLogin();
+    expect(sessionStorage.getItem('mfa-return-url')).toBe('/menu/communities/42');
+  });
+
+  it('resends an expired community confirmation link with its ID', () => {
+    queryParamMap = convertToParamMap({ returnUrl: '/menu/communities/42' });
+    component.ngOnInit();
+    component.username = 'fixture-user';
+    spyOn<any>(component, 'startResendCooldown');
+    component.resendConfirmation();
+    expect(auth.resendRegistrationConfirmation).toHaveBeenCalledWith('fixture-user', null, 42);
+  });
+
+  it('shows no invitation message for unrelated or malformed destinations', () => {
+    for (const returnUrl of ['/menu/feed', 'https://example.com', '/menu/events/not-a-number']) {
+      queryParamMap = convertToParamMap({ returnUrl });
+      component.ngOnInit();
+      fixture.detectChanges();
+
+      expect(component.loginContextKey).toBe('');
+      expect(fixture.nativeElement.querySelector('.login-context')).toBeNull();
+    }
+  });
+
   it('should preserve the request destination while MFA is required', () => {
-    const route = TestBed.inject(ActivatedRoute);
-    route.snapshot.queryParamMap = convertToParamMap({ returnUrl: '/menu/notifications' });
+    queryParamMap = convertToParamMap({ returnUrl: '/menu/notifications' });
     component.ngOnInit();
     auth.login.and.returnValue(of({
       mfaRequired: true, challengeId: 'fixture-challenge', challengeExpiresAt: null,
@@ -80,6 +173,96 @@ describe('LoginComponent', () => {
     component.password = 'fixture-password';
     component.onLogin();
     expect(sessionStorage.getItem('mfa-return-url')).toBe('/menu/notifications');
+  });
+
+  it('should preserve a shared session destination after login', () => {
+    queryParamMap =
+      convertToParamMap({ returnUrl: '/menu/events/42' });
+    component.ngOnInit();
+    component.username = 'fixture-user';
+    component.password = 'fixture-password';
+
+    component.onLogin();
+
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/menu/events/42');
+  });
+
+  it('should keep a legitimate internal destination with query parameters', () => {
+    queryParamMap =
+      convertToParamMap({ returnUrl: '/menu/notifications?view=requests' });
+    component.ngOnInit();
+    component.username = 'fixture-user';
+    component.password = 'fixture-password';
+
+    component.onLogin();
+
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/menu/notifications?view=requests');
+  });
+
+  it('should reject external and malformed login return URLs', () => {
+    const invalidTargets = [
+      'https://example.com',
+      '//example.com',
+      '/login',
+      '/menu/../login',
+      '/menu//events/42',
+      '/menu/%2e%2e/login',
+      '/menu/events%2f42',
+      '/menu/events\\42'
+    ];
+
+    for (const returnUrl of invalidTargets) {
+      queryParamMap =
+        convertToParamMap({ returnUrl });
+      component.ngOnInit();
+      component.username = 'fixture-user';
+      component.password = 'fixture-password';
+
+      component.onLogin();
+
+      expect(router.navigateByUrl).toHaveBeenCalledWith('/menu/feed');
+      (router.navigateByUrl as jasmine.Spy).calls.reset();
+    }
+  });
+
+  it('should store only a validated destination for MFA', () => {
+    queryParamMap =
+      convertToParamMap({ returnUrl: '//example.com' });
+    component.ngOnInit();
+    auth.login.and.returnValue(of({
+      mfaRequired: true, challengeId: 'fixture-challenge', challengeExpiresAt: null,
+      token: null, profile: null
+    }));
+    component.username = 'fixture-user';
+    component.password = 'fixture-password';
+
+    component.onLogin();
+
+    expect(sessionStorage.getItem('mfa-return-url')).toBe('/menu/feed');
+  });
+
+  it('preserves a shared session when resending confirmation after failed login', () => {
+    queryParamMap =
+      convertToParamMap({ returnUrl: '/menu/events/42' });
+    component.ngOnInit();
+    component.username = 'fixture-user';
+    spyOn<any>(component, 'startResendCooldown');
+
+    component.resendConfirmation();
+
+    expect(auth.resendRegistrationConfirmation).toHaveBeenCalledWith('fixture-user', 42);
+  });
+
+  it('does not forward other login destinations as session IDs', () => {
+    queryParamMap =
+      convertToParamMap({ returnUrl: '/menu/notifications' });
+    component.ngOnInit();
+    component.username = 'fixture-user';
+    spyOn<any>(component, 'startResendCooldown');
+
+    component.resendConfirmation();
+
+    expect(auth.resendRegistrationConfirmation).toHaveBeenCalledWith('fixture-user', null);
   });
 
   it('should not show the request message for a normal login', () => {
@@ -106,7 +289,7 @@ describe('LoginComponent', () => {
     auth.login.and.returnValue(of({
       mfaRequired: true,
       challengeId: 'challenge-123',
-      expiresAt: '2026-09-26T00:05:00Z',
+      challengeExpiresAt: '2026-09-26T00:05:00Z',
       token: null,
       profile: null
     }));

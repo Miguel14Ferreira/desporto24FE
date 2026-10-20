@@ -9,7 +9,7 @@
         </p>
       </div>
 
-      <button type="button" class="secondary-action" (click)="cancel()">
+      <button type="button" class="secondary-action jynlo-action jynlo-action--neutral" (click)="cancel()">
         {{ 'common.cancel' | t }}
       </button>
     </header>
@@ -134,10 +134,10 @@
       </div>
 
       <div class="form-actions">
-        <button type="button" class="secondary-action" (click)="cancel()" [disabled]="loading">
+        <button type="button" class="secondary-action jynlo-action jynlo-action--neutral" (click)="cancel()" [disabled]="loading">
           {{ 'common.cancel' | t }}
         </button>
-        <button type="submit" class="primary-action" [disabled]="loading || !acceptedLegalTerms">
+        <button type="submit" class="primary-action jynlo-action jynlo-action--primary" [disabled]="loading || !acceptedLegalTerms">
           {{ loading ? ('googleOnboarding.creating' | t) : ('googleOnboarding.finish' | t) }}
         </button>
       </div>

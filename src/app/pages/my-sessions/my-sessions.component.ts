@@ -137,8 +137,12 @@ export class MySessionsComponent implements OnInit {
       });
   }
 
+  canLeaveWaitlist(session: SessionSummary): boolean {
+    return session.status === 'OPEN' || session.status === 'FULL';
+  }
+
   leaveWaitlist(session: SessionSummary): void {
-    if (this.waitlistLeavingId !== null) {
+    if (this.waitlistLeavingId !== null || !this.canLeaveWaitlist(session)) {
       return;
     }
 

@@ -1,0 +1,60 @@
+import { appTranslate as t } from '../../i18n/i18n.service';
+
+describe('Community value proposition copy', () => {
+  const keys = [
+    'communities.pitchEyebrow',
+    'communities.pitchTitle',
+    'communities.pitchLead',
+    'communities.pitchPromise',
+    'communities.pitchCreate',
+    'communities.pitchExplore',
+    'communities.pitchOnboarding',
+    'communities.pitchBenefitsLabel',
+    'communities.pitchGamesTitle',
+    'communities.pitchGamesText',
+    'communities.pitchSeasonsTitle',
+    'communities.pitchSeasonsText',
+    'communities.pitchRankingsTitle',
+    'communities.pitchRankingsText',
+    'communities.pitchGroupTitle',
+    'communities.pitchGroupText'
+  ];
+  let previousLanguage: string | null;
+
+  beforeEach(() => previousLanguage = localStorage.getItem('d24-language'));
+  afterEach(() => {
+    if (previousLanguage === null) localStorage.removeItem('d24-language');
+    else localStorage.setItem('d24-language', previousLanguage);
+  });
+
+  for (const language of ['pt', 'en']) {
+    it('provides every value proposition label in ' + language, () => {
+      localStorage.setItem('d24-language', language);
+      for (const key of keys) {
+        expect(t(key)).withContext(key).not.toBe(key);
+        expect(t(key).trim().length).withContext(key).toBeGreaterThan(0);
+      }
+    });
+  }
+
+  it('does not advertise standalone tournaments as a completed feature', () => {
+    for (const language of ['pt', 'en']) {
+      localStorage.setItem('d24-language', language);
+      const heading = t('communities.pitchSeasonsTitle').toLowerCase();
+      const lead = t('communities.pitchLead').toLowerCase();
+      expect(heading).not.toContain('torneios');
+      expect(heading).not.toContain('tournaments');
+      expect(lead).not.toContain('torneios');
+      expect(lead).not.toContain('tournaments');
+      expect(t('communityInviteStep.tournamentNotice')).not.toBe('communityInviteStep.tournamentNotice');
+    }
+  });
+
+  it('describes invitation by link without promising WhatsApp contact import', () => {
+    localStorage.setItem('d24-language', 'pt');
+    expect(t('communities.pitchLead')).toContain('WhatsApp');
+    expect(t('communities.pitchOnboarding')).toContain('partilha a ligação');
+    expect(t('communities.pitchOnboarding')).toContain('escolhe aderir');
+    expect(t('communities.pitchPromise')).toContain('Menos confusão');
+  });
+});

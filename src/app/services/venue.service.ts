@@ -9,6 +9,12 @@ import {
   VenueInformationSource
 } from '../pages/model/venue';
 
+export interface VenueSuggestionPage {
+  venues: Venue[];
+  page: number;
+  hasMore: boolean;
+}
+
 export interface VenuePhoto {
   id: number;
   photoUrl: string;
@@ -44,7 +50,7 @@ export class VenueService {
 
   constructor(private http: HttpClient) {}
 
-  search(city?: string, sport?: string): Observable<Venue[]> {
+  search(city?: string, sport?: string, latitude?: number, longitude?: number, radiusKm?: number): Observable<Venue[]> {
     let params = new HttpParams();
 
     if (city?.trim()) {
@@ -53,8 +59,27 @@ export class VenueService {
     if (sport?.trim()) {
       params = params.set('sport', sport.trim());
     }
+    if (latitude !== undefined) {
+      params = params.set('latitude', String(latitude));
+    }
+    if (longitude !== undefined) {
+      params = params.set('longitude', String(longitude));
+    }
+    if (radiusKm !== undefined) {
+      params = params.set('radiusKm', String(radiusKm));
+    }
 
     return this.http.get<Venue[]>(this.baseUrl, { params });
+  }
+
+  /** Bounded server-side autocomplete; keeps the legacy search contract unchanged. */
+  suggest(name?: string, city?: string, sport?: string, page = 0, district?: string): Observable<VenueSuggestionPage> {
+    let params = new HttpParams().set('page', String(page));
+    if (name?.trim()) params = params.set('name', name.trim());
+    if (city?.trim()) params = params.set('city', city.trim());
+    if (sport?.trim()) params = params.set('sport', sport.trim());
+    if (district?.trim()) params = params.set('district', district.trim());
+    return this.http.get<VenueSuggestionPage>(this.baseUrl + '/suggest', { params });
   }
 
   get(id: number): Observable<Venue> {

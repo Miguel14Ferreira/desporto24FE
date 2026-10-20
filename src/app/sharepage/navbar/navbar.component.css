@@ -84,12 +84,28 @@
   border: 1px solid rgba(255,255,255,.14);
 }
 
-.site-nav__links .register-link {
-  background: #f8fafc;
-  color: #0f172a;
+/* Desktop: keep frequent actions visible; move secondary sections to the account menu. */
+@media (min-width: 901px) {
+  .site-nav__links .mobile-only-link {
+    display: none;
+  }
+}
+
+.site-nav__links .nav-create-action {
+  background: var(--d24-accent);
+  color: #07111f;
+}
+
+.site-nav__links .nav-create-action:hover,
+.site-nav__links .nav-create-action.active-link {
+  background: #86efac;
+  color: #07111f;
 }
 
 @media (max-width: 900px) {
+  .site-nav__links .desktop-primary-link {
+    display: none;
+  }
   .site-nav__shell {
     align-items: stretch;
     flex-direction: column;
@@ -193,16 +209,25 @@
 
 .account-menu summary {
   list-style: none;
-  border: 1px solid rgba(255,255,255,.14);
-  border-radius: .7rem;
-  padding: .55rem .75rem;
-  color: #cbd5e1;
-  font-size: .86rem;
-  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-height: 40px;
+  margin: 0;
+  border: 1px solid var(--jynlo-action-border);
+  border-radius: 999px;
+  padding: .58rem .92rem;
+  background: var(--jynlo-action-bg);
+  color: var(--jynlo-action-text);
+  font-size: .84rem;
+  font-weight: 750;
+  line-height: 1.2;
   cursor: pointer;
 }
 
 .account-menu summary::-webkit-details-marker { display: none; }
+.account-menu summary span[aria-hidden="true"] { margin-right: .3rem; }
 
 .account-menu[open] summary,
 .account-menu summary:hover {

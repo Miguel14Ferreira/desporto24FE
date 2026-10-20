@@ -20,6 +20,8 @@ export interface AppNotification {
   token: string | null;
   type: AppNotificationType;
   sessionId: number | null;
+  /** Added by the community join workflow; absent on older notifications. */
+  communityId?: number | null;
   relatedUsername: string | null;
   read: boolean;
   username: string;

@@ -1,9 +1,11 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { AuthenticationService } from './services/authethication.service';
 import { PilotAnalyticsService } from './services/pilot-analytics.service';
+import { OnlinePresenceService } from './services/online-presence.service';
 import { appTranslate as t } from './i18n/i18n.service';
+import { registrationSessionReturnUrl, registrationCommunityReturnUrl, takeRegistrationDestination } from './shared/registration-return-url';
 
 @Component({
     selector: 'app-root',
@@ -12,18 +14,20 @@ import { appTranslate as t } from './i18n/i18n.service';
     changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
-export class AppComponent implements OnInit {
+export class AppComponent implements OnInit, OnDestroy {
   title = 'desporto24';
 
   constructor(
     private router: Router,
     private authenticationService: AuthenticationService,
-    private pilotAnalyticsService: PilotAnalyticsService
+    private pilotAnalyticsService: PilotAnalyticsService,
+    private onlinePresence: OnlinePresenceService
   ) {}
 
   ngOnInit(): void {
     const params = new URLSearchParams(window.location.search);
     this.pilotAnalyticsService.recordFirstAccess(params.get('cohort'));
+    this.onlinePresence.start();
 
     const token = params.get('confirmRegistration');
 
@@ -39,7 +43,7 @@ export class AppComponent implements OnInit {
           'auth-success-message',
           t('feedback.confirm.successLogin')
         );
-        this.router.navigateByUrl('/login');
+        this.navigateToLoginAfterConfirmation(params);
       },
       error: error => {
         const apiMessage = error?.error?.message;
@@ -49,8 +53,24 @@ export class AppComponent implements OnInit {
             ? apiMessage
             : t('feedback.confirm.error')
         );
-        this.router.navigateByUrl('/login');
+        this.navigateToLoginAfterConfirmation(params);
       }
     });
+  }
+
+  ngOnDestroy(): void {
+    this.onlinePresence.stop();
+  }
+
+  private navigateToLoginAfterConfirmation(params: URLSearchParams): void {
+    const destinationFromEmail = registrationSessionReturnUrl(params.get('returnSessionId'))
+      ?? registrationCommunityReturnUrl(params.get('returnCommunityId'));
+    const destinationFromBrowser = takeRegistrationDestination();
+    const destination = destinationFromEmail ?? destinationFromBrowser;
+    if (destination) {
+      this.router.navigate(['/login'], { queryParams: { returnUrl: destination } });
+    } else {
+      this.router.navigateByUrl('/login');
+    }
   }
 }

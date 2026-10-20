@@ -2,14 +2,14 @@
   <div class="create-shell">
     <header class="page-header">
       <div>
-        <p class="eyebrow">Desporto24</p>
-        <h1>{{ 'createSession.title' | t }}</h1>
-        <p class="subtitle">{{ 'createSession.subtitle' | t }}</p>
+        <p class="eyebrow">Jynlo</p>
+        <h1>{{ (findPlayersMode ? 'createSession.findPlayersTitle' : 'createSession.title') | t }}</h1>
+        <p class="subtitle">{{ (findPlayersMode ? 'createSession.findPlayersSubtitle' : 'createSession.subtitle') | t }}</p>
       </div>
 
       <div class="header-actions">
-        <a class="secondary-action" routerLink="/menu/events">{{ 'mySessions.discover' | t }}</a>
-        <a class="secondary-action" routerLink="/menu/my-sessions">{{ 'mySessions.title' | t }}</a>
+        <a class="secondary-action jynlo-action jynlo-action--neutral" routerLink="/menu/events">{{ 'mySessions.discover' | t }}</a>
+        <a class="secondary-action jynlo-action jynlo-action--neutral" routerLink="/menu/my-sessions">{{ 'mySessions.title' | t }}</a>
       </div>
     </header>
 
@@ -25,16 +25,36 @@
           <small>{{ 'createSession.communityAudienceHint' | t }}</small>
         </div>
         <a
-          class="secondary-action"
-          routerLink="/menu/communities"
-          [queryParams]="{ community: communityId }">
+          class="secondary-action jynlo-action jynlo-action--neutral"
+          [routerLink]="['/menu/communities', communityId]">
           {{ 'createSession.backCommunity' | t }}
         </a>
       </div>
     }
 
+    @if (findPlayersMode) {
+      <div class="recruit-context" role="note">
+        <strong>{{ 'createSession.findPlayersNoteTitle' | t }}</strong>
+        <p>{{ 'createSession.findPlayersNote' | t }}</p>
+      </div>
+    }
+
     <form class="create-card" (ngSubmit)="createSession()">
       <div class="form-grid">
+        @if (communityId && communitySportLoaded && communitySports.length) {
+          <div class="community-sport-choices">
+            <span class="community-sport-label">Modalidades do grupo</span>
+            <div class="community-sport-options" role="group" aria-label="Escolher modalidade da comunidade">
+              @for (item of communitySports; track item) {
+                <button type="button" class="community-sport-option"
+                  [class.active]="sport === item"
+                  [attr.aria-pressed]="sport === item"
+                  [disabled]="loading" (click)="chooseCommunitySport(item)">{{ item }}</button>
+              }
+            </div>
+            <small>Também podes escolher outra modalidade no campo abaixo.</small>
+          </div>
+        }
         <label>
           <span>{{ 'events.sport' | t }} *</span>
           <input
@@ -75,6 +95,28 @@
         </label>
 
       </div>
+
+      @if (findPlayersMode) {
+        <div class="recruit-availability">
+          <label class="recruit-confirmed">
+            <span>{{ 'createSession.confirmedPlayers' | t }} *</span>
+            <input
+              type="number"
+              name="confirmedPlayers"
+              [(ngModel)]="confirmedPlayers"
+              min="1"
+              [max]="maxParticipants"
+              step="1"
+              [disabled]="loading">
+            <small>{{ 'createSession.confirmedPlayersHint' | t }}</small>
+          </label>
+          <div class="recruit-remaining" aria-live="polite">
+            <span>{{ 'createSession.availableSpots' | t }}</span>
+            <strong>{{ availablePlaces }}</strong>
+            <small>{{ 'createSession.availableSpotsHint' | t }}</small>
+          </div>
+        </div>
+      }
 
       @if (communityId) {
         <div class="form-grid">
@@ -117,7 +159,7 @@
 
           <button
             type="button"
-            class="secondary-action"
+            class="secondary-action jynlo-action jynlo-action--neutral"
             [disabled]="loading || venueSaving"
             (click)="toggleVenueCreator()">
             {{ showVenueCreator ? ('common.cancel' | t) : ('venue.saveNew' | t) }}
@@ -125,29 +167,70 @@
         </div>
 
         <label class="venue-select-field">
+          <span>{{ 'venue.district' | t }}</span>
+          <select name="venueDistrict" [ngModel]="venueDistrict"
+                  (ngModelChange)="onDistrictChanged($event)" [disabled]="loading || venueSaving">
+            <option value="">{{ 'venue.districtPlaceholder' | t }}</option>
+            @for (district of districts; track district) {
+              <option [value]="district">{{ district }}</option>
+            }
+            <option [value]="allDistrictsOption">{{ 'venue.searchAllDistricts' | t }}</option>
+          </select>
+          <small class="venue-current-location">{{ 'venue.districtHint' | t }}</small>
+        </label>
+
+        <label class="venue-select-field">
           <span>{{ 'venue.search' | t }}</span>
           <input
             type="search"
             name="venueSearch"
             list="venue-search-options"
-            [(ngModel)]="venueSearch"
+            [ngModel]="venueSearch"
+            (ngModelChange)="onVenueSearchChanged($event)"
             autocomplete="off"
-            [disabled]="loading || venuesLoading || !sportSelected"
+            [disabled]="loading || !sportSelected || !venueDistrict"
             (change)="confirmVenueSelection()"
-            [placeholder]="sportSelected ? ('venue.searchPlaceholder' | t) : 'Seleciona primeiro o desporto'">
+            [placeholder]="!sportSelected ? ('venue.chooseSportFirst' | t)
+              : !venueDistrict ? ('venue.districtPlaceholder' | t) : ('venue.searchPlaceholder' | t)">
           <datalist id="venue-search-options">
             @for (venue of venueOptions; track venue.id) {
               <option [value]="venue.name + ' · ' + venue.city"></option>
             }
           </datalist>
-          <small class="venue-current-location">
-            @if (!sportSelected) {
-              Seleciona primeiro um desporto da lista.
+          <small class="venue-current-location" aria-live="polite">
+            @if (venuesLoading) {
+              {{ 'venue.searching' | t }}
+            } @else if (!sportSelected) {
+              {{ 'venue.chooseSportFirst' | t }}
+            } @else if (!venueDistrict) {
+              {{ 'venue.chooseDistrictFirst' | t }}
+            } @else if (venueDistrict === allDistrictsOption) {
+              {{ 'venue.nationwideHint' | t }}
             } @else {
               {{ 'venue.searchHint' | t }}
             }
           </small>
         </label>
+
+        @if (venuesHasMore && sportSelected && venueDistrict) {
+          <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
+            [disabled]="venuesLoading || loading" (click)="loadMoreVenues()">
+            {{ 'venue.showMore' | t }}
+          </button>
+        }
+
+        @if (venuesLoadError) {
+          <div class="venue-load-error feedback error-feedback" role="alert">
+            <span>{{ 'venue.loadError' | t }}</span>
+            <button
+              type="button"
+              class="secondary-action jynlo-action jynlo-action--neutral"
+              [disabled]="venuesLoading || loading"
+              (click)="loadVenues()">
+              {{ 'common.retry' | t }}
+            </button>
+          </div>
+        }
 
         @if (selectedVenueId) {
           <div class="venue-create-card">
@@ -157,7 +240,7 @@
             </div>
             <button
               type="button"
-              class="secondary-action"
+              class="secondary-action jynlo-action jynlo-action--neutral"
               [disabled]="loading"
               (click)="useMapLinkVenue()">
               {{ 'venue.mapLink.use' | t }}
@@ -177,7 +260,8 @@
               <input
                 type="text"
                 name="venueMapLink"
-                [(ngModel)]="venueMapLink"
+                [ngModel]="venueMapLink"
+                (ngModelChange)="onVenueMapLinkChanged($event)"
                 [disabled]="loading || venueMapLinkLoading"
                 [placeholder]="'venue.mapLink.placeholder' | t">
             </label>
@@ -185,8 +269,8 @@
             <div class="header-actions">
               <button
                 type="button"
-                class="secondary-action"
-                [disabled]="venueMapLinkLoading || !venueMapLink.trim()"
+                class="secondary-action jynlo-action jynlo-action--neutral"
+                [disabled]="venueMapLinkLoading || !venueMapLink.trim() || locating"
                 (click)="resolveVenueMapLink()">
                 {{ venueMapLinkLoading ? ('venue.mapLink.resolving' | t) : ('venue.mapLink.resolve' | t) }}
               </button>
@@ -194,18 +278,40 @@
               @if (venueMapCandidateResolvedUrl) {
                 <button
                   type="button"
-                  class="secondary-action"
+                  class="secondary-action jynlo-action jynlo-action--neutral"
                   (click)="clearVenueMapLinkCandidate()">
                   {{ 'common.remove' | t }}
                 </button>
               }
             </div>
 
+            <div class="gps-location-option">
+              <p class="venue-current-location">{{ 'createSession.gpsLocationHint' | t }}</p>
+              <div class="header-actions">
+                <button
+                  type="button"
+                  class="secondary-action jynlo-action jynlo-action--neutral gps-location-action"
+                  [disabled]="loading || locating || venueMapLinkLoading"
+                  (click)="captureCurrentLocation()">
+                  {{ locating ? ('events.locating' | t) : ('createSession.useLocation' | t) }}
+                </button>
+                @if (locationSource === 'gps') {
+                  <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
+                          [disabled]="loading || locating" (click)="clearLocation()">
+                    {{ 'createSession.removeLocation' | t }}
+                  </button>
+                }
+              </div>
+              @if (locationError) {
+                <div class="location-error" role="alert">{{ locationError }}</div>
+              }
+            </div>
+
             @if (venueMapLinkError) {
-              <div class="location-error">{{ venueMapLinkError }}</div>
+              <div class="location-error" role="alert">{{ venueMapLinkError }}</div>
             }
 
-            @if (venueMapCandidateResolvedUrl && selectedVenueMapUrl && latitude !== null && longitude !== null) {
+            @if (hasCoordinates && selectedVenueMapUrl) {
               <div style="margin-top: .5rem;">
                 <iframe
                   style="display:block;width:100%;height:260px;border:0;border-radius:14px;"
@@ -215,8 +321,17 @@
                   referrerpolicy="no-referrer-when-downgrade">
                 </iframe>
                 <p class="venue-current-location" style="margin-top:.6rem;">
-                  {{ 'venue.mapLink.found' | t }}
+                  {{ (locationSource === 'gps' ? 'createSession.gpsLocationFound' : 'venue.mapLink.found') | t }}
                 </p>
+                @if (locationSource === 'gps' && gpsAccuracyMeters !== null) {
+                  <p class="gps-accuracy" [class.gps-accuracy-warning]="gpsAccuracyIsLow"
+                     [attr.role]="gpsAccuracyIsLow ? 'status' : null">
+                    {{ 'createSession.gpsAccuracy' | t:{ meters: gpsAccuracyMeters } }}
+                    @if (gpsAccuracyIsLow) {
+                      <span>{{ 'createSession.gpsAccuracyWarning' | t }}</span>
+                    }
+                  </p>
+                }
               </div>
             }
           </div>
@@ -261,7 +376,7 @@
                   referrerpolicy="no-referrer-when-downgrade">
                 </iframe>
                 <a
-                  class="secondary-action"
+                  class="secondary-action jynlo-action jynlo-action--neutral"
                   style="display:inline-flex;margin-top:.75rem;"
                   [href]="'https://www.google.com/maps/search/?api=1&query='
                     + venue.latitude + ',' + venue.longitude"
@@ -445,7 +560,7 @@
 
             <button
               type="button"
-              class="primary-action"
+              class="primary-action jynlo-action jynlo-action--primary"
               [disabled]="venueSaving"
               (click)="saveVenue()">
               {{ venueSaving ? ('venue.saving' | t) : ('venue.save' | t) }}
@@ -461,56 +576,29 @@
             <input
               type="text"
               name="city"
-              [(ngModel)]="city"
+              [ngModel]="city"
+              (ngModelChange)="onCityChanged($event)"
               [disabled]="loading"
               [placeholder]="'events.cityPlaceholder' | t">
           </label>
 
           <label>
-            <span>{{ 'createSession.address' | t }} *</span>
+            <span>{{ 'createSession.address' | t }} @if (!hasCoordinates) { * }</span>
             <input
               type="text"
               name="address"
               [(ngModel)]="address"
               [disabled]="loading"
               [placeholder]="'createSession.addressPlaceholder' | t">
+            @if (hasCoordinates) {
+              <small class="venue-current-location">{{ 'createSession.addressOptionalWithMapPoint' | t }}</small>
+            }
           </label>
         </div>
       }
 
-      <section class="location-section" [class.location-ready]="locationCaptured">
-        <div>
-          <h2>{{ 'createSession.locationTitle' | t }}</h2>
-          <p>
-            @if (locationCaptured) {
-              {{ 'createSession.locationSaved' | t }}
-            } @else {
-              {{ 'createSession.locationOptional' | t }}
-            }
-          </p>
-          @if (locationError) {
-            <div class="location-error">{{ locationError }}</div>
-          }
-        </div>
-
-        <div class="location-actions">
-          @if (locationCaptured) {
-            <button type="button" class="secondary-action" [disabled]="loading" (click)="clearLocation()">
-              {{ 'createSession.removeLocation' | t }}
-            </button>
-          } @else {
-            <button
-              type="button"
-              class="secondary-action"
-              [disabled]="loading || locating"
-              (click)="captureCurrentLocation()">
-              {{ locating ? ('events.locating' | t) : ('createSession.useLocation' | t) }}
-            </button>
-          }
-        </div>
-      </section>
-
       <div class="options-grid">
+        @if (!findPlayersMode) {
         <section class="option-card">
           <label class="toggle-row">
             <input
@@ -536,6 +624,7 @@
             </label>
           }
         </section>
+        }
 
         <section class="option-card">
           <label class="toggle-row">
@@ -586,15 +675,15 @@
             <img [src]="photoPreview" [alt]="'createSession.photoAlt' | t">
             <div>
               <strong>{{ photo?.name }}</strong>
-              <button type="button" [disabled]="loading" (click)="clearPhoto()">{{ 'common.remove' | t }}</button>
+              <button class="jynlo-action jynlo-action--neutral" type="button" [disabled]="loading" (click)="clearPhoto()">{{ 'common.remove' | t }}</button>
             </div>
           </div>
         }
       </section>
 
       <div class="form-actions">
-        <a class="secondary-action" routerLink="/menu/events">{{ 'common.cancel' | t }}</a>
-        <button type="submit" class="primary-action" [disabled]="loading">
+        <a class="secondary-action jynlo-action jynlo-action--neutral" routerLink="/menu/events">{{ 'common.cancel' | t }}</a>
+        <button type="submit" class="primary-action jynlo-action jynlo-action--primary" [disabled]="loading || venueSaving || venueMapLinkLoading">
           {{ loading ? ('createSession.creating' | t) : ('mySessions.create' | t) }}
         </button>
       </div>

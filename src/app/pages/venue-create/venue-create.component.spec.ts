@@ -1,4 +1,4 @@
-import { Router } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 
 import { VenueService } from '../../services/venue.service';
@@ -6,6 +6,43 @@ import { Venue } from '../model/venue';
 import { VenueCreateComponent } from './venue-create.component';
 
 describe('VenueCreateComponent', () => {
+  it('prefills a valid favorite sport and locality from Discover without auto-saving', () => {
+    const venueService = jasmine.createSpyObj<VenueService>('VenueService', ['create']);
+    const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
+    const route = {
+      snapshot: { queryParamMap: convertToParamMap({ sport: '  pAdEl  ', city: '  Lisboa  ' }) }
+    } as unknown as ActivatedRoute;
+    const component = new VenueCreateComponent(venueService, router, route);
+    component.ngOnInit();
+
+    expect(component.city).toBe('Lisboa');
+    expect(component.selectedSports).toEqual(['Padel']);
+    expect(component.isSportSelected('Padel')).toBeTrue();
+    expect(component.latitude).toBeNull();
+    expect(component.longitude).toBeNull();
+
+    // Both prefilled values remain editable.
+    component.toggleSport('Padel', false);
+    component.toggleSport('Ténis', true);
+    component.city = 'Sintra';
+    expect(component.selectedSports).toEqual(['Ténis']);
+    expect(component.city).toBe('Sintra');
+    expect(venueService.create).not.toHaveBeenCalled();
+  });
+
+  it('rejects an unknown sport without losing the locality passed from Discover', () => {
+    const venueService = jasmine.createSpyObj<VenueService>('VenueService', ['create']);
+    const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
+    const route = {
+      snapshot: { queryParamMap: convertToParamMap({ sport: 'Outro desporto', city: 'Porto' }) }
+    } as unknown as ActivatedRoute;
+    const component = new VenueCreateComponent(venueService, router, route);
+    component.ngOnInit();
+
+    expect(component.selectedSports).toEqual([]);
+    expect(component.city).toBe('Porto');
+  });
+
   it('does not submit when required fields are missing', () => {
     const venueService = jasmine.createSpyObj<VenueService>('VenueService', ['create']);
     const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
@@ -21,6 +58,31 @@ describe('VenueCreateComponent', () => {
     expect(router.navigate).not.toHaveBeenCalled();
     expect(component.validationError).toBeTrue();
     expect(component.saving).toBeFalse();
+  });
+
+  it('requires a selected sport before creating a venue', () => {
+    const venueService = jasmine.createSpyObj<VenueService>('VenueService', ['create']);
+    const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
+    venueService.create.and.returnValue(of({ id: 9 } as Venue));
+    const component = new VenueCreateComponent(venueService, router);
+    component.name = 'Pavilhão Central';
+    component.city = 'Lisboa';
+    component.address = 'Rua do Desporto';
+
+    component.save();
+
+    expect(component.validationError).toBeTrue();
+    expect(component.saving).toBeFalse();
+    expect(venueService.create).not.toHaveBeenCalled();
+
+    component.toggleSport('Padel', true);
+    component.save();
+
+    expect(component.validationError).toBeFalse();
+    expect(venueService.create).toHaveBeenCalledOnceWith(
+      jasmine.objectContaining({ sports: 'Padel' })
+    );
+    expect(router.navigate).toHaveBeenCalledWith(['/menu/venues', 9]);
   });
 
   it('creates the venue and navigates to its detail page', () => {
@@ -70,6 +132,33 @@ describe('VenueCreateComponent', () => {
     expect(component.saving).toBeFalse();
   });
 
+  it('derives the indoor flag consistently from the environment', () => {
+    const cases: { environment: 'INDOOR' | 'OUTDOOR' | 'BOTH'; indoor: boolean }[] = [
+      { environment: 'INDOOR', indoor: true },
+      { environment: 'OUTDOOR', indoor: false },
+      { environment: 'BOTH', indoor: true }
+    ];
+
+    for (const { environment, indoor } of cases) {
+      const venueService = jasmine.createSpyObj<VenueService>('VenueService', ['create']);
+      const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
+      venueService.create.and.returnValue(of({ id: 7 } as Venue));
+
+      const component = new VenueCreateComponent(venueService, router);
+      component.name = 'Recinto de teste';
+      component.city = 'Lisboa';
+      component.address = 'Rua do Desporto';
+      component.selectedSports = ['Futsal'];
+      component.environmentType = environment;
+
+      component.save();
+
+      expect(venueService.create).toHaveBeenCalledOnceWith(
+        jasmine.objectContaining({ environmentType: environment, indoor })
+      );
+    }
+  });
+
   it('adds and removes sports from the multi-selection', () => {
     const venueService = jasmine.createSpyObj<VenueService>('VenueService', ['create']);
     const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
@@ -84,6 +173,42 @@ describe('VenueCreateComponent', () => {
     expect(component.isSportSelected('Futsal')).toBeFalse();
   });
 
+  it('starts with eight popular sports and gives access to the whole catalog', () => {
+    const service = jasmine.createSpyObj<VenueService>('VenueService', ['create']);
+    const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
+    const component = new VenueCreateComponent(service, router);
+
+    expect(component.visibleSports).toEqual([
+      'Futebol', 'Futsal', 'Padel', 'Ténis',
+      'Basquetebol', 'Natação', 'Voleibol', 'Musculação'
+    ]);
+
+    component.showAllSports = true;
+    expect(component.visibleSports).toEqual([...component.sportsCatalog]);
+  });
+
+  it('searches all sports without accents and preserves multiple selections', () => {
+    const service = jasmine.createSpyObj<VenueService>('VenueService', ['create']);
+    const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
+    const component = new VenueCreateComponent(service, router);
+
+    component.sportSearch = 'TENIS';
+    expect(component.visibleSports).toContain('Ténis');
+    component.toggleSport('Ténis', true);
+    component.sportSearch = 'natacao';
+    expect(component.visibleSports).toContain('Natação');
+    component.toggleSport('Natação', true);
+
+    expect(component.selectedSports).toEqual(['Ténis', 'Natação']);
+    component.sportSearch = '';
+    expect(component.visibleSports).not.toContain('Ténis');
+    component.toggleSport('Ténis', false);
+    expect(component.visibleSports).toContain('Ténis');
+
+    component.sportSearch = 'desporto inexistente';
+    expect(component.visibleSports).toEqual([]);
+  });
+
   it('shows an error and stays on the form when creation fails', () => {
     const venueService = jasmine.createSpyObj<VenueService>('VenueService', ['create']);
     const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
@@ -93,6 +218,7 @@ describe('VenueCreateComponent', () => {
     component.name = 'Pavilhão Central';
     component.city = 'Lisboa';
     component.address = 'Rua do Desporto';
+    component.selectedSports = ['Futsal'];
 
     component.save();
 
@@ -147,6 +273,7 @@ describe('VenueCreateComponent', () => {
     component.name = 'Pavilhão Central';
     component.city = 'Lisboa';
     component.address = 'Rua do Desporto';
+    component.selectedSports = ['Futsal'];
     component.toilets = true;
     component.lockers = false;
 

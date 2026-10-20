@@ -1,9 +1,9 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { appTranslate as t } from '../../i18n/i18n.service';
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, NgZone, OnDestroy, OnInit } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
-import { finalize, retry, timeout } from 'rxjs';
+import { debounceTime, finalize, retry, Subject, timeout } from 'rxjs';
 
 import { CreateSessionRequest } from '../model/create-session-request';
 import { SessionService } from '../../services/session.service';
@@ -11,6 +11,7 @@ import { CommunityGroupsService } from '../../services/community-groups.service'
 import { VenuePhoto, VenueService } from '../../services/venue.service';
 import { Venue, VenueOwnershipType } from '../model/venue';
 import { SPORTS_CATALOG } from '../../shared/sports-catalog';
+import { MAINLAND_PORTUGAL_DISTRICTS, SEARCH_ALL_DISTRICTS } from '../../shared/portugal-districts';
 
 @Component({
   selector: 'app-events2',
@@ -19,12 +20,14 @@ import { SPORTS_CATALOG } from '../../shared/sports-catalog';
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false
 })
-export class Events2Component implements OnInit {
+export class Events2Component implements OnInit, OnDestroy {
   sport = '';
   gameDate = '';
   city = '';
   address = '';
   maxParticipants = 4;
+  // The organiser already has one reserved Jynlo place.
+  confirmedPlayers: number | null = 1;
 
   privateGame = false;
   password = '';
@@ -41,20 +44,57 @@ export class Events2Component implements OnInit {
   locating = false;
   locationCaptured = false;
   locationError = '';
+  locationSource: 'gps' | 'map' | null = null;
+  gpsAccuracyMeters: number | null = null;
+  private gpsRequestId = 0;
+
+  get gpsAccuracyIsLow(): boolean {
+    return this.gpsAccuracyMeters !== null && this.gpsAccuracyMeters > 100;
+  }
+
+  get hasCoordinates(): boolean {
+    return this.locationCaptured
+      && this.latitude !== null && this.longitude !== null
+      && Number.isFinite(this.latitude) && Number.isFinite(this.longitude)
+      && Math.abs(this.latitude) <= 90 && Math.abs(this.longitude) <= 180;
+  }
 
   loading = false;
   errorMessage = '';
 
   communityId: number | null = null;
   communityName = '';
+  communitySports: string[] = [];
+  communitySportLoaded = false;
+
+  /** Community sports are suggestions, not a restriction: organizers may pick any sport. */
+  chooseCommunitySport(sport: string): void {
+    if (this.loading || !this.communitySports.includes(sport) || this.sport === sport) return;
+    this.sport = sport;
+    this.confirmSportSelection();
+  }
   recurrence: 'NONE' | 'WEEKLY' | 'BIWEEKLY' = 'NONE';
   recurrenceOccurrences = 4;
 
   readonly sportsCatalog = SPORTS_CATALOG;
+  readonly districts = MAINLAND_PORTUGAL_DISTRICTS;
+  readonly allDistrictsOption = SEARCH_ALL_DISTRICTS;
+  venueDistrict = '';
   venues: Venue[] = [];
+  private newlyCreatedVenues: Venue[] = [];
   venueSearch = '';
   selectedVenueId: number | null = null;
   venuesLoading = false;
+  venuesLoadError = false;
+  venuesHasMore = false;
+  venuePage = 0;
+  private venueLookupVersion = 0;
+  private readonly venueSearchChanged = new Subject<void>();
+  private readonly venueSearchSubscription = this.venueSearchChanged
+    .pipe(debounceTime(300))
+    .subscribe(() => {
+      if (this.sportSelected) this.loadVenues();
+    });
   venueSaving = false;
   showVenueCreator = false;
   venueName = '';
@@ -77,9 +117,11 @@ export class Events2Component implements OnInit {
   venueLighting = false;
   selectedVenuePhoto: VenuePhoto | null = null;
   venuePhotoLoading = false;
+  private venuePhotoRequestId = 0;
   selectedVenueMapUrl: SafeResourceUrl | null = null;
   venueMapLink = '';
   venueMapLinkLoading = false;
+  private venueMapRequestId = 0;
   venueMapLinkError = '';
   venueMapCandidateResolvedUrl = '';
 
@@ -89,14 +131,56 @@ export class Events2Component implements OnInit {
     private venueService: VenueService,
     private sanitizer: DomSanitizer,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private ngZone: NgZone
   ) {}
+
+  get findPlayersMode(): boolean {
+    return this.route.snapshot.queryParamMap.get('intent') === 'findPlayers' && !this.communityId;
+  }
+
+  get availablePlaces(): number {
+    const maximum = Number(this.maxParticipants);
+    const confirmed = Number(this.confirmedPlayers);
+    if (!Number.isInteger(maximum) || !Number.isInteger(confirmed)
+        || maximum < 2 || maximum > 100 || confirmed < 1 || confirmed > maximum) {
+      return 0;
+    }
+    return maximum - confirmed;
+  }
 
   ngOnInit(): void {
     this.minDate = this.toLocalDateTimeValue(new Date());
-    this.loadVenues();
 
-    const communityId = Number(this.route.snapshot.queryParamMap.get('community'));
+    const params = this.route.snapshot.queryParamMap;
+    const communityId = Number(params.get('community'));
+    if (!Number.isFinite(communityId) || communityId <= 0) {
+      const requestedSport = (params.get('sport') || '').trim();
+      this.sport = this.sportsCatalog.find(
+        option => option.toLocaleLowerCase('pt') === requestedSport.toLocaleLowerCase('pt')
+      ) || '';
+      this.city = (params.get('city') || '').trim().slice(0, 120);
+
+      // Prefill only the existing Find Players mode. Never trust external
+      // navigation parameters as a submitted count without validation.
+      if (params.get('intent') === 'findPlayers') {
+        const confirmedRaw = params.get('confirmed');
+        const missingRaw = params.get('missing');
+        if (confirmedRaw !== null && missingRaw !== null
+            && /^[1-9]\d{0,2}$/.test(confirmedRaw)
+            && /^[1-9]\d{0,2}$/.test(missingRaw)) {
+          const confirmed = Number(confirmedRaw);
+          const missing = Number(missingRaw);
+          if (confirmed + missing <= 100) {
+            this.confirmedPlayers = confirmed;
+            this.maxParticipants = confirmed + missing;
+          }
+        }
+      }
+    }
+
+    if (this.sportSelected) this.loadVenues();
+
     if (Number.isFinite(communityId) && communityId > 0) {
       this.communityId = communityId;
       this.communityService.get(communityId)
@@ -107,19 +191,38 @@ export class Events2Component implements OnInit {
         .subscribe({
         next: community => {
           this.communityName = community.name;
-          if (!this.sport.trim() && community.sport) {
-            this.sport = community.sport;
+          const list = community.sports?.length ? community.sports
+            : (community.sport ? [community.sport] : []);
+          // Older communities expose just `sport`; multi-sport ones must not
+          // silently pick the first modality on behalf of the organiser.
+          this.communitySports = [...new Set(list.filter(value => this.sportsCatalog.includes(value)))];
+          this.communitySportLoaded = true;
+          if (!this.sport.trim() && this.communitySports.length === 1) {
+            this.sport = this.communitySports[0];
+            if (this.sportSelected) this.loadVenues();
           }
         },
         error: () => {
           this.errorMessage = t('feedback.communities.openError');
           this.communityName = '';
+          this.communitySports = [];
+          this.communitySportLoaded = false;
         }
       });
     }
   }
 
+  ngOnDestroy(): void {
+    ++this.venueLookupVersion;
+    this.venueSearchSubscription.unsubscribe();
+    this.venueSearchChanged.complete();
+  }
+
   createSession(): void {
+    if (this.loading || this.venueSaving || this.venueMapLinkLoading) {
+      return;
+    }
+
     const validationError = this.validate();
     if (validationError) {
       this.errorMessage = validationError;
@@ -130,13 +233,21 @@ export class Events2Component implements OnInit {
       sport: this.sport.trim(),
       gameDate: new Date(this.gameDate).toISOString(),
       city: this.city.trim(),
-      address: this.address.trim(),
+      address: this.address.trim() || (this.hasCoordinates
+        ? t('createSession.mapPointAddress', {
+            latitude: this.latitude!.toFixed(6),
+            longitude: this.longitude!.toFixed(6)
+          })
+        : ''),
       maxParticipants: Number(this.maxParticipants),
+      ...(this.findPlayersMode
+        ? { externalConfirmedParticipants: Number(this.confirmedPlayers) - 1 }
+        : {}),
       priceAmount: this.hasPrice ? Number(this.priceAmount ?? 0) : 0,
-      privateGame: this.privateGame,
-      password: this.privateGame ? this.password.trim() : null,
-      latitude: this.locationCaptured ? this.latitude : null,
-      longitude: this.locationCaptured ? this.longitude : null,
+      privateGame: this.findPlayersMode ? false : this.privateGame,
+      password: this.findPlayersMode ? null : (this.privateGame ? this.password.trim() : null),
+      latitude: this.hasCoordinates ? this.latitude : null,
+      longitude: this.hasCoordinates ? this.longitude : null,
       communityId: this.communityId,
       venueId: this.selectedVenueId,
       recurrence: this.communityId ? this.recurrence : 'NONE',
@@ -154,7 +265,11 @@ export class Events2Component implements OnInit {
         finalize(() => this.loading = false)
       )
       .subscribe({
-        next: session => this.router.navigate(['/menu/events', session.id]),
+        next: session => this.router.navigate(
+          ['/menu/events', session.id],
+          !session.privateGame && session.canSharePublicly === true
+            ? { queryParams: { created: 1 } } : {}
+        ),
         error: error => {
           this.errorMessage = this.errorFrom(
             error,
@@ -164,19 +279,94 @@ export class Events2Component implements OnInit {
       });
   }
 
-  loadVenues(): void {
+  /** Query by district on the server; never download the national catalog. */
+  loadVenues(page = 0): void {
+    if (!this.venueDistrict || (this.venueDistrict === SEARCH_ALL_DISTRICTS
+        && this.venueSearch.trim().split(' · ')[0].trim().length < 3)) {
+      ++this.venueLookupVersion;
+      this.venuesLoading = false;
+      this.venuesHasMore = false;
+      this.venuesLoadError = false;
+      this.venuePage = 0;
+      this.venues = [...this.newlyCreatedVenues];
+      return;
+    }
+    if (page > 0 && (this.venuesLoading || !this.venuesHasMore || page !== this.venuePage + 1)) return;
+    const typed = this.venueSearch.trim();
+    const separator = typed.lastIndexOf(' · ');
+    const name = separator < 0 ? typed : typed.slice(0, separator).trim();
+    const city = separator < 0 ? this.city.trim() : typed.slice(separator + 3).trim();
+    const version = ++this.venueLookupVersion;
     this.venuesLoading = true;
+    this.venuesLoadError = false;
 
-    this.venueService.search()
+    this.venueService.suggest(name, city, this.sportSelected ? this.sport.trim() : '', page,
+        this.venueDistrict === SEARCH_ALL_DISTRICTS ? undefined : this.venueDistrict)
       .pipe(
         timeout(10_000),
         retry({ count: 1 }),
-        finalize(() => this.venuesLoading = false)
+        finalize(() => {
+          if (version === this.venueLookupVersion) this.venuesLoading = false;
+        })
       )
       .subscribe({
-        next: venues => this.venues = venues,
-        error: () => this.venues = []
+        next: result => {
+          if (version !== this.venueLookupVersion) return;
+          const merged = new Map<number, Venue>();
+          for (const venue of [...(page > 0 ? this.venues : []), ...result.venues, ...this.newlyCreatedVenues]) {
+            merged.set(venue.id, venue);
+          }
+          this.venues = [...merged.values()].sort((a, b) =>
+            a.name.localeCompare(b.name, 'pt') || a.city.localeCompare(b.city, 'pt') || a.id - b.id
+          );
+          this.venuePage = result.page;
+          this.venuesHasMore = result.hasMore;
+        },
+        error: () => {
+          if (version !== this.venueLookupVersion) return;
+          if (page === 0) this.venues = [...this.newlyCreatedVenues];
+          this.venuesHasMore = false;
+          this.venuesLoadError = true;
+        }
       });
+  }
+
+  loadMoreVenues(): void {
+    if (this.venuesHasMore) this.loadVenues(this.venuePage + 1);
+  }
+
+  private queueVenueLookup(): void {
+    // Reject in-flight responses immediately, not after the debounce delay.
+    ++this.venueLookupVersion;
+    this.venuesLoading = false;
+    this.venuesLoadError = false;
+    this.venuesHasMore = false;
+    this.venuePage = 0;
+    this.venueSearchChanged.next();
+  }
+
+  onDistrictChanged(value: string): void {
+    const chosen = this.districts.find(district => district === value)
+      ?? (value === SEARCH_ALL_DISTRICTS ? SEARCH_ALL_DISTRICTS : '');
+    if (chosen === this.venueDistrict) return;
+    const previous = this.venueDistrict;
+    this.selectVenue(null);
+    this.venueDistrict = chosen;
+    this.venueSearch = '';
+    this.newlyCreatedVenues = [];
+    this.venues = [];
+    if (previous && previous !== chosen) this.city = '';
+    ++this.venueLookupVersion;
+    this.venuesLoading = false;
+    this.venuesHasMore = false;
+    this.venuesLoadError = false;
+    this.venuePage = 0;
+    if (this.sportSelected && chosen !== SEARCH_ALL_DISTRICTS && chosen) this.loadVenues();
+  }
+
+  onCityChanged(value: string): void {
+    this.city = value;
+    if (this.sportSelected && this.venueDistrict && this.selectedVenueId === null) this.queueVenueLookup();
   }
 
   get sportSelected(): boolean {
@@ -186,18 +376,22 @@ export class Events2Component implements OnInit {
   }
 
   get venueOptions(): Venue[] {
-    const city = this.city.trim().toLocaleLowerCase('pt');
+    return this.matchingVenues();
+  }
+
+  private matchingVenues(): Venue[] {
+    const city = this.normalizeVenueSearch(this.city.trim());
     const sport = this.sport.trim().toLocaleLowerCase('pt');
-    const search = this.venueSearch.trim().toLocaleLowerCase('pt');
+    const search = this.normalizeVenueSearch(this.venueSearch.trim());
 
     const filtered = this.venues.filter(venue => {
       const cityMatches = !city
-        || venue.city.toLocaleLowerCase('pt').includes(city);
+        || this.normalizeVenueSearch(venue.city).includes(city);
 
       const venueSports = (venue.sports || '').toLocaleLowerCase('pt');
       const sportMatches = !sport
         || !venueSports
-        || venueSports.includes(sport);
+        || venueSports.split(/[;,]/).some(venueSport => venueSport.trim() === sport);
 
       const acronym = venue.name
         .split(/\s+/)
@@ -209,17 +403,18 @@ export class Events2Component implements OnInit {
       const searchable = [
         venue.name,
         venue.city,
+        venue.name + ' · ' + venue.city,
         venue.address,
         venue.venueType || '',
         acronym
-      ].join(' ').toLocaleLowerCase('pt');
-
-      const searchMatches = !search || searchable.includes(search);
+      ].join(' ');
+      const searchMatches = !search
+        || this.normalizeVenueSearch(searchable).includes(search);
 
       return cityMatches && sportMatches && searchMatches;
     });
 
-    return search ? filtered.slice(0, 40) : filtered.slice(0, 40);
+    return filtered;
   }
 
   confirmSportSelection(): void {
@@ -231,32 +426,67 @@ export class Events2Component implements OnInit {
       this.sport = '';
       this.venueSearch = '';
       this.selectVenue(null);
+      ++this.venueLookupVersion;
+      this.venues = [...this.newlyCreatedVenues];
+      this.venuesHasMore = false;
       return;
     }
 
     this.sport = selected;
     this.venueSearch = '';
     this.selectVenue(null);
+    this.loadVenues();
+  }
+
+  private normalizeVenueSearch(value: string): string {
+    return value.normalize('NFD').replace(/\p{M}/gu, '').toLocaleLowerCase('pt');
+  }
+
+  onVenueSearchChanged(value: string): void {
+    if (this.venueSearch === value) {
+      return;
+    }
+
+    this.venueSearch = value;
+    if (this.selectedVenueId !== null) {
+      // Stop filtering suggestions by the city inherited from the old venue.
+      this.selectVenue(null);
+    }
+    if (this.sportSelected && this.venueDistrict) this.queueVenueLookup();
   }
 
   confirmVenueSelection(): void {
-    const normalized = this.venueSearch.trim().toLocaleLowerCase('pt');
-    const match = this.venues.find(
-      venue =>
-        venue.name.toLocaleLowerCase('pt') === normalized
-        || (venue.name + ' · ' + venue.city).toLocaleLowerCase('pt') === normalized
-    );
+    const normalized = this.normalizeVenueSearch(this.venueSearch.trim());
+    // Check every compatible venue, not just the first 40 autocomplete suggestions.
+    // A repeated name must never silently select an arbitrary venue.
+    const matches = this.sportSelected
+      ? this.matchingVenues().filter(
+          venue =>
+            this.normalizeVenueSearch(venue.name) === normalized
+            || this.normalizeVenueSearch(venue.name + ' · ' + venue.city) === normalized
+        )
+      : [];
 
-    if (!match) {
+    // A name-only result may have duplicates on later server pages.
+    if (matches.length !== 1 || (this.venuesHasMore
+        && this.normalizeVenueSearch(matches[0].name) === normalized)) {
       this.selectVenue(null);
       return;
     }
 
+    const match = matches[0];
     this.venueSearch = match.name + ' · ' + match.city;
     this.selectVenue(match.id);
   }
 
   selectVenue(value: number | string | null): void {
+    this.invalidateVenueMapLinkRequest();
+    // Changing venues also cancels an unfinished browser GPS request.
+    this.gpsRequestId++;
+    this.locating = false;
+    // Invalidate outstanding photo requests before changing the selected venue.
+    this.venuePhotoRequestId++;
+    const previousVenue = this.venues.find(venue => venue.id === this.selectedVenueId);
     const venueId = value === null || value === ''
       ? null
       : Number(value);
@@ -269,6 +499,17 @@ export class Events2Component implements OnInit {
       this.selectedVenuePhoto = null;
       this.venuePhotoLoading = false;
       this.selectedVenueMapUrl = null;
+
+      if (previousVenue) {
+        // Do not silently reuse a deselected venue's location for another sport.
+        if (this.city === previousVenue.city) {
+          this.city = '';
+        }
+        if (this.address === previousVenue.address) {
+          this.address = '';
+        }
+        this.clearLocation();
+      }
       return;
     }
 
@@ -279,6 +520,10 @@ export class Events2Component implements OnInit {
       return;
     }
 
+    this.locationSource = null;
+    this.gpsAccuracyMeters = null;
+    this.venueMapCandidateResolvedUrl = '';
+    this.venueMapLink = '';
     this.loadVenuePhoto(venue.id);
     this.selectedVenueMapUrl = venue.latitude !== null && venue.longitude !== null
       ? this.sanitizer.bypassSecurityTrustResourceUrl(
@@ -292,7 +537,7 @@ export class Events2Component implements OnInit {
     this.address = venue.address;
 
     if (!this.sport.trim() && venue.sports) {
-      this.sport = venue.sports.split(',')[0]?.trim() || '';
+      this.sport = venue.sports.split(/[;,]/)[0]?.trim() || '';
     }
 
     if (venue.latitude !== null && venue.longitude !== null) {
@@ -305,22 +550,41 @@ export class Events2Component implements OnInit {
   }
 
   private loadVenuePhoto(venueId: number): void {
+    const requestId = this.venuePhotoRequestId;
+    const isCurrentVenue = () =>
+      requestId === this.venuePhotoRequestId && this.selectedVenueId === venueId;
+
     this.selectedVenuePhoto = null;
     this.venuePhotoLoading = true;
 
     this.venueService.listPhotos(venueId)
       .pipe(
         timeout(10_000),
-        finalize(() => this.venuePhotoLoading = false)
+        finalize(() => {
+          if (isCurrentVenue()) {
+            this.venuePhotoLoading = false;
+          }
+        })
       )
       .subscribe({
-        next: photos => this.selectedVenuePhoto = photos[0] ?? null,
-        error: () => this.selectedVenuePhoto = null
+        next: photos => {
+          if (isCurrentVenue()) {
+            this.selectedVenuePhoto = photos[0] ?? null;
+          }
+        },
+        error: () => {
+          if (isCurrentVenue()) {
+            this.selectedVenuePhoto = null;
+          }
+        }
       });
   }
 
   useMapLinkVenue(): void {
+    this.invalidateVenueMapLinkRequest();
+    this.venuePhotoRequestId++;
     this.selectedVenueId = null;
+    this.venueSearch = '';
     this.selectedVenuePhoto = null;
     this.venuePhotoLoading = false;
     this.selectedVenueMapUrl = null;
@@ -329,12 +593,43 @@ export class Events2Component implements OnInit {
     this.clearLocation();
   }
 
+  onVenueMapLinkChanged(url: string): void {
+    if (this.venueMapLink === url) {
+      return;
+    }
+
+    this.venueMapLink = url;
+    this.venueMapLinkError = '';
+    this.invalidateVenueMapLinkRequest();
+    // Choosing a Maps link invalidates any pending browser GPS callback.
+    this.gpsRequestId++;
+    this.locating = false;
+
+    // A previously confirmed link must not leave its old map coordinates behind.
+    if (this.locationSource === 'map') {
+      this.clearLocation();
+    }
+  }
+
   resolveVenueMapLink(): void {
     const url = this.venueMapLink.trim();
     if (!url || this.venueMapLinkLoading) {
       return;
     }
 
+    // Revalidating a link invalidates the previous Maps point, even if the
+    // field was changed programmatically rather than through the template.
+    if (this.locationSource === 'map') {
+      this.clearLocation();
+    }
+
+    this.gpsRequestId++;
+    this.locating = false;
+    const requestId = ++this.venueMapRequestId;
+    const isCurrentRequest = () =>
+      requestId === this.venueMapRequestId
+      && this.selectedVenueId === null
+      && this.venueMapLink.trim() === url;
     this.venueMapLinkLoading = true;
     this.venueMapLinkError = '';
     this.venueMapCandidateResolvedUrl = '';
@@ -342,13 +637,24 @@ export class Events2Component implements OnInit {
     this.venueService.resolveMapLink(url)
       .pipe(
         timeout(12_000),
-        finalize(() => this.venueMapLinkLoading = false)
+        finalize(() => {
+          if (requestId === this.venueMapRequestId) {
+            this.venueMapLinkLoading = false;
+          }
+        })
       )
       .subscribe({
         next: candidate => {
+          // A removed or superseded Maps lookup must never restore old coordinates.
+          if (!isCurrentRequest()) {
+            return;
+          }
           this.latitude = candidate.latitude;
           this.longitude = candidate.longitude;
           this.locationCaptured = true;
+          this.locationSource = 'map';
+          this.gpsAccuracyMeters = null;
+          this.locationError = '';
           this.venueMapCandidateResolvedUrl = candidate.resolvedUrl;
           this.selectedVenueMapUrl = this.sanitizer.bypassSecurityTrustResourceUrl(
             'https://www.google.com/maps?q='
@@ -357,10 +663,17 @@ export class Events2Component implements OnInit {
           );
         },
         error: () => {
-          this.venueMapLinkError = t('venue.mapLink.error');
-          this.venueMapCandidateResolvedUrl = '';
+          if (isCurrentRequest()) {
+            this.venueMapLinkError = t('venue.mapLink.error');
+            this.venueMapCandidateResolvedUrl = '';
+          }
         }
       });
+  }
+
+  private invalidateVenueMapLinkRequest(): void {
+    this.venueMapRequestId++;
+    this.venueMapLinkLoading = false;
   }
 
   clearVenueMapLinkCandidate(): void {
@@ -380,6 +693,15 @@ export class Events2Component implements OnInit {
       return;
     }
 
+    if (!this.sportSelected) {
+      this.errorMessage = t('venue.create.sportsRequired');
+      return;
+    }
+
+    if (!this.venueDistrict || this.venueDistrict === SEARCH_ALL_DISTRICTS) {
+      this.errorMessage = t('venue.districtRequiredToSave');
+      return;
+    }
     if (!this.venueName.trim() || !this.city.trim() || !this.address.trim()) {
       this.errorMessage = t('feedback.venue.required');
       return;
@@ -391,8 +713,9 @@ export class Events2Component implements OnInit {
     this.venueService.create({
       name: this.venueName.trim(),
       city: this.city.trim(),
+      district: this.venueDistrict,
       address: this.address.trim(),
-      sports: this.sport.trim() || null,
+      sports: this.sport.trim(),
       venueType: this.venueType.trim() || null,
       ownershipType: this.venueOwnershipType,
       surfaceType: this.venueSurfaceType.trim() || null,
@@ -419,9 +742,15 @@ export class Events2Component implements OnInit {
       )
       .subscribe({
         next: venue => {
-          this.venues = [...this.venues, venue]
+          this.newlyCreatedVenues = [
+            ...this.newlyCreatedVenues.filter(item => item.id !== venue.id),
+            venue
+          ];
+          this.venues = [...this.venues.filter(item => item.id !== venue.id), venue]
             .sort((a, b) => a.name.localeCompare(b.name, 'pt'));
-          this.selectedVenueId = venue.id;
+          // Newly saved venues must go through the same selection flow as existing ones.
+          this.selectVenue(venue.id);
+          this.venueSearch = venue.name + ' · ' + venue.city;
           this.showVenueCreator = false;
           this.venueName = '';
           this.venueType = '';
@@ -456,42 +785,87 @@ export class Events2Component implements OnInit {
   }
 
   captureCurrentLocation(): void {
-    this.locationError = '';
+    if (this.locating || this.loading || this.selectedVenueId !== null) {
+      return;
+    }
 
+    this.locationError = '';
     if (!navigator.geolocation) {
       this.locationError = t('feedback.location.unsupported');
       return;
     }
 
+    this.invalidateVenueMapLinkRequest();
+    const requestId = ++this.gpsRequestId;
     this.locating = true;
-
     navigator.geolocation.getCurrentPosition(
-      position => {
-        this.latitude = position.coords.latitude;
-        this.longitude = position.coords.longitude;
-        this.locationCaptured = true;
-        this.locating = false;
-      },
-      () => {
-        this.locationCaptured = false;
-        this.latitude = null;
-        this.longitude = null;
+      position => this.ngZone.run(() => {
+        if (requestId !== this.gpsRequestId) {
+          return;
+        }
+        this.applyCurrentPosition(
+          position.coords.latitude, position.coords.longitude, position.coords.accuracy);
+      }),
+      () => this.ngZone.run(() => {
+        if (requestId !== this.gpsRequestId) {
+          return;
+        }
         this.locating = false;
         this.locationError = t('feedback.location.error');
-      },
+      }),
       {
-        enableHighAccuracy: false,
-        timeout: 10000,
-        maximumAge: 300000
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0
       }
     );
   }
 
+  applyCurrentPosition(latitude: number, longitude: number, accuracyMeters?: number): void {
+    // A location chosen directly supersedes an older browser request too.
+    this.gpsRequestId++;
+    if (this.selectedVenueId !== null || !Number.isFinite(latitude)
+        || !Number.isFinite(longitude) || Math.abs(latitude) > 90
+        || Math.abs(longitude) > 180) {
+      this.locating = false;
+      this.locationError = t('feedback.location.error');
+      return;
+    }
+
+    this.invalidateVenueMapLinkRequest();
+    this.latitude = latitude;
+    this.longitude = longitude;
+    this.locationCaptured = true;
+    this.locationSource = 'gps';
+    this.gpsAccuracyMeters = accuracyMeters !== undefined
+      && Number.isFinite(accuracyMeters) && accuracyMeters >= 0
+        ? Math.max(1, Math.round(accuracyMeters))
+        : null;
+    this.locating = false;
+    this.locationError = '';
+    this.venueMapLink = '';
+    this.venueMapLinkError = '';
+    this.venueMapCandidateResolvedUrl = '';
+    this.selectedVenueMapUrl = this.sanitizer.bypassSecurityTrustResourceUrl(
+      'https://www.google.com/maps?q=' + latitude + ',' + longitude + '&z=17&output=embed'
+    );
+  }
+
   clearLocation(): void {
+    this.invalidateVenueMapLinkRequest();
+    this.gpsRequestId++;
+    this.locating = false;
     this.locationCaptured = false;
     this.latitude = null;
     this.longitude = null;
+    this.locationSource = null;
+    this.gpsAccuracyMeters = null;
     this.locationError = '';
+    if (this.selectedVenueId === null) {
+      this.selectedVenueMapUrl = null;
+      this.venueMapCandidateResolvedUrl = '';
+      this.venueMapLinkError = '';
+    }
   }
 
   onPhotoChange(event: Event): void {
@@ -530,8 +904,25 @@ export class Events2Component implements OnInit {
       return 'Seleciona um desporto da lista.';
     }
 
-    if (!this.gameDate || !this.city.trim() || !this.address.trim()) {
-      return 'Preenche a data, localidade e morada.';
+    if (this.selectedVenueId !== null) {
+      const venue = this.venues.find(item => item.id === this.selectedVenueId);
+      if (!venue) {
+        return t('createSession.venueNoLongerAvailable');
+      }
+
+      // Match the server's semicolon-separated sport check before submitting.
+      const venueSports = venue.sports?.trim() || '';
+      if (venueSports && !venueSports.split(';').some(
+        venueSport => venueSport.trim().toLocaleLowerCase('pt')
+          === this.sport.trim().toLocaleLowerCase('pt')
+      )) {
+        return t('createSession.venueSportMismatch');
+      }
+    }
+
+    if (!this.gameDate || !this.city.trim()
+        || (!this.address.trim() && !this.hasCoordinates)) {
+      return 'Preenche a data e a localidade. Sem localização no mapa, indica também a morada.';
     }
 
     const city = this.city.trim();
@@ -549,6 +940,14 @@ export class Events2Component implements OnInit {
       return t('feedback.create.playersRange');
     }
 
+    if (this.findPlayersMode) {
+      const confirmed = Number(this.confirmedPlayers);
+      if (this.confirmedPlayers === null || !Number.isInteger(confirmed)
+          || confirmed < 1 || confirmed > players) {
+        return t('createSession.confirmedPlayersError');
+      }
+    }
+
     if (this.communityId && this.recurrence !== 'NONE') {
       const occurrences = Number(this.recurrenceOccurrences);
       if (!Number.isInteger(occurrences) || occurrences < 2 || occurrences > 52) {
@@ -556,7 +955,7 @@ export class Events2Component implements OnInit {
       }
     }
 
-    if (this.privateGame && !this.password.trim()) {
+    if (!this.findPlayersMode && this.privateGame && !this.password.trim()) {
       return t('feedback.create.privatePassword');
     }
 

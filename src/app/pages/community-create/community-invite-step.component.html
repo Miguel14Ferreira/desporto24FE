@@ -1,0 +1,138 @@
+<section class="invite-step-page">
+  <div class="invite-step-shell">
+    <div class="invite-step-progress" [attr.aria-label]="'communityInviteStep.progressLabel' | t">
+      <span [class.current]="step === 'invite'">{{ 'communityInviteStep.stepInvite' | t }}</span>
+      <span aria-hidden="true">→</span>
+      <span [class.current]="step === 'competition'">{{ 'communityInviteStep.stepCompetition' | t }}</span>
+    </div>
+
+    <div class="invite-step-panel">
+      @if (step === 'invite') {
+        <div class="invite-step-icon" aria-hidden="true">🤝</div>
+        <h1>{{ 'communityInviteStep.title' | t }}</h1>
+        <p class="invite-step-lead">{{ 'communityInviteStep.subtitle' | t }}</p>
+
+        @if (loading) {
+          <p role="status">{{ 'communityInviteStep.loading' | t }}</p>
+        } @else if (loadError) {
+          <p class="invite-step-message" role="alert">{{ 'communityInviteStep.error' | t }}</p>
+        } @else if (!canGenerate()) {
+          <p class="invite-step-message" role="alert">{{ 'communityInviteStep.noPermission' | t }}</p>
+        } @else {
+          <div class="invite-step-community">
+            <span class="invite-step-community-avatar" aria-hidden="true">{{ (community?.name || '?').charAt(0).toUpperCase() }}</span>
+            <div>
+              <strong>{{ community?.name }}</strong>
+              <span>{{ community?.sport || ('communities.multiSport' | t) }}</span>
+            </div>
+          </div>
+
+          @if (!inviteLink) {
+            <button type="button" class="primary-action jynlo-action jynlo-action--primary"
+                    (click)="generateLink()">
+              {{ 'communityInviteStep.generate' | t }}
+            </button>
+          } @else {
+            <label class="invite-step-link">
+              <span>{{ 'communityInviteStep.linkLabel' | t }}</span>
+              <input type="text" [value]="inviteLink" readonly (click)="$any($event.target).select()">
+            </label>
+            <div class="invite-step-share-actions">
+              <a class="primary-action button-link jynlo-action jynlo-action--primary"
+                 [href]="whatsAppShareUrl()" target="_blank" rel="noopener noreferrer">
+                {{ 'communityInviteStep.share' | t }}
+              </a>
+              <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
+                      (click)="copyLink()">
+                {{ 'communityInviteStep.copy' | t }}
+              </button>
+            </div>
+            @if (copyFeedback) {
+              <p class="invite-step-message" role="status">{{ copyFeedback }}</p>
+            }
+          }
+
+          <p class="invite-step-note">
+            {{ (community?.visibility === 'PRIVATE'
+              ? 'communityInviteStep.privateHint' : 'communityInviteStep.publicHint') | t }}
+          </p>
+        }
+
+        <div class="invite-step-footer">
+          <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
+                  [disabled]="loading" (click)="continueAfterInvite()">
+            {{ (inviteLink ? 'communityInviteStep.next' : 'communityInviteStep.skipInvite') | t }}
+          </button>
+        </div>
+      } @else {
+        <div class="invite-step-icon" aria-hidden="true">✨</div>
+        <h1>A tua comunidade. As tuas regras.</h1>
+        <p class="invite-step-lead">Como querem viver o desporto juntos? Escolhe uma ou várias formas de organizar o grupo. Podem mudar de ideias mais tarde.</p>
+
+        <div class="competition-onboarding-options" role="group"
+             aria-label="Escolhe as atividades da comunidade">
+          <button type="button" class="competition-onboarding-option"
+                  [class.selected]="activitySelected('individual')"
+                  [attr.aria-pressed]="activitySelected('individual')"
+                  [disabled]="competitionSaving" (click)="chooseActivity('individual')">
+            <span class="competition-onboarding-emoji" aria-hidden="true">👤</span>
+            <strong>Torneios individuais</strong>
+            <span>Competições entre participantes, com confrontos e classificação própria.</span>
+            <small>Ex.: liga de ténis entre amigos.</small>
+          </button>
+          <button type="button" class="competition-onboarding-option"
+                  [class.selected]="activitySelected('teams')"
+                  [attr.aria-pressed]="activitySelected('teams')"
+                  [disabled]="competitionSaving" (click)="chooseActivity('teams')">
+            <span class="competition-onboarding-emoji" aria-hidden="true">🏆</span>
+            <strong>Torneios por equipas</strong>
+            <span>Formar equipas dentro da comunidade e organizar campeonatos.</span>
+            <small>Em desenvolvimento: calendário e classificação por equipas ainda não disponíveis.</small>
+          </button>
+          <button type="button" class="competition-onboarding-option"
+                  [class.selected]="activitySelected('statistics')"
+                  [attr.aria-pressed]="activitySelected('statistics')"
+                  [disabled]="competitionSaving" (click)="chooseActivity('statistics')">
+            <span class="competition-onboarding-emoji" aria-hidden="true">📊</span>
+            <strong>Classificações e estatísticas</strong>
+            <span>Guardar resultados de jogos habituais, acompanhar épocas e o histórico Excel.</span>
+            <small>Ex.: os 14 amigos do CNG.</small>
+          </button>
+          <button type="button" class="competition-onboarding-option"
+                  [class.selected]="activityChoiceMade && selectedActivities.size === 0"
+                  [attr.aria-pressed]="activityChoiceMade && selectedActivities.size === 0"
+                  [disabled]="competitionSaving" (click)="chooseSessionsOnly()">
+            <span class="competition-onboarding-emoji" aria-hidden="true">📅</span>
+            <strong>Apenas sessões</strong>
+            <span>Organizar jogos e guardar o histórico normal de sessões, sem pontos nem classificações.</span>
+            <small>Continuam a poder ativar outras atividades mais tarde.</small>
+          </button>
+        </div>
+
+        <p class="invite-step-note">As sessões estão sempre disponíveis. As outras três opções podem ser combinadas e geridas posteriormente, sem perder dados.</p>
+        @if (selectedActivities.size > 1) {
+          <p class="invite-step-message" role="status">Escolheste {{ selectedActivities.size }} funcionalidades para começar.</p>
+        }
+        @if (competitionError) {
+          <p class="invite-step-error" role="alert">{{ competitionError }}</p>
+        }
+
+        <div class="invite-step-footer invite-step-footer-options">
+          <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
+                  [disabled]="competitionSaving" (click)="backToInvite()">
+            {{ 'communityInviteStep.backToInvite' | t }}
+          </button>
+          <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
+                  [disabled]="competitionSaving" (click)="continueToCommunity()">
+            {{ 'communityInviteStep.decideLater' | t }}
+          </button>
+          <button type="button" class="primary-action jynlo-action jynlo-action--primary"
+                  [disabled]="competitionSaving || !activityChoiceMade"
+                  (click)="saveCompetitionAndContinue()">
+            {{ (competitionSaving ? 'communityInviteStep.competitionSaving' : 'communityInviteStep.competitionSave') | t }}
+          </button>
+        </div>
+      }
+    </div>
+  </div>
+</section>

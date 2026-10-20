@@ -10,10 +10,10 @@
       </div>
 
       <div class="header-actions">
-        <button type="button" class="secondary-action" (click)="load()" [disabled]="loading">
+        <button type="button" class="secondary-action jynlo-action jynlo-action--neutral" (click)="load()" [disabled]="loading">
           Atualizar
         </button>
-        <a class="secondary-action" routerLink="/menu/admin">Voltar ao Admin</a>
+        <a class="secondary-action jynlo-action jynlo-action--neutral" routerLink="/menu/admin">Voltar ao Admin</a>
       </div>
     </header>
 
@@ -49,7 +49,7 @@
             <p class="reason">{{ report.reason }}</p>
 
             <div class="report-actions">
-              <button
+              <button class="jynlo-action jynlo-action--neutral"
                 type="button"
                 [disabled]="updatingId !== null"
                 (click)="closeReport(report, 'REVIEWED')">

@@ -1,4 +1,6 @@
 name: Desporto24 FE Feature CI
+# The live preview branch is validated in pr-validation.yml before merge; do not
+# duplicate npm ci + tests + build on the deployment branch's push event.
 
 on:
   push:
@@ -32,5 +34,3 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Build production container
-        run: docker build --tag desporto24-fe:ci .

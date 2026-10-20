@@ -6,46 +6,76 @@
         <h1>{{ 'adminHub.players' | t }}</h1>
         <p class="subtitle">{{ 'adminPlayers.subtitle' | t }}</p>
       </div>
-      <a class="secondary-action" routerLink="/menu/admin">{{ 'admin.dashboard' | t }}</a>
+      <a class="secondary-action jynlo-action jynlo-action--neutral" routerLink="/menu/admin">{{ 'admin.dashboard' | t }}</a>
     </header>
     <form (ngSubmit)="search()" class="search-form">
       <label for="player-search">{{ 'adminPlayers.searchLabel' | t }}</label>
       <div class="search-row">
         <input id="player-search" name="name" type="search" [(ngModel)]="name"
-          maxlength="100" autocomplete="off" [disabled]="changingRole" [placeholder]="'adminPlayers.placeholder' | t">
-        <button type="submit" [disabled]="loading || changingRole || !name.trim()">
+          maxlength="100" autocomplete="off" [disabled]="working" [placeholder]="'adminPlayers.placeholder' | t">
+        <button class="jynlo-action jynlo-action--primary" type="submit" [disabled]="loading || working || !name.trim()">
           {{ (loading ? 'common.searching' : 'adminPlayers.search') | t }}
         </button>
-        <button type="button" class="secondary-action" [disabled]="changingRole" (click)="clear()">{{ 'events.clear' | t }}</button>
+        <button type="button" class="secondary-action jynlo-action jynlo-action--neutral" [disabled]="working" (click)="clear()">{{ 'events.clear' | t }}</button>
       </div>
     </form>
+
     @if (errorKey) {
       <p class="state error" role="alert">{{ errorKey | t }}</p>
     } @else if (loading) {
       <p class="state" role="status">{{ 'common.loading' | t }}</p>
     } @else if (!searched) {
       <p class="state">{{ 'adminPlayers.ready' | t }}</p>
-    } @else if (players.length === 0) {
+    } @else if (players.length === 0 && !moderationSuccessKey) {
       <p class="state">{{ 'adminPlayers.empty' | t }}</p>
     }
-    @if (roleErrorKey) {
-      <p class="state error" role="alert">{{ roleErrorKey | t }}</p>
-    }
+    @if (roleErrorKey) { <p class="state error" role="alert">{{ roleErrorKey | t }}</p> }
     @if (roleSuccessName) {
       <p class="state success" role="status">{{ 'adminPlayers.roleSuccess' | t:{ name: roleSuccessName } }}</p>
     }
+    @if (moderationErrorKey) { <p class="state error" role="alert">{{ moderationErrorKey | t }}</p> }
+    @if (moderationSuccessKey) {
+      <p class="state success" role="status">{{ moderationSuccessKey | t:{ name: moderationSuccessName } }}</p>
+    }
+
     @if (pendingRole) {
       <section class="role-confirmation" role="group" aria-labelledby="role-confirm-title">
         <h2 id="role-confirm-title">{{ (pendingRole.role === 'ROLE_ADMIN' ? 'adminPlayers.confirmPromote' : 'adminPlayers.confirmDemote') | t:{ name: pendingRole.username } }}</h2>
         <p>{{ 'adminPlayers.roleSessionNotice' | t }}</p>
         <div class="confirmation-actions">
-          <button type="button" (click)="confirmRoleChange()" [disabled]="changingRole">
+          <button class="jynlo-action jynlo-action--neutral" type="button" (click)="confirmRoleChange()" [disabled]="working">
             {{ (changingRole ? 'adminPlayers.roleSaving' : 'adminPlayers.roleConfirm') | t }}
           </button>
-          <button type="button" class="secondary-action" (click)="cancelRoleChange()" [disabled]="changingRole">{{ 'adminPlayers.roleCancel' | t }}</button>
+          <button type="button" class="secondary-action jynlo-action jynlo-action--neutral" (click)="cancelRoleChange()" [disabled]="working">{{ 'adminPlayers.roleCancel' | t }}</button>
         </div>
       </section>
     }
+
+    @if (pendingModeration) {
+      <section class="moderation-confirmation" [class.moderation-confirmation--danger]="pendingModeration.action === 'DELETE'"
+        role="group" aria-labelledby="moderation-confirm-title">
+        <h2 id="moderation-confirm-title">{{ ('adminPlayers.confirm.' + pendingModeration.action) | t:{ name: pendingModeration.username } }}</h2>
+        <p>{{ ('adminPlayers.notice.' + pendingModeration.action) | t }}</p>
+        <label for="moderation-reason">{{ 'adminPlayers.reason' | t }}</label>
+        <textarea id="moderation-reason" rows="3" name="moderationReason" [(ngModel)]="moderationReason"
+          maxlength="500" [disabled]="working" [placeholder]="'adminPlayers.reasonPlaceholder' | t"></textarea>
+        <small>{{ 'adminPlayers.reasonHelp' | t }}</small>
+        @if (pendingModeration.action === 'DELETE') {
+          <label for="delete-confirmation">{{ 'adminPlayers.typeUsername' | t:{ name: pendingModeration.username } }}</label>
+          <input id="delete-confirmation" type="text" name="deleteConfirmation" [(ngModel)]="deleteConfirmation"
+            autocomplete="off" [disabled]="working" [placeholder]="pendingModeration.username">
+        }
+        <div class="confirmation-actions">
+          <button class="jynlo-action" [class.danger-action]="pendingModeration.action === 'DELETE'"
+            type="button" (click)="confirmModeration()" [disabled]="!canConfirmModeration">
+            {{ (moderating ? 'adminPlayers.roleSaving' : 'adminPlayers.confirmAction') | t }}
+          </button>
+          <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
+            (click)="cancelModeration()" [disabled]="working">{{ 'adminPlayers.roleCancel' | t }}</button>
+        </div>
+      </section>
+    }
+
     @if (!loading && players.length > 0) {
       <p class="results-label">{{ 'adminPlayers.results' | t:{ name: searchedName } }}</p>
       <div class="table-scroll">
@@ -54,7 +84,7 @@
             <th scope="col">{{ 'adminPlayers.player' | t }}</th>
             <th scope="col">{{ 'adminPlayers.role' | t }}</th>
             <th scope="col">{{ 'adminPlayers.status' | t }}</th>
-            @if (canManageRoles) { <th scope="col">{{ 'adminPlayers.actions' | t }}</th> }
+            @if (canManageRoles || canModerate) { <th scope="col">{{ 'adminPlayers.actions' | t }}</th> }
           </tr></thead>
           <tbody>
             @for (player of players; track player.id) {
@@ -65,27 +95,56 @@
                   }
                 </td>
                 <td>{{ roleKey(player) | t }}</td>
-                <td><span class="status" [class.status--active]="player.enabled === true && player.notLocked === true">{{ statusKey(player) | t }}</span></td>
-                @if (canManageRoles) {
+                <td><span class="status" [class.status--active]="player.enabled === true && player.notLocked === true"
+                  [class.status--suspended]="!!player.moderationSuspendedAt">{{ statusKey(player) | t }}</span></td>
+                @if (canManageRoles || canModerate) {
                   <td class="role-action">
-                    @if (canChangeRole(player)) {
-                      <button type="button" class="secondary-action" [disabled]="changingRole" (click)="beginRoleChange(player)">
-                        {{ (player.role === 'ROLE_ADMIN' ? 'adminPlayers.demote' : 'adminPlayers.promote') | t }}
-                      </button>
+                    @if (canManagePlayer(player)) {
+                      <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
+                        [disabled]="working" [attr.aria-expanded]="expandedPlayerId === player.id"
+                        (click)="toggleActions(player)">{{ 'adminPlayers.manage' | t }}</button>
                     } @else {
-                      <span class="player-name">{{ (player.role === 'ROLE_USER' ? 'adminPlayers.activeRequired' : 'adminPlayers.protectedRole') | t }}</span>
+                      <span class="player-name">{{ 'adminPlayers.protectedRole' | t }}</span>
                     }
                   </td>
                 }
               </tr>
+              @if (expandedPlayerId === player.id && canManagePlayer(player)) {
+                <tr class="management-row">
+                  <td [attr.colspan]="(canManageRoles || canModerate) ? 4 : 3">
+                    <div class="management-actions">
+                      @if (canChangeRole(player)) {
+                        <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
+                          [disabled]="working" (click)="beginRoleChange(player)">
+                          {{ (player.role === 'ROLE_ADMIN' ? 'adminPlayers.demote' : 'adminPlayers.promote') | t }}
+                        </button>
+                      }
+                      @if (canSuspend(player)) {
+                        <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
+                          [disabled]="working" (click)="beginModeration(player, 'SUSPEND')">{{ 'adminPlayers.suspend' | t }}</button>
+                      }
+                      @if (canReinstate(player)) {
+                        <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
+                          [disabled]="working" (click)="beginModeration(player, 'REINSTATE')">{{ 'adminPlayers.reinstate' | t }}</button>
+                      }
+                      @if (canDelete(player)) {
+                        <button type="button" class="secondary-action jynlo-action danger-outline"
+                          [disabled]="working" (click)="beginModeration(player, 'DELETE')">{{ 'adminPlayers.delete' | t }}</button>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              }
             }
           </tbody>
         </table>
       </div>
       <nav class="pagination" [attr.aria-label]="'adminPlayers.pagination' | t">
-        <button type="button" class="secondary-action" [disabled]="changingRole || page === 0" (click)="changePage(-1)">{{ 'adminPlayers.previous' | t }}</button>
+        <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
+          [disabled]="working || page === 0" (click)="changePage(-1)">{{ 'adminPlayers.previous' | t }}</button>
         <span>{{ 'adminPlayers.page' | t:{ page: page + 1 } }}</span>
-        <button type="button" class="secondary-action" [disabled]="changingRole || !hasMore" (click)="changePage(1)">{{ 'adminPlayers.next' | t }}</button>
+        <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
+          [disabled]="working || !hasMore" (click)="changePage(1)">{{ 'adminPlayers.next' | t }}</button>
       </nav>
     }
   </div>

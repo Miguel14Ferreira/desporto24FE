@@ -17,17 +17,24 @@ export class SocialFeedService {
     return this.http.get<FeedItem[]>(this.baseUrl);
   }
 
-  createPost(content: string, image?: File): Observable<FeedItem> {
-    if (!image) {
+  createPost(content: string, image?: File, sessionId?: number, video?: File): Observable<FeedItem> {
+    if (image && video) {
+      throw new Error('A post can contain either a photo or a video, not both');
+    }
+    if (!image && !video) {
       return this.http.post<FeedItem>(
         this.baseUrl + '/posts',
-        { content }
+        { content, ...(sessionId == null ? {} : { sessionId }) }
       );
     }
 
     const formData = new FormData();
     formData.append('content', content);
-    formData.append('image', image);
+    if (image) formData.append('image', image);
+    if (video) formData.append('video', video);
+    if (sessionId != null) {
+      formData.append('sessionId', String(sessionId));
+    }
 
     return this.http.post<FeedItem>(
       this.baseUrl + '/posts',
@@ -78,6 +85,13 @@ export class SocialFeedService {
     return this.http.post<void>(
       this.baseUrl + '/posts/' + postId + '/report',
       { reason }
+    );
+  }
+
+  hideAttendanceActivity(sessionId: number): Observable<void> {
+    return this.http.put<void>(
+      this.baseUrl + '/attendance/' + sessionId + '/hide',
+      null
     );
   }
 

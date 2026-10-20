@@ -98,35 +98,6 @@ h1 {
   color: #c7d2fe;
 }
 
-.admin-card--planned {
-  opacity: .72;
-}
-
-.planned-badge {
-  display: inline-block;
-  margin-top: .7rem;
-  border-radius: 999px;
-  padding: .25rem .5rem;
-  background: rgba(255,255,255,.06);
-  color: #cbd5e1;
-  font-size: .72rem;
-  font-weight: 800;
-}
-
-.security-note {
-  margin-top: 1rem;
-  border: 1px solid rgba(74,222,128,.2);
-  border-radius: 1rem;
-  padding: 1rem;
-  background: rgba(22,101,52,.08);
-}
-
-.security-note p {
-  margin: .35rem 0 0;
-  color: #bbf7d0;
-  line-height: 1.5;
-}
-
 @media (max-width: 760px) {
   .page-header {
     align-items: flex-start;
@@ -137,3 +108,4 @@ h1 {
     grid-template-columns: 1fr;
   }
 }
+

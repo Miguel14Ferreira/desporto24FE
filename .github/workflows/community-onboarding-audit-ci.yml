@@ -1,0 +1,19 @@
+name: Validate community discovery and onboarding
+# Manual diagnostic job; pull requests use the consolidated pr-validation.yml.
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  frontend-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Community onboarding and prior-feature regression tests
+        run: npm test -- --watch=false --browsers=ChromeHeadless --include=src/app/pages/communities/community-discovery-action.spec.ts --include=src/app/pages/community-create/community-invite-step.component.spec.ts --include=src/app/pages/community-create/community-create.component.spec.ts --include=src/app/pages/communities/community-group-invite.spec.ts --include=src/app/pages/communities/community-bulk-approval.spec.ts --include=src/app/pages/communities/community-value-proposition.spec.ts --include=src/app/pages/communities/communities.component.spec.ts
+      - run: npm run build

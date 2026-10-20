@@ -6,6 +6,7 @@ import { MenuComponent } from './menu.component';
 import { AuthenticationService } from '../../services/authethication.service';
 import { MyProfileService } from '../../services/my-profile.service';
 import { NotificationApiService } from '../../services/notification-api.service';
+import { AdminAccessService } from '../../services/admin-access.service';
 import { TEST_IMPORTS, TEST_PROVIDERS } from '../../testing/test-providers';
 
 describe('MenuComponent', () => {
@@ -14,20 +15,24 @@ describe('MenuComponent', () => {
   let authenticationService: jasmine.SpyObj<AuthenticationService>;
   let profileService: jasmine.SpyObj<MyProfileService>;
   let notificationService: jasmine.SpyObj<NotificationApiService>;
+  let adminAccessService: jasmine.SpyObj<AdminAccessService>;
 
   beforeEach(async () => {
     authenticationService = jasmine.createSpyObj<AuthenticationService>(
       'AuthenticationService',
-      ['terminarSessao', 'logOut', 'hasAnyRole']
+      ['terminarSessao', 'logOut']
     );
     authenticationService.terminarSessao.and.returnValue(of(void 0));
-    authenticationService.hasAnyRole.and.returnValue(false);
 
     profileService = jasmine.createSpyObj<MyProfileService>('MyProfileService', ['get']);
     profileService.get.and.returnValue(of({
       userId: 'u1',
       username: 'miguel',
       fullName: 'Miguel Ferreira',
+      nickname: null,
+      bio: null,
+      skillLevel: null,
+      availability: null,
       dateOfBirth: null,
       address: null,
       country: 'Portugal',
@@ -63,10 +68,14 @@ describe('MenuComponent', () => {
         token: null,
         type: null,
         sessionId: null,
+        relatedUsername: null,
         read: false,
         username: 'miguel'
       }
     ]));
+
+    adminAccessService = jasmine.createSpyObj<AdminAccessService>('AdminAccessService', ['check']);
+    adminAccessService.check.and.returnValue(of(void 0));
 
     await TestBed.configureTestingModule({
       declarations: [MenuComponent],
@@ -75,7 +84,8 @@ describe('MenuComponent', () => {
         ...TEST_PROVIDERS,
         { provide: AuthenticationService, useValue: authenticationService },
         { provide: MyProfileService, useValue: profileService },
-        { provide: NotificationApiService, useValue: notificationService }
+        { provide: NotificationApiService, useValue: notificationService },
+        { provide: AdminAccessService, useValue: adminAccessService }
       ]
     }).compileComponents();
 
@@ -90,8 +100,8 @@ describe('MenuComponent', () => {
     expect(notificationService.mine).toHaveBeenCalled();
     expect(component.profile?.username).toBe('miguel');
     expect(component.unreadNotifications).toBe(1);
-    expect(authenticationService.hasAnyRole)
-      .toHaveBeenCalledWith('ROLE_ADMIN', 'ROLE_SUPER_ADMIN');
+    expect(adminAccessService.check).toHaveBeenCalled();
+    expect(component.isAdmin).toBeTrue();
   });
 
   it('should terminate the remote session and clear local authentication', () => {

@@ -8,7 +8,7 @@ import { environment } from 'src/environment/environment';
 import { CommunityProfile } from '../model/community-profile';
 import { ProfileActivity } from '../model/my-profile';
 import { FollowStatus } from '../model/follow';
-import { CommunityService } from '../../services/community.service';
+import { CommunityService, ProfileSearchFilters } from '../../services/community.service';
 import { AuthenticationService } from '../../services/authethication.service';
 import { ReliabilityService } from '../../services/reliability.service';
 import { SocialGraphService } from '../../services/social-graph.service';
@@ -30,12 +30,82 @@ export class PerfisComponent implements OnInit, OnDestroy {
   levelFilter = '';
   readonly sportsCatalog = SPORTS_CATALOG;
 
+  private appliedSearchFilters: ProfileSearchFilters | null = null;
   private searchSubscription?: Subscription;
   private routeSubscription?: Subscription;
   private profileSubscription?: Subscription;
   private detailSubscription?: Subscription;
   profilePage = false;
   backToFriends = false;
+  get backToFeed(): boolean {
+    return this.route.snapshot.queryParamMap.get('from') === 'feed';
+  }
+
+  get backToDiscover(): boolean {
+    const params = this.route.snapshot.queryParamMap;
+    return params.get('from') === 'discover'
+      || (params.get('from') === 'people' && params.get('via') === 'discover');
+  }
+
+  get backToPeopleSearch(): boolean {
+    return this.route.snapshot.queryParamMap.get('from') === 'people';
+  }
+
+  get peopleProfileParams() {
+    const filters = this.appliedSearchFilters;
+    const originalDiscover = this.backToDiscover
+      ? (this.discoverReturnParams || { sport: '', city: '', player: '' })
+      : null;
+    return {
+      from: 'people',
+      player: filters?.name || null,
+      sport: filters?.sport || null,
+      city: filters?.location || null,
+      minAge: filters?.minAge ?? null,
+      maxAge: filters?.maxAge ?? null,
+      level: filters?.skillLevel || null,
+      via: originalDiscover ? 'discover' : null,
+      discoverSport: originalDiscover?.sport ?? null,
+      discoverCity: originalDiscover?.city ?? null,
+      discoverPlayer: originalDiscover?.player ?? null
+    };
+  }
+
+  get peopleSearchReturnParams() {
+    const params = this.route.snapshot.queryParamMap;
+    return {
+      from: 'people',
+      player: params.get('player'),
+      sport: params.get('sport'),
+      city: params.get('city'),
+      minAge: params.get('minAge'),
+      maxAge: params.get('maxAge'),
+      level: params.get('level'),
+      via: params.get('via'),
+      discoverSport: params.get('discoverSport'),
+      discoverCity: params.get('discoverCity'),
+      discoverPlayer: params.get('discoverPlayer')
+    };
+  }
+
+  get discoverReturnParams(): { sport: string; city: string; player: string } | null {
+    const params = this.route.snapshot.queryParamMap;
+    const hasOriginalDiscoverFilters = params.get('from') === 'people'
+      && params.get('via') === 'discover'
+      && (params.has('discoverSport') || params.has('discoverCity') || params.has('discoverPlayer'));
+    const sportKey = hasOriginalDiscoverFilters ? 'discoverSport' : 'sport';
+    const cityKey = hasOriginalDiscoverFilters ? 'discoverCity' : 'city';
+    const playerKey = hasOriginalDiscoverFilters ? 'discoverPlayer' : 'player';
+    if (!params.has(sportKey) && !params.has(cityKey) && !params.has(playerKey)) {
+      return null;
+    }
+
+    return {
+      sport: params.get(sportKey) || '',
+      city: params.get(cityKey) || '',
+      player: params.get(playerKey) || ''
+    };
+  }
 
   profiles: CommunityProfile[] = [];
   selectedProfile?: CommunityProfile;
@@ -72,8 +142,33 @@ export class PerfisComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.backToFriends = this.route.snapshot.queryParamMap.get('from') === 'friends';
+    const params = this.route.snapshot.queryParamMap;
+    this.backToFriends = params.get('from') === 'friends';
     this.loadFriendUsernames();
+
+    const source = params.get('from');
+    if ((source === 'discover' || source === 'people')
+        && !this.route.snapshot.paramMap.has('username')) {
+      this.searchTerm = (params.get('player') || '').trim();
+      if (source === 'discover' && this.searchTerm) {
+        // Discover name search ignores sport and locality; retain that behaviour.
+        this.sportFilter = '';
+        this.locationFilter = '';
+      } else {
+        this.sportFilter = (params.get('sport') || '').trim();
+        this.locationFilter = (params.get('city') || '').trim();
+      }
+      if (source === 'people') {
+        this.minAge = this.ageFromQuery(params.get('minAge'));
+        this.maxAge = this.ageFromQuery(params.get('maxAge'));
+        const level = params.get('level') || '';
+        this.levelFilter = ['BEGINNER', 'INTERMEDIATE', 'ADVANCED'].includes(level) ? level : '';
+      }
+      if (this.searchTerm || this.sportFilter || this.locationFilter
+          || this.minAge !== null || this.maxAge !== null || this.levelFilter) {
+        this.search();
+      }
+    }
     this.routeSubscription = this.route.paramMap.subscribe(params => {
       const username = params.get('username');
       this.profilePage = Boolean(username);
@@ -88,6 +183,14 @@ export class PerfisComponent implements OnInit, OnDestroy {
     this.routeSubscription?.unsubscribe();
     this.profileSubscription?.unsubscribe();
     this.detailSubscription?.unsubscribe();
+  }
+
+  private ageFromQuery(value: string | null): number | null {
+    if (value === null || !/^\d+$/.test(value)) {
+      return null;
+    }
+    const age = Number(value);
+    return Number.isInteger(age) && age >= 18 && age <= 99 ? age : null;
   }
 
   private loadFriendUsernames(): void {
@@ -138,14 +241,15 @@ export class PerfisComponent implements OnInit, OnDestroy {
     this.actionError = '';
     this.actionSuccess = '';
 
-    this.searchSubscription = this.communityService.findProfiles({
+    const filters: ProfileSearchFilters = {
       name: this.searchTerm.trim() || undefined,
       sport: this.sportFilter.trim() || undefined,
       location: this.locationFilter.trim() || undefined,
       minAge: this.minAge === null ? undefined : this.minAge,
       maxAge: this.maxAge === null ? undefined : this.maxAge,
       skillLevel: this.levelFilter || undefined
-    })
+    };
+    this.searchSubscription = this.communityService.findProfiles(filters)
       .pipe(
         timeout(10_000),
         retry({ count: 1 }),
@@ -153,13 +257,17 @@ export class PerfisComponent implements OnInit, OnDestroy {
       )
       .subscribe({
         next: profiles => {
+          this.appliedSearchFilters = { ...filters };
           this.profiles = profiles;
           this.searched = true;
           this.selectedProfile = undefined;
         },
         error: error => {
-          this.profiles = [];
-          this.searched = true;
+          // Keep the last successful result set and its navigation context.
+          if (!this.appliedSearchFilters) {
+            this.profiles = [];
+            this.searched = true;
+          }
           this.errorMessage = this.errorFrom(
             error,
             t('feedback.community.searchError')
@@ -170,6 +278,7 @@ export class PerfisComponent implements OnInit, OnDestroy {
 
   clearSearch(): void {
     this.searchSubscription?.unsubscribe();
+    this.appliedSearchFilters = null;
     this.loading = false;
     this.profiles = [];
     this.searched = false;

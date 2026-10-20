@@ -26,6 +26,9 @@ describe('AlterardadosComponent', () => {
     gender: null,
     email: 'miguel@example.com',
     favoriteSports: 'Padel',
+    bio: null,
+    skillLevel: null,
+    availability: null,
     mfa: true,
     profilePicUrl: null,
     joinDateDisplay: null,
@@ -51,6 +54,29 @@ describe('AlterardadosComponent', () => {
     fixture = TestBed.createComponent(AlterardadosComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
+  });
+
+  it('keeps photo upload controls visually disabled while the photo is saving', () => {
+    component.photoEditing = true;
+    component.photoSaving = true;
+    fixture.detectChanges();
+
+    const picker: HTMLLabelElement = fixture.nativeElement.querySelector('.photo-edit-actions .upload-action');
+    const input: HTMLInputElement = picker.querySelector('input[type="file"]')!;
+    const save: HTMLButtonElement = fixture.nativeElement.querySelector('.photo-edit-actions .photo-save-action');
+    const cancel: HTMLButtonElement = fixture.nativeElement.querySelector('.photo-edit-actions .photo-cancel-action');
+
+    expect(picker.classList.contains('jynlo-action')).toBeTrue();
+    expect(picker.classList.contains('disabled')).toBeTrue();
+    expect(input.disabled).toBeTrue();
+    expect(save.disabled).toBeTrue();
+    expect(cancel.disabled).toBeTrue();
+
+    component.photoSaving = false;
+    fixture.detectChanges();
+
+    expect(picker.classList.contains('disabled')).toBeFalse();
+    expect(input.disabled).toBeFalse();
   });
 
   it('should create and load the authenticated profile', () => {
@@ -80,6 +106,48 @@ describe('AlterardadosComponent', () => {
       })
     );
     expect(component.toastMessage).toContain('sucesso');
+  });
+
+  it('allows editing the optional locality and sends it to the profile API', () => {
+    const locationInput = fixture.nativeElement.querySelector('input[name="location"]') as HTMLInputElement;
+    expect(locationInput).not.toBeNull();
+    expect(locationInput.value).toBe('Lisboa');
+    expect(locationInput.required).toBeFalse();
+    expect(locationInput.maxLength).toBe(120);
+    expect(locationInput.autocomplete).toBe('address-level2');
+
+    locationInput.value = '  Sintra  ';
+    locationInput.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    component.save();
+
+    expect(service.update).toHaveBeenCalledWith(
+      jasmine.objectContaining({ location: 'Sintra' })
+    );
+  });
+
+  it('allows removing the locality without sending a blank string', () => {
+    const locationInput = fixture.nativeElement.querySelector('input[name="location"]') as HTMLInputElement;
+    locationInput.value = '   ';
+    locationInput.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    component.save();
+
+    expect(service.update).toHaveBeenCalledWith(
+      jasmine.objectContaining({ location: null })
+    );
+  });
+
+  it('disables locality editing while profile changes are being saved', async () => {
+    component.saving = true;
+    fixture.detectChanges();
+    // NgModel applies its disabled state asynchronously.
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const locationInput = fixture.nativeElement.querySelector('input[name="location"]') as HTMLInputElement;
+    expect(locationInput.disabled).toBeTrue();
   });
 
   it('should treat the phone as optional and clear its calling code when empty', () => {
@@ -118,25 +186,23 @@ describe('AlterardadosComponent', () => {
     );
   });
 
-  it('should silently close an unfinished MFA setup when the toggle is turned off', () => {
+  it('should require verification before disabling active MFA', () => {
     if (!component.profile) {
       fail('Profile should be loaded');
       return;
     }
 
-    component.profile.mfa = false;
-    component.mfaSetup = {
-      secret: 'secret',
-      qrCodeDataUrl: 'data:image/png;base64,test',
-      otpauthUri: 'otpauth://totp/desporto24'
-    };
-    component.mfaSetupCode = '123456';
+    expect(component.profile.mfa).toBeTrue();
+    component.mfaDisableCode = '123456';
+    const checkbox = { checked: false };
 
-    component.onMfaToggle({ target: { checked: false } } as unknown as Event);
+    component.onMfaToggle({ target: checkbox } as unknown as Event);
 
+    expect(checkbox.checked).toBeTrue();
+    expect(component.mfaDisablePending).toBeTrue();
+    expect(component.mfaDisableCode).toBe('');
+    expect(component.profile.mfa).toBeTrue();
     expect(service.disableMfa).not.toHaveBeenCalled();
-    expect(component.mfaSetup).toBeUndefined();
-    expect(component.mfaSetupCode).toBe('');
     expect(component.toastMessage).toBe('');
   });
 
@@ -160,7 +226,8 @@ describe('AlterardadosComponent', () => {
     component.save();
 
     expect(service.update).not.toHaveBeenCalled();
-    expect(component.errorMessage).toContain('email');
+    expect(component.errorMessage).toBe('Existem campos que precisam da tua atenção.');
+    expect(component.fieldErrors.email).toBe('Indica o teu email.');
   });
 
   it('should not delete the account when the confirmation username is wrong', () => {

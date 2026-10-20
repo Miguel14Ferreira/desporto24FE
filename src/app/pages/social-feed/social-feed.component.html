@@ -2,26 +2,189 @@
   <div class="feed-shell">
     <header class="page-header">
       <div>
-        <p class="eyebrow">Desporto24</p>
+        <p class="eyebrow">Jynlo</p>
         <h1>{{ 'feed.title' | t }}</h1>
         <p class="subtitle">{{ 'feed.subtitle' | t }}</p>
       </div>
 
-      <div class="header-actions">
-        <a class="secondary-action" routerLink="/menu/perfis">{{ 'feed.findPeople' | t }}</a>
-        <a class="primary-action" routerLink="/menu/createEvent">{{ 'feed.createSession' | t }}</a>
-      </div>
     </header>
+
+    <section class="week-hub" [attr.aria-label]="'week.title' | t">
+      <div class="week-hub-heading">
+        <div>
+          <p class="week-hub-eyebrow">{{ 'week.eyebrow' | t }}</p>
+          <h2>{{ 'week.title' | t }}</h2>
+          <p>{{ 'week.subtitle' | t }}</p>
+        </div>
+        <a class="jynlo-action jynlo-action--accent week-hub-create"
+           routerLink="/menu/createEvent">{{ 'week.create' | t }} <span aria-hidden="true">↗</span></a>
+      </div>
+      <section class="week-recruit" [attr.aria-label]="'week.recruitTitle' | t">
+        <div class="week-recruit-copy">
+          <span class="week-recruit-label">{{ 'week.recruitKicker' | t }}</span>
+          <strong>{{ 'week.recruitTitle' | t }}</strong>
+          <p>{{ 'week.recruitHint' | t }}</p>
+        </div>
+        <div class="week-recruit-actions">
+          <label class="week-recruit-field">
+            <span>{{ 'week.alreadyConfirmed' | t }}</span>
+            <input type="number" min="1" max="99" step="1" name="weekConfirmed"
+              [(ngModel)]="quickConfirmedPlayers" [attr.aria-label]="'week.alreadyConfirmed' | t">
+          </label>
+          <label class="week-recruit-field">
+            <span>{{ 'week.missing' | t }}</span>
+            <input type="number" min="1" max="99" step="1" name="weekMissing"
+              [(ngModel)]="quickMissingPlayers" [attr.aria-label]="'week.missing' | t">
+          </label>
+          <a class="jynlo-action jynlo-action--primary week-recruit-cta"
+             [routerLink]="quickRecruitValid ? '/menu/createEvent' : null"
+             [queryParams]="quickRecruitValid
+               ? { intent: 'findPlayers', confirmed: quickConfirmedPlayers, missing: quickMissingPlayers }
+               : null"
+             [class.week-recruit-disabled]="!quickRecruitValid"
+             [attr.aria-disabled]="!quickRecruitValid">
+            {{ 'week.recruitAction' | t }} <span aria-hidden="true">→</span>
+          </a>
+        </div>
+        @if (!quickRecruitValid) {
+          <small class="week-recruit-error" role="status">{{ 'week.recruitValidation' | t }}</small>
+        }
+      </section>
+      <div class="week-hub-grid">
+        <article class="week-hub-card" aria-label="Os teus próximos jogos">
+          <div class="week-card-heading"><span aria-hidden="true">▦</span><h3>{{ 'week.upcoming' | t }}</h3></div>
+          @if (myWeekGamesLoading) {
+            <p class="week-muted" role="status">{{ 'week.loading' | t }}</p>
+          } @else if (myWeekGamesError) {
+            <p class="week-muted" role="alert">{{ 'week.unavailable' | t }}</p>
+          } @else if (myWeekGames.length === 0 && myWeekWaitlist.length === 0) {
+            <p class="week-muted">{{ 'week.noUpcoming' | t }}</p>
+          } @else {
+            @for (session of myWeekGames; track session.id) {
+              <a class="week-item" [routerLink]="['/menu/events', session.id]">
+                <strong>{{ session.sport }} <span aria-hidden="true">↗</span></strong>
+                <span>{{ session.city }} · {{ session.gameDate | date:'dd/MM HH:mm' }}</span>
+                <small>{{ 'week.confirmed' | t }}</small>
+              </a>
+              @if (canPromoteWeekGame(session)) {
+                <a class="week-share-action jynlo-action jynlo-action--neutral"
+                   [routerLink]="['/menu/events', session.id]"
+                   [queryParams]="{ promote: '1' }">
+                  {{ 'week.promoteVacancies' | t:{
+                    count: session.maxParticipants - session.participantCount
+                  } }}
+                  <span aria-hidden="true">↗</span>
+                </a>
+              }
+            }
+            @for (session of myWeekWaitlist; track session.id) {
+              <a class="week-item" [routerLink]="['/menu/events', session.id]">
+                <strong>{{ session.sport }} <span aria-hidden="true">↗</span></strong>
+                <span>{{ session.city }} · {{ session.gameDate | date:'dd/MM HH:mm' }}</span>
+                <small class="week-waitlist">{{ 'week.waitlist' | t }}</small>
+              </a>
+            }
+          }
+          <a class="week-card-link" routerLink="/menu/my-sessions">{{ 'week.allMyGames' | t }} →</a>
+        </article>
+        <article class="week-hub-card" aria-label="Jogos a precisar de jogadores">
+          <div class="week-card-heading"><span aria-hidden="true">✦</span><h3>{{ 'week.openSlots' | t }}</h3></div>
+          @if ((loadingSessions || myWeekGamesLoading) && myWeekOffers.length === 0) {
+            <p class="week-muted" role="status">{{ 'week.loading' | t }}</p>
+          } @else if ((sessionSearchError || myWeekGamesError) && myWeekOffers.length === 0) {
+            <p class="week-muted" role="alert">{{ 'week.unavailable' | t }}</p>
+          } @else if (myWeekOffers.length === 0) {
+            <p class="week-muted">{{ 'week.noOpenSlots' | t }}</p>
+          } @else {
+            @for (session of myWeekOffers; track session.id) {
+              <a class="week-item" [routerLink]="['/menu/events', session.id]"
+                 [queryParams]="{ join: '1' }">
+                <strong>{{ session.sport }} <span aria-hidden="true">↗</span></strong>
+                <span>{{ session.city }} · {{ session.gameDate | date:'dd/MM HH:mm' }}</span>
+                <small>{{ 'week.needs' | t }} {{ session.maxParticipants - session.participantCount }}
+                  {{ (session.maxParticipants - session.participantCount) === 1 ? ('week.player' | t) : ('week.players' | t) }}</small>
+              </a>
+            }
+          }
+          <a class="week-card-link" routerLink="/menu/discover">{{ 'week.discover' | t }} →</a>
+        </article>
+        <article class="week-hub-card" aria-label="As tuas comunidades">
+          <div class="week-card-heading"><span aria-hidden="true">◎</span><h3>{{ 'week.communities' | t }}</h3></div>
+          @if (myWeekCommunitiesLoading) {
+            <p class="week-muted" role="status">{{ 'week.loading' | t }}</p>
+          } @else if (myWeekCommunitiesError) {
+            <p class="week-muted" role="alert">{{ 'week.unavailable' | t }}</p>
+          } @else if (myWeekCommunities.length === 0) {
+            <p class="week-muted">{{ 'week.noCommunities' | t }}</p>
+          } @else {
+            @for (community of myWeekCommunities; track community.id) {
+              <a class="week-item" [routerLink]="['/menu/communities', community.id]">
+                <strong>{{ community.name }} <span aria-hidden="true">↗</span></strong>
+                <span>{{ community.sport || (community.sports && community.sports[0]) || ('week.multisport' | t) }}</span>
+                <small>{{ community.memberCount }} {{ 'week.members' | t }}</small>
+              </a>
+            }
+          }
+          <a class="week-card-link" routerLink="/menu/communities">{{ 'week.exploreCommunities' | t }} →</a>
+        </article>
+      </div>
+    </section>
+
+    <div class="feed-layout">
+      <div class="feed-main">
+    @if (!loading && !errorMessage && items.length === 0) {
+      <div class="state-card feed-empty-state">
+        <h2>{{ 'feed.emptyTitle' | t }}</h2>
+        <p>{{ 'feed.emptyText' | t }}</p>
+        <nav class="feed-empty-actions" [attr.aria-label]="'feed.emptyTitle' | t">
+          <a class="jynlo-action jynlo-action--primary" routerLink="/menu/discover">{{ 'menu.findSessions' | t }}</a>
+          <a class="jynlo-action jynlo-action--neutral" routerLink="/menu/perfis">{{ 'feed.findPeople' | t }}</a>
+          <a class="jynlo-action jynlo-action--neutral" routerLink="/menu/createEvent">{{ 'menu.createSession' | t }}</a>
+        </nav>
+      </div>
+    }
 
     <section class="composer">
       <div class="composer-heading">
         <strong>{{ 'feed.shareTitle' | t }}</strong>
         <span>{{ postContent.length }}/1000</span>
       </div>
+      @if (newSessionForFeed; as newSession) {
+        <div class="postgame-session-card">
+          <div class="postgame-session-summary">
+            <span class="postgame-session-kicker">{{ 'feed.newSessionLinked' | t }}</span>
+            <strong>{{ newSession.sport }} · {{ newSession.city }}</strong>
+            <span>{{ newSession.gameDate | date:'dd/MM/yyyy HH:mm' }}</span>
+          </div>
+          <button type="button" class="postgame-detach jynlo-action jynlo-action--neutral"
+                  [disabled]="posting" (click)="detachNewSession()">{{ 'feed.postGameDetach' | t }}</button>
+        </div>
+        <p class="composer-hint" role="status">{{ 'feed.newSessionHint' | t }}</p>
+      }
+      @if (postGameSession; as completedSession) {
+        <div class="postgame-session-card">
+          <div class="postgame-session-summary">
+            <span class="postgame-session-kicker">{{ 'feed.postGameLinkedSession' | t }}</span>
+            <strong>{{ completedSession.sport }} · {{ completedSession.city }}</strong>
+            <span>{{ completedSession.gameDate | date:'dd/MM/yyyy HH:mm' }}</span>
+          </div>
+          <button type="button" class="postgame-detach jynlo-action jynlo-action--neutral" [disabled]="posting"
+                  (click)="detachPostGameSession()">{{ 'feed.postGameDetach' | t }}</button>
+        </div>
+        <p class="composer-hint" role="status">{{ 'feed.postGameHint' | t }}</p>
+        <div class="postgame-prompts" role="group" [attr.aria-label]="'feed.postGamePromptsLabel' | t">
+          @for (promptKey of postGamePromptKeys; track promptKey) {
+            <button type="button" class="postgame-prompt jynlo-action jynlo-action--neutral"
+                    [disabled]="posting" (click)="applyPostGamePrompt(promptKey)">
+              {{ promptKey | t }}
+            </button>
+          }
+        </div>
+      }
       <textarea
         [(ngModel)]="postContent"
         maxlength="1000"
-        rows="4"
+        rows="3"
         [disabled]="posting"
         [placeholder]="'feed.sharePlaceholder' | t"></textarea>
 
@@ -38,8 +201,17 @@
         </div>
       }
 
+      @if (postVideoPreview) {
+        <div class="composer-image-preview">
+          <video [src]="postVideoPreview" controls preload="metadata" playsinline
+            [attr.aria-label]="'feed.videoPreviewAlt' | t"></video>
+          <button type="button" class="remove-image" [disabled]="posting"
+            (click)="removePostVideo()">{{ 'feed.removeVideo' | t }}</button>
+        </div>
+      }
+
       <div class="composer-actions">
-        <label class="image-picker" [class.disabled]="posting">
+        <label class="image-picker jynlo-action" [class.disabled]="posting">
           <input
             type="file"
             accept="image/jpeg,image/png,image/webp"
@@ -47,7 +219,13 @@
             (change)="onPostImageChange($event)">
           <span>{{ postImagePreview ? ('feed.changeImage' | t) : ('feed.addImage' | t) }}</span>
         </label>
+        <label class="image-picker jynlo-action" [class.disabled]="posting">
+          <input type="file" accept="video/mp4,video/webm" [disabled]="posting"
+            (change)="onPostVideoChange($event)">
+          <span>{{ postVideoPreview ? ('feed.changeVideo' | t) : ('feed.addVideo' | t) }}</span>
+        </label>
         <button
+          class="jynlo-action jynlo-action--primary"
           type="button"
           [disabled]="posting || !postContent.trim()"
           (click)="publish()">
@@ -67,15 +245,7 @@
     @if (!loading && errorMessage) {
       <div class="state-card error-state">
         <p>{{ errorMessage }}</p>
-        <button type="button" (click)="load()">{{ 'common.retry' | t }}</button>
-      </div>
-    }
-
-    @if (!loading && !errorMessage && items.length === 0) {
-      <div class="state-card">
-        <h2>{{ 'feed.emptyTitle' | t }}</h2>
-        <p>{{ 'feed.emptyText' | t }}</p>
-        <a routerLink="/menu/perfis">{{ 'feed.findPeople' | t }}</a>
+        <button class="jynlo-action jynlo-action--neutral" type="button" (click)="load()">{{ 'common.retry' | t }}</button>
       </div>
     }
 
@@ -84,23 +254,41 @@
         @for (item of items; track item.type + '-' + (item.postId || item.sessionId) + '-' + item.createdAt) {
           <article class="feed-card">
             <div class="feed-author">
-              <div class="avatar">
-                @if (profileImage(item); as image) {
-                  <img [src]="image" [alt]="item.authorUsername">
-                } @else {
-                  <span>{{ initials(item) }}</span>
-                }
-              </div>
+              <a
+                class="feed-author-link"
+                [routerLink]="['/menu/perfis', item.authorUsername]"
+                [queryParams]="{ from: 'feed' }"
+                [attr.aria-label]="item.authorDisplayName + ' (@' + item.authorUsername + ')'">
+                <div class="avatar">
+                  @if (profileImage(item); as image) {
+                    <img [src]="image" [alt]="item.authorUsername">
+                  } @else {
+                    <span>{{ initials(item) }}</span>
+                  }
+                </div>
 
-              <div class="author-copy">
-                <strong>{{ item.authorDisplayName }}</strong>
-                <span>@{{ item.authorUsername }} · {{ item.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
-              </div>
+                <div class="author-copy">
+                  <strong>{{ item.authorDisplayName }}</strong>
+                  <span>@{{ item.authorUsername }} · {{ item.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
+                </div>
+              </a>
+
+              @if (item.type === 'SESSION_ATTENDED' && item.sessionId !== null
+                   && item.authorUsername === currentUsername) {
+                <button
+                  type="button"
+                  class="delete-post jynlo-action jynlo-action--danger"
+                  [disabled]="hidingAttendanceSessionId !== null"
+                  (click)="hideAttendanceActivity(item)">
+                  {{ hidingAttendanceSessionId === item.sessionId
+                    ? ('common.processing' | t) : ('feed.hideAttendance' | t) }}
+                </button>
+              }
 
               @if (item.type === 'POST' && item.authorUsername === currentUsername) {
                 <button
                   type="button"
-                  class="delete-post"
+                  class="delete-post jynlo-action jynlo-action--danger"
                   [disabled]="deletingPostId !== null"
                   (click)="deletePost(item)">
                   {{ deletingPostId === item.postId ? ('common.processing' | t) : ('feed.delete' | t) }}
@@ -118,25 +306,62 @@
                   [alt]="'feed.postImageAlt' | t:{ user: item.authorDisplayName }">
               }
 
+              @if (item.sessionId !== null) {
+                <a class="session-preview" [routerLink]="['/menu/events', item.sessionId]">
+                  <div>
+                    <strong>{{ item.sport }}</strong>
+                    <span>{{ item.city }}</span>
+                  </div>
+                  <div>
+                    <div class="session-date-time">
+                    <span class="session-date">{{ item.gameDate | date:'dd/MM/yyyy' }}</span>
+                    <span class="session-hour">{{ item.gameDate | date:'HH:mm' }}</span>
+                  </div>
+                    <strong>{{ 'feed.viewSession' | t }}</strong>
+                  </div>
+                </a>
+              }
+
               <div class="post-actions">
+                @if (postVideo(item); as video) {
+                 <video class="post-video" [src]="video" controls playsinline preload="none"
+                   [attr.aria-label]="'feed.postVideoAlt' | t:{ user: item.authorDisplayName }"></video>
+               }
+
+               @if (item.sessionId !== null) {
+                  <button
+                    type="button"
+                    class="share-session jynlo-action jynlo-action--neutral"
+                    [disabled]="sharingSessionId !== null"
+                    (click)="shareSession(item)"
+                    [attr.aria-label]="shareFeedbackSessionId === item.sessionId ? shareFeedbackMessage : ('publicSession.share' | t)">
+                    <span aria-hidden="true">↗</span>
+                    {{ shareFeedbackSessionId === item.sessionId ? shareFeedbackMessage : ('publicSession.share' | t) }}
+                  </button>
+                }
                 <button
                   type="button"
                   [class.active]="item.likedByMe"
                   [disabled]="interactionLoadingPostId !== null"
+                  [attr.aria-label]="item.likedByMe ? ('feed.unlikeAction' | t) : ('feed.likeAction' | t)"
+                  [attr.aria-pressed]="item.likedByMe"
                   (click)="toggleLike(item)">
-                  <span>{{ item.likedByMe ? '♥' : '♡' }}</span>
+                  <span aria-hidden="true">{{ item.likedByMe ? '♥' : '♡' }}</span>
                   {{ item.likeCount }}
                 </button>
 
                 <button
                   type="button"
+                  [attr.aria-label]="item.postId !== null && openCommentPosts.has(item.postId)
+                    ? ('feed.hideCommentsAction' | t) : ('feed.showCommentsAction' | t)"
+                  [attr.aria-expanded]="item.postId !== null && openCommentPosts.has(item.postId)"
                   (click)="toggleComments(item)">
-                  <span>💬</span>
+                  <span aria-hidden="true">💬</span>
                   {{ item.commentCount }}
                 </button>
 
                 @if (item.authorUsername !== currentUsername) {
-                  <button
+                  <button class="jynlo-action jynlo-action--neutral"
                     type="button"
                     [disabled]="reportingPostId !== null || (item.postId !== null && reportedPostIds.has(item.postId))"
                     (click)="reportPost(item)">
@@ -155,17 +380,24 @@
 
                   @for (comment of commentsByPost[item.postId] || []; track comment.id) {
                     <div class="comment-row">
-                      <div class="comment-avatar">
+                      <a
+                        class="comment-avatar"
+                        [routerLink]="['/menu/perfis', comment.authorUsername]"
+                        [queryParams]="{ from: 'feed' }"
+                        [attr.aria-label]="comment.authorDisplayName + ' (@' + comment.authorUsername + ')'">
                         @if (commentProfileImage(comment); as image) {
                           <img [src]="image" [alt]="comment.authorUsername">
                         } @else {
                           <span>{{ commentInitials(comment) }}</span>
                         }
-                      </div>
+                      </a>
 
                       <div class="comment-copy">
                         <div class="comment-heading">
-                          <strong>{{ comment.authorDisplayName }}</strong>
+                          <a class="comment-author-link" [routerLink]="['/menu/perfis', comment.authorUsername]"
+                            [queryParams]="{ from: 'feed' }">
+                            <strong>{{ comment.authorDisplayName }}</strong>
+                          </a>
                           <span>@{{ comment.authorUsername }} · {{ comment.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
                         </div>
                         <p>{{ comment.content }}</p>
@@ -200,7 +432,7 @@
                       [ngModel]="commentDrafts[item.postId] || ''"
                       (ngModelChange)="commentDrafts[item.postId] = $event"
                       [placeholder]="'feed.commentPlaceholder' | t">
-                    <button
+                    <button class="jynlo-action jynlo-action--neutral"
                       type="button"
                       [disabled]="interactionLoadingPostId !== null || !(commentDrafts[item.postId] || '').trim()"
                       (click)="submitComment(item)">
@@ -230,21 +462,31 @@
                   <span>{{ item.city }}</span>
                 </div>
                 <div>
-                  <span>{{ item.gameDate | date:'dd/MM/yyyy HH:mm' }}</span>
+                  <div class="session-date-time">
+                    <span class="session-date">{{ item.gameDate | date:'dd/MM/yyyy' }}</span>
+                    <span class="session-hour">{{ item.gameDate | date:'HH:mm' }}</span>
+                  </div>
                   <strong>{{ 'feed.viewSession' | t }}</strong>
                 </div>
               </a>
+              @if (item.sessionId !== null) {
+                <div class="post-actions">
+                  <button
+                                      type="button"
+                                      class="share-session jynlo-action jynlo-action--neutral"
+                                      [disabled]="sharingSessionId !== null"
+                                      (click)="shareSession(item)"
+                                      [attr.aria-label]="shareFeedbackSessionId === item.sessionId ? shareFeedbackMessage : ('publicSession.share' | t)">
+                                      <span aria-hidden="true">↗</span>
+                                      {{ shareFeedbackSessionId === item.sessionId ? shareFeedbackMessage : ('publicSession.share' | t) }}
+                                    </button>
+                </div>
+              }
             }
 
             @if (item.type === 'SESSION_CREATED') {
               <div class="activity-copy">
                 <span class="activity-label">{{ 'feed.activity.sessionCreated' | t }}</span>
-                <p>
-                  {{ 'feed.activity.createdSession' | t:{
-                    sport: item.sport || '',
-                    city: item.city || ''
-                  } }}
-                </p>
               </div>
 
               <a
@@ -255,14 +497,97 @@
                   <span>{{ item.city }}</span>
                 </div>
                 <div>
-                  <span>{{ item.gameDate | date:'dd/MM/yyyy HH:mm' }}</span>
+                  <div class="session-date-time">
+                    <span class="session-date">{{ item.gameDate | date:'dd/MM/yyyy' }}</span>
+                    <span class="session-hour">{{ item.gameDate | date:'HH:mm' }}</span>
+                  </div>
                   <strong>{{ 'feed.viewSession' | t }}</strong>
                 </div>
               </a>
+              @if (item.sessionId !== null) {
+                <div class="post-actions">
+                  <button
+                    type="button"
+                    class="share-session jynlo-action jynlo-action--neutral"
+                    [disabled]="sharingSessionId !== null"
+                    (click)="shareSession(item)"
+                    [attr.aria-label]="shareFeedbackSessionId === item.sessionId ? shareFeedbackMessage : ('publicSession.share' | t)">
+                    <span aria-hidden="true">↗</span>
+                    {{ shareFeedbackSessionId === item.sessionId ? shareFeedbackMessage : ('publicSession.share' | t) }}
+                  </button>
+                </div>
+              }
+            }
+            @if (manualShareItem === item && manualShareUrl) {
+              <div class="manual-share-link">
+                <label for="feed-share-link">{{ 'publicSession.shareLink' | t }}</label>
+                <div class="manual-share-controls">
+                  <input id="feed-share-link" #shareLinkInput type="text"
+                         [value]="manualShareUrl" readonly
+                         [attr.aria-label]="'publicSession.shareLink' | t">
+                  <button class="jynlo-action jynlo-action--neutral" type="button" (click)="shareLinkInput.select()">{{ 'publicSession.selectLink' | t }}</button>
+                </div>
+              </div>
             }
           </article>
         }
       </div>
     }
+      </div>
+
+      <aside class="feed-sidebar" [attr.aria-label]="'discover.title' | t">
+        <section class="state-card feed-discovery-card">
+          <h2>{{ (suggestedSessions.length > 0 ? 'feed.suggestedSessionsTitle' : 'menu.findSessions') | t }}</h2>
+          @if (suggestedSessions.length > 0) {
+            <div class="feed-suggested-sessions">
+              @for (session of suggestedSessions; track session.id) {
+                <a class="feed-suggested-session" [routerLink]="['/menu/events', session.id]">
+                  <span class="feed-suggested-details">
+                    <strong>{{ session.sport }}</strong>
+                    <span>{{ session.city }} · {{ session.gameDate | date:'dd/MM HH:mm' }}</span>
+                    <span>{{ session.maxParticipants - session.participantCount }} {{ 'discover.when.vacancies' | t }}</span>
+                  </span>
+                  <span class="feed-suggested-link-label">{{ 'feed.viewSession' | t }} →</span>
+                </a>
+              }
+            </div>
+          }
+          <a class="jynlo-action jynlo-action--neutral feed-sidebar-link" routerLink="/menu/events">
+            {{ 'discover.when.action' | t }} →
+          </a>
+        </section>
+
+        <section class="state-card feed-discovery-card">
+          <h2>{{ 'discover.who.title' | t }}</h2>
+          @if (suggestedPeople.length > 0) {
+            <div class="feed-suggested-people">
+              @for (profile of suggestedPeople; track profile.username) {
+                <a class="feed-suggested-person"
+                   [routerLink]="['/menu/perfis', profile.username]"
+                   [queryParams]="{ from: 'feed' }">
+                  <span class="avatar feed-suggested-avatar" aria-hidden="true">
+                    @if (suggestedProfileImage(profile); as picture) {
+                      <img [src]="picture" alt="">
+                    } @else {
+                      <span>{{ profile.username.charAt(0).toUpperCase() }}</span>
+                    }
+                  </span>
+                  <span class="feed-suggested-person-details">
+                    <strong>{{ profile.nickname || profile.fullName || profile.username }}</strong>
+                    <small>@{{ profile.username }}</small>
+                    @if (profile.favoriteSports) {
+                      <small>{{ profile.favoriteSports }}</small>
+                    }
+                  </span>
+                </a>
+              }
+            </div>
+          }
+          <a class="jynlo-action jynlo-action--neutral feed-sidebar-link" routerLink="/menu/perfis">
+            {{ 'feed.findPeople' | t }} →
+          </a>
+        </section>
+      </aside>
+    </div>
   </div>
 </section>

@@ -10,13 +10,13 @@
     @if (!loading && successMessage) {
       <h1>{{ 'confirm.successTitle' | t }}</h1>
       <div class="feedback success-feedback">{{ successMessage }}</div>
-      <a class="primary-action" routerLink="/login">{{ 'confirm.enter' | t }}</a>
+      <a class="primary-action jynlo-action jynlo-action--primary" routerLink="/login">{{ 'confirm.enter' | t }}</a>
     }
 
     @if (!loading && errorMessage) {
       <h1>{{ 'confirm.errorTitle' | t }}</h1>
       <div class="feedback error-feedback">{{ errorMessage }}</div>
-      <a class="secondary-action" routerLink="/login">{{ 'confirm.back' | t }}</a>
+      <a class="secondary-action jynlo-action jynlo-action--neutral" routerLink="/login">{{ 'confirm.back' | t }}</a>
     }
   </div>
 </section>

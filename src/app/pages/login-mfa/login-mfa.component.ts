@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { finalize, timeout } from 'rxjs';
 
 import { AuthenticationService } from '../../services/authethication.service';
+import { safeLoginReturnUrl } from '../../shared/safe-login-return-url';
 
 @Component({
   selector: 'app-login-mfa',
@@ -89,7 +90,7 @@ export class LoginMFAComponent implements OnInit, OnDestroy {
           }
 
           this.authService.saveToken(response.token);
-          const returnUrl = sessionStorage.getItem('mfa-return-url') || '/menu/feed';
+          const returnUrl = safeLoginReturnUrl(sessionStorage.getItem('mfa-return-url'));
           this.clearChallenge();
           this.router.navigateByUrl(returnUrl);
         },
@@ -147,8 +148,9 @@ export class LoginMFAComponent implements OnInit, OnDestroy {
   }
 
   cancel(): void {
+    const returnUrl = safeLoginReturnUrl(sessionStorage.getItem('mfa-return-url'));
     this.clearChallenge();
-    this.router.navigate(['/login']);
+    this.router.navigate(['/login'], { queryParams: { returnUrl } });
   }
 
   countdownLabel(): string {

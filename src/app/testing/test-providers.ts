@@ -5,6 +5,7 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { of } from 'rxjs';
 
 import { AuthenticationService } from '../services/authethication.service';
+import { TranslatePipe } from '../i18n/translate.pipe';
 
 const authenticationServiceMock = new Proxy(
   {
@@ -42,7 +43,8 @@ const activatedRouteMock = {
 export const TEST_IMPORTS = [
   FormsModule,
   ReactiveFormsModule,
-  RouterTestingModule
+  RouterTestingModule,
+  TranslatePipe
 ];
 
 export const TEST_PROVIDERS: Provider[] = [

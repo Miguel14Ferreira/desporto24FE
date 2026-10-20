@@ -14,9 +14,12 @@ export interface CommunityGroup {
   name: string;
   description: string | null;
   sport: string | null;
+  sports?: string[];
   photoUrl: string | null;
   visibility: CommunityVisibility;
   rankingsEnabled: boolean;
+  individualTournamentsEnabled?: boolean;
+  teamTournamentsEnabled?: boolean;
   ownerUsername: string;
   myRole: CommunityRole | null;
   memberCount: number;
@@ -43,8 +46,8 @@ export interface CommunityCompetitionSettings {
 }
 
 export interface CommunityRoundEntry {
-  profileId: number;
-  username: string;
+  profileId: number | null;
+  username: string | null;
   fullName: string | null;
   profilePicUrl: string | null;
   team: string | null;
@@ -75,8 +78,8 @@ export interface CommunitySeason {
 
 export interface CommunityStanding {
   position: number;
-  profileId: number;
-  username: string;
+  profileId: number | null;
+  username: string | null;
   fullName: string | null;
   profilePicUrl: string | null;
   games: number;

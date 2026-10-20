@@ -37,8 +37,7 @@ export class AuthenticationGuard {
       if (refreshed.token) {
         return true;
       }
-
-      return true;
+      // A successful refresh response without a token cannot authenticate a user.
     } catch (error) {
       if (!this.isRefreshRejected(error)) {
         // Keep the current route during temporary API/network outages.

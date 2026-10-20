@@ -11,7 +11,7 @@
         <span>{{ errorMessage }}</span>
         <button
           type="button"
-          class="primary-action"
+          class="primary-action jynlo-action jynlo-action--primary"
           (click)="retrySessionLoad()">
           {{ 'sessionDetail.retry' | t }}
         </button>
@@ -25,6 +25,37 @@
         }
 
         <div class="detail-content">
+          @if (showCreationSharePanel() || (promotionOpen && canPromoteSession())) {
+            <section class="session-created-share" [attr.aria-label]="(showCreationSharePanel() ? 'sessionDetail.createdTitle' : 'sessionDetail.promoteGame') | t">
+              <strong>{{ (showCreationSharePanel() ? 'sessionDetail.createdTitle' : 'sessionDetail.promoteGame') | t }}</strong>
+              <p>{{ (showCreationSharePanel() ? 'sessionDetail.createdShareHint' : 'sessionDetail.promotionHint') | t }}</p>
+              <div class="session-created-actions">
+                <a class="jynlo-action jynlo-action--primary" [href]="whatsappShareUrl()"
+                   target="_blank" rel="noopener noreferrer">{{ 'publicSession.shareWhatsApp' | t }}</a>
+                <button class="jynlo-action jynlo-action--neutral" type="button" (click)="copyPublicShareLink()"
+                        [disabled]="sharingSession">{{ 'sessionDetail.copyLink' | t }}</button>
+                <a class="jynlo-action jynlo-action--neutral" routerLink="/menu/feed"
+                   [queryParams]="{ shareSession: session.id }">{{ 'sessionDetail.publishFeed' | t }}</a>
+                @if (showCreationSharePanel()) {
+                  <button class="jynlo-action jynlo-action--neutral" type="button"
+                          (click)="dismissCreationShare()">{{ 'sessionDetail.continueDetails' | t }}</button>
+                }
+
+              </div>
+              @if (shareFeedback) { <p class="share-feedback" role="status">{{ shareFeedback }}</p> }
+              @if (manualShareUrl) {
+                <div class="manual-share-link">
+                  <label for="session-share-url">Ligação pública da sessão</label>
+                  <div class="manual-share-controls">
+                    <input id="session-share-url" #shareLinkInput type="text" [value]="manualShareUrl"
+                           readonly aria-label="Ligação pública da sessão para copiar">
+                    <button class="jynlo-action jynlo-action--neutral" type="button"
+                            (click)="shareLinkInput.select()">Selecionar ligação</button>
+                  </div>
+                </div>
+              }
+            </section>
+          }
           <div class="title-row">
             <div>
               <p class="eyebrow">{{ session.sport }}</p>
@@ -37,6 +68,102 @@
               }
             </div>
           </div>
+
+          @if (session.joined) {
+            <div class="membership-status" role="status">
+              <strong>{{ 'sessionDetail.joinedTitle' | t }}</strong>
+              <button type="button" class="participants-shortcut"
+                      (click)="scrollToParticipants()">{{ 'sessionDetail.whosGoing' | t }} ↓</button>
+            </div>
+          } @else if (session.waitlisted) {
+            <div class="membership-status waitlisted" role="status">
+              <strong>{{ 'mySessions.waitlist' | t }}</strong>
+              @if (session.waitlistPosition !== null) {
+                <span>{{ 'sessionDetail.position' | t:{ position: session.waitlistPosition } }}</span>
+              }
+            </div>
+          }
+
+          <div class="session-top-actions">
+            @if (canJoinSession()) {
+              <button type="button" class="join-shortcut" (click)="scrollToParticipation()">
+                {{ isFull() ? ('sessionDetail.viewWaitlist' | t) : ('sessionDetail.viewJoin' | t) }}
+                <span aria-hidden="true">↓</span>
+              </button>
+            }
+            @if (canSharePostGameMoment()) {
+              <a class="postgame-action jynlo-action jynlo-action--neutral" routerLink="/menu/feed"
+                 [queryParams]="{ momentSession: session.id }">{{ 'sessionDetail.sharePostGameMoment' | t }}</a>
+            }
+            @if (canRatePostGame() && (ratingDismissed || ratingCollapsedByExisting)) {
+              <button type="button" class="share-session-action rating-reopen-action"
+                      (click)="reopenOverallRating()">
+                {{ (myOverallScore !== null ? 'sessionDetail.overallRatingEdit'
+                                           : 'sessionDetail.overallRatingReopen') | t }}
+              </button>
+            }
+            @if (canPromoteSession() && !showCreationSharePanel()) {
+              <button type="button" class="share-session-action open-promotion-button jynlo-action jynlo-action--neutral"
+                      [attr.aria-expanded]="promotionOpen" (click)="togglePromotionPanel()">
+                {{ (promotionOpen ? 'sessionDetail.hidePromotion' : 'sessionDetail.promoteGame') | t }}
+              </button>
+            }
+            @if (canShareSession() && !canPromoteSession()) {
+              <button type="button" class="share-session-action jynlo-action jynlo-action--neutral"
+                      [disabled]="sharingSession" (click)="shareSession()">
+                {{ sharingSession ? 'A partilhar...' : 'Partilhar sessão' }}
+              </button>
+              @if (shareFeedback && !showCreationSharePanel()) {
+                <span class="share-feedback" role="status">{{ shareFeedback }}</span>
+              }
+              @if (manualShareUrl && !canPromoteSession()) {
+                <div class="manual-share-link">
+                  <label for="session-share-url">Ligação pública da sessão</label>
+                  <div class="manual-share-controls">
+                    <input id="session-share-url" #shareLinkInput type="text"
+                           [value]="manualShareUrl" readonly
+                           aria-label="Ligação pública da sessão para copiar">
+                    <button class="jynlo-action jynlo-action--neutral" type="button" (click)="shareLinkInput.select()">Selecionar ligação</button>
+                  </div>
+                </div>
+              }
+            }
+          </div>
+
+          @if (canFindPlayers()) {
+            <div class="session-player-search" role="region" aria-label="Procurar jogadores">
+              <strong>Faltam {{ missingPlayers() }} jogadores</strong>
+              @if (canShareSession()) {
+                <button type="button" class="jynlo-action jynlo-action--neutral"
+                        (click)="toggleFriendInvites()">Convidar amigos</button>
+                @if (inviteFriendsOpen) {
+                  <div class="session-friend-invites">
+                    @if (inviteFriendsLoading) { <p>A carregar amigos...</p> }
+                    @if (!inviteFriendsLoading && inviteFriends.length === 0 && !inviteError) {
+                      <p>Não tens amigos disponíveis para convidar.</p>
+                    }
+                    @for (friend of inviteFriends; track friend.username) {
+                      <div>
+                        <span>@{{ friend.username }}</span>
+                        <button type="button" class="jynlo-action jynlo-action--neutral"
+                          [disabled]="inviteSendingTo !== null"
+                          (click)="sendSessionInvite(friend.username)">Enviar mensagem</button>
+                        <button type="button" class="jynlo-action jynlo-action--neutral"
+                          [disabled]="formalInviteSendingTo !== null || formalInvitedFriends.has(friend.username)"
+                          (click)="sendFormalSessionInvite(friend.username)">{{ formalInvitedFriends.has(friend.username) ? 'Convite enviado' : 'Enviar convite' }}</button>
+                      </div>
+                    }
+                    @if (inviteFeedback) { <p role="status">{{ inviteFeedback }}</p> }
+                    @if (inviteError) { <p role="alert">{{ inviteError }}</p> }
+                  </div>
+                }
+              }
+              <a class="jynlo-action jynlo-action--primary" routerLink="/menu/perfis"
+                 [queryParams]="{ from: 'people', sport: session.sport, city: session.city }">
+                Procurar jogadores
+              </a>
+            </div>
+          }
 
           <div class="detail-grid">
             <div>
@@ -62,6 +189,83 @@
               <strong>{{ session.creatorUsername || ('sessionDetail.user' | t) }}</strong>
             </div>
           </div>
+
+          @if (canReviewPostGame()) {
+            <section id="post-game-review" class="post-game-review" aria-labelledby="post-game-review-title">
+              <div>
+                <span class="post-game-review-kicker">{{ 'sessionDetail.postGameKicker' | t }}</span>
+                <h2 id="post-game-review-title">{{ 'sessionDetail.postGameTitle' | t }}</h2>
+                <p>{{ 'sessionDetail.postGameDescription' | t }}</p>
+              </div>
+              <div class="post-game-review-actions">
+                <button type="button" class="primary-action jynlo-action jynlo-action--primary"
+                        [disabled]="actionLoading" (click)="openPostGameAttendance()">
+                  {{ 'sessionDetail.postGameYes' | t }}
+                </button>
+                <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
+                        [disabled]="actionLoading" (click)="confirmGameDidNotHappen()">
+                  {{ 'sessionDetail.postGameNo' | t }}
+                </button>
+              </div>
+              <small>{{ 'sessionDetail.postGameAttendanceHint' | t }}</small>
+            </section>
+          }
+
+          @if (canRatePostGame() && !ratingDismissed && !ratingCollapsedByExisting) {
+            <section class="overall-rating-panel" aria-labelledby="overall-rating-title">
+              <div>
+                <span class="overall-rating-kicker">{{ 'sessionDetail.overallRatingKicker' | t }}</span>
+                <h2 id="overall-rating-title">{{ 'sessionDetail.overallRatingTitle' | t }}</h2>
+                <p>{{ 'sessionDetail.overallRatingDescription' | t }}</p>
+              </div>
+              <div class="overall-rating-stars" role="group"
+                   [attr.aria-label]="'sessionDetail.overallRatingStarsLabel' | t">
+                @for (star of overallRatingStars; track star) {
+                  <button type="button" class="overall-rating-star"
+                          [class.is-selected]="star <= (selectedOverallScore ?? 0)"
+                          [attr.aria-label]="'sessionDetail.overallRatingStar' | t:{ count: star }"
+                          [attr.aria-pressed]="selectedOverallScore === star"
+                          [disabled]="ratingLoading || ratingSaving || ratingLoadedSessionId !== session.id"
+                          (click)="selectOverallScore(star)">★</button>
+                }
+              </div>
+              @if (myOverallScore !== null) {
+                <p class="overall-rating-existing">
+                  {{ 'sessionDetail.overallRatingExisting' | t:{ count: myOverallScore } }}
+                </p>
+              }
+              @if (ratingLoading) {
+                <p class="overall-rating-feedback">{{ 'sessionDetail.overallRatingLoading' | t }}</p>
+              }
+              @if (ratingError) {
+                <p class="overall-rating-feedback overall-rating-error" role="alert">{{ ratingError }}</p>
+                @if (ratingLoadedSessionId !== session.id) {
+                  <button type="button" class="overall-rating-retry"
+                          [disabled]="ratingLoading" (click)="loadMyOverallRating()">
+                    {{ 'sessionDetail.retry' | t }}
+                  </button>
+                }
+              }
+              @if (ratingSuccess) {
+                <p class="overall-rating-feedback overall-rating-success" role="status">{{ ratingSuccess }}</p>
+              }
+              <div class="overall-rating-actions">
+                <button type="button" class="primary-action jynlo-action jynlo-action--primary"
+                        [disabled]="!canSaveOverallRating()"
+                        (click)="saveOverallRating()">
+                  {{ ratingSaving ? ('profile.saving' | t)
+                      : ((myOverallScore === null
+                           ? 'sessionDetail.overallRatingSave'
+                           : 'sessionDetail.overallRatingUpdate') | t) }}
+                </button>
+                <button type="button" class="overall-rating-skip"
+                        [disabled]="ratingSaving"
+                        (click)="dismissOverallRating()">
+                  {{ 'sessionDetail.overallRatingSkip' | t }}
+                </button>
+              </div>
+            </section>
+          }
 
           @if (session.venue) {
             <section class="venue-detail-panel">
@@ -92,16 +296,16 @@
             </div>
             <div class="calendar-actions">
               @if (googleCalendarUrl(); as googleUrl) {
-                <a class="calendar-action" [href]="googleUrl" target="_blank" rel="noopener noreferrer">
+                <a class="calendar-action jynlo-action jynlo-action--neutral" [href]="googleUrl" target="_blank" rel="noopener noreferrer">
                   Google Calendar
                 </a>
               }
               @if (outlookCalendarUrl(); as outlookUrl) {
-                <a class="calendar-action" [href]="outlookUrl" target="_blank" rel="noopener noreferrer">
+                <a class="calendar-action jynlo-action jynlo-action--neutral" [href]="outlookUrl" target="_blank" rel="noopener noreferrer">
                   Outlook
                 </a>
               }
-              <button type="button" class="calendar-action" (click)="downloadIcs()">
+              <button type="button" class="calendar-action jynlo-action jynlo-action--neutral" (click)="downloadIcs()">
                 {{ 'sessionDetail.downloadIcs' | t }}
               </button>
             </div>
@@ -186,13 +390,15 @@
                   }.
                 </p>
               </div>
-              <button
-                type="button"
-                class="danger-action"
-                [disabled]="actionLoading"
-                (click)="leaveSession()">
-                {{ actionLoading ? ('common.processing' | t) : ('mySessions.leaveWaitlist' | t) }}
-              </button>
+              @if (canLeaveSession()) {
+                <button
+                  type="button"
+                  class="danger-action jynlo-action jynlo-action--danger"
+                  [disabled]="actionLoading"
+                  (click)="leaveSession()">
+                  {{ actionLoading ? ('common.processing' | t) : ('mySessions.leaveWaitlist' | t) }}
+                </button>
+              }
             </section>
           } @else if (session.joined && isCreator()) {
             <section class="participation-panel">
@@ -216,7 +422,7 @@
                   </div>
                   <button
                     type="button"
-                    class="secondary-action"
+                    class="secondary-action jynlo-action jynlo-action--neutral"
                     [disabled]="teamsLoading"
                     (click)="generateTeams()">
                     {{
@@ -268,7 +474,7 @@
                   </p>
                   <button
                     type="button"
-                    class="primary-action"
+                    class="primary-action jynlo-action jynlo-action--primary"
                     [disabled]="teamsConfirming || !teamSuggestionPendingConfirmation"
                     (click)="confirmTeams()">
                     {{
@@ -309,14 +515,14 @@
                     </label>
                     <button
                       type="button"
-                      class="danger-action"
+                      class="danger-action jynlo-action jynlo-action--danger"
                       [disabled]="actionLoading || !selectedProblemType"
                       (click)="reportProblem()">
                       {{ actionLoading ? ('common.processing' | t) : ('sessionDetail.sendProblem' | t) }}
                     </button>
                     <button
                       type="button"
-                      class="secondary-action"
+                      class="secondary-action jynlo-action jynlo-action--neutral"
                       [disabled]="actionLoading"
                       (click)="toggleProblemReport()">
                       {{ 'common.cancel' | t }}
@@ -324,7 +530,7 @@
                   } @else {
                     <button
                       type="button"
-                      class="secondary-action"
+                      class="secondary-action jynlo-action jynlo-action--neutral"
                       [disabled]="actionLoading"
                       (click)="toggleProblemReport()">
                       {{ 'sessionDetail.reportProblem' | t }}
@@ -339,16 +545,25 @@
                 <h2>{{ 'sessionDetail.joinedTitle' | t }}</h2>
                 <p>{{ 'sessionDetail.joinedText' | t }}</p>
               </div>
-              <button
-                type="button"
-                class="danger-action"
-                [disabled]="actionLoading"
-                (click)="leaveSession()">
-                {{ actionLoading ? ('common.processing' | t) : ('sessionDetail.leaveSession' | t) }}
-              </button>
+              @if (canLeaveSession()) {
+                <button
+                  type="button"
+                  class="danger-action jynlo-action jynlo-action--danger"
+                  [disabled]="actionLoading"
+                  (click)="leaveSession()">
+                  {{ actionLoading ? ('common.processing' | t) : ('sessionDetail.leaveSession' | t) }}
+                </button>
+              }
+            </section>
+          } @else if (!canJoinSession()) {
+            <section class="participation-panel">
+              <div>
+                <h2>{{ 'sessionDetail.closed' | t }}</h2>
+                <p>{{ 'sessionDetail.closedText' | t }}</p>
+              </div>
             </section>
           } @else {
-            <section class="participation-panel">
+            <section id="session-participation" class="participation-panel">
               <div>
                 <h2>{{ isFull() ? ('sessionDetail.full' | t) : ('sessionDetail.wantJoin' | t) }}</h2>
                 <p>
@@ -374,7 +589,7 @@
 
                 <button
                   type="button"
-                  class="primary-action"
+                  class="primary-action jynlo-action jynlo-action--primary"
                   [disabled]="actionLoading"
                   (click)="joinSession()">
                   {{ joinButtonLabel() }}
@@ -385,7 +600,7 @@
 
 
           @if (session.joined) {
-            <section class="session-participants-panel">
+            <section id="session-participants" class="session-participants-panel">
               <div class="session-participants-header">
                 <div>
                   <h2>{{ 'sessionDetail.whosGoing' | t }}</h2>
@@ -393,7 +608,7 @@
                 </div>
                 <button
                   type="button"
-                  class="secondary-action"
+                  class="secondary-action jynlo-action jynlo-action--neutral"
                   [disabled]="sessionParticipantsLoading"
                   (click)="loadSessionParticipants()">
                   {{ sessionParticipantsLoading ? ('chat.refreshing' | t) : ('chat.refresh' | t) }}
@@ -447,7 +662,7 @@
                 </div>
                 <button
                   type="button"
-                  class="secondary-action"
+                  class="secondary-action jynlo-action jynlo-action--neutral"
                   (click)="toggleAttendanceManager()">
                   {{ 'sessionDetail.manageAttendance' | t }}
                 </button>
@@ -462,19 +677,35 @@
                 <div class="attendance-actions">
                   <button
                     type="button"
-                    class="refresh-attendance"
-                    [disabled]="participantsLoading"
+                    class="refresh-attendance jynlo-action jynlo-action--neutral"
+                    [disabled]="participantsLoading || attendanceBulkUpdating"
                     (click)="loadParticipants()">
                     {{ participantsLoading ? ('chat.refreshing' | t) : ('chat.refresh' | t) }}
                   </button>
                   <button
                     type="button"
-                    class="secondary-action"
+                    class="secondary-action jynlo-action jynlo-action--neutral"
                     (click)="toggleAttendanceManager()">
                     {{ 'sessionDetail.hideAttendance' | t }}
                   </button>
                 </div>
               </div>
+
+              @if (canConfirmPendingAttendance() || attendanceBulkUpdating) {
+                <div class="attendance-bulk-action">
+                  <button
+                    type="button"
+                    class="confirm-bulk-attendance jynlo-action jynlo-action--primary"
+                    [disabled]="!canConfirmPendingAttendance()"
+                    (click)="confirmPendingAttendance()">
+                    {{ attendanceBulkUpdating ? ('profile.saving' | t)
+                       : ((hasRecordedNoShows()
+                         ? 'sessionDetail.confirmRemainingAttendance'
+                         : 'sessionDetail.confirmAllAttendance') | t) }}
+                  </button>
+                  <small>{{ 'sessionDetail.confirmAttendanceHint' | t }}</small>
+                </div>
+              }
 
               @if (attendanceSuccess) {
                 <div class="attendance-feedback attendance-success">{{ attendanceSuccess }}</div>
@@ -515,15 +746,15 @@
                       <div class="attendance-actions">
                         <button
                           type="button"
-                          class="attended-action"
-                          [disabled]="!canRecordAttendance() || attendanceUpdatingId !== null || removeLoadingId !== null"
+                          class="attended-action jynlo-action jynlo-action--neutral"
+                          [disabled]="!canRecordAttendance() || attendanceUpdatingId !== null || attendanceBulkUpdating || removeLoadingId !== null"
                           (click)="recordAttendance(participant, 'ATTENDED')">
                           {{ attendanceUpdatingId === participant.id ? ('profile.saving' | t) : ('sessionDetail.present' | t) }}
                         </button>
                         <button
                           type="button"
-                          class="no-show-action"
-                          [disabled]="!canRecordAttendance() || attendanceUpdatingId !== null || removeLoadingId !== null"
+                          class="no-show-action jynlo-action jynlo-action--danger"
+                          [disabled]="!canRecordAttendance() || attendanceUpdatingId !== null || attendanceBulkUpdating || removeLoadingId !== null"
                           (click)="recordAttendance(participant, 'NO_SHOW')">
                           {{ attendanceUpdatingId === participant.id ? ('profile.saving' | t) : ('sessionDetail.absent' | t) }}
                         </button>
@@ -534,15 +765,15 @@
                               <span>{{ 'sessionDetail.removeUser' | t:{ username: participant.username } }}</span>
                               <button
                                 type="button"
-                                class="confirm-remove-action"
-                                [disabled]="removeLoadingId !== null"
+                                class="confirm-remove-action jynlo-action jynlo-action--danger"
+                                [disabled]="removeLoadingId !== null || attendanceBulkUpdating"
                                 (click)="confirmRemoveParticipant(participant)">
                                 {{ removeLoadingId === participant.id ? ('friends.removing' | t) : ('common.confirm' | t) }}
                               </button>
                               <button
                                 type="button"
-                                class="cancel-remove-action"
-                                [disabled]="removeLoadingId !== null"
+                                class="cancel-remove-action jynlo-action jynlo-action--neutral"
+                                [disabled]="removeLoadingId !== null || attendanceBulkUpdating"
                                 (click)="cancelRemoveParticipant()">
                                 {{ 'common.cancel' | t }}
                               </button>
@@ -550,14 +781,57 @@
                           } @else {
                             <button
                               type="button"
-                              class="remove-participant-action"
-                              [disabled]="removeLoadingId !== null || attendanceUpdatingId !== null"
+                              class="remove-participant-action jynlo-action jynlo-action--danger"
+                              [disabled]="removeLoadingId !== null || attendanceUpdatingId !== null || attendanceBulkUpdating"
                               (click)="requestRemoveParticipant(participant)">
                               Remover
                             </button>
                           }
                         }
                       </div>
+
+                      @if (canRemoveParticipant(participant)
+                           && (participant.attendanceStatus === 'NO_SHOW'
+                               || futureExclusions[participant.id] === true)) {
+                        <div class="future-exclusion-panel">
+                          @if (futureExclusions[participant.id] === true) {
+                            <span>{{ 'sessionDetail.futureExclusionActive' | t }}</span>
+                            <button type="button" class="future-exclusion-undo jynlo-action jynlo-action--neutral"
+                              [disabled]="futureExclusionUpdatingId !== null || attendanceBulkUpdating"
+                              (click)="allowFutureSessions(participant)">
+                              {{ 'sessionDetail.futureExclusionUndo' | t }}
+                            </button>
+                          } @else if (futureExclusions[participant.id] === false) {
+                            @if (pendingFutureExclusionId === participant.id) {
+                              <span>{{ 'sessionDetail.futureExclusionConfirm' | t:{ username: participant.username } }}</span>
+                              <button type="button" class="future-exclusion-confirm jynlo-action jynlo-action--primary"
+                                [disabled]="futureExclusionUpdatingId !== null || attendanceUpdatingId !== null || attendanceBulkUpdating"
+                                (click)="confirmFutureExclusion(participant)">
+                                {{ 'sessionDetail.futureExclusionYes' | t }}
+                              </button>
+                              <button type="button" class="future-exclusion-cancel jynlo-action jynlo-action--neutral"
+                                [disabled]="futureExclusionUpdatingId !== null"
+                                (click)="cancelFutureExclusion()">
+                                {{ 'common.cancel' | t }}
+                              </button>
+                            } @else {
+                              <button type="button" class="future-exclusion-request jynlo-action jynlo-action--neutral"
+                                [disabled]="futureExclusionUpdatingId !== null || attendanceUpdatingId !== null || attendanceBulkUpdating"
+                                (click)="requestFutureExclusion(participant)">
+                                {{ 'sessionDetail.futureExclusionRequest' | t }}
+                              </button>
+                            }
+                          } @else if (futureExclusions[participant.id] === null) {
+                            <span>{{ 'sessionDetail.futureExclusionLoadError' | t }}</span>
+                            <button type="button" class="future-exclusion-undo jynlo-action jynlo-action--neutral"
+                              [disabled]="participantsLoading" (click)="loadParticipants()">
+                              {{ 'common.retry' | t }}
+                            </button>
+                          } @else {
+                            <span>{{ 'sessionDetail.futureExclusionChecking' | t }}</span>
+                          }
+                        </div>
+                      }
                     </article>
                   }
                 </div>
@@ -573,7 +847,7 @@
                   <h2>{{ 'sessionDetail.sessionChat' | t }}</h2>
                   <p>{{ 'sessionDetail.sessionChatText' | t }}</p>
                 </div>
-                <span class="sync-status">{{ 'chat.autoRefresh' | t }}</span>
+                <span class="sync-status">{{ (canSendChat() ? 'chat.autoRefresh' : 'sessionDetail.chatClosedShort') | t }}</span>
               </div>
 
               @if (chatError) {
@@ -582,7 +856,9 @@
 
               <div class="message-list">
                 @if (!chatLoading && messages.length === 0) {
-                  <div class="empty-chat">{{ 'sessionDetail.emptyChat' | t }}</div>
+                  <div class="empty-chat">
+                    {{ (canSendChat() ? 'sessionDetail.emptyChat' : 'sessionDetail.emptyChatClosed') | t }}
+                  </div>
                 }
 
                 @for (message of messages; track message.id) {
@@ -598,6 +874,7 @@
                 }
               </div>
 
+              @if (canSendChat()) {
               <form class="message-composer" (ngSubmit)="sendMessage()">
                 <label>
                   <span>{{ 'sessionDetail.newMessage' | t }}</span>
@@ -640,12 +917,17 @@
                   <span>{{ 'chat.autoRefreshHint' | t }}</span>
                   <button
                     type="submit"
-                    class="primary-action"
+                    class="primary-action jynlo-action jynlo-action--primary"
                     [disabled]="messageSending || !messageBody.trim()">
                     {{ messageSending ? ('chat.sending' | t) : ('chat.send' | t) }}
                   </button>
                 </div>
               </form>
+              } @else {
+                <div class="chat-read-only" role="status">
+                  {{ 'sessionDetail.chatClosedDescription' | t }}
+                </div>
+              }
             </section>
           } @else if (!session.waitlisted) {
             <section class="chat-locked">

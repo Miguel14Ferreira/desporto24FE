@@ -1,0 +1,51 @@
+name: Validate tournament browser flows
+# E2E is expensive (Chromium OS dependencies + browser install).
+# Opt in explicitly instead of starting a second npm install on each PR commit.
+# workflow_dispatch is available from the Actions UI after the workflow
+# exists on the repository's default branch; otherwise run Playwright locally.
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+
+# Avoid paying for outdated Playwright runs after a PR is updated.
+concurrency:
+  group: fe-browser-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  browser-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      CI: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install project dependencies
+        run: npm ci
+      # Pin the browser-test runner without changing the application's production
+      # dependency graph or the existing npm ci lockfile for this first E2E phase.
+      - name: Install pinned Playwright runner
+        run: npm install --no-save --package-lock=false @playwright/test@1.56.1
+      - name: Install Chromium and OS dependencies
+        run: npx playwright install --with-deps chromium
+      - name: Run browser tests with a mocked API
+        run: npx playwright test --config=playwright.config.ts
+      - name: Print browser error context on failure
+        if: failure()
+        run: |
+          find test-results -name error-context.md -type f -print -exec sed -n '1,160p' {} \; || true
+      - name: Upload browser screenshots and traces
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: jynlo-tournament-browser-report
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 14

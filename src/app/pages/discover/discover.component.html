@@ -21,7 +21,8 @@
             type="text"
             name="sport"
             list="discover-sports"
-            [(ngModel)]="sport"
+            [ngModel]="sport"
+            (ngModelChange)="onSportChange($event)"
             autocomplete="off"
             [placeholder]="'discover.sportPlaceholder' | t">
           <datalist id="discover-sports">
@@ -36,18 +37,19 @@
           <input
             type="text"
             name="location"
-            [(ngModel)]="location"
+            [ngModel]="location"
+            (ngModelChange)="onLocationChange($event)"
             autocomplete="address-level2"
             [placeholder]="'discover.locationPlaceholder' | t">
         </label>
 
-        <button type="submit" [disabled]="loading">
+        <button class="jynlo-action jynlo-action--primary" type="submit" [disabled]="loading">
           {{ loading ? ('discover.searching' | t) : ('discover.search' | t) }}
         </button>
       </div>
 
       @if (sport || location) {
-        <button type="button" class="clear-button" (click)="clear()">
+        <button type="button" class="clear-button jynlo-action jynlo-action--neutral" (click)="clear()">
           {{ 'events.clear' | t }}
         </button>
       }
@@ -57,13 +59,18 @@
       <div class="state-card">{{ 'discover.loading' | t }}</div>
     }
 
-    @if (!loading && loadError) {
+    @if (!loading && (venuesLoadError || sessionsLoadError || peopleLoadError)) {
       <div class="state-card discover-error" role="alert">
         <div>
           <strong>{{ 'discover.error.title' | t }}</strong>
           <span>{{ 'discover.error.text' | t }}</span>
+          <span>
+            @if (venuesLoadError) { Recintos indisponíveis. }
+            @if (sessionsLoadError) { Sessões indisponíveis. }
+            @if (peopleLoadError) { Jogadores indisponíveis. }
+          </span>
         </div>
-        <button type="button" (click)="search()">
+        <button class="jynlo-action jynlo-action--neutral" type="button" (click)="search()">
           {{ 'discover.error.retry' | t }}
         </button>
       </div>
@@ -81,6 +88,33 @@
             </div>
             <span class="result-count">{{ venues.length }}</span>
           </header>
+
+          <div class="discover-nearby discover-nearby--venues">
+            @if (!nearbyVenuePosition) {
+              <button type="button" class="jynlo-action jynlo-action--neutral"
+                (click)="enableNearbyVenues()" [disabled]="locatingVenues">
+                {{ (locatingVenues ? 'discover.nearby.locating' : 'discover.venuesNearby.action') | t }}
+              </button>
+            } @else {
+              <label>
+                <span>{{ 'discover.nearby.radius' | t }}</span>
+                <select [value]="nearbyVenueRadiusKm" (change)="changeNearbyVenueRadius(+$any($event.target).value)">
+                  <option [value]="10">10 km</option>
+                  <option [value]="25">25 km</option>
+                  <option [value]="50">50 km</option>
+                </select>
+              </label>
+              <button type="button" class="jynlo-action jynlo-action--neutral"
+                (click)="disableNearbyVenues(); search()">
+                {{ 'discover.nearby.back' | t }}
+              </button>
+            }
+            <small>{{ 'discover.venuesNearby.hint' | t }}</small>
+            @if (nearbyVenueError) {
+              <p role="alert">{{ (nearbyVenueError === 'unsupported'
+                ? 'feedback.location.unsupported' : 'feedback.location.error') | t }}</p>
+            }
+          </div>
 
           @if (topVenues.length === 0) {
             <div class="pillar-empty">
@@ -120,13 +154,14 @@
           }
 
           @if (venues.length > 4) {
-            <button type="button" class="pillar-action" (click)="toggleAllVenues()">
+            <button type="button" class="pillar-action jynlo-action jynlo-action--neutral" (click)="toggleAllVenues()">
               {{ (showAllVenues ? 'discover.where.showLess' : 'discover.where.showAll') | t }}
               <span>{{ showAllVenues ? '↑' : '↓' }}</span>
             </button>
           }
 
-          <a class="pillar-action" routerLink="/menu/venues/new">
+          <a class="pillar-action jynlo-action jynlo-action--neutral" routerLink="/menu/venues/new"
+             [queryParams]="{ sport: sport.trim() || null, city: location.trim() || null }">
             {{ 'discover.where.action' | t }} <span>→</span>
           </a>
         </section>
@@ -141,29 +176,89 @@
             <span class="result-count">{{ sessions.length }}</span>
           </header>
 
+          <div class="discover-nearby">
+            @if (!nearbyPosition) {
+              <button type="button" class="jynlo-action jynlo-action--neutral"
+                (click)="enableNearbySessions()" [disabled]="locatingSessions">
+                {{ (locatingSessions ? 'discover.nearby.locating' : 'discover.nearby.action') | t }}
+              </button>
+            } @else {
+              <label>
+                <span>{{ 'discover.nearby.radius' | t }}</span>
+                <select [value]="nearbyRadiusKm" (change)="changeNearbyRadius(+$any($event.target).value)">
+                  <option [value]="10">10 km</option>
+                  <option [value]="25">25 km</option>
+                  <option [value]="50">50 km</option>
+                </select>
+              </label>
+              <button type="button" class="jynlo-action jynlo-action--neutral"
+                (click)="disableNearbySessions(); search()">
+                {{ 'discover.nearby.back' | t }}
+              </button>
+            }
+            <small>{{ 'discover.nearby.hint' | t }}</small>
+            @if (nearbySessionError) {
+              <p role="alert">{{ (nearbySessionError === 'unsupported'
+                ? 'feedback.location.unsupported' : 'feedback.location.error') | t }}</p>
+            }
+          </div>
+
           @if (topSessions.length === 0) {
-            <div class="pillar-empty">
+            <div class="pillar-empty session-empty">
               <strong>{{ 'discover.when.emptyTitle' | t }}</strong>
               <span>{{ 'discover.when.emptyText' | t }}</span>
+              @if (!sessionsLoadError) {
+                <a class="jynlo-action jynlo-action--primary session-empty-create"
+                  routerLink="/menu/createEvent"
+                  [queryParams]="{ sport: sport.trim() || null, city: location.trim() || null }">
+                  {{ 'discover.when.createAction' | t }} <span aria-hidden="true">→</span>
+                </a>
+              }
             </div>
           } @else {
             <div class="result-list">
               @for (session of topSessions; track session.id) {
-                <a class="result-card session-card" [routerLink]="['/menu/events', session.id]">
+                <a class="result-card session-card" [routerLink]="['/menu/events', session.id]"
+                   [queryParams]="session.joinedByViewer || session.waitlistedByViewer ? null : { join: '1' }">
                   <div class="session-main">
                     <strong>{{ session.sport }}</strong>
                     <span>{{ session.city }} · {{ session.gameDate | date:'dd/MM HH:mm' }}</span>
+                    <span class="session-summary-meta">
+                      @if (session.priceAmount > 0) {
+                        {{ session.priceAmount | number:'1.2-2' }} €
+                      } @else {
+                        {{ 'common.free' | t }}
+                      }
+                      @if (session.distanceKm !== null && session.distanceKm !== undefined) {
+                        · {{ session.distanceKm | number:'1.0-1' }} km
+                      }
+                    </span>
                   </div>
                   <div class="session-side">
                     <strong>{{ vacancies(session) }}</strong>
                     <span>{{ 'discover.when.vacancies' | t }}</span>
+                    <span class="session-entry-hint"
+                      [class.session-entry-hint--member]="session.joinedByViewer || session.waitlistedByViewer">
+                      {{ (session.joinedByViewer ? 'discover.when.alreadyJoined'
+                        : session.waitlistedByViewer ? 'discover.when.waitlisted'
+                        : 'discover.when.viewJoin') | t }}
+                      <span aria-hidden="true">→</span>
+                    </span>
                   </div>
                 </a>
               }
             </div>
           }
 
-          <a class="pillar-action" routerLink="/menu/events">
+          @if (sessions.length > topSessionResults.length) {
+            <button type="button" class="jynlo-action jynlo-action--neutral"
+              [attr.aria-expanded]="showAllSessions"
+              (click)="toggleAllSessions()">
+              {{ showAllSessions ? 'Ver menos sessões' : 'Ver todas as ' + sessions.length + ' sessões' }}
+            </button>
+          }
+
+          <a class="pillar-action jynlo-action jynlo-action--neutral" routerLink="/menu/events">
             {{ 'discover.when.action' | t }} <span>→</span>
           </a>
         </section>
@@ -178,17 +273,53 @@
             <span class="result-count">{{ people.length }}</span>
           </header>
 
+          <form class="discover-people-search" (ngSubmit)="searchPlayers()">
+            <label for="discover-player-name">{{ 'discover.who.searchLabel' | t }}</label>
+            <div class="discover-people-search-controls">
+              <input id="discover-player-name" name="playerName" type="search"
+                [(ngModel)]="playerName"
+                [placeholder]="'discover.who.searchPlaceholder' | t"
+                autocomplete="off">
+              <button type="submit" class="jynlo-action jynlo-action--neutral"
+                [disabled]="loading || loadingPeople">
+                {{ (loadingPeople ? 'discover.who.searching' : 'discover.who.search') | t }}
+              </button>
+              @if (playerName) {
+                <button type="button" class="jynlo-action jynlo-action--neutral"
+                  (click)="clearPlayerName()" [disabled]="loading || loadingPeople">
+                  {{ 'events.clear' | t }}
+                </button>
+              }
+            </div>
+            <small>{{ 'discover.who.searchHint' | t }}</small>
+            @if (playerSearchError) {
+              <p role="alert">{{ 'discover.who.searchError' | t }}</p>
+            }
+          </form>
+
           @if (topPeople.length === 0) {
-            <div class="pillar-empty">
+            <div class="pillar-empty people-empty">
               <strong>{{ 'discover.who.emptyTitle' | t }}</strong>
-              <span>{{ 'discover.who.emptyText' | t }}</span>
+              <span>{{ (appliedPlayerName ? 'discover.who.emptyNameText' : 'discover.who.emptyText') | t }}</span>
+              @if (!peopleLoadError && !playerSearchError && !appliedPlayerName) {
+                <a class="jynlo-action jynlo-action--primary people-empty-recruit"
+                   routerLink="/menu/createEvent"
+                   [queryParams]="{ intent: 'findPlayers', sport: sport.trim() || null, city: location.trim() || null }">
+                  {{ 'discover.who.recruitAction' | t }} <span aria-hidden="true">→</span>
+                </a>
+              }
             </div>
           } @else {
             <div class="result-list">
               @for (profile of topPeople; track profile.username) {
-                <article class="result-card person-card">
+                <a class="result-card person-card" [routerLink]="['/menu/perfis', profile.username]"
+                   [queryParams]="{ from: 'discover', sport: sport.trim(), city: location.trim(), player: appliedPlayerName }">
                   <div class="person-avatar">
-                    {{ (profile.nickname || profile.fullName || profile.username).charAt(0).toUpperCase() }}
+                    @if (playerPhotoUrl(profile); as photo) {
+                      <img [src]="photo" alt="" loading="lazy">
+                    } @else {
+                      {{ (profile.nickname || profile.fullName || profile.username).charAt(0).toUpperCase() }}
+                    }
                   </div>
                   <div>
                     <strong>{{ profile.nickname || profile.fullName || profile.username }}</strong>
@@ -199,13 +330,27 @@
                     @if (profile.skillLevel) {
                       <small>{{ ('profile.level.' + profile.skillLevel) | t }}</small>
                     }
+                    <span class="person-entry-hint">
+                      {{ 'discover.who.profileAction' | t }} <span aria-hidden="true">→</span>
+                    </span>
                   </div>
-                </article>
+                </a>
               }
             </div>
           }
 
-          <a class="pillar-action" routerLink="/menu/perfis">
+          @if (people.length > 4 && !appliedPlayerName) {
+            <button type="button" class="pillar-action jynlo-action jynlo-action--neutral people-toggle"
+              (click)="toggleAllPeople()">
+              {{ (showAllPeople ? 'discover.who.showLess' : 'discover.who.showAll') | t }}
+              <span aria-hidden="true">{{ showAllPeople ? '↑' : '↓' }}</span>
+            </button>
+          }
+
+          <a class="pillar-action jynlo-action jynlo-action--neutral" routerLink="/menu/perfis"
+             [queryParams]="appliedPlayerName
+               ? { from: 'discover', player: appliedPlayerName }
+               : { from: 'discover', sport: sport.trim() || null, city: location.trim() || null }">
             {{ 'discover.who.action' | t }} <span>→</span>
           </a>
         </section>

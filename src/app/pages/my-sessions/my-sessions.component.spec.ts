@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { defer, of, throwError } from 'rxjs';
 
 import { MySessionsComponent } from './my-sessions.component';
 import { ReliabilityService } from '../../services/reliability.service';
@@ -73,6 +73,33 @@ describe('MySessionsComponent', () => {
     fixture.detectChanges();
   });
 
+  it('uses consistent pills for empty creation and discovery states', () => {
+    const find = fixture.nativeElement.querySelector('.empty-card a[href="/menu/events"]') as HTMLAnchorElement;
+    expect(find).toBeTruthy();
+    expect(find.classList.contains('jynlo-action')).toBeTrue();
+    expect(find.classList.contains('jynlo-action--neutral')).toBeTrue();
+
+    component.data = { ...component.data, created: [] };
+    fixture.detectChanges();
+
+    const create = fixture.nativeElement.querySelector('.empty-card a[href="/menu/createEvent"]') as HTMLAnchorElement;
+    expect(create).toBeTruthy();
+    expect(create.classList.contains('jynlo-action')).toBeTrue();
+    expect(create.classList.contains('jynlo-action--primary')).toBeTrue();
+  });
+
+  it('aligns created session details with the destructive cancellation action', () => {
+    const actions: HTMLElement = fixture.nativeElement.querySelector('.session-card .card-actions');
+    const details = actions.querySelector('a[href="/menu/events/11"]') as HTMLAnchorElement;
+    const cancel = actions.querySelector('button.danger-action') as HTMLButtonElement;
+
+    expect(details).toBeTruthy();
+    expect(cancel).toBeTruthy();
+    expect(details.classList.contains('jynlo-action')).toBeTrue();
+    expect(details.classList.contains('jynlo-action--neutral')).toBeTrue();
+    expect(cancel.classList.contains('jynlo-action--danger')).toBeTrue();
+  });
+
   it('should create and load sessions and attendance history', () => {
     expect(component).toBeTruthy();
     expect(component.data.created.length).toBe(1);
@@ -86,7 +113,9 @@ describe('MySessionsComponent', () => {
     component.confirmCancel();
 
     expect(sessionService.cancel).toHaveBeenCalledWith(11);
-    expect(sessionService.mine).toHaveBeenCalledTimes(2);
+    expect(sessionService.mine).toHaveBeenCalledTimes(1);
+    expect(component.data.created[0].status).toBe('CANCELLED');
+    expect(component.pendingCancelId).toBeNull();
     expect(component.actionMessage).toContain('cancelada');
   });
 
@@ -108,8 +137,51 @@ describe('MySessionsComponent', () => {
     expect(component.actionMessage).toContain('lista de espera');
   });
 
+  it('hides waitlist withdrawal for completed and cancelled sessions', () => {
+    for (const status of ['COMPLETED', 'CANCELLED']) {
+      const waitlisted = { ...createdSession, id: 22, status };
+      component.data = { ...component.data, waitlisted: [waitlisted] };
+      fixture.detectChanges();
+
+      const waitlistCard: HTMLElement = fixture.nativeElement.querySelector('.waitlist-badge')
+        ?.closest('.session-card');
+      expect(waitlistCard.querySelector('a[href="/menu/events/22"]')).toBeTruthy();
+      expect(waitlistCard.querySelector('button.danger-action')).toBeNull();
+      expect(component.canLeaveWaitlist(waitlisted)).toBeFalse();
+
+      component.leaveWaitlist(waitlisted);
+    }
+
+    expect(sessionService.leave).not.toHaveBeenCalled();
+  });
+
+  it('keeps waitlist withdrawal available for open and full sessions', () => {
+    for (const status of ['OPEN', 'FULL']) {
+      const waitlisted = { ...createdSession, id: 22, status };
+      component.data = { ...component.data, waitlisted: [waitlisted] };
+      fixture.detectChanges();
+
+      const waitlistCard: HTMLElement = fixture.nativeElement.querySelector('.waitlist-badge')
+        ?.closest('.session-card');
+      expect(waitlistCard.querySelector('button.danger-action')).toBeTruthy();
+      expect(component.canLeaveWaitlist(waitlisted)).toBeTrue();
+    }
+  });
+
   it('should calculate remaining vacancies', () => {
     expect(component.vacancies(createdSession)).toBe(7);
+  });
+
+  it('aligns attendance history session links with dispute actions', () => {
+    const actions: HTMLElement = fixture.nativeElement.querySelector('.attendance-card .attendance-actions');
+    const sessionLink = actions.querySelector('a[href="/menu/events/12"]') as HTMLAnchorElement;
+    const dispute = actions.querySelector('button.dispute-action') as HTMLButtonElement;
+
+    expect(sessionLink).toBeTruthy();
+    expect(sessionLink.classList.contains('jynlo-action')).toBeTrue();
+    expect(sessionLink.classList.contains('jynlo-action--neutral')).toBeTrue();
+    expect(dispute).toBeTruthy();
+    expect(dispute.classList.contains('jynlo-action')).toBeTrue();
   });
 
   it('should dispute a no-show and update its local state', () => {
@@ -139,44 +211,54 @@ describe('MySessionsComponent', () => {
 
   it('should expose a recoverable error when my sessions keep failing', () => {
     sessionService.mine.calls.reset();
-    sessionService.mine.and.returnValue(
-      throwError(() => new Error('service unavailable'))
-    );
+    let subscriptions = 0;
+    sessionService.mine.and.returnValue(defer(() => {
+      subscriptions++;
+      return throwError(() => new Error('service unavailable'));
+    }));
 
     component.load();
 
-    expect(sessionService.mine).toHaveBeenCalledTimes(2);
+    expect(sessionService.mine).toHaveBeenCalledTimes(1);
+    expect(subscriptions).toBe(2);
     expect(component.loading).toBeFalse();
     expect(component.errorMessage).toBeTruthy();
   });
 
   it('should recover my sessions after one automatic retry', () => {
     sessionService.mine.calls.reset();
-    sessionService.mine.and.returnValues(
-      throwError(() => new Error('temporary failure')),
-      of({
-        created: [createdSession],
-        joined: [],
-        waitlisted: []
-      })
-    );
+    let subscriptions = 0;
+    sessionService.mine.and.returnValue(defer(() => {
+      subscriptions++;
+      return subscriptions === 1
+        ? throwError(() => new Error('temporary failure'))
+        : of({
+            created: [createdSession],
+            joined: [],
+            waitlisted: []
+          });
+    }));
 
     component.load();
 
-    expect(sessionService.mine).toHaveBeenCalledTimes(2);
+    expect(sessionService.mine).toHaveBeenCalledTimes(1);
+    expect(subscriptions).toBe(2);
     expect(component.errorMessage).toBe('');
     expect(component.data.created.length).toBe(1);
   });
 
   it('should expose a recoverable error when attendance history keeps failing', () => {
     reliabilityService.attendanceHistory.calls.reset();
-    reliabilityService.attendanceHistory.and.returnValue(
-      throwError(() => new Error('service unavailable'))
-    );
+    let subscriptions = 0;
+    reliabilityService.attendanceHistory.and.returnValue(defer(() => {
+      subscriptions++;
+      return throwError(() => new Error('service unavailable'));
+    }));
 
     component.loadAttendanceHistory();
 
-    expect(reliabilityService.attendanceHistory).toHaveBeenCalledTimes(2);
+    expect(reliabilityService.attendanceHistory).toHaveBeenCalledTimes(1);
+    expect(subscriptions).toBe(2);
     expect(component.attendanceLoading).toBeFalse();
     expect(component.attendanceHistory).toEqual([]);
     expect(component.attendanceError).toBeTruthy();

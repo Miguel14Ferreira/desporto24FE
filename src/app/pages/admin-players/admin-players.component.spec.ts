@@ -13,7 +13,7 @@ describe('AdminPlayersComponent role changes', () => {
   });
 
   beforeEach(() => {
-    service = jasmine.createSpyObj('AdminPlayersService', ['search', 'changeRole']);
+    service = jasmine.createSpyObj('AdminPlayersService', ['search', 'changeRole', 'moderate']);
     auth = jasmine.createSpyObj('AuthenticationService', ['hasAnyRole']);
     auth.hasAnyRole.and.returnValue(true);
     component = new AdminPlayersComponent(service, auth);
@@ -73,6 +73,57 @@ describe('AdminPlayersComponent role changes', () => {
     component.confirmRoleChange();
     expect(service.changeRole).toHaveBeenCalledOnceWith(2, 'ROLE_USER', 'ROLE_ADMIN');
     expect(component.players[0].role).toBe('ROLE_USER');
+    component.ngOnDestroy();
+  });
+});
+
+describe('AdminPlayersComponent account moderation', () => {
+  let component: AdminPlayersComponent;
+  let service: jasmine.SpyObj<AdminPlayersService>;
+  let auth: jasmine.SpyObj<AuthenticationService>;
+  const player = (): AdminPlayer => ({
+    id: 2, username: 'ana', fullName: null, nickname: null,
+    role: 'ROLE_USER', enabled: true, notLocked: true, moderationSuspendedAt: null
+  });
+  beforeEach(() => {
+    service = jasmine.createSpyObj('AdminPlayersService', ['search', 'changeRole', 'moderate']);
+    auth = jasmine.createSpyObj('AuthenticationService', ['hasAnyRole']);
+    auth.hasAnyRole.and.returnValue(true);
+    component = new AdminPlayersComponent(service, auth);
+    component.players = [player()];
+  });
+  it('requires a reason and explicit confirmation before suspension', () => {
+    component.beginModeration(component.players[0], 'SUSPEND');
+    expect(component.canConfirmModeration).toBeFalse();
+    component.moderationReason = 'Inappropriate messages';
+    expect(component.canConfirmModeration).toBeTrue();
+    const response = new Subject<{id:number; action:'SUSPEND'; moderationSuspendedAt:string; notLocked:boolean}>();
+    service.moderate.and.returnValue(response);
+    component.confirmModeration();
+    expect(service.moderate).toHaveBeenCalledOnceWith(2, 'SUSPEND', 'ana', false, 'Inappropriate messages');
+    response.next({ id: 2, action: 'SUSPEND', moderationSuspendedAt: '2026-10-19T10:00:00Z', notLocked: false });
+    response.complete();
+    expect(component.statusKey(component.players[0])).toBe('adminPlayers.suspended');
+    component.ngOnDestroy();
+  });
+  it('requires typing the username before deleting', () => {
+    component.beginModeration(component.players[0], 'DELETE');
+    component.moderationReason = 'Repeated harmful behaviour';
+    expect(component.canConfirmModeration).toBeFalse();
+    component.deleteConfirmation = 'ana';
+    expect(component.canConfirmModeration).toBeTrue();
+    service.moderate.and.returnValue(of({ id: 2, action: 'DELETE', moderationSuspendedAt: null, notLocked: false }));
+    component.confirmModeration();
+    expect(component.players.length).toBe(0);
+    component.ngOnDestroy();
+  });
+  it('protects administrative roles and prevents deletion by regular admins', () => {
+    const otherAdmin = { ...player(), role: 'ROLE_ADMIN' };
+    expect(component.canSuspend(otherAdmin)).toBeFalse();
+    expect(component.canDelete(otherAdmin)).toBeFalse();
+    auth.hasAnyRole.and.callFake((...roles) => roles.includes('ROLE_ADMIN'));
+    expect(component.canSuspend(player())).toBeTrue();
+    expect(component.canDelete(player())).toBeFalse();
     component.ngOnDestroy();
   });
 });

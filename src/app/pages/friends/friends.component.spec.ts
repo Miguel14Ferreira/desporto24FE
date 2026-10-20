@@ -13,6 +13,7 @@ describe('FriendsComponent', () => {
   const friend = () => ({
     username: 'ana',
     fullName: 'Ana Silva',
+    nickname: null,
     location: 'Lisboa',
     favoriteSports: 'Padel',
     profilePicUrl: null,
@@ -50,9 +51,41 @@ describe('FriendsComponent', () => {
     expect(component.friends.length).toBe(1);
   });
 
+  it('uses the shared primary action when the friends list is empty', () => {
+    service.friends.and.returnValue(of([]));
+    component.load();
+    fixture.detectChanges();
+
+    const findPlayers: HTMLAnchorElement = fixture.nativeElement.querySelector(
+      '.state-card a[href="/menu/perfis"]'
+    );
+    expect(findPlayers).toBeTruthy();
+    expect(findPlayers.classList.contains('jynlo-action')).toBeTrue();
+    expect(findPlayers.classList.contains('jynlo-action--primary')).toBeTrue();
+  });
+
   it('should filter friends locally', () => {
     component.filter = 'lisboa';
     expect(component.filteredFriends.length).toBe(1);
+  });
+
+  it('keeps all friend-card actions on the same pill style and tracks expanded state', () => {
+    const root: HTMLElement = fixture.nativeElement;
+    const profile = root.querySelector('.friend-actions a[href*="/menu/perfis"]') as HTMLAnchorElement;
+    const chat = root.querySelector('.friend-actions a[href*="/menu/friendList/chat"]') as HTMLAnchorElement;
+    const more = root.querySelector('.friend-more__trigger') as HTMLButtonElement;
+
+    expect(profile.classList.contains('jynlo-action')).toBeTrue();
+    expect(chat.classList.contains('jynlo-action')).toBeTrue();
+    expect(more.classList.contains('jynlo-action')).toBeTrue();
+    expect(more.classList.contains('jynlo-action--neutral')).toBeTrue();
+    expect(more.getAttribute('aria-expanded')).toBe('false');
+
+    more.click();
+    fixture.detectChanges();
+
+    expect(more.getAttribute('aria-expanded')).toBe('true');
+    expect(root.querySelector('.friend-more__menu')).toBeTruthy();
   });
 
   it('should toggle the compact more-actions menu', () => {

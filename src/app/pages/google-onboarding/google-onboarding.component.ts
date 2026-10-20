@@ -1,12 +1,13 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { finalize, timeout } from 'rxjs';
 import { appTranslate as t } from '../../i18n/i18n.service';
 
 import { AuthenticationService } from '../../services/authethication.service';
 import { GoogleRegistrationRequest } from '../model/google-auth-response';
 import { COUNTRY_CALLING_CODES, countryNameFromLabel } from '../../shared/country-calling-codes';
+import { safeLoginReturnUrl } from '../../shared/safe-login-return-url';
 
 @Component({
   selector: 'app-google-onboarding',
@@ -40,7 +41,8 @@ export class GoogleOnboardingComponent implements OnInit {
 
   constructor(
     private authenticationService: AuthenticationService,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
@@ -50,7 +52,7 @@ export class GoogleOnboardingComponent implements OnInit {
     this.pictureUrl = sessionStorage.getItem('google-onboarding-picture') || '';
 
     if (!this.credential || !this.email) {
-      this.router.navigate(['/login']);
+      this.router.navigate(['/login'], { queryParams: { returnUrl: this.returnUrl } });
     }
   }
 
@@ -94,7 +96,7 @@ export class GoogleOnboardingComponent implements OnInit {
 
           this.authenticationService.saveToken(response.token);
           this.clearPendingGoogleRegistration();
-          this.router.navigate(['/menu/feed']);
+          this.router.navigateByUrl(this.returnUrl);
         },
         error: error => {
           this.errorMessage = this.errorFrom(
@@ -107,7 +109,11 @@ export class GoogleOnboardingComponent implements OnInit {
 
   cancel(): void {
     this.clearPendingGoogleRegistration();
-    this.router.navigate(['/login']);
+    this.router.navigate(['/login'], { queryParams: { returnUrl: this.returnUrl } });
+  }
+
+  private get returnUrl(): string {
+    return safeLoginReturnUrl(this.route.snapshot.queryParamMap.get('returnUrl'));
   }
 
   private validate(): string | null {

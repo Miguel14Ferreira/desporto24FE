@@ -334,3 +334,22 @@ label small {
     flex-direction: column;
   }
 }
+
+/* Optional, multi-sport selector: the sport list grows without affecting the visibility field. */
+.sport-selection { display: grid; grid-template-rows: auto; gap: .55rem; }
+.sport-selection > .field-help { min-height: 0; margin: 0; }
+.sport-tags { display: flex; flex-wrap: wrap; gap: .5rem; }
+.sport-tag { display: inline-flex; align-items: center; gap: .65rem;
+  padding: .38rem .45rem .38rem .85rem; border-radius: 999px;
+  background: rgba(34,197,94,.13); border: 1px solid rgba(34,197,94,.35);
+  color: #d1fae5; font-size: .86rem; }
+.sport-tag button { color: inherit; border: 0; border-radius: 999px;
+  background: rgba(255,255,255,.11); width: 30px; height: 30px; cursor: pointer; }
+.sport-suggestions { display: grid; grid-template-columns: repeat(auto-fit,minmax(145px,1fr)); gap: .35rem; }
+.sport-suggestions button { min-height: 42px; padding: .6rem .7rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: space-between; gap: .35rem;
+  border: 1px solid rgba(255,255,255,.14); border-radius: .65rem;
+  background: rgba(255,255,255,.07); color: #f8fafc; text-align: left; }
+.sport-suggestions button:hover, .sport-suggestions button:focus-visible {
+  outline: 2px solid #86efac; outline-offset: 1px;
+}
