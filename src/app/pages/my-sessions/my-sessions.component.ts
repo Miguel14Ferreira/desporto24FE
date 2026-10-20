@@ -251,6 +251,10 @@ export class MySessionsComponent implements OnInit {
     return Math.max(session.maxParticipants - session.participantCount, 0);
   }
 
+  sessionDisplayDate(session: SessionSummary): string | null {
+    return Number.isFinite(Date.parse(session.gameDate)) ? session.gameDate : null;
+  }
+
   /** The next confirmed upcoming game, never a waitlist or expired session. */
   get nextJoinedSession(): SessionSummary | null {
     const now = Date.now();
