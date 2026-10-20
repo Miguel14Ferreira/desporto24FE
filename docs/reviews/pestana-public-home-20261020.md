@@ -6,5 +6,6 @@ Miguel Pestana's latest review notes that the public homepage explains the value
 - Session cards link only to the existing public `/sessions/{id}` preview (not to private participant lists or authenticated session edit flows).
 - Fetch at most three consecutive `VenueService.suggest(..., page)` pages, stopping early when four usable venues are found; display max 4 records that have name, locality and nonblank sport. Keep earlier valid results if a later page fails. Never claim booking availability.
 - No fake sessions, no invented public statistics, no GPS permissions, no payment features. Show honest empty or failed-to-load messages.
-- PT/EN strings and three Jasmine unit tests included. Browser and Angular unit tests **not executed**.
+- Public filters for **sport** (suggestions from the existing shared catalogue) and **locality** search only existing public session/venue endpoints; searching and clearing never require login. A new search cancels prior requests so stale responses cannot overwrite the latest results.
+- PT/EN strings and **nine** Jasmine unit tests in source, including filtering, clearing, and latest-search-wins regressions. Browser and Angular unit tests **not executed**.
 - Before release validate anonymous CORS, actual backend status enum, empty datasets, and data protection: venue and session summaries must remain strictly public. No backend/DB changes, no merge or deploy without approval.
