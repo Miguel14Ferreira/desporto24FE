@@ -47,6 +47,15 @@ jobs:
             git merge --no-edit --no-ff -X ours origin/"$source"
             test -z "$(git ls-files -u)"
           done
+          # The 18-Oct admin statistics and legacy venue fallback were based
+          # on APIs removed/reworked by the 20-Oct desktop candidate. Preserve
+          # develop's newer component/service contracts instead of reintroducing
+          # outdated references that fail Angular compilation.
+          git restore --source=origin/develop --             src/app/pages/admin-players             src/app/pages/admin/admin.module.ts             src/app/services/venue.service.ts             src/app/services/venue.service.spec.ts
+          if [ -n "$(git status --porcelain)" ]; then
+            git add -A
+            git commit -m 'Keep current admin and venue contracts over stale audit patches'
+          fi
           git status --porcelain
           git log -5 --format='%h %s'
       - name: Full Angular regression suite on exact combined tree
