@@ -138,6 +138,12 @@
           }
         </div>
       </div>
+      @if ((sessionsLoadError || venuesLoadError) && !sessionsLoading && !venuesLoading) {
+        <button class="preview-retry jynlo-action jynlo-action--neutral"
+                type="button" (click)="retryPublicDiscovery()">
+          {{ 'home.preview.retry' | t }}
+        </button>
+      }
       <a class="preview-cta jynlo-action jynlo-action--primary"
          routerLink="/login/registerNewUser">{{ 'home.preview.join' | t }}</a>
     </section>
