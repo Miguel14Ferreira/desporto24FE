@@ -35,6 +35,11 @@ describe('ContactComponent', () => {
     component.problem = 'Gostava de ter torneios.';
   }
 
+  it('declares POST on the contact form', () => {
+    const form = fixture.nativeElement.querySelector('form.contact-card') as HTMLFormElement;
+    expect(form.getAttribute('method')).toBe('post');
+  });
+
   it('should create', () => {
     expect(component).toBeTruthy();
   });

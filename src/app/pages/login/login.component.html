@@ -21,7 +21,7 @@
       }
 
       @if (errorMessage) {
-        <div class="error-feedback">{{ errorMessage }}</div>
+        <div class="error-feedback" role="alert">{{ errorMessage }}</div>
       }
 
       @if (canResendConfirmation) {
@@ -41,11 +41,12 @@
         </div>
       }
 
-      <form (ngSubmit)="onLogin()">
+      <form method="post" (ngSubmit)="onLogin()" novalidate>
         <label>
           <span>{{ 'login.username' | t }}</span>
           <input
             name="username"
+            required
             [(ngModel)]="username"
             autocomplete="username"
             [disabled]="loading"
@@ -57,12 +58,17 @@
           <div class="password-field">
             <input
               [type]="showPassword ? 'text' : 'password'"
+              id="login-password"
               name="password"
+              required
               [(ngModel)]="password"
               autocomplete="current-password"
               [disabled]="loading"
               [placeholder]="'login.passwordPlaceholder' | t">
-            <button class="jynlo-action jynlo-action--neutral" type="button" (click)="showPassword = !showPassword">
+            <button class="jynlo-action jynlo-action--neutral" type="button" aria-controls="login-password"
+              [attr.aria-pressed]="showPassword"
+              [attr.aria-label]="(showPassword ? 'common.hide' : 'common.show') | t"
+              (click)="showPassword = !showPassword">
               {{ showPassword ? ('common.hide' | t) : ('common.show' | t) }}
             </button>
           </div>
