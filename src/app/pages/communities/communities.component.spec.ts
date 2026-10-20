@@ -272,6 +272,78 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(matches).toHaveBeenCalledWith(8);
   });
 
+  it('ignores older reload groups and invites while preserving the latest loading state', () => {
+    const firstMine = new Subject<any[]>();
+    const secondMine = new Subject<any[]>();
+    const firstInvites = new Subject<any[]>();
+    const secondInvites = new Subject<any[]>();
+    (component as any).communityService = {
+      mine: jasmine.createSpy('mine')
+        .and.returnValues(firstMine.asObservable(), secondMine.asObservable()),
+      myInvites: jasmine.createSpy('myInvites')
+        .and.returnValues(firstInvites.asObservable(), secondInvites.asObservable())
+    };
+    (component as any).route = {
+      snapshot: { paramMap: { get: () => null }, queryParamMap: { get: () => null } }
+    };
+    component.selected = undefined;
+    component.communities = [];
+    component.invites = [];
+
+    component.reload();
+    component.reload();
+    firstMine.next([{ id: 7 }]);
+    firstMine.complete();
+    firstInvites.next([{ id: 70 }]);
+    firstInvites.complete();
+    expect(component.communities).toEqual([]);
+    expect(component.invites).toEqual([]);
+    expect(component.loading).toBeTrue();
+
+    secondMine.next([{ id: 8 }]);
+    secondMine.complete();
+    secondInvites.next([{ id: 80 }]);
+    secondInvites.complete();
+    expect(component.communities.map(group => group.id)).toEqual([8]);
+    expect(component.invites.map(invite => invite.id)).toEqual([80]);
+    expect(component.loading).toBeFalse();
+  });
+
+  it('ignores stale reload failures without hiding current group or invite results', () => {
+    const firstMine = new Subject<any[]>();
+    const secondMine = new Subject<any[]>();
+    const firstInvites = new Subject<any[]>();
+    const secondInvites = new Subject<any[]>();
+    (component as any).communityService = {
+      mine: jasmine.createSpy('mine')
+        .and.returnValues(firstMine.asObservable(), secondMine.asObservable()),
+      myInvites: jasmine.createSpy('myInvites')
+        .and.returnValues(firstInvites.asObservable(), secondInvites.asObservable())
+    };
+    (component as any).route = {
+      snapshot: { paramMap: { get: () => null }, queryParamMap: { get: () => null } }
+    };
+    component.selected = undefined;
+    component.invites = [{ id: 4 } as any];
+
+    component.reload();
+    component.reload();
+    firstMine.error(new Error('stale groups failure'));
+    firstInvites.error(new Error('stale invites failure'));
+    expect(component.errorMessage).toBe('');
+    expect(component.invites.map(invite => invite.id)).toEqual([4]);
+    expect(component.loading).toBeTrue();
+
+    secondMine.next([{ id: 9 }]);
+    secondMine.complete();
+    secondInvites.next([{ id: 90 }]);
+    secondInvites.complete();
+    expect(component.errorMessage).toBe('');
+    expect(component.communities.map(group => group.id)).toEqual([9]);
+    expect(component.invites.map(invite => invite.id)).toEqual([90]);
+    expect(component.loading).toBeFalse();
+  });
+
   it('ignores an obsolete community presentation and keeps the latest one loading', () => {
     const older = new Subject<any>();
     const newer = new Subject<any>();
