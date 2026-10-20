@@ -66,6 +66,14 @@ export class PublicSessionPreviewComponent implements OnInit {
     this.loadPreview();
   }
 
+  // Keep the join/waitlist section in view after sign-in or registration.
+  // This never submits a join request automatically.
+  get participationReturnUrl(): string | null {
+    return this.returnUrl && this.canRequestParticipation
+      ? this.returnUrl + '?join=1'
+      : this.returnUrl;
+  }
+
   retryLoad(): void {
     if (this.canRetry && !this.loading) {
       this.loadPreview();
