@@ -398,3 +398,23 @@
   font-size: 0.85rem;
   color: #696969;
 }
+
+/* A source link is informational; Jynlo does not arrange venue bookings. */
+.venue-website-link {
+  margin-left: 12px;
+}
+
+.venue-access-note {
+  max-width: 720px;
+  margin: 14px 0 0;
+  color: var(--text-muted, #596372);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 640px) {
+  .venue-website-link {
+    margin-left: 0;
+    margin-top: 8px;
+  }
+}
