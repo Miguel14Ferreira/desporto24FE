@@ -42,7 +42,10 @@
         </div>
         <div>
           <span>{{ 'venue.detail.address' | t }}</span>
-          <strong>{{ venue.address }}</strong>
+          <strong>{{ postalAddress || ('venue.detail.postalAddressUnknown' | t) }}</strong>
+          @if (isGpsOnly) {
+            <small class="venue-map-approximate-hint">{{ 'venue.detail.gpsOnlyHint' | t }}</small>
+          }
         </div>
       </div>
 

@@ -68,6 +68,39 @@ describe('VenueDetailsComponent', () => {
     expect(component.mapUrl).toBe('https://www.google.com/maps?q=0,0');
   });
 
+  it('hides generated GPS-only placeholders and still links to the mapped coordinates', () => {
+    const component = new VenueDetailsComponent({} as ActivatedRoute, {} as VenueService);
+    component.venue = {
+      ...createVenue(), address: 'Localização no mapa: 38.7223, -9.1393 (morada por confirmar)',
+      locationStatus: 'GPS_ONLY_ADDRESS_UNKNOWN'
+    };
+
+    expect(component.isGpsOnly).toBeTrue();
+    expect(component.postalAddress).toBeNull();
+    expect(component.mapUrl).toBe('https://www.google.com/maps?q=38.7223,-9.1393');
+  });
+
+  it('can handle old backend responses without locationStatus', () => {
+    const component = new VenueDetailsComponent({} as ActivatedRoute, {} as VenueService);
+    component.venue = { ...createVenue(), address: 'Morada por confirmar',
+      latitude: 38.7223, longitude: -9.1393 };
+    expect(component.isGpsOnly).toBeTrue();
+    expect(component.postalAddress).toBeNull();
+
+    component.venue = { ...createVenue(), address: 'Rua do Desporto 10' };
+    expect(component.isGpsOnly).toBeFalse();
+    expect(component.postalAddress).toBe('Rua do Desporto 10');
+  });
+
+  it('does not insert an unknown postal address into approximate map searches', () => {
+    const component = new VenueDetailsComponent({} as ActivatedRoute, {} as VenueService);
+    component.venue = { ...createVenue(), address: 'Morada por confirmar',
+      latitude: null, longitude: null };
+    expect(component.mapUrl).toContain('/maps/search/?api=1&query=');
+    expect(component.mapUrl).not.toContain('confirmar');
+    expect(component.postalAddress).toBeNull();
+  });
+
   it('offers an explicit approximate address search when the venue lacks GPS coordinates', () => {
     const component = new VenueDetailsComponent({} as ActivatedRoute, {} as VenueService);
     component.venue = {

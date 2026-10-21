@@ -4,6 +4,7 @@ import { finalize, retry, timeout } from 'rxjs';
 
 import { VenuePhoto, VenueService, VenueSportCondition } from '../../services/venue.service';
 import { Venue } from '../model/venue';
+import { isVenueGpsOnly, venuePostalAddress } from '../../shared/venue-location';
 import { venueEnvironmentTranslationKey } from '../../shared/venue-environment';
 
 @Component({
@@ -74,6 +75,15 @@ export class VenueDetailsComponent implements OnInit {
       && longitude >= -180 && longitude <= 180;
   }
 
+  /** Hide OSM coordinate placeholders instead of calling them postal addresses. */
+  get postalAddress(): string | null {
+    return this.venue ? venuePostalAddress(this.venue) : null;
+  }
+
+  get isGpsOnly(): boolean {
+    return this.venue ? isVenueGpsOnly(this.venue) : false;
+  }
+
   get mapUrl(): string | null {
     const venue = this.venue;
     if (!venue) return null;
@@ -83,7 +93,7 @@ export class VenueDetailsComponent implements OnInit {
     }
 
     // A search link is useful but never claims to pinpoint a venue without GPS.
-    const query = [venue.name, venue.address, venue.city, venue.district, 'Portugal']
+    const query = [venue.name, this.postalAddress, venue.city, venue.district, 'Portugal']
       .filter((part): part is string => typeof part === 'string' && part.trim().length > 0)
       .join(', ');
     return query ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}` : null;
