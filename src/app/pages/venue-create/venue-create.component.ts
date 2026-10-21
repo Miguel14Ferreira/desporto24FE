@@ -101,6 +101,7 @@ export class VenueCreateComponent implements OnInit {
   private similarVenueRequestVersion = 0;
 
   private mapLinkRequestVersion = 0;
+  private locationRequestVersion = 0;
   private coordinatesFromResolvedMapLink = false;
 
   constructor(
@@ -173,6 +174,9 @@ export class VenueCreateComponent implements OnInit {
   }
 
   onMapLinkChanged(): void {
+    // A Maps edit supersedes a pending browser GPS position.
+    ++this.locationRequestVersion;
+    this.locating = false;
     // A changed Maps link must never silently retain coordinates from the previous link.
     ++this.mapLinkRequestVersion;
     if (this.coordinatesFromResolvedMapLink) {
@@ -186,6 +190,9 @@ export class VenueCreateComponent implements OnInit {
   }
 
   onManualCoordinatesChanged(): void {
+    // Manual coordinates supersede both pending GPS and Maps responses.
+    ++this.locationRequestVersion;
+    this.locating = false;
     // Explicitly edited coordinates belong to the user, not to a Maps URL.
     ++this.mapLinkRequestVersion;
     this.coordinatesFromResolvedMapLink = false;
@@ -197,6 +204,9 @@ export class VenueCreateComponent implements OnInit {
     const url = this.mapLink.trim();
     if (!url || this.resolvingMapLink || this.saving) return;
     const requestVersion = ++this.mapLinkRequestVersion;
+    // Explicit Maps resolution takes precedence over a pending browser location.
+    ++this.locationRequestVersion;
+    this.locating = false;
     this.resolvingMapLink = true;
     this.mapLinkError = false;
     this.mapLinkResolved = false;
@@ -234,16 +244,22 @@ export class VenueCreateComponent implements OnInit {
       return;
     }
 
+    const requestVersion = ++this.locationRequestVersion;
+    // A newly requested GPS location supersedes a Maps lookup still in flight.
+    ++this.mapLinkRequestVersion;
+    this.resolvingMapLink = false;
     this.locating = true;
     this.locationError = false;
     navigator.geolocation.getCurrentPosition(
       position => {
+        if (requestVersion !== this.locationRequestVersion) return;
         this.latitude = position.coords.latitude;
         this.longitude = position.coords.longitude;
         this.onManualCoordinatesChanged();
         this.locating = false;
       },
       () => {
+        if (requestVersion !== this.locationRequestVersion) return;
         this.locationError = true;
         this.locating = false;
       }
