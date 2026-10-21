@@ -63,7 +63,7 @@ export interface CreateVenueRequest {
   name: string;
   city: string;
   district?: string | null;
-  address: string;
+  address: string | null;
   sports: string | null;
   venueType?: string | null;
   ownershipType?: VenueOwnershipType | null;

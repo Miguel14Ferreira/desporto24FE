@@ -51,11 +51,12 @@
           type="text"
           name="address"
           [(ngModel)]="address"
-          required
-          [attr.aria-invalid]="validationError && !address.trim() ? 'true' : null"
-          [attr.aria-describedby]="validationError && !address.trim() ? 'venue-required-fields-error' : null"
+          [required]="!hasValidGpsCoordinates"
+          [attr.aria-invalid]="validationError && locationIsMissing ? 'true' : null"
+          [attr.aria-describedby]="validationError && locationIsMissing ? 'venue-required-fields-error' : null"
           autocomplete="street-address"
           [placeholder]="'createSession.addressPlaceholder' | t">
+        <small>{{ 'venue.create.addressOrGpsHint' | t }}</small>
       </label>
 
       <div class="venue-create-similar venue-create-wide" [attr.aria-label]="'venue.create.similarTitle' | t">
@@ -455,7 +456,7 @@
         </div>
       </details>
 
-      <details class="venue-create-amenities venue-create-wide">
+      <details class="venue-create-amenities venue-create-wide" open>
         <summary class="venue-create-amenities-summary">
           <strong>{{ 'venue.create.location' | t }}</strong>
           <span class="venue-create-amenities-closed">{{ 'venue.create.addOptionalDetails' | t }}</span>
@@ -503,8 +504,11 @@
       </details>
 
       <div class="venue-create-actions venue-create-wide">
-        @if (validationError && (!name.trim() || !city.trim() || !address.trim())) {
+        @if (validationError && (!name.trim() || !city.trim() || locationIsMissing)) {
           <span id="venue-required-fields-error" class="venue-create-error" role="alert" aria-live="assertive">{{ 'venue.requiredFields' | t }}</span>
+        }
+        @if (validationError && hasInvalidGpsCoordinates) {
+          <span class="venue-create-error" role="alert">{{ 'venue.create.invalidGps' | t }}</span>
         }
         @if (duplicateVenueError) {
           <span id="venue-create-duplicate-error" class="venue-create-error" role="alert" aria-live="assertive">{{ 'venue.create.duplicateError' | t }}</span>
