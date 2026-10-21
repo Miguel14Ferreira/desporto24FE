@@ -360,7 +360,12 @@
           <div class="venue-preview">
             <div>
               <strong>{{ venue.name }}</strong>
-              <span>{{ venue.address }} · {{ venue.city }}</span>
+              <span>{{ venue.address ? venue.address + ' · ' : '' }}{{ venue.city }}</span>
+              @if (venue.informationSource === 'OPENSTREETMAP') {
+                <small class="venue-source-caution">
+                  {{ 'createSession.venueOsmUnverified' | t }}
+                </small>
+              }
             </div>
             <div class="venue-tags">
               @if (venue.surfaceType) { <span>{{ venue.surfaceType }}</span> }
