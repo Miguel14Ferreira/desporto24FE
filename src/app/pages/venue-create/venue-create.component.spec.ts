@@ -6,6 +6,62 @@ import { Venue } from '../model/venue';
 import { VenueCreateComponent } from './venue-create.component';
 
 describe('VenueCreateComponent', () => {
+  it('allows GPS-only venue creation, sending null instead of fabricating an address', () => {
+    const service = jasmine.createSpyObj<VenueService>('VenueService', ['create']);
+    const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
+    service.create.and.returnValue(of({ id: 55 } as Venue));
+    const component = new VenueCreateComponent(service, router);
+    component.name = 'Pavilhão do Bairro';
+    component.city = 'Cantanhede';
+    component.selectedSports = ['Futsal'];
+    component.latitude = 40.344;
+    component.longitude = -8.588;
+
+    expect(component.hasValidGpsCoordinates).toBeTrue();
+    expect(component.locationIsMissing).toBeFalse();
+    component.save();
+
+    expect(service.create).toHaveBeenCalledOnceWith(jasmine.objectContaining({
+      address: null, latitude: 40.344, longitude: -8.588
+    }));
+    expect(router.navigate).toHaveBeenCalledWith(['/menu/venues', 55]);
+  });
+
+  it('rejects missing, incomplete and foreign coordinates when the postal address is absent', () => {
+    const service = jasmine.createSpyObj<VenueService>('VenueService', ['create']);
+    const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
+    const component = new VenueCreateComponent(service, router);
+    component.name = 'Campo do Bairro';
+    component.city = 'Lisboa';
+    component.selectedSports = ['Futsal'];
+    for (const [lat, lon] of [
+      [null, null], [40.3, null], [null, -8.2],
+      [45, -8.2], [Number.NaN, -8.2], [40.3, -14]
+    ] as Array<[number | null, number | null]>) {
+      component.latitude = lat;
+      component.longitude = lon;
+      component.validationError = false;
+      component.save();
+      expect(component.validationError).toBeTrue();
+    }
+    expect(service.create).not.toHaveBeenCalled();
+  });
+
+  it('keeps existing address-based venue creation without GPS compatible', () => {
+    const service = jasmine.createSpyObj<VenueService>('VenueService', ['create']);
+    const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
+    service.create.and.returnValue(of({ id: 22 } as Venue));
+    const component = new VenueCreateComponent(service, router);
+    component.name = 'Campo Central';
+    component.city = 'Porto';
+    component.address = 'Rua do Desporto 12';
+    component.selectedSports = ['Futebol'];
+    component.save();
+    expect(service.create).toHaveBeenCalledOnceWith(jasmine.objectContaining({
+      address: 'Rua do Desporto 12', latitude: null, longitude: null
+    }));
+  });
+
   it('prefills a valid favorite sport and locality from Discover without auto-saving', () => {
     const venueService = jasmine.createSpyObj<VenueService>('VenueService', ['create']);
     const router = jasmine.createSpyObj<Router>('Router', ['navigate']);

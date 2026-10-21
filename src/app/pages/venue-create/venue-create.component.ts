@@ -270,10 +270,27 @@ export class VenueCreateComponent implements OnInit {
       : this.selectedSports.filter(item => item !== sport);
   }
 
+  /** Only a complete plausible Portugal continental GPS pair can replace a postal address. */
+  get hasValidGpsCoordinates(): boolean {
+    return this.latitude !== null && this.longitude !== null
+      && Number.isFinite(this.latitude) && Number.isFinite(this.longitude)
+      && this.latitude >= 36.8 && this.latitude <= 42.3
+      && this.longitude >= -9.6 && this.longitude <= -6.0;
+  }
+
+  get hasInvalidGpsCoordinates(): boolean {
+    return (this.latitude !== null || this.longitude !== null)
+      && !this.hasValidGpsCoordinates;
+  }
+
+  get locationIsMissing(): boolean {
+    return !this.address.trim() && !this.hasValidGpsCoordinates;
+  }
+
   save(): void {
     if (this.saving) return;
 
-    if (!this.name.trim() || !this.city.trim() || !this.address.trim() || this.selectedSports.length === 0) {
+    if (!this.name.trim() || !this.city.trim() || this.locationIsMissing || this.hasInvalidGpsCoordinates || this.selectedSports.length === 0) {
       this.validationError = true;
       return;
     }
@@ -282,7 +299,7 @@ export class VenueCreateComponent implements OnInit {
 
     const request: CreateVenueRequest = {
       name: this.name.trim(), city: this.city.trim(), district: this.district,
-      address: this.address.trim(),
+      address: this.address.trim() || null,
       sports: this.selectedSports.join(';'), venueType: this.valueOrNull(this.venueType),
       ownershipType: this.ownershipType, surfaceType: this.valueOrNull(this.surfaceType),
       environmentType: this.environmentType, indoor: this.environmentType !== 'OUTDOOR', changingRooms: this.changingRooms,
