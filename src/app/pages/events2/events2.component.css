@@ -597,3 +597,12 @@ input[type='datetime-local'] {
 @media (max-width: 540px) {
   .location-methods { grid-template-columns: 1fr; }
 }
+
+
+.venue-source-caution {
+  display: block;
+  margin-top: 6px;
+  color: var(--text-muted, #64748b);
+  font-size: 0.83rem;
+  line-height: 1.45;
+}
