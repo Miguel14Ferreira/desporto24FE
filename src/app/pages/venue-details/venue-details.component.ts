@@ -84,6 +84,21 @@ export class VenueDetailsComponent implements OnInit {
     return this.venue ? isVenueGpsOnly(this.venue) : false;
   }
 
+  /** Only show an explicit HTTPS venue website, never user-provided script URLs. */
+  get venueWebsiteUrl(): string | null {
+    const value = this.venue?.website?.trim();
+    if (!value) return null;
+    try {
+      const parsed = new URL(value);
+      if (parsed.protocol !== 'https:' || !parsed.hostname
+          || parsed.username || parsed.password
+          || parsed.port && parsed.port !== '443') return null;
+      return parsed.href;
+    } catch {
+      return null;
+    }
+  }
+
   get mapUrl(): string | null {
     const venue = this.venue;
     if (!venue) return null;

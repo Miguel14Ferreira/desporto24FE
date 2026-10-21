@@ -61,6 +61,16 @@
         }
       }
 
+      @if (venueWebsiteUrl; as safeVenueWebsite) {
+        <a class="venue-map-link venue-website-link"
+           [href]="safeVenueWebsite"
+           target="_blank"
+           rel="noopener noreferrer">
+          {{ 'venue.detail.externalWebsite' | t }}
+        </a>
+      }
+      <p class="venue-access-note">{{ 'venue.detail.accessNotice' | t }}</p>
+
       <section class="venue-photos-section">
         <div class="venue-photos-heading">
           <h2>{{ 'venue.detail.photos' | t }}</h2>
