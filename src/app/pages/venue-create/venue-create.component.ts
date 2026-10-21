@@ -245,6 +245,9 @@ export class VenueCreateComponent implements OnInit {
     }
 
     const requestVersion = ++this.locationRequestVersion;
+    // A newly requested GPS location supersedes a Maps lookup still in flight.
+    ++this.mapLinkRequestVersion;
+    this.resolvingMapLink = false;
     this.locating = true;
     this.locationError = false;
     navigator.geolocation.getCurrentPosition(
