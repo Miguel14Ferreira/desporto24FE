@@ -403,6 +403,31 @@
               @if (teams.length === 0 && !teamsLoadError) {
                 <p class="t-muted">Ainda não existem equipas. O organizador pode começar por criar a primeira.</p>
               }
+              @if (invitedTeamId && selected.id === invitedTournamentId && invitedTeam) {
+                <section class="team-invite-accept" aria-label="Convite para equipa">
+                  <div>
+                    <strong>🏆 Foste convidado para a equipa {{ invitedTeam.name }}</strong>
+                    <p>{{ selected.name }} · {{ community.name }}</p>
+                    @if (myTeam?.id === invitedTeam.id) {
+                      <p class="team-invite-confirmed" role="status">Já fazes parte desta equipa. Boa sorte!</p>
+                    } @else if (myTeam) {
+                      <p role="status">Já pertences à equipa {{ myTeam.name }} neste torneio.</p>
+                    } @else if (selected.status !== 'DRAFT') {
+                      <p role="status">O torneio já começou. Os plantéis estão fechados.</p>
+                    } @else if (invitedTeam.players.length >= invitedTeam.playersPerTeam) {
+                      <p role="status">Esta equipa já está completa.</p>
+                    } @else {
+                      <p>O convite não te inscreve automaticamente. Confirma se queres entrar nesta equipa.</p>
+                      <button type="button" class="t-btn t-btn-primary"
+                        [disabled]="busy || detailsLoading" (click)="acceptInvitedTeam()">
+                        {{ busy ? 'A aceitar…' : 'Aceitar convite e entrar na equipa' }}
+                      </button>
+                    }
+                  </div>
+                </section>
+              } @else if (invitedTeamId && selected.id === invitedTournamentId && !teamsLoadError && !detailsLoading) {
+                <p class="field-validation" role="alert">A equipa deste convite não existe neste torneio.</p>
+              }
               <div class="team-roster-grid">
                 @for (team of teams; track team.id) {
                   <article class="team-roster-card">
@@ -434,21 +459,43 @@
                       }
                     </div>
                     @if (canManageTeamRoster && team.players.length < team.playersPerTeam) {
-                      <div class="team-player-assign">
-                        <label [for]="'team-player-' + team.id">Adicionar membro à equipa {{ team.name }}</label>
-                        <select [id]="'team-player-' + team.id" [(ngModel)]="teamPlayerDraft[team.id]" [disabled]="busy || detailsLoading">
-                          <option [ngValue]="null">Seleciona um membro</option>
-                          @for (member of availableTeamMembers; track member.profileId) {
-                            <option [ngValue]="member.profileId">{{ member.fullName || member.username }} (&#64;{{ member.username }})</option>
-                          }
-                        </select>
-                        <button type="button" class="t-btn t-btn-primary"
-                          [disabled]="busy || detailsLoading || !teamPlayerDraft[team.id]"
-                          (click)="assignTeamPlayer(team)">Adicionar jogador</button>
-                        @if (!availableTeamMembers.length) {
-                          <p class="t-muted">Não há mais membros disponíveis para atribuir.</p>
+                      <div class="team-share-invite">
+                        <strong>Convidar jogadores</strong>
+                        <p>Envia o convite por WhatsApp ou copia o link. O jogador aceita o lugar na própria conta.</p>
+                        <div class="team-share-actions">
+                          <a class="t-btn t-btn-primary" [href]="teamWhatsAppUrl(team)"
+                            target="_blank" rel="noopener noreferrer"
+                            [attr.aria-label]="'Convidar para a equipa ' + team.name + ' por WhatsApp'">
+                            WhatsApp
+                          </a>
+                          <button type="button" class="t-btn t-btn-secondary"
+                            [disabled]="busy || detailsLoading" (click)="copyTeamInvite(team)">
+                            Copiar link
+                          </button>
+                        </div>
+                        <label [for]="'team-invite-link-' + team.id">Link da equipa</label>
+                        <input [id]="'team-invite-link-' + team.id" type="text" readonly
+                          [value]="teamInviteUrl(team)" (click)="$any($event.target).select()">
+                        @if (inviteCopyFeedback[team.id]) {
+                          <p role="status">{{ inviteCopyFeedback[team.id] }}</p>
                         }
+                        <p class="t-muted">Quem ainda não pertence à comunidade terá primeiro de aderir.</p>
                       </div>
+                      <details class="team-manual-assign">
+                        <summary>Adicionar um membro manualmente (organizador)</summary>
+                        <div class="team-player-assign">
+                          <label [for]="'team-player-' + team.id">Membro da comunidade</label>
+                          <select [id]="'team-player-' + team.id" [(ngModel)]="teamPlayerDraft[team.id]" [disabled]="busy || detailsLoading">
+                            <option [ngValue]="null">Seleciona um membro</option>
+                            @for (member of availableTeamMembers; track member.profileId) {
+                              <option [ngValue]="member.profileId">{{ member.fullName || member.username }} (&#64;{{ member.username }})</option>
+                            }
+                          </select>
+                          <button type="button" class="t-btn t-btn-secondary"
+                            [disabled]="busy || detailsLoading || !teamPlayerDraft[team.id]"
+                            (click)="assignTeamPlayer(team)">Adicionar jogador</button>
+                        </div>
+                      </details>
                     }
                   </article>
                 }
