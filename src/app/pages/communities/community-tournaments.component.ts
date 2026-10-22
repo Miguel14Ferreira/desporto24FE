@@ -194,7 +194,6 @@ export class CommunityTournamentsComponent implements OnChanges {
       ++this.standingsRevision;
       ++this.teamMatchesRevision;
       ++this.teamStandingsRevision;
-    ++this.teamGroupsRevision;
       ++this.teamGroupsRevision;
       this.busy = false;
       this.showGuide = false;
@@ -213,9 +212,6 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.teamMatchesLoading = false;
       this.teamMatchesError = false;
       this.teamStandings = undefined;
-    this.teamGroups = [];
-    this.teamGroupsLoading = false;
-    this.teamGroupsError = false;
       this.teamGroups = [];
       this.teamGroupsLoading = false;
       this.teamGroupsError = false;
@@ -411,6 +407,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     ++this.standingsRevision;
     ++this.teamMatchesRevision;
     ++this.teamStandingsRevision;
+    ++this.teamGroupsRevision;
     // A request for the previous tournament must not leave this one disabled.
     this.busy = false;
     this.detailsLoading = false;
@@ -434,6 +431,9 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.teamStandings = undefined;
     this.teamStandingsLoading = false;
     this.teamStandingsError = false;
+    this.teamGroups = [];
+    this.teamGroupsLoading = false;
+    this.teamGroupsError = false;
     this.teamScoreDrafts = {};
     this.teamScoreTouched.clear();
     this.scoreDrafts = {};
@@ -745,7 +745,7 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.showError('Os resultados devem ser números inteiros entre 0 e 999.');
       return;
     }
-    if (this.isKnockout && score.home === score.away) {
+    if (this.isEliminationMatch(match) && score.home === score.away) {
       this.showError('Nas eliminatórias, o resultado tem de definir um vencedor.');
       return;
     }
