@@ -20,6 +20,7 @@ export class VenueDetailsComponent implements OnInit {
   sportConditions: VenueSportCondition[] = [];
   ratingSummary: VenueRatingSummary | null = null;
   ratingSummaryLoading = true;
+  ratingSummaryLoadError = false;
   sportConditionSport = '';
   sportConditionText = '';
   loading = true;
@@ -71,6 +72,7 @@ export class VenueDetailsComponent implements OnInit {
 
   private loadRatingSummary(venueId: number): void {
     this.ratingSummaryLoading = true;
+    this.ratingSummaryLoadError = false;
     this.venueService.getRatingSummary(venueId)
       .pipe(timeout(10_000), finalize(() => this.ratingSummaryLoading = false))
       .subscribe({
@@ -86,6 +88,7 @@ export class VenueDetailsComponent implements OnInit {
         error: () => {
           // A ratings API outage must never break the venue page.
           this.ratingSummary = null;
+          this.ratingSummaryLoadError = true;
         }
       });
   }
