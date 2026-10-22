@@ -495,7 +495,10 @@
                 <div class="t-section-heading">
                   <div>
                     <h5>{{ isGroupKnockout ? 'Fase de grupos e eliminatórias' : (isKnockout ? 'Quadro de eliminatórias' : 'Jornadas e confrontos entre equipas') }}</h5>
-                    @if (isKnockout) {
+                    @if (isGroupKnockout) {
+                      <p>Os jogos de cada grupo permitem empates. Depois de apurados os dois primeiros,
+                        os quartos ou meias-finais e a final exigem sempre um vencedor.</p>
+                    } @else if (isKnockout) {
                       <p>O vencedor de cada jogo avança. Não são aceites empates nas eliminatórias.</p>
                     } @else {
                       <p>Campeonato todos contra todos. Os resultados atualizam automaticamente a classificação.</p>
@@ -523,9 +526,7 @@
                   @for (game of teamMatches; track game.id; let index = $index) {
                     @if (index === 0 || teamMatches[index - 1].roundNumber !== game.roundNumber
                           || teamMatches[index - 1].groupNumber !== game.groupNumber) {
-                      <h6>{{ isGroupKnockout
-                          ? (game.groupNumber != null ? 'Grupo ' + groupLabel(game.groupNumber) + ' · Jornada ' : 'Eliminatórias · Ronda ')
-                          : (isKnockout ? 'Ronda ' : 'Jornada ') }}{{ game.roundNumber }}</h6>
+                      <h6>{{ teamMatchStageLabel(game) }}</h6>
                     }
                     <div class="team-fixture">
                        <strong>{{ game.homeTeamName }}</strong>
