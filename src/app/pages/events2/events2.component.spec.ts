@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of, Subject, throwError } from 'rxjs';
 
@@ -1001,17 +1001,16 @@ describe('Events2Component', () => {
     );
   });
 
-  it('lets the organiser replace a selected venue with another in a different city', () => {
-    component.venues = [
-      {
-        id: 101, name: 'Campo de Lisboa', city: 'Lisboa',
-        address: 'Rua A', sports: 'Padel', latitude: 38.72, longitude: -9.14
-      } as Venue,
-      {
-        id: 102, name: 'Campo do Porto', city: 'Porto',
-        address: 'Rua B', sports: 'Padel', latitude: 41.15, longitude: -8.61
-      } as Venue
-    ];
+  it('lets the organiser replace a selected venue after switching district and searching the server', fakeAsync(() => {
+    const lisbon = {
+      id: 101, name: 'Campo de Lisboa', city: 'Lisboa',
+      address: 'Rua A', sports: 'Padel', latitude: 38.72, longitude: -9.14
+    } as Venue;
+    const porto = {
+      id: 102, name: 'Campo do Porto', city: 'Porto',
+      address: 'Rua B', sports: 'Padel', latitude: 41.15, longitude: -8.61
+    } as Venue;
+    component.venues = [lisbon];
     component.sport = 'Padel';
     component.selectVenue(101);
     component.venueSearch = 'Campo de Lisboa · Lisboa';
@@ -1019,22 +1018,29 @@ describe('Events2Component', () => {
 
     expect(component.selectedVenueId).toBe(101);
     expect(component.city).toBe('Lisboa');
-    expect(component.venueOptions.map(venue => venue.id)).toEqual([101]);
 
-    const search = fixture.nativeElement.querySelector('input[name="venueSearch"]') as HTMLInputElement;
-    search.value = 'Campo do Porto · Porto';
-    search.dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-
-    expect(component.venueSearch).toBe('Campo do Porto · Porto');
+    // Old results cannot be selected in a new district or during debounce.
+    venueService.suggest.and.returnValue(of({ venues: [porto], page: 0, hasMore: false }));
+    component.onDistrictChanged('Porto');
     expect(component.selectedVenueId).toBeNull();
     expect(component.city).toBe('');
     expect(component.address).toBe('');
     expect(component.latitude).toBeNull();
     expect(component.longitude).toBeNull();
-    expect(component.venueOptions.map(venue => venue.id)).toEqual([102]);
 
-    search.dispatchEvent(new Event('change'));
+    const search = fixture.nativeElement.querySelector('input[name="venueSearch"]') as HTMLInputElement;
+    search.value = 'Campo do Porto · Porto';
+    search.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    expect(component.venueOptions).toEqual([]);
+    tick(300);
+    fixture.detectChanges();
+
+    expect(venueService.suggest).toHaveBeenCalledWith('Campo do Porto', 'Porto', 'Padel', 0, 'Porto');
+    expect(component.venueOptions.map(venue => venue.id)).toEqual([102]);
+    const option = fixture.nativeElement.querySelector('button.venue-result-option') as HTMLButtonElement;
+    expect(option).not.toBeNull();
+    option.click();
     fixture.detectChanges();
 
     expect(component.selectedVenueId).toBe(102);
@@ -1042,7 +1048,7 @@ describe('Events2Component', () => {
     expect(component.address).toBe('Rua B');
     expect(component.latitude).toBe(41.15);
     expect(component.longitude).toBe(-8.61);
-  });
+  }));
 
   it('keeps manually entered location when searching without a selected venue', () => {
     component.sport = 'Padel';

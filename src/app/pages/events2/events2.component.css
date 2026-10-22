@@ -606,3 +606,106 @@ input[type='datetime-local'] {
   font-size: 0.83rem;
   line-height: 1.45;
 }
+
+
+/* National catalogue results: scan names and cities, then choose by venue ID. */
+.venue-search-results {
+  border: 1px solid rgba(148, 163, 184, .2);
+  border-radius: .85rem;
+  background: rgba(2, 6, 23, .36);
+  padding: .45rem;
+  min-width: 0;
+}
+
+.venue-results-caption {
+  margin: .3rem .5rem .65rem;
+  color: #cbd5e1;
+  font-size: .78rem;
+  font-weight: 750;
+}
+
+.venue-results-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: .3rem;
+  max-height: 320px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.venue-result-option {
+  appearance: none;
+  box-sizing: border-box;
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: .85rem;
+  padding: .72rem .8rem;
+  text-align: left;
+  color: #f8fafc;
+  border: 1px solid transparent;
+  border-radius: .65rem;
+  background: rgba(255, 255, 255, .04);
+  font: inherit;
+  cursor: pointer;
+}
+
+.venue-result-option:hover:not(:disabled),
+.venue-result-option:focus-visible {
+  border-color: rgba(125, 211, 252, .55);
+  background: rgba(56, 189, 248, .1);
+  outline-offset: 2px;
+}
+
+.venue-result-option:focus-visible {
+  outline: 2px solid #7dd3fc;
+}
+
+.venue-result-option:disabled {
+  cursor: wait;
+  opacity: .58;
+}
+
+.venue-result-main,
+.venue-result-details {
+  min-width: 0;
+  display: grid;
+  gap: .2rem;
+}
+
+.venue-result-main strong {
+  overflow-wrap: anywhere;
+  font-size: .88rem;
+}
+
+.venue-result-main > span,
+.venue-result-details > span {
+  color: #94a3b8;
+  font-size: .74rem;
+  line-height: 1.4;
+}
+
+.venue-result-details {
+  text-align: right;
+  max-width: 42%;
+}
+
+.venue-result-details .venue-result-unverified {
+  color: #fbbf24;
+}
+
+@media (max-width: 760px) {
+  .venue-result-option {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: .4rem;
+  }
+
+  .venue-result-details {
+    text-align: left;
+    max-width: 100%;
+  }
+}

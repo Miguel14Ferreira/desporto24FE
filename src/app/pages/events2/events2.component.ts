@@ -343,6 +343,9 @@ export class Events2Component implements OnInit, OnDestroy {
     this.venuesLoadError = false;
     this.venuesHasMore = false;
     this.venuePage = 0;
+    // Previously fetched rows belong to an older query/district/sport;
+    // never leave them clickable while the new lookup is debounced.
+    this.venues = [...this.newlyCreatedVenues];
     this.venueSearchChanged.next();
   }
 
@@ -454,6 +457,18 @@ export class Events2Component implements OnInit, OnDestroy {
       this.selectVenue(null);
     }
     if (this.sportSelected && this.venueDistrict) this.queueVenueLookup();
+  }
+
+  /** Visible results select the actual server ID, never a potentially duplicate name. */
+  chooseVenueFromResults(venueId: number): void {
+    if (this.venuesLoading || !this.sportSelected || !this.venueDistrict) return;
+    const venue = this.venueOptions.find(item => item.id === venueId);
+    if (!venue) return;
+
+    ++this.venueLookupVersion; // Ignore a slower response from the previous query.
+    this.venuesLoading = false;
+    this.venueSearch = venue.name + ' · ' + venue.city;
+    this.selectVenue(venue.id);
   }
 
   confirmVenueSelection(): void {
