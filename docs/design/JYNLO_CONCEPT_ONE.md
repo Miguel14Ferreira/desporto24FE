@@ -112,3 +112,40 @@ statistics or invented profile data. No backend changes.
 Acceptance: validate individual/other profiles, privacy and follow states, full
 post composer/comments, week recommendations, discover empty/full results, and
 anonymous homepage before another rollout. No mobile redesign in this wave.
+
+
+## Fourth screen migration — secondary journeys (Oct 22, 2026)
+
+`src/styles/jynlo-secondary-concept-one.css` is the scoped design
+layer for six further desktop pages, opted in with
+`jynlo-c1 jynlo-secondary`:
+
+- Main logged-in menu/dashboard (`menu`)
+- Notifications and the selected notice detail
+- Friends/search and friends actions
+- One-to-one chat and existing message composer
+- Edit personal profile, including photo and MFA settings
+- Create a community, including larger 3:2 image preview
+
+**No** changes to TypeScript, permissions, API contracts, routes, chat
+transport, notification deletion rules, security/MFA logic or profile
+upload validation. Never replace danger actions with the positive green
+accent. Text still controls name/pseudonym privacy and data access.
+
+The next separate task is the admin surface, which needs denser
+information design and should not be mixed with social screen styles.
+
+### Visual checks before considering the new look finished
+
+1. Menu cards/profile and logout on desktop.
+2. Notifications: empty, unread, selected, mark-as-read, clear-all
+   confirmation, security-related actions.
+3. Friends: populated/empty/filtered, contextual menu, blocked state.
+4. Chat: direct messages, blocked state, emoji picker, composer and
+   long messages; do not regress automatic refresh.
+5. Profile editing: saved/pending photo, cropping, validation, MFA
+   flows, error states and disabled fields.
+6. Community creation: original form fields, large preview,
+   no-photo fallback, upload errors and navigation.
+
+GitHub CI is necessary but not a substitute for browser visual review.
