@@ -28,6 +28,6 @@ describe('Tournament team WhatsApp and link invites', () => {
     expect(share.startsWith('https://wa.me/?text=')).toBeTrue();
     expect(new URL(share).searchParams.get('text')).toContain('Os Verdes');
     expect(new URL(share).searchParams.get('text')).toContain(url);
-    expect(new URL(share).searchParams.get('text')).toContain('aderir à comunidade');
+    expect(new URL(share).searchParams.get('text')).toContain('adere à comunidade');
   });
 });
