@@ -823,9 +823,14 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.showError('Escolhe um critério de desempate válido.');
       return;
     }
-    await this.mutate(this.api.createTeamTournament(this.community.id, name, this.sportDraft,
-      size, this.roundRobinLegsDraft, this.pointRulesDraft, this.teamTieBreakPriorityDraft,
-      this.teamFormatDraft, this.teamGroupCountDraft),
+    const createRequest = this.teamFormatDraft === 'GROUP_KNOCKOUT'
+      ? this.api.createTeamTournament(this.community.id, name, this.sportDraft, size,
+          this.roundRobinLegsDraft, this.pointRulesDraft, this.teamTieBreakPriorityDraft,
+          this.teamFormatDraft, this.teamGroupCountDraft)
+      : this.api.createTeamTournament(this.community.id, name, this.sportDraft, size,
+          this.roundRobinLegsDraft, this.pointRulesDraft, this.teamTieBreakPriorityDraft,
+          this.teamFormatDraft);
+    await this.mutate(createRequest,
       'Competição por equipas criada. Agora podes preparar os plantéis.', result => {
         this.nameDraft = '';
         this.roundRobinLegsDraft = 1;
