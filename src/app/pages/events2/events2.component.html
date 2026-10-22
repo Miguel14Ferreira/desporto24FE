@@ -231,7 +231,7 @@
                     (click)="chooseVenueFromResults(venue.id)">
                     <span class="venue-result-main">
                       <strong>{{ venue.name }}</strong>
-                      <span>{{ venue.city }}@if (venue.district && venue.district !== venue.city) { · {{ venue.district }} }</span>
+                      <span>{{ venue.city }}{{ venue.district && venue.district !== venue.city ? ' · ' + venue.district : '' }}</span>
                     </span>
                     <span class="venue-result-details">
                       @if (venue.address) {
