@@ -24,6 +24,47 @@ describe('CommunitiesComponent public session eligibility', () => {
     };
   });
 
+  it('shows Portuguese labels for standard English Excel headers without changing source mappings', () => {
+    const previous = localStorage.getItem('d24-language');
+    try {
+      localStorage.setItem('d24-language', 'pt');
+      expect(component.importColumnHeaderLabel('Player')).toBe('Nome do jogador');
+      expect(component.importColumnHeaderLabel('WIN')).toBe('Vitória');
+      expect(component.importColumnHeaderLabel('Draw')).toBe('Empate');
+      expect(component.importColumnHeaderLabel('loss')).toBe('Derrota');
+      expect(component.importColumnHeaderLabel('Wins')).toBe('Vitórias');
+      expect(component.importColumnHeaderLabel('Custom Excel Header')).toBe('Custom Excel Header');
+      component.importMappings = [{ columnIndex: 0, header: 'Player', field: 'PLAYER', confidence: 1 }];
+      expect(component.importColumnHeaderLabel(component.importMappings[0].header)).toBe('Nome do jogador');
+      expect(component.importMappings[0].header).toBe('Player');
+      expect(component.importMappings[0].field).toBe('PLAYER');
+    } finally {
+      if (previous == null) localStorage.removeItem('d24-language');
+      else localStorage.setItem('d24-language', previous);
+    }
+  });
+
+  it('localizes WIN/DRAW/LOSS in normalized Excel previews but retains internal result codes', () => {
+    const previous = localStorage.getItem('d24-language');
+    try {
+      localStorage.setItem('d24-language', 'pt');
+      expect(component.importPreviewResultLabel({ result: 'WIN' })).toBe('Vitória');
+      expect(component.importPreviewResultLabel({ result: 'DRAW' })).toBe('Empate');
+      expect(component.importPreviewResultLabel({ result: 'LOSS' })).toBe('Derrota');
+      expect(component.importPreviewResultLabel({ win: true })).toBe('Vitória');
+      expect(component.importPreviewResultLabel({ draw: true })).toBe('Empate');
+      expect(component.importPreviewResultLabel({ loss: true })).toBe('Derrota');
+      expect(component.importPreviewResultLabel({})).toBe('—');
+      expect(component.importPreviewResultLabel({ result: 'PENDING' })).toBe('PENDING');
+      localStorage.setItem('d24-language', 'en');
+      expect(component.importColumnHeaderLabel('Player')).toBe('Player name');
+      expect(component.importPreviewResultLabel({ result: 'WIN' })).toBe('Win');
+    } finally {
+      if (previous == null) localStorage.removeItem('d24-language');
+      else localStorage.setItem('d24-language', previous);
+    }
+  });
+
   it('accepts Excel, CSV and TSV history files regardless of extension casing', () => {
     for (const name of ['histórico.xlsx', 'antigo.XLS', 'jornadas.csv', 'resultados.TSV']) {
       const file = new File(['Jogador;Golos\\nAna;2'], name, { type: 'application/octet-stream' });
