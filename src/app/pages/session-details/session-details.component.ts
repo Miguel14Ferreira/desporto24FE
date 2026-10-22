@@ -281,11 +281,21 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   }
 
   canRatePostGame(): boolean {
-    if (!this.session?.joined
+    if (!this.session?.joined || !this.currentUsername
       || this.session.status === 'CANCELLED'
       || this.session.problemType === 'NOT_OCCURRED') {
       return false;
     }
+
+    // Registration alone does not prove participation. Only confirmed
+    // attendees should see the editor; the backend checks the stored
+    // attendance timestamp independently before accepting any rating.
+    const attended = this.sessionParticipants.some(participant =>
+      participant.username.toLowerCase() === this.currentUsername!.toLowerCase()
+      && participant.attendanceStatus === 'ATTENDED'
+    );
+    if (!attended) return false;
+
     const kickoff = Date.parse(this.session.gameDate);
     return Number.isFinite(kickoff)
       && kickoff + (2 * 60 * 60 * 1000) <= Date.now();
@@ -544,6 +554,11 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
       .subscribe({
         next: participants => {
           this.sessionParticipants = participants;
+          // The initial session load runs before the participant roster.
+          // Load private rating only after the API confirms actual attendance.
+          if (this.canRatePostGame() && !this.ratingDismissed) {
+            this.loadMyOverallRating();
+          }
           if (this.isCreator()) {
             this.participants = participants;
           }
@@ -1558,10 +1573,8 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
       .subscribe({
         next: session => {
           this.session = session;
-          if (this.canRatePostGame() && !this.ratingDismissed) {
-            this.loadMyOverallRating();
-          }
-
+          // Rating eligibility is determined after the participant roster loads,
+          // not from the joined flag alone.
           if (session.creatorUsername) {
             this.loadCreatorReliability(session.creatorUsername);
           }
