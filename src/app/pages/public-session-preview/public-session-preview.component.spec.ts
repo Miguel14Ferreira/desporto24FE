@@ -160,7 +160,7 @@ describe('PublicSessionPreviewComponent', () => {
     expect(link.getAttribute('target')).toBe('_blank');
     expect(link.getAttribute('rel')).toBe('noopener noreferrer');
     const text = new URL(link.href).searchParams.get('text')!;
-    expect(text).toBe(shareText('pt-PT') + '\\n' + publicUrl);
+    expect(text).toBe(shareText('pt-PT') + '\n' + publicUrl);
     expect(text).toContain('🎾 Padel');
     expect(text).toContain('📍 Lisboa');
     expect(text).toContain('👥 2 vagas');
@@ -169,7 +169,7 @@ describe('PublicSessionPreviewComponent', () => {
     i18n.setLanguage('en');
     fixture.detectChanges();
     expect(new URL(link.href).searchParams.get('text'))
-      .toBe(shareText('en-GB') + '\\n' + publicUrl);
+      .toBe(shareText('en-GB') + '\n' + publicUrl);
     expect(link.href).not.toContain('menu/events');
   });
 
