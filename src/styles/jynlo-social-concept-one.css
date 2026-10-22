@@ -135,10 +135,30 @@ body .community-page.jynlo-c1 .profile-detail {
     var(--jynlo-ui-surface);
 }
 body .community-page.jynlo-c1 .profile-detail .large-avatar {
-  width: clamp(125px, 15vw, 195px);
-  height: clamp(125px, 15vw, 195px);
+  /* .avatar (44px) and .large-avatar (84px) previously retained a small
+     flex-basis: the new height grew but the flex item stayed very narrow. */
+  --jynlo-profile-avatar-size: clamp(125px, 15vw, 195px);
+  width: var(--jynlo-profile-avatar-size);
+  height: var(--jynlo-profile-avatar-size);
+  flex: 0 0 var(--jynlo-profile-avatar-size);
+  min-width: var(--jynlo-profile-avatar-size);
+  min-height: var(--jynlo-profile-avatar-size);
+  aspect-ratio: 1 / 1;
   border-radius: 1.4rem;
   overflow: hidden;
+  place-items: center;
+}
+body .community-page.jynlo-c1 .profile-detail .large-avatar img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+body .community-page.jynlo-c1 .profile-detail .profile-identity {
+  min-width: 0;
+}
+body .community-page.jynlo-c1 .profile-detail .profile-identity h1 {
+  overflow-wrap: anywhere;
 }
 body .community-page.jynlo-c1 .profile-identity h1 {
   font-size: clamp(2.1rem, 3.6vw, 3.2rem);

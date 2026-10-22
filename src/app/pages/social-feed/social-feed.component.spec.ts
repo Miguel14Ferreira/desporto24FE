@@ -298,8 +298,8 @@ describe('SocialFeedComponent discovery sidebar', () => {
       profilePicUrl: null, joinDateDisplay: null
     });
     community.discoverProfiles.and.returnValue(of([
-      candidate('miguel'), candidate('ana'), candidate('bruno'),
-      candidate('carla'), candidate('diogo')
+      candidate('miguel'), candidate('jynloteste01'), candidate('JYNLOTESTE02'),
+      candidate('ana'), candidate('bruno'), candidate('carla'), candidate('diogo')
     ]));
 
     fixture.detectChanges();
@@ -307,6 +307,8 @@ describe('SocialFeedComponent discovery sidebar', () => {
     fixture.detectChanges();
 
     expect(community.discoverProfiles).toHaveBeenCalledTimes(1);
+    // QA accounts must never take slots from real player suggestions, even if
+    // the discovery API still returns them during a rolling deployment.
     expect(component.suggestedPeople.map(person => person.username))
       .toEqual(['ana', 'bruno', 'carla']);
     const links = Array.from(
