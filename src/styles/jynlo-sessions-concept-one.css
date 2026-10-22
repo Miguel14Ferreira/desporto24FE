@@ -1,0 +1,296 @@
+/*
+ * Jynlo Concept 1 — Sessions / Games visual pilot.
+ * Scoped to explicitly opted-in page roots. Shared foundations live in
+ * jynlo-foundations.css; no business logic, permissions or navigation changes.
+ */
+body .jynlo-c1.jynlo-games {
+  background:
+    radial-gradient(ellipse 68% 450px at 95% 5%, rgba(25, 133, 135, .15), transparent 78%),
+    linear-gradient(150deg, var(--jynlo-ui-canvas), #0b2333 68%, #071523);
+  color: var(--jynlo-ui-text);
+  padding-top: 6.3rem;
+}
+body .jynlo-c1.jynlo-games :is(.sessions-shell,.create-shell,.detail-shell,.page-shell) {
+  width: min(var(--jynlo-ui-container), 100%);
+}
+body .jynlo-c1.jynlo-games.create-page .create-shell { max-width: 1080px; }
+body .jynlo-c1.jynlo-games.detail-page .detail-shell { max-width: 1100px; }
+body .jynlo-c1.jynlo-games :is(.page-header, .title-row) {
+  gap: 1.3rem;
+}
+body .jynlo-c1.jynlo-games :is(.page-header h1,.title-row h1) {
+  font-size: clamp(2.5rem, 4.5vw, 4rem);
+  font-weight: 850;
+  letter-spacing: -.045em;
+  line-height: 1.08;
+}
+body .jynlo-c1.jynlo-games :is(.page-header .eyebrow,.title-row .eyebrow,.section-kicker) {
+  color: var(--jynlo-ui-brand);
+  letter-spacing: .14em;
+  font-weight: 850;
+}
+body .jynlo-c1.jynlo-games :is(.subtitle,.page-header .subtitle) {
+  max-width: 53ch;
+  color: var(--jynlo-ui-muted);
+  line-height: 1.65;
+}
+body .jynlo-c1.jynlo-games .jynlo-action--primary {
+  --jynlo-action-bg: var(--jynlo-ui-brand);
+  --jynlo-action-border: var(--jynlo-ui-brand);
+  --jynlo-action-hover: #83f4cf;
+  --jynlo-action-text: var(--jynlo-ui-brand-text);
+}
+body .jynlo-c1.jynlo-games .jynlo-action--neutral {
+  --jynlo-action-text: #e2f1f5;
+  --jynlo-action-bg: rgba(144, 190, 208, .07);
+  --jynlo-action-hover: rgba(144, 190, 208, .15);
+  --jynlo-action-border: rgba(144, 190, 208, .26);
+}
+body .jynlo-c1.jynlo-games .jynlo-action:focus-visible,
+body .jynlo-c1.jynlo-games :is(input,select,textarea,button):focus-visible {
+  outline: 2px solid var(--jynlo-ui-brand);
+  outline-offset: 3px;
+}
+body .jynlo-c1.jynlo-games :is(.state-card,.feedback,.empty-card) {
+  border: 1px solid var(--jynlo-ui-outline);
+  border-radius: var(--jynlo-ui-radius-md);
+  background: var(--jynlo-ui-surface-glass);
+  box-shadow: var(--jynlo-ui-shadow);
+}
+body .jynlo-c1.jynlo-games :is(.filters,.nearby-panel,.create-card,.detail-card,.session-card,.attendance-card,.confirm-modal) {
+  border: 1px solid var(--jynlo-ui-outline);
+  border-radius: var(--jynlo-ui-radius-lg);
+  background: var(--jynlo-ui-surface-glass);
+  box-shadow: var(--jynlo-ui-shadow);
+}
+body .jynlo-c1.jynlo-games :is(input:not([type="checkbox"]):not([type="radio"]),select,textarea) {
+  border-color: rgba(158, 204, 217, .25);
+  border-radius: var(--jynlo-ui-radius-sm);
+  background: rgba(8, 25, 40, .7);
+  color: var(--jynlo-ui-text);
+}
+body .jynlo-c1.jynlo-games :is(.filters,.create-card) label > span {
+  color: var(--jynlo-ui-muted);
+}
+body .jynlo-c1.jynlo-games :is(.filters,.create-card) :is(input,select,textarea):disabled {
+  opacity: .6;
+  cursor: not-allowed;
+}
+
+/* Explore matches: editorial search + readable card-like result rows. */
+body .sessions-page.jynlo-c1 .page-header { margin-bottom: 1.7rem; }
+body .sessions-page.jynlo-c1 .nearby-panel {
+  padding: clamp(1.15rem, 2.2vw, 1.55rem);
+  background:
+    radial-gradient(ellipse at 95% 10%, rgba(65, 233, 176, .14), transparent 65%),
+    linear-gradient(120deg, #102a3b, #112238);
+  border-color: rgba(65, 233, 176, .22);
+}
+body .sessions-page.jynlo-c1 .nearby-panel strong { color: #e8fff6; }
+body .sessions-page.jynlo-c1 .nearby-panel p { color: var(--jynlo-ui-muted); }
+body .sessions-page.jynlo-c1 .filters {
+  padding: clamp(1.1rem, 2.4vw, 1.7rem);
+}
+body .sessions-page.jynlo-c1 .advanced-toggle {
+  color: var(--jynlo-ui-brand);
+}
+body .sessions-page.jynlo-c1 .session-list { gap: .9rem; }
+body .sessions-page.jynlo-c1 .session-row {
+  min-height: 112px;
+  padding: 1.1rem 1.2rem;
+  gap: clamp(.65rem, 1.5vw, 1.25rem);
+  border: 1px solid var(--jynlo-ui-outline);
+  border-radius: var(--jynlo-ui-radius-md);
+  background:
+    radial-gradient(circle at 0% 0%, rgba(65, 233, 176, .055), transparent 30%),
+    var(--jynlo-ui-surface);
+  box-shadow: 0 14px 32px rgba(1, 10, 23, .15);
+}
+body .sessions-page.jynlo-c1 .session-row:hover {
+  border-color: rgba(65, 233, 176, .42);
+  background: #152c40;
+}
+body .sessions-page.jynlo-c1 .session-identity strong {
+  font-size: 1.3rem;
+  letter-spacing: -.025em;
+  color: var(--jynlo-ui-text);
+}
+body .sessions-page.jynlo-c1 .sport-label {
+  color: var(--jynlo-ui-brand);
+  letter-spacing: .1em;
+}
+body .sessions-page.jynlo-c1 .session-fact span {
+  color: var(--jynlo-ui-subtle);
+  font-size: .78rem;
+}
+body .sessions-page.jynlo-c1 .session-fact strong {
+  color: #eaf5fc;
+  font-size: .91rem;
+}
+body .sessions-page.jynlo-c1 .session-vacancies.available strong {
+  color: #99ffd9;
+}
+body .sessions-page.jynlo-c1 .session-row--full {
+  opacity: .83;
+}
+body .sessions-page.jynlo-c1 .session-action--join {
+  --jynlo-action-bg: var(--jynlo-ui-brand);
+  --jynlo-action-border: var(--jynlo-ui-brand);
+  --jynlo-action-hover: #83f4cf;
+  --jynlo-action-text: var(--jynlo-ui-brand-text);
+}
+body .sessions-page.jynlo-c1 .status {
+  color: #a8ffe0;
+  background: rgba(65, 233, 176, .09);
+}
+
+/* Create match: readable stacked sections, 3 venue selection paths intact. */
+body .create-page.jynlo-c1 .create-card {
+  padding: clamp(1.4rem, 3vw, 2.5rem);
+}
+body .create-page.jynlo-c1 :is(.venue-section,.photo-section,.community-context,.recruit-context,.venue-create-card,.option-card) {
+  border-radius: var(--jynlo-ui-radius-md);
+  border-color: var(--jynlo-ui-outline);
+  background: var(--jynlo-ui-surface-raised);
+}
+body .create-page.jynlo-c1 .venue-heading h2 {
+  font-size: clamp(1.4rem, 2.2vw, 1.9rem);
+  letter-spacing: -.03em;
+}
+body .create-page.jynlo-c1 .location-method {
+  border-radius: .75rem;
+  border-color: rgba(151, 188, 201, .3);
+}
+body .create-page.jynlo-c1 .location-method.active {
+  border-color: var(--jynlo-ui-brand);
+  background: rgba(65, 233, 176, .14);
+  color: #b7ffe7;
+}
+body .create-page.jynlo-c1 .community-sport-option.active {
+  border-color: var(--jynlo-ui-brand);
+  background: rgba(65, 233, 176, .14);
+  color: #b7ffe7;
+}
+body .create-page.jynlo-c1 .recruit-remaining {
+  border-color: rgba(65, 233, 176, .24);
+  background: rgba(65, 233, 176, .07);
+}
+body .create-page.jynlo-c1 .recruit-remaining strong {
+  color: #a8ffe0;
+}
+
+/* Match detail: cover, strong identity, compact semantic stats. */
+body .detail-page.jynlo-c1 .back-link {
+  color: #bbffe8;
+  text-underline-offset: .2rem;
+}
+body .detail-page.jynlo-c1 .detail-card {
+  border: 1px solid var(--jynlo-ui-outline);
+  background: var(--jynlo-ui-surface);
+}
+body .detail-page.jynlo-c1 .session-photo {
+  width: 100%;
+  height: clamp(220px, 30vw, 410px);
+  max-height: 410px;
+  object-fit: cover;
+}
+body .detail-page.jynlo-c1 .detail-content {
+  padding: clamp(1.4rem, 3.2vw, 2.65rem);
+}
+body .detail-page.jynlo-c1 .title-row {
+  padding-bottom: 1.25rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid var(--jynlo-ui-outline);
+}
+body .detail-page.jynlo-c1 .title-row h1 {
+  font-size: clamp(2.3rem, 4.4vw, 3.8rem);
+}
+body .detail-page.jynlo-c1 .detail-grid {
+  gap: .8rem;
+}
+body .detail-page.jynlo-c1 .detail-grid > div {
+  border: 1px solid var(--jynlo-ui-outline);
+  border-radius: var(--jynlo-ui-radius-md);
+  background: var(--jynlo-ui-surface-raised);
+  padding: 1rem;
+}
+body .detail-page.jynlo-c1 .detail-grid span {
+  color: var(--jynlo-ui-subtle);
+}
+body .detail-page.jynlo-c1 .detail-grid strong {
+  color: #eaf6ff;
+}
+body .detail-page.jynlo-c1 :is(.address-panel,.participation-panel,.calendar-panel,.organizer-preparation,.post-game-review,.overall-rating-panel,.attendance-panel,.session-participants-panel) {
+  border-radius: var(--jynlo-ui-radius-md);
+  border-color: var(--jynlo-ui-outline);
+  background: var(--jynlo-ui-surface-raised);
+}
+body .detail-page.jynlo-c1 :is(.membership-status,.session-created-share) {
+  border-radius: var(--jynlo-ui-radius-md);
+  border-color: rgba(65, 233, 176, .32);
+  background: rgba(65, 233, 176, .07);
+}
+
+/* Your matches: 2/3-column card grids and next match hero. */
+body .my-sessions-page.jynlo-c1 .next-session-highlight {
+  padding: clamp(1.2rem, 2.6vw, 2rem);
+  border: 1px solid rgba(65, 233, 176, .26);
+  border-radius: var(--jynlo-ui-radius-lg);
+  background:
+    radial-gradient(ellipse at 95% 15%, rgba(65, 233, 176, .13), transparent 60%),
+    linear-gradient(110deg, #123143, #122138);
+  box-shadow: var(--jynlo-ui-shadow);
+}
+body .my-sessions-page.jynlo-c1 .next-session-highlight h2 {
+  margin-top: .45rem;
+  font-size: clamp(1.5rem, 2.6vw, 2.15rem);
+  letter-spacing: -.035em;
+}
+body .my-sessions-page.jynlo-c1 .section-heading h2 {
+  font-size: clamp(1.4rem, 2.2vw, 1.95rem);
+  letter-spacing: -.03em;
+}
+body .my-sessions-page.jynlo-c1 .session-section { margin-top: 2.2rem; }
+body .my-sessions-page.jynlo-c1 .session-grid {
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 305px), 1fr));
+}
+body .my-sessions-page.jynlo-c1 .session-card {
+  padding: clamp(1.15rem, 2vw, 1.55rem);
+  border-color: var(--jynlo-ui-outline);
+  background: var(--jynlo-ui-surface);
+}
+body .my-sessions-page.jynlo-c1 .session-card h3 {
+  font-size: 1.45rem;
+  letter-spacing: -.025em;
+}
+body .my-sessions-page.jynlo-c1 .sport {
+  color: var(--jynlo-ui-brand);
+}
+body .my-sessions-page.jynlo-c1 .meta-grid > div {
+  background: rgba(142, 184, 204, .08);
+  border: 1px solid rgba(154, 192, 208, .1);
+  border-radius: var(--jynlo-ui-radius-sm);
+}
+body .my-sessions-page.jynlo-c1 .count-badge {
+  background: rgba(65, 233, 176, .11);
+  color: #abffe2;
+}
+body .my-sessions-page.jynlo-c1 .attendance-card {
+  background: var(--jynlo-ui-surface);
+}
+@media (max-width: 780px) {
+  body .jynlo-c1.jynlo-games { padding: 6rem 1rem 3rem; }
+  body .sessions-page.jynlo-c1 .session-row { padding: 1rem; }
+  body .my-sessions-page.jynlo-c1 .session-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  body .create-page.jynlo-c1 .create-card,
+  body .detail-page.jynlo-c1 .detail-content { padding: 1.2rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  body .sessions-page.jynlo-c1 .session-row {
+    transform: none;
+    transition: none;
+  }
+}
