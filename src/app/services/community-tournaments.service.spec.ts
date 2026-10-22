@@ -42,6 +42,20 @@ describe('CommunityTournamentsService API contract', () => {
         winPoints: 4, drawPoints: 2, lossPoints: 0 });
   });
 
+  it('creates group knockout with group count and independent sporting rules', () => {
+    service.createTeamTournament(7, 'Taça com grupos', 'Futebol', 5, 1,
+      { winPoints: 3, drawPoints: 1, lossPoints: 0 },
+      'GOAL_DIFFERENCE_FIRST', 'GROUP_KNOCKOUT', 4).subscribe();
+    expect(http.post).toHaveBeenCalledWith(
+      environment.apiUrl + '/api/communities/7/tournaments',
+      { name: 'Taça com grupos', sport: 'Futebol', entryType: 'TEAM',
+        playersPerTeam: 5, format: 'GROUP_KNOCKOUT', groupCount: 4,
+        teamTieBreakPriority: 'GOAL_DIFFERENCE_FIRST',
+        winPoints: 3, drawPoints: 1, lossPoints: 0 });
+    service.teamGroups(7, 9).subscribe();
+    expect(http.get).toHaveBeenCalledWith(base + '/teams/groups');
+  });
+
   it('sends knockout format without league-only settings', () => {
     service.createTeamTournament(7, 'Taça', 'Futebol', 3, 2,
       { winPoints: 4, drawPoints: 1, lossPoints: 0 }, 'WINS_FIRST', 'KNOCKOUT').subscribe();

@@ -58,7 +58,7 @@
           </div>
           <p>Escolham a modalidade e os jogadores por equipa. Criem equipas reais com os membros da comunidade.</p>
           <p class="guide-example">Ex.: 20 membros divididos em quatro equipas de cinco.</p>
-          <p>Podem organizar ligas de todos contra todos ou taças por eliminatórias, com plantéis e resultados registados. As fases de grupos ainda não estão disponíveis.</p>
+          <p>Podem organizar ligas de todos contra todos ou taças por eliminatórias, com plantéis e resultados registados. Também podem combinar fases de grupos e eliminatórias, com apuramento automático.</p>
           @if (canManage && community.teamTournamentsEnabled !== false) {
             <button type="button" class="t-btn t-btn-primary" (click)="startTeamCreation()">Preparar torneio por equipas</button>
           } @else if (canManage) {
@@ -144,7 +144,23 @@
               <button type="button" class="t-sport-chip" [disabled]="busy"
                 [attr.aria-pressed]="teamFormatDraft === 'KNOCKOUT'"
                 (click)="teamFormatDraft = 'KNOCKOUT'">Eliminatórias (taça)</button>
+              <button type="button" class="t-sport-chip" [disabled]="busy"
+                [attr.aria-pressed]="teamFormatDraft === 'GROUP_KNOCKOUT'"
+                (click)="teamFormatDraft = 'GROUP_KNOCKOUT'">Grupos + Eliminatórias</button>
             </div>
+            @if (teamFormatDraft === 'GROUP_KNOCKOUT') {
+              <p class="sport-choice-hint">Os dois primeiros de cada grupo avançam. Desempate: pontos,
+                critérios desportivos e, em último caso, ordem do sorteio inicial.</p>
+              <label id="group-count-label">Número de grupos</label>
+              <div class="t-community-sports" role="group" aria-labelledby="group-count-label">
+                <button type="button" class="t-sport-chip" [disabled]="busy"
+                  [attr.aria-pressed]="teamGroupCountDraft === 2"
+                  (click)="teamGroupCountDraft = 2">2 grupos · mínimo 4 equipas</button>
+                <button type="button" class="t-sport-chip" [disabled]="busy"
+                  [attr.aria-pressed]="teamGroupCountDraft === 4"
+                  (click)="teamGroupCountDraft = 4">4 grupos · mínimo 8 equipas</button>
+              </div>
+            }
             @if (teamFormatDraft === 'KNOCKOUT') {
               <p class="sport-choice-hint">Sorteio de 2 a 32 equipas. Há entradas diretas na primeira ronda quando necessário.
                 Cada jogo tem de ter vencedor. Os vencedores avançam até à final.</p>
@@ -169,7 +185,7 @@
             A escolha fica definida ao criar o torneio e não muda depois de publicares as jornadas.</p>
           }
         }
-        @if (showTeamCreate && teamFormatDraft === 'LEAGUE') {
+        @if (showTeamCreate && teamFormatDraft !== 'KNOCKOUT') {
           <fieldset class="t-points-rules t-tiebreak-rules" aria-describedby="t-tiebreak-help">
             <legend>Critério de desempate</legend>
             <p id="t-tiebreak-help" class="sport-choice-hint">
@@ -189,7 +205,7 @@
             </div>
           </fieldset>
         }
-        @if (!showTeamCreate || teamFormatDraft === 'LEAGUE') {
+        @if (!showTeamCreate || teamFormatDraft !== 'KNOCKOUT') {
         <fieldset class="t-points-rules" aria-describedby="t-points-rules-help">
           <legend>Regras de pontuação</legend>
           <p id="t-points-rules-help" class="sport-choice-hint">
@@ -222,7 +238,7 @@
         </fieldset>
         }
         <button type="button" class="t-btn t-btn-primary"
-          [disabled]="busy || (teamFormatDraft === 'LEAGUE' && !validPointRules)
+          [disabled]="busy || (teamFormatDraft !== 'KNOCKOUT' && !validPointRules)
             || nameDraft.trim().length < 2 || !sportDraft
             || (showTeamCreate && (!teamSizeDraft || teamSizeDraft < 1 || teamSizeDraft > 30))"
           (click)="showTeamCreate ? createTeamCompetition() : create()">
@@ -276,7 +292,11 @@
             <h4>{{ selected.name }}</h4>
             <span class="t-tournament-sport">{{ selected.sport || 'Modalidade não definida' }}</span>
             @if (isTeamCompetition) {
-              @if (selected.format === 'KNOCKOUT') {
+              @if (selected.format === 'GROUP_KNOCKOUT') {
+                <p>Grupos + eliminatórias · {{ selected.groupCount }} grupos ·
+                  {{ selected.playersPerTeam }} jogadores por equipa</p>
+                <p>Apuram-se dois por grupo; o último critério de desempate é a ordem do sorteio.</p>
+              } @else if (selected.format === 'KNOCKOUT') {
                 <p>Eliminatórias · {{ selected.playersPerTeam }} jogadores por equipa · Eliminação simples</p>
               } @else {
                 <p>Campeonato por equipas · {{ selected.playersPerTeam }} jogadores por equipa ·
@@ -334,7 +354,7 @@
                 <p>O campeonato terminou empatado nos critérios desportivos.</p>
               } @else {
                 <strong>Equipa campeã: {{ selected.championTeamName }}</strong>
-                @if (isKnockout) {
+                @if (isCupFormat) {
                   <p>Taça concluída · Campeão das eliminatórias</p>
                 } @else {
                   <p>{{ selected.championPoints }} pontos · Campeonato concluído</p>
@@ -362,7 +382,7 @@
                 <p>Todos os jogadores são membros reais da comunidade. Um membro só pode integrar uma equipa nesta competição.
                   {{ selected.status === 'DRAFT'
                     ? 'Quando todas as equipas estiverem completas, publica os confrontos.'
-                    : (isKnockout ? 'Regista os vencedores de cada ronda até à final.' : 'Regista os resultados nas jornadas e acompanha a tabela classificativa.') }}</p>
+                    : (isCupFormat ? 'Regista os resultados e acompanha os apuramentos até à final.' : 'Regista os resultados nas jornadas e acompanha a tabela classificativa.') }}</p>
               </div>
               @if (teamsLoadError) {
                 <p class="field-validation" role="alert">Não foi possível carregar os plantéis. Usa Atualizar para tentar novamente.</p>
@@ -436,8 +456,11 @@
               @if (canManage && selected.status === 'DRAFT') {
                 <div class="team-schedule-action">
                   <div>
-                    <strong>{{ isKnockout ? 'Prontos para sortear as eliminatórias?' : 'Prontos para começar o campeonato?' }}</strong>
-                    @if (isKnockout) {
+                    <strong>{{ isGroupKnockout ? 'Prontos para sortear os grupos?' : (isKnockout ? 'Prontos para sortear as eliminatórias?' : 'Prontos para começar o campeonato?') }}</strong>
+                    @if (isGroupKnockout) {
+                      <p>Publicar sorteia as equipas pelos grupos e cria as jornadas.
+                        Os dois primeiros de cada grupo avançam automaticamente. Publicar fecha os plantéis.</p>
+                    } @else if (isKnockout) {
                       <p>Sortear os primeiros confrontos e entradas diretas. Os vencedores avançam automaticamente.
                         Publicar fecha os plantéis.</p>
                     } @else {
@@ -445,8 +468,8 @@
                         ? 'duas voltas, com jogos em casa e fora' : 'uma volta entre todas as equipas' }}.
                         A publicação fecha os plantéis e fixa as regras da competição.</p>
                     }
-                    @if (teams.length < 2) {
-                      <p class="field-validation" role="status">Cria pelo menos duas equipas.</p>
+                    @if (teams.length < (isGroupKnockout ? (selected.groupCount ?? 2) * 2 : 2)) {
+                      <p class="field-validation" role="status">Cria pelo menos {{ isGroupKnockout ? (selected.groupCount ?? 2) * 2 : 2 }} equipas.</p>
                     } @else if (readyTeamCount !== teams.length) {
                       <p class="field-validation" role="status">
                         Completa os plantéis das {{ teams.length - readyTeamCount }} equipas em falta.
@@ -456,13 +479,13 @@
                   @if (confirmAction === 'schedule') {
                     <div class="confirm-actions">
                       <button type="button" class="t-btn t-btn-primary" [disabled]="!canPublishTeamSchedule"
-                        (click)="publishTeamSchedule()">{{ isKnockout ? 'Sim, sortear eliminatórias' : 'Sim, publicar jornadas por equipas' }}</button>
+                        (click)="publishTeamSchedule()">{{ isGroupKnockout ? 'Sim, sortear grupos' : (isKnockout ? 'Sim, sortear eliminatórias' : 'Sim, publicar jornadas por equipas') }}</button>
                       <button type="button" class="t-btn t-btn-secondary" [disabled]="busy"
                         (click)="confirmAction = null">Cancelar</button>
                     </div>
                   } @else {
                     <button type="button" class="t-btn t-btn-primary" [disabled]="!canPublishTeamSchedule"
-                      (click)="confirmAction = 'schedule'">{{ isKnockout ? 'Sortear eliminatórias' : 'Gerar jornadas entre equipas' }}</button>
+                      (click)="confirmAction = 'schedule'">{{ isGroupKnockout ? 'Sortear grupos e jornadas' : (isKnockout ? 'Sortear eliminatórias' : 'Gerar jornadas entre equipas') }}</button>
                   }
                 </div>
               }
@@ -471,8 +494,11 @@
               <section class="t-section team-fixtures-section" aria-label="Jornadas entre equipas">
                 <div class="t-section-heading">
                   <div>
-                    <h5>{{ isKnockout ? 'Quadro de eliminatórias' : 'Jornadas e confrontos entre equipas' }}</h5>
-                    @if (isKnockout) {
+                    <h5>{{ isGroupKnockout ? 'Fase de grupos e eliminatórias' : (isKnockout ? 'Quadro de eliminatórias' : 'Jornadas e confrontos entre equipas') }}</h5>
+                    @if (isGroupKnockout) {
+                      <p>Os jogos de cada grupo permitem empates. Depois de apurados os dois primeiros,
+                        os quartos ou meias-finais e a final exigem sempre um vencedor.</p>
+                    } @else if (isKnockout) {
                       <p>O vencedor de cada jogo avança. Não são aceites empates nas eliminatórias.</p>
                     } @else {
                       <p>Campeonato todos contra todos. Os resultados atualizam automaticamente a classificação.</p>
@@ -498,8 +524,9 @@
                 }
                 <div class="team-fixtures-list">
                   @for (game of teamMatches; track game.id; let index = $index) {
-                    @if (index === 0 || teamMatches[index - 1].roundNumber !== game.roundNumber) {
-                      <h6>{{ isKnockout ? 'Ronda' : 'Jornada' }} {{ game.roundNumber }}</h6>
+                    @if (index === 0 || teamMatches[index - 1].roundNumber !== game.roundNumber
+                          || teamMatches[index - 1].groupNumber !== game.groupNumber) {
+                      <h6>{{ teamMatchStageLabel(game) }}</h6>
                     }
                     <div class="team-fixture">
                        <strong>{{ game.homeTeamName }}</strong>
@@ -532,13 +559,13 @@
                            </label>
                            <button type="button" class="t-btn t-btn-primary t-btn-small"
                              [disabled]="busy || !validScore(teamScoreDraft(game).home) || !validScore(teamScoreDraft(game).away)
-                                || (isKnockout && teamScoreDraft(game).home === teamScoreDraft(game).away)"
+                                || (isEliminationMatch(game) && teamScoreDraft(game).home === teamScoreDraft(game).away)"
                              [attr.aria-label]="(game.status === 'COMPLETED' ? 'Corrigir' : 'Guardar') + ' resultado entre ' + game.homeTeamName + ' e ' + game.awayTeamName"
                              (click)="saveTeamScore(game)">
                              {{ game.status === 'COMPLETED' ? 'Corrigir' : 'Guardar' }}
                            </button>
                            @if (isTeamScoreInvalid(game)) {
-                             <p class="field-validation" role="status">{{ isKnockout
+                             <p class="field-validation" role="status">{{ isEliminationMatch(game)
                                 ? 'A eliminatória exige um vencedor e marcadores inteiros entre 0 e 999.'
                                 : 'Indica dois marcadores inteiros entre 0 e 999.' }}</p>
                            }
@@ -552,7 +579,61 @@
                     (click)="loadTeamMatches()">Ver mais confrontos</button>
                 }
               </section>
-              @if (!isKnockout) {
+              @if (isGroupKnockout) {
+                <section class="t-section team-standings-section" aria-label="Classificação dos grupos">
+                  <div class="t-section-heading">
+                    <div>
+                      <h5>Classificações dos grupos</h5>
+                      <p>Dois apurados por grupo · desempate por pontos, critérios desportivos e sorteio inicial.</p>
+                    </div>
+                    <button type="button" class="t-btn t-btn-secondary t-btn-small"
+                      [disabled]="teamGroupsLoading" (click)="loadGroupStandings()">Atualizar</button>
+                  </div>
+                  @if (teamGroupsLoading) {
+                    <p class="t-muted" role="status">A atualizar classificações…</p>
+                  }
+                  @if (teamGroupsError) {
+                    <p class="field-validation" role="alert">Não foi possível consultar as classificações dos grupos.</p>
+                  }
+                  @if (teamGroups; as groups) {
+                    @if (groups.knockoutStarted) {
+                      <p class="t-muted">Grupos concluídos. Os apurados já disputam as eliminatórias.</p>
+                    }
+                    @for (group of groups.groups; track group.groupNumber) {
+                      <h6>Grupo {{ groupLabel(group.groupNumber) }}</h6>
+                      <div class="standings-scroll">
+                        <table class="standings-table team-standings-table"
+                          [attr.aria-label]="'Classificação do grupo ' + groupLabel(group.groupNumber)">
+                          <thead>
+                            <tr>
+                              <th scope="col">#</th><th scope="col">Equipa</th>
+                              <th scope="col">J</th><th scope="col">V</th><th scope="col">E</th>
+                              <th scope="col">D</th><th scope="col">GM</th><th scope="col">GS</th>
+                              <th scope="col">DG</th><th scope="col">Pts</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            @for (row of group.standings; track row.teamId) {
+                              <tr>
+                                <td>{{ row.position }}</td>
+                                <th scope="row">{{ row.teamName }}
+                                  @if (groups.knockoutStarted && row.position <= 2) {
+                                    <span class="tournament-state">Apurada</span>
+                                  }
+                                </th>
+                                <td>{{ row.played }}</td><td>{{ row.won }}</td><td>{{ row.drawn }}</td>
+                                <td>{{ row.lost }}</td><td>{{ row.goalsFor }}</td><td>{{ row.goalsAgainst }}</td>
+                                <td>{{ row.goalDifference }}</td><td><strong>{{ row.points }}</strong></td>
+                              </tr>
+                            }
+                          </tbody>
+                        </table>
+                      </div>
+                    }
+                  }
+                </section>
+              }
+              @if (selected.format === 'LEAGUE') {
               <section class="t-section team-standings-section" aria-label="Classificação por equipas">
                 <div class="t-section-heading">
                   <div>

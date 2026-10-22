@@ -3,7 +3,7 @@ import { finalize, firstValueFrom, forkJoin, Observable, timeout } from 'rxjs';
 import { CommunityGroup } from '../model/community-group';
 import {
   CommunityTournament, TournamentPointRules, TeamTieBreakPriority, TournamentMatch, TournamentParticipant, TournamentStandingRow,
-  TournamentStandings, TournamentTeam, TournamentTeamMatch, TournamentTeamStandings
+  TournamentStandings, TournamentTeam, TournamentTeamMatch, TournamentTeamStandings, TournamentTeamGroups
 } from '../model/community-tournament';
 import { CommunityTournamentsService } from '../../services/community-tournaments.service';
 import { AuthenticationService } from '../../services/authethication.service';
@@ -37,7 +37,8 @@ export class CommunityTournamentsComponent implements OnChanges {
   showTeamCreate = false;
   teamSizeDraft = 5;
   roundRobinLegsDraft: 1 | 2 = 1;
-  teamFormatDraft: 'LEAGUE' | 'KNOCKOUT' = 'LEAGUE';
+  teamFormatDraft: 'LEAGUE' | 'KNOCKOUT' | 'GROUP_KNOCKOUT' = 'LEAGUE';
+  teamGroupCountDraft: 2 | 4 = 2;
   teamTieBreakPriorityDraft: TeamTieBreakPriority = 'GOAL_DIFFERENCE_FIRST';
   winPointsDraft = 3;
   drawPointsDraft = 1;
@@ -53,6 +54,10 @@ export class CommunityTournamentsComponent implements OnChanges {
   teamMatchesError = false;
   private teamMatchesRevision = 0;
   teamStandings?: TournamentTeamStandings;
+  teamGroups?: TournamentTeamGroups;
+  teamGroupsLoading = false;
+  teamGroupsError = false;
+  private teamGroupsRevision = 0;
   teamStandingsLoading = false;
   teamStandingsError = false;
   private teamStandingsRevision = 0;
@@ -190,12 +195,14 @@ export class CommunityTournamentsComponent implements OnChanges {
       ++this.standingsRevision;
       ++this.teamMatchesRevision;
       ++this.teamStandingsRevision;
+      ++this.teamGroupsRevision;
       this.busy = false;
       this.showGuide = false;
       this.showIndividualCreate = false;
       this.showTeamCreate = false;
       this.roundRobinLegsDraft = 1;
       this.teamFormatDraft = 'LEAGUE';
+      this.teamGroupCountDraft = 2;
       this.teamTieBreakPriorityDraft = 'GOAL_DIFFERENCE_FIRST';
       this.resetPointRules();
       this.teamNameDraft = '';
@@ -207,6 +214,9 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.teamMatchesLoading = false;
       this.teamMatchesError = false;
       this.teamStandings = undefined;
+      this.teamGroups = undefined;
+      this.teamGroupsLoading = false;
+      this.teamGroupsError = false;
       this.teamStandingsLoading = false;
       this.teamStandingsError = false;
       this.teamScoreDrafts = {};
@@ -272,16 +282,50 @@ export class CommunityTournamentsComponent implements OnChanges {
     return this.isTeamCompetition && this.selected?.format === 'KNOCKOUT';
   }
 
+  get isGroupKnockout(): boolean {
+    return this.isTeamCompetition && this.selected?.format === 'GROUP_KNOCKOUT';
+  }
+
+  get isCupFormat(): boolean {
+    return this.isKnockout || this.isGroupKnockout;
+  }
+
+  isEliminationMatch(game: TournamentTeamMatch): boolean {
+    return this.isKnockout || (this.isGroupKnockout && game.groupNumber == null);
+  }
+
+  groupLabel(number: number): string {
+    return String.fromCharCode(64 + number);
+  }
+
+  teamMatchStageLabel(game: TournamentTeamMatch): string {
+    if (!this.isGroupKnockout) {
+      return (this.isKnockout ? 'Ronda ' : 'Jornada ') + game.roundNumber;
+    }
+    if (game.groupNumber != null) {
+      return 'Grupo ' + this.groupLabel(game.groupNumber) + ' · Jornada ' + game.roundNumber;
+    }
+    const totalRounds = this.selected?.groupCount === 4 ? 3 : 2;
+    const remaining = totalRounds - game.roundNumber;
+    return remaining === 2 ? 'Quartos de final'
+      : remaining === 1 ? 'Meias-finais'
+      : remaining === 0 ? 'Final'
+      : 'Ronda eliminatória ' + game.roundNumber;
+  }
+
   get knockoutTotalRounds(): number {
-    return this.teams.length >= 2 ? Math.ceil(Math.log2(this.teams.length)) : 0;
+    return this.isGroupKnockout
+      ? (this.selected?.groupCount === 4 ? 3 : 2)
+      : (this.teams.length >= 2 ? Math.ceil(Math.log2(this.teams.length)) : 0);
   }
 
   get currentKnockoutRound(): number {
-    return this.teamMatches.reduce((latest, game) => Math.max(latest, game.roundNumber), 1);
+    return this.teamMatches.filter(game => this.isEliminationMatch(game))
+      .reduce((latest, game) => Math.max(latest, game.roundNumber), 1);
   }
 
   isPastKnockoutRound(match: TournamentTeamMatch): boolean {
-    return this.isKnockout && match.roundNumber < this.currentKnockoutRound;
+    return this.isEliminationMatch(match) && match.roundNumber < this.currentKnockoutRound;
   }
 
   get knockoutFirstRoundByes(): TournamentTeam[] {
@@ -301,14 +345,15 @@ export class CommunityTournamentsComponent implements OnChanges {
 
   get canPublishTeamSchedule(): boolean {
     return this.canManageTeamRoster && !this.detailsLoading && !this.teamsLoadError
-      && this.teams.length >= 2 && this.teams.length <= 32
+      && this.teams.length >= (this.isGroupKnockout ? (this.selected?.groupCount ?? 2) * 2 : 2)
+      && this.teams.length <= 32
       && this.readyTeamCount === this.teams.length;
   }
 
   get canCompleteTeam(): boolean {
     const table = this.teamStandings;
     if (!table || !this.canManage || this.selected?.entryType !== 'TEAM'
-        || this.selected.format === 'KNOCKOUT'
+        || this.selected.format !== 'LEAGUE'
         || this.selected.status !== 'IN_PROGRESS' || this.teamStandingsLoading
         || this.teamStandingsError || this.busy) return false;
     const size = table.standings.length;
@@ -380,6 +425,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     ++this.standingsRevision;
     ++this.teamMatchesRevision;
     ++this.teamStandingsRevision;
+    ++this.teamGroupsRevision;
     // A request for the previous tournament must not leave this one disabled.
     this.busy = false;
     this.detailsLoading = false;
@@ -401,6 +447,9 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.teamMatchesLoading = false;
     this.teamMatchesError = false;
     this.teamStandings = undefined;
+    this.teamGroups = undefined;
+    this.teamGroupsLoading = false;
+    this.teamGroupsError = false;
     this.teamStandingsLoading = false;
     this.teamStandingsError = false;
     this.teamScoreDrafts = {};
@@ -574,7 +623,8 @@ export class CommunityTournamentsComponent implements OnChanges {
         this.teamPlayerDraft = {};
         if (tournament.status !== 'DRAFT') {
           this.loadTeamMatches(true);
-          if (tournament.format !== 'KNOCKOUT') this.loadTeamStandings();
+          if (tournament.format === 'LEAGUE') this.loadTeamStandings();
+          if (tournament.format === 'GROUP_KNOCKOUT') this.loadGroupStandings();
         }
       },
       error: () => {
@@ -657,6 +707,37 @@ export class CommunityTournamentsComponent implements OnChanges {
     });
   }
 
+  loadGroupStandings(): void {
+    const tournament = this.selected;
+    if (!tournament || tournament.format !== 'GROUP_KNOCKOUT'
+        || tournament.status === 'DRAFT' || !this.isMember) return;
+    const cid = this.community.id;
+    const revision = ++this.teamGroupsRevision;
+    this.teamGroupsLoading = true;
+    this.teamGroupsError = false;
+    this.api.teamGroups(cid, tournament.id).pipe(
+      timeout(12000),
+      finalize(() => {
+        if (revision === this.teamGroupsRevision) {
+          this.teamGroupsLoading = false;
+          this.changeDetector.markForCheck();
+        }
+      })
+    ).subscribe({
+      next: groups => {
+        if (revision !== this.teamGroupsRevision || this.community.id !== cid
+            || this.selected?.id !== tournament.id) return;
+        this.teamGroups = groups;
+      },
+      error: () => {
+        if (revision !== this.teamGroupsRevision || this.community.id !== cid
+            || this.selected?.id !== tournament.id) return;
+        this.teamGroups = undefined;
+        this.teamGroupsError = true;
+      }
+    });
+  }
+
   teamScoreDraft(match: TournamentTeamMatch): { home: number | null; away: number | null } {
     return this.teamScoreDrafts[match.id]
       || { home: match.homeScore ?? null, away: match.awayScore ?? null };
@@ -674,7 +755,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     const score = this.teamScoreDraft(match);
     return this.teamScoreTouched.has(match.id)
       && (!this.validScore(score.home) || !this.validScore(score.away)
-        || (this.isKnockout && score.home === score.away));
+        || (this.isEliminationMatch(match) && score.home === score.away));
   }
 
   async saveTeamScore(match: TournamentTeamMatch): Promise<void> {
@@ -685,7 +766,7 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.showError('Os resultados devem ser números inteiros entre 0 e 999.');
       return;
     }
-    if (this.isKnockout && score.home === score.away) {
+    if (this.isEliminationMatch(match) && score.home === score.away) {
       this.showError('Nas eliminatórias, o resultado tem de definir um vencedor.');
       return;
     }
@@ -694,7 +775,7 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.teamMatches = this.teamMatches.map(game => game.id === saved.id ? saved : game);
       this.teamScoreDrafts[saved.id] = { home: saved.homeScore ?? null, away: saved.awayScore ?? null };
       this.teamScoreTouched.delete(saved.id);
-      if (this.isKnockout) {
+      if (this.isEliminationMatch(saved)) {
         if (saved.roundNumber === this.knockoutTotalRounds && saved.homeScore !== saved.awayScore) {
           const homeWins = saved.homeScore! > saved.awayScore!;
           this.updateSelected({
@@ -704,6 +785,9 @@ export class CommunityTournamentsComponent implements OnChanges {
             championTied: false, championPoints: null
           });
         }
+        this.loadTeamMatches(true);
+      } else if (this.isGroupKnockout) {
+        this.loadGroupStandings();
         this.loadTeamMatches(true);
       } else {
         this.loadTeamStandings();
@@ -745,22 +829,28 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.showError('Escolhe uma ou duas voltas.');
       return;
     }
-    if (this.teamFormatDraft === 'LEAGUE' && !this.validPointRules) {
+    if (this.teamFormatDraft !== 'KNOCKOUT' && !this.validPointRules) {
       this.showError('Define pontos inteiros entre 0 e 100 para vitória, empate e derrota.');
       return;
     }
-    if (this.teamFormatDraft === 'LEAGUE'
+    if (this.teamFormatDraft !== 'KNOCKOUT'
         && !this.teamTieBreakChoices.some(choice => choice.value === this.teamTieBreakPriorityDraft)) {
       this.showError('Escolhe um critério de desempate válido.');
       return;
     }
-    await this.mutate(this.api.createTeamTournament(this.community.id, name, this.sportDraft,
-      size, this.roundRobinLegsDraft, this.pointRulesDraft, this.teamTieBreakPriorityDraft,
-      this.teamFormatDraft),
+    const createRequest = this.teamFormatDraft === 'GROUP_KNOCKOUT'
+      ? this.api.createTeamTournament(this.community.id, name, this.sportDraft, size,
+          this.roundRobinLegsDraft, this.pointRulesDraft, this.teamTieBreakPriorityDraft,
+          this.teamFormatDraft, this.teamGroupCountDraft)
+      : this.api.createTeamTournament(this.community.id, name, this.sportDraft, size,
+          this.roundRobinLegsDraft, this.pointRulesDraft, this.teamTieBreakPriorityDraft,
+          this.teamFormatDraft);
+    await this.mutate(createRequest,
       'Competição por equipas criada. Agora podes preparar os plantéis.', result => {
         this.nameDraft = '';
         this.roundRobinLegsDraft = 1;
         this.teamFormatDraft = 'LEAGUE';
+        this.teamGroupCountDraft = 2;
         this.teamTieBreakPriorityDraft = 'GOAL_DIFFERENCE_FIRST';
         this.resetPointRules();
         this.showTeamCreate = false;
