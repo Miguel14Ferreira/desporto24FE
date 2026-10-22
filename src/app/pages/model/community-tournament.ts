@@ -21,7 +21,8 @@ export interface CommunityTournament {
   playersPerTeam?: number | null;
   roundRobinLegs?: 1 | 2;
   teamTieBreakPriority?: TeamTieBreakPriority;
-  format: 'LEAGUE' | 'KNOCKOUT';
+  format: 'LEAGUE' | 'KNOCKOUT' | 'GROUP_KNOCKOUT';
+  groupCount?: 2 | 4 | null;
   status: TournamentStatus;
   winPoints: number;
   drawPoints: number;
@@ -136,6 +137,7 @@ export interface TournamentTeamMatch {
   status: TournamentMatchStatus;
   homeScore?: number | null;
   awayScore?: number | null;
+  groupNumber?: number | null;
 }
 
 export interface TournamentTeamMatchPage {
@@ -164,6 +166,17 @@ export interface TournamentTeamStandingRow {
   goalsAgainst: number;
   goalDifference: number;
   points: number;
+}
+
+export interface TournamentTeamGroup {
+  groupNumber: number;
+  standings: TournamentTeamStandingRow[];
+}
+
+export interface TournamentTeamGroups {
+  tournamentId: number;
+  knockoutStarted: boolean;
+  groups: TournamentTeamGroup[];
 }
 
 export interface TournamentTeamStandings {
