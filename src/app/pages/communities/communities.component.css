@@ -1612,3 +1612,10 @@ input,textarea,select {
 .feature-settings-actions { display: flex; flex-wrap: wrap; gap: .65rem; margin-top: .8rem; }
 .feature-settings-success { margin-top: .7rem; color: #86efac; }
 .feature-settings-error { margin-top: .7rem; color: #fecaca; }
+
+/* The invitation from an email is identified only in the signed-in recipient's inbox. */
+.invite-row--targeted {
+  border: 1px solid rgba(52, 211, 153, .7);
+  border-radius: .75rem;
+  background: rgba(16, 185, 129, .09);
+}

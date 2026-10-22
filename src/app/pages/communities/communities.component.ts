@@ -334,6 +334,30 @@ export class CommunitiesComponent implements OnInit {
     return this.isDetailMode;
   }
 
+  /**
+   * A member lands on their communities by default; new users see onboarding.
+   * Query parameters always take precedence, including the targeted invite
+   * deep link sent by email. Do not use routerLinkActive exact here: extra
+   * invite query parameters would incorrectly hide the recipient's inbox.
+   */
+  showMineView(): boolean {
+    if (this.detailMode()) return false;
+    const view = this.route.snapshot.queryParamMap.get('view');
+    if (view === 'mine') return true;
+    if (view === 'explore') return false;
+    return this.communities.length > 0;
+  }
+
+  private requestedInviteId(): number | null {
+    const raw = this.route.snapshot.queryParamMap.get('invite');
+    const id = raw && /^[1-9]\d*$/.test(raw) ? Number(raw) : NaN;
+    return Number.isSafeInteger(id) ? id : null;
+  }
+
+  isTargetedInvite(invite: CommunityInvite): boolean {
+    return invite.id === this.requestedInviteId();
+  }
+
   backToCommunities(): void {
     void this.router.navigate(['/menu/communities']);
   }
@@ -571,7 +595,11 @@ export class CommunitiesComponent implements OnInit {
       )
       .subscribe({
         next: invites => {
-          if (reloadVersion === this.reloadRequestVersion) this.invites = invites;
+          if (reloadVersion !== this.reloadRequestVersion) return;
+          const targetInviteId = this.requestedInviteId();
+          this.invites = [...invites].sort((first, second) =>
+            Number(second.id === targetInviteId) - Number(first.id === targetInviteId));
+
         },
         error: () => {
           if (reloadVersion === this.reloadRequestVersion) this.invites = [];

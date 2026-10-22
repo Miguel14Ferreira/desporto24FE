@@ -1,13 +1,5 @@
 <section class="communities-page" [class.community-detail-page]="detailMode()">
   <div class="communities-shell">
-    <a
-      #mineView="routerLinkActive"
-      routerLink="/menu/communities"
-      [queryParams]="{ view: 'mine' }"
-      routerLinkActive="active"
-      [routerLinkActiveOptions]="{ exact: true }"
-      hidden
-      aria-hidden="true"></a>
     @if (!detailMode()) {
     <header class="page-header">
       <div>
@@ -16,8 +8,8 @@
         <p class="subtitle">{{ 'communities.subtitle' | t }}</p>
       </div>
       <div class="row-actions">
-        @if (mineView.isActive) {
-          <a class="secondary-action header-action button-link jynlo-action jynlo-action--neutral" routerLink="/menu/communities">
+        @if (showMineView()) {
+          <a class="secondary-action header-action button-link jynlo-action jynlo-action--neutral" routerLink="/menu/communities" [queryParams]="{ view: 'explore' }">
             {{ 'communities.searchTitle' | t }}
           </a>
         } @else {
@@ -28,7 +20,7 @@
             {{ 'communities.mine' | t }}
           </a>
         }
-        @if (mineView.isActive) {
+        @if (showMineView()) {
           <a class="primary-action header-action button-link jynlo-action jynlo-action--primary" routerLink="/menu/communities/create">
             {{ 'communities.create' | t }}
           </a>
@@ -43,7 +35,7 @@
       </div>
     }
 
-    @if (!detailMode() && !mineView.isActive) {
+    @if (!detailMode() && !showMineView() && !loading && !errorMessage) {
       <section class="community-pitch" aria-labelledby="community-pitch-title">
         <div class="community-pitch-copy">
           <p class="community-pitch-eyebrow">{{ 'communities.pitchEyebrow' | t }}</p>
@@ -225,11 +217,11 @@
       <div class="feedback error-feedback">{{ errorMessage }}</div>
     }
 
-    @if (mineView.isActive && invites.length > 0) {
+    @if (showMineView() && invites.length > 0) {
       <section class="invites-card">
         <h2>{{ 'communities.pendingInvites' | t }}</h2>
         @for (invite of invites; track invite.id) {
-          <div class="invite-row">
+          <div class="invite-row" [class.invite-row--targeted]="isTargetedInvite(invite)">
             <div>
               <strong>{{ invite.communityName }}</strong>
               <span>{{ 'communities.invitedBy' | t:{ username: invite.invitedByUsername } }}</span>
@@ -247,12 +239,12 @@
       </section>
     }
 
-    @if ((mineView.isActive && loading) || (detailMode() && presentationLoading)) {
+    @if ((!detailMode() && loading) || (detailMode() && presentationLoading)) {
       <div class="empty-state">
         <span class="empty-icon">◎</span>
         <strong>{{ 'communities.loading' | t }}</strong>
       </div>
-    } @else if (mineView.isActive && communities.length === 0 && invites.length === 0) {
+    } @else if (showMineView() && communities.length === 0 && invites.length === 0) {
       <section class="empty-state">
         <span class="empty-icon">◎</span>
         <h2>{{ 'communities.emptyTitle' | t }}</h2>
@@ -261,9 +253,9 @@
           {{ 'communities.createFirst' | t }}
         </a>
       </section>
-    } @else if ((mineView.isActive && communities.length > 0) || detailMode()) {
+    } @else if ((showMineView() && communities.length > 0) || detailMode()) {
       <div class="communities-layout">
-        @if (mineView.isActive) {
+        @if (showMineView()) {
         <aside class="community-list">
           <div class="list-heading">
             <strong>{{ 'communities.mine' | t }}</strong>
