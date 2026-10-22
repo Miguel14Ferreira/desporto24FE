@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { finalize, retry, timeout } from 'rxjs';
 
-import { VenuePhoto, VenueService, VenueSportCondition } from '../../services/venue.service';
+import { VenuePhoto, VenueRatingSummary, VenueService, VenueSportCondition } from '../../services/venue.service';
 import { Venue } from '../model/venue';
 import { isVenueGpsOnly, venuePostalAddress } from '../../shared/venue-location';
 import { venueEnvironmentTranslationKey } from '../../shared/venue-environment';
@@ -18,6 +18,8 @@ export class VenueDetailsComponent implements OnInit {
   venue: Venue | null = null;
   photos: VenuePhoto[] = [];
   sportConditions: VenueSportCondition[] = [];
+  ratingSummary: VenueRatingSummary | null = null;
+  ratingSummaryLoading = true;
   sportConditionSport = '';
   sportConditionText = '';
   loading = true;
@@ -45,6 +47,7 @@ export class VenueDetailsComponent implements OnInit {
       this.loading = false;
       this.photosLoading = false;
       this.sportConditionsLoading = false;
+      this.ratingSummaryLoading = false;
       this.loadError = true;
       return;
     }
@@ -63,6 +66,28 @@ export class VenueDetailsComponent implements OnInit {
     this.loadPhotos(venueId);
 
     this.loadSportConditions(venueId);
+    this.loadRatingSummary(venueId);
+  }
+
+  private loadRatingSummary(venueId: number): void {
+    this.ratingSummaryLoading = true;
+    this.venueService.getRatingSummary(venueId)
+      .pipe(timeout(10_000), finalize(() => this.ratingSummaryLoading = false))
+      .subscribe({
+        next: summary => {
+          if (summary.venueId === venueId && summary.ratingCount >= 3
+              && summary.averageScore !== null) {
+            this.ratingSummary = summary;
+          } else {
+            // The backend deliberately hides aggregates under three reviewers.
+            this.ratingSummary = null;
+          }
+        },
+        error: () => {
+          // A ratings API outage must never break the venue page.
+          this.ratingSummary = null;
+        }
+      });
   }
 
   get hasConfirmedMapCoordinates(): boolean {
