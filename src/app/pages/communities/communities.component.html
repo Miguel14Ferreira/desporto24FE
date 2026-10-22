@@ -1395,7 +1395,7 @@
                                 @for (mapping of importMappings; track mapping.columnIndex) {
                                   <div class="import-mapping-row">
                                     <div>
-                                      <strong>{{ mapping.header || ('communities.import.unnamed' | t) }}</strong>
+                                      <strong [attr.title]="mapping.header || null">{{ mapping.header ? importColumnHeaderLabel(mapping.header) : ('communities.import.unnamed' | t) }}</strong>
                                       @if (mapping.confidence > 0) {
                                         <small>{{ 'communities.import.suggested' | t }} · {{ mapping.confidence * 100 | number:'1.0-0' }}%</small>
                                       }
@@ -1606,7 +1606,7 @@
                                   <div class="import-normalized-row">
                                     <b>{{ row.player }}</b>
                                     <span>{{ row.date || '—' }}</span>
-                                    <span>{{ row.result || (row.win ? 'WIN' : (row.draw ? 'DRAW' : (row.loss ? 'LOSS' : '—'))) }}</span>
+                                    <span>{{ importPreviewResultLabel(row) }}</span>
                                   </div>
                                 }
                               </div>
