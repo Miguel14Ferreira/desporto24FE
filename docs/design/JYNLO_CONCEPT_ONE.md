@@ -66,3 +66,30 @@ Do **not** redefine legacy `--d24-*` tokens in this pilot; they still serve olde
 ## Later adoption
 
 Once the Communities desktop pilot is accepted, reuse the tokens and primitives **one feature area at a time**: Sessions and postgame → User profiles → Home/social feed → Administration. Do not migrate everything in one PR.
+
+## Second screen migration — Sessions and Games (Oct 22, 2026)
+
+The original Communities pilot is live and approved. The next strictly visual
+migration is in `src/styles/jynlo-sessions-concept-one.css`, scoped to page roots
+with `jynlo-c1 jynlo-games`. Four routes opt in:
+
+- `/menu/events`: matching game discovery results and filter/nearby panels.
+- `/menu/createEvent`: calmer create-session form, preserving venue database,
+  Maps URL and live GPS selection.
+- `/menu/events/:id`: larger game header/cover, booking/attendance and postgame
+  panels, with all permission-bound controls intact.
+- `/menu/my-sessions`: upcoming game highlight and organized match cards.
+
+No new data, counts, badges, images or endpoints are invented. The matching
+behavior, form validation, private-address permissions, attendance, postgame,
+ratings and organizer restrictions remain untouched.
+
+Manual visual review should check:
+1. Nearby on/off, empty/error states, sorting/filtering and navigation in Explore.
+2. All three location selection modes, sports/districts, and create/preview.
+3. Joined/not-joined/organizer/detail flows, including restricted address.
+4. My games: created, joined, waitlisted, attendance and cancel confirmation.
+5. Desktop first; narrow viewport and keyboard focus must remain usable.
+
+Do not combine this update with pending share/Google Maps functional PRs. Roll
+out Profiles and Main Feed only after this pilot's visual and test acceptance.
