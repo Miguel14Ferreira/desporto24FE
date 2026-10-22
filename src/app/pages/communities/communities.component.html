@@ -1,4 +1,4 @@
-<section class="communities-page" [class.community-detail-page]="detailMode()">
+<section class="communities-page jynlo-c1" [class.community-detail-page]="detailMode()">
   <div class="communities-shell">
     @if (!detailMode()) {
     <header class="page-header">
@@ -257,9 +257,13 @@
       <div class="communities-layout">
         @if (showMineView()) {
         <aside class="community-list">
-          <div class="list-heading">
-            <strong>{{ 'communities.mine' | t }}</strong>
-            <span>{{ communities.length }}</span>
+          <div class="list-heading jynlo-ui-section-heading">
+            <div>
+              <p class="eyebrow jynlo-ui-overline">Jynlo</p>
+              <h2>{{ 'communities.mine' | t }}</h2>
+              <p class="mine-hint">{{ 'communities.mineHint' | t }}</p>
+            </div>
+            <span [attr.aria-label]="'communities.mine' | t">{{ communities.length }}</span>
           </div>
 
           @for (community of communities; track community.id) {
