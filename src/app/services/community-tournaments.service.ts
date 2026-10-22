@@ -13,7 +13,7 @@ import {
   TournamentParticipantPage,
   TournamentScheduleSummary,
   TournamentStandings, TournamentTeam, TournamentTeamMatchPage, TournamentTeamMatch,
-  TournamentTeamScheduleSummary, TournamentTeamStandings
+  TournamentTeamScheduleSummary, TournamentTeamStandings, TournamentTeamGroups
 } from '../pages/model/community-tournament';
 
 @Injectable({ providedIn: 'root' })
@@ -44,12 +44,16 @@ export class CommunityTournamentsService {
                        playersPerTeam: number, roundRobinLegs: 1 | 2 = 1,
                        rules: TournamentPointRules = { winPoints: 3, drawPoints: 1, lossPoints: 0 },
                        teamTieBreakPriority: TeamTieBreakPriority = 'GOAL_DIFFERENCE_FIRST',
-                       format: 'LEAGUE' | 'KNOCKOUT' = 'LEAGUE'
+                       format: 'LEAGUE' | 'KNOCKOUT' | 'GROUP_KNOCKOUT' = 'LEAGUE',
+                       groupCount: 2 | 4 = 2
   ): Observable<CommunityTournament> {
     const config = format === 'KNOCKOUT'
       ? { name, sport, entryType: 'TEAM', playersPerTeam, format }
-      : { name, sport, entryType: 'TEAM', playersPerTeam, format,
-          roundRobinLegs, teamTieBreakPriority, ...rules };
+      : format === 'GROUP_KNOCKOUT'
+        ? { name, sport, entryType: 'TEAM', playersPerTeam, format, groupCount,
+            teamTieBreakPriority, ...rules }
+        : { name, sport, entryType: 'TEAM', playersPerTeam, format,
+            roundRobinLegs, teamTieBreakPriority, ...rules };
     return this.http.post<CommunityTournament>(this.url(communityId), config);
   }
 
@@ -96,6 +100,10 @@ export class CommunityTournamentsService {
   teamStandings(communityId: number, tournamentId: number): Observable<TournamentTeamStandings> {
     return this.http.get<TournamentTeamStandings>(
       this.url(communityId, tournamentId) + '/teams/standings');
+  }
+
+  teamGroups(communityId: number, tournamentId: number): Observable<TournamentTeamGroups> {
+    return this.http.get<TournamentTeamGroups>(this.url(communityId, tournamentId) + '/teams/groups');
   }
 
   completeTeam(communityId: number, tournamentId: number): Observable<CommunityTournament> {
