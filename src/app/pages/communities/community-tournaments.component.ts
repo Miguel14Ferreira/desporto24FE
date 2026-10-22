@@ -285,7 +285,8 @@ export class CommunityTournamentsComponent implements OnChanges {
   }
 
   get isGroupKnockoutPublished(): boolean {
-    return this.isGroupStage && this.teamGroups.some(group => group.knockoutPublished);
+    return this.isGroupStage && (this.teamGroups.some(group => group.knockoutPublished)
+      || this.teamMatches.some(game => game.groupNumber == null));
   }
 
   isEliminationMatch(game: TournamentTeamMatch): boolean {
