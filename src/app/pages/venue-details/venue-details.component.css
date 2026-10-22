@@ -418,3 +418,42 @@
     margin-top: 8px;
   }
 }
+
+/* Public facility averages show only after three independent attendees rate. */
+.venue-rating-summary {
+  margin: 14px 0;
+  padding: 15px 18px;
+  border: 1px solid rgba(14, 116, 83, .18);
+  border-radius: 12px;
+  background: rgba(16, 185, 129, .055);
+}
+
+.venue-rating-summary h2 {
+  margin: 0 0 9px;
+  font-size: 1rem;
+}
+
+.venue-rating-summary p {
+  margin: 0 0 7px;
+  line-height: 1.5;
+}
+
+.venue-rating-summary small {
+  color: var(--text-muted, #596372);
+}
+
+.venue-rating-summary-score {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.venue-rating-summary-score strong {
+  font-size: 1.35rem;
+  color: #047857;
+}
+
+.venue-rating-summary-score span {
+  font-size: .9rem;
+}
