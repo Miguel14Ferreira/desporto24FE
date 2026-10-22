@@ -28,13 +28,16 @@ describe('Community tournaments management', () => {
       'list', 'create', 'participants', 'join', 'leave', 'confirm', 'removeParticipant',
       'generateSchedule', 'matches', 'recordResult', 'standings', 'complete', 'delete',
       'createTeamTournament', 'teams', 'createTeam', 'addTeamPlayer', 'removeTeamPlayer', 'deleteTeam',
-      'generateTeamSchedule', 'teamMatches', 'recordTeamResult', 'teamStandings', 'completeTeam'
+      'generateTeamSchedule', 'teamMatches', 'recordTeamResult', 'teamStandings', 'teamGroups', 'completeTeam'
     ]);
     api.list.and.returnValue(of({ tournaments: [draft], page: 0, hasMore: false }));
     api.participants.and.returnValue(of({ participants: [], page: 0, hasMore: false }));
     api.matches.and.returnValue(of({ matches: [], page: 0, hasMore: false }));
     api.teams.and.returnValue(of([]));
     api.teamMatches.and.returnValue(of({ matches: [], page: 0, hasMore: false }));
+    api.teamGroups.and.returnValue(of({
+      tournamentId: 19, knockoutStarted: false, groups: []
+    }));
     api.teamStandings.and.returnValue(of({
       tournamentId: 19, status: 'IN_PROGRESS', totalMatches: 0, completedMatches: 0,
       winPoints: 3, drawPoints: 1, lossPoints: 0, standings: []
@@ -66,6 +69,22 @@ describe('Community tournaments management', () => {
       { profileId: 2, username: 'ana', fullName: 'Ana', profilePicUrl: null, role: 'MEMBER' as const },
       { profileId: 3, username: 'bruno', fullName: 'Bruno', profilePicUrl: null, role: 'MEMBER' as const }
     ];
+
+    it('creates group knockout with four groups and resets the draft', async () => {
+      api.createTeamTournament.and.returnValue(of({ ...teamDraft,
+        format: 'GROUP_KNOCKOUT', groupCount: 4 }));
+      component.startTeamCreation();
+      component.nameDraft = 'Taça de amigos';
+      component.teamFormatDraft = 'GROUP_KNOCKOUT';
+      component.teamGroupCountDraft = 4;
+      await component.createTeamCompetition();
+      expect(api.createTeamTournament).toHaveBeenCalledWith(7, 'Taça de amigos', 'Futebol',
+        5, 1, { winPoints: 3, drawPoints: 1, lossPoints: 0 },
+        'GOAL_DIFFERENCE_FIRST', 'GROUP_KNOCKOUT', 4);
+      expect(component.teamFormatDraft).toBe('LEAGUE');
+      expect(component.teamGroupCountDraft).toBe(2);
+      expect(component.isGroupKnockout).toBeTrue();
+    });
 
     it('creates a team draft with independent sport and squad size', async () => {
       api.createTeamTournament.and.returnValue(of(teamDraft));
