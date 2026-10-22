@@ -51,6 +51,22 @@ describe('CommunityTournamentsService API contract', () => {
         playersPerTeam: 3, format: 'KNOCKOUT' });
   });
 
+  it('creates a group+knockout team competition with group points and no league-only config', () => {
+    service.createTeamTournament(7, 'Torneio dos bairros', 'Futebol', 5, 1,
+      { winPoints: 3, drawPoints: 1, lossPoints: 0 }, 'GOAL_DIFFERENCE_FIRST',
+      'GROUP_KNOCKOUT').subscribe();
+    expect(http.post).toHaveBeenCalledWith(
+      environment.apiUrl + '/api/communities/7/tournaments',
+      { name: 'Torneio dos bairros', sport: 'Futebol', entryType: 'TEAM',
+        playersPerTeam: 5, format: 'GROUP_KNOCKOUT',
+        winPoints: 3, drawPoints: 1, lossPoints: 0 });
+  });
+
+  it('reads group standings via the member-only team competition endpoint', () => {
+    service.teamGroups(7, 9).subscribe();
+    expect(http.get).toHaveBeenCalledWith(base + '/teams/groups');
+  });
+
   it('never supplies another user identity when requesting self-enrollment', () => {
     service.join(7, 9).subscribe();
     expect(http.put).toHaveBeenCalledWith(base + '/participants/me', null);
