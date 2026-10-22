@@ -13,7 +13,7 @@ import { appTranslate as t } from '../../i18n/i18n.service';
 import { SessionMessage } from '../model/session-message';
 import { ReliabilitySummary } from '../model/reliability-summary';
 import { SessionParticipant } from '../model/session-participant';
-import { JoinSessionResponse, MyVenueRating, PlayerCompliment, PlayerComplimentType, SessionOverallRating, SessionService, SessionTeamSuggestion } from '../../services/session.service';
+import { JoinSessionResponse, MyVenueRating, OrganizerExclusionReason, PlayerCompliment, PlayerComplimentType, SessionOverallRating, SessionService, SessionTeamSuggestion } from '../../services/session.service';
 import { ReliabilityService } from '../../services/reliability.service';
 import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.service';
 
@@ -50,6 +50,11 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   removeLoadingId: number | null = null;
   pendingRemovalId: number | null = null;
   pendingFutureExclusionId: number | null = null;
+  pendingFutureExclusionReason: OrganizerExclusionReason | '' = '';
+  readonly futureExclusionReasons: readonly OrganizerExclusionReason[] = [
+    'NO_SHOW', 'UNSPORTING_CONDUCT', 'DISRESPECTFUL_BEHAVIOUR', 'ABUSIVE_BEHAVIOUR', 'OTHER'
+  ];
+
   futureExclusionUpdatingId: number | null = null;
   futureExclusions: Record<number, boolean | null> = {};
   showProblemReport = false;
@@ -925,14 +930,28 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     });
   }
 
+  availableFutureExclusionReasons(participant: SessionParticipant): OrganizerExclusionReason[] {
+    return this.futureExclusionReasons.filter(reason =>
+      reason !== 'NO_SHOW' || participant.attendanceStatus === 'NO_SHOW'
+    );
+  }
+
+  chooseFutureExclusionReason(participant: SessionParticipant, value: string): void {
+    if (this.pendingFutureExclusionId !== participant.id
+      || this.futureExclusionUpdatingId !== null) return;
+    const selected = value as OrganizerExclusionReason;
+    this.pendingFutureExclusionReason =
+      this.availableFutureExclusionReasons(participant).includes(selected) ? selected : '';
+  }
+
   requestFutureExclusion(participant: SessionParticipant): void {
     if (!this.isCreator() || !this.canRemoveParticipant(participant)
-      || participant.attendanceStatus !== 'NO_SHOW'
       || this.futureExclusions[participant.id] !== false
       || this.futureExclusionUpdatingId !== null) {
       return;
     }
     this.pendingFutureExclusionId = participant.id;
+    this.pendingFutureExclusionReason = '';
     this.participantManagementError = '';
     this.participantManagementSuccess = '';
   }
@@ -940,12 +959,14 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   cancelFutureExclusion(): void {
     if (this.futureExclusionUpdatingId === null) {
       this.pendingFutureExclusionId = null;
+      this.pendingFutureExclusionReason = '';
     }
   }
 
   confirmFutureExclusion(participant: SessionParticipant): void {
     if (!this.sessionId || !this.isCreator() || !this.canRemoveParticipant(participant)
-      || participant.attendanceStatus !== 'NO_SHOW'
+      || !this.pendingFutureExclusionReason
+      || !this.availableFutureExclusionReasons(participant).includes(this.pendingFutureExclusionReason)
       || this.pendingFutureExclusionId !== participant.id
       || this.futureExclusions[participant.id] !== false
       || this.futureExclusionUpdatingId !== null || this.attendanceUpdatingId !== null
@@ -954,12 +975,13 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     }
     this.futureExclusionUpdatingId = participant.id;
     this.participantManagementError = '';
-    this.sessionService.excludeFromFutureSessions(this.sessionId, participant.id)
+    this.sessionService.excludeFromFutureSessions(this.sessionId, participant.id, this.pendingFutureExclusionReason as OrganizerExclusionReason)
       .pipe(timeout(10_000), finalize(() => this.futureExclusionUpdatingId = null))
       .subscribe({
         next: result => {
           this.futureExclusions[participant.id] = result.excluded;
           this.pendingFutureExclusionId = null;
+          this.pendingFutureExclusionReason = '';
           this.participantManagementSuccess =
             t('feedback.session.futureExclusionSaved', { username: participant.username });
         },
