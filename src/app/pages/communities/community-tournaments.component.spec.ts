@@ -86,6 +86,29 @@ describe('Community tournaments management', () => {
       expect(component.isGroupKnockout).toBeTrue();
     });
 
+    it('labels group fixtures, quarterfinals, semifinals and final without changing league labels', () => {
+      component.selected = { ...teamDraft, status: 'IN_PROGRESS',
+        format: 'GROUP_KNOCKOUT', groupCount: 4 };
+      const game = { id: 91, groupNumber: 1, roundNumber: 2,
+        homeTeamId: 11, homeTeamName: 'A', awayTeamId: 12, awayTeamName: 'B',
+        status: 'SCHEDULED' as const, homeScore: null, awayScore: null };
+      expect(component.teamMatchStageLabel(game)).toBe('Grupo A · Jornada 2');
+      expect(component.teamMatchStageLabel({ ...game, groupNumber: null, roundNumber: 1 }))
+        .toBe('Quartos de final');
+      expect(component.teamMatchStageLabel({ ...game, groupNumber: null, roundNumber: 2 }))
+        .toBe('Meias-finais');
+      expect(component.teamMatchStageLabel({ ...game, groupNumber: null, roundNumber: 3 }))
+        .toBe('Final');
+
+      component.selected = { ...component.selected, groupCount: 2 };
+      expect(component.teamMatchStageLabel({ ...game, groupNumber: null, roundNumber: 1 }))
+        .toBe('Meias-finais');
+      expect(component.teamMatchStageLabel({ ...game, groupNumber: null, roundNumber: 2 }))
+        .toBe('Final');
+      component.selected = { ...component.selected, format: 'LEAGUE' };
+      expect(component.teamMatchStageLabel(game)).toBe('Jornada 2');
+    });
+
     it('creates a team draft with independent sport and squad size', async () => {
       api.createTeamTournament.and.returnValue(of(teamDraft));
       component.startTeamCreation();
