@@ -150,7 +150,13 @@ export class DirectChatComponent implements OnInit, OnDestroy, AfterViewChecked 
       )
       .subscribe({
         next: result => {
-          this.messages = this.sorted(result.messages.content);
+          // A WebSocket message can arrive before this HTTP request finishes.
+          // Merge instead of overwriting it with a potentially older snapshot.
+          this.messages = this.sorted([
+            ...this.messages.filter(existing => !result.messages.content.some(incoming =>
+              existing.id !== null && incoming.id === existing.id)),
+            ...result.messages.content
+          ]);
           this.chatInfo = result.info;
           this.historyPage = 0;
           this.hasOlderMessages = !result.messages.last;
