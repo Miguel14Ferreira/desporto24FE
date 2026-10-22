@@ -7,6 +7,7 @@ import { of, throwError } from 'rxjs';
 import { PublicSessionPreviewComponent } from './public-session-preview.component';
 import { AuthenticationService } from '../../services/authethication.service';
 import { I18nService } from '../../i18n/i18n.service';
+import { compactSessionShareMessage } from '../../shared/session-share-message';
 
 describe('PublicSessionPreviewComponent', () => {
   let fixture: ComponentFixture<PublicSessionPreviewComponent>;
@@ -57,13 +58,12 @@ describe('PublicSessionPreviewComponent', () => {
     return fixture.nativeElement as HTMLElement;
   }
 
-  function shareWhen(locale: 'pt-PT' | 'en-GB'): string {
-    const start = Date.parse(fixture.componentInstance.session!.gameDate!);
-    const formatted = new Intl.DateTimeFormat(locale, {
-      day: '2-digit', month: '2-digit', year: 'numeric',
-      hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
-    }).format(start);
-    return (locale === 'pt-PT' ? 'Quando: ' : 'When: ') + formatted;
+  function shareText(locale: 'pt-PT' | 'en-GB'): string {
+    const game = fixture.componentInstance.session!;
+    return compactSessionShareMessage({
+      sport: game.sport, city: game.city, gameDate: game.gameDate,
+      remainingPlaces: fixture.componentInstance.remainingPlaces
+    }, locale);
   }
 
   it('localizes the session photo description without changing its source', () => {
@@ -151,47 +151,51 @@ describe('PublicSessionPreviewComponent', () => {
       .toBe(new URL('/sessions/42', window.location.origin).href);
   });
 
-  it('shares only the validated public session URL on WhatsApp in PT and EN', () => {
+  it('shares a short game-first WhatsApp message, with no promotional sentence', () => {
     const i18n = TestBed.inject(I18nService);
-    const page = render();
+    const page = render({ participantCount: 2 });
     const link = page.querySelector('.whatsapp-share-action') as HTMLAnchorElement;
     const publicUrl = new URL('/sessions/42', window.location.origin).href;
-
     expect(link).not.toBeNull();
-    expect(link.textContent?.trim()).toBe('Partilhar no WhatsApp');
     expect(link.getAttribute('target')).toBe('_blank');
     expect(link.getAttribute('rel')).toBe('noopener noreferrer');
-    expect(new URL(link.href).origin).toBe('https://wa.me');
-    expect(new URL(link.href).searchParams.get('text'))
-      .toBe('Bora jogar Padel em Lisboa? Junta-te a nós na Jynlo!\n' + shareWhen('pt-PT') + '\n' + publicUrl);
+    const text = new URL(link.href).searchParams.get('text')!;
+    expect(text).toBe(shareText('pt-PT') + '\\n' + publicUrl);
+    expect(text).toContain('🎾 Padel');
+    expect(text).toContain('📍 Lisboa');
+    expect(text).toContain('👥 2 vagas');
+    expect(text).not.toContain('Junta-te a nós na Jynlo');
 
     i18n.setLanguage('en');
     fixture.detectChanges();
-
-    expect(link.textContent?.trim()).toBe('Share on WhatsApp');
     expect(new URL(link.href).searchParams.get('text'))
-      .toBe('Want to play Padel in Lisboa? Join us on Jynlo!\n' + shareWhen('en-GB') + '\n' + publicUrl);
+      .toBe(shareText('en-GB') + '\\n' + publicUrl);
     expect(link.href).not.toContain('menu/events');
   });
 
-  it('keeps WhatsApp invitations useful when sport or city is missing', () => {
+  it('keeps the invite useful without sport, city or public count', () => {
     const i18n = TestBed.inject(I18nService);
-    render({ sport: '  Padel  ', city: null });
-    const publicUrl = new URL('/sessions/42', window.location.origin).href;
+    render({ sport: null, city: null, participantCount: null });
     const sharedText = () => new URL(fixture.componentInstance.whatsappShareUrl()!)
-      .searchParams.get('text');
-
-    expect(sharedText()).toBe('Bora jogar Padel? Junta-te a nós na Jynlo!\n' + shareWhen('pt-PT') + '\n' + publicUrl);
-
-    fixture.componentInstance.session!.sport = null;
-    fixture.componentInstance.session!.city = ' Porto ';
-    expect(sharedText()).toBe('Bora jogar em Porto? Junta-te a nós na Jynlo!\n' + shareWhen('pt-PT') + '\n' + publicUrl);
-
-    fixture.componentInstance.session!.city = ' ';
-    expect(sharedText()).toBe('Vem jogar connosco na Jynlo!\n' + shareWhen('pt-PT') + '\n' + publicUrl);
-
+      .searchParams.get('text')!;
+    expect(sharedText()).toContain('🏅 Jogo desportivo');
+    expect(sharedText()).not.toContain('👥');
     i18n.setLanguage('en');
-    expect(sharedText()).toBe('Come play with us on Jynlo!\n' + shareWhen('en-GB') + '\n' + publicUrl);
+    expect(sharedText()).toContain('🏅 Sports game');
+    expect(sharedText()).not.toContain('Jynlo!');
+  });
+
+  it('opens only the publicly known municipality in Maps', () => {
+    const page = render({ city: 'Cascais' });
+    const link = page.querySelector('.public-location-link') as HTMLAnchorElement;
+    expect(link).not.toBeNull();
+    expect(link.getAttribute('target')).toBe('_blank');
+    expect(link.getAttribute('rel')).toBe('noopener noreferrer');
+    expect(new URL(link.href).searchParams.get('query')).toBe('Cascais, Portugal');
+
+    fixture.componentInstance.session!.city = null;
+    fixture.detectChanges();
+    expect(page.querySelector('.public-location-link')).toBeNull();
   });
 
   it('does not offer WhatsApp sharing for sessions closed to participation', () => {
@@ -206,49 +210,28 @@ describe('PublicSessionPreviewComponent', () => {
     expect(page.querySelector('.whatsapp-share-action')).toBeNull();
   });
 
-  it('uses localized invitations consistently for native and WhatsApp sharing', async () => {
+  it('keeps native sharing consistent with the short WhatsApp invite in both languages', async () => {
     const i18n = TestBed.inject(I18nService);
     const nativeShare = jasmine.createSpy('share').and.returnValue(Promise.resolve());
     const prior = Object.getOwnPropertyDescriptor(navigator, 'share');
     Object.defineProperty(navigator, 'share', { configurable: true, value: nativeShare });
-
     try {
-      render();
+      render({ participantCount: 2 });
       const component = fixture.componentInstance;
       const publicUrl = new URL('/sessions/42', window.location.origin).href;
-      const textForWhatsApp = () => new URL(component.whatsappShareUrl()!)
-        .searchParams.get('text');
-
       await component.shareSession();
       expect(nativeShare).toHaveBeenCalledWith(jasmine.objectContaining({
-        text: 'Bora jogar Padel em Lisboa? Junta-te a nós na Jynlo!\n' + shareWhen('pt-PT'),
-        url: publicUrl
+        text: shareText('pt-PT'), url: publicUrl
       }));
-      expect(textForWhatsApp()).toContain('Bora jogar Padel em Lisboa?');
-
       i18n.setLanguage('en');
       nativeShare.calls.reset();
       await component.shareSession();
       expect(nativeShare).toHaveBeenCalledWith(jasmine.objectContaining({
-        text: 'Want to play Padel in Lisboa? Join us on Jynlo!\n' + shareWhen('en-GB'),
-        url: publicUrl
-      }));
-      expect(textForWhatsApp()).toContain('Want to play Padel in Lisboa?');
-
-      component.session!.sport = null;
-      component.session!.city = null;
-      nativeShare.calls.reset();
-      await component.shareSession();
-      expect(nativeShare).toHaveBeenCalledWith(jasmine.objectContaining({
-        text: 'Come play with us on Jynlo!\n' + shareWhen('en-GB'),
-        url: publicUrl
+        text: shareText('en-GB'), url: publicUrl
       }));
     } finally {
-      if (prior) {
-        Object.defineProperty(navigator, 'share', prior);
-      } else {
-        Reflect.deleteProperty(navigator, 'share');
-      }
+      if (prior) Object.defineProperty(navigator, 'share', prior);
+      else Reflect.deleteProperty(navigator, 'share');
     }
   });
 
