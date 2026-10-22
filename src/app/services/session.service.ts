@@ -18,6 +18,10 @@ export interface MyVenueRating {
 }
 
 /** Positive only: no public player stars or rankings. */
+/** Kept private to the organizer. This is not a global player score. */
+export type OrganizerExclusionReason =
+  'NO_SHOW' | 'UNSPORTING_CONDUCT' | 'DISRESPECTFUL_BEHAVIOUR' | 'ABUSIVE_BEHAVIOUR' | 'OTHER';
+
 export type PlayerComplimentType = 'FAIR_PLAY' | 'GREAT_TEAMMATE' | 'POSITIVE_ENERGY';
 
 export interface PlayerCompliment {
@@ -275,9 +279,11 @@ export class SessionService {
     );
   }
 
-  excludeFromFutureSessions(id: number, participantId: number): Observable<{ excluded: boolean }> {
+  excludeFromFutureSessions(
+    id: number, participantId: number, reason: OrganizerExclusionReason
+  ): Observable<{ excluded: boolean }> {
     return this.http.put<{ excluded: boolean }>(
-      this.baseUrl + '/' + id + '/participants/' + participantId + '/future-exclusion', null
+      this.baseUrl + '/' + id + '/participants/' + participantId + '/future-exclusion', { reason }
     );
   }
 
