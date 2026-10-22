@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of, Subject, BehaviorSubject } from 'rxjs';
+import { of, Subject, BehaviorSubject, throwError } from 'rxjs';
 
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 
@@ -704,6 +704,25 @@ describe('PerfisComponent', () => {
     expect(fixture.nativeElement.querySelector('.detail-actions button.primary-action')).toBeNull();
     component.sendFriendRequest(profile);
     expect(service.sendFriendRequest).not.toHaveBeenCalled();
+  });
+
+  it('recovers from an already-friends response instead of keeping a red error and duplicate button', () => {
+    service.friendshipStatus.and.returnValues(
+      of({ friends: false, pendingRequest: false }),
+      of({ friends: true, pendingRequest: false })
+    );
+    service.sendFriendRequest.and.returnValue(throwError(() => ({
+      status: 409, error: { message: 'Tu já tens este perfil na tua lista de amigos!' }
+    })));
+    routeParams.next(convertToParamMap({ username: 'ana' }));
+    component.sendFriendRequest(profile);
+    fixture.detectChanges();
+
+    expect(service.friendshipStatus).toHaveBeenCalledTimes(2);
+    expect(component.actionError).toBe('');
+    expect(component.isFriend(profile)).toBeTrue();
+    expect(fixture.nativeElement.querySelector('a[href="/menu/friendList/chat/ana"]')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.detail-actions button.primary-action')).toBeNull();
   });
 
   it('renders an outstanding friend request without offering another request', () => {
