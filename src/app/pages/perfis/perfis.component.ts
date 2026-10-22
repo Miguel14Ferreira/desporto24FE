@@ -8,7 +8,7 @@ import { environment } from 'src/environment/environment';
 import { CommunityProfile } from '../model/community-profile';
 import { ProfileActivity } from '../model/my-profile';
 import { FollowStatus } from '../model/follow';
-import { CommunityService, ProfileSearchFilters } from '../../services/community.service';
+import { CommunityService, FriendshipStatus, ProfileSearchFilters } from '../../services/community.service';
 import { AuthenticationService } from '../../services/authethication.service';
 import { ReliabilityService } from '../../services/reliability.service';
 import { SocialGraphService } from '../../services/social-graph.service';
@@ -35,6 +35,7 @@ export class PerfisComponent implements OnInit, OnDestroy {
   private routeSubscription?: Subscription;
   private profileSubscription?: Subscription;
   private detailSubscription?: Subscription;
+  private friendshipSubscription?: Subscription;
   profilePage = false;
   backToFriends = false;
   get backToFeed(): boolean {
@@ -129,6 +130,9 @@ export class PerfisComponent implements OnInit, OnDestroy {
   currentUsername = '';
   pendingFriendRequests = new Set<string>();
   friendUsernames = new Set<string>();
+  selectedFriendshipStatus: FriendshipStatus | null = null;
+  friendshipLoading = false;
+  friendshipError = false;
 
   constructor(
     private communityService: CommunityService,
@@ -144,7 +148,7 @@ export class PerfisComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     const params = this.route.snapshot.queryParamMap;
     this.backToFriends = params.get('from') === 'friends';
-    this.loadFriendUsernames();
+    // A profile asks the API for its own authenticated relationship state.
 
     const source = params.get('from');
     if ((source === 'discover' || source === 'people')
@@ -183,6 +187,7 @@ export class PerfisComponent implements OnInit, OnDestroy {
     this.routeSubscription?.unsubscribe();
     this.profileSubscription?.unsubscribe();
     this.detailSubscription?.unsubscribe();
+    this.friendshipSubscription?.unsubscribe();
   }
 
   private ageFromQuery(value: string | null): number | null {
@@ -193,22 +198,36 @@ export class PerfisComponent implements OnInit, OnDestroy {
     return Number.isInteger(age) && age >= 18 && age <= 99 ? age : null;
   }
 
-  private loadFriendUsernames(): void {
-    this.communityService.friends()
+  loadFriendshipStatus(username: string): void {
+    this.friendshipSubscription?.unsubscribe();
+    this.friendshipLoading = true;
+    this.friendshipError = false;
+    this.selectedFriendshipStatus = null;
+
+    this.friendshipSubscription = this.communityService.friendshipStatus(username)
       .pipe(
         timeout(10_000),
-        retry({ count: 1 })
+        finalize(() => this.friendshipLoading = false)
       )
       .subscribe({
-      next: friends => {
-        this.friendUsernames = new Set(
-          friends.map(friend => friend.username.toLowerCase())
-        );
-      },
-      error: () => {
-        this.friendUsernames = new Set<string>();
-      }
-    });
+        next: status => {
+          if (this.selectedProfile?.username.toLowerCase() !== username.toLowerCase()) return;
+          this.selectedFriendshipStatus = status;
+          this.friendshipError = false;
+          if (status.friends) {
+            this.friendUsernames.add(username.toLowerCase());
+            this.pendingFriendRequests.delete(username);
+          } else {
+            this.friendUsernames.delete(username.toLowerCase());
+            if (status.pendingRequest) this.pendingFriendRequests.add(username);
+          }
+          if (status.friends || status.pendingRequest) this.actionError = '';
+        },
+        error: () => {
+          if (this.selectedProfile?.username.toLowerCase() !== username.toLowerCase()) return;
+          this.friendshipError = true;
+        }
+      });
   }
 
   search(): void {
@@ -297,6 +316,7 @@ export class PerfisComponent implements OnInit, OnDestroy {
   private loadProfile(username: string): void {
     this.profileSubscription?.unsubscribe();
     this.detailSubscription?.unsubscribe();
+    this.friendshipSubscription?.unsubscribe();
     this.closeProfile();
     this.loading = true;
     this.errorMessage = '';
@@ -321,6 +341,7 @@ export class PerfisComponent implements OnInit, OnDestroy {
     this.reportReason = '';
     this.actionError = '';
     this.actionSuccess = '';
+    this.loadFriendshipStatus(profile.username);
 
     this.detailSubscription = forkJoin({
       activity: this.reliabilityService.activity(profile.username)
@@ -348,6 +369,9 @@ export class PerfisComponent implements OnInit, OnDestroy {
 
   closeProfile(): void {
     this.selectedProfile = undefined;
+    this.selectedFriendshipStatus = null;
+    this.friendshipLoading = false;
+    this.friendshipError = false;
     this.selectedActivity = undefined;
     this.selectedFollowStatus = undefined;
     this.selectedBlocked = false;
@@ -383,11 +407,13 @@ export class PerfisComponent implements OnInit, OnDestroy {
           if (status.blocked) {
             this.selectedFollowStatus = undefined;
             this.friendUsernames.delete(profile.username.toLowerCase());
+            this.selectedFriendshipStatus = { friends: false, pendingRequest: false };
             this.pendingFriendRequests.delete(profile.username);
             this.reportOpen = false;
             this.reportReason = '';
           }
 
+          if (!status.blocked) this.loadFriendshipStatus(profile.username);
           this.actionSuccess = status.blocked
             ? t('feedback.community.blocked', { username: profile.username })
             : t('feedback.community.unblocked', { username: profile.username });
@@ -492,7 +518,10 @@ export class PerfisComponent implements OnInit, OnDestroy {
       || this.isOwnProfile(profile)
       || this.selectedBlocked
       || this.isFriend(profile)
-      || this.pendingFriendRequests.has(profile.username)
+      || this.friendshipLoading
+      || this.friendshipError
+      || (this.selectedProfile?.username === profile.username && !this.selectedFriendshipStatus)
+      || this.friendRequestPending(profile)
     ) {
       return;
     }
@@ -509,6 +538,7 @@ export class PerfisComponent implements OnInit, OnDestroy {
       .subscribe({
         next: () => {
           this.pendingFriendRequests.add(profile.username);
+          this.selectedFriendshipStatus = { friends: false, pendingRequest: true };
           this.actionSuccess = t('feedback.community.requestSent', { username: profile.username });
         },
         error: error => {
@@ -522,6 +552,11 @@ export class PerfisComponent implements OnInit, OnDestroy {
           }
 
           this.actionError = message;
+          // The relation may have changed in another tab. Reconcile rather than
+          // leaving an erroneous 'send request' action visible indefinitely.
+          if (this.selectedProfile?.username === profile.username) {
+            this.loadFriendshipStatus(profile.username);
+          }
         }
       });
   }
@@ -531,11 +566,15 @@ export class PerfisComponent implements OnInit, OnDestroy {
   }
 
   friendRequestPending(profile: CommunityProfile): boolean {
-    return this.pendingFriendRequests.has(profile.username);
+    return this.selectedProfile?.username === profile.username
+      ? Boolean(this.selectedFriendshipStatus?.pendingRequest)
+      : this.pendingFriendRequests.has(profile.username);
   }
 
   isFriend(profile: CommunityProfile): boolean {
-    return this.friendUsernames.has(profile.username.toLowerCase());
+    return this.selectedProfile?.username === profile.username
+      ? Boolean(this.selectedFriendshipStatus?.friends)
+      : this.friendUsernames.has(profile.username.toLowerCase());
   }
 
   profileImage(profile: CommunityProfile): string | null {
