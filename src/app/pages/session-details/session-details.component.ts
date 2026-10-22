@@ -10,6 +10,7 @@ import { DirectChatService } from '../../services/direct-chat.service';
 import { FriendSummary } from '../model/friend-summary';
 import { SessionDetail } from '../model/session-detail';
 import { appTranslate as t } from '../../i18n/i18n.service';
+import { compactSessionShareMessage } from '../../shared/session-share-message';
 import { SessionMessage } from '../model/session-message';
 import { ReliabilitySummary } from '../model/reliability-summary';
 import { SessionParticipant } from '../model/session-participant';
@@ -156,7 +157,9 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     this.promotionOpen = this.route.snapshot.queryParamMap?.get('promote') === '1';
     this.currentUsername = this.readCurrentUsername();
 
-    const rawId = this.route.snapshot.paramMap.get('id');
+    // In a lazy-loaded empty child route, the :id may live on the parent snapshot.
+    const rawId = this.route.snapshot.paramMap.get('id')
+      ?? this.route.parent?.snapshot.paramMap.get('id');
     const id = rawId && /^[1-9]\d*$/.test(rawId) ? Number(rawId) : NaN;
     if (!Number.isSafeInteger(id)) {
       this.errorMessage = t('feedback.session.invalid');
@@ -1511,22 +1514,21 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     this.creationShareDismissed = true;
   }
 
+  private compactShareText(): string {
+    return compactSessionShareMessage({
+      sport: this.session?.sport,
+      city: this.session?.city,
+      gameDate: this.session?.gameDate,
+      remainingPlaces: this.session?.status === 'OPEN' && this.session.maxParticipants != null
+        && this.session.participantCount != null
+        ? Math.max(0, this.session.maxParticipants - this.session.participantCount) : null
+    }, document.documentElement.lang === 'en' ? 'en-GB' : 'pt-PT');
+  }
+
   whatsappShareUrl(): string | null {
     const url = this.publicShareUrl();
-    if (!url || !this.session || !this.canPromoteSession()) {
-      return null;
-    }
-    const invitation = t('publicSession.whatsappSportCity', {
-      sport: this.session.sport, city: this.session.city
-    });
-    const date = new Date(this.session.gameDate);
-    const when = Number.isFinite(date.getTime())
-      ? '\n' + t('publicSession.shareWhen', {
-          date: new Intl.DateTimeFormat(document.documentElement.lang === 'en' ? 'en-GB' : 'pt-PT', {
-            dateStyle: 'short', timeStyle: 'short'
-          }).format(date)
-        }) : '';
-    return 'https://wa.me/?text=' + encodeURIComponent(invitation + when + '\n' + url);
+    if (!url || !this.session || !this.canPromoteSession()) return null;
+    return 'https://wa.me/?text=' + encodeURIComponent(this.compactShareText() + '\n' + url);
   }
 
   async copyPublicShareLink(): Promise<void> {
@@ -1582,7 +1584,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
         try {
           await navigator.share({
             title: 'Sessão de ' + this.session!.sport + ' na Jynlo',
-            text: 'Vem jogar connosco na Jynlo!',
+            text: this.compactShareText(),
             url
           });
           this.shareFeedback = 'Partilhado';
@@ -1742,6 +1744,19 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
       : '';
 
     return `Sessão de ${this.session?.sport ?? 'desporto'} no Desporto24.${creator}`;
+  }
+
+  /** Only reveal the exact map pin when the API authorizes this address. */
+  exactGoogleMapsUrl(): string | null {
+    if (!this.session?.canSeeExactAddress || !this.session.address?.trim()) return null;
+    const lat = this.session.venue?.latitude;
+    const lon = this.session.venue?.longitude;
+    const hasGps = typeof lat === 'number' && typeof lon === 'number'
+      && Number.isFinite(lat) && Number.isFinite(lon)
+      && Math.abs(lat) <= 90 && Math.abs(lon) <= 180;
+    const query = hasGps ? lat + ',' + lon
+      : this.session.address.trim() + ', ' + this.session.city;
+    return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(query);
   }
 
   private calendarLocation(): string {
