@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { AfterViewChecked, ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { JwtHelperService } from '@auth0/angular-jwt';
-import { catchError, concatMap, finalize, from, map, mergeMap, of, retry, Subscription, timeout, toArray } from 'rxjs';
+import { catchError, concatMap, finalize, forkJoin, from, map, mergeMap, of, retry, Subscription, timeout, toArray } from 'rxjs';
 
 import { environment } from 'src/environment/environment';
 import { CommunityService } from '../../services/community.service';
@@ -13,7 +13,7 @@ import { appTranslate as t } from '../../i18n/i18n.service';
 import { SessionMessage } from '../model/session-message';
 import { ReliabilitySummary } from '../model/reliability-summary';
 import { SessionParticipant } from '../model/session-participant';
-import { JoinSessionResponse, MyVenueRating, SessionOverallRating, SessionService, SessionTeamSuggestion } from '../../services/session.service';
+import { JoinSessionResponse, MyVenueRating, PlayerCompliment, PlayerComplimentType, SessionOverallRating, SessionService, SessionTeamSuggestion } from '../../services/session.service';
 import { ReliabilityService } from '../../services/reliability.service';
 import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.service';
 
@@ -86,6 +86,18 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   venueRatingError = '';
   venueRatingSuccess = '';
   venueRatingLoadedSessionId: number | null = null;
+
+  // Post-game appreciation is private, optional, positive-only and unrelated to stars.
+  readonly complimentTypes: readonly PlayerComplimentType[] =
+    ['FAIR_PLAY', 'GREAT_TEAMMATE', 'POSITIVE_ENERGY'];
+  complimentsOpen = false;
+  complimentsLoading = false;
+  complimentSavingUsername: string | null = null;
+  complimentsLoadedSessionId: number | null = null;
+  complimentsSent: PlayerCompliment[] = [];
+  complimentsReceived: PlayerCompliment[] = [];
+  complimentsError = '';
+  complimentsSuccess = '';
 
   errorMessage = '';
   actionError = '';
@@ -315,6 +327,98 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
 
   canRateVenuePostGame(): boolean {
     return this.canRatePostGame() && !!this.session?.venue?.id;
+  }
+
+  /** A username is the stable identity exposed by the roster; its id is a participation id. */
+  eligibleComplimentPlayers(): SessionParticipant[] {
+    if (!this.canRatePostGame() || !this.currentUsername) return [];
+    const me = this.currentUsername.toLowerCase();
+    return this.sessionParticipants.filter(participant =>
+      participant.attendanceStatus === 'ATTENDED'
+      && participant.username.toLowerCase() !== me
+    );
+  }
+
+  canOfferCompliments(): boolean {
+    return this.eligibleComplimentPlayers().length > 0;
+  }
+
+  toggleCompliments(): void {
+    if (!this.canOfferCompliments()) return;
+    this.complimentsOpen = !this.complimentsOpen;
+    if (this.complimentsOpen) this.loadCompliments();
+  }
+
+  loadCompliments(): void {
+    if (!this.sessionId || !this.canOfferCompliments() || this.complimentsLoading
+        || this.complimentSavingUsername
+        || this.complimentsLoadedSessionId === this.sessionId) return;
+
+    const sessionId = this.sessionId;
+    this.complimentsLoading = true;
+    this.complimentsError = '';
+    forkJoin({
+      sent: this.sessionService.sentCompliments(sessionId),
+      received: this.sessionService.receivedCompliments(sessionId)
+    }).pipe(
+      timeout(10_000),
+      finalize(() => this.complimentsLoading = false)
+    ).subscribe({
+      next: ({ sent, received }) => {
+        if (this.sessionId !== sessionId) return;
+        this.complimentsSent = sent;
+        this.complimentsReceived = received;
+        this.complimentsLoadedSessionId = sessionId;
+      },
+      error: () => {
+        if (this.sessionId === sessionId) {
+          this.complimentsError = t('sessionDetail.complimentsLoadError');
+        }
+      }
+    });
+  }
+
+  myCompliment(recipientUsername: string): PlayerCompliment | undefined {
+    return this.complimentsSent.find(item =>
+      item.recipientUsername.toLowerCase() === recipientUsername.toLowerCase());
+  }
+
+  complimentLabel(type: PlayerComplimentType): string {
+    return t('sessionDetail.compliment.' + type);
+  }
+
+  giveCompliment(participant: SessionParticipant, type: PlayerComplimentType): void {
+    if (!this.sessionId || !this.complimentsOpen || this.complimentsLoading
+        || this.complimentsLoadedSessionId !== this.sessionId
+        || this.complimentSavingUsername
+        || !this.eligibleComplimentPlayers().some(player =>
+          player.username.toLowerCase() === participant.username.toLowerCase())
+        || !this.complimentTypes.includes(type)
+        || this.myCompliment(participant.username)?.type === type) return;
+
+    const sessionId = this.sessionId;
+    this.complimentSavingUsername = participant.username;
+    this.complimentsError = '';
+    this.complimentsSuccess = '';
+    this.sessionService.giveCompliment(sessionId, participant.username, type)
+      .pipe(timeout(10_000), finalize(() => this.complimentSavingUsername = null))
+      .subscribe({
+        next: compliment => {
+          if (this.sessionId !== sessionId
+              || compliment.recipientUsername.toLowerCase() !== participant.username.toLowerCase()) return;
+          this.complimentsSent = [
+            ...this.complimentsSent.filter(item =>
+              item.recipientUsername.toLowerCase() !== participant.username.toLowerCase()),
+            compliment
+          ];
+          this.complimentsSuccess = t('sessionDetail.complimentsSaved');
+        },
+        error: () => {
+          if (this.sessionId === sessionId) {
+            this.complimentsError = t('sessionDetail.complimentsSaveError');
+          }
+        }
+      });
   }
 
   loadMyVenueRating(): void {
