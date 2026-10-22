@@ -579,7 +579,9 @@
 
             @if (activeTab === 'tournaments') {
               <section class="community-tab-panel">
-                <app-community-tournaments [community]="selected"></app-community-tournaments>
+                <app-community-tournaments [community]="selected"
+                   [invitedTournamentId]="invitedTournamentId"
+                   [invitedTeamId]="invitedTeamId"></app-community-tournaments>
               </section>
             }
 
