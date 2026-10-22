@@ -8,6 +8,7 @@ import { environment } from 'src/environment/environment';
 import { AuthenticationService } from '../../services/authethication.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import { I18nService } from '../../i18n/i18n.service';
+import { compactSessionShareMessage } from '../../shared/session-share-message';
 
 interface SessionPublicPreview {
   id: number;
@@ -87,23 +88,12 @@ export class PublicSessionPreviewComponent implements OnInit {
   }
 
   private shareMessage(): string {
-    const sport = this.session?.sport?.trim();
-    const city = this.session?.city?.trim();
-    const messageKey = sport && city ? 'publicSession.whatsappSportCity'
-      : sport ? 'publicSession.whatsappSport'
-      : city ? 'publicSession.whatsappCity'
-      : 'publicSession.shareMessage';
-    const invitation = this.i18n.translate(messageKey, { sport: sport || '', city: city || '' });
-    const start = Date.parse(this.session?.gameDate ?? '');
-    if (!Number.isFinite(start)) {
-      return invitation;
-    }
-    const locale = this.i18n.currentLanguage === 'en' ? 'en-GB' : 'pt-PT';
-    const date = new Intl.DateTimeFormat(locale, {
-      day: '2-digit', month: '2-digit', year: 'numeric',
-      hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
-    }).format(start);
-    return invitation + '\n' + this.i18n.translate('publicSession.shareWhen', { date });
+    return compactSessionShareMessage({
+      sport: this.session?.sport,
+      city: this.session?.city,
+      gameDate: this.session?.gameDate,
+      remainingPlaces: this.remainingPlaces
+    }, this.i18n.currentLanguage === 'en' ? 'en-GB' : 'pt-PT');
   }
 
   whatsappShareUrl(): string | null {
@@ -210,6 +200,13 @@ export class PublicSessionPreviewComponent implements OnInit {
     const rawDate = this.session?.gameDate;
     // Legacy or incomplete public API records must never crash Angular DatePipe.
     return rawDate && Number.isFinite(Date.parse(rawDate)) ? rawDate : null;
+  }
+
+  /** Public preview only exposes the municipality, never the protected street address. */
+  get cityMapsUrl(): string | null {
+    const city = this.session?.city?.trim();
+    return city ? 'https://www.google.com/maps/search/?api=1&query='
+      + encodeURIComponent(city + ', Portugal') : null;
   }
 
   get remainingPlaces(): number | null {
