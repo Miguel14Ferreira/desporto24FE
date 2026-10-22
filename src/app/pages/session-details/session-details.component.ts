@@ -13,7 +13,7 @@ import { appTranslate as t } from '../../i18n/i18n.service';
 import { SessionMessage } from '../model/session-message';
 import { ReliabilitySummary } from '../model/reliability-summary';
 import { SessionParticipant } from '../model/session-participant';
-import { JoinSessionResponse, SessionOverallRating, SessionService, SessionTeamSuggestion } from '../../services/session.service';
+import { JoinSessionResponse, MyVenueRating, SessionOverallRating, SessionService, SessionTeamSuggestion } from '../../services/session.service';
 import { ReliabilityService } from '../../services/reliability.service';
 import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.service';
 
@@ -74,6 +74,18 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   ratingError = '';
   ratingSuccess = '';
   ratingLoadedSessionId: number | null = null;
+
+  // Venue stars are separate from the overall session rating.
+  // Only confirmed attendees can edit; the venue summary is anonymous.
+  selectedVenueScore: number | null = null;
+  myVenueScore: number | null = null;
+  venueRatingLoading = false;
+  venueRatingSaving = false;
+  venueRatingDismissed = false;
+  venueRatingCollapsedByExisting = false;
+  venueRatingError = '';
+  venueRatingSuccess = '';
+  venueRatingLoadedSessionId: number | null = null;
 
   errorMessage = '';
   actionError = '';
@@ -299,6 +311,91 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     const kickoff = Date.parse(this.session.gameDate);
     return Number.isFinite(kickoff)
       && kickoff + (2 * 60 * 60 * 1000) <= Date.now();
+  }
+
+  canRateVenuePostGame(): boolean {
+    return this.canRatePostGame() && !!this.session?.venue?.id;
+  }
+
+  loadMyVenueRating(): void {
+    if (!this.sessionId || !this.canRateVenuePostGame()
+      || this.venueRatingLoading || this.venueRatingSaving
+      || this.venueRatingLoadedSessionId === this.sessionId) return;
+
+    const sessionId = this.sessionId;
+    const venueId = this.session?.venue?.id;
+    this.venueRatingLoading = true;
+    this.venueRatingError = '';
+    this.sessionService.myVenueRating(sessionId)
+      .pipe(timeout(10_000), finalize(() => this.venueRatingLoading = false))
+      .subscribe({
+        next: rating => {
+          if (this.sessionId !== sessionId || this.session?.venue?.id !== venueId) return;
+          this.venueRatingLoadedSessionId = sessionId;
+          this.myVenueScore = rating?.score ?? null;
+          this.selectedVenueScore = this.myVenueScore;
+          this.venueRatingCollapsedByExisting = this.myVenueScore !== null;
+        },
+        error: () => {
+          this.venueRatingError = t('feedback.venue.ratingLoadError');
+        }
+      });
+  }
+
+  selectVenueScore(score: number): void {
+    if (!this.canRateVenuePostGame() || this.venueRatingLoading || this.venueRatingSaving
+      || this.venueRatingLoadedSessionId !== this.sessionId
+      || !Number.isInteger(score) || score < 1 || score > 5) return;
+    this.selectedVenueScore = score;
+    this.venueRatingError = '';
+    this.venueRatingSuccess = '';
+  }
+
+  canSaveVenueRating(): boolean {
+    return this.canRateVenuePostGame()
+      && !this.venueRatingLoading && !this.venueRatingSaving
+      && this.venueRatingLoadedSessionId === this.sessionId
+      && this.selectedVenueScore !== null
+      && this.selectedVenueScore >= 1 && this.selectedVenueScore <= 5
+      && this.selectedVenueScore !== this.myVenueScore;
+  }
+
+  saveVenueRating(): void {
+    if (!this.sessionId || !this.canSaveVenueRating() || this.selectedVenueScore === null) return;
+    const sessionId = this.sessionId;
+    const venueId = this.session?.venue?.id;
+    const wasRated = this.myVenueScore !== null;
+    this.venueRatingSaving = true;
+    this.venueRatingError = '';
+    this.venueRatingSuccess = '';
+    this.sessionService.rateVenue(sessionId, this.selectedVenueScore)
+      .pipe(timeout(10_000), finalize(() => this.venueRatingSaving = false))
+      .subscribe({
+        next: (saved: MyVenueRating) => {
+          if (this.sessionId !== sessionId || saved.venueId !== venueId) return;
+          this.myVenueScore = saved.score;
+          this.selectedVenueScore = saved.score;
+          this.venueRatingLoadedSessionId = sessionId;
+          this.venueRatingSuccess = t(wasRated
+            ? 'feedback.venue.ratingUpdated' : 'feedback.venue.ratingSaved');
+        },
+        error: () => {
+          this.venueRatingError = t('feedback.venue.ratingSaveError');
+        }
+      });
+  }
+
+  dismissVenueRating(): void {
+    if (this.venueRatingSaving) return;
+    this.venueRatingDismissed = true;
+    this.venueRatingError = '';
+  }
+
+  reopenVenueRating(): void {
+    if (!this.canRateVenuePostGame()) return;
+    this.venueRatingDismissed = false;
+    this.venueRatingCollapsedByExisting = false;
+    this.loadMyVenueRating();
   }
 
   loadMyOverallRating(): void {
@@ -558,6 +655,9 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
           // Load private rating only after the API confirms actual attendance.
           if (this.canRatePostGame() && !this.ratingDismissed) {
             this.loadMyOverallRating();
+          }
+          if (this.canRateVenuePostGame() && !this.venueRatingDismissed) {
+            this.loadMyVenueRating();
           }
           if (this.isCreator()) {
             this.participants = participants;
