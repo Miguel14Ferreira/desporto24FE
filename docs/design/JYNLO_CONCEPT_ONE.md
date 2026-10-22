@@ -93,3 +93,22 @@ Manual visual review should check:
 
 Do not combine this update with pending share/Google Maps functional PRs. Roll
 out Profiles and Main Feed only after this pilot's visual and test acceptance.
+
+## Third screen migration — Social/Profiles/Discovery
+
+Scoped CSS: `src/styles/jynlo-social-concept-one.css`. Five desktop areas
+opt into the shared tokens with `jynlo-c1 jynlo-social`:
+
+- Personal Profile: stronger identity portrait and readable achievements.
+- People / Player profiles: consistent search grid, player cards and public profile.
+- Main Social Feed: lively but calm composer, real post cards, weekly hub and suggestions.
+- Discover: clear where/when/who search panels with common surfaces.
+- Public Home: the same brand vocabulary for the hero, discover preview and communities.
+
+All existing query parameters, privacy decisions, follow and friend actions,
+post composer, upload controls and public preview routes are preserved; no new
+statistics or invented profile data. No backend changes.
+
+Acceptance: validate individual/other profiles, privacy and follow states, full
+post composer/comments, week recommendations, discover empty/full results, and
+anonymous homepage before another rollout. No mobile redesign in this wave.
