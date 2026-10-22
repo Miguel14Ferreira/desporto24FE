@@ -350,3 +350,31 @@ body .communities-page.jynlo-c1 .community-timeline-entry .entry-meta strong {
     transform: none;
   }
 }
+
+/* Team competition: genuine group tables, two qualifiers per group. */
+body .communities-page.jynlo-c1 .team-groups-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: 1rem;
+}
+body .communities-page.jynlo-c1 .team-group-card {
+  min-width: 0;
+  padding: clamp(1rem, 2vw, 1.5rem);
+  background: var(--jynlo-ui-surface-raised);
+  border: 1px solid var(--jynlo-ui-outline);
+  border-radius: var(--jynlo-ui-radius-md);
+}
+body .communities-page.jynlo-c1 .team-group-card h6 {
+  margin: 0 0 .35rem;
+  color: #f7fbff;
+  font-size: 1.25rem;
+}
+body .communities-page.jynlo-c1 .team-group-card .group-qualified {
+  background: rgba(65, 233, 176, .12);
+}
+body .communities-page.jynlo-c1 .team-group-card .group-qualified th {
+  color: #a8ffe0;
+}
+body .communities-page.jynlo-c1 .team-group-card .standings-scroll {
+  overflow-x: auto;
+}
