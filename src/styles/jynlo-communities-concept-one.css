@@ -1,0 +1,352 @@
+/*
+ * First screen migration to Jynlo Concept 1.
+ * All visual overrides are scoped to .jynlo-c1 so other screens stay stable.
+ * Component CSS retains layout fallback; higher-specificity rules implement
+ * the new appearance without enlarging Angular component-style budgets.
+ */
+body .communities-page.jynlo-c1 {
+  --jynlo-community-glow: rgba(65, 233, 176, .13);
+  background:
+    radial-gradient(ellipse 70% 520px at 94% 6%, rgba(17, 105, 115, .19), transparent 75%),
+    linear-gradient(155deg, #071523 8%, #0a2031 65%, #071523 100%);
+  color: var(--jynlo-ui-text);
+  padding-top: 6.2rem;
+}
+body .communities-page.jynlo-c1 .communities-shell {
+  width: min(var(--jynlo-ui-container), 100%);
+}
+body .communities-page.jynlo-c1 .page-header {
+  margin-bottom: clamp(1.3rem, 3vw, 2.1rem);
+  gap: 1.4rem;
+}
+body .communities-page.jynlo-c1 .page-header h1 {
+  font-weight: 850;
+  letter-spacing: -.045em;
+  line-height: 1.08;
+  font-size: clamp(2.5rem, 4.6vw, 4.15rem);
+}
+body .communities-page.jynlo-c1 .page-header .subtitle {
+  color: var(--jynlo-ui-muted);
+  max-width: 52ch;
+  margin: .8rem 0 0;
+  line-height: 1.6;
+}
+body .communities-page.jynlo-c1 .page-header .eyebrow {
+  color: var(--jynlo-ui-brand);
+  margin-bottom: .8rem;
+  letter-spacing: .15em;
+}
+body .communities-page.jynlo-c1 .jynlo-action--primary {
+  --jynlo-action-bg: var(--jynlo-ui-brand);
+  --jynlo-action-border: var(--jynlo-ui-brand);
+  --jynlo-action-hover: #80f5ca;
+  --jynlo-action-text: var(--jynlo-ui-brand-text);
+  box-shadow: 0 7px 22px rgba(65, 233, 176, .11);
+}
+body .communities-page.jynlo-c1 .jynlo-action--neutral {
+  --jynlo-action-text: #e0f0f5;
+  --jynlo-action-border: rgba(142, 192, 208, .3);
+  --jynlo-action-bg: rgba(117, 170, 185, .075);
+  --jynlo-action-hover: rgba(117, 170, 185, .16);
+}
+body .communities-page.jynlo-c1 .jynlo-action:focus-visible {
+  outline: 3px solid var(--jynlo-ui-brand);
+  outline-offset: 3px;
+}
+body .communities-page.jynlo-c1 .community-pitch {
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr);
+  border: 1px solid rgba(65, 233, 176, .25);
+  border-radius: var(--jynlo-ui-radius-lg);
+  gap: clamp(1.5rem, 4vw, 3.4rem);
+  padding: clamp(1.5rem, 4vw, 3.25rem);
+  background:
+    radial-gradient(ellipse at 85% 10%, var(--jynlo-community-glow), transparent 62%),
+    linear-gradient(125deg, rgba(17, 34, 52, .98), rgba(12, 45, 55, .9));
+  box-shadow: var(--jynlo-ui-shadow);
+}
+body .communities-page.jynlo-c1 .community-pitch h2 {
+  max-width: 16ch;
+  font-size: clamp(2.15rem, 3.3vw, 3.35rem);
+  font-weight: 860;
+  letter-spacing: -.045em;
+}
+body .communities-page.jynlo-c1 .community-pitch-lead {
+  max-width: 55ch;
+  line-height: 1.75;
+}
+body .communities-page.jynlo-c1 .community-pitch-benefits {
+  gap: .9rem;
+}
+body .communities-page.jynlo-c1 .community-pitch-benefit {
+  min-height: 155px;
+  padding: clamp(.95rem, 1.6vw, 1.4rem);
+  border-radius: var(--jynlo-ui-radius-md);
+  border: 1px solid var(--jynlo-ui-outline);
+  background: rgba(139, 190, 209, .064);
+}
+body .communities-page.jynlo-c1 .community-pitch-benefit-icon {
+  font-size: 1.5rem;
+}
+body .communities-page.jynlo-c1 .community-pitch-benefit p {
+  color: var(--jynlo-ui-muted);
+}
+body .communities-page.jynlo-c1 .create-card,
+body .communities-page.jynlo-c1 .invites-card,
+body .communities-page.jynlo-c1 .state-card {
+  background: var(--jynlo-ui-surface-glass);
+  border-color: var(--jynlo-ui-outline);
+  border-radius: var(--jynlo-ui-radius-lg);
+}
+body .communities-page.jynlo-c1:not(.community-detail-page) .create-card {
+  padding: clamp(1.15rem, 2.5vw, 2rem);
+}
+body .communities-page.jynlo-c1 .list-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: .65rem;
+  color: var(--jynlo-ui-text);
+}
+body .communities-page.jynlo-c1 .list-heading strong {
+  font-size: clamp(1.35rem, 2vw, 1.75rem);
+  font-weight: 800;
+  letter-spacing: -.02em;
+}
+body .communities-page.jynlo-c1 .list-heading span {
+  display: inline-grid;
+  place-items: center;
+  min-width: 2.1rem;
+  height: 2.1rem;
+  padding: 0 .5rem;
+  border-radius: 999px;
+  background: rgba(65, 233, 176, .11);
+  color: #a8ffe0;
+  font-weight: 800;
+}
+body .communities-page.jynlo-c1:not(.community-detail-page) .communities-layout > .community-list,
+body .communities-page.jynlo-c1:not(.community-detail-page) .create-card .community-list {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 275px), 1fr));
+  gap: 1.1rem;
+}
+body .communities-page.jynlo-c1 .community-list .community-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  min-width: 0;
+  min-height: 250px;
+  overflow: hidden;
+  padding: 0;
+  gap: 0;
+  text-align: left;
+  border: 1px solid var(--jynlo-ui-outline);
+  border-radius: var(--jynlo-ui-radius-md);
+  background: var(--jynlo-ui-surface);
+  transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+body .communities-page.jynlo-c1 .community-list .community-card:hover,
+body .communities-page.jynlo-c1 .community-list .community-card:focus-visible {
+  transform: translateY(-2px);
+  border-color: rgba(65, 233, 176, .55);
+  box-shadow: 0 15px 40px rgba(1, 11, 25, .3);
+}
+body .communities-page.jynlo-c1 .community-list .community-card .community-card-main {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  gap: 0;
+}
+body .communities-page.jynlo-c1 .community-list .community-card .community-avatar {
+  width: 100%;
+  height: 142px;
+  min-width: 0;
+  border-radius: 0;
+  flex-basis: auto;
+  background:
+    radial-gradient(circle at 85% 25%, rgba(65, 233, 176, .32), transparent 45%),
+    linear-gradient(145deg, #173c4c, #0b2032);
+  font-size: 3rem;
+}
+body .communities-page.jynlo-c1 .community-list .community-card .community-card-copy {
+  display: grid;
+  min-width: 0;
+  padding: 1rem 1.15rem .75rem;
+  gap: .35rem;
+}
+body .communities-page.jynlo-c1 .community-list .community-card .community-card-copy strong {
+  font-size: 1.2rem;
+  color: var(--jynlo-ui-text);
+  letter-spacing: -.015em;
+}
+body .communities-page.jynlo-c1 .community-list .community-card .community-card-copy span,
+body .communities-page.jynlo-c1 .community-list .community-card .community-card-copy small {
+  color: var(--jynlo-ui-muted);
+}
+body .communities-page.jynlo-c1 .community-list .community-card > small,
+body .communities-page.jynlo-c1 .community-list .community-card > .visibility {
+  margin: auto 1.15rem 1rem;
+  color: #a8ffe0;
+  font-weight: 750;
+}
+body .communities-page.jynlo-c1 .community-list .community-card .sport-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .4rem;
+}
+body .communities-page.jynlo-c1.community-detail-page .role-badge {
+  color: var(--jynlo-ui-brand);
+  border: 1px solid rgba(65, 233, 176, .28);
+  background: rgba(65, 233, 176, .075);
+}
+body .communities-page.jynlo-c1 .list-heading h2 {
+  margin: 0;
+  color: var(--jynlo-ui-text);
+  font-size: clamp(1.35rem, 2vw, 1.85rem);
+  font-weight: 820;
+  letter-spacing: -.025em;
+}
+body .communities-page.jynlo-c1 .list-heading .mine-hint {
+  color: var(--jynlo-ui-muted);
+  margin: .4rem 0 0;
+  font-size: .88rem;
+  line-height: 1.5;
+}
+body .communities-page.jynlo-c1 .list-heading .eyebrow {
+  color: var(--jynlo-ui-brand);
+  margin: 0 0 .45rem;
+}
+body .communities-page.jynlo-c1.community-detail-page .detail-header {
+  position: relative;
+  gap: clamp(1.3rem, 3vw, 2.4rem);
+  align-items: flex-start;
+  padding: clamp(1.4rem, 3vw, 2.6rem);
+  border: 1px solid var(--jynlo-ui-outline);
+  border-radius: var(--jynlo-ui-radius-lg);
+  background:
+    radial-gradient(ellipse at 92% 10%, rgba(65, 233, 176, .12), transparent 55%),
+    linear-gradient(120deg, #12253a, #0c2634);
+  box-shadow: var(--jynlo-ui-shadow);
+}
+body .communities-page.jynlo-c1.community-detail-page .detail-header .community-detail-identity {
+  flex: 1 1 auto;
+  min-width: 0;
+  gap: clamp(1.3rem, 3.2vw, 3rem);
+  align-items: center;
+}
+body .communities-page.jynlo-c1.community-detail-page .community-photo-block {
+  flex: 0 0 clamp(260px, 30vw, 390px);
+  width: clamp(260px, 30vw, 390px);
+  max-width: 100%;
+}
+body .communities-page.jynlo-c1.community-detail-page .community-photo-block .community-avatar--large {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16/10;
+  border-radius: var(--jynlo-ui-radius-md);
+  border: 1px solid rgba(230, 255, 255, .15);
+  background: linear-gradient(145deg, #1e5660, #102738);
+  box-shadow: 0 18px 38px rgba(1, 10, 23, .27);
+}
+body .communities-page.jynlo-c1.community-detail-page .community-photo-block .community-avatar--large img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+body .communities-page.jynlo-c1.community-detail-page .community-detail-copy h2 {
+  font-size: clamp(2.5rem, 4.5vw, 4rem);
+  line-height: 1.06;
+  letter-spacing: -.05em;
+  font-weight: 860;
+}
+body .communities-page.jynlo-c1.community-detail-page .community-detail-copy > p {
+  max-width: 55ch;
+  line-height: 1.65;
+  color: var(--jynlo-ui-muted);
+}
+body .communities-page.jynlo-c1.community-detail-page .visibility {
+  color: #b4ffe4;
+  background: rgba(65, 233, 176, .12);
+}
+body .communities-page.jynlo-c1.community-detail-page .community-tabs {
+  gap: .4rem;
+  margin: 1.35rem 0 0;
+  background: rgba(11, 31, 47, .86);
+  border: 1px solid var(--jynlo-ui-outline);
+  border-radius: var(--jynlo-ui-radius-md);
+  padding: .55rem;
+}
+body .communities-page.jynlo-c1.community-detail-page .community-tabs button {
+  font-size: .88rem;
+  min-height: 44px;
+  color: var(--jynlo-ui-muted);
+  border-radius: .65rem;
+}
+body .communities-page.jynlo-c1.community-detail-page .community-tabs button.active {
+  color: var(--jynlo-ui-brand);
+  background: rgba(65, 233, 176, .10);
+  border-color: rgba(65, 233, 176, .3);
+}
+body .communities-page.jynlo-c1.community-detail-page .community-tab-panel {
+  border-radius: var(--jynlo-ui-radius-lg);
+  border: 1px solid var(--jynlo-ui-outline);
+  background: var(--jynlo-ui-surface-glass);
+  padding: clamp(1.3rem, 2.4vw, 2rem);
+}
+body .communities-page.jynlo-c1 .overview-card,
+body .communities-page.jynlo-c1 .community-timeline-entry,
+body .communities-page.jynlo-c1 .leader-highlight {
+  border-color: var(--jynlo-ui-outline);
+  background: var(--jynlo-ui-surface-raised);
+  border-radius: var(--jynlo-ui-radius-md);
+}
+body .communities-page.jynlo-c1 .community-timeline-heading h3 {
+  font-size: clamp(1.3rem, 2vw, 1.8rem);
+  letter-spacing: -.035em;
+}
+body .communities-page.jynlo-c1 .community-timeline-form textarea {
+  border-radius: var(--jynlo-ui-radius-md);
+  background: #0a1c2d;
+  border: 1px solid rgba(159, 201, 213, .25);
+}
+body .communities-page.jynlo-c1 .community-timeline-entry .entry-meta strong {
+  color: var(--jynlo-ui-brand);
+}
+@media (max-width: 940px) {
+  body .communities-page.jynlo-c1 .community-pitch { grid-template-columns: 1fr; }
+  body .communities-page.jynlo-c1.community-detail-page .detail-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  body .communities-page.jynlo-c1.community-detail-page .detail-header .community-detail-identity {
+    width: 100%;
+  }
+}
+@media (max-width: 720px) {
+  body .communities-page.jynlo-c1 { padding: 5.8rem 1rem 3rem; }
+  body .communities-page.jynlo-c1 .community-pitch {
+    padding: 1.35rem;
+    border-radius: var(--jynlo-ui-radius-md);
+  }
+  body .communities-page.jynlo-c1 .community-pitch-benefits {
+    grid-template-columns: minmax(0,1fr);
+  }
+  body .communities-page.jynlo-c1.community-detail-page .community-detail-identity {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  body .communities-page.jynlo-c1.community-detail-page .community-photo-block {
+    width: min(100%, 420px);
+    flex: 0 0 auto;
+  }
+  body .communities-page.jynlo-c1:not(.community-detail-page) .community-list {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 235px), 1fr));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  body .communities-page.jynlo-c1 .community-list .community-card {
+    transition: none;
+  }
+  body .communities-page.jynlo-c1 .community-list .community-card:hover {
+    transform: none;
+  }
+}
