@@ -343,7 +343,9 @@
                 <p>O campeonato terminou empatado nos critérios desportivos.</p>
               } @else {
                 <strong>Equipa campeã: {{ selected.championTeamName }}</strong>
-                @if (isKnockout) {
+                @if (isGroupStage) {
+                  <p>Fase de grupos e eliminatórias concluídas</p>
+                } @else if (isKnockout) {
                   <p>Taça concluída · Campeão das eliminatórias</p>
                 } @else {
                   <p>{{ selected.championPoints }} pontos · Campeonato concluído</p>
