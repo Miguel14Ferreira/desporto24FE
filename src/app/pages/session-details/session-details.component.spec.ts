@@ -43,6 +43,18 @@ describe('SessionDetailsComponent', () => {
     gamePhoto: null
   };
 
+  /** Private rating controls are available only to confirmed session attendees. */
+  function confirmRatingAttendance(username?: string): void {
+    const identity = username ?? (component as any).currentUsername ?? 'player-one';
+    (component as any).currentUsername = identity;
+    component.sessionParticipants = [{
+      id: 15,
+      username: identity,
+      attendanceStatus: 'ATTENDED',
+      joinedAt: '2026-09-20T18:00:00Z'
+    }];
+  }
+
   beforeEach(async () => {
     communityService = jasmine.createSpyObj<CommunityService>('CommunityService', ['friends']);
     communityService.friends.and.returnValue(of([{username:'player-two', fullName: 'Player Two', nickname: null, profilePicUrl: null, chatBlocked: false, blockedByMe: false}]));
@@ -254,6 +266,7 @@ describe('SessionDetailsComponent', () => {
 
   it('offers one optional overall rating only to registered participants after the game', () => {
     component.session = { ...session, joined: true, gameDate: '2020-10-01T18:00:00Z' };
+    confirmRatingAttendance();
     component.loadMyOverallRating();
     fixture.detectChanges();
 
@@ -269,6 +282,7 @@ describe('SessionDetailsComponent', () => {
 
   it('saves a selected star rating and permits editing a stored rating', () => {
     component.session = { ...session, joined: true, gameDate: '2020-10-01T18:00:00Z' };
+    confirmRatingAttendance();
     sessionService.myOverallRating.and.returnValue(of({
       overallScore: 3, updatedAt: '2026-10-13T10:00:00Z'
     }));
@@ -301,6 +315,7 @@ describe('SessionDetailsComponent', () => {
 
   it('does not keep prompting after a previously saved rating', () => {
     component.session = { ...session, joined: true, gameDate: '2020-10-01T18:00:00Z' };
+    confirmRatingAttendance();
     sessionService.myOverallRating.and.returnValue(of({
       overallScore: 4, updatedAt: '2026-10-13T10:00:00Z'
     }));
@@ -324,6 +339,7 @@ describe('SessionDetailsComponent', () => {
 
   it('keeps first-time rating success visible on the visit where it was saved', () => {
     component.session = { ...session, joined: true, gameDate: '2020-10-01T18:00:00Z' };
+    confirmRatingAttendance();
     component.loadMyOverallRating();
     fixture.detectChanges();
     expect(component.myOverallScore).toBeNull();
@@ -346,6 +362,7 @@ describe('SessionDetailsComponent', () => {
     try {
       (component as any).currentUsername = 'rating-dismiss-test-user';
       component.session = { ...session, joined: true, gameDate: '2020-10-01T18:00:00Z' };
+    confirmRatingAttendance();
       component.loadMyOverallRating();
       fixture.detectChanges();
 
@@ -380,6 +397,7 @@ describe('SessionDetailsComponent', () => {
     try {
       (component as any).currentUsername = 'rating-return-test-user';
       component.session = { ...session, joined: true, gameDate: '2020-10-01T18:00:00Z' };
+    confirmRatingAttendance();
       sessionService.myOverallRating.and.returnValue(of({
         overallScore: 4, updatedAt: '2026-10-13T10:00:00Z'
       }));
@@ -414,6 +432,7 @@ describe('SessionDetailsComponent', () => {
     try {
       (component as any).currentUsername = 'rating-pending-test-user';
       component.session = { ...session, joined: true, gameDate: '2020-10-01T18:00:00Z' };
+    confirmRatingAttendance();
       const pending = new Subject<{ overallScore: number; updatedAt: string } | null>();
       sessionService.myOverallRating.and.returnValue(pending.asObservable());
       (component as any).restoreRatingDismissal();
@@ -458,6 +477,7 @@ describe('SessionDetailsComponent', () => {
 
   it('can skip the rating without sending it or changing attendance', () => {
     component.session = { ...session, joined: true, gameDate: '2020-10-01T18:00:00Z' };
+    confirmRatingAttendance();
     component.loadMyOverallRating();
     fixture.detectChanges();
     (fixture.nativeElement.querySelector('.overall-rating-skip') as HTMLButtonElement).click();
@@ -487,6 +507,7 @@ describe('SessionDetailsComponent', () => {
 
   it('does not save an invalid or missing rating', () => {
     component.session = { ...session, joined: true, gameDate: '2020-10-01T18:00:00Z' };
+    confirmRatingAttendance();
     component.loadMyOverallRating();
     component.selectedOverallScore = null;
     component.saveOverallRating();
@@ -499,6 +520,7 @@ describe('SessionDetailsComponent', () => {
 
   it('can retry retrieving an existing rating without submitting a new one', () => {
     component.session = { ...session, joined: true, gameDate: '2020-10-01T18:00:00Z' };
+    confirmRatingAttendance();
     sessionService.myOverallRating.and.returnValue(throwError(() => new Error('offline')));
     component.loadMyOverallRating();
     fixture.detectChanges();
@@ -510,6 +532,46 @@ describe('SessionDetailsComponent', () => {
     expect(component.ratingError).toBe('');
     expect(sessionService.myOverallRating).toHaveBeenCalledTimes(2);
     expect(sessionService.rateOverall).not.toHaveBeenCalled();
+  });
+
+  it('hides star ratings while attendance is pending or marked no-show', () => {
+    component.session = { ...session, joined: true, gameDate: '2020-10-01T18:00:00Z' };
+    (component as any).currentUsername = 'player-one';
+    component.sessionParticipants = [{
+      id: 15, username: 'player-one', attendanceStatus: 'PENDING',
+      joinedAt: '2026-09-20T18:00:00Z'
+    }];
+    component.loadMyOverallRating();
+    fixture.detectChanges();
+    expect(component.canRatePostGame()).toBeFalse();
+    expect(fixture.nativeElement.querySelector('.overall-rating-panel')).toBeNull();
+    expect(sessionService.myOverallRating).not.toHaveBeenCalled();
+
+    component.sessionParticipants[0].attendanceStatus = 'NO_SHOW';
+    expect(component.canRatePostGame()).toBeFalse();
+
+    component.sessionParticipants[0].attendanceStatus = 'LATE_CANCELLED';
+    expect(component.canRatePostGame()).toBeFalse();
+
+    component.sessionParticipants[0].attendanceStatus = 'ATTENDED';
+    expect(component.canRatePostGame()).toBeTrue();
+  });
+
+  it('loads an attendee rating only after the participation roster confirms presence', () => {
+    component.session = { ...session, joined: true, gameDate: '2020-10-01T18:00:00Z' };
+    (component as any).currentUsername = 'player-one';
+    sessionService.participants.and.returnValue(of([{
+      id: 15, username: 'player-one', attendanceStatus: 'ATTENDED',
+      joinedAt: '2026-09-20T18:00:00Z'
+    }]));
+    expect(sessionService.myOverallRating).not.toHaveBeenCalled();
+
+    component.loadSessionParticipants();
+    fixture.detectChanges();
+
+    expect(component.canRatePostGame()).toBeTrue();
+    expect(sessionService.myOverallRating).toHaveBeenCalledOnceWith(7);
+    expect(fixture.nativeElement.querySelector('.overall-rating-panel')).not.toBeNull();
   });
 
   it('should create', () => {
