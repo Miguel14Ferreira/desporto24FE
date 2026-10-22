@@ -1,9 +1,9 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { appTranslate as t } from '../../i18n/i18n.service';
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewChecked, ChangeDetectionStrategy, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { JwtHelperService } from '@auth0/angular-jwt';
-import { Subscription, forkJoin, finalize, retry, timeout } from 'rxjs';
+import { Subscription, TimeoutError, forkJoin, finalize, retry, timeout } from 'rxjs';
 
 import { DirectChatInfo, DirectChatMessage } from '../model/direct-chat';
 import { DirectChatService } from '../../services/direct-chat.service';
@@ -17,7 +17,8 @@ import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.s
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false
 })
-export class DirectChatComponent implements OnInit, OnDestroy {
+export class DirectChatComponent implements OnInit, OnDestroy, AfterViewChecked {
+  @ViewChild('messageList') messageList?: ElementRef<HTMLElement>;
   recipientUsername = '';
   currentUsername: string | null = null;
   messages: DirectChatMessage[] = [];
@@ -34,6 +35,13 @@ export class DirectChatComponent implements OnInit, OnDestroy {
   actionSuccess = '';
   messageBody = '';
   showEmojiPicker = false;
+  realtimeConnected = false;
+  realtimeEverConnected = false;
+  deliveryUncertain = false;
+  deliveryChecking = false;
+  private pendingDelivery?: { text: string; knownIds: Set<number>; startedAt: number };
+  private scrollToBottomRequested = false;
+  private restoreScroll?: { top: number; height: number };
 
   readonly emojis = ['😀', '😂', '😊', '😍', '🥳', '😎', '😉', '👍', '👏', '🙌', '🔥', '⚽', '🏀', '🎾', '🏓', '💪', '❤️', '✅'];
 
@@ -74,16 +82,21 @@ export class DirectChatComponent implements OnInit, OnDestroy {
           && this.messages.some(existing => existing.id === message.id);
 
         if (!alreadyPresent) {
+          const follow = this.isNearBottom() || this.isOwnMessage(message);
           this.messages = this.sorted([...this.messages, message]);
+          if (follow) this.scrollToBottomRequested = true;
+        }
+        if (this.deliveryUncertain && this.matchesPendingDelivery(message)) {
+          this.confirmPendingDelivery();
         }
       })
     );
 
     this.realtimeSubscriptions.add(
       this.realtimeService.connected$.subscribe(connected => {
-        if (!connected) {
-          return;
-        }
+        this.realtimeConnected = connected;
+        if (!connected) return;
+        this.realtimeEverConnected = true;
 
         if (this.initialRealtimeConnection) {
           this.initialRealtimeConnection = false;
@@ -97,6 +110,25 @@ export class DirectChatComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.realtimeSubscriptions.unsubscribe();
+  }
+
+  ngAfterViewChecked(): void {
+    const el = this.messageList?.nativeElement;
+    if (!el) return;
+    if (this.restoreScroll) {
+      el.scrollTop = this.restoreScroll.top + el.scrollHeight - this.restoreScroll.height;
+      this.restoreScroll = undefined;
+      return;
+    }
+    if (this.scrollToBottomRequested) {
+      el.scrollTop = el.scrollHeight;
+      this.scrollToBottomRequested = false;
+    }
+  }
+
+  private isNearBottom(): boolean {
+    const el = this.messageList?.nativeElement;
+    return !el || el.scrollHeight - el.scrollTop - el.clientHeight < 120;
   }
 
   load(): void {
@@ -122,6 +154,7 @@ export class DirectChatComponent implements OnInit, OnDestroy {
           this.chatInfo = result.info;
           this.historyPage = 0;
           this.hasOlderMessages = !result.messages.last;
+          this.scrollToBottomRequested = true;
         },
         error: error => {
           this.messages = [];
@@ -142,7 +175,11 @@ export class DirectChatComponent implements OnInit, OnDestroy {
       )
       .subscribe({
         next: page => {
+          const follow = this.isNearBottom();
           this.messages = this.sorted([...this.messages.filter(message => !page.content.some(recent => recent.id === message.id)), ...page.content]);
+          if (follow) this.scrollToBottomRequested = true;
+          const confirmed = this.messages.find(message => this.matchesPendingDelivery(message));
+          if (confirmed) this.confirmPendingDelivery();
         }
       });
   }
@@ -153,6 +190,8 @@ export class DirectChatComponent implements OnInit, OnDestroy {
     }
 
     this.loadingOlder = true;
+    const el = this.messageList?.nativeElement;
+    const before = el ? { top: el.scrollTop, height: el.scrollHeight } : undefined;
     const nextPage = this.historyPage + 1;
     this.chatService.recentHistory(this.recipientUsername, nextPage)
       .pipe(timeout(10_000), finalize(() => this.loadingOlder = false))
@@ -161,6 +200,7 @@ export class DirectChatComponent implements OnInit, OnDestroy {
           this.messages = this.sorted([...this.messages.filter(message => !page.content.some(older => older.id === message.id)), ...page.content]);
           this.historyPage = nextPage;
           this.hasOlderMessages = !page.last;
+          if (before) this.restoreScroll = before;
         },
         error: error => {
           this.actionError = this.errorFrom(error, t('feedback.chat.loadError'));
@@ -171,7 +211,7 @@ export class DirectChatComponent implements OnInit, OnDestroy {
   onEnter(event: Event): void {
     const keyboardEvent = event as KeyboardEvent;
 
-    if (keyboardEvent.shiftKey) {
+    if (keyboardEvent.shiftKey || keyboardEvent.isComposing || keyboardEvent.keyCode === 229) {
       return;
     }
 
@@ -182,7 +222,7 @@ export class DirectChatComponent implements OnInit, OnDestroy {
   sendMessage(): void {
     const text = this.messageBody.trim();
 
-    if (!this.recipientUsername || this.sending || this.chatInfo?.chatBlocked) {
+    if (!this.recipientUsername || this.sending || this.deliveryUncertain || this.chatInfo?.chatBlocked) {
       return;
     }
 
@@ -199,6 +239,11 @@ export class DirectChatComponent implements OnInit, OnDestroy {
     this.sending = true;
     this.actionError = '';
     this.actionSuccess = '';
+    const pending = {
+      text,
+      knownIds: new Set(this.messages.filter(message => message.id !== null).map(message => message.id as number)),
+      startedAt: Date.now()
+    };
 
     this.chatService.send(this.recipientUsername, text)
       .pipe(
@@ -216,11 +261,83 @@ export class DirectChatComponent implements OnInit, OnDestroy {
 
           this.messageBody = '';
           this.showEmojiPicker = false;
+          this.scrollToBottomRequested = true;
+          this.deliveryUncertain = false;
+          this.pendingDelivery = undefined;
         },
         error: error => {
-          this.actionError = this.errorFrom(error, t('feedback.chat.sendError'));
+          if (this.isUncertainSendError(error)) {
+            // A timeout can happen *after* the server committed the message.
+            // Never automatically retry a POST that could have succeeded.
+            this.pendingDelivery = pending;
+            this.deliveryUncertain = true;
+            this.actionError = t('chat.sendUncertain');
+            this.verifyDelivery();
+          } else {
+            this.actionError = this.errorFrom(error, t('feedback.chat.sendError'));
+          }
         }
       });
+  }
+
+  verifyDelivery(): void {
+    if (!this.deliveryUncertain || this.deliveryChecking || !this.pendingDelivery) return;
+    const alreadyDelivered = this.messages.find(message => this.matchesPendingDelivery(message));
+    if (alreadyDelivered) {
+      this.confirmPendingDelivery();
+      return;
+    }
+    this.deliveryChecking = true;
+    this.chatService.recentHistory(this.recipientUsername)
+      .pipe(timeout(10_000), finalize(() => this.deliveryChecking = false))
+      .subscribe({
+        next: page => {
+          const found = page.content.find(message => this.matchesPendingDelivery(message));
+          if (found) {
+            this.messages = this.sorted([...this.messages.filter(m => m.id !== found.id), found]);
+            this.confirmPendingDelivery();
+          } else {
+            this.actionError = t('chat.sendUnconfirmed');
+          }
+        },
+        error: () => this.actionError = t('chat.verifyUnavailable')
+      });
+  }
+
+  /**
+   * Deliberately opt out of the ambiguous-send guard. The original text stays
+   * in the composer; the user is warned it may already have been delivered.
+   */
+  resumeAfterUncertainSend(): void {
+    if (this.deliveryChecking) return;
+    this.deliveryUncertain = false;
+    this.pendingDelivery = undefined;
+    this.actionError = t('chat.sendRetryWarning');
+  }
+
+  private confirmPendingDelivery(): void {
+    this.deliveryUncertain = false;
+    this.pendingDelivery = undefined;
+    this.messageBody = '';
+    this.actionError = '';
+    this.actionSuccess = t('chat.sendConfirmed');
+    this.scrollToBottomRequested = true;
+  }
+
+  private matchesPendingDelivery(message: DirectChatMessage): boolean {
+    const pending = this.pendingDelivery;
+    if (!pending || message.id === null || pending.knownIds.has(message.id)) return false;
+    if (!this.currentUsername || !this.isOwnMessage(message)) return false;
+    if (message.username2.toLowerCase() !== this.recipientUsername.toLowerCase()) return false;
+    const sentAt = this.timestamp(message);
+    // Unreliable or absent timestamps should not be treated as proof of delivery.
+    return sentAt >= pending.startedAt - 60_000 && message.text === pending.text;
+  }
+
+  private isUncertainSendError(error: unknown): boolean {
+    return error instanceof TimeoutError
+      || error instanceof HttpErrorResponse
+         && (error.status === 0 || error.status === 408 || error.status === 429 || error.status >= 500);
   }
 
   toggleEmojiPicker(): void {
