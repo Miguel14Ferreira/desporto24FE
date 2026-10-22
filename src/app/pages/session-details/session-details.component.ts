@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { AfterViewChecked, ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { JwtHelperService } from '@auth0/angular-jwt';
-import { catchError, concatMap, finalize, forkJoin, from, map, mergeMap, of, retry, Subscription, timeout, toArray } from 'rxjs';
+import { catchError, concatMap, finalize, forkJoin, from, map, mergeMap, of, retry, Subscription, TimeoutError, timeout, toArray } from 'rxjs';
 
 import { environment } from 'src/environment/environment';
 import { CommunityService } from '../../services/community.service';
@@ -108,6 +108,10 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   errorMessage = '';
   actionError = '';
   actionSuccess = '';
+  detailRefreshWarning = '';
+  joinOutcomeUnknown = false;
+  joinStatusChecking = false;
+  joinStatusMessage = '';
   inviteFriendsOpen = false;
   inviteFriendsLoading = false;
   inviteSendingTo: string | null = null;
@@ -246,32 +250,91 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     if (!this.canJoinSession() || !this.sessionId || this.actionLoading) {
       return;
     }
-
     if (this.session!.privateGame && !this.joinPassword.trim()) {
       this.actionError = t('feedback.session.privatePassword');
       this.actionSuccess = '';
       return;
     }
-
     this.actionLoading = true;
     this.actionError = '';
     this.actionSuccess = '';
+    this.joinStatusMessage = '';
 
     this.sessionService.join(this.sessionId, this.joinPassword)
-      .pipe(
-        timeout(10_000),
-        finalize(() => this.actionLoading = false)
-      )
+      .pipe(timeout(10_000), finalize(() => this.actionLoading = false))
       .subscribe({
         next: response => {
           this.joinPassword = '';
+          this.joinOutcomeUnknown = false;
           this.actionSuccess = this.joinSuccessMessage(response);
+          // The POST result is authoritative even if the follow-up details GET fails.
+          if (this.session) {
+            this.session = {
+              ...this.session,
+              joined: response.state === 'PARTICIPANT',
+              waitlisted: response.state === 'WAITLISTED',
+              waitlistPosition: response.state === 'WAITLISTED' ? response.waitlistPosition : null
+            };
+          }
           this.loadSession(false);
         },
         error: error => {
-          this.actionError = this.errorFrom(error, t('feedback.session.joinError'));
+          if (this.isUncertainJoinError(error)) {
+            // Timeout or lost response can follow a successful server-side commit.
+            // Block repeat POSTs until a separate GET verifies the actual membership.
+            this.joinOutcomeUnknown = true;
+            this.joinStatusMessage = t('feedback.session.joinChecking');
+            this.verifyJoinOutcome();
+          } else {
+            this.actionError = this.errorFrom(error, t('feedback.session.joinError'));
+          }
         }
       });
+  }
+
+  verifyJoinOutcome(): void {
+    if (!this.joinOutcomeUnknown || this.joinStatusChecking || !this.sessionId) return;
+    this.joinStatusChecking = true;
+    this.joinStatusMessage = t('feedback.session.joinChecking');
+    this.sessionService.detail(this.sessionId)
+      .pipe(timeout(10_000), retry({ count: 1 }),
+        finalize(() => this.joinStatusChecking = false))
+      .subscribe({
+        next: detail => {
+          this.session = detail;
+          if (detail.joined || detail.waitlisted) {
+            this.joinOutcomeUnknown = false;
+            this.joinStatusMessage = '';
+            this.actionSuccess = this.joinSuccessMessage({
+              state: detail.waitlisted ? 'WAITLISTED' : 'PARTICIPANT',
+              waitlistPosition: detail.waitlisted ? detail.waitlistPosition : null
+            });
+            this.actionError = '';
+            if (detail.joined) {
+              this.loadSessionParticipants();
+              this.refreshMessages();
+            }
+          } else {
+            // A new POST is only possible after a successful verification GET.
+            this.joinOutcomeUnknown = false;
+            this.joinStatusMessage = t('feedback.session.joinNotConfirmed');
+          }
+        },
+        error: () => {
+          // Keep repeat POST disabled until membership can be checked.
+          this.joinStatusMessage = t('feedback.session.joinVerificationUnavailable');
+        }
+      });
+  }
+
+  private isUncertainJoinError(error: unknown): boolean {
+    if (error instanceof TimeoutError) return true;
+    if (error instanceof HttpErrorResponse) {
+      return error.status === 0 || error.status === 408 || error.status === 429
+        || error.status >= 500;
+    }
+    // Unknown client failures are not proof the server rolled back the transaction.
+    return true;
   }
 
   leaveSession(): void {
@@ -295,6 +358,9 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
           this.actionSuccess = wasWaitlisted
             ? t('feedback.session.leftWaitlist')
             : t('feedback.session.left');
+          if (this.session) {
+            this.session = { ...this.session, joined: false, waitlisted: false, waitlistPosition: null };
+          }
           this.loadSession(false);
         },
         error: error => {
@@ -1627,7 +1693,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   }
 
   canJoinSession(): boolean {
-    if (!this.session || this.session.joined || this.session.waitlisted
+    if (this.joinOutcomeUnknown || !this.session || this.session.joined || this.session.waitlisted
       || (this.session.status !== 'OPEN' && this.session.status !== 'FULL')) {
       return false;
     }
@@ -1800,6 +1866,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
       this.loading = true;
     }
     this.errorMessage = '';
+    this.detailRefreshWarning = '';
 
     this.sessionService.detail(this.sessionId)
       .pipe(
@@ -1850,7 +1917,13 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
             this.chatError = '';
           }
         },
-        error: () => this.errorMessage = t('feedback.session.detailsError')
+        error: () => {
+          if (showPageLoader) {
+            this.errorMessage = t('feedback.session.detailsError');
+          } else {
+            this.detailRefreshWarning = t('feedback.session.detailsRefreshError');
+          }
+        }
       });
   }
 
