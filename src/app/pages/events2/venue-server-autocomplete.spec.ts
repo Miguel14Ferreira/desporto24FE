@@ -164,4 +164,65 @@ describe('Create session venue server autocomplete', () => {
     component.confirmVenueSelection();
     expect(component.selectedVenueId).toBeNull();
   });
+
+  it('renders two same-name venues as separate clickable results with stable IDs', () => {
+    venues.suggest.and.returnValue(of(page([
+      venue(501, 'Pavilhão Municipal', 'Porto'),
+      venue(777, 'Pavilhão Municipal', 'Porto')
+    ])));
+    component.sport = 'Padel';
+    component.loadVenues();
+    fixture.detectChanges();
+
+    const results = fixture.nativeElement.querySelectorAll(
+      'button.venue-result-option'
+    ) as NodeListOf<HTMLButtonElement>;
+    expect(results.length).toBe(2);
+    expect(results[0].textContent).toContain('Pavilhão Municipal');
+    expect(results[1].textContent).toContain('Pavilhão Municipal');
+    results[1].click();
+
+    expect(component.selectedVenueId).toBe(777);
+    expect(component.venueSearch).toBe('Pavilhão Municipal · Porto');
+  });
+
+  it('shows the unverified OSM source and GPS-only address without inventing a street', () => {
+    const gpsOnly = {
+      ...venue(2026, 'Campo Desportivo da Fonte'),
+      address: null,
+      latitude: 41.15,
+      longitude: -8.6,
+      informationSource: 'OPENSTREETMAP'
+    } as unknown as Venue;
+    venues.suggest.and.returnValue(of(page([gpsOnly])));
+    component.sport = 'Padel';
+    component.loadVenues();
+    fixture.detectChanges();
+
+    const result = fixture.nativeElement.querySelector('button.venue-result-option') as HTMLButtonElement;
+    expect(result).not.toBeNull();
+    expect(result.textContent).toContain('morada por confirmar');
+    expect(result.textContent).toContain('OpenStreetMap');
+    expect(result.textContent).not.toContain('null');
+    result.click();
+    expect(component.selectedVenueId).toBe(2026);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('button.venue-result-option')).toBeNull();
+  });
+
+  it('does not leave outdated search-result buttons active during debounce', fakeAsync(() => {
+    venues.suggest.and.returnValues(
+      of(page([venue(10, 'Campo Antigo')])),
+      of(page([venue(11, 'Campo Novo')]))
+    );
+    component.sport = 'Padel';
+    component.loadVenues();
+    expect(component.venues.map(v => v.id)).toEqual([10]);
+    component.onVenueSearchChanged('Campo Novo');
+    expect(component.venues).toEqual([]);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('button.venue-result-option')).toBeNull();
+    tick(300);
+    expect(component.venues.map(v => v.id)).toEqual([11]);
+  }));
 });
