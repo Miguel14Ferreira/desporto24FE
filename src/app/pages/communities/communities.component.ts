@@ -1550,6 +1550,40 @@ export class CommunitiesComponent implements OnInit {
     return t('communities.import.field.' + field);
   }
 
+  /**
+   * Known English headings from uploaded spreadsheets should be presented in
+   * the selected UI language. Keep the original Excel header in mapping.header
+   * so the importer still uses exactly the original source column.
+   */
+  importColumnHeaderLabel(header: string): string {
+    const keyByHeader: Record<string, string> = {
+      player: 'PLAYER', players: 'PLAYER', playername: 'PLAYER',
+      win: 'WIN', wins: 'WINS', draw: 'DRAW', draws: 'DRAWS',
+      loss: 'LOSS', losses: 'LOSSES',
+      date: 'DATE', result: 'RESULT', goals: 'GOALS',
+      assists: 'ASSISTS', points: 'POINTS',
+      name: 'NAME', position: 'POSITION', played: 'PLAYED',
+      home: 'HOME', away: 'AWAY', score: 'SCORE',
+      homescore: 'HOME_SCORE', awayscore: 'AWAY_SCORE'
+    };
+    const field = keyByHeader[this.normalizedHeader(header)];
+    return field ? this.importFieldLabel(field) : header;
+  }
+
+  importPreviewResultLabel(row: {
+    result?: string | null; win?: boolean | number | null;
+    draw?: boolean | number | null; loss?: boolean | number | null;
+  }): string {
+    const value = String(row.result || (row.win ? 'WIN'
+      : row.draw ? 'DRAW' : row.loss ? 'LOSS' : '')).trim().toUpperCase();
+    switch (value) {
+      case 'WIN': return t('communities.result.win');
+      case 'DRAW': return t('communities.result.draw');
+      case 'LOSS': return t('communities.result.loss');
+      default: return value || '—';
+    }
+  }
+
   private validImportFields(mode: 'ROUNDS' | 'STANDINGS' | 'MATCHES'): boolean {
     const fields = new Set(this.importMappings.map(mapping => mapping.field));
     if (mode === 'ROUNDS') return fields.has('PLAYER');
