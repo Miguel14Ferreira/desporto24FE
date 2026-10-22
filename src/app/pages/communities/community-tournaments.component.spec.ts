@@ -28,7 +28,7 @@ describe('Community tournaments management', () => {
       'list', 'create', 'participants', 'join', 'leave', 'confirm', 'removeParticipant',
       'generateSchedule', 'matches', 'recordResult', 'standings', 'complete', 'delete',
       'createTeamTournament', 'teams', 'createTeam', 'addTeamPlayer', 'removeTeamPlayer', 'deleteTeam',
-      'generateTeamSchedule', 'teamMatches', 'recordTeamResult', 'teamStandings', 'completeTeam'
+      'generateTeamSchedule', 'teamMatches', 'recordTeamResult', 'teamStandings', 'teamGroups', 'completeTeam'
     ]);
     api.list.and.returnValue(of({ tournaments: [draft], page: 0, hasMore: false }));
     api.participants.and.returnValue(of({ participants: [], page: 0, hasMore: false }));
@@ -39,6 +39,7 @@ describe('Community tournaments management', () => {
       tournamentId: 19, status: 'IN_PROGRESS', totalMatches: 0, completedMatches: 0,
       winPoints: 3, drawPoints: 1, lossPoints: 0, standings: []
     }));
+    api.teamGroups.and.returnValue(of([]));
     api.standings.and.returnValue(of({
       tournamentId: 9, status: 'DRAFT', totalMatches: 0, completedMatches: 0,
       winPoints: 3, drawPoints: 1, lossPoints: 0, standings: []
@@ -139,6 +140,58 @@ describe('Community tournaments management', () => {
       await component.createTeamCompetition();
       expect(component.error).toContain('desempate');
       expect(api.createTeamTournament).not.toHaveBeenCalled();
+    });
+
+    it('creates group+knockout tournament and resets the format after creation', async () => {
+      api.createTeamTournament.and.returnValue(of({
+        ...teamDraft, format: 'GROUP_KNOCKOUT'
+      }));
+      component.startTeamCreation();
+      component.nameDraft = 'Torneio com grupos';
+      component.teamFormatDraft = 'GROUP_KNOCKOUT';
+      await component.createTeamCompetition();
+      expect(api.createTeamTournament).toHaveBeenCalledWith(
+        7, 'Torneio com grupos', 'Futebol', 5, 1,
+        { winPoints: 3, drawPoints: 1, lossPoints: 0 }, 'GOAL_DIFFERENCE_FIRST',
+        'GROUP_KNOCKOUT');
+      expect(component.teamFormatDraft).toBe('LEAGUE');
+      expect(component.selected?.format).toBe('GROUP_KNOCKOUT');
+    });
+
+    it('does not publish group fixtures for invalid roster sizes', () => {
+      component.selectTournament({ ...teamDraft, format: 'GROUP_KNOCKOUT' });
+      const filled = { ...team, players: Array.from({ length: 5 }, (_, i) =>
+        ({ profileId: i + 1, username: 'user' + i, displayName: 'Jogador ' + i })) };
+      component.teams = Array.from({ length: 5 }, (_, i) =>
+        ({ ...filled, id: i + 1 }));
+      expect(component.canPublishTeamSchedule).toBeFalse();
+      component.teams.pop();
+      expect(component.canPublishTeamSchedule).toBeTrue();
+    });
+
+    it('allows drawn group games and loads per-group table without requesting league standings', async () => {
+      const groups = [{
+        groupNumber: 1, totalMatches: 3, completedMatches: 1,
+        knockoutPublished: false, standings: []
+      }];
+      api.teamGroups.and.returnValue(of(groups));
+      const fixture = { id: 76, roundNumber: 1, groupNumber: 1,
+        homeTeamId: 40, homeTeamName: 'Verdes',
+        awayTeamId: 41, awayTeamName: 'Azuis', status: 'SCHEDULED' as const };
+      api.teams.and.returnValue(of([team, { ...team, id: 41, name: 'Azuis' }]));
+      api.teamMatches.and.returnValue(of({ matches: [fixture], page: 0, hasMore: false }));
+      component.selectTournament({ ...teamDraft,
+        format: 'GROUP_KNOCKOUT', status: 'IN_PROGRESS' });
+      expect(api.teamGroups).toHaveBeenCalledWith(7, 19);
+      expect(api.teamStandings).not.toHaveBeenCalled();
+      expect(component.teamGroups).toEqual(groups);
+      expect(component.isGroupStage).toBeTrue();
+      component.setTeamScore(fixture, 'home', 1);
+      component.setTeamScore(fixture, 'away', 1);
+      api.recordTeamResult.and.returnValue(of({ ...fixture,
+        status: 'COMPLETED' as const, homeScore: 1, awayScore: 1 }));
+      await component.saveTeamScore(fixture);
+      expect(api.recordTeamResult).toHaveBeenCalledWith(7, 19, 76, 1, 1);
     });
 
     it('creates knockout cup without league rules or standings', async () => {
