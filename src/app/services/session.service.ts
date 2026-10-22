@@ -10,6 +10,13 @@ import { SessionMessage } from '../pages/model/session-message';
 import { CreateSessionRequest } from '../pages/model/create-session-request';
 import { SessionParticipant } from '../pages/model/session-participant';
 
+/** A private vote, never exposed to other participants. */
+export interface MyVenueRating {
+  venueId: number;
+  score: number;
+  updatedAt: string;
+}
+
 export interface SessionSearchFilters {
   query?: string;
   sport?: string;
@@ -178,6 +185,19 @@ export class SessionService {
     return this.http.post<void>(
       this.baseUrl + '/' + id + '/problems',
       { type, details: details?.trim() || null }
+    );
+  }
+
+  myVenueRating(sessionId: number): Observable<MyVenueRating | null> {
+    return this.http.get<MyVenueRating | null>(
+      this.baseUrl + '/' + sessionId + '/venue-rating/me'
+    );
+  }
+
+  rateVenue(sessionId: number, score: number): Observable<MyVenueRating> {
+    return this.http.put<MyVenueRating>(
+      this.baseUrl + '/' + sessionId + '/venue-rating/me',
+      { score }
     );
   }
 
