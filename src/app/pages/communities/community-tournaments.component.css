@@ -191,3 +191,30 @@
 .t-tiebreak-choice { display: grid; gap: .3rem; text-align: left; border-radius: .75rem; padding: .75rem; min-width: 0; }
 .t-tiebreak-choice strong { font-size: .82rem; }
 .t-tiebreak-choice span { font-size: .74rem; line-height: 1.4; color: #cbd5e1; }
+
+
+/* Team invitation mirrors the community share step without disrupting the desktop roster. */
+.team-invite-accept,
+.team-share-invite {
+  border: 1px solid var(--jynlo-border, rgba(112, 131, 161, .24));
+  background: var(--jynlo-surface, rgba(112, 131, 161, .06));
+  border-radius: 14px;
+  padding: 16px;
+}
+.team-invite-accept { margin: 16px 0; }
+.team-invite-accept p,
+.team-share-invite p { margin: 6px 0 12px; }
+.team-invite-confirmed { color: #258352; font-weight: 700; }
+.team-share-invite { margin-top: 14px; }
+.team-share-invite label { display: block; margin-top: 12px; font-size: .85rem; }
+.team-share-invite input {
+  width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box;
+  border-radius: 9px; padding: 10px;
+  background: transparent; border: 1px solid rgba(118, 133, 156, .35);
+  color: inherit; font: inherit;
+}
+.team-share-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.team-share-actions .t-btn { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
+.team-manual-assign { margin-top: 12px; }
+.team-manual-assign summary { cursor: pointer; font-weight: 600; }
+.team-manual-assign .team-player-assign { margin-top: 10px; }

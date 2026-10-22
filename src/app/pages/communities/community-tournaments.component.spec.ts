@@ -27,7 +27,7 @@ describe('Community tournaments management', () => {
     api = jasmine.createSpyObj<CommunityTournamentsService>('CommunityTournamentsService', [
       'list', 'create', 'participants', 'join', 'leave', 'confirm', 'removeParticipant',
       'generateSchedule', 'matches', 'recordResult', 'standings', 'complete', 'delete',
-      'createTeamTournament', 'teams', 'createTeam', 'addTeamPlayer', 'removeTeamPlayer', 'deleteTeam',
+      'createTeamTournament', 'details', 'teams', 'createTeam', 'addTeamPlayer', 'acceptTeamInvite', 'removeTeamPlayer', 'deleteTeam',
       'generateTeamSchedule', 'teamMatches', 'recordTeamResult', 'teamStandings', 'teamGroups', 'completeTeam'
     ]);
     api.list.and.returnValue(of({ tournaments: [draft], page: 0, hasMore: false }));
@@ -69,6 +69,54 @@ describe('Community tournaments management', () => {
       { profileId: 2, username: 'ana', fullName: 'Ana', profilePicUrl: null, role: 'MEMBER' as const },
       { profileId: 3, username: 'bruno', fullName: 'Bruno', profilePicUrl: null, role: 'MEMBER' as const }
     ];
+
+    it('shows the invited team using an exact tournament deep link rather than the first result', () => {
+      const other = { ...teamDraft, id: 99, name: 'Outro torneio' };
+      api.list.and.returnValue(of({ tournaments: [other], page: 0, hasMore: false }));
+      api.details.and.returnValue(of(teamDraft));
+      api.teams.and.returnValue(of([team]));
+      component.invitedTournamentId = 19;
+      component.invitedTeamId = 40;
+      component.ngOnChanges({ community: new SimpleChange(undefined, community, true) });
+
+      expect(api.details).toHaveBeenCalledWith(7, 19);
+      expect(component.selected?.id).toBe(19);
+      expect(component.invitedTeam?.id).toBe(40);
+      expect(component.teamInviteUrl(team))
+        .toContain('/menu/communities/7?tab=tournaments&tournament=19&team=40');
+    });
+
+    it('allows a member to accept only their own invited team spot', async () => {
+      api.list.and.returnValue(of({ tournaments: [teamDraft], page: 0, hasMore: false }));
+      api.teams.and.returnValue(of([team]));
+      api.acceptTeamInvite.and.returnValue(of({ ...team, players: [{
+        profileId: 1, username: 'owner', displayName: 'Organizador'
+      }]}));
+      component.invitedTournamentId = 19;
+      component.invitedTeamId = 40;
+      component.ngOnChanges({ community: new SimpleChange(undefined, community, true) });
+
+      await component.acceptInvitedTeam();
+      expect(api.acceptTeamInvite).toHaveBeenCalledOnceWith(7, 19, 40);
+      expect(component.feedback).toContain('Convite aceite');
+    });
+
+    it('never submits self-registration if the team is full or player is elsewhere', async () => {
+      api.list.and.returnValue(of({ tournaments: [teamDraft], page: 0, hasMore: false }));
+      api.teams.and.returnValue(of([{ ...team, players: [
+        { profileId: 1, username: 'owner', displayName: 'Organizador' },
+        { profileId: 2, username: 'ana', displayName: 'Ana' },
+        { profileId: 3, username: 'bruno', displayName: 'Bruno' },
+        { profileId: 4, username: 'x', displayName: 'X' },
+        { profileId: 5, username: 'y', displayName: 'Y' }
+      ] }]));
+      component.invitedTournamentId = 19;
+      component.invitedTeamId = 40;
+      component.ngOnChanges({ community: new SimpleChange(undefined, community, true) });
+
+      await component.acceptInvitedTeam();
+      expect(api.acceptTeamInvite).not.toHaveBeenCalled();
+    });
 
     it('creates group knockout with four groups and resets the draft', async () => {
       api.createTeamTournament.and.returnValue(of({ ...teamDraft,

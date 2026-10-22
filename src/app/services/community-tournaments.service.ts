@@ -57,6 +57,15 @@ export class CommunityTournamentsService {
     return this.http.post<CommunityTournament>(this.url(communityId), config);
   }
 
+  details(communityId: number, tournamentId: number): Observable<CommunityTournament> {
+    return this.http.get<CommunityTournament>(this.url(communityId, tournamentId));
+  }
+
+  acceptTeamInvite(communityId: number, tournamentId: number, teamId: number): Observable<TournamentTeam> {
+    return this.http.put<TournamentTeam>(
+      this.url(communityId, tournamentId) + '/teams/' + teamId + '/players/me', null);
+  }
+
   teams(communityId: number, tournamentId: number): Observable<TournamentTeam[]> {
     return this.http.get<TournamentTeam[]>(this.url(communityId, tournamentId) + '/teams');
   }

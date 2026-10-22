@@ -406,6 +406,21 @@ export class CommunitiesComponent implements OnInit {
     private router: Router
   ) {}
 
+  private positiveQueryId(key: string): number | null {
+    const raw = this.route.snapshot.queryParamMap.get(key);
+    if (!raw || !/^[1-9][0-9]*$/.test(raw)) return null;
+    const id = Number(raw);
+    return Number.isSafeInteger(id) ? id : null;
+  }
+
+  get invitedTournamentId(): number | null {
+    return this.positiveQueryId('tournament');
+  }
+
+  get invitedTeamId(): number | null {
+    return this.invitedTournamentId ? this.positiveQueryId('team') : null;
+  }
+
   ngOnInit(): void {
     this.isDetailMode = Boolean(this.route.snapshot.paramMap.get('id'));
     this.reload();
