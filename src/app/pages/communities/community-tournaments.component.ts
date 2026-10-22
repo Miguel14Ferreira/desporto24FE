@@ -9,6 +9,7 @@ import { CommunityTournamentsService } from '../../services/community-tournament
 import { AuthenticationService } from '../../services/authethication.service';
 import { tournamentScoreTerminology } from './community-tournament-scoring';
 import { SPORTS_CATALOG } from '../../shared/sports-catalog';
+import { buildTournamentTeamInviteUrl, teamInvitationWhatsAppUrl } from './community-team-invite';
 
 @Component({
   selector: 'app-community-tournaments',
@@ -18,6 +19,8 @@ import { SPORTS_CATALOG } from '../../shared/sports-catalog';
 })
 export class CommunityTournamentsComponent implements OnChanges {
   @Input({ required: true }) community!: CommunityGroup;
+  @Input() invitedTournamentId: number | null = null;
+  @Input() invitedTeamId: number | null = null;
 
   tournaments: CommunityTournament[] = [];
   selected?: CommunityTournament;
@@ -45,6 +48,7 @@ export class CommunityTournamentsComponent implements OnChanges {
   lossPointsDraft = 0;
   teamNameDraft = '';
   teamPlayerDraft: Record<number, number | null> = {};
+  inviteCopyFeedback: Record<number, string> = {};
   teams: TournamentTeam[] = [];
   teamsLoadError = false;
   teamMatches: TournamentTeamMatch[] = [];
@@ -207,6 +211,7 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.resetPointRules();
       this.teamNameDraft = '';
       this.teamPlayerDraft = {};
+      this.inviteCopyFeedback = {};
       this.teams = [];
       this.teamsLoadError = false;
       this.teamMatches = [];
@@ -276,6 +281,51 @@ export class CommunityTournamentsComponent implements OnChanges {
   get availableTeamMembers() {
     const assigned = new Set(this.teams.flatMap(team => team.players.map(player => player.profileId)));
     return (this.community.members || []).filter(member => !assigned.has(member.profileId));
+  }
+
+  get invitedTeam(): TournamentTeam | undefined {
+    if (!this.invitedTeamId || this.selected?.id !== this.invitedTournamentId) return undefined;
+    return this.teams.find(team => team.id === this.invitedTeamId);
+  }
+
+  get myTeam(): TournamentTeam | undefined {
+    return this.teams.find(team => team.players.some(player =>
+      player.username.toLowerCase() === this.myUsername));
+  }
+
+  teamInviteUrl(team: TournamentTeam): string {
+    if (!this.selected || !this.community?.id) return '';
+    return buildTournamentTeamInviteUrl(
+      window.location.origin, this.community.id, this.selected.id, team.id);
+  }
+
+  teamWhatsAppUrl(team: TournamentTeam): string {
+    if (!this.selected) return '';
+    return teamInvitationWhatsAppUrl(
+      this.community.name, this.selected.name, team.name, this.teamInviteUrl(team));
+  }
+
+  async copyTeamInvite(team: TournamentTeam): Promise<void> {
+    if (!this.canManageTeamRoster || team.players.length >= team.playersPerTeam) return;
+    try {
+      await navigator.clipboard.writeText(this.teamInviteUrl(team));
+      this.inviteCopyFeedback[team.id] = 'Link copiado! Partilha-o com os jogadores.';
+    } catch {
+      this.inviteCopyFeedback[team.id] = 'Não foi possível copiar. Abre o link para partilhar manualmente.';
+    }
+    this.changeDetector.markForCheck();
+  }
+
+  async acceptInvitedTeam(): Promise<void> {
+    const team = this.invitedTeam;
+    if (!team || !this.selected || !this.isMember || this.busy || this.detailsLoading
+        || this.selected.status !== 'DRAFT' || this.myTeam
+        || team.players.length >= team.playersPerTeam) return;
+    await this.mutate(
+      this.api.acceptTeamInvite(this.community.id, this.selected.id, team.id),
+      'Convite aceite! Já fazes parte da equipa ' + team.name + '.',
+      () => this.loadTeams()
+    );
   }
 
   get isKnockout(): boolean {
@@ -408,7 +458,28 @@ export class CommunityTournamentsComponent implements OnChanges {
         this.tournamentsPage = page;
         this.tournamentsHasMore = result.hasMore;
         if (reset && !result.tournaments.length && !this.showIndividualCreate && !this.showTeamCreate) this.showGuide = true;
-        if (reset && !this.selected && result.tournaments.length) {
+        if (reset && !this.selected && this.invitedTournamentId) {
+          const invited = result.tournaments.find(item => item.id === this.invitedTournamentId);
+          if (invited) {
+            this.selectTournament(invited);
+          } else {
+            // Older tournaments may be on later pages. Fetch the exact scoped ID,
+            // rather than silently opening an unrelated competition.
+            this.api.details(communityId, this.invitedTournamentId)
+              .pipe(timeout(12000)).subscribe({
+                next: detail => {
+                  if (revision !== this.listRevision || this.community.id !== communityId
+                      || this.selected) return;
+                  this.selectTournament(detail);
+                },
+                error: () => {
+                  if (revision === this.listRevision) {
+                    this.showError('O torneio deste convite já não está disponível.');
+                  }
+                }
+              });
+          }
+        } else if (reset && !this.selected && result.tournaments.length) {
           this.selectTournament(result.tournaments[0]);
         }
       },
