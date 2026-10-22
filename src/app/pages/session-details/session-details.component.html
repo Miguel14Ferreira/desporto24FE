@@ -943,9 +943,7 @@
                         }
                       </div>
 
-                      @if (canRemoveParticipant(participant)
-                           && (participant.attendanceStatus === 'NO_SHOW'
-                               || futureExclusions[participant.id] === true)) {
+                      @if (canRemoveParticipant(participant)) {
                         <div class="future-exclusion-panel">
                           @if (futureExclusions[participant.id] === true) {
                             <span>{{ 'sessionDetail.futureExclusionActive' | t }}</span>
@@ -957,8 +955,22 @@
                           } @else if (futureExclusions[participant.id] === false) {
                             @if (pendingFutureExclusionId === participant.id) {
                               <span>{{ 'sessionDetail.futureExclusionConfirm' | t:{ username: participant.username } }}</span>
+                              <label class="future-exclusion-reason-label"
+                                     [for]="'future-exclusion-reason-' + participant.id">
+                                {{ 'sessionDetail.futureExclusionSelectReason' | t }}
+                              </label>
+                              <select class="future-exclusion-reason" [id]="'future-exclusion-reason-' + participant.id"
+                                      [value]="pendingFutureExclusionReason"
+                                      [disabled]="futureExclusionUpdatingId !== null"
+                                      (change)="chooseFutureExclusionReason(participant, $any($event.target).value)">
+                                <option value="">{{ 'sessionDetail.futureExclusionChooseReason' | t }}</option>
+                                @for (reason of availableFutureExclusionReasons(participant); track reason) {
+                                  <option [value]="reason">{{ ('sessionDetail.futureExclusionReason.' + reason) | t }}</option>
+                                }
+                              </select>
+                              <small class="future-exclusion-private-hint">{{ 'sessionDetail.futureExclusionPrivateHint' | t }}</small>
                               <button type="button" class="future-exclusion-confirm jynlo-action jynlo-action--primary"
-                                [disabled]="futureExclusionUpdatingId !== null || attendanceUpdatingId !== null || attendanceBulkUpdating"
+                                [disabled]="!pendingFutureExclusionReason || futureExclusionUpdatingId !== null || attendanceUpdatingId !== null || attendanceBulkUpdating"
                                 (click)="confirmFutureExclusion(participant)">
                                 {{ 'sessionDetail.futureExclusionYes' | t }}
                               </button>
