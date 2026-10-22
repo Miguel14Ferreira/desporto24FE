@@ -1,0 +1,193 @@
+/*
+ * Jynlo Concept 1 — Admin desktop screens.
+ * Denser information layout than social screens; never hide permission
+ * controls, case states, or destructive-action confirmations.
+ * All selectors are rooted in explicitly opted-in jynlo-admin pages.
+ */
+body .jynlo-c1.jynlo-admin {
+  background:
+    radial-gradient(ellipse 70% 430px at 94% 5%, rgba(20, 119, 140, .13), transparent 77%),
+    linear-gradient(155deg, var(--jynlo-ui-canvas), #0a2031 67%, #071523);
+  color: var(--jynlo-ui-text);
+  padding-top: 6.3rem;
+}
+body .jynlo-c1.jynlo-admin :is(.admin-shell,.players-shell) {
+  width: min(var(--jynlo-ui-container), 100%);
+  max-width: 100%;
+  margin-inline: auto;
+}
+body .jynlo-c1.jynlo-admin :is(.page-header,.players-shell > header) {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.4rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.7rem;
+}
+body .jynlo-c1.jynlo-admin :is(.page-header h1,.players-shell > header h1) {
+  font-size: clamp(2.25rem, 4.25vw, 3.75rem);
+  font-weight: 850;
+  line-height: 1.1;
+  letter-spacing: -.045em;
+}
+body .jynlo-c1.jynlo-admin :is(.eyebrow,.section-kicker) {
+  color: var(--jynlo-ui-brand);
+  font-weight: 850;
+  letter-spacing: .12em;
+}
+body .jynlo-c1.jynlo-admin .subtitle {
+  max-width: 70ch;
+  color: var(--jynlo-ui-muted);
+  line-height: 1.65;
+}
+body .jynlo-c1.jynlo-admin .jynlo-action--primary {
+  --jynlo-action-bg: var(--jynlo-ui-brand);
+  --jynlo-action-border: var(--jynlo-ui-brand);
+  --jynlo-action-hover: #87f4d1;
+  --jynlo-action-text: var(--jynlo-ui-brand-text);
+}
+body .jynlo-c1.jynlo-admin .jynlo-action--neutral {
+  --jynlo-action-bg: rgba(145, 195, 210, .075);
+  --jynlo-action-border: rgba(145, 195, 210, .27);
+  --jynlo-action-hover: rgba(145, 195, 210, .16);
+  --jynlo-action-text: #e9f5fc;
+}
+body .jynlo-c1.jynlo-admin .jynlo-action:focus-visible,
+body .jynlo-c1.jynlo-admin :is(a,button,input,select,textarea):focus-visible {
+  outline: 2px solid var(--jynlo-ui-brand);
+  outline-offset: 3px;
+}
+body .jynlo-c1.jynlo-admin :is(.state-card,.feedback,.state,.toolbar,.search-form,.platform-overview,.role-confirmation,.moderation-confirmation) {
+  border: 1px solid var(--jynlo-ui-outline);
+  border-radius: var(--jynlo-ui-radius-md);
+  background: var(--jynlo-ui-surface);
+}
+body .jynlo-c1.jynlo-admin :is(input:not([type="checkbox"]),select,textarea) {
+  border-color: rgba(155, 194, 214, .28);
+  border-radius: var(--jynlo-ui-radius-sm);
+  color: var(--jynlo-ui-text);
+  background: #0b2132;
+}
+body .jynlo-c1.jynlo-admin :is(.state.error,.error-feedback,.error-state,.moderation-confirmation--danger) {
+  border-color: rgba(248, 113, 113, .46);
+}
+body .jynlo-c1.jynlo-admin :is(.state-card,.feedback,.state) { padding: 1.15rem; }
+
+/* Admin landing: clear service navigation, no fake KPI data. */
+body .admin-page.jynlo-c1 .admin-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 290px), 1fr));
+  gap: 1.15rem;
+}
+body .admin-page.jynlo-c1 .admin-card {
+  padding: clamp(1.3rem, 2vw, 1.8rem);
+  border: 1px solid var(--jynlo-ui-outline);
+  border-radius: var(--jynlo-ui-radius-md);
+  background: var(--jynlo-ui-surface);
+  box-shadow: 0 12px 32px rgba(1, 11, 23, .18);
+  transition: border-color .18s ease, transform .18s ease;
+}
+body .admin-page.jynlo-c1 .admin-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(65, 233, 176, .4);
+}
+body .admin-page.jynlo-c1 .admin-card strong { color: #f4fbff; }
+body .admin-page.jynlo-c1 .card-icon { color: var(--jynlo-ui-brand); }
+
+/* Statistics: compact truthful KPI readouts and trends. */
+body .admin-page.jynlo-c1 .platform-overview {
+  padding: clamp(1.3rem, 2.5vw, 2rem);
+  box-shadow: var(--jynlo-ui-shadow);
+}
+body .admin-page.jynlo-c1 .overview-card {
+  background: var(--jynlo-ui-surface-raised);
+  border: 1px solid var(--jynlo-ui-outline);
+  border-radius: var(--jynlo-ui-radius-sm);
+  padding: 1.05rem;
+}
+body .admin-page.jynlo-c1 .overview-card strong {
+  font-variant-numeric: tabular-nums;
+  color: #bcffe8;
+}
+body .admin-page.jynlo-c1 .overview-card small { color: var(--jynlo-ui-muted); }
+body .admin-page.jynlo-c1 .growth-chart {
+  border-color: var(--jynlo-ui-outline);
+  border-radius: var(--jynlo-ui-radius-md);
+  background: var(--jynlo-ui-surface-raised);
+}
+body .admin-page.jynlo-c1 .growth-value {
+  color: #eaf6fc;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Moderation: readable reasons, status tabs, and explicit danger contrasts. */
+body .admin-page.jynlo-c1 .dispute-list { gap: .9rem; }
+body .admin-page.jynlo-c1 .dispute-card {
+  padding: clamp(1.1rem, 2vw, 1.6rem);
+  border: 1px solid var(--jynlo-ui-outline);
+  border-radius: var(--jynlo-ui-radius-md);
+  background: var(--jynlo-ui-surface);
+}
+body .admin-page.jynlo-c1 .reason-card {
+  border: 1px solid var(--jynlo-ui-outline);
+  border-radius: var(--jynlo-ui-radius-sm);
+  background: var(--jynlo-ui-surface-raised);
+}
+body .admin-page.jynlo-c1 .status-tabs button {
+  border-radius: .65rem;
+  min-height: 42px;
+}
+body .admin-page.jynlo-c1 .status-tabs button.active {
+  border-color: rgba(65, 233, 176, .4);
+  background: rgba(65, 233, 176, .12);
+  color: #baffdf;
+}
+
+/* Idea/report inbox: separate list from case details. */
+body .admin-ideas-page.jynlo-c1 .ideas-layout { gap: 1.2rem; }
+body .admin-ideas-page.jynlo-c1 :is(.idea-card,.idea-detail),
+body .admin-reports-page.jynlo-c1 .report-card {
+  border: 1px solid var(--jynlo-ui-outline);
+  border-radius: var(--jynlo-ui-radius-md);
+  background: var(--jynlo-ui-surface);
+  box-shadow: 0 12px 30px rgba(1, 11, 23, .12);
+}
+body .admin-ideas-page.jynlo-c1 :is(.idea-card.active,.idea-card:hover) {
+  border-color: rgba(65, 233, 176, .42);
+}
+body .admin-ideas-page.jynlo-c1 .idea-detail { padding: clamp(1.2rem, 2.3vw, 1.9rem); }
+body .admin-ideas-page.jynlo-c1 .idea-message,
+body .admin-reports-page.jynlo-c1 .reason {
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+body .admin-reports-page.jynlo-c1 .report-list { gap: 1rem; }
+body .admin-reports-page.jynlo-c1 .report-card { padding: 1.3rem; }
+
+/* Player tools: prevent admin tables becoming an unreadable card grid. */
+body .players-page.jynlo-c1 .players-shell { max-width: var(--jynlo-ui-container); }
+body .players-page.jynlo-c1 .search-form { padding: 1.35rem; }
+body .players-page.jynlo-c1 .table-scroll {
+  overflow-x: auto;
+  border: 1px solid var(--jynlo-ui-outline);
+  border-radius: var(--jynlo-ui-radius-md);
+  background: var(--jynlo-ui-surface);
+}
+body .players-page.jynlo-c1 .table-scroll table { width: 100%; }
+body .players-page.jynlo-c1 .table-scroll th { color: #b8d2de; }
+body .players-page.jynlo-c1 .table-scroll td { color: #e8f3f9; }
+body .players-page.jynlo-c1 :is(.role-confirmation,.moderation-confirmation) {
+  padding: 1.3rem;
+  box-shadow: var(--jynlo-ui-shadow);
+}
+body .players-page.jynlo-c1 .moderation-confirmation--danger {
+  border-color: rgba(248, 113, 113, .65);
+}
+@media (max-width: 800px) {
+  body .jynlo-c1.jynlo-admin { padding: 6rem 1rem 3rem; }
+  body .jynlo-c1.jynlo-admin .search-row { grid-template-columns: minmax(0, 1fr); }
+  body .admin-page.jynlo-c1 .growth-charts { grid-template-columns: minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) {
+  body .admin-page.jynlo-c1 .admin-card { transition: none; transform: none; }
+}
