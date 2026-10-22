@@ -197,6 +197,55 @@ describe('SessionDetailsComponent', () => {
     fixture.detectChanges();
   });
 
+  it('opens a shared session when the lazy route keeps its id on the parent snapshot', () => {
+    const route = TestBed.inject(ActivatedRoute) as any;
+    route.snapshot.paramMap = convertToParamMap({});
+    route.parent = { snapshot: { paramMap: convertToParamMap({ id: '53' }) } };
+    sessionService.detail.calls.reset();
+
+    component.ngOnInit();
+
+    expect(sessionService.detail).toHaveBeenCalledWith(53);
+    expect(component.errorMessage).toBe('');
+  });
+
+  it('opens only an authorised exact address in Google Maps', () => {
+    component.session = {
+      ...session, address: 'Rua Machado dos Santos, Parede',
+      canSeeExactAddress: true,
+      venue: { latitude: 38.7, longitude: -9.36 } as any
+    };
+    fixture.detectChanges();
+    const link = fixture.nativeElement.querySelector('.session-location-map') as HTMLAnchorElement;
+    expect(link).not.toBeNull();
+    expect(new URL(link.href).hostname).toBe('www.google.com');
+    expect(new URL(link.href).searchParams.get('query')).toBe('38.7,-9.36');
+    expect(link.getAttribute('rel')).toBe('noopener noreferrer');
+
+    component.session = { ...session, address: 'Rua Machado dos Santos, Parede', canSeeExactAddress: false };
+    fixture.detectChanges();
+    expect(component.exactGoogleMapsUrl()).toBeNull();
+    expect(fixture.nativeElement.querySelector('.session-location-map')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.address-panel').textContent)
+      .not.toContain('Rua Machado dos Santos');
+  });
+
+  it('shares only concise game details and a public URL, without generic promotion', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = {
+      ...session, status: 'OPEN', canSharePublicly: true,
+      gameDate: '2099-10-01T18:00:00Z'
+    };
+    const link = component.whatsappShareUrl()!;
+    expect(link).not.toBeNull();
+    const text = new URL(link).searchParams.get('text')!;
+    expect(text).toContain('🎾 Padel');
+    expect(text).toContain('📍 Lisboa');
+    expect(text).toContain('👥 2 vagas');
+    expect(text).toContain('/sessions/7');
+    expect(text).not.toContain('Vem jogar connosco na Jynlo!');
+  });
+
   it('sends a public session link to a selected friend only on explicit action', () => {
     (component as any).currentUsername = 'creator-user';
     component.session = {...session, gameDate:'2099-10-01T18:00:00Z', canSharePublicly: true};
