@@ -354,6 +354,69 @@
             </section>
           }
 
+          @if (canOfferCompliments()) {
+            <section class="player-compliments-panel" aria-labelledby="player-compliments-title">
+              <div class="player-compliments-heading">
+                <div>
+                  <span class="overall-rating-kicker">{{ 'sessionDetail.overallRatingKicker' | t }}</span>
+                  <h2 id="player-compliments-title">{{ 'sessionDetail.complimentsTitle' | t }}</h2>
+                  <p>{{ 'sessionDetail.complimentsHint' | t }}</p>
+                </div>
+                <button type="button" class="jynlo-action jynlo-action--neutral compliments-toggle"
+                        [attr.aria-expanded]="complimentsOpen" (click)="toggleCompliments()">
+                  {{ (complimentsOpen ? 'sessionDetail.complimentsHide' : 'sessionDetail.complimentsOpen') | t }}
+                </button>
+              </div>
+
+              @if (complimentsOpen) {
+                @if (complimentsLoading) {
+                  <p role="status">{{ 'sessionDetail.complimentsLoading' | t }}</p>
+                }
+                @if (complimentsError) {
+                  <div class="overall-rating-feedback overall-rating-error" role="alert">
+                    {{ complimentsError }}
+                    @if (complimentsLoadedSessionId !== session.id) {
+                      <button type="button" class="overall-rating-retry" (click)="loadCompliments()"
+                              [disabled]="complimentsLoading">{{ 'sessionDetail.retry' | t }}</button>
+                    }
+                  </div>
+                }
+                @if (complimentsSuccess) {
+                  <p class="overall-rating-feedback overall-rating-success" role="status">{{ complimentsSuccess }}</p>
+                }
+                @if (!complimentsLoading && complimentsLoadedSessionId === session.id) {
+                  <div class="player-compliments-list">
+                    @for (participant of eligibleComplimentPlayers(); track participant.id) {
+                      <article class="player-compliment-row">
+                        <strong>{{ '@' + participant.username }}</strong>
+                        <div class="player-compliment-actions" role="group"
+                             [attr.aria-label]="'sessionDetail.complimentsFor' | t:{ username: participant.username }">
+                          @for (kind of complimentTypes; track kind) {
+                            <button type="button" class="player-compliment-choice"
+                                    [class.is-sent]="myCompliment(participant.username)?.type === kind"
+                                    [attr.aria-pressed]="myCompliment(participant.username)?.type === kind"
+                                    [disabled]="complimentSavingUsername !== null"
+                                    (click)="giveCompliment(participant, kind)">
+                              {{ complimentLabel(kind) }}
+                            </button>
+                          }
+                        </div>
+                      </article>
+                    }
+                  </div>
+                  @if (complimentsReceived.length > 0) {
+                    <div class="compliments-received" aria-label="{{ 'sessionDetail.complimentsReceived' | t }}">
+                      <h3>{{ 'sessionDetail.complimentsReceived' | t }}</h3>
+                      @for (compliment of complimentsReceived; track compliment.senderUsername) {
+                        <p>{{ '@' + compliment.senderUsername }} · {{ complimentLabel(compliment.type) }}</p>
+                      }
+                    </div>
+                  }
+                }
+              }
+            </section>
+          }
+
           @if (session.venue) {
             <section class="venue-detail-panel">
               <div class="venue-detail-heading">
