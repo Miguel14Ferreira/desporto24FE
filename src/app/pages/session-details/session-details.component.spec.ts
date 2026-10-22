@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
 import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
 
 import { SessionDetailsComponent } from './session-details.component';
@@ -195,6 +196,59 @@ describe('SessionDetailsComponent', () => {
     fixture = TestBed.createComponent(SessionDetailsComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
+  });
+
+  it('keeps a confirmed membership visible if the details refresh fails after POST', () => {
+    component.session = { ...session, gameDate: new Date(Date.now() + 3600_000).toISOString() };
+    sessionService.detail.and.returnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
+    expect(component.canJoinSession()).toBeTrue();
+
+    component.joinSession();
+    fixture.detectChanges();
+
+    expect(sessionService.join).toHaveBeenCalledTimes(1);
+    expect(component.session?.joined).toBeTrue();
+    expect(component.canJoinSession()).toBeFalse();
+    expect(component.actionSuccess).toBeTruthy();
+    expect(component.errorMessage).toBe('');
+    expect(component.detailRefreshWarning).toBeTruthy();
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain(component.detailRefreshWarning);
+  });
+
+  it('blocks duplicate POST after a network failure until GET confirms membership', () => {
+    component.session = { ...session, gameDate: new Date(Date.now() + 3600_000).toISOString() };
+    sessionService.join.and.returnValue(throwError(() => new HttpErrorResponse({ status: 0 })));
+    sessionService.detail.and.returnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
+
+    component.joinSession();
+    fixture.detectChanges();
+
+    expect(component.joinOutcomeUnknown).toBeTrue();
+    expect(component.canJoinSession()).toBeFalse();
+    expect(component.joinStatusMessage).toBeTruthy();
+    expect((fixture.nativeElement as HTMLElement).querySelector('.participation-panel button')).not.toBeNull();
+    component.joinSession();
+    expect(sessionService.join).toHaveBeenCalledTimes(1);
+
+    sessionService.detail.and.returnValue(of({ ...session, joined: true }));
+    component.verifyJoinOutcome();
+    fixture.detectChanges();
+
+    expect(component.joinOutcomeUnknown).toBeFalse();
+    expect(component.session?.joined).toBeTrue();
+    expect(component.actionSuccess).toBeTruthy();
+    expect(sessionService.join).toHaveBeenCalledTimes(1);
+  });
+
+  it('treats an explicit invalid request as rejected without showing uncertain state', () => {
+    component.session = { ...session, gameDate: new Date(Date.now() + 3600_000).toISOString() };
+    sessionService.join.and.returnValue(throwError(() => new HttpErrorResponse({
+      status: 403, error: { message: 'Não autorizado' }
+    })));
+    component.joinSession();
+    expect(component.joinOutcomeUnknown).toBeFalse();
+    expect(component.actionError).toContain('Não autorizado');
+    expect(sessionService.detail).toHaveBeenCalledTimes(1); // ngOnInit only
   });
 
   it('opens a shared session when the lazy route keeps its id on the parent snapshot', () => {
