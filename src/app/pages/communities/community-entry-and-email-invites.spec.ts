@@ -47,7 +47,7 @@ describe('Community entry and email invite destinations', () => {
     expect(component.showMineView()).toBeTrue();
     expect(component.isTargetedInvite({ id: 27 } as CommunityInvite)).toBeTrue();
     expect(component.isTargetedInvite({ id: 26 } as CommunityInvite)).toBeFalse();
-    query.invite = '27x';
+    query['invite'] = '27x';
     expect(component.isTargetedInvite({ id: 27 } as CommunityInvite)).toBeFalse();
   });
 
