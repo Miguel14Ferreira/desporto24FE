@@ -956,7 +956,7 @@
                             @if (pendingFutureExclusionId === participant.id) {
                               <span>{{ 'sessionDetail.futureExclusionConfirm' | t:{ username: participant.username } }}</span>
                               <label class="future-exclusion-reason-label"
-                                     [for]="'future-exclusion-reason-' + participant.id">
+                                     [attr.for]="'future-exclusion-reason-' + participant.id">
                                 {{ 'sessionDetail.futureExclusionSelectReason' | t }}
                               </label>
                               <select class="future-exclusion-reason" [id]="'future-exclusion-reason-' + participant.id"
