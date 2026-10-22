@@ -13,7 +13,7 @@ import {
   TournamentParticipantPage,
   TournamentScheduleSummary,
   TournamentStandings, TournamentTeam, TournamentTeamMatchPage, TournamentTeamMatch,
-  TournamentTeamScheduleSummary, TournamentTeamStandings
+  TournamentTeamScheduleSummary, TournamentTeamStandings, TournamentGroupOverview
 } from '../pages/model/community-tournament';
 
 @Injectable({ providedIn: 'root' })
@@ -44,12 +44,14 @@ export class CommunityTournamentsService {
                        playersPerTeam: number, roundRobinLegs: 1 | 2 = 1,
                        rules: TournamentPointRules = { winPoints: 3, drawPoints: 1, lossPoints: 0 },
                        teamTieBreakPriority: TeamTieBreakPriority = 'GOAL_DIFFERENCE_FIRST',
-                       format: 'LEAGUE' | 'KNOCKOUT' = 'LEAGUE'
+                       format: 'LEAGUE' | 'KNOCKOUT' | 'GROUP_KNOCKOUT' = 'LEAGUE'
   ): Observable<CommunityTournament> {
     const config = format === 'KNOCKOUT'
       ? { name, sport, entryType: 'TEAM', playersPerTeam, format }
-      : { name, sport, entryType: 'TEAM', playersPerTeam, format,
-          roundRobinLegs, teamTieBreakPriority, ...rules };
+      : format === 'GROUP_KNOCKOUT'
+        ? { name, sport, entryType: 'TEAM', playersPerTeam, format, ...rules }
+        : { name, sport, entryType: 'TEAM', playersPerTeam, format,
+            roundRobinLegs, teamTieBreakPriority, ...rules };
     return this.http.post<CommunityTournament>(this.url(communityId), config);
   }
 
@@ -91,6 +93,11 @@ export class CommunityTournamentsService {
     return this.http.post<TournamentTeamMatch>(
       this.url(communityId, tournamentId) + '/teams/matches/' + matchId + '/result',
       { homeScore, awayScore });
+  }
+
+  teamGroups(communityId: number, tournamentId: number): Observable<TournamentGroupOverview[]> {
+    return this.http.get<TournamentGroupOverview[]>(
+      this.url(communityId, tournamentId) + '/teams/groups');
   }
 
   teamStandings(communityId: number, tournamentId: number): Observable<TournamentTeamStandings> {
