@@ -36,12 +36,13 @@ describe('PerfisComponent', () => {
     routeParams = new BehaviorSubject(convertToParamMap({}));
     service = jasmine.createSpyObj<CommunityService>(
       'CommunityService',
-      ['searchProfiles', 'findProfiles', 'sendFriendRequest', 'reportUser', 'userBlockStatus', 'blockUser', 'unblockUser', 'discoverProfiles', 'friends', 'publicProfile']
+      ['searchProfiles', 'findProfiles', 'sendFriendRequest', 'reportUser', 'userBlockStatus', 'blockUser', 'unblockUser', 'discoverProfiles', 'friends', 'publicProfile', 'friendshipStatus']
     );
     service.searchProfiles.and.returnValue(of([profile]));
     service.findProfiles.and.returnValue(of([profile]));
     service.discoverProfiles.and.returnValue(of([profile]));
     service.friends.and.returnValue(of([]));
+    service.friendshipStatus.and.returnValue(of({ friends: false, pendingRequest: false }));
     service.publicProfile.and.returnValue(of(profile));
     service.sendFriendRequest.and.returnValue(of({}));
     service.reportUser.and.returnValue(of(void 0));
@@ -689,6 +690,68 @@ describe('PerfisComponent', () => {
       skillLevel: 'INTERMEDIATE'
     });
     expect(component.profiles).toEqual([profile]);
+  });
+
+  it('shows the chat instead of another request when the server confirms friendship', () => {
+    service.friendshipStatus.and.returnValue(of({ friends: true, pendingRequest: false }));
+    routeParams.next(convertToParamMap({ username: 'ana' }));
+    fixture.detectChanges();
+
+    expect(service.friendshipStatus).toHaveBeenCalledWith('ana');
+    expect(component.isFriend(profile)).toBeTrue();
+    expect(fixture.nativeElement.querySelector('.friend-status')?.textContent).toContain(t('friends.title'));
+    expect(fixture.nativeElement.querySelector('a[href="/menu/friendList/chat/ana"]')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.detail-actions button.primary-action')).toBeNull();
+    component.sendFriendRequest(profile);
+    expect(service.sendFriendRequest).not.toHaveBeenCalled();
+  });
+
+  it('renders an outstanding friend request without offering another request', () => {
+    service.friendshipStatus.and.returnValue(of({ friends: false, pendingRequest: true }));
+    routeParams.next(convertToParamMap({ username: 'ana' }));
+    fixture.detectChanges();
+
+    expect(component.friendRequestPending(profile)).toBeTrue();
+    const request: HTMLButtonElement = fixture.nativeElement.querySelector('.detail-actions button.primary-action');
+    expect(request.disabled).toBeTrue();
+    expect(request.textContent).toContain(t('community.requestPending'));
+  });
+
+  it('fails closed while status is loading or failed, rather than displaying add-friend', () => {
+    const pending = new Subject<{ friends: boolean; pendingRequest: boolean }>();
+    service.friendshipStatus.and.returnValue(pending);
+    routeParams.next(convertToParamMap({ username: 'ana' }));
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.detail-actions button.primary-action')).toBeNull();
+    expect(component.friendshipLoading).toBeTrue();
+
+    pending.error({ status: 503 });
+    fixture.detectChanges();
+    expect(component.friendshipError).toBeTrue();
+    expect(fixture.nativeElement.querySelector('.detail-actions button.primary-action')).toBeNull();
+
+    service.friendshipStatus.and.returnValue(of({ friends: true, pendingRequest: false }));
+    component.loadFriendshipStatus('ana');
+    fixture.detectChanges();
+    expect(component.friendshipError).toBeFalse();
+    expect(component.isFriend(profile)).toBeTrue();
+  });
+
+  it('ignores friendship responses from a profile that is no longer selected', () => {
+    const oldStatus = new Subject<{ friends: boolean; pendingRequest: boolean }>();
+    service.friendshipStatus.and.returnValue(oldStatus);
+    routeParams.next(convertToParamMap({ username: 'ana' }));
+
+    const secondProfile = { ...profile, username: 'rui' };
+    service.publicProfile.and.returnValue(of(secondProfile));
+    service.friendshipStatus.and.returnValue(of({ friends: false, pendingRequest: false }));
+    routeParams.next(convertToParamMap({ username: 'rui' }));
+    oldStatus.next({ friends: true, pendingRequest: false });
+    fixture.detectChanges();
+
+    expect(component.selectedProfile?.username).toBe('rui');
+    expect(component.isFriend(secondProfile)).toBeFalse();
+    expect(component.friendUsernames.has('ana')).toBeFalse();
   });
 
   it('should send a friend request for the selected profile', () => {
