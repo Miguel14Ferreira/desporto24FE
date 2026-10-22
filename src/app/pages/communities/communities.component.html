@@ -35,7 +35,7 @@
       </div>
     }
 
-    @if (!detailMode() && !showMineView() && !loading) {
+    @if (!detailMode() && !showMineView() && !loading && !errorMessage) {
       <section class="community-pitch" aria-labelledby="community-pitch-title">
         <div class="community-pitch-copy">
           <p class="community-pitch-eyebrow">{{ 'communities.pitchEyebrow' | t }}</p>
@@ -239,7 +239,7 @@
       </section>
     }
 
-    @if ((showMineView() && loading) || (detailMode() && presentationLoading)) {
+    @if ((!detailMode() && loading) || (detailMode() && presentationLoading)) {
       <div class="empty-state">
         <span class="empty-icon">◎</span>
         <strong>{{ 'communities.loading' | t }}</strong>
