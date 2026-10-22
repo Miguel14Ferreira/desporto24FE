@@ -12,7 +12,7 @@ describe('Community WhatsApp group invites', () => {
           appTranslate('communities.whatsappShareMessage', { name: 'Futebol de Amigos' }),
           appTranslate('communities.whatsappSharePrivate'),
           link
-        ].join('\\n\\n');
+        ].join('\n\n');
         const encoded = buildWhatsAppGroupShareUrl(message);
         const decoded = new URL(encoded).searchParams.get('text') || '';
         expect(decoded).toContain('Futebol de Amigos');
