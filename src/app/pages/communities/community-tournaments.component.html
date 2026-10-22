@@ -58,7 +58,7 @@
           </div>
           <p>Escolham a modalidade e os jogadores por equipa. Criem equipas reais com os membros da comunidade.</p>
           <p class="guide-example">Ex.: 20 membros divididos em quatro equipas de cinco.</p>
-          <p>Podem organizar ligas de todos contra todos ou taças por eliminatórias, com plantéis e resultados registados. As fases de grupos ainda não estão disponíveis.</p>
+          <p>Podem organizar ligas de todos contra todos ou taças por eliminatórias, com plantéis e resultados registados. Também podem combinar fases de grupos e eliminatórias, com apuramento automático.</p>
           @if (canManage && community.teamTournamentsEnabled !== false) {
             <button type="button" class="t-btn t-btn-primary" (click)="startTeamCreation()">Preparar torneio por equipas</button>
           } @else if (canManage) {
@@ -144,7 +144,23 @@
               <button type="button" class="t-sport-chip" [disabled]="busy"
                 [attr.aria-pressed]="teamFormatDraft === 'KNOCKOUT'"
                 (click)="teamFormatDraft = 'KNOCKOUT'">Eliminatórias (taça)</button>
+              <button type="button" class="t-sport-chip" [disabled]="busy"
+                [attr.aria-pressed]="teamFormatDraft === 'GROUP_KNOCKOUT'"
+                (click)="teamFormatDraft = 'GROUP_KNOCKOUT'">Grupos + Eliminatórias</button>
             </div>
+            @if (teamFormatDraft === 'GROUP_KNOCKOUT') {
+              <p class="sport-choice-hint">Os dois primeiros de cada grupo avançam. Desempate: pontos,
+                critérios desportivos e, em último caso, ordem do sorteio inicial.</p>
+              <label id="group-count-label">Número de grupos</label>
+              <div class="t-community-sports" role="group" aria-labelledby="group-count-label">
+                <button type="button" class="t-sport-chip" [disabled]="busy"
+                  [attr.aria-pressed]="teamGroupCountDraft === 2"
+                  (click)="teamGroupCountDraft = 2">2 grupos · mínimo 4 equipas</button>
+                <button type="button" class="t-sport-chip" [disabled]="busy"
+                  [attr.aria-pressed]="teamGroupCountDraft === 4"
+                  (click)="teamGroupCountDraft = 4">4 grupos · mínimo 8 equipas</button>
+              </div>
+            }
             @if (teamFormatDraft === 'KNOCKOUT') {
               <p class="sport-choice-hint">Sorteio de 2 a 32 equipas. Há entradas diretas na primeira ronda quando necessário.
                 Cada jogo tem de ter vencedor. Os vencedores avançam até à final.</p>
@@ -169,7 +185,7 @@
             A escolha fica definida ao criar o torneio e não muda depois de publicares as jornadas.</p>
           }
         }
-        @if (showTeamCreate && teamFormatDraft === 'LEAGUE') {
+        @if (showTeamCreate && teamFormatDraft !== 'KNOCKOUT') {
           <fieldset class="t-points-rules t-tiebreak-rules" aria-describedby="t-tiebreak-help">
             <legend>Critério de desempate</legend>
             <p id="t-tiebreak-help" class="sport-choice-hint">
@@ -189,7 +205,7 @@
             </div>
           </fieldset>
         }
-        @if (!showTeamCreate || teamFormatDraft === 'LEAGUE') {
+        @if (!showTeamCreate || teamFormatDraft !== 'KNOCKOUT') {
         <fieldset class="t-points-rules" aria-describedby="t-points-rules-help">
           <legend>Regras de pontuação</legend>
           <p id="t-points-rules-help" class="sport-choice-hint">
@@ -222,7 +238,7 @@
         </fieldset>
         }
         <button type="button" class="t-btn t-btn-primary"
-          [disabled]="busy || (teamFormatDraft === 'LEAGUE' && !validPointRules)
+          [disabled]="busy || (teamFormatDraft !== 'KNOCKOUT' && !validPointRules)
             || nameDraft.trim().length < 2 || !sportDraft
             || (showTeamCreate && (!teamSizeDraft || teamSizeDraft < 1 || teamSizeDraft > 30))"
           (click)="showTeamCreate ? createTeamCompetition() : create()">
@@ -471,7 +487,7 @@
               <section class="t-section team-fixtures-section" aria-label="Jornadas entre equipas">
                 <div class="t-section-heading">
                   <div>
-                    <h5>{{ isKnockout ? 'Quadro de eliminatórias' : 'Jornadas e confrontos entre equipas' }}</h5>
+                    <h5>{{ isGroupKnockout ? 'Fase de grupos e eliminatórias' : (isKnockout ? 'Quadro de eliminatórias' : 'Jornadas e confrontos entre equipas') }}</h5>
                     @if (isKnockout) {
                       <p>O vencedor de cada jogo avança. Não são aceites empates nas eliminatórias.</p>
                     } @else {
@@ -532,7 +548,7 @@
                            </label>
                            <button type="button" class="t-btn t-btn-primary t-btn-small"
                              [disabled]="busy || !validScore(teamScoreDraft(game).home) || !validScore(teamScoreDraft(game).away)
-                                || (isKnockout && teamScoreDraft(game).home === teamScoreDraft(game).away)"
+                                || (isEliminationMatch(game) && teamScoreDraft(game).home === teamScoreDraft(game).away)"
                              [attr.aria-label]="(game.status === 'COMPLETED' ? 'Corrigir' : 'Guardar') + ' resultado entre ' + game.homeTeamName + ' e ' + game.awayTeamName"
                              (click)="saveTeamScore(game)">
                              {{ game.status === 'COMPLETED' ? 'Corrigir' : 'Guardar' }}
@@ -552,7 +568,7 @@
                     (click)="loadTeamMatches()">Ver mais confrontos</button>
                 }
               </section>
-              @if (!isKnockout) {
+              @if (selected.format === 'LEAGUE') {
               <section class="t-section team-standings-section" aria-label="Classificação por equipas">
                 <div class="t-section-heading">
                   <div>
