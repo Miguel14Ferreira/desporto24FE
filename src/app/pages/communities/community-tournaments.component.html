@@ -578,6 +578,60 @@
                     (click)="loadTeamMatches()">Ver mais confrontos</button>
                 }
               </section>
+              @if (isGroupKnockout) {
+                <section class="t-section team-standings-section" aria-label="Classificação dos grupos">
+                  <div class="t-section-heading">
+                    <div>
+                      <h5>Classificações dos grupos</h5>
+                      <p>Dois apurados por grupo · desempate por pontos, critérios desportivos e sorteio inicial.</p>
+                    </div>
+                    <button type="button" class="t-btn t-btn-secondary t-btn-small"
+                      [disabled]="teamGroupsLoading" (click)="loadGroupStandings()">Atualizar</button>
+                  </div>
+                  @if (teamGroupsLoading) {
+                    <p class="t-muted" role="status">A atualizar classificações…</p>
+                  }
+                  @if (teamGroupsError) {
+                    <p class="field-validation" role="alert">Não foi possível consultar as classificações dos grupos.</p>
+                  }
+                  @if (teamGroups; as groups) {
+                    @if (groups.knockoutStarted) {
+                      <p class="t-muted">Grupos concluídos. Os apurados já disputam as eliminatórias.</p>
+                    }
+                    @for (group of groups.groups; track group.groupNumber) {
+                      <h6>Grupo {{ groupLabel(group.groupNumber) }}</h6>
+                      <div class="standings-scroll">
+                        <table class="standings-table team-standings-table"
+                          [attr.aria-label]="'Classificação do grupo ' + groupLabel(group.groupNumber)">
+                          <thead>
+                            <tr>
+                              <th scope="col">#</th><th scope="col">Equipa</th>
+                              <th scope="col">J</th><th scope="col">V</th><th scope="col">E</th>
+                              <th scope="col">D</th><th scope="col">GM</th><th scope="col">GS</th>
+                              <th scope="col">DG</th><th scope="col">Pts</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            @for (row of group.standings; track row.teamId) {
+                              <tr>
+                                <td>{{ row.position }}</td>
+                                <th scope="row">{{ row.teamName }}
+                                  @if (groups.knockoutStarted && row.position <= 2) {
+                                    <span class="tournament-state">Apurada</span>
+                                  }
+                                </th>
+                                <td>{{ row.played }}</td><td>{{ row.won }}</td><td>{{ row.drawn }}</td>
+                                <td>{{ row.lost }}</td><td>{{ row.goalsFor }}</td><td>{{ row.goalsAgainst }}</td>
+                                <td>{{ row.goalDifference }}</td><td><strong>{{ row.points }}</strong></td>
+                              </tr>
+                            }
+                          </tbody>
+                        </table>
+                      </div>
+                    }
+                  }
+                </section>
+              }
               @if (selected.format === 'LEAGUE') {
               <section class="t-section team-standings-section" aria-label="Classificação por equipas">
                 <div class="t-section-heading">
