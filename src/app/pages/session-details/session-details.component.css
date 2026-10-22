@@ -1495,3 +1495,8 @@ h1 {
 .compliments-received { margin-top: 1rem; padding-top: .75rem; border-top: 1px solid rgba(255,255,255,.13); }
 .compliments-received h3 { margin: 0 0 .5rem; font-size: 1rem; }
 .compliments-received p { margin: .25rem 0; color: #d1fae5; }
+
+.session-location-map { color: #e0f2fe; text-decoration: underline; text-underline-offset: .2rem; overflow-wrap: anywhere; font-weight: 650; }
+.session-location-map:hover { color: #7dd3fc; }
+.session-location-map:focus-visible { outline: 2px solid #7dd3fc; outline-offset: 3px; }
+.address-panel small { display: block; margin-top: .35rem; color: #94a3b8; }
