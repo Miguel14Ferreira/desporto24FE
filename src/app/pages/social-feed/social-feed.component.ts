@@ -235,6 +235,10 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
     );
   }
 
+  // QA accounts stay usable for testing, but must never be promoted as people to follow.
+  // Match only the two known test usernames, not a general 'test' substring.
+  private readonly qaSuggestionUsernames = new Set(['jynloteste01', 'jynloteste02']);
+
   private rankSuggestedPeople(profiles: CommunityProfile[], me: CommunityProfile | null, friends: Set<string>): CommunityProfile[] {
     const sports = new Set((me?.favoriteSports || '').split(/[,;|]/)
       .map(value => this.normalizeSuggestion(value)).filter(Boolean));
@@ -242,7 +246,8 @@ export class SocialFeedComponent implements OnInit, OnDestroy {
     return profiles
       .filter(profile => profile.username?.trim()
         && profile.username.toLowerCase() !== this.currentUsername.toLowerCase()
-        && !friends.has(profile.username.toLowerCase()))
+        && !friends.has(profile.username.toLowerCase())
+        && !this.qaSuggestionUsernames.has(profile.username.trim().toLowerCase()))
       .map((profile, index) => {
         const theirSports = (profile.favoriteSports || '').split(/[,;|]/)
           .map(value => this.normalizeSuggestion(value));
