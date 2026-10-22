@@ -251,6 +251,12 @@
               <span>{{ 'community.ownProfile' | t }}</span>
             } @else if (selectedBlocked) {
               <span>{{ 'community.blockedStatus' | t }}</span>
+            } @else if (friendshipLoading) {
+              <span class="friend-status" role="status">A verificar amizade…</span>
+            } @else if (friendshipError) {
+              <span class="friend-status" role="alert">Não foi possível verificar a amizade.</span>
+              <button type="button" class="jynlo-action jynlo-action--neutral"
+                (click)="loadFriendshipStatus(selectedProfile.username)">Tentar novamente</button>
             } @else if (isFriend(selectedProfile)) {
               <button type="button" class="friend-status jynlo-action jynlo-action--neutral" disabled>✓ {{ 'friends.title' | t }}</button>
               <a
