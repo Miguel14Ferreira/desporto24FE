@@ -350,15 +350,13 @@ export class CommunitiesComponent implements OnInit {
 
   private requestedInviteId(): number | null {
     const raw = this.route.snapshot.queryParamMap.get('invite');
-    const id = raw && /^[1-9]\\d*$/.test(raw) ? Number(raw) : NaN;
+    const id = raw && /^[1-9]\d*$/.test(raw) ? Number(raw) : NaN;
     return Number.isSafeInteger(id) ? id : null;
   }
 
   isTargetedInvite(invite: CommunityInvite): boolean {
     return invite.id === this.requestedInviteId();
   }
-
-
 
   backToCommunities(): void {
     void this.router.navigate(['/menu/communities']);
