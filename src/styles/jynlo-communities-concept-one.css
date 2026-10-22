@@ -193,8 +193,27 @@ body .communities-page.jynlo-c1 .community-list .community-card .sport-tags {
   flex-wrap: wrap;
   gap: .4rem;
 }
-body .communities-page.jynlo-c1 .community-detail-page .role-badge {
+body .communities-page.jynlo-c1.community-detail-page .role-badge {
   color: var(--jynlo-ui-brand);
+  border: 1px solid rgba(65, 233, 176, .28);
+  background: rgba(65, 233, 176, .075);
+}
+body .communities-page.jynlo-c1 .list-heading h2 {
+  margin: 0;
+  color: var(--jynlo-ui-text);
+  font-size: clamp(1.35rem, 2vw, 1.85rem);
+  font-weight: 820;
+  letter-spacing: -.025em;
+}
+body .communities-page.jynlo-c1 .list-heading .mine-hint {
+  color: var(--jynlo-ui-muted);
+  margin: .4rem 0 0;
+  font-size: .88rem;
+  line-height: 1.5;
+}
+body .communities-page.jynlo-c1 .list-heading .eyebrow {
+  color: var(--jynlo-ui-brand);
+  margin: 0 0 .45rem;
 }
 body .communities-page.jynlo-c1.community-detail-page .detail-header {
   position: relative;
