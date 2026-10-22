@@ -10,6 +10,11 @@ export interface UserBlockStatus {
   blocked: boolean;
 }
 
+export interface FriendshipStatus {
+  friends: boolean;
+  pendingRequest: boolean;
+}
+
 export interface ProfileSearchFilters {
   name?: string;
   sport?: string;
@@ -71,6 +76,12 @@ export class CommunityService {
   publicProfile(username: string): Observable<CommunityProfile> {
     return this.http.get<CommunityProfile>(
       this.profileUrl + '/' + encodeURIComponent(username)
+    );
+  }
+
+  friendshipStatus(username: string): Observable<FriendshipStatus> {
+    return this.http.get<FriendshipStatus>(
+      this.friendsUrl + '/status/' + encodeURIComponent(username)
     );
   }
 
