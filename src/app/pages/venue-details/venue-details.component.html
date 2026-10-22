@@ -49,6 +49,21 @@
         </div>
       </div>
 
+      @if (!ratingSummaryLoading && !ratingSummaryLoadError) {
+        <section class="venue-rating-summary" aria-labelledby="venue-rating-heading">
+          <h2 id="venue-rating-heading">{{ 'venue.detail.ratingHeading' | t }}</h2>
+          @if (ratingSummary; as summary) {
+            <p class="venue-rating-summary-score">
+              <strong>{{ summary.averageScore | number:'1.1-1' }} / 5 ★</strong>
+              <span>{{ 'venue.detail.ratingCount' | t:{ count: summary.ratingCount } }}</span>
+            </p>
+          } @else {
+            <p>{{ 'venue.detail.ratingWaiting' | t }}</p>
+          }
+          <small>{{ 'venue.detail.ratingOnlyPlayed' | t }}</small>
+        </section>
+      }
+
       @if (mapUrl; as venueMapUrl) {
         <a class="venue-map-link"
            [href]="venueMapUrl"
