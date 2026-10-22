@@ -26,7 +26,7 @@
               @if (cityMapsUrl; as mapUrl) {
                 <a class="public-location-link" [href]="mapUrl" target="_blank" rel="noopener noreferrer"
                    [attr.aria-label]="'publicSession.viewAreaOnMaps' | t">
-                  {{ details.city }} <span aria-hidden="true">↗</span>
+                  <strong>{{ details.city }}</strong> <span aria-hidden="true">↗</span>
                 </a>
               } @else {
                 <strong>{{ 'publicSession.notSpecified' | t }}</strong>
