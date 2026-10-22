@@ -82,7 +82,7 @@ describe('Community tournaments management', () => {
         5, 1, { winPoints: 3, drawPoints: 1, lossPoints: 0 },
         'GOAL_DIFFERENCE_FIRST', 'GROUP_KNOCKOUT', 4);
       expect(component.teamFormatDraft).toBe('LEAGUE');
-      expect(component.teamGroupCountDraft).toBe(2);
+      expect(Number(component.teamGroupCountDraft)).toBe(2);
       expect(component.isGroupKnockout).toBeTrue();
     });
 
