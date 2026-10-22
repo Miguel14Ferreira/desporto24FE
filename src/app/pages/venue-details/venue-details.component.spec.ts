@@ -145,12 +145,14 @@ describe('VenueDetailsComponent', () => {
 
     const venueService = jasmine.createSpyObj<VenueService>('VenueService', [
       'get',
+      'getRatingSummary',
       'listPhotos',
       'listSportConditions',
       'addPhoto',
       'addSportCondition'
     ]);
 
+    venueService.getRatingSummary.and.returnValue(of({venueId: 7, ratingCount: 0, averageScore: null}));
     venueService.get.and.returnValue(of(venue));
     venueService.listPhotos.and.returnValue(of([]));
     venueService.listSportConditions.and.returnValue(of([]));
@@ -162,10 +164,46 @@ describe('VenueDetailsComponent', () => {
     expect(venueService.get).toHaveBeenCalledOnceWith(7);
     expect(venueService.listPhotos).toHaveBeenCalledOnceWith(7);
     expect(venueService.listSportConditions).toHaveBeenCalledOnceWith(7);
+    expect(venueService.getRatingSummary).toHaveBeenCalledOnceWith(7);
+    expect(component.ratingSummary).toBeNull();
     expect(component.venue).toEqual(venue);
     expect(component.loading).toBeFalse();
     expect(component.photosLoading).toBeFalse();
     expect(component.sportConditionsLoading).toBeFalse();
+    expect(component.loadError).toBeFalse();
+  });
+
+  it('displays a public average only after three different players rated', () => {
+    const route = {snapshot:{paramMap:{get: () => '7'}}} as unknown as ActivatedRoute;
+    const venueService = jasmine.createSpyObj<VenueService>('VenueService', [
+      'get', 'getRatingSummary', 'listPhotos', 'listSportConditions'
+    ]);
+    venueService.get.and.returnValue(of(createVenue()));
+    venueService.listPhotos.and.returnValue(of([]));
+    venueService.listSportConditions.and.returnValue(of([]));
+    venueService.getRatingSummary.and.returnValue(of({
+      venueId: 7, ratingCount: 3, averageScore: 4.7
+    }));
+    const component = new VenueDetailsComponent(route, venueService);
+    component.ngOnInit();
+    expect(component.ratingSummary?.ratingCount).toBe(3);
+    expect(component.ratingSummary?.averageScore).toBe(4.7);
+  });
+
+  it('keeps the venue usable when its ratings API is unavailable', () => {
+    const route = {snapshot:{paramMap:{get: () => '7'}}} as unknown as ActivatedRoute;
+    const venueService = jasmine.createSpyObj<VenueService>('VenueService', [
+      'get', 'getRatingSummary', 'listPhotos', 'listSportConditions'
+    ]);
+    venueService.get.and.returnValue(of(createVenue()));
+    venueService.listPhotos.and.returnValue(of([]));
+    venueService.listSportConditions.and.returnValue(of([]));
+    venueService.getRatingSummary.and.returnValue(throwError(() => new Error('unavailable')));
+    const component = new VenueDetailsComponent(route, venueService);
+    component.ngOnInit();
+    expect(component.venue?.id).toBe(7);
+    expect(component.ratingSummary).toBeNull();
+    expect(component.ratingSummaryLoadError).toBeTrue();
     expect(component.loadError).toBeFalse();
   });
 
@@ -180,12 +218,14 @@ describe('VenueDetailsComponent', () => {
 
     const venueService = jasmine.createSpyObj<VenueService>('VenueService', [
       'get',
+      'getRatingSummary',
       'listPhotos',
       'listSportConditions',
       'addPhoto',
       'addSportCondition'
     ]);
 
+    venueService.getRatingSummary.and.returnValue(of({venueId: 7, ratingCount: 0, averageScore: null}));
     venueService.get.and.returnValue(throwError(() => new Error('load failed')));
     venueService.listPhotos.and.returnValue(of([]));
     venueService.listSportConditions.and.returnValue(of([]));
@@ -213,12 +253,14 @@ describe('VenueDetailsComponent', () => {
 
     const venueService = jasmine.createSpyObj<VenueService>('VenueService', [
       'get',
+      'getRatingSummary',
       'listPhotos',
       'listSportConditions',
       'addPhoto',
       'addSportCondition'
     ]);
 
+    venueService.getRatingSummary.and.returnValue(of({venueId: 7, ratingCount: 0, averageScore: null}));
     venueService.get.and.returnValue(of(venue));
     venueService.listPhotos.and.returnValue(of([]));
     venueService.listSportConditions.and.returnValue(
@@ -249,12 +291,14 @@ describe('VenueDetailsComponent', () => {
 
     const venueService = jasmine.createSpyObj<VenueService>('VenueService', [
       'get',
+      'getRatingSummary',
       'listPhotos',
       'listSportConditions',
       'addPhoto',
       'addSportCondition'
     ]);
 
+    venueService.getRatingSummary.and.returnValue(of({venueId: 7, ratingCount: 0, averageScore: null}));
     venueService.get.and.returnValue(of(venue));
     venueService.listPhotos.and.returnValue(
       throwError(() => new Error('photos failed'))
@@ -496,6 +540,7 @@ describe('VenueDetailsComponent', () => {
 
     const venueService = jasmine.createSpyObj<VenueService>('VenueService', [
       'get',
+      'getRatingSummary',
       'listPhotos',
       'listSportConditions',
       'addPhoto',

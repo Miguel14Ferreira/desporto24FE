@@ -297,6 +297,63 @@
             </section>
           }
 
+          @if (canRateVenuePostGame() && (venueRatingDismissed || venueRatingCollapsedByExisting)) {
+            <button type="button" class="share-session-action venue-rating-reopen-action"
+                    (click)="reopenVenueRating()">
+              {{ (myVenueScore !== null ? 'sessionDetail.venueRatingEdit'
+                                          : 'sessionDetail.venueRatingReopen') | t }}
+            </button>
+          }
+          @if (canRateVenuePostGame() && !venueRatingDismissed && !venueRatingCollapsedByExisting) {
+            <section class="overall-rating-panel venue-rating-panel" aria-labelledby="venue-rating-title">
+              <div>
+                <span class="overall-rating-kicker">{{ 'sessionDetail.overallRatingKicker' | t }}</span>
+                <h2 id="venue-rating-title">{{ 'sessionDetail.venueRatingTitle' | t }}</h2>
+                <p>{{ 'sessionDetail.venueRatingDescription' | t }}</p>
+              </div>
+              <div class="overall-rating-stars" role="group"
+                   [attr.aria-label]="'sessionDetail.venueRatingStarsLabel' | t">
+                @for (star of overallRatingStars; track star) {
+                  <button type="button" class="overall-rating-star venue-rating-star"
+                          [class.is-selected]="star <= (selectedVenueScore ?? 0)"
+                          [attr.aria-label]="'sessionDetail.overallRatingStar' | t:{ count: star }"
+                          [attr.aria-pressed]="selectedVenueScore === star"
+                          [disabled]="venueRatingLoading || venueRatingSaving || venueRatingLoadedSessionId !== session.id"
+                          (click)="selectVenueScore(star)">★</button>
+                }
+              </div>
+              @if (myVenueScore !== null) {
+                <p class="overall-rating-existing">
+                  {{ 'sessionDetail.venueRatingExisting' | t:{ count: myVenueScore } }}
+                </p>
+              }
+              @if (venueRatingLoading) {
+                <p class="overall-rating-feedback">{{ 'sessionDetail.venueRatingLoading' | t }}</p>
+              }
+              @if (venueRatingError) {
+                <p class="overall-rating-feedback overall-rating-error" role="alert">{{ venueRatingError }}</p>
+                @if (venueRatingLoadedSessionId !== session.id) {
+                  <button type="button" class="overall-rating-retry" (click)="loadMyVenueRating()"
+                          [disabled]="venueRatingLoading">{{ 'sessionDetail.retry' | t }}</button>
+                }
+              }
+              @if (venueRatingSuccess) {
+                <p class="overall-rating-feedback overall-rating-success" role="status">{{ venueRatingSuccess }}</p>
+              }
+              <div class="overall-rating-actions">
+                <button type="button" class="primary-action jynlo-action jynlo-action--primary"
+                        [disabled]="!canSaveVenueRating()" (click)="saveVenueRating()">
+                  {{ (myVenueScore === null ? 'sessionDetail.venueRatingSave'
+                                              : 'sessionDetail.venueRatingUpdate') | t }}
+                </button>
+                <button type="button" class="overall-rating-skip"
+                        [disabled]="venueRatingSaving" (click)="dismissVenueRating()">
+                  {{ 'sessionDetail.overallRatingSkip' | t }}
+                </button>
+              </div>
+            </section>
+          }
+
           @if (session.venue) {
             <section class="venue-detail-panel">
               <div class="venue-detail-heading">

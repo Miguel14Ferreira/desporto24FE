@@ -62,7 +62,7 @@ describe('SessionDetailsComponent', () => {
     directChatService.send.and.returnValue(of({} as any));
     sessionService = jasmine.createSpyObj<SessionService>(
       'SessionService',
-      ['detail', 'join', 'leave', 'complete', 'reportDidNotOccur', 'reportProblem', 'messages', 'postMessage', 'participants', 'removeParticipant', 'teamSuggestion', 'confirmTeams', 'futureExclusionStatus', 'excludeFromFutureSessions', 'allowFutureSessions', 'myOverallRating', 'rateOverall']
+      ['detail', 'join', 'leave', 'complete', 'reportDidNotOccur', 'reportProblem', 'messages', 'postMessage', 'participants', 'removeParticipant', 'teamSuggestion', 'confirmTeams', 'futureExclusionStatus', 'excludeFromFutureSessions', 'allowFutureSessions', 'myOverallRating', 'rateOverall', 'myVenueRating', 'rateVenue']
     );
     sessionService.detail.and.returnValue(of(session));
     sessionService.join.and.returnValue(of({
@@ -78,6 +78,10 @@ describe('SessionDetailsComponent', () => {
     sessionService.excludeFromFutureSessions.and.returnValue(of({ excluded: true }));
     sessionService.allowFutureSessions.and.returnValue(of({ excluded: false }));
     sessionService.myOverallRating.and.returnValue(of(null));
+    sessionService.myVenueRating.and.returnValue(of(null));
+    sessionService.rateVenue.and.returnValue(of({
+      venueId: 100, score: 4, updatedAt: '2026-10-22T10:00:00Z'
+    }));
     sessionService.rateOverall.and.returnValue(of({
       overallScore: 5, updatedAt: '2026-10-13T10:00:00Z'
     }));
@@ -262,6 +266,64 @@ describe('SessionDetailsComponent', () => {
     expect(sessionService.reportDidNotOccur).toHaveBeenCalledWith(7);
     expect(component.session?.status).toBe('CANCELLED');
     expect(reliabilityService.recordAttendance).not.toHaveBeenCalled();
+  });
+
+  it('offers venue stars only after confirmed attendance at a registered venue', () => {
+    (component as any).currentUsername = 'player-one';
+    component.session = {
+      ...session, joined: true,
+      gameDate: new Date(Date.now() - 3 * 3600_000).toISOString(),
+      venue: { id: 100, name: 'Recinto Jynlo', city: 'Lisboa' } as any
+    };
+    component.sessionParticipants = [{
+      id: 15, username: 'player-one', attendanceStatus: 'PENDING',
+      joinedAt: '2026-09-20T18:00:00Z'
+    }];
+    fixture.detectChanges();
+    expect(component.canRateVenuePostGame()).toBeFalse();
+    expect(fixture.nativeElement.querySelector('.venue-rating-panel')).toBeNull();
+
+    confirmRatingAttendance('player-one');
+    component.loadMyVenueRating();
+    fixture.detectChanges();
+    expect(component.canRateVenuePostGame()).toBeTrue();
+    expect(fixture.nativeElement.querySelectorAll('.venue-rating-star').length).toBe(5);
+    expect(sessionService.myVenueRating).toHaveBeenCalledWith(7);
+  });
+
+  it('submits a venue score separately from the game experience rating', () => {
+    (component as any).currentUsername = 'player-one';
+    component.session = {
+      ...session, joined: true,
+      gameDate: new Date(Date.now() - 3 * 3600_000).toISOString(),
+      venue: { id: 100, name: 'Recinto Jynlo', city: 'Lisboa' } as any
+    };
+    confirmRatingAttendance('player-one');
+    component.loadMyVenueRating();
+    fixture.detectChanges();
+    const stars = fixture.nativeElement.querySelectorAll('.venue-rating-star') as NodeListOf<HTMLButtonElement>;
+    stars[3].click();
+    fixture.detectChanges();
+    expect(component.canSaveVenueRating()).toBeTrue();
+    (fixture.nativeElement.querySelector('.venue-rating-panel .primary-action') as HTMLButtonElement).click();
+    expect(sessionService.rateVenue).toHaveBeenCalledOnceWith(7, 4);
+    expect(sessionService.rateOverall).not.toHaveBeenCalled();
+    expect(component.myVenueScore).toBe(4);
+    expect(component.venueRatingSuccess).toContain('guardada');
+  });
+
+  it('never renders venue ratings for a game without a registered venue', () => {
+    (component as any).currentUsername = 'player-one';
+    component.session = {
+      ...session, joined: true,
+      gameDate: new Date(Date.now() - 3 * 3600_000).toISOString(),
+      venue: null
+    };
+    confirmRatingAttendance('player-one');
+    fixture.detectChanges();
+    expect(component.canRateVenuePostGame()).toBeFalse();
+    expect(fixture.nativeElement.querySelector('.venue-rating-panel')).toBeNull();
+    expect(sessionService.myVenueRating).not.toHaveBeenCalled();
   });
 
   it('offers one optional overall rating only to registered participants after the game', () => {

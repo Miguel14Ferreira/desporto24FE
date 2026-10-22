@@ -15,6 +15,13 @@ export interface VenueSuggestionPage {
   hasMore: boolean;
 }
 
+/** No public count or average is exposed until three different people rate. */
+export interface VenueRatingSummary {
+  venueId: number;
+  ratingCount: number;
+  averageScore: number | null;
+}
+
 export interface VenuePhoto {
   id: number;
   photoUrl: string;
@@ -80,6 +87,10 @@ export class VenueService {
     if (sport?.trim()) params = params.set('sport', sport.trim());
     if (district?.trim()) params = params.set('district', district.trim());
     return this.http.get<VenueSuggestionPage>(this.baseUrl + '/suggest', { params });
+  }
+
+  getRatingSummary(id: number): Observable<VenueRatingSummary> {
+    return this.http.get<VenueRatingSummary>(this.baseUrl + '/' + id + '/ratings/summary');
   }
 
   get(id: number): Observable<Venue> {
