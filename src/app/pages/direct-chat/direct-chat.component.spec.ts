@@ -131,6 +131,7 @@ describe('DirectChatComponent', () => {
     expect(component.messageBody).toBe('Teste de rede');
     component.sendMessage();
     expect(service.send).toHaveBeenCalledTimes(1);
+    fixture.detectChanges();
     expect((fixture.nativeElement as HTMLElement).querySelector('.delivery-warning')).not.toBeNull();
     component.resumeAfterUncertainSend();
     expect(component.deliveryUncertain).toBeFalse();
