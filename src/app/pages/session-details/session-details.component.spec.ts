@@ -62,7 +62,7 @@ describe('SessionDetailsComponent', () => {
     directChatService.send.and.returnValue(of({} as any));
     sessionService = jasmine.createSpyObj<SessionService>(
       'SessionService',
-      ['detail', 'join', 'leave', 'complete', 'reportDidNotOccur', 'reportProblem', 'messages', 'postMessage', 'participants', 'removeParticipant', 'teamSuggestion', 'confirmTeams', 'futureExclusionStatus', 'excludeFromFutureSessions', 'allowFutureSessions', 'myOverallRating', 'rateOverall', 'myVenueRating', 'rateVenue']
+      ['detail', 'join', 'leave', 'complete', 'reportDidNotOccur', 'reportProblem', 'messages', 'postMessage', 'participants', 'removeParticipant', 'teamSuggestion', 'confirmTeams', 'futureExclusionStatus', 'excludeFromFutureSessions', 'allowFutureSessions', 'myOverallRating', 'rateOverall', 'myVenueRating', 'rateVenue', 'sentCompliments', 'receivedCompliments', 'giveCompliment']
     );
     sessionService.detail.and.returnValue(of(session));
     sessionService.join.and.returnValue(of({
@@ -84,6 +84,14 @@ describe('SessionDetailsComponent', () => {
     }));
     sessionService.rateOverall.and.returnValue(of({
       overallScore: 5, updatedAt: '2026-10-13T10:00:00Z'
+    }));
+    sessionService.sentCompliments.and.returnValue(of([]));
+    sessionService.receivedCompliments.and.returnValue(of([]));
+    sessionService.giveCompliment.and.returnValue(of({
+      senderUsername: 'player-one',
+      recipientUsername: 'player-two',
+      type: 'FAIR_PLAY',
+      updatedAt: '2026-10-22T10:00:00Z'
     }));
     sessionService.messages.and.returnValue(of([]));
     sessionService.participants.and.returnValue(of([
@@ -266,6 +274,105 @@ describe('SessionDetailsComponent', () => {
     expect(sessionService.reportDidNotOccur).toHaveBeenCalledWith(7);
     expect(component.session?.status).toBe('CANCELLED');
     expect(reliabilityService.recordAttendance).not.toHaveBeenCalled();
+  });
+
+  it('offers positive peer compliments only when both players attended', () => {
+    (component as any).currentUsername = 'player-one';
+    component.session = {
+      ...session, joined: true,
+      gameDate: new Date(Date.now() - 3 * 3600_000).toISOString()
+    };
+    confirmRatingAttendance('player-one');
+    component.sessionParticipants.push({
+      id: 16, username: 'player-two', attendanceStatus: 'PENDING', joinedAt: '2026-09-20T18:00:00Z'
+    });
+    fixture.detectChanges();
+    expect(component.canOfferCompliments()).toBeFalse();
+    expect(fixture.nativeElement.querySelector('.player-compliments-panel')).toBeNull();
+
+    component.sessionParticipants[1].attendanceStatus = 'ATTENDED';
+    fixture.detectChanges();
+    expect(component.canOfferCompliments()).toBeTrue();
+    expect(fixture.nativeElement.querySelector('.player-compliments-panel')).not.toBeNull();
+    expect(sessionService.sentCompliments).not.toHaveBeenCalled();
+
+    (fixture.nativeElement.querySelector('.compliments-toggle') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(sessionService.sentCompliments).toHaveBeenCalledOnceWith(7);
+    expect(sessionService.receivedCompliments).toHaveBeenCalledOnceWith(7);
+    expect(fixture.nativeElement.querySelectorAll('.player-compliment-choice').length).toBe(3);
+  });
+
+  it('submits username-based compliments without confusing participation IDs with profile IDs', () => {
+    (component as any).currentUsername = 'player-one';
+    component.session = {
+      ...session, joined: true,
+      gameDate: new Date(Date.now() - 3 * 3600_000).toISOString()
+    };
+    confirmRatingAttendance('player-one');
+    component.sessionParticipants.push({
+      id: 9999, username: 'player-two', attendanceStatus: 'ATTENDED', joinedAt: '2026-09-20T18:00:00Z'
+    });
+    sessionService.giveCompliment.and.returnValue(of({
+      senderUsername: 'player-one', recipientUsername: 'player-two',
+      type: 'GREAT_TEAMMATE', updatedAt: '2026-10-22T10:00:00Z'
+    }));
+    component.toggleCompliments();
+    fixture.detectChanges();
+    const choices = fixture.nativeElement.querySelectorAll('.player-compliment-choice') as NodeListOf<HTMLButtonElement>;
+    choices[1].click();
+    fixture.detectChanges();
+    expect(sessionService.giveCompliment).toHaveBeenCalledOnceWith(7, 'player-two', 'GREAT_TEAMMATE');
+    expect(component.myCompliment('player-two')?.type).toBe('GREAT_TEAMMATE');
+    expect(fixture.nativeElement.querySelector('.player-compliment-choice.is-sent')).not.toBeNull();
+
+    choices[1].click();
+    expect(sessionService.giveCompliment).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows only compliments received by the logged-in player', () => {
+    (component as any).currentUsername = 'player-one';
+    component.session = {
+      ...session, joined: true,
+      gameDate: new Date(Date.now() - 3 * 3600_000).toISOString()
+    };
+    confirmRatingAttendance('player-one');
+    component.sessionParticipants.push({
+      id: 16, username: 'player-two', attendanceStatus: 'ATTENDED', joinedAt: '2026-09-20T18:00:00Z'
+    });
+    sessionService.receivedCompliments.and.returnValue(of([{
+      senderUsername: 'player-two', recipientUsername: 'player-one', type: 'FAIR_PLAY',
+      updatedAt: '2026-10-22T10:00:00Z'
+    }]));
+    component.toggleCompliments();
+    fixture.detectChanges();
+    const received = fixture.nativeElement.querySelector('.compliments-received') as HTMLElement;
+    expect(received).not.toBeNull();
+    expect(received.textContent).toContain('player-two');
+    expect(received.textContent).toContain('Fair play');
+    expect(sessionService.receivedCompliments).toHaveBeenCalledOnceWith(7);
+  });
+
+  it('handles unavailable compliments API without submitting any feedback', () => {
+    (component as any).currentUsername = 'player-one';
+    component.session = {
+      ...session, joined: true,
+      gameDate: new Date(Date.now() - 3 * 3600_000).toISOString()
+    };
+    confirmRatingAttendance('player-one');
+    component.sessionParticipants.push({
+      id: 16, username: 'player-two', attendanceStatus: 'ATTENDED', joinedAt: '2026-09-20T18:00:00Z'
+    });
+    sessionService.sentCompliments.and.returnValue(throwError(() => new Error('offline')));
+    component.toggleCompliments();
+    fixture.detectChanges();
+    expect(component.complimentsLoadedSessionId).toBeNull();
+    expect(fixture.nativeElement.querySelector('.player-compliments-panel [role="alert"]')).not.toBeNull();
+    expect(sessionService.giveCompliment).not.toHaveBeenCalled();
+    sessionService.sentCompliments.and.returnValue(of([]));
+    component.loadCompliments();
+    fixture.detectChanges();
+    expect(component.complimentsLoadedSessionId).toBe(7);
   });
 
   it('offers venue stars only after confirmed attendance at a registered venue', () => {
