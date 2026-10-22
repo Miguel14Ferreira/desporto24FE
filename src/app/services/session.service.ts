@@ -17,6 +17,16 @@ export interface MyVenueRating {
   updatedAt: string;
 }
 
+/** Positive only: no public player stars or rankings. */
+export type PlayerComplimentType = 'FAIR_PLAY' | 'GREAT_TEAMMATE' | 'POSITIVE_ENERGY';
+
+export interface PlayerCompliment {
+  senderUsername: string;
+  recipientUsername: string;
+  type: PlayerComplimentType;
+  updatedAt: string;
+}
+
 export interface SessionSearchFilters {
   query?: string;
   sport?: string;
@@ -185,6 +195,23 @@ export class SessionService {
     return this.http.post<void>(
       this.baseUrl + '/' + id + '/problems',
       { type, details: details?.trim() || null }
+    );
+  }
+
+  /** Load feedback that this signed-in player sent after a session. */
+  sentCompliments(sessionId: number): Observable<PlayerCompliment[]> {
+    return this.http.get<PlayerCompliment[]>(`${this.baseUrl}/${sessionId}/compliments/me`);
+  }
+
+  /** Private compliments received by the signed-in player. */
+  receivedCompliments(sessionId: number): Observable<PlayerCompliment[]> {
+    return this.http.get<PlayerCompliment[]>(`${this.baseUrl}/${sessionId}/compliments/received/me`);
+  }
+
+  giveCompliment(sessionId: number, recipientUsername: string, type: PlayerComplimentType): Observable<PlayerCompliment> {
+    return this.http.put<PlayerCompliment>(
+      `${this.baseUrl}/${sessionId}/compliments/players/${encodeURIComponent(recipientUsername)}/me`,
+      { type }
     );
   }
 
