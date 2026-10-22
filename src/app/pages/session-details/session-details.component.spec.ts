@@ -2265,8 +2265,14 @@ describe('SessionDetailsComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('ana');
 
     fixture.detectChanges();
+    const reason = fixture.nativeElement.querySelector('.future-exclusion-reason') as HTMLSelectElement;
+    expect(reason).not.toBeNull();
+    expect((fixture.nativeElement.querySelector('.future-exclusion-confirm') as HTMLButtonElement).disabled).toBeTrue();
+    reason.value = 'NO_SHOW';
+    reason.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
     (fixture.nativeElement.querySelector('.future-exclusion-confirm') as HTMLButtonElement).click();
-    expect(sessionService.excludeFromFutureSessions).toHaveBeenCalledWith(7, 15);
+    expect(sessionService.excludeFromFutureSessions).toHaveBeenCalledWith(7, 15, 'NO_SHOW');
     expect(component.futureExclusions[15]).toBeTrue();
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.future-exclusion-undo')).not.toBeNull();
@@ -2279,20 +2285,53 @@ describe('SessionDetailsComponent', () => {
     expect(component.futureExclusions[15]).toBeFalse();
   });
 
-  it('does not create future exclusions without a recorded no-show or for outsiders', () => {
+  it('requires an explicit reason and does not allow restrictions by outsiders', () => {
     const participant = { id: 15, username: 'ana', attendanceStatus: 'PENDING' as const,
       joinedAt: '2026-09-20T18:00:00Z' };
     (component as any).currentUsername = 'creator-user';
     component.session = { ...session, joined: true, gameDate: '2020-10-01T18:00:00Z' };
     component.futureExclusions[15] = false;
     component.requestFutureExclusion(participant);
+    expect(component.pendingFutureExclusionId).toBe(15);
     component.confirmFutureExclusion(participant);
     expect(sessionService.excludeFromFutureSessions).not.toHaveBeenCalled();
+    component.chooseFutureExclusionReason(participant, 'NO_SHOW');
+    expect(component.pendingFutureExclusionReason).toBe('');
+    component.cancelFutureExclusion();
 
     (component as any).currentUsername = 'outsider';
-    component.requestFutureExclusion({ ...participant, attendanceStatus: 'NO_SHOW' });
+    component.requestFutureExclusion(participant);
     expect(component.pendingFutureExclusionId).toBeNull();
     expect(sessionService.excludeFromFutureSessions).not.toHaveBeenCalled();
+  });
+
+  it('lets the organizer restrict a present player for lack of fair play without changing attendance', () => {
+    (component as any).currentUsername = 'creator-user';
+    component.session = { ...session, joined: true, gameDate: '2020-10-01T18:00:00Z' };
+    component.showAttendanceManager = true;
+    const player = { id: 15, username: 'ana', attendanceStatus: 'ATTENDED' as const,
+      joinedAt: '2026-09-20T18:00:00Z' };
+    sessionService.participants.and.returnValue(of([player]));
+    component.loadParticipants();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.future-exclusion-request')).not.toBeNull();
+    (fixture.nativeElement.querySelector('.future-exclusion-request') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    const reason = fixture.nativeElement.querySelector('.future-exclusion-reason') as HTMLSelectElement;
+    expect(Array.from(reason.options).some(option => option.value === 'NO_SHOW')).toBeFalse();
+    reason.value = 'UNSPORTING_CONDUCT';
+    reason.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+    expect(component.pendingFutureExclusionReason).toBe('UNSPORTING_CONDUCT');
+    (fixture.nativeElement.querySelector('.future-exclusion-confirm') as HTMLButtonElement).click();
+    expect(sessionService.excludeFromFutureSessions).toHaveBeenCalledOnceWith(7, 15, 'UNSPORTING_CONDUCT');
+    expect(player.attendanceStatus).toBe('ATTENDED');
+    expect(component.futureExclusions[15]).toBeTrue();
+
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('.future-exclusion-undo') as HTMLButtonElement).click();
+    expect(sessionService.allowFutureSessions).toHaveBeenCalledOnceWith(7, 15);
+    expect(component.futureExclusions[15]).toBeFalse();
   });
 
   it('shows a recoverable error when restriction status cannot be loaded', () => {
