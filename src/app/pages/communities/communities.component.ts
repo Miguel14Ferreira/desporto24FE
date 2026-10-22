@@ -31,11 +31,12 @@ import {
 } from '../../services/community-groups.service';
 import { CommunityService } from '../../services/community.service';
 import { SessionService } from '../../services/session.service';
+import { CommunityTimelineService, CommunityTimelineEntry, CommunityTimelineKind } from '../../services/community-timeline.service';
 import { CommunityProfile } from '../model/community-profile';
 import { SessionSummary } from '../model/session-summary';
 import { SPORTS_CATALOG } from '../../shared/sports-catalog';
 
-type CommunityTab = 'home' | 'sessions' | 'tournaments' | 'ranking' | 'stats' | 'members';
+type CommunityTab = 'home' | 'feed' | 'chat' | 'sessions' | 'tournaments' | 'ranking' | 'stats' | 'members';
 
 @Component({
   selector: 'app-communities',
@@ -90,6 +91,85 @@ export class CommunitiesComponent implements OnInit {
   errorMessage = '';
 
   activeTab: CommunityTab = 'home';
+  timelineEntries: CommunityTimelineEntry[] = [];
+  timelineLoading = false;
+  timelineSending = false;
+  timelineDeletingId: number | null = null;
+  timelineError = '';
+  feedDraft = '';
+  chatDraft = '';
+  private timelineRequestVersion = 0;
+
+  get timelineKind(): CommunityTimelineKind {
+    return this.activeTab === 'chat' ? 'CHAT' : 'POST';
+  }
+
+  loadTimeline(): void {
+    if (!this.selected || (this.activeTab !== 'feed' && this.activeTab !== 'chat')) return;
+    const communityId = this.selected.id;
+    const kind = this.timelineKind;
+    const version = ++this.timelineRequestVersion;
+    this.timelineLoading = true;
+    this.timelineError = '';
+    this.timelineService.list(communityId, kind)
+      .pipe(timeout(10_000), finalize(() => {
+        if (version === this.timelineRequestVersion) this.timelineLoading = false;
+      }))
+      .subscribe({
+        next: entries => {
+          if (version === this.timelineRequestVersion && this.selected?.id === communityId
+              && this.timelineKind === kind) this.timelineEntries = entries;
+        },
+        error: () => {
+          if (version === this.timelineRequestVersion) this.timelineError = t('communities.timelineLoadError');
+        }
+      });
+  }
+
+  sendTimeline(): void {
+    if (!this.selected || this.timelineSending ||
+        (this.activeTab !== 'feed' && this.activeTab !== 'chat')) return;
+    const kind = this.timelineKind;
+    const communityId = this.selected.id;
+    const text = kind === 'CHAT' ? this.chatDraft.trim() : this.feedDraft.trim();
+    const max = kind === 'CHAT' ? 2000 : 1000;
+    if (!text || text.length > max) return;
+    this.timelineSending = true;
+    this.timelineError = '';
+    this.timelineService.send(communityId, kind, text)
+      .pipe(timeout(10_000), finalize(() => this.timelineSending = false))
+      .subscribe({
+        next: () => {
+          if (this.selected?.id !== communityId) return;
+          if (kind === 'CHAT') this.chatDraft = '';
+          else this.feedDraft = '';
+          if (this.timelineKind === kind) this.loadTimeline();
+        },
+        error: () => {
+          if (this.selected?.id === communityId) this.timelineError = t('communities.timelineSendError');
+        }
+      });
+  }
+
+  deleteTimeline(entry: CommunityTimelineEntry): void {
+    if (!this.selected || !this.canManage() || this.timelineDeletingId !== null ||
+        entry.communityId !== this.selected.id || entry.kind !== this.timelineKind) return;
+    const communityId = this.selected.id;
+    const kind = this.timelineKind;
+    this.timelineDeletingId = entry.id;
+    this.timelineError = '';
+    this.timelineService.delete(communityId, kind, entry.id)
+      .pipe(timeout(10_000), finalize(() => this.timelineDeletingId = null))
+      .subscribe({
+        next: () => {
+          if (this.selected?.id === communityId && this.timelineKind === kind) this.loadTimeline();
+        },
+        error: () => {
+          if (this.selected?.id === communityId) this.timelineError = t('communities.timelineDeleteError');
+        }
+      });
+  }
+
   showAllStandings = false;
   historicalPlayers: HistoricalPlayerCandidate[] = [];
   historicalPlayersLoading = false;
@@ -321,6 +401,7 @@ export class CommunitiesComponent implements OnInit {
     private communityService: CommunityGroupsService,
     private profileService: CommunityService,
     private sessionService: SessionService,
+    private timelineService: CommunityTimelineService,
     private route: ActivatedRoute,
     private router: Router
   ) {}
@@ -691,6 +772,12 @@ export class CommunitiesComponent implements OnInit {
     this.featuresError = '';
     this.pendingJoinRequestsLoading = false;
     this.pendingJoinRequests = [];
+    ++this.timelineRequestVersion;
+    this.timelineEntries = [];
+    this.timelineError = '';
+    this.timelineLoading = false;
+    this.feedDraft = '';
+    this.chatDraft = '';
     this.errorMessage = '';
 
     this.communityService.get(community.id)
@@ -708,6 +795,8 @@ export class CommunitiesComponent implements OnInit {
         const openJoinRequests = requestedMembers
           && (full.myRole === 'OWNER' || full.myRole === 'ADMIN');
         this.activeTab = requestedMembers ? 'members'
+          : requestedTab === 'feed' ? 'feed'
+          : requestedTab === 'chat' ? 'chat'
           : requestedTab === 'tournaments' && this.hasCompetitions(full) ? 'tournaments'
           : requestedTab === 'ranking' && (full.rankingsEnabled || this.hasCompetitions(full)) ? 'ranking'
           : requestedTab === 'stats' && full.rankingsEnabled ? 'stats'
@@ -739,6 +828,7 @@ export class CommunitiesComponent implements OnInit {
         this.loadArchivedStandings(full.id);
         this.loadCompetition(full);
         this.loadCommunitySessions(full);
+        if (this.activeTab === 'feed' || this.activeTab === 'chat') this.loadTimeline();
         if (this.activeTab === 'members') this.loadHistoricalLinks(full.id);
         if (openJoinRequests) this.loadPendingJoinRequests(full.id);
       },
@@ -755,6 +845,11 @@ export class CommunitiesComponent implements OnInit {
         || (tab === 'ranking' && !this.canBrowseHistoricalArchives)
         || (tab === 'stats' && !this.selected?.rankingsEnabled)) return;
     this.activeTab = tab;
+    ++this.timelineRequestVersion;
+    this.timelineEntries = [];
+    this.timelineError = '';
+    this.timelineLoading = false;
+    if (tab === 'feed' || tab === 'chat') this.loadTimeline();
     this.pendingArchiveDeepLinkCommunityId = null;
     this.errorMessage = '';
 

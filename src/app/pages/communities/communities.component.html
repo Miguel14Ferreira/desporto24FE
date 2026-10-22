@@ -416,6 +416,12 @@
                 (click)="setTab('home')">
                 {{ 'communities.tab.home' | t }}
               </button>
+              <button type="button" [class.active]="activeTab === 'feed'"
+                [attr.aria-current]="activeTab === 'feed' ? 'true' : null"
+                (click)="setTab('feed')">{{ 'communities.tab.feed' | t }}</button>
+              <button type="button" [class.active]="activeTab === 'chat'"
+                [attr.aria-current]="activeTab === 'chat' ? 'true' : null"
+                (click)="setTab('chat')">{{ 'communities.tab.chat' | t }}</button>
               <button type="button" [class.active]="activeTab === 'sessions'"
                 [attr.aria-current]="activeTab === 'sessions' ? 'true' : null"
                 (click)="setTab('sessions')">
@@ -443,6 +449,68 @@
                 {{ 'communities.tab.members' | t }}
               </button>
             </nav>
+
+            @if (activeTab === 'feed' || activeTab === 'chat') {
+              <section class="community-tab-panel community-timeline"
+                       [attr.aria-label]="(activeTab === 'feed' ? 'communities.tab.feed' : 'communities.tab.chat') | t">
+                <div class="community-timeline-heading">
+                  <div>
+                    <h3>{{ (activeTab === 'feed' ? 'communities.timelineFeedTitle' : 'communities.timelineChatTitle') | t }}</h3>
+                    <p>{{ (activeTab === 'feed' ? 'communities.timelineFeedHint' : 'communities.timelineChatHint') | t }}</p>
+                  </div>
+                  <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
+                          [disabled]="timelineLoading" (click)="loadTimeline()">
+                    {{ 'communities.timelineRefresh' | t }}
+                  </button>
+                </div>
+                <form class="community-timeline-form" (ngSubmit)="sendTimeline()">
+                  @if (activeTab === 'feed') {
+                    <label for="community-feed-text">{{ 'communities.timelineWritePost' | t }}</label>
+                    <textarea id="community-feed-text" name="community-feed-text" rows="3" maxlength="1000"
+                              [(ngModel)]="feedDraft"
+                              [placeholder]="'communities.timelineFeedPlaceholder' | t"></textarea>
+                  } @else {
+                    <label for="community-chat-text">{{ 'communities.timelineWriteMessage' | t }}</label>
+                    <textarea id="community-chat-text" name="community-chat-text" rows="2" maxlength="2000"
+                              [(ngModel)]="chatDraft"
+                              [placeholder]="'communities.timelineChatPlaceholder' | t"></textarea>
+                  }
+                  <div class="row-actions">
+                    <button type="submit" class="primary-action jynlo-action jynlo-action--primary"
+                            [disabled]="timelineSending || !(activeTab === 'feed' ? feedDraft.trim() : chatDraft.trim())">
+                      {{ (activeTab === 'feed' ? 'communities.timelinePublish' : 'communities.timelineSend') | t }}
+                    </button>
+                  </div>
+                </form>
+                @if (timelineError) {
+                  <p class="community-timeline-error" role="alert">{{ timelineError }}</p>
+                }
+                @if (timelineLoading) {
+                  <p role="status">{{ 'communities.loading' | t }}</p>
+                } @else if (timelineEntries.length === 0 && !timelineError) {
+                  <p class="community-timeline-empty">{{ (activeTab === 'feed' ? 'communities.timelineNoPosts' : 'communities.timelineNoMessages') | t }}</p>
+                } @else {
+                  <div [class.community-timeline-chat]="activeTab === 'chat'"
+                       [class.community-timeline-feed]="activeTab === 'feed'">
+                    @for (entry of timelineEntries; track entry.id) {
+                      <article class="community-timeline-entry">
+                        <div class="entry-meta">
+                          <strong>@{{ entry.username }}</strong>
+                          <time [attr.datetime]="entry.createdAt">{{ entry.createdAt | date:'short' }}</time>
+                          @if (canManage()) {
+                            <button type="button" class="secondary-action small jynlo-action jynlo-action--neutral jynlo-action--compact"
+                                    [disabled]="timelineDeletingId !== null" (click)="deleteTimeline(entry)">
+                              {{ 'communities.timelineRemove' | t }}
+                            </button>
+                          }
+                        </div>
+                        <p>{{ entry.body }}</p>
+                      </article>
+                    }
+                  </div>
+                }
+              </section>
+            }
 
             @if (canManage() && activeTab === 'home') {
               <section class="community-feature-settings" aria-label="Gerir funcionalidades da comunidade">
