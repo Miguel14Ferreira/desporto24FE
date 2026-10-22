@@ -767,6 +767,17 @@ export class CommunityTournamentsComponent implements OnChanges {
         }
         this.loadTeamMatches(true);
       } else if (this.isGroupStage) {
+        if (saved.groupNumber == null && this.teamGroups.length > 0
+            && saved.roundNumber === 99 + Math.ceil(Math.log2(this.teamGroups.length * 2))
+            && saved.homeScore !== saved.awayScore) {
+          const homeWins = saved.homeScore! > saved.awayScore!;
+          this.updateSelected({
+            ...this.selected!, status: 'COMPLETED',
+            championTeamId: homeWins ? saved.homeTeamId : saved.awayTeamId,
+            championTeamName: homeWins ? saved.homeTeamName : saved.awayTeamName,
+            championTied: false, championPoints: null
+          });
+        }
         this.loadTeamMatches(true);
         this.loadTeamGroups();
       } else {
