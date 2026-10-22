@@ -23,7 +23,14 @@
           <div class="session-facts">
             <div class="fact">
               <span class="fact-label">{{ 'common.location' | t }}</span>
-              <strong>{{ details.city || ('publicSession.notSpecified' | t) }}</strong>
+              @if (cityMapsUrl; as mapUrl) {
+                <a class="public-location-link" [href]="mapUrl" target="_blank" rel="noopener noreferrer"
+                   [attr.aria-label]="'publicSession.viewAreaOnMaps' | t">
+                  <strong>{{ details.city }}</strong> <span aria-hidden="true">↗</span>
+                </a>
+              } @else {
+                <strong>{{ 'publicSession.notSpecified' | t }}</strong>
+              }
             </div>
             <div class="fact">
               <span class="fact-label">{{ 'publicSession.date' | t }}</span>

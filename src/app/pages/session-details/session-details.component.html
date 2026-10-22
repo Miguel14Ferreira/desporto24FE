@@ -514,8 +514,12 @@
 
           <section class="address-panel">
             <h2>{{ 'sessionDetail.location' | t }}</h2>
-            @if (session.canSeeExactAddress && session.address) {
-              <p>{{ session.address }}</p>
+            @if (exactGoogleMapsUrl(); as mapsUrl) {
+              <a class="session-location-map" [href]="mapsUrl" target="_blank" rel="noopener noreferrer"
+                 [attr.aria-label]="'sessionDetail.openMaps' | t">
+                {{ session.address }} <span aria-hidden="true">↗</span>
+              </a>
+              <small>{{ 'sessionDetail.openMapsHint' | t }}</small>
             } @else {
               <p>{{ 'sessionDetail.addressLocked' | t }}</p>
             }
