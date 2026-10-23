@@ -12,6 +12,27 @@ interface ChatSocketEnvelope {
   message?: DirectChatMessage | SessionMessage | CommunityTimelineEntry;
 }
 
+/**
+ * The dedicated websocket gateway serializes java.util.Date as Unix epoch
+ * milliseconds. Angular's HTTP mapper uses ISO dates, so keep a single date
+ * shape before passing a live direct message to either chat UI.
+ *
+ * Never invent an arrival timestamp: history from the backend is authoritative.
+ */
+export function normalizeDirectChatRealtimeMessage(message: DirectChatMessage): DirectChatMessage {
+  const rawDate: unknown = message.date;
+  if (typeof rawDate !== 'number' && !(typeof rawDate === 'string' && /^\\d{13}$/.test(rawDate.trim()))) {
+    return message;
+  }
+  const milliseconds = Number(rawDate);
+  const date = new Date(milliseconds);
+  return {
+    ...message,
+    date: Number.isFinite(milliseconds) && milliseconds > 0 && Number.isFinite(date.getTime())
+      ? date.toISOString() : null
+  };
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -71,7 +92,7 @@ export class DirectChatRealtimeService {
         }
 
         if (envelope.type === 'CHAT_MESSAGE' && envelope.message) {
-          this.messageSubject.next(envelope.message as DirectChatMessage);
+          this.messageSubject.next(normalizeDirectChatRealtimeMessage(envelope.message as DirectChatMessage));
           return;
         }
 
