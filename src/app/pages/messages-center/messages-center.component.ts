@@ -340,9 +340,14 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
             replyToMessageId: hit.replyToMessageId,
             replyToSender: hit.replyToSender, replyToText: hit.replyToText
           }));
-          this.messageSearchResults = page === 0 ? results : mergeInboxMessages([
-            ...this.messageSearchResults, ...results
-          ]);
+          if (page === 0) {
+            this.messageSearchResults = results;
+          } else {
+            // Server sorts hits newest-first; keep that ordering across pages.
+            const known = new Set(this.messageSearchResults.map(item => item.id));
+            this.messageSearchResults = [...this.messageSearchResults,
+              ...results.filter(item => !known.has(item.id))];
+          }
           this.messageSearchPage = page;
           this.messageSearchHasMore = response.hasMore && page < 50;
         },
