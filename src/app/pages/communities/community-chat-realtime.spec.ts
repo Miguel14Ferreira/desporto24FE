@@ -12,7 +12,7 @@ describe('Community chat realtime and sending', () => {
 
   beforeEach(() => {
     component = Object.create(CommunitiesComponent.prototype) as CommunitiesComponent;
-    api = jasmine.createSpyObj<CommunityTimelineService>('CommunityTimelineService', ['list', 'send', 'delete']);
+    api = jasmine.createSpyObj<CommunityTimelineService>('CommunityTimelineService', ['list', 'olderMessages', 'send', 'delete']);
     (component as any).timelineService = api;
     component.selected = { id: 7, name: 'CNG', members: [], myRole: 'MEMBER' } as any;
     component.activeTab = 'chat';
@@ -61,13 +61,35 @@ describe('Community chat realtime and sending', () => {
     expect(component.timelineEntries.map(x => x.id)).toEqual([2, 3]);
   });
 
-  it('limits active chat to latest 60 messages and respects ordering', () => {
+  it('retains history and respects ordering', () => {
     const many = Array.from({ length: 75 }, (_, i) =>
       ({ ...entry(i + 1), createdAt: new Date(2026, 9, 23, 12, i).toISOString() }));
     for (const item of [...many].reverse()) component.onCommunityChatRealtime(item);
-    expect(component.timelineEntries.length).toBe(60);
-    expect(component.timelineEntries[0].id).toBe(16);
-    expect(component.timelineEntries[59].id).toBe(75);
+    expect(component.timelineEntries.length).toBe(75);
+    expect(component.timelineEntries[0].id).toBe(1);
+    expect(component.timelineEntries[74].id).toBe(75);
+  });
+
+  it('loads earlier messages with the oldest cursor, without duplication', () => {
+    component.timelineEntries = Array.from({ length: 60 }, (_, i) => entry(i + 61));
+    component.chatHasOlder = true;
+    api.olderMessages.and.returnValue(of([entry(59), entry(60)]));
+    component.loadOlderCommunityMessages();
+    expect(api.olderMessages).toHaveBeenCalledOnceWith(7, 61);
+    expect(component.timelineEntries.map(x => x.id)[0]).toBe(59);
+    expect(component.timelineEntries.length).toBe(62);
+    expect(component.chatHasOlder).toBeFalse();
+  });
+
+  it('never requests earlier messages for feed or without history', () => {
+    component.timelineEntries = [entry(1)];
+    component.chatHasOlder = true;
+    component.activeTab = 'feed';
+    component.loadOlderCommunityMessages();
+    component.activeTab = 'chat';
+    component.chatHasOlder = false;
+    component.loadOlderCommunityMessages();
+    expect(api.olderMessages).not.toHaveBeenCalled();
   });
 
   it('keeps a draft and prevents second POST when the first result is uncertain', () => {
