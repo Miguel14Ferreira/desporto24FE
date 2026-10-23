@@ -1200,3 +1200,26 @@ body .communities-page.jynlo-c1 .race-penalty-editor .race-dsq-field input {
   width: 1rem;
   height: 1rem;
 }
+
+/* Per-event performance marks; never reused as season points. */
+body .communities-page.jynlo-c1 .round-performance-mark {
+  display: inline-flex;
+  align-items: center;
+  padding: .3rem .65rem;
+  border-radius: .6rem;
+  border: 1px solid rgba(112,245,195,.26);
+  background: rgba(112,245,195,.07);
+  color: #8ef7d0;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+body .communities-page.jynlo-c1 .round-performance-rank {
+  color: #afd6e5;
+  font-size: .78rem;
+  font-weight: 700;
+}
+body .communities-page.jynlo-c1 .round-performance-unscored {
+  color: #9cb6c5;
+  font-size: .78rem;
+}

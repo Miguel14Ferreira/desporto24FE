@@ -1255,6 +1255,16 @@
                                         <input type="number" min="0.001" step="0.001" [(ngModel)]="entry.bestLapSeconds">
                                       </label>
                                     }
+                                  } @else if (performanceKind(newRoundEventType); as unit) {
+                                    <label>
+                                      <span>{{ (unit === 'metres'
+                                        ? 'communities.performance.metres'
+                                        : 'communities.performance.points') | t }}</span>
+                                      <input type="number" [min]="unit === 'metres' ? 0.001 : 0"
+                                        [max]="unit === 'metres' ? 999999.999 : 100"
+                                        step="0.001" [(ngModel)]="entry.performanceValue"
+                                        [placeholder]="'communities.performance.optional' | t">
+                                    </label>
                                   } @else if (!racketSupportsSets(newRoundSport) && !newRoundEventType) {
                                     <label>
                                       <span>{{ 'communities.result' | t }}</span>
@@ -1839,7 +1849,7 @@
                             <small>{{ 'communities.resultFormat.recordedOnly' | t }}</small>
                           </div>
                           <div class="round-results">
-                            @for (entry of round.entries; track $index) {
+                            @for (entry of eventPerformanceEntries(round); track entry.entryId ?? $index) {
                               <div class="round-result-row">
                                 <div>
                                   <strong>{{ entry.fullName || entry.username }}</strong>
@@ -1848,7 +1858,24 @@
                                     @if (entry.team) { · {{ entry.team }} }
                                   </span>
                                 </div>
-                                @if (!neutralRound(round)) {
+                                @if (neutralRound(round)) {
+                                  @if (entry.performanceValue != null) {
+                                    <span class="round-performance-mark">
+                                      {{ performanceDisplay(entry.performanceValue) }}
+                                      {{ (performanceKind(round.eventType) === 'metres'
+                                        ? 'communities.performance.metresUnit'
+                                        : 'communities.performance.pointsUnit') | t }}
+                                    </span>
+                                    <span class="round-performance-rank">
+                                      {{ 'communities.performance.position' | t }}:
+                                      {{ eventPerformancePlace(eventPerformanceEntries(round), entry) }}.º
+                                    </span>
+                                  } @else {
+                                    <span class="round-performance-unscored">
+                                      {{ 'communities.performance.unscored' | t }}
+                                    </span>
+                                  }
+                                } @else {
                                   <span
                                     class="result-chip"
                                     [class.win]="entry.result === 'WIN'"
