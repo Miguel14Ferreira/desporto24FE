@@ -142,9 +142,10 @@
               <p class="inbox-compose-locked" role="status">{{ 'inbox.cannotWrite' | t }}</p>
             }
             <label for="inbox-reply">{{ 'inbox.writeMessage' | t }}</label>
-            <textarea id="inbox-reply" name="inboxDraft" [(ngModel)]="draft"
+            <textarea #composerTextarea id="inbox-reply" name="inboxDraft" [(ngModel)]="draft"
               [placeholder]="'chat.placeholder' | t" rows="2" maxlength="2000"
-              [disabled]="composerAccessLoading || !composerAllowed || previewLoading || previewError || sending || deliveryUncertain || deliveryChecking"
+              [readOnly]="sending"
+              [disabled]="composerAccessLoading || !composerAllowed || previewLoading || previewError || deliveryUncertain || deliveryChecking"
               (keydown.enter)="onComposerEnter($event)"></textarea>
             <div class="inbox-composer-bottom">
               <span>{{ 'chat.enterHint' | t }} · {{ draft.length }}/2000</span>

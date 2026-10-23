@@ -20,6 +20,7 @@ import { ChatReadSyncService } from '../../services/chat-read-sync.service';
 })
 export class DirectChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   @ViewChild('messageList') messageList?: ElementRef<HTMLElement>;
+  @ViewChild('composerTextarea') composerTextarea?: ElementRef<HTMLTextAreaElement>;
   recipientUsername = '';
   currentUsername: string | null = null;
   messages: DirectChatMessage[] = [];
@@ -263,6 +264,9 @@ export class DirectChatComponent implements OnInit, OnDestroy, AfterViewChecked 
     this.sending = true;
     this.actionError = '';
     this.actionSuccess = '';
+    // Keep the text field focused after Enter or clicking Send. Read-only
+    // during this request avoids edits that would otherwise be cleared on ACK.
+    this.composerTextarea?.nativeElement.focus({ preventScroll: true });
     const pending = {
       text,
       knownIds: new Set(this.messages.filter(message => message.id !== null).map(message => message.id as number)),

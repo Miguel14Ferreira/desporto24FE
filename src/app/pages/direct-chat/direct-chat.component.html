@@ -95,12 +95,13 @@
         <form class="composer" (ngSubmit)="sendMessage()">
           <label>
             <span>{{ 'chat.message' | t }}</span>
-            <textarea
+            <textarea #composerTextarea
               name="messageBody"
               [(ngModel)]="messageBody"
               maxlength="2000"
               rows="3"
-              [disabled]="sending || deliveryUncertain || chatInfo?.chatBlocked === true"
+              [readOnly]="sending"
+              [disabled]="deliveryUncertain || chatInfo?.chatBlocked === true"
               [placeholder]="'chat.placeholder' | t"
               (keydown.enter)="onEnter($event)"></textarea>
           </label>

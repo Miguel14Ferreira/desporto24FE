@@ -117,6 +117,58 @@ describe('DirectChatComponent', () => {
     expect(component.messageBody).toBe('');
   });
 
+  it('keeps the compose textarea focused and enabled while a send is pending and after success', () => {
+    const pending = new Subject<import('../model/direct-chat').DirectChatMessage>();
+    service.send.and.returnValue(pending.asObservable());
+    component.messageBody = 'Outra mensagem';
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    const editor = root.querySelector<HTMLTextAreaElement>('textarea[name="messageBody"]')!;
+    const sendButton = root.querySelector<HTMLButtonElement>('.composer button[type="submit"]')!;
+    expect(editor).not.toBeNull();
+    editor.blur();
+    sendButton.click();
+    fixture.detectChanges();
+
+    expect(service.send).toHaveBeenCalledOnceWith('ana', 'Outra mensagem');
+    expect(component.sending).toBeTrue();
+    expect(editor.disabled).toBeFalse();
+    expect(editor.readOnly).toBeTrue();
+    expect(document.activeElement).toBe(editor);
+
+    pending.next({ id: 65, username1: 'fixture-user', username2: 'ana',
+      text: 'Outra mensagem', date: new Date().toISOString(), dataDisplay: null });
+    pending.complete();
+    fixture.detectChanges();
+
+    expect(component.sending).toBeFalse();
+    expect(component.messageBody).toBe('');
+    expect(editor.disabled).toBeFalse();
+    expect(editor.readOnly).toBeFalse();
+    expect(document.activeElement).toBe(editor);
+  });
+
+  it('does not steal focus back after a slow send if the user moved elsewhere', () => {
+    const pending = new Subject<import('../model/direct-chat').DirectChatMessage>();
+    service.send.and.returnValue(pending.asObservable());
+    component.messageBody = 'Mensagem';
+    fixture.detectChanges();
+    component.sendMessage();
+    fixture.detectChanges();
+
+    const another = document.createElement('button');
+    (fixture.nativeElement as HTMLElement).appendChild(another);
+    another.focus();
+    expect(document.activeElement).toBe(another);
+
+    pending.next({ id: 66, username1: 'fixture-user', username2: 'ana',
+      text: 'Mensagem', date: new Date().toISOString(), dataDisplay: null });
+    pending.complete();
+    fixture.detectChanges();
+    expect(document.activeElement).toBe(another);
+  });
+
   it('shows the live connection and reconnecting state without claiming read receipts', () => {
     expect(component.realtimeConnected).toBeFalse();
     connection.next(true);

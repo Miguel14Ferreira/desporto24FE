@@ -187,6 +187,31 @@ describe('Unified Jynlo message center', () => {
     expect(component.sending).toBeFalse();
   });
 
+  it('restores composer focus at submit and does not refocus asynchronously on delivery', () => {
+    const selected = item('direct', 'bea');
+    component.conversations = [selected];
+    direct.recentHistory.and.returnValue(of({ content: [], last: true }));
+    const send = new Subject<any>();
+    direct.send.and.returnValue(send.asObservable());
+    component.selectConversation(selected);
+    component.draft = 'Olá novamente';
+
+    const focus = jasmine.createSpy('focus');
+    component.composerTextarea = { nativeElement: { focus } } as any;
+    component.sendMessage();
+    expect(focus).toHaveBeenCalledOnceWith({ preventScroll: true });
+    expect(component.sending).toBeTrue();
+
+    component.sendMessage();
+    expect(direct.send).toHaveBeenCalledTimes(1);
+    send.next({ id: 83, username1: 'ana', username2: 'bea', text: 'Olá novamente',
+      date: new Date().toISOString(), dataDisplay: null });
+    send.complete();
+    expect(component.sending).toBeFalse();
+    expect(component.draft).toBe('');
+    expect(focus).toHaveBeenCalledTimes(1);
+  });
+
   it('does not POST direct messages when the original chat is blocked', () => {
     const selected = item('direct', 'bea');
     component.conversations = [selected];
