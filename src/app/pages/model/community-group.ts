@@ -62,6 +62,7 @@ export interface CommunityRound {
   id: number;
   name: string;
   playedAt: string;
+  sport?: string | null;
   entries: CommunityRoundEntry[];
 }
 
