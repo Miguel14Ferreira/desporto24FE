@@ -125,12 +125,23 @@
               @if (messageSearchResults.length > 0) {
                 <div class="inbox-history-search-results" [attr.aria-label]="'inbox.searchResults' | t">
                   @for (result of messageSearchResults; track result.id) {
-                    <article class="inbox-history-search-result">
+                    <article class="inbox-history-search-result"
+                      [class.is-selected]="selectedSearchResultId === result.id">
                       <div class="inbox-history-search-meta">
                         <strong>{{ result.sender }}</strong>
                         <time>{{ formatDate(result.createdAt) }}</time>
                       </div>
                       <p>{{ result.text }}</p>
+                      <button type="button" class="inbox-search-result-open"
+                        [attr.aria-pressed]="selectedSearchResultId === result.id"
+                        (click)="viewMessageSearchResult(result)">
+                        {{ 'inbox.locateSearchResult' | t }}
+                      </button>
+                      @if (selectedSearchResultId === result.id && searchResultNotInPreview) {
+                        <p class="inbox-history-search-note" role="status">
+                          {{ 'inbox.oldSearchResultNote' | t }}
+                        </p>
+                      }
                       @if (composerAllowed && !sending && !deliveryUncertain) {
                         <button type="button" class="inbox-search-result-reply"
                           (click)="replyToMessage(result)">{{ 'chat.replyToMessage' | t }}</button>
@@ -165,7 +176,9 @@
               <p class="inbox-preview-state">{{ 'chat.empty' | t }}</p>
             }
             @for (message of messages; track message.id) {
-              <article class="inbox-bubble" [class.is-mine]="isMine(message)">
+              <article class="inbox-bubble" [class.is-mine]="isMine(message)"
+                [class.inbox-bubble--search-match]="selectedSearchResultId === message.id"
+                [attr.data-message-id]="message.id" tabindex="-1">
                 <div class="inbox-bubble-meta">
                   <strong>{{ isMine(message) ? ('chat.you' | t) : message.sender }}</strong>
                   <time>{{ formatDate(message.createdAt) }}</time>
