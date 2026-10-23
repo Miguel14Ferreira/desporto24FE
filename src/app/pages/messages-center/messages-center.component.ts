@@ -296,7 +296,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
         }
         this.confirmFromHistoryIfPresent(conversation.key, this.messages);
         this.updatePreviewFromHistory(conversation.key, this.messages);
-        this.markRenderedRead(conversation.key);
+        this.markRenderedRead(conversation.key, true);
         this.scrollRequested = true;
       },
       error: () => {
@@ -560,8 +560,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
           if (!snapshot) return item;
           // Do not regress after a newer WebSocket message reached this tab
           // while the HTTP snapshot was still in transit.
-          const socketNewer = !!item.latestAt && !!snapshot.latestAt
-            && Date.parse(item.latestAt) > Date.parse(snapshot.latestAt);
+          const socketNewer = !!item.latestAt && (!snapshot.latestAt
+            || Date.parse(item.latestAt) > Date.parse(snapshot.latestAt));
           if (socketNewer) {
             return { ...item, unreadCount: Math.max(item.unreadCount ?? 0, snapshot.unreadCount) };
           }
@@ -583,9 +583,9 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     });
   }
 
-  private markRenderedRead(key: string): void {
+  private markRenderedRead(key: string, fromLoadedHistory = false): void {
     if (!this.serverSummariesAvailable || key !== this.selectedKey
-        || this.previewLoading || this.previewError || this.messages.length === 0) return;
+        || (this.previewLoading && !fromLoadedHistory) || this.previewError || this.messages.length === 0) return;
     const lastSeen = Math.max(...this.messages.map(message => message.id));
     if (!Number.isSafeInteger(lastSeen) || lastSeen <= 0) return;
     const conversation = this.selected;
@@ -595,6 +595,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       .pipe(timeout(10_000)).subscribe({
         next: snapshot => {
           if (readVersion !== this.readVersion || this.selectedKey !== key) return;
+          ++this.summaryVersion; // invalidate snapshots taken before this read acknowledgement
           this.conversations = this.conversations.map(item => item.key === key
             ? { ...item, unreadCount: snapshot.unreadCount, newThisVisit: 0 }
             : item);
