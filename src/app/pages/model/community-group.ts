@@ -85,6 +85,11 @@ export interface CommunityGroupRoutineScore {
   score: number | null;
 }
 
+export interface CommunityBasketballScore {
+  sideA: number | null;
+  sideB: number | null;
+}
+
 export interface CommunityRound {
   id: number;
   name: string;
@@ -96,11 +101,13 @@ export interface CommunityRound {
     | 'RHYTHMIC_APPARATUS' | 'ARTISTIC_SOLO_TECHNICAL' | 'ARTISTIC_SOLO_FREE'
     | 'RHYTHMIC_GROUP_5' | 'RHYTHMIC_GROUP_3_2'
     | 'ARTISTIC_DUET_TECH' | 'ARTISTIC_DUET_FREE'
-    | 'ARTISTIC_TEAM_TECH' | 'ARTISTIC_TEAM_FREE' | null;
+    | 'ARTISTIC_TEAM_TECH' | 'ARTISTIC_TEAM_FREE'
+    | 'BASKETBALL_FINAL' | 'BASKETBALL_3X3_FINAL' | null;
   eventDiscipline?: string | null;
   matchFormat?: CommunityRacketMatchFormat | null;
   setScores?: CommunitySetScore[] | null;
   groupScores?: CommunityGroupRoutineScore[] | null;
+  basketballScore?: CommunityBasketballScore | null;
   entries: CommunityRoundEntry[];
 }
 

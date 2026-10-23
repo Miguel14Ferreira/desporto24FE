@@ -1133,6 +1133,7 @@
                               : newRoundEventType === 'PARKOUR_FREESTYLE' ? 'communities.parkour.freestyleHint'
                               : newRoundEventType === 'BREAKING_BATTLE' ? 'communities.breaking.hint'
                               : newRoundEventType === 'TRAMPOLINE_INDIVIDUAL' ? 'communities.trampoline.hint'
+                              : isBasketballFinal(newRoundEventType) ? 'communities.basketball.hint'
                               : newRoundEventType === 'RHYTHMIC_APPARATUS' ? 'communities.rhythmic.hint'
                               : isGroupRoutineEvent(newRoundEventType) ? 'communities.groupRoutine.hint'
                               : newRoundEventType === 'ARTISTIC_SOLO_TECHNICAL'
@@ -1197,6 +1198,15 @@
                                         <option value="B">{{ 'communities.racket.sideB' | t }}</option>
                                       </select>
                                     </label>
+                                  } @else if (isBasketballFinal(newRoundEventType)) {
+                                    <label>
+                                      <span>{{ 'communities.basketball.side' | t }}</span>
+                                      <select [(ngModel)]="entry.team">
+                                        <option value="">{{ 'communities.basketball.selectSide' | t }}</option>
+                                        <option value="A">{{ 'communities.basketball.sideA' | t }}</option>
+                                        <option value="B">{{ 'communities.basketball.sideB' | t }}</option>
+                                      </select>
+                                    </label>
                                   } @else if (isGroupRoutineEvent(newRoundEventType)) {
                                     <label>
                                       <span>{{ 'communities.groupRoutine.groupName' | t }}</span>
@@ -1244,6 +1254,8 @@
                                           [(ngModel)]="entry.waveScore2" [placeholder]="'communities.performance.optional' | t">
                                       </label>
                                     </div>
+                                  } @else if (isBasketballFinal(newRoundEventType)) {
+                                    <small>{{ 'communities.basketball.memberOnly' | t }}</small>
                                   } @else if (isGroupRoutineEvent(newRoundEventType)) {
                                     <small>{{ 'communities.groupRoutine.memberOnly' | t }}</small>
                                   } @else if (newRoundEventType === 'BREAKING_BATTLE') {
@@ -1311,6 +1323,23 @@
                           }
                         </div>
 
+                        @if (isBasketballFinal(newRoundEventType)) {
+                          <section class="round-basketball-editor">
+                            <h4>{{ 'communities.basketball.finalTitle' | t }}</h4>
+                            <p>{{ 'communities.basketball.finalHint' | t }}</p>
+                            <div class="round-basketball-score-inputs">
+                              <label><span>{{ 'communities.basketball.sideA' | t }}</span>
+                                <input type="number" min="0" max="999" step="1"
+                                  [(ngModel)]="roundBasketballScoreDraft.sideA">
+                              </label>
+                              <span class="round-basketball-divider" aria-hidden="true">:</span>
+                              <label><span>{{ 'communities.basketball.sideB' | t }}</span>
+                                <input type="number" min="0" max="999" step="1"
+                                  [(ngModel)]="roundBasketballScoreDraft.sideB">
+                              </label>
+                            </div>
+                          </section>
+                        }
                         @if (isGroupRoutineEvent(newRoundEventType)) {
                           <section class="round-shared-groups">
                             <h4>{{ 'communities.groupRoutine.scoresTitle' | t }}</h4>
@@ -1771,6 +1800,30 @@
                             @if (raceDecisionMessage) {
                               <p class="season-management-message" role="status">{{ raceDecisionMessage }}</p>
                             }
+                          } @else if (recordedBasketballFinal(round)) {
+                            <section class="round-basketball-final" [attr.aria-label]="'communities.basketball.finalTitle' | t">
+                              <div class="round-basketball-heading">
+                                <strong>{{ 'communities.basketball.finalTitle' | t }}</strong>
+                                <small>{{ 'communities.basketball.recordedOnly' | t }}</small>
+                              </div>
+                              <div class="round-basketball-scoreboard">
+                                <div class="round-basketball-side" [class.round-basketball-winner]="basketballWinner(round.basketballScore) === 'A'">
+                                  <span>{{ 'communities.basketball.sideA' | t }}</span>
+                                  <strong>{{ round.basketballScore?.sideA }}</strong>
+                                  @for (player of racketSidePlayers(round, 'A'); track $index) {
+                                    <small>{{ player.fullName || player.username }}</small>
+                                  }
+                                </div>
+                                <span class="round-basketball-vs" aria-hidden="true">:</span>
+                                <div class="round-basketball-side" [class.round-basketball-winner]="basketballWinner(round.basketballScore) === 'B'">
+                                  <span>{{ 'communities.basketball.sideB' | t }}</span>
+                                  <strong>{{ round.basketballScore?.sideB }}</strong>
+                                  @for (player of racketSidePlayers(round, 'B'); track $index) {
+                                    <small>{{ player.fullName || player.username }}</small>
+                                  }
+                                </div>
+                              </div>
+                            </section>
                           } @else if (recordedRacketMatch(round)) {
                             <section class="racket-result-card">
                               <div class="racket-result-header">
