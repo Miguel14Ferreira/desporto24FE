@@ -1186,12 +1186,18 @@
                         </div>
 
                         @if (viewForNewRound() === 'race') {
-                          <p class="round-sport-guidance" role="note">{{ 'communities.race.metricsEntryHint' | t }}</p>
+                          <p class="round-sport-guidance" role="note">
+                            {{ (newRoundEventType === 'PARKOUR_SPEED'
+                              ? 'communities.parkour.speedHint' : 'communities.race.metricsEntryHint') | t }}
+                          </p>
                         } @else if (newRoundEventType && viewForNewRound() === 'individual') {
                           <p class="round-sport-guidance" role="note">
                             {{ (newRoundEventType === 'HEAT' ? 'communities.surf.hint'
                               : newRoundEventType === 'BODYBOARD_HEAT' ? 'communities.bodyboard.hint'
                               : newRoundEventType === 'APPARATUS' ? 'communities.gym.hint'
+                              : newRoundEventType === 'SKATE_PARK' ? 'communities.skate.parkHint'
+                              : newRoundEventType === 'SKATE_STREET' ? 'communities.skate.streetHint'
+                              : newRoundEventType === 'PARKOUR_FREESTYLE' ? 'communities.parkour.freestyleHint'
                               : 'communities.eventType.marksHint') | t }}
                           </p>
                         }
@@ -1298,9 +1304,13 @@
                                       <span>{{ (unit === 'metres'
                                         ? 'communities.performance.metres'
                                         : unit === 'gym' ? 'communities.gym.finalScore'
+                                        : unit === 'street' ? 'communities.skate.streetTotal'
+                                        : newRoundEventType === 'SKATE_PARK' ? 'communities.skate.parkScore'
+                                        : newRoundEventType === 'PARKOUR_FREESTYLE'
+                                          ? 'communities.parkour.freestyleScore'
                                         : 'communities.performance.points') | t }}</span>
                                       <input type="number" [min]="unit === 'metres' ? 0.001 : 0"
-                                        [max]="unit === 'metres' ? 999999.999 : 100"
+                                        [max]="unit === 'metres' ? 999999.999 : unit === 'street' ? 300 : 100"
                                         step="0.001" [(ngModel)]="entry.performanceValue"
                                         [placeholder]="'communities.performance.optional' | t">
                                     </label>
@@ -1649,10 +1659,13 @@
                               <div class="race-round-heading">
                                 <span aria-hidden="true">🏁</span>
                                 <div>
-                                  <strong>{{ 'communities.race.recordTitle' | t }}</strong>
-                                  <small>{{ 'communities.race.metricsSubtitle' | t }}</small>
+                                  <strong>{{ (round.eventType === 'PARKOUR_SPEED'
+                                    ? 'communities.parkour.speedTitle' : 'communities.race.recordTitle') | t }}</strong>
+                                  <small>{{ (round.eventType === 'PARKOUR_SPEED'
+                                    ? 'communities.parkour.speedSubtitle' : 'communities.race.metricsSubtitle') | t }}</small>
                                 </div>
-                                <span class="race-round-count">{{ round.entries.length }} {{ 'communities.race.drivers' | t }}</span>
+                                <span class="race-round-count">{{ round.entries.length }} {{ (round.eventType === 'PARKOUR_SPEED'
+                                  ? 'communities.parkour.athletes' : 'communities.race.drivers') | t }}</span>
                               </div>
                               <div class="race-round-entries">
                                 @for (entry of round.entries; track $index) {

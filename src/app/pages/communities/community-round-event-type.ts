@@ -5,7 +5,8 @@ import { CommunityRoundView, formatForSport, viewForSport } from './community-ro
  * Explicitly supported event variants. This registry must be extended alongside
  * backend CommunityRoundEventType; it is NOT a complete rulebook for 121 sports.
  */
-export type CommunityEventType = 'RACE' | 'FREESTYLE' | 'TRACK' | 'JUMP' | 'THROW' | 'HEAT' | 'BODYBOARD_HEAT' | 'APPARATUS';
+export type CommunityEventType = 'RACE' | 'FREESTYLE' | 'TRACK' | 'JUMP' | 'THROW' | 'HEAT' | 'BODYBOARD_HEAT' | 'APPARATUS'
+  | 'SKATE_PARK' | 'SKATE_STREET' | 'PARKOUR_SPEED' | 'PARKOUR_FREESTYLE';
 export interface CommunityEventOption { code: CommunityEventType; labelKey: string }
 const TYPES: Record<string, readonly CommunityEventOption[]> = {
   bmx: [
@@ -23,7 +24,15 @@ const TYPES: Record<string, readonly CommunityEventOption[]> = {
   ],
   surf: [{ code: 'HEAT', labelKey: 'communities.eventType.heat' }],
   bodyboard: [{ code: 'BODYBOARD_HEAT', labelKey: 'communities.eventType.bodyboardHeat' }],
-  'ginastica artistica': [{ code: 'APPARATUS', labelKey: 'communities.eventType.apparatus' }]
+  'ginastica artistica': [{ code: 'APPARATUS', labelKey: 'communities.eventType.apparatus' }],
+  skate: [
+    { code: 'SKATE_PARK', labelKey: 'communities.eventType.skate_park' },
+    { code: 'SKATE_STREET', labelKey: 'communities.eventType.skate_street' }
+  ],
+  parkour: [
+    { code: 'PARKOUR_SPEED', labelKey: 'communities.eventType.parkour_speed' },
+    { code: 'PARKOUR_FREESTYLE', labelKey: 'communities.eventType.parkour_freestyle' }
+  ]
 };
 
 function normalize(sport: string): string {
@@ -38,6 +47,7 @@ export function isRaceEvent(sport: string | null | undefined, eventType: string 
   const name = sport ? normalize(sport) : '';
   if (name === 'atletismo') return eventType === 'TRACK';
   if (name === 'snowboard') return eventType === 'RACE';
+  if (name === 'parkour') return eventType === 'PARKOUR_SPEED';
   if (name === 'bmx') return eventType == null || eventType === 'RACE'; // existing history
   return eventType == null && viewForSport(sport || null) === 'race';
 }
@@ -63,7 +73,8 @@ export function eventPresentationFormat(
 ): string {
   if (isRaceEvent(sport, eventType)) return 'race';
   if (isNeutralEvent(sport, eventType))
-    return ['FREESTYLE', 'HEAT', 'BODYBOARD_HEAT', 'APPARATUS'].includes(eventType || '') ? 'judged' : 'measured';
+    return ['FREESTYLE', 'HEAT', 'BODYBOARD_HEAT', 'APPARATUS',
+      'SKATE_PARK', 'SKATE_STREET', 'PARKOUR_FREESTYLE'].includes(eventType || '') ? 'judged' : 'measured';
   return formatForSport(sport || null);
 }
 

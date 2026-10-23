@@ -68,3 +68,13 @@ O registo central é `src/app/pages/communities/community-round-sport.ts`. Os te
 - Sem regras automáticas de interferência, prioridade, penalização ou desempate federativo. Totais iguais partilham posição na vista provisória.
 - Nenhum novo changeset ou backfill de BD: contrato já existente é suficiente. Resultados históricos e outros desportos inalterados.
 - Referências analisadas: regra de competição da International Bodyboarding Corporation (2025) e clube NCCB (duas melhores ondas, escala 0–10). 
+
+## Skate e Parkour — tipos de prova com resultados próprios (23/10/2026)
+- Skate Park `SKATE_PARK`: nota final de run avaliada manualmente (0–100), sem reconstruir médias dos júris ou desempates.
+- Skate Street `SKATE_STREET`: total final introduzido manualmente (0–300). Formats de runs/tricks variam; não definir fórmula automática nem assumir o formato olímpico.
+- Parkour Speed `PARKOUR_SPEED`: tempo real em segundos (até três casas decimais), posição opcional se conhecida. Sem voltas, melhor volta ou tempos inferidos.
+- Parkour Freestyle `PARKOUR_FREESTYLE`: nota final introduzida pelo organizador na escala **comunitária** de 0–100. Não afirmar equivalência com pontuação FIG nem calcular execução/dificuldade.
+- Todos os tipos exigem seleção em novas jornadas; históricos `event_type = null` ficam intactos.
+- Usam campos `performance_value`, `elapsed_seconds`, `finish_position` já existentes; não há migração Liquibase nem backfill, nem pontos automáticos de época.
+- As posições por notas são apenas da jornada e empates não seguem critérios oficiais.
+- Referências: World Skate Skateboarding Street & Park Competition Rules (abril 2025), FIG Parkour Code of Points 2025–2028.
