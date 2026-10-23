@@ -8,6 +8,7 @@ import { buildCommunityGroupInviteUrl, buildWhatsAppGroupShareUrl } from './comm
 import { communityRoundMatchup, CommunityRoundMatchup } from './community-round-matchup';
 import { sportForRound, viewForSport, formatForSport, CommunityRoundView } from './community-round-sport';
 import { raceSupportsLaps, formatRaceSeconds, raceEntryValidationError } from './community-race-metrics';
+import { raceDecisionError } from './community-race-decisions';
 import { racketSupportsSets, racketUsesPointsPerSet, racketMatchWinner, recordedRacketMatch } from './community-racket-results';
 
 import {
@@ -588,11 +589,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
         || this.raceDecisionEditorKey !== round.id + ':' + entry.entryId) return;
     const seconds = Number(this.raceDecisionTimeSeconds);
     const reason = this.raceDecisionReason.trim();
-    if (!Number.isFinite(seconds) || seconds < 0 || seconds > 3600
-        || Math.abs(seconds * 1000 - Math.round(seconds * 1000)) > 1e-6
-        || (seconds > 0 && entry.elapsedSeconds == null)
-        || ((seconds > 0 || this.raceDecisionDisqualified) && !reason)
-        || reason.length > 255) {
+    if (raceDecisionError(seconds, this.raceDecisionDisqualified,
+        this.raceDecisionReason, entry.elapsedSeconds)) {
       this.raceDecisionError = t('feedback.communities.raceDecisionInvalid');
       return;
     }
