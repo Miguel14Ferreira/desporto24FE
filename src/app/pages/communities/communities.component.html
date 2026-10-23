@@ -1129,6 +1129,44 @@
                         @if (viewForNewRound() === 'race') {
                           <p class="round-sport-guidance" role="note">{{ 'communities.race.metricsEntryHint' | t }}</p>
                         }
+                        @if (racketSupportsSets(newRoundSport)) {
+                          <section class="racket-round-editor" aria-label="{{ 'communities.racket.title' | t }}">
+                            <label>
+                              <span>{{ 'communities.racket.matchFormat' | t }}</span>
+                              <select [(ngModel)]="racketMatchFormat">
+                                <option value="SINGLES">{{ 'communities.racket.singles' | t }}</option>
+                                <option value="DOUBLES">{{ 'communities.racket.doubles' | t }}</option>
+                              </select>
+                            </label>
+                            <div class="racket-sets-header">
+                              <strong>{{ 'communities.racket.setScores' | t }}</strong>
+                              <span>{{ (racketUsesPointsPerSet(newRoundSport)
+                                ? 'communities.racket.pointsHint' : 'communities.racket.gamesHint') | t }}</span>
+                            </div>
+                            @for (score of racketSetScores; track $index) {
+                              <div class="racket-set-editor">
+                                <span>{{ 'communities.racket.set' | t }} {{ $index + 1 }}</span>
+                                <label>
+                                  <span>{{ 'communities.racket.sideA' | t }}</span>
+                                  <input type="number" min="0" max="99" step="1" [(ngModel)]="score.sideA">
+                                </label>
+                                <label>
+                                  <span>{{ 'communities.racket.sideB' | t }}</span>
+                                  <input type="number" min="0" max="99" step="1" [(ngModel)]="score.sideB">
+                                </label>
+                                <button type="button" class="secondary-action jynlo-action jynlo-action--neutral jynlo-action--compact"
+                                  [disabled]="racketSetScores.length <= 1" (click)="removeRacketSet($index)">
+                                  {{ 'communities.racket.removeSet' | t }}
+                                </button>
+                              </div>
+                            }
+                            <button type="button" class="secondary-action jynlo-action jynlo-action--neutral jynlo-action--compact"
+                              [disabled]="racketSetScores.length >= 5" (click)="addRacketSet()">
+                              {{ 'communities.racket.addSet' | t }}
+                            </button>
+                            <p>{{ 'communities.racket.selectSidesHint' | t }}</p>
+                          </section>
+                        }
                         <div class="round-player-list">
                           @for (entry of roundEntries; track entry.username) {
                             <article class="round-player" [class.included]="entry.included">
@@ -1139,13 +1177,21 @@
 
                               @if (entry.included) {
                                 <div class="round-player-fields">
-                                  @if (viewForNewRound() !== 'race') {
-                                  <label>
-                                    <span>{{ 'communities.team' | t }}</span>
-                                    <input
-                                      [(ngModel)]="entry.team"
-                                      [placeholder]="'communities.teamPlaceholder' | t">
-                                  </label>
+                                  @if (racketSupportsSets(newRoundSport)) {
+                                    <label>
+                                      <span>{{ 'communities.racket.side' | t }}</span>
+                                      <select [(ngModel)]="entry.team">
+                                        <option value="">{{ 'communities.racket.selectSide' | t }}</option>
+                                        <option value="A">{{ 'communities.racket.sideA' | t }}</option>
+                                        <option value="B">{{ 'communities.racket.sideB' | t }}</option>
+                                      </select>
+                                    </label>
+                                  } @else if (viewForNewRound() !== 'race') {
+                                    <label>
+                                      <span>{{ 'communities.team' | t }}</span>
+                                      <input [(ngModel)]="entry.team"
+                                        [placeholder]="'communities.teamPlaceholder' | t">
+                                    </label>
                                   }
                                   @if (viewForNewRound() === 'race') {
                                     <label>
@@ -1168,7 +1214,7 @@
                                         <input type="number" min="0.001" step="0.001" [(ngModel)]="entry.bestLapSeconds">
                                       </label>
                                     }
-                                  } @else {
+                                  } @else if (!racketSupportsSets(newRoundSport)) {
                                     <label>
                                       <span>{{ 'communities.result' | t }}</span>
                                       <select [(ngModel)]="entry.result">
@@ -1178,7 +1224,7 @@
                                       </select>
                                     </label>
                                   }
-                                  @if (viewForNewRound() !== 'race') {
+                                  @if (viewForNewRound() !== 'race' && !racketSupportsSets(newRoundSport)) {
                                   <label>
                                     <span>{{ 'communities.goals' | t }}</span>
                                     <input type="number" min="0" [(ngModel)]="entry.goals">
@@ -1305,6 +1351,40 @@
                                         }
                                       }
                                     </div>
+                                  </div>
+                                }
+                              </div>
+                            </section>
+                          } @else if (recordedRacketMatch(round)) {
+                            <section class="racket-result-card">
+                              <div class="racket-result-header">
+                                <strong>{{ (round.matchFormat === 'DOUBLES'
+                                  ? 'communities.racket.doubles' : 'communities.racket.singles') | t }}</strong>
+                                <span>{{ (racketUsesPointsPerSet(roundSport(round))
+                                  ? 'communities.racket.pointsHint' : 'communities.racket.gamesHint') | t }}</span>
+                              </div>
+                              <div class="racket-result-sides">
+                                <div class="racket-result-side">
+                                  <strong>{{ 'communities.racket.sideA' | t }}</strong>
+                                  @for (player of racketSidePlayers(round, 'A'); track $index) {
+                                    <span>{{ player.fullName || player.username }}</span>
+                                  }
+                                </div>
+                                <span class="racket-result-vs">VS</span>
+                                <div class="racket-result-side">
+                                  <strong>{{ 'communities.racket.sideB' | t }}</strong>
+                                  @for (player of racketSidePlayers(round, 'B'); track $index) {
+                                    <span>{{ player.fullName || player.username }}</span>
+                                  }
+                                </div>
+                              </div>
+                              <div class="racket-result-sets" role="table" [attr.aria-label]="'communities.racket.setScores' | t">
+                                @for (score of round.setScores || []; track $index) {
+                                  <div class="racket-result-set" role="row">
+                                    <span>{{ 'communities.racket.set' | t }} {{ $index + 1 }}</span>
+                                    <strong [class.racket-set-winner]="(score.sideA ?? 0) > (score.sideB ?? 0)">{{ score.sideA }}</strong>
+                                    <span class="racket-result-dash">:</span>
+                                    <strong [class.racket-set-winner]="(score.sideB ?? 0) > (score.sideA ?? 0)">{{ score.sideB }}</strong>
                                   </div>
                                 }
                               </div>
