@@ -89,14 +89,14 @@
         </div>
       </section>
 
-      <section class="create-card" id="community-search" #communitySearchSection>
-        <div>
+      <section class="create-card community-discovery" id="community-search" #communitySearchSection aria-labelledby="community-discovery-title">
+        <div class="community-discovery-heading">
           <p class="eyebrow">{{ 'communities.title' | t }}</p>
-          <h2>{{ 'communities.searchTitle' | t }}</h2>
+          <h2 id="community-discovery-title">{{ 'communities.searchTitle' | t }}</h2>
           <p class="subtitle">{{ 'communities.searchHint' | t }}</p>
         </div>
 
-        <form class="form-grid" (ngSubmit)="searchCommunities(0)">
+        <form class="form-grid community-discovery-filters" (ngSubmit)="searchCommunities(0)">
           <label>
             <span>{{ 'community.nameOptional' | t }}</span>
             <input
@@ -119,7 +119,7 @@
               [placeholder]="'events.sportPlaceholder' | t">
           </label>
 
-          <div class="row-actions full-width">
+          <div class="row-actions full-width community-discovery-filter-actions">
             <button
               type="submit"
               class="primary-action jynlo-action jynlo-action--primary"
@@ -136,30 +136,42 @@
           </div>
         </form>
 
+        @if (communitySearchLoading) {
+          <p class="community-discovery-status" role="status">{{ 'common.searching' | t }}</p>
+        }
+
         @if (communitySearchError) {
-          <div class="feedback error-feedback">{{ communitySearchError }}</div>
+          <div class="feedback error-feedback" role="alert">{{ communitySearchError }}</div>
         }
 
         @if (communitySearchPerformed && !communitySearchLoading && communitySearchResults.length === 0 && !communitySearchError) {
-          <div class="empty-state compact">
+          <div class="empty-state compact community-discovery-empty">
             <strong>{{ 'communities.searchEmptyTitle' | t }}</strong>
             <p>{{ 'communities.searchEmptyText' | t }}</p>
           </div>
         }
 
         @if (communitySearchPerformed && !communitySearchLoading && communitySearchResults.length > 0) {
-          <div class="community-list">
+          <div class="community-discovery-results">
+            <div class="community-discovery-results-heading">
+              <div>
+                <p class="eyebrow jynlo-ui-overline">{{ 'communities.title' | t }}</p>
+                <h3>{{ 'communities.resultsTitle' | t }}</h3>
+              </div>
+              <p>{{ 'communities.resultsHint' | t }}</p>
+            </div>
+          <div class="community-list community-discovery-grid">
             @for (community of communitySearchResults; track community.id) {
               <button
                 type="button"
                 class="community-card"
                 (click)="openCommunityPresentation(community)">
                 <div class="community-card-main">
-                  <div class="community-avatar">
+                  <div class="community-avatar community-discovery-cover">
                     @if (community.photoUrl) {
-                      <img [src]="community.photoUrl" [alt]="community.name">
+                      <img [src]="community.photoUrl" [alt]="community.name" loading="lazy" decoding="async">
                     } @else {
-                      <span>{{ community.name.charAt(0).toUpperCase() }}</span>
+                      <span aria-hidden="true">{{ community.name.charAt(0).toUpperCase() }}</span>
                     }
                   </div>
                   <div class="community-card-copy">
@@ -180,19 +192,24 @@
                         </span>
                       }
                     </div>
-                    <small>{{ community.description || ('communities.noDescription' | t) }}</small>
+                    <small class="community-discovery-description">{{ community.description || ('communities.noDescription' | t) }}</small>
                   </div>
                 </div>
-                <span class="visibility">
-                  {{ community.visibility === 'PRIVATE'
-                    ? ('communities.private' | t)
-                    : ('communities.public' | t) }}
-                </span>
+                <div class="community-discovery-card-footer">
+                  <span class="visibility">
+                    {{ community.visibility === 'PRIVATE'
+                      ? ('communities.private' | t)
+                      : ('communities.public' | t) }}
+                  </span>
+                  <span class="community-discovery-card-link">
+                    {{ 'communities.viewCommunity' | t }} <span aria-hidden="true">→</span>
+                  </span>
+                </div>
               </button>
             }
           </div>
 
-          <nav class="row-actions" [attr.aria-label]="'communities.title' | t">
+          <nav class="row-actions community-discovery-pagination" [attr.aria-label]="'communities.title' | t">
             <button
               type="button"
               class="secondary-action jynlo-action jynlo-action--neutral"
@@ -209,6 +226,7 @@
               {{ 'adminPlayers.next' | t }}
             </button>
           </nav>
+          </div>
         }
       </section>
     }
