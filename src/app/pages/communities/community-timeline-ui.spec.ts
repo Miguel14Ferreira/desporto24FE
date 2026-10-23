@@ -25,6 +25,7 @@ describe('Community feed/chat UI state isolation', () => {
     component.feedDraft = '';
     component.chatDraft = '';
     (component as any).timelineRequestVersion = 0;
+    (component as any).chatEventsDuringLoad = new Map();
     list = jasmine.createSpy('list').and.returnValue(of([]));
     send = jasmine.createSpy('send').and.returnValue(of(message('POST')));
     remove = jasmine.createSpy('delete').and.returnValue(of(undefined));
