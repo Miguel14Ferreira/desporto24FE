@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { appTranslate as t } from '../../i18n/i18n.service';
-import { AfterViewChecked, ChangeDetectionStrategy, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewChecked, ChangeDetectionStrategy, Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { JwtHelperService } from '@auth0/angular-jwt';
 import { Subscription, TimeoutError, forkJoin, finalize, retry, timeout } from 'rxjs';
@@ -9,6 +9,7 @@ import { DirectChatInfo, DirectChatMessage } from '../model/direct-chat';
 import { DirectChatService } from '../../services/direct-chat.service';
 import { CommunityService } from '../../services/community.service';
 import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.service';
+import { ChatReadSyncService } from '../../services/chat-read-sync.service';
 
 @Component({
   selector: 'app-direct-chat',
@@ -46,6 +47,7 @@ export class DirectChatComponent implements OnInit, OnDestroy, AfterViewChecked 
   readonly emojis = ['😀', '😂', '😊', '😍', '🥳', '😎', '😉', '👍', '👏', '🙌', '🔥', '⚽', '🏀', '🎾', '🏓', '💪', '❤️', '✅'];
 
   private readonly jwtHelper = new JwtHelperService();
+  private readonly readSync = inject(ChatReadSyncService);
   private readonly dateTimeFormatter = new Intl.DateTimeFormat('pt-PT', {
     dateStyle: 'short',
     timeStyle: 'short'
@@ -124,6 +126,22 @@ export class DirectChatComponent implements OnInit, OnDestroy, AfterViewChecked 
       el.scrollTop = el.scrollHeight;
       this.scrollToBottomRequested = false;
     }
+    this.markVisibleMessagesRead();
+  }
+
+  @HostListener('window:scroll')
+  @HostListener('window:focus')
+  @HostListener('document:visibilitychange')
+  onMessageLogScroll(): void {
+    this.markVisibleMessagesRead();
+  }
+
+  private markVisibleMessagesRead(): void {
+    if (this.loading || this.errorMessage || !this.chatInfo || !this.currentUsername
+        || !this.recipientUsername || this.messages.length === 0) return;
+    const highestId = Math.max(0, ...this.messages.map(message => message.id || 0));
+    this.readSync.markVisible('direct', this.recipientUsername,
+      highestId, this.messageList?.nativeElement);
   }
 
   private isNearBottom(): boolean {
