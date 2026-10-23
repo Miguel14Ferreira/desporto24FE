@@ -47,7 +47,7 @@ describe('Unified Jynlo message center', () => {
       connected$: connected.asObservable(),
       connect: jasmine.createSpy('connect')
     } as unknown as DirectChatRealtimeService;
-    inboxApi = jasmine.createSpyObj<InboxApiService>('InboxApiService', ['summaries', 'markRead']);
+    inboxApi = jasmine.createSpyObj<InboxApiService>('InboxApiService', ['summaries', 'markRead', 'searchMessages']);
     inboxApi.summaries.and.returnValue(of([]));
     inboxApi.markRead.and.callFake(ref => of({ ...ref, latestMessageId: null,
       latestText: null, latestSender: null, latestAt: null, unreadCount: 0 }));
@@ -61,6 +61,82 @@ describe('Unified Jynlo message center', () => {
     } as any));
     component = new MessagesCenterComponent(friends, communities, sessions, direct, timeline, realtime, inboxApi);
     (component as any).currentUsername = 'ana';
+  });
+
+  it('searches full chat history through an authorized scoped request without marking read', () => {
+    const selected = item('direct', 'bea');
+    component.conversations = [selected];
+    component.selectedKey = selected.key;
+    component.messageSearchOpen = true;
+    component.messageSearchTerm = 'torneio';
+    inboxApi.searchMessages.and.returnValue(of({
+      page: 0, hasMore: false, results: [{ id: 7, sender: 'bea', text: 'Torneio antigo',
+        createdAt: '2026-09-01T12:00:00Z', replyToMessageId: 3,
+        replyToSender: 'ana', replyToText: 'Um torneio?' }]
+    }));
+    component.submitMessageSearch();
+    expect(inboxApi.searchMessages).toHaveBeenCalledOnceWith(
+      { kind: 'direct', id: 'bea' }, 'torneio', 0);
+    expect(component.messageSearchResults[0]).toEqual(jasmine.objectContaining({
+      id: 7, text: 'Torneio antigo', replyToMessageId: 3
+    }));
+    expect(inboxApi.markRead).not.toHaveBeenCalled();
+  });
+
+  it('loads additional pages newest first with no duplicate messages', () => {
+    const selected = item('community', 7);
+    component.conversations = [selected];
+    component.selectedKey = selected.key;
+    component.messageSearchOpen = true;
+    component.messageSearchTerm = 'treino';
+    inboxApi.searchMessages.and.returnValues(
+      of({ page: 0, hasMore: true, results: [{ id: 30, sender: 'ana',
+        text: 'Treino recente', createdAt: '2026-10-23T10:00:00Z' }] }),
+      of({ page: 1, hasMore: false, results: [
+        { id: 30, sender: 'ana', text: 'Treino recente', createdAt: '2026-10-23T10:00:00Z' },
+        { id: 9, sender: 'bea', text: 'Treino antigo', createdAt: '2026-08-15T10:00:00Z' }
+      ] })
+    );
+    component.submitMessageSearch();
+    component.submitMessageSearch(1);
+    expect(component.messageSearchResults.map(m => m.id)).toEqual([30, 9]);
+    expect(component.messageSearchHasMore).toBeFalse();
+    expect(inboxApi.searchMessages).toHaveBeenCalledTimes(2);
+  });
+
+  it('discards search results after switching conversations or changing the query', () => {
+    const older = new Subject<any>();
+    const selected = item('session', 41);
+    component.conversations = [selected, item('direct', 'bea')];
+    component.selectedKey = selected.key;
+    component.messageSearchOpen = true;
+    component.messageSearchTerm = 'golo';
+    inboxApi.searchMessages.and.returnValue(older.asObservable());
+    component.submitMessageSearch();
+    component.messageSearchTerm = 'jogo';
+    component.onMessageSearchTermChange();
+    older.next({ page: 0, hasMore: false, results: [
+      { id: 33, sender: 'ana', text: 'golo', createdAt: null }
+    ] });
+    older.complete();
+    expect(component.messageSearchResults).toEqual([]);
+    expect(component.messageSearchLoading).toBeFalse();
+    expect(component.messageSearchSearched).toBeFalse();
+    component.toggleMessageSearch();
+    expect(component.messageSearchOpen).toBeFalse();
+  });
+
+  it('refuses short searches and does not quote historical results from another chat', () => {
+    const selected = item('direct', 'bea');
+    component.conversations = [selected];
+    component.selectedKey = selected.key;
+    component.messageSearchOpen = true;
+    component.messageSearchTerm = 'a';
+    component.submitMessageSearch();
+    expect(inboxApi.searchMessages).not.toHaveBeenCalled();
+    component.composerAllowed = true;
+    component.replyToMessage(message('community:7', 11));
+    expect(component.replyingTo).toBeNull();
   });
 
   it('shows friends, membership communities and confirmed sessions without N+1 histories', () => {
