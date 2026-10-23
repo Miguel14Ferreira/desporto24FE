@@ -443,10 +443,14 @@ export class CommunityGroupsService {
       eventType?: 'RACE' | 'FREESTYLE' | 'TRACK' | 'JUMP' | 'THROW' | 'HEAT' | 'BODYBOARD_HEAT' | 'APPARATUS'
         | 'SKATE_PARK' | 'SKATE_STREET' | 'PARKOUR_SPEED' | 'PARKOUR_FREESTYLE'
         | 'BREAKING_BATTLE' | 'TRAMPOLINE_INDIVIDUAL'
-        | 'RHYTHMIC_APPARATUS' | 'ARTISTIC_SOLO_TECHNICAL' | 'ARTISTIC_SOLO_FREE' | null;
+        | 'RHYTHMIC_APPARATUS' | 'ARTISTIC_SOLO_TECHNICAL' | 'ARTISTIC_SOLO_FREE'
+        | 'RHYTHMIC_GROUP_5' | 'RHYTHMIC_GROUP_3_2'
+        | 'ARTISTIC_DUET_TECH' | 'ARTISTIC_DUET_FREE'
+        | 'ARTISTIC_TEAM_TECH' | 'ARTISTIC_TEAM_FREE' | null;
       eventDiscipline?: string | null;
       matchFormat?: 'SINGLES' | 'DOUBLES' | null;
       setScores?: Array<{ sideA: number | null; sideB: number | null }> | null;
+      groupScores?: Array<{ groupName: string; score: number | null }>;
       entries: Array<{
         username: string;
         team: string | null;
