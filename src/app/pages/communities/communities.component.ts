@@ -1,6 +1,8 @@
-import { ChangeDetectionStrategy, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { AfterViewChecked, ChangeDetectionStrategy, Component, ElementRef, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import { JwtHelperService } from '@auth0/angular-jwt';
 import { ActivatedRoute, Router } from '@angular/router';
-import { finalize, firstValueFrom, Observable, retry, timeout } from 'rxjs';
+import { finalize, firstValueFrom, Observable, retry, timeout, Subscription, TimeoutError } from 'rxjs';
 import { appTranslate as t } from '../../i18n/i18n.service';
 import { buildCommunityGroupInviteUrl, buildWhatsAppGroupShareUrl } from './community-group-invite';
 
@@ -32,6 +34,7 @@ import {
 import { CommunityService } from '../../services/community.service';
 import { SessionService } from '../../services/session.service';
 import { CommunityTimelineService, CommunityTimelineEntry, CommunityTimelineKind } from '../../services/community-timeline.service';
+import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.service';
 import { CommunityProfile } from '../model/community-profile';
 import { SessionSummary } from '../model/session-summary';
 import { SPORTS_CATALOG } from '../../shared/sports-catalog';
@@ -45,8 +48,12 @@ type CommunityTab = 'home' | 'feed' | 'chat' | 'sessions' | 'tournaments' | 'ran
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false
 })
-export class CommunitiesComponent implements OnInit {
+export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked {
   @ViewChild('communitySearchSection') communitySearchSection?: ElementRef<HTMLElement>;
+  @ViewChild('communityChatLog') communityChatLog?: ElementRef<HTMLElement>;
+  private readonly realtimeService = inject(DirectChatRealtimeService);
+  private readonly chatSubscriptions = new Subscription();
+  private readonly jwtHelper = new JwtHelperService();
 
   private readonly sessionDateFormatter = new Intl.DateTimeFormat('pt-PT', {
     dateStyle: 'medium',
@@ -98,7 +105,122 @@ export class CommunitiesComponent implements OnInit {
   timelineError = '';
   feedDraft = '';
   chatDraft = '';
+  chatRealtimeConnected = false;
+  chatEverConnected = false;
+  chatDeliveryUncertain = false;
+  chatDeliveryChecking = false;
+  private pendingChatDelivery?: { communityId: number; text: string; ids: Set<number>; at: number };
+  private chatScrollRequested = false;
   private timelineRequestVersion = 0;
+  private chatEventsDuringLoad = new Map<number, CommunityTimelineEntry>();
+
+  private currentChatUsername(): string | null {
+    try {
+      const token = localStorage.getItem('t');
+      return token ? this.jwtHelper.decodeToken(token)?.sub ?? null : null;
+    } catch { return null; }
+  }
+
+  isMyChatEntry(entry: CommunityTimelineEntry): boolean {
+    const username = this.currentChatUsername();
+    return Boolean(username && username.toLowerCase() === entry.username.toLowerCase());
+  }
+
+  private nearChatBottom(): boolean {
+    const el = this.communityChatLog?.nativeElement;
+    return !el || el.scrollHeight - el.scrollTop - el.clientHeight <= 120;
+  }
+
+  ngAfterViewChecked(): void {
+    if (this.chatScrollRequested && this.activeTab === 'chat' && this.communityChatLog?.nativeElement) {
+      this.communityChatLog.nativeElement.scrollTop = this.communityChatLog.nativeElement.scrollHeight;
+      this.chatScrollRequested = false;
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.chatSubscriptions.unsubscribe();
+  }
+
+  private sortChatEntries(entries: CommunityTimelineEntry[]): CommunityTimelineEntry[] {
+    return [...entries].sort((a, b) =>
+      a.createdAt.localeCompare(b.createdAt) || a.id - b.id).slice(-60);
+  }
+
+  private mergeChatEntries(entries: CommunityTimelineEntry[], follow = false): void {
+    const byId = new Map(this.timelineEntries.map(item => [item.id, item]));
+    for (const entry of entries) byId.set(entry.id, entry);
+    this.timelineEntries = this.sortChatEntries([...byId.values()]);
+    if (follow) this.chatScrollRequested = true;
+    if (this.chatDeliveryUncertain && this.timelineEntries.some(item => this.matchesPendingChatDelivery(item))) {
+      this.confirmChatDelivery();
+    }
+  }
+
+  onCommunityChatRealtime(entry: CommunityTimelineEntry): void {
+    if (!this.selected || this.activeTab !== 'chat' || entry.kind !== 'CHAT'
+        || entry.communityId !== this.selected.id) return;
+    const follow = this.nearChatBottom() || this.isMyChatEntry(entry);
+    if (this.timelineLoading) this.chatEventsDuringLoad?.set(entry.id, entry);
+    this.mergeChatEntries([entry], follow);
+  }
+
+  private matchesPendingChatDelivery(entry: CommunityTimelineEntry): boolean {
+    const pending = this.pendingChatDelivery;
+    if (!pending || entry.kind !== 'CHAT' || entry.communityId !== pending.communityId
+        || pending.ids.has(entry.id) || !this.isMyChatEntry(entry) || entry.body !== pending.text) return false;
+    const date = Date.parse(entry.createdAt);
+    return Number.isFinite(date) && date >= pending.at - 60_000;
+  }
+
+  private confirmChatDelivery(): void {
+    this.chatDeliveryUncertain = false;
+    this.pendingChatDelivery = undefined;
+    this.chatDraft = '';
+    this.timelineError = '';
+    this.chatScrollRequested = true;
+  }
+
+  verifyCommunityChatDelivery(): void {
+    if (!this.chatDeliveryUncertain || this.chatDeliveryChecking || !this.pendingChatDelivery) return;
+    const id = this.pendingChatDelivery.communityId;
+    if (this.selected?.id !== id || this.activeTab !== 'chat') return;
+    if (this.timelineEntries.some(item => this.matchesPendingChatDelivery(item))) {
+      this.confirmChatDelivery();
+      return;
+    }
+    this.chatDeliveryChecking = true;
+    this.timelineService.list(id, 'CHAT')
+      .pipe(timeout(10_000), finalize(() => { this.chatDeliveryChecking = false; }))
+      .subscribe({
+        next: items => {
+          if (this.selected?.id !== id || this.activeTab !== 'chat') return;
+          this.mergeChatEntries(items, this.nearChatBottom());
+          if (this.chatDeliveryUncertain) this.timelineError = t('chat.sendUnconfirmed');
+        },
+        error: () => { if (this.selected?.id === id) this.timelineError = t('chat.verifyUnavailable'); }
+      });
+  }
+
+  resumeCommunityChatAfterUncertainSend(): void {
+    if (this.chatDeliveryChecking) return;
+    this.pendingChatDelivery = undefined;
+    this.chatDeliveryUncertain = false;
+    this.timelineError = t('chat.sendRetryWarning');
+  }
+
+  onCommunityChatEnter(event: Event): void {
+    const keyboard = event as KeyboardEvent;
+    if (keyboard.shiftKey || keyboard.isComposing || keyboard.keyCode === 229) return;
+    keyboard.preventDefault();
+    this.sendTimeline();
+  }
+
+  private isUncertainChatError(error: unknown): boolean {
+    return error instanceof TimeoutError
+      || error instanceof HttpErrorResponse
+      && (error.status === 0 || error.status === 408 || error.status === 429 || error.status >= 500);
+  }
 
   get timelineKind(): CommunityTimelineKind {
     return this.activeTab === 'chat' ? 'CHAT' : 'POST';
@@ -110,6 +232,7 @@ export class CommunitiesComponent implements OnInit {
     const kind = this.timelineKind;
     const version = ++this.timelineRequestVersion;
     this.timelineLoading = true;
+    if (kind === 'CHAT') this.chatEventsDuringLoad?.clear();
     this.timelineError = '';
     this.timelineService.list(communityId, kind)
       .pipe(timeout(10_000), finalize(() => {
@@ -118,7 +241,22 @@ export class CommunitiesComponent implements OnInit {
       .subscribe({
         next: entries => {
           if (version === this.timelineRequestVersion && this.selected?.id === communityId
-              && this.timelineKind === kind) this.timelineEntries = entries;
+              && this.timelineKind === kind) {
+            if (kind === 'CHAT') {
+              // HTTP history is authoritative, including moderators' deletions.
+              // Preserve only websocket messages received while the HTTP request ran.
+              const follow = this.timelineEntries.length === 0 || this.nearChatBottom();
+              const byId = new Map(entries.map(entry => [entry.id, entry]));
+              for (const entry of this.chatEventsDuringLoad?.values() ?? []) byId.set(entry.id, entry);
+              this.timelineEntries = this.sortChatEntries([...byId.values()]);
+              this.chatEventsDuringLoad?.clear();
+              if (follow) this.chatScrollRequested = true;
+              if (this.chatDeliveryUncertain
+                  && this.timelineEntries.some(entry => this.matchesPendingChatDelivery(entry))) {
+                this.confirmChatDelivery();
+              }
+            } else this.timelineEntries = entries;
+          }
         },
         error: () => {
           if (version === this.timelineRequestVersion) this.timelineError = t('communities.timelineLoadError');
@@ -128,7 +266,8 @@ export class CommunitiesComponent implements OnInit {
 
   sendTimeline(): void {
     if (!this.selected || this.timelineSending ||
-        (this.activeTab !== 'feed' && this.activeTab !== 'chat')) return;
+        (this.activeTab !== 'feed' && this.activeTab !== 'chat') ||
+        (this.activeTab === 'chat' && this.chatDeliveryUncertain)) return;
     const kind = this.timelineKind;
     const communityId = this.selected.id;
     const text = kind === 'CHAT' ? this.chatDraft.trim() : this.feedDraft.trim();
@@ -136,17 +275,37 @@ export class CommunitiesComponent implements OnInit {
     if (!text || text.length > max) return;
     this.timelineSending = true;
     this.timelineError = '';
+    const pending = kind === 'CHAT'
+      ? { communityId, text, ids: new Set(this.timelineEntries.map(entry => entry.id)), at: Date.now() }
+      : undefined;
     this.timelineService.send(communityId, kind, text)
       .pipe(timeout(10_000), finalize(() => this.timelineSending = false))
       .subscribe({
-        next: () => {
+        next: entry => {
           if (this.selected?.id !== communityId) return;
-          if (kind === 'CHAT') this.chatDraft = '';
-          else this.feedDraft = '';
-          if (this.timelineKind === kind) this.loadTimeline();
+          if (kind === 'CHAT') {
+            if (this.activeTab === 'chat') {
+              this.mergeChatEntries([entry], true);
+              // The authoritative recent history also reflects moderation and
+              // messages sent between the HTTP POST and its acknowledgement.
+              this.loadTimeline();
+            }
+            this.chatDraft = '';
+            this.pendingChatDelivery = undefined;
+            this.chatDeliveryUncertain = false;
+          } else {
+            this.feedDraft = '';
+            if (this.timelineKind === kind) this.loadTimeline();
+          }
         },
-        error: () => {
-          if (this.selected?.id === communityId) this.timelineError = t('communities.timelineSendError');
+        error: error => {
+          if (this.selected?.id !== communityId) return;
+          if (kind === 'CHAT' && pending && this.isUncertainChatError(error)) {
+            this.pendingChatDelivery = pending;
+            this.chatDeliveryUncertain = true;
+            this.timelineError = t('chat.sendUncertain');
+            this.verifyCommunityChatDelivery();
+          } else this.timelineError = t('communities.timelineSendError');
         }
       });
   }
@@ -424,6 +583,18 @@ export class CommunitiesComponent implements OnInit {
   ngOnInit(): void {
     this.isDetailMode = Boolean(this.route.snapshot.paramMap.get('id'));
     this.reload();
+    this.realtimeService.connect();
+    this.chatSubscriptions.add(this.realtimeService.communityMessages$.subscribe(
+      entry => this.onCommunityChatRealtime(entry)
+    ));
+    this.chatSubscriptions.add(this.realtimeService.connected$.subscribe(connected => {
+      this.chatRealtimeConnected = connected;
+      if (connected) {
+        this.chatEverConnected = true;
+        // Recover missed events after reconnection, but only for the open chat.
+        if (this.selected && this.activeTab === 'chat') this.loadTimeline();
+      }
+    }));
   }
 
   detailMode(): boolean {
@@ -788,11 +959,14 @@ export class CommunitiesComponent implements OnInit {
     this.pendingJoinRequestsLoading = false;
     this.pendingJoinRequests = [];
     ++this.timelineRequestVersion;
+    this.chatEventsDuringLoad?.clear();
     this.timelineEntries = [];
     this.timelineError = '';
     this.timelineLoading = false;
     this.feedDraft = '';
     this.chatDraft = '';
+    this.chatDeliveryUncertain = false;
+    this.pendingChatDelivery = undefined;
     this.errorMessage = '';
 
     this.communityService.get(community.id)
@@ -860,7 +1034,10 @@ export class CommunitiesComponent implements OnInit {
         || (tab === 'ranking' && !this.canBrowseHistoricalArchives)
         || (tab === 'stats' && !this.selected?.rankingsEnabled)) return;
     this.activeTab = tab;
+    this.chatDeliveryUncertain = false;
+    this.pendingChatDelivery = undefined;
     ++this.timelineRequestVersion;
+    this.chatEventsDuringLoad?.clear();
     this.timelineEntries = [];
     this.timelineError = '';
     this.timelineLoading = false;

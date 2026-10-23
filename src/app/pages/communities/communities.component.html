@@ -456,11 +456,18 @@
 
             @if (activeTab === 'feed' || activeTab === 'chat') {
               <section class="community-tab-panel community-timeline"
+                       [class.community-chat-panel]="activeTab === 'chat'"
                        [attr.aria-label]="(activeTab === 'feed' ? 'communities.tab.feed' : 'communities.tab.chat') | t">
                 <div class="community-timeline-heading">
                   <div>
                     <h3>{{ (activeTab === 'feed' ? 'communities.timelineFeedTitle' : 'communities.timelineChatTitle') | t }}</h3>
                     <p>{{ (activeTab === 'feed' ? 'communities.timelineFeedHint' : 'communities.timelineChatHint') | t }}</p>
+                    @if (activeTab === 'chat') {
+                      <span class="community-chat-connection" [class.is-connected]="chatRealtimeConnected" role="status">
+                        <span class="community-chat-dot" aria-hidden="true"></span>
+                        {{ (chatRealtimeConnected ? 'chat.connected' : (chatEverConnected ? 'chat.reconnecting' : 'chat.connecting')) | t }}
+                      </span>
+                    }
                   </div>
                   <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
                           [disabled]="timelineLoading" (click)="loadTimeline()">
@@ -476,30 +483,51 @@
                   } @else {
                     <label for="community-chat-text">{{ 'communities.timelineWriteMessage' | t }}</label>
                     <textarea id="community-chat-text" name="community-chat-text" rows="2" maxlength="2000"
-                              [(ngModel)]="chatDraft"
+                              [(ngModel)]="chatDraft" [disabled]="timelineSending || chatDeliveryUncertain"
+                              (keydown.enter)="onCommunityChatEnter($event)"
                               [placeholder]="'communities.timelineChatPlaceholder' | t"></textarea>
+                    <div class="community-chat-composer-hint">{{ 'chat.enterHint' | t }} · {{ chatDraft.length }}/2000</div>
                   }
                   <div class="row-actions">
                     <button type="submit" class="primary-action jynlo-action jynlo-action--primary"
-                            [disabled]="timelineSending || !(activeTab === 'feed' ? feedDraft.trim() : chatDraft.trim())">
+                            [disabled]="timelineSending || (activeTab === 'chat' && chatDeliveryUncertain) || !(activeTab === 'feed' ? feedDraft.trim() : chatDraft.trim())">
                       {{ (activeTab === 'feed' ? 'communities.timelinePublish' : 'communities.timelineSend') | t }}
                     </button>
                   </div>
                 </form>
-                @if (timelineError) {
+                @if (timelineError && !chatDeliveryUncertain) {
                   <p class="community-timeline-error" role="alert">{{ timelineError }}</p>
+                }
+                @if (activeTab === 'chat' && chatDeliveryUncertain) {
+                  <div class="community-chat-delivery-warning" role="alert">
+                    <strong>{{ 'chat.uncertainTitle' | t }}</strong>
+                    <p>{{ timelineError }}</p>
+                    <div class="community-chat-verification">
+                      <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
+                              [disabled]="chatDeliveryChecking" (click)="verifyCommunityChatDelivery()">
+                        {{ (chatDeliveryChecking ? 'chat.verifying' : 'chat.verifyDelivery') | t }}
+                      </button>
+                      <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
+                              [disabled]="chatDeliveryChecking" (click)="resumeCommunityChatAfterUncertainSend()">
+                        {{ 'chat.resumeWriting' | t }}
+                      </button>
+                    </div>
+                  </div>
                 }
                 @if (timelineLoading) {
                   <p role="status">{{ 'communities.loading' | t }}</p>
                 } @else if (timelineEntries.length === 0 && !timelineError) {
                   <p class="community-timeline-empty">{{ (activeTab === 'feed' ? 'communities.timelineNoPosts' : 'communities.timelineNoMessages') | t }}</p>
                 } @else {
-                  <div [class.community-timeline-chat]="activeTab === 'chat'"
-                       [class.community-timeline-feed]="activeTab === 'feed'">
+                  <div #communityChatLog [class.community-timeline-chat]="activeTab === 'chat'"
+                       [class.community-timeline-feed]="activeTab === 'feed'"
+                       [attr.role]="activeTab === 'chat' ? 'log' : null"
+                       [attr.aria-live]="activeTab === 'chat' ? 'polite' : null"
+                       [attr.aria-label]="activeTab === 'chat' ? ('chat.messages' | t) : null">
                     @for (entry of timelineEntries; track entry.id) {
-                      <article class="community-timeline-entry">
+                      <article class="community-timeline-entry" [class.my-chat-message]="activeTab === 'chat' && isMyChatEntry(entry)">
                         <div class="entry-meta">
-                          <strong>@{{ entry.username }}</strong>
+                          <strong>{{ (activeTab === 'chat' && isMyChatEntry(entry)) ? ('chat.you' | t) : ('@' + entry.username) }}</strong>
                           <time [attr.datetime]="entry.createdAt">{{ entry.createdAt | date:'short' }}</time>
                           @if (canManage()) {
                             <button type="button" class="secondary-action small jynlo-action jynlo-action--neutral jynlo-action--compact"
