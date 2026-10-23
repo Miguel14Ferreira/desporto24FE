@@ -203,6 +203,19 @@ describe('SessionDetailsComponent', () => {
     fixture.detectChanges();
   });
 
+  it('offers a jump to new session messages without moving the scroll until chosen', () => {
+    component.session = { ...session, joined: true };
+    const log = { scrollHeight: 900, scrollTop: 60, clientHeight: 260 };
+    component.chatMessageList = { nativeElement: log } as any;
+    realtimeSessionMessages.next({ id: 91, sessionId: 7, senderUsername: 'player-two',
+      body: 'Vamos!', createdAt: '2026-10-23T09:00:00Z' });
+    expect(component.newMessagesPending).toBe(1);
+    expect(log.scrollTop).toBe(60);
+    component.jumpToLatestMessages();
+    expect(log.scrollTop).toBe(900);
+    expect(component.newMessagesPending).toBe(0);
+  });
+
   it('only synchronizes session chat reads after access is granted and messages have loaded', () => {
     component.messages = [{
       id: 29, sessionId: 7, senderUsername: 'creator-user',

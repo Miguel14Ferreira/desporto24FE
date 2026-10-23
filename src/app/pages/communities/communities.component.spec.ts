@@ -24,6 +24,25 @@ describe('CommunitiesComponent public session eligibility', () => {
     };
   });
 
+  it('shows a new chat arrival counter only for the opened community', () => {
+    component.selected = { id: 7 } as any;
+    component.activeTab = 'chat';
+    component.timelineEntries = [];
+    component.newMessagesPending = 0;
+    const log = { scrollHeight: 900, scrollTop: 20, clientHeight: 230 };
+    component.communityChatLog = { nativeElement: log } as any;
+    const incoming = { id: 14, communityId: 7, username: 'bea',
+      kind: 'CHAT', body: 'Olá!', createdAt: '2026-10-23T09:00:00Z' };
+    component.onCommunityChatRealtime(incoming as any);
+    component.onCommunityChatRealtime(incoming as any);
+    component.onCommunityChatRealtime({ ...incoming, id: 15, communityId: 8 } as any);
+    expect(component.newMessagesPending).toBe(1);
+    expect(log.scrollTop).toBe(20);
+    component.jumpToLatestMessages();
+    expect(log.scrollTop).toBe(900);
+    expect(component.newMessagesPending).toBe(0);
+  });
+
   it('selects chat-only reply quotes and clears only on explicit cancellation', () => {
     const group = { id: 7, name: 'CNG' };
     component.selected = group as any;

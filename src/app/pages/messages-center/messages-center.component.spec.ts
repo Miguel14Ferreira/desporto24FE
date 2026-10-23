@@ -104,6 +104,42 @@ describe('Unified Jynlo message center', () => {
       { kind: 'direct', id: 'bea' }, 22);
   });
 
+  it('counts new remote arrivals while scrolled up and returns to the end only on request', () => {
+    const conversation = item('direct', 'bea');
+    component.conversations = [conversation];
+    component.selectedKey = conversation.key;
+    component.messages = [message(conversation.key, 1, 'ana')];
+    const log = { scrollHeight: 1200, scrollTop: 100, clientHeight: 350 };
+    component.previewLog = { nativeElement: log } as any;
+
+    (component as any).acceptRealtime(conversation.key, message(conversation.key, 2, 'bea'));
+    (component as any).acceptRealtime(conversation.key, message(conversation.key, 2, 'bea'));
+    (component as any).acceptRealtime(conversation.key, message(conversation.key, 3, 'bea'));
+    expect(component.newMessagesPending).toBe(2);
+    expect(log.scrollTop).toBe(100);
+    expect(inboxApi.markRead).not.toHaveBeenCalled();
+
+    component.jumpToLatestMessages();
+    expect(log.scrollTop).toBe(1200);
+    expect(component.newMessagesPending).toBe(0);
+    expect(inboxApi.markRead).toHaveBeenCalledOnceWith(
+      { kind: 'direct', id: 'bea' }, 3);
+  });
+
+  it('does not display a new-arrival jump within a detached historical search window', () => {
+    const selected = item('community', 7);
+    component.conversations = [selected];
+    component.selectedKey = selected.key;
+    component.historicalPreview = true;
+    component.newMessagesPending = 0;
+    component.messages = [message(selected.key, 2, 'ana')];
+    (component as any).acceptRealtime(selected.key, message(selected.key, 30, 'bea'));
+    expect(component.newMessagesPending).toBe(0);
+    expect(component.messages.map(item => item.id)).toEqual([2]);
+    component.jumpToLatestMessages();
+    expect(inboxApi.markRead).not.toHaveBeenCalled();
+  });
+
   it('locates an already loaded search result without rewriting or marking chat history as read', () => {
     const selected = item('direct', 'bea');
     component.conversations = [selected];

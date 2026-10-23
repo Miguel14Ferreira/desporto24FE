@@ -1819,6 +1819,7 @@ input,textarea,select {
 }
 .chat-new-messages:hover { background: #24645a; }
 .chat-new-messages:focus-visible { outline: 2px solid #a7fce2; outline-offset: 3px; }
+.community-chat-panel .chat-new-messages { order: 2; align-self: flex-end; }
 .chat-new-messages-count {
   min-width: 22px; border-radius: 999px; padding: .08rem .38rem;
   background: #58dec4; color: #052c2c; text-align: center; font-variant-numeric: tabular-nums;
