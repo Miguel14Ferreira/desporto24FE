@@ -88,3 +88,21 @@ num `SKIP` ou `PASS`.
 
 Executar **sem** `--send-once` para diagnosticar. A mensagem privada de teste
 já foi recebida em tempo real e não precisa de novo envio.
+
+## Indicadores ✓ / ✓✓ — validação real e faseada (opt-in)
+
+O teste adicional de indicadores de leitura **não corre automaticamente em CI**. Reutiliza as duas contas QA, mas só abre o chat de `jynloteste02` depois de `jynloteste01` enviar uma única mensagem. Valida sequencialmente: um ✓ e cursor do destinatário ainda anterior à nova mensagem; abertura real do chat da conta destinatária; cursor confirmado no backend; atualização automática para ✓✓ azul no remetente sem refresh; e isolamento dos tokens nos dois contextos Chromium. Não cria sessões ou comunidades nem altera dados de contas reais.
+
+Executar apenas depois de os commits frontend/backend esperados estarem LIVE e de confirmar que não há outro browser com o chat QA destinatário aberto, usando as mesmas variáveis de ambiente protegidas descritas acima:
+
+~~~powershell
+node scripts/qa/jynlo-read-receipts-live-browser.cjs --receipt-once
+~~~
+
+Não repetir em caso de falha ou timeout após o envio: consultar o histórico QA antes. As mensagens QA criadas permanecem no histórico para auditoria. O processo não grava tokens/passwords e apenas comunica estados PASS/FAIL sem conteúdo de mensagens.
+
+Validação sem rede/credenciais em CI:
+
+~~~powershell
+node --test scripts/qa/jynlo-read-receipts-live-browser.test.cjs
+~~~
