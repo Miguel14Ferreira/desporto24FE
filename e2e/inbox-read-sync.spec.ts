@@ -26,7 +26,7 @@ const messages: Message[] = [{
 const readThrough = new Map<string, number>([['bea', 41]]);
 const requests: string[] = [];
 const unauthorized: string[] = [];
-const authenticatedSockets = new Map<string, (value: unknown) => void>();
+const authenticatedSockets = new Map<string, Set<(value: unknown) => void>>();
 
 function jwt(username: string) {
   const encode = (data: unknown) => Buffer.from(JSON.stringify(data)).toString('base64url');
@@ -57,7 +57,9 @@ async function authenticatedContext(browser: import('@playwright/test').Browser,
     socket.onMessage(payload => {
       try {
         if (JSON.parse(String(payload)).type === 'AUTH') {
-          authenticatedSockets.set(username, value => socket.send(JSON.stringify(value)));
+          const sockets = authenticatedSockets.get(username) || new Set<(value: unknown) => void>();
+          sockets.add(value => socket.send(JSON.stringify(value)));
+          authenticatedSockets.set(username, sockets);
           socket.send(JSON.stringify({ type: 'AUTHENTICATED' }));
         }
       } catch { /* ignore malformed fixture data */ }
@@ -119,8 +121,17 @@ async function authenticatedContext(browser: import('@playwright/test').Browser,
       if (persisted > previous) {
         // Mirrors BE AFTER_COMMIT event: only the sender, never an optimistic
         // delivery or an unauthenticated browser, receives the receipt.
-        authenticatedSockets.get(other)?.({ type: 'CHAT_READ_RECEIPT',
-          receipt: {peerUsername: username, lastReadMessageId: persisted} });
+        // Server-after-commit pushes to both participants' own authenticated
+        // sockets. The sender receives blue ticks; the reader's other
+        // devices refresh the unread count for exactly this conversation.
+        for (const deliver of authenticatedSockets.get(other) || []) deliver({
+          type: 'CHAT_READ_RECEIPT',
+          receipt: {peerUsername: username, lastReadMessageId: persisted}
+        });
+        for (const deliver of authenticatedSockets.get(username) || []) deliver({
+          type: 'INBOX_OWN_READ_UPDATED',
+          read: {kind:'direct',conversationId:other,lastReadMessageId:persisted}
+        });
       }
       const last = messages[messages.length - 1];
       return response(route, 200, {
@@ -368,5 +379,47 @@ test('a background recipient tab cannot mark messages read until it becomes acti
   } finally {
     await senderContext.close();
     await recipientContext.close();
+  }
+});
+
+test('two devices of the same account update an unread badge after a committed read', async ({ browser }) => {
+  // This is a synthetic dual-browser contract. Both contexts use the SAME
+  // account, unlike the existing two-participant sender/recipient tests.
+  messages.splice(1);
+  readThrough.clear();
+  readThrough.set('bea', 41);
+  authenticatedSockets.clear();
+  requests.length = 0;
+  unauthorized.length = 0;
+
+  const passiveContext = await authenticatedContext(browser, 'ana');
+  const readerContext = await authenticatedContext(browser, 'ana');
+  const passive = await passiveContext.newPage();
+  try {
+    // Browser B is already online with an unread message and no open chat.
+    await passive.goto('/menu/messages', { waitUntil: 'domcontentloaded' });
+    const conversation = passive.locator('.inbox-entry').filter({hasText:'Bea'});
+    await expect(conversation.locator('.inbox-unread')).toHaveText('1');
+    await expect.poll(() => authenticatedSockets.get('ana')?.size).toBe(1);
+    const summariesBefore = requests.filter(x =>
+      x === 'ana:POST /api/messages/inbox/summaries').length;
+
+    // Browser A reads the conversation; server commits the cursor and pushes
+    // an own-read notification to ALL currently authenticated 'ana' sockets.
+    const reader = await readerContext.newPage();
+    await reader.goto('/menu/messages?kind=direct&id=bea',
+      {waitUntil:'domcontentloaded'});
+    await expect(reader.locator('.inbox-entry.is-selected')).toContainText('Bea');
+    await expect(reader.locator('.inbox-bubble[data-message-id="41"]')).toBeVisible();
+    await expect.poll(() => readThrough.get('ana')).toBe(41);
+
+    // No reload or 45-second timer advancement on passive browser.
+    await expect(conversation.locator('.inbox-unread')).toHaveCount(0);
+    expect(requests.filter(x =>
+      x === 'ana:POST /api/messages/inbox/summaries').length).toBeGreaterThan(summariesBefore);
+    expect(unauthorized).toEqual([]);
+  } finally {
+    await passiveContext.close();
+    await readerContext.close();
   }
 });
