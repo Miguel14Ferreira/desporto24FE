@@ -1345,7 +1345,7 @@
                                       <td>{{ driver.races }}</td>
                                       <td>{{ driver.wins }}</td>
                                       <td>{{ driver.podiums }}</td>
-                                      <td>{{ driver.bestFinish }}.º</td>
+                                      <td>{{ driver.bestFinish == null ? '—' : driver.bestFinish + '.º' }}</td>
                                       @if (group.rule) {
                                         <td>−{{ driver.penaltyPoints }}</td>
                                         <td class="racket-standings-wins">{{ driver.championshipPoints ?? '—' }}</td>
@@ -1582,12 +1582,62 @@
                                           <span>{{ 'communities.race.bestLapShort' | t }} {{ bestLap }}</span>
                                         }
                                       }
+                                      @if (entry.raceDisqualified) {
+                                        <span class="race-decision-dsq" [title]="entry.raceStewardReason || ''">
+                                          {{ 'communities.race.dsq' | t }}
+                                        </span>
+                                      }
+                                      @if ((entry.raceTimePenaltySeconds ?? 0) > 0) {
+                                        <span class="race-penalty-chip" [title]="entry.raceStewardReason || ''">
+                                          +{{ raceTime(entry.raceTimePenaltySeconds) }} {{ 'communities.race.timePenaltyLabel' | t }}
+                                        </span>
+                                        @if (raceTime(entry.adjustedElapsedSeconds); as adjusted) {
+                                          <span class="race-adjusted-time">
+                                            {{ 'communities.race.adjustedTime' | t }}: {{ adjusted }}
+                                          </span>
+                                        }
+                                      }
                                       @if ((entry.racePenaltyPoints ?? 0) > 0) {
                                         <span class="race-penalty-chip" [title]="entry.racePenaltyReason || ''">
                                           −{{ entry.racePenaltyPoints }} {{ 'communities.race.pointsShort' | t }}
                                         </span>
                                       }
                                       @if (canManageRaceChampionship() && entry.entryId != null && entry.finishPosition != null) {
+                                        @if (raceDecisionEditorKey === round.id + ':' + entry.entryId) {
+                                          <div class="race-penalty-editor">
+                                            <label>
+                                              <span>{{ 'communities.race.timePenaltySeconds' | t }}</span>
+                                              <input type="number" min="0" max="3600" step="0.001"
+                                                [(ngModel)]="raceDecisionTimeSeconds" [disabled]="raceDecisionSaving">
+                                            </label>
+                                            <label class="race-dsq-field">
+                                              <input type="checkbox" [(ngModel)]="raceDecisionDisqualified"
+                                                [disabled]="raceDecisionSaving">
+                                              <span>{{ 'communities.race.disqualified' | t }}</span>
+                                            </label>
+                                            <label>
+                                              <span>{{ 'communities.race.decisionReason' | t }}</span>
+                                              <input type="text" maxlength="255" [(ngModel)]="raceDecisionReason"
+                                                [disabled]="raceDecisionSaving">
+                                            </label>
+                                            <button type="button" class="primary-action jynlo-action jynlo-action--primary jynlo-action--compact"
+                                              [disabled]="raceDecisionSaving" (click)="saveRaceDecision(round, entry)">
+                                              {{ 'communities.race.saveDecision' | t }}
+                                            </button>
+                                            <button type="button" class="secondary-action jynlo-action jynlo-action--neutral jynlo-action--compact"
+                                              [disabled]="raceDecisionSaving" (click)="cancelRaceDecision()">
+                                              {{ 'common.cancel' | t }}
+                                            </button>
+                                            @if (raceDecisionError) {
+                                              <p role="alert" class="season-management-error">{{ raceDecisionError }}</p>
+                                            }
+                                          </div>
+                                        } @else {
+                                          <button type="button" class="secondary-action jynlo-action jynlo-action--neutral jynlo-action--compact"
+                                            [disabled]="raceDecisionSaving" (click)="editRaceDecision(round, entry)">
+                                            {{ 'communities.race.manageDecision' | t }}
+                                          </button>
+                                        }
                                         @if (racePenaltyEditorKey === round.id + ':' + entry.entryId) {
                                           <div class="race-penalty-editor">
                                             <label>
@@ -1626,6 +1676,9 @@
                             </section>
                             @if (racePenaltyMessage) {
                               <p class="season-management-message" role="status">{{ racePenaltyMessage }}</p>
+                            }
+                            @if (raceDecisionMessage) {
+                              <p class="season-management-message" role="status">{{ raceDecisionMessage }}</p>
                             }
                           } @else if (recordedRacketMatch(round)) {
                             <section class="racket-result-card">
