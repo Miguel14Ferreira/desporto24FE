@@ -661,3 +661,126 @@ body .communities-page.jynlo-c1 .season-management-message {
   color: #a8ffe0;
   margin: .75rem 0 0;
 }
+
+/* Concept 1 – compact competition cards with explicit or safely inferred teams. */
+body .communities-page.jynlo-c1 .round-matchup {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 42px minmax(0, 1fr);
+  align-items: center;
+  gap: .7rem;
+  margin-top: 1rem;
+}
+body .communities-page.jynlo-c1 .round-matchup-side {
+  min-width: 0;
+  height: 100%;
+  padding: 1rem;
+  border: 1px solid rgba(148, 163, 184, .17);
+  border-radius: 1rem;
+  background: rgba(12, 29, 46, .88);
+}
+body .communities-page.jynlo-c1 .round-matchup-side--a {
+  border-top: 2px solid rgba(65, 233, 176, .8);
+}
+body .communities-page.jynlo-c1 .round-matchup-side--b {
+  border-top: 2px solid rgba(125, 211, 252, .65);
+}
+body .communities-page.jynlo-c1 .round-matchup-side-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .6rem;
+  padding-bottom: .8rem;
+  border-bottom: 1px solid rgba(148, 163, 184, .15);
+}
+body .communities-page.jynlo-c1 .round-matchup-side-head h4 {
+  margin: .18rem 0;
+  font-size: 1.1rem;
+  font-weight: 850;
+  letter-spacing: -.02em;
+  overflow-wrap: anywhere;
+}
+body .communities-page.jynlo-c1 .round-matchup-side-head small,
+body .communities-page.jynlo-c1 .round-matchup-kicker {
+  color: #9ab2c6;
+  font-size: .72rem;
+  font-weight: 650;
+}
+body .communities-page.jynlo-c1 .round-matchup-kicker {
+  color: #72e6cd;
+  font-size: .63rem;
+  letter-spacing: .12em;
+  font-weight: 850;
+}
+body .communities-page.jynlo-c1 .round-matchup-players {
+  display: grid;
+  gap: .1rem;
+  padding-top: .6rem;
+}
+body .communities-page.jynlo-c1 .round-matchup-player {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: .65rem;
+  padding: .48rem .2rem;
+}
+body .communities-page.jynlo-c1 .round-matchup-player-name {
+  display: grid;
+  gap: .08rem;
+  min-width: 0;
+}
+body .communities-page.jynlo-c1 .round-matchup-player-name strong {
+  font-size: .87rem;
+  overflow-wrap: anywhere;
+}
+body .communities-page.jynlo-c1 .round-matchup-player-name small {
+  color: #9ab2c6;
+  font-size: .7rem;
+}
+body .communities-page.jynlo-c1 .round-matchup-player-stats {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: .35rem;
+  font-size: .73rem;
+  color: #c6d9e9;
+}
+body .communities-page.jynlo-c1 .round-matchup-vs {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  background: #17364b;
+  border: 1px solid rgba(125, 211, 252, .3);
+  color: #d3f5fd;
+  font-size: .75rem;
+  font-weight: 950;
+}
+body .communities-page.jynlo-c1 .round-matchup-inferred {
+  margin: .75rem .1rem 0;
+  color: #94a3b8;
+  font-size: .74rem;
+  line-height: 1.45;
+}
+body .communities-page.jynlo-c1 .season-delete-acknowledge {
+  display: flex;
+  align-items: flex-start;
+  gap: .6rem;
+  color: #f2d8db;
+  cursor: pointer;
+  font-size: .83rem;
+}
+body .communities-page.jynlo-c1 .season-delete-acknowledge input {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  accent-color: #ef7777;
+}
+@media (max-width: 800px) {
+  body .communities-page.jynlo-c1 .round-matchup {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  body .communities-page.jynlo-c1 .round-matchup-vs {
+    margin: -.25rem auto;
+  }
+}
