@@ -29,6 +29,7 @@ describe('CommunitiesComponent public session eligibility', () => {
     component.activeTab = 'chat';
     component.timelineEntries = [];
     component.newMessagesPending = 0;
+    (component as any).readSync = { markVisible: jasmine.createSpy('markVisible') };
     const log = { scrollHeight: 900, scrollTop: 20, clientHeight: 230 };
     component.communityChatLog = { nativeElement: log } as any;
     const incoming = { id: 14, communityId: 7, username: 'bea',
