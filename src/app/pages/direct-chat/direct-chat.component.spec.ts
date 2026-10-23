@@ -143,6 +143,19 @@ describe('DirectChatComponent', () => {
     expect(component.messages.length).toBe(1);
   });
 
+  it('keeps a new persisted live message after older messages even when the timestamp is missing', () => {
+    component.currentUsername = 'fixture-user';
+    component.messages = [{
+      id: 20, username1: 'ana', username2: 'fixture-user',
+      text: 'Antes', date: '2026-10-23T09:00:00Z', dataDisplay: null
+    }];
+    messages.next({
+      id: 21, username1: 'ana', username2: 'fixture-user',
+      text: 'Agora', date: null, dataDisplay: null
+    });
+    expect(component.messages.map(item => item.id)).toEqual([20, 21]);
+  });
+
   it('blocks accidental duplicate POST on uncertain delivery, preserving unsent text', () => {
     component.currentUsername = 'fixture-user';
     component.messageBody = 'Teste de rede';
