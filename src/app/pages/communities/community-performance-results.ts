@@ -1,9 +1,10 @@
 import { CommunityRound, CommunityRoundEntry, CommunityRoundEntryDraft } from '../model/community-group';
 
 /** Provisional community marks: never official federation scores or season points. */
-export function performanceKind(eventType: string | null | undefined): 'metres' | 'points' | null {
+export function performanceKind(eventType: string | null | undefined): 'metres' | 'points' | 'gym' | null {
   if (eventType === 'JUMP' || eventType === 'THROW') return 'metres';
   if (eventType === 'FREESTYLE') return 'points';
+  if (eventType === 'APPARATUS') return 'gym';
   return null;
 }
 
@@ -19,15 +20,29 @@ export function performanceError(
     const value = Number(raw);
     return !Number.isFinite(value) || value < 0
       || (kind === 'metres' && value <= 0)
-      || (kind === 'points' && value > 100)
+      || ((kind === 'points' || kind === 'gym') && value > 100)
       || value > 999999.999
       || Math.abs(value * 1000 - Math.round(value * 1000)) > 1e-6;
   });
 }
 
+/** Only the two adjudicated wave marks are entered, not judges' raw scoring. */
+export function surfWaveTotal(entry: Pick<CommunityRoundEntry, 'waveScore1' | 'waveScore2'>): number | null {
+  if (entry.waveScore1 == null && entry.waveScore2 == null) return null;
+  return Math.round(((entry.waveScore1 ?? 0) + (entry.waveScore2 ?? 0)) * 1000) / 1000;
+}
+export function surfWaveError(entries: Pick<CommunityRoundEntryDraft, 'waveScore1' | 'waveScore2'>[]): boolean {
+  return entries.some(entry => [entry.waveScore1, entry.waveScore2].some(mark =>
+    mark != null && (!Number.isFinite(Number(mark)) || Number(mark) < 0 || Number(mark) > 10
+      || Math.abs(Number(mark) * 1000 - Math.round(Number(mark) * 1000)) > 1e-6)
+  ));
+}
+function scoreForEvent(entry: CommunityRoundEntry, type?: string | null): number | null {
+  return type === 'HEAT' ? surfWaveTotal(entry) : entry.performanceValue ?? null;
+}
 export function eventPerformanceEntries(round: CommunityRound): CommunityRoundEntry[] {
   return [...round.entries].sort((a, b) => {
-    const av = a.performanceValue, bv = b.performanceValue;
+    const av = scoreForEvent(a, round.eventType), bv = scoreForEvent(b, round.eventType);
     if (av == null) return bv == null ? 0 : 1;
     if (bv == null) return -1;
     return bv - av;
@@ -36,12 +51,14 @@ export function eventPerformanceEntries(round: CommunityRound): CommunityRoundEn
 
 /** Competition-style rank within ONE event only; identical marks share position. */
 export function eventPerformancePlace(
-  entries: CommunityRoundEntry[], entry: CommunityRoundEntry
+  entries: CommunityRoundEntry[], entry: CommunityRoundEntry, type?: string | null
 ): number | null {
-  if (entry.performanceValue == null) return null;
-  return 1 + entries.filter(other =>
-    other.performanceValue != null && other.performanceValue > entry.performanceValue!
-  ).length;
+  const score = scoreForEvent(entry, type);
+  if (score == null) return null;
+  return 1 + entries.filter(other => {
+    const otherScore = scoreForEvent(other, type);
+    return otherScore != null && otherScore > score;
+  }).length;
 }
 
 export function performanceDisplay(value: number | null | undefined): string {

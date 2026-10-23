@@ -5,7 +5,7 @@ import { CommunityRoundView, formatForSport, viewForSport } from './community-ro
  * Explicitly supported event variants. This registry must be extended alongside
  * backend CommunityRoundEventType; it is NOT a complete rulebook for 121 sports.
  */
-export type CommunityEventType = 'RACE' | 'FREESTYLE' | 'TRACK' | 'JUMP' | 'THROW';
+export type CommunityEventType = 'RACE' | 'FREESTYLE' | 'TRACK' | 'JUMP' | 'THROW' | 'HEAT' | 'APPARATUS';
 export interface CommunityEventOption { code: CommunityEventType; labelKey: string }
 const TYPES: Record<string, readonly CommunityEventOption[]> = {
   bmx: [
@@ -20,7 +20,9 @@ const TYPES: Record<string, readonly CommunityEventOption[]> = {
   snowboard: [
     { code: 'RACE', labelKey: 'communities.eventType.race' },
     { code: 'FREESTYLE', labelKey: 'communities.eventType.freestyle' }
-  ]
+  ],
+  surf: [{ code: 'HEAT', labelKey: 'communities.eventType.heat' }],
+  'ginastica artistica': [{ code: 'APPARATUS', labelKey: 'communities.eventType.apparatus' }]
 };
 
 function normalize(sport: string): string {
@@ -60,7 +62,7 @@ export function eventPresentationFormat(
 ): string {
   if (isRaceEvent(sport, eventType)) return 'race';
   if (isNeutralEvent(sport, eventType))
-    return eventType === 'FREESTYLE' ? 'judged' : 'measured';
+    return ['FREESTYLE', 'HEAT', 'APPARATUS'].includes(eventType || '') ? 'judged' : 'measured';
   return formatForSport(sport || null);
 }
 
