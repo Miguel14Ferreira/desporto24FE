@@ -262,7 +262,7 @@
             <textarea #composerTextarea id="inbox-reply" name="inboxDraft" [(ngModel)]="draft"
               [placeholder]="'chat.placeholder' | t" rows="2" maxlength="2000"
               [readOnly]="sending"
-              [disabled]="composerAccessLoading || !composerAllowed || previewLoading || previewError || deliveryUncertain || deliveryChecking"
+              [disabled]="composerAccessLoading || !composerAllowed || !isSelectedSessionOpen() || previewLoading || previewError || deliveryUncertain || deliveryChecking"
               (ngModelChange)="onTypingInput()" (blur)="typing.stop()"
               (keydown.enter)="onComposerEnter($event)"></textarea>
             <div class="inbox-composer-bottom">

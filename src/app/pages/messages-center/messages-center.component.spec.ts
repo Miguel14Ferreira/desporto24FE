@@ -374,6 +374,40 @@ describe('Unified Jynlo message center', () => {
     expect(sessions.messages).toHaveBeenCalledWith(14);
   });
 
+  it('handles query-param changes without reopening a manually selected conversation', () => {
+    const params = new BehaviorSubject({
+      get: (key: string) => key === 'kind' ? 'direct' : key === 'id' ? 'bea' : null
+    });
+    friends.friends.and.returnValue(of([
+      { username: 'bea', fullName: 'Bea' }, { username: 'ana', fullName: 'Ana' }
+    ] as any));
+    direct.recentHistory.and.returnValue(of({ content: [], last: true } as any));
+    component = new MessagesCenterComponent(friends, communities, sessions, direct, timeline,
+      realtime, inboxApi, { queryParamMap: params.asObservable() } as any);
+    component.ngOnInit();
+    expect(component.selectedKey).toBe('direct:bea');
+    params.next({ get: key => key === 'kind' ? 'direct' : key === 'id' ? 'ana' : null });
+    expect(component.selectedKey).toBe('direct:ana');
+    component.selectConversation(component.conversations.find(item => item.key === 'direct:bea')!);
+    component.loadInbox();
+    expect(component.selectedKey).toBe('direct:bea');
+    component.ngOnDestroy();
+  });
+
+  it('enforces kickoff in the message center even if access was cached', () => {
+    const current = item('session', 14);
+    component.conversations = [current];
+    component.selectedKey = current.key;
+    component.composerAllowed = true;
+    component.draft = 'Olá';
+    (component as any).sessionKickoffs.set(14, Date.now() - 1000);
+    expect(component.isSelectedSessionOpen()).toBeFalse();
+    expect(component.canSendMessage()).toBeFalse();
+    (component as any).sessionKickoffs.set(14, Date.now() + 3600_000);
+    expect(component.isSelectedSessionOpen()).toBeTrue();
+    expect(component.canSendMessage()).toBeTrue();
+  });
+
   it('does not invent a conversation from a forged or expired deep link', () => {
     component = new MessagesCenterComponent(friends, communities, sessions, direct, timeline,
       realtime, inboxApi, { snapshot: { queryParamMap: { get: (key: string) =>

@@ -261,7 +261,8 @@
               <button type="button" class="friend-status jynlo-action jynlo-action--neutral" disabled>✓ {{ 'friends.title' | t }}</button>
               <a
                 class="primary-action jynlo-action jynlo-action--primary"
-                [routerLink]="['/menu/friendList/chat', selectedProfile.username]">
+                routerLink="/menu/messages"
+                [queryParams]="{ kind: 'direct', id: selectedProfile.username }">
                 {{ 'friends.openChat' | t }}
               </a>
             } @else {

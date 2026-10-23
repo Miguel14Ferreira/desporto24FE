@@ -312,7 +312,9 @@ export class NotificationsComponent implements OnInit {
       return;
     }
 
-    this.router.navigate(['/menu/friendList/chat', notification.relatedUsername]);
+    void this.router.navigate(['/menu/messages'], {
+      queryParams: { kind: 'direct', id: notification.relatedUsername }
+    });
   }
 
   canProtectAccount(notification: AppNotification): boolean {

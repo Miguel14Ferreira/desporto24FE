@@ -219,7 +219,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
         this.chatRealtimeConnected = connected;
         if (connected) {
           this.chatEverConnected = true;
-          if (this.canAccessChat()) this.refreshMessages(false);
+          // The session details page has no chat log. Only the inbox loads it.
         }
       })
     );
@@ -358,7 +358,6 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
             this.actionError = '';
             if (detail.joined) {
               this.loadSessionParticipants();
-              this.refreshMessages();
             }
           } else {
             // A new POST is only possible after a successful verification GET.
@@ -2119,13 +2118,9 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
             this.sessionParticipantsError = '';
           }
 
-          if (session.joined) {
-            this.refreshMessages();
-          } else {
-            // Roster visibility does not confer chat access.
-            this.messages = [];
-            this.chatError = '';
-          }
+          // Never fetch a hidden chat on session details.
+          this.messages = [];
+          this.chatError = '';
         },
         error: () => {
           if (showPageLoader) {

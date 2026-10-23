@@ -182,6 +182,16 @@ describe('NotificationsComponent', () => {
     }
   });
 
+  it('opens chat notifications directly in the unified inbox', () => {
+    const notice = { ...notificationFixture(), type: 'CHAT_MESSAGE', relatedUsername: 'ana' };
+    component.openChat(notice);
+    expect(router.navigate).toHaveBeenCalledWith(['/menu/messages'],
+      { queryParams: { kind: 'direct', id: 'ana' } });
+    (router.navigate as jasmine.Spy).calls.reset();
+    component.openChat({ ...notice, relatedUsername: null });
+    expect(router.navigate).not.toHaveBeenCalled();
+  });
+
   it('opens a new join request notification directly in member management', () => {
     const joinRequest = {
       ...notificationFixture(), id: 91, type: 'COMMUNITY_JOIN_REQUEST', communityId: 42,
