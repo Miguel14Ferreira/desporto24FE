@@ -163,6 +163,43 @@ describe('Chat WebSocket identity and reconnection', () => {
     expect(socket.closeCalls).toBe(1);
   });
 
+  it('emits only authenticated and strictly validated own-read updates',()=> {
+    const seen=jasmine.createSpy('ownRead');
+    service.ownReads$.subscribe(seen);
+    service.connect();
+    const socket=RealtimeFakeSocket.sockets[0];
+    socket.open();
+    const read={kind:'community',conversationId:'7',lastReadMessageId:50};
+    socket.receive({type:'INBOX_OWN_READ_UPDATED',read});
+    expect(seen).not.toHaveBeenCalled();
+    socket.receive({type:'AUTHENTICATED'});
+    for(const invalid of [
+      {kind:'other',conversationId:'7',lastReadMessageId:50},
+      {kind:'community',conversationId:'7',lastReadMessageId:0},
+      {kind:'community',conversationId:'7',lastReadMessageId:50.4},
+      {kind:'community',conversationId:7,lastReadMessageId:50},
+      {kind:'direct',conversationId:'',lastReadMessageId:50}
+    ]) socket.receive({type:'INBOX_OWN_READ_UPDATED',read:invalid});
+    expect(seen).not.toHaveBeenCalled();
+    socket.receive({type:'INBOX_OWN_READ_UPDATED',read});
+    expect(seen).toHaveBeenCalledOnceWith(read);
+  });
+
+  it('drops an own-read event from a socket authenticated for the previous account',()=> {
+    const seen=jasmine.createSpy('ownRead');
+    service.ownReads$.subscribe(seen);
+    service.connect();
+    const socket=RealtimeFakeSocket.sockets[0];
+    socket.open();
+    socket.receive({type:'AUTHENTICATED'});
+    localStorage.setItem('t',qaToken('jynloteste02'));
+    socket.receive({type:'INBOX_OWN_READ_UPDATED',read:{
+      kind:'direct',conversationId:'bea',lastReadMessageId:99
+    }});
+    expect(seen).not.toHaveBeenCalled();
+    expect(socket.closeCalls).toBe(1);
+  });
+
   it('replaces a socket when the account token changes and ignores late old events', fakeAsync(() => {
     const old = localStorage.getItem('t');
     const received = jasmine.createSpy('received');
