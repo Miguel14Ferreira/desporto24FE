@@ -301,6 +301,16 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.messageSearchPage = 0;
   }
 
+  onMessageSearchTermChange(): void {
+    // Invalidate any earlier HTTP result if the user types another query.
+    ++this.messageSearchVersion;
+    this.messageSearchResults = [];
+    this.messageSearchLoading = false;
+    this.messageSearchError = false;
+    this.messageSearchHasMore = false;
+    this.messageSearchPage = 0;
+  }
+
   submitMessageSearch(page = 0): void {
     const conversation = this.selected;
     const term = this.messageSearchTerm.trim();
@@ -319,7 +329,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       .subscribe({
         next: response => {
           if (version !== this.messageSearchVersion || this.selectedKey !== key
-              || !this.messageSearchOpen) return;
+              || !this.messageSearchOpen || this.messageSearchTerm.trim() !== term) return;
           const results = response.results.map(hit => ({
             key, id: hit.id, sender: hit.sender, text: hit.text,
             createdAt: hit.createdAt || '',
