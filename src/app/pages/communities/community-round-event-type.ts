@@ -5,7 +5,7 @@ import { CommunityRoundView, formatForSport, viewForSport } from './community-ro
  * Explicitly supported event variants. This registry must be extended alongside
  * backend CommunityRoundEventType; it is NOT a complete rulebook for 121 sports.
  */
-export type CommunityEventType = 'RACE' | 'FREESTYLE' | 'TRACK' | 'JUMP' | 'THROW' | 'HEAT' | 'APPARATUS';
+export type CommunityEventType = 'RACE' | 'FREESTYLE' | 'TRACK' | 'JUMP' | 'THROW' | 'HEAT' | 'BODYBOARD_HEAT' | 'APPARATUS';
 export interface CommunityEventOption { code: CommunityEventType; labelKey: string }
 const TYPES: Record<string, readonly CommunityEventOption[]> = {
   bmx: [
@@ -22,6 +22,7 @@ const TYPES: Record<string, readonly CommunityEventOption[]> = {
     { code: 'FREESTYLE', labelKey: 'communities.eventType.freestyle' }
   ],
   surf: [{ code: 'HEAT', labelKey: 'communities.eventType.heat' }],
+  bodyboard: [{ code: 'BODYBOARD_HEAT', labelKey: 'communities.eventType.bodyboardHeat' }],
   'ginastica artistica': [{ code: 'APPARATUS', labelKey: 'communities.eventType.apparatus' }]
 };
 
@@ -62,7 +63,7 @@ export function eventPresentationFormat(
 ): string {
   if (isRaceEvent(sport, eventType)) return 'race';
   if (isNeutralEvent(sport, eventType))
-    return ['FREESTYLE', 'HEAT', 'APPARATUS'].includes(eventType || '') ? 'judged' : 'measured';
+    return ['FREESTYLE', 'HEAT', 'BODYBOARD_HEAT', 'APPARATUS'].includes(eventType || '') ? 'judged' : 'measured';
   return formatForSport(sport || null);
 }
 
