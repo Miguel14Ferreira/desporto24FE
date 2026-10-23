@@ -71,3 +71,19 @@
   .inbox-detail-heading { flex-wrap:wrap; }
 }
 @media (prefers-reduced-motion:reduce) { * { scroll-behavior:auto !important; transition:none !important; } }
+
+
+.inbox-composer { padding: 15px 22px 18px; border-top: 1px solid #345262; background: #142d3b; display:flex; flex-direction:column; gap:8px; }
+.inbox-composer label { color:#bce5df; font-size:.77rem; font-weight:750; }
+.inbox-composer textarea { width:100%; resize:vertical; min-height:70px; max-height:170px; border-radius:12px; padding:12px 14px; font:inherit; font-size:.88rem; line-height:1.5; color:#f0fbff; background:#09202e; border:1px solid #457080; }
+.inbox-composer textarea:focus-visible { outline:2px solid #67e5ce; outline-offset:2px; }
+.inbox-composer textarea:disabled { opacity:.55; cursor:not-allowed; }
+.inbox-composer-bottom { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; }
+.inbox-composer-bottom > span { font-size:.72rem; color:#acc7d0; }
+.inbox-composer-actions { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+.inbox-composer-actions .jynlo-action { font-size:.79rem; text-decoration:none; }
+.inbox-compose-locked { margin:0; padding:9px 12px; background:#31424a; border-radius:10px; color:#d8e4ea; font-size:.79rem; }
+.inbox-compose-alert { margin:12px 22px 0; padding:13px 16px; border:1px solid #4a9078; background:#183e38; color:#c3f3e4; border-radius:12px; font-size:.84rem; }
+.inbox-compose-alert--error { background:#44392e; border-color:#b58c55; color:#ffe6bb; }
+.inbox-compose-alert-actions { margin-top:12px; display:flex; gap:8px; flex-wrap:wrap; }
+@media (max-width:800px) { .inbox-composer { padding:14px; } .inbox-compose-alert { margin:10px 14px 0; } }

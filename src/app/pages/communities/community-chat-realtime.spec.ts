@@ -36,27 +36,32 @@ describe('Community chat realtime and sending', () => {
   });
 
   it('reconciles socket messages with an older HTTP response without duplicates', () => {
+    // Explicit timestamps avoid relying on the runner clock or millisecond ties.
+    const timed = (id: number) => ({ ...entry(id),
+      createdAt: new Date(Date.UTC(2026, 9, 23, 12, 0, id)).toISOString() });
     const pending = new Subject<CommunityTimelineEntry[]>();
     api.list.and.returnValue(pending.asObservable());
     component.loadTimeline();
-    component.onCommunityChatRealtime(entry(14));
-    component.onCommunityChatRealtime(entry(14));
-    pending.next([entry(12), entry(13)]);
+    component.onCommunityChatRealtime(timed(14));
+    component.onCommunityChatRealtime(timed(14));
+    pending.next([timed(12), timed(13)]);
     pending.complete();
     expect(component.timelineEntries.map(x => x.id)).toEqual([12, 13, 14]);
   });
 
   it('honors deleted messages on HTTP reload but retains socket messages arriving during it', () => {
-    component.timelineEntries = [entry(1), entry(2)];
+    const timed = (id: number) => ({ ...entry(id),
+      createdAt: new Date(Date.UTC(2026, 9, 23, 12, 0, id)).toISOString() });
+    component.timelineEntries = [timed(1), timed(2)];
     const pending = new Subject<CommunityTimelineEntry[]>();
     api.list.and.returnValue(pending.asObservable());
     component.loadTimeline();
-    component.onCommunityChatRealtime(entry(3));
-    pending.next([entry(2)]);
+    component.onCommunityChatRealtime(timed(3));
+    pending.next([timed(2)]);
     pending.complete();
     expect(component.timelineEntries.map(x => x.id)).toEqual([2, 3]);
 
-    api.list.and.returnValue(of([entry(2), entry(3)]));
+    api.list.and.returnValue(of([timed(2), timed(3)]));
     component.loadTimeline();
     expect(component.timelineEntries.map(x => x.id)).toEqual([2, 3]);
   });

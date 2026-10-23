@@ -119,12 +119,46 @@
               </article>
             }
           </div>
-          <footer class="inbox-detail-footer">
-            <span>{{ 'inbox.readOnlyHint' | t }}</span>
-            <a class="jynlo-action jynlo-action--accent"
-              [routerLink]="conversationLink(conversation)"
-              [queryParams]="conversationQuery(conversation)">{{ 'inbox.reply' | t }} →</a>
-          </footer>
+          @if (composerError || composerSuccess) {
+            <section class="inbox-compose-alert" [class.inbox-compose-alert--error]="!!composerError"
+              [attr.role]="composerError ? 'alert' : 'status'">
+              {{ composerError || composerSuccess }}
+              @if (deliveryUncertain) {
+                <div class="inbox-compose-alert-actions">
+                  <button type="button" class="jynlo-action jynlo-action--neutral"
+                    [disabled]="deliveryChecking" (click)="verifyDelivery()">
+                    {{ (deliveryChecking ? 'chat.verifying' : 'chat.verifyDelivery') | t }}
+                  </button>
+                  <button type="button" class="jynlo-action jynlo-action--secondary"
+                    [disabled]="deliveryChecking" (click)="resumeAfterUncertainSend()">
+                    {{ 'chat.resumeWriting' | t }}
+                  </button>
+                </div>
+              }
+            </section>
+          }
+          <form class="inbox-composer" (ngSubmit)="sendMessage()">
+            @if (!composerAccessLoading && !composerAllowed && !previewLoading && !previewError) {
+              <p class="inbox-compose-locked" role="status">{{ 'inbox.cannotWrite' | t }}</p>
+            }
+            <label for="inbox-reply">{{ 'inbox.writeMessage' | t }}</label>
+            <textarea id="inbox-reply" name="inboxDraft" [(ngModel)]="draft"
+              [placeholder]="'chat.placeholder' | t" rows="2" maxlength="2000"
+              [disabled]="composerAccessLoading || !composerAllowed || previewLoading || previewError || sending || deliveryUncertain || deliveryChecking"
+              (keydown.enter)="onComposerEnter($event)"></textarea>
+            <div class="inbox-composer-bottom">
+              <span>{{ 'chat.enterHint' | t }} · {{ draft.length }}/2000</span>
+              <div class="inbox-composer-actions">
+                <a class="jynlo-action jynlo-action--neutral"
+                  [routerLink]="conversationLink(conversation)"
+                  [queryParams]="conversationQuery(conversation)">{{ 'inbox.openChat' | t }} ↗</a>
+                <button type="submit" class="jynlo-action jynlo-action--primary"
+                  [disabled]="!canSendMessage()">
+                  {{ (sending ? 'chat.sending' : 'chat.send') | t }}
+                </button>
+              </div>
+            </div>
+          </form>
         } @else {
           <div class="inbox-welcome">
             <span class="inbox-welcome-icon" aria-hidden="true">💬</span>

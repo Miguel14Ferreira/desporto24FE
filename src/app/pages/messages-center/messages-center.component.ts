@@ -1,9 +1,12 @@
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, ElementRef, OnDestroy, OnInit, AfterViewChecked, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { JwtHelperService } from '@auth0/angular-jwt';
-import { catchError, finalize, forkJoin, map, Observable, of, Subscription, timeout } from 'rxjs';
+import { catchError, finalize, forkJoin, map, Observable, of, Subscription, TimeoutError, timeout } from 'rxjs';
+import { appTranslate as t } from '../../i18n/i18n.service';
+import { SessionDetail } from '../model/session-detail';
 
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import { CommunityService } from '../../services/community.service';
@@ -42,6 +45,19 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   failedSources: InboxKind[] = [];
   realtimeConnected = false;
   everConnected = false;
+  draft = '';
+  sending = false;
+  deliveryUncertain = false;
+  deliveryChecking = false;
+  composerAccessLoading = false;
+  composerAllowed = false;
+  composerError = '';
+  composerSuccess = '';
+  private composerVersion = 0;
+  private readonly drafts = new Map<string, string>();
+  private readonly pendingByConversation = new Map<string, {
+    key: string; text: string; knownIds: Set<number>; startedAt: number;
+  }>();
   private readonly subscriptions = new Subscription();
   private readonly jwt = new JwtHelperService();
   private currentUsername = '';
@@ -211,11 +227,20 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   }
 
   selectConversation(conversation: InboxConversation): void {
+    if (this.sending || this.deliveryChecking) return;
     if (conversation.key === this.selectedKey && !this.previewError) return;
+    if (this.selectedKey) this.drafts.set(this.selectedKey, this.draft);
     this.selectedKey = conversation.key;
+    this.draft = this.drafts.get(conversation.key) || '';
+    this.deliveryUncertain = this.pendingByConversation.has(conversation.key);
+    this.composerError = this.deliveryUncertain ? t('chat.sendUnconfirmed') : '';
+    this.composerSuccess = '';
+    this.composerAllowed = false;
+    this.composerAccessLoading = true;
     this.messages = [];
     this.previewError = false;
     this.markReadThisVisit(conversation.key);
+    this.loadComposerAccess(conversation);
     this.loadHistory(conversation);
   }
 
@@ -250,12 +275,19 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
         // overwrite them with an older response or duplicate their IDs.
         this.messages = mergeInboxMessages([...entries, ...this.realtimeDuringLoad.values()]);
         this.realtimeDuringLoad.clear();
+        if (conversation.kind === 'community') {
+          this.composerAllowed = true;
+          this.composerAccessLoading = false;
+        }
+        this.confirmFromHistoryIfPresent(conversation.key, this.messages);
         this.updatePreviewFromHistory(conversation.key, this.messages);
         this.scrollRequested = true;
       },
       error: () => {
         if (version !== this.selectionVersion || conversation.key !== this.selectedKey) return;
         this.previewError = true;
+        this.composerAllowed = false;
+        this.composerAccessLoading = false;
       }
     });
   }
@@ -299,6 +331,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     if (isSelected) {
       this.messages = mergeInboxMessages([...this.messages, message]);
       if (this.previewLoading) this.realtimeDuringLoad.set(message.id, message);
+      this.confirmFromHistoryIfPresent(key, [message]);
       this.scrollRequested = true;
     }
   }
@@ -315,6 +348,172 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       conversation.key === key
         ? { ...conversation, latestText: last.text, latestAt: last.createdAt }
         : conversation));
+  }
+
+  private loadComposerAccess(conversation: InboxConversation): void {
+    const version = ++this.composerVersion;
+    if (conversation.kind === 'community') {
+      // Community chat history itself confirms membership; the server
+      // rechecks authorization independently for every POST.
+      return;
+    }
+    const access: Observable<boolean> = conversation.kind === 'direct'
+      ? this.direct.info(String(conversation.id)).pipe(map(info => !info.chatBlocked))
+      : this.sessions.detail(Number(conversation.id)).pipe(map(detail => this.sessionIsWritable(detail)));
+    access.pipe(timeout(10000), catchError(() => of(false))).subscribe(allowed => {
+      if (version !== this.composerVersion || conversation.key !== this.selectedKey) return;
+      this.composerAllowed = allowed;
+      this.composerAccessLoading = false;
+    });
+  }
+
+  private sessionIsWritable(session: SessionDetail): boolean {
+    const kickoff = Date.parse(session.gameDate || '');
+    return session.joined === true
+      && session.status !== 'CANCELLED' && session.status !== 'COMPLETED'
+      && session.problemType !== 'NOT_OCCURRED'
+      && Number.isFinite(kickoff) && Date.now() < kickoff + 2 * 60 * 60 * 1000;
+  }
+
+  canSendMessage(): boolean {
+    return Boolean(this.selected && this.composerAllowed && !this.composerAccessLoading
+      && !this.previewLoading && !this.previewError && !this.sending && !this.deliveryUncertain
+      && !this.deliveryChecking && this.draft.trim().length > 0
+      && this.draft.trim().length <= 2000);
+  }
+
+  onComposerEnter(event: Event): void {
+    const keyboard = event as KeyboardEvent;
+    if (keyboard.shiftKey || keyboard.isComposing || keyboard.keyCode === 229) return;
+    keyboard.preventDefault();
+    this.sendMessage();
+  }
+
+  private recentHistory(conversation: InboxConversation): Observable<InboxMessage[]> {
+    if (conversation.kind === 'direct') return this.direct.recentHistory(String(conversation.id))
+      .pipe(map(page => page.content.map(item => this.fromDirect(item, String(conversation.id)))));
+    if (conversation.kind === 'community') return this.timeline.list(Number(conversation.id), 'CHAT')
+      .pipe(map(entries => entries.map(item => this.fromCommunity(item))));
+    return this.sessions.messages(Number(conversation.id))
+      .pipe(map(entries => entries.map(item => this.fromSession(item))));
+  }
+
+  sendMessage(): void {
+    const conversation = this.selected;
+    if (!conversation || !this.canSendMessage()) return;
+    const key = conversation.key;
+    const text = this.draft.trim();
+    const pending = { key, text, knownIds: new Set(this.messages.map(item => item.id)),
+      startedAt: Date.now() };
+
+    let send: Observable<InboxMessage>;
+    if (conversation.kind === 'direct') {
+      send = this.direct.send(String(conversation.id), text)
+        .pipe(map(message => this.fromDirect(message, String(conversation.id))));
+    } else if (conversation.kind === 'community') {
+      send = this.timeline.send(Number(conversation.id), 'CHAT', text)
+        .pipe(map(message => this.fromCommunity(message)));
+    } else {
+      send = this.sessions.postMessage(Number(conversation.id), text)
+        .pipe(map(message => this.fromSession(message)));
+    }
+
+    this.sending = true;
+    this.composerError = '';
+    this.composerSuccess = '';
+    // Unlike HTTP GETs, ambiguous POSTs are NEVER automatically retried.
+    send.pipe(timeout(10000), finalize(() => { this.sending = false; })).subscribe({
+      next: message => {
+        if (key !== this.selectedKey) return;
+        this.acceptRealtime(key, message);
+        this.draft = '';
+        this.drafts.delete(key);
+        this.pendingByConversation.delete(key);
+        this.deliveryUncertain = false;
+      },
+      error: error => {
+        if (key !== this.selectedKey) return;
+        if (this.isUncertainError(error)) {
+          this.pendingByConversation.set(key, pending);
+          this.deliveryUncertain = true;
+          this.composerError = t('chat.sendUncertain');
+          this.verifyDelivery();
+        } else {
+          this.composerError = t('feedback.chat.sendError');
+          // Permission may have changed since the conversation was opened.
+          if (error instanceof HttpErrorResponse && (error.status === 401 || error.status === 403)) {
+            this.composerAllowed = false;
+          }
+        }
+      }
+    });
+  }
+
+  private isUncertainError(error: unknown): boolean {
+    return error instanceof TimeoutError
+      || !(error instanceof HttpErrorResponse)
+      || error.status === 0 || error.status === 408 || error.status === 429 || error.status >= 500;
+  }
+
+  private matchesPending(message: InboxMessage, pending: {
+    key: string; text: string; knownIds: Set<number>; startedAt: number;
+  }): boolean {
+    if (message.key !== pending.key || pending.knownIds.has(message.id) || message.text !== pending.text
+      || !this.currentUsername || message.sender.toLowerCase() !== this.currentUsername.toLowerCase()) return false;
+    const sentAt = Date.parse(message.createdAt);
+    return Number.isFinite(sentAt) && sentAt >= pending.startedAt - 60_000;
+  }
+
+  private confirmFromHistoryIfPresent(key: string, messages: InboxMessage[]): void {
+    const pending = this.pendingByConversation.get(key);
+    if (pending && messages.some(message => this.matchesPending(message, pending))) {
+      this.pendingByConversation.delete(key);
+      if (this.selectedKey === key) {
+        this.deliveryUncertain = false;
+        this.draft = '';
+        this.drafts.delete(key);
+        this.composerError = '';
+        this.composerSuccess = t('chat.sendConfirmed');
+      }
+    }
+  }
+
+  verifyDelivery(): void {
+    const conversation = this.selected;
+    const pending = conversation && this.pendingByConversation.get(conversation.key);
+    if (!conversation || !pending || !this.deliveryUncertain || this.deliveryChecking) return;
+    if (this.messages.some(item => this.matchesPending(item, pending))) {
+      this.confirmFromHistoryIfPresent(conversation.key, this.messages);
+      return;
+    }
+    this.deliveryChecking = true;
+    this.recentHistory(conversation).pipe(timeout(10000), finalize(() => {
+      this.deliveryChecking = false;
+    })).subscribe({
+      next: entries => {
+        if (conversation.key !== this.selectedKey) return;
+        const delivered = entries.find(item => this.matchesPending(item, pending));
+        if (delivered) {
+          this.messages = mergeInboxMessages([...this.messages, delivered]);
+          this.updatePreviewFromHistory(conversation.key, this.messages);
+          this.confirmFromHistoryIfPresent(conversation.key, [delivered]);
+          this.scrollRequested = true;
+        } else {
+          this.composerError = t('chat.sendUnconfirmed');
+        }
+      },
+      error: () => {
+        if (conversation.key === this.selectedKey) this.composerError = t('chat.verifyUnavailable');
+      }
+    });
+  }
+
+  resumeAfterUncertainSend(): void {
+    if (this.sending || this.deliveryChecking || !this.selectedKey || !this.deliveryUncertain) return;
+    this.pendingByConversation.delete(this.selectedKey);
+    this.deliveryUncertain = false;
+    this.composerError = t('chat.sendRetryWarning');
+    // The draft remains intact. Any further POST requires a deliberate action.
   }
 
   conversationLink(conversation: InboxConversation): (string | number)[] {
