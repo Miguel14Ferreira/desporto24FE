@@ -564,10 +564,19 @@
                        [attr.role]="activeTab === 'chat' ? 'log' : null"
                        [attr.aria-live]="activeTab === 'chat' ? 'polite' : null"
                        [attr.aria-label]="activeTab === 'chat' ? ('chat.messages' | t) : null">
-                    @for (entry of timelineEntries; track entry.id) {
-                      <article class="community-timeline-entry" [class.my-chat-message]="activeTab === 'chat' && isMyChatEntry(entry)">
+                    @for (entry of timelineEntries; track entry.id; let i = $index) {
+                      @if (activeTab === 'chat' && chatDayLabelAt(i); as dayLabel) {
+                        <div class="chat-day-separator" role="separator" [attr.aria-label]="dayLabel">
+                          <span>{{ dayLabel }}</span>
+                        </div>
+                      }
+                      <article class="community-timeline-entry"
+                        [class.my-chat-message]="activeTab === 'chat' && isMyChatEntry(entry)"
+                        [class.thread-continuation]="activeTab === 'chat' && chatContinuesGroupAt(i)">
                         <div class="entry-meta">
-                          <strong>{{ (activeTab === 'chat' && isMyChatEntry(entry)) ? ('chat.you' | t) : ('@' + entry.username) }}</strong>
+                          @if (activeTab !== 'chat' || !chatContinuesGroupAt(i)) {
+                            <strong>{{ (activeTab === 'chat' && isMyChatEntry(entry)) ? ('chat.you' | t) : ('@' + entry.username) }}</strong>
+                          }
                           <time [attr.datetime]="entry.createdAt">{{ entry.createdAt | date:'short' }}</time>
                           @if (canManage()) {
                             <button type="button" class="secondary-action small jynlo-action jynlo-action--neutral jynlo-action--compact"

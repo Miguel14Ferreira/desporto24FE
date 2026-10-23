@@ -176,7 +176,7 @@
               </button>
             </div>
           }
-          <div class="inbox-message-log" #previewLog role="log" aria-live="polite"
+          <div class="inbox-message-log" #previewLog (scroll)="onPreviewLogScroll()" role="log" aria-live="polite"
             [attr.aria-label]="'inbox.previewLabel' | t">
             @if (previewLoading) {
               <p class="inbox-preview-state" role="status">{{ 'inbox.loadingPreview' | t }}</p>
@@ -190,12 +190,19 @@
             @if (!previewLoading && !previewError && messages.length === 0) {
               <p class="inbox-preview-state">{{ 'chat.empty' | t }}</p>
             }
-            @for (message of messages; track message.id) {
-              <article class="inbox-bubble" [class.is-mine]="isMine(message)"
+            @for (message of messages; track message.id; let i = $index) {
+              @if (dayLabelAt(i); as dayLabel) {
+                <div class="chat-day-separator" role="separator" [attr.aria-label]="dayLabel">
+                  <span>{{ dayLabel }}</span>
+                </div>
+              }
+              <article class="inbox-bubble" [class.thread-continuation]="continuesGroupAt(i)" [class.is-mine]="isMine(message)"
                 [class.inbox-bubble--search-match]="selectedSearchResultId === message.id"
                 [attr.data-message-id]="message.id" tabindex="-1">
                 <div class="inbox-bubble-meta">
-                  <strong>{{ isMine(message) ? ('chat.you' | t) : message.sender }}</strong>
+                  @if (!continuesGroupAt(i)) {
+                    <strong>{{ isMine(message) ? ('chat.you' | t) : message.sender }}</strong>
+                  }
                   <time>{{ formatDate(message.createdAt) }}</time>
                 </div>
                 @if (message.replyToMessageId && message.replyToText) {

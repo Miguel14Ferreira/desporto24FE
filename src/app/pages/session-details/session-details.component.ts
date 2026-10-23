@@ -18,6 +18,7 @@ import { JoinSessionResponse, MyVenueRating, OrganizerExclusionReason, PlayerCom
 import { ReliabilityService } from '../../services/reliability.service';
 import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.service';
 import { ChatTypingTracker } from '../../services/chat-typing-tracker';
+import { chatContinuesGroup, chatDaySeparator } from '../../shared/chat-thread-presentation';
 import { ChatReadSyncService } from '../../services/chat-read-sync.service';
 
 @Component({
@@ -1438,6 +1439,19 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
       this.messageBody += emoji;
       this.showEmojiPicker = false;
     }
+  }
+
+  dayLabelAt(index: number): string {
+    const current = this.messages[index];
+    return current ? chatDaySeparator(current.createdAt,
+      index > 0 ? this.messages[index - 1].createdAt : null) : '';
+  }
+
+  continuesGroupAt(index: number): boolean {
+    if (index <= 0) return false;
+    const current = this.messages[index], before = this.messages[index - 1];
+    return chatContinuesGroup(current.senderUsername, current.createdAt,
+      before.senderUsername, before.createdAt);
   }
 
   messageDate(message: SessionMessage): string {

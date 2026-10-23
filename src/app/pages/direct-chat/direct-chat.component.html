@@ -81,10 +81,18 @@
             <div class="empty-chat">{{ 'chat.empty' | t }}</div>
           }
 
-          @for (message of messages; track message.id ?? $index) {
-            <article class="message" [class.own-message]="isOwnMessage(message)">
+          @for (message of messages; track message.id ?? $index; let i = $index) {
+            @if (dayLabelAt(i); as dayLabel) {
+              <div class="chat-day-separator" role="separator" [attr.aria-label]="dayLabel">
+                <span>{{ dayLabel }}</span>
+              </div>
+            }
+            <article class="message" [class.own-message]="isOwnMessage(message)"
+              [class.thread-continuation]="continuesGroupAt(i)">
               <div class="message-meta">
-                <strong>{{ isOwnMessage(message) ? ('chat.you' | t) : message.username1 }}</strong>
+                @if (!continuesGroupAt(i)) {
+                  <strong>{{ isOwnMessage(message) ? ('chat.you' | t) : message.username1 }}</strong>
+                }
                 <span>{{ messageDate(message) }}</span>
               </div>
               @if (message.replyToMessageId && message.replyToText) {
