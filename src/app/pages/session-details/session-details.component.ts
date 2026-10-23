@@ -28,12 +28,14 @@ import { ChatReadSyncService } from '../../services/chat-read-sync.service';
 })
 export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChecked {
   @ViewChild('chatMessageList') chatMessageList?: ElementRef<HTMLElement>;
+  @ViewChild('sessionComposer') sessionComposer?: ElementRef<HTMLTextAreaElement>;
   private readonly messageDateFormatter = new Intl.DateTimeFormat('pt-PT', {
     dateStyle: 'short',
     timeStyle: 'short'
   });
   session?: SessionDetail;
   messages: SessionMessage[] = [];
+  replyingToSessionMessage: SessionMessage | null = null;
   creatorReliability?: ReliabilitySummary;
   participants: SessionParticipant[] = [];
   sessionParticipants: SessionParticipant[] = [];
@@ -49,7 +51,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   chatEverConnected = false;
   chatDeliveryUncertain = false;
   chatDeliveryChecking = false;
-  private pendingChatDelivery?: { text: string; knownIds: Set<number>; startedAt: number };
+  private pendingChatDelivery?: { text: string; replyToMessageId: number | null; knownIds: Set<number>; startedAt: number };
   private scrollChatToBottomRequested = false;
   reliabilityLoading = false;
   participantsLoading = false;
@@ -1274,6 +1276,16 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
       });
   }
 
+  replyToSessionMessage(message: SessionMessage): void {
+    if (!this.canSendChat() || this.messageSending || this.chatDeliveryUncertain) return;
+    this.replyingToSessionMessage = message;
+    this.sessionComposer?.nativeElement.focus({ preventScroll: true });
+  }
+
+  cancelSessionReply(): void {
+    if (!this.messageSending && !this.chatDeliveryUncertain) this.replyingToSessionMessage = null;
+  }
+
   sendMessage(): void {
     const body = this.messageBody.trim();
 
@@ -1293,14 +1305,18 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
 
     this.messageSending = true;
     this.chatError = '';
+    const replyId = this.replyingToSessionMessage?.id ?? null;
+    this.sessionComposer?.nativeElement.focus({ preventScroll: true });
     const pending = {
-      text: body,
+      text: body, replyToMessageId: replyId,
       knownIds: new Set(this.messages.map(message => message.id)),
       startedAt: Date.now()
     };
 
-    this.sessionService.postMessage(this.sessionId, body)
-      .pipe(
+    const send = replyId
+      ? this.sessionService.postMessage(this.sessionId, body, replyId)
+      : this.sessionService.postMessage(this.sessionId, body);
+    send.pipe(
         timeout(10_000),
         finalize(() => this.messageSending = false)
       )
@@ -1308,6 +1324,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
         next: message => {
           this.appendMessageIfMissing(message);
           this.messageBody = '';
+          this.replyingToSessionMessage = null;
           this.showEmojiPicker = false;
           this.chatDeliveryUncertain = false;
           this.pendingChatDelivery = undefined;
@@ -1368,6 +1385,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     this.pendingChatDelivery = undefined;
     this.chatDeliveryUncertain = false;
     this.messageBody = '';
+    this.replyingToSessionMessage = null;
     this.chatError = '';
     this.scrollChatToBottomRequested = true;
   }
@@ -1378,7 +1396,8 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
         || !this.sessionId || message.sessionId !== this.sessionId
         || !this.isOwnMessage(message) || message.body !== pending.text) return false;
     const sentAt = Date.parse(message.createdAt);
-    return Number.isFinite(sentAt) && sentAt >= pending.startedAt - 60_000;
+    return Number.isFinite(sentAt) && sentAt >= pending.startedAt - 60_000
+      && (message.replyToMessageId ?? null) === pending.replyToMessageId;
   }
 
   private isUncertainChatSendError(error: unknown): boolean {
