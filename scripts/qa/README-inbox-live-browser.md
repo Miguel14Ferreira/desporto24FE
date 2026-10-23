@@ -71,3 +71,20 @@ eliminação completa de comunidades.
 O resultado [SKIP] continua a significar *não testado*. Para fechar o teste
 de início de sessão com o organizador real, será necessária uma sessão QA
 privada e controlada, criada intencionalmente num teste separado.
+
+
+## Diagnóstico de erros sem expor credenciais
+
+A versão de QA apresenta um código para cada etapa de verificação de permissões:
+`COMMUNITY_PUBLIC_DISCOVERY`, `SESSION_FUTURE_MEMBER`,
+`SESSION_EXPIRED_OWNER` e `SESSION_PUBLIC_DISCOVERY`.
+
+Os códigos `HTTP_403`, `HTTP_500`, `UNEXPECTED_COMMUNITY_DISCOVERY_FORMAT`
+e `ACCESS_NOT_DENIED_HTTP_200` identificam a natureza da falha sem mostrar
+tokens, mensagens, IDs privados ou passwords. Mesmo que uma etapa falhe, as
+restantes verificações apenas de leitura são tentadas. O teste global falha
+sempre que alguma verificação obrigatória falhe; uma falha não é convertida
+num `SKIP` ou `PASS`.
+
+Executar **sem** `--send-once` para diagnosticar. A mensagem privada de teste
+já foi recebida em tempo real e não precisa de novo envio.
