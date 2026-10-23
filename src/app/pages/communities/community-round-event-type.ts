@@ -15,7 +15,8 @@ export type CommunityEventType = 'RACE' | 'FREESTYLE' | 'TRACK' | 'JUMP' | 'THRO
   | 'BASKETBALL_FINAL' | 'BASKETBALL_3X3_FINAL'
   | 'VOLLEYBALL_FINAL' | 'BEACH_VOLLEY_FINAL' | 'HANDBALL_FINAL' | 'RUGBY_FINAL' | 'RUGBY_SEVENS_FINAL'
     | 'FUTSAL_FINAL' | 'FIELD_HOCKEY_FINAL' | 'ROLLER_HOCKEY_FINAL' | 'WATER_POLO_FINAL'
-    | 'FOOTVOLLEY_SINGLE_18' | 'FOOTVOLLEY_BEST_OF_3' | 'FOOTVOLLEY_SINGLE_15';
+    | 'FOOTVOLLEY_SINGLE_18' | 'FOOTVOLLEY_BEST_OF_3' | 'FOOTVOLLEY_SINGLE_15'
+    | 'ICE_HOCKEY_REG' | 'ICE_HOCKEY_OT' | 'ICE_HOCKEY_SO';
 export interface CommunityEventOption { code: CommunityEventType; labelKey: string }
 const TYPES: Record<string, readonly CommunityEventOption[]> = {
   basquetebol: [{ code: 'BASKETBALL_FINAL', labelKey: 'communities.basketball.fiveVsFive' }],
@@ -33,6 +34,11 @@ const TYPES: Record<string, readonly CommunityEventOption[]> = {
   'futsal': [{ code: 'FUTSAL_FINAL', labelKey: 'communities.teamFinal.futsal' }],
   'hoquei em campo': [{ code: 'FIELD_HOCKEY_FINAL', labelKey: 'communities.teamFinal.fieldHockey' }],
   'hoquei em patins': [{ code: 'ROLLER_HOCKEY_FINAL', labelKey: 'communities.teamFinal.rollerHockey' }],
+  'hoquei no gelo': [
+    { code: 'ICE_HOCKEY_REG', labelKey: 'communities.iceHockey.regulation' },
+    { code: 'ICE_HOCKEY_OT', labelKey: 'communities.iceHockey.overtime' },
+    { code: 'ICE_HOCKEY_SO', labelKey: 'communities.iceHockey.shootout' }
+  ],
   'polo aquatico': [{ code: 'WATER_POLO_FINAL', labelKey: 'communities.teamFinal.waterPolo' }],
   bmx: [
     { code: 'RACE', labelKey: 'communities.eventType.race' },
@@ -126,7 +132,8 @@ export function eventPresentationFormat(
           'VOLLEYBALL_FINAL', 'BEACH_VOLLEY_FINAL',
           'FOOTVOLLEY_SINGLE_18', 'FOOTVOLLEY_BEST_OF_3', 'FOOTVOLLEY_SINGLE_15',
           'HANDBALL_FINAL', 'RUGBY_FINAL', 'RUGBY_SEVENS_FINAL',
-          'FUTSAL_FINAL', 'FIELD_HOCKEY_FINAL', 'ROLLER_HOCKEY_FINAL', 'WATER_POLO_FINAL'].includes(eventType || '') ? 'team'
+          'FUTSAL_FINAL', 'FIELD_HOCKEY_FINAL', 'ROLLER_HOCKEY_FINAL', 'WATER_POLO_FINAL',
+          'ICE_HOCKEY_REG', 'ICE_HOCKEY_OT', 'ICE_HOCKEY_SO'].includes(eventType || '') ? 'team'
       : 'measured';
   return formatForSport(sport || null);
 }

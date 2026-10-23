@@ -1,6 +1,6 @@
 import { eventOptionsForSport, eventPresentationFormat, isNeutralEvent } from './community-round-event-type';
 import { isTeamFinalEvent, teamFinalError, recordedTeamFinal, teamFinalWinner,
-  teamFinalUsesGoals, teamFinalTitleKey } from './community-team-final-results';
+  teamFinalUsesGoals, teamFinalTitleKey, iceHockeyEvent, teamFinalHintKey } from './community-team-final-results';
 
 describe('handball rugby and sevens final team scores', () => {
   const sides=[{team:'A'},{team:'B'}];
@@ -48,8 +48,37 @@ describe('handball rugby and sevens final team scores', () => {
     expect(teamFinalUsesGoals('HANDBALL_FINAL')).toBeTrue();
     expect(teamFinalUsesGoals('RUGBY_FINAL')).toBeFalse();
     expect(teamFinalUsesGoals('RUGBY_SEVENS_FINAL')).toBeFalse();
-    expect(eventOptionsForSport('Hóquei no Gelo')).toEqual([]);
+    expect(eventOptionsForSport('Hóquei no Gelo').map(x=>x.code)).toEqual([
+      'ICE_HOCKEY_REG','ICE_HOCKEY_OT','ICE_HOCKEY_SO']);
     expect(teamFinalTitleKey('RUGBY_FINAL')).toBe('communities.teamFinal.rugby');
+  });
+  it('distinguishes regulation, overtime and shootout scores in ice hockey',()=>{
+    const events=['ICE_HOCKEY_REG','ICE_HOCKEY_OT','ICE_HOCKEY_SO'];
+    expect(eventOptionsForSport('Hóquei no Gelo').map(x=>x.code)).toEqual(events as any);
+    for(const type of events){
+      expect(type.length).toBeLessThanOrEqual(20);
+      expect(iceHockeyEvent(type)).toBeTrue();
+      expect(isTeamFinalEvent(type)).toBeTrue();
+      expect(teamFinalUsesGoals(type)).toBeTrue();
+      expect(isNeutralEvent('Hóquei no Gelo',type)).toBeTrue();
+      expect(eventPresentationFormat('Hóquei no Gelo',type)).toBe('team');
+      expect(teamFinalHintKey(type)).toContain('iceHockey');
+    }
+    expect(teamFinalTitleKey('ICE_HOCKEY_REG')).toBe('communities.teamFinal.iceRegulation');
+    expect(teamFinalTitleKey('ICE_HOCKEY_OT')).toBe('communities.teamFinal.iceOvertime');
+    expect(teamFinalTitleKey('ICE_HOCKEY_SO')).toBe('communities.teamFinal.iceShootout');
+    expect(teamFinalError('ICE_HOCKEY_REG',sides,score(2,2))).toBeNull();
+    expect(teamFinalError('ICE_HOCKEY_REG',sides,score(4,2))).toBeNull();
+    for (const type of ['ICE_HOCKEY_OT','ICE_HOCKEY_SO']) {
+      expect(teamFinalError(type,sides,score(3,2))).toBeNull();
+      expect(teamFinalError(type,sides,score(0,1))).toBeNull();
+      expect(teamFinalError(type,sides,score(2,2))).toBe('iceHockeyInvalidDecision');
+      expect(teamFinalError(type,sides,score(5,2))).toBe('iceHockeyInvalidDecision');
+      expect(teamFinalError(type,[{team:'A'}],score(3,2))).toBe('teamFinalInvalidTeams');
+    }
+    expect(eventOptionsForSport('Hóquei')).toEqual([]);
+    expect(eventOptionsForSport('Hóquei em Campo').map(x=>x.code)).toEqual(['FIELD_HOCKEY_FINAL']);
+    expect(teamFinalHintKey('RUGBY_FINAL')).toBe('communities.teamFinal.finalHint');
   });
   it('rejects invalid scores and incomplete team assignments',()=>{
     expect(teamFinalError('RUGBY_FINAL',sides,score(1000,0))).toBe('teamFinalInvalidScore');

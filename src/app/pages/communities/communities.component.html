@@ -1386,8 +1386,7 @@
                         @if (isTeamFinalEvent(newRoundEventType)) {
                           <section class="round-basketball-editor">
                             <h4>{{ 'communities.teamFinal.finalTitle' | t }}</h4>
-                            <p>{{ (teamFinalUsesGoals(newRoundEventType)
-                              ? 'communities.teamFinal.goalHint' : 'communities.teamFinal.finalHint') | t }}</p>
+                            <p>{{ teamFinalHintKey(newRoundEventType) | t }}</p>
                             <div class="round-basketball-score-inputs">
                               <label><span>{{ 'communities.teamFinal.sideA' | t }}</span>
                                 <input type="number" min="0" max="999" step="1"
@@ -1938,6 +1937,9 @@
                               </div>
                               @if (round.teamScore?.sideA === round.teamScore?.sideB) {
                                 <small>{{ 'communities.teamFinal.draw' | t }}</small>
+                              }
+                              @if (round.eventType === 'ICE_HOCKEY_REG' && round.teamScore?.sideA === round.teamScore?.sideB) {
+                                <small>{{ 'communities.iceHockey.regulationDraw' | t }}</small>
                               }
                               <small>{{ 'communities.teamFinal.recordedOnly' | t }}</small>
                             </section>
