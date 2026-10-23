@@ -83,6 +83,11 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   messageSearchHasMore = false;
   messageSearchPage = 0;
   private messageSearchVersion = 0;
+  historicalPreview = false;
+  historyLocateLoading = false;
+  historyLocateError = false;
+  private historyLocateVersion = 0;
+  private pendingScrollToMessageId: number | null = null;
   private readonly seenRealtimeIds = new Set<string>();
   private readonly realtimeDuringLoad = new Map<number, InboxMessage>();
 
@@ -122,7 +127,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       this.realtimeConnected = connected;
       if (!connected) return;
       this.everConnected = true;
-      if (connectedOnce && this.selected) this.loadHistory(this.selected);
+      if (connectedOnce && this.selected && !this.historicalPreview) this.loadHistory(this.selected);
       if (connectedOnce && this.serverSummariesAvailable) this.refreshSummaries();
       connectedOnce = true;
     }));
@@ -141,9 +146,20 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   }
 
   ngAfterViewChecked(): void {
-    if (this.scrollRequested && this.previewLog?.nativeElement) {
-      const element = this.previewLog.nativeElement;
-      element.scrollTop = element.scrollHeight;
+    const log = this.previewLog?.nativeElement;
+    if (!log) return;
+    if (this.pendingScrollToMessageId !== null) {
+      const target = log.querySelector<HTMLElement>(
+        '[data-message-id="' + this.pendingScrollToMessageId + '"]');
+      if (target) {
+        target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        target.focus({ preventScroll: true });
+        this.pendingScrollToMessageId = null;
+      }
+      return;
+    }
+    if (this.scrollRequested) {
+      log.scrollTop = log.scrollHeight;
       this.scrollRequested = false;
     }
   }
@@ -270,6 +286,11 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     if (conversation.key === this.selectedKey && !this.previewError) return;
     if (this.selectedKey) this.drafts.set(this.selectedKey, this.draft);
     this.selectedKey = conversation.key;
+    ++this.historyLocateVersion;
+    this.historicalPreview = false;
+    this.historyLocateLoading = false;
+    this.historyLocateError = false;
+    this.pendingScrollToMessageId = null;
     this.resetMessageSearch();
     this.replyingTo = null;
     this.draft = this.drafts.get(conversation.key) || '';
@@ -308,19 +329,77 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   }
 
   viewMessageSearchResult(result: InboxMessage): void {
-    if (!this.selectedKey || result.key !== this.selectedKey
+    const conversation = this.selected;
+    if (!conversation || result.key !== conversation.key
         || !this.messageSearchResults.some(item => item.id === result.id)) return;
     this.selectedSearchResultId = result.id;
-    const inPreview = this.messages.some(item => item.id === result.id);
-    this.searchResultNotInPreview = !inPreview;
-    if (inPreview) {
-      // Only jump when the message is truly loaded. Do not insert an old
-      // standalone hit into a recent timeline and misrepresent chronology.
-      const log = this.previewLog?.nativeElement;
-      const target = log?.querySelector<HTMLElement>('[data-message-id="' + result.id + '"]');
-      target?.scrollIntoView({ block: 'center', behavior: 'smooth' });
-      target?.focus({ preventScroll: true });
+    this.historyLocateError = false;
+    if (this.messages.some(item => item.id === result.id)) {
+      this.searchResultNotInPreview = false;
+      const target = this.previewLog?.nativeElement?.querySelector<HTMLElement>(
+        '[data-message-id="' + result.id + '"]');
+      if (target) {
+        target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        target.focus({ preventScroll: true });
+      } else {
+        this.pendingScrollToMessageId = result.id;
+      }
+      return;
     }
+
+    // Never append a detached old hit to the newest messages. Fetch an
+    // authorized, bounded chronological window around it instead.
+    const version = ++this.historyLocateVersion;
+    this.searchResultNotInPreview = true;
+    this.historyLocateLoading = true;
+    const key = conversation.key;
+    this.inboxApi.messageContext({ kind: conversation.kind, id: String(conversation.id) }, result.id)
+      .pipe(timeout(10_000), finalize(() => {
+        if (version === this.historyLocateVersion) this.historyLocateLoading = false;
+      })).subscribe({
+        next: hits => {
+          if (version !== this.historyLocateVersion || this.selectedKey !== key
+              || this.selectedSearchResultId !== result.id) return;
+          if (!hits.some(hit => hit.id === result.id)) {
+            this.historyLocateError = true;
+            return;
+          }
+          // Discard any unfinished recent-history HTTP response without
+          // affecting the search results or the user's current draft.
+          ++this.selectionVersion;
+          this.previewLoading = false;
+          this.previewError = false;
+          this.historicalPreview = true;
+          if (conversation.kind === 'community') {
+            this.composerAllowed = true;
+            this.composerAccessLoading = false;
+          }
+          this.messages = mergeInboxMessages(hits.map(hit => ({
+            key, id: hit.id, sender: hit.sender, text: hit.text,
+            createdAt: hit.createdAt || '',
+            replyToMessageId: hit.replyToMessageId,
+            replyToSender: hit.replyToSender, replyToText: hit.replyToText
+          })));
+          this.searchResultNotInPreview = false;
+          this.scrollRequested = false;
+          this.pendingScrollToMessageId = result.id;
+        },
+        error: () => {
+          if (version === this.historyLocateVersion && this.selectedKey === key)
+            this.historyLocateError = true;
+        }
+      });
+  }
+
+  returnToRecent(): void {
+    ++this.historyLocateVersion;
+    this.historicalPreview = false;
+    this.historyLocateLoading = false;
+    this.historyLocateError = false;
+    this.pendingScrollToMessageId = null;
+    this.selectedSearchResultId = null;
+    this.searchResultNotInPreview = false;
+    if (this.selected) this.loadHistory(this.selected);
   }
 
   onMessageSearchTermChange(): void {
@@ -329,6 +408,10 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.messageSearchResults = [];
     this.selectedSearchResultId = null;
     this.searchResultNotInPreview = false;
+    ++this.historyLocateVersion;
+    this.historyLocateLoading = false;
+    this.historyLocateError = false;
+    this.pendingScrollToMessageId = null;
     this.messageSearchLoading = false;
     this.messageSearchError = false;
     this.messageSearchSearched = false;
@@ -381,7 +464,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   }
 
   reloadPreview(): void {
-    if (this.selected) this.loadHistory(this.selected);
+    this.returnToRecent();
   }
 
   private loadHistory(conversation: InboxConversation): void {
@@ -471,11 +554,15 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
         ? { ...conversation, latestText: message.text, latestAt: message.createdAt,
             latestMessageId: message.id,
             unreadCount: conversation.unreadCount === undefined ? undefined :
-              conversation.unreadCount + (!isSelected && !isMine ? 1 : 0),
-            newThisVisit: conversation.newThisVisit + (!isSelected && !isMine ? 1 : 0) }
+              conversation.unreadCount + ((!isSelected || this.historicalPreview) && !isMine ? 1 : 0),
+            newThisVisit: conversation.newThisVisit + ((!isSelected || this.historicalPreview) && !isMine ? 1 : 0) }
         : conversation));
 
     if (isSelected) {
+      this.confirmFromHistoryIfPresent(key, [message]);
+      // The historical window is not the live end of the chat. Never mix
+      // fresh socket events into it or acknowledge them as rendered/read.
+      if (this.historicalPreview) return;
       this.messages = mergeInboxMessages([...this.messages, message]);
       if (this.previewLoading) this.realtimeDuringLoad.set(message.id, message);
       this.confirmFromHistoryIfPresent(key, [message]);
@@ -598,6 +685,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       next: message => {
         if (key !== this.selectedKey) return;
         this.acceptRealtime(key, message);
+        if (this.historicalPreview) this.returnToRecent();
         this.draft = '';
         this.replyingTo = null;
         this.drafts.delete(key);
@@ -738,7 +826,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   }
 
   private markRenderedRead(key: string, fromLoadedHistory = false): void {
-    if (!this.serverSummariesAvailable || key !== this.selectedKey
+    if (!this.serverSummariesAvailable || key !== this.selectedKey || this.historicalPreview
         || (this.previewLoading && !fromLoadedHistory) || this.previewError || this.messages.length === 0) return;
     const lastSeen = Math.max(...this.messages.map(message => message.id));
     if (!Number.isSafeInteger(lastSeen) || lastSeen <= 0) return;
