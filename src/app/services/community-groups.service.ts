@@ -229,6 +229,14 @@ export class CommunityGroupsService {
         '/entries/' + entryId + '/race-penalty', request);
   }
 
+  updateRaceDecision(communityId: number, roundId: number, entryId: number,
+    request: { timePenaltySeconds: number; disqualified: boolean; reason: string | null }
+  ): Observable<unknown> {
+    return this.http.put(
+      this.url + '/' + communityId + '/rounds/' + roundId +
+        '/entries/' + entryId + '/race-decision', request);
+  }
+
   updateRacketRule(
     communityId: number,
     seasonId: number,
