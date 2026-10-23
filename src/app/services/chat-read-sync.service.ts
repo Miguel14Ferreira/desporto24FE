@@ -28,7 +28,7 @@ export class ChatReadSyncService {
   markVisible(kind: InboxKind, id: string | number, newestId: number | null | undefined,
               logElement?: HTMLElement): void {
     if (!logElement || !Number.isSafeInteger(newestId) || !newestId || newestId <= 0) return;
-    if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+    if (!this.isTabVisible()) return;
 
     // Opening a session details page does not imply viewing its chat.
     // Also avoid reading incoming messages when the user is reviewing old ones.
@@ -45,6 +45,10 @@ export class ChatReadSyncService {
     state.wanted = Math.max(state.wanted, newestId);
     this.states.set(key, state);
     this.flush(kind, String(id), state);
+  }
+
+  private isTabVisible(): boolean {
+    return typeof document === 'undefined' || document.visibilityState !== 'hidden';
   }
 
   private viewer(): string {
