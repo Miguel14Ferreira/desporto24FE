@@ -47,8 +47,11 @@ describe('Unified Jynlo message center', () => {
       connected$: connected.asObservable(),
       connect: jasmine.createSpy('connect')
     } as unknown as DirectChatRealtimeService;
-    inboxApi = jasmine.createSpyObj<InboxApiService>('InboxApiService', ['summaries', 'markRead', 'searchMessages', 'messageContext']);
+    inboxApi = jasmine.createSpyObj<InboxApiService>('InboxApiService', ['summaries', 'markRead', 'searchMessages', 'messageContext', 'directReadReceipt']);
     inboxApi.summaries.and.returnValue(of([]));
+    inboxApi.directReadReceipt.and.callFake(peer => of({
+      peerUsername: peer, lastReadMessageId: 0
+    }));
     inboxApi.markRead.and.callFake(ref => of({ ...ref, latestMessageId: null,
       latestText: null, latestSender: null, latestAt: null, unreadCount: 0 }));
     friends.friends.and.returnValue(of([]));
@@ -722,4 +725,90 @@ describe('Unified Jynlo message center', () => {
     expect(component.conversations[0].unreadCount).toBe(1);
   });
 
+});
+
+describe('Direct chat confirmed read status', () => {
+  // Intentionally tested without a DOM renderer: these are authorization
+  // and state-race contracts for the inbox, not visual snapshot tests.
+  let inbox: MessagesCenterComponent;
+  let api: jasmine.SpyObj<InboxApiService>;
+  let direct: jasmine.SpyObj<DirectChatService>;
+  let friends: jasmine.SpyObj<CommunityService>;
+  let communities: jasmine.SpyObj<CommunityGroupsService>;
+  let sessions: jasmine.SpyObj<SessionService>;
+  let timeline: jasmine.SpyObj<CommunityTimelineService>;
+  let realtime: DirectChatRealtimeService;
+
+  beforeEach(() => {
+    friends = jasmine.createSpyObj('CommunityService', ['friends']);
+    communities = jasmine.createSpyObj('CommunityGroupsService', ['mine']);
+    sessions = jasmine.createSpyObj('SessionService', ['mine','messages','detail','postMessage']);
+    direct = jasmine.createSpyObj('DirectChatService', ['recentHistory','info','send']);
+    timeline = jasmine.createSpyObj('CommunityTimelineService', ['list','send']);
+    api = jasmine.createSpyObj<InboxApiService>('InboxApiService',
+      ['summaries','markRead','searchMessages','messageContext','directReadReceipt']);
+    api.summaries.and.returnValue(of([]));
+    api.directReadReceipt.and.callFake(peer=>of({peerUsername:peer,lastReadMessageId:0}));
+    api.markRead.and.returnValue(of({kind:'direct',id:'bea',
+      latestMessageId:null,latestText:null,latestAt:null,latestSender:null,unreadCount:0}));
+    direct.recentHistory.and.returnValue(of({content:[],last:true} as any));
+    direct.info.and.returnValue(of({chatBlocked:false,whoBlocked:null} as any));
+    realtime = {connected$:new BehaviorSubject(false).asObservable(),
+      messages$:new Subject<any>().asObservable(),
+      communityMessages$:new Subject<any>().asObservable(),
+      sessionMessages$:new Subject<any>().asObservable(),
+      connect:()=>{}} as unknown as DirectChatRealtimeService;
+    inbox = new MessagesCenterComponent(friends,communities,sessions,
+      direct,timeline,realtime,api);
+    (inbox as any).currentUsername = 'ana';
+  });
+
+  function select(peer:string):void {
+    const conversation={key:'direct:'+peer,kind:'direct' as const,
+      id:peer,title:peer,subtitle:peer,newThisVisit:0};
+    inbox.conversations=[conversation];
+    inbox.selectConversation(conversation);
+  }
+
+  it('only marks persisted own private messages read when the peer cursor covers their ID',()=>{
+    api.directReadReceipt.and.returnValue(of({peerUsername:'bea',lastReadMessageId:11}));
+    select('bea');
+    expect(inbox.isDirectMessageRead({key:'direct:bea',id:10,sender:'ana',
+      text:'a',createdAt:''})).toBeTrue();
+    expect(inbox.isDirectMessageRead({key:'direct:bea',id:12,sender:'ana',
+      text:'b',createdAt:''})).toBeFalse();
+    expect(inbox.isDirectMessageRead({key:'direct:bea',id:10,sender:'bea',
+      text:'c',createdAt:''})).toBeFalse();
+    expect(inbox.isDirectMessageRead({key:'direct:bea',id:0,sender:'ana',
+      text:'unsaved',createdAt:''})).toBeFalse();
+  });
+
+  it('ignores a delayed response from a previous selected conversation',()=>{
+    const slow=new Subject<{peerUsername:string;lastReadMessageId:number}>();
+    api.directReadReceipt.and.callFake(peer => peer==='bea'
+      ? slow.asObservable() : of({peerUsername:peer,lastReadMessageId:0}));
+    select('bea');
+    select('carla');
+    slow.next({peerUsername:'bea',lastReadMessageId:999});
+    slow.complete();
+    expect(inbox.isDirectMessageRead({key:'direct:carla',id:10,
+      sender:'ana',text:'not read',createdAt:''})).toBeFalse();
+    expect(api.directReadReceipt).toHaveBeenCalledWith('bea');
+    expect(api.directReadReceipt).toHaveBeenCalledWith('carla');
+  });
+
+  it('does not trust errors, wrong identities, or decreasing cursors',()=>{
+    api.directReadReceipt.and.returnValue(of({peerUsername:'bea',lastReadMessageId:18}));
+    select('bea');
+    api.directReadReceipt.and.returnValue(of({peerUsername:'other',lastReadMessageId:999}));
+    (inbox as any).refreshPeerReadReceipt(true);
+    expect(inbox.isDirectMessageRead({key:'direct:bea',id:18,
+      sender:'ana',text:'read',createdAt:''})).toBeTrue();
+    expect(inbox.isDirectMessageRead({key:'direct:bea',id:19,
+      sender:'ana',text:'unread',createdAt:''})).toBeFalse();
+    api.directReadReceipt.and.returnValue(of({peerUsername:'bea',lastReadMessageId:5}));
+    (inbox as any).refreshPeerReadReceipt(true);
+    expect(inbox.isDirectMessageRead({key:'direct:bea',id:18,
+      sender:'ana',text:'read',createdAt:''})).toBeTrue();
+  });
 });

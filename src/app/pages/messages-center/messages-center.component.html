@@ -199,6 +199,12 @@
                     <strong>{{ isMine(message) ? ('chat.you' | t) : message.sender }}</strong>
                   }
                   <time>{{ formatDate(message.createdAt) }}</time>
+                  @if (conversation.kind === 'direct' && isMine(message) && message.id > 0) {
+                    <span class="inbox-read-check" [class.is-read]="isDirectMessageRead(message)"
+                      [attr.aria-label]="(isDirectMessageRead(message) ? 'inbox.readConfirmed' : 'inbox.sentConfirmed') | t"
+                      [title]="(isDirectMessageRead(message) ? 'inbox.readConfirmed' : 'inbox.sentConfirmed') | t"
+                      role="img" aria-live="off">{{ isDirectMessageRead(message) ? '✓✓' : '✓' }}</span>
+                  }
                 </div>
                 @if (message.replyToMessageId && message.replyToText) {
                   <div class="inbox-message-quote">

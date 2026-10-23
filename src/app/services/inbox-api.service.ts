@@ -10,6 +10,12 @@ export interface InboxReference {
   id: string;
 }
 
+export interface DirectReadReceipt {
+  peerUsername: string;
+  /** The last message ID the other account confirmed reading; 0 = no receipt. */
+  lastReadMessageId: number;
+}
+
 export interface InboxSummary extends InboxReference {
   latestMessageId: number | null;
   latestText: string | null;
@@ -56,6 +62,13 @@ export class InboxApiService {
     return this.http.get<ChatSearchHit[]>(this.url + '/context', {
       params: { kind: conversation.kind, id: conversation.id, messageId }
     });
+  }
+
+  /** The peer's server-confirmed read cursor, never a delivery inference. */
+  directReadReceipt(peerUsername: string): Observable<DirectReadReceipt> {
+    return this.http.get<DirectReadReceipt>(
+      this.url + '/direct/' + encodeURIComponent(peerUsername) + '/receipt'
+    );
   }
 
   markRead(conversation: InboxReference, lastSeenMessageId: number): Observable<InboxSummary> {

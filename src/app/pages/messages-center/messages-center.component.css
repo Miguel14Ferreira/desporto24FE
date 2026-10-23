@@ -217,3 +217,9 @@
   min-width: 22px; border-radius: 999px; padding: .08rem .38rem;
   background: #58dec4; color: #052c2c; text-align: center; font-variant-numeric: tabular-nums;
 }
+
+/* Persisted private-message receipts: a single check means server-saved,
+   blue double checks only when the other user's read cursor confirms it. */
+.inbox-read-check { white-space: nowrap; color: #b7cbd1; font-size: .79rem;
+  font-weight: 850; letter-spacing: -.13em; padding-right: 4px; }
+.inbox-read-check.is-read { color: #75d9fa; }
