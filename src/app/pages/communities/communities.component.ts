@@ -20,7 +20,8 @@ import {
   CommunityRound,
   CommunityRoundEntry,
   CommunityRoundEntryDraft,
-  CommunityStanding
+  CommunityStanding,
+  CommunityRacketStandingGroup
 } from '../model/community-group';
 import {
   CommunityGroupsService,
@@ -79,6 +80,13 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   savingSports = false;
   sportsMessage = '';
   competition?: CommunityCompetitionOverview;
+  racketRuleEditorKey: string | null = null;
+  racketRuleWinPoints = 2;
+  racketRuleLossPoints = 0;
+  racketRuleTieBreak: 'SETS_FIRST' | 'SCORE_FIRST' = 'SETS_FIRST';
+  racketRuleSaving = false;
+  racketRuleError = '';
+  racketRuleMessage = '';
   maxStandingPoints = 0;
   topGoalsStanding?: CommunityStanding;
   topAssistsStanding?: CommunityStanding;
@@ -453,6 +461,70 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
 
   viewForNewRound(): CommunityRoundView {
     return viewForSport(this.newRoundSport);
+  }
+
+  racketRuleKey(group: CommunityRacketStandingGroup): string {
+    return group.sport.toLocaleLowerCase() + ':' + group.matchFormat;
+  }
+
+  canConfigureRacketRules(): boolean {
+    return this.canManage() && this.selectedSeasonId !== null &&
+      this.selectedSeasonId === this.competition?.activeSeasonId;
+  }
+
+  editRacketRule(group: CommunityRacketStandingGroup): void {
+    if (!this.canConfigureRacketRules() || this.racketRuleSaving) return;
+    this.racketRuleEditorKey = this.racketRuleKey(group);
+    this.racketRuleWinPoints = group.rule?.winPoints ?? 2;
+    this.racketRuleLossPoints = group.rule?.lossPoints ?? 0;
+    this.racketRuleTieBreak = group.rule?.tieBreak ?? 'SETS_FIRST';
+    this.racketRuleMessage = '';
+    this.racketRuleError = '';
+  }
+
+  cancelRacketRule(): void {
+    if (this.racketRuleSaving) return;
+    this.racketRuleEditorKey = null;
+    this.racketRuleError = '';
+  }
+
+  saveRacketRule(group: CommunityRacketStandingGroup): void {
+    if (!this.selected || !this.canConfigureRacketRules() || this.racketRuleSaving
+        || this.racketRuleEditorKey !== this.racketRuleKey(group)) return;
+    const win = Number(this.racketRuleWinPoints);
+    const loss = Number(this.racketRuleLossPoints);
+    if (!Number.isInteger(win) || !Number.isInteger(loss)
+        || win > 100 || loss < 0 || win <= loss) {
+      this.racketRuleError = t('feedback.communities.racketRuleInvalid');
+      return;
+    }
+    const communityId = this.selected.id;
+    const seasonId = this.selectedSeasonId!;
+    const editKey = this.racketRuleEditorKey;
+    this.racketRuleSaving = true;
+    this.racketRuleError = '';
+    this.communityService.updateRacketRule(communityId, seasonId, {
+      sport: group.sport,
+      matchFormat: group.matchFormat,
+      winPoints: win,
+      lossPoints: loss,
+      tieBreak: this.racketRuleTieBreak
+    }).pipe(
+      timeout(10_000),
+      finalize(() => this.racketRuleSaving = false)
+    ).subscribe({
+      next: () => {
+        if (this.selected?.id !== communityId || this.selectedSeasonId !== seasonId) return;
+        this.racketRuleEditorKey = null;
+        this.racketRuleMessage = t('communities.racket.ruleSaved');
+        this.loadCompetition(this.selected, seasonId);
+      },
+      error: () => {
+        if (this.selected?.id !== communityId || this.selectedSeasonId !== seasonId
+            || this.racketRuleEditorKey !== editKey) return;
+        this.racketRuleError = t('feedback.communities.racketRuleError');
+      }
+    });
   }
 
   racketSupportsSets(sport: string | null): boolean {
@@ -1613,6 +1685,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
           if (requestVersion !== this.competitionRequestVersion ||
               this.selected?.id !== community.id) return;
           this.competition = competition;
+          if (!this.canConfigureRacketRules()) this.racketRuleEditorKey = null;
           this.maxStandingPoints = Math.max(
             0,
             ...competition.standings.map(item => item.points)
