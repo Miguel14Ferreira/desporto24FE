@@ -110,6 +110,14 @@ export interface CommunityStanding {
   bestWinStreak: number;
 }
 
+export interface CommunityRacketScoringRule {
+  sport: string;
+  matchFormat: CommunityRacketMatchFormat;
+  winPoints: number;
+  lossPoints: number;
+  tieBreak: 'SETS_FIRST' | 'SCORE_FIRST';
+}
+
 export interface CommunityRacketStanding {
   position: number;
   profileId: number;
@@ -125,12 +133,14 @@ export interface CommunityRacketStanding {
   gamesOrPointsWon: number;
   gamesOrPointsLost: number;
   gamesOrPointsDifference: number;
+  championshipPoints?: number | null;
 }
 
 export interface CommunityRacketStandingGroup {
   sport: string;
   matchFormat: CommunityRacketMatchFormat;
   standings: CommunityRacketStanding[];
+  rule?: CommunityRacketScoringRule | null;
 }
 
 export interface CommunityCompetitionOverview {
