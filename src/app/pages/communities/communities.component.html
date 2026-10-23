@@ -1385,7 +1385,8 @@
                         @if (isTeamFinalEvent(newRoundEventType)) {
                           <section class="round-basketball-editor">
                             <h4>{{ 'communities.teamFinal.finalTitle' | t }}</h4>
-                            <p>{{ 'communities.teamFinal.finalHint' | t }}</p>
+                            <p>{{ (teamFinalUsesGoals(newRoundEventType)
+                              ? 'communities.teamFinal.goalHint' : 'communities.teamFinal.finalHint') | t }}</p>
                             <div class="round-basketball-score-inputs">
                               <label><span>{{ 'communities.teamFinal.sideA' | t }}</span>
                                 <input type="number" min="0" max="999" step="1"
@@ -1914,8 +1915,8 @@
                           } @else if (recordedTeamFinal(round)) {
                             <section class="round-basketball-final" [attr.aria-label]="'communities.teamFinal.finalTitle' | t">
                               <div class="round-basketball-heading">
-                                <strong>{{ (round.eventType === 'HANDBALL_FINAL' ? 'communities.teamFinal.handball' : round.eventType === 'RUGBY_SEVENS_FINAL' ? 'communities.teamFinal.sevens' : 'communities.teamFinal.rugby') | t }}</strong>
-                                <small>{{ (round.eventType === 'HANDBALL_FINAL' ? 'communities.teamFinal.goals' : 'communities.teamFinal.points') | t }}</small>
+                                <strong>{{ teamFinalTitleKey(round.eventType) | t }}</strong>
+                                <small>{{ (teamFinalUsesGoals(round.eventType) ? 'communities.teamFinal.goals' : 'communities.teamFinal.points') | t }}</small>
                               </div>
                               <div class="round-basketball-scoreboard">
                                 <div class="round-basketball-side" [class.round-basketball-winner]="teamFinalWinner(round.teamScore) === 'A'">

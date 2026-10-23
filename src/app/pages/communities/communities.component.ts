@@ -14,7 +14,8 @@ import { breakingBattleError } from './community-breaking-battle';
 import { isVolleyballEvent, volleyballMaxSets, volleyballMinSets,
   volleyballMatchError, volleyballSetWinner, volleyballSetTotals,
   recordedVolleyballMatch } from './community-volleyball-results';
-import { isTeamFinalEvent, teamFinalError, recordedTeamFinal, teamFinalWinner } from './community-team-final-results';
+import { isTeamFinalEvent, teamFinalError, recordedTeamFinal, teamFinalWinner,
+  teamFinalUsesGoals, teamFinalTitleKey } from './community-team-final-results';
 import { isBasketballFinal, basketballScoreError,
   recordedBasketballFinal, basketballWinner } from './community-basketball-results';
 import { isGroupRoutineEvent, routineGroupNames, routineGroupError,
@@ -821,6 +822,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   isTeamFinalEvent = isTeamFinalEvent;
   recordedTeamFinal = recordedTeamFinal;
   teamFinalWinner = teamFinalWinner;
+  teamFinalUsesGoals = teamFinalUsesGoals;
+  teamFinalTitleKey = teamFinalTitleKey;
   isBasketballFinal = isBasketballFinal;
   recordedBasketballFinal = recordedBasketballFinal;
   basketballWinner = basketballWinner;

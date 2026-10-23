@@ -13,7 +13,8 @@ export type CommunityEventType = 'RACE' | 'FREESTYLE' | 'TRACK' | 'JUMP' | 'THRO
   | 'ARTISTIC_DUET_TECH' | 'ARTISTIC_DUET_FREE'
   | 'ARTISTIC_TEAM_TECH' | 'ARTISTIC_TEAM_FREE'
   | 'BASKETBALL_FINAL' | 'BASKETBALL_3X3_FINAL'
-  | 'VOLLEYBALL_FINAL' | 'BEACH_VOLLEY_FINAL' | 'HANDBALL_FINAL' | 'RUGBY_FINAL' | 'RUGBY_SEVENS_FINAL';
+  | 'VOLLEYBALL_FINAL' | 'BEACH_VOLLEY_FINAL' | 'HANDBALL_FINAL' | 'RUGBY_FINAL' | 'RUGBY_SEVENS_FINAL'
+    | 'FUTSAL_FINAL' | 'FIELD_HOCKEY_FINAL' | 'ROLLER_HOCKEY_FINAL' | 'WATER_POLO_FINAL';
 export interface CommunityEventOption { code: CommunityEventType; labelKey: string }
 const TYPES: Record<string, readonly CommunityEventOption[]> = {
   basquetebol: [{ code: 'BASKETBALL_FINAL', labelKey: 'communities.basketball.fiveVsFive' }],
@@ -23,6 +24,10 @@ const TYPES: Record<string, readonly CommunityEventOption[]> = {
   andebol: [{ code: 'HANDBALL_FINAL', labelKey: 'communities.teamFinal.handball' }],
   rugby: [{ code: 'RUGBY_FINAL', labelKey: 'communities.teamFinal.rugby' }],
   'rugby sevens': [{ code: 'RUGBY_SEVENS_FINAL', labelKey: 'communities.teamFinal.sevens' }],
+  'futsal': [{ code: 'FUTSAL_FINAL', labelKey: 'communities.teamFinal.futsal' }],
+  'hoquei em campo': [{ code: 'FIELD_HOCKEY_FINAL', labelKey: 'communities.teamFinal.fieldHockey' }],
+  'hoquei em patins': [{ code: 'ROLLER_HOCKEY_FINAL', labelKey: 'communities.teamFinal.rollerHockey' }],
+  'polo aquatico': [{ code: 'WATER_POLO_FINAL', labelKey: 'communities.teamFinal.waterPolo' }],
   bmx: [
     { code: 'RACE', labelKey: 'communities.eventType.race' },
     { code: 'FREESTYLE', labelKey: 'communities.eventType.freestyle' }
@@ -83,8 +88,10 @@ export function isRaceEvent(sport: string | null | undefined, eventType: string 
 
 export function eventView(sport: string | null | undefined, eventType: string | null | undefined): CommunityRoundView {
   if (eventOptionsForSport(sport).length && eventType == null) {
-    // BMX legacy rounds were recorded as races before event variants existed.
-    return normalize(sport!) === 'bmx' ? 'race' : 'individual';
+    // Preserve historical race/team round presentation without reinterpreting
+    // legacy scores as typed event results. Newly typed rounds still use their event.
+    if (normalize(sport!) === 'bmx') return 'race';
+    return viewForSport(sport || null) === 'team' ? 'team' : 'individual';
   }
   if (isRaceEvent(sport, eventType)) return 'race';
   if (eventType != null) return 'individual';
@@ -111,7 +118,8 @@ export function eventPresentationFormat(
       'ARTISTIC_TEAM_TECH', 'ARTISTIC_TEAM_FREE'].includes(eventType || '') ? 'judged'
       : ['BASKETBALL_FINAL', 'BASKETBALL_3X3_FINAL',
           'VOLLEYBALL_FINAL', 'BEACH_VOLLEY_FINAL',
-          'HANDBALL_FINAL', 'RUGBY_FINAL', 'RUGBY_SEVENS_FINAL'].includes(eventType || '') ? 'team'
+          'HANDBALL_FINAL', 'RUGBY_FINAL', 'RUGBY_SEVENS_FINAL',
+          'FUTSAL_FINAL', 'FIELD_HOCKEY_FINAL', 'ROLLER_HOCKEY_FINAL', 'WATER_POLO_FINAL'].includes(eventType || '') ? 'team'
       : 'measured';
   return formatForSport(sport || null);
 }
