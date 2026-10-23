@@ -24,6 +24,29 @@ describe('Community chat realtime and sending', () => {
     api.list.and.returnValue(of([]));
   });
 
+  it('marks only visible CHAT entries as read, never community feed posts', () => {
+    const mark = jasmine.createSpy('markVisible');
+    (component as any).readSync = { markVisible: mark };
+    const log = document.createElement('div');
+    component.communityChatLog = { nativeElement: log } as any;
+    component.timelineLoading = false;
+    component.timelineError = '';
+    component.timelineEntries = [entry(16), entry(17)];
+
+    component.onCommunityChatScroll();
+    expect(mark).toHaveBeenCalledOnceWith('community', 7, 17, log);
+
+    mark.calls.reset();
+    component.activeTab = 'feed';
+    component.onCommunityChatScroll();
+    expect(mark).not.toHaveBeenCalled();
+
+    component.activeTab = 'chat';
+    component.timelineError = 'Não autorizado';
+    component.onCommunityChatScroll();
+    expect(mark).not.toHaveBeenCalled();
+  });
+
   it('ignores messages from other communities or non-chat channels', () => {
     component.onCommunityChatRealtime(entry(1, 8));
     component.onCommunityChatRealtime({ ...entry(2), kind: 'POST' });
