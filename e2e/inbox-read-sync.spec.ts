@@ -313,12 +313,25 @@ test('a background recipient tab cannot mark messages read until it becomes acti
     const recipient = await recipientContext.newPage();
     await recipient.goto('/menu/messages?kind=direct&id=ana', {waitUntil:'domcontentloaded'});
     await expect(recipient.locator('.inbox-bubble[data-message-id="41"]')).toBeVisible();
-    // A different tab takes the foreground in the recipient's browser.
-    const otherTab = await recipientContext.newPage();
-    await otherTab.goto('about:blank');
-    await otherTab.bringToFront();
-    await expect.poll(() => recipient.evaluate(() =>
-      document.visibilityState === 'hidden' || !document.hasFocus())).toBe(true);
+    // Chromium headless may report every tab as focused, even after
+    // bringToFront on another page. Force the real document's visibility/focus
+    // contract during reload so the Angular lifecycle is deterministic.
+    await recipient.addInitScript(() => {
+      let qaVisible = false;
+      Object.defineProperty(document, 'visibilityState', {
+        configurable: true, get: () => qaVisible ? 'visible' : 'hidden'
+      });
+      Object.defineProperty(document, 'hasFocus', {
+        configurable: true, value: () => qaVisible
+      });
+      (window as any).__qaActivatePage = () => {
+        qaVisible = true;
+        document.dispatchEvent(new Event('visibilitychange'));
+        window.dispatchEvent(new Event('focus'));
+      };
+    });
+    await recipient.reload({waitUntil:'domcontentloaded'});
+    expect(await recipient.evaluate(() => document.visibilityState)).toBe('hidden');
 
     const sender = await senderContext.newPage();
     await sender.goto('/menu/messages?kind=direct&id=bea', {waitUntil:'domcontentloaded'});
@@ -336,8 +349,8 @@ test('a background recipient tab cannot mark messages read until it becomes acti
     await expect(sender.locator('.inbox-bubble[data-message-id="42"] .inbox-read-check'))
       .toHaveText('✓');
 
-    // The first actual activation marks the now-visible history read.
-    await recipient.bringToFront();
+    // First foreground activation marks the now-visible history read.
+    await recipient.evaluate(() => (window as any).__qaActivatePage());
     await expect.poll(() => recipient.evaluate(() => document.hasFocus())).toBe(true);
     await expect.poll(() => readThrough.get('bea')).toBe(42);
     expect(unauthorized).toEqual([]);
