@@ -88,8 +88,10 @@ export function isRaceEvent(sport: string | null | undefined, eventType: string 
 
 export function eventView(sport: string | null | undefined, eventType: string | null | undefined): CommunityRoundView {
   if (eventOptionsForSport(sport).length && eventType == null) {
-    // BMX legacy rounds were recorded as races before event variants existed.
-    return normalize(sport!) === 'bmx' ? 'race' : 'individual';
+    // Preserve historical race/team round presentation without reinterpreting
+    // legacy scores as typed event results. Newly typed rounds still use their event.
+    if (normalize(sport!) === 'bmx') return 'race';
+    return viewForSport(sport || null) === 'team' ? 'team' : 'individual';
   }
   if (isRaceEvent(sport, eventType)) return 'race';
   if (eventType != null) return 'individual';

@@ -63,5 +63,12 @@ describe('multi-format sports should not reuse unrelated scoring rules', () => {
     expect(eventView('Snowboard', null)).toBe('individual');
     expect(eventView('Karting', null)).toBe('race');
     expect(eventView('Futsal', null)).toBe('team');
+    for (const sport of ['Andebol', 'Rugby', 'Rugby Sevens', 'Voleibol',
+      'Voleibol de Praia', 'Basquetebol', 'Basquetebol 3x3',
+      'Hóquei em Campo', 'Hóquei em Patins', 'Polo Aquático']) {
+      expect(eventView(sport, null)).toBe('team');
+    }
+    expect(eventView('Futsal', 'FUTSAL_FINAL')).toBe('individual');
+    expect(eventPresentationFormat('Futsal', 'FUTSAL_FINAL')).toBe('team');
   });
 });
