@@ -58,7 +58,7 @@ export function volleyballSetWinner(
 }
 export function volleyballSetTotals(sets: readonly CommunitySetScore[] | null | undefined):
   {sideA: number; sideB: number} {
-  return (sets ?? []).reduce((total, set) => ({
+  return (sets ?? []).reduce<{sideA: number; sideB: number}>((total, set) => ({
     sideA: total.sideA + Number((set.sideA ?? -1) > (set.sideB ?? -1)),
     sideB: total.sideB + Number((set.sideB ?? -1) > (set.sideA ?? -1))
   }), {sideA: 0, sideB: 0});

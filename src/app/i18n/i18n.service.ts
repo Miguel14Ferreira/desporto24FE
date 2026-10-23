@@ -3613,7 +3613,7 @@ const EN: Dictionary = {
   'communities.volleyball.addSet': 'Add set',
   'communities.volleyball.removeSet': 'Remove',
   'communities.volleyball.recordedOnly': 'Sets recorded by organizer; no automatic season points',
-  'feedback.communities.volleyballInvalidScore': 'Invalid set: use whole-number points up to 999, the sport's target and a two-point lead.',
+  'feedback.communities.volleyballInvalidScore': 'Invalid set: use whole-number points up to 999, the required target and a two-point lead.',
   'feedback.communities.volleyballInvalidSets': 'The sets must determine a winner and stop immediately when the match is won.',
   'feedback.communities.volleyballInvalidTeams': 'Assign both teams. Beach volleyball requires two registered players per side.',
   'communities.basketball.hint': 'Assign participants to sides A and B. Enter final team points only, never football goals or individual player points.',
