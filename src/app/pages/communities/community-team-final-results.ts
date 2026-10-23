@@ -3,7 +3,8 @@ import { CommunityRound, CommunityTeamFinalScore } from '../model/community-grou
 export function isTeamFinalEvent(type: string | null | undefined): boolean {
   return type === 'HANDBALL_FINAL' || type === 'RUGBY_FINAL' || type === 'RUGBY_SEVENS_FINAL'
     || type === 'FUTSAL_FINAL' || type === 'FIELD_HOCKEY_FINAL'
-    || type === 'ROLLER_HOCKEY_FINAL' || type === 'WATER_POLO_FINAL';
+    || type === 'ROLLER_HOCKEY_FINAL' || type === 'WATER_POLO_FINAL'
+    || type === 'ICE_HOCKEY_REG' || type === 'ICE_HOCKEY_OT' || type === 'ICE_HOCKEY_SO';
 }
 /** Only rugby and rugby sevens use points; these team events use goals. */
 export function teamFinalUsesGoals(type: string | null | undefined): boolean {
@@ -13,10 +14,24 @@ export function teamFinalUsesGoals(type: string | null | undefined): boolean {
 const TEAM_FINAL_LABELS: Record<string, string> = {
   HANDBALL_FINAL: 'handball', RUGBY_FINAL: 'rugby', RUGBY_SEVENS_FINAL: 'sevens',
   FUTSAL_FINAL: 'futsal', FIELD_HOCKEY_FINAL: 'fieldHockey',
-  ROLLER_HOCKEY_FINAL: 'rollerHockey', WATER_POLO_FINAL: 'waterPolo'
+  ROLLER_HOCKEY_FINAL: 'rollerHockey', WATER_POLO_FINAL: 'waterPolo',
+  ICE_HOCKEY_REG: 'iceRegulation', ICE_HOCKEY_OT: 'iceOvertime', ICE_HOCKEY_SO: 'iceShootout'
 };
 export function teamFinalTitleKey(type: string | null | undefined): string {
   return 'communities.teamFinal.' + (type ? TEAM_FINAL_LABELS[type] ?? 'finalTitle' : 'finalTitle');
+}
+
+export function iceHockeyEvent(type: string | null | undefined): boolean {
+  return type === 'ICE_HOCKEY_REG' || type === 'ICE_HOCKEY_OT' || type === 'ICE_HOCKEY_SO';
+}
+export function teamFinalHintKey(type: string | null | undefined): string {
+  switch (type) {
+    case 'ICE_HOCKEY_REG': return 'communities.iceHockey.regulationHint';
+    case 'ICE_HOCKEY_OT': return 'communities.iceHockey.overtimeHint';
+    case 'ICE_HOCKEY_SO': return 'communities.iceHockey.shootoutHint';
+    default: return teamFinalUsesGoals(type)
+      ? 'communities.teamFinal.goalHint' : 'communities.teamFinal.finalHint';
+  }
 }
 
 export function teamFinalError(type: string | null | undefined,
@@ -27,6 +42,9 @@ export function teamFinalError(type: string | null | undefined,
       || !Number.isInteger(score.sideA) || !Number.isInteger(score.sideB)
       || score.sideA < 0 || score.sideB < 0 || score.sideA > 999 || score.sideB > 999)
     return 'teamFinalInvalidScore';
+  if ((type === 'ICE_HOCKEY_OT' || type === 'ICE_HOCKEY_SO')
+      && Math.abs(score.sideA - score.sideB) !== 1)
+    return 'iceHockeyInvalidDecision';
   if (!entries.some(e => e.team === 'A') || !entries.some(e => e.team === 'B')
       || entries.some(e => (e.team !== 'A' && e.team !== 'B') || e.performanceValue != null))
     return 'teamFinalInvalidTeams';
