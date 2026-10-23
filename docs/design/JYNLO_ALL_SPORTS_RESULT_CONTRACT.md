@@ -49,3 +49,8 @@ O registo central é `src/app/pages/communities/community-round-sport.ts`. Os te
 - A interface mostra marca, unidade e **posição somente dentro daquela jornada**; marcas iguais partilham posição. Participantes sem marca ficam sem classificação.
 - Não são criados pontos de campeonato, medalhas automáticas nem classificação cruzada entre salto em altura e distância, entre outros.
 - Próximos incrementos: especificar disciplinas atléticas (altura, comprimento, triplo, dardo, peso, etc.), séries e tentativas, critérios de validade e painel de júris com notas individuais.
+
+## Seguimento — disciplinas atléticas de campo (23/10/2026)
+- Novas provas `JUMP`: comprimento, triplo, altura ou vara; `THROW`: peso, disco, dardo ou martelo.
+- `community_round.event_discipline` é nullable para histórico; novas jornadas de saltos/lançamentos exigem a seleção.
+- Marcas em metros e posições apenas na jornada; **sem** classificação cruzada entre disciplinas, tentativas oficiais ou pontuações inventadas.

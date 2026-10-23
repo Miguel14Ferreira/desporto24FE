@@ -9,6 +9,7 @@ import { communityRoundMatchup, CommunityRoundMatchup } from './community-round-
 import { sportForRound, CommunityRoundView } from './community-round-sport';
 import { eventOptionsForSport, eventView, isNeutralEvent, eventPresentationFormat,
   CommunityEventType } from './community-round-event-type';
+import { athleticsDisciplineOptions, athleticsDisciplineValid } from './community-field-disciplines';
 import { raceSupportsLaps, formatRaceSeconds, raceEntryValidationError } from './community-race-metrics';
 import { raceDecisionError } from './community-race-decisions';
 import { performanceKind, performanceError, eventPerformanceEntries,
@@ -487,6 +488,10 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     return t('communities.eventType.' + type.toLowerCase());
   }
 
+  athleticsDisciplineOptions = athleticsDisciplineOptions;
+  fieldDisciplineLabel(code: string): string {
+    return t('communities.discipline.' + code.toLowerCase());
+  }
   performanceKind = performanceKind;
   performanceDisplay = performanceDisplay;
 
@@ -889,6 +894,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   roundPlayedAt = '';
   roundSportDraft = '';
   roundEventTypeDraft = '';
+  roundDisciplineDraft = '';
   importSportDraft = '';
   racketMatchFormat: 'SINGLES' | 'DOUBLES' = 'SINGLES';
   racketSetScores: Array<{ sideA: number | null; sideB: number | null }> =
@@ -1436,6 +1442,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
         this.roundDeleteConfirmId = undefined;
         this.roundSportDraft = '';
         this.roundEventTypeDraft = '';
+        this.roundDisciplineDraft = '';
         this.importSportDraft = '';
         this.racketMatchFormat = 'SINGLES';
         this.racketSetScores = [{sideA: null,sideB: null},{sideA: null,sideB: null}];
@@ -2909,6 +2916,11 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       this.errorMessage = t('feedback.communities.roundEventTypeRequired');
       return;
     }
+    if (!athleticsDisciplineValid(this.newRoundSport, this.newRoundEventType,
+      this.roundDisciplineDraft || null)) {
+      this.errorMessage = t('feedback.communities.disciplineRequired');
+      return;
+    }
     const race = this.viewForNewRound() === 'race';
     const neutral = isNeutralEvent(this.newRoundSport, this.newRoundEventType);
     const racket = racketSupportsSets(this.newRoundSport);
@@ -2972,6 +2984,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       playedAt: playedAt.toISOString(),
       sport: this.newRoundSport,
       eventType: this.newRoundEventType,
+      eventDiscipline: this.roundDisciplineDraft || null,
       ...(racket ? { matchFormat: this.racketMatchFormat,
         setScores: this.racketSetScores.map(set => ({ ...set })) } : {}),
       entries
@@ -2985,6 +2998,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
           this.roundName = '';
           this.roundPlayedAt = '';
           this.roundEventTypeDraft = '';
+          this.roundDisciplineDraft = '';
           this.racketMatchFormat = 'SINGLES';
           this.racketSetScores = [{sideA: null,sideB: null},{sideA: null,sideB: null}];
           this.prepareRoundEntries();
