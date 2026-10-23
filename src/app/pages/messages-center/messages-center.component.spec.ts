@@ -375,7 +375,7 @@ describe('Unified Jynlo message center', () => {
   });
 
   it('handles query-param changes without reopening a manually selected conversation', () => {
-    const params = new BehaviorSubject({
+    const params = new BehaviorSubject<{ get: (key: string) => string | null }>({
       get: (key: string) => key === 'kind' ? 'direct' : key === 'id' ? 'bea' : null
     });
     friends.friends.and.returnValue(of([
