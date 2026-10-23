@@ -350,3 +350,239 @@ body .communities-page.jynlo-c1 .community-timeline-entry .entry-meta strong {
     transform: none;
   }
 }
+
+/*
+ * Explore communities — Concept 1. Grid columns remain reserved even when the
+ * API returns one card: auto-fit with 1fr used to stretch a single card to 100%.
+ * These overrides affect only the discovery section, never My Communities,
+ * community detail, membership rules or the shared card component.
+ */
+body .communities-page.jynlo-c1:not(.community-detail-page) .community-discovery {
+  padding: clamp(1.3rem, 3vw, 2.2rem);
+  background:
+    radial-gradient(ellipse at 95% 0%, rgba(65, 233, 176, .055), transparent 58%),
+    var(--jynlo-ui-surface-glass);
+}
+body .communities-page.jynlo-c1 .community-discovery-heading h2 {
+  font-size: clamp(1.7rem, 2.6vw, 2.35rem);
+  font-weight: 830;
+  letter-spacing: -.035em;
+}
+body .communities-page.jynlo-c1 .community-discovery-heading .eyebrow {
+  color: var(--jynlo-ui-brand);
+}
+body .communities-page.jynlo-c1 .community-discovery-heading .subtitle {
+  margin: .5rem 0 0;
+  line-height: 1.55;
+  max-width: 65ch;
+  color: var(--jynlo-ui-muted);
+}
+body .communities-page.jynlo-c1 .community-discovery-filters {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  align-items: end;
+  gap: .85rem;
+  margin: 1.55rem 0 0;
+}
+body .communities-page.jynlo-c1 .community-discovery-filters > label {
+  min-width: 0;
+}
+body .communities-page.jynlo-c1 .community-discovery-filters label span {
+  color: #d5e9f2;
+}
+body .communities-page.jynlo-c1 .community-discovery-filters input {
+  min-height: 46px;
+  background: #10263a;
+  border: 1px solid rgba(154, 192, 208, .27);
+  border-radius: var(--jynlo-ui-radius-sm);
+  color: var(--jynlo-ui-text);
+}
+body .communities-page.jynlo-c1 .community-discovery-filters input::placeholder {
+  color: #8ba6b9;
+}
+body .communities-page.jynlo-c1 .community-discovery-filters input:focus-visible {
+  outline: 2px solid var(--jynlo-ui-outline-focus);
+  outline-offset: 2px;
+  border-color: var(--jynlo-ui-brand);
+}
+body .communities-page.jynlo-c1 .community-discovery-filter-actions {
+  grid-column: auto;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: .55rem;
+  margin: 0;
+}
+body .communities-page.jynlo-c1 .community-discovery-filter-actions .jynlo-action {
+  min-height: 46px !important;
+}
+body .communities-page.jynlo-c1 .community-discovery-status {
+  margin: 1.5rem 0 0;
+  color: var(--jynlo-ui-muted);
+}
+body .communities-page.jynlo-c1 .community-discovery-results {
+  margin-top: 1.8rem;
+  padding-top: 1.4rem;
+  border-top: 1px solid var(--jynlo-ui-outline);
+}
+body .communities-page.jynlo-c1 .community-discovery-results-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: .6rem 1.5rem;
+  margin-bottom: 1.1rem;
+}
+body .communities-page.jynlo-c1 .community-discovery-results-heading .eyebrow {
+  margin: 0 0 .4rem;
+  color: var(--jynlo-ui-brand);
+}
+body .communities-page.jynlo-c1 .community-discovery-results-heading h3 {
+  font-size: clamp(1.25rem, 2vw, 1.65rem);
+  font-weight: 800;
+  letter-spacing: -.025em;
+}
+body .communities-page.jynlo-c1 .community-discovery-results-heading > p {
+  color: var(--jynlo-ui-muted);
+  margin: 0;
+  font-size: .87rem;
+}
+body .communities-page.jynlo-c1:not(.community-detail-page) .community-discovery .community-discovery-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.05rem;
+  align-items: stretch;
+}
+body .communities-page.jynlo-c1 .community-discovery-grid .community-card {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--jynlo-ui-surface);
+  border-radius: var(--jynlo-ui-radius-md);
+  overflow: hidden;
+}
+body .communities-page.jynlo-c1 .community-discovery-grid .community-card-main {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  gap: 0;
+}
+body .communities-page.jynlo-c1 .community-discovery-grid .community-discovery-cover {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  min-height: 0;
+  flex: 0 0 auto;
+  border-radius: 0;
+  font-size: clamp(2.7rem, 5vw, 4rem);
+}
+body .communities-page.jynlo-c1 .community-discovery-grid .community-discovery-cover img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+body .communities-page.jynlo-c1 .community-discovery-grid .community-card-copy {
+  flex: 1 1 auto;
+  width: 100%;
+  padding: 1.1rem 1.15rem .65rem;
+  gap: .55rem;
+}
+body .communities-page.jynlo-c1 .community-discovery-grid .community-card-copy strong {
+  font-size: 1.13rem;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+body .communities-page.jynlo-c1 .community-discovery-grid .community-discovery-description {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  line-height: 1.55;
+  min-height: 2.8em;
+  overflow-wrap: anywhere;
+  color: var(--jynlo-ui-muted);
+}
+body .communities-page.jynlo-c1 .community-discovery-grid .community-discovery-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: .65rem;
+  padding: 0 1.15rem 1.1rem;
+  margin-top: auto;
+}
+body .communities-page.jynlo-c1 .community-discovery-grid .community-discovery-card-footer .visibility {
+  width: auto;
+  margin: 0;
+  padding: .32rem .65rem;
+  border: 1px solid rgba(65, 233, 176, .17);
+  border-radius: 999px;
+  background: rgba(65, 233, 176, .1);
+  color: #b4ffe4;
+  line-height: 1.3;
+}
+body .communities-page.jynlo-c1 .community-discovery-grid .community-discovery-card-link {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  font-size: .82rem;
+  font-weight: 800;
+  color: var(--jynlo-ui-brand);
+}
+body .communities-page.jynlo-c1 .community-discovery-grid .community-card:hover .community-discovery-card-link span {
+  transform: translateX(2px);
+}
+body .communities-page.jynlo-c1 .community-discovery-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .75rem;
+  margin-top: 1.5rem;
+}
+body .communities-page.jynlo-c1 .community-discovery-pagination > span {
+  color: var(--jynlo-ui-muted);
+  font-size: .85rem;
+}
+body .communities-page.jynlo-c1 .community-discovery-empty {
+  margin: 1.5rem 0 0;
+  padding: 2.2rem 1.2rem;
+  border: 1px dashed var(--jynlo-ui-outline);
+  border-radius: var(--jynlo-ui-radius-md);
+  text-align: center;
+  color: var(--jynlo-ui-muted);
+}
+body .communities-page.jynlo-c1 .community-discovery-empty strong {
+  color: var(--jynlo-ui-text);
+}
+@media (max-width: 1040px) {
+  body .communities-page.jynlo-c1:not(.community-detail-page) .community-discovery .community-discovery-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 820px) {
+  body .communities-page.jynlo-c1 .community-discovery-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  body .communities-page.jynlo-c1 .community-discovery-filter-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+  }
+}
+@media (max-width: 650px) {
+  body .communities-page.jynlo-c1 .community-discovery-filters {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  body .communities-page.jynlo-c1 .community-discovery-filter-actions {
+    grid-column: 1;
+  }
+  body .communities-page.jynlo-c1:not(.community-detail-page) .community-discovery .community-discovery-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  body .communities-page.jynlo-c1 .community-discovery-results-heading {
+    align-items: flex-start;
+  }
+}
