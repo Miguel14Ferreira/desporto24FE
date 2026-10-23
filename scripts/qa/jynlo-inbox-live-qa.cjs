@@ -4,7 +4,8 @@
 /*
  * Real API-only integration test for Jynlo's persistent inbox read state.
  * NO credentials in source, commits, argv, stdout, or HTTP error messages.
- * Default: preflight only. `--ensure-friends` safely invites and accepts\n * friendship between the two QA accounts. `--send-once` sends ONE QA message.
+ * Default: preflight only. `--ensure-friends` safely invites and accepts
+ * friendship between the two QA accounts. `--send-once` sends ONE QA message.
  * Never retry an ambiguous POST. Does NOT validate browser DOM/WebSocket UI.
  * Requires Node.js >= 22 and two disposable QA accounts.
  */
