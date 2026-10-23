@@ -1563,7 +1563,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     this.chatScrollRestore = undefined;
     this.timelineError = '';
     this.timelineLoading = false;
-    if (tab === 'feed' || tab === 'chat') this.loadTimeline();
+    if (tab === 'feed') this.loadTimeline();
     this.pendingArchiveDeepLinkCommunityId = null;
     this.errorMessage = '';
 
