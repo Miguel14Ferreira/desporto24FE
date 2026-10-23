@@ -260,9 +260,8 @@ test('one inbox handles deep links, legacy chat URLs and per-account membership'
     // no new POST may leave the browser, even if the composer had been unlocked.
     const postsBefore = audited.filter(x => x === 'ana:POST /api/sessions/41/messages').length;
     await first.evaluate(() => {
-      const afterKickoff = Date.parse(document.querySelector('title')?.textContent ?? '') || 0;
-      // Shift the clock by 20 minutes; the test fixture's kickoff is +6 minutes.
-      const shifted = Date.now() + 20 * 60_000 + (afterKickoff ? 0 : 0);
+      // Shift the clock by 20 minutes; the fixture's kickoff is +6 minutes.
+      const shifted = Date.now() + 20 * 60_000;
       Date.now = () => shifted;
     });
     await first.locator('#inbox-reply').fill('Não enviar depois do início');
