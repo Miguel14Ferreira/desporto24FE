@@ -85,6 +85,18 @@
           }
 
           <div class="session-top-actions">
+            @if (canAccessChat()) {
+              @if (canSendChat()) {
+                <a class="jynlo-action jynlo-action--primary"
+                   [routerLink]="['/menu/messages']"
+                   [queryParams]="{ kind: 'session', id: session.id }">
+                  <span aria-hidden="true">💬</span> {{ 'sessionDetail.openChat' | t }}
+                </a>
+              } @else {
+                <span class="jynlo-action jynlo-action--neutral"
+                      role="status">{{ 'sessionDetail.chatUnavailable' | t }}</span>
+              }
+            }
             @if (canJoinSession()) {
               <button type="button" class="join-shortcut" (click)="scrollToParticipation()">
                 {{ isFull() ? ('sessionDetail.viewWaitlist' | t) : ('sessionDetail.viewJoin' | t) }}
@@ -1026,172 +1038,6 @@
             }
           }
 
-          @if (canAccessChat()) {
-            <section id="session-chat" class="chat-panel">
-              <div class="chat-header">
-                <div>
-                  <h2>{{ 'sessionDetail.sessionChat' | t }}</h2>
-                  <p>{{ 'sessionDetail.sessionChatText' | t }}</p>
-                </div>
-                <span class="sync-status" [class.sync-status--connected]="canSendChat() && chatRealtimeConnected" role="status">
-                  @if (canSendChat()) {
-                    <span class="sync-indicator" aria-hidden="true"></span>
-                    {{ (chatRealtimeConnected ? 'chat.connected' : (chatEverConnected ? 'chat.reconnecting' : 'chat.connecting')) | t }}
-                  } @else {
-                    {{ 'sessionDetail.chatClosedShort' | t }}
-                  }
-                </span>
-              </div>
-
-              @if (chatError && !chatDeliveryUncertain) {
-                <div class="chat-error" role="alert">{{ chatError }}</div>
-              }
-
-              @if (chatDeliveryUncertain) {
-                <section class="chat-delivery-warning" role="alert">
-                  <div>
-                    <strong>{{ 'chat.uncertainTitle' | t }}</strong>
-                    <p>{{ chatError }}</p>
-                  </div>
-                  <div class="chat-delivery-actions">
-                    <button type="button" class="jynlo-action jynlo-action--neutral"
-                      [disabled]="chatDeliveryChecking" (click)="verifyChatDelivery()">
-                      {{ (chatDeliveryChecking ? 'chat.verifying' : 'chat.verifyDelivery') | t }}
-                    </button>
-                    <button type="button" class="jynlo-action jynlo-action--secondary"
-                      [disabled]="chatDeliveryChecking" (click)="resumeChatAfterUncertainSend()">
-                      {{ 'chat.resumeWriting' | t }}
-                    </button>
-                  </div>
-                </section>
-              }
-
-              <div class="message-list" #chatMessageList (scroll)="onSessionChatScroll()" role="log" aria-live="polite"
-                   aria-relevant="additions" [attr.aria-label]="'chat.messages' | t">
-                @if (!chatLoading && messages.length === 0) {
-                  <div class="empty-chat">
-                    {{ (canSendChat() ? 'sessionDetail.emptyChat' : 'sessionDetail.emptyChatClosed') | t }}
-                  </div>
-                }
-
-                @for (message of messages; track message.id; let i = $index) {
-                  @if (dayLabelAt(i); as dayLabel) {
-                    <div class="chat-day-separator" role="separator" [attr.aria-label]="dayLabel">
-                      <span>{{ dayLabel }}</span>
-                    </div>
-                  }
-                  <article
-                    class="message"
-                    [class.own-message]="isOwnMessage(message)"
-                    [class.thread-continuation]="continuesGroupAt(i)">
-                    <div class="message-meta">
-                      @if (!continuesGroupAt(i)) {
-                        <strong>{{ isOwnMessage(message) ? ('chat.you' | t) : message.senderUsername }}</strong>
-                      }
-                      <span>{{ messageDate(message) }}</span>
-                    </div>
-                    @if (message.replyToMessageId && message.replyToText) {
-                      <div class="jynlo-chat-quote">
-                        <strong>{{ message.replyToSender }}</strong>
-                        <span>{{ message.replyToText }}</span>
-                      </div>
-                    }
-                    <p>{{ message.body }}</p>
-                    @if (canSendChat()) {
-                      <button type="button" class="jynlo-chat-reply-action"
-                        [disabled]="messageSending || chatDeliveryUncertain"
-                        (click)="replyToSessionMessage(message)">
-                        ↩ {{ 'chat.replyToMessage' | t }}
-                      </button>
-                    }
-                    <app-chat-reactions kind="session" [conversationId]="message.sessionId"
-                      [messageId]="message.id"
-                      [disabled]="!canSendChat()"></app-chat-reactions>
-                  </article>
-                }
-              </div>
-
-              @if (newMessagesPending > 0) {
-                <button type="button" class="chat-new-messages" (click)="jumpToLatestMessages()">
-                  <span aria-hidden="true">↓</span> {{ 'chat.newMessages' | t }}
-                  <span class="chat-new-messages-count">{{ newMessagesPending }}</span>
-                </button>
-              }
-              @if (typing.label('session', session.id); as typingLabel) {
-                <p class="chat-typing-indicator" role="status" aria-live="off">{{ typingLabel }}</p>
-              }
-              @if (canSendChat()) {
-              <form class="message-composer" (ngSubmit)="sendMessage()">
-                @if (replyingToSessionMessage; as original) {
-                  <div class="jynlo-chat-reply-banner">
-                    <div><strong>{{ 'chat.replyingTo' | t }} {{ original.senderUsername }}</strong>
-                      <span>{{ original.body }}</span></div>
-                    <button type="button" [disabled]="messageSending || chatDeliveryUncertain"
-                      (click)="cancelSessionReply()">{{ 'chat.cancelReply' | t }}</button>
-                  </div>
-                }
-                <label>
-                  <span>{{ 'sessionDetail.newMessage' | t }}</span>
-                  <textarea #sessionComposer
-                    name="messageBody"
-                    [(ngModel)]="messageBody"
-                    maxlength="2000"
-                    rows="3"
-                    [readOnly]="messageSending"
-                    [disabled]="chatDeliveryUncertain"
-                    [placeholder]="'sessionDetail.groupPlaceholder' | t"
-                    (ngModelChange)="onTypingInput()"
-                    (blur)="typing.stop()"
-                    (keydown.enter)="onChatEnter($event)"></textarea>
-                </label>
-
-                <div class="composer-tools">
-                  <div class="emoji-wrap">
-                    <button
-                      type="button"
-                      class="emoji-toggle"
-                      [attr.aria-expanded]="showEmojiPicker"
-                      [disabled]="messageSending || chatDeliveryUncertain"
-                      (click)="toggleEmojiPicker()">
-                      😊 {{ 'chat.emoji' | t }}
-                    </button>
-
-                    @if (showEmojiPicker) {
-                      <div class="emoji-picker">
-                        @for (emoji of emojis; track emoji) {
-                          <button type="button" class="emoji-option" (click)="addEmoji(emoji)">
-                            {{ emoji }}
-                          </button>
-                        }
-                      </div>
-                    }
-                  </div>
-
-                  <span class="character-count">{{ messageBody.length }}/2000</span>
-                </div>
-
-                <div class="composer-footer">
-                  <span>{{ 'chat.enterHint' | t }}</span>
-                  <button
-                    type="submit"
-                    class="primary-action jynlo-action jynlo-action--primary"
-                    [disabled]="messageSending || chatDeliveryUncertain || !messageBody.trim()">
-                    {{ messageSending ? ('chat.sending' | t) : ('chat.send' | t) }}
-                  </button>
-                </div>
-              </form>
-              } @else {
-                <div class="chat-read-only" role="status">
-                  {{ 'sessionDetail.chatClosedDescription' | t }}
-                </div>
-              }
-            </section>
-          } @else if (!session.waitlisted) {
-            <section class="chat-locked">
-              <h2>{{ 'sessionDetail.sessionChat' | t }}</h2>
-              <p>{{ 'sessionDetail.chatLocked' | t }}</p>
-            </section>
-          }
         </div>
       </article>
     }

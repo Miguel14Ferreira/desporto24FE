@@ -356,12 +356,31 @@ describe('Unified Jynlo message center', () => {
     expect(component.recentCount).toBe(0);
   });
 
-  it('keeps links scoped to the original authorized chat screens', () => {
-    expect(component.conversationLink(item('direct', 'Bea'))).toEqual(['/menu/friendList/chat', 'Bea']);
-    expect(component.conversationLink(item('community', 7))).toEqual(['/menu/communities', 7]);
-    expect(component.conversationQuery(item('community', 7))).toEqual({ tab: 'chat' });
-    expect(component.conversationLink(item('session', 14))).toEqual(['/menu/events', 14]);
-    expect(component.conversationQuery(item('session', 14))).toEqual({ chat: '1' });
+  it('lists only upcoming session conversations and opens a linked authorized session', () => {
+    const active = new Date(Date.now() + 3600_000).toISOString();
+    const past = new Date(Date.now() - 3600_000).toISOString();
+    sessions.mine.and.returnValue(of({ created: [
+      { id: 14, gameDate: active, status: 'OPEN', sport: 'Futebol', city: 'Lisboa' },
+      { id: 15, gameDate: past, status: 'OPEN', sport: 'Padel', city: 'Lisboa' },
+      { id: 16, gameDate: active, status: 'CANCELLED', sport: 'Padel', city: 'Lisboa' }
+    ], joined: [], waitlisted: [] } as any));
+    sessions.messages.and.returnValue(of([]));
+    component = new MessagesCenterComponent(friends, communities, sessions, direct, timeline,
+      realtime, inboxApi, { snapshot: { queryParamMap: { get: (key: string) =>
+        key === 'kind' ? 'session' : key === 'id' ? '14' : null } } } as any);
+    component.loadInbox();
+    expect(component.conversations.filter(c => c.kind === 'session').map(c => c.id)).toEqual([14]);
+    expect(component.selectedKey).toBe('session:14');
+    expect(sessions.messages).toHaveBeenCalledWith(14);
+  });
+
+  it('does not invent a conversation from a forged or expired deep link', () => {
+    component = new MessagesCenterComponent(friends, communities, sessions, direct, timeline,
+      realtime, inboxApi, { snapshot: { queryParamMap: { get: (key: string) =>
+        key === 'kind' ? 'session' : key === 'id' ? '999' : null } } } as any);
+    component.loadInbox();
+    expect(component.selectedKey).toBeNull();
+    expect(sessions.messages).not.toHaveBeenCalled();
   });
 
   it('normalizes case and accents in search and deduplicates history by ID', () => {

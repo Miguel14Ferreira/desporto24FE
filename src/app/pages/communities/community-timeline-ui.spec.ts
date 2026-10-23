@@ -30,26 +30,30 @@ describe('Community feed/chat UI state isolation', () => {
     send = jasmine.createSpy('send').and.returnValue(of(message('POST')));
     remove = jasmine.createSpy('delete').and.returnValue(of(undefined));
     (component as any).timelineService = { list, send, delete: remove };
+    (component as any).router = { navigate: jasmine.createSpy('navigate').and.returnValue(Promise.resolve(true)) };
     spyOn(component, 'canManage').and.returnValue(true);
   });
 
-  it('does not request content until feed or chat is selected', () => {
+  it('requests only the feed and redirects the old chat tab to the inbox', () => {
     component.setTab('home');
     expect(list).not.toHaveBeenCalled();
     component.setTab('feed');
     expect(list).toHaveBeenCalledOnceWith(7, 'POST');
     component.setTab('chat');
-    expect(list.calls.mostRecent().args).toEqual([7, 'CHAT']);
+    expect(list).toHaveBeenCalledTimes(1);
+    expect((component as any).router.navigate).toHaveBeenCalledWith(['/menu/messages'],
+      { queryParams: { kind: 'community', id: 7 } });
   });
 
-  it('ignores a stale feed response after switching to chat', () => {
+  it('keeps feed content separate when navigating to the central chat', () => {
     const earlier = new Subject<CommunityTimelineEntry[]>();
-    list.and.returnValues(earlier.asObservable(), of([message('CHAT')]));
+    list.and.returnValue(earlier.asObservable());
     component.setTab('feed');
     component.setTab('chat');
     earlier.next([message('POST')]);
     earlier.complete();
-    expect(component.timelineEntries.map(item => item.kind)).toEqual(['CHAT']);
+    expect(component.timelineEntries.map(item => item.kind)).toEqual(['POST']);
+    expect(list).toHaveBeenCalledTimes(1);
     expect(component.timelineLoading).toBeFalse();
   });
 

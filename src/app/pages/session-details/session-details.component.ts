@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { AfterViewChecked, ChangeDetectionStrategy, Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { JwtHelperService } from '@auth0/angular-jwt';
 import { catchError, concatMap, finalize, forkJoin, from, map, mergeMap, of, retry, Subscription, TimeoutError, timeout, toArray } from 'rxjs';
 
@@ -158,6 +158,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   private pendingChatScroll = false;
   private pendingMembershipScroll = false;
   private readonly jwtHelper = new JwtHelperService();
+  private readonly router = inject(Router);
   private readonly readSync = inject(ChatReadSyncService);
   private readonly realtimeSubscriptions = new Subscription();
   readonly typing: ChatTypingTracker;
@@ -190,6 +191,12 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     }
 
     this.sessionId = id;
+    if (this.pendingChatScroll) {
+      void this.router.navigate(['/menu/messages'], {
+        queryParams: { kind: 'session', id }, replaceUrl: true
+      });
+      return;
+    }
     this.restoreRatingDismissal();
     this.loadSession();
     this.realtimeService.connect();
@@ -1241,8 +1248,10 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
 
   private markVisibleMessagesRead(): void {
     // Session details can be opened without opening/seeing the chat.
-    if (!this.sessionId || !this.canAccessChat() || this.chatLoading || this.chatError
-        || this.messages.length === 0) return;
+    // The session details screen no longer renders a chat log. Never mark
+    // hidden messages as read; the unified inbox owns read acknowledgements.
+    if (!this.chatMessageList?.nativeElement || !this.sessionId || !this.canAccessChat()
+        || this.chatLoading || this.chatError || this.messages.length === 0) return;
     const highestId = this.messages.reduce((max, message) => Math.max(max, message.id), 0);
     this.readSync.markVisible('session', this.sessionId,
       highestId, this.chatMessageList?.nativeElement);
@@ -1502,7 +1511,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   }
 
   canAccessChat(): boolean {
-    return Boolean(this.session?.joined);
+    return Boolean(this.session?.joined || this.isCreator());
   }
 
   canSendChat(): boolean {
@@ -1513,10 +1522,9 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
       return false;
     }
 
-    // Mirror the backend chat window; history remains readable after closure.
+    // No session chat from kick-off onward.
     const kickoff = Date.parse(this.session.gameDate);
-    return Number.isFinite(kickoff)
-      && Date.now() < kickoff + (2 * 60 * 60 * 1000);
+    return Number.isFinite(kickoff) && Date.now() < kickoff;
   }
 
   isOwnMessage(message: SessionMessage): boolean {

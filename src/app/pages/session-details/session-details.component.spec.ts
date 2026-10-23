@@ -228,8 +228,7 @@ describe('SessionDetailsComponent', () => {
     fixture.detectChanges();
     readSync.markVisible.calls.reset();
     component.onSessionChatScroll();
-    expect(readSync.markVisible).toHaveBeenCalledOnceWith(
-      'session', 7, 29, jasmine.anything());
+    expect(readSync.markVisible).not.toHaveBeenCalled(); // No chat log on session details.
 
     readSync.markVisible.calls.reset();
     component.chatError = 'Sem autorização';
@@ -1803,7 +1802,7 @@ describe('SessionDetailsComponent', () => {
     expect(component.messages).toEqual([]);
   });
 
-  it('keeps chat history visible but hides the composer after the game', () => {
+  it('keeps past-session chat unavailable on details without deleting server messages', () => {
     const archived: SessionMessage = {
       id: 7,
       sessionId: 7,
@@ -1819,20 +1818,17 @@ describe('SessionDetailsComponent', () => {
 
     expect(component.canAccessChat()).toBeTrue();
     expect(component.canSendChat()).toBeFalse();
-    expect(fixture.nativeElement.querySelector('.chat-panel')).not.toBeNull();
-    expect(fixture.nativeElement.querySelector('.message-list').textContent)
-      .toContain('Até ao próximo jogo!');
+    expect(fixture.nativeElement.querySelector('.chat-panel')).toBeNull();
     expect(fixture.nativeElement.querySelector('.message-composer')).toBeNull();
-    expect(fixture.nativeElement.querySelector('.chat-read-only').textContent)
-      .toContain('chat está encerrado');
-    expect(fixture.nativeElement.textContent).toContain('Chat encerrado');
+    expect(fixture.nativeElement.textContent).toContain('Chat indisponível');
+    expect(component.messages.some(item => item.body === 'Até ao próximo jogo!')).toBeTrue();
 
     component.messageBody = 'Tentar enviar depois do jogo';
     component.sendMessage();
     expect(sessionService.postMessage).not.toHaveBeenCalled();
   });
 
-  it('keeps the chat writable while a game is underway', () => {
+  it('closes chat as soon as the game starts', () => {
     component.session = {
       ...session,
       joined: true,
@@ -1840,9 +1836,9 @@ describe('SessionDetailsComponent', () => {
     };
     fixture.detectChanges();
 
-    expect(component.canSendChat()).toBeTrue();
-    expect(fixture.nativeElement.querySelector('.message-composer')).not.toBeNull();
-    expect(fixture.nativeElement.querySelector('.chat-read-only')).toBeNull();
+    expect(component.canSendChat()).toBeFalse();
+    expect(fixture.nativeElement.querySelector('.message-composer')).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Chat indisponível');
   });
 
   it('immediately closes chat when the game is completed, cancelled or did not occur', () => {
@@ -1863,14 +1859,14 @@ describe('SessionDetailsComponent', () => {
     expect(component.canSendChat()).toBeFalse();
   });
 
-  it('shows a closed empty state instead of suggesting a new chat', () => {
+  it('does not render another chat UI for a concluded session', () => {
     component.session = { ...session, joined: true };
     component.messages = [];
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('.empty-chat').textContent)
-      .toContain('terminou sem mensagens');
+    expect(fixture.nativeElement.querySelector('.empty-chat')).toBeNull();
     expect(fixture.nativeElement.querySelector('.message-composer')).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Chat indisponível');
   });
 
   it('should send a chat message and append it locally', () => {
@@ -1905,7 +1901,7 @@ describe('SessionDetailsComponent', () => {
     expect(sessionService.postMessage).toHaveBeenCalledOnceWith(7, 'Levo!', 30);
     expect(component.replyingToSessionMessage).toBeNull();
     fixture.detectChanges();
-    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Levas as bolas?');
+    expect(fixture.nativeElement.querySelector('.chat-panel')).toBeNull();
     expect(component.messages.some(item => item.replyToMessageId === 30)).toBeTrue();
   });
 
@@ -1946,17 +1942,18 @@ describe('SessionDetailsComponent', () => {
     expect(component.messages.length).toBe(1);
   });
 
-  it('shows connection and reconnection status on the session chat', () => {
+  it('shows one inbox chat entry instead of another session chat header', () => {
     component.session = {
       ...session, joined: true,
       gameDate: new Date(Date.now() + 3_600_000).toISOString()
     };
     realtimeConnected.next(true);
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('.sync-status').textContent).toContain('Ligado em tempo real');
+    expect(fixture.nativeElement.textContent).toContain('Chat da sessão');
+    expect(fixture.nativeElement.querySelector('.chat-panel')).toBeNull();
     realtimeConnected.next(false);
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('.sync-status').textContent).toContain('A restabelecer ligação');
+    expect(fixture.nativeElement.querySelector('.sync-status')).toBeNull();
   });
 
   it('blocks a second session POST after network loss until delivery is verified', async () => {
@@ -1976,8 +1973,8 @@ describe('SessionDetailsComponent', () => {
     fixture.detectChanges();
     await fixture.whenStable(); // ngModel schedules the disabled state asynchronously.
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('.chat-delivery-warning')).not.toBeNull();
-    expect((fixture.nativeElement.querySelector('.message-composer textarea') as HTMLTextAreaElement).disabled).toBeTrue();
+    expect(fixture.nativeElement.querySelector('.chat-delivery-warning')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.message-composer')).toBeNull();
     component.resumeChatAfterUncertainSend();
     expect(component.chatDeliveryUncertain).toBeFalse();
     expect(component.messageBody).toBe('Confirmam a hora?');
