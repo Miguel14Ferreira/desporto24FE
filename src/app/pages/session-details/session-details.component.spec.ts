@@ -9,6 +9,7 @@ import { DirectChatService } from '../../services/direct-chat.service';
 import { SessionService } from '../../services/session.service';
 import { ReliabilityService } from '../../services/reliability.service';
 import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.service';
+import { ChatReadSyncService } from '../../services/chat-read-sync.service';
 import { SessionMessage } from '../model/session-message';
 import { TEST_IMPORTS, TEST_PROVIDERS } from '../../testing/test-providers';
 import { I18nService } from '../../i18n/i18n.service';
@@ -23,6 +24,7 @@ describe('SessionDetailsComponent', () => {
   let realtimeService: jasmine.SpyObj<DirectChatRealtimeService>;
   let realtimeSessionMessages: Subject<SessionMessage>;
   let realtimeConnected: BehaviorSubject<boolean>;
+  let readSync: jasmine.SpyObj<ChatReadSyncService>;
 
   const session = {
     id: 7,
@@ -57,6 +59,7 @@ describe('SessionDetailsComponent', () => {
   }
 
   beforeEach(async () => {
+    readSync = jasmine.createSpyObj<ChatReadSyncService>('ChatReadSyncService', ['markVisible']);
     communityService = jasmine.createSpyObj<CommunityService>('CommunityService', ['friends']);
     communityService.friends.and.returnValue(of([{username:'player-two', fullName: 'Player Two', nickname: null, profilePicUrl: null, chatBlocked: false, blockedByMe: false}]));
     directChatService = jasmine.createSpyObj<DirectChatService>('DirectChatService', ['send']);
@@ -167,6 +170,7 @@ describe('SessionDetailsComponent', () => {
       imports: TEST_IMPORTS,
       providers: [
         ...TEST_PROVIDERS,
+        { provide: ChatReadSyncService, useValue: readSync },
         {
           provide: ActivatedRoute,
           useValue: {
@@ -196,6 +200,27 @@ describe('SessionDetailsComponent', () => {
     fixture = TestBed.createComponent(SessionDetailsComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
+  });
+
+  it('only synchronizes session chat reads after access is granted and messages have loaded', () => {
+    component.messages = [{
+      id: 29, sessionId: 7, senderUsername: 'creator-user',
+      body: 'Olá', createdAt: '2026-10-23T09:00:00Z'
+    }];
+    component.onSessionChatScroll();
+    expect(readSync.markVisible).not.toHaveBeenCalled();
+
+    component.session = { ...session, joined: true };
+    fixture.detectChanges();
+    readSync.markVisible.calls.reset();
+    component.onSessionChatScroll();
+    expect(readSync.markVisible).toHaveBeenCalledOnceWith(
+      'session', 7, 29, jasmine.anything());
+
+    readSync.markVisible.calls.reset();
+    component.chatError = 'Sem autorização';
+    component.onSessionChatScroll();
+    expect(readSync.markVisible).not.toHaveBeenCalled();
   });
 
   it('keeps a confirmed membership visible if the details refresh fails after POST', () => {

@@ -7,6 +7,7 @@ import { DirectChatComponent } from './direct-chat.component';
 import { DirectChatService } from '../../services/direct-chat.service';
 import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.service';
 import { CommunityService } from '../../services/community.service';
+import { ChatReadSyncService } from '../../services/chat-read-sync.service';
 import { TEST_IMPORTS, TEST_PROVIDERS } from '../../testing/test-providers';
 
 describe('DirectChatComponent', () => {
@@ -16,8 +17,10 @@ describe('DirectChatComponent', () => {
   let communityService: jasmine.SpyObj<CommunityService>;
   let messages: Subject<import('../model/direct-chat').DirectChatMessage>;
   let connection: Subject<boolean>;
+  let readSync: jasmine.SpyObj<ChatReadSyncService>;
 
   beforeEach(async () => {
+    readSync = jasmine.createSpyObj<ChatReadSyncService>('ChatReadSyncService', ['markVisible']);
     messages = new Subject();
     connection = new Subject();
     service = jasmine.createSpyObj<DirectChatService>(
@@ -67,13 +70,34 @@ describe('DirectChatComponent', () => {
             connected$: connection.asObservable()
           }
         },
-        { provide: CommunityService, useValue: communityService }
+        { provide: CommunityService, useValue: communityService },
+        { provide: ChatReadSyncService, useValue: readSync }
       ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(DirectChatComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
+  });
+
+  it('marks the latest direct message from the authorized, opened conversation', () => {
+    component.currentUsername = 'fixture-user';
+    component.messages = [{
+      id: 15, username1: 'ana', username2: 'fixture-user',
+      text: 'Olá', date: '2026-10-23T09:00:00Z', dataDisplay: null
+    }];
+    component.onMessageLogScroll();
+    expect(readSync.markVisible).toHaveBeenCalledOnceWith(
+      'direct', 'ana', 15, jasmine.anything());
+  });
+
+  it('does not mark an inaccessible or failed direct chat as read', () => {
+    component.messages = [{ id: 10, username1: 'ana', username2: 'fixture-user',
+      text: 'Olá', date: null, dataDisplay: null }];
+    component.currentUsername = 'fixture-user';
+    component.errorMessage = 'Erro';
+    component.onMessageLogScroll();
+    expect(readSync.markVisible).not.toHaveBeenCalled();
   });
 
   it('should create and load chat history', () => {

@@ -546,7 +546,7 @@
                   @if (activeTab === 'chat' && chatOlderError) {
                     <p role="alert" class="community-timeline-error">{{ chatOlderError }}</p>
                   }
-                  <div #communityChatLog [class.community-timeline-chat]="activeTab === 'chat'"
+                  <div #communityChatLog (scroll)="onCommunityChatScroll()" [class.community-timeline-chat]="activeTab === 'chat'"
                        [class.community-timeline-feed]="activeTab === 'feed'"
                        [attr.role]="activeTab === 'chat' ? 'log' : null"
                        [attr.aria-live]="activeTab === 'chat' ? 'polite' : null"

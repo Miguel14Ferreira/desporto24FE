@@ -1066,7 +1066,7 @@
                 </section>
               }
 
-              <div class="message-list" #chatMessageList role="log" aria-live="polite"
+              <div class="message-list" #chatMessageList (scroll)="onSessionChatScroll()" role="log" aria-live="polite"
                    aria-relevant="additions" [attr.aria-label]="'chat.messages' | t">
                 @if (!chatLoading && messages.length === 0) {
                   <div class="empty-chat">

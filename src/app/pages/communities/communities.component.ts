@@ -1,4 +1,4 @@
-import { AfterViewChecked, ChangeDetectionStrategy, Component, ElementRef, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
+import { AfterViewChecked, ChangeDetectionStrategy, Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { JwtHelperService } from '@auth0/angular-jwt';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -37,6 +37,7 @@ import { CommunityService } from '../../services/community.service';
 import { SessionService } from '../../services/session.service';
 import { CommunityTimelineService, CommunityTimelineEntry, CommunityTimelineKind } from '../../services/community-timeline.service';
 import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.service';
+import { ChatReadSyncService } from '../../services/chat-read-sync.service';
 import { CommunityProfile } from '../model/community-profile';
 import { SessionSummary } from '../model/session-summary';
 import { SPORTS_CATALOG } from '../../shared/sports-catalog';
@@ -54,6 +55,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   @ViewChild('communitySearchSection') communitySearchSection?: ElementRef<HTMLElement>;
   @ViewChild('communityChatLog') communityChatLog?: ElementRef<HTMLElement>;
   private readonly realtimeService = inject(DirectChatRealtimeService);
+  private readonly readSync = inject(ChatReadSyncService);
   private readonly chatSubscriptions = new Subscription();
   private readonly jwtHelper = new JwtHelperService();
 
@@ -148,6 +150,25 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       this.communityChatLog.nativeElement.scrollTop = this.communityChatLog.nativeElement.scrollHeight;
       this.chatScrollRequested = false;
     }
+    this.markVisibleCommunityChatRead();
+  }
+
+  @HostListener('window:scroll')
+  @HostListener('window:focus')
+  @HostListener('document:visibilitychange')
+  onCommunityChatScroll(): void {
+    this.markVisibleCommunityChatRead();
+  }
+
+  private markVisibleCommunityChatRead(): void {
+    // Never mark a community feed post as a chat message. Only the opened
+    // community chat tab with an authorized, successfully loaded log counts.
+    if (!this.selected || this.activeTab !== 'chat' || this.timelineLoading || this.timelineError
+        || this.timelineEntries.length === 0) return;
+    const highestId = this.timelineEntries.reduce((max, entry) =>
+      entry.kind === 'CHAT' ? Math.max(max, entry.id) : max, 0);
+    this.readSync.markVisible('community', this.selected.id,
+      highestId, this.communityChatLog?.nativeElement);
   }
 
   ngOnDestroy(): void {
