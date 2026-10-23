@@ -1220,6 +1220,48 @@ body .communities-page.jynlo-c1 .round-performance-mark--surf {
   border-color: rgba(106,200,255,.34);
   background: rgba(106,200,255,.10);
 }
+/* Breaking: compact two-person battle decision, no invented judge scores. */
+body .communities-page.jynlo-c1 .round-results.round-breaking-battle {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .8rem;
+}
+body .communities-page.jynlo-c1 .round-breaking-battle .round-result-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: .7rem;
+  min-width: 0;
+  padding: 1rem;
+  border-radius: .9rem;
+  border: 1px solid rgba(153,179,200,.22);
+  background: rgba(16,34,51,.5);
+}
+body .communities-page.jynlo-c1 .round-breaking-battle .round-breaking-winner {
+  border-color: rgba(112,245,195,.44);
+  background: linear-gradient(145deg, rgba(48,132,113,.18), rgba(16,34,51,.55));
+}
+body .communities-page.jynlo-c1 .round-breaking-decision {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(166,186,205,.3);
+  background: rgba(116,139,162,.13);
+  color: #c5d5e1;
+  border-radius: 999px;
+  padding: .28rem .65rem;
+  font-size: .77rem;
+  font-weight: 800;
+}
+body .communities-page.jynlo-c1 .round-breaking-decision--winner {
+  color: #91f3d0;
+  border-color: rgba(112,245,195,.4);
+  background: rgba(112,245,195,.11);
+}
+@media (max-width: 640px) {
+  body .communities-page.jynlo-c1 .round-results.round-breaking-battle {
+    grid-template-columns: 1fr;
+  }
+}
 /* Per-event performance marks; never reused as season points. */
 body .communities-page.jynlo-c1 .round-performance-mark {
   display: inline-flex;

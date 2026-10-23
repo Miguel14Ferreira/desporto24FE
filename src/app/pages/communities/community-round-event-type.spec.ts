@@ -13,6 +13,8 @@ describe('multi-format sports should not reuse unrelated scoring rules', () => {
     expect(eventOptionsForSport('Parkour').map(o => o.code))
       .toEqual(['PARKOUR_SPEED', 'PARKOUR_FREESTYLE']);
     expect(eventOptionsForSport('Ginástica Artística').map(o => o.code)).toEqual(['APPARATUS']);
+    expect(eventOptionsForSport('Breaking').map(o => o.code)).toEqual(['BREAKING_BATTLE']);
+    expect(eventOptionsForSport('Trampolim').map(o => o.code)).toEqual(['TRAMPOLINE_INDIVIDUAL']);
   });
   it('treats freestyle and field event results as participation-only', () => {
     expect(isRaceEvent('BMX', 'FREESTYLE')).toBeFalse();
@@ -32,6 +34,11 @@ describe('multi-format sports should not reuse unrelated scoring rules', () => {
     expect(eventPresentationFormat('Skate', 'SKATE_PARK')).toBe('judged');
     expect(eventPresentationFormat('Skate', 'SKATE_STREET')).toBe('judged');
     expect(eventPresentationFormat('Parkour', 'PARKOUR_SPEED')).toBe('race');
+    expect(eventPresentationFormat('Breaking', 'BREAKING_BATTLE')).toBe('judged');
+    expect(eventPresentationFormat('Trampolim', 'TRAMPOLINE_INDIVIDUAL')).toBe('judged');
+    expect(isNeutralEvent('Breaking', 'BREAKING_BATTLE')).toBeTrue();
+    expect(isNeutralEvent('Trampolim', 'TRAMPOLINE_INDIVIDUAL')).toBeTrue();
+    expect(eventView('Breaking', 'BREAKING_BATTLE')).toBe('individual');
   });
   it('preserves old BMX races while keeping other old results neutral', () => {
     expect(eventView('BMX', null)).toBe('race');

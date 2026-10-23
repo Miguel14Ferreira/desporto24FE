@@ -6,7 +6,8 @@ import { CommunityRoundView, formatForSport, viewForSport } from './community-ro
  * backend CommunityRoundEventType; it is NOT a complete rulebook for 121 sports.
  */
 export type CommunityEventType = 'RACE' | 'FREESTYLE' | 'TRACK' | 'JUMP' | 'THROW' | 'HEAT' | 'BODYBOARD_HEAT' | 'APPARATUS'
-  | 'SKATE_PARK' | 'SKATE_STREET' | 'PARKOUR_SPEED' | 'PARKOUR_FREESTYLE';
+  | 'SKATE_PARK' | 'SKATE_STREET' | 'PARKOUR_SPEED' | 'PARKOUR_FREESTYLE'
+  | 'BREAKING_BATTLE' | 'TRAMPOLINE_INDIVIDUAL';
 export interface CommunityEventOption { code: CommunityEventType; labelKey: string }
 const TYPES: Record<string, readonly CommunityEventOption[]> = {
   bmx: [
@@ -32,7 +33,9 @@ const TYPES: Record<string, readonly CommunityEventOption[]> = {
   parkour: [
     { code: 'PARKOUR_SPEED', labelKey: 'communities.eventType.parkour_speed' },
     { code: 'PARKOUR_FREESTYLE', labelKey: 'communities.eventType.parkour_freestyle' }
-  ]
+  ],
+  breaking: [{ code: 'BREAKING_BATTLE', labelKey: 'communities.eventType.breaking_battle' }],
+  trampolim: [{ code: 'TRAMPOLINE_INDIVIDUAL', labelKey: 'communities.eventType.trampoline_individual' }]
 };
 
 function normalize(sport: string): string {
@@ -74,7 +77,8 @@ export function eventPresentationFormat(
   if (isRaceEvent(sport, eventType)) return 'race';
   if (isNeutralEvent(sport, eventType))
     return ['FREESTYLE', 'HEAT', 'BODYBOARD_HEAT', 'APPARATUS',
-      'SKATE_PARK', 'SKATE_STREET', 'PARKOUR_FREESTYLE'].includes(eventType || '') ? 'judged' : 'measured';
+      'SKATE_PARK', 'SKATE_STREET', 'PARKOUR_FREESTYLE',
+      'BREAKING_BATTLE', 'TRAMPOLINE_INDIVIDUAL'].includes(eventType || '') ? 'judged' : 'measured';
   return formatForSport(sport || null);
 }
 

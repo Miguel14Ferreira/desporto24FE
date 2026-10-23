@@ -10,6 +10,7 @@ import { sportForRound, CommunityRoundView } from './community-round-sport';
 import { eventOptionsForSport, eventView, isNeutralEvent, eventPresentationFormat,
   CommunityEventType } from './community-round-event-type';
 import { athleticsDisciplineOptions, athleticsDisciplineValid } from './community-field-disciplines';
+import { breakingBattleError } from './community-breaking-battle';
 import { raceSupportsLaps, formatRaceSeconds, raceEntryValidationError } from './community-race-metrics';
 import { raceDecisionError } from './community-race-decisions';
 import { performanceKind, performanceError, eventPerformanceEntries,
@@ -2959,6 +2960,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     }
     const race = this.viewForNewRound() === 'race';
     const neutral = isNeutralEvent(this.newRoundSport, this.newRoundEventType);
+    const breaking = this.newRoundEventType === 'BREAKING_BATTLE';
     const racket = racketSupportsSets(this.newRoundSport);
 
     const selectedEntries = this.roundEntries.filter(entry => entry.included);
@@ -2974,9 +2976,14 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
         ? 'feedback.communities.bodyboardInvalid' : 'feedback.communities.surfInvalid');
       return;
     }
+    if (this.newRoundEventType === 'BREAKING_BATTLE' && breakingBattleError(selectedEntries)) {
+      this.errorMessage = t('feedback.communities.breakingInvalid');
+      return;
+    }
     if (neutral && !isWaveHeatEvent(this.newRoundEventType)
       && performanceError(this.newRoundEventType, selectedEntries)) {
-      this.errorMessage = t('feedback.communities.performanceInvalid');
+      this.errorMessage = t(this.newRoundEventType === 'TRAMPOLINE_INDIVIDUAL'
+        ? 'feedback.communities.trampolineInvalid' : 'feedback.communities.performanceInvalid');
       return;
     }
     if (race) {
@@ -2991,7 +2998,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       .map(entry => ({
         username: entry.username,
         team: race || neutral ? null : (entry.team.trim() || null),
-        result: race || neutral ? 'DRAW' as CommunityMatchResult
+        result: breaking ? entry.result
+          : race || neutral ? 'DRAW' as CommunityMatchResult
           : racket ? (entry.team === racketWinner ? 'WIN' : 'LOSS') as CommunityMatchResult
           : entry.result,
         goals: race || neutral || racket ? 0 : Math.max(0, Number(entry.goals) || 0),

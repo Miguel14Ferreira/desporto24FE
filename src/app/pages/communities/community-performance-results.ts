@@ -1,11 +1,12 @@
 import { CommunityRound, CommunityRoundEntry, CommunityRoundEntryDraft } from '../model/community-group';
 
 /** Provisional community marks: never official federation scores or season points. */
-export function performanceKind(eventType: string | null | undefined): 'metres' | 'points' | 'gym' | 'street' | null {
+export function performanceKind(eventType: string | null | undefined): 'metres' | 'points' | 'gym' | 'street' | 'trampoline' | null {
   if (eventType === 'JUMP' || eventType === 'THROW') return 'metres';
   if (eventType === 'FREESTYLE'
       || eventType === 'SKATE_PARK' || eventType === 'PARKOUR_FREESTYLE') return 'points';
   if (eventType === 'SKATE_STREET') return 'street';
+  if (eventType === 'TRAMPOLINE_INDIVIDUAL') return 'trampoline';
   if (eventType === 'APPARATUS') return 'gym';
   return null;
 }
@@ -24,8 +25,11 @@ export function performanceError(
       || (kind === 'metres' && value <= 0)
       || ((kind === 'points' || kind === 'gym') && value > 100)
       || (kind === 'street' && value > 300)
+      || (kind === 'trampoline' && value > 9999.99)
       || value > 999999.999
-      || Math.abs(value * 1000 - Math.round(value * 1000)) > 1e-6;
+      || (kind === 'trampoline'
+        ? Math.abs(value * 100 - Math.round(value * 100)) > 1e-6
+        : Math.abs(value * 1000 - Math.round(value * 1000)) > 1e-6);
   });
 }
 
