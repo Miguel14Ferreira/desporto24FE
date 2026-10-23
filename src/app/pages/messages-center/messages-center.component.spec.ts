@@ -743,6 +743,9 @@ describe('Direct chat confirmed read status', () => {
   beforeEach(() => {
     browserToken = 'fixture-auth-token-for-ana';
     spyOn(localStorage, 'getItem').and.callFake(key => key === 't' ? browserToken : null);
+    // Make the background/read contract independent of the Karma runner's focus.
+    spyOn(document, 'hasFocus').and.returnValue(true);
+    spyOnProperty(document, 'visibilityState', 'get').and.returnValue('visible');
     friends = jasmine.createSpyObj('CommunityService', ['friends']);
     communities = jasmine.createSpyObj('CommunityGroupsService', ['mine']);
     sessions = jasmine.createSpyObj('SessionService', ['mine','messages','detail','postMessage']);
@@ -818,6 +821,58 @@ describe('Direct chat confirmed read status', () => {
     select('bea');
     expect(inbox.isDirectMessageRead({key:'direct:carla',id:40,sender:'ana',
       text:'other chat',createdAt:''})).toBeFalse();
+  });
+
+  it('does not acknowledge a read while the recipient tab is hidden or unfocused',()=> {
+    select('bea');
+    inbox.messages=[{key:'direct:bea',id:42,sender:'bea',
+      text:'unread while away',createdAt:'2026-10-23T10:00:00Z'}];
+    inbox.previewLog = {nativeElement:{scrollHeight:100,scrollTop:0,clientHeight:100}} as any;
+    const visibility = Object.getOwnPropertyDescriptor(document, 'visibilityState')
+      || Object.getOwnPropertyDescriptor(Object.getPrototypeOf(document), 'visibilityState');
+    expect(visibility).toBeDefined();
+    (Object.getOwnPropertyDescriptor(document, 'visibilityState')?.get as any);
+    (document.visibilityState as string);
+    (document.hasFocus as jasmine.Spy).and.returnValue(false);
+    (inbox as any).markRenderedRead('direct:bea', true);
+    expect(api.markRead).not.toHaveBeenCalled();
+    (document.hasFocus as jasmine.Spy).and.returnValue(true);
+    (inbox as any).markRenderedRead('direct:bea', true);
+    expect(api.markRead).toHaveBeenCalledOnceWith(
+      {kind:'direct',id:'bea'},42);
+  });
+
+  it('stops receipt GET polling while inactive and refreshes on return',()=> {
+    const clock=spyOn(Date,'now').and.returnValue(100_000);
+    select('bea');
+    expect(api.directReadReceipt).toHaveBeenCalledTimes(1);
+    (document.hasFocus as jasmine.Spy).and.returnValue(false);
+    clock.and.returnValue(116_000);
+    (inbox as any).refreshPeerReadReceipt();
+    expect(api.directReadReceipt).toHaveBeenCalledTimes(1);
+    (document.hasFocus as jasmine.Spy).and.returnValue(true);
+    (inbox as any).onPageActive();
+    expect(api.directReadReceipt).toHaveBeenCalledTimes(2);
+    clock.and.returnValue(130_999);
+    (inbox as any).refreshPeerReadReceipt();
+    expect(api.directReadReceipt).toHaveBeenCalledTimes(2);
+    clock.and.returnValue(131_000);
+    (inbox as any).refreshPeerReadReceipt();
+    expect(api.directReadReceipt).toHaveBeenCalledTimes(3);
+  });
+
+  it('does not fetch a receipt or mark read if the document is hidden',()=> {
+    select('bea');
+    inbox.messages=[{key:'direct:bea',id:40,sender:'bea',text:'hidden',createdAt:''}];
+    (document.visibilityState as string);
+    // SpyOnProperty returns a spy we can reconfigure for this case.
+    const descriptor = Object.getOwnPropertyDescriptor(document, 'visibilityState');
+    expect(descriptor?.get).toBeDefined();
+    (descriptor!.get as jasmine.Spy).and.returnValue('hidden');
+    (inbox as any).markRenderedRead('direct:bea', true);
+    (inbox as any).refreshPeerReadReceipt(true);
+    expect(api.markRead).not.toHaveBeenCalled();
+    expect(api.directReadReceipt).toHaveBeenCalledTimes(1);
   });
 
   it('does not trust errors, wrong identities, or decreasing cursors',()=>{
