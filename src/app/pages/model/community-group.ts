@@ -110,6 +110,29 @@ export interface CommunityStanding {
   bestWinStreak: number;
 }
 
+export interface CommunityRacketStanding {
+  position: number;
+  profileId: number;
+  username: string | null;
+  fullName: string;
+  profilePicUrl: string | null;
+  matches: number;
+  wins: number;
+  losses: number;
+  setsWon: number;
+  setsLost: number;
+  setDifference: number;
+  gamesOrPointsWon: number;
+  gamesOrPointsLost: number;
+  gamesOrPointsDifference: number;
+}
+
+export interface CommunityRacketStandingGroup {
+  sport: string;
+  matchFormat: CommunityRacketMatchFormat;
+  standings: CommunityRacketStanding[];
+}
+
 export interface CommunityCompetitionOverview {
   settings: CommunityCompetitionSettings;
   seasons: CommunitySeason[];
@@ -117,6 +140,7 @@ export interface CommunityCompetitionOverview {
   activeSeasonId: number | null;
   rounds: CommunityRound[];
   standings: CommunityStanding[];
+  racketStandings?: CommunityRacketStandingGroup[];
 }
 
 export interface CommunityRoundEntryDraft {

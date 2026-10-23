@@ -1260,6 +1260,74 @@
                       </section>
                     }
 
+                    @if ((competition?.racketStandings?.length || 0) > 0) {
+                      <section class="racket-standings-section" aria-labelledby="racket-standings-title">
+                        <div class="section-heading">
+                          <div>
+                            <span class="section-kicker">{{ 'communities.racket.rankingKicker' | t }}</span>
+                            <h3 id="racket-standings-title">{{ 'communities.racket.rankingsTitle' | t }}</h3>
+                          </div>
+                        </div>
+                        <p class="racket-standings-explainer">
+                          {{ 'communities.racket.rankingHint' | t }}
+                        </p>
+                        @for (group of competition?.racketStandings || []; track group.sport + ':' + group.matchFormat) {
+                          <div class="racket-standings-group">
+                            <div class="racket-standings-group-head">
+                              <h4>{{ group.sport }}</h4>
+                              <span class="competition-badge">
+                                {{ (group.matchFormat === 'DOUBLES'
+                                  ? 'communities.racket.doubles' : 'communities.racket.singles') | t }}
+                              </span>
+                            </div>
+                            <div class="racket-standings-scroll">
+                              <table class="racket-standings-table">
+                                <thead>
+                                  <tr>
+                                    <th scope="col">{{ 'communities.racket.rank' | t }}</th>
+                                    <th scope="col">{{ 'communities.racket.player' | t }}</th>
+                                    <th scope="col" [title]="'communities.racket.matches' | t">{{ 'communities.racket.matchesShort' | t }}</th>
+                                    <th scope="col" [title]="'communities.racket.wins' | t">{{ 'communities.racket.winsShort' | t }}</th>
+                                    <th scope="col" [title]="'communities.racket.losses' | t">{{ 'communities.racket.lossesShort' | t }}</th>
+                                    <th scope="col">{{ 'communities.racket.sets' | t }}</th>
+                                    <th scope="col">{{ 'communities.racket.setBalance' | t }}</th>
+                                    <th scope="col">{{ (racketUsesPointsPerSet(group.sport)
+                                      ? 'communities.racket.points' : 'communities.racket.games') | t }}</th>
+                                    <th scope="col">{{ 'communities.racket.scoreBalance' | t }}</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  @for (row of group.standings; track row.profileId) {
+                                    <tr>
+                                      <td class="racket-standings-place">{{ row.position }}.º</td>
+                                      <th scope="row" class="racket-standings-player">
+                                        <strong>{{ row.fullName }}</strong>
+                                        @if (row.username) {
+                                          <small>@{{ row.username }}</small>
+                                        }
+                                      </th>
+                                      <td>{{ row.matches }}</td>
+                                      <td class="racket-standings-wins">{{ row.wins }}</td>
+                                      <td>{{ row.losses }}</td>
+                                      <td>{{ row.setsWon }}–{{ row.setsLost }}</td>
+                                      <td [class.racket-standings-positive]="row.setDifference > 0">
+                                        {{ row.setDifference > 0 ? '+' : '' }}{{ row.setDifference }}
+                                      </td>
+                                      <td>{{ row.gamesOrPointsWon }}–{{ row.gamesOrPointsLost }}</td>
+                                      <td [class.racket-standings-positive]="row.gamesOrPointsDifference > 0">
+                                        {{ row.gamesOrPointsDifference > 0 ? '+' : '' }}{{ row.gamesOrPointsDifference }}
+                                      </td>
+                                    </tr>
+                                  }
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        }
+                        <p class="racket-standings-footnote">{{ 'communities.racket.tieBreakHint' | t }}</p>
+                      </section>
+                    }
+
                     <section class="round-history">
                       <div class="section-heading">
                         <div>
