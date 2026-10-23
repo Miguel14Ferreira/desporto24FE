@@ -11,6 +11,8 @@ import { eventOptionsForSport, eventView, isNeutralEvent, eventPresentationForma
   CommunityEventType } from './community-round-event-type';
 import { athleticsDisciplineOptions, athleticsDisciplineValid } from './community-field-disciplines';
 import { breakingBattleError } from './community-breaking-battle';
+import { isGroupRoutineEvent, routineGroupNames, routineGroupError,
+  sortedRoutineGroups, routineGroupPlace, routineGroupMembers } from './community-group-routine-results';
 import { raceSupportsLaps, formatRaceSeconds, raceEntryValidationError } from './community-race-metrics';
 import { raceDecisionError } from './community-race-decisions';
 import { performanceKind, performanceError, eventPerformanceEntries,
@@ -827,7 +829,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
 
   roundMatchup(round: CommunityRound): CommunityRoundMatchup | null {
     const mode = this.roundView(round);
-    if (mode === 'race' || recordedRacketMatch(round)) return null;
+    if (mode === 'race' || recordedRacketMatch(round)
+        || isGroupRoutineEvent(round.eventType)) return null;
     const matchup = communityRoundMatchup(
       round, t('communities.matchup.teamA'), t('communities.matchup.teamB')
     );
@@ -961,6 +964,15 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   racketSetScores: Array<{ sideA: number | null; sideB: number | null }> =
     [{ sideA: null, sideB: null }, { sideA: null, sideB: null }];
   roundEntries: CommunityRoundEntryDraft[] = [];
+  roundGroupScoresDraft: Record<string, number | null> = {};
+  isGroupRoutineEvent = isGroupRoutineEvent;
+  sortedRoutineGroups = sortedRoutineGroups;
+  routineGroupPlace = routineGroupPlace;
+  routineGroupMembers = routineGroupMembers;
+
+  selectedRoutineGroups(): string[] {
+    return routineGroupNames(this.roundEntries.filter(e => e.included));
+  }
   roundDeleteConfirmId?: number;
 
   selectedSeasonId: number | null = null;
@@ -2288,9 +2300,11 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   prepareRoundEntries(community: CommunityGroup = this.selected as CommunityGroup): void {
     if (!community) {
       this.roundEntries = [];
+      this.roundGroupScoresDraft = {};
       return;
     }
 
+    this.roundGroupScoresDraft = {};
     this.roundEntries = community.members.map(member => ({
       username: member.username,
       included: false,
@@ -3003,6 +3017,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     const race = this.viewForNewRound() === 'race';
     const neutral = isNeutralEvent(this.newRoundSport, this.newRoundEventType);
     const breaking = this.newRoundEventType === 'BREAKING_BATTLE';
+    const groupRoutine = isGroupRoutineEvent(this.newRoundEventType);
     const racket = racketSupportsSets(this.newRoundSport);
 
     const selectedEntries = this.roundEntries.filter(entry => entry.included);
@@ -3016,6 +3031,15 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     if (neutral && isWaveHeatEvent(this.newRoundEventType) && surfWaveError(selectedEntries)) {
       this.errorMessage = t(this.newRoundEventType === 'BODYBOARD_HEAT'
         ? 'feedback.communities.bodyboardInvalid' : 'feedback.communities.surfInvalid');
+      return;
+    }
+    const routineGroups = groupRoutine ? this.selectedRoutineGroups() : [];
+    const groupScores = routineGroups.map(groupName => ({
+      groupName, score: this.roundGroupScoresDraft[groupName.toLocaleLowerCase()] ?? null
+    }));
+    const routineError = routineGroupError(this.newRoundEventType, selectedEntries, groupScores);
+    if (routineError) {
+      this.errorMessage = t('feedback.communities.' + routineError);
       return;
     }
     if (this.newRoundEventType === 'BREAKING_BATTLE' && breakingBattleError(selectedEntries)) {
@@ -3039,7 +3063,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     const entries = selectedEntries
       .map(entry => ({
         username: entry.username,
-        team: race || neutral ? null : (entry.team.trim() || null),
+        team: groupRoutine ? entry.team.trim()
+          : race || neutral ? null : (entry.team.trim() || null),
         result: breaking ? entry.result
           : race || neutral ? 'DRAW' as CommunityMatchResult
           : racket ? (entry.team === racketWinner ? 'WIN' : 'LOSS') as CommunityMatchResult
@@ -3080,6 +3105,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       sport: this.newRoundSport,
       eventType: this.newRoundEventType,
       eventDiscipline: this.roundDisciplineDraft || null,
+      ...(groupRoutine ? { groupScores } : {}),
       ...(racket ? { matchFormat: this.racketMatchFormat,
         setScores: this.racketSetScores.map(set => ({ ...set })) } : {}),
       entries

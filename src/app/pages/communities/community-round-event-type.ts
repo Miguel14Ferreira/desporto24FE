@@ -8,7 +8,10 @@ import { CommunityRoundView, formatForSport, viewForSport } from './community-ro
 export type CommunityEventType = 'RACE' | 'FREESTYLE' | 'TRACK' | 'JUMP' | 'THROW' | 'HEAT' | 'BODYBOARD_HEAT' | 'APPARATUS'
   | 'SKATE_PARK' | 'SKATE_STREET' | 'PARKOUR_SPEED' | 'PARKOUR_FREESTYLE'
   | 'BREAKING_BATTLE' | 'TRAMPOLINE_INDIVIDUAL'
-  | 'RHYTHMIC_APPARATUS' | 'ARTISTIC_SOLO_TECHNICAL' | 'ARTISTIC_SOLO_FREE';
+  | 'RHYTHMIC_APPARATUS' | 'ARTISTIC_SOLO_TECHNICAL' | 'ARTISTIC_SOLO_FREE'
+  | 'RHYTHMIC_GROUP_5' | 'RHYTHMIC_GROUP_3_2'
+  | 'ARTISTIC_DUET_TECH' | 'ARTISTIC_DUET_FREE'
+  | 'ARTISTIC_TEAM_TECH' | 'ARTISTIC_TEAM_FREE';
 export interface CommunityEventOption { code: CommunityEventType; labelKey: string }
 const TYPES: Record<string, readonly CommunityEventOption[]> = {
   bmx: [
@@ -37,10 +40,18 @@ const TYPES: Record<string, readonly CommunityEventOption[]> = {
   ],
   breaking: [{ code: 'BREAKING_BATTLE', labelKey: 'communities.eventType.breaking_battle' }],
   trampolim: [{ code: 'TRAMPOLINE_INDIVIDUAL', labelKey: 'communities.eventType.trampoline_individual' }],
-  'ginastica ritmica': [{ code: 'RHYTHMIC_APPARATUS', labelKey: 'communities.eventType.rhythmic_app' }],
+  'ginastica ritmica': [
+    { code: 'RHYTHMIC_APPARATUS', labelKey: 'communities.eventType.rhythmic_app' },
+    { code: 'RHYTHMIC_GROUP_5', labelKey: 'communities.eventType.rhythmic_group5' },
+    { code: 'RHYTHMIC_GROUP_3_2', labelKey: 'communities.eventType.rhythmic_group32' }
+  ],
   'natacao artistica': [
     { code: 'ARTISTIC_SOLO_TECHNICAL', labelKey: 'communities.eventType.artistic_tech' },
-    { code: 'ARTISTIC_SOLO_FREE', labelKey: 'communities.eventType.artistic_free' }
+    { code: 'ARTISTIC_SOLO_FREE', labelKey: 'communities.eventType.artistic_free' },
+    { code: 'ARTISTIC_DUET_TECH', labelKey: 'communities.eventType.artistic_duet_tech' },
+    { code: 'ARTISTIC_DUET_FREE', labelKey: 'communities.eventType.artistic_duet_free' },
+    { code: 'ARTISTIC_TEAM_TECH', labelKey: 'communities.eventType.artistic_team_tech' },
+    { code: 'ARTISTIC_TEAM_FREE', labelKey: 'communities.eventType.artistic_team_free' }
   ]
 };
 
@@ -85,7 +96,10 @@ export function eventPresentationFormat(
     return ['FREESTYLE', 'HEAT', 'BODYBOARD_HEAT', 'APPARATUS',
       'SKATE_PARK', 'SKATE_STREET', 'PARKOUR_FREESTYLE',
       'BREAKING_BATTLE', 'TRAMPOLINE_INDIVIDUAL',
-      'RHYTHMIC_APPARATUS', 'ARTISTIC_SOLO_TECHNICAL', 'ARTISTIC_SOLO_FREE'].includes(eventType || '') ? 'judged' : 'measured';
+      'RHYTHMIC_APPARATUS', 'ARTISTIC_SOLO_TECHNICAL', 'ARTISTIC_SOLO_FREE',
+      'RHYTHMIC_GROUP_5', 'RHYTHMIC_GROUP_3_2',
+      'ARTISTIC_DUET_TECH', 'ARTISTIC_DUET_FREE',
+      'ARTISTIC_TEAM_TECH', 'ARTISTIC_TEAM_FREE'].includes(eventType || '') ? 'judged' : 'measured';
   return formatForSport(sport || null);
 }
 
