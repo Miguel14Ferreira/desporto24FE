@@ -51,6 +51,13 @@ export class InboxApiService {
     });
   }
 
+  /** Bounded 41-message window around a hit, with the same server-side authorization. */
+  messageContext(conversation: InboxReference, messageId: number): Observable<ChatSearchHit[]> {
+    return this.http.get<ChatSearchHit[]>(this.url + '/context', {
+      params: { kind: conversation.kind, id: conversation.id, messageId }
+    });
+  }
+
   markRead(conversation: InboxReference, lastSeenMessageId: number): Observable<InboxSummary> {
     return this.http.put<InboxSummary>(this.url + '/read', {
       kind: conversation.kind, id: conversation.id, lastSeenMessageId

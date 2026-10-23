@@ -47,7 +47,7 @@ describe('Unified Jynlo message center', () => {
       connected$: connected.asObservable(),
       connect: jasmine.createSpy('connect')
     } as unknown as DirectChatRealtimeService;
-    inboxApi = jasmine.createSpyObj<InboxApiService>('InboxApiService', ['summaries', 'markRead', 'searchMessages']);
+    inboxApi = jasmine.createSpyObj<InboxApiService>('InboxApiService', ['summaries', 'markRead', 'searchMessages', 'messageContext']);
     inboxApi.summaries.and.returnValue(of([]));
     inboxApi.markRead.and.callFake(ref => of({ ...ref, latestMessageId: null,
       latestText: null, latestSender: null, latestAt: null, unreadCount: 0 }));
@@ -109,15 +109,70 @@ describe('Unified Jynlo message center', () => {
     component.selectedKey = selected.key;
     component.messages = [message(selected.key, 70), message(selected.key, 71)];
     component.messageSearchResults = [message(selected.key, 5)];
+    const delayed = new Subject<any[]>();
+    inboxApi.messageContext.and.returnValue(delayed.asObservable());
     component.viewMessageSearchResult(component.messageSearchResults[0]);
+    expect(inboxApi.messageContext).toHaveBeenCalledOnceWith({ kind: 'community', id: '7' }, 5);
     expect(component.selectedSearchResultId).toBe(5);
     expect(component.searchResultNotInPreview).toBeTrue();
     expect(component.messages.map(x => x.id)).toEqual([70, 71]);
+    delayed.next([{ id: 4, sender: 'ana', text: 'Antes', createdAt: null },
+      { id: 5, sender: 'bea', text: 'Mensagem antiga', createdAt: null },
+      { id: 6, sender: 'ana', text: 'Depois', createdAt: null }]);
+    delayed.complete();
+    expect(component.historicalPreview).toBeTrue();
+    expect(component.messages.map(x => x.id)).toEqual([4, 5, 6]);
+    expect(inboxApi.markRead).not.toHaveBeenCalled();
     component.viewMessageSearchResult(message('session:7', 99));
     expect(component.selectedSearchResultId).toBe(5);
     component.onMessageSearchTermChange();
     expect(component.selectedSearchResultId).toBeNull();
     expect(component.searchResultNotInPreview).toBeFalse();
+  });
+
+
+  it('does not join live socket messages into a historical window or mark them read', () => {
+    const selected = item('session', 41);
+    component.conversations = [selected];
+    component.selectedKey = selected.key;
+    component.historicalPreview = true;
+    component.messages = [message(selected.key, 5)];
+    (component as any).acceptRealtime(selected.key, message(selected.key, 90, 'bea'));
+    expect(component.messages.map(x => x.id)).toEqual([5]);
+    expect(inboxApi.markRead).not.toHaveBeenCalled();
+    expect(component.conversations[0].newThisVisit).toBe(1);
+  });
+
+  it('ignores a delayed historical context after switching conversation', () => {
+    const old = item('community', 7), next = item('direct', 'bea');
+    component.conversations = [old, next];
+    component.selectedKey = old.key;
+    component.messageSearchResults = [message(old.key, 5)];
+    const pending = new Subject<any[]>();
+    inboxApi.messageContext.and.returnValue(pending.asObservable());
+    direct.recentHistory.and.returnValue(of({ content: [], last: true }));
+    component.viewMessageSearchResult(component.messageSearchResults[0]);
+    component.selectConversation(next);
+    pending.next([{ id: 5, sender: 'bea', text: 'old', createdAt: null }]);
+    pending.complete();
+    expect(component.selectedKey).toBe(next.key);
+    expect(component.historicalPreview).toBeFalse();
+    expect(component.messages).toEqual([]);
+  });
+
+  it('refuses a mismatched context and keeps recent messages intact', () => {
+    const selected = item('direct', 'bea');
+    component.conversations = [selected];
+    component.selectedKey = selected.key;
+    component.messages = [message(selected.key, 80)];
+    component.messageSearchResults = [message(selected.key, 5)];
+    inboxApi.messageContext.and.returnValue(of([
+      { id: 7, sender: 'bea', text: 'other', createdAt: null }
+    ]));
+    component.viewMessageSearchResult(component.messageSearchResults[0]);
+    expect(component.historyLocateError).toBeTrue();
+    expect(component.historicalPreview).toBeFalse();
+    expect(component.messages.map(m => m.id)).toEqual([80]);
   });
 
   it('loads additional pages newest first with no duplicate messages', () => {

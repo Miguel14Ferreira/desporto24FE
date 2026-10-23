@@ -137,9 +137,14 @@
                         (click)="viewMessageSearchResult(result)">
                         {{ 'inbox.locateSearchResult' | t }}
                       </button>
-                      @if (selectedSearchResultId === result.id && searchResultNotInPreview) {
+                      @if (selectedSearchResultId === result.id && historyLocateLoading) {
                         <p class="inbox-history-search-note" role="status">
-                          {{ 'inbox.oldSearchResultNote' | t }}
+                          {{ 'inbox.historyContextLoading' | t }}
+                        </p>
+                      }
+                      @if (selectedSearchResultId === result.id && historyLocateError) {
+                        <p class="inbox-history-search-note" role="alert">
+                          {{ 'inbox.historyContextError' | t }}
                         </p>
                       }
                       @if (composerAllowed && !sending && !deliveryUncertain) {
@@ -160,6 +165,16 @@
                 <p class="inbox-history-search-status">{{ 'inbox.messageSearchNoResults' | t }}</p>
               }
             </section>
+          }
+          @if (historicalPreview) {
+            <div class="inbox-history-context-banner" role="status">
+              <div><strong>{{ 'inbox.historyContextTitle' | t }}</strong>
+                <span>{{ 'inbox.historyContextDescription' | t }}</span>
+              </div>
+              <button type="button" (click)="returnToRecent()">
+                {{ 'inbox.backToRecent' | t }}
+              </button>
+            </div>
           }
           <div class="inbox-message-log" #previewLog role="log" aria-live="polite"
             [attr.aria-label]="'inbox.previewLabel' | t">

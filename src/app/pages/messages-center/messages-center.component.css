@@ -164,3 +164,15 @@
   outline:2px solid #8cf5dc; outline-offset:2px; }
 .inbox-bubble--search-match { outline:2px solid #69e7cc; outline-offset:3px; }
 .inbox-history-search-note { color:#c2e8e2!important; font-size:.76rem!important; }
+
+/* Scoped historical window, clearly separated from the live inbox. */
+.inbox-history-context-banner { display:flex; align-items:center; justify-content:space-between;
+  flex-wrap:wrap; gap:12px; padding:11px 22px; background:#173b49;
+  border-bottom:1px solid #477a76; color:#d8f7ef; }
+.inbox-history-context-banner > div { display:flex; flex-direction:column; gap:3px; }
+.inbox-history-context-banner strong { font-size:.83rem; }
+.inbox-history-context-banner span { font-size:.75rem; color:#bfdbd6; }
+.inbox-history-context-banner button { border:1px solid #64bba8; border-radius:9px;
+  background:#236459; color:#fff; padding:8px 12px; font:inherit;
+  font-size:.78rem; font-weight:750; cursor:pointer; }
+.inbox-history-context-banner button:focus-visible { outline:2px solid #8cf5dc; outline-offset:2px; }
