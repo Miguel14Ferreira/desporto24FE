@@ -416,3 +416,7 @@ h1 {
   font-size: .75rem; cursor: pointer;
 }
 .chat-reply-banner button:disabled { opacity: .5; cursor: not-allowed; }
+
+/* Ephemeral, WebSocket-only typing status; never interrupts the composer. */
+.chat-typing-indicator { margin: 4px 16px; padding: 3px 5px; color: #74dfca;
+  font-size: .8rem; font-weight: 700; font-style: italic; min-height: 18px; }

@@ -1781,3 +1781,7 @@ input,textarea,select {
 
 .community-older-messages { align-self: center; display: block; margin: .75rem auto; padding: .55rem 1rem; border-radius: 999px; color: #c6e8ef; border: 1px solid rgba(152,195,211,.28); background: rgba(51,73,91,.6); cursor: pointer; }
 .community-older-messages:disabled { opacity: .6; cursor: wait; }
+
+/* Ephemeral, WebSocket-only typing status; never interrupts the composer. */
+.chat-typing-indicator { margin: 4px 16px; padding: 3px 5px; color: #74dfca;
+  font-size: .8rem; font-weight: 700; font-style: italic; min-height: 18px; }

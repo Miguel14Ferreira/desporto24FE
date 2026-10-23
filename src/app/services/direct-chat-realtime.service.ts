@@ -16,7 +16,15 @@ export interface ChatReactionEvent {
   emoji: string | null;
 }
 
+export interface ChatTypingEvent {
+  kind: 'direct' | 'session' | 'community';
+  conversationId: string;
+  username: string;
+  active: boolean;
+}
+
 interface ChatSocketEnvelope {
+  typing?: ChatTypingEvent;
   reaction?: ChatReactionEvent;
   type?: string;
   message?: DirectChatMessage | SessionMessage | CommunityTimelineEntry;
@@ -56,12 +64,14 @@ export class DirectChatRealtimeService {
   private readonly sessionMessageSubject = new Subject<SessionMessage>();
   private readonly communityMessageSubject = new Subject<CommunityTimelineEntry>();
   private readonly reactionSubject = new Subject<ChatReactionEvent>();
+  private readonly typingSubject = new Subject<ChatTypingEvent>();
   private readonly connectedSubject = new BehaviorSubject<boolean>(false);
 
   readonly messages$ = this.messageSubject.asObservable();
   readonly sessionMessages$ = this.sessionMessageSubject.asObservable();
   readonly communityMessages$ = this.communityMessageSubject.asObservable();
   readonly reactions$ = this.reactionSubject.asObservable();
+  readonly typing$ = this.typingSubject.asObservable();
   readonly connected$ = this.connectedSubject.asObservable();
 
   connect(): void {
@@ -103,6 +113,15 @@ export class DirectChatRealtimeService {
           return;
         }
 
+        if (envelope.type === 'CHAT_TYPING' && envelope.typing) {
+          const event = envelope.typing;
+          if (['direct', 'session', 'community'].includes(event.kind)
+              && typeof event.conversationId === 'string'
+              && typeof event.username === 'string'
+              && typeof event.active === 'boolean') this.typingSubject.next(event);
+          return;
+        }
+
         if (envelope.type === 'CHAT_REACTION_CHANGED' && envelope.reaction) {
           this.reactionSubject.next(envelope.reaction);
           return;
@@ -138,6 +157,12 @@ export class DirectChatRealtimeService {
         this.scheduleReconnect();
       }
     };
+  }
+
+  /** No HTTP fallback: ephemeral only, and never queued across reconnects. */
+  sendTyping(kind: ChatTypingEvent['kind'], id: string | number, active: boolean): void {
+    if (!this.connectedSubject.value || this.socket?.readyState !== WebSocket.OPEN) return;
+    this.socket.send(JSON.stringify({ type: 'CHAT_TYPING', kind, id: String(id), active }));
   }
 
   disconnect(): void {

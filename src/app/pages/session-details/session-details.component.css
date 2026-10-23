@@ -1590,3 +1590,7 @@ h1 {
   .chat-panel .message { max-width: 92%; }
   .chat-panel .chat-header { flex-direction: column; align-items: flex-start; }
 }
+
+/* Ephemeral, WebSocket-only typing status; never interrupts the composer. */
+.chat-typing-indicator { margin: 4px 16px; padding: 3px 5px; color: #74dfca;
+  font-size: .8rem; font-weight: 700; font-style: italic; min-height: 18px; }

@@ -1103,6 +1103,9 @@
                 }
               </div>
 
+              @if (typing.label('session', session.id); as typingLabel) {
+                <p class="chat-typing-indicator" role="status" aria-live="off">{{ typingLabel }}</p>
+              }
               @if (canSendChat()) {
               <form class="message-composer" (ngSubmit)="sendMessage()">
                 @if (replyingToSessionMessage; as original) {
@@ -1123,6 +1126,8 @@
                     [readOnly]="messageSending"
                     [disabled]="chatDeliveryUncertain"
                     [placeholder]="'sessionDetail.groupPlaceholder' | t"
+                    (ngModelChange)="onTypingInput()"
+                    (blur)="typing.stop()"
                     (keydown.enter)="onChatEnter($event)"></textarea>
                 </label>
 

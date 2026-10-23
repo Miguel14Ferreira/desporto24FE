@@ -176,3 +176,7 @@
   background:#236459; color:#fff; padding:8px 12px; font:inherit;
   font-size:.78rem; font-weight:750; cursor:pointer; }
 .inbox-history-context-banner button:focus-visible { outline:2px solid #8cf5dc; outline-offset:2px; }
+
+/* Ephemeral, WebSocket-only typing status; never interrupts the composer. */
+.chat-typing-indicator { margin: 4px 16px; padding: 3px 5px; color: #74dfca;
+  font-size: .8rem; font-weight: 700; font-style: italic; min-height: 18px; }

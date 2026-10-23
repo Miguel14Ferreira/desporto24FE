@@ -233,6 +233,9 @@
               }
             </section>
           }
+          @if (typing.label(conversation.kind, conversation.id); as typingLabel) {
+            <p class="chat-typing-indicator" role="status" aria-live="off">{{ typingLabel }}</p>
+          }
           <form class="inbox-composer" (ngSubmit)="sendMessage()">
             @if (replyingTo; as original) {
               <div class="inbox-reply-banner">
@@ -252,6 +255,7 @@
               [placeholder]="'chat.placeholder' | t" rows="2" maxlength="2000"
               [readOnly]="sending"
               [disabled]="composerAccessLoading || !composerAllowed || previewLoading || previewError || deliveryUncertain || deliveryChecking"
+              (ngModelChange)="onTypingInput()" (blur)="typing.stop()"
               (keydown.enter)="onComposerEnter($event)"></textarea>
             <div class="inbox-composer-bottom">
               <span>{{ 'chat.enterHint' | t }} · {{ draft.length }}/2000</span>

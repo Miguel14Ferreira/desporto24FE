@@ -507,9 +507,14 @@
                           (click)="cancelCommunityReply()">{{ 'chat.cancelReply' | t }}</button>
                       </div>
                     }
+                    @if (selected && typing.label('community', selected.id); as typingLabel) {
+                      <p class="chat-typing-indicator" role="status" aria-live="off">{{ typingLabel }}</p>
+                    }
                     <label for="community-chat-text">{{ 'communities.timelineWriteMessage' | t }}</label>
                     <textarea #communityComposer id="community-chat-text" name="community-chat-text" rows="2" maxlength="2000"
                               [(ngModel)]="chatDraft" [readOnly]="timelineSending" [disabled]="chatDeliveryUncertain"
+                              (ngModelChange)="onTypingInput()"
+                              (blur)="typing.stop()"
                               (keydown.enter)="onCommunityChatEnter($event)"
                               [placeholder]="'communities.timelineChatPlaceholder' | t"></textarea>
                     <div class="community-chat-composer-hint">{{ 'chat.enterHint' | t }} · {{ chatDraft.length }}/2000</div>
