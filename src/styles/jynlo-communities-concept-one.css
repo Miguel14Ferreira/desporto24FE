@@ -1080,8 +1080,11 @@ body .communities-page.jynlo-c1 .racket-standings-table .racket-standings-player
   text-align: left;
 }
 body .communities-page.jynlo-c1 .racket-standings-player {
-  display: grid;
-  gap: .15rem;
+  text-align: left;
+}
+body .communities-page.jynlo-c1 .racket-standings-player strong,
+body .communities-page.jynlo-c1 .racket-standings-player small {
+  display: block;
 }
 body .communities-page.jynlo-c1 .racket-standings-player small {
   color: #98b5c7;
