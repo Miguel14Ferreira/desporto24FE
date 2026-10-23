@@ -77,6 +77,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   messageSearchResults: InboxMessage[] = [];
   messageSearchLoading = false;
   messageSearchError = false;
+  messageSearchSearched = false;
   messageSearchHasMore = false;
   messageSearchPage = 0;
   private messageSearchVersion = 0;
@@ -297,6 +298,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.messageSearchResults = [];
     this.messageSearchLoading = false;
     this.messageSearchError = false;
+    this.messageSearchSearched = false;
     this.messageSearchHasMore = false;
     this.messageSearchPage = 0;
   }
@@ -322,6 +324,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     const key = conversation.key;
     this.messageSearchLoading = true;
     this.messageSearchError = false;
+    this.messageSearchSearched = true;
     this.inboxApi.searchMessages({ kind: conversation.kind, id: String(conversation.id) }, term, page)
       .pipe(timeout(10_000), finalize(() => {
         if (version === this.messageSearchVersion) this.messageSearchLoading = false;
