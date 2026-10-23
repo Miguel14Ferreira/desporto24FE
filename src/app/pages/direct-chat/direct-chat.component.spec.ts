@@ -169,6 +169,40 @@ describe('DirectChatComponent', () => {
     expect(document.activeElement).toBe(another);
   });
 
+  it('quotes a real earlier direct message and clears the quote only after delivery', () => {
+    const original = { id: 15, username1: 'ana', username2: 'fixture-user',
+      text: 'Vamos jogar?', date: '2026-10-23T09:00:00Z', dataDisplay: null };
+    component.currentUsername = 'fixture-user';
+    component.messages = [original];
+    component.replyTo(original);
+    expect(component.replyingTo?.id).toBe(15);
+    const reply = { id: 16, username1: 'fixture-user', username2: 'ana',
+      text: 'Sim!', date: '2026-10-23T09:02:00Z', dataDisplay: null,
+      replyToMessageId: 15, replyToSender: 'ana', replyToText: 'Vamos jogar?' };
+    service.send.and.returnValue(of(reply));
+    component.messageBody = '  Sim!  ';
+    component.sendMessage();
+    expect(service.send).toHaveBeenCalledOnceWith('ana', 'Sim!', 15);
+    expect(component.replyingTo).toBeNull();
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Vamos jogar?');
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Sim!');
+  });
+
+  it('keeps the selected quote and draft on a failed reply POST', () => {
+    const original = { id: 25, username1: 'ana', username2: 'fixture-user',
+      text: 'Treino amanhã?', date: '2026-10-23T09:00:00Z', dataDisplay: null };
+    component.replyTo(original);
+    component.messageBody = 'Talvez';
+    service.send.and.returnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+    service.recentHistory.and.returnValue(of({ content: [], last: true }));
+    component.sendMessage();
+    expect(service.send).toHaveBeenCalledOnceWith('ana', 'Talvez', 25);
+    expect(component.replyingTo?.id).toBe(25);
+    expect(component.messageBody).toBe('Talvez');
+    expect(component.deliveryUncertain).toBeTrue();
+  });
+
   it('shows the live connection and reconnecting state without claiming read receipts', () => {
     expect(component.realtimeConnected).toBeFalse();
     connection.next(true);
