@@ -6,7 +6,7 @@ import { finalize, firstValueFrom, Observable, retry, timeout, Subscription, Tim
 import { appTranslate as t } from '../../i18n/i18n.service';
 import { buildCommunityGroupInviteUrl, buildWhatsAppGroupShareUrl } from './community-group-invite';
 import { communityRoundMatchup, CommunityRoundMatchup } from './community-round-matchup';
-import { sportForRound, viewForSport, CommunityRoundView } from './community-round-sport';
+import { sportForRound, viewForSport, formatForSport, CommunityRoundView } from './community-round-sport';
 
 import {
   CommunityCompetitionOverview,
@@ -400,6 +400,10 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
 
   roundView(round: CommunityRound): CommunityRoundView {
     return viewForSport(this.roundSport(round));
+  }
+
+  roundFormatLabel(round: CommunityRound): string {
+    return t('communities.resultFormat.' + formatForSport(this.roundSport(round)));
   }
 
   get communityRoundSports(): string[] {
