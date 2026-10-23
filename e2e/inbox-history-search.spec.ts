@@ -9,6 +9,9 @@ import { Buffer } from 'node:buffer';
 if (process.env['JYNLO_USE_SYSTEM_CHROME']) test.use({ channel: 'chrome' });
 const APP = 'http://127.0.0.1:4200';
 const ISO = '2026-10-10T14:00:00Z';
+// Future/past session eligibility is relative to execution, not a brittle calendar date.
+const KICKOFF = new Date(Date.now() + 6 * 60_000).toISOString();
+const FINISHED = new Date(Date.now() - 60_000).toISOString();
 const audited: string[] = [];
 const searched: string[] = [];
 const contextRequests: string[] = [];
@@ -84,12 +87,15 @@ async function context(browser: Browser, user: 'ana' | 'bea') {
       return reply(route, 200, user === 'ana' ? [{ id: 7, name: 'CNG QA', sport: 'Futsal' }] : []);
     if (method === 'GET' && path === '/api/sessions/mine')
       return reply(route, 200, user === 'ana'
-        ? { created: [{ id: 41, sport: 'Ténis', city: 'Cacém',
-          gameDate: '2026-11-15T10:00:00Z' }], joined: [], waitlisted: [] }
+        ? { created: [
+          { id: 41, sport: 'Ténis', city: 'Cacém', gameDate: KICKOFF, status: 'OPEN' },
+          { id: 42, sport: 'Futebol', city: 'Cacém', gameDate: FINISHED, status: 'COMPLETED' }
+        ], joined: [], waitlisted: [] }
         : { created: [], joined: [], waitlisted: [] });
     if (method === 'GET' && path === '/api/sessions/41')
       return reply(route, user === 'ana' ? 200 : 403, {
-        id: 41, sport: 'Ténis', gameDate: '2026-11-15T10:00:00Z', joined: true, status: 'OPEN'
+        id: 41, sport: 'Ténis', gameDate: KICKOFF, joined: true,
+        creatorUsername: 'ana', status: 'OPEN'
       });
     if (method === 'GET' && /^\/api\/chat\/me\/[^/]+\/info$/.test(path))
       return reply(route, 200, { chatBlocked: false, whoBlocked: null });
@@ -206,5 +212,65 @@ test('two isolated browser identities, full-history search, and bounded context 
     expect(errors).toEqual([]);
   } finally {
     await ana.close(); await bea.close();
+  }
+});
+
+test('one inbox handles deep links, legacy chat URLs and per-account membership', async ({ browser }) => {
+  audited.length = 0; reads.length = 0;
+  const ana = await context(browser, 'ana');
+  const bea = await context(browser, 'bea');
+  const first = await ana.newPage(), second = await bea.newPage();
+  const errors: string[] = [];
+  first.on('pageerror', error => errors.push('ana: ' + error.message));
+  second.on('pageerror', error => errors.push('bea: ' + error.message));
+
+  try {
+    await first.goto('/menu/friendList/chat/bea', { waitUntil: 'domcontentloaded' });
+    await expect(first).toHaveURL(/\/menu\/messages\?kind=direct&id=bea/);
+    await expect(first.locator('.inbox-entry.is-selected')).toContainText('Bea');
+    await expect(first.locator('.inbox-bubble')).toHaveCount(2);
+
+    // Angular must react to query-only navigation without rebuilding this page.
+    await first.evaluate(() => {
+      history.pushState(null, '', '/menu/messages?kind=community&id=7');
+      dispatchEvent(new PopStateEvent('popstate'));
+    });
+    await expect(first.locator('.inbox-entry.is-selected')).toContainText('CNG QA');
+    await expect(first.locator('.inbox-bubble')).toHaveCount(2);
+
+    await first.evaluate(() => {
+      history.pushState(null, '', '/menu/messages?kind=session&id=41');
+      dispatchEvent(new PopStateEvent('popstate'));
+    });
+    await expect(first.locator('.inbox-entry.is-selected')).toContainText('Ténis');
+    await expect(first.locator('#inbox-reply')).toBeEnabled();
+    await expect(first.locator('.inbox-bubble')).toHaveCount(2);
+    await expect(first.locator('.inbox-entry').filter({ hasText: 'Futebol' })).toHaveCount(0);
+
+    // A non-member cannot invent a community or session via a crafted link.
+    await second.goto('/menu/messages?kind=community&id=7', { waitUntil: 'domcontentloaded' });
+    await expect(second.locator('.inbox-entry')).toHaveCount(1);
+    await expect(second.locator('.inbox-entry.is-selected')).toHaveCount(0);
+    await second.goto('/menu/messages?kind=session&id=41', { waitUntil: 'domcontentloaded' });
+    await expect(second.locator('.inbox-entry.is-selected')).toHaveCount(0);
+    expect(audited).not.toContain('bea:GET /api/communities/7/messages');
+    expect(audited).not.toContain('bea:GET /api/sessions/41/messages');
+
+    // Time crosses kick-off WHILE the session chat remains on screen:
+    // no new POST may leave the browser, even if the composer had been unlocked.
+    const postsBefore = audited.filter(x => x === 'ana:POST /api/sessions/41/messages').length;
+    await first.evaluate(() => {
+      // Shift the clock by 20 minutes; the fixture's kickoff is +6 minutes.
+      const shifted = Date.now() + 20 * 60_000;
+      Date.now = () => shifted;
+    });
+    await first.locator('#inbox-reply').fill('Não enviar depois do início');
+    await expect(first.locator('#inbox-reply')).toBeDisabled();
+    await expect(first.locator('.inbox-composer button[type="submit"]')).toBeDisabled();
+    expect(audited.filter(x => x === 'ana:POST /api/sessions/41/messages')).toHaveLength(postsBefore);
+    expect(errors).toEqual([]);
+  } finally {
+    await ana.close();
+    await bea.close();
   }
 });
