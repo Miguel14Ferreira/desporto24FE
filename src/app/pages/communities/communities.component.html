@@ -1385,7 +1385,7 @@
 
                         @if (isTeamFinalEvent(newRoundEventType)) {
                           <section class="round-basketball-editor">
-                            <h4>{{ 'communities.teamFinal.finalTitle' | t }}</h4>
+                            <h4>{{ teamFinalTitleKey(newRoundEventType) | t }}</h4>
                             <p>{{ teamFinalHintKey(newRoundEventType) | t }}</p>
                             <div class="round-basketball-score-inputs">
                               <label><span>{{ 'communities.teamFinal.sideA' | t }}</span>
@@ -1913,10 +1913,10 @@
                               </div>
                             </section>
                           } @else if (recordedTeamFinal(round)) {
-                            <section class="round-basketball-final" [attr.aria-label]="'communities.teamFinal.finalTitle' | t">
+                            <section class="round-basketball-final" [attr.aria-label]="teamFinalTitleKey(round.eventType) | t">
                               <div class="round-basketball-heading">
                                 <strong>{{ teamFinalTitleKey(round.eventType) | t }}</strong>
-                                <small>{{ (teamFinalUsesGoals(round.eventType) ? 'communities.teamFinal.goals' : 'communities.teamFinal.points') | t }}</small>
+                                <small>{{ teamFinalScoreLabelKey(round.eventType) | t }}</small>
                               </div>
                               <div class="round-basketball-scoreboard">
                                 <div class="round-basketball-side" [class.round-basketball-winner]="teamFinalWinner(round.teamScore) === 'A'">
@@ -1940,6 +1940,9 @@
                               }
                               @if (round.eventType === 'ICE_HOCKEY_REG' && round.teamScore?.sideA === round.teamScore?.sideB) {
                                 <small>{{ 'communities.iceHockey.regulationDraw' | t }}</small>
+                              }
+                              @if (teamFinalUsesRuns(round.eventType) && round.teamScore?.sideA === round.teamScore?.sideB) {
+                                <small>{{ 'communities.teamFinal.runsTieDisclaimer' | t }}</small>
                               }
                               <small>{{ 'communities.teamFinal.recordedOnly' | t }}</small>
                             </section>
