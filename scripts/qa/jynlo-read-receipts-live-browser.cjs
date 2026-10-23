@@ -97,7 +97,7 @@ chromiumImpl, report = console.log } = {}) {
     const checkMark = bubble.locator('.inbox-read-check');
     await checkMark.waitFor({ timeout: TIMEOUT });
     check((await checkMark.textContent() || '').trim() === '✓'
-      && await checkMark.locator('.is-read').count() === 0,
+      && !(await checkMark.getAttribute('class') || '').split(/\s+/).includes('is-read'),
       'PREMATURE_BLUE_CHECK');
     const before = await receipt(senderToken, TO, fetchImpl);
     check(!receiptCovers(before, TO, sent.id), 'PREMATURE_SERVER_READ');
