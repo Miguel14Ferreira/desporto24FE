@@ -249,10 +249,10 @@ export class SessionService {
     return this.http.get<SessionMessage[]>(this.baseUrl + '/' + id + '/messages');
   }
 
-  postMessage(id: number, body: string): Observable<SessionMessage> {
+  postMessage(id: number, body: string, replyToMessageId?: number): Observable<SessionMessage> {
     return this.http.post<SessionMessage>(
       this.baseUrl + '/' + id + '/messages',
-      { body: body.trim() }
+      { body: body.trim(), ...(replyToMessageId ? { replyToMessageId } : {}) }
     );
   }
 
