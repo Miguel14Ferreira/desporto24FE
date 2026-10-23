@@ -6,6 +6,7 @@ import { finalize, firstValueFrom, Observable, retry, timeout, Subscription, Tim
 import { appTranslate as t } from '../../i18n/i18n.service';
 import { buildCommunityGroupInviteUrl, buildWhatsAppGroupShareUrl } from './community-group-invite';
 import { communityRoundMatchup, CommunityRoundMatchup } from './community-round-matchup';
+import { sportForRound, viewForSport, CommunityRoundView } from './community-round-sport';
 
 import {
   CommunityCompetitionOverview,
@@ -393,10 +394,40 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     return entry.username ? '@' + entry.username : t('communities.identity.unlinked');
   }
 
+  roundSport(round: CommunityRound): string | null {
+    return sportForRound(round, this.selected);
+  }
+
+  roundView(round: CommunityRound): CommunityRoundView {
+    return viewForSport(this.roundSport(round));
+  }
+
+  get communityRoundSports(): string[] {
+    return this.selected ? this.communitySports(this.selected) : [];
+  }
+
+  get newRoundSport(): string | null {
+    return this.communityRoundSports.length === 1
+      ? this.communityRoundSports[0] : (this.roundSportDraft || null);
+  }
+
+  get newImportSport(): string | null {
+    return this.communityRoundSports.length === 1
+      ? this.communityRoundSports[0] : (this.importSportDraft || null);
+  }
+
+  viewForNewRound(): CommunityRoundView {
+    return viewForSport(this.newRoundSport);
+  }
+
   roundMatchup(round: CommunityRound): CommunityRoundMatchup | null {
-    return communityRoundMatchup(
+    const mode = this.roundView(round);
+    if (mode === 'race') return null;
+    const matchup = communityRoundMatchup(
       round, t('communities.matchup.teamA'), t('communities.matchup.teamB')
     );
+    // For individual and unknown modalities accept only explicit team labels.
+    return mode === 'team' || (matchup && !matchup.inferred) ? matchup : null;
   }
 
   get availableHistoricalPlayers(): HistoricalPlayerCandidate[] {
@@ -517,6 +548,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
 
   roundName = '';
   roundPlayedAt = '';
+  roundSportDraft = '';
+  importSportDraft = '';
   roundEntries: CommunityRoundEntryDraft[] = [];
   roundDeleteConfirmId?: number;
 
@@ -1057,6 +1090,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
         this.confirmingBatchJoin = false;
         this.batchJoinFeedback = '';
         this.roundDeleteConfirmId = undefined;
+        this.roundSportDraft = '';
+        this.importSportDraft = '';
         this.selectedSeasonId = null;
         this.closeSeasonConfirming = false;
         this.prepareRoundEntries(full);
@@ -2433,6 +2468,10 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       this.importFileError = t('communities.import.seasonRequired');
       return;
     }
+    if (this.communityRoundSports.length > 1 && !this.newImportSport) {
+      this.importFileError = t('feedback.communities.roundSportRequired');
+      return;
+    }
     if (this.sourceDatesNeedYear && (!Number.isInteger(this.importDefaultYear) ||
         (this.importDefaultYear ?? 0) < 1900 || (this.importDefaultYear ?? 0) > 2100)) {
       this.importFileError = t('communities.import.explicitYearRequired');
@@ -2446,7 +2485,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       seasonId: this.selectedSeasonId,
       defaultYear: this.importDefaultYear || null,
       sourceCompetition: this.importSourceCompetition?.trim() || null,
-      sourceRound: this.importSourceRound?.trim() || null
+      sourceRound: this.importSourceRound?.trim() || null,
+      sport: this.newImportSport
     };
 
     this.importPlanLoading = true;
@@ -2463,6 +2503,10 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
 
   confirmHistoricalImport(): void {
     if (!this.selected || !this.importFile || !this.importSheetName || !this.selectedSeasonId || !this.importFinalPlan || this.importConfirming) return;
+    if (this.communityRoundSports.length > 1 && !this.newImportSport) {
+      this.importFileError = t('feedback.communities.roundSportRequired');
+      return;
+    }
     if (this.importIncludesPoints && !this.importPointsAcknowledged) {
       this.importFileError = t('communities.import.pointsAcknowledgementRequired');
       return;
@@ -2477,7 +2521,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       seasonId: this.selectedSeasonId,
       defaultYear: this.importDefaultYear || null,
       sourceCompetition: this.importSourceCompetition?.trim() || null,
-      sourceRound: this.importSourceRound?.trim() || null
+      sourceRound: this.importSourceRound?.trim() || null,
+      sport: this.newImportSport
     };
     this.importConfirming = true;
     this.importFileError = '';
@@ -2497,17 +2542,22 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     if (!this.selected || !this.canManage() || this.roundSaving) {
       return;
     }
+    if (this.communityRoundSports.length > 1 && !this.newRoundSport) {
+      this.errorMessage = t('feedback.communities.roundSportRequired');
+      return;
+    }
+    const race = this.viewForNewRound() === 'race';
 
     const entries = this.roundEntries
       .filter(entry => entry.included)
       .map(entry => ({
         username: entry.username,
-        team: entry.team.trim() || null,
+        team: race ? null : (entry.team.trim() || null),
         result: entry.result,
-        goals: Math.max(0, Number(entry.goals) || 0),
-        assists: Math.max(0, Number(entry.assists) || 0),
-        mvp: Boolean(entry.mvp),
-        cleanSheet: Boolean(entry.cleanSheet)
+        goals: race ? 0 : Math.max(0, Number(entry.goals) || 0),
+        assists: race ? 0 : Math.max(0, Number(entry.assists) || 0),
+        mvp: !race && Boolean(entry.mvp),
+        cleanSheet: !race && Boolean(entry.cleanSheet)
       }));
 
     if (!this.roundName.trim() || !this.roundPlayedAt || entries.length === 0) {
@@ -2527,6 +2577,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     this.communityService.createRound(this.selected.id, {
       name: this.roundName.trim(),
       playedAt: playedAt.toISOString(),
+      sport: this.newRoundSport,
       entries
     })
       .pipe(
