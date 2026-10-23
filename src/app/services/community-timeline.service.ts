@@ -27,6 +27,11 @@ export class CommunityTimelineService {
     return this.http.get<CommunityTimelineEntry[]>(this.url(id, kind));
   }
 
+  olderMessages(id: number, beforeId: number): Observable<CommunityTimelineEntry[]> {
+    return this.http.get<CommunityTimelineEntry[]>(
+      this.url(id, 'CHAT') + '/older', { params: { before: String(beforeId) } });
+  }
+
   send(id: number, kind: CommunityTimelineKind, body: string): Observable<CommunityTimelineEntry> {
     return this.http.post<CommunityTimelineEntry>(this.url(id, kind), { body: body.trim() });
   }

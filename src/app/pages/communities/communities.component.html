@@ -519,6 +519,15 @@
                 } @else if (timelineEntries.length === 0 && !timelineError) {
                   <p class="community-timeline-empty">{{ (activeTab === 'feed' ? 'communities.timelineNoPosts' : 'communities.timelineNoMessages') | t }}</p>
                 } @else {
+                  @if (activeTab === 'chat' && chatHasOlder) {
+                    <button type="button" class="community-older-messages jynlo-action jynlo-action--neutral"
+                      [disabled]="chatOlderLoading" (click)="loadOlderCommunityMessages()">
+                      {{ (chatOlderLoading ? 'chat.loadingOlder' : 'chat.loadOlder') | t }}
+                    </button>
+                  }
+                  @if (activeTab === 'chat' && chatOlderError) {
+                    <p role="alert" class="community-timeline-error">{{ chatOlderError }}</p>
+                  }
                   <div #communityChatLog [class.community-timeline-chat]="activeTab === 'chat'"
                        [class.community-timeline-feed]="activeTab === 'feed'"
                        [attr.role]="activeTab === 'chat' ? 'log' : null"

@@ -109,6 +109,10 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   chatEverConnected = false;
   chatDeliveryUncertain = false;
   chatDeliveryChecking = false;
+  chatOlderLoading = false;
+  chatHasOlder = false;
+  chatOlderError = '';
+  private chatScrollRestore?: { top: number; height: number };
   private pendingChatDelivery?: { communityId: number; text: string; ids: Set<number>; at: number };
   private chatScrollRequested = false;
   private timelineRequestVersion = 0;
@@ -132,6 +136,12 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   }
 
   ngAfterViewChecked(): void {
+    if (this.chatScrollRestore && this.communityChatLog?.nativeElement) {
+      const el = this.communityChatLog.nativeElement;
+      el.scrollTop = this.chatScrollRestore.top + el.scrollHeight - this.chatScrollRestore.height;
+      this.chatScrollRestore = undefined;
+      return;
+    }
     if (this.chatScrollRequested && this.activeTab === 'chat' && this.communityChatLog?.nativeElement) {
       this.communityChatLog.nativeElement.scrollTop = this.communityChatLog.nativeElement.scrollHeight;
       this.chatScrollRequested = false;
@@ -144,7 +154,33 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
 
   private sortChatEntries(entries: CommunityTimelineEntry[]): CommunityTimelineEntry[] {
     return [...entries].sort((a, b) =>
-      a.createdAt.localeCompare(b.createdAt) || a.id - b.id).slice(-60);
+      a.createdAt.localeCompare(b.createdAt) || a.id - b.id);
+  }
+
+  loadOlderCommunityMessages(): void {
+    if (!this.selected || this.activeTab !== 'chat' || this.chatOlderLoading
+        || !this.chatHasOlder || !this.timelineEntries.length) return;
+    const communityId = this.selected.id;
+    const oldestId = this.timelineEntries[0].id;
+    const el = this.communityChatLog?.nativeElement;
+    const before = el ? { top: el.scrollTop, height: el.scrollHeight } : undefined;
+    this.chatOlderLoading = true;
+    this.chatOlderError = '';
+    this.timelineService.olderMessages(communityId, oldestId)
+      .pipe(timeout(10_000), finalize(() => { this.chatOlderLoading = false; }))
+      .subscribe({
+        next: entries => {
+          if (this.selected?.id !== communityId || this.activeTab !== 'chat') return;
+          const byId = new Map(this.timelineEntries.map(entry => [entry.id, entry]));
+          for (const entry of entries) byId.set(entry.id, entry);
+          this.timelineEntries = this.sortChatEntries([...byId.values()]);
+          this.chatHasOlder = entries.length === 60;
+          if (before) this.chatScrollRestore = before;
+        },
+        error: () => {
+          if (this.selected?.id === communityId) this.chatOlderError = t('chat.olderError');
+        }
+      });
   }
 
   private mergeChatEntries(entries: CommunityTimelineEntry[], follow = false): void {
@@ -249,6 +285,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
               const byId = new Map(entries.map(entry => [entry.id, entry]));
               for (const entry of this.chatEventsDuringLoad?.values() ?? []) byId.set(entry.id, entry);
               this.timelineEntries = this.sortChatEntries([...byId.values()]);
+              this.chatHasOlder = this.chatHasOlder || entries.length === 60;
               this.chatEventsDuringLoad?.clear();
               if (follow) this.chatScrollRequested = true;
               if (this.chatDeliveryUncertain
@@ -961,6 +998,9 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     ++this.timelineRequestVersion;
     this.chatEventsDuringLoad?.clear();
     this.timelineEntries = [];
+    this.chatHasOlder = false;
+    this.chatOlderError = '';
+    this.chatScrollRestore = undefined;
     this.timelineError = '';
     this.timelineLoading = false;
     this.feedDraft = '';
@@ -1039,6 +1079,9 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     ++this.timelineRequestVersion;
     this.chatEventsDuringLoad?.clear();
     this.timelineEntries = [];
+    this.chatHasOlder = false;
+    this.chatOlderError = '';
+    this.chatScrollRestore = undefined;
     this.timelineError = '';
     this.timelineLoading = false;
     if (tab === 'feed' || tab === 'chat') this.loadTimeline();

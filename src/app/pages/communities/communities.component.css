@@ -1778,3 +1778,6 @@ input,textarea,select {
   .community-chat-panel .community-timeline-chat { padding: .8rem .2rem; }
   .community-chat-panel .community-timeline-entry { max-width: 92%; }
 }
+
+.community-older-messages { align-self: center; display: block; margin: .75rem auto; padding: .55rem 1rem; border-radius: 999px; color: #c6e8ef; border: 1px solid rgba(152,195,211,.28); background: rgba(51,73,91,.6); cursor: pointer; }
+.community-older-messages:disabled { opacity: .6; cursor: wait; }
