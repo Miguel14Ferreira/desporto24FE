@@ -24,6 +24,24 @@ describe('CommunitiesComponent public session eligibility', () => {
     };
   });
 
+  it('selects chat-only reply quotes and clears only on explicit cancellation', () => {
+    const group = { id: 7, name: 'CNG' };
+    component.selected = group as any;
+    component.activeTab = 'chat';
+    component.timelineSending = false;
+    component.chatDeliveryUncertain = false;
+    const entry = { id: 21, communityId: 7, kind: 'CHAT', username: 'ana',
+      body: 'Vamos jogar?', createdAt: new Date().toISOString() };
+    component.replyToCommunityMessage(entry as any);
+    expect(component.replyingToCommunityMessage?.id).toBe(21);
+    component.cancelCommunityReply();
+    expect(component.replyingToCommunityMessage).toBeNull();
+    component.replyToCommunityMessage({ ...entry, communityId: 9 } as any);
+    expect(component.replyingToCommunityMessage).toBeNull();
+    component.replyToCommunityMessage({ ...entry, kind: 'POST' } as any);
+    expect(component.replyingToCommunityMessage).toBeNull();
+  });
+
   it('shows Portuguese labels for standard English Excel headers without changing source mappings', () => {
     const previous = localStorage.getItem('d24-language');
     try {
