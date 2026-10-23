@@ -51,6 +51,10 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   serverSummariesAvailable = true;
   private summaryVersion = 0;
   private readVersion = 0;
+  /** Only a confirmed response about the currently selected private peer applies. */
+  private peerReadCursor: number | null = null;
+  private peerReceiptVersion = 0;
+  private peerReceiptCheckedAt = 0;
   private summaryTimer?: ReturnType<typeof setInterval>;
   realtimeConnected = false;
   everConnected = false;
@@ -148,6 +152,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       this.everConnected = true;
       if (connectedOnce && this.selected && !this.historicalPreview) this.loadHistory(this.selected);
       if (connectedOnce && this.serverSummariesAvailable) this.refreshSummaries();
+      if (connectedOnce) this.refreshPeerReadReceipt(true);
       connectedOnce = true;
     }));
 
@@ -155,11 +160,13 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.loadInbox();
     this.summaryTimer = setInterval(() => {
       if (this.serverSummariesAvailable && !this.loading) this.refreshSummaries();
+      this.refreshPeerReadReceipt();
     }, 45_000);
   }
 
   ngOnDestroy(): void {
     this.typing.destroy();
+    ++this.peerReceiptVersion;
     this.subscriptions.unsubscribe();
     if (this.summaryTimer) clearInterval(this.summaryTimer);
     // The navbar owns the shared socket lifecycle. Never disconnect it here.
@@ -380,6 +387,9 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     if (this.selectedKey) this.drafts.set(this.selectedKey, this.draft);
     this.typing.stop();
     this.selectedKey = conversation.key;
+    ++this.peerReceiptVersion;
+    this.peerReadCursor = null;
+    this.peerReceiptCheckedAt = 0;
     this.newMessagesPending = 0;
     ++this.historyLocateVersion;
     this.historicalPreview = false;
@@ -399,6 +409,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.markReadThisVisit(conversation.key);
     this.loadComposerAccess(conversation);
     this.loadHistory(conversation);
+    this.refreshPeerReadReceipt(true);
   }
 
   toggleMessageSearch(): void {
@@ -963,6 +974,41 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
         error: () => {
           // Never pretend that a failed read receipt has synchronized.
           // A later refresh can reconcile it with the server.
+        }
+      });
+  }
+
+  /**
+   * For private chats only, a read check is shown solely after the recipient's
+   * authorized persisted cursor includes the message's positive server ID.
+   */
+  isDirectMessageRead(message: InboxMessage): boolean {
+    return this.selected?.kind === 'direct' && this.isMine(message)
+      && Number.isSafeInteger(message.id) && message.id > 0
+      && this.peerReadCursor !== null && this.peerReadCursor >= message.id;
+  }
+
+  private refreshPeerReadReceipt(force = false): void {
+    const conversation = this.selected;
+    if (!conversation || conversation.kind !== 'direct') return;
+    // One scoped lightweight GET at most every 30 seconds for the active peer.
+    // Never request a receipt for every message or for community/session chats.
+    if (!force && Date.now() - this.peerReceiptCheckedAt < 30_000) return;
+    this.peerReceiptCheckedAt = Date.now();
+    const version = ++this.peerReceiptVersion;
+    const key = conversation.key;
+    this.inboxApi.directReadReceipt(String(conversation.id)).pipe(timeout(10_000))
+      .subscribe({
+        next: receipt => {
+          if (version !== this.peerReceiptVersion || this.selectedKey !== key) return;
+          if (receipt?.peerUsername?.toLowerCase() !== String(conversation.id).toLowerCase()
+              || !Number.isSafeInteger(receipt.lastReadMessageId)
+              || receipt.lastReadMessageId < 0) return;
+          // Network responses can complete out of order. A read cursor is monotonic.
+          this.peerReadCursor = Math.max(this.peerReadCursor ?? 0, receipt.lastReadMessageId);
+        },
+        error: () => {
+          // Unknown remains unknown; no fake read/delivery receipt on HTTP error.
         }
       });
   }
