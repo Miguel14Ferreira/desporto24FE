@@ -201,3 +201,37 @@ select option {
     text-wrap: balance;
   }
 }
+
+
+/* Shared quoted chat messages (session and community chat, both desktop). */
+.jynlo-chat-quote, .jynlo-chat-reply-banner {
+  display: flex; flex-direction: column; gap: 4px; min-width: 0;
+  border-left: 3px solid #46dbbd; border-radius: 5px 9px 9px 5px;
+  background: rgba(5, 23, 32, .45); padding: 9px 12px; margin: 6px 0 10px;
+}
+.jynlo-chat-quote strong, .jynlo-chat-reply-banner strong {
+  color: #8df4df; font-size: .76rem; line-height: 1.4;
+}
+.jynlo-chat-quote span, .jynlo-chat-reply-banner span {
+  color: #e0f1f3; font-size: .8rem; line-height: 1.4;
+  white-space: pre-wrap; overflow-wrap: anywhere; overflow: hidden;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+}
+.jynlo-chat-reply-action {
+  display: block; border: 0; background: transparent; color: #8df4df;
+  margin: 7px 0 0 auto; padding: 4px 5px; border-radius: 6px;
+  font: inherit; font-size: .75rem; cursor: pointer;
+}
+.jynlo-chat-reply-action:hover:not(:disabled) { text-decoration: underline; }
+.jynlo-chat-reply-action:disabled { opacity: .4; cursor: not-allowed; }
+.jynlo-chat-reply-action:focus-visible, .jynlo-chat-reply-banner button:focus-visible {
+  outline: 2px solid #8df4df; outline-offset: 2px;
+}
+.jynlo-chat-reply-banner { flex-direction: row; align-items: center; justify-content: space-between; }
+.jynlo-chat-reply-banner > div { display: flex; flex-direction: column; min-width: 0; }
+.jynlo-chat-reply-banner button {
+  flex: 0 0 auto; border: 1px solid #539a88; border-radius: 9px;
+  color: #c1fbea; background: #183944; padding: 7px 9px;
+  font: inherit; font-size: .76rem; cursor: pointer;
+}
+.jynlo-chat-reply-banner button:disabled { opacity: .5; cursor: not-allowed; }
