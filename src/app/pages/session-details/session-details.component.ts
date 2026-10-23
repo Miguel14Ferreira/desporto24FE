@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { AfterViewChecked, ChangeDetectionStrategy, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewChecked, ChangeDetectionStrategy, Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { JwtHelperService } from '@auth0/angular-jwt';
 import { catchError, concatMap, finalize, forkJoin, from, map, mergeMap, of, retry, Subscription, TimeoutError, timeout, toArray } from 'rxjs';
@@ -17,6 +17,7 @@ import { SessionParticipant } from '../model/session-participant';
 import { JoinSessionResponse, MyVenueRating, OrganizerExclusionReason, PlayerCompliment, PlayerComplimentType, SessionOverallRating, SessionService, SessionTeamSuggestion } from '../../services/session.service';
 import { ReliabilityService } from '../../services/reliability.service';
 import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.service';
+import { ChatReadSyncService } from '../../services/chat-read-sync.service';
 
 @Component({
   selector: 'app-session-details',
@@ -152,6 +153,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   private pendingChatScroll = false;
   private pendingMembershipScroll = false;
   private readonly jwtHelper = new JwtHelperService();
+  private readonly readSync = inject(ChatReadSyncService);
   private readonly realtimeSubscriptions = new Subscription();
 
   constructor(
@@ -218,6 +220,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
       el.scrollTop = el.scrollHeight;
       this.scrollChatToBottomRequested = false;
     }
+    this.markVisibleMessagesRead();
     if (this.loading || !this.session) {
       return;
     }
@@ -1208,6 +1211,22 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
       new Date(this.session.gameDate).getTime() + (30 * 60 * 1000);
 
     return attendanceAvailableAt <= Date.now();
+  }
+
+  @HostListener('window:scroll')
+  @HostListener('window:focus')
+  @HostListener('document:visibilitychange')
+  onSessionChatScroll(): void {
+    this.markVisibleMessagesRead();
+  }
+
+  private markVisibleMessagesRead(): void {
+    // Session details can be opened without opening/seeing the chat.
+    if (!this.sessionId || !this.canAccessChat() || this.chatLoading || this.chatError
+        || this.messages.length === 0) return;
+    const highestId = Math.max(0, ...this.messages.map(message => message.id));
+    this.readSync.markVisible('session', this.sessionId,
+      highestId, this.chatMessageList?.nativeElement);
   }
 
   private isNearChatBottom(): boolean {
