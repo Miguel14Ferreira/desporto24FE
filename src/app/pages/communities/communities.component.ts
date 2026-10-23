@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { finalize, firstValueFrom, Observable, retry, timeout, Subscription, TimeoutError } from 'rxjs';
 import { appTranslate as t } from '../../i18n/i18n.service';
 import { buildCommunityGroupInviteUrl, buildWhatsAppGroupShareUrl } from './community-group-invite';
+import { communityRoundMatchup, CommunityRoundMatchup } from './community-round-matchup';
 
 import {
   CommunityCompetitionOverview,
@@ -392,6 +393,12 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     return entry.username ? '@' + entry.username : t('communities.identity.unlinked');
   }
 
+  roundMatchup(round: CommunityRound): CommunityRoundMatchup | null {
+    return communityRoundMatchup(
+      round, t('communities.matchup.teamA'), t('communities.matchup.teamB')
+    );
+  }
+
   get availableHistoricalPlayers(): HistoricalPlayerCandidate[] {
     return this.historicalPlayers.filter(candidate => candidate.linkStatus === 'UNLINKED');
   }
@@ -521,6 +528,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   editingSeasonId: number | null = null;
   editingSeasonName = '';
   deletingSeasonId: number | null = null;
+  seasonDeleteAcknowledged = false;
   seasonActionSaving = false;
   seasonActionError = '';
   seasonActionMessage = '';
@@ -1653,6 +1661,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   requestDeleteSeason(season: CommunitySeason): void {
     if (!this.selected || !this.canManage() || this.seasonActionSaving) return;
     this.deletingSeasonId = season.id;
+    this.seasonDeleteAcknowledged = false;
     this.editingSeasonId = null;
     this.editingSeasonName = '';
     this.seasonActionError = '';
@@ -1664,6 +1673,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     this.editingSeasonId = null;
     this.editingSeasonName = '';
     this.deletingSeasonId = null;
+    this.seasonDeleteAcknowledged = false;
     this.seasonActionError = '';
   }
 
@@ -1698,7 +1708,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
 
   confirmDeleteSeason(season: CommunitySeason): void {
     if (!this.selected || !this.canManage() || this.seasonActionSaving
-        || this.deletingSeasonId !== season.id) return;
+        || this.deletingSeasonId !== season.id || !this.seasonDeleteAcknowledged) return;
     const communityId = this.selected.id;
     this.seasonActionSaving = true;
     this.seasonActionError = '';
@@ -1709,14 +1719,15 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
         next: () => {
           if (this.selected?.id !== communityId) return;
           this.deletingSeasonId = null;
+          this.seasonDeleteAcknowledged = false;
           if (this.selectedSeasonId === season.id) this.selectedSeasonId = null;
           this.seasonActionMessage = t('communities.seasonDeleted');
           this.loadCompetition(this.selected, this.selectedSeasonId);
         },
         error: (error: HttpErrorResponse) => {
           if (this.selected?.id !== communityId) return;
-          this.seasonActionError = error.status === 400 || error.status === 409
-            ? t('feedback.communities.seasonDeleteBlocked')
+          this.seasonActionError = error.status === 409
+            ? t('feedback.communities.seasonDeleteConflict')
             : t('feedback.communities.seasonDeleteError');
         }
       });
