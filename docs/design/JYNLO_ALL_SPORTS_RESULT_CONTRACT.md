@@ -78,3 +78,11 @@ O registo central é `src/app/pages/communities/community-round-sport.ts`. Os te
 - Usam campos `performance_value`, `elapsed_seconds`, `finish_position` já existentes; não há migração Liquibase nem backfill, nem pontos automáticos de época.
 - As posições por notas são apenas da jornada e empates não seguem critérios oficiais.
 - Referências: World Skate Skateboarding Street & Park Competition Rules (abril 2025), FIG Parkour Code of Points 2025–2028.
+
+## Breaking e Trampolim — decisão vs. nota final (23/10/2026)
+- **Breaking `BREAKING_BATTLE`**: dois participantes exatos, uma decisão do júri com um `WIN` e um `LOSS` registados manualmente. Não são recolhidas pontuações artificiais, votos individuais, marcadores ou equipas. `isNeutralEvent` impede inclusão nas classificações gerais W/D/L da comunidade. Batalhas sem decisão final não são publicadas nesta fase; sem brackets automáticos.
+- **Trampolim `TRAMPOLINE_INDIVIDUAL`**: regista apenas o resultado final já validado do exercício individual usando `performance_value`, que é opcional. Até duas casas decimais, e máximo **técnico de armazenamento** 9999.99 (não é máximo regulamentar).
+- No código FIG 2025–2028, a nota individual combina E/H/T/D menos penalizações, pelo que não inferimos os componentes a partir da nota final.
+- Sem modalidade sincronizada, tumbling, double mini, regras de elegibilidade, desempates oficiais, ranking cruzado ou pontos automáticos. Os históricos com `event_type = null` ficam intocados.
+- Sem migração Liquibase: utilizam os campos `result`, `event_type` e `performance_value` já existentes.
+- Fontes consultadas: WDSF Breaking Rules and Regulations Manual v16 (2026); FIG Trampoline Code of Points 2025–2028.

@@ -2982,7 +2982,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     }
     if (neutral && !isWaveHeatEvent(this.newRoundEventType)
       && performanceError(this.newRoundEventType, selectedEntries)) {
-      this.errorMessage = t('feedback.communities.performanceInvalid');
+      this.errorMessage = t(this.newRoundEventType === 'TRAMPOLINE_INDIVIDUAL'
+        ? 'feedback.communities.trampolineInvalid' : 'feedback.communities.performanceInvalid');
       return;
     }
     if (race) {
