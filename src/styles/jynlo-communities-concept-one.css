@@ -1096,3 +1096,39 @@ body .communities-page.jynlo-c1 .racket-standings-positive {
   color: #8ef7d0;
   font-weight: 850;
 }
+
+/* Per-season racket championship scoring. */
+body .communities-page.jynlo-c1 .racket-standings-rule-description {
+  color: #9cdbcb;
+  font-size: .76rem;
+  margin: .3rem 0 1rem;
+  line-height: 1.5;
+}
+body .communities-page.jynlo-c1 .racket-rule-editor {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: .7rem 1rem;
+  margin: .8rem 0 1rem;
+  padding: .85rem;
+  border: 1px solid rgba(107,233,191,.22);
+  background: rgba(107,233,191,.045);
+  border-radius: .9rem;
+}
+body .communities-page.jynlo-c1 .racket-rule-editor > label {
+  display: grid;
+  gap: .35rem;
+  color: #c9dfeb;
+  font-size: .8rem;
+}
+body .communities-page.jynlo-c1 .racket-rule-editor input {
+  width: 120px;
+}
+body .communities-page.jynlo-c1 .racket-rule-editor select {
+  max-width: 300px;
+}
+body .communities-page.jynlo-c1 .racket-rule-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .45rem;
+}
