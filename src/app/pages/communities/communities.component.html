@@ -888,9 +888,14 @@
                             } @else if (deletingSeasonId === season.id) {
                               <div class="season-management-confirm">
                                 <p>{{ 'communities.deleteSeasonWarning' | t }}</p>
+                                <label class="season-delete-acknowledge">
+                                  <input type="checkbox" [(ngModel)]="seasonDeleteAcknowledged"
+                                    [disabled]="seasonActionSaving">
+                                  <span>{{ 'communities.deleteSeasonAcknowledgement' | t }}</span>
+                                </label>
                                 <div class="row-actions">
                                   <button type="button" class="jynlo-action jynlo-action--danger"
-                                    [disabled]="seasonActionSaving"
+                                    [disabled]="seasonActionSaving || !seasonDeleteAcknowledged"
                                     (click)="confirmDeleteSeason(season)">{{ 'communities.confirmDeleteSeason' | t }}</button>
                                   <button type="button" class="jynlo-action jynlo-action--neutral"
                                     [disabled]="seasonActionSaving" (click)="cancelSeasonAction()">{{ 'common.cancel' | t }}</button>
@@ -1221,6 +1226,82 @@
                             }
                           </div>
 
+                          @if (roundMatchup(round); as matchup) {
+                            <div class="round-matchup">
+                              <section class="round-matchup-side round-matchup-side--a"
+                                [attr.aria-label]="matchup.left.label">
+                                <div class="round-matchup-side-head">
+                                  <div>
+                                    <span class="round-matchup-kicker">{{ 'communities.matchup.team' | t }}</span>
+                                    <h4>{{ matchup.left.label }}</h4>
+                                    <small>{{ matchup.left.entries.length }} {{ 'communities.matchup.players' | t }}</small>
+                                  </div>
+                                  @if (matchup.left.result) {
+                                    <span class="result-chip" [class.win]="matchup.left.result === 'WIN'"
+                                      [class.loss]="matchup.left.result === 'LOSS'">
+                                      {{ resultLabel(matchup.left.result) }}
+                                    </span>
+                                  }
+                                </div>
+                                <div class="round-matchup-players">
+                                  @for (entry of matchup.left.entries; track $index) {
+                                    <div class="round-matchup-player">
+                                      <div class="round-matchup-player-name">
+                                        <strong>{{ entry.fullName || entry.username }}</strong>
+                                        <small>{{ roundEntryHandle(entry) }}</small>
+                                      </div>
+                                      @if (entry.goals || entry.assists || entry.mvp || entry.cleanSheet) {
+                                        <div class="round-matchup-player-stats">
+                                          @if (entry.goals) { <span>{{ entry.goals }} G</span> }
+                                          @if (entry.assists) { <span>{{ entry.assists }} A</span> }
+                                          @if (entry.mvp) { <span class="mini-badge">MVP</span> }
+                                          @if (entry.cleanSheet) { <span class="mini-badge">CS</span> }
+                                        </div>
+                                      }
+                                    </div>
+                                  }
+                                </div>
+                              </section>
+                              <div class="round-matchup-vs" aria-hidden="true">VS</div>
+                              <section class="round-matchup-side round-matchup-side--b"
+                                [attr.aria-label]="matchup.right.label">
+                                <div class="round-matchup-side-head">
+                                  <div>
+                                    <span class="round-matchup-kicker">{{ 'communities.matchup.team' | t }}</span>
+                                    <h4>{{ matchup.right.label }}</h4>
+                                    <small>{{ matchup.right.entries.length }} {{ 'communities.matchup.players' | t }}</small>
+                                  </div>
+                                  @if (matchup.right.result) {
+                                    <span class="result-chip" [class.win]="matchup.right.result === 'WIN'"
+                                      [class.loss]="matchup.right.result === 'LOSS'">
+                                      {{ resultLabel(matchup.right.result) }}
+                                    </span>
+                                  }
+                                </div>
+                                <div class="round-matchup-players">
+                                  @for (entry of matchup.right.entries; track $index) {
+                                    <div class="round-matchup-player">
+                                      <div class="round-matchup-player-name">
+                                        <strong>{{ entry.fullName || entry.username }}</strong>
+                                        <small>{{ roundEntryHandle(entry) }}</small>
+                                      </div>
+                                      @if (entry.goals || entry.assists || entry.mvp || entry.cleanSheet) {
+                                        <div class="round-matchup-player-stats">
+                                          @if (entry.goals) { <span>{{ entry.goals }} G</span> }
+                                          @if (entry.assists) { <span>{{ entry.assists }} A</span> }
+                                          @if (entry.mvp) { <span class="mini-badge">MVP</span> }
+                                          @if (entry.cleanSheet) { <span class="mini-badge">CS</span> }
+                                        </div>
+                                      }
+                                    </div>
+                                  }
+                                </div>
+                              </section>
+                            </div>
+                            @if (matchup.inferred) {
+                              <p class="round-matchup-inferred">{{ 'communities.matchup.inferred' | t }}</p>
+                            }
+                          } @else {
                           <div class="round-results">
                             @for (entry of round.entries; track $index) {
                               <div class="round-result-row">
@@ -1244,6 +1325,7 @@
                               </div>
                             }
                           </div>
+                          }
                         </article>
                       }
                     </section>
