@@ -71,7 +71,7 @@
       }
 
       <section class="chat-card">
-        <div class="message-list" #messageList role="log" aria-live="polite" aria-relevant="additions" [attr.aria-label]="'chat.messages' | t">
+        <div class="message-list" #messageList (scroll)="onMessageLogScroll()" role="log" aria-live="polite" aria-relevant="additions" [attr.aria-label]="'chat.messages' | t">
           @if (hasOlderMessages) {
             <button type="button" class="load-older-action jynlo-action jynlo-action--neutral" [disabled]="loadingOlder" (click)="loadOlderMessages()">
               {{ (loadingOlder ? 'chat.loadingOlder' : 'chat.loadOlder') | t }}
