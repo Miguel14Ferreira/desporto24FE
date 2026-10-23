@@ -1134,6 +1134,7 @@
                               : newRoundEventType === 'BREAKING_BATTLE' ? 'communities.breaking.hint'
                               : newRoundEventType === 'TRAMPOLINE_INDIVIDUAL' ? 'communities.trampoline.hint'
                               : newRoundEventType === 'RHYTHMIC_APPARATUS' ? 'communities.rhythmic.hint'
+                              : isGroupRoutineEvent(newRoundEventType) ? 'communities.groupRoutine.hint'
                               : newRoundEventType === 'ARTISTIC_SOLO_TECHNICAL'
                                 || newRoundEventType === 'ARTISTIC_SOLO_FREE' ? 'communities.artistic.hint'
                               : 'communities.eventType.marksHint') | t }}
@@ -1196,6 +1197,12 @@
                                         <option value="B">{{ 'communities.racket.sideB' | t }}</option>
                                       </select>
                                     </label>
+                                  } @else if (isGroupRoutineEvent(newRoundEventType)) {
+                                    <label>
+                                      <span>{{ 'communities.groupRoutine.groupName' | t }}</span>
+                                      <input [(ngModel)]="entry.team" maxlength="60"
+                                        [placeholder]="'communities.groupRoutine.groupPlaceholder' | t">
+                                    </label>
                                   } @else if (viewForNewRound() !== 'race' && !newRoundEventType) {
                                     <label>
                                       <span>{{ 'communities.team' | t }}</span>
@@ -1237,6 +1244,8 @@
                                           [(ngModel)]="entry.waveScore2" [placeholder]="'communities.performance.optional' | t">
                                       </label>
                                     </div>
+                                  } @else if (isGroupRoutineEvent(newRoundEventType)) {
+                                    <small>{{ 'communities.groupRoutine.memberOnly' | t }}</small>
                                   } @else if (newRoundEventType === 'BREAKING_BATTLE') {
                                     <label>
                                       <span>{{ 'communities.breaking.decision' | t }}</span>
@@ -1302,6 +1311,25 @@
                           }
                         </div>
 
+                        @if (isGroupRoutineEvent(newRoundEventType)) {
+                          <section class="round-shared-groups">
+                            <h4>{{ 'communities.groupRoutine.scoresTitle' | t }}</h4>
+                            <p>{{ 'communities.groupRoutine.scoresHint' | t }}</p>
+                            @for (name of selectedRoutineGroups(); track name) {
+                              <div class="round-shared-group-editor">
+                                <strong>{{ name }}</strong>
+                                <label>
+                                  <span>{{ 'communities.groupRoutine.finalScore' | t }}</span>
+                                  <input type="number" min="0"
+                                    [max]="newRoundEventType?.startsWith('RHYTHMIC') ? 999999.999 : 999999.9999"
+                                    [step]="newRoundEventType?.startsWith('RHYTHMIC') ? 0.001 : 0.0001"
+                                    [(ngModel)]="roundGroupScoresDraft[name.toLocaleLowerCase()]"
+                                    [placeholder]="'communities.performance.optional' | t">
+                                </label>
+                              </div>
+                            }
+                          </section>
+                        }
                         <button
                           type="button"
                           class="primary-action jynlo-action jynlo-action--primary"
@@ -1857,6 +1885,32 @@
                             <span class="round-generic-format">{{ roundFormatLabel(round) }}</span>
                             <small>{{ 'communities.resultFormat.recordedOnly' | t }}</small>
                           </div>
+                          @if (isGroupRoutineEvent(round.eventType)) {
+                            <div class="round-shared-results">
+                              @for (group of sortedRoutineGroups(round); track group.groupName) {
+                                <div class="round-shared-result">
+                                  <div class="round-shared-result-head">
+                                    <strong>{{ group.groupName }}</strong>
+                                    @if (group.score != null) {
+                                      <span class="round-performance-mark">
+                                        {{ performanceDisplay(group.score, round.eventType?.startsWith('RHYTHMIC') ? 3 : 4) }}
+                                      </span>
+                                    } @else {
+                                      <span class="round-performance-unscored">
+                                        {{ 'communities.performance.unscored' | t }}
+                                      </span>
+                                    }
+                                  </div>
+                                  <small>{{ routineGroupMembers(round, group.groupName).join(' · ') }}</small>
+                                  @if (routineGroupPlace(sortedRoutineGroups(round), group); as place) {
+                                    <span class="round-performance-rank">
+                                      {{ 'communities.performance.position' | t }}: {{ place }}.º
+                                    </span>
+                                  }
+                                </div>
+                              }
+                            </div>
+                          } @else {
                           <div class="round-results" [class.round-breaking-battle]="round.eventType === 'BREAKING_BATTLE'">
                             @for (entry of eventPerformanceEntries(round); track entry.entryId ?? $index) {
                               <div class="round-result-row"
@@ -1926,6 +1980,7 @@
                               </div>
                             }
                           </div>
+                          }
                           }
                         </article>
                       }
