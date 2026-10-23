@@ -62,11 +62,20 @@ export interface CommunityRoundEntry {
   lapsCompleted?: number | null;
 }
 
+export interface CommunitySetScore {
+  sideA: number | null;
+  sideB: number | null;
+}
+
+export type CommunityRacketMatchFormat = 'SINGLES' | 'DOUBLES';
+
 export interface CommunityRound {
   id: number;
   name: string;
   playedAt: string;
   sport?: string | null;
+  matchFormat?: CommunityRacketMatchFormat | null;
+  setScores?: CommunitySetScore[] | null;
   entries: CommunityRoundEntry[];
 }
 
