@@ -439,3 +439,21 @@ h1 {
 .message-list .message.thread-continuation:not(.own-message) { border-top-left-radius: .35rem; }
 .message-list .message.thread-continuation.own-message { border-top-right-radius: .35rem; }
 .message-list .message.thread-continuation .message-meta { justify-content: flex-end; }
+
+
+/* New arrivals remain discoverable without stealing the reader's scroll. */
+.chat-new-messages {
+  display: flex; align-items: center; gap: .55rem; width: fit-content;
+  margin: -16px 14px 10px auto; position: relative; z-index: 2;
+  padding: .55rem .85rem; border-radius: 999px;
+  border: 1px solid rgba(108, 234, 201, .65); background: #194e4c;
+  color: #eafffa; box-shadow: 0 5px 18px rgba(0,0,0,.26);
+  font: inherit; font-size: .8rem; font-weight: 800;
+  cursor: pointer;
+}
+.chat-new-messages:hover { background: #24645a; }
+.chat-new-messages:focus-visible { outline: 2px solid #a7fce2; outline-offset: 3px; }
+.chat-new-messages-count {
+  min-width: 22px; border-radius: 999px; padding: .08rem .38rem;
+  background: #58dec4; color: #052c2c; text-align: center; font-variant-numeric: tabular-nums;
+}

@@ -74,6 +74,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   private selectionVersion = 0;
   private inboxVersion = 0;
   private scrollRequested = false;
+  newMessagesPending = 0;
   messageSearchOpen = false;
   messageSearchTerm = '';
   messageSearchResults: InboxMessage[] = [];
@@ -170,7 +171,18 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   }
 
   onPreviewLogScroll(): void {
-    if (this.selectedKey && this.isNearPreviewBottom()) this.markRenderedRead(this.selectedKey);
+    if (this.isNearPreviewBottom()) {
+      this.newMessagesPending = 0;
+      if (this.selectedKey) this.markRenderedRead(this.selectedKey);
+    }
+  }
+
+  jumpToLatestMessages(): void {
+    if (this.historicalPreview || !this.previewLog?.nativeElement) return;
+    const log = this.previewLog.nativeElement;
+    log.scrollTop = log.scrollHeight;
+    this.newMessagesPending = 0;
+    if (this.selectedKey) this.markRenderedRead(this.selectedKey);
   }
 
   ngAfterViewChecked(): void {
@@ -189,6 +201,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     if (this.scrollRequested) {
       log.scrollTop = log.scrollHeight;
       this.scrollRequested = false;
+      this.newMessagesPending = 0;
     }
   }
 
@@ -315,6 +328,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     if (this.selectedKey) this.drafts.set(this.selectedKey, this.draft);
     this.typing.stop();
     this.selectedKey = conversation.key;
+    this.newMessagesPending = 0;
     ++this.historyLocateVersion;
     this.historicalPreview = false;
     this.historyLocateLoading = false;
@@ -399,6 +413,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
           this.previewLoading = false;
           this.previewError = false;
           this.historicalPreview = true;
+          this.newMessagesPending = 0;
           if (conversation.kind === 'community') {
             this.composerAllowed = true;
             this.composerAccessLoading = false;
@@ -421,6 +436,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   }
 
   returnToRecent(): void {
+    this.newMessagesPending = 0;
     ++this.historyLocateVersion;
     this.historicalPreview = false;
     this.historyLocateLoading = false;
@@ -523,7 +539,13 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
         const follow = this.messages.length === 0 || this.isNearPreviewBottom();
         // Merge live events received after the HTTP request started; never
         // overwrite them with an older response or duplicate their IDs.
+        const before = new Set(this.messages.map(item => item.id));
         this.messages = mergeInboxMessages([...entries, ...this.realtimeDuringLoad.values()]);
+        if (!follow && before.size > 0 && !this.historicalPreview) {
+          this.newMessagesPending += this.messages.filter(item =>
+            !before.has(item.id) && item.sender.toLowerCase() !== this.currentUsername.toLowerCase()).length;
+        }
+        if (follow) this.newMessagesPending = 0;
         this.realtimeDuringLoad.clear();
         if (conversation.kind === 'community') {
           this.composerAllowed = true;
@@ -595,6 +617,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       // fresh socket events into it or acknowledge them as rendered/read.
       if (this.historicalPreview) return;
       const follow = isMine || this.isNearPreviewBottom();
+      if (!follow) this.newMessagesPending++;
+      else this.newMessagesPending = 0;
       this.messages = mergeInboxMessages([...this.messages, message]);
       if (this.previewLoading) this.realtimeDuringLoad.set(message.id, message);
       this.confirmFromHistoryIfPresent(key, [message]);
