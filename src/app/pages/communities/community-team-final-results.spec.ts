@@ -107,8 +107,8 @@ describe('handball rugby and sevens final team scores', () => {
         .toBe('teamFinalInvalidTeams');
     }
     expect(eventOptionsForSport('Futebol')).toEqual([]);
-    expect(eventOptionsForSport('Lacrosse')).toEqual([]);
-    expect(eventOptionsForSport('Corfebol')).toEqual([]);
+    expect(eventOptionsForSport('Lacrosse').map(x=>x.code)).toEqual(['LACROSSE_M_REG','LACROSSE_M_OT']);
+    expect(eventOptionsForSport('Corfebol').map(x=>x.code)).toEqual(['KORFBALL_REG','KORFBALL_GOLDEN']);
     expect(teamFinalScoreLabelKey('FUTSAL_FINAL')).toBe('communities.teamFinal.goals');
     expect(teamFinalScoreLabelKey('RUGBY_FINAL')).toBe('communities.teamFinal.points');
   });
