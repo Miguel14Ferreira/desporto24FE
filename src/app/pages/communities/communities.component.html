@@ -1346,6 +1346,10 @@
                               <p class="round-matchup-inferred">{{ 'communities.matchup.inferred' | t }}</p>
                             }
                           } @else {
+                          <div class="round-generic-context">
+                            <span class="round-generic-format">{{ roundFormatLabel(round) }}</span>
+                            <small>{{ 'communities.resultFormat.recordedOnly' | t }}</small>
+                          </div>
                           <div class="round-results">
                             @for (entry of round.entries; track $index) {
                               <div class="round-result-row">
@@ -1362,8 +1366,8 @@
                                   [class.loss]="entry.result === 'LOSS'">
                                   {{ resultLabel(entry.result) }}
                                 </span>
-                                <span>{{ entry.goals }} G</span>
-                                <span>{{ entry.assists }} A</span>
+                                @if (entry.goals) { <span>{{ entry.goals }} G</span> }
+                                @if (entry.assists) { <span>{{ entry.assists }} A</span> }
                                 @if (entry.mvp) { <span class="mini-badge">MVP</span> }
                                 @if (entry.cleanSheet) { <span class="mini-badge">CS</span> }
                               </div>
