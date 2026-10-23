@@ -165,8 +165,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     // community chat tab with an authorized, successfully loaded log counts.
     if (!this.selected || this.activeTab !== 'chat' || this.timelineLoading || this.timelineError
         || this.timelineEntries.length === 0) return;
-    const highestId = Math.max(0, ...this.timelineEntries
-      .filter(entry => entry.kind === 'CHAT').map(entry => entry.id));
+    const highestId = this.timelineEntries.reduce((max, entry) =>
+      entry.kind === 'CHAT' ? Math.max(max, entry.id) : max, 0);
     this.readSync.markVisible('community', this.selected.id,
       highestId, this.communityChatLog?.nativeElement);
   }
