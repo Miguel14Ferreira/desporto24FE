@@ -214,6 +214,21 @@ export class CommunityGroupsService {
     );
   }
 
+  updateRaceRule(communityId: number, seasonId: number,
+    request: { sport: string; pointsByPlace: string }
+  ): Observable<unknown> {
+    return this.http.put(
+      this.url + '/' + communityId + '/seasons/' + seasonId + '/race-rules', request);
+  }
+
+  updateRacePenalty(communityId: number, roundId: number, entryId: number,
+    request: { penaltyPoints: number; reason: string | null }
+  ): Observable<unknown> {
+    return this.http.put(
+      this.url + '/' + communityId + '/rounds/' + roundId +
+        '/entries/' + entryId + '/race-penalty', request);
+  }
+
   updateRacketRule(
     communityId: number,
     seasonId: number,
