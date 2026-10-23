@@ -86,6 +86,16 @@ jobs:
         env:
           JYNLO_USE_SYSTEM_CHROME: '1'
         run: npx playwright test e2e/inbox-read-sync.spec.ts --config=playwright.config.ts --project=desktop-chromium --grep "blue checks follow recipient read cursor"
+      # Recheck only foreground chat reading and recipient receipts using two
+      # real Chromium browser contexts with completely synthetic backend state.
+      - name: Install Playwright for foreground read regression
+        if: ${{ startsWith(github.head_ref, 'fix/chat-read-visible-active-') }}
+        run: npm install --no-save --package-lock=false @playwright/test@1.56.1
+      - name: Verify inactive-tab reads and fast recipient receipts
+        if: ${{ startsWith(github.head_ref, 'fix/chat-read-visible-active-') }}
+        env:
+          JYNLO_USE_SYSTEM_CHROME: '1'
+        run: npx playwright test e2e/inbox-read-sync.spec.ts --config=playwright.config.ts --project=desktop-chromium --grep "blue checks follow|background recipient tab"
       # Candidate-only browser verification. No additional job, second npm ci,
       # Render deployment, production credentials or production API requests.
       - name: Install Chromium for integrated desktop smoke
