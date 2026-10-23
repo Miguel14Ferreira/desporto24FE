@@ -51,6 +51,12 @@ export function normalizeDirectChatRealtimeMessage(message: DirectChatMessage): 
   };
 }
 
+/** A bounded exponential reconnect policy; only successful AUTH resets it. */
+export function chatReconnectDelayMs(attempt: number): number {
+  const n = Number.isFinite(attempt) ? Math.max(0, Math.floor(attempt)) : 0;
+  return Math.min(30_000, 3_000 * 2 ** Math.min(n, 4));
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -58,6 +64,8 @@ export class DirectChatRealtimeService {
   private socket?: WebSocket;
   private reconnectTimer?: ReturnType<typeof setTimeout>;
   private shouldReconnect = false;
+  private activeToken: string | null = null;
+  private reconnectAttempts = 0;
   private readonly jwtHelper = new JwtHelperService();
 
   private readonly messageSubject = new Subject<DirectChatMessage>();
@@ -81,37 +89,66 @@ export class DirectChatRealtimeService {
       return;
     }
 
-    if (
-      this.socket?.readyState === WebSocket.OPEN
-      || this.socket?.readyState === WebSocket.CONNECTING
-    ) {
-      return;
-    }
+    // A shared singleton can outlive logout/login and route changes. Never
+    // reuse a socket authorized with the previous account's token.
+    if (this.socket && this.activeToken !== token) this.disconnect();
+
+    if (this.socket?.readyState === WebSocket.OPEN
+        || this.socket?.readyState === WebSocket.CONNECTING) return;
 
     this.shouldReconnect = true;
     this.clearReconnectTimer();
+    const url = environment.apiUrl.replace(/^http:/, 'ws:')
+      .replace(/^https:/, 'wss:') + '/ws/chat';
 
-    const websocketUrl =
-      environment.apiUrl.replace(/^http:/, 'ws:').replace(/^https:/, 'wss:')
-      + '/ws/chat';
+    let socket: WebSocket;
+    try {
+      socket = new WebSocket(url);
+    } catch {
+      // Browsers may fail synchronously when offline or the endpoint is invalid.
+      this.connectedSubject.next(false);
+      this.scheduleReconnect();
+      return;
+    }
 
-    this.socket = new WebSocket(websocketUrl);
+    this.socket = socket;
+    this.activeToken = token;
+    let authenticated = false;
+    const isCurrent = () => this.shouldReconnect && this.socket === socket;
 
-    this.socket.onopen = () => {
-      this.socket?.send(JSON.stringify({
-        type: 'AUTH',
-        token
-      }));
+    socket.onopen = () => {
+      if (!isCurrent()) return;
+      if (localStorage.getItem('t') !== token) {
+        this.disconnect();
+        return;
+      }
+      try {
+        socket.send(JSON.stringify({ type: 'AUTH', token }));
+      } catch {
+        socket.close();
+      }
     };
 
-    this.socket.onmessage = event => {
+    socket.onmessage = event => {
+      if (!isCurrent()) return;
+      // Do not deliver messages belonging to an earlier signed-in identity,
+      // even if Angular has not yet reacted to the localStorage token change.
+      if (localStorage.getItem('t') !== token) {
+        this.disconnect();
+        return;
+      }
       try {
         const envelope = JSON.parse(event.data) as ChatSocketEnvelope;
 
         if (envelope.type === 'AUTHENTICATED') {
+          authenticated = true;
+          this.reconnectAttempts = 0;
           this.connectedSubject.next(true);
           return;
         }
+        // The backend requires AUTH before delivering private messages.
+        // Apply the same contract on the client, including typing/reactions.
+        if (!authenticated) return;
 
         if (envelope.type === 'CHAT_TYPING' && envelope.typing) {
           const event = envelope.typing;
@@ -141,21 +178,29 @@ export class DirectChatRealtimeService {
           this.communityMessageSubject.next(envelope.message as CommunityTimelineEntry);
         }
       } catch {
-        // Ignore malformed realtime events; HTTP history remains authoritative.
+        // Ignore malformed events. HTTP history remains authoritative.
       }
     };
 
-    this.socket.onerror = () => {
-      this.connectedSubject.next(false);
+    socket.onerror = () => {
+      if (isCurrent()) this.connectedSubject.next(false);
     };
 
-    this.socket.onclose = () => {
-      this.connectedSubject.next(false);
+    socket.onclose = event => {
+      if (this.socket !== socket) return; // Ignore late events from old sockets.
       this.socket = undefined;
+      this.activeToken = null;
+      this.connectedSubject.next(false);
+      if (!this.shouldReconnect) return;
 
-      if (this.shouldReconnect) {
-        this.scheduleReconnect();
+      // The gateway rejects invalid/revoked credentials with 1003. Do not
+      // hammer it in a loop: a new explicit connect after login can retry.
+      if (event.code === 1003) {
+        this.shouldReconnect = false;
+        this.clearReconnectTimer();
+        return;
       }
+      this.scheduleReconnect();
     };
   }
 
@@ -167,28 +212,27 @@ export class DirectChatRealtimeService {
 
   disconnect(): void {
     this.shouldReconnect = false;
+    this.reconnectAttempts = 0;
     this.clearReconnectTimer();
     this.connectedSubject.next(false);
 
-    if (this.socket) {
-      const socket = this.socket;
-      this.socket = undefined;
-      socket.close();
-    }
+    const previous = this.socket;
+    this.socket = undefined;
+    this.activeToken = null;
+    // Detach the old identity before closing; its delayed callbacks cannot
+    // clear a newer socket or schedule a reconnect with the wrong token.
+    previous?.close();
   }
 
   private scheduleReconnect(): void {
+    if (!this.shouldReconnect) return;
     this.clearReconnectTimer();
-
+    const wait = chatReconnectDelayMs(this.reconnectAttempts++);
     this.reconnectTimer = setTimeout(() => {
-      const token = localStorage.getItem('t');
-      if (!token || this.jwtHelper.isTokenExpired(token)) {
-        this.disconnect();
-        return;
-      }
-
+      this.reconnectTimer = undefined;
+      if (!this.shouldReconnect) return;
       this.connect();
-    }, 3000);
+    }, wait);
   }
 
   private clearReconnectTimer(): void {
