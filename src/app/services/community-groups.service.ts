@@ -214,6 +214,17 @@ export class CommunityGroupsService {
     );
   }
 
+  updateRacketRule(
+    communityId: number,
+    seasonId: number,
+    request: { sport: string; matchFormat: 'SINGLES' | 'DOUBLES';
+      winPoints: number; lossPoints: number; tieBreak: 'SETS_FIRST' | 'SCORE_FIRST' }
+  ): Observable<unknown> {
+    return this.http.put(
+      this.url + '/' + communityId + '/seasons/' + seasonId + '/racket-rules', request
+    );
+  }
+
   competition(
     id: number,
     seasonId: number | null = null
