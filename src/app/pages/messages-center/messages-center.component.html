@@ -127,6 +127,8 @@
                     (click)="replyToMessage(message)">
                     ↩ {{ 'chat.replyToMessage' | t }}
                   </button>
+                <app-chat-reactions [kind]="conversation.kind" [conversationId]="conversation.id"
+                  [messageId]="message.id" [disabled]="!composerAllowed"></app-chat-reactions>
               </article>
             }
           </div>

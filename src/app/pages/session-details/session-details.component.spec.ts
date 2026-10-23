@@ -12,6 +12,7 @@ import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.s
 import { ChatReadSyncService } from '../../services/chat-read-sync.service';
 import { SessionMessage } from '../model/session-message';
 import { TEST_IMPORTS, TEST_PROVIDERS } from '../../testing/test-providers';
+import { ChatReactionsStubComponent } from '../../testing/chat-reactions-stub.component';
 import { I18nService } from '../../i18n/i18n.service';
 
 describe('SessionDetailsComponent', () => {
@@ -167,7 +168,7 @@ describe('SessionDetailsComponent', () => {
 
     await TestBed.configureTestingModule({
       declarations: [SessionDetailsComponent],
-      imports: TEST_IMPORTS,
+      imports: [...TEST_IMPORTS, ChatReactionsStubComponent],
       providers: [
         ...TEST_PROVIDERS,
         { provide: ChatReadSyncService, useValue: readSync },

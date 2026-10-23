@@ -16,6 +16,7 @@ import { SessionService } from '../../services/session.service';
 import { DirectChatService } from '../../services/direct-chat.service';
 import { CommunityTimelineService } from '../../services/community-timeline.service';
 import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.service';
+import { ChatReactionsComponent } from '../../shared/chat-reactions/chat-reactions.component';
 import { DirectChatMessage } from '../model/direct-chat';
 import { SessionMessage } from '../model/session-message';
 import { CommunityTimelineEntry } from '../../services/community-timeline.service';
@@ -27,7 +28,7 @@ import {
 @Component({
   selector: 'app-messages-center',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TranslatePipe],
+  imports: [CommonModule, FormsModule, RouterLink, TranslatePipe, ChatReactionsComponent],
   templateUrl: './messages-center.component.html',
   styleUrls: ['./messages-center.component.css'],
   changeDetection: ChangeDetectionStrategy.Eager

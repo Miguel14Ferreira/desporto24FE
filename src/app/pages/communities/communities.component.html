@@ -584,6 +584,8 @@
                             (click)="replyToCommunityMessage(entry)">
                             ↩ {{ 'chat.replyToMessage' | t }}
                           </button>
+                          <app-chat-reactions kind="community" [conversationId]="entry.communityId"
+                            [messageId]="entry.id"></app-chat-reactions>
                         }
                       </article>
                     }

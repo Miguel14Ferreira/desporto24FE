@@ -9,6 +9,7 @@ import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.s
 import { CommunityService } from '../../services/community.service';
 import { ChatReadSyncService } from '../../services/chat-read-sync.service';
 import { TEST_IMPORTS, TEST_PROVIDERS } from '../../testing/test-providers';
+import { ChatReactionsStubComponent } from '../../testing/chat-reactions-stub.component';
 
 describe('DirectChatComponent', () => {
   let component: DirectChatComponent;
@@ -50,7 +51,7 @@ describe('DirectChatComponent', () => {
 
     await TestBed.configureTestingModule({
       declarations: [DirectChatComponent],
-      imports: TEST_IMPORTS,
+      imports: [...TEST_IMPORTS, ChatReactionsStubComponent],
       providers: [
         ...TEST_PROVIDERS,
         {

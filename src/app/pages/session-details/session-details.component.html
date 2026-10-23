@@ -1096,6 +1096,9 @@
                         ↩ {{ 'chat.replyToMessage' | t }}
                       </button>
                     }
+                    <app-chat-reactions kind="session" [conversationId]="message.sessionId"
+                      [messageId]="message.id"
+                      [disabled]="!canSendChat()"></app-chat-reactions>
                   </article>
                 }
               </div>

@@ -1778,6 +1778,8 @@ const PT: Dictionary = {
   'chat.sending': 'A enviar...',
   'chat.send': 'Enviar',
   'chat.replyToMessage': 'Responder',
+  'chat.react': 'Reagir à mensagem',
+  'chat.reactionError': 'Não foi possível guardar a reação.',
   'chat.replyingTo': 'A responder a',
   'chat.cancelReply': 'Cancelar resposta',
 
@@ -4058,6 +4060,8 @@ const EN: Dictionary = {
   'chat.sending': 'Sending...',
   'chat.send': 'Send',
   'chat.replyToMessage': 'Reply',
+  'chat.react': 'React to message',
+  'chat.reactionError': 'Could not save reaction.',
   'chat.replyingTo': 'Replying to',
   'chat.cancelReply': 'Cancel reply',
 
