@@ -405,6 +405,7 @@ export class CommunityGroupsService {
     request: {
       name: string;
       playedAt: string;
+      sport?: string | null;
       entries: Array<{
         username: string;
         team: string | null;

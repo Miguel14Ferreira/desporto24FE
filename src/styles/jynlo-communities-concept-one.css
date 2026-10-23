@@ -784,3 +784,73 @@ body .communities-page.jynlo-c1 .season-delete-acknowledge input {
     margin: -.25rem auto;
   }
 }
+
+/* Sport-aware race records — no invented finishing positions or timing. */
+body .communities-page.jynlo-c1 .race-round-record {
+  margin-top: 1rem;
+  border: 1px solid rgba(125,211,252,.2);
+  border-radius: 1rem;
+  background: rgba(13,31,49,.82);
+  padding: 1rem;
+}
+body .communities-page.jynlo-c1 .race-round-heading {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .8rem;
+  padding-bottom: .85rem;
+  border-bottom: 1px solid rgba(148,163,184,.15);
+}
+body .communities-page.jynlo-c1 .race-round-heading > span:first-child { font-size: 1.7rem; }
+body .communities-page.jynlo-c1 .race-round-heading > div {
+  display: grid;
+  gap: .25rem;
+  flex: 1;
+}
+body .communities-page.jynlo-c1 .race-round-heading strong { font-weight: 850; }
+body .communities-page.jynlo-c1 .race-round-heading small,
+body .communities-page.jynlo-c1 .race-round-count {
+  color: #a5c3d4;
+  font-size: .76rem;
+}
+body .communities-page.jynlo-c1 .race-round-entries {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .55rem;
+  padding-top: .85rem;
+}
+body .communities-page.jynlo-c1 .race-round-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .7rem;
+  padding: .8rem;
+  border: 1px solid rgba(148,163,184,.13);
+  border-radius: .7rem;
+  background: rgba(255,255,255,.025);
+}
+body .communities-page.jynlo-c1 .race-round-entry > div {
+  min-width: 0;
+  display: grid;
+  gap: .17rem;
+}
+body .communities-page.jynlo-c1 .race-round-entry strong { overflow-wrap: anywhere; }
+body .communities-page.jynlo-c1 .race-round-entry small {
+  color: #9db5c5;
+  font-size: .72rem;
+}
+body .communities-page.jynlo-c1 .round-sport-tag {
+  color: #91ebcf;
+  font-size: .7rem;
+  font-weight: 800;
+}
+body .communities-page.jynlo-c1 .round-sport-guidance {
+  margin: .65rem 0;
+  font-size: .79rem;
+  color: #a6cfe5;
+}
+@media (max-width: 670px) {
+  body .communities-page.jynlo-c1 .race-round-entries {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
