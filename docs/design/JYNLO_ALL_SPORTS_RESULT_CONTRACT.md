@@ -93,3 +93,11 @@ O registo central é `src/app/pages/communities/community-round-sport.ts`. Os te
 - `performance_value` alargado de NUMERIC(9,3) para NUMERIC(10,4): seis dígitos inteiros preservados, mais uma casa decimal; Liquibase executa a alteração uma vez sem tocar nos valores históricos. Outros eventos continuam limitados à precisão que tinham.
 - Posições são apenas por exercício dentro da jornada, sem desempates de federação nem pontos de época. Duetos, equipas, conjuntos e acrobática necessitam de contrato separado.
 - Referências: FIG RG Code of Points 2025–2028; World Aquatics Artistic Swimming Competition Regulations 2025 e página de regras 2026.
+
+## Duetos, equipas e conjuntos — pontuação coletiva (23/10/2026)
+- `RHYTHMIC_GROUP_5` e `RHYTHMIC_GROUP_3_2`: exercícios de cinco ginastas com uma nota final por conjunto (três casas decimais); não inferir aparelhos específicos do ciclo FIG.
+- `ARTISTIC_DUET_TECH/FREE`: dois participantes por dueto; `ARTISTIC_TEAM_TECH/FREE`: quatro a oito por equipa. Notas finais a quatro decimais, sem calcular elementos, penalizações nem somar automaticamente técnica/livre.
+- `entries[].team` associa cada membro ao seu grupo, sem qualquer `performanceValue` individual. `groupScores[]` é 1 resultado partilhado por nome de grupo, com marca opcional. Posições/empates apenas dentro da jornada.
+- O backend rejeita grupos vazios, duplicados, atletas com nota individual e participantes fora dos limites; o frontend valida antes de submeter. Nenhum ponto W/D/L é gerado.
+- Uma coluna JSON TEXT nullable em `community_round` guarda somente novas jornadas coletivas. Histórico anterior, jornadas individuais e épicas existentes permanecem intactos.
+- Referências: FIG RG Code 2025–2028, World Aquatics Artistic Swimming Competition Regulations (fevereiro de 2026). 
