@@ -23,6 +23,9 @@ export interface InboxMessage {
   sender: string;
   text: string;
   createdAt: string;
+  replyToMessageId?: number | null;
+  replyToSender?: string | null;
+  replyToText?: string | null;
 }
 
 export function inboxKey(kind: InboxKind, id: string | number): string {
