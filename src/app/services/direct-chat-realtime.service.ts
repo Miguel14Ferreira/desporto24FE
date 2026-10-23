@@ -21,7 +21,7 @@ interface ChatSocketEnvelope {
  */
 export function normalizeDirectChatRealtimeMessage(message: DirectChatMessage): DirectChatMessage {
   const rawDate: unknown = message.date;
-  if (typeof rawDate !== 'number' && !(typeof rawDate === 'string' && /^\\d{13}$/.test(rawDate.trim()))) {
+  if (typeof rawDate !== 'number' && !(typeof rawDate === 'string' && /^\d{13}$/.test(rawDate.trim()))) {
     return message;
   }
   const milliseconds = Number(rawDate);
