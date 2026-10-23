@@ -120,6 +120,19 @@ async function authenticatedContext(browser: import('@playwright/test').Browser,
           && m.id > (readThrough.get(username) || 0)).length
       });
     }
+    // Authenticated receipt: only the other participant's persisted cursor
+    // can prove read status (not a connected WebSocket or elapsed time).
+    const receipt = /^\/api\/messages\/inbox\/direct\/([^/]+)\/receipt$/.exec(url.pathname);
+    if (method === 'GET' && receipt) {
+      const peer = decodeURIComponent(receipt[1]).toLowerCase();
+      if (peer !== (username === 'ana' ? 'bea' : 'ana')) {
+        unauthorized.push(username + ':receipt-peer:' + peer);
+        return response(route, 403, {});
+      }
+      return response(route, 200, {
+        peerUsername: peer, lastReadMessageId: readThrough.get(peer) || 0
+      });
+    }
     const chat = /^\/api\/chat\/me\/([^/]+)(\/page|\/info)?$/.exec(url.pathname);
     if (chat) {
       const peer = decodeURIComponent(chat[1]).toLowerCase();
@@ -214,6 +227,72 @@ test('two isolated browsers share server read state across inbox and original di
     expect(errors).toEqual([]);
     expect(requests).toContain('ana:PUT /api/messages/inbox/read');
     expect(requests).toContain('bea:POST /api/chat/me/ana');
+  } finally {
+    await ana.close();
+    await bea.close();
+  }
+});
+
+test('blue checks follow recipient read cursor, not delivery or another account', async ({ browser }) => {
+  test.slow(); // Browser timers run virtually; extra room for a cold Angular dev server.
+  messages.splice(1);
+  readThrough.clear();
+  readThrough.set('bea', 41);
+  requests.length = 0;
+  unauthorized.length = 0;
+
+  const ana = await authenticatedContext(browser, 'ana');
+  const bea = await authenticatedContext(browser, 'bea');
+  const sender = await ana.newPage();
+  const pageErrors: string[] = [];
+  sender.on('pageerror', error => pageErrors.push('sender: ' + error.message));
+  try {
+    // Install a controllable page clock before navigating: no 45s waiting
+    // for the existing lightweight 45s receipt poll.
+    await sender.clock.install();
+    await sender.goto('/menu/messages?kind=direct&id=bea', {
+      waitUntil: 'domcontentloaded'
+    });
+    await expect(sender.locator('.inbox-entry.is-selected')).toContainText('Bea');
+    await expect(sender.locator('#inbox-reply')).toBeEnabled();
+
+    // The recipient browser must NOT open its conversation until after send.
+    await sender.locator('#inbox-reply').fill('Confirmação de leitura QA simulada');
+    const postsBefore = requests.filter(x => x === 'ana:POST /api/chat/me/bea').length;
+    await sender.locator('.inbox-composer button[type="submit"]').click();
+    await expect.poll(() => messages.length).toBe(2);
+    expect(requests.filter(x => x === 'ana:POST /api/chat/me/bea')).toHaveLength(postsBefore + 1);
+    const outgoing = sender.locator('.inbox-bubble[data-message-id="42"]');
+    await expect(outgoing).toBeVisible();
+    await expect(outgoing.locator('.inbox-read-check')).toHaveText('✓');
+    await expect(outgoing.locator('.inbox-read-check')).not.toHaveClass(/is-read/);
+    expect(readThrough.get('bea')).toBe(41); // Server still says 'unread'.
+
+    const recipient = await bea.newPage();
+    recipient.on('pageerror', error => pageErrors.push('recipient: ' + error.message));
+    await recipient.goto('/menu/messages?kind=direct&id=ana', {
+      waitUntil: 'domcontentloaded'
+    });
+    await expect(recipient.locator('.inbox-bubble[data-message-id="42"]')).toBeVisible();
+    await expect.poll(() => readThrough.get('bea')).toBe(42);
+    await expect(recipient.locator('.inbox-bubble[data-message-id="42"] .inbox-read-check'))
+      .toHaveCount(0);
+
+    // Automatic polling must update sender without a reload or a guessed
+    // delivery event. This advances ONLY the sender page's virtual clock.
+    await sender.clock.fastForward(46_000);
+    await expect(outgoing.locator('.inbox-read-check')).toHaveText('✓✓');
+    await expect(outgoing.locator('.inbox-read-check')).toHaveClass(/is-read/);
+
+    // Simulate another same-origin tab replacing the sender's login.
+    // Blue checks from the old authenticated session must disappear.
+    await sender.evaluate(() => localStorage.setItem('t', 'other-account-fixture'));
+    await sender.clock.fastForward(46_000);
+    await expect(outgoing.locator('.inbox-read-check')).toHaveText('✓');
+    await expect(outgoing.locator('.inbox-read-check')).not.toHaveClass(/is-read/);
+    expect(unauthorized).toEqual([]);
+    expect(pageErrors).toEqual([]);
+    expect(requests.filter(x => x === 'ana:POST /api/chat/me/bea')).toHaveLength(postsBefore + 1);
   } finally {
     await ana.close();
     await bea.close();

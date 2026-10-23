@@ -76,6 +76,16 @@ jobs:
         env:
           JYNLO_USE_SYSTEM_CHROME: '1'
         run: npx playwright test e2e/inbox-read-sync.spec.ts e2e/inbox-history-search.spec.ts --config=playwright.config.ts --project=desktop-chromium
+      # Verify real Angular DOM ✓ / ✓✓ against two separate mocked identities.
+      # GitHub Actions never receives QA credentials or contacts production.
+      - name: Install Playwright for read-indicator browser contract
+        if: ${{ startsWith(github.head_ref, 'qa/read-indicators-') }}
+        run: npm install --no-save --package-lock=false @playwright/test@1.56.1
+      - name: Confirm sender, recipient and account-switch read indicators
+        if: ${{ startsWith(github.head_ref, 'qa/read-indicators-') }}
+        env:
+          JYNLO_USE_SYSTEM_CHROME: '1'
+        run: npx playwright test e2e/inbox-read-sync.spec.ts --config=playwright.config.ts --project=desktop-chromium --grep "blue checks follow recipient read cursor"
       # Candidate-only browser verification. No additional job, second npm ci,
       # Render deployment, production credentials or production API requests.
       - name: Install Chromium for integrated desktop smoke
