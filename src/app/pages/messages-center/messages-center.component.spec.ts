@@ -1,4 +1,5 @@
 import { of, Subject, throwError, BehaviorSubject } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
 import { MessagesCenterComponent } from './messages-center.component';
 import {
   InboxConversation, InboxMessage, inboxKey, matchesInboxSearch,
@@ -34,9 +35,9 @@ describe('Unified Jynlo message center', () => {
   beforeEach(() => {
     friends = jasmine.createSpyObj('CommunityService', ['friends']);
     communities = jasmine.createSpyObj('CommunityGroupsService', ['mine']);
-    sessions = jasmine.createSpyObj('SessionService', ['mine', 'messages']);
-    direct = jasmine.createSpyObj('DirectChatService', ['recentHistory']);
-    timeline = jasmine.createSpyObj('CommunityTimelineService', ['list']);
+    sessions = jasmine.createSpyObj('SessionService', ['mine', 'messages', 'detail', 'postMessage']);
+    direct = jasmine.createSpyObj('DirectChatService', ['recentHistory', 'info', 'send']);
+    timeline = jasmine.createSpyObj('CommunityTimelineService', ['list', 'send']);
     realtime = {
       messages$: directEvents.asObservable(),
       communityMessages$: communityEvents.asObservable(),
@@ -47,6 +48,11 @@ describe('Unified Jynlo message center', () => {
     friends.friends.and.returnValue(of([]));
     communities.mine.and.returnValue(of([]));
     sessions.mine.and.returnValue(of({ created: [], joined: [], waitlisted: [] }));
+    direct.info.and.returnValue(of({ chatBlocked: false, whoBlocked: null }));
+    sessions.detail.and.returnValue(of({
+      id: 41, sport: 'Futsal', city: 'Cacém', gameDate: '2026-11-01T10:00:00Z',
+      joined: true, status: 'OPEN'
+    } as any));
     component = new MessagesCenterComponent(friends, communities, sessions, direct, timeline, realtime);
     (component as any).currentUsername = 'ana';
   });
@@ -139,4 +145,120 @@ describe('Unified Jynlo message center', () => {
       { ...item('direct', 'bea'), latestAt: '2026-10-23T00:00:00Z' }
     ])[0].key).toBe('direct:bea');
   });
+
+  it('sends a community reply once and reconciles WebSocket before HTTP success', () => {
+    const selected = item('community', 7);
+    component.conversations = [selected];
+    timeline.list.and.returnValue(of([]));
+    const post = new Subject<any>();
+    timeline.send.and.returnValue(post.asObservable());
+    component.selectConversation(selected);
+    component.draft = '  Vamos jogar?  ';
+    component.sendMessage();
+    expect(timeline.send).toHaveBeenCalledOnceWith(7, 'CHAT', 'Vamos jogar?');
+    expect(component.sending).toBeTrue();
+    component.sendMessage();
+    expect(timeline.send).toHaveBeenCalledTimes(1);
+    const saved = { id: 80, communityId: 7, kind: 'CHAT', username: 'ana',
+      body: 'Vamos jogar?', createdAt: new Date().toISOString() };
+    (component as any).acceptRealtime('community:7', {
+      key: 'community:7', id: 80, sender: 'ana', text: 'Vamos jogar?', createdAt: saved.createdAt
+    });
+    post.next(saved);
+    post.complete();
+    expect(component.messages.map(x => x.id)).toEqual([80]);
+    expect(component.draft).toBe('');
+    expect(component.sending).toBeFalse();
+  });
+
+  it('does not POST direct messages when the original chat is blocked', () => {
+    const selected = item('direct', 'bea');
+    component.conversations = [selected];
+    direct.recentHistory.and.returnValue(of({ last: true, content: [] }));
+    direct.info.and.returnValue(of({ chatBlocked: true, whoBlocked: 'bea' }));
+    component.selectConversation(selected);
+    component.draft = 'Olá';
+    expect(component.canSendMessage()).toBeFalse();
+    component.sendMessage();
+    expect(direct.send).not.toHaveBeenCalled();
+  });
+
+  it('does not POST to completed sessions or to a session without membership', () => {
+    const selected = item('session', 41);
+    component.conversations = [selected];
+    sessions.messages.and.returnValue(of([]));
+    sessions.detail.and.returnValue(of({ id: 41, status: 'COMPLETED', joined: true,
+      gameDate: '2026-11-01T10:00:00Z' } as any));
+    component.selectConversation(selected);
+    component.draft = 'Olá';
+    expect(component.canSendMessage()).toBeFalse();
+    expect(sessions.postMessage).not.toHaveBeenCalled();
+  });
+
+  it('preserves an uncertain draft and blocks re-sends after network timeout', () => {
+    const selected = item('community', 7);
+    component.conversations = [selected];
+    timeline.list.and.returnValue(of([]));
+    timeline.send.and.returnValue(throwError(() => new HttpErrorResponse({ status: 0 })));
+    component.selectConversation(selected);
+    component.draft = '  Bora! ';
+    component.sendMessage();
+    expect(component.deliveryUncertain).toBeTrue();
+    expect(component.draft).toBe('  Bora! ');
+    component.sendMessage();
+    expect(timeline.send).toHaveBeenCalledTimes(1);
+    component.resumeAfterUncertainSend();
+    expect(component.deliveryUncertain).toBeFalse();
+    expect(component.draft).toBe('  Bora! ');
+  });
+
+  it('confirms a successful session POST after a lost HTTP response without a second POST', () => {
+    const selected = item('session', 41);
+    component.conversations = [selected];
+    sessions.messages.and.returnValues(of([]), of([{
+      id: 33, sessionId: 41, senderUsername: 'ana', body: 'Até logo',
+      createdAt: new Date().toISOString()
+    }]));
+    sessions.detail.and.returnValue(of({ id: 41, status: 'OPEN', joined: true,
+      gameDate: new Date(Date.now() + 60_000).toISOString() } as any));
+    sessions.postMessage.and.returnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
+    component.selectConversation(selected);
+    component.draft = 'Até logo';
+    component.sendMessage();
+    expect(sessions.postMessage).toHaveBeenCalledOnceWith(41, 'Até logo');
+    expect(component.deliveryUncertain).toBeFalse();
+    expect(component.draft).toBe('');
+    expect(component.messages.map(m => m.id)).toEqual([33]);
+  });
+
+  it('retains pending drafts per conversation but never sends while ambiguous', () => {
+    const community = item('community', 7);
+    const directChat = item('direct', 'bea');
+    component.conversations = [community, directChat];
+    timeline.list.and.returnValue(of([]));
+    timeline.send.and.returnValue(throwError(() => new HttpErrorResponse({ status: 408 })));
+    direct.recentHistory.and.returnValue(of({ last: true, content: [] }));
+    component.selectConversation(community);
+    component.draft = 'Pendente';
+    component.sendMessage();
+    expect(component.deliveryUncertain).toBeTrue();
+    component.selectConversation(directChat);
+    component.draft = 'Uma conversa diferente';
+    component.selectConversation(community);
+    expect(component.deliveryUncertain).toBeTrue();
+    expect(component.draft).toBe('Pendente');
+    component.sendMessage();
+    expect(timeline.send).toHaveBeenCalledTimes(1);
+  });
+
+  it('allows Shift+Enter and composition without triggering send', () => {
+    const evt = new KeyboardEvent('keydown', { key: 'Enter', shiftKey: true, cancelable: true });
+    component.onComposerEnter(evt);
+    expect(evt.defaultPrevented).toBeFalse();
+    const ime = new KeyboardEvent('keydown', { key: 'Enter', isComposing: true, cancelable: true });
+    component.onComposerEnter(ime);
+    expect(ime.defaultPrevented).toBeFalse();
+    expect(timeline.send).not.toHaveBeenCalled();
+  });
+
 });
