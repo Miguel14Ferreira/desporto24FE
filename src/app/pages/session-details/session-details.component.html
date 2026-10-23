@@ -1033,14 +1033,41 @@
                   <h2>{{ 'sessionDetail.sessionChat' | t }}</h2>
                   <p>{{ 'sessionDetail.sessionChatText' | t }}</p>
                 </div>
-                <span class="sync-status">{{ (canSendChat() ? 'chat.autoRefresh' : 'sessionDetail.chatClosedShort') | t }}</span>
+                <span class="sync-status" [class.sync-status--connected]="canSendChat() && chatRealtimeConnected" role="status">
+                  @if (canSendChat()) {
+                    <span class="sync-indicator" aria-hidden="true"></span>
+                    {{ (chatRealtimeConnected ? 'chat.connected' : (chatEverConnected ? 'chat.reconnecting' : 'chat.connecting')) | t }}
+                  } @else {
+                    {{ 'sessionDetail.chatClosedShort' | t }}
+                  }
+                </span>
               </div>
 
-              @if (chatError) {
-                <div class="chat-error">{{ chatError }}</div>
+              @if (chatError && !chatDeliveryUncertain) {
+                <div class="chat-error" role="alert">{{ chatError }}</div>
               }
 
-              <div class="message-list">
+              @if (chatDeliveryUncertain) {
+                <section class="chat-delivery-warning" role="alert">
+                  <div>
+                    <strong>{{ 'chat.uncertainTitle' | t }}</strong>
+                    <p>{{ chatError }}</p>
+                  </div>
+                  <div class="chat-delivery-actions">
+                    <button type="button" class="jynlo-action jynlo-action--neutral"
+                      [disabled]="chatDeliveryChecking" (click)="verifyChatDelivery()">
+                      {{ (chatDeliveryChecking ? 'chat.verifying' : 'chat.verifyDelivery') | t }}
+                    </button>
+                    <button type="button" class="jynlo-action jynlo-action--secondary"
+                      [disabled]="chatDeliveryChecking" (click)="resumeChatAfterUncertainSend()">
+                      {{ 'chat.resumeWriting' | t }}
+                    </button>
+                  </div>
+                </section>
+              }
+
+              <div class="message-list" #chatMessageList role="log" aria-live="polite"
+                   aria-relevant="additions" [attr.aria-label]="'chat.messages' | t">
                 @if (!chatLoading && messages.length === 0) {
                   <div class="empty-chat">
                     {{ (canSendChat() ? 'sessionDetail.emptyChat' : 'sessionDetail.emptyChatClosed') | t }}
@@ -1052,7 +1079,7 @@
                     class="message"
                     [class.own-message]="isOwnMessage(message)">
                     <div class="message-meta">
-                      <strong>{{ message.senderUsername }}</strong>
+                      <strong>{{ isOwnMessage(message) ? ('chat.you' | t) : message.senderUsername }}</strong>
                       <span>{{ messageDate(message) }}</span>
                     </div>
                     <p>{{ message.body }}</p>
@@ -1069,7 +1096,7 @@
                     [(ngModel)]="messageBody"
                     maxlength="2000"
                     rows="3"
-                    [disabled]="messageSending"
+                    [disabled]="messageSending || chatDeliveryUncertain"
                     [placeholder]="'sessionDetail.groupPlaceholder' | t"
                     (keydown.enter)="onChatEnter($event)"></textarea>
                 </label>
@@ -1080,7 +1107,7 @@
                       type="button"
                       class="emoji-toggle"
                       [attr.aria-expanded]="showEmojiPicker"
-                      [disabled]="messageSending"
+                      [disabled]="messageSending || chatDeliveryUncertain"
                       (click)="toggleEmojiPicker()">
                       😊 {{ 'chat.emoji' | t }}
                     </button>
@@ -1100,11 +1127,11 @@
                 </div>
 
                 <div class="composer-footer">
-                  <span>{{ 'chat.autoRefreshHint' | t }}</span>
+                  <span>{{ 'chat.enterHint' | t }}</span>
                   <button
                     type="submit"
                     class="primary-action jynlo-action jynlo-action--primary"
-                    [disabled]="messageSending || !messageBody.trim()">
+                    [disabled]="messageSending || chatDeliveryUncertain || !messageBody.trim()">
                     {{ messageSending ? ('chat.sending' | t) : ('chat.send' | t) }}
                   </button>
                 </div>

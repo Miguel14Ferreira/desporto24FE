@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { AfterViewChecked, ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewChecked, ChangeDetectionStrategy, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { JwtHelperService } from '@auth0/angular-jwt';
 import { catchError, concatMap, finalize, forkJoin, from, map, mergeMap, of, retry, Subscription, TimeoutError, timeout, toArray } from 'rxjs';
@@ -26,6 +26,7 @@ import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.s
   standalone: false
 })
 export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChecked {
+  @ViewChild('chatMessageList') chatMessageList?: ElementRef<HTMLElement>;
   private readonly messageDateFormatter = new Intl.DateTimeFormat('pt-PT', {
     dateStyle: 'short',
     timeStyle: 'short'
@@ -43,6 +44,12 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   actionLoading = false;
   chatLoading = false;
   messageSending = false;
+  chatRealtimeConnected = false;
+  chatEverConnected = false;
+  chatDeliveryUncertain = false;
+  chatDeliveryChecking = false;
+  private pendingChatDelivery?: { text: string; knownIds: Set<number>; startedAt: number };
+  private scrollChatToBottomRequested = false;
   reliabilityLoading = false;
   participantsLoading = false;
   sessionParticipantsLoading = false;
@@ -182,13 +189,18 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
         }
 
         this.appendMessageIfMissing(message);
+        if (this.chatDeliveryUncertain && this.matchesPendingChatDelivery(message)) {
+          this.confirmChatDelivery();
+        }
       })
     );
 
     this.realtimeSubscriptions.add(
       this.realtimeService.connected$.subscribe(connected => {
-        if (connected && this.canAccessChat()) {
-          this.refreshMessages(false);
+        this.chatRealtimeConnected = connected;
+        if (connected) {
+          this.chatEverConnected = true;
+          if (this.canAccessChat()) this.refreshMessages(false);
         }
       })
     );
@@ -199,6 +211,11 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   }
 
   ngAfterViewChecked(): void {
+    if (this.scrollChatToBottomRequested && this.chatMessageList?.nativeElement) {
+      const el = this.chatMessageList.nativeElement;
+      el.scrollTop = el.scrollHeight;
+      this.scrollChatToBottomRequested = false;
+    }
     if (this.loading || !this.session) {
       return;
     }
@@ -1184,6 +1201,11 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     return attendanceAvailableAt <= Date.now();
   }
 
+  private isNearChatBottom(): boolean {
+    const el = this.chatMessageList?.nativeElement;
+    return !el || el.scrollHeight - el.scrollTop - el.clientHeight < 120;
+  }
+
   refreshMessages(showLoading = true): void {
     if (!this.sessionId || !this.canAccessChat() || this.chatLoading) {
       return;
@@ -1205,7 +1227,19 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
         })
       )
       .subscribe({
-        next: messages => this.messages = this.sortedMessages(messages),
+        next: messages => {
+          // A websocket event may arrive while HTTP is still in flight.
+          const follow = this.messages.length === 0 || this.isNearChatBottom();
+          this.messages = this.sortedMessages([
+            ...this.messages.filter(existing => !messages.some(incoming => incoming.id === existing.id)),
+            ...messages
+          ]);
+          if (follow) this.scrollChatToBottomRequested = true;
+          if (this.chatDeliveryUncertain &&
+              this.messages.some(message => this.matchesPendingChatDelivery(message))) {
+            this.confirmChatDelivery();
+          }
+        },
         error: error => {
           this.chatError = this.errorFrom(error, t('feedback.session.chatLoadError'));
         }
@@ -1215,7 +1249,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   sendMessage(): void {
     const body = this.messageBody.trim();
 
-    if (!this.sessionId || !this.canSendChat() || this.messageSending) {
+    if (!this.sessionId || !this.canSendChat() || this.messageSending || this.chatDeliveryUncertain) {
       return;
     }
 
@@ -1231,6 +1265,11 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
 
     this.messageSending = true;
     this.chatError = '';
+    const pending = {
+      text: body,
+      knownIds: new Set(this.messages.map(message => message.id)),
+      startedAt: Date.now()
+    };
 
     this.sessionService.postMessage(this.sessionId, body)
       .pipe(
@@ -1242,16 +1281,89 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
           this.appendMessageIfMissing(message);
           this.messageBody = '';
           this.showEmojiPicker = false;
+          this.chatDeliveryUncertain = false;
+          this.pendingChatDelivery = undefined;
+          this.scrollChatToBottomRequested = true;
         },
         error: error => {
-          this.chatError = this.errorFrom(error, t('feedback.chat.sendError'));
+          if (this.isUncertainChatSendError(error)) {
+            // Timeout / dropped response can occur after a committed POST.
+            // Keep the draft and do not automatically issue another POST.
+            this.pendingChatDelivery = pending;
+            this.chatDeliveryUncertain = true;
+            this.chatError = t('chat.sendUncertain');
+            this.verifyChatDelivery();
+          } else {
+            this.chatError = this.errorFrom(error, t('feedback.chat.sendError'));
+          }
         }
       });
   }
 
+  verifyChatDelivery(): void {
+    if (!this.chatDeliveryUncertain || this.chatDeliveryChecking
+        || !this.pendingChatDelivery || !this.sessionId || !this.canAccessChat()) return;
+    const existing = this.messages.find(message => this.matchesPendingChatDelivery(message));
+    if (existing) {
+      this.confirmChatDelivery();
+      return;
+    }
+    this.chatDeliveryChecking = true;
+    this.sessionService.messages(this.sessionId)
+      .pipe(timeout(10_000), finalize(() => this.chatDeliveryChecking = false))
+      .subscribe({
+        next: messages => {
+          const follow = this.isNearChatBottom();
+          this.messages = this.sortedMessages([
+            ...this.messages.filter(existing => !messages.some(incoming => incoming.id === existing.id)),
+            ...messages
+          ]);
+          if (follow) this.scrollChatToBottomRequested = true;
+          if (this.messages.some(message => this.matchesPendingChatDelivery(message))) {
+            this.confirmChatDelivery();
+          } else {
+            this.chatError = t('chat.sendUnconfirmed');
+          }
+        },
+        error: () => { this.chatError = t('chat.verifyUnavailable'); }
+      });
+  }
+
+  resumeChatAfterUncertainSend(): void {
+    if (this.chatDeliveryChecking) return;
+    this.pendingChatDelivery = undefined;
+    this.chatDeliveryUncertain = false;
+    this.chatError = t('chat.sendRetryWarning');
+  }
+
+  private confirmChatDelivery(): void {
+    this.pendingChatDelivery = undefined;
+    this.chatDeliveryUncertain = false;
+    this.messageBody = '';
+    this.chatError = '';
+    this.scrollChatToBottomRequested = true;
+  }
+
+  private matchesPendingChatDelivery(message: SessionMessage): boolean {
+    const pending = this.pendingChatDelivery;
+    if (!pending || pending.knownIds.has(message.id)
+        || !this.sessionId || message.sessionId !== this.sessionId
+        || !this.isOwnMessage(message) || message.body !== pending.text) return false;
+    const sentAt = Date.parse(message.createdAt);
+    return Number.isFinite(sentAt) && sentAt >= pending.startedAt - 60_000;
+  }
+
+  private isUncertainChatSendError(error: unknown): boolean {
+    if (error instanceof TimeoutError) return true;
+    if (error instanceof HttpErrorResponse) {
+      return error.status === 0 || error.status === 408 || error.status === 429 || error.status >= 500;
+    }
+    return true;
+  }
+
   onChatEnter(event: Event): void {
     const keyboardEvent = event as KeyboardEvent;
-    if (keyboardEvent.shiftKey) {
+    if (keyboardEvent.shiftKey || keyboardEvent.isComposing || keyboardEvent.keyCode === 229) {
       return;
     }
 
@@ -1288,7 +1400,9 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
       return;
     }
 
+    const follow = this.isNearChatBottom() || this.isOwnMessage(message);
     this.messages = this.sortedMessages([...this.messages, message]);
+    if (follow) this.scrollChatToBottomRequested = true;
   }
 
   private sortedMessages(messages: SessionMessage[]): SessionMessage[] {
