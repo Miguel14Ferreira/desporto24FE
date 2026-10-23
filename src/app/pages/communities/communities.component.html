@@ -1130,7 +1130,7 @@
                             <label>
                               <span>{{ 'communities.roundSport' | t }}</span>
                               <select [(ngModel)]="roundSportDraft"
-                                (ngModelChange)="roundEventTypeDraft = ''"
+                                (ngModelChange)="roundEventTypeDraft = ''; roundDisciplineDraft = ''"
                                 [attr.aria-label]="'communities.roundSport' | t">
                                 <option value="">{{ 'communities.selectRoundSport' | t }}</option>
                                 @for (sport of communityRoundSports; track sport) {
@@ -1143,10 +1143,22 @@
                             <label>
                               <span>{{ 'communities.eventType.label' | t }}</span>
                               <select [(ngModel)]="roundEventTypeDraft"
+                                (ngModelChange)="roundDisciplineDraft = ''"
                                 [attr.aria-label]="'communities.eventType.label' | t">
                                 <option value="">{{ 'communities.eventType.select' | t }}</option>
                                 @for (choice of eventOptions(newRoundSport); track choice.code) {
                                   <option [value]="choice.code">{{ choice.labelKey | t }}</option>
+                                }
+                              </select>
+                            </label>
+                          }
+                          @if (athleticsDisciplineOptions(newRoundSport, newRoundEventType).length) {
+                            <label>
+                              <span>{{ 'communities.discipline.label' | t }}</span>
+                              <select [(ngModel)]="roundDisciplineDraft" [attr.aria-label]="'communities.discipline.label' | t">
+                                <option value="">{{ 'communities.discipline.select' | t }}</option>
+                                @for (option of athleticsDisciplineOptions(newRoundSport, newRoundEventType); track option) {
+                                  <option [value]="option">{{ fieldDisciplineLabel(option) }}</option>
                                 }
                               </select>
                             </label>
@@ -1570,6 +1582,9 @@
                               }
                               @if (round.eventType) {
                                 <span class="round-sport-tag">{{ eventTypeLabel(round.eventType) }}</span>
+                              }
+                              @if (round.eventDiscipline) {
+                                <span class="round-sport-tag round-field-discipline">{{ fieldDisciplineLabel(round.eventDiscipline) }}</span>
                               }
                             </div>
 

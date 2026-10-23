@@ -441,6 +441,7 @@ export class CommunityGroupsService {
       playedAt: string;
       sport?: string | null;
       eventType?: 'RACE' | 'FREESTYLE' | 'TRACK' | 'JUMP' | 'THROW' | null;
+      eventDiscipline?: string | null;
       matchFormat?: 'SINGLES' | 'DOUBLES' | null;
       setScores?: Array<{ sideA: number | null; sideB: number | null }> | null;
       entries: Array<{
