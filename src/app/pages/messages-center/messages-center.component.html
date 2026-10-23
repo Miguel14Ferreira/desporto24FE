@@ -119,7 +119,7 @@
                 <p role="status" class="inbox-history-search-status">{{ 'inbox.messageSearchLoading' | t }}</p>
               } @else if (messageSearchError) {
                 <p role="alert" class="inbox-history-search-status">{{ 'inbox.messageSearchError' | t }}</p>
-              } @else if (messageSearchResults.length === 0 && messageSearchPage === 0) {
+              } @else if (!messageSearchSearched) {
                 <p class="inbox-history-search-status">{{ 'inbox.messageSearchHint' | t }}</p>
               }
               @if (messageSearchResults.length > 0) {
@@ -144,8 +144,8 @@
                     {{ 'inbox.moreSearchResults' | t }}
                   </button>
                 }
-              } @else if (!messageSearchLoading && !messageSearchError && messageSearchPage >= 0
-                && messageSearchTerm.trim().length >= 2) {
+              } @else if (messageSearchSearched && !messageSearchLoading && !messageSearchError
+                && messageSearchResults.length === 0) {
                 <p class="inbox-history-search-status">{{ 'inbox.messageSearchNoResults' | t }}</p>
               }
             </section>
