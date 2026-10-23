@@ -586,3 +586,78 @@ body .communities-page.jynlo-c1 .community-discovery-empty strong {
     align-items: flex-start;
   }
 }
+
+/* Community season administration — scoped Concept 1 desktop additions. */
+body .communities-page.jynlo-c1 .season-management {
+  margin: 1.2rem 0;
+  padding: 1rem;
+  border: 1px solid var(--jynlo-ui-outline);
+  border-radius: var(--jynlo-ui-radius-md);
+  background: var(--jynlo-ui-surface-raised);
+}
+body .communities-page.jynlo-c1 .season-management-heading h4 {
+  font-size: 1rem;
+  font-weight: 800;
+  margin: 0;
+}
+body .communities-page.jynlo-c1 .season-management-heading p {
+  margin: .3rem 0 1rem;
+  color: var(--jynlo-ui-muted);
+  font-size: .83rem;
+}
+body .communities-page.jynlo-c1 .season-management-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: .75rem;
+  padding: .8rem 0;
+  border-top: 1px solid var(--jynlo-ui-outline);
+}
+body .communities-page.jynlo-c1 .season-management-identity {
+  display: grid;
+  min-width: 0;
+  gap: .25rem;
+}
+body .communities-page.jynlo-c1 .season-management-identity strong {
+  overflow-wrap: anywhere;
+}
+body .communities-page.jynlo-c1 .season-management-identity span {
+  color: var(--jynlo-ui-muted);
+  font-size: .77rem;
+}
+body .communities-page.jynlo-c1 .season-management-actions,
+body .communities-page.jynlo-c1 .season-management-confirm .row-actions,
+body .communities-page.jynlo-c1 .season-management-editor .row-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .5rem;
+}
+body .communities-page.jynlo-c1 .season-management-editor,
+body .communities-page.jynlo-c1 .season-management-confirm {
+  display: grid;
+  gap: .5rem;
+  width: min(100%, 410px);
+}
+body .communities-page.jynlo-c1 .season-management-editor input {
+  min-height: 42px;
+  border: 1px solid var(--jynlo-ui-outline);
+  background: #0a1c2d;
+  border-radius: var(--jynlo-ui-radius-sm);
+  color: var(--jynlo-ui-text);
+}
+body .communities-page.jynlo-c1 .season-management-confirm p {
+  color: var(--jynlo-ui-muted);
+  margin: 0;
+  font-size: .85rem;
+  line-height: 1.5;
+}
+body .communities-page.jynlo-c1 .season-management-error {
+  color: #fecaca;
+  margin: .75rem 0 0;
+}
+body .communities-page.jynlo-c1 .season-management-message {
+  color: #a8ffe0;
+  margin: .75rem 0 0;
+}
