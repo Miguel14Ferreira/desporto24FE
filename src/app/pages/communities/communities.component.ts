@@ -48,6 +48,7 @@ import { CommunityService } from '../../services/community.service';
 import { SessionService } from '../../services/session.service';
 import { CommunityTimelineService, CommunityTimelineEntry, CommunityTimelineKind } from '../../services/community-timeline.service';
 import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.service';
+import { ChatTypingTracker } from '../../services/chat-typing-tracker';
 import { ChatReadSyncService } from '../../services/chat-read-sync.service';
 import { CommunityProfile } from '../model/community-profile';
 import { SessionSummary } from '../model/session-summary';
@@ -67,6 +68,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   @ViewChild('communityChatLog') communityChatLog?: ElementRef<HTMLElement>;
   @ViewChild('communityComposer') communityComposer?: ElementRef<HTMLTextAreaElement>;
   private readonly realtimeService = inject(DirectChatRealtimeService);
+  readonly typing = new ChatTypingTracker(this.realtimeService);
   private readonly readSync = inject(ChatReadSyncService);
   private readonly chatSubscriptions = new Subscription();
   private readonly jwtHelper = new JwtHelperService();
@@ -210,6 +212,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   }
 
   ngOnDestroy(): void {
+    this.typing.destroy();
     this.chatSubscriptions.unsubscribe();
   }
 
@@ -285,6 +288,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   private confirmChatDelivery(): void {
     this.chatDeliveryUncertain = false;
     this.pendingChatDelivery = undefined;
+    this.typing?.stop();
     this.chatDraft = '';
     this.replyingToCommunityMessage = null;
     this.timelineError = '';
@@ -317,6 +321,12 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     this.pendingChatDelivery = undefined;
     this.chatDeliveryUncertain = false;
     this.timelineError = t('chat.sendRetryWarning');
+  }
+
+  onTypingInput(): void {
+    if (this.selected && this.activeTab === 'chat')
+      this.typing.input('community', this.selected.id, this.chatDraft,
+        !this.timelineSending && !this.chatDeliveryUncertain);
   }
 
   onCommunityChatEnter(event: Event): void {
@@ -376,6 +386,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   }
 
   sendTimeline(): void {
+    if (this.activeTab === 'chat') this.typing?.stop();
     if (!this.selected || this.timelineSending ||
         (this.activeTab !== 'feed' && this.activeTab !== 'chat') ||
         (this.activeTab === 'chat' && this.chatDeliveryUncertain)) return;

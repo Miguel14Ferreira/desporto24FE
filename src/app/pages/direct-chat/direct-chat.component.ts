@@ -9,6 +9,7 @@ import { DirectChatInfo, DirectChatMessage } from '../model/direct-chat';
 import { DirectChatService } from '../../services/direct-chat.service';
 import { CommunityService } from '../../services/community.service';
 import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.service';
+import { ChatTypingTracker } from '../../services/chat-typing-tracker';
 import { ChatReadSyncService } from '../../services/chat-read-sync.service';
 
 @Component({
@@ -55,6 +56,7 @@ export class DirectChatComponent implements OnInit, OnDestroy, AfterViewChecked 
     timeStyle: 'short'
   });
   private readonly realtimeSubscriptions = new Subscription();
+  readonly typing: ChatTypingTracker;
   private initialRealtimeConnection = true;
 
   constructor(
@@ -62,7 +64,9 @@ export class DirectChatComponent implements OnInit, OnDestroy, AfterViewChecked 
     private chatService: DirectChatService,
     private communityService: CommunityService,
     private realtimeService: DirectChatRealtimeService
-  ) {}
+  ) {
+    this.typing = new ChatTypingTracker(realtimeService);
+  }
 
   ngOnInit(): void {
     this.currentUsername = this.readCurrentUsername();
@@ -113,6 +117,7 @@ export class DirectChatComponent implements OnInit, OnDestroy, AfterViewChecked 
   }
 
   ngOnDestroy(): void {
+    this.typing.destroy();
     this.realtimeSubscriptions.unsubscribe();
   }
 
@@ -256,6 +261,7 @@ export class DirectChatComponent implements OnInit, OnDestroy, AfterViewChecked 
   }
 
   sendMessage(): void {
+    this.typing.stop();
     const text = this.messageBody.trim();
 
     if (!this.recipientUsername || this.sending || this.deliveryUncertain || this.chatInfo?.chatBlocked) {
@@ -384,6 +390,11 @@ export class DirectChatComponent implements OnInit, OnDestroy, AfterViewChecked 
     return error instanceof TimeoutError
       || error instanceof HttpErrorResponse
          && (error.status === 0 || error.status === 408 || error.status === 429 || error.status >= 500);
+  }
+
+  onTypingInput(): void {
+    this.typing.input('direct', this.recipientUsername, this.messageBody,
+      !this.chatInfo?.chatBlocked && !this.sending && !this.deliveryUncertain);
   }
 
   toggleEmojiPicker(): void {

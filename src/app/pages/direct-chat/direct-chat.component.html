@@ -108,6 +108,9 @@
           }
         </div>
 
+        @if (typing.label('direct', recipientUsername); as typingLabel) {
+          <p class="chat-typing-indicator" role="status" aria-live="off">{{ typingLabel }}</p>
+        }
         <form class="composer" (ngSubmit)="sendMessage()">
           @if (replyingTo; as original) {
             <div class="chat-reply-banner">
@@ -129,6 +132,8 @@
               [readOnly]="sending"
               [disabled]="deliveryUncertain || chatInfo?.chatBlocked === true"
               [placeholder]="'chat.placeholder' | t"
+              (ngModelChange)="onTypingInput()"
+              (blur)="typing.stop()"
               (keydown.enter)="onEnter($event)"></textarea>
           </label>
 

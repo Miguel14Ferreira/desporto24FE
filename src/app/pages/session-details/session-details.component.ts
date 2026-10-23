@@ -17,6 +17,7 @@ import { SessionParticipant } from '../model/session-participant';
 import { JoinSessionResponse, MyVenueRating, OrganizerExclusionReason, PlayerCompliment, PlayerComplimentType, SessionOverallRating, SessionService, SessionTeamSuggestion } from '../../services/session.service';
 import { ReliabilityService } from '../../services/reliability.service';
 import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.service';
+import { ChatTypingTracker } from '../../services/chat-typing-tracker';
 import { ChatReadSyncService } from '../../services/chat-read-sync.service';
 
 @Component({
@@ -157,6 +158,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   private readonly jwtHelper = new JwtHelperService();
   private readonly readSync = inject(ChatReadSyncService);
   private readonly realtimeSubscriptions = new Subscription();
+  readonly typing: ChatTypingTracker;
 
   constructor(
     private route: ActivatedRoute,
@@ -165,7 +167,9 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     private directChatService: DirectChatService,
     private reliabilityService: ReliabilityService,
     private realtimeService: DirectChatRealtimeService
-  ) {}
+  ) {
+    this.typing = new ChatTypingTracker(realtimeService);
+  }
 
   ngOnInit(): void {
     this.pendingJoinScroll = this.route.snapshot.queryParamMap?.get('join') === '1';
@@ -213,6 +217,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   }
 
   ngOnDestroy(): void {
+    this.typing.destroy();
     this.realtimeSubscriptions.unsubscribe();
   }
 
@@ -1287,6 +1292,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   }
 
   sendMessage(): void {
+    this.typing.stop();
     const body = this.messageBody.trim();
 
     if (!this.sessionId || !this.canSendChat() || this.messageSending || this.chatDeliveryUncertain) {
@@ -1406,6 +1412,11 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
       return error.status === 0 || error.status === 408 || error.status === 429 || error.status >= 500;
     }
     return true;
+  }
+
+  onTypingInput(): void {
+    if (this.sessionId != null) this.typing.input('session', this.sessionId,
+      this.messageBody, this.canSendChat() && !this.messageSending && !this.chatDeliveryUncertain);
   }
 
   onChatEnter(event: Event): void {

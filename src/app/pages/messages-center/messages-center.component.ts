@@ -16,6 +16,7 @@ import { SessionService } from '../../services/session.service';
 import { DirectChatService } from '../../services/direct-chat.service';
 import { CommunityTimelineService } from '../../services/community-timeline.service';
 import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.service';
+import { ChatTypingTracker } from '../../services/chat-typing-tracker';
 import { ChatReactionsComponent } from '../../shared/chat-reactions/chat-reactions.component';
 import { DirectChatMessage } from '../model/direct-chat';
 import { SessionMessage } from '../model/session-message';
@@ -90,6 +91,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   private pendingScrollToMessageId: number | null = null;
   private readonly seenRealtimeIds = new Set<string>();
   private readonly realtimeDuringLoad = new Map<number, InboxMessage>();
+  readonly typing: ChatTypingTracker;
 
   constructor(
     private readonly contacts: CommunityService,
@@ -99,7 +101,9 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     private readonly timeline: CommunityTimelineService,
     private readonly realtime: DirectChatRealtimeService,
     private readonly inboxApi: InboxApiService
-  ) {}
+  ) {
+    this.typing = new ChatTypingTracker(realtime);
+  }
 
   ngOnInit(): void {
     try {
@@ -140,6 +144,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   }
 
   ngOnDestroy(): void {
+    this.typing.destroy();
     this.subscriptions.unsubscribe();
     if (this.summaryTimer) clearInterval(this.summaryTimer);
     // The navbar owns the shared socket lifecycle. Never disconnect it here.
@@ -285,6 +290,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     if (this.sending || this.deliveryChecking) return;
     if (conversation.key === this.selectedKey && !this.previewError) return;
     if (this.selectedKey) this.drafts.set(this.selectedKey, this.draft);
+    this.typing.stop();
     this.selectedKey = conversation.key;
     ++this.historyLocateVersion;
     this.historicalPreview = false;
@@ -629,6 +635,12 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     if (!this.sending && !this.deliveryUncertain) this.replyingTo = null;
   }
 
+  onTypingInput(): void {
+    const conversation = this.selected;
+    if (!conversation) return;
+    this.typing.input(conversation.kind, conversation.id, this.draft, this.canSendMessage());
+  }
+
   onComposerEnter(event: Event): void {
     const keyboard = event as KeyboardEvent;
     if (keyboard.shiftKey || keyboard.isComposing || keyboard.keyCode === 229) return;
@@ -646,6 +658,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   }
 
   sendMessage(): void {
+    this.typing.stop();
     const conversation = this.selected;
     if (!conversation || !this.canSendMessage()) return;
     const key = conversation.key;
