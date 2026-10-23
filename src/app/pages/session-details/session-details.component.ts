@@ -1248,8 +1248,10 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
 
   private markVisibleMessagesRead(): void {
     // Session details can be opened without opening/seeing the chat.
-    if (!this.sessionId || !this.canAccessChat() || this.chatLoading || this.chatError
-        || this.messages.length === 0) return;
+    // The session details screen no longer renders a chat log. Never mark
+    // hidden messages as read; the unified inbox owns read acknowledgements.
+    if (!this.chatMessageList?.nativeElement || !this.sessionId || !this.canAccessChat()
+        || this.chatLoading || this.chatError || this.messages.length === 0) return;
     const highestId = this.messages.reduce((max, message) => Math.max(max, message.id), 0);
     this.readSync.markVisible('session', this.sessionId,
       highestId, this.chatMessageList?.nativeElement);
