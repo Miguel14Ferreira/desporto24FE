@@ -26,6 +26,11 @@ export function performanceError(
   });
 }
 
+/** Explicit wave heat types share numeric storage, NOT regulations, penalties or tie-break rules. */
+export function isWaveHeatEvent(eventType: string | null | undefined): boolean {
+  return eventType === 'HEAT' || eventType === 'BODYBOARD_HEAT';
+}
+
 /** Only the two adjudicated wave marks are entered, not judges' raw scoring. */
 export function surfWaveTotal(entry: Pick<CommunityRoundEntry, 'waveScore1' | 'waveScore2'>): number | null {
   if (entry.waveScore1 == null && entry.waveScore2 == null) return null;
@@ -38,7 +43,7 @@ export function surfWaveError(entries: Pick<CommunityRoundEntryDraft, 'waveScore
   ));
 }
 function scoreForEvent(entry: CommunityRoundEntry, type?: string | null): number | null {
-  return type === 'HEAT' ? surfWaveTotal(entry) : entry.performanceValue ?? null;
+  return isWaveHeatEvent(type) ? surfWaveTotal(entry) : entry.performanceValue ?? null;
 }
 export function eventPerformanceEntries(round: CommunityRound): CommunityRoundEntry[] {
   return [...round.entries].sort((a, b) => {

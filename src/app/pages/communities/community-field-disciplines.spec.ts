@@ -11,6 +11,7 @@ describe('Athletics field disciplines', () => {
     expect(athleticsDisciplineOptions('Atletismo', 'TRACK')).toEqual([]);
     expect(athleticsDisciplineOptions('Futebol', 'JUMP')).toEqual([]);
     expect(athleticsDisciplineOptions('Ginástica Artística', 'APPARATUS')).toContain('BALANCE_BEAM');
+    expect(athleticsDisciplineOptions('Bodyboard', 'BODYBOARD_HEAT')).toEqual(['PRONE', 'DROP_KNEE']);
   });
   it('never mixes disciplines into races or other sports', () => {
     expect(athleticsDisciplineValid('Atletismo', 'JUMP', 'LONG_JUMP')).toBeTrue();
@@ -20,6 +21,11 @@ describe('Athletics field disciplines', () => {
     expect(athleticsDisciplineValid('Snowboard', 'FREESTYLE', null)).toBeTrue();
     expect(athleticsDisciplineValid('Ginástica Artística', 'APPARATUS', 'FLOOR')).toBeTrue();
     expect(athleticsDisciplineValid('Ginástica Artística', 'APPARATUS', null)).toBeFalse();
+    expect(athleticsDisciplineValid('Bodyboard', 'BODYBOARD_HEAT', 'PRONE')).toBeTrue();
+    expect(athleticsDisciplineValid('Bodyboard', 'BODYBOARD_HEAT', 'DROP_KNEE')).toBeTrue();
+    expect(athleticsDisciplineValid('Bodyboard', 'BODYBOARD_HEAT', null)).toBeFalse();
+    expect(athleticsDisciplineValid('Bodyboard', 'BODYBOARD_HEAT', 'FLOOR')).toBeFalse();
+    expect(athleticsDisciplineValid('Surf', 'HEAT', 'PRONE')).toBeFalse();
     expect(athleticsDisciplineValid('Snowboard', 'FREESTYLE', 'LONG_JUMP')).toBeFalse();
   });
 });
