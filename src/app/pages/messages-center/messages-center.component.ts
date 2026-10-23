@@ -336,7 +336,14 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.historyLocateError = false;
     if (this.messages.some(item => item.id === result.id)) {
       this.searchResultNotInPreview = false;
-      this.pendingScrollToMessageId = result.id;
+      const target = this.previewLog?.nativeElement?.querySelector<HTMLElement>(
+        '[data-message-id="' + result.id + '"]');
+      if (target) {
+        target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        target.focus({ preventScroll: true });
+      } else {
+        this.pendingScrollToMessageId = result.id;
+      }
       return;
     }
 
@@ -363,6 +370,10 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
           this.previewLoading = false;
           this.previewError = false;
           this.historicalPreview = true;
+          if (conversation.kind === 'community') {
+            this.composerAllowed = true;
+            this.composerAccessLoading = false;
+          }
           this.messages = mergeInboxMessages(hits.map(hit => ({
             key, id: hit.id, sender: hit.sender, text: hit.text,
             createdAt: hit.createdAt || '',
