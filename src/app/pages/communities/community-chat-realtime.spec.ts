@@ -17,6 +17,7 @@ describe('Community chat realtime and sending', () => {
     component.selected = { id: 7, name: 'CNG', members: [], myRole: 'MEMBER' } as any;
     component.activeTab = 'chat';
     component.timelineEntries = [];
+    component.chatDeliveryUncertain = false;
     (component as any).timelineRequestVersion = 0;
     spyOn(component as any, 'currentChatUsername').and.returnValue('ana');
     api.list.and.returnValue(of([]));
