@@ -327,6 +327,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     // Invalidate any earlier HTTP result if the user types another query.
     ++this.messageSearchVersion;
     this.messageSearchResults = [];
+    this.selectedSearchResultId = null;
+    this.searchResultNotInPreview = false;
     this.messageSearchLoading = false;
     this.messageSearchError = false;
     this.messageSearchSearched = false;
