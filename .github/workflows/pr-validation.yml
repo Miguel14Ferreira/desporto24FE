@@ -44,6 +44,17 @@ jobs:
         run: npm test -- --watch=false --browsers=ChromeHeadless
       - name: Build frontend once
         run: npm run build
+      # Opt-in browser regression for the unread-indicator fix only.
+      # Two fully synthetic accounts share in-memory API state; no prod writes,
+      # credentials, extra CI job or Chromium download.
+      - name: Install Playwright for inbox dual-browser regression
+        if: ${{ startsWith(github.head_ref, 'fix/inbox-persistent-unread-badge-') }}
+        run: npm install --no-save --package-lock=false @playwright/test@1.56.1
+      - name: Check persisted unread across two isolated browser contexts
+        if: ${{ startsWith(github.head_ref, 'fix/inbox-persistent-unread-badge-') }}
+        env:
+          JYNLO_USE_SYSTEM_CHROME: '1'
+        run: npx playwright test e2e/inbox-read-sync.spec.ts --config=playwright.config.ts --project=desktop-chromium
       # Candidate-only browser verification. No additional job, second npm ci,
       # Render deployment, production credentials or production API requests.
       - name: Install Chromium for integrated desktop smoke

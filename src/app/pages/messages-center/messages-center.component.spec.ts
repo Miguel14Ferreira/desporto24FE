@@ -268,6 +268,20 @@ describe('Unified Jynlo message center', () => {
   });
 
 
+  it('renders persistent unread badge text instead of local visit count', () => {
+    const remoteUnread = { ...item('direct', 'bea'), unreadCount: 12, newThisVisit: 0 };
+    expect(component.unreadCountFor(remoteUnread)).toBe(12);
+    expect(component.unreadBadgeText(remoteUnread)).toBe('12');
+    const many = { ...remoteUnread, unreadCount: 142 };
+    expect(component.unreadBadgeText(many)).toBe('99+');
+    const localFallback = { ...item('direct', 'bea'), newThisVisit: 3 };
+    expect(component.unreadBadgeText(localFallback)).toBe('3');
+    component.conversations = [remoteUnread];
+    component.setFilter('recent');
+    expect(component.filteredConversations).toEqual([remoteUnread]);
+    expect(component.recentCount).toBe(12);
+  });
+
   it('hydrates previews and unread counts from authenticated server snapshots without fetching chat histories', () => {
     friends.friends.and.returnValue(of([{ username: 'bea', fullName: null, nickname: null,
       profilePicUrl: null, chatBlocked: false, blockedByMe: false }]));

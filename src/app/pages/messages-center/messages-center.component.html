@@ -68,7 +68,7 @@
                 </span>
                 @if ((conversation.unreadCount ?? conversation.newThisVisit) > 0) {
                   <span class="inbox-unread" [attr.aria-label]="'inbox.newCount' | t:{count: (conversation.unreadCount ?? conversation.newThisVisit)}">
-                    {{ (conversation.unreadCount ?? conversation.newThisVisit) > 99 ? '99+' : conversation.newThisVisit }}
+                    {{ unreadBadgeText(conversation) }}
                   </span>
                 }
               </button>
