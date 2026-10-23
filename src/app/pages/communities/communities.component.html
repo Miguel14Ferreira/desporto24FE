@@ -1260,6 +1260,110 @@
                       </section>
                     }
 
+                    @if ((competition?.raceStandings?.length || 0) > 0) {
+                      <section class="racket-standings-section" aria-labelledby="race-standings-title">
+                        <div class="section-heading">
+                          <div>
+                            <span class="section-kicker">{{ 'communities.race.championshipKicker' | t }}</span>
+                            <h3 id="race-standings-title">{{ 'communities.race.championshipTitle' | t }}</h3>
+                          </div>
+                        </div>
+                        <p class="racket-standings-explainer">{{ 'communities.race.championshipHint' | t }}</p>
+                        @for (group of competition?.raceStandings || []; track group.sport) {
+                          <div class="racket-standings-group">
+                            <div class="racket-standings-group-head">
+                              <h4>🏁 {{ group.sport }}</h4>
+                              @if (group.rule) {
+                                <span class="competition-badge">{{ 'communities.race.scoringOn' | t }}</span>
+                              } @else {
+                                <span class="competition-badge">{{ 'communities.race.noScoring' | t }}</span>
+                              }
+                            </div>
+                            @if (group.rule) {
+                              <p class="racket-standings-rule-description">
+                                {{ 'communities.race.pointsByPlace' | t }}:
+                                {{ group.rule.pointsByPlace.join(' · ') }}
+                              </p>
+                            }
+                            @if (canManageRaceChampionship()) {
+                              @if (raceRuleSport === group.sport) {
+                                <div class="racket-rule-editor">
+                                  <label>
+                                    <span>{{ 'communities.race.pointsByPlace' | t }}</span>
+                                    <input type="text" maxlength="160" [(ngModel)]="raceRulePoints"
+                                      [disabled]="raceRuleSaving"
+                                      [placeholder]="'communities.race.pointsExample' | t">
+                                  </label>
+                                  <div class="racket-rule-actions">
+                                    <button type="button" class="primary-action jynlo-action jynlo-action--primary jynlo-action--compact"
+                                      [disabled]="raceRuleSaving" (click)="saveRaceRule(group)">
+                                      {{ 'communities.race.savePoints' | t }}
+                                    </button>
+                                    <button type="button" class="secondary-action jynlo-action jynlo-action--neutral jynlo-action--compact"
+                                      [disabled]="raceRuleSaving" (click)="cancelRaceRule()">
+                                      {{ 'common.cancel' | t }}
+                                    </button>
+                                  </div>
+                                </div>
+                                <p class="round-sport-guidance">{{ 'communities.race.scoringDisclaimer' | t }}</p>
+                                @if (raceRuleError) {
+                                  <p role="alert" class="season-management-error">{{ raceRuleError }}</p>
+                                }
+                              } @else {
+                                <button type="button"
+                                  class="secondary-action jynlo-action jynlo-action--neutral jynlo-action--compact"
+                                  [disabled]="raceRuleSaving" (click)="editRaceRule(group)">
+                                  {{ (group.rule ? 'communities.race.editPoints'
+                                    : 'communities.race.configurePoints') | t }}
+                                </button>
+                              }
+                            }
+                            <div class="racket-standings-scroll">
+                              <table class="racket-standings-table">
+                                <thead>
+                                  <tr>
+                                    <th scope="col">{{ 'communities.racket.rank' | t }}</th>
+                                    <th scope="col">{{ 'communities.racket.player' | t }}</th>
+                                    <th scope="col">{{ 'communities.race.races' | t }}</th>
+                                    <th scope="col">{{ 'communities.race.wins' | t }}</th>
+                                    <th scope="col">{{ 'communities.race.podiums' | t }}</th>
+                                    <th scope="col">{{ 'communities.race.bestFinish' | t }}</th>
+                                    @if (group.rule) {
+                                      <th scope="col">{{ 'communities.race.penaltiesShort' | t }}</th>
+                                      <th scope="col">{{ 'communities.racket.championshipPoints' | t }}</th>
+                                    }
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  @for (driver of group.standings; track driver.playerId) {
+                                    <tr>
+                                      <td class="racket-standings-place">{{ driver.position }}.º</td>
+                                      <th scope="row" class="racket-standings-player">
+                                        <strong>{{ driver.fullName || driver.username }}</strong>
+                                        @if (driver.username) { <small>@{{ driver.username }}</small> }
+                                      </th>
+                                      <td>{{ driver.races }}</td>
+                                      <td>{{ driver.wins }}</td>
+                                      <td>{{ driver.podiums }}</td>
+                                      <td>{{ driver.bestFinish }}.º</td>
+                                      @if (group.rule) {
+                                        <td>−{{ driver.penaltyPoints }}</td>
+                                        <td class="racket-standings-wins">{{ driver.championshipPoints ?? '—' }}</td>
+                                      }
+                                    </tr>
+                                  }
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        }
+                        @if (raceRuleMessage) {
+                          <p class="season-management-message" role="status">{{ raceRuleMessage }}</p>
+                        }
+                        <p class="racket-standings-footnote">{{ 'communities.race.rankingNote' | t }}</p>
+                      </section>
+                    }
+
                     @if ((competition?.racketStandings?.length || 0) > 0) {
                       <section class="racket-standings-section" aria-labelledby="racket-standings-title">
                         <div class="section-heading">
@@ -1478,11 +1582,51 @@
                                           <span>{{ 'communities.race.bestLapShort' | t }} {{ bestLap }}</span>
                                         }
                                       }
+                                      @if ((entry.racePenaltyPoints ?? 0) > 0) {
+                                        <span class="race-penalty-chip" [title]="entry.racePenaltyReason || ''">
+                                          −{{ entry.racePenaltyPoints }} {{ 'communities.race.pointsShort' | t }}
+                                        </span>
+                                      }
+                                      @if (canManageRaceChampionship() && entry.entryId != null && entry.finishPosition != null) {
+                                        @if (racePenaltyEditorKey === round.id + ':' + entry.entryId) {
+                                          <div class="race-penalty-editor">
+                                            <label>
+                                              <span>{{ 'communities.race.penaltyPoints' | t }}</span>
+                                              <input type="number" min="0" max="1000" step="1"
+                                                [(ngModel)]="racePenaltyPoints" [disabled]="racePenaltySaving">
+                                            </label>
+                                            <label>
+                                              <span>{{ 'communities.race.penaltyReason' | t }}</span>
+                                              <input type="text" maxlength="255" [(ngModel)]="racePenaltyReason"
+                                                [disabled]="racePenaltySaving">
+                                            </label>
+                                            <button type="button" class="primary-action jynlo-action jynlo-action--primary jynlo-action--compact"
+                                              [disabled]="racePenaltySaving" (click)="saveRacePenalty(round, entry)">
+                                              {{ 'communities.race.savePenalty' | t }}
+                                            </button>
+                                            <button type="button" class="secondary-action jynlo-action jynlo-action--neutral jynlo-action--compact"
+                                              [disabled]="racePenaltySaving" (click)="cancelRacePenalty()">
+                                              {{ 'common.cancel' | t }}
+                                            </button>
+                                            @if (racePenaltyError) {
+                                              <p role="alert" class="season-management-error">{{ racePenaltyError }}</p>
+                                            }
+                                          </div>
+                                        } @else {
+                                          <button type="button" class="secondary-action jynlo-action jynlo-action--neutral jynlo-action--compact"
+                                            [disabled]="racePenaltySaving" (click)="editRacePenalty(round, entry)">
+                                            {{ 'communities.race.penaltyAction' | t }}
+                                          </button>
+                                        }
+                                      }
                                     </div>
                                   </div>
                                 }
                               </div>
                             </section>
+                            @if (racePenaltyMessage) {
+                              <p class="season-management-message" role="status">{{ racePenaltyMessage }}</p>
+                            }
                           } @else if (recordedRacketMatch(round)) {
                             <section class="racket-result-card">
                               <div class="racket-result-header">

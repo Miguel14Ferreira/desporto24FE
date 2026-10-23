@@ -1132,3 +1132,42 @@ body .communities-page.jynlo-c1 .racket-rule-actions {
   flex-wrap: wrap;
   gap: .45rem;
 }
+
+/* Race championship configuration & per-entry penalties — Concept One */
+body .communities-page.jynlo-c1 .race-penalty-chip {
+  font-size: .73rem;
+  font-weight: 800;
+  padding: .25rem .5rem;
+  border: 1px solid rgba(251,191,36,.36);
+  border-radius: .6rem;
+  color: #f8db92;
+  background: rgba(251,191,36,.08);
+}
+body .communities-page.jynlo-c1 .race-penalty-editor {
+  display: flex;
+  gap: .55rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  width: 100%;
+  padding: .75rem;
+  border-radius: .75rem;
+  border: 1px solid rgba(251,191,36,.24);
+  background: rgba(251,191,36,.05);
+}
+body .communities-page.jynlo-c1 .race-penalty-editor label {
+  display: grid;
+  gap: .3rem;
+  font-size: .75rem;
+  min-width: 100px;
+}
+body .communities-page.jynlo-c1 .race-penalty-editor input[type="number"] {
+  max-width: 115px;
+}
+body .communities-page.jynlo-c1 .race-penalty-editor input[type="text"] {
+  max-width: 270px;
+  width: 100%;
+}
+body .communities-page.jynlo-c1 .racket-rule-editor input[type="text"] {
+  width: min(100%, 390px);
+  min-width: min(280px, 100%);
+}
