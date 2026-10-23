@@ -31,3 +31,13 @@ O registo central é `src/app/pages/communities/community-round-sport.ts`. Os te
 - Não apagar nem reinterpretar dados históricos automaticamente.
 - A seleção de modalidade de cada nova jornada já é suportada. Comunidades multidesporto exigem escolha.
 - Modalidades desconhecidas usam representação neutra e são detetadas pelo teste de catálogo.
+
+## Estado incremental — tipos de prova em jornadas (23/10/2026)
+
+- **BMX**: corrida `RACE` vs freestyle `FREESTYLE`.
+- **Snowboard**: corrida `RACE` vs freestyle `FREESTYLE`.
+- **Atletismo**: pista `TRACK`, saltos `JUMP`, lançamentos `THROW`.
+- Tipo de prova guardado opcionalmente em `community_round.event_type`; histórico anterior permanece `null`. Na criação de novas jornadas destas três modalidades, a escolha é obrigatória.
+- Corridas com tipo `RACE`/`TRACK` podem utilizar as posições/tempos e classificação existentes. Freestyle, saltos e lançamentos são **registos de participação apenas**, sem converter falsamente números de golos ou W/D/L em pontuação.
+- **Legado**: as jornadas BMX antigas sem tipo continuam a ser tratadas como corrida, preservando o significado dos dados anteriores. As outras modalidades e a importação histórica mantêm o seu comportamento.
+- Próximos passos: modelar resultados por marca/altura/distância, avaliações com júri e regras específicas de pontuação por tipo de evento; ampliar o registo para as restantes modalidades cuja tipologia é variável.
