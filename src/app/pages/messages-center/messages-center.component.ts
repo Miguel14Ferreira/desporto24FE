@@ -54,6 +54,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   /** Only a confirmed response about the currently selected private peer applies. */
   private peerReadCursor: number | null = null;
   private peerReceiptVersion = 0;
+  private readonly ownReadSyncVersions = new Map<string, number>();
   private peerReceiptCheckedAt = 0;
   /** Token active when this inbox mounted; a different login must not inherit receipts. */
   private receiptSessionToken: string | null = null;
@@ -155,6 +156,9 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     // the original sender. Unknown peers/sessions must never affect the UI.
     this.subscriptions.add(this.realtime.readReceipts$.subscribe(receipt => {
       this.acceptPersistedPeerReadReceipt(receipt);
+    }));
+    this.subscriptions.add(this.realtime.ownReads$.subscribe(read => {
+      this.refreshOwnPersistedRead(read);
     }));
     this.subscriptions.add(this.realtime.communityMessages$.subscribe(message => {
       if (message.kind !== 'CHAT') return;
@@ -1021,6 +1025,59 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       && message.key === this.selectedKey && this.isMine(message)
       && Number.isSafeInteger(message.id) && message.id > 0
       && this.peerReadCursor !== null && this.peerReadCursor >= message.id;
+  }
+
+  /**
+   * A different browser of THIS identity read a conversation. Never set
+   * unread=0 from an event alone: a newer message might have arrived while
+   * the read transaction committed. Fetch the authoritative count for just
+   * that one conversation; ordinary 45-second summaries recover socket loss.
+   */
+  private refreshOwnPersistedRead(
+    read: { kind: InboxKind; conversationId: string; lastReadMessageId: number } | null
+  ): void {
+    if (!this.isReceiptSessionCurrent() || !read
+        || !['direct', 'community', 'session'].includes(read.kind)
+        || typeof read.conversationId !== 'string'
+        || read.conversationId.length === 0 || read.conversationId.length > 128
+        || !Number.isSafeInteger(read.lastReadMessageId) || read.lastReadMessageId <= 0
+        || !this.serverSummariesAvailable || this.loading) return;
+    const key = inboxKey(read.kind, read.conversationId);
+    const conversation = this.conversations.find(item => item.key === key);
+    if (!conversation) return; // No forged or stale membership may be added.
+    const version = (this.ownReadSyncVersions.get(key) ?? 0) + 1;
+    this.ownReadSyncVersions.set(key, version);
+    const inboxVersion = this.inboxVersion;
+    ++this.summaryVersion; // Discard a global snapshot sampled before this commit.
+    this.inboxApi.summaries([{ kind: conversation.kind, id: String(conversation.id) }])
+      .pipe(timeout(10_000)).subscribe({
+        next: values => {
+          if (!this.isReceiptSessionCurrent() || inboxVersion !== this.inboxVersion
+              || this.ownReadSyncVersions.get(key) !== version) return;
+          const snapshot = values.find(item => inboxKey(item.kind, item.id) === key);
+          if (!snapshot) return;
+          this.conversations = orderInbox(this.conversations.map(item => {
+            if (item.key !== key) return item;
+            // A newer socket message arriving during the HTTP GET wins over
+            // this snapshot; the periodic refresh will reconcile any gap.
+            const newer = !!item.latestAt && (!snapshot.latestAt
+              || Date.parse(item.latestAt) > Date.parse(snapshot.latestAt));
+            if (newer || (item.latestMessageId !== undefined
+              && item.latestMessageId !== null
+              && (snapshot.latestMessageId === null
+                || item.latestMessageId > snapshot.latestMessageId))) return item;
+            return { ...item,
+              latestText: snapshot.latestText ?? undefined,
+              latestAt: snapshot.latestAt ?? undefined,
+              latestMessageId: snapshot.latestMessageId,
+              unreadCount: snapshot.unreadCount, newThisVisit: 0
+            };
+          }));
+        },
+        error: () => {
+          // A transient GET failure must never clear unread badges locally.
+        }
+      });
   }
 
   private acceptPersistedPeerReadReceipt(
