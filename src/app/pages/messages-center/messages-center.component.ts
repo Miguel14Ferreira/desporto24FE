@@ -309,6 +309,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.messageSearchResults = [];
     this.messageSearchLoading = false;
     this.messageSearchError = false;
+    this.messageSearchSearched = false;
     this.messageSearchHasMore = false;
     this.messageSearchPage = 0;
   }
