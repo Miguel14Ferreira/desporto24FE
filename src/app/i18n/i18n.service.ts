@@ -1729,6 +1729,9 @@ const PT: Dictionary = {
   'chat.placeholder': 'Escreve uma mensagem...',
   'chat.sending': 'A enviar...',
   'chat.send': 'Enviar',
+  'chat.replyToMessage': 'Responder',
+  'chat.replyingTo': 'A responder a',
+  'chat.cancelReply': 'Cancelar resposta',
 
   'admin.eyebrow': 'Administração',
   'adminHub.title': 'Centro de administração',
@@ -3958,6 +3961,9 @@ const EN: Dictionary = {
   'chat.placeholder': 'Write a message...',
   'chat.sending': 'Sending...',
   'chat.send': 'Send',
+  'chat.replyToMessage': 'Reply',
+  'chat.replyingTo': 'Replying to',
+  'chat.cancelReply': 'Cancel reply',
 
   'admin.eyebrow': 'Administration',
   'adminHub.title': 'Administration centre',
