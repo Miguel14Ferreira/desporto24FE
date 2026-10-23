@@ -109,3 +109,13 @@ O registo central é `src/app/pages/communities/community-round-sport.ts`. Os te
 - Limites oficiais de 3x3 (21 pontos para vitória durante o tempo regulamentar) **não** são usados como limite do marcador, por poder haver vitória com 21 ou mais; não se valida uma ficha federativa/roster completo através dos membros registados.
 - Duas colunas inteiras nullable em `community_round` preservam histórico e não alteram épocas anteriores. PT/EN e registo desktop Concept One.
 - Fontes: FIBA Official Basketball Rules 2024, FIBA 3x3 Basketball overview.
+
+## Voleibol e Voleibol de Praia — resultados por sets (23/10/2026)
+- Tipos de prova explícitos `VOLLEYBALL_FINAL` e `BEACH_VOLLEY_FINAL`. Com estes tipos não há W/D/L nem golos/assistências individuais contabilizados na classificação genérica.
+- Voleibol indoor: vence quem ganhar três sets, num máximo de cinco. Primeiros quatro a 25, eventual 5.º a 15, vantagem mínima de dois pontos, sem teto de pontos regulamentar.
+- Voleibol de Praia: vence quem ganhar dois sets, num máximo de três. Primeiros dois a 21, eventual 3.º a 15, vantagem mínima de dois, sem teto regulamentar; dois jogadores registados por lado.
+- Validar todos os sets completos, não permitir novos sets depois de atingida a vitória. Limite máximo técnico de armazenamento 999 pontos por lado/set (não limite desportivo).
+- Reutilizar `CommunitySetScore` e a coluna `community_round.set_scores` para formato compacto; `match_format = NULL` para evitar ser confundido com raquete. **Nenhuma migração** nem reinterpretação de partidas antigas.
+- Marcador por sets 3–0, 3–1, 3–2 ou 2–0, 2–1, discriminando os pontos de cada set. Registar apenas participantes associados a cada lado; no indoor não inferir ficha de equipa completa.
+- Forfeits, jogos reduzidos e desempates de torneio além de cada partida ficam para outro contrato explícito.
+- Referências FIVB regras-base 2025–2028: https://www.fivb.com/volleyball/the-game/basic-rules/ e https://www.fivb.com/beach-volleyball/the-game/basic-rules/
