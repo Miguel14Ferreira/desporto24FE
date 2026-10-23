@@ -59,6 +59,7 @@ type CommunityTab = 'home' | 'feed' | 'chat' | 'sessions' | 'tournaments' | 'ran
 export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked {
   @ViewChild('communitySearchSection') communitySearchSection?: ElementRef<HTMLElement>;
   @ViewChild('communityChatLog') communityChatLog?: ElementRef<HTMLElement>;
+  @ViewChild('communityComposer') communityComposer?: ElementRef<HTMLTextAreaElement>;
   private readonly realtimeService = inject(DirectChatRealtimeService);
   private readonly readSync = inject(ChatReadSyncService);
   private readonly chatSubscriptions = new Subscription();
@@ -139,6 +140,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   timelineError = '';
   feedDraft = '';
   chatDraft = '';
+  replyingToCommunityMessage: CommunityTimelineEntry | null = null;
   chatRealtimeConnected = false;
   chatEverConnected = false;
   chatDeliveryUncertain = false;
@@ -147,7 +149,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   chatHasOlder = false;
   chatOlderError = '';
   private chatScrollRestore?: { top: number; height: number };
-  private pendingChatDelivery?: { communityId: number; text: string; ids: Set<number>; at: number };
+  private pendingChatDelivery?: { communityId: number; text: string; replyToMessageId: number | null; ids: Set<number>; at: number };
   private chatScrollRequested = false;
   private timelineRequestVersion = 0;
   private chatEventsDuringLoad = new Map<number, CommunityTimelineEntry>();
@@ -254,18 +256,31 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     this.mergeChatEntries([entry], follow);
   }
 
+  replyToCommunityMessage(entry: CommunityTimelineEntry): void {
+    if (this.activeTab !== 'chat' || !this.selected || entry.kind !== 'CHAT'
+        || entry.communityId !== this.selected.id || this.timelineSending || this.chatDeliveryUncertain) return;
+    this.replyingToCommunityMessage = entry;
+    this.communityComposer?.nativeElement.focus({ preventScroll: true });
+  }
+
+  cancelCommunityReply(): void {
+    if (!this.timelineSending && !this.chatDeliveryUncertain) this.replyingToCommunityMessage = null;
+  }
+
   private matchesPendingChatDelivery(entry: CommunityTimelineEntry): boolean {
     const pending = this.pendingChatDelivery;
     if (!pending || entry.kind !== 'CHAT' || entry.communityId !== pending.communityId
         || pending.ids.has(entry.id) || !this.isMyChatEntry(entry) || entry.body !== pending.text) return false;
     const date = Date.parse(entry.createdAt);
-    return Number.isFinite(date) && date >= pending.at - 60_000;
+    return Number.isFinite(date) && date >= pending.at - 60_000
+      && (entry.replyToMessageId ?? null) === pending.replyToMessageId;
   }
 
   private confirmChatDelivery(): void {
     this.chatDeliveryUncertain = false;
     this.pendingChatDelivery = undefined;
     this.chatDraft = '';
+    this.replyingToCommunityMessage = null;
     this.timelineError = '';
     this.chatScrollRequested = true;
   }
@@ -365,10 +380,16 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     if (!text || text.length > max) return;
     this.timelineSending = true;
     this.timelineError = '';
+    const replyId = kind === 'CHAT' ? this.replyingToCommunityMessage?.id ?? null : null;
+    if (kind === 'CHAT') this.communityComposer?.nativeElement.focus({ preventScroll: true });
     const pending = kind === 'CHAT'
-      ? { communityId, text, ids: new Set(this.timelineEntries.map(entry => entry.id)), at: Date.now() }
+      ? { communityId, text, replyToMessageId: replyId,
+          ids: new Set(this.timelineEntries.map(entry => entry.id)), at: Date.now() }
       : undefined;
-    this.timelineService.send(communityId, kind, text)
+    const send = replyId
+      ? this.timelineService.send(communityId, kind, text, replyId)
+      : this.timelineService.send(communityId, kind, text);
+    send
       .pipe(timeout(10_000), finalize(() => this.timelineSending = false))
       .subscribe({
         next: entry => {
@@ -381,6 +402,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
               this.loadTimeline();
             }
             this.chatDraft = '';
+            this.replyingToCommunityMessage = null;
             this.pendingChatDelivery = undefined;
             this.chatDeliveryUncertain = false;
           } else {
@@ -1337,6 +1359,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     this.timelineLoading = false;
     this.feedDraft = '';
     this.chatDraft = '';
+    this.replyingToCommunityMessage = null;
     this.chatDeliveryUncertain = false;
     this.pendingChatDelivery = undefined;
     this.errorMessage = '';
@@ -1410,6 +1433,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
         || (tab === 'ranking' && !this.canBrowseHistoricalArchives)
         || (tab === 'stats' && !this.selected?.rankingsEnabled)) return;
     this.activeTab = tab;
+    this.replyingToCommunityMessage = null;
     this.chatDeliveryUncertain = false;
     this.pendingChatDelivery = undefined;
     ++this.timelineRequestVersion;
