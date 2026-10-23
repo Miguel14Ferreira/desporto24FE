@@ -15,6 +15,8 @@ type Message = {
 type Conversation = { kind: 'direct' | 'community' | 'session'; id: string };
 
 const base = 'http://127.0.0.1:4200';
+// In CI, reuse the Chrome already installed for the 1000 Angular tests.
+if (process.env['JYNLO_USE_SYSTEM_CHROME']) test.use({ channel: 'chrome' });
 const utc = () => new Date().toISOString();
 const messages: Message[] = [{
   id: 41, username1: 'bea', username2: 'ana', text: 'Primeira mensagem para testar',
@@ -67,7 +69,11 @@ async function authenticatedContext(browser: import('@playwright/test').Browser,
     const isApi = url.origin === 'http://localhost:8080'
       || url.origin === 'https://api.d24sports.com';
     if (!isApi) return route.abort('blockedbyclient');
-    if (method === 'OPTIONS') return response(route, 204, {});
+    if (method === 'OPTIONS') return route.fulfill({ status: 204, headers: {
+      'access-control-allow-origin': '*',
+      'access-control-allow-methods': 'GET, POST, PUT, OPTIONS',
+      'access-control-allow-headers': '*'
+    } });
 
     requests.push(username + ':' + method + ' ' + url.pathname);
     if (method === 'GET' && url.pathname === '/api/friends/me') {
