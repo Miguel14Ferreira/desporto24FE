@@ -18,6 +18,9 @@ function fixture(now,pass){
     latitude:null,longitude:null,communityId:null,venueId:null,
     recurrence:'NONE',recurrenceOccurrences:null,externalConfirmedParticipants:0};
 }
+function candidateId(response){
+  return Number.isSafeInteger(response?.id)&&response.id>0?response.id:null;
+}
 function createdId(response,expected){
   must(Number.isSafeInteger(response?.id)&&response.id>0,'QA_CREATE_ID_MISSING');
   must(response.privateGame===true&&response.maxParticipants===2
@@ -93,7 +96,10 @@ async function run({passwords=[process.env.JYNLO_QA_PASSWORD_1,
     // One create POST only. Never auto-retry if the response is uncertain.
     const created=await request('/api/sessions',{
       method:'POST',token:tokens[0],body:planned,fetchImpl});
-    id=createdId(created,planned.gameDate);
+    // Keep the identifier BEFORE validating other response fields, so a
+    // partially unexpected response still permits cancellation in finally.
+    id=candidateId(created);
+    createdId(created,planned.gameDate);
     report('[PASS] Uma sessão privada QA criada: ID '+id+' (duas vagas, sem recinto)');
     phase='NON_MEMBER_DENIAL';
     await requireDenied('session',id,tokens[1],fetchImpl);
@@ -179,4 +185,4 @@ if(require.main===module){
     process.exitCode=1;
   });
 }
-module.exports={consent,fixture,createdId,joinedState,status,untilKickoff,run};
+module.exports={consent,fixture,candidateId,createdId,joinedState,status,untilKickoff,run};
