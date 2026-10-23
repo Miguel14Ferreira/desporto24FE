@@ -151,6 +151,11 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       const peer = from === self ? message.username2 : message.username1;
       this.acceptRealtime(inboxKey('direct', peer), this.fromDirect(message, peer));
     }));
+    // These events are pushed only AFTER_COMMIT by the server and address
+    // the original sender. Unknown peers/sessions must never affect the UI.
+    this.subscriptions.add(this.realtime.readReceipts$.subscribe(receipt => {
+      this.acceptPersistedPeerReadReceipt(receipt);
+    }));
     this.subscriptions.add(this.realtime.communityMessages$.subscribe(message => {
       if (message.kind !== 'CHAT') return;
       this.acceptRealtime(inboxKey('community', message.communityId), this.fromCommunity(message));
@@ -1016,6 +1021,20 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       && message.key === this.selectedKey && this.isMine(message)
       && Number.isSafeInteger(message.id) && message.id > 0
       && this.peerReadCursor !== null && this.peerReadCursor >= message.id;
+  }
+
+  private acceptPersistedPeerReadReceipt(
+    receipt: { peerUsername: string; lastReadMessageId: number } | null
+  ): void {
+    const selected = this.selected;
+    if (!this.isReceiptSessionCurrent() || !selected || selected.kind !== 'direct'
+        || !receipt || typeof receipt.peerUsername !== 'string'
+        || receipt.peerUsername.toLowerCase() !== String(selected.id).toLowerCase()
+        || !Number.isSafeInteger(receipt.lastReadMessageId)
+        || receipt.lastReadMessageId <= 0) return;
+    // A server-sent receipt is not delivery, presence, or a local read guess:
+    // it follows a committed durable cursor. Never decrease the known state.
+    this.peerReadCursor = Math.max(this.peerReadCursor ?? 0, receipt.lastReadMessageId);
   }
 
   private refreshPeerReadReceipt(force = false): void {

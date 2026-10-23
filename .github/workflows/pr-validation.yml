@@ -96,6 +96,16 @@ jobs:
         env:
           JYNLO_USE_SYSTEM_CHROME: '1'
         run: npx playwright test e2e/inbox-read-sync.spec.ts --config=playwright.config.ts --project=desktop-chromium --grep "blue checks follow|background recipient tab"
+      # Direct read receipts: two fully simulated browser identities and a
+      # committed socket event; no credentials or production API calls.
+      - name: Install Playwright for instant confirmed read regression
+        if: ${{ startsWith(github.head_ref, 'feature/chat-confirmed-read-websocket-') }}
+        run: npm install --no-save --package-lock=false @playwright/test@1.56.1
+      - name: Verify ✓/✓✓ before and immediately after server confirmation
+        if: ${{ startsWith(github.head_ref, 'feature/chat-confirmed-read-websocket-') }}
+        env:
+          JYNLO_USE_SYSTEM_CHROME: '1'
+        run: npx playwright test e2e/inbox-read-sync.spec.ts --config=playwright.config.ts --project=desktop-chromium --grep "blue checks follow"
       # Candidate-only browser verification. No additional job, second npm ci,
       # Render deployment, production credentials or production API requests.
       - name: Install Chromium for integrated desktop smoke

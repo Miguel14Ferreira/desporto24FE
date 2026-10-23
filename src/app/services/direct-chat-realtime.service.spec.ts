@@ -127,6 +127,42 @@ describe('Chat WebSocket identity and reconnection', () => {
     expect(received).toHaveBeenCalledTimes(1);
   });
 
+  it('forwards committed read receipts only after socket authentication',()=> {
+    const seen = jasmine.createSpy('read');
+    service.readReceipts$.subscribe(seen);
+    service.connect();
+    const socket = RealtimeFakeSocket.sockets[0];
+    socket.open();
+    const receipt={peerUsername:'jynloteste02',lastReadMessageId:42};
+    socket.receive({type:'CHAT_READ_RECEIPT',receipt});
+    expect(seen).not.toHaveBeenCalled();
+    socket.receive({type:'AUTHENTICATED'});
+    for(const invalid of [
+      {peerUsername:'jynloteste02',lastReadMessageId:0},
+      {peerUsername:'jynloteste02',lastReadMessageId:42.5},
+      {peerUsername:'jynloteste02',lastReadMessageId:'42'},
+      {peerUsername:null,lastReadMessageId:999}
+    ]) socket.receive({type:'CHAT_READ_RECEIPT',receipt:invalid});
+    expect(seen).not.toHaveBeenCalled();
+    socket.receive({type:'CHAT_READ_RECEIPT',receipt});
+    expect(seen).toHaveBeenCalledOnceWith(receipt);
+  });
+
+  it('does not leak a prior session read receipt after a different login',()=> {
+    const seen = jasmine.createSpy('read');
+    service.readReceipts$.subscribe(seen);
+    service.connect();
+    const socket = RealtimeFakeSocket.sockets[0];
+    socket.open();
+    socket.receive({type:'AUTHENTICATED'});
+    localStorage.setItem('t',qaToken('jynloteste02'));
+    socket.receive({type:'CHAT_READ_RECEIPT',receipt:{
+      peerUsername:'jynloteste02',lastReadMessageId:500
+    }});
+    expect(seen).not.toHaveBeenCalled();
+    expect(socket.closeCalls).toBe(1);
+  });
+
   it('replaces a socket when the account token changes and ignores late old events', fakeAsync(() => {
     const old = localStorage.getItem('t');
     const received = jasmine.createSpy('received');

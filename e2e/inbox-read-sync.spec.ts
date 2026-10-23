@@ -26,6 +26,7 @@ const messages: Message[] = [{
 const readThrough = new Map<string, number>([['bea', 41]]);
 const requests: string[] = [];
 const unauthorized: string[] = [];
+const authenticatedSockets = new Map<string, (value: unknown) => void>();
 
 function jwt(username: string) {
   const encode = (data: unknown) => Buffer.from(JSON.stringify(data)).toString('base64url');
@@ -56,6 +57,7 @@ async function authenticatedContext(browser: import('@playwright/test').Browser,
     socket.onMessage(payload => {
       try {
         if (JSON.parse(String(payload)).type === 'AUTH') {
+          authenticatedSockets.set(username, value => socket.send(JSON.stringify(value)));
           socket.send(JSON.stringify({ type: 'AUTHENTICATED' }));
         }
       } catch { /* ignore malformed fixture data */ }
@@ -111,7 +113,15 @@ async function authenticatedContext(browser: import('@playwright/test').Browser,
         return response(route, 403, { message: 'Not authorized' });
       }
       const allowedId = Math.min(payload.lastSeenMessageId, messages[messages.length - 1].id);
-      readThrough.set(username, Math.max(readThrough.get(username) || 0, allowedId));
+      const previous = readThrough.get(username) || 0;
+      const persisted = Math.max(previous, allowedId);
+      readThrough.set(username, persisted);
+      if (persisted > previous) {
+        // Mirrors BE AFTER_COMMIT event: only the sender, never an optimistic
+        // delivery or an unauthenticated browser, receives the receipt.
+        authenticatedSockets.get(other)?.({ type: 'CHAT_READ_RECEIPT',
+          receipt: {peerUsername: username, lastReadMessageId: persisted} });
+      }
       const last = messages[messages.length - 1];
       return response(route, 200, {
         kind: 'direct', id: other, latestMessageId: last.id,
@@ -173,6 +183,7 @@ test('two isolated browsers share server read state across inbox and original di
   messages.splice(1);
   readThrough.clear();
   readThrough.set('bea', 41);
+  authenticatedSockets.clear();
   requests.length = 0;
   unauthorized.length = 0;
 
@@ -238,6 +249,7 @@ test('blue checks follow recipient read cursor, not delivery or another account'
   messages.splice(1);
   readThrough.clear();
   readThrough.set('bea', 41);
+  authenticatedSockets.clear();
   requests.length = 0;
   unauthorized.length = 0;
 
@@ -278,10 +290,8 @@ test('blue checks follow recipient read cursor, not delivery or another account'
     await expect(recipient.locator('.inbox-bubble[data-message-id="42"] .inbox-read-check'))
       .toHaveCount(0);
 
-    // After returning to the sender, its foreground-only receipt GET refreshes
-    // the blue check without a reload or a guessed delivery event.
-    await sender.bringToFront();
-    await sender.clock.fastForward(16_000);
+    // The committed WebSocket event changes the marker immediately, even
+    // while the page clock is frozen; no polling or browser refresh is needed.
     await expect(outgoing.locator('.inbox-read-check')).toHaveText('✓✓');
     await expect(outgoing.locator('.inbox-read-check')).toHaveClass(/is-read/);
 
@@ -304,6 +314,7 @@ test('a background recipient tab cannot mark messages read until it becomes acti
   messages.splice(1);
   readThrough.clear();
   readThrough.set('bea', 41);
+  authenticatedSockets.clear();
   requests.length = 0;
   unauthorized.length = 0;
 
