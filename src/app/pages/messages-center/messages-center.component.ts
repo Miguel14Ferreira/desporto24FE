@@ -72,6 +72,14 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   private selectionVersion = 0;
   private inboxVersion = 0;
   private scrollRequested = false;
+  messageSearchOpen = false;
+  messageSearchTerm = '';
+  messageSearchResults: InboxMessage[] = [];
+  messageSearchLoading = false;
+  messageSearchError = false;
+  messageSearchHasMore = false;
+  messageSearchPage = 0;
+  private messageSearchVersion = 0;
   private readonly seenRealtimeIds = new Set<string>();
   private readonly realtimeDuringLoad = new Map<number, InboxMessage>();
 
@@ -259,6 +267,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     if (conversation.key === this.selectedKey && !this.previewError) return;
     if (this.selectedKey) this.drafts.set(this.selectedKey, this.draft);
     this.selectedKey = conversation.key;
+    this.resetMessageSearch();
     this.replyingTo = null;
     this.draft = this.drafts.get(conversation.key) || '';
     this.deliveryUncertain = this.pendingByConversation.has(conversation.key);
@@ -271,6 +280,63 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.markReadThisVisit(conversation.key);
     this.loadComposerAccess(conversation);
     this.loadHistory(conversation);
+  }
+
+  toggleMessageSearch(): void {
+    if (this.messageSearchOpen) {
+      this.resetMessageSearch();
+    } else {
+      this.messageSearchOpen = true;
+    }
+  }
+
+  private resetMessageSearch(): void {
+    ++this.messageSearchVersion;
+    this.messageSearchOpen = false;
+    this.messageSearchTerm = '';
+    this.messageSearchResults = [];
+    this.messageSearchLoading = false;
+    this.messageSearchError = false;
+    this.messageSearchHasMore = false;
+    this.messageSearchPage = 0;
+  }
+
+  submitMessageSearch(page = 0): void {
+    const conversation = this.selected;
+    const term = this.messageSearchTerm.trim();
+    if (!conversation || !this.messageSearchOpen || this.messageSearchLoading
+        || term.length < 2 || term.length > 80
+        || page < 0 || page > 50 || page > 0 && !this.messageSearchHasMore) return;
+
+    const version = ++this.messageSearchVersion;
+    const key = conversation.key;
+    this.messageSearchLoading = true;
+    this.messageSearchError = false;
+    this.inboxApi.searchMessages({ kind: conversation.kind, id: String(conversation.id) }, term, page)
+      .pipe(timeout(10_000), finalize(() => {
+        if (version === this.messageSearchVersion) this.messageSearchLoading = false;
+      }))
+      .subscribe({
+        next: response => {
+          if (version !== this.messageSearchVersion || this.selectedKey !== key
+              || !this.messageSearchOpen) return;
+          const results = response.results.map(hit => ({
+            key, id: hit.id, sender: hit.sender, text: hit.text,
+            createdAt: hit.createdAt || '',
+            replyToMessageId: hit.replyToMessageId,
+            replyToSender: hit.replyToSender, replyToText: hit.replyToText
+          }));
+          this.messageSearchResults = page === 0 ? results : mergeInboxMessages([
+            ...this.messageSearchResults, ...results
+          ]);
+          this.messageSearchPage = page;
+          this.messageSearchHasMore = response.hasMore && page < 50;
+        },
+        error: () => {
+          if (version !== this.messageSearchVersion || this.selectedKey !== key) return;
+          this.messageSearchError = true;
+        }
+      });
   }
 
   reloadPreview(): void {
