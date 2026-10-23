@@ -1870,7 +1870,10 @@ describe('SessionDetailsComponent', () => {
   });
 
   it('shows connection and reconnection status on the session chat', () => {
-    component.session = { ...session, joined: true };
+    component.session = {
+      ...session, joined: true,
+      gameDate: new Date(Date.now() + 3_600_000).toISOString()
+    };
     realtimeConnected.next(true);
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.sync-status').textContent).toContain('Ligado em tempo real');
@@ -1879,7 +1882,7 @@ describe('SessionDetailsComponent', () => {
     expect(fixture.nativeElement.querySelector('.sync-status').textContent).toContain('A restabelecer ligação');
   });
 
-  it('blocks a second session POST after network loss until delivery is verified', () => {
+  it('blocks a second session POST after network loss until delivery is verified', async () => {
     component.session = {
       ...session, joined: true,
       gameDate: new Date(Date.now() + 3_600_000).toISOString()
@@ -1893,6 +1896,8 @@ describe('SessionDetailsComponent', () => {
     expect(component.messageBody).toBe('Confirmam a hora?');
     component.sendMessage();
     expect(sessionService.postMessage).toHaveBeenCalledTimes(1);
+    fixture.detectChanges();
+    await fixture.whenStable(); // ngModel schedules the disabled state asynchronously.
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.chat-delivery-warning')).not.toBeNull();
     expect((fixture.nativeElement.querySelector('.message-composer textarea') as HTMLTextAreaElement).disabled).toBeTrue();
