@@ -93,6 +93,9 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   private pendingScrollToMessageId: number | null = null;
   private readonly seenRealtimeIds = new Set<string>();
   private readonly realtimeDuringLoad = new Map<number, InboxMessage>();
+  private pendingDeepLinkKey: string | null = null;
+  private observedDeepLinkKey: string | null = null;
+  private readonly sessionKickoffs = new Map<number, number>();
   readonly typing: ChatTypingTracker;
 
   constructor(
@@ -109,6 +112,15 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   }
 
   ngOnInit(): void {
+    // Angular reuses the component when only the query changes.
+    if (this.route?.queryParamMap) {
+      this.subscriptions.add(this.route.queryParamMap.subscribe(params =>
+        this.queueDeepLink(params.get('kind'), params.get('id'))));
+    } else {
+      this.queueDeepLink(
+        this.route?.snapshot?.queryParamMap?.get('kind') ?? null,
+        this.route?.snapshot?.queryParamMap?.get('id') ?? null);
+    }
     try {
       const token = localStorage.getItem('t');
       this.currentUsername = (token ? this.jwt.decodeToken(token)?.sub : '') || '';
@@ -241,6 +253,11 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   }
 
   loadInbox(): void {
+    // Support snapshot-only navigation contexts as well as live route streams.
+    if (this.observedDeepLinkKey === null && this.route?.snapshot?.queryParamMap) {
+      this.queueDeepLink(this.route.snapshot.queryParamMap.get('kind'),
+        this.route.snapshot.queryParamMap.get('id'));
+    }
     const request = ++this.inboxVersion;
     this.loading = true;
     this.failedSources = [];
@@ -291,6 +308,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       }
 
       // 'waitlisted' users have not yet been admitted to session chat.
+      this.sessionKickoffs.clear();
       const included = new Set<number>();
       for (const session of [...sessions.created, ...sessions.joined]) {
         // The only available session conversations are games yet to happen.
@@ -299,6 +317,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
             || session.status === 'CANCELLED' || session.status === 'COMPLETED'
             || session.status === 'NOT_OCCURRED' || included.has(session.id)) continue;
         included.add(session.id);
+        this.sessionKickoffs.set(session.id, kickoff);
         entries.push({
           key: inboxKey('session', session.id),
           kind: 'session',
@@ -318,14 +337,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
         latestMessageId: existing.get(item.key)?.latestMessageId
       })));
       this.refreshSummaries(request);
-      // Deep links from community/session cards select one authorized conversation.
-      // Unknown or expired targets never add a conversation to the list.
-      const kind = this.route?.snapshot?.queryParamMap?.get('kind');
-      const id = this.route?.snapshot?.queryParamMap?.get('id');
-      if ((kind === 'direct' || kind === 'community' || kind === 'session') && id) {
-        const target = this.conversations.find(entry => entry.key === inboxKey(kind, id));
-        if (target && target.key !== this.selectedKey) this.selectConversation(target);
-      }
+      // Consume a link only once; a refresh must not override manual selection.
+      this.openPendingDeepLink();
       // Leave the initial choice to the user: no N+1 history requests at page load.
       if (this.selectedKey && !this.conversations.some(item => item.key === this.selectedKey)) {
         this.selectedKey = null;
@@ -333,6 +346,32 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
         ++this.selectionVersion;
       }
     });
+  }
+
+  private queueDeepLink(kind: string | null, id: string | null): void {
+    const supported = kind === 'direct' || kind === 'community' || kind === 'session';
+    const value = id?.trim() || '';
+    const numericId = /^[1-9][0-9]*$/.test(value) && Number.isSafeInteger(Number(value));
+    const next = supported && value && value.length <= 128
+      && (kind === 'direct' || numericId) ? inboxKey(kind, value) : null;
+    if (next === this.observedDeepLinkKey) return;
+    this.observedDeepLinkKey = next;
+    this.pendingDeepLinkKey = next;
+    this.openPendingDeepLink();
+  }
+
+  private openPendingDeepLink(): void {
+    if (!this.pendingDeepLinkKey) return;
+    const target = this.conversations.find(item => item.key === this.pendingDeepLinkKey);
+    if (!target) return; // Never add a forged or expired conversation.
+    this.pendingDeepLinkKey = null;
+    if (target.key !== this.selectedKey) this.selectConversation(target);
+  }
+
+  isSelectedSessionOpen(): boolean {
+    const target = this.selected;
+    return !target || target.kind !== 'session'
+      || Date.now() < (this.sessionKickoffs.get(Number(target.id)) ?? 0);
   }
 
   selectConversation(conversation: InboxConversation): void {
@@ -674,14 +713,16 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
 
   private sessionIsWritable(session: SessionDetail): boolean {
     const kickoff = Date.parse(session.gameDate || '');
-    return session.joined === true
+    return (session.joined === true || Boolean(this.currentUsername
+        && session.creatorUsername?.toLowerCase() === this.currentUsername.toLowerCase()))
       && session.status !== 'CANCELLED' && session.status !== 'COMPLETED'
       && session.problemType !== 'NOT_OCCURRED'
-      && Number.isFinite(kickoff) && Date.now() < kickoff + 2 * 60 * 60 * 1000;
+      && Number.isFinite(kickoff) && Date.now() < kickoff;
   }
 
   canSendMessage(): boolean {
-    return Boolean(this.selected && this.composerAllowed && !this.composerAccessLoading
+    return Boolean(this.selected && this.isSelectedSessionOpen()
+      && this.composerAllowed && !this.composerAccessLoading
       && !this.previewLoading && !this.previewError && !this.sending && !this.deliveryUncertain
       && !this.deliveryChecking && this.draft.trim().length > 0
       && this.draft.trim().length <= 2000);

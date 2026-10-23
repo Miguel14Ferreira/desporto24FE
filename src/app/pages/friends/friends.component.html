@@ -86,7 +86,8 @@
 
               <a
                 class="friend-action friend-action--primary jynlo-action jynlo-action--primary"
-                [routerLink]="['/menu/friendList/chat', friend.username]">
+                routerLink="/menu/messages"
+                [queryParams]="{ kind: 'direct', id: friend.username }">
                 <span>💬</span>
                 {{ 'friends.chatAction' | t }}
               </a>
