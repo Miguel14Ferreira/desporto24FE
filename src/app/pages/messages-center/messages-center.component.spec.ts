@@ -83,6 +83,27 @@ describe('Unified Jynlo message center', () => {
     expect(inboxApi.markRead).not.toHaveBeenCalled();
   });
 
+  it('keeps scroll position and unread state while an earlier message is being read', () => {
+    const conversation = item('direct', 'bea');
+    component.conversations = [conversation];
+    component.selectedKey = conversation.key;
+    component.messages = [message(conversation.key, 20), message(conversation.key, 21)];
+    const log = { scrollHeight: 1000, scrollTop: 100, clientHeight: 280 };
+    component.previewLog = { nativeElement: log } as any;
+
+    (component as any).acceptRealtime(conversation.key, message(conversation.key, 22, 'bea'));
+    component.ngAfterViewChecked();
+    expect(component.messages.map(x => x.id)).toEqual([20, 21, 22]);
+    expect(log.scrollTop).toBe(100);
+    expect(inboxApi.markRead).not.toHaveBeenCalled();
+
+    // Returning manually to the bottom may now acknowledge the new message.
+    log.scrollTop = 720;
+    component.onPreviewLogScroll();
+    expect(inboxApi.markRead).toHaveBeenCalledOnceWith(
+      { kind: 'direct', id: 'bea' }, 22);
+  });
+
   it('locates an already loaded search result without rewriting or marking chat history as read', () => {
     const selected = item('direct', 'bea');
     component.conversations = [selected];
