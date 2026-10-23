@@ -1849,6 +1849,106 @@ describe('SessionDetailsComponent', () => {
     expect(component.messageBody).toBe('');
   });
 
+  it('keeps a socket message when an older HTTP chat response arrives afterwards', () => {
+    component.session = {
+      ...session, joined: true,
+      gameDate: new Date(Date.now() + 3_600_000).toISOString()
+    };
+    const pending = new Subject<SessionMessage[]>();
+    sessionService.messages.and.returnValue(pending.asObservable());
+    component.refreshMessages();
+    const incoming: SessionMessage = {
+      id: 801, sessionId: 7, senderUsername: 'player-one',
+      body: 'Chego em 5 minutos', createdAt: new Date().toISOString()
+    };
+    realtimeSessionMessages.next(incoming);
+    pending.next([]);
+    pending.complete();
+    expect(component.messages).toEqual([incoming]);
+    realtimeSessionMessages.next(incoming);
+    expect(component.messages.length).toBe(1);
+  });
+
+  it('shows connection and reconnection status on the session chat', () => {
+    component.session = { ...session, joined: true };
+    realtimeConnected.next(true);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.sync-status').textContent).toContain('Ligado em tempo real');
+    realtimeConnected.next(false);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.sync-status').textContent).toContain('A restabelecer ligação');
+  });
+
+  it('blocks a second session POST after network loss until delivery is verified', () => {
+    component.session = {
+      ...session, joined: true,
+      gameDate: new Date(Date.now() + 3_600_000).toISOString()
+    };
+    (component as any).currentUsername = 'fixture-user';
+    component.messageBody = 'Confirmam a hora?';
+    sessionService.postMessage.and.returnValue(throwError(() => new HttpErrorResponse({ status: 0 })));
+    sessionService.messages.and.returnValue(of([]));
+    component.sendMessage();
+    expect(component.chatDeliveryUncertain).toBeTrue();
+    expect(component.messageBody).toBe('Confirmam a hora?');
+    component.sendMessage();
+    expect(sessionService.postMessage).toHaveBeenCalledTimes(1);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.chat-delivery-warning')).not.toBeNull();
+    expect((fixture.nativeElement.querySelector('.message-composer textarea') as HTMLTextAreaElement).disabled).toBeTrue();
+    component.resumeChatAfterUncertainSend();
+    expect(component.chatDeliveryUncertain).toBeFalse();
+    expect(component.messageBody).toBe('Confirmam a hora?');
+    expect(sessionService.postMessage).toHaveBeenCalledTimes(1);
+  });
+
+  it('confirms uncertain delivery from session chat history without a duplicate POST', () => {
+    component.session = {
+      ...session, joined: true,
+      gameDate: new Date(Date.now() + 3_600_000).toISOString()
+    };
+    (component as any).currentUsername = 'fixture-user';
+    component.messageBody = 'Até logo, equipa';
+    const delivered: SessionMessage = {
+      id: 810, sessionId: 7, senderUsername: 'fixture-user',
+      body: 'Até logo, equipa', createdAt: new Date().toISOString()
+    };
+    sessionService.postMessage.and.returnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
+    sessionService.messages.and.returnValue(of([delivered]));
+    component.sendMessage();
+    expect(component.chatDeliveryUncertain).toBeFalse();
+    expect(component.messageBody).toBe('');
+    expect(component.messages.map(message => message.id)).toContain(810);
+    expect(sessionService.postMessage).toHaveBeenCalledTimes(1);
+  });
+
+  it('never mistakes an older identical message for the uncertain new message', () => {
+    component.session = {
+      ...session, joined: true,
+      gameDate: new Date(Date.now() + 3_600_000).toISOString()
+    };
+    (component as any).currentUsername = 'fixture-user';
+    const old: SessionMessage = {
+      id: 707, sessionId: 7, senderUsername: 'fixture-user',
+      body: 'Bora jogar', createdAt: new Date().toISOString()
+    };
+    component.messages = [old];
+    component.messageBody = 'Bora jogar';
+    sessionService.postMessage.and.returnValue(throwError(() => new HttpErrorResponse({ status: 408 })));
+    sessionService.messages.and.returnValue(of([old]));
+    component.sendMessage();
+    expect(component.chatDeliveryUncertain).toBeTrue();
+    expect(component.messageBody).toBe('Bora jogar');
+    expect(sessionService.postMessage).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not submit Enter during text composition', () => {
+    const event = new KeyboardEvent('keydown', { key: 'Enter', isComposing: true, cancelable: true });
+    component.onChatEnter(event);
+    expect(event.defaultPrevented).toBeFalse();
+    expect(sessionService.postMessage).not.toHaveBeenCalled();
+  });
+
   it('should append a realtime session message only once', () => {
     const message: SessionMessage = {
       id: 50,
