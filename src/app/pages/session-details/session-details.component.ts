@@ -1224,7 +1224,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     // Session details can be opened without opening/seeing the chat.
     if (!this.sessionId || !this.canAccessChat() || this.chatLoading || this.chatError
         || this.messages.length === 0) return;
-    const highestId = Math.max(0, ...this.messages.map(message => message.id));
+    const highestId = this.messages.reduce((max, message) => Math.max(max, message.id), 0);
     this.readSync.markVisible('session', this.sessionId,
       highestId, this.chatMessageList?.nativeElement);
   }
