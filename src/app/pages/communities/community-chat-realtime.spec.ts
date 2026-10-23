@@ -73,7 +73,7 @@ describe('Community chat realtime and sending', () => {
   it('loads earlier messages with the oldest cursor, without duplication', () => {
     component.timelineEntries = Array.from({ length: 60 }, (_, i) => entry(i + 61));
     component.chatHasOlder = true;
-    api.olderMessages.and.returnValue(of([entry(59), entry(60)]));
+    api.olderMessages.and.returnValue(of([ { ...entry(59), createdAt: '2026-10-21T09:00:00Z' }, { ...entry(60), createdAt: '2026-10-21T09:01:00Z' } ]));
     component.loadOlderCommunityMessages();
     expect(api.olderMessages).toHaveBeenCalledOnceWith(7, 61);
     expect(component.timelineEntries.map(x => x.id)[0]).toBe(59);
