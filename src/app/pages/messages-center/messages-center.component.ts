@@ -411,6 +411,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     ++this.historyLocateVersion;
     this.historyLocateLoading = false;
     this.historyLocateError = false;
+    this.pendingScrollToMessageId = null;
     this.messageSearchLoading = false;
     this.messageSearchError = false;
     this.messageSearchSearched = false;
