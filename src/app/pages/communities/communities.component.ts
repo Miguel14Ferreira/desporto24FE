@@ -49,6 +49,7 @@ import { SessionService } from '../../services/session.service';
 import { CommunityTimelineService, CommunityTimelineEntry, CommunityTimelineKind } from '../../services/community-timeline.service';
 import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.service';
 import { ChatTypingTracker } from '../../services/chat-typing-tracker';
+import { chatContinuesGroup, chatDaySeparator } from '../../shared/chat-thread-presentation';
 import { ChatReadSyncService } from '../../services/chat-read-sync.service';
 import { CommunityProfile } from '../model/community-profile';
 import { SessionSummary } from '../model/session-summary';
@@ -167,6 +168,20 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       const token = localStorage.getItem('t');
       return token ? this.jwtHelper.decodeToken(token)?.sub ?? null : null;
     } catch { return null; }
+  }
+
+  chatDayLabelAt(index: number): string {
+    const current = this.timelineEntries[index];
+    return current ? chatDaySeparator(current.createdAt,
+      index > 0 ? this.timelineEntries[index - 1].createdAt : null) : '';
+  }
+
+  chatContinuesGroupAt(index: number): boolean {
+    if (index <= 0) return false;
+    const current = this.timelineEntries[index], previous = this.timelineEntries[index - 1];
+    return current.kind === 'CHAT' && previous.kind === 'CHAT'
+      && chatContinuesGroup(current.username, current.createdAt,
+        previous.username, previous.createdAt);
   }
 
   isMyChatEntry(entry: CommunityTimelineEntry): boolean {

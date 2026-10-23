@@ -10,6 +10,7 @@ import { DirectChatService } from '../../services/direct-chat.service';
 import { CommunityService } from '../../services/community.service';
 import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.service';
 import { ChatTypingTracker } from '../../services/chat-typing-tracker';
+import { chatContinuesGroup, chatDaySeparator } from '../../shared/chat-thread-presentation';
 import { ChatReadSyncService } from '../../services/chat-read-sync.service';
 
 @Component({
@@ -476,6 +477,19 @@ export class DirectChatComponent implements OnInit, OnDestroy, AfterViewChecked 
     }
 
     return t('feedback.chat.blockedGeneric');
+  }
+
+  dayLabelAt(index: number): string {
+    const item = this.messages[index];
+    return item ? chatDaySeparator(item.date || item.dataDisplay,
+      index > 0 ? (this.messages[index - 1].date || this.messages[index - 1].dataDisplay) : null) : '';
+  }
+
+  continuesGroupAt(index: number): boolean {
+    if (index <= 0) return false;
+    const current = this.messages[index], previous = this.messages[index - 1];
+    return chatContinuesGroup(current.username1, current.date || current.dataDisplay,
+      previous.username1, previous.date || previous.dataDisplay);
   }
 
   messageDate(message: DirectChatMessage): string {

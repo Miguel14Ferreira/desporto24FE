@@ -17,6 +17,7 @@ import { DirectChatService } from '../../services/direct-chat.service';
 import { CommunityTimelineService } from '../../services/community-timeline.service';
 import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.service';
 import { ChatTypingTracker } from '../../services/chat-typing-tracker';
+import { chatContinuesGroup, chatDaySeparator } from '../../shared/chat-thread-presentation';
 import { ChatReactionsComponent } from '../../shared/chat-reactions/chat-reactions.component';
 import { DirectChatMessage } from '../model/direct-chat';
 import { SessionMessage } from '../model/session-message';
@@ -148,6 +149,28 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.subscriptions.unsubscribe();
     if (this.summaryTimer) clearInterval(this.summaryTimer);
     // The navbar owns the shared socket lifecycle. Never disconnect it here.
+  }
+
+  dayLabelAt(index: number): string {
+    const current = this.messages[index];
+    return current ? chatDaySeparator(current.createdAt,
+      index > 0 ? this.messages[index - 1].createdAt : null) : '';
+  }
+
+  continuesGroupAt(index: number): boolean {
+    if (index <= 0) return false;
+    const current = this.messages[index], previous = this.messages[index - 1];
+    return chatContinuesGroup(current.sender, current.createdAt,
+      previous.sender, previous.createdAt);
+  }
+
+  private isNearPreviewBottom(): boolean {
+    const log = this.previewLog?.nativeElement;
+    return !log || log.scrollHeight - log.scrollTop - log.clientHeight < 120;
+  }
+
+  onPreviewLogScroll(): void {
+    if (this.selectedKey && this.isNearPreviewBottom()) this.markRenderedRead(this.selectedKey);
   }
 
   ngAfterViewChecked(): void {
@@ -496,6 +519,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     })).subscribe({
       next: entries => {
         if (version !== this.selectionVersion || conversation.key !== this.selectedKey) return;
+        // Keep a user's scroll position when refreshing an already opened history.
+        const follow = this.messages.length === 0 || this.isNearPreviewBottom();
         // Merge live events received after the HTTP request started; never
         // overwrite them with an older response or duplicate their IDs.
         this.messages = mergeInboxMessages([...entries, ...this.realtimeDuringLoad.values()]);
@@ -506,8 +531,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
         }
         this.confirmFromHistoryIfPresent(conversation.key, this.messages);
         this.updatePreviewFromHistory(conversation.key, this.messages);
-        this.markRenderedRead(conversation.key, true);
-        this.scrollRequested = true;
+        if (follow) this.markRenderedRead(conversation.key, true);
+        this.scrollRequested = follow;
       },
       error: () => {
         if (version !== this.selectionVersion || conversation.key !== this.selectedKey) return;
@@ -569,11 +594,12 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       // The historical window is not the live end of the chat. Never mix
       // fresh socket events into it or acknowledge them as rendered/read.
       if (this.historicalPreview) return;
+      const follow = isMine || this.isNearPreviewBottom();
       this.messages = mergeInboxMessages([...this.messages, message]);
       if (this.previewLoading) this.realtimeDuringLoad.set(message.id, message);
       this.confirmFromHistoryIfPresent(key, [message]);
-      if (!this.previewLoading && !this.previewError) this.markRenderedRead(key);
-      this.scrollRequested = true;
+      if (!this.previewLoading && !this.previewError && follow) this.markRenderedRead(key);
+      this.scrollRequested = follow;
     }
   }
 
@@ -841,6 +867,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   private markRenderedRead(key: string, fromLoadedHistory = false): void {
     if (!this.serverSummariesAvailable || key !== this.selectedKey || this.historicalPreview
         || (this.previewLoading && !fromLoadedHistory) || this.previewError || this.messages.length === 0) return;
+    if (!fromLoadedHistory && !this.isNearPreviewBottom()) return;
     const lastSeen = Math.max(...this.messages.map(message => message.id));
     if (!Number.isSafeInteger(lastSeen) || lastSeen <= 0) return;
     const conversation = this.selected;
