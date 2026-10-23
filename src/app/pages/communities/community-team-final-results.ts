@@ -4,18 +4,29 @@ export function isTeamFinalEvent(type: string | null | undefined): boolean {
   return type === 'HANDBALL_FINAL' || type === 'RUGBY_FINAL' || type === 'RUGBY_SEVENS_FINAL'
     || type === 'FUTSAL_FINAL' || type === 'FIELD_HOCKEY_FINAL'
     || type === 'ROLLER_HOCKEY_FINAL' || type === 'WATER_POLO_FINAL'
-    || type === 'ICE_HOCKEY_REG' || type === 'ICE_HOCKEY_OT' || type === 'ICE_HOCKEY_SO';
+    || type === 'ICE_HOCKEY_REG' || type === 'ICE_HOCKEY_OT' || type === 'ICE_HOCKEY_SO'
+    || type === 'BASEBALL_RUNS' || type === 'SOFTBALL_RUNS';
 }
-/** Only rugby and rugby sevens use points; these team events use goals. */
+/** Sport-aware scoreboard units: goals, rugby points, or baseball/softball runs. */
+export function teamFinalUsesRuns(type: string | null | undefined): boolean {
+  return type === 'BASEBALL_RUNS' || type === 'SOFTBALL_RUNS';
+}
 export function teamFinalUsesGoals(type: string | null | undefined): boolean {
-  return isTeamFinalEvent(type) && type !== 'RUGBY_FINAL' && type !== 'RUGBY_SEVENS_FINAL';
+  return isTeamFinalEvent(type) && type !== 'RUGBY_FINAL' && type !== 'RUGBY_SEVENS_FINAL'
+    && !teamFinalUsesRuns(type);
+}
+export function teamFinalScoreLabelKey(type: string | null | undefined): string {
+  return teamFinalUsesRuns(type) ? 'communities.teamFinal.runs'
+    : teamFinalUsesGoals(type) ? 'communities.teamFinal.goals'
+    : 'communities.teamFinal.points';
 }
 
 const TEAM_FINAL_LABELS: Record<string, string> = {
   HANDBALL_FINAL: 'handball', RUGBY_FINAL: 'rugby', RUGBY_SEVENS_FINAL: 'sevens',
   FUTSAL_FINAL: 'futsal', FIELD_HOCKEY_FINAL: 'fieldHockey',
   ROLLER_HOCKEY_FINAL: 'rollerHockey', WATER_POLO_FINAL: 'waterPolo',
-  ICE_HOCKEY_REG: 'iceRegulation', ICE_HOCKEY_OT: 'iceOvertime', ICE_HOCKEY_SO: 'iceShootout'
+  ICE_HOCKEY_REG: 'iceRegulation', ICE_HOCKEY_OT: 'iceOvertime', ICE_HOCKEY_SO: 'iceShootout',
+  BASEBALL_RUNS: 'baseballRuns', SOFTBALL_RUNS: 'softballRuns'
 };
 export function teamFinalTitleKey(type: string | null | undefined): string {
   return 'communities.teamFinal.' + (type ? TEAM_FINAL_LABELS[type] ?? 'finalTitle' : 'finalTitle');
@@ -29,6 +40,8 @@ export function teamFinalHintKey(type: string | null | undefined): string {
     case 'ICE_HOCKEY_REG': return 'communities.iceHockey.regulationHint';
     case 'ICE_HOCKEY_OT': return 'communities.iceHockey.overtimeHint';
     case 'ICE_HOCKEY_SO': return 'communities.iceHockey.shootoutHint';
+    case 'BASEBALL_RUNS': return 'communities.teamFinal.baseballRunsHint';
+    case 'SOFTBALL_RUNS': return 'communities.teamFinal.softballRunsHint';
     default: return teamFinalUsesGoals(type)
       ? 'communities.teamFinal.goalHint' : 'communities.teamFinal.finalHint';
   }
