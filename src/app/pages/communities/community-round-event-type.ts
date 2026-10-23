@@ -13,13 +13,16 @@ export type CommunityEventType = 'RACE' | 'FREESTYLE' | 'TRACK' | 'JUMP' | 'THRO
   | 'ARTISTIC_DUET_TECH' | 'ARTISTIC_DUET_FREE'
   | 'ARTISTIC_TEAM_TECH' | 'ARTISTIC_TEAM_FREE'
   | 'BASKETBALL_FINAL' | 'BASKETBALL_3X3_FINAL'
-  | 'VOLLEYBALL_FINAL' | 'BEACH_VOLLEY_FINAL';
+  | 'VOLLEYBALL_FINAL' | 'BEACH_VOLLEY_FINAL' | 'HANDBALL_FINAL' | 'RUGBY_FINAL' | 'RUGBY_SEVENS_FINAL';
 export interface CommunityEventOption { code: CommunityEventType; labelKey: string }
 const TYPES: Record<string, readonly CommunityEventOption[]> = {
   basquetebol: [{ code: 'BASKETBALL_FINAL', labelKey: 'communities.basketball.fiveVsFive' }],
   'basquetebol 3x3': [{ code: 'BASKETBALL_3X3_FINAL', labelKey: 'communities.basketball.threeVsThree' }],
   voleibol: [{ code: 'VOLLEYBALL_FINAL', labelKey: 'communities.volleyball.indoor' }],
   'voleibol de praia': [{ code: 'BEACH_VOLLEY_FINAL', labelKey: 'communities.volleyball.beach' }],
+  andebol: [{ code: 'HANDBALL_FINAL', labelKey: 'communities.teamFinal.handball' }],
+  rugby: [{ code: 'RUGBY_FINAL', labelKey: 'communities.teamFinal.rugby' }],
+  'rugby sevens': [{ code: 'RUGBY_SEVENS_FINAL', labelKey: 'communities.teamFinal.sevens' }],
   bmx: [
     { code: 'RACE', labelKey: 'communities.eventType.race' },
     { code: 'FREESTYLE', labelKey: 'communities.eventType.freestyle' }
@@ -107,7 +110,8 @@ export function eventPresentationFormat(
       'ARTISTIC_DUET_TECH', 'ARTISTIC_DUET_FREE',
       'ARTISTIC_TEAM_TECH', 'ARTISTIC_TEAM_FREE'].includes(eventType || '') ? 'judged'
       : ['BASKETBALL_FINAL', 'BASKETBALL_3X3_FINAL',
-          'VOLLEYBALL_FINAL', 'BEACH_VOLLEY_FINAL'].includes(eventType || '') ? 'team'
+          'VOLLEYBALL_FINAL', 'BEACH_VOLLEY_FINAL',
+          'HANDBALL_FINAL', 'RUGBY_FINAL', 'RUGBY_SEVENS_FINAL'].includes(eventType || '') ? 'team'
       : 'measured';
   return formatForSport(sport || null);
 }

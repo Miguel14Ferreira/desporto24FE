@@ -119,3 +119,9 @@ O registo central é `src/app/pages/communities/community-round-sport.ts`. Os te
 - Marcador por sets 3–0, 3–1, 3–2 ou 2–0, 2–1, discriminando os pontos de cada set. Registar apenas participantes associados a cada lado; no indoor não inferir ficha de equipa completa.
 - Forfeits, jogos reduzidos e desempates de torneio além de cada partida ficam para outro contrato explícito.
 - Referências FIVB regras-base 2025–2028: https://www.fivb.com/volleyball/the-game/basic-rules/ e https://www.fivb.com/beach-volleyball/the-game/basic-rules/
+
+## Andebol / Rugby / Rugby Sevens — marcador final por equipa
+- Eventos tipados: HANDBALL_FINAL, RUGBY_FINAL, RUGBY_SEVENS_FINAL.
+- Registo manual de golos no Andebol e pontos totais no Rugby, com empates possíveis e sem inferir ensaios, conversões ou pontos de classificação.
+- API teamScore e colunas nullable team_score_a/team_score_b, separadas de basketballScore, das estatísticas de futebol e dos resultados históricos.
+- Pontuações inteiras 0–999 como limite técnico; equipas A/B, tradução PT/EN, Concept One.
