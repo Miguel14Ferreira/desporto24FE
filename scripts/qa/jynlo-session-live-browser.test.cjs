@@ -1,6 +1,6 @@
 'use strict';
 const test=require('node:test'),assert=require('node:assert/strict');
-const {consent,fixture,createdId,joinedState,status,untilKickoff}=
+const {consent,fixture,candidateId,createdId,joinedState,status,untilKickoff}=
   require('./jynlo-session-live-browser.cjs');
 
 test('explicit opt-in and private isolated non-recurring fixture',()=>{
@@ -55,4 +55,15 @@ test('kickoff check uses one bounded clock wait',async()=>{
   assert.equal(wait,3800);
   await assert.rejects(()=>untilKickoff('2030-10-23T19:00:00Z',
     ()=>Date.parse('2026-10-23T19:00:00Z')),/QA_KICKOFF_WINDOW_INVALID/);
+});
+
+test('capture created session id before validating fields for targeted cleanup',()=>{
+  const incomplete={id:991,privateGame:false,maxParticipants:2,creatorUsername:'jynloteste01',
+    gameDate:'2026-10-23T19:03:00Z'};
+  assert.equal(candidateId(incomplete),991);
+  assert.throws(()=>createdId(incomplete,'2026-10-23T19:03:00Z'),
+    /QA_CREATE_RESPONSE_MISMATCH/);
+  assert.equal(candidateId({id:null}),null);
+  assert.equal(candidateId({id:-3}),null);
+  assert.equal(candidateId({id:1.2}),null);
 });
