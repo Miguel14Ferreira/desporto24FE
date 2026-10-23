@@ -278,16 +278,17 @@ test('blue checks follow recipient read cursor, not delivery or another account'
     await expect(recipient.locator('.inbox-bubble[data-message-id="42"] .inbox-read-check'))
       .toHaveCount(0);
 
-    // Automatic polling must update sender without a reload or a guessed
-    // delivery event. This advances ONLY the sender page's virtual clock.
-    await sender.clock.fastForward(46_000);
+    // After returning to the sender, its foreground-only receipt GET refreshes
+    // the blue check without a reload or a guessed delivery event.
+    await sender.bringToFront();
+    await sender.clock.fastForward(16_000);
     await expect(outgoing.locator('.inbox-read-check')).toHaveText('✓✓');
     await expect(outgoing.locator('.inbox-read-check')).toHaveClass(/is-read/);
 
     // Simulate another same-origin tab replacing the sender's login.
     // Blue checks from the old authenticated session must disappear.
     await sender.evaluate(() => localStorage.setItem('t', 'other-account-fixture'));
-    await sender.clock.fastForward(46_000);
+    await sender.clock.fastForward(16_000);
     await expect(outgoing.locator('.inbox-read-check')).toHaveText('✓');
     await expect(outgoing.locator('.inbox-read-check')).not.toHaveClass(/is-read/);
     expect(unauthorized).toEqual([]);
@@ -296,5 +297,65 @@ test('blue checks follow recipient read cursor, not delivery or another account'
   } finally {
     await ana.close();
     await bea.close();
+  }
+});
+
+test('a background recipient tab cannot mark messages read until it becomes active', async ({ browser }) => {
+  messages.splice(1);
+  readThrough.clear();
+  readThrough.set('bea', 41);
+  requests.length = 0;
+  unauthorized.length = 0;
+
+  const senderContext = await authenticatedContext(browser, 'ana');
+  const recipientContext = await authenticatedContext(browser, 'bea');
+  try {
+    const recipient = await recipientContext.newPage();
+    await recipient.goto('/menu/messages?kind=direct&id=ana', {waitUntil:'domcontentloaded'});
+    await expect(recipient.locator('.inbox-bubble[data-message-id="41"]')).toBeVisible();
+    // Chromium headless may report every tab as focused, even after
+    // bringToFront on another page. Force the real document's visibility/focus
+    // contract during reload so the Angular lifecycle is deterministic.
+    await recipient.addInitScript(() => {
+      let qaVisible = false;
+      Object.defineProperty(document, 'visibilityState', {
+        configurable: true, get: () => qaVisible ? 'visible' : 'hidden'
+      });
+      Object.defineProperty(document, 'hasFocus', {
+        configurable: true, value: () => qaVisible
+      });
+      (window as any).__qaActivatePage = () => {
+        qaVisible = true;
+        document.dispatchEvent(new Event('visibilitychange'));
+        window.dispatchEvent(new Event('focus'));
+      };
+    });
+    await recipient.reload({waitUntil:'domcontentloaded'});
+    expect(await recipient.evaluate(() => document.visibilityState)).toBe('hidden');
+
+    const sender = await senderContext.newPage();
+    await sender.goto('/menu/messages?kind=direct&id=bea', {waitUntil:'domcontentloaded'});
+    await expect(sender.locator('#inbox-reply')).toBeEnabled();
+    await sender.locator('#inbox-reply').fill('Mensagem para uma aba em segundo plano');
+    await sender.locator('.inbox-composer button[type="submit"]').click();
+    await expect.poll(() => messages.length).toBe(2);
+
+    // Load the unread message in an inactive tab. A background DOM render is
+    // not evidence that the account holder actually read the message.
+    await recipient.reload({waitUntil:'domcontentloaded'});
+    await expect(recipient.locator('.inbox-bubble[data-message-id="42"]')).toBeVisible();
+    expect(await recipient.evaluate(() => document.hasFocus())).toBe(false);
+    expect(readThrough.get('bea')).toBe(41);
+    await expect(sender.locator('.inbox-bubble[data-message-id="42"] .inbox-read-check'))
+      .toHaveText('✓');
+
+    // First foreground activation marks the now-visible history read.
+    await recipient.evaluate(() => (window as any).__qaActivatePage());
+    await expect.poll(() => recipient.evaluate(() => document.hasFocus())).toBe(true);
+    await expect.poll(() => readThrough.get('bea')).toBe(42);
+    expect(unauthorized).toEqual([]);
+  } finally {
+    await senderContext.close();
+    await recipientContext.close();
   }
 });
