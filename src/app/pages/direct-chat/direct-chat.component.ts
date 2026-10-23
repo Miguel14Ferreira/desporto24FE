@@ -139,7 +139,7 @@ export class DirectChatComponent implements OnInit, OnDestroy, AfterViewChecked 
   private markVisibleMessagesRead(): void {
     if (this.loading || this.errorMessage || !this.chatInfo || !this.currentUsername
         || !this.recipientUsername || this.messages.length === 0) return;
-    const highestId = Math.max(0, ...this.messages.map(message => message.id || 0));
+    const highestId = this.messages.reduce((max, message) => Math.max(max, message.id || 0), 0);
     this.readSync.markVisible('direct', this.recipientUsername,
       highestId, this.messageList?.nativeElement);
   }
