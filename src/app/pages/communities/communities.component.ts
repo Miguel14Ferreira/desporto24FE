@@ -14,6 +14,7 @@ import { breakingBattleError } from './community-breaking-battle';
 import { isVolleyballEvent, volleyballMaxSets, volleyballMinSets,
   volleyballMatchError, volleyballSetWinner, volleyballSetTotals,
   recordedVolleyballMatch } from './community-volleyball-results';
+import { isTeamFinalEvent, teamFinalError, recordedTeamFinal, teamFinalWinner } from './community-team-final-results';
 import { isBasketballFinal, basketballScoreError,
   recordedBasketballFinal, basketballWinner } from './community-basketball-results';
 import { isGroupRoutineEvent, routineGroupNames, routineGroupError,
@@ -817,6 +818,9 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   recordedRacketMatch(round: CommunityRound): boolean {
     return recordedRacketMatch(round);
   }
+  isTeamFinalEvent = isTeamFinalEvent;
+  recordedTeamFinal = recordedTeamFinal;
+  teamFinalWinner = teamFinalWinner;
   isBasketballFinal = isBasketballFinal;
   recordedBasketballFinal = recordedBasketballFinal;
   basketballWinner = basketballWinner;
@@ -858,7 +862,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     const mode = this.roundView(round);
     if (mode === 'race' || recordedRacketMatch(round)
         || isGroupRoutineEvent(round.eventType) || recordedBasketballFinal(round)
-        || recordedVolleyballMatch(round)) return null;
+        || recordedVolleyballMatch(round) || recordedTeamFinal(round)) return null;
     const matchup = communityRoundMatchup(
       round, t('communities.matchup.teamA'), t('communities.matchup.teamB')
     );
@@ -994,6 +998,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   roundEntries: CommunityRoundEntryDraft[] = [];
   roundGroupScoresDraft: Record<string, number | null> = {};
   roundBasketballScoreDraft = { sideA: null as number | null, sideB: null as number | null };
+  roundTeamScoreDraft = {sideA: null as number | null, sideB: null as number | null};
   volleyballSetScores: Array<{sideA: number | null; sideB: number | null}> =
     [{sideA: null,sideB: null},{sideA: null,sideB: null}];
   isGroupRoutineEvent = isGroupRoutineEvent;
@@ -2333,12 +2338,14 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       this.roundEntries = [];
       this.roundGroupScoresDraft = {};
       this.roundBasketballScoreDraft = { sideA: null, sideB: null };
+      this.roundTeamScoreDraft = {sideA: null, sideB: null};
       this.resetVolleyballSets();
       return;
     }
 
     this.roundGroupScoresDraft = {};
     this.roundBasketballScoreDraft = { sideA: null, sideB: null };
+    this.roundTeamScoreDraft = {sideA: null, sideB: null};
     this.resetVolleyballSets();
     this.roundEntries = community.members.map(member => ({
       username: member.username,
@@ -3054,6 +3061,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     const breaking = this.newRoundEventType === 'BREAKING_BATTLE';
     const groupRoutine = isGroupRoutineEvent(this.newRoundEventType);
     const basketball = isBasketballFinal(this.newRoundEventType);
+    const teamFinal = isTeamFinalEvent(this.newRoundEventType);
     const volleyball = isVolleyballEvent(this.newRoundEventType);
     const racket = racketSupportsSets(this.newRoundSport);
 
@@ -3065,6 +3073,10 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
         this.errorMessage = t('feedback.communities.' + invalid);
         return;
       }
+    }
+    if (teamFinal) {
+      const invalid = teamFinalError(this.newRoundEventType, selectedEntries, this.roundTeamScoreDraft);
+      if (invalid) { this.errorMessage = t('feedback.communities.' + invalid); return; }
     }
     if (basketball) {
       const invalid = basketballScoreError(this.newRoundEventType,
@@ -3116,7 +3128,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     const entries = selectedEntries
       .map(entry => ({
         username: entry.username,
-        team: groupRoutine || basketball || volleyball ? entry.team.trim()
+        team: groupRoutine || basketball || volleyball || teamFinal ? entry.team.trim()
           : race || neutral ? null : (entry.team.trim() || null),
         result: breaking ? entry.result
           : race || neutral ? 'DRAW' as CommunityMatchResult
@@ -3160,6 +3172,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       eventDiscipline: this.roundDisciplineDraft || null,
       ...(groupRoutine ? { groupScores } : {}),
       ...(basketball ? { basketballScore: { ...this.roundBasketballScoreDraft } } : {}),
+      ...(teamFinal ? { teamScore: { ...this.roundTeamScoreDraft } } : {}),
       ...(volleyball ? { setScores: this.volleyballSetScores.map(set => ({ ...set })) } : {}),
       ...(racket ? { matchFormat: this.racketMatchFormat,
         setScores: this.racketSetScores.map(set => ({ ...set })) } : {}),
@@ -3178,6 +3191,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
           this.racketMatchFormat = 'SINGLES';
           this.racketSetScores = [{sideA: null,sideB: null},{sideA: null,sideB: null}];
           this.roundBasketballScoreDraft = { sideA: null, sideB: null };
+          this.roundTeamScoreDraft = {sideA: null, sideB: null};
           this.resetVolleyballSets();
           this.prepareRoundEntries();
           this.loadCompetition(this.selected as CommunityGroup, this.selectedSeasonId);

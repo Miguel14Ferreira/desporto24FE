@@ -448,12 +448,13 @@ export class CommunityGroupsService {
         | 'ARTISTIC_DUET_TECH' | 'ARTISTIC_DUET_FREE'
         | 'ARTISTIC_TEAM_TECH' | 'ARTISTIC_TEAM_FREE'
         | 'BASKETBALL_FINAL' | 'BASKETBALL_3X3_FINAL'
-        | 'VOLLEYBALL_FINAL' | 'BEACH_VOLLEY_FINAL' | null;
+        | 'VOLLEYBALL_FINAL' | 'BEACH_VOLLEY_FINAL' | 'HANDBALL_FINAL' | 'RUGBY_FINAL' | 'RUGBY_SEVENS_FINAL' | null;
       eventDiscipline?: string | null;
       matchFormat?: 'SINGLES' | 'DOUBLES' | null;
       setScores?: Array<{ sideA: number | null; sideB: number | null }> | null;
       groupScores?: Array<{ groupName: string; score: number | null }>;
       basketballScore?: { sideA: number | null; sideB: number | null };
+      teamScore?: { sideA: number | null; sideB: number | null };
       entries: Array<{
         username: string;
         team: string | null;

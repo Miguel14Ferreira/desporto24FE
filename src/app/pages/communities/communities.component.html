@@ -1134,6 +1134,7 @@
                               : newRoundEventType === 'BREAKING_BATTLE' ? 'communities.breaking.hint'
                               : newRoundEventType === 'TRAMPOLINE_INDIVIDUAL' ? 'communities.trampoline.hint'
                               : isVolleyballEvent(newRoundEventType) ? 'communities.volleyball.hint'
+                              : isTeamFinalEvent(newRoundEventType) ? 'communities.teamFinal.hint'
                               : isBasketballFinal(newRoundEventType) ? 'communities.basketball.hint'
                               : newRoundEventType === 'RHYTHMIC_APPARATUS' ? 'communities.rhythmic.hint'
                               : isGroupRoutineEvent(newRoundEventType) ? 'communities.groupRoutine.hint'
@@ -1243,6 +1244,15 @@
                                         <option value="B">{{ 'communities.volleyball.sideB' | t }}</option>
                                       </select>
                                     </label>
+                                  } @else if (isTeamFinalEvent(newRoundEventType)) {
+                                    <label>
+                                      <span>{{ 'communities.teamFinal.side' | t }}</span>
+                                      <select [(ngModel)]="entry.team">
+                                        <option value="">{{ 'communities.teamFinal.selectSide' | t }}</option>
+                                        <option value="A">{{ 'communities.teamFinal.sideA' | t }}</option>
+                                        <option value="B">{{ 'communities.teamFinal.sideB' | t }}</option>
+                                      </select>
+                                    </label>
                                   } @else if (isBasketballFinal(newRoundEventType)) {
                                     <label>
                                       <span>{{ 'communities.basketball.side' | t }}</span>
@@ -1301,6 +1311,8 @@
                                     </div>
                                   } @else if (isVolleyballEvent(newRoundEventType)) {
                                     <small>{{ 'communities.volleyball.memberOnly' | t }}</small>
+                                  } @else if (isTeamFinalEvent(newRoundEventType)) {
+                                    <small>{{ 'communities.teamFinal.memberOnly' | t }}</small>
                                   } @else if (isBasketballFinal(newRoundEventType)) {
                                     <small>{{ 'communities.basketball.memberOnly' | t }}</small>
                                   } @else if (isGroupRoutineEvent(newRoundEventType)) {
@@ -1370,6 +1382,23 @@
                           }
                         </div>
 
+                        @if (isTeamFinalEvent(newRoundEventType)) {
+                          <section class="round-basketball-editor">
+                            <h4>{{ 'communities.teamFinal.finalTitle' | t }}</h4>
+                            <p>{{ 'communities.teamFinal.finalHint' | t }}</p>
+                            <div class="round-basketball-score-inputs">
+                              <label><span>{{ 'communities.teamFinal.sideA' | t }}</span>
+                                <input type="number" min="0" max="999" step="1"
+                                  [(ngModel)]="roundTeamScoreDraft.sideA">
+                              </label>
+                              <span class="round-basketball-divider" aria-hidden="true">:</span>
+                              <label><span>{{ 'communities.teamFinal.sideB' | t }}</span>
+                                <input type="number" min="0" max="999" step="1"
+                                  [(ngModel)]="roundTeamScoreDraft.sideB">
+                              </label>
+                            </div>
+                          </section>
+                        }
                         @if (isBasketballFinal(newRoundEventType)) {
                           <section class="round-basketball-editor">
                             <h4>{{ 'communities.basketball.finalTitle' | t }}</h4>
@@ -1881,6 +1910,34 @@
                                   </div>
                                 }
                               </div>
+                            </section>
+                          } @else if (recordedTeamFinal(round)) {
+                            <section class="round-basketball-final" [attr.aria-label]="'communities.teamFinal.finalTitle' | t">
+                              <div class="round-basketball-heading">
+                                <strong>{{ (round.eventType === 'HANDBALL_FINAL' ? 'communities.teamFinal.handball' : round.eventType === 'RUGBY_SEVENS_FINAL' ? 'communities.teamFinal.sevens' : 'communities.teamFinal.rugby') | t }}</strong>
+                                <small>{{ (round.eventType === 'HANDBALL_FINAL' ? 'communities.teamFinal.goals' : 'communities.teamFinal.points') | t }}</small>
+                              </div>
+                              <div class="round-basketball-scoreboard">
+                                <div class="round-basketball-side" [class.round-basketball-winner]="teamFinalWinner(round.teamScore) === 'A'">
+                                  <span>{{ 'communities.teamFinal.sideA' | t }}</span>
+                                  <strong>{{ round.teamScore?.sideA }}</strong>
+                                  @for (player of racketSidePlayers(round, 'A'); track $index) {
+                                    <small>{{ player.fullName || player.username }}</small>
+                                  }
+                                </div>
+                                <span class="round-basketball-vs" aria-hidden="true">:</span>
+                                <div class="round-basketball-side" [class.round-basketball-winner]="teamFinalWinner(round.teamScore) === 'B'">
+                                  <span>{{ 'communities.teamFinal.sideB' | t }}</span>
+                                  <strong>{{ round.teamScore?.sideB }}</strong>
+                                  @for (player of racketSidePlayers(round, 'B'); track $index) {
+                                    <small>{{ player.fullName || player.username }}</small>
+                                  }
+                                </div>
+                              </div>
+                              @if (round.teamScore?.sideA === round.teamScore?.sideB) {
+                                <small>{{ 'communities.teamFinal.draw' | t }}</small>
+                              }
+                              <small>{{ 'communities.teamFinal.recordedOnly' | t }}</small>
                             </section>
                           } @else if (recordedBasketballFinal(round)) {
                             <section class="round-basketball-final" [attr.aria-label]="'communities.basketball.finalTitle' | t">
