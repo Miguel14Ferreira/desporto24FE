@@ -83,6 +83,43 @@ describe('Unified Jynlo message center', () => {
     expect(inboxApi.markRead).not.toHaveBeenCalled();
   });
 
+  it('locates an already loaded search result without rewriting or marking chat history as read', () => {
+    const selected = item('direct', 'bea');
+    component.conversations = [selected];
+    component.selectedKey = selected.key;
+    component.messages = [message(selected.key, 4), message(selected.key, 9)];
+    component.messageSearchResults = [message(selected.key, 4)];
+    const focus = jasmine.createSpy('focus');
+    const scrollIntoView = jasmine.createSpy('scrollIntoView');
+    component.previewLog = { nativeElement: {
+      querySelector: (_: string) => ({ focus, scrollIntoView })
+    }} as any;
+    component.viewMessageSearchResult(component.messageSearchResults[0]);
+    expect(component.selectedSearchResultId).toBe(4);
+    expect(component.searchResultNotInPreview).toBeFalse();
+    expect(scrollIntoView).toHaveBeenCalled();
+    expect(focus).toHaveBeenCalled();
+    expect(component.messages.map(x => x.id)).toEqual([4, 9]);
+    expect(inboxApi.markRead).not.toHaveBeenCalled();
+  });
+
+  it('keeps an older hit in search results rather than inserting it into recent history', () => {
+    const selected = item('community', 7);
+    component.conversations = [selected];
+    component.selectedKey = selected.key;
+    component.messages = [message(selected.key, 70), message(selected.key, 71)];
+    component.messageSearchResults = [message(selected.key, 5)];
+    component.viewMessageSearchResult(component.messageSearchResults[0]);
+    expect(component.selectedSearchResultId).toBe(5);
+    expect(component.searchResultNotInPreview).toBeTrue();
+    expect(component.messages.map(x => x.id)).toEqual([70, 71]);
+    component.viewMessageSearchResult(message('session:7', 99));
+    expect(component.selectedSearchResultId).toBe(5);
+    component.onMessageSearchTermChange();
+    expect(component.selectedSearchResultId).toBeNull();
+    expect(component.searchResultNotInPreview).toBeFalse();
+  });
+
   it('loads additional pages newest first with no duplicate messages', () => {
     const selected = item('community', 7);
     component.conversations = [selected];

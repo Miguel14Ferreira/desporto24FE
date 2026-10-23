@@ -153,3 +153,14 @@
   .inbox-history-search { padding:12px 14px; }
   .inbox-heading-actions { justify-content:flex-start; }
 }
+
+
+.inbox-history-search-result.is-selected { border-color:#69e7cc; }
+.inbox-search-result-open { border:1px solid #53877e; border-radius:8px;
+  background:#133e46; color:#b6f8e5; padding:6px 10px;
+  font:inherit; font-size:.76rem; cursor:pointer; margin-right:7px; }
+.inbox-search-result-open:hover { background:#236057; }
+.inbox-search-result-open:focus-visible, .inbox-bubble--search-match:focus-visible {
+  outline:2px solid #8cf5dc; outline-offset:2px; }
+.inbox-bubble--search-match { outline:2px solid #69e7cc; outline-offset:3px; }
+.inbox-history-search-note { color:#c2e8e2!important; font-size:.76rem!important; }

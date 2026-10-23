@@ -75,6 +75,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   messageSearchOpen = false;
   messageSearchTerm = '';
   messageSearchResults: InboxMessage[] = [];
+  selectedSearchResultId: number | null = null;
+  searchResultNotInPreview = false;
   messageSearchLoading = false;
   messageSearchError = false;
   messageSearchSearched = false;
@@ -296,6 +298,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.messageSearchOpen = false;
     this.messageSearchTerm = '';
     this.messageSearchResults = [];
+    this.selectedSearchResultId = null;
+    this.searchResultNotInPreview = false;
     this.messageSearchLoading = false;
     this.messageSearchError = false;
     this.messageSearchSearched = false;
@@ -303,10 +307,28 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.messageSearchPage = 0;
   }
 
+  viewMessageSearchResult(result: InboxMessage): void {
+    if (!this.selectedKey || result.key !== this.selectedKey
+        || !this.messageSearchResults.some(item => item.id === result.id)) return;
+    this.selectedSearchResultId = result.id;
+    const inPreview = this.messages.some(item => item.id === result.id);
+    this.searchResultNotInPreview = !inPreview;
+    if (inPreview) {
+      // Only jump when the message is truly loaded. Do not insert an old
+      // standalone hit into a recent timeline and misrepresent chronology.
+      const log = this.previewLog?.nativeElement;
+      const target = log?.querySelector<HTMLElement>('[data-message-id="' + result.id + '"]');
+      target?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      target?.focus({ preventScroll: true });
+    }
+  }
+
   onMessageSearchTermChange(): void {
     // Invalidate any earlier HTTP result if the user types another query.
     ++this.messageSearchVersion;
     this.messageSearchResults = [];
+    this.selectedSearchResultId = null;
+    this.searchResultNotInPreview = false;
     this.messageSearchLoading = false;
     this.messageSearchError = false;
     this.messageSearchSearched = false;
