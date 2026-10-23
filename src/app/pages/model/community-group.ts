@@ -56,6 +56,10 @@ export interface CommunityRoundEntry {
   assists: number;
   mvp: boolean;
   cleanSheet: boolean;
+  finishPosition?: number | null;
+  elapsedSeconds?: number | null;
+  bestLapSeconds?: number | null;
+  lapsCompleted?: number | null;
 }
 
 export interface CommunityRound {
@@ -115,4 +119,8 @@ export interface CommunityRoundEntryDraft {
   assists: number;
   mvp: boolean;
   cleanSheet: boolean;
+  finishPosition?: number | null;
+  elapsedSeconds?: number | null;
+  bestLapSeconds?: number | null;
+  lapsCompleted?: number | null;
 }
