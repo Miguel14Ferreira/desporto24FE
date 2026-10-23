@@ -420,6 +420,13 @@
                   </div>
                   <h2>{{ selected.name }}</h2>
                   <p>{{ selected.description || ('communities.noDescription' | t) }}</p>
+                  <div class="row-actions">
+                    <a class="jynlo-action jynlo-action--primary"
+                       [routerLink]="['/menu/messages']"
+                       [queryParams]="{ kind: 'community', id: selected.id }">
+                      <span aria-hidden="true">💬</span> {{ 'communities.openChat' | t }}
+                    </a>
+                  </div>
                 </div>
               </div>
 
@@ -441,9 +448,6 @@
               <button type="button" [class.active]="activeTab === 'feed'"
                 [attr.aria-current]="activeTab === 'feed' ? 'true' : null"
                 (click)="setTab('feed')">{{ 'communities.tab.feed' | t }}</button>
-              <button type="button" [class.active]="activeTab === 'chat'"
-                [attr.aria-current]="activeTab === 'chat' ? 'true' : null"
-                (click)="setTab('chat')">{{ 'communities.tab.chat' | t }}</button>
               <button type="button" [class.active]="activeTab === 'sessions'"
                 [attr.aria-current]="activeTab === 'sessions' ? 'true' : null"
                 (click)="setTab('sessions')">
@@ -472,7 +476,7 @@
               </button>
             </nav>
 
-            @if (activeTab === 'feed' || activeTab === 'chat') {
+            @if (activeTab === 'feed') {
               <section class="community-tab-panel community-timeline"
                        [class.community-chat-panel]="activeTab === 'chat'"
                        [attr.aria-label]="(activeTab === 'feed' ? 'communities.tab.feed' : 'communities.tab.chat') | t">

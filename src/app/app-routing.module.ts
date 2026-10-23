@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
+import { CanActivateFn, Router, RouterModule, Routes } from '@angular/router';
+import { inject } from '@angular/core';
 import { AboutComponent } from './pages/about/about.component';
 import { AlterardadosComponent } from './pages/alterardados/alterardados.component';
 import { ChangepasswordComponent } from './pages/changepassword/changepassword.component';
@@ -28,6 +29,13 @@ import { VenueDetailsComponent } from './pages/venue-details/venue-details.compo
 import { VenueCreateComponent } from './pages/venue-create/venue-create.component';
 import { LegalPageComponent } from './pages/legal-page/legal-page.component';
 import { PublicSessionPreviewComponent } from './pages/public-session-preview/public-session-preview.component';
+
+const legacyPrivateChatRedirect: CanActivateFn = route => {
+  const username = route.paramMap.get('username') || route.paramMap.get('username2');
+  return inject(Router).createUrlTree(['/menu/messages'], {
+    queryParams: username ? { kind: 'direct', id: username } : {}
+  });
+};
 
 const routes: Routes = [
   {path:'', redirectTo:'home',pathMatch:'full'},
@@ -71,8 +79,8 @@ const routes: Routes = [
   {path:'menu', redirectTo:'/menu/feed', pathMatch:'full'},
   {path:'menu/friendList',component:FriendsComponent,canActivate:[AuthenticationGuard]},
   {path:'menu/messages',loadComponent:() => import('./pages/messages-center/messages-center.component').then(m => m.MessagesCenterComponent),canActivate:[AuthenticationGuard]},
-  {path:'menu/friendList/chat/:username',loadChildren:() => import('./pages/direct-chat/direct-chat.module').then(m => m.DirectChatModule),canActivate:[AuthenticationGuard]},
-  {path:'menu/friendList/chat/:username1/:username2',loadChildren:() => import('./pages/direct-chat/direct-chat.module').then(m => m.DirectChatModule),canActivate:[AuthenticationGuard]},
+  {path:'menu/friendList/chat/:username',canActivate:[AuthenticationGuard,legacyPrivateChatRedirect],children:[]},
+  {path:'menu/friendList/chat/:username1/:username2',canActivate:[AuthenticationGuard,legacyPrivateChatRedirect],children:[]},
   {path:'menu/notifications',component:NotificationsComponent,canActivate:[AuthenticationGuard]},
   {path:'menu/notifications/:id',component:NotificationsComponent,canActivate:[AuthenticationGuard]},
   {path:'menu/communities',loadChildren:() => import('./pages/communities/communities.module').then(m => m.CommunitiesModule),canActivate:[AuthenticationGuard]},

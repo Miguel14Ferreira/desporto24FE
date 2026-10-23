@@ -1477,6 +1477,14 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
         this.selected = full;
         this.resetHistoricalLinks();
         const requestedTab = this.route.snapshot.queryParamMap.get('tab');
+        if (requestedTab === 'chat') {
+          // Preserve existing invitation/bookmark URLs, but never reopen a
+          // second chat interface inside communities.
+          void this.router.navigate(['/menu/messages'], {
+            queryParams: { kind: 'community', id: full.id }, replaceUrl: true
+          });
+          return;
+        }
         const requestedMembers = requestedTab === 'members';
         const openJoinRequests = requestedMembers
           && (full.myRole === 'OWNER' || full.myRole === 'ADMIN');
@@ -1533,6 +1541,12 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   }
 
   setTab(tab: CommunityTab): void {
+    if (tab === 'chat') {
+      if (this.selected) void this.router.navigate(['/menu/messages'], {
+        queryParams: { kind: 'community', id: this.selected.id }
+      });
+      return;
+    }
     if ((tab === 'tournaments' && !this.hasCompetitions(this.selected))
         || (tab === 'ranking' && !this.canBrowseHistoricalArchives)
         || (tab === 'stats' && !this.selected?.rankingsEnabled)) return;

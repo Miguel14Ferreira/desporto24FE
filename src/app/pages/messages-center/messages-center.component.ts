@@ -1,8 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, ElementRef, OnDestroy, OnInit, AfterViewChecked, ViewChild, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, AfterViewChecked, ViewChild, ChangeDetectionStrategy, Optional } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { JwtHelperService } from '@auth0/angular-jwt';
 import { catchError, finalize, forkJoin, map, Observable, of, Subscription, TimeoutError, timeout } from 'rxjs';
 import { appTranslate as t } from '../../i18n/i18n.service';
@@ -102,7 +102,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     private readonly direct: DirectChatService,
     private readonly timeline: CommunityTimelineService,
     private readonly realtime: DirectChatRealtimeService,
-    private readonly inboxApi: InboxApiService
+    private readonly inboxApi: InboxApiService,
+    @Optional() private readonly route: ActivatedRoute | null = null
   ) {
     this.typing = new ChatTypingTracker(realtime);
   }
@@ -292,7 +293,11 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       // 'waitlisted' users have not yet been admitted to session chat.
       const included = new Set<number>();
       for (const session of [...sessions.created, ...sessions.joined]) {
-        if (included.has(session.id)) continue;
+        // The only available session conversations are games yet to happen.
+        const kickoff = Date.parse(session.gameDate || '');
+        if (!Number.isFinite(kickoff) || kickoff <= Date.now()
+            || session.status === 'CANCELLED' || session.status === 'COMPLETED'
+            || session.status === 'NOT_OCCURRED' || included.has(session.id)) continue;
         included.add(session.id);
         entries.push({
           key: inboxKey('session', session.id),
@@ -313,6 +318,14 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
         latestMessageId: existing.get(item.key)?.latestMessageId
       })));
       this.refreshSummaries(request);
+      // Deep links from community/session cards select one authorized conversation.
+      // Unknown or expired targets never add a conversation to the list.
+      const kind = this.route?.snapshot?.queryParamMap?.get('kind');
+      const id = this.route?.snapshot?.queryParamMap?.get('id');
+      if ((kind === 'direct' || kind === 'community' || kind === 'session') && id) {
+        const target = this.conversations.find(entry => entry.key === inboxKey(kind, id));
+        if (target && target.key !== this.selectedKey) this.selectConversation(target);
+      }
       // Leave the initial choice to the user: no N+1 history requests at page load.
       if (this.selectedKey && !this.conversations.some(item => item.key === this.selectedKey)) {
         this.selectedKey = null;
@@ -911,18 +924,6 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
           // A later refresh can reconcile it with the server.
         }
       });
-  }
-
-  conversationLink(conversation: InboxConversation): (string | number)[] {
-    if (conversation.kind === 'direct') return ['/menu/friendList/chat', String(conversation.id)];
-    if (conversation.kind === 'community') return ['/menu/communities', Number(conversation.id)];
-    return ['/menu/events', Number(conversation.id)];
-  }
-
-  conversationQuery(conversation: InboxConversation): Record<string, string> {
-    if (conversation.kind === 'community') return { tab: 'chat' };
-    if (conversation.kind === 'session') return { chat: '1' };
-    return {};
   }
 
   isMine(message: InboxMessage): boolean {
