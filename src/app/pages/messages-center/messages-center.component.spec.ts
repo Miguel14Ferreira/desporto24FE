@@ -30,6 +30,7 @@ describe('Unified Jynlo message center', () => {
   let realtime: DirectChatRealtimeService;
   let inboxApi: jasmine.SpyObj<InboxApiService>;
   const directEvents = new Subject<any>();
+  const receiptEvents = new Subject<{peerUsername: string;lastReadMessageId:number}>();
   const communityEvents = new Subject<any>();
   const sessionEvents = new Subject<any>();
   const connected = new BehaviorSubject<boolean>(false);
@@ -46,6 +47,7 @@ describe('Unified Jynlo message center', () => {
     timeline = jasmine.createSpyObj('CommunityTimelineService', ['list', 'send']);
     realtime = {
       messages$: directEvents.asObservable(),
+      readReceipts$: receiptEvents.asObservable(),
       communityMessages$: communityEvents.asObservable(),
       sessionMessages$: sessionEvents.asObservable(),
       connected$: connected.asObservable(),
@@ -765,6 +767,7 @@ describe('Direct chat confirmed read status', () => {
     direct.info.and.returnValue(of({chatBlocked:false,whoBlocked:null} as any));
     realtime = {connected$:new BehaviorSubject(false).asObservable(),
       messages$:new Subject<any>().asObservable(),
+      readReceipts$:new Subject<any>().asObservable(),
       communityMessages$:new Subject<any>().asObservable(),
       sessionMessages$:new Subject<any>().asObservable(),
       connect:()=>{}} as unknown as DirectChatRealtimeService;
@@ -871,6 +874,44 @@ describe('Direct chat confirmed read status', () => {
     (inbox as any).refreshPeerReadReceipt(true);
     expect(api.markRead).not.toHaveBeenCalled();
     expect(api.directReadReceipt).toHaveBeenCalledTimes(1);
+  });
+
+  it('applies server-confirmed WebSocket reads to the selected direct peer immediately',()=> {
+    api.directReadReceipt.and.returnValue(of({peerUsername:'bea',lastReadMessageId:5}));
+    select('bea');
+    (inbox as any).acceptPersistedPeerReadReceipt({peerUsername:'bea',lastReadMessageId:42});
+    expect(inbox.isDirectMessageRead({key:'direct:bea',id:42,sender:'ana',
+      text:'read',createdAt:''})).toBeTrue();
+    // Later stale HTTP GET cannot regress the newer server-sent watermark.
+    api.directReadReceipt.and.returnValue(of({peerUsername:'bea',lastReadMessageId:10}));
+    (inbox as any).refreshPeerReadReceipt(true);
+    expect(inbox.isDirectMessageRead({key:'direct:bea',id:42,sender:'ana',
+      text:'read',createdAt:''})).toBeTrue();
+  });
+
+  it('ignores forged, foreign, noninteger, and old-account socket receipts',()=> {
+    select('bea');
+    const own={key:'direct:bea',id:42,sender:'ana',text:'unread',createdAt:''};
+    for(const invalid of [
+      {peerUsername:'carla',lastReadMessageId:999},
+      {peerUsername:'bea',lastReadMessageId:42.7},
+      {peerUsername:'bea',lastReadMessageId:-1},
+      {peerUsername:'bea',lastReadMessageId:0}
+    ]) (inbox as any).acceptPersistedPeerReadReceipt(invalid);
+    expect(inbox.isDirectMessageRead(own)).toBeFalse();
+    browserToken='switched-to-another-account';
+    (inbox as any).acceptPersistedPeerReadReceipt({peerUsername:'bea',lastReadMessageId:999});
+    expect(inbox.isDirectMessageRead(own)).toBeFalse();
+    browserToken='fixture-auth-token-for-ana';
+    expect(inbox.isDirectMessageRead(own)).toBeFalse();
+  });
+
+  it('does not apply a read event from an earlier selected conversation',()=> {
+    select('bea');
+    select('carla');
+    (inbox as any).acceptPersistedPeerReadReceipt({peerUsername:'bea',lastReadMessageId:999});
+    expect(inbox.isDirectMessageRead({key:'direct:carla',id:10,
+      sender:'ana',text:'not read',createdAt:''})).toBeFalse();
   });
 
   it('does not trust errors, wrong identities, or decreasing cursors',()=>{
