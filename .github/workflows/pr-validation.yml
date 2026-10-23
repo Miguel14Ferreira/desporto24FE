@@ -55,6 +55,16 @@ jobs:
         env:
           JYNLO_USE_SYSTEM_CHROME: '1'
         run: npx playwright test e2e/inbox-read-sync.spec.ts --config=playwright.config.ts --project=desktop-chromium
+      # Historical-search browser QA runs in this same job, using two separate
+      # in-memory identities. All external API/WebSocket traffic is intercepted.
+      - name: Add Playwright for historical search browser contract
+        if: ${{ startsWith(github.head_ref, 'qa/inbox-history-search-') }}
+        run: npm install --no-save --package-lock=false @playwright/test@1.56.1
+      - name: Exercise historical search in two browser contexts
+        if: ${{ startsWith(github.head_ref, 'qa/inbox-history-search-') }}
+        env:
+          JYNLO_USE_SYSTEM_CHROME: '1'
+        run: npx playwright test e2e/inbox-history-search.spec.ts --config=playwright.config.ts --project=desktop-chromium
       # Candidate-only browser verification. No additional job, second npm ci,
       # Render deployment, production credentials or production API requests.
       - name: Install Chromium for integrated desktop smoke
