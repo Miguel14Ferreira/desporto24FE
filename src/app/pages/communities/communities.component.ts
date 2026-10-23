@@ -121,7 +121,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     } catch { return null; }
   }
 
-  private isMyChatEntry(entry: CommunityTimelineEntry): boolean {
+  isMyChatEntry(entry: CommunityTimelineEntry): boolean {
     const username = this.currentChatUsername();
     return Boolean(username && username.toLowerCase() === entry.username.toLowerCase());
   }
