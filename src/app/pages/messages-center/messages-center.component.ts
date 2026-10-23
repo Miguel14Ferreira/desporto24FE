@@ -7,6 +7,7 @@ import { JwtHelperService } from '@auth0/angular-jwt';
 import { catchError, finalize, forkJoin, map, Observable, of, Subscription, TimeoutError, timeout } from 'rxjs';
 import { appTranslate as t } from '../../i18n/i18n.service';
 import { SessionDetail } from '../model/session-detail';
+import { InboxApiService, InboxSummary } from '../../services/inbox-api.service';
 
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import { CommunityService } from '../../services/community.service';
@@ -43,6 +44,10 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   previewLoading = false;
   previewError = false;
   failedSources: InboxKind[] = [];
+  serverSummariesAvailable = true;
+  private summaryVersion = 0;
+  private readVersion = 0;
+  private summaryTimer?: ReturnType<typeof setInterval>;
   realtimeConnected = false;
   everConnected = false;
   draft = '';
@@ -73,7 +78,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     private readonly sessions: SessionService,
     private readonly direct: DirectChatService,
     private readonly timeline: CommunityTimelineService,
-    private readonly realtime: DirectChatRealtimeService
+    private readonly realtime: DirectChatRealtimeService,
+    private readonly inboxApi: InboxApiService
   ) {}
 
   ngOnInit(): void {
@@ -103,15 +109,20 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       if (!connected) return;
       this.everConnected = true;
       if (connectedOnce && this.selected) this.loadHistory(this.selected);
+      if (connectedOnce && this.serverSummariesAvailable) this.refreshSummaries();
       connectedOnce = true;
     }));
 
     this.realtime.connect();
     this.loadInbox();
+    this.summaryTimer = setInterval(() => {
+      if (this.serverSummariesAvailable && !this.loading) this.refreshSummaries();
+    }, 45_000);
   }
 
   ngOnDestroy(): void {
     this.subscriptions.unsubscribe();
+    if (this.summaryTimer) clearInterval(this.summaryTimer);
     // The navbar owns the shared socket lifecycle. Never disconnect it here.
   }
 
@@ -130,12 +141,13 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   get filteredConversations(): InboxConversation[] {
     return this.conversations.filter(conversation =>
       (this.filter === 'all' || (this.filter === 'recent'
-        ? conversation.newThisVisit > 0 : conversation.kind === this.filter))
+        ? (conversation.unreadCount ?? conversation.newThisVisit) > 0 : conversation.kind === this.filter))
       && matchesInboxSearch(conversation, this.search));
   }
 
   get recentCount(): number {
-    return this.conversations.reduce((total, conversation) => total + conversation.newThisVisit, 0);
+    return this.conversations.reduce((total, conversation) =>
+      total + (conversation.unreadCount ?? conversation.newThisVisit), 0);
   }
 
   get sourceError(): boolean {
@@ -215,8 +227,11 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
         ...item,
         latestText: existing.get(item.key)?.latestText,
         latestAt: existing.get(item.key)?.latestAt,
-        newThisVisit: existing.get(item.key)?.newThisVisit || 0
+        newThisVisit: existing.get(item.key)?.newThisVisit || 0,
+        unreadCount: existing.get(item.key)?.unreadCount,
+        latestMessageId: existing.get(item.key)?.latestMessageId
       })));
+      this.refreshSummaries(request);
       // Leave the initial choice to the user: no N+1 history requests at page load.
       if (this.selectedKey && !this.conversations.some(item => item.key === this.selectedKey)) {
         this.selectedKey = null;
@@ -281,6 +296,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
         }
         this.confirmFromHistoryIfPresent(conversation.key, this.messages);
         this.updatePreviewFromHistory(conversation.key, this.messages);
+        this.markRenderedRead(conversation.key);
         this.scrollRequested = true;
       },
       error: () => {
@@ -325,6 +341,9 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.conversations = orderInbox(this.conversations.map(conversation =>
       conversation.key === key
         ? { ...conversation, latestText: message.text, latestAt: message.createdAt,
+            latestMessageId: message.id,
+            unreadCount: conversation.unreadCount === undefined ? undefined :
+              conversation.unreadCount + (!isSelected && !isMine ? 1 : 0),
             newThisVisit: conversation.newThisVisit + (!isSelected && !isMine ? 1 : 0) }
         : conversation));
 
@@ -332,6 +351,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       this.messages = mergeInboxMessages([...this.messages, message]);
       if (this.previewLoading) this.realtimeDuringLoad.set(message.id, message);
       this.confirmFromHistoryIfPresent(key, [message]);
+      if (!this.previewLoading && !this.previewError) this.markRenderedRead(key);
       this.scrollRequested = true;
     }
   }
@@ -346,7 +366,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     if (!last) return;
     this.conversations = orderInbox(this.conversations.map(conversation =>
       conversation.key === key
-        ? { ...conversation, latestText: last.text, latestAt: last.createdAt }
+        ? { ...conversation, latestText: last.text, latestAt: last.createdAt,
+            latestMessageId: last.id }
         : conversation));
   }
 
@@ -514,6 +535,75 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.deliveryUncertain = false;
     this.composerError = t('chat.sendRetryWarning');
     // The draft remains intact. Any further POST requires a deliberate action.
+  }
+
+  /** Read markers live on the server, not in localStorage or notification badges. */
+  refreshSummaries(inboxVersion = this.inboxVersion): void {
+    if (!this.serverSummariesAvailable || this.conversations.length === 0) return;
+    const requestVersion = ++this.summaryVersion;
+    const batches = [];
+    for (let offset = 0; offset < this.conversations.length; offset += 150) {
+      const chunk = this.conversations.slice(offset, offset + 150);
+      batches.push(this.inboxApi.summaries(chunk.map(item => ({
+        kind: item.kind, id: String(item.id)
+      }))).pipe(timeout(15_000)));
+    }
+    forkJoin(batches).subscribe({
+      next: batchesResult => {
+        if (inboxVersion !== this.inboxVersion || requestVersion !== this.summaryVersion) return;
+        const summaries = new Map<string, InboxSummary>();
+        for (const batch of batchesResult) {
+          for (const snapshot of batch) summaries.set(inboxKey(snapshot.kind, snapshot.id), snapshot);
+        }
+        this.conversations = orderInbox(this.conversations.map(item => {
+          const snapshot = summaries.get(item.key);
+          if (!snapshot) return item;
+          // Do not regress after a newer WebSocket message reached this tab
+          // while the HTTP snapshot was still in transit.
+          const socketNewer = !!item.latestAt && !!snapshot.latestAt
+            && Date.parse(item.latestAt) > Date.parse(snapshot.latestAt);
+          if (socketNewer) {
+            return { ...item, unreadCount: Math.max(item.unreadCount ?? 0, snapshot.unreadCount) };
+          }
+          return { ...item,
+            latestText: snapshot.latestText ?? undefined,
+            latestAt: snapshot.latestAt ?? undefined,
+            latestMessageId: snapshot.latestMessageId,
+            unreadCount: snapshot.unreadCount,
+            newThisVisit: 0
+          };
+        }));
+      },
+      error: () => {
+        if (requestVersion !== this.summaryVersion) return;
+        // The earlier frontend still works with its local, visit-scoped
+        // counters if this new endpoint is temporarily unavailable.
+        this.serverSummariesAvailable = false;
+      }
+    });
+  }
+
+  private markRenderedRead(key: string): void {
+    if (!this.serverSummariesAvailable || key !== this.selectedKey
+        || this.previewLoading || this.previewError || this.messages.length === 0) return;
+    const lastSeen = Math.max(...this.messages.map(message => message.id));
+    if (!Number.isSafeInteger(lastSeen) || lastSeen <= 0) return;
+    const conversation = this.selected;
+    if (!conversation) return;
+    const readVersion = ++this.readVersion;
+    this.inboxApi.markRead({ kind: conversation.kind, id: String(conversation.id) }, lastSeen)
+      .pipe(timeout(10_000)).subscribe({
+        next: snapshot => {
+          if (readVersion !== this.readVersion || this.selectedKey !== key) return;
+          this.conversations = this.conversations.map(item => item.key === key
+            ? { ...item, unreadCount: snapshot.unreadCount, newThisVisit: 0 }
+            : item);
+        },
+        error: () => {
+          // Never pretend that a failed read receipt has synchronized.
+          // A later refresh can reconcile it with the server.
+        }
+      });
   }
 
   conversationLink(conversation: InboxConversation): (string | number)[] {
