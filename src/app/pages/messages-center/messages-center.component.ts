@@ -141,13 +141,23 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   get filteredConversations(): InboxConversation[] {
     return this.conversations.filter(conversation =>
       (this.filter === 'all' || (this.filter === 'recent'
-        ? (conversation.unreadCount ?? conversation.newThisVisit) > 0 : conversation.kind === this.filter))
+        ? this.unreadCountFor(conversation) > 0 : conversation.kind === this.filter))
       && matchesInboxSearch(conversation, this.search));
+  }
+
+  /** One source of truth for both persistent unread badges and the filter. */
+  unreadCountFor(conversation: InboxConversation): number {
+    return conversation.unreadCount ?? conversation.newThisVisit;
+  }
+
+  unreadBadgeText(conversation: InboxConversation): string {
+    const count = this.unreadCountFor(conversation);
+    return count > 99 ? '99+' : String(count);
   }
 
   get recentCount(): number {
     return this.conversations.reduce((total, conversation) =>
-      total + (conversation.unreadCount ?? conversation.newThisVisit), 0);
+      total + this.unreadCountFor(conversation), 0);
   }
 
   get sourceError(): boolean {
