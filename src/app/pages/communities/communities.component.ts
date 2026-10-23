@@ -7,6 +7,7 @@ import { appTranslate as t } from '../../i18n/i18n.service';
 import { buildCommunityGroupInviteUrl, buildWhatsAppGroupShareUrl } from './community-group-invite';
 import { communityRoundMatchup, CommunityRoundMatchup } from './community-round-matchup';
 import { sportForRound, viewForSport, formatForSport, CommunityRoundView } from './community-round-sport';
+import { raceSupportsLaps, formatRaceSeconds, raceEntryValidationError } from './community-race-metrics';
 
 import {
   CommunityCompetitionOverview,
@@ -421,6 +422,14 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
 
   roundView(round: CommunityRound): CommunityRoundView {
     return viewForSport(this.roundSport(round));
+  }
+
+  raceSupportsLaps(sport: string | null): boolean {
+    return raceSupportsLaps(sport);
+  }
+
+  raceTime(seconds: number | null | undefined): string | null {
+    return formatRaceSeconds(seconds);
   }
 
   roundFormatLabel(round: CommunityRound): string {
@@ -1886,7 +1895,11 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       goals: 0,
       assists: 0,
       mvp: false,
-      cleanSheet: false
+      cleanSheet: false,
+      finishPosition: null,
+      elapsedSeconds: null,
+      bestLapSeconds: null,
+      lapsCompleted: null
     }));
   }
 
@@ -2573,16 +2586,30 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     }
     const race = this.viewForNewRound() === 'race';
 
-    const entries = this.roundEntries
-      .filter(entry => entry.included)
+    const selectedEntries = this.roundEntries.filter(entry => entry.included);
+    if (race) {
+      const invalid = raceEntryValidationError(selectedEntries);
+      if (invalid) {
+        this.errorMessage = t('feedback.communities.' + invalid);
+        return;
+      }
+    }
+
+    const entries = selectedEntries
       .map(entry => ({
         username: entry.username,
         team: race ? null : (entry.team.trim() || null),
-        result: entry.result,
+        result: race ? 'DRAW' as CommunityMatchResult : entry.result,
         goals: race ? 0 : Math.max(0, Number(entry.goals) || 0),
         assists: race ? 0 : Math.max(0, Number(entry.assists) || 0),
         mvp: !race && Boolean(entry.mvp),
-        cleanSheet: !race && Boolean(entry.cleanSheet)
+        cleanSheet: !race && Boolean(entry.cleanSheet),
+        ...(race ? {
+          finishPosition: entry.finishPosition ?? null,
+          elapsedSeconds: entry.elapsedSeconds ?? null,
+          bestLapSeconds: this.raceSupportsLaps(this.newRoundSport) ? entry.bestLapSeconds ?? null : null,
+          lapsCompleted: this.raceSupportsLaps(this.newRoundSport) ? entry.lapsCompleted ?? null : null
+        } : {})
       }));
 
     if (!this.roundName.trim() || !this.roundPlayedAt || entries.length === 0) {
