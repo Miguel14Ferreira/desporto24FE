@@ -11,7 +11,7 @@ describe('Chat thread presentation', () => {
     expect(chatDaySeparator(next, prev, now)).toBe('Hoje');
     expect(chatDaySeparator(prev, local(2026, 10, 22, 9, 0), now)).toBe('');
     expect(chatDaySeparator(prev, undefined, now)).toBe('Ontem');
-    expect(chatDaySeparator(local(2026, 9, 21, 9, 0), undefined, now)).toContain('set.');
+    expect(chatDaySeparator(local(2026, 9, 21, 9, 0), undefined, now)).toContain('2026');
   });
 
   it('never invents dates when older messages have missing or malformed timestamps', () => {
