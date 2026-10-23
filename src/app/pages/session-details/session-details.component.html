@@ -1111,6 +1111,12 @@
                 }
               </div>
 
+              @if (newMessagesPending > 0) {
+                <button type="button" class="chat-new-messages" (click)="jumpToLatestMessages()">
+                  <span aria-hidden="true">↓</span> {{ 'chat.newMessages' | t }}
+                  <span class="chat-new-messages-count">{{ newMessagesPending }}</span>
+                </button>
+              }
               @if (typing.label('session', session.id); as typingLabel) {
                 <p class="chat-typing-indicator" role="status" aria-live="off">{{ typingLabel }}</p>
               }

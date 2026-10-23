@@ -55,6 +55,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   chatDeliveryChecking = false;
   private pendingChatDelivery?: { text: string; replyToMessageId: number | null; knownIds: Set<number>; startedAt: number };
   private scrollChatToBottomRequested = false;
+  newMessagesPending = 0;
   reliabilityLoading = false;
   participantsLoading = false;
   sessionParticipantsLoading = false;
@@ -227,6 +228,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
       const el = this.chatMessageList.nativeElement;
       el.scrollTop = el.scrollHeight;
       this.scrollChatToBottomRequested = false;
+      this.newMessagesPending = 0;
     }
     this.markVisibleMessagesRead();
     if (this.loading || !this.session) {
@@ -1225,6 +1227,15 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   @HostListener('window:focus')
   @HostListener('document:visibilitychange')
   onSessionChatScroll(): void {
+    if (this.isNearChatBottom()) this.newMessagesPending = 0;
+    this.markVisibleMessagesRead();
+  }
+
+  jumpToLatestMessages(): void {
+    const log = this.chatMessageList?.nativeElement;
+    if (!log) return;
+    log.scrollTop = log.scrollHeight;
+    this.newMessagesPending = 0;
     this.markVisibleMessagesRead();
   }
 
@@ -1474,7 +1485,12 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
 
     const follow = this.isNearChatBottom() || this.isOwnMessage(message);
     this.messages = this.sortedMessages([...this.messages, message]);
-    if (follow) this.scrollChatToBottomRequested = true;
+    if (follow) {
+      this.newMessagesPending = 0;
+      this.scrollChatToBottomRequested = true;
+    } else {
+      this.newMessagesPending++;
+    }
   }
 
   private sortedMessages(messages: SessionMessage[]): SessionMessage[] {

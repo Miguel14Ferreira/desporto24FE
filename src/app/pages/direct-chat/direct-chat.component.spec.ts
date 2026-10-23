@@ -81,6 +81,24 @@ describe('DirectChatComponent', () => {
     fixture.detectChanges();
   });
 
+  it('signals incoming messages when scrolled up and clears the count after jumping to latest', () => {
+    component.currentUsername = 'fixture-user';
+    const log = { scrollHeight: 900, scrollTop: 25, clientHeight: 250 };
+    component.messageList = { nativeElement: log } as any;
+    const incoming = (id: number) => ({
+      id, username1: 'ana', username2: 'fixture-user', text: 'Olá',
+      date: '2026-10-23T09:00:00Z', dataDisplay: null
+    });
+    messages.next(incoming(41));
+    messages.next(incoming(41));
+    messages.next(incoming(42));
+    expect(component.newMessagesPending).toBe(2);
+    expect(log.scrollTop).toBe(25);
+    component.jumpToLatestMessages();
+    expect(log.scrollTop).toBe(900);
+    expect(component.newMessagesPending).toBe(0);
+  });
+
   it('marks the latest direct message from the authorized, opened conversation', () => {
     component.currentUsername = 'fixture-user';
     component.messages = [{

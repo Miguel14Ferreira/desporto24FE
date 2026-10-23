@@ -161,6 +161,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   private chatScrollRestore?: { top: number; height: number };
   private pendingChatDelivery?: { communityId: number; text: string; replyToMessageId: number | null; ids: Set<number>; at: number };
   private chatScrollRequested = false;
+  newMessagesPending = 0;
   private timelineRequestVersion = 0;
   private chatEventsDuringLoad = new Map<number, CommunityTimelineEntry>();
 
@@ -205,6 +206,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     if (this.chatScrollRequested && this.activeTab === 'chat' && this.communityChatLog?.nativeElement) {
       this.communityChatLog.nativeElement.scrollTop = this.communityChatLog.nativeElement.scrollHeight;
       this.chatScrollRequested = false;
+      this.newMessagesPending = 0;
     }
     this.markVisibleCommunityChatRead();
   }
@@ -213,6 +215,16 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   @HostListener('window:focus')
   @HostListener('document:visibilitychange')
   onCommunityChatScroll(): void {
+    if (this.activeTab === 'chat' && this.nearChatBottom()) this.newMessagesPending = 0;
+    this.markVisibleCommunityChatRead();
+  }
+
+  jumpToLatestMessages(): void {
+    if (this.activeTab !== 'chat') return;
+    const log = this.communityChatLog?.nativeElement;
+    if (!log) return;
+    log.scrollTop = log.scrollHeight;
+    this.newMessagesPending = 0;
     this.markVisibleCommunityChatRead();
   }
 
@@ -267,7 +279,10 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     const byId = new Map(this.timelineEntries.map(item => [item.id, item]));
     for (const entry of entries) byId.set(entry.id, entry);
     this.timelineEntries = this.sortChatEntries([...byId.values()]);
-    if (follow) this.chatScrollRequested = true;
+    if (follow) {
+      this.newMessagesPending = 0;
+      this.chatScrollRequested = true;
+    }
     if (this.chatDeliveryUncertain && this.timelineEntries.some(item => this.matchesPendingChatDelivery(item))) {
       this.confirmChatDelivery();
     }
@@ -277,6 +292,10 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     if (!this.selected || this.activeTab !== 'chat' || entry.kind !== 'CHAT'
         || entry.communityId !== this.selected.id) return;
     const follow = this.nearChatBottom() || this.isMyChatEntry(entry);
+    // Ignore replayed websocket IDs for the prompt; the history merge still
+    // deduplicates and validates uncertain POSTs.
+    if (!follow && !this.timelineEntries.some(previous => previous.id === entry.id))
+      this.newMessagesPending++;
     if (this.timelineLoading) this.chatEventsDuringLoad?.set(entry.id, entry);
     this.mergeChatEntries([entry], follow);
   }
@@ -382,9 +401,14 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
               // HTTP history is authoritative, including moderators' deletions.
               // Preserve only websocket messages received while the HTTP request ran.
               const follow = this.timelineEntries.length === 0 || this.nearChatBottom();
+              const previouslySeen = new Set(this.timelineEntries.map(entry => entry.id));
               const byId = new Map(entries.map(entry => [entry.id, entry]));
               for (const entry of this.chatEventsDuringLoad?.values() ?? []) byId.set(entry.id, entry);
               this.timelineEntries = this.sortChatEntries([...byId.values()]);
+              if (!follow && previouslySeen.size) this.newMessagesPending += entries.filter(
+                entry => entry.kind === 'CHAT' && !previouslySeen.has(entry.id)
+                  && !this.isMyChatEntry(entry) && !this.chatEventsDuringLoad?.has(entry.id)).length;
+              if (follow) this.newMessagesPending = 0;
               this.chatHasOlder = this.chatHasOlder || entries.length === 60;
               this.chatEventsDuringLoad?.clear();
               if (follow) this.chatScrollRequested = true;
@@ -1429,6 +1453,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     ++this.timelineRequestVersion;
     this.chatEventsDuringLoad?.clear();
     this.timelineEntries = [];
+    this.newMessagesPending = 0;
     this.chatHasOlder = false;
     this.chatOlderError = '';
     this.chatScrollRestore = undefined;
@@ -1518,6 +1543,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     ++this.timelineRequestVersion;
     this.chatEventsDuringLoad?.clear();
     this.timelineEntries = [];
+    this.newMessagesPending = 0;
     this.chatHasOlder = false;
     this.chatOlderError = '';
     this.chatScrollRestore = undefined;

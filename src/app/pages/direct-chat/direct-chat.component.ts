@@ -46,6 +46,7 @@ export class DirectChatComponent implements OnInit, OnDestroy, AfterViewChecked 
   deliveryChecking = false;
   private pendingDelivery?: { text: string; replyToMessageId: number | null; knownIds: Set<number>; startedAt: number };
   private scrollToBottomRequested = false;
+  newMessagesPending = 0;
   private restoreScroll?: { top: number; height: number };
 
   readonly emojis = ['😀', '😂', '😊', '😍', '🥳', '😎', '😉', '👍', '👏', '🙌', '🔥', '⚽', '🏀', '🎾', '🏓', '💪', '❤️', '✅'];
@@ -93,7 +94,12 @@ export class DirectChatComponent implements OnInit, OnDestroy, AfterViewChecked 
         if (!alreadyPresent) {
           const follow = this.isNearBottom() || this.isOwnMessage(message);
           this.messages = this.sorted([...this.messages, message]);
-          if (follow) this.scrollToBottomRequested = true;
+          if (follow) {
+            this.newMessagesPending = 0;
+            this.scrollToBottomRequested = true;
+          } else {
+            this.newMessagesPending++;
+          }
         }
         if (this.deliveryUncertain && this.matchesPendingDelivery(message)) {
           this.confirmPendingDelivery();
@@ -133,6 +139,7 @@ export class DirectChatComponent implements OnInit, OnDestroy, AfterViewChecked 
     if (this.scrollToBottomRequested) {
       el.scrollTop = el.scrollHeight;
       this.scrollToBottomRequested = false;
+      this.newMessagesPending = 0;
     }
     this.markVisibleMessagesRead();
   }
@@ -141,6 +148,15 @@ export class DirectChatComponent implements OnInit, OnDestroy, AfterViewChecked 
   @HostListener('window:focus')
   @HostListener('document:visibilitychange')
   onMessageLogScroll(): void {
+    if (this.isNearBottom()) this.newMessagesPending = 0;
+    this.markVisibleMessagesRead();
+  }
+
+  jumpToLatestMessages(): void {
+    const log = this.messageList?.nativeElement;
+    if (!log) return;
+    log.scrollTop = log.scrollHeight;
+    this.newMessagesPending = 0;
     this.markVisibleMessagesRead();
   }
 
@@ -186,6 +202,7 @@ export class DirectChatComponent implements OnInit, OnDestroy, AfterViewChecked 
           this.chatInfo = result.info;
           this.historyPage = 0;
           this.hasOlderMessages = !result.messages.last;
+          this.newMessagesPending = 0;
           this.scrollToBottomRequested = true;
         },
         error: error => {
@@ -209,7 +226,10 @@ export class DirectChatComponent implements OnInit, OnDestroy, AfterViewChecked 
         next: page => {
           const follow = this.isNearBottom();
           this.messages = this.sorted([...this.messages.filter(message => !page.content.some(recent => recent.id === message.id)), ...page.content]);
-          if (follow) this.scrollToBottomRequested = true;
+          if (follow) {
+            this.newMessagesPending = 0;
+            this.scrollToBottomRequested = true;
+          }
           const confirmed = this.messages.find(message => this.matchesPendingDelivery(message));
           if (confirmed) this.confirmPendingDelivery();
         }

@@ -604,6 +604,12 @@
                       </article>
                     }
                   </div>
+                  @if (activeTab === 'chat' && newMessagesPending > 0) {
+                    <button type="button" class="chat-new-messages" (click)="jumpToLatestMessages()">
+                      <span aria-hidden="true">↓</span> {{ 'chat.newMessages' | t }}
+                      <span class="chat-new-messages-count">{{ newMessagesPending }}</span>
+                    </button>
+                  }
                 }
               </section>
             }

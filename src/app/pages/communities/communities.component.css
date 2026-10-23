@@ -1805,3 +1805,22 @@ input,textarea,select {
 .community-chat-panel .community-timeline-chat .community-timeline-entry.thread-continuation.my-chat-message { border-top-right-radius: .35rem; }
 .community-chat-panel .community-timeline-chat .community-timeline-entry.thread-continuation .entry-meta { justify-content: flex-end; }
 .community-timeline-feed .chat-day-separator { display: none; }
+
+
+/* New arrivals remain discoverable without stealing the reader's scroll. */
+.chat-new-messages {
+  display: flex; align-items: center; gap: .55rem; width: fit-content;
+  margin: -16px 14px 10px auto; position: relative; z-index: 2;
+  padding: .55rem .85rem; border-radius: 999px;
+  border: 1px solid rgba(108, 234, 201, .65); background: #194e4c;
+  color: #eafffa; box-shadow: 0 5px 18px rgba(0,0,0,.26);
+  font: inherit; font-size: .8rem; font-weight: 800;
+  cursor: pointer;
+}
+.chat-new-messages:hover { background: #24645a; }
+.chat-new-messages:focus-visible { outline: 2px solid #a7fce2; outline-offset: 3px; }
+.community-chat-panel .chat-new-messages { order: 2; align-self: flex-end; }
+.chat-new-messages-count {
+  min-width: 22px; border-radius: 999px; padding: .08rem .38rem;
+  background: #58dec4; color: #052c2c; text-align: center; font-variant-numeric: tabular-nums;
+}

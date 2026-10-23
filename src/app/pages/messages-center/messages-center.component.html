@@ -222,6 +222,12 @@
               </article>
             }
           </div>
+          @if (!historicalPreview && !previewLoading && !previewError && newMessagesPending > 0) {
+            <button type="button" class="chat-new-messages" (click)="jumpToLatestMessages()">
+              <span aria-hidden="true">↓</span> {{ 'chat.newMessages' | t }}
+              <span class="chat-new-messages-count">{{ newMessagesPending }}</span>
+            </button>
+          }
           @if (composerError || composerSuccess) {
             <section class="inbox-compose-alert" [class.inbox-compose-alert--error]="!!composerError"
               [attr.role]="composerError ? 'alert' : 'status'">
