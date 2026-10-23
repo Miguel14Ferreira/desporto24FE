@@ -125,3 +125,10 @@ O registo central é `src/app/pages/communities/community-round-sport.ts`. Os te
 - Registo manual de golos no Andebol e pontos totais no Rugby, com empates possíveis e sem inferir ensaios, conversões ou pontos de classificação.
 - API teamScore e colunas nullable team_score_a/team_score_b, separadas de basketballScore, das estatísticas de futebol e dos resultados históricos.
 - Pontuações inteiras 0–999 como limite técnico; equipas A/B, tradução PT/EN, Concept One.
+
+## Futsal, Hóquei em Campo, Hóquei em Patins e Polo Aquático — golos finais por equipa (23/10/2026)
+- Tipos de prova: `FUTSAL_FINAL`, `FIELD_HOCKEY_FINAL`, `ROLLER_HOCKEY_FINAL`, `WATER_POLO_FINAL`. Modalidades separadas, sem fallback da modalidade genérica «Hóquei» nem do Hóquei no Gelo.
+- Marcador coletivo A/B com golos confirmados e possíveis empates, sem simular prolongamento, shoot-outs, marcadores individuais, penáltis ou vitória numa eliminatória. Os sistemas competitivos exigem contratos adicionais para essas decisões.
+- Reutiliza o contrato `teamScore` e as colunas já existentes `team_score_a/b`. **Sem Liquibase novo**. Colunas antigas continuam nullable, sem backfill nem interpretação automática de resultados antigos.
+- O rugby mantém pontos e o andebol mantém golos; basquetebol e voleibol não são convertidos. Resultado neutro para classificações W/D/L genéricas, sem pontos de época inventados.
+- Design desktop Concept One, traduções PT/EN, testes de validação de resultados e seleção de modalidade. Referências: FIFA Futsal Law 10, FIH Rules of Hockey 2026, World Skate Rink Hockey Regulations e World Aquatics Competition Regulations.

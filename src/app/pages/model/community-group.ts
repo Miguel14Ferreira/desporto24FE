@@ -105,7 +105,8 @@ export interface CommunityRound {
     | 'ARTISTIC_DUET_TECH' | 'ARTISTIC_DUET_FREE'
     | 'ARTISTIC_TEAM_TECH' | 'ARTISTIC_TEAM_FREE'
     | 'BASKETBALL_FINAL' | 'BASKETBALL_3X3_FINAL'
-    | 'VOLLEYBALL_FINAL' | 'BEACH_VOLLEY_FINAL' | 'HANDBALL_FINAL' | 'RUGBY_FINAL' | 'RUGBY_SEVENS_FINAL' | null;
+    | 'VOLLEYBALL_FINAL' | 'BEACH_VOLLEY_FINAL' | 'HANDBALL_FINAL' | 'RUGBY_FINAL' | 'RUGBY_SEVENS_FINAL'
+    | 'FUTSAL_FINAL' | 'FIELD_HOCKEY_FINAL' | 'ROLLER_HOCKEY_FINAL' | 'WATER_POLO_FINAL' | null;
   eventDiscipline?: string | null;
   matchFormat?: CommunityRacketMatchFormat | null;
   setScores?: CommunitySetScore[] | null;

@@ -1,8 +1,24 @@
 import { CommunityRound, CommunityTeamFinalScore } from '../model/community-group';
 
 export function isTeamFinalEvent(type: string | null | undefined): boolean {
-  return type === 'HANDBALL_FINAL' || type === 'RUGBY_FINAL' || type === 'RUGBY_SEVENS_FINAL';
+  return type === 'HANDBALL_FINAL' || type === 'RUGBY_FINAL' || type === 'RUGBY_SEVENS_FINAL'
+    || type === 'FUTSAL_FINAL' || type === 'FIELD_HOCKEY_FINAL'
+    || type === 'ROLLER_HOCKEY_FINAL' || type === 'WATER_POLO_FINAL';
 }
+/** Only rugby and rugby sevens use points; these team events use goals. */
+export function teamFinalUsesGoals(type: string | null | undefined): boolean {
+  return isTeamFinalEvent(type) && type !== 'RUGBY_FINAL' && type !== 'RUGBY_SEVENS_FINAL';
+}
+
+const TEAM_FINAL_LABELS: Record<string, string> = {
+  HANDBALL_FINAL: 'handball', RUGBY_FINAL: 'rugby', RUGBY_SEVENS_FINAL: 'sevens',
+  FUTSAL_FINAL: 'futsal', FIELD_HOCKEY_FINAL: 'fieldHockey',
+  ROLLER_HOCKEY_FINAL: 'rollerHockey', WATER_POLO_FINAL: 'waterPolo'
+};
+export function teamFinalTitleKey(type: string | null | undefined): string {
+  return 'communities.teamFinal.' + (type ? TEAM_FINAL_LABELS[type] ?? 'finalTitle' : 'finalTitle');
+}
+
 export function teamFinalError(type: string | null | undefined,
   entries: readonly {team: string; performanceValue?: number | null}[],
   score: CommunityTeamFinalScore | null): string | null {
