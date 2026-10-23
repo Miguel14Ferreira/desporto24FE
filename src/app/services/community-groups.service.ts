@@ -455,6 +455,7 @@ export class CommunityGroupsService {
         elapsedSeconds?: number | null;
         bestLapSeconds?: number | null;
         lapsCompleted?: number | null;
+        performanceValue?: number | null;
       }>;
     }
   ): Observable<unknown> {
