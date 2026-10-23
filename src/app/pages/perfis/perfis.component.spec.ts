@@ -700,7 +700,7 @@ describe('PerfisComponent', () => {
     expect(service.friendshipStatus).toHaveBeenCalledWith('ana');
     expect(component.isFriend(profile)).toBeTrue();
     expect(fixture.nativeElement.querySelector('.friend-status')?.textContent).toContain(t('friends.title'));
-    expect(fixture.nativeElement.querySelector('a[href="/menu/friendList/chat/ana"]')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('a[href*="/menu/messages?kind=direct"]')).toBeTruthy();
     expect(fixture.nativeElement.querySelector('.detail-actions button.primary-action')).toBeNull();
     component.sendFriendRequest(profile);
     expect(service.sendFriendRequest).not.toHaveBeenCalled();
@@ -721,7 +721,7 @@ describe('PerfisComponent', () => {
     expect(service.friendshipStatus).toHaveBeenCalledTimes(2);
     expect(component.actionError).toBe('');
     expect(component.isFriend(profile)).toBeTrue();
-    expect(fixture.nativeElement.querySelector('a[href="/menu/friendList/chat/ana"]')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('a[href*="/menu/messages?kind=direct"]')).toBeTruthy();
     expect(fixture.nativeElement.querySelector('.detail-actions button.primary-action')).toBeNull();
   });
 

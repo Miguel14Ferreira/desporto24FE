@@ -253,6 +253,11 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   }
 
   loadInbox(): void {
+    // Support snapshot-only navigation contexts as well as live route streams.
+    if (this.observedDeepLinkKey === null && this.route?.snapshot?.queryParamMap) {
+      this.queueDeepLink(this.route.snapshot.queryParamMap.get('kind'),
+        this.route.snapshot.queryParamMap.get('id'));
+    }
     const request = ++this.inboxVersion;
     this.loading = true;
     this.failedSources = [];

@@ -61,6 +61,8 @@ describe('Unified Jynlo message center', () => {
     } as any));
     component = new MessagesCenterComponent(friends, communities, sessions, direct, timeline, realtime, inboxApi);
     (component as any).currentUsername = 'ana';
+    // Older isolated tests construct a session chat without calling loadInbox().
+    (component as any).sessionKickoffs.set(41, Date.now() + 3600_000);
   });
 
   it('searches full chat history through an authorized scoped request without marking read', () => {
