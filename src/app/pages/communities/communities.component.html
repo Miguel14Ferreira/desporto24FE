@@ -1650,7 +1650,7 @@
                                 <span class="round-sport-tag">{{ sport }}</span>
                               }
                               @if (round.eventType) {
-                                <span class="round-sport-tag">{{ eventTypeLabel(round.eventType) }}</span>
+                                <span class="round-sport-tag">{{ eventTypeLabel(round.eventType, roundSport(round)) }}</span>
                               }
                               @if (round.eventDiscipline) {
                                 <span class="round-sport-tag round-field-discipline">{{ fieldDisciplineLabel(round.eventDiscipline) }}</span>
