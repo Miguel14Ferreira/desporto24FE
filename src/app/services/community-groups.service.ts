@@ -414,6 +414,10 @@ export class CommunityGroupsService {
         assists: number;
         mvp: boolean;
         cleanSheet: boolean;
+        finishPosition?: number | null;
+        elapsedSeconds?: number | null;
+        bestLapSeconds?: number | null;
+        lapsCompleted?: number | null;
       }>;
     }
   ): Observable<unknown> {
