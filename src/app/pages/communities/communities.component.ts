@@ -161,7 +161,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     if (!this.selected || this.activeTab !== 'chat' || entry.kind !== 'CHAT'
         || entry.communityId !== this.selected.id) return;
     const follow = this.nearChatBottom() || this.isMyChatEntry(entry);
-    if (this.timelineLoading) this.chatEventsDuringLoad.set(entry.id, entry);
+    if (this.timelineLoading) this.chatEventsDuringLoad?.set(entry.id, entry);
     this.mergeChatEntries([entry], follow);
   }
 
@@ -232,7 +232,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     const kind = this.timelineKind;
     const version = ++this.timelineRequestVersion;
     this.timelineLoading = true;
-    if (kind === 'CHAT') this.chatEventsDuringLoad.clear();
+    if (kind === 'CHAT') this.chatEventsDuringLoad?.clear();
     this.timelineError = '';
     this.timelineService.list(communityId, kind)
       .pipe(timeout(10_000), finalize(() => {
@@ -247,9 +247,9 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
               // Preserve only websocket messages received while the HTTP request ran.
               const follow = this.timelineEntries.length === 0 || this.nearChatBottom();
               const byId = new Map(entries.map(entry => [entry.id, entry]));
-              for (const entry of this.chatEventsDuringLoad.values()) byId.set(entry.id, entry);
+              for (const entry of this.chatEventsDuringLoad?.values() ?? []) byId.set(entry.id, entry);
               this.timelineEntries = this.sortChatEntries([...byId.values()]);
-              this.chatEventsDuringLoad.clear();
+              this.chatEventsDuringLoad?.clear();
               if (follow) this.chatScrollRequested = true;
               if (this.chatDeliveryUncertain
                   && this.timelineEntries.some(entry => this.matchesPendingChatDelivery(entry))) {
@@ -959,7 +959,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     this.pendingJoinRequestsLoading = false;
     this.pendingJoinRequests = [];
     ++this.timelineRequestVersion;
-    this.chatEventsDuringLoad.clear();
+    this.chatEventsDuringLoad?.clear();
     this.timelineEntries = [];
     this.timelineError = '';
     this.timelineLoading = false;
@@ -1037,7 +1037,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     this.chatDeliveryUncertain = false;
     this.pendingChatDelivery = undefined;
     ++this.timelineRequestVersion;
-    this.chatEventsDuringLoad.clear();
+    this.chatEventsDuringLoad?.clear();
     this.timelineEntries = [];
     this.timelineError = '';
     this.timelineLoading = false;
