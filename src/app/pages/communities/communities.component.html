@@ -1155,8 +1155,12 @@
                           @if (athleticsDisciplineOptions(newRoundSport, newRoundEventType).length) {
                             <label>
                               <span>{{ (newRoundEventType === 'APPARATUS'
-                                ? 'communities.gym.apparatus' : 'communities.discipline.label') | t }}</span>
-                              <select [(ngModel)]="roundDisciplineDraft" [attr.aria-label]="'communities.discipline.label' | t">
+                                ? 'communities.gym.apparatus'
+                                : newRoundEventType === 'BODYBOARD_HEAT'
+                                ? 'communities.bodyboard.category' : 'communities.discipline.label') | t }}</span>
+                              <select [(ngModel)]="roundDisciplineDraft"
+                                [attr.aria-label]="(newRoundEventType === 'BODYBOARD_HEAT'
+                                  ? 'communities.bodyboard.category' : 'communities.discipline.label') | t">
                                 <option value="">{{ 'communities.discipline.select' | t }}</option>
                                 @for (option of athleticsDisciplineOptions(newRoundSport, newRoundEventType); track option) {
                                   <option [value]="option">{{ fieldDisciplineLabel(option) }}</option>
@@ -1181,6 +1185,7 @@
                         } @else if (newRoundEventType && viewForNewRound() === 'individual') {
                           <p class="round-sport-guidance" role="note">
                             {{ (newRoundEventType === 'HEAT' ? 'communities.surf.hint'
+                              : newRoundEventType === 'BODYBOARD_HEAT' ? 'communities.bodyboard.hint'
                               : newRoundEventType === 'APPARATUS' ? 'communities.gym.hint'
                               : 'communities.eventType.marksHint') | t }}
                           </p>
@@ -1270,15 +1275,15 @@
                                         <input type="number" min="0.001" step="0.001" [(ngModel)]="entry.bestLapSeconds">
                                       </label>
                                     }
-                                  } @else if (newRoundEventType === 'HEAT') {
+                                  } @else if (isWaveHeatEvent(newRoundEventType)) {
                                     <div class="round-wave-editor">
                                       <label>
-                                        <span>{{ 'communities.surf.wave1' | t }}</span>
+                                        <span>{{ waveLabelKey(newRoundEventType, 1) | t }}</span>
                                         <input type="number" min="0" max="10" step="0.001"
                                           [(ngModel)]="entry.waveScore1" [placeholder]="'communities.performance.optional' | t">
                                       </label>
                                       <label>
-                                        <span>{{ 'communities.surf.wave2' | t }}</span>
+                                        <span>{{ waveLabelKey(newRoundEventType, 2) | t }}</span>
                                         <input type="number" min="0" max="10" step="0.001"
                                           [(ngModel)]="entry.waveScore2" [placeholder]="'communities.performance.optional' | t">
                                       </label>
@@ -1891,11 +1896,11 @@
                                   </span>
                                 </div>
                                 @if (neutralRound(round)) {
-                                  @if (round.eventType === 'HEAT') {
+                                  @if (isWaveHeatEvent(round.eventType)) {
                                     @if (surfWaveTotal(entry) !== null) {
                                       <div class="round-surf-scores">
-                                        <small>{{ 'communities.surf.wave1' | t }}: {{ performanceDisplay(entry.waveScore1) }}</small>
-                                        <small>{{ 'communities.surf.wave2' | t }}: {{ performanceDisplay(entry.waveScore2) }}</small>
+                                        <small>{{ waveLabelKey(round.eventType, 1) | t }}: {{ performanceDisplay(entry.waveScore1) }}</small>
+                                        <small>{{ waveLabelKey(round.eventType, 2) | t }}: {{ performanceDisplay(entry.waveScore2) }}</small>
                                       </div>
                                       <span class="round-performance-mark round-performance-mark--surf">
                                         {{ performanceDisplay(surfWaveTotal(entry)) }} / 20

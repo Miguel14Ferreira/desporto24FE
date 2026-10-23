@@ -8,6 +8,7 @@ describe('multi-format sports should not reuse unrelated scoring rules', () => {
     expect(eventOptionsForSport('Snowboard').map(o => o.code)).toEqual(['RACE', 'FREESTYLE']);
     expect(eventOptionsForSport('Futebol')).toEqual([]);
     expect(eventOptionsForSport('Surf').map(o => o.code)).toEqual(['HEAT']);
+    expect(eventOptionsForSport('Bodyboard').map(o => o.code)).toEqual(['BODYBOARD_HEAT']);
     expect(eventOptionsForSport('Ginástica Artística').map(o => o.code)).toEqual(['APPARATUS']);
   });
   it('treats freestyle and field event results as participation-only', () => {
@@ -16,11 +17,13 @@ describe('multi-format sports should not reuse unrelated scoring rules', () => {
     expect(isNeutralEvent('Atletismo', 'THROW')).toBeTrue();
     expect(eventPresentationFormat('BMX', 'FREESTYLE')).toBe('judged');
     expect(eventPresentationFormat('Surf', 'HEAT')).toBe('judged');
+    expect(eventPresentationFormat('Bodyboard', 'BODYBOARD_HEAT')).toBe('judged');
     expect(eventPresentationFormat('Ginástica Artística', 'APPARATUS')).toBe('judged');
     expect(eventPresentationFormat('Atletismo', 'JUMP')).toBe('measured');
     expect(eventView('BMX', 'FREESTYLE')).toBe('individual');
     expect(eventView('Atletismo', 'TRACK')).toBe('race');
     expect(eventView('Snowboard', 'RACE')).toBe('race');
+    expect(eventView('Bodyboard', 'BODYBOARD_HEAT')).toBe('individual');
   });
   it('preserves old BMX races while keeping other old results neutral', () => {
     expect(eventView('BMX', null)).toBe('race');

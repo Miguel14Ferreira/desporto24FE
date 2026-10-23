@@ -60,3 +60,11 @@ O registo central é `src/app/pages/communities/community-round-sport.ts`. Os te
 - Ginástica Artística APPARATUS: seleção de um de oito aparelhos e registo manual opcional da nota final já apurada. Não há cálculo da dificuldade/exe-cução dos júris.
 - Surf utiliza `wave_score_1` e `wave_score_2`, ambos nullable; não reutiliza `performance_value` nem altera histórico.
 - Não criar classificação de época, medalhas ou rankings cruzados entre provas/aparelhos.
+
+## Bodyboard — bateria com categoria explícita (23/10/2026)
+- Novo tipo `BODYBOARD_HEAT` exclusivo da modalidade Bodyboard. Não reinterpretar as baterias antigas de surf `HEAT`.
+- Categoria obrigatória para novas baterias: `PRONE` ou `DROP_KNEE`. Posições apenas dentro da bateria criada; não cruzar categorias.
+- Duas melhores ondas já avaliadas (0–10 cada), guardadas nos campos existentes `wave_score_1/2`. Soma local no frontend até 20; ausência de ambas continua sem resultado.
+- Sem regras automáticas de interferência, prioridade, penalização ou desempate federativo. Totais iguais partilham posição na vista provisória.
+- Nenhum novo changeset ou backfill de BD: contrato já existente é suficiente. Resultados históricos e outros desportos inalterados.
+- Referências analisadas: regra de competição da International Bodyboarding Corporation (2025) e clube NCCB (duas melhores ondas, escala 0–10). 
