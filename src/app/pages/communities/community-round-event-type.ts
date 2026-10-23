@@ -17,7 +17,7 @@ export type CommunityEventType = 'RACE' | 'FREESTYLE' | 'TRACK' | 'JUMP' | 'THRO
     | 'FUTSAL_FINAL' | 'FIELD_HOCKEY_FINAL' | 'ROLLER_HOCKEY_FINAL' | 'WATER_POLO_FINAL'
     | 'FOOTVOLLEY_SINGLE_18' | 'FOOTVOLLEY_BEST_OF_3' | 'FOOTVOLLEY_SINGLE_15'
     | 'ICE_HOCKEY_REG' | 'ICE_HOCKEY_OT' | 'ICE_HOCKEY_SO' | 'BASEBALL_RUNS' | 'SOFTBALL_RUNS' | 'KORFBALL_REG' | 'KORFBALL_GOLDEN'
-    | 'LACROSSE_M_REG' | 'LACROSSE_M_OT';
+    | 'LACROSSE_M_REG' | 'LACROSSE_M_OT' | 'AMFOOTBALL_SCORE' | 'FLAGFOOTBALL_SCORE';
 export interface CommunityEventOption { code: CommunityEventType; labelKey: string }
 const TYPES: Record<string, readonly CommunityEventOption[]> = {
   basquetebol: [{ code: 'BASKETBALL_FINAL', labelKey: 'communities.basketball.fiveVsFive' }],
@@ -32,6 +32,8 @@ const TYPES: Record<string, readonly CommunityEventOption[]> = {
     { code: 'LACROSSE_M_REG', labelKey: 'communities.teamFinal.lacrosseMenReg' },
     { code: 'LACROSSE_M_OT', labelKey: 'communities.teamFinal.lacrosseMenOt' }
   ],
+  'futebol americano': [{ code: 'AMFOOTBALL_SCORE', labelKey: 'communities.teamFinal.americanFootball' }],
+  'flag football': [{ code: 'FLAGFOOTBALL_SCORE', labelKey: 'communities.teamFinal.flagFootball' }],
   voleibol: [{ code: 'VOLLEYBALL_FINAL', labelKey: 'communities.volleyball.indoor' }],
   'voleibol de praia': [{ code: 'BEACH_VOLLEY_FINAL', labelKey: 'communities.volleyball.beach' }],
   futevolei: [
@@ -147,7 +149,8 @@ export function eventPresentationFormat(
           'ICE_HOCKEY_REG', 'ICE_HOCKEY_OT', 'ICE_HOCKEY_SO',
           'BASEBALL_RUNS', 'SOFTBALL_RUNS',
           'KORFBALL_REG', 'KORFBALL_GOLDEN',
-          'LACROSSE_M_REG', 'LACROSSE_M_OT'].includes(eventType || '') ? 'team'
+          'LACROSSE_M_REG', 'LACROSSE_M_OT',
+          'AMFOOTBALL_SCORE', 'FLAGFOOTBALL_SCORE'].includes(eventType || '') ? 'team'
       : 'measured';
   return formatForSport(sport || null);
 }

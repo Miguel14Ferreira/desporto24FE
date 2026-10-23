@@ -1950,6 +1950,10 @@
                               @if (round.eventType === 'LACROSSE_M_REG' && round.teamScore?.sideA === round.teamScore?.sideB) {
                                 <small>{{ 'communities.teamFinal.lacrosseMenRegDraw' | t }}</small>
                               }
+                              @if ((round.eventType === 'AMFOOTBALL_SCORE' || round.eventType === 'FLAGFOOTBALL_SCORE')
+                                && round.teamScore?.sideA === round.teamScore?.sideB) {
+                                <small>{{ 'communities.teamFinal.footballPointsTie' | t }}</small>
+                              }
                               <small>{{ 'communities.teamFinal.recordedOnly' | t }}</small>
                             </section>
                           } @else if (recordedBasketballFinal(round)) {

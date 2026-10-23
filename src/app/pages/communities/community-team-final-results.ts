@@ -7,14 +7,16 @@ export function isTeamFinalEvent(type: string | null | undefined): boolean {
     || type === 'ICE_HOCKEY_REG' || type === 'ICE_HOCKEY_OT' || type === 'ICE_HOCKEY_SO'
     || type === 'BASEBALL_RUNS' || type === 'SOFTBALL_RUNS'
     || type === 'KORFBALL_REG' || type === 'KORFBALL_GOLDEN'
-    || type === 'LACROSSE_M_REG' || type === 'LACROSSE_M_OT';
+    || type === 'LACROSSE_M_REG' || type === 'LACROSSE_M_OT'
+    || type === 'AMFOOTBALL_SCORE' || type === 'FLAGFOOTBALL_SCORE';
 }
-/** Sport-aware scoreboard units: goals, rugby points, or baseball/softball runs. */
+/** Sport-aware scoreboard units: goals, rugby and football points, or baseball/softball runs. */
 export function teamFinalUsesRuns(type: string | null | undefined): boolean {
   return type === 'BASEBALL_RUNS' || type === 'SOFTBALL_RUNS';
 }
 export function teamFinalUsesGoals(type: string | null | undefined): boolean {
   return isTeamFinalEvent(type) && type !== 'RUGBY_FINAL' && type !== 'RUGBY_SEVENS_FINAL'
+    && type !== 'AMFOOTBALL_SCORE' && type !== 'FLAGFOOTBALL_SCORE'
     && !teamFinalUsesRuns(type);
 }
 export function teamFinalScoreLabelKey(type: string | null | undefined): string {
@@ -30,7 +32,8 @@ const TEAM_FINAL_LABELS: Record<string, string> = {
   ICE_HOCKEY_REG: 'iceRegulation', ICE_HOCKEY_OT: 'iceOvertime', ICE_HOCKEY_SO: 'iceShootout',
   BASEBALL_RUNS: 'baseballRuns', SOFTBALL_RUNS: 'softballRuns',
   KORFBALL_REG: 'korfballReg', KORFBALL_GOLDEN: 'korfballGolden',
-  LACROSSE_M_REG: 'lacrosseMenReg', LACROSSE_M_OT: 'lacrosseMenOt'
+  LACROSSE_M_REG: 'lacrosseMenReg', LACROSSE_M_OT: 'lacrosseMenOt',
+  AMFOOTBALL_SCORE: 'americanFootball', FLAGFOOTBALL_SCORE: 'flagFootball'
 };
 export function teamFinalTitleKey(type: string | null | undefined): string {
   return 'communities.teamFinal.' + (type ? TEAM_FINAL_LABELS[type] ?? 'finalTitle' : 'finalTitle');
@@ -50,9 +53,15 @@ export function teamFinalHintKey(type: string | null | undefined): string {
     case 'KORFBALL_GOLDEN': return 'communities.teamFinal.korfballGoldenHint';
     case 'LACROSSE_M_REG': return 'communities.teamFinal.lacrosseMenRegHint';
     case 'LACROSSE_M_OT': return 'communities.teamFinal.lacrosseMenOtHint';
+    case 'AMFOOTBALL_SCORE': return 'communities.teamFinal.americanFootballHint';
+    case 'FLAGFOOTBALL_SCORE': return 'communities.teamFinal.flagFootballHint';
     default: return teamFinalUsesGoals(type)
       ? 'communities.teamFinal.goalHint' : 'communities.teamFinal.finalHint';
   }
+}
+
+export function teamFinalIsFootballPointsEvent(type: string | null | undefined): boolean {
+  return type === 'AMFOOTBALL_SCORE' || type === 'FLAGFOOTBALL_SCORE';
 }
 
 export function teamFinalIsDecisiveGoalEvent(type: string | null | undefined): boolean {
