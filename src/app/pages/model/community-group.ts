@@ -60,6 +60,10 @@ export interface CommunityRoundEntry {
   elapsedSeconds?: number | null;
   bestLapSeconds?: number | null;
   lapsCompleted?: number | null;
+  entryId?: number | null;
+  communityPlayerId?: number | null;
+  racePenaltyPoints?: number;
+  racePenaltyReason?: string | null;
 }
 
 export interface CommunitySetScore {
@@ -143,6 +147,32 @@ export interface CommunityRacketStandingGroup {
   rule?: CommunityRacketScoringRule | null;
 }
 
+export interface CommunityRaceRule {
+  sport: string;
+  pointsByPlace: number[];
+}
+
+export interface CommunityRaceStanding {
+  position: number;
+  playerId: number;
+  profileId: number | null;
+  username: string | null;
+  fullName: string | null;
+  profilePicUrl: string | null;
+  races: number;
+  wins: number;
+  podiums: number;
+  bestFinish: number;
+  championshipPoints: number | null;
+  penaltyPoints: number;
+}
+
+export interface CommunityRaceStandingGroup {
+  sport: string;
+  rule: CommunityRaceRule | null;
+  standings: CommunityRaceStanding[];
+}
+
 export interface CommunityCompetitionOverview {
   settings: CommunityCompetitionSettings;
   seasons: CommunitySeason[];
@@ -151,6 +181,7 @@ export interface CommunityCompetitionOverview {
   rounds: CommunityRound[];
   standings: CommunityStanding[];
   racketStandings?: CommunityRacketStandingGroup[];
+  raceStandings?: CommunityRaceStandingGroup[];
 }
 
 export interface CommunityRoundEntryDraft {
