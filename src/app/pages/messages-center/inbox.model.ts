@@ -12,6 +12,9 @@ export interface InboxConversation {
   latestAt?: string;
   /** Only WebSocket messages received during this browser visit. Not server read receipts. */
   newThisVisit: number;
+  /** Server-sourced persistent unread count; absent only when summaries are unavailable. */
+  unreadCount?: number;
+  latestMessageId?: number | null;
 }
 
 export interface InboxMessage {

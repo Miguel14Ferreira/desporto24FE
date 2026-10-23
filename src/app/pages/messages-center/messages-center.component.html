@@ -66,9 +66,9 @@
                   <span class="inbox-entry-kind">{{ kindLabel(conversation.kind) | t }} · {{ conversation.subtitle }}</span>
                   <span class="inbox-entry-snippet">{{ conversation.latestText || ('inbox.openPreview' | t) }}</span>
                 </span>
-                @if (conversation.newThisVisit > 0) {
-                  <span class="inbox-unread" [attr.aria-label]="'inbox.newCount' | t:{count: conversation.newThisVisit}">
-                    {{ conversation.newThisVisit > 99 ? '99+' : conversation.newThisVisit }}
+                @if ((conversation.unreadCount ?? conversation.newThisVisit) > 0) {
+                  <span class="inbox-unread" [attr.aria-label]="'inbox.newCount' | t:{count: (conversation.unreadCount ?? conversation.newThisVisit)}">
+                    {{ (conversation.unreadCount ?? conversation.newThisVisit) > 99 ? '99+' : conversation.newThisVisit }}
                   </span>
                 }
               </button>
@@ -169,6 +169,6 @@
         }
       </main>
     </div>
-    <p class="inbox-unread-note">{{ 'inbox.unreadScope' | t }}</p>
+    <p class="inbox-unread-note">{{ (serverSummariesAvailable ? 'inbox.unreadScope' : 'inbox.unreadOffline') | t }}</p>
   </div>
 </section>
