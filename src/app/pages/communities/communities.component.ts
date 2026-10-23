@@ -518,6 +518,12 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   seasonStartsAt = '';
   seasonSaving = false;
   closeSeasonConfirming = false;
+  editingSeasonId: number | null = null;
+  editingSeasonName = '';
+  deletingSeasonId: number | null = null;
+  seasonActionSaving = false;
+  seasonActionError = '';
+  seasonActionMessage = '';
 
   importMode: 'ROUNDS' | 'STANDINGS' | 'MATCHES' = 'ROUNDS';
   matchPreviewLoading = false;
@@ -1541,6 +1547,10 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
             season => !season.active && Boolean(season.championUsername)
           );
           this.selectedSeasonId = competition.selectedSeasonId;
+          if (this.editingSeasonId !== null &&
+              !competition.seasons.some(item => item.id === this.editingSeasonId)) this.editingSeasonId = null;
+          if (this.deletingSeasonId !== null &&
+              !competition.seasons.some(item => item.id === this.deletingSeasonId)) this.deletingSeasonId = null;
           this.rankingsEnabledDraft = competition.settings.rankingsEnabled;
           this.winPointsDraft = competition.settings.winPoints;
           this.drawPointsDraft = competition.settings.drawPoints;
@@ -1626,6 +1636,88 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
         error: error => {
           this.errorMessage = error.error?.message
             || t('feedback.communities.seasonCreateError');
+        }
+      });
+  }
+
+
+  editSeason(season: CommunitySeason): void {
+    if (!this.selected || !this.canManage() || this.seasonActionSaving) return;
+    this.editingSeasonId = season.id;
+    this.editingSeasonName = season.name;
+    this.deletingSeasonId = null;
+    this.seasonActionError = '';
+    this.seasonActionMessage = '';
+  }
+
+  requestDeleteSeason(season: CommunitySeason): void {
+    if (!this.selected || !this.canManage() || this.seasonActionSaving) return;
+    this.deletingSeasonId = season.id;
+    this.editingSeasonId = null;
+    this.editingSeasonName = '';
+    this.seasonActionError = '';
+    this.seasonActionMessage = '';
+  }
+
+  cancelSeasonAction(): void {
+    if (this.seasonActionSaving) return;
+    this.editingSeasonId = null;
+    this.editingSeasonName = '';
+    this.deletingSeasonId = null;
+    this.seasonActionError = '';
+  }
+
+  saveSeasonName(season: CommunitySeason): void {
+    const name = this.editingSeasonName.trim();
+    if (!this.selected || !this.canManage() || this.seasonActionSaving
+        || this.editingSeasonId !== season.id) return;
+    if (!name || name.length > 120) {
+      this.seasonActionError = t('feedback.communities.seasonNameInvalid');
+      return;
+    }
+    const communityId = this.selected.id;
+    this.seasonActionSaving = true;
+    this.seasonActionError = '';
+    this.seasonActionMessage = '';
+    this.communityService.renameSeason(communityId, season.id, name)
+      .pipe(timeout(10_000), finalize(() => this.seasonActionSaving = false))
+      .subscribe({
+        next: () => {
+          if (this.selected?.id !== communityId) return;
+          this.editingSeasonId = null;
+          this.editingSeasonName = '';
+          this.seasonActionMessage = t('communities.seasonRenamed');
+          this.loadCompetition(this.selected, this.selectedSeasonId);
+        },
+        error: () => {
+          if (this.selected?.id === communityId)
+            this.seasonActionError = t('feedback.communities.seasonRenameError');
+        }
+      });
+  }
+
+  confirmDeleteSeason(season: CommunitySeason): void {
+    if (!this.selected || !this.canManage() || this.seasonActionSaving
+        || this.deletingSeasonId !== season.id) return;
+    const communityId = this.selected.id;
+    this.seasonActionSaving = true;
+    this.seasonActionError = '';
+    this.seasonActionMessage = '';
+    this.communityService.deleteSeason(communityId, season.id)
+      .pipe(timeout(10_000), finalize(() => this.seasonActionSaving = false))
+      .subscribe({
+        next: () => {
+          if (this.selected?.id !== communityId) return;
+          this.deletingSeasonId = null;
+          if (this.selectedSeasonId === season.id) this.selectedSeasonId = null;
+          this.seasonActionMessage = t('communities.seasonDeleted');
+          this.loadCompetition(this.selected, this.selectedSeasonId);
+        },
+        error: (error: HttpErrorResponse) => {
+          if (this.selected?.id !== communityId) return;
+          this.seasonActionError = error.status === 400 || error.status === 409
+            ? t('feedback.communities.seasonDeleteBlocked')
+            : t('feedback.communities.seasonDeleteError');
         }
       });
   }

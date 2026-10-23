@@ -367,6 +367,17 @@ export class CommunityGroupsService {
     );
   }
 
+  renameSeason(id: number, seasonId: number, name: string): Observable<CommunitySeason> {
+    return this.http.put<CommunitySeason>(
+      this.url + '/' + id + '/seasons/' + seasonId,
+      { name }
+    );
+  }
+
+  deleteSeason(id: number, seasonId: number): Observable<void> {
+    return this.http.delete<void>(this.url + '/' + id + '/seasons/' + seasonId);
+  }
+
   closeSeason(id: number, seasonId: number): Observable<CommunitySeason> {
     return this.http.post<CommunitySeason>(
       this.url + '/' + id + '/seasons/' + seasonId + '/close',
