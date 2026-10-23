@@ -14,13 +14,19 @@ export type CommunityEventType = 'RACE' | 'FREESTYLE' | 'TRACK' | 'JUMP' | 'THRO
   | 'ARTISTIC_TEAM_TECH' | 'ARTISTIC_TEAM_FREE'
   | 'BASKETBALL_FINAL' | 'BASKETBALL_3X3_FINAL'
   | 'VOLLEYBALL_FINAL' | 'BEACH_VOLLEY_FINAL' | 'HANDBALL_FINAL' | 'RUGBY_FINAL' | 'RUGBY_SEVENS_FINAL'
-    | 'FUTSAL_FINAL' | 'FIELD_HOCKEY_FINAL' | 'ROLLER_HOCKEY_FINAL' | 'WATER_POLO_FINAL';
+    | 'FUTSAL_FINAL' | 'FIELD_HOCKEY_FINAL' | 'ROLLER_HOCKEY_FINAL' | 'WATER_POLO_FINAL'
+    | 'FOOTVOLLEY_SINGLE_18' | 'FOOTVOLLEY_BEST_OF_3' | 'FOOTVOLLEY_SINGLE_15';
 export interface CommunityEventOption { code: CommunityEventType; labelKey: string }
 const TYPES: Record<string, readonly CommunityEventOption[]> = {
   basquetebol: [{ code: 'BASKETBALL_FINAL', labelKey: 'communities.basketball.fiveVsFive' }],
   'basquetebol 3x3': [{ code: 'BASKETBALL_3X3_FINAL', labelKey: 'communities.basketball.threeVsThree' }],
   voleibol: [{ code: 'VOLLEYBALL_FINAL', labelKey: 'communities.volleyball.indoor' }],
   'voleibol de praia': [{ code: 'BEACH_VOLLEY_FINAL', labelKey: 'communities.volleyball.beach' }],
+  futevolei: [
+    { code: 'FOOTVOLLEY_SINGLE_18', labelKey: 'communities.footvolley.single18' },
+    { code: 'FOOTVOLLEY_BEST_OF_3', labelKey: 'communities.footvolley.bestOf3' },
+    { code: 'FOOTVOLLEY_SINGLE_15', labelKey: 'communities.footvolley.single15' }
+  ],
   andebol: [{ code: 'HANDBALL_FINAL', labelKey: 'communities.teamFinal.handball' }],
   rugby: [{ code: 'RUGBY_FINAL', labelKey: 'communities.teamFinal.rugby' }],
   'rugby sevens': [{ code: 'RUGBY_SEVENS_FINAL', labelKey: 'communities.teamFinal.sevens' }],
@@ -118,6 +124,7 @@ export function eventPresentationFormat(
       'ARTISTIC_TEAM_TECH', 'ARTISTIC_TEAM_FREE'].includes(eventType || '') ? 'judged'
       : ['BASKETBALL_FINAL', 'BASKETBALL_3X3_FINAL',
           'VOLLEYBALL_FINAL', 'BEACH_VOLLEY_FINAL',
+          'FOOTVOLLEY_SINGLE_18', 'FOOTVOLLEY_BEST_OF_3', 'FOOTVOLLEY_SINGLE_15',
           'HANDBALL_FINAL', 'RUGBY_FINAL', 'RUGBY_SEVENS_FINAL',
           'FUTSAL_FINAL', 'FIELD_HOCKEY_FINAL', 'ROLLER_HOCKEY_FINAL', 'WATER_POLO_FINAL'].includes(eventType || '') ? 'team'
       : 'measured';

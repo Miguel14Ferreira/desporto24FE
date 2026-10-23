@@ -11,9 +11,9 @@ import { eventOptionsForSport, eventView, isNeutralEvent, eventPresentationForma
   CommunityEventType } from './community-round-event-type';
 import { athleticsDisciplineOptions, athleticsDisciplineValid } from './community-field-disciplines';
 import { breakingBattleError } from './community-breaking-battle';
-import { isVolleyballEvent, volleyballMaxSets, volleyballMinSets,
+import { isVolleyballEvent, isFootvolleyEvent, volleyballMaxSets, volleyballMinSets,
   volleyballMatchError, volleyballSetWinner, volleyballSetTotals,
-  recordedVolleyballMatch } from './community-volleyball-results';
+  volleyballFormatHint, volleyballResultTitle, recordedVolleyballMatch } from './community-volleyball-results';
 import { isTeamFinalEvent, teamFinalError, recordedTeamFinal, teamFinalWinner,
   teamFinalUsesGoals, teamFinalTitleKey } from './community-team-final-results';
 import { isBasketballFinal, basketballScoreError,
@@ -828,6 +828,9 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   recordedBasketballFinal = recordedBasketballFinal;
   basketballWinner = basketballWinner;
   isVolleyballEvent = isVolleyballEvent;
+  isFootvolleyEvent = isFootvolleyEvent;
+  volleyballFormatHint = volleyballFormatHint;
+  volleyballResultTitle = volleyballResultTitle;
   volleyballMaxSets = volleyballMaxSets;
   volleyballMinSets = volleyballMinSets;
   volleyballSetWinner = volleyballSetWinner;
