@@ -406,6 +406,8 @@ export class CommunityGroupsService {
       name: string;
       playedAt: string;
       sport?: string | null;
+      matchFormat?: 'SINGLES' | 'DOUBLES' | null;
+      setScores?: Array<{ sideA: number | null; sideB: number | null }> | null;
       entries: Array<{
         username: string;
         team: string | null;
