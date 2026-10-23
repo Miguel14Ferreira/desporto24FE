@@ -35,6 +35,10 @@ describe('Unified Jynlo message center', () => {
   const connected = new BehaviorSubject<boolean>(false);
 
   beforeEach(() => {
+    // The default inbox tests exercise foreground user interactions. Hidden
+    // document cases are explicitly covered in the receipt-specific suite.
+    spyOn(document, 'hasFocus').and.returnValue(true);
+    spyOnProperty(document, 'visibilityState', 'get').and.returnValue('visible');
     friends = jasmine.createSpyObj('CommunityService', ['friends']);
     communities = jasmine.createSpyObj('CommunityGroupsService', ['mine']);
     sessions = jasmine.createSpyObj('SessionService', ['mine', 'messages', 'detail', 'postMessage']);
