@@ -55,6 +55,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   private peerReadCursor: number | null = null;
   private peerReceiptVersion = 0;
   private peerReceiptCheckedAt = 0;
+  /** Token active when this inbox mounted; a different login must not inherit receipts. */
+  private receiptSessionToken: string | null = null;
   private summaryTimer?: ReturnType<typeof setInterval>;
   realtimeConnected = false;
   everConnected = false;
@@ -127,8 +129,9 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     }
     try {
       const token = localStorage.getItem('t');
+      this.receiptSessionToken = token;
       this.currentUsername = (token ? this.jwt.decodeToken(token)?.sub : '') || '';
-    } catch { this.currentUsername = ''; }
+    } catch { this.currentUsername = ''; this.receiptSessionToken = null; }
 
     this.subscriptions.add(this.realtime.messages$.subscribe(message => {
       const from = message.username1.toLowerCase();
@@ -982,13 +985,29 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
    * For private chats only, a read check is shown solely after the recipient's
    * authorized persisted cursor includes the message's positive server ID.
    */
+  private isReceiptSessionCurrent(): boolean {
+    // Different logins in tabs on the same origin share localStorage. Fail
+    // closed until Angular creates a new inbox for the active account.
+    try {
+      return !!this.receiptSessionToken && localStorage.getItem('t') === this.receiptSessionToken;
+    } catch { return false; }
+  }
+
   isDirectMessageRead(message: InboxMessage): boolean {
-    return this.selected?.kind === 'direct' && this.isMine(message)
+    return this.isReceiptSessionCurrent() && this.selected?.kind === 'direct'
+      && message.key === this.selectedKey && this.isMine(message)
       && Number.isSafeInteger(message.id) && message.id > 0
       && this.peerReadCursor !== null && this.peerReadCursor >= message.id;
   }
 
   private refreshPeerReadReceipt(force = false): void {
+    if (!this.isReceiptSessionCurrent()) {
+      // A different account may have replaced the shared browser token.
+      ++this.peerReceiptVersion;
+      this.peerReadCursor = null;
+      this.peerReceiptCheckedAt = 0;
+      return;
+    }
     const conversation = this.selected;
     if (!conversation || conversation.kind !== 'direct') return;
     // One scoped lightweight GET at most every 30 seconds for the active peer.
@@ -1000,7 +1019,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.inboxApi.directReadReceipt(String(conversation.id)).pipe(timeout(10_000))
       .subscribe({
         next: receipt => {
-          if (version !== this.peerReceiptVersion || this.selectedKey !== key) return;
+          if (version !== this.peerReceiptVersion || this.selectedKey !== key
+              || !this.isReceiptSessionCurrent()) return;
           if (receipt?.peerUsername?.toLowerCase() !== String(conversation.id).toLowerCase()
               || !Number.isSafeInteger(receipt.lastReadMessageId)
               || receipt.lastReadMessageId < 0) return;

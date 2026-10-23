@@ -738,8 +738,11 @@ describe('Direct chat confirmed read status', () => {
   let sessions: jasmine.SpyObj<SessionService>;
   let timeline: jasmine.SpyObj<CommunityTimelineService>;
   let realtime: DirectChatRealtimeService;
+  let browserToken: string;
 
   beforeEach(() => {
+    browserToken = 'fixture-auth-token-for-ana';
+    spyOn(localStorage, 'getItem').and.callFake(key => key === 't' ? browserToken : null);
     friends = jasmine.createSpyObj('CommunityService', ['friends']);
     communities = jasmine.createSpyObj('CommunityGroupsService', ['mine']);
     sessions = jasmine.createSpyObj('SessionService', ['mine','messages','detail','postMessage']);
@@ -761,6 +764,7 @@ describe('Direct chat confirmed read status', () => {
     inbox = new MessagesCenterComponent(friends,communities,sessions,
       direct,timeline,realtime,api);
     (inbox as any).currentUsername = 'ana';
+    (inbox as any).receiptSessionToken = browserToken;
   });
 
   function select(peer:string):void {
@@ -795,6 +799,25 @@ describe('Direct chat confirmed read status', () => {
       sender:'ana',text:'not read',createdAt:''})).toBeFalse();
     expect(api.directReadReceipt).toHaveBeenCalledWith('bea');
     expect(api.directReadReceipt).toHaveBeenCalledWith('carla');
+  });
+
+  it('hides stale read receipts immediately if another tab replaces the login token',()=> {
+    api.directReadReceipt.and.returnValue(of({peerUsername:'bea',lastReadMessageId:42}));
+    select('bea');
+    const own = {key:'direct:bea',id:42,sender:'ana',text:'hello',createdAt:''};
+    expect(inbox.isDirectMessageRead(own)).toBeTrue();
+    browserToken = 'fixture-token-from-another-account';
+    expect(inbox.isDirectMessageRead(own)).toBeFalse();
+    (inbox as any).refreshPeerReadReceipt(true);
+    expect((inbox as any).peerReadCursor).toBeNull();
+    expect(api.directReadReceipt).toHaveBeenCalledTimes(1);
+  });
+
+  it('never reuses a peer receipt for a message belonging to another conversation',()=> {
+    api.directReadReceipt.and.returnValue(of({peerUsername:'bea',lastReadMessageId:42}));
+    select('bea');
+    expect(inbox.isDirectMessageRead({key:'direct:carla',id:40,sender:'ana',
+      text:'other chat',createdAt:''})).toBeFalse();
   });
 
   it('does not trust errors, wrong identities, or decreasing cursors',()=>{
