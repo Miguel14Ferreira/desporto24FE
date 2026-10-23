@@ -16,6 +16,12 @@ export interface ChatReactionEvent {
   emoji: string | null;
 }
 
+/** Emitted by the authenticated backend only after the read cursor commits. */
+export interface DirectChatReadReceiptEvent {
+  peerUsername: string;
+  lastReadMessageId: number;
+}
+
 export interface ChatTypingEvent {
   kind: 'direct' | 'session' | 'community';
   conversationId: string;
@@ -26,6 +32,7 @@ export interface ChatTypingEvent {
 interface ChatSocketEnvelope {
   typing?: ChatTypingEvent;
   reaction?: ChatReactionEvent;
+  receipt?: DirectChatReadReceiptEvent;
   type?: string;
   message?: DirectChatMessage | SessionMessage | CommunityTimelineEntry;
 }
@@ -73,6 +80,7 @@ export class DirectChatRealtimeService {
   private readonly communityMessageSubject = new Subject<CommunityTimelineEntry>();
   private readonly reactionSubject = new Subject<ChatReactionEvent>();
   private readonly typingSubject = new Subject<ChatTypingEvent>();
+  private readonly readReceiptSubject = new Subject<DirectChatReadReceiptEvent>();
   private readonly connectedSubject = new BehaviorSubject<boolean>(false);
 
   readonly messages$ = this.messageSubject.asObservable();
@@ -80,6 +88,7 @@ export class DirectChatRealtimeService {
   readonly communityMessages$ = this.communityMessageSubject.asObservable();
   readonly reactions$ = this.reactionSubject.asObservable();
   readonly typing$ = this.typingSubject.asObservable();
+  readonly readReceipts$ = this.readReceiptSubject.asObservable();
   readonly connected$ = this.connectedSubject.asObservable();
 
   connect(): void {
@@ -161,6 +170,17 @@ export class DirectChatRealtimeService {
 
         if (envelope.type === 'CHAT_REACTION_CHANGED' && envelope.reaction) {
           this.reactionSubject.next(envelope.reaction);
+          return;
+        }
+
+        if (envelope.type === 'CHAT_READ_RECEIPT' && envelope.receipt) {
+          const receipt = envelope.receipt;
+          if (typeof receipt.peerUsername === 'string'
+              && receipt.peerUsername.length > 0
+              && Number.isSafeInteger(receipt.lastReadMessageId)
+              && receipt.lastReadMessageId > 0) {
+            this.readReceiptSubject.next(receipt);
+          }
           return;
         }
 
