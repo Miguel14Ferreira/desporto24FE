@@ -22,6 +22,13 @@ export interface DirectChatReadReceiptEvent {
   lastReadMessageId: number;
 }
 
+/** Own-server cursor change, used only to fetch an authoritative unread count. */
+export interface InboxOwnReadEvent {
+  kind: 'direct' | 'community' | 'session';
+  conversationId: string;
+  lastReadMessageId: number;
+}
+
 export interface ChatTypingEvent {
   kind: 'direct' | 'session' | 'community';
   conversationId: string;
@@ -33,6 +40,7 @@ interface ChatSocketEnvelope {
   typing?: ChatTypingEvent;
   reaction?: ChatReactionEvent;
   receipt?: DirectChatReadReceiptEvent;
+  read?: InboxOwnReadEvent;
   type?: string;
   message?: DirectChatMessage | SessionMessage | CommunityTimelineEntry;
 }
@@ -81,6 +89,7 @@ export class DirectChatRealtimeService {
   private readonly reactionSubject = new Subject<ChatReactionEvent>();
   private readonly typingSubject = new Subject<ChatTypingEvent>();
   private readonly readReceiptSubject = new Subject<DirectChatReadReceiptEvent>();
+  private readonly ownReadSubject = new Subject<InboxOwnReadEvent>();
   private readonly connectedSubject = new BehaviorSubject<boolean>(false);
 
   readonly messages$ = this.messageSubject.asObservable();
@@ -89,6 +98,7 @@ export class DirectChatRealtimeService {
   readonly reactions$ = this.reactionSubject.asObservable();
   readonly typing$ = this.typingSubject.asObservable();
   readonly readReceipts$ = this.readReceiptSubject.asObservable();
+  readonly ownReads$ = this.ownReadSubject.asObservable();
   readonly connected$ = this.connectedSubject.asObservable();
 
   connect(): void {
@@ -170,6 +180,16 @@ export class DirectChatRealtimeService {
 
         if (envelope.type === 'CHAT_REACTION_CHANGED' && envelope.reaction) {
           this.reactionSubject.next(envelope.reaction);
+          return;
+        }
+
+        if (envelope.type === 'INBOX_OWN_READ_UPDATED' && envelope.read) {
+          const read = envelope.read;
+          if (['direct', 'community', 'session'].includes(read.kind)
+              && typeof read.conversationId === 'string'
+              && read.conversationId.length > 0 && read.conversationId.length <= 128
+              && Number.isSafeInteger(read.lastReadMessageId)
+              && read.lastReadMessageId > 0) this.ownReadSubject.next(read);
           return;
         }
 
