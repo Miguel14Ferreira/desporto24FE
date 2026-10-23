@@ -64,6 +64,10 @@ export interface CommunityRoundEntry {
   communityPlayerId?: number | null;
   racePenaltyPoints?: number;
   racePenaltyReason?: string | null;
+  raceTimePenaltySeconds?: number | null;
+  adjustedElapsedSeconds?: number | null;
+  raceDisqualified?: boolean;
+  raceStewardReason?: string | null;
 }
 
 export interface CommunitySetScore {
@@ -162,7 +166,7 @@ export interface CommunityRaceStanding {
   races: number;
   wins: number;
   podiums: number;
-  bestFinish: number;
+  bestFinish: number | null;
   championshipPoints: number | null;
   penaltyPoints: number;
 }

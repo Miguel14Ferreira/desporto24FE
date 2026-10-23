@@ -8,6 +8,7 @@ import { buildCommunityGroupInviteUrl, buildWhatsAppGroupShareUrl } from './comm
 import { communityRoundMatchup, CommunityRoundMatchup } from './community-round-matchup';
 import { sportForRound, viewForSport, formatForSport, CommunityRoundView } from './community-round-sport';
 import { raceSupportsLaps, formatRaceSeconds, raceEntryValidationError } from './community-race-metrics';
+import { raceDecisionError } from './community-race-decisions';
 import { racketSupportsSets, racketUsesPointsPerSet, racketMatchWinner, recordedRacketMatch } from './community-racket-results';
 
 import {
@@ -92,6 +93,13 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   racePenaltySaving = false;
   racePenaltyError = '';
   racePenaltyMessage = '';
+  raceDecisionEditorKey: string | null = null;
+  raceDecisionTimeSeconds = 0;
+  raceDecisionDisqualified = false;
+  raceDecisionReason = '';
+  raceDecisionSaving = false;
+  raceDecisionError = '';
+  raceDecisionMessage = '';
   racketRuleEditorKey: string | null = null;
   racketRuleWinPoints = 2;
   racketRuleLossPoints = 0;
@@ -556,6 +564,51 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
         this.loadCompetition(this.selected, seasonId);
       },
       error: () => { this.racePenaltyError = t('feedback.communities.racePenaltyError'); }
+    });
+  }
+
+  editRaceDecision(round: CommunityRound, entry: CommunityRoundEntry): void {
+    if (!this.canManageRaceChampionship() || this.raceDecisionSaving
+        || entry.entryId == null || entry.finishPosition == null) return;
+    this.raceDecisionEditorKey = round.id + ':' + entry.entryId;
+    this.raceDecisionTimeSeconds = entry.raceTimePenaltySeconds ?? 0;
+    this.raceDecisionDisqualified = entry.raceDisqualified ?? false;
+    this.raceDecisionReason = entry.raceStewardReason ?? '';
+    this.raceDecisionError = '';
+    this.raceDecisionMessage = '';
+  }
+
+  cancelRaceDecision(): void {
+    if (!this.raceDecisionSaving) this.raceDecisionEditorKey = null;
+    this.raceDecisionError = '';
+  }
+
+  saveRaceDecision(round: CommunityRound, entry: CommunityRoundEntry): void {
+    if (!this.selected || !this.canManageRaceChampionship() || this.raceDecisionSaving
+        || entry.entryId == null
+        || this.raceDecisionEditorKey !== round.id + ':' + entry.entryId) return;
+    const seconds = Number(this.raceDecisionTimeSeconds);
+    const reason = this.raceDecisionReason.trim();
+    if (raceDecisionError(seconds, this.raceDecisionDisqualified,
+        this.raceDecisionReason, entry.elapsedSeconds)) {
+      this.raceDecisionError = t('feedback.communities.raceDecisionInvalid');
+      return;
+    }
+    const communityId = this.selected.id, seasonId = this.selectedSeasonId!;
+    this.raceDecisionSaving = true;
+    this.raceDecisionError = '';
+    this.communityService.updateRaceDecision(communityId, round.id, entry.entryId, {
+      timePenaltySeconds: seconds,
+      disqualified: this.raceDecisionDisqualified,
+      reason: seconds > 0 || this.raceDecisionDisqualified ? reason : null
+    }).pipe(timeout(10_000), finalize(() => this.raceDecisionSaving = false)).subscribe({
+      next: () => {
+        if (this.selected?.id !== communityId || this.selectedSeasonId !== seasonId) return;
+        this.raceDecisionEditorKey = null;
+        this.raceDecisionMessage = t('communities.race.decisionSaved');
+        this.loadCompetition(this.selected, seasonId);
+      },
+      error: () => { this.raceDecisionError = t('feedback.communities.raceDecisionError'); }
     });
   }
 
@@ -1785,6 +1838,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
           if (!this.canManageRaceChampionship()) {
             this.raceRuleSport = null;
             this.racePenaltyEditorKey = null;
+            this.raceDecisionEditorKey = null;
           }
           this.maxStandingPoints = Math.max(
             0,
