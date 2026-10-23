@@ -1014,3 +1014,82 @@ body .communities-page.jynlo-c1 .racket-set-winner {
     grid-template-columns: minmax(0,1fr);
   }
 }
+
+/* Independent rankings for racket singles/doubles and each sport. */
+body .communities-page.jynlo-c1 .racket-standings-section {
+  margin: 1.3rem 0 2rem;
+  padding: 1.25rem;
+  border: 1px solid rgba(105,225,184,.21);
+  border-radius: 1.15rem;
+  background: rgba(11,29,45,.8);
+}
+body .communities-page.jynlo-c1 .racket-standings-explainer,
+body .communities-page.jynlo-c1 .racket-standings-footnote {
+  margin: .55rem 0 1.1rem;
+  color: #a4bfd0;
+  font-size: .81rem;
+  line-height: 1.5;
+}
+body .communities-page.jynlo-c1 .racket-standings-group {
+  margin: 1.2rem 0;
+  padding: 1rem;
+  border: 1px solid rgba(148,163,184,.17);
+  border-radius: .95rem;
+  background: rgba(255,255,255,.02);
+}
+body .communities-page.jynlo-c1 .racket-standings-group-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: .6rem;
+  margin-bottom: .8rem;
+}
+body .communities-page.jynlo-c1 .racket-standings-group-head h4 {
+  margin: 0;
+  font-size: 1.03rem;
+  font-weight: 850;
+}
+body .communities-page.jynlo-c1 .racket-standings-scroll {
+  overflow-x: auto;
+  max-width: 100%;
+}
+body .communities-page.jynlo-c1 .racket-standings-table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 740px;
+  font-size: .78rem;
+  font-variant-numeric: tabular-nums;
+}
+body .communities-page.jynlo-c1 .racket-standings-table th,
+body .communities-page.jynlo-c1 .racket-standings-table td {
+  padding: .66rem .45rem;
+  text-align: right;
+  border-bottom: 1px solid rgba(148,163,184,.12);
+  white-space: nowrap;
+}
+body .communities-page.jynlo-c1 .racket-standings-table thead th {
+  font-size: .69rem;
+  text-transform: uppercase;
+  letter-spacing: .045em;
+  color: #a4c0d2;
+  font-weight: 800;
+}
+body .communities-page.jynlo-c1 .racket-standings-table th:nth-child(2),
+body .communities-page.jynlo-c1 .racket-standings-table .racket-standings-player {
+  text-align: left;
+}
+body .communities-page.jynlo-c1 .racket-standings-player {
+  display: grid;
+  gap: .15rem;
+}
+body .communities-page.jynlo-c1 .racket-standings-player small {
+  color: #98b5c7;
+  font-weight: 400;
+}
+body .communities-page.jynlo-c1 .racket-standings-place,
+body .communities-page.jynlo-c1 .racket-standings-wins,
+body .communities-page.jynlo-c1 .racket-standings-positive {
+  color: #8ef7d0;
+  font-weight: 850;
+}
