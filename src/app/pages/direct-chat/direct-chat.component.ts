@@ -460,7 +460,10 @@ export class DirectChatComponent implements OnInit, OnDestroy, AfterViewChecked 
   }
 
   private sorted(messages: DirectChatMessage[]): DirectChatMessage[] {
-    return [...messages].sort((a, b) => this.timestamp(a) - this.timestamp(b));
+    // The database assigns increasing IDs. In particular, an event whose date
+    // was omitted by the socket must not be sorted before the full history.
+    return [...messages].sort((a, b) =>
+      a.id !== null && b.id !== null ? a.id - b.id : this.timestamp(a) - this.timestamp(b));
   }
 
   private belongsToCurrentConversation(message: DirectChatMessage): boolean {

@@ -152,6 +152,16 @@ describe('Unified Jynlo message center', () => {
     ])[0].key).toBe('direct:bea');
   });
 
+  it('sorts a live message without a timestamp after older history using the persisted ID', () => {
+    const key = 'direct:bea';
+    const history = message(key, 10, 'bea');
+    const live = { ...message(key, 12, 'bea'), createdAt: '' };
+    const result = mergeInboxMessages([live, history]);
+    expect(result.map(entry => entry.id)).toEqual([10, 12]);
+    // No timestamp is invented; the backend record remains authoritative.
+    expect(result[1].createdAt).toBe('');
+  });
+
   it('sends a community reply once and reconciles WebSocket before HTTP success', () => {
     const selected = item('community', 7);
     component.conversations = [selected];

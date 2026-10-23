@@ -34,8 +34,10 @@ export function mergeInboxMessages(messages: InboxMessage[]): InboxMessage[] {
   for (const message of messages) {
     if (Number.isFinite(message.id) && message.id > 0) byId.set(message.id, message);
   }
-  return [...byId.values()].sort((a, b) =>
-    (Date.parse(a.createdAt) || 0) - (Date.parse(b.createdAt) || 0) || a.id - b.id);
+  // Message IDs are monotonically assigned by the backend within each chat
+  // stream. Prefer them over optional/invalid timestamps: a live message
+  // without a parseable date must never jump above older history.
+  return [...byId.values()].sort((a, b) => a.id - b.id);
 }
 
 export function orderInbox(conversations: InboxConversation[]): InboxConversation[] {
