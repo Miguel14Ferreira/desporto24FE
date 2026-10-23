@@ -10,6 +10,7 @@ import { sportForRound, CommunityRoundView } from './community-round-sport';
 import { eventOptionsForSport, eventView, isNeutralEvent, eventPresentationFormat,
   CommunityEventType } from './community-round-event-type';
 import { athleticsDisciplineOptions, athleticsDisciplineValid } from './community-field-disciplines';
+import { breakingBattleError } from './community-breaking-battle';
 import { raceSupportsLaps, formatRaceSeconds, raceEntryValidationError } from './community-race-metrics';
 import { raceDecisionError } from './community-race-decisions';
 import { performanceKind, performanceError, eventPerformanceEntries,
@@ -49,6 +50,7 @@ import { SessionService } from '../../services/session.service';
 import { CommunityTimelineService, CommunityTimelineEntry, CommunityTimelineKind } from '../../services/community-timeline.service';
 import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.service';
 import { ChatTypingTracker } from '../../services/chat-typing-tracker';
+import { chatContinuesGroup, chatDaySeparator } from '../../shared/chat-thread-presentation';
 import { ChatReadSyncService } from '../../services/chat-read-sync.service';
 import { CommunityProfile } from '../model/community-profile';
 import { SessionSummary } from '../model/session-summary';
@@ -167,6 +169,20 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       const token = localStorage.getItem('t');
       return token ? this.jwtHelper.decodeToken(token)?.sub ?? null : null;
     } catch { return null; }
+  }
+
+  chatDayLabelAt(index: number): string {
+    const current = this.timelineEntries[index];
+    return current ? chatDaySeparator(current.createdAt,
+      index > 0 ? this.timelineEntries[index - 1].createdAt : null) : '';
+  }
+
+  chatContinuesGroupAt(index: number): boolean {
+    if (index <= 0) return false;
+    const current = this.timelineEntries[index], previous = this.timelineEntries[index - 1];
+    return current.kind === 'CHAT' && previous.kind === 'CHAT'
+      && chatContinuesGroup(current.username, current.createdAt,
+        previous.username, previous.createdAt);
   }
 
   isMyChatEntry(entry: CommunityTimelineEntry): boolean {
@@ -2944,6 +2960,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     }
     const race = this.viewForNewRound() === 'race';
     const neutral = isNeutralEvent(this.newRoundSport, this.newRoundEventType);
+    const breaking = this.newRoundEventType === 'BREAKING_BATTLE';
     const racket = racketSupportsSets(this.newRoundSport);
 
     const selectedEntries = this.roundEntries.filter(entry => entry.included);
@@ -2957,6 +2974,10 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     if (neutral && isWaveHeatEvent(this.newRoundEventType) && surfWaveError(selectedEntries)) {
       this.errorMessage = t(this.newRoundEventType === 'BODYBOARD_HEAT'
         ? 'feedback.communities.bodyboardInvalid' : 'feedback.communities.surfInvalid');
+      return;
+    }
+    if (this.newRoundEventType === 'BREAKING_BATTLE' && breakingBattleError(selectedEntries)) {
+      this.errorMessage = t('feedback.communities.breakingInvalid');
       return;
     }
     if (neutral && !isWaveHeatEvent(this.newRoundEventType)
@@ -2976,7 +2997,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       .map(entry => ({
         username: entry.username,
         team: race || neutral ? null : (entry.team.trim() || null),
-        result: race || neutral ? 'DRAW' as CommunityMatchResult
+        result: breaking ? entry.result
+          : race || neutral ? 'DRAW' as CommunityMatchResult
           : racket ? (entry.team === racketWinner ? 'WIN' : 'LOSS') as CommunityMatchResult
           : entry.result,
         goals: race || neutral || racket ? 0 : Math.max(0, Number(entry.goals) || 0),

@@ -564,10 +564,19 @@
                        [attr.role]="activeTab === 'chat' ? 'log' : null"
                        [attr.aria-live]="activeTab === 'chat' ? 'polite' : null"
                        [attr.aria-label]="activeTab === 'chat' ? ('chat.messages' | t) : null">
-                    @for (entry of timelineEntries; track entry.id) {
-                      <article class="community-timeline-entry" [class.my-chat-message]="activeTab === 'chat' && isMyChatEntry(entry)">
+                    @for (entry of timelineEntries; track entry.id; let i = $index) {
+                      @if (activeTab === 'chat' && chatDayLabelAt(i); as dayLabel) {
+                        <div class="chat-day-separator" role="separator" [attr.aria-label]="dayLabel">
+                          <span>{{ dayLabel }}</span>
+                        </div>
+                      }
+                      <article class="community-timeline-entry"
+                        [class.my-chat-message]="activeTab === 'chat' && isMyChatEntry(entry)"
+                        [class.thread-continuation]="activeTab === 'chat' && chatContinuesGroupAt(i)">
                         <div class="entry-meta">
-                          <strong>{{ (activeTab === 'chat' && isMyChatEntry(entry)) ? ('chat.you' | t) : ('@' + entry.username) }}</strong>
+                          @if (activeTab !== 'chat' || !chatContinuesGroupAt(i)) {
+                            <strong>{{ (activeTab === 'chat' && isMyChatEntry(entry)) ? ('chat.you' | t) : ('@' + entry.username) }}</strong>
+                          }
                           <time [attr.datetime]="entry.createdAt">{{ entry.createdAt | date:'short' }}</time>
                           @if (canManage()) {
                             <button type="button" class="secondary-action small jynlo-action jynlo-action--neutral jynlo-action--compact"
@@ -1198,6 +1207,8 @@
                               : newRoundEventType === 'SKATE_PARK' ? 'communities.skate.parkHint'
                               : newRoundEventType === 'SKATE_STREET' ? 'communities.skate.streetHint'
                               : newRoundEventType === 'PARKOUR_FREESTYLE' ? 'communities.parkour.freestyleHint'
+                              : newRoundEventType === 'BREAKING_BATTLE' ? 'communities.breaking.hint'
+                              : newRoundEventType === 'TRAMPOLINE_INDIVIDUAL' ? 'communities.trampoline.hint'
                               : 'communities.eventType.marksHint') | t }}
                           </p>
                         }
@@ -1299,19 +1310,30 @@
                                           [(ngModel)]="entry.waveScore2" [placeholder]="'communities.performance.optional' | t">
                                       </label>
                                     </div>
+                                  } @else if (newRoundEventType === 'BREAKING_BATTLE') {
+                                    <label>
+                                      <span>{{ 'communities.breaking.decision' | t }}</span>
+                                      <select [(ngModel)]="entry.result" [attr.aria-label]="'communities.breaking.decision' | t">
+                                        <option value="DRAW">{{ 'communities.breaking.chooseDecision' | t }}</option>
+                                        <option value="WIN">{{ 'communities.breaking.winner' | t }}</option>
+                                        <option value="LOSS">{{ 'communities.breaking.loser' | t }}</option>
+                                      </select>
+                                    </label>
                                   } @else if (performanceKind(newRoundEventType); as unit) {
                                     <label>
                                       <span>{{ (unit === 'metres'
                                         ? 'communities.performance.metres'
                                         : unit === 'gym' ? 'communities.gym.finalScore'
                                         : unit === 'street' ? 'communities.skate.streetTotal'
+                                        : unit === 'trampoline' ? 'communities.trampoline.finalScore'
                                         : newRoundEventType === 'SKATE_PARK' ? 'communities.skate.parkScore'
                                         : newRoundEventType === 'PARKOUR_FREESTYLE'
                                           ? 'communities.parkour.freestyleScore'
                                         : 'communities.performance.points') | t }}</span>
                                       <input type="number" [min]="unit === 'metres' ? 0.001 : 0"
-                                        [max]="unit === 'metres' ? 999999.999 : unit === 'street' ? 300 : 100"
-                                        step="0.001" [(ngModel)]="entry.performanceValue"
+                                        [max]="unit === 'metres' ? 999999.999 : unit === 'street' ? 300
+                                          : unit === 'trampoline' ? 9999.99 : 100"
+                                        [step]="unit === 'trampoline' ? 0.01 : 0.001" [(ngModel)]="entry.performanceValue"
                                         [placeholder]="'communities.performance.optional' | t">
                                     </label>
                                   } @else if (!racketSupportsSets(newRoundSport) && !newRoundEventType) {
@@ -1903,9 +1925,10 @@
                             <span class="round-generic-format">{{ roundFormatLabel(round) }}</span>
                             <small>{{ 'communities.resultFormat.recordedOnly' | t }}</small>
                           </div>
-                          <div class="round-results">
+                          <div class="round-results" [class.round-breaking-battle]="round.eventType === 'BREAKING_BATTLE'">
                             @for (entry of eventPerformanceEntries(round); track entry.entryId ?? $index) {
-                              <div class="round-result-row">
+                              <div class="round-result-row"
+                                [class.round-breaking-winner]="round.eventType === 'BREAKING_BATTLE' && entry.result === 'WIN'">
                                 <div>
                                   <strong>{{ entry.fullName || entry.username }}</strong>
                                   <span>
@@ -1913,7 +1936,13 @@
                                     @if (entry.team) { · {{ entry.team }} }
                                   </span>
                                 </div>
-                                @if (neutralRound(round)) {
+                                @if (round.eventType === 'BREAKING_BATTLE') {
+                                  <span class="round-breaking-decision"
+                                    [class.round-breaking-decision--winner]="entry.result === 'WIN'">
+                                    {{ (entry.result === 'WIN'
+                                      ? 'communities.breaking.winner' : 'communities.breaking.loser') | t }}
+                                  </span>
+                                } @else if (neutralRound(round)) {
                                   @if (isWaveHeatEvent(round.eventType)) {
                                     @if (surfWaveTotal(entry) !== null) {
                                       <div class="round-surf-scores">
