@@ -6,7 +6,9 @@ import { finalize, firstValueFrom, Observable, retry, timeout, Subscription, Tim
 import { appTranslate as t } from '../../i18n/i18n.service';
 import { buildCommunityGroupInviteUrl, buildWhatsAppGroupShareUrl } from './community-group-invite';
 import { communityRoundMatchup, CommunityRoundMatchup } from './community-round-matchup';
-import { sportForRound, viewForSport, formatForSport, CommunityRoundView } from './community-round-sport';
+import { sportForRound, CommunityRoundView } from './community-round-sport';
+import { eventOptionsForSport, eventView, isNeutralEvent, eventPresentationFormat,
+  CommunityEventType } from './community-round-event-type';
 import { raceSupportsLaps, formatRaceSeconds, raceEntryValidationError } from './community-race-metrics';
 import { raceDecisionError } from './community-race-decisions';
 import { racketSupportsSets, racketUsesPointsPerSet, racketMatchWinner, recordedRacketMatch } from './community-racket-results';
@@ -472,7 +474,19 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   }
 
   roundView(round: CommunityRound): CommunityRoundView {
-    return viewForSport(this.roundSport(round));
+    return eventView(this.roundSport(round), round.eventType);
+  }
+
+  eventOptions(sport: string | null) {
+    return eventOptionsForSport(sport);
+  }
+
+  eventTypeLabel(type: string): string {
+    return t('communities.eventType.' + type.toLowerCase());
+  }
+
+  neutralRound(round: CommunityRound): boolean {
+    return isNeutralEvent(this.roundSport(round), round.eventType);
   }
 
   raceSupportsLaps(sport: string | null): boolean {
@@ -484,7 +498,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   }
 
   roundFormatLabel(round: CommunityRound): string {
-    return t('communities.resultFormat.' + formatForSport(this.roundSport(round)));
+    return t('communities.resultFormat.' +
+      eventPresentationFormat(this.roundSport(round), round.eventType));
   }
 
   get communityRoundSports(): string[] {
@@ -501,8 +516,15 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       ? this.communityRoundSports[0] : (this.importSportDraft || null);
   }
 
+  get newRoundEventType(): CommunityEventType | null {
+    return this.roundEventTypeDraft ? this.roundEventTypeDraft as CommunityEventType : null;
+  }
+
   viewForNewRound(): CommunityRoundView {
-    return viewForSport(this.newRoundSport);
+    // While event selection is missing, do not show race or football stats.
+    if (eventOptionsForSport(this.newRoundSport).length && !this.newRoundEventType)
+      return 'unknown';
+    return eventView(this.newRoundSport, this.newRoundEventType);
   }
 
   canManageRaceChampionship(): boolean {
@@ -853,6 +875,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   roundName = '';
   roundPlayedAt = '';
   roundSportDraft = '';
+  roundEventTypeDraft = '';
   importSportDraft = '';
   racketMatchFormat: 'SINGLES' | 'DOUBLES' = 'SINGLES';
   racketSetScores: Array<{ sideA: number | null; sideB: number | null }> =
@@ -2867,7 +2890,12 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       this.errorMessage = t('feedback.communities.roundSportRequired');
       return;
     }
+    if (eventOptionsForSport(this.newRoundSport).length && !this.newRoundEventType) {
+      this.errorMessage = t('feedback.communities.roundEventTypeRequired');
+      return;
+    }
     const race = this.viewForNewRound() === 'race';
+    const neutral = isNeutralEvent(this.newRoundSport, this.newRoundEventType);
     const racket = racketSupportsSets(this.newRoundSport);
 
     const selectedEntries = this.roundEntries.filter(entry => entry.included);
@@ -2889,14 +2917,14 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     const entries = selectedEntries
       .map(entry => ({
         username: entry.username,
-        team: race ? null : (entry.team.trim() || null),
-        result: race ? 'DRAW' as CommunityMatchResult
+        team: race || neutral ? null : (entry.team.trim() || null),
+        result: race || neutral ? 'DRAW' as CommunityMatchResult
           : racket ? (entry.team === racketWinner ? 'WIN' : 'LOSS') as CommunityMatchResult
           : entry.result,
-        goals: race || racket ? 0 : Math.max(0, Number(entry.goals) || 0),
-        assists: race || racket ? 0 : Math.max(0, Number(entry.assists) || 0),
-        mvp: !race && !racket && Boolean(entry.mvp),
-        cleanSheet: !race && !racket && Boolean(entry.cleanSheet),
+        goals: race || neutral || racket ? 0 : Math.max(0, Number(entry.goals) || 0),
+        assists: race || neutral || racket ? 0 : Math.max(0, Number(entry.assists) || 0),
+        mvp: !race && !neutral && !racket && Boolean(entry.mvp),
+        cleanSheet: !race && !neutral && !racket && Boolean(entry.cleanSheet),
         ...(race ? {
           finishPosition: entry.finishPosition ?? null,
           elapsedSeconds: entry.elapsedSeconds ?? null,
@@ -2923,6 +2951,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       name: this.roundName.trim(),
       playedAt: playedAt.toISOString(),
       sport: this.newRoundSport,
+      eventType: this.newRoundEventType,
       ...(racket ? { matchFormat: this.racketMatchFormat,
         setScores: this.racketSetScores.map(set => ({ ...set })) } : {}),
       entries
@@ -2935,6 +2964,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
         next: () => {
           this.roundName = '';
           this.roundPlayedAt = '';
+          this.roundEventTypeDraft = '';
           this.racketMatchFormat = 'SINGLES';
           this.racketSetScores = [{sideA: null,sideB: null},{sideA: null,sideB: null}];
           this.prepareRoundEntries();
