@@ -882,3 +882,34 @@ body .communities-page.jynlo-c1 .round-generic-context small {
 body .communities-page.jynlo-c1 .round-results .round-result-row {
   grid-template-columns: minmax(150px,1fr) repeat(5,auto);
 }
+
+/* Race results — keep numeric measures visible, never generate a podium. */
+body .communities-page.jynlo-c1 .race-round-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: .4rem .7rem;
+  color: #c4deec;
+  font-variant-numeric: tabular-nums;
+  font-size: .8rem;
+}
+body .communities-page.jynlo-c1 .race-round-position {
+  min-width: 3.5rem;
+  text-align: center;
+  padding: .36rem .5rem;
+  border: 1px solid rgba(89, 230, 185, .29);
+  background: rgba(65, 233, 176, .08);
+  border-radius: .6rem;
+  color: #c5ffeb;
+  font-weight: 900;
+}
+body .communities-page.jynlo-c1 .race-round-unranked {
+  font-size: .75rem;
+  color: #91aabc;
+}
+@media (max-width: 750px) {
+  body .communities-page.jynlo-c1 .race-round-metrics {
+    justify-content: flex-start;
+  }
+}
