@@ -9,6 +9,9 @@ describe('multi-format sports should not reuse unrelated scoring rules', () => {
     expect(eventOptionsForSport('Futebol')).toEqual([]);
     expect(eventOptionsForSport('Surf').map(o => o.code)).toEqual(['HEAT']);
     expect(eventOptionsForSport('Bodyboard').map(o => o.code)).toEqual(['BODYBOARD_HEAT']);
+    expect(eventOptionsForSport('Skate').map(o => o.code)).toEqual(['SKATE_PARK', 'SKATE_STREET']);
+    expect(eventOptionsForSport('Parkour').map(o => o.code))
+      .toEqual(['PARKOUR_SPEED', 'PARKOUR_FREESTYLE']);
     expect(eventOptionsForSport('Ginástica Artística').map(o => o.code)).toEqual(['APPARATUS']);
   });
   it('treats freestyle and field event results as participation-only', () => {
@@ -24,6 +27,11 @@ describe('multi-format sports should not reuse unrelated scoring rules', () => {
     expect(eventView('Atletismo', 'TRACK')).toBe('race');
     expect(eventView('Snowboard', 'RACE')).toBe('race');
     expect(eventView('Bodyboard', 'BODYBOARD_HEAT')).toBe('individual');
+    expect(eventView('Parkour', 'PARKOUR_SPEED')).toBe('race');
+    expect(eventView('Parkour', 'PARKOUR_FREESTYLE')).toBe('individual');
+    expect(eventPresentationFormat('Skate', 'SKATE_PARK')).toBe('judged');
+    expect(eventPresentationFormat('Skate', 'SKATE_STREET')).toBe('judged');
+    expect(eventPresentationFormat('Parkour', 'PARKOUR_SPEED')).toBe('race');
   });
   it('preserves old BMX races while keeping other old results neutral', () => {
     expect(eventView('BMX', null)).toBe('race');
