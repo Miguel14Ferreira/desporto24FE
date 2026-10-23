@@ -86,3 +86,10 @@ O registo central é `src/app/pages/communities/community-round-sport.ts`. Os te
 - Sem modalidade sincronizada, tumbling, double mini, regras de elegibilidade, desempates oficiais, ranking cruzado ou pontos automáticos. Os históricos com `event_type = null` ficam intocados.
 - Sem migração Liquibase: utilizam os campos `result`, `event_type` e `performance_value` já existentes.
 - Fontes consultadas: WDSF Breaking Rules and Regulations Manual v16 (2026); FIG Trampoline Code of Points 2025–2028.
+
+## Ginástica Rítmica e Natação Artística (individual/solo, 23/10/2026)
+- Ginástica Rítmica `RHYTHMIC_APPARATUS`: selecionar obrigatoriamente Arco/Bola/Maças/Fita; nota final de um exercício validada externamente, com até três decimais. Sem total de concurso completo nem conjuntos.
+- Natação Artística `ARTISTIC_SOLO_TECHNICAL` e `ARTISTIC_SOLO_FREE`: provas separadas, nota final já validada de uma rotina a quatro decimais. Não gerar componentes de elementos/impressão artística nem soma automática de rotinas.
+- `performance_value` alargado de NUMERIC(9,3) para NUMERIC(10,4): seis dígitos inteiros preservados, mais uma casa decimal; Liquibase executa a alteração uma vez sem tocar nos valores históricos. Outros eventos continuam limitados à precisão que tinham.
+- Posições são apenas por exercício dentro da jornada, sem desempates de federação nem pontos de época. Duetos, equipas, conjuntos e acrobática necessitam de contrato separado.
+- Referências: FIG RG Code of Points 2025–2028; World Aquatics Artistic Swimming Competition Regulations 2025 e página de regras 2026.

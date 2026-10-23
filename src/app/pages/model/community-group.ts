@@ -87,7 +87,8 @@ export interface CommunityRound {
   sport?: string | null;
   eventType?: 'RACE' | 'FREESTYLE' | 'TRACK' | 'JUMP' | 'THROW' | 'HEAT' | 'BODYBOARD_HEAT' | 'APPARATUS'
     | 'SKATE_PARK' | 'SKATE_STREET' | 'PARKOUR_SPEED' | 'PARKOUR_FREESTYLE'
-    | 'BREAKING_BATTLE' | 'TRAMPOLINE_INDIVIDUAL' | null;
+    | 'BREAKING_BATTLE' | 'TRAMPOLINE_INDIVIDUAL'
+    | 'RHYTHMIC_APPARATUS' | 'ARTISTIC_SOLO_TECHNICAL' | 'ARTISTIC_SOLO_FREE' | null;
   eventDiscipline?: string | null;
   matchFormat?: CommunityRacketMatchFormat | null;
   setScores?: CommunitySetScore[] | null;

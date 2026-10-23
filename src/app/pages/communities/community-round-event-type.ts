@@ -7,7 +7,8 @@ import { CommunityRoundView, formatForSport, viewForSport } from './community-ro
  */
 export type CommunityEventType = 'RACE' | 'FREESTYLE' | 'TRACK' | 'JUMP' | 'THROW' | 'HEAT' | 'BODYBOARD_HEAT' | 'APPARATUS'
   | 'SKATE_PARK' | 'SKATE_STREET' | 'PARKOUR_SPEED' | 'PARKOUR_FREESTYLE'
-  | 'BREAKING_BATTLE' | 'TRAMPOLINE_INDIVIDUAL';
+  | 'BREAKING_BATTLE' | 'TRAMPOLINE_INDIVIDUAL'
+  | 'RHYTHMIC_APPARATUS' | 'ARTISTIC_SOLO_TECHNICAL' | 'ARTISTIC_SOLO_FREE';
 export interface CommunityEventOption { code: CommunityEventType; labelKey: string }
 const TYPES: Record<string, readonly CommunityEventOption[]> = {
   bmx: [
@@ -35,7 +36,12 @@ const TYPES: Record<string, readonly CommunityEventOption[]> = {
     { code: 'PARKOUR_FREESTYLE', labelKey: 'communities.eventType.parkour_freestyle' }
   ],
   breaking: [{ code: 'BREAKING_BATTLE', labelKey: 'communities.eventType.breaking_battle' }],
-  trampolim: [{ code: 'TRAMPOLINE_INDIVIDUAL', labelKey: 'communities.eventType.trampoline_individual' }]
+  trampolim: [{ code: 'TRAMPOLINE_INDIVIDUAL', labelKey: 'communities.eventType.trampoline_individual' }],
+  'ginastica ritmica': [{ code: 'RHYTHMIC_APPARATUS', labelKey: 'communities.eventType.rhythmic_app' }],
+  'natacao artistica': [
+    { code: 'ARTISTIC_SOLO_TECHNICAL', labelKey: 'communities.eventType.artistic_tech' },
+    { code: 'ARTISTIC_SOLO_FREE', labelKey: 'communities.eventType.artistic_free' }
+  ]
 };
 
 function normalize(sport: string): string {
@@ -78,7 +84,8 @@ export function eventPresentationFormat(
   if (isNeutralEvent(sport, eventType))
     return ['FREESTYLE', 'HEAT', 'BODYBOARD_HEAT', 'APPARATUS',
       'SKATE_PARK', 'SKATE_STREET', 'PARKOUR_FREESTYLE',
-      'BREAKING_BATTLE', 'TRAMPOLINE_INDIVIDUAL'].includes(eventType || '') ? 'judged' : 'measured';
+      'BREAKING_BATTLE', 'TRAMPOLINE_INDIVIDUAL',
+      'RHYTHMIC_APPARATUS', 'ARTISTIC_SOLO_TECHNICAL', 'ARTISTIC_SOLO_FREE'].includes(eventType || '') ? 'judged' : 'measured';
   return formatForSport(sport || null);
 }
 

@@ -1,12 +1,14 @@
 import { CommunityRound, CommunityRoundEntry, CommunityRoundEntryDraft } from '../model/community-group';
 
 /** Provisional community marks: never official federation scores or season points. */
-export function performanceKind(eventType: string | null | undefined): 'metres' | 'points' | 'gym' | 'street' | 'trampoline' | null {
+export function performanceKind(eventType: string | null | undefined): 'metres' | 'points' | 'gym' | 'street' | 'trampoline' | 'rhythmic' | 'artistic' | null {
   if (eventType === 'JUMP' || eventType === 'THROW') return 'metres';
   if (eventType === 'FREESTYLE'
       || eventType === 'SKATE_PARK' || eventType === 'PARKOUR_FREESTYLE') return 'points';
   if (eventType === 'SKATE_STREET') return 'street';
   if (eventType === 'TRAMPOLINE_INDIVIDUAL') return 'trampoline';
+  if (eventType === 'RHYTHMIC_APPARATUS') return 'rhythmic';
+  if (eventType === 'ARTISTIC_SOLO_TECHNICAL' || eventType === 'ARTISTIC_SOLO_FREE') return 'artistic';
   if (eventType === 'APPARATUS') return 'gym';
   return null;
 }
@@ -26,10 +28,12 @@ export function performanceError(
       || ((kind === 'points' || kind === 'gym') && value > 100)
       || (kind === 'street' && value > 300)
       || (kind === 'trampoline' && value > 9999.99)
-      || value > 999999.999
+      || value > (kind === 'artistic' ? 999999.9999 : 999999.999)
       || (kind === 'trampoline'
         ? Math.abs(value * 100 - Math.round(value * 100)) > 1e-6
-        : Math.abs(value * 1000 - Math.round(value * 1000)) > 1e-6);
+        : kind === 'artistic'
+          ? Math.abs(value * 10000 - Math.round(value * 10000)) > 1e-6
+          : Math.abs(value * 1000 - Math.round(value * 1000)) > 1e-6);
   });
 }
 
@@ -73,7 +77,7 @@ export function eventPerformancePlace(
   }).length;
 }
 
-export function performanceDisplay(value: number | null | undefined): string {
+export function performanceDisplay(value: number | null | undefined, decimals = 3): string {
   return value == null ? '—'
-    : Number(value).toLocaleString('pt-PT', { maximumFractionDigits: 3 });
+    : Number(value).toLocaleString('pt-PT', { maximumFractionDigits: decimals });
 }

@@ -15,6 +15,9 @@ describe('multi-format sports should not reuse unrelated scoring rules', () => {
     expect(eventOptionsForSport('Ginástica Artística').map(o => o.code)).toEqual(['APPARATUS']);
     expect(eventOptionsForSport('Breaking').map(o => o.code)).toEqual(['BREAKING_BATTLE']);
     expect(eventOptionsForSport('Trampolim').map(o => o.code)).toEqual(['TRAMPOLINE_INDIVIDUAL']);
+    expect(eventOptionsForSport('Ginástica Rítmica').map(o => o.code)).toEqual(['RHYTHMIC_APPARATUS']);
+    expect(eventOptionsForSport('Natação Artística').map(o => o.code))
+      .toEqual(['ARTISTIC_SOLO_TECHNICAL', 'ARTISTIC_SOLO_FREE']);
   });
   it('treats freestyle and field event results as participation-only', () => {
     expect(isRaceEvent('BMX', 'FREESTYLE')).toBeFalse();
@@ -39,6 +42,10 @@ describe('multi-format sports should not reuse unrelated scoring rules', () => {
     expect(isNeutralEvent('Breaking', 'BREAKING_BATTLE')).toBeTrue();
     expect(isNeutralEvent('Trampolim', 'TRAMPOLINE_INDIVIDUAL')).toBeTrue();
     expect(eventView('Breaking', 'BREAKING_BATTLE')).toBe('individual');
+    expect(isNeutralEvent('Ginástica Rítmica', 'RHYTHMIC_APPARATUS')).toBeTrue();
+    expect(isNeutralEvent('Natação Artística', 'ARTISTIC_SOLO_TECHNICAL')).toBeTrue();
+    expect(eventPresentationFormat('Natação Artística', 'ARTISTIC_SOLO_FREE')).toBe('judged');
+    expect(eventView('Natação Artística', 'ARTISTIC_SOLO_FREE')).toBe('individual');
   });
   it('preserves old BMX races while keeping other old results neutral', () => {
     expect(eventView('BMX', null)).toBe('race');

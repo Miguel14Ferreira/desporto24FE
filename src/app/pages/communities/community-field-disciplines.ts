@@ -5,6 +5,8 @@ export type AthleticsDiscipline = 'LONG_JUMP' | 'TRIPLE_JUMP' | 'HIGH_JUMP' | 'P
 export type GymApparatus = 'FLOOR' | 'VAULT' | 'POMMEL_HORSE' | 'RINGS'
   | 'PARALLEL_BARS' | 'HORIZONTAL_BAR' | 'UNEVEN_BARS' | 'BALANCE_BEAM';
 export type BodyboardStance = 'PRONE' | 'DROP_KNEE';
+export type RhythmicApparatus = 'HOOP' | 'BALL' | 'CLUBS' | 'RIBBON';
+const RHYTHMIC_APPARATUS: readonly RhythmicApparatus[] = ['HOOP', 'BALL', 'CLUBS', 'RIBBON'];
 const BODYBOARD_STANCES: readonly BodyboardStance[] = ['PRONE', 'DROP_KNEE'];
 
 const GYM_APPARATUS: readonly GymApparatus[] = [
@@ -18,11 +20,12 @@ const OPTIONS: Record<string, readonly AthleticsDiscipline[]> = {
 
 export function athleticsDisciplineOptions(
   sport: string | null | undefined, eventType: string | null | undefined
-): readonly (AthleticsDiscipline | GymApparatus | BodyboardStance)[] {
+): readonly (AthleticsDiscipline | GymApparatus | BodyboardStance | RhythmicApparatus)[] {
   const normalized = sport?.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
   if (normalized === 'atletismo') return OPTIONS[eventType || ''] ?? [];
   if (normalized === 'ginastica artistica' && eventType === 'APPARATUS') return GYM_APPARATUS;
   if (normalized === 'bodyboard' && eventType === 'BODYBOARD_HEAT') return BODYBOARD_STANCES;
+  if (normalized === 'ginastica ritmica' && eventType === 'RHYTHMIC_APPARATUS') return RHYTHMIC_APPARATUS;
   return [];
 }
 
@@ -32,6 +35,6 @@ export function athleticsDisciplineValid(
 ): boolean {
   const options = athleticsDisciplineOptions(sport, eventType);
   return options.length
-    ? options.includes(discipline as AthleticsDiscipline | GymApparatus | BodyboardStance)
+    ? options.includes(discipline as AthleticsDiscipline | GymApparatus | BodyboardStance | RhythmicApparatus)
     : !discipline;
 }

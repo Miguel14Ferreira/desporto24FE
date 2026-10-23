@@ -1174,7 +1174,9 @@
                           }
                           @if (athleticsDisciplineOptions(newRoundSport, newRoundEventType).length) {
                             <label>
-                              <span>{{ (newRoundEventType === 'APPARATUS'
+                              <span>{{ (newRoundEventType === 'RHYTHMIC_APPARATUS'
+                                ? 'communities.rhythmic.apparatus'
+                                : newRoundEventType === 'APPARATUS'
                                 ? 'communities.gym.apparatus'
                                 : newRoundEventType === 'BODYBOARD_HEAT'
                                 ? 'communities.bodyboard.category' : 'communities.discipline.label') | t }}</span>
@@ -1215,6 +1217,9 @@
                               : newRoundEventType === 'PARKOUR_FREESTYLE' ? 'communities.parkour.freestyleHint'
                               : newRoundEventType === 'BREAKING_BATTLE' ? 'communities.breaking.hint'
                               : newRoundEventType === 'TRAMPOLINE_INDIVIDUAL' ? 'communities.trampoline.hint'
+                              : newRoundEventType === 'RHYTHMIC_APPARATUS' ? 'communities.rhythmic.hint'
+                              : newRoundEventType === 'ARTISTIC_SOLO_TECHNICAL'
+                                || newRoundEventType === 'ARTISTIC_SOLO_FREE' ? 'communities.artistic.hint'
                               : 'communities.eventType.marksHint') | t }}
                           </p>
                         }
@@ -1332,14 +1337,19 @@
                                         : unit === 'gym' ? 'communities.gym.finalScore'
                                         : unit === 'street' ? 'communities.skate.streetTotal'
                                         : unit === 'trampoline' ? 'communities.trampoline.finalScore'
+                                        : unit === 'rhythmic' ? 'communities.rhythmic.finalScore'
+                                        : unit === 'artistic' ? 'communities.artistic.finalScore'
                                         : newRoundEventType === 'SKATE_PARK' ? 'communities.skate.parkScore'
                                         : newRoundEventType === 'PARKOUR_FREESTYLE'
                                           ? 'communities.parkour.freestyleScore'
                                         : 'communities.performance.points') | t }}</span>
                                       <input type="number" [min]="unit === 'metres' ? 0.001 : 0"
                                         [max]="unit === 'metres' ? 999999.999 : unit === 'street' ? 300
-                                          : unit === 'trampoline' ? 9999.99 : 100"
-                                        [step]="unit === 'trampoline' ? 0.01 : 0.001" [(ngModel)]="entry.performanceValue"
+                                          : unit === 'trampoline' ? 9999.99
+                                          : unit === 'rhythmic' ? 999999.999
+                                          : unit === 'artistic' ? 999999.9999 : 100"
+                                        [step]="unit === 'trampoline' ? 0.01
+                                          : unit === 'artistic' ? 0.0001 : 0.001" [(ngModel)]="entry.performanceValue"
                                         [placeholder]="'communities.performance.optional' | t">
                                     </label>
                                   } @else if (!racketSupportsSets(newRoundSport) && !newRoundEventType) {
@@ -1646,7 +1656,7 @@
                                 <span class="round-sport-tag">{{ sport }}</span>
                               }
                               @if (round.eventType) {
-                                <span class="round-sport-tag">{{ eventTypeLabel(round.eventType) }}</span>
+                                <span class="round-sport-tag">{{ eventTypeLabel(round.eventType, roundSport(round)) }}</span>
                               }
                               @if (round.eventDiscipline) {
                                 <span class="round-sport-tag round-field-discipline">{{ fieldDisciplineLabel(round.eventDiscipline) }}</span>
@@ -1967,10 +1977,14 @@
                                     }
                                   } @else if (entry.performanceValue != null) {
                                     <span class="round-performance-mark">
-                                      {{ performanceDisplay(entry.performanceValue) }}
-                                      {{ (performanceKind(round.eventType) === 'metres'
-                                        ? 'communities.performance.metresUnit'
-                                        : 'communities.performance.pointsUnit') | t }}
+                                      {{ performanceDisplay(entry.performanceValue,
+                                        performanceKind(round.eventType) === 'artistic' ? 4 : 3) }}
+                                      @if (performanceKind(round.eventType) === 'metres') {
+                                        {{ 'communities.performance.metresUnit' | t }}
+                                      } @else if (performanceKind(round.eventType) !== 'rhythmic'
+                                        && performanceKind(round.eventType) !== 'artistic') {
+                                        {{ 'communities.performance.pointsUnit' | t }}
+                                      }
                                     </span>
                                     <span class="round-performance-rank">
                                       {{ 'communities.performance.position' | t }}:

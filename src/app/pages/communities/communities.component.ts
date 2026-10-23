@@ -536,8 +536,10 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     return eventOptionsForSport(sport);
   }
 
-  eventTypeLabel(type: string): string {
-    return t('communities.eventType.' + type.toLowerCase());
+  eventTypeLabel(type: string, sport: string | null): string {
+    // Use the same explicit label mapping as the event picker, including new types.
+    const key = eventOptionsForSport(sport).find(option => option.code === type)?.labelKey;
+    return t(key ?? ('communities.eventType.' + type.toLowerCase()));
   }
 
   athleticsDisciplineOptions = athleticsDisciplineOptions;
