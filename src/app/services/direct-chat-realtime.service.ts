@@ -7,7 +7,17 @@ import { DirectChatMessage } from '../pages/model/direct-chat';
 import { SessionMessage } from '../pages/model/session-message';
 import { CommunityTimelineEntry } from './community-timeline.service';
 
+export interface ChatReactionEvent {
+  kind: 'direct' | 'session' | 'community';
+  conversationId: string;
+  messageId: number;
+  counts: Record<string, number>;
+  actorUsername: string;
+  emoji: string | null;
+}
+
 interface ChatSocketEnvelope {
+  reaction?: ChatReactionEvent;
   type?: string;
   message?: DirectChatMessage | SessionMessage | CommunityTimelineEntry;
 }
@@ -45,11 +55,13 @@ export class DirectChatRealtimeService {
   private readonly messageSubject = new Subject<DirectChatMessage>();
   private readonly sessionMessageSubject = new Subject<SessionMessage>();
   private readonly communityMessageSubject = new Subject<CommunityTimelineEntry>();
+  private readonly reactionSubject = new Subject<ChatReactionEvent>();
   private readonly connectedSubject = new BehaviorSubject<boolean>(false);
 
   readonly messages$ = this.messageSubject.asObservable();
   readonly sessionMessages$ = this.sessionMessageSubject.asObservable();
   readonly communityMessages$ = this.communityMessageSubject.asObservable();
+  readonly reactions$ = this.reactionSubject.asObservable();
   readonly connected$ = this.connectedSubject.asObservable();
 
   connect(): void {
@@ -88,6 +100,11 @@ export class DirectChatRealtimeService {
 
         if (envelope.type === 'AUTHENTICATED') {
           this.connectedSubject.next(true);
+          return;
+        }
+
+        if (envelope.type === 'CHAT_REACTION_CHANGED' && envelope.reaction) {
+          this.reactionSubject.next(envelope.reaction);
           return;
         }
 
