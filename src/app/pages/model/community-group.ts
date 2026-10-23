@@ -68,6 +68,7 @@ export interface CommunityRoundEntry {
   adjustedElapsedSeconds?: number | null;
   raceDisqualified?: boolean;
   raceStewardReason?: string | null;
+  performanceValue?: number | null;
 }
 
 export interface CommunitySetScore {
@@ -202,4 +203,5 @@ export interface CommunityRoundEntryDraft {
   elapsedSeconds?: number | null;
   bestLapSeconds?: number | null;
   lapsCompleted?: number | null;
+  performanceValue?: number | null;
 }
