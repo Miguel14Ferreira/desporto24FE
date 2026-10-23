@@ -857,6 +857,64 @@
                       }
                     }
 
+
+                    @if (canManage() && (competition?.seasons?.length || 0) > 0) {
+                      <div class="season-management" aria-labelledby="season-management-title">
+                        <div class="season-management-heading">
+                          <h4 id="season-management-title">{{ 'communities.manageSeasons' | t }}</h4>
+                          <p>{{ 'communities.manageSeasonsHint' | t }}</p>
+                        </div>
+                        @for (season of competition?.seasons || []; track season.id) {
+                          <div class="season-management-row">
+                            <div class="season-management-identity">
+                              <strong>{{ season.name }}</strong>
+                              <span>{{ (season.active ? 'communities.activeSeason' : 'communities.closedSeason') | t }}</span>
+                            </div>
+                            @if (editingSeasonId === season.id) {
+                              <div class="season-management-editor">
+                                <label>
+                                  <span>{{ 'communities.seasonName' | t }}</span>
+                                  <input type="text" maxlength="120" [(ngModel)]="editingSeasonName"
+                                    [disabled]="seasonActionSaving" (keyup.enter)="saveSeasonName(season)">
+                                </label>
+                                <div class="row-actions">
+                                  <button type="button" class="jynlo-action jynlo-action--primary"
+                                    [disabled]="seasonActionSaving || !editingSeasonName.trim() || editingSeasonName.trim().length > 120"
+                                    (click)="saveSeasonName(season)">{{ 'communities.saveSeasonName' | t }}</button>
+                                  <button type="button" class="jynlo-action jynlo-action--neutral"
+                                    [disabled]="seasonActionSaving" (click)="cancelSeasonAction()">{{ 'common.cancel' | t }}</button>
+                                </div>
+                              </div>
+                            } @else if (deletingSeasonId === season.id) {
+                              <div class="season-management-confirm">
+                                <p>{{ 'communities.deleteSeasonWarning' | t }}</p>
+                                <div class="row-actions">
+                                  <button type="button" class="jynlo-action jynlo-action--danger"
+                                    [disabled]="seasonActionSaving"
+                                    (click)="confirmDeleteSeason(season)">{{ 'communities.confirmDeleteSeason' | t }}</button>
+                                  <button type="button" class="jynlo-action jynlo-action--neutral"
+                                    [disabled]="seasonActionSaving" (click)="cancelSeasonAction()">{{ 'common.cancel' | t }}</button>
+                                </div>
+                              </div>
+                            } @else {
+                              <div class="row-actions season-management-actions">
+                                <button type="button" class="jynlo-action jynlo-action--neutral jynlo-action--compact"
+                                  [disabled]="seasonActionSaving" (click)="editSeason(season)">{{ 'communities.renameSeason' | t }}</button>
+                                <button type="button" class="jynlo-action jynlo-action--danger jynlo-action--compact"
+                                  [disabled]="seasonActionSaving" (click)="requestDeleteSeason(season)">{{ 'communities.deleteSeason' | t }}</button>
+                              </div>
+                            }
+                          </div>
+                        }
+                        @if (seasonActionError) {
+                          <p class="season-management-error" role="alert">{{ seasonActionError }}</p>
+                        }
+                        @if (seasonActionMessage) {
+                          <p class="season-management-message" role="status">{{ seasonActionMessage }}</p>
+                        }
+                      </div>
+                    }
+
                     @if (trophies().length > 0) {
                       <div class="trophies-grid">
                         @for (season of trophies(); track season.id) {
