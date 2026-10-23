@@ -17,6 +17,9 @@ describe('ChatReadSyncService', () => {
     api = jasmine.createSpyObj<InboxApiService>('InboxApiService', ['markRead', 'summaries']);
     api.markRead.and.returnValue(of(acknowledged(9)));
     service = new ChatReadSyncService(api);
+    // Chrome Headless runs tests without a foreground browser tab.
+    // Test visible and hidden UI states explicitly, not the runner's focus.
+    spyOn<any>(service, 'isTabVisible').and.returnValue(true);
     log = document.createElement('div');
     spyOn(log, 'getBoundingClientRect').and.returnValue({
       top: 10, bottom: 130, height: 120, left: 0, right: 100, width: 100,
