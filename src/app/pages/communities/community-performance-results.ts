@@ -1,9 +1,11 @@
 import { CommunityRound, CommunityRoundEntry, CommunityRoundEntryDraft } from '../model/community-group';
 
 /** Provisional community marks: never official federation scores or season points. */
-export function performanceKind(eventType: string | null | undefined): 'metres' | 'points' | 'gym' | null {
+export function performanceKind(eventType: string | null | undefined): 'metres' | 'points' | 'gym' | 'street' | null {
   if (eventType === 'JUMP' || eventType === 'THROW') return 'metres';
-  if (eventType === 'FREESTYLE') return 'points';
+  if (eventType === 'FREESTYLE'
+      || eventType === 'SKATE_PARK' || eventType === 'PARKOUR_FREESTYLE') return 'points';
+  if (eventType === 'SKATE_STREET') return 'street';
   if (eventType === 'APPARATUS') return 'gym';
   return null;
 }
@@ -21,6 +23,7 @@ export function performanceError(
     return !Number.isFinite(value) || value < 0
       || (kind === 'metres' && value <= 0)
       || ((kind === 'points' || kind === 'gym') && value > 100)
+      || (kind === 'street' && value > 300)
       || value > 999999.999
       || Math.abs(value * 1000 - Math.round(value * 1000)) > 1e-6;
   });
