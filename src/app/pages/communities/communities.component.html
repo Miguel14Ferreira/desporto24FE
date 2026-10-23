@@ -1280,6 +1280,57 @@
                                   ? 'communities.racket.doubles' : 'communities.racket.singles') | t }}
                               </span>
                             </div>
+                            @if (group.rule) {
+                              <p class="racket-standings-rule-description">
+                                {{ 'communities.racket.pointsPerWin' | t }}: {{ group.rule.winPoints }}
+                                · {{ 'communities.racket.pointsPerLoss' | t }}: {{ group.rule.lossPoints }}
+                                · {{ (group.rule.tieBreak === 'SCORE_FIRST'
+                                  ? 'communities.racket.scoreFirst' : 'communities.racket.setsFirst') | t }}
+                              </p>
+                            }
+                            @if (canConfigureRacketRules()) {
+                              @if (racketRuleEditorKey === racketRuleKey(group)) {
+                                <div class="racket-rule-editor">
+                                  <label>
+                                    <span>{{ 'communities.racket.pointsPerWin' | t }}</span>
+                                    <input type="number" min="1" max="100" step="1"
+                                      [(ngModel)]="racketRuleWinPoints" [disabled]="racketRuleSaving">
+                                  </label>
+                                  <label>
+                                    <span>{{ 'communities.racket.pointsPerLoss' | t }}</span>
+                                    <input type="number" min="0" max="99" step="1"
+                                      [(ngModel)]="racketRuleLossPoints" [disabled]="racketRuleSaving">
+                                  </label>
+                                  <label>
+                                    <span>{{ 'communities.racket.tieBreak' | t }}</span>
+                                    <select [(ngModel)]="racketRuleTieBreak" [disabled]="racketRuleSaving">
+                                      <option value="SETS_FIRST">{{ 'communities.racket.setsFirst' | t }}</option>
+                                      <option value="SCORE_FIRST">{{ 'communities.racket.scoreFirst' | t }}</option>
+                                    </select>
+                                  </label>
+                                  <div class="racket-rule-actions">
+                                    <button type="button" class="primary-action jynlo-action jynlo-action--primary jynlo-action--compact"
+                                      [disabled]="racketRuleSaving" (click)="saveRacketRule(group)">
+                                      {{ 'communities.racket.saveRule' | t }}
+                                    </button>
+                                    <button type="button" class="secondary-action jynlo-action jynlo-action--neutral jynlo-action--compact"
+                                      [disabled]="racketRuleSaving" (click)="cancelRacketRule()">
+                                      {{ 'common.cancel' | t }}
+                                    </button>
+                                  </div>
+                                </div>
+                                @if (racketRuleError) {
+                                  <p class="season-management-error" role="alert">{{ racketRuleError }}</p>
+                                }
+                              } @else {
+                                <button type="button"
+                                  class="secondary-action jynlo-action jynlo-action--neutral jynlo-action--compact"
+                                  [disabled]="racketRuleSaving" (click)="editRacketRule(group)">
+                                  {{ (group.rule ? 'communities.racket.editRule'
+                                    : 'communities.racket.configureRule') | t }}
+                                </button>
+                              }
+                            }
                             <div class="racket-standings-scroll">
                               <table class="racket-standings-table">
                                 <thead>
@@ -1294,6 +1345,9 @@
                                     <th scope="col">{{ (racketUsesPointsPerSet(group.sport)
                                       ? 'communities.racket.points' : 'communities.racket.games') | t }}</th>
                                     <th scope="col">{{ 'communities.racket.scoreBalance' | t }}</th>
+                                    @if (group.rule) {
+                                      <th scope="col">{{ 'communities.racket.championshipPoints' | t }}</th>
+                                    }
                                   </tr>
                                 </thead>
                                 <tbody>
@@ -1317,12 +1371,18 @@
                                       <td [class.racket-standings-positive]="row.gamesOrPointsDifference > 0">
                                         {{ row.gamesOrPointsDifference > 0 ? '+' : '' }}{{ row.gamesOrPointsDifference }}
                                       </td>
+                                      @if (group.rule) {
+                                        <td class="racket-standings-wins">{{ row.championshipPoints ?? '—' }}</td>
+                                      }
                                     </tr>
                                   }
                                 </tbody>
                               </table>
                             </div>
                           </div>
+                        }
+                        @if (racketRuleMessage) {
+                          <p class="season-management-message" role="status">{{ racketRuleMessage }}</p>
                         }
                         <p class="racket-standings-footnote">{{ 'communities.racket.tieBreakHint' | t }}</p>
                       </section>
