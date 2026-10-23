@@ -1091,8 +1091,7 @@
                     <p>{{ message.body }}</p>
                     @if (canSendChat()) {
                       <button type="button" class="jynlo-chat-reply-action"
-                        [readOnly]="messageSending"
-                    [disabled]="chatDeliveryUncertain"
+                        [disabled]="messageSending || chatDeliveryUncertain"
                         (click)="replyToSessionMessage(message)">
                         ↩ {{ 'chat.replyToMessage' | t }}
                       </button>
@@ -1118,7 +1117,8 @@
                     [(ngModel)]="messageBody"
                     maxlength="2000"
                     rows="3"
-                    [disabled]="messageSending || chatDeliveryUncertain"
+                    [readOnly]="messageSending"
+                    [disabled]="chatDeliveryUncertain"
                     [placeholder]="'sessionDetail.groupPlaceholder' | t"
                     (keydown.enter)="onChatEnter($event)"></textarea>
                 </label>
