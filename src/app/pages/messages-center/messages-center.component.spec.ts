@@ -235,12 +235,47 @@ describe('Unified Jynlo message center', () => {
     }));
   });
 
-  it('never creates a quoted reply in a community or session conversation', () => {
-    const community = item('community', 7);
-    component.conversations = [community];
-    component.selectedKey = community.key;
-    (component as any).composerAllowed = true;
-    component.replyToMessage(message(community.key, 10));
+  it('quotes a community message and sends its ID without exposing a direct chat payload', () => {
+    const selected = item('community', 7);
+    component.conversations = [selected];
+    timeline.list.and.returnValue(of([
+      { id: 10, communityId: 7, kind: 'CHAT', username: 'bea',
+        body: 'Vamos jogar?', createdAt: '2026-10-23T09:00:00Z' }
+    ]));
+    component.selectConversation(selected);
+    component.replyToMessage(component.messages[0]);
+    expect(component.replyingTo?.id).toBe(10);
+    component.draft = 'Sim!';
+    timeline.send.and.returnValue(of({ id: 11, communityId: 7, kind: 'CHAT',
+      username: 'ana', body: 'Sim!', createdAt: '2026-10-23T09:01:00Z',
+      replyToMessageId: 10, replyToSender: 'bea', replyToText: 'Vamos jogar?' }));
+    component.sendMessage();
+    expect(timeline.send).toHaveBeenCalledOnceWith(7, 'CHAT', 'Sim!', 10);
+    expect(component.replyingTo).toBeNull();
+    expect(component.messages.find(m => m.id === 11)?.replyToText).toBe('Vamos jogar?');
+  });
+
+  it('quotes a session message and clears it when another conversation is selected', () => {
+    const session = item('session', 41);
+    const directChat = item('direct', 'bea');
+    component.conversations = [session, directChat];
+    sessions.messages.and.returnValue(of([
+      { id: 33, sessionId: 41, senderUsername: 'bea', body: 'Traz uma bola?',
+        createdAt: '2026-10-23T09:00:00Z' }
+    ]));
+    sessions.detail.and.returnValue(of({ id: 41, status: 'OPEN', joined: true,
+      gameDate: new Date(Date.now() + 3600_000).toISOString() } as any));
+    component.selectConversation(session);
+    component.replyToMessage(component.messages[0]);
+    component.draft = 'Combinado';
+    sessions.postMessage.and.returnValue(of({ id: 34, sessionId: 41,
+      senderUsername: 'ana', body: 'Combinado', createdAt: new Date().toISOString(),
+      replyToMessageId: 33, replyToSender: 'bea', replyToText: 'Traz uma bola?' }));
+    component.sendMessage();
+    expect(sessions.postMessage).toHaveBeenCalledOnceWith(41, 'Combinado', 33);
+    expect(component.replyingTo).toBeNull();
+    direct.recentHistory.and.returnValue(of({ last: true, content: [] }));
+    component.selectConversation(directChat);
     expect(component.replyingTo).toBeNull();
   });
 

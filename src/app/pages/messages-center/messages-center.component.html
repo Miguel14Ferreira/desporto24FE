@@ -122,13 +122,11 @@
                   </div>
                 }
                 <p>{{ message.text }}</p>
-                @if (conversation.kind === 'direct') {
-                  <button type="button" class="inbox-reply-action"
+                <button type="button" class="inbox-reply-action"
                     [disabled]="sending || deliveryUncertain || !composerAllowed"
                     (click)="replyToMessage(message)">
                     ↩ {{ 'chat.replyToMessage' | t }}
                   </button>
-                }
               </article>
             }
           </div>

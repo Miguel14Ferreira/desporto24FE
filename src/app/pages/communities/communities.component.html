@@ -499,9 +499,17 @@
                               [(ngModel)]="feedDraft"
                               [placeholder]="'communities.timelineFeedPlaceholder' | t"></textarea>
                   } @else {
+                    @if (replyingToCommunityMessage; as original) {
+                      <div class="jynlo-chat-reply-banner">
+                        <div><strong>{{ 'chat.replyingTo' | t }} {{ original.username }}</strong>
+                          <span>{{ original.body }}</span></div>
+                        <button type="button" [disabled]="timelineSending || chatDeliveryUncertain"
+                          (click)="cancelCommunityReply()">{{ 'chat.cancelReply' | t }}</button>
+                      </div>
+                    }
                     <label for="community-chat-text">{{ 'communities.timelineWriteMessage' | t }}</label>
-                    <textarea id="community-chat-text" name="community-chat-text" rows="2" maxlength="2000"
-                              [(ngModel)]="chatDraft" [disabled]="timelineSending || chatDeliveryUncertain"
+                    <textarea #communityComposer id="community-chat-text" name="community-chat-text" rows="2" maxlength="2000"
+                              [(ngModel)]="chatDraft" [readOnly]="timelineSending" [disabled]="chatDeliveryUncertain"
                               (keydown.enter)="onCommunityChatEnter($event)"
                               [placeholder]="'communities.timelineChatPlaceholder' | t"></textarea>
                     <div class="community-chat-composer-hint">{{ 'chat.enterHint' | t }} · {{ chatDraft.length }}/2000</div>
@@ -563,7 +571,20 @@
                             </button>
                           }
                         </div>
+                        @if (activeTab === 'chat' && entry.replyToMessageId && entry.replyToText) {
+                          <div class="jynlo-chat-quote">
+                            <strong>{{ entry.replyToSender }}</strong>
+                            <span>{{ entry.replyToText }}</span>
+                          </div>
+                        }
                         <p>{{ entry.body }}</p>
+                        @if (activeTab === 'chat') {
+                          <button type="button" class="jynlo-chat-reply-action"
+                            [disabled]="timelineSending || chatDeliveryUncertain"
+                            (click)="replyToCommunityMessage(entry)">
+                            ↩ {{ 'chat.replyToMessage' | t }}
+                          </button>
+                        }
                       </article>
                     }
                   </div>

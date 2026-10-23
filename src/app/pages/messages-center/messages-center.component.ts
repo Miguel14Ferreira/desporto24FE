@@ -336,12 +336,16 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
 
   private fromCommunity(entry: CommunityTimelineEntry): InboxMessage {
     return { key: inboxKey('community', entry.communityId), id: entry.id,
-      sender: entry.username, text: entry.body, createdAt: entry.createdAt };
+      sender: entry.username, text: entry.body, createdAt: entry.createdAt,
+      replyToMessageId: entry.replyToMessageId, replyToSender: entry.replyToSender,
+      replyToText: entry.replyToText };
   }
 
   private fromSession(entry: SessionMessage): InboxMessage {
     return { key: inboxKey('session', entry.sessionId), id: entry.id,
-      sender: entry.senderUsername, text: entry.body, createdAt: entry.createdAt };
+      sender: entry.senderUsername, text: entry.body, createdAt: entry.createdAt,
+      replyToMessageId: entry.replyToMessageId, replyToSender: entry.replyToSender,
+      replyToText: entry.replyToText };
   }
 
   private acceptRealtime(key: string, message: InboxMessage): void {
@@ -420,7 +424,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   }
 
   replyToMessage(message: InboxMessage): void {
-    if (message.id <= 0 || this.selected?.kind !== 'direct'
+    if (message.id <= 0 || message.key !== this.selectedKey
         || !this.composerAllowed || this.sending || this.deliveryUncertain) return;
     this.replyingTo = message;
     this.composerTextarea?.nativeElement.focus({ preventScroll: true });
@@ -451,7 +455,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     if (!conversation || !this.canSendMessage()) return;
     const key = conversation.key;
     const text = this.draft.trim();
-    const replyId = conversation.kind === 'direct' ? this.replyingTo?.id || null : null;
+    const replyId = this.replyingTo?.key === key ? this.replyingTo.id : null;
     const pending = { key, text, replyToMessageId: replyId,
       knownIds: new Set(this.messages.map(item => item.id)),
       startedAt: Date.now() };
@@ -463,11 +467,15 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
         : this.direct.send(String(conversation.id), text);
       send = request.pipe(map(message => this.fromDirect(message, String(conversation.id))));
     } else if (conversation.kind === 'community') {
-      send = this.timeline.send(Number(conversation.id), 'CHAT', text)
-        .pipe(map(message => this.fromCommunity(message)));
+      const request = replyId
+        ? this.timeline.send(Number(conversation.id), 'CHAT', text, replyId)
+        : this.timeline.send(Number(conversation.id), 'CHAT', text);
+      send = request.pipe(map(message => this.fromCommunity(message)));
     } else {
-      send = this.sessions.postMessage(Number(conversation.id), text)
-        .pipe(map(message => this.fromSession(message)));
+      const request = replyId
+        ? this.sessions.postMessage(Number(conversation.id), text, replyId)
+        : this.sessions.postMessage(Number(conversation.id), text);
+      send = request.pipe(map(message => this.fromSession(message)));
     }
 
     this.sending = true;

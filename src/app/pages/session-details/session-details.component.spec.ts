@@ -1874,6 +1874,44 @@ describe('SessionDetailsComponent', () => {
     expect(component.messageBody).toBe('');
   });
 
+  it('sends a quoted session reply with the parent ID and renders persisted snapshot', () => {
+    component.session = { ...session, joined: true,
+      gameDate: new Date(Date.now() + 3_600_000).toISOString() };
+    const original: SessionMessage = { id: 30, sessionId: 7, senderUsername: 'player-two',
+      body: 'Levas as bolas?', createdAt: new Date().toISOString() };
+    component.messages = [original];
+    component.replyToSessionMessage(original);
+    expect(component.replyingToSessionMessage?.id).toBe(30);
+    const response: SessionMessage = { id: 31, sessionId: 7, senderUsername: 'player-one',
+      body: 'Levo!', createdAt: new Date().toISOString(),
+      replyToMessageId: 30, replyToSender: 'player-two', replyToText: 'Levas as bolas?' };
+    sessionService.postMessage.and.returnValue(of(response));
+    component.messageBody = 'Levo!';
+    component.sendMessage();
+    expect(sessionService.postMessage).toHaveBeenCalledOnceWith(7, 'Levo!', 30);
+    expect(component.replyingToSessionMessage).toBeNull();
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Levas as bolas?');
+    expect(component.messages.some(item => item.replyToMessageId === 30)).toBeTrue();
+  });
+
+  it('preserves quoted parent and text after an uncertain session POST', () => {
+    component.session = { ...session, joined: true,
+      gameDate: new Date(Date.now() + 3_600_000).toISOString() };
+    const original: SessionMessage = { id: 40, sessionId: 7, senderUsername: 'player-two',
+      body: 'A que horas?', createdAt: new Date().toISOString() };
+    component.replyToSessionMessage(original);
+    component.messageBody = 'Às oito';
+    sessionService.postMessage.and.returnValue(throwError(() => new HttpErrorResponse({ status: 0 })));
+    sessionService.messages.and.returnValue(of([]));
+    component.sendMessage();
+    expect(component.replyingToSessionMessage?.id).toBe(40);
+    expect(component.messageBody).toBe('Às oito');
+    expect(component.chatDeliveryUncertain).toBeTrue();
+    component.sendMessage();
+    expect(sessionService.postMessage).toHaveBeenCalledTimes(1);
+  });
+
   it('keeps a socket message when an older HTTP chat response arrives afterwards', () => {
     component.session = {
       ...session, joined: true,
