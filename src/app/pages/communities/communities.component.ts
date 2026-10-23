@@ -209,9 +209,10 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     this.timelineError = t('chat.sendRetryWarning');
   }
 
-  onCommunityChatEnter(event: KeyboardEvent): void {
-    if (event.shiftKey || event.isComposing || event.keyCode === 229) return;
-    event.preventDefault();
+  onCommunityChatEnter(event: Event): void {
+    const keyboard = event as KeyboardEvent;
+    if (keyboard.shiftKey || keyboard.isComposing || keyboard.keyCode === 229) return;
+    keyboard.preventDefault();
     this.sendTimeline();
   }
 
