@@ -828,11 +828,6 @@ describe('Direct chat confirmed read status', () => {
     inbox.messages=[{key:'direct:bea',id:42,sender:'bea',
       text:'unread while away',createdAt:'2026-10-23T10:00:00Z'}];
     inbox.previewLog = {nativeElement:{scrollHeight:100,scrollTop:0,clientHeight:100}} as any;
-    const visibility = Object.getOwnPropertyDescriptor(document, 'visibilityState')
-      || Object.getOwnPropertyDescriptor(Object.getPrototypeOf(document), 'visibilityState');
-    expect(visibility).toBeDefined();
-    (Object.getOwnPropertyDescriptor(document, 'visibilityState')?.get as any);
-    (document.visibilityState as string);
     (document.hasFocus as jasmine.Spy).and.returnValue(false);
     (inbox as any).markRenderedRead('direct:bea', true);
     expect(api.markRead).not.toHaveBeenCalled();
@@ -864,8 +859,7 @@ describe('Direct chat confirmed read status', () => {
   it('does not fetch a receipt or mark read if the document is hidden',()=> {
     select('bea');
     inbox.messages=[{key:'direct:bea',id:40,sender:'bea',text:'hidden',createdAt:''}];
-    (document.visibilityState as string);
-    // SpyOnProperty returns a spy we can reconfigure for this case.
+    // The foreground visibility spy was installed by this suite's setup.
     const descriptor = Object.getOwnPropertyDescriptor(document, 'visibilityState');
     expect(descriptor?.get).toBeDefined();
     (descriptor!.get as jasmine.Spy).and.returnValue('hidden');
