@@ -854,3 +854,31 @@ body .communities-page.jynlo-c1 .round-sport-guidance {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* Common result formats for the complete sports catalogue — safe fallback. */
+body .communities-page.jynlo-c1 .round-generic-context {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .35rem 1rem;
+  margin: .9rem 0 .2rem;
+  color: var(--jynlo-ui-muted);
+}
+body .communities-page.jynlo-c1 .round-generic-format {
+  display: inline-flex;
+  align-items: center;
+  padding: .3rem .65rem;
+  border: 1px solid rgba(125,211,252,.22);
+  border-radius: 999px;
+  color: #c9f6fc;
+  background: rgba(125,211,252,.07);
+  font-size: .76rem;
+  font-weight: 800;
+}
+body .communities-page.jynlo-c1 .round-generic-context small {
+  font-size: .73rem;
+  line-height: 1.45;
+}
+body .communities-page.jynlo-c1 .round-results .round-result-row {
+  grid-template-columns: minmax(150px,1fr) repeat(5,auto);
+}
