@@ -1,7 +1,7 @@
 import { eventOptionsForSport, eventPresentationFormat, isNeutralEvent } from './community-round-event-type';
 import { isTeamFinalEvent, teamFinalError, recordedTeamFinal, teamFinalWinner,
   teamFinalUsesGoals, teamFinalTitleKey, iceHockeyEvent, teamFinalHintKey,
-  teamFinalUsesRuns, teamFinalScoreLabelKey } from './community-team-final-results';
+  teamFinalUsesRuns, teamFinalScoreLabelKey, teamFinalIsDecisiveGoalEvent } from './community-team-final-results';
 
 describe('handball rugby and sevens final team scores', () => {
   const sides=[{team:'A'},{team:'B'}];
@@ -111,6 +111,41 @@ describe('handball rugby and sevens final team scores', () => {
     expect(eventOptionsForSport('Corfebol')).toEqual([]);
     expect(teamFinalScoreLabelKey('FUTSAL_FINAL')).toBe('communities.teamFinal.goals');
     expect(teamFinalScoreLabelKey('RUGBY_FINAL')).toBe('communities.teamFinal.points');
+  });
+  it('registers only Corfebol and mens field Lacrosse goal formats',()=>{
+    const supported: Array<[string,string,string,string]> = [
+      ['Corfebol','KORFBALL_REG','KORFBALL_GOLDEN','korfball'],
+      ['Lacrosse','LACROSSE_M_REG','LACROSSE_M_OT','lacrosseMen']
+    ];
+    for (const [sport,regular,decided,prefix] of supported) {
+      expect(eventOptionsForSport(sport).map(x=>x.code)).toEqual([regular,decided] as any);
+      for (const type of [regular,decided]) {
+        expect(type.length).toBeLessThanOrEqual(20);
+        expect(isTeamFinalEvent(type)).toBeTrue();
+        expect(teamFinalUsesGoals(type)).toBeTrue();
+        expect(isNeutralEvent(sport,type)).toBeTrue();
+        expect(eventPresentationFormat(sport,type)).toBe('team');
+        expect(teamFinalScoreLabelKey(type)).toBe('communities.teamFinal.goals');
+        expect(teamFinalTitleKey(type)).toContain(prefix);
+        expect(teamFinalHintKey(type)).toContain(prefix);
+        expect(teamFinalError(type,sides,score(0,0))).toBe(type===decided?'teamFinalDecisiveGoalRequired':null);
+      }
+      expect(teamFinalIsDecisiveGoalEvent(regular)).toBeFalse();
+      expect(teamFinalIsDecisiveGoalEvent(decided)).toBeTrue();
+      expect(teamFinalError(regular,sides,score(11,11))).toBeNull();
+      expect(teamFinalError(regular,sides,score(15,12))).toBeNull();
+      expect(teamFinalError(decided,sides,score(12,11))).toBeNull();
+      expect(teamFinalError(decided,sides,score(11,12))).toBeNull();
+      expect(teamFinalError(decided,sides,score(11,11))).toBe('teamFinalDecisiveGoalRequired');
+      expect(teamFinalError(decided,sides,score(11,13))).toBe('teamFinalDecisiveGoalRequired');
+      expect(teamFinalError(regular,sides,score(1000,0))).toBe('teamFinalInvalidScore');
+      expect(teamFinalError(decided,[{team:'A'}],score(12,11))).toBe('teamFinalInvalidTeams');
+    }
+    expect(eventOptionsForSport('Corfebol').map(x=>x.code)).not.toContain('LACROSSE_M_REG' as any);
+    expect(eventOptionsForSport('Lacrosse').map(x=>x.code)).not.toContain('KORFBALL_REG' as any);
+    expect(eventOptionsForSport('Futebol')).toEqual([]);
+    expect(teamFinalIsDecisiveGoalEvent('ICE_HOCKEY_OT')).toBeTrue();
+    expect(teamFinalIsDecisiveGoalEvent('ICE_HOCKEY_SO')).toBeTrue();
   });
   it('rejects invalid scores and incomplete team assignments',()=>{
     expect(teamFinalError('RUGBY_FINAL',sides,score(1000,0))).toBe('teamFinalInvalidScore');

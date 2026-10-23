@@ -1944,6 +1944,12 @@
                               @if (teamFinalUsesRuns(round.eventType) && round.teamScore?.sideA === round.teamScore?.sideB) {
                                 <small>{{ 'communities.teamFinal.runsTieDisclaimer' | t }}</small>
                               }
+                              @if (round.eventType === 'KORFBALL_REG' && round.teamScore?.sideA === round.teamScore?.sideB) {
+                                <small>{{ 'communities.teamFinal.korfballRegDraw' | t }}</small>
+                              }
+                              @if (round.eventType === 'LACROSSE_M_REG' && round.teamScore?.sideA === round.teamScore?.sideB) {
+                                <small>{{ 'communities.teamFinal.lacrosseMenRegDraw' | t }}</small>
+                              }
                               <small>{{ 'communities.teamFinal.recordedOnly' | t }}</small>
                             </section>
                           } @else if (recordedBasketballFinal(round)) {
