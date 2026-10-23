@@ -55,6 +55,45 @@ async function openPrivate(context, peer) {
     'Botão antigo de chat reapareceu');
   return page;
 }
+// Read-only authorization probes: never POST, PUT or consume response bodies.
+// 404 may deliberately conceal the existence of an unauthorized conversation.
+async function requireDenied(kind, id, token, fetchImpl = fetch) {
+  check(kind === 'community' || kind === 'session', 'Invalid chat kind');
+  check(Number.isSafeInteger(id) && id > 0, 'Invalid chat identifier');
+  check(typeof token === 'string' && token.length > 0, 'Missing QA identity');
+  const path = kind === 'community'
+    ? '/api/communities/' + id + '/messages'
+    : '/api/sessions/' + id + '/messages';
+  let res;
+  try {
+    res = await fetchImpl(API + path, {
+      method: 'GET', redirect: 'error', signal: AbortSignal.timeout(TIMEOUT),
+      headers: { Accept: 'application/json', Authorization: 'Bearer ' + token }
+    });
+  } catch {
+    throw Error('Read-only authorization check could not connect');
+  }
+  check(res.status === 403 || res.status === 404,
+    'Authorization check returned an unexpected HTTP status');
+  return true;
+}
+
+function firstAccessibleOutsiderCommunity(discovery, mineOne, mineTwo) {
+  check(Array.isArray(discovery?.communities), 'Unexpected public community discovery shape');
+  const own = new Set([...mineOne, ...mineTwo].map(x => Number(x.id)));
+  return discovery.communities.find(item => Number.isSafeInteger(item?.id)
+    && item.id > 0 && !own.has(item.id)) || null;
+}
+
+function firstPublicOutsiderSession(discovered, mySessions) {
+  check(Array.isArray(discovered), 'Unexpected public session discovery shape');
+  const own = new Set([...(mySessions.created || []),
+    ...(mySessions.joined || []), ...(mySessions.waitlisted || [])]
+    .map(x => Number(x.id)));
+  return discovered.find(item => upcoming(item)
+    && item.privateGame === false && !own.has(item.id)) || null;
+}
+
 async function optionalAccess(one, two, tokenOne, tokenTwo, report, fetchImpl) {
   const [mine, theirs, sessions] = await Promise.all([
     request('/api/communities/mine',{token:tokenOne,fetchImpl}),
@@ -68,6 +107,12 @@ async function optionalAccess(one, two, tokenOne, tokenTwo, report, fetchImpl) {
   const exclusive = mine.find(g=>Number.isSafeInteger(g?.id) && g.id>0
     && !otherIds.has(g.id));
   if (exclusive) {
+    // Verify the server before checking navigation. An unauthorized browser
+    // selection alone is not sufficient proof that the API protects history.
+    const ownerMessages = await request('/api/communities/' + exclusive.id + '/messages',
+      { token: tokenOne, fetchImpl });
+    check(Array.isArray(ownerMessages), 'Owner community history is not readable');
+    await requireDenied('community', exclusive.id, tokenTwo, fetchImpl);
     const owner = await one.newPage(), outsider = await two.newPage();
     try {
       const path='/menu/messages?kind=community&id='+exclusive.id;
@@ -80,9 +125,30 @@ async function optionalAccess(one, two, tokenOne, tokenTwo, report, fetchImpl) {
       report('[PASS] Acesso a comunidade isolado por identidade');
     } finally { await owner.close(); await outsider.close(); }
   } else report('[SKIP] Sem comunidade exclusiva das contas QA');
+  // Even if neither QA account owns a community, a public discovery record
+  // should not give a non-member access to its member-only chat.
+  if (!exclusive) {
+    const discovery = await request('/api/communities/search?page=0',
+      { token: tokenOne, fetchImpl });
+    const publicOnly = firstAccessibleOutsiderCommunity(discovery, mine, theirs);
+    if (publicOnly) {
+      await requireDenied('community', publicOnly.id, tokenOne, fetchImpl);
+      report('[PASS] Comunidade pública descoberta não revela o chat a não membros');
+    } else report('[SKIP] Sem comunidade pública de terceiros para testar não membros');
+  }
+
+  const future = [...sessions.created, ...sessions.joined].find(upcoming);
+  if (future) {
+    const ownHistory = await request('/api/sessions/' + future.id + '/messages',
+      { token: tokenOne, fetchImpl });
+    check(Array.isArray(ownHistory), 'Sessão futura autorizada não devolve histórico');
+    report('[PASS] Sessão futura da conta QA mantém o chat autorizado');
+  } else report('[SKIP] Sem sessão futura da conta QA para testar chat aberto');
+
   const past = [...sessions.created,...sessions.joined]
     .find(s=>Number.isSafeInteger(s?.id)&&!upcoming(s));
   if (past) {
+    await requireDenied('session', past.id, tokenOne, fetchImpl);
     const page=await one.newPage();
     try {
       await page.goto(SITE+'/menu/messages?kind=session&id='+past.id,
@@ -94,6 +160,16 @@ async function optionalAccess(one, two, tokenOne, tokenTwo, report, fetchImpl) {
       report('[PASS] Sessão passada não permite abrir chat');
     } finally { await page.close(); }
   } else report('[SKIP] Sem sessão passada nas contas QA');
+
+  // The outsider check does not create any session, change membership or
+  // write messages. It remains valid when QA accounts own no sessions.
+  const publicSessions = await request('/api/sessions?privateGame=false',
+    { token: tokenOne, fetchImpl });
+  const outsiderSession = firstPublicOutsiderSession(publicSessions, sessions);
+  if (outsiderSession) {
+    await requireDenied('session', outsiderSession.id, tokenOne, fetchImpl);
+    report('[PASS] Sessão pública de terceiros não concede acesso ao chat');
+  } else report('[SKIP] Sem sessão pública futura de terceiros para teste de não participante');
 }
 async function run({ sendOnce=false, passwords=[
   process.env.JYNLO_QA_PASSWORD_1,process.env.JYNLO_QA_PASSWORD_2
@@ -156,4 +232,5 @@ if(require.main===module) {
     process.exitCode=1;
   });
 }
-module.exports={upcoming,authenticate,request,run};
+module.exports={upcoming,authenticate,request,run,requireDenied,
+  firstAccessibleOutsiderCommunity,firstPublicOutsiderSession};
