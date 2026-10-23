@@ -36,12 +36,13 @@ export class DirectChatComponent implements OnInit, OnDestroy, AfterViewChecked 
   actionError = '';
   actionSuccess = '';
   messageBody = '';
+  replyingTo: DirectChatMessage | null = null;
   showEmojiPicker = false;
   realtimeConnected = false;
   realtimeEverConnected = false;
   deliveryUncertain = false;
   deliveryChecking = false;
-  private pendingDelivery?: { text: string; knownIds: Set<number>; startedAt: number };
+  private pendingDelivery?: { text: string; replyToMessageId: number | null; knownIds: Set<number>; startedAt: number };
   private scrollToBottomRequested = false;
   private restoreScroll?: { top: number; height: number };
 
@@ -233,6 +234,16 @@ export class DirectChatComponent implements OnInit, OnDestroy, AfterViewChecked 
       });
   }
 
+  replyTo(message: DirectChatMessage): void {
+    if (!message.id || this.sending || this.deliveryUncertain || this.chatInfo?.chatBlocked) return;
+    this.replyingTo = message;
+    this.composerTextarea?.nativeElement.focus({ preventScroll: true });
+  }
+
+  cancelReply(): void {
+    if (!this.sending && !this.deliveryUncertain) this.replyingTo = null;
+  }
+
   onEnter(event: Event): void {
     const keyboardEvent = event as KeyboardEvent;
 
@@ -267,14 +278,18 @@ export class DirectChatComponent implements OnInit, OnDestroy, AfterViewChecked 
     // Keep the text field focused after Enter or clicking Send. Read-only
     // during this request avoids edits that would otherwise be cleared on ACK.
     this.composerTextarea?.nativeElement.focus({ preventScroll: true });
+    const replyId = this.replyingTo?.id || null;
     const pending = {
       text,
+      replyToMessageId: replyId,
       knownIds: new Set(this.messages.filter(message => message.id !== null).map(message => message.id as number)),
       startedAt: Date.now()
     };
 
-    this.chatService.send(this.recipientUsername, text)
-      .pipe(
+    const send = replyId
+      ? this.chatService.send(this.recipientUsername, text, replyId)
+      : this.chatService.send(this.recipientUsername, text);
+    send.pipe(
         timeout(10_000),
         finalize(() => this.sending = false)
       )
@@ -288,6 +303,7 @@ export class DirectChatComponent implements OnInit, OnDestroy, AfterViewChecked 
           }
 
           this.messageBody = '';
+          this.replyingTo = null;
           this.showEmojiPicker = false;
           this.scrollToBottomRequested = true;
           this.deliveryUncertain = false;
@@ -347,6 +363,7 @@ export class DirectChatComponent implements OnInit, OnDestroy, AfterViewChecked 
     this.deliveryUncertain = false;
     this.pendingDelivery = undefined;
     this.messageBody = '';
+    this.replyingTo = null;
     this.actionError = '';
     this.actionSuccess = t('chat.sendConfirmed');
     this.scrollToBottomRequested = true;
@@ -359,7 +376,8 @@ export class DirectChatComponent implements OnInit, OnDestroy, AfterViewChecked 
     if (message.username2.toLowerCase() !== this.recipientUsername.toLowerCase()) return false;
     const sentAt = this.timestamp(message);
     // Unreliable or absent timestamps should not be treated as proof of delivery.
-    return sentAt >= pending.startedAt - 60_000 && message.text === pending.text;
+    return sentAt >= pending.startedAt - 60_000 && message.text === pending.text
+      && (message.replyToMessageId ?? null) === pending.replyToMessageId;
   }
 
   private isUncertainSendError(error: unknown): boolean {

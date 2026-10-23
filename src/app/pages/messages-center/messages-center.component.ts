@@ -52,6 +52,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   realtimeConnected = false;
   everConnected = false;
   draft = '';
+  replyingTo: InboxMessage | null = null;
   sending = false;
   deliveryUncertain = false;
   deliveryChecking = false;
@@ -62,7 +63,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   private composerVersion = 0;
   private readonly drafts = new Map<string, string>();
   private readonly pendingByConversation = new Map<string, {
-    key: string; text: string; knownIds: Set<number>; startedAt: number;
+    key: string; text: string; replyToMessageId: number | null; knownIds: Set<number>; startedAt: number;
   }>();
   private readonly subscriptions = new Subscription();
   private readonly jwt = new JwtHelperService();
@@ -257,6 +258,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     if (conversation.key === this.selectedKey && !this.previewError) return;
     if (this.selectedKey) this.drafts.set(this.selectedKey, this.draft);
     this.selectedKey = conversation.key;
+    this.replyingTo = null;
     this.draft = this.drafts.get(conversation.key) || '';
     this.deliveryUncertain = this.pendingByConversation.has(conversation.key);
     this.composerError = this.deliveryUncertain ? t('chat.sendUnconfirmed') : '';
@@ -325,7 +327,10 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       id: message.id || 0,
       sender: message.username1,
       text: message.text,
-      createdAt: message.date || message.dataDisplay || ''
+      createdAt: message.date || message.dataDisplay || '',
+      replyToMessageId: message.replyToMessageId,
+      replyToSender: message.replyToSender,
+      replyToText: message.replyToText
     };
   }
 
@@ -414,6 +419,17 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       && this.draft.trim().length <= 2000);
   }
 
+  replyToMessage(message: InboxMessage): void {
+    if (message.id <= 0 || this.selected?.kind !== 'direct'
+        || !this.composerAllowed || this.sending || this.deliveryUncertain) return;
+    this.replyingTo = message;
+    this.composerTextarea?.nativeElement.focus({ preventScroll: true });
+  }
+
+  cancelReply(): void {
+    if (!this.sending && !this.deliveryUncertain) this.replyingTo = null;
+  }
+
   onComposerEnter(event: Event): void {
     const keyboard = event as KeyboardEvent;
     if (keyboard.shiftKey || keyboard.isComposing || keyboard.keyCode === 229) return;
@@ -435,13 +451,17 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     if (!conversation || !this.canSendMessage()) return;
     const key = conversation.key;
     const text = this.draft.trim();
-    const pending = { key, text, knownIds: new Set(this.messages.map(item => item.id)),
+    const replyId = conversation.kind === 'direct' ? this.replyingTo?.id || null : null;
+    const pending = { key, text, replyToMessageId: replyId,
+      knownIds: new Set(this.messages.map(item => item.id)),
       startedAt: Date.now() };
 
     let send: Observable<InboxMessage>;
     if (conversation.kind === 'direct') {
-      send = this.direct.send(String(conversation.id), text)
-        .pipe(map(message => this.fromDirect(message, String(conversation.id))));
+      const request = replyId
+        ? this.direct.send(String(conversation.id), text, replyId)
+        : this.direct.send(String(conversation.id), text);
+      send = request.pipe(map(message => this.fromDirect(message, String(conversation.id))));
     } else if (conversation.kind === 'community') {
       send = this.timeline.send(Number(conversation.id), 'CHAT', text)
         .pipe(map(message => this.fromCommunity(message)));
@@ -463,6 +483,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
         if (key !== this.selectedKey) return;
         this.acceptRealtime(key, message);
         this.draft = '';
+        this.replyingTo = null;
         this.drafts.delete(key);
         this.pendingByConversation.delete(key);
         this.deliveryUncertain = false;
@@ -492,12 +513,13 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   }
 
   private matchesPending(message: InboxMessage, pending: {
-    key: string; text: string; knownIds: Set<number>; startedAt: number;
+    key: string; text: string; replyToMessageId: number | null; knownIds: Set<number>; startedAt: number;
   }): boolean {
     if (message.key !== pending.key || pending.knownIds.has(message.id) || message.text !== pending.text
       || !this.currentUsername || message.sender.toLowerCase() !== this.currentUsername.toLowerCase()) return false;
     const sentAt = Date.parse(message.createdAt);
-    return Number.isFinite(sentAt) && sentAt >= pending.startedAt - 60_000;
+    return Number.isFinite(sentAt) && sentAt >= pending.startedAt - 60_000
+      && (message.replyToMessageId ?? null) === pending.replyToMessageId;
   }
 
   private confirmFromHistoryIfPresent(key: string, messages: InboxMessage[]): void {
@@ -507,6 +529,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       if (this.selectedKey === key) {
         this.deliveryUncertain = false;
         this.draft = '';
+        this.replyingTo = null;
         this.drafts.delete(key);
         this.composerError = '';
         this.composerSuccess = t('chat.sendConfirmed');

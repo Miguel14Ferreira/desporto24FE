@@ -25,10 +25,10 @@ export class DirectChatService {
     );
   }
 
-  send(username: string, text: string): Observable<DirectChatMessage> {
+  send(username: string, text: string, replyToMessageId?: number): Observable<DirectChatMessage> {
     return this.http.post<DirectChatMessage>(
       this.baseUrl + '/' + encodeURIComponent(username),
-      { text: text.trim() }
+      { text: text.trim(), ...(replyToMessageId ? { replyToMessageId } : {}) }
     );
   }
 

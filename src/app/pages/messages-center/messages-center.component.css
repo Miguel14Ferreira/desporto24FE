@@ -87,3 +87,33 @@
 .inbox-compose-alert--error { background:#44392e; border-color:#b58c55; color:#ffe6bb; }
 .inbox-compose-alert-actions { margin-top:12px; display:flex; gap:8px; flex-wrap:wrap; }
 @media (max-width:800px) { .inbox-composer { padding:14px; } .inbox-compose-alert { margin:10px 14px 0; } }
+
+
+/* Private quoted replies; never offer a false quote action for other chat kinds. */
+.inbox-message-quote, .inbox-reply-banner {
+  border-left: 3px solid #49dec4; border-radius: 5px 10px 10px 5px;
+  background: rgba(9, 29, 40, .42); padding: 9px 11px;
+  display: flex; flex-direction: column; gap: 4px; margin-top: 8px;
+  min-width: 0;
+}
+.inbox-message-quote strong, .inbox-reply-banner strong { color: #91ead8; font-size: .74rem; }
+.inbox-message-quote span, .inbox-reply-banner span {
+  color: #e2f2f4; font-size: .79rem; line-height: 1.4; overflow-wrap: anywhere;
+  overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2; white-space: pre-wrap;
+}
+.inbox-reply-action {
+  display: block; margin: 8px 0 0 auto; border: none; border-radius: 6px;
+  padding: 3px 5px; background: none; color: #8fe7d3;
+  font: inherit; font-size: .73rem; cursor: pointer;
+}
+.inbox-reply-action:hover:not(:disabled) { text-decoration: underline; }
+.inbox-reply-action:disabled { opacity: .4; cursor: not-allowed; }
+.inbox-reply-action:focus-visible, .inbox-reply-banner button:focus-visible {
+  outline: 2px solid #8ef9dc; outline-offset: 2px;
+}
+.inbox-reply-banner { margin: 0; flex-direction: row; align-items: center; justify-content: space-between; }
+.inbox-reply-banner > div { display: flex; flex-direction: column; min-width: 0; }
+.inbox-reply-banner button { flex-shrink: 0; border: 1px solid #477871; border-radius: 8px;
+  color: #adf4de; background: transparent; padding: 7px 9px; cursor: pointer; font: inherit; font-size: .76rem; }
+.inbox-reply-banner button:disabled { opacity: .5; cursor: not-allowed; }

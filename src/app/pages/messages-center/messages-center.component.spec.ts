@@ -212,6 +212,38 @@ describe('Unified Jynlo message center', () => {
     expect(focus).toHaveBeenCalledTimes(1);
   });
 
+  it('quotes a private message by ID and keeps its server snapshot when showing history', () => {
+    const selected = item('direct', 'bea');
+    component.conversations = [selected];
+    direct.recentHistory.and.returnValue(of({ last: true, content: [{
+      id: 12, username1: 'bea', username2: 'ana', text: 'Tudo bem?',
+      date: '2026-10-23T09:00:00Z', dataDisplay: null
+    }] }));
+    component.selectConversation(selected);
+    expect(component.messages[0].id).toBe(12);
+    component.replyToMessage(component.messages[0]);
+    expect(component.replyingTo?.id).toBe(12);
+    component.draft = 'Sim!';
+    direct.send.and.returnValue(of({ id: 13, username1: 'ana', username2: 'bea',
+      text: 'Sim!', date: '2026-10-23T09:01:00Z', dataDisplay: null,
+      replyToMessageId: 12, replyToSender: 'bea', replyToText: 'Tudo bem?' }));
+    component.sendMessage();
+    expect(direct.send).toHaveBeenCalledOnceWith('bea', 'Sim!', 12);
+    expect(component.replyingTo).toBeNull();
+    expect(component.messages.find(m => m.id === 13)).toEqual(jasmine.objectContaining({
+      replyToMessageId: 12, replyToSender: 'bea', replyToText: 'Tudo bem?'
+    }));
+  });
+
+  it('never creates a quoted reply in a community or session conversation', () => {
+    const community = item('community', 7);
+    component.conversations = [community];
+    component.selectedKey = community.key;
+    (component as any).composerAllowed = true;
+    component.replyToMessage(message(community.key, 10));
+    expect(component.replyingTo).toBeNull();
+  });
+
   it('does not POST direct messages when the original chat is blocked', () => {
     const selected = item('direct', 'bea');
     component.conversations = [selected];

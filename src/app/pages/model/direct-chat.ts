@@ -5,6 +5,9 @@ export interface DirectChatMessage {
   text: string;
   dataDisplay: string | null;
   date: string | null;
+  replyToMessageId?: number | null;
+  replyToSender?: string | null;
+  replyToText?: string | null;
 }
 
 export interface DirectChatInfo {
