@@ -58,6 +58,16 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   /** Token active when this inbox mounted; a different login must not inherit receipts. */
   private receiptSessionToken: string | null = null;
   private summaryTimer?: ReturnType<typeof setInterval>;
+  private receiptTimer?: ReturnType<typeof setInterval>;
+  /** Only a foreground inbox can acknowledge messages as actually viewed. */
+  private isPageActive(): boolean {
+    return document.visibilityState === 'visible' && document.hasFocus();
+  }
+  private readonly onPageActive = (): void => {
+    if (!this.isPageActive()) return;
+    if (this.selectedKey) this.markRenderedRead(this.selectedKey);
+    this.refreshPeerReadReceipt(true);
+  };
   realtimeConnected = false;
   everConnected = false;
   draft = '';
@@ -161,17 +171,24 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
 
     this.realtime.connect();
     this.loadInbox();
+    window.addEventListener('focus', this.onPageActive);
+    document.addEventListener('visibilitychange', this.onPageActive);
     this.summaryTimer = setInterval(() => {
       if (this.serverSummariesAvailable && !this.loading) this.refreshSummaries();
-      this.refreshPeerReadReceipt();
     }, 45_000);
+    // Only an actively viewed private chat polls its receipt, at most once
+    // every 15 seconds. Background tabs do not add API traffic.
+    this.receiptTimer = setInterval(() => this.refreshPeerReadReceipt(), 15_000);
   }
 
   ngOnDestroy(): void {
     this.typing.destroy();
     ++this.peerReceiptVersion;
     this.subscriptions.unsubscribe();
+    window.removeEventListener('focus', this.onPageActive);
+    document.removeEventListener('visibilitychange', this.onPageActive);
     if (this.summaryTimer) clearInterval(this.summaryTimer);
+    if (this.receiptTimer) clearInterval(this.receiptTimer);
     // The navbar owns the shared socket lifecycle. Never disconnect it here.
   }
 
@@ -957,7 +974,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   }
 
   private markRenderedRead(key: string, fromLoadedHistory = false): void {
-    if (!this.serverSummariesAvailable || key !== this.selectedKey || this.historicalPreview
+    // A background/unfocused browser must not make a message look read.
+    if (!this.isPageActive() || !this.serverSummariesAvailable || key !== this.selectedKey || this.historicalPreview
         || (this.previewLoading && !fromLoadedHistory) || this.previewError || this.messages.length === 0) return;
     if (!fromLoadedHistory && !this.isNearPreviewBottom()) return;
     const lastSeen = Math.max(...this.messages.map(message => message.id));
@@ -1009,10 +1027,10 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       return;
     }
     const conversation = this.selected;
-    if (!conversation || conversation.kind !== 'direct') return;
-    // One scoped lightweight GET at most every 30 seconds for the active peer.
+    if (!conversation || conversation.kind !== 'direct' || !this.isPageActive()) return;
+    // One scoped lightweight GET at most every 15 seconds for the active peer.
     // Never request a receipt for every message or for community/session chats.
-    if (!force && Date.now() - this.peerReceiptCheckedAt < 30_000) return;
+    if (!force && Date.now() - this.peerReceiptCheckedAt < 15_000) return;
     this.peerReceiptCheckedAt = Date.now();
     const version = ++this.peerReceiptVersion;
     const key = conversation.key;
