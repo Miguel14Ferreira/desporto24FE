@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { finalize, timeout } from 'rxjs';
 import { InboxApiService, InboxKind } from './inbox-api.service';
+import { JwtHelperService } from '@auth0/angular-jwt';
 
 interface ReadState {
   confirmed: number;
@@ -18,6 +19,9 @@ interface ReadState {
 export class ChatReadSyncService {
   private readonly states = new Map<string, ReadState>();
   private readonly retryDelayMs = 15_000;
+  private readonly jwt = new JwtHelperService();
+  private cachedToken: string | null = null;
+  private cachedViewer = '';
 
   constructor(private readonly inboxApi: InboxApiService) {}
 
@@ -30,16 +34,32 @@ export class ChatReadSyncService {
     // Also avoid reading incoming messages when the user is reviewing old ones.
     const rect = logElement.getBoundingClientRect();
     const screenHeight = typeof window === 'undefined' ? 0 : window.innerHeight;
-    if (rect.height <= 0 || rect.bottom <= 0 || rect.top >= screenHeight
+    if (rect.height <= 0 || rect.bottom <= 0 || rect.bottom > screenHeight + 24
+        || rect.top >= screenHeight
         || logElement.scrollHeight - logElement.scrollTop - logElement.clientHeight > 120) return;
 
-    const key = kind + ':' + String(id).toLowerCase();
+    const key = this.viewer() + ':' + kind + ':' + String(id).toLowerCase();
     const state = this.states.get(key) ?? {
       confirmed: 0, wanted: 0, inFlight: false, failedAt: 0
     };
     state.wanted = Math.max(state.wanted, newestId);
     this.states.set(key, state);
     this.flush(kind, String(id), state);
+  }
+
+  private viewer(): string {
+    // Shared services survive SPA navigation and account switching. Do not let
+    // one user's acknowledged watermark suppress another user's read receipts.
+    const token = typeof localStorage === 'undefined' ? null : localStorage.getItem('t');
+    if (token !== this.cachedToken) {
+      this.cachedToken = token;
+      try {
+        this.cachedViewer = token ? (this.jwt.decodeToken(token)?.sub || '').toLowerCase() : '';
+      } catch {
+        this.cachedViewer = '';
+      }
+    }
+    return this.cachedViewer;
   }
 
   private flush(kind: InboxKind, id: string, state: ReadState): void {
