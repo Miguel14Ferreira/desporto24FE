@@ -9,6 +9,8 @@ describe('multi-format sports should not reuse unrelated scoring rules', () => {
     expect(eventOptionsForSport('Futebol')).toEqual([]);
     expect(eventOptionsForSport('Surf').map(o => o.code)).toEqual(['HEAT']);
     expect(eventOptionsForSport('Bodyboard').map(o => o.code)).toEqual(['BODYBOARD_HEAT']);
+    expect(eventOptionsForSport('Basquetebol').map(o => o.code)).toEqual(['BASKETBALL_FINAL']);
+    expect(eventOptionsForSport('Basquetebol 3x3').map(o => o.code)).toEqual(['BASKETBALL_3X3_FINAL']);
     expect(eventOptionsForSport('Skate').map(o => o.code)).toEqual(['SKATE_PARK', 'SKATE_STREET']);
     expect(eventOptionsForSport('Parkour').map(o => o.code))
       .toEqual(['PARKOUR_SPEED', 'PARKOUR_FREESTYLE']);
