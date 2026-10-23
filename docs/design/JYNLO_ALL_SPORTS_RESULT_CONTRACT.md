@@ -41,3 +41,11 @@ O registo central é `src/app/pages/communities/community-round-sport.ts`. Os te
 - Corridas com tipo `RACE`/`TRACK` podem utilizar as posições/tempos e classificação existentes. Freestyle, saltos e lançamentos são **registos de participação apenas**, sem converter falsamente números de golos ou W/D/L em pontuação.
 - **Legado**: as jornadas BMX antigas sem tipo continuam a ser tratadas como corrida, preservando o significado dos dados anteriores. As outras modalidades e a importação histórica mantêm o seu comportamento.
 - Próximos passos: modelar resultados por marca/altura/distância, avaliações com júri e regras específicas de pontuação por tipo de evento; ampliar o registo para as restantes modalidades cuja tipologia é variável.
+
+## Resultados por marca/nota — primeiro incremento (23/10/2026)
+- BMX/Snowboard `FREESTYLE`: uma nota agregada de 0 a 100 por participante, opcional; não implica sistema oficial de júris, rondas ou pesos.
+- Atletismo `JUMP`/`THROW`: uma marca positiva em metros, até 3 casas decimais, por participante; não se misturam modalidades nem subdisciplinas em rankings de época.
+- `community_round_entry.performance_value` é NULL em histórico anterior e nas modalidades não abrangidas. Não há backfill ou alteração de resultados antigos.
+- A interface mostra marca, unidade e **posição somente dentro daquela jornada**; marcas iguais partilham posição. Participantes sem marca ficam sem classificação.
+- Não são criados pontos de campeonato, medalhas automáticas nem classificação cruzada entre salto em altura e distância, entre outros.
+- Próximos incrementos: especificar disciplinas atléticas (altura, comprimento, triplo, dardo, peso, etc.), séries e tentativas, critérios de validade e painel de júris com notas individuais.
