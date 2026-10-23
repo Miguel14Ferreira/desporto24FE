@@ -11,6 +11,7 @@ import { SessionService } from '../../services/session.service';
 import { DirectChatService } from '../../services/direct-chat.service';
 import { CommunityTimelineService } from '../../services/community-timeline.service';
 import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.service';
+import { InboxApiService } from '../../services/inbox-api.service';
 
 const item = (kind: 'direct' | 'community' | 'session', id: string | number): InboxConversation => ({
   kind, id, key: inboxKey(kind, id), title: String(id), subtitle: '', newThisVisit: 0
@@ -27,6 +28,7 @@ describe('Unified Jynlo message center', () => {
   let direct: jasmine.SpyObj<DirectChatService>;
   let timeline: jasmine.SpyObj<CommunityTimelineService>;
   let realtime: DirectChatRealtimeService;
+  let inboxApi: jasmine.SpyObj<InboxApiService>;
   const directEvents = new Subject<any>();
   const communityEvents = new Subject<any>();
   const sessionEvents = new Subject<any>();
@@ -45,6 +47,10 @@ describe('Unified Jynlo message center', () => {
       connected$: connected.asObservable(),
       connect: jasmine.createSpy('connect')
     } as unknown as DirectChatRealtimeService;
+    inboxApi = jasmine.createSpyObj<InboxApiService>('InboxApiService', ['summaries', 'markRead']);
+    inboxApi.summaries.and.returnValue(of([]));
+    inboxApi.markRead.and.callFake(ref => of({ ...ref, latestMessageId: null,
+      latestText: null, latestSender: null, latestAt: null, unreadCount: 0 }));
     friends.friends.and.returnValue(of([]));
     communities.mine.and.returnValue(of([]));
     sessions.mine.and.returnValue(of({ created: [], joined: [], waitlisted: [] }));
@@ -53,7 +59,7 @@ describe('Unified Jynlo message center', () => {
       id: 41, sport: 'Futsal', city: 'Cacém', gameDate: '2026-11-01T10:00:00Z',
       joined: true, status: 'OPEN'
     } as any));
-    component = new MessagesCenterComponent(friends, communities, sessions, direct, timeline, realtime);
+    component = new MessagesCenterComponent(friends, communities, sessions, direct, timeline, realtime, inboxApi);
     (component as any).currentUsername = 'ana';
   });
 
@@ -259,6 +265,65 @@ describe('Unified Jynlo message center', () => {
     component.onComposerEnter(ime);
     expect(ime.defaultPrevented).toBeFalse();
     expect(timeline.send).not.toHaveBeenCalled();
+  });
+
+
+  it('hydrates previews and unread counts from authenticated server snapshots without fetching chat histories', () => {
+    friends.friends.and.returnValue(of([{ username: 'bea', fullName: null, nickname: null,
+      profilePicUrl: null, chatBlocked: false, blockedByMe: false }]));
+    inboxApi.summaries.and.returnValue(of([{
+      kind: 'direct', id: 'bea', latestMessageId: 70, latestText: 'Vamos jogar?',
+      latestSender: 'bea', latestAt: '2026-10-23T09:00:00Z', unreadCount: 4
+    }]));
+    component.loadInbox();
+    expect(component.conversations[0].latestText).toBe('Vamos jogar?');
+    expect(component.recentCount).toBe(4);
+    component.setFilter('recent');
+    expect(component.filteredConversations.map(x => x.key)).toEqual(['direct:bea']);
+    expect(direct.recentHistory).not.toHaveBeenCalled();
+  });
+
+  it('persists a read cursor after authorized history loads and clears the unread badge', () => {
+    const community = item('community', 7);
+    community.unreadCount = 5;
+    component.conversations = [community];
+    timeline.list.and.returnValue(of([{ id: 75, communityId: 7, kind: 'CHAT',
+      username: 'bea', body: 'Olá', createdAt: '2026-10-23T09:00:00Z' }]));
+    inboxApi.markRead.and.returnValue(of({
+      kind: 'community', id: '7', latestMessageId: 75, latestText: 'Olá',
+      latestSender: 'bea', latestAt: '2026-10-23T09:00:00Z', unreadCount: 0
+    }));
+    component.selectConversation(community);
+    expect(inboxApi.markRead).toHaveBeenCalledOnceWith(
+      { kind: 'community', id: '7' }, 75);
+    expect(component.recentCount).toBe(0);
+  });
+
+  it('never persists read on HTTP forbidden or failed preview', () => {
+    const community = item('community', 7);
+    component.conversations = [community];
+    timeline.list.and.returnValue(throwError(() => new Error('403')));
+    component.selectConversation(community);
+    expect(inboxApi.markRead).not.toHaveBeenCalled();
+    expect(component.previewError).toBeTrue();
+  });
+
+  it('retains locally newer socket activity when a snapshot arrives late', () => {
+    const community = item('community', 7);
+    component.conversations = [community];
+    const pending = new Subject<any>();
+    inboxApi.summaries.and.returnValue(pending.asObservable());
+    component.refreshSummaries();
+    (component as any).acceptRealtime('community:7', {
+      key: 'community:7', id: 80, sender: 'bea', text: 'Nova',
+      createdAt: '2026-10-23T10:00:00Z'
+    });
+    pending.next([{ kind: 'community', id: '7', latestMessageId: 79,
+      latestText: 'Antiga', latestSender: 'ana',
+      latestAt: '2026-10-23T09:00:00Z', unreadCount: 1 }]);
+    pending.complete();
+    expect(component.conversations[0].latestText).toBe('Nova');
+    expect(component.conversations[0].unreadCount).toBe(1);
   });
 
 });
