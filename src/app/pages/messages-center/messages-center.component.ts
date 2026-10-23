@@ -34,6 +34,7 @@ import {
 })
 export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChecked {
   @ViewChild('previewLog') previewLog?: ElementRef<HTMLElement>;
+  @ViewChild('composerTextarea') composerTextarea?: ElementRef<HTMLTextAreaElement>;
 
   conversations: InboxConversation[] = [];
   selectedKey: string | null = null;
@@ -452,6 +453,10 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.sending = true;
     this.composerError = '';
     this.composerSuccess = '';
+    // A disabled textarea loses focus while the POST is pending. Keep it
+    // enabled/read-only and restore focus immediately after button submits.
+    // Never steal focus later when the HTTP response arrives.
+    this.composerTextarea?.nativeElement.focus({ preventScroll: true });
     // Unlike HTTP GETs, ambiguous POSTs are NEVER automatically retried.
     send.pipe(timeout(10000), finalize(() => { this.sending = false; })).subscribe({
       next: message => {
