@@ -1171,3 +1171,32 @@ body .communities-page.jynlo-c1 .racket-rule-editor input[type="text"] {
   width: min(100%, 390px);
   min-width: min(280px, 100%);
 }
+
+/* Distinguish race steward decisions from official measured results. */
+body .communities-page.jynlo-c1 .race-decision-dsq {
+  display: inline-flex;
+  align-items: center;
+  gap: .25rem;
+  border-radius: .6rem;
+  padding: .32rem .6rem;
+  border: 1px solid rgba(248,113,113,.38);
+  background: rgba(185,28,28,.15);
+  color: #fecaca;
+  font-size: .73rem;
+  font-weight: 900;
+}
+body .communities-page.jynlo-c1 .race-adjusted-time {
+  color: #d3f6e9;
+  font-size: .75rem;
+  font-variant-numeric: tabular-nums;
+}
+body .communities-page.jynlo-c1 .race-penalty-editor .race-dsq-field {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  font-size: .78rem;
+}
+body .communities-page.jynlo-c1 .race-penalty-editor .race-dsq-field input {
+  width: 1rem;
+  height: 1rem;
+}
