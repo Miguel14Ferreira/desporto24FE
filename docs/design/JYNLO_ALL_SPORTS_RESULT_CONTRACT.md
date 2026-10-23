@@ -54,3 +54,9 @@ O registo central é `src/app/pages/communities/community-round-sport.ts`. Os te
 - Novas provas `JUMP`: comprimento, triplo, altura ou vara; `THROW`: peso, disco, dardo ou martelo.
 - `community_round.event_discipline` é nullable para histórico; novas jornadas de saltos/lançamentos exigem a seleção.
 - Marcas em metros e posições apenas na jornada; **sem** classificação cruzada entre disciplinas, tentativas oficiais ou pontuações inventadas.
+
+## Incremento de avaliações por júri — surf e ginástica artística (23/10/2026)
+- Surf HEAT: duas notas de ondas **já avaliadas** entre 0 e 10, opcionais. A soma representa exclusivamente os valores fornecidos. Sem ondas: sem nota ou posição. A posição é apenas na bateria.
+- Ginástica Artística APPARATUS: seleção de um de oito aparelhos e registo manual opcional da nota final já apurada. Não há cálculo da dificuldade/exe-cução dos júris.
+- Surf utiliza `wave_score_1` e `wave_score_2`, ambos nullable; não reutiliza `performance_value` nem altera histórico.
+- Não criar classificação de época, medalhas ou rankings cruzados entre provas/aparelhos.

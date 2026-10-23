@@ -1154,7 +1154,8 @@
                           }
                           @if (athleticsDisciplineOptions(newRoundSport, newRoundEventType).length) {
                             <label>
-                              <span>{{ 'communities.discipline.label' | t }}</span>
+                              <span>{{ (newRoundEventType === 'APPARATUS'
+                                ? 'communities.gym.apparatus' : 'communities.discipline.label') | t }}</span>
                               <select [(ngModel)]="roundDisciplineDraft" [attr.aria-label]="'communities.discipline.label' | t">
                                 <option value="">{{ 'communities.discipline.select' | t }}</option>
                                 @for (option of athleticsDisciplineOptions(newRoundSport, newRoundEventType); track option) {
@@ -1179,7 +1180,9 @@
                           <p class="round-sport-guidance" role="note">{{ 'communities.race.metricsEntryHint' | t }}</p>
                         } @else if (newRoundEventType && viewForNewRound() === 'individual') {
                           <p class="round-sport-guidance" role="note">
-                            {{ 'communities.eventType.participationOnly' | t }}
+                            {{ (newRoundEventType === 'HEAT' ? 'communities.surf.hint'
+                              : newRoundEventType === 'APPARATUS' ? 'communities.gym.hint'
+                              : 'communities.eventType.marksHint') | t }}
                           </p>
                         }
                         @if (racketSupportsSets(newRoundSport)) {
@@ -1267,10 +1270,24 @@
                                         <input type="number" min="0.001" step="0.001" [(ngModel)]="entry.bestLapSeconds">
                                       </label>
                                     }
+                                  } @else if (newRoundEventType === 'HEAT') {
+                                    <div class="round-wave-editor">
+                                      <label>
+                                        <span>{{ 'communities.surf.wave1' | t }}</span>
+                                        <input type="number" min="0" max="10" step="0.001"
+                                          [(ngModel)]="entry.waveScore1" [placeholder]="'communities.performance.optional' | t">
+                                      </label>
+                                      <label>
+                                        <span>{{ 'communities.surf.wave2' | t }}</span>
+                                        <input type="number" min="0" max="10" step="0.001"
+                                          [(ngModel)]="entry.waveScore2" [placeholder]="'communities.performance.optional' | t">
+                                      </label>
+                                    </div>
                                   } @else if (performanceKind(newRoundEventType); as unit) {
                                     <label>
                                       <span>{{ (unit === 'metres'
                                         ? 'communities.performance.metres'
+                                        : unit === 'gym' ? 'communities.gym.finalScore'
                                         : 'communities.performance.points') | t }}</span>
                                       <input type="number" [min]="unit === 'metres' ? 0.001 : 0"
                                         [max]="unit === 'metres' ? 999999.999 : 100"
@@ -1874,7 +1891,23 @@
                                   </span>
                                 </div>
                                 @if (neutralRound(round)) {
-                                  @if (entry.performanceValue != null) {
+                                  @if (round.eventType === 'HEAT') {
+                                    @if (surfWaveTotal(entry) !== null) {
+                                      <div class="round-surf-scores">
+                                        <small>{{ 'communities.surf.wave1' | t }}: {{ performanceDisplay(entry.waveScore1) }}</small>
+                                        <small>{{ 'communities.surf.wave2' | t }}: {{ performanceDisplay(entry.waveScore2) }}</small>
+                                      </div>
+                                      <span class="round-performance-mark round-performance-mark--surf">
+                                        {{ performanceDisplay(surfWaveTotal(entry)) }} / 20
+                                      </span>
+                                      <span class="round-performance-rank">
+                                        {{ 'communities.performance.position' | t }}:
+                                        {{ eventPerformancePlace(eventPerformanceEntries(round), entry, round.eventType) }}.º
+                                      </span>
+                                    } @else {
+                                      <span class="round-performance-unscored">{{ 'communities.performance.unscored' | t }}</span>
+                                    }
+                                  } @else if (entry.performanceValue != null) {
                                     <span class="round-performance-mark">
                                       {{ performanceDisplay(entry.performanceValue) }}
                                       {{ (performanceKind(round.eventType) === 'metres'

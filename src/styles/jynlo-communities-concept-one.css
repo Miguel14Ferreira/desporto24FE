@@ -1201,6 +1201,25 @@ body .communities-page.jynlo-c1 .race-penalty-editor .race-dsq-field input {
   height: 1rem;
 }
 
+/* Surf heat marks are already adjudicated; do not generate a judge score. */
+body .communities-page.jynlo-c1 .round-wave-editor,
+body .communities-page.jynlo-c1 .round-surf-scores {
+  display: flex;
+  align-items: center;
+  gap: .4rem .7rem;
+  flex-wrap: wrap;
+}
+body .communities-page.jynlo-c1 .round-wave-editor label { flex: 1 1 120px; }
+body .communities-page.jynlo-c1 .round-surf-scores small {
+  color: #afd6e5;
+  font-variant-numeric: tabular-nums;
+  font-size: .74rem;
+}
+body .communities-page.jynlo-c1 .round-performance-mark--surf {
+  color: #a2e3ff;
+  border-color: rgba(106,200,255,.34);
+  background: rgba(106,200,255,.10);
+}
 /* Per-event performance marks; never reused as season points. */
 body .communities-page.jynlo-c1 .round-performance-mark {
   display: inline-flex;

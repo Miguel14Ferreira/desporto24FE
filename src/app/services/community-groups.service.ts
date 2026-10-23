@@ -440,7 +440,7 @@ export class CommunityGroupsService {
       name: string;
       playedAt: string;
       sport?: string | null;
-      eventType?: 'RACE' | 'FREESTYLE' | 'TRACK' | 'JUMP' | 'THROW' | null;
+      eventType?: 'RACE' | 'FREESTYLE' | 'TRACK' | 'JUMP' | 'THROW' | 'HEAT' | 'APPARATUS' | null;
       eventDiscipline?: string | null;
       matchFormat?: 'SINGLES' | 'DOUBLES' | null;
       setScores?: Array<{ sideA: number | null; sideB: number | null }> | null;
@@ -457,6 +457,8 @@ export class CommunityGroupsService {
         bestLapSeconds?: number | null;
         lapsCompleted?: number | null;
         performanceValue?: number | null;
+        waveScore1?: number | null;
+        waveScore2?: number | null;
       }>;
     }
   ): Observable<unknown> {

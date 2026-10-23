@@ -13,7 +13,7 @@ import { athleticsDisciplineOptions, athleticsDisciplineValid } from './communit
 import { raceSupportsLaps, formatRaceSeconds, raceEntryValidationError } from './community-race-metrics';
 import { raceDecisionError } from './community-race-decisions';
 import { performanceKind, performanceError, eventPerformanceEntries,
-  eventPerformancePlace, performanceDisplay } from './community-performance-results';
+  eventPerformancePlace, performanceDisplay, surfWaveError, surfWaveTotal } from './community-performance-results';
 import { racketSupportsSets, racketUsesPointsPerSet, racketMatchWinner, recordedRacketMatch } from './community-racket-results';
 
 import {
@@ -494,13 +494,14 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   }
   performanceKind = performanceKind;
   performanceDisplay = performanceDisplay;
+  surfWaveTotal = surfWaveTotal;
 
   eventPerformanceEntries(round: CommunityRound): CommunityRoundEntry[] {
     return eventPerformanceEntries(round);
   }
 
-  eventPerformancePlace(entries: CommunityRoundEntry[], entry: CommunityRoundEntry): number | null {
-    return eventPerformancePlace(entries, entry);
+  eventPerformancePlace(entries: CommunityRoundEntry[], entry: CommunityRoundEntry, type?: string | null): number | null {
+    return eventPerformancePlace(entries, entry, type);
   }
 
   neutralRound(round: CommunityRound): boolean {
@@ -2227,7 +2228,9 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       elapsedSeconds: null,
       bestLapSeconds: null,
       lapsCompleted: null,
-      performanceValue: null
+      performanceValue: null,
+      waveScore1: null,
+      waveScore2: null
     }));
   }
 
@@ -2933,7 +2936,12 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       this.errorMessage = t('feedback.communities.racketInvalidScore');
       return;
     }
-    if (neutral && performanceError(this.newRoundEventType, selectedEntries)) {
+    if (neutral && this.newRoundEventType === 'HEAT' && surfWaveError(selectedEntries)) {
+      this.errorMessage = t('feedback.communities.surfInvalid');
+      return;
+    }
+    if (neutral && this.newRoundEventType !== 'HEAT'
+      && performanceError(this.newRoundEventType, selectedEntries)) {
       this.errorMessage = t('feedback.communities.performanceInvalid');
       return;
     }
@@ -2956,7 +2964,10 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
         assists: race || neutral || racket ? 0 : Math.max(0, Number(entry.assists) || 0),
         mvp: !race && !neutral && !racket && Boolean(entry.mvp),
         cleanSheet: !race && !neutral && !racket && Boolean(entry.cleanSheet),
-        ...(neutral ? { performanceValue: entry.performanceValue ?? null } : {}),
+        ...(neutral && this.newRoundEventType !== 'HEAT'
+          ? { performanceValue: entry.performanceValue ?? null } : {}),
+        ...(neutral && this.newRoundEventType === 'HEAT'
+          ? { waveScore1: entry.waveScore1 ?? null, waveScore2: entry.waveScore2 ?? null } : {}),
         ...(race ? {
           finishPosition: entry.finishPosition ?? null,
           elapsedSeconds: entry.elapsedSeconds ?? null,

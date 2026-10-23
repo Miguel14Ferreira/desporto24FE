@@ -10,6 +10,7 @@ describe('Athletics field disciplines', () => {
     ]);
     expect(athleticsDisciplineOptions('Atletismo', 'TRACK')).toEqual([]);
     expect(athleticsDisciplineOptions('Futebol', 'JUMP')).toEqual([]);
+    expect(athleticsDisciplineOptions('Ginástica Artística', 'APPARATUS')).toContain('BALANCE_BEAM');
   });
   it('never mixes disciplines into races or other sports', () => {
     expect(athleticsDisciplineValid('Atletismo', 'JUMP', 'LONG_JUMP')).toBeTrue();
@@ -17,6 +18,8 @@ describe('Athletics field disciplines', () => {
     expect(athleticsDisciplineValid('Atletismo', 'JUMP', 'HAMMER')).toBeFalse();
     expect(athleticsDisciplineValid('Atletismo', 'THROW', 'JAVELIN')).toBeTrue();
     expect(athleticsDisciplineValid('Snowboard', 'FREESTYLE', null)).toBeTrue();
+    expect(athleticsDisciplineValid('Ginástica Artística', 'APPARATUS', 'FLOOR')).toBeTrue();
+    expect(athleticsDisciplineValid('Ginástica Artística', 'APPARATUS', null)).toBeFalse();
     expect(athleticsDisciplineValid('Snowboard', 'FREESTYLE', 'LONG_JUMP')).toBeFalse();
   });
 });

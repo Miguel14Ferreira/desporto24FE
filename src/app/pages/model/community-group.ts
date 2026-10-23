@@ -69,6 +69,8 @@ export interface CommunityRoundEntry {
   raceDisqualified?: boolean;
   raceStewardReason?: string | null;
   performanceValue?: number | null;
+  waveScore1?: number | null;
+  waveScore2?: number | null;
 }
 
 export interface CommunitySetScore {
@@ -83,7 +85,7 @@ export interface CommunityRound {
   name: string;
   playedAt: string;
   sport?: string | null;
-  eventType?: 'RACE' | 'FREESTYLE' | 'TRACK' | 'JUMP' | 'THROW' | null;
+  eventType?: 'RACE' | 'FREESTYLE' | 'TRACK' | 'JUMP' | 'THROW' | 'HEAT' | 'APPARATUS' | null;
   eventDiscipline?: string | null;
   matchFormat?: CommunityRacketMatchFormat | null;
   setScores?: CommunitySetScore[] | null;
@@ -205,4 +207,6 @@ export interface CommunityRoundEntryDraft {
   bestLapSeconds?: number | null;
   lapsCompleted?: number | null;
   performanceValue?: number | null;
+  waveScore1?: number | null;
+  waveScore2?: number | null;
 }
