@@ -19,6 +19,7 @@ describe('Community chat realtime and sending', () => {
     component.timelineEntries = [];
     component.chatDeliveryUncertain = false;
     (component as any).timelineRequestVersion = 0;
+    (component as any).chatEventsDuringLoad = new Map();
     spyOn(component as any, 'currentChatUsername').and.returnValue('ana');
     api.list.and.returnValue(of([]));
   });
@@ -43,6 +44,21 @@ describe('Community chat realtime and sending', () => {
     pending.next([entry(12), entry(13)]);
     pending.complete();
     expect(component.timelineEntries.map(x => x.id)).toEqual([12, 13, 14]);
+  });
+
+  it('honors deleted messages on HTTP reload but retains socket messages arriving during it', () => {
+    component.timelineEntries = [entry(1), entry(2)];
+    const pending = new Subject<CommunityTimelineEntry[]>();
+    api.list.and.returnValue(pending.asObservable());
+    component.loadTimeline();
+    component.onCommunityChatRealtime(entry(3));
+    pending.next([entry(2)]);
+    pending.complete();
+    expect(component.timelineEntries.map(x => x.id)).toEqual([2, 3]);
+
+    api.list.and.returnValue(of([entry(2), entry(3)]));
+    component.loadTimeline();
+    expect(component.timelineEntries.map(x => x.id)).toEqual([2, 3]);
   });
 
   it('limits active chat to latest 60 messages and respects ordering', () => {
