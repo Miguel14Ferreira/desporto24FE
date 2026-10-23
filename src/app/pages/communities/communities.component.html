@@ -1127,10 +1127,24 @@
                           @if (communityRoundSports.length > 1) {
                             <label>
                               <span>{{ 'communities.roundSport' | t }}</span>
-                              <select [(ngModel)]="roundSportDraft" [attr.aria-label]="'communities.roundSport' | t">
+                              <select [(ngModel)]="roundSportDraft"
+                                (ngModelChange)="roundEventTypeDraft = ''"
+                                [attr.aria-label]="'communities.roundSport' | t">
                                 <option value="">{{ 'communities.selectRoundSport' | t }}</option>
                                 @for (sport of communityRoundSports; track sport) {
                                   <option [value]="sport">{{ sport }}</option>
+                                }
+                              </select>
+                            </label>
+                          }
+                          @if (eventOptions(newRoundSport).length) {
+                            <label>
+                              <span>{{ 'communities.eventType.label' | t }}</span>
+                              <select [(ngModel)]="roundEventTypeDraft"
+                                [attr.aria-label]="'communities.eventType.label' | t">
+                                <option value="">{{ 'communities.eventType.select' | t }}</option>
+                                @for (choice of eventOptions(newRoundSport); track choice.code) {
+                                  <option [value]="choice.code">{{ choice.labelKey | t }}</option>
                                 }
                               </select>
                             </label>
@@ -1149,6 +1163,10 @@
 
                         @if (viewForNewRound() === 'race') {
                           <p class="round-sport-guidance" role="note">{{ 'communities.race.metricsEntryHint' | t }}</p>
+                        } @else if (newRoundEventType && viewForNewRound() === 'individual') {
+                          <p class="round-sport-guidance" role="note">
+                            {{ 'communities.eventType.participationOnly' | t }}
+                          </p>
                         }
                         @if (racketSupportsSets(newRoundSport)) {
                           <section class="racket-round-editor" aria-label="{{ 'communities.racket.title' | t }}">
@@ -1207,7 +1225,7 @@
                                         <option value="B">{{ 'communities.racket.sideB' | t }}</option>
                                       </select>
                                     </label>
-                                  } @else if (viewForNewRound() !== 'race') {
+                                  } @else if (viewForNewRound() !== 'race' && !newRoundEventType) {
                                     <label>
                                       <span>{{ 'communities.team' | t }}</span>
                                       <input [(ngModel)]="entry.team"
@@ -1235,7 +1253,7 @@
                                         <input type="number" min="0.001" step="0.001" [(ngModel)]="entry.bestLapSeconds">
                                       </label>
                                     }
-                                  } @else if (!racketSupportsSets(newRoundSport)) {
+                                  } @else if (!racketSupportsSets(newRoundSport) && !newRoundEventType) {
                                     <label>
                                       <span>{{ 'communities.result' | t }}</span>
                                       <select [(ngModel)]="entry.result">
@@ -1245,7 +1263,7 @@
                                       </select>
                                     </label>
                                   }
-                                  @if (viewForNewRound() !== 'race' && !racketSupportsSets(newRoundSport)) {
+                                  @if (viewForNewRound() !== 'race' && !newRoundEventType && !racketSupportsSets(newRoundSport)) {
                                   <label>
                                     <span>{{ 'communities.goals' | t }}</span>
                                     <input type="number" min="0" [(ngModel)]="entry.goals">
@@ -1538,6 +1556,9 @@
                               @if (roundSport(round); as sport) {
                                 <span class="round-sport-tag">{{ sport }}</span>
                               }
+                              @if (round.eventType) {
+                                <span class="round-sport-tag">{{ eventTypeLabel(round.eventType) }}</span>
+                              }
                             </div>
 
                             @if (canManage()) {
@@ -1825,12 +1846,14 @@
                                     @if (entry.team) { · {{ entry.team }} }
                                   </span>
                                 </div>
-                                <span
-                                  class="result-chip"
-                                  [class.win]="entry.result === 'WIN'"
-                                  [class.loss]="entry.result === 'LOSS'">
-                                  {{ resultLabel(entry.result) }}
-                                </span>
+                                @if (!neutralRound(round)) {
+                                  <span
+                                    class="result-chip"
+                                    [class.win]="entry.result === 'WIN'"
+                                    [class.loss]="entry.result === 'LOSS'">
+                                    {{ resultLabel(entry.result) }}
+                                  </span>
+                                }
                                 @if (entry.goals) { <span>{{ entry.goals }} G</span> }
                                 @if (entry.assists) { <span>{{ entry.assists }} A</span> }
                                 @if (entry.mvp) { <span class="mini-badge">MVP</span> }

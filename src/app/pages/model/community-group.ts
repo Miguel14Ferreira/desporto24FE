@@ -82,6 +82,7 @@ export interface CommunityRound {
   name: string;
   playedAt: string;
   sport?: string | null;
+  eventType?: 'RACE' | 'FREESTYLE' | 'TRACK' | 'JUMP' | 'THROW' | null;
   matchFormat?: CommunityRacketMatchFormat | null;
   setScores?: CommunitySetScore[] | null;
   entries: CommunityRoundEntry[];
