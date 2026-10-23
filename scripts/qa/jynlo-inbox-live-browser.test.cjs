@@ -100,3 +100,27 @@ test('public discoveries pick only non-member communities and future public nonp
   assert.throws(()=>firstPublicOutsiderSession({}, {created:[],joined:[]}),
     /Unexpected public session discovery shape/);
 });
+
+
+test('failure diagnostics only expose a stable stage and HTTP code',async()=>{
+  const {safeQaCause,readOnlyStage} = require('./jynlo-inbox-live-browser.cjs');
+  assert.equal(safeQaCause(Error('HTTP 500 em GET /api/communities/search?page=0')),
+    'HTTP_500');
+  assert.equal(safeQaCause(Error('Authorization check returned an unexpected HTTP status (200)')),
+    'ACCESS_NOT_DENIED_HTTP_200');
+  assert.equal(safeQaCause(Error('Unexpected public community discovery shape')),
+    'UNEXPECTED_COMMUNITY_DISCOVERY_FORMAT');
+  assert.equal(safeQaCause(Error('Authorization: Bearer hidden-qa-token')),
+    'UNCLASSIFIED_CHECK_FAILURE');
+  const messages=[],failures=[];
+  await readOnlyStage('COMMUNITY_PUBLIC_DISCOVERY', async() => {
+    throw Error('HTTP 503 em GET /api/communities/search?secret=do-not-expose');
+  }, message=>messages.push(message),failures);
+  assert.deepEqual(failures,['COMMUNITY_PUBLIC_DISCOVERY']);
+  assert.deepEqual(messages,['[FAIL] COMMUNITY_PUBLIC_DISCOVERY: HTTP_503']);
+  await readOnlyStage('SESSION_PUBLIC_DISCOVERY', async()=>{
+    throw Error('Authorization check returned an unexpected HTTP status (200)');
+  }, message=>messages.push(message),failures);
+  assert.deepEqual(messages[1],'[FAIL] SESSION_PUBLIC_DISCOVERY: ACCESS_NOT_DENIED_HTTP_200');
+  assert.equal(messages.join('').includes('do-not-expose'),false);
+});

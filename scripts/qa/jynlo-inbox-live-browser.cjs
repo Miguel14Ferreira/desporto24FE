@@ -9,6 +9,39 @@ const API = 'https://api.d24sports.com';
 const ACCOUNTS = ['jynloteste01','jynloteste02'];
 const TIMEOUT = 20_000;
 function check(value, message) { if (!value) throw Error(message); }
+
+// Only predefined stage labels and HTTP codes are emitted. Never display
+// raw browser/fetch errors, token values, message text or private resource IDs.
+function safeQaCause(error) {
+  const message = error instanceof Error ? error.message : '';
+  const http = /^HTTP (\d{3}) em /.exec(message);
+  if (http) return 'HTTP_' + http[1];
+  const denial = /^Authorization check returned an unexpected HTTP status \((\d{3})\)$/.exec(message);
+  if (denial) return 'ACCESS_NOT_DENIED_HTTP_' + denial[1];
+  if (message.includes('Unexpected public community discovery shape'))
+    return 'UNEXPECTED_COMMUNITY_DISCOVERY_FORMAT';
+  if (message.includes('Unexpected public session discovery shape'))
+    return 'UNEXPECTED_SESSION_DISCOVERY_FORMAT';
+  if (message.includes('Owner community history is not readable'))
+    return 'COMMUNITY_HISTORY_FORMAT';
+  if (message.includes('Sessão futura autorizada não devolve histórico'))
+    return 'SESSION_HISTORY_FORMAT';
+  if (message.includes('Read-only authorization check could not connect'))
+    return 'AUTHORIZATION_PROBE_NETWORK';
+  if (message.includes('A comunidade abriu para a conta não membro'))
+    return 'OUTSIDER_COMMUNITY_SELECTED';
+  if (message.includes('Sessão expirada ainda abre chat'))
+    return 'EXPIRED_SESSION_SELECTED';
+  return 'UNCLASSIFIED_CHECK_FAILURE';
+}
+
+async function readOnlyStage(label, work, report, failures) {
+  try { await work(); }
+  catch (error) {
+    report('[FAIL] ' + label + ': ' + safeQaCause(error));
+    failures.push(label);
+  }
+}
 function upcoming(s, now = Date.now()) {
   const kickoff = typeof s?.gameDate === 'string' ? Date.parse(s.gameDate) : NaN;
   return Number.isSafeInteger(s?.id) && s.id > 0 && Number.isFinite(kickoff)
@@ -74,7 +107,7 @@ async function requireDenied(kind, id, token, fetchImpl = fetch) {
     throw Error('Read-only authorization check could not connect');
   }
   check(res.status === 403 || res.status === 404,
-    'Authorization check returned an unexpected HTTP status');
+    'Authorization check returned an unexpected HTTP status (' + res.status + ')');
   return true;
 }
 
@@ -103,6 +136,7 @@ async function optionalAccess(one, two, tokenOne, tokenTwo, report, fetchImpl) {
   check(Array.isArray(mine) && Array.isArray(theirs)
     && Array.isArray(sessions.created) && Array.isArray(sessions.joined),
     'Respostas de comunidades/sessões inesperadas');
+  const failures = [];
   const otherIds = new Set(theirs.map(g=>Number(g.id)));
   const exclusive = mine.find(g=>Number.isSafeInteger(g?.id) && g.id>0
     && !otherIds.has(g.id));
@@ -127,7 +161,7 @@ async function optionalAccess(one, two, tokenOne, tokenTwo, report, fetchImpl) {
   } else report('[SKIP] Sem comunidade exclusiva das contas QA');
   // Even if neither QA account owns a community, a public discovery record
   // should not give a non-member access to its member-only chat.
-  if (!exclusive) {
+  if (!exclusive) await readOnlyStage('COMMUNITY_PUBLIC_DISCOVERY', async () => {
     const discovery = await request('/api/communities/search?page=0',
       { token: tokenOne, fetchImpl });
     const publicOnly = firstAccessibleOutsiderCommunity(discovery, mine, theirs);
@@ -135,19 +169,20 @@ async function optionalAccess(one, two, tokenOne, tokenTwo, report, fetchImpl) {
       await requireDenied('community', publicOnly.id, tokenOne, fetchImpl);
       report('[PASS] Comunidade pública descoberta não revela o chat a não membros');
     } else report('[SKIP] Sem comunidade pública de terceiros para testar não membros');
-  }
+  }, report, failures);
 
   const future = [...sessions.created, ...sessions.joined].find(upcoming);
-  if (future) {
+  if (future) await readOnlyStage('SESSION_FUTURE_MEMBER', async () => {
     const ownHistory = await request('/api/sessions/' + future.id + '/messages',
       { token: tokenOne, fetchImpl });
     check(Array.isArray(ownHistory), 'Sessão futura autorizada não devolve histórico');
     report('[PASS] Sessão futura da conta QA mantém o chat autorizado');
-  } else report('[SKIP] Sem sessão futura da conta QA para testar chat aberto');
+  }, report, failures);
+  else report('[SKIP] Sem sessão futura da conta QA para testar chat aberto');
 
   const past = [...sessions.created,...sessions.joined]
     .find(s=>Number.isSafeInteger(s?.id)&&!upcoming(s));
-  if (past) {
+  if (past) await readOnlyStage('SESSION_EXPIRED_OWNER', async () => {
     await requireDenied('session', past.id, tokenOne, fetchImpl);
     const page=await one.newPage();
     try {
@@ -159,17 +194,21 @@ async function optionalAccess(one, two, tokenOne, tokenTwo, report, fetchImpl) {
         'Sessão expirada ainda abre chat');
       report('[PASS] Sessão passada não permite abrir chat');
     } finally { await page.close(); }
-  } else report('[SKIP] Sem sessão passada nas contas QA');
+  }, report, failures);
+  else report('[SKIP] Sem sessão passada nas contas QA');
 
   // The outsider check does not create any session, change membership or
   // write messages. It remains valid when QA accounts own no sessions.
-  const publicSessions = await request('/api/sessions?privateGame=false',
-    { token: tokenOne, fetchImpl });
-  const outsiderSession = firstPublicOutsiderSession(publicSessions, sessions);
-  if (outsiderSession) {
-    await requireDenied('session', outsiderSession.id, tokenOne, fetchImpl);
-    report('[PASS] Sessão pública de terceiros não concede acesso ao chat');
-  } else report('[SKIP] Sem sessão pública futura de terceiros para teste de não participante');
+  await readOnlyStage('SESSION_PUBLIC_DISCOVERY', async () => {
+    const publicSessions = await request('/api/sessions?privateGame=false',
+      { token: tokenOne, fetchImpl });
+    const outsiderSession = firstPublicOutsiderSession(publicSessions, sessions);
+    if (outsiderSession) {
+      await requireDenied('session', outsiderSession.id, tokenOne, fetchImpl);
+      report('[PASS] Sessão pública de terceiros não concede acesso ao chat');
+    } else report('[SKIP] Sem sessão pública futura de terceiros para teste de não participante');
+  }, report, failures);
+  if (failures.length) throw Error('READ_ONLY_PROBES_FAILED');
 }
 async function run({ sendOnce=false, passwords=[
   process.env.JYNLO_QA_PASSWORD_1,process.env.JYNLO_QA_PASSWORD_2
@@ -227,10 +266,18 @@ if(require.main===module) {
   if(process.argv.slice(2).some(x=>x!=='--send-once')) {
     console.error('Utilização: node scripts/qa/jynlo-inbox-live-browser.cjs [--send-once]');
     process.exitCode=2;
-  } else run({sendOnce:process.argv.includes('--send-once')}).catch(()=>{
-    console.error('[FAIL] QA interrompido. Não repetir --send-once sem consultar primeiro o histórico de ambas as contas.');
+  } else run({sendOnce:process.argv.includes('--send-once')}).catch(error=>{
+    if (error instanceof Error && error.message === 'READ_ONLY_PROBES_FAILED') {
+      console.error('[FAIL] Verificações de acesso incompletas. Consultar os códigos acima; nenhuma repetição de mensagens é necessária.');
+    } else {
+      console.error('[FAIL] Teste interrompido: ' + safeQaCause(error));
+    }
+    if (process.argv.includes('--send-once')) {
+      console.error('Não repetir --send-once sem consultar primeiro o histórico de ambas as contas.');
+    }
     process.exitCode=1;
   });
 }
 module.exports={upcoming,authenticate,request,run,requireDenied,
-  firstAccessibleOutsiderCommunity,firstPublicOutsiderSession};
+  firstAccessibleOutsiderCommunity,firstPublicOutsiderSession,
+  safeQaCause,readOnlyStage};
