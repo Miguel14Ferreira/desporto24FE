@@ -1,11 +1,11 @@
 # Jynlo — Auditoria da cobertura funcional das 121 modalidades
 
-**Data:** 23 de outubro de 2026. **Fontes verificadas:** frontend `1c59d163` (`SPORTS_CATALOG`, `SPORTS_BY_RESULT_FORMAT`) e backend `3a3a3a53` (`SportsCatalog.ALLOWED`, `CommunityRoundEventType`, `CommunityRaceMetrics`, `CommunityRacketResults`). **Importante:** este é um inventário estático de contratos no código; não substitui QA autenticado nem certifica regras oficiais de federação.
+**Data:** 23 de outubro de 2026. **Fontes verificadas:** frontend `1c59d163` (`SPORTS_CATALOG`, `SPORTS_BY_RESULT_FORMAT`) e backend `3a3a3a53` (estado antes da correção), mais `f9cf842a` (catálogo corrigido LIVE) (`SportsCatalog.ALLOWED`, `CommunityRoundEventType`, `CommunityRaceMetrics`, `CommunityRacketResults`). **Importante:** este é um inventário estático de contratos no código; não substitui QA autenticado nem certifica regras oficiais de federação.
 
 ## Resultado da auditoria
 
 - **121/121** modalidades constam do catálogo do frontend, sem duplicados; cada uma tem **uma** família visual (`team` 23, `race` 29, `duel` 25, `judged` 19, `score` 6, `measured` 12, `activity` 7).
-- **Defeito confirmado e corrigido em branch backend** `feature/sports-catalog-121-parity-20261023`: a lista Java publicada tinha apenas 116. Não incluía **Bowling, Corrida de obstáculos, Hipismo, Teqball, Ténis de praia**. A branch de correção passou a conter 121. A publicação necessita de CI + merge + Render LIVE; este relatório **não afirma** que o fix já esteja em produção.
+- **Defeito confirmado, corrigido e publicado no backend** pelo [PR #218](https://github.com/Miguel14Ferreira/desporto24BE/pull/218), commit `f9cf842a`: a lista Java publicada tinha apenas 116. Não incluía **Bowling, Corrida de obstáculos, Hipismo, Teqball, Ténis de praia**. A lista atual contém 121. A suite Java passou, o PR foi integrado por squash merge e o commit `f9cf842a` foi confirmado **LIVE no Render**. A interface já tinha os cinco desportos, não havendo necessidade de novo deploy do frontend.
 - **12 modalidades** têm variantes de prova expressamente codificadas (mesmo assim, sem assumir regras oficiais ou cobertura completa de todas as disciplinas).
 - **7 modalidades** têm contrato de sets em singulares/pares, mas não implementam necessariamente os diferentes desempates oficiais de cada modalidade.
 - **28 modalidades** adicionais usam esquema-base de posições/tempos/voltas; regras oficiais e tipos de percurso continuam por modalidade.
