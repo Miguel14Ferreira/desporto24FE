@@ -2486,7 +2486,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       defaultYear: this.importDefaultYear || null,
       sourceCompetition: this.importSourceCompetition?.trim() || null,
       sourceRound: this.importSourceRound?.trim() || null,
-      sport: this.newImportSport
+      ...(this.newImportSport ? { sport: this.newImportSport } : {})
     };
 
     this.importPlanLoading = true;
@@ -2522,7 +2522,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       defaultYear: this.importDefaultYear || null,
       sourceCompetition: this.importSourceCompetition?.trim() || null,
       sourceRound: this.importSourceRound?.trim() || null,
-      sport: this.newImportSport
+      ...(this.newImportSport ? { sport: this.newImportSport } : {})
     };
     this.importConfirming = true;
     this.importFileError = '';
