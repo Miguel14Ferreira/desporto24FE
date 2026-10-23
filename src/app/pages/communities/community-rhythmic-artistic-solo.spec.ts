@@ -6,7 +6,8 @@ import { CommunityRoundEntry } from '../model/community-group';
 
 describe('Rhythmic apparatus and artistic swimming solo', () => {
   it('requires a rhythmic apparatus, never shares apparatus with artistic gymnastics', () => {
-    expect(eventOptionsForSport('Ginástica Rítmica').map(v => v.code)).toEqual(['RHYTHMIC_APPARATUS']);
+    expect(eventOptionsForSport('Ginástica Rítmica').map(v => v.code))
+      .toEqual(['RHYTHMIC_APPARATUS', 'RHYTHMIC_GROUP_5', 'RHYTHMIC_GROUP_3_2']);
     expect(athleticsDisciplineOptions('Ginástica Rítmica', 'RHYTHMIC_APPARATUS'))
       .toEqual(['HOOP', 'BALL', 'CLUBS', 'RIBBON']);
     expect(athleticsDisciplineValid('Ginástica Rítmica', 'RHYTHMIC_APPARATUS', null)).toBeFalse();
@@ -18,7 +19,9 @@ describe('Rhythmic apparatus and artistic swimming solo', () => {
   });
   it('preserves four decimals for distinct artistic solo routines', () => {
     expect(eventOptionsForSport('Natação Artística').map(v => v.code))
-      .toEqual(['ARTISTIC_SOLO_TECHNICAL','ARTISTIC_SOLO_FREE']);
+      .toEqual(['ARTISTIC_SOLO_TECHNICAL','ARTISTIC_SOLO_FREE',
+        'ARTISTIC_DUET_TECH', 'ARTISTIC_DUET_FREE',
+        'ARTISTIC_TEAM_TECH', 'ARTISTIC_TEAM_FREE']);
     expect(eventPresentationFormat('Natação Artística','ARTISTIC_SOLO_TECHNICAL')).toBe('judged');
     expect(performanceKind('ARTISTIC_SOLO_FREE')).toBe('artistic');
     expect(performanceError('ARTISTIC_SOLO_FREE', [{performanceValue: 180.1234}])).toBeFalse();
