@@ -5,10 +5,11 @@ import { JwtHelperService } from '@auth0/angular-jwt';
 import { environment } from 'src/environment/environment';
 import { DirectChatMessage } from '../pages/model/direct-chat';
 import { SessionMessage } from '../pages/model/session-message';
+import { CommunityTimelineEntry } from './community-timeline.service';
 
 interface ChatSocketEnvelope {
   type?: string;
-  message?: DirectChatMessage | SessionMessage;
+  message?: DirectChatMessage | SessionMessage | CommunityTimelineEntry;
 }
 
 @Injectable({
@@ -22,10 +23,12 @@ export class DirectChatRealtimeService {
 
   private readonly messageSubject = new Subject<DirectChatMessage>();
   private readonly sessionMessageSubject = new Subject<SessionMessage>();
+  private readonly communityMessageSubject = new Subject<CommunityTimelineEntry>();
   private readonly connectedSubject = new BehaviorSubject<boolean>(false);
 
   readonly messages$ = this.messageSubject.asObservable();
   readonly sessionMessages$ = this.sessionMessageSubject.asObservable();
+  readonly communityMessages$ = this.communityMessageSubject.asObservable();
   readonly connected$ = this.connectedSubject.asObservable();
 
   connect(): void {
@@ -74,6 +77,11 @@ export class DirectChatRealtimeService {
 
         if (envelope.type === 'SESSION_CHAT_MESSAGE' && envelope.message) {
           this.sessionMessageSubject.next(envelope.message as SessionMessage);
+          return;
+        }
+
+        if (envelope.type === 'COMMUNITY_CHAT_MESSAGE' && envelope.message) {
+          this.communityMessageSubject.next(envelope.message as CommunityTimelineEntry);
         }
       } catch {
         // Ignore malformed realtime events; HTTP history remains authoritative.
