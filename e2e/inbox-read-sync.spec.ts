@@ -3,7 +3,8 @@
  *
  * NO production requests, NO production credentials, NO Render writes.
  * Checks the actual Angular UI, HTTP contracts, and persisted read behavior
- * across two browser contexts. This is NOT a substitute for staging E2E.
+ * across two browser contexts, including the legacy URL redirect to inbox.
+ * This is NOT a substitute for staging E2E.
  */
 import { test, expect, type BrowserContext, type Page, type Route } from '@playwright/test';
 import { Buffer } from 'node:buffer';
@@ -200,11 +201,11 @@ test('two isolated browsers share server read state across inbox and original di
     await expect(newlyUnread.locator('.inbox-entry-snippet')).toHaveText('Nova mensagem da Bea');
     await expect(newlyUnread.locator('.inbox-unread')).toHaveText('1');
 
-    // Opening the ORIGINAL direct chat marks the new message read.
+    // A saved link to the old chat must redirect to the SAME unified inbox.
     await a.goto('/menu/friendList/chat/bea', { waitUntil: 'domcontentloaded' });
-    await expect(a.locator('.message-list .message')).toHaveCount(2);
-    await a.locator('.message-list').scrollIntoViewIfNeeded();
-    await a.locator('.message-list').evaluate(el => { el.scrollTop = el.scrollHeight; el.dispatchEvent(new Event('scroll')); });
+    await expect(a).toHaveURL(/\/menu\/messages\?kind=direct&id=bea/);
+    await expect(a.locator('.inbox-entry.is-selected')).toContainText('Bea');
+    await expect(a.locator('.inbox-bubble')).toHaveCount(2);
     await expect.poll(() => readThrough.get('ana')).toBe(42);
 
     await a.goto('/menu/messages', { waitUntil: 'domcontentloaded' });
