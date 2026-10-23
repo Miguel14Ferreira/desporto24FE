@@ -70,6 +70,7 @@ const routes: Routes = [
   {path:'login/MFAauthentication', component: LoginMFAComponent},
   {path:'menu', redirectTo:'/menu/feed', pathMatch:'full'},
   {path:'menu/friendList',component:FriendsComponent,canActivate:[AuthenticationGuard]},
+  {path:'menu/messages',loadComponent:() => import('./pages/messages-center/messages-center.component').then(m => m.MessagesCenterComponent),canActivate:[AuthenticationGuard]},
   {path:'menu/friendList/chat/:username',loadChildren:() => import('./pages/direct-chat/direct-chat.module').then(m => m.DirectChatModule),canActivate:[AuthenticationGuard]},
   {path:'menu/friendList/chat/:username1/:username2',loadChildren:() => import('./pages/direct-chat/direct-chat.module').then(m => m.DirectChatModule),canActivate:[AuthenticationGuard]},
   {path:'menu/notifications',component:NotificationsComponent,canActivate:[AuthenticationGuard]},

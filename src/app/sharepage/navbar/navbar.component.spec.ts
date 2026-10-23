@@ -65,7 +65,7 @@ describe('NavbarComponent', () => {
     const menu = nav.querySelector('details.account-menu');
     expect(menu?.querySelector('a[href="/menu/my-sessions"]')).toBeTruthy();
     expect(menu?.querySelector('a[href="/menu/communities"]')).toBeFalsy();
-    expect(menu?.querySelector('a[href="/menu/friendList"]')).toBeTruthy();
+    expect(menu?.querySelector('a[href="/menu/messages"]')).toBeTruthy();
     expect(menu?.querySelector('a[href="/menu/dadosPerfil"]')).toBeTruthy();
     expect(menu?.querySelector('.language-switch')).toBeTruthy();
     expect(menu?.querySelector('.logout-action')).toBeTruthy();
