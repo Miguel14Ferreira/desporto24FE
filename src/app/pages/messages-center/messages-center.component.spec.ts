@@ -968,7 +968,7 @@ describe('Direct chat confirmed read status', () => {
 
   it('ignores an older in-flight sync when a newer own-read event arrives',()=> {
     const old=new Subject<any[]>();
-    const newer={kind:'direct',id:'bea',latestMessageId:50,
+    const newer={kind:'direct' as const,id:'bea',latestMessageId:50,
       latestText:'ok',latestSender:'bea',latestAt:'2026-10-23T09:00:00Z',
       unreadCount:0};
     api.summaries.and.returnValues(old.asObservable(),of([newer]));
