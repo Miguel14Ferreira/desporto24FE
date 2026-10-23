@@ -8,7 +8,9 @@ export function isTeamFinalEvent(type: string | null | undefined): boolean {
     || type === 'BASEBALL_RUNS' || type === 'SOFTBALL_RUNS'
     || type === 'KORFBALL_REG' || type === 'KORFBALL_GOLDEN'
     || type === 'LACROSSE_M_REG' || type === 'LACROSSE_M_OT'
-    || type === 'AMFOOTBALL_SCORE' || type === 'FLAGFOOTBALL_SCORE';
+    || type === 'AMFOOTBALL_SCORE' || type === 'FLAGFOOTBALL_SCORE'
+    || type === 'CURLING_REG' || type === 'CURLING_EXTRA'
+    || type === 'PETANQUE_13' || type === 'PETANQUE_11';
 }
 /** Sport-aware scoreboard units: goals, rugby and football points, or baseball/softball runs. */
 export function teamFinalUsesRuns(type: string | null | undefined): boolean {
@@ -17,6 +19,8 @@ export function teamFinalUsesRuns(type: string | null | undefined): boolean {
 export function teamFinalUsesGoals(type: string | null | undefined): boolean {
   return isTeamFinalEvent(type) && type !== 'RUGBY_FINAL' && type !== 'RUGBY_SEVENS_FINAL'
     && type !== 'AMFOOTBALL_SCORE' && type !== 'FLAGFOOTBALL_SCORE'
+    && type !== 'CURLING_REG' && type !== 'CURLING_EXTRA'
+    && type !== 'PETANQUE_13' && type !== 'PETANQUE_11'
     && !teamFinalUsesRuns(type);
 }
 export function teamFinalScoreLabelKey(type: string | null | undefined): string {
@@ -33,7 +37,9 @@ const TEAM_FINAL_LABELS: Record<string, string> = {
   BASEBALL_RUNS: 'baseballRuns', SOFTBALL_RUNS: 'softballRuns',
   KORFBALL_REG: 'korfballReg', KORFBALL_GOLDEN: 'korfballGolden',
   LACROSSE_M_REG: 'lacrosseMenReg', LACROSSE_M_OT: 'lacrosseMenOt',
-  AMFOOTBALL_SCORE: 'americanFootball', FLAGFOOTBALL_SCORE: 'flagFootball'
+  AMFOOTBALL_SCORE: 'americanFootball', FLAGFOOTBALL_SCORE: 'flagFootball',
+  CURLING_REG: 'curlingReg', CURLING_EXTRA: 'curlingExtra',
+  PETANQUE_13: 'petanque13', PETANQUE_11: 'petanque11'
 };
 export function teamFinalTitleKey(type: string | null | undefined): string {
   return 'communities.teamFinal.' + (type ? TEAM_FINAL_LABELS[type] ?? 'finalTitle' : 'finalTitle');
@@ -55,9 +61,21 @@ export function teamFinalHintKey(type: string | null | undefined): string {
     case 'LACROSSE_M_OT': return 'communities.teamFinal.lacrosseMenOtHint';
     case 'AMFOOTBALL_SCORE': return 'communities.teamFinal.americanFootballHint';
     case 'FLAGFOOTBALL_SCORE': return 'communities.teamFinal.flagFootballHint';
+    case 'CURLING_REG': return 'communities.teamFinal.curlingRegHint';
+    case 'CURLING_EXTRA': return 'communities.teamFinal.curlingExtraHint';
+    case 'PETANQUE_13': return 'communities.teamFinal.petanque13Hint';
+    case 'PETANQUE_11': return 'communities.teamFinal.petanque11Hint';
     default: return teamFinalUsesGoals(type)
       ? 'communities.teamFinal.goalHint' : 'communities.teamFinal.finalHint';
   }
+}
+
+/** A chosen Petanca format defines the result limit for complete, untimed games. */
+export function teamFinalPetanqueTarget(type: string | null | undefined): number | null {
+  return type === 'PETANQUE_13' ? 13 : type === 'PETANQUE_11' ? 11 : null;
+}
+export function teamFinalMaxScore(type: string | null | undefined): number {
+  return teamFinalPetanqueTarget(type) ?? 999;
 }
 
 export function teamFinalIsFootballPointsEvent(type: string | null | undefined): boolean {
@@ -77,6 +95,12 @@ export function teamFinalError(type: string | null | undefined,
       || !Number.isInteger(score.sideA) || !Number.isInteger(score.sideB)
       || score.sideA < 0 || score.sideB < 0 || score.sideA > 999 || score.sideB > 999)
     return 'teamFinalInvalidScore';
+  if (type === 'CURLING_EXTRA' && score.sideA === score.sideB)
+    return 'curlingExtraInvalidResult';
+  const target = teamFinalPetanqueTarget(type);
+  if (target !== null && (Math.max(score.sideA, score.sideB) !== target
+      || Math.min(score.sideA, score.sideB) >= target))
+    return 'petanqueInvalidResult';
   if (teamFinalIsDecisiveGoalEvent(type)
       && Math.abs(score.sideA - score.sideB) !== 1)
     return (type === 'ICE_HOCKEY_OT' || type === 'ICE_HOCKEY_SO')
@@ -84,6 +108,11 @@ export function teamFinalError(type: string | null | undefined,
   if (!entries.some(e => e.team === 'A') || !entries.some(e => e.team === 'B')
       || entries.some(e => (e.team !== 'A' && e.team !== 'B') || e.performanceValue != null))
     return 'teamFinalInvalidTeams';
+  if (target !== null) {
+    const a = entries.filter(e => e.team === 'A').length;
+    const b = entries.filter(e => e.team === 'B').length;
+    if (a !== b || a > 3) return 'petanqueInvalidTeams';
+  }
   return null;
 }
 export function recordedTeamFinal(round: Pick<CommunityRound,'eventType'|'teamScore'>): boolean {

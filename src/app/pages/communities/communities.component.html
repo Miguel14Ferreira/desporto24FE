@@ -1389,12 +1389,12 @@
                             <p>{{ teamFinalHintKey(newRoundEventType) | t }}</p>
                             <div class="round-basketball-score-inputs">
                               <label><span>{{ 'communities.teamFinal.sideA' | t }}</span>
-                                <input type="number" min="0" max="999" step="1"
+                                <input type="number" min="0" [max]="teamFinalMaxScore(newRoundEventType)" step="1"
                                   [(ngModel)]="roundTeamScoreDraft.sideA">
                               </label>
                               <span class="round-basketball-divider" aria-hidden="true">:</span>
                               <label><span>{{ 'communities.teamFinal.sideB' | t }}</span>
-                                <input type="number" min="0" max="999" step="1"
+                                <input type="number" min="0" [max]="teamFinalMaxScore(newRoundEventType)" step="1"
                                   [(ngModel)]="roundTeamScoreDraft.sideB">
                               </label>
                             </div>
@@ -1953,6 +1953,9 @@
                               @if ((round.eventType === 'AMFOOTBALL_SCORE' || round.eventType === 'FLAGFOOTBALL_SCORE')
                                 && round.teamScore?.sideA === round.teamScore?.sideB) {
                                 <small>{{ 'communities.teamFinal.footballPointsTie' | t }}</small>
+                              }
+                              @if (round.eventType === 'CURLING_REG' && round.teamScore?.sideA === round.teamScore?.sideB) {
+                                <small>{{ 'communities.teamFinal.curlingRegTie' | t }}</small>
                               }
                               <small>{{ 'communities.teamFinal.recordedOnly' | t }}</small>
                             </section>
