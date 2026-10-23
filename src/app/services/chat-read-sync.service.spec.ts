@@ -27,7 +27,9 @@ describe('ChatReadSyncService', () => {
     } as DOMRect);
     Object.defineProperty(log, 'scrollHeight', { configurable: true, value: 400 });
     Object.defineProperty(log, 'clientHeight', { configurable: true, value: 100 });
-    log.scrollTop = 300;
+    // Detached DOM nodes do not retain native scrollTop in Headless Chrome.
+    // Make the virtual scroll geometry explicit and writable for this unit test.
+    Object.defineProperty(log, 'scrollTop', { configurable: true, writable: true, value: 300 });
   });
 
   it('persists a visible conversation once even after repeated view checks', () => {
