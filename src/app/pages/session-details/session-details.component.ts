@@ -149,6 +149,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   private sessionId?: number;
   private currentUsername: string | null = null;
   private pendingJoinScroll = false;
+  private pendingChatScroll = false;
   private pendingMembershipScroll = false;
   private readonly jwtHelper = new JwtHelperService();
   private readonly realtimeSubscriptions = new Subscription();
@@ -164,6 +165,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
 
   ngOnInit(): void {
     this.pendingJoinScroll = this.route.snapshot.queryParamMap?.get('join') === '1';
+    this.pendingChatScroll = this.route.snapshot.queryParamMap?.get('chat') === '1';
     this.pendingMembershipScroll = this.route.snapshot.queryParamMap?.get('membership') === '1';
     this.promotionOpen = this.route.snapshot.queryParamMap?.get('promote') === '1';
     this.currentUsername = this.readCurrentUsername();
@@ -218,6 +220,13 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     }
     if (this.loading || !this.session) {
       return;
+    }
+
+    if (this.pendingChatScroll) {
+      this.pendingChatScroll = false;
+      if (this.canAccessChat()) {
+        document.getElementById('session-chat')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     }
 
     if (this.pendingMembershipScroll) {
