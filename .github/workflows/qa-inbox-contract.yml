@@ -1,0 +1,29 @@
+name: Jynlo QA inbox contract tests
+
+on:
+  pull_request:
+    branches: [preview/render-fullstack]
+    paths:
+      - 'scripts/qa/jynlo-inbox-live-qa.cjs'
+      - 'scripts/qa/jynlo-inbox-live-qa.test.cjs'
+      - '.github/workflows/qa-inbox-contract.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: inbox-qa-contract-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  qa-contract:
+    name: QA friendship and inbox API contracts (mock only)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check scripts/qa/jynlo-inbox-live-qa.cjs
+      - run: node --test scripts/qa/jynlo-inbox-live-qa.test.cjs
