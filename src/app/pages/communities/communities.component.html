@@ -1066,7 +1066,7 @@
                             <label>
                               <span>{{ 'communities.roundSport' | t }}</span>
                               <select [(ngModel)]="roundSportDraft"
-                                (ngModelChange)="roundEventTypeDraft = ''; roundDisciplineDraft = ''"
+                                (ngModelChange)="roundEventTypeDraft = ''; roundDisciplineDraft = ''; resetVolleyballSets()"
                                 [attr.aria-label]="'communities.roundSport' | t">
                                 <option value="">{{ 'communities.selectRoundSport' | t }}</option>
                                 @for (sport of communityRoundSports; track sport) {
@@ -1079,7 +1079,7 @@
                             <label>
                               <span>{{ 'communities.eventType.label' | t }}</span>
                               <select [(ngModel)]="roundEventTypeDraft"
-                                (ngModelChange)="roundDisciplineDraft = ''"
+                                (ngModelChange)="roundDisciplineDraft = ''; resetVolleyballSets()"
                                 [attr.aria-label]="'communities.eventType.label' | t">
                                 <option value="">{{ 'communities.eventType.select' | t }}</option>
                                 @for (choice of eventOptions(newRoundSport); track choice.code) {
@@ -1133,6 +1133,7 @@
                               : newRoundEventType === 'PARKOUR_FREESTYLE' ? 'communities.parkour.freestyleHint'
                               : newRoundEventType === 'BREAKING_BATTLE' ? 'communities.breaking.hint'
                               : newRoundEventType === 'TRAMPOLINE_INDIVIDUAL' ? 'communities.trampoline.hint'
+                              : isVolleyballEvent(newRoundEventType) ? 'communities.volleyball.hint'
                               : isBasketballFinal(newRoundEventType) ? 'communities.basketball.hint'
                               : newRoundEventType === 'RHYTHMIC_APPARATUS' ? 'communities.rhythmic.hint'
                               : isGroupRoutineEvent(newRoundEventType) ? 'communities.groupRoutine.hint'
@@ -1140,6 +1141,41 @@
                                 || newRoundEventType === 'ARTISTIC_SOLO_FREE' ? 'communities.artistic.hint'
                               : 'communities.eventType.marksHint') | t }}
                           </p>
+                        }
+                        @if (isVolleyballEvent(newRoundEventType)) {
+                          <section class="round-volleyball-editor">
+                            <div class="round-volleyball-heading">
+                              <h4>{{ 'communities.volleyball.setsTitle' | t }}</h4>
+                              <p>{{ (newRoundEventType === 'BEACH_VOLLEY_FINAL'
+                                ? 'communities.volleyball.beachHint'
+                                : 'communities.volleyball.indoorHint') | t }}</p>
+                            </div>
+                            @for (score of volleyballSetScores; track $index) {
+                              <div class="round-volleyball-set-editor">
+                                <strong>{{ 'communities.volleyball.set' | t }} {{ $index + 1 }}</strong>
+                                <label>
+                                  <span>{{ 'communities.volleyball.sideA' | t }}</span>
+                                  <input type="number" min="0" max="999" step="1" [(ngModel)]="score.sideA">
+                                </label>
+                                <span class="round-volleyball-separator" aria-hidden="true">:</span>
+                                <label>
+                                  <span>{{ 'communities.volleyball.sideB' | t }}</span>
+                                  <input type="number" min="0" max="999" step="1" [(ngModel)]="score.sideB">
+                                </label>
+                                @if (volleyballSetScores.length > volleyballMinSets(newRoundEventType)) {
+                                  <button type="button" class="secondary-action jynlo-action jynlo-action--neutral jynlo-action--compact"
+                                    (click)="removeVolleyballSet($index)">
+                                    {{ 'communities.volleyball.removeSet' | t }}
+                                  </button>
+                                }
+                              </div>
+                            }
+                            <button type="button" class="secondary-action jynlo-action jynlo-action--neutral jynlo-action--compact"
+                              [disabled]="volleyballSetScores.length >= volleyballMaxSets(newRoundEventType)"
+                              (click)="addVolleyballSet()">
+                              {{ 'communities.volleyball.addSet' | t }}
+                            </button>
+                          </section>
                         }
                         @if (racketSupportsSets(newRoundSport)) {
                           <section class="racket-round-editor" aria-label="{{ 'communities.racket.title' | t }}">
@@ -1198,6 +1234,15 @@
                                         <option value="B">{{ 'communities.racket.sideB' | t }}</option>
                                       </select>
                                     </label>
+                                  } @else if (isVolleyballEvent(newRoundEventType)) {
+                                    <label>
+                                      <span>{{ 'communities.volleyball.side' | t }}</span>
+                                      <select [(ngModel)]="entry.team">
+                                        <option value="">{{ 'communities.volleyball.selectSide' | t }}</option>
+                                        <option value="A">{{ 'communities.volleyball.sideA' | t }}</option>
+                                        <option value="B">{{ 'communities.volleyball.sideB' | t }}</option>
+                                      </select>
+                                    </label>
                                   } @else if (isBasketballFinal(newRoundEventType)) {
                                     <label>
                                       <span>{{ 'communities.basketball.side' | t }}</span>
@@ -1254,6 +1299,8 @@
                                           [(ngModel)]="entry.waveScore2" [placeholder]="'communities.performance.optional' | t">
                                       </label>
                                     </div>
+                                  } @else if (isVolleyballEvent(newRoundEventType)) {
+                                    <small>{{ 'communities.volleyball.memberOnly' | t }}</small>
                                   } @else if (isBasketballFinal(newRoundEventType)) {
                                     <small>{{ 'communities.basketball.memberOnly' | t }}</small>
                                   } @else if (isGroupRoutineEvent(newRoundEventType)) {
@@ -1800,6 +1847,41 @@
                             @if (raceDecisionMessage) {
                               <p class="season-management-message" role="status">{{ raceDecisionMessage }}</p>
                             }
+                          } @else if (recordedVolleyballMatch(round)) {
+                            <section class="round-volleyball-final">
+                              <div class="round-volleyball-heading">
+                                <strong>{{ 'communities.volleyball.setsTitle' | t }}</strong>
+                                <small>{{ 'communities.volleyball.recordedOnly' | t }}</small>
+                              </div>
+                              <div class="round-volleyball-result">
+                                <div class="round-volleyball-side" [class.round-volleyball-winner]="volleyballSetWinner(round.setScores) === 'A'">
+                                  <span>{{ 'communities.volleyball.sideA' | t }}</span>
+                                  <strong>{{ volleyballSetTotals(round.setScores).sideA }}</strong>
+                                  @for (player of racketSidePlayers(round, 'A'); track $index) {
+                                    <small>{{ player.fullName || player.username }}</small>
+                                  }
+                                </div>
+                                <span class="round-volleyball-result-separator" aria-hidden="true">:</span>
+                                <div class="round-volleyball-side" [class.round-volleyball-winner]="volleyballSetWinner(round.setScores) === 'B'">
+                                  <span>{{ 'communities.volleyball.sideB' | t }}</span>
+                                  <strong>{{ volleyballSetTotals(round.setScores).sideB }}</strong>
+                                  @for (player of racketSidePlayers(round, 'B'); track $index) {
+                                    <small>{{ player.fullName || player.username }}</small>
+                                  }
+                                </div>
+                              </div>
+                              <div class="round-volleyball-set-list" role="table"
+                                [attr.aria-label]="'communities.volleyball.setsTitle' | t">
+                                @for (set of round.setScores || []; track $index) {
+                                  <div class="round-volleyball-set-row" role="row">
+                                    <span>{{ 'communities.volleyball.set' | t }} {{ $index + 1 }}</span>
+                                    <strong [class.round-volleyball-set-winner]="(set.sideA ?? 0) > (set.sideB ?? 0)">{{ set.sideA }}</strong>
+                                    <span>:</span>
+                                    <strong [class.round-volleyball-set-winner]="(set.sideB ?? 0) > (set.sideA ?? 0)">{{ set.sideB }}</strong>
+                                  </div>
+                                }
+                              </div>
+                            </section>
                           } @else if (recordedBasketballFinal(round)) {
                             <section class="round-basketball-final" [attr.aria-label]="'communities.basketball.finalTitle' | t">
                               <div class="round-basketball-heading">
