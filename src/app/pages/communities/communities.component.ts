@@ -1422,6 +1422,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
         this.batchJoinFeedback = '';
         this.roundDeleteConfirmId = undefined;
         this.roundSportDraft = '';
+        this.roundEventTypeDraft = '';
         this.importSportDraft = '';
         this.racketMatchFormat = 'SINGLES';
         this.racketSetScores = [{sideA: null,sideB: null},{sideA: null,sideB: null}];
