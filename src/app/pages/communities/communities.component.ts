@@ -288,7 +288,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   private confirmChatDelivery(): void {
     this.chatDeliveryUncertain = false;
     this.pendingChatDelivery = undefined;
-    this.typing.stop();
+    this.typing?.stop();
     this.chatDraft = '';
     this.replyingToCommunityMessage = null;
     this.timelineError = '';
@@ -386,7 +386,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   }
 
   sendTimeline(): void {
-    if (this.activeTab === 'chat') this.typing.stop();
+    if (this.activeTab === 'chat') this.typing?.stop();
     if (!this.selected || this.timelineSending ||
         (this.activeTab !== 'feed' && this.activeTab !== 'chat') ||
         (this.activeTab === 'chat' && this.chatDeliveryUncertain)) return;
