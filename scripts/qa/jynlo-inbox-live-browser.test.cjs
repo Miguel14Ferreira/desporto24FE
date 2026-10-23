@@ -50,3 +50,53 @@ test('MFA is never bypassed; API errors never disclose credentials or tokens',as
   });
   await assert.rejects(()=>request('https://not-our-api.test/path'),/Caminho inválido/);
 });
+
+
+test('read-only non-member check accepts only 403/404 and never parses chat bodies',async()=>{
+  const {requireDenied}=require('./jynlo-inbox-live-browser.cjs');
+  const seen=[];
+  const deny=async(url,opts)=>{
+    seen.push([url,opts.method]);
+    assert.equal(opts.headers.Authorization,'Bearer fixture-token');
+    assert.equal(opts.redirect,'error');
+    return {status:403,json:()=>{throw Error('Must never inspect private chat!')}};
+  };
+  assert.equal(await requireDenied('community',7,'fixture-token',deny),true);
+  assert.deepEqual(seen,[['https://api.d24sports.com/api/communities/7/messages','GET']]);
+  assert.equal(await requireDenied('session',41,'fixture-token',async()=>({status:404})),true);
+  for (const status of [200,401,500]) {
+    await assert.rejects(()=>requireDenied('session',41,'fixture-token',
+      async()=>({status})),/unexpected HTTP status/);
+  }
+  await assert.rejects(()=>requireDenied('community',0,'fixture-token',deny),
+    /Invalid chat identifier/);
+  await assert.rejects(()=>requireDenied('direct',7,'fixture-token',deny),
+    /Invalid chat kind/);
+});
+
+test('public discoveries pick only non-member communities and future public nonparticipant sessions',()=>{
+  const {firstAccessibleOutsiderCommunity,firstPublicOutsiderSession} =
+    require('./jynlo-inbox-live-browser.cjs');
+  const found=firstAccessibleOutsiderCommunity(
+    {communities:[{id:7},{id:8},{id:9}]},[{id:7}],[{id:8}]);
+  assert.equal(found.id,9);
+  assert.equal(firstAccessibleOutsiderCommunity(
+    {communities:[{id:7}]},[{id:7}],[]),null);
+  const now=Date.now();
+  const next=new Date(now+60_000).toISOString();
+  const before=new Date(now-60_000).toISOString();
+  const list=[
+    {id:11,privateGame:false,status:'OPEN',gameDate:before},
+    {id:12,privateGame:true,status:'OPEN',gameDate:next},
+    {id:13,privateGame:false,status:'OPEN',gameDate:next},
+    {id:14,privateGame:false,status:'OPEN',gameDate:next}
+  ];
+  assert.equal(firstPublicOutsiderSession(list,{
+    created:[{id:13}],joined:[],waitlisted:[]
+  }).id,14);
+  assert.equal(firstPublicOutsiderSession(list,{
+    created:[{id:13}],joined:[{id:14}],waitlisted:[]
+  }),null);
+  assert.throws(()=>firstPublicOutsiderSession({}, {created:[],joined:[]}),
+    /Unexpected public session discovery shape/);
+});
