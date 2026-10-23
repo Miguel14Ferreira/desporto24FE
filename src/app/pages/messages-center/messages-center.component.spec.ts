@@ -31,6 +31,7 @@ describe('Unified Jynlo message center', () => {
   let inboxApi: jasmine.SpyObj<InboxApiService>;
   const directEvents = new Subject<any>();
   const receiptEvents = new Subject<{peerUsername: string;lastReadMessageId:number}>();
+  const ownReadEvents = new Subject<any>();
   const communityEvents = new Subject<any>();
   const sessionEvents = new Subject<any>();
   const connected = new BehaviorSubject<boolean>(false);
@@ -48,6 +49,7 @@ describe('Unified Jynlo message center', () => {
     realtime = {
       messages$: directEvents.asObservable(),
       readReceipts$: receiptEvents.asObservable(),
+      ownReads$: ownReadEvents.asObservable(),
       communityMessages$: communityEvents.asObservable(),
       sessionMessages$: sessionEvents.asObservable(),
       connected$: connected.asObservable(),
@@ -768,6 +770,7 @@ describe('Direct chat confirmed read status', () => {
     realtime = {connected$:new BehaviorSubject(false).asObservable(),
       messages$:new Subject<any>().asObservable(),
       readReceipts$:new Subject<any>().asObservable(),
+      ownReads$:new Subject<any>().asObservable(),
       communityMessages$:new Subject<any>().asObservable(),
       sessionMessages$:new Subject<any>().asObservable(),
       connect:()=>{}} as unknown as DirectChatRealtimeService;
@@ -912,6 +915,73 @@ describe('Direct chat confirmed read status', () => {
     (inbox as any).acceptPersistedPeerReadReceipt({peerUsername:'bea',lastReadMessageId:999});
     expect(inbox.isDirectMessageRead({key:'direct:carla',id:10,
       sender:'ana',text:'not read',createdAt:''})).toBeFalse();
+  });
+
+  it('synchronizes the own unread badge from a scoped committed server summary',()=> {
+    const conversation={...item('direct','bea'),unreadCount:4,
+      latestAt:'2026-10-23T09:00:00Z',latestMessageId:42};
+    inbox.conversations=[conversation];
+    api.summaries.and.returnValue(of([{
+      kind:'direct',id:'bea',latestMessageId:42,latestText:'lida',
+      latestSender:'bea',latestAt:'2026-10-23T09:00:00Z',unreadCount:0
+    }]));
+    (inbox as any).refreshOwnPersistedRead({
+      kind:'direct',conversationId:'bea',lastReadMessageId:42
+    });
+    expect(api.summaries).toHaveBeenCalledOnceWith([{kind:'direct',id:'bea'}]);
+    expect(inbox.unreadCountFor(inbox.conversations[0])).toBe(0);
+  });
+
+  it('never clears newer unread activity from an older own-read snapshot',()=> {
+    const pending=new Subject<any[]>();
+    api.summaries.and.returnValue(pending.asObservable());
+    inbox.conversations=[{...item('community',7),unreadCount:3,
+      latestAt:'2026-10-23T09:00:00Z',latestMessageId:42}];
+    (inbox as any).refreshOwnPersistedRead({
+      kind:'community',conversationId:'7',lastReadMessageId:42
+    });
+    inbox.conversations=[{...inbox.conversations[0],unreadCount:4,
+      latestAt:'2026-10-23T10:00:00Z',latestMessageId:43}];
+    pending.next([{kind:'community',id:'7',latestMessageId:42,latestText:'antiga',
+      latestSender:'ana',latestAt:'2026-10-23T09:00:00Z',unreadCount:0}]);
+    pending.complete();
+    expect(inbox.conversations[0].unreadCount).toBe(4);
+    expect(inbox.conversations[0].latestMessageId).toBe(43);
+  });
+
+  it('ignores unknown conversations and reads from an earlier login',()=> {
+    inbox.conversations=[{...item('session',8),unreadCount:3}];
+    (inbox as any).refreshOwnPersistedRead({
+      kind:'session',conversationId:'9',lastReadMessageId:42
+    });
+    (inbox as any).refreshOwnPersistedRead({
+      kind:'session',conversationId:'8',lastReadMessageId:0
+    });
+    expect(api.summaries).not.toHaveBeenCalled();
+    browserToken='different-login-token';
+    (inbox as any).refreshOwnPersistedRead({
+      kind:'session',conversationId:'8',lastReadMessageId:42
+    });
+    expect(api.summaries).not.toHaveBeenCalled();
+    expect(inbox.conversations[0].unreadCount).toBe(3);
+  });
+
+  it('ignores an older in-flight sync when a newer own-read event arrives',()=> {
+    const old=new Subject<any[]>();
+    const newer={kind:'direct',id:'bea',latestMessageId:50,
+      latestText:'ok',latestSender:'bea',latestAt:'2026-10-23T09:00:00Z',
+      unreadCount:0};
+    api.summaries.and.returnValues(old.asObservable(),of([newer]));
+    inbox.conversations=[{...item('direct','bea'),unreadCount:5}];
+    (inbox as any).refreshOwnPersistedRead({
+      kind:'direct',conversationId:'bea',lastReadMessageId:42
+    });
+    (inbox as any).refreshOwnPersistedRead({
+      kind:'direct',conversationId:'bea',lastReadMessageId:50
+    });
+    old.next([{...newer,unreadCount:4}]);
+    old.complete();
+    expect(inbox.unreadCountFor(inbox.conversations[0])).toBe(0);
   });
 
   it('does not trust errors, wrong identities, or decreasing cursors',()=>{
