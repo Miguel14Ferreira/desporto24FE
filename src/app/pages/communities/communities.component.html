@@ -1133,6 +1133,7 @@
                               : newRoundEventType === 'PARKOUR_FREESTYLE' ? 'communities.parkour.freestyleHint'
                               : newRoundEventType === 'BREAKING_BATTLE' ? 'communities.breaking.hint'
                               : newRoundEventType === 'TRAMPOLINE_INDIVIDUAL' ? 'communities.trampoline.hint'
+                              : isFootvolleyEvent(newRoundEventType) ? 'communities.footvolley.hint'
                               : isVolleyballEvent(newRoundEventType) ? 'communities.volleyball.hint'
                               : isTeamFinalEvent(newRoundEventType) ? 'communities.teamFinal.hint'
                               : isBasketballFinal(newRoundEventType) ? 'communities.basketball.hint'
@@ -1146,10 +1147,8 @@
                         @if (isVolleyballEvent(newRoundEventType)) {
                           <section class="round-volleyball-editor">
                             <div class="round-volleyball-heading">
-                              <h4>{{ 'communities.volleyball.setsTitle' | t }}</h4>
-                              <p>{{ (newRoundEventType === 'BEACH_VOLLEY_FINAL'
-                                ? 'communities.volleyball.beachHint'
-                                : 'communities.volleyball.indoorHint') | t }}</p>
+                              <h4>{{ volleyballResultTitle(newRoundEventType) | t }}</h4>
+                              <p>{{ volleyballFormatHint(newRoundEventType) | t }}</p>
                             </div>
                             @for (score of volleyballSetScores; track $index) {
                               <div class="round-volleyball-set-editor">
@@ -1171,11 +1170,13 @@
                                 }
                               </div>
                             }
-                            <button type="button" class="secondary-action jynlo-action jynlo-action--neutral jynlo-action--compact"
-                              [disabled]="volleyballSetScores.length >= volleyballMaxSets(newRoundEventType)"
-                              (click)="addVolleyballSet()">
-                              {{ 'communities.volleyball.addSet' | t }}
-                            </button>
+                            @if (volleyballMaxSets(newRoundEventType) > volleyballMinSets(newRoundEventType)) {
+                              <button type="button" class="secondary-action jynlo-action jynlo-action--neutral jynlo-action--compact"
+                                [disabled]="volleyballSetScores.length >= volleyballMaxSets(newRoundEventType)"
+                                (click)="addVolleyballSet()">
+                                {{ 'communities.volleyball.addSet' | t }}
+                              </button>
+                            }
                           </section>
                         }
                         @if (racketSupportsSets(newRoundSport)) {
@@ -1880,7 +1881,7 @@
                           } @else if (recordedVolleyballMatch(round)) {
                             <section class="round-volleyball-final">
                               <div class="round-volleyball-heading">
-                                <strong>{{ 'communities.volleyball.setsTitle' | t }}</strong>
+                                <strong>{{ volleyballResultTitle(round.eventType) | t }}</strong>
                                 <small>{{ 'communities.volleyball.recordedOnly' | t }}</small>
                               </div>
                               <div class="round-volleyball-result">

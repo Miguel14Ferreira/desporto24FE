@@ -132,3 +132,10 @@ O registo central é `src/app/pages/communities/community-round-sport.ts`. Os te
 - Reutiliza o contrato `teamScore` e as colunas já existentes `team_score_a/b`. **Sem Liquibase novo**. Colunas antigas continuam nullable, sem backfill nem interpretação automática de resultados antigos.
 - O rugby mantém pontos e o andebol mantém golos; basquetebol e voleibol não são convertidos. Resultado neutro para classificações W/D/L genéricas, sem pontos de época inventados.
 - Design desktop Concept One, traduções PT/EN, testes de validação de resultados e seleção de modalidade. Referências: FIFA Futsal Law 10, FIH Rules of Hockey 2026, World Skate Rink Hockey Regulations e World Aquatics Competition Regulations.
+
+## Futevólei — três formatos reais de sets (23/10/2026)
+- Modalidade **já existente** nos catálogos canónicos FE e BE de 121 desportos: `Futevólei`. **Nenhuma modalidade nova**.
+- Formatos específicos: `FOOTVOLLEY_SINGLE_18` (um set a 18), `FOOTVOLLEY_BEST_OF_3` (18/18/15), `FOOTVOLLEY_SINGLE_15` (um set a 15, terceiro lugar). Requer vantagem mínima de dois pontos, sem teto fictício; dois participantes registados por lado.
+- Evidência: Federação Nacional de Futevólei — Footvolley World Tour Albufeira Portugal 2026: https://futevolei.pt/en/events/142/footvolley-world-tour-2026-albufeira-portugal ; European Footvolley League Official Rules 2025 https://footvolleyeurope.com/official-footvolley-rules-2025 . Regras específicas da competição prevalecem.
+- Regista pontuação por set utilizando o campo já existente `setScores`, com tipos de prova distintos dos de Voleibol e Voleibol de Praia. Sem migração de BD, sem backfill nem vitória/pontos de época W/D/L inventados. Histórico `eventType=null` mantém layout coletivo anterior.
+- Conceito visual Concept One, PT/EN, validação server-side e cliente, regressão automatizada.

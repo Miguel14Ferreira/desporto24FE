@@ -1,6 +1,6 @@
 import {
-  isVolleyballEvent, volleyballMatchError, volleyballMinSets,
-  volleyballMaxSets, volleyballSetWinner, volleyballSetTotals,
+  isVolleyballEvent, isFootvolleyEvent, volleyballMatchError, volleyballMinSets,
+  volleyballMaxSets, volleyballFormatHint, volleyballSetWinner, volleyballSetTotals,
   recordedVolleyballMatch
 } from './community-volleyball-results';
 import { eventOptionsForSport, eventPresentationFormat, isNeutralEvent }
@@ -29,6 +29,44 @@ describe('volleyball and beach volleyball FIVB-style complete match results', ()
     expect(volleyballMaxSets('VOLLEYBALL_FINAL')).toBe(5);
     expect(volleyballMinSets('BEACH_VOLLEY_FINAL')).toBe(2);
     expect(volleyballMaxSets('BEACH_VOLLEY_FINAL')).toBe(3);
+  });
+  it('registers footvolley only for canonical Futevólei and preserves distinct formats', () => {
+    const formats: Array<[string,number,number]> = [
+      ['FOOTVOLLEY_SINGLE_18',1,1], ['FOOTVOLLEY_BEST_OF_3',2,3],
+      ['FOOTVOLLEY_SINGLE_15',1,1]
+    ];
+    for (const [type,min,max] of formats) {
+      expect(eventOptionsForSport('Futevólei').map(x=>x.code)).toContain(type as any);
+      expect(isVolleyballEvent(type)).toBeTrue();
+      expect(isFootvolleyEvent(type)).toBeTrue();
+      expect(volleyballMinSets(type)).toBe(min);
+      expect(volleyballMaxSets(type)).toBe(max);
+      expect(volleyballFormatHint(type)).toContain('footvolley');
+      expect(isNeutralEvent('Futevólei',type)).toBeTrue();
+      expect(eventPresentationFormat('Futevólei',type)).toBe('team');
+    }
+    expect(eventOptionsForSport('Futebol')).toEqual([]);
+    expect(isFootvolleyEvent('BEACH_VOLLEY_FINAL')).toBeFalse();
+  });
+  it('validates footvolley 18-point singles, 18/18/15 and 15-point singles', () => {
+    const a=(type:string,sets:Array<{sideA:number;sideB:number}>)=>
+      volleyballMatchError(type,beach,sets);
+    expect(a('FOOTVOLLEY_SINGLE_18',[score(18,16)])).toBeNull();
+    expect(a('FOOTVOLLEY_SINGLE_18',[score(23,21)])).toBeNull();
+    expect(a('FOOTVOLLEY_SINGLE_15',[score(15,11)])).toBeNull();
+    expect(a('FOOTVOLLEY_BEST_OF_3',[score(18,16),score(18,13)])).toBeNull();
+    expect(a('FOOTVOLLEY_BEST_OF_3',[score(18,16),score(16,18),score(17,15)])).toBeNull();
+    expect(a('FOOTVOLLEY_SINGLE_18',[score(15,11)])).toBe('volleyballInvalidScore');
+    expect(a('FOOTVOLLEY_SINGLE_15',[score(18,11)])).toBe('volleyballInvalidScore');
+    expect(a('FOOTVOLLEY_BEST_OF_3',[score(18,16),score(18,16),score(15,11)]))
+      .toBe('volleyballInvalidSets');
+    expect(a('FOOTVOLLEY_BEST_OF_3',[score(18,16),score(16,18),score(15,14)]))
+      .toBe('volleyballInvalidScore');
+    expect(a('FOOTVOLLEY_SINGLE_18',[score(18,18)])).toBe('volleyballInvalidScore');
+    expect(volleyballMatchError('FOOTVOLLEY_SINGLE_18',indoor,[score(18,12)]))
+      .toBe('volleyballInvalidTeams');
+    expect(volleyballMatchError('BEACH_VOLLEY_FINAL',beach,[score(18,16)]))
+      .toBe('volleyballInvalidSets');
   });
   it('accepts best of five indoor, including deciding fifth and extended deuces', () => {
     expect(five([score(25,20),score(25,23),score(25,0)])).toBeNull();
