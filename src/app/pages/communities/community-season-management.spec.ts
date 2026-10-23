@@ -23,6 +23,7 @@ describe('Community season management', () => {
     component.seasonActionMessage = '';
     component.editingSeasonId = null;
     component.deletingSeasonId = null;
+    component.seasonDeleteAcknowledged = false;
     component.editingSeasonName = '';
     spyOn(component, 'canManage').and.returnValue(true);
     reload = spyOn(component, 'loadCompetition');
@@ -58,16 +59,20 @@ describe('Community season management', () => {
     expect(service.deleteSeason).not.toHaveBeenCalled();
 
     component.confirmDeleteSeason(season);
+    expect(service.deleteSeason).not.toHaveBeenCalled();
+    component.seasonDeleteAcknowledged = true;
+    component.confirmDeleteSeason(season);
     expect(service.deleteSeason).toHaveBeenCalledOnceWith(7, 44);
     expect(component.selectedSeasonId).toBeNull();
     expect(component.deletingSeasonId).toBeNull();
     expect(reload).toHaveBeenCalledWith(component.selected, null);
   });
 
-  it('does not delete data when the backend rejects a season containing rounds', () => {
+  it('keeps the selection and shows a conflict if deletion fails', () => {
     service.deleteSeason.and.returnValue(throwError(() =>
       new HttpErrorResponse({ status: 409 })));
     component.requestDeleteSeason(season);
+    component.seasonDeleteAcknowledged = true;
     component.confirmDeleteSeason(season);
 
     expect(component.seasonActionError).toBeTruthy();
