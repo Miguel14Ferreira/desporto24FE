@@ -270,7 +270,12 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
         next: entry => {
           if (this.selected?.id !== communityId) return;
           if (kind === 'CHAT') {
-            if (this.activeTab === 'chat') this.mergeChatEntries([entry], true);
+            if (this.activeTab === 'chat') {
+              this.mergeChatEntries([entry], true);
+              // The authoritative recent history also reflects moderation and
+              // messages sent between the HTTP POST and its acknowledgement.
+              this.loadTimeline();
+            }
             this.chatDraft = '';
             this.pendingChatDelivery = undefined;
             this.chatDeliveryUncertain = false;
