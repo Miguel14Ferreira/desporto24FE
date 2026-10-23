@@ -1262,6 +1262,59 @@ body .communities-page.jynlo-c1 .round-breaking-decision--winner {
     grid-template-columns: 1fr;
   }
 }
+/* Basketball final scoreboard: two team scores, never a football goal tally. */
+body .communities-page.jynlo-c1 .round-basketball-editor,
+body .communities-page.jynlo-c1 .round-basketball-final {
+  border: 1px solid rgba(141,184,208,.24);
+  border-radius: 1rem;
+  background: rgba(13,38,53,.36);
+  padding: 1rem;
+}
+body .communities-page.jynlo-c1 .round-basketball-editor h4 { margin: 0 0 .3rem; }
+body .communities-page.jynlo-c1 .round-basketball-score-inputs,
+body .communities-page.jynlo-c1 .round-basketball-scoreboard {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) auto minmax(0,1fr);
+  align-items: center;
+  gap: .8rem;
+}
+body .communities-page.jynlo-c1 .round-basketball-divider,
+body .communities-page.jynlo-c1 .round-basketball-vs {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #acc7dc;
+}
+body .communities-page.jynlo-c1 .round-basketball-side {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border-radius: .85rem;
+  border: 1px solid rgba(141,184,208,.23);
+  padding: 1rem;
+  background: rgba(16,42,58,.58);
+  gap: .35rem;
+}
+body .communities-page.jynlo-c1 .round-basketball-side > strong {
+  font-size: clamp(1.8rem, 3vw, 2.7rem);
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+body .communities-page.jynlo-c1 .round-basketball-winner {
+  border-color: rgba(112,245,195,.52);
+  background: linear-gradient(140deg,rgba(42,121,102,.23),rgba(16,42,58,.58));
+}
+body .communities-page.jynlo-c1 .round-basketball-side small { color: #aec7d8; }
+body .communities-page.jynlo-c1 .round-basketball-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: .6rem;
+  flex-wrap: wrap;
+  margin-bottom: .9rem;
+}
+@media (max-width: 520px) {
+  body .communities-page.jynlo-c1 .round-basketball-scoreboard { gap: .35rem; }
+  body .communities-page.jynlo-c1 .round-basketball-side { padding: .55rem; }
+}
 /* Collective routine scores: one shared mark, not five duplicated athlete marks. */
 body .communities-page.jynlo-c1 .round-shared-groups,
 body .communities-page.jynlo-c1 .round-shared-results {

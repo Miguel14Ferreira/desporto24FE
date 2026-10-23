@@ -446,11 +446,13 @@ export class CommunityGroupsService {
         | 'RHYTHMIC_APPARATUS' | 'ARTISTIC_SOLO_TECHNICAL' | 'ARTISTIC_SOLO_FREE'
         | 'RHYTHMIC_GROUP_5' | 'RHYTHMIC_GROUP_3_2'
         | 'ARTISTIC_DUET_TECH' | 'ARTISTIC_DUET_FREE'
-        | 'ARTISTIC_TEAM_TECH' | 'ARTISTIC_TEAM_FREE' | null;
+        | 'ARTISTIC_TEAM_TECH' | 'ARTISTIC_TEAM_FREE'
+        | 'BASKETBALL_FINAL' | 'BASKETBALL_3X3_FINAL' | null;
       eventDiscipline?: string | null;
       matchFormat?: 'SINGLES' | 'DOUBLES' | null;
       setScores?: Array<{ sideA: number | null; sideB: number | null }> | null;
       groupScores?: Array<{ groupName: string; score: number | null }>;
+      basketballScore?: { sideA: number | null; sideB: number | null };
       entries: Array<{
         username: string;
         team: string | null;

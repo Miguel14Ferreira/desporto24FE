@@ -101,3 +101,11 @@ O registo central é `src/app/pages/communities/community-round-sport.ts`. Os te
 - O backend rejeita grupos vazios, duplicados, atletas com nota individual e participantes fora dos limites; o frontend valida antes de submeter. Nenhum ponto W/D/L é gerado.
 - Uma coluna JSON TEXT nullable em `community_round` guarda somente novas jornadas coletivas. Histórico anterior, jornadas individuais e épicas existentes permanecem intactos.
 - Referências: FIG RG Code 2025–2028, World Aquatics Artistic Swimming Competition Regulations (fevereiro de 2026). 
+
+## Basquetebol e Basquetebol 3x3 — resultado final por equipa (23/10/2026)
+- Provas explícitas `BASKETBALL_FINAL` e `BASKETBALL_3X3_FINAL`; não partilham regras de golos/assistências de futebol.
+- Um único `basketballScore: {sideA,sideB}` no resultado da jornada, com valores inteiros não negativos (máximo **técnico** 999), sem empate no resultado final; participantes associados por `entries[].team = A/B`, com `DRAW` técnico neutro em todos os atletas.
+- Os resultados não alimentam a classificação genérica W/D/L; vencedor é indicado visualmente apenas pela comparação dos dois pontos finais. Posição individual, cestos, estatísticas, períodos, prolongamentos e regras de desempate não são inferidos.
+- Limites oficiais de 3x3 (21 pontos para vitória durante o tempo regulamentar) **não** são usados como limite do marcador, por poder haver vitória com 21 ou mais; não se valida uma ficha federativa/roster completo através dos membros registados.
+- Duas colunas inteiras nullable em `community_round` preservam histórico e não alteram épocas anteriores. PT/EN e registo desktop Concept One.
+- Fontes: FIBA Official Basketball Rules 2024, FIBA 3x3 Basketball overview.
