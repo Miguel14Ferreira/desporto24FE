@@ -1262,6 +1262,78 @@ body .communities-page.jynlo-c1 .round-breaking-decision--winner {
     grid-template-columns: 1fr;
   }
 }
+/* Volleyball set results: shared scores per side, not football goals. */
+body .communities-page.jynlo-c1 .round-volleyball-editor,
+body .communities-page.jynlo-c1 .round-volleyball-final {
+  border: 1px solid rgba(141,184,208,.24);
+  border-radius: 1rem;
+  background: rgba(13,38,53,.36);
+  padding: 1rem;
+}
+body .communities-page.jynlo-c1 .round-volleyball-heading {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: .8rem;
+}
+body .communities-page.jynlo-c1 .round-volleyball-heading h4 { margin: 0; }
+body .communities-page.jynlo-c1 .round-volleyball-set-editor,
+body .communities-page.jynlo-c1 .round-volleyball-set-row {
+  display: flex;
+  gap: .6rem;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: .55rem;
+  border-bottom: 1px solid rgba(141,184,208,.12);
+}
+body .communities-page.jynlo-c1 .round-volleyball-set-editor > strong { min-width: 3.5rem; }
+body .communities-page.jynlo-c1 .round-volleyball-set-editor label {
+  min-width: 90px;
+  max-width: 145px;
+  flex: 1;
+}
+body .communities-page.jynlo-c1 .round-volleyball-separator {
+  color: #abc9d8;
+  font-weight: 800;
+}
+body .communities-page.jynlo-c1 .round-volleyball-result {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) auto minmax(0,1fr);
+  align-items: center;
+  gap: .65rem;
+}
+body .communities-page.jynlo-c1 .round-volleyball-side {
+  border: 1px solid rgba(141,184,208,.24);
+  border-radius: .85rem;
+  padding: .8rem;
+  display: flex;
+  flex-direction: column;
+  gap: .25rem;
+  background: rgba(16,42,58,.58);
+  min-width: 0;
+}
+body .communities-page.jynlo-c1 .round-volleyball-side > strong {
+  font-size: clamp(1.8rem,3vw,2.7rem);
+  font-variant-numeric: tabular-nums;
+}
+body .communities-page.jynlo-c1 .round-volleyball-winner {
+  border-color: rgba(112,245,195,.52);
+  background: linear-gradient(140deg,rgba(42,121,102,.23),rgba(16,42,58,.58));
+}
+body .communities-page.jynlo-c1 .round-volleyball-side small { color: #abc9d8; }
+body .communities-page.jynlo-c1 .round-volleyball-result-separator {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #abc9d8;
+}
+body .communities-page.jynlo-c1 .round-volleyball-set-list { margin-top: .7rem; }
+body .communities-page.jynlo-c1 .round-volleyball-set-row {
+  display: grid;
+  grid-template-columns: minmax(5rem,1fr) auto auto auto;
+}
+body .communities-page.jynlo-c1 .round-volleyball-set-winner { color: #65ecc1; }
 /* Basketball final scoreboard: two team scores, never a football goal tally. */
 body .communities-page.jynlo-c1 .round-basketball-editor,
 body .communities-page.jynlo-c1 .round-basketball-final {
