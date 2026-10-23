@@ -1082,16 +1082,38 @@
                       <strong>{{ isOwnMessage(message) ? ('chat.you' | t) : message.senderUsername }}</strong>
                       <span>{{ messageDate(message) }}</span>
                     </div>
+                    @if (message.replyToMessageId && message.replyToText) {
+                      <div class="jynlo-chat-quote">
+                        <strong>{{ message.replyToSender }}</strong>
+                        <span>{{ message.replyToText }}</span>
+                      </div>
+                    }
                     <p>{{ message.body }}</p>
+                    @if (canSendChat()) {
+                      <button type="button" class="jynlo-chat-reply-action"
+                        [readOnly]="messageSending"
+                    [disabled]="chatDeliveryUncertain"
+                        (click)="replyToSessionMessage(message)">
+                        ↩ {{ 'chat.replyToMessage' | t }}
+                      </button>
+                    }
                   </article>
                 }
               </div>
 
               @if (canSendChat()) {
               <form class="message-composer" (ngSubmit)="sendMessage()">
+                @if (replyingToSessionMessage; as original) {
+                  <div class="jynlo-chat-reply-banner">
+                    <div><strong>{{ 'chat.replyingTo' | t }} {{ original.senderUsername }}</strong>
+                      <span>{{ original.body }}</span></div>
+                    <button type="button" [disabled]="messageSending || chatDeliveryUncertain"
+                      (click)="cancelSessionReply()">{{ 'chat.cancelReply' | t }}</button>
+                  </div>
+                }
                 <label>
                   <span>{{ 'sessionDetail.newMessage' | t }}</span>
-                  <textarea
+                  <textarea #sessionComposer
                     name="messageBody"
                     [(ngModel)]="messageBody"
                     maxlength="2000"
