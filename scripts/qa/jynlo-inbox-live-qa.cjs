@@ -4,9 +4,10 @@
 /*
  * Real API-only integration test for Jynlo's persistent inbox read state.
  * NO credentials in source, commits, argv, stdout, or HTTP error messages.
- * Default: preflight only. `--send-once` sends ONE QA message and marks it read.
+ * Default: preflight only. `--ensure-friends` safely invites and accepts
+ * friendship between the two QA accounts. `--send-once` sends ONE QA message.
  * Never retry an ambiguous POST. Does NOT validate browser DOM/WebSocket UI.
- * Requires Node.js >= 22 and two already-friended disposable QA accounts.
+ * Requires Node.js >= 22 and two disposable QA accounts.
  */
 const { randomUUID } = require('node:crypto');
 const { performance } = require('node:perf_hooks');
@@ -60,6 +61,70 @@ function createRunner({ fetchImpl = globalThis.fetch, output = console.log } = {
       'Contador de não lidas inválido.');
     return value;
   }
+  async function friendshipStatus(token, other) {
+    const status = await request('/api/friends/status/' + encodeURIComponent(other), {}, token);
+    verify(typeof status.friends === 'boolean' && typeof status.pendingRequest === 'boolean',
+      'Resposta de amizade inesperada da API.');
+    return status;
+  }
+
+  async function findQaInvitation(recipient, recipientToken, sender) {
+    const notifications = await request('/api/notifications/me', {}, recipientToken);
+    verify(Array.isArray(notifications), 'Resposta de notificações inesperada.');
+    // Legacy friend-request notifications have no structured sender field.
+    // Match the backend's exact sentence and the authenticated recipient,
+    // never an unrelated invitation. The token stays only in memory.
+    const expected = 'vindo de ' + sender + '.';
+    const matches = notifications.filter(n =>
+      n && n.friendRequest === true
+      && typeof n.username === 'string' && n.username.toLowerCase() === recipient
+      && typeof n.message === 'string' && n.message.includes(expected)
+      && typeof n.token === 'string' && n.token.length > 0
+      && Number.isSafeInteger(n.id) && n.id > 0);
+    verify(matches.length <= 1, 'Há vários pedidos QA indistinguíveis. Verificar nas notificações manualmente.');
+    return matches[0] || null;
+  }
+
+  async function ensureFriendship(one, tokenOne, two, tokenTwo) {
+    const first = await friendshipStatus(tokenOne, two);
+    const second = await friendshipStatus(tokenTwo, one);
+    if (first.friends && second.friends) {
+      output('[PASS] As duas contas QA já são amigas; não foi criado qualquer convite.');
+      return;
+    }
+    verify(first.friends === second.friends, 'Estados de amizade contraditórios; operação interrompida.');
+    const pending = first.pendingRequest || second.pendingRequest;
+    let invited = await findQaInvitation(two, tokenTwo, one);
+    let acceptToken = tokenTwo;
+    let acceptAccount = two;
+    if (!invited) {
+      invited = await findQaInvitation(one, tokenOne, two);
+      acceptToken = tokenOne;
+      acceptAccount = one;
+    }
+    if (!pending) {
+      // A notification could be stale: never accept it without a pending request.
+      verify(!invited, 'Notificação antiga sem pedido pendente. Verificar antes de continuar.');
+      // POST exactly once, even if the network result is ambiguous.
+      await request('/api/friends/add/' + encodeURIComponent(two), { method: 'POST' }, tokenOne);
+      output('[PASS] Pedido de amizade QA enviado uma única vez.');
+      invited = await findQaInvitation(two, tokenTwo, one);
+      acceptToken = tokenTwo;
+      acceptAccount = two;
+    }
+    verify(invited,
+      'Existe um pedido pendente mas nenhuma notificação QA correspondente. Não reenviar convite; verificar notificações.');
+    // Accepted only by the owner of this exact notification.
+    await request('/api/notifications/friend-request/' + invited.id + '/accept',
+      { method: 'POST' }, acceptToken);
+    output('[PASS] Convite QA aceite pela conta ' + acceptAccount + '.');
+    const after1 = await friendshipStatus(tokenOne, two);
+    const after2 = await friendshipStatus(tokenTwo, one);
+    verify(after1.friends && after2.friends,
+      'A aceitação não produziu uma amizade confirmada em ambas as contas.');
+    output('[PASS] Amizade QA confirmada nos dois perfis.');
+  }
+
   async function preflight(username1, token1, username2, token2) {
     for (const [username, token, other] of [[username1, token1, username2], [username2, token2, username1]]) {
       const f = await request('/api/friends/status/' + encodeURIComponent(other), {}, token);
@@ -73,7 +138,7 @@ function createRunner({ fetchImpl = globalThis.fetch, output = console.log } = {
     output('[PASS] Resumos autenticados obtidos em ambas as contas (sem revelar conteúdo).');
     return { from, to };
   }
-  async function run({ passwords, sendOnce = false } = {}) {
+  async function run({ passwords, sendOnce = false, ensureFriends = false } = {}) {
     verify(Array.isArray(passwords) && passwords.length === 2 && passwords.every(x => typeof x === 'string' && x.length > 0),
       'Definir JYNLO_QA_PASSWORD_1 e JYNLO_QA_PASSWORD_2 sem as colocar no terminal ou repositório.');
     const started = performance.now();
@@ -81,6 +146,7 @@ function createRunner({ fetchImpl = globalThis.fetch, output = console.log } = {
     const a = await login(one, passwords[0]);
     const b = await login(two, passwords[1]);
     output('[PASS] Duas sessões autenticadas, sem imprimir credenciais ou tokens.');
+    if (ensureFriends) await ensureFriendship(one, a, two, b);
     const before = await preflight(one, a, two, b);
     if (!sendOnce) {
       output('[PASS] Pré-validação de produção apenas-leitura (exceto autenticação). Para enviar UMA mensagem QA: --send-once');
@@ -128,13 +194,14 @@ function createRunner({ fetchImpl = globalThis.fetch, output = console.log } = {
 
 if (require.main === module) {
   const args = process.argv.slice(2);
-  if (args.some(x => !['--send-once'].includes(x))) {
-    console.error('Utilização: node scripts/qa/jynlo-inbox-live-qa.cjs [--send-once]');
+  if (args.some(x => !['--send-once', '--ensure-friends'].includes(x))) {
+    console.error('Utilização: node scripts/qa/jynlo-inbox-live-qa.cjs [--ensure-friends] [--send-once]');
     process.exitCode = 2;
   } else {
     createRunner().run({
       passwords: [process.env.JYNLO_QA_PASSWORD_1, process.env.JYNLO_QA_PASSWORD_2],
-      sendOnce: args.includes('--send-once')
+      sendOnce: args.includes('--send-once'),
+      ensureFriends: args.includes('--ensure-friends')
     }).catch(err => {
       console.error('[FAIL] ' + (err instanceof Error ? err.message : 'Erro desconhecido'));
       process.exitCode = 1;
