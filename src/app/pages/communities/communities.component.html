@@ -1103,6 +1103,17 @@
                         }
 
                         <div class="round-meta-form">
+                          @if (communityRoundSports.length > 1) {
+                            <label>
+                              <span>{{ 'communities.roundSport' | t }}</span>
+                              <select [(ngModel)]="roundSportDraft" [attr.aria-label]="'communities.roundSport' | t">
+                                <option value="">{{ 'communities.selectRoundSport' | t }}</option>
+                                @for (sport of communityRoundSports; track sport) {
+                                  <option [value]="sport">{{ sport }}</option>
+                                }
+                              </select>
+                            </label>
+                          }
                           <label>
                             <span>{{ 'communities.roundName' | t }}</span>
                             <input
@@ -1115,6 +1126,9 @@
                           </label>
                         </div>
 
+                        @if (viewForNewRound() === 'race') {
+                          <p class="round-sport-guidance" role="note">{{ 'communities.race.basicEntryHint' | t }}</p>
+                        }
                         <div class="round-player-list">
                           @for (entry of roundEntries; track entry.username) {
                             <article class="round-player" [class.included]="entry.included">
@@ -1125,12 +1139,14 @@
 
                               @if (entry.included) {
                                 <div class="round-player-fields">
+                                  @if (viewForNewRound() !== 'race') {
                                   <label>
                                     <span>{{ 'communities.team' | t }}</span>
                                     <input
                                       [(ngModel)]="entry.team"
                                       [placeholder]="'communities.teamPlaceholder' | t">
                                   </label>
+                                  }
                                   <label>
                                     <span>{{ 'communities.result' | t }}</span>
                                     <select [(ngModel)]="entry.result">
@@ -1139,6 +1155,7 @@
                                       <option value="LOSS">{{ 'communities.result.loss' | t }}</option>
                                     </select>
                                   </label>
+                                  @if (viewForNewRound() !== 'race') {
                                   <label>
                                     <span>{{ 'communities.goals' | t }}</span>
                                     <input type="number" min="0" [(ngModel)]="entry.goals">
@@ -1155,6 +1172,7 @@
                                     <input type="checkbox" [(ngModel)]="entry.cleanSheet">
                                     <span>{{ 'communities.cleanSheet' | t }}</span>
                                   </label>
+                                  }
                                 </div>
                               }
                             </article>
@@ -1195,6 +1213,9 @@
                             <div>
                               <strong>{{ round.name }}</strong>
                               <span>{{ formatRoundDate(round.playedAt) }}</span>
+                              @if (roundSport(round); as sport) {
+                                <span class="round-sport-tag">{{ sport }}</span>
+                              }
                             </div>
 
                             @if (canManage()) {
@@ -1226,7 +1247,30 @@
                             }
                           </div>
 
-                          @if (roundMatchup(round); as matchup) {
+                          @if (roundView(round) === 'race') {
+                            <section class="race-round-record" [attr.aria-label]="'communities.race.recordTitle' | t">
+                              <div class="race-round-heading">
+                                <span aria-hidden="true">🏁</span>
+                                <div>
+                                  <strong>{{ 'communities.race.recordTitle' | t }}</strong>
+                                  <small>{{ 'communities.race.noPositions' | t }}</small>
+                                </div>
+                                <span class="race-round-count">{{ round.entries.length }} {{ 'communities.race.drivers' | t }}</span>
+                              </div>
+                              <div class="race-round-entries">
+                                @for (entry of round.entries; track $index) {
+                                  <div class="race-round-entry">
+                                    <div>
+                                      <strong>{{ entry.fullName || entry.username }}</strong>
+                                      <small>{{ roundEntryHandle(entry) }}</small>
+                                    </div>
+                                    <span class="result-chip" [class.win]="entry.result === 'WIN'"
+                                      [class.loss]="entry.result === 'LOSS'">{{ resultLabel(entry.result) }}</span>
+                                  </div>
+                                }
+                              </div>
+                            </section>
+                          } @else if (roundMatchup(round); as matchup) {
                             <div class="round-matchup">
                               <section class="round-matchup-side round-matchup-side--a"
                                 [attr.aria-label]="matchup.left.label">
@@ -1807,6 +1851,17 @@
                               </div>
 
                               <div class="import-context">
+                                @if (communityRoundSports.length > 1) {
+                                  <label>
+                                    <span>{{ 'communities.roundSport' | t }}</span>
+                                    <select [(ngModel)]="importSportDraft" (ngModelChange)="invalidateImportPlan()">
+                                      <option value="">{{ 'communities.selectRoundSport' | t }}</option>
+                                      @for (sport of communityRoundSports; track sport) {
+                                        <option [value]="sport">{{ sport }}</option>
+                                      }
+                                    </select>
+                                  </label>
+                                }
                                 <label>
                                   <span>{{ 'communities.import.season' | t }}</span>
                                   <select [(ngModel)]="selectedSeasonId" (ngModelChange)="invalidateImportPlan()">
