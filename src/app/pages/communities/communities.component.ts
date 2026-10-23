@@ -112,6 +112,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   private pendingChatDelivery?: { communityId: number; text: string; ids: Set<number>; at: number };
   private chatScrollRequested = false;
   private timelineRequestVersion = 0;
+  private chatEventsDuringLoad = new Map<number, CommunityTimelineEntry>();
 
   private currentChatUsername(): string | null {
     try {
@@ -160,6 +161,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     if (!this.selected || this.activeTab !== 'chat' || entry.kind !== 'CHAT'
         || entry.communityId !== this.selected.id) return;
     const follow = this.nearChatBottom() || this.isMyChatEntry(entry);
+    if (this.timelineLoading) this.chatEventsDuringLoad.set(entry.id, entry);
     this.mergeChatEntries([entry], follow);
   }
 
@@ -229,6 +231,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     const kind = this.timelineKind;
     const version = ++this.timelineRequestVersion;
     this.timelineLoading = true;
+    if (kind === 'CHAT') this.chatEventsDuringLoad.clear();
     this.timelineError = '';
     this.timelineService.list(communityId, kind)
       .pipe(timeout(10_000), finalize(() => {
@@ -239,8 +242,18 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
           if (version === this.timelineRequestVersion && this.selected?.id === communityId
               && this.timelineKind === kind) {
             if (kind === 'CHAT') {
-              // An HTTP response must not overwrite messages received over the socket.
-              this.mergeChatEntries(entries, this.timelineEntries.length === 0 || this.nearChatBottom());
+              // HTTP history is authoritative, including moderators' deletions.
+              // Preserve only websocket messages received while the HTTP request ran.
+              const follow = this.timelineEntries.length === 0 || this.nearChatBottom();
+              const byId = new Map(entries.map(entry => [entry.id, entry]));
+              for (const entry of this.chatEventsDuringLoad.values()) byId.set(entry.id, entry);
+              this.timelineEntries = this.sortChatEntries([...byId.values()]);
+              this.chatEventsDuringLoad.clear();
+              if (follow) this.chatScrollRequested = true;
+              if (this.chatDeliveryUncertain
+                  && this.timelineEntries.some(entry => this.matchesPendingChatDelivery(entry))) {
+                this.confirmChatDelivery();
+              }
             } else this.timelineEntries = entries;
           }
         },
@@ -945,6 +958,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     this.pendingJoinRequestsLoading = false;
     this.pendingJoinRequests = [];
     ++this.timelineRequestVersion;
+    this.chatEventsDuringLoad.clear();
     this.timelineEntries = [];
     this.timelineError = '';
     this.timelineLoading = false;
@@ -1022,6 +1036,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     this.chatDeliveryUncertain = false;
     this.pendingChatDelivery = undefined;
     ++this.timelineRequestVersion;
+    this.chatEventsDuringLoad.clear();
     this.timelineEntries = [];
     this.timelineError = '';
     this.timelineLoading = false;
