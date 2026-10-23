@@ -111,7 +111,6 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   chatDeliveryChecking = false;
   private pendingChatDelivery?: { communityId: number; text: string; ids: Set<number>; at: number };
   private chatScrollRequested = false;
-  private readonly maxChatEntries = 60;
   private timelineRequestVersion = 0;
 
   private currentChatUsername(): string | null {
@@ -144,7 +143,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
 
   private sortChatEntries(entries: CommunityTimelineEntry[]): CommunityTimelineEntry[] {
     return [...entries].sort((a, b) =>
-      a.createdAt.localeCompare(b.createdAt) || a.id - b.id).slice(-this.maxChatEntries);
+      a.createdAt.localeCompare(b.createdAt) || a.id - b.id).slice(-60);
   }
 
   private mergeChatEntries(entries: CommunityTimelineEntry[], follow = false): void {
