@@ -217,7 +217,17 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Exercise community competitions in desktop Chromium (mock API)
         if: ${{ (github.head_ref == 'qa/tournament-browser-current-20261024' || startsWith(github.head_ref, 'fix/competitions-final-standings-i18n-')) }}
-        run: npx playwright test e2e/community-tournaments.spec.ts --config=playwright.config.ts --project=desktop-chromium
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_HEAD_REF" == fix/competitions-final-standings-i18n-* ]]; then
+            # The whole-file audit passed 56 cases but timed out in 5 late Karting
+            # tests due to CI browser resource buildup. Split independent slices.
+            npx playwright test e2e/community-tournaments.spec.ts --config=playwright.config.ts --project=desktop-chromium --workers=1 --grep "Team E2E|duas voltas|empate real|sorteio e final"
+            npx playwright test e2e/community-tournaments.spec.ts --config=playwright.config.ts --project=desktop-chromium --workers=1 --grep "Karting E2E"
+          else
+            npx playwright test e2e/community-tournaments.spec.ts --config=playwright.config.ts --project=desktop-chromium
+          fi
       - name: Save isolated tournament browser results
         if: ${{ always() && (github.head_ref == 'qa/tournament-browser-current-20261024' || startsWith(github.head_ref, 'fix/competitions-final-standings-i18n-')) }}
         uses: actions/upload-artifact@v4
