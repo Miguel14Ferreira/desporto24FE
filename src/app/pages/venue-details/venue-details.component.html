@@ -1,15 +1,30 @@
 <section class="venue-detail-page">
   <div class="venue-detail-shell">
-    <a class="back-link" routerLink="/menu/discover">{{ 'venue.detail.back' | t }}</a>
+    <a class="back-link" routerLink="/menu/venues">← {{ 'venue.catalog.backToList' | t }}</a>
 
     @if (loading) {
       <div class="venue-state">{{ 'venue.detail.loading' | t }}</div>
     } @else if (loadError || !venue) {
-      <div class="venue-state venue-state-error">{{ 'venue.detail.error' | t }}</div>
+      <div class="venue-state venue-state-error" role="alert">
+        <strong>{{ 'venue.detail.error' | t }}</strong>
+        <p>{{ 'venue.catalog.loadFailedHelp' | t }}</p>
+        <div class="venue-error-actions">
+          <button class="jynlo-action jynlo-action--primary" type="button" (click)="retryVenue()">{{ 'common.retry' | t }}</button>
+          <a class="jynlo-action jynlo-action--neutral" routerLink="/menu/venues">{{ 'venue.catalog.backToList' | t }}</a>
+        </div>
+      </div>
     } @else {
       <header class="venue-header">
         <span class="venue-kicker">{{ 'venue.detail.kicker' | t }}</span>
         <h1>{{ venue.name }}</h1>
+        <p class="venue-hero-location">📍 {{ venue.city }}@if (venue.district && venue.district !== venue.city) {, {{ venue.district }}}</p>
+        @if (venue.sports) {
+          <div class="venue-hero-sports">
+            @for (sport of venue.sports.split(','); track sport) {
+              <span>{{ sport.trim() }}</span>
+            }
+          </div>
+        }
 
         <div class="venue-provenance">
           <span class="venue-source-badge">
