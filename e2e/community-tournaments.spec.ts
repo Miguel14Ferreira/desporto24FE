@@ -1914,8 +1914,8 @@ test('Karting E2E: criador configura pontos, associa corrida e participante cons
 
     await a.getByRole('button', { name: 'Criar liga individual' }).click();
     await a.getByLabel('Nome do torneio').fill('Taça Karting QA');
-    await a.getByRole('button', { name: 'Criar campeonato de Karting' }).click();
-    const race = a.getByRole('region', { name: 'Campeonato de Karting' });
+    await a.getByRole('button', { name: 'Criar campeonato por corridas' }).click();
+    const race = a.getByRole('region', { name: 'Campeonato por corridas' });
     await expect(race).toBeVisible();
     await race.locator('#karting-race-points').fill('30, 20, 10');
     await race.getByRole('button', { name: 'Guardar pontuação' }).click();
@@ -1925,7 +1925,7 @@ test('Karting E2E: criador configura pontos, associa corrida e participante cons
     await race.getByRole('button', { name: 'Associar' }).click();
     await expect(race.getByText('Grande Prémio QA')).toBeVisible();
     await expect(race.getByText(/DNF.*Carla/)).toBeVisible();
-    const table = a.getByRole('table', { name: 'Classificação de Karting' });
+    const table = a.getByRole('table', { name: 'Classificação por corridas' });
     await expect(table.locator('tbody tr')).toHaveCount(2);
     // DNF stays in the race detail but has no championship standing without a finish.
     await expect(table.locator('tbody')).not.toContainText('Carla');
@@ -1935,9 +1935,9 @@ test('Karting E2E: criador configura pontos, associa corrida e participante cons
 
     await b.reload();
     await expect(b.getByRole('heading', { name: 'Taça Karting QA' })).toBeVisible();
-    const memberRace = b.getByRole('region', { name: 'Campeonato de Karting' });
+    const memberRace = b.getByRole('region', { name: 'Campeonato por corridas' });
     await expect(memberRace).toContainText('Grande Prémio QA');
-    await expect(b.getByRole('table', { name: 'Classificação de Karting' })
+    await expect(b.getByRole('table', { name: 'Classificação por corridas' })
       .locator('tbody tr').first()).toContainText('Ana');
     await expect(memberRace.getByRole('button', { name: 'Associar' })).toHaveCount(0);
     await expect(memberRace.getByRole('button', { name: 'Retirar' })).toHaveCount(0);
@@ -1960,8 +1960,8 @@ test('Karting E2E: pontuação crescente falha e deixa de ser editável após as
   await page.goto('/menu/communities/7?tab=tournaments');
   await page.getByRole('button', { name: 'Criar liga individual' }).click();
   await page.getByLabel('Nome do torneio').fill('Karting QA');
-  await page.getByRole('button', { name: 'Criar campeonato de Karting' }).click();
-  const race = page.getByRole('region', { name: 'Campeonato de Karting' });
+  await page.getByRole('button', { name: 'Criar campeonato por corridas' }).click();
+  const race = page.getByRole('region', { name: 'Campeonato por corridas' });
   await race.locator('#karting-race-points').fill('18,25,10');
   await race.getByRole('button', { name: 'Guardar pontuação' }).click();
   await expect(page.getByText(/pontos inteiros decrescentes/)).toBeVisible();
@@ -1995,9 +1995,9 @@ test('Karting E2E: encerra com campeão e mantém arquivo imutável em dois brow
     ]);
     await a.getByRole('button', { name: 'Criar liga individual' }).click();
     await a.getByLabel('Nome do torneio').fill('Campeonato arquivado QA');
-    await a.getByRole('button', { name: 'Criar campeonato de Karting' }).click();
-    const section = a.getByRole('region', { name: 'Campeonato de Karting' });
-    const close = section.getByRole('button', { name: 'Encerrar campeonato de Karting' });
+    await a.getByRole('button', { name: 'Criar campeonato por corridas' }).click();
+    const section = a.getByRole('region', { name: 'Campeonato por corridas' });
+    const close = section.getByRole('button', { name: 'Encerrar campeonato por corridas' });
     await expect(close).toBeDisabled();
     await section.getByRole('button', { name: 'Associar' }).click();
     await expect(close).toBeEnabled();
@@ -2015,7 +2015,7 @@ test('Karting E2E: encerra com campeão e mantém arquivo imutável em dois brow
     await expect(section.getByText('Classificação final arquivada')).toBeVisible();
     await expect(section.getByRole('button', { name: 'Retirar' })).toHaveCount(0);
     await expect(section.getByRole('button', { name: 'Associar' })).toHaveCount(0);
-    await expect(section.getByRole('button', { name: 'Encerrar campeonato de Karting' }))
+    await expect(section.getByRole('button', { name: 'Encerrar campeonato por corridas' }))
       .toHaveCount(0);
     expect(state.tournament?.status).toBe('COMPLETED');
     expect(state.tournament?.championProfileId).toBe(2);
@@ -2027,13 +2027,13 @@ test('Karting E2E: encerra com campeão e mantém arquivo imutável em dois brow
     state.linked = false;
     state.tied = true;
     await Promise.all([a.reload(), b.reload()]);
-    const archived = b.getByRole('region', { name: 'Campeonato de Karting' });
+    const archived = b.getByRole('region', { name: 'Campeonato por corridas' });
     const memberPodium = b.getByRole('region', { name: 'Pódio final' });
     await expect(memberPodium.locator('.karting-podium-place').first()).toContainText('Ana');
     await expect(archived.getByText('Classificação final arquivada')).toBeVisible();
     await expect(archived.getByText('Grande Prémio QA')).toBeVisible();
     await expect(archived.getByText('25 · 18 · 15 pontos')).toBeVisible();
-    const standings = b.getByRole('table', { name: 'Classificação de Karting' });
+    const standings = b.getByRole('table', { name: 'Classificação por corridas' });
     await expect(standings.locator('tbody tr')).toHaveCount(2);
     await expect(archived.getByText(/DNF.*Carla/)).toBeVisible();
     await expect(standings.locator('tbody')).not.toContainText('Carla');
@@ -2041,7 +2041,7 @@ test('Karting E2E: encerra com campeão e mantém arquivo imutável em dois brow
     await expect(standings.locator('tbody tr').first()).toContainText('25');
     await expect(archived.getByRole('button', { name: 'Retirar' })).toHaveCount(0);
     await expect(archived.getByRole('button', { name: 'Guardar pontuação' })).toHaveCount(0);
-    await expect(archived.getByRole('button', { name: 'Encerrar campeonato de Karting' }))
+    await expect(archived.getByRole('button', { name: 'Encerrar campeonato por corridas' }))
       .toHaveCount(0);
     expect(state.writes.filter(x => x.role === 'MEMBER')).toEqual([]);
     expect(ownerApi.unmocked.filter(x => x.includes('/tournaments'))).toEqual([]);
@@ -2062,12 +2062,12 @@ test('Karting E2E: empate no primeiro lugar não inventa campeão', async ({ pag
   await page.goto('/menu/communities/7?tab=tournaments');
   await page.getByRole('button', { name: 'Criar liga individual' }).click();
   await page.getByLabel('Nome do torneio').fill('Karting empatado QA');
-  await page.getByRole('button', { name: 'Criar campeonato de Karting' }).click();
-  const race = page.getByRole('region', { name: 'Campeonato de Karting' });
+  await page.getByRole('button', { name: 'Criar campeonato por corridas' }).click();
+  const race = page.getByRole('region', { name: 'Campeonato por corridas' });
   await race.getByRole('button', { name: 'Associar' }).click();
-  const table = page.getByRole('table', { name: 'Classificação de Karting' });
+  const table = page.getByRole('table', { name: 'Classificação por corridas' });
   await expect(table.locator('tbody tr')).toHaveCount(2);
-  await race.getByRole('button', { name: 'Encerrar campeonato de Karting' }).click();
+  await race.getByRole('button', { name: 'Encerrar campeonato por corridas' }).click();
   await race.getByRole('button', { name: 'Sim, encerrar e guardar classificação' }).click();
   await expect(page.getByText('Empate no primeiro lugar', { exact: true })).toBeVisible();
   await expect(page.getByText('Campeão:', { exact: false })).toHaveCount(0);
@@ -2089,11 +2089,11 @@ test('Karting E2E: PT/EN acompanha idioma da Jynlo em pontuação e arquivo', as
   await page.goto('/menu/communities/7?tab=tournaments');
   await page.getByRole('button', { name: 'Criar liga individual' }).click();
   await page.getByLabel('Nome do torneio').fill('Karting languages QA');
-  await page.getByRole('button', { name: 'Criar campeonato de Karting' }).click();
+  await page.getByRole('button', { name: 'Criar campeonato por corridas' }).click();
 
   await page.evaluate(() => localStorage.setItem('d24-language', 'en'));
   await page.reload();
-  const race = page.getByRole('region', { name: 'Karting championship' });
+  const race = page.getByRole('region', { name: 'Racing championship' });
   await expect(race.getByText('Championship races')).toBeVisible();
   await expect(race.getByText('Points by position')).toBeVisible();
   await expect(race.getByLabel('Points from first place onward, separated by commas')).toBeVisible();
@@ -2105,11 +2105,11 @@ test('Karting E2E: PT/EN acompanha idioma da Jynlo em pontuação e arquivo', as
   await race.locator('#karting-race-points').fill('25,18,15');
   await race.getByRole('button', { name: 'Save points' }).click();
   await race.getByRole('button', { name: 'Link' }).click();
-  await expect(race.getByRole('table', { name: 'Karting standings' })
+  await expect(race.getByRole('table', { name: 'Race championship standings' })
     .locator('tbody tr')).toHaveCount(2);
   await expect(race.getByText(/DNF.*Carla/)).toBeVisible();
 
-  await race.getByRole('button', { name: 'Finish Karting championship' }).click();
+  await race.getByRole('button', { name: 'Finish racing championship' }).click();
   await race.getByRole('button', { name: 'Yes, finish and archive standings' }).click();
   const finalPodium = page.getByRole('region', { name: 'Final podium' });
   await expect(finalPodium.locator('.karting-podium-place').first()).toContainText('Ana');
@@ -2118,7 +2118,7 @@ test('Karting E2E: PT/EN acompanha idioma da Jynlo em pontuação e arquivo', as
 
   await page.evaluate(() => localStorage.setItem('d24-language', 'pt'));
   await page.reload();
-  const portuguese = page.getByRole('region', { name: 'Campeonato de Karting' });
+  const portuguese = page.getByRole('region', { name: 'Campeonato por corridas' });
   await expect(page.getByRole('region', { name: 'Pódio final' })
     .locator('.karting-podium-place').first()).toContainText('Ana');
   await expect(portuguese.getByText('Classificação final arquivada')).toBeVisible();
