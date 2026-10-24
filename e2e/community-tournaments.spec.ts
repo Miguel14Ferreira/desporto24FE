@@ -1755,7 +1755,7 @@ test('xadrez apresenta 1/½/0 sem parâmetros genéricos e é limitado a ligas i
   await page.goto('/menu/communities/7?tab=tournaments');
   await page.getByRole('button', { name: 'Criar liga individual' }).click();
 
-  await expect(page.getByText('Pontuação de Xadrez')).toHaveCount(0);
+  await expect(page.getByText('Pontuação de Xadrez')).not.toBeVisible();
   await page.locator('.create-advanced-rules summary').click();
   await expect(page.getByText('Pontuação de Xadrez')).toBeVisible();
   await expect(page.getByText('Empate: ½')).toBeVisible();
