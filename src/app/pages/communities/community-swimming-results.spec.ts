@@ -23,7 +23,8 @@ describe('Natação: individual 50m-pool results', () => {
     expect(athleticsDisciplineValid('Natação', 'SWIM_LCM', 'IM_100')).toBeFalse();
     expect(athleticsDisciplineValid('Natação Artística', 'SWIM_LCM', 'FREE_50')).toBeFalse();
     expect(eventOptionsForSport('Natação Artística').some(x => x.code === 'SWIM_LCM')).toBeFalse();
-    expect(eventOptionsForSport('Natação em Águas Abertas')).toEqual([]);
+    expect(eventOptionsForSport('Natação em Águas Abertas').map(event => event.code))
+      .toEqual(['OWS_INDIVIDUAL']);
   });
 
   it('reuses race time display but not generic place or football WDL scoring', () => {
