@@ -86,6 +86,9 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   composerSuccess = '';
   private composerVersion = 0;
   private readonly drafts = new Map<string, string>();
+  // Text and reply target form one draft. Switching chat must never turn
+  // a quoted reply into a plain message, or leak the quote to another chat.
+  private readonly replyDrafts = new Map<string, InboxMessage>();
   private readonly pendingByConversation = new Map<string, RecoverableSend>();
   private restorePendingAfterInitialInbox = false;
   // Send and delivery checks belong to conversations, not the entire inbox.
@@ -419,6 +422,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
         if (!failedKinds.has(kind) && !entries.some(item => item.key === key)) {
           this.pendingByConversation.delete(key);
           this.drafts.delete(key);
+          this.replyDrafts.delete(key);
           discarded = true;
         }
       }
@@ -484,7 +488,12 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
 
   selectConversation(conversation: InboxConversation): void {
     if (conversation.key === this.selectedKey && !this.previewError) return;
-    if (this.selectedKey) this.drafts.set(this.selectedKey, this.draft);
+    if (this.selectedKey) {
+      this.drafts.set(this.selectedKey, this.draft);
+      if (this.replyingTo?.key === this.selectedKey && this.replyingTo.id > 0)
+        this.replyDrafts.set(this.selectedKey, this.replyingTo);
+      else this.replyDrafts.delete(this.selectedKey);
+    }
     this.typing.stop();
     this.selectedKey = conversation.key;
     ++this.peerReceiptVersion;
@@ -497,7 +506,9 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.historyLocateError = false;
     this.pendingScrollToMessageId = null;
     this.resetMessageSearch();
-    this.replyingTo = null;
+    const savedReply = this.replyDrafts.get(conversation.key);
+    this.replyingTo = savedReply?.key === conversation.key && savedReply.id > 0
+      ? savedReply : null;
     this.draft = this.drafts.get(conversation.key) || '';
     this.deliveryUncertain = this.pendingByConversation.has(conversation.key);
     this.sending = this.sendingKeys.has(conversation.key);
@@ -864,11 +875,14 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     if (message.id <= 0 || message.key !== this.selectedKey
         || !this.composerAllowed || this.sending || this.deliveryUncertain) return;
     this.replyingTo = message;
+    this.replyDrafts.set(message.key, message);
     this.composerTextarea?.nativeElement.focus({ preventScroll: true });
   }
 
   cancelReply(): void {
-    if (!this.sending && !this.deliveryUncertain) this.replyingTo = null;
+    if (this.sending || this.deliveryUncertain) return;
+    if (this.selectedKey) this.replyDrafts.delete(this.selectedKey);
+    this.replyingTo = null;
   }
 
   onTypingInput(): void {
@@ -950,6 +964,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
         // even if the user navigated elsewhere while the POST was pending.
         this.acceptRealtime(key, message);
         this.drafts.delete(key);
+        this.replyDrafts.delete(key);
         this.pendingByConversation.delete(key);
         this.inFlightByConversation.delete(key);
         this.persistPendingSends();
@@ -1036,6 +1051,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       // verification finishes after navigation to a different conversation.
       // Never clear the currently edited draft of another thread.
       this.drafts.delete(key);
+      this.replyDrafts.delete(key);
       this.sendErrorsByConversation.delete(key);
       if (this.selectedKey === key) {
         this.deliveryUncertain = false;

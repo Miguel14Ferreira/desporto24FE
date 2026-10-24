@@ -746,6 +746,102 @@ describe('Unified Jynlo message center', () => {
     expect(component.replyingTo).toBeNull();
   });
 
+  it('restores each reply target with its draft when switching chats', () => {
+    const bea=item('direct','bea'), group=item('community',7);
+    component.conversations=[bea,group];
+    direct.recentHistory.and.returnValue(of({last:true,content:[{
+      id:41,username1:'bea',username2:'ana',text:'Vens jogar?',
+      date:'2026-10-23T09:00:00Z',dataDisplay:null
+    }]} as any));
+    timeline.list.and.returnValue(of([{
+      id:51,communityId:7,kind:'CHAT',username:'carla',
+      body:'A que horas?',createdAt:'2026-10-23T10:00:00Z'
+    }] as any));
+    component.selectConversation(bea);
+    component.replyToMessage(component.messages[0]);
+    component.draft='Sim!';
+    component.selectConversation(group);
+    expect(component.replyingTo).toBeNull();
+    component.replyToMessage(component.messages[0]);
+    component.draft='Às 18h';
+
+    component.selectConversation(bea);
+    expect(component.draft).toBe('Sim!');
+    expect(component.replyingTo).toEqual(jasmine.objectContaining({
+      key:bea.key,id:41,text:'Vens jogar?'
+    }));
+    component.selectConversation(group);
+    expect(component.draft).toBe('Às 18h');
+    expect(component.replyingTo).toEqual(jasmine.objectContaining({
+      key:group.key,id:51,text:'A que horas?'
+    }));
+
+    component.selectConversation(bea);
+    direct.send.and.returnValue(of({id:55,username1:'ana',username2:'bea',
+      text:'Sim!',date:new Date().toISOString(),dataDisplay:null,
+      replyToMessageId:41,replyToText:'Vens jogar?',replyToSender:'bea'} as any));
+    component.sendMessage();
+    expect(direct.send).toHaveBeenCalledOnceWith('bea','Sim!',41);
+    expect(component.replyingTo).toBeNull();
+    component.selectConversation(group);
+    expect(component.replyingTo?.id).toBe(51);
+    component.selectConversation(bea);
+    expect(component.draft).toBe('');
+    expect(component.replyingTo).toBeNull();
+  });
+
+  it('cancels a quoted draft only for its current conversation', () => {
+    const bea=item('direct','bea'), group=item('community',7);
+    component.conversations=[bea,group];
+    direct.recentHistory.and.returnValue(of({last:true,content:[{
+      id:41,username1:'bea',username2:'ana',text:'Olá',
+      date:'2026-10-23T09:00:00Z',dataDisplay:null
+    }]} as any));
+    timeline.list.and.returnValue(of([{
+      id:42,communityId:7,kind:'CHAT',username:'carla',
+      body:'Olá grupo',createdAt:'2026-10-23T10:00:00Z'
+    }] as any));
+    component.selectConversation(bea);
+    component.replyToMessage(component.messages[0]);
+    component.draft='Mensagem privada';
+    component.selectConversation(group);
+    component.replyToMessage(component.messages[0]);
+    component.cancelReply();
+    expect(component.replyingTo).toBeNull();
+    component.selectConversation(bea);
+    expect(component.replyingTo?.id).toBe(41);
+    component.selectConversation(group);
+    expect(component.replyingTo).toBeNull();
+    expect(component.draft).toBe('');
+  });
+
+  it('clears an off-screen reply target only when that conversation send is confirmed', () => {
+    const bea=item('direct','bea'), group=item('community',7);
+    component.conversations=[bea,group];
+    direct.recentHistory.and.returnValue(of({last:true,content:[{
+      id:41,username1:'bea',username2:'ana',text:'Responde',
+      date:'2026-10-23T09:00:00Z',dataDisplay:null
+    }]} as any));
+    timeline.list.and.returnValue(of([]));
+    const post=new Subject<any>();
+    direct.send.and.returnValue(post.asObservable());
+    component.selectConversation(bea);
+    component.replyToMessage(component.messages[0]);
+    component.draft='Uma resposta';
+    component.sendMessage();
+    component.selectConversation(group);
+    component.draft='O meu outro rascunho';
+    post.next({id:52,username1:'ana',username2:'bea',text:'Uma resposta',
+      date:new Date().toISOString(),dataDisplay:null,
+      replyToMessageId:41,replyToText:'Responde',replyToSender:'bea'});
+    post.complete();
+    expect(component.draft).toBe('O meu outro rascunho');
+    component.selectConversation(bea);
+    expect(component.draft).toBe('');
+    expect(component.replyingTo).toBeNull();
+    expect(direct.send).toHaveBeenCalledOnceWith('bea','Uma resposta',41);
+  });
+
   it('does not POST direct messages when the original chat is blocked', () => {
     const selected = item('direct', 'bea');
     component.conversations = [selected];
