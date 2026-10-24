@@ -375,6 +375,63 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
       historicalArchives.unshift(item);
       return send(item);
     }
+
+    // Karting-only API fixture. Shared across independently authenticated
+    // browser contexts, never forwarding requests outside the local test app.
+    if (mode === 'karting' && karting) {
+      const base = '/api/communities/7/tournaments/11/races';
+      if (path === '/api/communities/7/tournaments' && method === 'GET') {
+        return send({ tournaments: karting.tournament ? [karting.tournament] : [],
+          page: 0, hasMore: false });
+      }
+      if (path === '/api/communities/7/tournaments' && method === 'POST') {
+        karting.writes.push({ role, path });
+        const body = req.postDataJSON() as { name: string; sport: string; scoringMode: string };
+        if (role !== 'OWNER') return send({ message: 'Sem permissão' }, 403);
+        if (body.sport !== 'Karting' || body.scoringMode !== 'RACE_POINTS')
+          return send({ message: 'Formato incorreto' }, 422);
+        karting.tournament = { ...tournament(11, body.name),
+          sport: 'Karting', entryType: 'INDIVIDUAL', scoringMode: 'RACE_POINTS' };
+        return send(karting.tournament, 201);
+      }
+      if (path === base && method === 'GET') {
+        return karting.tournament ? send(raceData(karting))
+          : send({ message: 'Não existe' }, 404);
+      }
+      if (path === base + '/points' && method === 'PUT') {
+        karting.writes.push({ role, path });
+        if (role !== 'OWNER') return send({ message: 'Sem permissão' }, 403);
+        if (!karting.tournament || karting.linked || karting.tournament.status !== 'DRAFT')
+          return send({ message: 'Pontuação fechada' }, 409);
+        const body = req.postDataJSON() as { pointsByPlace: string };
+        const parts = body.pointsByPlace.split(',').map(v => v.trim());
+        const values = parts.map(Number);
+        if (!parts.length || parts.length > 20 || parts.some(v => !/^\d{1,4}$/.test(v))
+            || values.some((v, i) => v > 1000 || (i > 0 && v > values[i-1])))
+          return send({ message: 'Pontuação inválida' }, 422);
+        karting.points = values;
+        return send(raceData(karting));
+      }
+      if (path === base + '/30' && method === 'PUT') {
+        karting.writes.push({ role, path });
+        if (role !== 'OWNER') return send({ message: 'Sem permissão' }, 403);
+        if (!karting.tournament || karting.linked)
+          return send({ message: 'Corrida indisponível' }, 409);
+        karting.linked = true;
+        karting.tournament.status = 'IN_PROGRESS';
+        return send(raceData(karting));
+      }
+      if (path === base + '/30' && method === 'DELETE') {
+        karting.writes.push({ role, path });
+        if (role !== 'OWNER') return send({ message: 'Sem permissão' }, 403);
+        if (!karting.tournament || !karting.linked)
+          return send({ message: 'Corrida indisponível' }, 409);
+        karting.linked = false;
+        karting.tournament.status = 'DRAFT';
+        return send(raceData(karting));
+      }
+    }
+
     if (path === '/api/communities/7/tournaments') {
       if (method === 'GET') {
         listAttempts++;
