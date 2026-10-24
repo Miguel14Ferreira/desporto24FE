@@ -183,6 +183,79 @@ describe('Unified Jynlo message center', () => {
       && message.attachmentName === 'jogo.pdf')).toBeTrue();
   });
 
+  it('keeps the microphone disabled without authorized private storage', async () => {
+    const peer = item('direct', 'bea');
+    component.conversations = [peer];
+    component.selectedKey = peer.key;
+    component.composerAllowed = true;
+    component.attachmentReady = false;
+    await component.startVoiceRecording();
+    expect(component.voiceRecording).toBeFalse();
+    expect(component.selectedAttachment).toBeNull();
+    expect(direct.sendAttachment).not.toHaveBeenCalled();
+  });
+
+  it('does not permit a send while the microphone records or finalizes', () => {
+    const peer = item('direct', 'bea');
+    component.conversations = [peer];
+    component.selectedKey = peer.key;
+    component.composerAllowed = true;
+    component.attachmentReady = true;
+    component.draft = 'Olá';
+    expect(component.canSendMessage()).toBeTrue();
+    component.voiceRecording = true;
+    expect(component.canSendMessage()).toBeFalse();
+    component.sendMessage();
+    expect(direct.send).not.toHaveBeenCalled();
+    component.voiceRecording = false;
+    component.voiceFinalizing = true;
+    expect(component.canSendMessage()).toBeFalse();
+    component.sendMessage();
+    expect(direct.send).not.toHaveBeenCalled();
+  });
+
+  it('sends an Opus voice note once, only after the user confirms Send', () => {
+    const peer = item('direct', 'bea');
+    component.conversations = [peer];
+    component.selectedKey = peer.key;
+    component.composerAllowed = true;
+    component.attachmentReady = true;
+    const file = new File(['OggS OpusHead'], 'voz.ogg', {type:'audio/ogg'});
+    component.selectedAttachment = file;
+    expect(direct.sendAttachment).not.toHaveBeenCalled();
+    direct.sendAttachment.and.returnValue(of({
+      id:52,username1:'ana',username2:'bea',text:'📎 voz.ogg',
+      attachmentName:'voz.ogg',attachmentMimeType:'audio/ogg',
+      attachmentSize:14,date:new Date().toISOString(),dataDisplay:null
+    }));
+    component.sendMessage();
+    expect(direct.sendAttachment).toHaveBeenCalledOnceWith('bea',file,'',undefined);
+    expect(direct.send).not.toHaveBeenCalled();
+    expect(component.selectedAttachment).toBeNull();
+    expect(component.messages.some(message => message.id === 52
+      && message.attachmentMimeType === 'audio/ogg')).toBeTrue();
+  });
+
+  it('downloads voice playback through the authenticated chat endpoint only', () => {
+    const peer = item('direct', 'bea');
+    const note = {
+      ...message(peer.key, 77, 'bea'), attachmentName:'voz.webm',
+      attachmentMimeType:'audio/webm', attachmentSize:100
+    };
+    component.conversations = [peer];
+    component.selectedKey = peer.key;
+    direct.downloadAttachment.and.returnValue(of(new Blob(['voice'], {type:'audio/webm'})));
+    const created = spyOn(URL, 'createObjectURL').and.returnValue('blob:private-voice');
+    const revoked = spyOn(URL, 'revokeObjectURL');
+    component.openAttachment(note);
+    expect(direct.downloadAttachment).toHaveBeenCalledOnceWith('bea',77);
+    expect(created).toHaveBeenCalled();
+    expect(component.attachmentPreviews.get(77)).toBe('blob:private-voice');
+    component.openAttachment(note);
+    expect(revoked).toHaveBeenCalledWith('blob:private-voice');
+    expect(component.attachmentPreviews.size).toBe(0);
+  });
+
   it('searches full chat history through an authorized scoped request without marking read', () => {
     const selected = item('direct', 'bea');
     component.conversations = [selected];
