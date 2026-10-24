@@ -1022,6 +1022,9 @@
                   @if (selected.sport === 'Ciclismo de Estrada') {
                     <p>{{ 'communities.roadCycling.championshipNotice' | t }}</p>
                   }
+                  @if (selected.sport === 'Ciclismo de Pista') {
+                    <p>{{ 'communities.trackCycling.championshipNotice' | t }}</p>
+                  }
                   @if (selected.sport === 'Ciclismo' || selected.sport === 'Mountain Bike' || selected.sport === 'Ciclocrosse') {
                     <p>{{ 'communities.race.communityScoring' | t }}</p>
                   }

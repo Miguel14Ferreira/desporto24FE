@@ -83,7 +83,8 @@ function createKartingFixture(sport = 'Karting'): KartingFixture {
 function raceData(state: KartingFixture) {
   const race = {
     id: 30, name: 'Grande Prémio QA', sport: state.sport,
-    eventType: state.sport === 'Ciclismo de Estrada' ? 'ROAD_RACE' : null,
+    eventType: state.sport === 'Ciclismo de Estrada' ? 'ROAD_RACE'
+      : state.sport === 'Ciclismo de Pista' ? 'TRACK_SCRATCH' : null,
     playedAt: '2026-10-23T18:00:00Z',
     entries: [
       { communityPlayerId: 2, fullName: 'Ana', finishPosition: 1, elapsedSeconds: 612,
@@ -1898,6 +1899,27 @@ test('xadrez apresenta 1/½/0 sem parâmetros genéricos e é limitado a ligas i
   await expect(page.getByText(/Xadrez por equipas precisa de partidas e resultados por tabuleiro/)).toBeVisible();
 });
 
+
+test('Track cycling E2E: only Scratch races join the community position championship', async ({ page }) => {
+  const state = createKartingFixture('Ciclismo de Pista');
+  const mock = await mockCommunityApi(page, 'OWNER', 'karting', 'Ciclismo de Pista',
+    ['Ciclismo de Pista'], 1, 'LEAGUE', state);
+  await page.goto('/menu/communities/7?tab=tournaments');
+  await page.getByRole('button', { name: 'Criar liga individual' }).click();
+  await page.getByLabel('Nome do torneio').fill('Taça Scratch QA');
+  await expect(page.locator('.classification-fixed-points')).toContainText('Ciclismo de Pista');
+  await page.getByRole('button', { name: 'Criar campeonato por corridas' }).click();
+  const race = page.getByRole('region', { name: 'Campeonato por corridas' });
+  await expect(race).toContainText('Ciclismo de Pista');
+  await expect(race).toContainText('Apenas Jornadas Scratch');
+  await race.getByRole('button', { name: 'Associar' }).click();
+  const table = page.getByRole('table', { name: 'Classificação por corridas' });
+  await expect(table.locator('tbody tr')).toHaveCount(2);
+  await expect(table.locator('tbody tr').first()).toContainText('Ana');
+  await expect(table.locator('tbody tr').first()).toContainText('25');
+  expect(state.tournament?.sport).toBe('Ciclismo de Pista');
+  expect(mock.unmocked.filter(path => path.includes('/tournaments'))).toEqual([]);
+});
 
 test('Road cycling E2E: only road-race positions feed the community championship', async ({ page }) => {
   const state = createKartingFixture('Ciclismo de Estrada');

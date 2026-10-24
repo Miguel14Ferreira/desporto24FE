@@ -704,6 +704,16 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     return raceSupportsLaps(sport);
   }
 
+  /** Do not keep invisible Scratch lap metrics after switching to a timed event. */
+  onRoundEventTypeChange(): void {
+    if (this.newRoundEventType === 'TRACK_TIME_TRIAL') {
+      for (const entry of this.roundEntries) {
+        entry.lapsCompleted = null;
+        entry.bestLapSeconds = null;
+      }
+    }
+  }
+
   raceTime(seconds: number | null | undefined): string | null {
     return formatRaceSeconds(seconds);
   }
@@ -3450,9 +3460,12 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       return;
     }
     if (race) {
-      if (this.newRoundSport === 'Ciclismo de Estrada' && this.newRoundEventType === 'TIME_TRIAL'
+      if ((this.newRoundSport === 'Ciclismo de Estrada' && this.newRoundEventType === 'TIME_TRIAL'
+          || this.newRoundSport === 'Ciclismo de Pista' && this.newRoundEventType === 'TRACK_TIME_TRIAL')
           && roadTimeTrialEntryInvalid(selectedEntries)) {
-        this.errorMessage = t('communities.roadCycling.timeTrialInvalid');
+        this.errorMessage = t(this.newRoundEventType === 'TRACK_TIME_TRIAL'
+          ? 'communities.trackCycling.timeTrialInvalid'
+          : 'communities.roadCycling.timeTrialInvalid');
         return;
       }
       const invalid = raceEntryValidationError(selectedEntries);
@@ -3482,8 +3495,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
         ...(race ? {
           finishPosition: entry.finishPosition ?? null,
           elapsedSeconds: entry.elapsedSeconds ?? null,
-          bestLapSeconds: this.raceSupportsLaps(this.newRoundSport) ? entry.bestLapSeconds ?? null : null,
-          lapsCompleted: this.raceSupportsLaps(this.newRoundSport) ? entry.lapsCompleted ?? null : null
+          bestLapSeconds: this.raceSupportsLaps(this.newRoundSport) && this.newRoundEventType !== 'TRACK_TIME_TRIAL' ? entry.bestLapSeconds ?? null : null,
+          lapsCompleted: this.raceSupportsLaps(this.newRoundSport) && this.newRoundEventType !== 'TRACK_TIME_TRIAL' ? entry.lapsCompleted ?? null : null
         } : {})
       }));
 

@@ -170,7 +170,7 @@ describe('Community tournaments management', () => {
   });
 
   it('creates Ciclismo, Mountain Bike and Ciclocrosse championships using recorded race positions', async () => {
-    for (const [index, sport] of (['Ciclismo', 'Mountain Bike', 'Ciclocrosse', 'Ciclismo de Estrada'] as const).entries()) {
+    for (const [index, sport] of (['Ciclismo', 'Mountain Bike', 'Ciclocrosse', 'Ciclismo de Estrada', 'Ciclismo de Pista'] as const).entries()) {
       component.startIndividualCreation();
       component.nameDraft = 'Campeonato ' + sport;
       component.chooseSport(sport);
@@ -187,7 +187,7 @@ describe('Community tournaments management', () => {
       expect(component.selected?.sport).toBe(sport);
     }
     expect(api.create).not.toHaveBeenCalled();
-    expect(api.createRaceChampionship).toHaveBeenCalledTimes(4);
+    expect(api.createRaceChampionship).toHaveBeenCalledTimes(5);
   });
 
   it('shows lap columns only for races that really have lap metrics', () => {
@@ -205,14 +205,14 @@ describe('Community tournaments management', () => {
   });
 
   it('does not offer cycling race championships as team or specialised event formats', () => {
-    for (const sport of ['Ciclismo', 'Mountain Bike', 'Ciclocrosse', 'Ciclismo de Estrada']) {
+    for (const sport of ['Ciclismo', 'Mountain Bike', 'Ciclocrosse', 'Ciclismo de Estrada', 'Ciclismo de Pista']) {
       component.startTeamCreation();
       component.chooseSport(sport);
       expect(component.isRaceChampionshipDraft).toBeFalse();
       expect(component.isSportFormatSupported).toBeFalse();
     }
     component.startIndividualCreation();
-    for (const sport of ['Ciclismo de Pista', 'Corrida de obstáculos', 'Triatlo']) {
+    for (const sport of ['Corrida de obstáculos', 'Triatlo']) {
       component.chooseSport(sport);
       expect(component.isRaceChampionshipDraft).toBeFalse();
       expect(component.isSportFormatSupported).toBeFalse();

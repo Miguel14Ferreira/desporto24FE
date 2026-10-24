@@ -38,6 +38,9 @@ describe('Race results with recorded measures', () => {
     expect(roadTimeTrialEntryInvalid([{ ...racer(1, 92.430), lapsCompleted: 4 }])).toBeTrue();
     expect(roadTimeTrialEntryInvalid([{ ...racer(1, 92.430), bestLapSeconds: 30 }])).toBeTrue();
     expect(raceSupportsLaps('Ciclismo de Estrada')).toBeFalse();
+    expect(raceSupportsLaps('Ciclismo de Pista')).toBeTrue(); // Scratch, not TT
+    // The shared TT validator is used for road and track individual time trials.
+    expect(roadTimeTrialEntryInvalid([racer(1, 66.222), racer(2, 67.331)])).toBeFalse();
   });
 
   it('rejects non-integral/negative laps', () => {
