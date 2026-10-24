@@ -163,6 +163,76 @@ describe('Historic tournament outcome from original spreadsheet', () => {
     expect(result.winner).toBe('A');
   });
 
+
+  const completeKnockout = () => [
+    row(2, 'Águias', 'B', 2, 0, 'Quartos de final 1'),
+    row(3, 'C', 'D', 3, 1, 'Quarter-final 2'),
+    row(4, 'E', 'F', 1, 0, '1/4 final 3'),
+    row(5, 'G', 'H', 2, 0, 'Quartas de finais 4'),
+    row(6, 'Águias', 'C', 2, 1, 'Meia-final 1'),
+    row(7, 'E', 'G', 1, 0, 'Semifinal 2'),
+    row(8, '  aguias  ', 'E', 3, 0, 'Grande Final')
+  ];
+
+  it('validates four explicit quarters through two semifinals into the final', () => {
+    const result = outcome(archive(completeKnockout()), 'KNOCKOUT');
+    expect(result).toEqual({ winner: 'aguias', reason: 'winner-estimated', matchesUsed: 7 });
+  });
+
+  it('does not infer a winner if a quarterfinal winner is absent from semifinals', () => {
+    const matches = completeKnockout();
+    matches[0] = row(2, 'Águias', 'B', 0, 2, 'Quartos de final 1');
+    const result = outcome(archive(matches), 'KNOCKOUT');
+    expect(result.winner).toBeNull();
+    expect(result.reason).toBe('quarterfinal-semifinal-mismatch');
+  });
+
+  it('rejects incomplete quarterfinal evidence rather than inventing missing fixtures', () => {
+    const matches = completeKnockout().filter(match => match.sourceRow !== 5);
+    const result = outcome(archive(matches), 'KNOCKOUT');
+    expect(result.winner).toBeNull();
+    expect(result.reason).toBe('incomplete-quarterfinals');
+  });
+
+  it('refuses to decide a tied quarterfinal without an imported tiebreak', () => {
+    const matches = completeKnockout();
+    matches[1] = row(3, 'C', 'D', 1, 1, 'Quarter-final 2');
+    const result = outcome(archive(matches), 'KNOCKOUT');
+    expect(result.winner).toBeNull();
+    expect(result.reason).toBe('drawn-quarterfinal');
+  });
+
+  it('does not reconstruct unlabelled semifinals from quarterfinals and the final', () => {
+    const matches = completeKnockout().filter(match =>
+      match.sourceRow < 6 || match.sourceRow === 8);
+    const result = outcome(archive(matches), 'KNOCKOUT');
+    expect(result.winner).toBeNull();
+    expect(result.reason).toBe('missing-semifinals-after-quarterfinals');
+  });
+
+  it('rejects repeated entrants in separate quarterfinal fixtures', () => {
+    const matches = completeKnockout();
+    matches[3] = row(5, 'Águias', 'H', 2, 0, 'Quartas de finais 4');
+    const result = outcome(archive(matches), 'KNOCKOUT');
+    expect(result.winner).toBeNull();
+    expect(result.reason).toBe('quarterfinal-semifinal-mismatch');
+  });
+
+  it('does not treat unlabelled earlier matches as quarterfinals', () => {
+    const matches = completeKnockout().slice(4);
+    matches.unshift(row(1, 'I', 'J', 2, 1, 'Jornada 1'));
+    const result = outcome(archive(matches), 'KNOCKOUT');
+    expect(result.reason).toBe('winner-estimated');
+    expect(result.winner).toBe('aguias');
+  });
+
+  it('never edits the source archive while validating quarterfinal progression', () => {
+    const item = archive(completeKnockout());
+    const snapshot = JSON.stringify(item);
+    outcome(item, 'KNOCKOUT');
+    expect(JSON.stringify(item)).toBe(snapshot);
+  });
+
   it('leaves the source archive unchanged', () => {
     const item = archive([row(2, 'Águias', 'Lobos', 1, 0, 'Final')]);
     const before = JSON.stringify(item);
