@@ -29,7 +29,8 @@ describe('Community tournaments management', () => {
       'generateSchedule', 'matches', 'recordResult', 'standings', 'complete', 'delete',
       'createTeamTournament', 'details', 'teams', 'createTeam', 'addTeamPlayer', 'acceptTeamInvite', 'removeTeamPlayer', 'deleteTeam',
       'generateTeamSchedule', 'teamMatches', 'recordTeamResult', 'teamStandings', 'teamGroups', 'completeTeam',
-      'createKartingChampionship', 'raceOverview', 'linkRace', 'unlinkRace', 'setRacePoints'
+      'createKartingChampionship', 'raceOverview', 'linkRace', 'unlinkRace', 'setRacePoints',
+      'completeKarting'
     ]);
     api.list.and.returnValue(of({ tournaments: [draft], page: 0, hasMore: false }));
     api.participants.and.returnValue(of({ participants: [], page: 0, hasMore: false }));
@@ -219,6 +220,49 @@ describe('Community tournaments management', () => {
     component.selected = { ...component.selected, status: 'IN_PROGRESS' };
     await component.saveRacePoints();
     expect(api.setRacePoints).not.toHaveBeenCalled();
+  });
+
+  it('only allows closing Karting with recorded races and classified drivers', async () => {
+    component.selected = { ...draft, id: 19, sport: 'Karting',
+      status: 'IN_PROGRESS', scoringMode: 'RACE_POINTS' };
+    component.raceOverview = {
+      tournamentId: 19, pointsByPlace: [25, 18],
+      linkedRaces: [], availableRaces: [], standings: []
+    };
+    expect(component.canCompleteRace).toBeFalse();
+    component.confirmAction = 'completeRace';
+    await component.completeRace();
+    expect(api.completeKarting).not.toHaveBeenCalled();
+    component.raceOverview.linkedRaces = [{
+      id: 30, name: 'Karting 1', sport: 'Karting',
+      playedAt: '2026-10-24T12:00:00Z', entries: []
+    }];
+    component.raceOverview.standings = [
+      { position: 1, playerId: 10, fullName: 'Ana', races: 1,
+        wins: 1, podiums: 1, bestFinish: 1, championshipPoints: 25, penaltyPoints: 0 },
+      { position: 2, playerId: 11, fullName: 'Rui', races: 1,
+        wins: 0, podiums: 1, bestFinish: 2, championshipPoints: 18, penaltyPoints: 0 }
+    ];
+    expect(component.canCompleteRace).toBeTrue();
+    api.completeKarting.and.returnValue(of({ ...component.selected,
+      status: 'COMPLETED', championProfileId: 10, championDisplayName: 'Ana',
+      championPoints: 25, completedAt: '2026-10-24T13:00:00Z' }));
+    component.confirmAction = 'completeRace';
+    await component.completeRace();
+    expect(api.completeKarting).toHaveBeenCalledOnceWith(7, 19);
+    expect(component.selected?.championDisplayName).toBe('Ana');
+    expect(component.selected?.status).toBe('COMPLETED');
+    expect(component.confirmAction).toBeNull();
+    expect(component.canCompleteRace).toBeFalse();
+    expect(api.raceOverview).toHaveBeenCalledWith(7, 19);
+  });
+
+  it('never closes a duel tournament via the Karting endpoint', async () => {
+    component.selected = { ...draft, status: 'IN_PROGRESS', sport: 'Xadrez',
+      scoringMode: 'CHESS_HALF_POINTS' };
+    component.confirmAction = 'completeRace';
+    await component.completeRace();
+    expect(api.completeKarting).not.toHaveBeenCalled();
   });
 
   it('does not present individual chess rules as a team-board tournament', async () => {

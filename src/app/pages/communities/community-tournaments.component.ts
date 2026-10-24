@@ -143,7 +143,7 @@ export class CommunityTournamentsComponent implements OnChanges {
   busy = false;
   error = '';
   feedback = '';
-  confirmAction: 'schedule' | 'complete' | 'completeTeam' | 'delete' | null = null;
+  confirmAction: 'schedule' | 'complete' | 'completeTeam' | 'completeRace' | 'delete' | null = null;
   scoreDrafts: Record<number, { home: number | null; away: number | null }> = {};
   scoreTouched = new Set<number>();
 
@@ -776,6 +776,26 @@ export class CommunityTournamentsComponent implements OnChanges {
         if (!result.linkedRaces.length) {
           this.updateSelected({ ...this.selected!, status: 'DRAFT', startedAt: null });
         }
+      });
+  }
+
+  get canCompleteRace(): boolean {
+    return this.isRaceCompetition && this.canManage && !this.busy
+      && this.selected?.status === 'IN_PROGRESS'
+      && (this.raceOverview?.linkedRaces.length ?? 0) > 0
+      && (this.raceOverview?.standings.length ?? 0) >= 2
+      && !this.detailsLoading && !this.raceError;
+  }
+
+  async completeRace(): Promise<void> {
+    if (!this.selected || !this.canCompleteRace || this.confirmAction !== 'completeRace') return;
+    const tournamentId = this.selected.id;
+    this.confirmAction = null;
+    await this.mutate(this.api.completeKarting(this.community.id, tournamentId),
+      'Campeonato de Karting encerrado. Campeão e classificação final arquivados.', tournament => {
+        this.updateSelected(tournament);
+        this.raceOverview = undefined;
+        this.loadRaceOverview();
       });
   }
 

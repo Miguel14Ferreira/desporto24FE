@@ -63,6 +63,11 @@ export class CommunityTournamentsService {
       this.url(communityId, tournamentId) + '/races/' + roundId, {});
   }
 
+  completeKarting(communityId: number, tournamentId: number): Observable<CommunityTournament> {
+    return this.http.post<CommunityTournament>(
+      this.url(communityId, tournamentId) + '/races/complete', {});
+  }
+
   unlinkRace(communityId: number, tournamentId: number, roundId: number): Observable<TournamentRaceOverview> {
     return this.http.delete<TournamentRaceOverview>(
       this.url(communityId, tournamentId) + '/races/' + roundId);
