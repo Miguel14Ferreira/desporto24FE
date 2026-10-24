@@ -66,6 +66,23 @@ export function normalizeDirectChatRealtimeMessage(message: DirectChatMessage): 
   };
 }
 
+/**
+ * Jackson's default JavaTime Instant WebSocket representation is epoch seconds
+ * (often fractional), whereas the REST API sends ISO-8601 strings.
+ * Normalize community and session events before their shared inbox receives
+ * them; never substitute the browser's current time for missing server dates.
+ */
+export function normalizeRealtimeChatInstant(value: unknown): string {
+  if (typeof value === 'string' && !/^\d+(?:\.\d+)?$/.test(value.trim())) return value;
+  if (typeof value !== 'string' && typeof value !== 'number') return '';
+  const timestamp = Number(value);
+  if (!Number.isFinite(timestamp) || timestamp <= 0) return '';
+  // Accept both seconds (Jackson Instant) and legacy epoch milliseconds.
+  const millis = Math.round(timestamp < 100_000_000_000 ? timestamp * 1000 : timestamp);
+  const date = new Date(millis);
+  return Number.isFinite(date.getTime()) ? date.toISOString() : '';
+}
+
 /** A bounded exponential reconnect policy; only successful AUTH resets it. */
 export function chatReconnectDelayMs(attempt: number): number {
   const n = Number.isFinite(attempt) ? Math.max(0, Math.floor(attempt)) : 0;
@@ -210,12 +227,18 @@ export class DirectChatRealtimeService {
         }
 
         if (envelope.type === 'SESSION_CHAT_MESSAGE' && envelope.message) {
-          this.sessionMessageSubject.next(envelope.message as SessionMessage);
+          const message = envelope.message as SessionMessage;
+          this.sessionMessageSubject.next({
+            ...message, createdAt: normalizeRealtimeChatInstant(message.createdAt)
+          });
           return;
         }
 
         if (envelope.type === 'COMMUNITY_CHAT_MESSAGE' && envelope.message) {
-          this.communityMessageSubject.next(envelope.message as CommunityTimelineEntry);
+          const message = envelope.message as CommunityTimelineEntry;
+          this.communityMessageSubject.next({
+            ...message, createdAt: normalizeRealtimeChatInstant(message.createdAt)
+          });
         }
       } catch {
         // Ignore malformed events. HTTP history remains authoritative.

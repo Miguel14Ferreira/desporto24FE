@@ -1,5 +1,5 @@
 import { DirectChatMessage } from '../pages/model/direct-chat';
-import { chatReconnectDelayMs, DirectChatRealtimeService, normalizeDirectChatRealtimeMessage } from './direct-chat-realtime.service';
+import { chatReconnectDelayMs, DirectChatRealtimeService, normalizeDirectChatRealtimeMessage, normalizeRealtimeChatInstant } from './direct-chat-realtime.service';
 import { fakeAsync, tick } from '@angular/core/testing';
 
 describe('Direct chat WebSocket timestamps', () => {
@@ -42,6 +42,25 @@ describe('Direct chat WebSocket timestamps', () => {
   });
 });
 
+
+describe('Session and community realtime timestamps', () => {
+  const iso = '2026-10-24T16:23:18.123Z';
+
+  it('converts Jackson Instant epoch seconds and fractions, preserving ISO values', () => {
+    const seconds = Date.parse(iso) / 1000;
+    expect(normalizeRealtimeChatInstant(seconds)).toBe(iso);
+    expect(normalizeRealtimeChatInstant(String(seconds))).toBe(iso);
+    expect(normalizeRealtimeChatInstant(Date.parse(iso))).toBe(iso);
+    expect(normalizeRealtimeChatInstant(iso)).toBe(iso);
+  });
+
+  it('does not invent a send time for invalid or absent server dates', () => {
+    expect(normalizeRealtimeChatInstant(null)).toBe('');
+    expect(normalizeRealtimeChatInstant(Number.NaN)).toBe('');
+    expect(normalizeRealtimeChatInstant(Number.POSITIVE_INFINITY)).toBe('');
+    expect(normalizeRealtimeChatInstant(-1)).toBe('');
+  });
+});
 
 /** Browser-only fake socket: no real network and no persisted credentials. */
 class RealtimeFakeSocket {
@@ -102,6 +121,33 @@ describe('Chat WebSocket identity and reconnection', () => {
     if (oldToken === null) localStorage.removeItem('t');
     else localStorage.setItem('t', oldToken);
     RealtimeFakeSocket.sockets = [];
+  });
+
+  it('normalizes authenticated community and session messages before emitting them', () => {
+    const sessionSeen = jasmine.createSpy('session');
+    const communitySeen = jasmine.createSpy('community');
+    service.sessionMessages$.subscribe(sessionSeen);
+    service.communityMessages$.subscribe(communitySeen);
+    service.connect();
+    const socket = RealtimeFakeSocket.sockets[0];
+    socket.open();
+    const iso = '2026-10-24T16:23:18.123Z';
+    const createdAt = Date.parse(iso) / 1000;
+    const sessionMessage = { id: 5, sessionId: 41, senderUsername: 'jynloteste02',
+      body: 'Teste', createdAt };
+    const communityMessage = { id: 9, communityId: 7, kind: 'CHAT',
+      username: 'jynloteste02', body: 'Teste', createdAt: String(createdAt) };
+    socket.receive({ type: 'SESSION_CHAT_MESSAGE', message: sessionMessage });
+    socket.receive({ type: 'COMMUNITY_CHAT_MESSAGE', message: communityMessage });
+    expect(sessionSeen).not.toHaveBeenCalled();
+    expect(communitySeen).not.toHaveBeenCalled();
+    socket.receive({ type: 'AUTHENTICATED' });
+    socket.receive({ type: 'SESSION_CHAT_MESSAGE', message: sessionMessage });
+    socket.receive({ type: 'COMMUNITY_CHAT_MESSAGE', message: communityMessage });
+    expect(sessionSeen).toHaveBeenCalledOnceWith(
+      jasmine.objectContaining({ createdAt: iso, id: 5 }));
+    expect(communitySeen).toHaveBeenCalledOnceWith(
+      jasmine.objectContaining({ createdAt: iso, id: 9 }));
   });
 
   it('requires successful AUTH before releasing any private chat event', () => {
