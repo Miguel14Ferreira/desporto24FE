@@ -1079,7 +1079,7 @@
                             <label>
                               <span>{{ 'communities.eventType.label' | t }}</span>
                               <select [(ngModel)]="roundEventTypeDraft"
-                                (ngModelChange)="roundDisciplineDraft = ''; resetVolleyballSets(); clearBjjSubmissionScores(); clearBoxingHiddenScores(); clearKickboxingHiddenScores(); clearMuayThaiHiddenScores(); clearStrengthTrainingHiddenScores()"
+                                (ngModelChange)="roundDisciplineDraft = ''; resetVolleyballSets(); clearBjjSubmissionScores(); clearBoxingHiddenScores(); clearKickboxingHiddenScores(); clearMuayThaiHiddenScores(); clearStrengthTrainingHiddenScores(); clearSwimmingHiddenScores()"
                                 [attr.aria-label]="'communities.eventType.label' | t">
                                 <option value="">{{ 'communities.eventType.select' | t }}</option>
                                 @for (choice of eventOptions(newRoundSport); track choice.code) {
@@ -1095,10 +1095,14 @@
                                 : newRoundEventType === 'APPARATUS'
                                 ? 'communities.gym.apparatus'
                                 : newRoundEventType === 'BODYBOARD_HEAT'
-                                ? 'communities.bodyboard.category' : 'communities.discipline.label') | t }}</span>
+                                ? 'communities.bodyboard.category'
+                                : newRoundEventType === 'SWIM_LCM'
+                                ? 'communities.swimming.eventLabel' : 'communities.discipline.label') | t }}</span>
                               <select [(ngModel)]="roundDisciplineDraft"
                                 [attr.aria-label]="(newRoundEventType === 'BODYBOARD_HEAT'
-                                  ? 'communities.bodyboard.category' : 'communities.discipline.label') | t">
+                                  ? 'communities.bodyboard.category'
+                                  : newRoundEventType === 'SWIM_LCM'
+                                  ? 'communities.swimming.eventLabel' : 'communities.discipline.label') | t">
                                 <option value="">{{ 'communities.discipline.select' | t }}</option>
                                 @for (option of athleticsDisciplineOptions(newRoundSport, newRoundEventType); track option) {
                                   <option [value]="option">{{ fieldDisciplineLabel(option) }}</option>
@@ -1120,7 +1124,8 @@
 
                         @if (viewForNewRound() === 'race') {
                           <p class="round-sport-guidance" role="note">
-                            {{ (newRoundEventType === 'PARKOUR_SPEED'
+                            {{ (newRoundEventType === 'SWIM_LCM' ? 'communities.swimming.hint'
+                              : newRoundEventType === 'PARKOUR_SPEED'
                               ? 'communities.parkour.speedHint' : 'communities.race.metricsEntryHint') | t }}
                           </p>
                         } @else if (newRoundEventType && viewForNewRound() === 'individual') {
@@ -1365,15 +1370,23 @@
                                     </label>
                                   }
                                   @if (viewForNewRound() === 'race') {
+                                    @if (newRoundEventType !== 'SWIM_LCM') {
+                                      <label>
+                                        <span>{{ 'communities.race.position' | t }}</span>
+                                        <input type="number" min="1" step="1" [(ngModel)]="entry.finishPosition"
+                                          [placeholder]="'communities.race.positionPlaceholder' | t">
+                                      </label>
+                                    }
                                     <label>
-                                      <span>{{ 'communities.race.position' | t }}</span>
-                                      <input type="number" min="1" step="1" [(ngModel)]="entry.finishPosition"
-                                        [placeholder]="'communities.race.positionPlaceholder' | t">
-                                    </label>
-                                    <label>
-                                      <span>{{ 'communities.race.elapsedSeconds' | t }}</span>
-                                      <input type="number" min="0.001" step="0.001" [(ngModel)]="entry.elapsedSeconds"
-                                        [placeholder]="'communities.race.timePlaceholder' | t">
+                                      <span>{{ (newRoundEventType === 'SWIM_LCM'
+                                        ? 'communities.swimming.timeSeconds'
+                                        : 'communities.race.elapsedSeconds') | t }}</span>
+                                      <input type="number" [min]="newRoundEventType === 'SWIM_LCM' ? 0.01 : 0.001"
+                                        [step]="newRoundEventType === 'SWIM_LCM' ? 0.01 : 0.001"
+                                        [(ngModel)]="entry.elapsedSeconds"
+                                        [placeholder]="(newRoundEventType === 'SWIM_LCM'
+                                          ? 'communities.swimming.timePlaceholder'
+                                          : 'communities.race.timePlaceholder') | t">
                                     </label>
                                     @if (raceSupportsLaps(newRoundSport)) {
                                       <label>
@@ -1979,12 +1992,15 @@
                               <div class="race-round-heading">
                                 <span aria-hidden="true">🏁</span>
                                 <div>
-                                  <strong>{{ (round.eventType === 'PARKOUR_SPEED'
+                                  <strong>{{ (round.eventType === 'SWIM_LCM' ? 'communities.swimming.recordTitle'
+                                    : round.eventType === 'PARKOUR_SPEED'
                                     ? 'communities.parkour.speedTitle' : 'communities.race.recordTitle') | t }}</strong>
-                                  <small>{{ (round.eventType === 'PARKOUR_SPEED'
+                                  <small>{{ (round.eventType === 'SWIM_LCM' ? 'communities.swimming.recordSubtitle'
+                                    : round.eventType === 'PARKOUR_SPEED'
                                     ? 'communities.parkour.speedSubtitle' : 'communities.race.metricsSubtitle') | t }}</small>
                                 </div>
-                                <span class="race-round-count">{{ round.entries.length }} {{ (round.eventType === 'PARKOUR_SPEED'
+                                <span class="race-round-count">{{ round.entries.length }} {{ (round.eventType === 'SWIM_LCM' ? 'communities.swimming.swimmers'
+                                  : round.eventType === 'PARKOUR_SPEED'
                                   ? 'communities.parkour.athletes' : 'communities.race.drivers') | t }}</span>
                               </div>
                               <div class="race-round-entries">
@@ -1995,13 +2011,21 @@
                                       <small>{{ roundEntryHandle(entry) }}</small>
                                     </div>
                                     <div class="race-round-metrics">
-                                      @if (entry.finishPosition != null) {
-                                        <span class="race-round-position">{{ entry.finishPosition }}.º</span>
+                                      @if (round.eventType === 'SWIM_LCM') {
+                                        @if (swimTime(entry.elapsedSeconds); as swimTotal) {
+                                          <span class="round-performance-mark">{{ swimTotal }}</span>
+                                        } @else {
+                                          <span class="race-round-unranked">{{ 'communities.swimming.noTime' | t }}</span>
+                                        }
                                       } @else {
-                                        <span class="race-round-unranked">{{ 'communities.race.noPosition' | t }}</span>
-                                      }
-                                      @if (raceTime(entry.elapsedSeconds); as total) {
-                                        <span>{{ total }}</span>
+                                        @if (entry.finishPosition != null) {
+                                          <span class="race-round-position">{{ entry.finishPosition }}.º</span>
+                                        } @else {
+                                          <span class="race-round-unranked">{{ 'communities.race.noPosition' | t }}</span>
+                                        }
+                                        @if (raceTime(entry.elapsedSeconds); as total) {
+                                          <span>{{ total }}</span>
+                                        }
                                       }
                                       @if (raceSupportsLaps(roundSport(round))) {
                                         @if (entry.lapsCompleted != null) {
