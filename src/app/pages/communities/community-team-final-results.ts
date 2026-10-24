@@ -11,7 +11,8 @@ export function isTeamFinalEvent(type: string | null | undefined): boolean {
     || type === 'AMFOOTBALL_SCORE' || type === 'FLAGFOOTBALL_SCORE'
     || type === 'CURLING_REG' || type === 'CURLING_EXTRA'
     || type === 'PETANQUE_13' || type === 'PETANQUE_11'
-    || type === 'BOWLING_TENPIN' || type === 'POOL_9_RACKS';
+    || type === 'BOWLING_TENPIN' || type === 'POOL_9_RACKS'
+    || type === 'FENCING_POOL_5' || type === 'FENCING_DE_15';
 }
 /** Sport-aware scoreboard units: goals, rugby and football points, or baseball/softball runs. */
 export function teamFinalUsesRuns(type: string | null | undefined): boolean {
@@ -23,17 +24,21 @@ export function teamFinalUsesGoals(type: string | null | undefined): boolean {
     && type !== 'CURLING_REG' && type !== 'CURLING_EXTRA'
     && type !== 'PETANQUE_13' && type !== 'PETANQUE_11'
     && type !== 'BOWLING_TENPIN' && type !== 'POOL_9_RACKS'
+    && type !== 'FENCING_POOL_5' && type !== 'FENCING_DE_15'
     && !teamFinalUsesRuns(type);
 }
 /** A/B denote individual competitors for explicitly singles formats. */
 export function teamFinalSideLabelKey(type: string | null | undefined, side: 'A' | 'B'): string {
-  return (type === 'BOWLING_TENPIN' || type === 'POOL_9_RACKS')
+  return (type === 'BOWLING_TENPIN' || type === 'POOL_9_RACKS'
+    || type === 'FENCING_POOL_5' || type === 'FENCING_DE_15')
     ? 'communities.teamFinal.player' + side
     : 'communities.teamFinal.side' + side;
 }
 
 export function teamFinalScoreLabelKey(type: string | null | undefined): string {
   if (type === 'POOL_9_RACKS') return 'communities.teamFinal.racksWon';
+  if (type === 'FENCING_POOL_5' || type === 'FENCING_DE_15')
+    return 'communities.teamFinal.touches';
   return teamFinalUsesRuns(type) ? 'communities.teamFinal.runs'
     : teamFinalUsesGoals(type) ? 'communities.teamFinal.goals'
     : 'communities.teamFinal.points';
@@ -50,7 +55,8 @@ const TEAM_FINAL_LABELS: Record<string, string> = {
   AMFOOTBALL_SCORE: 'americanFootball', FLAGFOOTBALL_SCORE: 'flagFootball',
   CURLING_REG: 'curlingReg', CURLING_EXTRA: 'curlingExtra',
   PETANQUE_13: 'petanque13', PETANQUE_11: 'petanque11',
-  BOWLING_TENPIN: 'bowlingTenpin', POOL_9_RACKS: 'poolNineBall'
+  BOWLING_TENPIN: 'bowlingTenpin', POOL_9_RACKS: 'poolNineBall',
+  FENCING_POOL_5: 'fencingPool', FENCING_DE_15: 'fencingElimination'
 };
 export function teamFinalTitleKey(type: string | null | undefined): string {
   return 'communities.teamFinal.' + (type ? TEAM_FINAL_LABELS[type] ?? 'finalTitle' : 'finalTitle');
@@ -78,6 +84,8 @@ export function teamFinalHintKey(type: string | null | undefined): string {
     case 'PETANQUE_11': return 'communities.teamFinal.petanque11Hint';
     case 'BOWLING_TENPIN': return 'communities.teamFinal.bowlingTenpinHint';
     case 'POOL_9_RACKS': return 'communities.teamFinal.poolNineBallHint';
+    case 'FENCING_POOL_5': return 'communities.teamFinal.fencingPoolHint';
+    case 'FENCING_DE_15': return 'communities.teamFinal.fencingEliminationHint';
     default: return teamFinalUsesGoals(type)
       ? 'communities.teamFinal.goalHint' : 'communities.teamFinal.finalHint';
   }
@@ -88,7 +96,10 @@ export function teamFinalPetanqueTarget(type: string | null | undefined): number
   return type === 'PETANQUE_13' ? 13 : type === 'PETANQUE_11' ? 11 : null;
 }
 export function teamFinalMaxScore(type: string | null | undefined): number {
-  return type === 'BOWLING_TENPIN' ? 300 : teamFinalPetanqueTarget(type) ?? 999;
+  return type === 'BOWLING_TENPIN' ? 300
+    : type === 'FENCING_POOL_5' ? 5
+    : type === 'FENCING_DE_15' ? 15
+    : teamFinalPetanqueTarget(type) ?? 999;
 }
 
 export function teamFinalIsFootballPointsEvent(type: string | null | undefined): boolean {
@@ -108,6 +119,12 @@ export function teamFinalError(type: string | null | undefined,
       || !Number.isInteger(score.sideA) || !Number.isInteger(score.sideB)
       || score.sideA < 0 || score.sideB < 0 || score.sideA > 999 || score.sideB > 999)
     return 'teamFinalInvalidScore';
+  if (type === 'FENCING_POOL_5' || type === 'FENCING_DE_15') {
+    if (score.sideA > teamFinalMaxScore(type) || score.sideB > teamFinalMaxScore(type))
+      return 'fencingInvalidScore';
+    // Priority-decided ties are not encoded; never invent a winner.
+    if (score.sideA === score.sideB) return 'fencingPriorityUnsupported';
+  }
   if (type === 'BOWLING_TENPIN' && (score.sideA > 300 || score.sideB > 300))
     return 'bowlingInvalidScore';
   if (type === 'POOL_9_RACKS' && score.sideA === score.sideB)
@@ -130,7 +147,8 @@ export function teamFinalError(type: string | null | undefined,
     const b = entries.filter(e => e.team === 'B').length;
     if (a !== b || a > 3) return 'petanqueInvalidTeams';
   }
-  if (type === 'BOWLING_TENPIN' || type === 'POOL_9_RACKS') {
+  if (type === 'BOWLING_TENPIN' || type === 'POOL_9_RACKS'
+      || type === 'FENCING_POOL_5' || type === 'FENCING_DE_15') {
     const a = entries.filter(e => e.team === 'A').length;
     const b = entries.filter(e => e.team === 'B').length;
     if (a !== 1 || b !== 1) return 'teamFinalSinglesRequired';

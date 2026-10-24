@@ -1154,12 +1154,12 @@
                               <div class="round-volleyball-set-editor">
                                 <strong>{{ 'communities.volleyball.set' | t }} {{ $index + 1 }}</strong>
                                 <label>
-                                  <span>{{ 'communities.volleyball.sideA' | t }}</span>
+                                  <span>{{ volleyballSideLabelKey(newRoundEventType, 'A') | t }}</span>
                                   <input type="number" min="0" max="999" step="1" [(ngModel)]="score.sideA">
                                 </label>
                                 <span class="round-volleyball-separator" aria-hidden="true">:</span>
                                 <label>
-                                  <span>{{ 'communities.volleyball.sideB' | t }}</span>
+                                  <span>{{ volleyballSideLabelKey(newRoundEventType, 'B') | t }}</span>
                                   <input type="number" min="0" max="999" step="1" [(ngModel)]="score.sideB">
                                 </label>
                                 @if (volleyballSetScores.length > volleyballMinSets(newRoundEventType)) {
@@ -1238,11 +1238,11 @@
                                     </label>
                                   } @else if (isVolleyballEvent(newRoundEventType)) {
                                     <label>
-                                      <span>{{ 'communities.volleyball.side' | t }}</span>
+                                      <span>{{ volleyballMemberSelectorKey(newRoundEventType) | t }}</span>
                                       <select [(ngModel)]="entry.team">
                                         <option value="">{{ 'communities.volleyball.selectSide' | t }}</option>
-                                        <option value="A">{{ 'communities.volleyball.sideA' | t }}</option>
-                                        <option value="B">{{ 'communities.volleyball.sideB' | t }}</option>
+                                        <option value="A">{{ volleyballSideLabelKey(newRoundEventType, 'A') | t }}</option>
+                                        <option value="B">{{ volleyballSideLabelKey(newRoundEventType, 'B') | t }}</option>
                                       </select>
                                     </label>
                                   } @else if (isTeamFinalEvent(newRoundEventType)) {
@@ -1885,7 +1885,7 @@
                               </div>
                               <div class="round-volleyball-result">
                                 <div class="round-volleyball-side" [class.round-volleyball-winner]="volleyballSetWinner(round.setScores) === 'A'">
-                                  <span>{{ 'communities.volleyball.sideA' | t }}</span>
+                                  <span>{{ volleyballSideLabelKey(round.eventType, 'A') | t }}</span>
                                   <strong>{{ volleyballSetTotals(round.setScores).sideA }}</strong>
                                   @for (player of racketSidePlayers(round, 'A'); track $index) {
                                     <small>{{ player.fullName || player.username }}</small>
@@ -1893,7 +1893,7 @@
                                 </div>
                                 <span class="round-volleyball-result-separator" aria-hidden="true">:</span>
                                 <div class="round-volleyball-side" [class.round-volleyball-winner]="volleyballSetWinner(round.setScores) === 'B'">
-                                  <span>{{ 'communities.volleyball.sideB' | t }}</span>
+                                  <span>{{ volleyballSideLabelKey(round.eventType, 'B') | t }}</span>
                                   <strong>{{ volleyballSetTotals(round.setScores).sideB }}</strong>
                                   @for (player of racketSidePlayers(round, 'B'); track $index) {
                                     <small>{{ player.fullName || player.username }}</small>
