@@ -1306,14 +1306,14 @@ test('torneio multidesporto bloqueia natação sem perfil competitivo e aceita b
   await page.getByLabel('Nome do torneio').fill('Liga de amigos');
   await expect(page.locator('.create-actions .t-btn-primary')).toBeDisabled();
 
-  await page.getByLabel('Modalidade do torneio').fill('natacao');
+  await page.locator('#new-tournament-sport-search').fill('natacao');
   await page.getByRole('button', { name: 'Natação', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Formato ainda indisponível' })).toBeDisabled();
   await expect(page.locator('.classification-notice')).toContainText('jornadas da comunidade');
   expect(fixture.tournaments).toHaveLength(0);
 
   await page.getByRole('button', { name: 'Alterar' }).click();
-  await page.getByLabel('Modalidade do torneio').fill('basquet');
+  await page.locator('#new-tournament-sport-search').fill('basquet');
   await page.getByRole('button', { name: 'Basquetebol', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Confirmar liga individual' })).toBeEnabled();
   await page.getByRole('button', { name: 'Confirmar liga individual' }).click();
@@ -1710,11 +1710,11 @@ test('os avisos diferenciam futebol, karting e judo sem inventar resultados', as
   await page.getByRole('button', { name: 'Preparar torneio por equipas' }).click();
 
   await expect(page.locator('.create-sport-notice')).toHaveCount(0);
-  await page.getByLabel('Modalidade do torneio').fill('kart');
+  await page.locator('#new-tournament-sport-search').fill('kart');
   await page.getByLabel('Sugestões de modalidades').getByRole('button', { name: 'Karting', exact: true }).click();
   await expect(page.locator('.create-sport-notice')).toContainText('tempos, posições ou voltas');
   await page.getByRole('button', { name: 'Alterar' }).click();
-  await page.getByLabel('Modalidade do torneio').fill('judo');
+  await page.locator('#new-tournament-sport-search').fill('judo');
   await page.getByLabel('Sugestões de modalidades').getByRole('button', { name: 'Judo', exact: true }).click();
   await expect(page.locator('.create-sport-notice')).toContainText('Sets, golpes e decisões');
 });
@@ -1755,9 +1755,9 @@ test('xadrez apresenta 1/½/0 sem parâmetros genéricos e é limitado a ligas i
   await page.goto('/menu/communities/7?tab=tournaments');
   await page.getByRole('button', { name: 'Criar liga individual' }).click();
 
-  await expect(page.getByText('Pontuação de Xadrez')).not.toBeVisible();
+  await expect(page.locator('.classification-fixed-points')).not.toBeVisible();
   await page.locator('.create-advanced-rules summary').click();
-  await expect(page.getByText('Pontuação de Xadrez')).toBeVisible();
+  await expect(page.locator('.classification-fixed-points')).toBeVisible();
   await expect(page.getByText('Empate: ½')).toBeVisible();
   await expect(page.getByRole('group', { name: 'Regras de pontuação' })).toHaveCount(0);
 
