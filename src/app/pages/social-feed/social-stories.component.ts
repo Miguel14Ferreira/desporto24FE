@@ -195,21 +195,21 @@ export class SocialStoriesComponent implements OnInit, OnDestroy {
   }
 
   @HostListener('document:keydown.arrowright', ['$event'])
-  onRight(event: KeyboardEvent): void {
+  onRight(event: Event): void {
     if (!this.activeStory || this.isInputEvent(event)) return;
     event.preventDefault();
     this.next();
   }
 
   @HostListener('document:keydown.arrowleft', ['$event'])
-  onLeft(event: KeyboardEvent): void {
+  onLeft(event: Event): void {
     if (!this.activeStory || this.isInputEvent(event)) return;
     event.preventDefault();
     this.previous();
   }
 
   @HostListener('document:keydown.space', ['$event'])
-  onSpace(event: KeyboardEvent): void {
+  onSpace(event: Event): void {
     if (!this.activeStory || this.isInputEvent(event)) return;
     event.preventDefault();
     this.togglePause();
@@ -221,7 +221,7 @@ export class SocialStoriesComponent implements OnInit, OnDestroy {
     this.syncVideo();
   }
 
-  private isInputEvent(event: KeyboardEvent): boolean {
+  private isInputEvent(event: Event): boolean {
     const target = event.target;
     return target instanceof HTMLElement && !!target.closest('input, textarea, select, [contenteditable="true"], button');
   }
