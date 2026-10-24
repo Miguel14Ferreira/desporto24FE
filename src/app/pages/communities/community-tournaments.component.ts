@@ -191,8 +191,13 @@ export class CommunityTournamentsComponent implements OnChanges {
     return tournamentClassificationProfile(this.sportDraft);
   }
 
-  get isKartingRaceDraft(): boolean {
-    return !this.showTeamCreate && this.sportDraft.trim().toLowerCase() === 'karting';
+  /** BMX must use race-result jornadas; BMX Freestyle remains unsupported here. */
+  get isRaceChampionshipDraft(): boolean {
+    return !this.showTeamCreate && (this.sportDraft === 'Karting' || this.sportDraft === 'BMX');
+  }
+
+  raceSportLabel(sport: string | null | undefined): string {
+    return sport === 'BMX' ? 'BMX Racing' : 'Karting';
   }
 
   get isRaceCompetition(): boolean {
