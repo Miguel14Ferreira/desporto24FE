@@ -5,10 +5,20 @@
       <h2>{{ 'stories.title' | t }}</h2>
       <p>{{ 'stories.subtitle' | t }}</p>
     </div>
+    <div class="story-header-actions">
+      <button type="button" class="story-retry" (click)="retry()" [disabled]="loading || mineLoading">
+        {{ 'stories.retry' | t }}
+      </button>
     <button type="button" class="story-add-action" (click)="composerOpen = !composerOpen">
       <span aria-hidden="true">+</span> {{ 'stories.create' | t }}
     </button>
+    </div>
   </div>
+
+  @if (!mineLoading && !mineError) {
+    <p class="story-my-status" role="status">{{ 'stories.mineStatus' | t }}: <strong>{{ mineEntries.length }}</strong></p>
+  }
+  @if (mineError) { <p class="story-error" role="alert">{{ mineError }}</p> }
 
   <div class="story-rail">
     @for (group of storyGroups; track group.key) {

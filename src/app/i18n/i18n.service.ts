@@ -5,6 +5,9 @@ export type AppLanguage = 'pt' | 'en';
 type Dictionary = Record<string, string>;
 
 const PT: Dictionary = {
+  'stories.retry': 'Tentar novamente',
+  'stories.mineStatus': 'Stories publicadas por ti nas últimas 24 horas',
+  'stories.mineFailed': 'Não foi possível verificar as tuas Stories. Tenta novamente.',
   'stories.kicker': 'Momentos desportivos',
   'stories.title': 'Stories',
   'stories.subtitle': 'Os melhores momentos dos teus amigos e comunidades, durante 24 horas.',
@@ -2913,6 +2916,9 @@ const PT: Dictionary = {
 };
 
 const EN: Dictionary = {
+  'stories.retry': 'Try again',
+  'stories.mineStatus': 'Stories you published in the last 24 hours',
+  'stories.mineFailed': 'Your Stories could not be checked. Please retry.',
   'stories.kicker': 'Sporting moments',
   'stories.title': 'Stories',
   'stories.subtitle': 'Your friends’ and communities’ best moments, for 24 hours.',

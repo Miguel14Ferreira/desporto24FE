@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { catchError, finalize, of, Subject, takeUntil, timeout } from 'rxjs';
@@ -28,6 +28,9 @@ interface StoryGroup {
 })
 export class SocialStoriesComponent implements OnInit, OnDestroy {
   entries: SocialStory[] = [];
+  mineEntries: SocialStory[] = [];
+  mineLoading = true;
+  mineError = '';
   groups: CommunityGroup[] = [];
   loading = true;
   composerOpen = false;
@@ -46,12 +49,14 @@ export class SocialStoriesComponent implements OnInit, OnDestroy {
 
   constructor(
     private readonly stories: SocialStoriesService,
+    private readonly changeDetector: ChangeDetectorRef,
     private readonly communities: CommunityGroupsService,
     private readonly route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
     this.reload();
+    this.loadMine();
     this.communities.mine().pipe(
       timeout(10000),
       catchError(() => of([] as CommunityGroup[])),
@@ -73,7 +78,11 @@ export class SocialStoriesComponent implements OnInit, OnDestroy {
 
   get storyGroups(): StoryGroup[] {
     const ordered = new Map<string, StoryGroup>();
-    for (const entry of this.entries) {
+    // Keep the author's own posts visible even when the discovery feed is temporarily unavailable.
+    const seen = new Set<number>();
+    for (const entry of [...this.mineEntries, ...this.entries]) {
+      if (seen.has(entry.id)) continue;
+      seen.add(entry.id);
       if (Date.parse(entry.expiresAt) <= Date.now()) continue;
       const key = entry.communityId === null
         ? 'person:' + entry.authorUsername.toLowerCase()
@@ -95,14 +104,48 @@ export class SocialStoriesComponent implements OnInit, OnDestroy {
 
   reload(): void {
     this.loading = true;
+    this.error = '';
     this.stories.feed().pipe(
-      timeout(10000),
-      finalize(() => this.loading = false),
+      timeout({ first: 10000 }),
       takeUntil(this.destroyed)
     ).subscribe({
-      next: stories => this.entries = stories,
-      error: () => this.error = t('stories.loadFailed')
+      next: stories => {
+        this.entries = stories;
+        this.loading = false;
+        this.changeDetector.markForCheck();
+      },
+      error: () => {
+        this.loading = false;
+        this.error = t('stories.loadFailed');
+        this.changeDetector.markForCheck();
+      }
     });
+  }
+
+  loadMine(): void {
+    this.mineLoading = true;
+    this.mineError = '';
+    this.stories.mine().pipe(
+      timeout({ first: 10000 }),
+      takeUntil(this.destroyed)
+    ).subscribe({
+      next: stories => {
+        this.mineEntries = stories;
+        this.mineLoading = false;
+        this.changeDetector.markForCheck();
+      },
+      error: () => {
+        this.mineLoading = false;
+        this.mineError = t('stories.mineFailed');
+        this.changeDetector.markForCheck();
+      }
+    });
+  }
+
+  retry(): void {
+    if (this.loading || this.mineLoading) return;
+    this.reload();
+    this.loadMine();
   }
 
   openGroup(group: StoryGroup): void {
@@ -187,6 +230,8 @@ export class SocialStoriesComponent implements OnInit, OnDestroy {
     ).subscribe({
       next: story => {
         this.entries = [story, ...this.entries.filter(item => item.id !== story.id)];
+        this.mineEntries = [story, ...this.mineEntries.filter(item => item.id !== story.id)];
+        this.mineError = '';
         this.removeFile();
         this.caption = '';
         this.communityId = '';
@@ -209,6 +254,7 @@ export class SocialStoriesComponent implements OnInit, OnDestroy {
     ).subscribe({
       next: () => {
         this.entries = this.entries.filter(entry => entry.id !== id);
+        this.mineEntries = this.mineEntries.filter(entry => entry.id !== id);
         this.close();
       },
       error: () => this.error = t('stories.deleteFailed')
