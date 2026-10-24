@@ -190,6 +190,16 @@ jobs:
         env:
           JYNLO_USE_SYSTEM_CHROME: '1'
         run: npx playwright test e2e/inbox-read-sync.spec.ts --config=playwright.config.ts --project=desktop-chromium --grep "blue checks follow|switching chats during a pending send|socket reconnection reconciles"
+      # Audited UX regression: quoted-reply metadata must remain bound to
+      # its original conversation while users navigate and edit other drafts.
+      - name: Install Playwright for quoted-reply navigation QA
+        if: ${{ startsWith(github.head_ref, 'fix/chat-preserve-reply-drafts-') }}
+        run: npm install --no-save --package-lock=false @playwright/test@1.56.1
+      - name: Verify reply targets survive navigation without cross-chat leaks
+        if: ${{ startsWith(github.head_ref, 'fix/chat-preserve-reply-drafts-') }}
+        env:
+          JYNLO_USE_SYSTEM_CHROME: '1'
+        run: npx playwright test e2e/inbox-read-sync.spec.ts --config=playwright.config.ts --project=desktop-chromium --grep "reply quote remains bound|switching chats during a pending send"
       # Candidate-only browser verification. No additional job, second npm ci,
       # Render deployment, production credentials or production API requests.
       - name: Install Chromium for integrated desktop smoke
