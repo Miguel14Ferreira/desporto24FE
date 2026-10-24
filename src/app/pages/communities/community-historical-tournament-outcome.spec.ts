@@ -14,8 +14,22 @@ describe('Historic tournament outcome from original spreadsheet', () => {
     sourceFilename: 'historico.xlsx', createdAt: '2026-10-24T00:00:00Z', rows
   });
 
+  const outcome = (item: HistoricalMatchArchive, format: 'LEAGUE' | 'KNOCKOUT',
+    sport = 'Futebol') => historicalTournamentOutcome(item, format, sport);
+
+  it('refuses to apply generic football scoring to sports with incompatible formats', () => {
+    const games = archive([
+      row(2, 'A', 'B', 2, 1, 'Final')
+    ]);
+    for (const sport of ['Karting', 'Golfe', 'Xadrez', 'Modalidade desconhecida']) {
+      const result = outcome(games, 'KNOCKOUT', sport);
+      expect(result.reason).withContext(sport).toBe('unsupported-sport');
+      expect(result.winner).toBeNull();
+    }
+  });
+
   it('estimates a winner only from a complete league with a unique points leader', () => {
-    const result = historicalTournamentOutcome(archive([
+    const result = outcome(archive([
       row(2, 'Águias', 'Lobos', 2, 1),
       row(3, 'Lobos', 'CNG', 2, 0),
       row(4, 'CNG', 'Águias', 0, 3)
@@ -24,7 +38,7 @@ describe('Historic tournament outcome from original spreadsheet', () => {
   });
 
   it('does not invent a champion when any league matchup is missing', () => {
-    const result = historicalTournamentOutcome(archive([
+    const result = outcome(archive([
       row(2, 'Águias', 'Lobos', 2, 0),
       row(3, 'Lobos', 'CNG', 2, 0)
     ]), 'LEAGUE');
@@ -33,7 +47,7 @@ describe('Historic tournament outcome from original spreadsheet', () => {
   });
 
   it('rejects uneven home and away fixture counts even if enough rows exist', () => {
-    const result = historicalTournamentOutcome(archive([
+    const result = outcome(archive([
       row(2, 'Águias', 'Lobos', 2, 0),
       row(3, 'Lobos', 'Águias', 1, 0),
       row(4, 'Águias', 'CNG', 2, 0),
@@ -43,7 +57,7 @@ describe('Historic tournament outcome from original spreadsheet', () => {
   });
 
   it('does not decide equal-point leaders using a sport-specific tie break', () => {
-    const result = historicalTournamentOutcome(archive([
+    const result = outcome(archive([
       row(2, 'A', 'B', 1, 0),
       row(3, 'B', 'C', 2, 0),
       row(4, 'C', 'A', 1, 0)
@@ -53,7 +67,7 @@ describe('Historic tournament outcome from original spreadsheet', () => {
   });
 
   it('refuses to infer a winner while duplicates require review', () => {
-    const result = historicalTournamentOutcome(archive([
+    const result = outcome(archive([
       row(2, 'Águias', 'Lobos', 3, 0),
       row(3, 'Águias', 'Lobos', 3, 0, 'J1', true)
     ]), 'LEAGUE');
@@ -62,7 +76,7 @@ describe('Historic tournament outcome from original spreadsheet', () => {
   });
 
   it('recognizes a decisive labelled final without misreading semifinals', () => {
-    const result = historicalTournamentOutcome(archive([
+    const result = outcome(archive([
       row(2, 'A', 'B', 3, 1, 'Semifinal'),
       row(3, 'C', 'D', 1, 0, 'Meia-final'),
       row(4, 'A', 'C', 2, 0, 'Grande Final')
@@ -72,13 +86,13 @@ describe('Historic tournament outcome from original spreadsheet', () => {
   });
 
   it('does not assign a knockout champion without a decisive unambiguous final', () => {
-    expect(historicalTournamentOutcome(archive([
+    expect(outcome(archive([
       row(2, 'A', 'B', 3, 1, 'Semifinal')
     ]), 'KNOCKOUT').reason).toBe('missing-final');
-    expect(historicalTournamentOutcome(archive([
+    expect(outcome(archive([
       row(2, 'A', 'B', 1, 1, 'Final')
     ]), 'KNOCKOUT').reason).toBe('drawn-final');
-    expect(historicalTournamentOutcome(archive([
+    expect(outcome(archive([
       row(2, 'A', 'B', 2, 1, 'Final'),
       row(3, 'C', 'D', 1, 0, 'Final')
     ]), 'KNOCKOUT').reason).toBe('multiple-finals');
@@ -87,7 +101,7 @@ describe('Historic tournament outcome from original spreadsheet', () => {
   it('leaves the source archive unchanged', () => {
     const item = archive([row(2, 'Águias', 'Lobos', 1, 0, 'Final')]);
     const before = JSON.stringify(item);
-    historicalTournamentOutcome(item, 'KNOCKOUT');
+    outcome(item, 'KNOCKOUT');
     expect(JSON.stringify(item)).toBe(before);
   });
 });
