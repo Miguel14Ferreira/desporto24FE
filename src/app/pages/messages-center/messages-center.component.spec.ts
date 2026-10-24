@@ -1084,6 +1084,91 @@ describe('Unified Jynlo message center', () => {
     expect(direct.send).not.toHaveBeenCalled();
   });
 
+  it('restores a blocked pending send after reload and confirms it with one read-only GET', () => {
+    const storageKey='jynlo.chat.uncertain-posts.v1';
+    sessionStorage.removeItem(storageKey);
+    connected.next(false);
+    const token='eyJhbGciOiJub25lIn0.'
+      + btoa(JSON.stringify({sub:'ana',exp:4102444800})).replace(/=+$/,'')
+      + '.fixture';
+    spyOn(localStorage,'getItem').and.returnValue(token);
+    friends.friends.and.returnValue(of([{username:'bea',nickname:'Bea'}] as any));
+    const heldPost=new Subject<any>();
+    direct.send.and.returnValue(heldPost.asObservable());
+    direct.recentHistory.and.returnValue(of({last:true,content:[]} as any));
+    component.ngOnInit();
+    try {
+      const peer=component.conversations.find(x=>x.key==='direct:bea')!;
+      component.selectConversation(peer);
+      component.draft='A mesma mensagem sem reenvio';
+      component.sendMessage();
+      expect(sessionStorage.getItem(storageKey)).toContain('A mesma mensagem sem reenvio');
+      expect(direct.send).toHaveBeenCalledTimes(1);
+      component.ngOnDestroy();
+
+      direct.recentHistory.and.returnValue(of({last:true,content:[{
+        id:92,username1:'ana',username2:'bea',
+        text:'A mesma mensagem sem reenvio',date:new Date().toISOString(),dataDisplay:null
+      }]} as any));
+      const reloaded=new MessagesCenterComponent(friends,communities,sessions,direct,
+        timeline,realtime,inboxApi);
+      reloaded.ngOnInit();
+      try {
+        expect(direct.recentHistory).toHaveBeenCalledTimes(2);
+        expect((reloaded as any).pendingByConversation.size).toBe(0);
+        expect(sessionStorage.getItem(storageKey)).toBeNull();
+        const restoredPeer=reloaded.conversations.find(x=>x.key==='direct:bea')!;
+        reloaded.selectConversation(restoredPeer);
+        expect(reloaded.deliveryUncertain).toBeFalse();
+        expect(reloaded.draft).toBe('');
+        expect(direct.send).toHaveBeenCalledTimes(1);
+      } finally {
+        reloaded.ngOnDestroy();
+      }
+    } finally {
+      sessionStorage.removeItem(storageKey);
+      connected.next(false);
+    }
+  });
+
+  it('restores but does not resend when the server cannot confirm the original POST', () => {
+    const key='jynlo.chat.uncertain-posts.v1';
+    sessionStorage.removeItem(key);
+    connected.next(false);
+    const token='eyJhbGciOiJub25lIn0.'
+      + btoa(JSON.stringify({sub:'ana',exp:4102444800})).replace(/=+$/,'')
+      + '.fixture';
+    spyOn(localStorage,'getItem').and.returnValue(token);
+    friends.friends.and.returnValue(of([{username:'bea',nickname:'Bea'}] as any));
+    const heldPost=new Subject<any>();
+    direct.send.and.returnValue(heldPost.asObservable());
+    direct.recentHistory.and.returnValue(of({last:true,content:[]} as any));
+    component.ngOnInit();
+    try {
+      const peer=component.conversations[0];
+      component.selectConversation(peer);
+      component.draft='Nunca enviar duas vezes';
+      component.sendMessage();
+      component.ngOnDestroy();
+      direct.recentHistory.and.returnValue(
+        throwError(()=>new HttpErrorResponse({status:503})));
+      const reloaded=new MessagesCenterComponent(friends,communities,sessions,direct,
+        timeline,realtime,inboxApi);
+      reloaded.ngOnInit();
+      try {
+        reloaded.selectConversation(reloaded.conversations[0]);
+        expect(reloaded.deliveryUncertain).toBeTrue();
+        expect(reloaded.draft).toBe('Nunca enviar duas vezes');
+        reloaded.sendMessage();
+        expect(direct.send).toHaveBeenCalledTimes(1);
+        expect(sessionStorage.getItem(key)).toContain('Nunca enviar duas vezes');
+      } finally { reloaded.ngOnDestroy(); }
+    } finally {
+      sessionStorage.removeItem(key);
+      connected.next(false);
+    }
+  });
+
   it('allows Shift+Enter and composition without triggering send', () => {
     const evt = new KeyboardEvent('keydown', { key: 'Enter', shiftKey: true, cancelable: true });
     component.onComposerEnter(evt);

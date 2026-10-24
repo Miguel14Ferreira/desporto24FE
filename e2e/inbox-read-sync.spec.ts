@@ -33,6 +33,8 @@ let holdAnaPost = false;
 let timeoutAnaAfterCommit = false;
 let suppressOwnCommittedSocket = false;
 let failAnaHistoryWhileOffline = false;
+let holdReplyAfterCommit = false;
+let releaseCommittedReply: (() => void) | null = null;
 let releaseAnaPost: (() => void) | null = null;
 
 function jwt(username: string) {
@@ -213,6 +215,14 @@ async function authenticatedContext(browser: import('@playwright/test').Browser,
           for (const deliver of authenticatedSockets.get(account) || []) {
             deliver({ type: 'CHAT_MESSAGE', message: sent });
           }
+        }
+        if (username === 'ana' && peer === 'bea' && holdReplyAfterCommit) {
+          // The server COMMITTED the POST, but the page is reloaded before
+          // the HTTP response can arrive. Aborted responses are ignored.
+          await new Promise<void>(resolve => { releaseCommittedReply = resolve; });
+          releaseCommittedReply = null;
+          try { return await response(route, 503, {message:'Request lost on reload'}); }
+          catch { return; }
         }
         if (username === 'ana' && peer === 'bea' && timeoutAnaAfterCommit) {
           // The database committed and socket event arrived, but HTTP broke.
@@ -721,6 +731,53 @@ test('socket reconnection reconciles an uncertain off-screen send via read-only 
     suppressOwnCommittedSocket=false;
     timeoutAnaAfterCommit=false;
     offlineAddedFriend=false;
+    await context.close();
+  }
+});
+
+test('reloading mid-send recovers the committed message without a second POST', async ({browser}) => {
+  messages.splice(1);
+  readThrough.clear();
+  readThrough.set('bea',41);
+  authenticatedSockets.clear();
+  requests.length=0;
+  unauthorized.length=0;
+  holdReplyAfterCommit=true;
+  suppressOwnCommittedSocket=true;
+  releaseCommittedReply=null;
+  const context=await authenticatedContext(browser,'ana');
+  try {
+    const page=await context.newPage();
+    const errors:string[]=[];
+    page.on('pageerror',e=>errors.push(e.message));
+    await page.goto('/menu/messages?kind=direct&id=bea',{waitUntil:'domcontentloaded'});
+    await expect(page.locator('#inbox-reply')).toBeEnabled();
+    await page.locator('#inbox-reply').fill('Recuperar após atualizar o browser');
+    await page.locator('.inbox-composer button[type="submit"]').click();
+    await expect.poll(()=>messages.length).toBe(2);
+    await expect.poll(()=>releaseCommittedReply!==null).toBe(true);
+
+    const beforeReload=await page.evaluate(()=>
+      sessionStorage.getItem('jynlo.chat.uncertain-posts.v1'));
+    expect(beforeReload).toContain('Recuperar após atualizar o browser');
+    expect(beforeReload).not.toContain('local-fixture');
+    // A new Angular component in the SAME tab rehydrates the blocked send
+    // and performs a read-only GET against the committed server history.
+    await page.reload({waitUntil:'domcontentloaded'});
+    releaseCommittedReply?.();
+    await expect(page.locator('.inbox-bubble[data-message-id="42"]')).toHaveCount(1);
+    await expect(page.locator('#inbox-reply')).toHaveValue('');
+    await expect(page.locator('.inbox-compose-alert-actions')).toHaveCount(0);
+    await expect.poll(async()=>page.evaluate(()=>
+      sessionStorage.getItem('jynlo.chat.uncertain-posts.v1'))).toBeNull();
+    expect(requests.filter(r=>r==='ana:POST /api/chat/me/bea')).toHaveLength(1);
+    expect(unauthorized).toEqual([]);
+    expect(errors).toEqual([]);
+  } finally {
+    releaseCommittedReply?.();
+    holdReplyAfterCommit=false;
+    releaseCommittedReply=null;
+    suppressOwnCommittedSocket=false;
     await context.close();
   }
 });
