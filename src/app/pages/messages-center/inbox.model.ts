@@ -23,6 +23,9 @@ export interface InboxMessage {
   sender: string;
   text: string;
   createdAt: string;
+  attachmentName?: string | null;
+  attachmentMimeType?: string | null;
+  attachmentSize?: number | null;
   replyToMessageId?: number | null;
   replyToSender?: string | null;
   replyToText?: string | null;

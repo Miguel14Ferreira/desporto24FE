@@ -81,6 +81,19 @@
 .inbox-composer-bottom > span { font-size:.72rem; color:#acc7d0; }
 .inbox-composer-actions { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
 .inbox-composer-actions .jynlo-action { font-size:.79rem; text-decoration:none; }
+.inbox-attachment-input { display:none; }
+.inbox-attachment-trigger { display:grid; place-items:center; width:36px; height:36px; border-radius:11px; border:1px solid #4b7980; background:#173946; color:#c9f0e7; font:inherit; font-size:1.2rem; cursor:pointer; }
+.inbox-attachment-trigger:hover { background:#205554; border-color:#57dfc6; }
+.inbox-attachment-trigger:disabled { opacity:.5; cursor:not-allowed; }
+.inbox-attachment-trigger:focus-visible, .inbox-attachment-button:focus-visible, .inbox-attachment-draft button:focus-visible { outline:2px solid #7ff7d8; outline-offset:2px; }
+.inbox-attachment-draft { display:flex; align-items:center; gap:9px; min-width:0; padding:9px 12px; background:#1e4650; border:1px solid #447c7d; border-radius:11px; font-size:.8rem; }
+.inbox-attachment-draft span:nth-child(2) { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; }
+.inbox-attachment-draft button { background:transparent; border:0; color:#8df3da; cursor:pointer; font:inherit; }
+.inbox-attachment { display:grid; gap:8px; min-width:0; margin-top:10px; }
+.inbox-attachment-button { display:flex; gap:9px; align-items:center; min-width:0; border:1px solid #628f91; border-radius:12px; padding:11px; background:#133845; color:#e5faf8; text-align:left; font:inherit; font-size:.8rem; cursor:pointer; }
+.inbox-attachment-button span:nth-child(2) { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.inbox-attachment-button small { flex:none; color:#a4dacf; font-size:.68rem; }
+.inbox-attachment-image { display:block; max-width:min(100%,400px); max-height:300px; object-fit:contain; border-radius:12px; background:#0d2732; }
 .inbox-emoji-controls { position:relative; }
 .inbox-emoji-trigger { display:grid; place-items:center; width:36px; height:36px; border-radius:11px; border:1px solid #4b7980; background:#173946; color:#bde9dd; font:inherit; font-size:1.2rem; cursor:pointer; }
 .inbox-emoji-trigger:hover, .inbox-emoji-trigger[aria-expanded="true"] { border-color:#55dac3; background:#1f5556; }
