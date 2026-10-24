@@ -16,6 +16,7 @@ import { chessGameError, chessGameScore } from './community-chess-results';
 import { judoBoutError, isJudoBout } from './community-judo-results';
 import { karateBoutError, isKarateEvent, isKarateKumite } from './community-karate-results';
 import { isBjjEvent, isBjjPoints, bjjResultError } from './community-bjj-results';
+import { isBoxingEvent, boxingResultError } from './community-boxing-results';
 import { isTaekwondoKyorugi, isTaekwondoEvent, taekwondoResultError }
   from './community-taekwondo-results';
 import { isVolleyballEvent, isFootvolleyEvent, volleyballMaxSets, volleyballMinSets,
@@ -831,8 +832,19 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   }
   chessGameScore = chessGameScore;
   isJudoBout = isJudoBout;
+  isBoxingEvent = isBoxingEvent;
   isBjjEvent = isBjjEvent;
   isBjjPoints = isBjjPoints;
+  clearBoxingHiddenScores(): void {
+    if (isBoxingEvent(this.newRoundEventType)) {
+      this.roundEntries.forEach(entry => {
+        entry.performanceValue = null;
+        entry.waveScore1 = null;
+        entry.waveScore2 = null;
+      });
+    }
+  }
+
   clearBjjSubmissionScores(): void {
     if (this.newRoundEventType === 'BJJ_IBJJF_GI_SUBMISSION') {
       this.roundEntries.forEach(entry => { entry.performanceValue = null; });
@@ -3104,6 +3116,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     const judo = isJudoBout(this.newRoundEventType);
     const karate = isKarateEvent(this.newRoundEventType);
     const bjj = isBjjEvent(this.newRoundEventType);
+    const boxing = isBoxingEvent(this.newRoundEventType);
     const taekwondo = isTaekwondoEvent(this.newRoundEventType);
     const kyorugi = isTaekwondoKyorugi(this.newRoundEventType);
     const groupRoutine = isGroupRoutineEvent(this.newRoundEventType);
@@ -3167,6 +3180,10 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       this.errorMessage = t('feedback.communities.taekwondoInvalid');
       return;
     }
+    if (boxing && boxingResultError(this.newRoundEventType, selectedEntries)) {
+      this.errorMessage = t('feedback.communities.boxingInvalid');
+      return;
+    }
     if (bjj && bjjResultError(this.newRoundEventType, selectedEntries)) {
       this.errorMessage = t('feedback.communities.bjjInvalid');
       return;
@@ -3183,7 +3200,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       this.errorMessage = t('feedback.communities.breakingInvalid');
       return;
     }
-    if (neutral && !karate && !taekwondo && !bjj && !isWaveHeatEvent(this.newRoundEventType)
+    if (neutral && !karate && !taekwondo && !bjj && !boxing && !isWaveHeatEvent(this.newRoundEventType)
       && performanceError(this.newRoundEventType, selectedEntries)) {
       this.errorMessage = t(performanceKind(this.newRoundEventType) === 'golf'
         ? 'feedback.communities.golfInvalid'
@@ -3202,9 +3219,9 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     const entries = selectedEntries
       .map(entry => ({
         username: entry.username,
-        team: groupRoutine || basketball || volleyball || teamFinal || chess || judo || karate || kyorugi || bjj ? entry.team.trim()
+        team: groupRoutine || basketball || volleyball || teamFinal || chess || judo || karate || kyorugi || bjj || boxing ? entry.team.trim()
           : race || neutral ? null : (entry.team.trim() || null),
-        result: breaking || chess || judo || karate || kyorugi || bjj ? entry.result
+        result: breaking || chess || judo || karate || kyorugi || bjj || boxing ? entry.result
           : race || neutral ? 'DRAW' as CommunityMatchResult
           : racket ? (entry.team === racketWinner ? 'WIN' : 'LOSS') as CommunityMatchResult
           : entry.result,
