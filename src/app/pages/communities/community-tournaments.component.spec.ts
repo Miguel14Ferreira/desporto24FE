@@ -116,6 +116,16 @@ describe('Community tournaments management', () => {
     });
   });
 
+  it('does not present individual chess rules as a team-board tournament', async () => {
+    component.chooseSport('Xadrez');
+    component.startTeamCreation();
+    component.nameDraft = 'Torneio por equipas';
+    expect(component.isSportFormatSupported).toBeFalse();
+    expect(component.sportFormatWarning).toContain('tabuleiro');
+    await component.createTeamCompetition();
+    expect(api.createTeamTournament).not.toHaveBeenCalled();
+  });
+
   it('creates a chess competition with a saved half-point scoring mode', async () => {
     component.startIndividualCreation();
     component.nameDraft = 'Liga de Xadrez';
