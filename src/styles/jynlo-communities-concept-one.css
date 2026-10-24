@@ -2033,3 +2033,32 @@ body .communities-page.jynlo-c1 .historical-outcome-copy p {
   font-size: .82rem;
   line-height: 1.55;
 }
+
+
+/* Historical fixtures: preserve visible source rounds and knockout phases. */
+body .communities-page.jynlo-c1 .historical-source-group th {
+  padding: .8rem 1rem;
+  text-align: left;
+  background: rgba(86, 158, 184, .13);
+  border-top: 1px solid rgba(136, 196, 218, .24);
+  color: #e8f8ff;
+  font-weight: 500;
+}
+body .communities-page.jynlo-c1 .historical-source-group-kind {
+  margin-right: .65rem;
+  color: #91b9c9;
+  font-size: .75rem;
+  font-weight: 500;
+}
+body .communities-page.jynlo-c1 .historical-source-group-count {
+  margin-left: .75rem;
+  color: #91b9c9;
+  font-size: .74rem;
+}
+@media (max-width: 650px) {
+  body .communities-page.jynlo-c1 .historical-source-group th { padding: .7rem; }
+  body .communities-page.jynlo-c1 .historical-source-group-count {
+    display: block;
+    margin: .3rem 0 0;
+  }
+}
