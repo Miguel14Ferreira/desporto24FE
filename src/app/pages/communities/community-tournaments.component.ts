@@ -534,17 +534,21 @@ export class CommunityTournamentsComponent implements OnChanges {
 
   teamMatchStageLabel(game: TournamentTeamMatch): string {
     if (!this.isGroupKnockout) {
-      return (this.isKnockout ? 'Ronda ' : 'Jornada ') + game.roundNumber;
+      return t(this.isKnockout
+        ? 'communities.tournaments.stageUi.knockoutRound'
+        : 'communities.tournaments.stageUi.leagueRound', { round: game.roundNumber });
     }
     if (game.groupNumber != null) {
-      return 'Grupo ' + this.groupLabel(game.groupNumber) + ' · Jornada ' + game.roundNumber;
+      return t('communities.tournaments.stageUi.groupRound', {
+        group: this.groupLabel(game.groupNumber), round: game.roundNumber
+      });
     }
     const totalRounds = this.selected?.groupCount === 4 ? 3 : 2;
     const remaining = totalRounds - game.roundNumber;
-    return remaining === 2 ? 'Quartos de final'
-      : remaining === 1 ? 'Meias-finais'
-      : remaining === 0 ? 'Final'
-      : 'Ronda eliminatória ' + game.roundNumber;
+    return remaining === 2 ? t('communities.tournaments.stageUi.quarterFinal')
+      : remaining === 1 ? t('communities.tournaments.stageUi.semiFinal')
+      : remaining === 0 ? t('communities.tournaments.stageUi.final')
+      : t('communities.tournaments.stageUi.knockoutFallback', { round: game.roundNumber });
   }
 
   get knockoutTotalRounds(): number {
