@@ -525,3 +525,16 @@
   .race-available-row .t-btn { width: 100%; }
   .race-points-editor .t-btn { width: 100%; }
 }
+
+/* Final, immutable Karting championship results. */
+.race-complete-action { display: grid; gap: .65rem; }
+.race-complete-action p { margin: 0; }
+.race-archive-notice {
+  display: grid; gap: .5rem;
+  padding: 1rem 1.2rem;
+  border: 1px solid rgba(52, 211, 153, .32);
+  border-radius: .85rem;
+  background: rgba(5, 91, 68, .16);
+}
+.race-archive-notice strong { color: #91f5d2; }
+.race-archive-notice p { margin: 0; color: #d3e5e5; font-size: .85rem; }
