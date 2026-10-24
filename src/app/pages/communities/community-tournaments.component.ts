@@ -204,6 +204,9 @@ export class CommunityTournamentsComponent implements OnChanges {
   }
 
   get sportFormatWarning(): string {
+    if (this.isKartingRaceDraft) {
+      return 'As posições, tempos, penalizações e desclassificações vêm das corridas registadas nas Jornadas. Associa as corridas depois de criares o campeonato.';
+    }
     return this.showTeamCreate && this.classificationProfile.scoringMode === 'CHESS_HALF_POINTS'
       ? 'O Xadrez por equipas precisa de partidas e resultados por tabuleiro. Para já, cria uma liga individual de Xadrez.'
       : this.classificationProfile.detail;
