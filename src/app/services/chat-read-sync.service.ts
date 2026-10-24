@@ -48,7 +48,10 @@ export class ChatReadSyncService {
   }
 
   private isTabVisible(): boolean {
-    return typeof document === 'undefined' || document.visibilityState !== 'hidden';
+    // Visibility alone is insufficient: a tab in an unfocused browser
+    // window can still report "visible". Match the unified inbox contract.
+    return typeof document !== 'undefined'
+      && document.visibilityState === 'visible' && document.hasFocus();
   }
 
   private viewer(): string {
@@ -67,7 +70,9 @@ export class ChatReadSyncService {
   }
 
   private flush(kind: InboxKind, id: string, state: ReadState): void {
-    if (state.inFlight || state.wanted <= state.confirmed
+    // An older HTTP read may finish after the user switches windows.
+    // Do not advance a queued, newer cursor until a fresh focused view.
+    if (!this.isTabVisible() || state.inFlight || state.wanted <= state.confirmed
         || Date.now() - state.failedAt < this.retryDelayMs) return;
     const current = state.wanted;
     state.inFlight = true;
