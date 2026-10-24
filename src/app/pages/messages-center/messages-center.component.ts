@@ -26,6 +26,7 @@ import {
   InboxConversation, InboxFilter, InboxKind, InboxMessage,
   inboxKey, matchesInboxSearch, mergeInboxMessages, orderInbox
 } from './inbox.model';
+import { RecoverableSend, restorePendingSends, savePendingSends } from './pending-send-session';
 
 @Component({
   selector: 'app-messages-center',
@@ -85,16 +86,13 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   composerSuccess = '';
   private composerVersion = 0;
   private readonly drafts = new Map<string, string>();
-  private readonly pendingByConversation = new Map<string, {
-    key: string; text: string; replyToMessageId: number | null; knownIds: Set<number>; startedAt: number;
-  }>();
+  private readonly pendingByConversation = new Map<string, RecoverableSend>();
+  private restorePendingAfterInitialInbox = false;
   // Send and delivery checks belong to conversations, not the entire inbox.
   // A delayed response must not lock or mutate a different selected thread.
   private readonly sendingKeys = new Set<string>();
   /** Match an AFTER_COMMIT socket event that beats the POST timeout/error. */
-  private readonly inFlightByConversation = new Map<string, {
-    key: string; text: string; replyToMessageId: number | null; knownIds: Set<number>; startedAt: number;
-  }>();
+  private readonly inFlightByConversation = new Map<string, RecoverableSend>();
   private readonly confirmedWhileSending = new Map<string, InboxMessage>();
   private readonly verifyingKeys = new Set<string>();
   private lastPendingRecheckAt = 0;
@@ -157,6 +155,17 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       this.receiptSessionToken = token;
       this.currentUsername = (token ? this.jwt.decodeToken(token)?.sub : '') || '';
     } catch { this.currentUsername = ''; this.receiptSessionToken = null; }
+    // sessionStorage is scoped to this browser tab and exact login token.
+    // Restore the original text ONLY as a blocked, uncertain draft. Never
+    // submit it again without an explicit user action.
+    if (this.receiptSessionToken && this.currentUsername) {
+      const restored = restorePendingSends(this.currentUsername, this.receiptSessionToken);
+      for (const pending of restored) {
+        this.pendingByConversation.set(pending.key, pending);
+        this.drafts.set(pending.key, pending.text);
+      }
+      this.restorePendingAfterInitialInbox = restored.length > 0;
+    }
 
     this.subscriptions.add(this.realtime.messages$.subscribe(message => {
       const from = message.username1.toLowerCase();
@@ -401,6 +410,19 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
           entries.push(previous);
         }
       }
+      // A successful membership lookup may prove the conversation was
+      // revoked. Its old pending draft must not stay in sessionStorage.
+      // A failing lookup is inconclusive and must retain recovery state.
+      let discarded = false;
+      for (const key of this.pendingByConversation.keys()) {
+        const kind = key.split(':', 1)[0] as InboxKind;
+        if (!failedKinds.has(kind) && !entries.some(item => item.key === key)) {
+          this.pendingByConversation.delete(key);
+          this.drafts.delete(key);
+          discarded = true;
+        }
+      }
+      if (discarded) this.persistPendingSends();
       this.conversations = orderInbox(entries.map(item => ({
         ...item,
         latestText: existing.get(item.key)?.latestText,
@@ -425,7 +447,9 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
           && !failedKinds.has(active.kind)) this.loadHistory(active);
       // Check uncertain POSTs for ALL still-authorized conversations. The
       // selected recent history above already performs its own confirmation.
-      if (recoverAfterReconnect) this.reconcilePendingDeliveries(
+      const recovery = recoverAfterReconnect || this.restorePendingAfterInitialInbox;
+      this.restorePendingAfterInitialInbox = false;
+      if (recovery) this.reconcilePendingDeliveries(
         true, active && !this.historicalPreview && !failedKinds.has(active.kind)
           ? active.key : null, failedKinds
       );
@@ -755,6 +779,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       // The server committed the POST, but its HTTP response could still
       // timeout. Remember this exact server message until the POST settles.
       this.confirmedWhileSending.set(key, message);
+      this.persistPendingSends();
     }
     // A delivery already marked uncertain is confirmed even if the
     // recipient is NOT the conversation currently shown on this device.
@@ -900,6 +925,9 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.sendingKeys.add(key);
     this.inFlightByConversation.set(key, pending);
     this.confirmedWhileSending.delete(key);
+    // Save BEFORE subscribing to the POST. Reload/crash at any point after
+    // clicking Send must remain uncertain, not silently lose that send.
+    this.persistPendingSends();
     this.sending = true;
     this.sendErrorsByConversation.delete(key);
     this.composerError = '';
@@ -921,6 +949,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
         this.acceptRealtime(key, message);
         this.drafts.delete(key);
         this.pendingByConversation.delete(key);
+        this.inFlightByConversation.delete(key);
+        this.persistPendingSends();
         this.sendErrorsByConversation.delete(key);
         if (key !== this.selectedKey) return;
         if (this.historicalPreview) this.returnToRecent();
@@ -934,7 +964,9 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
           // WebSocket can prove AFTER_COMMIT delivery before HTTP times out.
           // Resolve that race before marking a send uncertain or issuing
           // another GET. Never retry the original POST automatically.
+          this.inFlightByConversation.delete(key);
           this.pendingByConversation.set(key, pending);
+          this.persistPendingSends();
           const confirmed = this.confirmedWhileSending.get(key)
             || (key === this.selectedKey
               ? this.messages.find(item => this.matchesPending(item, pending))
@@ -949,6 +981,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
             this.verifyDelivery();
           }
         } else {
+          this.inFlightByConversation.delete(key);
+          this.persistPendingSends();
           const errorText = t('feedback.chat.sendError');
           this.sendErrorsByConversation.set(key, errorText);
           if (key === this.selectedKey) {
@@ -979,10 +1013,22 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       && (message.replyToMessageId ?? null) === pending.replyToMessageId;
   }
 
+  /** Persist in-flight and ambiguous sends, excluding proven server commits. */
+  private persistPendingSends(): void {
+    if (!this.currentUsername || !this.isReceiptSessionCurrent()
+        || !this.receiptSessionToken) return;
+    const pending = new Map<string, RecoverableSend>(this.pendingByConversation);
+    for (const [key, value] of this.inFlightByConversation) {
+      if (!this.confirmedWhileSending.has(key)) pending.set(key, value);
+    }
+    savePendingSends(this.currentUsername, this.receiptSessionToken, pending.values());
+  }
+
   private confirmFromHistoryIfPresent(key: string, messages: InboxMessage[]): void {
     const pending = this.pendingByConversation.get(key);
     if (pending && messages.some(message => this.matchesPending(message, pending))) {
       this.pendingByConversation.delete(key);
+      this.persistPendingSends();
       // A server-confirmed message clears its original draft even when
       // verification finishes after navigation to a different conversation.
       // Never clear the currently edited draft of another thread.
@@ -1078,6 +1124,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
         || this.verifyingKeys.has(this.selectedKey || '')
         || !this.selectedKey || !this.deliveryUncertain) return;
     this.pendingByConversation.delete(this.selectedKey);
+    this.persistPendingSends();
     this.deliveryUncertain = false;
     this.composerError = t('chat.sendRetryWarning');
     // The draft remains intact. Any further POST requires a deliberate action.
