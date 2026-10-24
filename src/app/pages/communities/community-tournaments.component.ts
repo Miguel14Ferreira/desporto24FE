@@ -143,7 +143,7 @@ export class CommunityTournamentsComponent implements OnChanges {
   busy = false;
   error = '';
   feedback = '';
-  confirmAction: 'schedule' | 'complete' | 'completeTeam' | 'delete' | null = null;
+  confirmAction: 'schedule' | 'complete' | 'completeTeam' | 'completeRace' | 'delete' | null = null;
   scoreDrafts: Record<number, { home: number | null; away: number | null }> = {};
   scoreTouched = new Set<number>();
 
