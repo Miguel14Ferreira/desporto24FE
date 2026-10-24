@@ -32,7 +32,7 @@ describe('explicit track Sprint best of three series', () => {
     const d = heat(4, gold, 'F1', 2, 'ana');
     expect(trackSprintSeriesStatus([c, d], c, 12)?.winner).toBeNull();
   });
-  it('resolves 2–1 and single quarterfinal', () => {
+  it('resolves 2–1 in finals and quarterfinals', () => {
     const rounds = [
       heat(1, gold, 'F', 1, 'ana'),
       heat(2, gold, 'F', 2, 'rui'),
@@ -40,7 +40,9 @@ describe('explicit track Sprint best of three series', () => {
     ];
     expect(trackSprintSeriesStatus(rounds, rounds[0], 12)?.winner).toBe('rui');
     const quarter = heat(4, 'SPRINT_QUARTER_FINAL', 'Q', 1, 'ana');
-    expect(trackSprintSeriesStatus([quarter], quarter, 12)?.winner).toBe('ana');
+    expect(trackSprintSeriesStatus([quarter], quarter, 12)?.winner).toBeNull();
+    const quarterTwo = heat(5, 'SPRINT_QUARTER_FINAL', 'Q', 2, 'ana');
+    expect(trackSprintSeriesStatus([quarter, quarterTwo], quarter, 12)?.winner).toBe('ana');
   });
   it('never combines inconsistent phases, participants or numbered heats', () => {
     const a = heat(1, semi, 'S', 1, 'ana');
