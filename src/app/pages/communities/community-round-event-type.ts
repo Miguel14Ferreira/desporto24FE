@@ -20,7 +20,8 @@ export type CommunityEventType = 'RACE' | 'FREESTYLE' | 'TRACK' | 'JUMP' | 'THRO
     | 'LACROSSE_M_REG' | 'LACROSSE_M_OT' | 'AMFOOTBALL_SCORE' | 'FLAGFOOTBALL_SCORE' | 'CURLING_REG' | 'CURLING_EXTRA'
     | 'PETANQUE_13' | 'PETANQUE_11' | 'BOWLING_TENPIN' | 'POOL_9_RACKS' | 'FENCING_POOL_5' | 'FENCING_DE_15'
     | 'TEQBALL_SINGLES' | 'TEQBALL_DOUBLES' | 'CHESS_GAME' | 'CRICKET_T20' | 'GOLF_STROKE_9' | 'GOLF_STROKE_18'
-    | 'JUDO_IPPON' | 'JUDO_AWASETE_IPPON' | 'JUDO_WAZA_ARI' | 'JUDO_YUKO' | 'JUDO_HANSOKU_MAKE';
+    | 'JUDO_IPPON' | 'JUDO_AWASETE_IPPON' | 'JUDO_WAZA_ARI' | 'JUDO_YUKO' | 'JUDO_HANSOKU_MAKE'
+    | 'KARATE_KUMITE_POINTS' | 'KARATE_KUMITE_SENSHU' | 'KARATE_KUMITE_HANTEI' | 'KARATE_KATA_JUDGES';
 export interface CommunityEventOption { code: CommunityEventType; labelKey: string }
 const TYPES: Record<string, readonly CommunityEventOption[]> = {
   basquetebol: [{ code: 'BASKETBALL_FINAL', labelKey: 'communities.basketball.fiveVsFive' }],
@@ -57,6 +58,12 @@ const TYPES: Record<string, readonly CommunityEventOption[]> = {
     { code: 'FENCING_DE_15', labelKey: 'communities.teamFinal.fencingElimination' }
   ],
   xadrez: [{ code: 'CHESS_GAME', labelKey: 'communities.eventType.chess_game' }],
+  karate: [
+    { code: 'KARATE_KUMITE_POINTS', labelKey: 'communities.karate.kumitePoints' },
+    { code: 'KARATE_KUMITE_SENSHU', labelKey: 'communities.karate.kumiteSenshu' },
+    { code: 'KARATE_KUMITE_HANTEI', labelKey: 'communities.karate.kumiteHantei' },
+    { code: 'KARATE_KATA_JUDGES', labelKey: 'communities.karate.kataJudges' }
+  ],
   judo: [
     { code: 'JUDO_IPPON', labelKey: 'communities.judo.ippon' },
     { code: 'JUDO_AWASETE_IPPON', labelKey: 'communities.judo.awaseteIppon' },
@@ -169,6 +176,7 @@ export function eventPresentationFormat(
   if (isRaceEvent(sport, eventType)) return 'race';
   if (eventType === 'CHESS_GAME' && normalize(sport || '') === 'xadrez') return 'duel';
   if (eventType?.startsWith('JUDO_') && normalize(sport || '') === 'judo') return 'duel';
+  if (eventType?.startsWith('KARATE_') && normalize(sport || '') === 'karate') return 'duel';
   if ((eventType === 'GOLF_STROKE_9' || eventType === 'GOLF_STROKE_18')
       && normalize(sport || '') === 'golfe') return 'score';
   if (isNeutralEvent(sport, eventType))

@@ -1133,6 +1133,7 @@
                               : newRoundEventType === 'PARKOUR_FREESTYLE' ? 'communities.parkour.freestyleHint'
                               : (newRoundEventType === 'GOLF_STROKE_9' || newRoundEventType === 'GOLF_STROKE_18')
                                 ? 'communities.golf.hint'
+                              : isKarateEvent(newRoundEventType) ? 'communities.karate.hint'
                               : isJudoBout(newRoundEventType) ? 'communities.judo.hint'
                               : newRoundEventType === 'CHESS_GAME' ? 'communities.chess.hint'
                               : newRoundEventType === 'BREAKING_BATTLE' ? 'communities.breaking.hint'
@@ -1273,6 +1274,15 @@
                                       <input [(ngModel)]="entry.team" maxlength="60"
                                         [placeholder]="'communities.groupRoutine.groupPlaceholder' | t">
                                     </label>
+                                  } @else if (isKarateEvent(newRoundEventType)) {
+                                    <label>
+                                      <span>{{ 'communities.karate.side' | t }}</span>
+                                      <select [(ngModel)]="entry.team" [attr.aria-label]="'communities.karate.side' | t">
+                                        <option value="">{{ 'communities.karate.chooseSide' | t }}</option>
+                                        <option value="AKA">{{ 'communities.karate.aka' | t }}</option>
+                                        <option value="AO">{{ 'communities.karate.ao' | t }}</option>
+                                      </select>
+                                    </label>
                                   } @else if (isJudoBout(newRoundEventType)) {
                                     <label>
                                       <span>{{ 'communities.judo.judogi' | t }}</span>
@@ -1340,6 +1350,23 @@
                                     <small>{{ 'communities.basketball.memberOnly' | t }}</small>
                                   } @else if (isGroupRoutineEvent(newRoundEventType)) {
                                     <small>{{ 'communities.groupRoutine.memberOnly' | t }}</small>
+                                  } @else if (isKarateEvent(newRoundEventType)) {
+                                    <label>
+                                      <span>{{ 'communities.karate.outcome' | t }}</span>
+                                      <select [(ngModel)]="entry.result" [attr.aria-label]="'communities.karate.outcome' | t">
+                                        <option value="DRAW" disabled>{{ 'communities.karate.chooseOutcome' | t }}</option>
+                                        <option value="WIN">{{ 'communities.karate.winner' | t }}</option>
+                                        <option value="LOSS">{{ 'communities.karate.loser' | t }}</option>
+                                      </select>
+                                    </label>
+                                    @if (isKarateKumite(newRoundEventType)) {
+                                      <label>
+                                        <span>{{ 'communities.karate.points' | t }}</span>
+                                        <input type="number" min="0" max="999999" step="1"
+                                          [(ngModel)]="entry.performanceValue"
+                                          [placeholder]="'communities.karate.pointsRequired' | t">
+                                      </label>
+                                    }
                                   } @else if (isJudoBout(newRoundEventType)) {
                                     <label>
                                       <span>{{ 'communities.judo.outcome' | t }}</span>
@@ -2212,12 +2239,13 @@
                             @for (entry of eventPerformanceEntries(round); track entry.entryId ?? $index) {
                               <div class="round-result-row"
                                 [class.round-breaking-winner]="(round.eventType === 'BREAKING_BATTLE'
-                                  || isJudoBout(round.eventType)) && entry.result === 'WIN'">
+                                  || isJudoBout(round.eventType) || isKarateEvent(round.eventType))
+                                  && entry.result === 'WIN'">
                                 <div>
                                   <strong>{{ entry.fullName || entry.username }}</strong>
                                   <span>
                                     {{ roundEntryHandle(entry) }}
-                                    @if (entry.team && !isJudoBout(round.eventType)) { · {{ entry.team }} }
+                                    @if (entry.team && !isJudoBout(round.eventType) && !isKarateEvent(round.eventType)) { · {{ entry.team }} }
                                   </span>
                                 </div>
                                 @if (round.eventType === 'BREAKING_BATTLE') {
@@ -2226,6 +2254,24 @@
                                     {{ (entry.result === 'WIN'
                                       ? 'communities.breaking.winner' : 'communities.breaking.loser') | t }}
                                   </span>
+                                } @else if (isKarateEvent(round.eventType)) {
+                                  <div class="round-surf-scores">
+                                    <small>{{ (entry.team === 'AKA' ? 'communities.karate.aka'
+                                      : 'communities.karate.ao') | t }}</small>
+                                    <span class="result-chip" [class.win]="entry.result === 'WIN'"
+                                      [class.loss]="entry.result === 'LOSS'">
+                                      {{ (entry.result === 'WIN' ? 'communities.karate.winner'
+                                        : 'communities.karate.loser') | t }}
+                                    </span>
+                                    @if (isKarateKumite(round.eventType)) {
+                                      <span class="round-performance-mark">
+                                        {{ performanceDisplay(entry.performanceValue, 0) }}
+                                        {{ 'communities.karate.pointsUnit' | t }}
+                                      </span>
+                                    } @else {
+                                      <small>{{ 'communities.karate.judgesConfirmed' | t }}</small>
+                                    }
+                                  </div>
                                 } @else if (isJudoBout(round.eventType)) {
                                   <div class="round-surf-scores">
                                     <small>{{ (entry.team === 'WHITE' ? 'communities.judo.white'
