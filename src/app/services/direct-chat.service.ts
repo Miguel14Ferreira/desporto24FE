@@ -32,6 +32,26 @@ export class DirectChatService {
     );
   }
 
+  attachmentsAvailable(username: string): Observable<{ available: boolean }> {
+    return this.http.get<{ available: boolean }>(this.baseUrl + '/'
+      + encodeURIComponent(username) + '/attachments/availability');
+  }
+
+  sendAttachment(username: string, file: File, caption: string,
+                 replyToMessageId?: number): Observable<DirectChatMessage> {
+    const form = new FormData();
+    form.append('file', file, file.name);
+    if (caption.trim()) form.append('caption', caption.trim());
+    if (replyToMessageId) form.append('replyToMessageId', String(replyToMessageId));
+    return this.http.post<DirectChatMessage>(this.baseUrl + '/'
+      + encodeURIComponent(username) + '/attachments', form);
+  }
+
+  downloadAttachment(username: string, messageId: number): Observable<Blob> {
+    return this.http.get(this.baseUrl + '/'
+      + encodeURIComponent(username) + '/attachments/' + messageId, {responseType:'blob'});
+  }
+
   info(username: string): Observable<DirectChatInfo> {
     return this.http.get<DirectChatInfo>(
       this.baseUrl + '/' + encodeURIComponent(username) + '/info'
