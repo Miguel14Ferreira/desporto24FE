@@ -179,3 +179,11 @@ O registo central é `src/app/pages/communities/community-round-sport.ts`. Os te
 - Cada formato guarda totais de **pontos**, não golos, em `team_score_a/b`; exige lados A/B e é neutro face a W/D/L genérico. Limites técnicos 0..999 (Petanca limitado aos objetivos da variante). Valores por end, estatísticas, rankings e pontuações de campeonato **não** são inventados.
 - `event_type` cabe em `VARCHAR(20)`; FE Concept One, PT/EN, testes coordenados Java + Angular.
 - Fontes: World Curling, regras 2026 https://worldcurling.org/rules/ e explicação de scoring https://worldcurling.org/about/curling/ ; FIPJP mantém as regras em 2026 https://fipjp.org/en/ , com instruções de jogo https://www.usapetanque.org/how-to-play-peacutetanque.html .
+
+
+## Bowling de dez pinos e Bilhar pool de nove bolas — confrontos individuais (24/10/2026)
+- `Bowling` e `Bilhar` existem no catálogo fechado das **121 modalidades**; nenhuma nova modalidade, migração ou alteração de dados anteriores.
+- `BOWLING_TENPIN`: uma partida **individual 1v1** de dez pinos; valores confirmados de 0 a 300 por jogador, em `team_score_a/b` (os lados A/B representam os dois jogadores, não equipas). Podem empatar; critérios oficiais de desempate não são inferidos. O total não permite reconstruir as dez frames, strikes, spares ou bónus.
+- `POOL_9_RACKS`: somente bilhar de **pool de nove bolas, singulares 1v1**; os totais representam *racks ganhos* num confronto completo, com vencedor obrigatório (não há empate). A distância/race-to e regras sobre break, faltas, jogadas individuais e formato da competição não são inventadas. Outras variantes do Bilhar ficam fora deste contrato.
+- Pontuação individual confirmada isolada dos resultados de futebol, gols, assistências, W/D/L genérico, classificações ou estatísticas oficiais. `event_type` cabe em `VARCHAR(20)`; mantenha `team_score_a/b` existentes; PT/EN Concept One.
+- Fontes: International Bowling Federation tenpin rules https://bowling.sport/universal-playing-rules-chapter-2/ ; WCBS nine-ball guide https://wcbs.sport/sports/how-to-play-pool/ ; WPA Rules of Play 2025 (2026 revision) https://www.wpapool.com/wp-content/uploads/2026/01/2026.01.02-WPA-Rules.pdf .

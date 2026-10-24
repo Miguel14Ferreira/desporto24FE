@@ -235,6 +235,55 @@ describe('handball rugby and sevens final team scores', () => {
     expect(eventOptionsForSport('Futebol')).toEqual([]);
     expect(teamFinalError('PETANQUE_13',[{team:'A'}],score(13,0))).toBe('teamFinalInvalidTeams');
   });
+  it('models one confirmed tenpin Bowling game, not invented frames',()=>{
+    const type='BOWLING_TENPIN';
+    expect(type.length).toBeLessThanOrEqual(20);
+    expect(eventOptionsForSport('Bowling').map(x=>x.code)).toEqual([type]);
+    expect(isTeamFinalEvent(type)).toBeTrue();
+    expect(isNeutralEvent('Bowling',type)).toBeTrue();
+    expect(eventPresentationFormat('Bowling',type)).toBe('team');
+    expect(teamFinalUsesGoals(type)).toBeFalse();
+    expect(teamFinalUsesRuns(type)).toBeFalse();
+    expect(teamFinalScoreLabelKey(type)).toBe('communities.teamFinal.points');
+    expect(teamFinalMaxScore(type)).toBe(300);
+    expect(teamFinalTitleKey(type)).toBe('communities.teamFinal.bowlingTenpin');
+    expect(teamFinalHintKey(type)).toBe('communities.teamFinal.bowlingTenpinHint');
+    for (const result of [score(0,0),score(300,300),score(221,190),score(100,200)])
+      expect(teamFinalError(type,sides,result)).toBeNull();
+    expect(teamFinalError(type,sides,score(301,0))).toBe('bowlingInvalidScore');
+    expect(teamFinalError(type,sides,score(0,301))).toBe('bowlingInvalidScore');
+    expect(teamFinalError(type,sides,score(-1,0))).toBe('teamFinalInvalidScore');
+    expect(teamFinalError(type,[{team:'A'},{team:'A'},{team:'B'}],score(150,100)))
+      .toBe('teamFinalSinglesRequired');
+    expect(recordedTeamFinal({eventType:type,teamScore:score(0,0)})).toBeTrue();
+    expect(teamFinalWinner(score(200,200))).toBeNull();
+  });
+  it('records singles nine-ball Pool rack wins without claiming a race length',()=>{
+    const type='POOL_9_RACKS';
+    expect(type.length).toBeLessThanOrEqual(20);
+    expect(eventOptionsForSport('Bilhar').map(x=>x.code)).toEqual([type]);
+    expect(isTeamFinalEvent(type)).toBeTrue();
+    expect(isNeutralEvent('Bilhar',type)).toBeTrue();
+    expect(eventPresentationFormat('Bilhar',type)).toBe('team');
+    expect(teamFinalUsesGoals(type)).toBeFalse();
+    expect(teamFinalUsesRuns(type)).toBeFalse();
+    expect(teamFinalScoreLabelKey(type)).toBe('communities.teamFinal.racksWon');
+    expect(teamFinalMaxScore(type)).toBe(999);
+    expect(teamFinalHintKey(type)).toBe('communities.teamFinal.poolNineBallHint');
+    for (const result of [score(1,0),score(9,6),score(7,10),score(11,10)])
+      expect(teamFinalError(type,sides,result)).toBeNull();
+    for (const result of [score(0,0),score(1,1),score(9,9)])
+      expect(teamFinalError(type,sides,result)).toBe('poolNineBallInvalidScore');
+    expect(teamFinalError(type,sides,score(-1,2))).toBe('teamFinalInvalidScore');
+    expect(teamFinalError(type,sides,score(1000,2))).toBe('teamFinalInvalidScore');
+    expect(teamFinalError(type,[{team:'A'},{team:'A'},{team:'B'}],score(5,3)))
+      .toBe('teamFinalSinglesRequired');
+    expect(recordedTeamFinal({eventType:type,teamScore:score(9,6)})).toBeTrue();
+    expect(teamFinalWinner(score(9,6))).toBe('A');
+    expect(teamFinalWinner(score(7,9))).toBe('B');
+    expect(eventOptionsForSport('Futebol')).toEqual([]);
+    expect(teamFinalScoreLabelKey('CURLING_EXTRA')).toBe('communities.teamFinal.points');
+  });
   it('rejects invalid scores and incomplete team assignments',()=>{
     expect(teamFinalError('RUGBY_FINAL',sides,score(1000,0))).toBe('teamFinalInvalidScore');
     expect(teamFinalError('RUGBY_FINAL',sides,score(-1,0))).toBe('teamFinalInvalidScore');

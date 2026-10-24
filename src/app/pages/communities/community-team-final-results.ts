@@ -10,7 +10,8 @@ export function isTeamFinalEvent(type: string | null | undefined): boolean {
     || type === 'LACROSSE_M_REG' || type === 'LACROSSE_M_OT'
     || type === 'AMFOOTBALL_SCORE' || type === 'FLAGFOOTBALL_SCORE'
     || type === 'CURLING_REG' || type === 'CURLING_EXTRA'
-    || type === 'PETANQUE_13' || type === 'PETANQUE_11';
+    || type === 'PETANQUE_13' || type === 'PETANQUE_11'
+    || type === 'BOWLING_TENPIN' || type === 'POOL_9_RACKS';
 }
 /** Sport-aware scoreboard units: goals, rugby and football points, or baseball/softball runs. */
 export function teamFinalUsesRuns(type: string | null | undefined): boolean {
@@ -21,9 +22,11 @@ export function teamFinalUsesGoals(type: string | null | undefined): boolean {
     && type !== 'AMFOOTBALL_SCORE' && type !== 'FLAGFOOTBALL_SCORE'
     && type !== 'CURLING_REG' && type !== 'CURLING_EXTRA'
     && type !== 'PETANQUE_13' && type !== 'PETANQUE_11'
+    && type !== 'BOWLING_TENPIN' && type !== 'POOL_9_RACKS'
     && !teamFinalUsesRuns(type);
 }
 export function teamFinalScoreLabelKey(type: string | null | undefined): string {
+  if (type === 'POOL_9_RACKS') return 'communities.teamFinal.racksWon';
   return teamFinalUsesRuns(type) ? 'communities.teamFinal.runs'
     : teamFinalUsesGoals(type) ? 'communities.teamFinal.goals'
     : 'communities.teamFinal.points';
@@ -39,7 +42,8 @@ const TEAM_FINAL_LABELS: Record<string, string> = {
   LACROSSE_M_REG: 'lacrosseMenReg', LACROSSE_M_OT: 'lacrosseMenOt',
   AMFOOTBALL_SCORE: 'americanFootball', FLAGFOOTBALL_SCORE: 'flagFootball',
   CURLING_REG: 'curlingReg', CURLING_EXTRA: 'curlingExtra',
-  PETANQUE_13: 'petanque13', PETANQUE_11: 'petanque11'
+  PETANQUE_13: 'petanque13', PETANQUE_11: 'petanque11',
+  BOWLING_TENPIN: 'bowlingTenpin', POOL_9_RACKS: 'poolNineBall'
 };
 export function teamFinalTitleKey(type: string | null | undefined): string {
   return 'communities.teamFinal.' + (type ? TEAM_FINAL_LABELS[type] ?? 'finalTitle' : 'finalTitle');
@@ -65,6 +69,8 @@ export function teamFinalHintKey(type: string | null | undefined): string {
     case 'CURLING_EXTRA': return 'communities.teamFinal.curlingExtraHint';
     case 'PETANQUE_13': return 'communities.teamFinal.petanque13Hint';
     case 'PETANQUE_11': return 'communities.teamFinal.petanque11Hint';
+    case 'BOWLING_TENPIN': return 'communities.teamFinal.bowlingTenpinHint';
+    case 'POOL_9_RACKS': return 'communities.teamFinal.poolNineBallHint';
     default: return teamFinalUsesGoals(type)
       ? 'communities.teamFinal.goalHint' : 'communities.teamFinal.finalHint';
   }
@@ -75,7 +81,7 @@ export function teamFinalPetanqueTarget(type: string | null | undefined): number
   return type === 'PETANQUE_13' ? 13 : type === 'PETANQUE_11' ? 11 : null;
 }
 export function teamFinalMaxScore(type: string | null | undefined): number {
-  return teamFinalPetanqueTarget(type) ?? 999;
+  return type === 'BOWLING_TENPIN' ? 300 : teamFinalPetanqueTarget(type) ?? 999;
 }
 
 export function teamFinalIsFootballPointsEvent(type: string | null | undefined): boolean {
@@ -95,6 +101,10 @@ export function teamFinalError(type: string | null | undefined,
       || !Number.isInteger(score.sideA) || !Number.isInteger(score.sideB)
       || score.sideA < 0 || score.sideB < 0 || score.sideA > 999 || score.sideB > 999)
     return 'teamFinalInvalidScore';
+  if (type === 'BOWLING_TENPIN' && (score.sideA > 300 || score.sideB > 300))
+    return 'bowlingInvalidScore';
+  if (type === 'POOL_9_RACKS' && score.sideA === score.sideB)
+    return 'poolNineBallInvalidScore';
   if (type === 'CURLING_EXTRA' && score.sideA === score.sideB)
     return 'curlingExtraInvalidResult';
   const target = teamFinalPetanqueTarget(type);
@@ -112,6 +122,11 @@ export function teamFinalError(type: string | null | undefined,
     const a = entries.filter(e => e.team === 'A').length;
     const b = entries.filter(e => e.team === 'B').length;
     if (a !== b || a > 3) return 'petanqueInvalidTeams';
+  }
+  if (type === 'BOWLING_TENPIN' || type === 'POOL_9_RACKS') {
+    const a = entries.filter(e => e.team === 'A').length;
+    const b = entries.filter(e => e.team === 'B').length;
+    if (a !== 1 || b !== 1) return 'teamFinalSinglesRequired';
   }
   return null;
 }
