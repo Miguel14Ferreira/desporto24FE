@@ -229,17 +229,17 @@
                 <p>Define como são atribuídos os pontos e, quando aplicável, os critérios de desempate.</p>
               </div>
             </div>
-            <div class="classification-profile" [class.classification-notice]="!classificationProfile.isRoundRobinSupported"
+            <div class="classification-profile" [class.classification-notice]="!isSportFormatSupported"
               role="status">
               <strong>{{ classificationProfile.heading }}</strong>
-              <p>{{ classificationProfile.detail }}</p>
+              <p>{{ sportFormatWarning }}</p>
               <small>{{ classificationProfile.fields }}</small>
-              @if (!classificationProfile.isRoundRobinSupported) {
+              @if (!isSportFormatSupported) {
                 <p>Para já, regista estas provas nas jornadas da comunidade. A criação de torneios por provas
                   só ficará disponível quando o calendário e a classificação deste formato estiverem implementados.</p>
               }
             </div>
-        @if (classificationProfile.isRoundRobinSupported && showTeamCreate && teamFormatDraft !== 'KNOCKOUT') {
+        @if (isSportFormatSupported && showTeamCreate && teamFormatDraft !== 'KNOCKOUT') {
           <fieldset class="t-points-rules t-tiebreak-rules" aria-describedby="t-tiebreak-help">
             <legend>Critério de desempate</legend>
             <p id="t-tiebreak-help" class="sport-choice-hint">
@@ -259,7 +259,7 @@
             </div>
           </fieldset>
         }
-        @if (classificationProfile.isRoundRobinSupported && (!showTeamCreate || teamFormatDraft !== 'KNOCKOUT')) {
+        @if (isSportFormatSupported && (!showTeamCreate || teamFormatDraft !== 'KNOCKOUT')) {
           @if (classificationProfile.scoringMode === 'CHESS_HALF_POINTS') {
             <div class="classification-fixed-points" role="note">
               <strong>Pontuação de Xadrez</strong>
@@ -302,10 +302,10 @@
           </section>
         }
 
-        @if (!classificationProfile.isRoundRobinSupported && showTeamCreate && teamFormatDraft === 'KNOCKOUT') {
+        @if (!isSportFormatSupported && showTeamCreate && teamFormatDraft === 'KNOCKOUT') {
           <div class="classification-profile classification-notice" role="status">
             <strong>{{ classificationProfile.heading }}</strong>
-            <p>{{ classificationProfile.detail }}</p>
+            <p>{{ sportFormatWarning }}</p>
             <small>{{ classificationProfile.fields }}</small>
             <p>Para já, regista estas provas nas jornadas da comunidade.</p>
           </div>
@@ -315,12 +315,12 @@
           <button type="button" class="t-btn t-btn-secondary"
             (click)="showIndividualCreate = false; showTeamCreate = false; showGuide = true">Voltar às opções</button>
         <button type="button" class="t-btn t-btn-primary"
-          [disabled]="busy || !classificationProfile.isRoundRobinSupported
+          [disabled]="busy || !isSportFormatSupported
             || (teamFormatDraft !== 'KNOCKOUT' && !validPointRules)
             || nameDraft.trim().length < 2 || !sportDraft
 "
           (click)="showTeamCreate ? createTeamCompetition() : create()">
-          {{ !classificationProfile.isRoundRobinSupported ? 'Formato ainda indisponível'
+          {{ !isSportFormatSupported ? 'Formato ainda indisponível'
               : (showTeamCreate ? 'Criar e preparar equipas' : 'Confirmar liga individual') }}
         </button>
         </div>
