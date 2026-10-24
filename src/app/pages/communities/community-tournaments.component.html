@@ -531,9 +531,9 @@
                 </div>
               </div>
               <div class="guide-community-note" role="note">
-                <strong>{{ selected.status === 'DRAFT' ? 'Primeiro organizamos as equipas.' : 'Calendário publicado.' }}</strong>
-                <p>Todos os jogadores são membros reais da comunidade. Um membro só pode integrar uma equipa nesta competição.
-                  @if (selected.playersPerTeam == null) { Podes convidar jogadores livremente antes de iniciar, até 30 por equipa. }
+                <strong>{{ (selected.status === 'DRAFT' ? 'communities.tournaments.teamUi.draftStatus' : 'communities.tournaments.teamUi.publishedStatus') | t }}</strong>
+                <p>{{ 'communities.tournaments.teamUi.membersHelp' | t }}
+                  @if (selected.playersPerTeam == null) { {{ 'communities.tournaments.teamUi.flexRosterHint' | t }} }
                   {{ selected.status === 'DRAFT'
                     ? 'Quando todas as equipas estiverem completas, publica os confrontos.'
                     : (isCupFormat ? 'Regista os resultados e acompanha os apuramentos até à final.' : 'Regista os resultados nas jornadas e acompanha a tabela classificativa.') }}</p>
@@ -560,12 +560,12 @@
               @if (invitedTeamId && selected.id === invitedTournamentId && invitedTeam) {
                 <section class="team-invite-accept" [attr.aria-label]="'communities.tournaments.teamUi.inviteRegion' | t">
                   <div>
-                    <strong>🏆 Foste convidado para a equipa {{ invitedTeam.name }}</strong>
+                    <strong>🏆 {{ 'communities.tournaments.teamUi.invited' | t:{team:invitedTeam.name} }}</strong>
                     <p>{{ selected.name }} · {{ community.name }}</p>
                     @if (myTeam?.id === invitedTeam.id) {
                       <p class="team-invite-confirmed" role="status">{{ 'communities.tournaments.teamUi.alreadyMember' | t }}</p>
                     } @else if (myTeam) {
-                      <p role="status">Já pertences à equipa {{ myTeam.name }} neste torneio.</p>
+                      <p role="status">{{ 'communities.tournaments.teamUi.otherTeam' | t:{team:myTeam.name} }}</p>
                     } @else if (selected.status !== 'DRAFT') {
                       <p role="status">{{ 'communities.tournaments.teamUi.rosterClosed' | t }}</p>
                     } @else if (isTeamRosterFull(invitedTeam)) {
@@ -574,7 +574,7 @@
                       <p>{{ 'communities.tournaments.teamUi.confirmInviteHint' | t }}</p>
                       <button type="button" class="t-btn t-btn-primary"
                         [disabled]="busy || detailsLoading" (click)="acceptInvitedTeam()">
-                        {{ busy ? 'A aceitar…' : 'Aceitar convite e entrar na equipa' }}
+                        {{ (busy ? 'communities.tournaments.teamUi.accepting' : 'communities.tournaments.teamUi.acceptInvite') | t }}
                       </button>
                     }
                   </div>
