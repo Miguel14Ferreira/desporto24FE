@@ -1131,6 +1131,8 @@
                               : newRoundEventType === 'SKATE_PARK' ? 'communities.skate.parkHint'
                               : newRoundEventType === 'SKATE_STREET' ? 'communities.skate.streetHint'
                               : newRoundEventType === 'PARKOUR_FREESTYLE' ? 'communities.parkour.freestyleHint'
+                              : (newRoundEventType === 'GOLF_STROKE_9' || newRoundEventType === 'GOLF_STROKE_18')
+                                ? 'communities.golf.hint'
                               : newRoundEventType === 'CHESS_GAME' ? 'communities.chess.hint'
                               : newRoundEventType === 'BREAKING_BATTLE' ? 'communities.breaking.hint'
                               : newRoundEventType === 'TRAMPOLINE_INDIVIDUAL' ? 'communities.trampoline.hint'
@@ -1348,7 +1350,8 @@
                                     </label>
                                   } @else if (performanceKind(newRoundEventType); as unit) {
                                     <label>
-                                      <span>{{ (unit === 'metres'
+                                      <span>{{ (unit === 'golf' ? 'communities.golf.grossStrokes'
+                                        : unit === 'metres'
                                         ? 'communities.performance.metres'
                                         : unit === 'gym' ? 'communities.gym.finalScore'
                                         : unit === 'street' ? 'communities.skate.streetTotal'
@@ -1359,14 +1362,18 @@
                                         : newRoundEventType === 'PARKOUR_FREESTYLE'
                                           ? 'communities.parkour.freestyleScore'
                                         : 'communities.performance.points') | t }}</span>
-                                      <input type="number" [min]="unit === 'metres' ? 0.001 : 0"
-                                        [max]="unit === 'metres' ? 999999.999 : unit === 'street' ? 300
+                                      <input type="number" [min]="unit === 'golf'
+                                          ? (newRoundEventType === 'GOLF_STROKE_9' ? 9 : 18)
+                                          : unit === 'metres' ? 0.001 : 0"
+                                        [max]="unit === 'golf' ? 999999
+                                          : unit === 'metres' ? 999999.999 : unit === 'street' ? 300
                                           : unit === 'trampoline' ? 9999.99
                                           : unit === 'rhythmic' ? 999999.999
                                           : unit === 'artistic' ? 999999.9999 : 100"
-                                        [step]="unit === 'trampoline' ? 0.01
+                                        [step]="unit === 'golf' ? 1 : unit === 'trampoline' ? 0.01
                                           : unit === 'artistic' ? 0.0001 : 0.001" [(ngModel)]="entry.performanceValue"
-                                        [placeholder]="'communities.performance.optional' | t">
+                                        [placeholder]="(unit === 'golf' ? 'communities.golf.required'
+                                          : 'communities.performance.optional') | t">
                                     </label>
                                   } @else if (!racketSupportsSets(newRoundSport) && !newRoundEventType) {
                                     <label>
@@ -2229,6 +2236,8 @@
                                         performanceKind(round.eventType) === 'artistic' ? 4 : 3) }}
                                       @if (performanceKind(round.eventType) === 'metres') {
                                         {{ 'communities.performance.metresUnit' | t }}
+                                      } @else if (performanceKind(round.eventType) === 'golf') {
+                                        {{ 'communities.golf.strokesUnit' | t }}
                                       } @else if (performanceKind(round.eventType) !== 'rhythmic'
                                         && performanceKind(round.eventType) !== 'artistic') {
                                         {{ 'communities.performance.pointsUnit' | t }}
@@ -2236,7 +2245,7 @@
                                     </span>
                                     <span class="round-performance-rank">
                                       {{ 'communities.performance.position' | t }}:
-                                      {{ eventPerformancePlace(eventPerformanceEntries(round), entry) }}.º
+                                      {{ eventPerformancePlace(eventPerformanceEntries(round), entry, round.eventType) }}.º
                                     </span>
                                   } @else {
                                     <span class="round-performance-unscored">
