@@ -5,6 +5,9 @@ export interface DirectChatMessage {
   text: string;
   dataDisplay: string | null;
   date: string | null;
+  attachmentName?: string | null;
+  attachmentMimeType?: string | null;
+  attachmentSize?: number | null;
   replyToMessageId?: number | null;
   replyToSender?: string | null;
   replyToText?: string | null;
