@@ -115,6 +115,7 @@ describe('SocialStoriesComponent', () => {
     fixture.detectChanges();
     expect(component.activeStory).not.toBeNull();
     const dialog = fixture.nativeElement.querySelector('.story-dialog') as HTMLElement;
+    expect(dialog).withContext('active=' + component.activeStory?.id + ' html=' + fixture.nativeElement.innerHTML.slice(-2300)).not.toBeNull();
     expect(dialog.textContent).toContain('@joao');
     expect(dialog.querySelector('video')?.hasAttribute('controls')).toBeFalse();
     expect(dialog.querySelector('.story-progress-track')).toBeTruthy();
