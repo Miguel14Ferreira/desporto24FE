@@ -26,6 +26,7 @@ interface Tournament {
   playersPerTeam?: number | null;
   roundRobinLegs?: 1 | 2;
   teamTieBreakPriority?: 'GOAL_DIFFERENCE_FIRST' | 'GOALS_SCORED_FIRST' | 'WINS_FIRST';
+  scoringMode?: 'RACE_POINTS' | 'CHESS_HALF_POINTS';
 }
 
 interface Participant {
@@ -66,15 +67,52 @@ function fixtureToken(username: string): string {
     encode({ sub: username, exp: Math.floor(Date.now() / 1000) + 3600 }), 'fixture'].join('.');
 }
 
+
+interface KartingFixture {
+  tournament: Tournament | null;
+  points: number[];
+  linked: boolean;
+  writes: Array<{ role: Role; path: string }>;
+}
+function createKartingFixture(): KartingFixture {
+  return { tournament: null, points: [25,18,15], linked: false, writes: [] };
+}
+function raceData(state: KartingFixture) {
+  const race = {
+    id: 30, name: 'Grande Prémio QA', sport: 'Karting', playedAt: '2026-10-23T18:00:00Z',
+    entries: [
+      { communityPlayerId: 2, fullName: 'Ana', finishPosition: 1, elapsedSeconds: 612,
+        bestLapSeconds: 58, racePenaltyPoints: 0, raceDisqualified: false },
+      { communityPlayerId: 3, fullName: 'Bruno', finishPosition: 2, elapsedSeconds: 624,
+        bestLapSeconds: 59, racePenaltyPoints: 0, raceDisqualified: false },
+      { communityPlayerId: 4, fullName: 'Carla', finishPosition: null, elapsedSeconds: null,
+        bestLapSeconds: null, racePenaltyPoints: 0, raceDisqualified: false }
+    ]
+  };
+  return {
+    tournamentId: 11, pointsByPlace: state.points,
+    linkedRaces: state.linked ? [race] : [],
+    availableRaces: state.linked ? [] : [race],
+    standings: state.linked ? [
+      { position: 1, playerId: 2, fullName: 'Ana', races: 1, wins: 1, podiums: 1,
+        bestFinish: 1, championshipPoints: state.points[0], penaltyPoints: 0 },
+      { position: 2, playerId: 3, fullName: 'Bruno', races: 1, wins: 0, podiums: 1,
+        bestFinish: 2, championshipPoints: state.points[1], penaltyPoints: 0 },
+      { position: 3, playerId: 4, fullName: 'Carla', races: 1, wins: 0, podiums: 0,
+        bestFinish: null, championshipPoints: 0, penaltyPoints: 0 }
+    ] : []
+  };
+}
+
 type FixtureMode = 'empty' | 'draft' | 'paged' | 'forbidden' | 'switch'
   | 'management' | 'complete-rejected' | 'list-network-error'
   | 'paged-enrollment' | 'draw-tie' | 'schedule-roster-paged' | 'schedule-roster-oversize'
   | 'discovery' | 'trial' | 'modules-off' | 'teams-only' | 'teams' | 'teams-view'
-  | 'teams-schedule' | 'history';
+  | 'teams-schedule' | 'history' | 'karting';
 
 async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
   sport: string | null = 'Futebol', sports?: string[], roundRobinLegs: 1 | 2 = 1,
-  format: 'LEAGUE' | 'KNOCKOUT' = 'LEAGUE') {
+  format: 'LEAGUE' | 'KNOCKOUT' = 'LEAGUE', karting?: KartingFixture) {
   const username = role === 'OWNER' ? 'organizador' : 'participante';
   const token = fixtureToken(username);
   await page.addInitScript(value => localStorage.setItem('t', value), token);
@@ -99,7 +137,7 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
     ]
   };
 
-  const tournaments: Tournament[] = mode === 'empty' || mode === 'teams' ? []
+  const tournaments: Tournament[] = mode === 'empty' || mode === 'teams' || mode === 'karting' ? []
     : [tournament(mode === 'teams-view' || mode === 'teams-schedule' ? 11 : 9, 'Liga de Outono')];
   // The sport is a snapshot on the tournament, not inferred by the component.
   tournaments.forEach(item => item.sport = sport);
