@@ -3,6 +3,7 @@ import { finalize, firstValueFrom, forkJoin, Observable, timeout } from 'rxjs';
 import { CommunityGroup } from '../model/community-group';
 import { HistoricalMatchArchive } from '../../services/community-groups.service';
 import { historicalTournamentStandings, HistoricalTournamentStanding } from './community-historical-tournament-standings';
+import { historicalTournamentOutcome, HistoricalTournamentOutcome } from './community-historical-tournament-outcome';
 import {
   CommunityTournament, TournamentPointRules, TeamTieBreakPriority, TournamentMatch, TournamentParticipant, TournamentStandingRow,
   TournamentStandings, TournamentTeam, TournamentTeamMatch, TournamentTeamStandings, TournamentTeamGroups,
@@ -38,6 +39,19 @@ export class CommunityTournamentsComponent implements OnChanges {
     if (this.selected?.format !== 'LEAGUE' || !this.historicalArchive) return [];
     return historicalTournamentStandings(this.historicalArchive,
       this.selected.winPoints, this.selected.drawPoints, this.selected.lossPoints);
+  }
+
+  get historicalScoreLabels() {
+    return tournamentScoreTerminology(this.selected?.sport);
+  }
+
+  get historicalOutcome(): HistoricalTournamentOutcome | null {
+    if (!this.historicalArchive || !this.selected?.historicalArchiveId) return null;
+    if (this.selected.format !== 'LEAGUE' && this.selected.format !== 'KNOCKOUT') return null;
+    return historicalTournamentOutcome(
+      this.historicalArchive, this.selected.format, this.selected.sport,
+      this.selected.winPoints, this.selected.drawPoints, this.selected.lossPoints
+    );
   }
 
   tournamentsPage = 0;
