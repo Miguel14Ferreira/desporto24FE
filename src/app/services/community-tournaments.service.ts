@@ -17,10 +17,10 @@ import {
 } from '../pages/model/community-tournament';
 
 /** Community result-by-position formats verified end to end. */
-export type RaceChampionshipSport = 'Karting' | 'BMX' | 'Ciclismo' | 'Mountain Bike';
+export type RaceChampionshipSport = 'Karting' | 'BMX' | 'Ciclismo' | 'Mountain Bike' | 'Ciclocrosse';
 
 export const RACE_CHAMPIONSHIP_SPORTS: readonly RaceChampionshipSport[] =
-  ['Karting', 'BMX', 'Ciclismo', 'Mountain Bike'];
+  ['Karting', 'BMX', 'Ciclismo', 'Mountain Bike', 'Ciclocrosse'];
 
 export function isRaceChampionshipSport(value: string): value is RaceChampionshipSport {
   return RACE_CHAMPIONSHIP_SPORTS.some(sport => sport === value);
