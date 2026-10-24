@@ -5,6 +5,21 @@ export type AppLanguage = 'pt' | 'en';
 type Dictionary = Record<string, string>;
 
 const PT: Dictionary = {
+  'profile.sessions.kicker': 'Segurança da conta',
+  'profile.sessions.title': 'Dispositivos com sessão iniciada',
+  'profile.sessions.hint': 'Consulta os teus acessos e termina a sessão apenas no dispositivo escolhido.',
+  'profile.sessions.refresh': 'Atualizar lista',
+  'profile.sessions.loading': 'A carregar sessões…',
+  'profile.sessions.empty': 'Sem sessões ativas para apresentar.',
+  'profile.sessions.current': 'Este dispositivo',
+  'profile.sessions.since': 'Desde',
+  'profile.sessions.expires': 'Expira em',
+  'profile.sessions.end': 'Terminar sessão',
+  'profile.sessions.confirm': 'Queres mesmo terminar esta sessão? O dispositivo deixará de ter acesso.',
+  'profile.sessions.revoked': 'Sessão terminada com sucesso.',
+  'profile.sessions.loadError': 'Não foi possível carregar as sessões. Tenta novamente.',
+  'profile.sessions.revokeError': 'Não foi possível terminar a sessão. Tenta novamente.',
+
   'venue.submission.eventHint': 'Sugestão de recinto enviada para aprovação. Para criar a sessão agora, escolhe um recinto existente ou usa o Google Maps/GPS.',
   'venue.submission.title': 'Sugerir um recinto',
   'venue.submission.explainer': 'O recinto será enviado à administração para análise e só ficará visível após aprovação.',
@@ -3476,6 +3491,21 @@ const PT: Dictionary = {
 };
 
 const EN: Dictionary = {
+  'profile.sessions.kicker': 'Account security',
+  'profile.sessions.title': 'Signed-in devices',
+  'profile.sessions.hint': 'Review your active sessions and sign out only the device you choose.',
+  'profile.sessions.refresh': 'Refresh list',
+  'profile.sessions.loading': 'Loading sessions…',
+  'profile.sessions.empty': 'No active sessions to display.',
+  'profile.sessions.current': 'This device',
+  'profile.sessions.since': 'Since',
+  'profile.sessions.expires': 'Expires',
+  'profile.sessions.end': 'Sign out',
+  'profile.sessions.confirm': 'Sign out this device? It will lose access to your account.',
+  'profile.sessions.revoked': 'Device signed out successfully.',
+  'profile.sessions.loadError': 'Could not load sessions. Please try again.',
+  'profile.sessions.revokeError': 'Could not sign out this device. Please try again.',
+
   'venue.submission.eventHint': 'Venue submitted for review. To create a session now, choose an approved venue or use Google Maps/GPS.',
   'venue.submission.title': 'Suggest a venue',
   'venue.submission.explainer': 'Your venue will be reviewed by the administrators and will appear publicly only after approval.',
