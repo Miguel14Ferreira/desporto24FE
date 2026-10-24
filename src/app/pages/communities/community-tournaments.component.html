@@ -251,9 +251,9 @@
                   só ficará disponível quando o calendário e a classificação deste formato estiverem implementados.</p>
               }
             </div>
-            @if (isKartingRaceDraft) {
+            @if (isRaceChampionshipDraft) {
               <div class="classification-fixed-points" role="note">
-                <strong>{{ 'communities.karting.creationTitle' | t }}</strong>
+                <strong>{{ raceSportLabel(sportDraft) }} · {{ 'communities.karting.creationTitle' | t }}</strong>
                 <p>{{ 'communities.karting.creationHint' | t }}</p>
               </div>
             } @else {
@@ -359,7 +359,7 @@
           (click)="showTeamCreate ? createTeamCompetition() : create()">
           {{ !isSportFormatSupported ? 'Formato ainda indisponível'
               : (showTeamCreate ? 'Criar e preparar equipas'
-                  : (isKartingRaceDraft ? ('communities.karting.createButton' | t) : 'Confirmar liga individual')) }}
+                  : (isRaceChampionshipDraft ? ('communities.karting.createButton' | t) : 'Confirmar liga individual')) }}
         </button>
         </div>
       </div>
@@ -402,6 +402,7 @@
               [attr.aria-pressed]="selected?.id === tournament.id"
               (click)="selectTournament(tournament)">
               <span class="karting-palmares-name">{{ tournament.name }}</span>
+              <small>{{ raceSportLabel(tournament.sport) }}</small>
               <span class="karting-palmares-winner">
                 {{ tournament.championTied
                   ? ('communities.tournaments.kartingSharedChampion' | t)
@@ -460,7 +461,7 @@
               }
             } @else {
               @if (isRaceCompetition) {
-                <p>{{ 'communities.karting.title' | t }}</p>
+                <p>{{ raceSportLabel(selected.sport) }} · {{ 'communities.karting.title' | t }}</p>
               } @else if (isChessTournament) {
                 <p>Xadrez · Vitória 1 · Empate ½ · Derrota 0</p>
               } @else {
@@ -925,8 +926,11 @@
             <section class="t-section race-championship" [attr.aria-label]="'communities.karting.sectionLabel' | t">
               <div class="t-section-heading">
                 <div>
-                  <h5>{{ 'communities.karting.racesTitle' | t }}</h5>
+                  <h5>{{ raceSportLabel(selected.sport) }} · {{ 'communities.karting.racesTitle' | t }}</h5>
                   <p>{{ 'communities.karting.racesHelp' | t }}</p>
+                  @if (selected.sport === 'BMX') {
+                    <p>{{ 'communities.race.bmxRacingOnly' | t }}</p>
+                  }
                 </div>
               </div>
               @if (selected.status === 'COMPLETED' && finalKartingPodium.length) {

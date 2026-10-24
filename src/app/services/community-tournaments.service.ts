@@ -41,9 +41,11 @@ export class CommunityTournamentsService {
   }
 
 
-  createKartingChampionship(communityId: number, name: string): Observable<CommunityTournament> {
+  /** Only disciplines verified end-to-end: Karting and BMX Racing (not Freestyle). */
+  createKartingChampionship(communityId: number, name: string,
+                            sport: 'Karting' | 'BMX' = 'Karting'): Observable<CommunityTournament> {
     return this.http.post<CommunityTournament>(this.url(communityId), {
-      name, sport: 'Karting', entryType: 'INDIVIDUAL', format: 'LEAGUE',
+      name, sport, entryType: 'INDIVIDUAL', format: 'LEAGUE',
       scoringMode: 'RACE_POINTS'
     });
   }
