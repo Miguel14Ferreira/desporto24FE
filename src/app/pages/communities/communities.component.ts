@@ -833,6 +833,11 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   isJudoBout = isJudoBout;
   isBjjEvent = isBjjEvent;
   isBjjPoints = isBjjPoints;
+  clearBjjSubmissionScores(): void {
+    if (this.newRoundEventType === 'BJJ_IBJJF_GI_SUBMISSION') {
+      this.roundEntries.forEach(entry => { entry.performanceValue = null; });
+    }
+  }
   isKarateEvent = isKarateEvent;
   isKarateKumite = isKarateKumite;
   isTaekwondoKyorugi = isTaekwondoKyorugi;
