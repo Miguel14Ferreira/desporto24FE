@@ -30,6 +30,7 @@ import { NotificationsComponent } from './pages/notifications/notifications.comp
 import { FriendsComponent } from './pages/friends/friends.component';
 import { GoogleOnboardingComponent } from './pages/google-onboarding/google-onboarding.component';
 import { NotFoundComponent } from './pages/not-found/not-found.component';
+import { SocialStoriesComponent } from './pages/social-feed/social-stories.component';
 import { SocialFeedComponent } from './pages/social-feed/social-feed.component';
 import { DiscoverComponent } from './pages/discover/discover.component';
 import { VenueDetailsComponent } from './pages/venue-details/venue-details.component';
@@ -72,5 +73,5 @@ import { LegalPageComponent } from './pages/legal-page/legal-page.component';
         FormsModule,
         ReactiveFormsModule,
         BrowserAnimationsModule,
-        TranslatePipe], providers: [AuthenticationGuard, AuthenticationService, { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }, provideHttpClient(withXhr(), withInterceptorsFromDi())] })
+        TranslatePipe, SocialStoriesComponent], providers: [AuthenticationGuard, AuthenticationService, { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }, provideHttpClient(withXhr(), withInterceptorsFromDi())] })
 export class AppModule { }

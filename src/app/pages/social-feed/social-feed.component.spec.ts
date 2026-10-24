@@ -1,3 +1,4 @@
+import { SocialStoriesComponent } from './social-stories.component';
 import { SocialFeedComponent } from './social-feed.component';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
@@ -38,7 +39,7 @@ describe('SocialFeedComponent discovery sidebar', () => {
 
     await TestBed.configureTestingModule({
       declarations: [SocialFeedComponent],
-      imports: TEST_IMPORTS,
+      imports: [...TEST_IMPORTS, SocialStoriesComponent],
       providers: [
         ...TEST_PROVIDERS,
         { provide: SocialFeedService, useValue: feed },
