@@ -2931,13 +2931,15 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       this.importFileError = t('communities.matches.tournamentSportRequired');
       return;
     }
-    const context = {
-      title: this.matchArchiveTitle.trim(),
-      entryType: this.matchArchiveEntryType,
-      createTournament: this.matchArchiveDestination === 'TOURNAMENT',
-      sport: this.matchArchiveDestination === 'TOURNAMENT' ? this.matchArchiveSport.trim() : undefined,
-      format: this.matchArchiveDestination === 'TOURNAMENT' ? this.matchArchiveFormat : undefined
-    };
+    const context = this.matchArchiveDestination === 'TOURNAMENT'
+      ? {
+          title: this.matchArchiveTitle.trim(),
+          entryType: this.matchArchiveEntryType,
+          createTournament: true,
+          sport: this.matchArchiveSport.trim(),
+          format: this.matchArchiveFormat
+        }
+      : { title: this.matchArchiveTitle.trim(), entryType: this.matchArchiveEntryType };
     this.matchArchiveConfirming = true;
     this.importFileError = '';
     this.communityService.confirmHistoricalMatches(communityId, file, mapping, context)
