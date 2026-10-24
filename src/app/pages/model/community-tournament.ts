@@ -121,7 +121,7 @@ export interface TournamentTeamPlayer {
 export interface TournamentTeam {
   id: number;
   name: string;
-  playersPerTeam: number;
+  playersPerTeam: number | null;
   createdAt: string;
   players: TournamentTeamPlayer[];
 }
