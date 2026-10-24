@@ -543,9 +543,9 @@
                         <th scope="col">Pts</th>
                       </tr></thead>
                       <tbody>
-                        @for (row of historicalLeagueTable; track row.name; let position = $index) {
+                        @for (row of historicalLeagueTable; track row.name) {
                           <tr>
-                            <td>{{ position + 1 }}</td>
+                            <td [title]="row.tiedOnPoints ? ('communities.matches.historicalPointsTie' | t) : null">{{ row.tiedOnPoints ? '=' : '' }}{{ row.rank }}</td>
                             <th scope="row">{{ row.name }}</th>
                             <td>{{ row.played }}</td><td>{{ row.won }}</td>
                             <td>{{ row.drawn }}</td><td>{{ row.lost }}</td>
