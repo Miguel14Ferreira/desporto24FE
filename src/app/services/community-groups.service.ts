@@ -1,5 +1,5 @@
 export interface TrackSprintBracketMatch {
-  phase: 'SPRINT_QUARTER_FINAL' | 'SPRINT_SEMI_FINAL' | 'SPRINT_BRONZE_FINAL' | 'SPRINT_GOLD_FINAL';
+  phase: 'SPRINT_EIGHTH_FINAL' | 'SPRINT_QUARTER_FINAL' | 'SPRINT_SEMI_FINAL' | 'SPRINT_BRONZE_FINAL' | 'SPRINT_GOLD_FINAL';
   slot: string;
   seriesKey: string;
   riderA: string | null;
@@ -14,8 +14,10 @@ export interface TrackSprintBracketOverview {
   id: number;
   seasonId: number;
   name: string;
-  format: 'EIGHT_RIDER_FINALS';
+  format: 'EIGHT_RIDER_FINALS' | 'SIXTEEN_RIDER_1_8';
   matches: TrackSprintBracketMatch[];
+  qualifyingRoundId?: number | null;
+  qualifyingSeeds?: string[];
 }
 
 import { HttpClient, HttpParams } from '@angular/common/http';
@@ -467,11 +469,19 @@ export class CommunityGroupsService {
       this.url + '/' + communityId + '/seasons/' + seasonId + '/track-sprint-brackets');
   }
 
-  createTrackSprintBracket(communityId: number, seasonId: number, name: string):
-    Observable<TrackSprintBracketOverview> {
+  createTrackSprintBracket(communityId: number, seasonId: number, name: string,
+    format: 'EIGHT_RIDER_FINALS' | 'SIXTEEN_RIDER_1_8' = 'EIGHT_RIDER_FINALS',
+    qualifyingRoundId: number | null = null): Observable<TrackSprintBracketOverview> {
     return this.http.post<TrackSprintBracketOverview>(
       this.url + '/' + communityId + '/seasons/' + seasonId + '/track-sprint-brackets',
-      {name});
+      {name, format, qualifyingRoundId});
+  }
+
+  deleteTrackSprintBracket(communityId: number, seasonId: number, bracketId: number):
+    Observable<void> {
+    return this.http.delete<void>(
+      this.url + '/' + communityId + '/seasons/' + seasonId
+        + '/track-sprint-brackets/' + bracketId);
   }
 
   createRound(

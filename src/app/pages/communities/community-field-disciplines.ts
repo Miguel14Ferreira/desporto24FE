@@ -7,10 +7,10 @@ export type GymApparatus = 'FLOOR' | 'VAULT' | 'POMMEL_HORSE' | 'RINGS'
 export type BodyboardStance = 'PRONE' | 'DROP_KNEE';
 export type RhythmicApparatus = 'HOOP' | 'BALL' | 'CLUBS' | 'RIBBON';
 export type OrienteeringCourse = 'ORIENT_SPRINT' | 'ORIENT_MIDDLE' | 'ORIENT_LONG';
-export type TrackSprintPhase = 'SPRINT_QUARTER_FINAL' | 'SPRINT_SEMI_FINAL'
+export type TrackSprintPhase = 'SPRINT_EIGHTH_FINAL' | 'SPRINT_QUARTER_FINAL' | 'SPRINT_SEMI_FINAL'
   | 'SPRINT_BRONZE_FINAL' | 'SPRINT_GOLD_FINAL';
 const TRACK_SPRINT_PHASES: readonly TrackSprintPhase[] = [
-  'SPRINT_QUARTER_FINAL', 'SPRINT_SEMI_FINAL',
+  'SPRINT_EIGHTH_FINAL', 'SPRINT_QUARTER_FINAL', 'SPRINT_SEMI_FINAL',
   'SPRINT_BRONZE_FINAL', 'SPRINT_GOLD_FINAL'
 ];
 const ORIENTEERING: readonly OrienteeringCourse[] = [
