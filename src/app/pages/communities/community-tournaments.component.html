@@ -931,6 +931,9 @@
                   @if (selected.sport === 'BMX') {
                     <p>{{ 'communities.race.bmxRacingOnly' | t }}</p>
                   }
+                  @if (selected.sport === 'Ciclismo' || selected.sport === 'Mountain Bike') {
+                    <p>{{ 'communities.race.communityScoring' | t }}</p>
+                  }
                 </div>
               </div>
               @if (selected.status === 'COMPLETED' && finalKartingPodium.length) {
@@ -999,10 +1002,14 @@
                         <thead>
                           <tr>
                             <th scope="col">{{ 'communities.tournaments.kartingRacePlace' | t }}</th>
-                            <th scope="col">{{ 'communities.tournaments.kartingRaceDriver' | t }}</th>
-                            <th scope="col">{{ 'communities.tournaments.kartingRaceLaps' | t }}</th>
+                            <th scope="col">{{ selected.sport === 'Karting' ? ('communities.tournaments.kartingRaceDriver' | t) : ('communities.race.athlete' | t) }}</th>
+                            @if (hasRaceLaps(race.entries)) {
+                              <th scope="col">{{ 'communities.tournaments.kartingRaceLaps' | t }}</th>
+                            }
                             <th scope="col">{{ 'communities.tournaments.kartingRaceTime' | t }}</th>
-                            <th scope="col">{{ 'communities.tournaments.kartingRaceBestLap' | t }}</th>
+                            @if (hasRaceBestLap(race.entries)) {
+                              <th scope="col">{{ 'communities.tournaments.kartingRaceBestLap' | t }}</th>
+                            }
                             <th scope="col">{{ 'communities.tournaments.kartingRacePoints' | t }}</th>
                           </tr>
                         </thead>
@@ -1030,7 +1037,9 @@
                                   </small>
                                 }
                               </td>
-                              <td>{{ driver.lapsCompleted ?? '—' }}</td>
+                              @if (hasRaceLaps(race.entries)) {
+                                <td>{{ driver.lapsCompleted ?? '—' }}</td>
+                              }
                               <td class="karting-race-clock">
                                 <strong>{{ formatKartingDuration(driver.adjustedElapsedSeconds ?? driver.elapsedSeconds) }}</strong>
                                 @if (driver.raceTimePenaltySeconds != null && driver.raceTimePenaltySeconds > 0) {
@@ -1038,7 +1047,9 @@
                                     {{ 'communities.tournaments.kartingTimePenalty' | t }}</small>
                                 }
                               </td>
-                              <td class="karting-race-clock">{{ formatKartingDuration(driver.bestLapSeconds) }}</td>
+                              @if (hasRaceBestLap(race.entries)) {
+                                <td class="karting-race-clock">{{ formatKartingDuration(driver.bestLapSeconds) }}</td>
+                              }
                               <td class="karting-race-award">{{ kartingRaceAward(driver) }}</td>
                             </tr>
                           }
