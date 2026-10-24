@@ -1,0 +1,58 @@
+name: Jynlo QA Karting live read-only
+
+# The repository default branch is master, while production runs from
+# preview/render-fullstack. A manual dispatch must be defined on master.
+# Checkout is pinned to a fully reviewed, CI-tested commit (PR #274), rather
+# than any mutable PR branch. No credentials ever enter pull-request jobs.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: jynlo-live-karting-readonly
+  cancel-in-progress: false
+
+jobs:
+  qa:
+    name: Two QA accounts · production read-only
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - name: Checkout reviewed QA script at immutable commit
+        uses: actions/checkout@v4
+        with:
+          ref: 2a174ee302bf1a50d22a207d01af6f834e1af021
+          persist-credentials: false
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Validate local QA safeguards without credentials
+        run: node --test scripts/qa/jynlo-karting-live-readonly.test.cjs
+
+      - name: Install pinned browser runner
+        run: npm install --no-save --package-lock=false playwright@1.56.1
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      # Protected repository secrets are injected only into the final process.
+      # Login POST is permitted; every gameplay/tournament/API probe is GET.
+      # No screenshots, logs of private records, persisted tokens or writes.
+      - name: Read-only live Karting QA with two isolated authenticated accounts
+        env:
+          JYNLO_QA_PASSWORD_1: ${{ secrets.JYNLO_QA_PASSWORD_1 }}
+          JYNLO_QA_PASSWORD_2: ${{ secrets.JYNLO_QA_PASSWORD_2 }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "$JYNLO_QA_PASSWORD_1" ] || [ -z "$JYNLO_QA_PASSWORD_2" ]; then
+            echo '[FAIL] Configure both JYNLO_QA_PASSWORD_1 and JYNLO_QA_PASSWORD_2 repository secrets.'
+            exit 1
+          fi
+          node scripts/qa/jynlo-karting-live-readonly.cjs
