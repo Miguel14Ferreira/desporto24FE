@@ -56,6 +56,14 @@ describe('CommunityTournamentsService API contract', () => {
     expect(http.get).toHaveBeenCalledWith(base + '/teams/groups');
   });
 
+  it('creates an individual Ciclocrosse series with race points, never football match rules', () => {
+    service.createRaceChampionship(7, 'Taça de Ciclocrosse', 'Ciclocrosse').subscribe();
+    expect(http.post).toHaveBeenCalledWith(
+      environment.apiUrl + '/api/communities/7/tournaments',
+      { name: 'Taça de Ciclocrosse', sport: 'Ciclocrosse',
+        entryType: 'INDIVIDUAL', format: 'LEAGUE', scoringMode: 'RACE_POINTS' });
+  });
+
   it('sends knockout format without league-only settings', () => {
     service.createTeamTournament(7, 'Taça', 'Futebol', 3, 2,
       { winPoints: 4, drawPoints: 1, lossPoints: 0 }, 'WINS_FIRST', 'KNOCKOUT').subscribe();

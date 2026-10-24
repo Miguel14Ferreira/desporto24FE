@@ -837,6 +837,24 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   isJudoBout = isJudoBout;
   isMuayThaiEvent = isMuayThaiEvent;
   isKickboxingEvent = isKickboxingEvent;
+  clearStrengthTrainingHiddenScores(): void {
+    if (this.newRoundEventType !== 'STRENGTH_TRAINING') return;
+    this.roundEntries.forEach(entry => {
+      entry.team = '';
+      entry.result = 'DRAW';
+      entry.goals = 0;
+      entry.assists = 0;
+      entry.mvp = false;
+      entry.cleanSheet = false;
+      entry.finishPosition = null;
+      entry.elapsedSeconds = null;
+      entry.bestLapSeconds = null;
+      entry.lapsCompleted = null;
+      entry.performanceValue = null;
+      entry.waveScore1 = null;
+      entry.waveScore2 = null;
+    });
+  }
   isKickboxingPointFighting = isKickboxingPointFighting;
   isBoxingEvent = isBoxingEvent;
   isBjjEvent = isBjjEvent;

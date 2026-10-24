@@ -1079,7 +1079,7 @@
                             <label>
                               <span>{{ 'communities.eventType.label' | t }}</span>
                               <select [(ngModel)]="roundEventTypeDraft"
-                                (ngModelChange)="roundDisciplineDraft = ''; resetVolleyballSets(); clearBjjSubmissionScores(); clearBoxingHiddenScores(); clearKickboxingHiddenScores(); clearMuayThaiHiddenScores()"
+                                (ngModelChange)="roundDisciplineDraft = ''; resetVolleyballSets(); clearBjjSubmissionScores(); clearBoxingHiddenScores(); clearKickboxingHiddenScores(); clearMuayThaiHiddenScores(); clearStrengthTrainingHiddenScores()"
                                 [attr.aria-label]="'communities.eventType.label' | t">
                                 <option value="">{{ 'communities.eventType.select' | t }}</option>
                                 @for (choice of eventOptions(newRoundSport); track choice.code) {
@@ -1125,7 +1125,8 @@
                           </p>
                         } @else if (newRoundEventType && viewForNewRound() === 'individual') {
                           <p class="round-sport-guidance" role="note">
-                            {{ (newRoundEventType === 'HEAT' ? 'communities.surf.hint'
+                            {{ (newRoundEventType === 'STRENGTH_TRAINING' ? 'communities.strengthTraining.hint'
+                              : newRoundEventType === 'HEAT' ? 'communities.surf.hint'
                               : newRoundEventType === 'BODYBOARD_HEAT' ? 'communities.bodyboard.hint'
                               : newRoundEventType === 'APPARATUS' ? 'communities.gym.hint'
                               : newRoundEventType === 'SKATE_PARK' ? 'communities.skate.parkHint'
@@ -1405,6 +1406,8 @@
                                     <small>{{ 'communities.basketball.memberOnly' | t }}</small>
                                   } @else if (isGroupRoutineEvent(newRoundEventType)) {
                                     <small>{{ 'communities.groupRoutine.memberOnly' | t }}</small>
+                                  } @else if (newRoundEventType === 'STRENGTH_TRAINING') {
+                                    <small>{{ 'communities.strengthTraining.participantOnly' | t }}</small>
                                   } @else if (isMuayThaiEvent(newRoundEventType)) {
                                     <label>
                                       <span>{{ 'communities.muayThai.outcome' | t }}</span>
@@ -2507,7 +2510,11 @@
                                     <small>{{ 'communities.chess.points' | t }}</small>
                                   </div>
                                 } @else if (neutralRound(round)) {
-                                  @if (isWaveHeatEvent(round.eventType)) {
+                                  @if (round.eventType === 'STRENGTH_TRAINING') {
+                                    <span class="round-performance-unscored">
+                                      {{ 'communities.strengthTraining.participated' | t }}
+                                    </span>
+                                  } @else if (isWaveHeatEvent(round.eventType)) {
                                     @if (surfWaveTotal(entry) !== null) {
                                       <div class="round-surf-scores">
                                         <small>{{ waveLabelKey(round.eventType, 1) | t }}: {{ performanceDisplay(entry.waveScore1) }}</small>

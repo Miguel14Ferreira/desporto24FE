@@ -27,7 +27,8 @@ export type CommunityEventType = 'RACE' | 'FREESTYLE' | 'TRACK' | 'JUMP' | 'THRO
     | 'BOXING_WB_POINTS' | 'BOXING_WB_KO' | 'BOXING_WB_RSC'
     | 'WAKO_POINT_FIGHTING' | 'WAKO_LIGHT_CONTACT' | 'WAKO_KICK_LIGHT'
     | 'WAKO_FULL_CONTACT' | 'WAKO_LOW_KICK' | 'WAKO_K1'
-    | 'IFMA_FULL_WP' | 'IFMA_FULL_KO' | 'IFMA_FULL_RSCS' | 'IFMA_FULL_RSCI';
+    | 'IFMA_FULL_WP' | 'IFMA_FULL_KO' | 'IFMA_FULL_RSCS' | 'IFMA_FULL_RSCI'
+    | 'STRENGTH_TRAINING';
 export interface CommunityEventOption { code: CommunityEventType; labelKey: string }
 const TYPES: Record<string, readonly CommunityEventOption[]> = {
   basquetebol: [{ code: 'BASKETBALL_FINAL', labelKey: 'communities.basketball.fiveVsFive' }],
@@ -64,6 +65,7 @@ const TYPES: Record<string, readonly CommunityEventOption[]> = {
     { code: 'FENCING_DE_15', labelKey: 'communities.teamFinal.fencingElimination' }
   ],
   xadrez: [{ code: 'CHESS_GAME', labelKey: 'communities.eventType.chess_game' }],
+  musculacao: [{ code: 'STRENGTH_TRAINING', labelKey: 'communities.strengthTraining.event' }],
   'muay thai': [
     { code: 'IFMA_FULL_WP', labelKey: 'communities.muayThai.fullWp' },
     { code: 'IFMA_FULL_KO', labelKey: 'communities.muayThai.fullKo' },
@@ -208,6 +210,7 @@ export function eventPresentationFormat(
   sport: string | null | undefined, eventType: string | null | undefined
 ): string {
   if (isRaceEvent(sport, eventType)) return 'race';
+  if (eventType === 'STRENGTH_TRAINING' && normalize(sport || '') === 'musculacao') return 'activity';
   if (eventType === 'CHESS_GAME' && normalize(sport || '') === 'xadrez') return 'duel';
   if (eventType?.startsWith('JUDO_') && normalize(sport || '') === 'judo') return 'duel';
   if (eventType?.startsWith('KARATE_') && normalize(sport || '') === 'karate') return 'duel';
