@@ -31,7 +31,7 @@ describe('Create session venue server autocomplete', () => {
       providers: [
         ...TEST_PROVIDERS,
         { provide: VenueService, useValue: venues },
-        { provide: SessionService, useValue: jasmine.createSpyObj<SessionService>('SessionService', ['submitSuggestion']) }
+        { provide: SessionService, useValue: jasmine.createSpyObj<SessionService>('SessionService', ['create']) }
       ]
     }).compileComponents();
     fixture = TestBed.createComponent(Events2Component);

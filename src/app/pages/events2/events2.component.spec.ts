@@ -17,7 +17,7 @@ describe('Events2Component', () => {
   let router: Router;
 
   beforeEach(async () => {
-    sessionService = jasmine.createSpyObj<SessionService>('SessionService', ['submitSuggestion']);
+    sessionService = jasmine.createSpyObj<SessionService>('SessionService', ['create']);
     venueService = jasmine.createSpyObj<VenueService>('VenueService', ['search', 'suggest', 'submitSuggestion', 'listPhotos', 'resolveMapLink']);
     venueService.suggest.and.returnValue(of({ venues: [], page: 0, hasMore: false }));
     venueService.listPhotos.and.returnValue(of([]));
@@ -224,7 +224,7 @@ describe('Events2Component', () => {
     expect(fixture.nativeElement.querySelector('.venue-load-error')).toBeNull();
   });
 
-  it('keeps a newly saved venue when the initial catalog response arrives late', () => {
+  it('keeps a pending suggestion out of public results, even after an older listing returns', () => {
     const pending = new Subject<VenueSuggestionPage>();
     venueService.suggest.and.returnValue(pending.asObservable());
     component.loadVenues();
@@ -232,26 +232,22 @@ describe('Events2Component', () => {
     component.venueName = 'Campo Novo';
     component.city = 'Lisboa';
     component.address = 'Rua Nova';
-    venueService.submitSuggestion.and.returnValue(of({
-      id: 801, name: 'Campo Novo', city: 'Lisboa',
-      address: 'Rua Nova', sports: 'Padel', latitude: null, longitude: null
-    } as Venue));
+    venueService.submitSuggestion.and.returnValue(of({id: 801, status: 'PENDING'}));
 
     component.saveVenue();
-    expect(component.selectedVenueId).toBe(801);
+    expect(component.selectedVenueId).toBeNull();
+    expect(component.venueSuggestionSubmitted).toBeTrue();
 
-    pending.next({ venues: [{
-      id: 802, name: 'Campo Antigo', city: 'Porto',
+    pending.next({ venues: [{ id: 802, name: 'Campo Antigo', city: 'Porto',
       address: 'Rua A', sports: 'Padel', latitude: null, longitude: null
     } as Venue], page: 0, hasMore: false });
     pending.complete();
 
-    expect(component.venues.map(venue => venue.id)).toEqual([802, 801]);
-    expect(component.selectedVenueId).toBe(801);
-    expect(component.selectedVenue()?.name).toBe('Campo Novo');
+    expect(component.venues.map(venue => venue.id)).toEqual([802]);
+    expect(component.selectedVenueId).toBeNull();
   });
 
-  it('retains saved venues if a pending catalog refresh fails', () => {
+  it('never inserts a pending suggestion into the approved venue cache after a request failure', () => {
     const pending = new Subject<VenueSuggestionPage>();
     venueService.suggest.and.returnValue(pending.asObservable());
     component.loadVenues();
@@ -259,41 +255,14 @@ describe('Events2Component', () => {
     component.venueName = 'Campo Novo';
     component.city = 'Lisboa';
     component.address = 'Rua Nova';
-    venueService.submitSuggestion.and.returnValue(of({
-      id: 801, name: 'Campo Novo', city: 'Lisboa',
-      address: 'Rua Nova', sports: 'Padel', latitude: null, longitude: null
-    } as Venue));
+    venueService.submitSuggestion.and.returnValue(of({id: 801, status: 'PENDING'}));
 
     component.saveVenue();
     pending.error(new Error('Offline'));
 
     expect(component.venuesLoadError).toBeTrue();
-    expect(component.venues.map(venue => venue.id)).toEqual([801]);
-    expect(component.selectedVenue()?.name).toBe('Campo Novo');
-  });
-
-  it('does not duplicate a saved venue if it is also in the catalog response', () => {
-    const pending = new Subject<VenueSuggestionPage>();
-    venueService.suggest.and.returnValue(pending.asObservable());
-    component.loadVenues();
-    component.sport = 'Padel';
-    component.venueName = 'Campo Novo';
-    component.city = 'Lisboa';
-    component.address = 'Rua Nova';
-    venueService.submitSuggestion.and.returnValue(of({
-      id: 801, name: 'Campo Novo', city: 'Lisboa',
-      address: 'Rua Nova', sports: 'Padel', latitude: null, longitude: null
-    } as Venue));
-
-    component.saveVenue();
-    pending.next({ venues: [{
-      id: 801, name: 'Campo Novo', city: 'Lisboa',
-      address: 'Rua Nova', sports: 'Padel', latitude: null, longitude: null
-    } as Venue], page: 0, hasMore: false });
-    pending.complete();
-
-    expect(component.venues.filter(venue => venue.id === 801).length).toBe(1);
-    expect(component.selectedVenueId).toBe(801);
+    expect(component.venues).toEqual([]);
+    expect(component.selectedVenueId).toBeNull();
   });
 
   it('prefills an editable sport and locality from Discover', () => {
@@ -514,8 +483,8 @@ describe('Events2Component', () => {
     expect(router.navigate).toHaveBeenCalledWith(['/menu/events', 42], {});
   });
 
-  it('waits for a newly created venue before submitting the session', () => {
-    const pending = new Subject<Venue>();
+  it('blocks session submission during a pending venue submission but never attaches its id', () => {
+    const pending = new Subject<{ id: number; status: string }>();
     venueService.submitSuggestion.and.returnValue(pending.asObservable());
     component.sport = 'Padel';
     component.gameDate = '2099-10-15T18:00';
@@ -525,34 +494,25 @@ describe('Events2Component', () => {
 
     component.saveVenue();
     fixture.detectChanges();
-
-    const submit = fixture.nativeElement.querySelector('button[type="submit"]') as HTMLButtonElement;
     expect(component.venueSaving).toBeTrue();
-    expect(submit.disabled).toBeTrue();
-
     component.createSession();
     expect(sessionService.create).not.toHaveBeenCalled();
 
-    pending.next({
-      id: 303, name: 'Campo Novo', city: 'Lisboa',
-      address: 'Rua A', sports: 'Padel', latitude: null, longitude: null
-    } as Venue);
+    pending.next({id: 303, status: 'PENDING'});
     pending.complete();
     fixture.detectChanges();
 
     expect(component.venueSaving).toBeFalse();
-    expect(component.selectedVenueId).toBe(303);
-    expect(submit.disabled).toBeFalse();
-
+    expect(component.selectedVenueId).toBeNull();
+    expect(component.venueSuggestionSubmitted).toBeTrue();
     component.createSession();
     expect(sessionService.create).toHaveBeenCalledWith(
-      jasmine.objectContaining({ venueId: 303, sport: 'Padel' }),
-      undefined
+      jasmine.objectContaining({ venueId: null, sport: 'Padel' }), undefined
     );
   });
 
-  it('re-enables session submission after venue creation fails', () => {
-    const pending = new Subject<Venue>();
+  it('re-enables session submission after a venue suggestion fails', () => {
+    const pending = new Subject<{ id: number; status: string }>();
     venueService.submitSuggestion.and.returnValue(pending.asObservable());
     component.sport = 'Padel';
     component.gameDate = '2099-10-15T18:00';
@@ -563,14 +523,12 @@ describe('Events2Component', () => {
     component.saveVenue();
     component.createSession();
     expect(sessionService.create).not.toHaveBeenCalled();
-
     pending.error(new Error('Service unavailable'));
     fixture.detectChanges();
 
     const submit = fixture.nativeElement.querySelector('button[type="submit"]') as HTMLButtonElement;
     expect(component.venueSaving).toBeFalse();
     expect(submit.disabled).toBeFalse();
-
     component.createSession();
     expect(sessionService.create).toHaveBeenCalledTimes(1);
   });
