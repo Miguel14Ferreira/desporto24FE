@@ -204,7 +204,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     return this.selected?.scoringMode === 'RACE_POINTS';
   }
 
-  /** All completed Karting championships in the loaded paginated list. */
+  /** Completed race championships (Karting and BMX Racing) in the loaded list. */
   get kartingPalmares(): CommunityTournament[] {
     return this.tournaments
       .filter(tournament => tournament.scoringMode === 'RACE_POINTS'
@@ -239,13 +239,13 @@ export class CommunityTournamentsComponent implements OnChanges {
   }
 
   get isSportFormatSupported(): boolean {
-    return this.isKartingRaceDraft || this.classificationProfile.isRoundRobinSupported
+    return this.isRaceChampionshipDraft || this.classificationProfile.isRoundRobinSupported
       && !(this.showTeamCreate && this.classificationProfile.scoringMode === 'CHESS_HALF_POINTS');
   }
 
   get sportFormatWarning(): string {
-    if (this.isKartingRaceDraft) {
-      return 'As posições, tempos, penalizações e desclassificações vêm das corridas registadas nas Jornadas. Associa as corridas depois de criares o campeonato.';
+    if (this.isRaceChampionshipDraft) {
+      return 'Este campeonato usa posições, tempos, penalizações e desclassificações das corridas registadas nas Jornadas. Em BMX, apenas provas Racing (não Freestyle) podem ser associadas.';
     }
     return this.showTeamCreate && this.classificationProfile.scoringMode === 'CHESS_HALF_POINTS'
       ? 'O Xadrez por equipas precisa de partidas e resultados por tabuleiro. Para já, cria uma liga individual de Xadrez.'
@@ -832,7 +832,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     const tournamentId = this.selected.id;
     this.confirmAction = null;
     await this.mutate(this.api.completeKarting(this.community.id, tournamentId),
-      'Campeonato de Karting encerrado. Campeão e classificação final arquivados.', tournament => {
+      'Campeonato por corridas encerrado. Campeão e classificação final arquivados.', tournament => {
         this.updateSelected(tournament);
         this.raceOverview = undefined;
         this.loadRaceOverview();
@@ -1264,13 +1264,13 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.showError('Esta modalidade precisa de resultados por prova. Usa as jornadas da comunidade.');
       return;
     }
-    if (!this.isKartingRaceDraft && !this.validPointRules) {
+    if (!this.isRaceChampionshipDraft && !this.validPointRules) {
       this.showError('Define pontos inteiros entre 0 e 100 para vitória, empate e derrota.');
       return;
     }
     const scoringMode = this.classificationProfile.scoringMode;
-    const createRequest = this.isKartingRaceDraft
-      ? this.api.createKartingChampionship(this.community.id, name)
+    const createRequest = this.isRaceChampionshipDraft
+      ? this.api.createKartingChampionship(this.community.id, name, this.sportDraft as 'Karting' | 'BMX')
       : scoringMode
       ? this.api.create(this.community.id, name, this.sportDraft, this.pointRulesDraft, scoringMode)
       : this.api.create(this.community.id, name, this.sportDraft, this.pointRulesDraft);
