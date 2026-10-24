@@ -26,22 +26,44 @@ export class ChatReactionStoreService {
   private readonly watchers = new Map<string, number>();
   private readonly pending = new Map<string, Set<number>>();
   private readonly busy = new Set<string>();
+  // Per-message generations invalidate an HTTP snapshot whenever a newer
+  // server event, write or reconnect supersedes it. Use a global sequence so
+  // unwatch/re-watch cannot accidentally reuse a generation.
+  private readonly revisions = new Map<string, number>();
+  private sequence = 0;
   private scheduled = false;
   private connectedOnce = false;
+  private wasConnected = false;
   readonly changed = new BehaviorSubject<number>(0);
 
   constructor(private readonly http: HttpClient, realtime: DirectChatRealtimeService) {
     realtime.reactions$.subscribe(event => this.applySocketEvent(event));
     realtime.connected$.subscribe(connected => {
-      if (!connected) return;
-      if (!this.connectedOnce) { this.connectedOnce = true; return; }
+      if (!connected) {
+        this.wasConnected = false;
+        return;
+      }
+      if (!this.connectedOnce) {
+        this.connectedOnce = true;
+        this.wasConnected = true;
+        return;
+      }
+      if (this.wasConnected) return; // Duplicate AUTH is not a reconnect.
+      this.wasConnected = true;
       this.cache.clear();
       for (const key of this.watchers.keys()) {
+        this.touch(key); // Invalidate any GET from before the outage.
         const [kind, id, rawMessage] = key.split(':');
         this.queue(kind as ChatReactionKind, id, Number(rawMessage));
       }
       this.changed.next(this.changed.value + 1);
     });
+  }
+
+  private touch(key: string): number {
+    const revision = ++this.sequence;
+    this.revisions.set(key, revision);
+    return revision;
   }
 
   private conversation(kind: ChatReactionKind, id: string | number): string {
@@ -70,8 +92,12 @@ export class ChatReactionStoreService {
   unwatch(kind: ChatReactionKind, id: string | number, messageId: number): void {
     const key = this.key(kind, id, messageId);
     const count = this.watchers.get(key) || 0;
-    if (count <= 1) this.watchers.delete(key);
-    else this.watchers.set(key, count - 1);
+    if (count <= 1) {
+      this.watchers.delete(key);
+      // Removed/unmounted conversations cannot keep old reaction counts.
+      this.cache.delete(key);
+      this.revisions.delete(key);
+    } else this.watchers.set(key, count - 1);
   }
 
   private queue(kind: ChatReactionKind, id: string, messageId: number): void {
@@ -95,14 +121,23 @@ export class ChatReactionStoreService {
       const active = [...ids].filter(msgId => this.watchers.has(this.key(kind, id, msgId)));
       for (let start = 0; start < active.length; start += 100) {
         const page = active.slice(start, start + 100);
+        const revisions = new Map(page.map(msgId => {
+          const key = this.key(kind, id, msgId);
+          return [key, this.touch(key)] as const;
+        }));
         const params = new HttpParams().set('ids', page.join(','));
         this.http.get<ChatReactionSummary[]>(this.url(kind, id), { params }).subscribe({
           next: summaries => {
             const byId = new Map(summaries.map(item => [item.messageId, item]));
             for (const msgId of page) {
               const key = this.key(kind, id, msgId);
-              if (this.watchers.has(key)) this.cache.set(key, byId.get(msgId)
-                || { messageId: msgId, counts: {}, myEmoji: null });
+              // A newer socket event, overlapping GET, mutation or reconnect
+              // supersedes this snapshot. Never repaint with older counts.
+              if (this.watchers.has(key) && !this.busy.has(key)
+                  && this.revisions.get(key) === revisions.get(key)) {
+                this.cache.set(key, byId.get(msgId)
+                  || { messageId: msgId, counts: {}, myEmoji: null });
+              }
             }
             this.changed.next(this.changed.value + 1);
           },
@@ -122,19 +157,34 @@ export class ChatReactionStoreService {
     const current = this.cache.get(key);
     if (!current || this.busy.has(key)) return;
     this.busy.add(key);
+    const revision = this.touch(key); // Invalidate pre-write GET requests.
+    const expectedEmoji = current.myEmoji === emoji ? null : emoji;
     const url = this.url(kind, id) + '/' + messageId;
     const request = current.myEmoji === emoji
       ? this.http.delete<ChatReactionSummary>(url)
       : this.http.put<ChatReactionSummary>(url, { emoji });
     request.subscribe({
       next: result => {
-        this.cache.set(key, result);
         this.busy.delete(key);
+        if (this.revisions.get(key) === revision) {
+          // No newer server event has arrived: this persisted write is latest.
+          if (this.watchers.has(key)) this.cache.set(key, result);
+          this.touch(key);
+        } else if (this.watchers.has(key)) {
+          // Another actor/socket update raced with the HTTP reply. Fetch the
+          // aggregate again rather than trusting either out-of-order payload.
+          this.queue(kind, String(id).toLowerCase(), messageId);
+        }
         this.changed.next(this.changed.value + 1);
       },
       error: () => {
         this.busy.delete(key);
-        onError();
+        const confirmedBySocket = this.revisions.get(key) !== revision
+          && this.cache.get(key)?.myEmoji === expectedEmoji;
+        // A committed socket confirmation may beat a lost HTTP response.
+        // Do not announce a failure when the desired reaction was confirmed.
+        if (!confirmedBySocket) onError();
+        if (this.watchers.has(key)) this.queue(kind, String(id).toLowerCase(), messageId);
         this.changed.next(this.changed.value + 1);
       }
     });
@@ -155,6 +205,10 @@ export class ChatReactionStoreService {
     if (!event || !Number.isSafeInteger(event.messageId) || event.messageId <= 0
         || !['direct', 'session', 'community'].includes(event.kind)) return;
     const key = this.key(event.kind, event.conversationId, event.messageId);
+    // Ignore unrelated rooms; do not grow revisions for every reaction
+    // arriving while no corresponding message is mounted.
+    if (!this.watchers.has(key) && !this.busy.has(key)) return;
+    this.touch(key); // Invalidate older HTTP GET and mutation acknowledgements.
     const current = this.cache.get(key);
     if (!current) {
       if (this.watchers.has(key)) this.queue(event.kind, event.conversationId, event.messageId);
