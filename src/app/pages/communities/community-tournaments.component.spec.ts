@@ -59,6 +59,7 @@ describe('Community tournaments management', () => {
   it('shows a single selected sport and preserves it until the replacement is picked', () => {
     expect(component.sportDraft).toBe('Futebol');
     expect(component.editingSport).toBeFalse();
+    expect(component.showCommunitySportShortcuts).toBeFalse();
 
     component.startTeamCreation();
     component.toggleSportEditor();
@@ -80,6 +81,18 @@ describe('Community tournaments management', () => {
     component.startIndividualCreation();
     expect(component.sportDraft).toBe('Karting');
     expect(component.editingSport).toBeFalse();
+
+    // After selecting Karting, Futebol must not appear again as an
+    // unlabelled quick suggestion when the editor is opened.
+    component.toggleSportEditor();
+    expect(component.showCommunitySportShortcuts).toBeFalse();
+    expect(component.suggestedSports).toEqual([]);
+    component.toggleSportEditor();
+    expect(component.sportDraft).toBe('Karting');
+
+    // Before any sport is chosen, community sports remain helpful shortcuts.
+    component.sportDraft = '';
+    expect(component.showCommunitySportShortcuts).toBeTrue();
   });
 
   describe('real team competitions', () => {
