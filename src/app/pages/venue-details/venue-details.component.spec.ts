@@ -132,6 +132,21 @@ describe('VenueDetailsComponent', () => {
     expect(component.mapUrl).toBeNull();
   });
 
+  it('supports retrying a failed venue load without getting stuck on the loading state', () => {
+    const route = {snapshot:{paramMap:{get: () => '7'}}} as ActivatedRoute;
+    const api = jasmine.createSpyObj<VenueService>('VenueService', ['get']);
+    api.get.and.returnValue(throwError(() => new Error('timeout')));
+    const component = new VenueDetailsComponent(route, api);
+    component.retryVenue();
+    expect(component.loadError).toBeTrue();
+    expect(component.loading).toBeFalse();
+    api.get.and.returnValue(of(createVenue()));
+    component.retryVenue();
+    expect(component.loadError).toBeFalse();
+    expect(component.venue?.id).toBe(7);
+    expect(component.loading).toBeFalse();
+  });
+
   it('loads the venue, photos and sport conditions from the route id', () => {
     const venue = createVenue();
 
