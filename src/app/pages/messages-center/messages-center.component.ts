@@ -68,7 +68,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   private readonly onPageActive = (): void => {
     // Never keep capturing microphone audio while another tab is foregrounded.
     if (!this.isPageActive()) {
-      this.cancelVoiceRecording();
+      if (this.voiceRecording || this.voiceFinalizing) this.cancelVoiceRecording();
       return;
     }
     if (this.selectedKey) this.markRenderedRead(this.selectedKey);
@@ -1339,6 +1339,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       this.sendErrorsByConversation.delete(key);
       if (this.selectedKey === key) {
         this.deliveryUncertain = false;
+        this.selectedAttachment = null;
+        this.clearVoicePreview();
         this.draft = '';
         this.replyingTo = null;
         this.composerError = '';
