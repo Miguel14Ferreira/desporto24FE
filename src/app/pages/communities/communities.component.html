@@ -1133,6 +1133,7 @@
                               : newRoundEventType === 'PARKOUR_FREESTYLE' ? 'communities.parkour.freestyleHint'
                               : (newRoundEventType === 'GOLF_STROKE_9' || newRoundEventType === 'GOLF_STROKE_18')
                                 ? 'communities.golf.hint'
+                              : isJudoBout(newRoundEventType) ? 'communities.judo.hint'
                               : newRoundEventType === 'CHESS_GAME' ? 'communities.chess.hint'
                               : newRoundEventType === 'BREAKING_BATTLE' ? 'communities.breaking.hint'
                               : newRoundEventType === 'TRAMPOLINE_INDIVIDUAL' ? 'communities.trampoline.hint'
@@ -1272,6 +1273,15 @@
                                       <input [(ngModel)]="entry.team" maxlength="60"
                                         [placeholder]="'communities.groupRoutine.groupPlaceholder' | t">
                                     </label>
+                                  } @else if (isJudoBout(newRoundEventType)) {
+                                    <label>
+                                      <span>{{ 'communities.judo.judogi' | t }}</span>
+                                      <select [(ngModel)]="entry.team" [attr.aria-label]="'communities.judo.judogi' | t">
+                                        <option value="">{{ 'communities.judo.selectJudogi' | t }}</option>
+                                        <option value="WHITE">{{ 'communities.judo.white' | t }}</option>
+                                        <option value="BLUE">{{ 'communities.judo.blue' | t }}</option>
+                                      </select>
+                                    </label>
                                   } @else if (newRoundEventType === 'CHESS_GAME') {
                                     <label>
                                       <span>{{ 'communities.chess.color' | t }}</span>
@@ -1330,6 +1340,15 @@
                                     <small>{{ 'communities.basketball.memberOnly' | t }}</small>
                                   } @else if (isGroupRoutineEvent(newRoundEventType)) {
                                     <small>{{ 'communities.groupRoutine.memberOnly' | t }}</small>
+                                  } @else if (isJudoBout(newRoundEventType)) {
+                                    <label>
+                                      <span>{{ 'communities.judo.outcome' | t }}</span>
+                                      <select [(ngModel)]="entry.result" [attr.aria-label]="'communities.judo.outcome' | t">
+                                        <option value="DRAW" disabled>{{ 'communities.judo.chooseOutcome' | t }}</option>
+                                        <option value="WIN">{{ 'communities.judo.winner' | t }}</option>
+                                        <option value="LOSS">{{ 'communities.judo.loser' | t }}</option>
+                                      </select>
+                                    </label>
                                   } @else if (newRoundEventType === 'CHESS_GAME') {
                                     <label>
                                       <span>{{ 'communities.chess.result' | t }}</span>
@@ -2192,12 +2211,13 @@
                           <div class="round-results" [class.round-breaking-battle]="round.eventType === 'BREAKING_BATTLE'">
                             @for (entry of eventPerformanceEntries(round); track entry.entryId ?? $index) {
                               <div class="round-result-row"
-                                [class.round-breaking-winner]="round.eventType === 'BREAKING_BATTLE' && entry.result === 'WIN'">
+                                [class.round-breaking-winner]="(round.eventType === 'BREAKING_BATTLE'
+                                  || isJudoBout(round.eventType)) && entry.result === 'WIN'">
                                 <div>
                                   <strong>{{ entry.fullName || entry.username }}</strong>
                                   <span>
                                     {{ roundEntryHandle(entry) }}
-                                    @if (entry.team) { · {{ entry.team }} }
+                                    @if (entry.team && !isJudoBout(round.eventType)) { · {{ entry.team }} }
                                   </span>
                                 </div>
                                 @if (round.eventType === 'BREAKING_BATTLE') {
@@ -2206,6 +2226,19 @@
                                     {{ (entry.result === 'WIN'
                                       ? 'communities.breaking.winner' : 'communities.breaking.loser') | t }}
                                   </span>
+                                } @else if (isJudoBout(round.eventType)) {
+                                  <div class="round-surf-scores">
+                                    <small>{{ (entry.team === 'WHITE' ? 'communities.judo.white'
+                                      : 'communities.judo.blue') | t }}</small>
+                                    <span class="result-chip" [class.win]="entry.result === 'WIN'"
+                                      [class.loss]="entry.result === 'LOSS'">
+                                      {{ (entry.result === 'WIN' ? 'communities.judo.winner'
+                                        : 'communities.judo.loser') | t }}
+                                    </span>
+                                    @if (entry.result === 'WIN') {
+                                      <small>{{ 'communities.judo.confirmedMethod' | t }}</small>
+                                    }
+                                  </div>
                                 } @else if (round.eventType === 'CHESS_GAME') {
                                   <div class="round-surf-scores">
                                     <small>{{ (entry.team === 'WHITE' ? 'communities.chess.white' : 'communities.chess.black') | t }}</small>
