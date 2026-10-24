@@ -257,6 +257,7 @@ export class CommunityTournamentsComponent implements OnChanges {
   get sportFormatWarning(): string {
     if (this.isRaceChampionshipDraft) {
       if (this.sportDraft === 'BMX') return t('communities.race.bmxRacingOnly');
+      if (this.sportDraft === 'Ciclismo de Estrada') return t('communities.roadCycling.championshipNotice');
       if (this.sportDraft === 'Ciclismo' || this.sportDraft === 'Mountain Bike'
           || this.sportDraft === 'Ciclocrosse') {
         return t('communities.race.communityScoring');

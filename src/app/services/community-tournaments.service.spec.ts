@@ -64,6 +64,14 @@ describe('CommunityTournamentsService API contract', () => {
         entryType: 'INDIVIDUAL', format: 'LEAGUE', scoringMode: 'RACE_POINTS' });
   });
 
+  it('creates road race championships with positions only, without time-trial rule mode', () => {
+    service.createRaceChampionship(7, 'Taça estrada', 'Ciclismo de Estrada').subscribe();
+    expect(http.post).toHaveBeenCalledWith(
+      environment.apiUrl + '/api/communities/7/tournaments',
+      { name: 'Taça estrada', sport: 'Ciclismo de Estrada',
+        entryType: 'INDIVIDUAL', format: 'LEAGUE', scoringMode: 'RACE_POINTS' });
+  });
+
   it('sends knockout format without league-only settings', () => {
     service.createTeamTournament(7, 'Taça', 'Futebol', 3, 2,
       { winPoints: 4, drawPoints: 1, lossPoints: 0 }, 'WINS_FIRST', 'KNOCKOUT').subscribe();

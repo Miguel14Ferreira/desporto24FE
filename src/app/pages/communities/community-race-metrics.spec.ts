@@ -1,4 +1,4 @@
-import { raceSupportsLaps, formatRaceSeconds, raceEntryValidationError } from './community-race-metrics';
+import { raceSupportsLaps, formatRaceSeconds, raceEntryValidationError, roadTimeTrialEntryInvalid } from './community-race-metrics';
 
 describe('Race results with recorded measures', () => {
   const racer = (finishPosition: number | null, elapsedSeconds: number | null) => ({
@@ -28,6 +28,16 @@ describe('Race results with recorded measures', () => {
     expect(raceEntryValidationError([racer(1.5, null)])).toBe('raceInvalidMetrics');
     expect(raceEntryValidationError([racer(1, -2)])).toBe('raceInvalidMetrics');
     expect(raceEntryValidationError([racer(1, 92.4301)])).toBe('raceInvalidMetrics');
+  });
+
+  it('requires a classified road time-trial rider to have both place and elapsed time', () => {
+    expect(roadTimeTrialEntryInvalid([racer(1, 92.430), racer(2, 95.220),
+      racer(null, null)])).toBeFalse();
+    expect(roadTimeTrialEntryInvalid([racer(1, null)])).toBeTrue();
+    expect(roadTimeTrialEntryInvalid([racer(null, 95.220)])).toBeTrue();
+    expect(roadTimeTrialEntryInvalid([{ ...racer(1, 92.430), lapsCompleted: 4 }])).toBeTrue();
+    expect(roadTimeTrialEntryInvalid([{ ...racer(1, 92.430), bestLapSeconds: 30 }])).toBeTrue();
+    expect(raceSupportsLaps('Ciclismo de Estrada')).toBeFalse();
   });
 
   it('rejects non-integral/negative laps', () => {

@@ -34,7 +34,7 @@ import { isBasketballFinal, basketballScoreError,
   recordedBasketballFinal, basketballWinner } from './community-basketball-results';
 import { isGroupRoutineEvent, routineGroupNames, routineGroupError,
   sortedRoutineGroups, routineGroupPlace, routineGroupMembers } from './community-group-routine-results';
-import { raceSupportsLaps, formatRaceSeconds, raceEntryValidationError } from './community-race-metrics';
+import { raceSupportsLaps, formatRaceSeconds, raceEntryValidationError, roadTimeTrialEntryInvalid } from './community-race-metrics';
 import { swimmingTimeError, formatSwimTime } from './community-swimming-results';
 import { raceDecisionError } from './community-race-decisions';
 import { performanceKind, performanceError, eventPerformanceEntries,
@@ -3308,6 +3308,11 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       return;
     }
     if (race) {
+      if (this.newRoundSport === 'Ciclismo de Estrada' && this.newRoundEventType === 'TIME_TRIAL'
+          && roadTimeTrialEntryInvalid(selectedEntries)) {
+        this.errorMessage = t('communities.roadCycling.timeTrialInvalid');
+        return;
+      }
       const invalid = raceEntryValidationError(selectedEntries);
       if (invalid) {
         this.errorMessage = t('feedback.communities.' + invalid);
