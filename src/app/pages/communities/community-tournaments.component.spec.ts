@@ -6,6 +6,7 @@ import { CommunityGroup } from '../model/community-group';
 import { CommunityTournament, TournamentMatch, TournamentPage, TournamentParticipant, TournamentParticipantPage, TournamentTeam } from '../model/community-tournament';
 import { CommunityTournamentsComponent } from './community-tournaments.component';
 import { tournamentScoreTerminology } from './community-tournament-scoring';
+import { appTranslate as t } from '../../i18n/i18n.service';
 
 describe('Community tournaments management', () => {
   let api: jasmine.SpyObj<CommunityTournamentsService>;
@@ -1543,6 +1544,29 @@ describe('Community tournaments management', () => {
       expect(terms.scoreInput).toBe('Marcador de');
       expect(terms.forAbbrev).toBe('MF');
       expect(terms.note).toContain('não suporta pares');
+    }
+  });
+
+  it('translates tournament detail notices and irreversible delete confirmation in PT/EN', () => {
+    const previous = localStorage.getItem('d24-language');
+    try {
+      localStorage.setItem('d24-language', 'en');
+      expect(t('communities.tournaments.detailUi.pointsSummary', { win: 3, draw: 1, loss: 0 }))
+        .toBe('Win 3 · Draw 1 · Loss 0 points');
+      expect(t('communities.tournaments.detailUi.deleteWarning', { name: 'Autumn Cup' }))
+        .toContain('Delete “Autumn Cup”?');
+      expect(t('communities.tournaments.detailUi.groupQualification')).toContain('draw order');
+      expect(t('communities.tournaments.detailUi.chessPoints')).toBe('Chess · Win 1 · Draw ½ · Loss 0');
+      localStorage.setItem('d24-language', 'pt');
+      expect(t('communities.tournaments.detailUi.pointsSummary', { win: 3, draw: 1, loss: 0 }))
+        .toBe('Vitória 3 · Empate 1 · Derrota 0 pontos');
+      expect(t('communities.tournaments.detailUi.deleteWarning', { name: 'Taça de Outono' }))
+        .toContain('Eliminar “Taça de Outono”?');
+      expect(t('communities.tournaments.detailUi.chessPoints')).toBe('Xadrez · Vitória 1 · Empate ½ · Derrota 0');
+      expect(api.delete).not.toHaveBeenCalled();
+    } finally {
+      if (previous === null) localStorage.removeItem('d24-language');
+      else localStorage.setItem('d24-language', previous);
     }
   });
 
