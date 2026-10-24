@@ -7,6 +7,7 @@ describe('Community season management', () => {
   let component: CommunitiesComponent;
   let service: { renameSeason: jasmine.Spy; deleteSeason: jasmine.Spy };
   let reload: jasmine.Spy;
+  let historyReload: jasmine.Spy;
   const season: CommunitySeason = {
     id: 44, name: 'Época 2026/27', active: false,
     startsAt: '2026-09-01T00:00:00Z', endedAt: '2027-05-01T00:00:00Z',
@@ -27,6 +28,7 @@ describe('Community season management', () => {
     component.editingSeasonName = '';
     spyOn(component, 'canManage').and.returnValue(true);
     reload = spyOn(component, 'loadCompetition');
+    historyReload = spyOn(component, 'loadHistoricalLinks');
     service = {
       renameSeason: jasmine.createSpy('renameSeason').and.returnValue(of({ ...season })),
       deleteSeason: jasmine.createSpy('deleteSeason').and.returnValue(of(undefined))
@@ -66,6 +68,7 @@ describe('Community season management', () => {
     expect(component.selectedSeasonId).toBeNull();
     expect(component.deletingSeasonId).toBeNull();
     expect(reload).toHaveBeenCalledWith(component.selected, null);
+    expect(historyReload).toHaveBeenCalledOnceWith(7);
   });
 
   it('keeps the selection and shows a conflict if deletion fails', () => {
@@ -79,6 +82,7 @@ describe('Community season management', () => {
     expect(component.selectedSeasonId).toBe(44);
     expect(component.deletingSeasonId).toBe(44);
     expect(reload).not.toHaveBeenCalled();
+    expect(historyReload).not.toHaveBeenCalled();
   });
 
   it('never exposes state changes to a member', () => {
