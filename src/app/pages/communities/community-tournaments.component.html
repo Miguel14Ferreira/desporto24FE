@@ -592,7 +592,7 @@
                       </div>
                       @if (canManageTeamRoster && team.players.length === 0) {
                         <button type="button" class="t-btn t-btn-danger-outline t-btn-small"
-                          [disabled]="detailsLoading" [attr.aria-label]="'communities.tournaments.teamUi.deleteAria' | t:{team:team.name}
+                          [disabled]="detailsLoading" [attr.aria-label]="'communities.tournaments.teamUi.deleteAria' | t:{team:team.name}"
                           (click)="deleteTournamentTeam(team)">{{ 'communities.tournaments.teamUi.deleteEmpty' | t }}</button>
                       }
                     </div>
@@ -606,7 +606,7 @@
                             <small>&#64;{{ player.username }}</small></div>
                           @if (canManageTeamRoster) {
                             <button type="button" class="t-btn t-btn-secondary t-btn-small"
-                              [attr.aria-label]="'communities.tournaments.teamUi.removeAria' | t:{player:player.username,team:team.name}
+                              [attr.aria-label]="'communities.tournaments.teamUi.removeAria' | t:{player:player.username,team:team.name}"
                               (click)="removeTeamPlayer(team, player.profileId)">{{ 'communities.tournaments.teamUi.remove' | t }}</button>
                           }
                         </div>
@@ -619,7 +619,7 @@
                         <div class="team-share-actions">
                           <a class="t-btn t-btn-primary" [href]="teamWhatsAppUrl(team)"
                             target="_blank" rel="noopener noreferrer"
-                            [attr.aria-label]="'communities.tournaments.teamUi.whatsappAria' | t:{team:team.name}>
+                            [attr.aria-label]="'communities.tournaments.teamUi.whatsappAria' | t:{team:team.name}">
                             WhatsApp
                           </a>
                           <button type="button" class="t-btn t-btn-secondary"
