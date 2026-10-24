@@ -1268,6 +1268,9 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   matchPreview?: HistoricalMatchPreview;
   matchArchiveTitle = '';
   matchArchiveEntryType: 'INDIVIDUAL' | 'TEAM' = 'INDIVIDUAL';
+  matchArchiveDestination: 'ARCHIVE' | 'TOURNAMENT' = 'ARCHIVE';
+  matchArchiveSport = '';
+  matchArchiveFormat: 'LEAGUE' | 'KNOCKOUT' = 'LEAGUE';
   matchArchiveAcknowledged = false;
   matchArchiveConfirming = false;
   matchArchiveConfirmed?: HistoricalMatchArchive;
@@ -2910,6 +2913,11 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       });
   }
 
+  viewImportedHistoricalTournament(): void {
+    if (!this.matchArchiveConfirmed?.tournamentId || !this.selected || !this.hasCompetitions(this.selected)) return;
+    this.setTab('tournaments');
+  }
+
   confirmMatchArchive(): void {
     if (!this.selected || !this.canManage() || this.importMode !== 'MATCHES' ||
         !this.importFile || !this.importSheetName || !this.matchPreview ||
@@ -2922,7 +2930,19 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     const communityId = this.selected.id;
     const file = this.importFile;
     const mapping = this.historicalMapping();
-    const context = { title: this.matchArchiveTitle.trim(), entryType: this.matchArchiveEntryType };
+    if (this.matchArchiveDestination === 'TOURNAMENT' && !this.matchArchiveSport.trim()) {
+      this.importFileError = t('communities.matches.tournamentSportRequired');
+      return;
+    }
+    const context = this.matchArchiveDestination === 'TOURNAMENT'
+      ? {
+          title: this.matchArchiveTitle.trim(),
+          entryType: this.matchArchiveEntryType,
+          createTournament: true,
+          sport: this.matchArchiveSport.trim(),
+          format: this.matchArchiveFormat
+        }
+      : { title: this.matchArchiveTitle.trim(), entryType: this.matchArchiveEntryType };
     this.matchArchiveConfirming = true;
     this.importFileError = '';
     this.communityService.confirmHistoricalMatches(communityId, file, mapping, context)

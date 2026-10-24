@@ -24,6 +24,7 @@ export interface CommunityTournament {
   teamTieBreakPriority?: TeamTieBreakPriority;
   format: 'LEAGUE' | 'KNOCKOUT' | 'GROUP_KNOCKOUT';
   groupCount?: 2 | 4 | null;
+  historicalArchiveId?: number | null;
   status: TournamentStatus;
   winPoints: number;
   drawPoints: number;

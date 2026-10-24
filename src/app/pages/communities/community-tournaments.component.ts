@@ -1,6 +1,8 @@
 import { ChangeDetectorRef, Component, ElementRef, Input, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
 import { finalize, firstValueFrom, forkJoin, Observable, timeout } from 'rxjs';
 import { CommunityGroup } from '../model/community-group';
+import { HistoricalMatchArchive } from '../../services/community-groups.service';
+import { historicalTournamentStandings, HistoricalTournamentStanding } from './community-historical-tournament-standings';
 import {
   CommunityTournament, TournamentPointRules, TeamTieBreakPriority, TournamentMatch, TournamentParticipant, TournamentStandingRow,
   TournamentStandings, TournamentTeam, TournamentTeamMatch, TournamentTeamStandings, TournamentTeamGroups,
@@ -29,6 +31,15 @@ export class CommunityTournamentsComponent implements OnChanges {
 
   tournaments: CommunityTournament[] = [];
   selected?: CommunityTournament;
+  historicalArchive?: HistoricalMatchArchive;
+  historicalArchivePage = 0;
+
+  get historicalLeagueTable(): HistoricalTournamentStanding[] {
+    if (this.selected?.format !== 'LEAGUE' || !this.historicalArchive) return [];
+    return historicalTournamentStandings(this.historicalArchive,
+      this.selected.winPoints, this.selected.drawPoints, this.selected.lossPoints);
+  }
+
   tournamentsPage = 0;
   tournamentsHasMore = false;
   participants: TournamentParticipant[] = [];
@@ -704,6 +715,8 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.busy = false;
     this.detailsLoading = false;
     this.selected = tournament;
+    this.historicalArchive = undefined;
+    this.historicalArchivePage = 0;
     this.confirmAction = null;
     this.feedback = '';
     this.error = '';
@@ -739,6 +752,10 @@ export class CommunityTournamentsComponent implements OnChanges {
   loadDetails(): void {
     const tournament = this.selected;
     if (!tournament || !this.isMember || this.detailsLoading) return;
+    if (tournament.historicalArchiveId) {
+      this.loadHistoricalTournament(tournament);
+      return;
+    }
     if (tournament.entryType === 'TEAM') {
       this.loadTeams();
       return;
@@ -783,6 +800,35 @@ export class CommunityTournamentsComponent implements OnChanges {
         if (revision === this.detailRevision) {
           this.focusPlayersAfterReload = false;
           this.showError('Não foi possível carregar os dados do torneio.');
+        }
+      }
+    });
+  }
+
+  loadHistoricalTournament(tournament: CommunityTournament): void {
+    if (!tournament.historicalArchiveId || !this.isMember || this.detailsLoading) return;
+    const cid = this.community.id;
+    const revision = ++this.detailRevision;
+    this.detailsLoading = true;
+    this.error = '';
+    this.api.historicalArchive(cid, tournament.historicalArchiveId).pipe(
+      timeout(12000),
+      finalize(() => {
+        if (revision === this.detailRevision) {
+          this.detailsLoading = false;
+          this.changeDetector.markForCheck();
+        }
+      })
+    ).subscribe({
+      next: archive => {
+        if (revision !== this.detailRevision || this.community.id !== cid
+            || this.selected?.id !== tournament.id) return;
+        this.historicalArchive = archive;
+        this.historicalArchivePage = 0;
+      },
+      error: () => {
+        if (revision === this.detailRevision && this.selected?.id === tournament.id) {
+          this.showError(t('communities.matches.detailError'));
         }
       }
     });

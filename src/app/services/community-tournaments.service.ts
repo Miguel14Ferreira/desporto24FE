@@ -2,6 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environment/environment';
+import { HistoricalMatchArchive } from './community-groups.service';
 import {
   CommunityTournament,
   TournamentPointRules,
@@ -35,6 +36,11 @@ export class CommunityTournamentsService {
   private url(communityId: number, tournamentId?: number): string {
     const base = this.baseUrl + '/' + communityId + '/tournaments';
     return tournamentId == null ? base : base + '/' + tournamentId;
+  }
+
+  historicalArchive(communityId: number, archiveId: number): Observable<HistoricalMatchArchive> {
+    return this.http.get<HistoricalMatchArchive>(
+      this.baseUrl + '/' + communityId + '/competition/match-archives/' + archiveId);
   }
 
   list(communityId: number, page: number): Observable<TournamentPage> {
