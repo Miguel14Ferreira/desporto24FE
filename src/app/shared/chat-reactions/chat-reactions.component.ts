@@ -103,7 +103,7 @@ export class ChatReactionsComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   /** Close by Escape and return keyboard users to the same action. */
-  dismissPicker(event: KeyboardEvent): void {
+  dismissPicker(event: Event): void {
     if (!this.expanded) return;
     event.preventDefault();
     event.stopPropagation();
