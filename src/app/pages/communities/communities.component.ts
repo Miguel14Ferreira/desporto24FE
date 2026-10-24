@@ -39,6 +39,8 @@ import { isGroupRoutineEvent, routineGroupNames, routineGroupError,
   sortedRoutineGroups, routineGroupPlace, routineGroupMembers } from './community-group-routine-results';
 import { raceSupportsLaps, formatRaceSeconds, raceEntryValidationError, roadTimeTrialEntryInvalid } from './community-race-metrics';
 import { swimmingTimeError, formatSwimTime } from './community-swimming-results';
+import { isInlineSpeedHeatEvent, isInlineSpeedFinalHeat, inlineSpeedHeatError,
+  inlineSpeedCandidatePlace } from './community-inline-speed-heats';
 import { openWaterTimeError, formatOpenWaterTime } from './community-open-water-results';
 import { orienteeringTimeError, formatOrienteeringTime } from './community-orienteering-results';
 import { raceDecisionError } from './community-race-decisions';
@@ -734,6 +736,9 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   orienteeringTime = formatOrienteeringTime;
   inlineSpeedTime = formatSwimTime;
   isInlineSpeedTimedEvent = isInlineSpeedTimedEvent;
+  isInlineSpeedHeatEvent = isInlineSpeedHeatEvent;
+  isInlineSpeedFinalHeat = isInlineSpeedFinalHeat;
+  inlineSpeedCandidatePlace = inlineSpeedCandidatePlace;
 
   roundFormatLabel(round: CommunityRound): string {
     return t('communities.resultFormat.' +
@@ -977,7 +982,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     if (this.newRoundEventType !== 'SWIM_LCM'
         && this.newRoundEventType !== 'OWS_INDIVIDUAL'
         && this.newRoundEventType !== 'FOOT_ORIENTEERING'
-        && !isInlineSpeedTimedEvent(this.newRoundEventType)) return;
+        && !isInlineSpeedTimedEvent(this.newRoundEventType)
+        && !isInlineSpeedHeatEvent(this.newRoundEventType)) return;
     this.roundEntries.forEach(entry => {
       entry.team = '';
       entry.result = 'DRAW';
@@ -3474,6 +3480,11 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       this.errorMessage = t('feedback.communities.openWaterInvalid');
       return;
     }
+    if (isInlineSpeedHeatEvent(this.newRoundEventType)
+        && inlineSpeedHeatError(this.newRoundEventType, selectedEntries)) {
+      this.errorMessage = t('feedback.communities.speedSkatingHeatInvalid');
+      return;
+    }
     if (isInlineSpeedTimedEvent(this.newRoundEventType) && swimmingTimeError(selectedEntries)) {
       this.errorMessage = t('feedback.communities.speedSkatingInvalid');
       return;
@@ -3518,8 +3529,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
         ...(race ? {
           finishPosition: entry.finishPosition ?? null,
           elapsedSeconds: entry.elapsedSeconds ?? null,
-          bestLapSeconds: this.raceSupportsLaps(this.newRoundSport) && this.newRoundEventType !== 'TRACK_TIME_TRIAL' && this.newRoundEventType !== 'TRACK_FLYING_200' ? entry.bestLapSeconds ?? null : null,
-          lapsCompleted: this.raceSupportsLaps(this.newRoundSport) && this.newRoundEventType !== 'TRACK_TIME_TRIAL' && this.newRoundEventType !== 'TRACK_FLYING_200' ? entry.lapsCompleted ?? null : null
+          bestLapSeconds: this.raceSupportsLaps(this.newRoundSport) && this.newRoundEventType !== 'TRACK_TIME_TRIAL' && this.newRoundEventType !== 'TRACK_FLYING_200' && !isInlineSpeedTimedEvent(this.newRoundEventType) && !isInlineSpeedHeatEvent(this.newRoundEventType) ? entry.bestLapSeconds ?? null : null,
+          lapsCompleted: this.raceSupportsLaps(this.newRoundSport) && this.newRoundEventType !== 'TRACK_TIME_TRIAL' && this.newRoundEventType !== 'TRACK_FLYING_200' && !isInlineSpeedTimedEvent(this.newRoundEventType) && !isInlineSpeedHeatEvent(this.newRoundEventType) ? entry.lapsCompleted ?? null : null
         } : {})
       }));
 

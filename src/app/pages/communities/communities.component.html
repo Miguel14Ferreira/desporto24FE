@@ -1222,7 +1222,8 @@
 
                         @if (viewForNewRound() === 'race') {
                           <p class="round-sport-guidance" role="note">
-                            {{ (newRoundEventType === 'INLINE_TRACK_500D_FIRST_ROUND' ? 'communities.speedSkating.track500Hint'
+                            {{ (isInlineSpeedHeatEvent(newRoundEventType) ? 'communities.speedSkating.placedHeatHint'
+                              : newRoundEventType === 'INLINE_TRACK_500D_FIRST_ROUND' ? 'communities.speedSkating.track500Hint'
                               : newRoundEventType === 'INLINE_ROAD_LAP_FIRST_ROUND' ? 'communities.speedSkating.roadLapHint'
                               : newRoundEventType === 'INLINE_TRACK_200_TT' ? 'communities.speedSkating.hint'
                               : newRoundEventType === 'FOOT_ORIENTEERING' ? 'communities.orienteering.hint'
@@ -1507,7 +1508,8 @@
                                     </label>
                                     @if (raceSupportsLaps(newRoundSport) && newRoundEventType !== 'TRACK_TIME_TRIAL'
                                         && newRoundEventType !== 'TRACK_FLYING_200'
-                                        && !isInlineSpeedTimedEvent(newRoundEventType)) {
+                                        && !isInlineSpeedTimedEvent(newRoundEventType)
+                                        && !isInlineSpeedHeatEvent(newRoundEventType)) {
                                       <label>
                                         <span>{{ 'communities.race.lapsCompleted' | t }}</span>
                                         <input type="number" min="0" step="1" [(ngModel)]="entry.lapsCompleted">
@@ -2121,7 +2123,8 @@
                               <div class="race-round-heading">
                                 <span aria-hidden="true">🏁</span>
                                 <div>
-                                  <strong>{{ (round.eventType === 'INLINE_TRACK_500D_FIRST_ROUND' ? 'communities.speedSkating.track500RecordTitle'
+                                  <strong>{{ (isInlineSpeedHeatEvent(round.eventType) ? 'communities.speedSkating.placedHeatRecordTitle'
+                                    : round.eventType === 'INLINE_TRACK_500D_FIRST_ROUND' ? 'communities.speedSkating.track500RecordTitle'
                                     : round.eventType === 'INLINE_ROAD_LAP_FIRST_ROUND' ? 'communities.speedSkating.roadLapRecordTitle'
                                     : round.eventType === 'INLINE_TRACK_200_TT' ? 'communities.speedSkating.recordTitle'
                                     : round.eventType === 'FOOT_ORIENTEERING' ? 'communities.orienteering.recordTitle'
@@ -2129,14 +2132,15 @@
                                     : round.eventType === 'SWIM_LCM' ? 'communities.swimming.recordTitle'
                                     : round.eventType === 'PARKOUR_SPEED'
                                     ? 'communities.parkour.speedTitle' : 'communities.race.recordTitle') | t }}</strong>
-                                  <small>{{ (isInlineSpeedTimedEvent(round.eventType) ? 'communities.speedSkating.recordSubtitle'
+                                  <small>{{ (isInlineSpeedHeatEvent(round.eventType) ? 'communities.speedSkating.placedHeatSubtitle'
+                                    : isInlineSpeedTimedEvent(round.eventType) ? 'communities.speedSkating.recordSubtitle'
                                     : round.eventType === 'FOOT_ORIENTEERING' ? 'communities.orienteering.recordSubtitle'
                                     : round.eventType === 'OWS_INDIVIDUAL' ? 'communities.openWater.recordSubtitle'
                                     : round.eventType === 'SWIM_LCM' ? 'communities.swimming.recordSubtitle'
                                     : round.eventType === 'PARKOUR_SPEED'
                                     ? 'communities.parkour.speedSubtitle' : 'communities.race.metricsSubtitle') | t }}</small>
                                 </div>
-                                <span class="race-round-count">{{ round.entries.length }} {{ (isInlineSpeedTimedEvent(round.eventType) ? 'communities.speedSkating.skaters'
+                                <span class="race-round-count">{{ round.entries.length }} {{ ((isInlineSpeedTimedEvent(round.eventType) || isInlineSpeedHeatEvent(round.eventType)) ? 'communities.speedSkating.skaters'
                                   : round.eventType === 'FOOT_ORIENTEERING' ? 'communities.orienteering.runners'
                                   : round.eventType === 'OWS_INDIVIDUAL' ? 'communities.openWater.swimmers'
                                   : round.eventType === 'SWIM_LCM' ? 'communities.swimming.swimmers'
@@ -2151,7 +2155,15 @@
                                       <small>{{ roundEntryHandle(entry) }}</small>
                                     </div>
                                     <div class="race-round-metrics">
-                                      @if (isInlineSpeedTimedEvent(round.eventType)) {
+                                      @if (isInlineSpeedHeatEvent(round.eventType)) {
+                                        <span class="race-round-position">{{ entry.finishPosition }}.º</span>
+                                        @if (inlineSpeedTime(entry.elapsedSeconds); as heatTime) {
+                                          <span class="round-performance-mark">{{ heatTime }}</span>
+                                        }
+                                        @if (inlineSpeedCandidatePlace(round.eventType, entry.finishPosition)) {
+                                          <span class="race-round-unranked">{{ 'communities.speedSkating.provisionalCandidate' | t }}</span>
+                                        }
+                                      } @else if (isInlineSpeedTimedEvent(round.eventType)) {
                                         @if (inlineSpeedTime(entry.elapsedSeconds); as skateTime) {
                                           <span class="round-performance-mark">{{ skateTime }}</span>
                                         } @else {
@@ -2185,7 +2197,8 @@
                                           <span>{{ total }}</span>
                                         }
                                       }
-                                      @if (raceSupportsLaps(roundSport(round))) {
+                                      @if (raceSupportsLaps(roundSport(round)) && !isInlineSpeedTimedEvent(round.eventType)
+                                          && !isInlineSpeedHeatEvent(round.eventType)) {
                                         @if (entry.lapsCompleted != null) {
                                           <span>{{ entry.lapsCompleted }} {{ 'communities.race.lapsShort' | t }}</span>
                                         }

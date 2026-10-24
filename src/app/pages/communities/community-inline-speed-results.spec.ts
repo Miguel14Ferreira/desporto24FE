@@ -1,6 +1,7 @@
 import { eventOptionsForSport, eventView, eventPresentationFormat,
   isRaceEvent, isNeutralEvent, isInlineSpeedTimedEvent } from './community-round-event-type';
 import { swimmingTimeError, formatSwimTime } from './community-swimming-results';
+import { INLINE_SPEED_HEAT_CODES } from './community-inline-speed-heats';
 import { raceEntryValidationError } from './community-race-metrics';
 import { CommunityRoundEntryDraft } from '../model/community-group';
 
@@ -16,7 +17,7 @@ describe('Patinagem de Velocidade — inline 200m track time trial', () => {
   it('registers distinct track and road time-only first rounds for the existing speed sport', () => {
     expect(eventOptionsForSport('Patinagem de Velocidade').map(x => x.code))
       .toEqual(['INLINE_TRACK_200_TT', 'INLINE_TRACK_500D_FIRST_ROUND',
-        'INLINE_ROAD_LAP_FIRST_ROUND']);
+        'INLINE_ROAD_LAP_FIRST_ROUND', ...INLINE_SPEED_HEAT_CODES]);
     expect(eventOptionsForSport('Patinagem')).toEqual([]);
     expect(eventOptionsForSport('Patinagem Artística')).toEqual([]);
     expect(eventOptionsForSport('Hóquei em Patins').map(x => x.code))
