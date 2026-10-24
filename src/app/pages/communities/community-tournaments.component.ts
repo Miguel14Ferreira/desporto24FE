@@ -785,7 +785,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     const text = this.racePointsDraft.trim();
     const points = text.split(',').map(v => v.trim());
     if (points.length < 1 || points.length > 20
-        || points.some((p, i) => !/^\\d{1,4}$/.test(p)
+        || points.some((p, i) => !/^\d{1,4}$/.test(p)
           || Number(p) > 1000
           || (i > 0 && Number(p) > Number(points[i - 1])))) {
       this.showError('Indica até 20 pontos inteiros decrescentes, entre 0 e 1000, separados por vírgulas.');
