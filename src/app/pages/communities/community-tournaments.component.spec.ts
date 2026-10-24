@@ -164,6 +164,63 @@ describe('Community tournaments management', () => {
     expect(api.generateSchedule).not.toHaveBeenCalled();
   });
 
+  it('accepts valid Karting points, including spaces around descending positions', async () => {
+    const original = {
+      tournamentId: 19, pointsByPlace: [25, 18, 15],
+      linkedRaces: [], availableRaces: [], standings: []
+    };
+    component.selected = { ...draft, id: 19, sport: 'Karting', scoringMode: 'RACE_POINTS' };
+    component.raceOverview = original;
+    component.racePointsDraft = '25, 18, 15, 12, 10';
+    api.setRacePoints.and.returnValue(of({
+      ...original, pointsByPlace: [25, 18, 15, 12, 10]
+    }));
+
+    await component.saveRacePoints();
+
+    expect(api.setRacePoints).toHaveBeenCalledOnceWith(7, 19, '25, 18, 15, 12, 10');
+    expect(component.racePointsDraft).toBe('25,18,15,12,10');
+    expect(component.raceOverview?.pointsByPlace).toEqual([25, 18, 15, 12, 10]);
+  });
+
+  it('rejects invalid Karting positions locally without calling the API', async () => {
+    const current = {
+      tournamentId: 19, pointsByPlace: [25, 18, 15],
+      linkedRaces: [], availableRaces: [], standings: []
+    };
+    component.selected = { ...draft, id: 19, sport: 'Karting', scoringMode: 'RACE_POINTS' };
+    component.raceOverview = current;
+    const invalid = ['25,18.5,15', '25,abc,15', '25,-1', '18,25',
+      '1001,25', '25,,15', '25,18,', '', Array(21).fill('1').join(',')];
+
+    for (const input of invalid) {
+      component.racePointsDraft = input;
+      await component.saveRacePoints();
+      expect(api.setRacePoints).not.toHaveBeenCalled();
+      expect(component.error).toContain('pontos inteiros decrescentes');
+    }
+  });
+
+  it('locks Karting points after associating the first race or starting the competition', async () => {
+    const linked = {
+      tournamentId: 19, pointsByPlace: [25, 18, 15], availableRaces: [],
+      linkedRaces: [{
+        id: 30, name: 'Corrida 1', sport: 'Karting',
+        playedAt: '2026-10-24T10:00:00Z', entries: []
+      }], standings: []
+    };
+    component.selected = { ...draft, id: 19, sport: 'Karting', scoringMode: 'RACE_POINTS' };
+    component.raceOverview = linked;
+    component.racePointsDraft = '30,20,10';
+    await component.saveRacePoints();
+    expect(api.setRacePoints).not.toHaveBeenCalled();
+
+    component.raceOverview = { ...linked, linkedRaces: [] };
+    component.selected = { ...component.selected, status: 'IN_PROGRESS' };
+    await component.saveRacePoints();
+    expect(api.setRacePoints).not.toHaveBeenCalled();
+  });
+
   it('does not present individual chess rules as a team-board tournament', async () => {
     component.chooseSport('Xadrez');
     component.startTeamCreation();
