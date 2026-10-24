@@ -291,7 +291,7 @@ export class CommunityTournamentsComponent implements OnChanges {
       return t('communities.karting.creationHint');
     }
     return this.showTeamCreate && this.classificationProfile.scoringMode === 'CHESS_HALF_POINTS'
-      ? 'O Xadrez por equipas precisa de partidas e resultados por tabuleiro. Para já, cria uma liga individual de Xadrez.'
+      ? t('communities.tournaments.organizerUi.teamChessUnavailable')
       : this.classificationProfile.detail;
   }
 
@@ -718,7 +718,7 @@ export class CommunityTournamentsComponent implements OnChanges {
                 },
                 error: () => {
                   if (revision === this.listRevision) {
-                    this.showError('O torneio deste convite já não está disponível.');
+                    this.showError(t('communities.tournaments.organizerUi.inviteExpired'));
                   }
                 }
               });
@@ -728,7 +728,7 @@ export class CommunityTournamentsComponent implements OnChanges {
         }
       },
       error: () => {
-        if (revision === this.listRevision) this.showError('Não foi possível carregar os torneios. Tenta novamente.');
+        if (revision === this.listRevision) this.showError(t('communities.tournaments.organizerUi.listError'));
       }
     });
   }
@@ -832,7 +832,7 @@ export class CommunityTournamentsComponent implements OnChanges {
       error: () => {
         if (revision === this.detailRevision) {
           this.focusPlayersAfterReload = false;
-          this.showError('Não foi possível carregar os dados do torneio.');
+          this.showError(t('communities.tournaments.organizerUi.detailsError'));
         }
       }
     });
@@ -978,7 +978,7 @@ export class CommunityTournamentsComponent implements OnChanges {
       },
       error: () => {
         if (revision === this.detailRevision && this.selected?.id === tid && this.community.id === cid) {
-          this.showError('Não foi possível carregar mais participantes.');
+          this.showError(t('communities.tournaments.organizerUi.participantsLoadError'));
         }
       }
     });
@@ -1005,7 +1005,7 @@ export class CommunityTournamentsComponent implements OnChanges {
       },
       error: () => {
         if (revision === this.detailRevision && this.selected?.id === tid && this.community.id === cid) {
-          this.showError('Não foi possível carregar mais jogos.');
+          this.showError(t('communities.tournaments.organizerUi.matchesLoadError'));
         }
       }
     });
@@ -1083,7 +1083,7 @@ export class CommunityTournamentsComponent implements OnChanges {
         if (revision === this.detailRevision && this.community.id === communityId
             && this.selected?.id === tournament.id) {
           this.teamsLoadError = true;
-          this.showError('Não foi possível carregar as equipas. Usa Atualizar para tentar novamente.');
+          this.showError(t('communities.tournaments.organizerUi.teamLoadError'));
         }
       }
     });
@@ -1121,7 +1121,7 @@ export class CommunityTournamentsComponent implements OnChanges {
         if (revision !== this.teamMatchesRevision || this.community.id !== cid
             || this.selected?.id !== tournament.id) return;
         this.teamMatchesError = true;
-        this.showError('Não foi possível carregar os confrontos por equipas. Tenta novamente.');
+        this.showError(t('communities.tournaments.organizerUi.teamMatchesLoadError'));
       }
     });
   }
@@ -1215,15 +1215,15 @@ export class CommunityTournamentsComponent implements OnChanges {
         || this.selected.status !== 'IN_PROGRESS' || this.isPastKnockoutRound(match)) return;
     const score = this.teamScoreDraft(match);
     if (!this.validScore(score.home) || !this.validScore(score.away)) {
-      this.showError('Os resultados devem ser números inteiros entre 0 e 999.');
+      this.showError(t('communities.tournaments.organizerUi.invalidScores'));
       return;
     }
     if (this.isEliminationMatch(match) && score.home === score.away) {
-      this.showError('Nas eliminatórias, o resultado tem de definir um vencedor.');
+      this.showError(t('communities.tournaments.organizerUi.knockoutNeedsWinner'));
       return;
     }
     await this.mutate(this.api.recordTeamResult(this.community.id, this.selected.id, match.id,
-      score.home!, score.away!), 'Resultado por equipas guardado.', saved => {
+      score.home!, score.away!), t('communities.tournaments.organizerUi.teamScoreSaved'), saved => {
       this.teamMatches = this.teamMatches.map(game => game.id === saved.id ? saved : game);
       this.teamScoreDrafts[saved.id] = { home: saved.homeScore ?? null, away: saved.awayScore ?? null };
       this.teamScoreTouched.delete(saved.id);
@@ -1252,7 +1252,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     if (!tournament || !this.canPublishTeamSchedule || this.confirmAction !== 'schedule') return;
     this.confirmAction = null;
     await this.mutate(this.api.generateTeamSchedule(this.community.id, tournament.id),
-      'Calendário por equipas publicado. Os plantéis estão agora fechados.', () => {
+      t('communities.tournaments.organizerUi.teamSchedulePublished'), () => {
         this.updateSelected({ ...tournament, status: 'IN_PROGRESS' });
         this.teamMatches = [];
         this.loadDetails();
@@ -1263,12 +1263,12 @@ export class CommunityTournamentsComponent implements OnChanges {
     const name = this.nameDraft.trim();
     if (!this.canManage || this.community.teamTournamentsEnabled === false || !this.showTeamCreate || this.busy) return;
     if (name.length < 2 || name.length > 120) {
-      this.showError('Indica um nome entre 2 e 120 caracteres.');
+      this.showError(t('communities.tournaments.organizerUi.invalidName'));
       return;
     }
     if (!this.sportDraft || !(SPORTS_CATALOG.includes(this.sportDraft)
         || this.communitySportOptions.includes(this.sportDraft))) {
-      this.showError('Escolhe uma modalidade válida para o torneio.');
+      this.showError(t('communities.tournaments.organizerUi.invalidSport'));
       return;
     }
     if (!this.isSportFormatSupported) {
@@ -1277,16 +1277,16 @@ export class CommunityTournamentsComponent implements OnChanges {
     }
     if (this.teamFormatDraft === 'LEAGUE'
         && this.roundRobinLegsDraft !== 1 && this.roundRobinLegsDraft !== 2) {
-      this.showError('Escolhe uma ou duas voltas.');
+      this.showError(t('communities.tournaments.organizerUi.invalidLegs'));
       return;
     }
     if (this.teamFormatDraft !== 'KNOCKOUT' && !this.validPointRules) {
-      this.showError('Define pontos inteiros entre 0 e 100 para vitória, empate e derrota.');
+      this.showError(t('communities.tournaments.organizerUi.invalidPoints'));
       return;
     }
     if (this.teamFormatDraft !== 'KNOCKOUT'
         && !this.teamTieBreakChoices.some(choice => choice.value === this.teamTieBreakPriorityDraft)) {
-      this.showError('Escolhe um critério de desempate válido.');
+      this.showError(t('communities.tournaments.organizerUi.invalidTiebreak'));
       return;
     }
     const createRequest = this.teamFormatDraft === 'GROUP_KNOCKOUT'
@@ -1297,7 +1297,7 @@ export class CommunityTournamentsComponent implements OnChanges {
           this.roundRobinLegsDraft, this.pointRulesDraft, this.teamTieBreakPriorityDraft,
           this.teamFormatDraft);
     await this.mutate(createRequest,
-      'Competição por equipas criada. Agora podes preparar os plantéis.', result => {
+      t('communities.tournaments.organizerUi.teamCreatedCompetition'), result => {
         this.nameDraft = '';
         this.roundRobinLegsDraft = 1;
         this.teamFormatDraft = 'LEAGUE';
@@ -1315,15 +1315,15 @@ export class CommunityTournamentsComponent implements OnChanges {
     if (!this.canManageTeamRoster || !this.selected) return;
     const name = this.teamNameDraft.trim().replace(/\s+/g, ' ');
     if (!name || name.length > 100) {
-      this.showError('Indica o nome da equipa (até 100 caracteres).');
+      this.showError(t('communities.tournaments.organizerUi.invalidTeamName'));
       return;
     }
     if (this.teams.length >= 32) {
-      this.showError('Esta versão permite até 32 equipas.');
+      this.showError(t('communities.tournaments.organizerUi.teamLimit'));
       return;
     }
     await this.mutate(this.api.createTeam(this.community.id, this.selected.id, name),
-      'Equipa criada.', () => { this.teamNameDraft = ''; this.loadTeams(); });
+      t('communities.tournaments.organizerUi.teamCreated'), () => { this.teamNameDraft = ''; this.loadTeams(); });
   }
 
   async assignTeamPlayer(team: TournamentTeam): Promise<void> {
@@ -1332,40 +1332,40 @@ export class CommunityTournamentsComponent implements OnChanges {
         || this.isTeamRosterFull(team)
         || !this.availableTeamMembers.some(member => member.profileId === id)) return;
     await this.mutate(this.api.addTeamPlayer(this.community.id, this.selected.id, team.id, id),
-      'Jogador adicionado à equipa.', () => this.loadTeams());
+      t('communities.tournaments.organizerUi.teamPlayerAdded'), () => this.loadTeams());
   }
 
   async removeTeamPlayer(team: TournamentTeam, profileId: number): Promise<void> {
     if (!this.canManageTeamRoster || !this.selected
         || !team.players.some(p => p.profileId === profileId)) return;
     await this.mutate(this.api.removeTeamPlayer(this.community.id, this.selected.id, team.id, profileId),
-      'Jogador removido do plantel.', () => this.loadTeams());
+      t('communities.tournaments.organizerUi.teamPlayerRemoved'), () => this.loadTeams());
   }
 
   async deleteTournamentTeam(team: TournamentTeam): Promise<void> {
     if (!this.canManageTeamRoster || !this.selected || team.players.length > 0) return;
     await this.mutate(this.api.deleteTeam(this.community.id, this.selected.id, team.id),
-      'Equipa eliminada.', () => this.loadTeams());
+      t('communities.tournaments.organizerUi.teamDeleted'), () => this.loadTeams());
   }
 
   async create(): Promise<void> {
     const name = this.nameDraft.trim();
     if (!this.canManage || this.community?.individualTournamentsEnabled === false
         || !this.showIndividualCreate || this.busy || name.length < 2 || name.length > 120) {
-      this.showError('Indica um nome entre 2 e 120 caracteres.');
+      this.showError(t('communities.tournaments.organizerUi.invalidName'));
       return;
     }
     if (!this.sportDraft || !(SPORTS_CATALOG.includes(this.sportDraft)
       || this.communitySportOptions.includes(this.sportDraft))) {
-      this.showError('Escolhe uma modalidade válida para o torneio.');
+      this.showError(t('communities.tournaments.organizerUi.invalidSport'));
       return;
     }
     if (!this.isSportFormatSupported) {
-      this.showError('Esta modalidade precisa de resultados por prova. Usa as jornadas da comunidade.');
+      this.showError(t('communities.tournaments.organizerUi.individualUnsupported'));
       return;
     }
     if (!this.isRaceChampionshipDraft && !this.validPointRules) {
-      this.showError('Define pontos inteiros entre 0 e 100 para vitória, empate e derrota.');
+      this.showError(t('communities.tournaments.organizerUi.invalidPoints'));
       return;
     }
     const scoringMode = this.classificationProfile.scoringMode;
@@ -1375,7 +1375,7 @@ export class CommunityTournamentsComponent implements OnChanges {
       ? this.api.create(this.community.id, name, this.sportDraft, this.pointRulesDraft, scoringMode)
       : this.api.create(this.community.id, name, this.sportDraft, this.pointRulesDraft);
     await this.mutate(createRequest,
-      'Torneio criado.', result => {
+      t('communities.tournaments.organizerUi.competitionCreated'), result => {
       this.nameDraft = '';
       this.resetPointRules();
       this.showIndividualCreate = false;
@@ -1392,7 +1392,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     const tournamentId = this.selected.id;
     this.confirmAction = null;
     await this.mutate(this.api.delete(this.community.id, tournamentId),
-      'Competição eliminada.', () => {
+      t('communities.tournaments.organizerUi.competitionDeleted'), () => {
         this.selected = undefined;
         this.tournaments = this.tournaments.filter(item => item.id !== tournamentId);
         this.participants = [];
@@ -1408,26 +1408,26 @@ export class CommunityTournamentsComponent implements OnChanges {
     if (!this.selected || !this.isMember || this.selected.status !== 'DRAFT'
         || this.myEnrollment || this.participantsHasMore) return;
     await this.mutate(this.api.join(this.community.id, this.selected.id),
-      'Inscrição atualizada.', () => this.refreshRosterAndFocus());
+      t('communities.tournaments.organizerUi.registrationUpdated'), () => this.refreshRosterAndFocus());
   }
 
   async leave(): Promise<void> {
     if (!this.selected || !this.isMember || this.selected.status !== 'DRAFT'
         || !this.myEnrollment) return;
     await this.mutate(this.api.leave(this.community.id, this.selected.id),
-      'Inscrição cancelada.', () => this.refreshRosterAndFocus());
+      t('communities.tournaments.organizerUi.registrationCancelled'), () => this.refreshRosterAndFocus());
   }
 
   async confirm(participant: TournamentParticipant): Promise<void> {
     if (!this.selected || !this.canManage || this.selected.status !== 'DRAFT') return;
     await this.mutate(this.api.confirm(this.community.id, this.selected.id, participant.profileId),
-      'Participante confirmado.', () => this.refreshRosterAndFocus());
+      t('communities.tournaments.organizerUi.participantConfirmed'), () => this.refreshRosterAndFocus());
   }
 
   async remove(participant: TournamentParticipant): Promise<void> {
     if (!this.selected || !this.canManage || this.selected.status !== 'DRAFT') return;
     await this.mutate(this.api.removeParticipant(this.community.id, this.selected.id, participant.profileId),
-      'Participante removido.', () => this.refreshRosterAndFocus());
+      t('communities.tournaments.organizerUi.participantRemoved'), () => this.refreshRosterAndFocus());
   }
 
   async publishSchedule(): Promise<void> {
@@ -1468,7 +1468,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     const tournamentId = this.selected.id;
     this.confirmAction = null;
     await this.mutate(this.api.completeTeam(this.community.id, tournamentId),
-      'Campeonato por equipas encerrado.', tournament => {
+      t('communities.tournaments.organizerUi.teamCompetitionCompleted'), tournament => {
         this.updateSelected(tournament);
         this.loadDetails();
       });
@@ -1479,7 +1479,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     const tournamentId = this.selected.id;
     this.confirmAction = null;
     await this.mutate(this.api.complete(this.community.id, tournamentId),
-      'Torneio encerrado.', tournament => {
+      t('communities.tournaments.organizerUi.individualCompetitionCompleted'), tournament => {
         this.updateSelected(tournament);
         this.loadDetails();
       });
@@ -1502,7 +1502,7 @@ export class CommunityTournamentsComponent implements OnChanges {
         if (revision === this.standingsRevision && this.community.id === communityId
             && this.selected?.id === tournament.id) {
           this.standings = undefined;
-          this.showError('Resultado guardado, mas não foi possível atualizar a classificação. Usa Atualizar para tentar novamente.');
+          this.showError(t('communities.tournaments.organizerUi.standingsRefreshError'));
         }
       }
     });
@@ -1533,7 +1533,7 @@ export class CommunityTournamentsComponent implements OnChanges {
           || (tid !== undefined && this.selected?.id !== tid)) return;
       const detail: unknown = error?.error?.detail || error?.error?.message;
       this.showError(typeof detail === 'string' && detail.length <= 180
-        ? detail : 'Não foi possível concluir a operação. Verifica os dados e tenta novamente.');
+        ? detail : t('communities.tournaments.organizerUi.mutationFallback'));
     } finally {
       if (mutationRevision === this.mutationRevision) {
         this.busy = false;
