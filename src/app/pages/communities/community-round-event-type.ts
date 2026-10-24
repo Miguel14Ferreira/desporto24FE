@@ -19,12 +19,13 @@ export type CommunityEventType = 'RACE' | 'FREESTYLE' | 'TRACK' | 'JUMP' | 'THRO
     | 'ICE_HOCKEY_REG' | 'ICE_HOCKEY_OT' | 'ICE_HOCKEY_SO' | 'BASEBALL_RUNS' | 'SOFTBALL_RUNS' | 'KORFBALL_REG' | 'KORFBALL_GOLDEN'
     | 'LACROSSE_M_REG' | 'LACROSSE_M_OT' | 'AMFOOTBALL_SCORE' | 'FLAGFOOTBALL_SCORE' | 'CURLING_REG' | 'CURLING_EXTRA'
     | 'PETANQUE_13' | 'PETANQUE_11' | 'BOWLING_TENPIN' | 'POOL_9_RACKS' | 'FENCING_POOL_5' | 'FENCING_DE_15'
-    | 'TEQBALL_SINGLES' | 'TEQBALL_DOUBLES' | 'CHESS_GAME';
+    | 'TEQBALL_SINGLES' | 'TEQBALL_DOUBLES' | 'CHESS_GAME' | 'CRICKET_T20';
 export interface CommunityEventOption { code: CommunityEventType; labelKey: string }
 const TYPES: Record<string, readonly CommunityEventOption[]> = {
   basquetebol: [{ code: 'BASKETBALL_FINAL', labelKey: 'communities.basketball.fiveVsFive' }],
   'basquetebol 3x3': [{ code: 'BASKETBALL_3X3_FINAL', labelKey: 'communities.basketball.threeVsThree' }],
   basebol: [{ code: 'BASEBALL_RUNS', labelKey: 'communities.teamFinal.baseballRuns' }],
+  cricket: [{ code: 'CRICKET_T20', labelKey: 'communities.cricket.t20' }],
   softbol: [{ code: 'SOFTBALL_RUNS', labelKey: 'communities.teamFinal.softballRuns' }],
   corfebol: [
     { code: 'KORFBALL_REG', labelKey: 'communities.teamFinal.korfballReg' },
@@ -170,7 +171,7 @@ export function eventPresentationFormat(
           'HANDBALL_FINAL', 'RUGBY_FINAL', 'RUGBY_SEVENS_FINAL',
           'FUTSAL_FINAL', 'FIELD_HOCKEY_FINAL', 'ROLLER_HOCKEY_FINAL', 'WATER_POLO_FINAL',
           'ICE_HOCKEY_REG', 'ICE_HOCKEY_OT', 'ICE_HOCKEY_SO',
-          'BASEBALL_RUNS', 'SOFTBALL_RUNS',
+          'BASEBALL_RUNS', 'SOFTBALL_RUNS', 'CRICKET_T20',
           'KORFBALL_REG', 'KORFBALL_GOLDEN',
           'LACROSSE_M_REG', 'LACROSSE_M_OT',
           'AMFOOTBALL_SCORE', 'FLAGFOOTBALL_SCORE',
