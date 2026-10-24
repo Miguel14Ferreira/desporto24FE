@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Component, ElementRef, Input, OnChanges, SimpleChang
 import { finalize, firstValueFrom, forkJoin, Observable, timeout } from 'rxjs';
 import { CommunityGroup } from '../model/community-group';
 import { HistoricalMatchArchive } from '../../services/community-groups.service';
-import { historicalTournamentStandings, HistoricalTournamentStanding } from './community-historical-tournament-standings';
+import { historicalTournamentStandings, HistoricalTournamentStanding, canEstimateHistoricalLeagueStandings } from './community-historical-tournament-standings';
 import { historicalTournamentOutcome, HistoricalTournamentOutcome } from './community-historical-tournament-outcome';
 import { groupHistoricalTournamentSourceRows } from './community-historical-tournament-source-groups';
 import {
@@ -43,8 +43,13 @@ export class CommunityTournamentsComponent implements OnChanges {
     return groupHistoricalTournamentSourceRows(this.historicalArchive.rows.slice(start, start + 50));
   }
 
+  get canEstimateHistoricalLeagueTable(): boolean {
+    return this.selected?.format === 'LEAGUE'
+      && canEstimateHistoricalLeagueStandings(this.selected.sport);
+  }
+
   get historicalLeagueTable(): HistoricalTournamentStanding[] {
-    if (this.selected?.format !== 'LEAGUE' || !this.historicalArchive) return [];
+    if (!this.canEstimateHistoricalLeagueTable || !this.historicalArchive || !this.selected) return [];
     return historicalTournamentStandings(this.historicalArchive,
       this.selected.winPoints, this.selected.drawPoints, this.selected.lossPoints);
   }
