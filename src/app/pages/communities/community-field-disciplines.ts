@@ -6,6 +6,10 @@ export type GymApparatus = 'FLOOR' | 'VAULT' | 'POMMEL_HORSE' | 'RINGS'
   | 'PARALLEL_BARS' | 'HORIZONTAL_BAR' | 'UNEVEN_BARS' | 'BALANCE_BEAM';
 export type BodyboardStance = 'PRONE' | 'DROP_KNEE';
 export type RhythmicApparatus = 'HOOP' | 'BALL' | 'CLUBS' | 'RIBBON';
+export type OrienteeringCourse = 'ORIENT_SPRINT' | 'ORIENT_MIDDLE' | 'ORIENT_LONG';
+const ORIENTEERING: readonly OrienteeringCourse[] = [
+  'ORIENT_SPRINT', 'ORIENT_MIDDLE', 'ORIENT_LONG'
+];
 export type OpenWaterDistance = 'OWS_5K' | 'OWS_10K';
 const OPEN_WATER: readonly OpenWaterDistance[] = ['OWS_5K', 'OWS_10K'];
 export type SwimmingPoolEvent = 'FREE_50' | 'FREE_100' | 'FREE_200' | 'BACK_100'
@@ -27,8 +31,9 @@ const OPTIONS: Record<string, readonly AthleticsDiscipline[]> = {
 
 export function athleticsDisciplineOptions(
   sport: string | null | undefined, eventType: string | null | undefined
-): readonly (AthleticsDiscipline | GymApparatus | BodyboardStance | RhythmicApparatus | SwimmingPoolEvent | OpenWaterDistance)[] {
+): readonly (AthleticsDiscipline | GymApparatus | BodyboardStance | RhythmicApparatus | SwimmingPoolEvent | OpenWaterDistance | OrienteeringCourse)[] {
   const normalized = sport?.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+  if (normalized === 'orientacao' && eventType === 'FOOT_ORIENTEERING') return ORIENTEERING;
   if (normalized === 'natacao em aguas abertas' && eventType === 'OWS_INDIVIDUAL') return OPEN_WATER;
   if (normalized === 'natacao' && eventType === 'SWIM_LCM') return SWIMMING_LCM;
   if (normalized === 'atletismo') return OPTIONS[eventType || ''] ?? [];
@@ -44,6 +49,6 @@ export function athleticsDisciplineValid(
 ): boolean {
   const options = athleticsDisciplineOptions(sport, eventType);
   return options.length
-    ? options.includes(discipline as AthleticsDiscipline | GymApparatus | BodyboardStance | RhythmicApparatus | SwimmingPoolEvent | OpenWaterDistance)
+    ? options.includes(discipline as AthleticsDiscipline | GymApparatus | BodyboardStance | RhythmicApparatus | SwimmingPoolEvent | OpenWaterDistance | OrienteeringCourse)
     : !discipline;
 }

@@ -39,6 +39,7 @@ import { isGroupRoutineEvent, routineGroupNames, routineGroupError,
 import { raceSupportsLaps, formatRaceSeconds, raceEntryValidationError, roadTimeTrialEntryInvalid } from './community-race-metrics';
 import { swimmingTimeError, formatSwimTime } from './community-swimming-results';
 import { openWaterTimeError, formatOpenWaterTime } from './community-open-water-results';
+import { orienteeringTimeError, formatOrienteeringTime } from './community-orienteering-results';
 import { raceDecisionError } from './community-race-decisions';
 import { performanceKind, performanceError, eventPerformanceEntries,
   eventPerformancePlace, performanceDisplay, surfWaveError, surfWaveTotal,
@@ -709,6 +710,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
 
   swimTime = formatSwimTime;
   openWaterTime = formatOpenWaterTime;
+  orienteeringTime = formatOrienteeringTime;
 
   roundFormatLabel(round: CommunityRound): string {
     return t('communities.resultFormat.' +
@@ -950,7 +952,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   isKickboxingEvent = isKickboxingEvent;
   clearSwimmingHiddenScores(): void {
     if (this.newRoundEventType !== 'SWIM_LCM'
-        && this.newRoundEventType !== 'OWS_INDIVIDUAL') return;
+        && this.newRoundEventType !== 'OWS_INDIVIDUAL'
+        && this.newRoundEventType !== 'FOOT_ORIENTEERING') return;
     this.roundEntries.forEach(entry => {
       entry.team = '';
       entry.result = 'DRAW';
@@ -3412,6 +3415,10 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
         ? 'feedback.communities.golfInvalid'
         : this.newRoundEventType === 'TRAMPOLINE_INDIVIDUAL'
           ? 'feedback.communities.trampolineInvalid' : 'feedback.communities.performanceInvalid');
+      return;
+    }
+    if (this.newRoundEventType === 'FOOT_ORIENTEERING' && orienteeringTimeError(selectedEntries)) {
+      this.errorMessage = t('feedback.communities.orienteeringInvalid');
       return;
     }
     if (this.newRoundEventType === 'OWS_INDIVIDUAL' && openWaterTimeError(selectedEntries)) {
