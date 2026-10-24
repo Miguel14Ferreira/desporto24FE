@@ -55,7 +55,9 @@ export function historicalKnockoutPhaseOverview(
       && (phase.matchCount !== phase.singleLegReference
         || phase.potentialDuplicates > 0 || phase.drawnResults > 0);
   }
-  return result;
+  // A stage with no explicit label is not part of the overview at all.
+  // Never suggest an absent phase existed in the original tournament.
+  return result.filter(phase => phase.matchCount > 0);
 }
 
 function stage(phase: HistoricalKnockoutPhaseId, singleLegReference: 4 | 2 | 1):
