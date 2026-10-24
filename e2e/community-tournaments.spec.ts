@@ -1304,7 +1304,7 @@ test('torneio multidesporto bloqueia natação sem perfil competitivo e aceita b
   await page.goto('/menu/communities/7?tab=tournaments');
   await page.getByRole('button', { name: 'Criar liga individual' }).click();
   await page.getByLabel('Nome do torneio').fill('Liga de amigos');
-  await expect(page.getByRole('button', { name: 'Confirmar liga individual' })).toBeDisabled();
+  await expect(page.locator('.create-actions .t-btn-primary')).toBeDisabled();
 
   await page.getByLabel('Modalidade do torneio').fill('natacao');
   await page.getByRole('button', { name: 'Natação', exact: true }).click();
@@ -1467,11 +1467,13 @@ test('organizador prepara equipas reais e distribui membros sem criar jornadas i
 
   const azuis = page.locator('.team-roster-card').filter({ hasText: 'Azuis' });
   const verdes = page.locator('.team-roster-card').filter({ hasText: 'Verdes' });
-  await azuis.getByLabel('Adicionar membro à equipa Azuis').selectOption({ label: 'Participante (@participante)' });
+  await azuis.locator('.team-manual-assign summary').click();
+  await azuis.getByRole('combobox', { name: 'Membro da comunidade' })
+    .selectOption({ label: 'Participante (@participante)' });
   await azuis.getByRole('button', { name: 'Adicionar jogador' }).click();
   await expect(azuis).toContainText('@participante');
-  await expect(verdes.getByLabel('Adicionar membro à equipa Verdes')
-    .locator('option', { hasText: '@participante' })).toHaveCount(0);
+  await expect(verdes.locator('.team-manual-assign select option')
+    .filter({ hasText: '@participante' })).toHaveCount(0);
   expect(fixture.teams[0].players.map(p => p.profileId)).toEqual([2]);
 
   await azuis.getByRole('button', { name: 'Remover participante da equipa Azuis' }).click();
@@ -1546,7 +1548,7 @@ test('organizador escolhe taça no início sem regras de liga', async ({ page })
   const fixture = await mockCommunityApi(page, 'OWNER', 'teams');
   await page.goto('/menu/communities/7?tab=tournaments');
   await page.getByRole('button', { name: 'Preparar torneio por equipas' }).click();
-  const knockout = page.locator('.create-format-option').filter({ hasText: 'Eliminatórias' });
+  const knockout = page.locator('.create-format-option').nth(1);
   await knockout.click();
   await expect(knockout).toHaveAttribute('aria-pressed', 'true');
   await expect(page.getByRole('group', { name: 'Número de voltas' })).toHaveCount(0);
@@ -1597,7 +1599,7 @@ test('torneio com plantéis incompletos não permite gerar jornadas entre equipa
   const fixture = await mockCommunityApi(page, 'OWNER', 'teams-view');
   await page.goto('/menu/communities/7?tab=tournaments');
   await expect(page.getByRole('button', { name: 'Gerar jornadas entre equipas' })).toBeDisabled();
-  await expect(page.getByText('Cria pelo menos duas equipas.')).toBeVisible();
+  await expect(page.getByText('Cria pelo menos 2 equipas.')).toBeVisible();
   expect(fixture.teamFixtures).toHaveLength(0);
 });
 
@@ -1709,11 +1711,11 @@ test('os avisos diferenciam futebol, karting e judo sem inventar resultados', as
 
   await expect(page.locator('.create-sport-notice')).toHaveCount(0);
   await page.getByLabel('Modalidade do torneio').fill('kart');
-  await page.getByRole('button', { name: 'Karting', exact: true }).click();
+  await page.getByLabel('Sugestões de modalidades').getByRole('button', { name: 'Karting', exact: true }).click();
   await expect(page.locator('.create-sport-notice')).toContainText('tempos, posições ou voltas');
   await page.getByRole('button', { name: 'Alterar' }).click();
   await page.getByLabel('Modalidade do torneio').fill('judo');
-  await page.getByRole('button', { name: 'Judo', exact: true }).click();
+  await page.getByLabel('Sugestões de modalidades').getByRole('button', { name: 'Judo', exact: true }).click();
   await expect(page.locator('.create-sport-notice')).toContainText('Sets, golpes e decisões');
 });
 
