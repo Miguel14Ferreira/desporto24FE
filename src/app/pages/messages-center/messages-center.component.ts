@@ -83,7 +83,6 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   composerAccessLoading = false;
   composerAllowed = false;
   composerError = '';
-  composerSuccess = '';
   private composerVersion = 0;
   private readonly drafts = new Map<string, string>();
   // Text and reply target form one draft. Switching chat must never turn
@@ -530,7 +529,6 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.deliveryChecking = this.verifyingKeys.has(conversation.key);
     this.composerError = this.deliveryUncertain
       ? t('chat.sendUnconfirmed') : this.sendErrorsByConversation.get(conversation.key) || '';
-    this.composerSuccess = '';
     this.composerAllowed = false;
     this.composerAccessLoading = true;
     this.messages = [];
@@ -900,8 +898,6 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   onTypingInput(): void {
     const conversation = this.selected;
     if (!conversation) return;
-    // "Saved" describes the previous send, not a freshly edited draft.
-    if (this.composerSuccess) this.composerSuccess = '';
     this.typing.input(conversation.kind, conversation.id, this.draft, this.canSendMessage());
   }
 
@@ -959,7 +955,6 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.sending = true;
     this.sendErrorsByConversation.delete(key);
     this.composerError = '';
-    this.composerSuccess = '';
     // A disabled textarea loses focus while the POST is pending. Keep it
     // enabled/read-only and restore focus immediately after button submits.
     // Never steal focus later when the HTTP response arrives.
@@ -987,7 +982,6 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
         this.replyingTo = null;
         this.deliveryUncertain = false;
         this.composerError = '';
-        this.composerSuccess = t('chat.sendConfirmed');
       },
       error: error => {
         if (this.isUncertainError(error)) {
@@ -1070,7 +1064,6 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
         this.draft = '';
         this.replyingTo = null;
         this.composerError = '';
-        this.composerSuccess = t('chat.sendConfirmed');
       }
     }
   }
