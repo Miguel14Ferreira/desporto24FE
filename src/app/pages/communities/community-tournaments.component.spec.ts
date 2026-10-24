@@ -129,7 +129,7 @@ describe('Community tournaments management', () => {
       ...draft, id: 19, name: 'Campeonato Karting', sport: 'Karting', scoringMode: 'RACE_POINTS'
     }));
     await component.create();
-    expect(api.createKartingChampionship).toHaveBeenCalledOnceWith(7, 'Campeonato Karting');
+    expect(api.createKartingChampionship).toHaveBeenCalledOnceWith(7, 'Campeonato Karting', 'Karting');
     expect(api.create).not.toHaveBeenCalled();
     expect(api.matches).not.toHaveBeenCalledWith(7, 19, 0);
     expect(api.raceOverview).toHaveBeenCalledWith(7, 19);
@@ -145,6 +145,36 @@ describe('Community tournaments management', () => {
     expect(component.pointRulesDraft).toEqual({
       winPoints: 3, drawPoints: 1, lossPoints: 0
     });
+  });
+
+  it('creates BMX Racing as a proper race championship, not a fictional duel', async () => {
+    component.startIndividualCreation();
+    component.nameDraft = 'Taça BMX Racing';
+    component.chooseSport('BMX');
+    expect(component.isRaceChampionshipDraft).toBeTrue();
+    expect(component.raceSportLabel('BMX')).toBe('BMX Racing');
+    expect(component.classificationProfile.isRoundRobinSupported).toBeFalse();
+    api.createKartingChampionship.and.returnValue(of({
+      ...draft, id: 40, name: 'Taça BMX Racing', sport: 'BMX', scoringMode: 'RACE_POINTS'
+    }));
+    await component.create();
+    expect(api.createKartingChampionship).toHaveBeenCalledOnceWith(7, 'Taça BMX Racing', 'BMX');
+    expect(api.create).not.toHaveBeenCalled();
+    expect(api.raceOverview).toHaveBeenCalledWith(7, 40);
+    expect(component.selected?.sport).toBe('BMX');
+
+    component.startTeamCreation();
+    component.chooseSport('BMX');
+    expect(component.isRaceChampionshipDraft).toBeFalse();
+    expect(component.isSportFormatSupported).toBeFalse();
+  });
+
+  it('does not enable race championships for unsupported event rules', () => {
+    component.startIndividualCreation();
+    for (const sport of ['Natação', 'Snowboard', 'Atletismo', 'Futebol']) {
+      component.chooseSport(sport);
+      expect(component.isRaceChampionshipDraft).toBeFalse();
+    }
   });
 
   it('links a Karting race and reads race standings without duel endpoints', async () => {
@@ -300,10 +330,12 @@ describe('Community tournaments management', () => {
     component.tournaments = [
       older, { ...draft, id: 32, sport: 'Karting', scoringMode: 'RACE_POINTS' },
       { ...draft, id: 33, sport: 'Futebol', status: 'COMPLETED' },
-      newer
+      newer,
+      { ...older, id: 34, name: 'BMX Summer Racing', sport: 'BMX',
+        completedAt: '2026-08-10T12:00:00Z', championDisplayName: 'Rui' }
     ];
     expect(component.hasKartingCompetitions).toBeTrue();
-    expect(component.kartingPalmares.map(tournament => tournament.id)).toEqual([31, 30]);
+    expect(component.kartingPalmares.map(tournament => tournament.id)).toEqual([31, 34, 30]);
     expect(component.kartingPalmares[0].championTied).toBeTrue();
     expect(component.kartingPalmares[1].championDisplayName).toBe('Ana');
 
