@@ -4,6 +4,7 @@ import { CommunityGroup } from '../model/community-group';
 import { HistoricalMatchArchive } from '../../services/community-groups.service';
 import { historicalTournamentStandings, HistoricalTournamentStanding } from './community-historical-tournament-standings';
 import { historicalTournamentOutcome, HistoricalTournamentOutcome } from './community-historical-tournament-outcome';
+import { groupHistoricalTournamentSourceRows } from './community-historical-tournament-source-groups';
 import {
   CommunityTournament, TournamentPointRules, TeamTieBreakPriority, TournamentMatch, TournamentParticipant, TournamentStandingRow,
   TournamentStandings, TournamentTeam, TournamentTeamMatch, TournamentTeamStandings, TournamentTeamGroups,
@@ -34,6 +35,13 @@ export class CommunityTournamentsComponent implements OnChanges {
   selected?: CommunityTournament;
   historicalArchive?: HistoricalMatchArchive;
   historicalArchivePage = 0;
+
+  /** Contiguous labels exactly as found in the spreadsheet, within this page. */
+  get historicalArchivePageGroups() {
+    if (!this.historicalArchive) return [];
+    const start = this.historicalArchivePage * 50;
+    return groupHistoricalTournamentSourceRows(this.historicalArchive.rows.slice(start, start + 50));
+  }
 
   get historicalLeagueTable(): HistoricalTournamentStanding[] {
     if (this.selected?.format !== 'LEAGUE' || !this.historicalArchive) return [];
