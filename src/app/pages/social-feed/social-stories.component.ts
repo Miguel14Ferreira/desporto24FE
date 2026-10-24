@@ -44,7 +44,7 @@ export class SocialStoriesComponent implements OnInit, OnDestroy {
   error = '';
   feedback = '';
   activeStory: SocialStory | null = null;
-  private currentGroup: SocialStory[] = [];
+  currentGroup: SocialStory[] = [];
   storyIndex = 0;
   private readonly destroyed = new Subject<void>();
 
