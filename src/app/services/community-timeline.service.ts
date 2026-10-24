@@ -12,6 +12,8 @@ export interface CommunityTimelineEntry {
   username: string;
   body: string;
   createdAt: string;
+  imageUrl?: string | null;
+  videoUrl?: string | null;
   replyToMessageId?: number | null;
   replyToSender?: string | null;
   replyToText?: string | null;
@@ -39,6 +41,14 @@ export class CommunityTimelineService {
        replyToMessageId?: number): Observable<CommunityTimelineEntry> {
     return this.http.post<CommunityTimelineEntry>(this.url(id, kind),
       { body: body.trim(), ...(kind === 'CHAT' && replyToMessageId ? { replyToMessageId } : {}) });
+  }
+
+  sendPostWithMedia(id: number, body: string, image?: File, video?: File): Observable<CommunityTimelineEntry> {
+    const form = new FormData();
+    form.append('content', body.trim());
+    if (image) form.append('image', image);
+    if (video) form.append('video', video);
+    return this.http.post<CommunityTimelineEntry>(this.url(id, 'POST'), form);
   }
 
   delete(id: number, kind: CommunityTimelineKind, entryId: number): Observable<void> {
