@@ -212,6 +212,22 @@
                   </div>
                 }
                 <p>{{ message.text }}</p>
+                @if (conversation.kind === 'direct' && message.attachmentName) {
+                  <div class="inbox-attachment">
+                    <button type="button" class="inbox-attachment-button"
+                      [disabled]="attachmentLoading.has(message.id)"
+                      (click)="openAttachment(message)">
+                      <span aria-hidden="true">{{ message.attachmentMimeType?.startsWith('image/') ? '🖼️' : '📄' }}</span>
+                      <span>{{ message.attachmentName }}</span>
+                      <small>{{ (attachmentLoading.has(message.id) ? 'chat.attachmentLoading'
+                        : attachmentPreviews.has(message.id) ? 'chat.attachmentHide' : 'chat.attachmentOpen') | t }}</small>
+                    </button>
+                    @if (attachmentPreviews.get(message.id); as previewUrl) {
+                      <img class="inbox-attachment-image" [src]="previewUrl" [alt]="message.attachmentName"
+                        loading="lazy">
+                    }
+                  </div>
+                }
                 <button type="button" class="inbox-reply-action"
                     [disabled]="sending || deliveryUncertain || !composerAllowed"
                     (click)="replyToMessage(message)">
@@ -262,6 +278,14 @@
             @if (!composerAccessLoading && !composerAllowed && !previewLoading && !previewError) {
               <p class="inbox-compose-locked" role="status">{{ 'inbox.cannotWrite' | t }}</p>
             }
+            @if (selectedAttachment; as file) {
+              <div class="inbox-attachment-draft">
+                <span aria-hidden="true">📎</span>
+                <span>{{ file.name }}</span>
+                <button type="button" [disabled]="sending || deliveryUncertain"
+                  (click)="removeAttachment()">{{ 'chat.attachmentRemove' | t }}</button>
+              </div>
+            }
             <label for="inbox-reply">{{ 'inbox.writeMessage' | t }}</label>
             <textarea #composerTextarea id="inbox-reply" name="inboxDraft" [(ngModel)]="draft"
               [placeholder]="'chat.placeholder' | t" rows="2" maxlength="2000"
@@ -272,6 +296,16 @@
             <div class="inbox-composer-bottom">
               <span>{{ 'chat.enterHint' | t }} · {{ draft.length }}/2000</span>
               <div class="inbox-composer-actions">
+                @if (conversation.kind === 'direct' && attachmentReady) {
+                  <input #attachmentFile type="file" class="inbox-attachment-input"
+                    accept=".jpg,.jpeg,.png,.webp,.gif,.pdf,image/jpeg,image/png,image/webp,image/gif,application/pdf"
+                    (change)="onAttachmentPicked($event)">
+                  <button type="button" class="inbox-attachment-trigger"
+                    [disabled]="!composerAllowed || composerAccessLoading || sending || deliveryUncertain || deliveryChecking || previewLoading || previewError"
+                    [attr.title]="'chat.attachmentAdd' | t"
+                    [attr.aria-label]="'chat.attachmentAdd' | t"
+                    (click)="attachmentFile.click()" aria-haspopup="dialog">📎</button>
+                }
                 <div class="inbox-emoji-controls" (keydown.escape)="closeEmojiPicker()">
                   <button type="button" class="inbox-emoji-trigger"
                     [attr.aria-label]="'chat.emojiPicker' | t"
