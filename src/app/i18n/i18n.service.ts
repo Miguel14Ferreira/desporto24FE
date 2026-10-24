@@ -5,6 +5,19 @@ export type AppLanguage = 'pt' | 'en';
 type Dictionary = Record<string, string>;
 
 const PT: Dictionary = {
+  'stories.progress': 'Progresso da Story',
+  'stories.viewPart': 'Ver Story',
+  'stories.unmute': 'Ativar som',
+  'stories.mute': 'Silenciar',
+  'stories.options': 'Mais opções',
+  'stories.mediaUnavailable': 'Não foi possível reproduzir este conteúdo.',
+  'stories.tapToPlay': 'Toca para reproduzir',
+  'stories.replyTo': 'Responder a',
+  'stories.sendReply': 'Enviar resposta',
+  'stories.sendHeart': 'Enviar coração',
+  'stories.replySent': 'Resposta enviada no chat privado.',
+  'stories.replyFailed': 'Não foi possível enviar a resposta. Confirma se podes conversar com esta pessoa.',
+  'stories.yourStory': 'A tua Story',
   'stories.retry': 'Tentar novamente',
   'stories.mineStatus': 'Stories publicadas por ti nas últimas 24 horas',
   'stories.mineFailed': 'Não foi possível verificar as tuas Stories. Tenta novamente.',
@@ -2945,6 +2958,19 @@ const PT: Dictionary = {
 };
 
 const EN: Dictionary = {
+  'stories.progress': 'Story progress',
+  'stories.viewPart': 'View Story',
+  'stories.unmute': 'Unmute',
+  'stories.mute': 'Mute',
+  'stories.options': 'More options',
+  'stories.mediaUnavailable': 'This content could not be played.',
+  'stories.tapToPlay': 'Tap to play',
+  'stories.replyTo': 'Reply to',
+  'stories.sendReply': 'Send reply',
+  'stories.sendHeart': 'Send heart',
+  'stories.replySent': 'Reply sent in direct messages.',
+  'stories.replyFailed': 'Could not send your reply. Check that you can message this person.',
+  'stories.yourStory': 'Your Story',
   'stories.retry': 'Try again',
   'stories.mineStatus': 'Stories you published in the last 24 hours',
   'stories.mineFailed': 'Your Stories could not be checked. Please retry.',

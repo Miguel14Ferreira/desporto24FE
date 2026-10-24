@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, HostListener, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { catchError, finalize, of, Subject, takeUntil, timeout } from 'rxjs';
@@ -7,6 +7,7 @@ import { catchError, finalize, of, Subject, takeUntil, timeout } from 'rxjs';
 import { environment } from 'src/environment/environment';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import { appTranslate as t } from '../../i18n/i18n.service';
+import { DirectChatService } from '../../services/direct-chat.service';
 import { CommunityGroupsService } from '../../services/community-groups.service';
 import { SocialStoriesService } from '../../services/social-stories.service';
 import { CommunityGroup } from '../model/community-group';
@@ -47,8 +48,210 @@ export class SocialStoriesComponent implements OnInit, OnDestroy {
   storyIndex = 0;
   private readonly destroyed = new Subject<void>();
 
+  // Instagram-style viewer: the only player controls are story gestures,
+  // a discreet audio toggle and the progress strips. No native video chrome.
+  @ViewChild('storyVideo') storyVideo?: ElementRef<HTMLVideoElement>;
+  viewElapsedMs = 0;
+  viewDurationMs = 7000;
+  imageLoaded = false;
+  mediaFailed = false;
+  autoplayFailed = false;
+  viewerPaused = false;
+  menuOpen = false;
+  muted = true;
+  replyText = '';
+  replyFocused = false;
+  replying = false;
+  private viewerTimer: ReturnType<typeof setInterval> | null = null;
+  private lastFrameAt = 0;
+
+  get viewerProgress(): number {
+    return Math.min(100, Math.max(0, this.viewElapsedMs / Math.max(1, this.viewDurationMs) * 100));
+  }
+
+  storyLabel(story: SocialStory): string {
+    return story.communityName || '@' + story.authorUsername.replace(/^@/, '');
+  }
+
+  storyAvatar(story: SocialStory): string | null {
+    return this.media(story.communityId !== null ? story.communityPhotoUrl : story.avatarUrl);
+  }
+
+  private startViewer(story: SocialStory): void {
+    this.stopViewerTimer();
+    this.activeStory = story;
+    this.viewElapsedMs = 0;
+    this.viewDurationMs = 7000;
+    this.imageLoaded = false;
+    this.mediaFailed = false;
+    this.autoplayFailed = false;
+    this.viewerPaused = false;
+    this.menuOpen = false;
+    this.muted = true;
+    this.replyText = '';
+    this.replyFocused = false;
+    this.feedback = '';
+    this.lastFrameAt = Date.now();
+    this.viewerTimer = setInterval(() => {
+      const now = Date.now();
+      const elapsed = Math.max(0, now - this.lastFrameAt);
+      this.lastFrameAt = now;
+      if (!this.activeStory || this.activeStory.video || !this.imageLoaded || this.playbackBlocked()) return;
+      this.viewElapsedMs = Math.min(this.viewDurationMs, this.viewElapsedMs + elapsed);
+      if (this.viewElapsedMs >= this.viewDurationMs) this.next();
+    }, 80);
+  }
+
+  private stopViewerTimer(): void {
+    if (this.viewerTimer !== null) {
+      clearInterval(this.viewerTimer);
+      this.viewerTimer = null;
+    }
+  }
+
+  playbackBlocked(): boolean {
+    return this.viewerPaused || this.menuOpen || this.replyFocused || document.hidden;
+  }
+
+  private syncVideo(): void {
+    const video = this.storyVideo?.nativeElement;
+    if (!video || !this.activeStory?.video) return;
+    if (this.playbackBlocked()) {
+      video.pause();
+      return;
+    }
+    const attempted = video.play();
+    if (attempted && typeof attempted.catch === 'function') {
+      attempted.catch(() => {
+        if (this.activeStory?.video) {
+          this.autoplayFailed = true;
+          this.changeDetector.markForCheck();
+        }
+      });
+    }
+  }
+
+  onImageLoaded(): void {
+    this.imageLoaded = true;
+    this.lastFrameAt = Date.now();
+  }
+
+  onVideoReady(event: Event): void {
+    const video = event.target as HTMLVideoElement;
+    if (Number.isFinite(video.duration) && video.duration > 0) {
+      this.viewDurationMs = video.duration * 1000;
+    }
+    this.syncVideo();
+  }
+
+  onVideoTime(event: Event): void {
+    const video = event.target as HTMLVideoElement;
+    this.viewElapsedMs = Math.min(this.viewDurationMs, video.currentTime * 1000);
+  }
+
+  onMediaError(): void {
+    this.mediaFailed = true;
+  }
+
+  retryVideo(): void {
+    this.autoplayFailed = false;
+    this.viewerPaused = false;
+    this.syncVideo();
+  }
+
+  togglePause(): void {
+    this.viewerPaused = !this.viewerPaused;
+    this.lastFrameAt = Date.now();
+    this.syncVideo();
+  }
+
+  toggleMute(): void {
+    this.muted = !this.muted;
+    if (this.storyVideo?.nativeElement) {
+      this.storyVideo.nativeElement.muted = this.muted;
+    }
+  }
+
+  toggleStoryMenu(): void {
+    this.menuOpen = !this.menuOpen;
+    this.syncVideo();
+  }
+
+  onReplyFocus(focused: boolean): void {
+    this.replyFocused = focused;
+    this.lastFrameAt = Date.now();
+    this.syncVideo();
+  }
+
+  jumpTo(index: number): void {
+    if (index < 0 || index >= this.currentGroup.length) return;
+    this.storyIndex = index;
+    this.startViewer(this.currentGroup[index]);
+  }
+
+  @HostListener('document:keydown.arrowright', ['$event'])
+  onRight(event: KeyboardEvent): void {
+    if (!this.activeStory || this.isInputEvent(event)) return;
+    event.preventDefault();
+    this.next();
+  }
+
+  @HostListener('document:keydown.arrowleft', ['$event'])
+  onLeft(event: KeyboardEvent): void {
+    if (!this.activeStory || this.isInputEvent(event)) return;
+    event.preventDefault();
+    this.previous();
+  }
+
+  @HostListener('document:keydown.space', ['$event'])
+  onSpace(event: KeyboardEvent): void {
+    if (!this.activeStory || this.isInputEvent(event)) return;
+    event.preventDefault();
+    this.togglePause();
+  }
+
+  @HostListener('document:visibilitychange')
+  onVisibilityChange(): void {
+    this.lastFrameAt = Date.now();
+    this.syncVideo();
+  }
+
+  private isInputEvent(event: KeyboardEvent): boolean {
+    const target = event.target;
+    return target instanceof HTMLElement && !!target.closest('input, textarea, select, [contenteditable="true"], button');
+  }
+
+  // Replies are real direct messages, subject to existing friendship/chat permissions.
+  // A failed or ambiguous delivery is never auto-retried to avoid duplicate messages.
+  replyToStory(reaction?: string): void {
+    const story = this.activeStory;
+    if (!story || story.communityId !== null || story.canDelete || this.replying) return;
+    const text = (reaction || this.replyText).trim();
+    if (!text || text.length > 500) return;
+    const permalink = new URL('/menu/feed?story=' + story.id, window.location.origin).href;
+    this.replying = true;
+    this.onReplyFocus(true);
+    this.directChat.send(story.authorUsername, text + '\n' + permalink).pipe(
+      timeout(12000),
+      finalize(() => {
+        this.replying = false;
+        this.onReplyFocus(false);
+        this.changeDetector.markForCheck();
+      }),
+      takeUntil(this.destroyed)
+    ).subscribe({
+      next: () => {
+        this.replyText = '';
+        this.feedback = t('stories.replySent');
+      },
+      error: () => this.feedback = t('stories.replyFailed')
+    });
+  }
+
+
   constructor(
     private readonly stories: SocialStoriesService,
+    private readonly directChat: DirectChatService,
     private readonly changeDetector: ChangeDetectorRef,
     private readonly communities: CommunityGroupsService,
     private readonly route: ActivatedRoute
@@ -151,36 +354,33 @@ export class SocialStoriesComponent implements OnInit, OnDestroy {
   openGroup(group: StoryGroup): void {
     this.currentGroup = [...group.stories].reverse();
     this.storyIndex = 0;
-    this.activeStory = this.currentGroup[0] || null;
-    this.feedback = '';
+    if (this.currentGroup[0]) this.startViewer(this.currentGroup[0]);
   }
 
   showStory(story: SocialStory): void {
     this.currentGroup = [story];
     this.storyIndex = 0;
-    this.activeStory = story;
-    this.feedback = '';
+    this.startViewer(story);
   }
 
   next(): void {
     if (this.storyIndex + 1 >= this.currentGroup.length) {
       this.close();
     } else {
-      this.activeStory = this.currentGroup[++this.storyIndex];
-      this.feedback = '';
+      this.startViewer(this.currentGroup[++this.storyIndex]);
     }
   }
 
   previous(): void {
-    if (this.storyIndex > 0) {
-      this.activeStory = this.currentGroup[--this.storyIndex];
-      this.feedback = '';
-    }
+    if (this.storyIndex > 0) this.startViewer(this.currentGroup[--this.storyIndex]);
   }
 
   close(): void {
+    this.stopViewerTimer();
+    this.storyVideo?.nativeElement.pause();
     this.activeStory = null;
     this.currentGroup = [];
+    this.menuOpen = false;
     this.feedback = '';
   }
 
@@ -283,6 +483,7 @@ export class SocialStoriesComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.stopViewerTimer();
     this.removeFile();
     this.destroyed.next();
     this.destroyed.complete();
