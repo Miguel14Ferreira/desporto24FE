@@ -534,9 +534,7 @@
                 <strong>{{ (selected.status === 'DRAFT' ? 'communities.tournaments.teamUi.draftStatus' : 'communities.tournaments.teamUi.publishedStatus') | t }}</strong>
                 <p>{{ 'communities.tournaments.teamUi.membersHelp' | t }}
                   @if (selected.playersPerTeam == null) { {{ 'communities.tournaments.teamUi.flexRosterHint' | t }} }
-                  {{ selected.status === 'DRAFT'
-                    ? 'Quando todas as equipas estiverem completas, publica os confrontos.'
-                    : (isCupFormat ? 'Regista os resultados e acompanha os apuramentos até à final.' : 'Regista os resultados nas jornadas e acompanha a tabela classificativa.') }}</p>
+                  {{ (selected.status === 'DRAFT' ? 'communities.tournaments.teamUi.draftHint' : (isCupFormat ? 'communities.tournaments.teamUi.cupHint' : 'communities.tournaments.teamUi.leagueHint')) | t }}</p>
               </div>
               @if (teamsLoadError) {
                 <p class="field-validation" role="alert">{{ 'communities.tournaments.teamUi.loadError' | t }}</p>
