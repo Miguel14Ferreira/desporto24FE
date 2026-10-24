@@ -14,6 +14,9 @@ export interface CommunityTimelineEntry {
   createdAt: string;
   imageUrl?: string | null;
   videoUrl?: string | null;
+  attachmentName?: string | null;
+  attachmentMimeType?: string | null;
+  attachmentSize?: number | null;
   replyToMessageId?: number | null;
   replyToSender?: string | null;
   replyToText?: string | null;
@@ -41,6 +44,26 @@ export class CommunityTimelineService {
        replyToMessageId?: number): Observable<CommunityTimelineEntry> {
     return this.http.post<CommunityTimelineEntry>(this.url(id, kind),
       { body: body.trim(), ...(kind === 'CHAT' && replyToMessageId ? { replyToMessageId } : {}) });
+  }
+
+  chatAttachmentsAvailable(id: number): Observable<{ available: boolean }> {
+    return this.http.get<{ available: boolean }>(
+      this.url(id, 'CHAT') + '/attachments/availability');
+  }
+
+  sendChatAttachment(id: number, file: File, caption: string,
+                     replyToMessageId?: number): Observable<CommunityTimelineEntry> {
+    const form = new FormData();
+    form.append('file', file, file.name);
+    if (caption.trim()) form.append('caption', caption.trim());
+    if (replyToMessageId) form.append('replyToMessageId', String(replyToMessageId));
+    return this.http.post<CommunityTimelineEntry>(
+      this.url(id, 'CHAT') + '/attachments', form);
+  }
+
+  downloadChatAttachment(id: number, messageId: number): Observable<Blob> {
+    return this.http.get(this.url(id, 'CHAT') + '/attachments/' + messageId,
+      { responseType: 'blob' });
   }
 
   sendPostWithMedia(id: number, body: string, image?: File, video?: File): Observable<CommunityTimelineEntry> {

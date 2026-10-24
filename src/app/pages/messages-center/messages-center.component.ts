@@ -848,7 +848,10 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     return { key: inboxKey('community', entry.communityId), id: entry.id,
       sender: entry.username, text: entry.body, createdAt: entry.createdAt,
       replyToMessageId: entry.replyToMessageId, replyToSender: entry.replyToSender,
-      replyToText: entry.replyToText };
+      replyToText: entry.replyToText,
+      attachmentName: entry.attachmentName,
+      attachmentMimeType: entry.attachmentMimeType,
+      attachmentSize: entry.attachmentSize };
   }
 
   private fromSession(entry: SessionMessage): InboxMessage {
@@ -950,7 +953,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       && !this.previewLoading && !this.previewError && !this.sending && !this.deliveryUncertain
       && !this.deliveryChecking && !this.voiceRecording && !this.voiceFinalizing
       && (this.draft.trim().length > 0
-        || (this.selected?.kind === 'direct' && this.attachmentControlsReady && !!this.selectedAttachment))
+        || (this.selected?.kind !== 'session' && this.attachmentControlsReady && !!this.selectedAttachment))
       && this.draft.trim().length <= 2000);
   }
 
@@ -978,11 +981,15 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.attachmentReady = false;
     // Progressive enhancement: older injected chat clients and test doubles
     // have no attachment capability; keep the composer securely text-only.
-    if (conversation.kind !== 'direct' || !this.isAttachmentIdentityCurrent()
-        || typeof this.direct.attachmentsAvailable !== 'function') return;
+    if (conversation.kind === 'session' || !this.isAttachmentIdentityCurrent()) return;
+    // A private chat and a community have different authorization scopes.
+    const available = conversation.kind === 'direct'
+      ? (typeof this.direct.attachmentsAvailable === 'function'
+          ? this.direct.attachmentsAvailable(String(conversation.id)) : of({ available: false }))
+      : (typeof this.timeline.chatAttachmentsAvailable === 'function'
+          ? this.timeline.chatAttachmentsAvailable(Number(conversation.id)) : of({ available: false }));
     const viewVersion = this.attachmentViewVersion;
-    this.direct.attachmentsAvailable(String(conversation.id))
-      .pipe(timeout(10000), catchError(() => of({available: false})))
+    available.pipe(timeout(10000), catchError(() => of({available: false})))
       .subscribe(result => {
         if (viewVersion === this.attachmentViewVersion && this.selectedKey === conversation.key
             && this.isAttachmentIdentityCurrent()) this.attachmentReady = result.available;
@@ -993,7 +1000,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0] ?? null;
     input.value = '';
-    if (!file || !this.attachmentControlsReady || this.selected?.kind !== 'direct'
+    if (!file || !this.attachmentControlsReady || this.selected?.kind === 'session'
         || !this.canEditDraft()) return;
     const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif',
       'application/pdf'].includes(file.type);
@@ -1035,7 +1042,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   }
 
   async startVoiceRecording(): Promise<void> {
-    if (!this.attachmentControlsReady || this.selected?.kind !== 'direct'
+    if (!this.attachmentControlsReady || this.selected?.kind === 'session'
         || !this.canEditDraft() || this.selectedAttachment || this.voiceRecording) return;
     const format = this.voiceFormat();
     if (!format) {
@@ -1136,7 +1143,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
 
   openAttachment(message: InboxMessage): void {
     const conversation = this.selected;
-    if (!conversation || conversation.kind !== 'direct' || message.key !== conversation.key
+    if (!conversation || conversation.kind === 'session' || message.key !== conversation.key
         || !this.isAttachmentIdentityCurrent()
         || !message.attachmentName || !message.attachmentMimeType || message.id <= 0
         || this.attachmentLoading.has(message.id)) return;
@@ -1148,8 +1155,10 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     }
     const viewVersion = this.attachmentViewVersion;
     this.attachmentLoading.add(message.id);
-    this.direct.downloadAttachment(String(conversation.id), message.id)
-      .pipe(timeout(30000), finalize(() => {
+    const download = conversation.kind === 'direct'
+      ? this.direct.downloadAttachment(String(conversation.id), message.id)
+      : this.timeline.downloadChatAttachment(Number(conversation.id), message.id);
+    download.pipe(timeout(30000), finalize(() => {
         if (viewVersion === this.attachmentViewVersion) this.attachmentLoading.delete(message.id);
       }))
       .subscribe({
@@ -1234,9 +1243,9 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     if (!conversation || !this.canSendMessage()) return;
     const key = conversation.key;
     // A file chosen under a prior login must never be submitted by this tab.
-    if (conversation.kind === 'direct' && this.selectedAttachment
+    if (conversation.kind !== 'session' && this.selectedAttachment
         && !this.attachmentControlsReady) return;
-    const file = conversation.kind === 'direct' ? this.selectedAttachment : null;
+    const file = conversation.kind !== 'session' ? this.selectedAttachment : null;
     const caption = this.draft.trim();
     // Server sends the same synthesized text for an attachment without a caption.
     const name = file?.name.replace(/\\/g, '/').split('/').pop()?.replace(/[\\x00-\\x1f\\x7f]/g, '').trim().slice(-160);
@@ -1255,7 +1264,9 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
         : this.direct.send(String(conversation.id), text);
       send = request.pipe(map(message => this.fromDirect(message, String(conversation.id))));
     } else if (conversation.kind === 'community') {
-      const request = replyId
+      const request = file
+        ? this.timeline.sendChatAttachment(Number(conversation.id), file, caption, replyId || undefined)
+        : replyId
         ? this.timeline.send(Number(conversation.id), 'CHAT', text, replyId)
         : this.timeline.send(Number(conversation.id), 'CHAT', text);
       send = request.pipe(map(message => this.fromCommunity(message)));

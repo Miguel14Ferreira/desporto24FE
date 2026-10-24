@@ -45,7 +45,7 @@ describe('Unified Jynlo message center', () => {
     communities = jasmine.createSpyObj('CommunityGroupsService', ['mine']);
     sessions = jasmine.createSpyObj('SessionService', ['mine', 'messages', 'detail', 'postMessage']);
     direct = jasmine.createSpyObj('DirectChatService', ['recentHistory', 'info', 'send', 'attachmentsAvailable', 'sendAttachment', 'downloadAttachment']);
-    timeline = jasmine.createSpyObj('CommunityTimelineService', ['list', 'send']);
+    timeline = jasmine.createSpyObj('CommunityTimelineService', ['list', 'send', 'chatAttachmentsAvailable', 'sendChatAttachment', 'downloadChatAttachment']);
     realtime = {
       messages$: directEvents.asObservable(),
       readReceipts$: receiptEvents.asObservable(),
@@ -67,6 +67,7 @@ describe('Unified Jynlo message center', () => {
     sessions.mine.and.returnValue(of({ created: [], joined: [], waitlisted: [] }));
     direct.info.and.returnValue(of({ chatBlocked: false, whoBlocked: null }));
     direct.attachmentsAvailable.and.returnValue(of({ available: false }));
+    timeline.chatAttachmentsAvailable.and.returnValue(of({ available: false }));
     sessions.detail.and.returnValue(of({
       id: 41, sport: 'Futsal', city: 'Cacém', gameDate: '2026-11-01T10:00:00Z',
       joined: true, status: 'OPEN'
@@ -251,6 +252,79 @@ describe('Unified Jynlo message center', () => {
     window.dispatchEvent(new StorageEvent('storage',
       { key: 't', oldValue: originalToken, newValue: activeToken }));
     expect(component.attachmentReady).toBeTrue();
+  });
+
+  it('gates community attachment controls on their own private backend availability', () => {
+    const community = item('community', 7);
+    const peer = item('direct', 'bea');
+    component.conversations = [community, peer];
+    spyOn<any>(component, 'loadHistory').and.stub();
+    spyOn<any>(component, 'loadComposerAccess').and.stub();
+    const pending = new Subject<{ available: boolean }>();
+    timeline.chatAttachmentsAvailable.and.returnValue(pending.asObservable());
+    component.selectConversation(community);
+    expect(component.attachmentControlsReady).toBeFalse();
+    expect(timeline.chatAttachmentsAvailable).toHaveBeenCalledOnceWith(7);
+    component.selectConversation(peer);
+    pending.next({ available: true });
+    pending.complete();
+    expect(component.attachmentControlsReady).toBeFalse();
+    expect(component.selectedAttachment).toBeNull();
+    expect(direct.attachmentsAvailable).toHaveBeenCalledOnceWith('bea');
+  });
+
+  it('sends a community PDF through membership-scoped multipart exactly once', () => {
+    const community = item('community', 7);
+    component.conversations = [community];
+    component.selectedKey = community.key;
+    component.attachmentReady = true;
+    component.composerAllowed = true;
+    const file = new File(['%PDF-1.4'], 'torneio.pdf', { type: 'application/pdf' });
+    component.onAttachmentPicked({ target: { files: [file], value: '' }} as any);
+    expect(component.selectedAttachment).toBe(file);
+    timeline.sendChatAttachment.and.returnValue(of({
+      id: 56, communityId: 7, kind: 'CHAT', username: 'ana',
+      body: '📎 torneio.pdf', createdAt: new Date().toISOString(),
+      attachmentName: 'torneio.pdf', attachmentMimeType: 'application/pdf',
+      attachmentSize: 8
+    }));
+    component.sendMessage();
+    expect(timeline.sendChatAttachment).toHaveBeenCalledOnceWith(7, file, '', undefined);
+    expect(timeline.send).not.toHaveBeenCalled();
+    expect(direct.sendAttachment).not.toHaveBeenCalled();
+    expect(component.selectedAttachment).toBeNull();
+    expect(component.messages.some(m => m.id === 56 && m.attachmentName === 'torneio.pdf')).toBeTrue();
+  });
+
+  it('downloads community media only through its authorized community endpoint', () => {
+    const community = item('community', 7);
+    component.conversations = [community];
+    component.selectedKey = community.key;
+    const photo = { ...message(community.key, 72, 'owner'),
+      attachmentName: 'foto.jpg', attachmentMimeType: 'image/jpeg', attachmentSize: 16 };
+    const createUrl = spyOn(URL, 'createObjectURL').and.returnValue('blob:community-private');
+    spyOn(URL, 'revokeObjectURL');
+    timeline.downloadChatAttachment.and.returnValue(of(new Blob(['private-photo'], {type:'image/jpeg'})));
+    component.openAttachment(photo);
+    expect(timeline.downloadChatAttachment).toHaveBeenCalledOnceWith(7, 72);
+    expect(direct.downloadAttachment).not.toHaveBeenCalled();
+    expect(createUrl).toHaveBeenCalled();
+    expect(component.attachmentPreviews.get(72)).toBe('blob:community-private');
+  });
+
+  it('never enables storage or media upload for short-lived session chats', () => {
+    const session = item('session', 41);
+    component.conversations = [session];
+    spyOn<any>(component, 'loadHistory').and.stub();
+    spyOn<any>(component, 'loadComposerAccess').and.stub();
+    component.selectConversation(session);
+    expect(component.attachmentReady).toBeFalse();
+    expect(direct.attachmentsAvailable).not.toHaveBeenCalled();
+    expect(timeline.chatAttachmentsAvailable).not.toHaveBeenCalled();
+    const file = new File(['x'], 'file.pdf', {type:'application/pdf'});
+    component.onAttachmentPicked({ target: { files: [file], value: '' }} as any);
+    expect(component.selectedAttachment).toBeNull();
+    expect(timeline.sendChatAttachment).not.toHaveBeenCalled();
   });
 
   it('refuses unsupported or oversized attachments before HTTP upload', () => {
