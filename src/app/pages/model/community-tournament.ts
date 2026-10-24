@@ -18,6 +18,7 @@ export interface CommunityTournament {
   sport?: string | null;
   // Older individual competitions may omit these fields in cached responses.
   entryType?: 'INDIVIDUAL' | 'TEAM';
+  scoringMode?: 'CHESS_HALF_POINTS' | null;
   playersPerTeam?: number | null;
   roundRobinLegs?: 1 | 2;
   teamTieBreakPriority?: TeamTieBreakPriority;
