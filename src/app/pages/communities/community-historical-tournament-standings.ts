@@ -1,4 +1,19 @@
 import { HistoricalMatchArchive } from '../../services/community-groups.service';
+import { SPORTS_CATALOG } from '../../shared/sports-catalog';
+import { tournamentClassificationProfile } from './community-tournament-classification';
+
+/**
+ * An archived score pair is not necessarily a head-to-head match with
+ * conventional win/draw/loss points. Gate provisional league tables on the
+ * canonical Jynlo sport and its already defined numeric-result capability.
+ * A stored historic source remains readable even when this returns false.
+ */
+export function canEstimateHistoricalLeagueStandings(sport: string | null | undefined): boolean {
+  const selected = sport?.trim();
+  if (!selected || !SPORTS_CATALOG.includes(selected)) return false;
+  const profile = tournamentClassificationProfile(selected);
+  return profile.isRoundRobinSupported && !profile.scoringMode;
+}
 
 export interface HistoricalTournamentStanding {
   name: string;
