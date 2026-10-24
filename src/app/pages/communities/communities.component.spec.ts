@@ -25,6 +25,20 @@ describe('CommunitiesComponent public session eligibility', () => {
   });
 
 
+  it('clears hidden circuit metrics for flying 200m without changing Scratch history', () => {
+    component.roundEntries = [
+      { lapsCompleted: 3, bestLapSeconds: 10.25 } as any,
+      { lapsCompleted: 4, bestLapSeconds: 9.89 } as any
+    ];
+    component.roundEventTypeDraft = 'TRACK_SCRATCH';
+    component.onRoundEventTypeChange();
+    expect(component.roundEntries[0].lapsCompleted).toBe(3);
+    component.roundEventTypeDraft = 'TRACK_FLYING_200';
+    component.onRoundEventTypeChange();
+    expect(component.roundEntries.map(e => [e.lapsCompleted, e.bestLapSeconds]))
+      .toEqual([[null, null], [null, null]]);
+  });
+
   it('detects uploaded GIF avatars even with CDN query strings or a fragment', () => {
     expect(component.isAnimatedCommunityAvatar('https://cdn.jynlo.test/communities/8/avatar.gif')).toBeTrue();
     expect(component.isAnimatedCommunityAvatar('/media/communities/8/avatar.GIF?v=2')).toBeTrue();
