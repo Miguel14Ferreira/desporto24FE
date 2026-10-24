@@ -153,6 +153,9 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
     : [tournament(mode === 'teams-view' || mode === 'teams-schedule' ? 11 : 9, 'Liga de Outono')];
   // The sport is a snapshot on the tournament, not inferred by the component.
   tournaments.forEach(item => item.sport = sport);
+  if (mode === 'paged' && sport === 'Xadrez') {
+    tournaments[0].scoringMode = 'CHESS_HALF_POINTS';
+  }
   if (mode === 'teams-view' || mode === 'teams-schedule') Object.assign(tournaments[0], {
     entryType: 'TEAM', playersPerTeam: 2, name: 'Torneio da comunidade',
     roundRobinLegs, format
@@ -2478,4 +2481,65 @@ test('Competition stages E2E: knockout round changes language but not winner rul
     .locator('.team-fixtures-list h6').first()).toHaveText('Ronda 1');
   expect(fixture.teamFixtures[0].status).toBe('SCHEDULED');
   expect(fixture.unmocked.filter(url => url.includes('/tournaments/'))).toEqual([]);
+});
+
+test('Competition individual E2E: registrations, standings and goal labels follow PT/EN', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'paged');
+  await page.goto('/menu/communities/7?tab=tournaments');
+  await page.evaluate(() => localStorage.setItem('d24-language', 'en'));
+  await page.reload();
+
+  const registrations = page.getByRole('region', { name: 'Registrations' });
+  await expect(registrations.getByRole('heading', { name: 'Participants' })).toBeVisible();
+  await expect(registrations.getByText('Confirmed')).toBeVisible();
+  const fixtures = page.getByRole('region', { name: 'Fixtures' });
+  await expect(fixtures.getByRole('heading', { name: 'Fixtures and results' })).toBeVisible();
+  await expect(fixtures.getByRole('spinbutton', { name: 'Goals for organizador' })).toBeVisible();
+  await expect(fixtures.getByRole('spinbutton', { name: 'Goals for participante' })).toBeVisible();
+  await expect(fixtures.getByRole('button', { name: 'Save round 1 result between organizador and participante' })).toBeVisible();
+  const table = page.getByRole('region', { name: 'Tournament standings' });
+  await expect(table.getByRole('heading', { name: 'Standings' })).toBeVisible();
+  await expect(table).toContainText('goal difference');
+  await expect(table.getByRole('columnheader', { name: 'GF' })).toBeVisible();
+
+  await page.evaluate(() => localStorage.setItem('d24-language', 'pt'));
+  await page.reload();
+  await expect(page.getByRole('region', { name: 'Inscrições' })
+    .getByRole('heading', { name: 'Participantes' })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Jornadas' })
+    .getByRole('spinbutton', { name: 'Golos de organizador' })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Classificação do torneio' })
+    .getByRole('columnheader', { name: 'GM' })).toBeVisible();
+  expect(fixture.organizerMutations).toEqual([]);
+  expect(fixture.unmocked.filter(url => url.includes('/tournaments/'))).toEqual([]);
+});
+
+test('Competition individual E2E: chess result options and scoring remain PT/EN', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'paged', 'Xadrez', ['Xadrez']);
+  await page.goto('/menu/communities/7?tab=tournaments');
+  await page.evaluate(() => localStorage.setItem('d24-language', 'en'));
+  await page.reload();
+
+  const fixtures = page.getByRole('region', { name: 'Fixtures' });
+  const result = fixtures.getByRole('combobox', { name: 'Match result between organizador and participante' });
+  await expect(result).toBeVisible();
+  await expect(result.locator('option')).toHaveText([
+    'Select result', 'Win for @organizador', 'Draw (½ – ½)', 'Win for @participante'
+  ]);
+  await result.selectOption('DRAW');
+  await expect(fixtures.getByRole('button', { name: 'Save round 1 result between organizador and participante' })).toBeEnabled();
+  const englishStandings = page.getByRole('region', { name: 'Tournament standings' });
+  await expect(englishStandings).toContainText('Chess points: win 1, draw ½, loss 0.');
+
+  await page.evaluate(() => localStorage.setItem('d24-language', 'pt'));
+  await page.reload();
+  const portuguese = page.getByRole('region', { name: 'Jornadas' });
+  const ptResult = portuguese.getByRole('combobox', { name: 'Resultado da partida entre organizador e participante' });
+  await expect(ptResult.locator('option')).toHaveText([
+    'Selecionar resultado', 'Vitória de @organizador', 'Empate (½ – ½)', 'Vitória de @participante'
+  ]);
+  await expect(page.getByRole('region', { name: 'Classificação do torneio' }))
+    .toContainText('Pontos de xadrez: vitória 1, empate ½, derrota 0.');
+  expect(fixture.organizerMutations).toEqual([]);
+  expect(fixture.matches.every(match => match.status === 'SCHEDULED')).toBeTruthy();
 });
