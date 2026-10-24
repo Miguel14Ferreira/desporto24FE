@@ -11,6 +11,7 @@ import { eventOptionsForSport, eventView, isNeutralEvent, eventPresentationForma
   CommunityEventType } from './community-round-event-type';
 import { athleticsDisciplineOptions, athleticsDisciplineValid } from './community-field-disciplines';
 import { breakingBattleError } from './community-breaking-battle';
+import { cricketT20Error, cricketOvers } from './community-cricket-results';
 import { chessGameError, chessGameScore } from './community-chess-results';
 import { isVolleyballEvent, isFootvolleyEvent, volleyballMaxSets, volleyballMinSets,
   volleyballMatchError, volleyballSetWinner, volleyballSetTotals,
@@ -824,6 +825,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     return recordedRacketMatch(round);
   }
   chessGameScore = chessGameScore;
+  cricketOvers = cricketOvers;
   isTeamFinalEvent = isTeamFinalEvent;
   recordedTeamFinal = recordedTeamFinal;
   teamFinalWinner = teamFinalWinner;
@@ -1017,6 +1019,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   roundGroupScoresDraft: Record<string, number | null> = {};
   roundBasketballScoreDraft = { sideA: null as number | null, sideB: null as number | null };
   roundTeamScoreDraft = {sideA: null as number | null, sideB: null as number | null};
+  roundCricketDraft = {wicketsA: null as number | null, legalBallsA: null as number | null,
+    wicketsB: null as number | null, legalBallsB: null as number | null};
   volleyballSetScores: Array<{sideA: number | null; sideB: number | null}> =
     [{sideA: null,sideB: null},{sideA: null,sideB: null}];
   isGroupRoutineEvent = isGroupRoutineEvent;
@@ -2357,6 +2361,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       this.roundGroupScoresDraft = {};
       this.roundBasketballScoreDraft = { sideA: null, sideB: null };
       this.roundTeamScoreDraft = {sideA: null, sideB: null};
+      this.roundCricketDraft = {wicketsA: null, legalBallsA: null, wicketsB: null, legalBallsB: null};
       this.resetVolleyballSets();
       return;
     }
@@ -2364,6 +2369,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     this.roundGroupScoresDraft = {};
     this.roundBasketballScoreDraft = { sideA: null, sideB: null };
     this.roundTeamScoreDraft = {sideA: null, sideB: null};
+    this.roundCricketDraft = {wicketsA: null, legalBallsA: null, wicketsB: null, legalBallsB: null};
     this.resetVolleyballSets();
     this.roundEntries = community.members.map(member => ({
       username: member.username,
@@ -3081,6 +3087,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     const groupRoutine = isGroupRoutineEvent(this.newRoundEventType);
     const basketball = isBasketballFinal(this.newRoundEventType);
     const teamFinal = isTeamFinalEvent(this.newRoundEventType);
+    const cricket = this.newRoundEventType === 'CRICKET_T20';
     const volleyball = isVolleyballEvent(this.newRoundEventType);
     const racket = racketSupportsSets(this.newRoundSport);
 
@@ -3096,6 +3103,10 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     if (teamFinal) {
       const invalid = teamFinalError(this.newRoundEventType, selectedEntries, this.roundTeamScoreDraft);
       if (invalid) { this.errorMessage = t('feedback.communities.' + invalid); return; }
+    }
+    if (cricket && cricketT20Error(this.roundCricketDraft, this.roundTeamScoreDraft)) {
+      this.errorMessage = t('feedback.communities.cricketInvalid');
+      return;
     }
     if (basketball) {
       const invalid = basketballScoreError(this.newRoundEventType,
@@ -3196,6 +3207,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       ...(groupRoutine ? { groupScores } : {}),
       ...(basketball ? { basketballScore: { ...this.roundBasketballScoreDraft } } : {}),
       ...(teamFinal ? { teamScore: { ...this.roundTeamScoreDraft } } : {}),
+      ...(cricket ? { cricketDetails: { ...this.roundCricketDraft } } : {}),
       ...(volleyball ? { setScores: this.volleyballSetScores.map(set => ({ ...set })) } : {}),
       ...(racket ? { matchFormat: this.racketMatchFormat,
         setScores: this.racketSetScores.map(set => ({ ...set })) } : {}),
@@ -3215,6 +3227,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
           this.racketSetScores = [{sideA: null,sideB: null},{sideA: null,sideB: null}];
           this.roundBasketballScoreDraft = { sideA: null, sideB: null };
           this.roundTeamScoreDraft = {sideA: null, sideB: null};
+          this.roundCricketDraft = {wicketsA: null, legalBallsA: null, wicketsB: null, legalBallsB: null};
           this.resetVolleyballSets();
           this.prepareRoundEntries();
           this.loadCompetition(this.selected as CommunityGroup, this.selectedSeasonId);
