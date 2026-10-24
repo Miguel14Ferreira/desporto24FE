@@ -199,6 +199,11 @@ export interface TournamentRaceEntry {
   elapsedSeconds: number | null;
   bestLapSeconds: number | null;
   racePenaltyPoints: number;
+  racePenaltyReason?: string | null;
+  raceTimePenaltySeconds?: number | null;
+  adjustedElapsedSeconds?: number | null;
+  raceStewardReason?: string | null;
+  lapsCompleted?: number | null;
   raceDisqualified: boolean;
 }
 
