@@ -23,7 +23,7 @@ jobs:
       - name: Checkout reviewed QA script at immutable commit
         uses: actions/checkout@v4
         with:
-          ref: 2a174ee302bf1a50d22a207d01af6f834e1af021
+          ref: 0ca244e5d94d64ae8b083113288b346ac37099e1
           persist-credentials: false
 
       - name: Use Node.js 22
