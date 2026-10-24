@@ -229,7 +229,17 @@
                 <p>Define como são atribuídos os pontos e, quando aplicável, os critérios de desempate.</p>
               </div>
             </div>
-        @if (showTeamCreate && teamFormatDraft !== 'KNOCKOUT') {
+            <div class="classification-profile" [class.classification-notice]="!classificationProfile.isRoundRobinSupported"
+              role="status">
+              <strong>{{ classificationProfile.heading }}</strong>
+              <p>{{ classificationProfile.detail }}</p>
+              <small>{{ classificationProfile.fields }}</small>
+              @if (!classificationProfile.isRoundRobinSupported) {
+                <p>Para já, regista estas provas nas jornadas da comunidade. A criação de torneios por provas
+                  só ficará disponível quando o calendário e a classificação deste formato estiverem implementados.</p>
+              }
+            </div>
+        @if (classificationProfile.isRoundRobinSupported && showTeamCreate && teamFormatDraft !== 'KNOCKOUT') {
           <fieldset class="t-points-rules t-tiebreak-rules" aria-describedby="t-tiebreak-help">
             <legend>Critério de desempate</legend>
             <p id="t-tiebreak-help" class="sport-choice-hint">
@@ -249,7 +259,14 @@
             </div>
           </fieldset>
         }
-        @if (!showTeamCreate || teamFormatDraft !== 'KNOCKOUT') {
+        @if (classificationProfile.isRoundRobinSupported && (!showTeamCreate || teamFormatDraft !== 'KNOCKOUT')) {
+          @if (classificationProfile.scoringMode === 'CHESS_HALF_POINTS') {
+            <div class="classification-fixed-points" role="note">
+              <strong>Pontuação de Xadrez</strong>
+              <div><span>Vitória: 1</span><span>Empate: ½</span><span>Derrota: 0</span></div>
+              <p>Este sistema é aplicado automaticamente; não há pontuações genéricas de futebol.</p>
+            </div>
+          } @else {
         <fieldset class="t-points-rules" aria-describedby="t-points-rules-help">
           <legend>Regras de pontuação</legend>
           <p id="t-points-rules-help" class="sport-choice-hint">
@@ -280,19 +297,31 @@
             <p class="field-validation" role="status">Introduz valores inteiros entre 0 e 100.</p>
           }
         </fieldset>
+          }
         }
           </section>
+        }
+
+        @if (!classificationProfile.isRoundRobinSupported && showTeamCreate && teamFormatDraft === 'KNOCKOUT') {
+          <div class="classification-profile classification-notice" role="status">
+            <strong>{{ classificationProfile.heading }}</strong>
+            <p>{{ classificationProfile.detail }}</p>
+            <small>{{ classificationProfile.fields }}</small>
+            <p>Para já, regista estas provas nas jornadas da comunidade.</p>
+          </div>
         }
 
         <div class="create-actions">
           <button type="button" class="t-btn t-btn-secondary"
             (click)="showIndividualCreate = false; showTeamCreate = false; showGuide = true">Voltar às opções</button>
         <button type="button" class="t-btn t-btn-primary"
-          [disabled]="busy || (teamFormatDraft !== 'KNOCKOUT' && !validPointRules)
+          [disabled]="busy || !classificationProfile.isRoundRobinSupported
+            || (teamFormatDraft !== 'KNOCKOUT' && !validPointRules)
             || nameDraft.trim().length < 2 || !sportDraft
 "
           (click)="showTeamCreate ? createTeamCompetition() : create()">
-          {{ showTeamCreate ? 'Criar e preparar equipas' : 'Confirmar liga individual' }}
+          {{ !classificationProfile.isRoundRobinSupported ? 'Formato ainda indisponível'
+              : (showTeamCreate ? 'Criar e preparar equipas' : 'Confirmar liga individual') }}
         </button>
         </div>
       </div>
@@ -360,7 +389,11 @@
                 <p>Desempate prioritário: {{ teamTieBreakLabel(selected.teamTieBreakPriority) }}</p>
               }
             } @else {
-              <p>Vitória {{ selected.winPoints }} · Empate {{ selected.drawPoints }} · Derrota {{ selected.lossPoints }} pontos</p>
+              @if (isChessTournament) {
+                <p>Xadrez · Vitória 1 · Empate ½ · Derrota 0</p>
+              } @else {
+                <p>Vitória {{ selected.winPoints }} · Empate {{ selected.drawPoints }} · Derrota {{ selected.lossPoints }} pontos</p>
+              }
             }
           </div>
           <div class="tournament-heading-actions">
@@ -394,7 +427,7 @@
                 <p>O torneio terminou com igualdade nos critérios de desempate.</p>
               } @else {
                 <strong>Campeão: {{ selected.championDisplayName || selected.championUsername }}</strong>
-                <p>{{ selected.championPoints }} pontos · Torneio concluído</p>
+                <p>{{ formatTournamentPoints(selected.championPoints) }} pontos · Torneio concluído</p>
               }
             </div>
           </div>
