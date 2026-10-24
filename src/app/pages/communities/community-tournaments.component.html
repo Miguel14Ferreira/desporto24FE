@@ -1213,7 +1213,7 @@
               <div class="match-list">
                 @for (match of matches; track match.id) {
                   <article class="match-card">
-                    <span class="match-round">Jornada {{ match.roundNumber }}</span>
+                    <span class="match-round">{{ 'communities.tournaments.stageUi.leagueRound' | t:{round:match.roundNumber} }}</span>
                     <div class="match-teams">
                       <strong>&#64;{{ match.homeUsername }}</strong>
                       <span class="vs">VS</span>
