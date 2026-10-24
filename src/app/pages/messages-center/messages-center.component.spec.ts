@@ -638,6 +638,47 @@ describe('Unified Jynlo message center', () => {
     expect(focus).toHaveBeenCalledTimes(1);
   });
 
+  it('shows a confirmed-send status only after the server persists the outgoing message', () => {
+    const peer = item('direct', 'bea');
+    component.conversations = [peer];
+    direct.recentHistory.and.returnValue(of({last:true,content:[]} as any));
+    const post = new Subject<any>();
+    direct.send.and.returnValue(post.asObservable());
+    component.selectConversation(peer);
+    component.draft = 'Boa jogada';
+    component.sendMessage();
+    expect(component.sending).toBeTrue();
+    expect(component.composerSuccess).toBe('');
+    post.next({id:83,username1:'ana',username2:'bea',text:'Boa jogada',
+      date:new Date().toISOString(),dataDisplay:null});
+    post.complete();
+    expect(component.sending).toBeFalse();
+    expect(component.deliveryUncertain).toBeFalse();
+    expect(component.composerSuccess).toBe('Mensagem confirmada no histórico.');
+    expect(component.messages.map(m=>m.id)).toEqual([83]);
+    component.draft='Nova mensagem';
+    component.onTypingInput();
+    expect(component.composerSuccess).toBe('');
+  });
+
+  it('does not show server confirmation when delivery is uncertain', () => {
+    const peer=item('direct','bea');
+    component.conversations=[peer];
+    // Opening the conversation succeeds; only the subsequent verification
+    // request fails after the POST becomes ambiguous.
+    direct.recentHistory.and.returnValues(
+      of({last:true,content:[]} as any),
+      throwError(()=>new HttpErrorResponse({status:503})));
+    direct.send.and.returnValue(
+      throwError(()=>new HttpErrorResponse({status:0})));
+    component.selectConversation(peer);
+    component.draft='Sem confirmação';
+    component.sendMessage();
+    expect(component.deliveryUncertain).toBeTrue();
+    expect(component.composerSuccess).toBe('');
+    expect(direct.send).toHaveBeenCalledTimes(1);
+  });
+
   it('quotes a private message by ID and keeps its server snapshot when showing history', () => {
     const selected = item('direct', 'bea');
     component.conversations = [selected];

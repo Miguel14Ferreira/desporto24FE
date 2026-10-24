@@ -180,6 +180,16 @@ jobs:
         env:
           JYNLO_USE_SYSTEM_CHROME: '1'
         run: npx playwright test e2e/inbox-read-sync.spec.ts --config=playwright.config.ts --project=desktop-chromium --grep "reloading mid-send recovers|socket reconnection reconciles"
+      # Browser verifies status from authenticated committed events only:
+      # pending POST, uncertain HTTP, persisted ✓ and recipient-read ✓✓.
+      - name: Install Playwright for delivery-status visual checks
+        if: ${{ startsWith(github.head_ref, 'feat/chat-clear-delivery-status-') }}
+        run: npm install --no-save --package-lock=false @playwright/test@1.56.1
+      - name: Verify private read checks and pending composer status
+        if: ${{ startsWith(github.head_ref, 'feat/chat-clear-delivery-status-') }}
+        env:
+          JYNLO_USE_SYSTEM_CHROME: '1'
+        run: npx playwright test e2e/inbox-read-sync.spec.ts --config=playwright.config.ts --project=desktop-chromium --grep "blue checks follow|switching chats during a pending send|socket reconnection reconciles"
       # Candidate-only browser verification. No additional job, second npm ci,
       # Render deployment, production credentials or production API requests.
       - name: Install Chromium for integrated desktop smoke

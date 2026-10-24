@@ -223,3 +223,33 @@
 .inbox-read-check { white-space: nowrap; color: #b7cbd1; font-size: .79rem;
   font-weight: 850; letter-spacing: -.13em; padding-right: 4px; }
 .inbox-read-check.is-read { color: #75d9fa; }
+
+
+/* Chat delivery lifecycle: feedback belongs to the composer, while ✓/✓✓
+   on persisted bubbles is the server-authoritative sent/read indicator. */
+.inbox-delivery-status {
+  align-self: flex-end; display: inline-flex; align-items: center; gap: 8px;
+  margin: 9px 22px 0; padding: 6px 11px; border-radius: 999px;
+  border: 1px solid rgba(111, 218, 194, .26); background: rgba(21, 64, 59, .92);
+  color: #c2f4e6; font-size: .75rem; font-weight: 750;
+}
+.inbox-delivery-status--sending {
+  color: #d0e5ec; border-color: rgba(157, 190, 208, .32); background: #1e3b4b;
+}
+.inbox-delivery-status--pending {
+  color: #ffe3ad; border-color: rgba(242, 185, 92, .5); background: #44392e;
+}
+.inbox-delivery-status--confirmed {
+  color: #b7f4da; border-color: rgba(104, 231, 178, .38);
+}
+.inbox-delivery-icon { font-size: .94rem; font-weight: 900; line-height: 1; }
+.inbox-delivery-spinner {
+  display: inline-block; width: 13px; height: 13px; border-radius: 50%;
+  border: 2px solid rgba(192, 223, 229, .33); border-top-color: #b2eae4;
+  animation: inbox-delivery-spin .85s linear infinite;
+}
+@keyframes inbox-delivery-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .inbox-delivery-spinner { animation: none; border-style: dotted; }
+}
+@media (max-width: 800px) { .inbox-delivery-status { margin: 9px 14px 0; } }

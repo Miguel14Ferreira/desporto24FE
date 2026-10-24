@@ -199,11 +199,11 @@
                     <strong>{{ isMine(message) ? ('chat.you' | t) : message.sender }}</strong>
                   }
                   <time>{{ formatDate(message.createdAt) }}</time>
-                  @if (conversation.kind === 'direct' && isMine(message) && message.id > 0) {
-                    <span class="inbox-read-check" [class.is-read]="isDirectMessageRead(message)"
-                      [attr.aria-label]="(isDirectMessageRead(message) ? 'inbox.readConfirmed' : 'inbox.sentConfirmed') | t"
-                      [title]="(isDirectMessageRead(message) ? 'inbox.readConfirmed' : 'inbox.sentConfirmed') | t"
-                      role="img" aria-live="off">{{ isDirectMessageRead(message) ? '✓✓' : '✓' }}</span>
+                  @if (isMine(message) && message.id > 0) {
+                    <span class="inbox-read-check" [class.is-read]="conversation.kind === 'direct' && isDirectMessageRead(message)"
+                      [attr.aria-label]="((conversation.kind === 'direct' && isDirectMessageRead(message)) ? 'inbox.readConfirmed' : 'inbox.savedOnServer') | t"
+                      [title]="((conversation.kind === 'direct' && isDirectMessageRead(message)) ? 'inbox.readConfirmed' : 'inbox.savedOnServer') | t"
+                      role="img" aria-live="off">{{ conversation.kind === 'direct' && isDirectMessageRead(message) ? '✓✓' : '✓' }}</span>
                   }
                 </div>
                 @if (message.replyToMessageId && message.replyToText) {
@@ -229,10 +229,27 @@
               <span class="chat-new-messages-count">{{ newMessagesPending }}</span>
             </button>
           }
-          @if (composerError || composerSuccess) {
-            <section class="inbox-compose-alert" [class.inbox-compose-alert--error]="!!composerError"
-              [attr.role]="composerError ? 'alert' : 'status'">
-              {{ composerError || composerSuccess }}
+          @if (sending || deliveryUncertain || composerSuccess) {
+            <div class="inbox-delivery-status"
+              [class.inbox-delivery-status--sending]="sending"
+              [class.inbox-delivery-status--pending]="deliveryUncertain"
+              [class.inbox-delivery-status--confirmed]="!sending && !deliveryUncertain"
+              role="status" aria-live="polite">
+              @if (sending) {
+                <span class="inbox-delivery-spinner" aria-hidden="true"></span>
+                <span>{{ 'inbox.deliverySending' | t }}</span>
+              } @else if (deliveryUncertain) {
+                <span class="inbox-delivery-icon" aria-hidden="true">◷</span>
+                <span>{{ (deliveryChecking ? 'inbox.deliveryChecking' : 'inbox.deliveryPending') | t }}</span>
+              } @else {
+                <span class="inbox-delivery-icon" aria-hidden="true">✓</span>
+                <span>{{ 'inbox.savedOnServer' | t }}</span>
+              }
+            </div>
+          }
+          @if (composerError) {
+            <section class="inbox-compose-alert inbox-compose-alert--error" role="alert">
+              {{ composerError }}
               @if (deliveryUncertain) {
                 <div class="inbox-compose-alert-actions">
                   <button type="button" class="jynlo-action jynlo-action--neutral"
