@@ -2856,6 +2856,13 @@
                         }
 
                         @if (importPreview) {
+                          <div class="import-wizard-section-heading import-wizard-review-heading">
+                            <span class="import-wizard-section-number" aria-hidden="true">03</span>
+                            <div>
+                              <h4>{{ 'communities.import.wizard.reviewTitle' | t }}</h4>
+                              <p>{{ 'communities.import.wizard.reviewHint' | t }}</p>
+                            </div>
+                          </div>
                           <div class="import-preview">
                             <label class="import-sheet-select">
                               <span>{{ 'communities.import.sheet' | t }}</span>
