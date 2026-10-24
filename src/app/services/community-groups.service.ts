@@ -440,7 +440,7 @@ export class CommunityGroupsService {
       name: string;
       playedAt: string;
       sport?: string | null;
-      eventType?: 'RACE' | 'FREESTYLE' | 'TRACK' | 'JUMP' | 'THROW' | 'HEAT' | 'BODYBOARD_HEAT' | 'APPARATUS'
+      eventType?: 'ROAD_RACE' | 'TIME_TRIAL' | 'RACE' | 'FREESTYLE' | 'TRACK' | 'JUMP' | 'THROW' | 'HEAT' | 'BODYBOARD_HEAT' | 'APPARATUS'
         | 'SKATE_PARK' | 'SKATE_STREET' | 'PARKOUR_SPEED' | 'PARKOUR_FREESTYLE'
         | 'BREAKING_BATTLE' | 'TRAMPOLINE_INDIVIDUAL'
         | 'RHYTHMIC_APPARATUS' | 'ARTISTIC_SOLO_TECHNICAL' | 'ARTISTIC_SOLO_FREE'

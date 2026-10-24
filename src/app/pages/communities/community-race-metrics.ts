@@ -24,6 +24,15 @@ export function formatRaceSeconds(value: number | null | undefined): string | nu
 }
 
 /** Same constraints as CommunityRaceMetrics.validate in the backend. */
+/** Time-trial positions are organizer-recorded, not inferred from raw times.
+ * Prevent half-entered results and circuit-only fields before API submission. */
+export function roadTimeTrialEntryInvalid(
+  entries: Pick<CommunityRoundEntryDraft, 'finishPosition' | 'elapsedSeconds' | 'bestLapSeconds' | 'lapsCompleted'>[]
+): boolean {
+  return entries.some(entry => (entry.finishPosition == null) !== (entry.elapsedSeconds == null)
+    || entry.bestLapSeconds != null || entry.lapsCompleted != null);
+}
+
 export function raceEntryValidationError(
   entries: Pick<CommunityRoundEntryDraft, 'finishPosition' | 'elapsedSeconds' | 'bestLapSeconds' | 'lapsCompleted'>[]
 ): 'raceInvalidMetrics' | null {

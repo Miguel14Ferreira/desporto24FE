@@ -4,6 +4,14 @@ import { eventOptionsForSport, eventView, isRaceEvent, isNeutralEvent,
 describe('multi-format sports should not reuse unrelated scoring rules', () => {
   it('requires choosing from the allowed variants of selected sports', () => {
     expect(eventOptionsForSport('BMX').map(o => o.code)).toEqual(['RACE', 'FREESTYLE']);
+    expect(eventOptionsForSport('Ciclismo de Estrada').map(o => o.code))
+      .toEqual(['ROAD_RACE', 'TIME_TRIAL']);
+    expect(isRaceEvent('Ciclismo de Estrada', 'ROAD_RACE')).toBeTrue();
+    expect(isRaceEvent('Ciclismo de Estrada', 'TIME_TRIAL')).toBeTrue();
+    expect(isRaceEvent('Ciclismo de Estrada', null)).toBeTrue();
+    expect(isRaceEvent('Ciclismo de Estrada', 'TRACK')).toBeFalse();
+    expect(eventView('Ciclismo de Estrada', null)).toBe('race');
+    expect(eventPresentationFormat('Ciclismo de Estrada', 'TIME_TRIAL')).toBe('race');
     expect(eventOptionsForSport('Atletismo').map(o => o.code)).toEqual(['TRACK', 'JUMP', 'THROW']);
     expect(eventOptionsForSport('Snowboard').map(o => o.code)).toEqual(['RACE', 'FREESTYLE']);
     expect(eventOptionsForSport('Futebol')).toEqual([]);
