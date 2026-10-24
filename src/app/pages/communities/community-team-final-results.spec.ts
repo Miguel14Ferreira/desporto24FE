@@ -295,6 +295,35 @@ describe('handball rugby and sevens final team scores', () => {
       expect(teamFinalSideLabelKey(type,'B')).toBe('communities.teamFinal.sideB');
     }
   });
+  it('enforces individual Fencing pool 5 and elimination 15 touch limits',()=>{
+    for(const [type,max,key] of [
+      ['FENCING_POOL_5',5,'fencingPool'],
+      ['FENCING_DE_15',15,'fencingElimination']
+    ] as const){
+      expect(type.length).toBeLessThanOrEqual(20);
+      expect(eventOptionsForSport('Esgrima').map(x=>x.code)).toContain(type);
+      expect(eventPresentationFormat('Esgrima',type)).toBe('team');
+      expect(isNeutralEvent('Esgrima',type)).toBeTrue();
+      expect(isTeamFinalEvent(type)).toBeTrue();
+      expect(teamFinalUsesGoals(type)).toBeFalse();
+      expect(teamFinalScoreLabelKey(type)).toBe('communities.teamFinal.touches');
+      expect(teamFinalTitleKey(type)).toBe('communities.teamFinal.'+key);
+      expect(teamFinalHintKey(type)).toBe('communities.teamFinal.'+key+'Hint');
+      expect(teamFinalMaxScore(type)).toBe(max);
+      expect(teamFinalSideLabelKey(type,'A')).toBe('communities.teamFinal.playerA');
+      expect(teamFinalSideLabelKey(type,'B')).toBe('communities.teamFinal.playerB');
+      for(const points of [score(max,0),score(max,max-1),score(3,2),score(0,1)])
+        expect(teamFinalError(type,sides,points)).toBeNull();
+      for(const points of [score(max+1,0),score(0,max+1)])
+        expect(teamFinalError(type,sides,points)).toBe('fencingInvalidScore');
+      for(const points of [score(0,0),score(4,4)])
+        expect(teamFinalError(type,sides,points)).toBe('fencingPriorityUnsupported');
+      expect(teamFinalError(type,[{team:'A'},{team:'A'},{team:'B'}],score(max,2)))
+        .toBe('teamFinalSinglesRequired');
+    }
+    expect(eventOptionsForSport('Teqball').map(x=>x.code)).toEqual(['TEQBALL_SINGLES','TEQBALL_DOUBLES']);
+    expect(eventOptionsForSport('Futebol')).toEqual([]);
+  });
   it('rejects invalid scores and incomplete team assignments',()=>{
     expect(teamFinalError('RUGBY_FINAL',sides,score(1000,0))).toBe('teamFinalInvalidScore');
     expect(teamFinalError('RUGBY_FINAL',sides,score(-1,0))).toBe('teamFinalInvalidScore');

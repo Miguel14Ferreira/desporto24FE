@@ -1,5 +1,7 @@
 import {
-  isVolleyballEvent, isFootvolleyEvent, volleyballMatchError, volleyballMinSets,
+  isVolleyballEvent, isFootvolleyEvent, isTeqballEvent,
+  volleyballSideLabelKey, volleyballMemberSelectorKey,
+  volleyballMatchError, volleyballMinSets,
   volleyballMaxSets, volleyballFormatHint, volleyballSetWinner, volleyballSetTotals,
   recordedVolleyballMatch
 } from './community-volleyball-results';
@@ -86,6 +88,40 @@ describe('volleyball and beach volleyball FIVB-style complete match results', ()
       .toBe('volleyballInvalidSets');
     expect(three([score(21,19),score(19,21),score(15,14)]))
       .toBe('volleyballInvalidScore');
+  });
+  it('validates Teqball 2026 singles and doubles and a two-point deciding set',()=>{
+    const singles=[{team:'A'},{team:'B'}];
+    const doubles=[{team:'A'},{team:'A'},{team:'B'},{team:'B'}];
+    for(const [type,players] of [
+      ['TEQBALL_SINGLES',singles],['TEQBALL_DOUBLES',doubles]
+    ] as const) {
+      expect(type.length).toBeLessThanOrEqual(20);
+      expect(eventOptionsForSport('Teqball').map(x=>x.code)).toContain(type);
+      expect(isTeqballEvent(type)).toBeTrue();
+      expect(isVolleyballEvent(type)).toBeTrue();
+      expect(isFootvolleyEvent(type)).toBeFalse();
+      expect(isNeutralEvent('Teqball',type)).toBeTrue();
+      expect(eventPresentationFormat('Teqball',type)).toBe('team');
+      expect(volleyballMinSets(type)).toBe(2);
+      expect(volleyballMaxSets(type)).toBe(3);
+      expect(volleyballFormatHint(type)).toContain('teqball');
+      expect(volleyballMatchError(type,players,[score(12,11),score(12,0)])).toBeNull();
+      expect(volleyballMatchError(type,players,[score(12,11),score(11,12),score(14,12)])).toBeNull();
+      expect(volleyballMatchError(type,players,[score(11,12),score(12,11),score(12,10)])).toBeNull();
+      for(const invalid of [
+        [score(12,11)], [score(11,10),score(12,8)],
+        [score(13,11),score(12,8)], [score(12,8),score(12,7),score(12,2)],
+        [score(12,8),score(8,12),score(12,11)],
+        [score(12,8),score(8,12),score(14,11)]
+      ])expect(volleyballMatchError(type,players,invalid)).not.toBeNull();
+      expect(volleyballMatchError(type,type==='TEQBALL_SINGLES'?doubles:singles,
+        [score(12,8),score(12,5)])).toBe('volleyballInvalidTeams');
+      expect(recordedVolleyballMatch({eventType:type,setScores:[score(12,5),score(12,8)]})).toBeTrue();
+    }
+    expect(volleyballSideLabelKey('TEQBALL_SINGLES','A')).toBe('communities.teamFinal.playerA');
+    expect(volleyballSideLabelKey('TEQBALL_DOUBLES','B')).toBe('communities.volleyball.sideB');
+    expect(volleyballMemberSelectorKey('TEQBALL_SINGLES')).toBe('communities.teqball.player');
+    expect(volleyballSideLabelKey('BEACH_VOLLEY_FINAL','A')).toBe('communities.volleyball.sideA');
   });
   it('rejects incomplete/impossible points and incorrect team memberships', () => {
     for(const broken of [score(24,24),score(25,24),score(26,23),

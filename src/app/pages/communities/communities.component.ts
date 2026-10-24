@@ -13,6 +13,7 @@ import { athleticsDisciplineOptions, athleticsDisciplineValid } from './communit
 import { breakingBattleError } from './community-breaking-battle';
 import { isVolleyballEvent, isFootvolleyEvent, volleyballMaxSets, volleyballMinSets,
   volleyballMatchError, volleyballSetWinner, volleyballSetTotals,
+  volleyballSideLabelKey, volleyballMemberSelectorKey,
   volleyballFormatHint, volleyballResultTitle, recordedVolleyballMatch } from './community-volleyball-results';
 import { isTeamFinalEvent, teamFinalError, recordedTeamFinal, teamFinalWinner,
   teamFinalUsesGoals, teamFinalTitleKey, teamFinalHintKey,
@@ -843,6 +844,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   volleyballSetWinner = volleyballSetWinner;
   volleyballSetTotals = volleyballSetTotals;
   recordedVolleyballMatch = recordedVolleyballMatch;
+  volleyballSideLabelKey = volleyballSideLabelKey;
+  volleyballMemberSelectorKey = volleyballMemberSelectorKey;
 
   resetVolleyballSets(): void {
     this.volleyballSetScores = Array.from({length: volleyballMinSets(this.newRoundEventType)},
