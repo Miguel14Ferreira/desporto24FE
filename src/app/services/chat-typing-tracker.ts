@@ -41,6 +41,7 @@ export class ChatTypingTracker {
       if (!connected) {
         this.resetVisible();
         this.localKey = '';
+        this.nextAllowed = 0;
         this.clearIdle();
       }
     }));
