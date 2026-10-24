@@ -228,24 +228,6 @@
               <span class="chat-new-messages-count">{{ newMessagesPending }}</span>
             </button>
           }
-          @if (sending || deliveryUncertain || composerSuccess) {
-            <div class="inbox-delivery-status"
-              [class.inbox-delivery-status--sending]="sending"
-              [class.inbox-delivery-status--pending]="deliveryUncertain"
-              [class.inbox-delivery-status--confirmed]="!sending && !deliveryUncertain"
-              role="status" aria-live="polite">
-              @if (sending) {
-                <span class="inbox-delivery-spinner" aria-hidden="true"></span>
-                <span>{{ 'inbox.deliverySending' | t }}</span>
-              } @else if (deliveryUncertain) {
-                <span class="inbox-delivery-icon" aria-hidden="true">◷</span>
-                <span>{{ (deliveryChecking ? 'inbox.deliveryChecking' : 'inbox.deliveryPending') | t }}</span>
-              } @else {
-                <span class="inbox-delivery-icon" aria-hidden="true">✓</span>
-                <span>{{ 'inbox.savedOnServer' | t }}</span>
-              }
-            </div>
-          }
           @if (composerError) {
             <section class="inbox-compose-alert inbox-compose-alert--error" role="alert">
               {{ composerError }}
