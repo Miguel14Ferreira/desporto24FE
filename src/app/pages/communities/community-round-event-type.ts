@@ -1,4 +1,5 @@
 import { CommunityRound } from '../model/community-group';
+import { isInlineSpeedHeatEvent } from './community-inline-speed-heats';
 import { CommunityRoundView, formatForSport, viewForSport } from './community-round-sport';
 
 /**
@@ -29,7 +30,8 @@ export type CommunityEventType = 'TRACK_SCRATCH' | 'TRACK_TIME_TRIAL' | 'TRACK_F
     | 'WAKO_FULL_CONTACT' | 'WAKO_LOW_KICK' | 'WAKO_K1'
     | 'IFMA_FULL_WP' | 'IFMA_FULL_KO' | 'IFMA_FULL_RSCS' | 'IFMA_FULL_RSCI'
     | 'STRENGTH_TRAINING' | 'SWIM_LCM' | 'OWS_INDIVIDUAL' | 'FOOT_ORIENTEERING' | 'INLINE_TRACK_200_TT'
-    | 'INLINE_TRACK_500D_FIRST_ROUND' | 'INLINE_ROAD_LAP_FIRST_ROUND';
+    | 'INLINE_TRACK_500D_FIRST_ROUND' | 'INLINE_ROAD_LAP_FIRST_ROUND'
+    | 'INLINE_TRACK_500D_QUARTER_HEAT' | 'INLINE_TRACK_500D_SEMI_HEAT' | 'INLINE_TRACK_500D_FINAL_A' | 'INLINE_TRACK_500D_FINAL_B' | 'INLINE_ROAD_LAP_QUARTER_HEAT' | 'INLINE_ROAD_LAP_SEMI_HEAT' | 'INLINE_ROAD_LAP_FINAL_A' | 'INLINE_ROAD_LAP_FINAL_B';
 export interface CommunityEventOption { code: CommunityEventType; labelKey: string }
 const TYPES: Record<string, readonly CommunityEventOption[]> = {
   basquetebol: [{ code: 'BASKETBALL_FINAL', labelKey: 'communities.basketball.fiveVsFive' }],
@@ -73,7 +75,15 @@ const TYPES: Record<string, readonly CommunityEventOption[]> = {
   'patinagem de velocidade': [
     { code: 'INLINE_TRACK_200_TT', labelKey: 'communities.speedSkating.track200tt' },
     { code: 'INLINE_TRACK_500D_FIRST_ROUND', labelKey: 'communities.speedSkating.track500first' },
-    { code: 'INLINE_ROAD_LAP_FIRST_ROUND', labelKey: 'communities.speedSkating.roadLapFirst' }
+    { code: 'INLINE_ROAD_LAP_FIRST_ROUND', labelKey: 'communities.speedSkating.roadLapFirst' },
+    { code: 'INLINE_TRACK_500D_QUARTER_HEAT', labelKey: 'communities.speedSkating.track500Quarter' },
+    { code: 'INLINE_TRACK_500D_SEMI_HEAT', labelKey: 'communities.speedSkating.track500Semi' },
+    { code: 'INLINE_TRACK_500D_FINAL_A', labelKey: 'communities.speedSkating.track500FinalA' },
+    { code: 'INLINE_TRACK_500D_FINAL_B', labelKey: 'communities.speedSkating.track500FinalB' },
+    { code: 'INLINE_ROAD_LAP_QUARTER_HEAT', labelKey: 'communities.speedSkating.roadLapQuarter' },
+    { code: 'INLINE_ROAD_LAP_SEMI_HEAT', labelKey: 'communities.speedSkating.roadLapSemi' },
+    { code: 'INLINE_ROAD_LAP_FINAL_A', labelKey: 'communities.speedSkating.roadLapFinalA' },
+    { code: 'INLINE_ROAD_LAP_FINAL_B', labelKey: 'communities.speedSkating.roadLapFinalB' }
   ],
   'muay thai': [
     { code: 'IFMA_FULL_WP', labelKey: 'communities.muayThai.fullWp' },
@@ -211,7 +221,7 @@ export function isRaceEvent(sport: string | null | undefined, eventType: string 
   if (name === 'natacao') return eventType == null || eventType === 'SWIM_LCM';
   if (name === 'natacao em aguas abertas') return eventType == null || eventType === 'OWS_INDIVIDUAL';
   if (name === 'orientacao') return eventType == null || eventType === 'FOOT_ORIENTEERING';
-  if (name === 'patinagem de velocidade') return eventType == null || isInlineSpeedTimedEvent(eventType);
+  if (name === 'patinagem de velocidade') return eventType == null || isInlineSpeedTimedEvent(eventType) || isInlineSpeedHeatEvent(eventType);
   if (name === 'snowboard') return eventType === 'RACE';
   if (name === 'parkour') return eventType === 'PARKOUR_SPEED';
   if (name === 'bmx') return eventType == null || eventType === 'RACE'; // existing history
