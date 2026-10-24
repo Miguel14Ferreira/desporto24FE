@@ -76,6 +76,60 @@ describe('Unified Jynlo message center', () => {
     (component as any).sessionKickoffs.set(41, Date.now() + 3600_000);
   });
 
+  it('inserts an emoji at the current caret and restores the editor focus', () => {
+    const conversation = item('direct', 'bea');
+    component.conversations = [conversation];
+    component.selectedKey = conversation.key;
+    component.composerAllowed = true;
+    component.draft = 'Olá mundo';
+    const focus = jasmine.createSpy('focus');
+    const setSelectionRange = jasmine.createSpy('setSelectionRange');
+    component.composerTextarea = { nativeElement: {
+      selectionStart: 4, selectionEnd: 9, focus, setSelectionRange
+    }} as any;
+
+    component.toggleEmojiPicker();
+    expect(component.emojiPickerOpen).toBeTrue();
+    component.insertEmoji('⚽');
+    expect(component.draft).toBe('Olá ⚽');
+    expect(component.emojiPickerOpen).toBeFalse();
+    expect(focus).toHaveBeenCalled();
+    expect(setSelectionRange).toHaveBeenCalledWith(6, 6);
+    expect(direct.send).not.toHaveBeenCalled();
+  });
+
+  it('does not exceed the chat 2000-character limit with surrogate-pair emojis', () => {
+    const conversation = item('community', 7);
+    component.conversations = [conversation];
+    component.selectedKey = conversation.key;
+    component.composerAllowed = true;
+    component.draft = 'a'.repeat(1999);
+    component.composerTextarea = { nativeElement: {
+      selectionStart: 1999, selectionEnd: 1999,
+      focus: jasmine.createSpy('focus'), setSelectionRange: jasmine.createSpy('setSelectionRange')
+    }} as any;
+
+    component.toggleEmojiPicker();
+    component.insertEmoji('⚽');
+    expect(component.draft).toBe('a'.repeat(1999));
+    expect(component.emojiPickerOpen).toBeTrue();
+    expect(direct.send).not.toHaveBeenCalled();
+  });
+
+  it('keeps each unsent draft separate and closes the emoji panel on chat navigation', () => {
+    const directChat = item('direct', 'bea');
+    const community = item('community', 7);
+    component.conversations = [directChat, community];
+    component.selectedKey = directChat.key;
+    component.composerAllowed = true;
+    component.draft = 'Olá';
+    component.toggleEmojiPicker();
+    component.selectConversation(community);
+    expect(component.emojiPickerOpen).toBeFalse();
+    component.selectConversation(directChat);
+    expect(component.draft).toBe('Olá');
+  });
+
   it('searches full chat history through an authorized scoped request without marking read', () => {
     const selected = item('direct', 'bea');
     component.conversations = [selected];
