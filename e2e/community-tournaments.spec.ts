@@ -2605,7 +2605,7 @@ test('Competition profiles E2E: swimming race warning stays unavailable in EN an
   await expect(profile.locator('strong')).toHaveText('Race standings');
   await expect(profile.locator('p').first()).toContainText('cannot produce valid race standings');
   await expect(profile.locator('small').first()).toHaveText('Finish position · Time · Penalties / DNF');
-  await expect(wizard.getByRole('button', { name: 'Confirm individual league' })).toBeDisabled();
+  await expect(wizard.getByRole('button', { name: 'Format not available yet' })).toBeDisabled();
 
   await page.evaluate(() => localStorage.setItem('d24-language', 'pt'));
   await page.reload();
@@ -2616,7 +2616,7 @@ test('Competition profiles E2E: swimming race warning stays unavailable in EN an
   const ptProfile = portuguese.locator('.classification-profile');
   await expect(ptProfile.locator('strong')).toHaveText('Classificação por corridas');
   await expect(ptProfile.locator('p').first()).toContainText('não pode produzir uma classificação de corrida válida');
-  await expect(portuguese.getByRole('button', { name: 'Confirmar liga individual' })).toBeDisabled();
+  await expect(portuguese.getByRole('button', { name: 'Formato ainda indisponível' })).toBeDisabled();
   expect(fixture.organizerMutations).toEqual([]);
   expect(fixture.unmocked.filter(url => url.includes('/tournaments'))).toEqual([]);
 });
