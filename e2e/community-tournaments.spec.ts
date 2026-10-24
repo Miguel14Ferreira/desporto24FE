@@ -1914,7 +1914,7 @@ test('Karting E2E: criador configura pontos, associa corrida e participante cons
 
     await a.getByRole('button', { name: 'Criar liga individual' }).click();
     await a.getByLabel('Nome do torneio').fill('Taça Karting QA');
-    await a.getByRole('button', { name: 'Criar campeonato de Karting' }).click();
+    await a.getByRole('button', { name: 'Criar campeonato por corridas' }).click();
     const race = a.getByRole('region', { name: 'Campeonato de Karting' });
     await expect(race).toBeVisible();
     await race.locator('#karting-race-points').fill('30, 20, 10');
@@ -1960,7 +1960,7 @@ test('Karting E2E: pontuação crescente falha e deixa de ser editável após as
   await page.goto('/menu/communities/7?tab=tournaments');
   await page.getByRole('button', { name: 'Criar liga individual' }).click();
   await page.getByLabel('Nome do torneio').fill('Karting QA');
-  await page.getByRole('button', { name: 'Criar campeonato de Karting' }).click();
+  await page.getByRole('button', { name: 'Criar campeonato por corridas' }).click();
   const race = page.getByRole('region', { name: 'Campeonato de Karting' });
   await race.locator('#karting-race-points').fill('18,25,10');
   await race.getByRole('button', { name: 'Guardar pontuação' }).click();
@@ -1995,7 +1995,7 @@ test('Karting E2E: encerra com campeão e mantém arquivo imutável em dois brow
     ]);
     await a.getByRole('button', { name: 'Criar liga individual' }).click();
     await a.getByLabel('Nome do torneio').fill('Campeonato arquivado QA');
-    await a.getByRole('button', { name: 'Criar campeonato de Karting' }).click();
+    await a.getByRole('button', { name: 'Criar campeonato por corridas' }).click();
     const section = a.getByRole('region', { name: 'Campeonato de Karting' });
     const close = section.getByRole('button', { name: 'Encerrar campeonato de Karting' });
     await expect(close).toBeDisabled();
@@ -2062,7 +2062,7 @@ test('Karting E2E: empate no primeiro lugar não inventa campeão', async ({ pag
   await page.goto('/menu/communities/7?tab=tournaments');
   await page.getByRole('button', { name: 'Criar liga individual' }).click();
   await page.getByLabel('Nome do torneio').fill('Karting empatado QA');
-  await page.getByRole('button', { name: 'Criar campeonato de Karting' }).click();
+  await page.getByRole('button', { name: 'Criar campeonato por corridas' }).click();
   const race = page.getByRole('region', { name: 'Campeonato de Karting' });
   await race.getByRole('button', { name: 'Associar' }).click();
   const table = page.getByRole('table', { name: 'Classificação de Karting' });
@@ -2089,7 +2089,7 @@ test('Karting E2E: PT/EN acompanha idioma da Jynlo em pontuação e arquivo', as
   await page.goto('/menu/communities/7?tab=tournaments');
   await page.getByRole('button', { name: 'Criar liga individual' }).click();
   await page.getByLabel('Nome do torneio').fill('Karting languages QA');
-  await page.getByRole('button', { name: 'Criar campeonato de Karting' }).click();
+  await page.getByRole('button', { name: 'Criar campeonato por corridas' }).click();
 
   await page.evaluate(() => localStorage.setItem('d24-language', 'en'));
   await page.reload();
