@@ -169,23 +169,25 @@ export class CommunityTournamentsComponent implements OnChanges {
     }
   }
 
-  readonly teamTieBreakChoices: ReadonlyArray<{
+  get teamTieBreakChoices(): ReadonlyArray<{
     value: TeamTieBreakPriority;
     title: string;
     explanation: string;
-  }> = [
-    { value: 'GOAL_DIFFERENCE_FIRST', title: 'Diferença do marcador',
-      explanation: 'Primeiro a diferença entre o que cada equipa marcou e sofreu.' },
-    { value: 'GOALS_SCORED_FIRST', title: 'Marcador a favor',
-      explanation: 'Primeiro quem marcou mais ao longo do campeonato.' },
-    { value: 'WINS_FIRST', title: 'Mais vitórias',
-      explanation: 'Primeiro quem ganhou mais confrontos.' }
-  ];
+  }> {
+    return [
+      { value: 'GOAL_DIFFERENCE_FIRST', title: t('communities.tournaments.teamUi.tieDifference'),
+        explanation: t('communities.tournaments.teamUi.tieDifferenceHelp') },
+      { value: 'GOALS_SCORED_FIRST', title: t('communities.tournaments.teamUi.tieGoals'),
+        explanation: t('communities.tournaments.teamUi.tieGoalsHelp') },
+      { value: 'WINS_FIRST', title: t('communities.tournaments.teamUi.tieWins'),
+        explanation: t('communities.tournaments.teamUi.tieWinsHelp') }
+    ];
+  }
 
   teamTieBreakLabel(priority: TeamTieBreakPriority | null | undefined): string {
     return this.teamTieBreakChoices.find(choice =>
       choice.value === (priority ?? 'GOAL_DIFFERENCE_FIRST'))?.title
-      ?? 'Diferença do marcador';
+      ?? t('communities.tournaments.teamUi.tieDifference');
   }
 
   get classificationProfile() {
@@ -490,9 +492,9 @@ export class CommunityTournamentsComponent implements OnChanges {
     if (!this.canManageTeamRoster || this.isTeamRosterFull(team)) return;
     try {
       await navigator.clipboard.writeText(this.teamInviteUrl(team));
-      this.inviteCopyFeedback[team.id] = 'Link copiado! Partilha-o com os jogadores.';
+      this.inviteCopyFeedback[team.id] = t('communities.tournaments.teamUi.copySuccess');
     } catch {
-      this.inviteCopyFeedback[team.id] = 'Não foi possível copiar. Abre o link para partilhar manualmente.';
+      this.inviteCopyFeedback[team.id] = t('communities.tournaments.teamUi.copyError');
     }
     this.changeDetector.markForCheck();
   }
@@ -504,7 +506,7 @@ export class CommunityTournamentsComponent implements OnChanges {
         || this.isTeamRosterFull(team)) return;
     await this.mutate(
       this.api.acceptTeamInvite(this.community.id, this.selected.id, team.id),
-      'Convite aceite! Já fazes parte da equipa ' + team.name + '.',
+      t('communities.tournaments.teamUi.acceptSuccess', {team: team.name}),
       () => this.loadTeams()
     );
   }
