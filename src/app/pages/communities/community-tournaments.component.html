@@ -439,7 +439,7 @@
             <span class="t-tournament-sport">{{ selected.sport || ('communities.tournaments.overview.sportUndefined' | t) }}</span>
             @if (isTeamCompetition) {
               @if (selected.format === 'GROUP_KNOCKOUT') {
-                <p>{{ 'communities.tournaments.detailUi.groupsKnockout' | t }} · {{ 'communities.tournaments.detailUi.groupsCount' | t:{count:selected.groupCount} }} ·
+                <p>{{ 'communities.tournaments.detailUi.groupsKnockout' | t }} · {{ 'communities.tournaments.detailUi.groupsCount' | t:{count:selected.groupCount ?? 0} }} ·
                   @if (selected.playersPerTeam != null) {
                     {{ 'communities.tournaments.detailUi.teamSize' | t:{count:selected.playersPerTeam} }}
                   } @else {
