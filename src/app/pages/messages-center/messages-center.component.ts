@@ -874,6 +874,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   onTypingInput(): void {
     const conversation = this.selected;
     if (!conversation) return;
+    // "Saved" describes the previous send, not a freshly edited draft.
+    if (this.composerSuccess) this.composerSuccess = '';
     this.typing.input(conversation.kind, conversation.id, this.draft, this.canSendMessage());
   }
 
@@ -958,6 +960,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
         this.replyingTo = null;
         this.deliveryUncertain = false;
         this.composerError = '';
+        this.composerSuccess = t('chat.sendConfirmed');
       },
       error: error => {
         if (this.isUncertainError(error)) {
