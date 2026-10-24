@@ -69,10 +69,27 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   private readonly onWindowBlur = (): void => {
     if (this.voiceRecording || this.voiceFinalizing) this.cancelVoiceRecording();
   };
+  private readonly onAuthStorageChange = (event: StorageEvent): void => {
+    // localStorage changes in *other* tabs on the same origin.
+    if ((event.key === 't' || event.key === null) && !this.isAttachmentIdentityCurrent()) {
+      this.clearMediaOnAccountChange();
+    }
+  };
+  private clearMediaOnAccountChange(): void {
+    ++this.attachmentViewVersion;
+    this.attachmentReady = false;
+    this.selectedAttachment = null;
+    this.cancelVoiceRecording();
+    this.clearAttachmentPreviews();
+  }
   private readonly onPageActive = (): void => {
     // Never keep capturing microphone audio while another tab is foregrounded.
     if (!this.isPageActive()) {
       if (this.voiceRecording || this.voiceFinalizing) this.cancelVoiceRecording();
+      return;
+    }
+    if (!this.isAttachmentIdentityCurrent()) {
+      this.clearMediaOnAccountChange();
       return;
     }
     if (this.selectedKey) this.markRenderedRead(this.selectedKey);
@@ -86,6 +103,11 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   draft = '';
   /** The upload composer stays hidden until the authenticated backend confirms private storage readiness. */
   attachmentReady = false;
+  // Invalidate in-flight private media responses on chat navigation or teardown.
+  private attachmentViewVersion = 0;
+  get attachmentControlsReady(): boolean {
+    return this.attachmentReady && this.isAttachmentIdentityCurrent();
+  }
   selectedAttachment: File | null = null;
   voiceRecording = false;
   voiceFinalizing = false;
@@ -256,6 +278,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.loadInbox();
     window.addEventListener('focus', this.onPageActive);
     window.addEventListener('blur', this.onWindowBlur);
+    window.addEventListener('storage', this.onAuthStorageChange);
     document.addEventListener('visibilitychange', this.onPageActive);
     this.summaryTimer = setInterval(() => {
       if (this.loading || !this.isReceiptSessionCurrent()) return;
@@ -275,10 +298,12 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.subscriptions.unsubscribe();
     window.removeEventListener('focus', this.onPageActive);
     window.removeEventListener('blur', this.onWindowBlur);
+    window.removeEventListener('storage', this.onAuthStorageChange);
     document.removeEventListener('visibilitychange', this.onPageActive);
     if (this.summaryTimer) clearInterval(this.summaryTimer);
     if (this.receiptTimer) clearInterval(this.receiptTimer);
     this.cancelVoiceRecording();
+    ++this.attachmentViewVersion;
     this.clearAttachmentPreviews();
     // The navbar owns the shared socket lifecycle. Never disconnect it here.
   }
@@ -543,6 +568,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.emojiPickerOpen = false;
     this.selectedAttachment = null;
     this.attachmentReady = false;
+    ++this.attachmentViewVersion;
     this.clearAttachmentPreviews();
     this.selectedKey = conversation.key;
     ++this.peerReceiptVersion;
@@ -924,7 +950,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       && !this.previewLoading && !this.previewError && !this.sending && !this.deliveryUncertain
       && !this.deliveryChecking && !this.voiceRecording && !this.voiceFinalizing
       && (this.draft.trim().length > 0
-        || (this.selected?.kind === 'direct' && this.attachmentReady && !!this.selectedAttachment))
+        || (this.selected?.kind === 'direct' && this.attachmentControlsReady && !!this.selectedAttachment))
       && this.draft.trim().length <= 2000);
   }
 
@@ -952,12 +978,14 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.attachmentReady = false;
     // Progressive enhancement: older injected chat clients and test doubles
     // have no attachment capability; keep the composer securely text-only.
-    if (conversation.kind !== 'direct'
+    if (conversation.kind !== 'direct' || !this.isAttachmentIdentityCurrent()
         || typeof this.direct.attachmentsAvailable !== 'function') return;
+    const viewVersion = this.attachmentViewVersion;
     this.direct.attachmentsAvailable(String(conversation.id))
       .pipe(timeout(10000), catchError(() => of({available: false})))
       .subscribe(result => {
-        if (this.selectedKey === conversation.key) this.attachmentReady = result.available;
+        if (viewVersion === this.attachmentViewVersion && this.selectedKey === conversation.key
+            && this.isAttachmentIdentityCurrent()) this.attachmentReady = result.available;
       });
   }
 
@@ -965,7 +993,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0] ?? null;
     input.value = '';
-    if (!file || !this.attachmentReady || this.selected?.kind !== 'direct'
+    if (!file || !this.attachmentControlsReady || this.selected?.kind !== 'direct'
         || !this.canEditDraft()) return;
     const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif',
       'application/pdf'].includes(file.type);
@@ -1007,7 +1035,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   }
 
   async startVoiceRecording(): Promise<void> {
-    if (!this.attachmentReady || this.selected?.kind !== 'direct'
+    if (!this.attachmentControlsReady || this.selected?.kind !== 'direct'
         || !this.canEditDraft() || this.selectedAttachment || this.voiceRecording) return;
     const format = this.voiceFormat();
     if (!format) {
@@ -1024,7 +1052,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       return;
     }
     if (generation !== this.voiceGeneration || this.selectedKey !== key
-        || !this.isPageActive() || !this.attachmentReady) {
+        || !this.isPageActive() || !this.attachmentControlsReady) {
       stream.getTracks().forEach(track => track.stop());
       return;
     }
@@ -1109,6 +1137,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   openAttachment(message: InboxMessage): void {
     const conversation = this.selected;
     if (!conversation || conversation.kind !== 'direct' || message.key !== conversation.key
+        || !this.isAttachmentIdentityCurrent()
         || !message.attachmentName || !message.attachmentMimeType || message.id <= 0
         || this.attachmentLoading.has(message.id)) return;
     const existing = this.attachmentPreviews.get(message.id);
@@ -1117,13 +1146,18 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       this.attachmentPreviews.delete(message.id);
       return;
     }
+    const viewVersion = this.attachmentViewVersion;
     this.attachmentLoading.add(message.id);
     this.direct.downloadAttachment(String(conversation.id), message.id)
-      .pipe(timeout(30000), finalize(() => this.attachmentLoading.delete(message.id)))
+      .pipe(timeout(30000), finalize(() => {
+        if (viewVersion === this.attachmentViewVersion) this.attachmentLoading.delete(message.id);
+      }))
       .subscribe({
         next: blob => {
-          // A delayed response must never show another conversation's attachment.
-          if (this.selectedKey !== conversation.key) return;
+          // Never expose a previous login's file, or a download from a chat
+          // that was left and reopened while the GET was pending.
+          if (viewVersion !== this.attachmentViewVersion || this.selectedKey !== conversation.key
+              || !this.isAttachmentIdentityCurrent()) return;
           const url = URL.createObjectURL(blob);
           if (message.attachmentMimeType?.startsWith('image/')
               || message.attachmentMimeType?.startsWith('audio/')) {
@@ -1138,7 +1172,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
           }
         },
         error: () => {
-          if (this.selectedKey === conversation.key)
+          if (viewVersion === this.attachmentViewVersion && this.selectedKey === conversation.key
+              && this.isAttachmentIdentityCurrent())
             this.composerError = t('chat.attachmentDownloadFailed');
         }
       });
@@ -1198,6 +1233,9 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     const conversation = this.selected;
     if (!conversation || !this.canSendMessage()) return;
     const key = conversation.key;
+    // A file chosen under a prior login must never be submitted by this tab.
+    if (conversation.kind === 'direct' && this.selectedAttachment
+        && !this.attachmentControlsReady) return;
     const file = conversation.kind === 'direct' ? this.selectedAttachment : null;
     const caption = this.draft.trim();
     // Server sends the same synthesized text for an attachment without a caption.
@@ -1536,6 +1574,13 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
    * For private chats only, a read check is shown solely after the recipient's
    * authorized persisted cursor includes the message's positive server ID.
    */
+  private isAttachmentIdentityCurrent(): boolean {
+    // The mounted app decodes currentUsername at initialization. A removed or
+    // replaced token cannot unlock media in the original authenticated inbox.
+    return !!this.currentUsername && (this.receiptSessionToken === null
+      || this.isReceiptSessionCurrent());
+  }
+
   private isReceiptSessionCurrent(): boolean {
     // Different logins in tabs on the same origin share localStorage. Fail
     // closed until Angular creates a new inbox for the active account.
