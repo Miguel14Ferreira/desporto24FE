@@ -362,6 +362,16 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
     }
 
     if (mode === 'historical-knockout'
+        && path === '/api/communities/7/competition/match-archives'
+        && method === 'GET') {
+      // The community page also loads the archive index independently from
+      // the selected historic tournament. Keep every request in-memory.
+      return send([{
+        id: 91, title: 'Taça antiga QA', entryType: 'TEAM',
+        sourceFilename: 'torneio-sintetico.xlsx', createdAt: '2026-10-25T00:00:00Z'
+      }]);
+    }
+    if (mode === 'historical-knockout'
         && path === '/api/communities/7/competition/match-archives/91'
         && method === 'GET') {
       // 50 unlabelled rows on page one, then three labelled phases on page two.
