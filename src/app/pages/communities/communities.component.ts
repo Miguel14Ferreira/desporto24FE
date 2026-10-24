@@ -15,6 +15,7 @@ import { athleticsDisciplineOptions, athleticsDisciplineValid } from './communit
 import { breakingBattleError } from './community-breaking-battle';
 import { trackSprintHeatError } from './community-track-sprint-results';
 import { trackSprintSeriesStatus } from './community-track-sprint-series';
+import { availableSprintBracketSlots, nextSprintBracketHeatNumber } from './community-track-sprint-bracket-picker';
 import { cricketT20Error, cricketOvers } from './community-cricket-results';
 import { chessGameError, chessGameScore } from './community-chess-results';
 import { judoBoutError, isJudoBout } from './community-judo-results';
@@ -2350,9 +2351,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   }
 
   get availableSprintBracketMatches(): TrackSprintBracketMatch[] {
-    return this.sprintBrackets.flatMap(bracket => bracket.matches)
-      .filter(match => match.phase === this.roundDisciplineDraft
-        && (match.status === 'READY' || match.status === 'IN_PROGRESS'));
+    return availableSprintBracketSlots(this.sprintBrackets, this.roundDisciplineDraft);
   }
 
   selectSprintBracketSeries(seriesKey: string): void {
@@ -2361,8 +2360,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       this.sprintHeatNumberDraft = 1;
       return;
     }
-    this.sprintHeatNumberDraft = 1 + (this.competition?.rounds || [])
-      .filter(round => round.sprintSeriesKey === seriesKey).length;
+    this.sprintHeatNumberDraft = nextSprintBracketHeatNumber(
+      this.competition?.rounds || [], seriesKey);
   }
 
   sprintBracketStatusKey(status: TrackSprintBracketMatch['status']): string {
