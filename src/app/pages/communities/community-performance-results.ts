@@ -1,7 +1,8 @@
 import { CommunityRound, CommunityRoundEntry, CommunityRoundEntryDraft } from '../model/community-group';
 
 /** Provisional community marks: never official federation scores or season points. */
-export function performanceKind(eventType: string | null | undefined): 'metres' | 'points' | 'gym' | 'street' | 'trampoline' | 'rhythmic' | 'artistic' | 'golf' | null {
+export function performanceKind(eventType: string | null | undefined): 'metres' | 'points' | 'gym' | 'street' | 'trampoline' | 'rhythmic' | 'artistic' | 'golf' | 'poomsae' | null {
+  if (eventType === 'TKD_POOMSAE_RECOGNIZED' || eventType === 'TKD_POOMSAE_FREESTYLE') return 'poomsae';
   if (eventType === 'GOLF_STROKE_9' || eventType === 'GOLF_STROKE_18') return 'golf';
   if (eventType === 'JUMP' || eventType === 'THROW') return 'metres';
   if (eventType === 'FREESTYLE'
@@ -22,7 +23,7 @@ export function performanceError(
   if (!kind) return entries.some(entry => entry.performanceValue != null);
   return entries.some(entry => {
     const raw = entry.performanceValue;
-    if (raw == null) return kind === 'golf'; // Golf rankings require every selected player's confirmed total.
+    if (raw == null) return kind === 'golf' || kind === 'poomsae'; // Confirmed final scores required.
     const value = Number(raw);
     if (kind === 'golf') {
       const holes = eventType === 'GOLF_STROKE_9' ? 9 : 18;
@@ -31,6 +32,7 @@ export function performanceError(
     return !Number.isFinite(value) || value < 0
       || (kind === 'metres' && value <= 0)
       || ((kind === 'points' || kind === 'gym') && value > 100)
+      || (kind === 'poomsae' && value > 10)
       || (kind === 'street' && value > 300)
       || (kind === 'trampoline' && value > 9999.99)
       || value > (kind === 'artistic' ? 999999.9999 : 999999.999)

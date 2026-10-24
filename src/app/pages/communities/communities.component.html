@@ -1133,6 +1133,7 @@
                               : newRoundEventType === 'PARKOUR_FREESTYLE' ? 'communities.parkour.freestyleHint'
                               : (newRoundEventType === 'GOLF_STROKE_9' || newRoundEventType === 'GOLF_STROKE_18')
                                 ? 'communities.golf.hint'
+                              : isTaekwondoEvent(newRoundEventType) ? 'communities.taekwondo.hint'
                               : isKarateEvent(newRoundEventType) ? 'communities.karate.hint'
                               : isJudoBout(newRoundEventType) ? 'communities.judo.hint'
                               : newRoundEventType === 'CHESS_GAME' ? 'communities.chess.hint'
@@ -1274,6 +1275,16 @@
                                       <input [(ngModel)]="entry.team" maxlength="60"
                                         [placeholder]="'communities.groupRoutine.groupPlaceholder' | t">
                                     </label>
+                                  } @else if (isTaekwondoKyorugi(newRoundEventType)) {
+                                    <label>
+                                      <span>{{ 'communities.taekwondo.side' | t }}</span>
+                                      <select [(ngModel)]="entry.team"
+                                        [attr.aria-label]="'communities.taekwondo.side' | t">
+                                        <option value="">{{ 'communities.taekwondo.chooseSide' | t }}</option>
+                                        <option value="CHUNG">{{ 'communities.taekwondo.chung' | t }}</option>
+                                        <option value="HONG">{{ 'communities.taekwondo.hong' | t }}</option>
+                                      </select>
+                                    </label>
                                   } @else if (isKarateEvent(newRoundEventType)) {
                                     <label>
                                       <span>{{ 'communities.karate.side' | t }}</span>
@@ -1350,6 +1361,22 @@
                                     <small>{{ 'communities.basketball.memberOnly' | t }}</small>
                                   } @else if (isGroupRoutineEvent(newRoundEventType)) {
                                     <small>{{ 'communities.groupRoutine.memberOnly' | t }}</small>
+                                  } @else if (isTaekwondoKyorugi(newRoundEventType)) {
+                                    <label>
+                                      <span>{{ 'communities.taekwondo.outcome' | t }}</span>
+                                      <select [(ngModel)]="entry.result"
+                                        [attr.aria-label]="'communities.taekwondo.outcome' | t">
+                                        <option value="DRAW" disabled>{{ 'communities.taekwondo.chooseOutcome' | t }}</option>
+                                        <option value="WIN">{{ 'communities.taekwondo.winner' | t }}</option>
+                                        <option value="LOSS">{{ 'communities.taekwondo.loser' | t }}</option>
+                                      </select>
+                                    </label>
+                                    <label>
+                                      <span>{{ 'communities.taekwondo.roundsWon' | t }}</span>
+                                      <input type="number" min="0" max="2" step="1"
+                                        [(ngModel)]="entry.performanceValue"
+                                        [placeholder]="'communities.taekwondo.roundsRequired' | t">
+                                    </label>
                                   } @else if (isKarateEvent(newRoundEventType)) {
                                     <label>
                                       <span>{{ 'communities.karate.outcome' | t }}</span>
@@ -1396,7 +1423,8 @@
                                     </label>
                                   } @else if (performanceKind(newRoundEventType); as unit) {
                                     <label>
-                                      <span>{{ (unit === 'golf' ? 'communities.golf.grossStrokes'
+                                      <span>{{ (unit === 'poomsae' ? 'communities.taekwondo.finalMark'
+                                        : unit === 'golf' ? 'communities.golf.grossStrokes'
                                         : unit === 'metres'
                                         ? 'communities.performance.metres'
                                         : unit === 'gym' ? 'communities.gym.finalScore'
@@ -1411,14 +1439,15 @@
                                       <input type="number" [min]="unit === 'golf'
                                           ? (newRoundEventType === 'GOLF_STROKE_9' ? 9 : 18)
                                           : unit === 'metres' ? 0.001 : 0"
-                                        [max]="unit === 'golf' ? 999999
+                                        [max]="unit === 'poomsae' ? 10 : unit === 'golf' ? 999999
                                           : unit === 'metres' ? 999999.999 : unit === 'street' ? 300
                                           : unit === 'trampoline' ? 9999.99
                                           : unit === 'rhythmic' ? 999999.999
                                           : unit === 'artistic' ? 999999.9999 : 100"
                                         [step]="unit === 'golf' ? 1 : unit === 'trampoline' ? 0.01
                                           : unit === 'artistic' ? 0.0001 : 0.001" [(ngModel)]="entry.performanceValue"
-                                        [placeholder]="(unit === 'golf' ? 'communities.golf.required'
+                                        [placeholder]="(unit === 'poomsae' ? 'communities.taekwondo.markRequired'
+                                          : unit === 'golf' ? 'communities.golf.required'
                                           : 'communities.performance.optional') | t">
                                     </label>
                                   } @else if (!racketSupportsSets(newRoundSport) && !newRoundEventType) {
@@ -2239,13 +2268,16 @@
                             @for (entry of eventPerformanceEntries(round); track entry.entryId ?? $index) {
                               <div class="round-result-row"
                                 [class.round-breaking-winner]="(round.eventType === 'BREAKING_BATTLE'
-                                  || isJudoBout(round.eventType) || isKarateEvent(round.eventType))
+                                  || isJudoBout(round.eventType) || isKarateEvent(round.eventType)
+                                  || isTaekwondoKyorugi(round.eventType))
                                   && entry.result === 'WIN'">
                                 <div>
                                   <strong>{{ entry.fullName || entry.username }}</strong>
                                   <span>
                                     {{ roundEntryHandle(entry) }}
-                                    @if (entry.team && !isJudoBout(round.eventType) && !isKarateEvent(round.eventType)) { · {{ entry.team }} }
+                                    @if (entry.team && !isJudoBout(round.eventType)
+                                      && !isKarateEvent(round.eventType)
+                                      && !isTaekwondoKyorugi(round.eventType)) { · {{ entry.team }} }
                                   </span>
                                 </div>
                                 @if (round.eventType === 'BREAKING_BATTLE') {
@@ -2254,6 +2286,20 @@
                                     {{ (entry.result === 'WIN'
                                       ? 'communities.breaking.winner' : 'communities.breaking.loser') | t }}
                                   </span>
+                                } @else if (isTaekwondoKyorugi(round.eventType)) {
+                                  <div class="round-surf-scores">
+                                    <small>{{ (entry.team === 'CHUNG' ? 'communities.taekwondo.chung'
+                                      : 'communities.taekwondo.hong') | t }}</small>
+                                    <span class="result-chip" [class.win]="entry.result === 'WIN'"
+                                      [class.loss]="entry.result === 'LOSS'">
+                                      {{ (entry.result === 'WIN' ? 'communities.taekwondo.winner'
+                                        : 'communities.taekwondo.loser') | t }}
+                                    </span>
+                                    <span class="round-performance-mark">
+                                      {{ performanceDisplay(entry.performanceValue, 0) }}
+                                      {{ 'communities.taekwondo.roundsUnit' | t }}
+                                    </span>
+                                  </div>
                                 } @else if (isKarateEvent(round.eventType)) {
                                   <div class="round-surf-scores">
                                     <small>{{ (entry.team === 'AKA' ? 'communities.karate.aka'
@@ -2315,6 +2361,8 @@
                                         performanceKind(round.eventType) === 'artistic' ? 4 : 3) }}
                                       @if (performanceKind(round.eventType) === 'metres') {
                                         {{ 'communities.performance.metresUnit' | t }}
+                                      } @else if (performanceKind(round.eventType) === 'poomsae') {
+                                        {{ 'communities.taekwondo.markUnit' | t }}
                                       } @else if (performanceKind(round.eventType) === 'golf') {
                                         {{ 'communities.golf.strokesUnit' | t }}
                                       } @else if (performanceKind(round.eventType) !== 'rhythmic'
