@@ -19,13 +19,17 @@ export type CommunityEventType = 'RACE' | 'FREESTYLE' | 'TRACK' | 'JUMP' | 'THRO
     | 'ICE_HOCKEY_REG' | 'ICE_HOCKEY_OT' | 'ICE_HOCKEY_SO' | 'BASEBALL_RUNS' | 'SOFTBALL_RUNS' | 'KORFBALL_REG' | 'KORFBALL_GOLDEN'
     | 'LACROSSE_M_REG' | 'LACROSSE_M_OT' | 'AMFOOTBALL_SCORE' | 'FLAGFOOTBALL_SCORE' | 'CURLING_REG' | 'CURLING_EXTRA'
     | 'PETANQUE_13' | 'PETANQUE_11' | 'BOWLING_TENPIN' | 'POOL_9_RACKS' | 'FENCING_POOL_5' | 'FENCING_DE_15'
-    | 'TEQBALL_SINGLES' | 'TEQBALL_DOUBLES' | 'CHESS_GAME' | 'CRICKET_T20';
+    | 'TEQBALL_SINGLES' | 'TEQBALL_DOUBLES' | 'CHESS_GAME' | 'CRICKET_T20' | 'GOLF_STROKE_9' | 'GOLF_STROKE_18';
 export interface CommunityEventOption { code: CommunityEventType; labelKey: string }
 const TYPES: Record<string, readonly CommunityEventOption[]> = {
   basquetebol: [{ code: 'BASKETBALL_FINAL', labelKey: 'communities.basketball.fiveVsFive' }],
   'basquetebol 3x3': [{ code: 'BASKETBALL_3X3_FINAL', labelKey: 'communities.basketball.threeVsThree' }],
   basebol: [{ code: 'BASEBALL_RUNS', labelKey: 'communities.teamFinal.baseballRuns' }],
   cricket: [{ code: 'CRICKET_T20', labelKey: 'communities.cricket.t20' }],
+  golfe: [
+    { code: 'GOLF_STROKE_9', labelKey: 'communities.golf.stroke9' },
+    { code: 'GOLF_STROKE_18', labelKey: 'communities.golf.stroke18' }
+  ],
   softbol: [{ code: 'SOFTBALL_RUNS', labelKey: 'communities.teamFinal.softballRuns' }],
   corfebol: [
     { code: 'KORFBALL_REG', labelKey: 'communities.teamFinal.korfballReg' },
@@ -156,6 +160,8 @@ export function eventPresentationFormat(
 ): string {
   if (isRaceEvent(sport, eventType)) return 'race';
   if (eventType === 'CHESS_GAME' && normalize(sport || '') === 'xadrez') return 'duel';
+  if ((eventType === 'GOLF_STROKE_9' || eventType === 'GOLF_STROKE_18')
+      && normalize(sport || '') === 'golfe') return 'score';
   if (isNeutralEvent(sport, eventType))
     return ['FREESTYLE', 'HEAT', 'BODYBOARD_HEAT', 'APPARATUS',
       'SKATE_PARK', 'SKATE_STREET', 'PARKOUR_FREESTYLE',
