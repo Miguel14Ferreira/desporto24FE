@@ -10,7 +10,10 @@ export type HistoricalTournamentOutcomeReason =
   | 'tied-leaders'
   | 'missing-final'
   | 'multiple-finals'
-  | 'drawn-final';
+  | 'drawn-final'
+  | 'incomplete-semifinals'
+  | 'drawn-semifinal'
+  | 'semifinal-final-mismatch';
 
 export interface HistoricalTournamentOutcome {
   /** A likely winner derived solely from original results; never an official title. */
@@ -26,6 +29,9 @@ export interface HistoricalTournamentOutcome {
  * Deliberately do not assume goal difference, sets or sport-specific tie breaks.
  *
  * For knockout infer only when a clearly labelled final has a decisive score.
+ * When semifinals are explicitly present, verify that exactly two independent,
+ * decisive semifinal winners match the two finalists. Do not infer phases
+ * missing from the source, or turn the estimate into an official title.
  * If the Excel has ambiguity, show why a winner cannot be reconstructed.
  */
 export function historicalTournamentOutcome(
@@ -57,6 +63,32 @@ export function historicalTournamentOutcome(
     if (finals.length !== 1) return pending('multiple-finals');
     const final = finals[0];
     if (final.homeScore === final.awayScore) return pending('drawn-final');
+
+    // Only cross-check semifinals that the source explicitly labelled.
+    // A final without semifinal rows remains a tentative *final-only* estimate.
+    const semifinals = matches.filter(row => isSemifinalRound(row.sourceRound));
+    if (semifinals.length) {
+      if (semifinals.length !== 2) return pending('incomplete-semifinals');
+      if (semifinals.some(row => row.homeScore === row.awayScore)) {
+        return pending('drawn-semifinal');
+      }
+
+      const semifinalEntrants = semifinals.flatMap(row => [normalize(row.home), normalize(row.away)]);
+      const semifinalWinners = semifinals.map(row =>
+        normalize(row.homeScore > row.awayScore ? row.home : row.away));
+      const finalists = [normalize(final.home), normalize(final.away)];
+
+      // Each semifinal must involve different entrants; no entrant can play
+      // both semifinals. The winners must be exactly the original finalists.
+      if (semifinalEntrants.some(name => !name)
+        || new Set(semifinalEntrants).size !== 4
+        || finalists.some(name => !name)
+        || new Set(finalists).size !== 2
+        || new Set(semifinalWinners).size !== 2
+        || semifinalWinners.some(name => !finalists.includes(name))) {
+        return pending('semifinal-final-mismatch');
+      }
+    }
     return {
       winner: (final.homeScore > final.awayScore ? final.home : final.away).trim(),
       reason: 'winner-estimated',
@@ -89,6 +121,16 @@ export function historicalTournamentOutcome(
   // necessarily goal difference. Never choose a champion from alphabetical order.
   if (table[0].points === table[1].points) return pending('tied-leaders');
   return { winner: table[0].name, reason: 'winner-estimated', matchesUsed: matches.length };
+}
+
+/**
+ * Recognise only explicit semifinal round names in the imported source;
+ * never guess a bracket from the order, fixture count or chronology.
+ * The normalized forms cover PT/EN singular/plural and 1/2 final.
+ */
+function isSemifinalRound(sourceRound: string | null | undefined): boolean {
+  const label = normalize(sourceRound || '').replace(/[-_.]+/g, ' ').replace(/\\s+/g, ' ');
+  return /^(?:semi\\s*finais?|meias?\\s*finais?|1\\s*\\/\\s*2\\s*finais?)(?:\\s*[12ab])?$/.test(label);
 }
 
 function normalize(value: string): string {
