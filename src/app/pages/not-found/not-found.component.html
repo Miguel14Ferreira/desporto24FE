@@ -1,9 +1,9 @@
 <section class="not-found-page">
   <div class="not-found-card">
     <p class="eyebrow">404</p>
-    <h1>Esta página não existe</h1>
-    <p>O endereço pode estar incorreto ou a página pode ter sido movida.</p>
+    <h1>{{ 'notFound.title' | t }}</h1>
+    <p>{{ 'notFound.text' | t }}</p>
 
-    <a [routerLink]="destination">{{ actionLabel }}</a>
+    <a [routerLink]="destination">{{ (destination === '/menu' ? 'notFound.dashboard' : 'notFound.home') | t }}</a>
   </div>
 </section>
