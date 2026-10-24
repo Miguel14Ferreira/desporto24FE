@@ -1,3 +1,23 @@
+export interface TrackSprintBracketMatch {
+  phase: 'SPRINT_QUARTER_FINAL' | 'SPRINT_SEMI_FINAL' | 'SPRINT_BRONZE_FINAL' | 'SPRINT_GOLD_FINAL';
+  slot: string;
+  seriesKey: string;
+  riderA: string | null;
+  riderB: string | null;
+  winsA: number;
+  winsB: number;
+  winner: string | null;
+  status: 'READY' | 'WAITING_PREVIOUS' | 'IN_PROGRESS' | 'FINISHED' | 'CONFLICT';
+}
+
+export interface TrackSprintBracketOverview {
+  id: number;
+  seasonId: number;
+  name: string;
+  format: 'EIGHT_RIDER_FINALS';
+  matches: TrackSprintBracketMatch[];
+}
+
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
@@ -436,6 +456,18 @@ export class CommunityGroupsService {
       this.url + '/' + id + '/competition/settings',
       request
     );
+  }
+
+  trackSprintBrackets(communityId: number, seasonId: number): Observable<TrackSprintBracketOverview[]> {
+    return this.http.get<TrackSprintBracketOverview[]>(
+      this.url + '/' + communityId + '/seasons/' + seasonId + '/track-sprint-brackets');
+  }
+
+  createTrackSprintBracket(communityId: number, seasonId: number, name: string):
+    Observable<TrackSprintBracketOverview> {
+    return this.http.post<TrackSprintBracketOverview>(
+      this.url + '/' + communityId + '/seasons/' + seasonId + '/track-sprint-brackets',
+      {name});
   }
 
   createRound(

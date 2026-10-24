@@ -1130,6 +1130,71 @@
                       <p>{{ 'communities.competitionSessionsHint' | t }}</p>
                     </div>
                   } @else {
+                    @if (selectedSeasonId !== null && communityRoundSports.includes('Ciclismo de Pista')) {
+                      <section class="round-editor" [attr.aria-label]="'communities.trackCycling.bracketTitle' | t">
+                        <div class="section-heading">
+                          <div>
+                            <span class="section-kicker">{{ 'communities.trackCycling.sprintHeat' | t }}</span>
+                            <h3>{{ 'communities.trackCycling.bracketTitle' | t }}</h3>
+                          </div>
+                        </div>
+                        <p class="round-sport-guidance">{{ 'communities.trackCycling.bracketHint' | t }}</p>
+                        @if (canManage() && selectedSeasonId === activeSeason()?.id) {
+                          <div class="round-meta-form">
+                            <label>
+                              <span>{{ 'communities.trackCycling.bracketName' | t }}</span>
+                              <input [(ngModel)]="sprintBracketNameDraft" maxlength="80"
+                                [placeholder]="'communities.trackCycling.bracketNamePlaceholder' | t">
+                            </label>
+                            <button type="button" class="btn btn-primary" (click)="createSprintBracket()"
+                              [disabled]="sprintBracketSaving || !sprintBracketNameDraft.trim()">
+                              {{ 'communities.trackCycling.bracketCreate' | t }}
+                            </button>
+                          </div>
+                        }
+                        @if (sprintBracketError) {
+                          <p role="alert">{{ sprintBracketError }}</p>
+                        }
+                        @if (sprintBracketLoading) {
+                          <p>{{ 'communities.trackCycling.bracketLoading' | t }}</p>
+                        }
+                        @for (bracket of sprintBrackets; track bracket.id) {
+                          <div class="season-round-hint">
+                            <strong>{{ bracket.name }}</strong>
+                            <span> · {{ 'communities.trackCycling.bracketFormat' | t }}</span>
+                          </div>
+                          <div class="round-meta-form">
+                            @for (match of bracket.matches; track match.slot) {
+                              <section class="racket-result-card">
+                                <div class="racket-result-header">
+                                  <strong>{{ fieldDisciplineLabel(match.phase) }} · {{ match.slot }}</strong>
+                                  <small>{{ sprintBracketStatusKey(match.status) | t }}</small>
+                                </div>
+                                <div class="racket-result-sides">
+                                  <div class="racket-result-side">
+                                    <strong>{{ match.riderA || ('communities.trackCycling.bracketTbd' | t) }}</strong>
+                                    <span>{{ match.winsA }}</span>
+                                  </div>
+                                  <span class="racket-result-vs">VS</span>
+                                  <div class="racket-result-side">
+                                    <strong>{{ match.riderB || ('communities.trackCycling.bracketTbd' | t) }}</strong>
+                                    <span>{{ match.winsB }}</span>
+                                  </div>
+                                </div>
+                                @if (match.winner) {
+                                  <small>{{ 'communities.trackCycling.seriesWinner' | t }}: {{ match.winner }}</small>
+                                }
+                                @if (canManage() && selectedSeasonId === activeSeason()?.id
+                                      && (match.status === 'READY' || match.status === 'IN_PROGRESS')) {
+                                  <small>{{ 'communities.trackCycling.bracketSeries' | t }}: {{ match.seriesKey }}</small>
+                                }
+                              </section>
+                            }
+                          </div>
+                        }
+                      </section>
+                    }
+
                     @if (canManage()) {
                       <section class="round-editor">
                         <div class="section-heading">
@@ -1193,6 +1258,7 @@
                                 : newRoundEventType === 'TRACK_SPRINT_HEAT'
                                 ? 'communities.trackCycling.phase' : 'communities.discipline.label') | t }}</span>
                               <select [(ngModel)]="roundDisciplineDraft"
+                                (ngModelChange)="sprintSeriesKeyDraft = ''; sprintHeatNumberDraft = 1"
                                 [attr.aria-label]="(newRoundEventType === 'BODYBOARD_HEAT'
                                   ? 'communities.bodyboard.category'
                                   : newRoundEventType === 'SWIM_LCM'
@@ -1215,6 +1281,19 @@
                                 <input [(ngModel)]="sprintSeriesKeyDraft" maxlength="40"
                                   [placeholder]="'communities.trackCycling.seriesPlaceholder' | t">
                               </label>
+                              @if (selectedSeasonId === activeSeason()?.id && availableSprintBracketMatches.length) {
+                                <label>
+                                  <span>{{ 'communities.trackCycling.bracketSeries' | t }}</span>
+                                  <select [ngModel]="sprintSeriesKeyDraft"
+                                    (ngModelChange)="selectSprintBracketSeries($event)">
+                                    <option value="">{{ 'communities.trackCycling.bracketUnlinked' | t }}</option>
+                                    @for (match of availableSprintBracketMatches; track match.seriesKey) {
+                                      <option [value]="match.seriesKey">{{ match.slot }} · {{ match.seriesKey }}
+                                        ({{ sprintBracketStatusKey(match.status) | t }})</option>
+                                    }
+                                  </select>
+                                </label>
+                              }
                               @if (sprintSeriesKeyDraft.trim()) {
                                 <label>
                                   <span>{{ 'communities.trackCycling.heatNumber' | t }}</span>
