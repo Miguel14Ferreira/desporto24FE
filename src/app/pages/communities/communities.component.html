@@ -477,52 +477,89 @@
             </nav>
 
             @if (activeTab === 'feed') {
-              <section class="community-tab-panel community-timeline"
+              <section class="community-tab-panel community-timeline community-feed"
                        [attr.aria-label]="'communities.tab.feed' | t">
-                <div class="community-timeline-heading">
+                <div class="community-timeline-heading community-feed-heading">
                   <div>
+                    <span class="section-kicker">{{ 'communities.tab.feed' | t }}</span>
                     <h3>{{ 'communities.timelineFeedTitle' | t }}</h3>
                     <p>{{ 'communities.timelineFeedHint' | t }}</p>
                   </div>
-                  <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
+                  <button type="button" class="secondary-action jynlo-action jynlo-action--neutral community-feed-refresh"
                           [disabled]="timelineLoading" (click)="loadTimeline()">
+                    <span aria-hidden="true">↻</span>
                     {{ 'communities.timelineRefresh' | t }}
                   </button>
                 </div>
-                <form class="community-timeline-form" (ngSubmit)="sendTimeline()">
-                  <label for="community-feed-text">{{ 'communities.timelineWritePost' | t }}</label>
+
+                <form class="community-timeline-form community-feed-composer" (ngSubmit)="sendTimeline()">
+                  <div class="community-feed-composer-head">
+                    <strong>{{ 'communities.timelineWritePost' | t }}</strong>
+                    <span>{{ feedDraft.length }}/1000</span>
+                  </div>
+                  <label class="community-feed-text-label" for="community-feed-text">
+                    {{ 'communities.timelineFeedPlaceholder' | t }}
+                  </label>
                   <textarea id="community-feed-text" name="community-feed-text" rows="3" maxlength="1000"
                             [(ngModel)]="feedDraft"
+                            [disabled]="timelineSending"
                             [placeholder]="'communities.timelineFeedPlaceholder' | t"></textarea>
-                  <div class="row-actions">
+                  <div class="community-feed-composer-actions">
+                    <span class="community-feed-composer-note">
+                      <span aria-hidden="true">✦</span>
+                      {{ 'communities.timelineComposerNote' | t }}
+                    </span>
                     <button type="submit" class="primary-action jynlo-action jynlo-action--primary"
                             [disabled]="timelineSending || !feedDraft.trim()">
-                      {{ 'communities.timelinePublish' | t }}
+                      {{ timelineSending ? ('common.processing' | t) : ('communities.timelinePublish' | t) }}
                     </button>
                   </div>
                 </form>
+
                 @if (timelineError) {
-                  <p class="community-timeline-error" role="alert">{{ timelineError }}</p>
+                  <div class="community-feed-alert" role="alert">
+                    <span>{{ timelineError }}</span>
+                    <button type="button" class="jynlo-action jynlo-action--neutral jynlo-action--compact"
+                      [disabled]="timelineLoading" (click)="loadTimeline()">{{ 'common.retry' | t }}</button>
+                  </div>
                 }
                 @if (timelineLoading) {
-                  <p role="status">{{ 'communities.loading' | t }}</p>
+                  <div class="community-feed-status" role="status">{{ 'communities.loading' | t }}</div>
                 } @else if (timelineEntries.length === 0 && !timelineError) {
-                  <p class="community-timeline-empty">{{ 'communities.timelineNoPosts' | t }}</p>
+                  <div class="community-feed-empty">
+                    <span class="community-feed-empty-icon" aria-hidden="true">✦</span>
+                    <h4>{{ 'communities.timelineEmptyTitle' | t }}</h4>
+                    <p>{{ 'communities.timelineNoPosts' | t }}</p>
+                  </div>
                 } @else {
-                  <div class="community-timeline-feed">
+                  <div class="community-timeline-feed community-feed-list">
                     @for (entry of timelineEntries; track entry.id) {
-                      <article class="community-timeline-entry">
-                        <div class="entry-meta">
-                          <strong>{{ '@' + entry.username }}</strong>
-                          <time [attr.datetime]="entry.createdAt">{{ entry.createdAt | date:'short' }}</time>
-                          @if (canManage()) {
-                            <button type="button" class="secondary-action small jynlo-action jynlo-action--neutral jynlo-action--compact"
+                      <article class="community-timeline-entry community-feed-card">
+                        <div class="community-feed-author">
+                          <a class="community-feed-author-link"
+                             [routerLink]="['/menu/perfis', entry.username]"
+                             [queryParams]="{ from: 'communities' }"
+                             [attr.aria-label]="communityFeedAuthorName(entry.username) + ' (@' + entry.username + ')'">
+                            <span class="community-feed-avatar">
+                              @if (communityFeedAvatar(entry.username); as avatar) {
+                                <img [src]="avatar" [alt]="entry.username" loading="lazy">
+                              } @else {
+                                <span>{{ communityFeedInitials(entry.username) }}</span>
+                              }
+                            </span>
+                            <span class="community-feed-author-copy">
+                              <strong>{{ communityFeedAuthorName(entry.username) }}</strong>
+                              <small>@{{ entry.username }} · <time [attr.datetime]="entry.createdAt">{{ entry.createdAt | date:'dd/MM/yyyy HH:mm' }}</time></small>
+                            </span>
+                          </a>
+                          @if (canDeleteCommunityPost(entry)) {
+                            <button type="button" class="community-feed-delete jynlo-action jynlo-action--danger"
                                     [disabled]="timelineDeletingId !== null" (click)="deleteTimeline(entry)">
-                              {{ 'communities.timelineRemove' | t }}
+                              {{ timelineDeletingId === entry.id ? ('common.processing' | t) : ('communities.timelineRemove' | t) }}
                             </button>
                           }
                         </div>
-                        <p>{{ entry.body }}</p>
+                        <p class="community-feed-body">{{ entry.body }}</p>
                       </article>
                     }
                   </div>
