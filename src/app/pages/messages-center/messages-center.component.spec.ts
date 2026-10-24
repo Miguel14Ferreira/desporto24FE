@@ -664,7 +664,10 @@ describe('Unified Jynlo message center', () => {
   it('does not show server confirmation when delivery is uncertain', () => {
     const peer=item('direct','bea');
     component.conversations=[peer];
-    direct.recentHistory.and.returnValue(
+    // Opening the conversation succeeds; only the subsequent verification
+    // request fails after the POST becomes ambiguous.
+    direct.recentHistory.and.returnValues(
+      of({last:true,content:[]} as any),
       throwError(()=>new HttpErrorResponse({status:503})));
     direct.send.and.returnValue(
       throwError(()=>new HttpErrorResponse({status:0})));
