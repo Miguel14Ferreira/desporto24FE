@@ -26,6 +26,7 @@ interface Tournament {
   playersPerTeam?: number | null;
   roundRobinLegs?: 1 | 2;
   teamTieBreakPriority?: 'GOAL_DIFFERENCE_FIRST' | 'GOALS_SCORED_FIRST' | 'WINS_FIRST';
+  scoringMode?: 'RACE_POINTS' | 'CHESS_HALF_POINTS';
 }
 
 interface Participant {
@@ -66,15 +67,52 @@ function fixtureToken(username: string): string {
     encode({ sub: username, exp: Math.floor(Date.now() / 1000) + 3600 }), 'fixture'].join('.');
 }
 
+
+interface KartingFixture {
+  tournament: Tournament | null;
+  points: number[];
+  linked: boolean;
+  writes: Array<{ role: Role; path: string }>;
+}
+function createKartingFixture(): KartingFixture {
+  return { tournament: null, points: [25,18,15], linked: false, writes: [] };
+}
+function raceData(state: KartingFixture) {
+  const race = {
+    id: 30, name: 'Grande Prémio QA', sport: 'Karting', playedAt: '2026-10-23T18:00:00Z',
+    entries: [
+      { communityPlayerId: 2, fullName: 'Ana', finishPosition: 1, elapsedSeconds: 612,
+        bestLapSeconds: 58, racePenaltyPoints: 0, raceDisqualified: false },
+      { communityPlayerId: 3, fullName: 'Bruno', finishPosition: 2, elapsedSeconds: 624,
+        bestLapSeconds: 59, racePenaltyPoints: 0, raceDisqualified: false },
+      { communityPlayerId: 4, fullName: 'Carla', finishPosition: null, elapsedSeconds: null,
+        bestLapSeconds: null, racePenaltyPoints: 0, raceDisqualified: false }
+    ]
+  };
+  return {
+    tournamentId: 11, pointsByPlace: state.points,
+    linkedRaces: state.linked ? [race] : [],
+    availableRaces: state.linked ? [] : [race],
+    standings: state.linked ? [
+      { position: 1, playerId: 2, fullName: 'Ana', races: 1, wins: 1, podiums: 1,
+        bestFinish: 1, championshipPoints: state.points[0], penaltyPoints: 0 },
+      { position: 2, playerId: 3, fullName: 'Bruno', races: 1, wins: 0, podiums: 1,
+        bestFinish: 2, championshipPoints: state.points[1], penaltyPoints: 0 },
+      { position: 3, playerId: 4, fullName: 'Carla', races: 1, wins: 0, podiums: 0,
+        bestFinish: null, championshipPoints: 0, penaltyPoints: 0 }
+    ] : []
+  };
+}
+
 type FixtureMode = 'empty' | 'draft' | 'paged' | 'forbidden' | 'switch'
   | 'management' | 'complete-rejected' | 'list-network-error'
   | 'paged-enrollment' | 'draw-tie' | 'schedule-roster-paged' | 'schedule-roster-oversize'
   | 'discovery' | 'trial' | 'modules-off' | 'teams-only' | 'teams' | 'teams-view'
-  | 'teams-schedule' | 'history';
+  | 'teams-schedule' | 'history' | 'karting';
 
 async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
   sport: string | null = 'Futebol', sports?: string[], roundRobinLegs: 1 | 2 = 1,
-  format: 'LEAGUE' | 'KNOCKOUT' = 'LEAGUE') {
+  format: 'LEAGUE' | 'KNOCKOUT' = 'LEAGUE', karting?: KartingFixture) {
   const username = role === 'OWNER' ? 'organizador' : 'participante';
   const token = fixtureToken(username);
   await page.addInitScript(value => localStorage.setItem('t', value), token);
@@ -99,7 +137,7 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
     ]
   };
 
-  const tournaments: Tournament[] = mode === 'empty' || mode === 'teams' ? []
+  const tournaments: Tournament[] = mode === 'empty' || mode === 'teams' || mode === 'karting' ? []
     : [tournament(mode === 'teams-view' || mode === 'teams-schedule' ? 11 : 9, 'Liga de Outono')];
   // The sport is a snapshot on the tournament, not inferred by the component.
   tournaments.forEach(item => item.sport = sport);
@@ -337,6 +375,63 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
       historicalArchives.unshift(item);
       return send(item);
     }
+
+    // Karting-only API fixture. Shared across independently authenticated
+    // browser contexts, never forwarding requests outside the local test app.
+    if (mode === 'karting' && karting) {
+      const base = '/api/communities/7/tournaments/11/races';
+      if (path === '/api/communities/7/tournaments' && method === 'GET') {
+        return send({ tournaments: karting.tournament ? [karting.tournament] : [],
+          page: 0, hasMore: false });
+      }
+      if (path === '/api/communities/7/tournaments' && method === 'POST') {
+        karting.writes.push({ role, path });
+        const body = req.postDataJSON() as { name: string; sport: string; scoringMode: string };
+        if (role !== 'OWNER') return send({ message: 'Sem permissão' }, 403);
+        if (body.sport !== 'Karting' || body.scoringMode !== 'RACE_POINTS')
+          return send({ message: 'Formato incorreto' }, 422);
+        karting.tournament = { ...tournament(11, body.name),
+          sport: 'Karting', entryType: 'INDIVIDUAL', scoringMode: 'RACE_POINTS' };
+        return send(karting.tournament, 201);
+      }
+      if (path === base && method === 'GET') {
+        return karting.tournament ? send(raceData(karting))
+          : send({ message: 'Não existe' }, 404);
+      }
+      if (path === base + '/points' && method === 'PUT') {
+        karting.writes.push({ role, path });
+        if (role !== 'OWNER') return send({ message: 'Sem permissão' }, 403);
+        if (!karting.tournament || karting.linked || karting.tournament.status !== 'DRAFT')
+          return send({ message: 'Pontuação fechada' }, 409);
+        const body = req.postDataJSON() as { pointsByPlace: string };
+        const parts = body.pointsByPlace.split(',').map(v => v.trim());
+        const values = parts.map(Number);
+        if (!parts.length || parts.length > 20 || parts.some(v => !/^\d{1,4}$/.test(v))
+            || values.some((v, i) => v > 1000 || (i > 0 && v > values[i-1])))
+          return send({ message: 'Pontuação inválida' }, 422);
+        karting.points = values;
+        return send(raceData(karting));
+      }
+      if (path === base + '/30' && method === 'PUT') {
+        karting.writes.push({ role, path });
+        if (role !== 'OWNER') return send({ message: 'Sem permissão' }, 403);
+        if (!karting.tournament || karting.linked)
+          return send({ message: 'Corrida indisponível' }, 409);
+        karting.linked = true;
+        karting.tournament.status = 'IN_PROGRESS';
+        return send(raceData(karting));
+      }
+      if (path === base + '/30' && method === 'DELETE') {
+        karting.writes.push({ role, path });
+        if (role !== 'OWNER') return send({ message: 'Sem permissão' }, 403);
+        if (!karting.tournament || !karting.linked)
+          return send({ message: 'Corrida indisponível' }, 409);
+        karting.linked = false;
+        karting.tournament.status = 'DRAFT';
+        return send(raceData(karting));
+      }
+    }
+
     if (path === '/api/communities/7/tournaments') {
       if (method === 'GET') {
         listAttempts++;
@@ -1765,4 +1860,84 @@ test('xadrez apresenta 1/½/0 sem parâmetros genéricos e é limitado a ligas i
   await page.getByRole('button', { name: 'Preparar torneio por equipas' }).click();
   await expect(page.getByRole('button', { name: 'Formato ainda indisponível' })).toBeDisabled();
   await expect(page.getByText(/Xadrez por equipas precisa de partidas e resultados por tabuleiro/)).toBeVisible();
+});
+
+
+test('Karting E2E: criador configura pontos, associa corrida e participante consulta', async ({ browser }, testInfo) => {
+  const state = createKartingFixture();
+  const owner = await browser.newContext();
+  const member = await browser.newContext();
+  try {
+    const a = await owner.newPage();
+    const b = await member.newPage();
+    const organizer = await mockCommunityApi(a, 'OWNER', 'karting', 'Karting',
+      ['Karting'], 1, 'LEAGUE', state);
+    const participant = await mockCommunityApi(b, 'MEMBER', 'karting', 'Karting',
+      ['Karting'], 1, 'LEAGUE', state);
+    await Promise.all([
+      a.goto('/menu/communities/7?tab=tournaments'),
+      b.goto('/menu/communities/7?tab=tournaments')
+    ]);
+
+    await a.getByRole('button', { name: 'Criar liga individual' }).click();
+    await a.getByLabel('Nome do torneio').fill('Taça Karting QA');
+    await a.getByRole('button', { name: 'Criar campeonato de Karting' }).click();
+    const race = a.getByRole('region', { name: 'Campeonato de Karting' });
+    await expect(race).toBeVisible();
+    await race.locator('#karting-race-points').fill('30, 20, 10');
+    await race.getByRole('button', { name: 'Guardar pontuação' }).click();
+    await expect(race.locator('#karting-race-points')).toHaveValue('30,20,10');
+    expect(state.points).toEqual([30,20,10]);
+
+    await race.getByRole('button', { name: 'Associar' }).click();
+    await expect(race.getByText('Grande Prémio QA')).toBeVisible();
+    await expect(race.getByText(/DNF.*Carla/)).toBeVisible();
+    const table = a.getByRole('table', { name: 'Classificação de Karting' });
+    await expect(table.locator('tbody tr')).toHaveCount(3);
+    await expect(table.locator('tbody tr').first()).toContainText('Ana');
+    await expect(table.locator('tbody tr').first()).toContainText('30');
+    await expect(race.locator('.race-points-editor')).toHaveCount(0);
+
+    await b.reload();
+    await expect(b.getByRole('heading', { name: 'Taça Karting QA' })).toBeVisible();
+    const memberRace = b.getByRole('region', { name: 'Campeonato de Karting' });
+    await expect(memberRace).toContainText('Grande Prémio QA');
+    await expect(b.getByRole('table', { name: 'Classificação de Karting' })
+      .locator('tbody tr').first()).toContainText('Ana');
+    await expect(memberRace.getByRole('button', { name: 'Associar' })).toHaveCount(0);
+    await expect(memberRace.getByRole('button', { name: 'Retirar' })).toHaveCount(0);
+    await expect(memberRace.getByRole('button', { name: 'Guardar pontuação' })).toHaveCount(0);
+    expect(state.writes.filter(x => x.role === 'MEMBER')).toEqual([]);
+    expect(organizer.unmocked.filter(x => x.includes('/tournaments'))).toEqual([]);
+    expect(participant.unmocked.filter(x => x.includes('/tournaments'))).toEqual([]);
+    await testInfo.attach('karting-championship', {
+      body: await race.screenshot(), contentType: 'image/png'
+    });
+  } finally {
+    await Promise.all([owner.close(), member.close()]);
+  }
+});
+
+test('Karting E2E: pontuação crescente falha e deixa de ser editável após associar corrida', async ({ page }) => {
+  const state = createKartingFixture();
+  const fixture = await mockCommunityApi(page, 'OWNER', 'karting', 'Karting',
+    ['Karting'], 1, 'LEAGUE', state);
+  await page.goto('/menu/communities/7?tab=tournaments');
+  await page.getByRole('button', { name: 'Criar liga individual' }).click();
+  await page.getByLabel('Nome do torneio').fill('Karting QA');
+  await page.getByRole('button', { name: 'Criar campeonato de Karting' }).click();
+  const race = page.getByRole('region', { name: 'Campeonato de Karting' });
+  await race.locator('#karting-race-points').fill('18,25,10');
+  await race.getByRole('button', { name: 'Guardar pontuação' }).click();
+  await expect(page.getByText(/pontos inteiros decrescentes/)).toBeVisible();
+  expect(state.points).toEqual([25,18,15]);
+  expect(state.writes.filter(x => x.path.endsWith('/races/points'))).toHaveLength(0);
+  await race.locator('#karting-race-points').fill('25,18,15');
+  await race.getByRole('button', { name: 'Guardar pontuação' }).click();
+  expect(state.writes.filter(x => x.path.endsWith('/races/points'))).toHaveLength(1);
+  await race.getByRole('button', { name: 'Associar' }).click();
+  await expect(race.locator('.race-points-editor')).toHaveCount(0);
+  await expect(race.getByText('25 · 18 · 15 pontos')).toBeVisible();
+  expect(state.linked).toBe(true);
+  expect(fixture.unmocked.filter(x => x.includes('/tournaments'))).toEqual([]);
 });
