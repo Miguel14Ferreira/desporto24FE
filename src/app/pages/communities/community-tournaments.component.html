@@ -56,8 +56,8 @@
             <span aria-hidden="true">👥</span><strong>Por equipas</strong>
             <span class="guide-tag">Ligas e taças disponíveis</span>
           </div>
-          <p>Escolham a modalidade e os jogadores por equipa. Criem equipas reais com os membros da comunidade.</p>
-          <p class="guide-example">Ex.: 20 membros divididos em quatro equipas de cinco.</p>
+          <p>Escolham a modalidade, criem as equipas e convidem os jogadores por ligação ou WhatsApp. Não precisam de definir um tamanho fixo para os plantéis.</p>
+          <p class="guide-example">Ex.: quatro equipas com plantéis flexíveis, a preencher por convite.</p>
           <p>Podem organizar ligas de todos contra todos ou taças por eliminatórias, com plantéis e resultados registados. Também podem combinar fases de grupos e eliminatórias, com apuramento automático.</p>
           @if (canManage && community.teamTournamentsEnabled !== false) {
             <button type="button" class="t-btn t-btn-primary" (click)="startTeamCreation()">Preparar torneio por equipas</button>
@@ -82,7 +82,7 @@
           <h4>{{ showTeamCreate ? 'Preparar torneio por equipas' : 'Criar liga individual' }}</h4>
           @if (showTeamCreate) {
             <p>Escolhe uma liga todos contra todos ou uma taça por eliminatórias.
-              Depois define a modalidade e os plantéis.</p>
+              Depois escolhe a modalidade. As equipas e os convites são geridos após a criação.</p>
           } @else {
             <p>Competição individual sem equipas: cada participante compete por si. Os resultados não alteram o histórico de jogos habituais da comunidade.</p>
           }
