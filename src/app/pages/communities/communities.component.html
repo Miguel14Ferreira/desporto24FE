@@ -3245,11 +3245,14 @@
                     </div>
                   </div>
 
-                  <label class="season-filter">
-                     <input type="checkbox" [(ngModel)]="showAllStandings">
-                     <span>{{ 'communities.identity.showAll' | t }}</span>
-                   </label>
-                   <div class="ranking-table-wrap">
+                  <div class="ranking-controls">
+                    <label class="ranking-members-toggle">
+                      <input type="checkbox" [(ngModel)]="showAllStandings">
+                      <span>{{ 'communities.identity.showAll' | t }}</span>
+                    </label>
+                  </div>
+                  @if (displayedRankings.length > 0) {
+                    <div class="ranking-table-wrap">
                     <table class="ranking-table">
                       <thead>
                         <tr>
@@ -3285,9 +3288,8 @@
                         }
                       </tbody>
                     </table>
-                  </div>
-
-                  @if (!displayedRankings.length) {
+                    </div>
+                  } @else {
                     <div class="module-empty compact">
                       <h3>{{ 'communities.noRanking' | t }}</h3>
                       <p>{{ 'communities.noRankingText' | t }}</p>
