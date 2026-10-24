@@ -1758,7 +1758,7 @@ test('xadrez apresenta 1/½/0 sem parâmetros genéricos e é limitado a ligas i
   await expect(page.locator('.classification-fixed-points')).not.toBeVisible();
   await page.locator('.create-advanced-rules summary').click();
   await expect(page.locator('.classification-fixed-points')).toBeVisible();
-  await expect(page.getByText('Empate: ½')).toBeVisible();
+  await expect(page.locator('.classification-fixed-points').getByText('Empate: ½', { exact: true })).toBeVisible();
   await expect(page.getByRole('group', { name: 'Regras de pontuação' })).toHaveCount(0);
 
   await page.getByRole('button', { name: 'Voltar às opções' }).click();
