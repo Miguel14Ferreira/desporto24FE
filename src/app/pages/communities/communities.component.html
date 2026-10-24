@@ -1131,6 +1131,7 @@
                               : newRoundEventType === 'SKATE_PARK' ? 'communities.skate.parkHint'
                               : newRoundEventType === 'SKATE_STREET' ? 'communities.skate.streetHint'
                               : newRoundEventType === 'PARKOUR_FREESTYLE' ? 'communities.parkour.freestyleHint'
+                              : newRoundEventType === 'CHESS_GAME' ? 'communities.chess.hint'
                               : newRoundEventType === 'BREAKING_BATTLE' ? 'communities.breaking.hint'
                               : newRoundEventType === 'TRAMPOLINE_INDIVIDUAL' ? 'communities.trampoline.hint'
                               : isFootvolleyEvent(newRoundEventType) ? 'communities.footvolley.hint'
@@ -1269,6 +1270,15 @@
                                       <input [(ngModel)]="entry.team" maxlength="60"
                                         [placeholder]="'communities.groupRoutine.groupPlaceholder' | t">
                                     </label>
+                                  } @else if (newRoundEventType === 'CHESS_GAME') {
+                                    <label>
+                                      <span>{{ 'communities.chess.color' | t }}</span>
+                                      <select [(ngModel)]="entry.team" [attr.aria-label]="'communities.chess.color' | t">
+                                        <option value="">{{ 'communities.chess.selectColor' | t }}</option>
+                                        <option value="WHITE">{{ 'communities.chess.white' | t }}</option>
+                                        <option value="BLACK">{{ 'communities.chess.black' | t }}</option>
+                                      </select>
+                                    </label>
                                   } @else if (viewForNewRound() !== 'race' && !newRoundEventType) {
                                     <label>
                                       <span>{{ 'communities.team' | t }}</span>
@@ -1318,6 +1328,15 @@
                                     <small>{{ 'communities.basketball.memberOnly' | t }}</small>
                                   } @else if (isGroupRoutineEvent(newRoundEventType)) {
                                     <small>{{ 'communities.groupRoutine.memberOnly' | t }}</small>
+                                  } @else if (newRoundEventType === 'CHESS_GAME') {
+                                    <label>
+                                      <span>{{ 'communities.chess.result' | t }}</span>
+                                      <select [(ngModel)]="entry.result" [attr.aria-label]="'communities.chess.result' | t">
+                                        <option value="WIN">{{ 'communities.result.win' | t }}</option>
+                                        <option value="DRAW">{{ 'communities.result.draw' | t }}</option>
+                                        <option value="LOSS">{{ 'communities.result.loss' | t }}</option>
+                                      </select>
+                                    </label>
                                   } @else if (newRoundEventType === 'BREAKING_BATTLE') {
                                     <label>
                                       <span>{{ 'communities.breaking.decision' | t }}</span>
@@ -2143,6 +2162,13 @@
                                     {{ (entry.result === 'WIN'
                                       ? 'communities.breaking.winner' : 'communities.breaking.loser') | t }}
                                   </span>
+                                } @else if (round.eventType === 'CHESS_GAME') {
+                                  <div class="round-surf-scores">
+                                    <small>{{ (entry.team === 'WHITE' ? 'communities.chess.white' : 'communities.chess.black') | t }}</small>
+                                    <span class="result-chip" [class.win]="entry.result === 'WIN'"
+                                      [class.loss]="entry.result === 'LOSS'">{{ chessGameScore(entry.result) }}</span>
+                                    <small>{{ 'communities.chess.points' | t }}</small>
+                                  </div>
                                 } @else if (neutralRound(round)) {
                                   @if (isWaveHeatEvent(round.eventType)) {
                                     @if (surfWaveTotal(entry) !== null) {

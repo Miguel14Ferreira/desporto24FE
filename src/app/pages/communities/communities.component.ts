@@ -11,6 +11,7 @@ import { eventOptionsForSport, eventView, isNeutralEvent, eventPresentationForma
   CommunityEventType } from './community-round-event-type';
 import { athleticsDisciplineOptions, athleticsDisciplineValid } from './community-field-disciplines';
 import { breakingBattleError } from './community-breaking-battle';
+import { chessGameError, chessGameScore } from './community-chess-results';
 import { isVolleyballEvent, isFootvolleyEvent, volleyballMaxSets, volleyballMinSets,
   volleyballMatchError, volleyballSetWinner, volleyballSetTotals,
   volleyballSideLabelKey, volleyballMemberSelectorKey,
@@ -822,6 +823,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   recordedRacketMatch(round: CommunityRound): boolean {
     return recordedRacketMatch(round);
   }
+  chessGameScore = chessGameScore;
   isTeamFinalEvent = isTeamFinalEvent;
   recordedTeamFinal = recordedTeamFinal;
   teamFinalWinner = teamFinalWinner;
@@ -3075,6 +3077,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     const race = this.viewForNewRound() === 'race';
     const neutral = isNeutralEvent(this.newRoundSport, this.newRoundEventType);
     const breaking = this.newRoundEventType === 'BREAKING_BATTLE';
+    const chess = this.newRoundEventType === 'CHESS_GAME';
     const groupRoutine = isGroupRoutineEvent(this.newRoundEventType);
     const basketball = isBasketballFinal(this.newRoundEventType);
     const teamFinal = isTeamFinalEvent(this.newRoundEventType);
@@ -3123,6 +3126,10 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       this.errorMessage = t('feedback.communities.' + routineError);
       return;
     }
+    if (chess && chessGameError(selectedEntries)) {
+      this.errorMessage = t('feedback.communities.chessInvalid');
+      return;
+    }
     if (this.newRoundEventType === 'BREAKING_BATTLE' && breakingBattleError(selectedEntries)) {
       this.errorMessage = t('feedback.communities.breakingInvalid');
       return;
@@ -3144,16 +3151,16 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     const entries = selectedEntries
       .map(entry => ({
         username: entry.username,
-        team: groupRoutine || basketball || volleyball || teamFinal ? entry.team.trim()
+        team: groupRoutine || basketball || volleyball || teamFinal || chess ? entry.team.trim()
           : race || neutral ? null : (entry.team.trim() || null),
-        result: breaking ? entry.result
+        result: breaking || chess ? entry.result
           : race || neutral ? 'DRAW' as CommunityMatchResult
           : racket ? (entry.team === racketWinner ? 'WIN' : 'LOSS') as CommunityMatchResult
           : entry.result,
-        goals: race || neutral || racket ? 0 : Math.max(0, Number(entry.goals) || 0),
-        assists: race || neutral || racket ? 0 : Math.max(0, Number(entry.assists) || 0),
-        mvp: !race && !neutral && !racket && Boolean(entry.mvp),
-        cleanSheet: !race && !neutral && !racket && Boolean(entry.cleanSheet),
+        goals: race || neutral || racket || chess ? 0 : Math.max(0, Number(entry.goals) || 0),
+        assists: race || neutral || racket || chess ? 0 : Math.max(0, Number(entry.assists) || 0),
+        mvp: !race && !neutral && !racket && !chess && Boolean(entry.mvp),
+        cleanSheet: !race && !neutral && !racket && !chess && Boolean(entry.cleanSheet),
         ...(neutral && !isWaveHeatEvent(this.newRoundEventType)
           ? { performanceValue: entry.performanceValue ?? null } : {}),
         ...(neutral && isWaveHeatEvent(this.newRoundEventType)
