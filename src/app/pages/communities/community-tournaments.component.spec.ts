@@ -265,6 +265,53 @@ describe('Community tournaments management', () => {
     expect(api.completeKarting).not.toHaveBeenCalled();
   });
 
+  it('shows a frozen Karting podium using official finishing ranks, including shared first place', () => {
+    component.selected = { ...draft, id: 19, sport: 'Karting', scoringMode: 'RACE_POINTS',
+      status: 'COMPLETED', championTied: true, completedAt: '2026-10-24T13:00:00Z' };
+    component.raceOverview = {
+      tournamentId: 19, pointsByPlace: [25, 18], linkedRaces: [], availableRaces: [],
+      standings: [
+        { position: 3, playerId: 15, fullName: 'João', races: 2, wins: 0,
+          podiums: 1, bestFinish: 3, championshipPoints: 21, penaltyPoints: 0 },
+        { position: 1, playerId: 11, fullName: 'Rui', races: 2, wins: 1,
+          podiums: 2, bestFinish: 1, championshipPoints: 43, penaltyPoints: 0 },
+        { position: 1, playerId: 10, fullName: 'Ana', races: 2, wins: 1,
+          podiums: 2, bestFinish: 1, championshipPoints: 43, penaltyPoints: 0 },
+        { position: 4, playerId: 12, fullName: 'Beatriz', races: 2, wins: 0,
+          podiums: 1, bestFinish: 3, championshipPoints: 12, penaltyPoints: 0 }
+      ]
+    };
+    expect(component.finalKartingPodium.map(driver => driver.position)).toEqual([1, 1, 3]);
+    expect(component.finalKartingPodium.map(driver => driver.fullName))
+      .toEqual(['Ana', 'Rui', 'João']);
+    component.selected = { ...component.selected, status: 'IN_PROGRESS' };
+    expect(component.finalKartingPodium).toEqual([]);
+    component.selected = { ...draft, status: 'COMPLETED', scoringMode: 'CHESS_HALF_POINTS' };
+    expect(component.finalKartingPodium).toEqual([]);
+  });
+
+  it('lists only finished Karting championships in reverse date order, preserving historical ties', () => {
+    const older = { ...draft, id: 30, name: 'Taça primavera',
+      sport: 'Karting', scoringMode: 'RACE_POINTS' as const,
+      status: 'COMPLETED' as const, completedAt: '2026-04-10T12:00:00Z',
+      championDisplayName: 'Ana', championTied: false };
+    const newer = { ...older, id: 31, name: 'Taça outono',
+      completedAt: '2026-10-12T12:00:00Z', championDisplayName: null, championTied: true };
+    component.tournaments = [
+      older, { ...draft, id: 32, sport: 'Karting', scoringMode: 'RACE_POINTS' },
+      { ...draft, id: 33, sport: 'Futebol', status: 'COMPLETED' },
+      newer
+    ];
+    expect(component.hasKartingCompetitions).toBeTrue();
+    expect(component.kartingPalmares.map(tournament => tournament.id)).toEqual([31, 30]);
+    expect(component.kartingPalmares[0].championTied).toBeTrue();
+    expect(component.kartingPalmares[1].championDisplayName).toBe('Ana');
+
+    component.tournaments = [];
+    expect(component.hasKartingCompetitions).toBeFalse();
+    expect(component.kartingPalmares).toEqual([]);
+  });
+
   it('does not present individual chess rules as a team-board tournament', async () => {
     component.chooseSport('Xadrez');
     component.startTeamCreation();
