@@ -129,7 +129,7 @@
         }
         @if (!sportDraft || editingSport) {
           <div id="tournament-sport-options" class="sport-options">
-        @if (communitySportOptions.length) {
+        @if (showCommunitySportShortcuts) {
           <div class="t-community-sports" role="group" aria-label="Modalidades da comunidade">
             @for (item of communitySportOptions.slice(0, 6); track item) {
               <button type="button" class="t-sport-chip" [disabled]="busy"
