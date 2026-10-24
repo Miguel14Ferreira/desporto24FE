@@ -88,6 +88,11 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   // Send and delivery checks belong to conversations, not the entire inbox.
   // A delayed response must not lock or mutate a different selected thread.
   private readonly sendingKeys = new Set<string>();
+  /** Match an AFTER_COMMIT socket event that beats the POST timeout/error. */
+  private readonly inFlightByConversation = new Map<string, {
+    key: string; text: string; replyToMessageId: number | null; knownIds: Set<number>; startedAt: number;
+  }>();
+  private readonly confirmedWhileSending = new Map<string, InboxMessage>();
   private readonly verifyingKeys = new Set<string>();
   private readonly sendErrorsByConversation = new Map<string, string>();
   private readonly subscriptions = new Subscription();
@@ -735,6 +740,16 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.seenRealtimeIds.add(eventId);
     if (this.seenRealtimeIds.size > 1000) this.seenRealtimeIds.clear();
 
+    const sending = this.inFlightByConversation.get(key);
+    if (sending && this.matchesPending(message, sending)) {
+      // The server committed the POST, but its HTTP response could still
+      // timeout. Remember this exact server message until the POST settles.
+      this.confirmedWhileSending.set(key, message);
+    }
+    // A delivery already marked uncertain is confirmed even if the
+    // recipient is NOT the conversation currently shown on this device.
+    this.confirmFromHistoryIfPresent(key, [message]);
+
     const isSelected = key === this.selectedKey;
     const isMine = !!this.currentUsername
       && message.sender.toLowerCase() === this.currentUsername.toLowerCase();
@@ -748,7 +763,6 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
         : conversation));
 
     if (isSelected) {
-      this.confirmFromHistoryIfPresent(key, [message]);
       // The historical window is not the live end of the chat. Never mix
       // fresh socket events into it or acknowledge them as rendered/read.
       if (this.historicalPreview) return;
@@ -757,7 +771,6 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       else this.newMessagesPending = 0;
       this.messages = mergeInboxMessages([...this.messages, message]);
       if (this.previewLoading) this.realtimeDuringLoad.set(message.id, message);
-      this.confirmFromHistoryIfPresent(key, [message]);
       if (!this.previewLoading && !this.previewError && follow) this.markRenderedRead(key);
       this.scrollRequested = follow;
     }
@@ -875,6 +888,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     }
 
     this.sendingKeys.add(key);
+    this.inFlightByConversation.set(key, pending);
+    this.confirmedWhileSending.delete(key);
     this.sending = true;
     this.sendErrorsByConversation.delete(key);
     this.composerError = '';
@@ -886,6 +901,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     // Unlike HTTP GETs, ambiguous POSTs are NEVER automatically retried.
     send.pipe(timeout(10000), finalize(() => {
       this.sendingKeys.delete(key);
+      this.inFlightByConversation.delete(key);
+      this.confirmedWhileSending.delete(key);
       if (this.selectedKey === key) this.sending = false;
     })).subscribe({
       next: message => {
@@ -904,9 +921,18 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       },
       error: error => {
         if (this.isUncertainError(error)) {
-          // A failed/ambiguous POST never retries automatically; retain the
-          // original draft and require verification before any resend.
+          // WebSocket can prove AFTER_COMMIT delivery before HTTP times out.
+          // Resolve that race before marking a send uncertain or issuing
+          // another GET. Never retry the original POST automatically.
           this.pendingByConversation.set(key, pending);
+          const confirmed = this.confirmedWhileSending.get(key)
+            || (key === this.selectedKey
+              ? this.messages.find(item => this.matchesPending(item, pending))
+              : undefined);
+          if (confirmed && this.matchesPending(confirmed, pending)) {
+            this.confirmFromHistoryIfPresent(key, [confirmed]);
+            return;
+          }
           if (key === this.selectedKey) {
             this.deliveryUncertain = true;
             this.composerError = t('chat.sendUncertain');
