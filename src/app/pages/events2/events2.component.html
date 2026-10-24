@@ -437,6 +437,9 @@
           </div>
         }
 
+        @if (venueSuggestionSubmitted) {
+          <p class="venue-submission-inline-notice" role="status">{{ 'venue.submission.eventHint' | t }}</p>
+        }
         @if (showVenueCreator && locationMethod === 'venue') {
           <div class="venue-create-card">
             <div class="venue-create-grid">
@@ -611,7 +614,7 @@
               class="primary-action jynlo-action jynlo-action--primary"
               [disabled]="venueSaving"
               (click)="saveVenue()">
-              {{ venueSaving ? ('venue.saving' | t) : ('venue.save' | t) }}
+              {{ venueSaving ? ('venue.submission.sending' | t) : ('venue.submission.send' | t) }}
             </button>
           </div>
         }

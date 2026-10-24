@@ -5,6 +5,7 @@ export type AppLanguage = 'pt' | 'en';
 type Dictionary = Record<string, string>;
 
 const PT: Dictionary = {
+  'venue.submission.eventHint': 'Sugestão de recinto enviada para aprovação. Para criar a sessão agora, escolhe um recinto existente ou usa o Google Maps/GPS.',
   'venue.submission.title': 'Sugerir um recinto',
   'venue.submission.explainer': 'O recinto será enviado à administração para análise e só ficará visível após aprovação.',
   'venue.submission.send': 'Enviar sugestão',
@@ -3385,6 +3386,7 @@ const PT: Dictionary = {
 };
 
 const EN: Dictionary = {
+  'venue.submission.eventHint': 'Venue submitted for review. To create a session now, choose an approved venue or use Google Maps/GPS.',
   'venue.submission.title': 'Suggest a venue',
   'venue.submission.explainer': 'Your venue will be reviewed by the administrators and will appear publicly only after approval.',
   'venue.submission.send': 'Submit suggestion',

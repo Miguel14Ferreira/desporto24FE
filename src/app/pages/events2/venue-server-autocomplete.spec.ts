@@ -21,7 +21,7 @@ describe('Create session venue server autocomplete', () => {
 
   beforeEach(async () => {
     venues = jasmine.createSpyObj<VenueService>('VenueService', [
-      'suggest', 'search', 'create', 'listPhotos', 'resolveMapLink'
+      'suggest', 'search', 'submitSuggestion', 'listPhotos', 'resolveMapLink'
     ]);
     venues.suggest.and.returnValue(of(page([])));
     venues.listPhotos.and.returnValue(of([]));
@@ -31,7 +31,7 @@ describe('Create session venue server autocomplete', () => {
       providers: [
         ...TEST_PROVIDERS,
         { provide: VenueService, useValue: venues },
-        { provide: SessionService, useValue: jasmine.createSpyObj<SessionService>('SessionService', ['create']) }
+        { provide: SessionService, useValue: jasmine.createSpyObj<SessionService>('SessionService', ['submitSuggestion']) }
       ]
     }).compileComponents();
     fixture = TestBed.createComponent(Events2Component);

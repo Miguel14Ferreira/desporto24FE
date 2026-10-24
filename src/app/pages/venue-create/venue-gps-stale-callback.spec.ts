@@ -14,7 +14,7 @@ describe('Venue browser GPS response consistency', () => {
     ({ coords: { latitude, longitude } } as GeolocationPosition);
 
   beforeEach(() => {
-    venueService = jasmine.createSpyObj<VenueService>('VenueService', ['resolveMapLink', 'create']);
+    venueService = jasmine.createSpyObj<VenueService>('VenueService', ['resolveMapLink', 'submitSuggestion']);
     const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
     component = new VenueCreateComponent(venueService, router);
     onSuccess = [];

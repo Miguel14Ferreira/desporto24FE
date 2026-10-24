@@ -711,3 +711,5 @@ input[type='datetime-local'],
     max-width: 100%;
   }
 }
+
+.venue-submission-inline-notice{padding:13px 16px;margin:12px 0;border:1px solid rgba(47,222,165,.48);border-radius:12px;background:rgba(21,118,94,.16);color:#aaf7d9;line-height:1.5}

@@ -17,8 +17,8 @@ describe('Events2Component', () => {
   let router: Router;
 
   beforeEach(async () => {
-    sessionService = jasmine.createSpyObj<SessionService>('SessionService', ['create']);
-    venueService = jasmine.createSpyObj<VenueService>('VenueService', ['search', 'suggest', 'create', 'listPhotos', 'resolveMapLink']);
+    sessionService = jasmine.createSpyObj<SessionService>('SessionService', ['submitSuggestion']);
+    venueService = jasmine.createSpyObj<VenueService>('VenueService', ['search', 'suggest', 'submitSuggestion', 'listPhotos', 'resolveMapLink']);
     venueService.suggest.and.returnValue(of({ venues: [], page: 0, hasMore: false }));
     venueService.listPhotos.and.returnValue(of([]));
 
@@ -232,7 +232,7 @@ describe('Events2Component', () => {
     component.venueName = 'Campo Novo';
     component.city = 'Lisboa';
     component.address = 'Rua Nova';
-    venueService.create.and.returnValue(of({
+    venueService.submitSuggestion.and.returnValue(of({
       id: 801, name: 'Campo Novo', city: 'Lisboa',
       address: 'Rua Nova', sports: 'Padel', latitude: null, longitude: null
     } as Venue));
@@ -259,7 +259,7 @@ describe('Events2Component', () => {
     component.venueName = 'Campo Novo';
     component.city = 'Lisboa';
     component.address = 'Rua Nova';
-    venueService.create.and.returnValue(of({
+    venueService.submitSuggestion.and.returnValue(of({
       id: 801, name: 'Campo Novo', city: 'Lisboa',
       address: 'Rua Nova', sports: 'Padel', latitude: null, longitude: null
     } as Venue));
@@ -280,7 +280,7 @@ describe('Events2Component', () => {
     component.venueName = 'Campo Novo';
     component.city = 'Lisboa';
     component.address = 'Rua Nova';
-    venueService.create.and.returnValue(of({
+    venueService.submitSuggestion.and.returnValue(of({
       id: 801, name: 'Campo Novo', city: 'Lisboa',
       address: 'Rua Nova', sports: 'Padel', latitude: null, longitude: null
     } as Venue));
@@ -516,7 +516,7 @@ describe('Events2Component', () => {
 
   it('waits for a newly created venue before submitting the session', () => {
     const pending = new Subject<Venue>();
-    venueService.create.and.returnValue(pending.asObservable());
+    venueService.submitSuggestion.and.returnValue(pending.asObservable());
     component.sport = 'Padel';
     component.gameDate = '2099-10-15T18:00';
     component.city = 'Lisboa';
@@ -553,7 +553,7 @@ describe('Events2Component', () => {
 
   it('re-enables session submission after venue creation fails', () => {
     const pending = new Subject<Venue>();
-    venueService.create.and.returnValue(pending.asObservable());
+    venueService.submitSuggestion.and.returnValue(pending.asObservable());
     component.sport = 'Padel';
     component.gameDate = '2099-10-15T18:00';
     component.city = 'Lisboa';
@@ -1465,7 +1465,7 @@ describe('Events2Component', () => {
 
     component.saveVenue();
 
-    expect(venueService.create).not.toHaveBeenCalled();
+    expect(venueService.submitSuggestion).not.toHaveBeenCalled();
     expect(component.venueSaving).toBeFalse();
     expect(component.errorMessage).toContain('modalidade');
   });
@@ -1478,86 +1478,41 @@ describe('Events2Component', () => {
 
     component.saveVenue();
 
-    expect(venueService.create).not.toHaveBeenCalled();
+    expect(venueService.submitSuggestion).not.toHaveBeenCalled();
     expect(component.errorMessage).toContain('modalidade');
   });
 
-  it('sends the selected catalog sport when saving a venue', () => {
-    venueService.create.and.returnValue(of({
-      id: 303, name: 'Campo Novo', city: 'Lisboa', address: 'Rua A',
-      sports: 'Padel', latitude: null, longitude: null
-    } as Venue));
-    component.sport = 'Padel';
-    component.venueName = 'Campo Novo';
-    component.city = 'Lisboa';
-    component.address = 'Rua A';
-
-    component.saveVenue();
-
-    expect(venueService.create).toHaveBeenCalledWith(
-      jasmine.objectContaining({ sports: 'Padel', name: 'Campo Novo' })
-    );
-    expect(component.selectedVenueId).toBe(303);
-  });
-
-  it('selects a newly created venue and refreshes its search, map and photograph', () => {
-    const venue = {
-      id: 301, name: 'Campo Novo', city: 'Lisboa', address: 'Rua A',
-      sports: 'Padel', latitude: 38.72, longitude: -9.14
-    } as Venue;
-    venueService.create.and.returnValue(of(venue));
-    venueService.listPhotos.and.returnValue(of([{
-      id: 8, photoUrl: '/new-venue.jpg', uploadedByUsername: null,
-      createdAt: '2026-10-14T00:00:00Z'
-    }]));
+  it('submits a new venue suggestion without making it selectable before approval', () => {
+    venueService.submitSuggestion.and.returnValue(of({ id: 303, status: 'PENDING' }));
     component.sport = 'Padel';
     component.venueName = 'Campo Novo';
     component.city = 'Lisboa';
     component.address = 'Rua A';
     component.showVenueCreator = true;
-    component.applyCurrentPosition(38.72, -9.14, 17);
-
     component.saveVenue();
-    fixture.detectChanges();
 
-    expect(venueService.create).toHaveBeenCalledTimes(1);
-    expect(venueService.listPhotos).toHaveBeenCalledWith(301);
-    expect(component.selectedVenueId).toBe(301);
-    expect(component.venueSearch).toBe('Campo Novo · Lisboa');
-    expect(component.city).toBe('Lisboa');
-    expect(component.address).toBe('Rua A');
-    expect(component.latitude).toBe(38.72);
-    expect(component.longitude).toBe(-9.14);
-    expect(component.locationSource).toBeNull();
-    expect(component.selectedVenuePhoto?.photoUrl).toBe('/new-venue.jpg');
+    expect(venueService.submitSuggestion).toHaveBeenCalledWith(
+      jasmine.objectContaining({ sports: 'Padel', name: 'Campo Novo' })
+    );
+    expect(component.venueSuggestionSubmitted).toBeTrue();
+    expect(component.selectedVenueId).toBeNull();
+    expect(component.venues.some(v => v.id === 303)).toBeFalse();
+    expect(venueService.listPhotos).not.toHaveBeenCalledWith(303);
     expect(component.showVenueCreator).toBeFalse();
-    expect(fixture.nativeElement.querySelector('.venue-preview img')).not.toBeNull();
-    expect(fixture.nativeElement.querySelector('.venue-preview iframe')).not.toBeNull();
   });
 
-  it('clears an obsolete map point when a newly saved venue has no coordinates', () => {
-    venueService.create.and.returnValue(of({
-      id: 302, name: 'Campo sem mapa', city: 'Lisboa', address: 'Rua B',
-      sports: 'Padel', latitude: null, longitude: null
-    } as Venue));
+  it('does not turn the new suggestion into a public venue even when GPS is supplied', () => {
+    venueService.submitSuggestion.and.returnValue(of({ id: 301, status: 'PENDING' }));
     component.sport = 'Padel';
-    component.venueName = 'Campo sem mapa';
+    component.venueName = 'Campo Novo';
     component.city = 'Lisboa';
-    component.address = 'Rua B';
-    component.applyCurrentPosition(38.72, -9.14);
-
+    component.address = 'Rua A';
+    component.applyCurrentPosition(38.72, -9.14, 17);
     component.saveVenue();
-    fixture.detectChanges();
 
-    expect(component.selectedVenueId).toBe(302);
-    expect(component.venueSearch).toBe('Campo sem mapa · Lisboa');
-    expect(component.city).toBe('Lisboa');
-    expect(component.address).toBe('Rua B');
-    expect(component.latitude).toBeNull();
-    expect(component.longitude).toBeNull();
-    expect(component.locationCaptured).toBeFalse();
-    expect(component.selectedVenueMapUrl).toBeNull();
-    expect(fixture.nativeElement.querySelector('.venue-preview iframe')).toBeNull();
+    expect(component.selectedVenueId).toBeNull();
+    expect(component.venueSuggestionSubmitted).toBeTrue();
+    expect(component.venues.some(v => v.id === 301)).toBeFalse();
   });
 
   it('should apply a saved venue to the session form', () => {

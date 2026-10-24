@@ -97,6 +97,7 @@ export class Events2Component implements OnInit, OnDestroy {
       if (this.sportSelected) this.loadVenues();
     });
   venueSaving = false;
+  venueSuggestionSubmitted = false;
   showVenueCreator = false;
   venueName = '';
   venueType = '';
@@ -755,9 +756,10 @@ export class Events2Component implements OnInit, OnDestroy {
     }
 
     this.venueSaving = true;
+    this.venueSuggestionSubmitted = false;
     this.errorMessage = '';
 
-    this.venueService.create({
+    this.venueService.submitSuggestion({
       name: this.venueName.trim(),
       city: this.city.trim(),
       district: this.venueDistrict,
@@ -788,35 +790,18 @@ export class Events2Component implements OnInit, OnDestroy {
         finalize(() => this.venueSaving = false)
       )
       .subscribe({
-        next: venue => {
-          this.newlyCreatedVenues = [
-            ...this.newlyCreatedVenues.filter(item => item.id !== venue.id),
-            venue
-          ];
-          this.venues = [...this.venues.filter(item => item.id !== venue.id), venue]
-            .sort((a, b) => a.name.localeCompare(b.name, 'pt'));
-          // Newly saved venues must go through the same selection flow as existing ones.
-          this.selectVenue(venue.id);
-          this.venueSearch = venue.name + ' · ' + venue.city;
+        next: suggestion => {
+          // Pending suggestions are NOT public venue ids. Never select or
+          // attach them to a session before an administrator approves them.
+          if (suggestion.status !== 'PENDING') {
+            this.errorMessage = t('feedback.venue.createError');
+            return;
+          }
+          this.venueSuggestionSubmitted = true;
+          this.selectedVenueId = null;
           this.showVenueCreator = false;
           this.venueName = '';
-          this.venueType = '';
-          this.venueOwnershipType = null;
-          this.venueSurfaceType = '';
-          this.venueIndoor = false;
-          this.venueChangingRooms = false;
-          this.venueToilets = null;
-          this.venueLockers = null;
-          this.venueAccessible = null;
-          this.venueFirstAid = null;
-          this.venueAed = null;
-          this.venueCafe = null;
-          this.venueServices = '';
-          this.venueTransport = '';
-          this.venueOpeningHours = '';
-          this.venuePriceInfo = '';
-          this.venueParking = false;
-          this.venueLighting = false;
+          this.errorMessage = '';
         },
         error: error => {
           this.errorMessage = this.errorFrom(
