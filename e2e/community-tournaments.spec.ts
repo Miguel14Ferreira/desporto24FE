@@ -2078,3 +2078,46 @@ test('Karting E2E: empate no primeiro lugar não inventa campeão', async ({ pag
   await expect(table.locator('tbody tr')).toHaveCount(2);
   expect(fixture.unmocked.filter(x => x.includes('/tournaments'))).toEqual([]);
 });
+
+
+test('Karting E2E: PT/EN acompanha idioma da Jynlo em pontuação e arquivo', async ({ page }) => {
+  const state = createKartingFixture();
+  const fixture = await mockCommunityApi(page, 'OWNER', 'karting', 'Karting',
+    ['Karting'], 1, 'LEAGUE', state);
+
+  await page.goto('/menu/communities/7?tab=tournaments');
+  await page.getByRole('button', { name: 'Criar liga individual' }).click();
+  await page.getByLabel('Nome do torneio').fill('Karting languages QA');
+  await page.getByRole('button', { name: 'Criar campeonato de Karting' }).click();
+
+  await page.evaluate(() => localStorage.setItem('d24-language', 'en'));
+  await page.reload();
+  const race = page.getByRole('region', { name: 'Karting championship' });
+  await expect(race.getByText('Championship races')).toBeVisible();
+  await expect(race.getByText('Points by position')).toBeVisible();
+  await expect(race.getByLabel('Points from first place onward, separated by commas')).toBeVisible();
+
+  await race.locator('#karting-race-points').fill('10,20,5');
+  await race.getByRole('button', { name: 'Save points' }).click();
+  await expect(page.getByText(/Enter up to 20 descending whole-number/)).toBeVisible();
+  expect(state.writes.filter(x => x.path.endsWith('/races/points'))).toHaveLength(0);
+  await race.locator('#karting-race-points').fill('25,18,15');
+  await race.getByRole('button', { name: 'Save points' }).click();
+  await race.getByRole('button', { name: 'Link' }).click();
+  await expect(race.getByRole('table', { name: 'Karting standings' })
+    .locator('tbody tr')).toHaveCount(2);
+  await expect(race.getByText(/DNF.*Carla/)).toBeVisible();
+
+  await race.getByRole('button', { name: 'Finish Karting championship' }).click();
+  await race.getByRole('button', { name: 'Yes, finish and archive standings' }).click();
+  await expect(page.getByText('Champion: Ana')).toBeVisible();
+  await expect(race.getByText('Final standings archived')).toBeVisible();
+  await expect(race.getByText(/Community round results may be corrected/)).toBeVisible();
+
+  await page.evaluate(() => localStorage.setItem('d24-language', 'pt'));
+  await page.reload();
+  const portuguese = page.getByRole('region', { name: 'Campeonato de Karting' });
+  await expect(page.getByText('Campeão: Ana')).toBeVisible();
+  await expect(portuguese.getByText('Classificação final arquivada')).toBeVisible();
+  expect(fixture.unmocked.filter(x => x.includes('/tournaments'))).toEqual([]);
+});
