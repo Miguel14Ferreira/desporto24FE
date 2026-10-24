@@ -107,6 +107,7 @@ describe('SocialStoriesComponent', () => {
 
   it('displays the @username and hides the native video player controls and dates', fakeAsync(() => {
     api.feed.and.returnValue(of([{ ...picture, video: true }]));
+    api.mine.and.returnValue(of([]));
     fixture.detectChanges();
     tick();
     component.openGroup(component.storyGroups[0]);
