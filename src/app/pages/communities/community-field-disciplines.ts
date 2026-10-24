@@ -6,6 +6,11 @@ export type GymApparatus = 'FLOOR' | 'VAULT' | 'POMMEL_HORSE' | 'RINGS'
   | 'PARALLEL_BARS' | 'HORIZONTAL_BAR' | 'UNEVEN_BARS' | 'BALANCE_BEAM';
 export type BodyboardStance = 'PRONE' | 'DROP_KNEE';
 export type RhythmicApparatus = 'HOOP' | 'BALL' | 'CLUBS' | 'RIBBON';
+export type SwimmingPoolEvent = 'FREE_50' | 'FREE_100' | 'FREE_200' | 'BACK_100'
+  | 'BREAST_100' | 'FLY_100' | 'IM_200';
+const SWIMMING_LCM: readonly SwimmingPoolEvent[] = [
+  'FREE_50', 'FREE_100', 'FREE_200', 'BACK_100', 'BREAST_100', 'FLY_100', 'IM_200'
+];
 const RHYTHMIC_APPARATUS: readonly RhythmicApparatus[] = ['HOOP', 'BALL', 'CLUBS', 'RIBBON'];
 const BODYBOARD_STANCES: readonly BodyboardStance[] = ['PRONE', 'DROP_KNEE'];
 
@@ -20,8 +25,9 @@ const OPTIONS: Record<string, readonly AthleticsDiscipline[]> = {
 
 export function athleticsDisciplineOptions(
   sport: string | null | undefined, eventType: string | null | undefined
-): readonly (AthleticsDiscipline | GymApparatus | BodyboardStance | RhythmicApparatus)[] {
+): readonly (AthleticsDiscipline | GymApparatus | BodyboardStance | RhythmicApparatus | SwimmingPoolEvent)[] {
   const normalized = sport?.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+  if (normalized === 'natacao' && eventType === 'SWIM_LCM') return SWIMMING_LCM;
   if (normalized === 'atletismo') return OPTIONS[eventType || ''] ?? [];
   if (normalized === 'ginastica artistica' && eventType === 'APPARATUS') return GYM_APPARATUS;
   if (normalized === 'bodyboard' && eventType === 'BODYBOARD_HEAT') return BODYBOARD_STANCES;
@@ -35,6 +41,6 @@ export function athleticsDisciplineValid(
 ): boolean {
   const options = athleticsDisciplineOptions(sport, eventType);
   return options.length
-    ? options.includes(discipline as AthleticsDiscipline | GymApparatus | BodyboardStance | RhythmicApparatus)
+    ? options.includes(discipline as AthleticsDiscipline | GymApparatus | BodyboardStance | RhythmicApparatus | SwimmingPoolEvent)
     : !discipline;
 }
