@@ -504,13 +504,48 @@
                             [(ngModel)]="feedDraft"
                             [disabled]="timelineSending"
                             [placeholder]="'communities.timelineFeedPlaceholder' | t"></textarea>
+                  @if (feedImagePreview) {
+                    <div class="community-feed-media-preview">
+                      <img [src]="feedImagePreview" [alt]="'feed.imagePreviewAlt' | t">
+                      <button type="button" class="jynlo-action jynlo-action--danger"
+                        [disabled]="timelineSending" (click)="clearCommunityFeedImage()">
+                        {{ 'feed.removeImage' | t }}
+                      </button>
+                    </div>
+                  }
+                  @if (feedVideoPreview) {
+                    <div class="community-feed-media-preview">
+                      <video [src]="feedVideoPreview" controls playsinline preload="metadata"
+                        [attr.aria-label]="'feed.videoPreviewAlt' | t"></video>
+                      <button type="button" class="jynlo-action jynlo-action--danger"
+                        [disabled]="timelineSending" (click)="clearCommunityFeedVideo()">
+                        {{ 'feed.removeVideo' | t }}
+                      </button>
+                    </div>
+                  }
+                  <div class="community-feed-media-actions">
+                    <label class="community-feed-file-picker jynlo-action jynlo-action--neutral"
+                      [class.disabled]="timelineSending">
+                      <input type="file" accept="image/jpeg,image/png,image/webp"
+                        [disabled]="timelineSending" (change)="onCommunityFeedImageChange($event)">
+                      <span aria-hidden="true">▧</span>
+                      {{ feedImageFile ? ('feed.changeImage' | t) : ('feed.addImage' | t) }}
+                    </label>
+                    <label class="community-feed-file-picker jynlo-action jynlo-action--neutral"
+                      [class.disabled]="timelineSending">
+                      <input type="file" accept="video/mp4,video/webm"
+                        [disabled]="timelineSending" (change)="onCommunityFeedVideoChange($event)">
+                      <span aria-hidden="true">▶</span>
+                      {{ feedVideoFile ? ('feed.changeVideo' | t) : ('feed.addVideo' | t) }}
+                    </label>
+                  </div>
                   <div class="community-feed-composer-actions">
                     <span class="community-feed-composer-note">
                       <span aria-hidden="true">✦</span>
                       {{ 'communities.timelineComposerNote' | t }}
                     </span>
                     <button type="submit" class="primary-action jynlo-action jynlo-action--primary"
-                            [disabled]="timelineSending || !feedDraft.trim()">
+                            [disabled]="!canPublishCommunityPost">
                       {{ timelineSending ? ('common.processing' | t) : ('communities.timelinePublish' | t) }}
                     </button>
                   </div>
@@ -559,7 +594,19 @@
                             </button>
                           }
                         </div>
-                        <p class="community-feed-body">{{ entry.body }}</p>
+                        @if (entry.body) {
+                          <p class="community-feed-body">{{ entry.body }}</p>
+                        }
+                        @if (communityFeedMediaUrl(entry.imageUrl); as image) {
+                          <img class="community-feed-post-media" [src]="image"
+                            [alt]="'feed.postImageAlt' | t:{ user: communityFeedAuthorName(entry.username) }"
+                            loading="lazy">
+                        }
+                        @if (communityFeedMediaUrl(entry.videoUrl); as video) {
+                          <video class="community-feed-post-media community-feed-post-video"
+                            [src]="video" controls playsinline preload="none"
+                            [attr.aria-label]="'feed.postVideoAlt' | t:{ user: communityFeedAuthorName(entry.username) }"></video>
+                        }
                       </article>
                     }
                   </div>
