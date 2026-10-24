@@ -1042,8 +1042,11 @@
                         <th scope="row">{{ playerLabel(row) }}</th>
                         <td>{{ row.played }}</td><td>{{ row.won }}</td>
                         <td>{{ row.drawn }}</td><td>{{ row.lost }}</td>
-                        <td>{{ row.goalsFor }}</td><td>{{ row.goalsAgainst }}</td>
-                        <td>{{ row.goalDifference }}</td><td class="points-cell">{{ row.points }}</td>
+                        @if (!isChessTournament) {
+                          <td>{{ row.goalsFor }}</td><td>{{ row.goalsAgainst }}</td>
+                          <td>{{ row.goalDifference }}</td>
+                        }
+                        <td class="points-cell">{{ formatTournamentPoints(row.points) }}</td>
                       </tr>
                     }
                   </tbody>
