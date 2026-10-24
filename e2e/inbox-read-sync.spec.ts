@@ -25,6 +25,7 @@ const messages: Message[] = [{
 }];
 const readThrough = new Map<string, number>([['bea', 41]]);
 const requests: string[] = [];
+const capturedSends: Array<{username:string;peer:string;text:string;replyToMessageId?:number}> = [];
 const unauthorized: string[] = [];
 const authenticatedSockets = new Map<string, Set<(value: unknown) => void>>();
 const socketRoutes = new Map<string, Array<{ close: (options?: {code?: number; reason?: string}) => void }>>();
@@ -201,7 +202,8 @@ async function authenticatedContext(browser: import('@playwright/test').Browser,
           await new Promise<void>(resolve => { releaseAnaPost = resolve; });
           releaseAnaPost = null;
         }
-        const body = req.postDataJSON() as { text: string };
+        const body = req.postDataJSON() as { text: string; replyToMessageId?:number };
+        capturedSends.push({username,peer,text:body.text,replyToMessageId:body.replyToMessageId});
         const sent = {
           id: messages[messages.length - 1].id + 1, username1: username,
           username2: peer, text: body.text, date: utc(), dataDisplay: null
@@ -784,6 +786,53 @@ test('reloading mid-send recovers the committed message without a second POST', 
     holdReplyAfterCommit=false;
     releaseCommittedReply=null;
     suppressOwnCommittedSocket=false;
+    await context.close();
+  }
+});
+
+test('reply quote remains bound to its original conversation after switching chats', async ({browser}) => {
+  messages.splice(1);
+  readThrough.clear();
+  readThrough.set('bea',41);
+  authenticatedSockets.clear();
+  requests.length=0;
+  capturedSends.length=0;
+  unauthorized.length=0;
+  offlineAddedFriend=true;
+  const context=await authenticatedContext(browser,'ana');
+  try {
+    const page=await context.newPage();
+    const errors:string[]=[];
+    page.on('pageerror',e=>errors.push(e.message));
+    await page.goto('/menu/messages?kind=direct&id=bea',{waitUntil:'domcontentloaded'});
+    const old=page.locator('.inbox-bubble[data-message-id="41"]');
+    await expect(old).toBeVisible();
+    await old.locator('.inbox-reply-action').click();
+    await expect(page.locator('.inbox-reply-banner')).toContainText('Primeira mensagem para testar');
+    await page.locator('#inbox-reply').fill('Combinado, Bea');
+
+    // Another friend has a separate draft; no quote from Bea may leak there.
+    await page.locator('.inbox-entry').filter({hasText:'Carla'}).click();
+    await expect(page.locator('.inbox-reply-banner')).toHaveCount(0);
+    await page.locator('#inbox-reply').fill('Escrever à Carla');
+    await page.locator('.inbox-entry').filter({hasText:'Bea'}).click();
+    await expect(page.locator('#inbox-reply')).toHaveValue('Combinado, Bea');
+    await expect(page.locator('.inbox-reply-banner')).toContainText('Primeira mensagem para testar');
+    await page.locator('.inbox-composer button[type="submit"]').click();
+    await expect.poll(()=>capturedSends.length).toBe(1);
+    expect(capturedSends[0]).toMatchObject({
+      username:'ana',peer:'bea',text:'Combinado, Bea',replyToMessageId:41
+    });
+    await expect(page.locator('#inbox-reply')).toHaveValue('');
+    await expect(page.locator('.inbox-reply-banner')).toHaveCount(0);
+    await page.locator('.inbox-entry').filter({hasText:'Carla'}).click();
+    await expect(page.locator('#inbox-reply')).toHaveValue('Escrever à Carla');
+    await expect(page.locator('.inbox-reply-banner')).toHaveCount(0);
+    expect(requests.filter(r=>r==='ana:POST /api/chat/me/bea')).toHaveLength(1);
+    expect(unauthorized).toEqual([]);
+    expect(errors).toEqual([]);
+  } finally {
+    offlineAddedFriend=false;
     await context.close();
   }
 });
