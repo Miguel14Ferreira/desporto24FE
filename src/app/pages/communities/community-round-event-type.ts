@@ -23,7 +23,8 @@ export type CommunityEventType = 'RACE' | 'FREESTYLE' | 'TRACK' | 'JUMP' | 'THRO
     | 'JUDO_IPPON' | 'JUDO_AWASETE_IPPON' | 'JUDO_WAZA_ARI' | 'JUDO_YUKO' | 'JUDO_HANSOKU_MAKE'
     | 'KARATE_KUMITE_POINTS' | 'KARATE_KUMITE_SENSHU' | 'KARATE_KUMITE_HANTEI' | 'KARATE_KATA_JUDGES'
     | 'TKD_KYORUGI_BEST3' | 'TKD_POOMSAE_RECOGNIZED' | 'TKD_POOMSAE_FREESTYLE'
-    | 'BJJ_IBJJF_GI_SUBMISSION' | 'BJJ_IBJJF_GI_POINTS';
+    | 'BJJ_IBJJF_GI_SUBMISSION' | 'BJJ_IBJJF_GI_POINTS'
+    | 'BOXING_WB_POINTS' | 'BOXING_WB_KO' | 'BOXING_WB_RSC';
 export interface CommunityEventOption { code: CommunityEventType; labelKey: string }
 const TYPES: Record<string, readonly CommunityEventOption[]> = {
   basquetebol: [{ code: 'BASKETBALL_FINAL', labelKey: 'communities.basketball.fiveVsFive' }],
@@ -60,6 +61,11 @@ const TYPES: Record<string, readonly CommunityEventOption[]> = {
     { code: 'FENCING_DE_15', labelKey: 'communities.teamFinal.fencingElimination' }
   ],
   xadrez: [{ code: 'CHESS_GAME', labelKey: 'communities.eventType.chess_game' }],
+  boxe: [
+    { code: 'BOXING_WB_POINTS', labelKey: 'communities.boxing.winPoints' },
+    { code: 'BOXING_WB_KO', labelKey: 'communities.boxing.winKo' },
+    { code: 'BOXING_WB_RSC', labelKey: 'communities.boxing.winRsc' }
+  ],
   'jiu-jitsu brasileiro': [
     { code: 'BJJ_IBJJF_GI_SUBMISSION', labelKey: 'communities.bjj.submission' },
     { code: 'BJJ_IBJJF_GI_POINTS', labelKey: 'communities.bjj.points' }
@@ -188,6 +194,8 @@ export function eventPresentationFormat(
   if (eventType === 'CHESS_GAME' && normalize(sport || '') === 'xadrez') return 'duel';
   if (eventType?.startsWith('JUDO_') && normalize(sport || '') === 'judo') return 'duel';
   if (eventType?.startsWith('KARATE_') && normalize(sport || '') === 'karate') return 'duel';
+  if ((eventType === 'BOXING_WB_POINTS' || eventType === 'BOXING_WB_KO'
+        || eventType === 'BOXING_WB_RSC') && normalize(sport || '') === 'boxe') return 'duel';
   if ((eventType === 'BJJ_IBJJF_GI_SUBMISSION' || eventType === 'BJJ_IBJJF_GI_POINTS')
       && normalize(sport || '') === 'jiu-jitsu brasileiro') return 'duel';
   if (eventType === 'TKD_KYORUGI_BEST3' && normalize(sport || '') === 'taekwondo') return 'duel';
