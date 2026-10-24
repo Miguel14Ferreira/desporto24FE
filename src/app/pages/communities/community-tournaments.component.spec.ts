@@ -56,6 +56,32 @@ describe('Community tournaments management', () => {
   });
 
 
+  it('shows a single selected sport and preserves it until the replacement is picked', () => {
+    expect(component.sportDraft).toBe('Futebol');
+    expect(component.editingSport).toBeFalse();
+
+    component.startTeamCreation();
+    component.toggleSportEditor();
+    expect(component.editingSport).toBeTrue();
+    expect(component.sportDraft).toBe('Futebol');
+
+    component.sportSearch = 'kar';
+    component.toggleSportEditor(); // Cancel keeps the current selection.
+    expect(component.editingSport).toBeFalse();
+    expect(component.sportSearch).toBe('');
+    expect(component.sportDraft).toBe('Futebol');
+
+    component.toggleSportEditor();
+    component.chooseSport('Karting');
+    expect(component.sportDraft).toBe('Karting');
+    expect(component.editingSport).toBeFalse();
+    expect(component.sportSearch).toBe('');
+
+    component.startIndividualCreation();
+    expect(component.sportDraft).toBe('Karting');
+    expect(component.editingSport).toBeFalse();
+  });
+
   describe('real team competitions', () => {
     const teamDraft: CommunityTournament = {
       ...draft, id: 19, name: 'Torneio CNG 5x5', sport: 'Futebol',
