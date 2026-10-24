@@ -17,6 +17,8 @@ import { judoBoutError, isJudoBout } from './community-judo-results';
 import { karateBoutError, isKarateEvent, isKarateKumite } from './community-karate-results';
 import { isBjjEvent, isBjjPoints, bjjResultError } from './community-bjj-results';
 import { isBoxingEvent, boxingResultError } from './community-boxing-results';
+import { isKickboxingEvent, isKickboxingPointFighting, kickboxingResultError }
+  from './community-kickboxing-results';
 import { isTaekwondoKyorugi, isTaekwondoEvent, taekwondoResultError }
   from './community-taekwondo-results';
 import { isVolleyballEvent, isFootvolleyEvent, volleyballMaxSets, volleyballMinSets,
@@ -832,9 +834,22 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   }
   chessGameScore = chessGameScore;
   isJudoBout = isJudoBout;
+  isKickboxingEvent = isKickboxingEvent;
+  isKickboxingPointFighting = isKickboxingPointFighting;
   isBoxingEvent = isBoxingEvent;
   isBjjEvent = isBjjEvent;
   isBjjPoints = isBjjPoints;
+  clearKickboxingHiddenScores(): void {
+    if (isKickboxingEvent(this.newRoundEventType)
+        && !isKickboxingPointFighting(this.newRoundEventType)) {
+      this.roundEntries.forEach(entry => {
+        entry.performanceValue = null;
+        entry.waveScore1 = null;
+        entry.waveScore2 = null;
+      });
+    }
+  }
+
   clearBoxingHiddenScores(): void {
     if (isBoxingEvent(this.newRoundEventType)) {
       this.roundEntries.forEach(entry => {
@@ -3117,6 +3132,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     const karate = isKarateEvent(this.newRoundEventType);
     const bjj = isBjjEvent(this.newRoundEventType);
     const boxing = isBoxingEvent(this.newRoundEventType);
+    const kickboxing = isKickboxingEvent(this.newRoundEventType);
     const taekwondo = isTaekwondoEvent(this.newRoundEventType);
     const kyorugi = isTaekwondoKyorugi(this.newRoundEventType);
     const groupRoutine = isGroupRoutineEvent(this.newRoundEventType);
@@ -3180,6 +3196,10 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       this.errorMessage = t('feedback.communities.taekwondoInvalid');
       return;
     }
+    if (kickboxing && kickboxingResultError(this.newRoundEventType, selectedEntries)) {
+      this.errorMessage = t('feedback.communities.kickboxingInvalid');
+      return;
+    }
     if (boxing && boxingResultError(this.newRoundEventType, selectedEntries)) {
       this.errorMessage = t('feedback.communities.boxingInvalid');
       return;
@@ -3200,7 +3220,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       this.errorMessage = t('feedback.communities.breakingInvalid');
       return;
     }
-    if (neutral && !karate && !taekwondo && !bjj && !boxing && !isWaveHeatEvent(this.newRoundEventType)
+    if (neutral && !karate && !taekwondo && !bjj && !boxing && !kickboxing && !isWaveHeatEvent(this.newRoundEventType)
       && performanceError(this.newRoundEventType, selectedEntries)) {
       this.errorMessage = t(performanceKind(this.newRoundEventType) === 'golf'
         ? 'feedback.communities.golfInvalid'
@@ -3219,9 +3239,9 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     const entries = selectedEntries
       .map(entry => ({
         username: entry.username,
-        team: groupRoutine || basketball || volleyball || teamFinal || chess || judo || karate || kyorugi || bjj || boxing ? entry.team.trim()
+        team: groupRoutine || basketball || volleyball || teamFinal || chess || judo || karate || kyorugi || bjj || boxing || kickboxing ? entry.team.trim()
           : race || neutral ? null : (entry.team.trim() || null),
-        result: breaking || chess || judo || karate || kyorugi || bjj || boxing ? entry.result
+        result: breaking || chess || judo || karate || kyorugi || bjj || boxing || kickboxing ? entry.result
           : race || neutral ? 'DRAW' as CommunityMatchResult
           : racket ? (entry.team === racketWinner ? 'WIN' : 'LOSS') as CommunityMatchResult
           : entry.result,
