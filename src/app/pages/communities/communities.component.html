@@ -3149,18 +3149,66 @@
                                   </select>
                                 </label>
                               </div>
+                              <div class="historical-import-destination" role="group"
+                                   [attr.aria-label]="'communities.matches.destinationTitle' | t">
+                                <h4>{{ 'communities.matches.destinationTitle' | t }}</h4>
+                                <div class="historical-import-choice-row">
+                                  <button type="button" class="historical-import-choice"
+                                    [class.is-selected]="matchArchiveDestination === 'ARCHIVE'"
+                                    [attr.aria-pressed]="matchArchiveDestination === 'ARCHIVE'"
+                                    (click)="matchArchiveDestination = 'ARCHIVE'; matchArchiveAcknowledged = false">
+                                    <strong>{{ 'communities.matches.destinationArchive' | t }}</strong>
+                                    <span>{{ 'communities.matches.destinationArchiveHint' | t }}</span>
+                                  </button>
+                                  <button type="button" class="historical-import-choice"
+                                    [class.is-selected]="matchArchiveDestination === 'TOURNAMENT'"
+                                    [attr.aria-pressed]="matchArchiveDestination === 'TOURNAMENT'"
+                                    (click)="matchArchiveDestination = 'TOURNAMENT'; matchArchiveAcknowledged = false; matchArchiveSport = matchArchiveSport || selected?.sports?.[0] || selected?.sport || ''">
+                                    <strong>{{ 'communities.matches.destinationTournament' | t }}</strong>
+                                    <span>{{ 'communities.matches.destinationTournamentHint' | t }}</span>
+                                  </button>
+                                </div>
+                                @if (matchArchiveDestination === 'TOURNAMENT') {
+                                  <div class="import-context historical-tournament-options">
+                                    <label>
+                                      <span>{{ 'communities.matches.tournamentSport' | t }}</span>
+                                      <input [(ngModel)]="matchArchiveSport" maxlength="100"
+                                        [attr.aria-invalid]="!matchArchiveSport.trim()"
+                                        (ngModelChange)="matchArchiveAcknowledged = false"
+                                        [placeholder]="'communities.matches.tournamentSportPlaceholder' | t">
+                                    </label>
+                                    <label>
+                                      <span>{{ 'communities.matches.tournamentFormat' | t }}</span>
+                                      <select [(ngModel)]="matchArchiveFormat"
+                                        (ngModelChange)="matchArchiveAcknowledged = false">
+                                        <option value="LEAGUE">{{ 'communities.matches.tournamentLeague' | t }}</option>
+                                        <option value="KNOCKOUT">{{ 'communities.matches.tournamentKnockout' | t }}</option>
+                                      </select>
+                                    </label>
+                                  </div>
+                                  <p role="note" class="venue-current-location">
+                                    {{ 'communities.matches.tournamentReadOnlyNote' | t }}
+                                  </p>
+                                }
+                              </div>
                               <label class="check-stat">
                                 <input type="checkbox" [(ngModel)]="matchArchiveAcknowledged">
                                 <span>{{ 'communities.matches.acknowledge' | t }}</span>
                               </label>
                               <button type="button" class="primary-action import-confirm jynlo-action jynlo-action--primary"
-                                [disabled]="matchArchiveConfirming || !matchArchiveAcknowledged || matchArchiveTitle.trim().length < 2 || matchArchiveTitle.trim().length > 120"
+                                [disabled]="matchArchiveConfirming || !matchArchiveAcknowledged || matchArchiveTitle.trim().length < 2 || matchArchiveTitle.trim().length > 120 || (matchArchiveDestination === 'TOURNAMENT' && !matchArchiveSport.trim())"
                                 (click)="confirmMatchArchive()">
-                                {{ matchArchiveConfirming ? ('communities.import.importing' | t) : ('communities.matches.confirm' | t) }}
+                                {{ matchArchiveConfirming ? ('communities.import.importing' | t) : ((matchArchiveDestination === 'TOURNAMENT' ? 'communities.matches.createHistoricalTournament' : 'communities.matches.confirm') | t) }}
                               </button>
                             }
                             @if (matchArchiveConfirmed) {
-                              <p class="import-success" role="status">{{ 'communities.matches.saved' | t }} · {{ matchArchiveConfirmed.title }}</p>
+                              <p class="import-success" role="status">{{ (matchArchiveConfirmed.tournamentId ? 'communities.matches.tournamentCreated' : 'communities.matches.saved') | t }} · {{ matchArchiveConfirmed.title }}</p>
+                              @if (matchArchiveConfirmed.tournamentId && hasCompetitions(selected)) {
+                                <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
+                                  (click)="viewImportedHistoricalTournament()">
+                                  {{ 'communities.matches.openHistoricalTournament' | t }}
+                                </button>
+                              }
                             }
 
                             @if (importMode === 'STANDINGS' && archivePreview) {
