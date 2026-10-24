@@ -1,7 +1,8 @@
 import { CommunityRound, CommunityRoundEntry, CommunityRoundEntryDraft } from '../model/community-group';
 
 /** Provisional community marks: never official federation scores or season points. */
-export function performanceKind(eventType: string | null | undefined): 'metres' | 'points' | 'gym' | 'street' | 'trampoline' | 'rhythmic' | 'artistic' | null {
+export function performanceKind(eventType: string | null | undefined): 'metres' | 'points' | 'gym' | 'street' | 'trampoline' | 'rhythmic' | 'artistic' | 'golf' | null {
+  if (eventType === 'GOLF_STROKE_9' || eventType === 'GOLF_STROKE_18') return 'golf';
   if (eventType === 'JUMP' || eventType === 'THROW') return 'metres';
   if (eventType === 'FREESTYLE'
       || eventType === 'SKATE_PARK' || eventType === 'PARKOUR_FREESTYLE') return 'points';
@@ -21,8 +22,12 @@ export function performanceError(
   if (!kind) return entries.some(entry => entry.performanceValue != null);
   return entries.some(entry => {
     const raw = entry.performanceValue;
-    if (raw == null) return false; // participation-only remains possible
+    if (raw == null) return kind === 'golf'; // Golf rankings require every selected player's confirmed total.
     const value = Number(raw);
+    if (kind === 'golf') {
+      const holes = eventType === 'GOLF_STROKE_9' ? 9 : 18;
+      return !Number.isInteger(value) || value < holes || value > 999999;
+    }
     return !Number.isFinite(value) || value < 0
       || (kind === 'metres' && value <= 0)
       || ((kind === 'points' || kind === 'gym') && value > 100)
@@ -61,7 +66,9 @@ export function eventPerformanceEntries(round: CommunityRound): CommunityRoundEn
     const av = scoreForEvent(a, round.eventType), bv = scoreForEvent(b, round.eventType);
     if (av == null) return bv == null ? 0 : 1;
     if (bv == null) return -1;
-    return bv - av;
+    // For golf gross stroke play fewer strokes rank higher. All other judged/measured
+    // result formats still rank higher totals first.
+    return performanceKind(round.eventType) === 'golf' ? av - bv : bv - av;
   });
 }
 
@@ -73,7 +80,8 @@ export function eventPerformancePlace(
   if (score == null) return null;
   return 1 + entries.filter(other => {
     const otherScore = scoreForEvent(other, type);
-    return otherScore != null && otherScore > score;
+    return otherScore != null &&
+      (performanceKind(type) === 'golf' ? otherScore < score : otherScore > score);
   }).length;
 }
 
