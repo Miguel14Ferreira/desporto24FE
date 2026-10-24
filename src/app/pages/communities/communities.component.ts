@@ -37,6 +37,7 @@ import { isGroupRoutineEvent, routineGroupNames, routineGroupError,
   sortedRoutineGroups, routineGroupPlace, routineGroupMembers } from './community-group-routine-results';
 import { raceSupportsLaps, formatRaceSeconds, raceEntryValidationError } from './community-race-metrics';
 import { swimmingTimeError, formatSwimTime } from './community-swimming-results';
+import { openWaterTimeError, formatOpenWaterTime } from './community-open-water-results';
 import { raceDecisionError } from './community-race-decisions';
 import { performanceKind, performanceError, eventPerformanceEntries,
   eventPerformancePlace, performanceDisplay, surfWaveError, surfWaveTotal,
@@ -629,6 +630,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   }
 
   swimTime = formatSwimTime;
+  openWaterTime = formatOpenWaterTime;
 
   roundFormatLabel(round: CommunityRound): string {
     return t('communities.resultFormat.' +
@@ -869,7 +871,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   isMuayThaiEvent = isMuayThaiEvent;
   isKickboxingEvent = isKickboxingEvent;
   clearSwimmingHiddenScores(): void {
-    if (this.newRoundEventType !== 'SWIM_LCM') return;
+    if (this.newRoundEventType !== 'SWIM_LCM'
+        && this.newRoundEventType !== 'OWS_INDIVIDUAL') return;
     this.roundEntries.forEach(entry => {
       entry.team = '';
       entry.result = 'DRAW';
@@ -3329,6 +3332,10 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
         ? 'feedback.communities.golfInvalid'
         : this.newRoundEventType === 'TRAMPOLINE_INDIVIDUAL'
           ? 'feedback.communities.trampolineInvalid' : 'feedback.communities.performanceInvalid');
+      return;
+    }
+    if (this.newRoundEventType === 'OWS_INDIVIDUAL' && openWaterTimeError(selectedEntries)) {
+      this.errorMessage = t('feedback.communities.openWaterInvalid');
       return;
     }
     if (this.newRoundEventType === 'SWIM_LCM' && swimmingTimeError(selectedEntries)) {
