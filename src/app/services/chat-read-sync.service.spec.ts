@@ -56,6 +56,45 @@ describe('ChatReadSyncService', () => {
     expect(api.markRead).not.toHaveBeenCalled();
   });
 
+  it('does not mark messages as read while the browser window is unfocused', () => {
+    // Do not use the default test stub: exercise the real foreground check.
+    (service as any).isTabVisible.and.callThrough();
+    const focus = spyOn(document, 'hasFocus').and.returnValue(false);
+    const visibility = spyOnProperty(document, 'visibilityState', 'get').and.returnValue('visible');
+    service.markVisible('direct', 'bea', 10, log);
+    expect(api.markRead).not.toHaveBeenCalled();
+
+    focus.and.returnValue(true);
+    visibility.and.returnValue('hidden');
+    service.markVisible('direct', 'bea', 10, log);
+    expect(api.markRead).not.toHaveBeenCalled();
+
+    visibility.and.returnValue('visible');
+    service.markVisible('direct', 'bea', 10, log);
+    expect(api.markRead).toHaveBeenCalledOnceWith({ kind: 'direct', id: 'bea' }, 10);
+  });
+
+  it('holds a queued read while unfocused and only flushes after a new focused view', () => {
+    let focused = true;
+    (service as any).isTabVisible.and.callFake(() => focused);
+    const first = new Subject<InboxSummary>();
+    api.markRead.and.returnValues(first.asObservable(), of(acknowledged(20)));
+
+    service.markVisible('community', 7, 12, log);
+    service.markVisible('community', 7, 20, log);
+    expect(api.markRead).toHaveBeenCalledTimes(1);
+
+    focused = false;
+    first.next(acknowledged(12));
+    first.complete();
+    expect(api.markRead).toHaveBeenCalledTimes(1);
+
+    focused = true;
+    service.markVisible('community', 7, 20, log);
+    expect(api.markRead).toHaveBeenCalledTimes(2);
+    expect(api.markRead.calls.argsFor(1)).toEqual([{ kind: 'community', id: '7' }, 20]);
+  });
+
   it('serializes newer receipts received during an earlier in-flight request', () => {
     const delayed = new Subject<InboxSummary>();
     api.markRead.and.returnValues(delayed.asObservable(), of(acknowledged(20)));
