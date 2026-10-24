@@ -62,6 +62,51 @@ describe('Community tournaments management', () => {
   });
 
 
+  it('translates organizer validation feedback without submitting invalid team tournaments', async () => {
+    const previous = localStorage.getItem('d24-language');
+    try {
+      component.startTeamCreation();
+      component.nameDraft = 'A';
+      localStorage.setItem('d24-language', 'en');
+      await component.createTeamCompetition();
+      expect(component.error).toBe('Enter a name between 2 and 120 characters.');
+      expect(api.createTeamTournament).not.toHaveBeenCalled();
+
+      localStorage.setItem('d24-language', 'pt');
+      await component.createTeamCompetition();
+      expect(component.error).toBe('Indica um nome entre 2 e 120 caracteres.');
+      expect(api.createTeamTournament).not.toHaveBeenCalled();
+
+      localStorage.setItem('d24-language', 'en');
+      component.nameDraft = 'A valid tournament';
+      component.sportDraft = 'Modalidade inexistente';
+      await component.createTeamCompetition();
+      expect(component.error).toBe('Choose a valid sport for the tournament.');
+      expect(api.createTeamTournament).not.toHaveBeenCalled();
+    } finally {
+      if (previous === null) localStorage.removeItem('d24-language');
+      else localStorage.setItem('d24-language', previous);
+    }
+  });
+
+  it('shows localized individual creation success after the selected tournament changes', async () => {
+    const previous = localStorage.getItem('d24-language');
+    try {
+      localStorage.setItem('d24-language', 'en');
+      component.startIndividualCreation();
+      component.nameDraft = 'Autumn QA League';
+      component.sportDraft = 'Futebol';
+      api.create.and.returnValue(of({ ...draft, sport: 'Futebol', name: 'Autumn QA League' }));
+      await component.create();
+      expect(api.create).toHaveBeenCalled();
+      expect(component.feedback).toBe('Tournament created.');
+      expect(component.selected?.name).toBe('Autumn QA League');
+    } finally {
+      if (previous === null) localStorage.removeItem('d24-language');
+      else localStorage.setItem('d24-language', previous);
+    }
+  });
+
   it('shows a single selected sport and preserves it until the replacement is picked', () => {
     expect(component.sportDraft).toBe('Futebol');
     expect(component.editingSport).toBeFalse();
