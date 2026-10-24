@@ -144,7 +144,8 @@ input[type='text'],
 input[type='search'],
 input[type='password'],
 input[type='number'],
-input[type='datetime-local'] {
+input[type='datetime-local'],
+.form-grid select {
   width: 100%;
   box-sizing: border-box;
   border: 1px solid rgba(255, 255, 255, .16);
@@ -156,7 +157,8 @@ input[type='datetime-local'] {
   font: inherit;
 }
 
-input[type='datetime-local'] {
+input[type='datetime-local'],
+.form-grid select {
   color-scheme: dark;
 }
 
