@@ -33,6 +33,7 @@ export class VenueDetailsComponent implements OnInit {
   sportConditionSaving = false;
   sportConditionSaveError = false;
   loadError = false;
+  private venueLoadVersion = 0;
   private photosLoadVersion = 0;
   private sportConditionsLoadVersion = 0;
 
@@ -53,21 +54,41 @@ export class VenueDetailsComponent implements OnInit {
       return;
     }
 
-    this.venueService.get(venueId)
-      .pipe(
-        timeout(10_000),
-        retry({ count: 1 }),
-        finalize(() => this.loading = false)
-      )
-      .subscribe({
-        next: venue => this.venue = venue,
-        error: () => this.loadError = true
-      });
-
+    this.retryVenue();
     this.loadPhotos(venueId);
 
     this.loadSportConditions(venueId);
     this.loadRatingSummary(venueId);
+  }
+
+  retryVenue(): void {
+    const venueId = Number(this.route.snapshot.paramMap.get('id'));
+    if (!Number.isSafeInteger(venueId) || venueId <= 0) {
+      this.venue = null;
+      this.loading = false;
+      this.loadError = true;
+      return;
+    }
+    const version = ++this.venueLoadVersion;
+    this.loading = true;
+    this.loadError = false;
+    this.venue = null;
+    // Do not make a person watch two successive 10-second timeouts.
+    // If the API is unreachable, show a clear retry action.
+    this.venueService.get(venueId)
+      .pipe(timeout({ first: 12000 }))
+      .subscribe({
+        next: venue => {
+          if (version !== this.venueLoadVersion) return;
+          this.venue = venue;
+          this.loading = false;
+        },
+        error: () => {
+          if (version !== this.venueLoadVersion) return;
+          this.loadError = true;
+          this.loading = false;
+        }
+      });
   }
 
   private loadRatingSummary(venueId: number): void {
