@@ -235,6 +235,15 @@ export interface CommunityCompetitionOverview {
   raceStandings?: CommunityRaceStandingGroup[];
 }
 
+/** Admin-confirmed links between completed heats. No federation qualification is implied. */
+export interface CommunityInlineProgression {
+  targetRoundId: number;
+  sourceRoundIds: number[];
+  confirmedByUsername: string | null;
+  reason: string | null;
+  confirmedAt: string | null;
+}
+
 export interface CommunityRoundEntryDraft {
   username: string;
   included: boolean;
