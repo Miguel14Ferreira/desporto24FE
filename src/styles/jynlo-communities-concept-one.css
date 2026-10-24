@@ -2084,10 +2084,6 @@ body .communities-page.jynlo-c1 .historical-phase-card {
 body .communities-page.jynlo-c1 .historical-phase-card--review {
   border-color: rgba(226, 166, 87, .42);
 }
-body .communities-page.jynlo-c1 .historical-phase-card--absent {
-  background: rgba(23, 41, 52, .22);
-  border-style: dashed;
-}
 body .communities-page.jynlo-c1 .historical-phase-card-heading {
   display: flex;
   justify-content: space-between;
@@ -2132,7 +2128,7 @@ body .communities-page.jynlo-c1 .historical-phase-legend {
   font-size: .79rem;
   line-height: 1.45;
 }
-body .communities-page.jynlo-c1 .historical-tournament-details [aria-label] {
+body .communities-page.jynlo-c1 .historical-archive-fixtures {
   scroll-margin-top: 7rem;
 }
 @media (max-width: 850px) {
