@@ -1,0 +1,105 @@
+<section class="stories-panel" [attr.aria-label]="'stories.title' | t">
+  <div class="stories-heading">
+    <div>
+      <span class="stories-eyebrow">{{ 'stories.kicker' | t }}</span>
+      <h2>{{ 'stories.title' | t }}</h2>
+      <p>{{ 'stories.subtitle' | t }}</p>
+    </div>
+    <button type="button" class="story-add-action" (click)="composerOpen = !composerOpen">
+      <span aria-hidden="true">+</span> {{ 'stories.create' | t }}
+    </button>
+  </div>
+
+  <div class="story-rail">
+    @for (group of storyGroups; track group.key) {
+      <button type="button" class="story-bubble" (click)="openGroup(group)"
+          [attr.aria-label]="('stories.view' | t) + ' ' + group.name">
+        <span class="story-ring">
+          @if (group.avatar) {
+            <img [src]="group.avatar" [alt]="''" loading="lazy">
+          } @else {
+            <span class="story-placeholder">{{ group.name.charAt(0).toUpperCase() }}</span>
+          }
+        </span>
+        <span class="story-name">{{ group.name }}</span>
+        @if (group.stories.length > 1) { <small>{{ group.stories.length }} {{ 'stories.items' | t }}</small> }
+      </button>
+    }
+    @if (!loading && storyGroups.length === 0) {
+      <p class="stories-empty">{{ 'stories.empty' | t }}</p>
+    }
+    @if (loading) { <p class="stories-empty">{{ 'stories.loading' | t }}</p> }
+  </div>
+
+  @if (composerOpen) {
+    <div class="story-composer">
+      <div class="story-field">
+        <label for="storyAudience">{{ 'stories.publishAs' | t }}</label>
+        <select id="storyAudience" [(ngModel)]="communityId" [disabled]="uploading">
+          <option value="">{{ 'stories.personal' | t }}</option>
+          @for (group of groups; track group.id) {
+            <option [value]="group.id">{{ group.name }} ({{ 'stories.community' | t }})</option>
+          }
+        </select>
+      </div>
+      <label class="story-file">
+        <input type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm"
+          [disabled]="uploading" (change)="pickFile($event)">
+        {{ 'stories.selectMedia' | t }}
+      </label>
+      @if (filePreview) {
+        <div class="story-preview">
+          @if (file?.type?.startsWith('video/')) {
+            <video [src]="filePreview" controls playsinline preload="metadata"></video>
+          } @else {
+            <img [src]="filePreview" [alt]="'stories.preview' | t">
+          }
+          <button type="button" [disabled]="uploading" (click)="removeFile()">{{ 'stories.remove' | t }}</button>
+        </div>
+      }
+      <label for="storyCaption">{{ 'stories.caption' | t }}</label>
+      <textarea id="storyCaption" [(ngModel)]="caption" maxlength="180" rows="2"
+        [disabled]="uploading" [placeholder]="'stories.captionHint' | t"></textarea>
+      <div class="story-composer-footer">
+        <small>{{ caption.length }}/180 · {{ 'stories.expiry' | t }}</small>
+        <button type="button" class="story-primary" [disabled]="!file || uploading" (click)="publish()">
+          {{ (uploading ? 'stories.publishing' : 'stories.publish') | t }}
+        </button>
+      </div>
+    </div>
+  }
+
+  @if (error) { <p class="story-error" role="alert">{{ error }}</p> }
+  @if (feedback && !activeStory) { <p class="story-success" role="status">{{ feedback }}</p> }
+
+  @if (activeStory; as story) {
+    <div class="story-overlay" role="presentation">
+      <section class="story-dialog" role="dialog" aria-modal="true" [attr.aria-label]="'stories.viewer' | t">
+        <header class="story-dialog-header">
+          <strong>{{ story.communityName || story.displayName }}</strong>
+          <span>{{ story.createdAt | date:'dd/MM HH:mm' }}</span>
+          <button type="button" [attr.aria-label]="'stories.close' | t" (click)="close()">×</button>
+        </header>
+        <div class="story-dialog-media">
+          @if (story.video) {
+            <video [src]="media(story.mediaUrl)" controls playsinline preload="metadata"></video>
+          } @else {
+            <img [src]="media(story.mediaUrl)" [alt]="story.caption || ('stories.photo' | t)">
+          }
+          @if (story.caption) { <p class="story-caption">{{ story.caption }}</p> }
+        </div>
+        <footer class="story-dialog-footer">
+          <button type="button" (click)="previous()" [disabled]="storyIndex === 0">
+            {{ 'stories.previous' | t }}
+          </button>
+          <button type="button" (click)="shareStory()">{{ 'stories.share' | t }}</button>
+          @if (story.canDelete) {
+            <button type="button" [disabled]="deleting" (click)="deleteStory()">{{ 'stories.delete' | t }}</button>
+          }
+          <button type="button" (click)="next()">{{ 'stories.next' | t }}</button>
+        </footer>
+        @if (feedback) { <p class="story-feedback" role="status">{{ feedback }}</p> }
+      </section>
+    </div>
+  }
+</section>
