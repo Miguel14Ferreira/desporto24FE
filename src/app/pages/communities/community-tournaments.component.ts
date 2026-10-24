@@ -12,6 +12,7 @@ import { tournamentScoreTerminology } from './community-tournament-scoring';
 import { formatForSport } from './community-round-sport';
 import { tournamentClassificationProfile } from './community-tournament-classification';
 import { SPORTS_CATALOG } from '../../shared/sports-catalog';
+import { appTranslate as t } from '../../i18n/i18n.service';
 import { buildTournamentTeamInviteUrl, teamInvitationWhatsAppUrl } from './community-team-invite';
 
 @Component({
@@ -753,7 +754,7 @@ export class CommunityTournamentsComponent implements OnChanges {
       error: () => {
         if (revision === this.raceRevision && this.selected?.id === tournament.id) {
           this.raceError = true;
-          this.showError('Não foi possível carregar as corridas do campeonato.');
+          this.showError(t('communities.karting.loadErrorToast'));
         }
       }
     });
@@ -762,7 +763,7 @@ export class CommunityTournamentsComponent implements OnChanges {
   async linkTournamentRace(roundId: number): Promise<void> {
     if (!this.selected || !this.canManage || this.isRaceCompetition === false) return;
     await this.mutate(this.api.linkRace(this.community.id, this.selected.id, roundId),
-      'Corrida associada ao campeonato.', result => {
+      t('communities.karting.raceLinked'), result => {
         this.raceOverview = result;
         this.updateSelected({ ...this.selected!, status: 'IN_PROGRESS' });
       });
@@ -771,7 +772,7 @@ export class CommunityTournamentsComponent implements OnChanges {
   async unlinkTournamentRace(roundId: number): Promise<void> {
     if (!this.selected || !this.canManage || this.isRaceCompetition === false) return;
     await this.mutate(this.api.unlinkRace(this.community.id, this.selected.id, roundId),
-      'Corrida retirada do campeonato. O resultado continua nas jornadas.', result => {
+      t('communities.karting.raceUnlinked'), result => {
         this.raceOverview = result;
         if (!result.linkedRaces.length) {
           this.updateSelected({ ...this.selected!, status: 'DRAFT', startedAt: null });
@@ -792,7 +793,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     const tournamentId = this.selected.id;
     this.confirmAction = null;
     await this.mutate(this.api.completeKarting(this.community.id, tournamentId),
-      'Campeonato de Karting encerrado. Campeão e classificação final arquivados.', tournament => {
+      t('communities.karting.finishSaved'), tournament => {
         this.updateSelected(tournament);
         this.raceOverview = undefined;
         this.loadRaceOverview();
@@ -808,11 +809,11 @@ export class CommunityTournamentsComponent implements OnChanges {
         || points.some((p, i) => !/^\d{1,4}$/.test(p)
           || Number(p) > 1000
           || (i > 0 && Number(p) > Number(points[i - 1])))) {
-      this.showError('Indica até 20 pontos inteiros decrescentes, entre 0 e 1000, separados por vírgulas.');
+      this.showError(t('communities.karting.pointsInvalid'));
       return;
     }
     await this.mutate(this.api.setRacePoints(this.community.id, this.selected.id, text),
-      'Pontuação por posição guardada.', result => {
+      t('communities.karting.pointsSaved'), result => {
         this.raceOverview = result;
         this.racePointsDraft = result.pointsByPlace.join(',');
       });
