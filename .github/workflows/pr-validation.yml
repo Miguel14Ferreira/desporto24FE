@@ -51,7 +51,7 @@ jobs:
       # Offline contract for the future manual authenticated QA workflow.
       # Fake network/browser only; production passwords are NEVER available on PR events.
       - name: Validate dual-account QA read-only safeguards (synthetic)
-        if: ${{ startsWith(github.head_ref, 'qa/karting-auth-readonly-') }}
+        if: ${{ startsWith(github.head_ref, 'qa/karting-auth-readonly-') || startsWith(github.head_ref, 'qa/karting-auth-coverage-pages-') }}
         run: node --test scripts/qa/jynlo-karting-live-readonly.test.cjs
       # Opt-in browser regression for the unread-indicator fix only.
       # Two fully synthetic accounts share in-memory API state; no prod writes,
