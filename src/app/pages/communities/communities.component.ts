@@ -1739,7 +1739,14 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       }))
       .subscribe({
         next: players => {
-          if (this.selected?.id === communityId) this.historicalPlayers = players;
+          if (this.selected?.id !== communityId) return;
+          this.historicalPlayers = players;
+          // Deleting a season can remove the previously selected imported name.
+          if (this.historicalPlayerId !== null &&
+              !players.some(player => player.playerId === this.historicalPlayerId)) {
+            this.historicalPlayerId = null;
+            this.historicalClaimAcknowledged = false;
+          }
         },
         error: () => {
           if (this.selected?.id === communityId) this.historicalPlayersError = t('communities.identity.loadError');
@@ -2322,6 +2329,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
           if (this.selectedSeasonId === season.id) this.selectedSeasonId = null;
           this.seasonActionMessage = t('communities.seasonDeleted');
           this.loadCompetition(this.selected, this.selectedSeasonId);
+          this.loadHistoricalLinks(communityId);
         },
         error: (error: HttpErrorResponse) => {
           if (this.selected?.id !== communityId) return;
