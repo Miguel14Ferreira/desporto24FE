@@ -4474,7 +4474,7 @@ const EN: Dictionary = {
   'communities.muayThai.fullRscInjury': 'Muay Thai — Full Contact: Referee Stops Contest Injury (RSCI)',
   'communities.swimming.eventLabel': 'Swimming event (distance and stroke)',
   'communities.speedSkating.track200tt': 'Speed skating — 200 m track dual time trial (inline skates)',
-  'communities.speedSkating.hint': 'Record only known 200 m track times, in seconds and hundredths (e.g. 18.43). Jynlo does not yet verify paired starts, heats, finals or officials' decisions; no automatic placings or championship points.',
+  'communities.speedSkating.hint': 'Record only known 200 m track times, in seconds and hundredths (e.g. 18.43). Jynlo does not yet verify paired starts, heats, finals or decisions by officials; no automatic placings or championship points.',
   'communities.speedSkating.timeSeconds': 'Recorded time (seconds, hundredths)',
   'communities.speedSkating.timePlaceholder': 'E.g. 18.43',
   'communities.speedSkating.recordTitle': 'Speed skating times',
