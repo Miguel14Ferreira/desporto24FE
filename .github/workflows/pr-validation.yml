@@ -169,6 +169,17 @@ jobs:
         env:
           JYNLO_USE_SYSTEM_CHROME: '1'
         run: npx playwright test e2e/inbox-read-sync.spec.ts --config=playwright.config.ts --project=desktop-chromium --grep "socket reconnection reconciles|off-screen WebSocket confirmation"
+      # Same-tab sessionStorage recovery: the server commits one POST but the
+      # browser reloads before receiving HTTP; restore a blocked draft and
+      # confirm via GET. All API/socket interactions are synthetic.
+      - name: Install Playwright for reload-safe pending sends
+        if: ${{ startsWith(github.head_ref, 'fix/chat-reload-pending-sends-') }}
+        run: npm install --no-save --package-lock=false @playwright/test@1.56.1
+      - name: Verify F5 pending-send recovery without duplicate POST
+        if: ${{ startsWith(github.head_ref, 'fix/chat-reload-pending-sends-') }}
+        env:
+          JYNLO_USE_SYSTEM_CHROME: '1'
+        run: npx playwright test e2e/inbox-read-sync.spec.ts --config=playwright.config.ts --project=desktop-chromium --grep "reloading mid-send recovers|socket reconnection reconciles"
       # Candidate-only browser verification. No additional job, second npm ci,
       # Render deployment, production credentials or production API requests.
       - name: Install Chromium for integrated desktop smoke
