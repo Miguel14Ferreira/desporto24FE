@@ -2,9 +2,8 @@
 .inbox-page { min-height: calc(100vh - 68px); padding: clamp(16px, 3vw, 44px) 20px 36px; color: #eaf5f7; background: radial-gradient(circle at 95% 5%, rgba(25,169,157,.16), transparent 35%), linear-gradient(145deg,#081825,#101f31 68%,#0b2030); }
 .inbox-shell { max-width: 1360px; margin: 0 auto; }
 .inbox-heading { display: flex; justify-content: space-between; gap: 20px; align-items: center; margin-bottom: 22px; }
-.inbox-eyebrow { color:#63dbc6; font-size: .72rem; font-weight: 800; text-transform: uppercase; letter-spacing: .16em; margin:0 0 6px; }
 .inbox-heading h1 { margin: 0 0 6px; font-size: clamp(1.8rem, 3vw, 2.65rem); line-height: 1.1; font-weight: 850; }
-.inbox-heading p:not(.inbox-eyebrow) { margin:0; color:#b6cdd6; }
+.inbox-heading p { margin:0; color:#b6cdd6; }
 .inbox-connection { display: inline-flex; align-items: center; gap: 10px; padding: 10px 14px; border: 1px solid #355264; border-radius: 999px; color: #c9dce4; font-size:.82rem; white-space:nowrap; }
 .inbox-connection-dot { height: 9px; width:9px; border-radius: 100%; background:#94a3b8; }
 .inbox-connection.is-online .inbox-connection-dot { background:#4addac; box-shadow: 0 0 0 4px rgba(74,221,172,.12); }
