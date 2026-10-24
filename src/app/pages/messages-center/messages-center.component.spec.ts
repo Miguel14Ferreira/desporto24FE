@@ -752,7 +752,7 @@ describe('Unified Jynlo message center', () => {
     expect(focus).toHaveBeenCalledTimes(1);
   });
 
-  it('shows a confirmed-send status only after the server persists the outgoing message', () => {
+  it('sends once and shows no redundant success notice after the server confirms delivery', () => {
     const peer = item('direct', 'bea');
     component.conversations = [peer];
     direct.recentHistory.and.returnValue(of({last:true,content:[]} as any));
@@ -762,20 +762,18 @@ describe('Unified Jynlo message center', () => {
     component.draft = 'Boa jogada';
     component.sendMessage();
     expect(component.sending).toBeTrue();
-    expect(component.composerSuccess).toBe('');
     post.next({id:83,username1:'ana',username2:'bea',text:'Boa jogada',
       date:new Date().toISOString(),dataDisplay:null});
     post.complete();
     expect(component.sending).toBeFalse();
     expect(component.deliveryUncertain).toBeFalse();
-    expect(component.composerSuccess).toBe('Mensagem confirmada no histórico.');
+    expect(component.composerError).toBe('');
     expect(component.messages.map(m=>m.id)).toEqual([83]);
-    component.draft='Nova mensagem';
-    component.onTypingInput();
-    expect(component.composerSuccess).toBe('');
+    expect(component.draft).toBe('');
+    expect(direct.send).toHaveBeenCalledTimes(1);
   });
 
-  it('does not show server confirmation when delivery is uncertain', () => {
+  it('keeps a useful error notice when delivery is uncertain', () => {
     const peer=item('direct','bea');
     component.conversations=[peer];
     // Opening the conversation succeeds; only the subsequent verification
@@ -789,7 +787,7 @@ describe('Unified Jynlo message center', () => {
     component.draft='Sem confirmação';
     component.sendMessage();
     expect(component.deliveryUncertain).toBeTrue();
-    expect(component.composerSuccess).toBe('');
+    expect(component.composerError).toBeTruthy();
     expect(direct.send).toHaveBeenCalledTimes(1);
   });
 

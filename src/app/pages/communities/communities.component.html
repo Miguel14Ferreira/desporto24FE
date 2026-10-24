@@ -1167,8 +1167,10 @@
                           <p class="round-sport-guidance" role="note">
                             {{ (newRoundEventType === 'OWS_INDIVIDUAL' ? 'communities.openWater.hint'
                               : newRoundEventType === 'SWIM_LCM' ? 'communities.swimming.hint'
-                              : newRoundEventType === 'PARKOUR_SPEED'
-                              ? 'communities.parkour.speedHint' : 'communities.race.metricsEntryHint') | t }}
+                              : newRoundEventType === 'PARKOUR_SPEED' ? 'communities.parkour.speedHint'
+                              : newRoundEventType === 'ROAD_RACE' ? 'communities.roadCycling.roadRaceHint'
+                              : newRoundEventType === 'TIME_TRIAL' ? 'communities.roadCycling.timeTrialHint'
+                              : 'communities.race.metricsEntryHint') | t }}
                           </p>
                         } @else if (newRoundEventType && viewForNewRound() === 'individual') {
                           <p class="round-sport-guidance" role="note">

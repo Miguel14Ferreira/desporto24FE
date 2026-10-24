@@ -37,6 +37,8 @@ export class SocialStoriesComponent implements OnInit, OnDestroy {
   composerOpen = false;
   uploading = false;
   deleting = false;
+  deleteConfirmOpen = false;
+  deleteError = '';
   caption = '';
   communityId = '';
   file: File | null = null;
@@ -87,6 +89,8 @@ export class SocialStoriesComponent implements OnInit, OnDestroy {
     this.autoplayFailed = false;
     this.viewerPaused = false;
     this.menuOpen = false;
+    this.deleteConfirmOpen = false;
+    this.deleteError = '';
     this.muted = true;
     this.replyText = '';
     this.replyFocused = false;
@@ -112,7 +116,7 @@ export class SocialStoriesComponent implements OnInit, OnDestroy {
   }
 
   playbackBlocked(): boolean {
-    return this.viewerPaused || this.menuOpen || this.replyFocused || document.hidden;
+    return this.viewerPaused || this.menuOpen || this.replyFocused || this.deleteConfirmOpen || document.hidden;
   }
 
   private syncVideo(): void {
@@ -189,7 +193,7 @@ export class SocialStoriesComponent implements OnInit, OnDestroy {
   }
 
   jumpTo(index: number): void {
-    if (index < 0 || index >= this.currentGroup.length) return;
+    if (this.deleteConfirmOpen || index < 0 || index >= this.currentGroup.length) return;
     this.storyIndex = index;
     this.startViewer(this.currentGroup[index]);
   }
@@ -299,7 +303,9 @@ export class SocialStoriesComponent implements OnInit, OnDestroy {
       if (!group) {
         group = {
           key,
-          name: entry.communityName || entry.displayName,
+          name: entry.communityId !== null
+            ? (entry.communityName || entry.displayName)
+            : '@' + entry.authorUsername.replace(/^@/, ''),
           avatar: this.media(entry.communityPhotoUrl || entry.avatarUrl),
           stories: []
         };
@@ -369,6 +375,7 @@ export class SocialStoriesComponent implements OnInit, OnDestroy {
   }
 
   next(): void {
+    if (this.deleteConfirmOpen) return;
     if (this.storyIndex + 1 >= this.currentGroup.length) {
       this.close();
     } else {
@@ -377,10 +384,15 @@ export class SocialStoriesComponent implements OnInit, OnDestroy {
   }
 
   previous(): void {
+    if (this.deleteConfirmOpen) return;
     if (this.storyIndex > 0) this.startViewer(this.currentGroup[--this.storyIndex]);
   }
 
   close(): void {
+    if (this.deleteConfirmOpen) {
+      this.cancelDeleteStory();
+      return;
+    }
     this.stopViewerTimer();
     this.storyVideo?.nativeElement.pause();
     this.activeStory = null;
@@ -448,22 +460,47 @@ export class SocialStoriesComponent implements OnInit, OnDestroy {
     });
   }
 
-  deleteStory(): void {
-    if (!this.activeStory?.canDelete || this.deleting
-        || !window.confirm(t('stories.deleteConfirm'))) return;
-    const id = this.activeStory.id;
+  requestDeleteStory(): void {
+    if (!this.activeStory?.canDelete || this.deleting) return;
+    this.menuOpen = false;
+    this.deleteError = '';
+    this.deleteConfirmOpen = true;
+    this.syncVideo();
+    this.changeDetector.markForCheck();
+  }
+
+  cancelDeleteStory(): void {
+    if (this.deleting) return;
+    this.deleteConfirmOpen = false;
+    this.deleteError = '';
+    this.lastFrameAt = Date.now();
+    this.syncVideo();
+    this.changeDetector.markForCheck();
+  }
+
+  confirmDeleteStory(): void {
+    const story = this.activeStory;
+    if (!this.deleteConfirmOpen || !story?.canDelete || this.deleting) return;
     this.deleting = true;
-    this.stories.delete(id).pipe(
+    this.deleteError = '';
+    this.stories.delete(story.id).pipe(
       timeout(10000),
-      finalize(() => this.deleting = false),
+      finalize(() => {
+        this.deleting = false;
+        this.changeDetector.markForCheck();
+      }),
       takeUntil(this.destroyed)
     ).subscribe({
       next: () => {
-        this.entries = this.entries.filter(entry => entry.id !== id);
-        this.mineEntries = this.mineEntries.filter(entry => entry.id !== id);
+        this.entries = this.entries.filter(entry => entry.id !== story.id);
+        this.mineEntries = this.mineEntries.filter(entry => entry.id !== story.id);
+        this.deleteConfirmOpen = false;
         this.close();
       },
-      error: () => this.error = t('stories.deleteFailed')
+      error: () => {
+        this.deleteError = t('stories.deleteFailed');
+        this.changeDetector.markForCheck();
+      }
     });
   }
 
