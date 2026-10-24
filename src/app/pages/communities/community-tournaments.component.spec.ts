@@ -95,6 +95,23 @@ describe('Community tournaments management', () => {
     expect(component.showCommunitySportShortcuts).toBeTrue();
   });
 
+  it('explains when sport-specific race or combat results need community rounds', () => {
+    component.sportDraft = 'Futebol';
+    expect(component.creationSportNoticeKey).toBeNull();
+
+    component.chooseSport('Karting');
+    expect(component.creationSportNoticeKey).toBe('communities.tournaments.creationRaceNotice');
+
+    component.chooseSport('Judo');
+    expect(component.creationSportNoticeKey).toBe('communities.tournaments.creationDuelNotice');
+
+    component.chooseSport('Golfe');
+    expect(component.creationSportNoticeKey).toBe('communities.tournaments.creationPerformanceNotice');
+
+    component.sportDraft = '';
+    expect(component.creationSportNoticeKey).toBeNull();
+  });
+
   describe('real team competitions', () => {
     const teamDraft: CommunityTournament = {
       ...draft, id: 19, name: 'Torneio CNG 5x5', sport: 'Futebol',
