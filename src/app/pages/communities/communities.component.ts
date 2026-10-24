@@ -13,6 +13,7 @@ import { athleticsDisciplineOptions, athleticsDisciplineValid } from './communit
 import { breakingBattleError } from './community-breaking-battle';
 import { cricketT20Error, cricketOvers } from './community-cricket-results';
 import { chessGameError, chessGameScore } from './community-chess-results';
+import { judoBoutError, isJudoBout } from './community-judo-results';
 import { isVolleyballEvent, isFootvolleyEvent, volleyballMaxSets, volleyballMinSets,
   volleyballMatchError, volleyballSetWinner, volleyballSetTotals,
   volleyballSideLabelKey, volleyballMemberSelectorKey,
@@ -825,6 +826,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     return recordedRacketMatch(round);
   }
   chessGameScore = chessGameScore;
+  isJudoBout = isJudoBout;
   cricketOvers = cricketOvers;
   isTeamFinalEvent = isTeamFinalEvent;
   recordedTeamFinal = recordedTeamFinal;
@@ -3084,6 +3086,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     const neutral = isNeutralEvent(this.newRoundSport, this.newRoundEventType);
     const breaking = this.newRoundEventType === 'BREAKING_BATTLE';
     const chess = this.newRoundEventType === 'CHESS_GAME';
+    const judo = isJudoBout(this.newRoundEventType);
     const groupRoutine = isGroupRoutineEvent(this.newRoundEventType);
     const basketball = isBasketballFinal(this.newRoundEventType);
     const teamFinal = isTeamFinalEvent(this.newRoundEventType);
@@ -3141,6 +3144,10 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       this.errorMessage = t('feedback.communities.chessInvalid');
       return;
     }
+    if (judo && judoBoutError(selectedEntries)) {
+      this.errorMessage = t('feedback.communities.judoInvalid');
+      return;
+    }
     if (this.newRoundEventType === 'BREAKING_BATTLE' && breakingBattleError(selectedEntries)) {
       this.errorMessage = t('feedback.communities.breakingInvalid');
       return;
@@ -3164,9 +3171,9 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     const entries = selectedEntries
       .map(entry => ({
         username: entry.username,
-        team: groupRoutine || basketball || volleyball || teamFinal || chess ? entry.team.trim()
+        team: groupRoutine || basketball || volleyball || teamFinal || chess || judo ? entry.team.trim()
           : race || neutral ? null : (entry.team.trim() || null),
-        result: breaking || chess ? entry.result
+        result: breaking || chess || judo ? entry.result
           : race || neutral ? 'DRAW' as CommunityMatchResult
           : racket ? (entry.team === racketWinner ? 'WIN' : 'LOSS') as CommunityMatchResult
           : entry.result,
