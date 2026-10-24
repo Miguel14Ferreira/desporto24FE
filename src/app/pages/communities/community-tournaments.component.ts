@@ -227,6 +227,14 @@ export class CommunityTournamentsComponent implements OnChanges {
     return this.tournaments.some(tournament => tournament.scoringMode === 'RACE_POINTS');
   }
 
+  hasRaceLaps(entries: readonly TournamentRaceEntry[]): boolean {
+    return entries.some(entry => entry.lapsCompleted != null);
+  }
+
+  hasRaceBestLap(entries: readonly TournamentRaceEntry[]): boolean {
+    return entries.some(entry => entry.bestLapSeconds != null);
+  }
+
   orderedKartingRaceEntries(entries: readonly TournamentRaceEntry[]): TournamentRaceEntry[] {
     return orderedKartingRaceEntries(entries);
   }
