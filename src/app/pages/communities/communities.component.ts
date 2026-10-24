@@ -828,6 +828,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   }
   chessGameScore = chessGameScore;
   isJudoBout = isJudoBout;
+  isKarateEvent = isKarateEvent;
+  isKarateKumite = isKarateKumite;
   cricketOvers = cricketOvers;
   isTeamFinalEvent = isTeamFinalEvent;
   recordedTeamFinal = recordedTeamFinal;
