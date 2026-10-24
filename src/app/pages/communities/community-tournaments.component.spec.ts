@@ -709,7 +709,7 @@ describe('Community tournaments management', () => {
     expect(api.create).toHaveBeenCalledWith(7, 'Liga de outono', 'Padel', { winPoints: 3, drawPoints: 1, lossPoints: 0 });
   });
 
-  it('supports a tournament sport outside the community without changing it', async () => {
+  it('recognizes a different sport but avoids a false 1v1 swimming competition', async () => {
     component.community = { ...community, sports: ['Futebol', 'Padel'] };
     component.ngOnChanges({ community: new SimpleChange(community, component.community, false) });
     component.sportSearch = 'natação';
@@ -717,14 +717,14 @@ describe('Community tournaments management', () => {
     component.chooseSport('Natação');
     component.startIndividualCreation();
     component.nameDraft = 'Liga de natação';
-    api.create.and.returnValue(of({ ...draft, id: 22, sport: 'Natação' }));
     await component.create();
-    expect(api.create).toHaveBeenCalledWith(7, 'Liga de natação', 'Natação', { winPoints: 3, drawPoints: 1, lossPoints: 0 });
-    expect(component.scoring.scoreInput).toBe('Marcador de');
+    expect(api.create).not.toHaveBeenCalled();
+    expect(component.error).toContain('jornadas');
+    expect(component.classificationProfile.format).toBe('race');
     expect(component.community.sport).toBe('Futebol');
   });
 
-  it('keeps legacy community modalities selectable even if they are outside the catalog', async () => {
+  it('keeps legacy community modalities selectable without inventing their scoring', async () => {
     component.community = { ...community, sports: ['Desporto local tradicional', 'Futebol'] };
     component.ngOnChanges({ community: new SimpleChange(community, component.community, false) });
     component.sportSearch = 'tradicional';
@@ -732,9 +732,10 @@ describe('Community tournaments management', () => {
     component.chooseSport('Desporto local tradicional');
     component.startIndividualCreation();
     component.nameDraft = 'Torneio local';
-    api.create.and.returnValue(of({ ...draft, id: 23, sport: 'Desporto local tradicional' }));
     await component.create();
-    expect(api.create).toHaveBeenCalledWith(7, 'Torneio local', 'Desporto local tradicional', { winPoints: 3, drawPoints: 1, lossPoints: 0 });
+    expect(api.create).not.toHaveBeenCalled();
+    expect(component.classificationProfile.format).toBe('unknown');
+    expect(component.error).toContain('jornadas');
   });
 
   it('uses the selected tournament sport for scoring rather than the community primary sport', () => {
