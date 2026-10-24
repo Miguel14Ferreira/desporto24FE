@@ -560,12 +560,12 @@
                   <div>
                     <h5>{{ 'communities.matches.archivesTitle' | t }}</h5>
                     <p>{{ 'communities.matches.tournamentFixtureNote' | t }}</p>
+                    <p>{{ 'communities.matches.historicalSourceGroupingNote' | t }}</p>
                   </div>
                 </div>
                 <div class="standings-scroll">
                   <table class="standings-table">
                     <thead><tr>
-                      <th scope="col">{{ 'communities.matches.round' | t }}</th>
                       <th scope="col">{{ 'communities.matches.date' | t }}</th>
                       <th scope="col">{{ 'communities.matches.home' | t }}</th>
                       <th scope="col">{{ 'communities.matches.score' | t }}</th>
@@ -573,15 +573,25 @@
                       <th scope="col">{{ 'communities.matches.review' | t }}</th>
                     </tr></thead>
                     <tbody>
-                      @for (match of archive.rows.slice(historicalArchivePage * 50, (historicalArchivePage + 1) * 50); track match.sourceRow) {
-                        <tr>
-                          <td>{{ match.sourceRound || '—' }}</td>
-                          <td>{{ match.sourceDate || '—' }}</td>
-                          <th scope="row">{{ match.home }}</th>
-                          <td>{{ match.homeScore }}–{{ match.awayScore }}</td>
-                          <td>{{ match.away }}</td>
-                          <td>{{ match.potentialDuplicate ? ('communities.matches.possibleRepeat' | t) : '—' }}</td>
+                      @for (group of historicalArchivePageGroups; track group.firstSourceRow) {
+                        <tr class="historical-source-group">
+                          <th scope="rowgroup" colspan="5">
+                            <span class="historical-source-group-kind">{{ (selected.format === 'KNOCKOUT'
+                              ? 'communities.matches.historicalSourcePhase'
+                              : 'communities.matches.historicalSourceRound') | t }}</span>
+                            <strong>{{ group.sourceRound || ('communities.matches.historicalNoSourceRound' | t) }}</strong>
+                            <span class="historical-source-group-count">{{ group.rows.length }} {{ 'communities.matches.matchesCount' | t }}</span>
+                          </th>
                         </tr>
+                        @for (match of group.rows; track match.sourceRow) {
+                          <tr>
+                            <td>{{ match.sourceDate || '—' }}</td>
+                            <th scope="row">{{ match.home }}</th>
+                            <td>{{ match.homeScore }}–{{ match.awayScore }}</td>
+                            <td>{{ match.away }}</td>
+                            <td>{{ match.potentialDuplicate ? ('communities.matches.possibleRepeat' | t) : '—' }}</td>
+                          </tr>
+                        }
                       }
                     </tbody>
                   </table>
