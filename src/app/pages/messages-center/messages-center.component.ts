@@ -84,6 +84,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   attachmentReady = false;
   selectedAttachment: File | null = null;
   voiceRecording = false;
+  voiceFinalizing = false;
   voicePreviewUrl: string | null = null;
   private voiceRecorder: MediaRecorder | null = null;
   private voiceStream: MediaStream | null = null;
@@ -915,7 +916,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     return Boolean(this.selected && this.isSelectedSessionOpen()
       && this.composerAllowed && !this.composerAccessLoading
       && !this.previewLoading && !this.previewError && !this.sending && !this.deliveryUncertain
-      && !this.deliveryChecking && (this.draft.trim().length > 0
+      && !this.deliveryChecking && !this.voiceRecording && !this.voiceFinalizing
+      && (this.draft.trim().length > 0
         || (this.selected?.kind === 'direct' && this.attachmentReady && !!this.selectedAttachment))
       && this.draft.trim().length <= 2000);
   }
@@ -988,6 +990,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
 
   private voiceFormat(): { mime: string; extension: string } | null {
     if (!this.voiceSupported) return null;
+    if (typeof MediaRecorder.isTypeSupported !== 'function') return null;
     if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
       return { mime: 'audio/webm;codecs=opus', extension: 'webm' };
     }
@@ -1038,6 +1041,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
         if (this.voiceTimer) clearTimeout(this.voiceTimer);
         this.voiceTimer = undefined;
         this.voiceRecording = false;
+        this.voiceFinalizing = false;
         if (this.voiceRecorder === recorder) this.voiceRecorder = null;
         if (this.voiceStream === stream) this.voiceStream = null;
         if (generation !== this.voiceGeneration || this.selectedKey !== key) return;
@@ -1055,6 +1059,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       };
       recorder.start(1000);
       this.voiceRecording = true;
+      this.voiceFinalizing = false;
       this.composerError = '';
       // A short, bounded voice note protects bandwidth and privacy.
       this.voiceTimer = setTimeout(() => this.stopVoiceRecording(), 60_000);
@@ -1063,12 +1068,14 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       this.voiceRecorder = null;
       this.voiceStream = null;
       this.voiceRecording = false;
+      this.voiceFinalizing = false;
       this.composerError = t('chat.voiceRecordFailed');
     }
   }
 
   stopVoiceRecording(): void {
     if (!this.voiceRecording || !this.voiceRecorder) return;
+    this.voiceFinalizing = true;
     if (this.voiceRecorder.state !== 'inactive') this.voiceRecorder.stop();
     this.voiceRecording = false;
   }
@@ -1083,6 +1090,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.voiceStream?.getTracks().forEach(track => track.stop());
     this.voiceStream = null;
     this.voiceRecording = false;
+    this.voiceFinalizing = false;
     this.clearVoicePreview();
   }
 
@@ -1158,7 +1166,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   private canEditDraft(): boolean {
     return Boolean(this.selected && this.composerAllowed && !this.composerAccessLoading
       && this.isSelectedSessionOpen() && !this.previewLoading && !this.previewError
-      && !this.sending && !this.deliveryUncertain && !this.deliveryChecking);
+      && !this.sending && !this.deliveryUncertain && !this.deliveryChecking
+      && !this.voiceRecording && !this.voiceFinalizing);
   }
 
   onComposerEnter(event: Event): void {
