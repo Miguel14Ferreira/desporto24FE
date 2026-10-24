@@ -160,6 +160,17 @@ export class CommunityTournamentsComponent implements OnChanges {
     return tournamentClassificationProfile(this.sportDraft);
   }
 
+  get isSportFormatSupported(): boolean {
+    return this.classificationProfile.isRoundRobinSupported
+      && !(this.showTeamCreate && this.classificationProfile.scoringMode === 'CHESS_HALF_POINTS');
+  }
+
+  get sportFormatWarning(): string {
+    return this.showTeamCreate && this.classificationProfile.scoringMode === 'CHESS_HALF_POINTS'
+      ? 'O Xadrez por equipas precisa de partidas e resultados por tabuleiro. Para já, cria uma liga individual de Xadrez.'
+      : this.classificationProfile.detail;
+  }
+
   get isChessTournament(): boolean {
     return this.selected?.scoringMode === 'CHESS_HALF_POINTS';
   }
@@ -978,8 +989,8 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.showError('Escolhe uma modalidade válida para o torneio.');
       return;
     }
-    if (!this.classificationProfile.isRoundRobinSupported) {
-      this.showError('Esta modalidade precisa de resultados por prova. Usa as jornadas da comunidade.');
+    if (!this.isSportFormatSupported) {
+      this.showError(this.sportFormatWarning);
       return;
     }
     if (this.teamFormatDraft === 'LEAGUE'
