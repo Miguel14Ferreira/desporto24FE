@@ -818,6 +818,20 @@ describe('CommunitiesComponent public session eligibility', () => {
       .toBe('@TMF14');
   });
 
+  it('keeps the ranking empty until results exist unless zero-game members are requested', () => {
+    component.competition = { standings: [
+      { profileId: 17, username: 'TMF14', fullName: 'Miguel Ferreira', games: 0, points: 0 }
+    ] } as any;
+    component.showAllStandings = false;
+
+    expect(component.displayedRankings).toEqual([]);
+    component.showAllStandings = true;
+    expect(component.displayedRankings).toHaveSize(1);
+    expect(component.displayedRankings[0].username).toBe('TMF14');
+    component.showAllStandings = false;
+    expect(component.displayedRankings).toEqual([]);
+  });
+
   it('keeps non-participants out of rankings by default but allows showing every member', () => {
     component.competition = { standings: [
       { profileId: null, username: null, fullName: 'Ferreirinha', games: 3, points: 6 },
