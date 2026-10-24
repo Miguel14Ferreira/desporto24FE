@@ -1372,10 +1372,33 @@ test('organizador remove torneio experimental sem resultados depois de confirmar
   expect(fixture.tournaments).toHaveLength(0);
 });
 
+test('formulário apresenta formatos acessíveis e avisos sem impor regras de outros desportos', async ({ page }) => {
+  await mockCommunityApi(page, 'OWNER', 'teams', 'Futebol');
+  await page.goto('/menu/communities/7?tab=tournaments');
+  await page.getByRole('button', { name: 'Preparar torneio por equipas' }).click();
+
+  const league = page.getByRole('button', { name: /Campeonato.*Todas as equipas/ });
+  const knockout = page.getByRole('button', { name: /Eliminatórias.*Quem perde sai/ });
+  const groups = page.getByRole('button', { name: /Grupos \+ eliminatórias.*Fase de grupos/ });
+  await expect(league).toHaveAttribute('aria-pressed', 'true');
+  await knockout.click();
+  await expect(knockout).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByText('Personalizar regras', { exact: true })).toHaveCount(0);
+  await groups.click();
+  await expect(groups).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByText('Personalizar regras', { exact: true })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Alterar', exact: true }).click();
+  await page.getByRole('searchbox', { name: 'Modalidade do torneio' }).fill('Karting');
+  await page.getByRole('button', { name: 'Karting', exact: true }).click();
+  await expect(page.getByText(/provas desta modalidade costumam usar tempos, posições ou voltas/)).toBeVisible();
+});
+
 test('organizador define a pontuação inicial de um torneio por equipas', async ({ page }) => {
   const fixture = await mockCommunityApi(page, 'OWNER', 'teams');
   await page.goto('/menu/communities/7?tab=tournaments');
   await page.getByRole('button', { name: 'Preparar torneio por equipas' }).click();
+  await page.getByText('Personalizar regras', { exact: true }).click();
   const rules = page.getByRole('group', { name: 'Regras de pontuação' });
   await expect(rules.getByRole('spinbutton', { name: 'Vitória' })).toHaveValue('3');
   await expect(rules.getByRole('spinbutton', { name: 'Empate' })).toHaveValue('1');
@@ -1399,6 +1422,7 @@ test('regras de pontos personalizadas também se aplicam à liga individual', as
   await page.goto('/menu/communities/7?tab=tournaments');
   await page.getByRole('button', { name: 'Criar liga individual' }).click();
   await page.getByLabel('Nome do torneio').fill('Liga dos amigos');
+  await page.getByText('Personalizar regras', { exact: true }).click();
   const rules = page.getByRole('group', { name: 'Regras de pontuação' });
   await rules.getByRole('spinbutton', { name: 'Vitória' }).fill('5');
   await rules.getByRole('spinbutton', { name: 'Empate' }).fill('2');
@@ -1414,6 +1438,7 @@ test('critério de desempate fica guardado na configuração inicial por equipas
   const fixture = await mockCommunityApi(page, 'OWNER', 'teams');
   await page.goto('/menu/communities/7?tab=tournaments');
   await page.getByRole('button', { name: 'Preparar torneio por equipas' }).click();
+  await page.getByText('Personalizar regras', { exact: true }).click();
   const priorities = page.getByRole('group', { name: 'Critério de desempate' });
   const difference = priorities.getByRole('button', { name: /Diferença do marcador/ });
   const wins = priorities.getByRole('button', { name: /Mais vitórias/ });
