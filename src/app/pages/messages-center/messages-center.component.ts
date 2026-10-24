@@ -76,6 +76,11 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   realtimeConnected = false;
   everConnected = false;
   draft = '';
+  /** The upload composer stays hidden until the authenticated backend confirms private storage readiness. */
+  attachmentReady = false;
+  selectedAttachment: File | null = null;
+  readonly attachmentPreviews = new Map<number, string>();
+  readonly attachmentLoading = new Set<number>();
   emojiPickerOpen = false;
   readonly composerEmojis = [
     '😀', '😃', '😄', '😁', '😂', '🤣', '😊', '😍', '🥰', '😘',
@@ -256,6 +261,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     document.removeEventListener('visibilitychange', this.onPageActive);
     if (this.summaryTimer) clearInterval(this.summaryTimer);
     if (this.receiptTimer) clearInterval(this.receiptTimer);
+    this.clearAttachmentPreviews();
     // The navbar owns the shared socket lifecycle. Never disconnect it here.
   }
 
@@ -516,6 +522,9 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     }
     this.typing.stop();
     this.emojiPickerOpen = false;
+    this.selectedAttachment = null;
+    this.attachmentReady = false;
+    this.clearAttachmentPreviews();
     this.selectedKey = conversation.key;
     ++this.peerReceiptVersion;
     this.peerReadCursor = null;
@@ -543,6 +552,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.previewError = false;
     // Opening a conversation is not proof the messages were displayed.
     this.loadComposerAccess(conversation);
+    this.loadAttachmentAvailability(conversation);
     this.loadHistory(conversation);
     this.refreshPeerReadReceipt(true);
   }
@@ -782,7 +792,10 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       createdAt: message.date || message.dataDisplay || '',
       replyToMessageId: message.replyToMessageId,
       replyToSender: message.replyToSender,
-      replyToText: message.replyToText
+      replyToText: message.replyToText,
+      attachmentName: message.attachmentName,
+      attachmentMimeType: message.attachmentMimeType,
+      attachmentSize: message.attachmentSize
     };
   }
 
@@ -890,7 +903,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     return Boolean(this.selected && this.isSelectedSessionOpen()
       && this.composerAllowed && !this.composerAccessLoading
       && !this.previewLoading && !this.previewError && !this.sending && !this.deliveryUncertain
-      && !this.deliveryChecking && this.draft.trim().length > 0
+      && !this.deliveryChecking && (this.draft.trim().length > 0
+        || (this.selected?.kind === 'direct' && this.attachmentReady && !!this.selectedAttachment))
       && this.draft.trim().length <= 2000);
   }
 
@@ -912,6 +926,80 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     const conversation = this.selected;
     if (!conversation) return;
     this.typing.input(conversation.kind, conversation.id, this.draft, this.canSendMessage());
+  }
+
+  private loadAttachmentAvailability(conversation: InboxConversation): void {
+    this.attachmentReady = false;
+    if (conversation.kind !== 'direct') return;
+    this.direct.attachmentsAvailable(String(conversation.id))
+      .pipe(timeout(10000), catchError(() => of({available: false})))
+      .subscribe(result => {
+        if (this.selectedKey === conversation.key) this.attachmentReady = result.available;
+      });
+  }
+
+  onAttachmentPicked(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+    input.value = '';
+    if (!file || !this.attachmentReady || this.selected?.kind !== 'direct'
+        || !this.canEditDraft()) return;
+    const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif',
+      'application/pdf'].includes(file.type);
+    if (!allowed || file.size === 0 || file.size > 5 * 1024 * 1024) {
+      this.composerError = t('chat.attachmentInvalid');
+      return;
+    }
+    this.selectedAttachment = file;
+    this.composerError = '';
+  }
+
+  removeAttachment(): void {
+    if (this.sending || this.deliveryUncertain) return;
+    this.selectedAttachment = null;
+  }
+
+  private clearAttachmentPreviews(): void {
+    for (const url of this.attachmentPreviews.values()) URL.revokeObjectURL(url);
+    this.attachmentPreviews.clear();
+    this.attachmentLoading.clear();
+  }
+
+  openAttachment(message: InboxMessage): void {
+    const conversation = this.selected;
+    if (!conversation || conversation.kind !== 'direct' || message.key !== conversation.key
+        || !message.attachmentName || !message.attachmentMimeType || message.id <= 0
+        || this.attachmentLoading.has(message.id)) return;
+    const existing = this.attachmentPreviews.get(message.id);
+    if (existing) {
+      URL.revokeObjectURL(existing);
+      this.attachmentPreviews.delete(message.id);
+      return;
+    }
+    this.attachmentLoading.add(message.id);
+    this.direct.downloadAttachment(String(conversation.id), message.id)
+      .pipe(timeout(30000), finalize(() => this.attachmentLoading.delete(message.id)))
+      .subscribe({
+        next: blob => {
+          // A delayed response must never show another conversation's attachment.
+          if (this.selectedKey !== conversation.key) return;
+          const url = URL.createObjectURL(blob);
+          if (message.attachmentMimeType?.startsWith('image/')) {
+            this.attachmentPreviews.set(message.id, url);
+          } else {
+            const anchor = document.createElement('a');
+            anchor.href = url;
+            anchor.download = message.attachmentName || 'anexo.pdf';
+            anchor.rel = 'noopener';
+            anchor.click();
+            setTimeout(() => URL.revokeObjectURL(url), 60_000);
+          }
+        },
+        error: () => {
+          if (this.selectedKey === conversation.key)
+            this.composerError = t('chat.attachmentDownloadFailed');
+        }
+      });
   }
 
   toggleEmojiPicker(): void {
@@ -967,7 +1055,11 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     const conversation = this.selected;
     if (!conversation || !this.canSendMessage()) return;
     const key = conversation.key;
-    const text = this.draft.trim();
+    const file = conversation.kind === 'direct' ? this.selectedAttachment : null;
+    const caption = this.draft.trim();
+    // Server sends the same synthesized text for an attachment without a caption.
+    const name = file?.name.replace(/\\/g, '/').split('/').pop()?.replace(/[\\x00-\\x1f\\x7f]/g, '').trim().slice(-160);
+    const text = file && !caption ? '📎 ' + (name || 'anexo') : caption;
     const replyId = this.replyingTo?.key === key ? this.replyingTo.id : null;
     const pending = { key, text, replyToMessageId: replyId,
       knownIds: new Set(this.messages.map(item => item.id)),
@@ -975,7 +1067,9 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
 
     let send: Observable<InboxMessage>;
     if (conversation.kind === 'direct') {
-      const request = replyId
+      const request = file
+        ? this.direct.sendAttachment(String(conversation.id), file, caption, replyId || undefined)
+        : replyId
         ? this.direct.send(String(conversation.id), text, replyId)
         : this.direct.send(String(conversation.id), text);
       send = request.pipe(map(message => this.fromDirect(message, String(conversation.id))));
@@ -1023,6 +1117,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
         this.sendErrorsByConversation.delete(key);
         if (key !== this.selectedKey) return;
         if (this.historicalPreview) this.returnToRecent();
+        this.selectedAttachment = null;
         this.draft = '';
         this.replyingTo = null;
         this.deliveryUncertain = false;
