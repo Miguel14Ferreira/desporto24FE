@@ -2010,7 +2010,9 @@ test('Karting E2E: encerra com campeão e mantém arquivo imutável em dois brow
 
     await close.click();
     await section.getByRole('button', { name: 'Sim, encerrar e guardar classificação' }).click();
-    await expect(a.getByText('Campeão: Ana')).toBeVisible();
+    const podium = a.getByRole('region', { name: 'Pódio final' });
+    await expect(podium).toBeVisible();
+    await expect(podium.locator('.karting-podium-place').first()).toContainText('Ana');
     await expect(section.getByText('Classificação final arquivada')).toBeVisible();
     await expect(section.getByRole('button', { name: 'Retirar' })).toHaveCount(0);
     await expect(section.getByRole('button', { name: 'Associar' })).toHaveCount(0);
@@ -2027,7 +2029,8 @@ test('Karting E2E: encerra com campeão e mantém arquivo imutável em dois brow
     state.tied = true;
     await Promise.all([a.reload(), b.reload()]);
     const archived = b.getByRole('region', { name: 'Campeonato de Karting' });
-    await expect(b.getByText('Campeão: Ana')).toBeVisible();
+    const memberPodium = b.getByRole('region', { name: 'Pódio final' });
+    await expect(memberPodium.locator('.karting-podium-place').first()).toContainText('Ana');
     await expect(archived.getByText('Classificação final arquivada')).toBeVisible();
     await expect(archived.getByText('Grande Prémio QA')).toBeVisible();
     await expect(archived.getByText('25 · 18 · 15 pontos')).toBeVisible();
@@ -2110,14 +2113,16 @@ test('Karting E2E: PT/EN acompanha idioma da Jynlo em pontuação e arquivo', as
 
   await race.getByRole('button', { name: 'Finish Karting championship' }).click();
   await race.getByRole('button', { name: 'Yes, finish and archive standings' }).click();
-  await expect(page.getByText('Champion: Ana')).toBeVisible();
+  const finalPodium = page.getByRole('region', { name: 'Final podium' });
+  await expect(finalPodium.locator('.karting-podium-place').first()).toContainText('Ana');
   await expect(race.getByText('Final standings archived')).toBeVisible();
   await expect(race.getByText(/Community round results may be corrected/)).toBeVisible();
 
   await page.evaluate(() => localStorage.setItem('d24-language', 'pt'));
   await page.reload();
   const portuguese = page.getByRole('region', { name: 'Campeonato de Karting' });
-  await expect(page.getByText('Campeão: Ana')).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Pódio final' })
+    .locator('.karting-podium-place').first()).toContainText('Ana');
   await expect(portuguese.getByText('Classificação final arquivada')).toBeVisible();
   expect(fixture.unmocked.filter(x => x.includes('/tournaments'))).toEqual([]);
 });
