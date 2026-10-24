@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
+import { DeviceSession } from '../../services/my-profile.service';
 
 import { AlterardadosComponent } from './alterardados.component';
 import { MyProfileService } from '../../services/my-profile.service';
@@ -36,11 +37,13 @@ describe('AlterardadosComponent', () => {
   };
 
   beforeEach(async () => {
-    service = jasmine.createSpyObj<MyProfileService>('MyProfileService', ['get', 'update', 'disableMfa', 'deleteAccount']);
+    service = jasmine.createSpyObj<MyProfileService>('MyProfileService', ['get', 'update', 'disableMfa', 'deleteAccount', 'getDeviceSessions', 'revokeDeviceSession']);
     service.get.and.returnValue(of({ ...profile }));
     service.update.and.returnValue(of({ ...profile, location: 'Sintra' }));
     service.disableMfa.and.returnValue(of({ ...profile, mfa: false }));
     service.deleteAccount.and.returnValue(of(void 0));
+    service.getDeviceSessions.and.returnValue(of([]));
+    service.revokeDeviceSession.and.returnValue(of(void 0));
 
     await TestBed.configureTestingModule({
       declarations: [AlterardadosComponent],
@@ -77,6 +80,44 @@ describe('AlterardadosComponent', () => {
 
     expect(picker.classList.contains('disabled')).toBeFalse();
     expect(input.disabled).toBeFalse();
+  });
+
+  it('lists signed-in devices without displaying bearer secrets', () => {
+    const device: DeviceSession = {
+      id: 'first-family',
+      device: 'Windows · Edge',
+      createdAt: '2026-10-24T18:00:00Z',
+      expiresAt: '2026-10-31T18:00:00Z',
+      current: true
+    };
+    service.getDeviceSessions.and.returnValue(of([device]));
+    component.loadDeviceSessions();
+    fixture.detectChanges();
+
+    expect(service.getDeviceSessions).toHaveBeenCalled();
+    expect(fixture.nativeElement.querySelector('.device-session__name').textContent)
+      .toContain('Windows · Edge');
+    expect(fixture.nativeElement.querySelector('.device-sessions').textContent)
+      .not.toContain('refresh-token');
+  });
+
+  it('requires explicit confirmation before revoking another device', () => {
+    const second: DeviceSession = {
+      id: 'another-family', device: 'Android · Chrome',
+      createdAt: null, expiresAt: '2026-10-31T18:00:00Z', current: false
+    };
+    service.getDeviceSessions.and.returnValue(of([second]));
+    component.loadDeviceSessions();
+    fixture.detectChanges();
+    const end = fixture.nativeElement.querySelector('.device-session button') as HTMLButtonElement;
+    end.click();
+    fixture.detectChanges();
+
+    expect(component.pendingRevokeId).toBe(second.id);
+    expect(service.revokeDeviceSession).not.toHaveBeenCalled();
+    component.revokeDevice(second);
+    expect(service.revokeDeviceSession).toHaveBeenCalledWith(second.id);
+    expect(component.deviceSessions.length).toBe(0);
   });
 
   it('should create and load the authenticated profile', () => {

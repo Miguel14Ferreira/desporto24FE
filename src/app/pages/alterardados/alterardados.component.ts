@@ -5,7 +5,7 @@ import { finalize, retry, timeout } from 'rxjs';
 
 import { environment } from 'src/environment/environment';
 import { MyProfile, UpdateMyProfileRequest } from '../model/my-profile';
-import { MfaSetupResponse, MyProfileService } from '../../services/my-profile.service';
+import { DeviceSession, MfaSetupResponse, MyProfileService } from '../../services/my-profile.service';
 import { AuthenticationService } from '../../services/authethication.service';
 import { SPORTS_CATALOG, sportIcon } from '../../shared/sports-catalog';
 import { COUNTRY_CALLING_CODES, countryNameFromLabel } from '../../shared/country-calling-codes';
@@ -20,6 +20,11 @@ import { calculateProfileCompletion } from '../../shared/profile-completion';
 })
 export class AlterardadosComponent implements OnInit {
   profile?: MyProfile;
+  deviceSessions: DeviceSession[] = [];
+  deviceSessionsLoading = false;
+  deviceSessionsError = '';
+  revokingDeviceId: string | null = null;
+  pendingRevokeId: string | null = null;
   photo?: File;
   photoPreview = '';
 
@@ -60,6 +65,50 @@ export class AlterardadosComponent implements OnInit {
 
   ngOnInit(): void {
     this.load();
+    this.loadDeviceSessions();
+  }
+
+  loadDeviceSessions(): void {
+    this.deviceSessionsLoading = true;
+    this.deviceSessionsError = '';
+    this.myProfileService.getDeviceSessions()
+      .pipe(timeout(10_000), finalize(() => this.deviceSessionsLoading = false))
+      .subscribe({
+        next: sessions => {
+          this.deviceSessions = sessions;
+          this.pendingRevokeId = null;
+        },
+        error: () => this.deviceSessionsError = t('profile.sessions.loadError')
+      });
+  }
+
+  confirmRevokeDevice(id: string): void {
+    if (this.revokingDeviceId) return;
+    this.pendingRevokeId = id;
+  }
+
+  cancelRevokeDevice(): void {
+    this.pendingRevokeId = null;
+  }
+
+  revokeDevice(session: DeviceSession): void {
+    if (this.pendingRevokeId !== session.id || this.revokingDeviceId) return;
+    this.revokingDeviceId = session.id;
+    this.deviceSessionsError = '';
+    this.myProfileService.revokeDeviceSession(session.id)
+      .pipe(timeout(10_000), finalize(() => this.revokingDeviceId = null))
+      .subscribe({
+        next: () => {
+          if (session.current) {
+            this.authenticationService.logOut();
+            return;
+          }
+          this.deviceSessions = this.deviceSessions.filter(item => item.id !== session.id);
+          this.pendingRevokeId = null;
+          this.showToast(t('profile.sessions.revoked'));
+        },
+        error: () => this.deviceSessionsError = t('profile.sessions.revokeError')
+      });
   }
 
   load(): void {
