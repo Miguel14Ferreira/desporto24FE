@@ -13,7 +13,11 @@ export type HistoricalTournamentOutcomeReason =
   | 'drawn-final'
   | 'incomplete-semifinals'
   | 'drawn-semifinal'
-  | 'semifinal-final-mismatch';
+  | 'semifinal-final-mismatch'
+  | 'incomplete-quarterfinals'
+  | 'drawn-quarterfinal'
+  | 'missing-semifinals-after-quarterfinals'
+  | 'quarterfinal-semifinal-mismatch';
 
 export interface HistoricalTournamentOutcome {
   /** A likely winner derived solely from original results; never an official title. */
@@ -30,8 +34,9 @@ export interface HistoricalTournamentOutcome {
  *
  * For knockout infer only when a clearly labelled final has a decisive score.
  * When semifinals are explicitly present, verify that exactly two independent,
- * decisive semifinal winners match the two finalists. Do not infer phases
- * missing from the source, or turn the estimate into an official title.
+ * decisive semifinal winners match the two finalists. If quarterfinals are
+ * explicitly present too, verify four unique and decisive fixtures that feed
+ * the semifinal entrants. Do not infer missing stages or create an official title.
  * If the Excel has ambiguity, show why a winner cannot be reconstructed.
  */
 export function historicalTournamentOutcome(
@@ -89,6 +94,32 @@ export function historicalTournamentOutcome(
         return pending('semifinal-final-mismatch');
       }
     }
+    // Validate quarterfinals only where the spreadsheet actually names them.
+    // Do not reconstruct missing semifinal fixtures, aggregate home/away legs,
+    // or award advancement after drawn fixtures without source evidence.
+    const quarterfinals = matches.filter(row => isQuarterfinalRound(row.sourceRound));
+    if (quarterfinals.length) {
+      if (quarterfinals.length !== 4) return pending('incomplete-quarterfinals');
+      if (quarterfinals.some(row => row.homeScore === row.awayScore)) {
+        return pending('drawn-quarterfinal');
+      }
+      if (!semifinals.length) return pending('missing-semifinals-after-quarterfinals');
+
+      const quarterfinalEntrants = quarterfinals.flatMap(row => [normalize(row.home), normalize(row.away)]);
+      const quarterfinalWinners = quarterfinals.map(row =>
+        normalize(row.homeScore > row.awayScore ? row.home : row.away));
+      const semifinalEntrants = semifinals.flatMap(row => [normalize(row.home), normalize(row.away)]);
+
+      // A valid four-match single-leg quarterfinal phase has eight distinct
+      // entrants; each of its winners must be one of the four semifinalists.
+      if (quarterfinalEntrants.some(name => !name)
+        || new Set(quarterfinalEntrants).size !== 8
+        || new Set(quarterfinalWinners).size !== 4
+        || new Set(semifinalEntrants).size !== 4
+        || quarterfinalWinners.some(name => !semifinalEntrants.includes(name))) {
+        return pending('quarterfinal-semifinal-mismatch');
+      }
+    }
     return {
       winner: (final.homeScore > final.awayScore ? final.home : final.away).trim(),
       reason: 'winner-estimated',
@@ -131,6 +162,12 @@ export function historicalTournamentOutcome(
 function isSemifinalRound(sourceRound: string | null | undefined): boolean {
   const label = normalize(sourceRound || '').replace(/[-_./]+/g, ' ').replace(/\s+/g, ' ');
   return /^(?:semi\s*fina(?:l|is)|meias?\s*fina(?:l|is)|1\s*2\s*fina(?:l|is))(?:\s*[12ab])?$/.test(label);
+}
+
+/** Only source-labelled quarterfinals, including common PT/EN and 1/4 variants. */
+function isQuarterfinalRound(sourceRound: string | null | undefined): boolean {
+  const label = normalize(sourceRound || '').replace(/[-_./]+/g, ' ').replace(/\s+/g, ' ');
+  return /^(?:(?:quartos?|quartas?)\s*(?:de\s*)?fina(?:l|is)|quarter\s*finals?|1\s*4\s*(?:de\s*)?fina(?:l|is))(?:\s*(?:[1-4]|[a-d]))?$/.test(label);
 }
 
 function normalize(value: string): string {
