@@ -466,9 +466,11 @@
                 <strong>{{ isRaceCompetition ? ('communities.karting.tieTitle' | t) : 'Empate no primeiro lugar' }}</strong>
                 <p>{{ isRaceCompetition ? ('communities.karting.tieDescription' | t) : 'O torneio terminou com igualdade nos critérios de desempate.' }}</p>
               } @else {
-                <strong>{{ isRaceCompetition
-                    ? ('communities.karting.championLabel' | t:{name: (selected.championDisplayName || selected.championUsername || '')})
-                    : 'Campeão: ' + (selected.championDisplayName || selected.championUsername) }}</strong>
+                @if (isRaceCompetition) {
+                  <strong>{{ 'communities.karting.championLabel' | t }} {{ selected.championDisplayName || selected.championUsername }}</strong>
+                } @else {
+                  <strong>Campeão: {{ selected.championDisplayName || selected.championUsername }}</strong>
+                }
                 <p>{{ formatTournamentPoints(selected.championPoints) }}
                   {{ isRaceCompetition ? ('communities.karting.championPoints' | t) : 'pontos · Torneio concluído' }}</p>
               }
