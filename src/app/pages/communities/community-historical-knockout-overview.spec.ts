@@ -38,11 +38,12 @@ describe('Historical knockout phase navigation from source labels', () => {
     rows.push(match(1000, 'Final'));
     rows.push(match(1001, 'Meia-final 2'));
     const result = historicalKnockoutPhaseOverview(archive(rows));
-    expect(result[1].matchCount).toBe(2);
-    expect(result[1].firstArchiveIndex).toBe(51);
+    expect(result.map(phase => phase.phase)).toEqual(['semifinal', 'final']);
+    expect(result[0].matchCount).toBe(2);
+    expect(result[0].firstArchiveIndex).toBe(51);
+    expect(result[0].firstPage).toBe(1);
+    expect(result[1].firstArchiveIndex).toBe(52);
     expect(result[1].firstPage).toBe(1);
-    expect(result[2].firstArchiveIndex).toBe(52);
-    expect(result[2].firstPage).toBe(1);
     expect(rows.map(row => row.sourceRow).slice(-3)).toEqual([999, 1000, 1001]);
   });
 
@@ -55,8 +56,8 @@ describe('Historical knockout phase navigation from source labels', () => {
     expect(result[0]).toEqual(jasmine.objectContaining({
       matchCount: 2, drawnResults: 1, potentialDuplicates: 1, requiresReview: true
     }));
-    expect(result[2]).toEqual(jasmine.objectContaining({
-      matchCount: 1, drawnResults: 0, requiresReview: false
+    expect(result[1]).toEqual(jasmine.objectContaining({
+      phase: 'final', matchCount: 1, drawnResults: 0, requiresReview: false
     }));
   });
 
@@ -64,12 +65,7 @@ describe('Historical knockout phase navigation from source labels', () => {
     const result = historicalKnockoutPhaseOverview(archive([
       match(2, ''), match(3, 'Jornada 1'), match(4, 'Quartas de final da escola')
     ]));
-    for (const phase of result) {
-      expect(phase.matchCount).toBe(0);
-      expect(phase.firstArchiveIndex).toBeNull();
-      expect(phase.firstPage).toBeNull();
-      expect(phase.requiresReview).toBeFalse();
-    }
+    expect(result).toEqual([]); // No invented phases or empty stage cards.
   });
 
   it('leaves the immutable spreadsheet snapshot untouched', () => {
