@@ -481,7 +481,25 @@ export class CommunityTournamentsComponent implements OnChanges {
   }
 
   get scoring() {
-    return tournamentScoreTerminology(this.selected?.entryType === 'TEAM' ? null : this.selected?.sport);
+    const terminology = tournamentScoreTerminology(
+      this.selected?.entryType === 'TEAM' ? null : this.selected?.sport
+    );
+    const kind = terminology.forTitle === 'Golos marcados' ? 'goals'
+      : terminology.forTitle === 'Pontos marcados' ? 'points'
+      : terminology.forTitle === 'Sets ganhos' ? 'sets' : 'generic';
+    const translated = (field: string) =>
+      t('communities.tournaments.individualUi.scoring.' + kind + '.' + field);
+    return {
+      ...terminology,
+      scoreInput: translated('scoreInput'),
+      forTitle: translated('forTitle'),
+      againstTitle: translated('againstTitle'),
+      differenceTitle: translated('differenceTitle'),
+      forAbbrev: translated('forAbbrev'),
+      againstAbbrev: translated('againstAbbrev'),
+      differenceAbbrev: translated('differenceAbbrev'),
+      note: translated('note')
+    };
   }
 
   get isTeamCompetition(): boolean {
@@ -1418,7 +1436,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     const tournamentId = tournament.id;
     this.confirmAction = null;
     await this.mutate(this.api.generateSchedule(this.community.id, tournamentId),
-      'Calendário publicado. O torneio começou.', () => {
+      t('communities.tournaments.individualUi.schedulePublished'), () => {
         this.updateSelected({ ...this.selected!, status: 'IN_PROGRESS' });
         this.loadDetails();
       });
@@ -1429,13 +1447,13 @@ export class CommunityTournamentsComponent implements OnChanges {
     const score = this.scoreDraft(match);
     if (!this.validTournamentScore(match)) {
       this.showError(this.isChessTournament
-        ? 'Xadrez: seleciona vitória das brancas, empate ou vitória das pretas.'
-        : 'Os resultados devem ser números inteiros entre 0 e 999.');
+        ? t('communities.tournaments.individualUi.chessInvalidToast')
+        : t('communities.tournaments.individualUi.scoresInvalidToast'));
       return;
     }
     await this.mutate(
       this.api.recordResult(this.community.id, this.selected.id, match.id, score.home!, score.away!),
-      'Resultado guardado.', saved => {
+      t('communities.tournaments.individualUi.resultSaved'), saved => {
         // Keep the already-loaded fixture pages visible, including distant rounds.
         this.matches = this.matches.map(game => game.id === saved.id ? saved : game);
         this.scoreDrafts[saved.id] = { home: saved.homeScore, away: saved.awayScore };
@@ -1526,12 +1544,12 @@ export class CommunityTournamentsComponent implements OnChanges {
 
   formatStatus(status: string): string {
     switch (status) {
-      case 'DRAFT': return 'Inscrições abertas';
-      case 'IN_PROGRESS': return 'Em curso';
-      case 'COMPLETED': return 'Terminado';
-      case 'PENDING': return 'A aguardar aprovação';
-      case 'CONFIRMED': return 'Confirmado';
-      case 'SCHEDULED': return 'Por disputar';
+      case 'DRAFT': return t('communities.tournaments.individualUi.statusDraft');
+      case 'IN_PROGRESS': return t('communities.tournaments.individualUi.statusInProgress');
+      case 'COMPLETED': return t('communities.tournaments.individualUi.statusCompleted');
+      case 'PENDING': return t('communities.tournaments.individualUi.statusPending');
+      case 'CONFIRMED': return t('communities.tournaments.individualUi.statusConfirmed');
+      case 'SCHEDULED': return t('communities.tournaments.individualUi.statusScheduled');
       default: return status;
     }
   }

@@ -1409,6 +1409,39 @@ describe('Community tournaments management', () => {
     }
   });
 
+  it('localizes individual sport scoring terms and registration statuses without changing the sport profile', () => {
+    const original = localStorage.getItem('d24-language');
+    try {
+      localStorage.setItem('d24-language', 'en');
+      component.selected = { ...draft, sport: 'Futebol' };
+      expect(component.scoring.scoreInput).toBe('Goals for');
+      expect(component.scoring.forAbbrev).toBe('GF');
+      expect(component.scoring.againstAbbrev).toBe('GA');
+      expect(component.scoring.differenceTitle).toBe('Goal difference');
+      expect(component.formatStatus('PENDING')).toBe('Awaiting approval');
+      expect(component.formatStatus('CONFIRMED')).toBe('Confirmed');
+      component.selected = { ...draft, sport: 'Basquetebol' };
+      expect(component.scoring.scoreInput).toBe('Points for');
+      expect(component.scoring.forAbbrev).toBe('PF');
+      component.selected = { ...draft, sport: 'Ténis' };
+      expect(component.scoring.scoreInput).toBe('Sets won by');
+      expect(component.scoring.forAbbrev).toBe('SW');
+      component.selected = { ...draft, sport: 'Xadrez' };
+      expect(component.scoring.scoreInput).toBe('Score for');
+      expect(component.scoring.forAbbrev).toBe('SF');
+
+      localStorage.setItem('d24-language', 'pt');
+      component.selected = { ...draft, sport: 'Futebol' };
+      expect(component.scoring.forAbbrev).toBe('GM');
+      expect(component.scoring.scoreInput).toBe('Golos de');
+      expect(component.formatStatus('PENDING')).toBe('A aguardar aprovação');
+      expect(component.formatStatus('CONFIRMED')).toBe('Confirmado');
+    } finally {
+      if (original === null) localStorage.removeItem('d24-language');
+      else localStorage.setItem('d24-language', original);
+    }
+  });
+
   it('does not call unknown sports football by default', () => {
     for (const sport of [null, 'Ciclismo', 'Natação', 'Atletismo']) {
       const terms = tournamentScoreTerminology(sport);
