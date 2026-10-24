@@ -50,6 +50,7 @@ const routes: Routes = [
   {path:'menu/events/:id',loadChildren:() => import('./pages/session-details/session-details.module').then(m => m.SessionDetailsModule),canActivate:[AuthenticationGuard]},
   {path:'menu/feed',component:SocialFeedComponent,canActivate:[AuthenticationGuard]},
   {path:'menu/discover',component:DiscoverComponent,canActivate:[AuthenticationGuard]},
+  {path:'menu/venues',loadComponent:() => import('./pages/venues-directory/venues-directory.component').then(m => m.VenuesDirectoryComponent),canActivate:[AuthenticationGuard]},
   {path:'menu/venues/new',component:VenueCreateComponent,canActivate:[AuthenticationGuard]},
   {path:'menu/venues/:id',component:VenueDetailsComponent,canActivate:[AuthenticationGuard]},
   {path:'menu/events',component:EventsComponent,canActivate:[AuthenticationGuard]},
