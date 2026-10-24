@@ -17,7 +17,8 @@ describe('Patinagem de Velocidade — inline 200m track time trial', () => {
   it('registers distinct track and road time-only first rounds for the existing speed sport', () => {
     expect(eventOptionsForSport('Patinagem de Velocidade').map(x => x.code))
       .toEqual(['INLINE_TRACK_200_TT', 'INLINE_TRACK_500D_FIRST_ROUND',
-        'INLINE_ROAD_LAP_FIRST_ROUND', ...INLINE_SPEED_HEAT_CODES]);
+        'INLINE_ROAD_LAP_FIRST_ROUND',
+        ...INLINE_SPEED_HEAT_CODES.filter(code => !code.endsWith('_FINAL_B'))]);
     expect(eventOptionsForSport('Patinagem')).toEqual([]);
     expect(eventOptionsForSport('Patinagem Artística')).toEqual([]);
     expect(eventOptionsForSport('Hóquei em Patins').map(x => x.code))
