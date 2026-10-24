@@ -703,7 +703,7 @@
                         <span class="section-kicker">{{ 'communities.competitionSettings' | t }}</span>
                         <h3>{{ 'communities.rankingsModule' | t }}</h3>
                       </div>
-                      <label class="switch-control">
+                      <label class="community-switch competition-settings-switch">
                         <input type="checkbox" [(ngModel)]="rankingsEnabledDraft">
                         <span>{{ rankingsEnabledDraft
                           ? ('communities.enabled' | t)
@@ -3253,7 +3253,7 @@
                   </div>
 
                   <div class="ranking-controls">
-                    <label class="ranking-members-toggle">
+                    <label class="community-switch ranking-members-toggle">
                       <input type="checkbox" [(ngModel)]="showAllStandings">
                       <span>{{ 'communities.identity.showAll' | t }}</span>
                     </label>

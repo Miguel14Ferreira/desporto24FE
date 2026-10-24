@@ -66,6 +66,32 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(component.showHistoricalIdentitySection).toBeTrue();
   });
 
+  it('keeps rankings activation as an explicit saved setting, independent of switch styling', () => {
+    const updateCompetitionSettings = jasmine.createSpy('updateCompetitionSettings')
+      .and.returnValue(of({ rankingsEnabled: false, winPoints: 3, drawPoints: 1, lossPoints: 0 }));
+    component.selected = { id: 7, myRole: 'OWNER' } as any;
+    component.competition = { settings: { rankingsEnabled: true } } as any;
+    component.competitionSaving = false;
+    component.rankingsEnabledDraft = true;
+    component.winPointsDraft = 3;
+    component.drawPointsDraft = 1;
+    component.lossPointsDraft = 0;
+    component.selectedSeasonId = null;
+    (component as any).communityService = { updateCompetitionSettings };
+    spyOn(component as any, 'replaceCommunity');
+    spyOn(component, 'loadCompetition');
+
+    component.rankingsEnabledDraft = false;
+    expect(updateCompetitionSettings).not.toHaveBeenCalled();
+    expect(component.competition?.settings.rankingsEnabled).toBeTrue();
+
+    component.saveCompetitionSettings();
+    expect(updateCompetitionSettings).toHaveBeenCalledOnceWith(7, {
+      rankingsEnabled: false, winPoints: 3, drawPoints: 1, lossPoints: 0
+    });
+    expect(component.competition?.settings.rankingsEnabled).toBeFalse();
+  });
+
   it('shows a new chat arrival counter only for the opened community', () => {
     component.selected = { id: 7 } as any;
     component.activeTab = 'chat';

@@ -558,15 +558,6 @@ input,textarea,select {
   margin-top: 1rem;
 }
 
-.switch-control {
-  display: flex;
-  grid-template-columns: auto 1fr;
-  align-items: center;
-  gap: .55rem;
-  color: #cbd5e1;
-}
-
-.switch-control input,
 .round-player-toggle input,
 .check-stat input {
   width: auto;
@@ -1004,8 +995,7 @@ input,textarea,select {
 }
 
 
-/* Ranking: the zero-game filter is an aligned, accessible switch, not a
-   detached browser checkbox inside the season selector's grid layout. */
+/* Shared Concept One switch for the rankings configuration and zero-game filter. */
 .ranking-controls {
   display: flex;
   align-items: center;
@@ -1013,7 +1003,7 @@ input,textarea,select {
   gap: .65rem;
   margin: .8rem 0 .95rem;
 }
-.ranking-members-toggle {
+.community-switch {
   display: inline-flex;
   align-items: center;
   gap: .7rem;
@@ -1030,11 +1020,11 @@ input,textarea,select {
   font-weight: 650;
   line-height: 1.4;
 }
-.ranking-members-toggle:hover {
+.community-switch:hover {
   border-color: rgba(125, 211, 252, .4);
   background: rgba(125, 211, 252, .07);
 }
-.ranking-members-toggle input[type='checkbox'] {
+.community-switch input[type='checkbox'] {
   appearance: none;
   -webkit-appearance: none;
   position: relative;
@@ -1048,7 +1038,7 @@ input,textarea,select {
   cursor: pointer;
   transition: background-color .18s ease, border-color .18s ease;
 }
-.ranking-members-toggle input[type='checkbox']::before {
+.community-switch input[type='checkbox']::before {
   content: '';
   position: absolute;
   top: 3px;
@@ -1060,17 +1050,39 @@ input,textarea,select {
   box-shadow: 0 1px 3px rgba(0, 0, 0, .2);
   transition: transform .18s ease;
 }
-.ranking-members-toggle input[type='checkbox']:checked {
+.community-switch input[type='checkbox']:checked {
   border-color: #5bdfbf;
   background: #1a806e;
 }
-.ranking-members-toggle input[type='checkbox']:checked::before {
+.community-switch input[type='checkbox']:checked::before {
   transform: translateX(18px);
   background: #fff;
 }
-.ranking-members-toggle input[type='checkbox']:focus-visible {
+.community-switch input[type='checkbox']:focus-visible {
   outline: 2px solid #74edd2;
   outline-offset: 3px;
+}
+
+.competition-settings .section-heading {
+  flex-wrap: wrap;
+}
+
+.competition-settings-switch {
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+@media (max-width: 560px) {
+  .competition-settings-switch {
+    margin-left: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .community-switch input[type='checkbox'],
+  .community-switch input[type='checkbox']::before {
+    transition: none;
+  }
 }
 
 .season-filter {
