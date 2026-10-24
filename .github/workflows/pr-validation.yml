@@ -158,6 +158,17 @@ jobs:
         env:
           JYNLO_USE_SYSTEM_CHROME: '1'
         run: npx playwright test e2e/inbox-read-sync.spec.ts --config=playwright.config.ts --project=desktop-chromium --grep "off-screen WebSocket confirmation|switching chats during a pending send"
+      # Synthetic outage: POST committed, HTTP reply lost, sender socket
+      # disconnected, original GET unavailable; on AUTH reconnect a scoped
+      # read-only GET must reconcile the original off-screen uncertain send.
+      - name: Install Playwright for uncertain-send reconnect recovery
+        if: ${{ startsWith(github.head_ref, 'fix/chat-pending-reconnect-verification-') }}
+        run: npm install --no-save --package-lock=false @playwright/test@1.56.1
+      - name: Verify read-only reconnect recovery without duplicate POST
+        if: ${{ startsWith(github.head_ref, 'fix/chat-pending-reconnect-verification-') }}
+        env:
+          JYNLO_USE_SYSTEM_CHROME: '1'
+        run: npx playwright test e2e/inbox-read-sync.spec.ts --config=playwright.config.ts --project=desktop-chromium --grep "socket reconnection reconciles|off-screen WebSocket confirmation"
       # Candidate-only browser verification. No additional job, second npm ci,
       # Render deployment, production credentials or production API requests.
       - name: Install Chromium for integrated desktop smoke
