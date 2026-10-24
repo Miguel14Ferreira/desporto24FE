@@ -73,7 +73,7 @@ export function normalizeDirectChatRealtimeMessage(message: DirectChatMessage): 
  * them; never substitute the browser's current time for missing server dates.
  */
 export function normalizeRealtimeChatInstant(value: unknown): string {
-  if (typeof value === 'string' && !/^\\d+(?:\\.\\d+)?$/.test(value.trim())) return value;
+  if (typeof value === 'string' && !/^\d+(?:\.\d+)?$/.test(value.trim())) return value;
   if (typeof value !== 'string' && typeof value !== 'number') return '';
   const timestamp = Number(value);
   if (!Number.isFinite(timestamp) || timestamp <= 0) return '';
