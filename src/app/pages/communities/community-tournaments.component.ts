@@ -467,7 +467,25 @@ export class CommunityTournamentsComponent implements OnChanges {
   }
 
   get scoring() {
-    return tournamentScoreTerminology(this.selected?.entryType === 'TEAM' ? null : this.selected?.sport);
+    const terminology = tournamentScoreTerminology(
+      this.selected?.entryType === 'TEAM' ? null : this.selected?.sport
+    );
+    const kind = terminology.forTitle === 'Golos marcados' ? 'goals'
+      : terminology.forTitle === 'Pontos marcados' ? 'points'
+      : terminology.forTitle === 'Sets ganhos' ? 'sets' : 'generic';
+    const translated = (field: string) =>
+      t('communities.tournaments.individualUi.scoring.' + kind + '.' + field);
+    return {
+      ...terminology,
+      scoreInput: translated('scoreInput'),
+      forTitle: translated('forTitle'),
+      againstTitle: translated('againstTitle'),
+      differenceTitle: translated('differenceTitle'),
+      forAbbrev: translated('forAbbrev'),
+      againstAbbrev: translated('againstAbbrev'),
+      differenceAbbrev: translated('differenceAbbrev'),
+      note: translated('note')
+    };
   }
 
   get isTeamCompetition(): boolean {
