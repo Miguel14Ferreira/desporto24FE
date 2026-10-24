@@ -18,7 +18,7 @@ export interface CommunityTournament {
   sport?: string | null;
   // Older individual competitions may omit these fields in cached responses.
   entryType?: 'INDIVIDUAL' | 'TEAM';
-  scoringMode?: 'CHESS_HALF_POINTS' | null;
+  scoringMode?: 'CHESS_HALF_POINTS' | 'RACE_POINTS' | null;
   playersPerTeam?: number | null;
   roundRobinLegs?: 1 | 2;
   teamTieBreakPriority?: TeamTieBreakPriority;
@@ -189,4 +189,43 @@ export interface TournamentTeamStandings {
   drawPoints: number;
   lossPoints: number;
   standings: TournamentTeamStandingRow[];
+}
+
+/** Karting championship only. Race entries are the existing community round results. */
+export interface TournamentRaceEntry {
+  communityPlayerId: number | null;
+  fullName: string | null;
+  finishPosition: number | null;
+  elapsedSeconds: number | null;
+  bestLapSeconds: number | null;
+  racePenaltyPoints: number;
+  raceDisqualified: boolean;
+}
+
+export interface TournamentRaceRound {
+  id: number;
+  name: string;
+  sport: string | null;
+  playedAt: string;
+  entries: TournamentRaceEntry[];
+}
+
+export interface TournamentRaceStanding {
+  position: number;
+  playerId: number;
+  fullName: string | null;
+  races: number;
+  wins: number;
+  podiums: number;
+  bestFinish: number | null;
+  championshipPoints: number | null;
+  penaltyPoints: number;
+}
+
+export interface TournamentRaceOverview {
+  tournamentId: number;
+  pointsByPlace: number[];
+  linkedRaces: TournamentRaceRound[];
+  availableRaces: TournamentRaceRound[];
+  standings: TournamentRaceStanding[];
 }
