@@ -41,6 +41,10 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.selected.winPoints, this.selected.drawPoints, this.selected.lossPoints);
   }
 
+  get historicalScoreLabels() {
+    return tournamentScoreTerminology(this.selected?.sport);
+  }
+
   get historicalOutcome(): HistoricalTournamentOutcome | null {
     if (!this.historicalArchive || !this.selected?.historicalArchiveId) return null;
     if (this.selected.format !== 'LEAGUE' && this.selected.format !== 'KNOCKOUT') return null;
