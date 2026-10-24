@@ -1974,3 +1974,103 @@ test('Karting E2E: pontuação crescente falha e deixa de ser editável após as
   expect(state.linked).toBe(true);
   expect(fixture.unmocked.filter(x => x.includes('/tournaments'))).toEqual([]);
 });
+
+
+test('Karting E2E: encerra com campeão e mantém arquivo imutável em dois browsers', async ({ browser }, testInfo) => {
+  const state = createKartingFixture();
+  const owner = await browser.newContext();
+  const member = await browser.newContext();
+  try {
+    const a = await owner.newPage();
+    const b = await member.newPage();
+    const ownerApi = await mockCommunityApi(a, 'OWNER', 'karting', 'Karting',
+      ['Karting'], 1, 'LEAGUE', state);
+    const memberApi = await mockCommunityApi(b, 'MEMBER', 'karting', 'Karting',
+      ['Karting'], 1, 'LEAGUE', state);
+    await Promise.all([
+      a.goto('/menu/communities/7?tab=tournaments'),
+      b.goto('/menu/communities/7?tab=tournaments')
+    ]);
+    await a.getByRole('button', { name: 'Criar liga individual' }).click();
+    await a.getByLabel('Nome do torneio').fill('Campeonato arquivado QA');
+    await a.getByRole('button', { name: 'Criar campeonato de Karting' }).click();
+    const section = a.getByRole('region', { name: 'Campeonato de Karting' });
+    const close = section.getByRole('button', { name: 'Encerrar campeonato de Karting' });
+    await expect(close).toBeDisabled();
+    await section.getByRole('button', { name: 'Associar' }).click();
+    await expect(close).toBeEnabled();
+    await close.click();
+    await expect(section.getByRole('button', { name: 'Sim, encerrar e guardar classificação' }))
+      .toBeVisible();
+    await section.getByRole('button', { name: 'Cancelar' }).click();
+    expect(state.tournament?.status).toBe('IN_PROGRESS');
+    expect(state.writes.filter(x => x.path.endsWith('/races/complete'))).toHaveLength(0);
+
+    await close.click();
+    await section.getByRole('button', { name: 'Sim, encerrar e guardar classificação' }).click();
+    await expect(a.getByText('Campeão: Ana')).toBeVisible();
+    await expect(section.getByText('Classificação final arquivada')).toBeVisible();
+    await expect(section.getByRole('button', { name: 'Retirar' })).toHaveCount(0);
+    await expect(section.getByRole('button', { name: 'Associar' })).toHaveCount(0);
+    await expect(section.getByRole('button', { name: 'Encerrar campeonato de Karting' }))
+      .toHaveCount(0);
+    expect(state.tournament?.status).toBe('COMPLETED');
+    expect(state.tournament?.championProfileId).toBe(2);
+    expect(state.writes.filter(x => x.path.endsWith('/races/complete'))).toHaveLength(1);
+
+    // Community rounds may be edited later. The completed snapshot must never
+    // be recalculated from the mutated mutable source.
+    state.points = [99, 77];
+    state.linked = false;
+    state.tied = true;
+    await Promise.all([a.reload(), b.reload()]);
+    const archived = b.getByRole('region', { name: 'Campeonato de Karting' });
+    await expect(b.getByText('Campeão: Ana')).toBeVisible();
+    await expect(archived.getByText('Classificação final arquivada')).toBeVisible();
+    await expect(archived.getByText('Grande Prémio QA')).toBeVisible();
+    await expect(archived.getByText('25 · 18 · 15 pontos')).toBeVisible();
+    const standings = b.getByRole('table', { name: 'Classificação de Karting' });
+    await expect(standings.locator('tbody tr')).toHaveCount(3);
+    await expect(standings.locator('tbody tr').first()).toContainText('Ana');
+    await expect(standings.locator('tbody tr').first()).toContainText('25');
+    await expect(archived.getByRole('button', { name: 'Retirar' })).toHaveCount(0);
+    await expect(archived.getByRole('button', { name: 'Guardar pontuação' })).toHaveCount(0);
+    await expect(archived.getByRole('button', { name: 'Encerrar campeonato de Karting' }))
+      .toHaveCount(0);
+    expect(state.writes.filter(x => x.role === 'MEMBER')).toEqual([]);
+    expect(ownerApi.unmocked.filter(x => x.includes('/tournaments'))).toEqual([]);
+    expect(memberApi.unmocked.filter(x => x.includes('/tournaments'))).toEqual([]);
+    await testInfo.attach('karting-archive-member-desktop', {
+      body: await archived.screenshot(), contentType: 'image/png'
+    });
+  } finally {
+    await Promise.all([owner.close(), member.close()]);
+  }
+});
+
+test('Karting E2E: empate no primeiro lugar não inventa campeão', async ({ page }) => {
+  const state = createKartingFixture();
+  state.tied = true;
+  const fixture = await mockCommunityApi(page, 'OWNER', 'karting', 'Karting',
+    ['Karting'], 1, 'LEAGUE', state);
+  await page.goto('/menu/communities/7?tab=tournaments');
+  await page.getByRole('button', { name: 'Criar liga individual' }).click();
+  await page.getByLabel('Nome do torneio').fill('Karting empatado QA');
+  await page.getByRole('button', { name: 'Criar campeonato de Karting' }).click();
+  const race = page.getByRole('region', { name: 'Campeonato de Karting' });
+  await race.getByRole('button', { name: 'Associar' }).click();
+  const table = page.getByRole('table', { name: 'Classificação de Karting' });
+  await expect(table.locator('tbody tr')).toHaveCount(2);
+  await race.getByRole('button', { name: 'Encerrar campeonato de Karting' }).click();
+  await race.getByRole('button', { name: 'Sim, encerrar e guardar classificação' }).click();
+  await expect(page.getByText('Empate no primeiro lugar', { exact: true })).toBeVisible();
+  await expect(page.getByText('Campeão:', { exact: false })).toHaveCount(0);
+  expect(state.tournament?.championTied).toBe(true);
+  expect(state.tournament?.championProfileId).toBeNull();
+  expect(state.tournament?.championPoints).toBeNull();
+  await page.reload();
+  await expect(page.getByText('Empate no primeiro lugar', { exact: true })).toBeVisible();
+  await expect(race.getByText('Classificação final arquivada')).toBeVisible();
+  await expect(table.locator('tbody tr')).toHaveCount(2);
+  expect(fixture.unmocked.filter(x => x.includes('/tournaments'))).toEqual([]);
+});
