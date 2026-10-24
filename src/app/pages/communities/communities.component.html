@@ -1419,6 +1419,34 @@
                             </div>
                           </section>
                         }
+                        @if (newRoundEventType === 'CRICKET_T20') {
+                          <section class="round-basketball-final" [attr.aria-label]="'communities.cricket.details' | t">
+                            <div class="round-basketball-heading">
+                              <strong>{{ 'communities.cricket.details' | t }}</strong>
+                              <small>{{ 'communities.cricket.legalBallsHint' | t }}</small>
+                            </div>
+                            <div class="round-basketball-scoreboard">
+                              <div class="round-basketball-side">
+                                <span>{{ 'communities.cricket.inningsA' | t }}</span>
+                                <label><span>{{ 'communities.cricket.wickets' | t }}</span>
+                                  <input type="number" min="0" max="10" step="1" [(ngModel)]="roundCricketDraft.wicketsA">
+                                </label>
+                                <label><span>{{ 'communities.cricket.legalBalls' | t }}</span>
+                                  <input type="number" min="1" max="120" step="1" [(ngModel)]="roundCricketDraft.legalBallsA">
+                                </label>
+                              </div>
+                              <div class="round-basketball-side">
+                                <span>{{ 'communities.cricket.inningsB' | t }}</span>
+                                <label><span>{{ 'communities.cricket.wickets' | t }}</span>
+                                  <input type="number" min="0" max="10" step="1" [(ngModel)]="roundCricketDraft.wicketsB">
+                                </label>
+                                <label><span>{{ 'communities.cricket.legalBalls' | t }}</span>
+                                  <input type="number" min="1" max="120" step="1" [(ngModel)]="roundCricketDraft.legalBallsB">
+                                </label>
+                              </div>
+                            </div>
+                          </section>
+                        }
                         @if (isBasketballFinal(newRoundEventType)) {
                           <section class="round-basketball-editor">
                             <h4>{{ 'communities.basketball.finalTitle' | t }}</h4>
@@ -1940,7 +1968,10 @@
                               <div class="round-basketball-scoreboard">
                                 <div class="round-basketball-side" [class.round-basketball-winner]="teamFinalWinner(round.teamScore) === 'A'">
                                   <span>{{ teamFinalSideLabelKey(round.eventType, 'A') | t }}</span>
-                                  <strong>{{ round.teamScore?.sideA }}</strong>
+                                  <strong>{{ round.teamScore?.sideA }}{{ round.eventType === 'CRICKET_T20' && round.cricketDetails ? '/' + round.cricketDetails.wicketsA : '' }}</strong>
+                                  @if (round.eventType === 'CRICKET_T20' && round.cricketDetails) {
+                                    <small>{{ cricketOvers(round.cricketDetails.legalBallsA) }} {{ 'communities.cricket.overs' | t }}</small>
+                                  }
                                   @for (player of racketSidePlayers(round, 'A'); track $index) {
                                     <small>{{ player.fullName || player.username }}</small>
                                   }
@@ -1948,7 +1979,10 @@
                                 <span class="round-basketball-vs" aria-hidden="true">:</span>
                                 <div class="round-basketball-side" [class.round-basketball-winner]="teamFinalWinner(round.teamScore) === 'B'">
                                   <span>{{ teamFinalSideLabelKey(round.eventType, 'B') | t }}</span>
-                                  <strong>{{ round.teamScore?.sideB }}</strong>
+                                  <strong>{{ round.teamScore?.sideB }}{{ round.eventType === 'CRICKET_T20' && round.cricketDetails ? '/' + round.cricketDetails.wicketsB : '' }}</strong>
+                                  @if (round.eventType === 'CRICKET_T20' && round.cricketDetails) {
+                                    <small>{{ cricketOvers(round.cricketDetails.legalBallsB) }} {{ 'communities.cricket.overs' | t }}</small>
+                                  }
                                   @for (player of racketSidePlayers(round, 'B'); track $index) {
                                     <small>{{ player.fullName || player.username }}</small>
                                   }
@@ -1959,6 +1993,9 @@
                               }
                               @if (round.eventType === 'ICE_HOCKEY_REG' && round.teamScore?.sideA === round.teamScore?.sideB) {
                                 <small>{{ 'communities.iceHockey.regulationDraw' | t }}</small>
+                              }
+                              @if (round.eventType === 'CRICKET_T20') {
+                                <small>{{ 'communities.cricket.notOfficialResult' | t }}</small>
                               }
                               @if (teamFinalUsesRuns(round.eventType) && round.teamScore?.sideA === round.teamScore?.sideB) {
                                 <small>{{ 'communities.teamFinal.runsTieDisclaimer' | t }}</small>
