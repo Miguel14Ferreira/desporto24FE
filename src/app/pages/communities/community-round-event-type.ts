@@ -19,7 +19,7 @@ export type CommunityEventType = 'RACE' | 'FREESTYLE' | 'TRACK' | 'JUMP' | 'THRO
     | 'ICE_HOCKEY_REG' | 'ICE_HOCKEY_OT' | 'ICE_HOCKEY_SO' | 'BASEBALL_RUNS' | 'SOFTBALL_RUNS' | 'KORFBALL_REG' | 'KORFBALL_GOLDEN'
     | 'LACROSSE_M_REG' | 'LACROSSE_M_OT' | 'AMFOOTBALL_SCORE' | 'FLAGFOOTBALL_SCORE' | 'CURLING_REG' | 'CURLING_EXTRA'
     | 'PETANQUE_13' | 'PETANQUE_11' | 'BOWLING_TENPIN' | 'POOL_9_RACKS' | 'FENCING_POOL_5' | 'FENCING_DE_15'
-    | 'TEQBALL_SINGLES' | 'TEQBALL_DOUBLES';
+    | 'TEQBALL_SINGLES' | 'TEQBALL_DOUBLES' | 'CHESS_GAME';
 export interface CommunityEventOption { code: CommunityEventType; labelKey: string }
 const TYPES: Record<string, readonly CommunityEventOption[]> = {
   basquetebol: [{ code: 'BASKETBALL_FINAL', labelKey: 'communities.basketball.fiveVsFive' }],
@@ -50,6 +50,7 @@ const TYPES: Record<string, readonly CommunityEventOption[]> = {
     { code: 'FENCING_POOL_5', labelKey: 'communities.teamFinal.fencingPool' },
     { code: 'FENCING_DE_15', labelKey: 'communities.teamFinal.fencingElimination' }
   ],
+  xadrez: [{ code: 'CHESS_GAME', labelKey: 'communities.eventType.chess_game' }],
   teqball: [
     { code: 'TEQBALL_SINGLES', labelKey: 'communities.teqball.singles' },
     { code: 'TEQBALL_DOUBLES', labelKey: 'communities.teqball.doubles' }
@@ -153,6 +154,7 @@ export function eventPresentationFormat(
   sport: string | null | undefined, eventType: string | null | undefined
 ): string {
   if (isRaceEvent(sport, eventType)) return 'race';
+  if (eventType === 'CHESS_GAME' && normalize(sport || '') === 'xadrez') return 'duel';
   if (isNeutralEvent(sport, eventType))
     return ['FREESTYLE', 'HEAT', 'BODYBOARD_HEAT', 'APPARATUS',
       'SKATE_PARK', 'SKATE_STREET', 'PARKOUR_FREESTYLE',
