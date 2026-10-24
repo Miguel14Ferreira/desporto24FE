@@ -22,7 +22,8 @@ export type CommunityEventType = 'RACE' | 'FREESTYLE' | 'TRACK' | 'JUMP' | 'THRO
     | 'TEQBALL_SINGLES' | 'TEQBALL_DOUBLES' | 'CHESS_GAME' | 'CRICKET_T20' | 'GOLF_STROKE_9' | 'GOLF_STROKE_18'
     | 'JUDO_IPPON' | 'JUDO_AWASETE_IPPON' | 'JUDO_WAZA_ARI' | 'JUDO_YUKO' | 'JUDO_HANSOKU_MAKE'
     | 'KARATE_KUMITE_POINTS' | 'KARATE_KUMITE_SENSHU' | 'KARATE_KUMITE_HANTEI' | 'KARATE_KATA_JUDGES'
-    | 'TKD_KYORUGI_BEST3' | 'TKD_POOMSAE_RECOGNIZED' | 'TKD_POOMSAE_FREESTYLE';
+    | 'TKD_KYORUGI_BEST3' | 'TKD_POOMSAE_RECOGNIZED' | 'TKD_POOMSAE_FREESTYLE'
+    | 'BJJ_IBJJF_GI_SUBMISSION' | 'BJJ_IBJJF_GI_POINTS';
 export interface CommunityEventOption { code: CommunityEventType; labelKey: string }
 const TYPES: Record<string, readonly CommunityEventOption[]> = {
   basquetebol: [{ code: 'BASKETBALL_FINAL', labelKey: 'communities.basketball.fiveVsFive' }],
@@ -59,6 +60,10 @@ const TYPES: Record<string, readonly CommunityEventOption[]> = {
     { code: 'FENCING_DE_15', labelKey: 'communities.teamFinal.fencingElimination' }
   ],
   xadrez: [{ code: 'CHESS_GAME', labelKey: 'communities.eventType.chess_game' }],
+  'jiu-jitsu brasileiro': [
+    { code: 'BJJ_IBJJF_GI_SUBMISSION', labelKey: 'communities.bjj.submission' },
+    { code: 'BJJ_IBJJF_GI_POINTS', labelKey: 'communities.bjj.points' }
+  ],
   taekwondo: [
     { code: 'TKD_KYORUGI_BEST3', labelKey: 'communities.taekwondo.kyorugi' },
     { code: 'TKD_POOMSAE_RECOGNIZED', labelKey: 'communities.taekwondo.recognized' },
@@ -183,6 +188,8 @@ export function eventPresentationFormat(
   if (eventType === 'CHESS_GAME' && normalize(sport || '') === 'xadrez') return 'duel';
   if (eventType?.startsWith('JUDO_') && normalize(sport || '') === 'judo') return 'duel';
   if (eventType?.startsWith('KARATE_') && normalize(sport || '') === 'karate') return 'duel';
+  if ((eventType === 'BJJ_IBJJF_GI_SUBMISSION' || eventType === 'BJJ_IBJJF_GI_POINTS')
+      && normalize(sport || '') === 'jiu-jitsu brasileiro') return 'duel';
   if (eventType === 'TKD_KYORUGI_BEST3' && normalize(sport || '') === 'taekwondo') return 'duel';
   if ((eventType === 'TKD_POOMSAE_RECOGNIZED' || eventType === 'TKD_POOMSAE_FREESTYLE')
       && normalize(sport || '') === 'taekwondo') return 'judged';
