@@ -16,7 +16,20 @@
 .tournament-type,.tournament-state { padding: .36rem .68rem; border-radius: 999px; background: rgba(16,185,129,.13); color: #86efac; font-size: .75rem; font-weight: 800; }
 .tournament-state.is-finished { color: #fde68a; background: rgba(251,191,36,.12); }
 .create-tournament,.t-section,.complete-action,.tournament-sidebar,.tournament-detail { background: rgba(10,23,38,.7); border: 1px solid rgba(148,163,184,.14); border-radius: 1rem; padding: 1rem; }
-.create-tournament { display: grid; grid-template-columns: 1fr minmax(12rem,22rem); gap: 1rem; align-items: end; }
+.create-tournament {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.15rem;
+  align-items: stretch;
+  width: 100%;
+  max-width: 70rem;
+  margin-inline: auto;
+  box-sizing: border-box;
+  padding: clamp(1rem, 2.4vw, 1.6rem);
+  border-color: rgba(125, 211, 252, .2);
+  background: linear-gradient(155deg, rgba(14, 31, 48, .97), rgba(9, 22, 37, .94));
+  box-shadow: 0 16px 48px rgba(0, 0, 0, .12);
+}
 .create-tournament > div:first-child { display: grid; gap: .35rem; }
 .create-controls { display: grid; gap: .4rem; }
 .create-controls label { font-size: .78rem; font-weight: 700; color: #cbd5e1; }
@@ -30,6 +43,157 @@
 .t-btn-small { min-height: 40px; font-size: .75rem; padding: .38rem .6rem; }
 .t-btn-wide { width: 100%; }
 .t-btn:disabled { opacity: .48; cursor: not-allowed; }
+
+/* Competition setup: readable full-width steps instead of a narrow right rail. */
+.create-tournament-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  min-width: 0;
+  padding: clamp(1rem, 2vw, 1.5rem);
+  border: 1px solid rgba(52, 211, 153, .24);
+  border-radius: .95rem;
+  background: radial-gradient(ellipse at 100% 0%, rgba(52, 211, 153, .12), transparent 54%),
+              linear-gradient(110deg, rgba(6, 95, 70, .2), rgba(14, 116, 144, .08));
+}
+.create-tournament-intro { display: grid; gap: .45rem; min-width: 0; max-width: 42rem; }
+.create-tournament-intro h4 {
+  font-size: clamp(1.3rem, 2.4vw, 1.75rem);
+  line-height: 1.2;
+  letter-spacing: -.025em;
+}
+.create-tournament-intro > p:not(.tournament-eyebrow) { font-size: .89rem; color: #cbd5e1; }
+.create-kind-pill {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  padding: .45rem .75rem;
+  border: 1px solid rgba(52, 211, 153, .36);
+  border-radius: 999px;
+  background: rgba(16, 185, 129, .12);
+  color: #a7f3d0;
+  font-size: .78rem;
+  font-weight: 800;
+}
+.create-tournament .create-controls { display: grid; gap: 1rem; min-width: 0; }
+.create-step {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+  padding: clamp(1rem, 2vw, 1.4rem);
+  border: 1px solid rgba(148, 163, 184, .18);
+  border-radius: .95rem;
+  background: rgba(18, 37, 56, .62);
+}
+.create-step-heading { display: flex; align-items: flex-start; gap: .8rem; }
+.create-step-heading > div { display: grid; gap: .25rem; min-width: 0; }
+.create-step-heading h5 { font-size: 1.02rem; letter-spacing: -.01em; }
+.create-step-heading p { font-size: .8rem; color: #9fb2c8; }
+.create-step-index {
+  display: inline-grid;
+  flex: 0 0 2rem;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border: 1px solid rgba(52, 211, 153, .42);
+  border-radius: .7rem;
+  background: rgba(16, 185, 129, .13);
+  color: #a7f3d0;
+  font-size: .79rem;
+  font-weight: 900;
+}
+.create-top-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 21rem), 1fr));
+  align-items: start;
+  gap: 1rem;
+}
+.create-field { display: grid; align-content: start; gap: .55rem; min-width: 0; }
+.create-tournament .create-controls label,
+.create-tournament .t-points-rules legend {
+  color: #e4edf7;
+  font-weight: 800;
+  font-size: .82rem;
+}
+.create-tournament input { min-height: 44px; }
+.create-tournament input:focus-visible {
+  border-color: #34d399;
+  box-shadow: 0 0 0 3px rgba(52, 211, 153, .13);
+}
+.create-tournament .sport-choice-hint { line-height: 1.5; }
+.create-tournament .chosen-sport {
+  padding: .65rem .8rem;
+  min-height: 44px;
+  box-sizing: border-box;
+}
+.create-tournament .t-community-sports { gap: .5rem; }
+.create-tournament .t-sport-chip { transition: background .15s, border-color .15s; }
+.create-tournament .t-sport-chip:hover:not(:disabled) {
+  border-color: rgba(52, 211, 153, .65);
+  background: rgba(16, 185, 129, .13);
+}
+.create-tournament .t-sport-chip[aria-pressed="true"] {
+  color: #d1fae5;
+  background: rgba(16, 185, 129, .2);
+  border-color: #34d399;
+  box-shadow: inset 0 0 0 1px rgba(52, 211, 153, .14);
+}
+.create-tournament .t-points-rules {
+  display: grid;
+  gap: .85rem;
+  margin: 0;
+  padding: 1rem;
+  background: rgba(6, 20, 35, .38);
+  border-color: rgba(148, 163, 184, .24);
+  border-radius: .8rem;
+}
+.create-options-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+}
+.create-options-grid .t-sport-chip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 66px;
+  padding: .8rem 1rem;
+  border-radius: .8rem;
+  text-align: center;
+  line-height: 1.35;
+  font-weight: 800;
+}
+.create-step-format > label { margin-top: .2rem; }
+.create-step-format #new-team-size { max-width: 15rem; }
+.create-step-format #team-size-hint { margin-top: -.5rem; }
+.create-tournament .t-tiebreak-choice {
+  min-height: 84px;
+  border-radius: .8rem;
+  justify-content: center;
+}
+.create-tournament .t-points-fields { max-width: 36rem; gap: .85rem; }
+.create-tournament .t-points-fields label { gap: .4rem; }
+.create-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: .7rem;
+  padding: 1rem .15rem .1rem;
+  border-top: 1px solid rgba(148, 163, 184, .2);
+}
+.create-actions .t-btn-primary { min-width: 15rem; }
+.create-actions .t-btn-secondary { margin-right: auto; }
+@media (max-width: 600px) {
+  .create-tournament-heading { flex-direction: column; }
+  .create-tournament .t-points-fields { gap: .45rem; }
+  .create-tournament .t-points-fields input { padding: .55rem; }
+  .create-actions { align-items: stretch; }
+  .create-actions .t-btn { flex: 1 1 100%; min-width: 0; }
+  .create-actions .t-btn-secondary { order: 2; }
+}
+
 .tournament-browser { display: grid; grid-template-columns: minmax(12rem, .7fr) minmax(0, 2fr); gap: 1rem; align-items: start; }
 .tournament-sidebar { display: grid; gap: .6rem; min-width: 0; }
 .sidebar-title { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
