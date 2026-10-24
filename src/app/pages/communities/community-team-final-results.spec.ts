@@ -2,7 +2,8 @@ import { eventOptionsForSport, eventPresentationFormat, isNeutralEvent } from '.
 import { isTeamFinalEvent, teamFinalError, recordedTeamFinal, teamFinalWinner,
   teamFinalUsesGoals, teamFinalTitleKey, iceHockeyEvent, teamFinalHintKey,
   teamFinalUsesRuns, teamFinalScoreLabelKey, teamFinalIsDecisiveGoalEvent,
-  teamFinalIsFootballPointsEvent, teamFinalPetanqueTarget, teamFinalMaxScore } from './community-team-final-results';
+  teamFinalIsFootballPointsEvent, teamFinalPetanqueTarget, teamFinalMaxScore,
+  teamFinalSideLabelKey } from './community-team-final-results';
 
 describe('handball rugby and sevens final team scores', () => {
   const sides=[{team:'A'},{team:'B'}];
@@ -283,6 +284,16 @@ describe('handball rugby and sevens final team scores', () => {
     expect(teamFinalWinner(score(7,9))).toBe('B');
     expect(eventOptionsForSport('Futebol')).toEqual([]);
     expect(teamFinalScoreLabelKey('CURLING_EXTRA')).toBe('communities.teamFinal.points');
+  });
+  it('labels singles as players while preserving team labels',()=>{
+    for (const type of ['BOWLING_TENPIN','POOL_9_RACKS']) {
+      expect(teamFinalSideLabelKey(type,'A')).toBe('communities.teamFinal.playerA');
+      expect(teamFinalSideLabelKey(type,'B')).toBe('communities.teamFinal.playerB');
+    }
+    for (const type of ['RUGBY_FINAL','CURLING_REG','PETANQUE_13','FUTSAL_FINAL']) {
+      expect(teamFinalSideLabelKey(type,'A')).toBe('communities.teamFinal.sideA');
+      expect(teamFinalSideLabelKey(type,'B')).toBe('communities.teamFinal.sideB');
+    }
   });
   it('rejects invalid scores and incomplete team assignments',()=>{
     expect(teamFinalError('RUGBY_FINAL',sides,score(1000,0))).toBe('teamFinalInvalidScore');

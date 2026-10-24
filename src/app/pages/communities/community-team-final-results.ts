@@ -25,6 +25,13 @@ export function teamFinalUsesGoals(type: string | null | undefined): boolean {
     && type !== 'BOWLING_TENPIN' && type !== 'POOL_9_RACKS'
     && !teamFinalUsesRuns(type);
 }
+/** A/B denote individual competitors for explicitly singles formats. */
+export function teamFinalSideLabelKey(type: string | null | undefined, side: 'A' | 'B'): string {
+  return (type === 'BOWLING_TENPIN' || type === 'POOL_9_RACKS')
+    ? 'communities.teamFinal.player' + side
+    : 'communities.teamFinal.side' + side;
+}
+
 export function teamFinalScoreLabelKey(type: string | null | undefined): string {
   if (type === 'POOL_9_RACKS') return 'communities.teamFinal.racksWon';
   return teamFinalUsesRuns(type) ? 'communities.teamFinal.runs'
