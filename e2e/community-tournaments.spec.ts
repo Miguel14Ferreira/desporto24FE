@@ -72,10 +72,12 @@ interface KartingFixture {
   tournament: Tournament | null;
   points: number[];
   linked: boolean;
+  tied: boolean;
+  snapshot: ReturnType<typeof raceData> | null;
   writes: Array<{ role: Role; path: string }>;
 }
 function createKartingFixture(): KartingFixture {
-  return { tournament: null, points: [25,18,15], linked: false, writes: [] };
+  return { tournament: null, points: [25,18,15], linked: false, tied: false, snapshot: null, writes: [] };
 }
 function raceData(state: KartingFixture) {
   const race = {
@@ -89,18 +91,24 @@ function raceData(state: KartingFixture) {
         bestLapSeconds: null, racePenaltyPoints: 0, raceDisqualified: false }
     ]
   };
+  const archiveStandings = state.tied ? [
+    { position: 1, playerId: 2, fullName: 'Ana', races: 1, wins: 1, podiums: 1,
+      bestFinish: 1, championshipPoints: 25, penaltyPoints: 0 },
+    { position: 1, playerId: 3, fullName: 'Bruno', races: 1, wins: 1, podiums: 1,
+      bestFinish: 1, championshipPoints: 25, penaltyPoints: 0 }
+  ] : null;
   return {
     tournamentId: 11, pointsByPlace: state.points,
     linkedRaces: state.linked ? [race] : [],
     availableRaces: state.linked ? [] : [race],
-    standings: state.linked ? [
+    standings: state.linked ? (archiveStandings ?? [
       { position: 1, playerId: 2, fullName: 'Ana', races: 1, wins: 1, podiums: 1,
         bestFinish: 1, championshipPoints: state.points[0], penaltyPoints: 0 },
       { position: 2, playerId: 3, fullName: 'Bruno', races: 1, wins: 0, podiums: 1,
         bestFinish: 2, championshipPoints: state.points[1], penaltyPoints: 0 },
       { position: 3, playerId: 4, fullName: 'Carla', races: 1, wins: 0, podiums: 0,
         bestFinish: null, championshipPoints: 0, penaltyPoints: 0 }
-    ] : []
+    ]) : []
   };
 }
 
@@ -395,8 +403,33 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
         return send(karting.tournament, 201);
       }
       if (path === base && method === 'GET') {
-        return karting.tournament ? send(raceData(karting))
+        return karting.tournament
+          ? send(karting.snapshot ?? raceData(karting))
           : send({ message: 'Não existe' }, 404);
+      }
+      if (path === base + '/complete' && method === 'POST') {
+        karting.writes.push({ role, path });
+        if (role !== 'OWNER') return send({ message: 'Sem permissão' }, 403);
+        if (!karting.tournament) return send({ message: 'Não existe' }, 404);
+        if (karting.tournament.status === 'COMPLETED') return send(karting.tournament);
+        const current = raceData(karting);
+        if (karting.tournament.status !== 'IN_PROGRESS' || !karting.linked
+            || current.standings.length < 2)
+          return send({ message: 'Faltam resultados válidos' }, 409);
+        // Match the backend contract: snapshot before completion. Unlike the
+        // mutable community round, the archive remains fixed for every reader.
+        karting.snapshot = JSON.parse(JSON.stringify(current)) as ReturnType<typeof raceData>;
+        const leader = current.standings[0];
+        const tied = current.standings[1]?.position === 1;
+        Object.assign(karting.tournament, {
+          status: 'COMPLETED', completedAt: '2026-10-24T13:00:00Z',
+          championTied: tied,
+          championProfileId: tied ? null : leader.playerId,
+          championUsername: tied ? null : 'ana',
+          championDisplayName: tied ? null : leader.fullName,
+          championPoints: tied ? null : leader.championshipPoints
+        });
+        return send(karting.tournament);
       }
       if (path === base + '/points' && method === 'PUT') {
         karting.writes.push({ role, path });
@@ -415,7 +448,7 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
       if (path === base + '/30' && method === 'PUT') {
         karting.writes.push({ role, path });
         if (role !== 'OWNER') return send({ message: 'Sem permissão' }, 403);
-        if (!karting.tournament || karting.linked)
+        if (!karting.tournament || karting.linked || karting.tournament.status === 'COMPLETED')
           return send({ message: 'Corrida indisponível' }, 409);
         karting.linked = true;
         karting.tournament.status = 'IN_PROGRESS';
@@ -424,7 +457,7 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
       if (path === base + '/30' && method === 'DELETE') {
         karting.writes.push({ role, path });
         if (role !== 'OWNER') return send({ message: 'Sem permissão' }, 403);
-        if (!karting.tournament || !karting.linked)
+        if (!karting.tournament || !karting.linked || karting.tournament.status === 'COMPLETED')
           return send({ message: 'Corrida indisponível' }, 409);
         karting.linked = false;
         karting.tournament.status = 'DRAFT';
