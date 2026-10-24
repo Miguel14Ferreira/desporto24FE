@@ -2237,6 +2237,9 @@ const PT: Dictionary = {
   'communities.changePhoto': 'Alterar fotografia',
   'communities.removePhoto': 'Remover fotografia',
   'feedback.communities.photoError': 'Não foi possível atualizar a fotografia da comunidade.',
+  'feedback.communities.avatarVideoNotSupported': 'Esse ficheiro é um vídeo MP4. Para uma fotografia animada, utiliza um GIF (.gif).',
+  'feedback.communities.avatarTooLarge': 'A fotografia da comunidade não pode ultrapassar 5 MB.',
+  'feedback.communities.avatarInvalidType': 'Escolhe uma fotografia JPG, PNG, WebP ou GIF animado (até 5 MB).',
   'feedback.communities.photoRemoveError': 'Não foi possível remover a fotografia da comunidade.',
 
   'googleOnboarding.eyebrow': 'JYNLO · Passo 2 de 2',
@@ -5393,6 +5396,9 @@ const EN: Dictionary = {
   'communities.changePhoto': 'Change photo',
   'communities.removePhoto': 'Remove photo',
   'feedback.communities.photoError': 'We could not update the community photo.',
+  'feedback.communities.avatarVideoNotSupported': 'This file is an MP4 video. To use an animated community photo, upload a GIF (.gif).',
+  'feedback.communities.avatarTooLarge': 'Community photos cannot exceed 5 MB.',
+  'feedback.communities.avatarInvalidType': 'Choose a JPG, PNG, WebP or animated GIF image (up to 5 MB).',
   'feedback.communities.photoRemoveError': 'We could not remove the community photo.',
 
   'googleOnboarding.eyebrow': 'JYNLO · Step 2 of 2',
