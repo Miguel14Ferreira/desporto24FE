@@ -14,7 +14,12 @@ describe('Inline speed skating — organizer-entered sprint heats', () => {
   it('registers all track/road quarter, semi and final A/B stage codes for the existing sport', () => {
     const options = eventOptionsForSport('Patinagem de Velocidade').map(x => x.code);
     for (const code of INLINE_SPEED_HEAT_CODES) {
-      expect(options).toContain(code as typeof options[number]);
+      if (code.endsWith('_FINAL_B')) {
+        // Historical Final B remains viewable, but is no longer offered for 2026.
+        expect(options).not.toContain(code as typeof options[number]);
+      } else {
+        expect(options).toContain(code as typeof options[number]);
+      }
       expect(isInlineSpeedHeatEvent(code)).toBeTrue();
       expect(isRaceEvent('Patinagem de Velocidade', code)).toBeTrue();
       expect(isNeutralEvent('Patinagem de Velocidade', code)).toBeFalse();
