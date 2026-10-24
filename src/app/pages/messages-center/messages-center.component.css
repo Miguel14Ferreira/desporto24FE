@@ -81,6 +81,14 @@
 .inbox-composer-bottom > span { font-size:.72rem; color:#acc7d0; }
 .inbox-composer-actions { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
 .inbox-composer-actions .jynlo-action { font-size:.79rem; text-decoration:none; }
+.inbox-emoji-controls { position:relative; }
+.inbox-emoji-trigger { display:grid; place-items:center; width:36px; height:36px; border-radius:11px; border:1px solid #4b7980; background:#173946; color:#bde9dd; font:inherit; font-size:1.2rem; cursor:pointer; }
+.inbox-emoji-trigger:hover, .inbox-emoji-trigger[aria-expanded="true"] { border-color:#55dac3; background:#1f5556; }
+.inbox-emoji-trigger:disabled { opacity:.5; cursor:not-allowed; }
+.inbox-emoji-trigger:focus-visible, .inbox-emoji-grid button:focus-visible { outline:2px solid #79f5d5; outline-offset:2px; }
+.inbox-emoji-grid { position:absolute; bottom:calc(100% + 10px); right:0; z-index:10; display:grid; grid-template-columns:repeat(8, 1fr); gap:3px; width:min(304px, 82vw); max-height:230px; overflow-y:auto; padding:9px; border:1px solid #477d79; border-radius:14px; background:#17343d; box-shadow:0 12px 35px #0008; }
+.inbox-emoji-grid button { display:grid; place-items:center; aspect-ratio:1; padding:3px; border:0; border-radius:8px; background:transparent; color:inherit; font-size:1.3rem; cursor:pointer; }
+.inbox-emoji-grid button:hover { background:#2b5a61; }
 .inbox-compose-locked { margin:0; padding:9px 12px; background:#31424a; border-radius:10px; color:#d8e4ea; font-size:.79rem; }
 .inbox-compose-alert { margin:12px 22px 0; padding:13px 16px; border:1px solid #4a9078; background:#183e38; color:#c3f3e4; border-radius:12px; font-size:.84rem; }
 .inbox-compose-alert--error { background:#44392e; border-color:#b58c55; color:#ffe6bb; }
