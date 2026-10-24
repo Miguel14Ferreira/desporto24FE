@@ -16,6 +16,16 @@ import {
   TournamentTeamScheduleSummary, TournamentTeamStandings, TournamentTeamGroups, TournamentRaceOverview
 } from '../pages/model/community-tournament';
 
+/** Community result-by-position formats verified end to end. */
+export type RaceChampionshipSport = 'Karting' | 'BMX' | 'Ciclismo' | 'Mountain Bike';
+
+export const RACE_CHAMPIONSHIP_SPORTS: readonly RaceChampionshipSport[] =
+  ['Karting', 'BMX', 'Ciclismo', 'Mountain Bike'];
+
+export function isRaceChampionshipSport(value: string): value is RaceChampionshipSport {
+  return RACE_CHAMPIONSHIP_SPORTS.some(sport => sport === value);
+}
+
 @Injectable({ providedIn: 'root' })
 export class CommunityTournamentsService {
   private readonly baseUrl = environment.apiUrl + '/api/communities';
@@ -41,9 +51,9 @@ export class CommunityTournamentsService {
   }
 
 
-  /** Only disciplines verified end-to-end: Karting and BMX Racing (not Freestyle). */
-  createKartingChampionship(communityId: number, name: string,
-                            sport: 'Karting' | 'BMX' = 'Karting'): Observable<CommunityTournament> {
+  /** Uses the generic rounds-based classification; not federation rulebooks. */
+  createRaceChampionship(communityId: number, name: string,
+                         sport: RaceChampionshipSport): Observable<CommunityTournament> {
     return this.http.post<CommunityTournament>(this.url(communityId), {
       name, sport, entryType: 'INDIVIDUAL', format: 'LEAGUE',
       scoringMode: 'RACE_POINTS'
@@ -65,7 +75,7 @@ export class CommunityTournamentsService {
       this.url(communityId, tournamentId) + '/races/' + roundId, {});
   }
 
-  completeKarting(communityId: number, tournamentId: number): Observable<CommunityTournament> {
+  completeRaceChampionship(communityId: number, tournamentId: number): Observable<CommunityTournament> {
     return this.http.post<CommunityTournament>(
       this.url(communityId, tournamentId) + '/races/complete', {});
   }

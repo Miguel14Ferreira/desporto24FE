@@ -29,8 +29,8 @@ describe('Community tournaments management', () => {
       'generateSchedule', 'matches', 'recordResult', 'standings', 'complete', 'delete',
       'createTeamTournament', 'details', 'teams', 'createTeam', 'addTeamPlayer', 'acceptTeamInvite', 'removeTeamPlayer', 'deleteTeam',
       'generateTeamSchedule', 'teamMatches', 'recordTeamResult', 'teamStandings', 'teamGroups', 'completeTeam',
-      'createKartingChampionship', 'raceOverview', 'linkRace', 'unlinkRace', 'setRacePoints',
-      'completeKarting'
+      'createRaceChampionship', 'raceOverview', 'linkRace', 'unlinkRace', 'setRacePoints',
+      'completeRaceChampionship'
     ]);
     api.list.and.returnValue(of({ tournaments: [draft], page: 0, hasMore: false }));
     api.participants.and.returnValue(of({ participants: [], page: 0, hasMore: false }));
@@ -125,11 +125,11 @@ describe('Community tournaments management', () => {
     expect(component.classificationProfile.heading).toContain('corridas');
     expect(component.classificationProfile.isRoundRobinSupported).toBeFalse();
     expect(component.isSportFormatSupported).toBeTrue();
-    api.createKartingChampionship.and.returnValue(of({
+    api.createRaceChampionship.and.returnValue(of({
       ...draft, id: 19, name: 'Campeonato Karting', sport: 'Karting', scoringMode: 'RACE_POINTS'
     }));
     await component.create();
-    expect(api.createKartingChampionship).toHaveBeenCalledOnceWith(7, 'Campeonato Karting', 'Karting');
+    expect(api.createRaceChampionship).toHaveBeenCalledOnceWith(7, 'Campeonato Karting', 'Karting');
     expect(api.create).not.toHaveBeenCalled();
     expect(api.matches).not.toHaveBeenCalledWith(7, 19, 0);
     expect(api.raceOverview).toHaveBeenCalledWith(7, 19);
@@ -154,11 +154,11 @@ describe('Community tournaments management', () => {
     expect(component.isRaceChampionshipDraft).toBeTrue();
     expect(component.raceSportLabel('BMX')).toBe('BMX Racing');
     expect(component.classificationProfile.isRoundRobinSupported).toBeFalse();
-    api.createKartingChampionship.and.returnValue(of({
+    api.createRaceChampionship.and.returnValue(of({
       ...draft, id: 40, name: 'Taça BMX Racing', sport: 'BMX', scoringMode: 'RACE_POINTS'
     }));
     await component.create();
-    expect(api.createKartingChampionship).toHaveBeenCalledOnceWith(7, 'Taça BMX Racing', 'BMX');
+    expect(api.createRaceChampionship).toHaveBeenCalledOnceWith(7, 'Taça BMX Racing', 'BMX');
     expect(api.create).not.toHaveBeenCalled();
     expect(api.raceOverview).toHaveBeenCalledWith(7, 40);
     expect(component.selected?.sport).toBe('BMX');
@@ -167,6 +167,56 @@ describe('Community tournaments management', () => {
     component.chooseSport('BMX');
     expect(component.isRaceChampionshipDraft).toBeFalse();
     expect(component.isSportFormatSupported).toBeFalse();
+  });
+
+  it('creates Ciclismo and Mountain Bike championships using recorded race positions', async () => {
+    for (const [index, sport] of (['Ciclismo', 'Mountain Bike'] as const).entries()) {
+      component.startIndividualCreation();
+      component.nameDraft = 'Campeonato ' + sport;
+      component.chooseSport(sport);
+      expect(component.classificationProfile.format).toBe('race');
+      expect(component.isRaceChampionshipDraft).toBeTrue();
+      expect(component.raceSportLabel(sport)).toBe(sport);
+      const id = 42 + index;
+      api.createRaceChampionship.and.returnValue(of({
+        ...draft, id, name: 'Campeonato ' + sport, sport, scoringMode: 'RACE_POINTS'
+      }));
+      await component.create();
+      expect(api.createRaceChampionship).toHaveBeenCalledWith(7, 'Campeonato ' + sport, sport);
+      expect(api.raceOverview).toHaveBeenCalledWith(7, id);
+      expect(component.selected?.sport).toBe(sport);
+    }
+    expect(api.create).not.toHaveBeenCalled();
+    expect(api.createRaceChampionship).toHaveBeenCalledTimes(2);
+  });
+
+  it('shows lap columns only for races that really have lap metrics', () => {
+    const entry = {
+      communityPlayerId: 11, fullName: 'Ana', finishPosition: 1,
+      elapsedSeconds: 120.5, bestLapSeconds: null, lapsCompleted: null,
+      racePenaltyPoints: 0, raceDisqualified: false
+    };
+    expect(component.hasRaceLaps([entry])).toBeFalse();
+    expect(component.hasRaceBestLap([entry])).toBeFalse();
+    expect(component.hasRaceLaps([{ ...entry, lapsCompleted: 3 }])).toBeTrue();
+    expect(component.hasRaceBestLap([{ ...entry, bestLapSeconds: 45.55 }])).toBeTrue();
+    expect(component.hasRaceLaps([])).toBeFalse();
+    expect(component.hasRaceBestLap([])).toBeFalse();
+  });
+
+  it('does not offer cycling race championships as team or specialised event formats', () => {
+    for (const sport of ['Ciclismo', 'Mountain Bike']) {
+      component.startTeamCreation();
+      component.chooseSport(sport);
+      expect(component.isRaceChampionshipDraft).toBeFalse();
+      expect(component.isSportFormatSupported).toBeFalse();
+    }
+    component.startIndividualCreation();
+    for (const sport of ['Ciclismo de Estrada', 'Ciclismo de Pista', 'Ciclocrosse']) {
+      component.chooseSport(sport);
+      expect(component.isRaceChampionshipDraft).toBeFalse();
+      expect(component.isSportFormatSupported).toBeFalse();
+    }
   });
 
   it('does not enable race championships for unsupported event rules', () => {
@@ -262,7 +312,7 @@ describe('Community tournaments management', () => {
     expect(component.canCompleteRace).toBeFalse();
     component.confirmAction = 'completeRace';
     await component.completeRace();
-    expect(api.completeKarting).not.toHaveBeenCalled();
+    expect(api.completeRaceChampionship).not.toHaveBeenCalled();
     component.raceOverview.linkedRaces = [{
       id: 30, name: 'Karting 1', sport: 'Karting',
       playedAt: '2026-10-24T12:00:00Z', entries: []
@@ -274,12 +324,12 @@ describe('Community tournaments management', () => {
         wins: 0, podiums: 1, bestFinish: 2, championshipPoints: 18, penaltyPoints: 0 }
     ];
     expect(component.canCompleteRace).toBeTrue();
-    api.completeKarting.and.returnValue(of({ ...component.selected,
+    api.completeRaceChampionship.and.returnValue(of({ ...component.selected,
       status: 'COMPLETED', championProfileId: 10, championDisplayName: 'Ana',
       championPoints: 25, completedAt: '2026-10-24T13:00:00Z' }));
     component.confirmAction = 'completeRace';
     await component.completeRace();
-    expect(api.completeKarting).toHaveBeenCalledOnceWith(7, 19);
+    expect(api.completeRaceChampionship).toHaveBeenCalledOnceWith(7, 19);
     expect(component.selected?.championDisplayName).toBe('Ana');
     expect(component.selected?.status).toBe('COMPLETED');
     expect(component.confirmAction).toBeNull();
@@ -292,7 +342,7 @@ describe('Community tournaments management', () => {
       scoringMode: 'CHESS_HALF_POINTS' };
     component.confirmAction = 'completeRace';
     await component.completeRace();
-    expect(api.completeKarting).not.toHaveBeenCalled();
+    expect(api.completeRaceChampionship).not.toHaveBeenCalled();
   });
 
   it('shows a frozen Karting podium using official finishing ranks, including shared first place', () => {

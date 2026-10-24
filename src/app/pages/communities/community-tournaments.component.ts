@@ -6,7 +6,7 @@ import {
   TournamentStandings, TournamentTeam, TournamentTeamMatch, TournamentTeamStandings, TournamentTeamGroups,
   TournamentRaceOverview, TournamentRaceStanding, TournamentRaceEntry
 } from '../model/community-tournament';
-import { CommunityTournamentsService } from '../../services/community-tournaments.service';
+import { CommunityTournamentsService, isRaceChampionshipSport, RaceChampionshipSport } from '../../services/community-tournaments.service';
 import { AuthenticationService } from '../../services/authethication.service';
 import { tournamentScoreTerminology } from './community-tournament-scoring';
 import { formatForSport } from './community-round-sport';
@@ -192,20 +192,20 @@ export class CommunityTournamentsComponent implements OnChanges {
     return tournamentClassificationProfile(this.sportDraft);
   }
 
-  /** Validated race modes only; BMX Freestyle remains excluded. */
+  /** Generic position-based races only; subdisciplines require separate contracts. */
   get isRaceChampionshipDraft(): boolean {
-    return !this.showTeamCreate && (this.sportDraft === 'Karting' || this.sportDraft === 'BMX');
+    return !this.showTeamCreate && isRaceChampionshipSport(this.sportDraft);
   }
 
   raceSportLabel(sport: string | null | undefined): string {
-    return sport === 'BMX' ? 'BMX Racing' : 'Karting';
+    return sport === 'BMX' ? 'BMX Racing' : (sport || 'Corridas');
   }
 
   get isRaceCompetition(): boolean {
     return this.selected?.scoringMode === 'RACE_POINTS';
   }
 
-  /** Karting and BMX Racing championships completed in the loaded paginated list. */
+  /** Completed championships using the validated race-result formats. */
   get kartingPalmares(): CommunityTournament[] {
     return this.tournaments
       .filter(tournament => tournament.scoringMode === 'RACE_POINTS'
@@ -225,6 +225,14 @@ export class CommunityTournamentsComponent implements OnChanges {
 
   get hasKartingCompetitions(): boolean {
     return this.tournaments.some(tournament => tournament.scoringMode === 'RACE_POINTS');
+  }
+
+  hasRaceLaps(entries: readonly TournamentRaceEntry[]): boolean {
+    return entries.some(entry => entry.lapsCompleted != null);
+  }
+
+  hasRaceBestLap(entries: readonly TournamentRaceEntry[]): boolean {
+    return entries.some(entry => entry.bestLapSeconds != null);
   }
 
   orderedKartingRaceEntries(entries: readonly TournamentRaceEntry[]): TournamentRaceEntry[] {
@@ -832,7 +840,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     if (!this.selected || !this.canCompleteRace || this.confirmAction !== 'completeRace') return;
     const tournamentId = this.selected.id;
     this.confirmAction = null;
-    await this.mutate(this.api.completeKarting(this.community.id, tournamentId),
+    await this.mutate(this.api.completeRaceChampionship(this.community.id, tournamentId),
       t('communities.karting.finishSaved'), tournament => {
         this.updateSelected(tournament);
         this.raceOverview = undefined;
@@ -1271,7 +1279,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     }
     const scoringMode = this.classificationProfile.scoringMode;
     const createRequest = this.isRaceChampionshipDraft
-      ? this.api.createKartingChampionship(this.community.id, name, this.sportDraft as 'Karting' | 'BMX')
+      ? this.api.createRaceChampionship(this.community.id, name, this.sportDraft as RaceChampionshipSport)
       : scoringMode
       ? this.api.create(this.community.id, name, this.sportDraft, this.pointRulesDraft, scoringMode)
       : this.api.create(this.community.id, name, this.sportDraft, this.pointRulesDraft);
