@@ -337,7 +337,8 @@ describe('Community tournaments management', () => {
     expect(component.hasKartingCompetitions).toBeTrue();
     expect(component.kartingPalmares.map(tournament => tournament.id)).toEqual([31, 34, 30]);
     expect(component.kartingPalmares[0].championTied).toBeTrue();
-    expect(component.kartingPalmares[1].championDisplayName).toBe('Ana');
+    expect(component.kartingPalmares[1].championDisplayName).toBe('Rui');
+    expect(component.kartingPalmares[2].championDisplayName).toBe('Ana');
 
     component.tournaments = [];
     expect(component.hasKartingCompetitions).toBeFalse();
