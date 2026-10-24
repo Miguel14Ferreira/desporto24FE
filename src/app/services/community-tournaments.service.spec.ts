@@ -72,6 +72,14 @@ describe('CommunityTournamentsService API contract', () => {
         entryType: 'INDIVIDUAL', format: 'LEAGUE', scoringMode: 'RACE_POINTS' });
   });
 
+  it('creates track scratch-only position championship without time-trial scoring', () => {
+    service.createRaceChampionship(7, 'Taça Scratch', 'Ciclismo de Pista').subscribe();
+    expect(http.post).toHaveBeenCalledWith(
+      environment.apiUrl + '/api/communities/7/tournaments',
+      { name: 'Taça Scratch', sport: 'Ciclismo de Pista',
+        entryType: 'INDIVIDUAL', format: 'LEAGUE', scoringMode: 'RACE_POINTS' });
+  });
+
   it('sends knockout format without league-only settings', () => {
     service.createTeamTournament(7, 'Taça', 'Futebol', 3, 2,
       { winPoints: 4, drawPoints: 1, lossPoints: 0 }, 'WINS_FIRST', 'KNOCKOUT').subscribe();

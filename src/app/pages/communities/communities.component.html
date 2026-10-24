@@ -1166,7 +1166,7 @@
                             <label>
                               <span>{{ 'communities.eventType.label' | t }}</span>
                               <select [(ngModel)]="roundEventTypeDraft"
-                                (ngModelChange)="roundDisciplineDraft = ''; resetVolleyballSets(); clearBjjSubmissionScores(); clearBoxingHiddenScores(); clearKickboxingHiddenScores(); clearMuayThaiHiddenScores(); clearStrengthTrainingHiddenScores(); clearSwimmingHiddenScores()"
+                                (ngModelChange)="roundDisciplineDraft = ''; resetVolleyballSets(); clearBjjSubmissionScores(); clearBoxingHiddenScores(); clearKickboxingHiddenScores(); clearMuayThaiHiddenScores(); clearStrengthTrainingHiddenScores(); clearSwimmingHiddenScores(); onRoundEventTypeChange()"
                                 [attr.aria-label]="'communities.eventType.label' | t">
                                 <option value="">{{ 'communities.eventType.select' | t }}</option>
                                 @for (choice of eventOptions(newRoundSport); track choice.code) {
@@ -1225,6 +1225,8 @@
                               : newRoundEventType === 'PARKOUR_SPEED' ? 'communities.parkour.speedHint'
                               : newRoundEventType === 'ROAD_RACE' ? 'communities.roadCycling.roadRaceHint'
                               : newRoundEventType === 'TIME_TRIAL' ? 'communities.roadCycling.timeTrialHint'
+                              : newRoundEventType === 'TRACK_SCRATCH' ? 'communities.trackCycling.scratchHint'
+                              : newRoundEventType === 'TRACK_TIME_TRIAL' ? 'communities.trackCycling.timeTrialHint'
                               : 'communities.race.metricsEntryHint') | t }}
                           </p>
                         } @else if (newRoundEventType && viewForNewRound() === 'individual') {
@@ -1492,7 +1494,7 @@
                                           ? 'communities.swimming.timePlaceholder'
                                           : 'communities.race.timePlaceholder') | t">
                                     </label>
-                                    @if (raceSupportsLaps(newRoundSport)) {
+                                    @if (raceSupportsLaps(newRoundSport) && newRoundEventType !== 'TRACK_TIME_TRIAL') {
                                       <label>
                                         <span>{{ 'communities.race.lapsCompleted' | t }}</span>
                                         <input type="number" min="0" step="1" [(ngModel)]="entry.lapsCompleted">
