@@ -1188,7 +1188,9 @@
                                 : newRoundEventType === 'OWS_INDIVIDUAL'
                                 ? 'communities.openWater.distanceLabel'
                                 : newRoundEventType === 'FOOT_ORIENTEERING'
-                                ? 'communities.orienteering.courseLabel' : 'communities.discipline.label') | t }}</span>
+                                ? 'communities.orienteering.courseLabel'
+                                : newRoundEventType === 'TRACK_SPRINT_HEAT'
+                                ? 'communities.trackCycling.phase' : 'communities.discipline.label') | t }}</span>
                               <select [(ngModel)]="roundDisciplineDraft"
                                 [attr.aria-label]="(newRoundEventType === 'BODYBOARD_HEAT'
                                   ? 'communities.bodyboard.category'
@@ -1253,6 +1255,7 @@
                               : isJudoBout(newRoundEventType) ? 'communities.judo.hint'
                               : newRoundEventType === 'CHESS_GAME' ? 'communities.chess.hint'
                               : newRoundEventType === 'BREAKING_BATTLE' ? 'communities.breaking.hint'
+                              : newRoundEventType === 'TRACK_SPRINT_HEAT' ? 'communities.trackCycling.sprintHint'
                               : newRoundEventType === 'TRAMPOLINE_INDIVIDUAL' ? 'communities.trampoline.hint'
                               : isFootvolleyEvent(newRoundEventType) ? 'communities.footvolley.hint'
                               : isVolleyballEvent(newRoundEventType) ? 'communities.volleyball.hint'
@@ -1641,6 +1644,16 @@
                                         <option value="WIN">{{ 'communities.result.win' | t }}</option>
                                         <option value="DRAW">{{ 'communities.result.draw' | t }}</option>
                                         <option value="LOSS">{{ 'communities.result.loss' | t }}</option>
+                                      </select>
+                                    </label>
+                                  } @else if (newRoundEventType === 'TRACK_SPRINT_HEAT') {
+                                    <label>
+                                      <span>{{ 'communities.trackCycling.decision' | t }}</span>
+                                      <select [(ngModel)]="entry.result"
+                                        [attr.aria-label]="'communities.trackCycling.decision' | t">
+                                        <option value="DRAW" disabled>{{ 'communities.trackCycling.chooseDecision' | t }}</option>
+                                        <option value="WIN">{{ 'communities.trackCycling.winner' | t }}</option>
+                                        <option value="LOSS">{{ 'communities.trackCycling.loser' | t }}</option>
                                       </select>
                                     </label>
                                   } @else if (newRoundEventType === 'BREAKING_BATTLE') {
@@ -2392,6 +2405,26 @@
                                   @for (player of racketSidePlayers(round, 'B'); track $index) {
                                     <small>{{ player.fullName || player.username }}</small>
                                   }
+                                </div>
+                              </div>
+                            </section>
+                          } @else if (round.eventType === 'TRACK_SPRINT_HEAT' && round.entries.length === 2) {
+                            <section class="racket-result-card" [attr.aria-label]="'communities.trackCycling.sprintHeat' | t">
+                              <div class="racket-result-header">
+                                <strong>{{ fieldDisciplineLabel(round.eventDiscipline || '') }}</strong>
+                                <span>{{ 'communities.trackCycling.recordedHeat' | t }}</span>
+                              </div>
+                              <div class="racket-result-sides">
+                                <div class="racket-result-side" [class.racket-set-winner]="round.entries[0].result === 'WIN'">
+                                  <strong>{{ round.entries[0].fullName || round.entries[0].username }}</strong>
+                                  <span>{{ (round.entries[0].result === 'WIN'
+                                    ? 'communities.trackCycling.winner' : 'communities.trackCycling.loser') | t }}</span>
+                                </div>
+                                <span class="racket-result-vs">VS</span>
+                                <div class="racket-result-side" [class.racket-set-winner]="round.entries[1].result === 'WIN'">
+                                  <strong>{{ round.entries[1].fullName || round.entries[1].username }}</strong>
+                                  <span>{{ (round.entries[1].result === 'WIN'
+                                    ? 'communities.trackCycling.winner' : 'communities.trackCycling.loser') | t }}</span>
                                 </div>
                               </div>
                             </section>

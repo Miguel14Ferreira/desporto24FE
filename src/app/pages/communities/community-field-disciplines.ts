@@ -7,6 +7,12 @@ export type GymApparatus = 'FLOOR' | 'VAULT' | 'POMMEL_HORSE' | 'RINGS'
 export type BodyboardStance = 'PRONE' | 'DROP_KNEE';
 export type RhythmicApparatus = 'HOOP' | 'BALL' | 'CLUBS' | 'RIBBON';
 export type OrienteeringCourse = 'ORIENT_SPRINT' | 'ORIENT_MIDDLE' | 'ORIENT_LONG';
+export type TrackSprintPhase = 'SPRINT_QUARTER_FINAL' | 'SPRINT_SEMI_FINAL'
+  | 'SPRINT_BRONZE_FINAL' | 'SPRINT_GOLD_FINAL';
+const TRACK_SPRINT_PHASES: readonly TrackSprintPhase[] = [
+  'SPRINT_QUARTER_FINAL', 'SPRINT_SEMI_FINAL',
+  'SPRINT_BRONZE_FINAL', 'SPRINT_GOLD_FINAL'
+];
 const ORIENTEERING: readonly OrienteeringCourse[] = [
   'ORIENT_SPRINT', 'ORIENT_MIDDLE', 'ORIENT_LONG'
 ];
@@ -31,8 +37,10 @@ const OPTIONS: Record<string, readonly AthleticsDiscipline[]> = {
 
 export function athleticsDisciplineOptions(
   sport: string | null | undefined, eventType: string | null | undefined
-): readonly (AthleticsDiscipline | GymApparatus | BodyboardStance | RhythmicApparatus | SwimmingPoolEvent | OpenWaterDistance | OrienteeringCourse)[] {
+): readonly (AthleticsDiscipline | GymApparatus | BodyboardStance | RhythmicApparatus | SwimmingPoolEvent | OpenWaterDistance | OrienteeringCourse | TrackSprintPhase)[] {
   const normalized = sport?.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+  if (normalized === 'ciclismo de pista' && eventType === 'TRACK_SPRINT_HEAT')
+    return TRACK_SPRINT_PHASES;
   if (normalized === 'orientacao' && eventType === 'FOOT_ORIENTEERING') return ORIENTEERING;
   if (normalized === 'natacao em aguas abertas' && eventType === 'OWS_INDIVIDUAL') return OPEN_WATER;
   if (normalized === 'natacao' && eventType === 'SWIM_LCM') return SWIMMING_LCM;
@@ -49,6 +57,6 @@ export function athleticsDisciplineValid(
 ): boolean {
   const options = athleticsDisciplineOptions(sport, eventType);
   return options.length
-    ? options.includes(discipline as AthleticsDiscipline | GymApparatus | BodyboardStance | RhythmicApparatus | SwimmingPoolEvent | OpenWaterDistance | OrienteeringCourse)
+    ? options.includes(discipline as AthleticsDiscipline | GymApparatus | BodyboardStance | RhythmicApparatus | SwimmingPoolEvent | OpenWaterDistance | OrienteeringCourse | TrackSprintPhase)
     : !discipline;
 }

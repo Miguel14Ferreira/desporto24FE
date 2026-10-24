@@ -5,10 +5,15 @@ describe('multi-format sports should not reuse unrelated scoring rules', () => {
   it('requires choosing from the allowed variants of selected sports', () => {
     expect(eventOptionsForSport('BMX').map(o => o.code)).toEqual(['RACE', 'FREESTYLE']);
     expect(eventOptionsForSport('Ciclismo de Pista').map(o => o.code))
-      .toEqual(['TRACK_SCRATCH', 'TRACK_TIME_TRIAL', 'TRACK_FLYING_200']);
+      .toEqual(['TRACK_SCRATCH', 'TRACK_TIME_TRIAL', 'TRACK_FLYING_200', 'TRACK_SPRINT_HEAT']);
     expect(isRaceEvent('Ciclismo de Pista', 'TRACK_SCRATCH')).toBeTrue();
     expect(isRaceEvent('Ciclismo de Pista', 'TRACK_TIME_TRIAL')).toBeTrue();
     expect(isRaceEvent('Ciclismo de Pista', 'TRACK_FLYING_200')).toBeTrue();
+    expect(isRaceEvent('Ciclismo de Pista', 'TRACK_SPRINT_HEAT')).toBeFalse();
+    expect(isNeutralEvent('Ciclismo de Pista', 'TRACK_SPRINT_HEAT')).toBeTrue();
+    expect(isNeutralEvent('Ciclismo de Estrada', 'TRACK_SPRINT_HEAT')).toBeFalse();
+    expect(eventView('Ciclismo de Pista', 'TRACK_SPRINT_HEAT')).toBe('individual');
+    expect(eventPresentationFormat('Ciclismo de Pista', 'TRACK_SPRINT_HEAT')).toBe('duel');
     expect(eventView('Ciclismo de Pista', 'TRACK_FLYING_200')).toBe('race');
     expect(eventPresentationFormat('Ciclismo de Pista', 'TRACK_FLYING_200')).toBe('race');
     expect(isRaceEvent('Ciclismo de Estrada', 'TRACK_FLYING_200')).toBeFalse();

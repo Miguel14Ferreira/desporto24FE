@@ -9,6 +9,9 @@ describe('Athletics field disciplines', () => {
       'SHOT_PUT', 'DISCUS', 'JAVELIN', 'HAMMER'
     ]);
     expect(athleticsDisciplineOptions('Atletismo', 'TRACK')).toEqual([]);
+    expect(athleticsDisciplineOptions('Ciclismo de Pista', 'TRACK_SPRINT_HEAT')).toEqual([
+      'SPRINT_QUARTER_FINAL', 'SPRINT_SEMI_FINAL', 'SPRINT_BRONZE_FINAL', 'SPRINT_GOLD_FINAL'
+    ]);
     expect(athleticsDisciplineOptions('Futebol', 'JUMP')).toEqual([]);
     expect(athleticsDisciplineOptions('Ginástica Artística', 'APPARATUS')).toContain('BALANCE_BEAM');
     expect(athleticsDisciplineOptions('Bodyboard', 'BODYBOARD_HEAT')).toEqual(['PRONE', 'DROP_KNEE']);
@@ -31,6 +34,11 @@ describe('Athletics field disciplines', () => {
     expect(athleticsDisciplineValid('Ginástica Rítmica', 'RHYTHMIC_APPARATUS', null)).toBeFalse();
     expect(athleticsDisciplineValid('Ginástica Rítmica', 'RHYTHMIC_APPARATUS', 'FLOOR')).toBeFalse();
     expect(athleticsDisciplineValid('Natação Artística', 'ARTISTIC_SOLO_FREE', 'BALL')).toBeFalse();
+    expect(athleticsDisciplineValid('Ciclismo de Pista', 'TRACK_SPRINT_HEAT', 'SPRINT_SEMI_FINAL')).toBeTrue();
+    expect(athleticsDisciplineValid('Ciclismo de Pista', 'TRACK_SPRINT_HEAT', null)).toBeFalse();
+    expect(athleticsDisciplineValid('Ciclismo de Pista', 'TRACK_SPRINT_HEAT', 'SPRINT_POINTS_RACE')).toBeFalse();
+    expect(athleticsDisciplineValid('Ciclismo de Pista', 'TRACK_FLYING_200', 'SPRINT_SEMI_FINAL')).toBeFalse();
+    expect(athleticsDisciplineValid('Ciclismo de Estrada', 'TRACK_SPRINT_HEAT', 'SPRINT_GOLD_FINAL')).toBeFalse();
     expect(athleticsDisciplineValid('Surf', 'HEAT', 'PRONE')).toBeFalse();
     expect(athleticsDisciplineValid('Snowboard', 'FREESTYLE', 'LONG_JUMP')).toBeFalse();
   });
