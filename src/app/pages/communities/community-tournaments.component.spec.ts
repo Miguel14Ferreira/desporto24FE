@@ -28,12 +28,17 @@ describe('Community tournaments management', () => {
       'list', 'create', 'participants', 'join', 'leave', 'confirm', 'removeParticipant',
       'generateSchedule', 'matches', 'recordResult', 'standings', 'complete', 'delete',
       'createTeamTournament', 'details', 'teams', 'createTeam', 'addTeamPlayer', 'acceptTeamInvite', 'removeTeamPlayer', 'deleteTeam',
-      'generateTeamSchedule', 'teamMatches', 'recordTeamResult', 'teamStandings', 'teamGroups', 'completeTeam'
+      'generateTeamSchedule', 'teamMatches', 'recordTeamResult', 'teamStandings', 'teamGroups', 'completeTeam',
+      'createKartingChampionship', 'raceOverview', 'linkRace', 'unlinkRace', 'setRacePoints'
     ]);
     api.list.and.returnValue(of({ tournaments: [draft], page: 0, hasMore: false }));
     api.participants.and.returnValue(of({ participants: [], page: 0, hasMore: false }));
     api.matches.and.returnValue(of({ matches: [], page: 0, hasMore: false }));
     api.teams.and.returnValue(of([]));
+    api.raceOverview.and.returnValue(of({
+      tournamentId: 19, pointsByPlace: [25, 18, 15], linkedRaces: [], availableRaces: [],
+      standings: []
+    }));
     api.teamMatches.and.returnValue(of({ matches: [], page: 0, hasMore: false }));
     api.teamGroups.and.returnValue(of({
       tournamentId: 19, knockoutStarted: false, groups: []
@@ -112,16 +117,24 @@ describe('Community tournaments management', () => {
     expect(component.creationSportNoticeKey).toBeNull();
   });
 
-  it('switches classification presets when changing sports and rejects fake karting standings', async () => {
+  it('creates a Karting championship instead of fake head-to-head fixtures', async () => {
     component.startIndividualCreation();
     component.nameDraft = 'Campeonato Karting';
     component.chooseSport('Karting');
     expect(component.classificationProfile.heading).toContain('corridas');
     expect(component.classificationProfile.isRoundRobinSupported).toBeFalse();
+    expect(component.isSportFormatSupported).toBeTrue();
+    api.createKartingChampionship.and.returnValue(of({
+      ...draft, id: 19, name: 'Campeonato Karting', sport: 'Karting', scoringMode: 'RACE_POINTS'
+    }));
     await component.create();
+    expect(api.createKartingChampionship).toHaveBeenCalledOnceWith(7, 'Campeonato Karting');
     expect(api.create).not.toHaveBeenCalled();
-    expect(component.error).toContain('jornadas');
+    expect(api.matches).not.toHaveBeenCalledWith(7, 19, 0);
+    expect(api.raceOverview).toHaveBeenCalledWith(7, 19);
+    expect(component.isRaceCompetition).toBeTrue();
 
+    component.startIndividualCreation();
     component.chooseSport('Xadrez');
     expect(component.classificationProfile.scoringMode).toBe('CHESS_HALF_POINTS');
     expect(component.pointRulesDraft).toEqual({
@@ -131,6 +144,24 @@ describe('Community tournaments management', () => {
     expect(component.pointRulesDraft).toEqual({
       winPoints: 3, drawPoints: 1, lossPoints: 0
     });
+  });
+
+  it('links a Karting race and reads race standings without duel endpoints', async () => {
+    component.selected = { ...draft, id: 19, sport: 'Karting', scoringMode: 'RACE_POINTS' };
+    const data = {
+      tournamentId: 19, pointsByPlace: [25, 18, 15],
+      linkedRaces: [{ id: 30, name: 'Corrida 1', sport: 'Karting',
+        playedAt: '2026-10-24T10:00:00Z', entries: [] }],
+      availableRaces: [],
+      standings: [{ position: 1, playerId: 11, fullName: 'Ana', races: 1,
+        wins: 1, podiums: 1, bestFinish: 1, championshipPoints: 25, penaltyPoints: 0 }]
+    };
+    api.linkRace.and.returnValue(of(data));
+    await component.linkTournamentRace(30);
+    expect(api.linkRace).toHaveBeenCalledWith(7, 19, 30);
+    expect(component.raceOverview?.standings[0].championshipPoints).toBe(25);
+    expect(component.selected.status).toBe('IN_PROGRESS');
+    expect(api.generateSchedule).not.toHaveBeenCalled();
   });
 
   it('does not present individual chess rules as a team-board tournament', async () => {

@@ -251,6 +251,13 @@
                   só ficará disponível quando o calendário e a classificação deste formato estiverem implementados.</p>
               }
             </div>
+            @if (isKartingRaceDraft) {
+              <div class="classification-fixed-points" role="note">
+                <strong>Karting · Campeonato por posições</strong>
+                <p>Depois de criar o campeonato, define a pontuação por posição e associa as corridas registadas
+                  nas Jornadas. Os tempos, penalizações e desclassificações são aproveitados automaticamente.</p>
+              </div>
+            } @else {
             <details class="create-advanced-rules">
               <summary>
                 <span>
@@ -329,6 +336,7 @@
         }
               </div>
             </details>
+            }
           </section>
         }
 
@@ -351,7 +359,8 @@
 "
           (click)="showTeamCreate ? createTeamCompetition() : create()">
           {{ !isSportFormatSupported ? 'Formato ainda indisponível'
-              : (showTeamCreate ? 'Criar e preparar equipas' : 'Confirmar liga individual') }}
+              : (showTeamCreate ? 'Criar e preparar equipas'
+                  : (isKartingRaceDraft ? 'Criar campeonato de Karting' : 'Confirmar liga individual')) }}
         </button>
         </div>
       </div>
@@ -419,7 +428,9 @@
                 <p>Desempate prioritário: {{ teamTieBreakLabel(selected.teamTieBreakPriority) }}</p>
               }
             } @else {
-              @if (isChessTournament) {
+              @if (isRaceCompetition) {
+                <p>Campeonato de Karting · Pontos por posição e resultados das Jornadas</p>
+              } @else if (isChessTournament) {
                 <p>Xadrez · Vitória 1 · Empate ½ · Derrota 0</p>
               } @else {
                 <p>Vitória {{ selected.winPoints }} · Empate {{ selected.drawPoints }} · Derrota {{ selected.lossPoints }} pontos</p>
@@ -868,6 +879,101 @@
               }
               }
             }
+          }
+        } @else if (isRaceCompetition) {
+          @if (!isMember) {
+            <div class="notice notice-info">Adere à comunidade para consultar este campeonato.</div>
+          } @else if (detailsLoading) {
+            <p class="t-muted" role="status">A carregar corridas e classificação…</p>
+          } @else if (raceError || !raceOverview) {
+            <div class="notice notice-info" role="status">
+              Não foi possível carregar o campeonato.
+              <button type="button" class="t-btn t-btn-secondary" (click)="loadRaceOverview()">Tentar novamente</button>
+            </div>
+          } @else {
+            <section class="t-section race-championship" aria-label="Campeonato de Karting">
+              <div class="t-section-heading">
+                <div>
+                  <h5>Corridas do campeonato</h5>
+                  <p>Associa corridas de Karting registadas nas Jornadas. Os resultados continuam nas provas originais.</p>
+                </div>
+              </div>
+              <div class="race-points-panel">
+                <strong>Pontos por posição</strong>
+                @if (canManage && selected.status === 'DRAFT' && !raceOverview.linkedRaces.length) {
+                  <div class="race-points-editor">
+                    <label for="karting-race-points">Pontos do 1.º lugar em diante, separados por vírgulas</label>
+                    <input id="karting-race-points" type="text" [(ngModel)]="racePointsDraft"
+                      [disabled]="busy" placeholder="25,18,15,12,10,8,6,4,2,1">
+                    <button type="button" class="t-btn t-btn-secondary" [disabled]="busy"
+                      (click)="saveRacePoints()">Guardar pontuação</button>
+                  </div>
+                } @else {
+                  <p>{{ raceOverview.pointsByPlace.join(' · ') }} pontos</p>
+                }
+              </div>
+              @if (!raceOverview.linkedRaces.length) {
+                <p class="t-muted">Nenhuma corrida associada. Regista primeiro uma corrida de Karting nas Jornadas.</p>
+              }
+              @for (race of raceOverview.linkedRaces; track race.id) {
+                <div class="race-round-card">
+                  <div class="race-round-header">
+                    <strong>{{ race.name }}</strong>
+                    <small>{{ race.playedAt | date:'dd/MM/yyyy' }}</small>
+                    @if (canManage && selected.status !== 'COMPLETED') {
+                      <button type="button" class="t-btn t-btn-secondary t-btn-small"
+                        [disabled]="busy" (click)="unlinkTournamentRace(race.id)">Retirar</button>
+                    }
+                  </div>
+                  <div class="race-results-grid">
+                    @for (driver of race.entries; track driver.communityPlayerId) {
+                      <span>{{ driver.raceDisqualified ? 'DSQ'
+                          : (driver.finishPosition == null ? 'DNF' : driver.finishPosition + '.º') }}
+                        · {{ driver.fullName }}
+                        @if (driver.elapsedSeconds != null) { · {{ driver.elapsedSeconds }} s }
+                      </span>
+                    }
+                  </div>
+                </div>
+              }
+              @if (canManage && selected.status !== 'COMPLETED') {
+                <div class="race-available">
+                  <h6>Adicionar corrida das Jornadas</h6>
+                  @if (!raceOverview.availableRaces.length) {
+                    <p class="t-muted">Não há outras corridas de Karting disponíveis nesta comunidade.</p>
+                  }
+                  @for (race of raceOverview.availableRaces; track race.id) {
+                    <div class="race-available-row">
+                      <span><strong>{{ race.name }}</strong>
+                        <small>{{ race.playedAt | date:'dd/MM/yyyy' }} · {{ race.entries.length }} participantes</small></span>
+                      <button type="button" class="t-btn t-btn-primary t-btn-small" [disabled]="busy"
+                        (click)="linkTournamentRace(race.id)">Associar</button>
+                    </div>
+                  }
+                </div>
+              }
+              <div class="race-standings-section">
+                <h6>Classificação geral</h6>
+                @if (raceOverview.standings.length) {
+                  <div class="t-table-scroll">
+                    <table aria-label="Classificação de Karting">
+                      <thead><tr><th>Pos.</th><th>Participante</th><th>Corridas</th><th>Vitórias</th><th>Pódios</th><th>Pontos</th></tr></thead>
+                      <tbody>
+                        @for (driver of raceOverview.standings; track driver.playerId) {
+                          <tr>
+                            <td>{{ driver.position }}.º</td><td>{{ driver.fullName }}</td>
+                            <td>{{ driver.races }}</td><td>{{ driver.wins }}</td><td>{{ driver.podiums }}</td>
+                            <td><strong>{{ driver.championshipPoints ?? '—' }}</strong></td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                } @else {
+                  <p class="t-muted">A classificação aparece depois de associares uma corrida válida.</p>
+                }
+              </div>
+            </section>
           }
         } @else if (!isMember) {
           <div class="notice notice-info" role="status">
