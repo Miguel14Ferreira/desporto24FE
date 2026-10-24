@@ -98,6 +98,7 @@ describe('Community tournaments management', () => {
   it('explains when sport-specific race or combat results need community rounds', () => {
     component.sportDraft = 'Futebol';
     expect(component.creationSportNoticeKey).toBeNull();
+    expect(component.validPointRules).toBeTrue();
 
     component.chooseSport('Karting');
     expect(component.creationSportNoticeKey).toBe('communities.tournaments.creationRaceNotice');
