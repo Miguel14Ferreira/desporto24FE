@@ -2271,3 +2271,54 @@ test('Competition creation E2E: format and scoring form switch between EN and PT
   expect(fixture.unmocked.filter(url => url.includes('/tournaments'))).toEqual([]);
   expect(fixture.organizerMutations).toEqual([]);
 });
+
+test('Competition teams E2E: rosters and invitation controls switch PT/EN', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'teams-view');
+  await page.goto('/menu/communities/7?tab=tournaments');
+  await page.evaluate(() => localStorage.setItem('d24-language', 'en'));
+  await page.reload();
+
+  const teams = page.getByRole('region', { name: 'Competition teams' });
+  await expect(teams.getByRole('heading', { name: 'Teams and rosters' })).toBeVisible();
+  await expect(teams.getByText('1 teams created · 0 ready to compete')).toBeVisible();
+  await expect(teams.getByLabel('New team name')).toHaveAttribute('placeholder', 'E.g. Green Team');
+  await expect(teams.getByRole('button', { name: 'Add team' })).toBeDisabled();
+  const azuis = teams.locator('.team-roster-card').filter({ hasText: 'Azuis' });
+  await expect(azuis.getByRole('link', { name: 'Invite to team Azuis via WhatsApp' })).toBeVisible();
+  await expect(azuis.getByRole('button', { name: 'Copy link' })).toBeVisible();
+  await expect(azuis.getByLabel('Team link')).toHaveAttribute('readonly');
+  await expect(azuis.getByRole('button', { name: 'Remove participante from team Azuis' })).toBeVisible();
+  await expect(azuis.locator('.team-manual-assign summary')).toHaveText('Add a member manually (organiser)');
+
+  await page.evaluate(() => localStorage.setItem('d24-language', 'pt'));
+  await page.reload();
+  const portuguese = page.getByRole('region', { name: 'Equipas da competição' });
+  await expect(portuguese.getByRole('heading', { name: 'Equipas e plantéis' })).toBeVisible();
+  await expect(portuguese.getByRole('button', { name: 'Copiar link' })).toBeVisible();
+  await expect(portuguese.getByRole('button', { name: 'Remover participante da equipa Azuis' })).toBeVisible();
+  expect(fixture.unmocked.filter(url => url.includes('/tournaments'))).toEqual([]);
+  expect(fixture.organizerMutations).toEqual([]);
+});
+
+test('Competition teams E2E: tiebreak explanations follow EN and PT without changing values', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'teams');
+  await page.goto('/menu/communities/7?tab=tournaments');
+  await page.evaluate(() => localStorage.setItem('d24-language', 'en'));
+  await page.reload();
+  await page.getByRole('button', { name: 'Set up a team tournament' }).click();
+  await page.locator('.create-advanced-rules summary').click();
+  const english = page.getByRole('group', { name: 'Tiebreak criterion' });
+  await expect(english.getByRole('button', { name: /Score difference/ })).toHaveAttribute('aria-pressed', 'true');
+  await expect(english.getByText('Rank first by the difference between scores for and against.')).toBeVisible();
+  await english.getByRole('button', { name: /Most wins/ }).click();
+  await expect(english.getByRole('button', { name: /Most wins/ })).toHaveAttribute('aria-pressed', 'true');
+
+  await page.evaluate(() => localStorage.setItem('d24-language', 'pt'));
+  await page.reload();
+  await page.getByRole('button', { name: 'Preparar torneio por equipas' }).click();
+  await page.locator('.create-advanced-rules summary').click();
+  const portuguese = page.getByRole('group', { name: 'Critério de desempate' });
+  await expect(portuguese.getByRole('button', { name: /Diferença do marcador/ })).toBeVisible();
+  await expect(portuguese.getByText('Primeiro a diferença entre o que cada equipa marcou e sofreu.')).toBeVisible();
+  expect(fixture.unmocked.filter(url => url.includes('/tournaments'))).toEqual([]);
+});
