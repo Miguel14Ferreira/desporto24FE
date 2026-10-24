@@ -468,6 +468,8 @@ export class CommunityGroupsService {
     | 'STRENGTH_TRAINING' | 'SWIM_LCM' | 'OWS_INDIVIDUAL' | 'FOOT_ORIENTEERING' | 'INLINE_TRACK_200_TT' | 'INLINE_TRACK_500D_FIRST_ROUND' | 'INLINE_ROAD_LAP_FIRST_ROUND'
     | 'INLINE_TRACK_500D_QUARTER_HEAT' | 'INLINE_TRACK_500D_SEMI_HEAT' | 'INLINE_TRACK_500D_FINAL_A' | 'INLINE_TRACK_500D_FINAL_B' | 'INLINE_ROAD_LAP_QUARTER_HEAT' | 'INLINE_ROAD_LAP_SEMI_HEAT' | 'INLINE_ROAD_LAP_FINAL_A' | 'INLINE_ROAD_LAP_FINAL_B' | null;
       eventDiscipline?: string | null;
+      sprintSeriesKey?: string | null;
+      sprintHeatNumber?: number | null;
       matchFormat?: 'SINGLES' | 'DOUBLES' | null;
       setScores?: Array<{ sideA: number | null; sideB: number | null }> | null;
       groupScores?: Array<{ groupName: string; score: number | null }>;

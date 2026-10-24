@@ -1208,6 +1208,25 @@
                               </select>
                             </label>
                           }
+                          @if (newRoundEventType === 'TRACK_SPRINT_HEAT') {
+                            @if (activeSeason()) {
+                              <label>
+                                <span>{{ 'communities.trackCycling.seriesName' | t }}</span>
+                                <input [(ngModel)]="sprintSeriesKeyDraft" maxlength="40"
+                                  [placeholder]="'communities.trackCycling.seriesPlaceholder' | t">
+                              </label>
+                              @if (sprintSeriesKeyDraft.trim()) {
+                                <label>
+                                  <span>{{ 'communities.trackCycling.heatNumber' | t }}</span>
+                                  <select [(ngModel)]="sprintHeatNumberDraft">
+                                    <option [ngValue]="1">1</option>
+                                    <option [ngValue]="2">2</option>
+                                    <option [ngValue]="3">3</option>
+                                  </select>
+                                </label>
+                              }
+                            }
+                          }
                           <label>
                             <span>{{ 'communities.roundName' | t }}</span>
                             <input
@@ -2427,6 +2446,21 @@
                               <div class="racket-result-header">
                                 <strong>{{ fieldDisciplineLabel(round.eventDiscipline || '') }}</strong>
                                 <span>{{ 'communities.trackCycling.recordedHeat' | t }}</span>
+                                @if (round.sprintSeriesKey && round.sprintHeatNumber) {
+                                  <small>{{ 'communities.trackCycling.seriesName' | t }}:
+                                    {{ round.sprintSeriesKey }} · {{ 'communities.trackCycling.heatNumber' | t }}
+                                    {{ round.sprintHeatNumber }}</small>
+                                  @if (trackSprintSeriesStatus(round); as series) {
+                                    <small>{{ series.winsA }}–{{ series.winsB }}
+                                      @if (series.winner) {
+                                        · {{ 'communities.trackCycling.seriesWinner' | t }}: {{ series.winner }}
+                                      } @else {
+                                        · {{ 'communities.trackCycling.seriesPending' | t }}
+                                      }
+                                    </small>
+                                  }
+                                }
+
                               </div>
                               <div class="racket-result-sides">
                                 <div class="racket-result-side" [class.racket-set-winner]="round.entries[0].result === 'WIN'">
