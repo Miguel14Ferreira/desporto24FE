@@ -457,3 +457,41 @@
 .venue-rating-summary-score span {
   font-size: .9rem;
 }
+
+/* Concept One venue profile – dark dedicated venue page. */
+.venue-detail-page{background:linear-gradient(155deg,#071927,#0a2431 62%,#071b27);color:#eef9ff;min-height:75vh}
+.venue-detail-shell{width:min(1090px,100%)}
+.venue-detail-page .back-link{color:#b6efe0;border:1px solid rgba(99,209,175,.32);border-radius:100px;padding:9px 14px;width:fit-content;text-decoration:none}
+.venue-detail-page .venue-header{padding:clamp(22px,4vw,42px);margin:0 0 20px;border-radius:22px;border:1px solid rgba(142,212,210,.24);background:radial-gradient(ellipse at 88% 8%,rgba(44,151,143,.23),transparent 58%),linear-gradient(135deg,#132e43,#102b35)}
+.venue-detail-page .venue-kicker{color:#50e9bf;letter-spacing:.17em;font-size:.75rem}
+.venue-detail-page .venue-header h1{font-size:clamp(2.2rem,5vw,3.5rem);line-height:1.1;letter-spacing:-.04em;margin:5px 0 12px;color:#fff}
+.venue-detail-page .venue-hero-location{color:#b8d6df;font-size:1rem;margin:0 0 18px}
+.venue-detail-page .venue-hero-sports{display:flex;flex-wrap:wrap;gap:8px}
+.venue-detail-page .venue-hero-sports span{font-size:.8rem;padding:7px 12px;border-radius:100px;border:1px solid rgba(54,230,183,.27);background:rgba(54,230,183,.1);color:#a8f8dc}
+.venue-detail-page .venue-provenance{margin-top:19px}
+.venue-detail-page .venue-source-badge{background:rgba(255,255,255,.07);border-color:rgba(184,220,227,.25);color:#d7f2f4}
+.venue-detail-page .venue-created-by,.venue-detail-page .venue-created-by a{color:#a6cad4}
+.venue-detail-page .venue-state{background:#10293b;border:1px solid rgba(159,205,217,.29);color:#f1fafc}
+.venue-detail-page .venue-state-error p{color:#bdd5db;font-weight:400}
+.venue-error-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:17px}
+.venue-error-actions .jynlo-action{padding:10px 15px;text-decoration:none}
+.venue-detail-page .venue-basic-info>div,.venue-detail-page .venue-information-grid>div,
+.venue-detail-page .venue-photos-state,.venue-detail-page .venue-sport-condition-card,.venue-detail-page .venue-sport-condition-form,
+.venue-detail-page .venue-sport-conditions-state{background:#102c3b;border:1px solid rgba(157,205,219,.22);border-radius:16px}
+.venue-detail-page .venue-basic-info span,.venue-detail-page .venue-information-grid span{color:#a1c6d0}
+.venue-detail-page .venue-basic-info strong,.venue-detail-page .venue-information-grid strong{color:#f7fbfc;overflow-wrap:anywhere}
+.venue-detail-page .venue-information-section h2,.venue-detail-page .venue-photos-section h2,
+.venue-detail-page .venue-amenities-section h2,.venue-detail-page .venue-sport-conditions-heading h2{color:#fff;font-size:1.25rem}
+.venue-detail-page .venue-amenities-list span{border-color:rgba(88,200,175,.27);background:rgba(35,134,128,.13);color:#bdf9e7}
+.venue-detail-page .venue-map-link,.venue-detail-page .venue-photo-upload,.venue-detail-page .venue-sport-condition-submit{
+  border:1px solid rgba(88,200,175,.42);background:#103b3a;color:#bbffe7}
+.venue-detail-page .venue-access-note,.venue-detail-page .venue-map-approximate-hint{color:#a5c2ce}
+.venue-detail-page .venue-photo-grid img{border-color:rgba(132,207,211,.25)}
+.venue-detail-page .venue-photo-item figcaption{color:#a8c9d4}
+.venue-detail-page .venue-sport-condition-form input,.venue-detail-page .venue-sport-condition-form textarea{
+ background:#091f2e;border:1px solid rgba(153,206,220,.27);color:#fff}
+.venue-detail-page .venue-rating-summary{background:rgba(14,93,77,.17);border-color:rgba(54,230,183,.3);color:#dffbef}
+.venue-detail-page .venue-rating-summary strong{color:#56efbe}
+.venue-detail-page .venue-rating-summary small{color:#afc9d3}
+.venue-detail-page .venue-venue-actions{display:flex;gap:12px}
+@media(max-width:640px){.venue-detail-page{padding:22px 14px}.venue-detail-page .venue-header{padding:23px}}
