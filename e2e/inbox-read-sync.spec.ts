@@ -31,6 +31,8 @@ const socketRoutes = new Map<string, Array<{ close: (options?: {code?: number; r
 let offlineAddedFriend = false;
 let holdAnaPost = false;
 let timeoutAnaAfterCommit = false;
+let suppressOwnCommittedSocket = false;
+let failAnaHistoryWhileOffline = false;
 let releaseAnaPost: (() => void) | null = null;
 
 function jwt(username: string) {
@@ -186,6 +188,8 @@ async function authenticatedContext(browser: import('@playwright/test').Browser,
         return response(route, 200, { chatBlocked: false, whoBlocked: null });
       }
       if (method === 'GET' && chat[2] === '/page') {
+        if (username === 'ana' && peer === 'bea' && failAnaHistoryWhileOffline)
+          return response(route, 503, {message:'offline history'});
         return response(route, 200, {
           content: peer === 'carla' ? [] : [...messages].reverse(), last: true
         });
@@ -205,6 +209,7 @@ async function authenticatedContext(browser: import('@playwright/test').Browser,
         // recipient and to all authenticated sender sessions. One server
         // message ID, no optimistic message and no second HTTP POST.
         for (const account of new Set([username, peer])) {
+          if (account === username && suppressOwnCommittedSocket) continue;
           for (const deliver of authenticatedSockets.get(account) || []) {
             deliver({ type: 'CHAT_MESSAGE', message: sent });
           }
@@ -656,6 +661,65 @@ test('off-screen WebSocket confirmation clears uncertain send after lost HTTP re
     holdAnaPost=false;
     timeoutAnaAfterCommit=false;
     releaseAnaPost=null;
+    offlineAddedFriend=false;
+    await context.close();
+  }
+});
+
+test('socket reconnection reconciles an uncertain off-screen send via read-only history', async ({browser}) => {
+  messages.splice(1);
+  readThrough.clear();
+  readThrough.set('bea',41);
+  authenticatedSockets.clear();
+  socketRoutes.clear();
+  requests.length=0;
+  unauthorized.length=0;
+  offlineAddedFriend=true;
+  timeoutAnaAfterCommit=true;
+  suppressOwnCommittedSocket=true;
+  failAnaHistoryWhileOffline=false;
+  const context=await authenticatedContext(browser,'ana');
+  try {
+    const page=await context.newPage();
+    const errors:string[]=[];
+    page.on('pageerror',err=>errors.push(err.message));
+    await page.goto('/menu/messages?kind=direct&id=bea',{waitUntil:'domcontentloaded'});
+    await expect(page.locator('#inbox-reply')).toBeEnabled();
+    await expect(page.locator('.inbox-entry').filter({hasText:'Carla'})).toBeVisible();
+    await expect.poll(()=>socketRoutes.get('ana')?.length).toBe(1);
+    await page.clock.install();
+    socketRoutes.get('ana')![0].close({code:1012,reason:'simulated offline socket'});
+    failAnaHistoryWhileOffline=true;
+
+    await page.locator('#inbox-reply').fill('Foi guardada enquanto estava offline');
+    await page.locator('.inbox-composer button[type="submit"]').click();
+    await expect.poll(()=>messages.length).toBe(2);
+    // The POST returned 503 after committing, and immediate verification
+    // cannot reach GET /page. No socket event was delivered to this client.
+    await expect(page.locator('.inbox-compose-alert-actions')).toBeVisible();
+    await page.locator('.inbox-entry').filter({hasText:'Carla'}).click();
+    await page.locator('#inbox-reply').fill('O rascunho continua aqui');
+    const checksBefore=requests.filter(r=>r==='ana:GET /api/chat/me/bea/page').length;
+
+    // The network recovers. AUTH after a real reconnect must recheck the
+    // original thread even though another conversation is currently open.
+    failAnaHistoryWhileOffline=false;
+    await page.clock.fastForward(3_100);
+    await expect.poll(()=>socketRoutes.get('ana')?.length).toBe(2);
+    await expect.poll(()=>requests.filter(r=>
+      r==='ana:GET /api/chat/me/bea/page').length).toBeGreaterThan(checksBefore);
+    await expect(page.locator('#inbox-reply')).toHaveValue('O rascunho continua aqui');
+    await page.locator('.inbox-entry').filter({hasText:'Bea'}).click();
+    await expect(page.locator('.inbox-compose-alert-actions')).toHaveCount(0);
+    await expect(page.locator('#inbox-reply')).toHaveValue('');
+    await expect(page.locator('.inbox-bubble[data-message-id="42"]')).toHaveCount(1);
+    expect(requests.filter(r=>r==='ana:POST /api/chat/me/bea')).toHaveLength(1);
+    expect(unauthorized).toEqual([]);
+    expect(errors).toEqual([]);
+  } finally {
+    failAnaHistoryWhileOffline=false;
+    suppressOwnCommittedSocket=false;
+    timeoutAnaAfterCommit=false;
     offlineAddedFriend=false;
     await context.close();
   }
