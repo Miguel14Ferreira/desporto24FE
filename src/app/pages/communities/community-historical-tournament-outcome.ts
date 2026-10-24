@@ -1,9 +1,11 @@
 import { HistoricalMatchArchive } from '../../services/community-groups.service';
 import { HistoricalTournamentStanding, historicalTournamentStandings } from './community-historical-tournament-standings';
+import { tournamentClassificationProfile } from './community-tournament-classification';
 
 export type HistoricalTournamentOutcomeReason =
   | 'winner-estimated'
   | 'no-results'
+  | 'unsupported-sport'
   | 'potential-duplicates'
   | 'incomplete-fixtures'
   | 'tied-leaders'
@@ -30,6 +32,7 @@ export interface HistoricalTournamentOutcome {
 export function historicalTournamentOutcome(
   archive: HistoricalMatchArchive,
   format: 'LEAGUE' | 'KNOCKOUT',
+  sport: string | null | undefined,
   winPoints = 3,
   drawPoints = 1,
   lossPoints = 0
@@ -39,6 +42,10 @@ export function historicalTournamentOutcome(
     ({ winner: null, reason, matchesUsed: matches.length });
 
   if (!matches.length) return pending('no-results');
+  const profile = tournamentClassificationProfile(sport);
+  if (!profile.isRoundRobinSupported || profile.scoringMode) {
+    return pending('unsupported-sport');
+  }
   if (archive.rows.some(row => row.potentialDuplicate)) {
     return pending('potential-duplicates');
   }
