@@ -346,7 +346,9 @@ test('blue checks follow recipient read cursor, not delivery or another account'
     await expect(outgoing.locator('.inbox-read-check')).toHaveText('✓');
     await expect(outgoing.locator('.inbox-read-check')).toHaveAttribute('aria-label', 'Guardada no servidor');
     await expect(outgoing.locator('.inbox-read-check')).not.toHaveClass(/is-read/);
-    await expect(sender.locator('.inbox-delivery-status--confirmed')).toContainText('Guardada no servidor');
+    // Successful sends must rely on the persisted ✓/✓✓ in the bubble.
+    // The former green "Guardada no servidor" composer banner was removed.
+    await expect(sender.locator('.inbox-delivery-status')).toHaveCount(0);
     expect(readThrough.get('bea')).toBe(41); // Server still says 'unread'.
 
     const recipient = await bea.newPage();
