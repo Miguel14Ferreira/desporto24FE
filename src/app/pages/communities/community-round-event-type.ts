@@ -18,7 +18,7 @@ export type CommunityEventType = 'RACE' | 'FREESTYLE' | 'TRACK' | 'JUMP' | 'THRO
     | 'FOOTVOLLEY_SINGLE_18' | 'FOOTVOLLEY_BEST_OF_3' | 'FOOTVOLLEY_SINGLE_15'
     | 'ICE_HOCKEY_REG' | 'ICE_HOCKEY_OT' | 'ICE_HOCKEY_SO' | 'BASEBALL_RUNS' | 'SOFTBALL_RUNS' | 'KORFBALL_REG' | 'KORFBALL_GOLDEN'
     | 'LACROSSE_M_REG' | 'LACROSSE_M_OT' | 'AMFOOTBALL_SCORE' | 'FLAGFOOTBALL_SCORE' | 'CURLING_REG' | 'CURLING_EXTRA'
-    | 'PETANQUE_13' | 'PETANQUE_11';
+    | 'PETANQUE_13' | 'PETANQUE_11' | 'BOWLING_TENPIN' | 'POOL_9_RACKS';
 export interface CommunityEventOption { code: CommunityEventType; labelKey: string }
 const TYPES: Record<string, readonly CommunityEventOption[]> = {
   basquetebol: [{ code: 'BASKETBALL_FINAL', labelKey: 'communities.basketball.fiveVsFive' }],
@@ -43,6 +43,8 @@ const TYPES: Record<string, readonly CommunityEventOption[]> = {
     { code: 'PETANQUE_13', labelKey: 'communities.teamFinal.petanque13' },
     { code: 'PETANQUE_11', labelKey: 'communities.teamFinal.petanque11' }
   ],
+  bowling: [{ code: 'BOWLING_TENPIN', labelKey: 'communities.teamFinal.bowlingTenpin' }],
+  bilhar: [{ code: 'POOL_9_RACKS', labelKey: 'communities.teamFinal.poolNineBall' }],
   voleibol: [{ code: 'VOLLEYBALL_FINAL', labelKey: 'communities.volleyball.indoor' }],
   'voleibol de praia': [{ code: 'BEACH_VOLLEY_FINAL', labelKey: 'communities.volleyball.beach' }],
   futevolei: [
@@ -160,7 +162,8 @@ export function eventPresentationFormat(
           'KORFBALL_REG', 'KORFBALL_GOLDEN',
           'LACROSSE_M_REG', 'LACROSSE_M_OT',
           'AMFOOTBALL_SCORE', 'FLAGFOOTBALL_SCORE',
-          'CURLING_REG', 'CURLING_EXTRA', 'PETANQUE_13', 'PETANQUE_11'].includes(eventType || '') ? 'team'
+          'CURLING_REG', 'CURLING_EXTRA', 'PETANQUE_13', 'PETANQUE_11',
+          'BOWLING_TENPIN', 'POOL_9_RACKS'].includes(eventType || '') ? 'team'
       : 'measured';
   return formatForSport(sport || null);
 }

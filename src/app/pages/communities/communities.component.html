@@ -1957,6 +1957,9 @@
                               @if (round.eventType === 'CURLING_REG' && round.teamScore?.sideA === round.teamScore?.sideB) {
                                 <small>{{ 'communities.teamFinal.curlingRegTie' | t }}</small>
                               }
+                              @if (round.eventType === 'BOWLING_TENPIN' && round.teamScore?.sideA === round.teamScore?.sideB) {
+                                <small>{{ 'communities.teamFinal.bowlingTie' | t }}</small>
+                              }
                               <small>{{ 'communities.teamFinal.recordedOnly' | t }}</small>
                             </section>
                           } @else if (recordedBasketballFinal(round)) {
