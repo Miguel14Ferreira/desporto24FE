@@ -947,11 +947,15 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     const pending = this.pendingByConversation.get(key);
     if (pending && messages.some(message => this.matchesPending(message, pending))) {
       this.pendingByConversation.delete(key);
+      // A server-confirmed message clears its original draft even when
+      // verification finishes after navigation to a different conversation.
+      // Never clear the currently edited draft of another thread.
+      this.drafts.delete(key);
+      this.sendErrorsByConversation.delete(key);
       if (this.selectedKey === key) {
         this.deliveryUncertain = false;
         this.draft = '';
         this.replyingTo = null;
-        this.drafts.delete(key);
         this.composerError = '';
         this.composerSuccess = t('chat.sendConfirmed');
       }
