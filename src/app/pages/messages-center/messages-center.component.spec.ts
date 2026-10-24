@@ -671,7 +671,10 @@ describe('Unified Jynlo message center', () => {
     (component as any).acceptRealtime('community:7', message('community:7', 8));
     delayed.next([{ id: 7, communityId: 7, kind: 'CHAT', username: 'ana', body: 'Anterior', createdAt: '2026-10-23T08:00:00Z' }]);
     expect(component.messages.map(x => x.id)).toEqual([7, 8]);
-    expect(component.recentCount).toBe(0);
+    // A live message received while the HTTP history was still loading has
+    // not been rendered/read yet; keep it unread until the visible read ACK.
+    expect(component.recentCount).toBe(1);
+    expect(inboxApi.markRead).not.toHaveBeenCalled();
   });
 
   it('counts only incoming messages for other conversations during this visit', () => {
