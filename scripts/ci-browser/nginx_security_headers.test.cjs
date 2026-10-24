@@ -13,7 +13,9 @@ test('nginx sends fundamental security headers', () => {
     'Referrer-Policy',
     'Content-Security-Policy',
   ]) {
-    assert.match(config, new RegExp('add_header\\s+' + header + '\\s+[^;]+\\s+always;'));
+    assert.ok(config.split('\n').some(line =>
+      line.includes('add_header ' + header + ' ') && line.trim().endsWith('always;')
+    ), header + ' missing always');
   }
   assert.ok(config.includes("frame-ancestors 'none'"));
   assert.ok(config.includes("object-src 'none'"));
