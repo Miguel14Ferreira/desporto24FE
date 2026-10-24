@@ -65,6 +65,39 @@ describe('Events2Component', () => {
     expect(component).toBeTruthy();
   });
 
+  it('styles the community recurrence selector like the other session inputs', () => {
+    component.communityId = 7;
+    fixture.detectChanges();
+
+    const select = fixture.nativeElement.querySelector(
+      'select[name="recurrence"]'
+    ) as HTMLSelectElement | null;
+    const sportInput = fixture.nativeElement.querySelector(
+      'input[name="sport"]'
+    ) as HTMLInputElement | null;
+
+    expect(select).not.toBeNull();
+    expect(sportInput).not.toBeNull();
+    if (!select || !sportInput) return;
+
+    const selectStyle = getComputedStyle(select);
+    const inputStyle = getComputedStyle(sportInput);
+    expect(selectStyle.borderRadius).toBe(inputStyle.borderRadius);
+    expect(selectStyle.backgroundColor).toBe(inputStyle.backgroundColor);
+    expect(selectStyle.paddingTop).toBe(inputStyle.paddingTop);
+    expect(selectStyle.paddingBottom).toBe(inputStyle.paddingBottom);
+    expect(Math.abs(select.getBoundingClientRect().width
+      - sportInput.getBoundingClientRect().width)).toBeLessThan(2);
+
+    select.value = 'WEEKLY';
+    select.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+    expect(component.recurrence).toBe('WEEKLY');
+    expect(fixture.nativeElement.querySelector(
+      'input[name="recurrenceOccurrences"]'
+    )).not.toBeNull();
+  });
+
   it('offers three exclusive location methods without requiring a venue in the catalogue', () => {
     const buttons = Array.from(
       fixture.nativeElement.querySelectorAll('.location-methods .location-method')
