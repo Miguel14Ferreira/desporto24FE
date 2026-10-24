@@ -163,6 +163,56 @@ describe('Community tournaments management', () => {
     expect(component.creationSportNoticeKey).toBeNull();
   });
 
+  it('shows classification family guidance in the selected language without changing supported formats', () => {
+    const previous = localStorage.getItem('d24-language');
+    const cases: Array<[string, string, string, boolean]> = [
+      ['Xadrez', 'Chess scoring', 'Pontuação de Xadrez', true],
+      ['Karting', 'Race standings', 'Classificação por corridas', false],
+      ['Atletismo', 'Time and measurement standings', 'Classificação por marcas e tempos', false],
+      ['Surf', 'Judged-event standings', 'Classificação por notas de júri', false],
+      ['Golfe', 'Event-score standings', 'Classificação por resultado de prova', false],
+      ['Yoga', 'Activity without defined competitive standings', 'Atividade sem classificação competitiva definida', false],
+      ['Modalidade inexistente', 'Sport without verified tournament rules', 'Modalidade sem regras de torneio verificadas', false],
+      ['Judo', 'Individual head-to-head standings', 'Classificação por confrontos individuais', true],
+      ['Futebol', 'Win, draw and loss standings', 'Classificação por vitórias, empates e derrotas', true]
+    ];
+    try {
+      component.startIndividualCreation();
+      for (const [sport, english, portuguese, supported] of cases) {
+        component.sportDraft = sport;
+        localStorage.setItem('d24-language', 'en');
+        const en = component.classificationProfile;
+        expect(en.heading).withContext(sport).toBe(english);
+        expect(en.detail).withContext(sport).not.toContain('Classificação');
+        expect(en.fields).withContext(sport).toBeTruthy();
+        expect(en.isRoundRobinSupported).withContext(sport).toBe(supported);
+        expect(en.pointRules).withContext(sport).toEqual(sport === 'Xadrez'
+          ? { winPoints: 2, drawPoints: 1, lossPoints: 0 }
+          : { winPoints: 3, drawPoints: 1, lossPoints: 0 });
+        localStorage.setItem('d24-language', 'pt');
+        const pt = component.classificationProfile;
+        expect(pt.heading).withContext(sport).toBe(portuguese);
+        expect(pt.isRoundRobinSupported).withContext(sport).toBe(supported);
+        expect(pt.pointRules).withContext(sport).toEqual(en.pointRules);
+      }
+      component.sportDraft = 'Xadrez';
+      component.startTeamCreation();
+      expect(component.isSportFormatSupported).toBeFalse();
+      localStorage.setItem('d24-language', 'en');
+      expect(component.sportFormatWarning).toContain('chess');
+      localStorage.setItem('d24-language', 'pt');
+      expect(component.sportFormatWarning).toContain('tabuleiro');
+      expect(component.raceSportLabel(null)).toBe('Corridas');
+      localStorage.setItem('d24-language', 'en');
+      expect(component.raceSportLabel(null)).toBe('Races');
+    } finally {
+      if (previous === null) localStorage.removeItem('d24-language');
+      else localStorage.setItem('d24-language', previous);
+    }
+    expect(api.create).not.toHaveBeenCalled();
+    expect(api.createTeamTournament).not.toHaveBeenCalled();
+  });
+
   it('creates a Karting championship instead of fake head-to-head fixtures', async () => {
     component.startIndividualCreation();
     component.nameDraft = 'Campeonato Karting';
