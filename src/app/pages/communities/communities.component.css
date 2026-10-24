@@ -1906,3 +1906,19 @@ input,textarea,select {
   min-width: 22px; border-radius: 999px; padding: .08rem .38rem;
   background: #58dec4; color: #052c2c; text-align: center; font-variant-numeric: tabular-nums;
 }
+
+
+/* Community animated logos are typically square. Show every GIF frame intact
+   without cropping artwork, and leave JPG/PNG/WebP cover styling unchanged. */
+.community-avatar.community-avatar--animated {
+  background: radial-gradient(circle at 50% 42%, #193444 0%, #071923 100%);
+}
+.community-avatar.community-avatar--animated > img,
+.community-detail-page .community-photo-block .community-avatar--large.community-avatar--animated > img {
+  object-fit: contain;
+}
+/* Use the source's square framing in the identity panel instead of a
+   landscape 3:2 crop. Other community photos keep their current proportions. */
+.community-detail-page .community-photo-block .community-avatar--large.community-avatar--animated {
+  aspect-ratio: 1 / 1;
+}
