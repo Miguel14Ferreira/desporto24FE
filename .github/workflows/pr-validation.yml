@@ -230,15 +230,15 @@ jobs:
           if-no-files-found: ignore
       # Karting browser QA with two synthetic, isolated identities.
       - name: Install Chromium for Karting championship E2E
-        if: ${{ startsWith(github.head_ref, 'qa/karting-browser-flow-') || startsWith(github.head_ref, 'test/karting-dnf-browser-contract-') }}
+        if: ${{ startsWith(github.head_ref, 'qa/karting-browser-flow-') || startsWith(github.head_ref, 'test/karting-dnf-browser-contract-') || startsWith(github.head_ref, 'fix/karting-pt-en-current-') }}
         run: |
           npm install --no-save --package-lock=false @playwright/test@1.56.1
           npx playwright install --with-deps chromium
       - name: Validate Karting race linking and read-only member views
-        if: ${{ startsWith(github.head_ref, 'qa/karting-browser-flow-') || startsWith(github.head_ref, 'test/karting-dnf-browser-contract-') }}
+        if: ${{ startsWith(github.head_ref, 'qa/karting-browser-flow-') || startsWith(github.head_ref, 'test/karting-dnf-browser-contract-') || startsWith(github.head_ref, 'fix/karting-pt-en-current-') }}
         run: npx playwright test e2e/community-tournaments.spec.ts --config=playwright.config.ts --project=desktop-chromium --grep "Karting E2E"
       - name: Save Karting E2E screenshots
-        if: ${{ always() && startsWith(github.head_ref, 'qa/karting-browser-flow-') || startsWith(github.head_ref, 'test/karting-dnf-browser-contract-') }}
+        if: ${{ always() && startsWith(github.head_ref, 'qa/karting-browser-flow-') || startsWith(github.head_ref, 'test/karting-dnf-browser-contract-') || startsWith(github.head_ref, 'fix/karting-pt-en-current-') }}
         uses: actions/upload-artifact@v4
         with:
           name: jynlo-karting-e2e

@@ -253,9 +253,8 @@
             </div>
             @if (isKartingRaceDraft) {
               <div class="classification-fixed-points" role="note">
-                <strong>Karting · Campeonato por posições</strong>
-                <p>Depois de criar o campeonato, define a pontuação por posição e associa as corridas registadas
-                  nas Jornadas. Os tempos, penalizações e desclassificações são aproveitados automaticamente.</p>
+                <strong>{{ 'communities.karting.creationTitle' | t }}</strong>
+                <p>{{ 'communities.karting.creationHint' | t }}</p>
               </div>
             } @else {
             <details class="create-advanced-rules">
@@ -360,7 +359,7 @@
           (click)="showTeamCreate ? createTeamCompetition() : create()">
           {{ !isSportFormatSupported ? 'Formato ainda indisponível'
               : (showTeamCreate ? 'Criar e preparar equipas'
-                  : (isKartingRaceDraft ? 'Criar campeonato de Karting' : 'Confirmar liga individual')) }}
+                  : (isKartingRaceDraft ? ('communities.karting.createButton' | t) : 'Confirmar liga individual')) }}
         </button>
         </div>
       </div>
@@ -461,7 +460,7 @@
               }
             } @else {
               @if (isRaceCompetition) {
-                <p>Campeonato de Karting · Pontos por posição e resultados das Jornadas</p>
+                <p>{{ 'communities.karting.title' | t }}</p>
               } @else if (isChessTournament) {
                 <p>Xadrez · Vitória 1 · Empate ½ · Derrota 0</p>
               } @else {
@@ -914,20 +913,20 @@
           }
         } @else if (isRaceCompetition) {
           @if (!isMember) {
-            <div class="notice notice-info">Adere à comunidade para consultar este campeonato.</div>
+            <div class="notice notice-info">{{ 'communities.karting.joinToView' | t }}</div>
           } @else if (detailsLoading) {
-            <p class="t-muted" role="status">A carregar corridas e classificação…</p>
+            <p class="t-muted" role="status">{{ 'communities.karting.loading' | t }}</p>
           } @else if (raceError || !raceOverview) {
             <div class="notice notice-info" role="status">
-              Não foi possível carregar o campeonato.
-              <button type="button" class="t-btn t-btn-secondary" (click)="loadRaceOverview()">Tentar novamente</button>
+              {{ 'communities.karting.loadError' | t }}
+              <button type="button" class="t-btn t-btn-secondary" (click)="loadRaceOverview()">{{ 'common.retry' | t }}</button>
             </div>
           } @else {
-            <section class="t-section race-championship" aria-label="Campeonato de Karting">
+            <section class="t-section race-championship" [attr.aria-label]="'communities.karting.sectionLabel' | t">
               <div class="t-section-heading">
                 <div>
-                  <h5>Corridas do campeonato</h5>
-                  <p>Associa corridas de Karting registadas nas Jornadas. Os resultados continuam nas provas originais.</p>
+                  <h5>{{ 'communities.karting.racesTitle' | t }}</h5>
+                  <p>{{ 'communities.karting.racesHelp' | t }}</p>
                 </div>
               </div>
               @if (selected.status === 'COMPLETED' && finalKartingPodium.length) {
@@ -945,7 +944,7 @@
                         <span class="karting-podium-medal" aria-hidden="true">
                           {{ driver.position === 1 ? '🥇' : (driver.position === 2 ? '🥈' : '🥉') }}
                         </span>
-                        <span class="karting-podium-rank">{{ driver.position }}.º</span>
+                        <span class="karting-podium-rank">{{ driver.position }}{{ 'communities.karting.ordinalSuffix' | t }}</span>
                         <strong>{{ driver.fullName || ('communities.tournaments.kartingChampionUnavailable' | t) }}</strong>
                         <span class="karting-podium-points">
                           {{ driver.championshipPoints ?? '—' }} {{ 'communities.tournaments.kartingPointsAbbrev' | t }}
@@ -963,21 +962,21 @@
                 </section>
               }
               <div class="race-points-panel">
-                <strong>Pontos por posição</strong>
+                <strong>{{ 'communities.karting.pointsTitle' | t }}</strong>
                 @if (canManage && selected.status === 'DRAFT' && !raceOverview.linkedRaces.length) {
                   <div class="race-points-editor">
-                    <label for="karting-race-points">Pontos do 1.º lugar em diante, separados por vírgulas</label>
+                    <label for="karting-race-points">{{ 'communities.karting.pointsLabel' | t }}</label>
                     <input id="karting-race-points" type="text" [(ngModel)]="racePointsDraft"
                       [disabled]="busy" placeholder="25,18,15,12,10,8,6,4,2,1">
                     <button type="button" class="t-btn t-btn-secondary" [disabled]="busy"
-                      (click)="saveRacePoints()">Guardar pontuação</button>
+                      (click)="saveRacePoints()">{{ 'communities.karting.savePoints' | t }}</button>
                   </div>
                 } @else {
-                  <p>{{ raceOverview.pointsByPlace.join(' · ') }} pontos</p>
+                  <p>{{ raceOverview.pointsByPlace.join(' · ') }} {{ 'communities.karting.points' | t }}</p>
                 }
               </div>
               @if (!raceOverview.linkedRaces.length) {
-                <p class="t-muted">Nenhuma corrida associada. Regista primeiro uma corrida de Karting nas Jornadas.</p>
+                <p class="t-muted">{{ 'communities.karting.noLinkedRaces' | t }}</p>
               }
               @for (race of raceOverview.linkedRaces; track race.id) {
                 <div class="race-round-card">
@@ -986,7 +985,7 @@
                     <small>{{ race.playedAt | date:'dd/MM/yyyy' }}</small>
                     @if (canManage && selected.status !== 'COMPLETED') {
                       <button type="button" class="t-btn t-btn-secondary t-btn-small"
-                        [disabled]="busy" (click)="unlinkTournamentRace(race.id)">Retirar</button>
+                        [disabled]="busy" (click)="unlinkTournamentRace(race.id)">{{ 'communities.karting.unlink' | t }}</button>
                     }
                   </div>
                   @if (race.entries.length) {
@@ -1049,30 +1048,30 @@
               }
               @if (canManage && selected.status !== 'COMPLETED') {
                 <div class="race-available">
-                  <h6>Adicionar corrida das Jornadas</h6>
+                  <h6>{{ 'communities.karting.addRace' | t }}</h6>
                   @if (!raceOverview.availableRaces.length) {
-                    <p class="t-muted">Não há outras corridas de Karting disponíveis nesta comunidade.</p>
+                    <p class="t-muted">{{ 'communities.karting.noAvailableRaces' | t }}</p>
                   }
                   @for (race of raceOverview.availableRaces; track race.id) {
                     <div class="race-available-row">
                       <span><strong>{{ race.name }}</strong>
-                        <small>{{ race.playedAt | date:'dd/MM/yyyy' }} · {{ race.entries.length }} participantes</small></span>
+                        <small>{{ race.playedAt | date:'dd/MM/yyyy' }} · {{ race.entries.length }} {{ 'communities.karting.participants' | t }}</small></span>
                       <button type="button" class="t-btn t-btn-primary t-btn-small" [disabled]="busy"
-                        (click)="linkTournamentRace(race.id)">Associar</button>
+                        (click)="linkTournamentRace(race.id)">{{ 'communities.karting.link' | t }}</button>
                     </div>
                   }
                 </div>
               }
               <div class="race-standings-section">
-                <h6>Classificação geral</h6>
+                <h6>{{ 'communities.karting.standingsTitle' | t }}</h6>
                 @if (raceOverview.standings.length) {
                   <div class="t-table-scroll">
-                    <table aria-label="Classificação de Karting">
-                      <thead><tr><th>Pos.</th><th>Participante</th><th>Corridas</th><th>Vitórias</th><th>Pódios</th><th>Pontos</th></tr></thead>
+                    <table [attr.aria-label]="'communities.karting.tableLabel' | t">
+                      <thead><tr><th>{{ 'communities.karting.position' | t }}</th><th>{{ 'communities.karting.participant' | t }}</th><th>{{ 'communities.karting.races' | t }}</th><th>{{ 'communities.karting.wins' | t }}</th><th>{{ 'communities.karting.podiums' | t }}</th><th>{{ 'communities.karting.points' | t }}</th></tr></thead>
                       <tbody>
                         @for (driver of raceOverview.standings; track driver.playerId) {
                           <tr>
-                            <td>{{ driver.position }}.º</td><td>{{ driver.fullName }}</td>
+                            <td>{{ driver.position }}{{ 'communities.karting.ordinalSuffix' | t }}</td><td>{{ driver.fullName }}</td>
                             <td>{{ driver.races }}</td><td>{{ driver.wins }}</td><td>{{ driver.podiums }}</td>
                             <td><strong>{{ driver.championshipPoints ?? '—' }}</strong></td>
                           </tr>
@@ -1081,26 +1080,23 @@
                     </table>
                   </div>
                 } @else {
-                  <p class="t-muted">A classificação aparece depois de associares uma corrida válida.</p>
+                  <p class="t-muted">{{ 'communities.karting.emptyStandings' | t }}</p>
                 }
               </div>
               @if (selected.status === 'COMPLETED') {
                 <div class="race-archive-notice" role="status">
-                  <strong>Classificação final arquivada</strong>
-                  <p>O campeão e os resultados deste campeonato ficaram guardados em
-                    {{ selected.completedAt | date:'dd/MM/yyyy' }}.
-                    As Jornadas podem ser corrigidas sem modificar este arquivo.</p>
+                  <strong>{{ 'communities.karting.archiveTitle' | t }}</strong>
+                  <p>{{ 'communities.karting.archiveDescription' | t:{date: (selected.completedAt | date:'dd/MM/yyyy') || '—'} }}</p>
                 </div>
               } @else if (canManage) {
                 <div class="complete-action race-complete-action">
-                  <strong>Concluir o campeonato de Karting?</strong>
-                  <p>Ao encerrar, a classificação, os resultados e o campeão ficam definitivos.
-                    Não será possível acrescentar ou retirar corridas deste campeonato.</p>
+                  <strong>{{ 'communities.karting.closeTitle' | t }}</strong>
+                  <p>{{ 'communities.karting.closeHelp' | t }}</p>
                   @if (confirmAction === 'completeRace') {
                     <div class="confirm-actions">
                       <button type="button" class="t-btn t-btn-primary"
                         [disabled]="!canCompleteRace" (click)="completeRace()">
-                        Sim, encerrar e guardar classificação
+                        {{ 'communities.karting.closeConfirm' | t }}
                       </button>
                       <button type="button" class="t-btn t-btn-secondary"
                         [disabled]="busy" (click)="confirmAction = null">Cancelar</button>
@@ -1108,9 +1104,9 @@
                   } @else {
                     <button type="button" class="t-btn t-btn-primary"
                       [disabled]="!canCompleteRace"
-                      (click)="confirmAction = 'completeRace'">Encerrar campeonato de Karting</button>
+                      (click)="confirmAction = 'completeRace'">{{ 'communities.karting.closeAction' | t }}</button>
                     @if (!canCompleteRace) {
-                      <p class="field-validation" role="status">Associa corridas com pelo menos dois participantes classificados.</p>
+                      <p class="field-validation" role="status">{{ 'communities.karting.closeDisabled' | t }}</p>
                     }
                   }
                 </div>
