@@ -1,6 +1,5 @@
 import { HistoricalMatchArchive } from '../../services/community-groups.service';
-import { HistoricalTournamentStanding, historicalTournamentStandings } from './community-historical-tournament-standings';
-import { tournamentClassificationProfile } from './community-tournament-classification';
+import { HistoricalTournamentStanding, historicalTournamentStandings, canEstimateHistoricalLeagueStandings } from './community-historical-tournament-standings';
 
 export type HistoricalTournamentOutcomeReason =
   | 'winner-estimated'
@@ -42,8 +41,7 @@ export function historicalTournamentOutcome(
     ({ winner: null, reason, matchesUsed: matches.length });
 
   if (!matches.length) return pending('no-results');
-  const profile = tournamentClassificationProfile(sport);
-  if (!profile.isRoundRobinSupported || profile.scoringMode) {
+  if (!canEstimateHistoricalLeagueStandings(sport)) {
     return pending('unsupported-sport');
   }
   if (archive.rows.some(row => row.potentialDuplicate)) {

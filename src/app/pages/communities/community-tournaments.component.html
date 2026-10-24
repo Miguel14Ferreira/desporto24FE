@@ -522,9 +522,14 @@
                   <div class="t-section-heading">
                     <div>
                       <h5>{{ 'communities.tournaments.classificationTitle' | t }}</h5>
-                      <p>{{ 'communities.matches.tournamentEstimatedStandings' | t }}</p>
+                      @if (canEstimateHistoricalLeagueTable) {
+                        <p>{{ 'communities.matches.tournamentEstimatedStandings' | t }}</p>
+                      } @else {
+                        <p class="t-muted" role="note">{{ 'communities.matches.historicalStandingsUnavailable' | t }}</p>
+                      }
                     </div>
                   </div>
+                  @if (canEstimateHistoricalLeagueTable) {
                   <div class="standings-scroll">
                     <table class="standings-table">
                       <thead><tr>
@@ -551,6 +556,7 @@
                       </tbody>
                     </table>
                   </div>
+                  }
                 </section>
               } @else {
                 <p class="t-muted">{{ 'communities.matches.knockoutNoTable' | t }}</p>

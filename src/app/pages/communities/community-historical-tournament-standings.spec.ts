@@ -1,4 +1,4 @@
-import { historicalTournamentStandings } from './community-historical-tournament-standings';
+import { historicalTournamentStandings, canEstimateHistoricalLeagueStandings } from './community-historical-tournament-standings';
 import { HistoricalMatchArchive } from '../../services/community-groups.service';
 
 describe('Historical Excel tournament standings', () => {
@@ -17,6 +17,16 @@ describe('Historical Excel tournament standings', () => {
     expect(table[0]).toEqual(jasmine.objectContaining({ played: 1, won: 1, points: 3, difference: 1 }));
     expect(table[2]).toEqual(jasmine.objectContaining({ played: 2, lost: 1, drawn: 1, points: 1 }));
   });
+  it('only allows provisional tables for catalogued compatible numeric head-to-head sports', () => {
+    expect(canEstimateHistoricalLeagueStandings('Futebol')).toBeTrue();
+    expect(canEstimateHistoricalLeagueStandings('Basquetebol')).toBeTrue();
+    for (const sport of ['Karting', 'Ciclismo', 'Golfe', 'Xadrez',
+      'Natação', 'Surf', 'Tiro com Arco', 'Modalidade inventada', '', null]) {
+      expect(canEstimateHistoricalLeagueStandings(sport))
+        .withContext(String(sport)).toBeFalse();
+    }
+  });
+
   it('never mutates the original Excel rows', () => {
     const original = JSON.stringify(archive.rows);
     historicalTournamentStandings(archive);
