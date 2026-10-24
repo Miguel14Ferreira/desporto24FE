@@ -29,6 +29,8 @@ const unauthorized: string[] = [];
 const authenticatedSockets = new Map<string, Set<(value: unknown) => void>>();
 const socketRoutes = new Map<string, Array<{ close: (options?: {code?: number; reason?: string}) => void }>>();
 let offlineAddedFriend = false;
+let holdAnaPost = false;
+let releaseAnaPost: (() => void) | null = null;
 
 function jwt(username: string) {
   const encode = (data: unknown) => Buffer.from(JSON.stringify(data)).toString('base64url');
@@ -162,7 +164,8 @@ async function authenticatedContext(browser: import('@playwright/test').Browser,
     const receipt = /^\/api\/messages\/inbox\/direct\/([^/]+)\/receipt$/.exec(url.pathname);
     if (method === 'GET' && receipt) {
       const peer = decodeURIComponent(receipt[1]).toLowerCase();
-      if (peer !== (username === 'ana' ? 'bea' : 'ana')) {
+      if (peer !== (username === 'ana' ? 'bea' : 'ana')
+          && !(username === 'ana' && offlineAddedFriend && peer === 'carla')) {
         unauthorized.push(username + ':receipt-peer:' + peer);
         return response(route, 403, {});
       }
@@ -173,7 +176,8 @@ async function authenticatedContext(browser: import('@playwright/test').Browser,
     const chat = /^\/api\/chat\/me\/([^/]+)(\/page|\/info)?$/.exec(url.pathname);
     if (chat) {
       const peer = decodeURIComponent(chat[1]).toLowerCase();
-      if (peer !== (username === 'ana' ? 'bea' : 'ana')) {
+      if (peer !== (username === 'ana' ? 'bea' : 'ana')
+          && !(username === 'ana' && offlineAddedFriend && peer === 'carla')) {
         unauthorized.push(username + ':peer:' + peer);
         return response(route, 403, {});
       }
@@ -182,10 +186,14 @@ async function authenticatedContext(browser: import('@playwright/test').Browser,
       }
       if (method === 'GET' && chat[2] === '/page') {
         return response(route, 200, {
-          content: [...messages].reverse(), last: true
+          content: peer === 'carla' ? [] : [...messages].reverse(), last: true
         });
       }
       if (method === 'POST' && !chat[2]) {
+        if (username === 'ana' && peer === 'bea' && holdAnaPost) {
+          await new Promise<void>(resolve => { releaseAnaPost = resolve; });
+          releaseAnaPost = null;
+        }
         const body = req.postDataJSON() as { text: string };
         const sent = {
           id: messages[messages.length - 1].id + 1, username1: username,
@@ -547,6 +555,53 @@ test('WebSocket outage recovers missed history and newly available friends witho
     expect(unauthorized).toEqual([]);
     expect(errors).toEqual([]);
   } finally {
+    offlineAddedFriend = false;
+    await context.close();
+  }
+});
+
+test('switching chats during a pending send preserves another draft and avoids a second POST', async ({browser}) => {
+  messages.splice(1);
+  readThrough.clear();
+  readThrough.set('bea', 41);
+  authenticatedSockets.clear();
+  requests.length = 0;
+  unauthorized.length = 0;
+  offlineAddedFriend = true;
+  holdAnaPost = true;
+  releaseAnaPost = null;
+  const context = await authenticatedContext(browser, 'ana');
+  try {
+    const page = await context.newPage();
+    const errors:string[] = [];
+    page.on('pageerror', error => errors.push(error.message));
+    await page.goto('/menu/messages?kind=direct&id=bea', {waitUntil:'domcontentloaded'});
+    await expect(page.locator('.inbox-entry').filter({hasText:'Carla'})).toBeVisible();
+    await expect(page.locator('#inbox-reply')).toBeEnabled();
+    await page.locator('#inbox-reply').fill('Mensagem enviada uma vez');
+    await page.locator('.inbox-composer button[type="submit"]').click();
+    await expect.poll(() => releaseAnaPost !== null).toBe(true);
+
+    // The HTTP response is held while the user opens a different conversation.
+    await page.locator('.inbox-entry').filter({hasText:'Carla'}).click();
+    await expect(page.locator('.inbox-entry.is-selected')).toContainText('Carla');
+    await page.locator('#inbox-reply').fill('Rascunho independente');
+    releaseAnaPost?.();
+    await expect.poll(() => messages.length).toBe(2);
+    await expect(page.locator('#inbox-reply')).toHaveValue('Rascunho independente');
+    await expect(page.locator('.inbox-entry').filter({hasText:'Bea'})
+      .locator('.inbox-entry-snippet')).toHaveText('Mensagem enviada uma vez');
+
+    await page.locator('.inbox-entry').filter({hasText:'Bea'}).click();
+    await expect(page.locator('#inbox-reply')).toHaveValue('');
+    await expect(page.locator('.inbox-bubble[data-message-id="42"]')).toHaveCount(1);
+    expect(requests.filter(v => v === 'ana:POST /api/chat/me/bea')).toHaveLength(1);
+    expect(unauthorized).toEqual([]);
+    expect(errors).toEqual([]);
+  } finally {
+    releaseAnaPost?.();
+    holdAnaPost = false;
+    releaseAnaPost = null;
     offlineAddedFriend = false;
     await context.close();
   }
