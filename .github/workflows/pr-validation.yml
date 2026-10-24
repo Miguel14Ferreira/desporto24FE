@@ -44,6 +44,17 @@ jobs:
         run: npm test -- --watch=false --browsers=ChromeHeadless
       - name: Build frontend once
         run: npm run build
+      # Targeted tournament browser QA after collapsing advanced rules.
+      # API is fully intercepted by the existing test fixture; no production access.
+      - name: Install Playwright for tournament creation browser QA
+        if: ${{ startsWith(github.head_ref, 'qa/tournament-browser-advanced-rules-') }}
+        run: npm install --no-save --package-lock=false @playwright/test@1.56.1
+      - name: Check tournament creation, advanced rules and sport warnings
+        if: ${{ startsWith(github.head_ref, 'qa/tournament-browser-advanced-rules-') }}
+        env:
+          JYNLO_USE_SYSTEM_CHROME: '1'
+        run: npx playwright test e2e/community-tournaments.spec.ts --config=playwright.config.ts --project=desktop-chromium --grep "formulário apresenta formatos|organizador define a pontuação inicial|regras de pontos personalizadas|critério de desempate fica guardado"
+
       # Opt-in browser regression for the unread-indicator fix only.
       # Two fully synthetic accounts share in-memory API state; no prod writes,
       # credentials, extra CI job or Chromium download.
