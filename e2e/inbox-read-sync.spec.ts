@@ -342,7 +342,9 @@ test('blue checks follow recipient read cursor, not delivery or another account'
     const outgoing = sender.locator('.inbox-bubble[data-message-id="42"]');
     await expect(outgoing).toBeVisible();
     await expect(outgoing.locator('.inbox-read-check')).toHaveText('✓');
+    await expect(outgoing.locator('.inbox-read-check')).toHaveAttribute('aria-label', 'Guardada no servidor');
     await expect(outgoing.locator('.inbox-read-check')).not.toHaveClass(/is-read/);
+    await expect(sender.locator('.inbox-delivery-status--confirmed')).toContainText('Guardada no servidor');
     expect(readThrough.get('bea')).toBe(41); // Server still says 'unread'.
 
     const recipient = await bea.newPage();
@@ -358,6 +360,7 @@ test('blue checks follow recipient read cursor, not delivery or another account'
     // The committed WebSocket event changes the marker immediately, even
     // while the page clock is frozen; no polling or browser refresh is needed.
     await expect(outgoing.locator('.inbox-read-check')).toHaveText('✓✓');
+    await expect(outgoing.locator('.inbox-read-check')).toHaveAttribute('aria-label', 'Lida pelo destinatário');
     await expect(outgoing.locator('.inbox-read-check')).toHaveClass(/is-read/);
 
     // Simulate another same-origin tab replacing the sender's login.
@@ -603,6 +606,7 @@ test('switching chats during a pending send preserves another draft and avoids a
     await page.locator('#inbox-reply').fill('Mensagem enviada uma vez');
     await page.locator('.inbox-composer button[type="submit"]').click();
     await expect.poll(() => releaseAnaPost !== null).toBe(true);
+    await expect(page.locator('.inbox-delivery-status--sending')).toContainText('A enviar');
 
     // The HTTP response is held while the user opens a different conversation.
     await page.locator('.inbox-entry').filter({hasText:'Carla'}).click();
@@ -707,6 +711,8 @@ test('socket reconnection reconciles an uncertain off-screen send via read-only 
     // The POST returned 503 after committing, and immediate verification
     // cannot reach GET /page. No socket event was delivered to this client.
     await expect(page.locator('.inbox-compose-alert-actions')).toBeVisible();
+    await expect(page.locator('.inbox-delivery-status--pending')).toBeVisible();
+    await expect(page.locator('.inbox-delivery-status--confirmed')).toHaveCount(0);
     await page.locator('.inbox-entry').filter({hasText:'Carla'}).click();
     await page.locator('#inbox-reply').fill('O rascunho continua aqui');
     const checksBefore=requests.filter(r=>r==='ana:GET /api/chat/me/bea/page').length;
