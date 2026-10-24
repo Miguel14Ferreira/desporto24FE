@@ -813,13 +813,18 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     const isSelected = key === this.selectedKey;
     const isMine = !!this.currentUsername
       && message.sender.toLowerCase() === this.currentUsername.toLowerCase();
+    // An open conversation is not necessarily being read: the window may be
+    // unfocused, its history still loading, or the reader scrolled up.
+    // Preserve its unread badge until the server confirms a visible read.
+    const unreadArrival = !isMine && (!isSelected || this.historicalPreview
+      || !this.isPageActive() || this.previewLoading || !this.isNearPreviewBottom());
     this.conversations = orderInbox(this.conversations.map(conversation =>
       conversation.key === key
         ? { ...conversation, latestText: message.text, latestAt: message.createdAt,
             latestMessageId: message.id,
             unreadCount: conversation.unreadCount === undefined ? undefined :
-              conversation.unreadCount + ((!isSelected || this.historicalPreview) && !isMine ? 1 : 0),
-            newThisVisit: conversation.newThisVisit + ((!isSelected || this.historicalPreview) && !isMine ? 1 : 0) }
+              conversation.unreadCount + (unreadArrival ? 1 : 0),
+            newThisVisit: conversation.newThisVisit + (unreadArrival ? 1 : 0) }
         : conversation));
 
     if (isSelected) {
