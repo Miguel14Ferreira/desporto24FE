@@ -2491,7 +2491,7 @@ test('Competition individual E2E: registrations, standings and goal labels follo
 
   const registrations = page.getByRole('region', { name: 'Registrations' });
   await expect(registrations.getByRole('heading', { name: 'Participants' })).toBeVisible();
-  await expect(registrations.getByText('Confirmed')).toBeVisible();
+  await expect(registrations.getByText('Confirmed').first()).toBeVisible();
   const fixtures = page.getByRole('region', { name: 'Fixtures' });
   await expect(fixtures.getByRole('heading', { name: 'Fixtures and results' })).toBeVisible();
   await expect(fixtures.getByRole('spinbutton', { name: 'Goals for organizador' })).toBeVisible();
