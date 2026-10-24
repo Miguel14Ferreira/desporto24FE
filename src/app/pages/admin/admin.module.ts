@@ -10,6 +10,7 @@ import { AdminDisputesComponent } from '../admin-disputes/admin-disputes.compone
 import { AdminIdeasComponent } from '../admin-ideas/admin-ideas.component';
 import { AdminPlayersComponent } from '../admin-players/admin-players.component';
 import { AdminUserReportsComponent } from '../admin-user-reports/admin-user-reports.component';
+import { AdminVenueSuggestionsComponent } from '../admin-venue-suggestions/admin-venue-suggestions.component';
 
 const routes: Routes = [
   { path: '', component: AdminDashboardComponent },
@@ -19,6 +20,7 @@ const routes: Routes = [
   { path: 'players', component: AdminPlayersComponent },
   { path: 'attendance-disputes', component: AdminDisputesComponent },
   { path: 'ideas', component: AdminIdeasComponent },
+  { path: 'venue-suggestions', component: AdminVenueSuggestionsComponent },
   { path: 'reports', component: AdminUserReportsComponent }
 ];
 
@@ -28,6 +30,7 @@ const routes: Routes = [
     AdminAuditComponent,
     AdminDisputesComponent,
     AdminIdeasComponent,
+    AdminVenueSuggestionsComponent,
     AdminPlayersComponent,
     AdminUserReportsComponent
   ],

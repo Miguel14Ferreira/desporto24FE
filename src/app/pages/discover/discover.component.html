@@ -153,16 +153,9 @@
             </div>
           }
 
-          @if (venues.length > 4) {
-            <button type="button" class="pillar-action jynlo-action jynlo-action--neutral" (click)="toggleAllVenues()">
-              {{ (showAllVenues ? 'discover.where.showLess' : 'discover.where.showAll') | t }}
-              <span>{{ showAllVenues ? '↑' : '↓' }}</span>
-            </button>
-          }
-
           <a class="pillar-action jynlo-action jynlo-action--neutral" routerLink="/menu/venues"
              [queryParams]="{ sport: sport.trim() || null, city: location.trim() || null }">
-            {{ 'venue.catalog.viewAll' | t }} <span aria-hidden="true">→</span>
+            {{ 'discover.where.showAll' | t }} <span aria-hidden="true">→</span>
           </a>
 
           <a class="pillar-action jynlo-action jynlo-action--neutral" routerLink="/menu/venues/new"

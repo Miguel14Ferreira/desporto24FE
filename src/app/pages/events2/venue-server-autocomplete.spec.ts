@@ -21,7 +21,7 @@ describe('Create session venue server autocomplete', () => {
 
   beforeEach(async () => {
     venues = jasmine.createSpyObj<VenueService>('VenueService', [
-      'suggest', 'search', 'create', 'listPhotos', 'resolveMapLink'
+      'suggest', 'search', 'submitSuggestion', 'listPhotos', 'resolveMapLink'
     ]);
     venues.suggest.and.returnValue(of(page([])));
     venues.listPhotos.and.returnValue(of([]));

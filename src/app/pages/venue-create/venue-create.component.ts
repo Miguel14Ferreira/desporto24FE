@@ -85,6 +85,7 @@ export class VenueCreateComponent implements OnInit {
   longitude: number | null = null;
   saving = false;
   saveError = false;
+  submitted = false;
   duplicateVenueError = false;
   validationError = false;
   locating = false;
@@ -328,15 +329,19 @@ export class VenueCreateComponent implements OnInit {
     };
 
     this.saving = true;
+    this.submitted = false;
     this.saveError = false;
     this.duplicateVenueError = false;
-    this.venueService.create(request)
+    this.venueService.submitSuggestion(request)
       .pipe(
         timeout(10_000),
         finalize(() => this.saving = false)
       )
       .subscribe({
-      next: venue => this.router.navigate(['/menu/venues', venue.id]),
+      next: receipt => {
+        this.submitted = receipt.status === 'PENDING';
+        if (!this.submitted) this.saveError = true;
+      },
       error: (error: HttpErrorResponse) => {
         this.duplicateVenueError = error.status === 409;
         this.saveError = !this.duplicateVenueError;
