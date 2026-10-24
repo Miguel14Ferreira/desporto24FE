@@ -79,11 +79,9 @@ const TYPES: Record<string, readonly CommunityEventOption[]> = {
     { code: 'INLINE_TRACK_500D_QUARTER_HEAT', labelKey: 'communities.speedSkating.track500Quarter' },
     { code: 'INLINE_TRACK_500D_SEMI_HEAT', labelKey: 'communities.speedSkating.track500Semi' },
     { code: 'INLINE_TRACK_500D_FINAL_A', labelKey: 'communities.speedSkating.track500FinalA' },
-    { code: 'INLINE_TRACK_500D_FINAL_B', labelKey: 'communities.speedSkating.track500FinalB' },
     { code: 'INLINE_ROAD_LAP_QUARTER_HEAT', labelKey: 'communities.speedSkating.roadLapQuarter' },
     { code: 'INLINE_ROAD_LAP_SEMI_HEAT', labelKey: 'communities.speedSkating.roadLapSemi' },
-    { code: 'INLINE_ROAD_LAP_FINAL_A', labelKey: 'communities.speedSkating.roadLapFinalA' },
-    { code: 'INLINE_ROAD_LAP_FINAL_B', labelKey: 'communities.speedSkating.roadLapFinalB' }
+    { code: 'INLINE_ROAD_LAP_FINAL_A', labelKey: 'communities.speedSkating.roadLapFinalA' }
   ],
   'muay thai': [
     { code: 'IFMA_FULL_WP', labelKey: 'communities.muayThai.fullWp' },
