@@ -272,6 +272,24 @@
             <div class="inbox-composer-bottom">
               <span>{{ 'chat.enterHint' | t }} · {{ draft.length }}/2000</span>
               <div class="inbox-composer-actions">
+                <div class="inbox-emoji-controls" (keydown.escape)="closeEmojiPicker()">
+                  <button type="button" class="inbox-emoji-trigger"
+                    [attr.aria-label]="'chat.emojiPicker' | t"
+                    [attr.aria-expanded]="emojiPickerOpen"
+                    [attr.title]="'chat.emojiPicker' | t"
+                    [disabled]="!composerAllowed || composerAccessLoading || sending || deliveryUncertain || deliveryChecking || previewLoading || previewError || !isSelectedSessionOpen()"
+                    (click)="toggleEmojiPicker()">
+                    <span aria-hidden="true">☺</span>
+                  </button>
+                  @if (emojiPickerOpen) {
+                    <div class="inbox-emoji-grid" role="group" [attr.aria-label]="'chat.emojiPicker' | t">
+                      @for (emoji of composerEmojis; track emoji) {
+                        <button type="button" [attr.aria-label]="emoji"
+                          (click)="insertEmoji(emoji)">{{ emoji }}</button>
+                      }
+                    </div>
+                  }
+                </div>
                 <button type="submit" class="jynlo-action jynlo-action--primary"
                   [disabled]="!canSendMessage()">
                   {{ (sending ? 'chat.sending' : 'chat.send') | t }}

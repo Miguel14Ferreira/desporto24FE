@@ -76,6 +76,13 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   realtimeConnected = false;
   everConnected = false;
   draft = '';
+  emojiPickerOpen = false;
+  readonly composerEmojis = [
+    '😀', '😃', '😄', '😁', '😂', '🤣', '😊', '😍', '🥰', '😘',
+    '😎', '🥳', '😢', '😭', '😮', '😅', '😉', '🤔', '🙏', '👏',
+    '👍', '👎', '💪', '🙌', '❤️', '🔥', '💯', '✨', '🎉', '✅',
+    '⚽', '🏀', '🏐', '🎾', '🏓', '🚴', '🏃', '🏆', '🥇', '🎯'
+  ];
   replyingTo: InboxMessage | null = null;
   sending = false;
   deliveryUncertain = false;
@@ -508,6 +515,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       else this.replyDrafts.delete(this.selectedKey);
     }
     this.typing.stop();
+    this.emojiPickerOpen = false;
     this.selectedKey = conversation.key;
     ++this.peerReceiptVersion;
     this.peerReadCursor = null;
@@ -906,6 +914,37 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.typing.input(conversation.kind, conversation.id, this.draft, this.canSendMessage());
   }
 
+  toggleEmojiPicker(): void {
+    if (!this.canEditDraft()) return;
+    this.emojiPickerOpen = !this.emojiPickerOpen;
+  }
+
+  closeEmojiPicker(): void {
+    this.emojiPickerOpen = false;
+  }
+
+  /** Insert at the caret, preserving selected text, pending drafts and focus. */
+  insertEmoji(emoji: string): void {
+    if (!this.canEditDraft() || !this.composerEmojis.includes(emoji)) return;
+    const textarea = this.composerTextarea?.nativeElement;
+    const start = textarea?.selectionStart ?? this.draft.length;
+    const end = textarea?.selectionEnd ?? start;
+    const next = this.draft.slice(0, start) + emoji + this.draft.slice(end);
+    // HTML textarea.maxLength counts UTF-16 units, including surrogate pairs.
+    if (next.length > 2000) return;
+    this.draft = next;
+    this.emojiPickerOpen = false;
+    this.onTypingInput();
+    textarea?.focus({ preventScroll: true });
+    textarea?.setSelectionRange(start + emoji.length, start + emoji.length);
+  }
+
+  private canEditDraft(): boolean {
+    return Boolean(this.selected && this.composerAllowed && !this.composerAccessLoading
+      && this.isSelectedSessionOpen() && !this.previewLoading && !this.previewError
+      && !this.sending && !this.deliveryUncertain && !this.deliveryChecking);
+  }
+
   onComposerEnter(event: Event): void {
     const keyboard = event as KeyboardEvent;
     if (keyboard.shiftKey || keyboard.isComposing || keyboard.keyCode === 229) return;
@@ -923,6 +962,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   }
 
   sendMessage(): void {
+    this.emojiPickerOpen = false;
     this.typing.stop();
     const conversation = this.selected;
     if (!conversation || !this.canSendMessage()) return;
