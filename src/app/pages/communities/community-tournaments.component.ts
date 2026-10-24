@@ -192,15 +192,20 @@ export class CommunityTournamentsComponent implements OnChanges {
     return tournamentClassificationProfile(this.sportDraft);
   }
 
-  get isKartingRaceDraft(): boolean {
-    return !this.showTeamCreate && this.sportDraft.trim().toLowerCase() === 'karting';
+  /** Validated race modes only; BMX Freestyle remains excluded. */
+  get isRaceChampionshipDraft(): boolean {
+    return !this.showTeamCreate && (this.sportDraft === 'Karting' || this.sportDraft === 'BMX');
+  }
+
+  raceSportLabel(sport: string | null | undefined): string {
+    return sport === 'BMX' ? 'BMX Racing' : 'Karting';
   }
 
   get isRaceCompetition(): boolean {
     return this.selected?.scoringMode === 'RACE_POINTS';
   }
 
-  /** All completed Karting championships in the loaded paginated list. */
+  /** Karting and BMX Racing championships completed in the loaded paginated list. */
   get kartingPalmares(): CommunityTournament[] {
     return this.tournaments
       .filter(tournament => tournament.scoringMode === 'RACE_POINTS'
@@ -235,13 +240,13 @@ export class CommunityTournamentsComponent implements OnChanges {
   }
 
   get isSportFormatSupported(): boolean {
-    return this.isKartingRaceDraft || this.classificationProfile.isRoundRobinSupported
+    return this.isRaceChampionshipDraft || this.classificationProfile.isRoundRobinSupported
       && !(this.showTeamCreate && this.classificationProfile.scoringMode === 'CHESS_HALF_POINTS');
   }
 
   get sportFormatWarning(): string {
-    if (this.isKartingRaceDraft) {
-      return 'As posições, tempos, penalizações e desclassificações vêm das corridas registadas nas Jornadas. Associa as corridas depois de criares o campeonato.';
+    if (this.isRaceChampionshipDraft) {
+      return 'O campeonato utiliza posições, tempos, penalizações e desclassificações das Jornadas. Em BMX, apenas as corridas Racing (não Freestyle) podem ser associadas.';
     }
     return this.showTeamCreate && this.classificationProfile.scoringMode === 'CHESS_HALF_POINTS'
       ? 'O Xadrez por equipas precisa de partidas e resultados por tabuleiro. Para já, cria uma liga individual de Xadrez.'
@@ -1260,13 +1265,13 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.showError('Esta modalidade precisa de resultados por prova. Usa as jornadas da comunidade.');
       return;
     }
-    if (!this.isKartingRaceDraft && !this.validPointRules) {
+    if (!this.isRaceChampionshipDraft && !this.validPointRules) {
       this.showError('Define pontos inteiros entre 0 e 100 para vitória, empate e derrota.');
       return;
     }
     const scoringMode = this.classificationProfile.scoringMode;
-    const createRequest = this.isKartingRaceDraft
-      ? this.api.createKartingChampionship(this.community.id, name)
+    const createRequest = this.isRaceChampionshipDraft
+      ? this.api.createKartingChampionship(this.community.id, name, this.sportDraft as 'Karting' | 'BMX')
       : scoringMode
       ? this.api.create(this.community.id, name, this.sportDraft, this.pointRulesDraft, scoringMode)
       : this.api.create(this.community.id, name, this.sportDraft, this.pointRulesDraft);
