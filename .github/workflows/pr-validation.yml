@@ -46,9 +46,11 @@ jobs:
         run: npm run build
       # Targeted tournament browser QA after collapsing advanced rules.
       # API is fully intercepted by the existing test fixture; no production access.
-      - name: Install Playwright for tournament creation browser QA
+      - name: Install Playwright and Chromium for tournament browser QA
         if: ${{ startsWith(github.head_ref, 'qa/tournament-browser-advanced-rules-') }}
-        run: npm install --no-save --package-lock=false @playwright/test@1.56.1
+        run: |
+          npm install --no-save --package-lock=false @playwright/test@1.56.1
+          npx playwright install --with-deps chromium
       - name: Check tournament creation, advanced rules and sport warnings
         if: ${{ startsWith(github.head_ref, 'qa/tournament-browser-advanced-rules-') }}
         env:
