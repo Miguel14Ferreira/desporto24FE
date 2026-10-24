@@ -112,6 +112,69 @@ describe('Community tournaments management', () => {
     expect(component.creationSportNoticeKey).toBeNull();
   });
 
+  it('switches classification presets when changing sports and rejects fake karting standings', async () => {
+    component.startIndividualCreation();
+    component.nameDraft = 'Campeonato Karting';
+    component.chooseSport('Karting');
+    expect(component.classificationProfile.heading).toContain('corridas');
+    expect(component.classificationProfile.isRoundRobinSupported).toBeFalse();
+    await component.create();
+    expect(api.create).not.toHaveBeenCalled();
+    expect(component.error).toContain('jornadas');
+
+    component.chooseSport('Xadrez');
+    expect(component.classificationProfile.scoringMode).toBe('CHESS_HALF_POINTS');
+    expect(component.pointRulesDraft).toEqual({
+      winPoints: 2, drawPoints: 1, lossPoints: 0
+    });
+    component.chooseSport('Futebol');
+    expect(component.pointRulesDraft).toEqual({
+      winPoints: 3, drawPoints: 1, lossPoints: 0
+    });
+  });
+
+  it('does not present individual chess rules as a team-board tournament', async () => {
+    component.chooseSport('Xadrez');
+    component.startTeamCreation();
+    component.nameDraft = 'Torneio por equipas';
+    expect(component.isSportFormatSupported).toBeFalse();
+    expect(component.sportFormatWarning).toContain('tabuleiro');
+    await component.createTeamCompetition();
+    expect(api.createTeamTournament).not.toHaveBeenCalled();
+  });
+
+  it('creates a chess competition with a saved half-point scoring mode', async () => {
+    component.startIndividualCreation();
+    component.nameDraft = 'Liga de Xadrez';
+    component.chooseSport('Xadrez');
+    api.create.and.returnValue(of({ ...draft, sport: 'Xadrez',
+      scoringMode: 'CHESS_HALF_POINTS', winPoints: 2, drawPoints: 1 }));
+    await component.create();
+    expect(api.create).toHaveBeenCalledOnceWith(
+      7, 'Liga de Xadrez', 'Xadrez', { winPoints: 2, drawPoints: 1, lossPoints: 0 },
+      'CHESS_HALF_POINTS'
+    );
+    expect(component.isChessTournament).toBeTrue();
+    expect(component.formatTournamentPoints(3)).toBe('1,5');
+  });
+
+  it('accepts only proper chess match outcomes for new chess tournaments', () => {
+    const game: TournamentMatch = { id: 81, roundNumber: 1, homeProfileId: 1,
+      homeUsername: 'ana', awayProfileId: 2, awayUsername: 'bruno',
+      status: 'SCHEDULED', homeScore: null, awayScore: null };
+    component.selected = { ...draft, sport: 'Xadrez', scoringMode: 'CHESS_HALF_POINTS',
+      status: 'IN_PROGRESS', winPoints: 2, drawPoints: 1 };
+    expect(component.validTournamentScore(game)).toBeFalse();
+    component.setChessOutcome(game, 'DRAW');
+    expect(component.validTournamentScore(game)).toBeTrue();
+    expect(component.chessOutcome(game)).toBe('DRAW');
+    expect(component.displayTournamentResult({ ...game, homeScore: 0, awayScore: 0 })).toBe('½ – ½');
+    component.setScore(game, 'home', 7);
+    expect(component.validTournamentScore(game)).toBeFalse();
+    component.setChessOutcome(game, 'BLACK');
+    expect(component.validTournamentScore(game)).toBeTrue();
+  });
+
   describe('real team competitions', () => {
     const teamDraft: CommunityTournament = {
       ...draft, id: 19, name: 'Torneio CNG 5x5', sport: 'Futebol',
@@ -673,7 +736,7 @@ describe('Community tournaments management', () => {
     expect(api.create).toHaveBeenCalledWith(7, 'Liga de outono', 'Padel', { winPoints: 3, drawPoints: 1, lossPoints: 0 });
   });
 
-  it('supports a tournament sport outside the community without changing it', async () => {
+  it('recognizes a different sport but avoids a false 1v1 swimming competition', async () => {
     component.community = { ...community, sports: ['Futebol', 'Padel'] };
     component.ngOnChanges({ community: new SimpleChange(community, component.community, false) });
     component.sportSearch = 'natação';
@@ -681,14 +744,14 @@ describe('Community tournaments management', () => {
     component.chooseSport('Natação');
     component.startIndividualCreation();
     component.nameDraft = 'Liga de natação';
-    api.create.and.returnValue(of({ ...draft, id: 22, sport: 'Natação' }));
     await component.create();
-    expect(api.create).toHaveBeenCalledWith(7, 'Liga de natação', 'Natação', { winPoints: 3, drawPoints: 1, lossPoints: 0 });
-    expect(component.scoring.scoreInput).toBe('Marcador de');
+    expect(api.create).not.toHaveBeenCalled();
+    expect(component.error).toContain('jornadas');
+    expect(component.classificationProfile.format).toBe('race');
     expect(component.community.sport).toBe('Futebol');
   });
 
-  it('keeps legacy community modalities selectable even if they are outside the catalog', async () => {
+  it('keeps legacy community modalities selectable without inventing their scoring', async () => {
     component.community = { ...community, sports: ['Desporto local tradicional', 'Futebol'] };
     component.ngOnChanges({ community: new SimpleChange(community, component.community, false) });
     component.sportSearch = 'tradicional';
@@ -696,9 +759,10 @@ describe('Community tournaments management', () => {
     component.chooseSport('Desporto local tradicional');
     component.startIndividualCreation();
     component.nameDraft = 'Torneio local';
-    api.create.and.returnValue(of({ ...draft, id: 23, sport: 'Desporto local tradicional' }));
     await component.create();
-    expect(api.create).toHaveBeenCalledWith(7, 'Torneio local', 'Desporto local tradicional', { winPoints: 3, drawPoints: 1, lossPoints: 0 });
+    expect(api.create).not.toHaveBeenCalled();
+    expect(component.classificationProfile.format).toBe('unknown');
+    expect(component.error).toContain('jornadas');
   });
 
   it('uses the selected tournament sport for scoring rather than the community primary sport', () => {

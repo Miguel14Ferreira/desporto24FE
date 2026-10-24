@@ -220,6 +220,52 @@
   .create-actions .t-btn-secondary { order: 2; }
 }
 
+
+/* The sport registry determines which scoring interface can be configured. */
+.classification-profile {
+  display: grid;
+  gap: .5rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid rgba(52,211,153,.25);
+  border-radius: .85rem;
+  background: rgba(16,185,129,.08);
+}
+.classification-profile strong { font-size: .96rem; color: #bbf7d0; }
+.classification-profile p { font-size: .84rem; color: #dbeafe; line-height: 1.55; }
+.classification-profile small { color: #a7f3d0; font-size: .75rem; }
+.classification-profile.classification-notice {
+  background: rgba(234,179,8,.07);
+  border-color: rgba(234,179,8,.34);
+}
+.classification-profile.classification-notice strong { color: #fde68a; }
+.classification-profile.classification-notice small { color: #fcd34d; }
+.classification-fixed-points {
+  display: grid;
+  gap: .75rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid rgba(52,211,153,.28);
+  border-radius: .85rem;
+  background: rgba(8,47,73,.3);
+}
+.classification-fixed-points > div { display: flex; flex-wrap: wrap; gap: .65rem; }
+.classification-fixed-points > div span {
+  padding: .55rem .75rem;
+  background: rgba(52,211,153,.1);
+  border: 1px solid rgba(52,211,153,.2);
+  border-radius: .65rem;
+  font-weight: 800;
+}
+.classification-fixed-points p { font-size: .77rem; color: #b8d4e6; }
+.score-edit label.chess-outcome { max-width: 22rem; }
+.score-edit .chess-outcome select {
+  min-width: min(100%, 17rem);
+  padding: .65rem;
+  border-radius: .6rem;
+  color: #eaf8f3;
+  border: 1px solid rgba(148,163,184,.4);
+  background: #152c42;
+}
+
 .tournament-browser { display: grid; grid-template-columns: minmax(12rem, .7fr) minmax(0, 2fr); gap: 1rem; align-items: start; }
 .tournament-sidebar { display: grid; gap: .6rem; min-width: 0; }
 .sidebar-title { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }

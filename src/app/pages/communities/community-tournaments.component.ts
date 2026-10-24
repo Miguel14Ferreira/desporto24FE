@@ -9,6 +9,7 @@ import { CommunityTournamentsService } from '../../services/community-tournament
 import { AuthenticationService } from '../../services/authethication.service';
 import { tournamentScoreTerminology } from './community-tournament-scoring';
 import { formatForSport } from './community-round-sport';
+import { tournamentClassificationProfile } from './community-tournament-classification';
 import { SPORTS_CATALOG } from '../../shared/sports-catalog';
 import { buildTournamentTeamInviteUrl, teamInvitationWhatsAppUrl } from './community-team-invite';
 
@@ -118,7 +119,10 @@ export class CommunityTournamentsComponent implements OnChanges {
 
   chooseSport(sport: string): void {
     if (this.busy || !(SPORTS_CATALOG.includes(sport) || this.communitySportOptions.includes(sport))) return;
-    this.sportDraft = sport;
+    if (this.sportDraft !== sport) {
+      this.sportDraft = sport;
+      this.resetPointRules();
+    }
     this.sportSearch = '';
     this.editingSport = false;
   }
@@ -177,6 +181,66 @@ export class CommunityTournamentsComponent implements OnChanges {
       ?? 'Diferença do marcador';
   }
 
+  get classificationProfile() {
+    return tournamentClassificationProfile(this.sportDraft);
+  }
+
+  get isSportFormatSupported(): boolean {
+    return this.classificationProfile.isRoundRobinSupported
+      && !(this.showTeamCreate && this.classificationProfile.scoringMode === 'CHESS_HALF_POINTS');
+  }
+
+  get sportFormatWarning(): string {
+    return this.showTeamCreate && this.classificationProfile.scoringMode === 'CHESS_HALF_POINTS'
+      ? 'O Xadrez por equipas precisa de partidas e resultados por tabuleiro. Para já, cria uma liga individual de Xadrez.'
+      : this.classificationProfile.detail;
+  }
+
+  get isChessTournament(): boolean {
+    return this.selected?.scoringMode === 'CHESS_HALF_POINTS';
+  }
+
+  formatTournamentPoints(points: number | null | undefined): string {
+    if (points == null) return '—';
+    return this.isChessTournament ? (points / 2).toLocaleString('pt-PT') : String(points);
+  }
+
+  chessOutcome(match: TournamentMatch): string {
+    const score = this.scoreDraft(match);
+    if (score.home === 1 && score.away === 0) return 'WHITE';
+    if (score.home === 0 && score.away === 0) return 'DRAW';
+    if (score.home === 0 && score.away === 1) return 'BLACK';
+    return '';
+  }
+
+  displayTournamentResult(match: TournamentMatch): string {
+    if (this.isChessTournament) {
+      if (match.homeScore === 1 && match.awayScore === 0) return '1 – 0';
+      if (match.homeScore === 0 && match.awayScore === 0) return '½ – ½';
+      if (match.homeScore === 0 && match.awayScore === 1) return '0 – 1';
+      return '—';
+    }
+    return match.homeScore + ' : ' + match.awayScore;
+  }
+
+  setChessOutcome(match: TournamentMatch, outcome: string): void {
+    const mapped = outcome === 'WHITE' ? { home: 1, away: 0 }
+      : outcome === 'DRAW' ? { home: 0, away: 0 }
+      : outcome === 'BLACK' ? { home: 0, away: 1 }
+      : { home: null, away: null };
+    this.scoreDrafts[match.id] = mapped;
+    this.scoreTouched.add(match.id);
+  }
+
+  validTournamentScore(match: TournamentMatch): boolean {
+    const score = this.scoreDraft(match);
+    if (!this.validScore(score.home) || !this.validScore(score.away)) return false;
+    return !this.isChessTournament
+      || ((score.home === 1 && score.away === 0)
+          || (score.home === 0 && score.away === 0)
+          || (score.home === 0 && score.away === 1));
+  }
+
   get pointRulesDraft(): TournamentPointRules {
     return {
       winPoints: this.winPointsDraft,
@@ -187,13 +251,17 @@ export class CommunityTournamentsComponent implements OnChanges {
 
   get validPointRules(): boolean {
     return Object.values(this.pointRulesDraft)
-      .every(value => Number.isInteger(value) && value >= 0 && value <= 100);
+      .every(value => Number.isInteger(value) && value >= 0 && value <= 100)
+      && (!this.classificationProfile.readOnlyPoints
+        || this.classificationProfile.scoringMode !== 'CHESS_HALF_POINTS'
+        || (this.winPointsDraft === 2 && this.drawPointsDraft === 1 && this.lossPointsDraft === 0));
   }
 
   private resetPointRules(): void {
-    this.winPointsDraft = 3;
-    this.drawPointsDraft = 1;
-    this.lossPointsDraft = 0;
+    const points = tournamentClassificationProfile(this.sportDraft).pointRules;
+    this.winPointsDraft = points.winPoints;
+    this.drawPointsDraft = points.drawPoints;
+    this.lossPointsDraft = points.lossPoints;
   }
 
   get nameTooShort(): boolean {
@@ -204,7 +272,7 @@ export class CommunityTournamentsComponent implements OnChanges {
   isScoreInvalid(match: TournamentMatch): boolean {
     const score = this.scoreDraft(match);
     return this.scoreTouched.has(match.id)
-      && (!this.validScore(score.home) || !this.validScore(score.away));
+      && !this.validTournamentScore(match);
   }
 
   private showError(message: string): void {
@@ -270,6 +338,7 @@ export class CommunityTournamentsComponent implements OnChanges {
         ? sports[0] : (!sports?.length ? this.community.sport || '' : '');
       this.sportSearch = '';
       this.editingSport = false;
+      this.resetPointRules();
       this.selected = undefined;
       this.loading = false;
       this.detailsLoading = false;
@@ -945,6 +1014,10 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.showError('Escolhe uma modalidade válida para o torneio.');
       return;
     }
+    if (!this.isSportFormatSupported) {
+      this.showError(this.sportFormatWarning);
+      return;
+    }
     if (this.teamFormatDraft === 'LEAGUE'
         && this.roundRobinLegsDraft !== 1 && this.roundRobinLegsDraft !== 2) {
       this.showError('Escolhe uma ou duas voltas.');
@@ -1030,11 +1103,19 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.showError('Escolhe uma modalidade válida para o torneio.');
       return;
     }
+    if (!this.classificationProfile.isRoundRobinSupported) {
+      this.showError('Esta modalidade precisa de resultados por prova. Usa as jornadas da comunidade.');
+      return;
+    }
     if (!this.validPointRules) {
       this.showError('Define pontos inteiros entre 0 e 100 para vitória, empate e derrota.');
       return;
     }
-    await this.mutate(this.api.create(this.community.id, name, this.sportDraft, this.pointRulesDraft),
+    const scoringMode = this.classificationProfile.scoringMode;
+    const createRequest = scoringMode
+      ? this.api.create(this.community.id, name, this.sportDraft, this.pointRulesDraft, scoringMode)
+      : this.api.create(this.community.id, name, this.sportDraft, this.pointRulesDraft);
+    await this.mutate(createRequest,
       'Torneio criado.', result => {
       this.nameDraft = '';
       this.resetPointRules();
@@ -1105,8 +1186,10 @@ export class CommunityTournamentsComponent implements OnChanges {
   async saveScore(match: TournamentMatch): Promise<void> {
     if (!this.selected || !this.canManage || this.selected.status !== 'IN_PROGRESS') return;
     const score = this.scoreDraft(match);
-    if (!this.validScore(score.home) || !this.validScore(score.away)) {
-      this.showError('Os resultados devem ser números inteiros entre 0 e 999.');
+    if (!this.validTournamentScore(match)) {
+      this.showError(this.isChessTournament
+        ? 'Xadrez: seleciona vitória das brancas, empate ou vitória das pretas.'
+        : 'Os resultados devem ser números inteiros entre 0 e 999.');
       return;
     }
     await this.mutate(
