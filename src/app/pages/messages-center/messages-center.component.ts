@@ -303,6 +303,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       log.scrollTop = log.scrollHeight;
       this.scrollRequested = false;
       this.newMessagesPending = 0;
+      if (this.selectedKey) this.markRenderedRead(this.selectedKey);
     }
   }
 
@@ -513,6 +514,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.peerReadCursor = null;
     this.peerReceiptCheckedAt = 0;
     this.newMessagesPending = 0;
+    this.scrollRequested = false;
     ++this.historyLocateVersion;
     this.historicalPreview = false;
     this.historyLocateLoading = false;
@@ -533,7 +535,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.composerAccessLoading = true;
     this.messages = [];
     this.previewError = false;
-    this.markReadThisVisit(conversation.key);
+    // Opening a conversation is not proof the messages were displayed.
     this.loadComposerAccess(conversation);
     this.loadHistory(conversation);
     this.refreshPeerReadReceipt(true);
@@ -752,7 +754,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
         }
         this.confirmFromHistoryIfPresent(conversation.key, this.messages);
         this.updatePreviewFromHistory(conversation.key, this.messages);
-        if (follow) this.markRenderedRead(conversation.key, true);
+        // The HTTP callback runs before Angular renders the new bubbles.
+        // Acknowledge only after the bottom bubble is in the live DOM.
         this.scrollRequested = follow;
       },
       error: () => {
@@ -830,14 +833,10 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       else this.newMessagesPending = 0;
       this.messages = mergeInboxMessages([...this.messages, message]);
       if (this.previewLoading) this.realtimeDuringLoad.set(message.id, message);
-      if (!this.previewLoading && !this.previewError && follow) this.markRenderedRead(key);
+      // A WebSocket event arrives before its bubble exists in the DOM.
+      // The post-render scroll path handles any read acknowledgement.
       this.scrollRequested = follow;
     }
-  }
-
-  private markReadThisVisit(key: string): void {
-    this.conversations = this.conversations.map(item =>
-      item.key === key ? { ...item, newThisVisit: 0 } : item);
   }
 
   private updatePreviewFromHistory(key: string, messages: InboxMessage[]): void {
@@ -1208,13 +1207,33 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     });
   }
 
-  private markRenderedRead(key: string, fromLoadedHistory = false): void {
+  private isLatestMessageVisible(messageId: number): boolean {
+    const log = this.previewLog?.nativeElement;
+    const lastBubble = log?.querySelector<HTMLElement>('[data-message-id="' + messageId + '"]');
+    if (!log || !lastBubble) return false; // Data received but not yet rendered.
+    const container = log.getBoundingClientRect();
+    const bubble = lastBubble.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    // A scroll container below the page fold, or a bubble outside the
+    // scrolled log, must not mark an unread conversation as viewed.
+    return container.width > 0 && container.height > 0
+      && bubble.width > 0 && bubble.height > 0
+      && container.top < viewportHeight && container.bottom > 0
+      && bubble.top < Math.min(container.bottom, viewportHeight)
+      && bubble.bottom > Math.max(container.top, 0);
+  }
+
+  private markRenderedRead(key: string): void {
     // A background/unfocused browser must not make a message look read.
-    if (!this.isPageActive() || !this.serverSummariesAvailable || key !== this.selectedKey || this.historicalPreview
-        || (this.previewLoading && !fromLoadedHistory) || this.previewError || this.messages.length === 0) return;
-    if (!fromLoadedHistory && !this.isNearPreviewBottom()) return;
+    if (!this.isPageActive() || key !== this.selectedKey || this.historicalPreview
+        || this.previewLoading || this.previewError || this.messages.length === 0) return;
+    if (!this.isNearPreviewBottom()) return;
     const lastSeen = Math.max(...this.messages.map(message => message.id));
-    if (!Number.isSafeInteger(lastSeen) || lastSeen <= 0) return;
+    if (!Number.isSafeInteger(lastSeen) || lastSeen <= 0
+        || !this.isLatestMessageVisible(lastSeen)) return;
+    // Without server summaries there is no authoritative cursor, so do not
+    // clear the unread badge on an unconfirmed read.
+    if (!this.serverSummariesAvailable) return;
     const conversation = this.selected;
     if (!conversation) return;
     const readVersion = ++this.readVersion;
