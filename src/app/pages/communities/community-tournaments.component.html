@@ -517,6 +517,45 @@
                   </div>
                 </div>
               }
+              @if (selected.format === 'KNOCKOUT' && historicalKnockoutPhases.length > 0) {
+                <section class="t-section historical-phases-summary"
+                  [attr.aria-label]="'communities.matches.historicalPhases.title' | t">
+                  <div class="t-section-heading">
+                    <div>
+                      <h5>{{ 'communities.matches.historicalPhases.title' | t }}</h5>
+                      <p>{{ 'communities.matches.historicalPhases.note' | t }}</p>
+                    </div>
+                  </div>
+                  <div class="historical-phase-cards">
+                    @for (phase of historicalKnockoutPhases; track phase.phase) {
+                      <article class="historical-phase-card"
+                        [class.historical-phase-card--review]="phase.requiresReview">
+                        <div class="historical-phase-card-heading">
+                          <strong>{{ ('communities.matches.historicalPhases.' + phase.phase) | t }}</strong>
+                          <span class="historical-phase-card-count">{{ phase.matchCount }} / {{ phase.singleLegReference }}</span>
+                        </div>
+                        <p class="historical-phase-card-status">
+                          {{ (phase.requiresReview
+                            ? 'communities.matches.historicalPhases.needsReview'
+                            : 'communities.matches.historicalPhases.sourceFound') | t }}
+                        </p>
+                        @if (phase.sourceLabels.length) {
+                          <p class="historical-phase-card-labels">{{ phase.sourceLabels.join(' · ') }}</p>
+                        }
+                        @if (phase.firstArchiveIndex !== null) {
+                          <button type="button" class="t-btn t-btn-secondary historical-phase-jump"
+                            (click)="showHistoricalKnockoutPhase(phase.firstArchiveIndex)">
+                            {{ 'communities.matches.historicalPhases.goTo' | t }}
+                          </button>
+                        }
+                      </article>
+                    }
+                  </div>
+                  <p class="t-muted historical-phase-legend">
+                    {{ 'communities.matches.historicalPhases.legend' | t }}
+                  </p>
+                </section>
+              }
               @if (selected.format === 'LEAGUE') {
                 <section class="t-section" [attr.aria-label]="'communities.tournaments.classificationTitle' | t">
                   <div class="t-section-heading">
@@ -561,7 +600,7 @@
               } @else {
                 <p class="t-muted">{{ 'communities.matches.knockoutNoTable' | t }}</p>
               }
-              <section class="t-section" [attr.aria-label]="'communities.matches.archivesTitle' | t">
+              <section #historicalArchiveFixtures class="t-section historical-archive-fixtures" [attr.aria-label]="'communities.matches.archivesTitle' | t">
                 <div class="t-section-heading">
                   <div>
                     <h5>{{ 'communities.matches.archivesTitle' | t }}</h5>

@@ -2062,3 +2062,77 @@ body .communities-page.jynlo-c1 .historical-source-group-count {
     margin: .3rem 0 0;
   }
 }
+
+
+/* Historical knockout stage overview: original Excel labels, not an official bracket. */
+body .communities-page.jynlo-c1 .historical-phase-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .8rem;
+  margin-top: 1rem;
+}
+body .communities-page.jynlo-c1 .historical-phase-card {
+  display: flex;
+  flex-direction: column;
+  gap: .55rem;
+  min-width: 0;
+  padding: 1rem;
+  border: 1px solid rgba(145, 190, 205, .22);
+  border-radius: 14px;
+  background: linear-gradient(145deg, rgba(36, 69, 81, .28), rgba(18, 34, 44, .35));
+}
+body .communities-page.jynlo-c1 .historical-phase-card--review {
+  border-color: rgba(226, 166, 87, .42);
+}
+body .communities-page.jynlo-c1 .historical-phase-card-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: .5rem;
+  color: #ecf8fd;
+}
+body .communities-page.jynlo-c1 .historical-phase-card-heading strong {
+  min-width: 0;
+  font-size: .92rem;
+}
+body .communities-page.jynlo-c1 .historical-phase-card-count {
+  color: #9fcedd;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+body .communities-page.jynlo-c1 .historical-phase-card-status {
+  margin: 0;
+  font-size: .82rem;
+  line-height: 1.4;
+  color: #b7d1da;
+}
+body .communities-page.jynlo-c1 .historical-phase-card--review .historical-phase-card-status {
+  color: #f4c794;
+}
+body .communities-page.jynlo-c1 .historical-phase-card-labels {
+  overflow-wrap: anywhere;
+  font-size: .76rem;
+  color: #92b8c7;
+  line-height: 1.45;
+  margin: 0;
+}
+body .communities-page.jynlo-c1 .historical-phase-jump {
+  align-self: flex-start;
+  margin-top: auto;
+  font-size: .8rem;
+  padding: .35rem .7rem;
+}
+body .communities-page.jynlo-c1 .historical-phase-legend {
+  margin-top: .8rem;
+  font-size: .79rem;
+  line-height: 1.45;
+}
+body .communities-page.jynlo-c1 .historical-archive-fixtures {
+  scroll-margin-top: 7rem;
+}
+@media (max-width: 850px) {
+  body .communities-page.jynlo-c1 .historical-phase-cards {
+    grid-template-columns: 1fr;
+  }
+}
