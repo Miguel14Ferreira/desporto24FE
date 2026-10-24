@@ -17,6 +17,7 @@ import { judoBoutError, isJudoBout } from './community-judo-results';
 import { karateBoutError, isKarateEvent, isKarateKumite } from './community-karate-results';
 import { isBjjEvent, isBjjPoints, bjjResultError } from './community-bjj-results';
 import { isBoxingEvent, boxingResultError } from './community-boxing-results';
+import { isMuayThaiEvent, muayThaiResultError } from './community-muay-thai-results';
 import { isKickboxingEvent, isKickboxingPointFighting, kickboxingResultError }
   from './community-kickboxing-results';
 import { isTaekwondoKyorugi, isTaekwondoEvent, taekwondoResultError }
@@ -834,11 +835,22 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   }
   chessGameScore = chessGameScore;
   isJudoBout = isJudoBout;
+  isMuayThaiEvent = isMuayThaiEvent;
   isKickboxingEvent = isKickboxingEvent;
   isKickboxingPointFighting = isKickboxingPointFighting;
   isBoxingEvent = isBoxingEvent;
   isBjjEvent = isBjjEvent;
   isBjjPoints = isBjjPoints;
+  clearMuayThaiHiddenScores(): void {
+    if (isMuayThaiEvent(this.newRoundEventType)) {
+      this.roundEntries.forEach(entry => {
+        entry.performanceValue = null;
+        entry.waveScore1 = null;
+        entry.waveScore2 = null;
+      });
+    }
+  }
+
   clearKickboxingHiddenScores(): void {
     if (isKickboxingEvent(this.newRoundEventType)
         && !isKickboxingPointFighting(this.newRoundEventType)) {
@@ -3133,6 +3145,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     const bjj = isBjjEvent(this.newRoundEventType);
     const boxing = isBoxingEvent(this.newRoundEventType);
     const kickboxing = isKickboxingEvent(this.newRoundEventType);
+    const muayThai = isMuayThaiEvent(this.newRoundEventType);
     const taekwondo = isTaekwondoEvent(this.newRoundEventType);
     const kyorugi = isTaekwondoKyorugi(this.newRoundEventType);
     const groupRoutine = isGroupRoutineEvent(this.newRoundEventType);
@@ -3196,6 +3209,10 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       this.errorMessage = t('feedback.communities.taekwondoInvalid');
       return;
     }
+    if (muayThai && muayThaiResultError(this.newRoundEventType, selectedEntries)) {
+      this.errorMessage = t('feedback.communities.muayThaiInvalid');
+      return;
+    }
     if (kickboxing && kickboxingResultError(this.newRoundEventType, selectedEntries)) {
       this.errorMessage = t('feedback.communities.kickboxingInvalid');
       return;
@@ -3220,7 +3237,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       this.errorMessage = t('feedback.communities.breakingInvalid');
       return;
     }
-    if (neutral && !karate && !taekwondo && !bjj && !boxing && !kickboxing && !isWaveHeatEvent(this.newRoundEventType)
+    if (neutral && !karate && !taekwondo && !bjj && !boxing && !kickboxing && !muayThai
+      && !isWaveHeatEvent(this.newRoundEventType)
       && performanceError(this.newRoundEventType, selectedEntries)) {
       this.errorMessage = t(performanceKind(this.newRoundEventType) === 'golf'
         ? 'feedback.communities.golfInvalid'
@@ -3239,9 +3257,9 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     const entries = selectedEntries
       .map(entry => ({
         username: entry.username,
-        team: groupRoutine || basketball || volleyball || teamFinal || chess || judo || karate || kyorugi || bjj || boxing || kickboxing ? entry.team.trim()
+        team: groupRoutine || basketball || volleyball || teamFinal || chess || judo || karate || kyorugi || bjj || boxing || kickboxing || muayThai ? entry.team.trim()
           : race || neutral ? null : (entry.team.trim() || null),
-        result: breaking || chess || judo || karate || kyorugi || bjj || boxing || kickboxing ? entry.result
+        result: breaking || chess || judo || karate || kyorugi || bjj || boxing || kickboxing || muayThai ? entry.result
           : race || neutral ? 'DRAW' as CommunityMatchResult
           : racket ? (entry.team === racketWinner ? 'WIN' : 'LOSS') as CommunityMatchResult
           : entry.result,
