@@ -1388,12 +1388,12 @@
                             <h4>{{ teamFinalTitleKey(newRoundEventType) | t }}</h4>
                             <p>{{ teamFinalHintKey(newRoundEventType) | t }}</p>
                             <div class="round-basketball-score-inputs">
-                              <label><span>{{ 'communities.teamFinal.sideA' | t }}</span>
+                              <label><span>{{ teamFinalSideLabelKey(newRoundEventType, 'A') | t }}</span>
                                 <input type="number" min="0" [max]="teamFinalMaxScore(newRoundEventType)" step="1"
                                   [(ngModel)]="roundTeamScoreDraft.sideA">
                               </label>
                               <span class="round-basketball-divider" aria-hidden="true">:</span>
-                              <label><span>{{ 'communities.teamFinal.sideB' | t }}</span>
+                              <label><span>{{ teamFinalSideLabelKey(newRoundEventType, 'B') | t }}</span>
                                 <input type="number" min="0" [max]="teamFinalMaxScore(newRoundEventType)" step="1"
                                   [(ngModel)]="roundTeamScoreDraft.sideB">
                               </label>
@@ -1920,7 +1920,7 @@
                               </div>
                               <div class="round-basketball-scoreboard">
                                 <div class="round-basketball-side" [class.round-basketball-winner]="teamFinalWinner(round.teamScore) === 'A'">
-                                  <span>{{ 'communities.teamFinal.sideA' | t }}</span>
+                                  <span>{{ teamFinalSideLabelKey(round.eventType, 'A') | t }}</span>
                                   <strong>{{ round.teamScore?.sideA }}</strong>
                                   @for (player of racketSidePlayers(round, 'A'); track $index) {
                                     <small>{{ player.fullName || player.username }}</small>
@@ -1928,7 +1928,7 @@
                                 </div>
                                 <span class="round-basketball-vs" aria-hidden="true">:</span>
                                 <div class="round-basketball-side" [class.round-basketball-winner]="teamFinalWinner(round.teamScore) === 'B'">
-                                  <span>{{ 'communities.teamFinal.sideB' | t }}</span>
+                                  <span>{{ teamFinalSideLabelKey(round.eventType, 'B') | t }}</span>
                                   <strong>{{ round.teamScore?.sideB }}</strong>
                                   @for (player of racketSidePlayers(round, 'B'); track $index) {
                                     <small>{{ player.fullName || player.username }}</small>
