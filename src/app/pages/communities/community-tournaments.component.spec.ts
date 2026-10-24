@@ -166,7 +166,7 @@ describe('Community tournaments management', () => {
       component.teamGroupCountDraft = 4;
       await component.createTeamCompetition();
       expect(api.createTeamTournament).toHaveBeenCalledWith(7, 'Taça de amigos', 'Futebol',
-        5, 1, { winPoints: 3, drawPoints: 1, lossPoints: 0 },
+        null, 1, { winPoints: 3, drawPoints: 1, lossPoints: 0 },
         'GOAL_DIFFERENCE_FIRST', 'GROUP_KNOCKOUT', 4);
       expect(component.teamFormatDraft).toBe('LEAGUE');
       expect(Number(component.teamGroupCountDraft)).toBe(2);
