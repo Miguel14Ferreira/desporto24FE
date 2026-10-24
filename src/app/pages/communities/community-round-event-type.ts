@@ -26,7 +26,8 @@ export type CommunityEventType = 'RACE' | 'FREESTYLE' | 'TRACK' | 'JUMP' | 'THRO
     | 'BJJ_IBJJF_GI_SUBMISSION' | 'BJJ_IBJJF_GI_POINTS'
     | 'BOXING_WB_POINTS' | 'BOXING_WB_KO' | 'BOXING_WB_RSC'
     | 'WAKO_POINT_FIGHTING' | 'WAKO_LIGHT_CONTACT' | 'WAKO_KICK_LIGHT'
-    | 'WAKO_FULL_CONTACT' | 'WAKO_LOW_KICK' | 'WAKO_K1';
+    | 'WAKO_FULL_CONTACT' | 'WAKO_LOW_KICK' | 'WAKO_K1'
+    | 'IFMA_FULL_WP' | 'IFMA_FULL_KO' | 'IFMA_FULL_RSCS' | 'IFMA_FULL_RSCI';
 export interface CommunityEventOption { code: CommunityEventType; labelKey: string }
 const TYPES: Record<string, readonly CommunityEventOption[]> = {
   basquetebol: [{ code: 'BASKETBALL_FINAL', labelKey: 'communities.basketball.fiveVsFive' }],
@@ -63,6 +64,12 @@ const TYPES: Record<string, readonly CommunityEventOption[]> = {
     { code: 'FENCING_DE_15', labelKey: 'communities.teamFinal.fencingElimination' }
   ],
   xadrez: [{ code: 'CHESS_GAME', labelKey: 'communities.eventType.chess_game' }],
+  'muay thai': [
+    { code: 'IFMA_FULL_WP', labelKey: 'communities.muayThai.fullWp' },
+    { code: 'IFMA_FULL_KO', labelKey: 'communities.muayThai.fullKo' },
+    { code: 'IFMA_FULL_RSCS', labelKey: 'communities.muayThai.fullRscSafety' },
+    { code: 'IFMA_FULL_RSCI', labelKey: 'communities.muayThai.fullRscInjury' }
+  ],
   kickboxing: [
     { code: 'WAKO_POINT_FIGHTING', labelKey: 'communities.kickboxing.pointFighting' },
     { code: 'WAKO_LIGHT_CONTACT', labelKey: 'communities.kickboxing.lightContact' },
@@ -204,6 +211,9 @@ export function eventPresentationFormat(
   if (eventType === 'CHESS_GAME' && normalize(sport || '') === 'xadrez') return 'duel';
   if (eventType?.startsWith('JUDO_') && normalize(sport || '') === 'judo') return 'duel';
   if (eventType?.startsWith('KARATE_') && normalize(sport || '') === 'karate') return 'duel';
+  if ((eventType === 'IFMA_FULL_WP' || eventType === 'IFMA_FULL_KO'
+        || eventType === 'IFMA_FULL_RSCS' || eventType === 'IFMA_FULL_RSCI')
+      && normalize(sport || '') === 'muay thai') return 'duel';
   if (eventType?.startsWith('WAKO_') && normalize(sport || '') === 'kickboxing') return 'duel';
   if ((eventType === 'BOXING_WB_POINTS' || eventType === 'BOXING_WB_KO'
         || eventType === 'BOXING_WB_RSC') && normalize(sport || '') === 'boxe') return 'duel';
