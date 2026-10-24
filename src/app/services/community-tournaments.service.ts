@@ -41,7 +41,7 @@ export class CommunityTournamentsService {
 
   /** Team tournaments have their own draft, roster and match lifecycle. */
   createTeamTournament(communityId: number, name: string, sport: string,
-                       playersPerTeam: number, roundRobinLegs: 1 | 2 = 1,
+                       playersPerTeam: number | null, roundRobinLegs: 1 | 2 = 1,
                        rules: TournamentPointRules = { winPoints: 3, drawPoints: 1, lossPoints: 0 },
                        teamTieBreakPriority: TeamTieBreakPriority = 'GOAL_DIFFERENCE_FIRST',
                        format: 'LEAGUE' | 'KNOCKOUT' | 'GROUP_KNOCKOUT' = 'LEAGUE',
