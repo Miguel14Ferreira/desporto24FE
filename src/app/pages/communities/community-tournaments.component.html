@@ -169,7 +169,7 @@
               <span class="create-step-index" aria-hidden="true">02</span>
               <div>
                 <h5>Formato e participantes</h5>
-                <p>Escolhe o formato, o tamanho das equipas e como se vão disputar os jogos.</p>
+                <p>Escolhe o formato da competição. Vais criar equipas e convidar jogadores na etapa seguinte.</p>
               </div>
             </div>
           <fieldset class="t-points-rules">
@@ -203,10 +203,6 @@
                 Cada jogo tem de ter vencedor. Os vencedores avançam até à final.</p>
             }
           </fieldset>
-          <label for="new-team-size">Jogadores por equipa</label>
-          <input id="new-team-size" type="number" min="1" max="30" step="1"
-            [(ngModel)]="teamSizeDraft" [disabled]="busy" aria-describedby="team-size-hint">
-          <p id="team-size-hint" class="sport-choice-hint">De 1 a 30 jogadores por equipa. Podes criar até 32 equipas.</p>
           @if (teamFormatDraft === 'LEAGUE') {
           <label id="tournament-legs-label">Número de voltas</label>
           <div class="t-community-sports" role="group" aria-labelledby="tournament-legs-label">
@@ -294,7 +290,7 @@
         <button type="button" class="t-btn t-btn-primary"
           [disabled]="busy || (teamFormatDraft !== 'KNOCKOUT' && !validPointRules)
             || nameDraft.trim().length < 2 || !sportDraft
-            || (showTeamCreate && (!teamSizeDraft || teamSizeDraft < 1 || teamSizeDraft > 30))"
+"
           (click)="showTeamCreate ? createTeamCompetition() : create()">
           {{ showTeamCreate ? 'Criar e preparar equipas' : 'Confirmar liga individual' }}
         </button>
@@ -349,12 +345,16 @@
             @if (isTeamCompetition) {
               @if (selected.format === 'GROUP_KNOCKOUT') {
                 <p>Grupos + eliminatórias · {{ selected.groupCount }} grupos ·
-                  {{ selected.playersPerTeam }} jogadores por equipa</p>
+                  @if (selected.playersPerTeam != null) {
+                    · {{ selected.playersPerTeam }} jogadores por equipa
+                  } @else {
+                    · Plantéis flexíveis
+                  }</p>
                 <p>Apuram-se dois por grupo; o último critério de desempate é a ordem do sorteio.</p>
               } @else if (selected.format === 'KNOCKOUT') {
-                <p>Eliminatórias · {{ selected.playersPerTeam }} jogadores por equipa · Eliminação simples</p>
+                <p>Eliminatórias · {{ selected.playersPerTeam != null ? selected.playersPerTeam + ' jogadores por equipa' : 'Plantéis flexíveis' }} · Eliminação simples</p>
               } @else {
-                <p>Campeonato por equipas · {{ selected.playersPerTeam }} jogadores por equipa ·
+                <p>Campeonato por equipas · {{ selected.playersPerTeam != null ? selected.playersPerTeam + ' jogadores por equipa' : 'Plantéis flexíveis' }} ·
                   {{ (selected.roundRobinLegs ?? 1) === 2 ? 'Duas voltas (casa e fora)' : 'Uma volta' }}</p>
                 <p>Vitória {{ selected.winPoints }} · Empate {{ selected.drawPoints }} · Derrota {{ selected.lossPoints }} pontos</p>
                 <p>Desempate prioritário: {{ teamTieBreakLabel(selected.teamTieBreakPriority) }}</p>
@@ -429,12 +429,13 @@
               <div class="t-section-heading">
                 <div>
                   <h5>Equipas e plantéis</h5>
-                  <p>{{ teams.length }} equipas criadas · {{ readyTeamCount }} com o plantel completo</p>
+                  <p>{{ teams.length }} equipas criadas · {{ readyTeamCount }} prontas para competir</p>
                 </div>
               </div>
               <div class="guide-community-note" role="note">
                 <strong>{{ selected.status === 'DRAFT' ? 'Primeiro organizamos as equipas.' : 'Calendário publicado.' }}</strong>
                 <p>Todos os jogadores são membros reais da comunidade. Um membro só pode integrar uma equipa nesta competição.
+                  @if (selected.playersPerTeam == null) { Podes convidar jogadores livremente antes de iniciar, até 30 por equipa. }
                   {{ selected.status === 'DRAFT'
                     ? 'Quando todas as equipas estiverem completas, publica os confrontos.'
                     : (isCupFormat ? 'Regista os resultados e acompanha os apuramentos até à final.' : 'Regista os resultados nas jornadas e acompanha a tabela classificativa.') }}</p>
@@ -469,7 +470,7 @@
                       <p role="status">Já pertences à equipa {{ myTeam.name }} neste torneio.</p>
                     } @else if (selected.status !== 'DRAFT') {
                       <p role="status">O torneio já começou. Os plantéis estão fechados.</p>
-                    } @else if (invitedTeam.players.length >= invitedTeam.playersPerTeam) {
+                    } @else if (isTeamRosterFull(invitedTeam)) {
                       <p role="status">Esta equipa já está completa.</p>
                     } @else {
                       <p>O convite não te inscreve automaticamente. Confirma se queres entrar nesta equipa.</p>
@@ -489,7 +490,7 @@
                     <div class="team-roster-heading">
                       <div>
                         <h6>{{ team.name }}</h6>
-                        <span class="tournament-state">{{ team.players.length }} / {{ team.playersPerTeam }} jogadores</span>
+                        <span class="tournament-state">{{ team.players.length }}{{ team.playersPerTeam != null ? ' / ' + team.playersPerTeam : '' }} jogadores</span>
                       </div>
                       @if (canManageTeamRoster && team.players.length === 0) {
                         <button type="button" class="t-btn t-btn-danger-outline t-btn-small"
@@ -513,7 +514,7 @@
                         </div>
                       }
                     </div>
-                    @if (canManageTeamRoster && team.players.length < team.playersPerTeam) {
+                    @if (canManageTeamRoster && !isTeamRosterFull(team)) {
                       <div class="team-share-invite">
                         <strong>Convidar jogadores</strong>
                         <p>Envia o convite por WhatsApp ou copia o link. O jogador aceita o lugar na própria conta.</p>
@@ -574,7 +575,7 @@
                       <p class="field-validation" role="status">Cria pelo menos {{ isGroupKnockout ? (selected.groupCount ?? 2) * 2 : 2 }} equipas.</p>
                     } @else if (readyTeamCount !== teams.length) {
                       <p class="field-validation" role="status">
-                        Completa os plantéis das {{ teams.length - readyTeamCount }} equipas em falta.
+                        {{ selected.playersPerTeam == null ? 'Adiciona pelo menos um jogador a cada uma das ' : 'Completa os plantéis das ' }}{{ teams.length - readyTeamCount }} equipas em falta.
                       </p>
                     }
                   </div>

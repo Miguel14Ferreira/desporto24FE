@@ -107,7 +107,7 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
     entryType: 'TEAM', playersPerTeam: 2, name: 'Torneio da comunidade',
     roundRobinLegs, format
   });
-  type MockTeam = { id: number; name: string; playersPerTeam: number; createdAt: string;
+  type MockTeam = { id: number; name: string; playersPerTeam: number | null; createdAt: string;
     players: { profileId: number; username: string; displayName: string }[] };
   const teams: MockTeam[] = mode === 'teams-view' || mode === 'teams-schedule' ? [{
     id: 40, name: 'Azuis', playersPerTeam: 2, createdAt: '2026-10-17T12:00:00Z',
@@ -347,7 +347,7 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
       }
       if (method === 'POST') {
         const body = req.postDataJSON() as {
-          name: string; sport: string; entryType?: 'TEAM'; playersPerTeam?: number;
+          name: string; sport: string; entryType?: 'TEAM'; playersPerTeam?: number | null;
           roundRobinLegs?: 1 | 2; winPoints?: number; drawPoints?: number; lossPoints?: number;
           teamTieBreakPriority?: 'GOAL_DIFFERENCE_FIRST' | 'GOALS_SCORED_FIRST' | 'WINS_FIRST';
           format?: 'LEAGUE' | 'KNOCKOUT';
@@ -368,7 +368,9 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
 
     if (path === '/api/communities/7/tournaments/11/teams/schedule' && method === 'POST') {
       if (publishedTeamSchedule || teams.length < 2
-          || teams.some(t => t.players.length !== t.playersPerTeam)) {
+          || teams.some(t => t.playersPerTeam == null
+            ? t.players.length < 1 || t.players.length > 30
+            : t.players.length !== t.playersPerTeam)) {
         return send({ message: 'Plantéis incompletos ou calendário existente' }, 409);
       }
       publishedTeamSchedule = true;
@@ -466,7 +468,7 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
           return send({ message: 'Equipa duplicada' }, 409);
         const created: MockTeam = {
           id: 40 + teams.length, name: trimmed,
-          playersPerTeam: tournaments[0]?.playersPerTeam || 2,
+          playersPerTeam: tournaments[0]?.playersPerTeam ?? null,
           createdAt: '2026-10-17T12:00:00Z', players: []
         };
         teams.push(created);
@@ -489,7 +491,7 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
         const body = req.postDataJSON() as { profileId: number };
         const member = community.members.find(m => m.profileId === body.profileId);
         if (!member || teams.some(x => x.players.some(p => p.profileId === body.profileId))
-            || t.players.length >= t.playersPerTeam)
+            || t.players.length >= (t.playersPerTeam ?? 30))
           return send({ message: 'Jogador indisponível' }, 409);
         t.players.push({ profileId: member.profileId, username: member.username,
           displayName: member.fullName });
@@ -1380,7 +1382,6 @@ test('organizador define a pontuação inicial de um torneio por equipas', async
   await expect(rules.getByRole('spinbutton', { name: 'Derrota' })).toHaveValue('0');
   await rules.getByRole('spinbutton', { name: 'Vitória' }).fill('-1');
   await page.getByLabel('Nome do torneio').fill('Liga pontos');
-  await page.getByLabel('Jogadores por equipa').fill('2');
   await expect(page.getByRole('button', { name: 'Criar e preparar equipas' })).toBeDisabled();
   await rules.getByRole('spinbutton', { name: 'Vitória' }).fill('2');
   await rules.getByRole('spinbutton', { name: 'Empate' }).fill('0');
@@ -1420,7 +1421,6 @@ test('critério de desempate fica guardado na configuração inicial por equipas
   await wins.click();
   await expect(wins).toHaveAttribute('aria-pressed', 'true');
   await page.getByLabel('Nome do torneio').fill('Liga personalizada');
-  await page.getByLabel('Jogadores por equipa').fill('2');
   await page.getByRole('button', { name: 'Criar e preparar equipas' }).click();
   await expect(page.locator('.tournament-heading'))
     .toContainText('Desempate prioritário: Mais vitórias');
@@ -1434,15 +1434,14 @@ test('organizador prepara equipas reais e distribui membros sem criar jornadas i
 
   await expect(page.getByRole('heading', { name: 'Como querem competir?' })).toBeVisible();
   await page.getByRole('button', { name: 'Preparar torneio por equipas' }).click();
-  await page.getByLabel('Nome do torneio').fill('Torneio CNG 2x2');
-  await page.getByLabel('Jogadores por equipa').fill('2');
+  await page.getByLabel('Nome do torneio').fill('Torneio CNG');
   await page.getByRole('button', { name: 'Criar e preparar equipas' }).click();
 
   await expect(page.getByRole('heading', { name: 'Equipas e plantéis' })).toBeVisible();
-  await expect(page.locator('.tournament-heading h4')).toHaveText('Torneio CNG 2x2');
+  await expect(page.locator('.tournament-heading h4')).toHaveText('Torneio CNG');
   await expect(page.getByRole('table', { name: 'Classificação do torneio' })).toHaveCount(0);
   expect(fixture.tournaments[0].entryType).toBe('TEAM');
-  expect(fixture.tournaments[0].playersPerTeam).toBe(2);
+  expect(fixture.tournaments[0].playersPerTeam).toBeNull();
 
   await page.getByLabel('Nome da nova equipa').fill('Azuis');
   await page.getByRole('button', { name: 'Adicionar equipa' }).click();
@@ -1538,7 +1537,6 @@ test('organizador escolhe taça no início sem regras de liga', async ({ page })
   await expect(knockout).toHaveAttribute('aria-pressed', 'true');
   await expect(page.getByRole('group', { name: 'Número de voltas' })).toHaveCount(0);
   await page.getByLabel('Nome do torneio').fill('Taça da comunidade');
-  await page.getByLabel('Jogadores por equipa').fill('2');
   await page.getByRole('button', { name: 'Criar e preparar equipas' }).click();
   await expect(page.locator('.tournament-heading')).toContainText('Eliminatórias');
   expect(fixture.tournaments[0].format).toBe('KNOCKOUT');
@@ -1576,7 +1574,6 @@ test('o organizador escolhe duas voltas na criação do torneio', async ({ page 
   await choice.getByRole('button', { name: 'Duas voltas (casa e fora)' }).click();
   await expect(choice.getByRole('button', { name: 'Duas voltas (casa e fora)' })).toHaveAttribute('aria-pressed', 'true');
   await page.getByLabel('Nome do torneio').fill('Liga de Outono');
-  await page.getByLabel('Jogadores por equipa').fill('2');
   await page.getByRole('button', { name: 'Criar e preparar equipas' }).click();
   expect(fixture.tournaments[0].roundRobinLegs).toBe(2);
   await expect(page.locator('.tournament-heading')).toContainText('Duas voltas (casa e fora)');

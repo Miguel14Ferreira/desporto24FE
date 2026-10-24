@@ -166,7 +166,7 @@ describe('Community tournaments management', () => {
       component.teamGroupCountDraft = 4;
       await component.createTeamCompetition();
       expect(api.createTeamTournament).toHaveBeenCalledWith(7, 'Taça de amigos', 'Futebol',
-        5, 1, { winPoints: 3, drawPoints: 1, lossPoints: 0 },
+        null, 1, { winPoints: 3, drawPoints: 1, lossPoints: 0 },
         'GOAL_DIFFERENCE_FIRST', 'GROUP_KNOCKOUT', 4);
       expect(component.teamFormatDraft).toBe('LEAGUE');
       expect(Number(component.teamGroupCountDraft)).toBe(2);
@@ -196,13 +196,12 @@ describe('Community tournaments management', () => {
       expect(component.teamMatchStageLabel(game)).toBe('Jornada 2');
     });
 
-    it('creates a team draft with independent sport and squad size', async () => {
+    it('creates a team draft without requiring a roster size', async () => {
       api.createTeamTournament.and.returnValue(of(teamDraft));
       component.startTeamCreation();
       component.nameDraft = ' Torneio CNG 5x5 ';
-      component.teamSizeDraft = 5;
       await component.createTeamCompetition();
-      expect(api.createTeamTournament).toHaveBeenCalledWith(7, 'Torneio CNG 5x5', 'Futebol', 5, 1, { winPoints: 3, drawPoints: 1, lossPoints: 0 }, 'GOAL_DIFFERENCE_FIRST', 'LEAGUE');
+      expect(api.createTeamTournament).toHaveBeenCalledWith(7, 'Torneio CNG 5x5', 'Futebol', null, 1, { winPoints: 3, drawPoints: 1, lossPoints: 0 }, 'GOAL_DIFFERENCE_FIRST', 'LEAGUE');
       expect(api.create).not.toHaveBeenCalled();
       expect(component.selected?.entryType).toBe('TEAM');
       expect(api.teams).toHaveBeenCalledWith(7, 19);
@@ -217,7 +216,7 @@ describe('Community tournaments management', () => {
       component.nameDraft = 'Liga casa e fora';
       component.roundRobinLegsDraft = 2;
       await component.createTeamCompetition();
-      expect(api.createTeamTournament).toHaveBeenCalledWith(7, 'Liga casa e fora', 'Futebol', 5, 2, { winPoints: 3, drawPoints: 1, lossPoints: 0 }, 'GOAL_DIFFERENCE_FIRST', 'LEAGUE');
+      expect(api.createTeamTournament).toHaveBeenCalledWith(7, 'Liga casa e fora', 'Futebol', null, 2, { winPoints: 3, drawPoints: 1, lossPoints: 0 }, 'GOAL_DIFFERENCE_FIRST', 'LEAGUE');
       expect(component.selected?.roundRobinLegs).toBe(2);
       expect(Number(component.roundRobinLegsDraft)).toBe(1);
       expect(api.create).not.toHaveBeenCalled();
@@ -234,7 +233,7 @@ describe('Community tournaments management', () => {
       component.lossPointsDraft = 0;
       await component.createTeamCompetition();
       expect(api.createTeamTournament).toHaveBeenCalledWith(
-        7, 'Torneio pontos', 'Futebol', 5, 1,
+        7, 'Torneio pontos', 'Futebol', null, 1,
         { winPoints: 2, drawPoints: 0, lossPoints: 0 }, 'GOAL_DIFFERENCE_FIRST', 'LEAGUE');
       expect(component.selected?.winPoints).toBe(2);
       expect(component.winPointsDraft).toBe(3);
@@ -253,7 +252,7 @@ describe('Community tournaments management', () => {
       component.teamTieBreakPriorityDraft = 'WINS_FIRST';
       await component.createTeamCompetition();
       expect(api.createTeamTournament).toHaveBeenCalledWith(
-        7, 'Liga de vitórias', 'Futebol', 5, 1,
+        7, 'Liga de vitórias', 'Futebol', null, 1,
         { winPoints: 3, drawPoints: 1, lossPoints: 0 }, 'WINS_FIRST', 'LEAGUE');
       expect(component.selected?.teamTieBreakPriority).toBe('WINS_FIRST');
       expect(component.teamTieBreakLabel(component.selected?.teamTieBreakPriority)).toBe('Mais vitórias');
@@ -280,7 +279,7 @@ describe('Community tournaments management', () => {
       component.winPointsDraft = -1;
       await component.createTeamCompetition();
       expect(api.createTeamTournament).toHaveBeenCalledWith(
-        7, 'Taça entre amigos', 'Futebol', 5, 2,
+        7, 'Taça entre amigos', 'Futebol', null, 2,
         { winPoints: -1, drawPoints: 1, lossPoints: 0 }, 'WINS_FIRST', 'KNOCKOUT');
       expect(component.selected?.format).toBe('KNOCKOUT');
       expect(component.teamFormatDraft).toBe('LEAGUE');
@@ -328,16 +327,24 @@ describe('Community tournaments management', () => {
       expect(component.canCompleteTeam).toBeTrue();
     });
 
-    it('validates team size before making a request', async () => {
-      component.startTeamCreation();
-      component.nameDraft = 'Liga por equipas';
-      component.teamSizeDraft = 31;
-      await component.createTeamCompetition();
-      expect(component.error).toContain('1 e 30');
-      expect(api.createTeamTournament).not.toHaveBeenCalled();
-      component.teamSizeDraft = 2.5;
-      await component.createTeamCompetition();
-      expect(api.createTeamTournament).not.toHaveBeenCalled();
+    it('supports flexible rosters and preserves legacy fixed sizes', () => {
+      const flexible = { ...teamDraft, playersPerTeam: null };
+      component.selectTournament(flexible);
+      const playerOne = { profileId: 2, username: 'ana', displayName: 'Ana' };
+      const playerTwo = { profileId: 3, username: 'bruno', displayName: 'Bruno' };
+      component.teams = [
+        { ...team, playersPerTeam: null, players: [playerOne] },
+        { ...team, id: 41, playersPerTeam: null, players: [playerOne, playerTwo] }
+      ];
+      expect(component.readyTeamCount).toBe(2);
+      expect(component.canPublishTeamSchedule).toBeTrue();
+      expect(component.isTeamRosterFull(component.teams[0])).toBeFalse();
+      component.teams[1].players = [];
+      expect(component.readyTeamCount).toBe(1);
+      expect(component.canPublishTeamSchedule).toBeFalse();
+      // Existing fixed-size tournaments retain the exact squad requirement.
+      component.teams = [{ ...team, players: [playerOne] }, { ...team, id: 41, players: [playerTwo] }];
+      expect(component.canPublishTeamSchedule).toBeFalse();
     });
 
     it('loads only teams for team tournaments, without individual standings or fixtures', () => {

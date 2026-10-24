@@ -38,7 +38,6 @@ export class CommunityTournamentsComponent implements OnChanges {
   showGuide = false;
   showIndividualCreate = false;
   showTeamCreate = false;
-  teamSizeDraft = 5;
   roundRobinLegsDraft: 1 | 2 = 1;
   teamFormatDraft: 'LEAGUE' | 'KNOCKOUT' | 'GROUP_KNOCKOUT' = 'LEAGUE';
   teamGroupCountDraft: 2 | 4 = 2;
@@ -321,7 +320,7 @@ export class CommunityTournamentsComponent implements OnChanges {
   }
 
   async copyTeamInvite(team: TournamentTeam): Promise<void> {
-    if (!this.canManageTeamRoster || team.players.length >= team.playersPerTeam) return;
+    if (!this.canManageTeamRoster || this.isTeamRosterFull(team)) return;
     try {
       await navigator.clipboard.writeText(this.teamInviteUrl(team));
       this.inviteCopyFeedback[team.id] = 'Link copiado! Partilha-o com os jogadores.';
@@ -335,7 +334,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     const team = this.invitedTeam;
     if (!team || !this.selected || !this.isMember || this.busy || this.detailsLoading
         || this.selected.status !== 'DRAFT' || this.myTeam
-        || team.players.length >= team.playersPerTeam) return;
+        || this.isTeamRosterFull(team)) return;
     await this.mutate(
       this.api.acceptTeamInvite(this.community.id, this.selected.id, team.id),
       'Convite aceite! Já fazes parte da equipa ' + team.name + '.',
@@ -404,8 +403,20 @@ export class CommunityTournamentsComponent implements OnChanges {
     return this.canManage && this.isTeamCompetition && this.selected?.status === 'DRAFT' && !this.busy;
   }
 
+  // Existing tournaments retain their exact roster size. New tournaments with
+  // no preset size can start once each team has at least one member.
+  isTeamRosterReady(team: TournamentTeam): boolean {
+    return team.playersPerTeam == null
+      ? team.players.length >= 1 && team.players.length <= 30
+      : team.players.length === team.playersPerTeam;
+  }
+
+  isTeamRosterFull(team: TournamentTeam): boolean {
+    return team.players.length >= (team.playersPerTeam ?? 30);
+  }
+
   get readyTeamCount(): number {
-    return this.teams.filter(t => t.players.length === t.playersPerTeam).length;
+    return this.teams.filter(team => this.isTeamRosterReady(team)).length;
   }
 
   get canPublishTeamSchedule(): boolean {
@@ -899,7 +910,6 @@ export class CommunityTournamentsComponent implements OnChanges {
 
   async createTeamCompetition(): Promise<void> {
     const name = this.nameDraft.trim();
-    const size = this.teamSizeDraft;
     if (!this.canManage || this.community.teamTournamentsEnabled === false || !this.showTeamCreate || this.busy) return;
     if (name.length < 2 || name.length > 120) {
       this.showError('Indica um nome entre 2 e 120 caracteres.');
@@ -908,10 +918,6 @@ export class CommunityTournamentsComponent implements OnChanges {
     if (!this.sportDraft || !(SPORTS_CATALOG.includes(this.sportDraft)
         || this.communitySportOptions.includes(this.sportDraft))) {
       this.showError('Escolhe uma modalidade válida para o torneio.');
-      return;
-    }
-    if (!Number.isInteger(size) || size < 1 || size > 30) {
-      this.showError('Indica entre 1 e 30 jogadores por equipa.');
       return;
     }
     if (this.teamFormatDraft === 'LEAGUE'
@@ -929,10 +935,10 @@ export class CommunityTournamentsComponent implements OnChanges {
       return;
     }
     const createRequest = this.teamFormatDraft === 'GROUP_KNOCKOUT'
-      ? this.api.createTeamTournament(this.community.id, name, this.sportDraft, size,
+      ? this.api.createTeamTournament(this.community.id, name, this.sportDraft, null,
           this.roundRobinLegsDraft, this.pointRulesDraft, this.teamTieBreakPriorityDraft,
           this.teamFormatDraft, this.teamGroupCountDraft)
-      : this.api.createTeamTournament(this.community.id, name, this.sportDraft, size,
+      : this.api.createTeamTournament(this.community.id, name, this.sportDraft, null,
           this.roundRobinLegsDraft, this.pointRulesDraft, this.teamTieBreakPriorityDraft,
           this.teamFormatDraft);
     await this.mutate(createRequest,
@@ -968,7 +974,7 @@ export class CommunityTournamentsComponent implements OnChanges {
   async assignTeamPlayer(team: TournamentTeam): Promise<void> {
     const id = this.teamPlayerDraft[team.id];
     if (!this.canManageTeamRoster || !this.selected || id == null || !Number.isInteger(id)
-        || team.players.length >= team.playersPerTeam
+        || this.isTeamRosterFull(team)
         || !this.availableTeamMembers.some(member => member.profileId === id)) return;
     await this.mutate(this.api.addTeamPlayer(this.community.id, this.selected.id, team.id, id),
       'Jogador adicionado à equipa.', () => this.loadTeams());
