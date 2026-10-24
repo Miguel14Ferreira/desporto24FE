@@ -195,22 +195,35 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     }));
     let connectedOnce = false;
     let disconnectedAfterAuth = false;
+    let sawConnectionSignal = false;
+    let failedBeforeFirstAuth = false;
     this.subscriptions.add(this.realtime.connected$.subscribe(connected => {
       this.realtimeConnected = connected;
       if (!connected) {
         if (connectedOnce) disconnectedAfterAuth = true;
+        else if (sawConnectionSignal) {
+          // The first false is the initial BehaviorSubject state, not a
+          // transport failure. Another false before AUTH means the socket
+          // failed and messages may have arrived after the initial REST GET.
+          failedBeforeFirstAuth = true;
+        }
+        sawConnectionSignal = true;
         return;
       }
       this.everConnected = true;
-      // Initial AUTH is followed by loadInbox below. After a real outage,
-      // refresh membership + summaries BEFORE replacing the selected history.
-      // A second AUTH notification without a disconnect is not a new outage.
-      if (connectedOnce && disconnectedAfterAuth && this.isReceiptSessionCurrent()) {
+      // Reconcile only after a genuine socket outage. This includes a failure
+      // before the first successful AUTH: the initial history GET may be stale.
+      // Repeated AUTH without a disconnect must never cause another GET.
+      if (((connectedOnce && disconnectedAfterAuth)
+          || (!connectedOnce && failedBeforeFirstAuth))
+          && this.isReceiptSessionCurrent()) {
         this.loadInbox(true);
         this.refreshPeerReadReceipt(true);
       }
       connectedOnce = true;
+      sawConnectionSignal = true;
       disconnectedAfterAuth = false;
+      failedBeforeFirstAuth = false;
     }));
 
     this.realtime.connect();

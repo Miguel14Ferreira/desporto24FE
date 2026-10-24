@@ -373,6 +373,45 @@ describe('Unified Jynlo message center', () => {
     }
   });
 
+  it('recovers messages received during an outage before the first socket AUTH', () => {
+    connected.next(false);
+    const token = 'eyJhbGciOiJub25lIn0.'
+      + btoa(JSON.stringify({sub:'ana',exp:4102444800})).replace(/=+$/, '')
+      + '.fixture';
+    spyOn(localStorage,'getItem').and.callFake(key => key === 't' ? token : null);
+    friends.friends.and.returnValues(
+      of([{username:'bea',nickname:'Bea'}] as any),
+      of([{username:'bea',nickname:'Bea'}, {username:'carla',nickname:'Carla'}] as any));
+    direct.recentHistory.and.returnValues(
+      of({content:[{id:41,username1:'bea',username2:'ana',text:'Antes',
+        date:'2026-10-23T09:00:00Z',dataDisplay:null}],last:true} as any),
+      of({content:[{id:42,username1:'bea',username2:'ana',text:'Enquanto offline',
+        date:'2026-10-23T10:00:00Z',dataDisplay:null},
+        {id:41,username1:'bea',username2:'ana',text:'Antes',
+        date:'2026-10-23T09:00:00Z',dataDisplay:null}],last:true} as any));
+    component.ngOnInit();
+    try {
+      component.selectConversation(component.conversations.find(c => c.key === 'direct:bea')!);
+      expect(component.messages.map(m => m.id)).toEqual([41]);
+      expect(friends.friends).toHaveBeenCalledTimes(1);
+      // Browser fails to authenticate its first socket. The REST snapshot
+      // already completed, so first successful AUTH must catch up the gap.
+      connected.next(false);
+      connected.next(true);
+      expect(friends.friends).toHaveBeenCalledTimes(2);
+      expect(component.conversations.map(c => c.key)).toContain('direct:carla');
+      expect(component.messages.map(m => m.id)).toEqual([41, 42]);
+      expect(direct.recentHistory).toHaveBeenCalledTimes(2);
+      connected.next(true);
+      expect(friends.friends).toHaveBeenCalledTimes(2);
+      expect(direct.recentHistory).toHaveBeenCalledTimes(2);
+      expect(direct.send).not.toHaveBeenCalled();
+    } finally {
+      component.ngOnDestroy();
+      connected.next(false);
+    }
+  });
+
   it('keeps authorized conversations on a transient membership lookup failure', () => {
     component.conversations=[item('direct','bea'), item('community',7)];
     friends.friends.and.returnValue(throwError(() => new Error('temporary outage')));
