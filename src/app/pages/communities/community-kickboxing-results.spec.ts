@@ -1,4 +1,4 @@
-import { eventOptionsForSport, eventPresentationFormat, isNeutralEvent }
+import { CommunityEventType, eventOptionsForSport, eventPresentationFormat, isNeutralEvent }
   from './community-round-event-type';
 import { isKickboxingEvent, isKickboxingPointFighting, kickboxingResultError }
   from './community-kickboxing-results';
@@ -7,7 +7,7 @@ import { CommunityRoundEntryDraft } from '../model/community-group';
 describe('WAKO Kickboxing specific contest decisions', () => {
   const e = (username:string, team:string, result:'WIN'|'LOSS'|'DRAW', score:number|null = null) =>
     ({username,team,result,performanceValue:score,waveScore1:null,waveScore2:null} as CommunityRoundEntryDraft);
-  const types=['WAKO_POINT_FIGHTING','WAKO_LIGHT_CONTACT','WAKO_KICK_LIGHT',
+  const types: CommunityEventType[] = ['WAKO_POINT_FIGHTING','WAKO_LIGHT_CONTACT','WAKO_KICK_LIGHT',
     'WAKO_FULL_CONTACT','WAKO_LOW_KICK','WAKO_K1'];
   it('selects precisely the six WAKO disciplines for existing Kickboxing only', () => {
     expect(eventOptionsForSport('Kickboxing').map(x=>x.code)).toEqual(types);
