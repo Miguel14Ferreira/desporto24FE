@@ -17,6 +17,9 @@ export function canEstimateHistoricalLeagueStandings(sport: string | null | unde
 
 export interface HistoricalTournamentStanding {
   name: string;
+  /** Display-only competition rank by points, never an official classification. */
+  rank: number;
+  tiedOnPoints: boolean;
   played: number;
   won: number;
   drawn: number;
@@ -42,7 +45,8 @@ export function historicalTournamentStandings(
     let row = byName.get(key);
     if (!row) {
       row = {
-        name: name.trim(), played: 0, won: 0, drawn: 0, lost: 0,
+        name: name.trim(), rank: 0, tiedOnPoints: false,
+        played: 0, won: 0, drawn: 0, lost: 0,
         goalsFor: 0, goalsAgainst: 0, difference: 0, points: 0
       };
       byName.set(key, row);
@@ -64,7 +68,20 @@ export function historicalTournamentStandings(
     }
   }
   for (const row of byName.values()) row.difference = row.goalsFor - row.goalsAgainst;
-  return [...byName.values()].sort((a, b) =>
-    b.points - a.points || b.difference - a.difference || b.goalsFor - a.goalsFor
-    || b.won - a.won || a.name.localeCompare(b.name, 'pt'));
+
+  // The imported file rarely contains the original league's tie-break rules.
+  // Never rank equal-point entrants by guessed goal/score difference, wins,
+  // alphabetic order or other unofficial criteria. Names are sorted only for
+  // stable display; everybody on equal points shares their provisional rank.
+  const ordered = [...byName.values()].sort((a, b) =>
+    b.points - a.points || a.name.localeCompare(b.name, 'pt'));
+  let rank = 0;
+  ordered.forEach((row, index) => {
+    if (index === 0 || ordered[index - 1].points !== row.points) rank = index + 1;
+    row.rank = rank;
+    row.tiedOnPoints =
+      (index > 0 && ordered[index - 1].points === row.points)
+      || (index + 1 < ordered.length && ordered[index + 1].points === row.points);
+  });
+  return ordered;
 }
