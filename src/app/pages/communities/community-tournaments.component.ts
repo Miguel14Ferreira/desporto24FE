@@ -4,7 +4,7 @@ import { CommunityGroup } from '../model/community-group';
 import {
   CommunityTournament, TournamentPointRules, TeamTieBreakPriority, TournamentMatch, TournamentParticipant, TournamentStandingRow,
   TournamentStandings, TournamentTeam, TournamentTeamMatch, TournamentTeamStandings, TournamentTeamGroups,
-  TournamentRaceOverview, TournamentRaceStanding
+  TournamentRaceOverview, TournamentRaceStanding, TournamentRaceEntry
 } from '../model/community-tournament';
 import { CommunityTournamentsService } from '../../services/community-tournaments.service';
 import { AuthenticationService } from '../../services/authethication.service';
@@ -13,6 +13,7 @@ import { formatForSport } from './community-round-sport';
 import { tournamentClassificationProfile } from './community-tournament-classification';
 import { SPORTS_CATALOG } from '../../shared/sports-catalog';
 import { buildTournamentTeamInviteUrl, teamInvitationWhatsAppUrl } from './community-team-invite';
+import { formatKartingDuration, kartingRaceAward, orderedKartingRaceEntries } from './community-karting-race-display';
 
 @Component({
   selector: 'app-community-tournaments',
@@ -218,6 +219,18 @@ export class CommunityTournamentsComponent implements OnChanges {
 
   get hasKartingCompetitions(): boolean {
     return this.tournaments.some(tournament => tournament.scoringMode === 'RACE_POINTS');
+  }
+
+  orderedKartingRaceEntries(entries: readonly TournamentRaceEntry[]): TournamentRaceEntry[] {
+    return orderedKartingRaceEntries(entries);
+  }
+
+  formatKartingDuration(seconds: number | null | undefined): string {
+    return formatKartingDuration(seconds);
+  }
+
+  kartingRaceAward(entry: TournamentRaceEntry): number {
+    return kartingRaceAward(entry, this.raceOverview?.pointsByPlace ?? []);
   }
 
   get isSportFormatSupported(): boolean {
