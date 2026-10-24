@@ -13,6 +13,10 @@ export class SocialStoriesService {
     return this.http.get<SocialStory[]>(this.url);
   }
 
+  mine(): Observable<SocialStory[]> {
+    return this.http.get<SocialStory[]>(this.url + '/mine');
+  }
+
   get(id: number): Observable<SocialStory> {
     return this.http.get<SocialStory>(this.url + '/' + id);
   }

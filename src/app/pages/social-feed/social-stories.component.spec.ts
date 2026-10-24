@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { of } from 'rxjs';
+import { NEVER, of } from 'rxjs';
 import { SocialStoriesComponent } from './social-stories.component';
 import { SocialStoriesService } from '../../services/social-stories.service';
 import { CommunityGroupsService } from '../../services/community-groups.service';
@@ -21,8 +21,9 @@ describe('SocialStoriesComponent', () => {
   };
 
   beforeEach(async () => {
-    api = jasmine.createSpyObj<SocialStoriesService>('SocialStoriesService', ['feed', 'get', 'publish', 'delete']);
+    api = jasmine.createSpyObj<SocialStoriesService>('SocialStoriesService', ['feed', 'mine', 'get', 'publish', 'delete']);
     api.feed.and.returnValue(of([picture]));
+    api.mine.and.returnValue(of([picture]));
     communities = jasmine.createSpyObj<CommunityGroupsService>('CommunityGroupsService', ['mine']);
     communities.mine.and.returnValue(of([
       { id: 3, name: 'CNG', visibility: 'PUBLIC', myRole: 'ADMIN' },
@@ -80,8 +81,28 @@ describe('SocialStoriesComponent', () => {
     }
   }));
 
+  it('does not leave the loading indicator stuck when the API times out', fakeAsync(() => {
+    api.feed.and.returnValue(NEVER);
+    fixture.detectChanges();
+    tick(10001);
+    fixture.detectChanges();
+    expect(component.loading).toBeFalse();
+    expect(component.error).toBeTruthy();
+    expect(component.storyGroups).toHaveSize(1); // Author-owned fallback
+    expect(component.mineEntries).toHaveSize(1);
+  }));
+
+  it('shows an owned active story when discovery returns an empty result', fakeAsync(() => {
+    api.feed.and.returnValue(of([]));
+    fixture.detectChanges();
+    tick();
+    expect(component.mineEntries).toHaveSize(1);
+    expect(component.storyGroups).toHaveSize(1);
+  }));
+
   it('excludes expired stories from the visual rail', fakeAsync(() => {
     api.feed.and.returnValue(of([{...picture, expiresAt: new Date(Date.now() - 1000).toISOString()}]));
+    api.mine.and.returnValue(of([]));
     fixture.detectChanges();
     tick();
     expect(component.storyGroups).toHaveSize(0);
