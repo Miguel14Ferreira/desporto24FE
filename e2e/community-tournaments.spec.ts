@@ -1372,6 +1372,7 @@ test('organizador remove torneio experimental sem resultados depois de confirmar
   expect(fixture.tournaments).toHaveLength(0);
 });
 
+// Browser regression for Concept One creation: no production API requests.
 test('formulário apresenta formatos acessíveis e avisos sem impor regras de outros desportos', async ({ page }) => {
   await mockCommunityApi(page, 'OWNER', 'teams', 'Futebol');
   await page.goto('/menu/communities/7?tab=tournaments');
