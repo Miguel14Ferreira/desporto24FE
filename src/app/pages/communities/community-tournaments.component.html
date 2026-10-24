@@ -373,6 +373,9 @@
           [attr.aria-pressed]="selected?.id === tournament.id"
           (click)="selectTournament(tournament)">
           <strong>{{ tournament.name }}</strong>
+          @if (tournament.historicalArchiveId) {
+            <small class="historical-tournament-badge">{{ 'communities.matches.tournamentHistoricalBadge' | t }}</small>
+          }
           <small>{{ tournament.sport || 'Sem modalidade definida' }} ·
               {{ tournament.entryType === 'TEAM' ? 'Por equipas' : 'Individual' }} ·
               {{ tournament.entryType === 'TEAM' && tournament.status === 'DRAFT'
@@ -483,6 +486,108 @@
           </div>
         </header>
 
+        @if (selected.historicalArchiveId) {
+          <section class="t-section historical-tournament-details"
+              [attr.aria-label]="'communities.matches.tournamentHistoricalBadge' | t">
+            <div class="t-section-heading">
+              <div>
+                <h5>{{ 'communities.matches.tournamentHistoricalBadge' | t }}</h5>
+                <p>{{ 'communities.matches.tournamentReadOnlyNote' | t }}</p>
+              </div>
+              <span class="tournament-state">{{ selected.format === 'LEAGUE'
+                ? ('communities.matches.tournamentLeague' | t)
+                : ('communities.matches.tournamentKnockout' | t) }}</span>
+            </div>
+            @if (detailsLoading) {
+              <p class="t-muted" role="status">{{ 'communities.archive.loading' | t }}</p>
+            } @else if (historicalArchive; as archive) {
+              <p class="t-muted">{{ archive.rows.length }} {{ 'communities.matches.matchesCount' | t }}
+                · {{ archive.sourceFilename }}</p>
+              @if (selected.format === 'LEAGUE') {
+                <section class="t-section" [attr.aria-label]="'communities.tournaments.classificationTitle' | t">
+                  <div class="t-section-heading">
+                    <div>
+                      <h5>{{ 'communities.tournaments.classificationTitle' | t }}</h5>
+                      <p>{{ 'communities.matches.tournamentEstimatedStandings' | t }}</p>
+                    </div>
+                  </div>
+                  <div class="standings-scroll">
+                    <table class="standings-table">
+                      <thead><tr>
+                        <th scope="col">#</th>
+                        <th scope="col">{{ 'communities.matches.participant' | t }}</th>
+                        <th scope="col">J</th><th scope="col">V</th>
+                        <th scope="col">E</th><th scope="col">D</th>
+                        <th scope="col">GM</th><th scope="col">GS</th><th scope="col">DG</th>
+                        <th scope="col">Pts</th>
+                      </tr></thead>
+                      <tbody>
+                        @for (row of historicalLeagueTable; track row.name; let position = $index) {
+                          <tr>
+                            <td>{{ position + 1 }}</td>
+                            <th scope="row">{{ row.name }}</th>
+                            <td>{{ row.played }}</td><td>{{ row.won }}</td>
+                            <td>{{ row.drawn }}</td><td>{{ row.lost }}</td>
+                            <td>{{ row.goalsFor }}</td><td>{{ row.goalsAgainst }}</td>
+                            <td>{{ row.difference }}</td><td class="points-cell">{{ row.points }}</td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+              } @else {
+                <p class="t-muted">{{ 'communities.matches.knockoutNoTable' | t }}</p>
+              }
+              <section class="t-section" [attr.aria-label]="'communities.matches.archivesTitle' | t">
+                <div class="t-section-heading">
+                  <div>
+                    <h5>{{ 'communities.matches.archivesTitle' | t }}</h5>
+                    <p>{{ 'communities.matches.tournamentFixtureNote' | t }}</p>
+                  </div>
+                </div>
+                <div class="standings-scroll">
+                  <table class="standings-table">
+                    <thead><tr>
+                      <th scope="col">{{ 'communities.matches.round' | t }}</th>
+                      <th scope="col">{{ 'communities.matches.date' | t }}</th>
+                      <th scope="col">{{ 'communities.matches.home' | t }}</th>
+                      <th scope="col">{{ 'communities.matches.score' | t }}</th>
+                      <th scope="col">{{ 'communities.matches.away' | t }}</th>
+                      <th scope="col">{{ 'communities.matches.review' | t }}</th>
+                    </tr></thead>
+                    <tbody>
+                      @for (match of archive.rows.slice(historicalArchivePage * 50, (historicalArchivePage + 1) * 50); track match.sourceRow) {
+                        <tr>
+                          <td>{{ match.sourceRound || '—' }}</td>
+                          <td>{{ match.sourceDate || '—' }}</td>
+                          <th scope="row">{{ match.home }}</th>
+                          <td>{{ match.homeScore }}–{{ match.awayScore }}</td>
+                          <td>{{ match.away }}</td>
+                          <td>{{ match.potentialDuplicate ? ('communities.matches.possibleRepeat' | t) : '—' }}</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+                @if (archive.rows.length > 50) {
+                  <div class="historical-tournament-pages">
+                    <button type="button" class="t-btn t-btn-secondary"
+                      [disabled]="historicalArchivePage === 0"
+                      (click)="historicalArchivePage = historicalArchivePage - 1">{{ 'communities.matches.previous' | t }}</button>
+                    <span>{{ historicalArchivePage * 50 + 1 }}–{{ (historicalArchivePage + 1) * 50 < archive.rows.length
+                      ? (historicalArchivePage + 1) * 50 : archive.rows.length }} / {{ archive.rows.length }}</span>
+                    <button type="button" class="t-btn t-btn-secondary"
+                      [disabled]="(historicalArchivePage + 1) * 50 >= archive.rows.length"
+                      (click)="historicalArchivePage = historicalArchivePage + 1">{{ 'communities.matches.next' | t }}</button>
+                  </div>
+                }
+              </section>
+            } @else {
+              <p class="t-muted">{{ 'communities.matches.detailError' | t }}</p>
+            }
+          </section>
+        } @else {
         @if (!isTeamCompetition && selected.status === 'COMPLETED' && !isRaceCompetition) {
           <div class="champion" role="status">
             <span aria-hidden="true">🏆</span>
@@ -1351,6 +1456,7 @@
               }
             </div>
           }
+        }
         }
       }
     </div>
