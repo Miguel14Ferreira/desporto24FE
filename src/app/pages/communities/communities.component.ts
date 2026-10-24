@@ -5,7 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { finalize, firstValueFrom, Observable, retry, timeout, Subscription, TimeoutError } from 'rxjs';
 import { appTranslate as t } from '../../i18n/i18n.service';
 import { environment } from 'src/environment/environment';
-import { acceptsCommunityAvatar } from './community-avatar-upload';
+import { communityAvatarUploadError } from './community-avatar-upload';
 import { buildCommunityGroupInviteUrl, buildWhatsAppGroupShareUrl } from './community-group-invite';
 import { communityRoundMatchup, CommunityRoundMatchup } from './community-round-matchup';
 import { sportForRound, CommunityRoundView } from './community-round-sport';
@@ -3792,8 +3792,13 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       return;
     }
 
-    if (!acceptsCommunityAvatar(file)) {
-      this.errorMessage = t('feedback.image.choose');
+    const avatarError = communityAvatarUploadError(file);
+    if (avatarError) {
+      this.errorMessage = t(avatarError === 'VIDEO'
+        ? 'feedback.communities.avatarVideoNotSupported'
+        : avatarError === 'TOO_LARGE'
+          ? 'feedback.communities.avatarTooLarge'
+          : 'feedback.communities.avatarInvalidType');
       input.value = '';
       return;
     }
