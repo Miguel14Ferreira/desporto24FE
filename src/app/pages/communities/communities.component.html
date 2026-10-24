@@ -1079,7 +1079,7 @@
                             <label>
                               <span>{{ 'communities.eventType.label' | t }}</span>
                               <select [(ngModel)]="roundEventTypeDraft"
-                                (ngModelChange)="roundDisciplineDraft = ''; resetVolleyballSets(); clearBjjSubmissionScores(); clearBoxingHiddenScores()"
+                                (ngModelChange)="roundDisciplineDraft = ''; resetVolleyballSets(); clearBjjSubmissionScores(); clearBoxingHiddenScores(); clearKickboxingHiddenScores()"
                                 [attr.aria-label]="'communities.eventType.label' | t">
                                 <option value="">{{ 'communities.eventType.select' | t }}</option>
                                 @for (choice of eventOptions(newRoundSport); track choice.code) {
@@ -1133,6 +1133,7 @@
                               : newRoundEventType === 'PARKOUR_FREESTYLE' ? 'communities.parkour.freestyleHint'
                               : (newRoundEventType === 'GOLF_STROKE_9' || newRoundEventType === 'GOLF_STROKE_18')
                                 ? 'communities.golf.hint'
+                              : isKickboxingEvent(newRoundEventType) ? 'communities.kickboxing.hint'
                               : isBoxingEvent(newRoundEventType) ? 'communities.boxing.hint'
                               : isBjjEvent(newRoundEventType) ? 'communities.bjj.hint'
                               : isTaekwondoEvent(newRoundEventType) ? 'communities.taekwondo.hint'
@@ -1277,6 +1278,16 @@
                                       <input [(ngModel)]="entry.team" maxlength="60"
                                         [placeholder]="'communities.groupRoutine.groupPlaceholder' | t">
                                     </label>
+                                  } @else if (isKickboxingEvent(newRoundEventType)) {
+                                    <label>
+                                      <span>{{ 'communities.kickboxing.side' | t }}</span>
+                                      <select [(ngModel)]="entry.team"
+                                        [attr.aria-label]="'communities.kickboxing.side' | t">
+                                        <option value="">{{ 'communities.kickboxing.selectSide' | t }}</option>
+                                        <option value="RED">{{ 'communities.kickboxing.red' | t }}</option>
+                                        <option value="BLUE">{{ 'communities.kickboxing.blue' | t }}</option>
+                                      </select>
+                                    </label>
                                   } @else if (isBoxingEvent(newRoundEventType)) {
                                     <label>
                                       <span>{{ 'communities.boxing.side' | t }}</span>
@@ -1383,6 +1394,24 @@
                                     <small>{{ 'communities.basketball.memberOnly' | t }}</small>
                                   } @else if (isGroupRoutineEvent(newRoundEventType)) {
                                     <small>{{ 'communities.groupRoutine.memberOnly' | t }}</small>
+                                  } @else if (isKickboxingEvent(newRoundEventType)) {
+                                    <label>
+                                      <span>{{ 'communities.kickboxing.outcome' | t }}</span>
+                                      <select [(ngModel)]="entry.result"
+                                        [attr.aria-label]="'communities.kickboxing.outcome' | t">
+                                        <option value="DRAW" disabled>{{ 'communities.kickboxing.selectOutcome' | t }}</option>
+                                        <option value="WIN">{{ 'communities.kickboxing.winner' | t }}</option>
+                                        <option value="LOSS">{{ 'communities.kickboxing.loser' | t }}</option>
+                                      </select>
+                                    </label>
+                                    @if (isKickboxingPointFighting(newRoundEventType)) {
+                                      <label>
+                                        <span>{{ 'communities.kickboxing.finalPoints' | t }}</span>
+                                        <input type="number" min="0" max="999999" step="1"
+                                          [(ngModel)]="entry.performanceValue"
+                                          [placeholder]="'communities.kickboxing.pointsRequired' | t">
+                                      </label>
+                                    }
                                   } @else if (isBoxingEvent(newRoundEventType)) {
                                     <label>
                                       <span>{{ 'communities.boxing.outcome' | t }}</span>
@@ -2320,7 +2349,7 @@
                                 [class.round-breaking-winner]="(round.eventType === 'BREAKING_BATTLE'
                                   || isJudoBout(round.eventType) || isKarateEvent(round.eventType)
                                   || isTaekwondoKyorugi(round.eventType) || isBjjEvent(round.eventType)
-                                  || isBoxingEvent(round.eventType))
+                                  || isBoxingEvent(round.eventType) || isKickboxingEvent(round.eventType))
                                   && entry.result === 'WIN'">
                                 <div>
                                   <strong>{{ entry.fullName || entry.username }}</strong>
@@ -2330,7 +2359,8 @@
                                       && !isKarateEvent(round.eventType)
                                       && !isTaekwondoKyorugi(round.eventType)
                                       && !isBjjEvent(round.eventType)
-                                      && !isBoxingEvent(round.eventType)) { · {{ entry.team }} }
+                                      && !isBoxingEvent(round.eventType)
+                                      && !isKickboxingEvent(round.eventType)) { · {{ entry.team }} }
                                   </span>
                                 </div>
                                 @if (round.eventType === 'BREAKING_BATTLE') {
@@ -2339,6 +2369,24 @@
                                     {{ (entry.result === 'WIN'
                                       ? 'communities.breaking.winner' : 'communities.breaking.loser') | t }}
                                   </span>
+                                } @else if (isKickboxingEvent(round.eventType)) {
+                                  <div class="round-surf-scores">
+                                    <small>{{ (entry.team === 'RED' ? 'communities.kickboxing.red'
+                                      : 'communities.kickboxing.blue') | t }}</small>
+                                    <span class="result-chip" [class.win]="entry.result === 'WIN'"
+                                      [class.loss]="entry.result === 'LOSS'">
+                                      {{ (entry.result === 'WIN' ? 'communities.kickboxing.winner'
+                                        : 'communities.kickboxing.loser') | t }}
+                                    </span>
+                                    @if (isKickboxingPointFighting(round.eventType)) {
+                                      <span class="round-performance-mark">
+                                        {{ performanceDisplay(entry.performanceValue, 0) }}
+                                        {{ 'communities.kickboxing.pointsUnit' | t }}
+                                      </span>
+                                    } @else if (entry.result === 'WIN') {
+                                      <small>{{ 'communities.kickboxing.confirmedDecision' | t }}</small>
+                                    }
+                                  </div>
                                 } @else if (isBoxingEvent(round.eventType)) {
                                   <div class="round-surf-scores">
                                     <small>{{ (entry.team === 'RED' ? 'communities.boxing.red'
