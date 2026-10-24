@@ -16,8 +16,8 @@ export interface TrackSprintBracketOverview {
   name: string;
   format: 'EIGHT_RIDER_FINALS' | 'SIXTEEN_RIDER_1_8';
   matches: TrackSprintBracketMatch[];
-  qualifyingRoundId: number | null;
-  qualifyingSeeds: string[];
+  qualifyingRoundId?: number | null;
+  qualifyingSeeds?: string[];
 }
 
 import { HttpClient, HttpParams } from '@angular/common/http';
