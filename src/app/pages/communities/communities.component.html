@@ -389,7 +389,7 @@
                       <label class="community-photo-action jynlo-action jynlo-action--neutral" [class.disabled]="photoUpdating">
                         <input
                           type="file"
-                          accept="image/jpeg,image/png,image/webp"
+                          accept="image/jpeg,image/png,image/webp,image/gif,.gif"
                           [disabled]="photoUpdating"
                           (change)="onCommunityPhotoChange($event)">
                         <span>{{ 'communities.changePhoto' | t }}</span>
