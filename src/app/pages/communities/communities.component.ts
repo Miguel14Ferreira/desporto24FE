@@ -41,6 +41,7 @@ import { raceSupportsLaps, formatRaceSeconds, raceEntryValidationError, roadTime
 import { swimmingTimeError, formatSwimTime } from './community-swimming-results';
 import { isInlineSpeedHeatEvent, isInlineSpeedFinalHeat, inlineSpeedHeatError,
   inlineSpeedCandidatePlace } from './community-inline-speed-heats';
+import { inlineProgressionSources, inlineProgressionSelectionError } from './community-inline-progression';
 import { openWaterTimeError, formatOpenWaterTime } from './community-open-water-results';
 import { orienteeringTimeError, formatOrienteeringTime } from './community-orienteering-results';
 import { raceDecisionError } from './community-race-decisions';
@@ -51,6 +52,7 @@ import { racketSupportsSets, racketUsesPointsPerSet, racketMatchWinner, recorded
 
 import {
   CommunityCompetitionOverview,
+  CommunityInlineProgression,
   CommunityGroup,
   CommunityInvite,
   CommunityMatchResult,
@@ -142,6 +144,13 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   raceDecisionSaving = false;
   raceDecisionError = '';
   raceDecisionMessage = '';
+  inlineProgressions: Record<number, CommunityInlineProgression> = {};
+  inlineProgressionEditingId: number | null = null;
+  inlineProgressionSourceIds: number[] = [];
+  inlineProgressionReason = '';
+  inlineProgressionSaving = false;
+  inlineProgressionError = '';
+  inlineProgressionMessage = '';
   racketRuleEditorKey: string | null = null;
   racketRuleWinPoints = 2;
   racketRuleLossPoints = 0;
@@ -2308,6 +2317,21 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
           if (requestVersion !== this.competitionRequestVersion ||
               this.selected?.id !== community.id) return;
           this.competition = competition;
+          this.inlineProgressionEditingId = null;
+          this.inlineProgressions = {};
+          if (competition.rounds.some(row => row.eventType?.startsWith('INLINE_'))) {
+            this.communityService.inlineProgressions(community.id)
+              .pipe(timeout(10_000))
+              .subscribe({
+                next: links => {
+                  if (requestVersion !== this.competitionRequestVersion
+                      || this.selected?.id !== community.id) return;
+                  this.inlineProgressions = Object.fromEntries(
+                    links.map(link => [link.targetRoundId, link]));
+                },
+                error: () => { /* Core competition listing remains usable on link API failure. */ }
+              });
+          }
           if (!this.canConfigureRacketRules()) this.racketRuleEditorKey = null;
           if (!this.canManageRaceChampionship()) {
             this.raceRuleSport = null;
@@ -3585,6 +3609,64 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
         error: error => {
           this.errorMessage = error.error?.message
             || t('feedback.communities.roundSaveError');
+        }
+      });
+  }
+
+  inlineProgressionSources(round: CommunityRound): CommunityRound[] {
+    return inlineProgressionSources(round, this.competition?.rounds ?? []);
+  }
+
+  beginInlineProgression(round: CommunityRound): void {
+    if (!this.canManage() || this.inlineProgressionSaving) return;
+    const existing = this.inlineProgressions[round.id];
+    this.inlineProgressionEditingId = round.id;
+    this.inlineProgressionSourceIds = [...(existing?.sourceRoundIds ?? [])];
+    this.inlineProgressionReason = existing?.reason ?? '';
+    this.inlineProgressionError = '';
+    this.inlineProgressionMessage = '';
+  }
+
+  toggleInlineProgressionSource(id: number, selected: boolean): void {
+    this.inlineProgressionSourceIds = selected
+      ? [...new Set([...this.inlineProgressionSourceIds, id])]
+      : this.inlineProgressionSourceIds.filter(x => x !== id);
+  }
+
+  cancelInlineProgression(): void {
+    if (!this.inlineProgressionSaving) this.inlineProgressionEditingId = null;
+    this.inlineProgressionError = '';
+  }
+
+  saveInlineProgression(round: CommunityRound): void {
+    if (!this.selected || !this.canManage() || this.inlineProgressionSaving
+        || this.inlineProgressionEditingId !== round.id) return;
+    const sources = this.inlineProgressionSources(round)
+      .filter(source => this.inlineProgressionSourceIds.includes(source.id));
+    if (sources.length !== this.inlineProgressionSourceIds.length
+        || inlineProgressionSelectionError(round, sources)
+        || this.inlineProgressionReason.trim().length < 10
+        || this.inlineProgressionReason.trim().length > 255) {
+      this.inlineProgressionError = t('feedback.communities.inlineProgressionInvalid');
+      return;
+    }
+    this.inlineProgressionSaving = true;
+    this.inlineProgressionError = '';
+    const communityId = this.selected.id;
+    this.communityService.confirmInlineProgression(communityId, round.id, {
+      sourceRoundIds: [...this.inlineProgressionSourceIds],
+      reason: this.inlineProgressionReason.trim()
+    }).pipe(timeout(10_000), finalize(() => this.inlineProgressionSaving = false))
+      .subscribe({
+        next: linked => {
+          if (this.selected?.id !== communityId) return;
+          this.inlineProgressions = { ...this.inlineProgressions, [round.id]: linked };
+          this.inlineProgressionEditingId = null;
+          this.inlineProgressionMessage = t('communities.speedSkating.progressionSaved');
+        },
+        error: error => {
+          this.inlineProgressionError = error.error?.message
+            || t('feedback.communities.inlineProgressionError');
         }
       });
   }
