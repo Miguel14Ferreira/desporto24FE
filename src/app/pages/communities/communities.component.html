@@ -1146,8 +1146,28 @@
                               <input [(ngModel)]="sprintBracketNameDraft" maxlength="80"
                                 [placeholder]="'communities.trackCycling.bracketNamePlaceholder' | t">
                             </label>
+                            <label>
+                              <span>{{ 'communities.trackCycling.bracketFormatChoice' | t }}</span>
+                              <select [(ngModel)]="sprintBracketFormatDraft"
+                                (ngModelChange)="sprintBracketQualifyingRoundIdDraft = null">
+                                <option value="EIGHT_RIDER_FINALS">{{ 'communities.trackCycling.bracketFormat' | t }}</option>
+                                <option value="SIXTEEN_RIDER_1_8">{{ 'communities.trackCycling.bracketFormat16' | t }}</option>
+                              </select>
+                            </label>
+                            @if (sprintBracketFormatDraft === 'SIXTEEN_RIDER_1_8') {
+                              <label>
+                                <span>{{ 'communities.trackCycling.qualifyingSource' | t }}</span>
+                                <select [(ngModel)]="sprintBracketQualifyingRoundIdDraft">
+                                  <option [ngValue]="null">{{ 'communities.trackCycling.qualifyingSelect' | t }}</option>
+                                  @for (round of availableSprintQualifyingRounds; track round.id) {
+                                    <option [ngValue]="round.id">{{ round.name }} — {{ roundDate(round.playedAt) }}</option>
+                                  }
+                                </select>
+                              </label>
+                              <small>{{ 'communities.trackCycling.qualifyingHint' | t }}</small>
+                            }
                             <button type="button" class="btn btn-primary" (click)="createSprintBracket()"
-                              [disabled]="sprintBracketSaving || !sprintBracketNameDraft.trim()">
+                              [disabled]="sprintBracketSaving || !canCreateSprintBracket()">
                               {{ 'communities.trackCycling.bracketCreate' | t }}
                             </button>
                           </div>
@@ -1161,8 +1181,27 @@
                         @for (bracket of sprintBrackets; track bracket.id) {
                           <div class="season-round-hint">
                             <strong>{{ bracket.name }}</strong>
-                            <span> · {{ 'communities.trackCycling.bracketFormat' | t }}</span>
+                            <span> · {{ (bracket.format === 'SIXTEEN_RIDER_1_8'
+                              ? 'communities.trackCycling.bracketFormat16'
+                              : 'communities.trackCycling.bracketFormat') | t }}</span>
                           </div>
+                          @if (bracket.format === 'SIXTEEN_RIDER_1_8' && bracket.qualifyingSeeds?.length) {
+                            <p class="round-sport-guidance">{{ 'communities.trackCycling.qualifyingSource' | t }}: #{{ bracket.qualifyingRoundId }}</p>
+                            <div class="round-meta-form">
+                              @for (rider of bracket.qualifyingSeeds; track rider) {
+                                <small>{{ $index + 1 }}. {{ rider }}</small>
+                              }
+                            </div>
+                          }
+                          @if (canManage() && selectedSeasonId === activeSeason()?.id) {
+                            <button type="button" class="btn btn-secondary"
+                              [disabled]="sprintBracketSaving"
+                              (click)="deleteSprintBracket(bracket.id)">
+                              {{ (deletingSprintBracketId === bracket.id
+                                ? 'communities.trackCycling.bracketConfirmDelete'
+                                : 'communities.trackCycling.bracketDelete') | t }}
+                            </button>
+                          }
                           <div class="round-meta-form">
                             @for (match of bracket.matches; track match.slot) {
                               <section class="racket-result-card">
@@ -1299,8 +1338,10 @@
                                   <span>{{ 'communities.trackCycling.heatNumber' | t }}</span>
                                   <select [(ngModel)]="sprintHeatNumberDraft">
                                     <option [ngValue]="1">1</option>
-                                    <option [ngValue]="2">2</option>
-                                    <option [ngValue]="3">3</option>
+                                    @if (roundDisciplineDraft !== 'SPRINT_EIGHTH_FINAL') {
+                                      <option [ngValue]="2">2</option>
+                                      <option [ngValue]="3">3</option>
+                                    }
                                   </select>
                                 </label>
                               }
