@@ -195,8 +195,8 @@ describe('Community tournaments management', () => {
         expect(pt.isRoundRobinSupported).withContext(sport).toBe(supported);
         expect(pt.pointRules).withContext(sport).toEqual(en.pointRules);
       }
-      component.sportDraft = 'Xadrez';
       component.startTeamCreation();
+      component.chooseSport('Xadrez');
       expect(component.isSportFormatSupported).toBeFalse();
       localStorage.setItem('d24-language', 'en');
       expect(component.sportFormatWarning).toContain('chess');
