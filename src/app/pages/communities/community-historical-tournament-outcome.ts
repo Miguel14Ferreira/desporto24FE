@@ -129,8 +129,8 @@ export function historicalTournamentOutcome(
  * The normalized forms cover PT/EN singular/plural and 1/2 final.
  */
 function isSemifinalRound(sourceRound: string | null | undefined): boolean {
-  const label = normalize(sourceRound || '').replace(/[-_.]+/g, ' ').replace(/\\s+/g, ' ');
-  return /^(?:semi\\s*finais?|meias?\\s*finais?|1\\s*\\/\\s*2\\s*finais?)(?:\\s*[12ab])?$/.test(label);
+  const label = normalize(sourceRound || '').replace(/[-_./]+/g, ' ').replace(/\s+/g, ' ');
+  return /^(?:semi\s*fina(?:l|is)|meias?\s*fina(?:l|is)|1\s*2\s*fina(?:l|is))(?:\s*[12ab])?$/.test(label);
 }
 
 function normalize(value: string): string {
