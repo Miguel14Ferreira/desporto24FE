@@ -217,14 +217,20 @@
                     <button type="button" class="inbox-attachment-button"
                       [disabled]="attachmentLoading.has(message.id)"
                       (click)="openAttachment(message)">
-                      <span aria-hidden="true">{{ message.attachmentMimeType?.startsWith('image/') ? '🖼️' : '📄' }}</span>
+                      <span aria-hidden="true">{{ message.attachmentMimeType?.startsWith('audio/') ? '🎤'
+                          : message.attachmentMimeType?.startsWith('image/') ? '🖼️' : '📄' }}</span>
                       <span>{{ message.attachmentName }}</span>
                       <small>{{ (attachmentLoading.has(message.id) ? 'chat.attachmentLoading'
                         : attachmentPreviews.has(message.id) ? 'chat.attachmentHide' : 'chat.attachmentOpen') | t }}</small>
                     </button>
                     @if (attachmentPreviews.get(message.id); as previewUrl) {
-                      <img class="inbox-attachment-image" [src]="previewUrl" [alt]="message.attachmentName"
-                        loading="lazy">
+                      @if (message.attachmentMimeType?.startsWith('audio/')) {
+                        <audio controls preload="metadata" [src]="previewUrl"
+                          [attr.aria-label]="'chat.voicePlayback' | t"></audio>
+                      } @else {
+                        <img class="inbox-attachment-image" [src]="previewUrl" [alt]="message.attachmentName"
+                          loading="lazy">
+                      }
                     }
                   </div>
                 }
@@ -280,11 +286,15 @@
             }
             @if (selectedAttachment; as file) {
               <div class="inbox-attachment-draft">
-                <span aria-hidden="true">📎</span>
-                <span>{{ file.name }}</span>
+                <span aria-hidden="true">{{ file.type.startsWith('audio/') ? '🎤' : '📎' }}</span>
+                <span>{{ file.type.startsWith('audio/') ? ('chat.voicePreview' | t) : file.name }}</span>
                 <button type="button" [disabled]="sending || deliveryUncertain"
                   (click)="removeAttachment()">{{ 'chat.attachmentRemove' | t }}</button>
               </div>
+              @if (voicePreviewUrl) {
+                <audio controls preload="metadata" [src]="voicePreviewUrl"
+                  [attr.aria-label]="'chat.voicePreview' | t"></audio>
+              }
             }
             <label for="inbox-reply">{{ 'inbox.writeMessage' | t }}</label>
             <textarea #composerTextarea id="inbox-reply" name="inboxDraft" [(ngModel)]="draft"
@@ -296,12 +306,32 @@
             <div class="inbox-composer-bottom">
               <span>{{ 'chat.enterHint' | t }} · {{ draft.length }}/2000</span>
               <div class="inbox-composer-actions">
+                @if (conversation.kind === 'direct' && attachmentReady && voiceSupported) {
+                  <button type="button" class="inbox-voice-trigger"
+                    [class.is-recording]="voiceRecording"
+                    [disabled]="!composerAllowed || composerAccessLoading || sending
+                      || deliveryUncertain || deliveryChecking || previewLoading || previewError
+                      || voiceFinalizing || (!voiceRecording && !!selectedAttachment)"
+                    [attr.aria-label]="(voiceRecording ? 'chat.voiceStop' : 'chat.voiceStart') | t"
+                    [attr.title]="(voiceRecording ? 'chat.voiceStop' : 'chat.voiceStart') | t"
+                    (click)="voiceRecording ? stopVoiceRecording() : startVoiceRecording()">
+                    <span aria-hidden="true">{{ voiceRecording ? '■' : '🎙️' }}</span>
+                  </button>
+                  @if (voiceRecording) {
+                    <button type="button" class="inbox-voice-cancel"
+                      (click)="cancelVoiceRecording()">{{ 'chat.voiceCancel' | t }}</button>
+                    <span class="inbox-voice-indicator" role="status">{{ 'chat.voiceRecording' | t }}</span>
+                  }
+                  @if (voiceFinalizing) {
+                    <span class="inbox-voice-indicator" role="status">{{ 'chat.voiceProcessing' | t }}</span>
+                  }
+                }
                 @if (conversation.kind === 'direct' && attachmentReady) {
                   <input #attachmentFile type="file" class="inbox-attachment-input"
                     accept=".jpg,.jpeg,.png,.webp,.gif,.pdf,image/jpeg,image/png,image/webp,image/gif,application/pdf"
                     (change)="onAttachmentPicked($event)">
                   <button type="button" class="inbox-attachment-trigger"
-                    [disabled]="!composerAllowed || composerAccessLoading || sending || deliveryUncertain || deliveryChecking || previewLoading || previewError"
+                    [disabled]="!composerAllowed || composerAccessLoading || sending || deliveryUncertain || deliveryChecking || previewLoading || previewError || voiceRecording || voiceFinalizing"
                     [attr.title]="'chat.attachmentAdd' | t"
                     [attr.aria-label]="'chat.attachmentAdd' | t"
                     (click)="attachmentFile.click()" aria-haspopup="dialog">📎</button>
