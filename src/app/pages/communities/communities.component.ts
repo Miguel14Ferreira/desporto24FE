@@ -14,6 +14,7 @@ import { eventOptionsForSport, eventView, isNeutralEvent, eventPresentationForma
 import { athleticsDisciplineOptions, athleticsDisciplineValid } from './community-field-disciplines';
 import { breakingBattleError } from './community-breaking-battle';
 import { trackSprintHeatError } from './community-track-sprint-results';
+import { trackSprintSeriesStatus } from './community-track-sprint-series';
 import { cricketT20Error, cricketOvers } from './community-cricket-results';
 import { chessGameError, chessGameScore } from './community-chess-results';
 import { judoBoutError, isJudoBout } from './community-judo-results';
@@ -678,6 +679,11 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   }
 
   athleticsDisciplineOptions = athleticsDisciplineOptions;
+  trackSprintSeriesStatus(round: CommunityRound) {
+    return trackSprintSeriesStatus(this.competition?.rounds || [], round,
+      this.competition?.selectedSeasonId ?? null);
+  }
+
   fieldDisciplineLabel(code: string): string {
     return t('communities.discipline.' + code.toLowerCase());
   }
@@ -709,6 +715,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
 
   /** Do not keep invisible Scratch lap metrics after switching to a timed event. */
   onRoundEventTypeChange(): void {
+    this.sprintSeriesKeyDraft = '';
+    this.sprintHeatNumberDraft = 1;
     if (this.newRoundEventType === 'TRACK_SPRINT_HEAT') {
       for (const entry of this.roundEntries) {
         entry.finishPosition = null;
@@ -3340,6 +3348,9 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       });
   }
 
+  sprintSeriesKeyDraft = '';
+  sprintHeatNumberDraft = 1;
+
   createRound(): void {
     if (!this.selected || !this.canManage() || this.roundSaving) {
       return;
@@ -3455,6 +3466,15 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       this.errorMessage = t('feedback.communities.judoInvalid');
       return;
     }
+    if (sprintHeat && this.sprintSeriesKeyDraft.trim() &&
+        (!this.activeSeason() || !/^[A-Za-z0-9][A-Za-z0-9 _.-]{0,39}$/.test(this.sprintSeriesKeyDraft.trim())
+          || !Number.isInteger(Number(this.sprintHeatNumberDraft))
+          || Number(this.sprintHeatNumberDraft) < 1
+          || Number(this.sprintHeatNumberDraft) >
+             (this.roundDisciplineDraft === 'SPRINT_QUARTER_FINAL' ? 1 : 3))) {
+      this.errorMessage = t('communities.trackCycling.seriesInvalid');
+      return;
+    }
     if (sprintHeat && trackSprintHeatError(selectedEntries)) {
       this.errorMessage = t('communities.trackCycling.sprintInvalid');
       return;
@@ -3554,6 +3574,10 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       sport: this.newRoundSport,
       eventType: this.newRoundEventType,
       eventDiscipline: this.roundDisciplineDraft || null,
+      ...(sprintHeat && this.sprintSeriesKeyDraft.trim() ? {
+        sprintSeriesKey: this.sprintSeriesKeyDraft.trim(),
+        sprintHeatNumber: Number(this.sprintHeatNumberDraft)
+      } : {}),
       ...(groupRoutine ? { groupScores } : {}),
       ...(basketball ? { basketballScore: { ...this.roundBasketballScoreDraft } } : {}),
       ...(teamFinal ? { teamScore: { ...this.roundTeamScoreDraft } } : {}),
@@ -3573,6 +3597,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
           this.roundPlayedAt = '';
           this.roundEventTypeDraft = '';
           this.roundDisciplineDraft = '';
+          this.sprintSeriesKeyDraft = '';
+          this.sprintHeatNumberDraft = 1;
           this.racketMatchFormat = 'SINGLES';
           this.racketSetScores = [{sideA: null,sideB: null},{sideA: null,sideB: null}];
           this.roundBasketballScoreDraft = { sideA: null, sideB: null };
