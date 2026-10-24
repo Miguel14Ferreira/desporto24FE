@@ -92,12 +92,14 @@ export class SocialStoriesComponent implements OnInit, OnDestroy {
     this.replyFocused = false;
     this.feedback = '';
     this.lastFrameAt = Date.now();
+    this.changeDetector.markForCheck();
     this.viewerTimer = setInterval(() => {
       const now = Date.now();
       const elapsed = Math.max(0, now - this.lastFrameAt);
       this.lastFrameAt = now;
       if (!this.activeStory || this.activeStory.video || !this.imageLoaded || this.playbackBlocked()) return;
       this.viewElapsedMs = Math.min(this.viewDurationMs, this.viewElapsedMs + elapsed);
+      this.changeDetector.markForCheck();
       if (this.viewElapsedMs >= this.viewDurationMs) this.next();
     }, 80);
   }
@@ -134,6 +136,7 @@ export class SocialStoriesComponent implements OnInit, OnDestroy {
   onImageLoaded(): void {
     this.imageLoaded = true;
     this.lastFrameAt = Date.now();
+    this.changeDetector.markForCheck();
   }
 
   onVideoReady(event: Event): void {
@@ -147,10 +150,12 @@ export class SocialStoriesComponent implements OnInit, OnDestroy {
   onVideoTime(event: Event): void {
     const video = event.target as HTMLVideoElement;
     this.viewElapsedMs = Math.min(this.viewDurationMs, video.currentTime * 1000);
+    this.changeDetector.markForCheck();
   }
 
   onMediaError(): void {
     this.mediaFailed = true;
+    this.changeDetector.markForCheck();
   }
 
   retryVideo(): void {
@@ -382,6 +387,7 @@ export class SocialStoriesComponent implements OnInit, OnDestroy {
     this.currentGroup = [];
     this.menuOpen = false;
     this.feedback = '';
+    this.changeDetector.markForCheck();
   }
 
   @HostListener('document:keydown.escape')
