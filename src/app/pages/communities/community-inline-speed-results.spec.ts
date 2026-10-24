@@ -1,5 +1,5 @@
 import { eventOptionsForSport, eventView, eventPresentationFormat,
-  isRaceEvent, isNeutralEvent } from './community-round-event-type';
+  isRaceEvent, isNeutralEvent, isInlineSpeedTimedEvent } from './community-round-event-type';
 import { swimmingTimeError, formatSwimTime } from './community-swimming-results';
 import { raceEntryValidationError } from './community-race-metrics';
 import { CommunityRoundEntryDraft } from '../model/community-group';
@@ -13,9 +13,10 @@ describe('Patinagem de Velocidade — inline 200m track time trial', () => {
       bestLapSeconds: null, lapsCompleted: null,
       performanceValue: null, waveScore1: null, waveScore2: null } as CommunityRoundEntryDraft);
 
-  it('registers exactly one initial type for the existing speed sport, not ice or artistic skating', () => {
+  it('registers distinct track and road time-only first rounds for the existing speed sport', () => {
     expect(eventOptionsForSport('Patinagem de Velocidade').map(x => x.code))
-      .toEqual(['INLINE_TRACK_200_TT']);
+      .toEqual(['INLINE_TRACK_200_TT', 'INLINE_TRACK_500D_FIRST_ROUND',
+        'INLINE_ROAD_LAP_FIRST_ROUND']);
     expect(eventOptionsForSport('Patinagem')).toEqual([]);
     expect(eventOptionsForSport('Patinagem Artística')).toEqual([]);
     expect(eventOptionsForSport('Hóquei em Patins').map(x => x.code))
@@ -51,5 +52,26 @@ describe('Patinagem de Velocidade — inline 200m track time trial', () => {
     const invalid = skater('ana', 18.43);
     invalid.lapsCompleted = 1;
     expect(swimmingTimeError([invalid])).toBeTrue();
+  });
+
+  it('keeps 500m+D and one-lap first rounds independent of official heats and finals', () => {
+    for (const code of ['INLINE_TRACK_200_TT', 'INLINE_TRACK_500D_FIRST_ROUND',
+      'INLINE_ROAD_LAP_FIRST_ROUND']) {
+      expect(isInlineSpeedTimedEvent(code)).toBeTrue();
+      expect(isRaceEvent('Patinagem de Velocidade', code)).toBeTrue();
+      expect(isNeutralEvent('Patinagem de Velocidade', code)).toBeFalse();
+      expect(eventView('Patinagem de Velocidade', code)).toBe('race');
+      expect(eventPresentationFormat('Patinagem de Velocidade', code)).toBe('race');
+      expect(swimmingTimeError([skater('ana', 45.37), skater('bruno', null)])).toBeFalse();
+      expect(swimmingTimeError([skater('ana', 45.373)])).toBeTrue();
+      expect(swimmingTimeError([skater('ana', 45.37, 1)])).toBeTrue();
+    }
+    expect(isInlineSpeedTimedEvent(null)).toBeFalse();
+    expect(isInlineSpeedTimedEvent('INLINE_TRACK_500D_FINAL')).toBeFalse();
+    expect(isInlineSpeedTimedEvent('INLINE_ROAD_LAP_FINAL')).toBeFalse();
+    expect(isRaceEvent('Patinagem Artística', 'INLINE_ROAD_LAP_FIRST_ROUND')).toBeFalse();
+    expect(isRaceEvent('Patinagem', 'INLINE_TRACK_500D_FIRST_ROUND')).toBeFalse();
+    expect(eventOptionsForSport('Patinagem Artística')).toEqual([]);
+    expect(eventView('Patinagem de Velocidade', null)).toBe('race');
   });
 });

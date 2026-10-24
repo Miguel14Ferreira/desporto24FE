@@ -1219,7 +1219,9 @@
 
                         @if (viewForNewRound() === 'race') {
                           <p class="round-sport-guidance" role="note">
-                            {{ (newRoundEventType === 'INLINE_TRACK_200_TT' ? 'communities.speedSkating.hint'
+                            {{ (newRoundEventType === 'INLINE_TRACK_500D_FIRST_ROUND' ? 'communities.speedSkating.track500Hint'
+                              : newRoundEventType === 'INLINE_ROAD_LAP_FIRST_ROUND' ? 'communities.speedSkating.roadLapHint'
+                              : newRoundEventType === 'INLINE_TRACK_200_TT' ? 'communities.speedSkating.hint'
                               : newRoundEventType === 'FOOT_ORIENTEERING' ? 'communities.orienteering.hint'
                               : newRoundEventType === 'OWS_INDIVIDUAL' ? 'communities.openWater.hint'
                               : newRoundEventType === 'SWIM_LCM' ? 'communities.swimming.hint'
@@ -1475,7 +1477,7 @@
                                   @if (viewForNewRound() === 'race') {
                                     @if (newRoundEventType !== 'SWIM_LCM' && newRoundEventType !== 'OWS_INDIVIDUAL'
                                         && newRoundEventType !== 'FOOT_ORIENTEERING'
-                                        && newRoundEventType !== 'INLINE_TRACK_200_TT') {
+                                        && !isInlineSpeedTimedEvent(newRoundEventType)) {
                                       <label>
                                         <span>{{ 'communities.race.position' | t }}</span>
                                         <input type="number" min="1" step="1" [(ngModel)]="entry.finishPosition"
@@ -1483,16 +1485,16 @@
                                       </label>
                                     }
                                     <label>
-                                      <span>{{ (newRoundEventType === 'INLINE_TRACK_200_TT' ? 'communities.speedSkating.timeSeconds'
+                                      <span>{{ (isInlineSpeedTimedEvent(newRoundEventType) ? 'communities.speedSkating.timeSeconds'
                                         : newRoundEventType === 'FOOT_ORIENTEERING' ? 'communities.orienteering.timeSeconds'
                                         : newRoundEventType === 'OWS_INDIVIDUAL' ? 'communities.openWater.timeSeconds'
                                         : newRoundEventType === 'SWIM_LCM'
                                         ? 'communities.swimming.timeSeconds'
                                         : 'communities.race.elapsedSeconds') | t }}</span>
-                                      <input type="number" [min]="newRoundEventType === 'INLINE_TRACK_200_TT' ? 0.01 : newRoundEventType === 'FOOT_ORIENTEERING' ? 1 : newRoundEventType === 'OWS_INDIVIDUAL' ? 0.1 : newRoundEventType === 'SWIM_LCM' ? 0.01 : 0.001"
-                                        [step]="newRoundEventType === 'INLINE_TRACK_200_TT' ? 0.01 : newRoundEventType === 'FOOT_ORIENTEERING' ? 1 : newRoundEventType === 'OWS_INDIVIDUAL' ? 0.1 : newRoundEventType === 'SWIM_LCM' ? 0.01 : 0.001"
+                                      <input type="number" [min]="isInlineSpeedTimedEvent(newRoundEventType) ? 0.01 : newRoundEventType === 'FOOT_ORIENTEERING' ? 1 : newRoundEventType === 'OWS_INDIVIDUAL' ? 0.1 : newRoundEventType === 'SWIM_LCM' ? 0.01 : 0.001"
+                                        [step]="isInlineSpeedTimedEvent(newRoundEventType) ? 0.01 : newRoundEventType === 'FOOT_ORIENTEERING' ? 1 : newRoundEventType === 'OWS_INDIVIDUAL' ? 0.1 : newRoundEventType === 'SWIM_LCM' ? 0.01 : 0.001"
                                         [(ngModel)]="entry.elapsedSeconds"
-                                        [placeholder]="(newRoundEventType === 'INLINE_TRACK_200_TT' ? 'communities.speedSkating.timePlaceholder'
+                                        [placeholder]="(isInlineSpeedTimedEvent(newRoundEventType) ? 'communities.speedSkating.timePlaceholder'
                                           : newRoundEventType === 'FOOT_ORIENTEERING' ? 'communities.orienteering.timePlaceholder'
                                           : newRoundEventType === 'OWS_INDIVIDUAL' ? 'communities.openWater.timePlaceholder'
                                           : newRoundEventType === 'SWIM_LCM'
@@ -1500,7 +1502,8 @@
                                           : 'communities.race.timePlaceholder') | t">
                                     </label>
                                     @if (raceSupportsLaps(newRoundSport) && newRoundEventType !== 'TRACK_TIME_TRIAL'
-                                        && newRoundEventType !== 'TRACK_FLYING_200') {
+                                        && newRoundEventType !== 'TRACK_FLYING_200'
+                                        && !isInlineSpeedTimedEvent(newRoundEventType)) {
                                       <label>
                                         <span>{{ 'communities.race.lapsCompleted' | t }}</span>
                                         <input type="number" min="0" step="1" [(ngModel)]="entry.lapsCompleted">
@@ -2104,20 +2107,22 @@
                               <div class="race-round-heading">
                                 <span aria-hidden="true">🏁</span>
                                 <div>
-                                  <strong>{{ (round.eventType === 'INLINE_TRACK_200_TT' ? 'communities.speedSkating.recordTitle'
+                                  <strong>{{ (round.eventType === 'INLINE_TRACK_500D_FIRST_ROUND' ? 'communities.speedSkating.track500RecordTitle'
+                                    : round.eventType === 'INLINE_ROAD_LAP_FIRST_ROUND' ? 'communities.speedSkating.roadLapRecordTitle'
+                                    : round.eventType === 'INLINE_TRACK_200_TT' ? 'communities.speedSkating.recordTitle'
                                     : round.eventType === 'FOOT_ORIENTEERING' ? 'communities.orienteering.recordTitle'
                                     : round.eventType === 'OWS_INDIVIDUAL' ? 'communities.openWater.recordTitle'
                                     : round.eventType === 'SWIM_LCM' ? 'communities.swimming.recordTitle'
                                     : round.eventType === 'PARKOUR_SPEED'
                                     ? 'communities.parkour.speedTitle' : 'communities.race.recordTitle') | t }}</strong>
-                                  <small>{{ (round.eventType === 'INLINE_TRACK_200_TT' ? 'communities.speedSkating.recordSubtitle'
+                                  <small>{{ (isInlineSpeedTimedEvent(round.eventType) ? 'communities.speedSkating.recordSubtitle'
                                     : round.eventType === 'FOOT_ORIENTEERING' ? 'communities.orienteering.recordSubtitle'
                                     : round.eventType === 'OWS_INDIVIDUAL' ? 'communities.openWater.recordSubtitle'
                                     : round.eventType === 'SWIM_LCM' ? 'communities.swimming.recordSubtitle'
                                     : round.eventType === 'PARKOUR_SPEED'
                                     ? 'communities.parkour.speedSubtitle' : 'communities.race.metricsSubtitle') | t }}</small>
                                 </div>
-                                <span class="race-round-count">{{ round.entries.length }} {{ (round.eventType === 'INLINE_TRACK_200_TT' ? 'communities.speedSkating.skaters'
+                                <span class="race-round-count">{{ round.entries.length }} {{ (isInlineSpeedTimedEvent(round.eventType) ? 'communities.speedSkating.skaters'
                                   : round.eventType === 'FOOT_ORIENTEERING' ? 'communities.orienteering.runners'
                                   : round.eventType === 'OWS_INDIVIDUAL' ? 'communities.openWater.swimmers'
                                   : round.eventType === 'SWIM_LCM' ? 'communities.swimming.swimmers'
@@ -2132,7 +2137,7 @@
                                       <small>{{ roundEntryHandle(entry) }}</small>
                                     </div>
                                     <div class="race-round-metrics">
-                                      @if (round.eventType === 'INLINE_TRACK_200_TT') {
+                                      @if (isInlineSpeedTimedEvent(round.eventType)) {
                                         @if (inlineSpeedTime(entry.elapsedSeconds); as skateTime) {
                                           <span class="round-performance-mark">{{ skateTime }}</span>
                                         } @else {
