@@ -161,6 +161,9 @@
         }
             </div>
           </div>
+          @if (creationSportNoticeKey; as noticeKey) {
+            <p class="create-sport-notice" role="note">{{ noticeKey | t }}</p>
+          }
         </section>
 
         @if (showTeamCreate) {
@@ -174,16 +177,25 @@
             </div>
           <fieldset class="t-points-rules">
             <legend>Formato do torneio</legend>
-            <div class="t-community-sports create-options-grid" role="group" aria-label="Formato do torneio">
-              <button type="button" class="t-sport-chip" [disabled]="busy"
+            <div class="create-format-grid" role="group" aria-label="Formato do torneio">
+              <button type="button" class="create-format-option" [disabled]="busy"
                 [attr.aria-pressed]="teamFormatDraft === 'LEAGUE'"
-                (click)="teamFormatDraft = 'LEAGUE'">Campeonato todos contra todos</button>
-              <button type="button" class="t-sport-chip" [disabled]="busy"
+                (click)="teamFormatDraft = 'LEAGUE'">
+                <strong>{{ 'communities.tournaments.formatLeagueTitle' | t }}</strong>
+                <span>{{ 'communities.tournaments.formatLeagueText' | t }}</span>
+              </button>
+              <button type="button" class="create-format-option" [disabled]="busy"
                 [attr.aria-pressed]="teamFormatDraft === 'KNOCKOUT'"
-                (click)="teamFormatDraft = 'KNOCKOUT'">Eliminatórias (taça)</button>
-              <button type="button" class="t-sport-chip" [disabled]="busy"
+                (click)="teamFormatDraft = 'KNOCKOUT'">
+                <strong>{{ 'communities.tournaments.formatKnockoutTitle' | t }}</strong>
+                <span>{{ 'communities.tournaments.formatKnockoutText' | t }}</span>
+              </button>
+              <button type="button" class="create-format-option" [disabled]="busy"
                 [attr.aria-pressed]="teamFormatDraft === 'GROUP_KNOCKOUT'"
-                (click)="teamFormatDraft = 'GROUP_KNOCKOUT'">Grupos + Eliminatórias</button>
+                (click)="teamFormatDraft = 'GROUP_KNOCKOUT'">
+                <strong>{{ 'communities.tournaments.formatGroupsTitle' | t }}</strong>
+                <span>{{ 'communities.tournaments.formatGroupsText' | t }}</span>
+              </button>
             </div>
             @if (teamFormatDraft === 'GROUP_KNOCKOUT') {
               <p class="sport-choice-hint">Os dois primeiros de cada grupo avançam. Desempate: pontos,
@@ -225,10 +237,21 @@
             <div class="create-step-heading">
               <span class="create-step-index" aria-hidden="true">{{ showTeamCreate ? '03' : '02' }}</span>
               <div>
-                <h5>Regras da classificação</h5>
-                <p>Define como são atribuídos os pontos e, quando aplicável, os critérios de desempate.</p>
+                <h5>{{ 'communities.tournaments.classificationTitle' | t }}</h5>
+                <p>{{ 'communities.tournaments.classificationText' | t }}</p>
               </div>
             </div>
+            <details class="create-advanced-rules">
+              <summary>
+                <span>
+                  <strong>{{ 'communities.tournaments.adjustRules' | t }}</strong>
+                  <small>{{ 'communities.tournaments.currentPoints' | t:{ win: winPointsDraft, draw: drawPointsDraft, loss: lossPointsDraft } }}</small>
+                  @if (!validPointRules) {
+                    <small class="field-validation">{{ 'communities.tournaments.invalidPointsHint' | t }}</small>
+                  }
+                </span>
+              </summary>
+              <div class="create-advanced-fields">
         @if (showTeamCreate && teamFormatDraft !== 'KNOCKOUT') {
           <fieldset class="t-points-rules t-tiebreak-rules" aria-describedby="t-tiebreak-help">
             <legend>Critério de desempate</legend>
@@ -281,6 +304,8 @@
           }
         </fieldset>
         }
+              </div>
+            </details>
           </section>
         }
 
