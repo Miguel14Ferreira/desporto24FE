@@ -18,6 +18,8 @@ on:
       - 'angular.json'
       - 'tsconfig*.json'
       - 'Dockerfile'
+      - 'default.conf.template'
+      - 'scripts/ci-browser/nginx_security_headers.test.cjs'
       - '.github/workflows/pr-validation.yml'
   workflow_dispatch:
 
@@ -46,6 +48,8 @@ jobs:
         run: npm ci
       - name: Run all Angular unit and regression tests
         run: npm test -- --watch=false --browsers=ChromeHeadless
+      - name: Validate nginx security policy
+        run: node --test scripts/ci-browser/nginx_security_headers.test.cjs
       - name: Build frontend once
         run: npm run build
       # Offline contract for the future manual authenticated QA workflow.
