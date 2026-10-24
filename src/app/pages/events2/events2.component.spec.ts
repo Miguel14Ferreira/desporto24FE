@@ -89,10 +89,12 @@ describe('Events2Component', () => {
     expect(Math.abs(select.getBoundingClientRect().width
       - sportInput.getBoundingClientRect().width)).toBeLessThan(2);
 
-    select.value = 'WEEKLY';
-    select.dispatchEvent(new Event('change'));
+    expect(Array.from(select.options).map(option => option.value)).toEqual([
+      'NONE', 'WEEKLY', 'BIWEEKLY'
+    ]);
+    // Changing the bound recurrence still opens the occurrences field.
+    component.recurrence = 'WEEKLY';
     fixture.detectChanges();
-    expect(component.recurrence).toBe('WEEKLY');
     expect(fixture.nativeElement.querySelector(
       'input[name="recurrenceOccurrences"]'
     )).not.toBeNull();
