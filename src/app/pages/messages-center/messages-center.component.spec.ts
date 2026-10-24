@@ -224,6 +224,35 @@ describe('Unified Jynlo message center', () => {
     expect(direct.send).not.toHaveBeenCalled();
   });
 
+  it('clears private media when another tab changes login and unregisters the listener', () => {
+    const encode = (value: unknown) => btoa(JSON.stringify(value));
+    const originalToken = [encode({ alg: 'none' }),
+      encode({ sub: 'ana', exp: Math.floor(Date.now() / 1000) + 3600 }), 'fixture'].join('.');
+    let activeToken = originalToken;
+    spyOn(localStorage, 'getItem').and.callFake(key => key === 't' ? activeToken : null);
+    const revoked = spyOn(URL, 'revokeObjectURL');
+    component.ngOnInit();
+    try {
+      component.attachmentReady = true;
+      component.selectedAttachment = new File(['private-pdf'], 'private.pdf',
+        { type: 'application/pdf' });
+      component.attachmentPreviews.set(91, 'blob:private-old-session');
+      activeToken = 'qa-different-account';
+      window.dispatchEvent(new StorageEvent('storage',
+        { key: 't', oldValue: originalToken, newValue: activeToken }));
+      expect(component.attachmentReady).toBeFalse();
+      expect(component.selectedAttachment).toBeNull();
+      expect(component.attachmentPreviews.size).toBe(0);
+      expect(revoked).toHaveBeenCalledWith('blob:private-old-session');
+    } finally {
+      component.ngOnDestroy();
+    }
+    component.attachmentReady = true;
+    window.dispatchEvent(new StorageEvent('storage',
+      { key: 't', oldValue: originalToken, newValue: activeToken }));
+    expect(component.attachmentReady).toBeTrue();
+  });
+
   it('refuses unsupported or oversized attachments before HTTP upload', () => {
     const peer = item('direct','bea');
     component.conversations = [peer];
