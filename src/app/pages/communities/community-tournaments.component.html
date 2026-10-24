@@ -1309,14 +1309,14 @@
           </section>
 
           @if (selected.status !== 'DRAFT') {
-            <section class="t-section" aria-label="Jornadas">
+            <section class="t-section" [attr.aria-label]="'communities.tournaments.individualUi.fixturesRegion' | t">
               <div class="t-section-heading">
                 <div>
-                  <h5>Confrontos e resultados</h5>
-                  <p>Os resultados destes confrontos atualizam a classificação individual desta competição.</p>
+                  <h5>{{ 'communities.tournaments.individualUi.fixturesHeading' | t }}</h5>
+                  <p>{{ 'communities.tournaments.individualUi.fixturesHelp' | t }}</p>
                 </div>
               </div>
-              @if (!matches.length) { <p class="t-muted">Não existem jogos para apresentar.</p> }
+              @if (!matches.length) { <p class="t-muted">{{ 'communities.tournaments.individualUi.emptyMatches' | t }}</p> }
               <div class="match-list">
                 @for (match of matches; track match.id) {
                   <article class="match-card">
@@ -1330,19 +1330,19 @@
                       <div class="score-edit">
                         @if (isChessTournament) {
                           <label class="chess-outcome">
-                            <span>Resultado da partida</span>
+                            <span>{{ 'communities.tournaments.individualUi.chessResult' | t }}</span>
                             <select [ngModel]="chessOutcome(match)"
                               (ngModelChange)="setChessOutcome(match, $event)"
-                              [disabled]="busy" [attr.aria-label]="'Resultado da partida entre ' + match.homeUsername + ' e ' + match.awayUsername">
-                              <option value="">Selecionar resultado</option>
-                              <option value="WHITE">Vitória de &#64;{{ match.homeUsername }}</option>
-                              <option value="DRAW">Empate (½ – ½)</option>
-                              <option value="BLACK">Vitória de &#64;{{ match.awayUsername }}</option>
+                              [disabled]="busy" [attr.aria-label]="'communities.tournaments.individualUi.chessResultAria' | t:{home:match.homeUsername,away:match.awayUsername}">
+                              <option value="">{{ 'communities.tournaments.individualUi.chessPlaceholder' | t }}</option>
+                              <option value="WHITE">{{ 'communities.tournaments.individualUi.whiteWin' | t:{player:match.homeUsername} }}</option>
+                              <option value="DRAW">{{ 'communities.tournaments.individualUi.chessDraw' | t }}</option>
+                              <option value="BLACK">{{ 'communities.tournaments.individualUi.blackWin' | t:{player:match.awayUsername} }}</option>
                             </select>
                           </label>
                         } @else {
                         <label>
-                          <span>Casa</span>
+                          <span>{{ 'communities.tournaments.individualUi.home' | t }}</span>
                           <input type="number" min="0" max="999" step="1"
                             [ngModel]="scoreDraft(match).home"
                             (ngModelChange)="setScore(match, 'home', $event)"
@@ -1352,7 +1352,7 @@
                         </label>
                         <span class="score-separator">:</span>
                         <label>
-                          <span>Fora</span>
+                          <span>{{ 'communities.tournaments.individualUi.away' | t }}</span>
                           <input type="number" min="0" max="999" step="1"
                             [ngModel]="scoreDraft(match).away"
                             (ngModelChange)="setScore(match, 'away', $event)"
@@ -1362,19 +1362,18 @@
                         </label>
                         }
                         <button class="t-btn t-btn-primary t-btn-small" type="button"
-                          [attr.aria-label]="(match.status === 'COMPLETED' ? 'Corrigir' : 'Guardar') + ' resultado da jornada ' + match.roundNumber + ' entre ' + match.homeUsername + ' e ' + match.awayUsername"
+                          [attr.aria-label]="(match.status === 'COMPLETED' ? 'communities.tournaments.individualUi.correctAria' : 'communities.tournaments.individualUi.saveAria') | t:{round:match.roundNumber,home:match.homeUsername,away:match.awayUsername}"
                           [disabled]="busy || !validTournamentScore(match)"
-                          (click)="saveScore(match)">{{ match.status === 'COMPLETED' ? 'Corrigir' : 'Guardar' }}</button>
+                          (click)="saveScore(match)">{{ (match.status === 'COMPLETED' ? 'communities.tournaments.individualUi.correct' : 'communities.tournaments.individualUi.save') | t }}</button>
                       </div>
                       @if (isScoreInvalid(match)) {
                         <p class="field-validation" [id]="'match-score-error-' + match.id" role="status">
-                          {{ isChessTournament ? 'Escolhe vitória do primeiro jogador, empate ou vitória do segundo.'
-                            : 'Indica dois marcadores inteiros entre 0 e 999.' }}
+                          {{ (isChessTournament ? 'communities.tournaments.individualUi.chessInvalid' : 'communities.tournaments.individualUi.scoreInvalid') | t }}
                         </p>
                       }
                     } @else {
                       <strong class="match-score">
-                        {{ match.status === 'COMPLETED' ? displayTournamentResult(match) : 'Por disputar' }}
+                        {{ match.status === 'COMPLETED' ? displayTournamentResult(match) : ('communities.tournaments.individualUi.pending' | t) }}
                       </strong>
                     }
                   </article>
@@ -1382,33 +1381,33 @@
               </div>
               @if (matchesHasMore) {
                 <button type="button" class="t-btn t-btn-secondary"
-                  [disabled]="busy" (click)="loadMoreMatches()">Carregar mais jogos</button>
+                  [disabled]="busy" (click)="loadMoreMatches()">{{ 'communities.tournaments.individualUi.loadMoreMatches' | t }}</button>
               }
             </section>
           }
 
-          <section class="t-section" aria-label="Classificação do torneio">
+          <section class="t-section" [attr.aria-label]="'communities.tournaments.individualUi.standingsRegion' | t">
             <div class="t-section-heading">
               <div>
-                <h5>Classificação</h5>
+                <h5>{{ 'communities.tournaments.individualUi.standings' | t }}</h5>
                 <p>{{ isChessTournament
-                  ? 'Pontos de xadrez: vitória 1, empate ½, derrota 0. As vitórias servem como primeiro desempate; não são aplicados desempates oficiais.'
-                  : 'Classificação apenas desta competição: pontos, ' + scoring.differenceTitle.toLowerCase() + ', ' + scoring.forTitle.toLowerCase() + ' e vitórias.' }}</p>
+                  ? ('communities.tournaments.individualUi.chessHelp' | t)
+                  : ('communities.tournaments.individualUi.generalHelp' | t:{difference:scoring.differenceTitle.toLowerCase(),forScore:scoring.forTitle.toLowerCase()}) }}</p>
               </div>
               @if (standings) {
-                <span class="tournament-state">{{ standings.completedMatches }} / {{ standings.totalMatches }} confrontos concluídos</span>
+                <span class="tournament-state">{{ 'communities.tournaments.individualUi.completed' | t:{completed:standings.completedMatches,total:standings.totalMatches} }}</span>
               }
             </div>
             @if (standings?.standings?.length) {
               <div class="standings-scroll">
-                <table class="standings-table" aria-label="Classificação do torneio">
+                <table class="standings-table" [attr.aria-label]="'communities.tournaments.individualUi.standingsRegion' | t">
                   <thead>
                     <tr>
-                      <th scope="col">#</th><th scope="col">Participante</th>
-                      <th scope="col" title="Jogos">J</th>
-                      <th scope="col" title="Vitórias">V</th>
-                      <th scope="col" title="Empates">E</th>
-                      <th scope="col" title="Derrotas">D</th>
+                      <th scope="col">#</th><th scope="col">{{ 'communities.tournaments.individualUi.playerCol' | t }}</th>
+                      <th scope="col" [title]="'communities.tournaments.individualUi.playedTitle' | t">J</th>
+                      <th scope="col" [title]="'communities.tournaments.individualUi.winTitle' | t">V</th>
+                      <th scope="col" [title]="'communities.tournaments.individualUi.drawTitle' | t">E</th>
+                      <th scope="col" [title]="'communities.tournaments.individualUi.lossTitle' | t">D</th>
                       @if (!isChessTournament) {
                         <th scope="col" [title]="scoring.forTitle">{{ scoring.forAbbrev }}</th>
                         <th scope="col" [title]="scoring.againstTitle">{{ scoring.againstAbbrev }}</th>
@@ -1435,7 +1434,7 @@
                 </table>
               </div>
             } @else {
-              <p class="t-muted">A classificação aparece quando houver jogadores confirmados.</p>
+              <p class="t-muted">{{ 'communities.tournaments.individualUi.emptyStandings' | t }}</p>
             }
           </section>
 
