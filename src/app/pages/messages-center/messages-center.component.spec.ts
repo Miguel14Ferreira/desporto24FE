@@ -614,7 +614,8 @@ describe('Unified Jynlo message center', () => {
     expect(component.conversations.find(x => x.key === 'direct:bea')?.newThisVisit).toBe(1);
     direct.recentHistory.and.returnValue(of({ content: [], last: true }));
     component.selectConversation(component.conversations.find(x => x.key === 'direct:bea')!);
-    expect(component.recentCount).toBe(0);
+    // Selecting a conversation without a rendered message is not reading it.
+    expect(component.recentCount).toBe(1);
   });
 
   it('lists only upcoming session conversations and opens a linked authorized session', () => {
