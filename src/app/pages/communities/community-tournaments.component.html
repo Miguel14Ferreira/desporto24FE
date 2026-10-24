@@ -946,6 +946,19 @@
                     </div>
                     @if (canManage && selected.status === 'IN_PROGRESS') {
                       <div class="score-edit">
+                        @if (isChessTournament) {
+                          <label class="chess-outcome">
+                            <span>Resultado da partida</span>
+                            <select [ngModel]="chessOutcome(match)"
+                              (ngModelChange)="setChessOutcome(match, $event)"
+                              [disabled]="busy" [attr.aria-label]="'Resultado da partida entre ' + match.homeUsername + ' e ' + match.awayUsername">
+                              <option value="">Selecionar resultado</option>
+                              <option value="WHITE">Vitória de &#64;{{ match.homeUsername }}</option>
+                              <option value="DRAW">Empate (½ – ½)</option>
+                              <option value="BLACK">Vitória de &#64;{{ match.awayUsername }}</option>
+                            </select>
+                          </label>
+                        } @else {
                         <label>
                           <span>Casa</span>
                           <input type="number" min="0" max="999" step="1"
@@ -965,19 +978,21 @@
                             [attr.aria-describedby]="isScoreInvalid(match) ? 'match-score-error-' + match.id : null"
                             [disabled]="busy" [attr.aria-label]="scoring.scoreInput + ' ' + match.awayUsername">
                         </label>
+                        }
                         <button class="t-btn t-btn-primary t-btn-small" type="button"
                           [attr.aria-label]="(match.status === 'COMPLETED' ? 'Corrigir' : 'Guardar') + ' resultado da jornada ' + match.roundNumber + ' entre ' + match.homeUsername + ' e ' + match.awayUsername"
-                          [disabled]="busy || !validScore(scoreDraft(match).home) || !validScore(scoreDraft(match).away)"
+                          [disabled]="busy || !validTournamentScore(match)"
                           (click)="saveScore(match)">{{ match.status === 'COMPLETED' ? 'Corrigir' : 'Guardar' }}</button>
                       </div>
                       @if (isScoreInvalid(match)) {
                         <p class="field-validation" [id]="'match-score-error-' + match.id" role="status">
-                          Indica dois marcadores inteiros entre 0 e 999.
+                          {{ isChessTournament ? 'Escolhe vitória do primeiro jogador, empate ou vitória do segundo.'
+                            : 'Indica dois marcadores inteiros entre 0 e 999.' }}
                         </p>
                       }
                     } @else {
                       <strong class="match-score">
-                        {{ match.status === 'COMPLETED' ? match.homeScore + ' : ' + match.awayScore : 'Por disputar' }}
+                        {{ match.status === 'COMPLETED' ? displayTournamentResult(match) : 'Por disputar' }}
                       </strong>
                     }
                   </article>
@@ -994,7 +1009,9 @@
             <div class="t-section-heading">
               <div>
                 <h5>Classificação</h5>
-                <p>Classificação apenas desta competição: pontos, {{ scoring.differenceTitle.toLowerCase() }}, {{ scoring.forTitle.toLowerCase() }} e vitórias.</p>
+                <p>{{ isChessTournament
+                  ? 'Pontos de xadrez: vitória 1, empate ½, derrota 0. As vitórias servem como primeiro desempate; não são aplicados desempates oficiais.'
+                  : 'Classificação apenas desta competição: pontos, ' + scoring.differenceTitle.toLowerCase() + ', ' + scoring.forTitle.toLowerCase() + ' e vitórias.' }}</p>
               </div>
               @if (standings) {
                 <span class="tournament-state">{{ standings.completedMatches }} / {{ standings.totalMatches }} confrontos concluídos</span>
@@ -1010,9 +1027,11 @@
                       <th scope="col" title="Vitórias">V</th>
                       <th scope="col" title="Empates">E</th>
                       <th scope="col" title="Derrotas">D</th>
-                      <th scope="col" [title]="scoring.forTitle">{{ scoring.forAbbrev }}</th>
-                      <th scope="col" [title]="scoring.againstTitle">{{ scoring.againstAbbrev }}</th>
-                      <th scope="col" [title]="scoring.differenceTitle">{{ scoring.differenceAbbrev }}</th>
+                      @if (!isChessTournament) {
+                        <th scope="col" [title]="scoring.forTitle">{{ scoring.forAbbrev }}</th>
+                        <th scope="col" [title]="scoring.againstTitle">{{ scoring.againstAbbrev }}</th>
+                        <th scope="col" [title]="scoring.differenceTitle">{{ scoring.differenceAbbrev }}</th>
+                      }
                       <th scope="col">Pts</th>
                     </tr>
                   </thead>
