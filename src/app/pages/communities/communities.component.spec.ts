@@ -78,7 +78,7 @@ describe('CommunitiesComponent public session eligibility', () => {
     component.lossPointsDraft = 0;
     component.selectedSeasonId = null;
     (component as any).communityService = { updateCompetitionSettings };
-    spyOn(component, 'replaceCommunity');
+    spyOn(component as any, 'replaceCommunity');
     spyOn(component, 'loadCompetition');
 
     component.rankingsEnabledDraft = false;
