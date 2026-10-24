@@ -229,7 +229,17 @@ export class CommunityTournamentsComponent implements OnChanges {
   }
 
   get classificationProfile() {
-    return tournamentClassificationProfile(this.sportDraft);
+    const profile = tournamentClassificationProfile(this.sportDraft);
+    // Translate only display copy; keep all competition eligibility and scoring rules
+    // from the shared, sport-aware classification profile unchanged.
+    const family = profile.scoringMode === 'CHESS_HALF_POINTS' ? 'chess' : profile.format;
+    const key = 'communities.tournaments.classificationUi.' + family + '.';
+    return {
+      ...profile,
+      heading: t(key + 'heading'),
+      detail: t(key + 'detail'),
+      fields: t(key + 'fields')
+    };
   }
 
   /** Generic position-based races only; subdisciplines require separate contracts. */
@@ -238,7 +248,8 @@ export class CommunityTournamentsComponent implements OnChanges {
   }
 
   raceSportLabel(sport: string | null | undefined): string {
-    return sport === 'BMX' ? 'BMX Racing' : (sport || 'Corridas');
+    return sport === 'BMX' ? 'BMX Racing'
+      : (sport || t('communities.tournaments.classificationUi.raceFallback'));
   }
 
   get isRaceCompetition(): boolean {
