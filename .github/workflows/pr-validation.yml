@@ -10,6 +10,7 @@ on:
     paths:
       - 'src/**'
       - 'e2e/community-tournaments.spec.ts'
+      - 'e2e/inbox-read-sync.spec.ts'
       - 'scripts/qa/jynlo-karting-live-readonly.cjs'
       - 'scripts/qa/jynlo-karting-live-readonly.test.cjs'
       - 'scripts/ci-browser/public_api_contract_READONLY.cjs'
