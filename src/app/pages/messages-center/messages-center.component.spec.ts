@@ -94,7 +94,7 @@ describe('Unified Jynlo message center', () => {
     expect(component.draft).toBe('Olá ⚽');
     expect(component.emojiPickerOpen).toBeFalse();
     expect(focus).toHaveBeenCalled();
-    expect(setSelectionRange).toHaveBeenCalledWith(6, 6);
+    expect(setSelectionRange).toHaveBeenCalledWith(5, 5);
     expect(direct.send).not.toHaveBeenCalled();
   });
 
@@ -110,7 +110,7 @@ describe('Unified Jynlo message center', () => {
     }} as any;
 
     component.toggleEmojiPicker();
-    component.insertEmoji('⚽');
+    component.insertEmoji('😀');
     expect(component.draft).toBe('a'.repeat(1999));
     expect(component.emojiPickerOpen).toBeTrue();
     expect(direct.send).not.toHaveBeenCalled();
@@ -124,6 +124,9 @@ describe('Unified Jynlo message center', () => {
     component.composerAllowed = true;
     component.draft = 'Olá';
     component.toggleEmojiPicker();
+    // This case tests draft continuity, not asynchronous HTTP history loading.
+    spyOn<any>(component, 'loadHistory').and.stub();
+    spyOn<any>(component, 'loadComposerAccess').and.stub();
     component.selectConversation(community);
     expect(component.emojiPickerOpen).toBeFalse();
     component.selectConversation(directChat);
