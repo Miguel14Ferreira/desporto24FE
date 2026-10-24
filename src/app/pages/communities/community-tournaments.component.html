@@ -388,6 +388,38 @@
                   ? 'Em preparação' : formatStatus(tournament.status) }}</small>
         </button>
       }
+      @if (hasKartingCompetitions) {
+        <section class="karting-palmares" aria-labelledby="karting-palmares-title">
+          <div class="karting-palmares-heading">
+            <span aria-hidden="true">🏆</span>
+            <div>
+              <h5 id="karting-palmares-title">{{ 'communities.tournaments.kartingPalmaresTitle' | t }}</h5>
+              <p>{{ 'communities.tournaments.kartingPalmaresSubtitle' | t }}</p>
+            </div>
+          </div>
+          @for (tournament of kartingPalmares; track tournament.id) {
+            <button type="button" class="karting-palmares-item"
+              [class.is-active]="selected?.id === tournament.id"
+              [attr.aria-pressed]="selected?.id === tournament.id"
+              (click)="selectTournament(tournament)">
+              <span class="karting-palmares-name">{{ tournament.name }}</span>
+              <span class="karting-palmares-winner">
+                {{ tournament.championTied
+                  ? ('communities.tournaments.kartingSharedChampion' | t)
+                  : (tournament.championDisplayName || tournament.championUsername
+                    || ('communities.tournaments.kartingChampionUnavailable' | t)) }}
+              </span>
+              <small>{{ tournament.completedAt | date:'dd/MM/yyyy' }}</small>
+            </button>
+          }
+          @if (!kartingPalmares.length) {
+            <p class="t-muted">{{ 'communities.tournaments.kartingNoFinishedChampionships' | t }}</p>
+          }
+          @if (tournamentsHasMore) {
+            <p class="karting-palmares-more">{{ 'communities.tournaments.kartingMoreHistoryHint' | t }}</p>
+          }
+        </section>
+      }
       @if (loading) { <p class="t-muted" role="status">A carregar torneios…</p> }
       @if (tournamentsHasMore) {
         <button class="t-btn t-btn-secondary t-btn-wide" type="button"
@@ -459,7 +491,7 @@
           </div>
         </header>
 
-        @if (!isTeamCompetition && selected.status === 'COMPLETED') {
+        @if (!isTeamCompetition && selected.status === 'COMPLETED' && !isRaceCompetition) {
           <div class="champion" role="status">
             <span aria-hidden="true">🏆</span>
             <div>
@@ -898,6 +930,38 @@
                   <p>Associa corridas de Karting registadas nas Jornadas. Os resultados continuam nas provas originais.</p>
                 </div>
               </div>
+              @if (selected.status === 'COMPLETED' && finalKartingPodium.length) {
+                <section class="karting-final-podium" aria-labelledby="karting-final-podium-title">
+                  <div class="karting-podium-heading">
+                    <span class="karting-podium-kicker">{{ 'communities.tournaments.kartingArchiveKicker' | t }}</span>
+                    <h5 id="karting-final-podium-title">{{ 'communities.tournaments.kartingFinalPodium' | t }}</h5>
+                    <p>{{ selected.name }} · {{ selected.completedAt | date:'dd/MM/yyyy' }}</p>
+                  </div>
+                  <div class="karting-podium-grid">
+                    @for (driver of finalKartingPodium; track driver.playerId) {
+                      <article class="karting-podium-place" [class.is-first]="driver.position === 1"
+                        [class.is-second]="driver.position === 2"
+                        [class.is-third]="driver.position === 3">
+                        <span class="karting-podium-medal" aria-hidden="true">
+                          {{ driver.position === 1 ? '🥇' : (driver.position === 2 ? '🥈' : '🥉') }}
+                        </span>
+                        <span class="karting-podium-rank">{{ driver.position }}.º</span>
+                        <strong>{{ driver.fullName || ('communities.tournaments.kartingChampionUnavailable' | t) }}</strong>
+                        <span class="karting-podium-points">
+                          {{ driver.championshipPoints ?? '—' }} {{ 'communities.tournaments.kartingPointsAbbrev' | t }}
+                        </span>
+                        <small>{{ driver.wins }} {{ 'communities.tournaments.kartingWins' | t }}
+                          · {{ driver.podiums }} {{ 'communities.tournaments.kartingPodiums' | t }}</small>
+                      </article>
+                    }
+                  </div>
+                  @if (selected.championTied) {
+                    <p class="karting-shared-title" role="status">
+                      {{ 'communities.tournaments.kartingSharedFirstPlaceNotice' | t }}
+                    </p>
+                  }
+                </section>
+              }
               <div class="race-points-panel">
                 <strong>Pontos por posição</strong>
                 @if (canManage && selected.status === 'DRAFT' && !raceOverview.linkedRaces.length) {
