@@ -4,7 +4,7 @@ import { CommunityGroup } from '../model/community-group';
 import {
   CommunityTournament, TournamentPointRules, TeamTieBreakPriority, TournamentMatch, TournamentParticipant, TournamentStandingRow,
   TournamentStandings, TournamentTeam, TournamentTeamMatch, TournamentTeamStandings, TournamentTeamGroups,
-  TournamentRaceOverview
+  TournamentRaceOverview, TournamentRaceStanding
 } from '../model/community-tournament';
 import { CommunityTournamentsService } from '../../services/community-tournaments.service';
 import { AuthenticationService } from '../../services/authethication.service';
@@ -196,6 +196,28 @@ export class CommunityTournamentsComponent implements OnChanges {
 
   get isRaceCompetition(): boolean {
     return this.selected?.scoringMode === 'RACE_POINTS';
+  }
+
+  /** All completed Karting championships in the loaded paginated list. */
+  get kartingPalmares(): CommunityTournament[] {
+    return this.tournaments
+      .filter(tournament => tournament.scoringMode === 'RACE_POINTS'
+        && tournament.status === 'COMPLETED')
+      .sort((a, b) => (Date.parse(b.completedAt ?? '') || 0)
+        - (Date.parse(a.completedAt ?? '') || 0));
+  }
+
+  /** The archived positions decide the medals, not the UI order or points alone. */
+  get finalKartingPodium(): TournamentRaceStanding[] {
+    if (!this.isRaceCompetition || this.selected?.status !== 'COMPLETED') return [];
+    return (this.raceOverview?.standings ?? [])
+      .filter(driver => Number.isInteger(driver.position)
+        && driver.position >= 1 && driver.position <= 3)
+      .sort((a, b) => a.position - b.position || a.playerId - b.playerId);
+  }
+
+  get hasKartingCompetitions(): boolean {
+    return this.tournaments.some(tournament => tournament.scoringMode === 'RACE_POINTS');
   }
 
   get isSportFormatSupported(): boolean {
