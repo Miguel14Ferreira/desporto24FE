@@ -35,6 +35,7 @@ import { isBasketballFinal, basketballScoreError,
 import { isGroupRoutineEvent, routineGroupNames, routineGroupError,
   sortedRoutineGroups, routineGroupPlace, routineGroupMembers } from './community-group-routine-results';
 import { raceSupportsLaps, formatRaceSeconds, raceEntryValidationError } from './community-race-metrics';
+import { swimmingTimeError, formatSwimTime } from './community-swimming-results';
 import { raceDecisionError } from './community-race-decisions';
 import { performanceKind, performanceError, eventPerformanceEntries,
   eventPerformancePlace, performanceDisplay, surfWaveError, surfWaveTotal,
@@ -599,6 +600,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     return formatRaceSeconds(seconds);
   }
 
+  swimTime = formatSwimTime;
+
   roundFormatLabel(round: CommunityRound): string {
     return t('communities.resultFormat.' +
       eventPresentationFormat(this.roundSport(round), round.eventType));
@@ -837,6 +840,23 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   isJudoBout = isJudoBout;
   isMuayThaiEvent = isMuayThaiEvent;
   isKickboxingEvent = isKickboxingEvent;
+  clearSwimmingHiddenScores(): void {
+    if (this.newRoundEventType !== 'SWIM_LCM') return;
+    this.roundEntries.forEach(entry => {
+      entry.team = '';
+      entry.result = 'DRAW';
+      entry.goals = 0;
+      entry.assists = 0;
+      entry.mvp = false;
+      entry.cleanSheet = false;
+      entry.finishPosition = null;
+      entry.bestLapSeconds = null;
+      entry.lapsCompleted = null;
+      entry.performanceValue = null;
+      entry.waveScore1 = null;
+      entry.waveScore2 = null;
+    });
+  }
   clearStrengthTrainingHiddenScores(): void {
     if (this.newRoundEventType !== 'STRENGTH_TRAINING') return;
     this.roundEntries.forEach(entry => {
@@ -3281,6 +3301,10 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
         ? 'feedback.communities.golfInvalid'
         : this.newRoundEventType === 'TRAMPOLINE_INDIVIDUAL'
           ? 'feedback.communities.trampolineInvalid' : 'feedback.communities.performanceInvalid');
+      return;
+    }
+    if (this.newRoundEventType === 'SWIM_LCM' && swimmingTimeError(selectedEntries)) {
+      this.errorMessage = t('feedback.communities.swimmingInvalid');
       return;
     }
     if (race) {
