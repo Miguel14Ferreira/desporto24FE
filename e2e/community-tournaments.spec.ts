@@ -2173,3 +2173,31 @@ test('Team E2E: English cup winner is translated without league standings', asyn
   await expect(page.getByText('Cup completed · Knockout champion')).toBeVisible();
   expect(fixture.unmocked.filter(x => x.includes('/tournaments/'))).toEqual([]);
 });
+
+test('Competition guide E2E: PT/EN localizes introduction and available actions', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'empty');
+  await page.goto('/menu/communities/7?tab=tournaments');
+  await page.evaluate(() => localStorage.setItem('d24-language', 'en'));
+  await page.reload();
+
+  await expect(page.getByRole('heading', { name: 'Community competitions' })).toBeVisible();
+  const englishGuide = page.getByRole('region', { name: 'How competitions work' });
+  await expect(englishGuide.getByRole('heading', { name: 'How would you like to compete?' })).toBeVisible();
+  await expect(englishGuide.getByRole('button', { name: 'Create individual league' })).toBeVisible();
+  await expect(englishGuide.getByRole('button', { name: 'Set up a team tournament' })).toBeVisible();
+  await expect(englishGuide.getByText('Leagues and cups available')).toBeVisible();
+
+  await englishGuide.getByRole('button', { name: 'Close guide' }).click();
+  await expect(englishGuide).toHaveCount(0);
+  await page.getByRole('button', { name: 'How does it work?' }).click();
+  await expect(page.getByRole('region', { name: 'How competitions work' })).toBeVisible();
+
+  await page.evaluate(() => localStorage.setItem('d24-language', 'pt'));
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Competições da comunidade' })).toBeVisible();
+  const portugueseGuide = page.getByRole('region', { name: 'Como funcionam as competições' });
+  await expect(portugueseGuide.getByRole('heading', { name: 'Como querem competir?' })).toBeVisible();
+  await expect(portugueseGuide.getByRole('button', { name: 'Criar liga individual' })).toBeVisible();
+  await expect(portugueseGuide.getByRole('button', { name: 'Preparar torneio por equipas' })).toBeVisible();
+  expect(fixture.unmocked.filter(url => url.includes('/tournaments'))).toEqual([]);
+});
