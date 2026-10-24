@@ -175,6 +175,10 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   timelineDeletingId: number | null = null;
   timelineError = '';
   feedDraft = '';
+  feedImageFile?: File;
+  feedVideoFile?: File;
+  feedImagePreview = '';
+  feedVideoPreview = '';
   chatDraft = '';
   replyingToCommunityMessage: CommunityTimelineEntry | null = null;
   chatRealtimeConnected = false;
@@ -266,6 +270,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   }
 
   ngOnDestroy(): void {
+    this.clearCommunityFeedImage();
+    this.clearCommunityFeedVideo();
     this.typing.destroy();
     this.chatSubscriptions.unsubscribe();
   }
@@ -432,6 +438,70 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     return entry.kind === 'POST' && (this.canManage() || this.isMyChatEntry(entry));
   }
 
+  get canPublishCommunityPost(): boolean {
+    return !!(this.feedDraft.trim() || this.feedImageFile || this.feedVideoFile)
+      && !this.timelineSending;
+  }
+
+  communityFeedMediaUrl(path: string | null | undefined): string | null {
+    if (!path) return null;
+    if (/^https?:\/\//i.test(path)) return path;
+    return environment.apiUrl + (path.startsWith('/') ? path : '/' + path);
+  }
+
+  onCommunityFeedImageChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      this.timelineError = t('communities.timelineInvalidImage');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      this.timelineError = t('communities.timelineImageTooLarge');
+      return;
+    }
+    this.clearCommunityFeedVideo();
+    this.clearCommunityFeedImage();
+    this.feedImageFile = file;
+    this.feedImagePreview = URL.createObjectURL(file);
+    this.timelineError = '';
+  }
+
+  onCommunityFeedVideoChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    if (!['video/mp4', 'video/webm'].includes(file.type)) {
+      this.timelineError = t('communities.timelineInvalidVideo');
+      return;
+    }
+    if (file.size > 20 * 1024 * 1024) {
+      this.timelineError = t('communities.timelineVideoTooLarge');
+      return;
+    }
+    this.clearCommunityFeedImage();
+    this.clearCommunityFeedVideo();
+    this.feedVideoFile = file;
+    this.feedVideoPreview = URL.createObjectURL(file);
+    this.timelineError = '';
+  }
+
+  clearCommunityFeedImage(): void {
+    if (this.feedImagePreview) URL.revokeObjectURL(this.feedImagePreview);
+    this.feedImageFile = undefined;
+    this.feedImagePreview = '';
+  }
+
+  clearCommunityFeedVideo(): void {
+    if (this.feedVideoPreview) URL.revokeObjectURL(this.feedVideoPreview);
+    this.feedVideoFile = undefined;
+    this.feedVideoPreview = '';
+  }
+
+
 
   loadTimeline(): void {
     if (!this.selected || (this.activeTab !== 'feed' && this.activeTab !== 'chat')) return;
@@ -486,7 +556,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     const communityId = this.selected.id;
     const text = kind === 'CHAT' ? this.chatDraft.trim() : this.feedDraft.trim();
     const max = kind === 'CHAT' ? 2000 : 1000;
-    if (!text || text.length > max) return;
+    if ((!text && (kind === 'CHAT' || !this.feedImageFile && !this.feedVideoFile))
+        || text.length > max) return;
     this.timelineSending = true;
     this.timelineError = '';
     const replyId = kind === 'CHAT' ? this.replyingToCommunityMessage?.id ?? null : null;
@@ -495,11 +566,15 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       ? { communityId, text, replyToMessageId: replyId,
           ids: new Set(this.timelineEntries.map(entry => entry.id)), at: Date.now() }
       : undefined;
-    const send = replyId
-      ? this.timelineService.send(communityId, kind, text, replyId)
-      : this.timelineService.send(communityId, kind, text);
+    const send = kind === 'POST' && (this.feedImageFile || this.feedVideoFile)
+      ? this.timelineService.sendPostWithMedia(
+          communityId, text, this.feedImageFile, this.feedVideoFile)
+      : replyId
+        ? this.timelineService.send(communityId, kind, text, replyId)
+        : this.timelineService.send(communityId, kind, text);
     send
-      .pipe(timeout(10_000), finalize(() => this.timelineSending = false))
+      .pipe(timeout(kind === 'POST' && (this.feedImageFile || this.feedVideoFile) ? 90_000 : 10_000),
+        finalize(() => this.timelineSending = false))
       .subscribe({
         next: entry => {
           if (this.selected?.id !== communityId) return;
@@ -516,6 +591,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
             this.chatDeliveryUncertain = false;
           } else {
             this.feedDraft = '';
+            this.clearCommunityFeedImage();
+            this.clearCommunityFeedVideo();
             if (this.timelineKind === kind) this.loadTimeline();
           }
         },
@@ -1668,6 +1745,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     this.timelineError = '';
     this.timelineLoading = false;
     this.feedDraft = '';
+    this.clearCommunityFeedImage();
+    this.clearCommunityFeedVideo();
     this.chatDraft = '';
     this.replyingToCommunityMessage = null;
     this.chatDeliveryUncertain = false;

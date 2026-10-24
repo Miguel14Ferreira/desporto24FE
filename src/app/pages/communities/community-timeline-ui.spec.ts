@@ -6,6 +6,7 @@ describe('Community feed/chat UI state isolation', () => {
   let component: CommunitiesComponent;
   let list: jasmine.Spy;
   let send: jasmine.Spy;
+  let sendPostWithMedia: jasmine.Spy;
   let remove: jasmine.Spy;
 
   const message = (kind: 'POST' | 'CHAT'): CommunityTimelineEntry => ({
@@ -28,8 +29,9 @@ describe('Community feed/chat UI state isolation', () => {
     (component as any).chatEventsDuringLoad = new Map();
     list = jasmine.createSpy('list').and.returnValue(of([]));
     send = jasmine.createSpy('send').and.returnValue(of(message('POST')));
+    sendPostWithMedia = jasmine.createSpy('sendPostWithMedia').and.returnValue(of(message('POST')));
     remove = jasmine.createSpy('delete').and.returnValue(of(undefined));
-    (component as any).timelineService = { list, send, delete: remove };
+    (component as any).timelineService = { list, send, sendPostWithMedia, delete: remove };
     (component as any).router = { navigate: jasmine.createSpy('navigate').and.returnValue(Promise.resolve(true)) };
     spyOn(component, 'canManage').and.returnValue(true);
   });
@@ -79,6 +81,32 @@ describe('Community feed/chat UI state isolation', () => {
     component.chatDraft = 'x'.repeat(2001);
     component.sendTimeline();
     expect(send).not.toHaveBeenCalled();
+  });
+
+  it('sends image-only posts as multipart media without writing to community chat', () => {
+    const photo = new File(['test'], 'match.jpg', { type: 'image/jpeg' });
+    component.activeTab = 'feed';
+    component.feedImageFile = photo;
+    component.feedDraft = '';
+    spyOn(component, 'loadTimeline');
+    component.sendTimeline();
+    expect(sendPostWithMedia).toHaveBeenCalledOnceWith(7, '', photo, undefined);
+    expect(send).not.toHaveBeenCalled();
+    expect(component.feedImageFile).toBeUndefined();
+    expect(component.loadTimeline).toHaveBeenCalled();
+  });
+
+  it('uses the same upload for video and preserves failed media for retry', () => {
+    const video = new File(['test'], 'match.mp4', { type: 'video/mp4' });
+    component.activeTab = 'feed';
+    component.feedVideoFile = video;
+    component.feedDraft = '  Grande jogo  ';
+    expect(component.canPublishCommunityPost).toBeTrue();
+    spyOn(component, 'loadTimeline');
+    component.sendTimeline();
+    expect(sendPostWithMedia).toHaveBeenCalledOnceWith(7, 'Grande jogo', undefined, video);
+    expect(component.feedVideoFile).toBeUndefined();
+    expect(component.feedDraft).toBe('');
   });
 
   it('shows the community member name and picture in a post, with a safe fallback', () => {
