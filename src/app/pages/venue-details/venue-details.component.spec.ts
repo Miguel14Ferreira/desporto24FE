@@ -133,7 +133,7 @@ describe('VenueDetailsComponent', () => {
   });
 
   it('supports retrying a failed venue load without getting stuck on the loading state', () => {
-    const route = {snapshot:{paramMap:{get: () => '7'}}} as ActivatedRoute;
+    const route = {snapshot:{paramMap:{get: () => '7'}}} as unknown as ActivatedRoute;
     const api = jasmine.createSpyObj<VenueService>('VenueService', ['get']);
     api.get.and.returnValue(throwError(() => new Error('timeout')));
     const component = new VenueDetailsComponent(route, api);
