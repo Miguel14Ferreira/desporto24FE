@@ -196,7 +196,8 @@ export function eventView(sport: string | null | undefined, eventType: string | 
   if (eventOptionsForSport(sport).length && eventType == null) {
     // Preserve historical race/team round presentation without reinterpreting
     // legacy scores as typed event results. Newly typed rounds still use their event.
-    if (normalize(sport!) === 'bmx') return 'race';
+    if (normalize(sport!) === 'bmx' || normalize(sport!) === 'natacao em aguas abertas')
+      return 'race';
     return viewForSport(sport || null) === 'team' ? 'team' : 'individual';
   }
   if (isRaceEvent(sport, eventType)) return 'race';
