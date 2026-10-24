@@ -3872,6 +3872,11 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       });
   }
 
+  /** Keep the entire animated logo visible; existing still photos retain cover cropping. */
+  isAnimatedCommunityAvatar(photoUrl: string | null | undefined): boolean {
+    return typeof photoUrl === 'string' && /\.gif(?:[?#]|$)/i.test(photoUrl);
+  }
+
   communityInitials(community: CommunityGroup): string {
     return community.name
       .split(/\s+/)
