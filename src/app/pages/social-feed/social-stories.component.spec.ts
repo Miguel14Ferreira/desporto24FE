@@ -139,7 +139,7 @@ describe('SocialStoriesComponent', () => {
     component.replyText = 'Boa!';
     component.replyToStory();
     tick();
-    expect(direct.send).toHaveBeenCalledWith('joao', jasmine.stringMatching(/Boa![\\s\\S]*story=9/));
+    expect(direct.send).toHaveBeenCalledWith('joao', jasmine.stringMatching(/Boa![\s\S]*story=9/));
     expect(component.replyText).toBe('');
     component.close();
   }));
