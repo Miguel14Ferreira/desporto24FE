@@ -1742,6 +1742,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     this.timelineError = '';
     this.timelineLoading = false;
     this.feedDraft = '';
+    this.clearCommunityFeedImage();
+    this.clearCommunityFeedVideo();
     this.chatDraft = '';
     this.replyingToCommunityMessage = null;
     this.chatDeliveryUncertain = false;
