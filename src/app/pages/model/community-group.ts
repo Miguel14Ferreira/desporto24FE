@@ -86,6 +86,10 @@ export interface CommunityGroupRoutineScore {
 }
 
 export interface CommunityTeamFinalScore { sideA: number | null; sideB: number | null; }
+export interface CommunityCricketDetails {
+  wicketsA: number | null; legalBallsA: number | null;
+  wicketsB: number | null; legalBallsB: number | null;
+}
 
 export interface CommunityBasketballScore {
   sideA: number | null;
@@ -111,13 +115,14 @@ export interface CommunityRound {
     | 'ICE_HOCKEY_REG' | 'ICE_HOCKEY_OT' | 'ICE_HOCKEY_SO' | 'BASEBALL_RUNS' | 'SOFTBALL_RUNS' | 'KORFBALL_REG' | 'KORFBALL_GOLDEN'
     | 'LACROSSE_M_REG' | 'LACROSSE_M_OT' | 'AMFOOTBALL_SCORE' | 'FLAGFOOTBALL_SCORE' | 'CURLING_REG' | 'CURLING_EXTRA'
     | 'PETANQUE_13' | 'PETANQUE_11' | 'BOWLING_TENPIN' | 'POOL_9_RACKS' | 'FENCING_POOL_5' | 'FENCING_DE_15'
-    | 'TEQBALL_SINGLES' | 'TEQBALL_DOUBLES' | 'CHESS_GAME' | null;
+    | 'TEQBALL_SINGLES' | 'TEQBALL_DOUBLES' | 'CHESS_GAME' | 'CRICKET_T20' | null;
   eventDiscipline?: string | null;
   matchFormat?: CommunityRacketMatchFormat | null;
   setScores?: CommunitySetScore[] | null;
   groupScores?: CommunityGroupRoutineScore[] | null;
   basketballScore?: CommunityBasketballScore | null;
   teamScore?: CommunityTeamFinalScore | null;
+  cricketDetails?: CommunityCricketDetails | null;
   entries: CommunityRoundEntry[];
 }
 
