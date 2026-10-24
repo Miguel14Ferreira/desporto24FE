@@ -2201,3 +2201,48 @@ test('Competition guide E2E: PT/EN localizes introduction and available actions'
   await expect(portugueseGuide.getByRole('button', { name: 'Preparar torneio por equipas' })).toBeVisible();
   expect(fixture.unmocked.filter(url => url.includes('/tournaments'))).toEqual([]);
 });
+
+test('Competition creation E2E: format and scoring form switch between EN and PT', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'empty');
+  await page.goto('/menu/communities/7?tab=tournaments');
+  await page.evaluate(() => localStorage.setItem('d24-language', 'en'));
+  await page.reload();
+
+  await page.getByRole('region', { name: 'How competitions work' })
+    .getByRole('button', { name: 'Set up a team tournament' }).click();
+  const wizard = page.getByRole('region', { name: 'Configure competition' });
+  await expect(wizard.getByRole('heading', { name: 'Set up a team tournament' })).toBeVisible();
+  await expect(wizard.getByRole('region', { name: 'Competition details' })).toBeVisible();
+  await expect(wizard.getByLabel('Tournament name')).toHaveAttribute('placeholder', 'E.g. Autumn League');
+  await wizard.getByLabel('Tournament name').fill('A');
+  await expect(wizard.getByText('The name must contain at least 2 characters.')).toBeVisible();
+  await expect(wizard.getByRole('region', { name: 'Format and participants' })).toBeVisible();
+  await expect(wizard.getByRole('button', { name: 'Two legs (home and away)' })).toBeVisible();
+  await wizard.getByRole('button', { name: 'Two legs (home and away)' }).click();
+  await expect(wizard.getByText(/One leg: each pair of teams meets once/)).toBeVisible();
+  await wizard.locator('.create-format-option').nth(2).click();
+  await expect(wizard.getByRole('button', { name: '2 groups · minimum 4 teams' })).toBeVisible();
+  await expect(wizard.getByRole('button', { name: '4 groups · minimum 8 teams' })).toBeVisible();
+  await expect(wizard.getByRole('region', { name: 'Standings rules' })).toBeVisible();
+  await wizard.getByRole('button', { name: 'Back to options' }).click();
+
+  await page.getByRole('region', { name: 'How competitions work' })
+    .getByRole('button', { name: 'Create individual league' }).click();
+  const individual = page.getByRole('region', { name: 'Configure competition' });
+  await expect(individual.getByRole('heading', { name: 'Create individual league' })).toBeVisible();
+  await expect(individual.getByRole('region', { name: 'Standings rules' })).toBeVisible();
+  await expect(individual.getByRole('button', { name: 'Confirm individual league' })).toBeDisabled();
+
+  await page.evaluate(() => localStorage.setItem('d24-language', 'pt'));
+  await page.reload();
+  await page.getByRole('region', { name: 'Como funcionam as competições' })
+    .getByRole('button', { name: 'Preparar torneio por equipas' }).click();
+  const portuguese = page.getByRole('region', { name: 'Configurar competição' });
+  await expect(portuguese.getByRole('heading', { name: 'Preparar torneio por equipas' })).toBeVisible();
+  await expect(portuguese.getByLabel('Nome do torneio')).toHaveAttribute('placeholder', 'Ex.: Liga de Outono');
+  await expect(portuguese.getByRole('button', { name: 'Duas voltas (casa e fora)' })).toBeVisible();
+  await expect(portuguese.getByRole('button', { name: 'Voltar às opções' })).toBeVisible();
+
+  expect(fixture.unmocked.filter(url => url.includes('/tournaments'))).toEqual([]);
+  expect(fixture.organizerMutations).toEqual([]);
+});
