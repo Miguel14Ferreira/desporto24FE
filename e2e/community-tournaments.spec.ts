@@ -2124,3 +2124,52 @@ test('Karting E2E: PT/EN acompanha idioma da Jynlo em pontuação e arquivo', as
   await expect(portuguese.getByText('Classificação final arquivada')).toBeVisible();
   expect(fixture.unmocked.filter(x => x.includes('/tournaments'))).toEqual([]);
 });
+
+
+test('Team E2E: PT/EN shows real league standings and translated champion', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'teams-schedule');
+  await page.goto('/menu/communities/7?tab=tournaments');
+  await page.evaluate(() => localStorage.setItem('d24-language', 'en'));
+  await page.reload();
+
+  await page.getByRole('button', { name: 'Gerar jornadas entre equipas' }).click();
+  await page.getByRole('button', { name: 'Sim, publicar jornadas por equipas' }).click();
+  const standings = page.getByRole('table', { name: 'Team standings' });
+  await expect(standings).toBeVisible();
+  await expect(standings.getByRole('columnheader', { name: 'GF' })).toBeVisible();
+  await expect(standings.getByRole('columnheader', { name: 'GA' })).toBeVisible();
+  const game = page.locator('.team-fixture');
+  await game.getByRole('spinbutton', { name: 'Golos de Azuis' }).fill('2');
+  await game.getByRole('spinbutton', { name: 'Golos de Verdes' }).fill('1');
+  await game.getByRole('button', { name: 'Guardar resultado entre Azuis e Verdes' }).click();
+
+  await page.getByRole('button', { name: 'Finish team championship' }).click();
+  await page.getByRole('button', { name: 'Yes, finish championship' }).click();
+  await expect(page.getByText('Champion team: Azuis')).toBeVisible();
+  await expect(page.getByText('3 points · Championship completed')).toBeVisible();
+  await expect(standings.locator('tbody tr')).toHaveCount(2);
+
+  await page.evaluate(() => localStorage.setItem('d24-language', 'pt'));
+  await page.reload();
+  await expect(page.getByText('Equipa campeã: Azuis')).toBeVisible();
+  await expect(page.getByRole('table', { name: 'Classificação por equipas' })).toBeVisible();
+  expect(fixture.unmocked.filter(x => x.includes('/tournaments/'))).toEqual([]);
+});
+
+test('Team E2E: English cup winner is translated without league standings', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'teams-schedule',
+    'Futebol', undefined, 1, 'KNOCKOUT');
+  await page.goto('/menu/communities/7?tab=tournaments');
+  await page.evaluate(() => localStorage.setItem('d24-language', 'en'));
+  await page.reload();
+  await page.getByRole('button', { name: 'Sortear eliminatórias' }).click();
+  await page.getByRole('button', { name: 'Sim, sortear eliminatórias' }).click();
+  await expect(page.getByRole('table', { name: 'Team standings' })).toHaveCount(0);
+  const match = page.locator('.team-fixture');
+  await match.getByRole('spinbutton', { name: 'Golos de Azuis' }).fill('2');
+  await match.getByRole('spinbutton', { name: 'Golos de Verdes' }).fill('1');
+  await match.getByRole('button', { name: 'Guardar resultado entre Azuis e Verdes' }).click();
+  await expect(page.getByText('Champion team: Azuis')).toBeVisible();
+  await expect(page.getByText('Cup completed · Knockout champion')).toBeVisible();
+  expect(fixture.unmocked.filter(x => x.includes('/tournaments/'))).toEqual([]);
+});
