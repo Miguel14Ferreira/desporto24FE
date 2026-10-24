@@ -496,11 +496,11 @@
             <span aria-hidden="true">🏆</span>
             <div>
               @if (selected.championTied) {
-                <strong>Empate no primeiro lugar</strong>
-                <p>O torneio terminou com igualdade nos critérios de desempate.</p>
+                <strong>{{ 'communities.tournaments.finalUi.individualTieTitle' | t }}</strong>
+                <p>{{ 'communities.tournaments.finalUi.individualTieHelp' | t }}</p>
               } @else {
-                <strong>Campeão: {{ selected.championDisplayName || selected.championUsername }}</strong>
-                <p>{{ formatTournamentPoints(selected.championPoints) }} pontos · Torneio concluído</p>
+                <strong>{{ 'communities.tournaments.finalUi.individualChampion' | t }} {{ selected.championDisplayName || selected.championUsername }}</strong>
+                <p>{{ formatTournamentPoints(selected.championPoints) }} {{ 'communities.tournaments.finalUi.individualFinished' | t }}</p>
               }
             </div>
           </div>
@@ -511,14 +511,14 @@
             <span aria-hidden="true">🏆</span>
             <div>
               @if (selected.championTied) {
-                <strong>Empate no primeiro lugar entre equipas</strong>
-                <p>O campeonato terminou empatado nos critérios desportivos.</p>
+                <strong>{{ 'communities.tournaments.finalUi.teamTieTitle' | t }}</strong>
+                <p>{{ 'communities.tournaments.finalUi.teamTieHelp' | t }}</p>
               } @else {
-                <strong>Equipa campeã: {{ selected.championTeamName }}</strong>
+                <strong>{{ 'communities.tournaments.finalUi.teamChampion' | t }} {{ selected.championTeamName }}</strong>
                 @if (isCupFormat) {
-                  <p>Taça concluída · Campeão das eliminatórias</p>
+                  <p>{{ 'communities.tournaments.finalUi.teamCupFinished' | t }}</p>
                 } @else {
-                  <p>{{ selected.championPoints }} pontos · Campeonato concluído</p>
+                  <p>{{ selected.championPoints }} {{ 'communities.tournaments.finalUi.teamLeagueFinished' | t }}</p>
                 }
               }
             </div>
@@ -789,36 +789,36 @@
                 }
               </section>
               @if (isGroupKnockout) {
-                <section class="t-section team-standings-section" aria-label="Classificação dos grupos">
+                <section class="t-section team-standings-section" [attr.aria-label]="'communities.tournaments.finalUi.groupStandingsAria' | t">
                   <div class="t-section-heading">
                     <div>
-                      <h5>Classificações dos grupos</h5>
-                      <p>Dois apurados por grupo · desempate por pontos, critérios desportivos e sorteio inicial.</p>
+                      <h5>{{ 'communities.tournaments.finalUi.groupStandings' | t }}</h5>
+                      <p>{{ 'communities.tournaments.finalUi.groupStandingsHint' | t }}</p>
                     </div>
                     <button type="button" class="t-btn t-btn-secondary t-btn-small"
-                      [disabled]="teamGroupsLoading" (click)="loadGroupStandings()">Atualizar</button>
+                      [disabled]="teamGroupsLoading" (click)="loadGroupStandings()">{{ 'communities.tournaments.finalUi.refresh' | t }}</button>
                   </div>
                   @if (teamGroupsLoading) {
-                    <p class="t-muted" role="status">A atualizar classificações…</p>
+                    <p class="t-muted" role="status">{{ 'communities.tournaments.finalUi.groupsLoading' | t }}</p>
                   }
                   @if (teamGroupsError) {
-                    <p class="field-validation" role="alert">Não foi possível consultar as classificações dos grupos.</p>
+                    <p class="field-validation" role="alert">{{ 'communities.tournaments.finalUi.groupsError' | t }}</p>
                   }
                   @if (teamGroups; as groups) {
                     @if (groups.knockoutStarted) {
-                      <p class="t-muted">Grupos concluídos. Os apurados já disputam as eliminatórias.</p>
+                      <p class="t-muted">{{ 'communities.tournaments.finalUi.groupsComplete' | t }}</p>
                     }
                     @for (group of groups.groups; track group.groupNumber) {
-                      <h6>Grupo {{ groupLabel(group.groupNumber) }}</h6>
+                      <h6>{{ 'communities.tournaments.finalUi.groupLabel' | t:{group: groupLabel(group.groupNumber)} }}</h6>
                       <div class="standings-scroll">
                         <table class="standings-table team-standings-table"
-                          [attr.aria-label]="'Classificação do grupo ' + groupLabel(group.groupNumber)">
+                          [attr.aria-label]="'communities.tournaments.finalUi.groupTableLabel' | t:{group: groupLabel(group.groupNumber)}">
                           <thead>
                             <tr>
-                              <th scope="col">#</th><th scope="col">Equipa</th>
-                              <th scope="col">J</th><th scope="col">V</th><th scope="col">E</th>
-                              <th scope="col">D</th><th scope="col">GM</th><th scope="col">GS</th>
-                              <th scope="col">DG</th><th scope="col">Pts</th>
+                              <th scope="col">#</th><th scope="col">{{ 'communities.tournaments.finalUi.teamCol' | t }}</th>
+                              <th scope="col">{{ 'communities.tournaments.finalUi.playedCol' | t }}</th><th scope="col">{{ 'communities.tournaments.finalUi.winsCol' | t }}</th><th scope="col">{{ 'communities.tournaments.finalUi.drawsCol' | t }}</th>
+                              <th scope="col">{{ 'communities.tournaments.finalUi.lossesCol' | t }}</th><th scope="col">{{ 'communities.tournaments.finalUi.forCol' | t }}</th><th scope="col">{{ 'communities.tournaments.finalUi.againstCol' | t }}</th>
+                              <th scope="col">{{ 'communities.tournaments.finalUi.differenceCol' | t }}</th><th scope="col">{{ 'communities.tournaments.finalUi.pointsCol' | t }}</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -827,7 +827,7 @@
                                 <td>{{ row.position }}</td>
                                 <th scope="row">{{ row.teamName }}
                                   @if (groups.knockoutStarted && row.position <= 2) {
-                                    <span class="tournament-state">Apurada</span>
+                                    <span class="tournament-state">{{ 'communities.tournaments.finalUi.qualified' | t }}</span>
                                   }
                                 </th>
                                 <td>{{ row.played }}</td><td>{{ row.won }}</td><td>{{ row.drawn }}</td>
@@ -843,33 +843,35 @@
                 </section>
               }
               @if (selected.format === 'LEAGUE') {
-              <section class="t-section team-standings-section" aria-label="Classificação por equipas">
+              <section class="t-section team-standings-section" [attr.aria-label]="'communities.tournaments.finalUi.teamStandings' | t">
                 <div class="t-section-heading">
                   <div>
-                    <h5>Classificação por equipas</h5>
-                    <p>Vitória: {{ teamStandings?.winPoints ?? selected.winPoints }} ·
-                      Empate: {{ teamStandings?.drawPoints ?? selected.drawPoints }} ·
-                      Derrota: {{ teamStandings?.lossPoints ?? selected.lossPoints }} pontos</p>
+                    <h5>{{ 'communities.tournaments.finalUi.teamStandings' | t }}</h5>
+                    <p>{{ 'communities.tournaments.finalUi.teamRules' | t:{
+                      win: (teamStandings?.winPoints ?? selected.winPoints),
+                      draw: (teamStandings?.drawPoints ?? selected.drawPoints),
+                      loss: (teamStandings?.lossPoints ?? selected.lossPoints)
+                    } }}</p>
                     <p>Desempate: {{ teamTieBreakLabel(selected.teamTieBreakPriority) }} primeiro</p>
                   </div>
                   <button type="button" class="t-btn t-btn-secondary t-btn-small"
-                    [disabled]="teamStandingsLoading" (click)="loadTeamStandings()">Atualizar</button>
+                    [disabled]="teamStandingsLoading" (click)="loadTeamStandings()">{{ 'communities.tournaments.finalUi.refresh' | t }}</button>
                 </div>
                 @if (teamStandingsLoading) {
-                  <p class="t-muted" role="status">A atualizar classificação…</p>
+                  <p class="t-muted" role="status">{{ 'communities.tournaments.finalUi.teamLoading' | t }}</p>
                 }
                 @if (teamStandingsError) {
-                  <p class="field-validation" role="alert">Não foi possível carregar a classificação por equipas.</p>
+                  <p class="field-validation" role="alert">{{ 'communities.tournaments.finalUi.teamError' | t }}</p>
                 }
                 @if (teamStandings; as table) {
-                  <p class="t-muted">{{ table.completedMatches }} / {{ table.totalMatches }} confrontos concluídos</p>
+                  <p class="t-muted">{{ 'communities.tournaments.finalUi.completedMatches' | t:{completed: table.completedMatches, total: table.totalMatches} }}</p>
                   <div class="standings-scroll">
-                    <table class="standings-table team-standings-table" aria-label="Classificação por equipas">
+                    <table class="standings-table team-standings-table" [attr.aria-label]="'communities.tournaments.finalUi.teamStandings' | t">
                       <thead>
-                        <tr><th scope="col">#</th><th scope="col">Equipa</th>
-                          <th scope="col">J</th><th scope="col">V</th><th scope="col">E</th>
-                          <th scope="col">D</th><th scope="col">GM</th><th scope="col">GS</th>
-                          <th scope="col">DG</th><th scope="col">Pts</th></tr>
+                        <tr><th scope="col">#</th><th scope="col">{{ 'communities.tournaments.finalUi.teamCol' | t }}</th>
+                          <th scope="col">{{ 'communities.tournaments.finalUi.playedCol' | t }}</th><th scope="col">{{ 'communities.tournaments.finalUi.winsCol' | t }}</th><th scope="col">{{ 'communities.tournaments.finalUi.drawsCol' | t }}</th>
+                          <th scope="col">{{ 'communities.tournaments.finalUi.lossesCol' | t }}</th><th scope="col">{{ 'communities.tournaments.finalUi.forCol' | t }}</th><th scope="col">{{ 'communities.tournaments.finalUi.againstCol' | t }}</th>
+                          <th scope="col">{{ 'communities.tournaments.finalUi.differenceCol' | t }}</th><th scope="col">{{ 'communities.tournaments.finalUi.pointsCol' | t }}</th></tr>
                       </thead>
                       <tbody>
                         @for (row of table.standings; track row.teamId) {
@@ -889,23 +891,21 @@
               @if (canManage && selected.status === 'IN_PROGRESS') {
                 <div class="complete-action">
                   <div>
-                    <h5>Encerrar campeonato por equipas</h5>
-                    <p>É necessário concluir todos os confrontos.
-                      Depois de encerrado, os resultados ficam bloqueados
-                      e a equipa campeã é registada.</p>
+                    <h5>{{ 'communities.tournaments.finalUi.completeTeamTitle' | t }}</h5>
+                    <p>{{ 'communities.tournaments.finalUi.completeTeamHelp' | t }}</p>
                   </div>
                   @if (confirmAction === 'completeTeam') {
                     <div class="confirm-actions">
                       <button type="button" class="t-btn t-btn-primary"
                         [disabled]="busy || !canCompleteTeam"
-                        (click)="completeTeam()">Sim, encerrar campeonato</button>
+                        (click)="completeTeam()">{{ 'communities.tournaments.finalUi.completeTeamConfirm' | t }}</button>
                       <button type="button" class="t-btn t-btn-secondary"
-                        (click)="confirmAction = null">Cancelar</button>
+                        (click)="confirmAction = null">{{ 'communities.tournaments.finalUi.cancel' | t }}</button>
                     </div>
                   } @else {
                     <button type="button" class="t-btn t-btn-secondary"
                       [disabled]="!canCompleteTeam"
-                      (click)="confirmAction = 'completeTeam'">Encerrar campeonato por equipas</button>
+                      (click)="confirmAction = 'completeTeam'">{{ 'communities.tournaments.finalUi.completeTeamTitle' | t }}</button>
                   }
                 </div>
               }
@@ -1338,19 +1338,19 @@
           @if (canManage && selected.status === 'IN_PROGRESS') {
             <div class="complete-action">
               <div>
-                <h5>Encerrar torneio</h5>
-                <p>Depois de concluído, os resultados ficam bloqueados e o campeão é registado.</p>
+                <h5>{{ 'communities.tournaments.finalUi.completeIndividualTitle' | t }}</h5>
+                <p>{{ 'communities.tournaments.finalUi.completeIndividualHelp' | t }}</p>
               </div>
               @if (confirmAction === 'complete') {
                 <div class="confirm-actions">
                   <button type="button" class="t-btn t-btn-primary" [disabled]="busy || !canComplete"
-                    (click)="complete()">Sim, encerrar</button>
-                  <button type="button" class="t-btn t-btn-secondary" (click)="confirmAction = null">Cancelar</button>
+                    (click)="complete()">{{ 'communities.tournaments.finalUi.completeIndividualConfirm' | t }}</button>
+                  <button type="button" class="t-btn t-btn-secondary" (click)="confirmAction = null">{{ 'communities.tournaments.finalUi.cancel' | t }}</button>
                 </div>
               } @else {
                 <button type="button" class="t-btn t-btn-secondary"
                   [disabled]="busy || !canComplete"
-                  (click)="confirmAction = 'complete'">Encerrar torneio</button>
+                  (click)="confirmAction = 'complete'">{{ 'communities.tournaments.finalUi.completeIndividualTitle' | t }}</button>
               }
             </div>
           }
