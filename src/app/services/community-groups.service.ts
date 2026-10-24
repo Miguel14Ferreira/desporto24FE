@@ -104,6 +104,7 @@ export interface HistoricalMatchArchiveSummary {
 
 export interface HistoricalMatchArchive extends HistoricalMatchArchiveSummary {
   rows: HistoricalMatchPreview['rows'];
+  tournamentId?: number | null;
 }
 
 
@@ -333,6 +334,9 @@ export class CommunityGroupsService {
   confirmHistoricalMatches(id: number, file: File, mapping: unknown, context: {
     title: string;
     entryType: 'INDIVIDUAL' | 'TEAM';
+    createTournament?: boolean;
+    sport?: string;
+    format?: 'LEAGUE' | 'KNOCKOUT';
   }): Observable<HistoricalMatchArchive> {
     const form = this.importForm(file, mapping);
     form.append('context', new Blob([JSON.stringify(context)], { type: 'application/json' }));
