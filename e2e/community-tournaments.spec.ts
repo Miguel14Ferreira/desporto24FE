@@ -69,6 +69,7 @@ function fixtureToken(username: string): string {
 
 
 interface KartingFixture {
+  sport: string;
   tournament: Tournament | null;
   points: number[];
   linked: boolean;
@@ -76,12 +77,12 @@ interface KartingFixture {
   snapshot: ReturnType<typeof raceData> | null;
   writes: Array<{ role: Role; path: string }>;
 }
-function createKartingFixture(): KartingFixture {
-  return { tournament: null, points: [25,18,15], linked: false, tied: false, snapshot: null, writes: [] };
+function createKartingFixture(sport = 'Karting'): KartingFixture {
+  return { sport, tournament: null, points: [25,18,15], linked: false, tied: false, snapshot: null, writes: [] };
 }
 function raceData(state: KartingFixture) {
   const race = {
-    id: 30, name: 'Grande Prémio QA', sport: 'Karting', playedAt: '2026-10-23T18:00:00Z',
+    id: 30, name: 'Grande Prémio QA', sport: state.sport, playedAt: '2026-10-23T18:00:00Z',
     entries: [
       { communityPlayerId: 2, fullName: 'Ana', finishPosition: 1, elapsedSeconds: 612,
         bestLapSeconds: 58, racePenaltyPoints: 0, raceDisqualified: false },
@@ -396,10 +397,10 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
         karting.writes.push({ role, path });
         const body = req.postDataJSON() as { name: string; sport: string; scoringMode: string };
         if (role !== 'OWNER') return send({ message: 'Sem permissão' }, 403);
-        if (body.sport !== 'Karting' || body.scoringMode !== 'RACE_POINTS')
+        if (body.sport !== karting.sport || body.scoringMode !== 'RACE_POINTS')
           return send({ message: 'Formato incorreto' }, 422);
         karting.tournament = { ...tournament(11, body.name),
-          sport: 'Karting', entryType: 'INDIVIDUAL', scoringMode: 'RACE_POINTS' };
+          sport: karting.sport, entryType: 'INDIVIDUAL', scoringMode: 'RACE_POINTS' };
         return send(karting.tournament, 201);
       }
       if (path === base && method === 'GET') {
@@ -1895,6 +1896,30 @@ test('xadrez apresenta 1/½/0 sem parâmetros genéricos e é limitado a ligas i
   await expect(page.getByText(/Xadrez por equipas precisa de partidas e resultados por tabuleiro/)).toBeVisible();
 });
 
+
+test('Ciclocrosse E2E: só as provas da modalidade alimentam a classificação por posições', async ({ page }) => {
+  const state = createKartingFixture('Ciclocrosse');
+  const mock = await mockCommunityApi(page, 'OWNER', 'karting', 'Ciclocrosse',
+    ['Ciclocrosse'], 1, 'LEAGUE', state);
+  await page.goto('/menu/communities/7?tab=tournaments');
+
+  await page.getByRole('button', { name: 'Criar liga individual' }).click();
+  await page.getByLabel('Nome do torneio').fill('Taça Ciclocrosse QA');
+  await expect(page.locator('.classification-fixed-points')).toContainText('Ciclocrosse');
+  await page.getByRole('button', { name: 'Criar campeonato por corridas' }).click();
+
+  const race = page.getByRole('region', { name: 'Campeonato por corridas' });
+  await expect(race).toBeVisible();
+  await expect(race).toContainText('Ciclocrosse');
+  expect(state.tournament?.sport).toBe('Ciclocrosse');
+  await race.getByRole('button', { name: 'Associar' }).click();
+  const standings = page.getByRole('table', { name: 'Classificação por corridas' });
+  await expect(standings.locator('tbody tr')).toHaveCount(2);
+  await expect(standings.locator('tbody tr').first()).toContainText('Ana');
+  await expect(standings.locator('tbody tr').first()).toContainText('25');
+  await expect(race.getByText('Piloto', { exact: true })).toHaveCount(0);
+  expect(mock.unmocked.filter(path => path.includes('/tournaments'))).toEqual([]);
+});
 
 test('Karting E2E: criador configura pontos, associa corrida e participante consulta', async ({ browser }, testInfo) => {
   const state = createKartingFixture();

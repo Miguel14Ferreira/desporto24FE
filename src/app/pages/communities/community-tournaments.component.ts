@@ -254,7 +254,12 @@ export class CommunityTournamentsComponent implements OnChanges {
 
   get sportFormatWarning(): string {
     if (this.isRaceChampionshipDraft) {
-      return 'O campeonato utiliza posições, tempos, penalizações e desclassificações das Jornadas. Em BMX, apenas as corridas Racing (não Freestyle) podem ser associadas.';
+      if (this.sportDraft === 'BMX') return t('communities.race.bmxRacingOnly');
+      if (this.sportDraft === 'Ciclismo' || this.sportDraft === 'Mountain Bike'
+          || this.sportDraft === 'Ciclocrosse') {
+        return t('communities.race.communityScoring');
+      }
+      return t('communities.karting.creationHint');
     }
     return this.showTeamCreate && this.classificationProfile.scoringMode === 'CHESS_HALF_POINTS'
       ? 'O Xadrez por equipas precisa de partidas e resultados por tabuleiro. Para já, cria uma liga individual de Xadrez.'
