@@ -1160,7 +1160,7 @@
                                 <select [(ngModel)]="sprintBracketQualifyingRoundIdDraft">
                                   <option [ngValue]="null">{{ 'communities.trackCycling.qualifyingSelect' | t }}</option>
                                   @for (round of availableSprintQualifyingRounds; track round.id) {
-                                    <option [ngValue]="round.id">{{ round.name }} — {{ roundDate(round.playedAt) }}</option>
+                                    <option [ngValue]="round.id">{{ round.name }} — {{ formatRoundDate(round.playedAt) }}</option>
                                   }
                                 </select>
                               </label>
