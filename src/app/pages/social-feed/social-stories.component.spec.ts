@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { NEVER, of } from 'rxjs';
+import { NEVER, of, throwError } from 'rxjs';
 import { SocialStoriesComponent } from './social-stories.component';
 import { SocialStoriesService } from '../../services/social-stories.service';
 import { DirectChatService } from '../../services/direct-chat.service';
@@ -51,7 +51,7 @@ describe('SocialStoriesComponent', () => {
     fixture.detectChanges();
     tick();
     expect(component.storyGroups).toHaveSize(1);
-    expect(component.storyGroups[0].name).toBe('João');
+    expect(component.storyGroups[0].name).toBe('@joao');
     expect(component.groups.map(c => c.id)).toEqual([3]);
     expect(fixture.nativeElement.querySelectorAll('.story-bubble').length).toBe(1);
   }));
@@ -69,6 +69,81 @@ describe('SocialStoriesComponent', () => {
     expect(component.activeStory?.id).toBe(9);
     component.next();
     expect(component.activeStory).toBeNull();
+  }));
+
+  it('shows the community name rather than the author username in the Stories rail', fakeAsync(() => {
+    api.feed.and.returnValue(of([{...picture, communityId: 3, communityName: 'CNG'}]));
+    api.mine.and.returnValue(of([]));
+    fixture.detectChanges();
+    tick();
+    expect(component.storyGroups[0].name).toBe('CNG');
+  }));
+
+  it('replaces native confirmation with a modal and cancels without deleting', fakeAsync(() => {
+    const nativeConfirm = spyOn(window, 'confirm');
+    fixture.detectChanges();
+    tick();
+    component.openGroup(component.storyGroups[0]);
+    fixture.detectChanges();
+    component.requestDeleteStory();
+    fixture.detectChanges();
+    expect(component.deleteConfirmOpen).toBeTrue();
+    expect(fixture.nativeElement.querySelector('[role="alertdialog"]')).toBeTruthy();
+    expect(nativeConfirm).not.toHaveBeenCalled();
+    expect(api.delete).not.toHaveBeenCalled();
+    component.cancelDeleteStory();
+    fixture.detectChanges();
+    expect(component.deleteConfirmOpen).toBeFalse();
+    expect(component.activeStory?.id).toBe(9);
+    expect(api.delete).not.toHaveBeenCalled();
+    component.close();
+  }));
+
+  it('deletes only after confirming and removes its entries from both feeds', fakeAsync(() => {
+    api.delete.and.returnValue(of(void 0));
+    fixture.detectChanges();
+    tick();
+    component.openGroup(component.storyGroups[0]);
+    component.requestDeleteStory();
+    expect(api.delete).not.toHaveBeenCalled();
+    component.confirmDeleteStory();
+    tick();
+    expect(api.delete).toHaveBeenCalledOnceWith(9);
+    expect(component.activeStory).toBeNull();
+    expect(component.deleteConfirmOpen).toBeFalse();
+    expect(component.entries).toEqual([]);
+    expect(component.mineEntries).toEqual([]);
+  }));
+
+  it('keeps the confirmation visible on a delete error rather than silently closing', fakeAsync(() => {
+    api.delete.and.returnValue(throwError(() => new Error('server error')));
+    fixture.detectChanges();
+    tick();
+    component.openGroup(component.storyGroups[0]);
+    component.requestDeleteStory();
+    component.confirmDeleteStory();
+    tick();
+    fixture.detectChanges();
+    expect(api.delete).toHaveBeenCalledTimes(1);
+    expect(component.activeStory?.id).toBe(9);
+    expect(component.deleteConfirmOpen).toBeTrue();
+    expect(component.deleteError).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.story-confirm-error')).toBeTruthy();
+    component.cancelDeleteStory();
+    component.close();
+  }));
+
+  it('prevents navigation while confirmation is open and restores the Story on Escape', fakeAsync(() => {
+    fixture.detectChanges();
+    tick();
+    component.openGroup(component.storyGroups[0]);
+    component.requestDeleteStory();
+    component.next();
+    expect(component.activeStory?.id).toBe(9);
+    component.escape();
+    expect(component.deleteConfirmOpen).toBeFalse();
+    expect(component.activeStory?.id).toBe(9);
+    component.close();
   }));
 
   it('blocks unsupported media and oversized videos in the browser', fakeAsync(() => {
