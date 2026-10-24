@@ -2561,3 +2561,62 @@ test('Competition organizer E2E: English creation success feedback matches selec
   expect(fixture.tournaments.some(item => item.name === 'Autumn QA League')).toBeTruthy();
   expect(fixture.unmocked.filter(url => url.includes('/tournaments/'))).toEqual([]);
 });
+
+test('Competition profiles E2E: chess rules and chess team restriction are bilingual', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'empty', 'Xadrez', ['Xadrez']);
+  await page.goto('/menu/communities/7?tab=tournaments');
+  await page.evaluate(() => localStorage.setItem('d24-language', 'en'));
+  await page.reload();
+  await page.getByRole('region', { name: 'How competitions work' })
+    .getByRole('button', { name: 'Create individual league' }).click();
+  const wizard = page.getByRole('region', { name: 'Configure competition' });
+  const profile = wizard.locator('.classification-profile');
+  await expect(profile.locator('strong')).toHaveText('Chess scoring');
+  await expect(profile.locator('p').first()).toContainText('Win: 1 point · Draw: ½ point · Loss: 0.');
+  await expect(profile.locator('small').first()).toHaveText('Each game result');
+  await wizard.getByRole('button', { name: 'Back to options' }).click();
+  await page.getByRole('region', { name: 'How competitions work' })
+    .getByRole('button', { name: 'Set up a team tournament' }).click();
+  await expect(page.locator('.classification-profile')).toContainText('Team chess requires board-by-board');
+  await expect(page.getByRole('button', { name: 'Format not available yet' })).toBeDisabled();
+
+  await page.evaluate(() => localStorage.setItem('d24-language', 'pt'));
+  await page.reload();
+  await page.getByRole('region', { name: 'Como funcionam as competições' })
+    .getByRole('button', { name: 'Criar liga individual' }).click();
+  const portuguese = page.locator('.classification-profile');
+  await expect(portuguese.locator('strong')).toHaveText('Pontuação de Xadrez');
+  await expect(portuguese.locator('p').first()).toContainText('Vitória: 1 ponto · Empate: ½ ponto · Derrota: 0.');
+  await expect(portuguese.locator('small').first()).toHaveText('Resultado de cada partida');
+  expect(fixture.organizerMutations).toEqual([]);
+  expect(fixture.unmocked.filter(url => url.includes('/tournaments'))).toEqual([]);
+});
+
+test('Competition profiles E2E: swimming race warning stays unavailable in EN and PT', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'empty', 'Natação', ['Natação']);
+  await page.goto('/menu/communities/7?tab=tournaments');
+  await page.evaluate(() => localStorage.setItem('d24-language', 'en'));
+  await page.reload();
+  await page.getByRole('region', { name: 'How competitions work' })
+    .getByRole('button', { name: 'Create individual league' }).click();
+  const wizard = page.getByRole('region', { name: 'Configure competition' });
+  await wizard.getByLabel('Tournament name').fill('Swimming QA');
+  const profile = wizard.locator('.classification-profile');
+  await expect(profile.locator('strong')).toHaveText('Race standings');
+  await expect(profile.locator('p').first()).toContainText('cannot produce valid race standings');
+  await expect(profile.locator('small').first()).toHaveText('Finish position · Time · Penalties / DNF');
+  await expect(wizard.getByRole('button', { name: 'Format not available yet' })).toBeDisabled();
+
+  await page.evaluate(() => localStorage.setItem('d24-language', 'pt'));
+  await page.reload();
+  await page.getByRole('region', { name: 'Como funcionam as competições' })
+    .getByRole('button', { name: 'Criar liga individual' }).click();
+  const portuguese = page.getByRole('region', { name: 'Configurar competição' });
+  await portuguese.getByLabel('Nome do torneio').fill('Natação QA');
+  const ptProfile = portuguese.locator('.classification-profile');
+  await expect(ptProfile.locator('strong')).toHaveText('Classificação por corridas');
+  await expect(ptProfile.locator('p').first()).toContainText('não pode produzir uma classificação de corrida válida');
+  await expect(portuguese.getByRole('button', { name: 'Formato ainda indisponível' })).toBeDisabled();
+  expect(fixture.organizerMutations).toEqual([]);
+  expect(fixture.unmocked.filter(url => url.includes('/tournaments'))).toEqual([]);
+});
