@@ -2136,3 +2136,30 @@ body .communities-page.jynlo-c1 .historical-archive-fixtures {
     grid-template-columns: 1fr;
   }
 }
+
+/* Owner-only destructive action, separated from normal member management. */
+body .communities-page.jynlo-c1 .community-delete-block {
+  margin-top: 1.5rem;
+  padding: 1.25rem;
+  border: 1px solid rgba(242, 123, 123, .38);
+  border-radius: 1rem;
+  background: rgba(117, 34, 48, .09);
+}
+body .communities-page.jynlo-c1 .community-delete-block > p,
+body .communities-page.jynlo-c1 .community-delete-confirm > label {
+  color: var(--jynlo-ui-muted);
+}
+body .communities-page.jynlo-c1 .community-delete-confirm {
+  display: grid;
+  gap: .85rem;
+  max-width: 38rem;
+  margin-top: 1rem;
+}
+body .communities-page.jynlo-c1 .community-delete-warning {
+  color: #f4b0b0;
+  line-height: 1.5;
+}
+body .communities-page.jynlo-c1 .community-delete-confirm input {
+  width: 100%;
+  min-width: 0;
+}
