@@ -721,6 +721,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   swimTime = formatSwimTime;
   openWaterTime = formatOpenWaterTime;
   orienteeringTime = formatOrienteeringTime;
+  inlineSpeedTime = formatSwimTime;
 
   roundFormatLabel(round: CommunityRound): string {
     return t('communities.resultFormat.' +
@@ -963,7 +964,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   clearSwimmingHiddenScores(): void {
     if (this.newRoundEventType !== 'SWIM_LCM'
         && this.newRoundEventType !== 'OWS_INDIVIDUAL'
-        && this.newRoundEventType !== 'FOOT_ORIENTEERING') return;
+        && this.newRoundEventType !== 'FOOT_ORIENTEERING'
+        && this.newRoundEventType !== 'INLINE_TRACK_200_TT') return;
     this.roundEntries.forEach(entry => {
       entry.team = '';
       entry.result = 'DRAW';
@@ -3453,6 +3455,10 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     }
     if (this.newRoundEventType === 'OWS_INDIVIDUAL' && openWaterTimeError(selectedEntries)) {
       this.errorMessage = t('feedback.communities.openWaterInvalid');
+      return;
+    }
+    if (this.newRoundEventType === 'INLINE_TRACK_200_TT' && swimmingTimeError(selectedEntries)) {
+      this.errorMessage = t('feedback.communities.speedSkatingInvalid');
       return;
     }
     if (this.newRoundEventType === 'SWIM_LCM' && swimmingTimeError(selectedEntries)) {
