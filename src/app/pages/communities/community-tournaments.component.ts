@@ -8,6 +8,7 @@ import {
 import { CommunityTournamentsService } from '../../services/community-tournaments.service';
 import { AuthenticationService } from '../../services/authethication.service';
 import { tournamentScoreTerminology } from './community-tournament-scoring';
+import { formatForSport } from './community-round-sport';
 import { tournamentClassificationProfile } from './community-tournament-classification';
 import { SPORTS_CATALOG } from '../../shared/sports-catalog';
 import { buildTournamentTeamInviteUrl, teamInvitationWhatsAppUrl } from './community-team-invite';
@@ -80,6 +81,30 @@ export class CommunityTournamentsComponent implements OnChanges {
   // sport, show search instead of implying the community sport is also selected.
   get showCommunitySportShortcuts(): boolean {
     return !this.sportDraft && this.communitySportOptions.length > 0;
+  }
+
+  /**
+   * Tournament creation currently uses numeric head-to-head results.
+   * Clearly distinguish that contract from the sport-specific formats
+   * available when recording community rounds. Presentation only.
+   */
+  get creationSportNoticeKey(): string | null {
+    if (!this.sportDraft.trim()) return null;
+    switch (formatForSport(this.sportDraft)) {
+      case 'race':
+        return 'communities.tournaments.creationRaceNotice';
+      case 'measured':
+      case 'judged':
+      case 'score':
+      case 'activity':
+        return 'communities.tournaments.creationPerformanceNotice';
+      case 'duel':
+        return 'communities.tournaments.creationDuelNotice';
+      case 'unknown':
+        return 'communities.tournaments.creationUnknownNotice';
+      default:
+        return null;
+    }
   }
 
   get suggestedSports(): string[] {

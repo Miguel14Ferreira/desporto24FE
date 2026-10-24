@@ -95,6 +95,23 @@ describe('Community tournaments management', () => {
     expect(component.showCommunitySportShortcuts).toBeTrue();
   });
 
+  it('explains when sport-specific race or combat results need community rounds', () => {
+    component.sportDraft = 'Futebol';
+    expect(component.creationSportNoticeKey).toBeNull();
+
+    component.chooseSport('Karting');
+    expect(component.creationSportNoticeKey).toBe('communities.tournaments.creationRaceNotice');
+
+    component.chooseSport('Judo');
+    expect(component.creationSportNoticeKey).toBe('communities.tournaments.creationDuelNotice');
+
+    component.chooseSport('Golfe');
+    expect(component.creationSportNoticeKey).toBe('communities.tournaments.creationPerformanceNotice');
+
+    component.sportDraft = '';
+    expect(component.creationSportNoticeKey).toBeNull();
+  });
+
   it('switches classification presets when changing sports and rejects fake karting standings', async () => {
     component.startIndividualCreation();
     component.nameDraft = 'Campeonato Karting';
