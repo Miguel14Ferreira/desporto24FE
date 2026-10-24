@@ -1,22 +1,22 @@
-<section class="tournaments" aria-label="Torneios da comunidade">
+<section class="tournaments" [attr.aria-label]="'communities.tournaments.overview.sectionLabel' | t">
   <div class="tournament-hero">
     <div>
-      <p class="tournament-eyebrow">Competição entre membros</p>
-      <h3>Competições da comunidade</h3>
-      <p>Organizem desafios individuais ou torneios por equipas. Os jogos semanais e as estatísticas habituais continuam independentes das competições.</p>
+      <p class="tournament-eyebrow">{{ 'communities.tournaments.overview.eyebrow' | t }}</p>
+      <h3>{{ 'communities.tournaments.overview.title' | t }}</h3>
+      <p>{{ 'communities.tournaments.overview.description' | t }}</p>
       @if (selected && !isTeamCompetition) {
         <p class="t-sport-note" role="note">{{ scoring.note }}</p>
       }
     </div>
     <div class="competition-hero-actions">
       @if (canManage && !showGuide && !showIndividualCreate && !showTeamCreate) {
-        <button type="button" class="t-btn t-btn-primary" (click)="showGuide = true">Criar competição</button>
+        <button type="button" class="t-btn t-btn-primary" (click)="showGuide = true">{{ 'communities.tournaments.overview.create' | t }}</button>
       }
       @if (!showGuide) {
-        <button type="button" class="t-btn t-btn-secondary" (click)="showGuide = true">Como funciona?</button>
+        <button type="button" class="t-btn t-btn-secondary" (click)="showGuide = true">{{ 'communities.tournaments.overview.how' | t }}</button>
       }
       @if (selected) {
-        <span class="tournament-type">{{ selected.sport || 'Modalidade por definir' }} · {{ isTeamCompetition ? 'Por equipas' : 'Liga individual' }}</span>
+        <span class="tournament-type">{{ selected.sport || ('communities.tournaments.overview.sportUndefined' | t) }} · {{ (isTeamCompetition ? 'communities.tournaments.overview.teamFormat' : 'communities.tournaments.overview.individualFormat') | t }}</span>
       }
     </div>
   </div>
@@ -30,47 +30,47 @@
 
 
   @if (showGuide) {
-    <section class="competition-guide" aria-label="Como funcionam as competições">
+    <section class="competition-guide" [attr.aria-label]="'communities.tournaments.overview.guideLabel' | t">
       <div class="guide-intro">
-        <span class="tournament-eyebrow">Antes de começar</span>
-        <h4>Como querem competir?</h4>
-        <p>Não há um tamanho mínimo obrigatório para organizar uma competição. Escolham o formato que combina convosco.</p>
+        <span class="tournament-eyebrow">{{ 'communities.tournaments.overview.beforeStart' | t }}</span>
+        <h4>{{ 'communities.tournaments.overview.guideTitle' | t }}</h4>
+        <p>{{ 'communities.tournaments.overview.guideDescription' | t }}</p>
       </div>
       <div class="guide-options">
         <article class="guide-option">
           <div class="guide-option-top">
-            <span aria-hidden="true">👤</span><strong>Individual</strong>
-            <span class="guide-tag">Disponível</span>
+            <span aria-hidden="true">👤</span><strong>{{ 'communities.tournaments.overview.individualTitle' | t }}</strong>
+            <span class="guide-tag">{{ 'communities.tournaments.overview.available' | t }}</span>
           </div>
-          <p>Cada participante compete por si numa liga de todos contra todos. Indicada para pequenos desafios e modalidades individuais.</p>
-          <p class="guide-example">Ex.: 6 amigos numa liga de ténis.</p>
+          <p>{{ 'communities.tournaments.overview.individualDescription' | t }}</p>
+          <p class="guide-example">{{ 'communities.tournaments.overview.individualExample' | t }}</p>
           @if (canManage && community.individualTournamentsEnabled !== false) {
             <button type="button" class="t-btn t-btn-primary"
-              (click)="startIndividualCreation()">Criar liga individual</button>
+              (click)="startIndividualCreation()">{{ 'communities.tournaments.overview.createIndividual' | t }}</button>
           } @else if (canManage) {
-            <p class="guide-coming">Para permitir ligas individuais, ativa esta funcionalidade no início da comunidade.</p>
+            <p class="guide-coming">{{ 'communities.tournaments.overview.individualDisabled' | t }}</p>
           }
         </article>
         <article class="guide-option">
           <div class="guide-option-top">
-            <span aria-hidden="true">👥</span><strong>Por equipas</strong>
-            <span class="guide-tag">Ligas e taças disponíveis</span>
+            <span aria-hidden="true">👥</span><strong>{{ 'communities.tournaments.overview.teamsTitle' | t }}</strong>
+            <span class="guide-tag">{{ 'communities.tournaments.overview.teamFormats' | t }}</span>
           </div>
-          <p>Escolham a modalidade, criem as equipas e convidem os jogadores por ligação ou WhatsApp. Não precisam de definir um tamanho fixo para os plantéis.</p>
-          <p class="guide-example">Ex.: quatro equipas com plantéis flexíveis, a preencher por convite.</p>
-          <p>Podem organizar ligas de todos contra todos ou taças por eliminatórias, com plantéis e resultados registados. Também podem combinar fases de grupos e eliminatórias, com apuramento automático.</p>
+          <p>{{ 'communities.tournaments.overview.teamsDescription' | t }}</p>
+          <p class="guide-example">{{ 'communities.tournaments.overview.teamsExample' | t }}</p>
+          <p>{{ 'communities.tournaments.overview.teamsHelp' | t }}</p>
           @if (canManage && community.teamTournamentsEnabled !== false) {
-            <button type="button" class="t-btn t-btn-primary" (click)="startTeamCreation()">Preparar torneio por equipas</button>
+            <button type="button" class="t-btn t-btn-primary" (click)="startTeamCreation()">{{ 'communities.tournaments.overview.createTeams' | t }}</button>
           } @else if (canManage) {
-            <p class="guide-coming">Ativa primeiro os torneios por equipas nas funcionalidades da comunidade.</p>
+            <p class="guide-coming">{{ 'communities.tournaments.overview.teamsDisabled' | t }}</p>
           }
         </article>
       </div>
       <div class="guide-community-note" role="note">
-        <strong>Jogam sempre com a mesma malta?</strong>
-        <p>Usem Classificação e Estatísticas para guardar jornadas semanais, épocas e histórico importado de Excel, CSV ou TSV. Não é preciso criar um torneio. E mesmo com 10 ou 11 pessoas, podem criar uma competição quando quiserem.</p>
+        <strong>{{ 'communities.tournaments.overview.weeklyTitle' | t }}</strong>
+        <p>{{ 'communities.tournaments.overview.weeklyDescription' | t }}</p>
       </div>
-      <button type="button" class="t-btn t-btn-secondary" (click)="showGuide = false">Fechar explicação</button>
+      <button type="button" class="t-btn t-btn-secondary" (click)="showGuide = false">{{ 'communities.tournaments.overview.closeGuide' | t }}</button>
     </section>
   }
 
