@@ -1861,3 +1861,74 @@ body .communities-page.jynlo-c1 .community-feed-alert {
     transition: none;
   }
 }
+
+
+/* Media inside the community feed mirrors the main social composer. */
+body .communities-page.jynlo-c1 .community-feed-media-actions {
+  display: flex;
+  gap: .65rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+body .communities-page.jynlo-c1 .community-feed-file-picker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .45rem;
+  width: auto;
+  cursor: pointer;
+  font-size: .84rem;
+  line-height: 1.2;
+}
+body .communities-page.jynlo-c1 .community-feed-file-picker input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  overflow: hidden;
+}
+body .communities-page.jynlo-c1 .community-feed-file-picker:focus-within {
+  outline: 2px solid #6ce5cb;
+  outline-offset: 3px;
+}
+body .communities-page.jynlo-c1 .community-feed-file-picker.disabled {
+  opacity: .5;
+  cursor: wait;
+}
+body .communities-page.jynlo-c1 .community-feed-media-preview {
+  position: relative;
+  overflow: hidden;
+  border-radius: .9rem;
+  background: rgba(2, 6, 23, .42);
+  border: 1px solid rgba(151, 195, 210, .25);
+}
+body .communities-page.jynlo-c1 .community-feed-media-preview img,
+body .communities-page.jynlo-c1 .community-feed-media-preview video {
+  display: block;
+  width: 100%;
+  max-height: 460px;
+  object-fit: contain;
+}
+body .communities-page.jynlo-c1 .community-feed-media-preview button {
+  position: absolute;
+  top: .65rem;
+  right: .65rem;
+  background: rgba(5, 17, 29, .92);
+}
+body .communities-page.jynlo-c1 .community-feed-post-media {
+  display: block;
+  width: 100%;
+  max-height: 600px;
+  margin-top: .95rem;
+  border-radius: .9rem;
+  background: rgba(2, 6, 23, .35);
+  object-fit: contain;
+}
+body .communities-page.jynlo-c1 .community-feed-post-video {
+  aspect-ratio: 16 / 9;
+}
+@media (max-width: 520px) {
+  body .communities-page.jynlo-c1 .community-feed-file-picker {
+    flex: 1 1 140px;
+  }
+}
