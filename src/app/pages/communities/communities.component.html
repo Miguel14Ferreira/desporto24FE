@@ -2148,6 +2148,62 @@
                                   ? 'communities.parkour.athletes' : 'communities.race.drivers') | t }}</span>
                               </div>
                               <div class="race-round-entries">
+                                @if (isInlineSpeedHeatEvent(round.eventType) && !round.eventType?.endsWith('_FINAL_B')) {
+                                  <div class="race-penalty-editor" role="group"
+                                    [attr.aria-label]="'communities.speedSkating.progressionTitle' | t">
+                                    @if (inlineProgressions[round.id]; as link) {
+                                      <strong>{{ 'communities.speedSkating.progressionConfirmed' | t }}</strong>
+                                      <p>{{ 'communities.speedSkating.progressionFrom' | t }}:
+                                        @for (originId of link.sourceRoundIds; track originId) {
+                                          <span>{{ originId }} </span>
+                                        }
+                                      </p>
+                                      <small>{{ link.confirmedByUsername }}: {{ link.reason }}</small>
+                                    } @else {
+                                      <small>{{ 'communities.speedSkating.progressionNotConfirmed' | t }}</small>
+                                    }
+                                    @if (canManage() && inlineProgressionSources(round).length) {
+                                      @if (inlineProgressionEditingId === round.id) {
+                                        <p>{{ 'communities.speedSkating.progressionHint' | t }}</p>
+                                        @for (source of inlineProgressionSources(round); track source.id) {
+                                          <label class="race-dsq-field">
+                                            <input type="checkbox"
+                                              [checked]="inlineProgressionSourceIds.includes(source.id)"
+                                              [disabled]="inlineProgressionSaving"
+                                              (change)="toggleInlineProgressionSource(source.id, $any($event.target).checked)">
+                                            <span>{{ source.name }} · {{ formatRoundDate(source.playedAt) }}</span>
+                                          </label>
+                                        }
+                                        <label>
+                                          <span>{{ 'communities.speedSkating.progressionReason' | t }}</span>
+                                          <textarea rows="2" maxlength="255"
+                                            [(ngModel)]="inlineProgressionReason"
+                                            [disabled]="inlineProgressionSaving"></textarea>
+                                        </label>
+                                        @if (inlineProgressionError) {
+                                          <small role="alert">{{ inlineProgressionError }}</small>
+                                        }
+                                        <div class="row-actions">
+                                          <button type="button" class="primary-action jynlo-action jynlo-action--primary jynlo-action--compact"
+                                            [disabled]="inlineProgressionSaving"
+                                            (click)="saveInlineProgression(round)">
+                                            {{ 'communities.speedSkating.progressionSave' | t }}
+                                          </button>
+                                          <button type="button" class="jynlo-action jynlo-action--compact"
+                                            [disabled]="inlineProgressionSaving"
+                                            (click)="cancelInlineProgression()">
+                                            {{ 'common.cancel' | t }}
+                                          </button>
+                                        </div>
+                                      } @else {
+                                        <button type="button" class="jynlo-action jynlo-action--compact"
+                                          (click)="beginInlineProgression(round)">
+                                          {{ 'communities.speedSkating.progressionEdit' | t }}
+                                        </button>
+                                      }
+                                    }
+                                  </div>
+                                }
                                 @for (entry of round.entries; track $index) {
                                   <div class="race-round-entry">
                                     <div>
