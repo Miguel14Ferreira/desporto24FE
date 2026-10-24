@@ -4,6 +4,7 @@ import { JwtHelperService } from '@auth0/angular-jwt';
 import { ActivatedRoute, Router } from '@angular/router';
 import { finalize, firstValueFrom, Observable, retry, timeout, Subscription, TimeoutError } from 'rxjs';
 import { appTranslate as t } from '../../i18n/i18n.service';
+import { environment } from 'src/environment/environment';
 import { buildCommunityGroupInviteUrl, buildWhatsAppGroupShareUrl } from './community-group-invite';
 import { communityRoundMatchup, CommunityRoundMatchup } from './community-round-matchup';
 import { sportForRound, CommunityRoundView } from './community-round-sport';
@@ -405,6 +406,32 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     return this.activeTab === 'chat' ? 'CHAT' : 'POST';
   }
 
+  /** Community feed identity mirrors the main feed without exposing private member data. */
+  communityFeedAuthorName(username: string): string {
+    const member = this.selected?.members?.find(
+      item => item.username.toLowerCase() === username.toLowerCase());
+    return member?.fullName?.trim() || username;
+  }
+
+  communityFeedInitials(username: string): string {
+    const parts = this.communityFeedAuthorName(username).split(/\s+/).filter(Boolean);
+    return (parts.length > 1 ? [parts[0], parts[parts.length - 1]] : parts)
+      .map(part => part.charAt(0).toUpperCase()).join('').slice(0, 2);
+  }
+
+  communityFeedAvatar(username: string): string | null {
+    const pic = this.selected?.members?.find(
+      item => item.username.toLowerCase() === username.toLowerCase())?.profilePicUrl;
+    if (!pic) return null;
+    if (/^(https?:\/\/|data:image\/)/i.test(pic)) return pic;
+    return environment.apiUrl + (pic.startsWith('/') ? pic : '/' + pic);
+  }
+
+  canDeleteCommunityPost(entry: CommunityTimelineEntry): boolean {
+    return entry.kind === 'POST' && (this.canManage() || this.isMyChatEntry(entry));
+  }
+
+
   loadTimeline(): void {
     if (!this.selected || (this.activeTab !== 'feed' && this.activeTab !== 'chat')) return;
     const communityId = this.selected.id;
@@ -504,8 +531,9 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   }
 
   deleteTimeline(entry: CommunityTimelineEntry): void {
-    if (!this.selected || !this.canManage() || this.timelineDeletingId !== null ||
-        entry.communityId !== this.selected.id || entry.kind !== this.timelineKind) return;
+    if (!this.selected || this.timelineDeletingId !== null ||
+        entry.communityId !== this.selected.id || entry.kind !== this.timelineKind ||
+        (entry.kind === 'POST' ? !this.canDeleteCommunityPost(entry) : !this.canManage())) return;
     const communityId = this.selected.id;
     const kind = this.timelineKind;
     this.timelineDeletingId = entry.id;
