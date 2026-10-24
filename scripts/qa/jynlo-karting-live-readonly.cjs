@@ -15,15 +15,16 @@ const SITE = 'https://d24sports.com';
 const API = 'https://api.d24sports.com';
 const ACCOUNTS = ['jynloteste01', 'jynloteste02'];
 const MAX_BYTES = 2_000_000;
-const MAX_COMMUNITIES = 3;
+const MAX_COMMUNITIES = 6;
 const MAX_TOURNAMENTS = 15;
+const MAX_PAGES = 3;
 
 function isId(value) {
   return Number.isSafeInteger(value) && value > 0;
 }
 function readOnlyPath(path) {
   assert.equal(typeof path, 'string');
-  assert.match(path, /^\/api\/communities(?:\/mine|\/[1-9]\d*\/tournaments(?:\?page=0|\/[1-9]\d*\/races)?)$/);
+  assert.match(path, /^\/api\/communities(?:\/mine|\/[1-9]\d*\/tournaments(?:\?page=[0-2]|\/[1-9]\d*\/races)?)$/);
   return path;
 }
 function commonCommunities(first, second) {
@@ -31,6 +32,11 @@ function commonCommunities(first, second) {
   const ids = new Set(second.filter(c => isId(c?.id)).map(c => c.id));
   return first.filter(c => isId(c?.id) && ids.has(c.id))
     .map(c => c.id).slice(0, MAX_COMMUNITIES);
+}
+function ownCommunities(communities) {
+  assert.ok(Array.isArray(communities), 'COMMUNITIES_FORMAT');
+  return [...new Set(communities.filter(c => isId(c?.id)).map(c => c.id))]
+    .slice(0, MAX_COMMUNITIES);
 }
 function validateArchived(tournament, data) {
   assert.equal(tournament.status, 'COMPLETED', 'NOT_ARCHIVED');
@@ -72,13 +78,27 @@ async function getJson(path, token, fetchImpl = fetch) {
   assert.ok(bytes.byteLength <= MAX_BYTES, 'LIVE_GET_TOO_LARGE');
   return JSON.parse(Buffer.from(bytes).toString('utf8'));
 }
-async function browserReadOnly(tokens, selectedCommunity, chromium) {
+
+async function tournamentPages(communityId, token, fetchImpl = fetch) {
+  const tournaments = [];
+  for (let page = 0; page < MAX_PAGES && tournaments.length < MAX_TOURNAMENTS; page++) {
+    const url = '/api/communities/' + communityId + '/tournaments?page=' + page;
+    const result = await getJson(url, token, fetchImpl);
+    assert.ok(Array.isArray(result?.tournaments) && result.page === page
+      && typeof result.hasMore === 'boolean', 'TOURNAMENT_PAGE_FORMAT');
+    tournaments.push(...result.tournaments.slice(0, MAX_TOURNAMENTS - tournaments.length));
+    if (!result.hasMore) break;
+  }
+  return tournaments;
+}
+
+async function browserReadOnly(tokens, selectedCommunities, chromium) {
   const browser = await chromium.launch({headless: true, args: ['--no-sandbox']});
   const contexts = [];
   const allowed = new Set([SITE, API]);
   let rejectedWrites = 0;
   try {
-    for (const token of tokens) {
+    for (const [index, token] of tokens.entries()) {
       const context = await browser.newContext({
         locale: 'pt-PT', viewport: { width: 1440, height: 900 },
         serviceWorkers: 'block', acceptDownloads: false
@@ -96,6 +116,7 @@ async function browserReadOnly(tokens, selectedCommunity, chromium) {
         return route.continue();
       });
       const page = await context.newPage();
+      const selectedCommunity = selectedCommunities[index] ?? null;
       const route = selectedCommunity
         ? '/menu/communities/' + selectedCommunity + '?tab=tournaments'
         : '/menu/communities?view=mine';
@@ -108,6 +129,11 @@ async function browserReadOnly(tokens, selectedCommunity, chromium) {
       if (selectedCommunity) {
         await page.locator('.communities-page.community-detail-page').waitFor({
           state:'visible',timeout:15000
+        });
+        // A matching URL alone can show an unloaded or error-only detail page.
+        // Require the actual community presentation to have rendered.
+        await page.locator('.community-detail h2').first().waitFor({
+          state: 'visible', timeout: 15000
         });
       }
       await page.close();
@@ -133,45 +159,54 @@ async function run({ passwords = [process.env.JYNLO_QA_PASSWORD_1,
   const shared = commonCommunities(lists[0], lists[1]);
   report('[PASS] Both accounts read own community memberships.');
 
+  // Audit each account's own communities even when they do not share one.
+  // Shared archives are compared across accounts, but do not gate all checks.
+  const own = lists.map(ownCommunities);
+  const indexed = [];
   let archived = 0, active = 0;
-  for (const id of shared) {
-    const path = '/api/communities/' + id + '/tournaments?page=0';
-    const pages = await Promise.all(tokens.map(t => getJson(path, t, fetchImpl)));
-    for (const p of pages) {
-      assert.ok(Array.isArray(p?.tournaments) && p.page === 0
-        && typeof p.hasMore === 'boolean', 'TOURNAMENT_PAGE_FORMAT');
+  for (let index = 0; index < tokens.length; index++) {
+    const entries = new Map();
+    for (const id of own[index]) {
+      const tournaments = await tournamentPages(id, tokens[index], fetchImpl);
+      for (const t of tournaments.filter(t => t.scoringMode === 'RACE_POINTS'
+          && isId(t.id))) {
+        const endpoint = '/api/communities/' + id + '/tournaments/' + t.id + '/races';
+        const data = await getJson(endpoint, tokens[index], fetchImpl);
+        assert.ok(Array.isArray(data?.linkedRaces)
+          && Array.isArray(data?.standings) && Array.isArray(data?.pointsByPlace),
+        'KARTING_OVERVIEW_FORMAT');
+        if (t.status === 'COMPLETED') {
+          validateArchived(t, data);
+          archived++;
+        } else active++;
+        entries.set(id + ':' + t.id, {t, data});
+      }
     }
-    // Never guess tournament IDs or request data from communities not joined by both QA users.
-    const otherIds = new Set(pages[1].tournaments.map(t => t.id));
-    const karting = pages[0].tournaments.filter(t =>
-      t.scoringMode === 'RACE_POINTS' && isId(t.id) && otherIds.has(t.id))
-      .slice(0, MAX_TOURNAMENTS);
-    for (const t of karting) {
-      const endpoint = '/api/communities/' + id + '/tournaments/' + t.id + '/races';
-      const data = await Promise.all(tokens.map(token => getJson(endpoint, token, fetchImpl)));
-      assert.ok(data.every(d => Array.isArray(d?.linkedRaces)
-        && Array.isArray(d?.standings) && Array.isArray(d?.pointsByPlace)),
-      'KARTING_OVERVIEW_FORMAT');
-      if (t.status === 'COMPLETED') {
-        for (const d of data) validateArchived(t, d);
-        assert.deepEqual(data[0], data[1], 'ARCHIVE_DIFFERS_BETWEEN_MEMBERS');
-        archived++;
-      } else active++;
-    }
+    indexed.push(entries);
+  }
+  let crossChecked = 0;
+  for (const [key, a] of indexed[0]) {
+    const b = indexed[1].get(key);
+    if (!b || a.t.status !== 'COMPLETED' || b.t.status !== 'COMPLETED') continue;
+    assert.deepEqual(a.data, b.data, 'ARCHIVE_DIFFERS_BETWEEN_MEMBERS');
+    crossChecked++;
   }
   report('[PASS] Karting API read-only checks complete; private data not printed.');
-  if (shared.length === 0) {
-    report('[SKIP] QA accounts do not share a community; no tournament was inspected.');
-  } else if (archived === 0) {
-    report('[SKIP] No shared completed Karting championship found for archive verification.');
+  if (archived === 0) {
+    report('[SKIP] No completed Karting championship found in bounded QA memberships.');
   } else {
+    report('[PASS] Completed Karting snapshots validated for available QA accounts.');
+  }
+  if (crossChecked > 0) {
     report('[PASS] Archived Karting classification is identical across two members.');
+  } else {
+    report('[SKIP] No shared completed Karting championship was available to compare.');
   }
   const chromium = browserEngine || require('playwright').chromium;
-  const blocked = await browserReadOnly(tokens, shared[0] ?? null, chromium);
+  const blocked = await browserReadOnly(tokens, own.map(ids => ids[0] ?? null), chromium);
   report('[PASS] Two separate Chromium contexts opened live authenticated communities.');
   report('[INFO] Browser-side blocked non-read requests: ' + blocked);
-  return { shared: shared.length, archived, active, blocked };
+  return { shared: shared.length, archived, active, crossChecked, blocked };
 }
 if (require.main === module) {
   run().catch(error => {
@@ -179,4 +214,5 @@ if (require.main === module) {
     process.exitCode = 1;
   });
 }
-module.exports = { run, readOnlyPath, commonCommunities, validateArchived, safeError };
+module.exports = { run, readOnlyPath, commonCommunities, ownCommunities,
+  tournamentPages, validateArchived, safeError };
