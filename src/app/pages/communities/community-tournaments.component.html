@@ -973,6 +973,37 @@
                   <p class="t-muted">A classificação aparece depois de associares uma corrida válida.</p>
                 }
               </div>
+              @if (selected.status === 'COMPLETED') {
+                <div class="race-archive-notice" role="status">
+                  <strong><icon name="lock" inline /> Classificação final arquivada</strong>
+                  <p>O campeão e os resultados deste campeonato ficaram guardados em
+                    {{ selected.completedAt | date:'dd/MM/yyyy' }}.
+                    As Jornadas podem ser corrigidas sem modificar este arquivo.</p>
+                </div>
+              } @else if (canManage) {
+                <div class="complete-action race-complete-action">
+                  <strong>Concluir o campeonato de Karting?</strong>
+                  <p>Ao encerrar, a classificação, os resultados e o campeão ficam definitivos.
+                    Não será possível acrescentar ou retirar corridas deste campeonato.</p>
+                  @if (confirmAction === 'completeRace') {
+                    <div class="confirm-actions">
+                      <button type="button" class="t-btn t-btn-primary"
+                        [disabled]="!canCompleteRace" (click)="completeRace()">
+                        Sim, encerrar e guardar classificação
+                      </button>
+                      <button type="button" class="t-btn t-btn-secondary"
+                        [disabled]="busy" (click)="confirmAction = null">Cancelar</button>
+                    </div>
+                  } @else {
+                    <button type="button" class="t-btn t-btn-primary"
+                      [disabled]="!canCompleteRace"
+                      (click)="confirmAction = 'completeRace'">Encerrar campeonato de Karting</button>
+                    @if (!canCompleteRace) {
+                      <p class="field-validation" role="status">Associa corridas com pelo menos dois participantes classificados.</p>
+                    }
+                  }
+                </div>
+              }
             </section>
           }
         } @else if (!isMember) {
