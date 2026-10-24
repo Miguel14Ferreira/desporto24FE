@@ -2404,3 +2404,56 @@ test('Competition fixtures E2E: English knockout publishing keeps winner-only sc
   expect(fixture.teamFixtures[0].status).toBe('SCHEDULED');
   expect(fixture.unmocked.filter(url => url.includes('/tournaments/'))).toEqual([]);
 });
+
+test('Competition stages E2E: individual match rounds follow PT/EN with no writes', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'paged');
+  await page.goto('/menu/communities/7?tab=tournaments');
+  await page.evaluate(() => localStorage.setItem('d24-language', 'en'));
+  await page.reload();
+  await expect(page.locator('.match-round').first()).toHaveText('Round 1');
+  await page.evaluate(() => localStorage.setItem('d24-language', 'pt'));
+  await page.reload();
+  await expect(page.locator('.match-round').first()).toHaveText('Jornada 1');
+  expect(fixture.unmocked.filter(url => url.includes('/tournaments/'))).toEqual([]);
+  expect(fixture.organizerMutations).toEqual([]);
+});
+
+test('Competition stages E2E: team league rounds follow PT/EN after publishing', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'teams-schedule');
+  await page.goto('/menu/communities/7?tab=tournaments');
+  await page.evaluate(() => localStorage.setItem('d24-language', 'en'));
+  await page.reload();
+  await page.getByRole('button', { name: 'Generate team fixtures' }).click();
+  await page.getByRole('button', { name: 'Yes, publish team fixtures' }).click();
+  const fixtures = page.getByRole('region', { name: 'Team fixtures' });
+  await expect(fixtures.locator('.team-fixtures-list h6').first()).toHaveText('Round 1');
+  await page.evaluate(() => localStorage.setItem('d24-language', 'pt'));
+  await page.reload();
+  await expect(page.getByRole('region', { name: 'Jornadas entre equipas' })
+    .locator('.team-fixtures-list h6').first()).toHaveText('Jornada 1');
+  expect(fixture.teamFixtures).toHaveLength(1);
+  expect(fixture.unmocked.filter(url => url.includes('/tournaments/'))).toEqual([]);
+});
+
+test('Competition stages E2E: knockout round changes language but not winner rules', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'teams-schedule',
+    'Futebol', undefined, 1, 'KNOCKOUT');
+  await page.goto('/menu/communities/7?tab=tournaments');
+  await page.evaluate(() => localStorage.setItem('d24-language', 'en'));
+  await page.reload();
+  await page.getByRole('button', { name: 'Draw knockouts' }).click();
+  await page.getByRole('button', { name: 'Yes, draw knockouts' }).click();
+  const fixtures = page.getByRole('region', { name: 'Team fixtures' });
+  await expect(fixtures.locator('.team-fixtures-list h6').first()).toHaveText('Round 1');
+  const match = fixtures.locator('.team-fixture').first();
+  await match.getByRole('spinbutton', { name: 'Goals for Azuis' }).fill('1');
+  await match.getByRole('spinbutton', { name: 'Goals for Verdes' }).fill('1');
+  await expect(match.getByRole('button', { name: 'Save result between Azuis and Verdes' })).toBeDisabled();
+
+  await page.evaluate(() => localStorage.setItem('d24-language', 'pt'));
+  await page.reload();
+  await expect(page.getByRole('region', { name: 'Jornadas entre equipas' })
+    .locator('.team-fixtures-list h6').first()).toHaveText('Ronda 1');
+  expect(fixture.teamFixtures[0].status).toBe('SCHEDULED');
+  expect(fixture.unmocked.filter(url => url.includes('/tournaments/'))).toEqual([]);
+});
