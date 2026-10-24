@@ -1824,3 +1824,165 @@ input,textarea,select {
   min-width: 22px; border-radius: 999px; padding: .08rem .38rem;
   background: #58dec4; color: #052c2c; text-align: center; font-variant-numeric: tabular-nums;
 }
+
+
+/* Guided history import: understandable choices before uploading an Excel file. */
+.import-wizard {
+  background: linear-gradient(160deg, rgba(18, 47, 65, .82), rgba(11, 28, 45, .72));
+  border: 1px solid rgba(156, 194, 211, .3);
+  padding: clamp(18px, 2.4vw, 30px);
+  color: #edf8ff;
+}
+.import-wizard-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.import-wizard-header h3 { margin: .25rem 0 .45rem; font-size: clamp(1.4rem, 2vw, 1.85rem); }
+.import-wizard-header p { color: #c8d9e4; max-width: 66ch; margin: 0; line-height: 1.55; }
+.import-wizard-header-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border: 1px solid rgba(95, 209, 192, .32);
+  border-radius: 14px;
+  background: rgba(95, 209, 192, .08);
+  font-size: 1.4rem;
+}
+.import-wizard-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 24px 0; }
+.import-wizard-step {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid rgba(150, 180, 196, .2);
+  border-radius: 11px;
+  background: rgba(255, 255, 255, .025);
+  color: #a7bfca;
+  font-size: .82rem;
+  font-weight: 700;
+}
+.import-wizard-step.is-active { border-color: rgba(91, 222, 191, .63); background: rgba(51, 191, 166, .11); color: #eafff9; }
+.import-wizard-step-number {
+  display: grid;
+  place-items: center;
+  width: 25px;
+  height: 25px;
+  flex: none;
+  border-radius: 50%;
+  border: 1px solid currentColor;
+  font-size: .76rem;
+}
+.import-wizard-step.is-active .import-wizard-step-number { background: #6ce5cb; border-color: #6ce5cb; color: #083636; }
+.import-wizard-section { margin-top: 22px; }
+.import-wizard-section + .import-wizard-section { padding-top: 23px; border-top: 1px solid rgba(150, 180, 196, .17); }
+.import-wizard-section-heading { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 15px; }
+.import-wizard-section-number {
+  flex: none;
+  padding-top: 4px;
+  font-size: .75rem;
+  font-weight: 900;
+  color: #65d9c5;
+  letter-spacing: .1em;
+}
+.import-wizard-section-heading h4 { margin: 0 0 4px; font-size: 1.05rem; color: #f1fbff; }
+.import-wizard-section-heading p { margin: 0; font-size: .85rem; color: #adc6d4; line-height: 1.5; }
+.import-wizard-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.import-wizard-option {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+  text-align: left;
+  font: inherit;
+  padding: 17px;
+  border: 1px solid rgba(145, 185, 205, .3);
+  border-radius: 15px;
+  background: rgba(4, 20, 34, .36);
+  color: #ecf9ff;
+  cursor: pointer;
+  transition: border-color .15s ease, background-color .15s ease, transform .15s ease;
+}
+.import-wizard-option:hover { border-color: rgba(121, 215, 199, .68); background: rgba(47, 114, 116, .17); }
+.import-wizard-option:focus-visible, .import-wizard .import-file-picker:focus-within {
+  outline: 2px solid #87f4d6;
+  outline-offset: 3px;
+}
+.import-wizard-option.is-selected { border-color: #63dec4; background: rgba(48, 157, 141, .14); box-shadow: inset 0 0 0 1px rgba(99, 222, 196, .2); }
+.import-wizard-option-top { width: 100%; display: flex; justify-content: space-between; align-items: center; }
+.import-wizard-option-icon { font-size: 1.35rem; line-height: 1; }
+.import-wizard-option-check { display: grid; place-items: center; width: 23px; height: 23px; border-radius: 50%; color: #063b36; font-size: .82rem; font-weight: 900; }
+.import-wizard-option.is-selected .import-wizard-option-check { background: #75e5c9; }
+.import-wizard-option strong { font-size: 1rem; line-height: 1.3; }
+.import-wizard-option-description { font-size: .86rem; color: #d0e1ea; line-height: 1.5; flex: 1; }
+.import-wizard-option-example { font-size: .76rem; color: #aec8d6; line-height: 1.45; }
+.import-wizard-option-impact {
+  display: inline-flex;
+  border: 1px solid rgba(111, 205, 195, .27);
+  border-radius: 8px;
+  padding: 6px 8px;
+  background: rgba(62, 135, 130, .1);
+  color: #b0efdf;
+  font-size: .75rem;
+  font-weight: 800;
+  line-height: 1.4;
+}
+.import-wizard-context {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: rgba(74, 128, 151, .12);
+  border: 1px solid rgba(132, 190, 214, .23);
+  border-radius: 11px;
+  padding: 12px 14px;
+  margin-top: 14px;
+  color: #dceef5;
+  font-size: .85rem;
+  line-height: 1.5;
+}
+.import-wizard-context > span:first-child { font-size: 1.05rem; color: #75e5c9; }
+.import-wizard-upload {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 17px;
+  border: 1px dashed rgba(136, 200, 210, .55);
+  border-radius: 13px;
+  background: rgba(8, 25, 41, .36);
+}
+.import-wizard-upload-icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex: none;
+  border-radius: 11px;
+  background: rgba(103, 217, 195, .15);
+  color: #83ebcf;
+  font-size: 1.6rem;
+}
+.import-wizard-upload-body { display: grid; min-width: 0; gap: 3px; flex: 1; }
+.import-wizard-upload-body strong { overflow-wrap: anywhere; font-size: .89rem; color: #f0fbff; }
+.import-wizard-upload-body span { color: #a8c1ce; font-size: .77rem; }
+.import-wizard .import-file-picker { margin: 0; flex: none; }
+.import-wizard-review-heading { margin: 24px 0 4px; padding-top: 23px; border-top: 1px solid rgba(150, 180, 196, .17); }
+.import-wizard .import-preview { margin-top: 16px; }
+
+@media (max-width: 840px) {
+  .import-wizard-options { grid-template-columns: 1fr; }
+  .import-wizard-option { gap: 7px; }
+  .import-wizard-steps { gap: 5px; }
+  .import-wizard-step { padding: 9px 7px; font-size: .74rem; }
+}
+@media (max-width: 580px) {
+  .import-wizard-header-icon { display: none; }
+  .import-wizard-steps { grid-template-columns: 1fr; }
+  .import-wizard-step { font-size: .8rem; }
+  .import-wizard-upload { flex-wrap: wrap; }
+  .import-wizard-upload .import-file-picker { width: 100%; text-align: center; }
+}
