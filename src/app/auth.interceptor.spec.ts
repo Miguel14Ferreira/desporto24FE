@@ -290,7 +290,7 @@ describe('AuthInterceptor', () => {
 
     const jwt = (marker: string) => {
       const encode = (value: object) => btoa(JSON.stringify(value))
-        .replace(/=/g, '').replace(/\\+/g, '-').replace(/\\//g, '_');
+        .replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
       return encode({ alg: 'HS512', typ: 'JWT' }) + '.'
         + encode({ sub: 'same-user', exp: Math.floor(Date.now() / 1000) + 3600, marker })
         + '.fixture';
