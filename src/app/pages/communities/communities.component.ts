@@ -3471,7 +3471,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
           || !Number.isInteger(Number(this.sprintHeatNumberDraft))
           || Number(this.sprintHeatNumberDraft) < 1
           || Number(this.sprintHeatNumberDraft) >
-             (this.roundDisciplineDraft === 'SPRINT_QUARTER_FINAL' ? 1 : 3))) {
+             3)) {
       this.errorMessage = t('communities.trackCycling.seriesInvalid');
       return;
     }
