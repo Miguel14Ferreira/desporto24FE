@@ -5,7 +5,7 @@ import { CommunityRoundView, formatForSport, viewForSport } from './community-ro
  * Explicitly supported event variants. This registry must be extended alongside
  * backend CommunityRoundEventType; it is NOT a complete rulebook for 121 sports.
  */
-export type CommunityEventType = 'TRACK_SCRATCH' | 'TRACK_TIME_TRIAL' | 'ROAD_RACE' | 'TIME_TRIAL' | 'RACE' | 'FREESTYLE' | 'TRACK' | 'JUMP' | 'THROW' | 'HEAT' | 'BODYBOARD_HEAT' | 'APPARATUS'
+export type CommunityEventType = 'TRACK_SCRATCH' | 'TRACK_TIME_TRIAL' | 'TRACK_FLYING_200' | 'ROAD_RACE' | 'TIME_TRIAL' | 'RACE' | 'FREESTYLE' | 'TRACK' | 'JUMP' | 'THROW' | 'HEAT' | 'BODYBOARD_HEAT' | 'APPARATUS'
   | 'SKATE_PARK' | 'SKATE_STREET' | 'PARKOUR_SPEED' | 'PARKOUR_FREESTYLE'
   | 'BREAKING_BATTLE' | 'TRAMPOLINE_INDIVIDUAL'
   | 'RHYTHMIC_APPARATUS' | 'ARTISTIC_SOLO_TECHNICAL' | 'ARTISTIC_SOLO_FREE'
@@ -136,7 +136,8 @@ const TYPES: Record<string, readonly CommunityEventOption[]> = {
   'polo aquatico': [{ code: 'WATER_POLO_FINAL', labelKey: 'communities.teamFinal.waterPolo' }],
   'ciclismo de pista': [
     { code: 'TRACK_SCRATCH', labelKey: 'communities.trackCycling.scratch' },
-    { code: 'TRACK_TIME_TRIAL', labelKey: 'communities.trackCycling.timeTrial' }
+    { code: 'TRACK_TIME_TRIAL', labelKey: 'communities.trackCycling.timeTrial' },
+    { code: 'TRACK_FLYING_200', labelKey: 'communities.trackCycling.flying200' }
   ],
   'ciclismo de estrada': [
     { code: 'ROAD_RACE', labelKey: 'communities.roadCycling.roadRace' },
@@ -204,7 +205,8 @@ export function isRaceEvent(sport: string | null | undefined, eventType: string 
   if (name === 'ciclismo de estrada')
     return eventType == null || eventType === 'ROAD_RACE' || eventType === 'TIME_TRIAL';
   if (name === 'ciclismo de pista')
-    return eventType == null || eventType === 'TRACK_SCRATCH' || eventType === 'TRACK_TIME_TRIAL';
+    return eventType == null || eventType === 'TRACK_SCRATCH' || eventType === 'TRACK_TIME_TRIAL'
+      || eventType === 'TRACK_FLYING_200';
   return eventType == null && viewForSport(sport || null) === 'race';
 }
 

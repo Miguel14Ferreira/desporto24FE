@@ -1228,6 +1228,7 @@
                               : newRoundEventType === 'TIME_TRIAL' ? 'communities.roadCycling.timeTrialHint'
                               : newRoundEventType === 'TRACK_SCRATCH' ? 'communities.trackCycling.scratchHint'
                               : newRoundEventType === 'TRACK_TIME_TRIAL' ? 'communities.trackCycling.timeTrialHint'
+                              : newRoundEventType === 'TRACK_FLYING_200' ? 'communities.trackCycling.flying200Hint'
                               : 'communities.race.metricsEntryHint') | t }}
                           </p>
                         } @else if (newRoundEventType && viewForNewRound() === 'individual') {
@@ -1498,7 +1499,8 @@
                                           ? 'communities.swimming.timePlaceholder'
                                           : 'communities.race.timePlaceholder') | t">
                                     </label>
-                                    @if (raceSupportsLaps(newRoundSport) && newRoundEventType !== 'TRACK_TIME_TRIAL') {
+                                    @if (raceSupportsLaps(newRoundSport) && newRoundEventType !== 'TRACK_TIME_TRIAL'
+                                        && newRoundEventType !== 'TRACK_FLYING_200') {
                                       <label>
                                         <span>{{ 'communities.race.lapsCompleted' | t }}</span>
                                         <input type="number" min="0" step="1" [(ngModel)]="entry.lapsCompleted">

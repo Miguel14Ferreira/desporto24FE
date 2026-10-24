@@ -41,6 +41,10 @@ describe('Race results with recorded measures', () => {
     expect(raceSupportsLaps('Ciclismo de Pista')).toBeTrue(); // Scratch, not TT
     // The shared TT validator is used for road and track individual time trials.
     expect(roadTimeTrialEntryInvalid([racer(1, 66.222), racer(2, 67.331)])).toBeFalse();
+    // Flying 200m also uses the same organizer-confirmed time-and-place contract.
+    expect(roadTimeTrialEntryInvalid([racer(1, 11.235), racer(2, 11.406)])).toBeFalse();
+    expect(roadTimeTrialEntryInvalid([racer(1, null)])).toBeTrue();
+    expect(roadTimeTrialEntryInvalid([{ ...racer(1, 11.235), bestLapSeconds: 9 }])).toBeTrue();
   });
 
   it('rejects non-integral/negative laps', () => {
