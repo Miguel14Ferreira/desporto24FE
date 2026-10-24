@@ -44,7 +44,7 @@ describe('Unified Jynlo message center', () => {
     friends = jasmine.createSpyObj('CommunityService', ['friends']);
     communities = jasmine.createSpyObj('CommunityGroupsService', ['mine']);
     sessions = jasmine.createSpyObj('SessionService', ['mine', 'messages', 'detail', 'postMessage']);
-    direct = jasmine.createSpyObj('DirectChatService', ['recentHistory', 'info', 'send']);
+    direct = jasmine.createSpyObj('DirectChatService', ['recentHistory', 'info', 'send', 'attachmentsAvailable', 'sendAttachment', 'downloadAttachment']);
     timeline = jasmine.createSpyObj('CommunityTimelineService', ['list', 'send']);
     realtime = {
       messages$: directEvents.asObservable(),
@@ -66,6 +66,7 @@ describe('Unified Jynlo message center', () => {
     communities.mine.and.returnValue(of([]));
     sessions.mine.and.returnValue(of({ created: [], joined: [], waitlisted: [] }));
     direct.info.and.returnValue(of({ chatBlocked: false, whoBlocked: null }));
+    direct.attachmentsAvailable.and.returnValue(of({ available: false }));
     sessions.detail.and.returnValue(of({
       id: 41, sport: 'Futsal', city: 'Cacém', gameDate: '2026-11-01T10:00:00Z',
       joined: true, status: 'OPEN'
@@ -131,6 +132,55 @@ describe('Unified Jynlo message center', () => {
     expect(component.emojiPickerOpen).toBeFalse();
     component.selectConversation(directChat);
     expect(component.draft).toBe('Olá');
+  });
+
+  it('does not expose attachment sending while private storage is unavailable', () => {
+    const conversation = item('direct','bea');
+    component.conversations = [conversation];
+    direct.recentHistory.and.returnValue(of({content:[],last:true}));
+    direct.attachmentsAvailable.and.returnValue(of({available:false}));
+    component.selectConversation(conversation);
+    expect(component.attachmentReady).toBeFalse();
+    expect(component.selectedAttachment).toBeNull();
+  });
+
+  it('refuses unsupported or oversized attachments before HTTP upload', () => {
+    const peer = item('direct','bea');
+    component.conversations = [peer];
+    component.selectedKey = peer.key;
+    component.attachmentReady = true;
+    component.composerAllowed = true;
+    const fakeInput: any = { files:[new File(['<script>hello</script>'],'x.html',{type:'text/html'})], value:'anything' };
+    component.onAttachmentPicked({target:fakeInput} as any);
+    expect(fakeInput.value).toBe('');
+    expect(component.selectedAttachment).toBeNull();
+    expect(component.composerError).toBeTruthy();
+    expect(direct.sendAttachment).not.toHaveBeenCalled();
+    const huge = new File([new Uint8Array(5 * 1024 * 1024 + 1)],'x.pdf',{type:'application/pdf'});
+    component.onAttachmentPicked({target:{files:[huge],value:''}} as any);
+    expect(component.selectedAttachment).toBeNull();
+  });
+
+  it('sends a private PDF via multipart once with the existing successful-send flow', () => {
+    const peer = item('direct','bea');
+    component.conversations = [peer];
+    component.selectedKey = peer.key;
+    component.attachmentReady = true;
+    component.composerAllowed = true;
+    const file = new File(['%PDF-1.4'],'jogo.pdf',{type:'application/pdf'});
+    component.onAttachmentPicked({target:{files:[file],value:''}} as any);
+    expect(component.selectedAttachment).toBe(file);
+    direct.sendAttachment.and.returnValue(of({
+      id:42,username1:'ana',username2:'bea',text:'📎 jogo.pdf',
+      attachmentName:'jogo.pdf',attachmentMimeType:'application/pdf',
+      attachmentSize:8,date:new Date().toISOString(),dataDisplay:null
+    }));
+    component.sendMessage();
+    expect(direct.sendAttachment).toHaveBeenCalledOnceWith('bea',file,'',undefined);
+    expect(direct.send).not.toHaveBeenCalled();
+    expect(component.selectedAttachment).toBeNull();
+    expect(component.messages.some(message => message.id === 42
+      && message.attachmentName === 'jogo.pdf')).toBeTrue();
   });
 
   it('searches full chat history through an authorized scoped request without marking read', () => {
