@@ -95,6 +95,59 @@ describe('Community tournaments management', () => {
     expect(component.showCommunitySportShortcuts).toBeTrue();
   });
 
+  it('switches classification presets when changing sports and rejects fake karting standings', async () => {
+    component.startIndividualCreation();
+    component.nameDraft = 'Campeonato Karting';
+    component.chooseSport('Karting');
+    expect(component.classificationProfile.heading).toContain('corridas');
+    expect(component.classificationProfile.isRoundRobinSupported).toBeFalse();
+    await component.create();
+    expect(api.create).not.toHaveBeenCalled();
+    expect(component.error).toContain('jornadas');
+
+    component.chooseSport('Xadrez');
+    expect(component.classificationProfile.scoringMode).toBe('CHESS_HALF_POINTS');
+    expect(component.pointRulesDraft).toEqual({
+      winPoints: 2, drawPoints: 1, lossPoints: 0
+    });
+    component.chooseSport('Futebol');
+    expect(component.pointRulesDraft).toEqual({
+      winPoints: 3, drawPoints: 1, lossPoints: 0
+    });
+  });
+
+  it('creates a chess competition with a saved half-point scoring mode', async () => {
+    component.startIndividualCreation();
+    component.nameDraft = 'Liga de Xadrez';
+    component.chooseSport('Xadrez');
+    api.create.and.returnValue(of({ ...draft, sport: 'Xadrez',
+      scoringMode: 'CHESS_HALF_POINTS', winPoints: 2, drawPoints: 1 }));
+    await component.create();
+    expect(api.create).toHaveBeenCalledOnceWith(
+      7, 'Liga de Xadrez', 'Xadrez', { winPoints: 2, drawPoints: 1, lossPoints: 0 },
+      'CHESS_HALF_POINTS'
+    );
+    expect(component.isChessTournament).toBeTrue();
+    expect(component.formatTournamentPoints(3)).toBe('1,5');
+  });
+
+  it('accepts only proper chess match outcomes for new chess tournaments', () => {
+    const game: TournamentMatch = { id: 81, roundNumber: 1, homeProfileId: 1,
+      homeUsername: 'ana', awayProfileId: 2, awayUsername: 'bruno',
+      status: 'SCHEDULED', homeScore: null, awayScore: null };
+    component.selected = { ...draft, sport: 'Xadrez', scoringMode: 'CHESS_HALF_POINTS',
+      status: 'IN_PROGRESS', winPoints: 2, drawPoints: 1 };
+    expect(component.validTournamentScore(game)).toBeFalse();
+    component.setChessOutcome(game, 'DRAW');
+    expect(component.validTournamentScore(game)).toBeTrue();
+    expect(component.chessOutcome(game)).toBe('DRAW');
+    expect(component.displayTournamentResult({ ...game, homeScore: 0, awayScore: 0 })).toBe('½ – ½');
+    component.setScore(game, 'home', 7);
+    expect(component.validTournamentScore(game)).toBeFalse();
+    component.setChessOutcome(game, 'BLACK');
+    expect(component.validTournamentScore(game)).toBeTrue();
+  });
+
   describe('real team competitions', () => {
     const teamDraft: CommunityTournament = {
       ...draft, id: 19, name: 'Torneio CNG 5x5', sport: 'Futebol',
