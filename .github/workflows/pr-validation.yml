@@ -10,6 +10,7 @@ on:
     paths:
       - 'src/**'
       - 'e2e/community-tournaments.spec.ts'
+      - 'scripts/ci-browser/public_api_contract_READONLY.cjs'
       - 'package.json'
       - 'package-lock.json'
       - 'angular.json'
@@ -239,6 +240,19 @@ jobs:
             test-results/
           retention-days: 3
           if-no-files-found: ignore
+      # Opt-in anonymous smoke against the REAL published site, without Work.
+      # Chromium blocks every non-GET/HEAD request before it reaches production.
+      # No QA credentials, cookies, private IDs, data mutations or stored responses.
+      - name: Install Chromium for live read-only public QA
+        if: ${{ startsWith(github.head_ref, 'qa/live-public-browser-readonly-') }}
+        run: |
+          npm install --no-save --package-lock=false playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Verify published Jynlo UI and anonymous API (GET only)
+        if: ${{ startsWith(github.head_ref, 'qa/live-public-browser-readonly-') }}
+        env:
+          JYNLO_LIVE_BROWSER_READONLY: '1'
+        run: node scripts/ci-browser/public_api_contract_READONLY.cjs
       # Candidate-only browser verification. No additional job, second npm ci,
       # Render deployment, production credentials or production API requests.
       - name: Install Chromium for integrated desktop smoke
