@@ -2344,3 +2344,63 @@ test('Competition teams E2E: tiebreak explanations follow EN and PT without chan
   await expect(portuguese.getByText('Primeiro a diferença entre o que cada equipa marcou e sofreu.')).toBeVisible();
   expect(fixture.unmocked.filter(url => url.includes('/tournaments'))).toEqual([]);
 });
+
+test('Competition fixtures E2E: English league publishing and result actions restore PT', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'teams-schedule');
+  await page.goto('/menu/communities/7?tab=tournaments');
+  await page.evaluate(() => localStorage.setItem('d24-language', 'en'));
+  await page.reload();
+
+  const schedule = page.locator('.team-schedule-action');
+  await expect(schedule.getByText('Ready to start the championship?')).toBeVisible();
+  await expect(schedule.getByText('Generate a single-leg schedule for all teams.', { exact: false })).toBeVisible();
+  await schedule.getByRole('button', { name: 'Generate team fixtures' }).click();
+  await expect(schedule.getByRole('button', { name: 'Yes, publish team fixtures' })).toBeVisible();
+  await schedule.getByRole('button', { name: 'Yes, publish team fixtures' }).click();
+
+  const fixtures = page.getByRole('region', { name: 'Team fixtures' });
+  await expect(fixtures.getByRole('heading', { name: 'Team rounds and fixtures' })).toBeVisible();
+  await expect(fixtures.getByText('Round-robin championship. Results update the standings automatically.')).toBeVisible();
+  await expect(fixtures.getByText('Not played')).toBeVisible();
+  const match = fixtures.locator('.team-fixture').first();
+  await match.getByRole('spinbutton', { name: 'Goals for Azuis' }).fill('2');
+  await match.getByRole('spinbutton', { name: 'Goals for Verdes' }).fill('1');
+  await match.getByRole('button', { name: 'Save result between Azuis and Verdes' }).click();
+  await expect(match.getByRole('button', { name: 'Correct result between Azuis and Verdes' })).toBeVisible();
+  await expect(page.getByText('Tiebreak: Score difference first')).toBeVisible();
+
+  await page.evaluate(() => localStorage.setItem('d24-language', 'pt'));
+  await page.reload();
+  const portuguese = page.getByRole('region', { name: 'Jornadas entre equipas' });
+  await expect(portuguese.getByRole('heading', { name: 'Jornadas e confrontos entre equipas' })).toBeVisible();
+  await expect(portuguese.getByRole('button', { name: 'Corrigir resultado entre Azuis e Verdes' })).toBeVisible();
+  await expect(page.getByText('Desempate: Diferença do marcador primeiro')).toBeVisible();
+  expect(fixture.teamFixtures).toHaveLength(1);
+  expect(fixture.unmocked.filter(url => url.includes('/tournaments/'))).toEqual([]);
+});
+
+test('Competition fixtures E2E: English knockout publishing keeps winner-only scoring', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'teams-schedule', 'Futebol', undefined, 1, 'KNOCKOUT');
+  await page.goto('/menu/communities/7?tab=tournaments');
+  await page.evaluate(() => localStorage.setItem('d24-language', 'en'));
+  await page.reload();
+
+  const schedule = page.locator('.team-schedule-action');
+  await expect(schedule.getByText('Ready to draw the knockout bracket?')).toBeVisible();
+  await expect(schedule.getByText('Draw the opening fixtures and byes.', { exact: false })).toBeVisible();
+  await schedule.getByRole('button', { name: 'Draw knockouts' }).click();
+  await expect(schedule.getByRole('button', { name: 'Yes, draw knockouts' })).toBeVisible();
+  await schedule.getByRole('button', { name: 'Yes, draw knockouts' }).click();
+
+  const fixtures = page.getByRole('region', { name: 'Team fixtures' });
+  await expect(fixtures.getByRole('heading', { name: 'Knockout bracket' })).toBeVisible();
+  await expect(fixtures.getByText('The winner advances. Draws are not allowed in knockout matches.')).toBeVisible();
+  const match = fixtures.locator('.team-fixture').first();
+  await match.getByRole('spinbutton', { name: 'Goals for Azuis' }).fill('1');
+  await match.getByRole('spinbutton', { name: 'Goals for Verdes' }).fill('1');
+  await expect(match.getByRole('button', { name: 'Save result between Azuis and Verdes' })).toBeDisabled();
+  await expect(match.getByText('A knockout match needs a winner and whole-number scores from 0 to 999.')).toBeVisible();
+  expect(fixture.teamFixtures).toHaveLength(1);
+  expect(fixture.teamFixtures[0].status).toBe('SCHEDULED');
+  expect(fixture.unmocked.filter(url => url.includes('/tournaments/'))).toEqual([]);
+});
