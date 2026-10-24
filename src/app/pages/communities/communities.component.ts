@@ -949,6 +949,17 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   get availableHistoricalPlayers(): HistoricalPlayerCandidate[] {
     return this.historicalPlayers.filter(candidate => candidate.linkStatus === 'UNLINKED');
   }
+  /**
+   * The historical identity card is relevant only when a member can claim
+   * a name, manage an existing claim, or needs to see a load/action error.
+   * Do not show an empty card (or briefly flash it) while loading.
+   */
+  get showHistoricalIdentitySection(): boolean {
+    return this.availableHistoricalPlayers.length > 0
+      || this.historicalClaims.length > 0
+      || !!this.historicalPlayersError
+      || !!this.historicalClaimsError;
+  }
   inviteUsername = '';
   inviteSearchResults: CommunityProfile[] = [];
   inviteSearchLoading = false;

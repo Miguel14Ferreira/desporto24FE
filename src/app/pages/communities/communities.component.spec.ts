@@ -24,6 +24,48 @@ describe('CommunitiesComponent public session eligibility', () => {
     };
   });
 
+  it('hides historical identity association without any eligible names, claims or errors', () => {
+    component.historicalPlayers = [];
+    component.historicalClaims = [];
+    component.historicalPlayersError = '';
+    component.historicalClaimsError = '';
+    component.historicalPlayersLoading = true;
+    component.historicalClaimsLoading = true;
+
+    expect(component.showHistoricalIdentitySection).toBeFalse();
+    component.historicalPlayersLoading = false;
+    component.historicalClaimsLoading = false;
+    expect(component.showHistoricalIdentitySection).toBeFalse();
+
+    // A historical name already claimed by another member is not actionable.
+    component.historicalPlayers = [
+      { playerId: 10, historicalName: 'Ferreirinha', linkStatus: 'ACCEPTED' } as any
+    ];
+    expect(component.showHistoricalIdentitySection).toBeFalse();
+  });
+
+  it('shows historical association for free names, owned claims or load errors', () => {
+    component.historicalPlayers = [
+      { playerId: 10, historicalName: 'Ferreirinha', linkStatus: 'UNLINKED' } as any
+    ];
+    component.historicalClaims = [];
+    component.historicalPlayersError = '';
+    component.historicalClaimsError = '';
+    expect(component.showHistoricalIdentitySection).toBeTrue();
+
+    component.historicalPlayers = [];
+    component.historicalClaims = [{ id: 12, historicalName: 'Ferreirinha' } as any];
+    expect(component.showHistoricalIdentitySection).toBeTrue();
+
+    component.historicalClaims = [];
+    component.historicalPlayersError = 'Não foi possível carregar.';
+    expect(component.showHistoricalIdentitySection).toBeTrue();
+
+    component.historicalPlayersError = '';
+    component.historicalClaimsError = 'Não foi possível carregar.';
+    expect(component.showHistoricalIdentitySection).toBeTrue();
+  });
+
   it('shows a new chat arrival counter only for the opened community', () => {
     component.selected = { id: 7 } as any;
     component.activeTab = 'chat';

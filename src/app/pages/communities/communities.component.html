@@ -3503,7 +3503,8 @@
             @if (!competitionLoading && activeTab === 'members') {
               <section class="community-tab-panel">
 
-                <section class="management-block">
+                @if (showHistoricalIdentitySection) {
+                  <section class="management-block">
                   <div class="section-heading">
                     <div>
                       <span class="section-kicker">{{ 'communities.identity.kicker' | t }}</span>
@@ -3539,9 +3540,6 @@
                   @if (historicalClaimMessage) {
                     <p class="import-success" role="status">{{ historicalClaimMessage }}</p>
                   }
-                  @if (!historicalPlayersLoading && availableHistoricalPlayers.length === 0) {
-                    <p>{{ 'communities.identity.none' | t }}</p>
-                  }
                   @if (availableHistoricalPlayers.length > 0) {
                     <div class="import-context">
                       <label>
@@ -3569,7 +3567,8 @@
                         : ('communities.identity.claim' | t) }}
                     </button>
                   }
-                </section>
+                  </section>
+                }
                 @if (canManage()) {
                   <section class="management-block first-block">
                     <div class="section-heading">
