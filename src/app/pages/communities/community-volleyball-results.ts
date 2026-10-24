@@ -3,7 +3,19 @@ import { CommunityRound, CommunitySetScore } from '../model/community-group';
 export function isVolleyballEvent(eventType: string | null | undefined): boolean {
   return eventType === 'VOLLEYBALL_FINAL' || eventType === 'BEACH_VOLLEY_FINAL'
     || eventType === 'FOOTVOLLEY_SINGLE_18' || eventType === 'FOOTVOLLEY_BEST_OF_3'
-    || eventType === 'FOOTVOLLEY_SINGLE_15';
+    || eventType === 'FOOTVOLLEY_SINGLE_15'
+    || eventType === 'TEQBALL_SINGLES' || eventType === 'TEQBALL_DOUBLES';
+}
+export function isTeqballEvent(eventType: string | null | undefined): boolean {
+  return eventType === 'TEQBALL_SINGLES' || eventType === 'TEQBALL_DOUBLES';
+}
+export function volleyballSideLabelKey(type: string | null | undefined, side: 'A'|'B'): string {
+  return type === 'TEQBALL_SINGLES' ? 'communities.teamFinal.player' + side
+    : 'communities.volleyball.side' + side;
+}
+export function volleyballMemberSelectorKey(type: string | null | undefined): string {
+  return type === 'TEQBALL_SINGLES' ? 'communities.teqball.player'
+    : 'communities.volleyball.side';
 }
 export function isFootvolleyEvent(eventType: string | null | undefined): boolean {
   return eventType === 'FOOTVOLLEY_SINGLE_18' || eventType === 'FOOTVOLLEY_BEST_OF_3'
@@ -11,11 +23,13 @@ export function isFootvolleyEvent(eventType: string | null | undefined): boolean
 }
 export function volleyballMaxSets(eventType: string | null | undefined): number {
   if (eventType === 'FOOTVOLLEY_SINGLE_18' || eventType === 'FOOTVOLLEY_SINGLE_15') return 1;
-  return eventType === 'BEACH_VOLLEY_FINAL' || eventType === 'FOOTVOLLEY_BEST_OF_3' ? 3 : 5;
+  return isTeqballEvent(eventType) || eventType === 'BEACH_VOLLEY_FINAL'
+    || eventType === 'FOOTVOLLEY_BEST_OF_3' ? 3 : 5;
 }
 export function volleyballMinSets(eventType: string | null | undefined): number {
   if (eventType === 'FOOTVOLLEY_SINGLE_18' || eventType === 'FOOTVOLLEY_SINGLE_15') return 1;
-  return eventType === 'BEACH_VOLLEY_FINAL' || eventType === 'FOOTVOLLEY_BEST_OF_3' ? 2 : 3;
+  return isTeqballEvent(eventType) || eventType === 'BEACH_VOLLEY_FINAL'
+    || eventType === 'FOOTVOLLEY_BEST_OF_3' ? 2 : 3;
 }
 export function volleyballFormatHint(eventType: string | null | undefined): string {
   switch (eventType) {
@@ -23,11 +37,14 @@ export function volleyballFormatHint(eventType: string | null | undefined): stri
     case 'FOOTVOLLEY_BEST_OF_3': return 'communities.footvolley.bestOf3Hint';
     case 'FOOTVOLLEY_SINGLE_15': return 'communities.footvolley.single15Hint';
     case 'BEACH_VOLLEY_FINAL': return 'communities.volleyball.beachHint';
+    case 'TEQBALL_SINGLES': return 'communities.teqball.singlesHint';
+    case 'TEQBALL_DOUBLES': return 'communities.teqball.doublesHint';
     default: return 'communities.volleyball.indoorHint';
   }
 }
 export function volleyballResultTitle(eventType: string | null | undefined): string {
-  return isFootvolleyEvent(eventType) ? 'communities.footvolley.title'
+  return isTeqballEvent(eventType) ? 'communities.teqball.title'
+    : isFootvolleyEvent(eventType) ? 'communities.footvolley.title'
     : 'communities.volleyball.setsTitle';
 }
 
@@ -46,11 +63,13 @@ export function volleyballMatchError(
     const x = sets[i].sideA, y = sets[i].sideB;
     if (x == null || y == null || !Number.isInteger(x) || !Number.isInteger(y)
         || x < 0 || y < 0 || x > 999 || y > 999) return 'volleyballInvalidScore';
-    const target = eventType === 'FOOTVOLLEY_SINGLE_15' ? 15
+    const teqball = isTeqballEvent(eventType);
+    const target = teqball ? 12 : eventType === 'FOOTVOLLEY_SINGLE_15' ? 15
       : isFootvolleyEvent(eventType) ? i === 2 ? 15 : 18
       : i === maximum - 1 ? 15 : maximum === 3 ? 21 : 25;
     const high = Math.max(x, y), low = Math.min(x, y);
-    if (high < target || high - low < 2 ||
+    if (teqball && i < 2 ? high !== 12 || low >= 12
+        : high < target || high - low < 2 ||
         (low < target - 1 && high !== target) ||
         (low >= target - 1 && high !== low + 2))
       return 'volleyballInvalidScore';
@@ -62,7 +81,9 @@ export function volleyballMatchError(
   const countA = entries.filter(p => p.team === 'A').length;
   const countB = entries.filter(p => p.team === 'B').length;
   if (entries.some(p => (p.team !== 'A' && p.team !== 'B') || p.performanceValue != null)
-      || (eventType === 'BEACH_VOLLEY_FINAL' || isFootvolleyEvent(eventType)
+      || (eventType === 'TEQBALL_SINGLES' ? countA !== 1 || countB !== 1
+        : eventType === 'TEQBALL_DOUBLES' ? countA !== 2 || countB !== 2
+        : eventType === 'BEACH_VOLLEY_FINAL' || isFootvolleyEvent(eventType)
         ? countA !== 2 || countB !== 2 : countA < 1 || countB < 1))
     return 'volleyballInvalidTeams';
   return null;
