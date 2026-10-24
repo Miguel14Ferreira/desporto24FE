@@ -519,15 +519,15 @@
 
         @if (isTeamCompetition) {
           @if (!isMember) {
-            <div class="notice notice-info" role="status">Adere à comunidade para consultar os plantéis desta competição.</div>
+            <div class="notice notice-info" role="status">{{ 'communities.tournaments.teamUi.memberOnly' | t }}</div>
           } @else if (detailsLoading) {
-            <p class="t-muted" role="status">A carregar equipas e plantéis…</p>
+            <p class="t-muted" role="status">{{ 'communities.tournaments.teamUi.loading' | t }}</p>
           } @else {
-            <section class="t-section team-roster-section" aria-label="Equipas da competição">
+            <section class="t-section team-roster-section" [attr.aria-label]="'communities.tournaments.teamUi.region' | t">
               <div class="t-section-heading">
                 <div>
-                  <h5>Equipas e plantéis</h5>
-                  <p>{{ teams.length }} equipas criadas · {{ readyTeamCount }} prontas para competir</p>
+                  <h5>{{ 'communities.tournaments.teamUi.title' | t }}</h5>
+                  <p>{{ 'communities.tournaments.teamUi.summary' | t:{teams:teams.length,ready:readyTeamCount} }}</p>
                 </div>
               </div>
               <div class="guide-community-note" role="note">
@@ -539,39 +539,39 @@
                     : (isCupFormat ? 'Regista os resultados e acompanha os apuramentos até à final.' : 'Regista os resultados nas jornadas e acompanha a tabela classificativa.') }}</p>
               </div>
               @if (teamsLoadError) {
-                <p class="field-validation" role="alert">Não foi possível carregar os plantéis. Usa Atualizar para tentar novamente.</p>
+                <p class="field-validation" role="alert">{{ 'communities.tournaments.teamUi.loadError' | t }}</p>
               }
               @if (canManage && selected.status === 'DRAFT') {
                 <div class="team-create-row">
-                  <label for="new-team-name">Nome da nova equipa</label>
+                  <label for="new-team-name">{{ 'communities.tournaments.teamUi.teamName' | t }}</label>
                   <div class="team-create-actions">
                     <input id="new-team-name" [(ngModel)]="teamNameDraft" maxlength="100"
-                      autocomplete="off" placeholder="Ex.: Equipa Verde" [disabled]="busy || detailsLoading">
+                      autocomplete="off" [placeholder]="'communities.tournaments.teamUi.teamExample' | t" [disabled]="busy || detailsLoading">
                     <button type="button" class="t-btn t-btn-primary" (click)="createTournamentTeam()"
                       [disabled]="busy || detailsLoading || !teamNameDraft.trim() || teams.length >= 32">
-                      Adicionar equipa
+                      {{ 'communities.tournaments.teamUi.createTeam' | t }}
                     </button>
                   </div>
                 </div>
               }
               @if (teams.length === 0 && !teamsLoadError) {
-                <p class="t-muted">Ainda não existem equipas. O organizador pode começar por criar a primeira.</p>
+                <p class="t-muted">{{ 'communities.tournaments.teamUi.emptyTeams' | t }}</p>
               }
               @if (invitedTeamId && selected.id === invitedTournamentId && invitedTeam) {
-                <section class="team-invite-accept" aria-label="Convite para equipa">
+                <section class="team-invite-accept" [attr.aria-label]="'communities.tournaments.teamUi.inviteRegion' | t">
                   <div>
                     <strong>🏆 Foste convidado para a equipa {{ invitedTeam.name }}</strong>
                     <p>{{ selected.name }} · {{ community.name }}</p>
                     @if (myTeam?.id === invitedTeam.id) {
-                      <p class="team-invite-confirmed" role="status">Já fazes parte desta equipa. Boa sorte!</p>
+                      <p class="team-invite-confirmed" role="status">{{ 'communities.tournaments.teamUi.alreadyMember' | t }}</p>
                     } @else if (myTeam) {
                       <p role="status">Já pertences à equipa {{ myTeam.name }} neste torneio.</p>
                     } @else if (selected.status !== 'DRAFT') {
-                      <p role="status">O torneio já começou. Os plantéis estão fechados.</p>
+                      <p role="status">{{ 'communities.tournaments.teamUi.rosterClosed' | t }}</p>
                     } @else if (isTeamRosterFull(invitedTeam)) {
-                      <p role="status">Esta equipa já está completa.</p>
+                      <p role="status">{{ 'communities.tournaments.teamUi.teamFull' | t }}</p>
                     } @else {
-                      <p>O convite não te inscreve automaticamente. Confirma se queres entrar nesta equipa.</p>
+                      <p>{{ 'communities.tournaments.teamUi.confirmInviteHint' | t }}</p>
                       <button type="button" class="t-btn t-btn-primary"
                         [disabled]="busy || detailsLoading" (click)="acceptInvitedTeam()">
                         {{ busy ? 'A aceitar…' : 'Aceitar convite e entrar na equipa' }}
@@ -580,7 +580,7 @@
                   </div>
                 </section>
               } @else if (invitedTeamId && selected.id === invitedTournamentId && !teamsLoadError && !detailsLoading) {
-                <p class="field-validation" role="alert">A equipa deste convite não existe neste torneio.</p>
+                <p class="field-validation" role="alert">{{ 'communities.tournaments.teamUi.invalidInvite' | t }}</p>
               }
               <div class="team-roster-grid">
                 @for (team of teams; track team.id) {
@@ -588,16 +588,16 @@
                     <div class="team-roster-heading">
                       <div>
                         <h6>{{ team.name }}</h6>
-                        <span class="tournament-state">{{ team.players.length }}{{ team.playersPerTeam != null ? ' / ' + team.playersPerTeam : '' }} jogadores</span>
+                        <span class="tournament-state">{{ team.players.length }}{{ team.playersPerTeam != null ? ' / ' + team.playersPerTeam : '' }} {{ 'communities.tournaments.teamUi.players' | t }}</span>
                       </div>
                       @if (canManageTeamRoster && team.players.length === 0) {
                         <button type="button" class="t-btn t-btn-danger-outline t-btn-small"
-                          [disabled]="detailsLoading" [attr.aria-label]="'Eliminar equipa ' + team.name"
-                          (click)="deleteTournamentTeam(team)">Eliminar equipa vazia</button>
+                          [disabled]="detailsLoading" [attr.aria-label]="'communities.tournaments.teamUi.deleteAria' | t:{team:team.name}
+                          (click)="deleteTournamentTeam(team)">{{ 'communities.tournaments.teamUi.deleteEmpty' | t }}</button>
                       }
                     </div>
                     @if (!team.players.length) {
-                      <p class="t-muted">Ainda não foram adicionados jogadores.</p>
+                      <p class="t-muted">{{ 'communities.tournaments.teamUi.noPlayers' | t }}</p>
                     }
                     <div class="players-list">
                       @for (player of team.players; track player.profileId) {
@@ -606,48 +606,48 @@
                             <small>&#64;{{ player.username }}</small></div>
                           @if (canManageTeamRoster) {
                             <button type="button" class="t-btn t-btn-secondary t-btn-small"
-                              [attr.aria-label]="'Remover ' + player.username + ' da equipa ' + team.name"
-                              (click)="removeTeamPlayer(team, player.profileId)">Remover</button>
+                              [attr.aria-label]="'communities.tournaments.teamUi.removeAria' | t:{player:player.username,team:team.name}
+                              (click)="removeTeamPlayer(team, player.profileId)">{{ 'communities.tournaments.teamUi.remove' | t }}</button>
                           }
                         </div>
                       }
                     </div>
                     @if (canManageTeamRoster && !isTeamRosterFull(team)) {
                       <div class="team-share-invite">
-                        <strong>Convidar jogadores</strong>
-                        <p>Envia o convite por WhatsApp ou copia o link. O jogador aceita o lugar na própria conta.</p>
+                        <strong>{{ 'communities.tournaments.teamUi.invitePlayers' | t }}</strong>
+                        <p>{{ 'communities.tournaments.teamUi.inviteHint' | t }}</p>
                         <div class="team-share-actions">
                           <a class="t-btn t-btn-primary" [href]="teamWhatsAppUrl(team)"
                             target="_blank" rel="noopener noreferrer"
-                            [attr.aria-label]="'Convidar para a equipa ' + team.name + ' por WhatsApp'">
+                            [attr.aria-label]="'communities.tournaments.teamUi.whatsappAria' | t:{team:team.name}>
                             WhatsApp
                           </a>
                           <button type="button" class="t-btn t-btn-secondary"
                             [disabled]="busy || detailsLoading" (click)="copyTeamInvite(team)">
-                            Copiar link
+                            {{ 'communities.tournaments.teamUi.copy' | t }}
                           </button>
                         </div>
-                        <label [for]="'team-invite-link-' + team.id">Link da equipa</label>
+                        <label [for]="'team-invite-link-' + team.id">{{ 'communities.tournaments.teamUi.teamLink' | t }}</label>
                         <input [id]="'team-invite-link-' + team.id" type="text" readonly
                           [value]="teamInviteUrl(team)" (click)="$any($event.target).select()">
                         @if (inviteCopyFeedback[team.id]) {
                           <p role="status">{{ inviteCopyFeedback[team.id] }}</p>
                         }
-                        <p class="t-muted">Quem ainda não pertence à comunidade terá primeiro de aderir.</p>
+                        <p class="t-muted">{{ 'communities.tournaments.teamUi.joinCommunity' | t }}</p>
                       </div>
                       <details class="team-manual-assign">
-                        <summary>Adicionar um membro manualmente (organizador)</summary>
+                        <summary>{{ 'communities.tournaments.teamUi.manualAssign' | t }}</summary>
                         <div class="team-player-assign">
-                          <label [for]="'team-player-' + team.id">Membro da comunidade</label>
+                          <label [for]="'team-player-' + team.id">{{ 'communities.tournaments.teamUi.communityMember' | t }}</label>
                           <select [id]="'team-player-' + team.id" [(ngModel)]="teamPlayerDraft[team.id]" [disabled]="busy || detailsLoading">
-                            <option [ngValue]="null">Seleciona um membro</option>
+                            <option [ngValue]="null">{{ 'communities.tournaments.teamUi.selectMember' | t }}</option>
                             @for (member of availableTeamMembers; track member.profileId) {
                               <option [ngValue]="member.profileId">{{ member.fullName || member.username }} (&#64;{{ member.username }})</option>
                             }
                           </select>
                           <button type="button" class="t-btn t-btn-secondary"
                             [disabled]="busy || detailsLoading || !teamPlayerDraft[team.id]"
-                            (click)="assignTeamPlayer(team)">Adicionar jogador</button>
+                            (click)="assignTeamPlayer(team)">{{ 'communities.tournaments.teamUi.addPlayer' | t }}</button>
                         </div>
                       </details>
                     }
