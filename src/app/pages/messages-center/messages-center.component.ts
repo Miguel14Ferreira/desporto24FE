@@ -930,7 +930,10 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
 
   private loadAttachmentAvailability(conversation: InboxConversation): void {
     this.attachmentReady = false;
-    if (conversation.kind !== 'direct') return;
+    // Progressive enhancement: older injected chat clients and test doubles
+    // have no attachment capability; keep the composer securely text-only.
+    if (conversation.kind !== 'direct'
+        || typeof this.direct.attachmentsAvailable !== 'function') return;
     this.direct.attachmentsAvailable(String(conversation.id))
       .pipe(timeout(10000), catchError(() => of({available: false})))
       .subscribe(result => {
