@@ -98,6 +98,71 @@ describe('Historic tournament outcome from original spreadsheet', () => {
     ]), 'KNOCKOUT').reason).toBe('multiple-finals');
   });
 
+  it('accepts a decisive final only when both explicitly labelled semifinals feed it', () => {
+    const result = outcome(archive([
+      row(2, 'Águias', 'Lobos', 2, 1, 'Meia-final 1'),
+      row(3, 'CNG', 'Tigres', 3, 0, 'Semi Final 2'),
+      row(4, 'Águias', 'CNG', 1, 0, 'Final')
+    ]), 'KNOCKOUT');
+    expect(result).toEqual({ winner: 'Águias', reason: 'winner-estimated', matchesUsed: 3 });
+  });
+
+  it('rejects a final with a finalist eliminated in the source semifinals', () => {
+    const result = outcome(archive([
+      row(2, 'A', 'B', 0, 1, 'Semifinal'),
+      row(3, 'C', 'D', 4, 0, 'Meias-finais'),
+      row(4, 'A', 'C', 2, 0, 'Final')
+    ]), 'KNOCKOUT');
+    expect(result.winner).toBeNull();
+    expect(result.reason).toBe('semifinal-final-mismatch');
+  });
+
+  it('does not infer a champion from an incomplete pair of labelled semifinals', () => {
+    const result = outcome(archive([
+      row(2, 'A', 'B', 2, 0, 'Semi-final'),
+      row(3, 'A', 'C', 1, 0, 'Final')
+    ]), 'KNOCKOUT');
+    expect(result).toEqual({ winner: null, reason: 'incomplete-semifinals', matchesUsed: 2 });
+  });
+
+  it('rejects a semifinal draw because its actual winner needs independent evidence', () => {
+    const result = outcome(archive([
+      row(2, 'A', 'B', 1, 1, 'Meia-final'),
+      row(3, 'C', 'D', 2, 1, 'Semifinal'),
+      row(4, 'A', 'C', 3, 0, 'Final')
+    ]), 'KNOCKOUT');
+    expect(result.reason).toBe('drawn-semifinal');
+    expect(result.winner).toBeNull();
+  });
+
+  it('does not accept duplicated or overlapping semifinal participants', () => {
+    const result = outcome(archive([
+      row(2, 'A', 'B', 1, 0, '1/2 final'),
+      row(3, 'A', 'C', 1, 0, '1/2 finais'),
+      row(4, 'A', 'C', 2, 1, 'Grande Final')
+    ]), 'KNOCKOUT');
+    expect(result.reason).toBe('semifinal-final-mismatch');
+    expect(result.winner).toBeNull();
+  });
+
+  it('recognizes participants across rounds with different case and diacritics', () => {
+    const result = outcome(archive([
+      row(2, 'Águias', 'Lobos', 1, 0, 'Semifinal A'),
+      row(3, 'CNG', 'Tigres', 1, 0, 'Semifinal B'),
+      row(4, '  aguias  ', 'cng', 2, 0, 'Final')
+    ]), 'KNOCKOUT');
+    expect(result.reason).toBe('winner-estimated');
+    expect(result.winner).toBe('aguias');
+  });
+
+  it('does not invent missing semifinal fixtures for a final-only archive', () => {
+    const result = outcome(archive([
+      row(2, 'A', 'B', 2, 1, 'Final')
+    ]), 'KNOCKOUT');
+    expect(result.reason).toBe('winner-estimated');
+    expect(result.winner).toBe('A');
+  });
+
   it('leaves the source archive unchanged', () => {
     const item = archive([row(2, 'Águias', 'Lobos', 1, 0, 'Final')]);
     const before = JSON.stringify(item);
