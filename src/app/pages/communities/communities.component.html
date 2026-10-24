@@ -379,7 +379,8 @@
               <div class="community-detail-identity">
                 <div class="community-photo-block">
                   <div class="community-avatar community-avatar--large"
-                    [class.community-avatar--animated]="isAnimatedCommunityAvatar(selected.photoUrl)">
+                    [class.community-avatar--animated]="isAnimatedCommunityAvatar(selected.photoUrl)"
+                    [class.community-avatar--letterboxed]="!!selected.photoUrl">
                     @if (selected.photoUrl) {
                       <img [src]="selected.photoUrl" [alt]="selected.name">
                     } @else {
