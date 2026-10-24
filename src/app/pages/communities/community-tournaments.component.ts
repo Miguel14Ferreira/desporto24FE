@@ -45,7 +45,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     if (!this.historicalArchive || !this.selected?.historicalArchiveId) return null;
     if (this.selected.format !== 'LEAGUE' && this.selected.format !== 'KNOCKOUT') return null;
     return historicalTournamentOutcome(
-      this.historicalArchive, this.selected.format,
+      this.historicalArchive, this.selected.format, this.selected.sport,
       this.selected.winPoints, this.selected.drawPoints, this.selected.lossPoints
     );
   }
