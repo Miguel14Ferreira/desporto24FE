@@ -149,6 +149,77 @@ describe('Unified Jynlo message center', () => {
       { kind: 'direct', id: 'bea' }, 3);
   });
 
+  it('keeps unread badges for a selected chat when the reader is scrolled up', () => {
+    const conversation = {...item('direct', 'bea'), unreadCount: 0};
+    component.conversations = [conversation];
+    component.selectedKey = conversation.key;
+    component.messages = [message(conversation.key, 12, 'ana')];
+    const log = {
+      scrollHeight: 900, scrollTop: 100, clientHeight: 300,
+      querySelector: () => ({getBoundingClientRect: () => ({
+        top: 200, bottom: 240, width: 220, height: 40
+      })}),
+      getBoundingClientRect: () => ({
+        top: 100, bottom: 400, width: 440, height: 300
+      })
+    };
+    component.previewLog = {nativeElement: log} as any;
+    (component as any).acceptRealtime(conversation.key, message(conversation.key, 13, 'bea'));
+    (component as any).acceptRealtime(conversation.key, message(conversation.key, 13, 'bea'));
+    expect(component.conversations.find(x => x.key === conversation.key)?.unreadCount).toBe(1);
+    expect(component.recentCount).toBe(1);
+    expect(component.newMessagesPending).toBe(1);
+    expect(inboxApi.markRead).not.toHaveBeenCalled();
+
+    log.scrollTop = 600;
+    component.onPreviewLogScroll();
+    expect(inboxApi.markRead).toHaveBeenCalledOnceWith({kind:'direct',id:'bea'}, 13);
+    expect(component.recentCount).toBe(0);
+  });
+
+  it('retains unread messages received while selected but unfocused until returning', () => {
+    const conversation = {...item('direct', 'bea'), unreadCount: 0};
+    component.conversations = [conversation];
+    component.selectedKey = conversation.key;
+    component.messages = [message(conversation.key, 20, 'ana')];
+    component.previewLog = {nativeElement: {
+      scrollHeight: 600, scrollTop: 400, clientHeight: 200,
+      querySelector: () => ({getBoundingClientRect: () => ({
+        top: 150, bottom: 185, width: 220, height: 35
+      })}),
+      getBoundingClientRect: () => ({
+        top: 100, bottom: 300, width: 430, height: 200
+      })
+    }} as any;
+    const focus = document.hasFocus as jasmine.Spy;
+    focus.and.returnValue(false);
+    (component as any).acceptRealtime(conversation.key, message(conversation.key, 21, 'bea'));
+    (component as any).acceptRealtime(conversation.key, message(conversation.key, 21, 'bea'));
+    component.ngAfterViewChecked();
+    expect(component.recentCount).toBe(1);
+    expect(component.conversations[0].unreadCount).toBe(1);
+    expect(inboxApi.markRead).not.toHaveBeenCalled();
+
+    focus.and.returnValue(true);
+    (component as any).onPageActive();
+    expect(inboxApi.markRead).toHaveBeenCalledOnceWith({kind:'direct',id:'bea'}, 21);
+    expect(component.recentCount).toBe(0);
+  });
+
+  it('does not count own messages or viewed incoming messages as unread', () => {
+    const conversation = {...item('direct', 'bea'), unreadCount: 0};
+    component.conversations = [conversation];
+    component.selectedKey = conversation.key;
+    component.messages = [message(conversation.key, 30, 'ana')];
+    component.previewLog = {nativeElement: {
+      scrollHeight: 400, scrollTop: 200, clientHeight: 200
+    }} as any;
+    (component as any).acceptRealtime(conversation.key, message(conversation.key, 31, 'ana'));
+    (component as any).acceptRealtime(conversation.key, message(conversation.key, 32, 'bea'));
+    expect(component.recentCount).toBe(0);
+    expect(component.conversations[0].unreadCount).toBe(0);
+  });
+
   it('does not confirm a newly loaded history until its latest bubble is rendered and visible', () => {
     const conversation = item('community', 7);
     component.conversations = [conversation];
