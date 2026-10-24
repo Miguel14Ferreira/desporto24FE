@@ -328,6 +328,141 @@ describe('Unified Jynlo message center', () => {
     expect(component.conversations.map(x => x.key)).toEqual(['community:7']);
   });
 
+  it('discovers an offline friend and recovers selected history after authenticated reconnect', () => {
+    connected.next(false);
+    const token = 'eyJhbGciOiJub25lIn0.'
+      + btoa(JSON.stringify({sub:'ana',exp:4102444800})).replace(/=+$/, '')
+      + '.fixture';
+    spyOn(localStorage,'getItem').and.callFake(key => key === 't' ? token : null);
+    friends.friends.and.returnValues(
+      of([{username:'bea',nickname:'Bea'}] as any),
+      of([{username:'bea',nickname:'Bea'}, {username:'carla',nickname:'Carla'}] as any));
+    direct.recentHistory.and.returnValues(
+      of({content:[{id:41,username1:'bea',username2:'ana',text:'Antiga',
+        date:'2026-10-23T09:00:00Z',dataDisplay:null}],last:true} as any),
+      of({content:[{id:42,username1:'bea',username2:'ana',text:'Offline',
+        date:'2026-10-23T10:00:00Z',dataDisplay:null},
+        {id:41,username1:'bea',username2:'ana',text:'Antiga',
+        date:'2026-10-23T09:00:00Z',dataDisplay:null}],last:true} as any));
+    inboxApi.summaries.and.callFake(refs => of(refs.map(ref => ({
+      ...ref, latestMessageId: ref.id === 'bea' ? 42 : 50,
+      latestText:'sincronizada',latestSender:'bea',latestAt:'2026-10-23T10:00:00Z',
+      unreadCount: ref.id === 'carla' ? 2 : 1
+    }))));
+    component.ngOnInit();
+    try {
+      connected.next(true); // first AUTH is not an outage
+      expect(friends.friends).toHaveBeenCalledTimes(1);
+      component.selectConversation(component.conversations.find(x => x.key === 'direct:bea')!);
+      expect(component.messages.map(m => m.id)).toEqual([41]);
+
+      connected.next(false);
+      connected.next(true);
+      expect(friends.friends).toHaveBeenCalledTimes(2);
+      expect(component.conversations.map(x => x.key)).toContain('direct:carla');
+      expect(component.conversations.find(x => x.key === 'direct:carla')?.unreadCount).toBe(2);
+      expect(component.selectedKey).toBe('direct:bea');
+      expect(direct.recentHistory).toHaveBeenCalledTimes(2);
+      expect(component.messages.map(m => m.id)).toEqual([41,42]);
+      connected.next(true); // redundant signal must not trigger another GET
+      expect(friends.friends).toHaveBeenCalledTimes(2);
+      expect(direct.recentHistory).toHaveBeenCalledTimes(2);
+    } finally {
+      component.ngOnDestroy();
+      connected.next(false);
+    }
+  });
+
+  it('keeps authorized conversations on a transient membership lookup failure', () => {
+    component.conversations=[item('direct','bea'), item('community',7)];
+    friends.friends.and.returnValue(throwError(() => new Error('temporary outage')));
+    communities.mine.and.returnValue(of([{id:7,name:'CNG'}] as any));
+    (component as any).receiptSessionToken = 'qa-session';
+    spyOn(localStorage,'getItem').and.returnValue('qa-session');
+    component.loadInbox(true);
+    expect(component.failedSources).toEqual(['direct']);
+    expect(component.conversations.map(x => x.key).sort()).toEqual([
+      'community:7','direct:bea'
+    ]);
+    expect(component.selectedKey).toBeNull();
+  });
+
+  it('removes a revoked conversation after a successful membership refresh', () => {
+    component.conversations=[item('direct','bea'), item('community',7)];
+    component.selectedKey='direct:bea';
+    component.messages=[message('direct:bea',41)];
+    friends.friends.and.returnValue(of([]));
+    communities.mine.and.returnValue(of([{id:7,name:'CNG'}] as any));
+    (component as any).receiptSessionToken = 'qa-session';
+    spyOn(localStorage,'getItem').and.returnValue('qa-session');
+    component.loadInbox(true);
+    expect(component.failedSources).toEqual([]);
+    expect(component.conversations.map(x => x.key)).toEqual(['community:7']);
+    expect(component.selectedKey).toBeNull();
+    expect(component.messages).toEqual([]);
+    expect(direct.recentHistory).not.toHaveBeenCalled();
+  });
+
+  it('retains the older loaded window and unread status while scrolled up on recovery', () => {
+    const conversation=item('direct','bea');
+    component.conversations=[conversation];
+    component.selectedKey=conversation.key;
+    component.messages=[message(conversation.key,30,'bea'),message(conversation.key,31,'bea')];
+    component.previewLog={nativeElement:{
+      scrollHeight:900,scrollTop:100,clientHeight:200
+    }} as any;
+    direct.recentHistory.and.returnValue(of({content:[
+      {id:31,username1:'bea',username2:'ana',text:'Já vista',
+        date:'2026-10-23T09:00:00Z',dataDisplay:null},
+      {id:32,username1:'bea',username2:'ana',text:'Durante a falha',
+        date:'2026-10-23T10:00:00Z',dataDisplay:null}
+    ],last:true} as any));
+    (component as any).loadHistory(conversation);
+    expect(component.messages.map(x => x.id)).toEqual([30,31,32]);
+    expect(component.newMessagesPending).toBe(1);
+    expect(inboxApi.markRead).not.toHaveBeenCalled();
+    expect(component.selectedKey).toBe(conversation.key);
+  });
+
+  it('preserves socket messages newer than an in-flight reconnect HTTP snapshot', () => {
+    const conversation=item('direct','bea');
+    const pending=new Subject<any>();
+    component.conversations=[conversation];
+    component.selectedKey=conversation.key;
+    direct.recentHistory.and.returnValue(pending.asObservable());
+    (component as any).loadHistory(conversation);
+    (component as any).acceptRealtime(conversation.key,message(conversation.key,48,'bea'));
+    pending.next({content:[
+      {id:47,username1:'bea',username2:'ana',text:'Servidor',
+        date:'2026-10-23T10:00:00Z',dataDisplay:null}
+    ],last:true});
+    pending.complete();
+    expect(component.messages.map(x => x.id)).toEqual([47,48]);
+    expect(component.messages.filter(x => x.id === 48)).toHaveSize(1);
+  });
+
+  it('does not recover another account history when the shared login token changes', () => {
+    connected.next(false);
+    const original='eyJhbGciOiJub25lIn0.'
+      + btoa(JSON.stringify({sub:'ana',exp:4102444800})).replace(/=+$/, '')
+      + '.fixture';
+    let browserToken=original;
+    spyOn(localStorage,'getItem').and.callFake(key => key === 't' ? browserToken : null);
+    component.ngOnInit();
+    try {
+      connected.next(true);
+      expect(friends.friends).toHaveBeenCalledTimes(1);
+      connected.next(false);
+      browserToken='replaced-by-another-account';
+      connected.next(true);
+      expect(friends.friends).toHaveBeenCalledTimes(1);
+      expect(direct.recentHistory).not.toHaveBeenCalled();
+    } finally {
+      component.ngOnDestroy();
+      connected.next(false);
+    }
+  });
+
   it('drops stale history from a previous selection, even after switching types', () => {
     const old = new Subject<any[]>();
     const newer = new Subject<any>();
