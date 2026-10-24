@@ -2109,7 +2109,7 @@ test('Karting E2E: PT/EN acompanha idioma da Jynlo em pontuação e arquivo', as
     .locator('tbody tr')).toHaveCount(2);
   await expect(race.getByText(/DNF.*Carla/)).toBeVisible();
 
-  await race.getByRole('button', { name: 'Finish Racing championship' }).click();
+  await race.getByRole('button', { name: 'Finish racing championship' }).click();
   await race.getByRole('button', { name: 'Yes, finish and archive standings' }).click();
   const finalPodium = page.getByRole('region', { name: 'Final podium' });
   await expect(finalPodium.locator('.karting-podium-place').first()).toContainText('Ana');
