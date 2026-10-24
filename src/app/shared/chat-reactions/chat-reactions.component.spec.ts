@@ -35,7 +35,7 @@ describe('Keyboard-accessible chat reaction picker', () => {
     expect(component.expanded).toBeTrue();
     expect(toggle.getAttribute('aria-expanded')).toBe('true');
     expect(toggle.getAttribute('aria-controls')).toBeTruthy();
-    expect(element.querySelector('.reaction-picker')?.id).toBe(toggle.getAttribute('aria-controls'));
+    expect(element.querySelector('.reaction-picker')?.id).toBe(toggle.getAttribute('aria-controls') || '');
 
     const first=element.querySelector<HTMLButtonElement>('.reaction-picker button')!;
     first.focus();
