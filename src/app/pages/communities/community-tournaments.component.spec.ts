@@ -190,6 +190,20 @@ describe('Community tournaments management', () => {
     expect(api.createRaceChampionship).toHaveBeenCalledTimes(2);
   });
 
+  it('shows lap columns only for races that really have lap metrics', () => {
+    const entry = {
+      communityPlayerId: 11, fullName: 'Ana', finishPosition: 1,
+      elapsedSeconds: 120.5, bestLapSeconds: null, lapsCompleted: null,
+      racePenaltyPoints: 0, raceDisqualified: false
+    };
+    expect(component.hasRaceLaps([entry])).toBeFalse();
+    expect(component.hasRaceBestLap([entry])).toBeFalse();
+    expect(component.hasRaceLaps([{ ...entry, lapsCompleted: 3 }])).toBeTrue();
+    expect(component.hasRaceBestLap([{ ...entry, bestLapSeconds: 45.55 }])).toBeTrue();
+    expect(component.hasRaceLaps([])).toBeFalse();
+    expect(component.hasRaceBestLap([])).toBeFalse();
+  });
+
   it('does not offer cycling race championships as team or specialised event formats', () => {
     for (const sport of ['Ciclismo', 'Mountain Bike']) {
       component.startTeamCreation();
