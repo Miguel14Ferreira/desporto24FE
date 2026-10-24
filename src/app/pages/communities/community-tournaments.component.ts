@@ -3,7 +3,8 @@ import { finalize, firstValueFrom, forkJoin, Observable, timeout } from 'rxjs';
 import { CommunityGroup } from '../model/community-group';
 import {
   CommunityTournament, TournamentPointRules, TeamTieBreakPriority, TournamentMatch, TournamentParticipant, TournamentStandingRow,
-  TournamentStandings, TournamentTeam, TournamentTeamMatch, TournamentTeamStandings, TournamentTeamGroups
+  TournamentStandings, TournamentTeam, TournamentTeamMatch, TournamentTeamStandings, TournamentTeamGroups,
+  TournamentRaceOverview
 } from '../model/community-tournament';
 import { CommunityTournamentsService } from '../../services/community-tournaments.service';
 import { AuthenticationService } from '../../services/authethication.service';
@@ -36,6 +37,10 @@ export class CommunityTournamentsComponent implements OnChanges {
   matchesPage = 0;
   matchesHasMore = false;
   standings?: TournamentStandings;
+  raceOverview?: TournamentRaceOverview;
+  raceError = false;
+  racePointsDraft = '';
+  private raceRevision = 0;
 
   showGuide = false;
   showIndividualCreate = false;
@@ -185,8 +190,16 @@ export class CommunityTournamentsComponent implements OnChanges {
     return tournamentClassificationProfile(this.sportDraft);
   }
 
+  get isKartingRaceDraft(): boolean {
+    return !this.showTeamCreate && this.sportDraft.trim().toLowerCase() === 'karting';
+  }
+
+  get isRaceCompetition(): boolean {
+    return this.selected?.scoringMode === 'RACE_POINTS';
+  }
+
   get isSportFormatSupported(): boolean {
-    return this.classificationProfile.isRoundRobinSupported
+    return this.isKartingRaceDraft || this.classificationProfile.isRoundRobinSupported
       && !(this.showTeamCreate && this.classificationProfile.scoringMode === 'CHESS_HALF_POINTS');
   }
 
@@ -303,6 +316,9 @@ export class CommunityTournamentsComponent implements OnChanges {
       ++this.detailRevision;
       ++this.mutationRevision;
       ++this.standingsRevision;
+      ++this.raceRevision;
+      this.raceOverview = undefined;
+      this.raceError = false;
       ++this.teamMatchesRevision;
       ++this.teamStandingsRevision;
       ++this.teamGroupsRevision;
@@ -614,6 +630,9 @@ export class CommunityTournamentsComponent implements OnChanges {
     ++this.detailRevision;
     ++this.mutationRevision;
     ++this.standingsRevision;
+    ++this.raceRevision;
+    this.raceOverview = undefined;
+    this.raceError = false;
     ++this.teamMatchesRevision;
     ++this.teamStandingsRevision;
     ++this.teamGroupsRevision;
@@ -660,6 +679,10 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.loadTeams();
       return;
     }
+    if (tournament.scoringMode === 'RACE_POINTS') {
+      this.loadRaceOverview();
+      return;
+    }
     const communityId = this.community.id;
     const revision = ++this.detailRevision;
     ++this.standingsRevision;
@@ -699,6 +722,77 @@ export class CommunityTournamentsComponent implements OnChanges {
         }
       }
     });
+  }
+
+  /** Race championships read real rounds, not fake 1-vs-1 fixtures. */
+  loadRaceOverview(): void {
+    const tournament = this.selected;
+    if (!tournament || tournament.scoringMode !== 'RACE_POINTS'
+        || !this.isMember || this.detailsLoading) return;
+    const cid = this.community.id, revision = ++this.raceRevision;
+    this.detailsLoading = true;
+    this.raceError = false;
+    this.api.raceOverview(cid, tournament.id).pipe(
+      timeout(12000),
+      finalize(() => {
+        if (revision === this.raceRevision) {
+          this.detailsLoading = false;
+          this.changeDetector.markForCheck();
+        }
+      })
+    ).subscribe({
+      next: result => {
+        if (revision !== this.raceRevision || this.community.id !== cid
+            || this.selected?.id !== tournament.id) return;
+        this.raceOverview = result;
+        this.racePointsDraft = result.pointsByPlace.join(',');
+      },
+      error: () => {
+        if (revision === this.raceRevision && this.selected?.id === tournament.id) {
+          this.raceError = true;
+          this.showError('Não foi possível carregar as corridas do campeonato.');
+        }
+      }
+    });
+  }
+
+  async linkTournamentRace(roundId: number): Promise<void> {
+    if (!this.selected || !this.canManage || this.isRaceCompetition === false) return;
+    await this.mutate(this.api.linkRace(this.community.id, this.selected.id, roundId),
+      'Corrida associada ao campeonato.', result => {
+        this.raceOverview = result;
+        this.updateSelected({ ...this.selected!, status: 'IN_PROGRESS' });
+      });
+  }
+
+  async unlinkTournamentRace(roundId: number): Promise<void> {
+    if (!this.selected || !this.canManage || this.isRaceCompetition === false) return;
+    await this.mutate(this.api.unlinkRace(this.community.id, this.selected.id, roundId),
+      'Corrida retirada do campeonato. O resultado continua nas jornadas.', result => {
+        this.raceOverview = result;
+        if (!result.linkedRaces.length) {
+          this.updateSelected({ ...this.selected!, status: 'DRAFT', startedAt: null });
+        }
+      });
+  }
+
+  async saveRacePoints(): Promise<void> {
+    if (!this.selected || !this.canManage || !this.isRaceCompetition
+        || this.raceOverview?.linkedRaces.length || this.selected.status !== 'DRAFT') return;
+    const text = this.racePointsDraft.trim();
+    const points = text.split(',').map(v => v.trim());
+    if (points.length < 1 || points.length > 20
+        || points.some((p, i) => !/^\\d{1,4}$/.test(p)
+          || Number(p) > 1000
+          || (i > 0 && Number(p) > Number(points[i - 1])))) {
+      this.showError('Indica até 20 pontos inteiros decrescentes, entre 0 e 1000, separados por vírgulas.');
+      return;
+    }
+    await this.mutate(this.api.setRacePoints(this.community.id, this.selected.id, text),
+      'Pontuação por posição guardada.', result => {
+        this.raceOverview = result;
+        this.racePointsDraft = result.pointsByPlace.join(',');
+      });
   }
 
   loadMoreParticipants(): void {
@@ -1103,16 +1197,18 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.showError('Escolhe uma modalidade válida para o torneio.');
       return;
     }
-    if (!this.classificationProfile.isRoundRobinSupported) {
+    if (!this.isSportFormatSupported) {
       this.showError('Esta modalidade precisa de resultados por prova. Usa as jornadas da comunidade.');
       return;
     }
-    if (!this.validPointRules) {
+    if (!this.isKartingRaceDraft && !this.validPointRules) {
       this.showError('Define pontos inteiros entre 0 e 100 para vitória, empate e derrota.');
       return;
     }
     const scoringMode = this.classificationProfile.scoringMode;
-    const createRequest = scoringMode
+    const createRequest = this.isKartingRaceDraft
+      ? this.api.createKartingChampionship(this.community.id, name)
+      : scoringMode
       ? this.api.create(this.community.id, name, this.sportDraft, this.pointRulesDraft, scoringMode)
       : this.api.create(this.community.id, name, this.sportDraft, this.pointRulesDraft);
     await this.mutate(createRequest,
