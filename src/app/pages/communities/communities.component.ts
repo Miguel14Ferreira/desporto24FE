@@ -14,6 +14,7 @@ import { breakingBattleError } from './community-breaking-battle';
 import { cricketT20Error, cricketOvers } from './community-cricket-results';
 import { chessGameError, chessGameScore } from './community-chess-results';
 import { judoBoutError, isJudoBout } from './community-judo-results';
+import { karateBoutError, isKarateEvent, isKarateKumite } from './community-karate-results';
 import { isVolleyballEvent, isFootvolleyEvent, volleyballMaxSets, volleyballMinSets,
   volleyballMatchError, volleyballSetWinner, volleyballSetTotals,
   volleyballSideLabelKey, volleyballMemberSelectorKey,
@@ -3087,6 +3088,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     const breaking = this.newRoundEventType === 'BREAKING_BATTLE';
     const chess = this.newRoundEventType === 'CHESS_GAME';
     const judo = isJudoBout(this.newRoundEventType);
+    const karate = isKarateEvent(this.newRoundEventType);
     const groupRoutine = isGroupRoutineEvent(this.newRoundEventType);
     const basketball = isBasketballFinal(this.newRoundEventType);
     const teamFinal = isTeamFinalEvent(this.newRoundEventType);
@@ -3144,6 +3146,10 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       this.errorMessage = t('feedback.communities.chessInvalid');
       return;
     }
+    if (karate && karateBoutError(this.newRoundEventType, selectedEntries)) {
+      this.errorMessage = t('feedback.communities.karateInvalid');
+      return;
+    }
     if (judo && judoBoutError(selectedEntries)) {
       this.errorMessage = t('feedback.communities.judoInvalid');
       return;
@@ -3152,7 +3158,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       this.errorMessage = t('feedback.communities.breakingInvalid');
       return;
     }
-    if (neutral && !isWaveHeatEvent(this.newRoundEventType)
+    if (neutral && !karate && !isWaveHeatEvent(this.newRoundEventType)
       && performanceError(this.newRoundEventType, selectedEntries)) {
       this.errorMessage = t(performanceKind(this.newRoundEventType) === 'golf'
         ? 'feedback.communities.golfInvalid'
@@ -3171,9 +3177,9 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     const entries = selectedEntries
       .map(entry => ({
         username: entry.username,
-        team: groupRoutine || basketball || volleyball || teamFinal || chess || judo ? entry.team.trim()
+        team: groupRoutine || basketball || volleyball || teamFinal || chess || judo || karate ? entry.team.trim()
           : race || neutral ? null : (entry.team.trim() || null),
-        result: breaking || chess || judo ? entry.result
+        result: breaking || chess || judo || karate ? entry.result
           : race || neutral ? 'DRAW' as CommunityMatchResult
           : racket ? (entry.team === racketWinner ? 'WIN' : 'LOSS') as CommunityMatchResult
           : entry.result,
