@@ -6,6 +6,7 @@ import { environment } from 'src/environment/environment';
 import { SessionSummary } from '../pages/model/session-summary';
 import {
   CommunityCompetitionOverview,
+  CommunityInlineProgression,
   CommunityCompetitionSettings,
   CommunityGroup,
   CommunityInvite,
@@ -497,6 +498,19 @@ export class CommunityGroupsService {
       this.url + '/' + id + '/rounds',
       request
     );
+  }
+
+  inlineProgressions(communityId: number): Observable<CommunityInlineProgression[]> {
+    return this.http.get<CommunityInlineProgression[]>(
+      this.url + '/' + communityId + '/inline-progressions');
+  }
+
+  confirmInlineProgression(communityId: number, targetRoundId: number,
+    request: { sourceRoundIds: number[]; reason: string }
+  ): Observable<CommunityInlineProgression> {
+    return this.http.put<CommunityInlineProgression>(
+      this.url + '/' + communityId + '/rounds/' + targetRoundId + '/inline-progression',
+      request);
   }
 
   deleteRound(communityId: number, roundId: number): Observable<void> {
