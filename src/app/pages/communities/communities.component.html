@@ -1079,7 +1079,7 @@
                             <label>
                               <span>{{ 'communities.eventType.label' | t }}</span>
                               <select [(ngModel)]="roundEventTypeDraft"
-                                (ngModelChange)="roundDisciplineDraft = ''; resetVolleyballSets(); clearBjjSubmissionScores(); clearBoxingHiddenScores(); clearKickboxingHiddenScores()"
+                                (ngModelChange)="roundDisciplineDraft = ''; resetVolleyballSets(); clearBjjSubmissionScores(); clearBoxingHiddenScores(); clearKickboxingHiddenScores(); clearMuayThaiHiddenScores()"
                                 [attr.aria-label]="'communities.eventType.label' | t">
                                 <option value="">{{ 'communities.eventType.select' | t }}</option>
                                 @for (choice of eventOptions(newRoundSport); track choice.code) {
@@ -1133,6 +1133,7 @@
                               : newRoundEventType === 'PARKOUR_FREESTYLE' ? 'communities.parkour.freestyleHint'
                               : (newRoundEventType === 'GOLF_STROKE_9' || newRoundEventType === 'GOLF_STROKE_18')
                                 ? 'communities.golf.hint'
+                              : isMuayThaiEvent(newRoundEventType) ? 'communities.muayThai.hint'
                               : isKickboxingEvent(newRoundEventType) ? 'communities.kickboxing.hint'
                               : isBoxingEvent(newRoundEventType) ? 'communities.boxing.hint'
                               : isBjjEvent(newRoundEventType) ? 'communities.bjj.hint'
@@ -1278,6 +1279,16 @@
                                       <input [(ngModel)]="entry.team" maxlength="60"
                                         [placeholder]="'communities.groupRoutine.groupPlaceholder' | t">
                                     </label>
+                                  } @else if (isMuayThaiEvent(newRoundEventType)) {
+                                    <label>
+                                      <span>{{ 'communities.muayThai.side' | t }}</span>
+                                      <select [(ngModel)]="entry.team"
+                                        [attr.aria-label]="'communities.muayThai.side' | t">
+                                        <option value="">{{ 'communities.muayThai.selectSide' | t }}</option>
+                                        <option value="RED">{{ 'communities.muayThai.red' | t }}</option>
+                                        <option value="BLUE">{{ 'communities.muayThai.blue' | t }}</option>
+                                      </select>
+                                    </label>
                                   } @else if (isKickboxingEvent(newRoundEventType)) {
                                     <label>
                                       <span>{{ 'communities.kickboxing.side' | t }}</span>
@@ -1394,6 +1405,16 @@
                                     <small>{{ 'communities.basketball.memberOnly' | t }}</small>
                                   } @else if (isGroupRoutineEvent(newRoundEventType)) {
                                     <small>{{ 'communities.groupRoutine.memberOnly' | t }}</small>
+                                  } @else if (isMuayThaiEvent(newRoundEventType)) {
+                                    <label>
+                                      <span>{{ 'communities.muayThai.outcome' | t }}</span>
+                                      <select [(ngModel)]="entry.result"
+                                        [attr.aria-label]="'communities.muayThai.outcome' | t">
+                                        <option value="DRAW" disabled>{{ 'communities.muayThai.selectOutcome' | t }}</option>
+                                        <option value="WIN">{{ 'communities.muayThai.winner' | t }}</option>
+                                        <option value="LOSS">{{ 'communities.muayThai.loser' | t }}</option>
+                                      </select>
+                                    </label>
                                   } @else if (isKickboxingEvent(newRoundEventType)) {
                                     <label>
                                       <span>{{ 'communities.kickboxing.outcome' | t }}</span>
@@ -2349,7 +2370,8 @@
                                 [class.round-breaking-winner]="(round.eventType === 'BREAKING_BATTLE'
                                   || isJudoBout(round.eventType) || isKarateEvent(round.eventType)
                                   || isTaekwondoKyorugi(round.eventType) || isBjjEvent(round.eventType)
-                                  || isBoxingEvent(round.eventType) || isKickboxingEvent(round.eventType))
+                                  || isBoxingEvent(round.eventType) || isKickboxingEvent(round.eventType)
+                                  || isMuayThaiEvent(round.eventType))
                                   && entry.result === 'WIN'">
                                 <div>
                                   <strong>{{ entry.fullName || entry.username }}</strong>
@@ -2360,7 +2382,8 @@
                                       && !isTaekwondoKyorugi(round.eventType)
                                       && !isBjjEvent(round.eventType)
                                       && !isBoxingEvent(round.eventType)
-                                      && !isKickboxingEvent(round.eventType)) { · {{ entry.team }} }
+                                      && !isKickboxingEvent(round.eventType)
+                                      && !isMuayThaiEvent(round.eventType)) { · {{ entry.team }} }
                                   </span>
                                 </div>
                                 @if (round.eventType === 'BREAKING_BATTLE') {
@@ -2369,6 +2392,19 @@
                                     {{ (entry.result === 'WIN'
                                       ? 'communities.breaking.winner' : 'communities.breaking.loser') | t }}
                                   </span>
+                                } @else if (isMuayThaiEvent(round.eventType)) {
+                                  <div class="round-surf-scores">
+                                    <small>{{ (entry.team === 'RED' ? 'communities.muayThai.red'
+                                      : 'communities.muayThai.blue') | t }}</small>
+                                    <span class="result-chip" [class.win]="entry.result === 'WIN'"
+                                      [class.loss]="entry.result === 'LOSS'">
+                                      {{ (entry.result === 'WIN' ? 'communities.muayThai.winner'
+                                        : 'communities.muayThai.loser') | t }}
+                                    </span>
+                                    @if (entry.result === 'WIN') {
+                                      <small>{{ 'communities.muayThai.confirmedDecision' | t }}</small>
+                                    }
+                                  </div>
                                 } @else if (isKickboxingEvent(round.eventType)) {
                                   <div class="round-surf-scores">
                                     <small>{{ (entry.team === 'RED' ? 'communities.kickboxing.red'
