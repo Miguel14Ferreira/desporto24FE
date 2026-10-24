@@ -30,6 +30,7 @@ const authenticatedSockets = new Map<string, Set<(value: unknown) => void>>();
 const socketRoutes = new Map<string, Array<{ close: (options?: {code?: number; reason?: string}) => void }>>();
 let offlineAddedFriend = false;
 let holdAnaPost = false;
+let timeoutAnaAfterCommit = false;
 let releaseAnaPost: (() => void) | null = null;
 
 function jwt(username: string) {
@@ -207,6 +208,12 @@ async function authenticatedContext(browser: import('@playwright/test').Browser,
           for (const deliver of authenticatedSockets.get(account) || []) {
             deliver({ type: 'CHAT_MESSAGE', message: sent });
           }
+        }
+        if (username === 'ana' && peer === 'bea' && timeoutAnaAfterCommit) {
+          // The database committed and socket event arrived, but HTTP broke.
+          // Mimic that ordering without ever sending a second HTTP POST.
+          await new Promise(resolve => setTimeout(resolve, 70));
+          return response(route, 503, {message:'Lost response after commit'});
         }
         return response(route, 200, sent);
       }
@@ -603,6 +610,53 @@ test('switching chats during a pending send preserves another draft and avoids a
     holdAnaPost = false;
     releaseAnaPost = null;
     offlineAddedFriend = false;
+    await context.close();
+  }
+});
+
+test('off-screen WebSocket confirmation clears uncertain send after lost HTTP response', async ({browser}) => {
+  messages.splice(1);
+  readThrough.clear();
+  readThrough.set('bea',41);
+  authenticatedSockets.clear();
+  requests.length=0;
+  unauthorized.length=0;
+  offlineAddedFriend=true;
+  holdAnaPost=true;
+  timeoutAnaAfterCommit=true;
+  releaseAnaPost=null;
+  const context=await authenticatedContext(browser,'ana');
+  try {
+    const page=await context.newPage();
+    const errors:string[]=[];
+    page.on('pageerror',e=>errors.push(e.message));
+    await page.goto('/menu/messages?kind=direct&id=bea',{waitUntil:'domcontentloaded'});
+    await expect(page.locator('.inbox-entry').filter({hasText:'Carla'})).toBeVisible();
+    await expect(page.locator('#inbox-reply')).toBeEnabled();
+    await page.locator('#inbox-reply').fill('Confirmada antes do erro');
+    await page.locator('.inbox-composer button[type="submit"]').click();
+    await expect.poll(()=>releaseAnaPost!==null).toBe(true);
+    await page.locator('.inbox-entry').filter({hasText:'Carla'}).click();
+    await page.locator('#inbox-reply').fill('Rascunho de Carla');
+    releaseAnaPost?.();
+    await expect.poll(()=>messages.length).toBe(2);
+    await expect(page.locator('#inbox-reply')).toHaveValue('Rascunho de Carla');
+    await expect(page.locator('.inbox-entry').filter({hasText:'Bea'})
+      .locator('.inbox-entry-snippet')).toHaveText('Confirmada antes do erro');
+
+    await page.locator('.inbox-entry').filter({hasText:'Bea'}).click();
+    await expect(page.locator('.inbox-bubble[data-message-id="42"]')).toHaveCount(1);
+    await expect(page.locator('#inbox-reply')).toHaveValue('');
+    await expect(page.locator('.inbox-composer')).not.toContainText('Confirmar entrega');
+    expect(requests.filter(v=>v==='ana:POST /api/chat/me/bea')).toHaveLength(1);
+    expect(unauthorized).toEqual([]);
+    expect(errors).toEqual([]);
+  } finally {
+    releaseAnaPost?.();
+    holdAnaPost=false;
+    timeoutAnaAfterCommit=false;
+    releaseAnaPost=null;
+    offlineAddedFriend=false;
     await context.close();
   }
 });

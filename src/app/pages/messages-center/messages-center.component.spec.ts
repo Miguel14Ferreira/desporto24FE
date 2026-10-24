@@ -890,6 +890,81 @@ describe('Unified Jynlo message center', () => {
     expect(direct.send).toHaveBeenCalledTimes(1);
   });
 
+  it('confirms an uncertain community send via WebSocket while another thread is open', () => {
+    const group = item('community', 7), peer = item('direct', 'bea');
+    component.conversations = [group, peer];
+    timeline.list.and.returnValue(of([]));
+    direct.recentHistory.and.returnValue(of({last:true,content:[]} as any));
+    timeline.send.and.returnValue(throwError(() => new HttpErrorResponse({status:503})));
+    component.selectConversation(group);
+    component.draft = 'Bora jogar às 18h';
+    component.sendMessage();
+    expect(component.deliveryUncertain).toBeTrue();
+    component.selectConversation(peer);
+    component.draft = 'Não apagar este texto';
+
+    (component as any).acceptRealtime(group.key, {
+      key:group.key,id:95,sender:'ana',text:'Bora jogar às 18h',
+      createdAt:new Date().toISOString()
+    });
+
+    expect(component.draft).toBe('Não apagar este texto');
+    expect(component.messages).toEqual([]);
+    component.selectConversation(group);
+    expect(component.deliveryUncertain).toBeFalse();
+    expect(component.draft).toBe('');
+    expect(component.conversations.find(c=>c.key===group.key)?.latestMessageId).toBe(95);
+    expect(timeline.send).toHaveBeenCalledTimes(1);
+  });
+
+  it('trusts a confirmed socket message that arrives before a timed-out HTTP response', () => {
+    const peer = item('direct','bea');
+    component.conversations=[peer];
+    direct.recentHistory.and.returnValue(of({last:true,content:[]} as any));
+    const request = new Subject<any>();
+    direct.send.and.returnValue(request.asObservable());
+    component.selectConversation(peer);
+    component.draft='Mensagem persistida';
+    component.sendMessage();
+
+    (component as any).acceptRealtime(peer.key,{
+      key:peer.key,id:72,sender:'ana',text:'Mensagem persistida',
+      createdAt:new Date().toISOString()
+    });
+    request.error(new HttpErrorResponse({status:0}));
+
+    expect(component.deliveryUncertain).toBeFalse();
+    expect(component.draft).toBe('');
+    expect(component.messages.map(m=>m.id)).toEqual([72]);
+    expect(direct.recentHistory).toHaveBeenCalledTimes(1);
+    expect(direct.send).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not confirm an uncertain message from a different sender or text', () => {
+    const group=item('community',7),peer=item('direct','bea');
+    component.conversations=[group,peer];
+    timeline.list.and.returnValue(of([]));
+    direct.recentHistory.and.returnValue(of({last:true,content:[]} as any));
+    timeline.send.and.returnValue(throwError(() => new HttpErrorResponse({status:408})));
+    component.selectConversation(group);
+    component.draft='Não confirmada';
+    component.sendMessage();
+    expect(component.deliveryUncertain).toBeTrue();
+    component.selectConversation(peer);
+    (component as any).acceptRealtime(group.key,{
+      key:group.key,id:98,sender:'bea',text:'Não confirmada',
+      createdAt:new Date().toISOString()
+    });
+    (component as any).acceptRealtime(group.key,{
+      key:group.key,id:99,sender:'ana',text:'Texto diferente',
+      createdAt:new Date().toISOString()
+    });
+    component.selectConversation(group);
+    expect(component.deliveryUncertain).toBeTrue();
+    expect(component.draft).toBe('Não confirmada');
+    expect(timeline.send).toHaveBeenCalledTimes(1);
+  });
+
   it('allows Shift+Enter and composition without triggering send', () => {
     const evt = new KeyboardEvent('keydown', { key: 'Enter', shiftKey: true, cancelable: true });
     component.onComposerEnter(evt);
