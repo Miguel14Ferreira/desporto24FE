@@ -1989,3 +1989,47 @@ body .communities-page.jynlo-c1 .historical-tournament-options {
     grid-template-columns: 1fr;
   }
 }
+
+
+/* Historic tournaments: explicitly separate inferred winners from official titles. */
+body .communities-page.jynlo-c1 .historical-outcome {
+  display: flex;
+  align-items: flex-start;
+  gap: .9rem;
+  margin: .9rem 0 1.1rem;
+  padding: 1rem 1.15rem;
+  border: 1px solid rgba(151, 191, 208, .32);
+  border-radius: .9rem;
+  background: rgba(120, 161, 189, .07);
+  color: #d6e8f2;
+}
+body .communities-page.jynlo-c1 .historical-outcome--estimated {
+  border-color: rgba(99, 222, 196, .35);
+  background: rgba(48, 157, 141, .11);
+}
+body .communities-page.jynlo-c1 .historical-outcome-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 2.2rem;
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: .7rem;
+  background: rgba(99, 222, 196, .13);
+  color: #7ee3ce;
+  font-size: 1.15rem;
+}
+body .communities-page.jynlo-c1 .historical-outcome-copy {
+  display: grid;
+  gap: .35rem;
+  min-width: 0;
+}
+body .communities-page.jynlo-c1 .historical-outcome-copy strong {
+  color: #f0fbff;
+  font-size: .98rem;
+}
+body .communities-page.jynlo-c1 .historical-outcome-copy p {
+  margin: 0;
+  color: #aec5d3;
+  font-size: .82rem;
+  line-height: 1.55;
+}
