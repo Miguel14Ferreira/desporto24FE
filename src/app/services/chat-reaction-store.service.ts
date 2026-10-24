@@ -205,6 +205,9 @@ export class ChatReactionStoreService {
     if (!event || !Number.isSafeInteger(event.messageId) || event.messageId <= 0
         || !['direct', 'session', 'community'].includes(event.kind)) return;
     const key = this.key(event.kind, event.conversationId, event.messageId);
+    // Ignore unrelated rooms; do not grow revisions for every reaction
+    // arriving while no corresponding message is mounted.
+    if (!this.watchers.has(key) && !this.busy.has(key)) return;
     this.touch(key); // Invalidate older HTTP GET and mutation acknowledgements.
     const current = this.cache.get(key);
     if (!current) {
