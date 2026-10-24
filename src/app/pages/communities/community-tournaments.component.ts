@@ -70,6 +70,7 @@ export class CommunityTournamentsComponent implements OnChanges {
   nameDraft = '';
   sportDraft = '';
   sportSearch = '';
+  editingSport = false;
   get communitySportOptions(): string[] {
     const selected = this.community?.sports;
     return selected?.length ? selected : (this.community?.sport ? [this.community.sport] : []);
@@ -88,6 +89,13 @@ export class CommunityTournamentsComponent implements OnChanges {
   chooseSport(sport: string): void {
     if (this.busy || !(SPORTS_CATALOG.includes(sport) || this.communitySportOptions.includes(sport))) return;
     this.sportDraft = sport;
+    this.sportSearch = '';
+    this.editingSport = false;
+  }
+
+  toggleSportEditor(): void {
+    if (this.busy || !this.sportDraft) return;
+    this.editingSport = !this.editingSport;
     this.sportSearch = '';
   }
 
@@ -231,6 +239,7 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.sportDraft = sports?.length === 1
         ? sports[0] : (!sports?.length ? this.community.sport || '' : '');
       this.sportSearch = '';
+      this.editingSport = false;
       this.selected = undefined;
       this.loading = false;
       this.detailsLoading = false;
@@ -659,6 +668,8 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.showGuide = false;
     this.showTeamCreate = false;
     this.showIndividualCreate = true;
+    this.editingSport = false;
+    this.sportSearch = '';
     this.error = '';
   }
 
@@ -667,6 +678,8 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.showGuide = false;
     this.showIndividualCreate = false;
     this.showTeamCreate = true;
+    this.editingSport = false;
+    this.sportSearch = '';
     this.error = '';
   }
 

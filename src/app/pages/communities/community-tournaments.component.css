@@ -127,6 +127,32 @@
   min-height: 44px;
   box-sizing: border-box;
 }
+.create-tournament .sport-field-label {
+  font-size: .82rem;
+  font-weight: 800;
+  color: #e4edf7;
+}
+.create-tournament .chosen-sport-value {
+  display: grid;
+  min-width: 0;
+  gap: .2rem;
+}
+.create-tournament .chosen-sport-value strong {
+  overflow-wrap: anywhere;
+  font-size: .94rem;
+}
+.create-tournament .chosen-sport-value small {
+  color: #a7d9c8;
+  font-size: .72rem;
+  font-weight: 500;
+}
+.create-tournament .sport-options {
+  display: grid;
+  gap: .6rem;
+  min-width: 0;
+  padding: .65rem .15rem 0;
+}
+
 .create-tournament .t-community-sports { gap: .5rem; }
 .create-tournament .t-sport-chip { transition: background .15s, border-color .15s; }
 .create-tournament .t-sport-chip:hover:not(:disabled) {

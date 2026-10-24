@@ -113,15 +113,22 @@
         }
             </div>
             <div class="create-field">
-        <label for="new-tournament-sport-search">Modalidade do torneio</label>
+        <span class="sport-field-label" id="tournament-sport-label">Modalidade do torneio</span>
         <p class="sport-choice-hint">Escolhe a modalidade desta competição. Podes usar uma diferente das modalidades da comunidade.</p>
         @if (sportDraft) {
-          <div class="chosen-sport" role="status">
-            <span>{{ sportDraft }}</span>
+          <div class="chosen-sport" role="group" aria-labelledby="tournament-sport-label">
+            <span class="chosen-sport-value">
+              <strong>{{ sportDraft }}</strong>
+              <small>Modalidade selecionada</small>
+            </span>
             <button type="button" class="t-btn t-btn-secondary t-btn-small"
-              [disabled]="busy" (click)="sportDraft = ''">Alterar</button>
+              [disabled]="busy" [attr.aria-expanded]="editingSport"
+              [attr.aria-controls]="editingSport ? 'tournament-sport-options' : null"
+              (click)="toggleSportEditor()">{{ editingSport ? 'Cancelar' : 'Alterar' }}</button>
           </div>
         }
+        @if (!sportDraft || editingSport) {
+          <div id="tournament-sport-options" class="sport-options">
         @if (communitySportOptions.length) {
           <div class="t-community-sports" role="group" aria-label="Modalidades da comunidade">
             @for (item of communitySportOptions.slice(0, 6); track item) {
@@ -137,6 +144,7 @@
         <input id="new-tournament-sport-search" type="search" [(ngModel)]="sportSearch"
           [disabled]="busy" maxlength="100" autocomplete="off"
           placeholder="Pesquisar outra modalidade"
+          aria-labelledby="tournament-sport-label"
           aria-describedby="tournament-sport-hint">
         <p id="tournament-sport-hint" class="sport-choice-hint">Pesquisa e seleciona uma modalidade no catálogo.</p>
         @if (suggestedSports.length) {
@@ -148,6 +156,8 @@
           </div>
         } @else if (sportSearch.trim()) {
           <p class="sport-choice-hint">Não foram encontradas modalidades. Tenta outra pesquisa.</p>
+        }
+          </div>
         }
             </div>
           </div>
