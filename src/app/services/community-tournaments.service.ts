@@ -13,7 +13,7 @@ import {
   TournamentParticipantPage,
   TournamentScheduleSummary,
   TournamentStandings, TournamentTeam, TournamentTeamMatchPage, TournamentTeamMatch,
-  TournamentTeamScheduleSummary, TournamentTeamStandings, TournamentTeamGroups
+  TournamentTeamScheduleSummary, TournamentTeamStandings, TournamentTeamGroups, TournamentRaceOverview
 } from '../pages/model/community-tournament';
 
 @Injectable({ providedIn: 'root' })
@@ -40,6 +40,33 @@ export class CommunityTournamentsService {
     return this.http.post<CommunityTournament>(this.url(communityId), body);
   }
 
+
+  createKartingChampionship(communityId: number, name: string): Observable<CommunityTournament> {
+    return this.http.post<CommunityTournament>(this.url(communityId), {
+      name, sport: 'Karting', entryType: 'INDIVIDUAL', format: 'LEAGUE',
+      scoringMode: 'RACE_POINTS'
+    });
+  }
+
+  raceOverview(communityId: number, tournamentId: number): Observable<TournamentRaceOverview> {
+    return this.http.get<TournamentRaceOverview>(this.url(communityId, tournamentId) + '/races');
+  }
+
+  setRacePoints(communityId: number, tournamentId: number,
+                pointsByPlace: string): Observable<TournamentRaceOverview> {
+    return this.http.put<TournamentRaceOverview>(
+      this.url(communityId, tournamentId) + '/races/points', { pointsByPlace });
+  }
+
+  linkRace(communityId: number, tournamentId: number, roundId: number): Observable<TournamentRaceOverview> {
+    return this.http.put<TournamentRaceOverview>(
+      this.url(communityId, tournamentId) + '/races/' + roundId, {});
+  }
+
+  unlinkRace(communityId: number, tournamentId: number, roundId: number): Observable<TournamentRaceOverview> {
+    return this.http.delete<TournamentRaceOverview>(
+      this.url(communityId, tournamentId) + '/races/' + roundId);
+  }
 
   /** Team tournaments have their own draft, roster and match lifecycle. */
   createTeamTournament(communityId: number, name: string, sport: string,
