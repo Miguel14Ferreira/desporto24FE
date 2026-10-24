@@ -1220,10 +1220,8 @@
                                   <span>{{ 'communities.trackCycling.heatNumber' | t }}</span>
                                   <select [(ngModel)]="sprintHeatNumberDraft">
                                     <option [ngValue]="1">1</option>
-                                    @if (roundDisciplineDraft !== 'SPRINT_QUARTER_FINAL') {
-                                      <option [ngValue]="2">2</option>
-                                      <option [ngValue]="3">3</option>
-                                    }
+                                    <option [ngValue]="2">2</option>
+                                    <option [ngValue]="3">3</option>
                                   </select>
                                 </label>
                               }
