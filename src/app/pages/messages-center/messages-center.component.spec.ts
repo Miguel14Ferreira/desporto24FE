@@ -183,6 +183,24 @@ describe('Unified Jynlo message center', () => {
       && message.attachmentName === 'jogo.pdf')).toBeTrue();
   });
 
+  it('stops recording on window blur and removes the listener on destroy', () => {
+    component.ngOnInit();
+    const cancel = spyOn(component, 'cancelVoiceRecording').and.callThrough();
+    try {
+      component.voiceRecording = true;
+      window.dispatchEvent(new Event('blur'));
+      expect(cancel).toHaveBeenCalledTimes(1);
+      expect(component.voiceRecording).toBeFalse();
+    } finally {
+      component.ngOnDestroy();
+    }
+    cancel.calls.reset();
+    component.voiceRecording = true;
+    window.dispatchEvent(new Event('blur'));
+    expect(cancel).not.toHaveBeenCalled();
+    component.voiceRecording = false;
+  });
+
   it('keeps the microphone disabled without authorized private storage', async () => {
     const peer = item('direct', 'bea');
     component.conversations = [peer];

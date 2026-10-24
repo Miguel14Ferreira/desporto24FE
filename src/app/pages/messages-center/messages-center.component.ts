@@ -65,6 +65,10 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   private isPageActive(): boolean {
     return document.visibilityState === 'visible' && document.hasFocus();
   }
+  /** Focus loss can happen without a visibilitychange (e.g. another window). */
+  private readonly onWindowBlur = (): void => {
+    if (this.voiceRecording || this.voiceFinalizing) this.cancelVoiceRecording();
+  };
   private readonly onPageActive = (): void => {
     // Never keep capturing microphone audio while another tab is foregrounded.
     if (!this.isPageActive()) {
@@ -251,6 +255,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.realtime.connect();
     this.loadInbox();
     window.addEventListener('focus', this.onPageActive);
+    window.addEventListener('blur', this.onWindowBlur);
     document.addEventListener('visibilitychange', this.onPageActive);
     this.summaryTimer = setInterval(() => {
       if (this.loading || !this.isReceiptSessionCurrent()) return;
@@ -269,6 +274,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     ++this.peerReceiptVersion;
     this.subscriptions.unsubscribe();
     window.removeEventListener('focus', this.onPageActive);
+    window.removeEventListener('blur', this.onWindowBlur);
     document.removeEventListener('visibilitychange', this.onPageActive);
     if (this.summaryTimer) clearInterval(this.summaryTimer);
     if (this.receiptTimer) clearInterval(this.receiptTimer);
