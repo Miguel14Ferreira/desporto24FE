@@ -75,19 +75,32 @@
   }
 
   @if (canManage && (showIndividualCreate || showTeamCreate)) {
-    <div class="create-tournament">
-      <div>
-        <h4>{{ showTeamCreate ? 'Preparar torneio por equipas' : 'Criar liga individual' }}</h4>
-        @if (showTeamCreate) {
-          <p>Escolhe uma liga todos contra todos ou uma taça por eliminatórias.
-            Depois define a modalidade e os plantéis.</p>
-        } @else {
-          <p>Competição individual sem equipas: cada participante compete por si. Os resultados não alteram o histórico de jogos habituais da comunidade.</p>
-        }
-        <button type="button" class="t-btn t-btn-secondary"
-          (click)="showIndividualCreate = false; showTeamCreate = false; showGuide = true">Voltar às opções</button>
+    <section class="create-tournament" aria-label="Configurar competição">
+      <div class="create-tournament-heading">
+        <div class="create-tournament-intro">
+          <p class="tournament-eyebrow">Nova competição</p>
+          <h4>{{ showTeamCreate ? 'Preparar torneio por equipas' : 'Criar liga individual' }}</h4>
+          @if (showTeamCreate) {
+            <p>Escolhe uma liga todos contra todos ou uma taça por eliminatórias.
+              Depois define a modalidade e os plantéis.</p>
+          } @else {
+            <p>Competição individual sem equipas: cada participante compete por si. Os resultados não alteram o histórico de jogos habituais da comunidade.</p>
+          }
+        </div>
+        <span class="create-kind-pill">{{ showTeamCreate ? 'Por equipas' : 'Individual' }}</span>
       </div>
+
       <div class="create-controls">
+        <section class="create-step create-step-identity" aria-label="Identificação da competição">
+          <div class="create-step-heading">
+            <span class="create-step-index" aria-hidden="true">01</span>
+            <div>
+              <h5>Identificação da competição</h5>
+              <p>Dá um nome ao torneio e escolhe a modalidade.</p>
+            </div>
+          </div>
+          <div class="create-top-fields">
+            <div class="create-field">
         <label for="new-tournament-name">Nome do torneio</label>
         <input id="new-tournament-name" [(ngModel)]="nameDraft" maxlength="120"
           [attr.aria-invalid]="nameTooShort ? 'true' : null"
@@ -98,6 +111,8 @@
             O nome deve ter pelo menos 2 caracteres.
           </p>
         }
+            </div>
+            <div class="create-field">
         <label for="new-tournament-sport-search">Modalidade do torneio</label>
         <p class="sport-choice-hint">Escolhe a modalidade desta competição. Podes usar uma diferente das modalidades da comunidade.</p>
         @if (sportDraft) {
@@ -134,10 +149,22 @@
         } @else if (sportSearch.trim()) {
           <p class="sport-choice-hint">Não foram encontradas modalidades. Tenta outra pesquisa.</p>
         }
+            </div>
+          </div>
+        </section>
+
         @if (showTeamCreate) {
+          <section class="create-step create-step-format" aria-label="Formato e participantes">
+            <div class="create-step-heading">
+              <span class="create-step-index" aria-hidden="true">02</span>
+              <div>
+                <h5>Formato e participantes</h5>
+                <p>Escolhe o formato, o tamanho das equipas e como se vão disputar os jogos.</p>
+              </div>
+            </div>
           <fieldset class="t-points-rules">
             <legend>Formato do torneio</legend>
-            <div class="t-community-sports" role="group" aria-label="Formato do torneio">
+            <div class="t-community-sports create-options-grid" role="group" aria-label="Formato do torneio">
               <button type="button" class="t-sport-chip" [disabled]="busy"
                 [attr.aria-pressed]="teamFormatDraft === 'LEAGUE'"
                 (click)="teamFormatDraft = 'LEAGUE'">Campeonato todos contra todos</button>
@@ -184,7 +211,18 @@
             Duas voltas: joga-se também o confronto inverso, com casa e fora trocados.
             A escolha fica definida ao criar o torneio e não muda depois de publicares as jornadas.</p>
           }
+          </section>
         }
+
+        @if (!showTeamCreate || teamFormatDraft !== 'KNOCKOUT') {
+          <section class="create-step create-step-rules" aria-label="Regras da classificação">
+            <div class="create-step-heading">
+              <span class="create-step-index" aria-hidden="true">{{ showTeamCreate ? '03' : '02' }}</span>
+              <div>
+                <h5>Regras da classificação</h5>
+                <p>Define como são atribuídos os pontos e, quando aplicável, os critérios de desempate.</p>
+              </div>
+            </div>
         @if (showTeamCreate && teamFormatDraft !== 'KNOCKOUT') {
           <fieldset class="t-points-rules t-tiebreak-rules" aria-describedby="t-tiebreak-help">
             <legend>Critério de desempate</legend>
@@ -237,6 +275,12 @@
           }
         </fieldset>
         }
+          </section>
+        }
+
+        <div class="create-actions">
+          <button type="button" class="t-btn t-btn-secondary"
+            (click)="showIndividualCreate = false; showTeamCreate = false; showGuide = true">Voltar às opções</button>
         <button type="button" class="t-btn t-btn-primary"
           [disabled]="busy || (teamFormatDraft !== 'KNOCKOUT' && !validPointRules)
             || nameDraft.trim().length < 2 || !sportDraft
@@ -244,8 +288,9 @@
           (click)="showTeamCreate ? createTeamCompetition() : create()">
           {{ showTeamCreate ? 'Criar e preparar equipas' : 'Confirmar liga individual' }}
         </button>
+        </div>
       </div>
-    </div>
+    </section>
   }
 
   <div class="tournament-browser">
