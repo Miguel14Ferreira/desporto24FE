@@ -1,10 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
+import { Component, ElementRef, Input, OnChanges, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import {
   CHAT_REACTION_EMOJIS, ChatReactionKind,
   ChatReactionStoreService, ChatReactionSummary
 } from '../../services/chat-reaction-store.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
+
+let reactionPickerSequence = 0;
 
 /** Reusable compact emoji reactions; the store coalesces sibling messages into one GET. */
 @Component({
@@ -13,7 +15,7 @@ import { TranslatePipe } from '../../i18n/translate.pipe';
   imports: [CommonModule, TranslatePipe],
   template: `
     @if (summary; as state) {
-      <div class="chat-reactions">
+      <div class="chat-reactions" (keydown.escape)="dismissPicker($event)" (focusout)="onFocusOut($event)">
         @for (entry of entries; track entry.emoji) {
           <button type="button" class="reaction-count"
               [class.mine]="state.myEmoji === entry.emoji"
@@ -25,7 +27,8 @@ import { TranslatePipe } from '../../i18n/translate.pipe';
           </button>
         }
         @if (!disabled) {
-          <button type="button" class="reaction-open" [attr.aria-expanded]="expanded"
+          <button #reactionToggle type="button" class="reaction-open"
+              [attr.aria-expanded]="expanded" [attr.aria-controls]="pickerId"
               [attr.aria-label]="'chat.react' | t"
               [disabled]="store.isBusy(kind, conversationId, messageId)"
               (click)="expanded = !expanded">
@@ -33,7 +36,7 @@ import { TranslatePipe } from '../../i18n/translate.pipe';
           </button>
         }
         @if (expanded && !disabled) {
-          <div class="reaction-picker" role="group" [attr.aria-label]="'chat.react' | t">
+          <div [id]="pickerId" class="reaction-picker" role="group" [attr.aria-label]="'chat.react' | t">
             @for (emoji of emojis; track emoji) {
               <button type="button" [attr.aria-label]="emoji"
                 [attr.aria-pressed]="state.myEmoji === emoji"
@@ -64,6 +67,7 @@ import { TranslatePipe } from '../../i18n/translate.pipe';
     .reaction-picker button { border: 0; background: transparent; border-radius: 7px;
       padding: 4px; font-size: 1.08rem; }
     .reaction-picker button:hover { background: rgba(82,217,187,.16); }
+    .reaction-picker button:focus-visible { background: rgba(82,217,187,.20); }
     button:focus-visible { outline: 2px solid #61edce; outline-offset: 2px; }
     button:disabled { opacity: .45; cursor: not-allowed; }
     .reaction-error { color: #ffd2cd; font-size: .75rem; width: 100%; }
@@ -76,7 +80,10 @@ export class ChatReactionsComponent implements OnInit, OnChanges, OnDestroy {
   @Input() conversationId!: string | number;
   @Input() messageId!: number;
   @Input() disabled = false;
+  @ViewChild('reactionToggle') private reactionToggle?: ElementRef<HTMLButtonElement>;
   readonly emojis = CHAT_REACTION_EMOJIS;
+  // Instance-local ID avoids duplicate aria-controls even for repeated messages.
+  readonly pickerId = 'chat-reactions-' + ++reactionPickerSequence;
   expanded = false;
   error = false;
   private watching?: { kind: ChatReactionKind; id: string | number; messageId: number };
@@ -93,6 +100,23 @@ export class ChatReactionsComponent implements OnInit, OnChanges, OnDestroy {
   get entries(): { emoji: string; count: number }[] {
     return this.emojis.filter(emoji => (this.summary?.counts?.[emoji] || 0) > 0)
       .map(emoji => ({ emoji, count: this.summary?.counts[emoji] || 0 }));
+  }
+
+  /** Close by Escape and return keyboard users to the same action. */
+  dismissPicker(event: Event): void {
+    if (!this.expanded) return;
+    event.preventDefault();
+    event.stopPropagation();
+    this.expanded = false;
+    this.reactionToggle?.nativeElement.focus({ preventScroll: true });
+  }
+
+  /** Tab or click outside leaves no lingering open picker in another chat. */
+  onFocusOut(event: FocusEvent): void {
+    if (!this.expanded) return;
+    const wrapper = event.currentTarget as HTMLElement | null;
+    const next = event.relatedTarget as Node | null;
+    if (!wrapper || !next || !wrapper.contains(next)) this.expanded = false;
   }
 
   pick(emoji: string): void {
