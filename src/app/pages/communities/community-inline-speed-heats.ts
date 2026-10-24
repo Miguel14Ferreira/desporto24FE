@@ -35,7 +35,7 @@ export function inlineSpeedHeatError(eventType: string | null | undefined,
     const username = entry.username?.trim().toLowerCase();
     const position = entry.finishPosition;
     if (!username || usernames.has(username)
-      || !Number.isInteger(position) || position == null
+      || position == null || !Number.isInteger(position)
       || position < 1 || position > entries.length || places.has(position)
       || !!entry.team?.trim() || entry.result !== 'DRAW'
       || (entry.goals ?? 0) !== 0 || (entry.assists ?? 0) !== 0
