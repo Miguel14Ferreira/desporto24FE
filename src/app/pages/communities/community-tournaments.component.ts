@@ -779,6 +779,26 @@ export class CommunityTournamentsComponent implements OnChanges {
       });
   }
 
+  get canCompleteRace(): boolean {
+    return this.isRaceCompetition && this.canManage && !this.busy
+      && this.selected?.status === 'IN_PROGRESS'
+      && (this.raceOverview?.linkedRaces.length ?? 0) > 0
+      && (this.raceOverview?.standings.length ?? 0) >= 2
+      && !this.detailsLoading && !this.raceError;
+  }
+
+  async completeRace(): Promise<void> {
+    if (!this.selected || !this.canCompleteRace || this.confirmAction !== 'completeRace') return;
+    const tournamentId = this.selected.id;
+    this.confirmAction = null;
+    await this.mutate(this.api.completeKarting(this.community.id, tournamentId),
+      'Campeonato de Karting encerrado. Campeão e classificação final arquivados.', tournament => {
+        this.updateSelected(tournament);
+        this.raceOverview = undefined;
+        this.loadRaceOverview();
+      });
+  }
+
   async saveRacePoints(): Promise<void> {
     if (!this.selected || !this.canManage || !this.isRaceCompetition
         || this.raceOverview?.linkedRaces.length || this.selected.status !== 'DRAFT') return;
