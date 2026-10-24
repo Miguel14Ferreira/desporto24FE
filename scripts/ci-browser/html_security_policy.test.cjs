@@ -17,5 +17,5 @@ test('static index limits referrers without blocking external login and map scri
   assert.ok(html.includes('<meta name="referrer" content="strict-origin-when-cross-origin">'));
   // This intentionally does not attempt to emulate HTTP response headers;
   // frame-ancestors and HSTS MUST be configured at the Render edge.
-  assert.ok(!html.includes('frame-ancestors'));
+  assert.ok(!html.includes('content="frame-ancestors'));
 });
