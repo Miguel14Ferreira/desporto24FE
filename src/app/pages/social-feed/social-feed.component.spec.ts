@@ -1,4 +1,4 @@
-import { SocialStoriesComponent } from './social-stories.component';
+import { Component } from '@angular/core';
 import { SocialFeedComponent } from './social-feed.component';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
@@ -13,6 +13,9 @@ import { AuthenticationService } from '../../services/authethication.service';
 import { FeedItem } from '../model/feed-item';
 import { appTranslate as t } from '../../i18n/i18n.service';
 import { TEST_IMPORTS, TEST_PROVIDERS } from '../../testing/test-providers';
+
+@Component({ selector: 'app-social-stories', standalone: true, template: '' })
+class StubStoriesComponent {}
 
 describe('SocialFeedComponent discovery sidebar', () => {
   let fixture: ComponentFixture<SocialFeedComponent>;
@@ -39,7 +42,7 @@ describe('SocialFeedComponent discovery sidebar', () => {
 
     await TestBed.configureTestingModule({
       declarations: [SocialFeedComponent],
-      imports: [...TEST_IMPORTS, SocialStoriesComponent],
+      imports: [...TEST_IMPORTS, StubStoriesComponent],
       providers: [
         ...TEST_PROVIDERS,
         { provide: SocialFeedService, useValue: feed },
