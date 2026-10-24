@@ -144,6 +144,86 @@ describe('Unified Jynlo message center', () => {
     expect(component.selectedAttachment).toBeNull();
   });
 
+  it('ignores a delayed private-storage availability result after a login switch', () => {
+    let browserToken = 'qa-ana';
+    spyOn(localStorage, 'getItem').and.callFake(key => key === 't' ? browserToken : null);
+    (component as any).receiptSessionToken = browserToken;
+    const pending = new Subject<{ available: boolean }>();
+    direct.attachmentsAvailable.and.returnValue(pending.asObservable());
+    direct.recentHistory.and.returnValue(of({ content: [], last: true }));
+    const peer = item('direct', 'bea');
+    component.conversations = [peer];
+    component.selectConversation(peer);
+
+    browserToken = 'qa-different-account';
+    pending.next({ available: true });
+    pending.complete();
+    expect(component.attachmentReady).toBeFalse();
+    expect(component.attachmentControlsReady).toBeFalse();
+    expect(component.selectedAttachment).toBeNull();
+  });
+
+  it('never previews a delayed private download after another account logs in', () => {
+    let browserToken = 'qa-ana';
+    spyOn(localStorage, 'getItem').and.callFake(key => key === 't' ? browserToken : null);
+    (component as any).receiptSessionToken = browserToken;
+    const peer = item('direct', 'bea');
+    const image = { ...message(peer.key, 82, 'bea'),
+      attachmentName: 'foto.jpg', attachmentMimeType: 'image/jpeg', attachmentSize: 512 };
+    component.conversations = [peer];
+    component.selectedKey = peer.key;
+    const pending = new Subject<Blob>();
+    direct.downloadAttachment.and.returnValue(pending.asObservable());
+    const createUrl = spyOn(URL, 'createObjectURL').and.returnValue('blob:never-show');
+    component.openAttachment(image);
+    expect(direct.downloadAttachment).toHaveBeenCalledOnceWith('bea', 82);
+
+    browserToken = 'qa-different-account';
+    pending.next(new Blob(['private-image'], { type: 'image/jpeg' }));
+    pending.complete();
+    expect(createUrl).not.toHaveBeenCalled();
+    expect(component.attachmentPreviews.size).toBe(0);
+    expect(component.attachmentControlsReady).toBeFalse();
+  });
+
+  it('drops a delayed download after leaving and reopening the same chat', () => {
+    const peer = item('direct', 'bea');
+    const other = item('direct', 'carla');
+    component.conversations = [peer, other];
+    component.selectedKey = peer.key;
+    const image = { ...message(peer.key, 83, 'bea'),
+      attachmentName: 'golo.gif', attachmentMimeType: 'image/gif', attachmentSize: 512 };
+    const pending = new Subject<Blob>();
+    direct.downloadAttachment.and.returnValue(pending.asObservable());
+    const createUrl = spyOn(URL, 'createObjectURL').and.returnValue('blob:old-chat');
+    spyOn<any>(component, 'loadHistory').and.stub();
+    spyOn<any>(component, 'loadComposerAccess').and.stub();
+    component.openAttachment(image);
+    component.selectConversation(other);
+    component.selectConversation(peer);
+    pending.next(new Blob(['private-gif'], { type: 'image/gif' }));
+    pending.complete();
+    expect(createUrl).not.toHaveBeenCalled();
+    expect(component.attachmentPreviews.size).toBe(0);
+  });
+
+  it('blocks an attachment send selected under a previous login', () => {
+    let browserToken = 'qa-ana';
+    spyOn(localStorage, 'getItem').and.callFake(key => key === 't' ? browserToken : null);
+    (component as any).receiptSessionToken = browserToken;
+    const peer = item('direct', 'bea');
+    component.conversations = [peer];
+    component.selectedKey = peer.key;
+    component.composerAllowed = true;
+    component.attachmentReady = true;
+    component.selectedAttachment = new File(['%PDF-1.4'], 'treino.pdf', { type: 'application/pdf' });
+    component.draft = 'Mensagem anterior à troca de conta';
+    browserToken = 'qa-different-account';
+    component.sendMessage();
+    expect(direct.sendAttachment).not.toHaveBeenCalled();
+    expect(direct.send).not.toHaveBeenCalled();
+  });
+
   it('refuses unsupported or oversized attachments before HTTP upload', () => {
     const peer = item('direct','bea');
     component.conversations = [peer];
