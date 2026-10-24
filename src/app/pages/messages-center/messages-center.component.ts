@@ -1038,7 +1038,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       next: entries => {
         // An account change, revoked conversation, cancelled retry, or
         // newer confirmation makes this old GET irrelevant.
-        if (!this.isReceiptSessionCurrent()
+        if ((this.receiptSessionToken && !this.isReceiptSessionCurrent())
             || !this.conversations.some(item => item.key === key)
             || this.pendingByConversation.get(key) !== pending) return;
         const delivered = entries.find(item => this.matchesPending(item, pending));
