@@ -76,6 +76,12 @@ export class CommunityTournamentsComponent implements OnChanges {
     return selected?.length ? selected : (this.community?.sport ? [this.community.sport] : []);
   }
 
+  // Shortcut chips are only useful before the first selection. When changing a
+  // sport, show search instead of implying the community sport is also selected.
+  get showCommunitySportShortcuts(): boolean {
+    return !this.sportDraft && this.communitySportOptions.length > 0;
+  }
+
   get suggestedSports(): string[] {
     const normalized = this.sportSearch.normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
