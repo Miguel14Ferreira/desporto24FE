@@ -517,7 +517,7 @@
                   </div>
                 </div>
               }
-              @if (selected.format === 'KNOCKOUT') {
+              @if (selected.format === 'KNOCKOUT' && historicalKnockoutPhases.length > 0) {
                 <section class="t-section historical-phases-summary"
                   [attr.aria-label]="'communities.matches.historicalPhases.title' | t">
                   <div class="t-section-heading">
@@ -529,18 +529,15 @@
                   <div class="historical-phase-cards">
                     @for (phase of historicalKnockoutPhases; track phase.phase) {
                       <article class="historical-phase-card"
-                        [class.historical-phase-card--review]="phase.requiresReview"
-                        [class.historical-phase-card--absent]="phase.matchCount === 0">
+                        [class.historical-phase-card--review]="phase.requiresReview">
                         <div class="historical-phase-card-heading">
                           <strong>{{ ('communities.matches.historicalPhases.' + phase.phase) | t }}</strong>
                           <span class="historical-phase-card-count">{{ phase.matchCount }} / {{ phase.singleLegReference }}</span>
                         </div>
                         <p class="historical-phase-card-status">
-                          {{ (phase.matchCount === 0
-                            ? 'communities.matches.historicalPhases.notLabelled'
-                            : phase.requiresReview
-                              ? 'communities.matches.historicalPhases.needsReview'
-                              : 'communities.matches.historicalPhases.sourceFound') | t }}
+                          {{ (phase.requiresReview
+                            ? 'communities.matches.historicalPhases.needsReview'
+                            : 'communities.matches.historicalPhases.sourceFound') | t }}
                         </p>
                         @if (phase.sourceLabels.length) {
                           <p class="historical-phase-card-labels">{{ phase.sourceLabels.join(' · ') }}</p>
