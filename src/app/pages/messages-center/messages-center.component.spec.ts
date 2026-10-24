@@ -965,6 +965,125 @@ describe('Unified Jynlo message center', () => {
     expect(timeline.send).toHaveBeenCalledTimes(1);
   });
 
+  it('recovers an off-screen uncertain direct send after authenticated WebSocket reconnect', () => {
+    connected.next(false);
+    const token='eyJhbGciOiJub25lIn0.'
+      + btoa(JSON.stringify({sub:'ana',exp:4102444800})).replace(/=+$/,'')
+      + '.fixture';
+    spyOn(localStorage,'getItem').and.returnValue(token);
+    friends.friends.and.returnValue(of([{username:'bea',nickname:'Bea'}] as any));
+    communities.mine.and.returnValue(of([{id:7,name:'CNG'}] as any));
+    timeline.list.and.returnValue(of([]));
+    direct.recentHistory.and.returnValue(of({last:true,content:[{
+      id:87,username1:'ana',username2:'bea',text:'Enviado antes da falha',
+      date:new Date().toISOString(),dataDisplay:null
+    }]} as any));
+    component.ngOnInit();
+    try {
+      connected.next(true); // first authorization must not scan histories
+      const group=component.conversations.find(x=>x.key==='community:7')!;
+      component.selectConversation(group);
+      component.draft='Outro rascunho';
+      (component as any).pendingByConversation.set('direct:bea',{
+        key:'direct:bea',text:'Enviado antes da falha',
+        replyToMessageId:null,knownIds:new Set(),startedAt:Date.now()
+      });
+      expect(direct.recentHistory).not.toHaveBeenCalled();
+      connected.next(false);
+      connected.next(true);
+      expect(direct.recentHistory).toHaveBeenCalledTimes(1);
+      expect(component.draft).toBe('Outro rascunho');
+      expect(component.selectedKey).toBe('community:7');
+      expect((component as any).pendingByConversation.has('direct:bea')).toBeFalse();
+      expect(component.conversations.find(x=>x.key==='direct:bea')?.latestMessageId).toBe(87);
+      component.selectConversation(component.conversations.find(x=>x.key==='direct:bea')!);
+      expect(component.deliveryUncertain).toBeFalse();
+      expect(component.draft).toBe('');
+      expect(direct.send).not.toHaveBeenCalled();
+      connected.next(true);
+      expect(direct.recentHistory).toHaveBeenCalledTimes(2); // opening only
+    } finally {
+      component.ngOnDestroy();
+      connected.next(false);
+    }
+  });
+
+  it('retains uncertainty when reconnect GET fails, and never retries POST', () => {
+    connected.next(false);
+    const token='eyJhbGciOiJub25lIn0.'
+      + btoa(JSON.stringify({sub:'ana',exp:4102444800})).replace(/=+$/,'')
+      + '.fixture';
+    spyOn(localStorage,'getItem').and.returnValue(token);
+    friends.friends.and.returnValue(of([{username:'bea',nickname:'Bea'}] as any));
+    direct.recentHistory.and.returnValue(throwError(()=>new HttpErrorResponse({status:503})));
+    component.ngOnInit();
+    try {
+      connected.next(true);
+      (component as any).pendingByConversation.set('direct:bea',{
+        key:'direct:bea',text:'Sem confirmação',
+        replyToMessageId:null,knownIds:new Set(),startedAt:Date.now()
+      });
+      connected.next(false);
+      connected.next(true);
+      expect(direct.recentHistory).toHaveBeenCalledTimes(1);
+      expect((component as any).pendingByConversation.has('direct:bea')).toBeTrue();
+      expect(direct.send).not.toHaveBeenCalled();
+      expect(component.conversations.map(c=>c.key)).toContain('direct:bea');
+    } finally {
+      component.ngOnDestroy();
+      connected.next(false);
+    }
+  });
+
+  it('ignores an old recovery GET after account switches while request is pending', () => {
+    connected.next(false);
+    const original='eyJhbGciOiJub25lIn0.'
+      + btoa(JSON.stringify({sub:'ana',exp:4102444800})).replace(/=+$/,'')
+      + '.fixture';
+    let token=original;
+    spyOn(localStorage,'getItem').and.callFake(k=>k==='t'?token:null);
+    friends.friends.and.returnValue(of([{username:'bea',nickname:'Bea'}] as any));
+    const oldGet=new Subject<any>();
+    direct.recentHistory.and.returnValue(oldGet.asObservable());
+    component.ngOnInit();
+    try {
+      connected.next(true);
+      (component as any).pendingByConversation.set('direct:bea',{
+        key:'direct:bea',text:'Privada',replyToMessageId:null,
+        knownIds:new Set(),startedAt:Date.now()
+      });
+      connected.next(false);
+      connected.next(true);
+      expect(direct.recentHistory).toHaveBeenCalledTimes(1);
+      token='logged-in-as-another-account';
+      oldGet.next({content:[{id:51,username1:'ana',username2:'bea',
+        text:'Privada',date:new Date().toISOString(),dataDisplay:null}],last:true});
+      oldGet.complete();
+      expect((component as any).pendingByConversation.has('direct:bea')).toBeTrue();
+      expect(component.conversations.find(x=>x.key==='direct:bea')?.latestMessageId).not.toBe(51);
+      expect(direct.send).not.toHaveBeenCalled();
+    } finally {
+      component.ngOnDestroy();
+      connected.next(false);
+    }
+  });
+
+  it('deduplicates repeated foreground checks of a still uncertain send', () => {
+    (component as any).receiptSessionToken='qa-session';
+    spyOn(localStorage,'getItem').and.returnValue('qa-session');
+    component.conversations=[item('direct','bea')];
+    (component as any).pendingByConversation.set('direct:bea',{
+      key:'direct:bea',text:'Em espera',replyToMessageId:null,
+      knownIds:new Set(),startedAt:Date.now()
+    });
+    direct.recentHistory.and.returnValue(of({content:[],last:true} as any));
+    (component as any).onPageActive();
+    (component as any).onPageActive();
+    expect(direct.recentHistory).toHaveBeenCalledTimes(1);
+    expect((component as any).pendingByConversation.has('direct:bea')).toBeTrue();
+    expect(direct.send).not.toHaveBeenCalled();
+  });
+
   it('allows Shift+Enter and composition without triggering send', () => {
     const evt = new KeyboardEvent('keydown', { key: 'Enter', shiftKey: true, cancelable: true });
     component.onComposerEnter(evt);
