@@ -454,13 +454,15 @@ export class CommunityGroupsService {
     | 'ICE_HOCKEY_REG' | 'ICE_HOCKEY_OT' | 'ICE_HOCKEY_SO' | 'BASEBALL_RUNS' | 'SOFTBALL_RUNS' | 'KORFBALL_REG' | 'KORFBALL_GOLDEN'
     | 'LACROSSE_M_REG' | 'LACROSSE_M_OT' | 'AMFOOTBALL_SCORE' | 'FLAGFOOTBALL_SCORE' | 'CURLING_REG' | 'CURLING_EXTRA'
     | 'PETANQUE_13' | 'PETANQUE_11' | 'BOWLING_TENPIN' | 'POOL_9_RACKS' | 'FENCING_POOL_5' | 'FENCING_DE_15'
-    | 'TEQBALL_SINGLES' | 'TEQBALL_DOUBLES' | 'CHESS_GAME' | null;
+    | 'TEQBALL_SINGLES' | 'TEQBALL_DOUBLES' | 'CHESS_GAME' | 'CRICKET_T20' | null;
       eventDiscipline?: string | null;
       matchFormat?: 'SINGLES' | 'DOUBLES' | null;
       setScores?: Array<{ sideA: number | null; sideB: number | null }> | null;
       groupScores?: Array<{ groupName: string; score: number | null }>;
       basketballScore?: { sideA: number | null; sideB: number | null };
       teamScore?: { sideA: number | null; sideB: number | null };
+      cricketDetails?: { wicketsA: number | null; legalBallsA: number | null;
+        wicketsB: number | null; legalBallsB: number | null };
       entries: Array<{
         username: string;
         team: string | null;

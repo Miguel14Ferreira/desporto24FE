@@ -12,11 +12,11 @@ export function isTeamFinalEvent(type: string | null | undefined): boolean {
     || type === 'CURLING_REG' || type === 'CURLING_EXTRA'
     || type === 'PETANQUE_13' || type === 'PETANQUE_11'
     || type === 'BOWLING_TENPIN' || type === 'POOL_9_RACKS'
-    || type === 'FENCING_POOL_5' || type === 'FENCING_DE_15';
+    || type === 'FENCING_POOL_5' || type === 'FENCING_DE_15' || type === 'CRICKET_T20';
 }
 /** Sport-aware scoreboard units: goals, rugby and football points, or baseball/softball runs. */
 export function teamFinalUsesRuns(type: string | null | undefined): boolean {
-  return type === 'BASEBALL_RUNS' || type === 'SOFTBALL_RUNS';
+  return type === 'BASEBALL_RUNS' || type === 'SOFTBALL_RUNS' || type === 'CRICKET_T20';
 }
 export function teamFinalUsesGoals(type: string | null | undefined): boolean {
   return isTeamFinalEvent(type) && type !== 'RUGBY_FINAL' && type !== 'RUGBY_SEVENS_FINAL'
@@ -29,6 +29,7 @@ export function teamFinalUsesGoals(type: string | null | undefined): boolean {
 }
 /** A/B denote individual competitors for explicitly singles formats. */
 export function teamFinalSideLabelKey(type: string | null | undefined, side: 'A' | 'B'): string {
+  if (type === 'CRICKET_T20') return 'communities.cricket.innings' + side;
   return (type === 'BOWLING_TENPIN' || type === 'POOL_9_RACKS'
     || type === 'FENCING_POOL_5' || type === 'FENCING_DE_15')
     ? 'communities.teamFinal.player' + side
@@ -56,7 +57,7 @@ const TEAM_FINAL_LABELS: Record<string, string> = {
   CURLING_REG: 'curlingReg', CURLING_EXTRA: 'curlingExtra',
   PETANQUE_13: 'petanque13', PETANQUE_11: 'petanque11',
   BOWLING_TENPIN: 'bowlingTenpin', POOL_9_RACKS: 'poolNineBall',
-  FENCING_POOL_5: 'fencingPool', FENCING_DE_15: 'fencingElimination'
+  FENCING_POOL_5: 'fencingPool', FENCING_DE_15: 'fencingElimination', CRICKET_T20: 'cricketT20'
 };
 export function teamFinalTitleKey(type: string | null | undefined): string {
   return 'communities.teamFinal.' + (type ? TEAM_FINAL_LABELS[type] ?? 'finalTitle' : 'finalTitle');
@@ -71,6 +72,7 @@ export function teamFinalHintKey(type: string | null | undefined): string {
     case 'ICE_HOCKEY_OT': return 'communities.iceHockey.overtimeHint';
     case 'ICE_HOCKEY_SO': return 'communities.iceHockey.shootoutHint';
     case 'BASEBALL_RUNS': return 'communities.teamFinal.baseballRunsHint';
+    case 'CRICKET_T20': return 'communities.cricket.t20Hint';
     case 'SOFTBALL_RUNS': return 'communities.teamFinal.softballRunsHint';
     case 'KORFBALL_REG': return 'communities.teamFinal.korfballRegHint';
     case 'KORFBALL_GOLDEN': return 'communities.teamFinal.korfballGoldenHint';
