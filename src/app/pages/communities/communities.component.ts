@@ -10,7 +10,7 @@ import { buildCommunityGroupInviteUrl, buildWhatsAppGroupShareUrl } from './comm
 import { communityRoundMatchup, CommunityRoundMatchup } from './community-round-matchup';
 import { sportForRound, CommunityRoundView } from './community-round-sport';
 import { eventOptionsForSport, eventView, isNeutralEvent, eventPresentationFormat,
-  CommunityEventType } from './community-round-event-type';
+  isInlineSpeedTimedEvent, CommunityEventType } from './community-round-event-type';
 import { athleticsDisciplineOptions, athleticsDisciplineValid } from './community-field-disciplines';
 import { breakingBattleError } from './community-breaking-battle';
 import { cricketT20Error, cricketOvers } from './community-cricket-results';
@@ -722,6 +722,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   openWaterTime = formatOpenWaterTime;
   orienteeringTime = formatOrienteeringTime;
   inlineSpeedTime = formatSwimTime;
+  isInlineSpeedTimedEvent = isInlineSpeedTimedEvent;
 
   roundFormatLabel(round: CommunityRound): string {
     return t('communities.resultFormat.' +
@@ -965,7 +966,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     if (this.newRoundEventType !== 'SWIM_LCM'
         && this.newRoundEventType !== 'OWS_INDIVIDUAL'
         && this.newRoundEventType !== 'FOOT_ORIENTEERING'
-        && this.newRoundEventType !== 'INLINE_TRACK_200_TT') return;
+        && !isInlineSpeedTimedEvent(this.newRoundEventType)) return;
     this.roundEntries.forEach(entry => {
       entry.team = '';
       entry.result = 'DRAW';
@@ -3457,7 +3458,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       this.errorMessage = t('feedback.communities.openWaterInvalid');
       return;
     }
-    if (this.newRoundEventType === 'INLINE_TRACK_200_TT' && swimmingTimeError(selectedEntries)) {
+    if (isInlineSpeedTimedEvent(this.newRoundEventType) && swimmingTimeError(selectedEntries)) {
       this.errorMessage = t('feedback.communities.speedSkatingInvalid');
       return;
     }
