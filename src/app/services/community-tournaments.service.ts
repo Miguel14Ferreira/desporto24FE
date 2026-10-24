@@ -34,8 +34,10 @@ export class CommunityTournamentsService {
   }
 
   create(communityId: number, name: string, sport: string,
-         rules: TournamentPointRules = { winPoints: 3, drawPoints: 1, lossPoints: 0 }): Observable<CommunityTournament> {
-    return this.http.post<CommunityTournament>(this.url(communityId), { name, sport, ...rules });
+         rules: TournamentPointRules = { winPoints: 3, drawPoints: 1, lossPoints: 0 },
+         scoringMode?: 'CHESS_HALF_POINTS'): Observable<CommunityTournament> {
+    const body = scoringMode ? { name, sport, ...rules, scoringMode } : { name, sport, ...rules };
+    return this.http.post<CommunityTournament>(this.url(communityId), body);
   }
 
 
