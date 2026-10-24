@@ -2543,3 +2543,21 @@ test('Competition individual E2E: chess result options and scoring remain PT/EN'
   expect(fixture.organizerMutations).toEqual([]);
   expect(fixture.matches.every(match => match.status === 'SCHEDULED')).toBeTruthy();
 });
+
+test('Competition organizer E2E: English creation success feedback matches selected language', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'empty', 'Futebol', ['Futebol']);
+  await page.goto('/menu/communities/7?tab=tournaments');
+  await page.evaluate(() => localStorage.setItem('d24-language', 'en'));
+  await page.reload();
+
+  await page.getByRole('region', { name: 'How competitions work' })
+    .getByRole('button', { name: 'Create individual league' }).click();
+  const wizard = page.getByRole('region', { name: 'Configure competition' });
+  await wizard.getByLabel('Tournament name').fill('Autumn QA League');
+  await expect(wizard.getByRole('button', { name: 'Confirm individual league' })).toBeEnabled();
+  await wizard.getByRole('button', { name: 'Confirm individual league' }).click();
+  await expect(page.locator('.notice-success')).toHaveText('Tournament created.');
+  await expect(page.locator('.tournament-heading h4')).toHaveText('Autumn QA League');
+  expect(fixture.tournaments.some(item => item.name === 'Autumn QA League')).toBeTruthy();
+  expect(fixture.unmocked.filter(url => url.includes('/tournaments/'))).toEqual([]);
+});
