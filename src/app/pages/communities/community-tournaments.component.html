@@ -365,7 +365,7 @@
         <span>{{ tournaments.length }}</span>
       </div>
       @if (!loading && !tournaments.length && !error) {
-        <p class="t-muted">{{ 'communities.tournaments.detailUi.empty' | t }} @if (!canManage) {{{ 'communities.tournaments.detailUi.emptyMemberHint' | t }}}</p>
+        <p class="t-muted">{{ 'communities.tournaments.detailUi.empty' | t }} @if (!canManage) { {{ 'communities.tournaments.detailUi.emptyMemberHint' | t }} }</p>
       }
       @for (tournament of tournaments; track tournament.id) {
         <button type="button" class="tournament-option"
