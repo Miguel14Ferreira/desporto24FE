@@ -5,6 +5,7 @@ import { HistoricalMatchArchive } from '../../services/community-groups.service'
 import { historicalTournamentStandings, HistoricalTournamentStanding, canEstimateHistoricalLeagueStandings } from './community-historical-tournament-standings';
 import { historicalTournamentOutcome, HistoricalTournamentOutcome } from './community-historical-tournament-outcome';
 import { groupHistoricalTournamentSourceRows } from './community-historical-tournament-source-groups';
+import { historicalKnockoutPhaseOverview } from './community-historical-knockout-overview';
 import {
   CommunityTournament, TournamentPointRules, TeamTieBreakPriority, TournamentMatch, TournamentParticipant, TournamentStandingRow,
   TournamentStandings, TournamentTeam, TournamentTeamMatch, TournamentTeamStandings, TournamentTeamGroups,
@@ -35,6 +36,23 @@ export class CommunityTournamentsComponent implements OnChanges {
   selected?: CommunityTournament;
   historicalArchive?: HistoricalMatchArchive;
   historicalArchivePage = 0;
+  @ViewChild('historicalArchiveFixtures') private historicalArchiveFixtures?: ElementRef<HTMLElement>;
+
+  /** Source-labelled stages, without inventing a fixture, bracket or official rank. */
+  get historicalKnockoutPhases() {
+    return this.historicalArchive ? historicalKnockoutPhaseOverview(this.historicalArchive) : [];
+  }
+
+  /** Navigate to the original row page and reveal the existing fixture list. */
+  showHistoricalKnockoutPhase(firstArchiveIndex: number): void {
+    if (!this.historicalArchive || firstArchiveIndex < 0
+      || firstArchiveIndex >= this.historicalArchive.rows.length) return;
+    this.historicalArchivePage = Math.floor(firstArchiveIndex / 50);
+    this.changeDetector.detectChanges();
+    this.historicalArchiveFixtures?.nativeElement.scrollIntoView({
+      behavior: 'smooth', block: 'start'
+    });
+  }
 
   /** Contiguous labels exactly as found in the spreadsheet, within this page. */
   get historicalArchivePageGroups() {
