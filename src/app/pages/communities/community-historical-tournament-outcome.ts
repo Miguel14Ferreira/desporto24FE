@@ -60,10 +60,7 @@ export function historicalTournamentOutcome(
   }
 
   if (format === 'KNOCKOUT') {
-    const finals = matches.filter(row => {
-      const label = normalize(row.sourceRound);
-      return /^(?:grande[- ]?)?final(?:issima)?(?:[- ]?\d{4})?$/.test(label);
-    });
+    const finals = matches.filter(row => isHistoricalFinalRound(row.sourceRound));
     if (!finals.length) return pending('missing-final');
     if (finals.length !== 1) return pending('multiple-finals');
     const final = finals[0];
@@ -159,15 +156,20 @@ export function historicalTournamentOutcome(
  * never guess a bracket from the order, fixture count or chronology.
  * The normalized forms cover PT/EN singular/plural and 1/2 final.
  */
-function isSemifinalRound(sourceRound: string | null | undefined): boolean {
+export function isSemifinalRound(sourceRound: string | null | undefined): boolean {
   const label = normalize(sourceRound || '').replace(/[-_./]+/g, ' ').replace(/\s+/g, ' ');
   return /^(?:semi\s*fina(?:l|is)|meias?\s*fina(?:l|is)|1\s*2\s*fina(?:l|is))(?:\s*[12ab])?$/.test(label);
 }
 
 /** Only source-labelled quarterfinals, including common PT/EN and 1/4 variants. */
-function isQuarterfinalRound(sourceRound: string | null | undefined): boolean {
+export function isQuarterfinalRound(sourceRound: string | null | undefined): boolean {
   const label = normalize(sourceRound || '').replace(/[-_./]+/g, ' ').replace(/\s+/g, ' ');
   return /^(?:(?:quartos?|quartas?)\s*(?:de\s*)?fina(?:l|is)|quarter\s*finals?|1\s*4\s*(?:de\s*)?fina(?:l|is))(?:\s*(?:[1-4]|[a-d]))?$/.test(label);
+}
+
+/** Share exactly the final-label recognition used by the winner estimator. */
+export function isHistoricalFinalRound(sourceRound: string | null | undefined): boolean {
+  return /^(?:grande[- ]?)?final(?:issima)?(?:[- ]?\d{4})?$/.test(normalize(sourceRound || ''));
 }
 
 function normalize(value: string): string {
