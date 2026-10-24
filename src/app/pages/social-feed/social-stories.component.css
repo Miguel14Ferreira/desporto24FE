@@ -101,3 +101,46 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 @media (prefers-reduced-motion: reduce) {
  .story-overlay .story-progress-track span { transition: none; }
 }
+
+
+/* Native browser confirmation replaced with a contained Jynlo alert dialog. */
+.story-overlay .story-confirm-backdrop {
+  position: absolute; inset: 0; z-index: 15; display: grid; place-items: center;
+  padding: 20px; background: rgba(0, 7, 16, .78); backdrop-filter: blur(9px);
+}
+.story-overlay .story-confirm-dialog {
+  width: min(340px, 100%); padding: 23px; border-radius: 20px;
+  border: 1px solid rgba(112, 162, 173, .35);
+  background: linear-gradient(160deg, #102c39 0%, #081b28 100%);
+  box-shadow: 0 22px 64px rgba(0, 0, 0, .65);
+  color: #f8fafc; text-align: center;
+}
+.story-overlay .story-confirm-icon {
+  margin: 0 auto 13px; width: 48px; height: 48px; display: grid; place-items: center;
+  border-radius: 16px; color: #fda4af; background: rgba(244, 63, 94, .11);
+  border: 1px solid rgba(251, 113, 133, .25);
+}
+.story-overlay .story-confirm-icon svg {
+  width: 25px; height: 25px; stroke: currentColor; stroke-width: 1.7;
+  stroke-linecap: round; stroke-linejoin: round; fill: none;
+}
+.story-overlay .story-confirm-dialog h3 { margin: 0 0 9px; font-size: 1.13rem; font-weight: 780; }
+.story-overlay .story-confirm-dialog > p:not(.story-confirm-error) {
+  margin: 0 0 22px; font-size: .88rem; line-height: 1.55; color: #bcd0db;
+}
+.story-overlay .story-confirm-dialog .story-confirm-error {
+  margin: 0 0 15px; padding: 9px; font-size: .82rem;
+  border-radius: 9px; color: #fecaca; background: rgba(220, 38, 38, .1);
+}
+.story-overlay .story-confirm-actions { display: flex; gap: 10px; }
+.story-overlay .story-confirm-actions button {
+  flex: 1; min-height: 43px; padding: 11px 13px;
+  border-radius: 11px; cursor: pointer; font-size: .88rem; font-weight: 730;
+}
+.story-overlay .story-confirm-cancel {
+  border: 1px solid rgba(148, 183, 196, .38); background: rgba(255, 255, 255, .06); color: #e6f2f5;
+}
+.story-overlay .story-confirm-cancel:hover:not(:disabled) { background: rgba(255, 255, 255, .12); }
+.story-overlay .story-confirm-danger { border: 1px solid #ea5264; background: #cd3349; color: white; }
+.story-overlay .story-confirm-danger:hover:not(:disabled) { background: #e34459; }
+.story-overlay .story-confirm-actions button:disabled { opacity: .55; cursor: wait; }
