@@ -4147,6 +4147,40 @@
                       </button>
                     </div>
                   </section>
+                  <section class="management-block community-delete-block" aria-labelledby="community-delete-title">
+                    <h3 id="community-delete-title">{{ 'communities.deleteTitle' | t }}</h3>
+                    <p>{{ 'communities.deleteHint' | t }}</p>
+                    @if (!communityDeleteConfirming) {
+                      <button type="button" class="danger-action jynlo-action jynlo-action--danger"
+                        [disabled]="communityDeleteLoading" (click)="beginCommunityDeletion()">
+                        {{ 'communities.deleteAction' | t }}
+                      </button>
+                    } @else {
+                      <div class="community-delete-confirm">
+                        <p class="community-delete-warning" role="alert">
+                          {{ 'communities.deleteWarning' | t }}
+                        </p>
+                        <label for="community-delete-name">{{ 'communities.deleteConfirmHint' | t:{ name: selected.name } }}</label>
+                        <input id="community-delete-name" name="communityDeleteName" type="text"
+                          autocomplete="off" spellcheck="false" [disabled]="communityDeleteLoading"
+                          [(ngModel)]="communityDeleteName">
+                        @if (communityDeleteError) {
+                          <p role="alert" class="feedback error-feedback">{{ communityDeleteError }}</p>
+                        }
+                        <div class="row-actions">
+                          <button type="button" class="danger-action jynlo-action jynlo-action--danger"
+                            [disabled]="communityDeleteLoading || communityDeleteName !== selected.name"
+                            (click)="confirmCommunityDeletion()">
+                            {{ (communityDeleteLoading ? 'communities.deleting' : 'communities.deleteConfirm') | t }}
+                          </button>
+                          <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
+                            [disabled]="communityDeleteLoading" (click)="cancelCommunityDeletion()">
+                            {{ 'common.cancel' | t }}
+                          </button>
+                        </div>
+                      </div>
+                    }
+                  </section>
                 } @else {
                   <section class="leave-block">
                     <button type="button" class="danger-action jynlo-action jynlo-action--danger" (click)="leave()">
