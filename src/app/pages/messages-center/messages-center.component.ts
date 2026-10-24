@@ -69,6 +69,19 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   private readonly onWindowBlur = (): void => {
     if (this.voiceRecording || this.voiceFinalizing) this.cancelVoiceRecording();
   };
+  private readonly onAuthStorageChange = (event: StorageEvent): void => {
+    // localStorage changes in *other* tabs on the same origin.
+    if ((event.key === 't' || event.key === null) && !this.isAttachmentIdentityCurrent()) {
+      this.clearMediaOnAccountChange();
+    }
+  };
+  private clearMediaOnAccountChange(): void {
+    ++this.attachmentViewVersion;
+    this.attachmentReady = false;
+    this.selectedAttachment = null;
+    this.cancelVoiceRecording();
+    this.clearAttachmentPreviews();
+  }
   private readonly onPageActive = (): void => {
     // Never keep capturing microphone audio while another tab is foregrounded.
     if (!this.isPageActive()) {
@@ -76,10 +89,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       return;
     }
     if (!this.isAttachmentIdentityCurrent()) {
-      this.attachmentReady = false;
-      this.selectedAttachment = null;
-      this.cancelVoiceRecording();
-      this.clearAttachmentPreviews();
+      this.clearMediaOnAccountChange();
       return;
     }
     if (this.selectedKey) this.markRenderedRead(this.selectedKey);
@@ -268,6 +278,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.loadInbox();
     window.addEventListener('focus', this.onPageActive);
     window.addEventListener('blur', this.onWindowBlur);
+    window.addEventListener('storage', this.onAuthStorageChange);
     document.addEventListener('visibilitychange', this.onPageActive);
     this.summaryTimer = setInterval(() => {
       if (this.loading || !this.isReceiptSessionCurrent()) return;
@@ -287,6 +298,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.subscriptions.unsubscribe();
     window.removeEventListener('focus', this.onPageActive);
     window.removeEventListener('blur', this.onWindowBlur);
+    window.removeEventListener('storage', this.onAuthStorageChange);
     document.removeEventListener('visibilitychange', this.onPageActive);
     if (this.summaryTimer) clearInterval(this.summaryTimer);
     if (this.receiptTimer) clearInterval(this.receiptTimer);
