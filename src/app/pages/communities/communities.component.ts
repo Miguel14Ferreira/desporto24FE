@@ -13,6 +13,7 @@ import { eventOptionsForSport, eventView, isNeutralEvent, eventPresentationForma
   CommunityEventType } from './community-round-event-type';
 import { athleticsDisciplineOptions, athleticsDisciplineValid } from './community-field-disciplines';
 import { breakingBattleError } from './community-breaking-battle';
+import { trackSprintHeatError } from './community-track-sprint-results';
 import { cricketT20Error, cricketOvers } from './community-cricket-results';
 import { chessGameError, chessGameScore } from './community-chess-results';
 import { judoBoutError, isJudoBout } from './community-judo-results';
@@ -706,6 +707,16 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
 
   /** Do not keep invisible Scratch lap metrics after switching to a timed event. */
   onRoundEventTypeChange(): void {
+    if (this.newRoundEventType === 'TRACK_SPRINT_HEAT') {
+      for (const entry of this.roundEntries) {
+        entry.finishPosition = null;
+        entry.elapsedSeconds = null;
+        entry.lapsCompleted = null;
+        entry.bestLapSeconds = null;
+        entry.performanceValue = null;
+        entry.result = 'DRAW';
+      }
+    }
     if (this.newRoundEventType === 'TRACK_TIME_TRIAL' || this.newRoundEventType === 'TRACK_FLYING_200') {
       for (const entry of this.roundEntries) {
         entry.lapsCompleted = null;
@@ -3342,6 +3353,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     const race = this.viewForNewRound() === 'race';
     const neutral = isNeutralEvent(this.newRoundSport, this.newRoundEventType);
     const breaking = this.newRoundEventType === 'BREAKING_BATTLE';
+    const sprintHeat = this.newRoundEventType === 'TRACK_SPRINT_HEAT';
     const chess = this.newRoundEventType === 'CHESS_GAME';
     const judo = isJudoBout(this.newRoundEventType);
     const karate = isKarateEvent(this.newRoundEventType);
@@ -3436,11 +3448,15 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       this.errorMessage = t('feedback.communities.judoInvalid');
       return;
     }
+    if (sprintHeat && trackSprintHeatError(selectedEntries)) {
+      this.errorMessage = t('communities.trackCycling.sprintInvalid');
+      return;
+    }
     if (this.newRoundEventType === 'BREAKING_BATTLE' && breakingBattleError(selectedEntries)) {
       this.errorMessage = t('feedback.communities.breakingInvalid');
       return;
     }
-    if (neutral && !karate && !taekwondo && !bjj && !boxing && !kickboxing && !muayThai
+    if (neutral && !sprintHeat && !karate && !taekwondo && !bjj && !boxing && !kickboxing && !muayThai
       && !isWaveHeatEvent(this.newRoundEventType)
       && performanceError(this.newRoundEventType, selectedEntries)) {
       this.errorMessage = t(performanceKind(this.newRoundEventType) === 'golf'
@@ -3486,7 +3502,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
         username: entry.username,
         team: groupRoutine || basketball || volleyball || teamFinal || chess || judo || karate || kyorugi || bjj || boxing || kickboxing || muayThai ? entry.team.trim()
           : race || neutral ? null : (entry.team.trim() || null),
-        result: breaking || chess || judo || karate || kyorugi || bjj || boxing || kickboxing || muayThai ? entry.result
+        result: sprintHeat || breaking || chess || judo || karate || kyorugi || bjj || boxing || kickboxing || muayThai ? entry.result
           : race || neutral ? 'DRAW' as CommunityMatchResult
           : racket ? (entry.team === racketWinner ? 'WIN' : 'LOSS') as CommunityMatchResult
           : entry.result,
@@ -3495,7 +3511,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
         mvp: !race && !neutral && !racket && !chess && Boolean(entry.mvp),
         cleanSheet: !race && !neutral && !racket && !chess && Boolean(entry.cleanSheet),
         ...(neutral && !isWaveHeatEvent(this.newRoundEventType)
-          ? { performanceValue: entry.performanceValue ?? null } : {}),
+          ? { performanceValue: sprintHeat ? null : entry.performanceValue ?? null } : {}),
         ...(neutral && isWaveHeatEvent(this.newRoundEventType)
           ? { waveScore1: entry.waveScore1 ?? null, waveScore2: entry.waveScore2 ?? null } : {}),
         ...(race ? {
