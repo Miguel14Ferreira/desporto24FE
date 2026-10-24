@@ -460,7 +460,8 @@ export class CommunityGroupsService {
     | 'TKD_KYORUGI_BEST3' | 'TKD_POOMSAE_RECOGNIZED' | 'TKD_POOMSAE_FREESTYLE'
     | 'BJJ_IBJJF_GI_SUBMISSION' | 'BJJ_IBJJF_GI_POINTS' | 'BOXING_WB_POINTS' | 'BOXING_WB_KO' | 'BOXING_WB_RSC' | 'WAKO_POINT_FIGHTING' | 'WAKO_LIGHT_CONTACT'
     | 'WAKO_KICK_LIGHT' | 'WAKO_FULL_CONTACT' | 'WAKO_LOW_KICK' | 'WAKO_K1'
-    | 'IFMA_FULL_WP' | 'IFMA_FULL_KO' | 'IFMA_FULL_RSCS' | 'IFMA_FULL_RSCI' | null;
+    | 'IFMA_FULL_WP' | 'IFMA_FULL_KO' | 'IFMA_FULL_RSCS' | 'IFMA_FULL_RSCI'
+    | 'STRENGTH_TRAINING' | null;
       eventDiscipline?: string | null;
       matchFormat?: 'SINGLES' | 'DOUBLES' | null;
       setScores?: Array<{ sideA: number | null; sideB: number | null }> | null;
