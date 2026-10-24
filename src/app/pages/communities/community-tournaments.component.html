@@ -655,67 +655,62 @@
               @if (canManage && selected.status === 'DRAFT') {
                 <div class="team-schedule-action">
                   <div>
-                    <strong>{{ isGroupKnockout ? 'Prontos para sortear os grupos?' : (isKnockout ? 'Prontos para sortear as eliminatórias?' : 'Prontos para começar o campeonato?') }}</strong>
+                    <strong>{{ (isGroupKnockout ? 'communities.tournaments.fixturesUi.readyGroups' : (isKnockout ? 'communities.tournaments.fixturesUi.readyKnockout' : 'communities.tournaments.fixturesUi.readyLeague')) | t }}</strong>
                     @if (isGroupKnockout) {
-                      <p>Publicar sorteia as equipas pelos grupos e cria as jornadas.
-                        Os dois primeiros de cada grupo avançam automaticamente. Publicar fecha os plantéis.</p>
+                      <p>{{ 'communities.tournaments.fixturesUi.groupPublishHint' | t }}</p>
                     } @else if (isKnockout) {
-                      <p>Sortear os primeiros confrontos e entradas diretas. Os vencedores avançam automaticamente.
-                        Publicar fecha os plantéis.</p>
+                      <p>{{ 'communities.tournaments.fixturesUi.knockoutPublishHint' | t }}</p>
                     } @else {
-                      <p>Gera o calendário de {{ (selected.roundRobinLegs ?? 1) === 2
-                        ? 'duas voltas, com jogos em casa e fora' : 'uma volta entre todas as equipas' }}.
-                        A publicação fecha os plantéis e fixa as regras da competição.</p>
+                      <p>{{ ((selected.roundRobinLegs ?? 1) === 2 ? 'communities.tournaments.fixturesUi.twoLegPublishHint' : 'communities.tournaments.fixturesUi.oneLegPublishHint') | t }}</p>
                     }
                     @if (teams.length < (isGroupKnockout ? (selected.groupCount ?? 2) * 2 : 2)) {
-                      <p class="field-validation" role="status">Cria pelo menos {{ isGroupKnockout ? (selected.groupCount ?? 2) * 2 : 2 }} equipas.</p>
+                      <p class="field-validation" role="status">{{ 'communities.tournaments.fixturesUi.minTeams' | t:{count:(isGroupKnockout ? (selected.groupCount ?? 2) * 2 : 2)} }}</p>
                     } @else if (readyTeamCount !== teams.length) {
                       <p class="field-validation" role="status">
-                        {{ selected.playersPerTeam == null ? 'Adiciona pelo menos um jogador a cada uma das ' : 'Completa os plantéis das ' }}{{ teams.length - readyTeamCount }} equipas em falta.
+                        {{ (selected.playersPerTeam == null ? 'communities.tournaments.fixturesUi.missingMembers' : 'communities.tournaments.fixturesUi.incompleteRosters') | t:{count:teams.length - readyTeamCount} }}
                       </p>
                     }
                   </div>
                   @if (confirmAction === 'schedule') {
                     <div class="confirm-actions">
                       <button type="button" class="t-btn t-btn-primary" [disabled]="!canPublishTeamSchedule"
-                        (click)="publishTeamSchedule()">{{ isGroupKnockout ? 'Sim, sortear grupos' : (isKnockout ? 'Sim, sortear eliminatórias' : 'Sim, publicar jornadas por equipas') }}</button>
+                        (click)="publishTeamSchedule()">{{ (isGroupKnockout ? 'communities.tournaments.fixturesUi.confirmGroups' : (isKnockout ? 'communities.tournaments.fixturesUi.confirmKnockout' : 'communities.tournaments.fixturesUi.confirmLeague')) | t }}</button>
                       <button type="button" class="t-btn t-btn-secondary" [disabled]="busy"
-                        (click)="confirmAction = null">Cancelar</button>
+                        (click)="confirmAction = null">{{ 'communities.tournaments.fixturesUi.cancel' | t }}</button>
                     </div>
                   } @else {
                     <button type="button" class="t-btn t-btn-primary" [disabled]="!canPublishTeamSchedule"
-                      (click)="confirmAction = 'schedule'">{{ isGroupKnockout ? 'Sortear grupos e jornadas' : (isKnockout ? 'Sortear eliminatórias' : 'Gerar jornadas entre equipas') }}</button>
+                      (click)="confirmAction = 'schedule'">{{ (isGroupKnockout ? 'communities.tournaments.fixturesUi.publishGroups' : (isKnockout ? 'communities.tournaments.fixturesUi.publishKnockout' : 'communities.tournaments.fixturesUi.publishLeague')) | t }}</button>
                   }
                 </div>
               }
             </section>
             @if (selected.status !== 'DRAFT') {
-              <section class="t-section team-fixtures-section" aria-label="Jornadas entre equipas">
+              <section class="t-section team-fixtures-section" [attr.aria-label]="'communities.tournaments.fixturesUi.fixturesRegion' | t">
                 <div class="t-section-heading">
                   <div>
-                    <h5>{{ isGroupKnockout ? 'Fase de grupos e eliminatórias' : (isKnockout ? 'Quadro de eliminatórias' : 'Jornadas e confrontos entre equipas') }}</h5>
+                    <h5>{{ (isGroupKnockout ? 'communities.tournaments.fixturesUi.groupsTitle' : (isKnockout ? 'communities.tournaments.fixturesUi.knockoutTitle' : 'communities.tournaments.fixturesUi.leagueTitle')) | t }}</h5>
                     @if (isGroupKnockout) {
-                      <p>Os jogos de cada grupo permitem empates. Depois de apurados os dois primeiros,
-                        os quartos ou meias-finais e a final exigem sempre um vencedor.</p>
+                      <p>{{ 'communities.tournaments.fixturesUi.groupsHelp' | t }}</p>
                     } @else if (isKnockout) {
-                      <p>O vencedor de cada jogo avança. Não são aceites empates nas eliminatórias.</p>
+                      <p>{{ 'communities.tournaments.fixturesUi.knockoutHelp' | t }}</p>
                     } @else {
-                      <p>Campeonato todos contra todos. Os resultados atualizam automaticamente a classificação.</p>
+                      <p>{{ 'communities.tournaments.fixturesUi.leagueHelp' | t }}</p>
                     }
                   </div>
                 </div>
                 @if (teamMatchesError) {
-                  <p class="field-validation" role="alert">Não foi possível consultar os confrontos. Tenta novamente.</p>
-                  <button class="t-btn t-btn-secondary" type="button" (click)="loadTeamMatches(true)">Tentar novamente</button>
+                  <p class="field-validation" role="alert">{{ 'communities.tournaments.fixturesUi.matchesError' | t }}</p>
+                  <button class="t-btn t-btn-secondary" type="button" (click)="loadTeamMatches(true)">{{ 'communities.tournaments.fixturesUi.retry' | t }}</button>
                 }
                 @if (teamMatchesLoading) {
-                  <p class="t-muted" role="status">A carregar jornadas…</p>
+                  <p class="t-muted" role="status">{{ 'communities.tournaments.fixturesUi.loading' | t }}</p>
                 }
                 @if (!teamMatchesLoading && !teamMatches.length && !teamMatchesError) {
-                  <p class="t-muted">Ainda não existem confrontos.</p>
+                  <p class="t-muted">{{ 'communities.tournaments.fixturesUi.empty' | t }}</p>
                 }
                 @if (isKnockout && knockoutFirstRoundByes.length) {
-                  <p class="t-muted">Entrada direta na segunda ronda:
+                  <p class="t-muted">{{ 'communities.tournaments.fixturesUi.bye' | t }}
                     @for (team of knockoutFirstRoundByes; track team.id; let last = $last) {
                       <strong>{{ team.name }}</strong>{{ last ? '' : ', ' }}
                     }
@@ -733,7 +728,7 @@
                        <strong>{{ game.awayTeamName }}</strong>
                        <span class="tournament-state">
                          {{ game.status === 'COMPLETED'
-                           ? game.homeScore + ' : ' + game.awayScore : 'Por disputar' }}
+                           ? game.homeScore + ' : ' + game.awayScore : ('communities.tournaments.fixturesUi.pending' | t) }}
                        </span>
                        @if (canManage && selected.status === 'IN_PROGRESS' && !isPastKnockoutRound(game)) {
                          <div class="team-score-edit">
@@ -742,7 +737,7 @@
                              <input type="number" min="0" max="999" step="1"
                                [ngModel]="teamScoreDraft(game).home"
                                (ngModelChange)="setTeamScore(game, 'home', $event)"
-                               [attr.aria-label]="'Golos de ' + game.homeTeamName"
+                               [attr.aria-label]="'communities.tournaments.fixturesUi.goalsFor' | t:{team:game.homeTeamName}"
                                [attr.aria-invalid]="isTeamScoreInvalid(game) && !validScore(teamScoreDraft(game).home) ? 'true' : null"
                                [disabled]="busy">
                            </label>
@@ -752,21 +747,19 @@
                              <input type="number" min="0" max="999" step="1"
                                [ngModel]="teamScoreDraft(game).away"
                                (ngModelChange)="setTeamScore(game, 'away', $event)"
-                               [attr.aria-label]="'Golos de ' + game.awayTeamName"
+                               [attr.aria-label]="'communities.tournaments.fixturesUi.goalsFor' | t:{team:game.awayTeamName}"
                                [attr.aria-invalid]="isTeamScoreInvalid(game) && !validScore(teamScoreDraft(game).away) ? 'true' : null"
                                [disabled]="busy">
                            </label>
                            <button type="button" class="t-btn t-btn-primary t-btn-small"
                              [disabled]="busy || !validScore(teamScoreDraft(game).home) || !validScore(teamScoreDraft(game).away)
                                 || (isEliminationMatch(game) && teamScoreDraft(game).home === teamScoreDraft(game).away)"
-                             [attr.aria-label]="(game.status === 'COMPLETED' ? 'Corrigir' : 'Guardar') + ' resultado entre ' + game.homeTeamName + ' e ' + game.awayTeamName"
+                             [attr.aria-label]="(game.status === 'COMPLETED' ? 'communities.tournaments.fixturesUi.correctAria' : 'communities.tournaments.fixturesUi.saveAria') | t:{home:game.homeTeamName,away:game.awayTeamName}"
                              (click)="saveTeamScore(game)">
-                             {{ game.status === 'COMPLETED' ? 'Corrigir' : 'Guardar' }}
+                             {{ (game.status === 'COMPLETED' ? 'communities.tournaments.fixturesUi.correct' : 'communities.tournaments.fixturesUi.save') | t }}
                            </button>
                            @if (isTeamScoreInvalid(game)) {
-                             <p class="field-validation" role="status">{{ isEliminationMatch(game)
-                                ? 'A eliminatória exige um vencedor e marcadores inteiros entre 0 e 999.'
-                                : 'Indica dois marcadores inteiros entre 0 e 999.' }}</p>
+                             <p class="field-validation" role="status">{{ (isEliminationMatch(game) ? 'communities.tournaments.fixturesUi.invalidKnockout' : 'communities.tournaments.fixturesUi.invalidScore') | t }}</p>
                            }
                          </div>
                        }
@@ -775,7 +768,7 @@
                 </div>
                 @if (teamMatchesHasMore) {
                   <button type="button" class="t-btn t-btn-secondary" [disabled]="teamMatchesLoading || busy"
-                    (click)="loadTeamMatches()">Ver mais confrontos</button>
+                    (click)="loadTeamMatches()">{{ 'communities.tournaments.fixturesUi.more' | t }}</button>
                 }
               </section>
               @if (isGroupKnockout) {
@@ -842,7 +835,7 @@
                       draw: (teamStandings?.drawPoints ?? selected.drawPoints),
                       loss: (teamStandings?.lossPoints ?? selected.lossPoints)
                     } }}</p>
-                    <p>Desempate: {{ teamTieBreakLabel(selected.teamTieBreakPriority) }} primeiro</p>
+                    <p>{{ 'communities.tournaments.fixturesUi.tiebreak' | t:{criterion:teamTieBreakLabel(selected.teamTieBreakPriority)} }}</p>
                   </div>
                   <button type="button" class="t-btn t-btn-secondary t-btn-small"
                     [disabled]="teamStandingsLoading" (click)="loadTeamStandings()">{{ 'communities.tournaments.finalUi.refresh' | t }}</button>
