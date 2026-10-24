@@ -538,6 +538,56 @@ describe('Community tournaments management', () => {
       expect(component.teamMatchStageLabel(game)).toBe('Jornada 2');
     });
 
+    it('translates league, cup and group stage labels PT/EN without changing competition phases', () => {
+      const previousLanguage = localStorage.getItem('d24-language');
+      const match = { id: 91, groupNumber: 1, roundNumber: 2,
+        homeTeamId: 11, homeTeamName: 'A', awayTeamId: 12, awayTeamName: 'B',
+        status: 'SCHEDULED' as const, homeScore: null, awayScore: null };
+      try {
+        component.selected = { ...teamDraft, status: 'IN_PROGRESS',
+          format: 'GROUP_KNOCKOUT', groupCount: 4 };
+        localStorage.setItem('d24-language', 'en');
+        expect(component.teamMatchStageLabel(match)).toBe('Group A · Round 2');
+        expect(component.teamMatchStageLabel({ ...match, groupNumber: null, roundNumber: 1 }))
+          .toBe('Quarter-finals');
+        expect(component.teamMatchStageLabel({ ...match, groupNumber: null, roundNumber: 2 }))
+          .toBe('Semi-finals');
+        expect(component.teamMatchStageLabel({ ...match, groupNumber: null, roundNumber: 3 }))
+          .toBe('Final');
+        expect(component.teamMatchStageLabel({ ...match, groupNumber: null, roundNumber: 4 }))
+          .toBe('Knockout round 4');
+        component.selected = { ...component.selected, groupCount: 2 };
+        expect(component.teamMatchStageLabel({ ...match, groupNumber: null, roundNumber: 1 }))
+          .toBe('Semi-finals');
+        expect(component.teamMatchStageLabel({ ...match, groupNumber: null, roundNumber: 2 }))
+          .toBe('Final');
+        component.selected = { ...component.selected, format: 'KNOCKOUT' };
+        expect(component.teamMatchStageLabel(match)).toBe('Round 2');
+        component.selected = { ...component.selected, format: 'LEAGUE' };
+        expect(component.teamMatchStageLabel(match)).toBe('Round 2');
+
+        localStorage.setItem('d24-language', 'pt');
+        expect(component.teamMatchStageLabel(match)).toBe('Jornada 2');
+        component.selected = { ...component.selected, format: 'GROUP_KNOCKOUT', groupCount: 4 };
+        expect(component.teamMatchStageLabel(match)).toBe('Grupo A · Jornada 2');
+        expect(component.teamMatchStageLabel({ ...match, groupNumber: null, roundNumber: 1 }))
+          .toBe('Quartos de final');
+        expect(component.teamMatchStageLabel({ ...match, groupNumber: null, roundNumber: 2 }))
+          .toBe('Meias-finais');
+        expect(component.teamMatchStageLabel({ ...match, groupNumber: null, roundNumber: 3 }))
+          .toBe('Final');
+        expect(component.teamMatchStageLabel({ ...match, groupNumber: null, roundNumber: 4 }))
+          .toBe('Ronda eliminatória 4');
+        component.selected = { ...component.selected, format: 'KNOCKOUT' };
+        expect(component.teamMatchStageLabel(match)).toBe('Ronda 2');
+      } finally {
+        if (previousLanguage === null) localStorage.removeItem('d24-language');
+        else localStorage.setItem('d24-language', previousLanguage);
+      }
+      expect(api.recordTeamResult).not.toHaveBeenCalled();
+      expect(api.generateTeamSchedule).not.toHaveBeenCalled();
+    });
+
     it('creates a team draft without requiring a roster size', async () => {
       api.createTeamTournament.and.returnValue(of(teamDraft));
       component.startTeamCreation();
