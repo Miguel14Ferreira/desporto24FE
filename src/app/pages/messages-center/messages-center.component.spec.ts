@@ -101,7 +101,12 @@ describe('Unified Jynlo message center', () => {
     component.conversations = [conversation];
     component.selectedKey = conversation.key;
     component.messages = [message(conversation.key, 20), message(conversation.key, 21)];
-    const log = { scrollHeight: 1000, scrollTop: 100, clientHeight: 280 };
+    const log = { scrollHeight: 1000, scrollTop: 100, clientHeight: 280,
+      querySelector: () => ({getBoundingClientRect: () => ({
+        top: 150, bottom: 190, width: 200, height: 40
+      })}),
+      getBoundingClientRect: () => ({top: 100, bottom: 380, width: 400, height: 280})
+    };
     component.previewLog = { nativeElement: log } as any;
 
     (component as any).acceptRealtime(conversation.key, message(conversation.key, 22, 'bea'));
@@ -122,7 +127,12 @@ describe('Unified Jynlo message center', () => {
     component.conversations = [conversation];
     component.selectedKey = conversation.key;
     component.messages = [message(conversation.key, 1, 'ana')];
-    const log = { scrollHeight: 1200, scrollTop: 100, clientHeight: 350 };
+    const log = { scrollHeight: 1200, scrollTop: 100, clientHeight: 350,
+      querySelector: () => ({getBoundingClientRect: () => ({
+        top: 150, bottom: 190, width: 200, height: 40
+      })}),
+      getBoundingClientRect: () => ({top: 100, bottom: 450, width: 400, height: 350})
+    };
     component.previewLog = { nativeElement: log } as any;
 
     (component as any).acceptRealtime(conversation.key, message(conversation.key, 2, 'bea'));
@@ -137,6 +147,70 @@ describe('Unified Jynlo message center', () => {
     expect(component.newMessagesPending).toBe(0);
     expect(inboxApi.markRead).toHaveBeenCalledOnceWith(
       { kind: 'direct', id: 'bea' }, 3);
+  });
+
+  it('does not confirm a newly loaded history until its latest bubble is rendered and visible', () => {
+    const conversation = item('community', 7);
+    component.conversations = [conversation];
+    timeline.list.and.returnValue(of([{id:75,communityId:7,kind:'CHAT',
+      username:'bea',body:'No histórico',createdAt:'2026-10-23T09:00:00Z'}]));
+    component.selectConversation(conversation);
+    // The HTTP response arrived but no Angular view or message bubble exists.
+    expect(inboxApi.markRead).not.toHaveBeenCalled();
+
+    let latestRendered = false;
+    let bubbleInView = false;
+    component.previewLog = {nativeElement: {
+      scrollHeight:900,scrollTop:0,clientHeight:300,
+      querySelector: (selector:string) => selector === '[data-message-id="75"]' && latestRendered
+        ? {getBoundingClientRect:()=>bubbleInView
+          ? {top:200,bottom:250,width:260,height:50}
+          : {top:700,bottom:750,width:260,height:50}}
+        : null,
+      getBoundingClientRect:()=>({top:100,bottom:400,width:400,height:300})
+    }} as any;
+    component.ngAfterViewChecked();
+    expect(inboxApi.markRead).not.toHaveBeenCalled();
+
+    latestRendered = true;
+    bubbleInView = true;
+    component.ngAfterViewChecked();
+    // The initial post-render pass already consumed its one-time scroll
+    // request while there was no bubble, so the user must visibly scroll.
+    expect(inboxApi.markRead).not.toHaveBeenCalled();
+    component.onPreviewLogScroll();
+    expect(inboxApi.markRead).toHaveBeenCalledOnceWith(
+      {kind:'community',id:'7'},75);
+  });
+
+  it('does not confirm a live message before its bubble appears in the active viewport', () => {
+    const conversation=item('direct','bea');
+    component.conversations=[conversation];
+    component.selectedKey=conversation.key;
+    component.messages=[message(conversation.key, 10, 'ana')];
+    let rendered=false;
+    let visible=false;
+    component.previewLog={nativeElement:{
+      scrollHeight:1000,scrollTop:800,clientHeight:200,
+      querySelector:(selector:string)=>selector==='[data-message-id="11"]' && rendered
+        ? {getBoundingClientRect:()=> visible
+          ? {top:160,bottom:190,width:200,height:30}
+          : {top:560,bottom:590,width:200,height:30}}
+        : null,
+      getBoundingClientRect:()=>({top:100,bottom:300,width:400,height:200})
+    }} as any;
+
+    (component as any).acceptRealtime(conversation.key,message(conversation.key,11,'bea'));
+    expect(inboxApi.markRead).not.toHaveBeenCalled();
+    component.ngAfterViewChecked();
+    expect(inboxApi.markRead).not.toHaveBeenCalled();
+    rendered=true;
+    component.onPreviewLogScroll();
+    expect(inboxApi.markRead).not.toHaveBeenCalled();
+    visible=true;
+    component.onPreviewLogScroll();
+    expect(inboxApi.markRead).toHaveBeenCalledOnceWith(
+      {kind:'direct',id:'bea'},11);
   });
 
   it('does not display a new-arrival jump within a detached historical search window', () => {
@@ -540,7 +614,8 @@ describe('Unified Jynlo message center', () => {
     expect(component.conversations.find(x => x.key === 'direct:bea')?.newThisVisit).toBe(1);
     direct.recentHistory.and.returnValue(of({ content: [], last: true }));
     component.selectConversation(component.conversations.find(x => x.key === 'direct:bea')!);
-    expect(component.recentCount).toBe(0);
+    // Selecting a conversation without a rendered message is not reading it.
+    expect(component.recentCount).toBe(1);
   });
 
   it('lists only upcoming session conversations and opens a linked authorized session', () => {
@@ -1396,6 +1471,16 @@ describe('Unified Jynlo message center', () => {
       latestSender: 'bea', latestAt: '2026-10-23T09:00:00Z', unreadCount: 0
     }));
     component.selectConversation(community);
+    expect(inboxApi.markRead).not.toHaveBeenCalled();
+    expect(component.recentCount).toBe(5);
+    component.previewLog = {nativeElement:{
+      scrollHeight:500,scrollTop:0,clientHeight:200,
+      querySelector: (selector:string) => selector === '[data-message-id="75"]'
+        ? {getBoundingClientRect: () => ({top:180,bottom:220,width:200,height:40})}
+        : null,
+      getBoundingClientRect: () => ({top:100,bottom:300,width:400,height:200})
+    }} as any;
+    component.ngAfterViewChecked();
     expect(inboxApi.markRead).toHaveBeenCalledOnceWith(
       { kind: 'community', id: '7' }, 75);
     expect(component.recentCount).toBe(0);
@@ -1532,12 +1617,17 @@ describe('Direct chat confirmed read status', () => {
     select('bea');
     inbox.messages=[{key:'direct:bea',id:42,sender:'bea',
       text:'unread while away',createdAt:'2026-10-23T10:00:00Z'}];
-    inbox.previewLog = {nativeElement:{scrollHeight:100,scrollTop:0,clientHeight:100}} as any;
+    inbox.previewLog = {nativeElement:{scrollHeight:100,scrollTop:0,clientHeight:100,
+      querySelector: () => ({getBoundingClientRect: () => ({
+        top: 120,bottom: 150,width: 200,height: 30
+      })}),
+      getBoundingClientRect: () => ({top:100,bottom:250,width:400,height:150})
+    }} as any;
     (document.hasFocus as jasmine.Spy).and.returnValue(false);
-    (inbox as any).markRenderedRead('direct:bea', true);
+    (inbox as any).markRenderedRead('direct:bea');
     expect(api.markRead).not.toHaveBeenCalled();
     (document.hasFocus as jasmine.Spy).and.returnValue(true);
-    (inbox as any).markRenderedRead('direct:bea', true);
+    (inbox as any).markRenderedRead('direct:bea');
     expect(api.markRead).toHaveBeenCalledOnceWith(
       {kind:'direct',id:'bea'},42);
   });
@@ -1568,7 +1658,7 @@ describe('Direct chat confirmed read status', () => {
     const descriptor = Object.getOwnPropertyDescriptor(document, 'visibilityState');
     expect(descriptor?.get).toBeDefined();
     (descriptor!.get as jasmine.Spy).and.returnValue('hidden');
-    (inbox as any).markRenderedRead('direct:bea', true);
+    (inbox as any).markRenderedRead('direct:bea');
     (inbox as any).refreshPeerReadReceipt(true);
     expect(api.markRead).not.toHaveBeenCalled();
     expect(api.directReadReceipt).toHaveBeenCalledTimes(1);
