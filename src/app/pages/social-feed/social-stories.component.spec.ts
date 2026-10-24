@@ -92,7 +92,7 @@ describe('SocialStoriesComponent', () => {
     expect(component.mineEntries).toHaveSize(1);
   }));
 
-  it('shows the author's own active story when discovery returns an empty result', fakeAsync(() => {
+  it('shows an owned active story when discovery returns an empty result', fakeAsync(() => {
     api.feed.and.returnValue(of([]));
     fixture.detectChanges();
     tick();
