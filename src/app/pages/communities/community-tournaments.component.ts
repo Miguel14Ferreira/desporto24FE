@@ -49,9 +49,17 @@ export class CommunityTournamentsComponent implements OnChanges {
       || firstArchiveIndex >= this.historicalArchive.rows.length) return;
     this.historicalArchivePage = Math.floor(firstArchiveIndex / 50);
     this.changeDetector.detectChanges();
-    this.historicalArchiveFixtures?.nativeElement.scrollIntoView({
-      behavior: 'smooth', block: 'start'
-    });
+
+    // A page can contain several source-defined stages. Jump to the actual
+    // first original match, not just the archive heading or the first group.
+    // Use the sourceRow from our own archived row; never build a selector from
+    // user-entered phase names.
+    const sourceRow = this.historicalArchive.rows[firstArchiveIndex].sourceRow;
+    const section = this.historicalArchiveFixtures?.nativeElement;
+    const match = section?.querySelector<HTMLElement>(
+      `[data-historical-source-row="${sourceRow}"]`
+    );
+    (match ?? section)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
   /** Contiguous labels exactly as found in the spreadsheet, within this page. */
