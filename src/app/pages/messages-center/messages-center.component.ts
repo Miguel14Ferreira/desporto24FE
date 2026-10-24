@@ -85,6 +85,11 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   private readonly pendingByConversation = new Map<string, {
     key: string; text: string; replyToMessageId: number | null; knownIds: Set<number>; startedAt: number;
   }>();
+  // Send and delivery checks belong to conversations, not the entire inbox.
+  // A delayed response must not lock or mutate a different selected thread.
+  private readonly sendingKeys = new Set<string>();
+  private readonly verifyingKeys = new Set<string>();
+  private readonly sendErrorsByConversation = new Map<string, string>();
   private readonly subscriptions = new Subscription();
   private readonly jwt = new JwtHelperService();
   private currentUsername = '';
@@ -439,7 +444,6 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   }
 
   selectConversation(conversation: InboxConversation): void {
-    if (this.sending || this.deliveryChecking) return;
     if (conversation.key === this.selectedKey && !this.previewError) return;
     if (this.selectedKey) this.drafts.set(this.selectedKey, this.draft);
     this.typing.stop();
@@ -457,7 +461,10 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.replyingTo = null;
     this.draft = this.drafts.get(conversation.key) || '';
     this.deliveryUncertain = this.pendingByConversation.has(conversation.key);
-    this.composerError = this.deliveryUncertain ? t('chat.sendUnconfirmed') : '';
+    this.sending = this.sendingKeys.has(conversation.key);
+    this.deliveryChecking = this.verifyingKeys.has(conversation.key);
+    this.composerError = this.deliveryUncertain
+      ? t('chat.sendUnconfirmed') : this.sendErrorsByConversation.get(conversation.key) || '';
     this.composerSuccess = '';
     this.composerAllowed = false;
     this.composerAccessLoading = true;
@@ -867,7 +874,9 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       send = request.pipe(map(message => this.fromSession(message)));
     }
 
+    this.sendingKeys.add(key);
     this.sending = true;
+    this.sendErrorsByConversation.delete(key);
     this.composerError = '';
     this.composerSuccess = '';
     // A disabled textarea loses focus while the POST is pending. Keep it
@@ -875,29 +884,43 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     // Never steal focus later when the HTTP response arrives.
     this.composerTextarea?.nativeElement.focus({ preventScroll: true });
     // Unlike HTTP GETs, ambiguous POSTs are NEVER automatically retried.
-    send.pipe(timeout(10000), finalize(() => { this.sending = false; })).subscribe({
+    send.pipe(timeout(10000), finalize(() => {
+      this.sendingKeys.delete(key);
+      if (this.selectedKey === key) this.sending = false;
+    })).subscribe({
       next: message => {
-        if (key !== this.selectedKey) return;
+        // The server's confirmed response belongs to the original thread,
+        // even if the user navigated elsewhere while the POST was pending.
         this.acceptRealtime(key, message);
+        this.drafts.delete(key);
+        this.pendingByConversation.delete(key);
+        this.sendErrorsByConversation.delete(key);
+        if (key !== this.selectedKey) return;
         if (this.historicalPreview) this.returnToRecent();
         this.draft = '';
         this.replyingTo = null;
-        this.drafts.delete(key);
-        this.pendingByConversation.delete(key);
         this.deliveryUncertain = false;
+        this.composerError = '';
       },
       error: error => {
-        if (key !== this.selectedKey) return;
         if (this.isUncertainError(error)) {
+          // A failed/ambiguous POST never retries automatically; retain the
+          // original draft and require verification before any resend.
           this.pendingByConversation.set(key, pending);
-          this.deliveryUncertain = true;
-          this.composerError = t('chat.sendUncertain');
-          this.verifyDelivery();
+          if (key === this.selectedKey) {
+            this.deliveryUncertain = true;
+            this.composerError = t('chat.sendUncertain');
+            this.verifyDelivery();
+          }
         } else {
-          this.composerError = t('feedback.chat.sendError');
-          // Permission may have changed since the conversation was opened.
-          if (error instanceof HttpErrorResponse && (error.status === 401 || error.status === 403)) {
-            this.composerAllowed = false;
+          const errorText = t('feedback.chat.sendError');
+          this.sendErrorsByConversation.set(key, errorText);
+          if (key === this.selectedKey) {
+            this.composerError = errorText;
+            // Permissions may have changed while this POST was pending.
+            if (error instanceof HttpErrorResponse && (error.status === 401 || error.status === 403)) {
+              this.composerAllowed = false;
+            }
           }
         }
       }
@@ -924,11 +947,15 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     const pending = this.pendingByConversation.get(key);
     if (pending && messages.some(message => this.matchesPending(message, pending))) {
       this.pendingByConversation.delete(key);
+      // A server-confirmed message clears its original draft even when
+      // verification finishes after navigation to a different conversation.
+      // Never clear the currently edited draft of another thread.
+      this.drafts.delete(key);
+      this.sendErrorsByConversation.delete(key);
       if (this.selectedKey === key) {
         this.deliveryUncertain = false;
         this.draft = '';
         this.replyingTo = null;
-        this.drafts.delete(key);
         this.composerError = '';
         this.composerSuccess = t('chat.sendConfirmed');
       }
@@ -938,24 +965,32 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   verifyDelivery(): void {
     const conversation = this.selected;
     const pending = conversation && this.pendingByConversation.get(conversation.key);
-    if (!conversation || !pending || !this.deliveryUncertain || this.deliveryChecking) return;
+    if (!conversation || !pending || !this.deliveryUncertain
+        || this.verifyingKeys.has(conversation.key)) return;
     if (this.messages.some(item => this.matchesPending(item, pending))) {
       this.confirmFromHistoryIfPresent(conversation.key, this.messages);
       return;
     }
+    this.verifyingKeys.add(conversation.key);
     this.deliveryChecking = true;
     this.recentHistory(conversation).pipe(timeout(10000), finalize(() => {
-      this.deliveryChecking = false;
+      this.verifyingKeys.delete(conversation.key);
+      if (conversation.key === this.selectedKey) this.deliveryChecking = false;
     })).subscribe({
       next: entries => {
-        if (conversation.key !== this.selectedKey) return;
+        // Ignore a previous verification invalidated by a manual reset or
+        // a newer server confirmation; it must not clear another draft.
+        if (this.pendingByConversation.get(conversation.key) !== pending) return;
         const delivered = entries.find(item => this.matchesPending(item, pending));
         if (delivered) {
-          this.messages = mergeInboxMessages([...this.messages, delivered]);
-          this.updatePreviewFromHistory(conversation.key, this.messages);
+          this.acceptRealtime(conversation.key, delivered);
+          if (conversation.key === this.selectedKey) {
+            this.messages = mergeInboxMessages([...this.messages, delivered]);
+            this.updatePreviewFromHistory(conversation.key, this.messages);
+            this.scrollRequested = true;
+          }
           this.confirmFromHistoryIfPresent(conversation.key, [delivered]);
-          this.scrollRequested = true;
-        } else {
+        } else if (conversation.key === this.selectedKey) {
           this.composerError = t('chat.sendUnconfirmed');
         }
       },
@@ -966,7 +1001,9 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   }
 
   resumeAfterUncertainSend(): void {
-    if (this.sending || this.deliveryChecking || !this.selectedKey || !this.deliveryUncertain) return;
+    if (this.sendingKeys.has(this.selectedKey || '')
+        || this.verifyingKeys.has(this.selectedKey || '')
+        || !this.selectedKey || !this.deliveryUncertain) return;
     this.pendingByConversation.delete(this.selectedKey);
     this.deliveryUncertain = false;
     this.composerError = t('chat.sendRetryWarning');

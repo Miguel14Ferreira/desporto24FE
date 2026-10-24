@@ -785,6 +785,111 @@ describe('Unified Jynlo message center', () => {
     expect(timeline.send).toHaveBeenCalledTimes(1);
   });
 
+  it('allows switching during an in-flight POST without mutating the next conversation draft', () => {
+    const bea=item('direct','bea'), group=item('community',7);
+    component.conversations=[bea,group];
+    direct.recentHistory.and.returnValue(of({last:true,content:[]} as any));
+    timeline.list.and.returnValue(of([]));
+    const post=new Subject<any>();
+    direct.send.and.returnValue(post.asObservable());
+    component.selectConversation(bea);
+    component.draft='A enviar para Bea';
+    component.sendMessage();
+    expect(component.sending).toBeTrue();
+
+    component.selectConversation(group);
+    expect(component.selectedKey).toBe(group.key);
+    expect(component.sending).toBeFalse();
+    component.draft='Rascunho na comunidade';
+    post.next({id:52,username1:'ana',username2:'bea',
+      text:'A enviar para Bea',date:new Date().toISOString(),dataDisplay:null});
+    post.complete();
+
+    expect(component.selectedKey).toBe(group.key);
+    expect(component.draft).toBe('Rascunho na comunidade');
+    expect(component.messages).toEqual([]);
+    expect(component.conversations.find(x=>x.key===bea.key)?.latestMessageId).toBe(52);
+    component.selectConversation(bea);
+    expect(component.draft).toBe('');
+    expect(component.deliveryUncertain).toBeFalse();
+    expect(direct.send).toHaveBeenCalledTimes(1);
+  });
+
+  it('prevents duplicate POST on the original thread when switching back during an in-flight send', () => {
+    const bea=item('direct','bea'), group=item('community',7);
+    component.conversations=[bea,group];
+    direct.recentHistory.and.returnValue(of({last:true,content:[]} as any));
+    timeline.list.and.returnValue(of([]));
+    const post=new Subject<any>();
+    direct.send.and.returnValue(post.asObservable());
+    component.selectConversation(bea);
+    component.draft='Uma só mensagem';
+    component.sendMessage();
+    component.selectConversation(group);
+    component.selectConversation(bea);
+    expect(component.sending).toBeTrue();
+    expect(component.draft).toBe('Uma só mensagem');
+    expect(component.canSendMessage()).toBeFalse();
+    component.sendMessage();
+    expect(direct.send).toHaveBeenCalledTimes(1);
+    post.next({id:51,username1:'ana',username2:'bea',
+      text:'Uma só mensagem',date:new Date().toISOString(),dataDisplay:null});
+    post.complete();
+    expect(component.sending).toBeFalse();
+    expect(component.draft).toBe('');
+    expect(component.messages.map(x=>x.id)).toEqual([51]);
+  });
+
+  it('keeps an ambiguous POST attached to its original conversation if HTTP fails after switching', () => {
+    const bea=item('direct','bea'), group=item('community',7);
+    component.conversations=[bea,group];
+    direct.recentHistory.and.returnValue(of({last:true,content:[]} as any));
+    timeline.list.and.returnValue(of([]));
+    const post=new Subject<any>();
+    direct.send.and.returnValue(post.asObservable());
+    component.selectConversation(bea);
+    component.draft='Não reenviar sem confirmar';
+    component.sendMessage();
+    component.selectConversation(group);
+    component.draft='Texto independente';
+    post.error(new HttpErrorResponse({status:503}));
+    expect(component.deliveryUncertain).toBeFalse();
+    expect(component.draft).toBe('Texto independente');
+    component.selectConversation(bea);
+    expect(component.deliveryUncertain).toBeTrue();
+    expect(component.draft).toBe('Não reenviar sem confirmar');
+    component.sendMessage();
+    expect(direct.send).toHaveBeenCalledTimes(1);
+  });
+
+  it('accepts a delayed verification after switching without clearing the next composer', () => {
+    const bea=item('direct','bea'), group=item('community',7);
+    component.conversations=[bea,group];
+    const verification=new Subject<any>();
+    direct.recentHistory.and.returnValues(
+      of({last:true,content:[]} as any), verification.asObservable(),
+      of({last:true,content:[]} as any));
+    timeline.list.and.returnValue(of([]));
+    direct.send.and.returnValue(throwError(()=>new HttpErrorResponse({status:0})));
+    component.selectConversation(bea);
+    component.draft='Confirmar envio';
+    component.sendMessage();
+    expect(component.deliveryChecking).toBeTrue();
+    component.selectConversation(group);
+    expect(component.selectedKey).toBe(group.key);
+    component.draft='Novo rascunho';
+    verification.next({last:true,content:[{id:80,username1:'ana',username2:'bea',
+      text:'Confirmar envio',date:new Date().toISOString(),dataDisplay:null}]});
+    verification.complete();
+    expect(component.draft).toBe('Novo rascunho');
+    expect(component.deliveryChecking).toBeFalse();
+    component.selectConversation(bea);
+    expect(component.deliveryUncertain).toBeFalse();
+    expect(component.draft).toBe('');
+    expect(component.conversations.find(x=>x.key===bea.key)?.latestMessageId).toBe(80);
+    expect(direct.send).toHaveBeenCalledTimes(1);
+  });
+
   it('allows Shift+Enter and composition without triggering send', () => {
     const evt = new KeyboardEvent('keydown', { key: 'Enter', shiftKey: true, cancelable: true });
     component.onComposerEnter(evt);
