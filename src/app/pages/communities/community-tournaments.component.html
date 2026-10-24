@@ -251,6 +251,13 @@
                   só ficará disponível quando o calendário e a classificação deste formato estiverem implementados.</p>
               }
             </div>
+            @if (isKartingRaceDraft) {
+              <div class="classification-fixed-points" role="note">
+                <strong>Karting · Campeonato por posições</strong>
+                <p>Depois de criar o campeonato, define a pontuação por posição e associa as corridas registadas
+                  nas Jornadas. Os tempos, penalizações e desclassificações são aproveitados automaticamente.</p>
+              </div>
+            } @else {
             <details class="create-advanced-rules">
               <summary>
                 <span>
@@ -329,6 +336,7 @@
         }
               </div>
             </details>
+            }
           </section>
         }
 
@@ -351,7 +359,8 @@
 "
           (click)="showTeamCreate ? createTeamCompetition() : create()">
           {{ !isSportFormatSupported ? 'Formato ainda indisponível'
-              : (showTeamCreate ? 'Criar e preparar equipas' : 'Confirmar liga individual') }}
+              : (showTeamCreate ? 'Criar e preparar equipas'
+                  : (isKartingRaceDraft ? 'Criar campeonato de Karting' : 'Confirmar liga individual')) }}
         </button>
         </div>
       </div>
@@ -419,7 +428,9 @@
                 <p>Desempate prioritário: {{ teamTieBreakLabel(selected.teamTieBreakPriority) }}</p>
               }
             } @else {
-              @if (isChessTournament) {
+              @if (isRaceCompetition) {
+                <p>Campeonato de Karting · Pontos por posição e resultados das Jornadas</p>
+              } @else if (isChessTournament) {
                 <p>Xadrez · Vitória 1 · Empate ½ · Derrota 0</p>
               } @else {
                 <p>Vitória {{ selected.winPoints }} · Empate {{ selected.drawPoints }} · Derrota {{ selected.lossPoints }} pontos</p>
