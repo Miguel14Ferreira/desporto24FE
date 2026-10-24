@@ -28,7 +28,7 @@ export type CommunityEventType = 'TRACK_SCRATCH' | 'TRACK_TIME_TRIAL' | 'ROAD_RA
     | 'WAKO_POINT_FIGHTING' | 'WAKO_LIGHT_CONTACT' | 'WAKO_KICK_LIGHT'
     | 'WAKO_FULL_CONTACT' | 'WAKO_LOW_KICK' | 'WAKO_K1'
     | 'IFMA_FULL_WP' | 'IFMA_FULL_KO' | 'IFMA_FULL_RSCS' | 'IFMA_FULL_RSCI'
-    | 'STRENGTH_TRAINING' | 'SWIM_LCM' | 'OWS_INDIVIDUAL' | 'FOOT_ORIENTEERING';
+    | 'STRENGTH_TRAINING' | 'SWIM_LCM' | 'OWS_INDIVIDUAL' | 'FOOT_ORIENTEERING' | 'INLINE_TRACK_200_TT';
 export interface CommunityEventOption { code: CommunityEventType; labelKey: string }
 const TYPES: Record<string, readonly CommunityEventOption[]> = {
   basquetebol: [{ code: 'BASKETBALL_FINAL', labelKey: 'communities.basketball.fiveVsFive' }],
@@ -69,6 +69,7 @@ const TYPES: Record<string, readonly CommunityEventOption[]> = {
   natacao: [{ code: 'SWIM_LCM', labelKey: 'communities.swimming.pool50m' }],
   'natacao em aguas abertas': [{ code: 'OWS_INDIVIDUAL', labelKey: 'communities.openWater.individual' }],
   orientacao: [{ code: 'FOOT_ORIENTEERING', labelKey: 'communities.orienteering.foot' }],
+  'patinagem de velocidade': [{ code: 'INLINE_TRACK_200_TT', labelKey: 'communities.speedSkating.track200tt' }],
   'muay thai': [
     { code: 'IFMA_FULL_WP', labelKey: 'communities.muayThai.fullWp' },
     { code: 'IFMA_FULL_KO', labelKey: 'communities.muayThai.fullKo' },
@@ -196,6 +197,7 @@ export function isRaceEvent(sport: string | null | undefined, eventType: string 
   if (name === 'natacao') return eventType == null || eventType === 'SWIM_LCM';
   if (name === 'natacao em aguas abertas') return eventType == null || eventType === 'OWS_INDIVIDUAL';
   if (name === 'orientacao') return eventType == null || eventType === 'FOOT_ORIENTEERING';
+  if (name === 'patinagem de velocidade') return eventType == null || eventType === 'INLINE_TRACK_200_TT';
   if (name === 'snowboard') return eventType === 'RACE';
   if (name === 'parkour') return eventType === 'PARKOUR_SPEED';
   if (name === 'bmx') return eventType == null || eventType === 'RACE'; // existing history
@@ -210,7 +212,7 @@ export function eventView(sport: string | null | undefined, eventType: string | 
   if (eventOptionsForSport(sport).length && eventType == null) {
     // Preserve historical race/team round presentation without reinterpreting
     // legacy scores as typed event results. Newly typed rounds still use their event.
-    if (normalize(sport!) === 'bmx' || normalize(sport!) === 'ciclismo de estrada' || normalize(sport!) === 'ciclismo de pista' || normalize(sport!) === 'natacao em aguas abertas' || normalize(sport!) === 'orientacao') return 'race';
+    if (normalize(sport!) === 'bmx' || normalize(sport!) === 'ciclismo de estrada' || normalize(sport!) === 'ciclismo de pista' || normalize(sport!) === 'natacao em aguas abertas' || normalize(sport!) === 'orientacao' || normalize(sport!) === 'patinagem de velocidade') return 'race';
     return viewForSport(sport || null) === 'team' ? 'team' : 'individual';
   }
   if (isRaceEvent(sport, eventType)) return 'race';
