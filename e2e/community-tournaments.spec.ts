@@ -97,6 +97,8 @@ function raceData(state: KartingFixture) {
     { position: 1, playerId: 3, fullName: 'Bruno', races: 1, wins: 1, podiums: 1,
       bestFinish: 1, championshipPoints: 25, penaltyPoints: 0 }
   ] : null;
+  // Match CommunityRaceStandings.calculate: an unplaced DNF is visible in
+  // the race result card but is omitted from the championship standings.
   return {
     tournamentId: 11, pointsByPlace: state.points,
     linkedRaces: state.linked ? [race] : [],
@@ -105,9 +107,7 @@ function raceData(state: KartingFixture) {
       { position: 1, playerId: 2, fullName: 'Ana', races: 1, wins: 1, podiums: 1,
         bestFinish: 1, championshipPoints: state.points[0], penaltyPoints: 0 },
       { position: 2, playerId: 3, fullName: 'Bruno', races: 1, wins: 0, podiums: 1,
-        bestFinish: 2, championshipPoints: state.points[1], penaltyPoints: 0 },
-      { position: 3, playerId: 4, fullName: 'Carla', races: 1, wins: 0, podiums: 0,
-        bestFinish: null, championshipPoints: 0, penaltyPoints: 0 }
+        bestFinish: 2, championshipPoints: state.points[1], penaltyPoints: 0 }
     ]) : []
   };
 }
@@ -1926,7 +1926,9 @@ test('Karting E2E: criador configura pontos, associa corrida e participante cons
     await expect(race.getByText('Grande Prémio QA')).toBeVisible();
     await expect(race.getByText(/DNF.*Carla/)).toBeVisible();
     const table = a.getByRole('table', { name: 'Classificação de Karting' });
-    await expect(table.locator('tbody tr')).toHaveCount(3);
+    await expect(table.locator('tbody tr')).toHaveCount(2);
+    // DNF stays in the race detail but has no championship standing without a finish.
+    await expect(table.locator('tbody')).not.toContainText('Carla');
     await expect(table.locator('tbody tr').first()).toContainText('Ana');
     await expect(table.locator('tbody tr').first()).toContainText('30');
     await expect(race.locator('.race-points-editor')).toHaveCount(0);
@@ -2030,7 +2032,9 @@ test('Karting E2E: encerra com campeão e mantém arquivo imutável em dois brow
     await expect(archived.getByText('Grande Prémio QA')).toBeVisible();
     await expect(archived.getByText('25 · 18 · 15 pontos')).toBeVisible();
     const standings = b.getByRole('table', { name: 'Classificação de Karting' });
-    await expect(standings.locator('tbody tr')).toHaveCount(3);
+    await expect(standings.locator('tbody tr')).toHaveCount(2);
+    await expect(archived.getByText(/DNF.*Carla/)).toBeVisible();
+    await expect(standings.locator('tbody')).not.toContainText('Carla');
     await expect(standings.locator('tbody tr').first()).toContainText('Ana');
     await expect(standings.locator('tbody tr').first()).toContainText('25');
     await expect(archived.getByRole('button', { name: 'Retirar' })).toHaveCount(0);
