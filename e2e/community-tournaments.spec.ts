@@ -72,10 +72,12 @@ interface KartingFixture {
   tournament: Tournament | null;
   points: number[];
   linked: boolean;
+  tied: boolean;
+  snapshot: ReturnType<typeof raceData> | null;
   writes: Array<{ role: Role; path: string }>;
 }
 function createKartingFixture(): KartingFixture {
-  return { tournament: null, points: [25,18,15], linked: false, writes: [] };
+  return { tournament: null, points: [25,18,15], linked: false, tied: false, snapshot: null, writes: [] };
 }
 function raceData(state: KartingFixture) {
   const race = {
@@ -89,18 +91,24 @@ function raceData(state: KartingFixture) {
         bestLapSeconds: null, racePenaltyPoints: 0, raceDisqualified: false }
     ]
   };
+  const archiveStandings = state.tied ? [
+    { position: 1, playerId: 2, fullName: 'Ana', races: 1, wins: 1, podiums: 1,
+      bestFinish: 1, championshipPoints: 25, penaltyPoints: 0 },
+    { position: 1, playerId: 3, fullName: 'Bruno', races: 1, wins: 1, podiums: 1,
+      bestFinish: 1, championshipPoints: 25, penaltyPoints: 0 }
+  ] : null;
   return {
     tournamentId: 11, pointsByPlace: state.points,
     linkedRaces: state.linked ? [race] : [],
     availableRaces: state.linked ? [] : [race],
-    standings: state.linked ? [
+    standings: state.linked ? (archiveStandings ?? [
       { position: 1, playerId: 2, fullName: 'Ana', races: 1, wins: 1, podiums: 1,
         bestFinish: 1, championshipPoints: state.points[0], penaltyPoints: 0 },
       { position: 2, playerId: 3, fullName: 'Bruno', races: 1, wins: 0, podiums: 1,
         bestFinish: 2, championshipPoints: state.points[1], penaltyPoints: 0 },
       { position: 3, playerId: 4, fullName: 'Carla', races: 1, wins: 0, podiums: 0,
         bestFinish: null, championshipPoints: 0, penaltyPoints: 0 }
-    ] : []
+    ]) : []
   };
 }
 
@@ -395,8 +403,33 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
         return send(karting.tournament, 201);
       }
       if (path === base && method === 'GET') {
-        return karting.tournament ? send(raceData(karting))
+        return karting.tournament
+          ? send(karting.snapshot ?? raceData(karting))
           : send({ message: 'Não existe' }, 404);
+      }
+      if (path === base + '/complete' && method === 'POST') {
+        karting.writes.push({ role, path });
+        if (role !== 'OWNER') return send({ message: 'Sem permissão' }, 403);
+        if (!karting.tournament) return send({ message: 'Não existe' }, 404);
+        if (karting.tournament.status === 'COMPLETED') return send(karting.tournament);
+        const current = raceData(karting);
+        if (karting.tournament.status !== 'IN_PROGRESS' || !karting.linked
+            || current.standings.length < 2)
+          return send({ message: 'Faltam resultados válidos' }, 409);
+        // Match the backend contract: snapshot before completion. Unlike the
+        // mutable community round, the archive remains fixed for every reader.
+        karting.snapshot = JSON.parse(JSON.stringify(current)) as ReturnType<typeof raceData>;
+        const leader = current.standings[0];
+        const tied = current.standings[1]?.position === 1;
+        Object.assign(karting.tournament, {
+          status: 'COMPLETED', completedAt: '2026-10-24T13:00:00Z',
+          championTied: tied,
+          championProfileId: tied ? null : leader.playerId,
+          championUsername: tied ? null : 'ana',
+          championDisplayName: tied ? null : leader.fullName,
+          championPoints: tied ? null : leader.championshipPoints
+        });
+        return send(karting.tournament);
       }
       if (path === base + '/points' && method === 'PUT') {
         karting.writes.push({ role, path });
@@ -415,7 +448,7 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
       if (path === base + '/30' && method === 'PUT') {
         karting.writes.push({ role, path });
         if (role !== 'OWNER') return send({ message: 'Sem permissão' }, 403);
-        if (!karting.tournament || karting.linked)
+        if (!karting.tournament || karting.linked || karting.tournament.status === 'COMPLETED')
           return send({ message: 'Corrida indisponível' }, 409);
         karting.linked = true;
         karting.tournament.status = 'IN_PROGRESS';
@@ -424,7 +457,7 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
       if (path === base + '/30' && method === 'DELETE') {
         karting.writes.push({ role, path });
         if (role !== 'OWNER') return send({ message: 'Sem permissão' }, 403);
-        if (!karting.tournament || !karting.linked)
+        if (!karting.tournament || !karting.linked || karting.tournament.status === 'COMPLETED')
           return send({ message: 'Corrida indisponível' }, 409);
         karting.linked = false;
         karting.tournament.status = 'DRAFT';
@@ -1939,5 +1972,105 @@ test('Karting E2E: pontuação crescente falha e deixa de ser editável após as
   await expect(race.locator('.race-points-editor')).toHaveCount(0);
   await expect(race.getByText('25 · 18 · 15 pontos')).toBeVisible();
   expect(state.linked).toBe(true);
+  expect(fixture.unmocked.filter(x => x.includes('/tournaments'))).toEqual([]);
+});
+
+
+test('Karting E2E: encerra com campeão e mantém arquivo imutável em dois browsers', async ({ browser }, testInfo) => {
+  const state = createKartingFixture();
+  const owner = await browser.newContext();
+  const member = await browser.newContext();
+  try {
+    const a = await owner.newPage();
+    const b = await member.newPage();
+    const ownerApi = await mockCommunityApi(a, 'OWNER', 'karting', 'Karting',
+      ['Karting'], 1, 'LEAGUE', state);
+    const memberApi = await mockCommunityApi(b, 'MEMBER', 'karting', 'Karting',
+      ['Karting'], 1, 'LEAGUE', state);
+    await Promise.all([
+      a.goto('/menu/communities/7?tab=tournaments'),
+      b.goto('/menu/communities/7?tab=tournaments')
+    ]);
+    await a.getByRole('button', { name: 'Criar liga individual' }).click();
+    await a.getByLabel('Nome do torneio').fill('Campeonato arquivado QA');
+    await a.getByRole('button', { name: 'Criar campeonato de Karting' }).click();
+    const section = a.getByRole('region', { name: 'Campeonato de Karting' });
+    const close = section.getByRole('button', { name: 'Encerrar campeonato de Karting' });
+    await expect(close).toBeDisabled();
+    await section.getByRole('button', { name: 'Associar' }).click();
+    await expect(close).toBeEnabled();
+    await close.click();
+    await expect(section.getByRole('button', { name: 'Sim, encerrar e guardar classificação' }))
+      .toBeVisible();
+    await section.getByRole('button', { name: 'Cancelar' }).click();
+    expect(state.tournament?.status).toBe('IN_PROGRESS');
+    expect(state.writes.filter(x => x.path.endsWith('/races/complete'))).toHaveLength(0);
+
+    await close.click();
+    await section.getByRole('button', { name: 'Sim, encerrar e guardar classificação' }).click();
+    await expect(a.getByText('Campeão: Ana')).toBeVisible();
+    await expect(section.getByText('Classificação final arquivada')).toBeVisible();
+    await expect(section.getByRole('button', { name: 'Retirar' })).toHaveCount(0);
+    await expect(section.getByRole('button', { name: 'Associar' })).toHaveCount(0);
+    await expect(section.getByRole('button', { name: 'Encerrar campeonato de Karting' }))
+      .toHaveCount(0);
+    expect(state.tournament?.status).toBe('COMPLETED');
+    expect(state.tournament?.championProfileId).toBe(2);
+    expect(state.writes.filter(x => x.path.endsWith('/races/complete'))).toHaveLength(1);
+
+    // Community rounds may be edited later. The completed snapshot must never
+    // be recalculated from the mutated mutable source.
+    state.points = [99, 77];
+    state.linked = false;
+    state.tied = true;
+    await Promise.all([a.reload(), b.reload()]);
+    const archived = b.getByRole('region', { name: 'Campeonato de Karting' });
+    await expect(b.getByText('Campeão: Ana')).toBeVisible();
+    await expect(archived.getByText('Classificação final arquivada')).toBeVisible();
+    await expect(archived.getByText('Grande Prémio QA')).toBeVisible();
+    await expect(archived.getByText('25 · 18 · 15 pontos')).toBeVisible();
+    const standings = b.getByRole('table', { name: 'Classificação de Karting' });
+    await expect(standings.locator('tbody tr')).toHaveCount(3);
+    await expect(standings.locator('tbody tr').first()).toContainText('Ana');
+    await expect(standings.locator('tbody tr').first()).toContainText('25');
+    await expect(archived.getByRole('button', { name: 'Retirar' })).toHaveCount(0);
+    await expect(archived.getByRole('button', { name: 'Guardar pontuação' })).toHaveCount(0);
+    await expect(archived.getByRole('button', { name: 'Encerrar campeonato de Karting' }))
+      .toHaveCount(0);
+    expect(state.writes.filter(x => x.role === 'MEMBER')).toEqual([]);
+    expect(ownerApi.unmocked.filter(x => x.includes('/tournaments'))).toEqual([]);
+    expect(memberApi.unmocked.filter(x => x.includes('/tournaments'))).toEqual([]);
+    await testInfo.attach('karting-archive-member-desktop', {
+      body: await archived.screenshot(), contentType: 'image/png'
+    });
+  } finally {
+    await Promise.all([owner.close(), member.close()]);
+  }
+});
+
+test('Karting E2E: empate no primeiro lugar não inventa campeão', async ({ page }) => {
+  const state = createKartingFixture();
+  state.tied = true;
+  const fixture = await mockCommunityApi(page, 'OWNER', 'karting', 'Karting',
+    ['Karting'], 1, 'LEAGUE', state);
+  await page.goto('/menu/communities/7?tab=tournaments');
+  await page.getByRole('button', { name: 'Criar liga individual' }).click();
+  await page.getByLabel('Nome do torneio').fill('Karting empatado QA');
+  await page.getByRole('button', { name: 'Criar campeonato de Karting' }).click();
+  const race = page.getByRole('region', { name: 'Campeonato de Karting' });
+  await race.getByRole('button', { name: 'Associar' }).click();
+  const table = page.getByRole('table', { name: 'Classificação de Karting' });
+  await expect(table.locator('tbody tr')).toHaveCount(2);
+  await race.getByRole('button', { name: 'Encerrar campeonato de Karting' }).click();
+  await race.getByRole('button', { name: 'Sim, encerrar e guardar classificação' }).click();
+  await expect(page.getByText('Empate no primeiro lugar', { exact: true })).toBeVisible();
+  await expect(page.getByText('Campeão:', { exact: false })).toHaveCount(0);
+  expect(state.tournament?.championTied).toBe(true);
+  expect(state.tournament?.championProfileId).toBeNull();
+  expect(state.tournament?.championPoints).toBeNull();
+  await page.reload();
+  await expect(page.getByText('Empate no primeiro lugar', { exact: true })).toBeVisible();
+  await expect(race.getByText('Classificação final arquivada')).toBeVisible();
+  await expect(table.locator('tbody tr')).toHaveCount(2);
   expect(fixture.unmocked.filter(x => x.includes('/tournaments'))).toEqual([]);
 });
