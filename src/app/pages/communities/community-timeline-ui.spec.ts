@@ -81,6 +81,38 @@ describe('Community feed/chat UI state isolation', () => {
     expect(send).not.toHaveBeenCalled();
   });
 
+  it('shows the community member name and picture in a post, with a safe fallback', () => {
+    component.selected = { id: 7, myRole: 'MEMBER', members: [{
+      profileId: 10, username: 'ana', fullName: 'Ana Ferreira',
+      profilePicUrl: 'https://example.test/ana.jpg', role: 'MEMBER'
+    }] } as any;
+
+    expect(component.communityFeedAuthorName('ANA')).toBe('Ana Ferreira');
+    expect(component.communityFeedAvatar('ana')).toBe('https://example.test/ana.jpg');
+    expect(component.communityFeedInitials('ana')).toBe('AF');
+    expect(component.communityFeedAuthorName('desconhecido')).toBe('desconhecido');
+    expect(component.communityFeedInitials('desconhecido')).toBe('D');
+    expect(component.communityFeedAvatar('desconhecido')).toBeNull();
+  });
+
+  it('allows an author to delete their own community post without manager permissions', () => {
+    component.activeTab = 'feed';
+    (component.canManage as jasmine.Spy).and.returnValue(false);
+    const authorCheck = spyOn(component, 'isMyChatEntry').and.returnValue(true);
+    spyOn(component, 'loadTimeline');
+    const entry = message('POST');
+
+    expect(component.canDeleteCommunityPost(entry)).toBeTrue();
+    component.deleteTimeline(entry);
+    expect(remove).toHaveBeenCalledOnceWith(7, 'POST', 18);
+
+    authorCheck.and.returnValue(false);
+    remove.calls.reset();
+    expect(component.canDeleteCommunityPost(entry)).toBeFalse();
+    component.deleteTimeline(entry);
+    expect(remove).not.toHaveBeenCalled();
+  });
+
   it('allows a manager to remove an item from this community and tab', () => {
     component.activeTab = 'feed';
     spyOn(component, 'loadTimeline');
