@@ -629,7 +629,7 @@
                           </th>
                         </tr>
                         @for (match of group.rows; track match.sourceRow) {
-                          <tr>
+                          <tr [attr.data-historical-source-row]="match.sourceRow">
                             <td>{{ match.sourceDate || '—' }}</td>
                             <th scope="row">{{ match.home }}</th>
                             <td>{{ match.homeScore }}–{{ match.awayScore }}</td>
