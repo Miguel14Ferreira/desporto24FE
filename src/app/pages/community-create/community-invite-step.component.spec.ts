@@ -1,4 +1,5 @@
 import { of, throwError } from 'rxjs';
+import { appTranslate } from '../../i18n/i18n.service';
 import { CommunityInviteStepComponent } from './community-invite-step.component';
 import { CommunityGroup } from '../model/community-group';
 
@@ -23,6 +24,29 @@ describe('CommunityInviteStepComponent', () => {
     component.ngOnInit();
     return { component, groups, router };
   }
+
+  it('shows available competition options in PT and EN, without out-of-date team warnings', () => {
+    const activityKeys = [
+      'communityInviteStep.activityTitle',
+      'communityInviteStep.activitySubtitle',
+      'communityInviteStep.individualTitle',
+      'communityInviteStep.teamsTitle',
+      'communityInviteStep.teamsDescription',
+      'communityInviteStep.teamsHint',
+      'communityInviteStep.statisticsTitle',
+      'communityInviteStep.sessionsTitle',
+      'communityInviteStep.activitySelectedCount'
+    ];
+
+    for (const language of ['pt', 'en']) {
+      localStorage.setItem('d24-language', language);
+      for (const key of activityKeys) {
+        expect(appTranslate(key)).not.toBe(key);
+      }
+      expect(appTranslate('communityInviteStep.teamsHint')).not.toMatch(/em desenvolvimento|in development/i);
+      expect(appTranslate('communityInviteStep.activitySelectedCount', { count: 2 })).toContain('2');
+    }
+  });
 
   it('prepares a link to the community after an explicit click', () => {
     const { component } = setup();
@@ -70,7 +94,7 @@ describe('CommunityInviteStepComponent', () => {
     expect(router.navigate).toHaveBeenCalledWith(['/menu/communities', 42]);
   });
 
-  it('supports all four paths, including sessions-only and the future teams module', () => {
+  it('supports all four paths, including sessions-only and team tournaments', () => {
     const { component, groups } = setup();
     const update = jasmine.createSpy('updateFeatures').and.returnValue(of({}));
     (groups as any).updateFeatures = update;
