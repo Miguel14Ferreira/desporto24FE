@@ -160,6 +160,11 @@
             </button>
           }
 
+          <a class="pillar-action jynlo-action jynlo-action--neutral" routerLink="/menu/venues"
+             [queryParams]="{ sport: sport.trim() || null, city: location.trim() || null }">
+            {{ 'venue.catalog.viewAll' | t }} <span aria-hidden="true">→</span>
+          </a>
+
           <a class="pillar-action jynlo-action jynlo-action--neutral" routerLink="/menu/venues/new"
              [queryParams]="{ sport: sport.trim() || null, city: location.trim() || null }">
             {{ 'discover.where.action' | t }} <span>→</span>
