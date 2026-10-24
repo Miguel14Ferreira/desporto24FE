@@ -23,7 +23,8 @@ export function trackSprintSeriesStatus(
     && round.sprintSeriesKey === current.sprintSeriesKey);
   matches.sort((a, b) => (a.sprintHeatNumber ?? 0) - (b.sprintHeatNumber ?? 0));
   const phase = current.eventDiscipline;
-  const max = 3;
+  const required = phase === 'SPRINT_EIGHTH_FINAL' ? 1 : 2;
+  const max = required === 1 ? 1 : 3;
   if (matches.length === 0 || matches.length > max) return null;
   let riderA = '', riderB = '', winsA = 0, winsB = 0;
   for (let i = 0; i < matches.length; i++) {
@@ -39,9 +40,8 @@ export function trackSprintSeriesStatus(
     if (winners.length !== 1 || losers.length !== 1) return null;
     if (winners[0].username?.toLowerCase() === riderA) winsA++;
     else winsB++;
-    if (i < matches.length - 1 && (winsA === 2 || winsB === 2)) return null;
+    if (i < matches.length - 1 && (winsA >= required || winsB >= required)) return null;
   }
-  const required = 2;
   return { heats: matches.length, winsA, winsB, riderA, riderB,
     winner: winsA === required ? riderA : winsB === required ? riderB : null };
 }
