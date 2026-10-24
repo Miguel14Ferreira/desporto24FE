@@ -177,6 +177,16 @@ export class CommunityTournamentsComponent implements OnChanges {
     return '';
   }
 
+  displayTournamentResult(match: TournamentMatch): string {
+    if (this.isChessTournament) {
+      if (match.homeScore === 1 && match.awayScore === 0) return '1 – 0';
+      if (match.homeScore === 0 && match.awayScore === 0) return '½ – ½';
+      if (match.homeScore === 0 && match.awayScore === 1) return '0 – 1';
+      return '—';
+    }
+    return match.homeScore + ' : ' + match.awayScore;
+  }
+
   setChessOutcome(match: TournamentMatch, outcome: string): void {
     const mapped = outcome === 'WHITE' ? { home: 1, away: 0 }
       : outcome === 'DRAW' ? { home: 0, away: 0 }
