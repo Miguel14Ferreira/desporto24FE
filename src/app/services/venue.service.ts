@@ -134,7 +134,8 @@ export class VenueService {
     );
   }
 
-  create(request: CreateVenueRequest): Observable<Venue> {
-    return this.http.post<Venue>(this.baseUrl, request);
+  /** Submissions are not venues until reviewed and approved by an admin. */
+  submitSuggestion(request: CreateVenueRequest): Observable<{ id: number; status: string }> {
+    return this.http.post<{ id: number; status: string }>(this.baseUrl, request);
   }
 }

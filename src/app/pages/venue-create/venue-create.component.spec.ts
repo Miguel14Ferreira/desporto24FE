@@ -7,9 +7,9 @@ import { VenueCreateComponent } from './venue-create.component';
 
 describe('VenueCreateComponent', () => {
   it('allows GPS-only venue creation, sending null instead of fabricating an address', () => {
-    const service = jasmine.createSpyObj<VenueService>('VenueService', ['create']);
+    const service = jasmine.createSpyObj<VenueService>('VenueService', ['submitSuggestion']);
     const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
-    service.create.and.returnValue(of({ id: 55 } as Venue));
+    service.submitSuggestion.and.returnValue(of({ id: 55, status: 'PENDING' }));
     const component = new VenueCreateComponent(service, router);
     component.name = 'Pavilhão do Bairro';
     component.city = 'Cantanhede';
@@ -21,14 +21,15 @@ describe('VenueCreateComponent', () => {
     expect(component.locationIsMissing).toBeFalse();
     component.save();
 
-    expect(service.create).toHaveBeenCalledOnceWith(jasmine.objectContaining({
+    expect(service.submitSuggestion).toHaveBeenCalledOnceWith(jasmine.objectContaining({
       address: null, latitude: 40.344, longitude: -8.588
     }));
-    expect(router.navigate).toHaveBeenCalledWith(['/menu/venues', 55]);
+    expect(router.navigate).not.toHaveBeenCalled();
+    expect(component.submitted).toBeTrue();
   });
 
   it('rejects missing, incomplete and foreign coordinates when the postal address is absent', () => {
-    const service = jasmine.createSpyObj<VenueService>('VenueService', ['create']);
+    const service = jasmine.createSpyObj<VenueService>('VenueService', ['submitSuggestion']);
     const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
     const component = new VenueCreateComponent(service, router);
     component.name = 'Campo do Bairro';
@@ -44,26 +45,26 @@ describe('VenueCreateComponent', () => {
       component.save();
       expect(component.validationError).toBeTrue();
     }
-    expect(service.create).not.toHaveBeenCalled();
+    expect(service.submitSuggestion).not.toHaveBeenCalled();
   });
 
   it('keeps existing address-based venue creation without GPS compatible', () => {
-    const service = jasmine.createSpyObj<VenueService>('VenueService', ['create']);
+    const service = jasmine.createSpyObj<VenueService>('VenueService', ['submitSuggestion']);
     const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
-    service.create.and.returnValue(of({ id: 22 } as Venue));
+    service.submitSuggestion.and.returnValue(of({ id: 22, status: 'PENDING' }));
     const component = new VenueCreateComponent(service, router);
     component.name = 'Campo Central';
     component.city = 'Porto';
     component.address = 'Rua do Desporto 12';
     component.selectedSports = ['Futebol'];
     component.save();
-    expect(service.create).toHaveBeenCalledOnceWith(jasmine.objectContaining({
+    expect(service.submitSuggestion).toHaveBeenCalledOnceWith(jasmine.objectContaining({
       address: 'Rua do Desporto 12', latitude: null, longitude: null
     }));
   });
 
   it('prefills a valid favorite sport and locality from Discover without auto-saving', () => {
-    const venueService = jasmine.createSpyObj<VenueService>('VenueService', ['create']);
+    const venueService = jasmine.createSpyObj<VenueService>('VenueService', ['submitSuggestion']);
     const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
     const route = {
       snapshot: { queryParamMap: convertToParamMap({ sport: '  pAdEl  ', city: '  Lisboa  ' }) }
@@ -84,13 +85,13 @@ describe('VenueCreateComponent', () => {
     component.city = 'Sintra';
     expect(component.selectedSports).toEqual(['Ténis']);
     expect(component.city).toBe('Sintra');
-    expect(venueService.create).not.toHaveBeenCalled();
+    expect(venueService.submitSuggestion).not.toHaveBeenCalled();
   });
 
   it('passes a valid mainland district through to the existing backend contract', () => {
-    const service = jasmine.createSpyObj<VenueService>('VenueService', ['create']);
+    const service = jasmine.createSpyObj<VenueService>('VenueService', ['submitSuggestion']);
     const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
-    service.create.and.returnValue(of({ id: 18 } as Venue));
+    service.submitSuggestion.and.returnValue(of({ id: 18, status: 'PENDING' }));
     const component = new VenueCreateComponent(service, router);
     component.name = 'Campo Municipal';
     component.city = 'Cascais';
@@ -100,13 +101,13 @@ describe('VenueCreateComponent', () => {
 
     component.save();
 
-    expect(service.create).toHaveBeenCalledOnceWith(
+    expect(service.submitSuggestion).toHaveBeenCalledOnceWith(
       jasmine.objectContaining({ district: 'Lisboa' })
     );
   });
 
   it('prefills only a known district from Discover without assuming one from city', () => {
-    const service = jasmine.createSpyObj<VenueService>('VenueService', ['create']);
+    const service = jasmine.createSpyObj<VenueService>('VenueService', ['submitSuggestion']);
     const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
     const route = {
       snapshot: { queryParamMap: convertToParamMap({
@@ -128,7 +129,7 @@ describe('VenueCreateComponent', () => {
   });
 
   it('rejects an unknown sport without losing the locality passed from Discover', () => {
-    const venueService = jasmine.createSpyObj<VenueService>('VenueService', ['create']);
+    const venueService = jasmine.createSpyObj<VenueService>('VenueService', ['submitSuggestion']);
     const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
     const route = {
       snapshot: { queryParamMap: convertToParamMap({ sport: 'Outro desporto', city: 'Porto' }) }
@@ -141,7 +142,7 @@ describe('VenueCreateComponent', () => {
   });
 
   it('uses bounded autocomplete only after the user explicitly asks to check for duplicates', () => {
-    const service = jasmine.createSpyObj<VenueService>('VenueService', ['create', 'suggest']);
+    const service = jasmine.createSpyObj<VenueService>('VenueService', ['submitSuggestion', 'suggest']);
     const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
     service.suggest.and.returnValue(of({
       venues: [{ id: 33, name: 'Pavilhão Norte', city: 'Cascais' } as Venue],
@@ -158,11 +159,11 @@ describe('VenueCreateComponent', () => {
     expect(component.similarVenueCheckComplete).toBeTrue();
     expect(component.similarVenues.map(venue => venue.id)).toEqual([33]);
     expect(component.checkingSimilarVenues).toBeFalse();
-    expect(service.create).not.toHaveBeenCalled();
+    expect(service.submitSuggestion).not.toHaveBeenCalled();
   });
 
   it('ignores a stale autocomplete response after the name or city changes', () => {
-    const service = jasmine.createSpyObj<VenueService>('VenueService', ['create', 'suggest']);
+    const service = jasmine.createSpyObj<VenueService>('VenueService', ['submitSuggestion', 'suggest']);
     const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
     const oldRequest = new Subject<{ venues: Venue[]; page: number; hasMore: boolean }>();
     service.suggest.and.returnValue(oldRequest.asObservable());
@@ -186,10 +187,10 @@ describe('VenueCreateComponent', () => {
   });
 
   it('does not block saving when the optional duplicate check fails', () => {
-    const service = jasmine.createSpyObj<VenueService>('VenueService', ['create', 'suggest']);
+    const service = jasmine.createSpyObj<VenueService>('VenueService', ['submitSuggestion', 'suggest']);
     const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
     service.suggest.and.returnValue(throwError(() => new Error('search unavailable')));
-    service.create.and.returnValue(of({ id: 8 } as Venue));
+    service.submitSuggestion.and.returnValue(of({ id: 8, status: 'PENDING' }));
     const component = new VenueCreateComponent(service, router);
     component.name = 'Campo Novo';
     component.city = 'Lisboa';
@@ -201,12 +202,13 @@ describe('VenueCreateComponent', () => {
     expect(component.checkingSimilarVenues).toBeFalse();
     component.save();
 
-    expect(service.create).toHaveBeenCalled();
-    expect(router.navigate).toHaveBeenCalledWith(['/menu/venues', 8]);
+    expect(service.submitSuggestion).toHaveBeenCalled();
+    expect(router.navigate).not.toHaveBeenCalled();
+    expect(component.submitted).toBeTrue();
   });
 
   it('does not submit when required fields are missing', () => {
-    const venueService = jasmine.createSpyObj<VenueService>('VenueService', ['create']);
+    const venueService = jasmine.createSpyObj<VenueService>('VenueService', ['submitSuggestion']);
     const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
     const component = new VenueCreateComponent(venueService, router);
 
@@ -216,16 +218,16 @@ describe('VenueCreateComponent', () => {
 
     component.save();
 
-    expect(venueService.create).not.toHaveBeenCalled();
+    expect(venueService.submitSuggestion).not.toHaveBeenCalled();
     expect(router.navigate).not.toHaveBeenCalled();
     expect(component.validationError).toBeTrue();
     expect(component.saving).toBeFalse();
   });
 
   it('requires a selected sport before creating a venue', () => {
-    const venueService = jasmine.createSpyObj<VenueService>('VenueService', ['create']);
+    const venueService = jasmine.createSpyObj<VenueService>('VenueService', ['submitSuggestion']);
     const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
-    venueService.create.and.returnValue(of({ id: 9 } as Venue));
+    venueService.submitSuggestion.and.returnValue(of({ id: 9, status: 'PENDING' }));
     const component = new VenueCreateComponent(venueService, router);
     component.name = 'Pavilhão Central';
     component.city = 'Lisboa';
@@ -235,23 +237,24 @@ describe('VenueCreateComponent', () => {
 
     expect(component.validationError).toBeTrue();
     expect(component.saving).toBeFalse();
-    expect(venueService.create).not.toHaveBeenCalled();
+    expect(venueService.submitSuggestion).not.toHaveBeenCalled();
 
     component.toggleSport('Padel', true);
     component.save();
 
     expect(component.validationError).toBeFalse();
-    expect(venueService.create).toHaveBeenCalledOnceWith(
+    expect(venueService.submitSuggestion).toHaveBeenCalledOnceWith(
       jasmine.objectContaining({ sports: 'Padel' })
     );
-    expect(router.navigate).toHaveBeenCalledWith(['/menu/venues', 9]);
+    expect(router.navigate).not.toHaveBeenCalled();
+    expect(component.submitted).toBeTrue();
   });
 
-  it('creates the venue and navigates to its detail page', () => {
-    const venueService = jasmine.createSpyObj<VenueService>('VenueService', ['create']);
+  it('submits a venue suggestion without publishing or navigating to a venue detail page', () => {
+    const venueService = jasmine.createSpyObj<VenueService>('VenueService', ['submitSuggestion']);
     const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
-    const venue = { id: 7, name: 'Pavilhão Central' } as Venue;
-    venueService.create.and.returnValue(of(venue));
+    const venue = { id: 7, status: 'PENDING' };
+    venueService.submitSuggestion.and.returnValue(of(venue));
 
     const component = new VenueCreateComponent(venueService, router);
     component.name = '  Pavilhão Central  ';
@@ -283,12 +286,13 @@ describe('VenueCreateComponent', () => {
 
     component.save();
 
-    expect(venueService.create).toHaveBeenCalledOnceWith(jasmine.objectContaining({
+    expect(venueService.submitSuggestion).toHaveBeenCalledOnceWith(jasmine.objectContaining({
       name: 'Pavilhão Central', city: 'Lisboa', address: 'Rua do Desporto',
       sports: 'Futsal;Padel', environmentType: 'BOTH', indoor: true,
       website: 'https://pavilhao.example', contact: '+351 210 000 000', changingRooms: true, changingRoomTypes: 'MALE;FEMALE;ADAPTED', showers: true, stands: true, drinkingFountain: true, medicalStation: true, lifeguard: true, staffOnSite: true, securitySurveillance: true, restaurant: true, vendingMachines: true, sportsShop: true, wifi: true, phoneCharging: true, parking: true, freeParking: true, nearbyRadiusMeters: 1000, nearbyPharmacy: true, nearbyAtm: true, latitude: null, longitude: null
     }));
-    expect(router.navigate).toHaveBeenCalledOnceWith(['/menu/venues', 7]);
+    expect(router.navigate).not.toHaveBeenCalled();
+    expect(component.submitted).toBeTrue();
     expect(component.validationError).toBeFalse();
     expect(component.saveError).toBeFalse();
     expect(component.saving).toBeFalse();
@@ -302,9 +306,9 @@ describe('VenueCreateComponent', () => {
     ];
 
     for (const { environment, indoor } of cases) {
-      const venueService = jasmine.createSpyObj<VenueService>('VenueService', ['create']);
+      const venueService = jasmine.createSpyObj<VenueService>('VenueService', ['submitSuggestion']);
       const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
-      venueService.create.and.returnValue(of({ id: 7 } as Venue));
+      venueService.submitSuggestion.and.returnValue(of({ id: 7, status: 'PENDING' }));
 
       const component = new VenueCreateComponent(venueService, router);
       component.name = 'Recinto de teste';
@@ -315,14 +319,14 @@ describe('VenueCreateComponent', () => {
 
       component.save();
 
-      expect(venueService.create).toHaveBeenCalledOnceWith(
+      expect(venueService.submitSuggestion).toHaveBeenCalledOnceWith(
         jasmine.objectContaining({ environmentType: environment, indoor })
       );
     }
   });
 
   it('adds and removes sports from the multi-selection', () => {
-    const venueService = jasmine.createSpyObj<VenueService>('VenueService', ['create']);
+    const venueService = jasmine.createSpyObj<VenueService>('VenueService', ['submitSuggestion']);
     const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
     const component = new VenueCreateComponent(venueService, router);
 
@@ -336,7 +340,7 @@ describe('VenueCreateComponent', () => {
   });
 
   it('starts with eight popular sports and gives access to the whole catalog', () => {
-    const service = jasmine.createSpyObj<VenueService>('VenueService', ['create']);
+    const service = jasmine.createSpyObj<VenueService>('VenueService', ['submitSuggestion']);
     const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
     const component = new VenueCreateComponent(service, router);
 
@@ -350,7 +354,7 @@ describe('VenueCreateComponent', () => {
   });
 
   it('searches all sports without accents and preserves multiple selections', () => {
-    const service = jasmine.createSpyObj<VenueService>('VenueService', ['create']);
+    const service = jasmine.createSpyObj<VenueService>('VenueService', ['submitSuggestion']);
     const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
     const component = new VenueCreateComponent(service, router);
 
@@ -372,9 +376,9 @@ describe('VenueCreateComponent', () => {
   });
 
   it('shows an error and stays on the form when creation fails', () => {
-    const venueService = jasmine.createSpyObj<VenueService>('VenueService', ['create']);
+    const venueService = jasmine.createSpyObj<VenueService>('VenueService', ['submitSuggestion']);
     const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
-    venueService.create.and.returnValue(throwError(() => new Error('create failed')));
+    venueService.submitSuggestion.and.returnValue(throwError(() => new Error('create failed')));
 
     const component = new VenueCreateComponent(venueService, router);
     component.name = 'Pavilhão Central';
@@ -384,13 +388,13 @@ describe('VenueCreateComponent', () => {
 
     component.save();
 
-    expect(venueService.create).toHaveBeenCalled();
+    expect(venueService.submitSuggestion).toHaveBeenCalled();
     expect(router.navigate).not.toHaveBeenCalled();
     expect(component.saveError).toBeTrue();
     expect(component.saving).toBeFalse();
   });
   it('fills coordinates from the current location', () => {
-    const venueService = jasmine.createSpyObj<VenueService>('VenueService', ['create']);
+    const venueService = jasmine.createSpyObj<VenueService>('VenueService', ['submitSuggestion']);
     const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
     const component = new VenueCreateComponent(venueService, router);
     const geolocation = spyOn(navigator.geolocation, 'getCurrentPosition');
@@ -408,7 +412,7 @@ describe('VenueCreateComponent', () => {
   });
 
   it('shows an error when current location cannot be obtained', () => {
-    const venueService = jasmine.createSpyObj<VenueService>('VenueService', ['create']);
+    const venueService = jasmine.createSpyObj<VenueService>('VenueService', ['submitSuggestion']);
     const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
     const component = new VenueCreateComponent(venueService, router);
     const geolocation = spyOn(navigator.geolocation, 'getCurrentPosition');
@@ -427,9 +431,9 @@ describe('VenueCreateComponent', () => {
     expect(component.locating).toBeFalse();
   });
   it('preserves unknown and explicit optional amenities in the request', () => {
-    const venueService = jasmine.createSpyObj<VenueService>('VenueService', ['create']);
+    const venueService = jasmine.createSpyObj<VenueService>('VenueService', ['submitSuggestion']);
     const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
-    venueService.create.and.returnValue(of({ id: 8 } as Venue));
+    venueService.submitSuggestion.and.returnValue(of({ id: 8, status: 'PENDING' }));
 
     const component = new VenueCreateComponent(venueService, router);
     component.name = 'Pavilhão Central';
@@ -441,7 +445,7 @@ describe('VenueCreateComponent', () => {
 
     component.save();
 
-    expect(venueService.create).toHaveBeenCalledOnceWith(jasmine.objectContaining({
+    expect(venueService.submitSuggestion).toHaveBeenCalledOnceWith(jasmine.objectContaining({
       toilets: true,
       lockers: false,
       accessible: null,
