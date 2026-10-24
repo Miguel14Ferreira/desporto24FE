@@ -2727,56 +2727,127 @@
                 } @else {
                   <p class="competition-context-hint" role="note">Classificação dos jogos habituais e jornadas registadas na comunidade. Os torneios têm resultados próprios.</p>
                     @if (canManage()) {
-                      <section class="import-panel">
-                        <div class="section-heading">
+                      <section class="import-panel import-wizard">
+                        <div class="import-wizard-header">
                           <div>
                             <span class="section-kicker">{{ 'communities.import.kicker' | t }}</span>
                             <h3>{{ 'communities.import.title' | t }}</h3>
+                            <p>{{ 'communities.import.hint' | t }}</p>
+                          </div>
+                          <span class="import-wizard-header-icon" aria-hidden="true">📥</span>
+                        </div>
+
+                        <div class="import-wizard-steps" role="list" [attr.aria-label]="'communities.import.wizard.progressLabel' | t">
+                          <div class="import-wizard-step" [class.is-active]="!importFile" role="listitem">
+                            <span class="import-wizard-step-number">1</span>
+                            <span>{{ 'communities.import.wizard.step1' | t }}</span>
+                          </div>
+                          <div class="import-wizard-step" [class.is-active]="!!importFile && !importPreview" role="listitem">
+                            <span class="import-wizard-step-number">2</span>
+                            <span>{{ 'communities.import.wizard.step2' | t }}</span>
+                          </div>
+                          <div class="import-wizard-step" [class.is-active]="!!importPreview" role="listitem">
+                            <span class="import-wizard-step-number">3</span>
+                            <span>{{ 'communities.import.wizard.step3' | t }}</span>
                           </div>
                         </div>
-                        <p>{{ 'communities.import.hint' | t }}</p>
-                        <div class="import-file-row" role="group" [attr.aria-label]="'communities.archive.importType' | t">
-                          <button type="button" class="secondary-action small jynlo-action jynlo-action--neutral jynlo-action--compact"
-                            [class.active]="importMode === 'ROUNDS'"
-                            [attr.aria-pressed]="importMode === 'ROUNDS'"
-                            (click)="selectImportMode('ROUNDS')">{{ 'communities.archive.rounds' | t }}</button>
-                          <button type="button" class="secondary-action small jynlo-action jynlo-action--neutral jynlo-action--compact"
-                            [class.active]="importMode === 'STANDINGS'"
-                            [attr.aria-pressed]="importMode === 'STANDINGS'"
-                            (click)="selectImportMode('STANDINGS')">{{ 'communities.archive.finalStandings' | t }}</button>
-                          <button type="button" class="secondary-action small jynlo-action jynlo-action--neutral jynlo-action--compact"
-                            [class.active]="importMode === 'MATCHES'"
-                            [attr.aria-pressed]="importMode === 'MATCHES'"
-                            (click)="selectImportMode('MATCHES')">{{ 'communities.matches.mode' | t }}</button>
-                        </div>
-                        <p role="note">{{ 'communities.import.chooseModeHint' | t }}</p>
-                        @if (importMode === 'ROUNDS') {
-                          <p class="import-validation" role="note">{{ 'communities.import.roundsAffectRankings' | t }}</p>
-                        }
-                        @if (importMode === 'STANDINGS') {
-                          <p>{{ 'communities.archive.hint' | t }}</p>
-                        } @else if (importMode === 'MATCHES') {
-                          <p role="note">{{ 'communities.matches.hint' | t }}</p>
-                        }
 
-                        <div class="import-file-row">
-                          <label class="secondary-action import-file-picker jynlo-action jynlo-action--neutral jynlo-action--compact">
-                            <input #importInput type="file" accept=".xlsx,.xls,.csv,.tsv" (change)="onImportFileChange($event)">
-                            <span>{{ importFileName || ('communities.import.choose' | t) }}</span>
-                          </label>
+                        <div class="import-wizard-section">
+                          <div class="import-wizard-section-heading">
+                            <span class="import-wizard-section-number" aria-hidden="true">01</span>
+                            <div>
+                              <h4>{{ 'communities.import.wizard.typeTitle' | t }}</h4>
+                              <p>{{ 'communities.import.wizard.typeHint' | t }}</p>
+                            </div>
+                          </div>
+                          <div class="import-wizard-options" role="group" [attr.aria-label]="'communities.archive.importType' | t">
+                            <button type="button" class="import-wizard-option"
+                              [class.is-selected]="importMode === 'ROUNDS'"
+                              [attr.aria-pressed]="importMode === 'ROUNDS'"
+                              (click)="selectImportMode('ROUNDS')">
+                              <span class="import-wizard-option-top">
+                                <span class="import-wizard-option-icon" aria-hidden="true">📅</span>
+                                <span class="import-wizard-option-check" aria-hidden="true">{{ importMode === 'ROUNDS' ? '✓' : '' }}</span>
+                              </span>
+                              <strong>{{ 'communities.import.wizard.roundsTitle' | t }}</strong>
+                              <span class="import-wizard-option-description">{{ 'communities.import.wizard.roundsDescription' | t }}</span>
+                              <span class="import-wizard-option-example">{{ 'communities.import.wizard.roundsExample' | t }}</span>
+                              <span class="import-wizard-option-impact">{{ 'communities.import.wizard.roundsEffect' | t }}</span>
+                            </button>
+                            <button type="button" class="import-wizard-option"
+                              [class.is-selected]="importMode === 'STANDINGS'"
+                              [attr.aria-pressed]="importMode === 'STANDINGS'"
+                              (click)="selectImportMode('STANDINGS')">
+                              <span class="import-wizard-option-top">
+                                <span class="import-wizard-option-icon" aria-hidden="true">🏆</span>
+                                <span class="import-wizard-option-check" aria-hidden="true">{{ importMode === 'STANDINGS' ? '✓' : '' }}</span>
+                              </span>
+                              <strong>{{ 'communities.import.wizard.standingsTitle' | t }}</strong>
+                              <span class="import-wizard-option-description">{{ 'communities.import.wizard.standingsDescription' | t }}</span>
+                              <span class="import-wizard-option-example">{{ 'communities.import.wizard.standingsExample' | t }}</span>
+                              <span class="import-wizard-option-impact">{{ 'communities.import.wizard.standingsEffect' | t }}</span>
+                            </button>
+                            <button type="button" class="import-wizard-option"
+                              [class.is-selected]="importMode === 'MATCHES'"
+                              [attr.aria-pressed]="importMode === 'MATCHES'"
+                              (click)="selectImportMode('MATCHES')">
+                              <span class="import-wizard-option-top">
+                                <span class="import-wizard-option-icon" aria-hidden="true">⚔️</span>
+                                <span class="import-wizard-option-check" aria-hidden="true">{{ importMode === 'MATCHES' ? '✓' : '' }}</span>
+                              </span>
+                              <strong>{{ 'communities.import.wizard.matchesTitle' | t }}</strong>
+                              <span class="import-wizard-option-description">{{ 'communities.import.wizard.matchesDescription' | t }}</span>
+                              <span class="import-wizard-option-example">{{ 'communities.import.wizard.matchesExample' | t }}</span>
+                              <span class="import-wizard-option-impact">{{ 'communities.import.wizard.matchesEffect' | t }}</span>
+                            </button>
+                          </div>
+                          <div class="import-wizard-context" role="note">
+                            <span aria-hidden="true">ⓘ</span>
+                            @if (importMode === 'ROUNDS') {
+                              <span>{{ 'communities.import.wizard.roundsWarning' | t }}</span>
+                            } @else if (importMode === 'STANDINGS') {
+                              <span>{{ 'communities.import.wizard.standingsWarning' | t }}</span>
+                            } @else {
+                              <span>{{ 'communities.import.wizard.matchesWarning' | t }}</span>
+                            }
+                          </div>
+                        </div>
+
+                        <div class="import-wizard-section">
+                          <div class="import-wizard-section-heading">
+                            <span class="import-wizard-section-number" aria-hidden="true">02</span>
+                            <div>
+                              <h4>{{ 'communities.import.wizard.fileTitle' | t }}</h4>
+                              <p>{{ 'communities.import.wizard.fileHint' | t }}</p>
+                            </div>
+                          </div>
+                          <div class="import-wizard-upload">
+                            <span class="import-wizard-upload-icon" aria-hidden="true">↑</span>
+                            <div class="import-wizard-upload-body">
+                              @if (importFile) {
+                                <strong>{{ importFileName }}</strong>
+                                <span>{{ 'communities.import.wizard.selectedFile' | t }}</span>
+                              } @else {
+                                <strong>{{ 'communities.import.wizard.noFile' | t }}</strong>
+                                <span>{{ 'communities.import.wizard.uploadHint' | t }}</span>
+                              }
+                            </div>
+                            <label class="secondary-action import-file-picker jynlo-action jynlo-action--neutral jynlo-action--compact">
+                              <input #importInput type="file" accept=".xlsx,.xls,.csv,.tsv" (change)="onImportFileChange($event)">
+                              <span>{{ 'communities.import.choose' | t }}</span>
+                            </label>
+                          </div>
                           @if (importFile) {
-                            <button type="button" class="primary-action small jynlo-action jynlo-action--primary jynlo-action--compact"
-                              [disabled]="importPreviewLoading"
-                              (click)="inspectImportFile()">
-                              {{ importPreviewLoading
-                                ? ('communities.import.inspecting' | t)
-                                : ('communities.import.inspect' | t) }}
-                            </button>
-                            <button type="button" class="secondary-action small jynlo-action jynlo-action--neutral jynlo-action--compact"
-                              [disabled]="importPreviewLoading"
-                              (click)="clearImportFile(importInput)">
-                              {{ 'communities.import.clear' | t }}
-                            </button>
+                            <div class="import-file-row">
+                              <button type="button" class="primary-action small jynlo-action jynlo-action--primary jynlo-action--compact"
+                                [disabled]="importPreviewLoading" (click)="inspectImportFile()">
+                                {{ importPreviewLoading ? ('communities.import.inspecting' | t) : ('communities.import.inspect' | t) }}
+                              </button>
+                              <button type="button" class="secondary-action small jynlo-action jynlo-action--neutral jynlo-action--compact"
+                                [disabled]="importPreviewLoading" (click)="clearImportFile(importInput)">
+                                {{ 'communities.import.clear' | t }}
+                              </button>
+                            </div>
                           }
                         </div>
 
