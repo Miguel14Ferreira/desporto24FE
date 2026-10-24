@@ -24,6 +24,21 @@ describe('CommunitiesComponent public session eligibility', () => {
     };
   });
 
+
+  it('detects uploaded GIF avatars even with CDN query strings or a fragment', () => {
+    expect(component.isAnimatedCommunityAvatar('https://cdn.jynlo.test/communities/8/avatar.gif')).toBeTrue();
+    expect(component.isAnimatedCommunityAvatar('/media/communities/8/avatar.GIF?v=2')).toBeTrue();
+    expect(component.isAnimatedCommunityAvatar('https://cdn.jynlo.test/a.gif#asset')).toBeTrue();
+  });
+
+  it('leaves static photos, missing photos and non-GIF paths using their existing crop', () => {
+    expect(component.isAnimatedCommunityAvatar('https://cdn.jynlo.test/avatar.jpg')).toBeFalse();
+    expect(component.isAnimatedCommunityAvatar('https://cdn.jynlo.test/avatar.webp?v=3')).toBeFalse();
+    expect(component.isAnimatedCommunityAvatar(null)).toBeFalse();
+    expect(component.isAnimatedCommunityAvatar(undefined)).toBeFalse();
+    expect(component.isAnimatedCommunityAvatar('https://cdn.jynlo.test/avatar.gif.backup')).toBeFalse();
+  });
+
   it('hides historical identity association without any eligible names, claims or errors', () => {
     component.historicalPlayers = [];
     component.historicalClaims = [];
