@@ -1702,11 +1702,12 @@ input,textarea,select {
   background: rgba(16, 185, 129, .09);
 }
 
-/* Community identity: landscape cover gives member photos a useful, intentional stage. */
+/* Community photos share a bounded frame, regardless of the source image
+   dimensions (including very large GIFs). Keep hero content prominent. */
 .community-detail-page .community-photo-block {
-  width: clamp(220px, 24vw, 300px);
+  width: clamp(200px, 22vw, 260px);
   max-width: 100%;
-  flex: 0 0 clamp(220px, 24vw, 300px);
+  flex: 0 0 clamp(200px, 22vw, 260px);
   align-self: stretch;
   justify-items: stretch;
 }
@@ -1756,8 +1757,8 @@ input,textarea,select {
 .community-timeline-empty { color:#94a3b8; padding:1.25rem; text-align:center; }
 @media (max-width: 800px) {
   .community-detail-page .community-photo-block {
-    width:min(100%, 320px);
-    flex:0 0 auto;
+    width: min(100%, 260px);
+    flex: 0 0 auto;
     align-self: auto;
   }
   .community-detail-page .community-photo-actions { flex-direction:row; }
@@ -1908,17 +1909,13 @@ input,textarea,select {
 }
 
 
-/* Community animated logos are typically square. Show every GIF frame intact
-   without cropping artwork, and leave JPG/PNG/WebP cover styling unchanged. */
+/* A GIF should show its full frame, but never grow its container. Every
+   community identity frame stays 3:2 (up to 260 x ~173 px on desktop).
+   Still photographs retain cover cropping; animated logos use contain. */
 .community-avatar.community-avatar--animated {
   background: radial-gradient(circle at 50% 42%, #193444 0%, #071923 100%);
 }
 .community-avatar.community-avatar--animated > img,
 .community-detail-page .community-photo-block .community-avatar--large.community-avatar--animated > img {
   object-fit: contain;
-}
-/* Use the source's square framing in the identity panel instead of a
-   landscape 3:2 crop. Other community photos keep their current proportions. */
-.community-detail-page .community-photo-block .community-avatar--large.community-avatar--animated {
-  aspect-ratio: 1 / 1;
 }
