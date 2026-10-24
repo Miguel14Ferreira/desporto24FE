@@ -149,6 +149,10 @@ export class CommunityGroupsService {
 
   constructor(private http: HttpClient) {}
 
+  deleteCommunity(id: number, name: string): Observable<void> {
+    return this.http.post<void>(this.url + '/' + id + '/delete', { name });
+  }
+
   mine(): Observable<CommunityGroup[]> {
     return this.http.get<CommunityGroup[]>(this.url + '/mine');
   }

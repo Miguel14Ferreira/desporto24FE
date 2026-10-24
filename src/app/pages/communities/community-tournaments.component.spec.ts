@@ -7,6 +7,7 @@ import { CommunityTournament, TournamentMatch, TournamentPage, TournamentPartici
 import { CommunityTournamentsComponent } from './community-tournaments.component';
 import { tournamentScoreTerminology } from './community-tournament-scoring';
 import { appTranslate as t } from '../../i18n/i18n.service';
+import { HistoricalMatchArchive } from '../../services/community-groups.service';
 
 describe('Community tournaments management', () => {
   let api: jasmine.SpyObj<CommunityTournamentsService>;
@@ -56,7 +57,10 @@ describe('Community tournaments management', () => {
     const auth = {
       loggedInPerfilname: 'owner', isLoggedIn: () => true
     } as unknown as AuthenticationService;
-    const cdr = { markForCheck: jasmine.createSpy('markForCheck') } as unknown as ChangeDetectorRef;
+    const cdr = {
+      markForCheck: jasmine.createSpy('markForCheck'),
+      detectChanges: jasmine.createSpy('detectChanges')
+    } as unknown as ChangeDetectorRef;
     component = new CommunityTournamentsComponent(api, auth, cdr);
     component.community = { ...community };
     component.ngOnChanges({ community: new SimpleChange(undefined, community, true) });
@@ -1545,6 +1549,50 @@ describe('Community tournaments management', () => {
       expect(terms.forAbbrev).toBe('MF');
       expect(terms.note).toContain('não suporta pares');
     }
+  });
+
+  it('navigates to the exact original row in a multi-phase historical archive', () => {
+    const rows: HistoricalMatchArchive['rows'] = Array.from({ length: 61 }, (_, index) => ({
+      sourceRow: index + 100,
+      home: 'Casa ' + index, away: 'Fora ' + index,
+      homeScore: 2, awayScore: 1,
+      sourceRound: index < 52 ? 'Jornada 1' : index < 56 ? 'Quartos de final'
+        : index < 58 ? 'Meias-finais' : 'Final',
+      sourceDate: '', potentialDuplicate: false
+    }));
+    component.historicalArchive = {
+      id: 7, title: 'Arquivo QA', entryType: 'TEAM',
+      sourceFilename: 'historico.xlsx', createdAt: '2026-10-25T00:00:00Z', rows
+    };
+    const target = jasmine.createSpyObj<HTMLElement>('row', ['scrollIntoView']);
+    const section = jasmine.createSpyObj<HTMLElement>('section', ['querySelector', 'scrollIntoView']);
+    section.querySelector.and.returnValue(target);
+    (component as any).historicalArchiveFixtures = { nativeElement: section };
+
+    component.showHistoricalKnockoutPhase(58);
+    expect(component.historicalArchivePage).toBe(1);
+    expect(section.querySelector).toHaveBeenCalledWith('[data-historical-source-row="158"]');
+    expect(target.scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'center' });
+    expect(section.scrollIntoView).not.toHaveBeenCalled();
+  });
+
+  it('falls back to the archived section when the target row is not rendered', () => {
+    const rows: HistoricalMatchArchive['rows'] = [{
+      sourceRow: 404, home: 'A', away: 'B', homeScore: 1, awayScore: 0,
+      sourceRound: 'Final', sourceDate: '', potentialDuplicate: false
+    }];
+    component.historicalArchive = {
+      id: 8, title: 'Arquivo QA', entryType: 'TEAM',
+      sourceFilename: 'historico.xlsx', createdAt: '2026-10-25T00:00:00Z', rows
+    };
+    const section = jasmine.createSpyObj<HTMLElement>('section', ['querySelector', 'scrollIntoView']);
+    section.querySelector.and.returnValue(null);
+    (component as any).historicalArchiveFixtures = { nativeElement: section };
+
+    component.showHistoricalKnockoutPhase(0);
+    expect(section.scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'center' });
+    component.showHistoricalKnockoutPhase(9);
+    expect(section.querySelector).toHaveBeenCalledTimes(1);
   });
 
   it('translates tournament detail notices and irreversible delete confirmation in PT/EN', () => {

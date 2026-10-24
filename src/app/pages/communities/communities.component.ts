@@ -1173,6 +1173,11 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   batchJoinTotal = 0;
   batchJoinFeedback = '';
   ownershipUsername = '';
+  communityDeleteConfirming = false;
+  communityDeleteName = '';
+  communityDeleteLoading = false;
+  communityDeleteError = '';
+
   photoUpdating = false;
 
   communitySearchName = '';
@@ -1789,6 +1794,9 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     this.featuresError = '';
     this.pendingJoinRequestsLoading = false;
     this.pendingJoinRequests = [];
+    this.communityDeleteConfirming = false;
+    this.communityDeleteName = '';
+    this.communityDeleteError = '';
     ++this.timelineRequestVersion;
     this.chatEventsDuringLoad?.clear();
     this.timelineEntries = [];
@@ -3938,6 +3946,46 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       },
       error: error => this.errorMessage = error.error?.message || t('feedback.communities.leaveError')
     });
+  }
+
+  beginCommunityDeletion(): void {
+    if (!this.selected || !this.isOwner() || this.communityDeleteLoading) return;
+    this.communityDeleteConfirming = true;
+    this.communityDeleteName = '';
+    this.communityDeleteError = '';
+  }
+
+  cancelCommunityDeletion(): void {
+    if (this.communityDeleteLoading) return;
+    this.communityDeleteConfirming = false;
+    this.communityDeleteName = '';
+    this.communityDeleteError = '';
+  }
+
+  confirmCommunityDeletion(): void {
+    const community = this.selected;
+    if (!community || !this.isOwner() || !this.communityDeleteConfirming
+        || this.communityDeleteLoading || this.communityDeleteName !== community.name) return;
+
+    this.communityDeleteLoading = true;
+    this.communityDeleteError = '';
+    this.communityService.deleteCommunity(community.id, community.name)
+      .pipe(timeout(10_000), finalize(() => this.communityDeleteLoading = false))
+      .subscribe({
+        next: () => {
+          if (this.selected?.id !== community.id) return;
+          this.communityDeleteConfirming = false;
+          this.communityDeleteName = '';
+          this.communities = this.communities.filter(item => item.id !== community.id);
+          this.selected = undefined;
+          void this.router.navigate(['/menu/communities'], { queryParams: { view: 'mine' } });
+        },
+        error: (error: HttpErrorResponse) => {
+          if (this.selected?.id !== community.id) return;
+          this.communityDeleteError = t(error.status === 409
+            ? 'communities.deleteBlocked' : 'communities.deleteFailed');
+        }
+      });
   }
 
   transferOwnership(): void {

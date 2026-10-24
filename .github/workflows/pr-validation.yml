@@ -56,6 +56,17 @@ jobs:
         run: node --test scripts/ci-browser/html_security_policy.test.cjs
       - name: Build frontend once
         run: npm run build
+      # Opt-in real Chromium QA for the source-labelled historical tournament
+      # navigation. The endpoint is fully mocked in Playwright, with 57 synthetic
+      # matches and no QA credentials or production traffic. One CI job only.
+      - name: Install Playwright for historical tournament browser navigation
+        if: ${{ startsWith(github.head_ref, 'fix/historical-phase-exact-row-browser-qa-') }}
+        run: |
+          npm install --no-save --package-lock=false @playwright/test@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Verify exact quarterfinal and final targets across 50-row pages
+        if: ${{ startsWith(github.head_ref, 'fix/historical-phase-exact-row-browser-qa-') }}
+        run: npx playwright test e2e/community-tournaments.spec.ts --config=playwright.config.ts --project=desktop-chromium --grep "Historical knockout browser QA"
       # Offline contract for the future manual authenticated QA workflow.
       # Fake network/browser only; production passwords are NEVER available on PR events.
       - name: Validate dual-account QA read-only safeguards (synthetic)

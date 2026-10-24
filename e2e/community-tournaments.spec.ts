@@ -11,6 +11,7 @@ interface Tournament {
   sport?: string | null;
   format: 'LEAGUE' | 'KNOCKOUT';
   status: TournamentStatus;
+  historicalArchiveId?: number | null;
   winPoints: number;
   drawPoints: number;
   lossPoints: number;
@@ -120,7 +121,7 @@ type FixtureMode = 'empty' | 'draft' | 'paged' | 'forbidden' | 'switch'
   | 'management' | 'complete-rejected' | 'list-network-error'
   | 'paged-enrollment' | 'draw-tie' | 'schedule-roster-paged' | 'schedule-roster-oversize'
   | 'discovery' | 'trial' | 'modules-off' | 'teams-only' | 'teams' | 'teams-view'
-  | 'teams-schedule' | 'history' | 'karting';
+  | 'teams-schedule' | 'history' | 'historical-knockout' | 'karting';
 
 async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
   sport: string | null = 'Futebol', sports?: string[], roundRobinLegs: 1 | 2 = 1,
@@ -153,6 +154,10 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
     : [tournament(mode === 'teams-view' || mode === 'teams-schedule' ? 11 : 9, 'Liga de Outono')];
   // The sport is a snapshot on the tournament, not inferred by the component.
   tournaments.forEach(item => item.sport = sport);
+  if (mode === 'historical-knockout') Object.assign(tournaments[0], {
+    name: 'Taça antiga QA', sport: 'Futebol', format: 'KNOCKOUT',
+    historicalArchiveId: 91, entryType: 'TEAM', status: 'COMPLETED'
+  });
   if (mode === 'paged' && sport === 'Xadrez') {
     tournaments[0].scoringMode = 'CHESS_HALF_POINTS';
   }
@@ -356,6 +361,49 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
       });
     }
 
+    if (mode === 'historical-knockout'
+        && path === '/api/communities/7/competition/match-archives'
+        && method === 'GET') {
+      // The community page also loads the archive index independently from
+      // the selected historic tournament. Keep every request in-memory.
+      return send([{
+        id: 91, title: 'Taça antiga QA', entryType: 'TEAM',
+        sourceFilename: 'torneio-sintetico.xlsx', createdAt: '2026-10-25T00:00:00Z'
+      }]);
+    }
+    if (mode === 'historical-knockout'
+        && path === '/api/communities/7/competition/match-archives/91'
+        && method === 'GET') {
+      // 50 unlabelled rows on page one, then three labelled phases on page two.
+      // The semifinal and final are on the same page as the quarterfinals:
+      // a jump to the *page heading* alone is not a successful navigation.
+      const rows = Array.from({ length: 50 }, (_, i) => ({
+        sourceRow: 201 + i, home: 'Antiga ' + i, away: 'Visitante ' + i,
+        homeScore: 1, awayScore: 0, sourceDate: '2023-05-01',
+        sourceRound: 'Jornada antiga', potentialDuplicate: false
+      }));
+      rows.push(
+        { sourceRow: 251, home: 'Águias', away: 'Lobos', homeScore: 3, awayScore: 0,
+          sourceDate: '2023-06-01', sourceRound: 'Quartos de final', potentialDuplicate: false },
+        { sourceRow: 252, home: 'CNG', away: 'Tigres', homeScore: 2, awayScore: 0,
+          sourceDate: '2023-06-02', sourceRound: 'Quartos de final', potentialDuplicate: false },
+        { sourceRow: 253, home: 'Leões', away: 'Dragões', homeScore: 1, awayScore: 0,
+          sourceDate: '2023-06-03', sourceRound: 'Quartos de final', potentialDuplicate: false },
+        { sourceRow: 254, home: 'Raios', away: 'Águias B', homeScore: 2, awayScore: 0,
+          sourceDate: '2023-06-04', sourceRound: 'Quartos de final', potentialDuplicate: false },
+        { sourceRow: 255, home: 'Águias', away: 'CNG', homeScore: 1, awayScore: 0,
+          sourceDate: '2023-06-05', sourceRound: 'Meias-finais', potentialDuplicate: false },
+        { sourceRow: 256, home: 'Leões', away: 'Raios', homeScore: 2, awayScore: 0,
+          sourceDate: '2023-06-06', sourceRound: 'Meias-finais', potentialDuplicate: false },
+        { sourceRow: 257, home: 'Águias', away: 'Leões', homeScore: 1, awayScore: 0,
+          sourceDate: '2023-06-07', sourceRound: 'Grande Final', potentialDuplicate: false }
+      );
+      return send({
+        id: 91, title: 'Taça antiga QA', entryType: 'TEAM',
+        sourceFilename: 'torneio-sintetico.xlsx', createdAt: '2026-10-25T00:00:00Z',
+        tournamentId: 9, rows
+      });
+    }
     if (path === '/api/communities/7/competition/standings-archives' && method === 'GET') {
       return send(historicalArchives.map(({ rows: _rows, ...summary }) => summary));
     }
@@ -866,6 +914,37 @@ test.afterEach(async ({ page }, info) => {
     } catch(e) { return { error: String(e) }; }
   }));
   console.log('[E2E diagnostics] page:', (await page.locator('body').innerText().catch(() => '')).slice(0, 3200));
+});
+
+
+test('Historical knockout browser QA: phase button jumps to the exact final across 50-row pages', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'historical-knockout');
+  await page.goto('/menu/communities/7?tab=tournaments');
+
+  await expect(page.getByRole('heading', { name: 'Taça antiga QA' })).toBeVisible();
+  const cards = page.locator('.historical-phase-card');
+  await expect(cards).toHaveCount(3);
+  await expect(cards.nth(0)).toContainText('4 / 4');
+  await expect(cards.nth(1)).toContainText('2 / 2');
+  await expect(cards.nth(2)).toContainText('1 / 1');
+  await expect(page.locator('[data-historical-source-row="257"]')).toHaveCount(0);
+
+  // All three phases are on page 2; selecting the final must target its row,
+  // not only the archive section or the page containing earlier quarters.
+  await cards.nth(2).getByRole('button', { name: 'Ver jogos no histórico' }).click();
+  const final = page.locator('[data-historical-source-row="257"]');
+  await expect(final).toHaveCount(1);
+  await expect(final).toContainText('Águias');
+  await expect(final).toContainText('Leões');
+  await expect(final).toBeInViewport({ ratio: 0.5 });
+  await expect(page.locator('.historical-tournament-pages')).toContainText('51–57 / 57');
+
+  // Jump back to the first source-labelled quarterfinal, same archive page.
+  await cards.nth(0).getByRole('button', { name: 'Ver jogos no histórico' }).click();
+  const quarter = page.locator('[data-historical-source-row="251"]');
+  await expect(quarter).toBeInViewport({ ratio: 0.5 });
+  await expect(page.locator('[data-historical-source-row="257"]')).toHaveCount(1);
+  expect(fixture.unmocked.filter(s => s.includes('match-archives'))).toEqual([]);
 });
 
 test('organizador abre Torneios e cria uma liga no navegador', async ({ page }) => {
@@ -2620,7 +2699,6 @@ test('Competition profiles E2E: swimming race warning stays unavailable in EN an
   expect(fixture.organizerMutations).toEqual([]);
   expect(fixture.unmocked.filter(url => url.includes('/tournaments'))).toEqual([]);
 });
-
 
 test('Competition organizer E2E: deletion warning, cancellation and sidebar follow PT/EN without mutation', async ({ page }) => {
   const fixture = await mockCommunityApi(page, 'OWNER', 'trial');
