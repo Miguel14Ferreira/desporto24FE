@@ -68,6 +68,9 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     if (!this.isPageActive()) return;
     if (this.selectedKey) this.markRenderedRead(this.selectedKey);
     this.refreshPeerReadReceipt(true);
+    // A laptop may have resumed without a socket reconnect notification.
+    // Only GET server history; never retry an ambiguous message POST.
+    this.reconcilePendingDeliveries(false);
   };
   realtimeConnected = false;
   everConnected = false;
@@ -94,6 +97,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   }>();
   private readonly confirmedWhileSending = new Map<string, InboxMessage>();
   private readonly verifyingKeys = new Set<string>();
+  private lastPendingRecheckAt = 0;
   private readonly sendErrorsByConversation = new Map<string, string>();
   private readonly subscriptions = new Subscription();
   private readonly jwt = new JwtHelperService();
@@ -419,6 +423,12 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       const active = this.selected;
       if (recoverAfterReconnect && active && !this.historicalPreview
           && !failedKinds.has(active.kind)) this.loadHistory(active);
+      // Check uncertain POSTs for ALL still-authorized conversations. The
+      // selected recent history above already performs its own confirmation.
+      if (recoverAfterReconnect) this.reconcilePendingDeliveries(
+        true, active && !this.historicalPreview && !failedKinds.has(active.kind)
+          ? active.key : null, failedKinds
+      );
     });
   }
 
@@ -988,42 +998,79 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     }
   }
 
+  /** Read-only reconciliation for uncertain sends on reconnect or foreground. */
+  private reconcilePendingDeliveries(
+    force: boolean,
+    skipKey: string | null = null,
+    failedKinds: ReadonlySet<InboxKind> = new Set<InboxKind>()
+  ): void {
+    if (!this.pendingByConversation.size || !this.isReceiptSessionCurrent()) return;
+    const now = Date.now();
+    // Focus/visibility events can fire in bursts. Reconnect itself bypasses
+    // the interval; per-thread in-flight requests cannot overlap.
+    if (!force && now - this.lastPendingRecheckAt < 15_000) return;
+    this.lastPendingRecheckAt = now;
+    for (const [key, pending] of this.pendingByConversation) {
+      if (key === skipKey || this.verifyingKeys.has(key)) continue;
+      const conversation = this.conversations.find(item => item.key === key);
+      if (!conversation || failedKinds.has(conversation.kind)) continue;
+      this.checkPendingDelivery(conversation, pending);
+    }
+  }
+
+  private checkPendingDelivery(
+    conversation: InboxConversation,
+    pending: { key: string; text: string; replyToMessageId: number | null;
+      knownIds: Set<number>; startedAt: number }
+  ): void {
+    const key = conversation.key;
+    if (this.verifyingKeys.has(key)) return;
+    if (this.selectedKey === key && this.messages.some(item => this.matchesPending(item, pending))) {
+      this.confirmFromHistoryIfPresent(key, this.messages);
+      return;
+    }
+    this.verifyingKeys.add(key);
+    if (this.selectedKey === key) this.deliveryChecking = true;
+    this.recentHistory(conversation).pipe(timeout(10000), finalize(() => {
+      this.verifyingKeys.delete(key);
+      if (this.selectedKey === key) this.deliveryChecking = false;
+    })).subscribe({
+      next: entries => {
+        // An account change, revoked conversation, cancelled retry, or
+        // newer confirmation makes this old GET irrelevant.
+        if (!this.isReceiptSessionCurrent()
+            || !this.conversations.some(item => item.key === key)
+            || this.pendingByConversation.get(key) !== pending) return;
+        const delivered = entries.find(item => this.matchesPending(item, pending));
+        if (delivered) {
+          this.acceptRealtime(key, delivered);
+          if (key === this.selectedKey && !this.historicalPreview) {
+            this.messages = mergeInboxMessages([...this.messages, delivered]);
+            this.updatePreviewFromHistory(key, this.messages);
+            this.scrollRequested = true;
+          }
+          this.confirmFromHistoryIfPresent(key, [delivered]);
+        } else if (key === this.selectedKey) {
+          // A limited history window is NOT proof the original POST failed.
+          this.composerError = t('chat.sendUnconfirmed');
+        }
+      },
+      error: () => {
+        // A failed GET is never interpreted as evidence to send again.
+        if (key === this.selectedKey && this.isReceiptSessionCurrent()
+            && this.pendingByConversation.get(key) === pending) {
+          this.composerError = t('chat.verifyUnavailable');
+        }
+      }
+    });
+  }
+
   verifyDelivery(): void {
     const conversation = this.selected;
     const pending = conversation && this.pendingByConversation.get(conversation.key);
     if (!conversation || !pending || !this.deliveryUncertain
         || this.verifyingKeys.has(conversation.key)) return;
-    if (this.messages.some(item => this.matchesPending(item, pending))) {
-      this.confirmFromHistoryIfPresent(conversation.key, this.messages);
-      return;
-    }
-    this.verifyingKeys.add(conversation.key);
-    this.deliveryChecking = true;
-    this.recentHistory(conversation).pipe(timeout(10000), finalize(() => {
-      this.verifyingKeys.delete(conversation.key);
-      if (conversation.key === this.selectedKey) this.deliveryChecking = false;
-    })).subscribe({
-      next: entries => {
-        // Ignore a previous verification invalidated by a manual reset or
-        // a newer server confirmation; it must not clear another draft.
-        if (this.pendingByConversation.get(conversation.key) !== pending) return;
-        const delivered = entries.find(item => this.matchesPending(item, pending));
-        if (delivered) {
-          this.acceptRealtime(conversation.key, delivered);
-          if (conversation.key === this.selectedKey) {
-            this.messages = mergeInboxMessages([...this.messages, delivered]);
-            this.updatePreviewFromHistory(conversation.key, this.messages);
-            this.scrollRequested = true;
-          }
-          this.confirmFromHistoryIfPresent(conversation.key, [delivered]);
-        } else if (conversation.key === this.selectedKey) {
-          this.composerError = t('chat.sendUnconfirmed');
-        }
-      },
-      error: () => {
-        if (conversation.key === this.selectedKey) this.composerError = t('chat.verifyUnavailable');
-      }
-    });
+    this.checkPendingDelivery(conversation, pending);
   }
 
   resumeAfterUncertainSend(): void {
