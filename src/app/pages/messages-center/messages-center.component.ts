@@ -168,14 +168,23 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       this.acceptRealtime(inboxKey('session', message.sessionId), this.fromSession(message));
     }));
     let connectedOnce = false;
+    let disconnectedAfterAuth = false;
     this.subscriptions.add(this.realtime.connected$.subscribe(connected => {
       this.realtimeConnected = connected;
-      if (!connected) return;
+      if (!connected) {
+        if (connectedOnce) disconnectedAfterAuth = true;
+        return;
+      }
       this.everConnected = true;
-      if (connectedOnce && this.selected && !this.historicalPreview) this.loadHistory(this.selected);
-      if (connectedOnce && this.serverSummariesAvailable) this.refreshSummaries();
-      if (connectedOnce) this.refreshPeerReadReceipt(true);
+      // Initial AUTH is followed by loadInbox below. After a real outage,
+      // refresh membership + summaries BEFORE replacing the selected history.
+      // A second AUTH notification without a disconnect is not a new outage.
+      if (connectedOnce && disconnectedAfterAuth && this.isReceiptSessionCurrent()) {
+        this.loadInbox(true);
+        this.refreshPeerReadReceipt(true);
+      }
       connectedOnce = true;
+      disconnectedAfterAuth = false;
     }));
 
     this.realtime.connect();
@@ -183,7 +192,11 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     window.addEventListener('focus', this.onPageActive);
     document.addEventListener('visibilitychange', this.onPageActive);
     this.summaryTimer = setInterval(() => {
-      if (this.serverSummariesAvailable && !this.loading) this.refreshSummaries();
+      if (this.loading || !this.isReceiptSessionCurrent()) return;
+      // Retry a failed membership lookup only after the normal 45s interval.
+      // Otherwise keep the existing cheap, batched summary refresh.
+      if (this.failedSources.length) this.loadInbox(true);
+      else if (this.serverSummariesAvailable) this.refreshSummaries();
     }, 45_000);
     // Only an actively viewed private chat polls its receipt, at most once
     // every 15 seconds. Background tabs do not add API traffic.
@@ -288,7 +301,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.filter = filter;
   }
 
-  loadInbox(): void {
+  loadInbox(recoverAfterReconnect = false): void {
     // Support snapshot-only navigation contexts as well as live route streams.
     if (this.observedDeepLinkKey === null && this.route?.snapshot?.queryParamMap) {
       this.queueDeepLink(this.route.snapshot.queryParamMap.get('kind'),
@@ -297,9 +310,10 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     const request = ++this.inboxVersion;
     this.loading = true;
     this.failedSources = [];
-
+    const failedKinds = new Set<InboxKind>();
+    // Outdated requests must never corrupt another request's error state.
     const failed = (kind: InboxKind) => {
-      this.failedSources.push(kind);
+      failedKinds.add(kind);
     };
     forkJoin({
       friends: this.contacts.friends().pipe(timeout(10000), catchError(() => {
@@ -317,7 +331,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     }).pipe(finalize(() => {
       if (request === this.inboxVersion) this.loading = false;
     })).subscribe(({ friends, communities, sessions }) => {
-      if (request !== this.inboxVersion) return;
+      if (request !== this.inboxVersion || (recoverAfterReconnect && !this.isReceiptSessionCurrent())) return;
+      this.failedSources = [...failedKinds];
       const existing = new Map(this.conversations.map(item => [item.key, item]));
       const entries: InboxConversation[] = [];
 
@@ -364,6 +379,14 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
         });
       }
 
+      // A failed membership source is not proof that membership was revoked:
+      // keep its already-authorized rows while the retry is pending. A
+      // successful source may remove genuinely revoked/deleted conversations.
+      for (const previous of existing.values()) {
+        if (failedKinds.has(previous.kind) && !entries.some(item => item.key === previous.key)) {
+          entries.push(previous);
+        }
+      }
       this.conversations = orderInbox(entries.map(item => ({
         ...item,
         latestText: existing.get(item.key)?.latestText,
@@ -381,6 +404,11 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
         this.messages = [];
         ++this.selectionVersion;
       }
+      // A delayed history refresh must never run for a removed conversation,
+      // a failed membership source, or a detached historical search window.
+      const active = this.selected;
+      if (recoverAfterReconnect && active && !this.historicalPreview
+          && !failedKinds.has(active.kind)) this.loadHistory(active);
     });
   }
 
@@ -632,7 +660,16 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
         // Merge live events received after the HTTP request started; never
         // overwrite them with an older response or duplicate their IDs.
         const before = new Set(this.messages.map(item => item.id));
-        this.messages = mergeInboxMessages([...entries, ...this.realtimeDuringLoad.values()]);
+        const latestServerId = entries.reduce((max, item) => Math.max(max, item.id), 0);
+        // When the user is reading above the bottom, never discard their
+        // earlier loaded window. When following the tail, retain only local
+        // messages newer than the HTTP snapshot to avoid losing socket events.
+        const preserved = follow
+          ? this.messages.filter(item => item.id > latestServerId)
+          : this.messages;
+        this.messages = mergeInboxMessages([
+          ...preserved, ...entries, ...this.realtimeDuringLoad.values()
+        ]);
         if (!follow && before.size > 0 && !this.historicalPreview) {
           this.newMessagesPending += this.messages.filter(item =>
             !before.has(item.id) && item.sender.toLowerCase() !== this.currentUsername.toLowerCase()).length;
