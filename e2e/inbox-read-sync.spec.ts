@@ -27,6 +27,8 @@ const readThrough = new Map<string, number>([['bea', 41]]);
 const requests: string[] = [];
 const unauthorized: string[] = [];
 const authenticatedSockets = new Map<string, Set<(value: unknown) => void>>();
+const socketRoutes = new Map<string, Array<{ close: (options?: {code?: number; reason?: string}) => void }>>();
+let offlineAddedFriend = false;
 
 function jwt(username: string) {
   const encode = (data: unknown) => Buffer.from(JSON.stringify(data)).toString('base64url');
@@ -60,6 +62,9 @@ async function authenticatedContext(browser: import('@playwright/test').Browser,
           const sockets = authenticatedSockets.get(username) || new Set<(value: unknown) => void>();
           sockets.add(value => socket.send(JSON.stringify(value)));
           authenticatedSockets.set(username, sockets);
+          const routes = socketRoutes.get(username) || [];
+          routes.push(socket);
+          socketRoutes.set(username, routes);
           socket.send(JSON.stringify({ type: 'AUTHENTICATED' }));
         }
       } catch { /* ignore malformed fixture data */ }
@@ -83,10 +88,15 @@ async function authenticatedContext(browser: import('@playwright/test').Browser,
     requests.push(username + ':' + method + ' ' + url.pathname);
     if (method === 'GET' && url.pathname === '/api/friends/me') {
       const other = username === 'ana' ? 'bea' : 'ana';
-      return response(route, 200, [{
+      const friends = [{
         username: other, nickname: other === 'bea' ? 'Bea' : 'Ana',
         fullName: null, profilePicUrl: null, chatBlocked: false, blockedByMe: false
-      }]);
+      }];
+      if (username === 'ana' && offlineAddedFriend) {
+        friends.push({username:'carla',nickname:'Carla',fullName:null,
+          profilePicUrl:null,chatBlocked:false,blockedByMe:false});
+      }
+      return response(route, 200, friends);
     }
     if (method === 'GET' && url.pathname === '/api/communities/mine') return response(route, 200, []);
     if (method === 'GET' && url.pathname === '/api/sessions/mine') {
@@ -95,8 +105,14 @@ async function authenticatedContext(browser: import('@playwright/test').Browser,
     if (method === 'POST' && url.pathname === '/api/messages/inbox/summaries') {
       const body = req.postDataJSON() as { conversations: Conversation[] };
       const result = body.conversations.filter(c => c.kind === 'direct')
-        .filter(c => c.id.toLowerCase() === (username === 'ana' ? 'bea' : 'ana'))
+        .filter(c => c.id.toLowerCase() === (username === 'ana' ? 'bea' : 'ana')
+          || (username === 'ana' && offlineAddedFriend && c.id.toLowerCase() === 'carla'))
         .map(c => {
+          if (c.id.toLowerCase() === 'carla') return {
+            kind:'direct' as const,id:c.id,latestMessageId:51,
+            latestText:'Convite recuperado',latestSender:'carla',
+            latestAt:utc(),unreadCount:1
+          };
           const latest = messages[messages.length - 1];
           return {
             kind: 'direct', id: c.id, latestMessageId: latest.id,
@@ -480,5 +496,58 @@ test('sent direct message mirrors to another signed-in device without duplicates
     await senderContext.close();
     await mirrorContext.close();
     await recipientContext.close();
+  }
+});
+
+test('WebSocket outage recovers missed history and newly available friends without a reload', async ({browser}) => {
+  messages.splice(1);
+  readThrough.clear();
+  readThrough.set('bea', 41);
+  authenticatedSockets.clear();
+  socketRoutes.clear();
+  offlineAddedFriend = false;
+  requests.length = 0;
+  unauthorized.length = 0;
+
+  const context = await authenticatedContext(browser, 'ana');
+  try {
+    const page = await context.newPage();
+    const errors:string[]=[];
+    page.on('pageerror', error => errors.push(error.message));
+    await page.goto('/menu/messages?kind=direct&id=bea', {waitUntil:'domcontentloaded'});
+    await expect(page.locator('.inbox-bubble[data-message-id="41"]')).toBeVisible();
+    await expect.poll(() => socketRoutes.get('ana')?.length).toBe(1);
+    const firstRequests = requests.filter(x=>x==='ana:GET /api/friends/me').length;
+    await page.clock.install();
+
+    // An unplanned outage: neither this new message nor this friendship is
+    // pushed to the browser while the socket is offline.
+    socketRoutes.get('ana')![0].close({code:1012,reason:'test network outage'});
+    messages.push({id:42,username1:'bea',username2:'ana',
+      text:'Mensagem perdida durante a falha',date:utc(),dataDisplay:null});
+    offlineAddedFriend = true;
+    await page.clock.fastForward(3_100); // first bounded reconnect retry
+    await expect.poll(() => socketRoutes.get('ana')?.length).toBe(2);
+    await expect.poll(() => requests.filter(x=>
+      x==='ana:GET /api/friends/me').length).toBeGreaterThan(firstRequests);
+
+    const carla=page.locator('.inbox-entry').filter({hasText:'Carla'});
+    await expect(carla).toBeVisible();
+    await expect(carla.locator('.inbox-unread')).toHaveText('1');
+    await expect(page.locator('.inbox-bubble[data-message-id="42"]')).toHaveCount(1);
+    await expect(page.locator('.inbox-bubble[data-message-id="42"]'))
+      .toContainText('Mensagem perdida durante a falha');
+
+    // Even a late replay of the same confirmed socket message cannot
+    // manufacture a second bubble or a second HTTP send.
+    const newestSocket=[...(authenticatedSockets.get('ana') || [])].at(-1)!;
+    newestSocket({type:'CHAT_MESSAGE',message:messages[1]});
+    await expect(page.locator('.inbox-bubble[data-message-id="42"]')).toHaveCount(1);
+    expect(requests.filter(x=>x==='ana:POST /api/chat/me/bea')).toHaveLength(0);
+    expect(unauthorized).toEqual([]);
+    expect(errors).toEqual([]);
+  } finally {
+    offlineAddedFriend = false;
+    await context.close();
   }
 });
