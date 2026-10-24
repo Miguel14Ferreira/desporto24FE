@@ -174,6 +174,13 @@ describe('Chat reaction batch store', () => {
     connected.next(true);
     flushMicrotasks();
     const stale=http.expectOne(r=>r.url.endsWith('/api/messages/reactions/community/9'));
+    // A socket event during recovery causes a newer authorized GET, which
+    // restores the cache before the user can click a reaction again.
+    reactionEvents.next({kind:'community',conversationId:'9',messageId:24,
+      counts:{},actorUsername:'bea',emoji:'👏'});
+    flushMicrotasks();
+    http.expectOne(r=>r.url.endsWith('/api/messages/reactions/community/9'))
+      .flush([{messageId:24,counts:{},myEmoji:null}]);
     store.toggle('community',9,24,'🎉',()=>fail('Unexpected failure'));
     const put=http.expectOne(r=>r.url.endsWith('/api/messages/reactions/community/9/24'));
     stale.flush([{messageId:24,counts:{},myEmoji:null}]);
