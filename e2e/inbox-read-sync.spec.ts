@@ -176,6 +176,14 @@ async function authenticatedContext(browser: import('@playwright/test').Browser,
           username2: peer, text: body.text, date: utc(), dataDisplay: null
         };
         messages.push(sent);
+        // Backend ChatMessageCreatedEvent is published AFTER_COMMIT to the
+        // recipient and to all authenticated sender sessions. One server
+        // message ID, no optimistic message and no second HTTP POST.
+        for (const account of new Set([username, peer])) {
+          for (const deliver of authenticatedSockets.get(account) || []) {
+            deliver({ type: 'CHAT_MESSAGE', message: sent });
+          }
+        }
         return response(route, 200, sent);
       }
     }
@@ -421,5 +429,56 @@ test('two devices of the same account update an unread badge after a committed r
   } finally {
     await passiveContext.close();
     await readerContext.close();
+  }
+});
+
+test('sent direct message mirrors to another signed-in device without duplicates', async ({ browser }) => {
+  messages.splice(1);
+  readThrough.clear();
+  readThrough.set('bea', 41);
+  authenticatedSockets.clear();
+  requests.length = 0;
+  unauthorized.length = 0;
+
+  const senderContext = await authenticatedContext(browser, 'ana');
+  const mirrorContext = await authenticatedContext(browser, 'ana');
+  const recipientContext = await authenticatedContext(browser, 'bea');
+  try {
+    const sender = await senderContext.newPage();
+    const mirror = await mirrorContext.newPage();
+    const recipient = await recipientContext.newPage();
+    const pageErrors: string[] = [];
+    for (const p of [sender, mirror, recipient]) {
+      p.on('pageerror', e => pageErrors.push(e.message));
+    }
+    await sender.goto('/menu/messages?kind=direct&id=bea', {waitUntil:'domcontentloaded'});
+    await mirror.goto('/menu/messages?kind=direct&id=bea', {waitUntil:'domcontentloaded'});
+    await recipient.goto('/menu/messages?kind=direct&id=ana', {waitUntil:'domcontentloaded'});
+    await expect(sender.locator('#inbox-reply')).toBeEnabled();
+    await expect(mirror.locator('.inbox-entry.is-selected')).toContainText('Bea');
+    await expect(recipient.locator('.inbox-entry.is-selected')).toContainText('Ana');
+    await expect.poll(() => authenticatedSockets.get('ana')?.size).toBe(2);
+    await expect.poll(() => authenticatedSockets.get('bea')?.size).toBe(1);
+
+    const countPosts = () => requests.filter(v => v === 'ana:POST /api/chat/me/bea').length;
+    const postsBefore = countPosts();
+    await sender.locator('#inbox-reply').fill('Sincronizada nos dois dispositivos');
+    await sender.locator('.inbox-composer button[type="submit"]').click();
+    await expect.poll(() => messages.length).toBe(2);
+    await expect.poll(countPosts).toBe(postsBefore + 1);
+    const sentId = '.inbox-bubble[data-message-id="42"]';
+    // Both signed-in sender windows and the recipient should see the exact
+    // same committed ID without a reload or 45-second HTTP history poll.
+    for (const page of [sender, mirror, recipient]) {
+      await expect(page.locator(sentId)).toHaveCount(1);
+      await expect(page.locator(sentId)).toContainText('Sincronizada nos dois dispositivos');
+    }
+    expect(countPosts()).toBe(postsBefore + 1);
+    expect(unauthorized).toEqual([]);
+    expect(pageErrors).toEqual([]);
+  } finally {
+    await senderContext.close();
+    await mirrorContext.close();
+    await recipientContext.close();
   }
 });
