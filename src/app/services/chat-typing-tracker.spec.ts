@@ -53,6 +53,19 @@ describe('Ephemeral typing tracker', () => {
     expect(tracker.label('session', 41)).toBe('');
   }));
 
+  it('resets the typing cooldown on disconnect so the first post-reconnect keystroke sends immediately', fakeAsync(() => {
+    tracker.input('direct','bea','Antes da queda');
+    expect(send).toHaveBeenCalledOnceWith('direct','bea',true);
+    tick(300); // still inside the 2400ms throttle window
+    online.next(false);
+    online.next(true);
+    tracker.input('direct','bea','Ligação voltou');
+    expect(send).toHaveBeenCalledTimes(2);
+    expect(send).toHaveBeenCalledWith('direct','bea',true);
+    tick(3201);
+    expect(send).toHaveBeenCalledWith('direct','bea',false);
+  }));
+
   it('ends active conversation before switching and when input is cleared', fakeAsync(() => {
     tracker.input('session', 41, 'jogar');
     tick(1200);
