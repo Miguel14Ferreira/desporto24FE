@@ -66,7 +66,11 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     return document.visibilityState === 'visible' && document.hasFocus();
   }
   private readonly onPageActive = (): void => {
-    if (!this.isPageActive()) return;
+    // Never keep capturing microphone audio while another tab is foregrounded.
+    if (!this.isPageActive()) {
+      if (this.voiceRecording || this.voiceFinalizing) this.cancelVoiceRecording();
+      return;
+    }
     if (this.selectedKey) this.markRenderedRead(this.selectedKey);
     this.refreshPeerReadReceipt(true);
     // A laptop may have resumed without a socket reconnect notification.
@@ -79,6 +83,13 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   /** The upload composer stays hidden until the authenticated backend confirms private storage readiness. */
   attachmentReady = false;
   selectedAttachment: File | null = null;
+  voiceRecording = false;
+  voiceFinalizing = false;
+  voicePreviewUrl: string | null = null;
+  private voiceRecorder: MediaRecorder | null = null;
+  private voiceStream: MediaStream | null = null;
+  private voiceTimer?: ReturnType<typeof setTimeout>;
+  private voiceGeneration = 0;
   readonly attachmentPreviews = new Map<number, string>();
   readonly attachmentLoading = new Set<number>();
   emojiPickerOpen = false;
@@ -261,6 +272,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     document.removeEventListener('visibilitychange', this.onPageActive);
     if (this.summaryTimer) clearInterval(this.summaryTimer);
     if (this.receiptTimer) clearInterval(this.receiptTimer);
+    this.cancelVoiceRecording();
     this.clearAttachmentPreviews();
     // The navbar owns the shared socket lifecycle. Never disconnect it here.
   }
@@ -521,6 +533,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       else this.replyDrafts.delete(this.selectedKey);
     }
     this.typing.stop();
+    this.cancelVoiceRecording();
     this.emojiPickerOpen = false;
     this.selectedAttachment = null;
     this.attachmentReady = false;
@@ -903,7 +916,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     return Boolean(this.selected && this.isSelectedSessionOpen()
       && this.composerAllowed && !this.composerAccessLoading
       && !this.previewLoading && !this.previewError && !this.sending && !this.deliveryUncertain
-      && !this.deliveryChecking && (this.draft.trim().length > 0
+      && !this.deliveryChecking && !this.voiceRecording && !this.voiceFinalizing
+      && (this.draft.trim().length > 0
         || (this.selected?.kind === 'direct' && this.attachmentReady && !!this.selectedAttachment))
       && this.draft.trim().length <= 2000);
   }
@@ -953,6 +967,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       this.composerError = t('chat.attachmentInvalid');
       return;
     }
+    this.clearVoicePreview();
     this.selectedAttachment = file;
     this.composerError = '';
   }
@@ -960,6 +975,123 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   removeAttachment(): void {
     if (this.sending || this.deliveryUncertain) return;
     this.selectedAttachment = null;
+    this.clearVoicePreview();
+  }
+
+  private clearVoicePreview(): void {
+    if (this.voicePreviewUrl) URL.revokeObjectURL(this.voicePreviewUrl);
+    this.voicePreviewUrl = null;
+  }
+
+  get voiceSupported(): boolean {
+    return typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getUserMedia
+      && typeof MediaRecorder !== 'undefined';
+  }
+
+  private voiceFormat(): { mime: string; extension: string } | null {
+    if (!this.voiceSupported) return null;
+    if (typeof MediaRecorder.isTypeSupported !== 'function') return null;
+    if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+      return { mime: 'audio/webm;codecs=opus', extension: 'webm' };
+    }
+    if (MediaRecorder.isTypeSupported('audio/ogg;codecs=opus')) {
+      return { mime: 'audio/ogg;codecs=opus', extension: 'ogg' };
+    }
+    return null;
+  }
+
+  async startVoiceRecording(): Promise<void> {
+    if (!this.attachmentReady || this.selected?.kind !== 'direct'
+        || !this.canEditDraft() || this.selectedAttachment || this.voiceRecording) return;
+    const format = this.voiceFormat();
+    if (!format) {
+      this.composerError = t('chat.voiceUnsupported');
+      return;
+    }
+    const key = this.selectedKey;
+    const generation = ++this.voiceGeneration;
+    let stream: MediaStream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch {
+      if (generation === this.voiceGeneration) this.composerError = t('chat.voicePermission');
+      return;
+    }
+    if (generation !== this.voiceGeneration || this.selectedKey !== key
+        || !this.isPageActive() || !this.attachmentReady) {
+      stream.getTracks().forEach(track => track.stop());
+      return;
+    }
+    try {
+      const recorder = new MediaRecorder(stream, { mimeType: format.mime });
+      const chunks: Blob[] = [];
+      this.voiceRecorder = recorder;
+      this.voiceStream = stream;
+      recorder.ondataavailable = event => {
+        if (event.data.size > 0) chunks.push(event.data);
+      };
+      recorder.onerror = () => {
+        if (generation === this.voiceGeneration) {
+          this.composerError = t('chat.voiceRecordFailed');
+          this.cancelVoiceRecording();
+        }
+      };
+      recorder.onstop = () => {
+        stream.getTracks().forEach(track => track.stop());
+        if (this.voiceTimer) clearTimeout(this.voiceTimer);
+        this.voiceTimer = undefined;
+        this.voiceRecording = false;
+        this.voiceFinalizing = false;
+        if (this.voiceRecorder === recorder) this.voiceRecorder = null;
+        if (this.voiceStream === stream) this.voiceStream = null;
+        if (generation !== this.voiceGeneration || this.selectedKey !== key) return;
+        const type = format.extension === 'webm' ? 'audio/webm' : 'audio/ogg';
+        const recorded = new Blob(chunks, { type });
+        if (recorded.size === 0 || recorded.size > 5 * 1024 * 1024) {
+          this.composerError = t('chat.voiceRecordFailed');
+          return;
+        }
+        this.clearVoicePreview();
+        this.selectedAttachment = new File([recorded],
+          'voz-' + Date.now() + '.' + format.extension, { type });
+        this.voicePreviewUrl = URL.createObjectURL(recorded);
+        this.composerError = '';
+      };
+      recorder.start(1000);
+      this.voiceRecording = true;
+      this.voiceFinalizing = false;
+      this.composerError = '';
+      // A short, bounded voice note protects bandwidth and privacy.
+      this.voiceTimer = setTimeout(() => this.stopVoiceRecording(), 60_000);
+    } catch {
+      stream.getTracks().forEach(track => track.stop());
+      this.voiceRecorder = null;
+      this.voiceStream = null;
+      this.voiceRecording = false;
+      this.voiceFinalizing = false;
+      this.composerError = t('chat.voiceRecordFailed');
+    }
+  }
+
+  stopVoiceRecording(): void {
+    if (!this.voiceRecording || !this.voiceRecorder) return;
+    this.voiceFinalizing = true;
+    if (this.voiceRecorder.state !== 'inactive') this.voiceRecorder.stop();
+    this.voiceRecording = false;
+  }
+
+  cancelVoiceRecording(): void {
+    ++this.voiceGeneration;
+    if (this.voiceTimer) clearTimeout(this.voiceTimer);
+    this.voiceTimer = undefined;
+    const recorder = this.voiceRecorder;
+    this.voiceRecorder = null;
+    if (recorder && recorder.state !== 'inactive') recorder.stop();
+    this.voiceStream?.getTracks().forEach(track => track.stop());
+    this.voiceStream = null;
+    this.voiceRecording = false;
+    this.voiceFinalizing = false;
+    this.clearVoicePreview();
   }
 
   private clearAttachmentPreviews(): void {
@@ -987,7 +1119,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
           // A delayed response must never show another conversation's attachment.
           if (this.selectedKey !== conversation.key) return;
           const url = URL.createObjectURL(blob);
-          if (message.attachmentMimeType?.startsWith('image/')) {
+          if (message.attachmentMimeType?.startsWith('image/')
+              || message.attachmentMimeType?.startsWith('audio/')) {
             this.attachmentPreviews.set(message.id, url);
           } else {
             const anchor = document.createElement('a');
@@ -1033,7 +1166,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   private canEditDraft(): boolean {
     return Boolean(this.selected && this.composerAllowed && !this.composerAccessLoading
       && this.isSelectedSessionOpen() && !this.previewLoading && !this.previewError
-      && !this.sending && !this.deliveryUncertain && !this.deliveryChecking);
+      && !this.sending && !this.deliveryUncertain && !this.deliveryChecking
+      && !this.voiceRecording && !this.voiceFinalizing);
   }
 
   onComposerEnter(event: Event): void {
@@ -1121,6 +1255,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
         if (key !== this.selectedKey) return;
         if (this.historicalPreview) this.returnToRecent();
         this.selectedAttachment = null;
+        this.clearVoicePreview();
         this.draft = '';
         this.replyingTo = null;
         this.deliveryUncertain = false;
@@ -1204,6 +1339,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       this.sendErrorsByConversation.delete(key);
       if (this.selectedKey === key) {
         this.deliveryUncertain = false;
+        this.selectedAttachment = null;
+        this.clearVoicePreview();
         this.draft = '';
         this.replyingTo = null;
         this.composerError = '';
