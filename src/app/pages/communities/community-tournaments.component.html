@@ -75,87 +75,86 @@
   }
 
   @if (canManage && (showIndividualCreate || showTeamCreate)) {
-    <section class="create-tournament" aria-label="Configurar competição">
+    <section class="create-tournament" [attr.aria-label]="'communities.tournaments.createUi.region' | t">
       <div class="create-tournament-heading">
         <div class="create-tournament-intro">
-          <p class="tournament-eyebrow">Nova competição</p>
-          <h4>{{ showTeamCreate ? 'Preparar torneio por equipas' : 'Criar liga individual' }}</h4>
+          <p class="tournament-eyebrow">{{ 'communities.tournaments.createUi.new' | t }}</p>
+          <h4>{{ (showTeamCreate ? 'communities.tournaments.createUi.teamTitle' : 'communities.tournaments.createUi.individualTitle') | t }}</h4>
           @if (showTeamCreate) {
-            <p>Escolhe uma liga todos contra todos ou uma taça por eliminatórias.
-              Depois escolhe a modalidade. As equipas e os convites são geridos após a criação.</p>
+            <p>{{ 'communities.tournaments.createUi.teamIntro' | t }}</p>
           } @else {
-            <p>Competição individual sem equipas: cada participante compete por si. Os resultados não alteram o histórico de jogos habituais da comunidade.</p>
+            <p>{{ 'communities.tournaments.createUi.individualIntro' | t }}</p>
           }
         </div>
-        <span class="create-kind-pill">{{ showTeamCreate ? 'Por equipas' : 'Individual' }}</span>
+        <span class="create-kind-pill">{{ (showTeamCreate ? 'communities.tournaments.createUi.formatPill' : 'communities.tournaments.createUi.individualPill') | t }}</span>
       </div>
 
       <div class="create-controls">
-        <section class="create-step create-step-identity" aria-label="Identificação da competição">
+        <section class="create-step create-step-identity" [attr.aria-label]="'communities.tournaments.createUi.identityRegion' | t">
           <div class="create-step-heading">
             <span class="create-step-index" aria-hidden="true">01</span>
             <div>
-              <h5>Identificação da competição</h5>
-              <p>Dá um nome ao torneio e escolhe a modalidade.</p>
+              <h5>{{ 'communities.tournaments.createUi.identityTitle' | t }}</h5>
+              <p>{{ 'communities.tournaments.createUi.identityHint' | t }}</p>
             </div>
           </div>
           <div class="create-top-fields">
             <div class="create-field">
-        <label for="new-tournament-name">Nome do torneio</label>
+        <label for="new-tournament-name">{{ 'communities.tournaments.createUi.nameLabel' | t }}</label>
         <input id="new-tournament-name" [(ngModel)]="nameDraft" maxlength="120"
           [attr.aria-invalid]="nameTooShort ? 'true' : null"
           [attr.aria-describedby]="nameTooShort ? 'tournament-name-hint' : null"
-          placeholder="Ex.: Liga de Outono" autocomplete="off">
+          [placeholder]="'communities.tournaments.createUi.sportNamePlaceholder' | t" autocomplete="off">
         @if (nameTooShort) {
           <p id="tournament-name-hint" class="field-validation" role="status">
-            O nome deve ter pelo menos 2 caracteres.
+            {{ 'communities.tournaments.createUi.nameError' | t }}
           </p>
         }
             </div>
             <div class="create-field">
-        <span class="sport-field-label" id="tournament-sport-label">Modalidade do torneio</span>
-        <p class="sport-choice-hint">Escolhe a modalidade desta competição. Podes usar uma diferente das modalidades da comunidade.</p>
+        <span class="sport-field-label" id="tournament-sport-label">{{ 'communities.tournaments.createUi.sportLabel' | t }}</span>
+        <p class="sport-choice-hint">{{ 'communities.tournaments.createUi.sportHint' | t }}</p>
         @if (sportDraft) {
           <div class="chosen-sport" role="group" aria-labelledby="tournament-sport-label">
             <span class="chosen-sport-value">
               <strong>{{ sportDraft }}</strong>
-              <small>Modalidade selecionada</small>
+              <small>{{ 'communities.tournaments.createUi.selectedSport' | t }}</small>
             </span>
             <button type="button" class="t-btn t-btn-secondary t-btn-small"
               [disabled]="busy" [attr.aria-expanded]="editingSport"
               [attr.aria-controls]="editingSport ? 'tournament-sport-options' : null"
-              (click)="toggleSportEditor()">{{ editingSport ? 'Cancelar' : 'Alterar' }}</button>
+              (click)="toggleSportEditor()">{{ (editingSport ? 'communities.tournaments.createUi.sportToggleCancel' : 'communities.tournaments.createUi.sportToggleChange') | t }}</button>
           </div>
         }
         @if (!sportDraft || editingSport) {
           <div id="tournament-sport-options" class="sport-options">
         @if (showCommunitySportShortcuts) {
-          <div class="t-community-sports" role="group" aria-label="Modalidades da comunidade">
+          <div class="t-community-sports" role="group" [attr.aria-label]="'communities.tournaments.createUi.communitySports' | t">
             @for (item of communitySportOptions.slice(0, 6); track item) {
               <button type="button" class="t-sport-chip" [disabled]="busy"
                 [attr.aria-pressed]="sportDraft === item"
                 (click)="chooseSport(item)">{{ item }}</button>
             }
             @if (communitySportOptions.length > 6) {
-              <span class="t-sport-muted">+{{ communitySportOptions.length - 6 }} modalidades pesquisáveis</span>
+              <span class="t-sport-muted">{{ 'communities.tournaments.createUi.moreSports' | t:{count: communitySportOptions.length - 6} }}</span>
             }
           </div>
         }
         <input id="new-tournament-sport-search" type="search" [(ngModel)]="sportSearch"
           [disabled]="busy" maxlength="100" autocomplete="off"
-          placeholder="Pesquisar outra modalidade"
+          [placeholder]="'communities.tournaments.createUi.sportSearchPlaceholder' | t"
           aria-labelledby="tournament-sport-label"
           aria-describedby="tournament-sport-hint">
-        <p id="tournament-sport-hint" class="sport-choice-hint">Pesquisa e seleciona uma modalidade no catálogo.</p>
+        <p id="tournament-sport-hint" class="sport-choice-hint">{{ 'communities.tournaments.createUi.searchHint' | t }}</p>
         @if (suggestedSports.length) {
-          <div class="t-sport-suggestions" role="group" aria-label="Sugestões de modalidades">
+          <div class="t-sport-suggestions" role="group" [attr.aria-label]="'communities.tournaments.createUi.suggestions' | t">
             @for (item of suggestedSports; track item) {
               <button type="button" class="t-sport-chip" [disabled]="busy"
                 (click)="chooseSport(item)">{{ item }}</button>
             }
           </div>
         } @else if (sportSearch.trim()) {
-          <p class="sport-choice-hint">Não foram encontradas modalidades. Tenta outra pesquisa.</p>
+          <p class="sport-choice-hint">{{ 'communities.tournaments.createUi.sportsEmpty' | t }}</p>
         }
           </div>
         }
@@ -167,17 +166,17 @@
         </section>
 
         @if (showTeamCreate) {
-          <section class="create-step create-step-format" aria-label="Formato e participantes">
+          <section class="create-step create-step-format" [attr.aria-label]="'communities.tournaments.createUi.formatRegion' | t">
             <div class="create-step-heading">
               <span class="create-step-index" aria-hidden="true">02</span>
               <div>
-                <h5>Formato e participantes</h5>
-                <p>Escolhe o formato da competição. Vais criar equipas e convidar jogadores na etapa seguinte.</p>
+                <h5>{{ 'communities.tournaments.createUi.formatTitle' | t }}</h5>
+                <p>{{ 'communities.tournaments.createUi.formatHint' | t }}</p>
               </div>
             </div>
           <fieldset class="t-points-rules">
-            <legend>Formato do torneio</legend>
-            <div class="create-format-grid" role="group" aria-label="Formato do torneio">
+            <legend>{{ 'communities.tournaments.createUi.formatLegend' | t }}</legend>
+            <div class="create-format-grid" role="group" [attr.aria-label]="'communities.tournaments.createUi.formatGroup' | t">
               <button type="button" class="create-format-option" [disabled]="busy"
                 [attr.aria-pressed]="teamFormatDraft === 'LEAGUE'"
                 (click)="teamFormatDraft = 'LEAGUE'">
@@ -198,42 +197,38 @@
               </button>
             </div>
             @if (teamFormatDraft === 'GROUP_KNOCKOUT') {
-              <p class="sport-choice-hint">Os dois primeiros de cada grupo avançam. Desempate: pontos,
-                critérios desportivos e, em último caso, ordem do sorteio inicial.</p>
-              <label id="group-count-label">Número de grupos</label>
+              <p class="sport-choice-hint">{{ 'communities.tournaments.createUi.groupsHint' | t }}</p>
+              <label id="group-count-label">{{ 'communities.tournaments.createUi.groupCount' | t }}</label>
               <div class="t-community-sports" role="group" aria-labelledby="group-count-label">
                 <button type="button" class="t-sport-chip" [disabled]="busy"
                   [attr.aria-pressed]="teamGroupCountDraft === 2"
-                  (click)="teamGroupCountDraft = 2">2 grupos · mínimo 4 equipas</button>
+                  (click)="teamGroupCountDraft = 2">{{ 'communities.tournaments.createUi.twoGroups' | t }}</button>
                 <button type="button" class="t-sport-chip" [disabled]="busy"
                   [attr.aria-pressed]="teamGroupCountDraft === 4"
-                  (click)="teamGroupCountDraft = 4">4 grupos · mínimo 8 equipas</button>
+                  (click)="teamGroupCountDraft = 4">{{ 'communities.tournaments.createUi.fourGroups' | t }}</button>
               </div>
             }
             @if (teamFormatDraft === 'KNOCKOUT') {
-              <p class="sport-choice-hint">Sorteio de 2 a 32 equipas. Há entradas diretas na primeira ronda quando necessário.
-                Cada jogo tem de ter vencedor. Os vencedores avançam até à final.</p>
+              <p class="sport-choice-hint">{{ 'communities.tournaments.createUi.knockoutHint' | t }}</p>
             }
           </fieldset>
           @if (teamFormatDraft === 'LEAGUE') {
-          <label id="tournament-legs-label">Número de voltas</label>
+          <label id="tournament-legs-label">{{ 'communities.tournaments.createUi.legsLabel' | t }}</label>
           <div class="t-community-sports" role="group" aria-labelledby="tournament-legs-label">
             <button type="button" class="t-sport-chip" [disabled]="busy"
               [attr.aria-pressed]="roundRobinLegsDraft === 1"
-              (click)="roundRobinLegsDraft = 1">Uma volta</button>
+              (click)="roundRobinLegsDraft = 1">{{ 'communities.tournaments.createUi.oneLeg' | t }}</button>
             <button type="button" class="t-sport-chip" [disabled]="busy"
               [attr.aria-pressed]="roundRobinLegsDraft === 2"
-              (click)="roundRobinLegsDraft = 2">Duas voltas (casa e fora)</button>
+              (click)="roundRobinLegsDraft = 2">{{ 'communities.tournaments.createUi.twoLegs' | t }}</button>
           </div>
-          <p class="sport-choice-hint">Uma volta: cada par de equipas joga uma vez.
-            Duas voltas: joga-se também o confronto inverso, com casa e fora trocados.
-            A escolha fica definida ao criar o torneio e não muda depois de publicares as jornadas.</p>
+          <p class="sport-choice-hint">{{ 'communities.tournaments.createUi.legsHint' | t }}</p>
           }
           </section>
         }
 
         @if (!showTeamCreate || teamFormatDraft !== 'KNOCKOUT') {
-          <section class="create-step create-step-rules" aria-label="Regras da classificação">
+          <section class="create-step create-step-rules" [attr.aria-label]="'communities.tournaments.createUi.rulesRegion' | t">
             <div class="create-step-heading">
               <span class="create-step-index" aria-hidden="true">{{ showTeamCreate ? '03' : '02' }}</span>
               <div>
@@ -247,8 +242,7 @@
               <p>{{ sportFormatWarning }}</p>
               <small>{{ classificationProfile.fields }}</small>
               @if (!isSportFormatSupported) {
-                <p>Para já, regista estas provas nas jornadas da comunidade. A criação de torneios por provas
-                  só ficará disponível quando o calendário e a classificação deste formato estiverem implementados.</p>
+                <p>{{ 'communities.tournaments.createUi.unsupportedLong' | t }}</p>
               }
             </div>
             @if (isRaceChampionshipDraft) {
@@ -262,7 +256,7 @@
                 <span>
                   <strong>{{ 'communities.tournaments.adjustRules' | t }}</strong>
                   @if (classificationProfile.scoringMode === 'CHESS_HALF_POINTS') {
-                    <small>Vitória 1 · Empate ½ · Derrota 0</small>
+                    <small>{{ 'communities.tournaments.createUi.chessSummary' | t }}</small>
                   } @else {
                     <small>{{ 'communities.tournaments.currentPoints' | t:{ win: winPointsDraft, draw: drawPointsDraft, loss: lossPointsDraft } }}</small>
                   }
@@ -275,10 +269,9 @@
 
         @if (isSportFormatSupported && showTeamCreate && teamFormatDraft !== 'KNOCKOUT') {
           <fieldset class="t-points-rules t-tiebreak-rules" aria-describedby="t-tiebreak-help">
-            <legend>Critério de desempate</legend>
+            <legend>{{ 'communities.tournaments.createUi.tiebreakTitle' | t }}</legend>
             <p id="t-tiebreak-help" class="sport-choice-hint">
-              Em igualdade de pontos, escolhe o primeiro critério usado na classificação.
-              Os restantes critérios também se aplicam. A regra é definida na criação.
+              {{ 'communities.tournaments.createUi.tiebreakHint' | t }}
             </p>
             <div class="t-tiebreak-choices">
               @for (choice of teamTieBreakChoices; track choice.value) {
@@ -296,39 +289,38 @@
         @if (isSportFormatSupported && (!showTeamCreate || teamFormatDraft !== 'KNOCKOUT')) {
           @if (classificationProfile.scoringMode === 'CHESS_HALF_POINTS') {
             <div class="classification-fixed-points" role="note">
-              <strong>Pontuação de Xadrez</strong>
-              <div><span>Vitória: 1</span><span>Empate: ½</span><span>Derrota: 0</span></div>
-              <p>Este sistema é aplicado automaticamente; não há pontuações genéricas de futebol.</p>
+              <strong>{{ 'communities.tournaments.createUi.chessTitle' | t }}</strong>
+              <div><span>{{ 'communities.tournaments.createUi.chessWin' | t }}</span><span>{{ 'communities.tournaments.createUi.chessDraw' | t }}</span><span>{{ 'communities.tournaments.createUi.chessLoss' | t }}</span></div>
+              <p>{{ 'communities.tournaments.createUi.chessHint' | t }}</p>
             </div>
           } @else {
         <fieldset class="t-points-rules" aria-describedby="t-points-rules-help">
-          <legend>Regras de pontuação</legend>
+          <legend>{{ 'communities.tournaments.createUi.pointsLegend' | t }}</legend>
           <p id="t-points-rules-help" class="sport-choice-hint">
-            Define os pontos atribuídos na classificação por cada resultado. Valor inicial: 3 / 1 / 0.
-            Estas regras ficam associadas ao torneio.
+            {{ 'communities.tournaments.createUi.pointsHint' | t }}
           </p>
           <div class="t-points-fields">
             <label for="tournament-win-points">
-              Vitória
+              {{ 'communities.tournaments.createUi.win' | t }}
               <input id="tournament-win-points" type="number" min="0" max="100" step="1"
                 [(ngModel)]="winPointsDraft" [disabled]="busy"
                 [attr.aria-invalid]="!validPointRules ? 'true' : null">
             </label>
             <label for="tournament-draw-points">
-              Empate
+              {{ 'communities.tournaments.createUi.draw' | t }}
               <input id="tournament-draw-points" type="number" min="0" max="100" step="1"
                 [(ngModel)]="drawPointsDraft" [disabled]="busy"
                 [attr.aria-invalid]="!validPointRules ? 'true' : null">
             </label>
             <label for="tournament-loss-points">
-              Derrota
+              {{ 'communities.tournaments.createUi.loss' | t }}
               <input id="tournament-loss-points" type="number" min="0" max="100" step="1"
                 [(ngModel)]="lossPointsDraft" [disabled]="busy"
                 [attr.aria-invalid]="!validPointRules ? 'true' : null">
             </label>
           </div>
           @if (!validPointRules) {
-            <p class="field-validation" role="status">Introduz valores inteiros entre 0 e 100.</p>
+            <p class="field-validation" role="status">{{ 'communities.tournaments.createUi.pointsError' | t }}</p>
           }
         </fieldset>
           }
@@ -344,22 +336,22 @@
             <strong>{{ classificationProfile.heading }}</strong>
             <p>{{ sportFormatWarning }}</p>
             <small>{{ classificationProfile.fields }}</small>
-            <p>Para já, regista estas provas nas jornadas da comunidade.</p>
+            <p>{{ 'communities.tournaments.createUi.unsupportedShort' | t }}</p>
           </div>
         }
 
         <div class="create-actions">
           <button type="button" class="t-btn t-btn-secondary"
-            (click)="showIndividualCreate = false; showTeamCreate = false; showGuide = true">Voltar às opções</button>
+            (click)="showIndividualCreate = false; showTeamCreate = false; showGuide = true">{{ 'communities.tournaments.createUi.back' | t }}</button>
         <button type="button" class="t-btn t-btn-primary"
           [disabled]="busy || !isSportFormatSupported
             || (teamFormatDraft !== 'KNOCKOUT' && !validPointRules)
             || nameDraft.trim().length < 2 || !sportDraft
 "
           (click)="showTeamCreate ? createTeamCompetition() : create()">
-          {{ !isSportFormatSupported ? 'Formato ainda indisponível'
-              : (showTeamCreate ? 'Criar e preparar equipas'
-                  : (isRaceChampionshipDraft ? ('communities.karting.createButton' | t) : 'Confirmar liga individual')) }}
+          {{ !isSportFormatSupported ? ('communities.tournaments.createUi.createButtonUnavailable' | t)
+              : (showTeamCreate ? ('communities.tournaments.createUi.createButtonTeams' | t)
+                  : (isRaceChampionshipDraft ? ('communities.karting.createButton' | t) : ('communities.tournaments.createUi.createButtonIndividual' | t))) }}
         </button>
         </div>
       </div>
