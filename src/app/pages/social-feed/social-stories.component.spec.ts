@@ -111,6 +111,9 @@ describe('SocialStoriesComponent', () => {
     tick();
     component.openGroup(component.storyGroups[0]);
     fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+    expect(component.activeStory).not.toBeNull();
     const dialog = fixture.nativeElement.querySelector('.story-dialog') as HTMLElement;
     expect(dialog.textContent).toContain('@joao');
     expect(dialog.querySelector('video')?.hasAttribute('controls')).toBeFalse();
