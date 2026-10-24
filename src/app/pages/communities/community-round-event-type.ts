@@ -28,7 +28,7 @@ export type CommunityEventType = 'RACE' | 'FREESTYLE' | 'TRACK' | 'JUMP' | 'THRO
     | 'WAKO_POINT_FIGHTING' | 'WAKO_LIGHT_CONTACT' | 'WAKO_KICK_LIGHT'
     | 'WAKO_FULL_CONTACT' | 'WAKO_LOW_KICK' | 'WAKO_K1'
     | 'IFMA_FULL_WP' | 'IFMA_FULL_KO' | 'IFMA_FULL_RSCS' | 'IFMA_FULL_RSCI'
-    | 'STRENGTH_TRAINING' | 'SWIM_LCM';
+    | 'STRENGTH_TRAINING' | 'SWIM_LCM' | 'OWS_INDIVIDUAL';
 export interface CommunityEventOption { code: CommunityEventType; labelKey: string }
 const TYPES: Record<string, readonly CommunityEventOption[]> = {
   basquetebol: [{ code: 'BASKETBALL_FINAL', labelKey: 'communities.basketball.fiveVsFive' }],
@@ -67,6 +67,7 @@ const TYPES: Record<string, readonly CommunityEventOption[]> = {
   xadrez: [{ code: 'CHESS_GAME', labelKey: 'communities.eventType.chess_game' }],
   musculacao: [{ code: 'STRENGTH_TRAINING', labelKey: 'communities.strengthTraining.event' }],
   natacao: [{ code: 'SWIM_LCM', labelKey: 'communities.swimming.pool50m' }],
+  'natacao em aguas abertas': [{ code: 'OWS_INDIVIDUAL', labelKey: 'communities.openWater.individual' }],
   'muay thai': [
     { code: 'IFMA_FULL_WP', labelKey: 'communities.muayThai.fullWp' },
     { code: 'IFMA_FULL_KO', labelKey: 'communities.muayThai.fullKo' },
@@ -184,6 +185,7 @@ export function isRaceEvent(sport: string | null | undefined, eventType: string 
   const name = sport ? normalize(sport) : '';
   if (name === 'atletismo') return eventType === 'TRACK';
   if (name === 'natacao') return eventType == null || eventType === 'SWIM_LCM';
+  if (name === 'natacao em aguas abertas') return eventType == null || eventType === 'OWS_INDIVIDUAL';
   if (name === 'snowboard') return eventType === 'RACE';
   if (name === 'parkour') return eventType === 'PARKOUR_SPEED';
   if (name === 'bmx') return eventType == null || eventType === 'RACE'; // existing history
