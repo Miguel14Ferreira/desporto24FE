@@ -100,7 +100,7 @@ describe('Events2Component', () => {
     )).not.toBeNull();
   });
 
-  it('explains one session per week and warns that immediate opening affects all four', () => {
+  it('explains one weekly game and warns that immediate opening opens all planned games', () => {
     component.communityId = 7;
     component.recurrence = 'WEEKLY';
     component.recurrenceOccurrences = 4;
@@ -109,13 +109,15 @@ describe('Events2Component', () => {
 
     const form = fixture.nativeElement as HTMLElement;
     const frequency = form.querySelector('select[name="recurrence"]') as HTMLSelectElement;
+    const weekly = form.querySelector('select[name="weeklySessionsPerWeek"]') as HTMLSelectElement;
     const weeks = form.querySelector('input[name="recurrenceOccurrences"]') as HTMLInputElement;
 
-    expect(frequency.closest('label')?.textContent).toContain('Sessões por semana');
-    expect(frequency.options[1].textContent).toContain('1 sessão por semana');
+    expect(frequency.closest('label')?.textContent).toContain('Frequência dos jogos');
+    expect(frequency.options[1].textContent).toContain('Todas as semanas');
+    expect(weekly.closest('label')?.textContent).toContain('Sessões por semana');
     expect(weeks.closest('label')?.textContent).toContain('Semanas com jogo');
     expect(form.querySelector('.recurrence-plan-summary')?.textContent)
-      .toContain('4 semanas com jogo');
+      .toContain('1 por semana durante 4 semanas = 4 sessões');
     expect(form.querySelectorAll('.recurrence-plan-summary')[1]?.textContent)
       .toContain('as inscrições das 4 sessões abrem todas');
 
@@ -126,6 +128,83 @@ describe('Events2Component', () => {
     component.registrationOpeningMode = 'SCHEDULED';
     fixture.detectChanges();
     expect(form.textContent).toContain('as seguintes uma semana depois da anterior');
+  });
+
+  it('allows three weekly games with separate first-week dates and shows 12 future games', () => {
+    component.communityId = 7;
+    component.recurrence = 'WEEKLY';
+    component.recurrenceOccurrences = 4;
+    component.gameDate = '2099-10-15T18:00';
+    component.sport = 'Padel';
+    component.city = 'Lisboa';
+    component.address = 'Rua do Campo';
+    // Initialize the ngModel-backed selector before simulating the user's choice.
+    fixture.detectChanges();
+    component.setWeeklySessionsPerWeek(3);
+    fixture.detectChanges();
+    expect(component.additionalWeeklyGameDates.length).toBe(2);
+
+    const form = fixture.nativeElement as HTMLElement;
+    const extras = form.querySelectorAll('input.weekly-game-date');
+    expect(extras.length).toBe(2);
+    expect(form.textContent).toContain('3 por semana durante 4 semanas = 12 sessões');
+    component.additionalWeeklyGameDates = ['2099-10-16T19:00', '2099-10-17T20:00'];
+    component.registrationOpeningMode = 'MANUAL';
+    fixture.detectChanges();
+    expect(form.textContent).toContain('As 12 sessões ficam fechadas');
+
+    component.createSession();
+    expect(sessionService.create).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        recurrence: 'WEEKLY', recurrenceOccurrences: 4,
+        additionalWeeklyGameDates: [
+          new Date('2099-10-16T19:00').toISOString(),
+          new Date('2099-10-17T20:00').toISOString()
+        ],
+        registrationOpeningMode: 'MANUAL'
+      }), undefined
+    );
+  });
+
+  it('rejects duplicated out-of-window weekly dates or more than 52 created games', () => {
+    component.communityId = 7;
+    component.sport = 'Padel';
+    component.city = 'Lisboa';
+    component.address = 'Rua do Campo';
+    component.gameDate = '2099-10-15T18:00';
+    component.recurrence = 'WEEKLY';
+    component.recurrenceOccurrences = 4;
+    component.setWeeklySessionsPerWeek(2);
+    component.additionalWeeklyGameDates = ['2099-10-15T18:00'];
+    component.createSession();
+    expect(sessionService.create).not.toHaveBeenCalled();
+    expect(component.errorMessage).toContain('horários diferentes');
+
+    component.additionalWeeklyGameDates = ['2099-10-23T18:00'];
+    component.createSession();
+    expect(component.errorMessage).toContain('dentro dos 7 dias');
+
+    component.additionalWeeklyGameDates = ['2099-10-17T18:00'];
+    component.recurrenceOccurrences = 27;
+    component.createSession();
+    expect(component.errorMessage).toContain('no máximo 52 sessões');
+    expect(sessionService.create).not.toHaveBeenCalled();
+  });
+
+  it('keeps one-weekly-session default compatible with existing request', () => {
+    component.communityId = 7;
+    component.sport = 'Padel';
+    component.city = 'Lisboa';
+    component.address = 'Rua do Campo';
+    component.gameDate = '2099-10-15T18:00';
+    component.recurrence = 'WEEKLY';
+    component.recurrenceOccurrences = 4;
+    component.createSession();
+    expect(sessionService.create).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        additionalWeeklyGameDates: [], recurrenceOccurrences: 4
+      }), undefined
+    );
   });
 
   it('distinguishes fortnightly sessions from weekly game weeks', () => {

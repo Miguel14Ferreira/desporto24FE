@@ -269,10 +269,14 @@ export interface InlineSpeedDecision {
   confirmedAt: string;
   stale: boolean;
 }
+export type InlineSpeedTieEvidenceType = 'PHOTO_FINISH' | 'VIDEO_REVIEW' | 'OFFICIAL_MINUTES' | 'TIEBREAK_TRIAL' | 'OTHER';
+
 export interface InlineSpeedTieBreakRevision {
   revision: number;
   selectedPlayerIds: number[];
   reason: string;
+  evidenceType?: InlineSpeedTieEvidenceType | null;
+  evidenceReference?: string | null;
   confirmedBy: string;
   confirmedAt: string;
   stale: boolean;
@@ -281,10 +285,36 @@ export interface InlineSpeedTieBreak {
   sourceStage: 'FIRST';
   selectedPlayerIds: number[];
   reason: string;
+  evidenceType?: InlineSpeedTieEvidenceType | null;
+  evidenceReference?: string | null;
   confirmedBy: string;
   confirmedAt: string;
   stale: boolean;
   revisions?: InlineSpeedTieBreakRevision[];
+}
+
+export interface InlineSpeedTrialResult {
+  playerId: number;
+  place: number;
+  seconds: number | null;
+}
+export interface InlineSpeedTrial {
+  id: number;
+  sourceStage: 'FIRST';
+  heldAt: string;
+  officialReference: string;
+  reason: string;
+  recordedBy: string;
+  recordedAt: string;
+  stale: boolean;
+  results: InlineSpeedTrialResult[];
+}
+export interface InlineSpeedTrialRequest {
+  actuallyHeld: boolean;
+  heldAt: string;
+  officialReference: string;
+  reason: string;
+  results: InlineSpeedTrialResult[];
 }
 
 export interface InlineSpeedOverview {
@@ -295,4 +325,5 @@ export interface InlineSpeedOverview {
   proposals: InlineSpeedProposal[];
   decisions: InlineSpeedDecision[];
   tieBreaks?: InlineSpeedTieBreak[];
+  trials?: InlineSpeedTrial[];
 }

@@ -23,6 +23,8 @@ export interface VenueEditSuggestion {
   reviewedByUsername: string | null;
   reviewedAt: string | null;
   decisionNote: string | null;
+  /** Authenticated moderator's confirmation date; null means no recorded attestation. */
+  sourceReviewConfirmedAt?: string | null;
 }
 
 export interface VenueEditSuggestionPage {
@@ -50,6 +52,11 @@ export class VenueEditSuggestionsService {
 
   pending(page = 0): Observable<VenueEditSuggestionPage> {
     return this.http.get<VenueEditSuggestionPage>(this.admin,
+      { params: new HttpParams().set('page', String(page)) });
+  }
+
+  history(page = 0): Observable<VenueEditSuggestionPage> {
+    return this.http.get<VenueEditSuggestionPage>(`${this.admin}/history`,
       { params: new HttpParams().set('page', String(page)) });
   }
 

@@ -63,7 +63,7 @@
                     @if (conversation.latestAt) { <small>{{ formatDate(conversation.latestAt) }}</small> }
                   </span>
                   <span class="inbox-entry-kind">{{ kindLabel(conversation.kind) | t }} · {{ conversation.subtitle }}</span>
-                  <span class="inbox-entry-snippet">{{ conversation.latestText || ('inbox.openPreview' | t) }}</span>
+                  <span class="inbox-entry-snippet">{{ conversation.latestText ? displayMessagePreview(conversation.latestText) : ('inbox.openPreview' | t) }}</span>
                 </span>
                 @if ((conversation.unreadCount ?? conversation.newThisVisit) > 0) {
                   <span class="inbox-unread" [attr.aria-label]="'inbox.newCount' | t:{count: (conversation.unreadCount ?? conversation.newThisVisit)}">
@@ -191,7 +191,7 @@
                 </div>
               }
               <article class="inbox-bubble" [class.thread-continuation]="continuesGroupAt(i)" [class.is-mine]="isMine(message)"
-                [class.inbox-bubble--voice]="isVoiceNote(message) && !showMessageBody(message) && !message.replyToMessageId"
+                [class.inbox-bubble--voice]="!message.deletedAt && isVoiceNote(message) && !showMessageBody(message) && !message.replyToMessageId"
                 [class.inbox-bubble--search-match]="selectedSearchResultId === message.id"
                 [attr.data-message-id]="message.id" tabindex="-1">
                 <div class="inbox-bubble-meta">
@@ -199,6 +199,9 @@
                     <strong>{{ isMine(message) ? ('chat.you' | t) : message.sender }}</strong>
                   }
                   <time>{{ formatDate(message.createdAt) }}</time>
+                  @if (message.editedAt && !message.deletedAt) {
+                    <small class="inbox-message-edited">{{ 'chat.messageEdited' | t }}</small>
+                  }
                   @if (isMine(message) && message.id > 0) {
                     <span class="inbox-read-check" [class.is-read]="conversation.kind === 'direct' && isDirectMessageRead(message)"
                       [attr.aria-label]="((conversation.kind === 'direct' && isDirectMessageRead(message)) ? 'inbox.readConfirmed' : 'inbox.savedOnServer') | t"
@@ -206,19 +209,45 @@
                       role="img" aria-live="off">{{ conversation.kind === 'direct' && isDirectMessageRead(message) ? '✓✓' : '✓' }}</span>
                   }
                 </div>
-                @if (message.replyToMessageId && message.replyToText) {
+                @if (!message.deletedAt && message.replyToMessageId && message.replyToText) {
                   <div class="inbox-message-quote">
                     <strong>{{ message.replyToSender }}</strong>
-                    <span>{{ message.replyToText }}</span>
+                    <span>{{ displayMessagePreview(message.replyToText) }}</span>
                   </div>
                 }
-                @if (readGiphyMessage(message.text); as giphy) {
+                @if (message.deletedAt) {
+                  <p class="inbox-message-deleted">{{ 'chat.messageDeleted' | t }}</p>
+                } @else if (editingMessageId === message.id) {
+                  <div class="inbox-edit-inline">
+                    <textarea [ngModel]="editDraft" (ngModelChange)="editDraft = $event"
+                      [ngModelOptions]="{standalone:true}" maxlength="2000" rows="3"
+                      [disabled]="mutationPending"
+                      [attr.aria-label]="'chat.editMessage' | t"></textarea>
+                    <div class="inbox-mutation-actions">
+                      <button type="button" [disabled]="mutationPending || !editDraft.trim() || editDraft.trim() === message.text || editDraft.trim().length > 2000"
+                        (click)="saveEditedMessage(message)">{{ 'chat.saveEdit' | t }}</button>
+                      <button type="button" [disabled]="mutationPending"
+                        (click)="cancelMessageMutation()">{{ 'chat.cancelEdit' | t }}</button>
+                    </div>
+                    @if (mutationError) { <p role="alert">{{ mutationError }}</p> }
+                  </div>
+                } @else if (readSharedMessage(message.text); as shared) {
+                  <div class="inbox-shared-card">
+                    <span class="inbox-shared-card-kind">{{ ('chat.shareType.' + shared.kind) | t }}</span>
+                    <strong>{{ shared.title }}</strong>
+                    @if (shared.subtitle) { <span>{{ shared.subtitle }}</span> }
+                    <a [routerLink]="shared.route" [attr.aria-label]="('chat.openShared' | t) + ': ' + shared.title">
+                      {{ 'chat.openShared' | t }} ↗
+                    </a>
+                    @if (shared.caption) { <p>{{ shared.caption }}</p> }
+                  </div>
+                } @else if (readGiphyMessage(message.text); as giphy) {
                   <app-giphy-embed [id]="giphy.id" [pageUrl]="giphy.pageUrl"
                     [caption]="giphy.caption" [creator]="giphy.creator"></app-giphy-embed>
                 } @else if (showMessageBody(message)) {
                   <p>{{ message.text }}</p>
                 }
-                @if (message.attachmentName) {
+                @if (!message.deletedAt && message.attachmentName) {
                   <div class="inbox-attachment">
                     @if (isVoiceNote(message)) {
                       <div class="inbox-voice-inline" [attr.aria-label]="'chat.voiceMessage' | t">
@@ -275,13 +304,37 @@
                     }
                   </div>
                 }
-                <button type="button" class="inbox-reply-action"
-                    [disabled]="sending || deliveryUncertain || !composerAllowed"
-                    (click)="replyToMessage(message)">
-                    ↩ {{ 'chat.replyToMessage' | t }}
-                  </button>
-                <app-chat-reactions [kind]="conversation.kind" [conversationId]="conversation.id"
-                  [messageId]="message.id" [disabled]="!composerAllowed"></app-chat-reactions>
+                @if (!message.deletedAt) {
+                  <div class="inbox-message-actions">
+                    <button type="button" class="inbox-reply-action"
+                      [disabled]="sending || deliveryUncertain || !composerAllowed || mutationPending"
+                      (click)="replyToMessage(message)">
+                      ↩ {{ 'chat.replyToMessage' | t }}
+                    </button>
+                    @if (canEditSentMessage(message)) {
+                      <button type="button" class="inbox-mutation-trigger"
+                        (click)="beginEditMessage(message)">{{ 'chat.editMessage' | t }}</button>
+                    }
+                    @if (canDeleteSentMessage(message)) {
+                      <button type="button" class="inbox-mutation-trigger"
+                        (click)="promptDeleteMessage(message)">{{ 'chat.deleteMessage' | t }}</button>
+                    }
+                  </div>
+                  @if (confirmingDeleteMessageId === message.id) {
+                    <div class="inbox-mutation-confirm">
+                      <p>{{ 'chat.confirmDeletion' | t }}</p>
+                      <div class="inbox-mutation-actions">
+                        <button type="button" [disabled]="mutationPending"
+                          (click)="confirmDeleteMessage(message)">{{ 'chat.deleteForEveryone' | t }}</button>
+                        <button type="button" [disabled]="mutationPending"
+                          (click)="cancelMessageMutation()">{{ 'chat.cancelEdit' | t }}</button>
+                      </div>
+                      @if (mutationError) { <p role="alert">{{ mutationError }}</p> }
+                    </div>
+                  }
+                  <app-chat-reactions [kind]="conversation.kind" [conversationId]="conversation.id"
+                    [messageId]="message.id" [disabled]="!composerAllowed"></app-chat-reactions>
+                }
               </article>
             }
           </div>
@@ -316,7 +369,7 @@
               <div class="inbox-reply-banner">
                 <div>
                   <strong>{{ 'chat.replyingTo' | t }} {{ original.sender }}</strong>
-                  <span>{{ original.text }}</span>
+                  <span>{{ displayMessagePreview(original.text) }}</span>
                 </div>
                 <button type="button" [disabled]="sending || deliveryUncertain"
                   (click)="cancelReply()">{{ 'chat.cancelReply' | t }}</button>
@@ -331,9 +384,22 @@
             } @else if (!composerAccessLoading && !composerAllowed && !previewLoading && !previewError) {
               <p class="inbox-compose-locked" role="status">{{ 'inbox.cannotWrite' | t }}</p>
             }
+            @if (selectedShare; as share) {
+              <div class="inbox-attachment-draft inbox-share-draft">
+                <span aria-hidden="true">↗</span>
+                <span>{{ ('chat.shareType.' + share.kind) | t }}: {{ share.title }}</span>
+                <button type="button" [disabled]="sending || deliveryUncertain"
+                  (click)="removeSelectedShare()">{{ 'chat.attachmentRemove' | t }}</button>
+              </div>
+            }
             @if (selectedGif; as gif) {
               <div class="inbox-attachment-draft inbox-giphy-draft">
-                <img [src]="gif.previewUrl" [alt]="'chat.gifImage' | t" referrerpolicy="no-referrer">
+                @if (gifAvailable === false) {
+                  <app-giphy-embed [id]="gif.id" [pageUrl]="gif.pageUrl"
+                    [compact]="true"></app-giphy-embed>
+                } @else {
+                  <img [src]="gif.previewUrl" [alt]="'chat.gifImage' | t" referrerpolicy="no-referrer">
+                }
                 <span>{{ gif.title }} · GIPHY</span>
                 <button type="button" [disabled]="sending || deliveryUncertain"
                   (click)="removeSelectedGif()">{{ 'chat.attachmentRemove' | t }}</button>
@@ -366,7 +432,7 @@
                     [class.is-recording]="voiceRecording"
                     [disabled]="!composerAllowed || composerAccessLoading || sending
                       || deliveryUncertain || deliveryChecking || previewLoading || previewError
-                      || voiceFinalizing || (!voiceRecording && (!!selectedAttachment || !!selectedGif))"
+                      || voiceFinalizing || (!voiceRecording && (!!selectedAttachment || !!selectedGif || !!selectedShare))"
                     [attr.aria-label]="(voiceRecording ? 'chat.voiceStop' : 'chat.voiceStart') | t"
                     [attr.title]="(voiceRecording ? 'chat.voiceStop' : 'chat.voiceStart') | t"
                     (click)="voiceRecording ? stopVoiceRecording() : startVoiceRecording()">
@@ -381,16 +447,69 @@
                     <span class="inbox-voice-indicator" role="status">{{ 'chat.voiceProcessing' | t }}</span>
                   }
                 }
-                @if (attachmentControlsReady) {
-                  <input #attachmentFile type="file" class="inbox-attachment-input"
+                <input #attachmentFile type="file" class="inbox-attachment-input"
                     accept=".jpg,.jpeg,.png,.webp,.gif,.pdf,image/jpeg,image/png,image/webp,image/gif,application/pdf"
                     (change)="onAttachmentPicked($event)">
-                  <button type="button" class="inbox-attachment-trigger"
-                    [disabled]="!composerAllowed || composerAccessLoading || sending || deliveryUncertain || deliveryChecking || previewLoading || previewError || voiceRecording || voiceFinalizing"
-                    [attr.title]="'chat.attachmentAdd' | t"
-                    [attr.aria-label]="'chat.attachmentAdd' | t"
-                    (click)="attachmentFile.click()" aria-haspopup="dialog">📎</button>
-                }
+                  <div class="inbox-share-controls" (keydown.escape)="closeSharePicker(); closeAttachmentMenu()">
+                    <button type="button" class="inbox-attachment-trigger"
+                      [disabled]="!composerAllowed || composerAccessLoading || sending || deliveryUncertain || deliveryChecking || previewLoading || previewError || voiceRecording || voiceFinalizing"
+                      [attr.title]="'chat.attachmentAdd' | t"
+                      [attr.aria-label]="'chat.attachmentAdd' | t"
+                      [attr.aria-expanded]="attachmentMenuOpen || sharePickerOpen"
+                      (click)="toggleAttachmentMenu()" aria-haspopup="dialog">📎</button>
+                    @if (attachmentMenuOpen) {
+                      <div class="inbox-share-menu" role="dialog" [attr.aria-label]="'chat.shareMenu' | t">
+                        <button type="button" [disabled]="!attachmentControlsReady"
+                          (click)="closeAttachmentMenu(); attachmentFile.click()">
+                          📄 {{ 'chat.shareFile' | t }}
+                        </button>
+                        <button type="button" (click)="openSharePicker()">
+                          ↗ {{ 'chat.shareJynlo' | t }}
+                        </button>
+                      </div>
+                    }
+                    @if (sharePickerOpen) {
+                      <section class="inbox-share-picker" role="dialog" [attr.aria-label]="'chat.shareJynlo' | t">
+                        <div class="inbox-share-picker-head">
+                          <strong>{{ 'chat.shareJynlo' | t }}</strong>
+                          <button type="button" [attr.aria-label]="'chat.pickerClose' | t"
+                            (click)="closeSharePicker()">×</button>
+                        </div>
+                        <div class="inbox-share-tabs" role="tablist">
+                          <button type="button" role="tab" [class.active]="sharePickerTab === 'profile'"
+                            [attr.aria-selected]="sharePickerTab === 'profile'"
+                            (click)="sharePickerTab = 'profile'">{{ 'chat.shareType.profile' | t }}</button>
+                          <button type="button" role="tab" [class.active]="sharePickerTab === 'session'"
+                            [attr.aria-selected]="sharePickerTab === 'session'"
+                            (click)="sharePickerTab = 'session'">{{ 'chat.shareType.session' | t }}</button>
+                          <button type="button" role="tab" [class.active]="sharePickerTab === 'community'"
+                            [attr.aria-selected]="sharePickerTab === 'community'"
+                            (click)="sharePickerTab = 'community'">{{ 'chat.shareType.community' | t }}</button>
+                        </div>
+                        <input type="search" class="inbox-share-filter" [ngModel]="sharePickerSearch"
+                          [ngModelOptions]="{standalone:true}" (ngModelChange)="sharePickerSearch = $event"
+                          [attr.aria-label]="'chat.shareSearch' | t" [placeholder]="'chat.shareSearch' | t">
+                        <div class="inbox-share-results">
+                          @if (sharePickerLoading) {
+                            <p role="status">{{ 'chat.shareLoading' | t }}</p>
+                          } @else if (sharePickerError) {
+                            <p role="alert">{{ 'chat.shareError' | t }}</p>
+                          } @else if (!visibleShareChoices.length) {
+                            <p>{{ 'chat.shareEmpty' | t }}</p>
+                          } @else {
+                            @for (item of visibleShareChoices; track item.kind + ':' + item.id) {
+                              <button type="button" class="inbox-share-option"
+                                (click)="selectShareChoice(item)">
+                                <strong>{{ item.title }}</strong>
+                                <small>{{ item.subtitle }}</small>
+                              </button>
+                            }
+                          }
+                        </div>
+                        <small class="inbox-share-privacy">{{ 'chat.sharePrivacy' | t }}</small>
+                      </section>
+                    }
+                  </div>
                 <div class="inbox-emoji-controls" (keydown.escape)="closeEmojiPicker()">
                   <input #gifFile type="file" class="inbox-attachment-input"
                     accept=".gif,image/gif" (change)="onAttachmentPicked($event)">
@@ -403,27 +522,92 @@
                     <span aria-hidden="true">☺</span>
                   </button>
                   @if (emojiPickerOpen) {
-                    <app-chat-emoji-gif-picker
-                      [tab]="pickerTab"
-                      [attachmentControlsReady]="attachmentControlsReady"
-                      [emojis]="composerEmojis"
-                      [categories]="gifCategories"
-                      [gifQuery]="gifQuery"
-                      [gifAvailable]="gifAvailable"
-                      [gifSelectingId]="gifSelectingId"
-                      [gifResults]="gifResults"
-                      [gifError]="gifError"
-                      [gifLoading]="gifLoading"
-                      [gifHasMore]="gifHasMore"
-                      (closed)="closeEmojiPicker()"
-                      (tabSelected)="selectPickerTab($event)"
-                      (emojiSelected)="insertEmoji($event)"
-                      (queryChanged)="onGifSearchInput($event)"
-                      (categorySelected)="searchGifCategory($event)"
-                      (gifSelected)="chooseGif($event)"
-                      (loadMore)="searchGifResults($event)"
-                      (uploadRequested)="closeEmojiPicker(); gifFile.click()"
-                    ></app-chat-emoji-gif-picker>
+                    <section class="inbox-picker-panel" role="dialog"
+                      [attr.aria-label]="'chat.pickerTitle' | t">
+                      <div class="inbox-picker-tabs" role="tablist" [attr.aria-label]="'chat.pickerTitle' | t">
+                        <button type="button" role="tab" [attr.aria-selected]="pickerTab === 'emoji'"
+                          [class.active]="pickerTab === 'emoji'"
+                          (click)="selectPickerTab('emoji')">☺ <span>{{ 'chat.pickerEmojis' | t }}</span></button>
+                        @if (attachmentControlsReady) {
+                          <button type="button" role="tab" [attr.aria-selected]="pickerTab === 'gif'"
+                            [class.active]="pickerTab === 'gif'"
+                            (click)="selectPickerTab('gif')">GIF</button>
+                        }
+                        <button type="button" class="inbox-picker-close"
+                          [attr.aria-label]="'chat.pickerClose' | t"
+                          (click)="closeEmojiPicker()">×</button>
+                      </div>
+                      @if (pickerTab === 'emoji') {
+                        <div class="inbox-picker-emoji-grid" role="group"
+                          [attr.aria-label]="'chat.emojiPicker' | t">
+                          @for (emoji of composerEmojis; track emoji) {
+                            <button type="button" [attr.aria-label]="emoji"
+                              (click)="insertEmoji(emoji)">{{ emoji }}</button>
+                          }
+                        </div>
+                      } @else {
+                        <div class="inbox-picker-gif-search">
+                          <span aria-hidden="true">⌕</span>
+                          <input type="search" name="gifSearch"
+                            [ngModel]="gifQuery" [ngModelOptions]="{standalone:true}"
+                            (ngModelChange)="onGifSearchInput($event)" maxlength="50"
+                            [disabled]="gifAvailable !== true || !!gifSelectingId"
+                            [placeholder]="'chat.gifSearch' | t"
+                            [attr.aria-label]="'chat.gifSearch' | t">
+                        </div>
+                        <div class="inbox-picker-categories"
+                          [attr.aria-label]="'chat.gifCategories' | t">
+                          @for (category of gifCategories; track category.phrase) {
+                            <button type="button" [disabled]="!gifAvailable || !!gifSelectingId"
+                              [attr.aria-label]="category.phrase"
+                              (click)="searchGifCategory(category.phrase)">{{ category.icon }}</button>
+                          }
+                        </div>
+                        @if (gifAvailable === false) {
+                          <p class="inbox-picker-feedback" role="status">{{ 'chat.gifNotConfigured' | t }}</p>
+                        }
+                        @if (gifError) {
+                          <p class="inbox-picker-feedback inbox-picker-error" role="alert">{{ gifError }}</p>
+                        }
+                        @if (gifLoading && !gifResults.length) {
+                          <p class="inbox-picker-feedback" role="status">{{ 'chat.gifLoading' | t }}</p>
+                        }
+                        <div class="inbox-picker-gif-grid" role="group"
+                          [attr.aria-label]="'chat.gifResults' | t">
+                          @for (gif of gifResults; track gif.id) {
+                            <div class="inbox-gif-tile">
+                              @if (gifAvailable === false) {
+                                <app-giphy-embed [id]="gif.id" [pageUrl]="gif.pageUrl"
+                                  [compact]="true"></app-giphy-embed>
+                              } @else {
+                                <img [src]="gif.previewUrl" [alt]="" loading="lazy" referrerpolicy="no-referrer">
+                              }
+                              <button type="button" class="inbox-gif-tile-select"
+                                [disabled]="!!gifSelectingId" [attr.title]="gif.title"
+                                [attr.aria-label]="gif.title || ('chat.gifSelect' | t)"
+                                (click)="chooseGif(gif)"></button>
+                            </div>
+                          }
+                        </div>
+                        @if (!gifLoading && gifAvailable && !gifError && !gifResults.length) {
+                          <p class="inbox-picker-feedback">{{ 'chat.gifNoResults' | t }}</p>
+                        }
+                        @if (gifHasMore && !gifLoading) {
+                          <button type="button" class="inbox-picker-more"
+                            [disabled]="!!gifSelectingId"
+                            (click)="searchGifResults(gifResults.length)">{{ 'chat.gifMore' | t }}</button>
+                        }
+                        <footer class="inbox-picker-footer">
+                          <button type="button" (click)="closeEmojiPicker(); gifFile.click()"
+                            [disabled]="!attachmentControlsReady || !!gifSelectingId">
+                            <span aria-hidden="true">↑</span> {{ 'chat.gifUpload' | t }}
+                          </button>
+                          @if (gifAvailable || gifResults.length) {
+                            <a href="https://giphy.com" target="_blank" rel="noopener noreferrer">Powered by GIPHY</a>
+                          }
+                        </footer>
+                      }
+                    </section>
                   }
                 </div>
                 <button type="submit" class="jynlo-action jynlo-action--primary"

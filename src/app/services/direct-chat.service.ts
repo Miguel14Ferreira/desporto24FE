@@ -32,6 +32,16 @@ export class DirectChatService {
     );
   }
 
+  editMessage(username: string, messageId: number, text: string): Observable<DirectChatMessage> {
+    return this.http.put<DirectChatMessage>(this.baseUrl + '/' + encodeURIComponent(username)
+      + '/messages/' + messageId, {text});
+  }
+
+  deleteMessage(username: string, messageId: number): Observable<DirectChatMessage> {
+    return this.http.delete<DirectChatMessage>(this.baseUrl + '/' + encodeURIComponent(username)
+      + '/messages/' + messageId);
+  }
+
   attachmentsAvailable(username: string): Observable<{ available: boolean }> {
     return this.http.get<{ available: boolean }>(this.baseUrl + '/'
       + encodeURIComponent(username) + '/attachments/availability');

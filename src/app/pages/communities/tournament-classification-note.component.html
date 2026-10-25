@@ -1,0 +1,24 @@
+@if (kind === 'profile') {
+  <div class="classification-profile" [class.classification-notice]="unsupported" role="status">
+    <strong>{{ heading }}</strong>
+    <p>{{ description }}</p>
+    <small>{{ fields }}</small>
+    @if (unsupported) {
+      <p>{{ 'communities.tournaments.createUi.unsupportedLong' | t }}</p>
+    }
+  </div>
+} @else {
+  <div class="classification-fixed-points" role="note">
+    @if (kind === 'inline') {
+      <strong>{{ 'communities.inlineSpeed.createNoPointsTitle' | t }}</strong>
+      <p>{{ 'communities.inlineSpeed.createNoPointsDescription' | t }}</p>
+    } @else if (kind === 'race') {
+      <strong>{{ raceSport }} · {{ 'communities.karting.creationTitle' | t }}</strong>
+      <p>{{ 'communities.karting.creationHint' | t }}</p>
+    } @else if (kind === 'chess') {
+      <strong>{{ 'communities.tournaments.createUi.chessTitle' | t }}</strong>
+      <div><span>{{ 'communities.tournaments.createUi.chessWin' | t }}</span><span>{{ 'communities.tournaments.createUi.chessDraw' | t }}</span><span>{{ 'communities.tournaments.createUi.chessLoss' | t }}</span></div>
+      <p>{{ 'communities.tournaments.createUi.chessHint' | t }}</p>
+    }
+  </div>
+}

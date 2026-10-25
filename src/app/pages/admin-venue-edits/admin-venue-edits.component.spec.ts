@@ -21,7 +21,7 @@ describe('AdminVenueEditsComponent', () => {
 
   beforeEach(() => {
     api = jasmine.createSpyObj<VenueEditSuggestionsService>('VenueEditSuggestionsService',
-      ['pending', 'decide']);
+      ['pending', 'history', 'decide']);
     cdr = jasmine.createSpyObj<ChangeDetectorRef>('ChangeDetectorRef', ['markForCheck']);
     api.pending.and.returnValue(of({ suggestions:[pending], page:0, hasMore:false }));
     component = new AdminVenueEditsComponent(api, cdr);
@@ -34,6 +34,55 @@ describe('AdminVenueEditsComponent', () => {
     expect(component.loading).toBeFalse();
     expect(component.suggestions.length).toBe(1);
     expect(component.fields(pending)).toEqual(['name']);
+  });
+
+
+  it('loads completed moderation records without changing the pending queue', () => {
+    const approved: VenueEditSuggestion = {
+      ...pending, id: 45, status: 'APPROVED', proposed: {contact: '225073300'},
+      before: {contact: null},
+      reviewedAt: '2026-10-25T20:00:00Z', reviewedByUsername: 'moderator',
+      sourceUrl: 'https://www.agoraporto.pt/piscinas-municipais/piscina-municipal-da-constituicao',
+      sourceReviewConfirmedAt: '2026-10-25T20:00:00Z'
+    };
+    const rejected: VenueEditSuggestion = {
+      ...pending, id: 46, status: 'REJECTED',
+      reviewedAt: '2026-10-25T19:00:00Z', reviewedByUsername: 'moderator',
+      decisionNote: 'Contacto sem confirmação', sourceReviewConfirmedAt: null
+    };
+    api.history.and.returnValue(of({ suggestions: [approved, rejected], page: 0, hasMore: false }));
+    component.changeMode('history');
+    expect(component.mode).toBe('history');
+    expect(component.page).toBe(0);
+    expect(api.history).toHaveBeenCalledOnceWith(0);
+    expect(component.suggestions.map(x => x.status)).toEqual(['APPROVED', 'REJECTED']);
+    expect(component.suggestions[0].sourceReviewConfirmedAt).toBe('2026-10-25T20:00:00Z');
+    expect(component.suggestions[1].sourceReviewConfirmedAt).toBeNull();
+
+    component.open(approved);
+    component.action = 'approve';
+    component.sourceReviewed = true;
+    component.decide();
+    expect(api.decide).not.toHaveBeenCalled();
+    component.changeMode('pending');
+    expect(component.selected).toBeNull();
+    expect(component.suggestions).toEqual([pending]);
+    expect(api.pending).toHaveBeenCalledTimes(2);
+  });
+
+  it('paginates history independently and shows errors without stale pending actions', () => {
+    api.history.and.returnValue(of({ suggestions: [], page: 1, hasMore: true }));
+    component.changeMode('history');
+    component.load(1);
+    expect(api.history).toHaveBeenCalledWith(1);
+    expect(component.page).toBe(1);
+    expect(component.hasMore).toBeTrue();
+    api.history.and.returnValue(throwError(() => ({status:503})));
+    component.load(0);
+    expect(component.loadError).toBeTrue();
+    expect(component.suggestions).toEqual([]);
+    expect(component.selected).toBeNull();
+    expect(api.decide).not.toHaveBeenCalled();
   });
 
   it('requires a reason for rejection and records the decision once', () => {

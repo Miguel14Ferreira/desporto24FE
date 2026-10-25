@@ -28,8 +28,9 @@ import {
 } from './inbox.model';
 import { RecoverableSend, restorePendingSends, savePendingSends } from './pending-send-session';
 import { GifChoice, encodeGiphyText, findGiphy, readGifProviderKey, readGiphyText } from './gif-picker.client';
+import { ShareChoice, ShareKind, encodeShareMessage, readSharedMessage } from './share-message';
 import { GiphyEmbedComponent } from './giphy-embed.component';
-import { ChatEmojiGifPickerComponent } from './chat-emoji-gif-picker.component';
+import { CURATED_GIPHY_GIFS } from './curated-gifs';
 
 export const VOICE_NOTE_MAX_DURATION_MS = 5 * 60_000;
 const VOICE_NOTE_AUDIO_BITRATE = 48_000;
@@ -37,7 +38,7 @@ const VOICE_NOTE_AUDIO_BITRATE = 48_000;
 @Component({
   selector: 'app-messages-center',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TranslatePipe, ChatReactionsComponent, GiphyEmbedComponent, ChatEmojiGifPickerComponent],
+  imports: [CommonModule, FormsModule, RouterLink, TranslatePipe, ChatReactionsComponent, GiphyEmbedComponent],
   templateUrl: './messages-center.component.html',
   styleUrls: ['./messages-center.component.css'],
   changeDetection: ChangeDetectionStrategy.Eager
@@ -92,6 +93,11 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.attachmentReady = false;
     this.selectedAttachment = null;
     this.selectedGif = null;
+    this.selectedShare = null;
+    this.closeSharePicker();
+    this.closeAttachmentMenu();
+    ++this.mutationVersion;
+    this.cancelMessageMutation();
     this.closeEmojiPicker();
     this.cancelVoiceRecording();
     this.clearAttachmentPreviews();
@@ -128,6 +134,20 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   selectedAttachment: File | null = null;
   // GIPHY media is NOT copied to R2: only validated CDN URLs travel as chat text.
   selectedGif: GifChoice | null = null;
+  selectedShare: ShareChoice | null = null;
+  attachmentMenuOpen = false;
+  sharePickerOpen = false;
+  sharePickerLoading = false;
+  sharePickerError = false;
+  sharePickerTab: ShareKind = 'profile';
+  sharePickerSearch = '';
+  shareChoices: ShareChoice[] = [];
+  private sharePickerVersion = 0;
+  get visibleShareChoices(): ShareChoice[] {
+    const q = this.sharePickerSearch.trim().toLocaleLowerCase();
+    return this.shareChoices.filter(i => i.kind === this.sharePickerTab
+      && (!q || (i.title + ' ' + i.subtitle).toLocaleLowerCase().includes(q)));
+  }
   voiceRecording = false;
   voiceFinalizing = false;
   voiceElapsedSeconds = 0;
@@ -181,6 +201,12 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     '💬', '👀', '🤷', '😴', '😤', '🥲', '🫶', '💥', '🎮', '🎵'
   ];
   replyingTo: InboxMessage | null = null;
+  editingMessageId: number | null = null;
+  editDraft = '';
+  confirmingDeleteMessageId: number | null = null;
+  mutationPending = false;
+  mutationError = '';
+  private mutationVersion = 0;
   sending = false;
   deliveryUncertain = false;
   deliveryChecking = false;
@@ -355,6 +381,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
 
   ngOnDestroy(): void {
     this.recentThreadCache.clear();
+    ++this.mutationVersion;
     this.typing.destroy();
     ++this.peerReceiptVersion;
     this.subscriptions.unsubscribe();
@@ -368,6 +395,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.sessionCutoffTimer = undefined;
     this.clearAttachmentRetry();
     this.closeEmojiPicker();
+    this.closeSharePicker();
+    this.closeAttachmentMenu();
     this.cancelVoiceRecording();
     ++this.attachmentViewVersion;
     this.clearAttachmentPreviews();
@@ -667,6 +696,9 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     ++this.attachmentViewVersion; // Reject any authenticated Blob still in flight.
     this.selectedAttachment = null;
     this.selectedGif = null;
+    this.selectedShare = null;
+    this.closeSharePicker();
+    this.closeAttachmentMenu();
     this.attachmentReady = false;
     this.clearAttachmentPreviews(); // Revoke images and stop audio playback.
     this.drafts.delete(conversation.key);
@@ -698,11 +730,16 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
         this.replyDrafts.set(this.selectedKey, this.replyingTo);
       else this.replyDrafts.delete(this.selectedKey);
     }
+    ++this.mutationVersion;
+    this.cancelMessageMutation();
     this.typing.stop();
     this.cancelVoiceRecording();
     this.closeEmojiPicker();
+    this.closeSharePicker();
+    this.closeAttachmentMenu();
     this.selectedAttachment = null;
     this.selectedGif = null;
+    this.selectedShare = null;
     this.clearAttachmentRetry();
     this.attachmentReady = false;
     ++this.attachmentViewVersion;
@@ -986,6 +1023,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       sender: message.username1,
       text: message.text,
       createdAt: message.date || message.dataDisplay || '',
+      editedAt: message.editedAt, deletedAt: message.deletedAt,
       replyToMessageId: message.replyToMessageId,
       replyToSender: message.replyToSender,
       replyToText: message.replyToText,
@@ -998,6 +1036,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   private fromCommunity(entry: CommunityTimelineEntry): InboxMessage {
     return { key: inboxKey('community', entry.communityId), id: entry.id,
       sender: entry.username, text: entry.body, createdAt: entry.createdAt,
+      editedAt: entry.editedAt, deletedAt: entry.deletedAt,
       replyToMessageId: entry.replyToMessageId, replyToSender: entry.replyToSender,
       replyToText: entry.replyToText,
       attachmentName: entry.attachmentName,
@@ -1008,6 +1047,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   private fromSession(entry: SessionMessage): InboxMessage {
     return { key: inboxKey('session', entry.sessionId), id: entry.id,
       sender: entry.senderUsername, text: entry.body, createdAt: entry.createdAt,
+      editedAt: entry.editedAt, deletedAt: entry.deletedAt,
       replyToMessageId: entry.replyToMessageId, replyToSender: entry.replyToSender,
       replyToText: entry.replyToText,
       attachmentName: entry.attachmentName,
@@ -1017,6 +1057,12 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
 
   private acceptRealtime(key: string, message: InboxMessage): void {
     if (!this.conversations.some(item => item.key === key) || message.id <= 0) return;
+    // Mutations reuse the original message ID. They must never count as new
+    // arrivals or acknowledge unread messages, even if a socket sends them twice.
+    if (message.editedAt || message.deletedAt) {
+      this.applyMessageMutation(key, message);
+      return;
+    }
     const eventId = key + ':' + message.id;
     if (this.seenRealtimeIds.has(eventId)) return;
     this.seenRealtimeIds.add(eventId);
@@ -1063,6 +1109,131 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       // The post-render scroll path handles any read acknowledgement.
       this.scrollRequested = follow;
     }
+  }
+
+  private applyMessageMutation(key: string, updated: InboxMessage): void {
+    const mutate = (messages: InboxMessage[]): InboxMessage[] => messages.map(message => {
+      if (message.id === updated.id) return updated;
+      if (updated.deletedAt && message.replyToMessageId === updated.id) {
+        return {...message, replyToText: '[message deleted]'};
+      }
+      return message;
+    });
+    if (key === this.selectedKey) {
+      this.messages = mutate(this.messages);
+      this.messageSearchResults = mutate(this.messageSearchResults);
+      if (updated.deletedAt) {
+        const previewUrl = this.attachmentPreviews.get(updated.id);
+        if (previewUrl) {
+          this.releaseVoicePlayer(updated.id);
+          URL.revokeObjectURL(previewUrl);
+          this.attachmentPreviews.delete(updated.id);
+        }
+        this.attachmentLoading.delete(updated.id);
+      }
+    }
+    const cache = this.recentThreadCache.get(key);
+    if (cache) this.recentThreadCache.set(key, {
+      ...cache, messages: mutate(cache.messages)
+    });
+    this.conversations = this.conversations.map(conversation =>
+      conversation.key === key && conversation.latestMessageId === updated.id
+        ? {...conversation, latestText: updated.deletedAt ? t('chat.messageDeleted') : updated.text}
+        : conversation);
+  }
+
+  canEditSentMessage(message: InboxMessage): boolean {
+    const date = Date.parse(message.createdAt);
+    return this.canDeleteSentMessage(message) && !message.attachmentName
+      && !readGiphyText(message.text) && !readSharedMessage(message.text)
+      && Number.isFinite(date) && Date.now() >= date
+      && Date.now() - date <= 15 * 60_000;
+  }
+
+  canDeleteSentMessage(message: InboxMessage): boolean {
+    return this.isMine(message) && message.id > 0 && !message.deletedAt
+      && message.key === this.selectedKey && !!this.selected && this.composerAllowed
+      && !this.composerAccessLoading && !this.previewLoading && !this.previewError
+      && !this.historicalPreview && !this.sending && !this.deliveryUncertain
+      && !this.deliveryChecking && !this.mutationPending && this.isSelectedSessionOpen();
+  }
+
+  beginEditMessage(message: InboxMessage): void {
+    if (!this.canEditSentMessage(message)) return;
+    this.confirmingDeleteMessageId = null;
+    this.editingMessageId = message.id;
+    this.editDraft = message.text;
+    this.mutationError = '';
+  }
+
+  cancelMessageMutation(): void {
+    this.editingMessageId = null;
+    this.confirmingDeleteMessageId = null;
+    this.editDraft = '';
+    this.mutationError = '';
+  }
+
+  promptDeleteMessage(message: InboxMessage): void {
+    if (!this.canDeleteSentMessage(message)) return;
+    this.editingMessageId = null;
+    this.confirmingDeleteMessageId = message.id;
+    this.mutationError = '';
+  }
+
+  private mutationRequest(conversation: InboxConversation, id: number,
+                          text: string | null): Observable<InboxMessage> {
+    if (conversation.kind === 'direct') {
+      const peer = String(conversation.id);
+      return (text === null ? this.direct.deleteMessage(peer, id)
+        : this.direct.editMessage(peer, id, text))
+        .pipe(map(entry => this.fromDirect(entry, peer)));
+    }
+    if (conversation.kind === 'community') {
+      const communityId = Number(conversation.id);
+      return (text === null ? this.timeline.deleteChatForEveryone(communityId, id)
+        : this.timeline.editChatMessage(communityId, id, text))
+        .pipe(map(entry => this.fromCommunity(entry)));
+    }
+    const sessionId = Number(conversation.id);
+    return (text === null ? this.sessions.deleteMessage(sessionId, id)
+      : this.sessions.editMessage(sessionId, id, text))
+      .pipe(map(entry => this.fromSession(entry)));
+  }
+
+  private commitMessageMutation(message: InboxMessage, text: string | null): void {
+    const conversation = this.selected;
+    if (!conversation || message.key !== conversation.key || this.mutationPending) return;
+    if (text === null ? !this.canDeleteSentMessage(message) : !this.canEditSentMessage(message)) return;
+    const version = ++this.mutationVersion;
+    const key = conversation.key;
+    this.mutationPending = true;
+    this.mutationError = '';
+    this.mutationRequest(conversation, message.id, text).pipe(timeout(10_000),
+      finalize(() => {
+        if (version === this.mutationVersion) this.mutationPending = false;
+      })).subscribe({
+      next: updated => {
+        if (version !== this.mutationVersion || key !== this.selectedKey) return;
+        this.applyMessageMutation(key, updated);
+        this.cancelMessageMutation();
+      },
+      error: () => {
+        if (version === this.mutationVersion && key === this.selectedKey) {
+          this.mutationError = t('chat.mutationFailed');
+        }
+      }
+    });
+  }
+
+  saveEditedMessage(message: InboxMessage): void {
+    const text = this.editDraft.trim();
+    if (!text || text.length > 2000 || text === message.text) return;
+    this.commitMessageMutation(message, text);
+  }
+
+  confirmDeleteMessage(message: InboxMessage): void {
+    if (this.confirmingDeleteMessageId !== message.id) return;
+    this.commitMessageMutation(message, null);
   }
 
   private updatePreviewFromHistory(key: string, messages: InboxMessage[]): void {
@@ -1122,10 +1293,11 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       && this.composerAllowed && !this.composerAccessLoading
       && !this.previewLoading && !this.previewError && !this.sending && !this.deliveryUncertain
       && !this.deliveryChecking && !this.voiceRecording && !this.voiceFinalizing
-      && (this.draft.trim().length > 0 || (this.attachmentControlsReady
-          && (!!this.selectedAttachment || !!this.selectedGif)))
+      && (this.draft.trim().length > 0 || !!this.selectedShare
+          || (this.attachmentControlsReady && (!!this.selectedAttachment || !!this.selectedGif)))
       && this.draft.trim().length <= 2000
-      && (!this.selectedGif || !!encodeGiphyText(this.selectedGif, this.draft.trim())));
+      && (!this.selectedGif || !!encodeGiphyText(this.selectedGif, this.draft.trim()))
+      && (!this.selectedShare || !!encodeShareMessage(this.selectedShare, this.draft.trim())));
   }
 
   replyToMessage(message: InboxMessage): void {
@@ -1201,6 +1373,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.clearVoicePreview();
     this.selectedAttachment = file;
     this.selectedGif = null;
+    this.selectedShare = null;
+    this.closeAttachmentMenu();
     this.composerError = '';
     this.closeEmojiPicker();
   }
@@ -1561,8 +1735,101 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       });
   }
 
+  toggleAttachmentMenu(): void {
+    if (!this.canEditDraft() || !this.isAttachmentIdentityCurrent()) return;
+    this.closeEmojiPicker();
+    this.closeSharePicker();
+    this.attachmentMenuOpen = !this.attachmentMenuOpen;
+  }
+  closeAttachmentMenu(): void { this.attachmentMenuOpen = false; }
+  closeSharePicker(): void {
+    ++this.sharePickerVersion;
+    this.sharePickerOpen = false;
+    this.sharePickerLoading = false;
+    this.sharePickerSearch = '';
+    this.shareChoices = [];
+  }
+  openSharePicker(): void {
+    if (!this.canEditDraft() || !this.isAttachmentIdentityCurrent()) return;
+    this.closeAttachmentMenu();
+    this.closeEmojiPicker();
+    this.sharePickerOpen = true;
+    this.sharePickerTab = 'profile';
+    this.sharePickerSearch = '';
+    this.sharePickerError = false;
+    this.sharePickerLoading = true;
+    const version = ++this.sharePickerVersion;
+    const selectedKey = this.selectedKey;
+    forkJoin({
+      people: this.contacts.friends().pipe(timeout(10000), catchError(() => of([]))),
+      communities: this.groups.mine().pipe(timeout(10000), catchError(() => of([]))),
+      sessions: this.sessions.mine().pipe(timeout(10000), catchError(() =>
+        of({created:[],joined:[],waitlisted:[]})))
+    }).subscribe({
+      next: ({people, communities, sessions}) => {
+        if (!this.sharePickerOpen || version !== this.sharePickerVersion
+            || selectedKey !== this.selectedKey || !this.isAttachmentIdentityCurrent()) return;
+        const friends: ShareChoice[] = people
+          .filter(person => !person.chatBlocked && !person.blockedByMe
+            && person.username.toLowerCase() !== this.currentUsername.toLowerCase())
+          .map(person => ({kind:'profile' as const,id:person.username,
+            title:person.nickname || person.fullName || person.username, subtitle:'@'+person.username}));
+        // Let members share their own public profile even with no friends yet.
+        if (this.currentUsername) friends.unshift({
+          kind:'profile', id:this.currentUsername, title:'@'+this.currentUsername,
+          subtitle:t('chat.shareMyProfile')
+        });
+        const included = new Set<number>();
+        const events: ShareChoice[] = [...sessions.created,...sessions.joined]
+          .filter(session => {
+            if (included.has(session.id) || session.privateGame || session.audience === 'COMMUNITY_ONLY'
+                || !Number.isFinite(Date.parse(session.gameDate))
+                || Date.parse(session.gameDate) <= Date.now()
+                || ['CANCELLED','COMPLETED','NOT_OCCURRED'].includes(session.status)) return false;
+            included.add(session.id);
+            return true;
+          }).map(session => ({kind:'session' as const,id:String(session.id),
+            title:session.sport+' · '+session.city,
+            subtitle:new Date(session.gameDate).toLocaleDateString('pt-PT')}));
+        const groups: ShareChoice[] = communities
+          .filter(group => group.visibility === 'PUBLIC')
+          .map(group => ({kind:'community' as const,id:String(group.id),
+            title:group.name,subtitle:group.sport||''}));
+        this.shareChoices = [...friends,...events,...groups];
+        this.sharePickerLoading = false;
+      },
+      error: () => { if(version===this.sharePickerVersion){
+        this.sharePickerLoading=false;this.sharePickerError=true;
+      }}
+    });
+  }
+  selectShareChoice(choice: ShareChoice): void {
+    if (!this.sharePickerOpen || !this.isAttachmentIdentityCurrent() || !this.canEditDraft()
+        || !this.shareChoices.some(item => item.kind === choice.kind && item.id === choice.id)
+        || !encodeShareMessage(choice,this.draft.trim())) return;
+    this.selectedShare = choice;
+    this.selectedAttachment = null;
+    this.selectedGif = null;
+    this.clearVoicePreview();
+    this.composerError = '';
+    this.closeSharePicker();
+  }
+  removeSelectedShare(): void {
+    if (!this.sending && !this.deliveryUncertain) this.selectedShare = null;
+  }
+  readSharedMessage(text: string) { return readSharedMessage(text); }
+  displayMessagePreview(value: string | null | undefined): string {
+    if (!value) return '';
+    const shared = readSharedMessage(value);
+    if (shared) return t('chat.shareType.' + shared.kind) + ': ' + shared.title;
+    if (readGiphyText(value)) return 'GIF · GIPHY';
+    return value;
+  }
+
   toggleEmojiPicker(): void {
     if (!this.canEditDraft()) return;
+    this.closeSharePicker();
+    this.closeAttachmentMenu();
     if (this.emojiPickerOpen && this.pickerTab === 'emoji') {
       this.closeEmojiPicker();
     } else {
@@ -1582,6 +1849,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.pickerTab = 'gif';
     if (this.gifAvailable === null) void this.configureGifPicker();
     else if (this.gifAvailable && this.gifResults.length === 0) void this.searchGifResults(0);
+    else if (this.gifAvailable === false) this.gifResults = [...CURATED_GIPHY_GIFS];
   }
 
   selectPickerTab(tab: 'emoji' | 'gif'): void {
@@ -1590,6 +1858,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       this.emojiPickerOpen = true;
       this.pickerTab = 'gif';
       if (this.gifAvailable === null) void this.configureGifPicker();
+      else if (this.gifAvailable === false) this.gifResults = [...CURATED_GIPHY_GIFS];
       else if (!this.gifLoading && this.gifResults.length === 0)
         void this.searchGifResults(0);
     } else {
@@ -1636,6 +1905,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       this.gifApiKey = key;
       this.gifAvailable = !!key;
       if (key) await this.searchGifResults(0);
+      else this.gifResults = [...CURATED_GIPHY_GIFS];
     } catch {
       if (generation === this.gifRequestVersion && !controller.signal.aborted)
         this.gifAvailable = false;
@@ -1701,6 +1971,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       return;
     }
     this.selectedGif = choice;
+    this.selectedShare = null;
     this.selectedAttachment = null;
     this.clearVoicePreview();
     this.composerError = '';
@@ -1748,6 +2019,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
 
   sendMessage(): void {
     this.closeEmojiPicker();
+    this.closeSharePicker();
+    this.closeAttachmentMenu();
     this.typing.stop();
     const conversation = this.selected;
     if (!conversation || !this.canSendMessage()) return;
@@ -1758,7 +2031,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     const caption = this.draft.trim();
     // Server sends the same synthesized text for an attachment without a caption.
     const name = file?.name.replace(/\\/g, '/').split('/').pop()?.replace(/[\\x00-\\x1f\\x7f]/g, '').trim().slice(-160);
-    const text = this.selectedGif ? encodeGiphyText(this.selectedGif, caption)
+    const text = this.selectedShare ? encodeShareMessage(this.selectedShare, caption)
+      : this.selectedGif ? encodeGiphyText(this.selectedGif, caption)
       : file && !caption ? '📎 ' + (name || 'anexo') : caption;
     const replyId = this.replyingTo?.key === key ? this.replyingTo.id : null;
     const pending = { key, text, replyToMessageId: replyId,
@@ -1823,6 +2097,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
         if (this.historicalPreview) this.returnToRecent();
         this.selectedAttachment = null;
         this.selectedGif = null;
+        this.selectedShare = null;
         this.clearVoicePreview();
         this.draft = '';
         this.replyingTo = null;

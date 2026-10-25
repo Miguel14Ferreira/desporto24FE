@@ -18,6 +18,7 @@ import {
 })
 export class AdminVenueEditsComponent implements OnInit, OnDestroy {
   suggestions: VenueEditSuggestion[] = [];
+  mode: 'pending' | 'history' = 'pending';
   selected: VenueEditSuggestion | null = null;
   action: 'approve' | 'reject' | null = null;
   note = '';
@@ -36,13 +37,26 @@ export class AdminVenueEditsComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void { this.load(0); }
 
+  changeMode(mode: 'pending' | 'history'): void {
+    if (this.mode === mode) return;
+    this.mode = mode;
+    this.page = 0;
+    this.selected = null;
+    this.action = null;
+    this.load(0);
+  }
+
   load(page = this.page): void {
     if (!Number.isInteger(page) || page < 0 || page > 1000) return;
     const request = ++this.version;
     this.page = page;
     this.loading = true;
     this.loadError = false;
-    this.api.pending(page).pipe(timeout(12000), takeUntil(this.destroyed)).subscribe({
+    this.selected = null;
+    this.action = null;
+    this.suggestions = [];
+    const request$ = this.mode === 'history' ? this.api.history(page) : this.api.pending(page);
+    request$.pipe(timeout(12000), takeUntil(this.destroyed)).subscribe({
       next: response => {
         if (request !== this.version) return;
         this.suggestions = response.suggestions;
@@ -103,7 +117,8 @@ export class AdminVenueEditsComponent implements OnInit, OnDestroy {
   }
 
   decide(): void {
-    if (!this.selected || !this.action || this.updating) return;
+    if (!this.selected || !this.action || this.updating || this.mode !== 'pending'
+        || this.selected.status !== 'PENDING') return;
     if (this.action === 'approve' && !this.canApproveSelected()) {
       this.actionError = true;
       return;

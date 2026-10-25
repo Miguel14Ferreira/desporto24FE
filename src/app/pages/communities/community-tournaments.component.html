@@ -30,48 +30,14 @@
 
 
   @if (showGuide) {
-    <section class="competition-guide" [attr.aria-label]="'communities.tournaments.overview.guideLabel' | t">
-      <div class="guide-intro">
-        <span class="tournament-eyebrow">{{ 'communities.tournaments.overview.beforeStart' | t }}</span>
-        <h4>{{ 'communities.tournaments.overview.guideTitle' | t }}</h4>
-        <p>{{ 'communities.tournaments.overview.guideDescription' | t }}</p>
-      </div>
-      <div class="guide-options">
-        <article class="guide-option">
-          <div class="guide-option-top">
-            <span aria-hidden="true">👤</span><strong>{{ 'communities.tournaments.overview.individualTitle' | t }}</strong>
-            <span class="guide-tag">{{ 'communities.tournaments.overview.available' | t }}</span>
-          </div>
-          <p>{{ 'communities.tournaments.overview.individualDescription' | t }}</p>
-          <p class="guide-example">{{ 'communities.tournaments.overview.individualExample' | t }}</p>
-          @if (canManage && community.individualTournamentsEnabled !== false) {
-            <button type="button" class="t-btn t-btn-primary"
-              (click)="startIndividualCreation()">{{ 'communities.tournaments.overview.createIndividual' | t }}</button>
-          } @else if (canManage) {
-            <p class="guide-coming">{{ 'communities.tournaments.overview.individualDisabled' | t }}</p>
-          }
-        </article>
-        <article class="guide-option">
-          <div class="guide-option-top">
-            <span aria-hidden="true">👥</span><strong>{{ 'communities.tournaments.overview.teamsTitle' | t }}</strong>
-            <span class="guide-tag">{{ 'communities.tournaments.overview.teamFormats' | t }}</span>
-          </div>
-          <p>{{ 'communities.tournaments.overview.teamsDescription' | t }}</p>
-          <p class="guide-example">{{ 'communities.tournaments.overview.teamsExample' | t }}</p>
-          <p>{{ 'communities.tournaments.overview.teamsHelp' | t }}</p>
-          @if (canManage && community.teamTournamentsEnabled !== false) {
-            <button type="button" class="t-btn t-btn-primary" (click)="startTeamCreation()">{{ 'communities.tournaments.overview.createTeams' | t }}</button>
-          } @else if (canManage) {
-            <p class="guide-coming">{{ 'communities.tournaments.overview.teamsDisabled' | t }}</p>
-          }
-        </article>
-      </div>
-      <div class="guide-community-note" role="note">
-        <strong>{{ 'communities.tournaments.overview.weeklyTitle' | t }}</strong>
-        <p>{{ 'communities.tournaments.overview.weeklyDescription' | t }}</p>
-      </div>
-      <button type="button" class="t-btn t-btn-secondary" (click)="showGuide = false">{{ 'communities.tournaments.overview.closeGuide' | t }}</button>
-    </section>
+    <app-competition-guide
+      [canManage]="canManage"
+      [individualEnabled]="community.individualTournamentsEnabled !== false"
+      [teamEnabled]="community.teamTournamentsEnabled !== false"
+      (individualSelected)="startIndividualCreation()"
+      (teamSelected)="startTeamCreation()"
+      (closeRequested)="showGuide = false"
+    ></app-competition-guide>
   }
 
   @if (canManage && (showIndividualCreate || showTeamCreate)) {
@@ -176,26 +142,11 @@
             </div>
           <fieldset class="t-points-rules">
             <legend>{{ 'communities.tournaments.createUi.formatLegend' | t }}</legend>
-            <div class="create-format-grid" role="group" [attr.aria-label]="'communities.tournaments.createUi.formatGroup' | t">
-              <button type="button" class="create-format-option" [disabled]="busy"
-                [attr.aria-pressed]="teamFormatDraft === 'LEAGUE'"
-                (click)="teamFormatDraft = 'LEAGUE'">
-                <strong>{{ 'communities.tournaments.formatLeagueTitle' | t }}</strong>
-                <span>{{ 'communities.tournaments.formatLeagueText' | t }}</span>
-              </button>
-              <button type="button" class="create-format-option" [disabled]="busy"
-                [attr.aria-pressed]="teamFormatDraft === 'KNOCKOUT'"
-                (click)="teamFormatDraft = 'KNOCKOUT'">
-                <strong>{{ 'communities.tournaments.formatKnockoutTitle' | t }}</strong>
-                <span>{{ 'communities.tournaments.formatKnockoutText' | t }}</span>
-              </button>
-              <button type="button" class="create-format-option" [disabled]="busy"
-                [attr.aria-pressed]="teamFormatDraft === 'GROUP_KNOCKOUT'"
-                (click)="teamFormatDraft = 'GROUP_KNOCKOUT'">
-                <strong>{{ 'communities.tournaments.formatGroupsTitle' | t }}</strong>
-                <span>{{ 'communities.tournaments.formatGroupsText' | t }}</span>
-              </button>
-            </div>
+            <app-competition-format-chooser
+              [selectedFormat]="teamFormatDraft"
+              [disabled]="busy"
+              (formatSelected)="teamFormatDraft = $event"
+            ></app-competition-format-chooser>
             @if (teamFormatDraft === 'GROUP_KNOCKOUT') {
               <p class="sport-choice-hint">{{ 'communities.tournaments.createUi.groupsHint' | t }}</p>
               <label id="group-count-label">{{ 'communities.tournaments.createUi.groupCount' | t }}</label>
@@ -236,25 +187,16 @@
                 <p>{{ (isInlineSpeedDraft ? 'communities.inlineSpeed.createRulesHint' : 'communities.tournaments.classificationText') | t }}</p>
               </div>
             </div>
-            <div class="classification-profile" [class.classification-notice]="!isSportFormatSupported"
-              role="status">
-              <strong>{{ isInlineSpeedDraft ? ('communities.inlineSpeed.createFormat' | t) : classificationProfile.heading }}</strong>
-              <p>{{ sportFormatWarning }}</p>
-              <small>{{ isInlineSpeedDraft ? ('communities.inlineSpeed.createFields' | t) : classificationProfile.fields }}</small>
-              @if (!isSportFormatSupported) {
-                <p>{{ 'communities.tournaments.createUi.unsupportedLong' | t }}</p>
-              }
-            </div>
+            <app-tournament-classification-note kind="profile"
+              [heading]="isInlineSpeedDraft ? ('communities.inlineSpeed.createFormat' | t) : classificationProfile.heading"
+              [description]="sportFormatWarning"
+              [fields]="isInlineSpeedDraft ? ('communities.inlineSpeed.createFields' | t) : classificationProfile.fields"
+              [unsupported]="!isSportFormatSupported"
+            ></app-tournament-classification-note>
             @if (isInlineSpeedDraft) {
-              <div class="classification-fixed-points" role="note">
-                <strong>{{ 'communities.inlineSpeed.createNoPointsTitle' | t }}</strong>
-                <p>{{ 'communities.inlineSpeed.createNoPointsDescription' | t }}</p>
-              </div>
+              <app-tournament-classification-note kind="inline"></app-tournament-classification-note>
             } @else if (isRaceChampionshipDraft) {
-              <div class="classification-fixed-points" role="note">
-                <strong>{{ raceSportLabel(sportDraft) }} · {{ 'communities.karting.creationTitle' | t }}</strong>
-                <p>{{ 'communities.karting.creationHint' | t }}</p>
-              </div>
+              <app-tournament-classification-note kind="race" [raceSport]="raceSportLabel(sportDraft)"></app-tournament-classification-note>
             } @else {
             <details class="create-advanced-rules">
               <summary>
@@ -293,11 +235,7 @@
         }
         @if (isSportFormatSupported && (!showTeamCreate || teamFormatDraft !== 'KNOCKOUT')) {
           @if (classificationProfile.scoringMode === 'CHESS_HALF_POINTS') {
-            <div class="classification-fixed-points" role="note">
-              <strong>{{ 'communities.tournaments.createUi.chessTitle' | t }}</strong>
-              <div><span>{{ 'communities.tournaments.createUi.chessWin' | t }}</span><span>{{ 'communities.tournaments.createUi.chessDraw' | t }}</span><span>{{ 'communities.tournaments.createUi.chessLoss' | t }}</span></div>
-              <p>{{ 'communities.tournaments.createUi.chessHint' | t }}</p>
-            </div>
+            <app-tournament-classification-note kind="chess"></app-tournament-classification-note>
           } @else {
         <fieldset class="t-points-rules" aria-describedby="t-points-rules-help">
           <legend>{{ 'communities.tournaments.createUi.pointsLegend' | t }}</legend>
@@ -1191,6 +1129,90 @@
                       · {{ decision.confirmedBy }}
                     </p>
                   }
+                  @if (proposal.sourceStage === 'FIRST') {
+                    @if (speedOverview.trials?.length) {
+                      <details class="t-muted inline-speed-trial-history">
+                        <summary>{{ 'communities.inlineSpeed.trialHistory' | t }}
+                          ({{ speedOverview.trials?.length }})</summary>
+                        @for (trial of speedOverview.trials ?? []; track trial.id) {
+                          <article class="race-round-card">
+                            <strong>{{ 'communities.inlineSpeed.trialTitle' | t }} #{{ trial.id }}</strong>
+                            <small>{{ trial.heldAt | date:'short' }} · {{ trial.recordedBy }}</small>
+                            @if (trial.stale) {
+                              <p class="notice notice-error">{{ 'communities.inlineSpeed.tieOutdated' | t }}</p>
+                            }
+                            <p>{{ trial.officialReference }} · {{ trial.reason }}</p>
+                            <ol>
+                              @for (result of trial.results; track result.playerId) {
+                                <li>{{ result.place }}.º
+                                  {{ speedTieSkaterNames([result.playerId]) }}
+                                  @if (result.seconds !== null) {
+                                    · {{ result.seconds }} s
+                                  }
+                                </li>
+                              }
+                            </ol>
+                          </article>
+                        }
+                      </details>
+                    }
+                    @if (canManage && selected.status !== 'COMPLETED' && !speedDecision('FIRST')
+                         && speedTrialCandidates().length >= 3
+                         && speedTrialCandidates().length <= 6) {
+                      <div class="inline-speed-trial-panel">
+                        <p class="t-muted">{{ 'communities.inlineSpeed.trialIntro' | t }}</p>
+                        @if (!speedTrialOpen) {
+                          <button type="button" class="t-btn t-btn-secondary"
+                            [disabled]="busy" (click)="openSpeedTrial()">
+                            {{ 'communities.inlineSpeed.trialOpen' | t }}
+                          </button>
+                        } @else {
+                          <label class="inline-speed-judge-reason">
+                            {{ 'communities.inlineSpeed.trialDate' | t }}
+                            <input type="datetime-local" name="speed-trial-date"
+                              [(ngModel)]="speedTrialHeldAt" [disabled]="busy">
+                          </label>
+                          <label class="inline-speed-judge-reason">
+                            {{ 'communities.inlineSpeed.trialReference' | t }}
+                            <input type="text" maxlength="500" name="speed-trial-reference"
+                              [(ngModel)]="speedTrialReference" [disabled]="busy">
+                          </label>
+                          <label class="inline-speed-judge-reason">
+                            {{ 'communities.inlineSpeed.trialReason' | t }}
+                            <textarea rows="2" maxlength="500" name="speed-trial-reason"
+                              [(ngModel)]="speedTrialReason" [disabled]="busy"></textarea>
+                          </label>
+                          <p class="t-muted">{{ 'communities.inlineSpeed.trialResults' | t }}</p>
+                          @for (skater of speedTrialCandidates(); track skater.playerId) {
+                            <div class="inline-speed-selection-row">
+                              <strong>{{ skater.name }}</strong>
+                              <label>
+                                {{ 'communities.inlineSpeed.trialPlace' | t }}
+                                <input type="number" min="1" max="6" step="1"
+                                  [name]="'speed-trial-place-' + skater.playerId"
+                                  [(ngModel)]="speedTrialPlaces[skater.playerId]" [disabled]="busy">
+                              </label>
+                              <label>
+                                {{ 'communities.inlineSpeed.trialSeconds' | t }}
+                                <input type="number" min="0.001" max="999999" step="0.001"
+                                  [name]="'speed-trial-seconds-' + skater.playerId"
+                                  [(ngModel)]="speedTrialTimes[skater.playerId]" [disabled]="busy">
+                              </label>
+                            </div>
+                          }
+                          <p class="t-muted">{{ 'communities.inlineSpeed.trialAttestation' | t }}</p>
+                          <button type="button" class="t-btn t-btn-primary"
+                            [disabled]="busy" (click)="recordSpeedTrial()">
+                            {{ 'communities.inlineSpeed.trialSave' | t }}
+                          </button>
+                          <button type="button" class="t-btn t-btn-secondary"
+                            [disabled]="busy" (click)="speedTrialOpen = false">
+                            {{ 'communities.tournaments.finalUi.cancel' | t }}
+                          </button>
+                        }
+                      </div>
+                    }
+                  }
                   @if (speedTieBreak(proposal.sourceStage); as ruling) {
                     <p class="notice" [class.notice-error]="ruling.stale"
                       [class.notice-info]="!ruling.stale" role="status">
@@ -1199,6 +1221,10 @@
                       · {{ ruling.confirmedBy }}
                     </p>
                     <p class="t-muted">{{ ruling.reason }}</p>
+                    @if (ruling.evidenceType && ruling.evidenceReference) {
+                      <p class="t-muted">{{ speedEvidenceLabel(ruling.evidenceType) }}
+                        · {{ ruling.evidenceReference }}</p>
+                    }
                     @if (ruling.revisions?.length) {
                       <details class="t-muted">
                         <summary>{{ 'communities.inlineSpeed.tieHistory' | t }}
@@ -1213,6 +1239,12 @@
                                 · {{ 'communities.inlineSpeed.tieOutdated' | t }}
                               }
                               <p>{{ revision.reason }}</p>
+                              @if (revision.evidenceType && revision.evidenceReference) {
+                                <small>{{ speedEvidenceLabel(revision.evidenceType) }}:
+                                  {{ revision.evidenceReference }}</small>
+                              } @else {
+                                <small>{{ 'communities.inlineSpeed.evidence.legacy' | t }}</small>
+                              }
                               <small>{{ 'communities.inlineSpeed.tieSelected' | t }}:
                                 {{ speedTieSkaterNames(revision.selectedPlayerIds) }}</small>
                             </li>
@@ -1256,6 +1288,24 @@
                           [name]="'inline-speed-tiebreak-reason'"
                           [(ngModel)]="speedReasons['FIRST']" [disabled]="busy"
                           [placeholder]="'communities.inlineSpeed.reasonPlaceholder' | t"></textarea>
+                      </label>
+                      <label class="inline-speed-judge-reason">
+                        {{ 'communities.inlineSpeed.evidenceType' | t }}
+                        <select name="inline-speed-evidence-type" [(ngModel)]="speedEvidenceType"
+                          [disabled]="busy">
+                          <option value="">{{ 'communities.inlineSpeed.evidenceSelect' | t }}</option>
+                          <option value="PHOTO_FINISH">{{ 'communities.inlineSpeed.evidence.PHOTO_FINISH' | t }}</option>
+                          <option value="VIDEO_REVIEW">{{ 'communities.inlineSpeed.evidence.VIDEO_REVIEW' | t }}</option>
+                          <option value="OFFICIAL_MINUTES">{{ 'communities.inlineSpeed.evidence.OFFICIAL_MINUTES' | t }}</option>
+                          <option value="TIEBREAK_TRIAL">{{ 'communities.inlineSpeed.evidence.TIEBREAK_TRIAL' | t }}</option>
+                          <option value="OTHER">{{ 'communities.inlineSpeed.evidence.OTHER' | t }}</option>
+                        </select>
+                      </label>
+                      <label class="inline-speed-judge-reason">
+                        {{ 'communities.inlineSpeed.evidenceReference' | t }}
+                        <small>{{ 'communities.inlineSpeed.evidenceReferenceHint' | t }}</small>
+                        <textarea rows="2" maxlength="500" name="inline-speed-evidence-reference"
+                          [(ngModel)]="speedEvidenceReference" [disabled]="busy"></textarea>
                       </label>
                       <button type="button" class="t-btn t-btn-primary"
                         [disabled]="busy || (speedSelections['FIRST']?.length ?? 0) !== 16"
@@ -1389,27 +1439,7 @@
                   }
                 </div>
               }
-              <div class="race-standings-section">
-                <h6>{{ 'communities.karting.standingsTitle' | t }}</h6>
-                @if (raceOverview.standings.length) {
-                  <div class="t-table-scroll">
-                    <table [attr.aria-label]="'communities.karting.tableLabel' | t">
-                      <thead><tr><th>{{ 'communities.karting.position' | t }}</th><th>{{ 'communities.karting.participant' | t }}</th><th>{{ 'communities.karting.races' | t }}</th><th>{{ 'communities.karting.wins' | t }}</th><th>{{ 'communities.karting.podiums' | t }}</th><th>{{ 'communities.karting.points' | t }}</th></tr></thead>
-                      <tbody>
-                        @for (driver of raceOverview.standings; track driver.playerId) {
-                          <tr>
-                            <td>{{ driver.position }}{{ 'communities.karting.ordinalSuffix' | t }}</td><td>{{ driver.fullName }}</td>
-                            <td>{{ driver.races }}</td><td>{{ driver.wins }}</td><td>{{ driver.podiums }}</td>
-                            <td><strong>{{ driver.championshipPoints ?? '—' }}</strong></td>
-                          </tr>
-                        }
-                      </tbody>
-                    </table>
-                  </div>
-                } @else {
-                  <p class="t-muted">{{ 'communities.karting.emptyStandings' | t }}</p>
-                }
-              </div>
+              <app-race-standings-card [standings]="raceOverview.standings"></app-race-standings-card>
               @if (selected.status === 'COMPLETED') {
                 <div class="race-archive-notice" role="status">
                   <strong>{{ 'communities.karting.archiveTitle' | t }}</strong>

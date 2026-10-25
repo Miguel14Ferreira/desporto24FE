@@ -76,6 +76,29 @@ export class Events2Component implements OnInit, OnDestroy {
   }
   recurrence: 'NONE' | 'WEEKLY' | 'BIWEEKLY' = 'NONE';
   recurrenceOccurrences = 4;
+  readonly weeklySessionCountOptions = [1, 2, 3, 4, 5, 6, 7];
+  weeklySessionsPerWeek = 1;
+  additionalWeeklyGameDates: string[] = [];
+
+  setWeeklySessionsPerWeek(next: number): void {
+    const count = Number(next);
+    if (!Number.isInteger(count) || count < 1 || count > 7) return;
+    this.weeklySessionsPerWeek = count;
+    const dates = [...this.additionalWeeklyGameDates];
+    while (dates.length < count - 1) dates.push('');
+    this.additionalWeeklyGameDates = dates.slice(0, count - 1);
+  }
+
+  get plannedSessions(): number {
+    return Number(this.recurrenceOccurrences)
+      * (this.recurrence === 'WEEKLY' ? this.weeklySessionsPerWeek : 1);
+  }
+
+  get maxRecurrenceCycles(): number {
+    return this.recurrence === 'WEEKLY'
+      ? Math.floor(52 / this.weeklySessionsPerWeek) : 52;
+  }
+
   registrationOpeningMode: 'IMMEDIATE' | 'SCHEDULED' | 'MANUAL' = 'IMMEDIATE';
   registrationOpensAt = '';
 
@@ -258,6 +281,10 @@ export class Events2Component implements OnInit, OnDestroy {
       recurrenceOccurrences: this.communityId && this.recurrence !== 'NONE'
         ? Number(this.recurrenceOccurrences)
         : null,
+      additionalWeeklyGameDates: this.communityId && this.recurrence === 'WEEKLY'
+        ? this.additionalWeeklyGameDates.map(value => new Date(value).toISOString()) : [],
+      recurrenceTimeZone: this.communityId && this.recurrence !== 'NONE'
+        ? Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC' : null,
       registrationOpeningMode: this.communityId ? this.registrationOpeningMode : 'IMMEDIATE',
       registrationOpensAt: this.communityId && this.registrationOpeningMode === 'SCHEDULED'
         ? new Date(this.registrationOpensAt).toISOString()
@@ -993,6 +1020,27 @@ export class Events2Component implements OnInit, OnDestroy {
       }
     }
 
+    if (this.communityId && this.recurrence === 'WEEKLY') {
+      const count = Number(this.weeklySessionsPerWeek);
+      if (!Number.isInteger(count) || count < 1 || count > 7
+          || this.additionalWeeklyGameDates.length !== count - 1) {
+        return t('feedback.create.weeklySlotsRange');
+      }
+      const start = Date.parse(this.gameDate);
+      const upper = new Date(this.gameDate);
+      upper.setDate(upper.getDate() + 7);
+      const seen = new Set<number>([start]);
+      for (const input of this.additionalWeeklyGameDates) {
+        const slot = Date.parse(input);
+        if (!input || !Number.isFinite(slot) || !Number.isFinite(start)
+            || slot <= Date.now() || slot <= start || slot >= upper.getTime()
+            || seen.has(slot)) {
+          return t('feedback.create.weeklySlotDateInvalid');
+        }
+        seen.add(slot);
+      }
+    }
+
     if (this.communityId && this.registrationOpeningMode === 'SCHEDULED') {
       const opening = Date.parse(this.registrationOpensAt);
       const kickoff = Date.parse(this.gameDate);
@@ -1004,8 +1052,12 @@ export class Events2Component implements OnInit, OnDestroy {
 
     if (this.communityId && this.recurrence !== 'NONE') {
       const occurrences = Number(this.recurrenceOccurrences);
-      if (!Number.isInteger(occurrences) || occurrences < 2 || occurrences > 52) {
+      if (!Number.isInteger(occurrences) || occurrences < 2
+          || occurrences > 52) {
         return t('feedback.create.recurrenceOccurrencesRange');
+      }
+      if (occurrences > this.maxRecurrenceCycles || this.plannedSessions > 52) {
+        return t('feedback.create.recurrenceTotalRange');
       }
     }
 
