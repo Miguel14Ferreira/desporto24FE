@@ -65,7 +65,7 @@
         </div>
         @if (preferencesError) {
           <p role="alert" class="preferences-error">{{ preferencesError }}
-            @if (!preferences) {
+            @if (preferencesRefreshFailed) {
               <button type="button" class="secondary-button" (click)="loadPreferences()">
                 {{ 'common.retry' | t }}
               </button>
@@ -90,13 +90,13 @@
               <label>
                 <span class="sr-only">{{ 'notifications.preferences.allInApp' | t }}</span>
                 <input type="checkbox" [checked]="prefs.inAppEnabled"
-                  [disabled]="preferencesSaving"
+                  [disabled]="preferencesSaving || preferencesLoading || preferencesRefreshFailed"
                   (change)="changeGlobal('inApp', $any($event.target).checked)">
               </label>
               <label>
                 <span class="sr-only">{{ 'notifications.preferences.allEmail' | t }}</span>
                 <input type="checkbox" [checked]="prefs.emailEnabled"
-                  [disabled]="preferencesSaving"
+                  [disabled]="preferencesSaving || preferencesLoading || preferencesRefreshFailed"
                   (change)="changeGlobal('email', $any($event.target).checked)">
               </label>
             </div>
@@ -106,13 +106,13 @@
                 <label>
                   <span class="sr-only">{{ ('notifications.preferences.type.' + type) | t }} — {{ 'notifications.preferences.inApp' | t }}</span>
                   <input type="checkbox" [checked]="preferenceEnabled(type, 'inApp')"
-                    [disabled]="preferencesSaving || !prefs.inAppEnabled"
+                    [disabled]="preferencesSaving || preferencesLoading || preferencesRefreshFailed || !prefs.inAppEnabled"
                     (change)="changeType(type, 'inApp', $any($event.target).checked)">
                 </label>
                 <label>
                   <span class="sr-only">{{ ('notifications.preferences.type.' + type) | t }} — {{ 'notifications.preferences.email' | t }}</span>
                   <input type="checkbox" [checked]="preferenceEnabled(type, 'email')"
-                    [disabled]="preferencesSaving || !prefs.emailEnabled"
+                    [disabled]="preferencesSaving || preferencesLoading || preferencesRefreshFailed || !prefs.emailEnabled"
                     (change)="changeType(type, 'email', $any($event.target).checked)">
                 </label>
               </div>
