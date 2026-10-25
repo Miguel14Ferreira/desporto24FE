@@ -364,6 +364,7 @@ export const EN: Record<string, string> = {
   'chat.pickerTitle': 'Emoji and GIFs',
   'chat.pickerEmojis': 'Emoji',
   'chat.pickerClose': 'Close picker',
+  'chat.gifSearchOffline': 'Search available reactions',
   'chat.gifSearch': 'Search GIFs via GIPHY',
   'chat.gifCategories': 'GIF categories',
   'chat.gifNotConfigured': 'Online search is not available yet. Choose an animated reaction below or upload a GIF from your device.',

@@ -394,12 +394,7 @@
             }
             @if (selectedGif; as gif) {
               <div class="inbox-attachment-draft inbox-giphy-draft">
-                @if (gifAvailable === false) {
-                  <app-giphy-embed [id]="gif.id" [pageUrl]="gif.pageUrl"
-                    [compact]="true"></app-giphy-embed>
-                } @else {
-                  <img [src]="gif.previewUrl" [alt]="'chat.gifImage' | t" referrerpolicy="no-referrer">
-                }
+                <img [src]="gif.previewUrl" [alt]="'chat.gifImage' | t" referrerpolicy="no-referrer">
                 <span>{{ gif.title }} · GIPHY</span>
                 <button type="button" [disabled]="sending || deliveryUncertain"
                   (click)="removeSelectedGif()">{{ 'chat.attachmentRemove' | t }}</button>
@@ -551,14 +546,16 @@
                           <input type="search" name="gifSearch"
                             [ngModel]="gifQuery" [ngModelOptions]="{standalone:true}"
                             (ngModelChange)="onGifSearchInput($event)" maxlength="50"
-                            [disabled]="gifAvailable !== true || !!gifSelectingId"
-                            [placeholder]="'chat.gifSearch' | t"
+                            [disabled]="gifAvailable === null || !!gifSelectingId"
+                            [placeholder]="(gifAvailable === false ? 'chat.gifSearchOffline' : 'chat.gifSearch') | t"
                             [attr.aria-label]="'chat.gifSearch' | t">
                         </div>
                         <div class="inbox-picker-categories"
                           [attr.aria-label]="'chat.gifCategories' | t">
                           @for (category of gifCategories; track category.phrase) {
-                            <button type="button" [disabled]="!gifAvailable || !!gifSelectingId"
+                            <button type="button" [disabled]="gifAvailable === null || !!gifSelectingId"
+                              [attr.aria-pressed]="gifQuery === category.phrase"
+                              [class.active]="gifQuery === category.phrase"
                               [attr.aria-label]="category.phrase"
                               (click)="searchGifCategory(category.phrase)">{{ category.icon }}</button>
                           }
@@ -576,12 +573,7 @@
                           [attr.aria-label]="'chat.gifResults' | t">
                           @for (gif of gifResults; track gif.id) {
                             <div class="inbox-gif-tile">
-                              @if (gifAvailable === false) {
-                                <app-giphy-embed [id]="gif.id" [pageUrl]="gif.pageUrl"
-                                  [compact]="true"></app-giphy-embed>
-                              } @else {
-                                <img [src]="gif.previewUrl" [alt]="" loading="lazy" referrerpolicy="no-referrer">
-                              }
+                              <img [src]="gif.previewUrl" [alt]="" loading="lazy" referrerpolicy="no-referrer">
                               <button type="button" class="inbox-gif-tile-select"
                                 [disabled]="!!gifSelectingId" [attr.title]="gif.title"
                                 [attr.aria-label]="gif.title || ('chat.gifSelect' | t)"
@@ -589,7 +581,7 @@
                             </div>
                           }
                         </div>
-                        @if (!gifLoading && gifAvailable && !gifError && !gifResults.length) {
+                        @if (!gifLoading && gifAvailable !== null && !gifError && !gifResults.length) {
                           <p class="inbox-picker-feedback">{{ 'chat.gifNoResults' | t }}</p>
                         }
                         @if (gifHasMore && !gifLoading) {

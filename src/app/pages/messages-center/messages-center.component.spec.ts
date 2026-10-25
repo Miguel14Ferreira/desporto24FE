@@ -303,6 +303,48 @@ describe('Unified Jynlo message center', () => {
     expect((direct.send.calls.mostRecent().args[1] as string).startsWith('[JYNLO:GIPHY:1]')).toBeTrue();
   });
 
+  it('lets users click every GIF category and choose a reaction without a GIPHY key', () => {
+    const peer = item('direct', 'bea');
+    component.conversations = [peer];
+    component.selectedKey = peer.key;
+    component.composerAllowed = true;
+    component.attachmentReady = true;
+    component.gifAvailable = false;
+    component.openGifPicker();
+    expect(component.gifResults.length).toBeGreaterThan(0);
+    for (const category of component.gifCategories) {
+      component.searchGifCategory(category.phrase);
+      expect(component.gifQuery).toBe(category.phrase);
+      expect(component.gifResults.length).withContext(category.phrase).toBeGreaterThan(0);
+    }
+    component.searchGifCategory('love');
+    const gif = component.gifResults[0];
+    component.chooseGif(gif);
+    expect(component.selectedGif).toEqual(gif);
+    expect(component.canSendMessage()).toBeTrue();
+    expect(component.emojiPickerOpen).toBeFalse();
+    expect(direct.send).not.toHaveBeenCalled();
+    expect(direct.sendAttachment).not.toHaveBeenCalled();
+  });
+
+  it('searches curated reactions locally when online GIF search is disabled', () => {
+    const peer = item('direct','bea');
+    component.conversations = [peer];
+    component.selectedKey = peer.key;
+    component.composerAllowed = true;
+    component.attachmentReady = true;
+    component.gifAvailable = false;
+    component.openGifPicker();
+    const network = spyOn(window,'fetch');
+    component.onGifSearchInput('CAMPEÃO');
+    expect(component.gifResults.length).toBeGreaterThan(0);
+    component.onGifSearchInput('sem resultados xyz');
+    expect(component.gifResults).toEqual([]);
+    component.onGifSearchInput('');
+    expect(component.gifResults.length).toBeGreaterThan(0);
+    expect(network).not.toHaveBeenCalled();
+  });
+
   it('toggles one shared media panel while preserving access to both tabs', () => {
     const peer = item('direct', 'bea');
     component.conversations = [peer];

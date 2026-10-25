@@ -30,7 +30,7 @@ import { RecoverableSend, restorePendingSends, savePendingSends } from './pendin
 import { GifChoice, encodeGiphyText, findGiphy, readGifProviderKey, readGiphyText } from './gif-picker.client';
 import { ShareChoice, ShareKind, encodeShareMessage, readSharedMessage } from './share-message';
 import { GiphyEmbedComponent } from './giphy-embed.component';
-import { CURATED_GIPHY_GIFS } from './curated-gifs';
+import { findCuratedGifs } from './curated-gifs';
 
 export const VOICE_NOTE_MAX_DURATION_MS = 5 * 60_000;
 const VOICE_NOTE_AUDIO_BITRATE = 48_000;
@@ -1849,7 +1849,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.pickerTab = 'gif';
     if (this.gifAvailable === null) void this.configureGifPicker();
     else if (this.gifAvailable && this.gifResults.length === 0) void this.searchGifResults(0);
-    else if (this.gifAvailable === false) this.gifResults = [...CURATED_GIPHY_GIFS];
+    else if (this.gifAvailable === false) this.gifResults = findCuratedGifs(this.gifQuery);
   }
 
   selectPickerTab(tab: 'emoji' | 'gif'): void {
@@ -1858,7 +1858,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       this.emojiPickerOpen = true;
       this.pickerTab = 'gif';
       if (this.gifAvailable === null) void this.configureGifPicker();
-      else if (this.gifAvailable === false) this.gifResults = [...CURATED_GIPHY_GIFS];
+      else if (this.gifAvailable === false) this.gifResults = findCuratedGifs(this.gifQuery);
       else if (!this.gifLoading && this.gifResults.length === 0)
         void this.searchGifResults(0);
     } else {
@@ -1905,10 +1905,12 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       this.gifApiKey = key;
       this.gifAvailable = !!key;
       if (key) await this.searchGifResults(0);
-      else this.gifResults = [...CURATED_GIPHY_GIFS];
+      else this.gifResults = findCuratedGifs(this.gifQuery);
     } catch {
-      if (generation === this.gifRequestVersion && !controller.signal.aborted)
+      if (generation === this.gifRequestVersion && !controller.signal.aborted) {
         this.gifAvailable = false;
+        this.gifResults = findCuratedGifs(this.gifQuery);
+      }
     } finally {
       if (generation === this.gifRequestVersion) this.gifLoading = false;
       if (this.gifConfigAbort === controller) this.gifConfigAbort = undefined;
@@ -1921,7 +1923,13 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.gifHasMore = false;
     this.gifError = '';
     this.stopGifRequests();
-    if (!this.gifAvailable || !this.emojiPickerOpen || this.pickerTab !== 'gif') return;
+    if (!this.emojiPickerOpen || this.pickerTab !== 'gif') return;
+    if (this.gifAvailable === false) {
+      // Show locally filtered public GIFs immediately. No network request.
+      this.gifResults = findCuratedGifs(this.gifQuery);
+      return;
+    }
+    if (!this.gifAvailable) return;
     this.gifLoading = true;
     this.gifTimer = setTimeout(() => {
       this.gifTimer = undefined;
@@ -1930,6 +1938,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   }
 
   searchGifCategory(phrase: string): void {
+    if (!this.gifCategories.some(category => category.phrase === phrase)
+        || this.gifAvailable === null || !this.emojiPickerOpen || this.pickerTab !== 'gif') return;
     this.onGifSearchInput(phrase);
   }
 

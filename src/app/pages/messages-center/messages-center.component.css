@@ -146,6 +146,9 @@
   border-radius:9px;color:inherit;font:inherit;font-size:1.15rem;
   padding:5px 13px;cursor:pointer; }
 .inbox-picker-categories button:hover:not(:disabled) { background:#285c5a; }
+.inbox-picker-categories button.active { background:#245e59;border-color:#6ae4c4;
+  box-shadow:inset 0 -2px 0 #6ae4c4; }
+.inbox-picker-categories button:focus-visible { outline:2px solid #85efd1;outline-offset:2px; }
 .inbox-picker-categories button:disabled { opacity:.5; }
 .inbox-picker-gif-grid { overflow-y:auto;min-height:0;flex:1;
   display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
