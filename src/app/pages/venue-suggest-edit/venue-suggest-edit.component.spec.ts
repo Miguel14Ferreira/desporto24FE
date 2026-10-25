@@ -59,6 +59,58 @@ describe('VenueSuggestEditComponent', () => {
     expect(component.last?.status).toBe('PENDING');
   });
 
+
+  it('requires a valid official HTTPS source when adding a contact', () => {
+    component.draft.contact = '225 073 300';
+    component.reason = 'Confirmado na página oficial da piscina';
+    expect(component.contactEvidenceRequired).toBeTrue();
+    expect(component.validContactSource).toBeFalse();
+    component.submit();
+    expect(component.sourceUrlInvalid).toBeTrue();
+    expect(api.submit).not.toHaveBeenCalled();
+
+    for (const unsafe of ['http://www.agoraporto.pt/piscina',
+      'https://user:password@www.agoraporto.pt/piscina',
+      'https://localhost/piscina', 'https://127.0.0.1/phone',
+      'javascript:alert(1)']) {
+      component.sourceUrl = unsafe;
+      expect(component.validContactSource).toBeFalse();
+    }
+
+    component.sourceUrl = 'https://www.agoraporto.pt/piscinas-municipais/piscina-municipal-da-constituicao';
+    expect(component.validContactSource).toBeTrue();
+    const receipt = {
+      id: 32, venueId: 7, venueName: venue.name, status: 'PENDING',
+      before: { contact: null }, proposed: { contact: '225 073 300' },
+      sourceUrl: component.sourceUrl, reason: component.reason,
+      submittedByUsername: 'member', submittedAt: '2026-10-25T18:00:00Z',
+      reviewedByUsername: null, reviewedAt: null, decisionNote: null
+    } as VenueEditSuggestion;
+    api.submit.and.returnValue(of(receipt));
+    component.submit();
+    expect(api.submit).toHaveBeenCalledOnceWith(7,
+      { contact: '225 073 300' }, component.reason, component.sourceUrl);
+    expect(component.submitted).toBeTrue();
+    expect(venue.contact).toBeNull();
+  });
+
+  it('allows removing an erroneous contact without requiring a source URL', () => {
+    component.venue = { ...venue, contact: '225000000' };
+    component.draft.contact = '';
+    component.reason = 'Este contacto deixou de funcionar no recinto';
+    expect(component.contactEvidenceRequired).toBeFalse();
+    expect(component.validContactSource).toBeTrue();
+    api.submit.and.returnValue(of({
+      id: 34, venueId: 7, venueName: venue.name, status: 'PENDING',
+      before: { contact: '225000000' }, proposed: { contact: '' },
+      reason: component.reason, submittedByUsername: 'member',
+      submittedAt: '2026-10-25T18:00:00Z', reviewedByUsername:null,
+      reviewedAt:null, decisionNote:null
+    }));
+    component.submit();
+    expect(api.submit).toHaveBeenCalledOnceWith(7, { contact: '' }, component.reason);
+  });
+
   it('does not send unchanged data', () => {
     component.reason = 'Confirmado no site oficial';
     component.submit();
