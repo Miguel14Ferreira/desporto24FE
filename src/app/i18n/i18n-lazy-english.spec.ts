@@ -69,6 +69,23 @@ describe('Lazy English translations', () => {
     expect(document.documentElement.lang).toBe('en');
   });
 
+  it('never directs users to the retired full chat in Portuguese or English', async () => {
+    await preloadEnglishTranslations();
+    for (const language of ['pt', 'en'] as const) {
+      localStorage.setItem('d24-language', language);
+      const locked = appTranslate('inbox.cannotWrite');
+      expect(locked).toBe(language === 'pt'
+        ? 'Não é possível enviar mensagens nesta conversa neste momento.'
+        : 'You cannot send messages in this conversation right now.');
+      for (const key of ['inbox.openChat', 'inbox.readOnlyHint',
+        'inbox.welcomeText', 'inbox.cannotWrite']) {
+        expect(appTranslate(key).toLowerCase()).not.toMatch(
+          /chat completo|full chat|original chat/
+        );
+      }
+    }
+  });
+
   it('does not preload English for a Portuguese visitor', async () => {
     await prepareInitialTranslations();
     expect(localStorage.getItem('d24-language')).toBe('pt');
