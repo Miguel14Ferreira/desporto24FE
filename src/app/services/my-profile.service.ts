@@ -33,7 +33,8 @@ export class MyProfileService {
 
   revokeDeviceSession(id: string): Observable<void> {
     return this.http.delete<void>(
-      environment.apiUrl + '/api/auth/sessions/' + encodeURIComponent(id)
+      environment.apiUrl + '/api/auth/sessions/' + encodeURIComponent(id),
+      { withCredentials: true }
     );
   }
 
