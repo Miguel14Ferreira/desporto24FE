@@ -2810,7 +2810,7 @@ test('Community feature controls E2E: PT/EN labels, history notice and cancellat
   await expect(page.getByRole('group', { name: 'Funcionalidades opcionais' })).toBeVisible();
   await expect(page.getByText('calendários em desenvolvimento')).toHaveCount(0);
   await page.getByRole('button', { name: 'Cancelar', exact: true }).click();
-  expect(fixture.unmocked.filter(url => url.includes('/competition/'))).toEqual([]);
+  expect(fixture.unmocked.filter(url => /^(POST|PUT|PATCH|DELETE) /.test(url))).toEqual([]);
 });
 
 test('Community spreadsheet inspection E2E: Portuguese backend error is not shown in English', async ({ page }) => {
@@ -2826,9 +2826,11 @@ test('Community spreadsheet inspection E2E: Portuguese backend error is not show
   await page.getByRole('button', { name: 'Final standings' }).click();
   const file = page.locator('input[accept=".xlsx,.xls,.csv,.tsv"]');
   await file.setInputFiles({ name: 'history.csv', mimeType: 'text/csv',
-    buffer: Buffer.from('Pos;Equipa;Pts\\n1;Azuis;3\\n') });
+    buffer: Buffer.from('Pos;Equipa;Pts\n1;Azuis;3\n') });
   await page.getByRole('button', { name: 'Analyse file' }).click();
-  await expect(page.getByRole('alert')).toContainText('We could not analyse this file.');
-  await expect(page.getByRole('alert')).not.toContainText('Não foi possível analisar');
+  await expect(page.getByRole('alert').filter({ hasText: 'We could not analyse this file.' }))
+    .toHaveCount(1);
+  expect((await page.getByRole('alert').allTextContents()).join(' '))
+    .not.toContain('Não foi possível analisar');
   expect(fixture.unmocked.filter(url => url.includes('/competition/import/'))).toEqual([]);
 });
