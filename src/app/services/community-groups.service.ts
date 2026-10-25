@@ -28,7 +28,7 @@ export interface TrackSprintIncident {
   heatNumber: number;
   incidentType: 'FALL' | 'PUNCTURE' | 'BICYCLE_DEFECT' | 'RULE_INFRINGEMENT' | 'OTHER';
   details: string;
-  status: 'PENDING' | 'DECIDED' | 'ADJUDICATION_REQUIRED' | 'RESTART_AUTHORIZED';
+  status: 'PENDING' | 'DECIDED' | 'ADJUDICATION_REQUIRED' | 'RESTART_AUTHORIZED' | 'OFFICIAL_HEAT_AWARDED';
   reportedBy: string;
   reportedAt: string;
   decisionType: 'RESTART_REQUIRED' | 'OFFICIAL_RESULT_TO_RECORD' | 'DISCIPLINARY_RULING' | null;
@@ -43,6 +43,11 @@ export interface TrackSprintIncident {
   rerunReason?: string | null;
   rerunAuthorizedBy?: string | null;
   rerunAuthorizedAt?: string | null;
+  awardWinner?: string | null;
+  awardReference?: string | null;
+  awardReason?: string | null;
+  awardConfirmedBy?: string | null;
+  awardConfirmedAt?: string | null;
 }
 
 export interface TrackSprintInterruption {
@@ -565,6 +570,16 @@ export class CommunityGroupsService {
     return this.http.put<TrackSprintIncident>(
       this.url + '/' + communityId + '/seasons/' + seasonId
       + '/track-sprint-brackets/' + bracketId + '/incidents/' + incidentId + '/rerun', payload);
+  }
+
+  confirmSprintTwoUpOfficialAward(communityId: number, seasonId: number, bracketId: number,
+    incidentId: number,
+    payload: {winnerUsername: string; basis: 'INTENTIONAL_FALL'; reference: string; reason: string}):
+    Observable<TrackSprintIncident> {
+    return this.http.put<TrackSprintIncident>(
+      this.url + '/' + communityId + '/seasons/' + seasonId
+      + '/track-sprint-brackets/' + bracketId + '/incidents/' + incidentId
+      + '/official-award', payload);
   }
 
   endTrackSprintCompetition(communityId: number, seasonId: number, bracketId: number,
