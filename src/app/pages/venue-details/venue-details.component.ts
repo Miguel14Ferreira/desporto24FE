@@ -163,6 +163,10 @@ export class VenueDetailsComponent implements OnInit, OnDestroy {
       });
   }
 
+  get venueSports(): string[] {
+    return (this.venue?.sports || '').split(/[,;]+/).map(s => s.trim()).filter(Boolean);
+  }
+
   get hasConfirmedMapCoordinates(): boolean {
     const latitude = this.venue?.latitude;
     const longitude = this.venue?.longitude;

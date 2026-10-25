@@ -38,3 +38,5 @@
 .admin-venue-confirm p{margin:0;color:#e0faf4}
 .admin-venue-error{color:#ffc0c0;padding:12px;border:1px solid #9d4853;border-radius:12px;margin-top:14px}
 @media(max-width:620px){.admin-venue-header{align-items:flex-start;flex-direction:column}.admin-venue-info{grid-template-columns:1fr}.admin-venue-dialog{padding:16px}}
+
+.admin-venue-nav{display:flex;align-items:center;gap:9px;flex-wrap:wrap}

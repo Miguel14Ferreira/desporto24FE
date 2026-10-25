@@ -495,3 +495,5 @@
 .venue-detail-page .venue-rating-summary small{color:#afc9d3}
 .venue-detail-page .venue-venue-actions{display:flex;gap:12px}
 @media(max-width:640px){.venue-detail-page{padding:22px 14px}.venue-detail-page .venue-header{padding:23px}}
+
+.venue-edit-link{display:inline-flex;text-decoration:none;margin:11px 0 3px;align-items:center;gap:7px}

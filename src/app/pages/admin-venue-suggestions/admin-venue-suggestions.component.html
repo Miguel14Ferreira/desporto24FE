@@ -6,7 +6,10 @@
         <h1>{{ 'venue.admin.title' | t }}</h1>
         <span>{{ 'venue.admin.subtitle' | t }}</span>
       </div>
-      <a routerLink="/menu/admin" class="admin-venue-back">← {{ 'adminHub.back' | t }}</a>
+      <div class="admin-venue-nav">
+        <a routerLink="/menu/admin/venue-edits" class="admin-venue-back">{{ 'venue.edit.admin.title' | t }}</a>
+        <a routerLink="/menu/admin" class="admin-venue-back">← {{ 'adminHub.back' | t }}</a>
+      </div>
     </header>
 
     <div class="admin-venue-summary">
