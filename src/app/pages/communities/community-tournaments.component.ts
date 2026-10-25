@@ -344,6 +344,8 @@ export class CommunityTournamentsComponent implements OnChanges {
   /** API warnings are authoritative but intentionally not locale-specific. */
   speedProposalWarning(proposal: InlineSpeedProposal): string {
     const warning = proposal.warning;
+    if (warning.includes('Empate múltiplo'))
+      return t('communities.inlineSpeed.warningMultipleTie');
     if (warning.includes('repetido')) return t('communities.inlineSpeed.warningDuplicate');
     if (warning.includes('tempos')) return t('communities.inlineSpeed.warningTimes');
     if (warning.includes('Posições')) return t('communities.inlineSpeed.warningPlaces');
@@ -368,7 +370,11 @@ export class CommunityTournamentsComponent implements OnChanges {
     return (this.speedSelections[stage] ?? []).includes(playerId);
   }
 
-  toggleSpeedChosen(stage: string, playerId: number): void {
+  toggleSpeedChosen(stage: InlineSpeedStage, playerId: number): void {
+    // Jury cannot approve an athlete marked DQ unless the original result
+    // itself was officially corrected. Never toggle them in this panel.
+    if (this.speedStageSkaters(stage).some(s => s.playerId === playerId && s.disqualified))
+      return;
     const previous = this.speedSelections[stage] ?? [];
     this.speedSelections[stage] = previous.includes(playerId)
       ? previous.filter(id => id !== playerId) : [...previous, playerId];
@@ -448,6 +454,19 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.showError(t('communities.inlineSpeed.noSelection')); return;
     }
     const reason = this.speedReasons[proposal.sourceStage] ?? '';
+    const selectable = this.speedStageSkaters(proposal.sourceStage)
+      .filter(s => !s.disqualified).map(s => s.playerId);
+    if (ids.some(id => !selectable.includes(id))) {
+      this.showError(t('communities.inlineSpeed.dqNotSelectable'));
+      return;
+    }
+    const extraWithoutTie = proposal.sourceStage === 'FIRST'
+      && proposal.targetStage === 'QUARTER' && proposal.expectedCount === 16
+      && proposal.playerIds.length === 16 && ids.length === 17;
+    if (extraWithoutTie && reason.trim().length < 20) {
+      this.showError(t('communities.inlineSpeed.exceptionReasonRequired'));
+      return;
+    }
     await this.mutate(this.api.confirmInlineSpeedQualification(this.community.id, this.selected.id,
       proposal.sourceStage, ids, reason), t('communities.inlineSpeed.confirmed'), overview => {
       this.speedOverview = overview;

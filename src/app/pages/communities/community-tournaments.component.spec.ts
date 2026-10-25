@@ -1747,6 +1747,63 @@ describe('Community tournaments management', () => {
       historicalArchiveId: 32 })).toBeFalse();
   });
 
+  it('explains three-way cutoff ties before offering any arbitrary selection, PT/EN', () => {
+    const p = { sourceStage: 'FIRST', targetStage: 'QUARTER', playerIds: [],
+      expectedCount: 16, ready: false, warning: 'Empate múltiplo no limite do 16.º' } as any;
+    const previous = localStorage.getItem('d24-language');
+    try {
+      localStorage.setItem('d24-language', 'pt');
+      expect(component.speedProposalWarning(p)).toContain('Empate de três');
+      localStorage.setItem('d24-language', 'en');
+      expect(component.speedProposalWarning(p)).toContain('Three or more');
+    } finally {
+      if (previous === null) localStorage.removeItem('d24-language');
+      else localStorage.setItem('d24-language', previous);
+    }
+  });
+
+  it('never lets the jury select a disqualified skater until source result correction', () => {
+    component.speedOverview = {
+      tournamentId: 9, discipline: 'TRACK_500D', availableHeats: [], decisions: [],
+      proposals: [], linkedHeats: [{
+        roundId: 101, heatNumber: 1, name: 'QA fictícia',
+        eventType: 'INLINE_TRACK_500D_FIRST_ROUND',
+        skaters: [
+          { playerId: 1, name: 'Ana', disqualified: false, position: null, seconds: 30 },
+          { playerId: 2, name: 'Bruno', disqualified: true, position: null, seconds: 31 }
+        ]
+      }]
+    };
+    component.speedSelections = { FIRST: [1] };
+    component.toggleSpeedChosen('FIRST', 2);
+    expect(component.speedSelections['FIRST']).toEqual([1]);
+    component.toggleSpeedChosen('FIRST', 1);
+    expect(component.speedSelections['FIRST']).toEqual([]);
+  });
+
+  it('requires a detailed explanation for an exceptional 17th qualifier without a time tie', async () => {
+    component.selected = { ...draft, sport: 'Patinagem de Velocidade' };
+    component.speedOverview = {
+      tournamentId: 9, discipline: 'TRACK_500D', availableHeats: [], decisions: [],
+      proposals: [], linkedHeats: [{
+        roundId: 102, heatNumber: 1, name: '20 fictional skaters',
+        eventType: 'INLINE_TRACK_500D_FIRST_ROUND',
+        skaters: Array.from({ length: 20 }, (_, index) => ({
+          playerId: index + 1, name: 'QA ' + (index + 1),
+          disqualified: false, position: null, seconds: index + 30
+        }))
+      }]
+    };
+    component.speedSelections = { FIRST: Array.from({ length: 17 }, (_, i) => i + 1) };
+    component.speedReasons = { FIRST: 'Júri confirma' };
+    const p = { sourceStage: 'FIRST', targetStage: 'QUARTER',
+      expectedCount: 16, ready: true, warning: '',
+      playerIds: Array.from({ length: 16 }, (_, i) => i + 1) } as any;
+    await component.confirmSpeedStage(p);
+    expect(component.error).toBe(t('communities.inlineSpeed.exceptionReasonRequired'));
+    expect(api.inlineSpeedOverview).not.toHaveBeenCalled();
+  });
+
   it('creates speed skating with zero generic football points and loads heat progression', async () => {
     component.startIndividualCreation();
     component.nameDraft = 'Campeonato de Patinagem 2026';

@@ -1229,9 +1229,12 @@
                       @for (skater of speedStageSkaters(proposal.sourceStage); track skater.playerId) {
                         <label class="inline-speed-selection-row">
                           <input type="checkbox" [checked]="speedChosen(proposal.sourceStage, skater.playerId)"
-                            [disabled]="busy || !canManage || selected.status === 'COMPLETED'"
+                            [disabled]="busy || !canManage || selected.status === 'COMPLETED' || skater.disqualified"
                             (change)="toggleSpeedChosen(proposal.sourceStage, skater.playerId)">
                           {{ skater.name }}
+                          @if (skater.disqualified) {
+                            <small>{{ 'communities.inlineSpeed.dqNotSelectable' | t }}</small>
+                          }
                         </label>
                       }
                     </div>
@@ -1240,6 +1243,9 @@
                         {{ 'communities.inlineSpeed.reason' | t }}
                         @if (proposal.sourceStage === 'FIRST') {
                           <small>{{ 'communities.inlineSpeed.firstRoundAttestation' | t }}</small>
+                          @if (proposal.targetStage === 'QUARTER') {
+                            <small>{{ 'communities.inlineSpeed.exceptionSeventeenthHint' | t }}</small>
+                          }
                         }
                         <textarea rows="2" maxlength="500"
                           [name]="'inline-speed-reason-' + proposal.sourceStage"
