@@ -6,6 +6,7 @@ import { historicalTournamentStandings, HistoricalTournamentStanding, canEstimat
 import { historicalTournamentOutcome, HistoricalTournamentOutcome } from './community-historical-tournament-outcome';
 import { groupHistoricalTournamentSourceRows } from './community-historical-tournament-source-groups';
 import { historicalKnockoutPhaseOverview } from './community-historical-knockout-overview';
+import { historicalMatchReviewFlags } from './community-historical-match-review';
 import {
   CommunityTournament, TournamentPointRules, TeamTieBreakPriority, TournamentMatch, TournamentParticipant, TournamentStandingRow,
   TournamentStandings, TournamentTeam, TournamentTeamMatch, TournamentTeamStandings, TournamentTeamGroups,
@@ -36,6 +37,7 @@ export class CommunityTournamentsComponent implements OnChanges {
   selected?: CommunityTournament;
   historicalArchive?: HistoricalMatchArchive;
   historicalArchivePage = 0;
+  readonly historicalMatchReviewFlags = historicalMatchReviewFlags;
   @ViewChild('historicalArchiveFixtures') private historicalArchiveFixtures?: ElementRef<HTMLElement>;
 
   /** Source-labelled stages, without inventing a fixture, bracket or official rank. */

@@ -106,7 +106,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   // Invalidate in-flight private media responses on chat navigation or teardown.
   private attachmentViewVersion = 0;
   get attachmentControlsReady(): boolean {
-    return this.attachmentReady && this.isAttachmentIdentityCurrent();
+    return this.attachmentReady && this.isAttachmentIdentityCurrent() && this.isSelectedSessionOpen();
   }
   selectedAttachment: File | null = null;
   voiceRecording = false;
@@ -858,7 +858,10 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     return { key: inboxKey('session', entry.sessionId), id: entry.id,
       sender: entry.senderUsername, text: entry.body, createdAt: entry.createdAt,
       replyToMessageId: entry.replyToMessageId, replyToSender: entry.replyToSender,
-      replyToText: entry.replyToText };
+      replyToText: entry.replyToText,
+      attachmentName: entry.attachmentName,
+      attachmentMimeType: entry.attachmentMimeType,
+      attachmentSize: entry.attachmentSize };
   }
 
   private acceptRealtime(key: string, message: InboxMessage): void {
@@ -953,7 +956,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       && !this.previewLoading && !this.previewError && !this.sending && !this.deliveryUncertain
       && !this.deliveryChecking && !this.voiceRecording && !this.voiceFinalizing
       && (this.draft.trim().length > 0
-        || (this.selected?.kind !== 'session' && this.attachmentControlsReady && !!this.selectedAttachment))
+        || (this.attachmentControlsReady && !!this.selectedAttachment))
       && this.draft.trim().length <= 2000);
   }
 
@@ -981,18 +984,21 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.attachmentReady = false;
     // Progressive enhancement: older injected chat clients and test doubles
     // have no attachment capability; keep the composer securely text-only.
-    if (conversation.kind === 'session' || !this.isAttachmentIdentityCurrent()) return;
+    if (!this.isAttachmentIdentityCurrent() || !this.isSelectedSessionOpen()) return;
     // A private chat and a community have different authorization scopes.
     const available = conversation.kind === 'direct'
       ? (typeof this.direct.attachmentsAvailable === 'function'
           ? this.direct.attachmentsAvailable(String(conversation.id)) : of({ available: false }))
-      : (typeof this.timeline.chatAttachmentsAvailable === 'function'
-          ? this.timeline.chatAttachmentsAvailable(Number(conversation.id)) : of({ available: false }));
+      : conversation.kind === 'community'
+      ? (typeof this.timeline.chatAttachmentsAvailable === 'function'
+          ? this.timeline.chatAttachmentsAvailable(Number(conversation.id)) : of({ available: false }))
+      : (typeof this.sessions.attachmentsAvailable === 'function'
+          ? this.sessions.attachmentsAvailable(Number(conversation.id)) : of({ available: false }));
     const viewVersion = this.attachmentViewVersion;
     available.pipe(timeout(10000), catchError(() => of({available: false})))
       .subscribe(result => {
         if (viewVersion === this.attachmentViewVersion && this.selectedKey === conversation.key
-            && this.isAttachmentIdentityCurrent()) this.attachmentReady = result.available;
+            && this.isAttachmentIdentityCurrent() && this.isSelectedSessionOpen()) this.attachmentReady = result.available;
       });
   }
 
@@ -1000,7 +1006,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0] ?? null;
     input.value = '';
-    if (!file || !this.attachmentControlsReady || this.selected?.kind === 'session'
+    if (!file || !this.attachmentControlsReady
         || !this.canEditDraft()) return;
     const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif',
       'application/pdf'].includes(file.type);
@@ -1042,7 +1048,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   }
 
   async startVoiceRecording(): Promise<void> {
-    if (!this.attachmentControlsReady || this.selected?.kind === 'session'
+    if (!this.attachmentControlsReady
         || !this.canEditDraft() || this.selectedAttachment || this.voiceRecording) return;
     const format = this.voiceFormat();
     if (!format) {
@@ -1085,7 +1091,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
         this.voiceFinalizing = false;
         if (this.voiceRecorder === recorder) this.voiceRecorder = null;
         if (this.voiceStream === stream) this.voiceStream = null;
-        if (generation !== this.voiceGeneration || this.selectedKey !== key) return;
+        if (generation !== this.voiceGeneration || this.selectedKey !== key
+            || !this.attachmentControlsReady) return;
         const type = format.extension === 'webm' ? 'audio/webm' : 'audio/ogg';
         const recorded = new Blob(chunks, { type });
         if (recorded.size === 0 || recorded.size > 5 * 1024 * 1024) {
@@ -1143,8 +1150,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
 
   openAttachment(message: InboxMessage): void {
     const conversation = this.selected;
-    if (!conversation || conversation.kind === 'session' || message.key !== conversation.key
-        || !this.isAttachmentIdentityCurrent()
+    if (!conversation || message.key !== conversation.key
+        || !this.isAttachmentIdentityCurrent() || !this.isSelectedSessionOpen()
         || !message.attachmentName || !message.attachmentMimeType || message.id <= 0
         || this.attachmentLoading.has(message.id)) return;
     const existing = this.attachmentPreviews.get(message.id);
@@ -1157,7 +1164,9 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.attachmentLoading.add(message.id);
     const download = conversation.kind === 'direct'
       ? this.direct.downloadAttachment(String(conversation.id), message.id)
-      : this.timeline.downloadChatAttachment(Number(conversation.id), message.id);
+      : conversation.kind === 'community'
+      ? this.timeline.downloadChatAttachment(Number(conversation.id), message.id)
+      : this.sessions.downloadAttachment(Number(conversation.id), message.id);
     download.pipe(timeout(30000), finalize(() => {
         if (viewVersion === this.attachmentViewVersion) this.attachmentLoading.delete(message.id);
       }))
@@ -1166,7 +1175,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
           // Never expose a previous login's file, or a download from a chat
           // that was left and reopened while the GET was pending.
           if (viewVersion !== this.attachmentViewVersion || this.selectedKey !== conversation.key
-              || !this.isAttachmentIdentityCurrent()) return;
+              || !this.isAttachmentIdentityCurrent() || !this.isSelectedSessionOpen()) return;
           const url = URL.createObjectURL(blob);
           if (message.attachmentMimeType?.startsWith('image/')
               || message.attachmentMimeType?.startsWith('audio/')) {
@@ -1243,9 +1252,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     if (!conversation || !this.canSendMessage()) return;
     const key = conversation.key;
     // A file chosen under a prior login must never be submitted by this tab.
-    if (conversation.kind !== 'session' && this.selectedAttachment
-        && !this.attachmentControlsReady) return;
-    const file = conversation.kind !== 'session' ? this.selectedAttachment : null;
+    if (this.selectedAttachment && !this.attachmentControlsReady) return;
+    const file = this.selectedAttachment;
     const caption = this.draft.trim();
     // Server sends the same synthesized text for an attachment without a caption.
     const name = file?.name.replace(/\\/g, '/').split('/').pop()?.replace(/[\\x00-\\x1f\\x7f]/g, '').trim().slice(-160);
@@ -1271,7 +1279,9 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
         : this.timeline.send(Number(conversation.id), 'CHAT', text);
       send = request.pipe(map(message => this.fromCommunity(message)));
     } else {
-      const request = replyId
+      const request = file
+        ? this.sessions.sendAttachment(Number(conversation.id), file, caption, replyId || undefined)
+        : replyId
         ? this.sessions.postMessage(Number(conversation.id), text, replyId)
         : this.sessions.postMessage(Number(conversation.id), text);
       send = request.pipe(map(message => this.fromSession(message)));

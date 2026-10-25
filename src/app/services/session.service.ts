@@ -256,6 +256,26 @@ export class SessionService {
     );
   }
 
+  attachmentsAvailable(id: number): Observable<{ available: boolean }> {
+    return this.http.get<{ available: boolean }>(
+      this.baseUrl + '/' + id + '/messages/attachments/availability');
+  }
+
+  sendAttachment(id: number, file: File, caption: string,
+                 replyToMessageId?: number): Observable<SessionMessage> {
+    const form = new FormData();
+    form.append('file', file, file.name);
+    if (caption.trim()) form.append('caption', caption.trim());
+    if (replyToMessageId) form.append('replyToMessageId', String(replyToMessageId));
+    return this.http.post<SessionMessage>(this.baseUrl + '/'
+      + id + '/messages/attachments', form);
+  }
+
+  downloadAttachment(id: number, messageId: number): Observable<Blob> {
+    return this.http.get(this.baseUrl + '/' + id
+      + '/messages/attachments/' + messageId, { responseType: 'blob' });
+  }
+
   participants(id: number): Observable<SessionParticipant[]> {
     return this.http.get<SessionParticipant[]>(this.baseUrl + '/' + id + '/participants');
   }
