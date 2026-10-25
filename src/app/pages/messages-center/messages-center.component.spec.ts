@@ -385,6 +385,20 @@ describe('Unified Jynlo message center', () => {
     expect(direct.send).not.toHaveBeenCalled();
   });
 
+  it('formats inbox timestamps compactly in PT and EN without changing full message dates', () => {
+    const date = new Date();
+    date.setHours(10, 24, 0, 0);
+    localStorage.setItem('d24-language', 'pt');
+    expect(component.formatInboxListTime(date.toISOString())).toMatch(/10:24/);
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    expect(component.formatInboxListTime(yesterday.toISOString())).toBe('Ontem');
+    localStorage.setItem('d24-language', 'en');
+    expect(component.formatInboxListTime(yesterday.toISOString())).toBe('Yesterday');
+    expect(component.formatInboxListTime('invalid timestamp')).toBe('');
+    localStorage.setItem('d24-language', 'pt');
+  });
+
   it('keeps each unsent draft separate and closes the emoji panel on chat navigation', () => {
     const directChat = item('direct', 'bea');
     const community = item('community', 7);
