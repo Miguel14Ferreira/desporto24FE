@@ -98,8 +98,8 @@ describe('Unified Jynlo message center', () => {
         gameDate:new Date(Date.now()+86400_000).toISOString(),status:'OPEN'}
     ],joined:[],waitlisted:[]} as any));
     component.openSharePicker();
-    expect(component.shareChoices.map(x=>x.id)).toEqual(['maria','10','8']);
-    const selected=component.shareChoices[1];
+    expect(component.shareChoices.map(x=>x.id)).toEqual(['ana','maria','10','8']);
+    const selected=component.shareChoices[2];
     component.draft='Junta-te!';
     component.selectShareChoice(selected);
     expect(component.selectedShare?.id).toBe('10');
