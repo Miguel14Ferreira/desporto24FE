@@ -504,6 +504,9 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
         }
       }
       if (discarded) this.persistPendingSends();
+      // Still using the previous selected row here: close any expired or
+      // revoked session and revoke its Blob URLs before replacing the list.
+      this.scheduleSelectedSessionCutoff();
       this.conversations = orderInbox(entries.map(item => ({
         ...item,
         latestText: existing.get(item.key)?.latestText,
