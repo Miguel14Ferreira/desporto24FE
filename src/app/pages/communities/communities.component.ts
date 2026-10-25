@@ -801,7 +801,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     return !!this.selected && !this.selected.rankingsEnabled
       && this.selected.individualTournamentsEnabled !== false
       && (this.communityRoundSports.includes('Patinagem de Velocidade')
-        || this.speedTournamentPresent);
+        || this.speedTournamentPresent === true);
   }
 
   /** Fetch only when useful; latest tournaments are listed first and never modified. */
