@@ -28,6 +28,9 @@ import {
 } from './inbox.model';
 import { RecoverableSend, restorePendingSends, savePendingSends } from './pending-send-session';
 
+export const VOICE_NOTE_MAX_DURATION_MS = 5 * 60_000;
+const VOICE_NOTE_AUDIO_BITRATE = 48_000;
+
 @Component({
   selector: 'app-messages-center',
   standalone: true,
@@ -119,10 +122,17 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   selectedAttachment: File | null = null;
   voiceRecording = false;
   voiceFinalizing = false;
+  voiceElapsedSeconds = 0;
+  readonly voiceMaxSeconds = VOICE_NOTE_MAX_DURATION_MS / 1000;
+  get voiceElapsedLabel(): string {
+    const seconds = this.voiceElapsedSeconds;
+    return Math.floor(seconds / 60) + ':' + String(seconds % 60).padStart(2, '0');
+  }
   voicePreviewUrl: string | null = null;
   private voiceRecorder: MediaRecorder | null = null;
   private voiceStream: MediaStream | null = null;
   private voiceTimer?: ReturnType<typeof setTimeout>;
+  private voiceElapsedTimer?: ReturnType<typeof setInterval>;
   private voiceGeneration = 0;
   readonly attachmentPreviews = new Map<number, string>();
   readonly attachmentLoading = new Set<number>();
@@ -1115,6 +1125,12 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.clearVoicePreview();
   }
 
+  private resetVoiceClock(): void {
+    if (this.voiceElapsedTimer) clearInterval(this.voiceElapsedTimer);
+    this.voiceElapsedTimer = undefined;
+    this.voiceElapsedSeconds = 0;
+  }
+
   private clearVoicePreview(): void {
     if (this.voicePreviewUrl) URL.revokeObjectURL(this.voicePreviewUrl);
     this.voicePreviewUrl = null;
@@ -1160,7 +1176,10 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       return;
     }
     try {
-      const recorder = new MediaRecorder(stream, { mimeType: format.mime });
+      // Target ~1.8 MB for five minutes of speech, within the 5 MB server cap.
+      const recorder = new MediaRecorder(stream, {
+        mimeType: format.mime, audioBitsPerSecond: VOICE_NOTE_AUDIO_BITRATE
+      });
       const chunks: Blob[] = [];
       this.voiceRecorder = recorder;
       this.voiceStream = stream;
@@ -1177,6 +1196,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
         stream.getTracks().forEach(track => track.stop());
         if (this.voiceTimer) clearTimeout(this.voiceTimer);
         this.voiceTimer = undefined;
+        this.resetVoiceClock();
         this.voiceRecording = false;
         this.voiceFinalizing = false;
         if (this.voiceRecorder === recorder) this.voiceRecorder = null;
@@ -1185,8 +1205,12 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
             || !this.attachmentControlsReady) return;
         const type = format.extension === 'webm' ? 'audio/webm' : 'audio/ogg';
         const recorded = new Blob(chunks, { type });
-        if (recorded.size === 0 || recorded.size > 5 * 1024 * 1024) {
+        if (recorded.size === 0) {
           this.composerError = t('chat.voiceRecordFailed');
+          return;
+        }
+        if (recorded.size > 5 * 1024 * 1024) {
+          this.composerError = t('chat.voiceTooLarge');
           return;
         }
         this.clearVoicePreview();
@@ -1199,12 +1223,20 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       this.voiceRecording = true;
       this.voiceFinalizing = false;
       this.composerError = '';
-      // A short, bounded voice note protects bandwidth and privacy.
-      this.voiceTimer = setTimeout(() => this.stopVoiceRecording(), 60_000);
+      // Allow a five-minute voice message, stopping safely at the limit.
+      this.voiceElapsedSeconds = 0;
+      const startedAt = Date.now();
+      this.voiceElapsedTimer = setInterval(() => {
+        this.voiceElapsedSeconds = Math.min(this.voiceMaxSeconds,
+          Math.floor((Date.now() - startedAt) / 1000));
+      }, 1000);
+      this.voiceTimer = setTimeout(() => this.stopVoiceRecording(),
+        VOICE_NOTE_MAX_DURATION_MS);
     } catch {
       stream.getTracks().forEach(track => track.stop());
       this.voiceRecorder = null;
       this.voiceStream = null;
+      this.resetVoiceClock();
       this.voiceRecording = false;
       this.voiceFinalizing = false;
       this.composerError = t('chat.voiceRecordFailed');
@@ -1214,6 +1246,9 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   stopVoiceRecording(): void {
     if (!this.voiceRecording || !this.voiceRecorder) return;
     this.voiceFinalizing = true;
+    if (this.voiceTimer) clearTimeout(this.voiceTimer);
+    this.voiceTimer = undefined;
+    this.resetVoiceClock();
     if (this.voiceRecorder.state !== 'inactive') this.voiceRecorder.stop();
     this.voiceRecording = false;
   }
@@ -1222,6 +1257,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     ++this.voiceGeneration;
     if (this.voiceTimer) clearTimeout(this.voiceTimer);
     this.voiceTimer = undefined;
+    this.resetVoiceClock();
     const recorder = this.voiceRecorder;
     this.voiceRecorder = null;
     if (recorder && recorder.state !== 'inactive') recorder.stop();
