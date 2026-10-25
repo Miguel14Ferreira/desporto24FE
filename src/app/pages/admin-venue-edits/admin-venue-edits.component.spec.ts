@@ -68,6 +68,7 @@ describe('AdminVenueEditsComponent', () => {
     pendingDecision.complete();
     expect(component.updating).toBeFalse();
     expect(component.selected).toBeNull();
+    api.history.and.returnValue(of({ suggestions: [], page: 0, hasMore: false }));
     component.changeMode('history');
     expect(api.history).toHaveBeenCalledOnceWith(0);
   });
