@@ -5,6 +5,20 @@ export type AppLanguage = 'pt' | 'en';
 type Dictionary = Record<string, string>;
 
 const PT: Dictionary = {
+  'communities.inlineSpeed.createTitle': 'Criar competição de Patinagem de Velocidade',
+  'communities.inlineSpeed.createIntro': 'Organiza provas por tempo e mangas eliminatórias. As posições, os tempos e os apuramentos são registados nas Jornadas.',
+  'communities.inlineSpeed.createRulesTitle': 'Resultados e progressão',
+  'communities.inlineSpeed.createRulesHint': 'Regras específicas para provas de 500 m +D em pista e Sprint de uma volta em estrada.',
+  'communities.inlineSpeed.createFormat': 'World Skate 2026 · Provas por mangas',
+  'communities.inlineSpeed.createFields': 'Tempos · Posições · Apuramentos e decisões dos juízes',
+  'communities.inlineSpeed.createNoPointsTitle': 'Sem pontos de vitória, empate ou derrota',
+  'communities.inlineSpeed.createNoPointsDescription': 'Os resultados desportivos são os tempos e as posições registados nas mangas. Os apurados só ficam confirmados após validação.',
+  'communities.inlineSpeed.createButton': 'Criar competição de patinagem',
+  'communities.inlineSpeed.status.DRAFT': 'A preparar mangas',
+  'communities.inlineSpeed.status.IN_PROGRESS': 'Provas em curso',
+  'communities.inlineSpeed.status.COMPLETED': 'Competição concluída',
+  'communities.inlineSpeed.detailSummary': 'Provas cronometradas · Posições e apuramentos · World Skate 2026',
+  'communities.inlineSpeed.noAvailableHeatsDetailed': 'Não foram encontradas mangas elegíveis. Regista uma Jornada de Patinagem de Velocidade (500 m +D ou Sprint de uma volta) numa época ativa; depois volta a esta competição para a associar.',
   'communities.inlineSpeed.title': 'Progressão de Patinagem de Velocidade · World Skate 2026',
   'communities.inlineSpeed.description': 'Associa mangas já registadas à competição e confirma os apurados de cada fase. Os tempos e posições originais não são alterados.',
   'communities.inlineSpeed.creationHelp': 'Provas individuais de 500 m +D (pista) e Sprint de uma volta (estrada): regista as mangas nas Jornadas e associa-as aqui para rever e confirmar apuramentos.',
@@ -3677,6 +3691,20 @@ const PT: Dictionary = {
 };
 
 const EN: Dictionary = {
+  'communities.inlineSpeed.createTitle': 'Create Speed Skating competition',
+  'communities.inlineSpeed.createIntro': 'Organize timed events and elimination heats. Placings, times and qualifiers are recorded in Rounds.',
+  'communities.inlineSpeed.createRulesTitle': 'Results and progression',
+  'communities.inlineSpeed.createRulesHint': 'Sport-specific rules for track 500m +D and road One Lap events.',
+  'communities.inlineSpeed.createFormat': 'World Skate 2026 · Heat-based events',
+  'communities.inlineSpeed.createFields': 'Times · Placings · Qualifiers and judge decisions',
+  'communities.inlineSpeed.createNoPointsTitle': 'No win, draw or loss points',
+  'communities.inlineSpeed.createNoPointsDescription': 'Sporting results are the times and finishing positions recorded in each heat. Qualification requires explicit confirmation.',
+  'communities.inlineSpeed.createButton': 'Create speed skating competition',
+  'communities.inlineSpeed.status.DRAFT': 'Preparing heats',
+  'communities.inlineSpeed.status.IN_PROGRESS': 'Events in progress',
+  'communities.inlineSpeed.status.COMPLETED': 'Competition completed',
+  'communities.inlineSpeed.detailSummary': 'Timed races · Placings and qualification · World Skate 2026',
+  'communities.inlineSpeed.noAvailableHeatsDetailed': 'No eligible heats found. Record a Speed Skating Round (track 500m +D or road One Lap) in an active season, then return here to link it.',
   'communities.inlineSpeed.title': 'Speed Skating progression · World Skate 2026',
   'communities.inlineSpeed.description': 'Link recorded heats to this competition and confirm qualifiers at each stage. Original finishing positions and times stay unchanged.',
   'communities.inlineSpeed.creationHelp': 'Individual track 500m +D and road One Lap: record heats in Rounds, then link them here to review and confirm qualification.',
