@@ -3233,3 +3233,39 @@ test('Community import HTTP 400 E2E: structured error is translated and no impor
   expect(fixture.matchConfirmCalls).toBe(0);
   expect(fixture.unmocked.filter(url => url.includes('/competition/import/'))).toEqual([]);
 });
+
+
+test('Community import HTTP 400 E2E: missing structured parameters do not leak placeholders', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'history');
+  let previewCalls = 0;
+  await page.route('**/api/communities/7/competition/import/preview', async route => {
+    if (route.request().method() !== 'POST') return route.fallback();
+    previewCalls++;
+    // A recognised code without its required row is deliberately malformed.
+    // The English UI must display the operation-specific review message.
+    await route.fulfill({ status: 400, contentType: 'application/json', body: JSON.stringify({
+      httpStatusCode: 400,
+      message: 'Linha 23: resultado inválido (exemplo: 2-1 ou 2:1)',
+      code: 'IMPORT_ROW_SCORE_INVALID', params: {}
+    }) });
+  });
+  await page.goto('/menu/communities/7?tab=ranking');
+  await page.evaluate(() => localStorage.setItem('d24-language', 'en'));
+  await page.reload();
+  await page.getByRole('button', { name: 'Final standings' }).click();
+  await page.locator('input[accept=".xlsx,.xls,.csv,.tsv"]').setInputFiles({
+    name: 'fictional-standings.csv', mimeType: 'text/csv',
+    buffer: Buffer.from('Pos;Equipa;Pts\n1;Azuis;3\n')
+  });
+  await page.getByRole('button', { name: 'Analyse file' }).click();
+  await expect(page.getByRole('alert').filter({ hasText: 'We could not analyse this file.' }))
+    .toHaveCount(1);
+  const alerts = (await page.getByRole('alert').allTextContents()).join(' ');
+  expect(alerts).not.toContain('{{row}}');
+  expect(alerts).not.toContain('Linha 23');
+  expect(alerts).not.toContain('resultado inválido');
+  expect(previewCalls).toBe(1);
+  expect(fixture.archiveConfirmCalls).toBe(0);
+  expect(fixture.matchConfirmCalls).toBe(0);
+  expect(fixture.unmocked.filter(url => url.includes('/competition/import/'))).toEqual([]);
+});
