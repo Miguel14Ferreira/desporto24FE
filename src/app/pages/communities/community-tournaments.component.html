@@ -1135,13 +1135,22 @@
                         <summary>{{ 'communities.inlineSpeed.trialHistory' | t }}
                           ({{ speedOverview.trials?.length }})</summary>
                         @for (trial of speedOverview.trials ?? []; track trial.id) {
-                          <article class="race-round-card">
+                          <article class="race-round-card"
+                            [attr.id]="'inline-speed-trial-' + trial.id">
                             <strong>{{ 'communities.inlineSpeed.trialTitle' | t }} #{{ trial.id }}</strong>
                             <small>{{ trial.heldAt | date:'short' }} · {{ trial.recordedBy }}</small>
                             @if (trial.stale) {
                               <p class="notice notice-error">{{ 'communities.inlineSpeed.tieOutdated' | t }}</p>
                             }
                             <p>{{ trial.officialReference }} · {{ trial.reason }}</p>
+                            @if (speedTrialUsedRevisions(trial.id).length) {
+                              <p class="t-muted">
+                                {{ 'communities.inlineSpeed.trialLinkedRevisions' | t }}:
+                                {{ speedTrialUsedRevisions(trial.id).join(', ') }}
+                              </p>
+                            } @else {
+                              <p class="t-muted">{{ 'communities.inlineSpeed.trialNotLinked' | t }}</p>
+                            }
                             <ol>
                               @for (result of trial.results; track result.playerId) {
                                 <li>{{ result.place }}.º
@@ -1225,6 +1234,14 @@
                       <p class="t-muted">{{ speedEvidenceLabel(ruling.evidenceType) }}
                         · {{ ruling.evidenceReference }}</p>
                     }
+                    @if (ruling.trialIds?.length) {
+                      <p class="t-muted">
+                        {{ 'communities.inlineSpeed.trialUsedInCurrent' | t }}:
+                        @for (id of ruling.trialIds ?? []; track id) {
+                          <a [attr.href]="'#inline-speed-trial-' + id">#{{ id }}</a>
+                        }
+                      </p>
+                    }
                     @if (ruling.revisions?.length) {
                       <details class="t-muted">
                         <summary>{{ 'communities.inlineSpeed.tieHistory' | t }}
@@ -1244,6 +1261,15 @@
                                   {{ revision.evidenceReference }}</small>
                               } @else {
                                 <small>{{ 'communities.inlineSpeed.evidence.legacy' | t }}</small>
+                              }
+                              @if (revision.trialIds?.length) {
+                                <p class="t-muted">
+                                  {{ 'communities.inlineSpeed.trialLinkedRevisions' | t }}
+                                  {{ revision.revision }}:
+                                  @for (id of revision.trialIds ?? []; track id) {
+                                    <a [attr.href]="'#inline-speed-trial-' + id">#{{ id }}</a>
+                                  }
+                                </p>
                               }
                               <small>{{ 'communities.inlineSpeed.tieSelected' | t }}:
                                 {{ speedTieSkaterNames(revision.selectedPlayerIds) }}</small>
@@ -1307,6 +1333,24 @@
                         <textarea rows="2" maxlength="500" name="inline-speed-evidence-reference"
                           [(ngModel)]="speedEvidenceReference" [disabled]="busy"></textarea>
                       </label>
+                      @if (speedAvailableTieTrials().length) {
+                        <fieldset class="inline-speed-trial-links">
+                          <legend>{{ 'communities.inlineSpeed.trialLinkHeading' | t }}</legend>
+                          <p class="t-muted">{{ 'communities.inlineSpeed.trialLinkHint' | t }}</p>
+                          @for (trial of speedAvailableTieTrials(); track trial.id) {
+                            <label class="inline-speed-selection-row">
+                              <input type="checkbox"
+                                [checked]="speedTrialLinked(trial.id)"
+                                [disabled]="busy || (!speedTrialLinked(trial.id) && speedTieTrialIds.length >= 10)"
+                                (change)="toggleSpeedTrialLink(trial.id, !speedTrialLinked(trial.id))">
+                              <span>
+                                #{{ trial.id }} · {{ trial.heldAt | date:'short' }}
+                                · {{ trial.officialReference }}
+                              </span>
+                            </label>
+                          }
+                        </fieldset>
+                      }
                       <button type="button" class="t-btn t-btn-primary"
                         [disabled]="busy || (speedSelections['FIRST']?.length ?? 0) !== 16"
                         (click)="resolveSpeedTie(proposal)">

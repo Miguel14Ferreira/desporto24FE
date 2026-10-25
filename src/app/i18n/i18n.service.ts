@@ -5,6 +5,12 @@ export type AppLanguage = 'pt' | 'en';
 type Dictionary = Record<string, string>;
 
 const PT: Dictionary = {
+  'communities.inlineSpeed.trialLinkHeading': 'Provas adicionais utilizadas nesta decisão',
+  'communities.inlineSpeed.trialLinkHint': 'Associa apenas provas realmente realizadas e válidas para estas mangas. Cada revisão guarda as suas próprias associações (máximo 10).',
+  'communities.inlineSpeed.trialLinkRequired': 'Quando a evidência é uma prova de desempate, seleciona pelo menos uma prova adicional registada e válida.',
+  'communities.inlineSpeed.trialLinkedRevisions': 'Utilizada na revisão do júri',
+  'communities.inlineSpeed.trialNotLinked': 'Esta prova ainda não foi associada a uma decisão do júri.',
+  'communities.inlineSpeed.trialUsedInCurrent': 'Provas associadas à decisão atual',
   'communities.inlineSpeed.trialHistory': 'Provas adicionais realizadas · registo oficial',
   'communities.inlineSpeed.trialTitle': 'Prova adicional',
   'communities.inlineSpeed.trialIntro': 'Só registes uma prova adicional que tenha realmente acontecido. Os tempos e lugares ficam separados das mangas originais; o apuramento exige uma decisão do júri.',

@@ -277,6 +277,7 @@ export interface InlineSpeedTieBreakRevision {
   reason: string;
   evidenceType?: InlineSpeedTieEvidenceType | null;
   evidenceReference?: string | null;
+  trialIds?: number[];
   confirmedBy: string;
   confirmedAt: string;
   stale: boolean;
@@ -287,6 +288,7 @@ export interface InlineSpeedTieBreak {
   reason: string;
   evidenceType?: InlineSpeedTieEvidenceType | null;
   evidenceReference?: string | null;
+  trialIds?: number[];
   confirmedBy: string;
   confirmedAt: string;
   stale: boolean;
