@@ -32,7 +32,7 @@ describe('Community tournaments management', () => {
       'createTeamTournament', 'details', 'teams', 'createTeam', 'addTeamPlayer', 'acceptTeamInvite', 'removeTeamPlayer', 'deleteTeam',
       'generateTeamSchedule', 'teamMatches', 'recordTeamResult', 'teamStandings', 'teamGroups', 'completeTeam',
       'createRaceChampionship', 'raceOverview', 'linkRace', 'unlinkRace', 'setRacePoints',
-      'completeRaceChampionship', 'inlineSpeedOverview'
+      'completeRaceChampionship', 'inlineSpeedOverview', 'resolveInlineSpeedTieBreak'
     ]);
     api.list.and.returnValue(of({ tournaments: [draft], page: 0, hasMore: false }));
     api.participants.and.returnValue(of({ participants: [], page: 0, hasMore: false }));
@@ -1818,6 +1818,53 @@ describe('Community tournaments management', () => {
     expect(component.selected?.sport).toBe('Patinagem de Velocidade');
     expect(api.inlineSpeedOverview).toHaveBeenCalled();
     expect(api.generateSchedule).not.toHaveBeenCalled();
+  });
+
+  it('requires a separate recorded jury tie-break to resolve a fictional three-way cutoff', async () => {
+    component.selected = { ...draft, sport: 'Patinagem de Velocidade' };
+    const skaters = Array.from({ length: 20 }, (_, i) => ({
+      playerId: i + 1, name: 'Fictício ' + (i + 1),
+      seconds: i >= 15 && i <= 17 ? 30.16 : 30 + (i + 1) / 100,
+      position: null, disqualified: false
+    }));
+    const proposal = {
+      sourceStage: 'FIRST' as const, targetStage: 'QUARTER' as const,
+      playerIds: [], expectedCount: 16, ready: false,
+      warning: 'Empate múltiplo no limite do 16.º'
+    };
+    const overview = {
+      tournamentId: 9, discipline: 'TRACK_500D' as const,
+      linkedHeats: [{
+        roundId: 100, name: 'Manga fictícia', eventType: 'INLINE_TRACK_500D_FIRST_ROUND',
+        heatNumber: 1, skaters
+      }], availableHeats: [], proposals: [proposal], decisions: [],
+      tieBreaks: []
+    };
+    component.speedOverview = overview;
+    expect(component.isSpeedMultiwayTie(proposal)).toBeTrue();
+    const candidates = component.speedTieCandidates();
+    expect(candidates.length).toBe(18);
+    expect(candidates.filter(s => component.speedTieGuaranteed(s)).length).toBe(15);
+    component.speedSelections = { FIRST: Array.from({ length: 15 }, (_, i) => i + 1) };
+    component.toggleSpeedChosen('FIRST', 1);
+    expect(component.speedSelections['FIRST']).toContain(1);
+    component.toggleSpeedChosen('FIRST', 18);
+    expect(component.speedSelections['FIRST']?.length).toBe(16);
+    component.speedReasons = { FIRST: 'Curto' };
+    await component.resolveSpeedTie(proposal);
+    expect(api.resolveInlineSpeedTieBreak).not.toHaveBeenCalled();
+    component.speedReasons = { FIRST: 'O júri reviu a prova de desempate com vídeo oficial' };
+    api.resolveInlineSpeedTieBreak.and.returnValue(of({
+      ...overview, proposals: [{ ...proposal, ready: true,
+        playerIds: component.speedSelections['FIRST'] ?? [] }],
+      tieBreaks: [{ sourceStage: 'FIRST', selectedPlayerIds: component.speedSelections['FIRST'] ?? [],
+        reason: component.speedReasons['FIRST'] ?? '', confirmedBy: 'owner',
+        confirmedAt: '2026-10-25T15:00:00Z', stale: false }]
+    }));
+    await component.resolveSpeedTie(proposal);
+    expect(api.resolveInlineSpeedTieBreak).toHaveBeenCalledWith(7, 9,
+      Array.from({ length: 15 }, (_, i) => i + 1).concat(18),
+      'O júri reviu a prova de desempate com vídeo oficial');
   });
 
   it('keeps regular individual league points intact for other sports', async () => {

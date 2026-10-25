@@ -119,6 +119,14 @@ export class CommunityTournamentsService {
       { playerIds, reason });
   }
 
+  /** Record a real jury ruling without fabricating source race times. */
+  resolveInlineSpeedTieBreak(communityId: number, tournamentId: number,
+                            playerIds: number[], reason: string): Observable<InlineSpeedOverview> {
+    return this.http.put<InlineSpeedOverview>(
+      this.url(communityId, tournamentId) + '/inline-speed/tiebreaks/FIRST',
+      { playerIds, reason });
+  }
+
   /** Team tournaments have their own draft, roster and match lifecycle. */
   createTeamTournament(communityId: number, name: string, sport: string,
                        playersPerTeam: number | null, roundRobinLegs: 1 | 2 = 1,
