@@ -1,0 +1,30 @@
+name: Jynlo LIVE notification QA (read-only, manual)
+# Default-branch entrypoint for opt-in QA. Executes the audited script from
+# the Jynlo LIVE FE branch, never from this older default-branch codebase.
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: jynlo-notifications-live-readonly
+  cancel-in-progress: false
+jobs:
+  readonly-notifications:
+    name: Read-only QA notification consistency and ownership
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      JYNLO_QA_PASSWORD_1: ${{ secrets.JYNLO_QA_PASSWORD_1 }}
+      JYNLO_QA_PASSWORD_2: ${{ secrets.JYNLO_QA_PASSWORD_2 }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: preview/render-fullstack
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify only-read contract against mocked HTTP
+        run: node --test scripts/qa/jynlo-notifications-live-readonly.test.cjs
+      - name: QA login and read-only notification verification
+        run: node scripts/qa/jynlo-notifications-live-readonly.cjs
