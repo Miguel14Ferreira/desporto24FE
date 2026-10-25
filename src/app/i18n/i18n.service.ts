@@ -38,6 +38,16 @@ const PT: Dictionary = {
   'communities.inlineSpeed.reason': 'Fundamentação do júri ou correção',
   'communities.inlineSpeed.reasonPlaceholder': 'Ex.: decisão do juiz principal, empate, exclusão ou exceção…',
   'communities.inlineSpeed.confirm': 'Confirmar apurados',
+  'communities.inlineSpeed.warningDuplicate': 'O mesmo patinador consta de mais de uma manga nesta fase.',
+  'communities.inlineSpeed.warningTimes': 'Faltam tempos oficiais para determinar os apurados.',
+  'communities.inlineSpeed.warningPlaces': 'Confirma os 1.º e 2.º lugares válidos de cada manga.',
+  'communities.inlineSpeed.warningIncomplete': 'A fase ainda não tem todas as mangas necessárias.',
+  'communities.inlineSpeed.warningTie17': 'Empate no corte entre 16.º e 17.º: rever com o juiz principal (art. 115).',
+  'communities.inlineSpeed.warningTie': 'Empate no tempo de corte: decisão dos juízes obrigatória.',
+  'communities.inlineSpeed.warningRoad': 'Progressão de estrada sujeita à validação do juiz e da comissão técnica.',
+  'communities.inlineSpeed.warningPending': 'Proposta provisória. Só a decisão explícita dos juízes confirma o apuramento.',
+  'communities.inlineSpeed.firstRoundAttestation': 'Obrigatório: confirma na fundamentação que todas as mangas da primeira fase estão registadas.',
+
 
   'profile.sessions.kicker': 'Segurança da conta',
   'profile.sessions.title': 'Dispositivos com sessão iniciada',
@@ -3680,6 +3690,16 @@ const EN: Dictionary = {
   'communities.inlineSpeed.reason': 'Judge rationale or correction',
   'communities.inlineSpeed.reasonPlaceholder': 'E.g. chief judge decision, tie, exclusion or exception…',
   'communities.inlineSpeed.confirm': 'Confirm qualifiers',
+  'communities.inlineSpeed.warningDuplicate': 'The same skater appears in more than one heat at this stage.',
+  'communities.inlineSpeed.warningTimes': 'Official times are missing; qualifiers cannot yet be determined.',
+  'communities.inlineSpeed.warningPlaces': 'Confirm the valid first- and second-place finishers in each heat.',
+  'communities.inlineSpeed.warningIncomplete': 'Not all required heats are recorded for this stage.',
+  'communities.inlineSpeed.warningTie17': 'Tie at the 16th/17th cut-off: chief judge review required (Art. 115).',
+  'communities.inlineSpeed.warningTie': 'Tie at the cut-off: judge decision required.',
+  'communities.inlineSpeed.warningRoad': 'Road advancement requires judge and technical commission verification.',
+  'communities.inlineSpeed.warningPending': 'Provisional proposal. Only explicit judge confirmation makes qualification official.',
+  'communities.inlineSpeed.firstRoundAttestation': 'Required: confirm in your explanation that every first-round heat has been recorded.',
+
 
   'profile.sessions.kicker': 'Account security',
   'profile.sessions.title': 'Signed-in devices',
