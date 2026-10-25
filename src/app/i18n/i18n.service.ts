@@ -356,6 +356,7 @@ const PT: Dictionary = {
   'chat.messageDeleted': 'Mensagem eliminada',
   'chat.mutationFailed': 'Não foi possível alterar a mensagem. Verifica a ligação e as permissões.',
   'chat.shareMenu': 'Opções de partilha',
+  'chat.shareMyProfile': 'O meu perfil',
   'chat.shareFile': 'Fotografia ou documento',
   'chat.shareJynlo': 'Partilhar na Jynlo',
   'chat.shareType.profile': 'Perfil',
