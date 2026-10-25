@@ -165,6 +165,11 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   sprintDecisionSanctionedUsername = '';
   sprintDecisionReference = '';
   sprintDecisionReason = '';
+  sprintRerunIncidentId: number | null = null;
+  sprintRerunBracketId: number | null = null;
+  sprintRerunOrder: string[] = ['', ''];
+  sprintRerunReference = '';
+  sprintRerunReason = '';
   sprintIncidentError = '';
   private sprintBracketRequestVersion = 0;
   raceRuleSport: string | null = null;
@@ -2627,6 +2632,68 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       next: () => {
         this.sprintDecisionIncidentId = null;
         this.sprintDecisionBracketId = null;
+        this.loadSprintBrackets(group, season);
+      },
+      error: error => this.sprintIncidentError = error.error?.message
+        || t('communities.trackCycling.incidentError')
+    });
+  }
+
+  sprintRerunAuthorized(bracket: TrackSprintBracketOverview, key: string): boolean {
+    return this.sprintIncidentsFor(bracket, key)
+      .some(i => i.status === 'RESTART_AUTHORIZED');
+  }
+
+  sprintCanAuthorizeReducedRerun(bracket: TrackSprintBracketOverview,
+    incident: TrackSprintIncident): boolean {
+    if (bracket.format !== 'OLYMPIC_TWENTY_FOUR_REPECHAGE'
+        || incident.status !== 'ADJUDICATION_REQUIRED'
+        || !['RELEGATION', 'DISQUALIFICATION'].includes(incident.sanctionType || '')
+        || !/^SP[1-9][0-9]*-(U[1-4]|W[1-2])$/.test(incident.seriesKey)) return false;
+    const m = bracket.matches.find(m => m.seriesKey === incident.seriesKey);
+    return !!m && m.status === 'READY'
+      && !!m.riderA && !!m.riderB && !!m.riderC && !m.riderD
+      && [m.riderA, m.riderB, m.riderC].includes(incident.sanctionedUsername || '');
+  }
+
+  sprintRerunEligibleRiders(bracket: TrackSprintBracketOverview,
+    incident: TrackSprintIncident): string[] {
+    if (!this.sprintCanAuthorizeReducedRerun(bracket, incident)) return [];
+    const m = bracket.matches.find(m => m.seriesKey === incident.seriesKey)!;
+    return [m.riderA!, m.riderB!, m.riderC!]
+      .filter(n => n !== incident.sanctionedUsername);
+  }
+
+  editSprintRerun(bracketId: number, incidentId: number): void {
+    this.sprintRerunBracketId = bracketId;
+    this.sprintRerunIncidentId = incidentId;
+    this.sprintRerunOrder = ['', ''];
+    this.sprintRerunReference = '';
+    this.sprintRerunReason = '';
+    this.sprintIncidentError = '';
+  }
+
+  saveSprintRerun(): void {
+    const bracket = this.sprintBrackets.find(b => b.id === this.sprintRerunBracketId);
+    const incident = (bracket?.incidents || []).find(i => i.id === this.sprintRerunIncidentId);
+    if (!this.selected || !this.canManage() || this.sprintIncidentSaving ||
+        this.selectedSeasonId == null || this.activeSeason()?.id !== this.selectedSeasonId
+        || !bracket || !incident || !this.sprintCanAuthorizeReducedRerun(bracket,incident)
+        || this.sprintRerunReference.trim().length < 12
+        || this.sprintRerunReason.trim().length < 12) return;
+    const eligible = this.sprintRerunEligibleRiders(bracket, incident);
+    if (eligible.length !== 2 || this.sprintRerunOrder[0] === this.sprintRerunOrder[1]
+        || !this.sprintRerunOrder.every(n => eligible.includes(n))) return;
+    const group = this.selected.id, season = this.selectedSeasonId;
+    this.sprintIncidentSaving = true; this.sprintIncidentError = '';
+    this.communityService.authorizeTrackSprintRerun(group, season, bracket.id, incident.id, {
+      orderedRiders: [...this.sprintRerunOrder],
+      reference: this.sprintRerunReference.trim(),
+      reason: this.sprintRerunReason.trim()
+    }).pipe(timeout(10_000), finalize(() => this.sprintIncidentSaving = false)).subscribe({
+      next: () => {
+        this.sprintRerunIncidentId = null;
+        this.sprintRerunBracketId = null;
         this.loadSprintBrackets(group, season);
       },
       error: error => this.sprintIncidentError = error.error?.message

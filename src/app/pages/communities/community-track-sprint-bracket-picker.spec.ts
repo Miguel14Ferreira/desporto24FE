@@ -47,6 +47,10 @@ describe('Track Sprint bracket picker', () => {
     one.incidents[0].sanctionedUsername = 'fixture_rider_01';
     expect(availableSprintBracketSlots([one],'SPRINT_QUARTER_FINAL')
       .map(m => m.slot)).toEqual(['Q2']);
+    one.incidents[0].status = 'RESTART_AUTHORIZED';
+    one.incidents[0].rerunRiders = ['fixture_rider_02','fixture_rider_03'];
+    expect(availableSprintBracketSlots([one],'SPRINT_QUARTER_FINAL')
+      .map(m => m.slot)).toEqual(['Q1','Q2']);
     one.incidents[0].status = 'DECIDED';
     one.incidents[0].decisionType = 'RESTART_REQUIRED';
     expect(availableSprintBracketSlots([one],'SPRINT_QUARTER_FINAL')
