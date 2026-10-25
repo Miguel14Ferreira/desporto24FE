@@ -76,7 +76,7 @@ export class AdminVenueEditsComponent implements OnInit, OnDestroy {
       const url = new URL(item.sourceUrl);
       if (url.protocol !== 'https:' || !url.hostname.includes('.') || url.hostname.endsWith('.')
           || url.username || url.password || (url.port && url.port !== '443')
-          || url.hash || !/^[a-z0-9-]+(\\.[a-z0-9-]+)+$/i.test(url.hostname)
+          || url.hash || !/^[a-z0-9-]+(\.[a-z0-9-]+)+$/i.test(url.hostname)
           || /^[0-9.]+$/.test(url.hostname)) return null;
       return url.href;
     } catch { return null; }
