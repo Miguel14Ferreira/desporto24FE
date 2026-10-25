@@ -27,6 +27,26 @@ describe('Track Sprint bracket picker', () => {
     expect(availableSprintBracketSlots([bracket(entries)], 'SPRINT_SEMI_FINAL')).toEqual([]);
     expect(availableSprintBracketSlots([bracket(entries)], '')).toEqual([]);
   });
+  it('excludes only the series with an unresolved incident, keeping official history', () => {
+    const one = bracket([
+      match('Q1','SPRINT_QUARTER_FINAL','READY'),
+      match('Q2','SPRINT_QUARTER_FINAL','READY')
+    ]);
+    one.incidents = [{
+      id: 13, seriesKey: 'SP41-Q1', heatNumber: 1,
+      incidentType: 'PUNCTURE', details: 'Synthetic stopped race',
+      status: 'PENDING', reportedBy: 'qa', reportedAt: '2026-10-25T16:00:00Z',
+      decisionType: null, decisionReference: null, decisionReason: null,
+      decidedBy: null, decidedAt: null
+    }];
+    expect(availableSprintBracketSlots([one],'SPRINT_QUARTER_FINAL')
+      .map(m => m.slot)).toEqual(['Q2']);
+    one.incidents[0].status = 'DECIDED';
+    one.incidents[0].decisionType = 'RESTART_REQUIRED';
+    expect(availableSprintBracketSlots([one],'SPRINT_QUARTER_FINAL')
+      .map(m => m.slot)).toEqual(['Q1','Q2']);
+  });
+
   it('never infers heat numbers from other events or another series', () => {
     const rounds = [
       round('TRACK_SPRINT_HEAT','SP41-Q1',1),
