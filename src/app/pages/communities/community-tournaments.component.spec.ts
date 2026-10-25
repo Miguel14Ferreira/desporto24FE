@@ -1749,7 +1749,7 @@ describe('Community tournaments management', () => {
 
   it('explains three-way cutoff ties before offering any arbitrary selection, PT/EN', () => {
     const p = { sourceStage: 'FIRST', targetStage: 'QUARTER', playerIds: [],
-      expectedCount: 16, ready: false, warning: 'Empate múltiplo no limite do 16.º' } as const;
+      expectedCount: 16, ready: false, warning: 'Empate múltiplo no limite do 16.º' } as any;
     const previous = localStorage.getItem('d24-language');
     try {
       localStorage.setItem('d24-language', 'pt');
@@ -1798,7 +1798,7 @@ describe('Community tournaments management', () => {
     component.speedReasons = { FIRST: 'Júri confirma' };
     const p = { sourceStage: 'FIRST', targetStage: 'QUARTER',
       expectedCount: 16, ready: true, warning: '',
-      playerIds: Array.from({ length: 16 }, (_, i) => i + 1) } as const;
+      playerIds: Array.from({ length: 16 }, (_, i) => i + 1) } as any;
     await component.confirmSpeedStage(p);
     expect(component.error).toBe(t('communities.inlineSpeed.exceptionReasonRequired'));
     expect(api.inlineSpeedOverview).not.toHaveBeenCalled();
