@@ -2885,7 +2885,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       assists: 'ASSISTS', points: 'POINTS',
       name: 'NAME', position: 'POSITION', played: 'PLAYED',
       home: 'HOME', away: 'AWAY', score: 'SCORE',
-      homescore: 'HOME_SCORE', awayscore: 'AWAY_SCORE'
+      homescore: 'HOME_SCORE', awayscore: 'AWAY_SCORE',
+      stage: 'ROUND', phase: 'ROUND', round: 'ROUND', matchday: 'ROUND'
     };
     const field = keyByHeader[this.normalizedHeader(header)];
     return field ? this.importFieldLabel(field) : header;
@@ -3080,7 +3081,9 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     if (/^(resultadofora|golesfora|golosfora|golos2|golosde2|awayscore|scoreaway|score2)$/.test(normalized)) return 'AWAY_SCORE';
     if (/^(resultado|result|score|placar|marcador)$/.test(normalized)) return 'SCORE';
     if (/^(data|date|datadojogo|matchdate)$/.test(normalized)) return 'DATE';
-    if (/^(jornada|round|ronda|rodada|matchday)$/.test(normalized)) return 'ROUND';
+    // Historical elimination spreadsheets often label this column "Fase" or
+    // "Stage" rather than "Jornada". Preserve the source value as ROUND.
+    if (/^(jornada|round|ronda|rodada|matchday|fase|fasedotorneio|fasedacompeticao|faseeliminatoria|eliminatoria|etapa|stage|phase|knockoutround|roundname|roundlabel)$/.test(normalized)) return 'ROUND';
     if (suggestion === 'DATE') return 'DATE';
     if (suggestion === 'RESULT') return 'SCORE';
     return 'IGNORE';
