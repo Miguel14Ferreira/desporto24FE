@@ -1904,9 +1904,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
           : requestedTab === 'chat' ? 'chat'
           : requestedTab === 'tournaments' && this.hasCompetitions(full) ? 'tournaments'
           : requestedTab === 'ranking' && (full.rankingsEnabled || this.hasCompetitions(full)) ? 'ranking'
-          : requestedTab === 'stats' && (full.rankingsEnabled
-              || (full.individualTournamentsEnabled !== false
-                  && this.communitySports(full).includes('Patinagem de Velocidade'))) ? 'stats'
+          : requestedTab === 'stats' && full.rankingsEnabled ? 'stats'
           : requestedTab === 'sessions' ? 'sessions'
           : 'home';
         // Archive-only communities reveal the History tab after the async lists load.
@@ -1962,8 +1960,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     }
     if ((tab === 'tournaments' && !this.hasCompetitions(this.selected))
         || (tab === 'ranking' && !this.canBrowseHistoricalArchives)
-        || (tab === 'stats' && !(this.selected?.rankingsEnabled
-            || this.canRecordInlineSpeedWithoutRankings))) return;
+        || (tab === 'stats' && !this.selected?.rankingsEnabled)) return;
     this.activeTab = tab;
     this.replyingToCommunityMessage = null;
     this.chatDeliveryUncertain = false;
