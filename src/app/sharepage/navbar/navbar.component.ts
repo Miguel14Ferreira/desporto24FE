@@ -4,7 +4,7 @@ import { AuthenticationService } from 'src/app/services/authethication.service';
 import { AppLanguage, I18nService } from 'src/app/i18n/i18n.service';
 import { NotificationApiService } from 'src/app/services/notification-api.service';
 import { DirectChatRealtimeService } from 'src/app/services/direct-chat-realtime.service';
-import { Subscription, filter, retry, timeout } from 'rxjs';
+import { Subscription, auditTime, filter, retry, timeout } from 'rxjs';
 
 @Component({
     selector: 'app-navbar',
@@ -23,6 +23,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
   admin = false;
   loggingOut = false;
   private notificationTimer?: ReturnType<typeof setInterval>;
+  private unreadRequest?: Subscription;
   private readonly subscriptions = new Subscription();
 
   constructor(
@@ -49,17 +50,19 @@ export class NavbarComponent implements OnInit, OnDestroy {
           .subscribe(() => this.syncAuthenticatedState())
       );
 
+      // A socket event is not necessarily a visible notification: chat alerts
+      // may be disabled, already read, or suppressed by the server.
+      // Coalesce bursts and ask the authoritative, preference-filtered endpoint.
       this.subscriptions.add(
-        this.realtimeService.messages$.subscribe(() => {
-          if (this.authenticated) {
-            this.unreadNotifications += 1;
-          }
+        this.realtimeService.messages$.pipe(auditTime(300)).subscribe(() => {
+          if (this.authenticated) this.loadUnreadNotifications();
         })
       );
     }
 
     ngOnDestroy(): void {
       this.subscriptions.unsubscribe();
+      this.unreadRequest?.unsubscribe();
       if (this.notificationTimer) {
         clearInterval(this.notificationTimer);
       }
@@ -76,6 +79,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         // pending logout must not disable the button in the next session.
         this.loggingOut = false;
         this.realtimeService.disconnect();
+        this.unreadRequest?.unsubscribe();
         this.unreadNotifications = 0;
         if (this.notificationTimer) {
           clearInterval(this.notificationTimer);
@@ -87,26 +91,33 @@ export class NavbarComponent implements OnInit, OnDestroy {
       this.realtimeService.connect();
 
       if (!this.notificationTimer) {
-        this.loadUnreadNotifications();
         this.notificationTimer = setInterval(
           () => this.loadUnreadNotifications(),
           60000
         );
       }
+      // Refresh when navigating back from alerts/settings instead of showing
+      // a stale badge for another minute.
+      this.loadUnreadNotifications();
     }
 
     loadUnreadNotifications(): void {
-      this.notificationService.unreadCount()
+      if (!this.authenticated) return;
+      // Discard older responses if a new refresh occurs (logout, navigation,
+      // incoming chat message). They must not replace the latest server count.
+      this.unreadRequest?.unsubscribe();
+      this.unreadRequest = this.notificationService.unreadCount()
         .pipe(
           timeout(10_000),
           retry({ count: 1 })
         )
         .subscribe({
-        next: unreadCount => {
-          this.unreadNotifications = unreadCount;
-        },
-        error: () => this.unreadNotifications = 0
-      });
+          next: count => {
+            if (this.authenticated) this.unreadNotifications = count;
+          },
+          // A transient request failure is not evidence that all alerts were read.
+          error: () => {}
+        });
     }
     
     DarkMode(){
