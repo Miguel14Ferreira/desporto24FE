@@ -169,6 +169,15 @@ async function locateSprintBracket(page: Page, qa: {unexpected:string[]}) {
       };
     }));
     console.log('[SPRINT-QA] visible body',(await page.locator('body').innerText().catch(()=>'')).slice(0,3500));
+    console.log('[SPRINT-QA] forced debug-only Angular render',await page.evaluate(()=>{
+      const ng=(window as any).ng;
+      const host=document.querySelector('app-communities');
+      const component=ng?.getComponent?.(host);
+      try { if(component)ng?.applyChanges?.(component); } catch(error) { return {error:String(error)}; }
+      const node=document.querySelector('section.round-editor[aria-label="Quadros de Sprint"]');
+      return {exists:Boolean(node),visible:Boolean(node?.getBoundingClientRect().height),
+        html:node?.outerHTML.slice(0,700),appType:typeof ng?.applyChanges};
+    }));
     console.log('[SPRINT-QA] seasons visited',(qa as any).seasonReads);
     console.log('[SPRINT-QA] unhandled HTTP',qa.unexpected.slice(0,30));
     throw error;
