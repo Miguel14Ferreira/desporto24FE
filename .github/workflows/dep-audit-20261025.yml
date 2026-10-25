@@ -26,7 +26,7 @@ jobs:
         with:
           node-version: '22'
       - name: Propose compatible vulnerability fixes to isolated branch
-        if: ${{ github.event_name == 'push' && github.event.head_commit.message == 'ci(security): propose compatible lockfile fixes' }}
+        if: "${{ github.event_name == 'push' && github.event.head_commit.message == 'ci(security): propose compatible lockfile fixes' }}"
         shell: bash
         run: |
           set -euo pipefail
