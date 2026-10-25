@@ -484,6 +484,32 @@
               </article>
             }
           </div>
+
+          @if (hasOtherDeviceSessions) {
+            <div class="device-sessions__bulk">
+              @if (pendingRevokeOtherDevices) {
+                <div class="device-sessions__bulk-confirm" role="group" [attr.aria-label]="'profile.sessions.othersConfirm' | t">
+                  <p>{{ 'profile.sessions.othersConfirm' | t }}</p>
+                  <div class="device-session__actions">
+                    <button type="button" class="danger-action jynlo-action jynlo-action--danger"
+                      [disabled]="revokingOtherDevices" (click)="revokeOtherDevices()">
+                      {{ 'profile.sessions.others' | t }}
+                    </button>
+                    <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
+                      [disabled]="revokingOtherDevices" (click)="cancelRevokeOtherDevices()">
+                      {{ 'common.cancel' | t }}
+                    </button>
+                  </div>
+                </div>
+              } @else {
+                <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
+                  [disabled]="deviceSessionsLoading || !!revokingDeviceId || revokingOtherDevices"
+                  (click)="confirmRevokeOtherDevices()">
+                  {{ 'profile.sessions.others' | t }}
+                </button>
+              }
+            </div>
+          }
         </section>
 
         <section class="danger-zone">

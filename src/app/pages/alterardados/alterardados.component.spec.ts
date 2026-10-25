@@ -37,12 +37,13 @@ describe('AlterardadosComponent', () => {
   };
 
   beforeEach(async () => {
-    service = jasmine.createSpyObj<MyProfileService>('MyProfileService', ['get', 'update', 'disableMfa', 'deleteAccount', 'getDeviceSessions', 'revokeDeviceSession']);
+    service = jasmine.createSpyObj<MyProfileService>('MyProfileService', ['get', 'update', 'disableMfa', 'deleteAccount', 'getDeviceSessions', 'revokeDeviceSession', 'revokeOtherDeviceSessions''getDeviceSessions', 'revokeDeviceSession']);
     service.get.and.returnValue(of({ ...profile }));
     service.update.and.returnValue(of({ ...profile, location: 'Sintra' }));
     service.disableMfa.and.returnValue(of({ ...profile, mfa: false }));
     service.deleteAccount.and.returnValue(of(void 0));
     service.getDeviceSessions.and.returnValue(of([]));
+    service.revokeOtherDeviceSessions.and.returnValue(of(void 0));
     service.revokeDeviceSession.and.returnValue(of(void 0));
 
     await TestBed.configureTestingModule({
@@ -118,6 +119,44 @@ describe('AlterardadosComponent', () => {
     component.revokeDevice(second);
     expect(service.revokeDeviceSession).toHaveBeenCalledWith(second.id);
     expect(component.deviceSessions.length).toBe(0);
+  });
+
+  it('requires confirmation and keeps this device signed in when ending all others', () => {
+    const current: DeviceSession = {
+      id: 'current-family', device: 'Windows · Edge',
+      createdAt: null, expiresAt: '2026-10-31T18:00:00Z', current: true
+    };
+    const other: DeviceSession = {
+      id: 'other-family', device: 'Android · Chrome',
+      createdAt: null, expiresAt: '2026-10-31T18:00:00Z', current: false
+    };
+    service.getDeviceSessions.and.returnValue(of([current, other]));
+    component.loadDeviceSessions();
+    fixture.detectChanges();
+
+    expect(component.hasOtherDeviceSessions).toBeTrue();
+    expect(fixture.nativeElement.querySelector('.device-sessions__bulk button')).not.toBeNull();
+    component.confirmRevokeOtherDevices();
+    expect(service.revokeOtherDeviceSessions).not.toHaveBeenCalled();
+
+    component.revokeOtherDevices();
+    expect(service.revokeOtherDeviceSessions).toHaveBeenCalledTimes(1);
+    expect(component.deviceSessions).toEqual([current]);
+    expect(component.hasOtherDeviceSessions).toBeFalse();
+    expect(component.pendingRevokeOtherDevices).toBeFalse();
+  });
+
+  it('never presents bulk revocation without a recognized current session', () => {
+    service.getDeviceSessions.and.returnValue(of([{
+      id: 'unbound', device: 'Unknown', createdAt: null,
+      expiresAt: '2026-10-31T18:00:00Z', current: false
+    }]));
+    component.loadDeviceSessions();
+    fixture.detectChanges();
+    expect(component.hasOtherDeviceSessions).toBeFalse();
+    expect(fixture.nativeElement.querySelector('.device-sessions__bulk')).toBeNull();
+    component.revokeOtherDevices();
+    expect(service.revokeOtherDeviceSessions).not.toHaveBeenCalled();
   });
 
   it('should create and load the authenticated profile', () => {

@@ -36,4 +36,14 @@ describe('MyProfileService device sessions', () => {
     req.flush(null);
     expect(done).toBeTrue();
   });
+  it('ends only other devices using an authenticated credentialed DELETE', () => {
+    let finished = false;
+    service.revokeOtherDeviceSessions().subscribe(() => finished = true);
+    const req = http.expectOne(r => r.url.endsWith('/api/auth/sessions/others'));
+    expect(req.request.method).toBe('DELETE');
+    expect(req.request.withCredentials).toBeTrue();
+    req.flush(null);
+    expect(finished).toBeTrue();
+  });
+
 });

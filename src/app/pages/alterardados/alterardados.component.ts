@@ -25,6 +25,8 @@ export class AlterardadosComponent implements OnInit {
   deviceSessionsError = '';
   revokingDeviceId: string | null = null;
   pendingRevokeId: string | null = null;
+  pendingRevokeOtherDevices = false;
+  revokingOtherDevices = false;
   photo?: File;
   photoPreview = '';
 
@@ -68,6 +70,38 @@ export class AlterardadosComponent implements OnInit {
     this.loadDeviceSessions();
   }
 
+  get hasOtherDeviceSessions(): boolean {
+    return this.deviceSessions.some(session => session.current)
+      && this.deviceSessions.some(session => !session.current);
+  }
+
+  confirmRevokeOtherDevices(): void {
+    if (this.revokingOtherDevices || this.revokingDeviceId || !this.hasOtherDeviceSessions) return;
+    this.pendingRevokeOtherDevices = true;
+  }
+
+  cancelRevokeOtherDevices(): void {
+    if (!this.revokingOtherDevices) this.pendingRevokeOtherDevices = false;
+  }
+
+  revokeOtherDevices(): void {
+    if (!this.pendingRevokeOtherDevices || !this.hasOtherDeviceSessions
+        || this.revokingOtherDevices || this.revokingDeviceId) return;
+    this.revokingOtherDevices = true;
+    this.deviceSessionsError = '';
+    this.myProfileService.revokeOtherDeviceSessions()
+      .pipe(timeout(10_000), finalize(() => this.revokingOtherDevices = false))
+      .subscribe({
+        next: () => {
+          this.deviceSessions = this.deviceSessions.filter(session => session.current);
+          this.pendingRevokeOtherDevices = false;
+          this.pendingRevokeId = null;
+          this.showToast(t('profile.sessions.othersRevoked'));
+        },
+        error: () => this.deviceSessionsError = t('profile.sessions.othersError')
+      });
+  }
+
   loadDeviceSessions(): void {
     this.deviceSessionsLoading = true;
     this.deviceSessionsError = '';
@@ -76,6 +110,7 @@ export class AlterardadosComponent implements OnInit {
       .subscribe({
         next: sessions => {
           this.deviceSessions = sessions;
+          this.pendingRevokeOtherDevices = false;
           this.pendingRevokeId = null;
         },
         error: () => this.deviceSessionsError = t('profile.sessions.loadError')
@@ -83,6 +118,7 @@ export class AlterardadosComponent implements OnInit {
   }
 
   confirmRevokeDevice(id: string): void {
+    if (this.revokingOtherDevices) return;
     if (this.revokingDeviceId) return;
     this.pendingRevokeId = id;
   }
@@ -92,6 +128,7 @@ export class AlterardadosComponent implements OnInit {
   }
 
   revokeDevice(session: DeviceSession): void {
+    if (this.revokingOtherDevices) return;
     if (this.pendingRevokeId !== session.id || this.revokingDeviceId) return;
     this.revokingDeviceId = session.id;
     this.deviceSessionsError = '';
