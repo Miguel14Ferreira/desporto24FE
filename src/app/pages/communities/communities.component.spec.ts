@@ -79,10 +79,10 @@ describe('CommunitiesComponent public session eligibility', () => {
     try {
       localStorage.setItem('d24-language', 'en');
       expect(t('communities.matches.previewReviewNotice', { count: 1 }))
-        .toContain('1 source matches flagged for review.');
+        .toContain('Source matches flagged for review: 1.');
       localStorage.setItem('d24-language', 'pt');
       expect(t('communities.matches.previewReviewNotice', { count: 1 }))
-        .toContain('1 partidas sinalizadas para revisão');
+        .toContain('Partidas sinalizadas para revisão no ficheiro: 1.');
     } finally {
       if (previous === null) localStorage.removeItem('d24-language');
       else localStorage.setItem('d24-language', previous);

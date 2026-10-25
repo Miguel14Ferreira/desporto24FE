@@ -1115,7 +1115,7 @@ test('Historical Excel review E2E: bilingual flags before saving never mutate so
   await page.getByRole('button', { name: 'Pré-visualizar partidas' }).click();
   const preview = page.getByRole('region', { name: 'Pré-visualização de partidas históricas' }).first();
   await expect(preview).toBeVisible();
-  await expect(preview.getByText('1 partidas sinalizadas para revisão', { exact: false })).toBeVisible();
+  await expect(preview.getByText('Partidas sinalizadas para revisão no ficheiro: 1', { exact: false })).toBeVisible();
   await expect(page.locator('[data-import-source-row="3"] .historical-match-review-flag'))
     .toHaveText('Possível repetição');
   await expect(page.locator('[data-import-source-row="8"] .historical-match-review-flag')).toHaveCount(0);
@@ -1123,7 +1123,7 @@ test('Historical Excel review E2E: bilingual flags before saving never mutate so
   await page.locator('.historical-import-choice').nth(1).click();
   await page.locator('.historical-tournament-options input').fill('Futebol');
   await page.locator('.historical-tournament-options select').selectOption('KNOCKOUT');
-  await expect(preview.getByText('2 partidas sinalizadas para revisão', { exact: false })).toBeVisible();
+  await expect(preview.getByText('Partidas sinalizadas para revisão no ficheiro: 2', { exact: false })).toBeVisible();
   await expect(page.locator('[data-import-source-row="8"] .historical-match-review-flag'))
     .toHaveText('Empate na eliminatória — confirmar quem avançou');
   await expect(page.locator('[data-import-source-row="8"]')).toContainText('1–1');
@@ -1131,7 +1131,23 @@ test('Historical Excel review E2E: bilingual flags before saving never mutate so
 
   await page.evaluate(() => localStorage.setItem('d24-language', 'en'));
   await page.reload();
-  // The import draft is intentionally session-local; no write or invented winner.
+  // Import draft is session-local. Repeat in EN to verify translated warnings,
+  // never sending a confirmation request or inventing a knockout winner.
+  await page.getByRole('button', { name: 'Past tournament matches' }).click();
+  await page.locator('input[accept=".xlsx,.xls,.csv,.tsv"]')
+    .setInputFiles({ name: 'historico-partidas-qa.csv', mimeType: 'text/csv',
+      buffer: Buffer.from(csv, 'utf8') });
+  await page.getByRole('button', { name: 'Analyse file' }).click();
+  await page.getByRole('button', { name: 'Preview matches' }).click();
+  await expect(page.getByText('Source matches flagged for review: 1.', { exact: false })).toBeVisible();
+  await expect(page.locator('[data-import-source-row="3"] .historical-match-review-flag'))
+    .toHaveText('Possible repeat');
+  await page.locator('.historical-import-choice').nth(1).click();
+  await page.locator('.historical-tournament-options input').fill('Futebol');
+  await page.locator('.historical-tournament-options select').selectOption('KNOCKOUT');
+  await expect(page.getByText('Source matches flagged for review: 2.', { exact: false })).toBeVisible();
+  await expect(page.locator('[data-import-source-row="8"] .historical-match-review-flag'))
+    .toHaveText('Tied knockout match — confirm who advanced');
   expect(fixture.matchConfirmCalls).toBe(0);
   expect(fixture.savedMatchArchive).toBeNull();
   expect(fixture.unmocked.filter(url => url.includes('/competition/import/'))).toEqual([]);
