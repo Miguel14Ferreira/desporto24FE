@@ -1105,6 +1105,146 @@
               }
             }
           }
+        } @else if (isInlineSpeedCompetition) {
+          @if (!isMember) {
+            <p class="notice notice-info">{{ 'communities.inlineSpeed.memberOnly' | t }}</p>
+          } @else if (detailsLoading) {
+            <p role="status" class="t-muted">{{ 'communities.inlineSpeed.loading' | t }}</p>
+          } @else if (speedError || !speedOverview) {
+            <div class="notice notice-info" role="status">
+              {{ 'communities.inlineSpeed.loadError' | t }}
+              <button type="button" class="t-btn t-btn-secondary" (click)="loadInlineSpeed()">{{ 'common.retry' | t }}</button>
+            </div>
+          } @else {
+            <section class="t-section inline-speed-progression" [attr.aria-label]="'communities.inlineSpeed.title' | t">
+              <div class="t-section-heading">
+                <div>
+                  <h5>{{ 'communities.inlineSpeed.title' | t }}</h5>
+                  <p>{{ 'communities.inlineSpeed.description' | t }}</p>
+                </div>
+                <button type="button" class="t-btn t-btn-secondary t-btn-small"
+                  [disabled]="busy" (click)="loadInlineSpeed()">{{ 'communities.inlineSpeed.refresh' | t }}</button>
+              </div>
+              <p class="notice notice-info" role="note">{{ 'communities.inlineSpeed.judgeNotice' | t }}</p>
+              @if (!speedOverview.linkedHeats.length) {
+                <p class="t-muted">{{ 'communities.inlineSpeed.noLinkedHeats' | t }}</p>
+              }
+              @for (heat of speedOverview.linkedHeats; track heat.roundId) {
+                <div class="race-round-card inline-speed-heat">
+                  <div class="race-round-header">
+                    <div>
+                      <strong>{{ speedStageName(speedStage(heat.eventType)) }} ·
+                        {{ 'communities.inlineSpeed.heat' | t }} {{ heat.heatNumber }}</strong>
+                      <small>{{ heat.name }}</small>
+                    </div>
+                    @if (canManage && selected.status !== 'COMPLETED') {
+                      <button type="button" class="t-btn t-btn-secondary t-btn-small"
+                        [disabled]="busy" (click)="unlinkSpeedHeat(heat.roundId)">
+                        {{ 'communities.inlineSpeed.unlink' | t }}
+                      </button>
+                    }
+                  </div>
+                  <div class="t-table-scroll">
+                    <table>
+                      <thead>
+                        <tr><th scope="col">{{ 'communities.inlineSpeed.place' | t }}</th>
+                          <th scope="col">{{ 'communities.inlineSpeed.skater' | t }}</th>
+                          <th scope="col">{{ 'communities.inlineSpeed.time' | t }}</th></tr>
+                      </thead>
+                      <tbody>
+                        @for (skater of heat.skaters; track skater.playerId) {
+                          <tr>
+                            <td>{{ skater.disqualified ? 'DSQ' : (skater.position ?? '—') }}</td>
+                            <td>{{ skater.name }}</td>
+                            <td>{{ skater.seconds == null ? '—' : (skater.seconds | number:'1.2-2') + ' s' }}</td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              }
+              @if (canManage && selected.status !== 'COMPLETED') {
+                <div class="race-available">
+                  <h6>{{ 'communities.inlineSpeed.addHeat' | t }}</h6>
+                  @if (!speedOverview.availableHeats.length) {
+                    <p class="t-muted">{{ 'communities.inlineSpeed.noAvailableHeats' | t }}</p>
+                  }
+                  @for (heat of speedOverview.availableHeats; track heat.roundId) {
+                    <div class="race-available-row">
+                      <span>
+                        <strong>{{ heat.name }}</strong>
+                        <small>{{ speedStageName(speedStage(heat.eventType)) }} · {{ heat.skaters.length }}
+                          {{ 'communities.inlineSpeed.skaters' | t }}</small>
+                      </span>
+                      <label>
+                        {{ 'communities.inlineSpeed.heat' | t }}
+                        <input type="number" min="1" [max]="speedMaximumHeats(heat.eventType)"
+                          [name]="'inline-speed-heat-' + heat.roundId"
+                          [(ngModel)]="speedHeats[heat.roundId]" [disabled]="busy"
+                          class="inline-speed-heat-number">
+                      </label>
+                      <button type="button" class="t-btn t-btn-primary t-btn-small"
+                        [disabled]="busy" (click)="linkSpeedHeat(heat.roundId)">
+                        {{ 'communities.inlineSpeed.link' | t }}
+                      </button>
+                    </div>
+                  }
+                </div>
+              }
+              @for (proposal of speedOverview.proposals; track proposal.sourceStage) {
+                <section class="t-section inline-speed-proposal" [attr.aria-label]="speedStageName(proposal.sourceStage)">
+                  <div class="t-section-heading">
+                    <div>
+                      <h6>{{ speedStageName(proposal.sourceStage) }} →
+                        {{ speedStageName(proposal.targetStage) }}</h6>
+                      <p>{{ speedProposalWarning(proposal) }}</p>
+                    </div>
+                  </div>
+                  @if (speedDecision(proposal.sourceStage); as decision) {
+                    <p class="notice" [class.notice-info]="!decision.stale" [class.notice-error]="decision.stale"
+                      role="status">
+                      {{ (decision.stale ? 'communities.inlineSpeed.stale' : 'communities.inlineSpeed.confirmed') | t }}
+                      · {{ decision.confirmedBy }}
+                    </p>
+                  }
+                  @if (!proposal.ready) {
+                    <p class="t-muted">{{ 'communities.inlineSpeed.awaitingHeats' | t }}</p>
+                  } @else {
+                    <p class="t-muted">{{ 'communities.inlineSpeed.candidates' | t }}:
+                      {{ proposal.playerIds.length }} / {{ proposal.expectedCount }}</p>
+                    <div class="inline-speed-selection">
+                      @for (skater of speedStageSkaters(proposal.sourceStage); track skater.playerId) {
+                        <label class="inline-speed-selection-row">
+                          <input type="checkbox" [checked]="speedChosen(proposal.sourceStage, skater.playerId)"
+                            [disabled]="busy || !canManage || selected.status === 'COMPLETED'"
+                            (change)="toggleSpeedChosen(proposal.sourceStage, skater.playerId)">
+                          {{ skater.name }}
+                        </label>
+                      }
+                    </div>
+                    @if (canManage && selected.status !== 'COMPLETED') {
+                      <label class="inline-speed-judge-reason">
+                        {{ 'communities.inlineSpeed.reason' | t }}
+                        @if (proposal.sourceStage === 'FIRST') {
+                          <small>{{ 'communities.inlineSpeed.firstRoundAttestation' | t }}</small>
+                        }
+                        <textarea rows="2" maxlength="500"
+                          [name]="'inline-speed-reason-' + proposal.sourceStage"
+                          [(ngModel)]="speedReasons[proposal.sourceStage]" [disabled]="busy"
+                          [placeholder]="'communities.inlineSpeed.reasonPlaceholder' | t"></textarea>
+                      </label>
+                      <button type="button" class="t-btn t-btn-primary"
+                        [disabled]="busy || !(speedSelections[proposal.sourceStage]?.length)"
+                        (click)="confirmSpeedStage(proposal)">
+                        {{ 'communities.inlineSpeed.confirm' | t }}
+                      </button>
+                    }
+                  }
+                </section>
+              }
+            </section>
+          }
         } @else if (isRaceCompetition) {
           @if (!isMember) {
             <div class="notice notice-info">{{ 'communities.karting.joinToView' | t }}</div>
