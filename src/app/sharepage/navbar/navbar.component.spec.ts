@@ -1,5 +1,5 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { EMPTY, of, Subject } from 'rxjs';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { of, Subject, throwError } from 'rxjs';
 
 import { NavbarComponent } from './navbar.component';
 import { AuthenticationService } from '../../services/authethication.service';
@@ -13,6 +13,7 @@ describe('NavbarComponent', () => {
   let authService: jasmine.SpyObj<AuthenticationService>;
   let realtimeService: jasmine.SpyObj<DirectChatRealtimeService>;
   let notificationService: jasmine.SpyObj<NotificationApiService>;
+  let incomingMessages: Subject<any>;
 
   beforeEach(async () => {
     authService = jasmine.createSpyObj<AuthenticationService>(
@@ -22,10 +23,11 @@ describe('NavbarComponent', () => {
     authService.hasSessionCandidate.and.returnValue(false);
     authService.terminarSessao.and.returnValue(of(undefined));
 
+    incomingMessages = new Subject<any>();
     realtimeService = jasmine.createSpyObj<DirectChatRealtimeService>(
       'DirectChatRealtimeService',
       ['connect', 'disconnect'],
-      { messages$: EMPTY }
+      { messages$: incomingMessages.asObservable() }
     );
 
     notificationService = jasmine.createSpyObj<NotificationApiService>(
@@ -188,6 +190,64 @@ describe('NavbarComponent', () => {
     expect(button).toBeTruthy();
     expect(button.disabled).toBeFalse();
     expect(component.loggingOut).toBeFalse();
+  });
+
+  it('keeps the badge hidden for muted chat even when realtime messages arrive', fakeAsync(() => {
+    authService.hasSessionCandidate.and.returnValue(true);
+    // Server respects CHAT_MESSAGE opt-out and says there are no visible alerts.
+    notificationService.unreadCount.and.returnValue(of(0));
+    (component as any).syncAuthenticatedState();
+    expect(notificationService.unreadCount).toHaveBeenCalledTimes(1);
+
+    incomingMessages.next({ id: 10 });
+    incomingMessages.next({ id: 11 });
+    incomingMessages.next({ id: 12 });
+    expect(component.unreadNotifications).toBe(0);
+    tick(299);
+    expect(notificationService.unreadCount).toHaveBeenCalledTimes(1);
+    tick(1);
+
+    // One coalesced refresh, never an optimistic +3.
+    expect(notificationService.unreadCount).toHaveBeenCalledTimes(2);
+    expect(component.unreadNotifications).toBe(0);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.notification-badge')).toBeNull();
+    component.ngOnDestroy();
+  }));
+
+  it('reflects actual server counts and discards obsolete in-flight responses', fakeAsync(() => {
+    const pendingOldResponse = new Subject<number>();
+    notificationService.unreadCount.and.returnValues(
+      pendingOldResponse.asObservable(), of(2), of(3)
+    );
+    authService.hasSessionCandidate.and.returnValue(true);
+    (component as any).syncAuthenticatedState();
+    incomingMessages.next({ id: 20 });
+    tick(300);
+    expect(component.unreadNotifications).toBe(2);
+
+    // Late results from the earlier HTTP request must not replace fresh data.
+    pendingOldResponse.next(99);
+    pendingOldResponse.complete();
+    expect(component.unreadNotifications).toBe(2);
+
+    incomingMessages.next({ id: 21 });
+    tick(300);
+    expect(component.unreadNotifications).toBe(3);
+    expect(notificationService.unreadCount).toHaveBeenCalledTimes(3);
+    component.ngOnDestroy();
+  }));
+
+  it('keeps the last confirmed badge on a temporary unread endpoint failure', () => {
+    authService.hasSessionCandidate.and.returnValue(true);
+    notificationService.unreadCount.and.returnValues(
+      of(4), throwError(() => new Error('Network offline'))
+    );
+    (component as any).syncAuthenticatedState();
+    expect(component.unreadNotifications).toBe(4);
+    component.loadUnreadNotifications();
+    expect(component.unreadNotifications).toBe(4);
+    component.ngOnDestroy();
   });
 
   it('should create without opening a chat connection when unauthenticated', () => {
