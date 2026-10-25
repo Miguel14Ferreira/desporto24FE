@@ -82,12 +82,19 @@ export interface HistoricalStandingRow {
   goalsAgainst: number | null;
 }
 
+/** Optional structured import diagnostics introduced without removing legacy messages. */
+export interface CommunityImportDiagnostic {
+  code: string;
+  params?: Record<string, string>;
+}
+
 export interface HistoricalStandingPreview {
   sheetName: string;
   sourceRows: number;
   acceptedRows: number;
   duplicateRows: number;
   warnings: string[];
+  warningDetails?: CommunityImportDiagnostic[];
   rows: HistoricalStandingRow[];
 }
 
@@ -110,6 +117,7 @@ export interface HistoricalMatchPreview {
   acceptedRows: number;
   potentialDuplicates: number;
   warnings: string[];
+  warningDetails?: CommunityImportDiagnostic[];
   rows: Array<{
     sourceRow: number;
     home: string;

@@ -1,4 +1,5 @@
 import { appTranslate as t } from '../../i18n/i18n.service';
+import type { CommunityImportDiagnostic } from '../../services/community-groups.service';
 
 /**
  * The import API currently returns human-readable Portuguese diagnostics.
@@ -27,12 +28,47 @@ const patterns: ReadonlyArray<{ match: RegExp; key: string; values: readonly str
     key: 'communities.import.diagnostic.conflictingResults', values: ['row'] }
 ];
 
-export function importDiagnosticLabel(source: unknown): string {
+/**
+ * Prefer machine-readable API codes whenever provided; older backends still
+ * return the legacy messages, which the existing strict patterns can translate.
+ * Unknown codes deliberately never fall through to an arbitrary backend string.
+ */
+const diagnosticCodeKeys: Record<string, string> = {
+  IMPORT_SHEET_MISSING: 'communities.import.diagnostic.sheetMissing',
+  IMPORT_COLUMN_MISSING: 'communities.import.diagnostic.columnMissing',
+  IMPORT_UNSUPPORTED_FIELD: 'communities.import.diagnostic.unsupportedField',
+  IMPORT_DUPLICATE_FIELD: 'communities.import.diagnostic.duplicateField',
+  IMPORT_PLAYER_COLUMN_REQUIRED: 'communities.import.diagnostic.playerColumn',
+  IMPORT_EMPTY_SHEET: 'communities.import.diagnostic.emptySheet',
+  IMPORT_DUPLICATE_MATCH: 'communities.import.diagnostic.duplicateMatch',
+  IMPORT_DUPLICATE_ROUND_PLAYER: 'communities.import.diagnostic.duplicateRoundPlayer',
+  IMPORT_DUPLICATE_STANDING: 'communities.import.diagnostic.duplicateStanding',
+  IMPORT_EMPTY_PLAYER: 'communities.import.diagnostic.playerEmpty',
+  IMPORT_INTEGER_REQUIRED: 'communities.import.diagnostic.integerRequired',
+  IMPORT_CONFLICTING_RESULTS: 'communities.import.diagnostic.conflictingResults'
+};
+
+export function importDiagnosticLabel(source: unknown, detail?: CommunityImportDiagnostic | null): string {
   if (typeof source !== 'string' || source.trim().length === 0) {
     return t('communities.import.diagnostic.unknown');
   }
   if (typeof localStorage === 'undefined' || localStorage.getItem('d24-language') !== 'en') {
     return source;
+  }
+  if (detail && typeof detail.code === 'string') {
+    const params: Record<string, string> = {};
+    if (detail.params && typeof detail.params === 'object' && !Array.isArray(detail.params)) {
+      for (const [name, value] of Object.entries(detail.params)) {
+        if (typeof value === 'string') params[name] = value;
+      }
+    }
+    const key = Object.prototype.hasOwnProperty.call(diagnosticCodeKeys, detail.code)
+      ? diagnosticCodeKeys[detail.code] : undefined;
+    if (key) return t(key, params);
+    const row = params['row'];
+    return typeof row === 'string' && /^\d+$/.test(row)
+      ? t('communities.import.diagnostic.unknownRow', { row })
+      : t('communities.import.diagnostic.unknown');
   }
   const message = source.trim();
   for (const rule of patterns) {

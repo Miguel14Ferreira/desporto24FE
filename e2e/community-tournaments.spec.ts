@@ -570,6 +570,7 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
       archivePreviewCalls++;
       return send({ sheetName: 'Dados', sourceRows: 3, acceptedRows: 2,
         duplicateRows: 1, warnings: ['Linha 4: ÁGUIAS repetido; mantém-se apenas a primeira ocorrência'],
+        warningDetails: [{ code: 'IMPORT_DUPLICATE_STANDING', params: { row: '4', name: 'ÁGUIAS' } }],
         rows: historicalRows });
     }
     if (path === '/api/communities/7/competition/import/standings/confirm' && method === 'POST') {
