@@ -11,7 +11,7 @@ import {
   CommunityTournament, TournamentStatus, TournamentPointRules, TeamTieBreakPriority, TournamentMatch, TournamentParticipant, TournamentStandingRow,
   TournamentStandings, TournamentTeam, TournamentTeamMatch, TournamentTeamStandings, TournamentTeamGroups,
   TournamentRaceOverview, TournamentRaceStanding, TournamentRaceEntry,
-  InlineSpeedOverview, InlineSpeedProposal, InlineSpeedSkater, InlineSpeedStage, InlineSpeedTieEvidenceType
+  InlineSpeedOverview, InlineSpeedProposal, InlineSpeedSkater, InlineSpeedStage, InlineSpeedTieEvidenceType, InlineSpeedTrialRequest
 } from '../model/community-tournament';
 import { CommunityTournamentsService, isRaceChampionshipSport, RaceChampionshipSport } from '../../services/community-tournaments.service';
 import { AuthenticationService } from '../../services/authethication.service';
@@ -128,6 +128,12 @@ export class CommunityTournamentsComponent implements OnChanges {
   speedReasons: Record<string, string> = {};
   speedEvidenceType: InlineSpeedTieEvidenceType | '' = '';
   speedEvidenceReference = '';
+  speedTrialOpen = false;
+  speedTrialHeldAt = '';
+  speedTrialReference = '';
+  speedTrialReason = '';
+  speedTrialPlaces: Record<number, number | null> = {};
+  speedTrialTimes: Record<number, number | null> = {};
   private speedRevision = 0;
   raceError = false;
   racePointsDraft = '';
@@ -419,6 +425,63 @@ export class CommunityTournamentsComponent implements OnChanges {
     if (ordered.length < 18) return [];
     const cutoff = ordered[15]?.seconds;
     return ordered.filter(s => s.seconds != null && cutoff != null && s.seconds <= cutoff);
+  }
+
+  /** Only the skaters actually tied on the qualification boundary may race a recorded trial. */
+  speedTrialCandidates(): InlineSpeedSkater[] {
+    return this.speedTieCandidates().filter(skater => !this.speedTieGuaranteed(skater));
+  }
+
+  openSpeedTrial(): void {
+    const candidates = this.speedTrialCandidates();
+    if (this.busy || !this.canManage || this.speedDecision('FIRST')
+        || candidates.length < 3 || candidates.length > 6) return;
+    this.speedTrialPlaces = {};
+    this.speedTrialTimes = {};
+    this.speedTrialHeldAt = '';
+    this.speedTrialReference = '';
+    this.speedTrialReason = '';
+    this.speedTrialOpen = true;
+  }
+
+  async recordSpeedTrial(): Promise<void> {
+    if (!this.selected || this.busy || !this.canManage || !this.speedTrialOpen
+        || this.speedDecision('FIRST') || this.selected.status === 'COMPLETED') return;
+    const candidates = this.speedTrialCandidates();
+    if (candidates.length < 3 || candidates.length > 6) return;
+    const places = candidates.map(s => Number(this.speedTrialPlaces[s.playerId]));
+    const numericTimes = candidates.map(s => this.speedTrialTimes[s.playerId]);
+    if (places.some(v => !Number.isInteger(v) || v < 1 || v > candidates.length)
+        || new Set(places).size !== places.length
+        || numericTimes.some(v => v != null && (!Number.isFinite(v) || v <= 0
+             || !Number.isInteger(v * 1000)))) {
+      this.showError(t('communities.inlineSpeed.trialInvalidPlaces'));
+      return;
+    }
+    const date = new Date(this.speedTrialHeldAt);
+    const reference = this.speedTrialReference.trim();
+    const reason = this.speedTrialReason.trim();
+    if (!this.speedTrialHeldAt || !Number.isFinite(date.getTime()) || date.getTime() > Date.now()
+        || reference.length < 8 || reference.length > 500
+        || reason.length < 20 || reason.length > 500) {
+      this.showError(t('communities.inlineSpeed.trialRequired'));
+      return;
+    }
+    const request: InlineSpeedTrialRequest = {
+      actuallyHeld: true,
+      heldAt: date.toISOString(),
+      officialReference: reference,
+      reason,
+      results: candidates.map((skater, index) => ({
+        playerId: skater.playerId, place: places[index], seconds: numericTimes[index] ?? null
+      }))
+    };
+    await this.mutate(this.api.recordInlineSpeedTrial(this.community.id, this.selected.id, request),
+      t('communities.inlineSpeed.trialSaved'), overview => {
+        this.speedOverview = overview;
+        this.speedTrialOpen = false;
+        this.loadInlineSpeed();
+      });
   }
 
   speedTieGuaranteed(skater: InlineSpeedSkater): boolean {
@@ -1098,6 +1161,12 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.speedTieCorrectionOpen = false;
     this.speedEvidenceType = '';
     this.speedEvidenceReference = '';
+    this.speedTrialOpen = false;
+    this.speedTrialHeldAt = '';
+    this.speedTrialReference = '';
+    this.speedTrialReason = '';
+    this.speedTrialPlaces = {};
+    this.speedTrialTimes = {};
     this.historicalArchive = undefined;
     this.historicalArchivePage = 0;
     this.historicalReviewCursor = { quarterfinal: -1, semifinal: -1, final: -1 };

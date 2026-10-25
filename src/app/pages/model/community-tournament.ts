@@ -293,6 +293,30 @@ export interface InlineSpeedTieBreak {
   revisions?: InlineSpeedTieBreakRevision[];
 }
 
+export interface InlineSpeedTrialResult {
+  playerId: number;
+  place: number;
+  seconds: number | null;
+}
+export interface InlineSpeedTrial {
+  id: number;
+  sourceStage: 'FIRST';
+  heldAt: string;
+  officialReference: string;
+  reason: string;
+  recordedBy: string;
+  recordedAt: string;
+  stale: boolean;
+  results: InlineSpeedTrialResult[];
+}
+export interface InlineSpeedTrialRequest {
+  actuallyHeld: boolean;
+  heldAt: string;
+  officialReference: string;
+  reason: string;
+  results: InlineSpeedTrialResult[];
+}
+
 export interface InlineSpeedOverview {
   tournamentId: number;
   discipline: 'TRACK_500D' | 'ROAD_LAP' | null;
@@ -301,4 +325,5 @@ export interface InlineSpeedOverview {
   proposals: InlineSpeedProposal[];
   decisions: InlineSpeedDecision[];
   tieBreaks?: InlineSpeedTieBreak[];
+  trials?: InlineSpeedTrial[];
 }

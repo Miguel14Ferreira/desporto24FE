@@ -14,7 +14,7 @@ import {
   TournamentParticipantPage,
   TournamentScheduleSummary,
   TournamentStandings, TournamentTeam, TournamentTeamMatchPage, TournamentTeamMatch,
-  TournamentTeamScheduleSummary, TournamentTeamStandings, TournamentTeamGroups, TournamentRaceOverview, InlineSpeedOverview, InlineSpeedTieEvidenceType
+  TournamentTeamScheduleSummary, TournamentTeamStandings, TournamentTeamGroups, TournamentRaceOverview, InlineSpeedOverview, InlineSpeedTieEvidenceType, InlineSpeedTrialRequest
 } from '../pages/model/community-tournament';
 
 /** Community result-by-position formats verified end to end. */
@@ -127,6 +127,14 @@ export class CommunityTournamentsService {
     return this.http.put<InlineSpeedOverview>(
       this.url(communityId, tournamentId) + '/inline-speed/tiebreaks/FIRST',
       { playerIds, reason, evidenceType, evidenceReference });
+  }
+
+  /** Append-only real trial results; requires separate jury qualification approval. */
+  recordInlineSpeedTrial(communityId: number, tournamentId: number,
+                          request: InlineSpeedTrialRequest): Observable<InlineSpeedOverview> {
+    return this.http.post<InlineSpeedOverview>(
+      this.url(communityId, tournamentId) + '/inline-speed/tiebreaks/FIRST/trials',
+      request);
   }
 
   /** Team tournaments have their own draft, roster and match lifecycle. */
