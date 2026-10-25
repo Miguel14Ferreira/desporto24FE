@@ -394,18 +394,9 @@
                 <div class="inbox-emoji-controls" (keydown.escape)="closeEmojiPicker()">
                   <input #gifFile type="file" class="inbox-attachment-input"
                     accept=".gif,image/gif" (change)="onAttachmentPicked($event)">
-                  @if (attachmentControlsReady) {
-                    <button type="button" class="inbox-gif-trigger"
-                      [disabled]="!composerAllowed || composerAccessLoading || sending
-                        || deliveryUncertain || deliveryChecking || previewLoading || previewError
-                        || voiceRecording || voiceFinalizing"
-                      [attr.aria-expanded]="emojiPickerOpen && pickerTab === 'gif'"
-                      [attr.title]="'chat.gifPicker' | t" [attr.aria-label]="'chat.gifPicker' | t"
-                      aria-haspopup="dialog" (click)="openGifPicker()">GIF</button>
-                  }
                   <button type="button" class="inbox-emoji-trigger"
                     [attr.aria-label]="'chat.emojiPicker' | t"
-                    [attr.aria-expanded]="emojiPickerOpen && pickerTab === 'emoji'"
+                    [attr.aria-expanded]="emojiPickerOpen"
                     [attr.title]="'chat.emojiPicker' | t"
                     [disabled]="!composerAllowed || composerAccessLoading || sending || deliveryUncertain || deliveryChecking || previewLoading || previewError || !isSelectedSessionOpen()"
                     aria-haspopup="dialog" (click)="toggleEmojiPicker()">
