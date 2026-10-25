@@ -83,6 +83,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     }
   };
   private clearMediaOnAccountChange(): void {
+    this.recentThreadCache.clear();
     this.clearAttachmentRetry();
     ++this.attachmentViewVersion;
     this.attachmentReady = false;
@@ -141,17 +142,25 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     '😀', '😃', '😄', '😁', '😂', '🤣', '😊', '😍', '🥰', '😘',
     '😎', '🥳', '😢', '😭', '😮', '😅', '😉', '🤔', '🙏', '👏',
     '👍', '👎', '💪', '🙌', '❤️', '🔥', '💯', '✨', '🎉', '✅',
-    '⚽', '🏀', '🏐', '🎾', '🏓', '🚴', '🏃', '🏆', '🥇', '🎯'
+    '⚽', '🏀', '🏐', '🎾', '🏓', '🚴', '🏃', '🏆', '🥇', '🎯',
+    '😇', '😜', '🤩', '🥹', '🤗', '🤝', '💚', '💕', '🚀', '🎊',
+    '💬', '👀', '🤷', '😴', '😤', '🥲', '🫶', '💥', '🎮', '🎵'
   ];
   replyingTo: InboxMessage | null = null;
   sending = false;
   deliveryUncertain = false;
   deliveryChecking = false;
   composerAccessLoading = false;
+  composerAccessError = false;
   composerAllowed = false;
   composerError = '';
   private composerVersion = 0;
   private readonly drafts = new Map<string, string>();
+  // A short-lived in-memory view avoids reloading an already-visited thread
+  // just to switch back. Never persist private content or object URLs.
+  private readonly recentThreadCache = new Map<string, {
+    messages: InboxMessage[]; expiresAt: number
+  }>();
   // Text and reply target form one draft. Switching chat must never turn
   // a quoted reply into a plain message, or leak the quote to another chat.
   private readonly replyDrafts = new Map<string, InboxMessage>();
@@ -311,6 +320,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   }
 
   ngOnDestroy(): void {
+    this.recentThreadCache.clear();
     this.typing.destroy();
     ++this.peerReceiptVersion;
     this.subscriptions.unsubscribe();
@@ -513,10 +523,18 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
           this.pendingByConversation.delete(key);
           this.drafts.delete(key);
           this.replyDrafts.delete(key);
+          this.recentThreadCache.delete(key);
           discarded = true;
         }
       }
       if (discarded) this.persistPendingSends();
+      // Revoke cached content when a successful membership lookup removes a chat.
+      for (const key of this.recentThreadCache.keys()) {
+        const kind = key.split(':', 1)[0] as InboxKind;
+        if (!failedKinds.has(kind) && !entries.some(item => item.key === key)) {
+          this.recentThreadCache.delete(key);
+        }
+      }
       // Still using the previous selected row here: close any expired or
       // revoked session and revoke its Blob URLs before replacing the list.
       this.scheduleSelectedSessionCutoff();
@@ -626,6 +644,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     ++this.peerReceiptVersion;
     this.resetMessageSearch();
     this.messages = [];
+    this.recentThreadCache.delete(conversation.key);
     this.previewLoading = false;
     this.historicalPreview = false;
     this.composerAllowed = false;
@@ -676,9 +695,14 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.composerError = this.deliveryUncertain
       ? t('chat.sendUnconfirmed') : this.sendErrorsByConversation.get(conversation.key) || '';
     this.composerAllowed = false;
+    this.composerAccessError = false;
     this.composerAccessLoading = true;
-    this.messages = [];
+    const cached = this.recentThreadCache.get(conversation.key);
+    this.messages = cached && cached.expiresAt > Date.now()
+        && this.isAttachmentIdentityCurrent()
+      ? cached.messages.map(message => ({...message})) : [];
     this.previewError = false;
+    // Revalidate authorization on every visit; the cache is never the source of truth.
     // Opening a conversation is not proof the messages were displayed.
     this.loadComposerAccess(conversation);
     this.loadAttachmentAvailability(conversation);
@@ -851,7 +875,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
 
   private loadHistory(conversation: InboxConversation): void {
     const version = ++this.selectionVersion;
-    this.previewLoading = true;
+    this.previewLoading = this.messages.length === 0;
     this.previewError = false;
     this.realtimeDuringLoad.clear();
 
@@ -887,6 +911,10 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
         this.messages = mergeInboxMessages([
           ...preserved, ...entries, ...this.realtimeDuringLoad.values()
         ]);
+        if (!this.historicalPreview) this.recentThreadCache.set(conversation.key, {
+          messages: this.messages.map(message => ({...message})),
+          expiresAt: Date.now() + 60_000
+        });
         if (!follow && before.size > 0 && !this.historicalPreview) {
           this.newMessagesPending += this.messages.filter(item =>
             !before.has(item.id) && item.sender.toLowerCase() !== this.currentUsername.toLowerCase()).length;
@@ -906,6 +934,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       error: () => {
         if (version !== this.selectionVersion || conversation.key !== this.selectedKey) return;
         this.previewError = true;
+        this.recentThreadCache.delete(conversation.key);
+        this.messages = [];
         this.composerAllowed = false;
         this.composerAccessLoading = false;
       }
@@ -1010,19 +1040,35 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
 
   private loadComposerAccess(conversation: InboxConversation): void {
     const version = ++this.composerVersion;
+    this.composerAccessError = false;
     if (conversation.kind === 'community') {
-      // Community chat history itself confirms membership; the server
-      // rechecks authorization independently for every POST.
+      // Community history independently confirms membership before enabling writes.
       return;
     }
     const access: Observable<boolean> = conversation.kind === 'direct'
       ? this.direct.info(String(conversation.id)).pipe(map(info => !info.chatBlocked))
       : this.sessions.detail(Number(conversation.id)).pipe(map(detail => this.sessionIsWritable(detail)));
-    access.pipe(timeout(10000), catchError(() => of(false))).subscribe(allowed => {
-      if (version !== this.composerVersion || conversation.key !== this.selectedKey) return;
-      this.composerAllowed = allowed;
-      this.composerAccessLoading = false;
+    access.pipe(timeout(10000)).subscribe({
+      next: allowed => {
+        if (version !== this.composerVersion || conversation.key !== this.selectedKey) return;
+        this.composerAllowed = allowed;
+        this.composerAccessLoading = false;
+      },
+      error: () => {
+        if (version !== this.composerVersion || conversation.key !== this.selectedKey) return;
+        this.composerAllowed = false;
+        this.composerAccessError = true;
+        this.composerAccessLoading = false;
+      }
     });
+  }
+
+  retryComposerAccess(): void {
+    const conversation = this.selected;
+    if (!conversation || !this.isAttachmentIdentityCurrent() || !this.isSelectedSessionOpen()) return;
+    this.composerAllowed = false;
+    this.composerAccessLoading = true;
+    this.loadComposerAccess(conversation);
   }
 
   private sessionIsWritable(session: SessionDetail): boolean {
@@ -1272,6 +1318,20 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     for (const url of this.attachmentPreviews.values()) URL.revokeObjectURL(url);
     this.attachmentPreviews.clear();
     this.attachmentLoading.clear();
+  }
+
+  isVoiceNote(message: InboxMessage): boolean {
+    return message.attachmentMimeType === 'audio/webm'
+      || message.attachmentMimeType === 'audio/ogg';
+  }
+
+  showMessageBody(message: InboxMessage): boolean {
+    const body = (message.text || '').trim();
+    if (!body) return false;
+    // The server supplies an automatic filename caption for file-only sends.
+    // Do not repeat raw .webm/.ogg names above their playable voice bubble.
+    return !message.attachmentName || (body !== '📎 ' + message.attachmentName
+      && (!this.isVoiceNote(message) || body !== message.attachmentName));
   }
 
   openAttachment(message: InboxMessage): void {
