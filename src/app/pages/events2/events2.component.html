@@ -133,6 +133,20 @@
             <small>{{ 'createSession.recurrenceHint' | t }}</small>
           </label>
 
+          @if (recurrence === 'WEEKLY') {
+            <label>
+              <span>{{ 'createSession.weeklySessionsPerWeek' | t }}</span>
+              <select name="weeklySessionsPerWeek"
+                [ngModel]="weeklySessionsPerWeek"
+                (ngModelChange)="setWeeklySessionsPerWeek($event)"
+                [disabled]="loading">
+                @for (count of weeklySessionCountOptions; track count) {
+                  <option [ngValue]="count">{{ 'createSession.weeklySessionOption' | t:{ count: count } }}</option>
+                }
+              </select>
+              <small>{{ 'createSession.weeklySessionsPerWeekHint' | t }}</small>
+            </label>
+          }
           @if (recurrence !== 'NONE') {
             <label>
               <span>{{ (recurrence === 'WEEKLY' ? 'createSession.recurrenceWeeks' : 'createSession.recurrenceOccurrences') | t }}</span>
@@ -141,15 +155,42 @@
                 name="recurrenceOccurrences"
                 [(ngModel)]="recurrenceOccurrences"
                 min="2"
-                max="52"
+                [max]="maxRecurrenceCycles"
                 [disabled]="loading">
-              <small>{{ (recurrence === 'WEEKLY' ? 'createSession.recurrenceWeeksHint' : 'createSession.recurrenceOccurrencesHint') | t }}</small>
+              <small>{{ recurrence === 'WEEKLY'
+                ? ('createSession.recurrenceWeeksDynamicHint' | t:{ max: maxRecurrenceCycles })
+                : ('createSession.recurrenceOccurrencesHint' | t) }}</small>
             </label>
           }
         </div>
+        @if (recurrence === 'WEEKLY' && weeklySessionsPerWeek > 1) {
+          <section class="venue-section" aria-label="Horários semanais">
+            <div class="venue-heading">
+              <div>
+                <span class="section-kicker">{{ 'createSession.weeklyScheduleTitle' | t }}</span>
+                <p>{{ 'createSession.weeklyScheduleHint' | t }}</p>
+              </div>
+            </div>
+            <div class="form-grid">
+              <p class="recurrence-plan-summary">
+                {{ 'createSession.weeklyFirstSlotHint' | t }}
+              </p>
+              @for (slot of additionalWeeklyGameDates; track $index; let i = $index) {
+                <label>
+                  <span>{{ 'createSession.weeklySlotDate' | t:{ count: i + 2 } }} *</span>
+                  <input class="weekly-game-date" type="datetime-local" name="weeklySlotDate-{{i}}"
+                    [(ngModel)]="additionalWeeklyGameDates[i]"
+                    [min]="gameDate || minDate" [disabled]="loading" required>
+                </label>
+              }
+            </div>
+          </section>
+        }
         @if (recurrence === 'WEEKLY') {
           <p class="recurrence-plan-summary" role="status">
-            {{ 'createSession.recurrenceWeeklySummary' | t:{ count: recurrenceOccurrences } }}
+            {{ 'createSession.recurrenceMultiWeeklySummary' | t:{
+              count: weeklySessionsPerWeek, weeks: recurrenceOccurrences, total: plannedSessions
+            } }}
           </p>
         } @else if (recurrence === 'BIWEEKLY') {
           <p class="recurrence-plan-summary" role="status">
@@ -186,15 +227,19 @@
           </div>
           @if (recurrence !== 'NONE' && registrationOpeningMode === 'IMMEDIATE') {
             <p class="recurrence-plan-summary" role="status">
-              {{ 'createSession.callupAllImmediate' | t:{ count: recurrenceOccurrences } }}
+              {{ 'createSession.callupAllImmediate' | t:{ count: plannedSessions } }}
             </p>
           } @else if (recurrence !== 'NONE' && registrationOpeningMode === 'SCHEDULED') {
             <p class="recurrence-plan-summary" role="status">
-              {{ (recurrence === 'WEEKLY' ? 'createSession.callupEachScheduledWeekly' : 'createSession.callupEachScheduledBiweekly') | t }}
+              {{ (recurrence === 'WEEKLY' && weeklySessionsPerWeek > 1
+                  ? 'createSession.callupEachScheduledMultiWeekly'
+                  : recurrence === 'WEEKLY'
+                    ? 'createSession.callupEachScheduledWeekly'
+                    : 'createSession.callupEachScheduledBiweekly') | t }}
             </p>
           } @else if (recurrence !== 'NONE' && registrationOpeningMode === 'MANUAL') {
             <p class="recurrence-plan-summary" role="status">
-              {{ 'createSession.callupEachManual' | t:{ count: recurrenceOccurrences } }}
+              {{ 'createSession.callupEachManual' | t:{ count: plannedSessions } }}
             </p>
           } @else if (registrationOpeningMode === 'MANUAL') {
             <p>{{ 'createSession.callupManualHint' | t }}</p>
