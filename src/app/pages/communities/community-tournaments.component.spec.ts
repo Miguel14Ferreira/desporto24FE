@@ -32,7 +32,7 @@ describe('Community tournaments management', () => {
       'createTeamTournament', 'details', 'teams', 'createTeam', 'addTeamPlayer', 'acceptTeamInvite', 'removeTeamPlayer', 'deleteTeam',
       'generateTeamSchedule', 'teamMatches', 'recordTeamResult', 'teamStandings', 'teamGroups', 'completeTeam',
       'createRaceChampionship', 'raceOverview', 'linkRace', 'unlinkRace', 'setRacePoints',
-      'completeRaceChampionship', 'inlineSpeedOverview', 'resolveInlineSpeedTieBreak'
+      'completeRaceChampionship', 'inlineSpeedOverview', 'resolveInlineSpeedTieBreak', 'recordInlineSpeedTrial'
     ]);
     api.list.and.returnValue(of({ tournaments: [draft], page: 0, hasMore: false }));
     api.participants.and.returnValue(of({ participants: [], page: 0, hasMore: false }));
@@ -1900,6 +1900,66 @@ describe('Community tournaments management', () => {
       playerIds: proposal.playerIds, reason: 'Ratificado', confirmedBy: 'owner',
       confirmedAt: '2026-10-25T16:15:00Z', stale: false }];
     expect(component.speedCanAmendTie(proposal)).toBeFalse();
+  });
+
+  it('records only an actual fictional cutoff trial and never confirms qualifiers', async () => {
+    component.selected = { ...draft, status: 'IN_PROGRESS', sport: 'Patinagem de Velocidade' };
+    const skaters = Array.from({ length: 20 }, (_, i) => ({
+      playerId: i + 1, name: 'Patinador QA ' + (i + 1),
+      seconds: i >= 15 && i <= 17 ? 30.16 : 30 + (i + 1) / 100,
+      position: null, disqualified: false
+    }));
+    const proposal = { sourceStage: 'FIRST' as const,
+      targetStage: 'QUARTER' as const, playerIds: [], expectedCount: 16,
+      ready: false, warning: 'Empate múltiplo no limite do 16.º' };
+    const overview = {
+      tournamentId: 9, discipline: 'TRACK_500D' as const,
+      linkedHeats: [{ roundId: 202, name: 'Manga QA', eventType: 'INLINE_TRACK_500D_FIRST_ROUND',
+        heatNumber: 1, skaters }], availableHeats: [], proposals: [proposal],
+      decisions: [], tieBreaks: [], trials: []
+    };
+    component.speedOverview = overview;
+    expect(component.speedTrialCandidates().map(s => s.playerId)).toEqual([16, 17, 18]);
+    component.openSpeedTrial();
+    expect(component.speedTrialOpen).toBeTrue();
+    component.speedTrialHeldAt = '2026-10-25T10:00';
+    component.speedTrialReference = 'Ata oficial de QA 101';
+    component.speedTrialReason = 'Uma prova adicional foi efetivamente realizada perante o júri.';
+    component.speedTrialPlaces = { 16: 3, 17: 2, 18: 1 };
+    component.speedTrialTimes = { 16: 31.003, 17: 31.002, 18: 31.001 };
+    api.recordInlineSpeedTrial.and.returnValue(of({ ...overview, trials: [{
+      id: 101, sourceStage: 'FIRST', heldAt: '2026-10-25T10:00:00Z',
+      officialReference: 'Ata oficial de QA 101', reason: component.speedTrialReason,
+      recordedBy: 'owner', recordedAt: '2026-10-25T11:00:00Z', stale: false,
+      results: [{ playerId: 18, place: 1, seconds: 31.001 },
+        { playerId: 17, place: 2, seconds: 31.002 },
+        { playerId: 16, place: 3, seconds: 31.003 }]
+    }] }));
+    await component.recordSpeedTrial();
+    expect(api.recordInlineSpeedTrial).toHaveBeenCalledTimes(1);
+    const [cId, tId, payload] = api.recordInlineSpeedTrial.calls.mostRecent().args;
+    expect([cId, tId]).toEqual([7, 9]);
+    expect(payload.actuallyHeld).toBeTrue();
+    expect(payload.results).toEqual([
+      { playerId: 16, place: 3, seconds: 31.003 },
+      { playerId: 17, place: 2, seconds: 31.002 },
+      { playerId: 18, place: 1, seconds: 31.001 }
+    ]);
+    expect(component.speedTrialOpen).toBeFalse();
+    expect(component.speedOverview?.decisions.length).toBe(0);
+    component.openSpeedTrial();
+    component.speedTrialPlaces = { 16: 1, 17: 1, 18: 3 };
+    await component.recordSpeedTrial();
+    expect(api.recordInlineSpeedTrial).toHaveBeenCalledTimes(1);
+    component.speedOverview!.decisions = [{
+      sourceStage: 'FIRST', targetStage: 'QUARTER', playerIds: Array.from({ length: 16 }, (_, i) => i + 1),
+      reason: 'Ratificação oficial', confirmedBy: 'owner',
+      confirmedAt: '2026-10-25T12:00:00Z', stale: false
+    }];
+    component.openSpeedTrial();
+    expect(component.speedTrialOpen).toBeTrue(); // already open from rejected correction
+    await component.recordSpeedTrial();
+    expect(api.recordInlineSpeedTrial).toHaveBeenCalledTimes(1);
   });
 
   it('keeps regular individual league points intact for other sports', async () => {
