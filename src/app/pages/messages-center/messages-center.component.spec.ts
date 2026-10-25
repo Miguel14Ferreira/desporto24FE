@@ -117,6 +117,7 @@ describe('Unified Jynlo message center', () => {
     component.attachmentReady=true;
     component.openSharePicker();
     component.selectedShare={kind:'profile',id:'maria',title:'Maria',subtitle:'@maria'};
+    direct.recentHistory.and.returnValue(of({content:[],last:true}));
     component.selectConversation(component.conversations[1]);
     expect(component.selectedShare).toBeNull();
     expect(component.sharePickerOpen).toBeFalse();
