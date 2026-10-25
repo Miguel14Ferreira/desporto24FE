@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 
 import { NotificationsComponent } from './notifications.component';
 import { NotificationApiService } from '../../services/notification-api.service';
@@ -470,6 +470,61 @@ describe('NotificationsComponent', () => {
       emailEnabled: false
     }));
     expect(component.preferences?.emailEnabled).toBeFalse();
+  });
+
+
+  it('fetches preferences again when reopened, including changes from another device', () => {
+    service.preferences.and.returnValues(
+      of({ inAppEnabled: true, emailEnabled: true,
+        disabledInAppTypes: [], disabledEmailTypes: [] }),
+      of({ inAppEnabled: false, emailEnabled: false,
+        disabledInAppTypes: ['CHAT_MESSAGE'], disabledEmailTypes: ['COMMUNITY_INVITE'] })
+    );
+
+    component.openPreferences();
+    expect(component.preferences?.inAppEnabled).toBeTrue();
+    component.openPreferences();
+    component.openPreferences();
+
+    expect(service.preferences).toHaveBeenCalledTimes(2);
+    expect(component.preferences?.inAppEnabled).toBeFalse();
+    expect(component.preferences?.emailEnabled).toBeFalse();
+    expect(component.preferences?.disabledInAppTypes).toContain('CHAT_MESSAGE');
+    expect(component.preferences?.disabledEmailTypes).toContain('COMMUNITY_INVITE');
+  });
+
+  it('disables preference switches and ignores stale edits while reloading', () => {
+    component.openPreferences();
+    component.openPreferences();
+
+    const refresh = new Subject<{
+      inAppEnabled: boolean;
+      emailEnabled: boolean;
+      disabledInAppTypes: string[];
+      disabledEmailTypes: string[];
+    }>();
+    service.preferences.and.returnValue(refresh.asObservable());
+    component.openPreferences();
+    expect(component.preferencesLoading).toBeTrue();
+
+    fixture.detectChanges();
+    const toggles = Array.from(
+      fixture.nativeElement.querySelectorAll('.notification-preferences input[type="checkbox"]')
+    ) as HTMLInputElement[];
+    expect(toggles.length).toBeGreaterThan(2);
+    expect(toggles.every(input => input.disabled)).toBeTrue();
+
+    const writes = service.updatePreferences.calls.count();
+    component.changeGlobal('email', false);
+    component.changeType('CHAT_MESSAGE', 'inApp', false);
+    expect(service.updatePreferences.calls.count()).toBe(writes);
+
+    refresh.next({ inAppEnabled: true, emailEnabled: false,
+      disabledInAppTypes: ['CHAT_MESSAGE'], disabledEmailTypes: [] });
+    refresh.complete();
+    expect(component.preferencesLoading).toBeFalse();
+    expect(component.preferences?.emailEnabled).toBeFalse();
+    expect(component.preferenceEnabled('CHAT_MESSAGE', 'inApp')).toBeFalse();
   });
 
   it('does not discard current preferences if server update fails', () => {
