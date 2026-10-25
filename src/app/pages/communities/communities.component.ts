@@ -4015,7 +4015,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     this.communityDeleteLoading = true;
     this.communityDeleteError = '';
     this.communityService.deleteCommunity(community.id, community.name)
-      .pipe(timeout(10_000), finalize(() => this.communityDeleteLoading = false))
+      .pipe(timeout(60_000), finalize(() => this.communityDeleteLoading = false))
       .subscribe({
         next: () => {
           if (this.selected?.id !== community.id) return;
