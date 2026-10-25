@@ -212,7 +212,17 @@
                     <span>{{ message.replyToText }}</span>
                   </div>
                 }
-                @if (showMessageBody(message)) {
+                @if (readGiphyMessage(message.text); as giphy) {
+                  <div class="inbox-giphy-message">
+                    <img [src]="giphy.mediaUrl" [alt]="'chat.gifImage' | t" loading="lazy">
+                    @if (giphy.caption) {
+                      <p>{{ giphy.caption }}</p>
+                    }
+                    <a [href]="giphy.pageUrl" target="_blank" rel="noopener noreferrer">
+                      via GIPHY · {{ giphy.creator }}
+                    </a>
+                  </div>
+                } @else if (showMessageBody(message)) {
                   <p>{{ message.text }}</p>
                 }
                 @if (message.attachmentName) {
@@ -328,6 +338,14 @@
             } @else if (!composerAccessLoading && !composerAllowed && !previewLoading && !previewError) {
               <p class="inbox-compose-locked" role="status">{{ 'inbox.cannotWrite' | t }}</p>
             }
+            @if (selectedGif; as gif) {
+              <div class="inbox-attachment-draft inbox-giphy-draft">
+                <img [src]="gif.previewUrl" [alt]="'chat.gifImage' | t">
+                <span>{{ gif.title }} · GIPHY</span>
+                <button type="button" [disabled]="sending || deliveryUncertain"
+                  (click)="removeSelectedGif()">{{ 'chat.attachmentRemove' | t }}</button>
+              </div>
+            }
             @if (selectedAttachment; as file) {
               <div class="inbox-attachment-draft">
                 <span aria-hidden="true">{{ file.type.startsWith('audio/') ? '🎤' : '📎' }}</span>
@@ -355,7 +373,7 @@
                     [class.is-recording]="voiceRecording"
                     [disabled]="!composerAllowed || composerAccessLoading || sending
                       || deliveryUncertain || deliveryChecking || previewLoading || previewError
-                      || voiceFinalizing || (!voiceRecording && !!selectedAttachment)"
+                      || voiceFinalizing || (!voiceRecording && (!!selectedAttachment || !!selectedGif))"
                     [attr.aria-label]="(voiceRecording ? 'chat.voiceStop' : 'chat.voiceStart') | t"
                     [attr.title]="(voiceRecording ? 'chat.voiceStop' : 'chat.voiceStart') | t"
                     (click)="voiceRecording ? stopVoiceRecording() : startVoiceRecording()">
@@ -459,9 +477,7 @@
                               [attr.title]="gif.title"
                               (click)="chooseGif(gif)">
                               <img [src]="gif.previewUrl" [alt]="gif.title" loading="lazy">
-                              @if (gifSelectingId === gif.id) {
-                                <span class="inbox-picker-selecting">{{ 'chat.gifPreparing' | t }}</span>
-                              }
+
                             </button>
                           }
                         </div>
