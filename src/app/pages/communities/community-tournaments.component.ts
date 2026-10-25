@@ -11,7 +11,7 @@ import {
   CommunityTournament, TournamentStatus, TournamentPointRules, TeamTieBreakPriority, TournamentMatch, TournamentParticipant, TournamentStandingRow,
   TournamentStandings, TournamentTeam, TournamentTeamMatch, TournamentTeamStandings, TournamentTeamGroups,
   TournamentRaceOverview, TournamentRaceStanding, TournamentRaceEntry,
-  InlineSpeedOverview, InlineSpeedProposal, InlineSpeedSkater, InlineSpeedStage
+  InlineSpeedOverview, InlineSpeedProposal, InlineSpeedSkater, InlineSpeedStage, InlineSpeedTieEvidenceType
 } from '../model/community-tournament';
 import { CommunityTournamentsService, isRaceChampionshipSport, RaceChampionshipSport } from '../../services/community-tournaments.service';
 import { AuthenticationService } from '../../services/authethication.service';
@@ -126,6 +126,8 @@ export class CommunityTournamentsComponent implements OnChanges {
   speedSelections: Record<string, number[]> = {};
   speedTieCorrectionOpen = false;
   speedReasons: Record<string, string> = {};
+  speedEvidenceType: InlineSpeedTieEvidenceType | '' = '';
+  speedEvidenceReference = '';
   private speedRevision = 0;
   raceError = false;
   racePointsDraft = '';
@@ -371,6 +373,11 @@ export class CommunityTournamentsComponent implements OnChanges {
     return (this.speedOverview?.tieBreaks ?? []).find(item => item.sourceStage === stage);
   }
 
+  speedEvidenceLabel(type: InlineSpeedTieEvidenceType | null | undefined): string {
+    return type ? t('communities.inlineSpeed.evidence.' + type)
+      : t('communities.inlineSpeed.evidence.legacy');
+  }
+
   /** Keep the audit log readable with names, retaining IDs if a player was removed. */
   speedTieSkaterNames(ids: number[]): string {
     const names = new Map(this.speedStageSkaters('FIRST')
@@ -390,6 +397,8 @@ export class CommunityTournamentsComponent implements OnChanges {
     if (!ruling) return;
     this.speedSelections['FIRST'] = [...ruling.selectedPlayerIds];
     this.speedReasons['FIRST'] = ruling.reason;
+    this.speedEvidenceType = ruling.evidenceType ?? '';
+    this.speedEvidenceReference = ruling.evidenceReference ?? '';
     this.speedTieCorrectionOpen = true;
   }
 
@@ -436,8 +445,14 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.showError(t('communities.inlineSpeed.tiebreakReasonRequired'));
       return;
     }
+    const evidenceType = this.speedEvidenceType;
+    const evidenceReference = this.speedEvidenceReference.trim();
+    if (!evidenceType || evidenceReference.length < 8 || evidenceReference.length > 500) {
+      this.showError(t('communities.inlineSpeed.evidenceRequired'));
+      return;
+    }
     await this.mutate(this.api.resolveInlineSpeedTieBreak(
-      this.community.id, this.selected.id, chosen, reason),
+      this.community.id, this.selected.id, chosen, reason, evidenceType, evidenceReference),
       t('communities.inlineSpeed.tiebreakSaved'), overview => {
         this.speedOverview = overview;
         this.speedTieCorrectionOpen = false;
@@ -1081,6 +1096,8 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.speedError = false;
     this.speedSelections = {};
     this.speedTieCorrectionOpen = false;
+    this.speedEvidenceType = '';
+    this.speedEvidenceReference = '';
     this.historicalArchive = undefined;
     this.historicalArchivePage = 0;
     this.historicalReviewCursor = { quarterfinal: -1, semifinal: -1, final: -1 };
