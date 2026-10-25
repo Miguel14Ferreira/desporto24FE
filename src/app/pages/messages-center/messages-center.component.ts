@@ -27,6 +27,8 @@ import {
   inboxKey, matchesInboxSearch, mergeInboxMessages, orderInbox
 } from './inbox.model';
 import { RecoverableSend, restorePendingSends, savePendingSends } from './pending-send-session';
+import { GifChoice, encodeGiphyText, findGiphy, readGifProviderKey, readGiphyText } from './gif-picker.client';
+import { GiphyEmbedComponent } from './giphy-embed.component';
 
 export const VOICE_NOTE_MAX_DURATION_MS = 5 * 60_000;
 const VOICE_NOTE_AUDIO_BITRATE = 48_000;
@@ -34,7 +36,7 @@ const VOICE_NOTE_AUDIO_BITRATE = 48_000;
 @Component({
   selector: 'app-messages-center',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TranslatePipe, ChatReactionsComponent],
+  imports: [CommonModule, FormsModule, RouterLink, TranslatePipe, ChatReactionsComponent, GiphyEmbedComponent],
   templateUrl: './messages-center.component.html',
   styleUrls: ['./messages-center.component.css'],
   changeDetection: ChangeDetectionStrategy.Eager
@@ -88,6 +90,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     ++this.attachmentViewVersion;
     this.attachmentReady = false;
     this.selectedAttachment = null;
+    this.selectedGif = null;
+    this.closeEmojiPicker();
     this.cancelVoiceRecording();
     this.clearAttachmentPreviews();
   }
@@ -121,6 +125,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     return this.attachmentReady && this.isAttachmentIdentityCurrent() && this.isSelectedSessionOpen();
   }
   selectedAttachment: File | null = null;
+  // GIPHY media is NOT copied to R2: only validated CDN URLs travel as chat text.
+  selectedGif: GifChoice | null = null;
   voiceRecording = false;
   voiceFinalizing = false;
   voiceElapsedSeconds = 0;
@@ -146,6 +152,25 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   private readonly voicePositions = new Map<number, number>();
   private readonly voiceAutoplayRequested = new Set<number>();
   emojiPickerOpen = false;
+  pickerTab: 'emoji' | 'gif' = 'emoji';
+  gifQuery = '';
+  gifResults: GifChoice[] = [];
+  gifLoading = false;
+  gifError = '';
+  gifAvailable: boolean | null = null;
+  gifHasMore = false;
+  gifSelectingId: string | null = null;
+  private gifApiKey = '';
+  private gifRequestVersion = 0;
+  private gifTimer?: ReturnType<typeof setTimeout>;
+  private gifSearchAbort?: AbortController;
+  private gifDownloadAbort?: AbortController;
+  private gifConfigAbort?: AbortController;
+  readonly gifCategories = [
+    { icon: '😂', phrase: 'funny' }, { icon: '❤️', phrase: 'love' },
+    { icon: '⚽', phrase: 'football' }, { icon: '👍', phrase: 'yes' },
+    { icon: '🎉', phrase: 'celebration' }, { icon: '🏆', phrase: 'victory' }
+  ];
   readonly composerEmojis = [
     '😀', '😃', '😄', '😁', '😂', '🤣', '😊', '😍', '🥰', '😘',
     '😎', '🥳', '😢', '😭', '😮', '😅', '😉', '🤔', '🙏', '👏',
@@ -341,6 +366,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     if (this.sessionCutoffTimer) clearTimeout(this.sessionCutoffTimer);
     this.sessionCutoffTimer = undefined;
     this.clearAttachmentRetry();
+    this.closeEmojiPicker();
     this.cancelVoiceRecording();
     ++this.attachmentViewVersion;
     this.clearAttachmentPreviews();
@@ -639,13 +665,14 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.clearAttachmentRetry();
     ++this.attachmentViewVersion; // Reject any authenticated Blob still in flight.
     this.selectedAttachment = null;
+    this.selectedGif = null;
     this.attachmentReady = false;
     this.clearAttachmentPreviews(); // Revoke images and stop audio playback.
     this.drafts.delete(conversation.key);
     this.replyDrafts.delete(conversation.key);
     this.draft = '';
     this.replyingTo = null;
-    this.emojiPickerOpen = false;
+    this.closeEmojiPicker();
     ++this.selectionVersion;
     ++this.composerVersion;
     ++this.historyLocateVersion;
@@ -672,8 +699,9 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     }
     this.typing.stop();
     this.cancelVoiceRecording();
-    this.emojiPickerOpen = false;
+    this.closeEmojiPicker();
     this.selectedAttachment = null;
+    this.selectedGif = null;
     this.clearAttachmentRetry();
     this.attachmentReady = false;
     ++this.attachmentViewVersion;
@@ -1093,9 +1121,10 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       && this.composerAllowed && !this.composerAccessLoading
       && !this.previewLoading && !this.previewError && !this.sending && !this.deliveryUncertain
       && !this.deliveryChecking && !this.voiceRecording && !this.voiceFinalizing
-      && (this.draft.trim().length > 0
-        || (this.attachmentControlsReady && !!this.selectedAttachment))
-      && this.draft.trim().length <= 2000);
+      && (this.draft.trim().length > 0 || (this.attachmentControlsReady
+          && (!!this.selectedAttachment || !!this.selectedGif)))
+      && this.draft.trim().length <= 2000
+      && (!this.selectedGif || !!encodeGiphyText(this.selectedGif, this.draft.trim())));
   }
 
   replyToMessage(message: InboxMessage): void {
@@ -1170,13 +1199,24 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     }
     this.clearVoicePreview();
     this.selectedAttachment = file;
+    this.selectedGif = null;
     this.composerError = '';
+    this.closeEmojiPicker();
   }
 
   removeAttachment(): void {
     if (this.sending || this.deliveryUncertain) return;
     this.selectedAttachment = null;
     this.clearVoicePreview();
+  }
+
+  removeSelectedGif(): void {
+    if (this.sending || this.deliveryUncertain) return;
+    this.selectedGif = null;
+  }
+
+  readGiphyMessage(text: string) {
+    return readGiphyText(text);
   }
 
   private resetVoiceClock(): void {
@@ -1461,6 +1501,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
 
   showMessageBody(message: InboxMessage): boolean {
     const body = (message.text || '').trim();
+    if (readGiphyText(body)) return false;
     if (!body) return false;
     // The server supplies an automatic filename caption for file-only sends.
     // Do not repeat raw .webm/.ogg names above their playable voice bubble.
@@ -1521,11 +1562,148 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
 
   toggleEmojiPicker(): void {
     if (!this.canEditDraft()) return;
-    this.emojiPickerOpen = !this.emojiPickerOpen;
+    if (this.emojiPickerOpen && this.pickerTab === 'emoji') {
+      this.closeEmojiPicker();
+    } else {
+      this.emojiPickerOpen = true;
+      this.pickerTab = 'emoji';
+      this.stopGifRequests();
+    }
+  }
+
+  openGifPicker(): void {
+    if (!this.canEditDraft() || !this.attachmentControlsReady) return;
+    if (this.emojiPickerOpen && this.pickerTab === 'gif') {
+      this.closeEmojiPicker();
+      return;
+    }
+    this.emojiPickerOpen = true;
+    this.pickerTab = 'gif';
+    if (this.gifAvailable === null) void this.configureGifPicker();
+    else if (this.gifAvailable && this.gifResults.length === 0) void this.searchGifResults(0);
+  }
+
+  selectPickerTab(tab: 'emoji' | 'gif'): void {
+    if (tab === 'gif') {
+      if (!this.attachmentControlsReady) return;
+      this.emojiPickerOpen = true;
+      this.pickerTab = 'gif';
+      if (this.gifAvailable === null) void this.configureGifPicker();
+      else if (!this.gifLoading && this.gifResults.length === 0)
+        void this.searchGifResults(0);
+    } else {
+      this.emojiPickerOpen = true;
+      this.pickerTab = 'emoji';
+      this.stopGifRequests();
+    }
+  }
+
+  private stopGifRequests(): void {
+    if (this.gifTimer) clearTimeout(this.gifTimer);
+    this.gifTimer = undefined;
+    this.gifSearchAbort?.abort();
+    this.gifSearchAbort = undefined;
+    this.gifDownloadAbort?.abort();
+    this.gifDownloadAbort = undefined;
+    this.gifConfigAbort?.abort();
+    this.gifConfigAbort = undefined;
+    ++this.gifRequestVersion;
+    this.gifLoading = false;
+    this.gifSelectingId = null;
   }
 
   closeEmojiPicker(): void {
     this.emojiPickerOpen = false;
+    this.stopGifRequests();
+    this.pickerTab = 'emoji';
+    this.gifQuery = '';
+    this.gifResults = [];
+    this.gifError = '';
+    this.gifHasMore = false;
+  }
+
+  private async configureGifPicker(): Promise<void> {
+    if (!this.emojiPickerOpen || this.pickerTab !== 'gif') return;
+    const generation = ++this.gifRequestVersion;
+    const controller = new AbortController();
+    this.gifConfigAbort = controller;
+    this.gifLoading = true;
+    try {
+      const key = await readGifProviderKey(controller.signal);
+      if (generation !== this.gifRequestVersion || !this.emojiPickerOpen
+          || this.pickerTab !== 'gif') return;
+      this.gifApiKey = key;
+      this.gifAvailable = !!key;
+      if (key) await this.searchGifResults(0);
+    } catch {
+      if (generation === this.gifRequestVersion && !controller.signal.aborted)
+        this.gifAvailable = false;
+    } finally {
+      if (generation === this.gifRequestVersion) this.gifLoading = false;
+      if (this.gifConfigAbort === controller) this.gifConfigAbort = undefined;
+    }
+  }
+
+  onGifSearchInput(term: string): void {
+    this.gifQuery = term.slice(0, 50);
+    this.gifResults = [];
+    this.gifHasMore = false;
+    this.gifError = '';
+    this.stopGifRequests();
+    if (!this.gifAvailable || !this.emojiPickerOpen || this.pickerTab !== 'gif') return;
+    this.gifLoading = true;
+    this.gifTimer = setTimeout(() => {
+      this.gifTimer = undefined;
+      void this.searchGifResults(0);
+    }, 350);
+  }
+
+  searchGifCategory(phrase: string): void {
+    this.onGifSearchInput(phrase);
+  }
+
+  async searchGifResults(offset: number): Promise<void> {
+    if (!this.gifApiKey || !this.emojiPickerOpen || this.pickerTab !== 'gif'
+        || !this.attachmentControlsReady || !this.canEditDraft()) return;
+    this.gifSearchAbort?.abort();
+    const version = ++this.gifRequestVersion;
+    const key = this.selectedKey;
+    const controller = new AbortController();
+    this.gifSearchAbort = controller;
+    this.gifLoading = true;
+    this.gifError = '';
+    try {
+      const language = localStorage.getItem('d24-language') === 'en' ? 'en' : 'pt';
+      const found = await findGiphy(this.gifApiKey, this.gifQuery, offset,
+        controller.signal, language);
+      if (version !== this.gifRequestVersion || key !== this.selectedKey
+          || !this.emojiPickerOpen || this.pickerTab !== 'gif'
+          || !this.attachmentControlsReady) return;
+      this.gifResults = offset ? [...this.gifResults, ...found.results] : found.results;
+      this.gifHasMore = found.hasMore;
+    } catch {
+      if (version === this.gifRequestVersion && !controller.signal.aborted)
+        this.gifError = t('chat.gifLoadFailed');
+    } finally {
+      if (version === this.gifRequestVersion) this.gifLoading = false;
+      if (this.gifSearchAbort === controller) this.gifSearchAbort = undefined;
+    }
+  }
+
+  chooseGif(choice: GifChoice): void {
+    if (!this.canEditDraft() || !this.attachmentControlsReady
+        || !this.emojiPickerOpen || this.pickerTab !== 'gif') return;
+    // GIPHY forbids rehosting its API media by default. Never download and
+    // reupload this file to Jynlo's R2: send metadata/link as text instead.
+    if (!encodeGiphyText(choice, this.draft.trim())) {
+      this.gifError = t('chat.gifCaptionTooLong');
+      return;
+    }
+    this.selectedGif = choice;
+    this.selectedAttachment = null;
+    this.clearVoicePreview();
+    this.composerError = '';
+    this.closeEmojiPicker();
   }
 
   /** Insert at the caret, preserving selected text, pending drafts and focus. */
@@ -1538,7 +1716,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     // HTML textarea.maxLength counts UTF-16 units, including surrogate pairs.
     if (next.length > 2000) return;
     this.draft = next;
-    this.emojiPickerOpen = false;
+    this.closeEmojiPicker();
     this.onTypingInput();
     textarea?.focus({ preventScroll: true });
     textarea?.setSelectionRange(start + emoji.length, start + emoji.length);
@@ -1568,7 +1746,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   }
 
   sendMessage(): void {
-    this.emojiPickerOpen = false;
+    this.closeEmojiPicker();
     this.typing.stop();
     const conversation = this.selected;
     if (!conversation || !this.canSendMessage()) return;
@@ -1579,7 +1757,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     const caption = this.draft.trim();
     // Server sends the same synthesized text for an attachment without a caption.
     const name = file?.name.replace(/\\/g, '/').split('/').pop()?.replace(/[\\x00-\\x1f\\x7f]/g, '').trim().slice(-160);
-    const text = file && !caption ? '📎 ' + (name || 'anexo') : caption;
+    const text = this.selectedGif ? encodeGiphyText(this.selectedGif, caption)
+      : file && !caption ? '📎 ' + (name || 'anexo') : caption;
     const replyId = this.replyingTo?.key === key ? this.replyingTo.id : null;
     const pending = { key, text, replyToMessageId: replyId,
       knownIds: new Set(this.messages.map(item => item.id)),
@@ -1642,6 +1821,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
         if (key !== this.selectedKey) return;
         if (this.historicalPreview) this.returnToRecent();
         this.selectedAttachment = null;
+        this.selectedGif = null;
         this.clearVoicePreview();
         this.draft = '';
         this.replyingTo = null;
@@ -1727,6 +1907,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       if (this.selectedKey === key) {
         this.deliveryUncertain = false;
         this.selectedAttachment = null;
+        this.selectedGif = null;
         this.clearVoicePreview();
         this.draft = '';
         this.replyingTo = null;

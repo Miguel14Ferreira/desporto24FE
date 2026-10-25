@@ -101,6 +101,97 @@ describe('Unified Jynlo message center', () => {
     expect(direct.send).not.toHaveBeenCalled();
   });
 
+  it('opens a shared emoji/GIF picker while retaining drafts and local GIF upload', async () => {
+    const peer = item('direct', 'bea');
+    component.conversations = [peer];
+    component.selectedKey = peer.key;
+    component.composerAllowed = true;
+    component.attachmentReady = true;
+    component.draft = 'Olá';
+    const network = spyOn(window, 'fetch').and.resolveTo(new Response(
+      JSON.stringify({apiKey: ''}), {status: 200}
+    ));
+    component.openGifPicker();
+    expect(component.emojiPickerOpen).toBeTrue();
+    expect(component.pickerTab).toBe('gif');
+    // Response.json() consumes an async browser stream; allow it to settle
+    // instead of assuming one event-loop turn is enough on Chromium CI.
+    for (let attempt = 0; attempt < 30 && component.gifAvailable === null; attempt++) {
+      await new Promise<void>(resolve => setTimeout(resolve, 5));
+    }
+    expect(network).toHaveBeenCalledTimes(1);
+    expect(component.gifAvailable).toBeFalse();
+    const gif = new File(['GIF89a'], 'local.gif', {type:'image/gif'});
+    component.onAttachmentPicked({target:{files:[gif],value:''}} as any);
+    expect(component.selectedAttachment).toBe(gif);
+    expect(component.draft).toBe('Olá');
+    expect(component.emojiPickerOpen).toBeFalse();
+    expect(direct.sendAttachment).not.toHaveBeenCalled();
+  });
+
+  it('switches back from GIF browsing to inserting emojis without a message POST', () => {
+    const peer = item('direct', 'bea');
+    component.conversations = [peer];
+    component.selectedKey = peer.key;
+    component.composerAllowed = true;
+    component.attachmentReady = true;
+    component.gifAvailable = false;
+    component.openGifPicker();
+    component.selectPickerTab('emoji');
+    expect(component.pickerTab).toBe('emoji');
+    component.draft = 'Olá';
+    component.insertEmoji('🏆');
+    expect(component.draft).toBe('Olá🏆');
+    expect(component.emojiPickerOpen).toBeFalse();
+    expect(direct.send).not.toHaveBeenCalled();
+  });
+
+  it('stages a remote GIPHY link without downloading, uploading or sending', () => {
+    const peer = item('direct', 'bea');
+    component.conversations = [peer];
+    component.selectedKey = peer.key;
+    component.composerAllowed = true;
+    component.attachmentReady = true;
+    component.gifAvailable = true;
+    const card = {id:'test',title:'Celebration',size:100,creator:'gif_creator',
+      pageUrl:'https://giphy.com/gifs/test',
+      previewUrl:'https://media0.giphy.com/media/123/giphy.gif',
+      downloadUrl:'https://media0.giphy.com/media/123/giphy.gif'};
+    component.gifResults = [card];
+    component.openGifPicker();
+    const network = spyOn(window, 'fetch');
+    component.chooseGif(card);
+    expect(component.selectedGif).toEqual(card);
+    expect(component.selectedAttachment).toBeNull();
+    expect(component.canSendMessage()).toBeTrue();
+    expect(component.emojiPickerOpen).toBeFalse();
+    expect(network).not.toHaveBeenCalled();
+    expect(direct.sendAttachment).not.toHaveBeenCalled();
+    expect(direct.send).not.toHaveBeenCalled();
+  });
+
+  it('never sends remote GIF bytes through private R2 upload', () => {
+    const peer = item('direct','bea');
+    component.conversations = [peer];
+    component.selectedKey = peer.key;
+    component.composerAllowed = true;
+    component.attachmentReady = true;
+    component.gifAvailable = true;
+    const card = {id:'party',title:'Party',size:100,creator:'creator',
+      pageUrl:'https://giphy.com/gifs/party',
+      previewUrl:'https://media.giphy.com/media/x/giphy.gif',
+      downloadUrl:'https://media.giphy.com/media/x/giphy.gif'};
+    component.gifResults = [card];
+    component.openGifPicker();
+    component.chooseGif(card);
+    direct.send.and.returnValue(of({id:44, username1:'ana',username2:'bea',
+      text:'',date:new Date().toISOString(),dataDisplay:null} as any));
+    component.sendMessage();
+    expect(direct.sendAttachment).not.toHaveBeenCalled();
+    expect(direct.send).toHaveBeenCalledTimes(1);
+    expect((direct.send.calls.mostRecent().args[1] as string).startsWith('[JYNLO:GIPHY:1]')).toBeTrue();
+  });
+
   it('does not exceed the chat 2000-character limit with surrogate-pair emojis', () => {
     const conversation = item('community', 7);
     component.conversations = [conversation];
