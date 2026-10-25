@@ -32,7 +32,15 @@ describe('Track sprint sixteen-rider qualifying', () => {
     expect(availableSprintQualifiers([tied], 28)).toEqual([]);
     expect(availableSprintQualifiers([qualifier(28)], 16).map(r => r.id)).toEqual([88]);
   });
+  it('requires exactly 24 unambiguous timings for the Olympic variant', () => {
+    expect(availableSprintQualifiers([qualifier(24)], 24).map(r=>r.id)).toEqual([88]);
+    expect(availableSprintQualifiers([qualifier(23)], 24)).toEqual([]);
+  });
   it('allows just one eighth-final and sixteenth-final heat', () => {
+    expect(nextSprintRoundHeatMax('SPRINT_THIRTY_SECOND_FINAL')).toBe(1);
+    expect(nextSprintRoundHeatMax('SPRINT_REPECHAGE_1_32')).toBe(1);
+    expect(nextSprintRoundHeatMax('SPRINT_REPECHAGE_1_16')).toBe(1);
+    expect(nextSprintRoundHeatMax('SPRINT_REPECHAGE_1_8')).toBe(1);
     expect(nextSprintRoundHeatMax('SPRINT_SIXTEENTH_FINAL')).toBe(1);
     expect(nextSprintRoundHeatMax('SPRINT_EIGHTH_FINAL')).toBe(1);
     expect(nextSprintRoundHeatMax('SPRINT_QUARTER_FINAL')).toBe(3);
