@@ -527,6 +527,37 @@ describe('NotificationsComponent', () => {
     expect(component.preferenceEnabled('CHAT_MESSAGE', 'inApp')).toBeFalse();
   });
 
+  it('does not allow overwriting newer settings after a failed refresh and offers retry', () => {
+    component.openPreferences();
+    component.openPreferences();
+    service.preferences.and.returnValue(throwError(() => new Error('Offline')));
+    component.openPreferences();
+
+    expect(component.preferencesRefreshFailed).toBeTrue();
+    expect(component.preferencesError).toBeTruthy();
+    fixture.detectChanges();
+    const toggles = Array.from(
+      fixture.nativeElement.querySelectorAll('.notification-preferences input[type="checkbox"]')
+    ) as HTMLInputElement[];
+    expect(toggles.length).toBeGreaterThan(0);
+    expect(toggles.every(input => input.disabled)).toBeTrue();
+    const retry = fixture.nativeElement.querySelector('.preferences-error button') as HTMLButtonElement;
+    expect(retry).toBeTruthy();
+
+    component.changeGlobal('inApp', false);
+    component.changeType('CHAT_MESSAGE', 'email', false);
+    expect(service.updatePreferences).not.toHaveBeenCalled();
+
+    service.preferences.and.returnValue(of({
+      inAppEnabled: false, emailEnabled: true,
+      disabledInAppTypes: ['CHAT_MESSAGE'], disabledEmailTypes: []
+    }));
+    retry.click();
+    expect(component.preferencesRefreshFailed).toBeFalse();
+    expect(component.preferences?.inAppEnabled).toBeFalse();
+    expect(component.preferences?.disabledInAppTypes).toContain('CHAT_MESSAGE');
+  });
+
   it('does not discard current preferences if server update fails', () => {
     component.openPreferences();
     const current = component.preferences;
