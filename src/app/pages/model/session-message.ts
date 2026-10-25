@@ -4,6 +4,8 @@ export interface SessionMessage {
   senderUsername: string;
   body: string;
   createdAt: string;
+  editedAt?: string | null;
+  deletedAt?: string | null;
   replyToMessageId?: number | null;
   replyToSender?: string | null;
   replyToText?: string | null;
