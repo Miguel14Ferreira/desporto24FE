@@ -42,6 +42,8 @@ export class VenueSuggestEditComponent implements OnInit {
   selectedSports: string[] = [];
   sportSearch = '';
   reason = '';
+  sourceUrl = '';
+  sourceUrlInvalid = false;
   last: VenueEditSuggestion | null = null;
   loading = true;
   loadError = false;
@@ -137,6 +139,25 @@ export class VenueSuggestEditComponent implements OnInit {
     return result;
   }
 
+  /** Only a newly submitted nonempty contact needs a source; removals stay possible. */
+  get contactEvidenceRequired(): boolean {
+    return typeof this.changes.contact === 'string' && !!this.changes.contact.trim();
+  }
+
+  get validContactSource(): boolean {
+    if (!this.contactEvidenceRequired) return true;
+    const value = this.sourceUrl.trim();
+    if (!value || value.length > 500) return false;
+    try {
+      const parsed = new URL(value);
+      return parsed.protocol === 'https:' && parsed.hostname.includes('.')
+        && !parsed.hostname.endsWith('.') && !parsed.username && !parsed.password
+        && !parsed.hash && (!parsed.port || parsed.port === '443')
+        && /^[a-z0-9-]+(\.[a-z0-9-]+)+$/i.test(parsed.hostname)
+        && !/^[0-9.]+$/.test(parsed.hostname);
+    } catch { return false; }
+  }
+
   get changeCount(): number {
     return Object.keys(this.changes).length;
   }
@@ -146,6 +167,7 @@ export class VenueSuggestEditComponent implements OnInit {
     this.submitError = false;
     this.duplicatePending = false;
     this.missingChanges = false;
+    this.sourceUrlInvalid = false;
     const changes = this.changes;
     if (!Object.keys(changes).length) { this.missingChanges = true; return; }
     if (this.reason.trim().length < 10
@@ -155,8 +177,15 @@ export class VenueSuggestEditComponent implements OnInit {
       this.submitError = true;
       return;
     }
+    if (!this.validContactSource) {
+      this.sourceUrlInvalid = true;
+      return;
+    }
     this.submitting = true;
-    this.suggestions.submit(this.venue.id, changes, this.reason.trim())
+    const request = this.contactEvidenceRequired
+      ? this.suggestions.submit(this.venue.id, changes, this.reason.trim(), this.sourceUrl.trim())
+      : this.suggestions.submit(this.venue.id, changes, this.reason.trim());
+    request
       .pipe(timeout(12000))
       .subscribe({
         next: proposal => {

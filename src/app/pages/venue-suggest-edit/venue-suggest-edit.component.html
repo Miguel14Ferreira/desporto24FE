@@ -83,6 +83,19 @@
             </div>
           </div>
 
+          @if (contactEvidenceRequired) {
+            <label class="venue-edit-source">
+              <span>{{ 'venue.edit.sourceUrl' | t }} *</span>
+              <input type="url" name="sourceUrl" [(ngModel)]="sourceUrl" required
+                maxlength="500" autocomplete="off" inputmode="url"
+                placeholder="https://…" [attr.aria-invalid]="sourceUrlInvalid || !validContactSource" />
+              <small class="venue-edit-contact-hint">{{ 'venue.edit.sourceHint' | t }}</small>
+            </label>
+            @if (sourceUrlInvalid) {
+              <p class="venue-edit-error" role="alert">{{ 'venue.edit.sourceRequired' | t }}</p>
+            }
+          }
+
           <label class="venue-edit-reason">
             <span>{{ 'venue.edit.reason' | t }} *</span>
             <textarea name="reason" [(ngModel)]="reason" required minlength="10"

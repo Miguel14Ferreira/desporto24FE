@@ -21,6 +21,7 @@ export class AdminVenueEditsComponent implements OnInit, OnDestroy {
   selected: VenueEditSuggestion | null = null;
   action: 'approve' | 'reject' | null = null;
   note = '';
+  sourceReviewed = false;
   page = 0;
   hasMore = false;
   loading = false;
@@ -64,10 +65,33 @@ export class AdminVenueEditsComponent implements OnInit, OnDestroy {
     return Object.keys(item.proposed) as VenueEditField[];
   }
 
+  hasProposedContact(item: VenueEditSuggestion): boolean {
+    return typeof item.proposed.contact === 'string' && !!item.proposed.contact.trim();
+  }
+
+  /** A source is user supplied; this validation is about safe links, not authenticity. */
+  sourceLink(item: VenueEditSuggestion): string | null {
+    if (typeof item.sourceUrl !== 'string' || item.sourceUrl.length > 500) return null;
+    try {
+      const url = new URL(item.sourceUrl);
+      if (url.protocol !== 'https:' || !url.hostname.includes('.') || url.hostname.endsWith('.')
+          || url.username || url.password || (url.port && url.port !== '443')
+          || url.hash || !/^[a-z0-9-]+(\.[a-z0-9-]+)+$/i.test(url.hostname)
+          || /^[0-9.]+$/.test(url.hostname)) return null;
+      return url.href;
+    } catch { return null; }
+  }
+
+  canApproveSelected(): boolean {
+    return !this.selected || !this.hasProposedContact(this.selected)
+      || (!!this.sourceLink(this.selected) && this.sourceReviewed);
+  }
+
   open(item: VenueEditSuggestion): void {
     this.selected = item;
     this.action = null;
     this.note = '';
+    this.sourceReviewed = false;
     this.actionError = false;
   }
 
@@ -75,10 +99,15 @@ export class AdminVenueEditsComponent implements OnInit, OnDestroy {
     if (this.updating) return;
     this.selected = null;
     this.action = null;
+    this.sourceReviewed = false;
   }
 
   decide(): void {
     if (!this.selected || !this.action || this.updating) return;
+    if (this.action === 'approve' && !this.canApproveSelected()) {
+      this.actionError = true;
+      return;
+    }
     if (this.action === 'reject' && this.note.trim().length < 5) {
       this.actionError = true;
       return;
