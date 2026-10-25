@@ -1,4 +1,4 @@
-import { of, Subject } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { ChangeDetectorRef, SimpleChange } from '@angular/core';
 import { AuthenticationService } from '../../services/authethication.service';
 import { CommunityTournamentsService } from '../../services/community-tournaments.service';
@@ -1615,6 +1615,61 @@ describe('Community tournaments management', () => {
     } finally {
       if (previous === null) localStorage.removeItem('d24-language');
       else localStorage.setItem('d24-language', previous);
+    }
+  });
+
+  it('localizes backend completion conflicts and never leaks unknown Portuguese API errors in English', async () => {
+    const original = localStorage.getItem('d24-language');
+    try {
+      component.startIndividualCreation();
+      component.nameDraft = 'Liga QA';
+      component.sportDraft = 'Futebol';
+      api.create.and.returnValue(throwError(() => ({
+        error: { detail: 'Todos os confrontos da liga precisam de estar concluídos' }, status: 409
+      })));
+      localStorage.setItem('d24-language', 'en');
+      await component.create();
+      expect(component.error).toBe('All league matches must be completed before closing the tournament.');
+      expect(component.selected?.id).toBe(9);
+      expect(component.feedback).toBe('');
+      expect(component.busy).toBeFalse();
+
+      localStorage.setItem('d24-language', 'pt');
+      await component.create();
+      expect(component.error).toBe('Todos os confrontos da liga precisam de estar concluídos');
+
+      api.create.and.returnValue(throwError(() => ({
+        error: { detail: 'Erro inesperado do servidor' }, status: 422
+      })));
+      localStorage.setItem('d24-language', 'en');
+      await component.create();
+      expect(component.error).toBe('Could not complete the operation. Check the information and try again.');
+      localStorage.setItem('d24-language', 'pt');
+      await component.create();
+      expect(component.error).toBe('Erro inesperado do servidor');
+
+      api.create.and.returnValue(throwError(() => ({ error: { detail: '   ' }, status: 500 })));
+      await component.create();
+      expect(component.error).toBe('Não foi possível concluir a operação. Verifica os dados e tenta novamente.');
+      expect(api.create).toHaveBeenCalledTimes(5);
+    } finally {
+      if (original === null) localStorage.removeItem('d24-language');
+      else localStorage.setItem('d24-language', original);
+    }
+  });
+
+  it('uses the existing PT/EN standings abbreviations consistently without touching match totals', () => {
+    const original = localStorage.getItem('d24-language');
+    try {
+      localStorage.setItem('d24-language', 'en');
+      expect(['playedCol', 'winsCol', 'drawsCol', 'lossesCol', 'pointsCol'].map(col =>
+        t('communities.tournaments.finalUi.' + col))).toEqual(['P', 'W', 'D', 'L', 'Pts']);
+      localStorage.setItem('d24-language', 'pt');
+      expect(['playedCol', 'winsCol', 'drawsCol', 'lossesCol', 'pointsCol'].map(col =>
+        t('communities.tournaments.finalUi.' + col))).toEqual(['J', 'V', 'E', 'D', 'Pts']);
+    } finally {
+      if (original === null) localStorage.removeItem('d24-language');
+      else localStorage.setItem('d24-language', original);
     }
   });
 

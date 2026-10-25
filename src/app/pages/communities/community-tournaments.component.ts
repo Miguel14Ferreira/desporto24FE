@@ -1584,8 +1584,18 @@ export class CommunityTournamentsComponent implements OnChanges {
       if (mutationRevision !== this.mutationRevision || this.community.id !== cid
           || (tid !== undefined && this.selected?.id !== tid)) return;
       const detail: unknown = error?.error?.detail || error?.error?.message;
-      this.showError(typeof detail === 'string' && detail.length <= 180
-        ? detail : t('communities.tournaments.organizerUi.mutationFallback'));
+      const safeDetail = typeof detail === 'string' && detail.trim().length > 0
+        && detail.length <= 180 ? detail : null;
+      // Keep the detailed server response for PT. In EN, never surface an
+      // untranslated arbitrary backend string. The known completion conflict
+      // keeps its exact meaning in either language.
+      const knownConflict = safeDetail?.trim() === 'Todos os confrontos da liga precisam de estar concluídos';
+      const english = typeof localStorage !== 'undefined'
+        && localStorage.getItem('d24-language') === 'en';
+      this.showError(knownConflict
+        ? t('communities.tournaments.organizerUi.completeAllMatches')
+        : (!english && safeDetail ? safeDetail
+          : t('communities.tournaments.organizerUi.mutationFallback')));
     } finally {
       if (mutationRevision === this.mutationRevision) {
         this.busy = false;
