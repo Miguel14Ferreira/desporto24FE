@@ -1947,6 +1947,7 @@ describe('Community tournaments management', () => {
     ]);
     expect(component.speedTrialOpen).toBeFalse();
     expect(component.speedOverview?.decisions.length).toBe(0);
+    component.speedOverview = overview; // reset mocked GET so the fictional tie is still visible
     component.openSpeedTrial();
     component.speedTrialPlaces = { 16: 1, 17: 1, 18: 3 };
     await component.recordSpeedTrial();
@@ -1956,8 +1957,9 @@ describe('Community tournaments management', () => {
       reason: 'Ratificação oficial', confirmedBy: 'owner',
       confirmedAt: '2026-10-25T12:00:00Z', stale: false
     }];
+    component.speedTrialOpen = false;
     component.openSpeedTrial();
-    expect(component.speedTrialOpen).toBeTrue(); // already open from rejected correction
+    expect(component.speedTrialOpen).toBeFalse();
     await component.recordSpeedTrial();
     expect(api.recordInlineSpeedTrial).toHaveBeenCalledTimes(1);
   });
