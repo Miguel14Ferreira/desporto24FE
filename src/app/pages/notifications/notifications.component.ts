@@ -310,6 +310,12 @@ export class NotificationsComponent implements OnInit {
     this.router.navigate(['/menu/communities']);
   }
 
+  /** Existing notifications can contain the retired brand; keep the source
+   * record unchanged while consistently showing Jynlo in the interface. */
+  legacyBrand(text: string | null | undefined): string {
+    return (text ?? '').replace(/DESPORTO24/gi, 'Jynlo');
+  }
+
   notificationSubject(notification: AppNotification): string {
     const joinCommunity = this.joinNotificationCommunityName(notification);
     if (joinCommunity) {
@@ -323,7 +329,7 @@ export class NotificationsComponent implements OnInit {
     const community = this.invitedCommunityName(notification);
     return community
       ? t('notification.communityInviteSubject', { community })
-      : notification.subject;
+      : this.legacyBrand(notification.subject);
   }
 
   notificationMessage(notification: AppNotification): string {
@@ -347,7 +353,7 @@ export class NotificationsComponent implements OnInit {
           username: notification.relatedUsername,
           community
         })
-      : notification.message;
+      : this.legacyBrand(notification.message);
   }
 
   private joinNotificationCommunityName(notification: AppNotification): string | null {
