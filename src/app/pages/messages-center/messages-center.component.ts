@@ -1392,9 +1392,27 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   }
 
   onVoicePlaybackEvent(id: number, player: HTMLAudioElement): void {
+    // A media event can arrive after the user leaves the chat and its private
+    // object URLs have already been revoked. Never restore a stale player.
+    if (!this.attachmentPreviews.has(id) || !this.isAttachmentIdentityCurrent()
+        || !this.isSelectedSessionOpen()) {
+      if (!player.paused) player.pause();
+      this.voicePlaying.delete(id);
+      return;
+    }
     this.voicePlayers.set(id, player);
-    if (player.paused || player.ended) this.voicePlaying.delete(id);
-    else this.voicePlaying.add(id);
+    if (player.paused || player.ended) {
+      this.voicePlaying.delete(id);
+    } else {
+      // Only one voice note can be audible at a time. Pause on the actual
+      // "playing" event, not on click: a browser may reject play() outright.
+      for (const [otherId, otherPlayer] of this.voicePlayers) {
+        if (otherId === id) continue;
+        if (!otherPlayer.paused) otherPlayer.pause();
+        this.voicePlaying.delete(otherId);
+      }
+      this.voicePlaying.add(id);
+    }
     this.onVoiceTimeUpdate(id, player);
   }
 
