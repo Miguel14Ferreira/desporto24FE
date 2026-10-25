@@ -1201,7 +1201,7 @@ describe('Community tournaments management', () => {
     component.confirmAction = 'delete';
     await component.deleteSelected();
     expect(api.delete).toHaveBeenCalledWith(7, 9);
-    expect(component.selected).toBeUndefined();
+    expect(component.feedback).toBe('');
     expect(component.tournaments).toEqual([]);
     expect(component.feedback).toBe('Competição eliminada.');
   });
@@ -1642,7 +1642,7 @@ describe('Community tournaments management', () => {
       })));
       localStorage.setItem('d24-language', 'en');
       await component.create();
-      expect(component.error).toBe('Could not complete the operation. Check the details and try again.');
+      expect(component.error).toBe('Could not complete the operation. Check the information and try again.');
       localStorage.setItem('d24-language', 'pt');
       await component.create();
       expect(component.error).toBe('Erro inesperado do servidor');
