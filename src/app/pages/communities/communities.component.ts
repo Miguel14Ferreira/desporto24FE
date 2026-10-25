@@ -49,7 +49,7 @@ import { isGroupRoutineEvent, routineGroupNames, routineGroupError,
 import { raceSupportsLaps, formatRaceSeconds, raceEntryValidationError, roadTimeTrialEntryInvalid } from './community-race-metrics';
 import { swimmingTimeError, formatSwimTime } from './community-swimming-results';
 import { isInlineSpeedHeatEvent, isInlineSpeedFinalHeat, inlineSpeedHeatError,
-  inlineSpeedCandidatePlace } from './community-inline-speed-heats';
+  inlineSpeedCandidatePlace, inlineSpeedFirstHeatTooLarge } from './community-inline-speed-heats';
 import { openWaterTimeError, formatOpenWaterTime } from './community-open-water-results';
 import { orienteeringTimeError, formatOrienteeringTime } from './community-orienteering-results';
 import { raceDecisionError } from './community-race-decisions';
@@ -3757,9 +3757,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     // World Skate 2026: timed 500 m +D / road one-lap qualifiers are
     // individual heats of at most six, not one round with every entrant.
     // The 200 m individual time trial keeps its existing behavior.
-    if ((this.newRoundEventType === 'INLINE_TRACK_500D_FIRST_ROUND'
-          || this.newRoundEventType === 'INLINE_ROAD_LAP_FIRST_ROUND')
-        && selectedEntries.length > 6) {
+    if (inlineSpeedFirstHeatTooLarge(this.newRoundEventType, selectedEntries.length)) {
       this.errorMessage = t('feedback.communities.speedSkatingFirstHeatLimit');
       return;
     }
