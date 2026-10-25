@@ -1488,6 +1488,8 @@
                                               ? ('communities.trackCycling.rerunAuthorized' | t)
                                               : incident.status === 'OFFICIAL_HEAT_AWARDED'
                                                 ? ('communities.trackCycling.awardDeclared' | t)
+                                                : incident.status === 'OFFICIAL_SERIES_AWARDED'
+                                                  ? ('communities.trackCycling.seriesVerdictDeclared' | t)
                                                 : ('communities.trackCycling.incidentDecided' | t) }}</span>
                                     <p>{{ incident.details }}</p>
                                     <small>{{ 'communities.trackCycling.incidentReportedBy' | t }}:
@@ -1506,15 +1508,20 @@
                                           <p>{{ 'communities.trackCycling.disciplineNoAutoResult' | t }}</p>
                                         }
                                       }
-                                      @if (incident.status === 'OFFICIAL_HEAT_AWARDED') {
-                                        <p>{{ 'communities.trackCycling.awardDeclared' | t }}:
+                                      @if (incident.status === 'OFFICIAL_HEAT_AWARDED'
+                                            || incident.status === 'OFFICIAL_SERIES_AWARDED') {
+                                        <p>{{ (incident.status === 'OFFICIAL_SERIES_AWARDED'
+                                            ? 'communities.trackCycling.seriesVerdictDeclared'
+                                            : 'communities.trackCycling.awardDeclared') | t }}:
                                           <strong>{{ incident.awardWinner }}</strong>
                                         </p>
                                         <p>{{ incident.awardReason }}</p>
                                         <small>{{ 'communities.trackCycling.incidentOfficialReference' | t }}:
                                           {{ incident.awardReference }} · {{ incident.awardConfirmedBy }}
                                         </small>
-                                        @if (sprintIsBo3Award(incident)) {
+                                        @if (incident.status === 'OFFICIAL_SERIES_AWARDED') {
+                                          <small>{{ 'communities.trackCycling.seriesVerdictNoFake' | t }}</small>
+                                        } @else if (sprintIsBo3Award(incident)) {
                                           <small>{{ 'communities.trackCycling.awardHeatNumber' | t }}:
                                             {{ incident.heatNumber }}</small>
                                           <small>{{ 'communities.trackCycling.awardBo3NotSeries' | t }}</small>
@@ -1537,17 +1544,22 @@
                                     }
                                   </div>
                                   @if (canManage() && selectedSeasonId === activeSeason()?.id
-                                        && sprintCanConfirmOfficialAward(bracket, incident)) {
+                                        && (sprintCanConfirmOfficialAward(bracket, incident)
+                                          || sprintCanConfirmSeriesVerdict(bracket, incident))) {
                                     <button class="btn btn-secondary" type="button"
                                       [disabled]="sprintIncidentSaving"
                                       (click)="editSprintOfficialAward(bracket.id, incident.id)">
-                                      {{ 'communities.trackCycling.awardConfirm' | t }}
+                                      {{ (sprintCanConfirmSeriesVerdict(bracket,incident)
+                                        ? 'communities.trackCycling.seriesVerdictConfirm'
+                                        : 'communities.trackCycling.awardConfirm') | t }}
                                     </button>
                                     @if (sprintAwardBracketId === bracket.id
                                           && sprintAwardIncidentId === incident.id) {
                                       <div class="round-meta-form">
-                                        <small>{{ (sprintIsBo3Award(incident)
-                                          ? 'communities.trackCycling.awardBo3Explain'
+                                        <small>{{ (sprintCanConfirmSeriesVerdict(bracket,incident)
+                                          ? 'communities.trackCycling.seriesVerdictExplain'
+                                          : sprintIsBo3Award(incident)
+                                            ? 'communities.trackCycling.awardBo3Explain'
                                           : 'communities.trackCycling.awardExplain') | t }}</small>
                                         <label>
                                           <span>{{ 'communities.trackCycling.awardWinner' | t }}</span>
@@ -1566,7 +1578,9 @@
                                           <span>{{ 'communities.trackCycling.incidentDecisionReason' | t }}</span>
                                           <textarea [(ngModel)]="sprintAwardReason" maxlength="500"></textarea>
                                         </label>
-                                        @if (sprintIsBo3Award(incident)) {
+                                        @if (incident.status === 'OFFICIAL_SERIES_AWARDED') {
+                                          <small>{{ 'communities.trackCycling.seriesVerdictNoFake' | t }}</small>
+                                        } @else if (sprintIsBo3Award(incident)) {
                                           <small>{{ 'communities.trackCycling.awardHeatNumber' | t }}:
                                             {{ incident.heatNumber }}</small>
                                           <small>{{ 'communities.trackCycling.awardBo3NotSeries' | t }}</small>
@@ -1578,7 +1592,9 @@
                                           [disabled]="sprintIncidentSaving || !sprintAwardWinner
                                             || sprintAwardReference.trim().length < 12
                                             || sprintAwardReason.trim().length < 12">
-                                          {{ 'communities.trackCycling.awardConfirmResult' | t }}
+                                          {{ (sprintCanConfirmSeriesVerdict(bracket,incident)
+                                            ? 'communities.trackCycling.seriesVerdictSave'
+                                            : 'communities.trackCycling.awardConfirmResult') | t }}
                                         </button>
                                       </div>
                                     }
