@@ -10,6 +10,11 @@
       </div>
 
       <div class="header-actions">
+        <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
+          [attr.aria-expanded]="preferencesOpen"
+          (click)="openPreferences()">
+          {{ 'notifications.preferences.button' | t }}
+        </button>
         @if (!loading && notifications.length > 0) {
           @if (!clearAllConfirming) {
             <button
@@ -45,6 +50,78 @@
         <a class="secondary-action jynlo-action jynlo-action--neutral" routerLink="/menu/events">{{ 'common.sessions' | t }}</a>
       </div>
     </header>
+
+    @if (preferencesOpen) {
+      <section class="notification-preferences" aria-labelledby="notifications-preferences-title">
+        <div class="notification-preferences__heading">
+          <div>
+            <h2 id="notifications-preferences-title">{{ 'notifications.preferences.title' | t }}</h2>
+            <p>{{ 'notifications.preferences.description' | t }}</p>
+          </div>
+          <button type="button" class="secondary-button jynlo-action jynlo-action--neutral"
+            (click)="openPreferences()" [attr.aria-label]="'notifications.preferences.close' | t">
+            {{ 'notifications.preferences.close' | t }}
+          </button>
+        </div>
+        @if (preferencesError) {
+          <p role="alert" class="preferences-error">{{ preferencesError }}
+            @if (!preferences) {
+              <button type="button" class="secondary-button" (click)="loadPreferences()">
+                {{ 'common.retry' | t }}
+              </button>
+            }
+          </p>
+        }
+        @if (preferencesSuccess) {
+          <p role="status" class="preferences-success">{{ preferencesSuccess }}</p>
+        }
+        @if (preferencesLoading) {
+          <p>{{ 'notifications.loading' | t }}</p>
+        }
+        @if (preferences; as prefs) {
+          <div class="notification-preferences__table">
+            <div class="notification-preferences__labels" aria-hidden="true">
+              <strong>{{ 'notifications.preferences.category' | t }}</strong>
+              <strong>{{ 'notifications.preferences.inApp' | t }}</strong>
+              <strong>{{ 'notifications.preferences.email' | t }}</strong>
+            </div>
+            <div class="notification-preferences__row notification-preferences__all">
+              <strong>{{ 'notifications.preferences.all' | t }}</strong>
+              <label>
+                <span class="sr-only">{{ 'notifications.preferences.allInApp' | t }}</span>
+                <input type="checkbox" [checked]="prefs.inAppEnabled"
+                  [disabled]="preferencesSaving"
+                  (change)="changeGlobal('inApp', $any($event.target).checked)">
+              </label>
+              <label>
+                <span class="sr-only">{{ 'notifications.preferences.allEmail' | t }}</span>
+                <input type="checkbox" [checked]="prefs.emailEnabled"
+                  [disabled]="preferencesSaving"
+                  (change)="changeGlobal('email', $any($event.target).checked)">
+              </label>
+            </div>
+            @for (type of preferenceTypes; track type) {
+              <div class="notification-preferences__row">
+                <span>{{ ('notifications.preferences.type.' + type) | t }}</span>
+                <label>
+                  <span class="sr-only">{{ ('notifications.preferences.type.' + type) | t }} — {{ 'notifications.preferences.inApp' | t }}</span>
+                  <input type="checkbox" [checked]="preferenceEnabled(type, 'inApp')"
+                    [disabled]="preferencesSaving || !prefs.inAppEnabled"
+                    (change)="changeType(type, 'inApp', $any($event.target).checked)">
+                </label>
+                <label>
+                  <span class="sr-only">{{ ('notifications.preferences.type.' + type) | t }} — {{ 'notifications.preferences.email' | t }}</span>
+                  <input type="checkbox" [checked]="preferenceEnabled(type, 'email')"
+                    [disabled]="preferencesSaving || !prefs.emailEnabled"
+                    (change)="changeType(type, 'email', $any($event.target).checked)">
+                </label>
+              </div>
+            }
+          </div>
+          <p class="notification-preferences__note">{{ 'notifications.preferences.securityNote' | t }}</p>
+        }
+      </section>
+    }
 
     @if (actionSuccess) {
       <div class="feedback success-feedback">{{ actionSuccess }}</div>
@@ -117,11 +194,11 @@
               <p class="detail-message">{{ notificationMessage(selected) }}</p>
 
               @if (selected.greeting) {
-                <p>{{ selected.greeting }}</p>
+                <p>{{ legacyBrand(selected.greeting) }}</p>
               }
 
               @if (selected.signature) {
-                <p class="signature">{{ selected.signature }}</p>
+                <p class="signature">{{ legacyBrand(selected.signature) }}</p>
               }
 
               <span class="created-at">{{ formatCreatedAt(selected.createdAt) }}</span>

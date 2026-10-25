@@ -6,7 +6,7 @@ import { finalize, map, Observable, retry, timeout } from 'rxjs';
 
 import { AppNotification } from '../model/app-notification';
 import { JoinSessionResponse, PendingSessionInvite, SessionService } from '../../services/session.service';
-import { NotificationApiService } from '../../services/notification-api.service';
+import { NotificationApiService, NotificationPreferences } from '../../services/notification-api.service';
 import { AuthenticationService } from '../../services/authethication.service';
 
 @Component({
@@ -26,6 +26,21 @@ export class NotificationsComponent implements OnInit {
   pendingInvites: PendingSessionInvite[] = [];
   unreadCount = 0;
   selected?: AppNotification;
+
+  // Every backend notification kind plus legacy friends/profile/other alerts.
+  readonly preferenceTypes = [
+    'COMMUNITY_INVITE', 'COMMUNITY_JOIN_REQUEST', 'COMMUNITY_JOIN_ACCEPTED',
+    'COMMUNITY_JOIN_REJECTED', 'SESSION_INVITE', 'WAITLIST_PROMOTED',
+    'SESSION_REMOVED', 'SESSION_CANCELLED', 'SESSION_POST_GAME_REVIEW',
+    'ATTENDANCE_DISPUTE_ACCEPTED', 'ATTENDANCE_DISPUTE_REJECTED',
+    'CHAT_MESSAGE', 'FRIEND_REQUEST', 'PROFILE_UPDATE', 'OTHER'
+  ] as const;
+  preferencesOpen = false;
+  preferencesLoading = false;
+  preferencesSaving = false;
+  preferencesError = '';
+  preferencesSuccess = '';
+  preferences?: NotificationPreferences;
 
   loading = false;
   actionLoadingId: number | null = null;
@@ -47,6 +62,72 @@ export class NotificationsComponent implements OnInit {
 
   ngOnInit(): void {
     this.load();
+  }
+
+  openPreferences(): void {
+    this.preferencesOpen = !this.preferencesOpen;
+    if (this.preferencesOpen && !this.preferences) this.loadPreferences();
+  }
+
+  loadPreferences(): void {
+    this.preferencesLoading = true;
+    this.preferencesError = '';
+    this.notificationService.preferences().pipe(
+      timeout(10_000), finalize(() => this.preferencesLoading = false)
+    ).subscribe({
+      next: settings => this.preferences = settings,
+      error: () => this.preferencesError = t('notifications.preferences.loadError')
+    });
+  }
+
+  preferenceEnabled(type: string, channel: 'inApp' | 'email'): boolean {
+    const list = channel === 'inApp' ? this.preferences?.disabledInAppTypes
+      : this.preferences?.disabledEmailTypes;
+    return !list?.includes(type);
+  }
+
+  changeGlobal(channel: 'inApp' | 'email', enabled: boolean): void {
+    if (!this.preferences) return;
+    const next = { ...this.preferences,
+      [channel === 'inApp' ? 'inAppEnabled' : 'emailEnabled']: enabled };
+    this.savePreferences(next);
+  }
+
+  changeType(type: string, channel: 'inApp' | 'email', enabled: boolean): void {
+    if (!this.preferences) return;
+    const key = channel === 'inApp' ? 'disabledInAppTypes' : 'disabledEmailTypes';
+    const disabled = new Set(this.preferences[key]);
+    if (enabled) disabled.delete(type); else disabled.add(type);
+    this.savePreferences({ ...this.preferences, [key]: [...disabled] });
+  }
+
+  private savePreferences(next: NotificationPreferences): void {
+    if (!this.preferences || this.preferencesSaving) return;
+    this.preferencesSaving = true;
+    this.preferencesError = '';
+    this.preferencesSuccess = '';
+    this.notificationService.updatePreferences(next).pipe(
+      timeout(10_000), finalize(() => this.preferencesSaving = false)
+    ).subscribe({
+      next: settings => {
+        this.preferences = settings;
+        this.preferencesSuccess = t('notifications.preferences.saved');
+        // Backend decides visibility and unread counts, including old alerts.
+        this.notificationService.mine().pipe(timeout(10_000)).subscribe({
+          next: items => {
+            this.notifications = [...items].sort(
+              (a, b) => this.timestamp(b.createdAt) - this.timestamp(a.createdAt)
+            );
+            if (this.selected && !this.notifications.some(item => item.id === this.selected?.id)) {
+              this.selected = undefined;
+            }
+            this.updateUnreadCount();
+          },
+          error: () => this.load()
+        });
+      },
+      error: () => this.preferencesError = t('notifications.preferences.saveError')
+    });
   }
 
   load(): void {
@@ -229,6 +310,12 @@ export class NotificationsComponent implements OnInit {
     this.router.navigate(['/menu/communities']);
   }
 
+  /** Existing notifications can contain the retired brand; keep the source
+   * record unchanged while consistently showing Jynlo in the interface. */
+  legacyBrand(text: string | null | undefined): string {
+    return (text ?? '').replace(/DESPORTO24/gi, 'Jynlo');
+  }
+
   notificationSubject(notification: AppNotification): string {
     const joinCommunity = this.joinNotificationCommunityName(notification);
     if (joinCommunity) {
@@ -242,7 +329,7 @@ export class NotificationsComponent implements OnInit {
     const community = this.invitedCommunityName(notification);
     return community
       ? t('notification.communityInviteSubject', { community })
-      : notification.subject;
+      : this.legacyBrand(notification.subject);
   }
 
   notificationMessage(notification: AppNotification): string {
@@ -266,7 +353,7 @@ export class NotificationsComponent implements OnInit {
           username: notification.relatedUsername,
           community
         })
-      : notification.message;
+      : this.legacyBrand(notification.message);
   }
 
   private joinNotificationCommunityName(notification: AppNotification): string | null {
