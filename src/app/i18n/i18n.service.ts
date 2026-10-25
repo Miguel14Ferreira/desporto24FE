@@ -2694,6 +2694,7 @@ const PT: Dictionary = {
   'communities.trackCycling.seriesName': 'Série identificada (opcional)',
   'communities.trackCycling.bracketTitle': 'Quadros de Sprint',
   'communities.trackCycling.interruptionTitle': 'Competição interrompida definitivamente',
+  'communities.trackCycling.interruptionPosition': 'Posição',
   'communities.trackCycling.interruption.BEFORE_QUARTERS': 'Interrompida antes de terminar os quartos de final',
   'communities.trackCycling.interruption.AFTER_QUARTERS': 'Interrompida após os quartos e antes de concluir as meias-finais',
   'communities.trackCycling.interruption.AFTER_SEMIS': 'Interrompida após as meias-finais',
