@@ -5,6 +5,7 @@ on:
     branches: [perf/bundle-audit-20261025]
     paths:
       - '.github/workflows/bundle-audit-once-20261025.yml'
+      - 'src/app/**'
 
 permissions:
   contents: read
