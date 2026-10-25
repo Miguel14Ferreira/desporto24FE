@@ -1,5 +1,5 @@
 export interface TrackSprintBracketMatch {
-  phase: 'SPRINT_EIGHTH_FINAL' | 'SPRINT_QUARTER_FINAL' | 'SPRINT_SEMI_FINAL' | 'SPRINT_BRONZE_FINAL' | 'SPRINT_GOLD_FINAL';
+  phase: 'SPRINT_SIXTEENTH_FINAL' | 'SPRINT_EIGHTH_FINAL' | 'SPRINT_QUARTER_FINAL' | 'SPRINT_SEMI_FINAL' | 'SPRINT_BRONZE_FINAL' | 'SPRINT_GOLD_FINAL';
   slot: string;
   seriesKey: string;
   riderA: string | null;
@@ -14,7 +14,7 @@ export interface TrackSprintBracketOverview {
   id: number;
   seasonId: number;
   name: string;
-  format: 'EIGHT_RIDER_FINALS' | 'SIXTEEN_RIDER_1_8';
+  format: 'EIGHT_RIDER_FINALS' | 'SIXTEEN_RIDER_1_8' | 'TWENTY_EIGHT_RIDER_1_16';
   matches: TrackSprintBracketMatch[];
   qualifyingRoundId?: number | null;
   qualifyingSeeds?: string[];
@@ -470,7 +470,7 @@ export class CommunityGroupsService {
   }
 
   createTrackSprintBracket(communityId: number, seasonId: number, name: string,
-    format: 'EIGHT_RIDER_FINALS' | 'SIXTEEN_RIDER_1_8' = 'EIGHT_RIDER_FINALS',
+    format: 'EIGHT_RIDER_FINALS' | 'SIXTEEN_RIDER_1_8' | 'TWENTY_EIGHT_RIDER_1_16' = 'EIGHT_RIDER_FINALS',
     qualifyingRoundId: number | null = null): Observable<TrackSprintBracketOverview> {
     return this.http.post<TrackSprintBracketOverview>(
       this.url + '/' + communityId + '/seasons/' + seasonId + '/track-sprint-brackets',
