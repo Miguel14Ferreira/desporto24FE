@@ -877,12 +877,14 @@ describe('Unified Jynlo message center', () => {
     component.attachmentPreviews.set(82, 'blob:voice-two');
     const first = {
       paused: false, ended: false, duration: 30, currentTime: 6,
-      pause: jasmine.createSpy('firstPause').and.callFake(() => { first.paused = true; })
+      pause: jasmine.createSpy('firstPause')
     };
+    first.pause.and.callFake(() => { first.paused = true; });
     const second = {
       paused: true, ended: false, duration: 45, currentTime: 2,
-      pause: jasmine.createSpy('secondPause').and.callFake(() => { second.paused = true; })
+      pause: jasmine.createSpy('secondPause')
     };
+    second.pause.and.callFake(() => { second.paused = true; });
     component.onVoiceReady({...message(peer.key, 81), attachmentName: '1.webm'}, first as unknown as HTMLAudioElement);
     component.onVoiceReady({...message(peer.key, 82), attachmentName: '2.webm'}, second as unknown as HTMLAudioElement);
     component.onVoicePlaybackEvent(81, first as unknown as HTMLAudioElement);
@@ -905,8 +907,9 @@ describe('Unified Jynlo message center', () => {
     component.selectedKey = peer.key;
     const player = {
       paused: false, ended: false, duration: 10, currentTime: 0,
-      pause: jasmine.createSpy('pause').and.callFake(() => { player.paused = true; })
+      pause: jasmine.createSpy('pause')
     };
+    player.pause.and.callFake(() => { player.paused = true; });
     component.attachmentPreviews.set(83, 'blob:private');
     component.onVoiceReady({...message(peer.key, 83)}, player as unknown as HTMLAudioElement);
     component.attachmentPreviews.delete(83);
