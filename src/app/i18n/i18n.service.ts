@@ -5,6 +5,11 @@ export type AppLanguage = 'pt' | 'en';
 type Dictionary = Record<string, string>;
 
 const PT: Dictionary = {
+  'communities.inlineSpeed.warningMultipleTie': 'Empate de três ou mais patinadores no limite do apuramento: é necessária uma decisão oficial de desempate antes de confirmar.',
+  'communities.inlineSpeed.dqNotSelectable': 'Desclassificado — corrige primeiro o resultado da manga de origem',
+  'communities.inlineSpeed.exceptionSeventeenthHint': 'O júri pode incluir um 17.º patinador por falta desportiva ou circunstância injusta, apenas com fundamentação detalhada. Em caso de empate triplo, resolve primeiro o desempate oficial.',
+  'communities.inlineSpeed.exceptionReasonRequired': 'Para incluir excecionalmente um 17.º patinador, indica uma fundamentação do júri com pelo menos 20 caracteres.',
+
   'communities.inlineSpeed.seasonsTitle': 'Épocas das provas',
   'communities.inlineSpeed.standaloneHeatHint': 'Podes registar mangas de Patinagem de Velocidade sem ativar as classificações gerais da comunidade. Seleciona 500 m +D ou Sprint de uma volta, regista os tempos e posições e associa a manga à competição. É necessária uma época ativa.',
   'communities.inlineSpeed.selectProgressionHeat': 'Seleciona uma manga de 500 m +D ou Sprint de uma volta. As classificações gerais continuam desativadas.',
@@ -3823,6 +3828,11 @@ const PT: Dictionary = {
 };
 
 const EN: Dictionary = {
+  'communities.inlineSpeed.warningMultipleTie': 'Three or more skaters are tied at the qualification cutoff. An official tie-break decision is required before confirmation.',
+  'communities.inlineSpeed.dqNotSelectable': 'Disqualified — correct the original heat result first',
+  'communities.inlineSpeed.exceptionSeventeenthHint': 'The jury may include a 17th skater following a sporting fault or unfair circumstance only with detailed reasons. A three-way tie first requires an official tie-break.',
+  'communities.inlineSpeed.exceptionReasonRequired': 'To exceptionally include a 17th skater, provide a jury explanation of at least 20 characters.',
+
   'communities.inlineSpeed.seasonsTitle': 'Event seasons',
   'communities.inlineSpeed.standaloneHeatHint': 'You can record Speed Skating heats without enabling the community-wide standings. Choose track 500m +D or road One Lap, record times and places, then link the heat to the competition. An active season is required.',
   'communities.inlineSpeed.selectProgressionHeat': 'Choose a track 500m +D or road One Lap heat. Community-wide standings remain disabled.',
