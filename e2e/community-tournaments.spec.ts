@@ -403,7 +403,8 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
           fileName: 'historico-partidas-qa.csv',
           sheets: [{
             name: 'Dados', nonEmptyRows: 7, structure: 'TABULAR',
-            headers: ['Casa', 'Fora', 'Resultado', 'Data', 'Jornada'],
+            headers: ['Casa', 'Fora', 'Resultado', 'Data',
+              mode === 'historical-import-flow' ? 'Fase' : 'Jornada'],
             sampleRows: [['Águias', 'Lobos', '3-0', '2023-06-01', 'Quartos de final']],
             columnSuggestions: []
           }]
@@ -1159,7 +1160,7 @@ test('Historical knockout browser QA: CSV upload, preview, consent and archive',
 
   await page.getByRole('button', { name: /Partidas de torneios antigos/ }).click();
   const csv = [
-    'Casa;Fora;Resultado;Data;Jornada',
+    'Casa;Fora;Resultado;Data;Fase',
     'Águias;Lobos;3-0;2023-06-01;Quartos de final',
     'CNG;Tigres;2-0;2023-06-02;Quartos de final',
     'Leões;Dragões;1-0;2023-06-03;Quartos de final',
@@ -1174,11 +1175,15 @@ test('Historical knockout browser QA: CSV upload, preview, consent and archive',
   await page.getByRole('button', { name: 'Analisar ficheiro' }).click();
   await expect(page.getByText('Folha ou conjunto de dados')).toBeVisible();
   expect(fixture.actualCsvUploaded).toBe(true);
+  // "Fase" must be mapped as ROUND, never silently dropped as IGNORE or DATE.
+  // The mock refuses preview unless the source phase was mapped to ROUND.
   await page.getByRole('button', { name: 'Pré-visualizar partidas' }).click();
   await expect(page.getByRole('region', { name: 'Pré-visualização de partidas históricas' })
     .first()).toBeVisible();
   expect(fixture.matchPreviewCalls).toBe(1);
   expect(fixture.matchConfirmCalls).toBe(0);
+  await expect(page.getByRole('region', { name: 'Pré-visualização de partidas históricas' })
+    .first()).toContainText('Quartos de final');
 
   // Upload inspection and preview must never write to an archive by themselves.
   await page.getByLabel('Nome do histórico').fill('Taça importada QA');
