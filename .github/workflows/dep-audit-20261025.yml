@@ -71,6 +71,9 @@ jobs:
           }
           console.log('No direct send imports in source, scripts or E2E.');
           NODE
+          # Angular requires synchronized exact peer versions; rebuild the stale lockfile
+          # from the semver-bounded manifest rather than bypassing peer checks.
+          rm package-lock.json
           npm install --package-lock-only --ignore-scripts --no-fund --no-audit \
             @angular/animations@22.2.3 \
             @angular/common@22.2.3 \
