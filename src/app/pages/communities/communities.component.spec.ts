@@ -1210,4 +1210,44 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(component.editingSports).toBeFalse();
   });
 
+  it('offers real World Skate 2026 heat recording when optional standings are disabled', () => {
+    component.selected = {
+      id: 7, name: 'Patinagem', sport: 'Patinagem de Velocidade',
+      sports: ['Patinagem de Velocidade', 'Futebol'],
+      rankingsEnabled: false, individualTournamentsEnabled: true
+    } as any;
+    expect(component.canRecordInlineSpeedWithoutRankings).toBeTrue();
+    expect(component.newRoundSport).toBe('Patinagem de Velocidade');
+    const options = component.eventOptions(component.newRoundSport).map(e => e.code);
+    expect(options).toContain('INLINE_TRACK_500D_FIRST_ROUND');
+    expect(options).toContain('INLINE_ROAD_LAP_SEMI_HEAT');
+    expect(options).toContain('INLINE_TRACK_500D_FINAL_A');
+    expect(options).not.toContain('INLINE_TRACK_200_TT');
+    expect(options).not.toContain('INLINE_TRACK_500D_FINAL_B');
+    expect(component.eventOptions('Futebol')).toEqual([]);
+  });
+
+  it('does not expose standalone heat recording to a disabled or unrelated community', () => {
+    component.selected = {
+      id: 8, sport: 'Futebol', rankingsEnabled: false,
+      individualTournamentsEnabled: true
+    } as any;
+    expect(component.canRecordInlineSpeedWithoutRankings).toBeFalse();
+    component.selected = {
+      id: 8, sport: 'Patinagem de Velocidade', rankingsEnabled: false,
+      individualTournamentsEnabled: false
+    } as any;
+    expect(component.canRecordInlineSpeedWithoutRankings).toBeFalse();
+  });
+
+  it('keeps all existing World Skate event choices when general rankings remain active', () => {
+    component.selected = {
+      id: 7, sport: 'Patinagem de Velocidade',
+      rankingsEnabled: true, individualTournamentsEnabled: true
+    } as any;
+    expect(component.canRecordInlineSpeedWithoutRankings).toBeFalse();
+    expect(component.eventOptions('Patinagem de Velocidade').map(e => e.code))
+      .toContain('INLINE_TRACK_200_TT');
+  });
+
 });
