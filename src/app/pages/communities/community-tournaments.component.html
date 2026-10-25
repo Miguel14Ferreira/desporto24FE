@@ -30,48 +30,14 @@
 
 
   @if (showGuide) {
-    <section class="competition-guide" [attr.aria-label]="'communities.tournaments.overview.guideLabel' | t">
-      <div class="guide-intro">
-        <span class="tournament-eyebrow">{{ 'communities.tournaments.overview.beforeStart' | t }}</span>
-        <h4>{{ 'communities.tournaments.overview.guideTitle' | t }}</h4>
-        <p>{{ 'communities.tournaments.overview.guideDescription' | t }}</p>
-      </div>
-      <div class="guide-options">
-        <article class="guide-option">
-          <div class="guide-option-top">
-            <span aria-hidden="true">👤</span><strong>{{ 'communities.tournaments.overview.individualTitle' | t }}</strong>
-            <span class="guide-tag">{{ 'communities.tournaments.overview.available' | t }}</span>
-          </div>
-          <p>{{ 'communities.tournaments.overview.individualDescription' | t }}</p>
-          <p class="guide-example">{{ 'communities.tournaments.overview.individualExample' | t }}</p>
-          @if (canManage && community.individualTournamentsEnabled !== false) {
-            <button type="button" class="t-btn t-btn-primary"
-              (click)="startIndividualCreation()">{{ 'communities.tournaments.overview.createIndividual' | t }}</button>
-          } @else if (canManage) {
-            <p class="guide-coming">{{ 'communities.tournaments.overview.individualDisabled' | t }}</p>
-          }
-        </article>
-        <article class="guide-option">
-          <div class="guide-option-top">
-            <span aria-hidden="true">👥</span><strong>{{ 'communities.tournaments.overview.teamsTitle' | t }}</strong>
-            <span class="guide-tag">{{ 'communities.tournaments.overview.teamFormats' | t }}</span>
-          </div>
-          <p>{{ 'communities.tournaments.overview.teamsDescription' | t }}</p>
-          <p class="guide-example">{{ 'communities.tournaments.overview.teamsExample' | t }}</p>
-          <p>{{ 'communities.tournaments.overview.teamsHelp' | t }}</p>
-          @if (canManage && community.teamTournamentsEnabled !== false) {
-            <button type="button" class="t-btn t-btn-primary" (click)="startTeamCreation()">{{ 'communities.tournaments.overview.createTeams' | t }}</button>
-          } @else if (canManage) {
-            <p class="guide-coming">{{ 'communities.tournaments.overview.teamsDisabled' | t }}</p>
-          }
-        </article>
-      </div>
-      <div class="guide-community-note" role="note">
-        <strong>{{ 'communities.tournaments.overview.weeklyTitle' | t }}</strong>
-        <p>{{ 'communities.tournaments.overview.weeklyDescription' | t }}</p>
-      </div>
-      <button type="button" class="t-btn t-btn-secondary" (click)="showGuide = false">{{ 'communities.tournaments.overview.closeGuide' | t }}</button>
-    </section>
+    <app-competition-guide
+      [canManage]="canManage"
+      [individualEnabled]="community.individualTournamentsEnabled !== false"
+      [teamEnabled]="community.teamTournamentsEnabled !== false"
+      (individualSelected)="startIndividualCreation()"
+      (teamSelected)="startTeamCreation()"
+      (closeRequested)="showGuide = false"
+    ></app-competition-guide>
   }
 
   @if (canManage && (showIndividualCreate || showTeamCreate)) {
@@ -176,26 +142,11 @@
             </div>
           <fieldset class="t-points-rules">
             <legend>{{ 'communities.tournaments.createUi.formatLegend' | t }}</legend>
-            <div class="create-format-grid" role="group" [attr.aria-label]="'communities.tournaments.createUi.formatGroup' | t">
-              <button type="button" class="create-format-option" [disabled]="busy"
-                [attr.aria-pressed]="teamFormatDraft === 'LEAGUE'"
-                (click)="teamFormatDraft = 'LEAGUE'">
-                <strong>{{ 'communities.tournaments.formatLeagueTitle' | t }}</strong>
-                <span>{{ 'communities.tournaments.formatLeagueText' | t }}</span>
-              </button>
-              <button type="button" class="create-format-option" [disabled]="busy"
-                [attr.aria-pressed]="teamFormatDraft === 'KNOCKOUT'"
-                (click)="teamFormatDraft = 'KNOCKOUT'">
-                <strong>{{ 'communities.tournaments.formatKnockoutTitle' | t }}</strong>
-                <span>{{ 'communities.tournaments.formatKnockoutText' | t }}</span>
-              </button>
-              <button type="button" class="create-format-option" [disabled]="busy"
-                [attr.aria-pressed]="teamFormatDraft === 'GROUP_KNOCKOUT'"
-                (click)="teamFormatDraft = 'GROUP_KNOCKOUT'">
-                <strong>{{ 'communities.tournaments.formatGroupsTitle' | t }}</strong>
-                <span>{{ 'communities.tournaments.formatGroupsText' | t }}</span>
-              </button>
-            </div>
+            <app-competition-format-chooser
+              [selectedFormat]="teamFormatDraft"
+              [disabled]="busy"
+              (formatSelected)="teamFormatDraft = $event"
+            ></app-competition-format-chooser>
             @if (teamFormatDraft === 'GROUP_KNOCKOUT') {
               <p class="sport-choice-hint">{{ 'communities.tournaments.createUi.groupsHint' | t }}</p>
               <label id="group-count-label">{{ 'communities.tournaments.createUi.groupCount' | t }}</label>
