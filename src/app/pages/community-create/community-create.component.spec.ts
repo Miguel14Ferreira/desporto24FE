@@ -2,6 +2,38 @@ import { of, throwError } from 'rxjs';
 import { CommunityCreateComponent } from './community-create.component';
 
 describe('Community creation onboarding', () => {
+  it('reads the owned community quota and blocks creation at the limit', () => {
+    const service = {
+      creationQuota: jasmine.createSpy('creationQuota').and.returnValue(of({
+        owned: 5, limit: 5, createdToday: 1, dailyLimit: 2, canCreate: false
+      })),
+      create: jasmine.createSpy('create').and.returnValue(of({ id: 42 }))
+    };
+    const router = { navigate: jasmine.createSpy('navigate').and.resolveTo(true) };
+    const component = new CommunityCreateComponent(service as any, router as any);
+    component.ngOnInit();
+    component.name = 'Mais um grupo';
+    expect(component.quota?.owned).toBe(5);
+    component.create();
+    expect(service.create).not.toHaveBeenCalled();
+  });
+
+  it('does not block when the quota status endpoint is unavailable', () => {
+    const service = {
+      creationQuota: jasmine.createSpy('creationQuota')
+        .and.returnValue(throwError(() => new Error('offline'))),
+      create: jasmine.createSpy('create').and.returnValue(of({ id: 43 }))
+    };
+    const router = { navigate: jasmine.createSpy('navigate').and.resolveTo(true) };
+    const component = new CommunityCreateComponent(service as any, router as any);
+    component.name = 'Uma comunidade';
+    component.ngOnInit();
+    expect(component.quota).toBeNull();
+    component.create();
+    expect(service.create).toHaveBeenCalled();
+  });
+
+
   it('opens the invite screen after creating a community', () => {
     const service = { create: jasmine.createSpy('create').and.returnValue(of({ id: 42 })) };
     const router = { navigate: jasmine.createSpy('navigate').and.resolveTo(true) };

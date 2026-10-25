@@ -16,6 +16,19 @@
       <div class="feedback error-feedback">{{ errorMessage }}</div>
     }
 
+    @if (quota) {
+      <section class="creation-note" role="status">
+        <span class="note-icon">◎</span>
+        <div>
+          <strong>{{ 'communityCreate.quotaOwned' | t:{ count: quota.owned, limit: quota.limit } }}</strong>
+          <p>{{ 'communityCreate.quotaToday' | t:{ count: quota.createdToday, limit: quota.dailyLimit } }}</p>
+          @if (!quota.canCreate) {
+            <p class="feedback error-feedback">{{ 'communityCreate.quotaReached' | t }}</p>
+          }
+        </div>
+      </section>
+    }
+
     <form class="create-panel" (ngSubmit)="create()">
       <div class="panel-heading">
         <div>
@@ -138,7 +151,7 @@
         <button type="button" class="secondary-action jynlo-action jynlo-action--neutral" [disabled]="saving" (click)="cancel()">
           {{ 'common.cancel' | t }}
         </button>
-        <button type="submit" class="primary-action jynlo-action jynlo-action--primary" [disabled]="saving || !name.trim()">
+        <button type="submit" class="primary-action jynlo-action jynlo-action--primary" [disabled]="saving || !name.trim() || quota?.canCreate === false">
           {{ saving ? ('communityCreate.creating' | t) : ('communityCreate.create' | t) }}
         </button>
       </div>
