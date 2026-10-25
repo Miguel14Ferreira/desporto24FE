@@ -375,6 +375,76 @@
           }
 
           @if (selected) {
+          @if (avatarCropFile) {
+            <div class="community-photo-editor-overlay">
+              <section class="community-photo-editor" role="dialog" aria-modal="true"
+                aria-labelledby="community-photo-editor-title">
+                <div class="community-photo-editor-heading">
+                  <div>
+                    <h2 id="community-photo-editor-title">{{ 'communities.cropTitle' | t }}</h2>
+                    <p>{{ 'communities.cropHint' | t }}</p>
+                  </div>
+                  <button type="button" class="community-photo-editor-close"
+                    [disabled]="photoUpdating" (click)="cancelCommunityAvatarCrop()"
+                    [attr.aria-label]="'communities.cropCancel' | t">×</button>
+                </div>
+
+                <div class="community-photo-editor-stage"
+                  [class.is-draggable]="avatarCropReady && !avatarCropAnimated && !photoUpdating"
+                  [class.is-dragging]="!!avatarCropDrag"
+                  (pointerdown)="onCommunityAvatarPointerDown($event)"
+                  (pointermove)="onCommunityAvatarPointerMove($event)"
+                  (pointerup)="onCommunityAvatarPointerUp($event)"
+                  (pointercancel)="onCommunityAvatarPointerUp($event)"
+                  (lostpointercapture)="onCommunityAvatarPointerUp($event)"
+                  (keydown)="onCommunityAvatarCropKey($event)"
+                  [attr.tabindex]="avatarCropAnimated ? -1 : 0"
+                  [attr.aria-label]="'communities.cropMove' | t">
+                  @if (avatarCropAnimated) {
+                    <img class="community-photo-editor-gif" [src]="avatarCropUrl"
+                      [alt]="'communities.cropPreview' | t">
+                  } @else if (avatarCropReady && avatarCropMetrics) {
+                    <img class="community-photo-editor-image" [src]="avatarCropUrl"
+                      [alt]="'communities.cropPreview' | t" draggable="false"
+                      [style.width.%]="avatarCropMetrics.widthPercent"
+                      [style.height.%]="avatarCropMetrics.heightPercent"
+                      [style.left.%]="50 + avatarCropOffsetX"
+                      [style.top.%]="50 + avatarCropOffsetY">
+                  } @else {
+                    <span role="status">{{ 'communities.cropLoading' | t }}</span>
+                  }
+                </div>
+
+                @if (avatarCropAnimated) {
+                  <p class="community-photo-editor-note">{{ 'communities.cropGifHint' | t }}</p>
+                } @else {
+                  <div class="community-photo-editor-zoom">
+                    <label for="community-photo-zoom">{{ 'communities.cropZoom' | t }}</label>
+                    <input id="community-photo-zoom" type="range"
+                      min="1" max="3" step="0.05" [value]="avatarCropZoom"
+                      [disabled]="!avatarCropReady || photoUpdating"
+                      (input)="onCommunityAvatarZoom($event)">
+                    <output for="community-photo-zoom">{{ avatarCropZoom.toFixed(2) }}×</output>
+                  </div>
+                  <p class="community-photo-editor-note">{{ 'communities.cropMove' | t }}</p>
+                }
+                @if (avatarCropError) {
+                  <p role="alert" class="community-photo-editor-error">{{ avatarCropError }}</p>
+                }
+                <div class="community-photo-editor-actions">
+                  <button type="button" class="jynlo-action jynlo-action--neutral"
+                    [disabled]="photoUpdating" (click)="cancelCommunityAvatarCrop()">
+                    {{ 'communities.cropCancel' | t }}
+                  </button>
+                  <button type="button" class="jynlo-action jynlo-action--primary"
+                    [disabled]="!avatarCropReady || photoUpdating" (click)="saveCommunityAvatarCrop()">
+                    {{ (photoUpdating ? 'communities.cropSaving' : 'communities.cropSave') | t }}
+                  </button>
+                </div>
+              </section>
+            </div>
+          }
+
             <div class="detail-header">
               <div class="community-detail-identity">
                 <div class="community-photo-block">
