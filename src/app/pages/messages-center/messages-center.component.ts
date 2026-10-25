@@ -29,7 +29,6 @@ import {
 import { RecoverableSend, restorePendingSends, savePendingSends } from './pending-send-session';
 import { GifChoice, encodeGiphyText, findGiphy, readGifProviderKey, readGiphyText } from './gif-picker.client';
 import { GiphyEmbedComponent } from './giphy-embed.component';
-import { ChatEmojiGifPickerComponent } from './chat-emoji-gif-picker.component';
 
 export const VOICE_NOTE_MAX_DURATION_MS = 5 * 60_000;
 const VOICE_NOTE_AUDIO_BITRATE = 48_000;
@@ -37,7 +36,7 @@ const VOICE_NOTE_AUDIO_BITRATE = 48_000;
 @Component({
   selector: 'app-messages-center',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TranslatePipe, ChatReactionsComponent, GiphyEmbedComponent, ChatEmojiGifPickerComponent],
+  imports: [CommonModule, FormsModule, RouterLink, TranslatePipe, ChatReactionsComponent, GiphyEmbedComponent],
   templateUrl: './messages-center.component.html',
   styleUrls: ['./messages-center.component.css'],
   changeDetection: ChangeDetectionStrategy.Eager
@@ -92,6 +91,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.attachmentReady = false;
     this.selectedAttachment = null;
     this.selectedGif = null;
+    ++this.mutationVersion;
+    this.cancelMessageMutation();
     this.closeEmojiPicker();
     this.cancelVoiceRecording();
     this.clearAttachmentPreviews();
@@ -181,6 +182,12 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     '💬', '👀', '🤷', '😴', '😤', '🥲', '🫶', '💥', '🎮', '🎵'
   ];
   replyingTo: InboxMessage | null = null;
+  editingMessageId: number | null = null;
+  editDraft = '';
+  confirmingDeleteMessageId: number | null = null;
+  mutationPending = false;
+  mutationError = '';
+  private mutationVersion = 0;
   sending = false;
   deliveryUncertain = false;
   deliveryChecking = false;
@@ -355,6 +362,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
 
   ngOnDestroy(): void {
     this.recentThreadCache.clear();
+    ++this.mutationVersion;
     this.typing.destroy();
     ++this.peerReceiptVersion;
     this.subscriptions.unsubscribe();
@@ -698,6 +706,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
         this.replyDrafts.set(this.selectedKey, this.replyingTo);
       else this.replyDrafts.delete(this.selectedKey);
     }
+    ++this.mutationVersion;
+    this.cancelMessageMutation();
     this.typing.stop();
     this.cancelVoiceRecording();
     this.closeEmojiPicker();
@@ -986,6 +996,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       sender: message.username1,
       text: message.text,
       createdAt: message.date || message.dataDisplay || '',
+      editedAt: message.editedAt, deletedAt: message.deletedAt,
       replyToMessageId: message.replyToMessageId,
       replyToSender: message.replyToSender,
       replyToText: message.replyToText,
@@ -998,6 +1009,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   private fromCommunity(entry: CommunityTimelineEntry): InboxMessage {
     return { key: inboxKey('community', entry.communityId), id: entry.id,
       sender: entry.username, text: entry.body, createdAt: entry.createdAt,
+      editedAt: entry.editedAt, deletedAt: entry.deletedAt,
       replyToMessageId: entry.replyToMessageId, replyToSender: entry.replyToSender,
       replyToText: entry.replyToText,
       attachmentName: entry.attachmentName,
@@ -1008,6 +1020,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   private fromSession(entry: SessionMessage): InboxMessage {
     return { key: inboxKey('session', entry.sessionId), id: entry.id,
       sender: entry.senderUsername, text: entry.body, createdAt: entry.createdAt,
+      editedAt: entry.editedAt, deletedAt: entry.deletedAt,
       replyToMessageId: entry.replyToMessageId, replyToSender: entry.replyToSender,
       replyToText: entry.replyToText,
       attachmentName: entry.attachmentName,
@@ -1017,6 +1030,12 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
 
   private acceptRealtime(key: string, message: InboxMessage): void {
     if (!this.conversations.some(item => item.key === key) || message.id <= 0) return;
+    // Mutations reuse the original message ID. They must never count as new
+    // arrivals or acknowledge unread messages, even if a socket sends them twice.
+    if (message.editedAt || message.deletedAt) {
+      this.applyMessageMutation(key, message);
+      return;
+    }
     const eventId = key + ':' + message.id;
     if (this.seenRealtimeIds.has(eventId)) return;
     this.seenRealtimeIds.add(eventId);
@@ -1063,6 +1082,131 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       // The post-render scroll path handles any read acknowledgement.
       this.scrollRequested = follow;
     }
+  }
+
+  private applyMessageMutation(key: string, updated: InboxMessage): void {
+    const mutate = (messages: InboxMessage[]): InboxMessage[] => messages.map(message => {
+      if (message.id === updated.id) return updated;
+      if (updated.deletedAt && message.replyToMessageId === updated.id) {
+        return {...message, replyToText: '[message deleted]'};
+      }
+      return message;
+    });
+    if (key === this.selectedKey) {
+      this.messages = mutate(this.messages);
+      this.messageSearchResults = mutate(this.messageSearchResults);
+      if (updated.deletedAt) {
+        const previewUrl = this.attachmentPreviews.get(updated.id);
+        if (previewUrl) {
+          this.releaseVoicePlayer(updated.id);
+          URL.revokeObjectURL(previewUrl);
+          this.attachmentPreviews.delete(updated.id);
+        }
+        this.attachmentLoading.delete(updated.id);
+      }
+    }
+    const cache = this.recentThreadCache.get(key);
+    if (cache) this.recentThreadCache.set(key, {
+      ...cache, messages: mutate(cache.messages)
+    });
+    this.conversations = this.conversations.map(conversation =>
+      conversation.key === key && conversation.latestMessageId === updated.id
+        ? {...conversation, latestText: updated.deletedAt ? t('chat.messageDeleted') : updated.text}
+        : conversation);
+  }
+
+  canEditSentMessage(message: InboxMessage): boolean {
+    const date = Date.parse(message.createdAt);
+    return this.canDeleteSentMessage(message) && !message.attachmentName
+      && !readGiphyText(message.text)
+      && Number.isFinite(date) && Date.now() >= date
+      && Date.now() - date <= 15 * 60_000;
+  }
+
+  canDeleteSentMessage(message: InboxMessage): boolean {
+    return this.isMine(message) && message.id > 0 && !message.deletedAt
+      && message.key === this.selectedKey && !!this.selected && this.composerAllowed
+      && !this.composerAccessLoading && !this.previewLoading && !this.previewError
+      && !this.historicalPreview && !this.sending && !this.deliveryUncertain
+      && !this.deliveryChecking && !this.mutationPending && this.isSelectedSessionOpen();
+  }
+
+  beginEditMessage(message: InboxMessage): void {
+    if (!this.canEditSentMessage(message)) return;
+    this.confirmingDeleteMessageId = null;
+    this.editingMessageId = message.id;
+    this.editDraft = message.text;
+    this.mutationError = '';
+  }
+
+  cancelMessageMutation(): void {
+    this.editingMessageId = null;
+    this.confirmingDeleteMessageId = null;
+    this.editDraft = '';
+    this.mutationError = '';
+  }
+
+  promptDeleteMessage(message: InboxMessage): void {
+    if (!this.canDeleteSentMessage(message)) return;
+    this.editingMessageId = null;
+    this.confirmingDeleteMessageId = message.id;
+    this.mutationError = '';
+  }
+
+  private mutationRequest(conversation: InboxConversation, id: number,
+                          text: string | null): Observable<InboxMessage> {
+    if (conversation.kind === 'direct') {
+      const peer = String(conversation.id);
+      return (text === null ? this.direct.deleteMessage(peer, id)
+        : this.direct.editMessage(peer, id, text))
+        .pipe(map(entry => this.fromDirect(entry, peer)));
+    }
+    if (conversation.kind === 'community') {
+      const communityId = Number(conversation.id);
+      return (text === null ? this.timeline.deleteChatForEveryone(communityId, id)
+        : this.timeline.editChatMessage(communityId, id, text))
+        .pipe(map(entry => this.fromCommunity(entry)));
+    }
+    const sessionId = Number(conversation.id);
+    return (text === null ? this.sessions.deleteMessage(sessionId, id)
+      : this.sessions.editMessage(sessionId, id, text))
+      .pipe(map(entry => this.fromSession(entry)));
+  }
+
+  private commitMessageMutation(message: InboxMessage, text: string | null): void {
+    const conversation = this.selected;
+    if (!conversation || message.key !== conversation.key || this.mutationPending) return;
+    if (text === null ? !this.canDeleteSentMessage(message) : !this.canEditSentMessage(message)) return;
+    const version = ++this.mutationVersion;
+    const key = conversation.key;
+    this.mutationPending = true;
+    this.mutationError = '';
+    this.mutationRequest(conversation, message.id, text).pipe(timeout(10_000),
+      finalize(() => {
+        if (version === this.mutationVersion) this.mutationPending = false;
+      })).subscribe({
+      next: updated => {
+        if (version !== this.mutationVersion || key !== this.selectedKey) return;
+        this.applyMessageMutation(key, updated);
+        this.cancelMessageMutation();
+      },
+      error: () => {
+        if (version === this.mutationVersion && key === this.selectedKey) {
+          this.mutationError = t('chat.mutationFailed');
+        }
+      }
+    });
+  }
+
+  saveEditedMessage(message: InboxMessage): void {
+    const text = this.editDraft.trim();
+    if (!text || text.length > 2000 || text === message.text) return;
+    this.commitMessageMutation(message, text);
+  }
+
+  confirmDeleteMessage(message: InboxMessage): void {
+    if (this.confirmingDeleteMessageId !== message.id) return;
+    this.commitMessageMutation(message, null);
   }
 
   private updatePreviewFromHistory(key: string, messages: InboxMessage[]): void {
