@@ -1,4 +1,4 @@
-import { venueOsmEmbedUrl, venueTelephoneUrl } from './venue-public-contact';
+import { venueHasMainlandCoordinates, venueOsmEmbedUrl, venueTelephoneUrl } from './venue-public-contact';
 
 describe('public venue map/contact links', () => {
   it('embeds valid coordinates with an OSM marker and small surrounding area', () => {
@@ -14,6 +14,17 @@ describe('public venue map/contact links', () => {
     expect(venueOsmEmbedUrl(-91, 2)).toBeNull();
     expect(venueOsmEmbedUrl(38.7, 181)).toBeNull();
     expect(venueOsmEmbedUrl(Number('NaN'), -9.1)).toBeNull();
+    expect(venueOsmEmbedUrl(0, 0)).toBeNull();
+    expect(venueOsmEmbedUrl(38.72, -5.5)).toBeNull();
+  });
+
+  it('accepts only plausible mainland Portugal coordinates for precise venue pins', () => {
+    expect(venueHasMainlandCoordinates(38.7223, -9.1393)).toBeTrue();
+    expect(venueHasMainlandCoordinates(41.15, -8.61)).toBeTrue();
+    expect(venueHasMainlandCoordinates(0, 0)).toBeFalse();
+    expect(venueHasMainlandCoordinates(32.65, -16.9)).toBeFalse();
+    expect(venueHasMainlandCoordinates(38.7, -5.5)).toBeFalse();
+    expect(venueHasMainlandCoordinates(null, -9.1)).toBeFalse();
   });
 
   it('offers safe click-to-call only for public-looking Portuguese phone numbers', () => {
