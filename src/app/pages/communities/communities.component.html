@@ -171,7 +171,7 @@
                     [class.community-avatar--animated]="isAnimatedCommunityAvatar(community.photoUrl)">
                     @if (community.photoUrl) {
                       <img [src]="community.photoUrl" [alt]="community.name" loading="lazy" decoding="async"
-                        [style.object-fit]="community.photoZoom != null ? 'cover' : null"
+                        style="object-fit: cover"
                         [style.object-position]="communityCoverPosition(community)"
                         [style.transform-origin]="communityCoverOrigin(community)"
                         [style.transform]="communityCoverZoom(community)">
@@ -299,7 +299,7 @@
                 <div class="community-avatar" [class.community-avatar--animated]="isAnimatedCommunityAvatar(community.photoUrl)">
                   @if (community.photoUrl) {
                     <img [src]="community.photoUrl" [alt]="community.name"
-                        [style.object-fit]="community.photoZoom != null ? 'cover' : null"
+                        style="object-fit: cover"
                         [style.object-position]="communityCoverPosition(community)"
                         [style.transform-origin]="communityCoverOrigin(community)"
                         [style.transform]="communityCoverZoom(community)">
@@ -330,7 +330,7 @@
                   [class.community-avatar--animated]="isAnimatedCommunityAvatar(communityPresentation.photoUrl)">
                   @if (communityPresentation.photoUrl) {
                     <img [src]="communityPresentation.photoUrl" [alt]="communityPresentation.name"
-                        [style.object-fit]="communityPresentation.photoZoom != null ? 'cover' : null"
+                        style="object-fit: cover"
                         [style.object-position]="communityCoverPosition(communityPresentation)"
                         [style.transform-origin]="communityCoverOrigin(communityPresentation)"
                         [style.transform]="communityCoverZoom(communityPresentation)">
@@ -467,11 +467,10 @@
               <div class="community-detail-identity">
                 <div class="community-photo-block">
                   <div class="community-avatar community-avatar--large"
-                    [class.community-avatar--animated]="isAnimatedCommunityAvatar(selected.photoUrl)"
-                    [class.community-avatar--letterboxed]="!!selected.photoUrl">
+                    [class.community-avatar--animated]="isAnimatedCommunityAvatar(selected.photoUrl)">
                     @if (selected.photoUrl) {
                       <img [src]="selected.photoUrl" [alt]="selected.name"
-                        [style.object-fit]="selected.photoZoom != null ? 'cover' : null"
+                        style="object-fit: cover"
                         [style.object-position]="communityCoverPosition(selected)"
                         [style.transform-origin]="communityCoverOrigin(selected)"
                         [style.transform]="communityCoverZoom(selected)">
