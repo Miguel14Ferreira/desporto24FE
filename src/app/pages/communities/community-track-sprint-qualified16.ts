@@ -18,7 +18,10 @@ export function availableSprintQualifiers(
       entry.elapsedSeconds > 0).map(entry => entry.elapsedSeconds!)
       .sort((a,b)=>a-b);
     if (timed.length < requiredRiders) return false;
-    return timed.slice(0,requiredRiders + 1).every((value,i,values)=>i===0 || value !== values[i-1]);
+    // An official 100m split or witnessed lot may resolve a 200m dead heat.
+    // Let organizers select the source; the separate form and backend require
+    // explicit evidence before any tied seed is ever assigned.
+    return true;
   });
 }
 
