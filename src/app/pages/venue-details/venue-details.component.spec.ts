@@ -1,4 +1,5 @@
 import { ActivatedRoute } from '@angular/router';
+import { DomSanitizer } from '@angular/platform-browser';
 import { of, throwError } from 'rxjs';
 
 import { VenueService } from '../../services/venue.service';
@@ -54,6 +55,32 @@ describe('VenueDetailsComponent', () => {
     informationSource: 'COMMUNITY',
     createdByUsername: 'miguel',
     createdAt: '2026-09-29T20:00:00Z'
+  });
+
+  it('offers an embedded map and verified-looking contact without needing Google credentials', () => {
+    const sanitizer = jasmine.createSpyObj<DomSanitizer>('DomSanitizer', ['bypassSecurityTrustResourceUrl']);
+    sanitizer.bypassSecurityTrustResourceUrl.and.callFake(url => ({ changingThisBreaksApplicationSecurity: url }) as any);
+    const component = new VenueDetailsComponent({} as ActivatedRoute, {} as VenueService, null, sanitizer);
+    component.venue = { ...createVenue(), contact: '+351 912 345 678' };
+    const first = component.embeddedMapUrl;
+    expect(first).toBeTruthy();
+    expect(sanitizer.bypassSecurityTrustResourceUrl).toHaveBeenCalledOnceWith(
+      jasmine.stringMatching(/^https:\/\/www\.openstreetmap\.org\/export\/embed\.html\?bbox=/)
+    );
+    expect(component.embeddedMapUrl).toBe(first); // cached SafeResourceUrl
+    expect(component.publicTelephoneUrl).toBe('tel:+351912345678');
+    expect(component.googleVenueContactUrl).toContain('Pavilh%C3%A3o%20Central');
+    expect(component.googleVenueContactUrl).toContain('Lisboa');
+  });
+
+  it('does not show a fake pin or fake telephone if data is missing', () => {
+    const sanitizer = jasmine.createSpyObj<DomSanitizer>('DomSanitizer', ['bypassSecurityTrustResourceUrl']);
+    const component = new VenueDetailsComponent({} as ActivatedRoute, {} as VenueService, null, sanitizer);
+    component.venue = { ...createVenue(), latitude: null, longitude: null, contact: 'recinto@example.pt' };
+    expect(component.embeddedMapUrl).toBeNull();
+    expect(component.publicTelephoneUrl).toBeNull();
+    expect(component.googleVenueContactUrl).toContain('/maps/search/');
+    expect(sanitizer.bypassSecurityTrustResourceUrl).not.toHaveBeenCalled();
   });
 
   it('links to precise coordinates when valid GPS data is present', () => {
