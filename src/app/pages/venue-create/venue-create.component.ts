@@ -48,7 +48,7 @@ export class VenueCreateComponent implements OnInit {
   venueType = '';
   ownershipType: VenueOwnershipType | null = null;
   surfaceType = '';
-  environmentType: VenueEnvironmentType = 'OUTDOOR';
+  environmentType: VenueEnvironmentType | null = null;
   changingRooms = false;
   changingRoomTypes: string[] = [];
   parking = false;
@@ -304,10 +304,22 @@ export class VenueCreateComponent implements OnInit {
     return !this.address.trim() && !this.hasValidGpsCoordinates;
   }
 
+  /** Five required inputs as specified in the reviewed venue UX proposal.
+   * Postal addresses may be substituted by valid mainland GPS coordinates.
+   * District remains optional because its municipality mapping is not yet authoritative.
+   */
+  get essentialCompletedCount(): number {
+    return Number(!!this.name.trim())
+      + Number(!!this.city.trim())
+      + Number(!this.locationIsMissing && !this.hasInvalidGpsCoordinates)
+      + Number(this.selectedSports.length > 0)
+      + Number(this.environmentType !== null);
+  }
+
   save(): void {
     if (this.saving) return;
 
-    if (!this.name.trim() || !this.city.trim() || this.locationIsMissing || this.hasInvalidGpsCoordinates || this.selectedSports.length === 0) {
+    if (!this.name.trim() || !this.city.trim() || this.locationIsMissing || this.hasInvalidGpsCoordinates || this.selectedSports.length === 0 || this.environmentType === null) {
       this.validationError = true;
       return;
     }
@@ -319,7 +331,7 @@ export class VenueCreateComponent implements OnInit {
       address: this.address.trim() || null,
       sports: this.selectedSports.join(';'), venueType: this.valueOrNull(this.venueType),
       ownershipType: this.ownershipType, surfaceType: this.valueOrNull(this.surfaceType),
-      environmentType: this.environmentType, indoor: this.environmentType !== 'OUTDOOR', changingRooms: this.changingRooms,
+      environmentType: this.environmentType, indoor: this.environmentType !== null && this.environmentType !== 'OUTDOOR', changingRooms: this.changingRooms,
       changingRoomTypes: this.changingRooms && this.changingRoomTypes.length ? this.changingRoomTypes.join(';') : null, toilets: this.toilets,
       lockers: this.lockers, showers: this.showers, stands: this.stands, drinkingFountain: this.drinkingFountain, accessible: this.accessible, firstAid: this.firstAid,
       aed: this.aed, medicalStation: this.medicalStation, lifeguard: this.lifeguard, staffOnSite: this.staffOnSite, securitySurveillance: this.securitySurveillance, cafe: this.cafe, restaurant: this.restaurant, vendingMachines: this.vendingMachines, sportsShop: this.sportsShop, wifi: this.wifi, phoneCharging: this.phoneCharging, nearbyRadiusMeters: this.nearbyRadiusMeters, nearbyPharmacy: this.nearbyPharmacy, nearbyAtm: this.nearbyAtm, services: this.valueOrNull(this.services),
