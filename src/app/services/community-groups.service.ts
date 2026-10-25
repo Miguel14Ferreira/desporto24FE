@@ -47,6 +47,9 @@ export interface CommunitySearchPresentation {
   sport: string | null;
   sports?: string[];
   photoUrl: string | null;
+  photoZoom?: number | null;
+  photoFocusX?: number | null;
+  photoFocusY?: number | null;
   visibility: CommunityVisibility;
 }
 
@@ -560,6 +563,15 @@ export class CommunityGroupsService {
     const formData = new FormData();
     formData.append('photo', photo);
     return this.http.put<CommunityGroup>(this.url + '/' + id + '/photo', formData);
+  }
+
+  updatePhotoFraming(
+    id: number, expectedPhotoUrl: string,
+    zoom: number, focusX: number, focusY: number
+  ): Observable<CommunityGroup> {
+    return this.http.put<CommunityGroup>(this.url + '/' + id + '/photo/framing', {
+      expectedPhotoUrl, zoom, focusX, focusY
+    });
   }
 
   removePhoto(id: number): Observable<CommunityGroup> {

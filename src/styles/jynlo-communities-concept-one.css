@@ -2347,3 +2347,23 @@ body .communities-page .community-photo-editor-actions {
   }
   body .communities-page .community-photo-editor-zoom { gap: 8px; }
 }
+
+/* Re-frame an already uploaded cover (including animated GIFs), without
+   downloading it into canvas or mutating its underlying media. */
+body .communities-page .community-photo-editor-existing {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  object-fit: cover;
+  pointer-events: none;
+  user-select: none;
+  will-change: transform;
+}
+body .communities-page .community-avatar img {
+  display: block;
+  transition: none;
+}
