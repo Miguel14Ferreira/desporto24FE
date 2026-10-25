@@ -13,6 +13,15 @@ export interface TrackSprintBracketMatch {
   status: 'READY' | 'WAITING_PREVIOUS' | 'IN_PROGRESS' | 'FINISHED' | 'CONFLICT';
 }
 
+/** Explicit signed UCI 3.2.027 decision for one group of tied 200m times. */
+export interface SprintTieDecision {
+  method: 'LAST_100' | 'DRAW_LOTS';
+  reason: 'LAST_100_UNAVAILABLE' | 'LAST_100_STILL_TIED' | null;
+  orderedUsernames: string[];
+  last100Seconds: Record<string, number>;
+  reference: string;
+}
+
 export interface TrackSprintBracketOverview {
   id: number;
   seasonId: number;
@@ -21,6 +30,8 @@ export interface TrackSprintBracketOverview {
   matches: TrackSprintBracketMatch[];
   qualifyingRoundId?: number | null;
   qualifyingSeeds?: string[];
+  officialTieDecisions?: SprintTieDecision[];
+  tieDecisionRecordedBy?: string | null;
 }
 
 import { HttpClient, HttpParams } from '@angular/common/http';
@@ -486,10 +497,11 @@ export class CommunityGroupsService {
 
   createTrackSprintBracket(communityId: number, seasonId: number, name: string,
     format: 'EIGHT_RIDER_FINALS' | 'SIXTEEN_RIDER_1_8' | 'TWENTY_EIGHT_RIDER_1_16' | 'OLYMPIC_TWENTY_FOUR_REPECHAGE' = 'EIGHT_RIDER_FINALS',
-    qualifyingRoundId: number | null = null): Observable<TrackSprintBracketOverview> {
+    qualifyingRoundId: number | null = null,
+    officialTieDecisions: SprintTieDecision[] = []): Observable<TrackSprintBracketOverview> {
     return this.http.post<TrackSprintBracketOverview>(
       this.url + '/' + communityId + '/seasons/' + seasonId + '/track-sprint-brackets',
-      {name, format, qualifyingRoundId});
+      {name, format, qualifyingRoundId, officialTieDecisions});
   }
 
   deleteTrackSprintBracket(communityId: number, seasonId: number, bracketId: number):

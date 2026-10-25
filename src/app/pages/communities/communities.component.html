@@ -1294,7 +1294,7 @@
                             <label>
                               <span>{{ 'communities.trackCycling.bracketFormatChoice' | t }}</span>
                               <select [(ngModel)]="sprintBracketFormatDraft"
-                                (ngModelChange)="sprintBracketQualifyingRoundIdDraft = null">
+                                (ngModelChange)="onSprintBracketFormatChanged()">
                                 <option value="EIGHT_RIDER_FINALS">{{ 'communities.trackCycling.bracketFormat' | t }}</option>
                                 <option value="SIXTEEN_RIDER_1_8">{{ 'communities.trackCycling.bracketFormat16' | t }}</option>
                                 <option value="TWENTY_EIGHT_RIDER_1_16">{{ 'communities.trackCycling.bracketFormat28' | t }}</option>
@@ -1304,7 +1304,8 @@
                             @if (sprintBracketFormatDraft !== 'EIGHT_RIDER_FINALS') {
                               <label>
                                 <span>{{ 'communities.trackCycling.qualifyingSource' | t }}</span>
-                                <select [(ngModel)]="sprintBracketQualifyingRoundIdDraft">
+                                <select [ngModel]="sprintBracketQualifyingRoundIdDraft"
+                                  (ngModelChange)="onSprintQualifierChanged($event)">
                                   <option [ngValue]="null">{{ 'communities.trackCycling.qualifyingSelect' | t }}</option>
                                   @for (round of availableSprintQualifyingRounds; track round.id) {
                                     <option [ngValue]="round.id">{{ round.name }} — {{ formatRoundDate(round.playedAt) }}</option>
@@ -1316,6 +1317,66 @@
                                 : sprintBracketFormatDraft === 'OLYMPIC_TWENTY_FOUR_REPECHAGE'
                                   ? 'communities.trackCycling.qualifyingHintOlympic'
                                   : 'communities.trackCycling.qualifyingHint') | t }}</small>
+                            }
+                            @if (sprintTieGroups.length) {
+                              <div class="round-sport-guidance" role="note">
+                                {{ 'communities.trackCycling.tieIntro' | t }}
+                              </div>
+                              @for (tie of sprintTieGroups; track tie.key) {
+                                @if (sprintTieDrafts[tie.key]; as decision) {
+                                  <fieldset class="round-meta-form">
+                                    <legend>{{ 'communities.trackCycling.tieGroup' | t }}:
+                                      {{ tie.riders.join(', ') }} · {{ tie.milliseconds / 1000 }} s
+                                    </legend>
+                                    @if (tie.crossesCutoff) {
+                                      <small>{{ 'communities.trackCycling.tieCutoff' | t }}</small>
+                                    }
+                                    <label>
+                                      <span>{{ 'communities.trackCycling.tieMethod' | t }}</span>
+                                      <select [(ngModel)]="decision.method">
+                                        <option value="LAST_100">{{ 'communities.trackCycling.tieLast100' | t }}</option>
+                                        <option value="DRAW_LOTS">{{ 'communities.trackCycling.tieDrawLots' | t }}</option>
+                                      </select>
+                                    </label>
+                                    @if (decision.method === 'DRAW_LOTS') {
+                                      <label>
+                                        <span>{{ 'communities.trackCycling.tieDrawReason' | t }}</span>
+                                        <select [(ngModel)]="decision.reason">
+                                          <option value="LAST_100_UNAVAILABLE">{{ 'communities.trackCycling.tieMissing100' | t }}</option>
+                                          <option value="LAST_100_STILL_TIED">{{ 'communities.trackCycling.tieSame100' | t }}</option>
+                                        </select>
+                                      </label>
+                                      @for (slot of tie.riders; track $index) {
+                                        <label>
+                                          <span>{{ 'communities.trackCycling.tieOfficialRank' | t }} {{ $index + 1 }}</span>
+                                          <select [(ngModel)]="decision.order[$index]">
+                                            <option value="">{{ 'communities.trackCycling.tieSelectRider' | t }}</option>
+                                            @for (rider of tie.riders; track rider) {
+                                              <option [value]="rider">{{ rider }}</option>
+                                            }
+                                          </select>
+                                        </label>
+                                      }
+                                    }
+                                    @if (decision.method === 'LAST_100'
+                                         || decision.reason === 'LAST_100_STILL_TIED') {
+                                      @for (rider of tie.riders; track rider) {
+                                        <label>
+                                          <span>{{ rider }} — {{ 'communities.trackCycling.tie100Seconds' | t }}</span>
+                                          <input type="text" inputmode="decimal"
+                                            [(ngModel)]="decision.last100Seconds[rider]" placeholder="5.123">
+                                        </label>
+                                      }
+                                    }
+                                    <label>
+                                      <span>{{ 'communities.trackCycling.tieReference' | t }}</span>
+                                      <input type="text" maxlength="255" [(ngModel)]="decision.reference"
+                                        [placeholder]="'communities.trackCycling.tieReferencePlaceholder' | t">
+                                    </label>
+                                    <small>{{ 'communities.trackCycling.tieDisclaimer' | t }}</small>
+                                  </fieldset>
+                                }
+                              }
                             }
                             <button type="button" class="btn btn-primary" (click)="createSprintBracket()"
                               [disabled]="sprintBracketSaving || !canCreateSprintBracket()">
@@ -1347,6 +1408,16 @@
                                 <small>{{ $index + 1 }}. {{ rider }}</small>
                               }
                             </div>
+                            @if (bracket.officialTieDecisions?.length) {
+                              <p class="round-sport-guidance">
+                                {{ 'communities.trackCycling.tieApprovedBy' | t }}:
+                                {{ bracket.tieDecisionRecordedBy }}
+                              </p>
+                              @for (record of bracket.officialTieDecisions || []; track $index) {
+                                <small>{{ 'communities.trackCycling.tieReference' | t }}:
+                                  {{ record.reference }} · {{ record.orderedUsernames.join(' → ') }}</small>
+                              }
+                            }
                           }
                           @if (canManage() && selectedSeasonId === activeSeason()?.id) {
                             <button type="button" class="btn btn-secondary"
