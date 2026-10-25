@@ -32,7 +32,7 @@ describe('Community tournaments management', () => {
       'createTeamTournament', 'details', 'teams', 'createTeam', 'addTeamPlayer', 'acceptTeamInvite', 'removeTeamPlayer', 'deleteTeam',
       'generateTeamSchedule', 'teamMatches', 'recordTeamResult', 'teamStandings', 'teamGroups', 'completeTeam',
       'createRaceChampionship', 'raceOverview', 'linkRace', 'unlinkRace', 'setRacePoints',
-      'completeRaceChampionship'
+      'completeRaceChampionship', 'inlineSpeedOverview'
     ]);
     api.list.and.returnValue(of({ tournaments: [draft], page: 0, hasMore: false }));
     api.participants.and.returnValue(of({ participants: [], page: 0, hasMore: false }));
@@ -41,6 +41,10 @@ describe('Community tournaments management', () => {
     api.raceOverview.and.returnValue(of({
       tournamentId: 19, pointsByPlace: [25, 18, 15], linkedRaces: [], availableRaces: [],
       standings: []
+    }));
+    api.inlineSpeedOverview.and.returnValue(of({
+      tournamentId: 19, discipline: null, linkedHeats: [], availableHeats: [],
+      proposals: [], decisions: []
     }));
     api.teamMatches.and.returnValue(of({ matches: [], page: 0, hasMore: false }));
     api.teamGroups.and.returnValue(of({
@@ -1726,6 +1730,48 @@ describe('Community tournaments management', () => {
       if (original === null) localStorage.removeItem('d24-language');
       else localStorage.setItem('d24-language', original);
     }
+  });
+
+  it('uses skating-only copy and status instead of generic WDL point labels', () => {
+    component.startIndividualCreation();
+    component.sportDraft = 'Patinagem de Velocidade';
+    expect(component.isInlineSpeedDraft).toBeTrue();
+    expect(component.isSportFormatSupported).toBeTrue();
+    expect(component.speedTournamentStatus('DRAFT')).toBe(
+      t('communities.inlineSpeed.status.DRAFT'));
+    expect(component.speedTournamentStatus('IN_PROGRESS')).toBe(
+      t('communities.inlineSpeed.status.IN_PROGRESS'));
+    expect(component.isInlineSpeedTournament({ ...draft, sport: 'Patinagem de Velocidade' })).toBeTrue();
+    expect(component.isInlineSpeedTournament({ ...draft, sport: 'Futebol' })).toBeFalse();
+    expect(component.isInlineSpeedTournament({ ...draft, sport: 'Patinagem de Velocidade',
+      historicalArchiveId: 32 })).toBeFalse();
+  });
+
+  it('creates speed skating with zero generic football points and loads heat progression', async () => {
+    component.startIndividualCreation();
+    component.nameDraft = 'Campeonato de Patinagem 2026';
+    component.sportDraft = 'Patinagem de Velocidade';
+    api.create.and.returnValue(of({
+      ...draft, name: component.nameDraft, sport: 'Patinagem de Velocidade',
+      winPoints: 0, drawPoints: 0, lossPoints: 0
+    }));
+    await component.create();
+    expect(api.create).toHaveBeenCalledWith(7, 'Campeonato de Patinagem 2026',
+      'Patinagem de Velocidade', { winPoints: 0, drawPoints: 0, lossPoints: 0 });
+    expect(component.selected?.sport).toBe('Patinagem de Velocidade');
+    expect(api.inlineSpeedOverview).toHaveBeenCalled();
+    expect(api.generateSchedule).not.toHaveBeenCalled();
+  });
+
+  it('keeps regular individual league points intact for other sports', async () => {
+    component.startIndividualCreation();
+    component.nameDraft = 'Liga de Futebol';
+    component.sportDraft = 'Futebol';
+    expect(component.isInlineSpeedDraft).toBeFalse();
+    api.create.and.returnValue(of({ ...draft, name: component.nameDraft, sport: 'Futebol' }));
+    await component.create();
+    expect(api.create).toHaveBeenCalledWith(7, 'Liga de Futebol', 'Futebol',
+      { winPoints: 3, drawPoints: 1, lossPoints: 0 });
   });
 
 });
