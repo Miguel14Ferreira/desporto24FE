@@ -1867,7 +1867,7 @@ describe('Community tournaments management', () => {
     expect(api.resolveInlineSpeedTieBreak).toHaveBeenCalledWith(7, 9,
       Array.from({ length: 15 }, (_, i) => i + 1).concat(18),
       'O júri reviu a prova de desempate com vídeo oficial',
-      'OFFICIAL_MINUTES', 'Ata oficial 2026-011', []);
+      'OFFICIAL_MINUTES', 'Ata oficial 2026-011', [], '');
   });
 
   it('preserves tie-break revision history and blocks edits after ratification', () => {
@@ -1959,13 +1959,51 @@ describe('Community tournaments management', () => {
     await component.resolveSpeedTie(proposal);
     expect(api.resolveInlineSpeedTieBreak).toHaveBeenCalledWith(
       7, 9, chosen, reason, 'TIEBREAK_TRIAL',
-      'Ata oficial da prova de desempate #101', [101]);
+      'Ata oficial da prova de desempate #101', [101], '');
     expect(component.speedOverview?.decisions.length).toBe(0);
     expect(component.speedTrialUsedRevisions(101)).toEqual([1]);
     const ruling = component.speedTieBreak('FIRST')!;
     component.speedOverview!.proposals = [{ ...proposal, ready: true }];
     component.startSpeedTieCorrection({ ...proposal, ready: true });
     expect(component.speedTieTrialIds).toEqual(ruling.trialIds ?? []);
+  });
+
+  it('requires an explicit jury reason when selected skater placed behind an excluded one', async () => {
+    component.selected = { ...draft, status: 'IN_PROGRESS', sport: 'Patinagem de Velocidade' };
+    const proposal = { sourceStage: 'FIRST' as const, targetStage: 'QUARTER' as const,
+      expectedCount: 16, playerIds: [], ready: false,
+      warning: 'Empate múltiplo no limite do 16.º' };
+    const chosen = Array.from({ length: 16 }, (_, i) => i + 1);
+    const trial = {
+      id: 301, sourceStage: 'FIRST' as const,
+      heldAt: '2026-10-25T10:00:00Z', officialReference: 'Ata de QA 301',
+      reason: 'Prova realizada perante júri', recordedBy: 'owner',
+      recordedAt: '2026-10-25T11:00:00Z', stale: false,
+      results: [{ playerId: 18, place: 1, seconds: 31.001 },
+        { playerId: 17, place: 2, seconds: 31.002 },
+        { playerId: 16, place: 3, seconds: 31.003 }]
+    };
+    const overview: InlineSpeedOverview = { tournamentId: 9, discipline: 'TRACK_500D',
+      linkedHeats: [], availableHeats: [], proposals: [proposal], decisions: [],
+      tieBreaks: [], trials: [trial] };
+    component.speedOverview = overview;
+    component.speedSelections = { FIRST: chosen };
+    component.speedTieTrialIds = [301];
+    component.speedReasons = { FIRST: 'O júri reviu a decisão de desempate com toda a documentação' };
+    component.speedEvidenceType = 'TIEBREAK_TRIAL';
+    component.speedEvidenceReference = 'Ata oficial da prova de desempate QA 301';
+    expect(component.speedTrialOrderConflicts().length).toBe(2);
+    await component.resolveSpeedTie(proposal);
+    expect(api.resolveInlineSpeedTieBreak).not.toHaveBeenCalled();
+    const override = 'A ordem da prova foi reavaliada perante irregularidade registada na ata oficial';
+    component.speedTrialOrderExceptionReason = override;
+    api.resolveInlineSpeedTieBreak.and.returnValue(of(overview));
+    api.inlineSpeedOverview.and.returnValue(of(overview));
+    await component.resolveSpeedTie(proposal);
+    expect(api.resolveInlineSpeedTieBreak).toHaveBeenCalledWith(
+      7, 9, chosen, component.speedReasons['FIRST'], 'TIEBREAK_TRIAL',
+      'Ata oficial da prova de desempate QA 301', [301], override);
+    expect(component.speedOverview?.decisions.length).toBe(0);
   });
 
   it('records only an actual fictional cutoff trial and never confirms qualifiers', async () => {

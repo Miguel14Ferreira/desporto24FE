@@ -1234,6 +1234,12 @@
                       <p class="t-muted">{{ speedEvidenceLabel(ruling.evidenceType) }}
                         · {{ ruling.evidenceReference }}</p>
                     }
+                    @if (ruling.trialOrderExceptionReason) {
+                      <p class="notice notice-info">
+                        {{ 'communities.inlineSpeed.trialOrderExceptionAudited' | t }}:
+                        {{ ruling.trialOrderExceptionReason }}
+                      </p>
+                    }
                     @if (ruling.trialIds?.length) {
                       <p class="t-muted">
                         {{ 'communities.inlineSpeed.trialUsedInCurrent' | t }}:
@@ -1256,6 +1262,12 @@
                                 · {{ 'communities.inlineSpeed.tieOutdated' | t }}
                               }
                               <p>{{ revision.reason }}</p>
+                              @if (revision.trialOrderExceptionReason) {
+                                <p class="t-muted">
+                                  {{ 'communities.inlineSpeed.trialOrderExceptionAudited' | t }}:
+                                  {{ revision.trialOrderExceptionReason }}
+                                </p>
+                              }
                               @if (revision.evidenceType && revision.evidenceReference) {
                                 <small>{{ speedEvidenceLabel(revision.evidenceType) }}:
                                   {{ revision.evidenceReference }}</small>
@@ -1350,6 +1362,26 @@
                             </label>
                           }
                         </fieldset>
+                      }
+                      @if (speedTrialOrderConflicts().length) {
+                        <div class="notice notice-info" role="status">
+                          <strong>{{ 'communities.inlineSpeed.trialOrderWarning' | t }}</strong>
+                          <p class="t-muted">{{ 'communities.inlineSpeed.trialOrderWarningHint' | t }}</p>
+                          @for (conflict of speedTrialOrderConflicts(); track conflict.trialId + ':' + conflict.chosenId + ':' + conflict.excludedId) {
+                            <p>
+                              #{{ conflict.trialId }} —
+                              {{ speedTieSkaterNames([conflict.chosenId]) }}
+                              ({{ conflict.chosenPlace }}.º)
+                              / {{ speedTieSkaterNames([conflict.excludedId]) }}
+                              ({{ conflict.excludedPlace }}.º)
+                            </p>
+                          }
+                        </div>
+                        <label class="inline-speed-judge-reason">
+                          {{ 'communities.inlineSpeed.trialOrderExceptionReason' | t }}
+                          <textarea rows="3" maxlength="500" name="inline-speed-trial-order-exception"
+                            [(ngModel)]="speedTrialOrderExceptionReason" [disabled]="busy"></textarea>
+                        </label>
                       }
                       <button type="button" class="t-btn t-btn-primary"
                         [disabled]="busy || (speedSelections['FIRST']?.length ?? 0) !== 16"
