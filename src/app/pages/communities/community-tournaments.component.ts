@@ -5,7 +5,7 @@ import { HistoricalMatchArchive } from '../../services/community-groups.service'
 import { historicalTournamentStandings, HistoricalTournamentStanding, canEstimateHistoricalLeagueStandings } from './community-historical-tournament-standings';
 import { historicalTournamentOutcome, HistoricalTournamentOutcome } from './community-historical-tournament-outcome';
 import { groupHistoricalTournamentSourceRows } from './community-historical-tournament-source-groups';
-import { historicalKnockoutPhaseOverview } from './community-historical-knockout-overview';
+import { historicalKnockoutPhaseOverview, HistoricalKnockoutPhaseOverview, HistoricalKnockoutPhaseId } from './community-historical-knockout-overview';
 import { historicalMatchReviewFlags } from './community-historical-match-review';
 import {
   CommunityTournament, TournamentPointRules, TeamTieBreakPriority, TournamentMatch, TournamentParticipant, TournamentStandingRow,
@@ -37,6 +37,9 @@ export class CommunityTournamentsComponent implements OnChanges {
   selected?: CommunityTournament;
   historicalArchive?: HistoricalMatchArchive;
   historicalArchivePage = 0;
+  /** Each phase advances independently across its explicitly flagged source rows. */
+  historicalReviewCursor: Record<HistoricalKnockoutPhaseId, number> =
+    { quarterfinal: -1, semifinal: -1, final: -1 };
   readonly historicalMatchReviewFlags = historicalMatchReviewFlags;
   @ViewChild('historicalArchiveFixtures') private historicalArchiveFixtures?: ElementRef<HTMLElement>;
 
@@ -62,6 +65,16 @@ export class CommunityTournamentsComponent implements OnChanges {
       `[data-historical-source-row="${sourceRow}"]`
     );
     (match ?? section)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  /** Review only actual flagged rows; a stage-count mismatch is not a fixture. */
+  showNextHistoricalReview(phase: HistoricalKnockoutPhaseOverview): void {
+    const current = this.historicalKnockoutPhases.find(item => item.phase === phase.phase);
+    const indices = current?.reviewArchiveIndices ?? [];
+    if (!indices.length) return;
+    const next = (this.historicalReviewCursor[phase.phase] + 1) % indices.length;
+    this.historicalReviewCursor[phase.phase] = next;
+    this.showHistoricalKnockoutPhase(indices[next]);
   }
 
   /** Contiguous labels exactly as found in the spreadsheet, within this page. */
@@ -802,6 +815,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.selected = tournament;
     this.historicalArchive = undefined;
     this.historicalArchivePage = 0;
+    this.historicalReviewCursor = { quarterfinal: -1, semifinal: -1, final: -1 };
     this.confirmAction = null;
     this.feedback = '';
     this.error = '';
@@ -910,6 +924,7 @@ export class CommunityTournamentsComponent implements OnChanges {
             || this.selected?.id !== tournament.id) return;
         this.historicalArchive = archive;
         this.historicalArchivePage = 0;
+        this.historicalReviewCursor = { quarterfinal: -1, semifinal: -1, final: -1 };
       },
       error: () => {
         if (revision === this.detailRevision && this.selected?.id === tournament.id) {

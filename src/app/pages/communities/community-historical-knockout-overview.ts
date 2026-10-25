@@ -2,6 +2,7 @@ import { HistoricalMatchArchive } from '../../services/community-groups.service'
 import {
   isHistoricalFinalRound, isQuarterfinalRound, isSemifinalRound
 } from './community-historical-tournament-outcome';
+import { historicalMatchReviewFlags } from './community-historical-match-review';
 
 export type HistoricalKnockoutPhaseId = 'quarterfinal' | 'semifinal' | 'final';
 
@@ -14,6 +15,8 @@ export interface HistoricalKnockoutPhaseOverview {
   sourceLabels: string[];
   potentialDuplicates: number;
   drawnResults: number;
+  /** Source-order, zero-based positions of genuinely flagged matches in this phase. */
+  reviewArchiveIndices: number[];
   /** Zero-based position in the original archive, not sourceRow (which may skip). */
   firstArchiveIndex: number | null;
   /** First page containing this explicitly labelled stage in the source order. */
@@ -48,6 +51,9 @@ export function historicalKnockoutPhaseOverview(
     if (label && !phase.sourceLabels.includes(label)) phase.sourceLabels.push(label);
     if (row.potentialDuplicate) phase.potentialDuplicates++;
     if (row.homeScore === row.awayScore) phase.drawnResults++;
+    if (historicalMatchReviewFlags(row, true).length) {
+      phase.reviewArchiveIndices.push(index);
+    }
   });
 
   for (const phase of result) {
@@ -64,7 +70,7 @@ function stage(phase: HistoricalKnockoutPhaseId, singleLegReference: 4 | 2 | 1):
 HistoricalKnockoutPhaseOverview {
   return {
     phase, matchCount: 0, singleLegReference, sourceLabels: [],
-    potentialDuplicates: 0, drawnResults: 0,
+    potentialDuplicates: 0, drawnResults: 0, reviewArchiveIndices: [],
     firstArchiveIndex: null, firstPage: null, requiresReview: false
   };
 }
