@@ -2322,7 +2322,6 @@ export const EN: Record<string, string> = {
 
   'communityCreate.eyebrow': 'Communities',
   'communityCreate.quotaOwned': 'Communities owned: {{count}} of {{limit}}.',
-  'communityCreate.quotaToday': 'Created today: {{count}} of {{limit}} allowed.',
   'communityCreate.quotaReached': 'You cannot create another community now. Contact support if you need more communities.',
   'adminPlayers.communityLimitSaved': 'Updated the community limit for {{name}}.',
   'adminPlayers.communityLimitError': 'Could not load or change the community limit.',

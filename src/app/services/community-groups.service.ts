@@ -108,8 +108,6 @@ export interface CommunitySearchPresentation {
 export interface CommunityCreationQuota {
   owned: number;
   limit: number;
-  createdToday: number;
-  dailyLimit: number;
   canCreate: boolean;
 }
 

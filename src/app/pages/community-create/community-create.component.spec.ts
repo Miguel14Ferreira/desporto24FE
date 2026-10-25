@@ -5,7 +5,7 @@ describe('Community creation onboarding', () => {
   it('reads the owned community quota and blocks creation at the limit', () => {
     const service = {
       creationQuota: jasmine.createSpy('creationQuota').and.returnValue(of({
-        owned: 5, limit: 5, createdToday: 1, dailyLimit: 2, canCreate: false
+        owned: 5, limit: 5, canCreate: false
       })),
       create: jasmine.createSpy('create').and.returnValue(of({ id: 42 }))
     };
@@ -16,6 +16,22 @@ describe('Community creation onboarding', () => {
     expect(component.quota?.owned).toBe(5);
     component.create();
     expect(service.create).not.toHaveBeenCalled();
+  });
+
+  it('allows further creation when under the owned limit, without a daily quota', () => {
+    const service = {
+      creationQuota: jasmine.createSpy('creationQuota').and.returnValue(of({
+        owned: 4, limit: 5, canCreate: true
+      })),
+      create: jasmine.createSpy('create').and.returnValue(of({ id: 50 }))
+    };
+    const router = { navigate: jasmine.createSpy('navigate').and.resolveTo(true) };
+    const component = new CommunityCreateComponent(service as any, router as any);
+    component.ngOnInit();
+    component.name = 'Quinta comunidade';
+    component.create();
+    expect(service.create).toHaveBeenCalled();
+    expect(router.navigate).toHaveBeenCalledWith(['/menu/communities', 50, 'invite']);
   });
 
   it('does not block when the quota status endpoint is unavailable', () => {

@@ -22,8 +22,6 @@ export interface AdminPlayerSearch {
 export interface CommunityQuota {
   owned: number;
   limit: number;
-  createdToday: number;
-  dailyLimit: number;
   canCreate: boolean;
 }
 
