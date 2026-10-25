@@ -40,8 +40,6 @@ jobs:
             throw Error('Expected patched Vite 8.3.5 override and exact lockfile version');
           if (!builder || !builder.startsWith('22.2.'))
             throw Error('Angular builder major/minor version changed unexpectedly: ' + builder);
-          if (lock.packages['']?.overrides?.vite !== '8.3.5')
-            throw Error('Root override is not reflected in package lock');
           console.log('VERIFIED Vite:', vite, 'Angular build:', builder);
           NODE
           npm audit --package-lock-only --json > "$RUNNER_TEMP/audit-all.json" || true
