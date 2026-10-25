@@ -359,13 +359,13 @@
   }
 
   <div class="tournament-browser">
-    <aside class="tournament-sidebar" aria-label="Lista de torneios">
+    <aside class="tournament-sidebar" [attr.aria-label]="'communities.tournaments.detailUi.listLabel' | t">
       <div class="sidebar-title">
-        <h4>Competições existentes</h4>
+        <h4>{{ 'communities.tournaments.detailUi.existingTitle' | t }}</h4>
         <span>{{ tournaments.length }}</span>
       </div>
       @if (!loading && !tournaments.length && !error) {
-        <p class="t-muted">Esta comunidade ainda não tem competições. @if (!canManage) {O organizador poderá criá-los aqui.}</p>
+        <p class="t-muted">{{ 'communities.tournaments.detailUi.empty' | t }} @if (!canManage) { {{ 'communities.tournaments.detailUi.emptyMemberHint' | t }} }</p>
       }
       @for (tournament of tournaments; track tournament.id) {
         <button type="button" class="tournament-option"
@@ -376,10 +376,10 @@
           @if (tournament.historicalArchiveId) {
             <small class="historical-tournament-badge">{{ 'communities.matches.tournamentHistoricalBadge' | t }}</small>
           }
-          <small>{{ tournament.sport || 'Sem modalidade definida' }} ·
-              {{ tournament.entryType === 'TEAM' ? 'Por equipas' : 'Individual' }} ·
+          <small>{{ tournament.sport || ('communities.tournaments.overview.sportUndefined' | t) }} ·
+              {{ (tournament.entryType === 'TEAM' ? 'communities.tournaments.overview.teamFormat' : 'communities.tournaments.overview.individualTitle') | t }} ·
               {{ tournament.entryType === 'TEAM' && tournament.status === 'DRAFT'
-                  ? 'Em preparação' : formatStatus(tournament.status) }}</small>
+                  ? ('communities.tournaments.detailUi.preparing' | t) : formatStatus(tournament.status) }}</small>
         </button>
       }
       @if (hasKartingCompetitions) {
@@ -415,72 +415,72 @@
           }
         </section>
       }
-      @if (loading) { <p class="t-muted" role="status">A carregar torneios…</p> }
+      @if (loading) { <p class="t-muted" role="status">{{ 'communities.tournaments.detailUi.loading' | t }}</p> }
       @if (tournamentsHasMore) {
         <button class="t-btn t-btn-secondary t-btn-wide" type="button"
-          [disabled]="loading" (click)="loadTournaments()">Ver mais torneios</button>
+          [disabled]="loading" (click)="loadTournaments()">{{ 'communities.tournaments.detailUi.showMore' | t }}</button>
       }
       @if (!tournaments.length && error) {
         <button class="t-btn t-btn-secondary" type="button" [disabled]="loading"
-          (click)="loadTournaments(true)">Tentar novamente</button>
+          (click)="loadTournaments(true)">{{ 'communities.tournaments.detailUi.retry' | t }}</button>
       }
     </aside>
 
     <div class="tournament-detail">
       @if (!selected) {
-        <div class="empty-tournament">Seleciona uma competição para veres participantes, confrontos e classificação.</div>
+        <div class="empty-tournament">{{ 'communities.tournaments.detailUi.selectCompetition' | t }}</div>
       } @else {
         <header class="tournament-heading">
           <div>
             <span class="tournament-state" [class.is-finished]="selected.status === 'COMPLETED'">
-              {{ isTeamCompetition && selected.status === 'DRAFT' ? 'Em preparação' : formatStatus(selected.status) }}
+              {{ isTeamCompetition && selected.status === 'DRAFT' ? ('communities.tournaments.detailUi.preparing' | t) : formatStatus(selected.status) }}
             </span>
             <h4>{{ selected.name }}</h4>
-            <span class="t-tournament-sport">{{ selected.sport || 'Modalidade não definida' }}</span>
+            <span class="t-tournament-sport">{{ selected.sport || ('communities.tournaments.overview.sportUndefined' | t) }}</span>
             @if (isTeamCompetition) {
               @if (selected.format === 'GROUP_KNOCKOUT') {
-                <p>Grupos + eliminatórias · {{ selected.groupCount }} grupos ·
+                <p>{{ 'communities.tournaments.detailUi.groupsKnockout' | t }} · {{ 'communities.tournaments.detailUi.groupsCount' | t:{count:selected.groupCount ?? 0} }} ·
                   @if (selected.playersPerTeam != null) {
-                    · {{ selected.playersPerTeam }} jogadores por equipa
+                    {{ 'communities.tournaments.detailUi.teamSize' | t:{count:selected.playersPerTeam} }}
                   } @else {
-                    · Plantéis flexíveis
+                    {{ 'communities.tournaments.detailUi.flexibleRosters' | t }}
                   }</p>
-                <p>Apuram-se dois por grupo; o último critério de desempate é a ordem do sorteio.</p>
+                <p>{{ 'communities.tournaments.detailUi.groupQualification' | t }}</p>
               } @else if (selected.format === 'KNOCKOUT') {
-                <p>Eliminatórias · {{ selected.playersPerTeam != null ? selected.playersPerTeam + ' jogadores por equipa' : 'Plantéis flexíveis' }} · Eliminação simples</p>
+                <p>{{ 'communities.tournaments.detailUi.knockout' | t }} · {{ (selected.playersPerTeam != null ? 'communities.tournaments.detailUi.teamSize' : 'communities.tournaments.detailUi.flexibleRosters') | t:{count:selected.playersPerTeam ?? 0} }} · {{ 'communities.tournaments.detailUi.singleElimination' | t }}</p>
               } @else {
-                <p>Campeonato por equipas · {{ selected.playersPerTeam != null ? selected.playersPerTeam + ' jogadores por equipa' : 'Plantéis flexíveis' }} ·
-                  {{ (selected.roundRobinLegs ?? 1) === 2 ? 'Duas voltas (casa e fora)' : 'Uma volta' }}</p>
-                <p>Vitória {{ selected.winPoints }} · Empate {{ selected.drawPoints }} · Derrota {{ selected.lossPoints }} pontos</p>
-                <p>Desempate prioritário: {{ teamTieBreakLabel(selected.teamTieBreakPriority) }}</p>
+                <p>{{ 'communities.tournaments.detailUi.teamLeague' | t }} · {{ (selected.playersPerTeam != null ? 'communities.tournaments.detailUi.teamSize' : 'communities.tournaments.detailUi.flexibleRosters') | t:{count:selected.playersPerTeam ?? 0} }} ·
+                  {{ ((selected.roundRobinLegs ?? 1) === 2 ? 'communities.tournaments.detailUi.twoLegs' : 'communities.tournaments.detailUi.oneLeg') | t }}</p>
+                <p>{{ 'communities.tournaments.detailUi.pointsSummary' | t:{win:selected.winPoints,draw:selected.drawPoints,loss:selected.lossPoints} }}</p>
+                <p>{{ 'communities.tournaments.detailUi.tiePriority' | t:{criterion:teamTieBreakLabel(selected.teamTieBreakPriority)} }}</p>
               }
             } @else {
               @if (isRaceCompetition) {
                 <p>{{ raceSportLabel(selected.sport) }} · {{ 'communities.karting.title' | t }}</p>
               } @else if (isChessTournament) {
-                <p>Xadrez · Vitória 1 · Empate ½ · Derrota 0</p>
+                <p>{{ 'communities.tournaments.detailUi.chessPoints' | t }}</p>
               } @else {
-                <p>Vitória {{ selected.winPoints }} · Empate {{ selected.drawPoints }} · Derrota {{ selected.lossPoints }} pontos</p>
+                <p>{{ 'communities.tournaments.detailUi.pointsSummary' | t:{win:selected.winPoints,draw:selected.drawPoints,loss:selected.lossPoints} }}</p>
               }
             }
           </div>
           <div class="tournament-heading-actions">
             @if (isMember) {
               <button type="button" class="t-btn t-btn-secondary" (click)="loadDetails()"
-                [disabled]="detailsLoading || busy">Atualizar</button>
+                [disabled]="detailsLoading || busy">{{ 'communities.tournaments.detailUi.refresh' | t }}</button>
             }
             @if (canManage && selected.status !== 'COMPLETED') {
               @if (confirmAction === 'delete') {
-                <div class="competition-delete-confirm" role="group" aria-label="Confirmar eliminação">
-                  <p>Eliminar “{{ selected.name }}”? As inscrições e confrontos sem resultados serão apagados. As estatísticas gerais da comunidade não serão afetadas.</p>
+                <div class="competition-delete-confirm" role="group" [attr.aria-label]="'communities.tournaments.detailUi.deleteLabel' | t">
+                  <p>{{ 'communities.tournaments.detailUi.deleteWarning' | t:{name:selected.name} }}</p>
                   <button type="button" class="t-btn t-btn-danger"
-                    [disabled]="busy" (click)="deleteSelected()">Sim, eliminar competição</button>
+                    [disabled]="busy" (click)="deleteSelected()">{{ 'communities.tournaments.detailUi.deleteConfirm' | t }}</button>
                   <button type="button" class="t-btn t-btn-secondary"
-                    [disabled]="busy" (click)="confirmAction = null">Cancelar</button>
+                    [disabled]="busy" (click)="confirmAction = null">{{ 'communities.tournaments.finalUi.cancel' | t }}</button>
                 </div>
               } @else {
                 <button type="button" class="t-btn t-btn-danger-outline"
-                  [disabled]="busy" (click)="confirmAction = 'delete'">Eliminar competição</button>
+                  [disabled]="busy" (click)="confirmAction = 'delete'">{{ 'communities.tournaments.detailUi.deleteAction' | t }}</button>
               }
             }
           </div>
@@ -1279,7 +1279,7 @@
                         {{ 'communities.karting.closeConfirm' | t }}
                       </button>
                       <button type="button" class="t-btn t-btn-secondary"
-                        [disabled]="busy" (click)="confirmAction = null">Cancelar</button>
+                        [disabled]="busy" (click)="confirmAction = null">{{ 'communities.tournaments.finalUi.cancel' | t }}</button>
                     </div>
                   } @else {
                     <button type="button" class="t-btn t-btn-primary"

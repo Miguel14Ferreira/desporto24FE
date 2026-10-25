@@ -2699,3 +2699,33 @@ test('Competition profiles E2E: swimming race warning stays unavailable in EN an
   expect(fixture.organizerMutations).toEqual([]);
   expect(fixture.unmocked.filter(url => url.includes('/tournaments'))).toEqual([]);
 });
+
+test('Competition organizer E2E: deletion warning, cancellation and sidebar follow PT/EN without mutation', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'trial');
+  await page.goto('/menu/communities/7?tab=tournaments');
+  await page.evaluate(() => localStorage.setItem('d24-language', 'en'));
+  await page.reload();
+
+  const sidebar = page.getByRole('complementary', { name: 'Tournament list' });
+  await expect(sidebar.getByRole('heading', { name: 'Existing competitions' })).toBeVisible();
+  await expect(page.locator('.tournament-heading')).toContainText('Win 3 · Draw 1 · Loss 0 points');
+  await page.getByRole('button', { name: 'Delete competition' }).click();
+  const warning = page.getByRole('group', { name: 'Confirm deletion' });
+  await expect(warning).toContainText('Delete “lol”?');
+  await expect(warning).toContainText('Overall community statistics will not be affected.');
+  await expect(warning.getByRole('button', { name: 'Yes, delete competition' })).toBeVisible();
+  await warning.getByRole('button', { name: 'Cancel' }).click();
+  expect(fixture.tournaments).toHaveLength(1);
+
+  await page.evaluate(() => localStorage.setItem('d24-language', 'pt'));
+  await page.reload();
+  await expect(page.getByRole('complementary', { name: 'Lista de torneios' })
+    .getByRole('heading', { name: 'Competições existentes' })).toBeVisible();
+  await expect(page.locator('.tournament-heading')).toContainText('Vitória 3 · Empate 1 · Derrota 0 pontos');
+  await page.getByRole('button', { name: 'Eliminar competição' }).click();
+  const portugueseWarning = page.getByRole('group', { name: 'Confirmar eliminação' });
+  await expect(portugueseWarning).toContainText('Eliminar “lol”?');
+  await portugueseWarning.getByRole('button', { name: 'Cancelar' }).click();
+  expect(fixture.tournaments).toHaveLength(1);
+  expect(fixture.unmocked.filter(url => url.includes('/tournaments/'))).toEqual([]);
+});
