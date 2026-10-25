@@ -28,10 +28,12 @@ export interface TrackSprintIncident {
   heatNumber: number;
   incidentType: 'FALL' | 'PUNCTURE' | 'BICYCLE_DEFECT' | 'RULE_INFRINGEMENT' | 'OTHER';
   details: string;
-  status: 'PENDING' | 'DECIDED';
+  status: 'PENDING' | 'DECIDED' | 'ADJUDICATION_REQUIRED';
   reportedBy: string;
   reportedAt: string;
-  decisionType: 'RESTART_REQUIRED' | 'OFFICIAL_RESULT_TO_RECORD' | null;
+  decisionType: 'RESTART_REQUIRED' | 'OFFICIAL_RESULT_TO_RECORD' | 'DISCIPLINARY_RULING' | null;
+  sanctionType?: 'WARNING' | 'RELEGATION' | 'DISQUALIFICATION' | null;
+  sanctionedUsername?: string | null;
   decisionReference: string | null;
   decisionReason: string | null;
   decidedBy: string | null;
@@ -531,7 +533,10 @@ export class CommunityGroupsService {
 
   decideTrackSprintIncident(communityId: number, seasonId: number, bracketId: number,
     incidentId: number,
-    payload: {decisionType: 'RESTART_REQUIRED' | 'OFFICIAL_RESULT_TO_RECORD'; reference: string; reason: string}):
+    payload: {decisionType: 'RESTART_REQUIRED' | 'OFFICIAL_RESULT_TO_RECORD' | 'DISCIPLINARY_RULING';
+      reference: string; reason: string;
+      sanctionType?: 'WARNING' | 'RELEGATION' | 'DISQUALIFICATION';
+      sanctionedUsername?: string}):
     Observable<TrackSprintIncident> {
     return this.http.put<TrackSprintIncident>(
       this.url + '/' + communityId + '/seasons/' + seasonId
