@@ -580,6 +580,98 @@ describe('Unified Jynlo message center', () => {
     expect(component.selectedAttachment).toBeNull();
   });
 
+  it('renders voice attachments as an audio note instead of a duplicated raw filename', () => {
+    const peer = item('direct', 'bea');
+    const recording: InboxMessage = {
+      ...message(peer.key, 77), text: '📎 voz-123.webm',
+      attachmentName: 'voz-123.webm', attachmentMimeType: 'audio/webm'
+    };
+    expect(component.isVoiceNote(recording)).toBeTrue();
+    expect(component.showMessageBody(recording)).toBeFalse();
+    expect(component.showMessageBody({...recording, text:'Bom dia!'})).toBeTrue();
+    expect(component.isVoiceNote({...recording, attachmentMimeType:'image/gif'})).toBeFalse();
+  });
+
+  it('accepts a GIF upload in a chat only after private storage is authorized', () => {
+    const peer = item('direct', 'bea');
+    component.conversations = [peer];
+    component.selectedKey = peer.key;
+    component.composerAllowed = true;
+    const gif = new File(['GIF89a'], 'festa.gif', {type:'image/gif'});
+    component.attachmentReady = false;
+    component.onAttachmentPicked({target:{files:[gif],value:''}} as any);
+    expect(component.selectedAttachment).toBeNull();
+    component.attachmentReady = true;
+    component.onAttachmentPicked({target:{files:[gif],value:''}} as any);
+    expect(component.selectedAttachment).toBe(gif);
+    expect(direct.sendAttachment).not.toHaveBeenCalled();
+  });
+
+  it('shows recent messages immediately when returning to a visited conversation', () => {
+    const peer = item('direct', 'bea');
+    const community = item('community', 7);
+    component.conversations = [peer, community];
+    const slow = new Subject<{content:any[];last:boolean}>();
+    direct.recentHistory.and.returnValues(
+      of({last:true,content:[{id:27,username1:'ana',username2:'bea',
+        text:'Olá!',date:'2026-10-25T13:00:00Z',dataDisplay:null}]}),
+      slow.asObservable()
+    );
+    timeline.list.and.returnValue(of([]));
+    component.selectConversation(peer);
+    expect(component.messages.map(m=>m.id)).toEqual([27]);
+    component.selectConversation(community);
+    component.selectConversation(peer);
+    expect(component.previewLoading).toBeFalse();
+    expect(component.messages.map(m=>m.id)).toEqual([27]);
+    slow.next({last:true,content:[{id:27,username1:'ana',username2:'bea',
+      text:'Atualizada',date:'2026-10-25T13:01:00Z',dataDisplay:null}]});
+    slow.complete();
+    expect(component.messages[0].text).toBe('Atualizada');
+    component.ngOnDestroy();
+    expect((component as any).recentThreadCache.size).toBe(0);
+  });
+
+  it('does not leave cached history visible after an authorization failure', () => {
+    const peer = item('direct', 'bea');
+    const community = item('community', 7);
+    component.conversations = [peer, community];
+    const refused = new Subject<any>();
+    direct.recentHistory.and.returnValues(
+      of({last:true,content:[{id:27,username1:'ana',username2:'bea',
+        text:'Privado',date:'2026-10-25T13:00:00Z',dataDisplay:null}]}),
+      refused.asObservable());
+    timeline.list.and.returnValue(of([]));
+    component.selectConversation(peer);
+    component.selectConversation(community);
+    component.selectConversation(peer);
+    expect(component.messages.length).toBe(1);
+    refused.error(new HttpErrorResponse({status:403}));
+    expect(component.previewError).toBeTrue();
+    expect(component.messages).toEqual([]);
+    expect((component as any).recentThreadCache.has(peer.key)).toBeFalse();
+  });
+
+  it('distinguishes a temporary composer permission error from a real block', () => {
+    const peer = item('direct', 'bea');
+    component.conversations = [peer];
+    direct.recentHistory.and.returnValue(of({content:[],last:true}));
+    direct.info.and.returnValue(throwError(() => new HttpErrorResponse({status:503})));
+    component.selectConversation(peer);
+    expect(component.composerAccessError).toBeTrue();
+    expect(component.composerAllowed).toBeFalse();
+
+    direct.info.and.returnValue(of({chatBlocked:false, whoBlocked:null}));
+    component.retryComposerAccess();
+    expect(component.composerAccessError).toBeFalse();
+    expect(component.composerAllowed).toBeTrue();
+
+    direct.info.and.returnValue(of({chatBlocked:true, whoBlocked:'bea'}));
+    component.retryComposerAccess();
+    expect(component.composerAccessError).toBeFalse();
+    expect(component.composerAllowed).toBeFalse();
+  });
+
   it('sends a private PDF via multipart once with the existing successful-send flow', () => {
     const peer = item('direct','bea');
     component.conversations = [peer];

@@ -211,23 +211,45 @@
                     <span>{{ message.replyToText }}</span>
                   </div>
                 }
-                <p>{{ message.text }}</p>
+                @if (showMessageBody(message)) {
+                  <p>{{ message.text }}</p>
+                }
                 @if (message.attachmentName) {
                   <div class="inbox-attachment">
-                    <button type="button" class="inbox-attachment-button"
-                      [disabled]="attachmentLoading.has(message.id)"
-                      (click)="openAttachment(message)">
-                      <span aria-hidden="true">{{ message.attachmentMimeType?.startsWith('audio/') ? '🎤'
-                          : message.attachmentMimeType?.startsWith('image/') ? '🖼️' : '📄' }}</span>
-                      <span>{{ message.attachmentName }}</span>
-                      <small>{{ (attachmentLoading.has(message.id) ? 'chat.attachmentLoading'
-                        : attachmentPreviews.has(message.id) ? 'chat.attachmentHide' : 'chat.attachmentOpen') | t }}</small>
-                    </button>
-                    @if (attachmentPreviews.get(message.id); as previewUrl) {
-                      @if (message.attachmentMimeType?.startsWith('audio/')) {
-                        <audio controls preload="metadata" [src]="previewUrl"
+                    @if (isVoiceNote(message)) {
+                      <div class="inbox-voice-note">
+                        <button type="button" class="inbox-voice-play"
+                          [disabled]="attachmentLoading.has(message.id)"
+                          [attr.aria-label]="(attachmentPreviews.has(message.id) ? 'chat.attachmentHide'
+                            : 'chat.voicePlayback') | t"
+                          (click)="openAttachment(message)">
+                          <span aria-hidden="true">{{ attachmentLoading.has(message.id) ? '…'
+                            : attachmentPreviews.has(message.id) ? '×' : '▶' }}</span>
+                        </button>
+                        <div class="inbox-voice-note-details">
+                          <strong>{{ 'chat.voiceMessage' | t }}</strong>
+                          <div class="inbox-voice-wave" aria-hidden="true"></div>
+                          <small>{{ (attachmentLoading.has(message.id) ? 'chat.attachmentLoading'
+                            : attachmentPreviews.has(message.id) ? 'chat.voiceReady'
+                            : 'chat.voiceTapToPlay') | t }}</small>
+                        </div>
+                      </div>
+                      @if (attachmentPreviews.get(message.id); as voiceUrl) {
+                        <audio controls preload="metadata" [src]="voiceUrl"
                           [attr.aria-label]="'chat.voicePlayback' | t"></audio>
-                      } @else {
+                      }
+                    } @else {
+                      <button type="button" class="inbox-attachment-button"
+                        [disabled]="attachmentLoading.has(message.id)"
+                        (click)="openAttachment(message)">
+                        <span aria-hidden="true">{{ message.attachmentMimeType?.startsWith('image/') ? '🖼️' : '📄' }}</span>
+                        <span>{{ message.attachmentMimeType === 'image/gif' ? ('chat.gifImage' | t)
+                          : message.attachmentName }}</span>
+                        <small>{{ (attachmentLoading.has(message.id) ? 'chat.attachmentLoading'
+                          : attachmentPreviews.has(message.id) ? 'chat.attachmentHide'
+                          : 'chat.attachmentOpen') | t }}</small>
+                      </button>
+                      @if (attachmentPreviews.get(message.id); as previewUrl) {
                         <img class="inbox-attachment-image" [src]="previewUrl" [alt]="message.attachmentName"
                           loading="lazy">
                       }
@@ -281,7 +303,13 @@
                   (click)="cancelReply()">{{ 'chat.cancelReply' | t }}</button>
               </div>
             }
-            @if (!composerAccessLoading && !composerAllowed && !previewLoading && !previewError) {
+            @if (!composerAccessLoading && composerAccessError && !previewLoading && !previewError) {
+              <div class="inbox-compose-locked" role="status">
+                {{ 'chat.composerCheckFailed' | t }}
+                <button type="button" class="inbox-composer-retry"
+                  (click)="retryComposerAccess()">{{ 'common.retry' | t }}</button>
+              </div>
+            } @else if (!composerAccessLoading && !composerAllowed && !previewLoading && !previewError) {
               <p class="inbox-compose-locked" role="status">{{ 'inbox.cannotWrite' | t }}</p>
             }
             @if (selectedAttachment; as file) {
@@ -335,6 +363,17 @@
                     [attr.title]="'chat.attachmentAdd' | t"
                     [attr.aria-label]="'chat.attachmentAdd' | t"
                     (click)="attachmentFile.click()" aria-haspopup="dialog">📎</button>
+                }
+                @if (attachmentControlsReady) {
+                  <input #gifFile type="file" class="inbox-attachment-input"
+                    accept=".gif,image/gif" (change)="onAttachmentPicked($event)">
+                  <button type="button" class="inbox-gif-trigger"
+                    [disabled]="!composerAllowed || composerAccessLoading || sending
+                      || deliveryUncertain || deliveryChecking || previewLoading || previewError
+                      || voiceRecording || voiceFinalizing"
+                    [attr.title]="'chat.gifUpload' | t"
+                    [attr.aria-label]="'chat.gifUpload' | t"
+                    (click)="gifFile.click()">GIF</button>
                 }
                 <div class="inbox-emoji-controls" (keydown.escape)="closeEmojiPicker()">
                   <button type="button" class="inbox-emoji-trigger"

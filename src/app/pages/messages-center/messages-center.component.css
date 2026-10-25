@@ -251,3 +251,53 @@
 .inbox-read-check { white-space: nowrap; color: #b7cbd1; font-size: .79rem;
   font-weight: 850; letter-spacing: -.13em; padding-right: 4px; }
 .inbox-read-check.is-read { color: #75d9fa; }
+
+
+/* Private voice notes: compact player-first bubbles instead of raw filenames. */
+.inbox-voice-note {
+  display:flex; gap:12px; align-items:center; min-width:min(260px,65vw);
+  border:1px solid #527f85; border-radius:18px; padding:11px 13px;
+  background:linear-gradient(120deg,#18424c,#1c5055);
+}
+.inbox-bubble.is-mine .inbox-voice-note { background:#1c6660; border-color:#439a8c; }
+.inbox-voice-play {
+  display:grid; place-items:center; flex:none; width:46px; height:46px;
+  border:0; border-radius:50%; background:#72ebcb; color:#0c2a35;
+  font:inherit; font-size:1.35rem; font-weight:800; cursor:pointer;
+}
+.inbox-voice-play:disabled { opacity:.55; cursor:wait; }
+.inbox-voice-play:focus-visible, .inbox-gif-trigger:focus-visible {
+  outline:2px solid #a4ffe3; outline-offset:3px;
+}
+.inbox-voice-note-details { display:grid; gap:4px; flex:1; min-width:0; }
+.inbox-voice-note-details strong { color:#effffb; font-size:.86rem; }
+.inbox-voice-note-details small { color:#b7dedc; font-size:.72rem; }
+.inbox-voice-wave {
+  height:18px; max-width:220px;
+  background:repeating-linear-gradient(90deg,transparent 0 2px,
+    #8bf0d5 2px 5px,transparent 5px 9px);
+  -webkit-mask-image:linear-gradient(to bottom,transparent 1px,#000 4px,#000 14px,transparent 17px);
+  mask-image:linear-gradient(to bottom,transparent 1px,#000 4px,#000 14px,transparent 17px);
+  opacity:.78;
+}
+.inbox-attachment:has(.inbox-voice-note) { width:min(345px,68vw); }
+.inbox-attachment:has(.inbox-voice-note) audio { width:100%; max-width:100%; }
+.inbox-gif-trigger {
+  display:grid; place-items:center; flex:none; min-width:40px; height:36px;
+  border:1px solid #4b7980; border-radius:11px; background:#173946;
+  color:#bde9dd; font-size:.68rem; font-weight:850; letter-spacing:.03em;
+  cursor:pointer;
+}
+.inbox-gif-trigger:hover { border-color:#55dac3; background:#1f5556; }
+.inbox-gif-trigger:disabled { opacity:.48; cursor:not-allowed; }
+@media (max-width:600px) {
+  .inbox-attachment:has(.inbox-voice-note) { width:100%; }
+  .inbox-voice-note { min-width:0; }
+}
+
+.inbox-composer-retry {
+  margin-left:10px; padding:6px 10px; border:1px solid #78d4cb; border-radius:9px;
+  background:transparent; color:#aaf8e4; font:inherit; font-weight:750; cursor:pointer;
+}
+.inbox-composer-retry:hover { background:#295857; }
+.inbox-composer-retry:focus-visible { outline:2px solid #adffe8; outline-offset:2px; }
