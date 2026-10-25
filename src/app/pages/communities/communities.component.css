@@ -1909,13 +1909,12 @@ input,textarea,select {
 }
 
 
-/* A GIF should show its full frame, but never grow its container. Every
-   community identity frame stays 3:2 (up to 260 x ~173 px on desktop).
-   Still photographs retain cover cropping; animated logos use contain. */
+/* Cover crops the display frame, never the underlying GIF file. Animation
+   remains intact, while the saved focus/zoom applies to every media type. */
 .community-avatar.community-avatar--animated {
   background: radial-gradient(circle at 50% 42%, #193444 0%, #071923 100%);
 }
 .community-avatar.community-avatar--animated > img,
 .community-detail-page .community-photo-block .community-avatar--large.community-avatar--animated > img {
-  object-fit: contain;
+  object-fit: cover;
 }

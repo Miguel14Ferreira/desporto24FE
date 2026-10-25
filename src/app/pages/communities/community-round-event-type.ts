@@ -6,7 +6,7 @@ import { CommunityRoundView, formatForSport, viewForSport } from './community-ro
  * Explicitly supported event variants. This registry must be extended alongside
  * backend CommunityRoundEventType; it is NOT a complete rulebook for 121 sports.
  */
-export type CommunityEventType = 'TRACK_SCRATCH' | 'TRACK_TIME_TRIAL' | 'TRACK_FLYING_200' | 'TRACK_SPRINT_HEAT' | 'TRACK_SPRINT_REPECHAGE' | 'ROAD_RACE' | 'TIME_TRIAL' | 'RACE' | 'FREESTYLE' | 'TRACK' | 'JUMP' | 'THROW' | 'HEAT' | 'BODYBOARD_HEAT' | 'APPARATUS'
+export type CommunityEventType = 'TRACK_SCRATCH' | 'TRACK_TIME_TRIAL' | 'TRACK_FLYING_200' | 'TRACK_SPRINT_HEAT' | 'TRACK_SPRINT_REPECHAGE' | 'TRACK_SPRINT_5_8' | 'ROAD_RACE' | 'TIME_TRIAL' | 'RACE' | 'FREESTYLE' | 'TRACK' | 'JUMP' | 'THROW' | 'HEAT' | 'BODYBOARD_HEAT' | 'APPARATUS'
   | 'SKATE_PARK' | 'SKATE_STREET' | 'PARKOUR_SPEED' | 'PARKOUR_FREESTYLE'
   | 'BREAKING_BATTLE' | 'TRAMPOLINE_INDIVIDUAL'
   | 'RHYTHMIC_APPARATUS' | 'ARTISTIC_SOLO_TECHNICAL' | 'ARTISTIC_SOLO_FREE'
@@ -154,7 +154,8 @@ const TYPES: Record<string, readonly CommunityEventOption[]> = {
     { code: 'TRACK_TIME_TRIAL', labelKey: 'communities.trackCycling.timeTrial' },
     { code: 'TRACK_FLYING_200', labelKey: 'communities.trackCycling.flying200' },
     { code: 'TRACK_SPRINT_HEAT', labelKey: 'communities.trackCycling.sprintHeat' },
-    { code: 'TRACK_SPRINT_REPECHAGE', labelKey: 'communities.trackCycling.repechage' }
+    { code: 'TRACK_SPRINT_REPECHAGE', labelKey: 'communities.trackCycling.repechage' },
+    { code: 'TRACK_SPRINT_5_8', labelKey: 'communities.trackCycling.placements58' }
   ],
   'ciclismo de estrada': [
     { code: 'ROAD_RACE', labelKey: 'communities.roadCycling.roadRace' },
@@ -230,7 +231,7 @@ export function isRaceEvent(sport: string | null | undefined, eventType: string 
     return eventType == null || eventType === 'ROAD_RACE' || eventType === 'TIME_TRIAL';
   if (name === 'ciclismo de pista')
     return eventType == null || eventType === 'TRACK_SCRATCH' || eventType === 'TRACK_TIME_TRIAL'
-      || eventType === 'TRACK_FLYING_200';
+      || eventType === 'TRACK_FLYING_200' || eventType === 'TRACK_SPRINT_5_8';
   return eventType == null && viewForSport(sport || null) === 'race';
 }
 

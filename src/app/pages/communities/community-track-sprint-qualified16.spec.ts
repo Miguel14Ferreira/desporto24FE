@@ -37,6 +37,7 @@ describe('Track sprint sixteen-rider qualifying', () => {
     expect(availableSprintQualifiers([qualifier(23)], 24)).toEqual([]);
   });
   it('allows just one eighth-final and sixteenth-final heat', () => {
+    expect(nextSprintRoundHeatMax('SPRINT_PLACES_5_8')).toBe(1);
     expect(nextSprintRoundHeatMax('SPRINT_THIRTY_SECOND_FINAL')).toBe(1);
     expect(nextSprintRoundHeatMax('SPRINT_REPECHAGE_1_32')).toBe(1);
     expect(nextSprintRoundHeatMax('SPRINT_REPECHAGE_1_16')).toBe(1);

@@ -170,7 +170,11 @@
                   <div class="community-avatar community-discovery-cover"
                     [class.community-avatar--animated]="isAnimatedCommunityAvatar(community.photoUrl)">
                     @if (community.photoUrl) {
-                      <img [src]="community.photoUrl" [alt]="community.name" loading="lazy" decoding="async">
+                      <img [src]="community.photoUrl" [alt]="community.name" loading="lazy" decoding="async"
+                        style="object-fit: cover"
+                        [style.object-position]="communityCoverPosition(community)"
+                        [style.transform-origin]="communityCoverOrigin(community)"
+                        [style.transform]="communityCoverZoom(community)">
                     } @else {
                       <span aria-hidden="true">{{ community.name.charAt(0).toUpperCase() }}</span>
                     }
@@ -294,7 +298,11 @@
               <div class="community-card-main">
                 <div class="community-avatar" [class.community-avatar--animated]="isAnimatedCommunityAvatar(community.photoUrl)">
                   @if (community.photoUrl) {
-                    <img [src]="community.photoUrl" [alt]="community.name">
+                    <img [src]="community.photoUrl" [alt]="community.name"
+                        style="object-fit: cover"
+                        [style.object-position]="communityCoverPosition(community)"
+                        [style.transform-origin]="communityCoverOrigin(community)"
+                        [style.transform]="communityCoverZoom(community)">
                   } @else {
                     <span>{{ communityInitials(community) }}</span>
                   }
@@ -321,7 +329,11 @@
                 <div class="community-avatar community-avatar--large"
                   [class.community-avatar--animated]="isAnimatedCommunityAvatar(communityPresentation.photoUrl)">
                   @if (communityPresentation.photoUrl) {
-                    <img [src]="communityPresentation.photoUrl" [alt]="communityPresentation.name">
+                    <img [src]="communityPresentation.photoUrl" [alt]="communityPresentation.name"
+                        style="object-fit: cover"
+                        [style.object-position]="communityCoverPosition(communityPresentation)"
+                        [style.transform-origin]="communityCoverOrigin(communityPresentation)"
+                        [style.transform]="communityCoverZoom(communityPresentation)">
                   } @else {
                     <span>{{ communityPresentation.name.charAt(0).toUpperCase() }}</span>
                   }
@@ -375,14 +387,93 @@
           }
 
           @if (selected) {
+          @if (avatarCropFile || avatarCropExisting) {
+            <div class="community-photo-editor-overlay">
+              <section class="community-photo-editor" role="dialog" aria-modal="true"
+                aria-labelledby="community-photo-editor-title">
+                <div class="community-photo-editor-heading">
+                  <div>
+                    <h2 id="community-photo-editor-title">{{ 'communities.cropTitle' | t }}</h2>
+                    <p>{{ 'communities.cropHint' | t }}</p>
+                  </div>
+                  <button type="button" class="community-photo-editor-close"
+                    [disabled]="photoUpdating" (click)="cancelCommunityAvatarCrop()"
+                    [attr.aria-label]="'communities.cropCancel' | t">×</button>
+                </div>
+
+                <div class="community-photo-editor-stage"
+                  [class.is-draggable]="avatarCropReady && !avatarCropAnimated && !photoUpdating"
+                  [class.is-dragging]="!!avatarCropDrag"
+                  (pointerdown)="onCommunityAvatarPointerDown($event)"
+                  (pointermove)="onCommunityAvatarPointerMove($event)"
+                  (pointerup)="onCommunityAvatarPointerUp($event)"
+                  (pointercancel)="onCommunityAvatarPointerUp($event)"
+                  (lostpointercapture)="onCommunityAvatarPointerUp($event)"
+                  (keydown)="onCommunityAvatarCropKey($event)"
+                  [attr.tabindex]="avatarCropAnimated ? -1 : 0"
+                  [attr.aria-label]="'communities.cropMove' | t">
+                  @if (avatarCropExisting) {
+                    <img class="community-photo-editor-existing" [src]="avatarCropUrl"
+                      [alt]="'communities.cropPreview' | t" draggable="false"
+                      [style.object-position]="avatarCropFocusX + '% ' + avatarCropFocusY + '%'"
+                      [style.transform-origin]="avatarCropFocusX + '% ' + avatarCropFocusY + '%'"
+                      [style.transform]="'scale(' + avatarCropZoom + ')'">
+                  } @else if (avatarCropAnimated) {
+                    <img class="community-photo-editor-gif" [src]="avatarCropUrl"
+                      [alt]="'communities.cropPreview' | t">
+                  } @else if (avatarCropReady && avatarCropMetrics) {
+                    <img class="community-photo-editor-image" [src]="avatarCropUrl"
+                      [alt]="'communities.cropPreview' | t" draggable="false"
+                      [style.width.%]="avatarCropMetrics.widthPercent"
+                      [style.height.%]="avatarCropMetrics.heightPercent"
+                      [style.left.%]="50 + avatarCropOffsetX"
+                      [style.top.%]="50 + avatarCropOffsetY">
+                  } @else {
+                    <span role="status">{{ 'communities.cropLoading' | t }}</span>
+                  }
+                </div>
+
+                @if (avatarCropAnimated && !avatarCropExisting) {
+                  <p class="community-photo-editor-note">{{ 'communities.cropGifHint' | t }}</p>
+                } @else {
+                  <div class="community-photo-editor-zoom">
+                    <label for="community-photo-zoom">{{ 'communities.cropZoom' | t }}</label>
+                    <input id="community-photo-zoom" type="range"
+                      min="1" max="3" step="0.05" [value]="avatarCropZoom"
+                      [disabled]="!avatarCropReady || photoUpdating"
+                      (input)="onCommunityAvatarZoom($event)">
+                    <output for="community-photo-zoom">{{ avatarCropZoom.toFixed(2) }}×</output>
+                  </div>
+                  <p class="community-photo-editor-note">{{ 'communities.cropMove' | t }}</p>
+                }
+                @if (avatarCropError) {
+                  <p role="alert" class="community-photo-editor-error">{{ avatarCropError }}</p>
+                }
+                <div class="community-photo-editor-actions">
+                  <button type="button" class="jynlo-action jynlo-action--neutral"
+                    [disabled]="photoUpdating" (click)="cancelCommunityAvatarCrop()">
+                    {{ 'communities.cropCancel' | t }}
+                  </button>
+                  <button type="button" class="jynlo-action jynlo-action--primary"
+                    [disabled]="!avatarCropReady || photoUpdating" (click)="saveCommunityAvatarCrop()">
+                    {{ (photoUpdating ? 'communities.cropSaving' : 'communities.cropSave') | t }}
+                  </button>
+                </div>
+              </section>
+            </div>
+          }
+
             <div class="detail-header">
               <div class="community-detail-identity">
                 <div class="community-photo-block">
                   <div class="community-avatar community-avatar--large"
-                    [class.community-avatar--animated]="isAnimatedCommunityAvatar(selected.photoUrl)"
-                    [class.community-avatar--letterboxed]="!!selected.photoUrl">
+                    [class.community-avatar--animated]="isAnimatedCommunityAvatar(selected.photoUrl)">
                     @if (selected.photoUrl) {
-                      <img [src]="selected.photoUrl" [alt]="selected.name">
+                      <img [src]="selected.photoUrl" [alt]="selected.name"
+                        style="object-fit: cover"
+                        [style.object-position]="communityCoverPosition(selected)"
+                        [style.transform-origin]="communityCoverOrigin(selected)"
+                        [style.transform]="communityCoverZoom(selected)">
                     } @else {
                       <span>{{ communityInitials(selected) }}</span>
                     }
@@ -399,6 +490,12 @@
                         <span>{{ 'communities.changePhoto' | t }}</span>
                       </label>
                       @if (selected.photoUrl) {
+                        <button type="button"
+                          class="community-photo-action jynlo-action jynlo-action--neutral"
+                          [disabled]="photoUpdating"
+                          (click)="openExistingCommunityAvatarCrop()">
+                          {{ 'communities.adjustPhoto' | t }}
+                        </button>
                         <button
                           type="button"
                           class="community-photo-action community-photo-remove jynlo-action jynlo-action--danger"
@@ -1235,7 +1332,20 @@
                                       <strong>{{ match.riderC }}</strong>
                                     </div>
                                   }
+                                  @if (match.riderD) {
+                                    <span class="racket-result-vs">VS</span>
+                                    <div class="racket-result-side">
+                                      <strong>{{ match.riderD }}</strong>
+                                    </div>
+                                  }
                                 </div>
+                                @if (match.rankings?.length) {
+                                  <div class="round-meta-form">
+                                    @for (rank of match.rankings || []; track rank.position) {
+                                      <small>{{ rank.position }}.º — {{ rank.username }}</small>
+                                    }
+                                  </div>
+                                }
                                 @if (match.winner) {
                                   <small>{{ 'communities.trackCycling.seriesWinner' | t }}: {{ match.winner }}</small>
                                 }
@@ -1310,7 +1420,7 @@
                                 ? 'communities.openWater.distanceLabel'
                                 : newRoundEventType === 'FOOT_ORIENTEERING'
                                 ? 'communities.orienteering.courseLabel'
-                                : (newRoundEventType === 'TRACK_SPRINT_HEAT' || newRoundEventType === 'TRACK_SPRINT_REPECHAGE')
+                                : (newRoundEventType === 'TRACK_SPRINT_HEAT' || newRoundEventType === 'TRACK_SPRINT_REPECHAGE' || newRoundEventType === 'TRACK_SPRINT_5_8')
                                 ? 'communities.trackCycling.phase' : 'communities.discipline.label') | t }}</span>
                               <select [(ngModel)]="roundDisciplineDraft"
                                 (ngModelChange)="sprintSeriesKeyDraft = ''; sprintHeatNumberDraft = 1"
@@ -1329,7 +1439,7 @@
                               </select>
                             </label>
                           }
-                          @if (newRoundEventType === 'TRACK_SPRINT_HEAT' || newRoundEventType === 'TRACK_SPRINT_REPECHAGE') {
+                          @if (newRoundEventType === 'TRACK_SPRINT_HEAT' || newRoundEventType === 'TRACK_SPRINT_REPECHAGE' || newRoundEventType === 'TRACK_SPRINT_5_8') {
                             @if (activeSeason()) {
                               <label>
                                 <span>{{ 'communities.trackCycling.seriesName' | t }}</span>
@@ -1357,7 +1467,8 @@
                                     @if (roundDisciplineDraft !== 'SPRINT_EIGHTH_FINAL'
                                       && roundDisciplineDraft !== 'SPRINT_SIXTEENTH_FINAL'
                                       && roundDisciplineDraft !== 'SPRINT_THIRTY_SECOND_FINAL'
-                                      && !roundDisciplineDraft.startsWith('SPRINT_REPECHAGE_')) {
+                                      && !roundDisciplineDraft.startsWith('SPRINT_REPECHAGE_')
+                                      && roundDisciplineDraft !== 'SPRINT_PLACES_5_8') {
                                       <option [ngValue]="2">2</option>
                                       <option [ngValue]="3">3</option>
                                     }
@@ -1393,6 +1504,7 @@
                               : newRoundEventType === 'TRACK_SCRATCH' ? 'communities.trackCycling.scratchHint'
                               : newRoundEventType === 'TRACK_TIME_TRIAL' ? 'communities.trackCycling.timeTrialHint'
                               : newRoundEventType === 'TRACK_FLYING_200' ? 'communities.trackCycling.flying200Hint'
+                              : newRoundEventType === 'TRACK_SPRINT_5_8' ? 'communities.trackCycling.placements58Hint'
                               : 'communities.race.metricsEntryHint') | t }}
                           </p>
                         } @else if (newRoundEventType && viewForNewRound() === 'individual') {
@@ -1644,10 +1756,13 @@
                                         && !isInlineSpeedTimedEvent(newRoundEventType)) {
                                       <label>
                                         <span>{{ 'communities.race.position' | t }}</span>
-                                        <input type="number" min="1" step="1" [(ngModel)]="entry.finishPosition"
+                                        <input type="number" [min]="newRoundEventType === 'TRACK_SPRINT_5_8' ? 5 : 1"
+                                          [max]="newRoundEventType === 'TRACK_SPRINT_5_8' ? 8 : null"
+                                          step="1" [(ngModel)]="entry.finishPosition"
                                           [placeholder]="'communities.race.positionPlaceholder' | t">
                                       </label>
                                     }
+                                    @if (newRoundEventType !== 'TRACK_SPRINT_5_8') {
                                     <label>
                                       <span>{{ (isInlineSpeedTimedEvent(newRoundEventType) ? 'communities.speedSkating.timeSeconds'
                                         : newRoundEventType === 'FOOT_ORIENTEERING' ? 'communities.orienteering.timeSeconds'
@@ -1665,7 +1780,9 @@
                                           ? 'communities.swimming.timePlaceholder'
                                           : 'communities.race.timePlaceholder') | t">
                                     </label>
-                                    @if (raceSupportsLaps(newRoundSport) && newRoundEventType !== 'TRACK_TIME_TRIAL'
+                                    }
+                                    @if (raceSupportsLaps(newRoundSport) && newRoundEventType !== 'TRACK_SPRINT_5_8'
+                                        && newRoundEventType !== 'TRACK_TIME_TRIAL'
                                         && newRoundEventType !== 'TRACK_FLYING_200'
                                         && !isInlineSpeedTimedEvent(newRoundEventType)
                                         && !isInlineSpeedHeatEvent(newRoundEventType)) {
@@ -3122,7 +3239,7 @@
                     <p>{{ 'communities.competitionDisabledText' | t }}</p>
                   </div>
                 } @else {
-                  <p class="competition-context-hint" role="note">Classificação dos jogos habituais e jornadas registadas na comunidade. Os torneios têm resultados próprios.</p>
+                  <p class="competition-context-hint" role="note">{{ 'communities.tournaments.overview.standingsSeparateHint' | t }}</p>
                     @if (canManage()) {
                       <section class="import-panel import-wizard">
                         <div class="import-wizard-header">
@@ -3362,6 +3479,11 @@
                                 @for (warning of matchPreview.warnings.slice(0, 10); track $index) {
                                   <p class="import-validation" role="note">{{ warning }}</p>
                                 }
+                                @if (importMatchReviewCount > 0) {
+                                  <p class="import-validation" role="note">
+                                    {{ 'communities.matches.previewReviewNotice' | t:{count:importMatchReviewCount} }}
+                                  </p>
+                                }
                                 <div class="archive-standings-scroll" role="region" tabindex="0"
                                   [attr.aria-label]="'communities.matches.title' | t">
                                   <table class="archive-standings-table">
@@ -3378,14 +3500,28 @@
                                     </thead>
                                     <tbody>
                                       @for (match of matchPreview.rows.slice(0, 25); track match.sourceRow) {
-                                        <tr>
+                                        @let reviewFlags = importMatchReviewFlags(match);
+                                        <tr [attr.data-import-source-row]="match.sourceRow"
+                                          [class.historical-match-row--review]="reviewFlags.length > 0">
                                           <td>{{ match.sourceRow }}</td>
                                           <td><strong>{{ match.home }}</strong></td>
                                           <td>{{ match.homeScore }}–{{ match.awayScore }}</td>
                                           <td><strong>{{ match.away }}</strong></td>
                                           <td>{{ match.sourceDate || '—' }}</td>
                                           <td>{{ match.sourceRound || '—' }}</td>
-                                          <td>{{ match.potentialDuplicate ? ('communities.matches.possibleRepeat' | t) : '—' }}</td>
+                                          <td class="historical-match-review-cell">
+                                            @if (reviewFlags.length > 0) {
+                                              @for (flag of reviewFlags; track flag) {
+                                                <span class="historical-match-review-flag">
+                                                  {{ (flag === 'possible-duplicate'
+                                                    ? 'communities.matches.possibleRepeat'
+                                                    : 'communities.matches.historicalKnockoutTieReview') | t }}
+                                                </span>
+                                              }
+                                            } @else {
+                                              <span class="historical-match-review-empty">—</span>
+                                            }
+                                          </td>
                                         </tr>
                                       }
                                     </tbody>
@@ -3703,10 +3839,10 @@
                         <tr>
                           <th>#</th>
                           <th>{{ 'communities.player' | t }}</th>
-                          <th>J</th>
-                          <th>V</th>
-                          <th>E</th>
-                          <th>D</th>
+                          <th scope="col" [title]="'communities.tournaments.individualUi.playedTitle' | t">{{ 'communities.tournaments.finalUi.playedCol' | t }}</th>
+                          <th scope="col" [title]="'communities.tournaments.individualUi.winTitle' | t">{{ 'communities.tournaments.finalUi.winsCol' | t }}</th>
+                          <th scope="col" [title]="'communities.tournaments.individualUi.drawTitle' | t">{{ 'communities.tournaments.finalUi.drawsCol' | t }}</th>
+                          <th scope="col" [title]="'communities.tournaments.individualUi.lossTitle' | t">{{ 'communities.tournaments.finalUi.lossesCol' | t }}</th>
                           <th>{{ 'communities.pointsShort' | t }}</th>
                         </tr>
                       </thead>

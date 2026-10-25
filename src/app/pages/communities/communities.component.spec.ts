@@ -1,6 +1,7 @@
 import { CommunitiesComponent } from './communities.component';
 import { of, Subject } from 'rxjs';
 import { SessionSummary } from '../model/session-summary';
+import { appTranslate as t } from '../../i18n/i18n.service';
 
 describe('CommunitiesComponent public session eligibility', () => {
   let component: CommunitiesComponent;
@@ -24,6 +25,69 @@ describe('CommunitiesComponent public session eligibility', () => {
     };
   });
 
+
+
+  it('keeps regular standings and tournament history explanations and column abbreviations translated PT/EN', () => {
+    const previous = localStorage.getItem('d24-language');
+    try {
+      localStorage.setItem('d24-language', 'en');
+      expect(t('communities.tournaments.overview.standingsSeparateHint'))
+        .toContain('Tournaments have separate results.');
+      expect(['playedCol', 'winsCol', 'drawsCol', 'lossesCol'].map(k =>
+        t('communities.tournaments.finalUi.' + k))).toEqual(['P', 'W', 'D', 'L']);
+      localStorage.setItem('d24-language', 'pt');
+      expect(t('communities.tournaments.overview.standingsSeparateHint'))
+        .toContain('Os torneios têm resultados independentes.');
+      expect(['playedCol', 'winsCol', 'drawsCol', 'lossesCol'].map(k =>
+        t('communities.tournaments.finalUi.' + k))).toEqual(['J', 'V', 'E', 'D']);
+    } finally {
+      if (previous === null) localStorage.removeItem('d24-language');
+      else localStorage.setItem('d24-language', previous);
+    }
+  });
+
+
+  it('flags original Excel preview rows by destination and format without modifying results or saving', () => {
+    const tied = {
+      sourceRow: 8, home: 'Águias', away: 'Leões',
+      homeScore: 1, awayScore: 1, sourceRound: 'Final',
+      sourceDate: '2023-06-07', potentialDuplicate: true
+    };
+    const leagueDraw = {
+      ...tied, sourceRow: 9, sourceRound: 'Jornada 1', potentialDuplicate: false
+    };
+    const snapshot = JSON.stringify([tied, leagueDraw]);
+    component.matchPreview = {
+      sheetName: 'Dados', sourceRows: 2, acceptedRows: 2,
+      potentialDuplicates: 1, warnings: [], rows: [tied, leagueDraw]
+    };
+    component.matchArchiveDestination = 'ARCHIVE';
+    component.matchArchiveFormat = 'KNOCKOUT';
+    expect(component.importMatchReviewFlags(tied)).toEqual(['possible-duplicate']);
+    expect(component.importMatchReviewCount).toBe(1);
+
+    component.matchArchiveDestination = 'TOURNAMENT';
+    component.matchArchiveFormat = 'LEAGUE';
+    expect(component.importMatchReviewFlags(tied)).toEqual(['possible-duplicate']);
+    component.matchArchiveFormat = 'KNOCKOUT';
+    expect(component.importMatchReviewFlags(tied)).toEqual(['possible-duplicate', 'tied-knockout']);
+    expect(component.importMatchReviewFlags(leagueDraw)).toEqual([]);
+    expect(component.importMatchReviewCount).toBe(1);
+    expect(JSON.stringify(component.matchPreview.rows)).toBe(snapshot);
+
+    const previous = localStorage.getItem('d24-language');
+    try {
+      localStorage.setItem('d24-language', 'en');
+      expect(t('communities.matches.previewReviewNotice', { count: 1 }))
+        .toContain('Source matches flagged for review: 1.');
+      localStorage.setItem('d24-language', 'pt');
+      expect(t('communities.matches.previewReviewNotice', { count: 1 }))
+        .toContain('Partidas sinalizadas para revisão no ficheiro: 1.');
+    } finally {
+      if (previous === null) localStorage.removeItem('d24-language');
+      else localStorage.setItem('d24-language', previous);
+    }
+  });
 
   it('clears hidden circuit metrics for flying 200m without changing Scratch history', () => {
     component.roundEntries = [

@@ -660,3 +660,41 @@
   .karting-race-table { min-width: 39rem; }
   .karting-race-table th, .karting-race-table td { padding: .65rem .5rem; }
 }
+
+
+/* Inline Speed 2026 qualification; compact and consistent with Concept One. */
+.inline-speed-progression .inline-speed-heat,
+.inline-speed-progression .inline-speed-proposal { margin-block: 1rem; }
+.inline-speed-progression .inline-speed-selection {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: .5rem;
+  margin-block: .75rem;
+}
+.inline-speed-progression .inline-speed-selection-row {
+  display: flex;
+  gap: .5rem;
+  align-items: center;
+  border: 1px solid var(--border-color, rgba(128,128,128,.22));
+  border-radius: .65rem;
+  padding: .65rem .8rem;
+  cursor: pointer;
+}
+.inline-speed-progression .inline-speed-heat-number {
+  width: 4.5rem;
+  max-width: 100%;
+}
+.inline-speed-progression .inline-speed-judge-reason {
+  display: grid;
+  gap: .4rem;
+  margin-block: .85rem;
+}
+.inline-speed-progression .inline-speed-judge-reason textarea {
+  width: 100%;
+  border-radius: .65rem;
+  padding: .7rem;
+  background: var(--card-bg, transparent);
+  color: inherit;
+  border: 1px solid var(--border-color, rgba(128,128,128,.3));
+  resize: vertical;
+}

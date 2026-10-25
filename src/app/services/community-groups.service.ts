@@ -1,10 +1,12 @@
 export interface TrackSprintBracketMatch {
-  phase: 'SPRINT_THIRTY_SECOND_FINAL' | 'SPRINT_REPECHAGE_1_32' | 'SPRINT_REPECHAGE_1_16' | 'SPRINT_REPECHAGE_1_8' | 'SPRINT_SIXTEENTH_FINAL' | 'SPRINT_EIGHTH_FINAL' | 'SPRINT_QUARTER_FINAL' | 'SPRINT_SEMI_FINAL' | 'SPRINT_BRONZE_FINAL' | 'SPRINT_GOLD_FINAL';
+  phase: 'SPRINT_THIRTY_SECOND_FINAL' | 'SPRINT_REPECHAGE_1_32' | 'SPRINT_REPECHAGE_1_16' | 'SPRINT_REPECHAGE_1_8' | 'SPRINT_PLACES_5_8' | 'SPRINT_SIXTEENTH_FINAL' | 'SPRINT_EIGHTH_FINAL' | 'SPRINT_QUARTER_FINAL' | 'SPRINT_SEMI_FINAL' | 'SPRINT_BRONZE_FINAL' | 'SPRINT_GOLD_FINAL';
   slot: string;
   seriesKey: string;
   riderA: string | null;
   riderB: string | null;
   riderC?: string | null;
+  riderD?: string | null;
+  rankings?: { position: number; username: string }[];
   winsA: number;
   winsB: number;
   winner: string | null;
@@ -45,6 +47,9 @@ export interface CommunitySearchPresentation {
   sport: string | null;
   sports?: string[];
   photoUrl: string | null;
+  photoZoom?: number | null;
+  photoFocusX?: number | null;
+  photoFocusY?: number | null;
   visibility: CommunityVisibility;
 }
 
@@ -491,7 +496,7 @@ export class CommunityGroupsService {
       name: string;
       playedAt: string;
       sport?: string | null;
-      eventType?: 'TRACK_SCRATCH' | 'TRACK_TIME_TRIAL' | 'TRACK_FLYING_200' | 'TRACK_SPRINT_HEAT' | 'TRACK_SPRINT_REPECHAGE' | 'ROAD_RACE' | 'TIME_TRIAL' | 'RACE' | 'FREESTYLE' | 'TRACK' | 'JUMP' | 'THROW' | 'HEAT' | 'BODYBOARD_HEAT' | 'APPARATUS'
+      eventType?: 'TRACK_SCRATCH' | 'TRACK_TIME_TRIAL' | 'TRACK_FLYING_200' | 'TRACK_SPRINT_HEAT' | 'TRACK_SPRINT_REPECHAGE' | 'TRACK_SPRINT_5_8' | 'ROAD_RACE' | 'TIME_TRIAL' | 'RACE' | 'FREESTYLE' | 'TRACK' | 'JUMP' | 'THROW' | 'HEAT' | 'BODYBOARD_HEAT' | 'APPARATUS'
         | 'SKATE_PARK' | 'SKATE_STREET' | 'PARKOUR_SPEED' | 'PARKOUR_FREESTYLE'
         | 'BREAKING_BATTLE' | 'TRAMPOLINE_INDIVIDUAL'
         | 'RHYTHMIC_APPARATUS' | 'ARTISTIC_SOLO_TECHNICAL' | 'ARTISTIC_SOLO_FREE'
@@ -558,6 +563,15 @@ export class CommunityGroupsService {
     const formData = new FormData();
     formData.append('photo', photo);
     return this.http.put<CommunityGroup>(this.url + '/' + id + '/photo', formData);
+  }
+
+  updatePhotoFraming(
+    id: number, expectedPhotoUrl: string,
+    zoom: number, focusX: number, focusY: number
+  ): Observable<CommunityGroup> {
+    return this.http.put<CommunityGroup>(this.url + '/' + id + '/photo/framing', {
+      expectedPhotoUrl, zoom, focusX, focusY
+    });
   }
 
   removePhoto(id: number): Observable<CommunityGroup> {
