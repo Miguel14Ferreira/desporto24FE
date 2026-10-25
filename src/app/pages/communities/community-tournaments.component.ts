@@ -328,6 +328,20 @@ export class CommunityTournamentsComponent implements OnChanges {
     return t('communities.inlineSpeed.stage.' + stage);
   }
 
+  /** API warnings are authoritative but intentionally not locale-specific. */
+  speedProposalWarning(proposal: InlineSpeedProposal): string {
+    const warning = proposal.warning;
+    if (warning.includes('repetido')) return t('communities.inlineSpeed.warningDuplicate');
+    if (warning.includes('tempos')) return t('communities.inlineSpeed.warningTimes');
+    if (warning.includes('Posições')) return t('communities.inlineSpeed.warningPlaces');
+    if (!proposal.ready) return t('communities.inlineSpeed.warningIncomplete');
+    if (warning.includes('16.º/17.º') || proposal.playerIds.length > proposal.expectedCount)
+      return t('communities.inlineSpeed.warningTie17');
+    if (warning.includes('Empate')) return t('communities.inlineSpeed.warningTie');
+    if (warning.includes('estrada')) return t('communities.inlineSpeed.warningRoad');
+    return t('communities.inlineSpeed.warningPending');
+  }
+
   speedStageSkaters(stage: InlineSpeedStage): InlineSpeedSkater[] {
     const athletes = new Map<number, InlineSpeedSkater>();
     for (const heat of this.speedOverview?.linkedHeats ?? []) {
@@ -370,6 +384,8 @@ export class CommunityTournamentsComponent implements OnChanges {
         if (revision !== this.speedRevision || this.community.id !== communityId
             || this.selected?.id !== tournament.id) return;
         this.speedOverview = response;
+        for (const heat of response.availableHeats)
+          this.speedHeats[heat.roundId] ??= 1;
         this.speedSelections = {};
         for (const proposal of response.proposals) {
           this.speedSelections[proposal.sourceStage] =
