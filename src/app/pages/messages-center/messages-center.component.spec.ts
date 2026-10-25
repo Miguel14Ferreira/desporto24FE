@@ -1,6 +1,6 @@
 import { of, Subject, throwError, BehaviorSubject } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
-import { MessagesCenterComponent } from './messages-center.component';
+import { MessagesCenterComponent, VOICE_NOTE_MAX_DURATION_MS } from './messages-center.component';
 import {
   InboxConversation, InboxMessage, inboxKey, matchesInboxSearch,
   mergeInboxMessages, orderInbox
@@ -600,6 +600,82 @@ describe('Unified Jynlo message center', () => {
     expect(component.selectedAttachment).toBeNull();
     expect(component.messages.some(message => message.id === 42
       && message.attachmentName === 'jogo.pdf')).toBeTrue();
+  });
+
+  it('extends the voice duration to five minutes and formats minutes correctly', () => {
+    expect(VOICE_NOTE_MAX_DURATION_MS).toBe(300_000);
+    expect(component.voiceMaxSeconds).toBe(300);
+    component.voiceElapsedSeconds = 0;
+    expect(component.voiceElapsedLabel).toBe('0:00');
+    component.voiceElapsedSeconds = 61;
+    expect(component.voiceElapsedLabel).toBe('1:01');
+    component.voiceElapsedSeconds = 299;
+    expect(component.voiceElapsedLabel).toBe('4:59');
+  });
+
+  it('records beyond 60 seconds and stops once at the five-minute boundary', async () => {
+    class FakeMediaRecorder {
+      static isTypeSupported(type: string) { return type === 'audio/webm;codecs=opus'; }
+      state: RecordingState = 'inactive';
+      ondataavailable: ((e: BlobEvent) => void) | null = null;
+      onstop: ((e: Event) => void) | null = null;
+      onerror: ((e: Event) => void) | null = null;
+      start = jasmine.createSpy('start').and.callFake(() => { this.state = 'recording'; });
+      stop = jasmine.createSpy('stop').and.callFake(() => {
+        this.state = 'inactive';
+        this.ondataavailable?.({data:new Blob(['sample Opus audio'],{type:'audio/webm'})} as BlobEvent);
+        this.onstop?.(new Event('stop'));
+      });
+      constructor(_stream: MediaStream, readonly settings: MediaRecorderOptions) {
+        lastRecorder = this;
+      }
+    }
+    let lastRecorder: FakeMediaRecorder | null = null;
+    const getRecorder = (): FakeMediaRecorder => {
+      if (lastRecorder === null) throw new Error('Recorder was not constructed');
+      return lastRecorder as FakeMediaRecorder;
+    };
+    const prevRecorder = Object.getOwnPropertyDescriptor(window, 'MediaRecorder');
+    const prevDevices = Object.getOwnPropertyDescriptor(navigator, 'mediaDevices');
+    const stopTracks = jasmine.createSpy('stopTracks');
+    const fakeStream = {getTracks: () => [{stop:stopTracks}]} as unknown as MediaStream;
+    const createUrl = spyOn(URL, 'createObjectURL').and.returnValue('blob:test-voice');
+    jasmine.clock().install();
+    jasmine.clock().mockDate(new Date());
+    Object.defineProperty(window, 'MediaRecorder',
+      {configurable:true,value:FakeMediaRecorder});
+    Object.defineProperty(navigator, 'mediaDevices', {configurable:true,
+      value:{getUserMedia:async () => fakeStream}});
+    try {
+      const peer = item('direct', 'bea');
+      component.conversations = [peer];
+      component.selectedKey = peer.key;
+      component.attachmentReady = true;
+      component.composerAllowed = true;
+      await component.startVoiceRecording();
+      expect(component.voiceRecording).toBeTrue();
+      expect(getRecorder().settings.audioBitsPerSecond).toBe(48000);
+      jasmine.clock().tick(61_000);
+      expect(component.voiceRecording).toBeTrue();
+      expect(component.voiceElapsedLabel).toBe('1:01');
+      expect(getRecorder().stop).not.toHaveBeenCalled();
+      jasmine.clock().tick(VOICE_NOTE_MAX_DURATION_MS - 61_000);
+      expect(component.voiceRecording).toBeFalse();
+      expect(getRecorder().stop).toHaveBeenCalledTimes(1);
+      expect(component.voiceElapsedSeconds).toBe(0);
+      expect(component.selectedAttachment?.type).toBe('audio/webm');
+      expect(createUrl).toHaveBeenCalledTimes(1);
+      expect(direct.sendAttachment).not.toHaveBeenCalled();
+      jasmine.clock().tick(60_000);
+      expect(getRecorder().stop).toHaveBeenCalledTimes(1);
+    } finally {
+      component.ngOnDestroy();
+      if (prevRecorder) Object.defineProperty(window, 'MediaRecorder', prevRecorder);
+      else delete (window as any).MediaRecorder;
+      if (prevDevices) Object.defineProperty(navigator, 'mediaDevices', prevDevices);
+      else delete (navigator as any).mediaDevices;
+      jasmine.clock().uninstall();
+    }
   });
 
   it('stops recording on window blur and removes the listener on destroy', () => {

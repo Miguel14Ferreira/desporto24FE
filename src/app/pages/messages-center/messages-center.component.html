@@ -320,7 +320,7 @@
                   @if (voiceRecording) {
                     <button type="button" class="inbox-voice-cancel"
                       (click)="cancelVoiceRecording()">{{ 'chat.voiceCancel' | t }}</button>
-                    <span class="inbox-voice-indicator" role="status">{{ 'chat.voiceRecording' | t }}</span>
+                    <span class="inbox-voice-indicator" role="status">{{ 'chat.voiceRecording' | t }} {{ voiceElapsedLabel }} / 5:00</span>
                   }
                   @if (voiceFinalizing) {
                     <span class="inbox-voice-indicator" role="status">{{ 'chat.voiceProcessing' | t }}</span>
