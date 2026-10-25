@@ -15,9 +15,6 @@
     </div>
   </div>
 
-  @if (!mineLoading && !mineError) {
-    <p class="story-my-status" role="status">{{ 'stories.mineStatus' | t }}: <strong>{{ mineEntries.length }}</strong></p>
-  }
   @if (mineError) { <p class="story-error" role="alert">{{ mineError }}</p> }
 
   <div class="story-rail">
