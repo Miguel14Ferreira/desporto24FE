@@ -169,15 +169,6 @@ async function locateSprintBracket(page: Page, qa: {unexpected:string[]}) {
       };
     }));
     console.log('[SPRINT-QA] visible body',(await page.locator('body').innerText().catch(()=>'')).slice(0,3500));
-    console.log('[SPRINT-QA] forced debug-only Angular render',await page.evaluate(()=>{
-      const ng=(window as any).ng;
-      const host=document.querySelector('app-communities');
-      const component=ng?.getComponent?.(host);
-      try { if(component)ng?.applyChanges?.(component); } catch(error) { return {error:String(error)}; }
-      const node=document.querySelector('section.round-editor[aria-label="Quadros de Sprint"]');
-      return {exists:Boolean(node),visible:Boolean(node?.getBoundingClientRect().height),
-        html:node?.outerHTML.slice(0,700),appType:typeof ng?.applyChanges};
-    }));
     console.log('[SPRINT-QA] seasons visited',(qa as any).seasonReads);
     console.log('[SPRINT-QA] unhandled HTTP',qa.unexpected.slice(0,30));
     throw error;
@@ -187,8 +178,8 @@ async function locateSprintBracket(page: Page, qa: {unexpected:string[]}) {
 
 test('Olympic sprint browser QA: member sees recorded three-up heats and 5–8 places, with no admin tools',async ({page})=>{
   const qa=await mockedCommunity(page,'MEMBER','finished');
-  await page.goto('/menu/communities/7?tab=ranking');
-  // The ranking page opens with "Todo o histórico". Explicitly choose a season.
+  await page.goto('/menu/communities/7?tab=sessions');
+  // Sprint brackets currently live in the Sessions tab. Select an active season.
   await page.locator('.season-filter select').selectOption({index:1});
   const section=await locateSprintBracket(page,qa);
   await expect(section).toContainText('Sprint Olímpico QA 2026');
@@ -203,7 +194,7 @@ test('Olympic sprint browser QA: member sees recorded three-up heats and 5–8 p
 
 test('Olympic sprint browser QA: owner can select 24 valid times; older season does not leak active bracket',async ({page})=>{
   const qa=await mockedCommunity(page,'OWNER','ready');
-  await page.goto('/menu/communities/7?tab=ranking');
+  await page.goto('/menu/communities/7?tab=sessions');
   // The ranking page opens with "Todo o histórico". Explicitly choose a season.
   await page.locator('.season-filter select').selectOption({index:1});
   const section=await locateSprintBracket(page,qa);
