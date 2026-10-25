@@ -1818,6 +1818,13 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     if (!this.sending && !this.deliveryUncertain) this.selectedShare = null;
   }
   readSharedMessage(text: string) { return readSharedMessage(text); }
+  displayMessagePreview(value: string | null | undefined): string {
+    if (!value) return '';
+    const shared = readSharedMessage(value);
+    if (shared) return t('chat.shareType.' + shared.kind) + ': ' + shared.title;
+    if (readGiphyText(value)) return 'GIF · GIPHY';
+    return value;
+  }
 
   toggleEmojiPicker(): void {
     if (!this.canEditDraft()) return;
