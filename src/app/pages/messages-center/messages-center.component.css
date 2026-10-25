@@ -385,3 +385,24 @@
 }
 .inbox-composer-retry:hover { background:#295857; }
 .inbox-composer-retry:focus-visible { outline:2px solid #adffe8; outline-offset:2px; }
+
+/* Edits and tombstones keep a stable message bubble and original delivery ID. */
+.inbox-message-edited { color:#a7d4c9;font-size:.67rem;font-style:italic; }
+.inbox-message-deleted { color:#a9bfca;font-style:italic;font-size:.84rem; }
+.inbox-message-actions { display:flex;align-items:center;gap:8px;flex-wrap:wrap; }
+.inbox-mutation-trigger { border:0;background:transparent;color:#a9e6d7;
+  padding:4px 6px;border-radius:7px;font:inherit;font-size:.72rem;cursor:pointer; }
+.inbox-mutation-trigger:hover { background:#235454; }
+.inbox-mutation-trigger:focus-visible,.inbox-mutation-actions button:focus-visible {
+  outline:2px solid #8af3db;outline-offset:2px;
+}
+.inbox-edit-inline,.inbox-mutation-confirm { display:grid;gap:9px;margin-top:8px;
+  border:1px solid #477d79;background:#12343f;border-radius:12px;padding:10px; }
+.inbox-edit-inline textarea { width:100%;min-height:65px;resize:vertical;border:1px solid #5c9290;
+  border-radius:9px;background:#09222f;color:#ecfffb;font:inherit;font-size:.83rem;padding:9px; }
+.inbox-mutation-confirm p,.inbox-edit-inline p { margin:0;color:#e9f9ef;font-size:.79rem; }
+.inbox-mutation-actions { display:flex;gap:9px;flex-wrap:wrap; }
+.inbox-mutation-actions button { border:1px solid #62a9a2;border-radius:8px;
+  background:#235958;color:#f5fffa;font:inherit;font-size:.77rem;
+  padding:7px 10px;cursor:pointer; }
+.inbox-mutation-actions button:disabled { opacity:.55;cursor:not-allowed; }
