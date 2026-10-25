@@ -13,6 +13,7 @@ import {
 import { buildCommunityGroupInviteUrl, buildWhatsAppGroupShareUrl } from './community-group-invite';
 import { communityRoundMatchup, CommunityRoundMatchup } from './community-round-matchup';
 import { historicalMatchReviewFlags } from './community-historical-match-review';
+import { importDiagnosticLabel as localizedImportDiagnostic } from './community-import-diagnostic';
 import { sportForRound, CommunityRoundView } from './community-round-sport';
 import { eventOptionsForSport, eventView, isNeutralEvent, eventPresentationFormat,
   isInlineSpeedTimedEvent, CommunityEventType } from './community-round-event-type';
@@ -132,6 +133,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   speedTournamentPresent = false;
   private speedTournamentLookupVersion = 0;
   readonly sportsCatalog = SPORTS_CATALOG;
+  readonly importDiagnosticLabel = localizedImportDiagnostic;
   sportsDraft: string[] = [];
   sportsSearch = '';
   editingSports = false;

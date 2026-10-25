@@ -3512,7 +3512,19 @@
                             @if (importValidation && !importValidation.valid) {
                               <div class="import-validation import-validation--error">
                                 <strong>{{ 'communities.import.mappingInvalid' | t }}</strong>
-                                @for (error of importValidation.errors; track error) { <span>{{ error }}</span> }
+                                @for (error of importValidation.errors; track error) { <span>{{ importDiagnosticLabel(error) }}</span> }
+                              </div>
+                            }
+
+                            @if (importMode === 'ROUNDS' && importValidation && importValidation.warnings.length > 0) {
+                              <div class="import-validation" role="note">
+                                <strong>{{ 'communities.import.validationWarnings' | t }}</strong>
+                                @for (warning of importValidation.warnings.slice(0, 8); track $index) {
+                                  <p>{{ importDiagnosticLabel(warning) }}</p>
+                                }
+                                @if (importValidation.warnings.length > 8) {
+                                  <p>{{ 'communities.import.moreValidationWarnings' | t:{count:importValidation.warnings.length - 8} }}</p>
+                                }
                               </div>
                             }
 
@@ -3525,7 +3537,7 @@
                                 <p>{{ matchPreview.acceptedRows }} {{ 'communities.matches.matchesCount' | t }}
                                   · {{ matchPreview.potentialDuplicates }} {{ 'communities.matches.possibleDuplicates' | t }}</p>
                                 @for (warning of matchPreview.warnings.slice(0, 10); track $index) {
-                                  <p class="import-validation" role="note">{{ warning }}</p>
+                                  <p class="import-validation" role="note">{{ importDiagnosticLabel(warning) }}</p>
                                 }
                                 @if (importMatchReviewCount > 0) {
                                   <p class="import-validation" role="note">
@@ -3665,7 +3677,7 @@
                                 <p>{{ archivePreview.acceptedRows }} {{ 'communities.import.accepted' | t }}
                                   · {{ archivePreview.duplicateRows }} {{ 'communities.import.duplicates' | t }}</p>
                                 @for (warning of archivePreview.warnings.slice(0, 8); track $index) {
-                                  <p class="venue-current-location">{{ warning }}</p>
+                                  <p class="venue-current-location">{{ importDiagnosticLabel(warning) }}</p>
                                 }
 <div class="archive-standings-scroll" role="region" [attr.aria-label]="'communities.archive.listTitle' | t" tabindex="0">
                       <table class="archive-standings-table">
