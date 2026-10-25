@@ -808,7 +808,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   private loadStandaloneSpeedTournament(group: CommunityGroup): void {
     const revision = ++this.speedTournamentLookupVersion;
     this.speedTournamentPresent = false;
-    if (group.rankingsEnabled || group.individualTournamentsEnabled === false) return;
+    if (group.rankingsEnabled || group.individualTournamentsEnabled === false
+        || !this.tournamentCatalog) return;
     this.tournamentCatalog.list(group.id, 0).pipe(timeout(10_000)).subscribe({
       next: page => {
         if (revision !== this.speedTournamentLookupVersion || this.selected?.id !== group.id) return;
