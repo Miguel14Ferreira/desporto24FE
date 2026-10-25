@@ -44,8 +44,6 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .story-header-actions { display: flex; gap: .55rem; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
 .story-retry { cursor: pointer; padding: .55rem .7rem; background: transparent; color: #c2e1f1; border: 1px solid #567b91; border-radius: .7rem; font-size: .8rem; }
 .story-retry:hover { background: rgba(125, 211, 252, .13); }
-.story-my-status { margin: .7rem 0 0; font-size: .8rem; color: #b8ceda; }
-.story-my-status strong { color: #fff; }
 
 /* Story player – immersive, native-player-free composition. */
 .story-overlay { position: fixed; inset: 0; z-index: 3000; display: grid; place-items: center; padding: 16px; background: rgba(2,9,17,.9); backdrop-filter: blur(13px); }
