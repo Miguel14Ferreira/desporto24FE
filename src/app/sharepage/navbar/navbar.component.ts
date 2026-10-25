@@ -58,6 +58,14 @@ export class NavbarComponent implements OnInit, OnDestroy {
           if (this.authenticated) this.loadUnreadNotifications();
         })
       );
+
+      // A read, delete, friend-request action or saved preference changes the
+      // server's unread count without a route change or socket event.
+      this.subscriptions.add(
+        this.notificationService.changes$.subscribe(() => {
+          if (this.authenticated) this.loadUnreadNotifications();
+        })
+      );
     }
 
     ngOnDestroy(): void {
