@@ -6,8 +6,9 @@ export function availableSprintBracketSlots(
   brackets: readonly TrackSprintBracketOverview[], phase: string | null | undefined
 ): TrackSprintBracketMatch[] {
   if (!phase) return [];
-  return brackets.flatMap(b => b.matches).filter(m => m.phase === phase
-    && (m.status === 'READY' || m.status === 'IN_PROGRESS'));
+  return brackets.flatMap(b => b.matches.filter(m => m.phase === phase
+    && (m.status === 'READY' || m.status === 'IN_PROGRESS')
+    && !(b.incidents || []).some(i => i.seriesKey === m.seriesKey && i.status === 'PENDING')));
 }
 
 /** Never fabricate a heat count: use only registered typed rounds in this season. */
