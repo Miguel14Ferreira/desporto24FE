@@ -1,11 +1,13 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit, Optional } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { finalize, retry, Subject, takeUntil, timeout } from 'rxjs';
 
 import { VenuePhoto, VenueRatingSummary, VenueService, VenueSportCondition } from '../../services/venue.service';
 import { Venue } from '../model/venue';
 import { isVenueGpsOnly, venuePostalAddress } from '../../shared/venue-location';
 import { venueEnvironmentTranslationKey } from '../../shared/venue-environment';
+import { venueOsmEmbedUrl, venueTelephoneUrl } from '../../shared/venue-public-contact';
 
 @Component({
   selector: 'app-venue-details',
@@ -38,11 +40,14 @@ export class VenueDetailsComponent implements OnInit, OnDestroy {
   private sportConditionsLoadVersion = 0;
   private readonly destroyed = new Subject<void>();
   private currentVenueId: number | null = null;
+  private embeddedMapSource = '';
+  private trustedMapSource: SafeResourceUrl | null = null;
 
   constructor(
     private route: ActivatedRoute,
     private venueService: VenueService,
-    @Optional() private readonly changeDetector: ChangeDetectorRef | null = null
+    @Optional() private readonly changeDetector: ChangeDetectorRef | null = null,
+    @Optional() private readonly sanitizer: DomSanitizer | null = null
   ) {}
 
   private updateView(): void {
@@ -214,6 +219,34 @@ export class VenueDetailsComponent implements OnInit, OnDestroy {
       .filter((part): part is string => typeof part === 'string' && part.trim().length > 0)
       .join(', ');
     return query ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}` : null;
+  }
+
+  /** The iframe always points to our own numeric OSM URL, never a submitted link. */
+  get embeddedMapUrl(): SafeResourceUrl | null {
+    if (!this.hasConfirmedMapCoordinates || !this.sanitizer) return null;
+    const source = venueOsmEmbedUrl(this.venue!.latitude!, this.venue!.longitude!);
+    if (!source) return null;
+    if (source !== this.embeddedMapSource) {
+      this.embeddedMapSource = source;
+      this.trustedMapSource = this.sanitizer.bypassSecurityTrustResourceUrl(source);
+    }
+    return this.trustedMapSource;
+  }
+
+  get publicTelephoneUrl(): string | null {
+    return venueTelephoneUrl(this.venue?.contact);
+  }
+
+  /** Opens Google's public business listing, not just an unlabelled GPS pin. */
+  get googleVenueContactUrl(): string | null {
+    const venue = this.venue;
+    if (!venue) return null;
+    const search = [venue.name, venue.city, venue.district, 'Portugal']
+      .filter((part): part is string => typeof part === 'string' && part.trim().length > 0)
+      .join(', ');
+    return search
+      ? 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(search)
+      : null;
   }
 
   retryPhotos(): void {
