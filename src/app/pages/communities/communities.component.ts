@@ -12,6 +12,7 @@ import {
 } from './community-avatar-crop';
 import { buildCommunityGroupInviteUrl, buildWhatsAppGroupShareUrl } from './community-group-invite';
 import { communityRoundMatchup, CommunityRoundMatchup } from './community-round-matchup';
+import { historicalMatchReviewFlags } from './community-historical-match-review';
 import { sportForRound, CommunityRoundView } from './community-round-sport';
 import { eventOptionsForSport, eventView, isNeutralEvent, eventPresentationFormat,
   isInlineSpeedTimedEvent, CommunityEventType } from './community-round-event-type';
@@ -1343,6 +1344,18 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
 
   importMode: 'ROUNDS' | 'STANDINGS' | 'MATCHES' = 'ROUNDS';
   matchPreviewLoading = false;
+
+  // Review is advisory: preserve every imported source row and never infer a
+  // knockout winner. The same flags appear in the read-only historical view.
+  importMatchReviewFlags(row: HistoricalMatchPreview['rows'][number]) {
+    return historicalMatchReviewFlags(row,
+      this.matchArchiveDestination === 'TOURNAMENT' && this.matchArchiveFormat === 'KNOCKOUT');
+  }
+
+  get importMatchReviewCount(): number {
+    return this.matchPreview?.rows.filter(row => this.importMatchReviewFlags(row).length > 0).length ?? 0;
+  }
+
   matchPreview?: HistoricalMatchPreview;
   matchArchiveTitle = '';
   matchArchiveEntryType: 'INDIVIDUAL' | 'TEAM' = 'INDIVIDUAL';

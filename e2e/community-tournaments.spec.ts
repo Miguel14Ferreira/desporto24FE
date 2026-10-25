@@ -121,7 +121,7 @@ type FixtureMode = 'empty' | 'draft' | 'paged' | 'forbidden' | 'switch'
   | 'management' | 'complete-rejected' | 'list-network-error'
   | 'paged-enrollment' | 'draw-tie' | 'schedule-roster-paged' | 'schedule-roster-oversize'
   | 'discovery' | 'trial' | 'modules-off' | 'teams-only' | 'teams' | 'teams-view'
-  | 'teams-schedule' | 'history' | 'historical-knockout' | 'historical-import-flow' | 'karting';
+  | 'teams-schedule' | 'history' | 'historical-knockout' | 'historical-import-flow' | 'historical-import-review' | 'karting';
 
 async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
   sport: string | null = 'Futebol', sports?: string[], roundRobinLegs: 1 | 2 = 1,
@@ -150,7 +150,7 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
     ]
   };
 
-  const tournaments: Tournament[] = mode === 'empty' || mode === 'teams' || mode === 'karting' || mode === 'historical-import-flow' ? []
+  const tournaments: Tournament[] = mode === 'empty' || mode === 'teams' || mode === 'karting' || mode === 'historical-import-flow' || mode === 'historical-import-review' ? []
     : [tournament(mode === 'teams-view' || mode === 'teams-schedule' ? 11 : 9, 'Liga de Outono')];
   // The sport is a snapshot on the tournament, not inferred by the component.
   tournaments.forEach(item => item.sport = sport);
@@ -260,6 +260,10 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
     { sourceRow: 8, home: 'Águias', away: 'Leões', homeScore: 1, awayScore: 0,
       sourceDate: '2023-06-07', sourceRound: 'Final', potentialDuplicate: false }
   ];
+  if (mode === 'historical-import-review') {
+    historicalImportRows[1].potentialDuplicate = true;
+    historicalImportRows[6].awayScore = 1;
+  }
   let savedMatchArchive: {
     id: number; title: string; entryType: 'TEAM' | 'INDIVIDUAL';
     sourceFilename: string; createdAt: string; tournamentId: number;
@@ -388,7 +392,7 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
 
     // Full browser upload path, but every endpoint is mocked on localhost.
     // We inspect the actual multipart payload so a bypassed file step fails QA.
-    if (mode === 'historical-import-flow') {
+    if (mode === 'historical-import-flow' || mode === 'historical-import-review') {
       const csvFileInRequest = () =>
         (req.postData() || '').includes('historico-partidas-qa.csv')
         && (req.postData() || '').includes('Águias;Lobos;3-0;2023-06-01;Quartos de final');
@@ -1087,6 +1091,66 @@ test('Historical knockout browser QA: phase button jumps to the exact final acro
   await expect(cards.nth(2).getByRole('button', { name: /Ver próximo jogo por rever/ }))
     .toHaveCount(0);
   expect(fixture.unmocked.filter(s => s.includes('match-archives'))).toEqual([]);
+});
+
+
+test('Historical Excel review E2E: bilingual flags before saving never mutate source rows', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'historical-import-review');
+  await page.goto('/menu/communities/7?tab=ranking');
+  await page.getByRole('button', { name: /Partidas de torneios antigos/ }).click();
+  const csv = [
+    'Casa;Fora;Resultado;Data;Jornada',
+    'Águias;Lobos;3-0;2023-06-01;Quartos de final',
+    'CNG;Tigres;2-0;2023-06-02;Quartos de final',
+    'Leões;Dragões;1-0;2023-06-03;Quartos de final',
+    'Raios;Falcões;2-0;2023-06-04;Quartos de final',
+    'Águias;CNG;1-0;2023-06-05;Meias-finais',
+    'Leões;Raios;2-0;2023-06-06;Meias-finais',
+    'Águias;Leões;1-1;2023-06-07;Final'
+  ].join('\n') + '\n';
+  await page.locator('input[accept=".xlsx,.xls,.csv,.tsv"]')
+    .setInputFiles({ name: 'historico-partidas-qa.csv', mimeType: 'text/csv',
+      buffer: Buffer.from(csv, 'utf8') });
+  await page.getByRole('button', { name: 'Analisar ficheiro' }).click();
+  await page.getByRole('button', { name: 'Pré-visualizar partidas' }).click();
+  const preview = page.getByRole('region', { name: 'Pré-visualização de partidas históricas' }).first();
+  await expect(preview).toBeVisible();
+  await expect(preview.getByText('Partidas sinalizadas para revisão no ficheiro: 1', { exact: false })).toBeVisible();
+  await expect(page.locator('[data-import-source-row="3"] .historical-match-review-flag'))
+    .toHaveText('Possível repetição');
+  await expect(page.locator('[data-import-source-row="8"] .historical-match-review-flag')).toHaveCount(0);
+
+  await page.locator('.historical-import-choice').nth(1).click();
+  await page.locator('.historical-tournament-options input').fill('Futebol');
+  await page.locator('.historical-tournament-options select').selectOption('KNOCKOUT');
+  await expect(preview.getByText('Partidas sinalizadas para revisão no ficheiro: 2', { exact: false })).toBeVisible();
+  await expect(page.locator('[data-import-source-row="8"] .historical-match-review-flag'))
+    .toHaveText('Empate na eliminatória — confirmar quem avançou');
+  await expect(page.locator('[data-import-source-row="8"]')).toContainText('1–1');
+  expect(fixture.matchConfirmCalls).toBe(0);
+
+  await page.evaluate(() => localStorage.setItem('d24-language', 'en'));
+  await page.reload();
+  // Import draft is session-local. Repeat in EN to verify translated warnings,
+  // never sending a confirmation request or inventing a knockout winner.
+  await page.getByRole('button', { name: 'Past tournament matches' }).click();
+  await page.locator('input[accept=".xlsx,.xls,.csv,.tsv"]')
+    .setInputFiles({ name: 'historico-partidas-qa.csv', mimeType: 'text/csv',
+      buffer: Buffer.from(csv, 'utf8') });
+  await page.getByRole('button', { name: 'Analyse file' }).click();
+  await page.getByRole('button', { name: 'Preview matches' }).click();
+  await expect(page.getByText('Source matches flagged for review: 1.', { exact: false })).toBeVisible();
+  await expect(page.locator('[data-import-source-row="3"] .historical-match-review-flag'))
+    .toHaveText('Possible repeat');
+  await page.locator('.historical-import-choice').nth(1).click();
+  await page.locator('.historical-tournament-options input').fill('Futebol');
+  await page.locator('.historical-tournament-options select').selectOption('KNOCKOUT');
+  await expect(page.getByText('Source matches flagged for review: 2.', { exact: false })).toBeVisible();
+  await expect(page.locator('[data-import-source-row="8"] .historical-match-review-flag'))
+    .toHaveText('Tied knockout match — confirm who advanced');
+  expect(fixture.matchConfirmCalls).toBe(0);
+  expect(fixture.savedMatchArchive).toBeNull();
+  expect(fixture.unmocked.filter(url => url.includes('/competition/import/'))).toEqual([]);
 });
 
 test('Historical knockout browser QA: CSV upload, preview, consent and archive', async ({ page }) => {

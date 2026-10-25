@@ -3480,6 +3480,11 @@
                                 @for (warning of matchPreview.warnings.slice(0, 10); track $index) {
                                   <p class="import-validation" role="note">{{ warning }}</p>
                                 }
+                                @if (importMatchReviewCount > 0) {
+                                  <p class="import-validation" role="note">
+                                    {{ 'communities.matches.previewReviewNotice' | t:{count:importMatchReviewCount} }}
+                                  </p>
+                                }
                                 <div class="archive-standings-scroll" role="region" tabindex="0"
                                   [attr.aria-label]="'communities.matches.title' | t">
                                   <table class="archive-standings-table">
@@ -3496,14 +3501,28 @@
                                     </thead>
                                     <tbody>
                                       @for (match of matchPreview.rows.slice(0, 25); track match.sourceRow) {
-                                        <tr>
+                                        @let reviewFlags = importMatchReviewFlags(match);
+                                        <tr [attr.data-import-source-row]="match.sourceRow"
+                                          [class.historical-match-row--review]="reviewFlags.length > 0">
                                           <td>{{ match.sourceRow }}</td>
                                           <td><strong>{{ match.home }}</strong></td>
                                           <td>{{ match.homeScore }}–{{ match.awayScore }}</td>
                                           <td><strong>{{ match.away }}</strong></td>
                                           <td>{{ match.sourceDate || '—' }}</td>
                                           <td>{{ match.sourceRound || '—' }}</td>
-                                          <td>{{ match.potentialDuplicate ? ('communities.matches.possibleRepeat' | t) : '—' }}</td>
+                                          <td class="historical-match-review-cell">
+                                            @if (reviewFlags.length > 0) {
+                                              @for (flag of reviewFlags; track flag) {
+                                                <span class="historical-match-review-flag">
+                                                  {{ (flag === 'possible-duplicate'
+                                                    ? 'communities.matches.possibleRepeat'
+                                                    : 'communities.matches.historicalKnockoutTieReview') | t }}
+                                                </span>
+                                              }
+                                            } @else {
+                                              <span class="historical-match-review-empty">—</span>
+                                            }
+                                          </td>
                                         </tr>
                                       }
                                     </tbody>
