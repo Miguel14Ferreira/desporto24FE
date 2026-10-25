@@ -1227,6 +1227,20 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(component.eventOptions('Futebol')).toEqual([]);
   });
 
+  it('records skating for an existing competition even when it differs from community sports', () => {
+    component.selected = {
+      id: 9, sport: 'Futebol', sports: ['Futebol'],
+      rankingsEnabled: false, individualTournamentsEnabled: true
+    } as any;
+    component.speedTournamentPresent = true;
+    expect(component.canRecordInlineSpeedWithoutRankings).toBeTrue();
+    expect(component.newRoundSport).toBe('Patinagem de Velocidade');
+    expect(component.eventOptions(component.newRoundSport).map(option => option.code))
+      .toContain('INLINE_ROAD_LAP_FIRST_ROUND');
+    component.speedTournamentPresent = false;
+    expect(component.canRecordInlineSpeedWithoutRankings).toBeFalse();
+  });
+
   it('does not expose standalone heat recording to a disabled or unrelated community', () => {
     component.selected = {
       id: 8, sport: 'Futebol', rankingsEnabled: false,
