@@ -121,7 +121,7 @@ type FixtureMode = 'empty' | 'draft' | 'paged' | 'forbidden' | 'switch'
   | 'management' | 'complete-rejected' | 'list-network-error'
   | 'paged-enrollment' | 'draw-tie' | 'schedule-roster-paged' | 'schedule-roster-oversize'
   | 'discovery' | 'trial' | 'modules-off' | 'teams-only' | 'teams' | 'teams-view'
-  | 'teams-schedule' | 'history' | 'historical-knockout' | 'karting';
+  | 'teams-schedule' | 'history' | 'historical-knockout' | 'historical-import-flow' | 'karting';
 
 async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
   sport: string | null = 'Futebol', sports?: string[], roundRobinLegs: 1 | 2 = 1,
@@ -150,7 +150,7 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
     ]
   };
 
-  const tournaments: Tournament[] = mode === 'empty' || mode === 'teams' || mode === 'karting' ? []
+  const tournaments: Tournament[] = mode === 'empty' || mode === 'teams' || mode === 'karting' || mode === 'historical-import-flow' ? []
     : [tournament(mode === 'teams-view' || mode === 'teams-schedule' ? 11 : 9, 'Liga de Outono')];
   // The sport is a snapshot on the tournament, not inferred by the component.
   tournaments.forEach(item => item.sport = sport);
@@ -240,7 +240,32 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
   let scheduleAttempts = 0;
   let listAttempts = 0;
   let joinAttempts = 0;
-  let archivePreviewCalls = 0;
+  let matchPreviewCalls = 0;
+  let matchConfirmCalls = 0;
+  let actualCsvUploaded = false;
+  let confirmedContext: Record<string, unknown> | null = null;
+  const historicalImportRows = [
+    { sourceRow: 2, home: 'Águias', away: 'Lobos', homeScore: 3, awayScore: 0,
+      sourceDate: '2023-06-01', sourceRound: 'Quartos de final', potentialDuplicate: false },
+    { sourceRow: 3, home: 'CNG', away: 'Tigres', homeScore: 2, awayScore: 0,
+      sourceDate: '2023-06-02', sourceRound: 'Quartos de final', potentialDuplicate: false },
+    { sourceRow: 4, home: 'Leões', away: 'Dragões', homeScore: 1, awayScore: 0,
+      sourceDate: '2023-06-03', sourceRound: 'Quartos de final', potentialDuplicate: false },
+    { sourceRow: 5, home: 'Raios', away: 'Falcões', homeScore: 2, awayScore: 0,
+      sourceDate: '2023-06-04', sourceRound: 'Quartos de final', potentialDuplicate: false },
+    { sourceRow: 6, home: 'Águias', away: 'CNG', homeScore: 1, awayScore: 0,
+      sourceDate: '2023-06-05', sourceRound: 'Meias-finais', potentialDuplicate: false },
+    { sourceRow: 7, home: 'Leões', away: 'Raios', homeScore: 2, awayScore: 0,
+      sourceDate: '2023-06-06', sourceRound: 'Meias-finais', potentialDuplicate: false },
+    { sourceRow: 8, home: 'Águias', away: 'Leões', homeScore: 1, awayScore: 0,
+      sourceDate: '2023-06-07', sourceRound: 'Final', potentialDuplicate: false }
+  ];
+  let savedMatchArchive: {
+    id: number; title: string; entryType: 'TEAM' | 'INDIVIDUAL';
+    sourceFilename: string; createdAt: string; tournamentId: number;
+    rows: typeof historicalImportRows;
+  } | null = null;
+    let archivePreviewCalls = 0;
   let archiveConfirmCalls = 0;
   const historicalRows = [
     { position: 1, name: 'Águias', played: 10, wins: 8, draws: 1, losses: 1, points: 25, goalsFor: 21, goalsAgainst: 9 },
@@ -361,6 +386,80 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
       });
     }
 
+    // Full browser upload path, but every endpoint is mocked on localhost.
+    // We inspect the actual multipart payload so a bypassed file step fails QA.
+    if (mode === 'historical-import-flow') {
+      const csvFileInRequest = () =>
+        (req.postData() || '').includes('historico-partidas-qa.csv')
+        && (req.postData() || '').includes('Águias;Lobos;3-0;2023-06-01;Quartos de final');
+      if (path === '/api/communities/7/competition/import/preview' && method === 'POST') {
+        actualCsvUploaded = csvFileInRequest();
+        if (!actualCsvUploaded) return send({ message: 'CSV QA não recebido' }, 422);
+        return send({
+          fileName: 'historico-partidas-qa.csv',
+          sheets: [{
+            name: 'Dados', nonEmptyRows: 7, structure: 'TABULAR',
+            headers: ['Casa', 'Fora', 'Resultado', 'Data', 'Jornada'],
+            sampleRows: [['Águias', 'Lobos', '3-0', '2023-06-01', 'Quartos de final']],
+            columnSuggestions: []
+          }]
+        });
+      }
+      if (path === '/api/communities/7/competition/import/matches/preview' && method === 'POST') {
+        if (!csvFileInRequest()) return send({ message: 'Sem ficheiro CSV' }, 422);
+        const body = req.postData() || '';
+        for (const required of ['HOME', 'AWAY', 'SCORE', 'DATE', 'ROUND']) {
+          if (!body.includes(required)) return send({ message: 'Mapeamento incompleto ' + required }, 422);
+        }
+        matchPreviewCalls++;
+        return send({
+          sheetName: 'Dados', sourceRows: historicalImportRows.length,
+          acceptedRows: historicalImportRows.length, potentialDuplicates: 0,
+          warnings: [], rows: historicalImportRows
+        });
+      }
+      if (path === '/api/communities/7/competition/import/matches/confirm' && method === 'POST') {
+        if (matchPreviewCalls !== 1 || !csvFileInRequest()) {
+          return send({ message: 'Ficheiro não foi pré-visualizado' }, 422);
+        }
+        const body = req.postData() || '';
+        const fragment = body.match(/\{\s*"title"\s*:\s*"[^"]+"[^}]*\}/);
+        if (!fragment) return send({ message: 'Contexto não encontrado' }, 422);
+        confirmedContext = JSON.parse(fragment[0]) as Record<string, unknown>;
+        if (confirmedContext.createTournament !== true
+          || confirmedContext.sport !== 'Futebol'
+          || confirmedContext.format !== 'KNOCKOUT'
+          || confirmedContext.entryType !== 'TEAM') {
+          return send({ message: 'Contexto do torneio incorreto' }, 422);
+        }
+        matchConfirmCalls++;
+        const newlySaved = {
+          id: 92, title: String(confirmedContext.title),
+          entryType: 'TEAM' as const,
+          sourceFilename: 'historico-partidas-qa.csv',
+          createdAt: '2026-10-25T00:00:00Z', tournamentId: 92,
+          rows: historicalImportRows
+        };
+        savedMatchArchive = newlySaved;
+        tournaments.unshift({
+          ...tournament(92, newlySaved.title),
+          historicalArchiveId: 92, format: 'KNOCKOUT',
+          status: 'COMPLETED', sport: 'Futebol', entryType: 'TEAM'
+        });
+        return send(newlySaved);
+      }
+      if (path === '/api/communities/7/competition/match-archives' && method === 'GET') {
+        return send(savedMatchArchive ? [{
+          id: 92, title: savedMatchArchive.title, entryType: 'TEAM',
+          sourceFilename: savedMatchArchive.sourceFilename,
+          createdAt: savedMatchArchive.createdAt
+        }] : []);
+      }
+      if (path === '/api/communities/7/competition/match-archives/92' && method === 'GET') {
+        return savedMatchArchive
+          ? send(savedMatchArchive) : send({ message: 'Ainda não criado' }, 404);
+      }
+    }
     if (mode === 'historical-knockout'
         && path === '/api/communities/7/competition/match-archives'
         && method === 'GET') {
@@ -831,7 +930,12 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
     get listAttempts(): number { return listAttempts; },
     get joinAttempts(): number { return joinAttempts; },
     get pendingDetails(): number { return pendingDetailResponses.length; },
-    get archivePreviewCalls(): number { return archivePreviewCalls; },
+    get matchPreviewCalls(): number { return matchPreviewCalls; },
+    get matchConfirmCalls(): number { return matchConfirmCalls; },
+    get actualCsvUploaded(): boolean { return actualCsvUploaded; },
+    get confirmedContext(): Record<string, unknown> | null { return confirmedContext; },
+    get savedMatchArchive() { return savedMatchArchive; },
+        get archivePreviewCalls(): number { return archivePreviewCalls; },
     get archiveConfirmCalls(): number { return archiveConfirmCalls; },
     historicalArchives,
     releaseDetails(): void {
