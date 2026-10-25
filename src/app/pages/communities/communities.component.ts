@@ -2674,9 +2674,23 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       && [match.riderA,match.riderB].includes(incident.sanctionedUsername || '');
   }
 
+  sprintCanConfirmSeriesVerdict(bracket: TrackSprintBracketOverview,
+    incident: TrackSprintIncident): boolean {
+    if(bracket.format !== 'OLYMPIC_TWENTY_FOUR_REPECHAGE'
+        ||bracket.interruption||incident.status!=='ADJUDICATION_REQUIRED'
+        ||incident.incidentType!=='FALL'
+        ||incident.sanctionType!=='DISQUALIFICATION'
+        ||!this.sprintIsBo3Award(incident))return false;
+    const m=bracket.matches.find(x=>x.seriesKey===incident.seriesKey);
+    return !!m && ['READY','IN_PROGRESS'].includes(m.status)
+        &&!!m.riderA &&!!m.riderB &&!m.riderC &&!m.riderD
+        &&[m.riderA,m.riderB].includes(incident.sanctionedUsername||'');
+  }
+
   sprintAwardEligibleWinner(bracket: TrackSprintBracketOverview,
     incident: TrackSprintIncident): string | null {
-    if (!this.sprintCanConfirmOfficialAward(bracket,incident)) return null;
+    if (!this.sprintCanConfirmOfficialAward(bracket,incident)
+        && !this.sprintCanConfirmSeriesVerdict(bracket,incident)) return null;
     const match=bracket.matches.find(m=>m.seriesKey===incident.seriesKey)!;
     return [match.riderA!,match.riderB!]
       .find(r=>r!==incident.sanctionedUsername) || null;
@@ -2696,20 +2710,27 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     const incident=(bracket?.incidents || []).find(i=>i.id===this.sprintAwardIncidentId);
     if (!this.selected || !this.canManage() || this.sprintIncidentSaving
         || this.selectedSeasonId==null || this.activeSeason()?.id !== this.selectedSeasonId
-        || !bracket || !incident || !this.sprintCanConfirmOfficialAward(bracket,incident)
+        || !bracket || !incident
+        || (!this.sprintCanConfirmOfficialAward(bracket,incident)
+            && !this.sprintCanConfirmSeriesVerdict(bracket,incident))
         || this.sprintAwardWinner !== this.sprintAwardEligibleWinner(bracket,incident)
         || this.sprintAwardReference.trim().length<12
         || this.sprintAwardReason.trim().length<12) return;
     const community=this.selected.id,season=this.selectedSeasonId;
     this.sprintIncidentSaving=true;
     this.sprintIncidentError='';
-    this.communityService.confirmSprintTwoUpOfficialAward(
-      community,season,bracket.id,incident.id,{
-        winnerUsername:this.sprintAwardWinner,
-        basis:'INTENTIONAL_FALL',
-        reference:this.sprintAwardReference.trim(),
-        reason:this.sprintAwardReason.trim()
-      }).pipe(timeout(10_000),finalize(()=>this.sprintIncidentSaving=false)).subscribe({
+    const payload={
+      winnerUsername:this.sprintAwardWinner,
+      basis:'INTENTIONAL_FALL' as const,
+      reference:this.sprintAwardReference.trim(),
+      reason:this.sprintAwardReason.trim()
+    };
+    const save$=this.sprintCanConfirmSeriesVerdict(bracket,incident)
+      ? this.communityService.confirmSprintBo3SeriesVerdict(
+          community,season,bracket.id,incident.id,payload)
+      : this.communityService.confirmSprintTwoUpOfficialAward(
+          community,season,bracket.id,incident.id,payload);
+    save$.pipe(timeout(10_000),finalize(()=>this.sprintIncidentSaving=false)).subscribe({
         next:()=>{
           this.sprintAwardBracketId=null;
           this.sprintAwardIncidentId=null;

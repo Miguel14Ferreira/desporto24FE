@@ -132,6 +132,34 @@ describe('CommunitiesComponent public session eligibility', () => {
     }
   });
 
+  it('requires a documented full-series decision for BO3 disqualification', () => {
+    const bracket={format:'OLYMPIC_TWENTY_FOUR_REPECHAGE',interruption:null,
+      matches:[{seriesKey:'SP53-Q1',status:'IN_PROGRESS',
+        riderA:'r1',riderB:'r24',riderC:null,riderD:null}]} as any;
+    const incident={seriesKey:'SP53-Q1',heatNumber:2,incidentType:'FALL',
+      status:'ADJUDICATION_REQUIRED',sanctionType:'DISQUALIFICATION',
+      sanctionedUsername:'r24'} as any;
+    expect(component.sprintCanConfirmSeriesVerdict(bracket,incident)).toBeTrue();
+    expect(component.sprintCanConfirmOfficialAward(bracket,incident)).toBeFalse();
+    expect(component.sprintAwardEligibleWinner(bracket,incident)).toBe('r1');
+    expect(component.sprintCanConfirmSeriesVerdict(bracket,{
+      ...incident,sanctionType:'RELEGATION'})).toBeFalse();
+    expect(component.sprintCanConfirmSeriesVerdict(bracket,{
+      ...incident,status:'OFFICIAL_SERIES_AWARDED'})).toBeFalse();
+    expect(component.sprintCanConfirmSeriesVerdict({...bracket,
+      interruption:{stage:'BEFORE_QUARTERS'}},incident)).toBeFalse();
+    const previous=localStorage.getItem('d24-language');
+    try {
+      localStorage.setItem('d24-language','pt');
+      expect(t('communities.trackCycling.seriesVerdictExplain')).toContain('desclassificação');
+      localStorage.setItem('d24-language','en');
+      expect(t('communities.trackCycling.seriesVerdictNoFake')).toContain('awarded the series');
+    } finally {
+      if(previous===null)localStorage.removeItem('d24-language');
+      else localStorage.setItem('d24-language',previous);
+    }
+  });
+
   it('clears hidden circuit metrics for flying 200m without changing Scratch history', () => {
     component.roundEntries = [
       { lapsCompleted: 3, bestLapSeconds: 10.25 } as any,
