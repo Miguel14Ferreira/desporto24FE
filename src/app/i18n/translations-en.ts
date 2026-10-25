@@ -351,6 +351,7 @@ export const EN: Record<string, string> = {
   'chat.messageDeleted': 'Message deleted',
   'chat.mutationFailed': 'Could not change this message. Check your connection and permissions.',
   'chat.shareMenu': 'Sharing options',
+  'chat.shareMyProfile': 'My profile',
   'chat.shareFile': 'Photo or document',
   'chat.shareJynlo': 'Share on Jynlo',
   'chat.shareType.profile': 'Profile',
