@@ -14,7 +14,7 @@ import {
   TournamentParticipantPage,
   TournamentScheduleSummary,
   TournamentStandings, TournamentTeam, TournamentTeamMatchPage, TournamentTeamMatch,
-  TournamentTeamScheduleSummary, TournamentTeamStandings, TournamentTeamGroups, TournamentRaceOverview, InlineSpeedOverview
+  TournamentTeamScheduleSummary, TournamentTeamStandings, TournamentTeamGroups, TournamentRaceOverview, InlineSpeedOverview, InlineSpeedTieEvidenceType
 } from '../pages/model/community-tournament';
 
 /** Community result-by-position formats verified end to end. */
@@ -121,10 +121,12 @@ export class CommunityTournamentsService {
 
   /** Record a real jury ruling without fabricating source race times. */
   resolveInlineSpeedTieBreak(communityId: number, tournamentId: number,
-                            playerIds: number[], reason: string): Observable<InlineSpeedOverview> {
+                            playerIds: number[], reason: string,
+                            evidenceType: InlineSpeedTieEvidenceType,
+                            evidenceReference: string): Observable<InlineSpeedOverview> {
     return this.http.put<InlineSpeedOverview>(
       this.url(communityId, tournamentId) + '/inline-speed/tiebreaks/FIRST',
-      { playerIds, reason });
+      { playerIds, reason, evidenceType, evidenceReference });
   }
 
   /** Team tournaments have their own draft, roster and match lifecycle. */
