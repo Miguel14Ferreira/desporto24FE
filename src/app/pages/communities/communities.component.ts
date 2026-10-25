@@ -2674,9 +2674,23 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       && [match.riderA,match.riderB].includes(incident.sanctionedUsername || '');
   }
 
+  sprintCanConfirmSeriesVerdict(bracket: TrackSprintBracketOverview,
+    incident: TrackSprintIncident): boolean {
+    if(bracket.format !== 'OLYMPIC_TWENTY_FOUR_REPECHAGE'
+        ||bracket.interruption||incident.status!=='ADJUDICATION_REQUIRED'
+        ||incident.incidentType!=='FALL'
+        ||incident.sanctionType!=='DISQUALIFICATION'
+        ||!this.sprintIsBo3Award(incident))return false;
+    const m=bracket.matches.find(x=>x.seriesKey===incident.seriesKey);
+    return !!m && ['READY','IN_PROGRESS'].includes(m.status)
+        &&!!m.riderA &&!!m.riderB &&!m.riderC &&!m.riderD
+        &&[m.riderA,m.riderB].includes(incident.sanctionedUsername||'');
+  }
+
   sprintAwardEligibleWinner(bracket: TrackSprintBracketOverview,
     incident: TrackSprintIncident): string | null {
-    if (!this.sprintCanConfirmOfficialAward(bracket,incident)) return null;
+    if (!this.sprintCanConfirmOfficialAward(bracket,incident)
+        && !this.sprintCanConfirmSeriesVerdict(bracket,incident)) return null;
     const match=bracket.matches.find(m=>m.seriesKey===incident.seriesKey)!;
     return [match.riderA!,match.riderB!]
       .find(r=>r!==incident.sanctionedUsername) || null;
