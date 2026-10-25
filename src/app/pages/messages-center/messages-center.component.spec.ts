@@ -43,9 +43,9 @@ describe('Unified Jynlo message center', () => {
     spyOnProperty(document, 'visibilityState', 'get').and.returnValue('visible');
     friends = jasmine.createSpyObj('CommunityService', ['friends']);
     communities = jasmine.createSpyObj('CommunityGroupsService', ['mine']);
-    sessions = jasmine.createSpyObj('SessionService', ['mine', 'messages', 'detail', 'postMessage', 'attachmentsAvailable', 'sendAttachment', 'downloadAttachment']);
-    direct = jasmine.createSpyObj('DirectChatService', ['recentHistory', 'info', 'send', 'attachmentsAvailable', 'sendAttachment', 'downloadAttachment']);
-    timeline = jasmine.createSpyObj('CommunityTimelineService', ['list', 'send', 'chatAttachmentsAvailable', 'sendChatAttachment', 'downloadChatAttachment']);
+    sessions = jasmine.createSpyObj('SessionService', ['mine', 'messages', 'detail', 'postMessage', 'attachmentsAvailable', 'sendAttachment', 'downloadAttachment', 'editMessage', 'deleteMessage']);
+    direct = jasmine.createSpyObj('DirectChatService', ['recentHistory', 'info', 'send', 'attachmentsAvailable', 'sendAttachment', 'downloadAttachment', 'editMessage', 'deleteMessage']);
+    timeline = jasmine.createSpyObj('CommunityTimelineService', ['list', 'send', 'chatAttachmentsAvailable', 'sendChatAttachment', 'downloadChatAttachment', 'editMessage', 'deleteMessage', 'editChatMessage', 'deleteChatForEveryone']);
     realtime = {
       messages$: directEvents.asObservable(),
       readReceipts$: receiptEvents.asObservable(),
@@ -77,6 +77,73 @@ describe('Unified Jynlo message center', () => {
     (component as any).currentUsername = 'ana';
     // Older isolated tests construct a session chat without calling loadInbox().
     (component as any).sessionKickoffs.set(41, Date.now() + 3600_000);
+  });
+
+  it('edits only own recent text messages and preserves another conversation draft', () => {
+    const peer = item('direct','bea');
+    component.conversations = [peer];
+    component.selectedKey = peer.key;
+    component.currentUsername = 'ana';
+    component.composerAllowed = true;
+    const sent: InboxMessage = {
+      ...message(peer.key, 200, 'ana'), text:'Primeiro',
+      createdAt:new Date(Date.now()-40_000).toISOString()
+    };
+    component.messages = [sent];
+    expect(component.canEditSentMessage(sent)).toBeTrue();
+    component.draft = 'O meu rascunho';
+    component.beginEditMessage(sent);
+    expect(component.editDraft).toBe('Primeiro');
+    direct.editMessage.and.returnValue(of({
+      id:200, username1:'ana',username2:'bea',text:'Corrigido',
+      date: sent.createdAt, dataDisplay: null,
+      editedAt:new Date().toISOString()
+    }));
+    component.editDraft = 'Corrigido';
+    component.saveEditedMessage(sent);
+    expect(direct.editMessage).toHaveBeenCalledOnceWith('bea', 200, 'Corrigido');
+    expect(component.messages[0].text).toBe('Corrigido');
+    expect(component.messages[0].editedAt).toBeTruthy();
+    expect(component.draft).toBe('O meu rascunho');
+    expect(direct.send).not.toHaveBeenCalled();
+  });
+
+  it('rejects editing other authors, attachments and messages older than 15 minutes', () => {
+    const peer = item('direct','bea');
+    component.conversations = [peer];
+    component.selectedKey = peer.key;
+    component.currentUsername = 'ana';
+    component.composerAllowed = true;
+    const recent = new Date(Date.now()-60_000).toISOString();
+    const old = new Date(Date.now()-16*60_000).toISOString();
+    expect(component.canEditSentMessage({...message(peer.key,20,'bea'),createdAt:recent})).toBeFalse();
+    expect(component.canEditSentMessage({...message(peer.key,21,'ana'),createdAt:old})).toBeFalse();
+    expect(component.canEditSentMessage({...message(peer.key,22,'ana'),
+      createdAt:recent,attachmentName:'a.pdf'})).toBeFalse();
+    expect(component.canEditSentMessage({...message(peer.key,23,'ana'),
+      createdAt:recent,deletedAt:recent})).toBeFalse();
+  });
+
+  it('only deletes after confirmation and shows a tombstone without creating a new unread', () => {
+    const peer = item('direct','bea');
+    peer.unreadCount=3;
+    component.conversations=[peer];
+    component.selectedKey=peer.key;
+    component.currentUsername='ana';
+    component.composerAllowed=true;
+    const first={...message(peer.key,17,'ana'), createdAt:new Date().toISOString()};
+    component.messages=[first];
+    component.promptDeleteMessage(first);
+    expect(direct.deleteMessage).not.toHaveBeenCalled();
+    direct.deleteMessage.and.returnValue(of({
+      id:17,username1:'ana',username2:'bea',text:'',
+      date:first.createdAt,dataDisplay:null,deletedAt:new Date().toISOString()
+    }));
+    component.confirmDeleteMessage(first);
+    expect(direct.deleteMessage).toHaveBeenCalledOnceWith('bea', 17);
+    expect(component.messages[0].deletedAt).toBeTruthy();
+    expect(component.messages).toHaveSize(1);
+    expect(component.conversations[0].unreadCount).toBe(3);
   });
 
   it('inserts an emoji at the current caret and restores the editor focus', () => {
