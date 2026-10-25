@@ -87,6 +87,7 @@ import {
   TrackSprintBracketMatch
 } from '../../services/community-groups.service';
 import { CommunityService } from '../../services/community.service';
+import { CommunityTournamentsService } from '../../services/community-tournaments.service';
 import { SessionService } from '../../services/session.service';
 import { CommunityTimelineService, CommunityTimelineEntry, CommunityTimelineKind } from '../../services/community-timeline.service';
 import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.service';
@@ -113,6 +114,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   private readonly realtimeService = inject(DirectChatRealtimeService);
   readonly typing = new ChatTypingTracker(this.realtimeService);
   private readonly readSync = inject(ChatReadSyncService);
+  private readonly tournamentCatalog = inject(CommunityTournamentsService);
   private readonly chatSubscriptions = new Subscription();
   private readonly jwtHelper = new JwtHelperService();
 
@@ -127,6 +129,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   communities: CommunityGroup[] = [];
   invites: CommunityInvite[] = [];
   selected?: CommunityGroup;
+  speedTournamentPresent = false;
+  private speedTournamentLookupVersion = 0;
   readonly sportsCatalog = SPORTS_CATALOG;
   sportsDraft: string[] = [];
   sportsSearch = '';
@@ -796,7 +800,25 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   get canRecordInlineSpeedWithoutRankings(): boolean {
     return !!this.selected && !this.selected.rankingsEnabled
       && this.selected.individualTournamentsEnabled !== false
-      && this.communityRoundSports.includes('Patinagem de Velocidade');
+      && (this.communityRoundSports.includes('Patinagem de Velocidade')
+        || this.speedTournamentPresent);
+  }
+
+  /** Fetch only when useful; latest tournaments are listed first and never modified. */
+  private loadStandaloneSpeedTournament(group: CommunityGroup): void {
+    const revision = ++this.speedTournamentLookupVersion;
+    this.speedTournamentPresent = false;
+    if (group.rankingsEnabled || group.individualTournamentsEnabled === false) return;
+    this.tournamentCatalog.list(group.id, 0).pipe(timeout(10_000)).subscribe({
+      next: page => {
+        if (revision !== this.speedTournamentLookupVersion || this.selected?.id !== group.id) return;
+        this.speedTournamentPresent = page.tournaments.some(item =>
+          item.sport === 'Patinagem de Velocidade'
+          && item.entryType !== 'TEAM'
+          && !item.historicalArchiveId && item.status !== 'COMPLETED');
+      },
+      error: () => { if (revision === this.speedTournamentLookupVersion) this.speedTournamentPresent = false; }
+    });
   }
 
   get newRoundSport(): string | null {
@@ -1886,6 +1908,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       next: full => {
         if (openVersion !== this.communityOpenRequestVersion) return;
         this.selected = full;
+        this.loadStandaloneSpeedTournament(full);
         this.resetHistoricalLinks();
         const requestedTab = this.route.snapshot.queryParamMap.get('tab');
         if (requestedTab === 'chat') {
@@ -1962,6 +1985,9 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
         || (tab === 'ranking' && !this.canBrowseHistoricalArchives)
         || (tab === 'stats' && !this.selected?.rankingsEnabled)) return;
     this.activeTab = tab;
+    if (tab === 'sessions' && this.selected && !this.selected.rankingsEnabled) {
+      this.loadStandaloneSpeedTournament(this.selected);
+    }
     this.replyingToCommunityMessage = null;
     this.chatDeliveryUncertain = false;
     this.pendingChatDelivery = undefined;
