@@ -12,6 +12,8 @@ export interface CommunityTimelineEntry {
   username: string;
   body: string;
   createdAt: string;
+  editedAt?: string | null;
+  deletedAt?: string | null;
   imageUrl?: string | null;
   videoUrl?: string | null;
   attachmentName?: string | null;
