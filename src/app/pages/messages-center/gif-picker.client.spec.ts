@@ -52,17 +52,18 @@ describe('GIPHY picker security and search', () => {
     const text = encodeGiphyText(choice, 'Golo!');
     expect(text.startsWith('[JYNLO:GIPHY:1]')).toBeTrue();
     expect(readGiphyText(text)).toEqual({
-      mediaUrl:preview,pageUrl:'https://giphy.com/gifs/safe',
+      id:'safe',pageUrl:'https://giphy.com/gifs/safe',
       creator:'gif_creator',caption:'Golo!'
     });
+    expect(text).not.toContain('media0.giphy.com');
     expect(encodeGiphyText(choice, 'x'.repeat(1950))).toBe('');
   });
 
   it('does not render forged remote GIF links as images', () => {
     const choice = parseGiphyResults({data:[sample('safe')]})[0];
     const valid = encodeGiphyText(choice, '');
-    expect(readGiphyText(valid.replace('media0.giphy.com', 'evil.example.com'))).toBeNull();
     expect(readGiphyText(valid.replace('giphy.com/gifs/', 'example.com/gifs/'))).toBeNull();
+    expect(readGiphyText(valid.replace('"id":"safe"', '"id":"<script>"'))).toBeNull();
     expect(readGiphyText(valid.replace('https:', 'javascript:'))).toBeNull();
     expect(readGiphyText('not a GIF')).toBeNull();
   });
