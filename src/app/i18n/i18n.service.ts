@@ -5,6 +5,9 @@ export type AppLanguage = 'pt' | 'en';
 type Dictionary = Record<string, string>;
 
 const PT: Dictionary = {
+  'communities.inlineSpeed.seasonsTitle': 'Épocas das provas',
+  'communities.inlineSpeed.standaloneHeatHint': 'Podes registar mangas de Patinagem de Velocidade sem ativar as classificações gerais da comunidade. Seleciona 500 m +D ou Sprint de uma volta, regista os tempos e posições e associa a manga à competição. É necessária uma época ativa.',
+  'communities.inlineSpeed.selectProgressionHeat': 'Seleciona uma manga de 500 m +D ou Sprint de uma volta. As classificações gerais continuam desativadas.',
   'communities.inlineSpeed.createTitle': 'Criar competição de Patinagem de Velocidade',
   'communities.inlineSpeed.createIntro': 'Organiza provas por tempo e mangas eliminatórias. As posições, os tempos e os apuramentos são registados nas Jornadas.',
   'communities.inlineSpeed.createRulesTitle': 'Resultados e progressão',
@@ -3696,6 +3699,9 @@ const PT: Dictionary = {
 };
 
 const EN: Dictionary = {
+  'communities.inlineSpeed.seasonsTitle': 'Event seasons',
+  'communities.inlineSpeed.standaloneHeatHint': 'You can record Speed Skating heats without enabling the community-wide standings. Choose track 500m +D or road One Lap, record times and places, then link the heat to the competition. An active season is required.',
+  'communities.inlineSpeed.selectProgressionHeat': 'Choose a track 500m +D or road One Lap heat. Community-wide standings remain disabled.',
   'communities.inlineSpeed.createTitle': 'Create Speed Skating competition',
   'communities.inlineSpeed.createIntro': 'Organize timed events and elimination heats. Placings, times and qualifiers are recorded in Rounds.',
   'communities.inlineSpeed.createRulesTitle': 'Results and progression',
