@@ -5,6 +5,21 @@ export type AppLanguage = 'pt' | 'en';
 type Dictionary = Record<string, string>;
 
 const PT: Dictionary = {
+  'communities.inlineSpeed.trialHistory': 'Provas adicionais realizadas · registo oficial',
+  'communities.inlineSpeed.trialTitle': 'Prova adicional',
+  'communities.inlineSpeed.trialIntro': 'Só registes uma prova adicional que tenha realmente acontecido. Os tempos e lugares ficam separados das mangas originais; o apuramento exige uma decisão do júri.',
+  'communities.inlineSpeed.trialOpen': 'Registar prova adicional realizada',
+  'communities.inlineSpeed.trialDate': 'Data e hora da prova',
+  'communities.inlineSpeed.trialReference': 'Referência oficial (ata ou documento)',
+  'communities.inlineSpeed.trialReason': 'Fundamentação da prova pelo júri',
+  'communities.inlineSpeed.trialResults': 'Chegada da prova adicional — lugares efetivamente registados',
+  'communities.inlineSpeed.trialPlace': 'Lugar',
+  'communities.inlineSpeed.trialSeconds': 'Tempo adicional em segundos (opcional)',
+  'communities.inlineSpeed.trialAttestation': 'Ao guardar confirmas que a prova ocorreu e que os resultados foram verificados pelo júri.',
+  'communities.inlineSpeed.trialSave': 'Guardar prova adicional real',
+  'communities.inlineSpeed.trialSaved': 'Prova adicional registada. A decisão de apuramento continua a exigir confirmação.',
+  'communities.inlineSpeed.trialInvalidPlaces': 'Indica lugares únicos de 1 a N e, se usados, tempos positivos até ao milésimo.',
+  'communities.inlineSpeed.trialRequired': 'Indica data passada, referência oficial (8–500 caracteres) e fundamentação (20–500 caracteres).',
   'communities.inlineSpeed.evidenceType': 'Tipo de evidência oficial',
   'communities.inlineSpeed.evidenceSelect': 'Escolhe a evidência consultada',
   'communities.inlineSpeed.evidenceReference': 'Referência da prova ou ata',
