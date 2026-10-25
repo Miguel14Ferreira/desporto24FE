@@ -124,6 +124,7 @@ export class CommunityTournamentsComponent implements OnChanges {
   speedError = false;
   speedHeats: Record<number, number> = {};
   speedSelections: Record<string, number[]> = {};
+  speedTieCorrectionOpen = false;
   speedReasons: Record<string, string> = {};
   private speedRevision = 0;
   raceError = false;
@@ -370,6 +371,21 @@ export class CommunityTournamentsComponent implements OnChanges {
     return (this.speedOverview?.tieBreaks ?? []).find(item => item.sourceStage === stage);
   }
 
+  speedCanAmendTie(proposal: InlineSpeedProposal): boolean {
+    return proposal.sourceStage === 'FIRST' && !!this.speedTieBreak('FIRST')
+      && !this.speedDecision('FIRST') && this.canManage
+      && this.selected?.status !== 'COMPLETED';
+  }
+
+  startSpeedTieCorrection(proposal: InlineSpeedProposal): void {
+    if (this.busy || !this.speedCanAmendTie(proposal)) return;
+    const ruling = this.speedTieBreak('FIRST');
+    if (!ruling) return;
+    this.speedSelections['FIRST'] = [...ruling.selectedPlayerIds];
+    this.speedReasons['FIRST'] = ruling.reason;
+    this.speedTieCorrectionOpen = true;
+  }
+
   /** Display only eligible cutoff candidates; never fabricate or edit recorded times. */
   isSpeedMultiwayTie(proposal: InlineSpeedProposal): boolean {
     return proposal.sourceStage === 'FIRST' && !proposal.ready
@@ -400,7 +416,9 @@ export class CommunityTournamentsComponent implements OnChanges {
   }
 
   async resolveSpeedTie(proposal: InlineSpeedProposal): Promise<void> {
-    if (!this.selected || !this.canManage || this.busy || !this.isSpeedMultiwayTie(proposal)) return;
+    if (!this.selected || !this.canManage || this.busy
+        || !(this.isSpeedMultiwayTie(proposal)
+          || (this.speedTieCorrectionOpen && this.speedCanAmendTie(proposal)))) return;
     const chosen = this.speedSelections['FIRST'] ?? [];
     const reason = (this.speedReasons['FIRST'] ?? '').trim();
     if (chosen.length !== 16 || new Set(chosen).size !== 16) {
@@ -415,6 +433,7 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.community.id, this.selected.id, chosen, reason),
       t('communities.inlineSpeed.tiebreakSaved'), overview => {
         this.speedOverview = overview;
+        this.speedTieCorrectionOpen = false;
         this.loadInlineSpeed();
       });
   }
@@ -429,7 +448,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     if (this.speedStageSkaters(stage).some(s => s.playerId === playerId && s.disqualified))
       return;
     if (stage === 'FIRST' && this.speedOverview?.proposals.some(
-      p => this.isSpeedMultiwayTie(p)) && this.speedTieCandidates().some(
+      p => this.isSpeedMultiwayTie(p) || this.speedTieCorrectionOpen) && this.speedTieCandidates().some(
       s => s.playerId === playerId && this.speedTieGuaranteed(s))) return;
     const previous = this.speedSelections[stage] ?? [];
     this.speedSelections[stage] = previous.includes(playerId)
@@ -1054,6 +1073,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.speedOverview = undefined;
     this.speedError = false;
     this.speedSelections = {};
+    this.speedTieCorrectionOpen = false;
     this.historicalArchive = undefined;
     this.historicalArchivePage = 0;
     this.historicalReviewCursor = { quarterfinal: -1, semifinal: -1, final: -1 };

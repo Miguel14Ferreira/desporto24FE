@@ -1228,9 +1228,37 @@
                       · {{ ruling.confirmedBy }}
                     </p>
                     <p class="t-muted">{{ ruling.reason }}</p>
+                    @if (ruling.revisions?.length) {
+                      <details class="t-muted">
+                        <summary>{{ 'communities.inlineSpeed.tieHistory' | t }}
+                          ({{ ruling.revisions?.length }})</summary>
+                        <ol>
+                          @for (revision of ruling.revisions ?? []; track revision.revision) {
+                            <li>
+                              {{ 'communities.inlineSpeed.tieVersion' | t }} {{ revision.revision }}
+                              · {{ revision.confirmedBy }}
+                              · {{ revision.confirmedAt | date:'short' }}
+                              @if (revision.stale) {
+                                · {{ 'communities.inlineSpeed.tieOutdated' | t }}
+                              }
+                              <p>{{ revision.reason }}</p>
+                              <small>{{ 'communities.inlineSpeed.tieSelected' | t }}:
+                                {{ revision.selectedPlayerIds.join(', ') }}</small>
+                            </li>
+                          }
+                        </ol>
+                      </details>
+                    }
+                    @if (speedCanAmendTie(proposal) && !speedTieCorrectionOpen) {
+                      <button type="button" class="t-btn"
+                        [disabled]="busy" (click)="startSpeedTieCorrection(proposal)">
+                        {{ 'communities.inlineSpeed.tieCorrect' | t }}
+                      </button>
+                    }
                   }
-                  @if (!proposal.ready) {
-                    @if (isSpeedMultiwayTie(proposal) && canManage && selected.status !== 'COMPLETED') {
+                  @if (!proposal.ready || (speedTieCorrectionOpen && speedCanAmendTie(proposal))) {
+                    @if ((isSpeedMultiwayTie(proposal) || (speedTieCorrectionOpen && speedCanAmendTie(proposal)))
+                      && canManage && selected.status !== 'COMPLETED') {
                       <p class="t-muted">{{ 'communities.inlineSpeed.tiebreakIntro' | t }}</p>
                       <p class="t-muted">{{ 'communities.inlineSpeed.candidates' | t }}:
                         {{ speedSelections['FIRST']?.length ?? 0 }} / 16</p>

@@ -1,5 +1,10 @@
 // Loaded only for users who choose English. Keep the original key/value table intact.
 export const EN: Record<string, string> = {
+  'communities.inlineSpeed.tieHistory': 'Auditable tie-break history',
+  'communities.inlineSpeed.tieVersion': 'Revision',
+  'communities.inlineSpeed.tieOutdated': 'Original results have changed',
+  'communities.inlineSpeed.tieSelected': 'Qualified skater IDs',
+  'communities.inlineSpeed.tieCorrect': 'Correct jury ruling',
   'communities.inlineSpeed.tiebreakIntro': 'Multiple skaters tied at the 16th-place cutoff: retain all skaters with faster times, then choose only among the skaters tied at the boundary, for exactly 16 qualifiers. The jury must explain the ruling.',
   'communities.inlineSpeed.tiebreakAlreadyQualified': 'guaranteed by faster time',
   'communities.inlineSpeed.tiebreakEvidenceHint': 'Record the official ruling and evidence consulted (e.g., video/photo finish, minutes, or a tie-break race). Original times remain unchanged.',
