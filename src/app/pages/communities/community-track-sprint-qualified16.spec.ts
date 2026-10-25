@@ -10,16 +10,18 @@ function qualifier(count: number): CommunityRound {
     })) } as CommunityRound;
 }
 describe('Track sprint sixteen-rider qualifying', () => {
-  it('only presents explicitly timed, unambiguous 200 m rounds', () => {
+  it('presents sufficiently timed 200 m rounds, including sources needing official tie resolution', () => {
     expect(availableSprintQualifiers([qualifier(16)]).map(r=>r.id)).toEqual([88]);
     expect(availableSprintQualifiers([qualifier(15)])).toEqual([]);
     const other = {...qualifier(16), eventType: 'TRACK_SCRATCH'} as CommunityRound;
     expect(availableSprintQualifiers([other])).toEqual([]);
   });
-  it('does not pick winners from tied timestamps or a disqualified rider', () => {
+  it('never invents tied winners and excludes a disqualified source below minimum participants', () => {
     const tied=qualifier(17);
     tied.entries[16].elapsedSeconds=tied.entries[15].elapsedSeconds;
-    expect(availableSprintQualifiers([tied])).toEqual([]);
+    expect(availableSprintQualifiers([tied]).map(r=>r.id)).toEqual([88]);
+    // A tied source remains selectable only for the explicit witness form;
+    // the server must not create a bracket until that form is valid.
     const disqualified=qualifier(16);
     disqualified.entries[15].raceDisqualified=true;
     expect(availableSprintQualifiers([disqualified])).toEqual([]);
@@ -29,7 +31,7 @@ describe('Track sprint sixteen-rider qualifying', () => {
     expect(availableSprintQualifiers([qualifier(27)], 28)).toEqual([]);
     const tied = qualifier(29);
     tied.entries[28].elapsedSeconds = tied.entries[27].elapsedSeconds;
-    expect(availableSprintQualifiers([tied], 28)).toEqual([]);
+    expect(availableSprintQualifiers([tied], 28).map(r=>r.id)).toEqual([88]);
     expect(availableSprintQualifiers([qualifier(28)], 16).map(r => r.id)).toEqual([88]);
   });
   it('requires exactly 24 unambiguous timings for the Olympic variant', () => {
