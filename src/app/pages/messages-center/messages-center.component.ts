@@ -30,6 +30,7 @@ import { RecoverableSend, restorePendingSends, savePendingSends } from './pendin
 import { GifChoice, encodeGiphyText, findGiphy, readGifProviderKey, readGiphyText } from './gif-picker.client';
 import { ShareChoice, ShareKind, encodeShareMessage, readSharedMessage } from './share-message';
 import { GiphyEmbedComponent } from './giphy-embed.component';
+import { CURATED_GIPHY_GIFS } from './curated-gifs';
 
 export const VOICE_NOTE_MAX_DURATION_MS = 5 * 60_000;
 const VOICE_NOTE_AUDIO_BITRATE = 48_000;
@@ -1833,6 +1834,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.pickerTab = 'gif';
     if (this.gifAvailable === null) void this.configureGifPicker();
     else if (this.gifAvailable && this.gifResults.length === 0) void this.searchGifResults(0);
+    else if (this.gifAvailable === false) this.gifResults = [...CURATED_GIPHY_GIFS];
   }
 
   selectPickerTab(tab: 'emoji' | 'gif'): void {
@@ -1841,6 +1843,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       this.emojiPickerOpen = true;
       this.pickerTab = 'gif';
       if (this.gifAvailable === null) void this.configureGifPicker();
+      else if (this.gifAvailable === false) this.gifResults = [...CURATED_GIPHY_GIFS];
       else if (!this.gifLoading && this.gifResults.length === 0)
         void this.searchGifResults(0);
     } else {
@@ -1887,6 +1890,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       this.gifApiKey = key;
       this.gifAvailable = !!key;
       if (key) await this.searchGifResults(0);
+      else this.gifResults = [...CURATED_GIPHY_GIFS];
     } catch {
       if (generation === this.gifRequestVersion && !controller.signal.aborted)
         this.gifAvailable = false;
