@@ -171,6 +171,12 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   sprintRerunReference = '';
   sprintRerunReason = '';
   sprintIncidentError = '';
+  sprintInterruptionBracketId: number | null = null;
+  sprintInterruptionReference = '';
+  sprintInterruptionReason = '';
+  sprintInterruptionConfirmed = false;
+  sprintInterruptionSaving = false;
+  sprintInterruptionError = '';
   private sprintBracketRequestVersion = 0;
   raceRuleSport: string | null = null;
   raceRulePoints = '25,18,15,12,10,8,6,4,2,1';
@@ -2698,6 +2704,39 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       },
       error: error => this.sprintIncidentError = error.error?.message
         || t('communities.trackCycling.incidentError')
+    });
+  }
+
+  editSprintInterruption(bracketId: number): void {
+    this.sprintInterruptionBracketId = bracketId;
+    this.sprintInterruptionReference = '';
+    this.sprintInterruptionReason = '';
+    this.sprintInterruptionConfirmed = false;
+    this.sprintInterruptionError = '';
+  }
+
+  saveSprintInterruption(): void {
+    if (!this.selected || !this.canManage() || this.sprintInterruptionSaving ||
+      this.selectedSeasonId == null || this.activeSeason()?.id !== this.selectedSeasonId ||
+      !this.sprintInterruptionConfirmed || this.sprintInterruptionBracketId == null ||
+      this.sprintInterruptionReference.trim().length < 12 ||
+      this.sprintInterruptionReason.trim().length < 12) return;
+    const bracket = this.sprintBrackets.find(b => b.id === this.sprintInterruptionBracketId);
+    if (!bracket || bracket.format !== 'OLYMPIC_TWENTY_FOUR_REPECHAGE' ||
+        !!bracket.interruption) return;
+    const communityId = this.selected.id, seasonId = this.selectedSeasonId;
+    this.sprintInterruptionSaving = true; this.sprintInterruptionError = '';
+    this.communityService.endTrackSprintCompetition(communityId,seasonId,bracket.id,{
+      reference: this.sprintInterruptionReference.trim(),
+      reason: this.sprintInterruptionReason.trim()
+    }).pipe(timeout(10_000),finalize(() => this.sprintInterruptionSaving = false)).subscribe({
+      next: () => {
+        this.sprintInterruptionBracketId = null;
+        this.sprintInterruptionConfirmed = false;
+        this.loadSprintBrackets(communityId,seasonId);
+      },
+      error: error => this.sprintInterruptionError = error.error?.message
+        || t('communities.trackCycling.interruptionError')
     });
   }
 
