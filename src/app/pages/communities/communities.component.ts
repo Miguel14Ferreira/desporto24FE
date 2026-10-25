@@ -1199,7 +1199,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   avatarCropError = '';
   private avatarCropImage: HTMLImageElement | null = null;
   private avatarCropCommunityId: number | null = null;
-  private avatarCropDrag: { id: number; x: number; y: number; offsetX: number; offsetY: number } | null = null;
+  avatarCropDrag: { id: number; x: number; y: number; offsetX: number; offsetY: number } | null = null;
 
   communitySearchName = '';
   communitySearchSport = '';
