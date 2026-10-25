@@ -1,9 +1,10 @@
 export interface TrackSprintBracketMatch {
-  phase: 'SPRINT_SIXTEENTH_FINAL' | 'SPRINT_EIGHTH_FINAL' | 'SPRINT_QUARTER_FINAL' | 'SPRINT_SEMI_FINAL' | 'SPRINT_BRONZE_FINAL' | 'SPRINT_GOLD_FINAL';
+  phase: 'SPRINT_THIRTY_SECOND_FINAL' | 'SPRINT_REPECHAGE_1_32' | 'SPRINT_REPECHAGE_1_16' | 'SPRINT_REPECHAGE_1_8' | 'SPRINT_SIXTEENTH_FINAL' | 'SPRINT_EIGHTH_FINAL' | 'SPRINT_QUARTER_FINAL' | 'SPRINT_SEMI_FINAL' | 'SPRINT_BRONZE_FINAL' | 'SPRINT_GOLD_FINAL';
   slot: string;
   seriesKey: string;
   riderA: string | null;
   riderB: string | null;
+  riderC?: string | null;
   winsA: number;
   winsB: number;
   winner: string | null;
@@ -14,7 +15,7 @@ export interface TrackSprintBracketOverview {
   id: number;
   seasonId: number;
   name: string;
-  format: 'EIGHT_RIDER_FINALS' | 'SIXTEEN_RIDER_1_8' | 'TWENTY_EIGHT_RIDER_1_16';
+  format: 'EIGHT_RIDER_FINALS' | 'SIXTEEN_RIDER_1_8' | 'TWENTY_EIGHT_RIDER_1_16' | 'OLYMPIC_TWENTY_FOUR_REPECHAGE';
   matches: TrackSprintBracketMatch[];
   qualifyingRoundId?: number | null;
   qualifyingSeeds?: string[];
@@ -470,7 +471,7 @@ export class CommunityGroupsService {
   }
 
   createTrackSprintBracket(communityId: number, seasonId: number, name: string,
-    format: 'EIGHT_RIDER_FINALS' | 'SIXTEEN_RIDER_1_8' | 'TWENTY_EIGHT_RIDER_1_16' = 'EIGHT_RIDER_FINALS',
+    format: 'EIGHT_RIDER_FINALS' | 'SIXTEEN_RIDER_1_8' | 'TWENTY_EIGHT_RIDER_1_16' | 'OLYMPIC_TWENTY_FOUR_REPECHAGE' = 'EIGHT_RIDER_FINALS',
     qualifyingRoundId: number | null = null): Observable<TrackSprintBracketOverview> {
     return this.http.post<TrackSprintBracketOverview>(
       this.url + '/' + communityId + '/seasons/' + seasonId + '/track-sprint-brackets',
@@ -490,7 +491,7 @@ export class CommunityGroupsService {
       name: string;
       playedAt: string;
       sport?: string | null;
-      eventType?: 'TRACK_SCRATCH' | 'TRACK_TIME_TRIAL' | 'TRACK_FLYING_200' | 'TRACK_SPRINT_HEAT' | 'ROAD_RACE' | 'TIME_TRIAL' | 'RACE' | 'FREESTYLE' | 'TRACK' | 'JUMP' | 'THROW' | 'HEAT' | 'BODYBOARD_HEAT' | 'APPARATUS'
+      eventType?: 'TRACK_SCRATCH' | 'TRACK_TIME_TRIAL' | 'TRACK_FLYING_200' | 'TRACK_SPRINT_HEAT' | 'TRACK_SPRINT_REPECHAGE' | 'ROAD_RACE' | 'TIME_TRIAL' | 'RACE' | 'FREESTYLE' | 'TRACK' | 'JUMP' | 'THROW' | 'HEAT' | 'BODYBOARD_HEAT' | 'APPARATUS'
         | 'SKATE_PARK' | 'SKATE_STREET' | 'PARKOUR_SPEED' | 'PARKOUR_FREESTYLE'
         | 'BREAKING_BATTLE' | 'TRAMPOLINE_INDIVIDUAL'
         | 'RHYTHMIC_APPARATUS' | 'ARTISTIC_SOLO_TECHNICAL' | 'ARTISTIC_SOLO_FREE'

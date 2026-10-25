@@ -5,7 +5,7 @@ describe('multi-format sports should not reuse unrelated scoring rules', () => {
   it('requires choosing from the allowed variants of selected sports', () => {
     expect(eventOptionsForSport('BMX').map(o => o.code)).toEqual(['RACE', 'FREESTYLE']);
     expect(eventOptionsForSport('Ciclismo de Pista').map(o => o.code))
-      .toEqual(['TRACK_SCRATCH', 'TRACK_TIME_TRIAL', 'TRACK_FLYING_200', 'TRACK_SPRINT_HEAT']);
+      .toEqual(['TRACK_SCRATCH', 'TRACK_TIME_TRIAL', 'TRACK_FLYING_200', 'TRACK_SPRINT_HEAT','TRACK_SPRINT_REPECHAGE']);
     expect(isRaceEvent('Ciclismo de Pista', 'TRACK_SCRATCH')).toBeTrue();
     expect(isRaceEvent('Ciclismo de Pista', 'TRACK_TIME_TRIAL')).toBeTrue();
     expect(isRaceEvent('Ciclismo de Pista', 'TRACK_FLYING_200')).toBeTrue();

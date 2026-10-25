@@ -131,7 +131,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   competition?: CommunityCompetitionOverview;
   sprintBrackets: TrackSprintBracketOverview[] = [];
   sprintBracketNameDraft = '';
-  sprintBracketFormatDraft: 'EIGHT_RIDER_FINALS' | 'SIXTEEN_RIDER_1_8' | 'TWENTY_EIGHT_RIDER_1_16' = 'EIGHT_RIDER_FINALS';
+  sprintBracketFormatDraft: 'EIGHT_RIDER_FINALS' | 'SIXTEEN_RIDER_1_8' | 'TWENTY_EIGHT_RIDER_1_16' | 'OLYMPIC_TWENTY_FOUR_REPECHAGE' = 'EIGHT_RIDER_FINALS';
   sprintBracketQualifyingRoundIdDraft: number | null = null;
   deletingSprintBracketId: number | null = null;
   sprintBracketSaving = false;
@@ -730,7 +730,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   onRoundEventTypeChange(): void {
     this.sprintSeriesKeyDraft = '';
     this.sprintHeatNumberDraft = 1;
-    if (this.newRoundEventType === 'TRACK_SPRINT_HEAT') {
+    if ((this.newRoundEventType === 'TRACK_SPRINT_HEAT' || this.newRoundEventType === 'TRACK_SPRINT_REPECHAGE')) {
       for (const entry of this.roundEntries) {
         entry.finishPosition = null;
         entry.elapsedSeconds = null;
@@ -2340,7 +2340,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
 
   get availableSprintQualifyingRounds(): CommunityRound[] {
     return availableSprintQualifiers(this.competition?.rounds || [],
-      this.sprintBracketFormatDraft === 'TWENTY_EIGHT_RIDER_1_16' ? 28 : 16);
+      this.sprintBracketFormatDraft === 'TWENTY_EIGHT_RIDER_1_16' ? 28
+        : this.sprintBracketFormatDraft === 'OLYMPIC_TWENTY_FOUR_REPECHAGE' ? 24 : 16);
   }
 
   canCreateSprintBracket(): boolean {
@@ -3504,7 +3505,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     const race = this.viewForNewRound() === 'race';
     const neutral = isNeutralEvent(this.newRoundSport, this.newRoundEventType);
     const breaking = this.newRoundEventType === 'BREAKING_BATTLE';
-    const sprintHeat = this.newRoundEventType === 'TRACK_SPRINT_HEAT';
+    const sprintHeat = (this.newRoundEventType === 'TRACK_SPRINT_HEAT' || this.newRoundEventType === 'TRACK_SPRINT_REPECHAGE');
     const chess = this.newRoundEventType === 'CHESS_GAME';
     const judo = isJudoBout(this.newRoundEventType);
     const karate = isKarateEvent(this.newRoundEventType);
@@ -3608,7 +3609,13 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       this.errorMessage = t('communities.trackCycling.seriesInvalid');
       return;
     }
-    if (sprintHeat && trackSprintHeatError(selectedEntries)) {
+    if (this.newRoundEventType === 'TRACK_SPRINT_REPECHAGE' &&
+        (!this.sprintSeriesKeyDraft.trim() ||
+          !this.availableSprintBracketMatches.some(m=>m.seriesKey===this.sprintSeriesKeyDraft))) {
+      this.errorMessage = t('communities.trackCycling.repechageRequiresBracket');
+      return;
+    }
+    if (sprintHeat && trackSprintHeatError(selectedEntries, this.roundDisciplineDraft)) {
       this.errorMessage = t('communities.trackCycling.sprintInvalid');
       return;
     }

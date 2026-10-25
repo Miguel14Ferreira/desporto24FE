@@ -1153,6 +1153,7 @@
                                 <option value="EIGHT_RIDER_FINALS">{{ 'communities.trackCycling.bracketFormat' | t }}</option>
                                 <option value="SIXTEEN_RIDER_1_8">{{ 'communities.trackCycling.bracketFormat16' | t }}</option>
                                 <option value="TWENTY_EIGHT_RIDER_1_16">{{ 'communities.trackCycling.bracketFormat28' | t }}</option>
+                                <option value="OLYMPIC_TWENTY_FOUR_REPECHAGE">{{ 'communities.trackCycling.bracketFormatOlympic' | t }}</option>
                               </select>
                             </label>
                             @if (sprintBracketFormatDraft !== 'EIGHT_RIDER_FINALS') {
@@ -1167,7 +1168,9 @@
                               </label>
                               <small>{{ (sprintBracketFormatDraft === 'TWENTY_EIGHT_RIDER_1_16'
                                 ? 'communities.trackCycling.qualifyingHint28'
-                                : 'communities.trackCycling.qualifyingHint') | t }}</small>
+                                : sprintBracketFormatDraft === 'OLYMPIC_TWENTY_FOUR_REPECHAGE'
+                                  ? 'communities.trackCycling.qualifyingHintOlympic'
+                                  : 'communities.trackCycling.qualifyingHint') | t }}</small>
                             }
                             <button type="button" class="btn btn-primary" (click)="createSprintBracket()"
                               [disabled]="sprintBracketSaving || !canCreateSprintBracket()">
@@ -1186,6 +1189,8 @@
                             <strong>{{ bracket.name }}</strong>
                             <span> · {{ (bracket.format === 'TWENTY_EIGHT_RIDER_1_16'
                               ? 'communities.trackCycling.bracketFormat28'
+                              : bracket.format === 'OLYMPIC_TWENTY_FOUR_REPECHAGE'
+                                ? 'communities.trackCycling.bracketFormatOlympic'
                               : bracket.format === 'SIXTEEN_RIDER_1_8'
                                 ? 'communities.trackCycling.bracketFormat16'
                                 : 'communities.trackCycling.bracketFormat') | t }}</span>
@@ -1224,6 +1229,12 @@
                                     <strong>{{ match.riderB || ('communities.trackCycling.bracketTbd' | t) }}</strong>
                                     <span>{{ match.winsB }}</span>
                                   </div>
+                                  @if (match.riderC) {
+                                    <span class="racket-result-vs">VS</span>
+                                    <div class="racket-result-side">
+                                      <strong>{{ match.riderC }}</strong>
+                                    </div>
+                                  }
                                 </div>
                                 @if (match.winner) {
                                   <small>{{ 'communities.trackCycling.seriesWinner' | t }}: {{ match.winner }}</small>
@@ -1299,7 +1310,7 @@
                                 ? 'communities.openWater.distanceLabel'
                                 : newRoundEventType === 'FOOT_ORIENTEERING'
                                 ? 'communities.orienteering.courseLabel'
-                                : newRoundEventType === 'TRACK_SPRINT_HEAT'
+                                : (newRoundEventType === 'TRACK_SPRINT_HEAT' || newRoundEventType === 'TRACK_SPRINT_REPECHAGE')
                                 ? 'communities.trackCycling.phase' : 'communities.discipline.label') | t }}</span>
                               <select [(ngModel)]="roundDisciplineDraft"
                                 (ngModelChange)="sprintSeriesKeyDraft = ''; sprintHeatNumberDraft = 1"
@@ -1318,7 +1329,7 @@
                               </select>
                             </label>
                           }
-                          @if (newRoundEventType === 'TRACK_SPRINT_HEAT') {
+                          @if (newRoundEventType === 'TRACK_SPRINT_HEAT' || newRoundEventType === 'TRACK_SPRINT_REPECHAGE') {
                             @if (activeSeason()) {
                               <label>
                                 <span>{{ 'communities.trackCycling.seriesName' | t }}</span>
@@ -1344,7 +1355,9 @@
                                   <select [(ngModel)]="sprintHeatNumberDraft">
                                     <option [ngValue]="1">1</option>
                                     @if (roundDisciplineDraft !== 'SPRINT_EIGHTH_FINAL'
-                                      && roundDisciplineDraft !== 'SPRINT_SIXTEENTH_FINAL') {
+                                      && roundDisciplineDraft !== 'SPRINT_SIXTEENTH_FINAL'
+                                      && roundDisciplineDraft !== 'SPRINT_THIRTY_SECOND_FINAL'
+                                      && !roundDisciplineDraft.startsWith('SPRINT_REPECHAGE_')) {
                                       <option [ngValue]="2">2</option>
                                       <option [ngValue]="3">3</option>
                                     }
@@ -1402,7 +1415,8 @@
                               : isJudoBout(newRoundEventType) ? 'communities.judo.hint'
                               : newRoundEventType === 'CHESS_GAME' ? 'communities.chess.hint'
                               : newRoundEventType === 'BREAKING_BATTLE' ? 'communities.breaking.hint'
-                              : newRoundEventType === 'TRACK_SPRINT_HEAT' ? 'communities.trackCycling.sprintHint'
+                              : (newRoundEventType === 'TRACK_SPRINT_HEAT' || newRoundEventType === 'TRACK_SPRINT_REPECHAGE')
+                                ? 'communities.trackCycling.sprintHint'
                               : newRoundEventType === 'TRAMPOLINE_INDIVIDUAL' ? 'communities.trampoline.hint'
                               : isFootvolleyEvent(newRoundEventType) ? 'communities.footvolley.hint'
                               : isVolleyballEvent(newRoundEventType) ? 'communities.volleyball.hint'
@@ -1794,7 +1808,8 @@
                                         <option value="LOSS">{{ 'communities.result.loss' | t }}</option>
                                       </select>
                                     </label>
-                                  } @else if (newRoundEventType === 'TRACK_SPRINT_HEAT') {
+                                  } @else if (newRoundEventType === 'TRACK_SPRINT_HEAT'
+                                      || newRoundEventType === 'TRACK_SPRINT_REPECHAGE') {
                                     <label>
                                       <span>{{ 'communities.trackCycling.decision' | t }}</span>
                                       <select [(ngModel)]="entry.result"
