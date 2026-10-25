@@ -5,6 +5,9 @@ export type AppLanguage = 'pt' | 'en';
 type Dictionary = Record<string, string>;
 
 const PT: Dictionary = {
+  'communities.inlineSpeed.seasonsTitle': 'Épocas das provas',
+  'communities.inlineSpeed.standaloneHeatHint': 'Podes registar mangas de Patinagem de Velocidade sem ativar as classificações gerais da comunidade. Seleciona 500 m +D ou Sprint de uma volta, regista os tempos e posições e associa a manga à competição. É necessária uma época ativa.',
+  'communities.inlineSpeed.selectProgressionHeat': 'Seleciona uma manga de 500 m +D ou Sprint de uma volta. As classificações gerais continuam desativadas.',
   'communities.inlineSpeed.createTitle': 'Criar competição de Patinagem de Velocidade',
   'communities.inlineSpeed.createIntro': 'Organiza provas por tempo e mangas eliminatórias. As posições, os tempos e os apuramentos são registados nas Jornadas.',
   'communities.inlineSpeed.createRulesTitle': 'Resultados e progressão',
@@ -2768,10 +2771,15 @@ const PT: Dictionary = {
   'communities.cropTitle': 'Ajustar fotografia',
   'communities.cropHint': 'Escolhe o enquadramento que vai aparecer na capa da comunidade.',
   'communities.cropMove': 'Arrasta a fotografia para posicioná-la ou usa as setas do teclado.',
+  'communities.cropModeLabel': 'Modo de apresentação',
+  'communities.cropFill': 'Preencher',
+  'communities.cropShowAll': 'Mostrar tudo',
+  'communities.cropFillHint': 'Preenche a moldura, podendo recortar as extremidades da imagem.',
+  'communities.cropShowAllHint': 'Mostra a imagem completa. O fundo desfocado adapta-se à moldura sem faixas pretas.',
   'communities.cropZoom': 'Zoom',
   'communities.cropPreview': 'Pré-visualização da capa',
   'communities.cropLoading': 'A preparar a fotografia...',
-  'communities.cropGifHint': 'Este GIF mantém a animação original. A imagem completa será apresentada sem recortes.',
+  'communities.cropGifHint': 'O GIF mantém a animação original. Escolhe «Mostrar tudo» para ver a imagem completa.',
   'communities.cropCancel': 'Cancelar',
   'communities.cropSave': 'Guardar fotografia',
   'communities.cropSaving': 'A guardar...',
@@ -3706,6 +3714,9 @@ const PT: Dictionary = {
 };
 
 const EN: Dictionary = {
+  'communities.inlineSpeed.seasonsTitle': 'Event seasons',
+  'communities.inlineSpeed.standaloneHeatHint': 'You can record Speed Skating heats without enabling the community-wide standings. Choose track 500m +D or road One Lap, record times and places, then link the heat to the competition. An active season is required.',
+  'communities.inlineSpeed.selectProgressionHeat': 'Choose a track 500m +D or road One Lap heat. Community-wide standings remain disabled.',
   'communities.inlineSpeed.createTitle': 'Create Speed Skating competition',
   'communities.inlineSpeed.createIntro': 'Organize timed events and elimination heats. Placings, times and qualifiers are recorded in Rounds.',
   'communities.inlineSpeed.createRulesTitle': 'Results and progression',
@@ -6469,10 +6480,15 @@ const EN: Dictionary = {
   'communities.cropTitle': 'Adjust photo',
   'communities.cropHint': 'Choose how your photo is framed in the community cover.',
   'communities.cropMove': 'Drag to reposition the photo, or use your keyboard arrow keys.',
+  'communities.cropModeLabel': 'Display mode',
+  'communities.cropFill': 'Fill frame',
+  'communities.cropShowAll': 'Show all',
+  'communities.cropFillHint': 'Fills the frame, which may crop the edges of the image.',
+  'communities.cropShowAllHint': 'Shows the full image. A blurred background fills the rest without black bars.',
   'communities.cropZoom': 'Zoom',
   'communities.cropPreview': 'Community cover preview',
   'communities.cropLoading': 'Preparing your photo...',
-  'communities.cropGifHint': 'This GIF will keep its animation. The full image will be displayed without cropping.',
+  'communities.cropGifHint': 'Your GIF remains animated. Choose “Show all” to display the complete image.',
   'communities.cropCancel': 'Cancel',
   'communities.cropSave': 'Save photo',
   'communities.cropSaving': 'Saving...',

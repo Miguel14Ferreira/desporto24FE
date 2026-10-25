@@ -170,8 +170,12 @@
                   <div class="community-avatar community-discovery-cover"
                     [class.community-avatar--animated]="isAnimatedCommunityAvatar(community.photoUrl)">
                     @if (community.photoUrl) {
-                      <img [src]="community.photoUrl" [alt]="community.name" loading="lazy" decoding="async"
-                        style="object-fit: cover"
+                      @if (communityCoverIsShowAll(community)) {
+                        <img class="community-cover-backdrop" [src]="community.photoUrl"
+                          alt="" aria-hidden="true" loading="lazy">
+                      }
+                      <img class="community-cover-foreground" [src]="community.photoUrl" [alt]="community.name" loading="lazy" decoding="async"
+                        [style.object-fit]="communityCoverFit(community)"
                         [style.object-position]="communityCoverPosition(community)"
                         [style.transform-origin]="communityCoverOrigin(community)"
                         [style.transform]="communityCoverZoom(community)">
@@ -298,8 +302,12 @@
               <div class="community-card-main">
                 <div class="community-avatar" [class.community-avatar--animated]="isAnimatedCommunityAvatar(community.photoUrl)">
                   @if (community.photoUrl) {
-                    <img [src]="community.photoUrl" [alt]="community.name"
-                        style="object-fit: cover"
+                    @if (communityCoverIsShowAll(community)) {
+                        <img class="community-cover-backdrop" [src]="community.photoUrl"
+                          alt="" aria-hidden="true" loading="lazy">
+                      }
+                      <img class="community-cover-foreground" [src]="community.photoUrl" [alt]="community.name"
+                        [style.object-fit]="communityCoverFit(community)"
                         [style.object-position]="communityCoverPosition(community)"
                         [style.transform-origin]="communityCoverOrigin(community)"
                         [style.transform]="communityCoverZoom(community)">
@@ -329,8 +337,12 @@
                 <div class="community-avatar community-avatar--large"
                   [class.community-avatar--animated]="isAnimatedCommunityAvatar(communityPresentation.photoUrl)">
                   @if (communityPresentation.photoUrl) {
-                    <img [src]="communityPresentation.photoUrl" [alt]="communityPresentation.name"
-                        style="object-fit: cover"
+                    @if (communityCoverIsShowAll(communityPresentation)) {
+                        <img class="community-cover-backdrop" [src]="communityPresentation.photoUrl"
+                          alt="" aria-hidden="true" loading="lazy">
+                      }
+                      <img class="community-cover-foreground" [src]="communityPresentation.photoUrl" [alt]="communityPresentation.name"
+                        [style.object-fit]="communityCoverFit(communityPresentation)"
                         [style.object-position]="communityCoverPosition(communityPresentation)"
                         [style.transform-origin]="communityCoverOrigin(communityPresentation)"
                         [style.transform]="communityCoverZoom(communityPresentation)">
@@ -401,8 +413,28 @@
                     [attr.aria-label]="'communities.cropCancel' | t">×</button>
                 </div>
 
+                <div class="community-photo-editor-modes" role="group"
+                  [attr.aria-label]="'communities.cropModeLabel' | t">
+                  <button type="button" [class.is-active]="avatarCropFitMode === 'COVER'"
+                    [attr.aria-pressed]="avatarCropFitMode === 'COVER'"
+                    [disabled]="photoUpdating || !avatarCropReady"
+                    (click)="setCommunityAvatarFitMode('COVER')">
+                    {{ 'communities.cropFill' | t }}
+                  </button>
+                  <button type="button" [class.is-active]="avatarCropFitMode === 'SHOW_ALL'"
+                    [attr.aria-pressed]="avatarCropFitMode === 'SHOW_ALL'"
+                    [disabled]="photoUpdating || !avatarCropReady"
+                    (click)="setCommunityAvatarFitMode('SHOW_ALL')">
+                    {{ 'communities.cropShowAll' | t }}
+                  </button>
+                </div>
+                <p class="community-photo-editor-note">
+                  {{ (avatarCropFitMode === 'SHOW_ALL'
+                    ? 'communities.cropShowAllHint' : 'communities.cropFillHint') | t }}
+                </p>
+
                 <div class="community-photo-editor-stage"
-                  [class.is-draggable]="avatarCropReady && !avatarCropAnimated && !photoUpdating"
+                  [class.is-draggable]="avatarCropReady && (avatarCropExisting || avatarCropFitMode === 'SHOW_ALL' || !avatarCropAnimated) && !photoUpdating"
                   [class.is-dragging]="!!avatarCropDrag"
                   (pointerdown)="onCommunityAvatarPointerDown($event)"
                   (pointermove)="onCommunityAvatarPointerMove($event)"
@@ -410,11 +442,16 @@
                   (pointercancel)="onCommunityAvatarPointerUp($event)"
                   (lostpointercapture)="onCommunityAvatarPointerUp($event)"
                   (keydown)="onCommunityAvatarCropKey($event)"
-                  [attr.tabindex]="avatarCropAnimated ? -1 : 0"
+                  [attr.tabindex]="avatarCropAnimated && avatarCropFitMode === 'COVER' && !avatarCropExisting ? -1 : 0"
                   [attr.aria-label]="'communities.cropMove' | t">
-                  @if (avatarCropExisting) {
+                  @if (avatarCropFitMode === 'SHOW_ALL' && avatarCropUrl) {
+                    <img class="community-photo-editor-backdrop" [src]="avatarCropUrl"
+                      alt="" aria-hidden="true">
+                  }
+                  @if (avatarCropExisting || avatarCropFitMode === 'SHOW_ALL') {
                     <img class="community-photo-editor-existing" [src]="avatarCropUrl"
                       [alt]="'communities.cropPreview' | t" draggable="false"
+                      [style.object-fit]="avatarCropFitMode === 'SHOW_ALL' ? 'contain' : 'cover'"
                       [style.object-position]="avatarCropFocusX + '% ' + avatarCropFocusY + '%'"
                       [style.transform-origin]="avatarCropFocusX + '% ' + avatarCropFocusY + '%'"
                       [style.transform]="'scale(' + avatarCropZoom + ')'">
@@ -433,13 +470,13 @@
                   }
                 </div>
 
-                @if (avatarCropAnimated && !avatarCropExisting) {
+                @if (avatarCropAnimated && !avatarCropExisting && avatarCropFitMode === 'COVER') {
                   <p class="community-photo-editor-note">{{ 'communities.cropGifHint' | t }}</p>
                 } @else {
                   <div class="community-photo-editor-zoom">
                     <label for="community-photo-zoom">{{ 'communities.cropZoom' | t }}</label>
                     <input id="community-photo-zoom" type="range"
-                      min="1" max="3" step="0.05" [value]="avatarCropZoom"
+                      [attr.min]="avatarCropFitMode === 'SHOW_ALL' ? 0.6 : 1" max="3" step="0.05" [value]="avatarCropZoom"
                       [disabled]="!avatarCropReady || photoUpdating"
                       (input)="onCommunityAvatarZoom($event)">
                     <output for="community-photo-zoom">{{ avatarCropZoom.toFixed(2) }}×</output>
@@ -469,8 +506,12 @@
                   <div class="community-avatar community-avatar--large"
                     [class.community-avatar--animated]="isAnimatedCommunityAvatar(selected.photoUrl)">
                     @if (selected.photoUrl) {
-                      <img [src]="selected.photoUrl" [alt]="selected.name"
-                        style="object-fit: cover"
+                      @if (communityCoverIsShowAll(selected)) {
+                        <img class="community-cover-backdrop" [src]="selected.photoUrl"
+                          alt="" aria-hidden="true" loading="lazy">
+                      }
+                      <img class="community-cover-foreground" [src]="selected.photoUrl" [alt]="selected.name"
+                        [style.object-fit]="communityCoverFit(selected)"
                         [style.object-position]="communityCoverPosition(selected)"
                         [style.transform-origin]="communityCoverOrigin(selected)"
                         [style.transform]="communityCoverZoom(selected)">
@@ -925,12 +966,13 @@
                   </section>
                 }
 
-                @if (competition?.settings?.rankingsEnabled) {
+                @if (competition?.settings?.rankingsEnabled || canRecordInlineSpeedWithoutRankings) {
                   <section class="season-dashboard">
                     <div class="section-heading">
                       <div>
                         <span class="section-kicker">{{ 'communities.seasonsKicker' | t }}</span>
-                        <h3>{{ 'communities.seasonsTitle' | t }}</h3>
+                        <h3>{{ (canRecordInlineSpeedWithoutRankings
+                          ? 'communities.inlineSpeed.seasonsTitle' : 'communities.seasonsTitle') | t }}</h3>
                       </div>
                       @if (activeSeason()) {
                         <span class="competition-badge">
@@ -1064,7 +1106,7 @@
                       </div>
                     }
 
-                    @if (trophies().length > 0) {
+                    @if (competition?.settings?.rankingsEnabled && trophies().length > 0) {
                       <div class="trophies-grid">
                         @for (season of trophies(); track season.id) {
                           <article class="trophy-card">
@@ -1079,7 +1121,7 @@
                           </article>
                         }
                       </div>
-                    } @else {
+                    } @else if (competition?.settings?.rankingsEnabled) {
                       <div class="module-empty compact">
                         <h3>{{ 'communities.noTrophies' | t }}</h3>
                         <p>{{ 'communities.noTrophiesText' | t }}</p>
@@ -1221,13 +1263,19 @@
                     }
                   </div>
 
-                  @if (!competition?.settings?.rankingsEnabled) {
+                  @if (!competition?.settings?.rankingsEnabled && !canRecordInlineSpeedWithoutRankings) {
                     <div class="module-empty compact">
                       <h3>{{ 'communities.competitionDisabledTitle' | t }}</h3>
                       <p>{{ 'communities.competitionSessionsHint' | t }}</p>
                     </div>
                   } @else {
-                    @if (selectedSeasonId !== null && communityRoundSports.includes('Ciclismo de Pista')) {
+                    @if (canRecordInlineSpeedWithoutRankings) {
+                      <p class="round-sport-guidance" role="note">
+                        {{ 'communities.inlineSpeed.standaloneHeatHint' | t }}
+                      </p>
+                    }
+                    @if (selectedSeasonId !== null && communityRoundSports.includes('Ciclismo de Pista')
+                        && !canRecordInlineSpeedWithoutRankings) {
                       <section class="round-editor" [attr.aria-label]="'communities.trackCycling.bracketTitle' | t">
                         <div class="section-heading">
                           <div>
@@ -1380,7 +1428,7 @@
                         }
 
                         <div class="round-meta-form">
-                          @if (communityRoundSports.length > 1) {
+                          @if (communityRoundSports.length > 1 && !canRecordInlineSpeedWithoutRankings) {
                             <label>
                               <span>{{ 'communities.roundSport' | t }}</span>
                               <select [(ngModel)]="roundSportDraft"

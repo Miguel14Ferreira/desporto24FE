@@ -87,6 +87,7 @@ import {
   TrackSprintBracketMatch
 } from '../../services/community-groups.service';
 import { CommunityService } from '../../services/community.service';
+import { CommunityTournamentsService } from '../../services/community-tournaments.service';
 import { SessionService } from '../../services/session.service';
 import { CommunityTimelineService, CommunityTimelineEntry, CommunityTimelineKind } from '../../services/community-timeline.service';
 import { DirectChatRealtimeService } from '../../services/direct-chat-realtime.service';
@@ -113,6 +114,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   private readonly realtimeService = inject(DirectChatRealtimeService);
   readonly typing = new ChatTypingTracker(this.realtimeService);
   private readonly readSync = inject(ChatReadSyncService);
+  private readonly tournamentCatalog = inject(CommunityTournamentsService);
   private readonly chatSubscriptions = new Subscription();
   private readonly jwtHelper = new JwtHelperService();
 
@@ -127,6 +129,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   communities: CommunityGroup[] = [];
   invites: CommunityInvite[] = [];
   selected?: CommunityGroup;
+  speedTournamentPresent = false;
+  private speedTournamentLookupVersion = 0;
   readonly sportsCatalog = SPORTS_CATALOG;
   sportsDraft: string[] = [];
   sportsSearch = '';
@@ -688,7 +692,21 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   }
 
   eventOptions(sport: string | null) {
-    return eventOptionsForSport(sport);
+    const all = eventOptionsForSport(sport);
+    if (!this.canRecordInlineSpeedWithoutRankings) return all;
+    // Standalone sprint recording must not offer a different sport, a 200m TT
+    // or the former Final B. Those are not World Skate 2026 progression heats.
+    return sport === 'Patinagem de Velocidade'
+      ? all.filter(option => this.isInlineSpeedProgressionHeat(option.code))
+      : [];
+  }
+
+  private isInlineSpeedProgressionHeat(eventType: string | null): boolean {
+    return eventType != null
+      && (eventType.startsWith('INLINE_TRACK_500D_')
+        || eventType.startsWith('INLINE_ROAD_LAP_'))
+      && (eventType.endsWith('_FIRST_ROUND') || eventType.endsWith('_QUARTER_HEAT')
+        || eventType.endsWith('_SEMI_HEAT') || eventType.endsWith('_FINAL_A'));
   }
 
   eventTypeLabel(type: string, sport: string | null): string {
@@ -778,7 +796,34 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     return this.selected ? this.communitySports(this.selected) : [];
   }
 
+  /** The optional W/D/L standings switch must not hide tournament heat recording. */
+  get canRecordInlineSpeedWithoutRankings(): boolean {
+    return !!this.selected && !this.selected.rankingsEnabled
+      && this.selected.individualTournamentsEnabled !== false
+      && (this.communityRoundSports.includes('Patinagem de Velocidade')
+        || this.speedTournamentPresent === true);
+  }
+
+  /** Fetch only when useful; latest tournaments are listed first and never modified. */
+  private loadStandaloneSpeedTournament(group: CommunityGroup): void {
+    const revision = ++this.speedTournamentLookupVersion;
+    this.speedTournamentPresent = false;
+    if (group.rankingsEnabled || group.individualTournamentsEnabled === false
+        || !this.tournamentCatalog) return;
+    this.tournamentCatalog.list(group.id, 0).pipe(timeout(10_000)).subscribe({
+      next: page => {
+        if (revision !== this.speedTournamentLookupVersion || this.selected?.id !== group.id) return;
+        this.speedTournamentPresent = page.tournaments.some(item =>
+          item.sport === 'Patinagem de Velocidade'
+          && item.entryType !== 'TEAM'
+          && !item.historicalArchiveId && item.status !== 'COMPLETED');
+      },
+      error: () => { if (revision === this.speedTournamentLookupVersion) this.speedTournamentPresent = false; }
+    });
+  }
+
   get newRoundSport(): string | null {
+    if (this.canRecordInlineSpeedWithoutRankings) return 'Patinagem de Velocidade';
     return this.communityRoundSports.length === 1
       ? this.communityRoundSports[0] : (this.roundSportDraft || null);
   }
@@ -1195,6 +1240,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   avatarCropUrl = '';
   avatarCropReady = false;
   avatarCropExisting = false;
+  avatarCropFitMode: 'COVER' | 'SHOW_ALL' = 'COVER';
   avatarCropFocusX = 50;
   avatarCropFocusY = 50;
   avatarCropAnimated = false;
@@ -1864,6 +1910,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       next: full => {
         if (openVersion !== this.communityOpenRequestVersion) return;
         this.selected = full;
+        this.loadStandaloneSpeedTournament(full);
         this.resetHistoricalLinks();
         const requestedTab = this.route.snapshot.queryParamMap.get('tab');
         if (requestedTab === 'chat') {
@@ -1940,6 +1987,9 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
         || (tab === 'ranking' && !this.canBrowseHistoricalArchives)
         || (tab === 'stats' && !this.selected?.rankingsEnabled)) return;
     this.activeTab = tab;
+    if (tab === 'sessions' && this.selected && !this.selected.rankingsEnabled) {
+      this.loadStandaloneSpeedTournament(this.selected);
+    }
     this.replyingToCommunityMessage = null;
     this.chatDeliveryUncertain = false;
     this.pendingChatDelivery = undefined;
@@ -3543,6 +3593,11 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     if (!this.selected || !this.canManage() || this.roundSaving) {
       return;
     }
+    if (this.canRecordInlineSpeedWithoutRankings
+        && !this.isInlineSpeedProgressionHeat(this.newRoundEventType)) {
+      this.errorMessage = t('communities.inlineSpeed.selectProgressionHeat');
+      return;
+    }
     if (this.communityRoundSports.length > 1 && !this.newRoundSport) {
       this.errorMessage = t('feedback.communities.roundSportRequired');
       return;
@@ -4127,6 +4182,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     this.avatarCropUrl = '';
     this.avatarCropReady = false;
     this.avatarCropExisting = false;
+    this.avatarCropFitMode = 'COVER';
     this.avatarCropFocusX = 50;
     this.avatarCropFocusY = 50;
     this.avatarCropAnimated = false;
@@ -4153,8 +4209,9 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   onCommunityAvatarZoom(event: Event): void {
     const value = Number((event.target as HTMLInputElement).value);
     if (!Number.isFinite(value)) return;
-    if (this.avatarCropExisting) {
-      this.avatarCropZoom = Math.max(1, Math.min(3, value));
+    if (this.avatarCropExisting || this.avatarCropFitMode === 'SHOW_ALL') {
+      this.avatarCropZoom = Math.max(this.avatarCropFitMode === 'SHOW_ALL' ? 0.6 : 1,
+        Math.min(3, value));
       return;
     }
     if (!this.avatarCropMetrics || !this.avatarCropImage) return;
@@ -4167,11 +4224,14 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
 
   onCommunityAvatarPointerDown(event: PointerEvent): void {
     if (!this.avatarCropReady || this.photoUpdating
-        || (!this.avatarCropExisting && (this.avatarCropAnimated || !this.avatarCropMetrics))) return;
+        || (!(this.avatarCropExisting || this.avatarCropFitMode === 'SHOW_ALL')
+            && (this.avatarCropAnimated || !this.avatarCropMetrics))) return;
     const stage = event.currentTarget as HTMLElement;
     this.avatarCropDrag = { id: event.pointerId, x: event.clientX, y: event.clientY,
-      offsetX: this.avatarCropExisting ? this.avatarCropFocusX : this.avatarCropOffsetX,
-      offsetY: this.avatarCropExisting ? this.avatarCropFocusY : this.avatarCropOffsetY };
+      offsetX: this.avatarCropExisting || this.avatarCropFitMode === 'SHOW_ALL'
+        ? this.avatarCropFocusX : this.avatarCropOffsetX,
+      offsetY: this.avatarCropExisting || this.avatarCropFitMode === 'SHOW_ALL'
+        ? this.avatarCropFocusY : this.avatarCropOffsetY };
     stage.setPointerCapture(event.pointerId);
     event.preventDefault();
   }
@@ -4179,10 +4239,11 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   onCommunityAvatarPointerMove(event: PointerEvent): void {
     const start = this.avatarCropDrag;
     if (!start || start.id !== event.pointerId
-        || (!this.avatarCropExisting && !this.avatarCropMetrics)) return;
+        || (!(this.avatarCropExisting || this.avatarCropFitMode === 'SHOW_ALL')
+            && !this.avatarCropMetrics)) return;
     const bounds = (event.currentTarget as HTMLElement).getBoundingClientRect();
     if (!bounds.width || !bounds.height) return;
-    if (this.avatarCropExisting) {
+    if (this.avatarCropExisting || this.avatarCropFitMode === 'SHOW_ALL') {
       this.avatarCropFocusX = Math.max(0, Math.min(100,
         start.offsetX - (event.clientX - start.x) / bounds.width * 100));
       this.avatarCropFocusY = Math.max(0, Math.min(100,
@@ -4203,14 +4264,15 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
 
   onCommunityAvatarCropKey(event: KeyboardEvent): void {
     if (this.photoUpdating) return;
-    if (!this.avatarCropExisting && (this.avatarCropAnimated || !this.avatarCropMetrics)) return;
+    if (!(this.avatarCropExisting || this.avatarCropFitMode === 'SHOW_ALL')
+        && (this.avatarCropAnimated || !this.avatarCropMetrics)) return;
     const move: Record<string, [number, number]> = {
       ArrowLeft: [-2, 0], ArrowRight: [2, 0], ArrowUp: [0, -2], ArrowDown: [0, 2]
     };
     const delta = move[event.key];
     if (!delta) return;
     event.preventDefault();
-    if (this.avatarCropExisting) {
+    if (this.avatarCropExisting || this.avatarCropFitMode === 'SHOW_ALL') {
       this.avatarCropFocusX = Math.max(0, Math.min(100, this.avatarCropFocusX - delta[0]));
       this.avatarCropFocusY = Math.max(0, Math.min(100, this.avatarCropFocusY - delta[1]));
       return;
@@ -4229,10 +4291,34 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     this.avatarCropUrl = this.selected.photoUrl;
     this.avatarCropCommunityId = this.selected.id;
     this.avatarCropReady = true;
+    this.avatarCropFitMode = this.selected.photoFitMode === 'SHOW_ALL' ? 'SHOW_ALL' : 'COVER';
     this.avatarCropZoom = this.selected.photoZoom ?? 1;
     this.avatarCropFocusX = this.selected.photoFocusX ?? 50;
     this.avatarCropFocusY = this.selected.photoFocusY ?? 50;
     this.errorMessage = '';
+  }
+
+  setCommunityAvatarFitMode(mode: 'COVER' | 'SHOW_ALL'): void {
+    if (this.photoUpdating || !this.avatarCropReady || this.avatarCropFitMode === mode) return;
+    this.avatarCropFitMode = mode;
+    // Changing the fit recalibrates zoom so "Mostrar tudo" starts fully visible.
+    this.avatarCropZoom = 1;
+    this.avatarCropFocusX = 50;
+    this.avatarCropFocusY = 50;
+    this.avatarCropOffsetX = 0;
+    this.avatarCropOffsetY = 0;
+    if (this.avatarCropImage && this.avatarCropMetrics) {
+      this.avatarCropMetrics = communityAvatarCrop(
+        this.avatarCropImage.naturalWidth, this.avatarCropImage.naturalHeight, 1);
+    }
+  }
+
+  communityCoverIsShowAll(community: { photoFitMode?: string | null }): boolean {
+    return community.photoFitMode === 'SHOW_ALL';
+  }
+
+  communityCoverFit(community: { photoFitMode?: string | null }): string {
+    return this.communityCoverIsShowAll(community) ? 'contain' : 'cover';
   }
 
   /** Shared presentation parameters, also used for animated GIFs. */
@@ -4258,7 +4344,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       this.photoUpdating = true;
       this.avatarCropError = '';
       this.communityService.updatePhotoFraming(
-        id, url, this.avatarCropZoom, this.avatarCropFocusX, this.avatarCropFocusY)
+        id, url, this.avatarCropZoom, this.avatarCropFocusX,
+        this.avatarCropFocusY, this.avatarCropFitMode)
         .pipe(timeout(15_000), finalize(() => this.photoUpdating = false))
         .subscribe({
           next: updated => {
@@ -4283,7 +4370,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     this.photoUpdating = true;
     let upload: File = file;
     try {
-      if (!this.avatarCropAnimated) {
+      if (!this.avatarCropAnimated && this.avatarCropFitMode === 'COVER') {
         if (!this.avatarCropImage || !this.avatarCropMetrics) throw new Error('Image not ready');
         const canvas = document.createElement('canvas');
         canvas.width = COMMUNITY_COVER_WIDTH;
@@ -4307,7 +4394,11 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
         this.photoUpdating = false;
         return;
       }
-      this.communityService.updatePhoto(id, upload)
+      this.communityService.updatePhoto(
+        id, upload, this.avatarCropFitMode,
+        this.avatarCropFitMode === 'SHOW_ALL' ? this.avatarCropZoom : 1,
+        this.avatarCropFitMode === 'SHOW_ALL' ? this.avatarCropFocusX : 50,
+        this.avatarCropFitMode === 'SHOW_ALL' ? this.avatarCropFocusY : 50)
         .pipe(timeout(30_000), finalize(() => this.photoUpdating = false))
         .subscribe({
           next: updated => {
