@@ -114,7 +114,11 @@ describe('Unified Jynlo message center', () => {
     component.openGifPicker();
     expect(component.emojiPickerOpen).toBeTrue();
     expect(component.pickerTab).toBe('gif');
-    await new Promise<void>(resolve => setTimeout(resolve, 0));
+    // Response.json() consumes an async browser stream; allow it to settle
+    // instead of assuming one event-loop turn is enough on Chromium CI.
+    for (let attempt = 0; attempt < 30 && component.gifAvailable === null; attempt++) {
+      await new Promise<void>(resolve => setTimeout(resolve, 5));
+    }
     expect(network).toHaveBeenCalledTimes(1);
     expect(component.gifAvailable).toBeFalse();
     const gif = new File(['GIF89a'], 'local.gif', {type:'image/gif'});
