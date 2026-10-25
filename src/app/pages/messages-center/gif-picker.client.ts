@@ -10,7 +10,7 @@ export interface GifChoice {
 }
 
 export interface GifTextMessage {
-  mediaUrl: string;
+  id: string;
   pageUrl: string;
   creator: string;
   caption: string;
@@ -66,7 +66,7 @@ export function encodeGiphyText(choice: GifChoice, caption: string): string {
   if (!safeMediaUrl(choice.downloadUrl) || !safePageUrl(choice.pageUrl)
       || !/^[a-zA-Z0-9_-]{1,80}$/.test(choice.id)) return '';
   const text = MARKER + JSON.stringify({
-    id: choice.id, u: choice.downloadUrl, p: choice.pageUrl,
+    id: choice.id, p: choice.pageUrl,
     a: choice.creator.slice(0, 60), c: caption
   });
   return text.length <= 2000 ? text : '';
@@ -80,8 +80,8 @@ export function readGiphyText(raw: string | null | undefined): GifTextMessage | 
         || !/^[a-zA-Z0-9_-]{1,80}$/.test(data.id)
         || typeof data.a !== 'string' || data.a.length > 60
         || typeof data.c !== 'string' || data.c.length > 1900
-        || !safeMediaUrl(data.u) || !safePageUrl(data.p)) return null;
-    return { mediaUrl: data.u, pageUrl: data.p, creator: data.a, caption: data.c };
+        || !safePageUrl(data.p)) return null;
+    return { id: data.id, pageUrl: data.p, creator: data.a, caption: data.c };
   } catch { return null; }
 }
 
