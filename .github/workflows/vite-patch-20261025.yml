@@ -1,0 +1,67 @@
+name: Isolated Vite security patch
+
+on:
+  push:
+    branches: [security/vite-835-override-20261025]
+    paths:
+      - '.github/workflows/vite-patch-20261025.yml'
+      - 'package.json'
+      - 'package-lock.json'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: vite-patch-20261025
+  cancel-in-progress: true
+
+jobs:
+  resolve-lock:
+    if: "${{ github.event.head_commit.message == 'chore(security): request Vite patch lockfile' }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Resolve only npm override and verify against advisories
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+          node <<'NODE'
+          const fs = require('fs');
+          const manifest = JSON.parse(fs.readFileSync('package.json','utf8'));
+          const lock = JSON.parse(fs.readFileSync('package-lock.json','utf8'));
+          const vite = lock.packages['node_modules/vite']?.version;
+          const builder = lock.packages['node_modules/@angular/build']?.version;
+          if (manifest.overrides?.vite !== '8.3.5' || vite !== '8.3.5')
+            throw Error('Expected patched Vite 8.3.5 override and exact lockfile version');
+          if (!builder || !builder.startsWith('22.2.'))
+            throw Error('Angular builder major/minor version changed unexpectedly: ' + builder);
+          if (lock.packages['']?.overrides?.vite !== '8.3.5')
+            throw Error('Root override is not reflected in package lock');
+          console.log('VERIFIED Vite:', vite, 'Angular build:', builder);
+          NODE
+          npm audit --package-lock-only --json > "$RUNNER_TEMP/audit-all.json" || true
+          npm audit --omit=dev --package-lock-only --json > "$RUNNER_TEMP/audit-prod.json" || true
+          node - "$RUNNER_TEMP/audit-all.json" "$RUNNER_TEMP/audit-prod.json" <<'NODE'
+          const fs = require('fs');
+          const [all,prod]=process.argv.slice(2).map(f=>JSON.parse(fs.readFileSync(f,'utf8')));
+          console.log('ALL advisories:',JSON.stringify(all.metadata?.vulnerabilities));
+          console.log('PRODUCTION advisories:',JSON.stringify(prod.metadata?.vulnerabilities));
+          if (!all.metadata?.vulnerabilities || !prod.metadata?.vulnerabilities)
+            throw Error('npm audit output is missing');
+          if ((all.metadata.vulnerabilities.high||0)+(all.metadata.vulnerabilities.critical||0)>0)
+            throw Error('High or critical advisory remains in full dependency tree');
+          if ((prod.metadata.vulnerabilities.total||0)>0)
+            throw Error('Production dependency vulnerability remains');
+          NODE
+          git diff --check
+          git diff --stat -- package-lock.json
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- package-lock.json
+          git commit -m "fix(deps): lock patched Vite 8.3.5"
+          git push origin HEAD:refs/heads/security/vite-835-override-20261025
