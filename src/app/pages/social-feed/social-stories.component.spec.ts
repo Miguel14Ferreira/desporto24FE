@@ -56,6 +56,17 @@ describe('SocialStoriesComponent', () => {
     expect(fixture.nativeElement.querySelectorAll('.story-bubble').length).toBe(1);
   }));
 
+  it('keeps personal Stories available without displaying the redundant 24-hour counter', fakeAsync(() => {
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+    expect(component.mineEntries).toHaveSize(1);
+    expect(api.mine).toHaveBeenCalled();
+    expect(fixture.nativeElement.querySelector('.story-my-status')).toBeNull();
+    expect(fixture.nativeElement.textContent).not.toContain('Stories publicadas por ti nas últimas 24 horas');
+    expect(fixture.nativeElement.querySelectorAll('.story-bubble').length).toBe(1);
+  }));
+
   it('groups several Stories from the same author and lets viewers move between them', fakeAsync(() => {
     const older = { ...picture, id: 8, createdAt: new Date(Date.now() - 1000).toISOString() };
     api.feed.and.returnValue(of([picture, older]));
