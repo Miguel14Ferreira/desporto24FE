@@ -1770,9 +1770,15 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
         if (!this.sharePickerOpen || version !== this.sharePickerVersion
             || selectedKey !== this.selectedKey || !this.attachmentControlsReady) return;
         const friends: ShareChoice[] = people
-          .filter(person => !person.chatBlocked && !person.blockedByMe)
+          .filter(person => !person.chatBlocked && !person.blockedByMe
+            && person.username.toLowerCase() !== this.currentUsername.toLowerCase())
           .map(person => ({kind:'profile' as const,id:person.username,
             title:person.nickname || person.fullName || person.username, subtitle:'@'+person.username}));
+        // Let members share their own public profile even with no friends yet.
+        if (this.currentUsername) friends.unshift({
+          kind:'profile', id:this.currentUsername, title:'@'+this.currentUsername,
+          subtitle:t('chat.shareMyProfile')
+        });
         const included = new Set<number>();
         const events: ShareChoice[] = [...sessions.created,...sessions.joined]
           .filter(session => {
