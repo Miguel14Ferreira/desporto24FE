@@ -925,12 +925,13 @@
                   </section>
                 }
 
-                @if (competition?.settings?.rankingsEnabled) {
+                @if (competition?.settings?.rankingsEnabled || canRecordInlineSpeedWithoutRankings) {
                   <section class="season-dashboard">
                     <div class="section-heading">
                       <div>
                         <span class="section-kicker">{{ 'communities.seasonsKicker' | t }}</span>
-                        <h3>{{ 'communities.seasonsTitle' | t }}</h3>
+                        <h3>{{ (canRecordInlineSpeedWithoutRankings
+                          ? 'communities.inlineSpeed.seasonsTitle' : 'communities.seasonsTitle') | t }}</h3>
                       </div>
                       @if (activeSeason()) {
                         <span class="competition-badge">
@@ -1064,7 +1065,7 @@
                       </div>
                     }
 
-                    @if (trophies().length > 0) {
+                    @if (competition?.settings?.rankingsEnabled && trophies().length > 0) {
                       <div class="trophies-grid">
                         @for (season of trophies(); track season.id) {
                           <article class="trophy-card">
@@ -1079,7 +1080,7 @@
                           </article>
                         }
                       </div>
-                    } @else {
+                    } @else if (competition?.settings?.rankingsEnabled) {
                       <div class="module-empty compact">
                         <h3>{{ 'communities.noTrophies' | t }}</h3>
                         <p>{{ 'communities.noTrophiesText' | t }}</p>
@@ -1221,13 +1222,19 @@
                     }
                   </div>
 
-                  @if (!competition?.settings?.rankingsEnabled) {
+                  @if (!competition?.settings?.rankingsEnabled && !canRecordInlineSpeedWithoutRankings) {
                     <div class="module-empty compact">
                       <h3>{{ 'communities.competitionDisabledTitle' | t }}</h3>
                       <p>{{ 'communities.competitionSessionsHint' | t }}</p>
                     </div>
                   } @else {
-                    @if (selectedSeasonId !== null && communityRoundSports.includes('Ciclismo de Pista')) {
+                    @if (canRecordInlineSpeedWithoutRankings) {
+                      <p class="round-sport-guidance" role="note">
+                        {{ 'communities.inlineSpeed.standaloneHeatHint' | t }}
+                      </p>
+                    }
+                    @if (selectedSeasonId !== null && communityRoundSports.includes('Ciclismo de Pista')
+                        && !canRecordInlineSpeedWithoutRankings) {
                       <section class="round-editor" [attr.aria-label]="'communities.trackCycling.bracketTitle' | t">
                         <div class="section-heading">
                           <div>
@@ -1380,7 +1387,7 @@
                         }
 
                         <div class="round-meta-form">
-                          @if (communityRoundSports.length > 1) {
+                          @if (communityRoundSports.length > 1 && !canRecordInlineSpeedWithoutRankings) {
                             <label>
                               <span>{{ 'communities.roundSport' | t }}</span>
                               <select [(ngModel)]="roundSportDraft"
