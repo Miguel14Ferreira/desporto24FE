@@ -153,7 +153,23 @@ async function locateSprintBracket(page: Page, qa: {unexpected:string[]}) {
   try { await expect(section).toBeVisible(); }
   catch (error) {
     console.log('[SPRINT-QA] URL',page.url());
+    console.log('[SPRINT-QA] DOM/Angular state',await page.evaluate(()=>{
+      const el=document.querySelector('.season-filter select') as HTMLSelectElement | null;
+      const host=document.querySelector('app-communities');
+      const component=(window as any).ng?.getComponent?.(host);
+      return {
+        seasonSelect:{value:el?.value,index:el?.selectedIndex},
+        seasonId:component?.selectedSeasonId,activeTab:component?.activeTab,
+        sports:component?.communityRoundSports,
+        selectedSeason:component?.competition?.selectedSeasonId,
+        activeSeason:component?.competition?.activeSeasonId,
+        bracketLoading:component?.sprintBracketLoading,bracketError:component?.sprintBracketError,
+        loadedBracketCount:component?.sprintBrackets?.length,
+        sprintNodes:document.querySelectorAll('[aria-label="Quadros de Sprint"]').length
+      };
+    }));
     console.log('[SPRINT-QA] visible body',(await page.locator('body').innerText().catch(()=>'')).slice(0,3500));
+    console.log('[SPRINT-QA] seasons visited',(qa as any).seasonReads);
     console.log('[SPRINT-QA] unhandled HTTP',qa.unexpected.slice(0,30));
     throw error;
   }
