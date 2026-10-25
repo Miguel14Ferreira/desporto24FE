@@ -66,10 +66,13 @@ export class NotificationsComponent implements OnInit {
 
   openPreferences(): void {
     this.preferencesOpen = !this.preferencesOpen;
-    if (this.preferencesOpen && !this.preferences) this.loadPreferences();
+    // Always re-fetch on open: settings may have changed on another device.
+    if (this.preferencesOpen) this.loadPreferences();
   }
 
   loadPreferences(): void {
+    // Never replace local settings with a stale GET while a PUT is in flight.
+    if (this.preferencesLoading || this.preferencesSaving) return;
     this.preferencesLoading = true;
     this.preferencesError = '';
     this.notificationService.preferences().pipe(
@@ -87,14 +90,14 @@ export class NotificationsComponent implements OnInit {
   }
 
   changeGlobal(channel: 'inApp' | 'email', enabled: boolean): void {
-    if (!this.preferences) return;
+    if (!this.preferences || this.preferencesLoading || this.preferencesSaving) return;
     const next = { ...this.preferences,
       [channel === 'inApp' ? 'inAppEnabled' : 'emailEnabled']: enabled };
     this.savePreferences(next);
   }
 
   changeType(type: string, channel: 'inApp' | 'email', enabled: boolean): void {
-    if (!this.preferences) return;
+    if (!this.preferences || this.preferencesLoading || this.preferencesSaving) return;
     const key = channel === 'inApp' ? 'disabledInAppTypes' : 'disabledEmailTypes';
     const disabled = new Set(this.preferences[key]);
     if (enabled) disabled.delete(type); else disabled.add(type);
