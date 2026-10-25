@@ -41,6 +41,12 @@ describe('Track Sprint bracket picker', () => {
     }];
     expect(availableSprintBracketSlots([one],'SPRINT_QUARTER_FINAL')
       .map(m => m.slot)).toEqual(['Q2']);
+    one.incidents[0].status = 'ADJUDICATION_REQUIRED';
+    one.incidents[0].decisionType = 'DISCIPLINARY_RULING';
+    one.incidents[0].sanctionType = 'DISQUALIFICATION';
+    one.incidents[0].sanctionedUsername = 'fixture_rider_01';
+    expect(availableSprintBracketSlots([one],'SPRINT_QUARTER_FINAL')
+      .map(m => m.slot)).toEqual(['Q2']);
     one.incidents[0].status = 'DECIDED';
     one.incidents[0].decisionType = 'RESTART_REQUIRED';
     expect(availableSprintBracketSlots([one],'SPRINT_QUARTER_FINAL')

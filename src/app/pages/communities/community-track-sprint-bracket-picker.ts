@@ -8,7 +8,8 @@ export function availableSprintBracketSlots(
   if (!phase) return [];
   return brackets.flatMap(b => b.matches.filter(m => m.phase === phase
     && (m.status === 'READY' || m.status === 'IN_PROGRESS')
-    && !(b.incidents || []).some(i => i.seriesKey === m.seriesKey && i.status === 'PENDING')));
+    && !(b.incidents || []).some(i => i.seriesKey === m.seriesKey
+      && (i.status === 'PENDING' || i.status === 'ADJUDICATION_REQUIRED'))));
 }
 
 /** Never fabricate a heat count: use only registered typed rounds in this season. */
