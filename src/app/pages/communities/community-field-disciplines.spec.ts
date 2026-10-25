@@ -15,6 +15,8 @@ describe('Athletics field disciplines', () => {
     ]);
     expect(athleticsDisciplineOptions('Ciclismo de Pista','TRACK_SPRINT_REPECHAGE'))
       .toEqual(['SPRINT_REPECHAGE_1_32','SPRINT_REPECHAGE_1_16','SPRINT_REPECHAGE_1_8']);
+    expect(athleticsDisciplineOptions('Ciclismo de Pista','TRACK_SPRINT_5_8'))
+      .toEqual(['SPRINT_PLACES_5_8']);
     expect(athleticsDisciplineOptions('Futebol', 'JUMP')).toEqual([]);
     expect(athleticsDisciplineOptions('Ginástica Artística', 'APPARATUS')).toContain('BALANCE_BEAM');
     expect(athleticsDisciplineOptions('Bodyboard', 'BODYBOARD_HEAT')).toEqual(['PRONE', 'DROP_KNEE']);
