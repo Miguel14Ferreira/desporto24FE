@@ -15,6 +15,8 @@ on:
       - 'scripts/qa/jynlo-notifications-live-readonly.cjs'
       - 'scripts/qa/jynlo-notifications-live-readonly.test.cjs'
       - '.github/workflows/notification-live-readonly.yml'
+      - 'scripts/qa/jynlo-email-live-preflight.cjs'
+      - 'scripts/qa/jynlo-email-live-preflight.test.cjs'
       - '.github/workflows/qa-inbox-contract.yml'
 
 permissions:
@@ -44,3 +46,5 @@ jobs:
       - run: node --test scripts/qa/jynlo-session-live-browser.test.cjs
       - run: node --check scripts/qa/jynlo-notifications-live-readonly.cjs
       - run: node --test scripts/qa/jynlo-notifications-live-readonly.test.cjs
+      - run: node --check scripts/qa/jynlo-email-live-preflight.cjs
+      - run: node --test scripts/qa/jynlo-email-live-preflight.test.cjs
