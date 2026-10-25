@@ -22,6 +22,8 @@ import { breakingBattleError } from './community-breaking-battle';
 import { trackSprintHeatError, trackSprintPlacesError } from './community-track-sprint-results';
 import { trackSprintSeriesStatus } from './community-track-sprint-series';
 import { availableSprintQualifiers, nextSprintRoundHeatMax } from './community-track-sprint-qualified16';
+import { sprintQualificationTieGroups, emptySprintTieDraft, sprintOfficialTieDecisions,
+  SprintQualificationTieGroup, SprintTieDraft } from './community-track-sprint-official-ties';
 import { availableSprintBracketSlots, nextSprintBracketHeatNumber } from './community-track-sprint-bracket-picker';
 import { cricketT20Error, cricketOvers } from './community-cricket-results';
 import { chessGameError, chessGameScore } from './community-chess-results';
@@ -145,6 +147,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   sprintBracketNameDraft = '';
   sprintBracketFormatDraft: 'EIGHT_RIDER_FINALS' | 'SIXTEEN_RIDER_1_8' | 'TWENTY_EIGHT_RIDER_1_16' | 'OLYMPIC_TWENTY_FOUR_REPECHAGE' = 'EIGHT_RIDER_FINALS';
   sprintBracketQualifyingRoundIdDraft: number | null = null;
+  sprintTieDrafts: Record<string, SprintTieDraft> = {};
   deletingSprintBracketId: number | null = null;
   sprintBracketSaving = false;
   sprintBracketLoading = false;
@@ -2434,12 +2437,35 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
         : this.sprintBracketFormatDraft === 'OLYMPIC_TWENTY_FOUR_REPECHAGE' ? 24 : 16);
   }
 
+  get sprintTieGroups(): SprintQualificationTieGroup[] {
+    const round = this.availableSprintQualifyingRounds.find(
+      r => r.id === this.sprintBracketQualifyingRoundIdDraft);
+    const starters = this.sprintBracketFormatDraft === 'TWENTY_EIGHT_RIDER_1_16'
+      ? 28 : this.sprintBracketFormatDraft === 'OLYMPIC_TWENTY_FOUR_REPECHAGE'
+        ? 24 : 16;
+    return sprintQualificationTieGroups(round, starters);
+  }
+
+  onSprintBracketFormatChanged(): void {
+    this.sprintBracketQualifyingRoundIdDraft = null;
+    this.sprintTieDrafts = {};
+  }
+
+  onSprintQualifierChanged(roundId: number | null): void {
+    this.sprintBracketQualifyingRoundIdDraft = roundId;
+    this.sprintTieDrafts = {};
+    for (const group of this.sprintTieGroups) {
+      this.sprintTieDrafts[group.key] = emptySprintTieDraft(group);
+    }
+  }
+
   canCreateSprintBracket(): boolean {
-    return !!this.sprintBracketNameDraft.trim() &&
-      (this.sprintBracketFormatDraft === 'EIGHT_RIDER_FINALS'
-        || this.sprintBracketQualifyingRoundIdDraft != null &&
-          this.availableSprintQualifyingRounds.some(
-            r => r.id === this.sprintBracketQualifyingRoundIdDraft));
+    if (!this.sprintBracketNameDraft.trim()) return false;
+    if (this.sprintBracketFormatDraft === 'EIGHT_RIDER_FINALS') return true;
+    if (this.sprintBracketQualifyingRoundIdDraft == null
+        || !this.availableSprintQualifyingRounds.some(
+          r => r.id === this.sprintBracketQualifyingRoundIdDraft)) return false;
+    return sprintOfficialTieDecisions(this.sprintTieGroups, this.sprintTieDrafts) !== null;
   }
 
   deleteSprintBracket(bracketId: number): void {
@@ -2478,15 +2504,19 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     const communityId = this.selected.id;
     this.sprintBracketSaving = true;
     this.sprintBracketError = '';
+    const officialTieDecisions = sprintOfficialTieDecisions(
+      this.sprintTieGroups, this.sprintTieDrafts) ?? [];
     this.communityService.createTrackSprintBracket(communityId, seasonId, name,
       this.sprintBracketFormatDraft,
       this.sprintBracketFormatDraft !== 'EIGHT_RIDER_FINALS'
-        ? this.sprintBracketQualifyingRoundIdDraft : null)
+        ? this.sprintBracketQualifyingRoundIdDraft : null,
+      officialTieDecisions)
       .pipe(timeout(10_000), finalize(() => this.sprintBracketSaving = false))
       .subscribe({
         next: () => {
           this.sprintBracketNameDraft = '';
           this.sprintBracketQualifyingRoundIdDraft = null;
+          this.sprintTieDrafts = {};
           this.sprintBracketFormatDraft = 'EIGHT_RIDER_FINALS';
           this.loadSprintBrackets(communityId, seasonId);
         },
