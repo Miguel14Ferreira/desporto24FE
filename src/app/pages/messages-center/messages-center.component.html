@@ -214,7 +214,7 @@
                 }
                 @if (readGiphyMessage(message.text); as giphy) {
                   <div class="inbox-giphy-message">
-                    <img [src]="giphy.mediaUrl" [alt]="'chat.gifImage' | t" loading="lazy">
+                    <img [src]="giphy.mediaUrl" [alt]="'chat.gifImage' | t" loading="lazy" referrerpolicy="no-referrer">
                     @if (giphy.caption) {
                       <p>{{ giphy.caption }}</p>
                     }
@@ -340,7 +340,7 @@
             }
             @if (selectedGif; as gif) {
               <div class="inbox-attachment-draft inbox-giphy-draft">
-                <img [src]="gif.previewUrl" [alt]="'chat.gifImage' | t">
+                <img [src]="gif.previewUrl" [alt]="'chat.gifImage' | t" referrerpolicy="no-referrer">
                 <span>{{ gif.title }} · GIPHY</span>
                 <button type="button" [disabled]="sending || deliveryUncertain"
                   (click)="removeSelectedGif()">{{ 'chat.attachmentRemove' | t }}</button>
@@ -476,7 +476,7 @@
                               [attr.aria-label]="gif.title || ('chat.gifSelect' | t)"
                               [attr.title]="gif.title"
                               (click)="chooseGif(gif)">
-                              <img [src]="gif.previewUrl" [alt]="gif.title" loading="lazy">
+                              <img [src]="gif.previewUrl" [alt]="gif.title" loading="lazy" referrerpolicy="no-referrer">
 
                             </button>
                           }
