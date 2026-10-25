@@ -366,6 +366,59 @@ export class CommunityTournamentsComponent implements OnChanges {
     return [...athletes.values()].sort((a, b) => a.name.localeCompare(b.name));
   }
 
+  speedTieBreak(stage: string) {
+    return (this.speedOverview?.tieBreaks ?? []).find(item => item.sourceStage === stage);
+  }
+
+  /** Display only eligible cutoff candidates; never fabricate or edit recorded times. */
+  isSpeedMultiwayTie(proposal: InlineSpeedProposal): boolean {
+    return proposal.sourceStage === 'FIRST' && !proposal.ready
+      && proposal.warning.includes('Empate múltiplo');
+  }
+
+  private speedTieOrdered(): InlineSpeedSkater[] {
+    return this.speedStageSkaters('FIRST')
+      .filter(s => !s.disqualified && s.seconds != null && s.seconds > 0)
+      .sort((a, b) => (a.seconds ?? 0) - (b.seconds ?? 0) || a.playerId - b.playerId);
+  }
+
+  speedTieCandidates(): InlineSpeedSkater[] {
+    const ordered = this.speedTieOrdered();
+    if (ordered.length < 18) return [];
+    const cutoff = ordered[15]?.seconds;
+    return ordered.filter(s => s.seconds != null && cutoff != null && s.seconds <= cutoff);
+  }
+
+  speedTieGuaranteed(skater: InlineSpeedSkater): boolean {
+    const cutoff = this.speedTieOrdered()[15]?.seconds;
+    return skater.seconds != null && cutoff != null && skater.seconds < cutoff;
+  }
+
+  private speedTieDefaultIds(): number[] {
+    return this.speedTieCandidates()
+      .filter(s => this.speedTieGuaranteed(s)).map(s => s.playerId);
+  }
+
+  async resolveSpeedTie(proposal: InlineSpeedProposal): Promise<void> {
+    if (!this.selected || !this.canManage || this.busy || !this.isSpeedMultiwayTie(proposal)) return;
+    const chosen = this.speedSelections['FIRST'] ?? [];
+    const reason = (this.speedReasons['FIRST'] ?? '').trim();
+    if (chosen.length !== 16 || new Set(chosen).size !== 16) {
+      this.showError(t('communities.inlineSpeed.tiebreakSelectionCount'));
+      return;
+    }
+    if (reason.length < 20 || reason.length > 500) {
+      this.showError(t('communities.inlineSpeed.tiebreakReasonRequired'));
+      return;
+    }
+    await this.mutate(this.api.resolveInlineSpeedTieBreak(
+      this.community.id, this.selected.id, chosen, reason),
+      t('communities.inlineSpeed.tiebreakSaved'), overview => {
+        this.speedOverview = overview;
+        this.loadInlineSpeed();
+      });
+  }
+
   speedChosen(stage: string, playerId: number): boolean {
     return (this.speedSelections[stage] ?? []).includes(playerId);
   }
@@ -375,6 +428,9 @@ export class CommunityTournamentsComponent implements OnChanges {
     // itself was officially corrected. Never toggle them in this panel.
     if (this.speedStageSkaters(stage).some(s => s.playerId === playerId && s.disqualified))
       return;
+    if (stage === 'FIRST' && this.speedOverview?.proposals.some(
+      p => this.isSpeedMultiwayTie(p)) && this.speedTieCandidates().some(
+      s => s.playerId === playerId && this.speedTieGuaranteed(s))) return;
     const previous = this.speedSelections[stage] ?? [];
     this.speedSelections[stage] = previous.includes(playerId)
       ? previous.filter(id => id !== playerId) : [...previous, playerId];
@@ -409,7 +465,8 @@ export class CommunityTournamentsComponent implements OnChanges {
         for (const proposal of response.proposals) {
           this.speedSelections[proposal.sourceStage] =
             [...(response.decisions.find(item => item.sourceStage === proposal.sourceStage)
-              ?.playerIds ?? proposal.playerIds)];
+              ?.playerIds ?? (this.isSpeedMultiwayTie(proposal)
+                ? this.speedTieDefaultIds() : proposal.playerIds))];
         }
         this.changeDetector.markForCheck();
       },
