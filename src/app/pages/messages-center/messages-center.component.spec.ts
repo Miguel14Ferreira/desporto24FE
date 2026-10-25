@@ -192,6 +192,28 @@ describe('Unified Jynlo message center', () => {
     expect((direct.send.calls.mostRecent().args[1] as string).startsWith('[JYNLO:GIPHY:1]')).toBeTrue();
   });
 
+  it('toggles one shared media panel while preserving access to both tabs', () => {
+    const peer = item('direct', 'bea');
+    component.conversations = [peer];
+    component.selectedKey = peer.key;
+    component.composerAllowed = true;
+    component.attachmentReady = true;
+    component.gifAvailable = false;
+    component.toggleEmojiPicker();
+    expect(component.emojiPickerOpen).toBeTrue();
+    expect(component.pickerTab).toBe('emoji');
+    component.selectPickerTab('gif');
+    expect(component.emojiPickerOpen).toBeTrue();
+    expect(component.pickerTab).toBe('gif');
+    component.selectPickerTab('emoji');
+    expect(component.emojiPickerOpen).toBeTrue();
+    expect(component.pickerTab).toBe('emoji');
+    component.toggleEmojiPicker();
+    expect(component.emojiPickerOpen).toBeFalse();
+    expect(component.selectedAttachment).toBeNull();
+    expect(direct.send).not.toHaveBeenCalled();
+  });
+
   it('does not exceed the chat 2000-character limit with surrogate-pair emojis', () => {
     const conversation = item('community', 7);
     component.conversations = [conversation];
