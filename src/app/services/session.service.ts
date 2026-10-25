@@ -260,6 +260,15 @@ export class SessionService {
     );
   }
 
+  editMessage(id: number, messageId: number, text: string): Observable<SessionMessage> {
+    return this.http.put<SessionMessage>(this.baseUrl + '/' + id + '/messages/' + messageId, {text});
+  }
+
+  deleteMessage(id: number, messageId: number): Observable<SessionMessage> {
+    return this.http.delete<SessionMessage>(
+      this.baseUrl + '/' + id + '/messages/' + messageId);
+  }
+
   attachmentsAvailable(id: number): Observable<{ available: boolean }> {
     return this.http.get<{ available: boolean }>(
       this.baseUrl + '/' + id + '/messages/attachments/availability');
