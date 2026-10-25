@@ -46,6 +46,15 @@ export class CommunityTimelineService {
       { body: body.trim(), ...(kind === 'CHAT' && replyToMessageId ? { replyToMessageId } : {}) });
   }
 
+  editChatMessage(id: number, messageId: number, text: string): Observable<CommunityTimelineEntry> {
+    return this.http.put<CommunityTimelineEntry>(this.url(id, 'CHAT') + '/' + messageId, {text});
+  }
+
+  deleteChatForEveryone(id: number, messageId: number): Observable<CommunityTimelineEntry> {
+    return this.http.delete<CommunityTimelineEntry>(
+      this.url(id, 'CHAT') + '/' + messageId + '/for-everyone');
+  }
+
   chatAttachmentsAvailable(id: number): Observable<{ available: boolean }> {
     return this.http.get<{ available: boolean }>(
       this.url(id, 'CHAT') + '/attachments/availability');
