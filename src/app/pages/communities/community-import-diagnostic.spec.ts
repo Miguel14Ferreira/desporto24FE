@@ -47,4 +47,34 @@ describe('community historical import diagnostics PT/EN', () => {
     expect(importDiagnosticLabel(null))
       .toBe('Review the original spreadsheet before confirming the import.');
   });
+
+  it('prefers stable codes over Portuguese text and retains source parameters', () => {
+    localStorage.setItem('d24-language', 'en');
+    const text = 'Este texto antigo não corresponde a nenhuma expressão conhecida';
+    expect(importDiagnosticLabel(text, {
+      code: 'IMPORT_DUPLICATE_STANDING', params: { row: '17', name: 'União Azul' }
+    })).toBe('Row 17: União Azul appears more than once; only the first occurrence is kept.');
+    expect(importDiagnosticLabel(text, {
+      code: 'IMPORT_INTEGER_REQUIRED', params: { row: '12', field: 'GOALS', value: 'N/A' }
+    })).toBe("Row 12: GOALS requires a valid integer ('N/A').");
+  });
+
+  it('falls back to generic English for unknown structured codes without leaking backend text', () => {
+    localStorage.setItem('d24-language', 'en');
+    expect(importDiagnosticLabel('Uma mensagem privada', {
+      code: 'IMPORT_UNRECOGNIZED', params: { row: '32' }
+    })).toBe('Row 32: review this warning in the original spreadsheet.');
+    expect(importDiagnosticLabel('Outra mensagem privada', {
+      code: 'SOME_NEW_IMPORT_CODE', params: {}
+    })).toBe('Review the original spreadsheet before confirming the import.');
+  });
+
+  it('retains Portuguese diagnostics even if the backend supplies a stable code', () => {
+    localStorage.setItem('d24-language', 'pt');
+    const original = 'Linha 4: uma mensagem portuguesa original';
+    expect(importDiagnosticLabel(original, {
+      code: 'IMPORT_DUPLICATE_MATCH', params: { row: '4' }
+    })).toBe(original);
+  });
+
 });

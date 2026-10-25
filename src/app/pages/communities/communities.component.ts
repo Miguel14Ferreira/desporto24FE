@@ -74,6 +74,7 @@ import {
 } from '../model/community-group';
 import {
   CommunityGroupsService,
+  CommunityImportDiagnostic,
   CommunityJoinRequest,
   CommunitySearchPresentation,
   HistoricalStandingPreview,
@@ -1440,7 +1441,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   importPreviewLoading = false;
   importSheetName = '';
   importMappings: Array<{ columnIndex: number; header: string; field: string; confidence: number }> = [];
-  importValidation?: { valid: boolean; dataRows: number; validRows: number; errors: string[]; warnings: string[] };
+  importValidation?: { valid: boolean; dataRows: number; validRows: number; errors: string[]; warnings: string[];
+    errorDetails?: CommunityImportDiagnostic[]; warningDetails?: CommunityImportDiagnostic[] };
   importNormalized?: { acceptedRows: number; skippedRows: number; rows: any[]; skipped: any[] };
   importMappingLoading = false;
   importDefaultYear: number | null = new Date().getFullYear();
