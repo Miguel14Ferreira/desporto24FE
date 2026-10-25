@@ -275,6 +275,7 @@ export interface InlineSpeedTieBreakRevision {
   revision: number;
   selectedPlayerIds: number[];
   reason: string;
+  trialOrderExceptionReason?: string | null;
   evidenceType?: InlineSpeedTieEvidenceType | null;
   evidenceReference?: string | null;
   trialIds?: number[];
@@ -286,6 +287,7 @@ export interface InlineSpeedTieBreak {
   sourceStage: 'FIRST';
   selectedPlayerIds: number[];
   reason: string;
+  trialOrderExceptionReason?: string | null;
   evidenceType?: InlineSpeedTieEvidenceType | null;
   evidenceReference?: string | null;
   trialIds?: number[];

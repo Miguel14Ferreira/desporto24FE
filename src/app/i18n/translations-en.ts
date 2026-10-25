@@ -1,5 +1,10 @@
 // Loaded only for users who choose English. Keep the original key/value table intact.
 export const EN: Record<string, string> = {
+  'communities.inlineSpeed.trialOrderWarning': 'The jury selection differs from the recorded additional trial placings',
+  'communities.inlineSpeed.trialOrderWarningHint': 'A skater excluded by this selection finished ahead of a selected skater in a recorded trial. The jury may decide differently, but must give a specific explanation for the exception.',
+  'communities.inlineSpeed.trialOrderExceptionReason': 'Official reason for overriding the trial finish order (20–500 characters)',
+  'communities.inlineSpeed.trialOrderExceptionRequired': 'The decision conflicts with the additional trial finish order. Give a specific explanation of 20 to 500 characters.',
+  'communities.inlineSpeed.trialOrderExceptionAudited': 'Jury-documented exception to recorded trial finish order',
   'communities.inlineSpeed.trialLinkHeading': 'Additional trials used in this ruling',
   'communities.inlineSpeed.trialLinkHint': 'Select only actual trials still valid for these source heats. Each revision preserves its own links (maximum 10).',
   'communities.inlineSpeed.trialLinkRequired': 'When using an additional trial as evidence, select at least one recorded, valid trial.',
