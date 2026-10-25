@@ -135,7 +135,7 @@
 
           @if (recurrence !== 'NONE') {
             <label>
-              <span>{{ 'createSession.recurrenceOccurrences' | t }}</span>
+              <span>{{ (recurrence === 'WEEKLY' ? 'createSession.recurrenceWeeks' : 'createSession.recurrenceOccurrences') | t }}</span>
               <input
                 type="number"
                 name="recurrenceOccurrences"
@@ -143,10 +143,19 @@
                 min="2"
                 max="52"
                 [disabled]="loading">
-              <small>{{ 'createSession.recurrenceOccurrencesHint' | t }}</small>
+              <small>{{ (recurrence === 'WEEKLY' ? 'createSession.recurrenceWeeksHint' : 'createSession.recurrenceOccurrencesHint') | t }}</small>
             </label>
           }
         </div>
+        @if (recurrence === 'WEEKLY') {
+          <p class="recurrence-plan-summary" role="status">
+            {{ 'createSession.recurrenceWeeklySummary' | t:{ count: recurrenceOccurrences } }}
+          </p>
+        } @else if (recurrence === 'BIWEEKLY') {
+          <p class="recurrence-plan-summary" role="status">
+            {{ 'createSession.recurrenceBiweeklySummary' | t:{ count: recurrenceOccurrences } }}
+          </p>
+        }
       }
 
       @if (communityId) {
@@ -175,7 +184,19 @@
               </label>
             }
           </div>
-          @if (registrationOpeningMode === 'MANUAL') {
+          @if (recurrence !== 'NONE' && registrationOpeningMode === 'IMMEDIATE') {
+            <p class="recurrence-plan-summary" role="status">
+              {{ 'createSession.callupAllImmediate' | t:{ count: recurrenceOccurrences } }}
+            </p>
+          } @else if (recurrence !== 'NONE' && registrationOpeningMode === 'SCHEDULED') {
+            <p class="recurrence-plan-summary" role="status">
+              {{ (recurrence === 'WEEKLY' ? 'createSession.callupEachScheduledWeekly' : 'createSession.callupEachScheduledBiweekly') | t }}
+            </p>
+          } @else if (recurrence !== 'NONE' && registrationOpeningMode === 'MANUAL') {
+            <p class="recurrence-plan-summary" role="status">
+              {{ 'createSession.callupEachManual' | t:{ count: recurrenceOccurrences } }}
+            </p>
+          } @else if (registrationOpeningMode === 'MANUAL') {
             <p>{{ 'createSession.callupManualHint' | t }}</p>
           }
         </section>
