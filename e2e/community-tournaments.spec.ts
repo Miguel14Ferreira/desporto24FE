@@ -1089,6 +1089,64 @@ test('Historical knockout browser QA: phase button jumps to the exact final acro
   expect(fixture.unmocked.filter(s => s.includes('match-archives'))).toEqual([]);
 });
 
+test('Historical CSV upload QA: preview, consent, archived knockout tournament and original fixtures', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'historical-import-flow');
+  await page.goto('/menu/communities/7?tab=ranking');
+
+  await page.getByRole('button', { name: /Partidas de torneios antigos/ }).click();
+  const csv = [
+    'Casa;Fora;Resultado;Data;Jornada',
+    'Águias;Lobos;3-0;2023-06-01;Quartos de final',
+    'CNG;Tigres;2-0;2023-06-02;Quartos de final',
+    'Leões;Dragões;1-0;2023-06-03;Quartos de final',
+    'Raios;Falcões;2-0;2023-06-04;Quartos de final',
+    'Águias;CNG;1-0;2023-06-05;Meias-finais',
+    'Leões;Raios;2-0;2023-06-06;Meias-finais',
+    'Águias;Leões;1-0;2023-06-07;Final'
+  ].join('\n') + '\n';
+  await page.locator('input[accept=".xlsx,.xls,.csv,.tsv"]')
+    .setInputFiles({ name: 'historico-partidas-qa.csv', mimeType: 'text/csv',
+      buffer: Buffer.from(csv, 'utf8') });
+  await page.getByRole('button', { name: 'Analisar ficheiro' }).click();
+  await expect(page.getByText('Folha ou conjunto de dados')).toBeVisible();
+  expect(fixture.actualCsvUploaded).toBe(true);
+  await page.getByRole('button', { name: 'Pré-visualizar partidas' }).click();
+  await expect(page.getByRole('region', { name: 'Pré-visualização de partidas históricas' })
+    .first()).toBeVisible();
+  expect(fixture.matchPreviewCalls).toBe(1);
+  expect(fixture.matchConfirmCalls).toBe(0);
+
+  // Upload inspection and preview must never write to an archive by themselves.
+  await page.getByLabel('Nome do histórico').fill('Taça importada QA');
+  await page.locator('.import-context select').first().selectOption('TEAM');
+  await page.locator('.historical-import-choice').nth(1).click();
+  await page.locator('.historical-tournament-options input').fill('Futebol');
+  await page.locator('.historical-tournament-options select').selectOption('KNOCKOUT');
+  const confirm = page.getByRole('button', { name: 'Criar torneio histórico' });
+  await expect(confirm).toBeDisabled();
+  expect(fixture.matchConfirmCalls).toBe(0);
+  await page.locator('.check-stat input[type="checkbox"]').check();
+  await confirm.click();
+
+  await expect(page.getByRole('status').filter({ hasText: 'Taça importada QA' })).toBeVisible();
+  expect(fixture.matchConfirmCalls).toBe(1);
+  expect(fixture.confirmedContext).toEqual({
+    title: 'Taça importada QA', entryType: 'TEAM',
+    createTournament: true, sport: 'Futebol', format: 'KNOCKOUT'
+  });
+  expect(fixture.savedMatchArchive?.rows).toHaveLength(7);
+  expect(fixture.savedMatchArchive?.rows.map(row => row.sourceRow))
+    .toEqual([2, 3, 4, 5, 6, 7, 8]);
+
+  await page.getByRole('button', { name: 'Ver em Competições' }).click();
+  await expect(page.getByRole('heading', { name: 'Taça importada QA' })).toBeVisible();
+  await expect(page.locator('.historical-phase-card')).toHaveCount(3);
+  await expect(page.locator('[data-historical-source-row="8"]')).toContainText('Águias');
+  await expect(page.locator('[data-historical-source-row="8"]')).toContainText('Leões');
+  expect(fixture.unmocked.filter(item => item.includes('/competition/import/')
+      || item.includes('/competition/match-archives'))).toEqual([]);
+});
+
 test('organizador abre Torneios e cria uma liga no navegador', async ({ page }) => {
   const state = await mockCommunityApi(page, 'OWNER', 'empty');
   await page.goto('/menu/communities/7?tab=tournaments');
