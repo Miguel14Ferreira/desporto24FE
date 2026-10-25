@@ -576,18 +576,18 @@
                         <div class="inbox-picker-gif-grid" role="group"
                           [attr.aria-label]="'chat.gifResults' | t">
                           @for (gif of gifResults; track gif.id) {
-                            <button type="button" [disabled]="!!gifSelectingId"
-                              [attr.aria-label]="gif.title || ('chat.gifSelect' | t)"
-                              [attr.title]="gif.title"
-                              (click)="chooseGif(gif)">
+                            <div class="inbox-gif-tile">
                               @if (gifAvailable === false) {
                                 <app-giphy-embed [id]="gif.id" [pageUrl]="gif.pageUrl"
                                   [compact]="true"></app-giphy-embed>
                               } @else {
-                                <img [src]="gif.previewUrl" [alt]="gif.title" loading="lazy" referrerpolicy="no-referrer">
+                                <img [src]="gif.previewUrl" [alt]="" loading="lazy" referrerpolicy="no-referrer">
                               }
-
-                            </button>
+                              <button type="button" class="inbox-gif-tile-select"
+                                [disabled]="!!gifSelectingId" [attr.title]="gif.title"
+                                [attr.aria-label]="gif.title || ('chat.gifSelect' | t)"
+                                (click)="chooseGif(gif)"></button>
+                            </div>
                           }
                         </div>
                         @if (!gifLoading && gifAvailable && !gifError && !gifResults.length) {
