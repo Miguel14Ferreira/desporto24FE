@@ -61,6 +61,9 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   private receiptSessionToken: string | null = null;
   private summaryTimer?: ReturnType<typeof setInterval>;
   private receiptTimer?: ReturnType<typeof setInterval>;
+  // A precise selected-session timer closes live previews at kickoff rather
+  // than waiting for the 45-second inbox summary refresh.
+  private sessionCutoffTimer?: ReturnType<typeof setTimeout>;
   /** Only a foreground inbox can acknowledge messages as actually viewed. */
   private isPageActive(): boolean {
     return document.visibilityState === 'visible' && document.hasFocus();
@@ -83,6 +86,9 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.clearAttachmentPreviews();
   }
   private readonly onPageActive = (): void => {
+    // Browser timers can be suspended during sleep/backgrounding. Re-evaluate
+    // the session's real kickoff before showing a previously loaded Blob.
+    this.scheduleSelectedSessionCutoff();
     // Never keep capturing microphone audio while another tab is foregrounded.
     if (!this.isPageActive()) {
       if (this.voiceRecording || this.voiceFinalizing) this.cancelVoiceRecording();
@@ -302,6 +308,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     document.removeEventListener('visibilitychange', this.onPageActive);
     if (this.summaryTimer) clearInterval(this.summaryTimer);
     if (this.receiptTimer) clearInterval(this.receiptTimer);
+    if (this.sessionCutoffTimer) clearTimeout(this.sessionCutoffTimer);
+    this.sessionCutoffTimer = undefined;
     this.cancelVoiceRecording();
     ++this.attachmentViewVersion;
     this.clearAttachmentPreviews();
@@ -496,6 +504,9 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
         }
       }
       if (discarded) this.persistPendingSends();
+      // Still using the previous selected row here: close any expired or
+      // revoked session and revoke its Blob URLs before replacing the list.
+      this.scheduleSelectedSessionCutoff();
       this.conversations = orderInbox(entries.map(item => ({
         ...item,
         latestText: existing.get(item.key)?.latestText,
@@ -504,6 +515,9 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
         unreadCount: existing.get(item.key)?.unreadCount,
         latestMessageId: existing.get(item.key)?.latestMessageId
       })));
+      // The server may have moved the kickoff since this chat was opened.
+      // Also revoke any open private previews if a session disappeared.
+      this.scheduleSelectedSessionCutoff();
       this.refreshSummaries(request);
       // Consume a link only once; a refresh must not override manual selection.
       this.openPendingDeepLink();
@@ -555,6 +569,58 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       || Date.now() < (this.sessionKickoffs.get(Number(target.id)) ?? 0);
   }
 
+  /**
+   * Enforce the server's pre-kickoff rule locally as well. The date is supplied
+   * by the authenticated sessions list; the backend remains authoritative.
+   */
+  private scheduleSelectedSessionCutoff(): void {
+    if (this.sessionCutoffTimer) clearTimeout(this.sessionCutoffTimer);
+    this.sessionCutoffTimer = undefined;
+    const conversation = this.selected;
+    if (!conversation || conversation.kind !== 'session') return;
+    const kickoff = this.sessionKickoffs.get(Number(conversation.id));
+    if (!Number.isFinite(kickoff) || (kickoff as number) <= Date.now()) {
+      this.closeSelectedSessionChat();
+      return;
+    }
+    const delay = (kickoff as number) - Date.now();
+    const key = conversation.key;
+    // JavaScript clamps very large timeouts; reschedule if clock changed.
+    this.sessionCutoffTimer = setTimeout(() => {
+      this.sessionCutoffTimer = undefined;
+      if (this.selectedKey === key) this.scheduleSelectedSessionCutoff();
+    }, Math.min(delay, 2_147_483_647));
+  }
+
+  private closeSelectedSessionChat(): void {
+    const conversation = this.selected;
+    if (!conversation || conversation.kind !== 'session') return;
+    this.typing.stop();
+    this.cancelVoiceRecording();
+    ++this.attachmentViewVersion; // Reject any authenticated Blob still in flight.
+    this.selectedAttachment = null;
+    this.attachmentReady = false;
+    this.clearAttachmentPreviews(); // Revoke images and stop audio playback.
+    this.drafts.delete(conversation.key);
+    this.replyDrafts.delete(conversation.key);
+    this.draft = '';
+    this.replyingTo = null;
+    this.emojiPickerOpen = false;
+    ++this.selectionVersion;
+    ++this.composerVersion;
+    ++this.historyLocateVersion;
+    ++this.peerReceiptVersion;
+    this.resetMessageSearch();
+    this.messages = [];
+    this.previewLoading = false;
+    this.historicalPreview = false;
+    this.composerAllowed = false;
+    this.composerAccessLoading = false;
+    this.selectedKey = null;
+    this.conversations = this.conversations.filter(item => item.key !== conversation.key);
+    this.sessionKickoffs.delete(Number(conversation.id));
+  }
+
   selectConversation(conversation: InboxConversation): void {
     if (conversation.key === this.selectedKey && !this.previewError) return;
     if (this.selectedKey) {
@@ -571,6 +637,9 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     ++this.attachmentViewVersion;
     this.clearAttachmentPreviews();
     this.selectedKey = conversation.key;
+    this.scheduleSelectedSessionCutoff();
+    // The session may have expired between clicking its row and selecting it.
+    if (this.selectedKey !== conversation.key) return;
     ++this.peerReceiptVersion;
     this.peerReadCursor = null;
     this.peerReceiptCheckedAt = 0;
