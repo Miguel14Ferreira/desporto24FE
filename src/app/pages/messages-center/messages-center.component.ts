@@ -28,7 +28,9 @@ import {
 } from './inbox.model';
 import { RecoverableSend, restorePendingSends, savePendingSends } from './pending-send-session';
 import { GifChoice, encodeGiphyText, findGiphy, readGifProviderKey, readGiphyText } from './gif-picker.client';
+import { ShareChoice, ShareKind, encodeShareMessage, readSharedMessage } from './share-message';
 import { GiphyEmbedComponent } from './giphy-embed.component';
+import { CURATED_GIPHY_GIFS } from './curated-gifs';
 
 export const VOICE_NOTE_MAX_DURATION_MS = 5 * 60_000;
 const VOICE_NOTE_AUDIO_BITRATE = 48_000;
@@ -91,6 +93,9 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.attachmentReady = false;
     this.selectedAttachment = null;
     this.selectedGif = null;
+    this.selectedShare = null;
+    this.closeSharePicker();
+    this.closeAttachmentMenu();
     ++this.mutationVersion;
     this.cancelMessageMutation();
     this.closeEmojiPicker();
@@ -129,6 +134,20 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   selectedAttachment: File | null = null;
   // GIPHY media is NOT copied to R2: only validated CDN URLs travel as chat text.
   selectedGif: GifChoice | null = null;
+  selectedShare: ShareChoice | null = null;
+  attachmentMenuOpen = false;
+  sharePickerOpen = false;
+  sharePickerLoading = false;
+  sharePickerError = false;
+  sharePickerTab: ShareKind = 'profile';
+  sharePickerSearch = '';
+  shareChoices: ShareChoice[] = [];
+  private sharePickerVersion = 0;
+  get visibleShareChoices(): ShareChoice[] {
+    const q = this.sharePickerSearch.trim().toLocaleLowerCase();
+    return this.shareChoices.filter(i => i.kind === this.sharePickerTab
+      && (!q || (i.title + ' ' + i.subtitle).toLocaleLowerCase().includes(q)));
+  }
   voiceRecording = false;
   voiceFinalizing = false;
   voiceElapsedSeconds = 0;
@@ -376,6 +395,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.sessionCutoffTimer = undefined;
     this.clearAttachmentRetry();
     this.closeEmojiPicker();
+    this.closeSharePicker();
+    this.closeAttachmentMenu();
     this.cancelVoiceRecording();
     ++this.attachmentViewVersion;
     this.clearAttachmentPreviews();
@@ -675,6 +696,9 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     ++this.attachmentViewVersion; // Reject any authenticated Blob still in flight.
     this.selectedAttachment = null;
     this.selectedGif = null;
+    this.selectedShare = null;
+    this.closeSharePicker();
+    this.closeAttachmentMenu();
     this.attachmentReady = false;
     this.clearAttachmentPreviews(); // Revoke images and stop audio playback.
     this.drafts.delete(conversation.key);
@@ -711,8 +735,11 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.typing.stop();
     this.cancelVoiceRecording();
     this.closeEmojiPicker();
+    this.closeSharePicker();
+    this.closeAttachmentMenu();
     this.selectedAttachment = null;
     this.selectedGif = null;
+    this.selectedShare = null;
     this.clearAttachmentRetry();
     this.attachmentReady = false;
     ++this.attachmentViewVersion;
@@ -1118,7 +1145,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   canEditSentMessage(message: InboxMessage): boolean {
     const date = Date.parse(message.createdAt);
     return this.canDeleteSentMessage(message) && !message.attachmentName
-      && !readGiphyText(message.text)
+      && !readGiphyText(message.text) && !readSharedMessage(message.text)
       && Number.isFinite(date) && Date.now() >= date
       && Date.now() - date <= 15 * 60_000;
   }
@@ -1266,10 +1293,11 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       && this.composerAllowed && !this.composerAccessLoading
       && !this.previewLoading && !this.previewError && !this.sending && !this.deliveryUncertain
       && !this.deliveryChecking && !this.voiceRecording && !this.voiceFinalizing
-      && (this.draft.trim().length > 0 || (this.attachmentControlsReady
-          && (!!this.selectedAttachment || !!this.selectedGif)))
+      && (this.draft.trim().length > 0 || !!this.selectedShare
+          || (this.attachmentControlsReady && (!!this.selectedAttachment || !!this.selectedGif)))
       && this.draft.trim().length <= 2000
-      && (!this.selectedGif || !!encodeGiphyText(this.selectedGif, this.draft.trim())));
+      && (!this.selectedGif || !!encodeGiphyText(this.selectedGif, this.draft.trim()))
+      && (!this.selectedShare || !!encodeShareMessage(this.selectedShare, this.draft.trim())));
   }
 
   replyToMessage(message: InboxMessage): void {
@@ -1345,6 +1373,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.clearVoicePreview();
     this.selectedAttachment = file;
     this.selectedGif = null;
+    this.selectedShare = null;
+    this.closeAttachmentMenu();
     this.composerError = '';
     this.closeEmojiPicker();
   }
@@ -1705,8 +1735,101 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       });
   }
 
+  toggleAttachmentMenu(): void {
+    if (!this.canEditDraft() || !this.isAttachmentIdentityCurrent()) return;
+    this.closeEmojiPicker();
+    this.closeSharePicker();
+    this.attachmentMenuOpen = !this.attachmentMenuOpen;
+  }
+  closeAttachmentMenu(): void { this.attachmentMenuOpen = false; }
+  closeSharePicker(): void {
+    ++this.sharePickerVersion;
+    this.sharePickerOpen = false;
+    this.sharePickerLoading = false;
+    this.sharePickerSearch = '';
+    this.shareChoices = [];
+  }
+  openSharePicker(): void {
+    if (!this.canEditDraft() || !this.isAttachmentIdentityCurrent()) return;
+    this.closeAttachmentMenu();
+    this.closeEmojiPicker();
+    this.sharePickerOpen = true;
+    this.sharePickerTab = 'profile';
+    this.sharePickerSearch = '';
+    this.sharePickerError = false;
+    this.sharePickerLoading = true;
+    const version = ++this.sharePickerVersion;
+    const selectedKey = this.selectedKey;
+    forkJoin({
+      people: this.contacts.friends().pipe(timeout(10000), catchError(() => of([]))),
+      communities: this.groups.mine().pipe(timeout(10000), catchError(() => of([]))),
+      sessions: this.sessions.mine().pipe(timeout(10000), catchError(() =>
+        of({created:[],joined:[],waitlisted:[]})))
+    }).subscribe({
+      next: ({people, communities, sessions}) => {
+        if (!this.sharePickerOpen || version !== this.sharePickerVersion
+            || selectedKey !== this.selectedKey || !this.isAttachmentIdentityCurrent()) return;
+        const friends: ShareChoice[] = people
+          .filter(person => !person.chatBlocked && !person.blockedByMe
+            && person.username.toLowerCase() !== this.currentUsername.toLowerCase())
+          .map(person => ({kind:'profile' as const,id:person.username,
+            title:person.nickname || person.fullName || person.username, subtitle:'@'+person.username}));
+        // Let members share their own public profile even with no friends yet.
+        if (this.currentUsername) friends.unshift({
+          kind:'profile', id:this.currentUsername, title:'@'+this.currentUsername,
+          subtitle:t('chat.shareMyProfile')
+        });
+        const included = new Set<number>();
+        const events: ShareChoice[] = [...sessions.created,...sessions.joined]
+          .filter(session => {
+            if (included.has(session.id) || session.privateGame || session.audience === 'COMMUNITY_ONLY'
+                || !Number.isFinite(Date.parse(session.gameDate))
+                || Date.parse(session.gameDate) <= Date.now()
+                || ['CANCELLED','COMPLETED','NOT_OCCURRED'].includes(session.status)) return false;
+            included.add(session.id);
+            return true;
+          }).map(session => ({kind:'session' as const,id:String(session.id),
+            title:session.sport+' · '+session.city,
+            subtitle:new Date(session.gameDate).toLocaleDateString('pt-PT')}));
+        const groups: ShareChoice[] = communities
+          .filter(group => group.visibility === 'PUBLIC')
+          .map(group => ({kind:'community' as const,id:String(group.id),
+            title:group.name,subtitle:group.sport||''}));
+        this.shareChoices = [...friends,...events,...groups];
+        this.sharePickerLoading = false;
+      },
+      error: () => { if(version===this.sharePickerVersion){
+        this.sharePickerLoading=false;this.sharePickerError=true;
+      }}
+    });
+  }
+  selectShareChoice(choice: ShareChoice): void {
+    if (!this.sharePickerOpen || !this.isAttachmentIdentityCurrent() || !this.canEditDraft()
+        || !this.shareChoices.some(item => item.kind === choice.kind && item.id === choice.id)
+        || !encodeShareMessage(choice,this.draft.trim())) return;
+    this.selectedShare = choice;
+    this.selectedAttachment = null;
+    this.selectedGif = null;
+    this.clearVoicePreview();
+    this.composerError = '';
+    this.closeSharePicker();
+  }
+  removeSelectedShare(): void {
+    if (!this.sending && !this.deliveryUncertain) this.selectedShare = null;
+  }
+  readSharedMessage(text: string) { return readSharedMessage(text); }
+  displayMessagePreview(value: string | null | undefined): string {
+    if (!value) return '';
+    const shared = readSharedMessage(value);
+    if (shared) return t('chat.shareType.' + shared.kind) + ': ' + shared.title;
+    if (readGiphyText(value)) return 'GIF · GIPHY';
+    return value;
+  }
+
   toggleEmojiPicker(): void {
     if (!this.canEditDraft()) return;
+    this.closeSharePicker();
+    this.closeAttachmentMenu();
     if (this.emojiPickerOpen && this.pickerTab === 'emoji') {
       this.closeEmojiPicker();
     } else {
@@ -1726,6 +1849,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.pickerTab = 'gif';
     if (this.gifAvailable === null) void this.configureGifPicker();
     else if (this.gifAvailable && this.gifResults.length === 0) void this.searchGifResults(0);
+    else if (this.gifAvailable === false) this.gifResults = [...CURATED_GIPHY_GIFS];
   }
 
   selectPickerTab(tab: 'emoji' | 'gif'): void {
@@ -1734,6 +1858,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       this.emojiPickerOpen = true;
       this.pickerTab = 'gif';
       if (this.gifAvailable === null) void this.configureGifPicker();
+      else if (this.gifAvailable === false) this.gifResults = [...CURATED_GIPHY_GIFS];
       else if (!this.gifLoading && this.gifResults.length === 0)
         void this.searchGifResults(0);
     } else {
@@ -1780,6 +1905,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       this.gifApiKey = key;
       this.gifAvailable = !!key;
       if (key) await this.searchGifResults(0);
+      else this.gifResults = [...CURATED_GIPHY_GIFS];
     } catch {
       if (generation === this.gifRequestVersion && !controller.signal.aborted)
         this.gifAvailable = false;
@@ -1845,6 +1971,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       return;
     }
     this.selectedGif = choice;
+    this.selectedShare = null;
     this.selectedAttachment = null;
     this.clearVoicePreview();
     this.composerError = '';
@@ -1892,6 +2019,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
 
   sendMessage(): void {
     this.closeEmojiPicker();
+    this.closeSharePicker();
+    this.closeAttachmentMenu();
     this.typing.stop();
     const conversation = this.selected;
     if (!conversation || !this.canSendMessage()) return;
@@ -1902,7 +2031,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     const caption = this.draft.trim();
     // Server sends the same synthesized text for an attachment without a caption.
     const name = file?.name.replace(/\\/g, '/').split('/').pop()?.replace(/[\\x00-\\x1f\\x7f]/g, '').trim().slice(-160);
-    const text = this.selectedGif ? encodeGiphyText(this.selectedGif, caption)
+    const text = this.selectedShare ? encodeShareMessage(this.selectedShare, caption)
+      : this.selectedGif ? encodeGiphyText(this.selectedGif, caption)
       : file && !caption ? '📎 ' + (name || 'anexo') : caption;
     const replyId = this.replyingTo?.key === key ? this.replyingTo.id : null;
     const pending = { key, text, replyToMessageId: replyId,
@@ -1967,6 +2097,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
         if (this.historicalPreview) this.returnToRecent();
         this.selectedAttachment = null;
         this.selectedGif = null;
+        this.selectedShare = null;
         this.clearVoicePreview();
         this.draft = '';
         this.replyingTo = null;
