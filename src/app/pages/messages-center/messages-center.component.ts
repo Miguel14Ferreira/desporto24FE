@@ -1293,8 +1293,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       && this.composerAllowed && !this.composerAccessLoading
       && !this.previewLoading && !this.previewError && !this.sending && !this.deliveryUncertain
       && !this.deliveryChecking && !this.voiceRecording && !this.voiceFinalizing
-      && (this.draft.trim().length > 0 || (this.attachmentControlsReady
-          && (!!this.selectedAttachment || !!this.selectedGif || !!this.selectedShare)))
+      && (this.draft.trim().length > 0 || !!this.selectedShare
+          || (this.attachmentControlsReady && (!!this.selectedAttachment || !!this.selectedGif)))
       && this.draft.trim().length <= 2000
       && (!this.selectedGif || !!encodeGiphyText(this.selectedGif, this.draft.trim()))
       && (!this.selectedShare || !!encodeShareMessage(this.selectedShare, this.draft.trim())));
@@ -1736,7 +1736,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   }
 
   toggleAttachmentMenu(): void {
-    if (!this.canEditDraft() || !this.attachmentControlsReady) return;
+    if (!this.canEditDraft() || !this.isAttachmentIdentityCurrent()) return;
     this.closeEmojiPicker();
     this.closeSharePicker();
     this.attachmentMenuOpen = !this.attachmentMenuOpen;
@@ -1750,7 +1750,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.shareChoices = [];
   }
   openSharePicker(): void {
-    if (!this.canEditDraft() || !this.attachmentControlsReady) return;
+    if (!this.canEditDraft() || !this.isAttachmentIdentityCurrent()) return;
     this.closeAttachmentMenu();
     this.closeEmojiPicker();
     this.sharePickerOpen = true;
@@ -1768,7 +1768,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     }).subscribe({
       next: ({people, communities, sessions}) => {
         if (!this.sharePickerOpen || version !== this.sharePickerVersion
-            || selectedKey !== this.selectedKey || !this.attachmentControlsReady) return;
+            || selectedKey !== this.selectedKey || !this.isAttachmentIdentityCurrent()) return;
         const friends: ShareChoice[] = people
           .filter(person => !person.chatBlocked && !person.blockedByMe
             && person.username.toLowerCase() !== this.currentUsername.toLowerCase())
@@ -1804,7 +1804,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     });
   }
   selectShareChoice(choice: ShareChoice): void {
-    if (!this.sharePickerOpen || !this.attachmentControlsReady || !this.canEditDraft()
+    if (!this.sharePickerOpen || !this.isAttachmentIdentityCurrent() || !this.canEditDraft()
         || !this.shareChoices.some(item => item.kind === choice.kind && item.id === choice.id)
         || !encodeShareMessage(choice,this.draft.trim())) return;
     this.selectedShare = choice;
@@ -1821,6 +1821,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
 
   toggleEmojiPicker(): void {
     if (!this.canEditDraft()) return;
+    this.closeSharePicker();
+    this.closeAttachmentMenu();
     if (this.emojiPickerOpen && this.pickerTab === 'emoji') {
       this.closeEmojiPicker();
     } else {
