@@ -4,7 +4,7 @@
       <p class="tournament-eyebrow">{{ 'communities.tournaments.overview.eyebrow' | t }}</p>
       <h3>{{ 'communities.tournaments.overview.title' | t }}</h3>
       <p>{{ 'communities.tournaments.overview.description' | t }}</p>
-      @if (selected && !isTeamCompetition) {
+      @if (selected && !isTeamCompetition && !isInlineSpeedCompetition) {
         <p class="t-sport-note" role="note">{{ scoring.note }}</p>
       }
     </div>
@@ -79,11 +79,11 @@
       <div class="create-tournament-heading">
         <div class="create-tournament-intro">
           <p class="tournament-eyebrow">{{ 'communities.tournaments.createUi.new' | t }}</p>
-          <h4>{{ (showTeamCreate ? 'communities.tournaments.createUi.teamTitle' : 'communities.tournaments.createUi.individualTitle') | t }}</h4>
+          <h4>{{ (showTeamCreate ? 'communities.tournaments.createUi.teamTitle' : (isInlineSpeedDraft ? 'communities.inlineSpeed.createTitle' : 'communities.tournaments.createUi.individualTitle')) | t }}</h4>
           @if (showTeamCreate) {
             <p>{{ 'communities.tournaments.createUi.teamIntro' | t }}</p>
           } @else {
-            <p>{{ 'communities.tournaments.createUi.individualIntro' | t }}</p>
+            <p>{{ (isInlineSpeedDraft ? 'communities.inlineSpeed.createIntro' : 'communities.tournaments.createUi.individualIntro') | t }}</p>
           }
         </div>
         <span class="create-kind-pill">{{ (showTeamCreate ? 'communities.tournaments.createUi.formatPill' : 'communities.tournaments.createUi.individualPill') | t }}</span>
@@ -232,20 +232,25 @@
             <div class="create-step-heading">
               <span class="create-step-index" aria-hidden="true">{{ showTeamCreate ? '03' : '02' }}</span>
               <div>
-                <h5>{{ 'communities.tournaments.classificationTitle' | t }}</h5>
-                <p>{{ 'communities.tournaments.classificationText' | t }}</p>
+                <h5>{{ (isInlineSpeedDraft ? 'communities.inlineSpeed.createRulesTitle' : 'communities.tournaments.classificationTitle') | t }}</h5>
+                <p>{{ (isInlineSpeedDraft ? 'communities.inlineSpeed.createRulesHint' : 'communities.tournaments.classificationText') | t }}</p>
               </div>
             </div>
             <div class="classification-profile" [class.classification-notice]="!isSportFormatSupported"
               role="status">
-              <strong>{{ classificationProfile.heading }}</strong>
+              <strong>{{ isInlineSpeedDraft ? ('communities.inlineSpeed.createFormat' | t) : classificationProfile.heading }}</strong>
               <p>{{ sportFormatWarning }}</p>
-              <small>{{ classificationProfile.fields }}</small>
+              <small>{{ isInlineSpeedDraft ? ('communities.inlineSpeed.createFields' | t) : classificationProfile.fields }}</small>
               @if (!isSportFormatSupported) {
                 <p>{{ 'communities.tournaments.createUi.unsupportedLong' | t }}</p>
               }
             </div>
-            @if (isRaceChampionshipDraft) {
+            @if (isInlineSpeedDraft) {
+              <div class="classification-fixed-points" role="note">
+                <strong>{{ 'communities.inlineSpeed.createNoPointsTitle' | t }}</strong>
+                <p>{{ 'communities.inlineSpeed.createNoPointsDescription' | t }}</p>
+              </div>
+            } @else if (isRaceChampionshipDraft) {
               <div class="classification-fixed-points" role="note">
                 <strong>{{ raceSportLabel(sportDraft) }} · {{ 'communities.karting.creationTitle' | t }}</strong>
                 <p>{{ 'communities.karting.creationHint' | t }}</p>
@@ -345,13 +350,15 @@
             (click)="showIndividualCreate = false; showTeamCreate = false; showGuide = true">{{ 'communities.tournaments.createUi.back' | t }}</button>
         <button type="button" class="t-btn t-btn-primary"
           [disabled]="busy || !isSportFormatSupported
-            || (teamFormatDraft !== 'KNOCKOUT' && !validPointRules)
+            || (teamFormatDraft !== 'KNOCKOUT' && !validPointRules && !isInlineSpeedDraft)
             || nameDraft.trim().length < 2 || !sportDraft
 "
           (click)="showTeamCreate ? createTeamCompetition() : create()">
           {{ !isSportFormatSupported ? ('communities.tournaments.createUi.createButtonUnavailable' | t)
               : (showTeamCreate ? ('communities.tournaments.createUi.createButtonTeams' | t)
-                  : (isRaceChampionshipDraft ? ('communities.karting.createButton' | t) : ('communities.tournaments.createUi.createButtonIndividual' | t))) }}
+                  : (isInlineSpeedDraft ? ('communities.inlineSpeed.createButton' | t)
+                    : (isRaceChampionshipDraft ? ('communities.karting.createButton' | t)
+                    : ('communities.tournaments.createUi.createButtonIndividual' | t)))) }}
         </button>
         </div>
       </div>
@@ -378,8 +385,9 @@
           }
           <small>{{ tournament.sport || ('communities.tournaments.overview.sportUndefined' | t) }} ·
               {{ (tournament.entryType === 'TEAM' ? 'communities.tournaments.overview.teamFormat' : 'communities.tournaments.overview.individualTitle') | t }} ·
-              {{ tournament.entryType === 'TEAM' && tournament.status === 'DRAFT'
-                  ? ('communities.tournaments.detailUi.preparing' | t) : formatStatus(tournament.status) }}</small>
+              {{ isInlineSpeedTournament(tournament) ? speedTournamentStatus(tournament.status)
+                  : (tournament.entryType === 'TEAM' && tournament.status === 'DRAFT'
+                    ? ('communities.tournaments.detailUi.preparing' | t) : formatStatus(tournament.status)) }}</small>
         </button>
       }
       @if (hasKartingCompetitions) {
@@ -433,7 +441,9 @@
         <header class="tournament-heading">
           <div>
             <span class="tournament-state" [class.is-finished]="selected.status === 'COMPLETED'">
-              {{ isTeamCompetition && selected.status === 'DRAFT' ? ('communities.tournaments.detailUi.preparing' | t) : formatStatus(selected.status) }}
+              {{ isInlineSpeedCompetition ? speedTournamentStatus(selected.status)
+                : (isTeamCompetition && selected.status === 'DRAFT'
+                  ? ('communities.tournaments.detailUi.preparing' | t) : formatStatus(selected.status)) }}
             </span>
             <h4>{{ selected.name }}</h4>
             <span class="t-tournament-sport">{{ selected.sport || ('communities.tournaments.overview.sportUndefined' | t) }}</span>
@@ -455,7 +465,9 @@
                 <p>{{ 'communities.tournaments.detailUi.tiePriority' | t:{criterion:teamTieBreakLabel(selected.teamTieBreakPriority)} }}</p>
               }
             } @else {
-              @if (isRaceCompetition) {
+              @if (isInlineSpeedCompetition) {
+                <p>{{ 'communities.inlineSpeed.detailSummary' | t }}</p>
+              } @else if (isRaceCompetition) {
                 <p>{{ raceSportLabel(selected.sport) }} · {{ 'communities.karting.title' | t }}</p>
               } @else if (isChessTournament) {
                 <p>{{ 'communities.tournaments.detailUi.chessPoints' | t }}</p>
@@ -1168,7 +1180,7 @@
                 <div class="race-available">
                   <h6>{{ 'communities.inlineSpeed.addHeat' | t }}</h6>
                   @if (!speedOverview.availableHeats.length) {
-                    <p class="t-muted">{{ 'communities.inlineSpeed.noAvailableHeats' | t }}</p>
+                    <p class="t-muted">{{ 'communities.inlineSpeed.noAvailableHeatsDetailed' | t }}</p>
                   }
                   @for (heat of speedOverview.availableHeats; track heat.roundId) {
                     <div class="race-available-row">
