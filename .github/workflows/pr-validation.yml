@@ -88,7 +88,10 @@ jobs:
       # two synthetic identities and two independent seasons. Never production.
       - name: Install Playwright for Olympic Sprint browser QA
         if: ${{ startsWith(github.head_ref, 'qa/track-sprint-olympic-browser-') }}
-        run: npm install --no-save --package-lock=false @playwright/test@1.56.1
+        run: |
+          npm install --no-save --package-lock=false @playwright/test@1.56.1
+          # The system Chrome is already on GitHub runners; video/trace requires ffmpeg.
+          npx playwright install ffmpeg
       - name: Validate Olympic repechages, 5th–8th places and season isolation
         if: ${{ startsWith(github.head_ref, 'qa/track-sprint-olympic-browser-') }}
         env:
