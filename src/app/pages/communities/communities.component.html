@@ -1514,7 +1514,13 @@
                                         <small>{{ 'communities.trackCycling.incidentOfficialReference' | t }}:
                                           {{ incident.awardReference }} · {{ incident.awardConfirmedBy }}
                                         </small>
-                                        <small>{{ 'communities.trackCycling.awardNotRaced' | t }}</small>
+                                        @if (sprintIsBo3Award(incident)) {
+                                          <small>{{ 'communities.trackCycling.awardHeatNumber' | t }}:
+                                            {{ incident.heatNumber }}</small>
+                                          <small>{{ 'communities.trackCycling.awardBo3NotSeries' | t }}</small>
+                                        } @else {
+                                          <small>{{ 'communities.trackCycling.awardNotRaced' | t }}</small>
+                                        }
                                       }
                                       @if (incident.status === 'RESTART_AUTHORIZED') {
                                         <p>{{ 'communities.trackCycling.rerunOrder' | t }}:
@@ -1540,7 +1546,9 @@
                                     @if (sprintAwardBracketId === bracket.id
                                           && sprintAwardIncidentId === incident.id) {
                                       <div class="round-meta-form">
-                                        <small>{{ 'communities.trackCycling.awardExplain' | t }}</small>
+                                        <small>{{ (sprintIsBo3Award(incident)
+                                          ? 'communities.trackCycling.awardBo3Explain'
+                                          : 'communities.trackCycling.awardExplain') | t }}</small>
                                         <label>
                                           <span>{{ 'communities.trackCycling.awardWinner' | t }}</span>
                                           <select [(ngModel)]="sprintAwardWinner">
@@ -1558,7 +1566,13 @@
                                           <span>{{ 'communities.trackCycling.incidentDecisionReason' | t }}</span>
                                           <textarea [(ngModel)]="sprintAwardReason" maxlength="500"></textarea>
                                         </label>
-                                        <small>{{ 'communities.trackCycling.awardNotRaced' | t }}</small>
+                                        @if (sprintIsBo3Award(incident)) {
+                                          <small>{{ 'communities.trackCycling.awardHeatNumber' | t }}:
+                                            {{ incident.heatNumber }}</small>
+                                          <small>{{ 'communities.trackCycling.awardBo3NotSeries' | t }}</small>
+                                        } @else {
+                                          <small>{{ 'communities.trackCycling.awardNotRaced' | t }}</small>
+                                        }
                                         <button class="btn btn-primary" type="button"
                                           (click)="saveSprintOfficialAward()"
                                           [disabled]="sprintIncidentSaving || !sprintAwardWinner

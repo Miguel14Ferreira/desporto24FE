@@ -2650,17 +2650,27 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     });
   }
 
+  sprintIsBo3Award(incident: TrackSprintIncident): boolean {
+    return /^SP[1-9][0-9]*-(Q[1-4]|S[1-2]|B|G)$/.test(incident.seriesKey);
+  }
+
   sprintCanConfirmOfficialAward(bracket: TrackSprintBracketOverview,
     incident: TrackSprintIncident): boolean {
     if (bracket.format !== 'OLYMPIC_TWENTY_FOUR_REPECHAGE'
         || bracket.interruption || incident.status !== 'ADJUDICATION_REQUIRED'
-        || incident.incidentType !== 'FALL' || incident.heatNumber !== 1
-        || !['RELEGATION', 'DISQUALIFICATION'].includes(incident.sanctionType || '')
-        || !/^SP[1-9][0-9]*-(A(?:[1-9]|1[0-2])|C[1-8]|E[1-6]|V[1-4])$/
-            .test(incident.seriesKey)) return false;
+        || incident.incidentType !== 'FALL'
+        || !['RELEGATION','DISQUALIFICATION'].includes(incident.sanctionType || '')) return false;
+    const single=incident.heatNumber===1
+      && /^SP[1-9][0-9]*-(A(?:[1-9]|1[0-2])|C[1-8]|E[1-6]|V[1-4])$/
+          .test(incident.seriesKey);
+    const bo3=this.sprintIsBo3Award(incident)
+      && incident.sanctionType==='RELEGATION'
+      && incident.heatNumber>=1 && incident.heatNumber<=3;
+    if(!single&&!bo3) return false;
     const match=bracket.matches.find(m=>m.seriesKey===incident.seriesKey);
-    return !!match && match.status === 'READY' && !!match.riderA && !!match.riderB
-      && !match.riderC && !match.riderD
+    return !!match
+      && (bo3 ? ['READY','IN_PROGRESS'].includes(match.status) : match.status==='READY')
+      && !!match.riderA && !!match.riderB && !match.riderC && !match.riderD
       && [match.riderA,match.riderB].includes(incident.sanctionedUsername || '');
   }
 
