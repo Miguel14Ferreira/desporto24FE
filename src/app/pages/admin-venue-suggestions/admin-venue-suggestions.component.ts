@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, Optional } from '@angular/core';
 import { Subject, takeUntil, timeout, finalize } from 'rxjs';
 import {
   AdminVenueSuggestion, AdminVenueSuggestionsService
