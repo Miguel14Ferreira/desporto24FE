@@ -869,6 +869,55 @@ describe('Unified Jynlo message center', () => {
     expect(player.muted).toBeFalse();
   });
 
+  it('pauses the preceding voice note when another begins playback', () => {
+    const peer = item('direct', 'bea');
+    component.conversations = [peer];
+    component.selectedKey = peer.key;
+    component.attachmentPreviews.set(81, 'blob:voice-one');
+    component.attachmentPreviews.set(82, 'blob:voice-two');
+    const first = {
+      paused: false, ended: false, duration: 30, currentTime: 6,
+      pause: jasmine.createSpy('firstPause')
+    };
+    first.pause.and.callFake(() => { first.paused = true; });
+    const second = {
+      paused: true, ended: false, duration: 45, currentTime: 2,
+      pause: jasmine.createSpy('secondPause')
+    };
+    second.pause.and.callFake(() => { second.paused = true; });
+    component.onVoiceReady({...message(peer.key, 81), attachmentName: '1.webm'}, first as unknown as HTMLAudioElement);
+    component.onVoiceReady({...message(peer.key, 82), attachmentName: '2.webm'}, second as unknown as HTMLAudioElement);
+    component.onVoicePlaybackEvent(81, first as unknown as HTMLAudioElement);
+    expect(component.voicePlaying.has(81)).toBeTrue();
+    second.paused = false; // The second HTMLAudioElement has just emitted "playing".
+    component.onVoicePlaybackEvent(82, second as unknown as HTMLAudioElement);
+    expect(first.pause).toHaveBeenCalledTimes(1);
+    expect(second.pause).not.toHaveBeenCalled();
+    expect(component.voicePlaying.has(81)).toBeFalse();
+    expect(component.voicePlaying.has(82)).toBeTrue();
+    // Position remains available for later resuming, without a second download.
+    expect(component.voiceTimeLabel(81)).toBe('0:06 / 0:30');
+    component.onVoicePlaybackEvent(81, first as unknown as HTMLAudioElement);
+    expect(component.voicePlaying.has(82)).toBeTrue();
+  });
+
+  it('ignores delayed voice playback events after private previews were removed', () => {
+    const peer = item('direct', 'bea');
+    component.conversations = [peer];
+    component.selectedKey = peer.key;
+    const player = {
+      paused: false, ended: false, duration: 10, currentTime: 0,
+      pause: jasmine.createSpy('pause')
+    };
+    player.pause.and.callFake(() => { player.paused = true; });
+    component.attachmentPreviews.set(83, 'blob:private');
+    component.onVoiceReady({...message(peer.key, 83)}, player as unknown as HTMLAudioElement);
+    component.attachmentPreviews.delete(83);
+    component.onVoicePlaybackEvent(83, player as unknown as HTMLAudioElement);
+    expect(player.pause).toHaveBeenCalledTimes(1);
+    expect(component.voicePlaying.has(83)).toBeFalse();
+  });
+
   it('starts voice playback only after authorized download, then releases it on chat change', () => {
     const peer = item('direct','bea');
     const note = {...message(peer.key, 77), attachmentName:'voz.webm',
