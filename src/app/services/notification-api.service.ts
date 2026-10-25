@@ -5,6 +5,13 @@ import { Observable } from 'rxjs';
 import { environment } from 'src/environment/environment';
 import { AppNotification } from '../pages/model/app-notification';
 
+export interface NotificationPreferences {
+  inAppEnabled: boolean;
+  emailEnabled: boolean;
+  disabledInAppTypes: string[];
+  disabledEmailTypes: string[];
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -12,6 +19,16 @@ export class NotificationApiService {
   private readonly baseUrl = environment.apiUrl + '/api/notifications';
 
   constructor(private http: HttpClient) {}
+
+  preferences(): Observable<NotificationPreferences> {
+    return this.http.get<NotificationPreferences>(this.baseUrl + '/me/preferences');
+  }
+
+  updatePreferences(settings: NotificationPreferences): Observable<NotificationPreferences> {
+    return this.http.put<NotificationPreferences>(
+      this.baseUrl + '/me/preferences', settings
+    );
+  }
 
   mine(): Observable<AppNotification[]> {
     return this.http.get<AppNotification[]>(this.baseUrl + '/me');
