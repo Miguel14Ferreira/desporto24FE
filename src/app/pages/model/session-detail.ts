@@ -14,4 +14,6 @@ export interface SessionDetail extends SessionSummary {
   problemDetails?: string | null;
   communityId?: number | null;
   canSharePublicly?: boolean;
+  registrationOpeningMode?: 'IMMEDIATE' | 'SCHEDULED' | 'MANUAL' | null;
+  registrationOpensAt?: string | null;
 }

@@ -149,6 +149,38 @@
         </div>
       }
 
+      @if (communityId) {
+        <section class="venue-section" aria-label="Convocatória">
+          <div class="venue-heading">
+            <div>
+              <span class="section-kicker">{{ 'createSession.callupTitle' | t }}</span>
+              <p>{{ 'createSession.callupHint' | t }}</p>
+            </div>
+          </div>
+          <div class="form-grid">
+            <label>
+              <span>{{ 'createSession.callupMode' | t }}</span>
+              <select name="registrationOpeningMode" [(ngModel)]="registrationOpeningMode" [disabled]="loading">
+                <option value="IMMEDIATE">{{ 'createSession.callupImmediate' | t }}</option>
+                <option value="SCHEDULED">{{ 'createSession.callupScheduled' | t }}</option>
+                <option value="MANUAL">{{ 'createSession.callupManual' | t }}</option>
+              </select>
+            </label>
+            @if (registrationOpeningMode === 'SCHEDULED') {
+              <label>
+                <span>{{ 'createSession.callupOpeningTime' | t }}</span>
+                <input type="datetime-local" name="registrationOpensAt"
+                  [(ngModel)]="registrationOpensAt" [disabled]="loading" required>
+                <small>{{ 'createSession.callupOpeningTimeHint' | t }}</small>
+              </label>
+            }
+          </div>
+          @if (registrationOpeningMode === 'MANUAL') {
+            <p>{{ 'createSession.callupManualHint' | t }}</p>
+          }
+        </section>
+      }
+
       <section class="venue-section">
         <div class="venue-heading">
           <div>

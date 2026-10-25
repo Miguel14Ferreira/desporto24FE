@@ -14,4 +14,6 @@ export interface CreateSessionRequest {
   venueId?: number | null;
   recurrence?: 'NONE' | 'WEEKLY' | 'BIWEEKLY';
   recurrenceOccurrences?: number | null;
+  registrationOpeningMode?: 'IMMEDIATE' | 'SCHEDULED' | 'MANUAL';
+  registrationOpensAt?: string | null;
 }
