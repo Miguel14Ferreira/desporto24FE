@@ -336,7 +336,7 @@ const PT: Dictionary = {
   'chat.pickerClose': 'Fechar seletor',
   'chat.gifSearch': 'Pesquisar GIFs via GIPHY',
   'chat.gifCategories': 'Categorias de GIFs',
-  'chat.gifNotConfigured': 'A pesquisa de GIFs ainda não está ativa. Podes continuar a enviar GIFs do dispositivo.',
+  'chat.gifNotConfigured': 'Pesquisa online ainda indisponível. Escolhe uma reação animada abaixo ou envia um GIF do dispositivo.',
   'chat.gifLoadFailed': 'Não foi possível carregar GIFs. Tenta novamente.',
   'chat.gifLoading': 'A procurar GIFs…',
   'chat.gifResults': 'Resultados de GIFs',
