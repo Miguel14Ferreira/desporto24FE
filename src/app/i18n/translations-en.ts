@@ -423,6 +423,8 @@ export const EN: Record<string, string> = {
   'login.resendIn': 'Resend available in {{seconds}}s',
   'login.username': 'Username',
   'login.usernamePlaceholder': 'Your username',
+  'login.identifier': 'Username, email or mobile number',
+  'login.identifierPlaceholder': 'Your username, email or mobile number',
   'login.password': 'Password',
   'login.passwordPlaceholder': 'Your password',
   'login.enter': 'Sign in',
@@ -3778,7 +3780,7 @@ export const EN: Record<string, string> = {
   'feedback.mfa.resent': 'Challenge renewed. Use a current code from your Authenticator app.',
   'feedback.mfa.resendError': 'Could not renew the challenge. Try again later.',
 
-  'feedback.login.required': 'Enter your username and password.',
+  'feedback.login.required': 'Enter your username, email or mobile number and password.',
   'feedback.login.noChallenge': 'The server did not return a valid MFA challenge.',
   'feedback.login.noToken': 'The server did not return an authentication token.',
   'feedback.login.error': 'We could not sign you in. Check your credentials.',
