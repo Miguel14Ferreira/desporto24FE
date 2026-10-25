@@ -88,7 +88,8 @@ import {
   HistoricalPlayerCandidate,
   HistoricalPlayerLink,
   TrackSprintBracketOverview,
-  TrackSprintBracketMatch
+  TrackSprintBracketMatch,
+  TrackSprintIncident
 } from '../../services/community-groups.service';
 import { CommunityService } from '../../services/community.service';
 import { CommunityTournamentsService } from '../../services/community-tournaments.service';
@@ -152,6 +153,17 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   sprintBracketSaving = false;
   sprintBracketLoading = false;
   sprintBracketError = '';
+  sprintIncidentSaving = false;
+  sprintIncidentSeriesKey: string | null = null;
+  sprintIncidentBracketId: number | null = null;
+  sprintIncidentType: TrackSprintIncident['incidentType'] = 'OTHER';
+  sprintIncidentDetails = '';
+  sprintDecisionIncidentId: number | null = null;
+  sprintDecisionBracketId: number | null = null;
+  sprintDecisionType: 'RESTART_REQUIRED' | 'OFFICIAL_RESULT_TO_RECORD' = 'RESTART_REQUIRED';
+  sprintDecisionReference = '';
+  sprintDecisionReason = '';
+  sprintIncidentError = '';
   private sprintBracketRequestVersion = 0;
   raceRuleSport: string | null = null;
   raceRulePoints = '25,18,15,12,10,8,6,4,2,1';
@@ -2523,6 +2535,78 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
         error: error => this.sprintBracketError = error.error?.message
           || t('communities.trackCycling.bracketCreateError')
       });
+  }
+
+  sprintIncidentsFor(bracket: TrackSprintBracketOverview, key: string): TrackSprintIncident[] {
+    return (bracket.incidents || []).filter(i => i.seriesKey === key);
+  }
+
+  sprintIncidentPending(bracket: TrackSprintBracketOverview, key: string): boolean {
+    return this.sprintIncidentsFor(bracket, key).some(i => i.status === 'PENDING');
+  }
+
+  editSprintIncident(bracketId: number, key: string): void {
+    this.sprintIncidentBracketId = bracketId;
+    this.sprintIncidentSeriesKey = key;
+    this.sprintIncidentType = 'OTHER';
+    this.sprintIncidentDetails = '';
+    this.sprintIncidentError = '';
+  }
+
+  saveSprintIncident(): void {
+    if (!this.selected || !this.canManage() || this.sprintIncidentSaving
+        || this.selectedSeasonId == null || this.activeSeason()?.id !== this.selectedSeasonId
+        || this.sprintIncidentBracketId == null || !this.sprintIncidentSeriesKey
+        || this.sprintIncidentDetails.trim().length < 12) return;
+    const group = this.selected.id, season = this.selectedSeasonId,
+      bracketId = this.sprintIncidentBracketId, key = this.sprintIncidentSeriesKey;
+    const nextHeat = nextSprintBracketHeatNumber(this.competition?.rounds || [], key);
+    this.sprintIncidentSaving = true; this.sprintIncidentError = '';
+    this.communityService.reportTrackSprintIncident(group, season, bracketId, {
+      seriesKey: key, heatNumber: nextHeat,
+      incidentType: this.sprintIncidentType, details: this.sprintIncidentDetails.trim()
+    }).pipe(timeout(10_000), finalize(() => this.sprintIncidentSaving = false)).subscribe({
+      next: () => {
+        this.sprintIncidentSeriesKey = null;
+        this.sprintIncidentBracketId = null;
+        this.loadSprintBrackets(group, season);
+      },
+      error: error => this.sprintIncidentError = error.error?.message
+        || t('communities.trackCycling.incidentError')
+    });
+  }
+
+  editSprintDecision(bracketId: number, incidentId: number): void {
+    this.sprintDecisionBracketId = bracketId;
+    this.sprintDecisionIncidentId = incidentId;
+    this.sprintDecisionType = 'RESTART_REQUIRED';
+    this.sprintDecisionReference = '';
+    this.sprintDecisionReason = '';
+    this.sprintIncidentError = '';
+  }
+
+  saveSprintDecision(): void {
+    if (!this.selected || !this.canManage() || this.sprintIncidentSaving
+        || this.selectedSeasonId == null || this.activeSeason()?.id !== this.selectedSeasonId
+        || this.sprintDecisionBracketId == null || this.sprintDecisionIncidentId == null
+        || this.sprintDecisionReference.trim().length < 12
+        || this.sprintDecisionReason.trim().length < 12) return;
+    const group = this.selected.id, season = this.selectedSeasonId,
+      bracket = this.sprintDecisionBracketId, id = this.sprintDecisionIncidentId;
+    this.sprintIncidentSaving = true; this.sprintIncidentError = '';
+    this.communityService.decideTrackSprintIncident(group, season, bracket, id, {
+      decisionType: this.sprintDecisionType,
+      reference: this.sprintDecisionReference.trim(),
+      reason: this.sprintDecisionReason.trim()
+    }).pipe(timeout(10_000), finalize(() => this.sprintIncidentSaving = false)).subscribe({
+      next: () => {
+        this.sprintDecisionIncidentId = null;
+        this.sprintDecisionBracketId = null;
+        this.loadSprintBrackets(group, season);
+      },
+      error: error => this.sprintIncidentError = error.error?.message
+        || t('communities.trackCycling.incidentError')
+    });
   }
 
   get availableSprintBracketMatches(): TrackSprintBracketMatch[] {

@@ -22,6 +22,22 @@ export interface SprintTieDecision {
   reference: string;
 }
 
+export interface TrackSprintIncident {
+  id: number;
+  seriesKey: string;
+  heatNumber: number;
+  incidentType: 'FALL' | 'PUNCTURE' | 'BICYCLE_DEFECT' | 'RULE_INFRINGEMENT' | 'OTHER';
+  details: string;
+  status: 'PENDING' | 'DECIDED';
+  reportedBy: string;
+  reportedAt: string;
+  decisionType: 'RESTART_REQUIRED' | 'OFFICIAL_RESULT_TO_RECORD' | null;
+  decisionReference: string | null;
+  decisionReason: string | null;
+  decidedBy: string | null;
+  decidedAt: string | null;
+}
+
 export interface TrackSprintBracketOverview {
   id: number;
   seasonId: number;
@@ -30,6 +46,7 @@ export interface TrackSprintBracketOverview {
   matches: TrackSprintBracketMatch[];
   qualifyingRoundId?: number | null;
   qualifyingSeeds?: string[];
+  incidents?: TrackSprintIncident[];
   officialTieDecisions?: SprintTieDecision[];
   tieDecisionRecordedBy?: string | null;
 }
@@ -502,6 +519,23 @@ export class CommunityGroupsService {
     return this.http.post<TrackSprintBracketOverview>(
       this.url + '/' + communityId + '/seasons/' + seasonId + '/track-sprint-brackets',
       {name, format, qualifyingRoundId, officialTieDecisions});
+  }
+
+  reportTrackSprintIncident(communityId: number, seasonId: number, bracketId: number,
+    payload: {seriesKey: string; heatNumber: number; incidentType: TrackSprintIncident['incidentType']; details: string}):
+    Observable<TrackSprintIncident> {
+    return this.http.post<TrackSprintIncident>(
+      this.url + '/' + communityId + '/seasons/' + seasonId
+      + '/track-sprint-brackets/' + bracketId + '/incidents', payload);
+  }
+
+  decideTrackSprintIncident(communityId: number, seasonId: number, bracketId: number,
+    incidentId: number,
+    payload: {decisionType: 'RESTART_REQUIRED' | 'OFFICIAL_RESULT_TO_RECORD'; reference: string; reason: string}):
+    Observable<TrackSprintIncident> {
+    return this.http.put<TrackSprintIncident>(
+      this.url + '/' + communityId + '/seasons/' + seasonId
+      + '/track-sprint-brackets/' + bracketId + '/incidents/' + incidentId + '/decision', payload);
   }
 
   deleteTrackSprintBracket(communityId: number, seasonId: number, bracketId: number):

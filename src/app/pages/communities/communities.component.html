@@ -1468,6 +1468,102 @@
                                 @if (match.winner) {
                                   <small>{{ 'communities.trackCycling.seriesWinner' | t }}: {{ match.winner }}</small>
                                 }
+                                @for (incident of sprintIncidentsFor(bracket, match.seriesKey); track incident.id) {
+                                  <div class="round-sport-guidance" role="note">
+                                    <strong>{{ 'communities.trackCycling.incidentTitle' | t }} #{{ incident.id }}</strong>
+                                    <span> · {{ incident.incidentType }}
+                                      · {{ incident.status === 'PENDING'
+                                          ? ('communities.trackCycling.incidentPending' | t)
+                                          : ('communities.trackCycling.incidentDecided' | t) }}</span>
+                                    <p>{{ incident.details }}</p>
+                                    <small>{{ 'communities.trackCycling.incidentReportedBy' | t }}:
+                                      {{ incident.reportedBy }} · {{ incident.reportedAt }}</small>
+                                    @if (incident.status === 'DECIDED') {
+                                      <p>{{ incident.decisionType === 'RESTART_REQUIRED'
+                                        ? ('communities.trackCycling.incidentRestart' | t)
+                                        : ('communities.trackCycling.incidentRecord' | t) }}</p>
+                                      <p>{{ incident.decisionReason }}</p>
+                                      <small>{{ 'communities.trackCycling.incidentOfficialReference' | t }}:
+                                        {{ incident.decisionReference }} · {{ incident.decidedBy }}</small>
+                                    }
+                                  </div>
+                                  @if (incident.status === 'PENDING' && canManage()
+                                    && selectedSeasonId === activeSeason()?.id) {
+                                    <button type="button" class="btn btn-secondary"
+                                      (click)="editSprintDecision(bracket.id, incident.id)"
+                                      [disabled]="sprintIncidentSaving">
+                                      {{ 'communities.trackCycling.incidentDecide' | t }}
+                                    </button>
+                                    @if (sprintDecisionIncidentId === incident.id
+                                          && sprintDecisionBracketId === bracket.id) {
+                                      <div class="round-meta-form">
+                                        <label>
+                                          <span>{{ 'communities.trackCycling.incidentDecisionType' | t }}</span>
+                                          <select [(ngModel)]="sprintDecisionType">
+                                            <option value="RESTART_REQUIRED">{{ 'communities.trackCycling.incidentRestart' | t }}</option>
+                                            <option value="OFFICIAL_RESULT_TO_RECORD">{{ 'communities.trackCycling.incidentRecord' | t }}</option>
+                                          </select>
+                                        </label>
+                                        <label>
+                                          <span>{{ 'communities.trackCycling.incidentOfficialReference' | t }}</span>
+                                          <input [(ngModel)]="sprintDecisionReference" maxlength="255">
+                                        </label>
+                                        <label>
+                                          <span>{{ 'communities.trackCycling.incidentDecisionReason' | t }}</span>
+                                          <textarea [(ngModel)]="sprintDecisionReason" maxlength="500"></textarea>
+                                        </label>
+                                        <button type="button" class="btn btn-primary"
+                                          (click)="saveSprintDecision()"
+                                          [disabled]="sprintIncidentSaving
+                                            || sprintDecisionReference.trim().length < 12
+                                            || sprintDecisionReason.trim().length < 12">
+                                          {{ 'communities.trackCycling.incidentConfirm' | t }}
+                                        </button>
+                                      </div>
+                                    }
+                                  }
+                                }
+                                @if (canManage() && selectedSeasonId === activeSeason()?.id
+                                      && !sprintIncidentPending(bracket, match.seriesKey)
+                                      && match.phase !== 'SPRINT_PLACES_5_8'
+                                      && (match.status === 'READY' || match.status === 'IN_PROGRESS')) {
+                                  <button type="button" class="btn btn-secondary"
+                                    [disabled]="sprintIncidentSaving"
+                                    (click)="editSprintIncident(bracket.id, match.seriesKey)">
+                                    {{ 'communities.trackCycling.incidentReport' | t }}
+                                  </button>
+                                  @if (sprintIncidentBracketId === bracket.id
+                                      && sprintIncidentSeriesKey === match.seriesKey) {
+                                    <div class="round-meta-form">
+                                      <label>
+                                        <span>{{ 'communities.trackCycling.incidentType' | t }}</span>
+                                        <select [(ngModel)]="sprintIncidentType">
+                                          <option value="FALL">{{ 'communities.trackCycling.incidentFall' | t }}</option>
+                                          <option value="PUNCTURE">{{ 'communities.trackCycling.incidentPuncture' | t }}</option>
+                                          <option value="BICYCLE_DEFECT">{{ 'communities.trackCycling.incidentDefect' | t }}</option>
+                                          <option value="RULE_INFRINGEMENT">{{ 'communities.trackCycling.incidentInfringement' | t }}</option>
+                                          <option value="OTHER">{{ 'communities.trackCycling.incidentOther' | t }}</option>
+                                        </select>
+                                      </label>
+                                      <label>
+                                        <span>{{ 'communities.trackCycling.incidentDetails' | t }}</span>
+                                        <textarea [(ngModel)]="sprintIncidentDetails" maxlength="500"></textarea>
+                                      </label>
+                                      <small>{{ 'communities.trackCycling.incidentNoResult' | t }}</small>
+                                      <button type="button" class="btn btn-primary"
+                                        (click)="saveSprintIncident()"
+                                        [disabled]="sprintIncidentSaving || sprintIncidentDetails.trim().length < 12">
+                                        {{ 'communities.trackCycling.incidentSave' | t }}
+                                      </button>
+                                    </div>
+                                  }
+                                }
+                                @if (sprintIncidentError &&
+                                      (sprintIncidentSeriesKey === match.seriesKey
+                                        || sprintIncidentsFor(bracket, match.seriesKey).length
+                                           && sprintDecisionBracketId === bracket.id)) {
+                                  <p role="alert">{{ sprintIncidentError }}</p>
+                                }
                                 @if (canManage() && selectedSeasonId === activeSeason()?.id
                                       && (match.status === 'READY' || match.status === 'IN_PROGRESS')) {
                                   <small>{{ 'communities.trackCycling.bracketSeries' | t }}: {{ match.seriesKey }}</small>
