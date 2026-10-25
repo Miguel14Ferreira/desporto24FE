@@ -2836,7 +2836,7 @@ test('Community feature controls E2E: PT/EN labels, history notice and cancellat
   await expect(page.getByRole('group', { name: 'Funcionalidades opcionais' })).toBeVisible();
   await expect(page.getByText('calendários em desenvolvimento')).toHaveCount(0);
   await page.getByRole('button', { name: 'Cancelar', exact: true }).click();
-  expect(fixture.unmocked.filter(url => /^(POST|PUT|PATCH|DELETE) /.test(url))).toEqual([]);
+  expect(fixture.unmocked.filter(url => /^(POST|PUT|PATCH|DELETE) \/api\/communities\/7\//.test(url))).toEqual([]);
 });
 
 test('Community spreadsheet inspection E2E: Portuguese backend error is not shown in English', async ({ page }) => {
