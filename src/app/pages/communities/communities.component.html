@@ -533,42 +533,13 @@
               </span>
             </div>
 
-            <nav class="community-tabs" [attr.aria-label]="'communities.tabsLabel' | t">
-              <button type="button" [class.active]="activeTab === 'home'"
-                [attr.aria-current]="activeTab === 'home' ? 'true' : null"
-                (click)="setTab('home')">
-                {{ 'communities.tab.home' | t }}
-              </button>
-              <button type="button" [class.active]="activeTab === 'feed'"
-                [attr.aria-current]="activeTab === 'feed' ? 'true' : null"
-                (click)="setTab('feed')">{{ 'communities.tab.feed' | t }}</button>
-              <button type="button" [class.active]="activeTab === 'sessions'"
-                [attr.aria-current]="activeTab === 'sessions' ? 'true' : null"
-                (click)="setTab('sessions')">
-                {{ 'communities.tab.sessions' | t }}
-              </button>
-              @if (hasCompetitions(selected)) {
-                <button type="button" [class.active]="activeTab === 'tournaments'"
-                  [attr.aria-current]="activeTab === 'tournaments' ? 'true' : null"
-                  (click)="setTab('tournaments')">{{ 'communities.features.competitionsTab' | t }}</button>
-              }
-              @if (canBrowseHistoricalArchives) {
-                <button type="button" [class.active]="activeTab === 'ranking'"
-                  [attr.aria-current]="activeTab === 'ranking' ? 'true' : null"
-                  (click)="setTab('ranking')">{{ selected.rankingsEnabled
-                    ? ('communities.tab.ranking' | t) : ('communities.archive.tabTitle' | t) }}</button>
-              }
-              @if (selected.rankingsEnabled) {
-                <button type="button" [class.active]="activeTab === 'stats'"
-                  [attr.aria-current]="activeTab === 'stats' ? 'true' : null"
-                  (click)="setTab('stats')">{{ 'communities.tab.stats' | t }}</button>
-              }
-              <button type="button" [class.active]="activeTab === 'members'"
-                [attr.aria-current]="activeTab === 'members' ? 'true' : null"
-                (click)="setTab('members')">
-                {{ 'communities.tab.members' | t }}
-              </button>
-            </nav>
+            <app-community-tabs
+              [activeTab]="activeTab"
+              [hasCompetitions]="hasCompetitions(selected)"
+              [canBrowseHistoricalArchives]="canBrowseHistoricalArchives"
+              [rankingsEnabled]="selected.rankingsEnabled"
+              (tabRequested)="setTab($event)"
+            ></app-community-tabs>
 
             @if (activeTab === 'feed') {
               <section class="community-tab-panel community-timeline community-feed"
