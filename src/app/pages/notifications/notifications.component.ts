@@ -33,7 +33,7 @@ export class NotificationsComponent implements OnInit {
     'COMMUNITY_JOIN_REJECTED', 'SESSION_INVITE', 'WAITLIST_PROMOTED',
     'SESSION_REMOVED', 'SESSION_CANCELLED', 'SESSION_POST_GAME_REVIEW',
     'ATTENDANCE_DISPUTE_ACCEPTED', 'ATTENDANCE_DISPUTE_REJECTED',
-    'CHAT_MESSAGE', 'FRIEND_REQUEST', 'PROFILE_UPDATE', 'OTHER'
+    'CHAT_MESSAGE', 'VENUE_EDIT_DECISION', 'FRIEND_REQUEST', 'PROFILE_UPDATE', 'OTHER'
   ] as const;
   preferencesOpen = false;
   preferencesLoading = false;
@@ -317,6 +317,10 @@ export class NotificationsComponent implements OnInit {
   }
 
   notificationSubject(notification: AppNotification): string {
+    if (notification.type === 'VENUE_EDIT_DECISION') {
+      return t(notification.subject.includes('aprovada')
+        ? 'notification.venueEditApprovedSubject' : 'notification.venueEditRejectedSubject');
+    }
     const joinCommunity = this.joinNotificationCommunityName(notification);
     if (joinCommunity) {
       const subjectKeys: Record<string, string> = {
@@ -333,6 +337,15 @@ export class NotificationsComponent implements OnInit {
   }
 
   notificationMessage(notification: AppNotification): string {
+    if (notification.type === 'VENUE_EDIT_DECISION') {
+      const parts = notification.message.match(/^A tua proposta para "(.+)" foi (aprovada|rejeitada)\.(?: Justificação: ([\s\S]*))?$/);
+      if (parts) {
+        const base = t(parts[2] === 'aprovada'
+          ? 'notification.venueEditApprovedMessage' : 'notification.venueEditRejectedMessage',
+          { venue: parts[1] });
+        return parts[3] ? base + ' ' + t('notification.venueEditReason', { reason: parts[3] }) : base;
+      }
+    }
     const joinCommunity = this.joinNotificationCommunityName(notification);
     if (joinCommunity) {
       if (notification.type === 'COMMUNITY_JOIN_REQUEST' && notification.relatedUsername) {
@@ -392,6 +405,14 @@ export class NotificationsComponent implements OnInit {
     } else {
       void this.router.navigate(['/menu/communities', notification.communityId]);
     }
+  }
+
+  openVenueDecision(notification: AppNotification): void {
+    if (notification.type !== 'VENUE_EDIT_DECISION'
+        || typeof notification.venueId !== 'number'
+        || !Number.isSafeInteger(notification.venueId)
+        || notification.venueId <= 0) return;
+    void this.router.navigate(['/menu/venues', notification.venueId]);
   }
 
   openChat(notification: AppNotification): void {
@@ -578,6 +599,8 @@ export class NotificationsComponent implements OnInit {
         return t('notification.communityJoinRejected');
       case 'CHAT_MESSAGE':
         return t('notification.chatMessage');
+      case 'VENUE_EDIT_DECISION':
+        return t('notification.venueEditType');
       default:
         return notification.friendRequest ? t('notification.friendRequest') : t('notification.generic');
     }
