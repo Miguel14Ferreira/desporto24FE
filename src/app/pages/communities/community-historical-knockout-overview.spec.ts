@@ -54,11 +54,38 @@ describe('Historical knockout phase navigation from source labels', () => {
       match(4, 'Final')
     ]));
     expect(result[0]).toEqual(jasmine.objectContaining({
-      matchCount: 2, drawnResults: 1, potentialDuplicates: 1, requiresReview: true
+      matchCount: 2, drawnResults: 1, potentialDuplicates: 1, requiresReview: true,
+      reviewArchiveIndices: [0, 1]
     }));
     expect(result[1]).toEqual(jasmine.objectContaining({
       phase: 'final', matchCount: 1, drawnResults: 0, requiresReview: false
     }));
+  });
+
+  it('retains source-order review row indices across 50-row page boundaries', () => {
+    const rows = Array.from({ length: 49 }, (_, index) =>
+      match(index + 300, 'Jornada antiga'));
+    rows.push(match(900, 'Quartos de final', 1, 1));
+    rows.push(match(901, 'Quartos de final', 2, 0));
+    rows.push(match(902, 'Quarter-final 2', 2, 2, true));
+    rows.push(match(903, 'Final', 1, 0));
+
+    const before = JSON.stringify(rows);
+    const [quarter, final] = historicalKnockoutPhaseOverview(archive(rows));
+    expect(quarter.reviewArchiveIndices).toEqual([49, 51]);
+    expect(quarter.matchCount).toBe(3);
+    expect(quarter.firstPage).toBe(0);
+    expect(quarter.reviewArchiveIndices.map(index => Math.floor(index / 50))).toEqual([0, 1]);
+    expect(final.reviewArchiveIndices).toEqual([]);
+    expect(JSON.stringify(rows)).toBe(before);
+  });
+
+  it('distinguishes a source count mismatch from a flag on an individual fixture', () => {
+    const [quarter] = historicalKnockoutPhaseOverview(archive([
+      match(8, 'Quartos de final', 2, 1)
+    ]));
+    expect(quarter.requiresReview).toBeTrue();
+    expect(quarter.reviewArchiveIndices).toEqual([]);
   });
 
   it('does not invent absent stages or treat unlabelled matches as a final', () => {
