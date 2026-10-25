@@ -269,6 +269,14 @@ export interface InlineSpeedDecision {
   confirmedAt: string;
   stale: boolean;
 }
+export interface InlineSpeedTieBreakRevision {
+  revision: number;
+  selectedPlayerIds: number[];
+  reason: string;
+  confirmedBy: string;
+  confirmedAt: string;
+  stale: boolean;
+}
 export interface InlineSpeedTieBreak {
   sourceStage: 'FIRST';
   selectedPlayerIds: number[];
@@ -276,6 +284,7 @@ export interface InlineSpeedTieBreak {
   confirmedBy: string;
   confirmedAt: string;
   stale: boolean;
+  revisions?: InlineSpeedTieBreakRevision[];
 }
 
 export interface InlineSpeedOverview {

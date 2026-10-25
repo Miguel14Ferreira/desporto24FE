@@ -1867,6 +1867,32 @@ describe('Community tournaments management', () => {
       'O júri reviu a prova de desempate com vídeo oficial');
   });
 
+  it('preserves tie-break revision history and blocks edits after ratification', () => {
+    component.selected = { ...draft, status: 'IN_PROGRESS', sport: 'Patinagem de Velocidade' };
+    const proposal = { sourceStage: 'FIRST' as const,
+      targetStage: 'QUARTER' as const, playerIds: Array.from({ length: 16 }, (_, i) => i + 1),
+      expectedCount: 16, ready: true, warning: '' };
+    const ruling = { sourceStage: 'FIRST' as const,
+      selectedPlayerIds: [...proposal.playerIds],
+      reason: 'A prova de desempate foi analisada pelo júri',
+      confirmedBy: 'owner', confirmedAt: '2026-10-25T16:00:00Z', stale: false,
+      revisions: [{ revision: 1, selectedPlayerIds: [...proposal.playerIds],
+        reason: 'A prova de desempate foi analisada pelo júri',
+        confirmedBy: 'owner', confirmedAt: '2026-10-25T16:00:00Z', stale: false }] };
+    component.speedOverview = { tournamentId: 9, discipline: 'TRACK_500D',
+      linkedHeats: [], availableHeats: [], proposals: [proposal], decisions: [],
+      tieBreaks: [ruling] };
+    expect(component.speedCanAmendTie(proposal)).toBeTrue();
+    component.startSpeedTieCorrection(proposal);
+    expect(component.speedTieCorrectionOpen).toBeTrue();
+    expect(component.speedSelections['FIRST']).toEqual(ruling.selectedPlayerIds);
+    expect(component.speedReasons['FIRST']).toBe(ruling.reason);
+    component.speedOverview.decisions = [{ sourceStage: 'FIRST', targetStage: 'QUARTER',
+      playerIds: proposal.playerIds, reason: 'Ratificado', confirmedBy: 'owner',
+      confirmedAt: '2026-10-25T16:15:00Z', stale: false }];
+    expect(component.speedCanAmendTie(proposal)).toBeFalse();
+  });
+
   it('keeps regular individual league points intact for other sports', async () => {
     component.startIndividualCreation();
     component.nameDraft = 'Liga de Futebol';
