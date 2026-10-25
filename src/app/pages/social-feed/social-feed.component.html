@@ -1,6 +1,6 @@
-<section class="feed-page jynlo-c1 jynlo-social">
+<section class="feed-page jynlo-c1 jynlo-social jynlo-entry-premium jynlo-feed-premium">
   <div class="feed-shell">
-    <header class="page-header">
+    <header class="page-header jynlo-feed-hero">
       <div>
         <p class="eyebrow">Jynlo</p>
         <h1>{{ 'feed.title' | t }}</h1>
@@ -11,7 +11,7 @@
 
     <app-social-stories></app-social-stories>
 
-    <section class="week-hub" [attr.aria-label]="'week.title' | t">
+    <section class="week-hub jynlo-premium-week" [attr.aria-label]="'week.title' | t">
       <div class="week-hub-heading">
         <div>
           <p class="week-hub-eyebrow">{{ 'week.eyebrow' | t }}</p>
@@ -132,7 +132,7 @@
       </div>
     </section>
 
-    <div class="feed-layout">
+    <div class="feed-layout jynlo-premium-feed-grid">
       <div class="feed-main">
     @if (!loading && !errorMessage && items.length === 0) {
       <div class="state-card feed-empty-state">

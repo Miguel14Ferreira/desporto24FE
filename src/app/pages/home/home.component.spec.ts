@@ -49,6 +49,17 @@ describe('HomeComponent public discovery', () => {
     return fixture;
   }
 
+  it('uses the approved premium Concept One landing while retaining working discovery links', () => {
+    const fixture = render();
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('.jynlo-home-premium')).not.toBeNull();
+    expect(root.querySelector('main.hero[aria-labelledby="jynlo-home-title"]')).not.toBeNull();
+    expect(root.querySelector('.jynlo-premium-features')?.querySelectorAll('article').length).toBe(3);
+    expect(root.querySelector('.public-discovery form.preview-search')).not.toBeNull();
+    expect(root.querySelector('a[href="#jynlo-public-discovery"]')).not.toBeNull();
+    expect(root.querySelectorAll('a.preview-item').length).toBe(0);
+  });
+
   it('makes public sessions discoverable without signing up and explains communities', () => {
     const fixture = render();
     const root = fixture.nativeElement as HTMLElement;
