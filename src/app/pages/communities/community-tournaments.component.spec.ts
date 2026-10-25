@@ -1776,9 +1776,9 @@ describe('Community tournaments management', () => {
     };
     component.speedSelections = { FIRST: [1] };
     component.toggleSpeedChosen('FIRST', 2);
-    expect(component.speedSelections.FIRST).toEqual([1]);
+    expect(component.speedSelections['FIRST']).toEqual([1]);
     component.toggleSpeedChosen('FIRST', 1);
-    expect(component.speedSelections.FIRST).toEqual([]);
+    expect(component.speedSelections['FIRST']).toEqual([]);
   });
 
   it('requires a detailed explanation for an exceptional 17th qualifier without a time tie', async () => {
