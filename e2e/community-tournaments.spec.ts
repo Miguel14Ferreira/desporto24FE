@@ -3091,3 +3091,25 @@ test('Community spreadsheet inspection E2E: Portuguese backend error is not show
     .not.toContain('Não foi possível analisar');
   expect(fixture.unmocked.filter(url => url.includes('/competition/import/'))).toEqual([]);
 });
+
+
+test('Historical spreadsheet E2E: duplicate source warning is localized in English without saving', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'history');
+  await page.goto('/menu/communities/7?tab=ranking');
+  await page.evaluate(() => localStorage.setItem('d24-language', 'en'));
+  await page.reload();
+  await page.getByRole('button', { name: 'Final standings' }).click();
+  await page.locator('input[accept=".xlsx,.xls,.csv,.tsv"]').setInputFiles({
+    name: 'original-standings.csv', mimeType: 'text/csv',
+    buffer: Buffer.from('Pos;Equipa;Pts\n1;Águias;25\n')
+  });
+  await page.getByRole('button', { name: 'Analyse file' }).click();
+  await page.getByRole('button', { name: 'Validate and preview data' }).click();
+  await expect(page.getByText('Row 4: ÁGUIAS appears more than once; only the first occurrence is kept.'))
+    .toBeVisible();
+  expect((await page.locator('.import-final-plan').allTextContents()).join(' '))
+    .not.toContain('mantém-se apenas a primeira');
+  expect(fixture.archivePreviewCalls).toBe(1);
+  expect(fixture.archiveConfirmCalls).toBe(0);
+  expect(fixture.unmocked.filter(item => item.includes('/competition/import/'))).toEqual([]);
+});
