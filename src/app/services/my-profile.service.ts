@@ -38,6 +38,13 @@ export class MyProfileService {
     );
   }
 
+  revokeOtherDeviceSessions(): Observable<void> {
+    return this.http.delete<void>(
+      environment.apiUrl + '/api/auth/sessions/others',
+      { withCredentials: true }
+    );
+  }
+
   get(): Observable<MyProfile> {
     return this.http.get<MyProfile>(this.baseUrl);
   }

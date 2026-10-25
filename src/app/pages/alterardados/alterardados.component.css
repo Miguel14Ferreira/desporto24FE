@@ -642,3 +642,21 @@ textarea { resize: vertical; }
   .device-sessions__header { flex-direction: column; }
   .device-session { align-items: stretch; }
 }
+
+
+.device-sessions__bulk {
+  margin-top: 1rem;
+  border-top: 1px solid rgba(255,255,255,.1);
+  padding-top: 1rem;
+}
+.device-sessions__bulk-confirm {
+  padding: .9rem 1rem;
+  border: 1px solid rgba(248,113,113,.25);
+  border-radius: .8rem;
+  background: rgba(127,29,29,.1);
+}
+.device-sessions__bulk-confirm p {
+  margin: 0 0 .75rem;
+  color: #fecaca;
+  line-height: 1.5;
+}

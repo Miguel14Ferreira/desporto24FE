@@ -79,6 +79,10 @@ const PT: Dictionary = {
   'profile.sessions.confirm': 'Queres mesmo terminar esta sessão? O dispositivo deixará de ter acesso.',
   'profile.sessions.revoked': 'Sessão terminada com sucesso.',
   'profile.sessions.loadError': 'Não foi possível carregar as sessões. Tenta novamente.',
+  'profile.sessions.others': 'Terminar sessão nos outros dispositivos',
+  'profile.sessions.othersConfirm': 'Queres terminar todas as outras sessões? Este dispositivo continuará com sessão iniciada.',
+  'profile.sessions.othersRevoked': 'As sessões dos outros dispositivos foram terminadas.',
+  'profile.sessions.othersError': 'Não foi possível terminar as outras sessões. Tenta novamente.',
   'profile.sessions.revokeError': 'Não foi possível terminar a sessão. Tenta novamente.',
 
   'venue.submission.eventHint': 'Sugestão de recinto enviada para aprovação. Para criar a sessão agora, escolhe um recinto existente ou usa o Google Maps/GPS.',
@@ -3848,6 +3852,10 @@ const EN: Dictionary = {
   'profile.sessions.confirm': 'Sign out this device? It will lose access to your account.',
   'profile.sessions.revoked': 'Device signed out successfully.',
   'profile.sessions.loadError': 'Could not load sessions. Please try again.',
+  'profile.sessions.others': 'Sign out all other devices',
+  'profile.sessions.othersConfirm': 'Sign out all other devices? This device will remain signed in.',
+  'profile.sessions.othersRevoked': 'All other devices were signed out.',
+  'profile.sessions.othersError': 'Could not sign out other devices. Please try again.',
   'profile.sessions.revokeError': 'Could not sign out this device. Please try again.',
 
   'venue.submission.eventHint': 'Venue submitted for review. To create a session now, choose an approved venue or use Google Maps/GPS.',
