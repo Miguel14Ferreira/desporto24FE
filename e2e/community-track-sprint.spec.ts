@@ -175,7 +175,7 @@ test('Olympic sprint browser QA: owner can select 24 valid times; older season d
   await editor.locator('select').first().selectOption('OLYMPIC_TWENTY_FOUR_REPECHAGE');
   const qual=editor.locator('select').nth(1);
   await expect(qual.locator('option')).toHaveCount(2);
-  await qual.selectOption({label:/Qualificação 200 m QA/});
+  await qual.selectOption({index:1});
   await editor.locator('button.btn-primary').click();
   await expect(section).toContainText('Novo Sprint QA');
   expect(qa.creations).toHaveLength(1);
@@ -183,7 +183,6 @@ test('Olympic sprint browser QA: owner can select 24 valid times; older season d
   expect(qa.writes).toHaveLength(1);
 
   // Switching seasons must replace bracket data, not keep stale choices/results.
-  await page.locator('select').filter({has:page.locator('option')}).first().count();
   await page.locator('.season-filter select').selectOption({index:2});
   await expect(section).not.toContainText('Sprint Olímpico QA 2026');
   await expect(section).not.toContainText('Novo Sprint QA');
