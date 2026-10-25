@@ -1,4 +1,4 @@
-import { AfterViewChecked, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
+import { AfterViewChecked, ChangeDetectionStrategy, Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { JwtHelperService } from '@auth0/angular-jwt';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -115,7 +115,6 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   private readonly readSync = inject(ChatReadSyncService);
   private readonly chatSubscriptions = new Subscription();
   private readonly jwtHelper = new JwtHelperService();
-  private readonly sprintChangeDetector = inject(ChangeDetectorRef);
 
   private readonly sessionDateFormatter = new Intl.DateTimeFormat('pt-PT', {
     dateStyle: 'medium',
@@ -2354,30 +2353,23 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     const requestVersion = ++this.sprintBracketRequestVersion;
     this.sprintBrackets = [];
     this.sprintBracketError = '';
-    this.sprintChangeDetector.markForCheck();
     if (seasonId == null || !this.communityRoundSports.includes('Ciclismo de Pista')) {
       this.sprintBracketLoading = false;
       return;
     }
     this.sprintBracketLoading = true;
-    this.sprintChangeDetector.markForCheck();
     this.communityService.trackSprintBrackets(communityId, seasonId)
       .pipe(timeout(10_000), finalize(() => {
-        if (requestVersion === this.sprintBracketRequestVersion) {
-          this.sprintBracketLoading = false;
-          this.sprintChangeDetector.markForCheck();
-        }
+        if (requestVersion === this.sprintBracketRequestVersion) this.sprintBracketLoading = false;
       })).subscribe({
         next: brackets => {
           if (requestVersion !== this.sprintBracketRequestVersion
               || this.selected?.id !== communityId || this.selectedSeasonId !== seasonId) return;
           this.sprintBrackets = brackets;
-          this.sprintChangeDetector.markForCheck();
         },
         error: () => {
           if (requestVersion !== this.sprintBracketRequestVersion) return;
           this.sprintBracketError = t('communities.trackCycling.bracketLoadError');
-          this.sprintChangeDetector.markForCheck();
         }
       });
   }
@@ -2549,7 +2541,6 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
           this.winPointsDraft = competition.settings.winPoints;
           this.drawPointsDraft = competition.settings.drawPoints;
           this.lossPointsDraft = competition.settings.lossPoints;
-          this.sprintChangeDetector.markForCheck();
         },
         error: () => {
           if (requestVersion !== this.competitionRequestVersion ||
@@ -2583,7 +2574,6 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       ? seasonId
       : null;
     this.loadCompetition(this.selected, this.selectedSeasonId);
-    this.sprintChangeDetector.markForCheck();
   }
 
   createSeason(): void {
