@@ -151,7 +151,7 @@ describe('CommunitiesComponent public session eligibility', () => {
     const previous=localStorage.getItem('d24-language');
     try {
       localStorage.setItem('d24-language','pt');
-      expect(t('communities.trackCycling.seriesVerdictExplain')).toContain('duas');
+      expect(t('communities.trackCycling.seriesVerdictExplain')).toContain('desclassificação');
       localStorage.setItem('d24-language','en');
       expect(t('communities.trackCycling.seriesVerdictNoFake')).toContain('awarded the series');
     } finally {
