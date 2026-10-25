@@ -1,5 +1,5 @@
 import { Venue } from '../pages/model/venue';
-import { venueOfficialContactPage } from './venue-official-contact-source';
+import { venueOfficialContactPage, venueOfficialContactPageNeedsIdentityCheck } from './venue-official-contact-source';
 
 describe('venueOfficialContactPage', () => {
   const candidate = (id: number, name: string, overrides: Partial<Venue> = {}) =>
@@ -12,8 +12,25 @@ describe('venueOfficialContactPage', () => {
       .toBe('https://www.agoraporto.pt/piscinas-municipais/piscina-municipal-de-cartes');
   });
 
-  it('never promotes Armando Pimentel review-only name hints to official venue links', () => {
-    expect(venueOfficialContactPage(candidate(2655, 'Piscinas Engenheiro Armando Pimentel'))).toBeNull();
+  it('offers an official operator page for the exact Armando Pimentel catalogue record with a warning', () => {
+    const listed = candidate(2655, 'Piscinas Engenheiro Armando Pimentel', {
+      address: 'Morada por confirmar'
+    });
+    expect(venueOfficialContactPage(listed))
+      .toBe('https://www.agoraporto.pt/desporto/piscina-municipal-eng-o-armando-pimentel');
+    expect(venueOfficialContactPageNeedsIdentityCheck(listed)).toBeTrue();
+    expect(venueOfficialContactPageNeedsIdentityCheck(candidate(261, 'Piscina Municipal da Constituição'))).toBeFalse();
+  });
+
+  it('never treats a name hint, other city or preexisting contact as the exact Armando Pimentel source', () => {
+    expect(venueOfficialContactPage(candidate(2655, 'Piscina Municipal Eng.º Armando Pimentel'))).toBeNull();
+    expect(venueOfficialContactPage(candidate(2655, 'Piscinas Engenheiro Armando Pimentel',
+      {city: 'Vila Nova de Gaia'}))).toBeNull();
+    expect(venueOfficialContactPage(candidate(2655, 'Piscinas Engenheiro Armando Pimentel',
+      {district: 'Lisboa'}))).toBeNull();
+    expect(venueOfficialContactPage(candidate(2655, 'Piscinas Engenheiro Armando Pimentel',
+      {contact: '+351 226 179 598'}))).toBeNull();
+    expect(venueOfficialContactPageNeedsIdentityCheck(candidate(999, 'Piscinas Engenheiro Armando Pimentel'))).toBeFalse();
   });
 
   it('refuses unrelated, renamed, moved or unconfirmed catalogue records', () => {

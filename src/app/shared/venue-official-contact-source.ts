@@ -17,6 +17,12 @@ const PORTO_OFFICIAL_CONTACT_PAGES: Readonly<Record<number, Readonly<{
   2654: {
     name: 'Piscina Municipal de Cartes',
     url: 'https://www.agoraporto.pt/piscinas-municipais/piscina-municipal-de-cartes'
+  },
+  // Exact LIVE Jynlo identity (ID/name/Porto), but its street is unconfirmed.
+  // Display an explicit warning; never prefill this record with phone/address.
+  2655: {
+    name: 'Piscinas Engenheiro Armando Pimentel',
+    url: 'https://www.agoraporto.pt/desporto/piscina-municipal-eng-o-armando-pimentel'
   }
 };
 
@@ -33,4 +39,9 @@ export function venueOfficialContactPage(venue: Venue | null): string | null {
   if (comparableName(venue.city) !== 'porto' || comparableName(venue.district) !== 'porto') return null;
   const source = PORTO_OFFICIAL_CONTACT_PAGES[venue.id];
   return source && comparableName(venue.name) === comparableName(source.name) ? source.url : null;
+}
+
+/** A similar official name is NOT proof of the Jynlo facility's identity. */
+export function venueOfficialContactPageNeedsIdentityCheck(venue: Venue | null): boolean {
+  return venue?.id === 2655 && !!venueOfficialContactPage(venue);
 }
