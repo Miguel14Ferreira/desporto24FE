@@ -542,6 +542,22 @@
                         @if (phase.sourceLabels.length) {
                           <p class="historical-phase-card-labels">{{ phase.sourceLabels.join(' · ') }}</p>
                         }
+                        @if (phase.reviewArchiveIndices.length > 0) {
+                          <div class="historical-phase-review-shortcut">
+                            <span class="historical-phase-review-count">
+                              {{ phase.reviewArchiveIndices.length }}
+                              {{ 'communities.matches.historicalPhases.flaggedMatches' | t }}
+                            </span>
+                            <button type="button"
+                              class="t-btn t-btn-secondary historical-phase-review-jump"
+                              (click)="showNextHistoricalReview(phase)">
+                              {{ 'communities.matches.historicalPhases.goToReview' | t }}
+                              @if (historicalReviewCursor[phase.phase] >= 0) {
+                                ({{ historicalReviewCursor[phase.phase] + 1 }}/{{ phase.reviewArchiveIndices.length }})
+                              }
+                            </button>
+                          </div>
+                        }
                         @if (phase.firstArchiveIndex !== null) {
                           <button type="button" class="t-btn t-btn-secondary historical-phase-jump"
                             (click)="showHistoricalKnockoutPhase(phase.firstArchiveIndex)">
