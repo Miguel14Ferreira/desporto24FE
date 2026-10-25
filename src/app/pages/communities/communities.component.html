@@ -1618,7 +1618,7 @@
                                 }
                                 @if (canManage() && selectedSeasonId === activeSeason()?.id
                                       && !sprintIncidentPending(bracket, match.seriesKey)
-                                      && !sprintIncidentsFor(bracket, match.seriesKey).some(i => i.status === 'RESTART_AUTHORIZED')
+                                      && !sprintRerunAuthorized(bracket, match.seriesKey)
                                       && match.phase !== 'SPRINT_PLACES_5_8'
                                       && (match.status === 'READY' || match.status === 'IN_PROGRESS')) {
                                   <button type="button" class="btn btn-secondary"
@@ -1655,7 +1655,8 @@
                                 @if (sprintIncidentError &&
                                       (sprintIncidentSeriesKey === match.seriesKey
                                         || sprintIncidentsFor(bracket, match.seriesKey).length
-                                           && sprintDecisionBracketId === bracket.id)) {
+                                           && sprintDecisionBracketId === bracket.id
+                                        || sprintRerunBracketId === bracket.id)) {
                                   <p role="alert">{{ sprintIncidentError }}</p>
                                 }
                                 @if (canManage() && selectedSeasonId === activeSeason()?.id
