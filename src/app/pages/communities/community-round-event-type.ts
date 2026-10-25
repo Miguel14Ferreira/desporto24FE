@@ -258,7 +258,7 @@ export function eventPresentationFormat(
   if (isRaceEvent(sport, eventType)) return 'race';
   if (eventType === 'STRENGTH_TRAINING' && normalize(sport || '') === 'musculacao') return 'activity';
   if (eventType === 'CHESS_GAME' && normalize(sport || '') === 'xadrez') return 'duel';
-  if (eventType === 'TRACK_SPRINT_HEAT' | 'TRACK_SPRINT_REPECHAGE' && normalize(sport || '') === 'ciclismo de pista') return 'duel';
+  if ((eventType === 'TRACK_SPRINT_HEAT' || eventType === 'TRACK_SPRINT_REPECHAGE') && normalize(sport || '') === 'ciclismo de pista') return 'duel';
   if (eventType?.startsWith('JUDO_') && normalize(sport || '') === 'judo') return 'duel';
   if (eventType?.startsWith('KARATE_') && normalize(sport || '') === 'karate') return 'duel';
   if ((eventType === 'IFMA_FULL_WP' || eventType === 'IFMA_FULL_KO'
