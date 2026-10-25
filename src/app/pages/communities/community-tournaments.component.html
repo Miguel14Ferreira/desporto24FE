@@ -546,7 +546,9 @@
                           <div class="historical-phase-review-shortcut">
                             <span class="historical-phase-review-count">
                               {{ phase.reviewArchiveIndices.length }}
-                              {{ 'communities.matches.historicalPhases.flaggedMatches' | t }}
+                              {{ (phase.reviewArchiveIndices.length === 1
+                                ? 'communities.matches.historicalPhases.flaggedMatchOne'
+                                : 'communities.matches.historicalPhases.flaggedMatchMany') | t }}
                             </span>
                             <button type="button"
                               class="t-btn t-btn-secondary historical-phase-review-jump"
