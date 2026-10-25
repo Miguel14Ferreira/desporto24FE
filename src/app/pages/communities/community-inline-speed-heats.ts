@@ -8,6 +8,14 @@ export const INLINE_SPEED_HEAT_CODES = [
   'INLINE_ROAD_LAP_FINAL_A', 'INLINE_ROAD_LAP_FINAL_B'
 ] as const;
 
+/** World Skate 2026: qualifying heats are limited to six skaters; the 200 m TT is exempt. */
+export function inlineSpeedFirstHeatTooLarge(eventType: string | null | undefined,
+  includedSkaters: number): boolean {
+  return (eventType === 'INLINE_TRACK_500D_FIRST_ROUND'
+    || eventType === 'INLINE_ROAD_LAP_FIRST_ROUND')
+    && includedSkaters > 6;
+}
+
 export function isInlineSpeedHeatEvent(eventType: string | null | undefined): boolean {
   return !!eventType && INLINE_SPEED_HEAT_CODES.some(code => code === eventType);
 }
