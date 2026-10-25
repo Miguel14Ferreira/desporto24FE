@@ -1854,6 +1854,8 @@ describe('Community tournaments management', () => {
     await component.resolveSpeedTie(proposal);
     expect(api.resolveInlineSpeedTieBreak).not.toHaveBeenCalled();
     component.speedReasons = { FIRST: 'O júri reviu a prova de desempate com vídeo oficial' };
+    component.speedEvidenceType = 'OFFICIAL_MINUTES';
+    component.speedEvidenceReference = 'Ata oficial 2026-011';
     api.resolveInlineSpeedTieBreak.and.returnValue(of({
       ...overview, proposals: [{ ...proposal, ready: true,
         playerIds: component.speedSelections['FIRST'] ?? [] }],
@@ -1864,7 +1866,8 @@ describe('Community tournaments management', () => {
     await component.resolveSpeedTie(proposal);
     expect(api.resolveInlineSpeedTieBreak).toHaveBeenCalledWith(7, 9,
       Array.from({ length: 15 }, (_, i) => i + 1).concat(18),
-      'O júri reviu a prova de desempate com vídeo oficial');
+      'O júri reviu a prova de desempate com vídeo oficial',
+      'OFFICIAL_MINUTES', 'Ata oficial 2026-011');
   });
 
   it('preserves tie-break revision history and blocks edits after ratification', () => {
@@ -1876,9 +1879,13 @@ describe('Community tournaments management', () => {
       selectedPlayerIds: [...proposal.playerIds],
       reason: 'A prova de desempate foi analisada pelo júri',
       confirmedBy: 'owner', confirmedAt: '2026-10-25T16:00:00Z', stale: false,
+      evidenceType: 'VIDEO_REVIEW' as const,
+      evidenceReference: 'Vídeo oficial #011',
       revisions: [{ revision: 1, selectedPlayerIds: [...proposal.playerIds],
         reason: 'A prova de desempate foi analisada pelo júri',
-        confirmedBy: 'owner', confirmedAt: '2026-10-25T16:00:00Z', stale: false }] };
+        confirmedBy: 'owner', confirmedAt: '2026-10-25T16:00:00Z', stale: false,
+        evidenceType: 'VIDEO_REVIEW' as const,
+        evidenceReference: 'Vídeo oficial #011' }] };
     component.speedOverview = { tournamentId: 9, discipline: 'TRACK_500D',
       linkedHeats: [], availableHeats: [], proposals: [proposal], decisions: [],
       tieBreaks: [ruling] };
@@ -1887,6 +1894,8 @@ describe('Community tournaments management', () => {
     expect(component.speedTieCorrectionOpen).toBeTrue();
     expect(component.speedSelections['FIRST']).toEqual(ruling.selectedPlayerIds);
     expect(component.speedReasons['FIRST']).toBe(ruling.reason);
+    expect(component.speedEvidenceType).toBe('VIDEO_REVIEW');
+    expect(component.speedEvidenceReference).toBe('Vídeo oficial #011');
     component.speedOverview.decisions = [{ sourceStage: 'FIRST', targetStage: 'QUARTER',
       playerIds: proposal.playerIds, reason: 'Ratificado', confirmedBy: 'owner',
       confirmedAt: '2026-10-25T16:15:00Z', stale: false }];
