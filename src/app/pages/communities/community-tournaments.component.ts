@@ -370,7 +370,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     return (this.speedSelections[stage] ?? []).includes(playerId);
   }
 
-  toggleSpeedChosen(stage: string, playerId: number): void {
+  toggleSpeedChosen(stage: InlineSpeedStage, playerId: number): void {
     // Jury cannot approve an athlete marked DQ unless the original result
     // itself was officially corrected. Never toggle them in this panel.
     if (this.speedStageSkaters(stage).some(s => s.playerId === playerId && s.disqualified))
