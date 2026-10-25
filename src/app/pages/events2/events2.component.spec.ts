@@ -100,6 +100,49 @@ describe('Events2Component', () => {
     )).not.toBeNull();
   });
 
+  it('explains one session per week and warns that immediate opening affects all four', () => {
+    component.communityId = 7;
+    component.recurrence = 'WEEKLY';
+    component.recurrenceOccurrences = 4;
+    component.registrationOpeningMode = 'IMMEDIATE';
+    fixture.detectChanges();
+
+    const form = fixture.nativeElement as HTMLElement;
+    const frequency = form.querySelector('select[name="recurrence"]') as HTMLSelectElement;
+    const weeks = form.querySelector('input[name="recurrenceOccurrences"]') as HTMLInputElement;
+
+    expect(frequency.closest('label')?.textContent).toContain('Sessões por semana');
+    expect(frequency.options[1].textContent).toContain('1 sessão por semana');
+    expect(weeks.closest('label')?.textContent).toContain('Semanas com jogo');
+    expect(form.querySelector('.recurrence-plan-summary')?.textContent)
+      .toContain('4 semanas com jogo');
+    expect(form.querySelectorAll('.recurrence-plan-summary')[1]?.textContent)
+      .toContain('as inscrições das 4 sessões abrem todas');
+
+    component.registrationOpeningMode = 'MANUAL';
+    fixture.detectChanges();
+    expect(form.textContent).toContain('Terás de abrir a convocatória de cada jogo individualmente');
+
+    component.registrationOpeningMode = 'SCHEDULED';
+    fixture.detectChanges();
+    expect(form.textContent).toContain('as seguintes uma semana depois da anterior');
+  });
+
+  it('distinguishes fortnightly sessions from weekly game weeks', () => {
+    component.communityId = 7;
+    component.recurrence = 'BIWEEKLY';
+    component.recurrenceOccurrences = 4;
+    component.registrationOpeningMode = 'SCHEDULED';
+    fixture.detectChanges();
+
+    const form = fixture.nativeElement as HTMLElement;
+    expect(form.querySelector('input[name="recurrenceOccurrences"]')?.closest('label')?.textContent)
+      .toContain('Sessões de 2 em 2 semanas');
+    expect(form.querySelector('.recurrence-plan-summary')?.textContent)
+      .toContain('4 sessões, uma de 2 em 2 semanas');
+    expect(form.textContent).toContain('as seguintes de 2 em 2 semanas');
+  });
+
   it('lets a community organizer choose scheduled or manual callup opening', () => {
     component.communityId = 7;
     fixture.detectChanges();
