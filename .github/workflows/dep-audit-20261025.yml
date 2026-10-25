@@ -25,6 +25,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      # Second pass: apply non-breaking transitive security patches on resolved Angular lockfile.
       - name: Propose compatible vulnerability fixes to isolated branch
         if: "${{ github.event_name == 'push' && github.event.head_commit.message == 'ci(security): propose compatible lockfile fixes' }}"
         shell: bash
