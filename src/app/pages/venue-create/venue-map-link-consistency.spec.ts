@@ -93,6 +93,7 @@ describe('Venue Maps link coordinate consistency', () => {
     component.city = 'Porto';
     component.address = 'Rua Central';
     component.selectedSports = ['Futsal'];
+    component.environmentType = 'OUTDOOR';
     component.mapLink = 'https://maps.app.goo.gl/old';
     component.resolveMapLink();
     component.mapLink = 'https://maps.app.goo.gl/new';

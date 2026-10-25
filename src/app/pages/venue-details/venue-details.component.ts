@@ -1,6 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, Optional } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { finalize, retry, timeout } from 'rxjs';
+import { finalize, retry, Subject, takeUntil, timeout } from 'rxjs';
 
 import { VenuePhoto, VenueRatingSummary, VenueService, VenueSportCondition } from '../../services/venue.service';
 import { Venue } from '../model/venue';
@@ -13,7 +13,7 @@ import { venueEnvironmentTranslationKey } from '../../shared/venue-environment';
   styleUrls: ['./venue-details.component.css'],
   standalone: false
 })
-export class VenueDetailsComponent implements OnInit {
+export class VenueDetailsComponent implements OnInit, OnDestroy {
   readonly venueEnvironmentTranslationKey = venueEnvironmentTranslationKey;
   venue: Venue | null = null;
   photos: VenuePhoto[] = [];
@@ -36,33 +36,64 @@ export class VenueDetailsComponent implements OnInit {
   private venueLoadVersion = 0;
   private photosLoadVersion = 0;
   private sportConditionsLoadVersion = 0;
+  private readonly destroyed = new Subject<void>();
+  private currentVenueId: number | null = null;
 
   constructor(
     private route: ActivatedRoute,
-    private venueService: VenueService
+    private venueService: VenueService,
+    @Optional() private readonly changeDetector: ChangeDetectorRef | null = null
   ) {}
 
-  ngOnInit(): void {
-    const venueId = Number(this.route.snapshot.paramMap.get('id'));
+  private updateView(): void {
+    this.changeDetector?.markForCheck();
+  }
 
-    if (!Number.isFinite(venueId) || venueId <= 0) {
+  ngOnInit(): void {
+    // Router reuse can keep the component alive while the selected ID changes.
+    // Existing tests use route.snapshot only, so support that route shape too.
+    if (this.route.paramMap) {
+      this.route.paramMap.pipe(takeUntil(this.destroyed))
+        .subscribe(params => this.openVenue(Number(params.get('id'))));
+    } else {
+      this.openVenue(Number(this.route.snapshot.paramMap.get('id')));
+    }
+  }
+
+  private openVenue(venueId: number): void {
+    if (!Number.isSafeInteger(venueId) || venueId <= 0) {
+      ++this.venueLoadVersion;
+      ++this.photosLoadVersion;
+      ++this.sportConditionsLoadVersion;
+      this.venue = null;
       this.loading = false;
       this.photosLoading = false;
       this.sportConditionsLoading = false;
       this.ratingSummaryLoading = false;
       this.loadError = true;
+      this.updateView();
       return;
     }
-
+    this.currentVenueId = venueId;
+    this.photos = [];
+    this.sportConditions = [];
+    this.ratingSummary = null;
     this.retryVenue();
     this.loadPhotos(venueId);
-
     this.loadSportConditions(venueId);
     this.loadRatingSummary(venueId);
   }
 
+  ngOnDestroy(): void {
+    ++this.venueLoadVersion;
+    ++this.photosLoadVersion;
+    ++this.sportConditionsLoadVersion;
+    this.destroyed.next();
+    this.destroyed.complete();
+  }
+
   retryVenue(): void {
-    const venueId = Number(this.route.snapshot.paramMap.get('id'));
+    const venueId = this.currentVenueId ?? Number(this.route.snapshot.paramMap.get('id'));
     if (!Number.isSafeInteger(venueId) || venueId <= 0) {
       this.venue = null;
       this.loading = false;
@@ -76,17 +107,29 @@ export class VenueDetailsComponent implements OnInit {
     // Do not make a person watch two successive 10-second timeouts.
     // If the API is unreachable, show a clear retry action.
     this.venueService.get(venueId)
-      .pipe(timeout({ first: 12000 }))
+      .pipe(
+        timeout({ first: 12000 }),
+        takeUntil(this.destroyed),
+        finalize(() => {
+          if (version === this.venueLoadVersion) {
+            // Always leave the spinner, including on timeout/unsubscribe.
+            this.loading = false;
+            this.updateView();
+          }
+        })
+      )
       .subscribe({
         next: venue => {
           if (version !== this.venueLoadVersion) return;
           this.venue = venue;
           this.loading = false;
+          this.updateView();
         },
         error: () => {
           if (version !== this.venueLoadVersion) return;
           this.loadError = true;
           this.loading = false;
+          this.updateView();
         }
       });
   }
@@ -94,8 +137,12 @@ export class VenueDetailsComponent implements OnInit {
   private loadRatingSummary(venueId: number): void {
     this.ratingSummaryLoading = true;
     this.ratingSummaryLoadError = false;
+    this.updateView();
     this.venueService.getRatingSummary(venueId)
-      .pipe(timeout(10_000), finalize(() => this.ratingSummaryLoading = false))
+      .pipe(timeout(10_000), takeUntil(this.destroyed), finalize(() => {
+        this.ratingSummaryLoading = false;
+        this.updateView();
+      }))
       .subscribe({
         next: summary => {
           if (summary.venueId === venueId && summary.ratingCount >= 3
@@ -105,11 +152,13 @@ export class VenueDetailsComponent implements OnInit {
             // The backend deliberately hides aggregates under three reviewers.
             this.ratingSummary = null;
           }
+          this.updateView();
         },
         error: () => {
           // A ratings API outage must never break the venue page.
           this.ratingSummary = null;
           this.ratingSummaryLoadError = true;
+          this.updateView();
         }
       });
   }
@@ -197,6 +246,7 @@ export class VenueDetailsComponent implements OnInit {
           this.sportConditionsLoading = false;
           this.sportConditionsLoadError = false;
           this.sportConditions = [condition, ...this.sportConditions.filter(item => item.id !== condition.id)];
+          this.updateView();
           this.sportConditionSport = '';
           this.sportConditionText = '';
         },
@@ -214,18 +264,20 @@ export class VenueDetailsComponent implements OnInit {
         timeout(10_000),
         retry({ count: 1 }),
         finalize(() => {
-          if (version === this.sportConditionsLoadVersion) this.sportConditionsLoading = false;
+          if (version === this.sportConditionsLoadVersion) { this.sportConditionsLoading = false; this.updateView(); }
         })
       )
       .subscribe({
         next: conditions => {
           if (version !== this.sportConditionsLoadVersion) return;
           this.sportConditions = conditions;
+          this.updateView();
         },
         error: () => {
           if (version !== this.sportConditionsLoadVersion) return;
           this.sportConditions = [];
           this.sportConditionsLoadError = true;
+          this.updateView();
         }
       });
   }
@@ -240,18 +292,20 @@ export class VenueDetailsComponent implements OnInit {
         timeout(10_000),
         retry({ count: 1 }),
         finalize(() => {
-          if (version === this.photosLoadVersion) this.photosLoading = false;
+          if (version === this.photosLoadVersion) { this.photosLoading = false; this.updateView(); }
         })
       )
       .subscribe({
         next: photos => {
           if (version !== this.photosLoadVersion) return;
           this.photos = photos;
+          this.updateView();
         },
         error: () => {
           if (version !== this.photosLoadVersion) return;
           this.photos = [];
           this.photosLoadError = true;
+          this.updateView();
         }
       });
   }
@@ -286,6 +340,7 @@ export class VenueDetailsComponent implements OnInit {
           this.photosLoading = false;
           this.photosLoadError = false;
           this.photos = [photo, ...this.photos.filter(item => item.id !== photo.id)];
+          this.updateView();
           input.value = '';
         },
         error: () => {

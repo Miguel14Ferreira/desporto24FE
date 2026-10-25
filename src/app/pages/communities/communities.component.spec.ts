@@ -379,6 +379,20 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(component['suggestMatchField']('Golos Casa', 'IGNORE')).toBe('HOME_SCORE');
     expect(component['suggestMatchField']('Golos Fora', 'IGNORE')).toBe('AWAY_SCORE');
     expect(component['suggestMatchField']('Jornada', 'IGNORE')).toBe('ROUND');
+    // A historical knockout Excel is likely to name the phase column Fase,
+    // not Jornada. The importer must keep it for source-stage navigation.
+    for (const header of [
+      'Fase', 'Fase do torneio', 'Fase da competição', 'Fase eliminatória',
+      'Eliminatória', 'Etapa', 'Stage', 'Phase', 'Knockout Round',
+      'Round name', 'Meia-final'
+    ]) {
+      const expected = header === 'Meia-final' ? 'IGNORE' : 'ROUND';
+      expect(component['suggestMatchField'](header, 'IGNORE'))
+        .withContext(header).toBe(expected);
+    }
+    expect(component['suggestMatchField']('Fase', 'DATE')).toBe('ROUND');
+    expect(component['suggestMatchField']('Fase de grupos', 'IGNORE')).toBe('IGNORE');
+
     expect(component['suggestMatchField']('Equipa', 'PLAYER')).toBe('IGNORE');
     component.importMappings = [{ columnIndex: 0, header: 'Equipa A', field: 'HOME', confidence: 1 }];
     component.matchPreview = { sheetName: 'Dados', sourceRows: 1, acceptedRows: 1,
@@ -390,6 +404,27 @@ describe('CommunitiesComponent public session eligibility', () => {
     component.selectImportMode('STANDINGS');
     expect(component.matchPreview).toBeUndefined();
     expect(component.importMode).toBe('STANDINGS');
+  });
+
+  it('maps Fase to source ROUND across sheet inspection and retains the original header', () => {
+    component.importMode = 'MATCHES';
+    component.importPreview = {
+      fileName: 'torneio.xlsx',
+      sheets: [{
+        name: 'Torneio 2024', nonEmptyRows: 7, structure: 'TABULAR',
+        headers: ['Casa', 'Fora', 'Resultado', 'Data', 'Fase'],
+        sampleRows: [['Águias', 'Lobos', '2-1', '2024-04-01', 'Quartos de final']],
+        columnSuggestions: [
+          { columnIndex: 3, header: 'Data', field: 'DATE', confidence: 1 },
+          { columnIndex: 4, header: 'Fase', field: 'DATE', confidence: 0.3 }
+        ]
+      }]
+    };
+    component.selectImportSheet('Torneio 2024');
+    expect(component.importMappings.map(mapping => mapping.field))
+      .toEqual(['HOME', 'AWAY', 'SCORE', 'DATE', 'ROUND']);
+    expect(component.importMappings[4].header).toBe('Fase');
+    expect(component.importSheetName).toBe('Torneio 2024');
   });
 
   it('only previews historical matches and never invokes any persistence endpoint', () => {
@@ -1208,6 +1243,112 @@ describe('CommunitiesComponent public session eligibility', () => {
     (component.canManage as jasmine.Spy).and.returnValue(false);
     component.editSports();
     expect(component.editingSports).toBeFalse();
+  });
+
+  it('offers real World Skate 2026 heat recording when optional standings are disabled', () => {
+    component.selected = {
+      id: 7, name: 'Patinagem', sport: 'Patinagem de Velocidade',
+      sports: ['Patinagem de Velocidade', 'Futebol'],
+      rankingsEnabled: false, individualTournamentsEnabled: true
+    } as any;
+    expect(component.canRecordInlineSpeedWithoutRankings).toBeTrue();
+    expect(component.newRoundSport).toBe('Patinagem de Velocidade');
+    const options = component.eventOptions(component.newRoundSport).map(e => e.code);
+    expect(options).toContain('INLINE_TRACK_500D_FIRST_ROUND');
+    expect(options).toContain('INLINE_ROAD_LAP_SEMI_HEAT');
+    expect(options).toContain('INLINE_TRACK_500D_FINAL_A');
+    expect(options).not.toContain('INLINE_TRACK_200_TT');
+    expect(options).not.toContain('INLINE_TRACK_500D_FINAL_B');
+    expect(component.eventOptions('Futebol')).toEqual([]);
+  });
+
+  it('records skating for an existing competition even when it differs from community sports', () => {
+    component.selected = {
+      id: 9, sport: 'Futebol', sports: ['Futebol'],
+      rankingsEnabled: false, individualTournamentsEnabled: true
+    } as any;
+    component.speedTournamentPresent = true;
+    expect(component.canRecordInlineSpeedWithoutRankings).toBeTrue();
+    expect(component.newRoundSport).toBe('Patinagem de Velocidade');
+    expect(component.eventOptions(component.newRoundSport).map(option => option.code))
+      .toContain('INLINE_ROAD_LAP_FIRST_ROUND');
+    component.speedTournamentPresent = false;
+    expect(component.canRecordInlineSpeedWithoutRankings).toBeFalse();
+  });
+
+  it('does not expose standalone heat recording to a disabled or unrelated community', () => {
+    component.selected = {
+      id: 8, sport: 'Futebol', rankingsEnabled: false,
+      individualTournamentsEnabled: true
+    } as any;
+    expect(component.canRecordInlineSpeedWithoutRankings).toBeFalse();
+    component.selected = {
+      id: 8, sport: 'Patinagem de Velocidade', rankingsEnabled: false,
+      individualTournamentsEnabled: false
+    } as any;
+    expect(component.canRecordInlineSpeedWithoutRankings).toBeFalse();
+  });
+
+  it('keeps all existing World Skate event choices when general rankings remain active', () => {
+    component.selected = {
+      id: 7, sport: 'Patinagem de Velocidade',
+      rankingsEnabled: true, individualTournamentsEnabled: true
+    } as any;
+    expect(component.canRecordInlineSpeedWithoutRankings).toBeFalse();
+    expect(component.eventOptions('Patinagem de Velocidade').map(e => e.code))
+      .toContain('INLINE_TRACK_200_TT');
+  });
+
+
+  it('keeps backend import validation details in PT and translates unknown errors in EN', () => {
+    const original = localStorage.getItem('d24-language');
+    try {
+      const failure = { error: { message: 'Linha 4: mapeamento inválido' }, status: 422 };
+      localStorage.setItem('d24-language', 'pt');
+      expect((component as any).importRequestError(failure, 'communities.archive.previewError'))
+        .toBe('Linha 4: mapeamento inválido');
+      localStorage.setItem('d24-language', 'en');
+      expect((component as any).importRequestError(failure, 'communities.archive.previewError'))
+        .toBe('We could not analyse these standings. Check the Name and Points columns.');
+      expect((component as any).importRequestError(failure, 'communities.matches.confirmError'))
+        .toBe('Could not save these historical matches.');
+      localStorage.setItem('d24-language', 'pt');
+      expect((component as any).importRequestError({ error: { message: '  ' } }, 'communities.import.inspectError'))
+        .toBe('Não foi possível analisar este ficheiro.');
+      expect((component as any).importRequestError({
+        error: { message: 'x'.repeat(241) }
+      }, 'communities.import.inspectError')).toBe('Não foi possível analisar este ficheiro.');
+    } finally {
+      if (original === null) localStorage.removeItem('d24-language');
+      else localStorage.setItem('d24-language', original);
+    }
+  });
+
+  it('localizes community feature changes and preserves saved module settings', () => {
+    const original = localStorage.getItem('d24-language');
+    const saved = { id: 7, rankingsEnabled: false,
+      individualTournamentsEnabled: true, teamTournamentsEnabled: true } as any;
+    component.selected = saved;
+    component.communities = [saved];
+    const update = jasmine.createSpy('updateFeatures').and.returnValue(of(saved));
+    (component as any).communityService = { updateFeatures: update };
+    spyOn(component as any, 'loadCompetition');
+    try {
+      localStorage.setItem('d24-language', 'en');
+      component.editFeatures();
+      component.saveFeatures();
+      expect(component.featuresFeedback).toBe('Features updated. Existing history has been preserved.');
+      expect(update).toHaveBeenCalledOnceWith(7, {
+        rankingsEnabled: false, individualTournamentsEnabled: true, teamTournamentsEnabled: true
+      });
+      localStorage.setItem('d24-language', 'pt');
+      component.editFeatures();
+      component.saveFeatures();
+      expect(component.featuresFeedback).toBe('Funcionalidades atualizadas. O histórico foi preservado.');
+    } finally {
+      if (original === null) localStorage.removeItem('d24-language');
+      else localStorage.setItem('d24-language', original);
+    }
   });
 
 });

@@ -50,6 +50,7 @@ export interface CommunitySearchPresentation {
   photoZoom?: number | null;
   photoFocusX?: number | null;
   photoFocusY?: number | null;
+  photoFitMode?: 'COVER' | 'SHOW_ALL' | null;
   visibility: CommunityVisibility;
 }
 
@@ -81,12 +82,19 @@ export interface HistoricalStandingRow {
   goalsAgainst: number | null;
 }
 
+/** Optional structured import diagnostics introduced without removing legacy messages. */
+export interface CommunityImportDiagnostic {
+  code: string;
+  params?: Record<string, string>;
+}
+
 export interface HistoricalStandingPreview {
   sheetName: string;
   sourceRows: number;
   acceptedRows: number;
   duplicateRows: number;
   warnings: string[];
+  warningDetails?: CommunityImportDiagnostic[];
   rows: HistoricalStandingRow[];
 }
 
@@ -109,6 +117,7 @@ export interface HistoricalMatchPreview {
   acceptedRows: number;
   potentialDuplicates: number;
   warnings: string[];
+  warningDetails?: CommunityImportDiagnostic[];
   rows: Array<{
     sourceRow: number;
     home: string;
@@ -559,18 +568,26 @@ export class CommunityGroupsService {
     );
   }
 
-  updatePhoto(id: number, photo: File): Observable<CommunityGroup> {
+  updatePhoto(
+    id: number, photo: File, fitMode: 'COVER' | 'SHOW_ALL' = 'COVER',
+    zoom = 1, focusX = 50, focusY = 50
+  ): Observable<CommunityGroup> {
     const formData = new FormData();
     formData.append('photo', photo);
+    formData.append('fitMode', fitMode);
+    formData.append('zoom', String(zoom));
+    formData.append('focusX', String(focusX));
+    formData.append('focusY', String(focusY));
     return this.http.put<CommunityGroup>(this.url + '/' + id + '/photo', formData);
   }
 
   updatePhotoFraming(
     id: number, expectedPhotoUrl: string,
-    zoom: number, focusX: number, focusY: number
+    zoom: number, focusX: number, focusY: number,
+    fitMode: 'COVER' | 'SHOW_ALL' = 'COVER'
   ): Observable<CommunityGroup> {
     return this.http.put<CommunityGroup>(this.url + '/' + id + '/photo/framing', {
-      expectedPhotoUrl, zoom, focusX, focusY
+      expectedPhotoUrl, zoom, focusX, focusY, fitMode
     });
   }
 

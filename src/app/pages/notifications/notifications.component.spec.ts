@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 
 import { NotificationsComponent } from './notifications.component';
 import { NotificationApiService } from '../../services/notification-api.service';
@@ -74,9 +74,14 @@ describe('NotificationsComponent', () => {
   beforeEach(async () => {
     service = jasmine.createSpyObj<NotificationApiService>(
       'NotificationApiService',
-      ['mine', 'markRead', 'delete', 'deleteAll', 'acceptFriendRequest', 'rejectFriendRequest', 'blockOwnAccount']
+      ['mine', 'markRead', 'delete', 'deleteAll', 'acceptFriendRequest', 'rejectFriendRequest', 'blockOwnAccount', 'preferences', 'updatePreferences']
     );
     service.mine.and.returnValue(of([notificationFixture()]));
+    service.preferences.and.returnValue(of({
+      inAppEnabled: true, emailEnabled: true,
+      disabledInAppTypes: [], disabledEmailTypes: []
+    }));
+    service.updatePreferences.and.callFake(prefs => of(prefs));
     service.markRead.and.returnValue(of(void 0));
     service.delete.and.returnValue(of(void 0));
     service.deleteAll.and.returnValue(of(void 0));
@@ -394,4 +399,34 @@ describe('NotificationsComponent', () => {
     expect(component.notifications.length).toBe(0);
     expect(component.actionSuccess).toContain('rejeitado');
   });
+  it('shows all in-app and email alert types with per-type persistent switches', () => {
+    component.openPreferences();
+    expect(service.preferences).toHaveBeenCalled();
+    expect(component.preferenceTypes).toContain('FRIEND_REQUEST');
+    expect(component.preferenceTypes).toContain('CHAT_MESSAGE');
+    expect(component.preferenceTypes).toContain('COMMUNITY_JOIN_REQUEST');
+    component.changeType('COMMUNITY_JOIN_REQUEST', 'inApp', false);
+    expect(service.updatePreferences).toHaveBeenCalledWith(jasmine.objectContaining({
+      inAppEnabled: true, emailEnabled: true,
+      disabledInAppTypes: ['COMMUNITY_JOIN_REQUEST']
+    }));
+    expect(component.preferenceEnabled('COMMUNITY_JOIN_REQUEST', 'inApp')).toBeFalse();
+    expect(component.preferenceEnabled('COMMUNITY_JOIN_REQUEST', 'email')).toBeTrue();
+    component.changeGlobal('email', false);
+    expect(service.updatePreferences).toHaveBeenCalledWith(jasmine.objectContaining({
+      emailEnabled: false
+    }));
+    expect(component.preferences?.emailEnabled).toBeFalse();
+  });
+
+  it('does not discard current preferences if server update fails', () => {
+    component.openPreferences();
+    const current = component.preferences;
+    service.updatePreferences.and.returnValue(
+      throwError(() => new Error('Offline')));
+    component.changeType('CHAT_MESSAGE', 'email', false);
+    expect(component.preferences).toEqual(current);
+    expect(component.preferencesError).toBeTruthy();
+  });
+
 });
