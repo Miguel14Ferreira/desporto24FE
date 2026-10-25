@@ -11,14 +11,12 @@ import { MenuComponent } from './pages/menu/menu.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi, withXhr } from '@angular/common/http';
 import { CreateaccountComponent } from './pages/createaccount/createaccount.component';
-import { AlterardadosComponent } from './pages/alterardados/alterardados.component';
 import { ChangepasswordComponent } from './pages/changepassword/changepassword.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ContactComponent } from './pages/contact/contact.component';
 import { ForgotpComponent } from './pages/forgotp/forgotp.component';
 import { AuthInterceptor } from './auth.interceptor';
 import { AuthenticationGuard } from './guard/authentication.guard';
-import { PerfisComponent } from './pages/perfis/perfis.component';
 import { AuthenticationService } from './services/authethication.service';
 import { AboutComponent } from './pages/about/about.component';
 import { Forgotp2Component } from './pages/forgotp2/forgotp2.component';
@@ -30,9 +28,6 @@ import { NotificationsComponent } from './pages/notifications/notifications.comp
 import { FriendsComponent } from './pages/friends/friends.component';
 import { GoogleOnboardingComponent } from './pages/google-onboarding/google-onboarding.component';
 import { NotFoundComponent } from './pages/not-found/not-found.component';
-import { SocialStoriesComponent } from './pages/social-feed/social-stories.component';
-import { SocialFeedComponent } from './pages/social-feed/social-feed.component';
-import { DiscoverComponent } from './pages/discover/discover.component';
 import { VenueDetailsComponent } from './pages/venue-details/venue-details.component';
 import { VenueCreateComponent } from './pages/venue-create/venue-create.component';
 import { TranslatePipe } from './i18n/translate.pipe';
@@ -49,8 +44,7 @@ import { LegalPageComponent } from './pages/legal-page/legal-page.component';
         MenuComponent,
         LoginMFAComponent,
         CreateaccountComponent,
-        PerfisComponent,
-        AlterardadosComponent,
+
         ChangepasswordComponent,
         ContactComponent,
         ForgotpComponent,
@@ -62,8 +56,7 @@ import { LegalPageComponent } from './pages/legal-page/legal-page.component';
         FriendsComponent,
         GoogleOnboardingComponent,
         NotFoundComponent,
-        SocialFeedComponent,
-        DiscoverComponent,
+
         VenueDetailsComponent,
         VenueCreateComponent,
         LegalPageComponent
@@ -73,5 +66,5 @@ import { LegalPageComponent } from './pages/legal-page/legal-page.component';
         FormsModule,
         ReactiveFormsModule,
         BrowserAnimationsModule,
-        TranslatePipe, SocialStoriesComponent], providers: [AuthenticationGuard, AuthenticationService, { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }, provideHttpClient(withXhr(), withInterceptorsFromDi())] })
+        TranslatePipe], providers: [AuthenticationGuard, AuthenticationService, { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }, provideHttpClient(withXhr(), withInterceptorsFromDi())] })
 export class AppModule { }
