@@ -19,6 +19,10 @@ export function trackSprintSeriesStatus(
 ): TrackSprintSeriesStatus | null {
   if (selectedSeasonId == null || current.eventType !== 'TRACK_SPRINT_HEAT' && current.eventType !== 'TRACK_SPRINT_REPECHAGE'
       || !current.sprintSeriesKey || !current.sprintHeatNumber) return null;
+  // Three-up repechages have a distinct winner; the bracket records that
+  // decision, never mislabel the third rider as side B in a two-up summary.
+  if (current.eventDiscipline === 'SPRINT_REPECHAGE_1_32'
+      || current.eventDiscipline === 'SPRINT_REPECHAGE_1_8') return null;
   const matches = rounds.filter(round => (round.eventType === 'TRACK_SPRINT_HEAT' || round.eventType === 'TRACK_SPRINT_REPECHAGE')
     && round.sprintSeriesKey === current.sprintSeriesKey);
   matches.sort((a, b) => (a.sprintHeatNumber ?? 0) - (b.sprintHeatNumber ?? 0));
