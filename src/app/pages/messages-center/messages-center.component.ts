@@ -28,6 +28,7 @@ import {
 } from './inbox.model';
 import { RecoverableSend, restorePendingSends, savePendingSends } from './pending-send-session';
 import { GifChoice, encodeGiphyText, findGiphy, readGifProviderKey, readGiphyText } from './gif-picker.client';
+import { ShareChoice, ShareKind, encodeShareMessage, readSharedMessage } from './share-message';
 import { GiphyEmbedComponent } from './giphy-embed.component';
 
 export const VOICE_NOTE_MAX_DURATION_MS = 5 * 60_000;
@@ -129,6 +130,20 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   selectedAttachment: File | null = null;
   // GIPHY media is NOT copied to R2: only validated CDN URLs travel as chat text.
   selectedGif: GifChoice | null = null;
+  selectedShare: ShareChoice | null = null;
+  attachmentMenuOpen = false;
+  sharePickerOpen = false;
+  sharePickerLoading = false;
+  sharePickerError = false;
+  sharePickerTab: ShareKind = 'profile';
+  sharePickerSearch = '';
+  shareChoices: ShareChoice[] = [];
+  private sharePickerVersion = 0;
+  get visibleShareChoices(): ShareChoice[] {
+    const q = this.sharePickerSearch.trim().toLocaleLowerCase();
+    return this.shareChoices.filter(i => i.kind === this.sharePickerTab
+      && (!q || (i.title + ' ' + i.subtitle).toLocaleLowerCase().includes(q)));
+  }
   voiceRecording = false;
   voiceFinalizing = false;
   voiceElapsedSeconds = 0;
@@ -1704,6 +1719,84 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
         }
       });
   }
+
+  toggleAttachmentMenu(): void {
+    if (!this.canEditDraft() || !this.attachmentControlsReady) return;
+    this.closeEmojiPicker();
+    this.closeSharePicker();
+    this.attachmentMenuOpen = !this.attachmentMenuOpen;
+  }
+  closeAttachmentMenu(): void { this.attachmentMenuOpen = false; }
+  closeSharePicker(): void {
+    ++this.sharePickerVersion;
+    this.sharePickerOpen = false;
+    this.sharePickerLoading = false;
+    this.sharePickerSearch = '';
+    this.shareChoices = [];
+  }
+  openSharePicker(): void {
+    if (!this.canEditDraft() || !this.attachmentControlsReady) return;
+    this.closeAttachmentMenu();
+    this.closeEmojiPicker();
+    this.sharePickerOpen = true;
+    this.sharePickerTab = 'profile';
+    this.sharePickerSearch = '';
+    this.sharePickerError = false;
+    this.sharePickerLoading = true;
+    const version = ++this.sharePickerVersion;
+    const selectedKey = this.selectedKey;
+    forkJoin({
+      people: this.contacts.friends().pipe(timeout(10000), catchError(() => of([]))),
+      communities: this.groups.mine().pipe(timeout(10000), catchError(() => of([]))),
+      sessions: this.sessions.mine().pipe(timeout(10000), catchError(() =>
+        of({created:[],joined:[],waitlisted:[]})))
+    }).subscribe({
+      next: ({people, communities, sessions}) => {
+        if (!this.sharePickerOpen || version !== this.sharePickerVersion
+            || selectedKey !== this.selectedKey || !this.attachmentControlsReady) return;
+        const friends: ShareChoice[] = people
+          .filter(person => !person.chatBlocked && !person.blockedByMe)
+          .map(person => ({kind:'profile' as const,id:person.username,
+            title:person.nickname || person.fullName || person.username, subtitle:'@'+person.username}));
+        const included = new Set<number>();
+        const events: ShareChoice[] = [...sessions.created,...sessions.joined]
+          .filter(session => {
+            if (included.has(session.id) || session.privateGame || session.audience === 'COMMUNITY_ONLY'
+                || !Number.isFinite(Date.parse(session.gameDate))
+                || Date.parse(session.gameDate) <= Date.now()
+                || ['CANCELLED','COMPLETED','NOT_OCCURRED'].includes(session.status)) return false;
+            included.add(session.id);
+            return true;
+          }).map(session => ({kind:'session' as const,id:String(session.id),
+            title:session.sport+' · '+session.city,
+            subtitle:new Date(session.gameDate).toLocaleDateString('pt-PT')}));
+        const groups: ShareChoice[] = communities
+          .filter(group => group.visibility === 'PUBLIC')
+          .map(group => ({kind:'community' as const,id:String(group.id),
+            title:group.name,subtitle:group.sport||''}));
+        this.shareChoices = [...friends,...events,...groups];
+        this.sharePickerLoading = false;
+      },
+      error: () => { if(version===this.sharePickerVersion){
+        this.sharePickerLoading=false;this.sharePickerError=true;
+      }}
+    });
+  }
+  selectShareChoice(choice: ShareChoice): void {
+    if (!this.sharePickerOpen || !this.attachmentControlsReady || !this.canEditDraft()
+        || !this.shareChoices.some(item => item.kind === choice.kind && item.id === choice.id)
+        || !encodeShareMessage(choice,this.draft.trim())) return;
+    this.selectedShare = choice;
+    this.selectedAttachment = null;
+    this.selectedGif = null;
+    this.clearVoicePreview();
+    this.composerError = '';
+    this.closeSharePicker();
+  }
+  removeSelectedShare(): void {
+    if (!this.sending && !this.deliveryUncertain) this.selectedShare = null;
+  }
+  readSharedMessage(text: string) { return readSharedMessage(text); }
 
   toggleEmojiPicker(): void {
     if (!this.canEditDraft()) return;
