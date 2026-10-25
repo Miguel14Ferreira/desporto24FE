@@ -131,7 +131,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   competition?: CommunityCompetitionOverview;
   sprintBrackets: TrackSprintBracketOverview[] = [];
   sprintBracketNameDraft = '';
-  sprintBracketFormatDraft: 'EIGHT_RIDER_FINALS' | 'SIXTEEN_RIDER_1_8' = 'EIGHT_RIDER_FINALS';
+  sprintBracketFormatDraft: 'EIGHT_RIDER_FINALS' | 'SIXTEEN_RIDER_1_8' | 'TWENTY_EIGHT_RIDER_1_16' = 'EIGHT_RIDER_FINALS';
   sprintBracketQualifyingRoundIdDraft: number | null = null;
   deletingSprintBracketId: number | null = null;
   sprintBracketSaving = false;
@@ -2339,7 +2339,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   }
 
   get availableSprintQualifyingRounds(): CommunityRound[] {
-    return availableSprintQualifiers(this.competition?.rounds || []);
+    return availableSprintQualifiers(this.competition?.rounds || [],
+      this.sprintBracketFormatDraft === 'TWENTY_EIGHT_RIDER_1_16' ? 28 : 16);
   }
 
   canCreateSprintBracket(): boolean {
@@ -2388,7 +2389,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     this.sprintBracketError = '';
     this.communityService.createTrackSprintBracket(communityId, seasonId, name,
       this.sprintBracketFormatDraft,
-      this.sprintBracketFormatDraft === 'SIXTEEN_RIDER_1_8'
+      this.sprintBracketFormatDraft !== 'EIGHT_RIDER_FINALS'
         ? this.sprintBracketQualifyingRoundIdDraft : null)
       .pipe(timeout(10_000), finalize(() => this.sprintBracketSaving = false))
       .subscribe({
