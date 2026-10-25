@@ -406,6 +406,7 @@ describe('Unified Jynlo message center', () => {
 
   it('closes selected session and revokes displayed private files exactly at kickoff', () => {
     jasmine.clock().install();
+    jasmine.clock().mockDate(new Date());
     try {
       const session = item('session', 41);
       (component as any).sessionKickoffs.set(41, Date.now() + 100);
@@ -444,6 +445,7 @@ describe('Unified Jynlo message center', () => {
 
   it('does not close a different chat when the previous session reaches kickoff', () => {
     jasmine.clock().install();
+    jasmine.clock().mockDate(new Date());
     try {
       const session = item('session', 41);
       const directChat = item('direct', 'bea');
