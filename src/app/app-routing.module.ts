@@ -52,6 +52,7 @@ const routes: Routes = [
   {path:'menu/discover',component:DiscoverComponent,canActivate:[AuthenticationGuard]},
   {path:'menu/venues',loadComponent:() => import('./pages/venues-directory/venues-directory.component').then(m => m.VenuesDirectoryComponent),canActivate:[AuthenticationGuard]},
   {path:'menu/venues/new',component:VenueCreateComponent,canActivate:[AuthenticationGuard]},
+  {path:'menu/venues/:id/suggest-edit',loadComponent:() => import('./pages/venue-suggest-edit/venue-suggest-edit.component').then(m => m.VenueSuggestEditComponent),canActivate:[AuthenticationGuard]},
   {path:'menu/venues/:id',component:VenueDetailsComponent,canActivate:[AuthenticationGuard]},
   {path:'menu/events',component:EventsComponent,canActivate:[AuthenticationGuard]},
   {path:'menu/login',redirectTo:'/login', pathMatch:'full'},
