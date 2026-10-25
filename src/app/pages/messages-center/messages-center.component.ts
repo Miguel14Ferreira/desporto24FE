@@ -40,7 +40,7 @@ const VOICE_NOTE_AUDIO_BITRATE = 48_000;
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, TranslatePipe, ChatReactionsComponent, GiphyEmbedComponent],
   templateUrl: './messages-center.component.html',
-  styleUrls: ['./messages-center.component.css'],
+  styleUrls: ['./messages-center.component.css', './messages-center-premium.component.css'],
   changeDetection: ChangeDetectionStrategy.Eager
 })
 export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChecked {
