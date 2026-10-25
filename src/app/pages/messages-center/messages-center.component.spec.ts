@@ -146,6 +146,88 @@ describe('Unified Jynlo message center', () => {
     expect(component.selectedAttachment).toBeNull();
   });
 
+  it('keeps private media available after an access token renews for the same account', () => {
+    const encode = (value: unknown) => btoa(JSON.stringify(value));
+    const exp = Math.floor(Date.now() / 1000) + 3600;
+    const jwt = (nonce: number) => [
+      encode({alg:'none'}), encode({sub:'ana', exp, nonce}), 'signature'
+    ].join('.');
+    const firstToken = jwt(1);
+    let currentToken = firstToken;
+    spyOn(localStorage, 'getItem').and.callFake(key => key === 't' ? currentToken : null);
+    (component as any).receiptSessionToken = firstToken;
+    const pending = new Subject<{available:boolean}>();
+    direct.attachmentsAvailable.and.returnValue(pending.asObservable());
+    spyOn<any>(component, 'loadHistory').and.stub();
+    const peer = item('direct', 'bea');
+    component.conversations = [peer];
+    component.selectConversation(peer);
+    currentToken = jwt(2); // The interceptor refreshed the same principal.
+    pending.next({available:true});
+    pending.complete();
+    expect(component.attachmentReady).toBeTrue();
+    expect(component.attachmentControlsReady).toBeTrue();
+  });
+
+  it('retries read-only private storage availability only once for the selected chat', () => {
+    jasmine.clock().install();
+    try {
+      const encode = (value: unknown) => btoa(JSON.stringify(value));
+      const token = [
+        encode({alg:'none'}),
+        encode({sub:'ana', exp:Math.floor(Date.now() / 1000) + 3600}),
+        'signature'
+      ].join('.');
+      spyOn(localStorage, 'getItem').and.callFake(key => key === 't' ? token : null);
+      (component as any).receiptSessionToken = token;
+      spyOn<any>(component, 'loadHistory').and.stub();
+      spyOn<any>(component, 'loadComposerAccess').and.stub();
+      direct.attachmentsAvailable.and.returnValues(of({available:false}), of({available:true}));
+      const peer = item('direct', 'bea');
+      component.conversations = [peer];
+      component.selectConversation(peer);
+      expect(component.attachmentControlsReady).toBeFalse();
+      jasmine.clock().tick(6001);
+      expect(direct.attachmentsAvailable).toHaveBeenCalledTimes(2);
+      expect(component.attachmentControlsReady).toBeTrue();
+      jasmine.clock().tick(20000);
+      expect(direct.attachmentsAvailable).toHaveBeenCalledTimes(2);
+    } finally {
+      component.ngOnDestroy();
+      jasmine.clock().uninstall();
+    }
+  });
+
+  it('cancels the delayed private storage retry when changing chats', () => {
+    jasmine.clock().install();
+    try {
+      const encode = (value: unknown) => btoa(JSON.stringify(value));
+      const token = [
+        encode({alg:'none'}),
+        encode({sub:'ana', exp:Math.floor(Date.now() / 1000) + 3600}),
+        'signature'
+      ].join('.');
+      spyOn(localStorage, 'getItem').and.callFake(key => key === 't' ? token : null);
+      (component as any).receiptSessionToken = token;
+      spyOn<any>(component, 'loadHistory').and.stub();
+      spyOn<any>(component, 'loadComposerAccess').and.stub();
+      direct.attachmentsAvailable.and.returnValue(of({available:false}));
+      const first = item('direct', 'bea');
+      const second = item('direct', 'carla');
+      component.conversations = [first, second];
+      component.selectConversation(first);
+      component.selectConversation(second);
+      jasmine.clock().tick(6001);
+      expect(direct.attachmentsAvailable.calls.allArgs()).toEqual([
+        ['bea'], ['carla'], ['carla']
+      ]);
+      expect(component.attachmentControlsReady).toBeFalse();
+    } finally {
+      component.ngOnDestroy();
+      jasmine.clock().uninstall();
+    }
+  });
+
   it('ignores a delayed private-storage availability result after a login switch', () => {
     let browserToken = 'qa-ana';
     spyOn(localStorage, 'getItem').and.callFake(key => key === 't' ? browserToken : null);

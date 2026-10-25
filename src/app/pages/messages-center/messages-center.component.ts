@@ -64,6 +64,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   // A precise selected-session timer closes live previews at kickoff rather
   // than waiting for the 45-second inbox summary refresh.
   private sessionCutoffTimer?: ReturnType<typeof setTimeout>;
+  private attachmentRetryTimer?: ReturnType<typeof setTimeout>;
   /** Only a foreground inbox can acknowledge messages as actually viewed. */
   private isPageActive(): boolean {
     return document.visibilityState === 'visible' && document.hasFocus();
@@ -79,6 +80,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     }
   };
   private clearMediaOnAccountChange(): void {
+    this.clearAttachmentRetry();
     ++this.attachmentViewVersion;
     this.attachmentReady = false;
     this.selectedAttachment = null;
@@ -310,6 +312,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     if (this.receiptTimer) clearInterval(this.receiptTimer);
     if (this.sessionCutoffTimer) clearTimeout(this.sessionCutoffTimer);
     this.sessionCutoffTimer = undefined;
+    this.clearAttachmentRetry();
     this.cancelVoiceRecording();
     ++this.attachmentViewVersion;
     this.clearAttachmentPreviews();
@@ -597,6 +600,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     if (!conversation || conversation.kind !== 'session') return;
     this.typing.stop();
     this.cancelVoiceRecording();
+    this.clearAttachmentRetry();
     ++this.attachmentViewVersion; // Reject any authenticated Blob still in flight.
     this.selectedAttachment = null;
     this.attachmentReady = false;
@@ -633,6 +637,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.cancelVoiceRecording();
     this.emojiPickerOpen = false;
     this.selectedAttachment = null;
+    this.clearAttachmentRetry();
     this.attachmentReady = false;
     ++this.attachmentViewVersion;
     this.clearAttachmentPreviews();
@@ -1049,25 +1054,41 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.typing.input(conversation.kind, conversation.id, this.draft, this.canSendMessage());
   }
 
-  private loadAttachmentAvailability(conversation: InboxConversation): void {
+  private clearAttachmentRetry(): void {
+    if (this.attachmentRetryTimer) clearTimeout(this.attachmentRetryTimer);
+    this.attachmentRetryTimer = undefined;
+  }
+
+  private loadAttachmentAvailability(conversation: InboxConversation, attempt = 0): void {
     this.attachmentReady = false;
-    // Progressive enhancement: older injected chat clients and test doubles
-    // have no attachment capability; keep the composer securely text-only.
     if (!this.isAttachmentIdentityCurrent() || !this.isSelectedSessionOpen()) return;
-    // A private chat and a community have different authorization scopes.
     const available = conversation.kind === 'direct'
       ? (typeof this.direct.attachmentsAvailable === 'function'
-          ? this.direct.attachmentsAvailable(String(conversation.id)) : of({ available: false }))
+          ? this.direct.attachmentsAvailable(String(conversation.id)) : of({available: false}))
       : conversation.kind === 'community'
       ? (typeof this.timeline.chatAttachmentsAvailable === 'function'
-          ? this.timeline.chatAttachmentsAvailable(Number(conversation.id)) : of({ available: false }))
+          ? this.timeline.chatAttachmentsAvailable(Number(conversation.id)) : of({available: false}))
       : (typeof this.sessions.attachmentsAvailable === 'function'
-          ? this.sessions.attachmentsAvailable(Number(conversation.id)) : of({ available: false }));
+          ? this.sessions.attachmentsAvailable(Number(conversation.id)) : of({available: false}));
     const viewVersion = this.attachmentViewVersion;
     available.pipe(timeout(10000), catchError(() => of({available: false})))
       .subscribe(result => {
-        if (viewVersion === this.attachmentViewVersion && this.selectedKey === conversation.key
-            && this.isAttachmentIdentityCurrent() && this.isSelectedSessionOpen()) this.attachmentReady = result.available;
+        if (viewVersion !== this.attachmentViewVersion || this.selectedKey !== conversation.key
+            || !this.isAttachmentIdentityCurrent() || !this.isSelectedSessionOpen()) return;
+        this.attachmentReady = result.available === true;
+        // One read-only retry covers an initial R2 probe or access-token refresh.
+        // Never repeat a file/message POST or retry across chat/account changes.
+        if (!this.attachmentReady && attempt === 0 && this.receiptSessionToken) {
+          this.clearAttachmentRetry();
+          this.attachmentRetryTimer = setTimeout(() => {
+            this.attachmentRetryTimer = undefined;
+            if (viewVersion === this.attachmentViewVersion
+                && this.selectedKey === conversation.key
+                && this.isAttachmentIdentityCurrent() && this.isSelectedSessionOpen()) {
+              this.loadAttachmentAvailability(conversation, 1);
+            }
+          }, 6000);
+        }
       });
   }
 
@@ -1667,8 +1688,18 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   private isAttachmentIdentityCurrent(): boolean {
     // The mounted app decodes currentUsername at initialization. A removed or
     // replaced token cannot unlock media in the original authenticated inbox.
-    return !!this.currentUsername && (this.receiptSessionToken === null
-      || this.isReceiptSessionCurrent());
+    if (!this.currentUsername) return false;
+    if (this.receiptSessionToken === null || this.isReceiptSessionCurrent()) return true;
+    try {
+      const current = localStorage.getItem('t');
+      if (!current || !this.receiptSessionToken) return false;
+      const original = this.jwt.decodeToken(this.receiptSessionToken);
+      const renewed = this.jwt.decodeToken(current);
+      const username = this.currentUsername.toLowerCase();
+      return original?.sub?.toLowerCase() === username
+        && renewed?.sub?.toLowerCase() === username
+        && typeof renewed.exp === 'number' && renewed.exp * 1000 > Date.now();
+    } catch { return false; }
   }
 
   private isReceiptSessionCurrent(): boolean {
