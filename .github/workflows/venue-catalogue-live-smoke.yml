@@ -1,0 +1,22 @@
+name: LIVE venue catalogue smoke (read only)
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/qa_live_venue_catalogue.py'
+      - '.github/workflows/venue-catalogue-live-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  venue-catalogue:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check public approved venues and detail route
+        env:
+          VENUES_API_URL: https://api.d24sports.com
+        run: python3 scripts/qa_live_venue_catalogue.py
