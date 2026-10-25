@@ -7,6 +7,7 @@ export type GymApparatus = 'FLOOR' | 'VAULT' | 'POMMEL_HORSE' | 'RINGS'
 export type BodyboardStance = 'PRONE' | 'DROP_KNEE';
 export type RhythmicApparatus = 'HOOP' | 'BALL' | 'CLUBS' | 'RIBBON';
 export type OrienteeringCourse = 'ORIENT_SPRINT' | 'ORIENT_MIDDLE' | 'ORIENT_LONG';
+export type TrackSprintClassification = 'SPRINT_PLACES_5_8';
 export type TrackSprintPhase = 'SPRINT_THIRTY_SECOND_FINAL' | 'SPRINT_SIXTEENTH_FINAL' | 'SPRINT_EIGHTH_FINAL' | 'SPRINT_QUARTER_FINAL' | 'SPRINT_SEMI_FINAL'
   | 'SPRINT_BRONZE_FINAL' | 'SPRINT_GOLD_FINAL';
 const TRACK_SPRINT_PHASES: readonly TrackSprintPhase[] = [
@@ -16,6 +17,7 @@ const TRACK_SPRINT_PHASES: readonly TrackSprintPhase[] = [
 export const TRACK_SPRINT_REPECHAGES = [
   'SPRINT_REPECHAGE_1_32', 'SPRINT_REPECHAGE_1_16', 'SPRINT_REPECHAGE_1_8'
 ] as const;
+const TRACK_SPRINT_CLASSIFICATION: readonly TrackSprintClassification[] = ['SPRINT_PLACES_5_8'];
 const ORIENTEERING: readonly OrienteeringCourse[] = [
   'ORIENT_SPRINT', 'ORIENT_MIDDLE', 'ORIENT_LONG'
 ];
@@ -40,12 +42,14 @@ const OPTIONS: Record<string, readonly AthleticsDiscipline[]> = {
 
 export function athleticsDisciplineOptions(
   sport: string | null | undefined, eventType: string | null | undefined
-): readonly (AthleticsDiscipline | GymApparatus | BodyboardStance | RhythmicApparatus | SwimmingPoolEvent | OpenWaterDistance | OrienteeringCourse | TrackSprintPhase | typeof TRACK_SPRINT_REPECHAGES[number])[] {
+): readonly (AthleticsDiscipline | GymApparatus | BodyboardStance | RhythmicApparatus | SwimmingPoolEvent | OpenWaterDistance | OrienteeringCourse | TrackSprintPhase | TrackSprintClassification | typeof TRACK_SPRINT_REPECHAGES[number])[] {
   const normalized = sport?.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
   if (normalized === 'ciclismo de pista' && eventType === 'TRACK_SPRINT_HEAT')
     return TRACK_SPRINT_PHASES;
   if (normalized === 'ciclismo de pista' && eventType === 'TRACK_SPRINT_REPECHAGE')
     return TRACK_SPRINT_REPECHAGES;
+  if (normalized === 'ciclismo de pista' && eventType === 'TRACK_SPRINT_5_8')
+    return TRACK_SPRINT_CLASSIFICATION;
   if (normalized === 'orientacao' && eventType === 'FOOT_ORIENTEERING') return ORIENTEERING;
   if (normalized === 'natacao em aguas abertas' && eventType === 'OWS_INDIVIDUAL') return OPEN_WATER;
   if (normalized === 'natacao' && eventType === 'SWIM_LCM') return SWIMMING_LCM;
@@ -62,6 +66,6 @@ export function athleticsDisciplineValid(
 ): boolean {
   const options = athleticsDisciplineOptions(sport, eventType);
   return options.length
-    ? options.includes(discipline as AthleticsDiscipline | GymApparatus | BodyboardStance | RhythmicApparatus | SwimmingPoolEvent | OpenWaterDistance | OrienteeringCourse | TrackSprintPhase | typeof TRACK_SPRINT_REPECHAGES[number])
+    ? options.includes(discipline as AthleticsDiscipline | GymApparatus | BodyboardStance | RhythmicApparatus | SwimmingPoolEvent | OpenWaterDistance | OrienteeringCourse | TrackSprintPhase | TrackSprintClassification | typeof TRACK_SPRINT_REPECHAGES[number])
     : !discipline;
 }

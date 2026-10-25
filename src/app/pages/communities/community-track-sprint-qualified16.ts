@@ -25,7 +25,8 @@ export function availableSprintQualifiers(
 export function nextSprintRoundHeatMax(
   phase: string | null | undefined
 ): number {
-  return phase === 'SPRINT_EIGHTH_FINAL' || phase === 'SPRINT_SIXTEENTH_FINAL'
+  return phase === 'SPRINT_PLACES_5_8' ? 1
+    : phase === 'SPRINT_EIGHTH_FINAL' || phase === 'SPRINT_SIXTEENTH_FINAL'
     || phase === 'SPRINT_THIRTY_SECOND_FINAL' || phase?.startsWith('SPRINT_REPECHAGE_')
       ? 1 : 3;
 }

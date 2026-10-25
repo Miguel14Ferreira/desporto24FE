@@ -1305,7 +1305,20 @@
                                       <strong>{{ match.riderC }}</strong>
                                     </div>
                                   }
+                                  @if (match.riderD) {
+                                    <span class="racket-result-vs">VS</span>
+                                    <div class="racket-result-side">
+                                      <strong>{{ match.riderD }}</strong>
+                                    </div>
+                                  }
                                 </div>
+                                @if (match.rankings?.length) {
+                                  <div class="round-meta-form">
+                                    @for (rank of match.rankings || []; track rank.position) {
+                                      <small>{{ rank.position }}.º — {{ rank.username }}</small>
+                                    }
+                                  </div>
+                                }
                                 @if (match.winner) {
                                   <small>{{ 'communities.trackCycling.seriesWinner' | t }}: {{ match.winner }}</small>
                                 }
@@ -1380,7 +1393,7 @@
                                 ? 'communities.openWater.distanceLabel'
                                 : newRoundEventType === 'FOOT_ORIENTEERING'
                                 ? 'communities.orienteering.courseLabel'
-                                : (newRoundEventType === 'TRACK_SPRINT_HEAT' || newRoundEventType === 'TRACK_SPRINT_REPECHAGE')
+                                : (newRoundEventType === 'TRACK_SPRINT_HEAT' || newRoundEventType === 'TRACK_SPRINT_REPECHAGE' || newRoundEventType === 'TRACK_SPRINT_5_8')
                                 ? 'communities.trackCycling.phase' : 'communities.discipline.label') | t }}</span>
                               <select [(ngModel)]="roundDisciplineDraft"
                                 (ngModelChange)="sprintSeriesKeyDraft = ''; sprintHeatNumberDraft = 1"
@@ -1399,7 +1412,7 @@
                               </select>
                             </label>
                           }
-                          @if (newRoundEventType === 'TRACK_SPRINT_HEAT' || newRoundEventType === 'TRACK_SPRINT_REPECHAGE') {
+                          @if (newRoundEventType === 'TRACK_SPRINT_HEAT' || newRoundEventType === 'TRACK_SPRINT_REPECHAGE' || newRoundEventType === 'TRACK_SPRINT_5_8') {
                             @if (activeSeason()) {
                               <label>
                                 <span>{{ 'communities.trackCycling.seriesName' | t }}</span>
@@ -1427,7 +1440,8 @@
                                     @if (roundDisciplineDraft !== 'SPRINT_EIGHTH_FINAL'
                                       && roundDisciplineDraft !== 'SPRINT_SIXTEENTH_FINAL'
                                       && roundDisciplineDraft !== 'SPRINT_THIRTY_SECOND_FINAL'
-                                      && !roundDisciplineDraft.startsWith('SPRINT_REPECHAGE_')) {
+                                      && !roundDisciplineDraft.startsWith('SPRINT_REPECHAGE_')
+                                      && roundDisciplineDraft !== 'SPRINT_PLACES_5_8') {
                                       <option [ngValue]="2">2</option>
                                       <option [ngValue]="3">3</option>
                                     }
@@ -1463,6 +1477,7 @@
                               : newRoundEventType === 'TRACK_SCRATCH' ? 'communities.trackCycling.scratchHint'
                               : newRoundEventType === 'TRACK_TIME_TRIAL' ? 'communities.trackCycling.timeTrialHint'
                               : newRoundEventType === 'TRACK_FLYING_200' ? 'communities.trackCycling.flying200Hint'
+                              : newRoundEventType === 'TRACK_SPRINT_5_8' ? 'communities.trackCycling.placements58Hint'
                               : 'communities.race.metricsEntryHint') | t }}
                           </p>
                         } @else if (newRoundEventType && viewForNewRound() === 'individual') {
@@ -1714,10 +1729,13 @@
                                         && !isInlineSpeedTimedEvent(newRoundEventType)) {
                                       <label>
                                         <span>{{ 'communities.race.position' | t }}</span>
-                                        <input type="number" min="1" step="1" [(ngModel)]="entry.finishPosition"
+                                        <input type="number" [min]="newRoundEventType === 'TRACK_SPRINT_5_8' ? 5 : 1"
+                                          [max]="newRoundEventType === 'TRACK_SPRINT_5_8' ? 8 : null"
+                                          step="1" [(ngModel)]="entry.finishPosition"
                                           [placeholder]="'communities.race.positionPlaceholder' | t">
                                       </label>
                                     }
+                                    @if (newRoundEventType !== 'TRACK_SPRINT_5_8') {
                                     <label>
                                       <span>{{ (isInlineSpeedTimedEvent(newRoundEventType) ? 'communities.speedSkating.timeSeconds'
                                         : newRoundEventType === 'FOOT_ORIENTEERING' ? 'communities.orienteering.timeSeconds'
@@ -1735,7 +1753,9 @@
                                           ? 'communities.swimming.timePlaceholder'
                                           : 'communities.race.timePlaceholder') | t">
                                     </label>
-                                    @if (raceSupportsLaps(newRoundSport) && newRoundEventType !== 'TRACK_TIME_TRIAL'
+                                    }
+                                    @if (raceSupportsLaps(newRoundSport) && newRoundEventType !== 'TRACK_SPRINT_5_8'
+                                        && newRoundEventType !== 'TRACK_TIME_TRIAL'
                                         && newRoundEventType !== 'TRACK_FLYING_200'
                                         && !isInlineSpeedTimedEvent(newRoundEventType)
                                         && !isInlineSpeedHeatEvent(newRoundEventType)) {
