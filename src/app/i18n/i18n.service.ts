@@ -337,6 +337,7 @@ const PT: Dictionary = {
   'chat.gifResults': 'Resultados de GIFs',
   'chat.gifSelect': 'Escolher GIF',
   'chat.gifPreparing': 'A preparar GIF…',
+  'chat.gifCaptionTooLong': 'O texto com o GIF é demasiado longo. Reduz a mensagem antes de escolheres o GIF.',
   'chat.gifDownloadFailed': 'Não foi possível preparar este GIF (limite de 5 MB). Escolhe outro ou envia um ficheiro.',
   'chat.gifNoResults': 'Não foram encontrados GIFs. Experimenta outra pesquisa.',
   'chat.gifMore': 'Ver mais GIFs',
