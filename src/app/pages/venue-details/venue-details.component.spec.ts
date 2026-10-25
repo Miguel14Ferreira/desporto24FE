@@ -73,6 +73,22 @@ describe('VenueDetailsComponent', () => {
     expect(component.googleVenueContactUrl).toContain('Lisboa');
   });
 
+  it('flags an unconfirmed operator identity for Armando Pimentel without revealing a telephone', () => {
+    const component = new VenueDetailsComponent({} as ActivatedRoute, {} as VenueService);
+    component.venue = {
+      ...createVenue(), id: 2655, name: 'Piscinas Engenheiro Armando Pimentel',
+      city: 'Porto', district: 'Porto', address: 'Morada por confirmar',
+      contact: null
+    };
+    expect(component.officialContactIdentityUnconfirmed).toBeTrue();
+    expect(component.officialContactPageUrl)
+      .toBe('https://www.agoraporto.pt/desporto/piscina-municipal-eng-o-armando-pimentel');
+    expect(component.publicTelephoneUrl).toBeNull();
+    component.venue = { ...component.venue, contact: '226179598' };
+    expect(component.officialContactIdentityUnconfirmed).toBeFalse();
+    expect(component.officialContactPageUrl).toBeNull();
+  });
+
   it('does not show a fake pin or fake telephone if data is missing', () => {
     const sanitizer = jasmine.createSpyObj<DomSanitizer>('DomSanitizer', ['bypassSecurityTrustResourceUrl']);
     const component = new VenueDetailsComponent({} as ActivatedRoute, {} as VenueService, null, sanitizer);
