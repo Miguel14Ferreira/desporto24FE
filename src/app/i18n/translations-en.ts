@@ -2689,6 +2689,7 @@ export const EN: Record<string, string> = {
   'communities.trackCycling.seriesName': 'Identified series (optional)',
   'communities.trackCycling.bracketTitle': 'Sprint brackets',
   'communities.trackCycling.interruptionTitle': 'Event permanently interrupted',
+  'communities.trackCycling.interruptionPosition': 'Place',
   'communities.trackCycling.interruption.BEFORE_QUARTERS': 'Interrupted before the quarterfinals were completed',
   'communities.trackCycling.interruption.AFTER_QUARTERS': 'Interrupted after the quarterfinals and before all semifinals were completed',
   'communities.trackCycling.interruption.AFTER_SEMIS': 'Interrupted after the semifinals',
