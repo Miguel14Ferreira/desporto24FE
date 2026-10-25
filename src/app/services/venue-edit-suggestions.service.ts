@@ -16,6 +16,8 @@ export interface VenueEditSuggestion {
   before: Partial<Record<VenueEditField, string | null>>;
   proposed: Partial<Record<VenueEditField, string>>;
   reason: string;
+  /** Submitted link, not verified until an administrator checks the source. */
+  sourceUrl?: string | null;
   submittedByUsername: string;
   submittedAt: string;
   reviewedByUsername: string | null;
@@ -36,10 +38,10 @@ export class VenueEditSuggestionsService {
 
   constructor(private readonly http: HttpClient) {}
 
-  submit(venueId: number, changes: Partial<Record<VenueEditField, string>>, reason: string):
+  submit(venueId: number, changes: Partial<Record<VenueEditField, string>>, reason: string, sourceUrl?: string):
     Observable<VenueEditSuggestion> {
     return this.http.post<VenueEditSuggestion>(
-      `${this.base}/${venueId}/edit-suggestions`, { changes, reason });
+      `${this.base}/${venueId}/edit-suggestions`, { changes, reason, ...(sourceUrl ? { sourceUrl } : {}) });
   }
 
   mine(venueId: number): Observable<VenueEditSuggestion> {
