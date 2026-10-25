@@ -105,6 +105,14 @@ export interface CommunitySearchPresentation {
   visibility: CommunityVisibility;
 }
 
+export interface CommunityCreationQuota {
+  owned: number;
+  limit: number;
+  createdToday: number;
+  dailyLimit: number;
+  canCreate: boolean;
+}
+
 export interface CommunitySearchResponse {
   communities: CommunitySearchPresentation[];
   page: number;
@@ -219,6 +227,10 @@ export class CommunityGroupsService {
 
   deleteCommunity(id: number, name: string): Observable<void> {
     return this.http.post<void>(this.url + '/' + id + '/delete', { name });
+  }
+
+  creationQuota(): Observable<CommunityCreationQuota> {
+    return this.http.get<CommunityCreationQuota>(this.url + '/creation-quota');
   }
 
   mine(): Observable<CommunityGroup[]> {
