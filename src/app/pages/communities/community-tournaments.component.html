@@ -1198,7 +1198,7 @@
                     <div>
                       <h6>{{ speedStageName(proposal.sourceStage) }} →
                         {{ speedStageName(proposal.targetStage) }}</h6>
-                      <p>{{ proposal.warning }}</p>
+                      <p>{{ speedProposalWarning(proposal) }}</p>
                     </div>
                   </div>
                   @if (speedDecision(proposal.sourceStage); as decision) {
@@ -1226,6 +1226,9 @@
                     @if (canManage && selected.status !== 'COMPLETED') {
                       <label class="inline-speed-judge-reason">
                         {{ 'communities.inlineSpeed.reason' | t }}
+                        @if (proposal.sourceStage === 'FIRST') {
+                          <small>{{ 'communities.inlineSpeed.firstRoundAttestation' | t }}</small>
+                        }
                         <textarea rows="2" maxlength="500"
                           [name]="'inline-speed-reason-' + proposal.sourceStage"
                           [(ngModel)]="speedReasons[proposal.sourceStage]" [disabled]="busy"
