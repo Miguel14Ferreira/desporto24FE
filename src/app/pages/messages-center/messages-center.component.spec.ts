@@ -43,7 +43,7 @@ describe('Unified Jynlo message center', () => {
     spyOnProperty(document, 'visibilityState', 'get').and.returnValue('visible');
     friends = jasmine.createSpyObj('CommunityService', ['friends']);
     communities = jasmine.createSpyObj('CommunityGroupsService', ['mine']);
-    sessions = jasmine.createSpyObj('SessionService', ['mine', 'messages', 'detail', 'postMessage']);
+    sessions = jasmine.createSpyObj('SessionService', ['mine', 'messages', 'detail', 'postMessage', 'attachmentsAvailable', 'sendAttachment', 'downloadAttachment']);
     direct = jasmine.createSpyObj('DirectChatService', ['recentHistory', 'info', 'send', 'attachmentsAvailable', 'sendAttachment', 'downloadAttachment']);
     timeline = jasmine.createSpyObj('CommunityTimelineService', ['list', 'send', 'chatAttachmentsAvailable', 'sendChatAttachment', 'downloadChatAttachment']);
     realtime = {
@@ -65,6 +65,7 @@ describe('Unified Jynlo message center', () => {
     friends.friends.and.returnValue(of([]));
     communities.mine.and.returnValue(of([]));
     sessions.mine.and.returnValue(of({ created: [], joined: [], waitlisted: [] }));
+    sessions.attachmentsAvailable.and.returnValue(of({ available: false }));
     direct.info.and.returnValue(of({ chatBlocked: false, whoBlocked: null }));
     direct.attachmentsAvailable.and.returnValue(of({ available: false }));
     timeline.chatAttachmentsAvailable.and.returnValue(of({ available: false }));
@@ -312,19 +313,95 @@ describe('Unified Jynlo message center', () => {
     expect(component.attachmentPreviews.get(72)).toBe('blob:community-private');
   });
 
-  it('never enables storage or media upload for short-lived session chats', () => {
+  it('keeps session media hidden when its protected backend reports unavailable', () => {
     const session = item('session', 41);
     component.conversations = [session];
     spyOn<any>(component, 'loadHistory').and.stub();
     spyOn<any>(component, 'loadComposerAccess').and.stub();
     component.selectConversation(session);
-    expect(component.attachmentReady).toBeFalse();
+    expect(sessions.attachmentsAvailable).toHaveBeenCalledOnceWith(41);
+    expect(component.attachmentControlsReady).toBeFalse();
     expect(direct.attachmentsAvailable).not.toHaveBeenCalled();
     expect(timeline.chatAttachmentsAvailable).not.toHaveBeenCalled();
     const file = new File(['x'], 'file.pdf', {type:'application/pdf'});
     component.onAttachmentPicked({ target: { files: [file], value: '' }} as any);
     expect(component.selectedAttachment).toBeNull();
+    expect(sessions.sendAttachment).not.toHaveBeenCalled();
+  });
+
+  it('sends a file in an open session via its participant-scoped endpoint only', () => {
+    const session = item('session', 41);
+    component.conversations = [session];
+    component.selectedKey = session.key;
+    component.attachmentReady = true;
+    component.composerAllowed = true;
+    (component as any).sessionKickoffs.set(41, Date.now() + 3600_000);
+    const file = new File(['%PDF-1.4'], 'treino.pdf', {type:'application/pdf'});
+    component.onAttachmentPicked({target:{files:[file],value:''}} as any);
+    expect(component.selectedAttachment).toBe(file);
+    sessions.sendAttachment.and.returnValue(of({
+      id:75,sessionId:41,senderUsername:'ana',body:'📎 treino.pdf',
+      createdAt:new Date().toISOString(),attachmentName:'treino.pdf',
+      attachmentMimeType:'application/pdf',attachmentSize:8
+    }));
+    component.sendMessage();
+    expect(sessions.sendAttachment).toHaveBeenCalledOnceWith(41,file,'',undefined);
+    expect(sessions.postMessage).not.toHaveBeenCalled();
+    expect(direct.sendAttachment).not.toHaveBeenCalled();
     expect(timeline.sendChatAttachment).not.toHaveBeenCalled();
+    expect(component.messages.some(x => x.id === 75 && x.attachmentName === 'treino.pdf'))
+      .toBeTrue();
+  });
+
+  it('never opens a session attachment once kickoff has passed', () => {
+    const session = item('session', 41);
+    component.conversations = [session];
+    component.selectedKey = session.key;
+    component.attachmentReady = true;
+    component.composerAllowed = true;
+    (component as any).sessionKickoffs.set(41, Date.now() - 1000);
+    const file = new File(['%PDF-1.4'], 'treino.pdf', {type:'application/pdf'});
+    component.onAttachmentPicked({target:{files:[file],value:''}} as any);
+    expect(component.selectedAttachment).toBeNull();
+    expect(component.attachmentControlsReady).toBeFalse();
+    component.openAttachment({...message(session.key,88,'ana'),
+      attachmentName:'jogo.jpg',attachmentMimeType:'image/jpeg'});
+    expect(sessions.downloadAttachment).not.toHaveBeenCalled();
+    expect(sessions.sendAttachment).not.toHaveBeenCalled();
+  });
+
+  it('discards a session availability response that arrives after kickoff', () => {
+    const session = item('session', 41);
+    component.conversations = [session];
+    const pending = new Subject<{ available: boolean }>();
+    sessions.attachmentsAvailable.and.returnValue(pending.asObservable());
+    spyOn<any>(component, 'loadHistory').and.stub();
+    spyOn<any>(component, 'loadComposerAccess').and.stub();
+    component.selectConversation(session);
+    (component as any).sessionKickoffs.set(41, Date.now() - 1000);
+    pending.next({ available: true });
+    pending.complete();
+    expect(component.attachmentReady).toBeFalse();
+    expect(component.attachmentControlsReady).toBeFalse();
+  });
+
+  it('discards an in-flight session image download if the game starts', () => {
+    const session = item('session', 41);
+    component.conversations = [session];
+    component.selectedKey = session.key;
+    (component as any).sessionKickoffs.set(41, Date.now() + 3600_000);
+    const pending = new Subject<Blob>();
+    sessions.downloadAttachment.and.returnValue(pending.asObservable());
+    const createUrl = spyOn(URL, 'createObjectURL').and.returnValue('blob:session-old');
+    const image = {...message(session.key,89,'ana'),
+      attachmentName:'bola.jpg',attachmentMimeType:'image/jpeg'};
+    component.openAttachment(image);
+    expect(sessions.downloadAttachment).toHaveBeenCalledOnceWith(41,89);
+    (component as any).sessionKickoffs.set(41, Date.now() - 1000);
+    pending.next(new Blob(['private'],{type:'image/jpeg'}));
+    pending.complete();
+    expect(createUrl).not.toHaveBeenCalled();
+    expect(component.attachmentPreviews.size).toBe(0);
   });
 
   it('refuses unsupported or oversized attachments before HTTP upload', () => {
