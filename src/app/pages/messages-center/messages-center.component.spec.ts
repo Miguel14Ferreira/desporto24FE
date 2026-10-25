@@ -841,6 +841,90 @@ describe('Unified Jynlo message center', () => {
       && message.attachmentMimeType === 'audio/ogg')).toBeTrue();
   });
 
+  it('shows one compact voice timeline with m:ss duration and accessible seeking', () => {
+    const player = {
+      duration: 92, currentTime: 0, paused: true, ended: false, muted: false,
+      play: jasmine.createSpy('play').and.returnValue(Promise.resolve()),
+      pause: jasmine.createSpy('pause'),
+      removeAttribute: jasmine.createSpy('removeAttribute'),
+      load: jasmine.createSpy('load')
+    } as unknown as HTMLAudioElement;
+    const note = {...message('direct:bea', 77), attachmentName: 'voice.webm',
+      attachmentMimeType: 'audio/webm'};
+    component.conversations = [item('direct', 'bea')];
+    component.selectedKey = note.key;
+    component.onVoiceReady(note, player);
+    expect(component.voiceTimeLabel(77)).toBe('0:00 / 1:32');
+    expect(component.voiceProgress(77)).toBe(0);
+    player.currentTime = 45;
+    component.onVoiceTimeUpdate(77, player);
+    expect(component.voiceTimeLabel(77)).toBe('0:45 / 1:32');
+    expect(component.voiceProgress(77)).toBe(49);
+    component.seekVoice(77, player, {target: {value:'50'}} as unknown as Event);
+    expect(player.currentTime).toBe(46);
+    component.toggleVoiceMute(77, player);
+    expect(player.muted).toBeTrue();
+    expect(component.voiceMuted.has(77)).toBeTrue();
+    component.toggleVoiceMute(77, player);
+    expect(player.muted).toBeFalse();
+  });
+
+  it('starts voice playback only after authorized download, then releases it on chat change', () => {
+    const peer = item('direct','bea');
+    const note = {...message(peer.key, 77), attachmentName:'voz.webm',
+      attachmentMimeType:'audio/webm'};
+    const player = {
+      duration:91, currentTime:0, paused:true, ended:false, muted:false,
+      play:jasmine.createSpy('play').and.returnValue(Promise.resolve()),
+      pause:jasmine.createSpy('pause'),
+      removeAttribute:jasmine.createSpy('removeAttribute'),
+      load:jasmine.createSpy('load')
+    } as unknown as HTMLAudioElement;
+    component.conversations = [peer, item('community',7)];
+    component.selectedKey = peer.key;
+    timeline.list.and.returnValue(of([]));
+    direct.recentHistory.and.returnValue(of({content:[],last:true}));
+    direct.downloadAttachment.and.returnValue(of(new Blob(['voice'], {type:'audio/webm'})));
+    const create = spyOn(URL, 'createObjectURL').and.returnValue('blob:private-voice');
+    const revoke = spyOn(URL, 'revokeObjectURL');
+    component.openVoiceNote(note);
+    expect(direct.downloadAttachment).toHaveBeenCalledOnceWith('bea',77);
+    expect(create).toHaveBeenCalledTimes(1);
+    component.onVoiceCanPlay(note, player);
+    expect(player.play).toHaveBeenCalledTimes(1);
+    component.selectConversation(component.conversations[1]);
+    expect(player.pause).toHaveBeenCalled();
+    expect(player.removeAttribute).toHaveBeenCalledWith('src');
+    expect(revoke).toHaveBeenCalledWith('blob:private-voice');
+    expect(component.voicePlaying.size).toBe(0);
+    expect((component as any).voiceAutoplayRequested.size).toBe(0);
+  });
+
+  it('does not autoplay a voice note after leaving its conversation', () => {
+    const peer = item('direct','bea');
+    const note = {...message(peer.key, 77), attachmentName:'voice.webm',
+      attachmentMimeType:'audio/webm'};
+    const player = {
+      duration:30, currentTime:0, paused:true, ended:false,
+      play:jasmine.createSpy('play').and.returnValue(Promise.resolve()),
+      pause:jasmine.createSpy('pause'),
+      removeAttribute:jasmine.createSpy('removeAttribute'),
+      load:jasmine.createSpy('load')
+    } as unknown as HTMLAudioElement;
+    component.conversations = [peer, item('direct','carla')];
+    component.selectedKey = peer.key;
+    direct.recentHistory.and.returnValue(of({content:[],last:true}));
+    const pending = new Subject<Blob>();
+    direct.downloadAttachment.and.returnValue(pending.asObservable());
+    component.openVoiceNote(note);
+    component.selectConversation(component.conversations[1]);
+    pending.next(new Blob(['secret'],{type:'audio/webm'}));
+    pending.complete();
+    component.onVoiceCanPlay(note, player);
+    expect(player.play).not.toHaveBeenCalled();
+    expect(component.attachmentPreviews.has(77)).toBeFalse();
+  });
+
   it('downloads voice playback through the authenticated chat endpoint only', () => {
     const peer = item('direct', 'bea');
     const note = {

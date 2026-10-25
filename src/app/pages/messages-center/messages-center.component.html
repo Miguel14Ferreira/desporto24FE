@@ -191,6 +191,7 @@
                 </div>
               }
               <article class="inbox-bubble" [class.thread-continuation]="continuesGroupAt(i)" [class.is-mine]="isMine(message)"
+                [class.inbox-bubble--voice]="isVoiceNote(message) && !showMessageBody(message) && !message.replyToMessageId"
                 [class.inbox-bubble--search-match]="selectedSearchResultId === message.id"
                 [attr.data-message-id]="message.id" tabindex="-1">
                 <div class="inbox-bubble-meta">
@@ -217,27 +218,42 @@
                 @if (message.attachmentName) {
                   <div class="inbox-attachment">
                     @if (isVoiceNote(message)) {
-                      <div class="inbox-voice-note">
-                        <button type="button" class="inbox-voice-play"
-                          [disabled]="attachmentLoading.has(message.id)"
-                          [attr.aria-label]="(attachmentPreviews.has(message.id) ? 'chat.attachmentHide'
-                            : 'chat.voicePlayback') | t"
-                          (click)="openAttachment(message)">
-                          <span aria-hidden="true">{{ attachmentLoading.has(message.id) ? '…'
-                            : attachmentPreviews.has(message.id) ? '×' : '▶' }}</span>
-                        </button>
-                        <div class="inbox-voice-note-details">
-                          <strong>{{ 'chat.voiceMessage' | t }}</strong>
-                          <div class="inbox-voice-wave" aria-hidden="true"></div>
-                          <small>{{ (attachmentLoading.has(message.id) ? 'chat.attachmentLoading'
-                            : attachmentPreviews.has(message.id) ? 'chat.voiceReady'
-                            : 'chat.voiceTapToPlay') | t }}</small>
-                        </div>
+                      <div class="inbox-voice-inline" [attr.aria-label]="'chat.voiceMessage' | t">
+                        @if (attachmentPreviews.get(message.id); as voiceUrl) {
+                          <audio #voicePlayer class="inbox-voice-media" preload="metadata" [src]="voiceUrl"
+                            (loadedmetadata)="onVoiceReady(message, voicePlayer)"
+                            (canplay)="onVoiceCanPlay(message, voicePlayer)"
+                            (timeupdate)="onVoiceTimeUpdate(message.id, voicePlayer)"
+                            (playing)="onVoicePlaybackEvent(message.id, voicePlayer)"
+                            (pause)="onVoicePlaybackEvent(message.id, voicePlayer)"
+                            (ended)="onVoicePlaybackEvent(message.id, voicePlayer)"></audio>
+                          <button type="button" class="inbox-voice-control"
+                            [attr.aria-label]="(voicePlaying.has(message.id) ? 'chat.voicePause' : 'chat.voicePlayback') | t"
+                            (click)="toggleVoicePlayback(message, voicePlayer)">
+                            <span aria-hidden="true">{{ voicePlaying.has(message.id) ? 'Ⅱ' : '▶' }}</span>
+                          </button>
+                          <input class="inbox-voice-seek" type="range" min="0" max="100" step="1"
+                            [value]="voiceProgress(message.id)"
+                            [attr.aria-label]="'chat.voiceSeek' | t"
+                            (input)="seekVoice(message.id, voicePlayer, $event)">
+                          <time class="inbox-voice-clock">{{ voiceTimeLabel(message.id) }}</time>
+                          <button type="button" class="inbox-voice-mute"
+                            [attr.aria-label]="(voiceMuted.has(message.id) ? 'chat.voiceUnmute' : 'chat.voiceMute') | t"
+                            (click)="toggleVoiceMute(message.id, voicePlayer)">
+                            <span aria-hidden="true">{{ voiceMuted.has(message.id) ? '🔇' : '🔊' }}</span>
+                          </button>
+                        } @else {
+                          <button type="button" class="inbox-voice-control"
+                            [disabled]="attachmentLoading.has(message.id)"
+                            [attr.aria-label]="'chat.voicePlayback' | t"
+                            [attr.title]="'chat.voiceTapToPlay' | t"
+                            (click)="openVoiceNote(message)">
+                            <span aria-hidden="true">{{ attachmentLoading.has(message.id) ? '…' : '▶' }}</span>
+                          </button>
+                          <span class="inbox-voice-loading-track" aria-hidden="true"></span>
+                          <time class="inbox-voice-clock">{{ attachmentLoading.has(message.id) ? '…' : '0:00' }}</time>
+                        }
                       </div>
-                      @if (attachmentPreviews.get(message.id); as voiceUrl) {
-                        <audio controls preload="metadata" [src]="voiceUrl"
-                          [attr.aria-label]="'chat.voicePlayback' | t"></audio>
-                      }
                     } @else {
                       <button type="button" class="inbox-attachment-button"
                         [disabled]="attachmentLoading.has(message.id)"

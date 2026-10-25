@@ -253,35 +253,53 @@
 .inbox-read-check.is-read { color: #75d9fa; }
 
 
-/* Private voice notes: compact player-first bubbles instead of raw filenames. */
-.inbox-voice-note {
-  display:flex; gap:12px; align-items:center; min-width:min(260px,65vw);
-  border:1px solid #527f85; border-radius:18px; padding:11px 13px;
-  background:linear-gradient(120deg,#18424c,#1c5055);
+/* Single-row voice player: native audio engine, one compact custom control strip. */
+.inbox-bubble--voice {
+  max-width:min(86%, 390px);
+  padding:8px 12px 6px;
 }
-.inbox-bubble.is-mine .inbox-voice-note { background:#1c6660; border-color:#439a8c; }
-.inbox-voice-play {
-  display:grid; place-items:center; flex:none; width:46px; height:46px;
-  border:0; border-radius:50%; background:#72ebcb; color:#0c2a35;
-  font:inherit; font-size:1.35rem; font-weight:800; cursor:pointer;
+.inbox-bubble--voice .inbox-bubble-meta { gap:9px; align-items:center; }
+.inbox-bubble--voice .inbox-reply-action { margin-top:3px; padding:2px 4px; }
+.inbox-bubble--voice .inbox-attachment { margin-top:5px; }
+.inbox-voice-inline {
+  width:100%; min-width:260px; max-width:360px;
+  display:flex; align-items:center; flex-wrap:nowrap;
+  gap:10px; padding:5px 7px; border-radius:14px;
+  background:rgba(8,38,49,.32); border:1px solid rgba(130,230,212,.19);
 }
-.inbox-voice-play:disabled { opacity:.55; cursor:wait; }
-.inbox-voice-play:focus-visible, .inbox-gif-trigger:focus-visible {
-  outline:2px solid #a4ffe3; outline-offset:3px;
+.inbox-voice-media {
+  position:absolute; width:1px; height:1px; opacity:0;
+  pointer-events:none; overflow:hidden;
 }
-.inbox-voice-note-details { display:grid; gap:4px; flex:1; min-width:0; }
-.inbox-voice-note-details strong { color:#effffb; font-size:.86rem; }
-.inbox-voice-note-details small { color:#b7dedc; font-size:.72rem; }
-.inbox-voice-wave {
-  height:18px; max-width:220px;
-  background:repeating-linear-gradient(90deg,transparent 0 2px,
-    #8bf0d5 2px 5px,transparent 5px 9px);
-  -webkit-mask-image:linear-gradient(to bottom,transparent 1px,#000 4px,#000 14px,transparent 17px);
-  mask-image:linear-gradient(to bottom,transparent 1px,#000 4px,#000 14px,transparent 17px);
-  opacity:.78;
+.inbox-voice-control {
+  display:grid; place-items:center; width:34px; height:34px; flex:0 0 34px;
+  border:0; border-radius:50%; cursor:pointer; font:inherit;
+  font-size:1rem; font-weight:800; color:#09343a; background:#81e6cb;
 }
-.inbox-attachment:has(.inbox-voice-note) { width:min(345px,68vw); }
-.inbox-attachment:has(.inbox-voice-note) audio { width:100%; max-width:100%; }
+.inbox-voice-control:hover:not(:disabled) { background:#b0f7de; }
+.inbox-voice-control:disabled { opacity:.6; cursor:wait; }
+.inbox-voice-control:focus-visible, .inbox-voice-mute:focus-visible,
+.inbox-voice-seek:focus-visible { outline:2px solid #a7ffe3; outline-offset:2px; }
+.inbox-voice-control span { transform:translateX(1px); }
+.inbox-voice-seek {
+  min-width:0; flex:1 1 auto; width:100%; height:5px; cursor:pointer;
+  accent-color:#7ee7ca; margin:0; padding:0;
+}
+.inbox-voice-loading-track {
+  display:block; flex:1 1 auto; min-width:40px; height:4px;
+  border-radius:10px; background:#87cdbd80;
+}
+.inbox-voice-clock {
+  flex:0 0 auto; white-space:nowrap; font-size:.73rem; font-variant-numeric:tabular-nums;
+  color:#d5f6eb; text-align:right; min-width:35px;
+}
+.inbox-voice-mute {
+  display:grid; place-items:center; width:26px; height:28px; flex:none;
+  border:0; background:transparent; color:#d5f6eb;
+  font-size:.94rem; padding:0; cursor:pointer;
+}
+.inbox-voice-mute:hover { filter:brightness(1.3); }
+.inbox-attachment:has(.inbox-voice-inline) { width:min(345px, 100%); }
 .inbox-gif-trigger {
   display:grid; place-items:center; flex:none; min-width:40px; height:36px;
   border:1px solid #4b7980; border-radius:11px; background:#173946;
@@ -291,8 +309,9 @@
 .inbox-gif-trigger:hover { border-color:#55dac3; background:#1f5556; }
 .inbox-gif-trigger:disabled { opacity:.48; cursor:not-allowed; }
 @media (max-width:600px) {
-  .inbox-attachment:has(.inbox-voice-note) { width:100%; }
-  .inbox-voice-note { min-width:0; }
+  .inbox-attachment:has(.inbox-voice-inline) { width:100%; }
+  .inbox-voice-inline { min-width:0; gap:7px; padding:4px 6px; }
+  .inbox-voice-clock { font-size:.67rem; }
 }
 
 .inbox-composer-retry {

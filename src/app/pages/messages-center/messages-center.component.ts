@@ -137,6 +137,14 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   private voiceGeneration = 0;
   readonly attachmentPreviews = new Map<number, string>();
   readonly attachmentLoading = new Set<number>();
+  // Only transient playback state is retained. URLs remain private and are
+  // revoked whenever the chat, account or active session changes.
+  readonly voicePlaying = new Set<number>();
+  readonly voiceMuted = new Set<number>();
+  private readonly voicePlayers = new Map<number, HTMLAudioElement>();
+  private readonly voiceDurations = new Map<number, number>();
+  private readonly voicePositions = new Map<number, number>();
+  private readonly voiceAutoplayRequested = new Set<number>();
   emojiPickerOpen = false;
   readonly composerEmojis = [
     '😀', '😃', '😄', '😁', '😂', '🤣', '😊', '😍', '🥰', '😘',
@@ -1315,9 +1323,117 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   }
 
   private clearAttachmentPreviews(): void {
+    for (const player of this.voicePlayers.values()) {
+      player.pause();
+      player.removeAttribute('src');
+      player.load();
+    }
+    this.voicePlayers.clear();
+    this.voicePlaying.clear();
+    this.voiceMuted.clear();
+    this.voiceDurations.clear();
+    this.voicePositions.clear();
+    this.voiceAutoplayRequested.clear();
     for (const url of this.attachmentPreviews.values()) URL.revokeObjectURL(url);
     this.attachmentPreviews.clear();
     this.attachmentLoading.clear();
+  }
+
+  private releaseVoicePlayer(id: number): void {
+    const player = this.voicePlayers.get(id);
+    if (player) {
+      player.pause();
+      player.removeAttribute('src');
+      player.load();
+    }
+    this.voicePlayers.delete(id);
+    this.voicePlaying.delete(id);
+    this.voiceMuted.delete(id);
+    this.voiceAutoplayRequested.delete(id);
+    this.voiceDurations.delete(id);
+    this.voicePositions.delete(id);
+  }
+
+  openVoiceNote(message: InboxMessage): void {
+    if (!this.isVoiceNote(message) || this.attachmentLoading.has(message.id)) return;
+    if (!this.selected || this.selectedKey !== message.key
+        || !this.isAttachmentIdentityCurrent() || !this.isSelectedSessionOpen()) return;
+    // A click may start playback once its authorized download has completed.
+    // Browsers that block deferred playback still show a normal play control.
+    this.voiceAutoplayRequested.add(message.id);
+    this.openAttachment(message);
+  }
+
+  onVoiceReady(message: InboxMessage, player: HTMLAudioElement): void {
+    if (this.selectedKey !== message.key || !this.isAttachmentIdentityCurrent()
+        || !this.isSelectedSessionOpen()) return;
+    this.voicePlayers.set(message.id, player);
+    if (Number.isFinite(player.duration) && player.duration > 0)
+      this.voiceDurations.set(message.id, player.duration);
+  }
+
+  onVoiceCanPlay(message: InboxMessage, player: HTMLAudioElement): void {
+    this.onVoiceReady(message, player);
+    if (!this.voiceAutoplayRequested.delete(message.id)) return;
+    if (this.selectedKey !== message.key || !this.isAttachmentIdentityCurrent()
+        || !this.isSelectedSessionOpen()) return;
+    // Do not claim playing until the actual media event fires.
+    void player.play().catch(() => { /* User can press Play again. */ });
+  }
+
+  toggleVoicePlayback(message: InboxMessage, player: HTMLAudioElement): void {
+    if (this.selectedKey !== message.key || !this.isAttachmentIdentityCurrent()
+        || !this.isSelectedSessionOpen()) return;
+    if (player.paused) {
+      void player.play().catch(() => { /* Browser media permissions remain authoritative. */ });
+    } else {
+      player.pause();
+    }
+  }
+
+  onVoicePlaybackEvent(id: number, player: HTMLAudioElement): void {
+    this.voicePlayers.set(id, player);
+    if (player.paused || player.ended) this.voicePlaying.delete(id);
+    else this.voicePlaying.add(id);
+    this.onVoiceTimeUpdate(id, player);
+  }
+
+  onVoiceTimeUpdate(id: number, player: HTMLAudioElement): void {
+    if (Number.isFinite(player.duration) && player.duration > 0)
+      this.voiceDurations.set(id, player.duration);
+    if (Number.isFinite(player.currentTime) && player.currentTime >= 0)
+      this.voicePositions.set(id, player.currentTime);
+  }
+
+  voiceProgress(id: number): number {
+    const duration = this.voiceDurations.get(id) || 0;
+    const position = this.voicePositions.get(id) || 0;
+    return duration > 0 ? Math.min(100, Math.max(0, Math.round(position / duration * 100))) : 0;
+  }
+
+  seekVoice(id: number, player: HTMLAudioElement, event: Event): void {
+    const duration = player.duration;
+    if (!Number.isFinite(duration) || duration <= 0) return;
+    const value = Number((event.target as HTMLInputElement).value);
+    if (!Number.isFinite(value)) return;
+    player.currentTime = Math.min(duration, Math.max(0, value / 100 * duration));
+    this.onVoiceTimeUpdate(id, player);
+  }
+
+  voiceTimeLabel(id: number): string {
+    const elapsed = this.voicePositions.get(id) || 0;
+    const duration = this.voiceDurations.get(id) || 0;
+    const format = (seconds: number) => {
+      const rounded = Number.isFinite(seconds) ? Math.max(0, Math.floor(seconds)) : 0;
+      return Math.floor(rounded / 60) + ':' + String(rounded % 60).padStart(2, '0');
+    };
+    return format(elapsed) + ' / ' + format(duration);
+  }
+
+  toggleVoiceMute(id: number, player: HTMLAudioElement): void {
+    player.muted = !player.muted;
+    if (player.muted) this.voiceMuted.add(id);
+    else this.voiceMuted.delete(id);
   }
 
   isVoiceNote(message: InboxMessage): boolean {
@@ -1342,6 +1458,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
         || this.attachmentLoading.has(message.id)) return;
     const existing = this.attachmentPreviews.get(message.id);
     if (existing) {
+      this.releaseVoicePlayer(message.id);
       URL.revokeObjectURL(existing);
       this.attachmentPreviews.delete(message.id);
       return;
@@ -1376,6 +1493,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
           }
         },
         error: () => {
+          this.voiceAutoplayRequested.delete(message.id);
           if (viewVersion === this.attachmentViewVersion && this.selectedKey === conversation.key
               && this.isAttachmentIdentityCurrent())
             this.composerError = t('chat.attachmentDownloadFailed');
