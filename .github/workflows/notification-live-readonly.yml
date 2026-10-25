@@ -1,0 +1,27 @@
+name: Jynlo LIVE notification QA (read-only, manual)
+# Opt-in. Requires two existing protected GitHub Actions secrets for disposable QA accounts.
+# This workflow never changes preferences, creates invitations, or sends email.
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: jynlo-notifications-live-readonly
+  cancel-in-progress: false
+jobs:
+  readonly-notifications:
+    name: Read-only QA notification consistency and ownership
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      JYNLO_QA_PASSWORD_1: ${{ secrets.JYNLO_QA_PASSWORD_1 }}
+      JYNLO_QA_PASSWORD_2: ${{ secrets.JYNLO_QA_PASSWORD_2 }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify that the QA runner cannot perform writes
+        run: node --test scripts/qa/jynlo-notifications-live-readonly.test.cjs
+      - name: Probe two disposable QA accounts without modifying notifications
+        run: node scripts/qa/jynlo-notifications-live-readonly.cjs
