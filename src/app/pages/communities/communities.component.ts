@@ -4139,7 +4139,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
         || (!this.avatarCropExisting && (this.avatarCropAnimated || !this.avatarCropMetrics))) return;
     const stage = event.currentTarget as HTMLElement;
     this.avatarCropDrag = { id: event.pointerId, x: event.clientX, y: event.clientY,
-      offsetX: this.avatarCropOffsetX, offsetY: this.avatarCropOffsetY };
+      offsetX: this.avatarCropExisting ? this.avatarCropFocusX : this.avatarCropOffsetX,
+      offsetY: this.avatarCropExisting ? this.avatarCropFocusY : this.avatarCropOffsetY };
     stage.setPointerCapture(event.pointerId);
     event.preventDefault();
   }
@@ -4184,7 +4185,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       return;
     }
     this.avatarCropOffsetX = clampAvatarOffset(this.avatarCropOffsetX + delta[0],
-      this.avatarCropMetrics.maxOffsetX);
+      this.avatarCropMetrics!.maxOffsetX);
     this.avatarCropOffsetY = clampAvatarOffset(this.avatarCropOffsetY + delta[1],
       this.avatarCropMetrics!.maxOffsetY);
   }
