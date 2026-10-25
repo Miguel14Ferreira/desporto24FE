@@ -91,8 +91,12 @@ describe('VenueDetailsComponent', () => {
     expect(component.mapUrl).toBe('https://www.google.com/maps?q=38.7223,-9.1393');
 
     component.venue = { ...createVenue(), latitude: 0, longitude: 0 };
-    expect(component.hasConfirmedMapCoordinates).toBeTrue();
-    expect(component.mapUrl).toBe('https://www.google.com/maps?q=0,0');
+    expect(component.hasConfirmedMapCoordinates).toBeFalse();
+    expect(component.mapUrl).toContain('/maps/search/?api=1&query=');
+
+    component.venue = { ...createVenue(), latitude: 38.72, longitude: -5.5 };
+    expect(component.hasConfirmedMapCoordinates).toBeFalse();
+    expect(component.mapUrl).toContain('/maps/search/?api=1&query=');
   });
 
   it('hides generated GPS-only placeholders and still links to the mapped coordinates', () => {
