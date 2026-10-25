@@ -12,6 +12,8 @@ export interface CommunityTimelineEntry {
   username: string;
   body: string;
   createdAt: string;
+  editedAt?: string | null;
+  deletedAt?: string | null;
   imageUrl?: string | null;
   videoUrl?: string | null;
   attachmentName?: string | null;
@@ -44,6 +46,15 @@ export class CommunityTimelineService {
        replyToMessageId?: number): Observable<CommunityTimelineEntry> {
     return this.http.post<CommunityTimelineEntry>(this.url(id, kind),
       { body: body.trim(), ...(kind === 'CHAT' && replyToMessageId ? { replyToMessageId } : {}) });
+  }
+
+  editChatMessage(id: number, messageId: number, text: string): Observable<CommunityTimelineEntry> {
+    return this.http.put<CommunityTimelineEntry>(this.url(id, 'CHAT') + '/' + messageId, {text});
+  }
+
+  deleteChatForEveryone(id: number, messageId: number): Observable<CommunityTimelineEntry> {
+    return this.http.delete<CommunityTimelineEntry>(
+      this.url(id, 'CHAT') + '/' + messageId + '/for-everyone');
   }
 
   chatAttachmentsAvailable(id: number): Observable<{ available: boolean }> {
