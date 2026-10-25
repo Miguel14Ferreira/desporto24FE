@@ -1,5 +1,5 @@
 import { ChangeDetectorRef } from '@angular/core';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 
 import {
   VenueEditSuggestion, VenueEditSuggestionsService
@@ -36,6 +36,42 @@ describe('AdminVenueEditsComponent', () => {
     expect(component.fields(pending)).toEqual(['name']);
   });
 
+
+  it('clears stale pagination when a subsequent request fails', () => {
+    api.pending.and.returnValue(of({ suggestions: [pending], page: 0, hasMore: true }));
+    component.load(0);
+    expect(component.hasMore).toBeTrue();
+
+    api.pending.and.returnValue(throwError(() => ({status: 503})));
+    component.load(1);
+    expect(component.page).toBe(1);
+    expect(component.hasMore).toBeFalse();
+    expect(component.loadError).toBeTrue();
+    expect(component.suggestions).toEqual([]);
+  });
+
+  it('keeps moderation context stable while decision is in progress', () => {
+    const pendingDecision = new Subject<VenueEditSuggestion>();
+    api.decide.and.returnValue(pendingDecision.asObservable());
+    component.open(pending);
+    component.action = 'approve';
+    component.decide();
+    expect(component.updating).toBeTrue();
+    const pageBefore = component.page;
+    component.changeMode('history');
+    component.load(1);
+    expect(component.mode).toBe('pending');
+    expect(component.page).toBe(pageBefore);
+    expect(api.history).not.toHaveBeenCalled();
+    expect(api.pending).toHaveBeenCalledTimes(1);
+    pendingDecision.next({ ...pending, status: 'APPROVED' });
+    pendingDecision.complete();
+    expect(component.updating).toBeFalse();
+    expect(component.selected).toBeNull();
+    api.history.and.returnValue(of({ suggestions: [], page: 0, hasMore: false }));
+    component.changeMode('history');
+    expect(api.history).toHaveBeenCalledOnceWith(0);
+  });
 
   it('loads completed moderation records without changing the pending queue', () => {
     const approved: VenueEditSuggestion = {

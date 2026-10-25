@@ -9,11 +9,11 @@
       <p>{{ 'venue.edit.admin.subtitle' | t }}</p>
     </header>
     <nav class="admin-edit-tabs" [attr.aria-label]="'venue.edit.admin.modeLabel' | t">
-      <button type="button" (click)="changeMode('pending')"
+      <button type="button" (click)="changeMode('pending')" [disabled]="updating"
         [class.active]="mode === 'pending'" [attr.aria-current]="mode === 'pending' ? 'page' : null">
         {{ 'venue.edit.admin.pendingTab' | t }}
       </button>
-      <button type="button" (click)="changeMode('history')"
+      <button type="button" (click)="changeMode('history')" [disabled]="updating"
         [class.active]="mode === 'history'" [attr.aria-current]="mode === 'history' ? 'page' : null">
         {{ 'venue.edit.admin.historyTab' | t }}
       </button>
@@ -50,11 +50,11 @@
       </div>
     }
     <nav class="admin-edit-pages">
-      <button type="button" (click)="load(page-1)" [disabled]="loading || page === 0">
+      <button type="button" (click)="load(page-1)" [disabled]="loading || updating || page === 0">
         {{ 'venue.admin.previous' | t }}
       </button>
       <span>{{ 'venue.catalog.page' | t }} {{ page + 1 }}</span>
-      <button type="button" (click)="load(page+1)" [disabled]="loading || !hasMore">
+      <button type="button" (click)="load(page+1)" [disabled]="loading || updating || !hasMore">
         {{ 'venue.admin.next' | t }}
       </button>
     </nav>

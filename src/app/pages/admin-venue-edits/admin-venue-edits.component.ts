@@ -38,7 +38,8 @@ export class AdminVenueEditsComponent implements OnInit, OnDestroy {
   ngOnInit(): void { this.load(0); }
 
   changeMode(mode: 'pending' | 'history'): void {
-    if (this.mode === mode) return;
+    // Keep the moderation context stable until the in-flight write completes.
+    if (this.mode === mode || this.updating) return;
     this.mode = mode;
     this.page = 0;
     this.selected = null;
@@ -47,11 +48,13 @@ export class AdminVenueEditsComponent implements OnInit, OnDestroy {
   }
 
   load(page = this.page): void {
-    if (!Number.isInteger(page) || page < 0 || page > 1000) return;
+    if (!Number.isInteger(page) || page < 0 || page > 1000 || this.updating) return;
     const request = ++this.version;
     this.page = page;
     this.loading = true;
     this.loadError = false;
+    // A failed/slow request must not retain the previous page's next-page state.
+    this.hasMore = false;
     this.selected = null;
     this.action = null;
     this.suggestions = [];
