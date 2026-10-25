@@ -31,10 +31,12 @@ export function venueOsmEmbedUrl(latitude: number, longitude: number): string | 
     return null;
   }
   const radius = 0.004;
-  const west = Math.max(-180, longitude - radius);
-  const east = Math.min(180, longitude + radius);
-  const south = Math.max(-90, latitude - radius);
-  const north = Math.min(90, latitude + radius);
+  // Avoid binary floating-point tails in OSM iframe URLs and stable tests.
+  const sixDecimals = (coordinate: number): number => Number(coordinate.toFixed(6));
+  const west = sixDecimals(Math.max(-180, longitude - radius));
+  const east = sixDecimals(Math.min(180, longitude + radius));
+  const south = sixDecimals(Math.max(-90, latitude - radius));
+  const north = sixDecimals(Math.min(90, latitude + radius));
   const bbox = [west, south, east, north].join('%2C');
   return 'https://www.openstreetmap.org/export/embed.html?bbox=' + bbox
     + '&layer=mapnik&marker=' + latitude + '%2C' + longitude;
