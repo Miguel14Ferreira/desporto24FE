@@ -24,7 +24,16 @@ describe('Track sprint sixteen-rider qualifying', () => {
     disqualified.entries[15].raceDisqualified=true;
     expect(availableSprintQualifiers([disqualified])).toEqual([]);
   });
-  it('allows just one eighth-final heat; later best-of-three remains intact', () => {
+  it('requires 28 recorded and unambiguous 200m times in the world-cup format', () => {
+    expect(availableSprintQualifiers([qualifier(28)], 28).map(r => r.id)).toEqual([88]);
+    expect(availableSprintQualifiers([qualifier(27)], 28)).toEqual([]);
+    const tied = qualifier(29);
+    tied.entries[28].elapsedSeconds = tied.entries[27].elapsedSeconds;
+    expect(availableSprintQualifiers([tied], 28)).toEqual([]);
+    expect(availableSprintQualifiers([qualifier(28)], 16).map(r => r.id)).toEqual([88]);
+  });
+  it('allows just one eighth-final and sixteenth-final heat', () => {
+    expect(nextSprintRoundHeatMax('SPRINT_SIXTEENTH_FINAL')).toBe(1);
     expect(nextSprintRoundHeatMax('SPRINT_EIGHTH_FINAL')).toBe(1);
     expect(nextSprintRoundHeatMax('SPRINT_QUARTER_FINAL')).toBe(3);
     expect(nextSprintRoundHeatMax('SPRINT_GOLD_FINAL')).toBe(3);

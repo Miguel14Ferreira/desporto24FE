@@ -23,7 +23,7 @@ export function trackSprintSeriesStatus(
     && round.sprintSeriesKey === current.sprintSeriesKey);
   matches.sort((a, b) => (a.sprintHeatNumber ?? 0) - (b.sprintHeatNumber ?? 0));
   const phase = current.eventDiscipline;
-  const required = phase === 'SPRINT_EIGHTH_FINAL' ? 1 : 2;
+  const required = phase === 'SPRINT_EIGHTH_FINAL' || phase === 'SPRINT_SIXTEENTH_FINAL' ? 1 : 2;
   const max = required === 1 ? 1 : 3;
   if (matches.length === 0 || matches.length > max) return null;
   let riderA = '', riderB = '', winsA = 0, winsB = 0;
