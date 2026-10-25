@@ -6,11 +6,52 @@ import { Venue } from '../model/venue';
 import { VenueCreateComponent } from './venue-create.component';
 
 describe('VenueCreateComponent', () => {
+  it('starts with no preselected environment and tracks five essential fields', () => {
+    const service = jasmine.createSpyObj<VenueService>('VenueService', ['submitSuggestion']);
+    const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
+    const component = new VenueCreateComponent(service, router);
+    expect(component.environmentType).toBeNull();
+    expect(component.essentialCompletedCount).toBe(0);
+    component.name = 'Campo de Teste';
+    component.city = 'Sintra';
+    component.address = 'Rua do Campo';
+    component.selectedSports = ['Futebol'];
+    expect(component.essentialCompletedCount).toBe(4);
+    component.save();
+    expect(component.validationError).toBeTrue();
+    expect(service.submitSuggestion).not.toHaveBeenCalled();
+
+    component.environmentType = 'INDOOR';
+    expect(component.essentialCompletedCount).toBe(5);
+    service.submitSuggestion.and.returnValue(of({id:13,status:'PENDING'}));
+    component.save();
+    expect(component.submitted).toBeTrue();
+    expect(service.submitSuggestion).toHaveBeenCalledOnceWith(
+      jasmine.objectContaining({ environmentType: 'INDOOR', indoor: true })
+    );
+  });
+
+  it('counts valid GPS instead of a postal address for the essential location field', () => {
+    const service = jasmine.createSpyObj<VenueService>('VenueService', ['submitSuggestion']);
+    const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
+    const component = new VenueCreateComponent(service, router);
+    component.name = 'Parque';
+    component.city = 'Porto';
+    component.selectedSports = ['Corrida'];
+    component.latitude = 41.14;
+    component.longitude = -8.61;
+    component.environmentType = 'OUTDOOR';
+    expect(component.essentialCompletedCount).toBe(5);
+    component.longitude = null;
+    expect(component.essentialCompletedCount).toBe(4);
+  });
+
   it('allows GPS-only venue creation, sending null instead of fabricating an address', () => {
     const service = jasmine.createSpyObj<VenueService>('VenueService', ['submitSuggestion']);
     const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
     service.submitSuggestion.and.returnValue(of({ id: 55, status: 'PENDING' }));
     const component = new VenueCreateComponent(service, router);
+    component.environmentType = 'OUTDOOR';
     component.name = 'Pavilhão do Bairro';
     component.city = 'Cantanhede';
     component.selectedSports = ['Futsal'];
@@ -32,6 +73,7 @@ describe('VenueCreateComponent', () => {
     const service = jasmine.createSpyObj<VenueService>('VenueService', ['submitSuggestion']);
     const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
     const component = new VenueCreateComponent(service, router);
+    component.environmentType = 'OUTDOOR';
     component.name = 'Campo do Bairro';
     component.city = 'Lisboa';
     component.selectedSports = ['Futsal'];
@@ -53,6 +95,7 @@ describe('VenueCreateComponent', () => {
     const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
     service.submitSuggestion.and.returnValue(of({ id: 22, status: 'PENDING' }));
     const component = new VenueCreateComponent(service, router);
+    component.environmentType = 'OUTDOOR';
     component.name = 'Campo Central';
     component.city = 'Porto';
     component.address = 'Rua do Desporto 12';
@@ -70,6 +113,7 @@ describe('VenueCreateComponent', () => {
       snapshot: { queryParamMap: convertToParamMap({ sport: '  pAdEl  ', city: '  Lisboa  ' }) }
     } as unknown as ActivatedRoute;
     const component = new VenueCreateComponent(venueService, router, route);
+    component.environmentType = 'OUTDOOR';
     component.ngOnInit();
 
     expect(component.city).toBe('Lisboa');
@@ -93,6 +137,7 @@ describe('VenueCreateComponent', () => {
     const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
     service.submitSuggestion.and.returnValue(of({ id: 18, status: 'PENDING' }));
     const component = new VenueCreateComponent(service, router);
+    component.environmentType = 'OUTDOOR';
     component.name = 'Campo Municipal';
     component.city = 'Cascais';
     component.district = 'Lisboa';
@@ -115,6 +160,7 @@ describe('VenueCreateComponent', () => {
       }) }
     } as unknown as ActivatedRoute;
     const component = new VenueCreateComponent(service, router, route);
+    component.environmentType = 'OUTDOOR';
     component.ngOnInit();
     expect(component.district).toBe('Lisboa');
 
@@ -135,6 +181,7 @@ describe('VenueCreateComponent', () => {
       snapshot: { queryParamMap: convertToParamMap({ sport: 'Outro desporto', city: 'Porto' }) }
     } as unknown as ActivatedRoute;
     const component = new VenueCreateComponent(venueService, router, route);
+    component.environmentType = 'OUTDOOR';
     component.ngOnInit();
 
     expect(component.selectedSports).toEqual([]);
@@ -149,6 +196,7 @@ describe('VenueCreateComponent', () => {
       page: 0, hasMore: false
     }));
     const component = new VenueCreateComponent(service, router);
+    component.environmentType = 'OUTDOOR';
     component.name = 'Pavilhão';
     component.city = 'Cascais';
 
@@ -168,6 +216,7 @@ describe('VenueCreateComponent', () => {
     const oldRequest = new Subject<{ venues: Venue[]; page: number; hasMore: boolean }>();
     service.suggest.and.returnValue(oldRequest.asObservable());
     const component = new VenueCreateComponent(service, router);
+    component.environmentType = 'OUTDOOR';
     component.name = 'Campo';
     component.city = 'Sintra';
     component.checkSimilarVenues();
@@ -192,6 +241,7 @@ describe('VenueCreateComponent', () => {
     service.suggest.and.returnValue(throwError(() => new Error('search unavailable')));
     service.submitSuggestion.and.returnValue(of({ id: 8, status: 'PENDING' }));
     const component = new VenueCreateComponent(service, router);
+    component.environmentType = 'OUTDOOR';
     component.name = 'Campo Novo';
     component.city = 'Lisboa';
     component.address = 'Rua Nova';
@@ -211,6 +261,7 @@ describe('VenueCreateComponent', () => {
     const venueService = jasmine.createSpyObj<VenueService>('VenueService', ['submitSuggestion']);
     const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
     const component = new VenueCreateComponent(venueService, router);
+    component.environmentType = 'OUTDOOR';
 
     component.name = 'Pavilhão Central';
     component.city = '';
@@ -229,6 +280,7 @@ describe('VenueCreateComponent', () => {
     const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
     venueService.submitSuggestion.and.returnValue(of({ id: 9, status: 'PENDING' }));
     const component = new VenueCreateComponent(venueService, router);
+    component.environmentType = 'OUTDOOR';
     component.name = 'Pavilhão Central';
     component.city = 'Lisboa';
     component.address = 'Rua do Desporto';
@@ -257,6 +309,7 @@ describe('VenueCreateComponent', () => {
     venueService.submitSuggestion.and.returnValue(of(venue));
 
     const component = new VenueCreateComponent(venueService, router);
+    component.environmentType = 'OUTDOOR';
     component.name = '  Pavilhão Central  ';
     component.city = '  Lisboa  ';
     component.address = '  Rua do Desporto  ';
@@ -311,6 +364,7 @@ describe('VenueCreateComponent', () => {
       venueService.submitSuggestion.and.returnValue(of({ id: 7, status: 'PENDING' }));
 
       const component = new VenueCreateComponent(venueService, router);
+    component.environmentType = 'OUTDOOR';
       component.name = 'Recinto de teste';
       component.city = 'Lisboa';
       component.address = 'Rua do Desporto';
@@ -329,6 +383,7 @@ describe('VenueCreateComponent', () => {
     const venueService = jasmine.createSpyObj<VenueService>('VenueService', ['submitSuggestion']);
     const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
     const component = new VenueCreateComponent(venueService, router);
+    component.environmentType = 'OUTDOOR';
 
     component.toggleSport('Futsal', true);
     component.toggleSport('Padel', true);
@@ -343,6 +398,7 @@ describe('VenueCreateComponent', () => {
     const service = jasmine.createSpyObj<VenueService>('VenueService', ['submitSuggestion']);
     const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
     const component = new VenueCreateComponent(service, router);
+    component.environmentType = 'OUTDOOR';
 
     expect(component.visibleSports).toEqual([
       'Futebol', 'Futsal', 'Padel', 'Ténis',
@@ -357,6 +413,7 @@ describe('VenueCreateComponent', () => {
     const service = jasmine.createSpyObj<VenueService>('VenueService', ['submitSuggestion']);
     const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
     const component = new VenueCreateComponent(service, router);
+    component.environmentType = 'OUTDOOR';
 
     component.sportSearch = 'TENIS';
     expect(component.visibleSports).toContain('Ténis');
@@ -381,6 +438,7 @@ describe('VenueCreateComponent', () => {
     venueService.submitSuggestion.and.returnValue(throwError(() => new Error('create failed')));
 
     const component = new VenueCreateComponent(venueService, router);
+    component.environmentType = 'OUTDOOR';
     component.name = 'Pavilhão Central';
     component.city = 'Lisboa';
     component.address = 'Rua do Desporto';
@@ -397,6 +455,7 @@ describe('VenueCreateComponent', () => {
     const venueService = jasmine.createSpyObj<VenueService>('VenueService', ['submitSuggestion']);
     const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
     const component = new VenueCreateComponent(venueService, router);
+    component.environmentType = 'OUTDOOR';
     const geolocation = spyOn(navigator.geolocation, 'getCurrentPosition');
 
     geolocation.and.callFake(success => success({
@@ -415,6 +474,7 @@ describe('VenueCreateComponent', () => {
     const venueService = jasmine.createSpyObj<VenueService>('VenueService', ['submitSuggestion']);
     const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
     const component = new VenueCreateComponent(venueService, router);
+    component.environmentType = 'OUTDOOR';
     const geolocation = spyOn(navigator.geolocation, 'getCurrentPosition');
 
     geolocation.and.callFake((_success, error) => error?.({
@@ -436,6 +496,7 @@ describe('VenueCreateComponent', () => {
     venueService.submitSuggestion.and.returnValue(of({ id: 8, status: 'PENDING' }));
 
     const component = new VenueCreateComponent(venueService, router);
+    component.environmentType = 'OUTDOOR';
     component.name = 'Pavilhão Central';
     component.city = 'Lisboa';
     component.address = 'Rua do Desporto';
