@@ -6,6 +6,10 @@ import { finalize, firstValueFrom, Observable, retry, timeout, Subscription, Tim
 import { appTranslate as t } from '../../i18n/i18n.service';
 import { environment } from 'src/environment/environment';
 import { communityAvatarUploadError } from './community-avatar-upload';
+import {
+  avatarCanvasPosition, clampAvatarOffset, communityAvatarCrop,
+  CommunityAvatarCrop, COMMUNITY_COVER_WIDTH, COMMUNITY_COVER_HEIGHT
+} from './community-avatar-crop';
 import { buildCommunityGroupInviteUrl, buildWhatsAppGroupShareUrl } from './community-group-invite';
 import { communityRoundMatchup, CommunityRoundMatchup } from './community-round-matchup';
 import { sportForRound, CommunityRoundView } from './community-round-sport';
@@ -291,6 +295,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   ngOnDestroy(): void {
     this.clearCommunityFeedImage();
     this.clearCommunityFeedVideo();
+    this.resetCommunityAvatarCrop();
     this.typing.destroy();
     this.chatSubscriptions.unsubscribe();
   }
@@ -1183,6 +1188,18 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   communityDeleteError = '';
 
   photoUpdating = false;
+  avatarCropFile: File | null = null;
+  avatarCropUrl = '';
+  avatarCropReady = false;
+  avatarCropAnimated = false;
+  avatarCropZoom = 1;
+  avatarCropOffsetX = 0;
+  avatarCropOffsetY = 0;
+  avatarCropMetrics: CommunityAvatarCrop | null = null;
+  avatarCropError = '';
+  private avatarCropImage: HTMLImageElement | null = null;
+  private avatarCropCommunityId: number | null = null;
+  private avatarCropDrag: { id: number; x: number; y: number; offsetX: number; offsetY: number } | null = null;
 
   communitySearchName = '';
   communitySearchSport = '';
@@ -1532,6 +1549,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   }
 
   private loadCommunityPresentation(id: number): void {
+    this.resetCommunityAvatarCrop();
     this.pendingArchiveDeepLinkCommunityId = null;
     this.invalidateArchiveRequests();
     // Only the most recent presentation request may change this view.
@@ -4061,46 +4079,180 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     });
   }
 
-  onCommunityPhotoChange(event: Event): void {
-    if (!this.selected || !this.canManage() || this.photoUpdating) {
-      return;
-    }
+  private resetCommunityAvatarCrop(): void {
+    if (this.avatarCropUrl) URL.revokeObjectURL(this.avatarCropUrl);
+    this.avatarCropFile = null;
+    this.avatarCropUrl = '';
+    this.avatarCropReady = false;
+    this.avatarCropAnimated = false;
+    this.avatarCropImage = null;
+    this.avatarCropCommunityId = null;
+    this.avatarCropDrag = null;
+    this.avatarCropMetrics = null;
+    this.avatarCropZoom = 1;
+    this.avatarCropOffsetX = 0;
+    this.avatarCropOffsetY = 0;
+    this.avatarCropError = '';
+  }
 
+  cancelCommunityAvatarCrop(): void {
+    if (!this.photoUpdating) this.resetCommunityAvatarCrop();
+  }
+
+  @HostListener('document:keydown.escape')
+  closeCommunityAvatarCropOnEscape(): void {
+    if (this.avatarCropFile && !this.photoUpdating) this.resetCommunityAvatarCrop();
+  }
+
+  onCommunityAvatarZoom(event: Event): void {
+    const value = Number((event.target as HTMLInputElement).value);
+    if (!this.avatarCropMetrics || !this.avatarCropImage || !Number.isFinite(value)) return;
+    this.avatarCropZoom = Math.max(1, Math.min(3, value));
+    this.avatarCropMetrics = communityAvatarCrop(
+      this.avatarCropImage.naturalWidth, this.avatarCropImage.naturalHeight, this.avatarCropZoom);
+    this.avatarCropOffsetX = clampAvatarOffset(this.avatarCropOffsetX, this.avatarCropMetrics.maxOffsetX);
+    this.avatarCropOffsetY = clampAvatarOffset(this.avatarCropOffsetY, this.avatarCropMetrics.maxOffsetY);
+  }
+
+  onCommunityAvatarPointerDown(event: PointerEvent): void {
+    if (!this.avatarCropReady || this.avatarCropAnimated || this.photoUpdating || !this.avatarCropMetrics) return;
+    const stage = event.currentTarget as HTMLElement;
+    this.avatarCropDrag = { id: event.pointerId, x: event.clientX, y: event.clientY,
+      offsetX: this.avatarCropOffsetX, offsetY: this.avatarCropOffsetY };
+    stage.setPointerCapture(event.pointerId);
+    event.preventDefault();
+  }
+
+  onCommunityAvatarPointerMove(event: PointerEvent): void {
+    const start = this.avatarCropDrag;
+    if (!start || start.id !== event.pointerId || !this.avatarCropMetrics) return;
+    const bounds = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    if (!bounds.width || !bounds.height) return;
+    this.avatarCropOffsetX = clampAvatarOffset(start.offsetX
+      + (event.clientX - start.x) / bounds.width * 100, this.avatarCropMetrics.maxOffsetX);
+    this.avatarCropOffsetY = clampAvatarOffset(start.offsetY
+      + (event.clientY - start.y) / bounds.height * 100, this.avatarCropMetrics.maxOffsetY);
+  }
+
+  onCommunityAvatarPointerUp(event: PointerEvent): void {
+    if (this.avatarCropDrag?.id === event.pointerId) this.avatarCropDrag = null;
+    const stage = event.currentTarget as HTMLElement;
+    if (stage.hasPointerCapture(event.pointerId)) stage.releasePointerCapture(event.pointerId);
+  }
+
+  onCommunityAvatarCropKey(event: KeyboardEvent): void {
+    if (this.avatarCropAnimated || !this.avatarCropMetrics || this.photoUpdating) return;
+    const move: Record<string, [number, number]> = {
+      ArrowLeft: [-2, 0], ArrowRight: [2, 0], ArrowUp: [0, -2], ArrowDown: [0, 2]
+    };
+    const delta = move[event.key];
+    if (!delta) return;
+    event.preventDefault();
+    this.avatarCropOffsetX = clampAvatarOffset(this.avatarCropOffsetX + delta[0],
+      this.avatarCropMetrics.maxOffsetX);
+    this.avatarCropOffsetY = clampAvatarOffset(this.avatarCropOffsetY + delta[1],
+      this.avatarCropMetrics.maxOffsetY);
+  }
+
+  async saveCommunityAvatarCrop(): Promise<void> {
+    const file = this.avatarCropFile;
+    const id = this.avatarCropCommunityId;
+    if (!file || id == null || !this.selected || this.selected.id !== id
+      || !this.canManage() || !this.avatarCropReady || this.photoUpdating) return;
+    this.avatarCropError = '';
+    this.photoUpdating = true;
+    let upload: File = file;
+    try {
+      if (!this.avatarCropAnimated) {
+        if (!this.avatarCropImage || !this.avatarCropMetrics) throw new Error('Image not ready');
+        const canvas = document.createElement('canvas');
+        canvas.width = COMMUNITY_COVER_WIDTH;
+        canvas.height = COMMUNITY_COVER_HEIGHT;
+        const context = canvas.getContext('2d');
+        if (!context) throw new Error('Canvas unavailable');
+        const position = avatarCanvasPosition(
+          this.avatarCropMetrics, this.avatarCropOffsetX, this.avatarCropOffsetY);
+        context.fillStyle = '#0b2332';
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        context.drawImage(this.avatarCropImage,
+          position.x, position.y, position.width, position.height);
+        const blob = await new Promise<Blob>((resolve, reject) =>
+          canvas.toBlob(result => result ? resolve(result) : reject(new Error('JPEG export failed')),
+            'image/jpeg', 0.9));
+        upload = new File([blob], 'community-cover.jpg', { type: 'image/jpeg' });
+        if (communityAvatarUploadError(upload)) throw new Error('JPEG exceeds upload limit');
+      }
+      // Switching groups or closing the page must not send a stale selected image.
+      if (!this.selected || this.selected.id !== id || this.avatarCropFile !== file) {
+        this.photoUpdating = false;
+        return;
+      }
+      this.communityService.updatePhoto(id, upload)
+        .pipe(timeout(30_000), finalize(() => this.photoUpdating = false))
+        .subscribe({
+          next: updated => {
+            if (this.selected?.id !== id) return;
+            this.selected = updated;
+            this.replaceCommunity(updated);
+            this.resetCommunityAvatarCrop();
+          },
+          error: () => { if (this.selected?.id === id)
+            this.avatarCropError = t('communities.cropUploadError'); }
+        });
+    } catch {
+      this.photoUpdating = false;
+      this.avatarCropError = t('communities.cropUploadError');
+    }
+  }
+
+  onCommunityPhotoChange(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
-    if (!file) {
-      return;
-    }
-
-    const avatarError = communityAvatarUploadError(file);
-    if (avatarError) {
-      this.errorMessage = t(avatarError === 'VIDEO'
+    // Browsers allow re-selecting the same photo after cancelling an edit.
+    input.value = '';
+    if (!file || !this.selected || !this.canManage() || this.photoUpdating) return;
+    const invalid = communityAvatarUploadError(file);
+    if (invalid) {
+      this.errorMessage = t(invalid === 'VIDEO'
         ? 'feedback.communities.avatarVideoNotSupported'
-        : avatarError === 'TOO_LARGE'
+        : invalid === 'TOO_LARGE'
           ? 'feedback.communities.avatarTooLarge'
           : 'feedback.communities.avatarInvalidType');
-      input.value = '';
       return;
     }
 
-    this.photoUpdating = true;
+    this.resetCommunityAvatarCrop();
     this.errorMessage = '';
+    this.avatarCropFile = file;
+    this.avatarCropCommunityId = this.selected.id;
+    const url = URL.createObjectURL(file);
+    this.avatarCropUrl = url;
+    this.avatarCropAnimated = file.type === 'image/gif';
 
-    this.communityService.updatePhoto(this.selected.id, file)
-      .pipe(
-        timeout(10_000),
-        finalize(() => {
-          this.photoUpdating = false;
-          input.value = '';
-        })
-      )
-      .subscribe({
-        next: community => {
-          this.selected = community;
-          this.replaceCommunity(community);
-        },
-        error: () => this.errorMessage = t('feedback.communities.photoError')
-      });
+    // Keep animated GIF bytes unchanged: canvas would flatten the animation.
+    if (this.avatarCropAnimated) {
+      this.avatarCropReady = true;
+      return;
+    }
+
+    const image = new Image();
+    image.onload = () => {
+      if (this.avatarCropUrl !== url) return;
+      try {
+        this.avatarCropImage = image;
+        this.avatarCropMetrics = communityAvatarCrop(image.naturalWidth, image.naturalHeight, 1);
+        this.avatarCropReady = true;
+      } catch {
+        this.resetCommunityAvatarCrop();
+        this.errorMessage = t('communities.cropInvalidImage');
+      }
+    };
+    image.onerror = () => {
+      if (this.avatarCropUrl !== url) return;
+      this.resetCommunityAvatarCrop();
+      this.errorMessage = t('communities.cropInvalidImage');
+    };
+    image.src = url;
   }
 
   removeCommunityPhoto(): void {
