@@ -45,6 +45,9 @@
                 <input [type]="field.key === 'website' ? 'url' : 'text'"
                   [name]="field.key" [(ngModel)]="draft[field.key]"
                   [maxlength]="field.limit" autocomplete="off" />
+                @if (field.key === 'contact') {
+                  <small class="venue-edit-contact-hint">{{ 'venue.visit.editContactHint' | t }}</small>
+                }
               </label>
             }
             <label>
