@@ -1,14 +1,23 @@
-/** GIPHY browser integration. No authentication tokens or private chat data are sent. */
+/** GIPHY media is displayed directly from its CDN; never copied to Jynlo R2. */
 export interface GifChoice {
   id: string;
   title: string;
   previewUrl: string;
   downloadUrl: string;
   size: number;
+  pageUrl: string;
+  creator: string;
 }
 
-const MAX_GIF_BYTES = 5 * 1024 * 1024;
+export interface GifTextMessage {
+  mediaUrl: string;
+  pageUrl: string;
+  creator: string;
+  caption: string;
+}
+
 const PAGE_SIZE = 18;
+const MARKER = '[JYNLO:GIPHY:1]';
 
 function safeMediaUrl(value: unknown): string {
   if (typeof value !== 'string') return '';
@@ -16,7 +25,16 @@ function safeMediaUrl(value: unknown): string {
     const uri = new URL(value);
     return uri.protocol === 'https:' && !uri.username && !uri.password && !uri.port
       && (/^media\d*\.giphy\.com$/.test(uri.hostname) || uri.hostname === 'i.giphy.com')
-      ? uri.toString() : '';
+      ? value : '';
+  } catch { return ''; }
+}
+function safePageUrl(value: unknown): string {
+  if (typeof value !== 'string') return '';
+  try {
+    const uri = new URL(value);
+    return uri.protocol === 'https:' && !uri.username && !uri.password && !uri.port
+      && (uri.hostname === 'giphy.com' || uri.hostname === 'www.giphy.com')
+      && uri.pathname.startsWith('/gifs/') ? value : '';
   } catch { return ''; }
 }
 
@@ -27,19 +45,44 @@ export function parseGiphyResults(raw: unknown): GifChoice[] {
     if (typeof item?.id !== 'string' || !/^[a-zA-Z0-9_-]{1,80}$/.test(item.id)
         || seen.has(item.id)) return [];
     const images = item.images || {};
-    const variants = [images.downsized, images.downsized_medium, images.fixed_width, images.original];
-    const download = variants.find(variant => {
-      const size = Number(variant?.size);
-      return safeMediaUrl(variant?.url) && size > 0 && size <= MAX_GIF_BYTES;
-    });
-    const preview = safeMediaUrl(images.fixed_width?.url)
-      || safeMediaUrl(images.downsized?.url);
-    if (!download || !preview) return [];
+    const mediaUrl = safeMediaUrl(images.downsized?.url)
+      || safeMediaUrl(images.fixed_width?.url)
+      || safeMediaUrl(images.original?.url);
+    const previewUrl = safeMediaUrl(images.fixed_width?.url) || mediaUrl;
+    const pageUrl = safePageUrl(item.url);
+    if (!mediaUrl || !previewUrl || !pageUrl) return [];
     seen.add(item.id);
-    return [{ id: item.id, title: String(item.title || 'GIF').slice(0, 110),
-      previewUrl: preview, downloadUrl: safeMediaUrl(download.url),
-      size: Number(download.size) }];
+    return [{
+      id: item.id, title: String(item.title || 'GIF').slice(0, 110),
+      previewUrl, downloadUrl: mediaUrl, pageUrl,
+      creator: String(item.username || 'GIPHY').slice(0, 60),
+      size: Number(images.downsized?.size) || 0
+    }];
   });
+}
+
+/** A text message with a strict typed payload; only GIPHY-hosted URLs are rendered. */
+export function encodeGiphyText(choice: GifChoice, caption: string): string {
+  if (!safeMediaUrl(choice.downloadUrl) || !safePageUrl(choice.pageUrl)
+      || !/^[a-zA-Z0-9_-]{1,80}$/.test(choice.id)) return '';
+  const text = MARKER + JSON.stringify({
+    id: choice.id, u: choice.downloadUrl, p: choice.pageUrl,
+    a: choice.creator.slice(0, 60), c: caption
+  });
+  return text.length <= 2000 ? text : '';
+}
+
+export function readGiphyText(raw: string | null | undefined): GifTextMessage | null {
+  if (!raw || !raw.startsWith(MARKER) || raw.length > 2000) return null;
+  try {
+    const data = JSON.parse(raw.slice(MARKER.length));
+    if (!data || typeof data !== 'object' || typeof data.id !== 'string'
+        || !/^[a-zA-Z0-9_-]{1,80}$/.test(data.id)
+        || typeof data.a !== 'string' || data.a.length > 60
+        || typeof data.c !== 'string' || data.c.length > 1900
+        || !safeMediaUrl(data.u) || !safePageUrl(data.p)) return null;
+    return { mediaUrl: data.u, pageUrl: data.p, creator: data.a, caption: data.c };
+  } catch { return null; }
 }
 
 export async function readGifProviderKey(signal?: AbortSignal): Promise<string> {
@@ -62,7 +105,7 @@ export async function findGiphy(
     rating: 'g', lang: language
   });
   if (query) params.set('q', query);
-  // GIPHY documents client-side Search requests, not a backend proxy.
+  // GIPHY requires direct browser API requests; do not proxy via Jynlo backend.
   const response = await fetch('https://api.giphy.com/v1/gifs/' + endpoint
     + '?' + params.toString(), {signal, credentials: 'omit'});
   if (!response.ok) throw new Error('GIPHY search failed');
@@ -71,21 +114,4 @@ export async function findGiphy(
   const total = Number(json?.pagination?.total_count);
   return {results, hasMore: results.length > 0 && Number.isFinite(total)
     && offset + PAGE_SIZE < total && offset + PAGE_SIZE < 90};
-}
-
-export async function downloadGiphyChoice(choice: GifChoice, signal: AbortSignal): Promise<File> {
-  const safeUrl = safeMediaUrl(choice.downloadUrl);
-  if (!safeUrl || !(choice.size > 0 && choice.size <= MAX_GIF_BYTES))
-    throw new Error('GIF URL or size not allowed');
-  const response = await fetch(safeUrl, {
-    signal, credentials: 'omit', mode: 'cors', referrerPolicy: 'no-referrer'
-  });
-  const declared = Number(response.headers.get('content-length'));
-  if (!response.ok || (declared > MAX_GIF_BYTES)) throw new Error('GIF too large');
-  const blob = await response.blob();
-  if (blob.size === 0 || blob.size > MAX_GIF_BYTES) throw new Error('GIF too large');
-  // Verify GIF magic bytes, not just Content-Type from the remote CDN.
-  const header = await blob.slice(0, 6).text();
-  if (header !== 'GIF87a' && header !== 'GIF89a') throw new Error('Invalid GIF');
-  return new File([blob], 'giphy-' + choice.id + '.gif', {type: 'image/gif'});
 }
