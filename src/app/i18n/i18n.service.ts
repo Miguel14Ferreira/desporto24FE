@@ -2327,7 +2327,6 @@ const PT: Dictionary = {
 
   'communityCreate.eyebrow': 'Comunidades',
   'communityCreate.quotaOwned': 'Comunidades próprias: {{count}} de {{limit}}.',
-  'communityCreate.quotaToday': 'Criadas hoje: {{count}} de {{limit}} permitidas.',
   'communityCreate.quotaReached': 'Não podes criar outra comunidade agora. Se precisares de mais comunidades, contacta o suporte.',
   'adminPlayers.communityLimitSaved': 'Limite de comunidades de {{name}} atualizado.',
   'adminPlayers.communityLimitError': 'Não foi possível consultar ou atualizar o limite.',
