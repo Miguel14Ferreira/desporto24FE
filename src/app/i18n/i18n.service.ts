@@ -5,6 +5,14 @@ export type AppLanguage = 'pt' | 'en';
 type Dictionary = Record<string, string>;
 
 const PT: Dictionary = {
+  'communities.inlineSpeed.tiebreakIntro': 'Empate múltiplo no 16.º lugar: mantém os patinadores com melhor tempo e seleciona apenas os atletas efetivamente empatados no limite, até perfazer 16 apurados. O júri deve justificar a decisão.',
+  'communities.inlineSpeed.tiebreakAlreadyQualified': 'apuramento garantido pelo tempo',
+  'communities.inlineSpeed.tiebreakEvidenceHint': 'Regista a decisão oficial e a evidência consultada (ex.: vídeo/fotofinish, ata ou prova de desempate). Os tempos originais não são alterados.',
+  'communities.inlineSpeed.tiebreakSelectionCount': 'O júri tem de selecionar exatamente 16 patinadores, incluindo todos os que ficaram claramente acima do limite.',
+  'communities.inlineSpeed.tiebreakReasonRequired': 'O desempate exige fundamentação entre 20 e 500 caracteres.',
+  'communities.inlineSpeed.tiebreakSaved': 'Desempate oficial do júri registado. Confirma agora o apuramento.',
+  'communities.inlineSpeed.tiebreakStale': 'Desempate desatualizado: os resultados originais mudaram. É necessária nova decisão.',
+  'communities.inlineSpeed.tiebreakConfirm': 'Registar decisão de desempate',
   'communities.inlineSpeed.warningMultipleTie': 'Empate de três ou mais patinadores no limite do apuramento: é necessária uma decisão oficial de desempate antes de confirmar.',
   'communities.inlineSpeed.dqNotSelectable': 'Desclassificado — corrige primeiro o resultado da manga de origem',
   'communities.inlineSpeed.exceptionSeventeenthHint': 'O júri pode incluir um 17.º patinador por falta desportiva ou circunstância injusta, apenas com fundamentação detalhada. Em caso de empate triplo, resolve primeiro o desempate oficial.',
@@ -3859,6 +3867,14 @@ const PT: Dictionary = {
 };
 
 const EN: Dictionary = {
+  'communities.inlineSpeed.tiebreakIntro': 'Multiple skaters tied at the 16th-place cutoff: retain all skaters with faster times, then choose only among the skaters tied at the boundary, for exactly 16 qualifiers. The jury must explain the ruling.',
+  'communities.inlineSpeed.tiebreakAlreadyQualified': 'guaranteed by faster time',
+  'communities.inlineSpeed.tiebreakEvidenceHint': 'Record the official ruling and evidence consulted (e.g., video/photo finish, minutes, or a tie-break race). Original times remain unchanged.',
+  'communities.inlineSpeed.tiebreakSelectionCount': 'The jury must select exactly 16 skaters, including all skaters clearly ahead of the cutoff.',
+  'communities.inlineSpeed.tiebreakReasonRequired': 'The ruling requires an explanation between 20 and 500 characters.',
+  'communities.inlineSpeed.tiebreakSaved': 'Official jury tie-break saved. Qualification still requires confirmation.',
+  'communities.inlineSpeed.tiebreakStale': 'Tie-break is outdated: source results changed. A new ruling is required.',
+  'communities.inlineSpeed.tiebreakConfirm': 'Record tie-break ruling',
   'communities.inlineSpeed.warningMultipleTie': 'Three or more skaters are tied at the qualification cutoff. An official tie-break decision is required before confirmation.',
   'communities.inlineSpeed.dqNotSelectable': 'Disqualified — correct the original heat result first',
   'communities.inlineSpeed.exceptionSeventeenthHint': 'The jury may include a 17th skater following a sporting fault or unfair circumstance only with detailed reasons. A three-way tie first requires an official tie-break.',
