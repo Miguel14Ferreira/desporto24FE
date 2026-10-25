@@ -428,6 +428,8 @@ const PT: Dictionary = {
   'login.resendIn': 'Podes reenviar em {{seconds}}s',
   'login.username': 'Nome de utilizador',
   'login.usernamePlaceholder': 'O teu username',
+  'login.identifier': 'Nome de utilizador, email ou telemóvel',
+  'login.identifierPlaceholder': 'O teu username, email ou telemóvel',
   'login.password': 'Palavra-passe',
   'login.passwordPlaceholder': 'A tua palavra-passe',
   'login.enter': 'Entrar',
@@ -3779,7 +3781,7 @@ const PT: Dictionary = {
   'feedback.mfa.resent': 'Desafio renovado. Usa um código atual da tua aplicação Authenticator.',
   'feedback.mfa.resendError': 'Não foi possível renovar o desafio. Tenta novamente mais tarde.',
 
-  'feedback.login.required': 'Preenche o nome de utilizador e a palavra-passe.',
+  'feedback.login.required': 'Preenche o nome de utilizador, email ou telemóvel e a palavra-passe.',
   'feedback.login.noChallenge': 'O servidor não devolveu um desafio MFA válido.',
   'feedback.login.noToken': 'O servidor não devolveu um token de autenticação.',
   'feedback.login.error': 'Não foi possível iniciar sessão. Confirma as credenciais.',
