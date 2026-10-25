@@ -53,7 +53,9 @@ export class VenueEditSuggestionsService {
       { params: new HttpParams().set('page', String(page)) });
   }
 
-  decide(id: number, action: 'approve' | 'reject', note: string): Observable<VenueEditSuggestion> {
-    return this.http.post<VenueEditSuggestion>(`${this.admin}/${id}/${action}`, { note });
+  decide(id: number, action: 'approve' | 'reject', note: string,
+    sourceReviewed = false): Observable<VenueEditSuggestion> {
+    return this.http.post<VenueEditSuggestion>(`${this.admin}/${id}/${action}`,
+      { note, ...(action === 'approve' && sourceReviewed ? { sourceReviewed: true } : {}) });
   }
 }
