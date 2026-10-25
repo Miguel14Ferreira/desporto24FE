@@ -117,4 +117,23 @@ describe('community historical import diagnostics PT/EN', () => {
       .toBe('Não foi possível analisar este ficheiro.');
   });
 
+  it('uses a safe English fallback when a structured warning is missing required parameters', () => {
+    localStorage.setItem('d24-language', 'en');
+    expect(importDiagnosticLabel('Linha 4: erro', {
+      code: 'IMPORT_DUPLICATE_STANDING', params: { row: '4' }
+    })).toBe('Review the original spreadsheet before confirming the import.');
+    expect(importDiagnosticLabel('Linha 4: erro', {
+      code: 'IMPORT_INTEGER_REQUIRED', params: { row: '4', field: 'GOALS' }
+    })).not.toContain('{{value}}');
+  });
+
+  it('uses the operation-specific English HTTP fallback when metadata is incomplete', () => {
+    localStorage.setItem('d24-language', 'en');
+    expect(importHttpErrorLabel({ error: {
+      message: 'Linha 23: erro', code: 'IMPORT_ROW_SCORE_INVALID', params: {}
+    } }, 'communities.matches.previewError')).toBe(
+      'Could not preview these matches. Map Home, Away and Score (or separate scores for both sides).'
+    );
+  });
+
 });
