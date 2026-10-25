@@ -2144,6 +2144,27 @@ body .communities-page.jynlo-c1 .historical-phase-card-labels {
   line-height: 1.45;
   margin: 0;
 }
+/* Source-flagged match shortcuts are separate from stage-count uncertainty. */
+body .communities-page.jynlo-c1 .historical-phase-review-shortcut {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .45rem .6rem;
+  margin-top: auto;
+}
+body .communities-page.jynlo-c1 .historical-phase-review-count {
+  color: #f4cc96;
+  font-size: .77rem;
+  font-variant-numeric: tabular-nums;
+}
+body .communities-page.jynlo-c1 .historical-phase-review-jump {
+  padding: .4rem .7rem;
+  border-color: rgba(242, 180, 97, .5);
+  font-size: .8rem;
+  max-width: 100%;
+  white-space: normal;
+  text-align: left;
+}
 body .communities-page.jynlo-c1 .historical-phase-jump {
   align-self: flex-start;
   margin-top: auto;
