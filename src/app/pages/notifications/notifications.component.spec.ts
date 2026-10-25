@@ -399,6 +399,59 @@ describe('NotificationsComponent', () => {
     expect(component.notifications.length).toBe(0);
     expect(component.actionSuccess).toContain('rejeitado');
   });
+  it('shows venue edit decisions in both languages and links to the exact venue', () => {
+    const previousLanguage = localStorage.getItem('d24-language');
+    const decision = {
+      ...notificationFixture(), id: 125, sessionId: null, venueId: 75,
+      type: 'VENUE_EDIT_DECISION',
+      subject: 'Sugestão de recinto rejeitada',
+      message: 'A tua proposta para "Pavilhão Municipal" foi rejeitada. Justificação: Informação não confirmada.'
+    };
+    try {
+      component.notifications = [decision];
+      component.selected = decision;
+      localStorage.setItem('d24-language', 'pt');
+      fixture.detectChanges();
+      expect(component.typeLabel(decision)).toBe('Alteração a recinto');
+      expect(component.notificationSubject(decision)).toBe('Alteração rejeitada');
+      expect(component.notificationMessage(decision)).toContain('Pavilhão Municipal');
+      expect(component.notificationMessage(decision)).toContain('Informação não confirmada.');
+      const button = Array.from(fixture.nativeElement.querySelectorAll('button'))
+        .find((element: any) => element.textContent.includes('Ver recinto')) as HTMLButtonElement;
+      expect(button).toBeDefined();
+      button.click();
+      expect(router.navigate).toHaveBeenCalledWith(['/menu/venues', 75]);
+
+      localStorage.setItem('d24-language', 'en');
+      expect(component.typeLabel(decision)).toBe('Venue edit');
+      expect(component.notificationSubject(decision)).toBe('Edit rejected');
+      expect(component.notificationMessage(decision)).toContain('Your suggested change to Pavilhão Municipal was rejected.');
+      expect(component.notificationMessage(decision)).toContain('Admin response: Informação não confirmada.');
+      (router.navigate as jasmine.Spy).calls.reset();
+      component.openVenueDecision({ ...decision, venueId: -1 });
+      expect(router.navigate).not.toHaveBeenCalled();
+      component.openVenueDecision({ ...decision, venueId: Number.MAX_SAFE_INTEGER + 1 });
+      expect(router.navigate).not.toHaveBeenCalled();
+    } finally {
+      if (previousLanguage === null) localStorage.removeItem('d24-language');
+      else localStorage.setItem('d24-language', previousLanguage);
+    }
+  });
+
+  it('supports independent opt-out of venue edit decision in-app and email alerts', () => {
+    component.openPreferences();
+    expect(component.preferenceTypes).toContain('VENUE_EDIT_DECISION');
+    component.changeType('VENUE_EDIT_DECISION', 'inApp', false);
+    expect(component.preferenceEnabled('VENUE_EDIT_DECISION', 'inApp')).toBeFalse();
+    expect(component.preferenceEnabled('VENUE_EDIT_DECISION', 'email')).toBeTrue();
+    component.changeType('VENUE_EDIT_DECISION', 'email', false);
+    expect(component.preferenceEnabled('VENUE_EDIT_DECISION', 'email')).toBeFalse();
+    expect(service.updatePreferences).toHaveBeenCalledWith(jasmine.objectContaining({
+      disabledInAppTypes: ['VENUE_EDIT_DECISION'],
+      disabledEmailTypes: ['VENUE_EDIT_DECISION']
+    }));
+  });
+
   it('shows all in-app and email alert types with per-type persistent switches', () => {
     component.openPreferences();
     expect(service.preferences).toHaveBeenCalled();
