@@ -19,6 +19,7 @@ export interface CommunityGroup {
   photoZoom?: number | null;
   photoFocusX?: number | null;
   photoFocusY?: number | null;
+  photoFitMode?: 'COVER' | 'SHOW_ALL' | null;
   visibility: CommunityVisibility;
   rankingsEnabled: boolean;
   individualTournamentsEnabled?: boolean;

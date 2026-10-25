@@ -41,9 +41,18 @@ describe('Community cover editor', () => {
     expect(updatePhoto).not.toHaveBeenCalled();
 
     await component.saveCommunityAvatarCrop();
-    expect(updatePhoto).toHaveBeenCalledOnceWith(42, gif);
+    expect(updatePhoto).toHaveBeenCalledOnceWith(42, gif, 'COVER', 1, 50, 50);
     expect(component.selected?.photoUrl).toBe('/media/communities/42/cover.gif');
     expect(component.avatarCropFile).toBeNull();
+  });
+
+  it('can upload an unchanged animated GIF in SHOW_ALL mode', async () => {
+    const gif = new File(['GIF89a', 'more-frames'], 'animated.gif', {type:'image/gif'});
+    component.onCommunityPhotoChange({target:{files:[gif], value:'animated.gif'}} as any);
+    component.setCommunityAvatarFitMode('SHOW_ALL');
+    component.onCommunityAvatarZoom({target:{value:'0.65'}} as any);
+    await component.saveCommunityAvatarCrop();
+    expect(updatePhoto).toHaveBeenCalledOnceWith(42, gif, 'SHOW_ALL', 0.65, 50, 50);
   });
 
   it('lets the user cancel a preview with no upload, including reselecting the same file', () => {

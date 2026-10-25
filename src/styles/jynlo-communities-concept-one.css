@@ -2367,3 +2367,79 @@ body .communities-page .community-avatar img {
   display: block;
   transition: none;
 }
+
+/* SHOW_ALL keeps the complete logo/text visible and fills unused space
+   with a blurred copy of the same image. GIF bytes and frames are unchanged. */
+body .communities-page .community-avatar {
+  isolation: isolate;
+  overflow: hidden;
+}
+body .communities-page .community-avatar > img.community-cover-backdrop,
+body .communities-page .community-photo-editor-stage > img.community-photo-editor-backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  z-index: 0;
+  display: block;
+  object-fit: cover;
+  object-position: center;
+  pointer-events: none;
+  filter: blur(18px) brightness(.52) saturate(.88);
+  transform: scale(1.22);
+}
+body .communities-page .community-avatar > img.community-cover-foreground {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  min-width: 0;
+  min-height: 0;
+  display: block;
+  pointer-events: none;
+}
+body .communities-page .community-photo-editor-stage > img.community-photo-editor-existing {
+  z-index: 1;
+}
+body .communities-page .community-photo-editor-stage {
+  isolation: isolate;
+}
+body .communities-page .community-photo-editor-modes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+  padding: 5px;
+  border-radius: 13px;
+  border: 1px solid rgba(151, 195, 210, .3);
+  background: rgba(5, 23, 35, .75);
+}
+body .communities-page .community-photo-editor-modes button {
+  min-width: 0;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  color: #bfd9e2;
+  font: inherit;
+  font-size: .85rem;
+  font-weight: 700;
+  background: transparent;
+  cursor: pointer;
+}
+body .communities-page .community-photo-editor-modes button.is-active {
+  background: #1b504f;
+  color: #e4fff4;
+  border-color: #4be7b5;
+}
+body .communities-page .community-photo-editor-modes button:focus-visible {
+  outline: 2px solid #4be7b5;
+  outline-offset: 2px;
+}
+body .communities-page .community-photo-editor-modes button:disabled {
+  cursor: wait;
+  opacity: .55;
+}
