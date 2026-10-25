@@ -1122,7 +1122,7 @@ test('Historical knockout browser QA: CSV upload, preview, consent and archive',
   await page.locator('.historical-import-choice').nth(1).click();
   await page.locator('.historical-tournament-options input').fill('Futebol');
   await page.locator('.historical-tournament-options select').selectOption('KNOCKOUT');
-  const confirm = page.getByRole('button', { name: 'Criar torneio histórico' });
+  const confirm = page.getByRole('button', { name: 'Criar torneio histórico', exact: true });
   await expect(confirm).toBeDisabled();
   expect(fixture.matchConfirmCalls).toBe(0);
   await page.locator('.check-stat input[type="checkbox"]').check();
