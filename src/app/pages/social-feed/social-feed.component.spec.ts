@@ -56,6 +56,18 @@ describe('SocialFeedComponent discovery sidebar', () => {
     component = fixture.componentInstance;
   });
 
+  it('uses the approved premium Concept One feed with genuine existing interactions', fakeAsync(() => {
+    fixture.detectChanges();
+    tick(351);
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('.jynlo-feed-premium .jynlo-feed-hero')).not.toBeNull();
+    expect(root.querySelector('.jynlo-premium-week .week-hub-grid')).not.toBeNull();
+    expect(root.querySelectorAll('.jynlo-premium-week .week-hub-card').length).toBe(3);
+    expect(root.querySelector('.jynlo-premium-feed-grid')).not.toBeNull();
+    expect(root.querySelector('a[href="/menu/createEvent"]')).not.toBeNull();
+    component.ngOnDestroy();
+  }));
+
   it('allows video selection, limits its size and keeps photo/video mutually exclusive', fakeAsync(() => {
     fixture.detectChanges();
     tick(351);
