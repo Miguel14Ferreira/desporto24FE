@@ -8,7 +8,7 @@ import { groupHistoricalTournamentSourceRows } from './community-historical-tour
 import { historicalKnockoutPhaseOverview, HistoricalKnockoutPhaseOverview, HistoricalKnockoutPhaseId } from './community-historical-knockout-overview';
 import { historicalMatchReviewFlags } from './community-historical-match-review';
 import {
-  CommunityTournament, TournamentPointRules, TeamTieBreakPriority, TournamentMatch, TournamentParticipant, TournamentStandingRow,
+  CommunityTournament, TournamentStatus, TournamentPointRules, TeamTieBreakPriority, TournamentMatch, TournamentParticipant, TournamentStandingRow,
   TournamentStandings, TournamentTeam, TournamentTeamMatch, TournamentTeamStandings, TournamentTeamGroups,
   TournamentRaceOverview, TournamentRaceStanding, TournamentRaceEntry,
   InlineSpeedOverview, InlineSpeedProposal, InlineSpeedSkater, InlineSpeedStage
@@ -306,11 +306,24 @@ export class CommunityTournamentsComponent implements OnChanges {
     return this.selected?.scoringMode === 'RACE_POINTS';
   }
 
+  /** A speed-skating bracket uses timed heats, never generic league points. */
+  get isInlineSpeedDraft(): boolean {
+    return !this.showTeamCreate && this.sportDraft === 'Patinagem de Velocidade';
+  }
+
+  isInlineSpeedTournament(tournament: CommunityTournament | undefined): boolean {
+    return tournament?.sport === 'Patinagem de Velocidade'
+      && tournament.entryType !== 'TEAM'
+      && tournament.scoringMode == null
+      && !tournament.historicalArchiveId;
+  }
+
   get isInlineSpeedCompetition(): boolean {
-    return this.selected?.sport === 'Patinagem de Velocidade'
-      && this.selected?.entryType !== 'TEAM'
-      && this.selected?.scoringMode == null
-      && !this.selected?.historicalArchiveId;
+    return this.isInlineSpeedTournament(this.selected);
+  }
+
+  speedTournamentStatus(status: TournamentStatus): string {
+    return t('communities.inlineSpeed.status.' + status);
   }
 
   speedStage(eventType: string): InlineSpeedStage {
@@ -1587,12 +1600,15 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.showError(t('communities.tournaments.organizerUi.individualUnsupported'));
       return;
     }
-    if (!this.isRaceChampionshipDraft && !this.validPointRules) {
+    if (!this.isRaceChampionshipDraft && !this.isInlineSpeedDraft && !this.validPointRules) {
       this.showError(t('communities.tournaments.organizerUi.invalidPoints'));
       return;
     }
     const scoringMode = this.classificationProfile.scoringMode;
-    const createRequest = this.isRaceChampionshipDraft
+    const createRequest = this.isInlineSpeedDraft
+      ? this.api.create(this.community.id, name, this.sportDraft,
+          { winPoints: 0, drawPoints: 0, lossPoints: 0 })
+      : this.isRaceChampionshipDraft
       ? this.api.createRaceChampionship(this.community.id, name, this.sportDraft as RaceChampionshipSport)
       : scoringMode
       ? this.api.create(this.community.id, name, this.sportDraft, this.pointRulesDraft, scoringMode)
