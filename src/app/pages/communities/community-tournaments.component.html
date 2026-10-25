@@ -187,25 +187,16 @@
                 <p>{{ (isInlineSpeedDraft ? 'communities.inlineSpeed.createRulesHint' : 'communities.tournaments.classificationText') | t }}</p>
               </div>
             </div>
-            <div class="classification-profile" [class.classification-notice]="!isSportFormatSupported"
-              role="status">
-              <strong>{{ isInlineSpeedDraft ? ('communities.inlineSpeed.createFormat' | t) : classificationProfile.heading }}</strong>
-              <p>{{ sportFormatWarning }}</p>
-              <small>{{ isInlineSpeedDraft ? ('communities.inlineSpeed.createFields' | t) : classificationProfile.fields }}</small>
-              @if (!isSportFormatSupported) {
-                <p>{{ 'communities.tournaments.createUi.unsupportedLong' | t }}</p>
-              }
-            </div>
+            <app-tournament-classification-note kind="profile"
+              [heading]="isInlineSpeedDraft ? ('communities.inlineSpeed.createFormat' | t) : classificationProfile.heading"
+              [description]="sportFormatWarning"
+              [fields]="isInlineSpeedDraft ? ('communities.inlineSpeed.createFields' | t) : classificationProfile.fields"
+              [unsupported]="!isSportFormatSupported"
+            ></app-tournament-classification-note>
             @if (isInlineSpeedDraft) {
-              <div class="classification-fixed-points" role="note">
-                <strong>{{ 'communities.inlineSpeed.createNoPointsTitle' | t }}</strong>
-                <p>{{ 'communities.inlineSpeed.createNoPointsDescription' | t }}</p>
-              </div>
+              <app-tournament-classification-note kind="inline"></app-tournament-classification-note>
             } @else if (isRaceChampionshipDraft) {
-              <div class="classification-fixed-points" role="note">
-                <strong>{{ raceSportLabel(sportDraft) }} · {{ 'communities.karting.creationTitle' | t }}</strong>
-                <p>{{ 'communities.karting.creationHint' | t }}</p>
-              </div>
+              <app-tournament-classification-note kind="race" [raceSport]="raceSportLabel(sportDraft)"></app-tournament-classification-note>
             } @else {
             <details class="create-advanced-rules">
               <summary>
@@ -244,11 +235,7 @@
         }
         @if (isSportFormatSupported && (!showTeamCreate || teamFormatDraft !== 'KNOCKOUT')) {
           @if (classificationProfile.scoringMode === 'CHESS_HALF_POINTS') {
-            <div class="classification-fixed-points" role="note">
-              <strong>{{ 'communities.tournaments.createUi.chessTitle' | t }}</strong>
-              <div><span>{{ 'communities.tournaments.createUi.chessWin' | t }}</span><span>{{ 'communities.tournaments.createUi.chessDraw' | t }}</span><span>{{ 'communities.tournaments.createUi.chessLoss' | t }}</span></div>
-              <p>{{ 'communities.tournaments.createUi.chessHint' | t }}</p>
-            </div>
+            <app-tournament-classification-note kind="chess"></app-tournament-classification-note>
           } @else {
         <fieldset class="t-points-rules" aria-describedby="t-points-rules-help">
           <legend>{{ 'communities.tournaments.createUi.pointsLegend' | t }}</legend>
@@ -1340,27 +1327,7 @@
                   }
                 </div>
               }
-              <div class="race-standings-section">
-                <h6>{{ 'communities.karting.standingsTitle' | t }}</h6>
-                @if (raceOverview.standings.length) {
-                  <div class="t-table-scroll">
-                    <table [attr.aria-label]="'communities.karting.tableLabel' | t">
-                      <thead><tr><th>{{ 'communities.karting.position' | t }}</th><th>{{ 'communities.karting.participant' | t }}</th><th>{{ 'communities.karting.races' | t }}</th><th>{{ 'communities.karting.wins' | t }}</th><th>{{ 'communities.karting.podiums' | t }}</th><th>{{ 'communities.karting.points' | t }}</th></tr></thead>
-                      <tbody>
-                        @for (driver of raceOverview.standings; track driver.playerId) {
-                          <tr>
-                            <td>{{ driver.position }}{{ 'communities.karting.ordinalSuffix' | t }}</td><td>{{ driver.fullName }}</td>
-                            <td>{{ driver.races }}</td><td>{{ driver.wins }}</td><td>{{ driver.podiums }}</td>
-                            <td><strong>{{ driver.championshipPoints ?? '—' }}</strong></td>
-                          </tr>
-                        }
-                      </tbody>
-                    </table>
-                  </div>
-                } @else {
-                  <p class="t-muted">{{ 'communities.karting.emptyStandings' | t }}</p>
-                }
-              </div>
+              <app-race-standings-card [standings]="raceOverview.standings"></app-race-standings-card>
               @if (selected.status === 'COMPLETED') {
                 <div class="race-archive-notice" role="status">
                   <strong>{{ 'communities.karting.archiveTitle' | t }}</strong>
