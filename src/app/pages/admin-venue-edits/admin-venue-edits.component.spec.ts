@@ -52,6 +52,56 @@ describe('AdminVenueEditsComponent', () => {
     expect(component.suggestions).toEqual([]);
   });
 
+
+  it('requires source verification before approving a contact and then sends one decision', () => {
+    const contactSuggestion: VenueEditSuggestion = {
+      ...pending, before: {contact: null}, proposed: {contact: '225073300'},
+      sourceUrl: 'https://www.agoraporto.pt/piscinas-municipais/piscina-municipal-da-constituicao'
+    };
+    component.open(contactSuggestion);
+    expect(component.hasProposedContact(contactSuggestion)).toBeTrue();
+    expect(component.sourceLink(contactSuggestion)).toContain('agoraporto.pt');
+    component.action = 'approve';
+    component.decide();
+    expect(component.actionError).toBeTrue();
+    expect(api.decide).not.toHaveBeenCalled();
+    component.sourceReviewed = true;
+    api.decide.and.returnValue(of({ ...contactSuggestion, status: 'APPROVED' }));
+    component.decide();
+    expect(api.decide).toHaveBeenCalledOnceWith(31, 'approve', '');
+    expect(component.selected).toBeNull();
+  });
+
+  it('blocks contact approval without a safe source, preserving rejection', () => {
+    const missingSource = { ...pending, before: {contact: null}, proposed: {contact:'225073300'} };
+    component.open(missingSource);
+    expect(component.sourceLink(missingSource)).toBeNull();
+    component.sourceReviewed = true;
+    expect(component.canApproveSelected()).toBeFalse();
+    component.action = 'approve';
+    component.decide();
+    expect(api.decide).not.toHaveBeenCalled();
+    expect(component.actionError).toBeTrue();
+
+    component.action = 'reject';
+    component.note = 'Contactos sem fonte verificável';
+    api.decide.and.returnValue(of({ ...missingSource, status: 'REJECTED' }));
+    component.decide();
+    expect(api.decide).toHaveBeenCalledOnceWith(31, 'reject', 'Contactos sem fonte verificável');
+    expect(component.selected).toBeNull();
+  });
+
+  it('rejects spoofed and non-HTTPS submitted source links', () => {
+    const item = { ...pending, proposed: {contact:'225073300'} };
+    for (const sourceUrl of [
+      'https://user@www.agoraporto.pt/a',
+      'https://www.agoraporto.pt.evil.test:8080/a',
+      'http://www.agoraporto.pt/a',
+      'javascript:alert(1)',
+      'https://localhost/a'
+    ]) expect(component.sourceLink({ ...item, sourceUrl })).toBeNull();
+  });
+
   it('retains proposal if approval conflicts with newer published changes', () => {
     component.open(pending);
     component.action = 'approve';
