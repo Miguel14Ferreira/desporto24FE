@@ -15,6 +15,7 @@ import { athleticsDisciplineOptions, athleticsDisciplineValid } from './communit
 import { breakingBattleError } from './community-breaking-battle';
 import { trackSprintHeatError } from './community-track-sprint-results';
 import { trackSprintSeriesStatus } from './community-track-sprint-series';
+import { availableSprintQualifiers, nextSprintRoundHeatMax } from './community-track-sprint-qualified16';
 import { availableSprintBracketSlots, nextSprintBracketHeatNumber } from './community-track-sprint-bracket-picker';
 import { cricketT20Error, cricketOvers } from './community-cricket-results';
 import { chessGameError, chessGameScore } from './community-chess-results';
@@ -130,6 +131,9 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   competition?: CommunityCompetitionOverview;
   sprintBrackets: TrackSprintBracketOverview[] = [];
   sprintBracketNameDraft = '';
+  sprintBracketFormatDraft: 'EIGHT_RIDER_FINALS' | 'SIXTEEN_RIDER_1_8' = 'EIGHT_RIDER_FINALS';
+  sprintBracketQualifyingRoundIdDraft: number | null = null;
+  deletingSprintBracketId: number | null = null;
   sprintBracketSaving = false;
   sprintBracketLoading = false;
   sprintBracketError = '';
@@ -2334,23 +2338,64 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       });
   }
 
+  get availableSprintQualifyingRounds(): CommunityRound[] {
+    return availableSprintQualifiers(this.competition?.rounds || []);
+  }
+
+  canCreateSprintBracket(): boolean {
+    return !!this.sprintBracketNameDraft.trim() &&
+      (this.sprintBracketFormatDraft === 'EIGHT_RIDER_FINALS'
+        || this.sprintBracketQualifyingRoundIdDraft != null &&
+          this.availableSprintQualifyingRounds.some(
+            r => r.id === this.sprintBracketQualifyingRoundIdDraft));
+  }
+
+  deleteSprintBracket(bracketId: number): void {
+    if (!this.selected || !this.canManage() || this.selectedSeasonId == null ||
+        this.selectedSeasonId !== this.activeSeason()?.id) return;
+    if (this.deletingSprintBracketId !== bracketId) {
+      this.deletingSprintBracketId = bracketId;
+      return;
+    }
+    const communityId = this.selected.id;
+    const seasonId = this.selectedSeasonId;
+    this.sprintBracketSaving = true;
+    this.sprintBracketError = '';
+    this.communityService.deleteTrackSprintBracket(communityId, seasonId, bracketId)
+      .pipe(timeout(10_000), finalize(() => this.sprintBracketSaving = false))
+      .subscribe({
+        next: () => {
+          this.deletingSprintBracketId = null;
+          this.loadSprintBrackets(communityId, seasonId);
+        },
+        error: error => this.sprintBracketError = error.error?.message
+          || t('communities.trackCycling.bracketDeleteError')
+      });
+  }
+
   createSprintBracket(): void {
     const seasonId = this.selectedSeasonId;
     const name = this.sprintBracketNameDraft.trim();
     if (!this.selected || !this.canManage() || seasonId == null ||
         !this.activeSeason() || seasonId !== this.activeSeason()?.id ||
-        this.sprintBracketSaving || !name || name.length > 80) {
+        this.sprintBracketSaving || !name || name.length > 80 ||
+        !this.canCreateSprintBracket()) {
       this.sprintBracketError = t('communities.trackCycling.bracketInvalid');
       return;
     }
     const communityId = this.selected.id;
     this.sprintBracketSaving = true;
     this.sprintBracketError = '';
-    this.communityService.createTrackSprintBracket(communityId, seasonId, name)
+    this.communityService.createTrackSprintBracket(communityId, seasonId, name,
+      this.sprintBracketFormatDraft,
+      this.sprintBracketFormatDraft === 'SIXTEEN_RIDER_1_8'
+        ? this.sprintBracketQualifyingRoundIdDraft : null)
       .pipe(timeout(10_000), finalize(() => this.sprintBracketSaving = false))
       .subscribe({
         next: () => {
           this.sprintBracketNameDraft = '';
+          this.sprintBracketQualifyingRoundIdDraft = null;
+          this.sprintBracketFormatDraft = 'EIGHT_RIDER_FINALS';
           this.loadSprintBrackets(communityId, seasonId);
         },
         error: error => this.sprintBracketError = error.error?.message
@@ -3558,7 +3603,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
           || !Number.isInteger(Number(this.sprintHeatNumberDraft))
           || Number(this.sprintHeatNumberDraft) < 1
           || Number(this.sprintHeatNumberDraft) >
-             3)) {
+             nextSprintRoundHeatMax(this.roundDisciplineDraft))) {
       this.errorMessage = t('communities.trackCycling.seriesInvalid');
       return;
     }
