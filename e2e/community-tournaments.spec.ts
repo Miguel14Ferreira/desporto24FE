@@ -386,12 +386,12 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
         { sourceRow: 251, home: 'Águias', away: 'Lobos', homeScore: 3, awayScore: 0,
           sourceDate: '2023-06-01', sourceRound: 'Quartos de final', potentialDuplicate: false },
         { sourceRow: 252, home: 'CNG', away: 'Tigres', homeScore: 2, awayScore: 0,
-          sourceDate: '2023-06-02', sourceRound: 'Quartos de final', potentialDuplicate: false },
+          sourceDate: '2023-06-02', sourceRound: 'Quartos de final', potentialDuplicate: true },
         { sourceRow: 253, home: 'Leões', away: 'Dragões', homeScore: 1, awayScore: 0,
           sourceDate: '2023-06-03', sourceRound: 'Quartos de final', potentialDuplicate: false },
         { sourceRow: 254, home: 'Raios', away: 'Águias B', homeScore: 2, awayScore: 0,
           sourceDate: '2023-06-04', sourceRound: 'Quartos de final', potentialDuplicate: false },
-        { sourceRow: 255, home: 'Águias', away: 'CNG', homeScore: 1, awayScore: 0,
+        { sourceRow: 255, home: 'Águias', away: 'CNG', homeScore: 1, awayScore: 1,
           sourceDate: '2023-06-05', sourceRound: 'Meias-finais', potentialDuplicate: false },
         { sourceRow: 256, home: 'Leões', away: 'Raios', homeScore: 2, awayScore: 0,
           sourceDate: '2023-06-06', sourceRound: 'Meias-finais', potentialDuplicate: false },
@@ -944,6 +944,18 @@ test('Historical knockout browser QA: phase button jumps to the exact final acro
   const quarter = page.locator('[data-historical-source-row="251"]');
   await expect(quarter).toBeInViewport({ ratio: 0.5 });
   await expect(page.locator('[data-historical-source-row="257"]')).toHaveCount(1);
+
+  // Read-only review flags are grounded in the source, never in guessed winners.
+  const repeated = page.locator('[data-historical-source-row="252"]');
+  const tiedSemi = page.locator('[data-historical-source-row="255"]');
+  await expect(repeated.locator('.historical-match-review-flag'))
+    .toHaveText(['Possível repetição']);
+  await expect(tiedSemi.locator('.historical-match-review-flag'))
+    .toHaveText(['Empate na eliminatória — confirmar quem avançou']);
+  await expect(page.locator('[data-historical-source-row="253"] .historical-match-review-flag'))
+    .toHaveCount(0);
+  await expect(repeated).toHaveClass(/historical-match-row--review/);
+  await expect(tiedSemi).toHaveClass(/historical-match-row--review/);
   expect(fixture.unmocked.filter(s => s.includes('match-archives'))).toEqual([]);
 });
 
