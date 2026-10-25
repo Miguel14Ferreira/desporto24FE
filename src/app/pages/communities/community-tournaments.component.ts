@@ -371,6 +371,13 @@ export class CommunityTournamentsComponent implements OnChanges {
     return (this.speedOverview?.tieBreaks ?? []).find(item => item.sourceStage === stage);
   }
 
+  /** Keep the audit log readable with names, retaining IDs if a player was removed. */
+  speedTieSkaterNames(ids: number[]): string {
+    const names = new Map(this.speedStageSkaters('FIRST')
+      .map(skater => [skater.playerId, skater.name]));
+    return ids.map(id => names.get(id) ?? '#' + id).join(', ');
+  }
+
   speedCanAmendTie(proposal: InlineSpeedProposal): boolean {
     return proposal.sourceStage === 'FIRST' && !!this.speedTieBreak('FIRST')
       && !this.speedDecision('FIRST') && this.canManage
