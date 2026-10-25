@@ -183,6 +183,8 @@ export class CommunityTournamentsComponent implements OnChanges {
    */
   get creationSportNoticeKey(): string | null {
     if (!this.sportDraft.trim()) return null;
+    if (this.sportDraft === 'Patinagem de Velocidade' && !this.showTeamCreate)
+      return null;
     switch (formatForSport(this.sportDraft)) {
       case 'race':
         return 'communities.tournaments.creationRaceNotice';
@@ -411,8 +413,7 @@ export class CommunityTournamentsComponent implements OnChanges {
   }
 
   async confirmSpeedStage(proposal: InlineSpeedProposal): Promise<void> {
-    if (!this.selected || !this.canManage || this.busy || !proposal.ready
-        || !!this.speedDecision(proposal.sourceStage)?.stale) return;
+    if (!this.selected || !this.canManage || this.busy || !proposal.ready) return;
     const ids = this.speedSelections[proposal.sourceStage] ?? [];
     if (!ids.length || new Set(ids).size !== ids.length) {
       this.showError(t('communities.inlineSpeed.noSelection')); return;
