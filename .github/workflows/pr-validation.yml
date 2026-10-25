@@ -306,6 +306,33 @@ jobs:
         env:
           JYNLO_LIVE_BROWSER_READONLY: '1'
         run: node scripts/ci-browser/public_api_contract_READONLY.cjs
+      # Opt-in auth-identifier browser regression. All API calls stay mocked.
+      - name: Install Chromium for username email phone login browser QA
+        if: ${{ github.head_ref == 'feat/login-multiple-identifiers-pt-en-20261025' }}
+        run: |
+          npm install --no-save --package-lock=false playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Verify login identifier submission in isolated Chromium
+        if: ${{ github.head_ref == 'feat/login-multiple-identifiers-pt-en-20261025' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/ci-browser/spa_server.py dist/desporto24 4173 > /tmp/jynlo-login-spa.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          ready=0
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent --output /dev/null http://127.0.0.1:4173/; then
+              ready=1
+              break
+            fi
+            sleep 1
+          done
+          if [ "$ready" != "1" ]; then
+            cat /tmp/jynlo-login-spa.log
+            exit 1
+          fi
+          node scripts/ci-browser/desktop_auth_smoke.cjs
       # Candidate-only browser verification. No additional job, second npm ci,
       # Render deployment, production credentials or production API requests.
       - name: Install Chromium for integrated desktop smoke

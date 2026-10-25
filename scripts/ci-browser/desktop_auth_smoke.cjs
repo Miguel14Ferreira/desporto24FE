@@ -24,6 +24,7 @@ async function main() {
   const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
   const browserErrors = [];
   const actions = [];
+  const loginIdentifiers = [];
   const unexpected = [];
 
   async function makePage() {
@@ -63,6 +64,7 @@ async function main() {
         if (url.pathname === '/api/auth/login' && req.method() === 'POST') {
           actions.push('login');
           const body = JSON.parse(req.postData() || '{}');
+          loginIdentifiers.push(body.username);
           // Names and passwords below exist ONLY inside this mocked runner.
           if (body.username === 'synthetic-invalid') {
             return respond(401, { message: 'Credenciais inválidas' });
@@ -74,7 +76,7 @@ async function main() {
               token: null, profile: null
             });
           }
-          if (body.username === 'synthetic-direct') {
+          if (['synthetic-direct', 'synthetic-user@example.test', '+351 912 345 678'].includes(body.username)) {
             return respond(200, {
               mfaRequired: false, challengeId: null,
               challengeExpiresAt: null, token: fixtureToken, profile: null
@@ -175,6 +177,23 @@ async function main() {
       await context.close();
     }
 
+    // The same form and password flow accept all three identifier formats.
+    // The synthetic API acknowledges aliases; the real Java resolver is tested
+    // separately in the backend suite. No production credentials leave Chromium.
+    {
+      for (const identifier of ['synthetic-user@example.test', '+351 912 345 678']) {
+        const { context, page } = await makePage();
+        await page.goto(SITE + '/login?returnUrl=%2Fmenu%2Fmy-sessions', {
+          waitUntil: 'domcontentloaded'
+        });
+        await fillAndSubmit(page, identifier);
+        await page.waitForURL(u => u.pathname === '/menu/my-sessions');
+        assert.equal(await token(page), fixtureToken);
+        assert.equal(loginIdentifiers.at(-1), identifier);
+        await context.close();
+      }
+    }
+
     // Case 4: MFA never authenticates the user before confirming its challenge.
     {
       const { context, page } = await makePage();
@@ -232,7 +251,7 @@ async function main() {
     }
 
     await assertNoLeak();
-    console.log('PASS: 5 synthetic authenticated-browser scenarios; no JS runtime errors.');
+    console.log('PASS: 7 synthetic authenticated-browser scenarios; no JS runtime errors.');
     console.log('PASS: empty/invalid login, direct JWT, MFA reject/confirm, expired MFA renewal and safe return.');
     console.log('PASS: zero real credentials, external auth calls or production API writes.');
   } finally {
