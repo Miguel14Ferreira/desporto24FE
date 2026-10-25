@@ -27,6 +27,7 @@ import {
   inboxKey, matchesInboxSearch, mergeInboxMessages, orderInbox
 } from './inbox.model';
 import { RecoverableSend, restorePendingSends, savePendingSends } from './pending-send-session';
+import { GifChoice, downloadGiphyChoice, findGiphy, readGifProviderKey } from './gif-picker.client';
 
 export const VOICE_NOTE_MAX_DURATION_MS = 5 * 60_000;
 const VOICE_NOTE_AUDIO_BITRATE = 48_000;
@@ -88,6 +89,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     ++this.attachmentViewVersion;
     this.attachmentReady = false;
     this.selectedAttachment = null;
+    this.closeEmojiPicker();
     this.cancelVoiceRecording();
     this.clearAttachmentPreviews();
   }
@@ -146,6 +148,25 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   private readonly voicePositions = new Map<number, number>();
   private readonly voiceAutoplayRequested = new Set<number>();
   emojiPickerOpen = false;
+  pickerTab: 'emoji' | 'gif' = 'emoji';
+  gifQuery = '';
+  gifResults: GifChoice[] = [];
+  gifLoading = false;
+  gifError = '';
+  gifAvailable: boolean | null = null;
+  gifHasMore = false;
+  gifSelectingId: string | null = null;
+  private gifApiKey = '';
+  private gifRequestVersion = 0;
+  private gifTimer?: ReturnType<typeof setTimeout>;
+  private gifSearchAbort?: AbortController;
+  private gifDownloadAbort?: AbortController;
+  private gifConfigAbort?: AbortController;
+  readonly gifCategories = [
+    { icon: '😂', phrase: 'funny' }, { icon: '❤️', phrase: 'love' },
+    { icon: '⚽', phrase: 'football' }, { icon: '👍', phrase: 'yes' },
+    { icon: '🎉', phrase: 'celebration' }, { icon: '🏆', phrase: 'victory' }
+  ];
   readonly composerEmojis = [
     '😀', '😃', '😄', '😁', '😂', '🤣', '😊', '😍', '🥰', '😘',
     '😎', '🥳', '😢', '😭', '😮', '😅', '😉', '🤔', '🙏', '👏',
@@ -341,6 +362,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     if (this.sessionCutoffTimer) clearTimeout(this.sessionCutoffTimer);
     this.sessionCutoffTimer = undefined;
     this.clearAttachmentRetry();
+    this.closeEmojiPicker();
     this.cancelVoiceRecording();
     ++this.attachmentViewVersion;
     this.clearAttachmentPreviews();
@@ -645,7 +667,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.replyDrafts.delete(conversation.key);
     this.draft = '';
     this.replyingTo = null;
-    this.emojiPickerOpen = false;
+    this.closeEmojiPicker();
     ++this.selectionVersion;
     ++this.composerVersion;
     ++this.historyLocateVersion;
@@ -672,7 +694,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     }
     this.typing.stop();
     this.cancelVoiceRecording();
-    this.emojiPickerOpen = false;
+    this.closeEmojiPicker();
     this.selectedAttachment = null;
     this.clearAttachmentRetry();
     this.attachmentReady = false;
@@ -1171,6 +1193,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.clearVoicePreview();
     this.selectedAttachment = file;
     this.composerError = '';
+    this.closeEmojiPicker();
   }
 
   removeAttachment(): void {
@@ -1521,11 +1544,161 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
 
   toggleEmojiPicker(): void {
     if (!this.canEditDraft()) return;
-    this.emojiPickerOpen = !this.emojiPickerOpen;
+    if (this.emojiPickerOpen && this.pickerTab === 'emoji') {
+      this.closeEmojiPicker();
+    } else {
+      this.emojiPickerOpen = true;
+      this.pickerTab = 'emoji';
+      this.stopGifRequests();
+    }
+  }
+
+  openGifPicker(): void {
+    if (!this.canEditDraft() || !this.attachmentControlsReady) return;
+    if (this.emojiPickerOpen && this.pickerTab === 'gif') {
+      this.closeEmojiPicker();
+      return;
+    }
+    this.emojiPickerOpen = true;
+    this.pickerTab = 'gif';
+    if (this.gifAvailable === null) void this.configureGifPicker();
+    else if (this.gifAvailable && this.gifResults.length === 0) void this.searchGifResults(0);
+  }
+
+  selectPickerTab(tab: 'emoji' | 'gif'): void {
+    if (tab === 'gif') {
+      if (!this.attachmentControlsReady) return;
+      this.emojiPickerOpen = true;
+      this.pickerTab = 'gif';
+      if (this.gifAvailable === null) void this.configureGifPicker();
+      else if (!this.gifLoading && this.gifResults.length === 0)
+        void this.searchGifResults(0);
+    } else {
+      this.emojiPickerOpen = true;
+      this.pickerTab = 'emoji';
+      this.stopGifRequests();
+    }
+  }
+
+  private stopGifRequests(): void {
+    if (this.gifTimer) clearTimeout(this.gifTimer);
+    this.gifTimer = undefined;
+    this.gifSearchAbort?.abort();
+    this.gifSearchAbort = undefined;
+    this.gifDownloadAbort?.abort();
+    this.gifDownloadAbort = undefined;
+    this.gifConfigAbort?.abort();
+    this.gifConfigAbort = undefined;
+    ++this.gifRequestVersion;
+    this.gifLoading = false;
+    this.gifSelectingId = null;
   }
 
   closeEmojiPicker(): void {
     this.emojiPickerOpen = false;
+    this.stopGifRequests();
+    this.pickerTab = 'emoji';
+    this.gifQuery = '';
+    this.gifResults = [];
+    this.gifError = '';
+    this.gifHasMore = false;
+  }
+
+  private async configureGifPicker(): Promise<void> {
+    if (!this.emojiPickerOpen || this.pickerTab !== 'gif') return;
+    const generation = ++this.gifRequestVersion;
+    const controller = new AbortController();
+    this.gifConfigAbort = controller;
+    this.gifLoading = true;
+    try {
+      const key = await readGifProviderKey(controller.signal);
+      if (generation !== this.gifRequestVersion || !this.emojiPickerOpen
+          || this.pickerTab !== 'gif') return;
+      this.gifApiKey = key;
+      this.gifAvailable = !!key;
+      if (key) await this.searchGifResults(0);
+    } catch {
+      if (generation === this.gifRequestVersion && !controller.signal.aborted)
+        this.gifAvailable = false;
+    } finally {
+      if (generation === this.gifRequestVersion) this.gifLoading = false;
+      if (this.gifConfigAbort === controller) this.gifConfigAbort = undefined;
+    }
+  }
+
+  onGifSearchInput(term: string): void {
+    this.gifQuery = term.slice(0, 50);
+    this.gifResults = [];
+    this.gifHasMore = false;
+    this.gifError = '';
+    this.stopGifRequests();
+    if (!this.gifAvailable || !this.emojiPickerOpen || this.pickerTab !== 'gif') return;
+    this.gifLoading = true;
+    this.gifTimer = setTimeout(() => {
+      this.gifTimer = undefined;
+      void this.searchGifResults(0);
+    }, 350);
+  }
+
+  searchGifCategory(phrase: string): void {
+    this.onGifSearchInput(phrase);
+  }
+
+  async searchGifResults(offset: number): Promise<void> {
+    if (!this.gifApiKey || !this.emojiPickerOpen || this.pickerTab !== 'gif'
+        || !this.attachmentControlsReady || !this.canEditDraft()) return;
+    this.gifSearchAbort?.abort();
+    const version = ++this.gifRequestVersion;
+    const key = this.selectedKey;
+    const controller = new AbortController();
+    this.gifSearchAbort = controller;
+    this.gifLoading = true;
+    this.gifError = '';
+    try {
+      const language = localStorage.getItem('d24-language') === 'en' ? 'en' : 'pt';
+      const found = await findGiphy(this.gifApiKey, this.gifQuery, offset,
+        controller.signal, language);
+      if (version !== this.gifRequestVersion || key !== this.selectedKey
+          || !this.emojiPickerOpen || this.pickerTab !== 'gif'
+          || !this.attachmentControlsReady) return;
+      this.gifResults = offset ? [...this.gifResults, ...found.results] : found.results;
+      this.gifHasMore = found.hasMore;
+    } catch {
+      if (version === this.gifRequestVersion && !controller.signal.aborted)
+        this.gifError = t('chat.gifLoadFailed');
+    } finally {
+      if (version === this.gifRequestVersion) this.gifLoading = false;
+      if (this.gifSearchAbort === controller) this.gifSearchAbort = undefined;
+    }
+  }
+
+  async chooseGif(choice: GifChoice): Promise<void> {
+    if (!this.canEditDraft() || !this.attachmentControlsReady || this.gifSelectingId
+        || !this.emojiPickerOpen || this.pickerTab !== 'gif') return;
+    const key = this.selectedKey;
+    const version = this.gifRequestVersion;
+    const controller = new AbortController();
+    this.gifDownloadAbort = controller;
+    this.gifSelectingId = choice.id;
+    this.gifError = '';
+    try {
+      const file = await downloadGiphyChoice(choice, controller.signal);
+      if (controller.signal.aborted || key !== this.selectedKey
+          || version !== this.gifRequestVersion || !this.attachmentControlsReady
+          || !this.canEditDraft()) return;
+      this.clearVoicePreview();
+      this.selectedAttachment = file;
+      this.composerError = '';
+      this.closeEmojiPicker();
+      // A GIF only enters the existing private-attachment send path on Send.
+    } catch {
+      if (!controller.signal.aborted && key === this.selectedKey
+          && version === this.gifRequestVersion)
+        this.gifError = t('chat.gifDownloadFailed');
+    } finally {
+      if (this.gifDownloadAbort === controller) this.gifDownloadAbort = undefined;
+      if (version === this.gifRequestVersion) this.gifSelectingId = null;
+    }
   }
 
   /** Insert at the caret, preserving selected text, pending drafts and focus. */
@@ -1538,7 +1711,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     // HTML textarea.maxLength counts UTF-16 units, including surrogate pairs.
     if (next.length > 2000) return;
     this.draft = next;
-    this.emojiPickerOpen = false;
+    this.closeEmojiPicker();
     this.onTypingInput();
     textarea?.focus({ preventScroll: true });
     textarea?.setSelectionRange(start + emoji.length, start + emoji.length);
@@ -1568,7 +1741,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   }
 
   sendMessage(): void {
-    this.emojiPickerOpen = false;
+    this.closeEmojiPicker();
     this.typing.stop();
     const conversation = this.selected;
     if (!conversation || !this.canSendMessage()) return;
