@@ -121,7 +121,7 @@ type FixtureMode = 'empty' | 'draft' | 'paged' | 'forbidden' | 'switch'
   | 'management' | 'complete-rejected' | 'list-network-error'
   | 'paged-enrollment' | 'draw-tie' | 'schedule-roster-paged' | 'schedule-roster-oversize'
   | 'discovery' | 'trial' | 'modules-off' | 'teams-only' | 'teams' | 'teams-view'
-  | 'teams-schedule' | 'history' | 'historical-knockout' | 'historical-import-flow' | 'historical-import-review' | 'karting';
+  | 'teams-schedule' | 'history' | 'historical-knockout' | 'historical-import-flow' | 'historical-import-review' | 'karting' | 'inline-speed-qa';
 
 async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
   sport: string | null = 'Futebol', sports?: string[], roundRobinLegs: 1 | 2 = 1,
@@ -133,7 +133,8 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
   const community = {
     id: 7, name: 'Jogadores de Lisboa', description: 'Liga dos amigos',
     sport, sports: sports ?? (sport ? [sport] : []), photoUrl: null, visibility: 'PRIVATE',
-    rankingsEnabled: mode !== 'modules-off' && mode !== 'teams-only',
+    rankingsEnabled: mode !== 'modules-off' && mode !== 'teams-only'
+      && mode !== 'inline-speed-qa',
     individualTournamentsEnabled: mode !== 'modules-off' && mode !== 'teams-only',
     teamTournamentsEnabled: mode !== 'modules-off',
     ownerUsername: 'organizador',
@@ -284,6 +285,38 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
   const requestedParticipantPages: number[] = [];
   const organizerMutations: string[] = [];
   const unmocked: string[] = [];
+  // In-memory fictional skaters only: never create accounts or hit production API.
+  const speedNames = ['Ana Exemplo', 'Bruno Exemplo', 'Carla Exemplo', 'Diogo Exemplo',
+    'Eva Exemplo', 'Filipe Exemplo', 'Gabriela Exemplo', 'Hugo Exemplo',
+    'Inês Exemplo', 'João Exemplo', 'Lara Exemplo', 'Marco Exemplo'];
+  const speedSkaters = speedNames.map((name, i) => ({
+    playerId: i + 1, name, position: null, seconds: 30 + (i + 1) / 100,
+    disqualified: false
+  }));
+  const speedHeat = {
+    roundId: 100, name: '500 m +D — Primeira fase QA',
+    eventType: 'INLINE_TRACK_500D_FIRST_ROUND', heatNumber: 1, skaters: speedSkaters
+  };
+  let speedLinked = false;
+  let speedConfirmed = false;
+  const speedWrites: string[] = [];
+  const speedDecisionReason: string[] = [];
+  function speedOverview() {
+    return {
+      tournamentId: 9, discipline: speedLinked ? 'TRACK_500D' : null,
+      linkedHeats: speedLinked ? [speedHeat] : [],
+      availableHeats: speedLinked ? [] : [speedHeat],
+      proposals: speedLinked ? [{
+        sourceStage: 'FIRST', targetStage: 'SEMI', playerIds: [1, 2, 3, 4, 5, 6, 7, 8],
+        expectedCount: 8, ready: true, warning: 'Confirmação dos juízes obrigatória'
+      }] : [],
+      decisions: speedConfirmed ? [{
+        sourceStage: 'FIRST', targetStage: 'SEMI', playerIds: [1, 2, 3, 4, 5, 6, 7, 8],
+        reason: speedDecisionReason[0], confirmedBy: 'organizador',
+        confirmedAt: '2026-10-25T10:00:00Z', stale: false
+      }] : []
+    };
+  }
   page.on('pageerror', error => console.log('[E2E PAGE ERROR]', error.stack || error.message));
   page.on('console', message => {
     if (message.type() === 'error') console.log('[E2E BROWSER CONSOLE]', message.text());
@@ -383,7 +416,13 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
     if (method === 'GET' && path === '/api/communities/7') return send(community);
     if (method === 'GET' && path === '/api/communities/7/sessions') return send([]);
     if (method === 'GET' && path === '/api/communities/7/competition') {
-      return send({
+      return send(mode === 'inline-speed-qa' ? {
+        settings: { rankingsEnabled: false, winPoints: 3, drawPoints: 1, lossPoints: 0 },
+        seasons: [{ id: 42, name: 'Época de teste 2026', active: true,
+          startsAt: '2026-10-25T09:00:00Z', endedAt: null }],
+        selectedSeasonId: 42, activeSeasonId: 42,
+        rounds: [], standings: [], racketStandings: [], raceStandings: []
+      } : {
         settings: { rankingsEnabled: true, winPoints: 3, drawPoints: 1, lossPoints: 0 },
         seasons: [], selectedSeasonId: null, activeSeasonId: null,
         rounds: [], standings: []
@@ -541,6 +580,32 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
         sourceFilename: 'tabela.csv', createdAt: '2026-10-17T20:00:00Z', rows: historicalRows };
       historicalArchives.unshift(item);
       return send(item);
+    }
+
+    // Speed-skating browser fixture: same HTTP shapes as production, local-only state.
+    if (mode === 'inline-speed-qa') {
+      const base = '/api/communities/7/tournaments/9/inline-speed';
+      if (method === 'GET' && path === base) return send(speedOverview());
+      const link = /^\/api\/communities\/7\/tournaments\/9\/inline-speed\/heats\/(\d+)$/.exec(path);
+      if (method === 'PUT' && link) {
+        if (role !== 'OWNER') return send({ message: 'Não autorizado' }, 403);
+        if (link[1] !== '100' || speedLinked) return send({ message: 'Manga duplicada' }, 409);
+        speedLinked = true;
+        speedWrites.push('link:' + link[1]);
+        return send(speedOverview());
+      }
+      const confirmed = path === base + '/qualifications/FIRST';
+      if (method === 'PUT' && confirmed) {
+        const body = req.postDataJSON() as { playerIds: number[]; reason: string };
+        if (role !== 'OWNER') return send({ message: 'Não autorizado' }, 403);
+        if (!speedLinked || body.reason.trim().length < 8 ||
+            JSON.stringify(body.playerIds) !== JSON.stringify([1,2,3,4,5,6,7,8]))
+          return send({ message: 'Decisão inválida' }, 422);
+        speedConfirmed = true;
+        speedDecisionReason.push(body.reason);
+        speedWrites.push('confirm:FIRST');
+        return send(speedOverview());
+      }
     }
 
     // Karting-only API fixture. Shared across independently authenticated
@@ -927,6 +992,7 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
 
   return {
     tournaments, teams, teamFixtures, participants, matches, unmocked, requestedMatchPages,
+    speedWrites, speedDecisionReason,
     requestedParticipantPages, organizerMutations,
     get completeAttempts(): number { return completeAttempts; },
     get scheduleAttempts(): number { return scheduleAttempts; },
@@ -3112,4 +3178,30 @@ test('Historical spreadsheet E2E: duplicate source warning is localized in Engli
   expect(fixture.archivePreviewCalls).toBe(1);
   expect(fixture.archiveConfirmCalls).toBe(0);
   expect(fixture.unmocked.filter(item => item.includes('/competition/import/'))).toEqual([]);
+});
+
+test('fictional speed-skating QA: link timed round and ratify qualifiers with standings disabled', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'inline-speed-qa',
+    'Patinagem de Velocidade');
+  await page.goto('/menu/communities/7?tab=tournaments');
+  const progression = page.locator('.inline-speed-progression');
+  await expect(progression).toBeVisible();
+  await expect(progression.locator('.race-available-row')).toContainText('500 m +D — Primeira fase QA');
+  await expect(progression.locator('.inline-speed-heat')).toHaveCount(0);
+
+  await progression.locator('.race-available-row button').first().click();
+  await expect(progression.locator('.inline-speed-heat')).toHaveCount(1);
+  await expect(progression.locator('.inline-speed-heat')).toContainText('Ana Exemplo');
+  await expect(progression.locator('.inline-speed-proposal')).toContainText('8 / 8');
+
+  // Nothing is approved without an explicit judge action and attestation.
+  await expect(progression.locator('.inline-speed-proposal [role=status]')).toHaveCount(0);
+  await progression.locator('.inline-speed-proposal textarea').fill(
+    'Confirmadas todas as mangas da primeira fase com resultados oficiais.');
+  await progression.locator('.inline-speed-proposal button').last().click();
+  await expect(progression.locator('.inline-speed-proposal [role=status]')).toContainText('organizador');
+  expect(fixture.speedWrites).toEqual(['link:100', 'confirm:FIRST']);
+  expect(fixture.speedDecisionReason[0]).toContain('Confirmadas todas as mangas');
+  expect(fixture.unmocked.filter(x => x.includes('/inline-speed'))).toEqual([]);
+  expect(fixture.tournaments[0].sport).toBe('Patinagem de Velocidade');
 });
