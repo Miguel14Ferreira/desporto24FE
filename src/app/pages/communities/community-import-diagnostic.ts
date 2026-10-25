@@ -45,7 +45,18 @@ const diagnosticCodeKeys: Record<string, string> = {
   IMPORT_DUPLICATE_STANDING: 'communities.import.diagnostic.duplicateStanding',
   IMPORT_EMPTY_PLAYER: 'communities.import.diagnostic.playerEmpty',
   IMPORT_INTEGER_REQUIRED: 'communities.import.diagnostic.integerRequired',
-  IMPORT_CONFLICTING_RESULTS: 'communities.import.diagnostic.conflictingResults'
+  IMPORT_CONFLICTING_RESULTS: 'communities.import.diagnostic.conflictingResults',
+  IMPORT_FILE_REQUIRED: 'communities.import.diagnostic.fileRequired',
+  IMPORT_FILE_TOO_LARGE: 'communities.import.diagnostic.fileTooLarge',
+  IMPORT_FILE_FORMAT_UNSUPPORTED: 'communities.import.diagnostic.fileUnsupported',
+  IMPORT_FILE_READ_FAILED: 'communities.import.diagnostic.fileReadFailed',
+  IMPORT_FILE_NAME_INVALID: 'communities.import.diagnostic.fileNameInvalid',
+  IMPORT_MAPPING_INVALID: 'communities.import.diagnostic.mappingInvalid',
+  IMPORT_ROW_SCORE_INVALID: 'communities.import.diagnostic.rowScoreInvalid',
+  IMPORT_ROW_SCORE_RANGE: 'communities.import.diagnostic.rowScoreRange',
+  IMPORT_ROW_OPPONENTS_INVALID: 'communities.import.diagnostic.rowOpponentsInvalid',
+  IMPORT_ROW_SELF_MATCH: 'communities.import.diagnostic.rowSelfMatch',
+  IMPORT_SOURCE_DATE_INVALID: 'communities.import.diagnostic.sourceDateInvalid'
 };
 
 export function importDiagnosticLabel(source: unknown, detail?: CommunityImportDiagnostic | null): string {
@@ -82,4 +93,35 @@ export function importDiagnosticLabel(source: unknown, detail?: CommunityImportD
   return row
     ? t('communities.import.diagnostic.unknownRow', { row: row[1] })
     : t('communities.import.diagnostic.unknown');
+}
+
+/**
+ * Prefer structured HTTP import validation errors when supported by the API.
+ * Older APIs have only a Portuguese message, which remains visible in PT.
+ * Unknown codes/messages use the operation-specific translation in EN.
+ */
+export function importHttpErrorLabel(error: unknown, fallbackKey: string): string {
+  const payload = (error && typeof error === 'object' && 'error' in error)
+    ? (error as { error?: unknown }).error : undefined;
+  const response = payload && typeof payload === 'object' && !Array.isArray(payload)
+    ? payload as { message?: unknown; code?: unknown; params?: unknown } : null;
+  const message = response?.message;
+  const english = typeof localStorage !== 'undefined' && localStorage.getItem('d24-language') === 'en';
+
+  if (!english) {
+    return typeof message === 'string' && message.trim().length > 0 && message.length <= 240
+      ? message : t(fallbackKey);
+  }
+  const code = response?.code;
+  if (typeof code === 'string' && Object.prototype.hasOwnProperty.call(diagnosticCodeKeys, code)) {
+    const params: Record<string, string> = {};
+    const source = response?.params;
+    if (source && typeof source === 'object' && !Array.isArray(source)) {
+      for (const [name, value] of Object.entries(source)) {
+        if (typeof value === 'string') params[name] = value;
+      }
+    }
+    return t(diagnosticCodeKeys[code], params);
+  }
+  return t(fallbackKey);
 }

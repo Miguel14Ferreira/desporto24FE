@@ -3206,3 +3206,30 @@ test('fictional speed-skating QA: link timed round and ratify qualifiers with st
   expect(fixture.unmocked.filter(x => x.includes('/inline-speed'))).toEqual([]);
   expect(fixture.tournaments[0].sport).toBe('Patinagem de Velocidade');
 });
+
+
+test('Community import HTTP 400 E2E: structured error is translated and no import is saved', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'history');
+  await page.route('**/api/communities/7/competition/import/preview', async route => {
+    if (route.request().method() !== 'POST') return route.fallback();
+    await route.fulfill({ status: 400, contentType: 'application/json', body: JSON.stringify({
+      httpStatusCode: 400, message: 'O ficheiro não pode ultrapassar 10 MB',
+      code: 'IMPORT_FILE_TOO_LARGE', params: {}
+    }) });
+  });
+  await page.goto('/menu/communities/7?tab=ranking');
+  await page.evaluate(() => localStorage.setItem('d24-language', 'en'));
+  await page.reload();
+  await page.getByRole('button', { name: 'Final standings' }).click();
+  await page.locator('input[accept=".xlsx,.xls,.csv,.tsv"]').setInputFiles({
+    name: 'old-history.csv', mimeType: 'text/csv',
+    buffer: Buffer.from('Pos;Equipa;Pts\n1;Azuis;3\n')
+  });
+  await page.getByRole('button', { name: 'Analyse file' }).click();
+  await expect(page.getByRole('alert').filter({ hasText: 'The file cannot exceed 10 MB.' }))
+    .toHaveCount(1);
+  expect((await page.getByRole('alert').allTextContents()).join(' ')).not.toContain('O ficheiro não pode');
+  expect(fixture.archiveConfirmCalls).toBe(0);
+  expect(fixture.matchConfirmCalls).toBe(0);
+  expect(fixture.unmocked.filter(url => url.includes('/competition/import/'))).toEqual([]);
+});
