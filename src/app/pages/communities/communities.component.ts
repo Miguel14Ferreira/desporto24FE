@@ -3754,6 +3754,15 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       this.errorMessage = t('feedback.communities.speedSkatingHeatInvalid');
       return;
     }
+    // World Skate 2026: timed 500 m +D / road one-lap qualifiers are
+    // individual heats of at most six, not one round with every entrant.
+    // The 200 m individual time trial keeps its existing behavior.
+    if ((this.newRoundEventType === 'INLINE_TRACK_500D_FIRST_ROUND'
+          || this.newRoundEventType === 'INLINE_ROAD_LAP_FIRST_ROUND')
+        && selectedEntries.length > 6) {
+      this.errorMessage = t('feedback.communities.speedSkatingFirstHeatLimit');
+      return;
+    }
     if (isInlineSpeedTimedEvent(this.newRoundEventType) && swimmingTimeError(selectedEntries)) {
       this.errorMessage = t('feedback.communities.speedSkatingInvalid');
       return;
