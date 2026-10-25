@@ -1146,4 +1146,56 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(component.editingSports).toBeFalse();
   });
 
+
+  it('keeps backend import validation details in PT and translates unknown errors in EN', () => {
+    const original = localStorage.getItem('d24-language');
+    try {
+      const failure = { error: { message: 'Linha 4: mapeamento inválido' }, status: 422 };
+      localStorage.setItem('d24-language', 'pt');
+      expect((component as any).importRequestError(failure, 'communities.archive.previewError'))
+        .toBe('Linha 4: mapeamento inválido');
+      localStorage.setItem('d24-language', 'en');
+      expect((component as any).importRequestError(failure, 'communities.archive.previewError'))
+        .toBe('We could not analyse these standings. Check the Name and Points columns.');
+      expect((component as any).importRequestError(failure, 'communities.matches.confirmError'))
+        .toBe('Could not save these historical matches.');
+      localStorage.setItem('d24-language', 'pt');
+      expect((component as any).importRequestError({ error: { message: '  ' } }, 'communities.import.inspectError'))
+        .toBe('Não foi possível analisar este ficheiro.');
+      expect((component as any).importRequestError({
+        error: { message: 'x'.repeat(241) }
+      }, 'communities.import.inspectError')).toBe('Não foi possível analisar este ficheiro.');
+    } finally {
+      if (original === null) localStorage.removeItem('d24-language');
+      else localStorage.setItem('d24-language', original);
+    }
+  });
+
+  it('localizes community feature changes and preserves saved module settings', () => {
+    const original = localStorage.getItem('d24-language');
+    const saved = { id: 7, rankingsEnabled: false,
+      individualTournamentsEnabled: true, teamTournamentsEnabled: true } as any;
+    component.selected = saved;
+    component.communities = [saved];
+    const update = jasmine.createSpy('updateFeatures').and.returnValue(of(saved));
+    (component as any).communityService = { updateFeatures: update };
+    spyOn(component as any, 'loadCompetition');
+    try {
+      localStorage.setItem('d24-language', 'en');
+      component.editFeatures();
+      component.saveFeatures();
+      expect(component.featuresFeedback).toBe('Features updated. Existing history has been preserved.');
+      expect(update).toHaveBeenCalledOnceWith(7, {
+        rankingsEnabled: false, individualTournamentsEnabled: true, teamTournamentsEnabled: true
+      });
+      localStorage.setItem('d24-language', 'pt');
+      component.editFeatures();
+      component.saveFeatures();
+      expect(component.featuresFeedback).toBe('Funcionalidades atualizadas. O histórico foi preservado.');
+    } finally {
+      if (original === null) localStorage.removeItem('d24-language');
+      else localStorage.setItem('d24-language', original);
+    }
+  });
+
 });
