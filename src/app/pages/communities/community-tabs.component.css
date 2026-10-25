@@ -1,0 +1,50 @@
+/* Presentation-only community tabs. The detail-page nav is the sole owner of these rules. */
+:host { display: block; }
+.community-tabs {
+  display: flex;
+  gap: .35rem;
+  margin: 1rem 0 0;
+  padding-bottom: .8rem;
+  overflow-x: auto;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+
+.community-tabs button {
+  flex: 0 0 auto;
+  border: 1px solid transparent;
+  border-radius: .7rem;
+  padding: .62rem .8rem;
+  background: transparent;
+  color: #94a3b8;
+  font: inherit;
+  font-size: .84rem;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.community-tabs button:hover {
+  color: #e2e8f0;
+  background: rgba(255,255,255,.04);
+}
+
+.community-tabs button.active {
+  border-color: rgba(125,211,252,.28);
+  background: rgba(125,211,252,.10);
+  color: #bae6fd;
+}
+
+@media (max-width: 800px) {
+  .community-tabs { margin-inline: -.2rem; }
+}
+
+.community-tabs {
+  padding: .55rem;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 1rem;
+  background: rgba(15,23,42,.72);
+}
+.community-tabs button { min-height: 42px; }
+
+@media (max-width: 800px) {
+  .community-tabs { padding: .4rem; }
+}
