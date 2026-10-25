@@ -1576,6 +1576,61 @@ describe('Community tournaments management', () => {
     expect(section.scrollIntoView).not.toHaveBeenCalled();
   });
 
+  it('cycles only flagged quarterfinal rows in source order across pages and wraps', () => {
+    const rows: HistoricalMatchArchive['rows'] = Array.from({ length: 53 }, (_, index) => ({
+      sourceRow: 500 + index,
+      home: 'Casa', away: 'Fora', homeScore: index === 49 ? 1 : 2,
+      awayScore: index === 49 ? 1 : 0,
+      sourceRound: index === 49 || index === 50 || index === 51
+        ? 'Quartos de final' : 'Jornada 1',
+      sourceDate: '', potentialDuplicate: index === 51
+    }));
+    component.historicalArchive = {
+      id: 90, title: 'Copa QA', entryType: 'TEAM',
+      sourceFilename: 'copa.xlsx', createdAt: '2026-10-25T00:00:00Z', rows
+    };
+    const target = jasmine.createSpyObj<HTMLElement>('row', ['scrollIntoView']);
+    const section = jasmine.createSpyObj<HTMLElement>('section', ['querySelector', 'scrollIntoView']);
+    section.querySelector.and.returnValue(target);
+    (component as any).historicalArchiveFixtures = { nativeElement: section };
+
+    const quarter = component.historicalKnockoutPhases[0];
+    expect(quarter.reviewArchiveIndices).toEqual([49, 51]);
+    component.showNextHistoricalReview(quarter);
+    expect(component.historicalArchivePage).toBe(0);
+    expect(section.querySelector).toHaveBeenCalledWith('[data-historical-source-row="549"]');
+    expect(component.historicalReviewCursor.quarterfinal).toBe(0);
+
+    component.showNextHistoricalReview(quarter);
+    expect(component.historicalArchivePage).toBe(1);
+    expect(section.querySelector).toHaveBeenCalledWith('[data-historical-source-row="551"]');
+    expect(component.historicalReviewCursor.quarterfinal).toBe(1);
+
+    component.showNextHistoricalReview(quarter);
+    expect(component.historicalArchivePage).toBe(0);
+    expect(component.historicalReviewCursor.quarterfinal).toBe(0);
+    expect(target.scrollIntoView).toHaveBeenCalledTimes(3);
+    expect(rows[49].homeScore).toBe(1);
+    expect(rows[51].potentialDuplicate).toBeTrue();
+  });
+
+  it('does not navigate to an inferred review fixture on mere stage count mismatch', () => {
+    const rows: HistoricalMatchArchive['rows'] = [{
+      sourceRow: 17, home: 'Casa', away: 'Fora', homeScore: 3, awayScore: 0,
+      sourceRound: 'Quartos de final', sourceDate: '', potentialDuplicate: false
+    }];
+    component.historicalArchive = {
+      id: 99, title: 'Copa QA', entryType: 'TEAM',
+      sourceFilename: 'copa.xlsx', createdAt: '2026-10-25T00:00:00Z', rows
+    };
+    const quarter = component.historicalKnockoutPhases[0];
+    expect(quarter.requiresReview).toBeTrue();
+    expect(quarter.reviewArchiveIndices).toEqual([]);
+    component.showNextHistoricalReview(quarter);
+    expect(component.historicalArchivePage).toBe(0);
+    expect(component.historicalReviewCursor.quarterfinal).toBe(-1);
+  });
+
   it('falls back to the archived section when the target row is not rendered', () => {
     const rows: HistoricalMatchArchive['rows'] = [{
       sourceRow: 404, home: 'A', away: 'B', homeScore: 1, awayScore: 0,
