@@ -629,12 +629,26 @@
                           </th>
                         </tr>
                         @for (match of group.rows; track match.sourceRow) {
-                          <tr [attr.data-historical-source-row]="match.sourceRow">
+                          @let reviewFlags = historicalMatchReviewFlags(match, selected.format === 'KNOCKOUT');
+                          <tr [attr.data-historical-source-row]="match.sourceRow"
+                            [class.historical-match-row--review]="reviewFlags.length > 0">
                             <td>{{ match.sourceDate || '—' }}</td>
                             <th scope="row">{{ match.home }}</th>
                             <td>{{ match.homeScore }}–{{ match.awayScore }}</td>
                             <td>{{ match.away }}</td>
-                            <td>{{ match.potentialDuplicate ? ('communities.matches.possibleRepeat' | t) : '—' }}</td>
+                            <td class="historical-match-review-cell">
+                              @if (reviewFlags.length > 0) {
+                                @for (flag of reviewFlags; track flag) {
+                                  <span class="historical-match-review-flag">
+                                    {{ (flag === 'possible-duplicate'
+                                      ? 'communities.matches.possibleRepeat'
+                                      : 'communities.matches.historicalKnockoutTieReview') | t }}
+                                  </span>
+                                }
+                              } @else {
+                                <span class="historical-match-review-empty">—</span>
+                              }
+                            </td>
                           </tr>
                         }
                       }
