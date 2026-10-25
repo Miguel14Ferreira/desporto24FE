@@ -8,6 +8,7 @@ import { Venue } from '../model/venue';
 import { isVenueGpsOnly, venuePostalAddress } from '../../shared/venue-location';
 import { venueEnvironmentTranslationKey } from '../../shared/venue-environment';
 import { venueHasMainlandCoordinates, venueOsmEmbedUrl, venueTelephoneUrl } from '../../shared/venue-public-contact';
+import { venueOfficialContactPage } from '../../shared/venue-official-contact-source';
 
 @Component({
   selector: 'app-venue-details',
@@ -229,6 +230,11 @@ export class VenueDetailsComponent implements OnInit, OnDestroy {
 
   get publicTelephoneUrl(): string | null {
     return venueTelephoneUrl(this.venue?.contact);
+  }
+
+  /** Operator's own contact page for exactly matched venue IDs; never a guessed telephone. */
+  get officialContactPageUrl(): string | null {
+    return venueOfficialContactPage(this.venue);
   }
 
   /** Opens Google's public business listing, not just an unlabelled GPS pin. */
