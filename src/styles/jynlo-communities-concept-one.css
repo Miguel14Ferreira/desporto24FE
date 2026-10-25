@@ -2212,11 +2212,11 @@ body .communities-page.jynlo-c1 .community-delete-confirm input {
   min-width: 0;
 }
 
-/* Community cover editor: the preview and exported image use the same 16:10
-   framing. Existing animated GIFs stay intact and are letterboxed. */
+/* Community cover is always filled by CSS (16:10); animated GIFs remain
+   animated because cropping is a presentation choice, not a file conversion. */
 body .communities-page.jynlo-c1.community-detail-page
   .community-photo-block .community-avatar--large.community-avatar--animated img {
-  object-fit: contain;
+  object-fit: cover;
 }
 
 body .communities-page .community-photo-editor-overlay {
