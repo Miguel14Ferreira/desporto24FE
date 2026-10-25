@@ -269,6 +269,15 @@ export interface InlineSpeedDecision {
   confirmedAt: string;
   stale: boolean;
 }
+export interface InlineSpeedTieBreak {
+  sourceStage: 'FIRST';
+  selectedPlayerIds: number[];
+  reason: string;
+  confirmedBy: string;
+  confirmedAt: string;
+  stale: boolean;
+}
+
 export interface InlineSpeedOverview {
   tournamentId: number;
   discipline: 'TRACK_500D' | 'ROAD_LAP' | null;
@@ -276,4 +285,5 @@ export interface InlineSpeedOverview {
   availableHeats: InlineSpeedHeat[];
   proposals: InlineSpeedProposal[];
   decisions: InlineSpeedDecision[];
+  tieBreaks?: InlineSpeedTieBreak[];
 }
