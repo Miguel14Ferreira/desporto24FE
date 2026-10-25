@@ -1193,6 +1193,9 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   avatarCropFile: File | null = null;
   avatarCropUrl = '';
   avatarCropReady = false;
+  avatarCropExisting = false;
+  avatarCropFocusX = 50;
+  avatarCropFocusY = 50;
   avatarCropAnimated = false;
   avatarCropZoom = 1;
   avatarCropOffsetX = 0;
@@ -4088,10 +4091,13 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   }
 
   private resetCommunityAvatarCrop(): void {
-    if (this.avatarCropUrl) URL.revokeObjectURL(this.avatarCropUrl);
+    if (this.avatarCropUrl && !this.avatarCropExisting) URL.revokeObjectURL(this.avatarCropUrl);
     this.avatarCropFile = null;
     this.avatarCropUrl = '';
     this.avatarCropReady = false;
+    this.avatarCropExisting = false;
+    this.avatarCropFocusX = 50;
+    this.avatarCropFocusY = 50;
     this.avatarCropAnimated = false;
     this.avatarCropImage = null;
     this.avatarCropCommunityId = null;
@@ -4109,21 +4115,28 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
 
   @HostListener('document:keydown.escape')
   closeCommunityAvatarCropOnEscape(): void {
-    if (this.avatarCropFile && !this.photoUpdating) this.resetCommunityAvatarCrop();
+    if ((this.avatarCropFile || this.avatarCropExisting) && !this.photoUpdating)
+      this.resetCommunityAvatarCrop();
   }
 
   onCommunityAvatarZoom(event: Event): void {
     const value = Number((event.target as HTMLInputElement).value);
-    if (!this.avatarCropMetrics || !this.avatarCropImage || !Number.isFinite(value)) return;
+    if (!Number.isFinite(value)) return;
+    if (this.avatarCropExisting) {
+      this.avatarCropZoom = Math.max(1, Math.min(3, value));
+      return;
+    }
+    if (!this.avatarCropMetrics || !this.avatarCropImage) return;
     this.avatarCropZoom = Math.max(1, Math.min(3, value));
     this.avatarCropMetrics = communityAvatarCrop(
       this.avatarCropImage.naturalWidth, this.avatarCropImage.naturalHeight, this.avatarCropZoom);
-    this.avatarCropOffsetX = clampAvatarOffset(this.avatarCropOffsetX, this.avatarCropMetrics.maxOffsetX);
+    this.avatarCropOffsetX = clampAvatarOffset(this.avatarCropOffsetX, this.avatarCropMetrics!.maxOffsetX);
     this.avatarCropOffsetY = clampAvatarOffset(this.avatarCropOffsetY, this.avatarCropMetrics.maxOffsetY);
   }
 
   onCommunityAvatarPointerDown(event: PointerEvent): void {
-    if (!this.avatarCropReady || this.avatarCropAnimated || this.photoUpdating || !this.avatarCropMetrics) return;
+    if (!this.avatarCropReady || this.photoUpdating
+        || (!this.avatarCropExisting && (this.avatarCropAnimated || !this.avatarCropMetrics))) return;
     const stage = event.currentTarget as HTMLElement;
     this.avatarCropDrag = { id: event.pointerId, x: event.clientX, y: event.clientY,
       offsetX: this.avatarCropOffsetX, offsetY: this.avatarCropOffsetY };
@@ -4133,13 +4146,21 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
 
   onCommunityAvatarPointerMove(event: PointerEvent): void {
     const start = this.avatarCropDrag;
-    if (!start || start.id !== event.pointerId || !this.avatarCropMetrics) return;
+    if (!start || start.id !== event.pointerId
+        || (!this.avatarCropExisting && !this.avatarCropMetrics)) return;
     const bounds = (event.currentTarget as HTMLElement).getBoundingClientRect();
     if (!bounds.width || !bounds.height) return;
+    if (this.avatarCropExisting) {
+      this.avatarCropFocusX = Math.max(0, Math.min(100,
+        start.offsetX - (event.clientX - start.x) / bounds.width * 100));
+      this.avatarCropFocusY = Math.max(0, Math.min(100,
+        start.offsetY - (event.clientY - start.y) / bounds.height * 100));
+      return;
+    }
     this.avatarCropOffsetX = clampAvatarOffset(start.offsetX
-      + (event.clientX - start.x) / bounds.width * 100, this.avatarCropMetrics.maxOffsetX);
+      + (event.clientX - start.x) / bounds.width * 100, this.avatarCropMetrics!.maxOffsetX);
     this.avatarCropOffsetY = clampAvatarOffset(start.offsetY
-      + (event.clientY - start.y) / bounds.height * 100, this.avatarCropMetrics.maxOffsetY);
+      + (event.clientY - start.y) / bounds.height * 100, this.avatarCropMetrics!.maxOffsetY);
   }
 
   onCommunityAvatarPointerUp(event: PointerEvent): void {
@@ -4149,20 +4170,79 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   }
 
   onCommunityAvatarCropKey(event: KeyboardEvent): void {
-    if (this.avatarCropAnimated || !this.avatarCropMetrics || this.photoUpdating) return;
+    if (this.photoUpdating) return;
+    if (!this.avatarCropExisting && (this.avatarCropAnimated || !this.avatarCropMetrics)) return;
     const move: Record<string, [number, number]> = {
       ArrowLeft: [-2, 0], ArrowRight: [2, 0], ArrowUp: [0, -2], ArrowDown: [0, 2]
     };
     const delta = move[event.key];
     if (!delta) return;
     event.preventDefault();
+    if (this.avatarCropExisting) {
+      this.avatarCropFocusX = Math.max(0, Math.min(100, this.avatarCropFocusX - delta[0]));
+      this.avatarCropFocusY = Math.max(0, Math.min(100, this.avatarCropFocusY - delta[1]));
+      return;
+    }
     this.avatarCropOffsetX = clampAvatarOffset(this.avatarCropOffsetX + delta[0],
       this.avatarCropMetrics.maxOffsetX);
     this.avatarCropOffsetY = clampAvatarOffset(this.avatarCropOffsetY + delta[1],
-      this.avatarCropMetrics.maxOffsetY);
+      this.avatarCropMetrics!.maxOffsetY);
+  }
+
+  /** Existing cover editor: no image download, re-encoding or upload required. */
+  openExistingCommunityAvatarCrop(): void {
+    if (!this.selected?.photoUrl || !this.canManage() || this.photoUpdating) return;
+    this.resetCommunityAvatarCrop();
+    this.avatarCropExisting = true;
+    this.avatarCropUrl = this.selected.photoUrl;
+    this.avatarCropCommunityId = this.selected.id;
+    this.avatarCropReady = true;
+    this.avatarCropZoom = this.selected.photoZoom ?? 1;
+    this.avatarCropFocusX = this.selected.photoFocusX ?? 50;
+    this.avatarCropFocusY = this.selected.photoFocusY ?? 50;
+    this.errorMessage = '';
+  }
+
+  /** Shared presentation parameters, also used for animated GIFs. */
+  communityCoverPosition(community: { photoFocusX?: number | null; photoFocusY?: number | null }): string {
+    return (community.photoFocusX ?? 50) + '% ' + (community.photoFocusY ?? 50) + '%';
+  }
+
+  communityCoverZoom(community: { photoZoom?: number | null }): string | null {
+    return community.photoZoom == null ? null : 'scale(' + community.photoZoom + ')';
+  }
+
+  communityCoverOrigin(community: { photoFocusX?: number | null; photoFocusY?: number | null }): string {
+    return this.communityCoverPosition(community);
   }
 
   async saveCommunityAvatarCrop(): Promise<void> {
+    if (this.avatarCropExisting) {
+      const id = this.avatarCropCommunityId;
+      const url = this.avatarCropUrl;
+      if (id == null || !this.selected || this.selected.id !== id
+          || this.selected.photoUrl !== url || !this.canManage()
+          || !this.avatarCropReady || this.photoUpdating) return;
+      this.photoUpdating = true;
+      this.avatarCropError = '';
+      this.communityService.updatePhotoFraming(
+        id, url, this.avatarCropZoom, this.avatarCropFocusX, this.avatarCropFocusY)
+        .pipe(timeout(15_000), finalize(() => this.photoUpdating = false))
+        .subscribe({
+          next: updated => {
+            if (this.selected?.id !== id || this.avatarCropUrl !== url) return;
+            this.selected = updated;
+            this.replaceCommunity(updated);
+            this.resetCommunityAvatarCrop();
+          },
+          error: (error: HttpErrorResponse) => {
+            if (this.selected?.id !== id) return;
+            this.avatarCropError = t(error.status === 409
+              ? 'communities.cropStalePhoto' : 'communities.cropUploadError');
+          }
+        });
+      return;
+    }
     const file = this.avatarCropFile;
     const id = this.avatarCropCommunityId;
     if (!file || id == null || !this.selected || this.selected.id !== id
