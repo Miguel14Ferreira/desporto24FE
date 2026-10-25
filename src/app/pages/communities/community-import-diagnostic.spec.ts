@@ -132,7 +132,7 @@ describe('community historical import diagnostics PT/EN', () => {
     expect(importHttpErrorLabel({ error: {
       message: 'Linha 23: erro', code: 'IMPORT_ROW_SCORE_INVALID', params: {}
     } }, 'communities.matches.previewError')).toBe(
-      'Could not analyse these historical matches. Check the scores and mapped columns.'
+      'Could not preview these matches. Map Home, Away and Score (or separate scores for both sides).'
     );
   });
 
