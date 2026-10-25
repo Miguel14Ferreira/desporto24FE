@@ -1474,14 +1474,26 @@
                                     <span> · {{ incident.incidentType }}
                                       · {{ incident.status === 'PENDING'
                                           ? ('communities.trackCycling.incidentPending' | t)
-                                          : ('communities.trackCycling.incidentDecided' | t) }}</span>
+                                          : incident.status === 'ADJUDICATION_REQUIRED'
+                                            ? ('communities.trackCycling.disciplineBlocked' | t)
+                                            : ('communities.trackCycling.incidentDecided' | t) }}</span>
                                     <p>{{ incident.details }}</p>
                                     <small>{{ 'communities.trackCycling.incidentReportedBy' | t }}:
                                       {{ incident.reportedBy }} · {{ incident.reportedAt }}</small>
-                                    @if (incident.status === 'DECIDED') {
+                                    @if (incident.status !== 'PENDING') {
                                       <p>{{ incident.decisionType === 'RESTART_REQUIRED'
                                         ? ('communities.trackCycling.incidentRestart' | t)
                                         : ('communities.trackCycling.incidentRecord' | t) }}</p>
+                                      @if (incident.decisionType === 'DISCIPLINARY_RULING') {
+                                        <p>
+                                          {{ 'communities.trackCycling.disciplineRider' | t }}:
+                                          <strong>{{ incident.sanctionedUsername }}</strong>
+                                          · {{ ('communities.trackCycling.sanction.' + incident.sanctionType) | t }}
+                                        </p>
+                                        @if (incident.status === 'ADJUDICATION_REQUIRED') {
+                                          <p>{{ 'communities.trackCycling.disciplineNoAutoResult' | t }}</p>
+                                        }
+                                      }
                                       <p>{{ incident.decisionReason }}</p>
                                       <small>{{ 'communities.trackCycling.incidentOfficialReference' | t }}:
                                         {{ incident.decisionReference }} · {{ incident.decidedBy }}</small>
@@ -1502,8 +1514,31 @@
                                           <select [(ngModel)]="sprintDecisionType">
                                             <option value="RESTART_REQUIRED">{{ 'communities.trackCycling.incidentRestart' | t }}</option>
                                             <option value="OFFICIAL_RESULT_TO_RECORD">{{ 'communities.trackCycling.incidentRecord' | t }}</option>
+                                          @if (sprintDecisionIsDisciplinaryAllowed) {
+                                            <option value="DISCIPLINARY_RULING">{{ 'communities.trackCycling.disciplineOfficial' | t }}</option>
+                                          }
                                           </select>
                                         </label>
+                                        @if (sprintDecisionType === 'DISCIPLINARY_RULING') {
+                                          <label>
+                                            <span>{{ 'communities.trackCycling.disciplineSanction' | t }}</span>
+                                            <select [(ngModel)]="sprintDecisionSanction">
+                                              <option value="WARNING">{{ 'communities.trackCycling.sanction.WARNING' | t }}</option>
+                                              <option value="RELEGATION">{{ 'communities.trackCycling.sanction.RELEGATION' | t }}</option>
+                                              <option value="DISQUALIFICATION">{{ 'communities.trackCycling.sanction.DISQUALIFICATION' | t }}</option>
+                                            </select>
+                                          </label>
+                                          <label>
+                                            <span>{{ 'communities.trackCycling.disciplineRider' | t }}</span>
+                                            <select [(ngModel)]="sprintDecisionSanctionedUsername">
+                                              <option value="">{{ 'communities.trackCycling.tieSelectRider' | t }}</option>
+                                              @for (name of sprintDecisionEligibleRiders; track name) {
+                                                <option [value]="name">{{ name }}</option>
+                                              }
+                                            </select>
+                                          </label>
+                                          <small>{{ 'communities.trackCycling.disciplineNoAutoResult' | t }}</small>
+                                        }
                                         <label>
                                           <span>{{ 'communities.trackCycling.incidentOfficialReference' | t }}</span>
                                           <input [(ngModel)]="sprintDecisionReference" maxlength="255">
@@ -1516,7 +1551,10 @@
                                           (click)="saveSprintDecision()"
                                           [disabled]="sprintIncidentSaving
                                             || sprintDecisionReference.trim().length < 12
-                                            || sprintDecisionReason.trim().length < 12">
+                                            || sprintDecisionReason.trim().length < 12
+                                            || (sprintDecisionType === 'DISCIPLINARY_RULING'
+                                              && (!sprintDecisionSanctionedUsername
+                                                || !sprintDecisionEligibleRiders.includes(sprintDecisionSanctionedUsername)))">
                                           {{ 'communities.trackCycling.incidentConfirm' | t }}
                                         </button>
                                       </div>
