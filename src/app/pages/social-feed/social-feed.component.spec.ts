@@ -11,7 +11,7 @@ import { CommunityService } from '../../services/community.service';
 import { CommunityGroupsService } from '../../services/community-groups.service';
 import { AuthenticationService } from '../../services/authethication.service';
 import { FeedItem } from '../model/feed-item';
-import { appTranslate as t } from '../../i18n/i18n.service';
+import { appTranslate as t, preloadEnglishTranslations } from '../../i18n/i18n.service';
 import { TEST_IMPORTS, TEST_PROVIDERS } from '../../testing/test-providers';
 
 @Component({ selector: 'app-social-stories', standalone: true, template: '' })
@@ -423,6 +423,7 @@ describe('SocialFeedComponent session sharing fallback', () => {
     const previousLanguage = localStorage.getItem('d24-language');
     try {
       localStorage.setItem('d24-language', 'en');
+      await preloadEnglishTranslations();
       makeNativeSharingUnavailable();
       spyOn<any>(component, 'copyShareUrl').and.returnValue(Promise.resolve());
 
@@ -626,9 +627,10 @@ describe('SocialFeedComponent post-game entry', () => {
     }
   });
 
-  it('uses an English prompt when the user has selected English', () => {
+  it('uses an English prompt when the user has selected English', async () => {
     const previousLanguage = localStorage.getItem('d24-language');
     localStorage.setItem('d24-language', 'en');
+    await preloadEnglishTranslations();
     const { target } = openFromSession();
     try {
       target.applyPostGamePrompt('feed.postGamePrompt.team');
