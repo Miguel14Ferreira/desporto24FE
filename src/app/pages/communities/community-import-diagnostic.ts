@@ -59,6 +59,13 @@ const diagnosticCodeKeys: Record<string, string> = {
   IMPORT_SOURCE_DATE_INVALID: 'communities.import.diagnostic.sourceDateInvalid'
 };
 
+function safeDiagnosticTranslation(key: string, params: Record<string, string>, fallbackKey: string): string {
+  const translated = t(key, params);
+  // A newer API can add codes or omit parameters. Never display raw
+  // interpolation markers such as {{row}} in import validation feedback.
+  return /\{\{[^{}]+\}\}/.test(translated) ? t(fallbackKey) : translated;
+}
+
 export function importDiagnosticLabel(source: unknown, detail?: CommunityImportDiagnostic | null): string {
   if (typeof source !== 'string' || source.trim().length === 0) {
     return t('communities.import.diagnostic.unknown');
@@ -75,7 +82,7 @@ export function importDiagnosticLabel(source: unknown, detail?: CommunityImportD
     }
     const key = Object.prototype.hasOwnProperty.call(diagnosticCodeKeys, detail.code)
       ? diagnosticCodeKeys[detail.code] : undefined;
-    if (key) return t(key, params);
+    if (key) return safeDiagnosticTranslation(key, params, 'communities.import.diagnostic.unknown');
     const row = params['row'];
     return typeof row === 'string' && /^\d+$/.test(row)
       ? t('communities.import.diagnostic.unknownRow', { row })
@@ -87,7 +94,7 @@ export function importDiagnosticLabel(source: unknown, detail?: CommunityImportD
     if (!groups) continue;
     const values: Record<string, string> = {};
     rule.values.forEach((name, index) => { values[name] = groups[index + 1]; });
-    return t(rule.key, values);
+    return safeDiagnosticTranslation(rule.key, values, 'communities.import.diagnostic.unknown');
   }
   const row = /^Linha (\d+)(?::|$)/u.exec(message);
   return row
@@ -121,7 +128,7 @@ export function importHttpErrorLabel(error: unknown, fallbackKey: string): strin
         if (typeof value === 'string') params[name] = value;
       }
     }
-    return t(diagnosticCodeKeys[code], params);
+    return safeDiagnosticTranslation(diagnosticCodeKeys[code], params, fallbackKey);
   }
   return t(fallbackKey);
 }
