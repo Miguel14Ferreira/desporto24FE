@@ -146,11 +146,22 @@ async function mockedCommunity(page: Page, role: Role, view: View = 'ready') {
   return {writes,unexpected,creations,seasonReads};
 }
 
+async function locateSprintBracket(page: Page, qa: {unexpected:string[]}) {
+  const section=page.locator('section.round-editor[aria-label="Quadros de Sprint"]');
+  try { await expect(section).toBeVisible(); }
+  catch (error) {
+    console.log('[SPRINT-QA] URL',page.url());
+    console.log('[SPRINT-QA] visible body',(await page.locator('body').innerText().catch(()=>'')).slice(0,3500));
+    console.log('[SPRINT-QA] unhandled HTTP',qa.unexpected.slice(0,30));
+    throw error;
+  }
+  return section;
+}
+
 test('Olympic sprint browser QA: member sees recorded three-up heats and 5–8 places, with no admin tools',async ({page})=>{
   const qa=await mockedCommunity(page,'MEMBER','finished');
   await page.goto('/menu/communities/7?tab=ranking');
-  const section=page.locator('section.round-editor[aria-label="Quadros de Sprint"]');
-  await expect(section).toBeVisible();
+  const section=await locateSprintBracket(page,qa);
   await expect(section).toContainText('Sprint Olímpico QA 2026');
   await expect(section).toContainText('r15');
   await expect(section).toContainText('r8');
@@ -164,8 +175,7 @@ test('Olympic sprint browser QA: member sees recorded three-up heats and 5–8 p
 test('Olympic sprint browser QA: owner can select 24 valid times; older season does not leak active bracket',async ({page})=>{
   const qa=await mockedCommunity(page,'OWNER','ready');
   await page.goto('/menu/communities/7?tab=ranking');
-  const section=page.locator('section.round-editor[aria-label="Quadros de Sprint"]');
-  await expect(section).toBeVisible();
+  const section=await locateSprintBracket(page,qa);
   await expect(section).toContainText('Sprint Olímpico QA 2026');
   await expect(section).toContainText('SP41-F58');
   await expect(section).toContainText('r8');
