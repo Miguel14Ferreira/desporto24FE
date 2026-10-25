@@ -13,6 +13,15 @@
     } @else {
     <form class="venue-create-form" (ngSubmit)="save()">
       <h2 class="venue-create-section-title">{{ 'venue.create.basicInfo' | t }}</h2>
+      <div class="venue-create-essential-progress venue-create-wide" role="status"
+        aria-live="polite">
+        <div class="venue-create-essential-progress-heading">
+          <strong>{{ 'venue.create.essentialProgress' | t:{ count: essentialCompletedCount } }}</strong>
+          <span>{{ 'venue.create.essentialHint' | t }}</span>
+        </div>
+        <progress [value]="essentialCompletedCount" max="5"
+          [attr.aria-label]="'venue.create.essentialProgressLabel' | t"></progress>
+      </div>
 
       <label>
         <span>{{ 'venue.name' | t }}</span>
@@ -154,12 +163,19 @@
       </div>
 
       <label>
-        <span>{{ 'venue.environment' | t }}</span>
-        <select name="environmentType" [(ngModel)]="environmentType">
+        <span>{{ 'venue.environment' | t }} *</span>
+        <select name="environmentType" [(ngModel)]="environmentType" required
+          [attr.aria-invalid]="validationError && !environmentType ? 'true' : null">
+          <option [ngValue]="null">{{ 'venue.create.environmentChoose' | t }}</option>
           <option value="INDOOR">{{ 'venue.environment.indoor' | t }}</option>
           <option value="OUTDOOR">{{ 'venue.environment.outdoor' | t }}</option>
           <option value="BOTH">{{ 'venue.environment.both' | t }}</option>
         </select>
+        @if (validationError && !environmentType) {
+          <small class="venue-create-error" role="alert">
+            {{ 'venue.create.environmentRequired' | t }}
+          </small>
+        }
       </label>
 
       <details class="venue-create-amenities venue-create-wide">
@@ -513,6 +529,9 @@
       <div class="venue-create-actions venue-create-wide">
         @if (validationError && (!name.trim() || !city.trim() || locationIsMissing)) {
           <span id="venue-required-fields-error" class="venue-create-error" role="alert" aria-live="assertive">{{ 'venue.requiredFields' | t }}</span>
+        }
+        @if (validationError && !environmentType) {
+          <span class="venue-create-error" role="alert">{{ 'venue.create.environmentRequired' | t }}</span>
         }
         @if (validationError && hasInvalidGpsCoordinates) {
           <span class="venue-create-error" role="alert">{{ 'venue.create.invalidGps' | t }}</span>
