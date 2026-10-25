@@ -89,6 +89,21 @@ describe('CommunitiesComponent public session eligibility', () => {
     }
   });
 
+  it('translates the 2026 six-skater qualifying heat limit in PT and EN', () => {
+    const previous = localStorage.getItem('d24-language');
+    try {
+      localStorage.setItem('d24-language', 'pt');
+      expect(t('feedback.communities.speedSkatingFirstHeatLimit'))
+        .toContain('no máximo 6');
+      localStorage.setItem('d24-language', 'en');
+      expect(t('feedback.communities.speedSkatingFirstHeatLimit'))
+        .toContain('at most 6');
+    } finally {
+      if (previous === null) localStorage.removeItem('d24-language');
+      else localStorage.setItem('d24-language', previous);
+    }
+  });
+
   it('clears hidden circuit metrics for flying 200m without changing Scratch history', () => {
     component.roundEntries = [
       { lapsCompleted: 3, bestLapSeconds: 10.25 } as any,
