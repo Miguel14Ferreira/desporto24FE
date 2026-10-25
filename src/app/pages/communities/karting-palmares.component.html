@@ -1,0 +1,31 @@
+<section class="karting-palmares" aria-labelledby="karting-palmares-title">
+  <div class="karting-palmares-heading">
+    <span aria-hidden="true">🏆</span>
+    <div>
+      <h5 id="karting-palmares-title">{{ 'communities.tournaments.kartingPalmaresTitle' | t }}</h5>
+      <p>{{ 'communities.tournaments.kartingPalmaresSubtitle' | t }}</p>
+    </div>
+  </div>
+  @for (tournament of tournaments; track tournament.id) {
+    <button type="button" class="karting-palmares-item"
+      [class.is-active]="selectedId === tournament.id"
+      [attr.aria-pressed]="selectedId === tournament.id"
+      (click)="tournamentSelected.emit(tournament)">
+      <span class="karting-palmares-name">{{ tournament.name }}</span>
+      <small>{{ raceSportLabel(tournament.sport) }}</small>
+      <span class="karting-palmares-winner">
+        {{ tournament.championTied
+          ? ('communities.tournaments.kartingSharedChampion' | t)
+          : (tournament.championDisplayName || tournament.championUsername
+            || ('communities.tournaments.kartingChampionUnavailable' | t)) }}
+      </span>
+      <small>{{ tournament.completedAt | date:'dd/MM/yyyy' }}</small>
+    </button>
+  }
+  @if (!tournaments.length) {
+    <p class="t-muted">{{ 'communities.tournaments.kartingNoFinishedChampionships' | t }}</p>
+  }
+  @if (hasMore) {
+    <p class="karting-palmares-more">{{ 'communities.tournaments.kartingMoreHistoryHint' | t }}</p>
+  }
+</section>

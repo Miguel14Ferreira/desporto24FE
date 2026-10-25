@@ -10,6 +10,8 @@ import { CommunitiesComponent } from './communities.component';
 import { ChatReactionsComponent } from '../../shared/chat-reactions/chat-reactions.component';
 import { CommunityTournamentsComponent } from './community-tournaments.component';
 import { KartingPodiumComponent } from './karting-podium.component';
+import { KartingPalmaresComponent } from './karting-palmares.component';
+import { KartingRaceTableComponent } from './karting-race-table.component';
 
 const routes: Routes = [
   { path: '', component: CommunitiesComponent },
@@ -23,6 +25,6 @@ const routes: Routes = [
     CommunitiesComponent, CommunityCreateComponent, CommunityInviteStepComponent,
     CommunityTournamentsComponent
   ],
-  imports: [CommonModule, FormsModule, RouterModule.forChild(routes), TranslatePipe, ChatReactionsComponent, KartingPodiumComponent]
+  imports: [CommonModule, FormsModule, RouterModule.forChild(routes), TranslatePipe, ChatReactionsComponent, KartingPodiumComponent, KartingPalmaresComponent, KartingRaceTableComponent]
 })
 export class CommunitiesModule {}
