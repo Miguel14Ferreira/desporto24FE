@@ -389,7 +389,7 @@ async function mockCommunityApi(page: Page, role: Role, mode: FixtureMode,
           sourceDate: '2023-06-02', sourceRound: 'Quartos de final', potentialDuplicate: true },
         { sourceRow: 253, home: 'Leões', away: 'Dragões', homeScore: 1, awayScore: 0,
           sourceDate: '2023-06-03', sourceRound: 'Quartos de final', potentialDuplicate: false },
-        { sourceRow: 254, home: 'Raios', away: 'Águias B', homeScore: 2, awayScore: 0,
+        { sourceRow: 254, home: 'Raios', away: 'Águias B', homeScore: 2, awayScore: 2,
           sourceDate: '2023-06-04', sourceRound: 'Quartos de final', potentialDuplicate: false },
         { sourceRow: 255, home: 'Águias', away: 'CNG', homeScore: 1, awayScore: 1,
           sourceDate: '2023-06-05', sourceRound: 'Meias-finais', potentialDuplicate: false },
@@ -956,6 +956,32 @@ test('Historical knockout browser QA: phase button jumps to the exact final acro
     .toHaveCount(0);
   await expect(repeated).toHaveClass(/historical-match-row--review/);
   await expect(tiedSemi).toHaveClass(/historical-match-row--review/);
+
+  // Review shortcuts must use exactly the source-flagged row order, not the
+  // first fixture of the stage. Repeated clicks visit every flagged case.
+  const reviewQuarter = cards.nth(0);
+  const nextQuarter = reviewQuarter.getByRole('button', { name: /Ver próximo jogo por rever/ });
+  await expect(reviewQuarter).toContainText('2 jogos sinalizados no Excel');
+  await nextQuarter.click();
+  await expect(repeated).toBeInViewport({ ratio: 0.5 });
+  await expect(nextQuarter).toContainText('(1/2)');
+  await nextQuarter.click();
+  const tiedQuarter = page.locator('[data-historical-source-row="254"]');
+  await expect(tiedQuarter).toBeInViewport({ ratio: 0.5 });
+  await expect(tiedQuarter.locator('.historical-match-review-flag'))
+    .toHaveText(['Empate na eliminatória — confirmar quem avançou']);
+  await expect(nextQuarter).toContainText('(2/2)');
+  await nextQuarter.click();
+  await expect(repeated).toBeInViewport({ ratio: 0.5 });
+  await expect(nextQuarter).toContainText('(1/2)');
+
+  const reviewSemi = cards.nth(1);
+  await expect(reviewSemi).toContainText('1 jogo sinalizado no Excel');
+  await reviewSemi.getByRole('button', { name: /Ver próximo jogo por rever/ }).click();
+  await expect(tiedSemi).toBeInViewport({ ratio: 0.5 });
+  await expect(nextQuarter).toContainText('(1/2)'); // Independent per-phase cursors.
+  await expect(cards.nth(2).getByRole('button', { name: /Ver próximo jogo por rever/ }))
+    .toHaveCount(0);
   expect(fixture.unmocked.filter(s => s.includes('match-archives'))).toEqual([]);
 });
 
