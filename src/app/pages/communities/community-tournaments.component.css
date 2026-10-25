@@ -174,22 +174,6 @@
   border-color: rgba(148, 163, 184, .24);
   border-radius: .8rem;
 }
-.create-options-grid {
-  display: grid !important;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
-}
-.create-options-grid .t-sport-chip {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  min-height: 66px;
-  padding: .8rem 1rem;
-  border-radius: .8rem;
-  text-align: center;
-  line-height: 1.35;
-  font-weight: 800;
-}
 .create-step-format > label { margin-top: .2rem; }
 .create-step-format #new-team-size { max-width: 15rem; }
 .create-step-format #team-size-hint { margin-top: -.5rem; }
@@ -439,11 +423,6 @@
   gap: .7rem; flex-wrap: wrap;
 }
 .race-round-header small { color: #99b1c7; }
-.race-results-grid {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
-  gap: .55rem; padding-top: .85rem;
-  font-size: .82rem; color: #cbd5e1;
-}
 .race-available { display: grid; gap: .85rem; }
 .race-available-row {
   border-bottom: 1px solid rgba(148,163,184,.16);
