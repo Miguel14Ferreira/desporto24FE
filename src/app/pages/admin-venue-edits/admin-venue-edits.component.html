@@ -76,6 +76,25 @@
             <strong>{{ 'venue.edit.reason' | t }}</strong>
             <p>{{ item.reason }}</p>
           </div>
+          @if (hasProposedContact(item)) {
+            <div class="admin-edit-source">
+              <strong>{{ 'venue.edit.admin.sourceHeading' | t }}</strong>
+              @if (sourceLink(item); as safeSource) {
+                <a [href]="safeSource" target="_blank" rel="noopener noreferrer">
+                  {{ 'venue.edit.admin.openSource' | t }}
+                </a>
+              } @else {
+                <p role="alert">{{ 'venue.edit.admin.missingSource' | t }}</p>
+              }
+              <small>{{ 'venue.edit.admin.sourceWarning' | t }}</small>
+              @if (sourceLink(item)) {
+                <label class="admin-edit-source-check">
+                  <input type="checkbox" name="sourceReviewed" [(ngModel)]="sourceReviewed">
+                  <span>{{ 'venue.edit.admin.sourceReviewed' | t }}</span>
+                </label>
+              }
+            </div>
+          }
           <label class="admin-edit-note">
             <span>{{ 'venue.edit.admin.note' | t }}</span>
             <textarea rows="3" name="note" [(ngModel)]="note"
@@ -95,14 +114,14 @@
                 {{ 'common.cancel' | t }}
               </button>
               <button type="button" class="admin-edit-accept" (click)="decide()"
-                [disabled]="updating || (action === 'reject' && note.trim().length < 5)">
+                [disabled]="updating || (action === 'reject' && note.trim().length < 5) || (action === 'approve' && !canApproveSelected())">
                 {{ 'venue.admin.confirm' | t }}
               </button>
             } @else {
               <button type="button" class="admin-edit-reject"
                 (click)="action='reject'">{{ 'venue.admin.reject' | t }}</button>
               <button type="button" class="admin-edit-accept"
-                (click)="action='approve'">{{ 'venue.admin.approve' | t }}</button>
+                (click)="action='approve'" [disabled]="!sourceLink(item) && hasProposedContact(item)">{{ 'venue.admin.approve' | t }}</button>
             }
           </div>
         </section>
