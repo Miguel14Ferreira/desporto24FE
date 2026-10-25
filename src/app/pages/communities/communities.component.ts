@@ -160,7 +160,9 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   sprintIncidentDetails = '';
   sprintDecisionIncidentId: number | null = null;
   sprintDecisionBracketId: number | null = null;
-  sprintDecisionType: 'RESTART_REQUIRED' | 'OFFICIAL_RESULT_TO_RECORD' = 'RESTART_REQUIRED';
+  sprintDecisionType: 'RESTART_REQUIRED' | 'OFFICIAL_RESULT_TO_RECORD' | 'DISCIPLINARY_RULING' = 'RESTART_REQUIRED';
+  sprintDecisionSanction: 'WARNING' | 'RELEGATION' | 'DISQUALIFICATION' = 'WARNING';
+  sprintDecisionSanctionedUsername = '';
   sprintDecisionReference = '';
   sprintDecisionReason = '';
   sprintIncidentError = '';
@@ -2542,7 +2544,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   }
 
   sprintIncidentPending(bracket: TrackSprintBracketOverview, key: string): boolean {
-    return this.sprintIncidentsFor(bracket, key).some(i => i.status === 'PENDING');
+    return this.sprintIncidentsFor(bracket, key)
+      .some(i => i.status === 'PENDING' || i.status === 'ADJUDICATION_REQUIRED');
   }
 
   editSprintIncident(bracketId: number, key: string): void {
@@ -2576,10 +2579,26 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     });
   }
 
+  get sprintDecisionEligibleRiders(): string[] {
+    const bracket = this.sprintBrackets.find(b => b.id === this.sprintDecisionBracketId);
+    const incident = (bracket?.incidents || []).find(i => i.id === this.sprintDecisionIncidentId);
+    const match = bracket?.matches.find(m => m.seriesKey === incident?.seriesKey);
+    return [match?.riderA, match?.riderB, match?.riderC, match?.riderD]
+      .filter((r): r is string => typeof r === 'string' && !!r.trim());
+  }
+
+  get sprintDecisionIsDisciplinaryAllowed(): boolean {
+    const bracket = this.sprintBrackets.find(b => b.id === this.sprintDecisionBracketId);
+    const incident = (bracket?.incidents || []).find(i => i.id === this.sprintDecisionIncidentId);
+    return incident?.incidentType === 'RULE_INFRINGEMENT' || incident?.incidentType === 'FALL';
+  }
+
   editSprintDecision(bracketId: number, incidentId: number): void {
     this.sprintDecisionBracketId = bracketId;
     this.sprintDecisionIncidentId = incidentId;
     this.sprintDecisionType = 'RESTART_REQUIRED';
+    this.sprintDecisionSanction = 'WARNING';
+    this.sprintDecisionSanctionedUsername = '';
     this.sprintDecisionReference = '';
     this.sprintDecisionReason = '';
     this.sprintIncidentError = '';
@@ -2590,14 +2609,20 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
         || this.selectedSeasonId == null || this.activeSeason()?.id !== this.selectedSeasonId
         || this.sprintDecisionBracketId == null || this.sprintDecisionIncidentId == null
         || this.sprintDecisionReference.trim().length < 12
-        || this.sprintDecisionReason.trim().length < 12) return;
+        || this.sprintDecisionReason.trim().length < 12
+        || (this.sprintDecisionType === 'DISCIPLINARY_RULING' &&
+            (!this.sprintDecisionIsDisciplinaryAllowed ||
+             !this.sprintDecisionEligibleRiders.includes(this.sprintDecisionSanctionedUsername)))) return;
     const group = this.selected.id, season = this.selectedSeasonId,
       bracket = this.sprintDecisionBracketId, id = this.sprintDecisionIncidentId;
     this.sprintIncidentSaving = true; this.sprintIncidentError = '';
     this.communityService.decideTrackSprintIncident(group, season, bracket, id, {
       decisionType: this.sprintDecisionType,
       reference: this.sprintDecisionReference.trim(),
-      reason: this.sprintDecisionReason.trim()
+      reason: this.sprintDecisionReason.trim(),
+      ...(this.sprintDecisionType === 'DISCIPLINARY_RULING'
+        ? {sanctionType: this.sprintDecisionSanction,
+           sanctionedUsername: this.sprintDecisionSanctionedUsername} : {})
     }).pipe(timeout(10_000), finalize(() => this.sprintIncidentSaving = false)).subscribe({
       next: () => {
         this.sprintDecisionIncidentId = null;
