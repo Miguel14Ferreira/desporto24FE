@@ -2639,6 +2639,11 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     });
   }
 
+  sprintRerunAuthorized(bracket: TrackSprintBracketOverview, key: string): boolean {
+    return this.sprintIncidentsFor(bracket, key)
+      .some(i => i.status === 'RESTART_AUTHORIZED');
+  }
+
   sprintCanAuthorizeReducedRerun(bracket: TrackSprintBracketOverview,
     incident: TrackSprintIncident): boolean {
     if (bracket.format !== 'OLYMPIC_TWENTY_FOUR_REPECHAGE'
