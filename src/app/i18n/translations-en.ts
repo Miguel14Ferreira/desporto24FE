@@ -332,6 +332,7 @@ export const EN: Record<string, string> = {
   'chat.gifResults': 'GIF results',
   'chat.gifSelect': 'Choose GIF',
   'chat.gifPreparing': 'Preparing GIF…',
+  'chat.gifCaptionTooLong': 'GIF message is too long. Shorten the caption before choosing the GIF.',
   'chat.gifDownloadFailed': 'Could not prepare this GIF (5 MB limit). Choose another or upload a file.',
   'chat.gifNoResults': 'No GIFs found. Try another search.',
   'chat.gifMore': 'More GIFs',
