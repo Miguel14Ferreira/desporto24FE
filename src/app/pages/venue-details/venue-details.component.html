@@ -140,6 +140,9 @@
                    [href]="officialPage" target="_blank" rel="noopener noreferrer">
                   {{ 'venue.visit.checkOfficialContact' | t }}
                 </a>
+                @if (officialContactIdentityUnconfirmed) {
+                  <small class="venue-contact-caveat">{{ 'venue.visit.operatorIdentityUnconfirmed' | t }}</small>
+                }
               }
               @if (googleVenueContactUrl; as googleListing) {
                 <a class="jynlo-action jynlo-action--neutral venue-visit-action"
