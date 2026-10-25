@@ -1199,6 +1199,10 @@
                       · {{ ruling.confirmedBy }}
                     </p>
                     <p class="t-muted">{{ ruling.reason }}</p>
+                    @if (ruling.evidenceType && ruling.evidenceReference) {
+                      <p class="t-muted">{{ speedEvidenceLabel(ruling.evidenceType) }}
+                        · {{ ruling.evidenceReference }}</p>
+                    }
                     @if (ruling.revisions?.length) {
                       <details class="t-muted">
                         <summary>{{ 'communities.inlineSpeed.tieHistory' | t }}
@@ -1213,6 +1217,12 @@
                                 · {{ 'communities.inlineSpeed.tieOutdated' | t }}
                               }
                               <p>{{ revision.reason }}</p>
+                              @if (revision.evidenceType && revision.evidenceReference) {
+                                <small>{{ speedEvidenceLabel(revision.evidenceType) }}:
+                                  {{ revision.evidenceReference }}</small>
+                              } @else {
+                                <small>{{ 'communities.inlineSpeed.evidence.legacy' | t }}</small>
+                              }
                               <small>{{ 'communities.inlineSpeed.tieSelected' | t }}:
                                 {{ speedTieSkaterNames(revision.selectedPlayerIds) }}</small>
                             </li>
@@ -1256,6 +1266,24 @@
                           [name]="'inline-speed-tiebreak-reason'"
                           [(ngModel)]="speedReasons['FIRST']" [disabled]="busy"
                           [placeholder]="'communities.inlineSpeed.reasonPlaceholder' | t"></textarea>
+                      </label>
+                      <label class="inline-speed-judge-reason">
+                        {{ 'communities.inlineSpeed.evidenceType' | t }}
+                        <select name="inline-speed-evidence-type" [(ngModel)]="speedEvidenceType"
+                          [disabled]="busy">
+                          <option value="">{{ 'communities.inlineSpeed.evidenceSelect' | t }}</option>
+                          <option value="PHOTO_FINISH">{{ 'communities.inlineSpeed.evidence.PHOTO_FINISH' | t }}</option>
+                          <option value="VIDEO_REVIEW">{{ 'communities.inlineSpeed.evidence.VIDEO_REVIEW' | t }}</option>
+                          <option value="OFFICIAL_MINUTES">{{ 'communities.inlineSpeed.evidence.OFFICIAL_MINUTES' | t }}</option>
+                          <option value="TIEBREAK_TRIAL">{{ 'communities.inlineSpeed.evidence.TIEBREAK_TRIAL' | t }}</option>
+                          <option value="OTHER">{{ 'communities.inlineSpeed.evidence.OTHER' | t }}</option>
+                        </select>
+                      </label>
+                      <label class="inline-speed-judge-reason">
+                        {{ 'communities.inlineSpeed.evidenceReference' | t }}
+                        <small>{{ 'communities.inlineSpeed.evidenceReferenceHint' | t }}</small>
+                        <textarea rows="2" maxlength="500" name="inline-speed-evidence-reference"
+                          [(ngModel)]="speedEvidenceReference" [disabled]="busy"></textarea>
                       </label>
                       <button type="button" class="t-btn t-btn-primary"
                         [disabled]="busy || (speedSelections['FIRST']?.length ?? 0) !== 16"

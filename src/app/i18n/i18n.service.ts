@@ -5,6 +5,17 @@ export type AppLanguage = 'pt' | 'en';
 type Dictionary = Record<string, string>;
 
 const PT: Dictionary = {
+  'communities.inlineSpeed.evidenceType': 'Tipo de evidência oficial',
+  'communities.inlineSpeed.evidenceSelect': 'Escolhe a evidência consultada',
+  'communities.inlineSpeed.evidenceReference': 'Referência da prova ou ata',
+  'communities.inlineSpeed.evidenceReferenceHint': 'Indica uma referência verificável: código da ata, identificação do vídeo ou ligação oficial. Não alteres os tempos originais.',
+  'communities.inlineSpeed.evidenceRequired': 'Indica o tipo de evidência e uma referência com 8 a 500 caracteres.',
+  'communities.inlineSpeed.evidence.PHOTO_FINISH': 'Fotofinish',
+  'communities.inlineSpeed.evidence.VIDEO_REVIEW': 'Revisão de vídeo',
+  'communities.inlineSpeed.evidence.OFFICIAL_MINUTES': 'Ata oficial do júri',
+  'communities.inlineSpeed.evidence.TIEBREAK_TRIAL': 'Prova adicional realmente realizada',
+  'communities.inlineSpeed.evidence.OTHER': 'Outro documento oficial',
+  'communities.inlineSpeed.evidence.legacy': 'Decisão anterior sem evidência estruturada',
   'communities.inlineSpeed.tieHistory': 'Histórico auditável do desempate',
   'communities.inlineSpeed.tieVersion': 'Versão',
   'communities.inlineSpeed.tieOutdated': 'Resultados de origem alterados',
