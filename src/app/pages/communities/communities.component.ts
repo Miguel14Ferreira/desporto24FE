@@ -688,7 +688,21 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   }
 
   eventOptions(sport: string | null) {
-    return eventOptionsForSport(sport);
+    const all = eventOptionsForSport(sport);
+    if (!this.canRecordInlineSpeedWithoutRankings) return all;
+    // Standalone sprint recording must not offer a different sport, a 200m TT
+    // or the former Final B. Those are not World Skate 2026 progression heats.
+    return sport === 'Patinagem de Velocidade'
+      ? all.filter(option => this.isInlineSpeedProgressionHeat(option.code))
+      : [];
+  }
+
+  private isInlineSpeedProgressionHeat(eventType: string | null): boolean {
+    return eventType != null
+      && (eventType.startsWith('INLINE_TRACK_500D_')
+        || eventType.startsWith('INLINE_ROAD_LAP_'))
+      && (eventType.endsWith('_FIRST_ROUND') || eventType.endsWith('_QUARTER_HEAT')
+        || eventType.endsWith('_SEMI_HEAT') || eventType.endsWith('_FINAL_A'));
   }
 
   eventTypeLabel(type: string, sport: string | null): string {
@@ -778,7 +792,15 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     return this.selected ? this.communitySports(this.selected) : [];
   }
 
+  /** The optional W/D/L standings switch must not hide tournament heat recording. */
+  get canRecordInlineSpeedWithoutRankings(): boolean {
+    return !!this.selected && !this.selected.rankingsEnabled
+      && this.selected.individualTournamentsEnabled !== false
+      && this.communityRoundSports.includes('Patinagem de Velocidade');
+  }
+
   get newRoundSport(): string | null {
+    if (this.canRecordInlineSpeedWithoutRankings) return 'Patinagem de Velocidade';
     return this.communityRoundSports.length === 1
       ? this.communityRoundSports[0] : (this.roundSportDraft || null);
   }
@@ -1882,7 +1904,9 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
           : requestedTab === 'chat' ? 'chat'
           : requestedTab === 'tournaments' && this.hasCompetitions(full) ? 'tournaments'
           : requestedTab === 'ranking' && (full.rankingsEnabled || this.hasCompetitions(full)) ? 'ranking'
-          : requestedTab === 'stats' && full.rankingsEnabled ? 'stats'
+          : requestedTab === 'stats' && (full.rankingsEnabled
+              || (full.individualTournamentsEnabled !== false
+                  && this.communitySports(full).includes('Patinagem de Velocidade'))) ? 'stats'
           : requestedTab === 'sessions' ? 'sessions'
           : 'home';
         // Archive-only communities reveal the History tab after the async lists load.
@@ -1938,7 +1962,8 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     }
     if ((tab === 'tournaments' && !this.hasCompetitions(this.selected))
         || (tab === 'ranking' && !this.canBrowseHistoricalArchives)
-        || (tab === 'stats' && !this.selected?.rankingsEnabled)) return;
+        || (tab === 'stats' && !(this.selected?.rankingsEnabled
+            || this.canRecordInlineSpeedWithoutRankings))) return;
     this.activeTab = tab;
     this.replyingToCommunityMessage = null;
     this.chatDeliveryUncertain = false;
@@ -3523,6 +3548,11 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
 
   createRound(): void {
     if (!this.selected || !this.canManage() || this.roundSaving) {
+      return;
+    }
+    if (this.canRecordInlineSpeedWithoutRankings
+        && !this.isInlineSpeedProgressionHeat(this.newRoundEventType)) {
+      this.errorMessage = t('communities.inlineSpeed.selectProgressionHeat');
       return;
     }
     if (this.communityRoundSports.length > 1 && !this.newRoundSport) {
