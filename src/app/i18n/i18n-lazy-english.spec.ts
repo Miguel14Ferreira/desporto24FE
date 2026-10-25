@@ -5,6 +5,13 @@ import {
   prepareInitialTranslations
 } from './i18n.service';
 
+// Angular Karma unit specs instantiate components without going through src/main.ts.
+// Reproduce the normal English bootstrap preload before *all* specs, including
+// legacy tests that synchronously set d24-language='en' and use appTranslate().
+beforeAll(async () => {
+  await preloadEnglishTranslations();
+});
+
 describe('Lazy English translations', () => {
   let originalLanguage: string | null;
 
