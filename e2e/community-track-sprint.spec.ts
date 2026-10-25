@@ -121,6 +121,12 @@ async function mockedCommunity(page: Page, role: Role, view: View = 'ready') {
         return send({id:42+creations.length-1,seasonId:4,...requestBody,matches:[]},201);
       }
     }
+    // Normal bootstrap telemetry is not a competition mutation. Mock only
+    // these two known endpoints locally; still reject/record every other write.
+    // This keeps the assertion scoped to Sprint changes without hiding new
+    // unapproved write calls that might be introduced by the UI.
+    if(method==='POST' && (path==='/api/pilot/events/access'
+        || path==='/api/presence/heartbeat'))return send({});
     if(method!=='GET') {
       writes.push(role + ':' + method + ' ' + path);
       return send({message:'Operação não permitida em QA'},403);
