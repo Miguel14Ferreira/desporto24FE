@@ -27,7 +27,7 @@ import {
   inboxKey, matchesInboxSearch, mergeInboxMessages, orderInbox
 } from './inbox.model';
 import { RecoverableSend, restorePendingSends, savePendingSends } from './pending-send-session';
-import { GifChoice, downloadGiphyChoice, findGiphy, readGifProviderKey } from './gif-picker.client';
+import { GifChoice, encodeGiphyText, findGiphy, readGifProviderKey, readGiphyText } from './gif-picker.client';
 
 export const VOICE_NOTE_MAX_DURATION_MS = 5 * 60_000;
 const VOICE_NOTE_AUDIO_BITRATE = 48_000;
@@ -89,6 +89,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     ++this.attachmentViewVersion;
     this.attachmentReady = false;
     this.selectedAttachment = null;
+    this.selectedGif = null;
     this.closeEmojiPicker();
     this.cancelVoiceRecording();
     this.clearAttachmentPreviews();
@@ -123,6 +124,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     return this.attachmentReady && this.isAttachmentIdentityCurrent() && this.isSelectedSessionOpen();
   }
   selectedAttachment: File | null = null;
+  // GIPHY media is NOT copied to R2: only validated CDN URLs travel as chat text.
+  selectedGif: GifChoice | null = null;
   voiceRecording = false;
   voiceFinalizing = false;
   voiceElapsedSeconds = 0;
@@ -661,6 +664,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.clearAttachmentRetry();
     ++this.attachmentViewVersion; // Reject any authenticated Blob still in flight.
     this.selectedAttachment = null;
+    this.selectedGif = null;
     this.attachmentReady = false;
     this.clearAttachmentPreviews(); // Revoke images and stop audio playback.
     this.drafts.delete(conversation.key);
@@ -696,6 +700,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.cancelVoiceRecording();
     this.closeEmojiPicker();
     this.selectedAttachment = null;
+    this.selectedGif = null;
     this.clearAttachmentRetry();
     this.attachmentReady = false;
     ++this.attachmentViewVersion;
@@ -1115,9 +1120,10 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       && this.composerAllowed && !this.composerAccessLoading
       && !this.previewLoading && !this.previewError && !this.sending && !this.deliveryUncertain
       && !this.deliveryChecking && !this.voiceRecording && !this.voiceFinalizing
-      && (this.draft.trim().length > 0
-        || (this.attachmentControlsReady && !!this.selectedAttachment))
-      && this.draft.trim().length <= 2000);
+      && (this.draft.trim().length > 0 || (this.attachmentControlsReady
+          && (!!this.selectedAttachment || !!this.selectedGif)))
+      && this.draft.trim().length <= 2000
+      && (!this.selectedGif || !!encodeGiphyText(this.selectedGif, this.draft.trim())));
   }
 
   replyToMessage(message: InboxMessage): void {
@@ -1192,6 +1198,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     }
     this.clearVoicePreview();
     this.selectedAttachment = file;
+    this.selectedGif = null;
     this.composerError = '';
     this.closeEmojiPicker();
   }
@@ -1200,6 +1207,15 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     if (this.sending || this.deliveryUncertain) return;
     this.selectedAttachment = null;
     this.clearVoicePreview();
+  }
+
+  removeSelectedGif(): void {
+    if (this.sending || this.deliveryUncertain) return;
+    this.selectedGif = null;
+  }
+
+  readGiphyMessage(text: string) {
+    return readGiphyText(text);
   }
 
   private resetVoiceClock(): void {
@@ -1484,6 +1500,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
 
   showMessageBody(message: InboxMessage): boolean {
     const body = (message.text || '').trim();
+    if (readGiphyText(body)) return false;
     if (!body) return false;
     // The server supplies an automatic filename caption for file-only sends.
     // Do not repeat raw .webm/.ogg names above their playable voice bubble.
@@ -1672,33 +1689,20 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     }
   }
 
-  async chooseGif(choice: GifChoice): Promise<void> {
-    if (!this.canEditDraft() || !this.attachmentControlsReady || this.gifSelectingId
+  chooseGif(choice: GifChoice): void {
+    if (!this.canEditDraft() || !this.attachmentControlsReady
         || !this.emojiPickerOpen || this.pickerTab !== 'gif') return;
-    const key = this.selectedKey;
-    const version = this.gifRequestVersion;
-    const controller = new AbortController();
-    this.gifDownloadAbort = controller;
-    this.gifSelectingId = choice.id;
-    this.gifError = '';
-    try {
-      const file = await downloadGiphyChoice(choice, controller.signal);
-      if (controller.signal.aborted || key !== this.selectedKey
-          || version !== this.gifRequestVersion || !this.attachmentControlsReady
-          || !this.canEditDraft()) return;
-      this.clearVoicePreview();
-      this.selectedAttachment = file;
-      this.composerError = '';
-      this.closeEmojiPicker();
-      // A GIF only enters the existing private-attachment send path on Send.
-    } catch {
-      if (!controller.signal.aborted && key === this.selectedKey
-          && version === this.gifRequestVersion)
-        this.gifError = t('chat.gifDownloadFailed');
-    } finally {
-      if (this.gifDownloadAbort === controller) this.gifDownloadAbort = undefined;
-      if (version === this.gifRequestVersion) this.gifSelectingId = null;
+    // GIPHY forbids rehosting its API media by default. Never download and
+    // reupload this file to Jynlo's R2: send metadata/link as text instead.
+    if (!encodeGiphyText(choice, this.draft.trim())) {
+      this.gifError = t('chat.gifCaptionTooLong');
+      return;
     }
+    this.selectedGif = choice;
+    this.selectedAttachment = null;
+    this.clearVoicePreview();
+    this.composerError = '';
+    this.closeEmojiPicker();
   }
 
   /** Insert at the caret, preserving selected text, pending drafts and focus. */
@@ -1752,7 +1756,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     const caption = this.draft.trim();
     // Server sends the same synthesized text for an attachment without a caption.
     const name = file?.name.replace(/\\/g, '/').split('/').pop()?.replace(/[\\x00-\\x1f\\x7f]/g, '').trim().slice(-160);
-    const text = file && !caption ? '📎 ' + (name || 'anexo') : caption;
+    const text = this.selectedGif ? encodeGiphyText(this.selectedGif, caption)
+      : file && !caption ? '📎 ' + (name || 'anexo') : caption;
     const replyId = this.replyingTo?.key === key ? this.replyingTo.id : null;
     const pending = { key, text, replyToMessageId: replyId,
       knownIds: new Set(this.messages.map(item => item.id)),
@@ -1815,6 +1820,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
         if (key !== this.selectedKey) return;
         if (this.historicalPreview) this.returnToRecent();
         this.selectedAttachment = null;
+        this.selectedGif = null;
         this.clearVoicePreview();
         this.draft = '';
         this.replyingTo = null;
@@ -1900,6 +1906,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       if (this.selectedKey === key) {
         this.deliveryUncertain = false;
         this.selectedAttachment = null;
+        this.selectedGif = null;
         this.clearVoicePreview();
         this.draft = '';
         this.replyingTo = null;
