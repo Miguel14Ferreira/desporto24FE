@@ -3,7 +3,7 @@ import { ChangeDetectorRef, SimpleChange } from '@angular/core';
 import { AuthenticationService } from '../../services/authethication.service';
 import { CommunityTournamentsService } from '../../services/community-tournaments.service';
 import { CommunityGroup } from '../model/community-group';
-import { CommunityTournament, TournamentMatch, TournamentPage, TournamentParticipant, TournamentParticipantPage, TournamentTeam } from '../model/community-tournament';
+import { CommunityTournament, TournamentMatch, TournamentPage, TournamentParticipant, TournamentParticipantPage, TournamentTeam, InlineSpeedOverview } from '../model/community-tournament';
 import { CommunityTournamentsComponent } from './community-tournaments.component';
 import { tournamentScoreTerminology } from './community-tournament-scoring';
 import { appTranslate as t } from '../../i18n/i18n.service';
@@ -1944,7 +1944,7 @@ describe('Community tournaments management', () => {
     component.toggleSpeedTrialLink(101, true);
     const chosen = component.speedSelections['FIRST'];
     const reason = component.speedReasons['FIRST'];
-    api.resolveInlineSpeedTieBreak.and.returnValue(of({
+    const savedOverview: InlineSpeedOverview = {
       ...overview, tieBreaks: [{
         sourceStage: 'FIRST', selectedPlayerIds: chosen, reason, confirmedBy: 'owner',
         confirmedAt: '2026-10-25T12:00:00Z', stale: false, trialIds: [101],
@@ -1953,7 +1953,9 @@ describe('Community tournaments management', () => {
           confirmedAt: '2026-10-25T12:00:00Z', stale: false, trialIds: [101]
         }]
       }]
-    }));
+    };
+    api.resolveInlineSpeedTieBreak.and.returnValue(of(savedOverview));
+    api.inlineSpeedOverview.and.returnValue(of(savedOverview));
     await component.resolveSpeedTie(proposal);
     expect(api.resolveInlineSpeedTieBreak).toHaveBeenCalledWith(
       7, 9, chosen, reason, 'TIEBREAK_TRIAL',
@@ -1963,7 +1965,7 @@ describe('Community tournaments management', () => {
     const ruling = component.speedTieBreak('FIRST')!;
     component.speedOverview!.proposals = [{ ...proposal, ready: true }];
     component.startSpeedTieCorrection({ ...proposal, ready: true });
-    expect(component.speedTieTrialIds).toEqual(ruling.trialIds);
+    expect(component.speedTieTrialIds).toEqual(ruling.trialIds ?? []);
   });
 
   it('records only an actual fictional cutoff trial and never confirms qualifiers', async () => {
