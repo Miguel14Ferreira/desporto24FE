@@ -46,3 +46,12 @@
 .admin-edit-source p[role="alert"]{color:#ffb8c4}
 .admin-edit-source-check{display:flex;align-items:flex-start;gap:10px;cursor:pointer}
 .admin-edit-source-check input{width:18px;height:18px;flex-shrink:0;margin-top:3px}
+
+.admin-edit-tabs{display:flex;flex-wrap:wrap;gap:10px;margin:-3px 0 24px}
+.admin-edit-tabs button{padding:10px 16px;border:1px solid #477282;border-radius:12px;background:#153749;color:#d8eef2;cursor:pointer}
+.admin-edit-tabs button.active{border-color:#38e1b4;color:#092c28;background:#8af2d6;font-weight:700}
+.admin-edit-tabs button:focus-visible{outline:2px solid #9df9e1;outline-offset:2px}
+.admin-edit-history-meta{border:1px solid #41717c;border-radius:13px;background:#173846;padding:15px;margin:18px 0}
+.admin-edit-history-meta strong{color:#a7f8df}
+.admin-edit-history-meta p{line-height:1.55;margin:9px 0;overflow-wrap:anywhere}
+.admin-edit-history-meta p span{color:#bad7dc}
