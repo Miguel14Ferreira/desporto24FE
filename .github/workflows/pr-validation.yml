@@ -12,6 +12,7 @@ on:
       - 'e2e/community-tournaments.spec.ts'
       - 'e2e/community-track-sprint.spec.ts'
       - 'e2e/inbox-read-sync.spec.ts'
+      - 'e2e/venue-admin-decision-history.spec.ts'
       - 'scripts/qa/jynlo-karting-live-readonly.cjs'
       - 'scripts/qa/jynlo-karting-live-readonly.test.cjs'
       - 'scripts/ci-browser/public_api_contract_READONLY.cjs'
@@ -67,6 +68,34 @@ jobs:
           JYNLO_USE_SYSTEM_CHROME: '1'
         run: |
           "$RUNNER_TEMP/jynlo-sprint-playwright/node_modules/.bin/playwright" test e2e/community-track-sprint.spec.ts --config=playwright.config.ts --project=desktop-chromium
+
+      # Optional real-Chromium QA for the admin venue-edit history.
+      # Uses only synthetic JWTs/HTTP fixtures; never calls production API.
+      # Run within the normal PR CI job to avoid a duplicate npm ci.
+      - name: Install pinned browser runner for venue-admin history
+        if: ${{ startsWith(github.head_ref, 'qa/venue-admin-history-browser-') }}
+        run: |
+          QA_DEPS="$RUNNER_TEMP/jynlo-venue-admin-playwright"
+          mkdir -p "$QA_DEPS" node_modules/@playwright
+          printf '%s\n' '{"private":true,"dependencies":{"@playwright/test":"1.56.1"}}' > "$QA_DEPS/package.json"
+          npm install --prefix "$QA_DEPS" --no-audit --no-fund
+          ln -s "$QA_DEPS/node_modules/@playwright/test" node_modules/@playwright/test
+      - name: Chromium venue history and moderation regression (isolated)
+        if: ${{ startsWith(github.head_ref, 'qa/venue-admin-history-browser-') }}
+        env:
+          JYNLO_USE_SYSTEM_CHROME: '1'
+        run: |
+          "$RUNNER_TEMP/jynlo-venue-admin-playwright/node_modules/.bin/playwright" test e2e/venue-admin-decision-history.spec.ts --config=playwright.config.ts --project=desktop-chromium
+      - name: Upload venue admin Chromium failure artifacts
+        if: ${{ failure() && startsWith(github.head_ref, 'qa/venue-admin-history-browser-') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: jynlo-venue-admin-history-browser-failures
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Run all Angular unit and regression tests
         run: npm test -- --watch=false --browsers=ChromeHeadless
