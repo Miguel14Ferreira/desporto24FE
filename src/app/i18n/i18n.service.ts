@@ -5,6 +5,11 @@ export type AppLanguage = 'pt' | 'en';
 type Dictionary = Record<string, string>;
 
 const PT: Dictionary = {
+  'communities.inlineSpeed.trialOrderWarning': 'A seleção do júri diverge dos lugares da prova adicional',
+  'communities.inlineSpeed.trialOrderWarningHint': 'A prova adicional registou um patinador excluído à frente de um selecionado. O júri pode decidir de forma diferente, mas deve explicar especificamente a exceção antes de guardar.',
+  'communities.inlineSpeed.trialOrderExceptionReason': 'Justificação oficial desta divergência (20–500 caracteres)',
+  'communities.inlineSpeed.trialOrderExceptionRequired': 'A decisão diverge da ordem da prova adicional. Indica uma fundamentação específica de 20 a 500 caracteres.',
+  'communities.inlineSpeed.trialOrderExceptionAudited': 'Exceção à ordem de chegada fundamentada pelo júri',
   'communities.inlineSpeed.trialLinkHeading': 'Provas adicionais utilizadas nesta decisão',
   'communities.inlineSpeed.trialLinkHint': 'Associa apenas provas realmente realizadas e válidas para estas mangas. Cada revisão guarda as suas próprias associações (máximo 10).',
   'communities.inlineSpeed.trialLinkRequired': 'Quando a evidência é uma prova de desempate, seleciona pelo menos uma prova adicional registada e válida.',
