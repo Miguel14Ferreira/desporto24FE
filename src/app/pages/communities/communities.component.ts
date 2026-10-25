@@ -1334,12 +1334,12 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
           this.selected = updated;
           this.communities = this.communities.map(item => item.id === communityId ? updated : item);
           this.featuresEditing = false;
-          this.featuresFeedback = 'Funcionalidades atualizadas. O histórico foi preservado.';
+          this.featuresFeedback = t('communities.features.saved');
           this.activeTab = 'home';
           this.loadCompetition(updated);
         },
         error: () => { if (this.selected?.id === communityId)
-          this.featuresError = 'Não foi possível atualizar as funcionalidades. Tenta novamente.'; }
+          this.featuresError = t('communities.features.saveError'); }
       });
   }
 
@@ -3034,6 +3034,21 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     input.value = '';
   }
 
+  /**
+   * Preserve a short backend validation detail for Portuguese users. The API
+   * does not return localized error codes for all import operations, so in
+   * English show the operation-specific translated fallback instead of leaking
+   * an arbitrary Portuguese backend message.
+   */
+  private importRequestError(error: unknown, fallbackKey: string): string {
+    const response = error as { error?: { message?: unknown } } | null;
+    const detail = response?.error?.message;
+    const english = typeof localStorage !== 'undefined'
+      && localStorage.getItem('d24-language') === 'en';
+    return !english && typeof detail === 'string' && detail.trim().length > 0
+      && detail.length <= 240 ? detail : t(fallbackKey);
+  }
+
   inspectImportFile(): void {
     if (!this.selected || !this.importFile || this.importPreviewLoading) {
       return;
@@ -3055,7 +3070,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
           this.selectImportSheet(sheet?.name || '');
         },
         error: error => {
-          this.importFileError = error.error?.message || t('communities.import.inspectError');
+          this.importFileError = this.importRequestError(error, 'communities.import.inspectError');
         }
       });
   }
@@ -3168,7 +3183,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
         error: error => {
           if (this.selected?.id === communityId && this.importMode === 'MATCHES'
               && this.importFile === file && this.importRevision === revision) {
-            this.importFileError = error.error?.message || t('communities.matches.previewError');
+            this.importFileError = this.importRequestError(error, 'communities.matches.previewError');
           }
         }
       });
@@ -3220,7 +3235,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
         },
         error: error => {
           if (this.selected?.id === communityId) {
-            this.importFileError = error.error?.message || t('communities.matches.confirmError');
+            this.importFileError = this.importRequestError(error, 'communities.matches.confirmError');
           }
         }
       });
@@ -3334,7 +3349,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
         },
         error: error => {
           if (this.selected?.id === communityId) {
-            this.importFileError = error.error?.message || t('communities.archive.previewError');
+            this.importFileError = this.importRequestError(error, 'communities.archive.previewError');
           }
         }
       });
@@ -3370,7 +3385,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
         },
         error: error => {
           if (this.selected?.id === communityId) {
-            this.importFileError = error.error?.message || t('communities.archive.confirmError');
+            this.importFileError = this.importRequestError(error, 'communities.archive.confirmError');
           }
         }
       });
@@ -3479,12 +3494,12 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
             )
             .subscribe({
               next: preview => this.importNormalized = preview,
-              error: error => this.importFileError = error.error?.message || t('communities.import.normalizeError')
+              error: error => this.importFileError = this.importRequestError(error, 'communities.import.normalizeError')
             });
         },
         error: error => {
           this.importMappingLoading = false;
-          this.importFileError = error.error?.message || t('communities.import.validateError');
+          this.importFileError = this.importRequestError(error, 'communities.import.validateError');
         }
       });
   }
@@ -3530,7 +3545,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       .pipe(timeout(20_000), finalize(() => this.importPlanLoading = false))
       .subscribe({
         next: plan => this.importFinalPlan = plan,
-        error: error => this.importFileError = error.error?.message || t('communities.import.planError')
+        error: error => this.importFileError = this.importRequestError(error, 'communities.import.planError')
       });
   }
 
@@ -3567,7 +3582,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
           this.importResult = result;
           this.loadCompetition(this.selected!, this.selectedSeasonId);
         },
-        error: error => this.importFileError = error.error?.message || t('communities.import.confirmError')
+        error: error => this.importFileError = this.importRequestError(error, 'communities.import.confirmError')
       });
   }
 

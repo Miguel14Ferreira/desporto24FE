@@ -3044,3 +3044,50 @@ test('Competition backend error E2E: English organizer sees translated completio
   expect(fixture.completeAttempts).toBe(1);
   expect(fixture.unmocked.filter(url => url.includes('/tournaments'))).toEqual([]);
 });
+
+
+test('Community feature controls E2E: PT/EN labels, history notice and cancellation are localized', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'modules-off');
+  await page.goto('/menu/communities/7?tab=tournaments');
+  await page.evaluate(() => localStorage.setItem('d24-language', 'en'));
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Community features' })).toBeVisible();
+  await page.getByRole('button', { name: 'Manage features' }).click();
+  const options = page.getByRole('group', { name: 'Optional features' });
+  await expect(options).toBeVisible();
+  await expect(options.getByLabel('Individual tournaments')).toBeVisible();
+  await expect(options.getByLabel('Team tournaments')).toBeVisible();
+  await expect(options.getByLabel('Standings and statistics for regular games')).toBeVisible();
+  await expect(page.getByText('Disabling an option hides its section without deleting data.', { exact: false })).toBeVisible();
+  await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await page.evaluate(() => localStorage.setItem('d24-language', 'pt'));
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Funcionalidades da comunidade' })).toBeVisible();
+  await page.getByRole('button', { name: 'Gerir funcionalidades' }).click();
+  await expect(page.getByRole('group', { name: 'Funcionalidades opcionais' })).toBeVisible();
+  await expect(page.getByText('calendários em desenvolvimento')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Cancelar', exact: true }).click();
+  expect(fixture.unmocked.filter(url => /^(POST|PUT|PATCH|DELETE) \/api\/communities\/7\//.test(url))).toEqual([]);
+});
+
+test('Community spreadsheet inspection E2E: Portuguese backend error is not shown in English', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'history');
+  await page.route('**/api/communities/7/competition/import/preview', async route => {
+    if (route.request().method() !== 'POST') return route.fallback();
+    await route.fulfill({ status: 422, contentType: 'application/json',
+      body: JSON.stringify({ message: 'Não foi possível analisar a folha de cálculo.' }) });
+  });
+  await page.goto('/menu/communities/7?tab=ranking');
+  await page.evaluate(() => localStorage.setItem('d24-language', 'en'));
+  await page.reload();
+  await page.getByRole('button', { name: 'Final standings' }).click();
+  const file = page.locator('input[accept=".xlsx,.xls,.csv,.tsv"]');
+  await file.setInputFiles({ name: 'history.csv', mimeType: 'text/csv',
+    buffer: Buffer.from('Pos;Equipa;Pts\n1;Azuis;3\n') });
+  await page.getByRole('button', { name: 'Analyse file' }).click();
+  await expect(page.getByRole('alert').filter({ hasText: 'We could not analyse this file.' }))
+    .toHaveCount(1);
+  expect((await page.getByRole('alert').allTextContents()).join(' '))
+    .not.toContain('Não foi possível analisar');
+  expect(fixture.unmocked.filter(url => url.includes('/competition/import/'))).toEqual([]);
+});

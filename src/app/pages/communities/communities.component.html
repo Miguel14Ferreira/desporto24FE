@@ -598,7 +598,7 @@
               @if (hasCompetitions(selected)) {
                 <button type="button" [class.active]="activeTab === 'tournaments'"
                   [attr.aria-current]="activeTab === 'tournaments' ? 'true' : null"
-                  (click)="setTab('tournaments')">Competições</button>
+                  (click)="setTab('tournaments')">{{ 'communities.features.competitionsTab' | t }}</button>
               }
               @if (canBrowseHistoricalArchives) {
                 <button type="button" [class.active]="activeTab === 'ranking'"
@@ -757,34 +757,34 @@
             }
 
             @if (canManage() && activeTab === 'home') {
-              <section class="community-feature-settings" aria-label="Gerir funcionalidades da comunidade">
+              <section class="community-feature-settings" [attr.aria-label]="'communities.features.region' | t">
                 <div class="community-feature-settings-title">
                   <div>
-                    <h3>Funcionalidades da comunidade</h3>
-                    <p>As sessões estão sempre disponíveis. Podes ativar outras formas de jogar quando quiseres, sem apagar resultados ou históricos anteriores.</p>
+                    <h3>{{ 'communities.features.title' | t }}</h3>
+                    <p>{{ 'communities.features.intro' | t }}</p>
                   </div>
                   @if (!featuresEditing) {
                     <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
-                      (click)="editFeatures()">Gerir funcionalidades</button>
+                      (click)="editFeatures()">{{ 'communities.features.manage' | t }}</button>
                   }
                 </div>
                 @if (featuresFeedback) { <p role="status" class="feature-settings-success">{{ featuresFeedback }}</p> }
                 @if (featuresError) { <p role="alert" class="feature-settings-error">{{ featuresError }}</p> }
                 @if (featuresEditing) {
-                  <div class="feature-settings-choices" role="group" aria-label="Funcionalidades opcionais">
+                  <div class="feature-settings-choices" role="group" [attr.aria-label]="'communities.features.group' | t">
                     <label><input type="checkbox" [(ngModel)]="featuresDraft.individualTournamentsEnabled"
-                      [disabled]="featuresSaving"> Torneios individuais</label>
+                      [disabled]="featuresSaving"> {{ 'communities.features.individual' | t }}</label>
                     <label><input type="checkbox" [(ngModel)]="featuresDraft.teamTournamentsEnabled"
-                      [disabled]="featuresSaving"> Torneios por equipas <small>(calendários em desenvolvimento)</small></label>
+                      [disabled]="featuresSaving"> {{ 'communities.features.team' | t }}</label>
                     <label><input type="checkbox" [(ngModel)]="featuresDraft.rankingsEnabled"
-                      [disabled]="featuresSaving"> Classificações e estatísticas dos jogos habituais</label>
+                      [disabled]="featuresSaving"> {{ 'communities.features.rankings' | t }}</label>
                   </div>
-                  <p class="feature-settings-caption">Sem nenhuma opção ativa: apenas sessões e respetivo histórico. Desativar uma opção oculta o módulo, mas não elimina os dados.</p>
+                  <p class="feature-settings-caption">{{ 'communities.features.caption' | t }}</p>
                   <div class="feature-settings-actions">
                     <button type="button" class="primary-action jynlo-action jynlo-action--primary"
-                      [disabled]="featuresSaving" (click)="saveFeatures()">Guardar funcionalidades</button>
+                      [disabled]="featuresSaving" (click)="saveFeatures()">{{ 'communities.features.save' | t }}</button>
                     <button type="button" class="secondary-action jynlo-action jynlo-action--neutral"
-                      [disabled]="featuresSaving" (click)="cancelFeaturesEdit()">Cancelar</button>
+                      [disabled]="featuresSaving" (click)="cancelFeaturesEdit()">{{ 'communities.features.cancel' | t }}</button>
                   </div>
                 }
               </section>
@@ -3937,7 +3937,7 @@
                     <p>{{ 'communities.competitionDisabledText' | t }}</p>
                   </div>
                 } @else {
-                  <p class="competition-context-hint" role="note">Estatísticas das jornadas regulares da comunidade, incluindo histórico importado por Excel. Não incluem automaticamente os torneios.</p>
+                  <p class="competition-context-hint" role="note">{{ 'communities.features.regularStatsHint' | t }}</p>
                   @if ((competition?.seasons?.length || 0) > 0) {
                     <div class="stats-filter-row">
                       <label class="season-filter">
