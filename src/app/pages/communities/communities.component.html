@@ -1476,7 +1476,9 @@
                                           ? ('communities.trackCycling.incidentPending' | t)
                                           : incident.status === 'ADJUDICATION_REQUIRED'
                                             ? ('communities.trackCycling.disciplineBlocked' | t)
-                                            : ('communities.trackCycling.incidentDecided' | t) }}</span>
+                                            : incident.status === 'RESTART_AUTHORIZED'
+                                              ? ('communities.trackCycling.rerunAuthorized' | t)
+                                              : ('communities.trackCycling.incidentDecided' | t) }}</span>
                                     <p>{{ incident.details }}</p>
                                     <small>{{ 'communities.trackCycling.incidentReportedBy' | t }}:
                                       {{ incident.reportedBy }} · {{ incident.reportedAt }}</small>
@@ -1494,11 +1496,64 @@
                                           <p>{{ 'communities.trackCycling.disciplineNoAutoResult' | t }}</p>
                                         }
                                       }
+                                      @if (incident.status === 'RESTART_AUTHORIZED') {
+                                        <p>{{ 'communities.trackCycling.rerunOrder' | t }}:
+                                          <strong>{{ (incident.rerunRiders || []).join(' → ') }}</strong>
+                                        </p>
+                                        <p>{{ incident.rerunReason }}</p>
+                                        <small>{{ 'communities.trackCycling.incidentOfficialReference' | t }}:
+                                          {{ incident.rerunReference }} · {{ incident.rerunAuthorizedBy }}
+                                        </small>
+                                      }
                                       <p>{{ incident.decisionReason }}</p>
                                       <small>{{ 'communities.trackCycling.incidentOfficialReference' | t }}:
                                         {{ incident.decisionReference }} · {{ incident.decidedBy }}</small>
                                     }
                                   </div>
+                                  @if (canManage() && selectedSeasonId === activeSeason()?.id
+                                        && sprintCanAuthorizeReducedRerun(bracket, incident)) {
+                                    <button type="button" class="btn btn-secondary"
+                                      [disabled]="sprintIncidentSaving"
+                                      (click)="editSprintRerun(bracket.id, incident.id)">
+                                      {{ 'communities.trackCycling.rerunApprove' | t }}
+                                    </button>
+                                    @if (sprintRerunBracketId === bracket.id
+                                          && sprintRerunIncidentId === incident.id) {
+                                      <div class="round-meta-form">
+                                        <small>{{ 'communities.trackCycling.rerunNotice' | t }}</small>
+                                        @for (position of [0,1]; track position) {
+                                          <label>
+                                            <span>{{ 'communities.trackCycling.rerunPosition' | t }} {{ position + 1 }}</span>
+                                            <select [(ngModel)]="sprintRerunOrder[position]">
+                                              <option value="">{{ 'communities.trackCycling.tieSelectRider' | t }}</option>
+                                              @for (candidate of sprintRerunEligibleRiders(bracket, incident);
+                                                    track candidate) {
+                                                <option [value]="candidate">{{ candidate }}</option>
+                                              }
+                                            </select>
+                                          </label>
+                                        }
+                                        <label>
+                                          <span>{{ 'communities.trackCycling.incidentOfficialReference' | t }}</span>
+                                          <input [(ngModel)]="sprintRerunReference" maxlength="255">
+                                        </label>
+                                        <label>
+                                          <span>{{ 'communities.trackCycling.incidentDecisionReason' | t }}</span>
+                                          <textarea [(ngModel)]="sprintRerunReason" maxlength="500"></textarea>
+                                        </label>
+                                        <small>{{ 'communities.trackCycling.rerunNoWinner' | t }}</small>
+                                        <button class="btn btn-primary" type="button"
+                                          (click)="saveSprintRerun()"
+                                          [disabled]="sprintIncidentSaving ||
+                                            sprintRerunReference.trim().length < 12 ||
+                                            sprintRerunReason.trim().length < 12 ||
+                                            !sprintRerunOrder[0] || !sprintRerunOrder[1] ||
+                                            sprintRerunOrder[0] === sprintRerunOrder[1]">
+                                          {{ 'communities.trackCycling.rerunConfirm' | t }}
+                                        </button>
+                                      </div>
+                                    }
+                                  }
                                   @if (incident.status === 'PENDING' && canManage()
                                     && selectedSeasonId === activeSeason()?.id) {
                                     <button type="button" class="btn btn-secondary"
@@ -1563,6 +1618,7 @@
                                 }
                                 @if (canManage() && selectedSeasonId === activeSeason()?.id
                                       && !sprintIncidentPending(bracket, match.seriesKey)
+                                      && !sprintIncidentsFor(bracket, match.seriesKey).some(i => i.status === 'RESTART_AUTHORIZED')
                                       && match.phase !== 'SPRINT_PLACES_5_8'
                                       && (match.status === 'READY' || match.status === 'IN_PROGRESS')) {
                                   <button type="button" class="btn btn-secondary"
