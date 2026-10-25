@@ -369,6 +369,7 @@ const PT: Dictionary = {
   'chat.pickerTitle': 'Emojis e GIFs',
   'chat.pickerEmojis': 'Emojis',
   'chat.pickerClose': 'Fechar seletor',
+  'chat.gifSearchOffline': 'Pesquisar reações disponíveis',
   'chat.gifSearch': 'Pesquisar GIFs via GIPHY',
   'chat.gifCategories': 'Categorias de GIFs',
   'chat.gifNotConfigured': 'Pesquisa online ainda indisponível. Escolhe uma reação animada abaixo ou envia um GIF do dispositivo.',
