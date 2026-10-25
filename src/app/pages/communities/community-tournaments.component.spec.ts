@@ -1201,7 +1201,7 @@ describe('Community tournaments management', () => {
     component.confirmAction = 'delete';
     await component.deleteSelected();
     expect(api.delete).toHaveBeenCalledWith(7, 9);
-    expect(component.feedback).toBe('');
+    expect(component.selected).toBeUndefined();
     expect(component.tournaments).toEqual([]);
     expect(component.feedback).toBe('Competição eliminada.');
   });
@@ -1630,7 +1630,8 @@ describe('Community tournaments management', () => {
       localStorage.setItem('d24-language', 'en');
       await component.create();
       expect(component.error).toBe('All league matches must be completed before closing the tournament.');
-      expect(component.selected).toBeUndefined();
+      expect(component.selected?.id).toBe(9);
+      expect(component.feedback).toBe('');
       expect(component.busy).toBeFalse();
 
       localStorage.setItem('d24-language', 'pt');
