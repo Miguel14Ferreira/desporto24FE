@@ -8,7 +8,7 @@ const PT: Dictionary = {
   'communities.inlineSpeed.tieHistory': 'Histórico auditável do desempate',
   'communities.inlineSpeed.tieVersion': 'Versão',
   'communities.inlineSpeed.tieOutdated': 'Resultados de origem alterados',
-  'communities.inlineSpeed.tieSelected': 'IDs dos apurados',
+  'communities.inlineSpeed.tieSelected': 'Patinadores selecionados',
   'communities.inlineSpeed.tieCorrect': 'Corrigir decisão do júri',
   'communities.inlineSpeed.tiebreakIntro': 'Empate múltiplo no 16.º lugar: mantém os patinadores com melhor tempo e seleciona apenas os atletas efetivamente empatados no limite, até perfazer 16 apurados. O júri deve justificar a decisão.',
   'communities.inlineSpeed.tiebreakAlreadyQualified': 'apuramento garantido pelo tempo',
