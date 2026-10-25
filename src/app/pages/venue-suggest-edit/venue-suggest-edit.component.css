@@ -28,3 +28,4 @@
 .venue-edit-actions>span{color:#b8d4dd}
 .venue-edit-actions button:disabled{opacity:.4;cursor:not-allowed}
 @media(max-width:640px){.venue-edit-grid{grid-template-columns:1fr}.venue-edit-page{padding:22px 14px 38px}.venue-edit-form{padding:17px}}
+.venue-edit-contact-hint{color:#b0cbd5;font-size:.79rem;line-height:1.45;font-weight:400}
