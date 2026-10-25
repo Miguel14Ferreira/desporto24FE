@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: jynlo-dependency-security-triage-${{ github.ref }}
@@ -25,6 +25,25 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Propose compatible vulnerability fixes to isolated branch
+        if: ${{ github.event_name == 'push' && github.event.head_commit.message == 'ci(security): propose compatible lockfile fixes' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo 'Applying semver-compatible dependency fixes only, without npm scripts.'
+          npm audit fix --package-lock-only --ignore-scripts --no-fund || true
+          if git diff --quiet -- package.json package-lock.json; then
+            echo 'No compatible lockfile changes.'
+            exit 1
+          fi
+          git diff --stat -- package.json package-lock.json
+          git diff -- package.json | head -60
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- package.json package-lock.json
+          git commit -m "fix(deps): apply non-breaking npm security lockfile updates"
+          git push origin HEAD:refs/heads/security/dependency-audit-20261025
+
       - name: Audit lockfile (all dependencies and production only)
         shell: bash
         run: |
