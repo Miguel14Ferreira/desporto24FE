@@ -3342,6 +3342,7 @@ const PT: Dictionary = {
   'venue.visit.call': 'Ligar para o recinto',
   'venue.visit.confirmContact': 'Contacto indicado no catálogo. Confirma com a entidade gestora antes de marcar.',
   'venue.visit.noContact': 'Ainda não temos um contacto público confirmado neste recinto.',
+  'venue.visit.checkOfficialContact': 'Consultar contactos na página oficial do recinto',
   'venue.visit.findGoogleContact': 'Procurar contacto no Google Maps',
   'venue.visit.correctContact': 'Corrigir contacto',
   'venue.visit.suggestContact': 'Sugerir contacto',

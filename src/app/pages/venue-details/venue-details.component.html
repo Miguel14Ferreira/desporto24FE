@@ -135,6 +135,12 @@
               <p class="venue-contact-missing">{{ 'venue.visit.noContact' | t }}</p>
             }
             <div class="venue-contact-other-actions">
+              @if (officialContactPageUrl; as officialPage) {
+                <a class="jynlo-action jynlo-action--neutral venue-visit-action"
+                   [href]="officialPage" target="_blank" rel="noopener noreferrer">
+                  {{ 'venue.visit.checkOfficialContact' | t }}
+                </a>
+              }
               @if (googleVenueContactUrl; as googleListing) {
                 <a class="jynlo-action jynlo-action--neutral venue-visit-action"
                    [href]="googleListing" target="_blank" rel="noopener noreferrer">

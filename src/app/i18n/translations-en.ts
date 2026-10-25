@@ -3335,6 +3335,7 @@ export const EN: Record<string, string> = {
   'venue.visit.call': 'Call the venue',
   'venue.visit.confirmContact': 'Contact listed in the catalogue. Confirm details with the operator before booking.',
   'venue.visit.noContact': 'We don\'t have a verified public contact for this venue yet.',
+  'venue.visit.checkOfficialContact': 'Check contacts on the venue’s official page',
   'venue.visit.findGoogleContact': 'Look up contact on Google Maps',
   'venue.visit.correctContact': 'Correct contact',
   'venue.visit.suggestContact': 'Suggest a contact',
