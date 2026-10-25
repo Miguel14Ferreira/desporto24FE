@@ -14,6 +14,8 @@ import { KartingPalmaresComponent } from './karting-palmares.component';
 import { KartingRaceTableComponent } from './karting-race-table.component';
 import { CompetitionGuideComponent } from './competition-guide.component';
 import { CompetitionFormatChooserComponent } from './competition-format-chooser.component';
+import { TournamentClassificationNoteComponent } from './tournament-classification-note.component';
+import { RaceStandingsCardComponent } from './race-standings-card.component';
 
 const routes: Routes = [
   { path: '', component: CommunitiesComponent },
@@ -28,6 +30,7 @@ const routes: Routes = [
     CommunityTournamentsComponent
   ],
   imports: [CommonModule, FormsModule, RouterModule.forChild(routes), TranslatePipe, ChatReactionsComponent, KartingPodiumComponent, KartingPalmaresComponent, KartingRaceTableComponent,
-    CompetitionGuideComponent, CompetitionFormatChooserComponent]
+    CompetitionGuideComponent, CompetitionFormatChooserComponent,
+    TournamentClassificationNoteComponent, RaceStandingsCardComponent]
 })
 export class CommunitiesModule {}
