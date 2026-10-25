@@ -16,6 +16,9 @@ export interface CommunityGroup {
   sport: string | null;
   sports?: string[];
   photoUrl: string | null;
+  photoZoom?: number | null;
+  photoFocusX?: number | null;
+  photoFocusY?: number | null;
   visibility: CommunityVisibility;
   rankingsEnabled: boolean;
   individualTournamentsEnabled?: boolean;
