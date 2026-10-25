@@ -381,9 +381,9 @@
                     (click)="attachmentFile.click()" aria-haspopup="dialog">📎</button>
                 }
                 <div class="inbox-emoji-controls" (keydown.escape)="closeEmojiPicker()">
+                  <input #gifFile type="file" class="inbox-attachment-input"
+                    accept=".gif,image/gif" (change)="onAttachmentPicked($event)">
                   @if (attachmentControlsReady) {
-                    <input #gifFile type="file" class="inbox-attachment-input"
-                      accept=".gif,image/gif" (change)="onAttachmentPicked($event)">
                     <button type="button" class="inbox-gif-trigger"
                       [disabled]="!composerAllowed || composerAccessLoading || sending
                         || deliveryUncertain || deliveryChecking || previewLoading || previewError
