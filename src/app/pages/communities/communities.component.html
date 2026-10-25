@@ -170,7 +170,11 @@
                   <div class="community-avatar community-discovery-cover"
                     [class.community-avatar--animated]="isAnimatedCommunityAvatar(community.photoUrl)">
                     @if (community.photoUrl) {
-                      <img [src]="community.photoUrl" [alt]="community.name" loading="lazy" decoding="async">
+                      <img [src]="community.photoUrl" [alt]="community.name" loading="lazy" decoding="async"
+                        [style.object-fit]="community.photoZoom != null ? 'cover' : null"
+                        [style.object-position]="communityCoverPosition(community)"
+                        [style.transform-origin]="communityCoverOrigin(community)"
+                        [style.transform]="communityCoverZoom(community)">
                     } @else {
                       <span aria-hidden="true">{{ community.name.charAt(0).toUpperCase() }}</span>
                     }
@@ -294,7 +298,11 @@
               <div class="community-card-main">
                 <div class="community-avatar" [class.community-avatar--animated]="isAnimatedCommunityAvatar(community.photoUrl)">
                   @if (community.photoUrl) {
-                    <img [src]="community.photoUrl" [alt]="community.name">
+                    <img [src]="community.photoUrl" [alt]="community.name"
+                        [style.object-fit]="community.photoZoom != null ? 'cover' : null"
+                        [style.object-position]="communityCoverPosition(community)"
+                        [style.transform-origin]="communityCoverOrigin(community)"
+                        [style.transform]="communityCoverZoom(community)">
                   } @else {
                     <span>{{ communityInitials(community) }}</span>
                   }
@@ -321,7 +329,11 @@
                 <div class="community-avatar community-avatar--large"
                   [class.community-avatar--animated]="isAnimatedCommunityAvatar(communityPresentation.photoUrl)">
                   @if (communityPresentation.photoUrl) {
-                    <img [src]="communityPresentation.photoUrl" [alt]="communityPresentation.name">
+                    <img [src]="communityPresentation.photoUrl" [alt]="communityPresentation.name"
+                        [style.object-fit]="communityPresentation.photoZoom != null ? 'cover' : null"
+                        [style.object-position]="communityCoverPosition(communityPresentation)"
+                        [style.transform-origin]="communityCoverOrigin(communityPresentation)"
+                        [style.transform]="communityCoverZoom(communityPresentation)">
                   } @else {
                     <span>{{ communityPresentation.name.charAt(0).toUpperCase() }}</span>
                   }
@@ -375,7 +387,7 @@
           }
 
           @if (selected) {
-          @if (avatarCropFile) {
+          @if (avatarCropFile || avatarCropExisting) {
             <div class="community-photo-editor-overlay">
               <section class="community-photo-editor" role="dialog" aria-modal="true"
                 aria-labelledby="community-photo-editor-title">
@@ -400,7 +412,13 @@
                   (keydown)="onCommunityAvatarCropKey($event)"
                   [attr.tabindex]="avatarCropAnimated ? -1 : 0"
                   [attr.aria-label]="'communities.cropMove' | t">
-                  @if (avatarCropAnimated) {
+                  @if (avatarCropExisting) {
+                    <img class="community-photo-editor-existing" [src]="avatarCropUrl"
+                      [alt]="'communities.cropPreview' | t" draggable="false"
+                      [style.object-position]="avatarCropFocusX + '% ' + avatarCropFocusY + '%'"
+                      [style.transform-origin]="avatarCropFocusX + '% ' + avatarCropFocusY + '%'"
+                      [style.transform]="'scale(' + avatarCropZoom + ')'">
+                  } @else if (avatarCropAnimated) {
                     <img class="community-photo-editor-gif" [src]="avatarCropUrl"
                       [alt]="'communities.cropPreview' | t">
                   } @else if (avatarCropReady && avatarCropMetrics) {
@@ -415,7 +433,7 @@
                   }
                 </div>
 
-                @if (avatarCropAnimated) {
+                @if (avatarCropAnimated && !avatarCropExisting) {
                   <p class="community-photo-editor-note">{{ 'communities.cropGifHint' | t }}</p>
                 } @else {
                   <div class="community-photo-editor-zoom">
@@ -452,7 +470,11 @@
                     [class.community-avatar--animated]="isAnimatedCommunityAvatar(selected.photoUrl)"
                     [class.community-avatar--letterboxed]="!!selected.photoUrl">
                     @if (selected.photoUrl) {
-                      <img [src]="selected.photoUrl" [alt]="selected.name">
+                      <img [src]="selected.photoUrl" [alt]="selected.name"
+                        [style.object-fit]="selected.photoZoom != null ? 'cover' : null"
+                        [style.object-position]="communityCoverPosition(selected)"
+                        [style.transform-origin]="communityCoverOrigin(selected)"
+                        [style.transform]="communityCoverZoom(selected)">
                     } @else {
                       <span>{{ communityInitials(selected) }}</span>
                     }
@@ -469,6 +491,12 @@
                         <span>{{ 'communities.changePhoto' | t }}</span>
                       </label>
                       @if (selected.photoUrl) {
+                        <button type="button"
+                          class="community-photo-action jynlo-action jynlo-action--neutral"
+                          [disabled]="photoUpdating"
+                          (click)="openExistingCommunityAvatarCrop()">
+                          {{ 'communities.adjustPhoto' | t }}
+                        </button>
                         <button
                           type="button"
                           class="community-photo-action community-photo-remove jynlo-action jynlo-action--danger"
