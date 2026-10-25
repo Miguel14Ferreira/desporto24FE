@@ -574,12 +574,14 @@
                       <thead><tr>
                         <th scope="col">#</th>
                         <th scope="col">{{ 'communities.matches.participant' | t }}</th>
-                        <th scope="col">J</th><th scope="col">V</th>
-                        <th scope="col">E</th><th scope="col">D</th>
+                        <th scope="col" [title]="'communities.tournaments.individualUi.playedTitle' | t">{{ 'communities.tournaments.finalUi.playedCol' | t }}</th>
+                        <th scope="col" [title]="'communities.tournaments.individualUi.winTitle' | t">{{ 'communities.tournaments.finalUi.winsCol' | t }}</th>
+                        <th scope="col" [title]="'communities.tournaments.individualUi.drawTitle' | t">{{ 'communities.tournaments.finalUi.drawsCol' | t }}</th>
+                        <th scope="col" [title]="'communities.tournaments.individualUi.lossTitle' | t">{{ 'communities.tournaments.finalUi.lossesCol' | t }}</th>
                         <th scope="col" [title]="historicalScoreLabels.forTitle">{{ historicalScoreLabels.forAbbrev }}</th>
                         <th scope="col" [title]="historicalScoreLabels.againstTitle">{{ historicalScoreLabels.againstAbbrev }}</th>
                         <th scope="col" [title]="historicalScoreLabels.differenceTitle">{{ historicalScoreLabels.differenceAbbrev }}</th>
-                        <th scope="col">Pts</th>
+                        <th scope="col">{{ 'communities.tournaments.finalUi.pointsCol' | t }}</th>
                       </tr></thead>
                       <tbody>
                         @for (row of historicalLeagueTable; track row.name) {
@@ -1475,16 +1477,16 @@
                   <thead>
                     <tr>
                       <th scope="col">#</th><th scope="col">{{ 'communities.tournaments.individualUi.playerCol' | t }}</th>
-                      <th scope="col" [title]="'communities.tournaments.individualUi.playedTitle' | t">J</th>
-                      <th scope="col" [title]="'communities.tournaments.individualUi.winTitle' | t">V</th>
-                      <th scope="col" [title]="'communities.tournaments.individualUi.drawTitle' | t">E</th>
-                      <th scope="col" [title]="'communities.tournaments.individualUi.lossTitle' | t">D</th>
+                      <th scope="col" [title]="'communities.tournaments.individualUi.playedTitle' | t">{{ 'communities.tournaments.finalUi.playedCol' | t }}</th>
+                      <th scope="col" [title]="'communities.tournaments.individualUi.winTitle' | t">{{ 'communities.tournaments.finalUi.winsCol' | t }}</th>
+                      <th scope="col" [title]="'communities.tournaments.individualUi.drawTitle' | t">{{ 'communities.tournaments.finalUi.drawsCol' | t }}</th>
+                      <th scope="col" [title]="'communities.tournaments.individualUi.lossTitle' | t">{{ 'communities.tournaments.finalUi.lossesCol' | t }}</th>
                       @if (!isChessTournament) {
                         <th scope="col" [title]="scoring.forTitle">{{ scoring.forAbbrev }}</th>
                         <th scope="col" [title]="scoring.againstTitle">{{ scoring.againstAbbrev }}</th>
                         <th scope="col" [title]="scoring.differenceTitle">{{ scoring.differenceAbbrev }}</th>
                       }
-                      <th scope="col">Pts</th>
+                      <th scope="col">{{ 'communities.tournaments.finalUi.pointsCol' | t }}</th>
                     </tr>
                   </thead>
                   <tbody>

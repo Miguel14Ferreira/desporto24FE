@@ -2729,3 +2729,49 @@ test('Competition organizer E2E: deletion warning, cancellation and sidebar foll
   expect(fixture.tournaments).toHaveLength(1);
   expect(fixture.unmocked.filter(url => url.includes('/tournaments/'))).toEqual([]);
 });
+
+
+test('Competition bilingual tables E2E: individual standings use PT/EN played and result abbreviations', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'paged');
+  await page.goto('/menu/communities/7?tab=tournaments');
+  await page.evaluate(() => localStorage.setItem('d24-language', 'en'));
+  await page.reload();
+  const table = page.getByRole('table', { name: 'Tournament standings' });
+  await expect(table).toBeVisible();
+  for (const [label, tooltip] of [['P', 'Played'], ['W', 'Wins'], ['D', 'Draws'], ['L', 'Losses']]) {
+    await expect(table.getByRole('columnheader', { name: label, exact: true })).toHaveAttribute('title', tooltip);
+  }
+  await expect(table.getByRole('columnheader', { name: 'Pts' })).toBeVisible();
+  await page.evaluate(() => localStorage.setItem('d24-language', 'pt'));
+  await page.reload();
+  const portuguese = page.getByRole('table', { name: 'Classificação do torneio' });
+  for (const [label, tooltip] of [['J', 'Jogos'], ['V', 'Vitórias'], ['E', 'Empates'], ['D', 'Derrotas']]) {
+    await expect(portuguese.getByRole('columnheader', { name: label, exact: true })).toHaveAttribute('title', tooltip);
+  }
+  expect(fixture.organizerMutations).toEqual([]);
+  expect(fixture.unmocked.filter(url => url.includes('/tournaments'))).toEqual([]);
+});
+
+test('Competition backend error E2E: English organizer sees translated completion conflict and can retry', async ({ page }) => {
+  const fixture = await mockCommunityApi(page, 'OWNER', 'complete-rejected');
+  await page.goto('/menu/communities/7?tab=tournaments');
+  await page.evaluate(() => localStorage.setItem('d24-language', 'en'));
+  await page.reload();
+
+  await page.getByRole('button', { name: 'Generate fixtures' }).click();
+  await page.getByRole('button', { name: 'Yes, publish fixtures' }).click();
+  const game = page.locator('.match-card').first();
+  await game.getByRole('spinbutton', { name: 'Goals for organizador' }).fill('1');
+  await game.getByRole('spinbutton', { name: 'Goals for participante' }).fill('0');
+  await game.getByRole('button', { name: 'Save' }).click();
+  await page.getByRole('button', { name: 'Finish tournament' }).click();
+  await page.getByRole('button', { name: 'Yes, finish' }).click();
+
+  const alert = page.getByRole('alert');
+  await expect(alert).toHaveText('All league matches must be completed before closing the tournament.');
+  await expect(alert).toBeFocused();
+  await expect(page.getByRole('button', { name: 'Finish tournament' })).toBeEnabled();
+  expect(fixture.tournaments[0].status).toBe('IN_PROGRESS');
+  expect(fixture.completeAttempts).toBe(1);
+  expect(fixture.unmocked.filter(url => url.includes('/tournaments'))).toEqual([]);
+});
