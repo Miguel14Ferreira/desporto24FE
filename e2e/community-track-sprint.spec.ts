@@ -138,6 +138,8 @@ async function mockedCommunity(page: Page, role: Role, view: View = 'ready') {
       });
     }
     if(path==='/api/communities/7/competition/standings-archives')return send([]);
+    if(path==='/api/communities/7/competition/match-archives')return send([]);
+    if(path==='/api/notifications/me/unread-count')return send(0);
     if(path==='/api/communities/7/tournaments')return send({tournaments:[],page:0,hasMore:false});
     if(path==='/api/notifications/unread-count')return send(0);
     unexpected.push(method+' '+path);
@@ -161,6 +163,8 @@ async function locateSprintBracket(page: Page, qa: {unexpected:string[]}) {
 test('Olympic sprint browser QA: member sees recorded three-up heats and 5–8 places, with no admin tools',async ({page})=>{
   const qa=await mockedCommunity(page,'MEMBER','finished');
   await page.goto('/menu/communities/7?tab=ranking');
+  // The ranking page opens with "Todo o histórico". Explicitly choose a season.
+  await page.locator('.season-filter select').selectOption({index:1});
   const section=await locateSprintBracket(page,qa);
   await expect(section).toContainText('Sprint Olímpico QA 2026');
   await expect(section).toContainText('r15');
@@ -175,6 +179,8 @@ test('Olympic sprint browser QA: member sees recorded three-up heats and 5–8 p
 test('Olympic sprint browser QA: owner can select 24 valid times; older season does not leak active bracket',async ({page})=>{
   const qa=await mockedCommunity(page,'OWNER','ready');
   await page.goto('/menu/communities/7?tab=ranking');
+  // The ranking page opens with "Todo o histórico". Explicitly choose a season.
+  await page.locator('.season-filter select').selectOption({index:1});
   const section=await locateSprintBracket(page,qa);
   await expect(section).toContainText('Sprint Olímpico QA 2026');
   await expect(section).toContainText('SP41-F58');
