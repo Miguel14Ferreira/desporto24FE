@@ -194,11 +194,11 @@
               <p class="detail-message">{{ notificationMessage(selected) }}</p>
 
               @if (selected.greeting) {
-                <p>{{ selected.greeting }}</p>
+                <p>{{ legacyBrand(selected.greeting) }}</p>
               }
 
               @if (selected.signature) {
-                <p class="signature">{{ selected.signature }}</p>
+                <p class="signature">{{ legacyBrand(selected.signature) }}</p>
               }
 
               <span class="created-at">{{ formatCreatedAt(selected.createdAt) }}</span>
