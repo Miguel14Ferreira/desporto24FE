@@ -5,8 +5,7 @@ import { HistoricalMatchArchive } from '../../services/community-groups.service'
 import { historicalTournamentStandings, HistoricalTournamentStanding, canEstimateHistoricalLeagueStandings } from './community-historical-tournament-standings';
 import { historicalTournamentOutcome, HistoricalTournamentOutcome } from './community-historical-tournament-outcome';
 import { groupHistoricalTournamentSourceRows } from './community-historical-tournament-source-groups';
-import { historicalKnockoutPhaseOverview } from './community-historical-knockout-overview';
-import { HistoricalKnockoutPhaseOverview, HistoricalKnockoutPhaseId } from './community-historical-knockout-overview';
+import { historicalKnockoutPhaseOverview, HistoricalKnockoutPhaseOverview, HistoricalKnockoutPhaseId } from './community-historical-knockout-overview';
 import { historicalMatchReviewFlags } from './community-historical-match-review';
 import {
   CommunityTournament, TournamentPointRules, TeamTieBreakPriority, TournamentMatch, TournamentParticipant, TournamentStandingRow,
