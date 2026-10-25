@@ -1,6 +1,6 @@
 import { eventOptionsForSport, eventView, isRaceEvent, isNeutralEvent } from './community-round-event-type';
 import { INLINE_SPEED_HEAT_CODES, isInlineSpeedHeatEvent, isInlineSpeedFinalHeat,
-  inlineSpeedHeatError, inlineSpeedCandidatePlace } from './community-inline-speed-heats';
+  inlineSpeedHeatError, inlineSpeedCandidatePlace, inlineSpeedFirstHeatTooLarge } from './community-inline-speed-heats';
 import { CommunityRoundEntryDraft } from '../model/community-group';
 
 describe('Inline speed skating — organizer-entered sprint heats', () => {
@@ -49,6 +49,15 @@ describe('Inline speed skating — organizer-entered sprint heats', () => {
     expect(inlineSpeedHeatError('INLINE_TRACK_500D_FINAL_A',
       [entrant('a', 1), entrant('b', 2), entrant('c', 3), entrant('d', 4),
         entrant('e', 5)])).toBeTrue();
+  });
+
+  it('enforces at most six skaters in a first-round sprint heat, not in 200m time trials', () => {
+    for (const code of ['INLINE_TRACK_500D_FIRST_ROUND', 'INLINE_ROAD_LAP_FIRST_ROUND']) {
+      expect(inlineSpeedFirstHeatTooLarge(code, 6)).toBeFalse();
+      expect(inlineSpeedFirstHeatTooLarge(code, 7)).toBeTrue();
+    }
+    expect(inlineSpeedFirstHeatTooLarge('INLINE_TRACK_200_TT', 20)).toBeFalse();
+    expect(inlineSpeedFirstHeatTooLarge('INLINE_TRACK_500D_SEMI_HEAT', 7)).toBeFalse();
   });
 
   it('identifies provisional top two only in preceding heats; finals have no advancement', () => {
