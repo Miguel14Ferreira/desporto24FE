@@ -45,6 +45,16 @@ export interface TrackSprintIncident {
   rerunAuthorizedAt?: string | null;
 }
 
+export interface TrackSprintInterruption {
+  stage: 'BEFORE_QUARTERS' | 'AFTER_QUARTERS' | 'AFTER_SEMIS';
+  reference: string;
+  reason: string;
+  recordedBy: string;
+  recordedAt: string;
+  noFinalClassification: boolean;
+  regulatoryPlacings: {username: string; position: number}[];
+}
+
 export interface TrackSprintBracketOverview {
   id: number;
   seasonId: number;
@@ -54,6 +64,7 @@ export interface TrackSprintBracketOverview {
   qualifyingRoundId?: number | null;
   qualifyingSeeds?: string[];
   incidents?: TrackSprintIncident[];
+  interruption?: TrackSprintInterruption | null;
   officialTieDecisions?: SprintTieDecision[];
   tieDecisionRecordedBy?: string | null;
 }
@@ -554,6 +565,13 @@ export class CommunityGroupsService {
     return this.http.put<TrackSprintIncident>(
       this.url + '/' + communityId + '/seasons/' + seasonId
       + '/track-sprint-brackets/' + bracketId + '/incidents/' + incidentId + '/rerun', payload);
+  }
+
+  endTrackSprintCompetition(communityId: number, seasonId: number, bracketId: number,
+    payload: {reference: string; reason: string}): Observable<TrackSprintBracketOverview> {
+    return this.http.put<TrackSprintBracketOverview>(
+      this.url + '/' + communityId + '/seasons/' + seasonId
+      + '/track-sprint-brackets/' + bracketId + '/interruption', payload);
   }
 
   deleteTrackSprintBracket(communityId: number, seasonId: number, bracketId: number):
