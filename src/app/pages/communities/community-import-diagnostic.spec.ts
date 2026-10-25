@@ -1,4 +1,4 @@
-import { importDiagnosticLabel } from './community-import-diagnostic';
+import { importDiagnosticLabel, importHttpErrorLabel } from './community-import-diagnostic';
 
 describe('community historical import diagnostics PT/EN', () => {
   let originalLanguage: string | null;
@@ -75,6 +75,46 @@ describe('community historical import diagnostics PT/EN', () => {
     expect(importDiagnosticLabel(original, {
       code: 'IMPORT_DUPLICATE_MATCH', params: { row: '4' }
     })).toBe(original);
+  });
+
+  it('shows a stable HTTP file error in English instead of the Portuguese backend message', () => {
+    localStorage.setItem('d24-language', 'en');
+    const request = { error: {
+      httpStatusCode: 400, message: 'O ficheiro não pode ultrapassar 10 MB',
+      code: 'IMPORT_FILE_TOO_LARGE', params: {}
+    } };
+    expect(importHttpErrorLabel(request, 'communities.import.inspectError'))
+      .toBe('The file cannot exceed 10 MB.');
+  });
+
+  it('preserves the source row for a structured invalid historic score', () => {
+    localStorage.setItem('d24-language', 'en');
+    expect(importHttpErrorLabel({ error: {
+      message: 'Mensagem antiga em português',
+      code: 'IMPORT_ROW_SCORE_INVALID', params: { row: '23' }
+    } }, 'communities.matches.previewError'))
+      .toBe('Row 23: invalid score. Use 2-1 or 2:1, for example.');
+  });
+
+  it('keeps operation-specific EN fallbacks for unknown or legacy HTTP codes', () => {
+    localStorage.setItem('d24-language', 'en');
+    const request = { error: { message: 'Uma mensagem privada', code: 'IMPORT_UNRECOGNIZED' } };
+    expect(importHttpErrorLabel(request, 'communities.import.inspectError'))
+      .toBe('We could not analyse this file.');
+    expect(importHttpErrorLabel({ error: { message: 'Uma mensagem privada' } }, 'communities.import.inspectError'))
+      .toBe('We could not analyse this file.');
+  });
+
+  it('keeps the original safe Portuguese HTTP detail and handles malformed responses', () => {
+    localStorage.setItem('d24-language', 'pt');
+    const original = 'Linha 23: resultado inválido (exemplo: 2-1 ou 2:1)';
+    expect(importHttpErrorLabel({ error: {
+      message: original, code: 'IMPORT_ROW_SCORE_INVALID', params: { row: '23' }
+    } }, 'communities.matches.previewError')).toBe(original);
+    expect(importHttpErrorLabel({ error: { message: 'a'.repeat(300) } }, 'communities.import.inspectError'))
+      .toBe('Não foi possível analisar este ficheiro.');
+    expect(importHttpErrorLabel({}, 'communities.import.inspectError'))
+      .toBe('Não foi possível analisar este ficheiro.');
   });
 
 });

@@ -13,7 +13,7 @@ import {
 import { buildCommunityGroupInviteUrl, buildWhatsAppGroupShareUrl } from './community-group-invite';
 import { communityRoundMatchup, CommunityRoundMatchup } from './community-round-matchup';
 import { historicalMatchReviewFlags } from './community-historical-match-review';
-import { importDiagnosticLabel as localizedImportDiagnostic } from './community-import-diagnostic';
+import { importDiagnosticLabel as localizedImportDiagnostic, importHttpErrorLabel } from './community-import-diagnostic';
 import { sportForRound, CommunityRoundView } from './community-round-sport';
 import { eventOptionsForSport, eventView, isNeutralEvent, eventPresentationFormat,
   isInlineSpeedTimedEvent, CommunityEventType } from './community-round-event-type';
@@ -3038,19 +3038,9 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     input.value = '';
   }
 
-  /**
-   * Preserve a short backend validation detail for Portuguese users. The API
-   * does not return localized error codes for all import operations, so in
-   * English show the operation-specific translated fallback instead of leaking
-   * an arbitrary Portuguese backend message.
-   */
+  /** Machine-readable import errors, with operation-specific legacy fallback. */
   private importRequestError(error: unknown, fallbackKey: string): string {
-    const response = error as { error?: { message?: unknown } } | null;
-    const detail = response?.error?.message;
-    const english = typeof localStorage !== 'undefined'
-      && localStorage.getItem('d24-language') === 'en';
-    return !english && typeof detail === 'string' && detail.trim().length > 0
-      && detail.length <= 240 ? detail : t(fallbackKey);
+    return importHttpErrorLabel(error, fallbackKey);
   }
 
   inspectImportFile(): void {
