@@ -114,8 +114,7 @@ describe('Unified Jynlo message center', () => {
     component.openGifPicker();
     expect(component.emojiPickerOpen).toBeTrue();
     expect(component.pickerTab).toBe('gif');
-    await Promise.resolve();
-    await Promise.resolve();
+    await new Promise<void>(resolve => setTimeout(resolve, 0));
     expect(network).toHaveBeenCalledTimes(1);
     expect(component.gifAvailable).toBeFalse();
     const gif = new File(['GIF89a'], 'local.gif', {type:'image/gif'});
@@ -143,27 +142,50 @@ describe('Unified Jynlo message center', () => {
     expect(direct.send).not.toHaveBeenCalled();
   });
 
-  it('stages a downloaded GIPHY GIF through private upload without automatic sending', async () => {
+  it('stages a remote GIPHY link without downloading, uploading or sending', () => {
     const peer = item('direct', 'bea');
     component.conversations = [peer];
     component.selectedKey = peer.key;
     component.composerAllowed = true;
     component.attachmentReady = true;
     component.gifAvailable = true;
-    const card = {id:'test',title:'Celebration',size:100,
+    const card = {id:'test',title:'Celebration',size:100,creator:'gif_creator',
+      pageUrl:'https://giphy.com/gifs/test',
       previewUrl:'https://media0.giphy.com/media/123/giphy.gif',
       downloadUrl:'https://media0.giphy.com/media/123/giphy.gif'};
     component.gifResults = [card];
     component.openGifPicker();
-    spyOn(window, 'fetch').and.resolveTo(new Response(
-      new Blob(['GIF89a','frame'], {type:'image/gif'}), {status:200}
-    ));
-    await component.chooseGif(card);
-    expect(component.selectedAttachment?.name).toBe('giphy-test.gif');
-    expect(component.selectedAttachment?.type).toBe('image/gif');
+    const network = spyOn(window, 'fetch');
+    component.chooseGif(card);
+    expect(component.selectedGif).toEqual(card);
+    expect(component.selectedAttachment).toBeNull();
+    expect(component.canSendMessage()).toBeTrue();
     expect(component.emojiPickerOpen).toBeFalse();
+    expect(network).not.toHaveBeenCalled();
     expect(direct.sendAttachment).not.toHaveBeenCalled();
     expect(direct.send).not.toHaveBeenCalled();
+  });
+
+  it('never sends remote GIF bytes through private R2 upload', () => {
+    const peer = item('direct','bea');
+    component.conversations = [peer];
+    component.selectedKey = peer.key;
+    component.composerAllowed = true;
+    component.attachmentReady = true;
+    component.gifAvailable = true;
+    const card = {id:'party',title:'Party',size:100,creator:'creator',
+      pageUrl:'https://giphy.com/gifs/party',
+      previewUrl:'https://media.giphy.com/media/x/giphy.gif',
+      downloadUrl:'https://media.giphy.com/media/x/giphy.gif'};
+    component.gifResults = [card];
+    component.openGifPicker();
+    component.chooseGif(card);
+    direct.send.and.returnValue(of({id:44, username1:'ana',username2:'bea',
+      text:'',date:new Date().toISOString(),dataDisplay:null} as any));
+    component.sendMessage();
+    expect(direct.sendAttachment).not.toHaveBeenCalled();
+    expect(direct.send).toHaveBeenCalledTimes(1);
+    expect((direct.send.calls.mostRecent().args[1] as string).startsWith('[JYNLO:GIPHY:1]')).toBeTrue();
   });
 
   it('does not exceed the chat 2000-character limit with surrogate-pair emojis', () => {
