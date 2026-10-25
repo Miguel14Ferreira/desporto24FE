@@ -231,6 +231,16 @@
                     </div>
                     @if (mutationError) { <p role="alert">{{ mutationError }}</p> }
                   </div>
+                } @else if (readSharedMessage(message.text); as shared) {
+                  <div class="inbox-shared-card">
+                    <span class="inbox-shared-card-kind">{{ ('chat.shareType.' + shared.kind) | t }}</span>
+                    <strong>{{ shared.title }}</strong>
+                    @if (shared.subtitle) { <span>{{ shared.subtitle }}</span> }
+                    <a [routerLink]="shared.route" [attr.aria-label]="('chat.openShared' | t) + ': ' + shared.title">
+                      {{ 'chat.openShared' | t }} ↗
+                    </a>
+                    @if (shared.caption) { <p>{{ shared.caption }}</p> }
+                  </div>
                 } @else if (readGiphyMessage(message.text); as giphy) {
                   <app-giphy-embed [id]="giphy.id" [pageUrl]="giphy.pageUrl"
                     [caption]="giphy.caption" [creator]="giphy.creator"></app-giphy-embed>
@@ -374,6 +384,14 @@
             } @else if (!composerAccessLoading && !composerAllowed && !previewLoading && !previewError) {
               <p class="inbox-compose-locked" role="status">{{ 'inbox.cannotWrite' | t }}</p>
             }
+            @if (selectedShare; as share) {
+              <div class="inbox-attachment-draft inbox-share-draft">
+                <span aria-hidden="true">↗</span>
+                <span>{{ ('chat.shareType.' + share.kind) | t }}: {{ share.title }}</span>
+                <button type="button" [disabled]="sending || deliveryUncertain"
+                  (click)="removeSelectedShare()">{{ 'chat.attachmentRemove' | t }}</button>
+              </div>
+            }
             @if (selectedGif; as gif) {
               <div class="inbox-attachment-draft inbox-giphy-draft">
                 <img [src]="gif.previewUrl" [alt]="'chat.gifImage' | t" referrerpolicy="no-referrer">
@@ -409,7 +427,7 @@
                     [class.is-recording]="voiceRecording"
                     [disabled]="!composerAllowed || composerAccessLoading || sending
                       || deliveryUncertain || deliveryChecking || previewLoading || previewError
-                      || voiceFinalizing || (!voiceRecording && (!!selectedAttachment || !!selectedGif))"
+                      || voiceFinalizing || (!voiceRecording && (!!selectedAttachment || !!selectedGif || !!selectedShare))"
                     [attr.aria-label]="(voiceRecording ? 'chat.voiceStop' : 'chat.voiceStart') | t"
                     [attr.title]="(voiceRecording ? 'chat.voiceStop' : 'chat.voiceStart') | t"
                     (click)="voiceRecording ? stopVoiceRecording() : startVoiceRecording()">
@@ -428,11 +446,65 @@
                   <input #attachmentFile type="file" class="inbox-attachment-input"
                     accept=".jpg,.jpeg,.png,.webp,.gif,.pdf,image/jpeg,image/png,image/webp,image/gif,application/pdf"
                     (change)="onAttachmentPicked($event)">
-                  <button type="button" class="inbox-attachment-trigger"
-                    [disabled]="!composerAllowed || composerAccessLoading || sending || deliveryUncertain || deliveryChecking || previewLoading || previewError || voiceRecording || voiceFinalizing"
-                    [attr.title]="'chat.attachmentAdd' | t"
-                    [attr.aria-label]="'chat.attachmentAdd' | t"
-                    (click)="attachmentFile.click()" aria-haspopup="dialog">📎</button>
+                  <div class="inbox-share-controls" (keydown.escape)="closeSharePicker(); closeAttachmentMenu()">
+                    <button type="button" class="inbox-attachment-trigger"
+                      [disabled]="!composerAllowed || composerAccessLoading || sending || deliveryUncertain || deliveryChecking || previewLoading || previewError || voiceRecording || voiceFinalizing"
+                      [attr.title]="'chat.attachmentAdd' | t"
+                      [attr.aria-label]="'chat.attachmentAdd' | t"
+                      [attr.aria-expanded]="attachmentMenuOpen || sharePickerOpen"
+                      (click)="toggleAttachmentMenu()" aria-haspopup="dialog">📎</button>
+                    @if (attachmentMenuOpen) {
+                      <div class="inbox-share-menu" role="dialog" [attr.aria-label]="'chat.shareMenu' | t">
+                        <button type="button" (click)="closeAttachmentMenu(); attachmentFile.click()">
+                          📄 {{ 'chat.shareFile' | t }}
+                        </button>
+                        <button type="button" (click)="openSharePicker()">
+                          ↗ {{ 'chat.shareJynlo' | t }}
+                        </button>
+                      </div>
+                    }
+                    @if (sharePickerOpen) {
+                      <section class="inbox-share-picker" role="dialog" [attr.aria-label]="'chat.shareJynlo' | t">
+                        <div class="inbox-share-picker-head">
+                          <strong>{{ 'chat.shareJynlo' | t }}</strong>
+                          <button type="button" [attr.aria-label]="'chat.pickerClose' | t"
+                            (click)="closeSharePicker()">×</button>
+                        </div>
+                        <div class="inbox-share-tabs" role="tablist">
+                          <button type="button" role="tab" [class.active]="sharePickerTab === 'profile'"
+                            [attr.aria-selected]="sharePickerTab === 'profile'"
+                            (click)="sharePickerTab = 'profile'">{{ 'chat.shareType.profile' | t }}</button>
+                          <button type="button" role="tab" [class.active]="sharePickerTab === 'session'"
+                            [attr.aria-selected]="sharePickerTab === 'session'"
+                            (click)="sharePickerTab = 'session'">{{ 'chat.shareType.session' | t }}</button>
+                          <button type="button" role="tab" [class.active]="sharePickerTab === 'community'"
+                            [attr.aria-selected]="sharePickerTab === 'community'"
+                            (click)="sharePickerTab = 'community'">{{ 'chat.shareType.community' | t }}</button>
+                        </div>
+                        <input type="search" class="inbox-share-filter" [ngModel]="sharePickerSearch"
+                          [ngModelOptions]="{standalone:true}" (ngModelChange)="sharePickerSearch = $event"
+                          [attr.aria-label]="'chat.shareSearch' | t" [placeholder]="'chat.shareSearch' | t">
+                        <div class="inbox-share-results">
+                          @if (sharePickerLoading) {
+                            <p role="status">{{ 'chat.shareLoading' | t }}</p>
+                          } @else if (sharePickerError) {
+                            <p role="alert">{{ 'chat.shareError' | t }}</p>
+                          } @else if (!visibleShareChoices.length) {
+                            <p>{{ 'chat.shareEmpty' | t }}</p>
+                          } @else {
+                            @for (item of visibleShareChoices; track item.kind + ':' + item.id) {
+                              <button type="button" class="inbox-share-option"
+                                (click)="selectShareChoice(item)">
+                                <strong>{{ item.title }}</strong>
+                                <small>{{ item.subtitle }}</small>
+                              </button>
+                            }
+                          }
+                        </div>
+                        <small class="inbox-share-privacy">{{ 'chat.sharePrivacy' | t }}</small>
+                      </section>
+                    }
+                  </div>
                 }
                 <div class="inbox-emoji-controls" (keydown.escape)="closeEmojiPicker()">
                   <input #gifFile type="file" class="inbox-attachment-input"
