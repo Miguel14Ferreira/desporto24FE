@@ -14,6 +14,7 @@ describe('NavbarComponent', () => {
   let realtimeService: jasmine.SpyObj<DirectChatRealtimeService>;
   let notificationService: jasmine.SpyObj<NotificationApiService>;
   let incomingMessages: Subject<any>;
+  let notificationChanges: Subject<void>;
 
   beforeEach(async () => {
     authService = jasmine.createSpyObj<AuthenticationService>(
@@ -30,8 +31,9 @@ describe('NavbarComponent', () => {
       { messages$: incomingMessages.asObservable() }
     );
 
+    notificationChanges = new Subject<void>();
     notificationService = jasmine.createSpyObj<NotificationApiService>(
-      'NotificationApiService', ['unreadCount']
+      'NotificationApiService', ['unreadCount'], { changes$: notificationChanges.asObservable() }
     );
     notificationService.unreadCount.and.returnValue(of(0));
 
@@ -190,6 +192,38 @@ describe('NavbarComponent', () => {
     expect(button).toBeTruthy();
     expect(button.disabled).toBeFalse();
     expect(component.loggingOut).toBeFalse();
+  });
+
+  it('updates the badge immediately on confirmed changes without navigating', () => {
+    notificationService.unreadCount.and.returnValues(of(4), of(3), of(0));
+    authService.hasSessionCandidate.and.returnValue(true);
+    (component as any).syncAuthenticatedState();
+    expect(component.unreadNotifications).toBe(4);
+
+    notificationChanges.next();
+    expect(notificationService.unreadCount).toHaveBeenCalledTimes(2);
+    expect(component.unreadNotifications).toBe(3);
+
+    notificationChanges.next();
+    expect(notificationService.unreadCount).toHaveBeenCalledTimes(3);
+    expect(component.unreadNotifications).toBe(0);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.notification-badge')).toBeNull();
+    component.ngOnDestroy();
+  });
+
+  it('ignores notification-change events after logout', () => {
+    authService.hasSessionCandidate.and.returnValue(true);
+    (component as any).syncAuthenticatedState();
+    expect(notificationService.unreadCount).toHaveBeenCalledTimes(1);
+
+    authService.hasSessionCandidate.and.returnValue(false);
+    (component as any).syncAuthenticatedState();
+    notificationChanges.next();
+
+    expect(component.unreadNotifications).toBe(0);
+    expect(notificationService.unreadCount).toHaveBeenCalledTimes(1);
+    component.ngOnDestroy();
   });
 
   it('keeps the badge hidden for muted chat even when realtime messages arrive', fakeAsync(() => {
