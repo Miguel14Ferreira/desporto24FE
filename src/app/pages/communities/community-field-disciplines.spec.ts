@@ -10,7 +10,7 @@ describe('Athletics field disciplines', () => {
     ]);
     expect(athleticsDisciplineOptions('Atletismo', 'TRACK')).toEqual([]);
     expect(athleticsDisciplineOptions('Ciclismo de Pista', 'TRACK_SPRINT_HEAT')).toEqual([
-      'SPRINT_EIGHTH_FINAL', 'SPRINT_QUARTER_FINAL', 'SPRINT_SEMI_FINAL',
+      'SPRINT_SIXTEENTH_FINAL', 'SPRINT_EIGHTH_FINAL', 'SPRINT_QUARTER_FINAL', 'SPRINT_SEMI_FINAL',
       'SPRINT_BRONZE_FINAL', 'SPRINT_GOLD_FINAL'
     ]);
     expect(athleticsDisciplineOptions('Futebol', 'JUMP')).toEqual([]);
