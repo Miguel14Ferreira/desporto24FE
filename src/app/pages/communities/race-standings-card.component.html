@@ -1,0 +1,21 @@
+<div class="race-standings-section">
+  <h6>{{ 'communities.karting.standingsTitle' | t }}</h6>
+  @if (standings.length) {
+    <div class="t-table-scroll">
+      <table [attr.aria-label]="'communities.karting.tableLabel' | t">
+        <thead><tr><th>{{ 'communities.karting.position' | t }}</th><th>{{ 'communities.karting.participant' | t }}</th><th>{{ 'communities.karting.races' | t }}</th><th>{{ 'communities.karting.wins' | t }}</th><th>{{ 'communities.karting.podiums' | t }}</th><th>{{ 'communities.karting.points' | t }}</th></tr></thead>
+        <tbody>
+          @for (driver of standings; track driver.playerId) {
+            <tr>
+              <td>{{ driver.position }}{{ 'communities.karting.ordinalSuffix' | t }}</td><td>{{ driver.fullName }}</td>
+              <td>{{ driver.races }}</td><td>{{ driver.wins }}</td><td>{{ driver.podiums }}</td>
+              <td><strong>{{ driver.championshipPoints ?? '—' }}</strong></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  } @else {
+    <p class="t-muted">{{ 'communities.karting.emptyStandings' | t }}</p>
+  }
+</div>

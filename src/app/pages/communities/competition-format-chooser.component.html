@@ -1,0 +1,20 @@
+<div class="create-format-grid" role="group" [attr.aria-label]="'communities.tournaments.createUi.formatGroup' | t">
+  <button type="button" class="create-format-option" [disabled]="disabled"
+    [attr.aria-pressed]="selectedFormat === 'LEAGUE'"
+    (click)="formatSelected.emit('LEAGUE')">
+    <strong>{{ 'communities.tournaments.formatLeagueTitle' | t }}</strong>
+    <span>{{ 'communities.tournaments.formatLeagueText' | t }}</span>
+  </button>
+  <button type="button" class="create-format-option" [disabled]="disabled"
+    [attr.aria-pressed]="selectedFormat === 'KNOCKOUT'"
+    (click)="formatSelected.emit('KNOCKOUT')">
+    <strong>{{ 'communities.tournaments.formatKnockoutTitle' | t }}</strong>
+    <span>{{ 'communities.tournaments.formatKnockoutText' | t }}</span>
+  </button>
+  <button type="button" class="create-format-option" [disabled]="disabled"
+    [attr.aria-pressed]="selectedFormat === 'GROUP_KNOCKOUT'"
+    (click)="formatSelected.emit('GROUP_KNOCKOUT')">
+    <strong>{{ 'communities.tournaments.formatGroupsTitle' | t }}</strong>
+    <span>{{ 'communities.tournaments.formatGroupsText' | t }}</span>
+  </button>
+</div>
