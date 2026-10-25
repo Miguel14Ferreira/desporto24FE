@@ -37,7 +37,7 @@ describe('AlterardadosComponent', () => {
   };
 
   beforeEach(async () => {
-    service = jasmine.createSpyObj<MyProfileService>('MyProfileService', ['get', 'update', 'disableMfa', 'deleteAccount', 'getDeviceSessions', 'revokeDeviceSession', 'revokeOtherDeviceSessions''getDeviceSessions', 'revokeDeviceSession']);
+    service = jasmine.createSpyObj<MyProfileService>('MyProfileService', ['get', 'update', 'disableMfa', 'deleteAccount', 'getDeviceSessions', 'revokeDeviceSession', 'revokeOtherDeviceSessions']);
     service.get.and.returnValue(of({ ...profile }));
     service.update.and.returnValue(of({ ...profile, location: 'Sintra' }));
     service.disableMfa.and.returnValue(of({ ...profile, mfa: false }));
