@@ -16,6 +16,21 @@ function round(eventType: string, key: string | null, n: number | null): Communi
 }
 
 describe('Track Sprint bracket picker', () => {
+  it('never offers a heat after the official permanent event interruption', () => {
+    const ongoing = bracket([match('Q1','SPRINT_QUARTER_FINAL','READY')]);
+    ongoing.format = 'OLYMPIC_TWENTY_FOUR_REPECHAGE';
+    ongoing.interruption = {
+      stage: 'BEFORE_QUARTERS', reference: 'Fictional signed report #20',
+      reason: 'Fictional permanent venue closure', recordedBy: 'qa',
+      recordedAt: '2026-10-25T18:00:00Z',
+      noFinalClassification: true, regulatoryPlacings: []
+    };
+    expect(availableSprintBracketSlots([ongoing],'SPRINT_QUARTER_FINAL')).toEqual([]);
+    ongoing.interruption = null;
+    expect(availableSprintBracketSlots([ongoing],'SPRINT_QUARTER_FINAL')
+      .map(m=>m.slot)).toEqual(['Q1']);
+  });
+
   it('shows only phase-matched ready/in-progress series', () => {
     const entries = [match('Q1', 'SPRINT_QUARTER_FINAL', 'READY'),
       match('Q2','SPRINT_QUARTER_FINAL','FINISHED'),

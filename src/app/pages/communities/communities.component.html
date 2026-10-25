@@ -1401,6 +1401,61 @@
                                 ? 'communities.trackCycling.bracketFormat16'
                                 : 'communities.trackCycling.bracketFormat') | t }}</span>
                           </div>
+                          @if (bracket.interruption; as stop) {
+                            <div class="round-sport-guidance" role="status">
+                              <strong>{{ 'communities.trackCycling.interruptionTitle' | t }}</strong>
+                              <p>{{ ('communities.trackCycling.interruption.' + stop.stage) | t }}</p>
+                              <p>{{ stop.reason }}</p>
+                              <small>{{ 'communities.trackCycling.incidentOfficialReference' | t }}:
+                                {{ stop.reference }} · {{ stop.recordedBy }} · {{ stop.recordedAt }}
+                              </small>
+                              @if (stop.noFinalClassification) {
+                                <p>{{ 'communities.trackCycling.interruptionNoRanking' | t }}</p>
+                              } @else {
+                                <small>{{ 'communities.trackCycling.interruptionPartial' | t }}</small>
+                                <div class="round-meta-form">
+                                  @for (placing of stop.regulatoryPlacings; track placing.username) {
+                                    <small>{{ 'communities.trackCycling.interruptionPosition' | t }} {{ placing.position }} · {{ placing.username }}</small>
+                                  }
+                                </div>
+                              }
+                            </div>
+                          } @else if (bracket.format === 'OLYMPIC_TWENTY_FOUR_REPECHAGE'
+                            && canManage() && selectedSeasonId === activeSeason()?.id) {
+                            <button type="button" class="btn btn-secondary"
+                              (click)="editSprintInterruption(bracket.id)"
+                              [disabled]="sprintInterruptionSaving">
+                              {{ 'communities.trackCycling.interruptionOpen' | t }}
+                            </button>
+                            @if (sprintInterruptionBracketId === bracket.id) {
+                              <div class="round-meta-form">
+                                <p>{{ 'communities.trackCycling.interruptionWarning' | t }}</p>
+                                <label>
+                                  <span>{{ 'communities.trackCycling.incidentOfficialReference' | t }}</span>
+                                  <input [(ngModel)]="sprintInterruptionReference" maxlength="255">
+                                </label>
+                                <label>
+                                  <span>{{ 'communities.trackCycling.incidentDecisionReason' | t }}</span>
+                                  <textarea [(ngModel)]="sprintInterruptionReason" maxlength="500"></textarea>
+                                </label>
+                                <label>
+                                  <input type="checkbox" [(ngModel)]="sprintInterruptionConfirmed">
+                                  <span>{{ 'communities.trackCycling.interruptionConfirm' | t }}</span>
+                                </label>
+                                <button type="button" class="btn btn-primary"
+                                  (click)="saveSprintInterruption()"
+                                  [disabled]="sprintInterruptionSaving ||
+                                    !sprintInterruptionConfirmed ||
+                                    sprintInterruptionReference.trim().length < 12 ||
+                                    sprintInterruptionReason.trim().length < 12">
+                                  {{ 'communities.trackCycling.interruptionSave' | t }}
+                                </button>
+                                @if (sprintInterruptionError) {
+                                  <p role="alert">{{ sprintInterruptionError }}</p>
+                                }
+                              </div>
+                            }
+                          }
                           @if (bracket.format !== 'EIGHT_RIDER_FINALS' && bracket.qualifyingSeeds?.length) {
                             <p class="round-sport-guidance">{{ 'communities.trackCycling.qualifyingSource' | t }}: #{{ bracket.qualifyingRoundId }}</p>
                             <div class="round-meta-form">
@@ -1419,7 +1474,8 @@
                               }
                             }
                           }
-                          @if (canManage() && selectedSeasonId === activeSeason()?.id) {
+                          @if (canManage() && selectedSeasonId === activeSeason()?.id
+                            && !bracket.interruption) {
                             <button type="button" class="btn btn-secondary"
                               [disabled]="sprintBracketSaving"
                               (click)="deleteSprintBracket(bracket.id)">
