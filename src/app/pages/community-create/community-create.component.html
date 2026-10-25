@@ -21,7 +21,6 @@
         <span class="note-icon">◎</span>
         <div>
           <strong>{{ 'communityCreate.quotaOwned' | t:{ count: quota.owned, limit: quota.limit } }}</strong>
-          <p>{{ 'communityCreate.quotaToday' | t:{ count: quota.createdToday, limit: quota.dailyLimit } }}</p>
           @if (!quota.canCreate) {
             <p class="feedback error-feedback">{{ 'communityCreate.quotaReached' | t }}</p>
           }
