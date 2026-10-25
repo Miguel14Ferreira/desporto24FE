@@ -1,5 +1,11 @@
 // Loaded only for users who choose English. Keep the original key/value table intact.
 export const EN: Record<string, string> = {
+  'communities.inlineSpeed.trialLinkHeading': 'Additional trials used in this ruling',
+  'communities.inlineSpeed.trialLinkHint': 'Select only actual trials still valid for these source heats. Each revision preserves its own links (maximum 10).',
+  'communities.inlineSpeed.trialLinkRequired': 'When using an additional trial as evidence, select at least one recorded, valid trial.',
+  'communities.inlineSpeed.trialLinkedRevisions': 'Used in jury revision',
+  'communities.inlineSpeed.trialNotLinked': 'This trial has not yet been linked to any jury ruling.',
+  'communities.inlineSpeed.trialUsedInCurrent': 'Trials linked to the current ruling',
   'communities.inlineSpeed.trialHistory': 'Recorded additional trials · official record',
   'communities.inlineSpeed.trialTitle': 'Additional trial',
   'communities.inlineSpeed.trialIntro': 'Record an additional trial only if it actually took place. Its times and places are kept separate from original heats; qualification still requires a jury decision.',

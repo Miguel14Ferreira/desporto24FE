@@ -1867,7 +1867,7 @@ describe('Community tournaments management', () => {
     expect(api.resolveInlineSpeedTieBreak).toHaveBeenCalledWith(7, 9,
       Array.from({ length: 15 }, (_, i) => i + 1).concat(18),
       'O júri reviu a prova de desempate com vídeo oficial',
-      'OFFICIAL_MINUTES', 'Ata oficial 2026-011');
+      'OFFICIAL_MINUTES', 'Ata oficial 2026-011', []);
   });
 
   it('preserves tie-break revision history and blocks edits after ratification', () => {
@@ -1900,6 +1900,70 @@ describe('Community tournaments management', () => {
       playerIds: proposal.playerIds, reason: 'Ratificado', confirmedBy: 'owner',
       confirmedAt: '2026-10-25T16:15:00Z', stale: false }];
     expect(component.speedCanAmendTie(proposal)).toBeFalse();
+  });
+
+  it('links the real trial to one jury revision and never ratifies automatically', async () => {
+    component.selected = { ...draft, status: 'IN_PROGRESS', sport: 'Patinagem de Velocidade' };
+    const skaters = Array.from({ length: 20 }, (_, i) => ({
+      playerId: i + 1, name: 'Patinador QA ' + (i + 1),
+      seconds: i >= 15 && i <= 17 ? 30.16 : 30 + (i + 1) / 100,
+      position: null, disqualified: false
+    }));
+    const proposal = {
+      sourceStage: 'FIRST' as const, targetStage: 'QUARTER' as const,
+      expectedCount: 16, playerIds: [], ready: false,
+      warning: 'Empate múltiplo no limite do 16.º'
+    };
+    const trial = {
+      id: 101, sourceStage: 'FIRST' as const,
+      heldAt: '2026-10-25T10:00:00Z', officialReference: 'Ata QA #101',
+      reason: 'Prova adicional realmente realizada', recordedBy: 'owner',
+      recordedAt: '2026-10-25T11:00:00Z', stale: false, results: []
+    };
+    const overview = {
+      tournamentId: 9, discipline: 'TRACK_500D' as const,
+      linkedHeats: [{ roundId: 100, name: 'Manga QA',
+        eventType: 'INLINE_TRACK_500D_FIRST_ROUND', heatNumber: 1, skaters }],
+      availableHeats: [], proposals: [proposal], decisions: [], tieBreaks: [],
+      trials: [trial, { ...trial, id: 102, stale: true }]
+    };
+    component.speedOverview = overview;
+    component.speedSelections = {
+      FIRST: Array.from({ length: 15 }, (_, i) => i + 1).concat(18)
+    };
+    component.speedReasons = {
+      FIRST: 'A prova de desempate real foi analisada e registada pelo júri'
+    };
+    component.speedEvidenceType = 'TIEBREAK_TRIAL';
+    component.speedEvidenceReference = 'Ata oficial da prova de desempate #101';
+    expect(component.speedAvailableTieTrials().map(t => t.id)).toEqual([101]);
+    component.toggleSpeedTrialLink(102, true);
+    expect(component.speedTieTrialIds).toEqual([]);
+    await component.resolveSpeedTie(proposal);
+    expect(api.resolveInlineSpeedTieBreak).not.toHaveBeenCalled();
+    component.toggleSpeedTrialLink(101, true);
+    const chosen = component.speedSelections['FIRST'];
+    const reason = component.speedReasons['FIRST'];
+    api.resolveInlineSpeedTieBreak.and.returnValue(of({
+      ...overview, tieBreaks: [{
+        sourceStage: 'FIRST', selectedPlayerIds: chosen, reason, confirmedBy: 'owner',
+        confirmedAt: '2026-10-25T12:00:00Z', stale: false, trialIds: [101],
+        revisions: [{
+          revision: 1, selectedPlayerIds: chosen, reason, confirmedBy: 'owner',
+          confirmedAt: '2026-10-25T12:00:00Z', stale: false, trialIds: [101]
+        }]
+      }]
+    }));
+    await component.resolveSpeedTie(proposal);
+    expect(api.resolveInlineSpeedTieBreak).toHaveBeenCalledWith(
+      7, 9, chosen, reason, 'TIEBREAK_TRIAL',
+      'Ata oficial da prova de desempate #101', [101]);
+    expect(component.speedOverview?.decisions.length).toBe(0);
+    expect(component.speedTrialUsedRevisions(101)).toEqual([1]);
+    const ruling = component.speedTieBreak('FIRST')!;
+    component.speedOverview!.proposals = [{ ...proposal, ready: true }];
+    component.startSpeedTieCorrection({ ...proposal, ready: true });
+    expect(component.speedTieTrialIds).toEqual(ruling.trialIds);
   });
 
   it('records only an actual fictional cutoff trial and never confirms qualifiers', async () => {

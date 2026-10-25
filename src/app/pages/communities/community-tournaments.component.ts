@@ -128,6 +128,7 @@ export class CommunityTournamentsComponent implements OnChanges {
   speedReasons: Record<string, string> = {};
   speedEvidenceType: InlineSpeedTieEvidenceType | '' = '';
   speedEvidenceReference = '';
+  speedTieTrialIds: number[] = [];
   speedTrialOpen = false;
   speedTrialHeldAt = '';
   speedTrialReference = '';
@@ -379,6 +380,34 @@ export class CommunityTournamentsComponent implements OnChanges {
     return (this.speedOverview?.tieBreaks ?? []).find(item => item.sourceStage === stage);
   }
 
+  /** Only real, still-current first-round trials may be cited by a new revision. */
+  speedAvailableTieTrials() {
+    return (this.speedOverview?.trials ?? []).filter(trial =>
+      trial.sourceStage === 'FIRST' && !trial.stale)
+      .sort((a, b) => a.heldAt.localeCompare(b.heldAt));
+  }
+
+  speedTrialLinked(id: number): boolean {
+    return this.speedTieTrialIds.includes(id);
+  }
+
+  toggleSpeedTrialLink(id: number, checked: boolean): void {
+    if (this.busy || !this.speedAvailableTieTrials().some(trial => trial.id === id)) return;
+    if (checked) {
+      if (!this.speedTieTrialIds.includes(id) && this.speedTieTrialIds.length < 10) {
+        this.speedTieTrialIds = [...this.speedTieTrialIds, id];
+      }
+    } else {
+      this.speedTieTrialIds = this.speedTieTrialIds.filter(value => value !== id);
+    }
+  }
+
+  speedTrialUsedRevisions(id: number): number[] {
+    return (this.speedTieBreak('FIRST')?.revisions ?? [])
+      .filter(revision => (revision.trialIds ?? []).includes(id))
+      .map(revision => revision.revision);
+  }
+
   speedEvidenceLabel(type: InlineSpeedTieEvidenceType | null | undefined): string {
     return type ? t('communities.inlineSpeed.evidence.' + type)
       : t('communities.inlineSpeed.evidence.legacy');
@@ -405,6 +434,8 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.speedReasons['FIRST'] = ruling.reason;
     this.speedEvidenceType = ruling.evidenceType ?? '';
     this.speedEvidenceReference = ruling.evidenceReference ?? '';
+    const available = new Set(this.speedAvailableTieTrials().map(trial => trial.id));
+    this.speedTieTrialIds = (ruling.trialIds ?? []).filter(id => available.has(id));
     this.speedTieCorrectionOpen = true;
   }
 
@@ -514,8 +545,17 @@ export class CommunityTournamentsComponent implements OnChanges {
       this.showError(t('communities.inlineSpeed.evidenceRequired'));
       return;
     }
+    const availableIds = new Set(this.speedAvailableTieTrials().map(trial => trial.id));
+    if (this.speedTieTrialIds.length > 10
+        || new Set(this.speedTieTrialIds).size !== this.speedTieTrialIds.length
+        || this.speedTieTrialIds.some(id => !availableIds.has(id))
+        || (evidenceType === 'TIEBREAK_TRIAL' && !this.speedTieTrialIds.length)) {
+      this.showError(t('communities.inlineSpeed.trialLinkRequired'));
+      return;
+    }
     await this.mutate(this.api.resolveInlineSpeedTieBreak(
-      this.community.id, this.selected.id, chosen, reason, evidenceType, evidenceReference),
+      this.community.id, this.selected.id, chosen, reason, evidenceType,
+      evidenceReference, [...this.speedTieTrialIds]),
       t('communities.inlineSpeed.tiebreakSaved'), overview => {
         this.speedOverview = overview;
         this.speedTieCorrectionOpen = false;
@@ -1161,6 +1201,7 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.speedTieCorrectionOpen = false;
     this.speedEvidenceType = '';
     this.speedEvidenceReference = '';
+    this.speedTieTrialIds = [];
     this.speedTrialOpen = false;
     this.speedTrialHeldAt = '';
     this.speedTrialReference = '';
