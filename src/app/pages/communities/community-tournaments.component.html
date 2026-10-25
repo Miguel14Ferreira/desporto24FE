@@ -1220,8 +1220,52 @@
                       · {{ decision.confirmedBy }}
                     </p>
                   }
+                  @if (speedTieBreak(proposal.sourceStage); as ruling) {
+                    <p class="notice" [class.notice-error]="ruling.stale"
+                      [class.notice-info]="!ruling.stale" role="status">
+                      {{ (ruling.stale ? 'communities.inlineSpeed.tiebreakStale'
+                        : 'communities.inlineSpeed.tiebreakSaved') | t }}
+                      · {{ ruling.confirmedBy }}
+                    </p>
+                    <p class="t-muted">{{ ruling.reason }}</p>
+                  }
                   @if (!proposal.ready) {
-                    <p class="t-muted">{{ 'communities.inlineSpeed.awaitingHeats' | t }}</p>
+                    @if (isSpeedMultiwayTie(proposal) && canManage && selected.status !== 'COMPLETED') {
+                      <p class="t-muted">{{ 'communities.inlineSpeed.tiebreakIntro' | t }}</p>
+                      <p class="t-muted">{{ 'communities.inlineSpeed.candidates' | t }}:
+                        {{ speedSelections['FIRST']?.length ?? 0 }} / 16</p>
+                      <div class="inline-speed-selection">
+                        @for (skater of speedTieCandidates(); track skater.playerId) {
+                          <label class="inline-speed-selection-row">
+                            <input type="checkbox"
+                              [checked]="speedChosen('FIRST', skater.playerId)"
+                              [disabled]="busy || speedTieGuaranteed(skater)"
+                              (change)="toggleSpeedChosen('FIRST', skater.playerId)">
+                            {{ skater.name }}
+                            <small>({{ skater.seconds }} s)
+                              @if (speedTieGuaranteed(skater)) {
+                                · {{ 'communities.inlineSpeed.tiebreakAlreadyQualified' | t }}
+                              }
+                            </small>
+                          </label>
+                        }
+                      </div>
+                      <label class="inline-speed-judge-reason">
+                        {{ 'communities.inlineSpeed.reason' | t }}
+                        <small>{{ 'communities.inlineSpeed.tiebreakEvidenceHint' | t }}</small>
+                        <textarea rows="3" maxlength="500"
+                          [name]="'inline-speed-tiebreak-reason'"
+                          [(ngModel)]="speedReasons['FIRST']" [disabled]="busy"
+                          [placeholder]="'communities.inlineSpeed.reasonPlaceholder' | t"></textarea>
+                      </label>
+                      <button type="button" class="t-btn t-btn-primary"
+                        [disabled]="busy || (speedSelections['FIRST']?.length ?? 0) !== 16"
+                        (click)="resolveSpeedTie(proposal)">
+                        {{ 'communities.inlineSpeed.tiebreakConfirm' | t }}
+                      </button>
+                    } @else {
+                      <p class="t-muted">{{ 'communities.inlineSpeed.awaitingHeats' | t }}</p>
+                    }
                   } @else {
                     <p class="t-muted">{{ 'communities.inlineSpeed.candidates' | t }}:
                       {{ proposal.playerIds.length }} / {{ proposal.expectedCount }}</p>
