@@ -23,6 +23,8 @@ export interface InboxMessage {
   sender: string;
   text: string;
   createdAt: string;
+  editedAt?: string | null;
+  deletedAt?: string | null;
   attachmentName?: string | null;
   attachmentMimeType?: string | null;
   attachmentSize?: number | null;
