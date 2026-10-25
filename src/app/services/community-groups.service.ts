@@ -50,6 +50,7 @@ export interface CommunitySearchPresentation {
   photoZoom?: number | null;
   photoFocusX?: number | null;
   photoFocusY?: number | null;
+  photoFitMode?: 'COVER' | 'SHOW_ALL' | null;
   visibility: CommunityVisibility;
 }
 
@@ -559,18 +560,26 @@ export class CommunityGroupsService {
     );
   }
 
-  updatePhoto(id: number, photo: File): Observable<CommunityGroup> {
+  updatePhoto(
+    id: number, photo: File, fitMode: 'COVER' | 'SHOW_ALL' = 'COVER',
+    zoom = 1, focusX = 50, focusY = 50
+  ): Observable<CommunityGroup> {
     const formData = new FormData();
     formData.append('photo', photo);
+    formData.append('fitMode', fitMode);
+    formData.append('zoom', String(zoom));
+    formData.append('focusX', String(focusX));
+    formData.append('focusY', String(focusY));
     return this.http.put<CommunityGroup>(this.url + '/' + id + '/photo', formData);
   }
 
   updatePhotoFraming(
     id: number, expectedPhotoUrl: string,
-    zoom: number, focusX: number, focusY: number
+    zoom: number, focusX: number, focusY: number,
+    fitMode: 'COVER' | 'SHOW_ALL' = 'COVER'
   ): Observable<CommunityGroup> {
     return this.http.put<CommunityGroup>(this.url + '/' + id + '/photo/framing', {
-      expectedPhotoUrl, zoom, focusX, focusY
+      expectedPhotoUrl, zoom, focusX, focusY, fitMode
     });
   }
 
