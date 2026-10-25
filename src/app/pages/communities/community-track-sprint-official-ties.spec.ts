@@ -41,9 +41,9 @@ describe('UCI Sprint 200m official tie resolution', () => {
     const decisions=sprintOfficialTieDecisions(groups,{[groups[0].key]:d});
     expect(decisions?.[0].orderedUsernames).toEqual(['r2','r1']);
     expect(decisions?.[0].method).toBe('LAST_100');
-    d.last100Seconds.r2='5.210';
+    d.last100Seconds['r2']='5.210';
     expect(sprintOfficialTieDecisions(groups,{[groups[0].key]:d})).toBeNull();
-    d.last100Seconds.r2='abc';
+    d.last100Seconds['r2']='abc';
     expect(sprintOfficialTieDecisions(groups,{[groups[0].key]:d})).toBeNull();
   });
 
@@ -73,7 +73,7 @@ describe('UCI Sprint 200m official tie resolution', () => {
     d.order=['r2','r1'];
     d.last100Seconds={r1:'4.999',r2:'4.999'};
     expect(sprintOfficialTieDecisions(groups,{[groups[0].key]:d})?.length).toBe(1);
-    d.last100Seconds.r2='5.000';
+    d.last100Seconds['r2']='5.000';
     expect(sprintOfficialTieDecisions(groups,{[groups[0].key]:d})).toBeNull();
   });
 
