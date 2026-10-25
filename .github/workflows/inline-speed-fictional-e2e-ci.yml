@@ -1,0 +1,45 @@
+name: Inline speed fictional browser QA
+# Runs only for the isolated, mock-API speed-skating regression fixture.
+# No requests reach production and no user accounts or real competitions are created.
+on:
+  pull_request:
+    branches: [preview/render-fullstack]
+    paths:
+      - 'e2e/community-tournaments.spec.ts'
+      - '.github/workflows/inline-speed-fictional-e2e-ci.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: inline-speed-fake-e2e-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  fake-speed-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      CI: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install Angular dependencies
+        run: npm ci
+      - name: Install pinned Playwright outside project lockfile
+        run: npm install --no-save --package-lock=false @playwright/test@1.56.1
+      - name: Install isolated browser
+        run: npx playwright install --with-deps chromium
+      - name: Browser progression with fictional skaters, mocked HTTP only
+        run: npx playwright test --config=playwright.config.ts --project=desktop-chromium --grep='fictional speed-skating QA'
+      - name: Upload failing screenshots and traces
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: inline-speed-fake-e2e
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 5
