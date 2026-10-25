@@ -404,6 +404,81 @@ describe('Unified Jynlo message center', () => {
     expect(component.attachmentPreviews.size).toBe(0);
   });
 
+  it('closes selected session and revokes displayed private files exactly at kickoff', () => {
+    jasmine.clock().install();
+    try {
+      const session = item('session', 41);
+      (component as any).sessionKickoffs.set(41, Date.now() + 100);
+      component.conversations = [session];
+      spyOn<any>(component, 'loadHistory').and.stub();
+      spyOn<any>(component, 'loadComposerAccess').and.stub();
+      const revoked = spyOn(URL, 'revokeObjectURL');
+      const pending = new Subject<Blob>();
+      sessions.downloadAttachment.and.returnValue(pending.asObservable());
+      const createUrl = spyOn(URL, 'createObjectURL').and.returnValue('blob:late');
+      component.selectConversation(session);
+      component.attachmentPreviews.set(64, 'blob:old-session');
+      component.selectedAttachment = new File(['test'], 'private.pdf',
+        { type: 'application/pdf' });
+      component.attachmentReady = true;
+      component.messages = [message(session.key, 65)];
+      component.openAttachment({ ...message(session.key, 66),
+        attachmentName: 'photo.jpg', attachmentMimeType: 'image/jpeg' });
+      expect(sessions.downloadAttachment).toHaveBeenCalledOnceWith(41, 66);
+
+      jasmine.clock().tick(101);
+      expect(component.selectedKey).toBeNull();
+      expect(component.conversations.some(c => c.key === session.key)).toBeFalse();
+      expect(component.messages).toEqual([]);
+      expect(component.selectedAttachment).toBeNull();
+      expect(component.attachmentPreviews.size).toBe(0);
+      expect(revoked).toHaveBeenCalledWith('blob:old-session');
+      pending.next(new Blob(['late'], { type: 'image/jpeg' }));
+      pending.complete();
+      expect(createUrl).not.toHaveBeenCalled();
+    } finally {
+      component.ngOnDestroy();
+      jasmine.clock().uninstall();
+    }
+  });
+
+  it('does not close a different chat when the previous session reaches kickoff', () => {
+    jasmine.clock().install();
+    try {
+      const session = item('session', 41);
+      const directChat = item('direct', 'bea');
+      (component as any).sessionKickoffs.set(41, Date.now() + 100);
+      component.conversations = [session, directChat];
+      spyOn<any>(component, 'loadHistory').and.stub();
+      spyOn<any>(component, 'loadComposerAccess').and.stub();
+      component.selectConversation(session);
+      component.selectConversation(directChat);
+      jasmine.clock().tick(101);
+      expect(component.selectedKey).toBe(directChat.key);
+      expect(component.conversations.some(c => c.key === directChat.key)).toBeTrue();
+    } finally {
+      component.ngOnDestroy();
+      jasmine.clock().uninstall();
+    }
+  });
+
+  it('expires private session previews on focus after browser suspension', () => {
+    const session = item('session', 41);
+    component.conversations = [session];
+    spyOn<any>(component, 'loadHistory').and.stub();
+    spyOn<any>(component, 'loadComposerAccess').and.stub();
+    component.selectConversation(session);
+    const revoked = spyOn(URL, 'revokeObjectURL');
+    component.attachmentPreviews.set(93, 'blob:suspended-session');
+    // Simulate time passing while the browser suspends timer callbacks.
+    (component as any).sessionKickoffs.set(41, Date.now() - 1000);
+    (component as any).onPageActive();
+    expect(component.selectedKey).toBeNull();
+    expect(component.attachmentPreviews.size).toBe(0);
+    expect(revoked).toHaveBeenCalledWith('blob:suspended-session');
+    component.ngOnDestroy();
+  });
+
   it('refuses unsupported or oversized attachments before HTTP upload', () => {
     const peer = item('direct','bea');
     component.conversations = [peer];
