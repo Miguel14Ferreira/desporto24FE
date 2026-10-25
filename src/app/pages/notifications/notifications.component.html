@@ -262,6 +262,15 @@
                   </button>
                 }
 
+                @if (selected.type === 'VENUE_EDIT_DECISION'
+                     && selected.venueId !== null && selected.venueId !== undefined) {
+                  <button type="button"
+                    class="primary-action jynlo-action jynlo-action--primary"
+                    (click)="openVenueDecision(selected)">
+                    {{ 'notifications.openVenue' | t }}
+                  </button>
+                }
+
                 @if (selected.type === 'CHAT_MESSAGE' && selected.relatedUsername) {
                   <button type="button" class="primary-action jynlo-action jynlo-action--primary" (click)="openChat(selected)">
                     {{ 'notifications.openChat' | t }}
