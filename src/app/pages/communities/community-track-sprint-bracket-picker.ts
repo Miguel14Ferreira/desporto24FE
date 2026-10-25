@@ -16,7 +16,7 @@ export function nextSprintBracketHeatNumber(
 ): number {
   if (!seriesKey) return 1;
   const heats = rounds.filter(round =>
-    (round.eventType === 'TRACK_SPRINT_HEAT' || round.eventType === 'TRACK_SPRINT_REPECHAGE') && round.sprintSeriesKey === seriesKey
+    (round.eventType === 'TRACK_SPRINT_HEAT' || round.eventType === 'TRACK_SPRINT_REPECHAGE' || round.eventType === 'TRACK_SPRINT_5_8') && round.sprintSeriesKey === seriesKey
     && round.sprintHeatNumber != null).map(round => round.sprintHeatNumber!);
   if (heats.length === 0) return 1;
   return Math.max(...heats) + 1;
