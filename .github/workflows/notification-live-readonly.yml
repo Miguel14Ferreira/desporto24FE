@@ -28,3 +28,5 @@ jobs:
         run: node --test scripts/qa/jynlo-notifications-live-readonly.test.cjs
       - name: QA login and read-only notification verification
         run: node scripts/qa/jynlo-notifications-live-readonly.cjs
+      - name: Check for QA-only community before any optional email test
+        run: node scripts/qa/jynlo-email-live-preflight.cjs
