@@ -2525,6 +2525,26 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     return kind === 'direct' ? 'inbox.private' : kind === 'community' ? 'inbox.community' : 'inbox.session';
   }
 
+  /** Compact inbox timestamp; keep full date/time in the title attribute. */
+  formatInboxListTime(value: string): string {
+    const millis = Date.parse(value || '');
+    if (!Number.isFinite(millis)) return '';
+    const date = new Date(millis);
+    const now = new Date();
+    const locale = localStorage.getItem('d24-language') === 'en' ? 'en-GB' : 'pt-PT';
+    const day = (dateValue: Date): number =>
+      new Date(dateValue.getFullYear(), dateValue.getMonth(), dateValue.getDate()).getTime();
+    const difference = (day(now) - day(date)) / 86400000;
+    if (difference === 0) {
+      return new Intl.DateTimeFormat(locale, {hour:'2-digit',minute:'2-digit'}).format(date);
+    }
+    if (difference === 1) return locale === 'en-GB' ? 'Yesterday' : 'Ontem';
+    if (difference > 1 && difference < 7) {
+      return new Intl.DateTimeFormat(locale, {weekday:'short'}).format(date);
+    }
+    return new Intl.DateTimeFormat(locale, {day:'2-digit',month:'2-digit'}).format(date);
+  }
+
   formatDate(value: string): string {
     const millis = Date.parse(value || '');
     return Number.isFinite(millis)
