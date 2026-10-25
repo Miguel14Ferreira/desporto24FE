@@ -170,6 +170,11 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   sprintRerunOrder: string[] = ['', ''];
   sprintRerunReference = '';
   sprintRerunReason = '';
+  sprintAwardBracketId: number | null = null;
+  sprintAwardIncidentId: number | null = null;
+  sprintAwardWinner = '';
+  sprintAwardReference = '';
+  sprintAwardReason = '';
   sprintIncidentError = '';
   sprintInterruptionBracketId: number | null = null;
   sprintInterruptionReference = '';
@@ -2643,6 +2648,66 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       error: error => this.sprintIncidentError = error.error?.message
         || t('communities.trackCycling.incidentError')
     });
+  }
+
+  sprintCanConfirmOfficialAward(bracket: TrackSprintBracketOverview,
+    incident: TrackSprintIncident): boolean {
+    if (bracket.format !== 'OLYMPIC_TWENTY_FOUR_REPECHAGE'
+        || bracket.interruption || incident.status !== 'ADJUDICATION_REQUIRED'
+        || incident.incidentType !== 'FALL' || incident.heatNumber !== 1
+        || !['RELEGATION', 'DISQUALIFICATION'].includes(incident.sanctionType || '')
+        || !/^SP[1-9][0-9]*-(A(?:[1-9]|1[0-2])|C[1-8]|E[1-6]|V[1-4])$/
+            .test(incident.seriesKey)) return false;
+    const match=bracket.matches.find(m=>m.seriesKey===incident.seriesKey);
+    return !!match && match.status === 'READY' && !!match.riderA && !!match.riderB
+      && !match.riderC && !match.riderD
+      && [match.riderA,match.riderB].includes(incident.sanctionedUsername || '');
+  }
+
+  sprintAwardEligibleWinner(bracket: TrackSprintBracketOverview,
+    incident: TrackSprintIncident): string | null {
+    if (!this.sprintCanConfirmOfficialAward(bracket,incident)) return null;
+    const match=bracket.matches.find(m=>m.seriesKey===incident.seriesKey)!;
+    return [match.riderA!,match.riderB!]
+      .find(r=>r!==incident.sanctionedUsername) || null;
+  }
+
+  editSprintOfficialAward(bracketId: number, incidentId: number): void {
+    this.sprintAwardBracketId=bracketId;
+    this.sprintAwardIncidentId=incidentId;
+    this.sprintAwardWinner=''; // never preselect a result
+    this.sprintAwardReference='';
+    this.sprintAwardReason='';
+    this.sprintIncidentError='';
+  }
+
+  saveSprintOfficialAward(): void {
+    const bracket=this.sprintBrackets.find(b=>b.id===this.sprintAwardBracketId);
+    const incident=(bracket?.incidents || []).find(i=>i.id===this.sprintAwardIncidentId);
+    if (!this.selected || !this.canManage() || this.sprintIncidentSaving
+        || this.selectedSeasonId==null || this.activeSeason()?.id !== this.selectedSeasonId
+        || !bracket || !incident || !this.sprintCanConfirmOfficialAward(bracket,incident)
+        || this.sprintAwardWinner !== this.sprintAwardEligibleWinner(bracket,incident)
+        || this.sprintAwardReference.trim().length<12
+        || this.sprintAwardReason.trim().length<12) return;
+    const community=this.selected.id,season=this.selectedSeasonId;
+    this.sprintIncidentSaving=true;
+    this.sprintIncidentError='';
+    this.communityService.confirmSprintTwoUpOfficialAward(
+      community,season,bracket.id,incident.id,{
+        winnerUsername:this.sprintAwardWinner,
+        basis:'INTENTIONAL_FALL',
+        reference:this.sprintAwardReference.trim(),
+        reason:this.sprintAwardReason.trim()
+      }).pipe(timeout(10_000),finalize(()=>this.sprintIncidentSaving=false)).subscribe({
+        next:()=>{
+          this.sprintAwardBracketId=null;
+          this.sprintAwardIncidentId=null;
+          this.loadSprintBrackets(community,season);
+        },
+        error:error=>this.sprintIncidentError=error.error?.message
+          || t('communities.trackCycling.incidentError')
+      });
   }
 
   sprintRerunAuthorized(bracket: TrackSprintBracketOverview, key: string): boolean {
