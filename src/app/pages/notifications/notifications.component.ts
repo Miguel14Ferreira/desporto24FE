@@ -37,6 +37,7 @@ export class NotificationsComponent implements OnInit {
   ] as const;
   preferencesOpen = false;
   preferencesLoading = false;
+  preferencesRefreshFailed = false;
   preferencesSaving = false;
   preferencesError = '';
   preferencesSuccess = '';
@@ -74,12 +75,16 @@ export class NotificationsComponent implements OnInit {
     // Never replace local settings with a stale GET while a PUT is in flight.
     if (this.preferencesLoading || this.preferencesSaving) return;
     this.preferencesLoading = true;
+    this.preferencesRefreshFailed = false;
     this.preferencesError = '';
     this.notificationService.preferences().pipe(
       timeout(10_000), finalize(() => this.preferencesLoading = false)
     ).subscribe({
       next: settings => this.preferences = settings,
-      error: () => this.preferencesError = t('notifications.preferences.loadError')
+      error: () => {
+        this.preferencesRefreshFailed = true;
+        this.preferencesError = t('notifications.preferences.loadError');
+      }
     });
   }
 
@@ -90,14 +95,14 @@ export class NotificationsComponent implements OnInit {
   }
 
   changeGlobal(channel: 'inApp' | 'email', enabled: boolean): void {
-    if (!this.preferences || this.preferencesLoading || this.preferencesSaving) return;
+    if (!this.preferences || this.preferencesLoading || this.preferencesSaving || this.preferencesRefreshFailed) return;
     const next = { ...this.preferences,
       [channel === 'inApp' ? 'inAppEnabled' : 'emailEnabled']: enabled };
     this.savePreferences(next);
   }
 
   changeType(type: string, channel: 'inApp' | 'email', enabled: boolean): void {
-    if (!this.preferences || this.preferencesLoading || this.preferencesSaving) return;
+    if (!this.preferences || this.preferencesLoading || this.preferencesSaving || this.preferencesRefreshFailed) return;
     const key = channel === 'inApp' ? 'disabledInAppTypes' : 'disabledEmailTypes';
     const disabled = new Set(this.preferences[key]);
     if (enabled) disabled.delete(type); else disabled.add(type);
