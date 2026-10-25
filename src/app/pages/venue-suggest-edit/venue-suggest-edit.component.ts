@@ -153,7 +153,7 @@ export class VenueSuggestEditComponent implements OnInit {
       return parsed.protocol === 'https:' && parsed.hostname.includes('.')
         && !parsed.hostname.endsWith('.') && !parsed.username && !parsed.password
         && !parsed.hash && (!parsed.port || parsed.port === '443')
-        && /^[a-z0-9-]+(\\.[a-z0-9-]+)+$/i.test(parsed.hostname)
+        && /^[a-z0-9-]+(\.[a-z0-9-]+)+$/i.test(parsed.hostname)
         && !/^[0-9.]+$/.test(parsed.hostname);
     } catch { return false; }
   }
