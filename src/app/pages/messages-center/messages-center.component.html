@@ -394,7 +394,12 @@
             }
             @if (selectedGif; as gif) {
               <div class="inbox-attachment-draft inbox-giphy-draft">
-                <img [src]="gif.previewUrl" [alt]="'chat.gifImage' | t" referrerpolicy="no-referrer">
+                @if (gifAvailable === false) {
+                  <app-giphy-embed [id]="gif.id" [pageUrl]="gif.pageUrl"
+                    [compact]="true"></app-giphy-embed>
+                } @else {
+                  <img [src]="gif.previewUrl" [alt]="'chat.gifImage' | t" referrerpolicy="no-referrer">
+                }
                 <span>{{ gif.title }} · GIPHY</span>
                 <button type="button" [disabled]="sending || deliveryUncertain"
                   (click)="removeSelectedGif()">{{ 'chat.attachmentRemove' | t }}</button>
@@ -575,7 +580,12 @@
                               [attr.aria-label]="gif.title || ('chat.gifSelect' | t)"
                               [attr.title]="gif.title"
                               (click)="chooseGif(gif)">
-                              <img [src]="gif.previewUrl" [alt]="gif.title" loading="lazy" referrerpolicy="no-referrer">
+                              @if (gifAvailable === false) {
+                                <app-giphy-embed [id]="gif.id" [pageUrl]="gif.pageUrl"
+                                  [compact]="true"></app-giphy-embed>
+                              } @else {
+                                <img [src]="gif.previewUrl" [alt]="gif.title" loading="lazy" referrerpolicy="no-referrer">
+                              }
 
                             </button>
                           }
@@ -593,7 +603,7 @@
                             [disabled]="!attachmentControlsReady || !!gifSelectingId">
                             <span aria-hidden="true">↑</span> {{ 'chat.gifUpload' | t }}
                           </button>
-                          @if (gifAvailable) {
+                          @if (gifAvailable || gifResults.length) {
                             <a href="https://giphy.com" target="_blank" rel="noopener noreferrer">Powered by GIPHY</a>
                           }
                         </footer>
