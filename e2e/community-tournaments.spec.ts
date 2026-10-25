@@ -1089,7 +1089,7 @@ test('Historical knockout browser QA: phase button jumps to the exact final acro
   expect(fixture.unmocked.filter(s => s.includes('match-archives'))).toEqual([]);
 });
 
-test('Historical CSV upload QA: preview, consent, archived knockout tournament and original fixtures', async ({ page }) => {
+test('Historical knockout browser QA: CSV upload, preview, consent and archive', async ({ page }) => {
   const fixture = await mockCommunityApi(page, 'OWNER', 'historical-import-flow');
   await page.goto('/menu/communities/7?tab=ranking');
 
