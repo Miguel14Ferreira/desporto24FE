@@ -1,10 +1,12 @@
 export interface TrackSprintBracketMatch {
-  phase: 'SPRINT_THIRTY_SECOND_FINAL' | 'SPRINT_REPECHAGE_1_32' | 'SPRINT_REPECHAGE_1_16' | 'SPRINT_REPECHAGE_1_8' | 'SPRINT_SIXTEENTH_FINAL' | 'SPRINT_EIGHTH_FINAL' | 'SPRINT_QUARTER_FINAL' | 'SPRINT_SEMI_FINAL' | 'SPRINT_BRONZE_FINAL' | 'SPRINT_GOLD_FINAL';
+  phase: 'SPRINT_THIRTY_SECOND_FINAL' | 'SPRINT_REPECHAGE_1_32' | 'SPRINT_REPECHAGE_1_16' | 'SPRINT_REPECHAGE_1_8' | 'SPRINT_PLACES_5_8' | 'SPRINT_SIXTEENTH_FINAL' | 'SPRINT_EIGHTH_FINAL' | 'SPRINT_QUARTER_FINAL' | 'SPRINT_SEMI_FINAL' | 'SPRINT_BRONZE_FINAL' | 'SPRINT_GOLD_FINAL';
   slot: string;
   seriesKey: string;
   riderA: string | null;
   riderB: string | null;
   riderC?: string | null;
+  riderD?: string | null;
+  rankings?: { position: number; username: string }[];
   winsA: number;
   winsB: number;
   winner: string | null;
