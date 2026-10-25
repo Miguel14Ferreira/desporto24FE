@@ -79,6 +79,49 @@ describe('Unified Jynlo message center', () => {
     (component as any).sessionKickoffs.set(41, Date.now() + 3600_000);
   });
 
+  it('shares public Jynlo entities without leaking private sessions or groups', () => {
+    const peer=item('direct','bea');
+    component.conversations=[peer];
+    component.selectedKey=peer.key;
+    component.composerAllowed=true;
+    component.attachmentReady=true;
+    friends.friends.and.returnValue(of([{username:'maria',nickname:'Maria',
+      fullName:'Maria',chatBlocked:false,blockedByMe:false,profilePicUrl:null}]));
+    communities.mine.and.returnValue(of([
+      {id:8,name:'Public Crew',sport:'Futsal',visibility:'PUBLIC'},
+      {id:9,name:'Private Crew',sport:'Futsal',visibility:'PRIVATE'}
+    ] as any));
+    sessions.mine.and.returnValue(of({created:[
+      {id:10,sport:'Futebol',city:'Lisboa',privateGame:false,
+        gameDate:new Date(Date.now()+86400_000).toISOString(),status:'OPEN'},
+      {id:11,sport:'Futebol',city:'Lisboa',privateGame:true,
+        gameDate:new Date(Date.now()+86400_000).toISOString(),status:'OPEN'}
+    ],joined:[],waitlisted:[]} as any));
+    component.openSharePicker();
+    expect(component.shareChoices.map(x=>x.id)).toEqual(['maria','10','8']);
+    const selected=component.shareChoices[1];
+    component.draft='Junta-te!';
+    component.selectShareChoice(selected);
+    expect(component.selectedShare?.id).toBe('10');
+    expect(component.draft).toBe('Junta-te!');
+    expect(component.canSendMessage()).toBeTrue();
+    expect(direct.send).not.toHaveBeenCalled();
+    expect(component.selectedAttachment).toBeNull();
+  });
+
+  it('clears share previews after switching conversation', () => {
+    const peer=item('direct','bea');
+    component.conversations=[peer,item('direct','carlos')];
+    component.selectedKey=peer.key;
+    component.composerAllowed=true;
+    component.attachmentReady=true;
+    component.openSharePicker();
+    component.selectedShare={kind:'profile',id:'maria',title:'Maria',subtitle:'@maria'};
+    component.selectConversation(component.conversations[1]);
+    expect(component.selectedShare).toBeNull();
+    expect(component.sharePickerOpen).toBeFalse();
+  });
+
   it('edits only own recent text messages and preserves another conversation draft', () => {
     const peer = item('direct','bea');
     component.conversations = [peer];
