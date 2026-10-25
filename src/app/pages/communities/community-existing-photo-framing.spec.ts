@@ -52,10 +52,33 @@ describe('Editing an existing community cover', () => {
     component.avatarCropFocusY = 70;
     await component.saveCommunityAvatarCrop();
     expect(framing).toHaveBeenCalledOnceWith(42,
-      'https://cdn.example/communities/42/animated.gif', 1.8, 40, 70);
+      'https://cdn.example/communities/42/animated.gif', 1.8, 40, 70, 'COVER');
     expect(upload).not.toHaveBeenCalled();
     expect(component.selected?.photoUrl).toContain('animated.gif');
     expect(component.avatarCropExisting).toBeFalse();
+  });
+
+  it('shows the complete GIF with a blurred background and permits zoom below 1', async () => {
+    component.openExistingCommunityAvatarCrop();
+    component.setCommunityAvatarFitMode('SHOW_ALL');
+    expect(component.avatarCropFitMode).toBe('SHOW_ALL');
+    expect(component.avatarCropZoom).toBe(1);
+    expect(component.communityCoverFit({ photoFitMode: 'SHOW_ALL' })).toBe('contain');
+    component.onCommunityAvatarZoom({ target: { value: '0.6' } } as any);
+    expect(component.avatarCropZoom).toBe(0.6);
+    await component.saveCommunityAvatarCrop();
+    expect(framing).toHaveBeenCalledOnceWith(42,
+      'https://cdn.example/communities/42/animated.gif', 0.6, 50, 50, 'SHOW_ALL');
+    expect(upload).not.toHaveBeenCalled();
+  });
+
+  it('returns to cover mode with zoom >= 1', () => {
+    component.openExistingCommunityAvatarCrop();
+    component.setCommunityAvatarFitMode('SHOW_ALL');
+    component.setCommunityAvatarFitMode('COVER');
+    component.onCommunityAvatarZoom({ target: {value: '0.6'} } as any);
+    expect(component.avatarCropZoom).toBe(1);
+    expect(component.communityCoverFit({ photoFitMode: 'COVER' })).toBe('cover');
   });
 
   it('cancels without saving', () => {
