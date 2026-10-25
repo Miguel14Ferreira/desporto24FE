@@ -100,6 +100,70 @@ describe('Events2Component', () => {
     )).not.toBeNull();
   });
 
+  it('lets a community organizer choose scheduled or manual callup opening', () => {
+    component.communityId = 7;
+    fixture.detectChanges();
+    const mode = fixture.nativeElement.querySelector(
+      'select[name="registrationOpeningMode"]'
+    ) as HTMLSelectElement;
+    expect(Array.from(mode.options).map(option => option.value)).toEqual([
+      'IMMEDIATE', 'SCHEDULED', 'MANUAL'
+    ]);
+    component.registrationOpeningMode = 'SCHEDULED';
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('input[name="registrationOpensAt"]'))
+      .not.toBeNull();
+    component.registrationOpeningMode = 'MANUAL';
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('input[name="registrationOpensAt"]'))
+      .toBeNull();
+  });
+
+  it('requires a future scheduled callup before kickoff', () => {
+    component.communityId = 7;
+    component.sport = 'Padel';
+    component.gameDate = '2099-10-15T18:00';
+    component.city = 'Lisboa';
+    component.address = 'Rua do Campo';
+    component.registrationOpeningMode = 'SCHEDULED';
+    component.registrationOpensAt = '2099-10-15T19:00';
+    component.createSession();
+    expect(sessionService.create).not.toHaveBeenCalled();
+    expect(component.errorMessage).toContain('abrir as inscrições');
+
+    component.registrationOpensAt = '2099-10-14T12:00';
+    component.createSession();
+    expect(sessionService.create).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        registrationOpeningMode: 'SCHEDULED',
+        registrationOpensAt: new Date('2099-10-14T12:00').toISOString()
+      }), undefined
+    );
+  });
+
+  it('creates a manually gated callup only for community sessions', () => {
+    component.communityId = 7;
+    component.sport = 'Padel';
+    component.gameDate = '2099-10-15T18:00';
+    component.city = 'Lisboa';
+    component.address = 'Rua do Campo';
+    component.registrationOpeningMode = 'MANUAL';
+    component.createSession();
+    expect(sessionService.create).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        registrationOpeningMode: 'MANUAL',
+        registrationOpensAt: null
+      }), undefined
+    );
+
+    sessionService.create.calls.reset();
+    component.communityId = null;
+    component.createSession();
+    expect(sessionService.create).toHaveBeenCalledWith(
+      jasmine.objectContaining({ registrationOpeningMode: 'IMMEDIATE' }), undefined
+    );
+  });
+
   it('offers three exclusive location methods without requiring a venue in the catalogue', () => {
     const buttons = Array.from(
       fixture.nativeElement.querySelectorAll('.location-methods .location-method')

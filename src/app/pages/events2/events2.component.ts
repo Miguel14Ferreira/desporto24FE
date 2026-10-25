@@ -76,6 +76,8 @@ export class Events2Component implements OnInit, OnDestroy {
   }
   recurrence: 'NONE' | 'WEEKLY' | 'BIWEEKLY' = 'NONE';
   recurrenceOccurrences = 4;
+  registrationOpeningMode: 'IMMEDIATE' | 'SCHEDULED' | 'MANUAL' = 'IMMEDIATE';
+  registrationOpensAt = '';
 
   readonly sportsCatalog = SPORTS_CATALOG;
   readonly districts = MAINLAND_PORTUGAL_DISTRICTS;
@@ -255,6 +257,10 @@ export class Events2Component implements OnInit, OnDestroy {
       recurrence: this.communityId ? this.recurrence : 'NONE',
       recurrenceOccurrences: this.communityId && this.recurrence !== 'NONE'
         ? Number(this.recurrenceOccurrences)
+        : null,
+      registrationOpeningMode: this.communityId ? this.registrationOpeningMode : 'IMMEDIATE',
+      registrationOpensAt: this.communityId && this.registrationOpeningMode === 'SCHEDULED'
+        ? new Date(this.registrationOpensAt).toISOString()
         : null
     };
 
@@ -984,6 +990,15 @@ export class Events2Component implements OnInit, OnDestroy {
       if (this.confirmedPlayers === null || !Number.isInteger(confirmed)
           || confirmed < 1 || confirmed > players) {
         return t('createSession.confirmedPlayersError');
+      }
+    }
+
+    if (this.communityId && this.registrationOpeningMode === 'SCHEDULED') {
+      const opening = Date.parse(this.registrationOpensAt);
+      const kickoff = Date.parse(this.gameDate);
+      if (!this.registrationOpensAt || !Number.isFinite(opening)
+          || !Number.isFinite(kickoff) || opening <= Date.now() || opening >= kickoff) {
+        return t('feedback.create.registrationOpensAtInvalid');
       }
     }
 

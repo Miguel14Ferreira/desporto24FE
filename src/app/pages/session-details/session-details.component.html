@@ -551,6 +551,27 @@
             <div class="action-message" role="status">{{ joinStatusMessage }}</div>
           }
 
+          @if (registrationPending() && session.status !== 'CANCELLED' && session.status !== 'COMPLETED') {
+            <section class="participation-panel" role="status">
+              <div>
+                <h2>{{ 'sessionDetail.callupPending' | t }}</h2>
+                @if (session.registrationOpeningMode === 'MANUAL') {
+                  <p>{{ 'sessionDetail.callupAwaitOrganizer' | t }}</p>
+                } @else if (session.registrationOpensAt) {
+                  <p>{{ 'sessionDetail.callupScheduledFor' | t }}:
+                    <strong>{{ session.registrationOpensAt | date:'dd/MM/yyyy, HH:mm' }}</strong>
+                  </p>
+                }
+              </div>
+              @if (isCreator() && session.registrationOpeningMode === 'MANUAL') {
+                <button type="button" class="primary-action jynlo-action jynlo-action--primary"
+                  (click)="openCallup()" [disabled]="actionLoading">
+                  {{ actionLoading ? ('common.processing' | t) : ('sessionDetail.openCallup' | t) }}
+                </button>
+              }
+            </section>
+          }
+
           @if (session.waitlisted) {
             <section class="participation-panel">
               <div>
@@ -738,6 +759,8 @@
                 {{ (joinStatusChecking ? 'sessionDetail.joinVerifying' : 'sessionDetail.joinVerify') | t }}
               </button>
             </section>
+          } @else if (registrationPending()) {
+            <!-- The callup status panel above explains when joining will open. -->
           } @else if (!canJoinSession()) {
             <section class="participation-panel">
               <div>

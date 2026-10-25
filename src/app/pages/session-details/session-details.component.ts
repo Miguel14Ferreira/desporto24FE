@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { AfterViewChecked, ChangeDetectionStrategy, Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
+import { AfterViewChecked, ChangeDetectionStrategy, Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild, NgZone, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { JwtHelperService } from '@auth0/angular-jwt';
 import { catchError, concatMap, finalize, forkJoin, from, map, mergeMap, of, retry, Subscription, TimeoutError, timeout, toArray } from 'rxjs';
@@ -47,6 +47,8 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
 
   loading = false;
   actionLoading = false;
+  registrationClock = Date.now();
+  private registrationClockTimer?: ReturnType<typeof setInterval>;
   chatLoading = false;
   messageSending = false;
   chatRealtimeConnected = false;
@@ -160,6 +162,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   private readonly jwtHelper = new JwtHelperService();
   private readonly router = inject(Router);
   private readonly readSync = inject(ChatReadSyncService);
+  private readonly zone = inject(NgZone);
   private readonly realtimeSubscriptions = new Subscription();
   readonly typing: ChatTypingTracker;
 
@@ -199,6 +202,12 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     }
     this.restoreRatingDismissal();
     this.loadSession();
+    // Run the clock outside Angular so fixture.whenStable() and browser
+    // navigation do not wait forever for a persistent repeating task.
+    this.zone.runOutsideAngular(() => {
+      this.registrationClockTimer = setInterval(
+        () => this.zone.run(() => this.registrationClock = Date.now()), 15000);
+    });
     this.realtimeService.connect();
 
     this.realtimeSubscriptions.add(
@@ -226,6 +235,7 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
   }
 
   ngOnDestroy(): void {
+    if (this.registrationClockTimer) clearInterval(this.registrationClockTimer);
     this.typing.destroy();
     this.realtimeSubscriptions.unsubscribe();
   }
@@ -1901,6 +1911,36 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     return Number.isFinite(startTime) && startTime > Date.now();
   }
 
+  registrationPending(): boolean {
+    if (!this.session || this.session.joined && !this.isCreator()) return false;
+    if (this.session.registrationOpeningMode === 'MANUAL') return true;
+    if (this.session.registrationOpeningMode === 'SCHEDULED') {
+      const when = Date.parse(this.session.registrationOpensAt ?? '');
+      return !Number.isFinite(when) || this.registrationClock < when;
+    }
+    return false;
+  }
+
+  openCallup(): void {
+    if (!this.sessionId || !this.session || !this.isCreator()
+        || this.session.registrationOpeningMode !== 'MANUAL' || this.actionLoading) return;
+    this.actionLoading = true;
+    this.actionError = '';
+    this.actionSuccess = '';
+    this.sessionService.openRegistration(this.sessionId)
+      .pipe(timeout(10000), finalize(() => this.actionLoading = false))
+      .subscribe({
+        next: detail => {
+          this.session = detail;
+          this.actionSuccess = t('sessionDetail.callupOpened');
+          this.loadSession(false);
+        },
+        error: error => {
+          this.actionError = this.errorFrom(error, t('sessionDetail.callupOpenError'));
+        }
+      });
+  }
+
   canJoinSession(): boolean {
     if (this.joinOutcomeUnknown || !this.session || this.session.joined || this.session.waitlisted
       || (this.session.status !== 'OPEN' && this.session.status !== 'FULL')) {
@@ -1908,7 +1948,8 @@ export class SessionDetailsComponent implements OnInit, OnDestroy, AfterViewChec
     }
 
     const startTime = Date.parse(this.session.gameDate);
-    return Number.isFinite(startTime) && startTime > Date.now();
+    return !this.registrationPending()
+      && Number.isFinite(startTime) && startTime > Date.now();
   }
 
   joinButtonLabel(): string {

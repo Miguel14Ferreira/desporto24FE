@@ -168,6 +168,10 @@ export class SessionService {
     );
   }
 
+  openRegistration(id: number): Observable<SessionDetail> {
+    return this.http.post<SessionDetail>(`${this.baseUrl}/${id}/registration/open`, null);
+  }
+
   leave(id: number): Observable<void> {
     return this.http.post<void>(this.baseUrl + '/' + id + '/leave', null);
   }
