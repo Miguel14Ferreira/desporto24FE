@@ -28,7 +28,7 @@ export interface TrackSprintIncident {
   heatNumber: number;
   incidentType: 'FALL' | 'PUNCTURE' | 'BICYCLE_DEFECT' | 'RULE_INFRINGEMENT' | 'OTHER';
   details: string;
-  status: 'PENDING' | 'DECIDED' | 'ADJUDICATION_REQUIRED';
+  status: 'PENDING' | 'DECIDED' | 'ADJUDICATION_REQUIRED' | 'RESTART_AUTHORIZED';
   reportedBy: string;
   reportedAt: string;
   decisionType: 'RESTART_REQUIRED' | 'OFFICIAL_RESULT_TO_RECORD' | 'DISCIPLINARY_RULING' | null;
@@ -38,6 +38,11 @@ export interface TrackSprintIncident {
   decisionReason: string | null;
   decidedBy: string | null;
   decidedAt: string | null;
+  rerunRiders?: string[];
+  rerunReference?: string | null;
+  rerunReason?: string | null;
+  rerunAuthorizedBy?: string | null;
+  rerunAuthorizedAt?: string | null;
 }
 
 export interface TrackSprintBracketOverview {
@@ -541,6 +546,14 @@ export class CommunityGroupsService {
     return this.http.put<TrackSprintIncident>(
       this.url + '/' + communityId + '/seasons/' + seasonId
       + '/track-sprint-brackets/' + bracketId + '/incidents/' + incidentId + '/decision', payload);
+  }
+
+  authorizeTrackSprintRerun(communityId: number, seasonId: number, bracketId: number,
+    incidentId: number, payload: {orderedRiders: string[]; reference: string; reason: string}):
+    Observable<TrackSprintIncident> {
+    return this.http.put<TrackSprintIncident>(
+      this.url + '/' + communityId + '/seasons/' + seasonId
+      + '/track-sprint-brackets/' + bracketId + '/incidents/' + incidentId + '/rerun', payload);
   }
 
   deleteTrackSprintBracket(communityId: number, seasonId: number, bracketId: number):
