@@ -18,6 +18,10 @@
         <span class="venue-kicker">{{ 'venue.detail.kicker' | t }}</span>
         <h1>{{ venue.name }}</h1>
         <p class="venue-hero-location">📍 {{ venue.city }}@if (venue.district && venue.district !== venue.city) {, {{ venue.district }}}</p>
+        <a class="jynlo-action jynlo-action--neutral venue-edit-link"
+          [routerLink]="['/menu/venues', venue.id, 'suggest-edit']">
+          ✎ {{ 'venue.edit.suggest' | t }}
+        </a>
         @if (venue.sports) {
           <div class="venue-hero-sports">
             @for (sport of venue.sports.split(','); track sport) {
