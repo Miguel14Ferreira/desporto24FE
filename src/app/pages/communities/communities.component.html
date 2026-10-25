@@ -3122,7 +3122,7 @@
                     <p>{{ 'communities.competitionDisabledText' | t }}</p>
                   </div>
                 } @else {
-                  <p class="competition-context-hint" role="note">Classificação dos jogos habituais e jornadas registadas na comunidade. Os torneios têm resultados próprios.</p>
+                  <p class="competition-context-hint" role="note">{{ 'communities.tournaments.overview.standingsSeparateHint' | t }}</p>
                     @if (canManage()) {
                       <section class="import-panel import-wizard">
                         <div class="import-wizard-header">
@@ -3703,10 +3703,10 @@
                         <tr>
                           <th>#</th>
                           <th>{{ 'communities.player' | t }}</th>
-                          <th>J</th>
-                          <th>V</th>
-                          <th>E</th>
-                          <th>D</th>
+                          <th scope="col" [title]="'communities.tournaments.individualUi.playedTitle' | t">{{ 'communities.tournaments.finalUi.playedCol' | t }}</th>
+                          <th scope="col" [title]="'communities.tournaments.individualUi.winTitle' | t">{{ 'communities.tournaments.finalUi.winsCol' | t }}</th>
+                          <th scope="col" [title]="'communities.tournaments.individualUi.drawTitle' | t">{{ 'communities.tournaments.finalUi.drawsCol' | t }}</th>
+                          <th scope="col" [title]="'communities.tournaments.individualUi.lossTitle' | t">{{ 'communities.tournaments.finalUi.lossesCol' | t }}</th>
                           <th>{{ 'communities.pointsShort' | t }}</th>
                         </tr>
                       </thead>

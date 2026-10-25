@@ -1,6 +1,7 @@
 import { CommunitiesComponent } from './communities.component';
 import { of, Subject } from 'rxjs';
 import { SessionSummary } from '../model/session-summary';
+import { appTranslate as t } from '../../i18n/i18n.service';
 
 describe('CommunitiesComponent public session eligibility', () => {
   let component: CommunitiesComponent;
@@ -24,6 +25,26 @@ describe('CommunitiesComponent public session eligibility', () => {
     };
   });
 
+
+
+  it('keeps regular standings and tournament history explanations and column abbreviations translated PT/EN', () => {
+    const previous = localStorage.getItem('d24-language');
+    try {
+      localStorage.setItem('d24-language', 'en');
+      expect(t('communities.tournaments.overview.standingsSeparateHint'))
+        .toContain('Tournaments have separate results.');
+      expect(['playedCol', 'winsCol', 'drawsCol', 'lossesCol'].map(k =>
+        t('communities.tournaments.finalUi.' + k))).toEqual(['P', 'W', 'D', 'L']);
+      localStorage.setItem('d24-language', 'pt');
+      expect(t('communities.tournaments.overview.standingsSeparateHint'))
+        .toContain('Os torneios têm resultados independentes.');
+      expect(['playedCol', 'winsCol', 'drawsCol', 'lossesCol'].map(k =>
+        t('communities.tournaments.finalUi.' + k))).toEqual(['J', 'V', 'E', 'D']);
+    } finally {
+      if (previous === null) localStorage.removeItem('d24-language');
+      else localStorage.setItem('d24-language', previous);
+    }
+  });
 
   it('clears hidden circuit metrics for flying 200m without changing Scratch history', () => {
     component.roundEntries = [
