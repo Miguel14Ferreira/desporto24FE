@@ -83,27 +83,79 @@
         </section>
       }
 
-      @if (mapUrl; as venueMapUrl) {
-        <a class="venue-map-link"
-           [href]="venueMapUrl"
-           target="_blank"
-           rel="noopener noreferrer">
-          {{ (hasConfirmedMapCoordinates ? 'venue.detail.viewMap' : 'venue.detail.searchMap') | t }}
-        </a>
-        @if (!hasConfirmedMapCoordinates) {
-          <small class="venue-map-approximate-hint">{{ 'venue.detail.searchMapHint' | t }}</small>
-        }
-      }
+      <section class="venue-visit-section" aria-labelledby="venue-visit-heading">
+        <div class="venue-visit-intro">
+          <h2 id="venue-visit-heading">{{ 'venue.visit.heading' | t }}</h2>
+          <p>{{ 'venue.visit.intro' | t }}</p>
+        </div>
 
-      @if (venueWebsiteUrl; as safeVenueWebsite) {
-        <a class="venue-map-link venue-website-link"
-           [href]="safeVenueWebsite"
-           target="_blank"
-           rel="noopener noreferrer">
-          {{ 'venue.detail.externalWebsite' | t }}
-        </a>
-      }
-      <p class="venue-access-note">{{ 'venue.detail.accessNotice' | t }}</p>
+        <div class="venue-visit-grid">
+          <div class="venue-visit-card venue-visit-map">
+            <h3>{{ 'venue.visit.location' | t }}</h3>
+            @if (embeddedMapUrl; as mapEmbedUrl) {
+              <iframe class="venue-map-iframe"
+                [src]="mapEmbedUrl"
+                [title]="'venue.visit.mapTitle' | t:{ name: venue.name }"
+                loading="lazy"
+                referrerpolicy="no-referrer"
+                allowfullscreen></iframe>
+              <small class="venue-map-credit">
+                {{ 'venue.visit.mapCredit' | t }}
+                <a href="https://www.openstreetmap.org/copyright" target="_blank"
+                   rel="noopener noreferrer">OpenStreetMap</a>
+              </small>
+            } @else {
+              <div class="venue-map-unavailable">
+                {{ 'venue.visit.noGps' | t }}
+              </div>
+            }
+            @if (mapUrl; as venueMapUrl) {
+              <a class="jynlo-action jynlo-action--neutral venue-visit-action"
+                 [href]="venueMapUrl" target="_blank" rel="noopener noreferrer">
+                {{ (hasConfirmedMapCoordinates ? 'venue.visit.openGoogleMap' : 'venue.detail.searchMap') | t }}
+              </a>
+            }
+            @if (!hasConfirmedMapCoordinates) {
+              <small class="venue-map-approximate-hint">{{ 'venue.detail.searchMapHint' | t }}</small>
+            }
+          </div>
+
+          <div class="venue-visit-card venue-visit-contact">
+            <h3>{{ 'venue.visit.contact' | t }}</h3>
+            @if (venue.contact?.trim()) {
+              <p class="venue-contact-number">{{ venue.contact }}</p>
+              @if (publicTelephoneUrl; as phoneUrl) {
+                <a [href]="phoneUrl"
+                   class="jynlo-action jynlo-action--primary venue-visit-action">
+                  {{ 'venue.visit.call' | t }}
+                </a>
+              }
+              <small class="venue-contact-caveat">{{ 'venue.visit.confirmContact' | t }}</small>
+            } @else {
+              <p class="venue-contact-missing">{{ 'venue.visit.noContact' | t }}</p>
+            }
+            <div class="venue-contact-other-actions">
+              @if (googleVenueContactUrl; as googleListing) {
+                <a class="jynlo-action jynlo-action--neutral venue-visit-action"
+                   [href]="googleListing" target="_blank" rel="noopener noreferrer">
+                  {{ 'venue.visit.findGoogleContact' | t }}
+                </a>
+              }
+              <a class="jynlo-action jynlo-action--neutral venue-visit-action"
+                 [routerLink]="['/menu/venues', venue.id, 'suggest-edit']">
+                {{ (venue.contact?.trim() ? 'venue.visit.correctContact' : 'venue.visit.suggestContact') | t }}
+              </a>
+            </div>
+            @if (venueWebsiteUrl; as safeVenueWebsite) {
+              <a class="venue-website-under-contact"
+                 [href]="safeVenueWebsite" target="_blank" rel="noopener noreferrer">
+                {{ 'venue.detail.externalWebsite' | t }}
+              </a>
+            }
+          </div>
+        </div>
+        <p class="venue-access-note">{{ 'venue.detail.accessNotice' | t }}</p>
+      </section>
 
       <section class="venue-photos-section">
         <div class="venue-photos-heading">
