@@ -123,10 +123,11 @@ export class CommunityTournamentsService {
   resolveInlineSpeedTieBreak(communityId: number, tournamentId: number,
                             playerIds: number[], reason: string,
                             evidenceType: InlineSpeedTieEvidenceType,
-                            evidenceReference: string): Observable<InlineSpeedOverview> {
+                            evidenceReference: string,
+                            trialIds: number[] = []): Observable<InlineSpeedOverview> {
     return this.http.put<InlineSpeedOverview>(
       this.url(communityId, tournamentId) + '/inline-speed/tiebreaks/FIRST',
-      { playerIds, reason, evidenceType, evidenceReference });
+      { playerIds, reason, evidenceType, evidenceReference, trialIds });
   }
 
   /** Append-only real trial results; requires separate jury qualification approval. */
