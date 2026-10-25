@@ -222,40 +222,6 @@
 
 
 /* The sport registry determines which scoring interface can be configured. */
-.classification-profile {
-  display: grid;
-  gap: .5rem;
-  padding: 1rem 1.1rem;
-  border: 1px solid rgba(52,211,153,.25);
-  border-radius: .85rem;
-  background: rgba(16,185,129,.08);
-}
-.classification-profile strong { font-size: .96rem; color: #bbf7d0; }
-.classification-profile p { font-size: .84rem; color: #dbeafe; line-height: 1.55; }
-.classification-profile small { color: #a7f3d0; font-size: .75rem; }
-.classification-profile.classification-notice {
-  background: rgba(234,179,8,.07);
-  border-color: rgba(234,179,8,.34);
-}
-.classification-profile.classification-notice strong { color: #fde68a; }
-.classification-profile.classification-notice small { color: #fcd34d; }
-.classification-fixed-points {
-  display: grid;
-  gap: .75rem;
-  padding: 1rem 1.1rem;
-  border: 1px solid rgba(52,211,153,.28);
-  border-radius: .85rem;
-  background: rgba(8,47,73,.3);
-}
-.classification-fixed-points > div { display: flex; flex-wrap: wrap; gap: .65rem; }
-.classification-fixed-points > div span {
-  padding: .55rem .75rem;
-  background: rgba(52,211,153,.1);
-  border: 1px solid rgba(52,211,153,.2);
-  border-radius: .65rem;
-  font-weight: 800;
-}
-.classification-fixed-points p { font-size: .77rem; color: #b8d4e6; }
 .score-edit label.chess-outcome { max-width: 22rem; }
 .score-edit .chess-outcome select {
   min-width: min(100%, 17rem);
@@ -457,8 +423,7 @@
 
 /* Karting championships reuse existing community race results. */
 .race-championship { display: grid; gap: 1rem; min-width: 0; }
-.race-points-panel, .race-round-card, .race-available,
-.race-standings-section {
+.race-points-panel, .race-round-card, .race-available {
   padding: 1rem;
   border: 1px solid rgba(148, 163, 184, .22);
   border-radius: .85rem;
@@ -486,15 +451,6 @@
 }
 .race-available-row span { display: grid; gap: .25rem; }
 .race-available-row small { font-size: .75rem; color: #9fb2c8; }
-.race-standings-section { display: grid; gap: .85rem; }
-.race-standings-section .t-table-scroll { overflow-x: auto; }
-.race-standings-section table { width: 100%; border-collapse: collapse; white-space: nowrap; }
-.race-standings-section th, .race-standings-section td {
-  padding: .7rem .55rem; text-align: left;
-  border-bottom: 1px solid rgba(148,163,184,.19);
-}
-.race-standings-section th { color: #bcd1df; font-size: .77rem; }
-.race-standings-section td strong { color: #a7f3d0; }
 @media (max-width: 600px) {
   .race-available-row .t-btn { width: 100%; }
   .race-points-editor .t-btn { width: 100%; }
