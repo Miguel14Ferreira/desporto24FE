@@ -92,6 +92,9 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.attachmentReady = false;
     this.selectedAttachment = null;
     this.selectedGif = null;
+    this.selectedShare = null;
+    this.closeSharePicker();
+    this.closeAttachmentMenu();
     ++this.mutationVersion;
     this.cancelMessageMutation();
     this.closeEmojiPicker();
@@ -391,6 +394,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.sessionCutoffTimer = undefined;
     this.clearAttachmentRetry();
     this.closeEmojiPicker();
+    this.closeSharePicker();
+    this.closeAttachmentMenu();
     this.cancelVoiceRecording();
     ++this.attachmentViewVersion;
     this.clearAttachmentPreviews();
@@ -690,6 +695,9 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     ++this.attachmentViewVersion; // Reject any authenticated Blob still in flight.
     this.selectedAttachment = null;
     this.selectedGif = null;
+    this.selectedShare = null;
+    this.closeSharePicker();
+    this.closeAttachmentMenu();
     this.attachmentReady = false;
     this.clearAttachmentPreviews(); // Revoke images and stop audio playback.
     this.drafts.delete(conversation.key);
@@ -726,8 +734,11 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.typing.stop();
     this.cancelVoiceRecording();
     this.closeEmojiPicker();
+    this.closeSharePicker();
+    this.closeAttachmentMenu();
     this.selectedAttachment = null;
     this.selectedGif = null;
+    this.selectedShare = null;
     this.clearAttachmentRetry();
     this.attachmentReady = false;
     ++this.attachmentViewVersion;
@@ -1133,7 +1144,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
   canEditSentMessage(message: InboxMessage): boolean {
     const date = Date.parse(message.createdAt);
     return this.canDeleteSentMessage(message) && !message.attachmentName
-      && !readGiphyText(message.text)
+      && !readGiphyText(message.text) && !readSharedMessage(message.text)
       && Number.isFinite(date) && Date.now() >= date
       && Date.now() - date <= 15 * 60_000;
   }
@@ -1282,9 +1293,10 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       && !this.previewLoading && !this.previewError && !this.sending && !this.deliveryUncertain
       && !this.deliveryChecking && !this.voiceRecording && !this.voiceFinalizing
       && (this.draft.trim().length > 0 || (this.attachmentControlsReady
-          && (!!this.selectedAttachment || !!this.selectedGif)))
+          && (!!this.selectedAttachment || !!this.selectedGif || !!this.selectedShare)))
       && this.draft.trim().length <= 2000
-      && (!this.selectedGif || !!encodeGiphyText(this.selectedGif, this.draft.trim())));
+      && (!this.selectedGif || !!encodeGiphyText(this.selectedGif, this.draft.trim()))
+      && (!this.selectedShare || !!encodeShareMessage(this.selectedShare, this.draft.trim())));
   }
 
   replyToMessage(message: InboxMessage): void {
@@ -1360,6 +1372,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.clearVoicePreview();
     this.selectedAttachment = file;
     this.selectedGif = null;
+    this.selectedShare = null;
+    this.closeAttachmentMenu();
     this.composerError = '';
     this.closeEmojiPicker();
   }
@@ -1938,6 +1952,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
       return;
     }
     this.selectedGif = choice;
+    this.selectedShare = null;
     this.selectedAttachment = null;
     this.clearVoicePreview();
     this.composerError = '';
@@ -1985,6 +2000,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
 
   sendMessage(): void {
     this.closeEmojiPicker();
+    this.closeSharePicker();
+    this.closeAttachmentMenu();
     this.typing.stop();
     const conversation = this.selected;
     if (!conversation || !this.canSendMessage()) return;
@@ -1995,7 +2012,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     const caption = this.draft.trim();
     // Server sends the same synthesized text for an attachment without a caption.
     const name = file?.name.replace(/\\/g, '/').split('/').pop()?.replace(/[\\x00-\\x1f\\x7f]/g, '').trim().slice(-160);
-    const text = this.selectedGif ? encodeGiphyText(this.selectedGif, caption)
+    const text = this.selectedShare ? encodeShareMessage(this.selectedShare, caption)
+      : this.selectedGif ? encodeGiphyText(this.selectedGif, caption)
       : file && !caption ? '📎 ' + (name || 'anexo') : caption;
     const replyId = this.replyingTo?.key === key ? this.replyingTo.id : null;
     const pending = { key, text, replyToMessageId: replyId,
@@ -2060,6 +2078,7 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
         if (this.historicalPreview) this.returnToRecent();
         this.selectedAttachment = null;
         this.selectedGif = null;
+        this.selectedShare = null;
         this.clearVoicePreview();
         this.draft = '';
         this.replyingTo = null;
