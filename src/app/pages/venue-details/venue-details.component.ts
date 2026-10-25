@@ -7,7 +7,7 @@ import { VenuePhoto, VenueRatingSummary, VenueService, VenueSportCondition } fro
 import { Venue } from '../model/venue';
 import { isVenueGpsOnly, venuePostalAddress } from '../../shared/venue-location';
 import { venueEnvironmentTranslationKey } from '../../shared/venue-environment';
-import { venueOsmEmbedUrl, venueTelephoneUrl } from '../../shared/venue-public-contact';
+import { venueHasMainlandCoordinates, venueOsmEmbedUrl, venueTelephoneUrl } from '../../shared/venue-public-contact';
 
 @Component({
   selector: 'app-venue-details',
@@ -173,13 +173,7 @@ export class VenueDetailsComponent implements OnInit, OnDestroy {
   }
 
   get hasConfirmedMapCoordinates(): boolean {
-    const latitude = this.venue?.latitude;
-    const longitude = this.venue?.longitude;
-    return latitude !== null && latitude !== undefined
-      && longitude !== null && longitude !== undefined
-      && Number.isFinite(latitude) && Number.isFinite(longitude)
-      && latitude >= -90 && latitude <= 90
-      && longitude >= -180 && longitude <= 180;
+    return venueHasMainlandCoordinates(this.venue?.latitude, this.venue?.longitude);
   }
 
   /** Hide OSM coordinate placeholders instead of calling them postal addresses. */
