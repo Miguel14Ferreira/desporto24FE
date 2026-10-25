@@ -4,7 +4,7 @@ import { CommunityRound } from '../model/community-group';
  * The backend is the authority for verified seeds and permission checks.
  */
 export function availableSprintQualifiers(
-  rounds: readonly CommunityRound[], requiredRiders: 16 | 28 = 16
+  rounds: readonly CommunityRound[], requiredRiders: 16 | 24 | 28 = 16
 ): CommunityRound[] {
   return rounds.filter(round => {
     if (round.sport !== 'Ciclismo de Pista' ||
@@ -25,5 +25,7 @@ export function availableSprintQualifiers(
 export function nextSprintRoundHeatMax(
   phase: string | null | undefined
 ): number {
-  return phase === 'SPRINT_EIGHTH_FINAL' || phase === 'SPRINT_SIXTEENTH_FINAL' ? 1 : 3;
+  return phase === 'SPRINT_EIGHTH_FINAL' || phase === 'SPRINT_SIXTEENTH_FINAL'
+    || phase === 'SPRINT_THIRTY_SECOND_FINAL' || phase?.startsWith('SPRINT_REPECHAGE_')
+      ? 1 : 3;
 }
