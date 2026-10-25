@@ -331,7 +331,7 @@ export const EN: Record<string, string> = {
   'chat.pickerClose': 'Close picker',
   'chat.gifSearch': 'Search GIFs via GIPHY',
   'chat.gifCategories': 'GIF categories',
-  'chat.gifNotConfigured': 'GIF search is not available yet. You can still upload GIFs from your device.',
+  'chat.gifNotConfigured': 'Online search is not available yet. Choose an animated reaction below or upload a GIF from your device.',
   'chat.gifLoadFailed': 'Could not load GIFs. Try again.',
   'chat.gifLoading': 'Searching GIFs…',
   'chat.gifResults': 'GIF results',
