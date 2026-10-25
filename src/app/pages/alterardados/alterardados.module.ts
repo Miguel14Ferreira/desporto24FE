@@ -1,0 +1,19 @@
+import { CommonModule } from '@angular/common';
+import { NgModule } from '@angular/core';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
+import { TranslatePipe } from '../../i18n/translate.pipe';
+import { AlterardadosComponent } from './alterardados.component';
+
+// Load this screen only when its route is opened, not on the public home page.
+@NgModule({
+  declarations: [AlterardadosComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
+    TranslatePipe,
+    RouterModule.forChild([{ path: '', component: AlterardadosComponent }])
+  ]
+})
+export class AlterardadosModule {}
