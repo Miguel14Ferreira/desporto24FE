@@ -1,0 +1,54 @@
+name: Jynlo dependency security triage (isolated)
+
+on:
+  push:
+    branches: [security/dependency-audit-20261025]
+    paths:
+      - '.github/workflows/dep-audit-20261025.yml'
+      - 'package.json'
+      - 'package-lock.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: jynlo-dependency-security-triage-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  dependency-triage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Audit lockfile (all dependencies and production only)
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Audit advisories without installing build dependencies or touching production.
+          npm audit --package-lock-only --json > "$RUNNER_TEMP/npm-all.json" || true
+          npm audit --omit=dev --package-lock-only --json > "$RUNNER_TEMP/npm-prod.json" || true
+          node - "$RUNNER_TEMP/npm-all.json" "$RUNNER_TEMP/npm-prod.json" <<'NODE'
+          const fs = require('fs');
+          function render(file, label) {
+            const audit = JSON.parse(fs.readFileSync(file, 'utf8'));
+            console.log('=== ' + label + ' ===');
+            console.log('TOTAL COUNTS', JSON.stringify(audit.metadata?.vulnerabilities || {}));
+            const entries = Object.entries(audit.vulnerabilities || {});
+            for (const [name, v] of entries.sort((a,b) => 
+              ['critical','high','moderate','low'].indexOf(a[1].severity) - ['critical','high','moderate','low'].indexOf(b[1].severity))) {
+              const via = (v.via || []).map(x => typeof x === 'string' ? x : 
+                `${x.name || name}:${x.source || '?'}:${x.title || '?'}:${x.range || '?'}`);
+              const fix = v.fixAvailable === false ? false : 
+                (v.fixAvailable === true ? true : {name:v.fixAvailable?.name,version:v.fixAvailable?.version,isSemVerMajor:v.fixAvailable?.isSemVerMajor});
+              console.log('ADVISORY', JSON.stringify({name, severity:v.severity, isDirect:v.isDirect, range:v.range, via, fix, effects:v.effects || []}));
+            }
+            if (!audit.metadata?.vulnerabilities) throw new Error('audit output missing metadata');
+          }
+          render(process.argv[2], 'ALL');
+          render(process.argv[3], 'PRODUCTION-ONLY');
+          NODE
