@@ -1,19 +1,18 @@
 <section class="inbox-page jynlo-c1 jynlo-secondary">
   <div class="inbox-shell">
-    <header class="inbox-heading">
-      <div>
-        <h1>{{ 'inbox.title' | t }}</h1>
-        <p>{{ 'inbox.subtitle' | t }}</p>
-      </div>
-      <span class="inbox-connection" [class.is-online]="realtimeConnected" role="status">
-        <span aria-hidden="true" class="inbox-connection-dot"></span>
-        {{ (realtimeConnected ? 'chat.connected' : everConnected ? 'chat.reconnecting' : 'chat.connecting') | t }}
-      </span>
-    </header>
-
     <div class="inbox-layout">
       <aside class="inbox-sidebar" [attr.aria-label]="'inbox.listLabel' | t">
         <div class="inbox-side-top">
+          <header class="inbox-side-heading">
+            <div>
+              <h1>{{ 'inbox.title' | t }}</h1>
+              <p>{{ 'inbox.subtitle' | t }}</p>
+            </div>
+            <span class="inbox-connection" [class.is-online]="realtimeConnected" role="status">
+              <span aria-hidden="true" class="inbox-connection-dot"></span>
+              <span class="inbox-connection-label">{{ (realtimeConnected ? 'chat.connected' : everConnected ? 'chat.reconnecting' : 'chat.connecting') | t }}</span>
+            </span>
+          </header>
           <label class="inbox-search">
             <span>{{ 'inbox.search' | t }}</span>
             <input type="search" name="search" [(ngModel)]="search"
@@ -55,12 +54,12 @@
                 (click)="selectConversation(conversation)">
                 <span class="inbox-avatar" [class.inbox-avatar--community]="conversation.kind === 'community'"
                   [class.inbox-avatar--session]="conversation.kind === 'session'" aria-hidden="true">
-                  {{ conversation.kind === 'direct' ? '👤' : conversation.kind === 'community' ? '👥' : '⚽' }}
+                  {{ conversation.kind === 'direct' ? conversation.title.slice(0, 1).toUpperCase() : conversation.kind === 'community' ? '👥' : '⚽' }}
                 </span>
                 <span class="inbox-entry-content">
                   <span class="inbox-entry-top">
                     <strong>{{ conversation.title }}</strong>
-                    @if (conversation.latestAt) { <small>{{ formatDate(conversation.latestAt) }}</small> }
+                    @if (conversation.latestAt) { <small [attr.title]="formatDate(conversation.latestAt)">{{ formatInboxListTime(conversation.latestAt) }}</small> }
                   </span>
                   <span class="inbox-entry-kind">{{ kindLabel(conversation.kind) | t }} · {{ conversation.subtitle }}</span>
                   <span class="inbox-entry-snippet">{{ conversation.latestText ? displayMessagePreview(conversation.latestText) : ('inbox.openPreview' | t) }}</span>
@@ -75,24 +74,34 @@
           </div>
         }
         <div class="inbox-side-footer">
-          <a routerLink="/menu/friendList">{{ 'inbox.manageFriends' | t }}</a>
-          <a routerLink="/menu/communities">{{ 'inbox.myCommunities' | t }}</a>
+          <a routerLink="/menu/friendList"><span aria-hidden="true">♙</span> {{ 'inbox.manageFriends' | t }}</a>
+          <a routerLink="/menu/communities"><span aria-hidden="true">♧</span> {{ 'inbox.myCommunities' | t }}</a>
         </div>
       </aside>
 
       <main class="inbox-detail">
         @if (selected; as conversation) {
           <header class="inbox-detail-heading">
-            <div>
-              <span class="inbox-detail-type">{{ kindLabel(conversation.kind) | t }}</span>
-              <h2>{{ conversation.title }}</h2>
-              <p>{{ conversation.subtitle }}</p>
+            <div class="inbox-chat-identity">
+              <span class="inbox-avatar inbox-detail-avatar"
+                [class.inbox-avatar--community]="conversation.kind === 'community'"
+                [class.inbox-avatar--session]="conversation.kind === 'session'" aria-hidden="true">
+                {{ conversation.kind === 'direct' ? conversation.title.slice(0, 1).toUpperCase() : conversation.kind === 'community' ? '👥' : '⚽' }}
+              </span>
+              <div class="inbox-detail-info">
+                <h2>{{ conversation.title }}</h2>
+                <p><span class="inbox-detail-type">{{ kindLabel(conversation.kind) | t }}</span>
+                  @if (conversation.subtitle) { <span aria-hidden="true"> · </span>{{ conversation.subtitle }} }</p>
+              </div>
             </div>
             <div class="inbox-heading-actions">
               <button type="button" class="inbox-search-toggle"
                 [attr.aria-expanded]="messageSearchOpen"
+                [attr.aria-label]="(messageSearchOpen ? 'inbox.closeMessageSearch' : 'inbox.searchMessages') | t"
+                [attr.title]="(messageSearchOpen ? 'inbox.closeMessageSearch' : 'inbox.searchMessages') | t"
                 (click)="toggleMessageSearch()">
-                {{ (messageSearchOpen ? 'inbox.closeMessageSearch' : 'inbox.searchMessages') | t }}
+                <span aria-hidden="true">{{ messageSearchOpen ? '×' : '⌕' }}</span>
+                <span class="inbox-visually-hidden">{{ (messageSearchOpen ? 'inbox.closeMessageSearch' : 'inbox.searchMessages') | t }}</span>
               </button>
             </div>
           </header>
@@ -412,15 +421,14 @@
                   [attr.aria-label]="'chat.voicePreview' | t"></audio>
               }
             }
-            <label for="inbox-reply">{{ 'inbox.writeMessage' | t }}</label>
+            <div class="inbox-compose-toolbar">
+              <label for="inbox-reply">{{ 'inbox.writeMessage' | t }}</label>
             <textarea #composerTextarea id="inbox-reply" name="inboxDraft" [(ngModel)]="draft"
               [placeholder]="'chat.placeholder' | t" rows="2" maxlength="2000"
               [readOnly]="sending"
               [disabled]="composerAccessLoading || !composerAllowed || !isSelectedSessionOpen() || previewLoading || previewError || deliveryUncertain || deliveryChecking"
               (ngModelChange)="onTypingInput()" (blur)="typing.stop()"
               (keydown.enter)="onComposerEnter($event)"></textarea>
-            <div class="inbox-composer-bottom">
-              <span>{{ 'chat.enterHint' | t }} · {{ draft.length }}/2000</span>
               <div class="inbox-composer-actions">
                 @if (attachmentControlsReady && voiceSupported) {
                   <button type="button" class="inbox-voice-trigger"
@@ -603,15 +611,21 @@
                   }
                 </div>
                 <button type="submit" class="jynlo-action jynlo-action--primary"
-                  [disabled]="!canSendMessage()">
-                  {{ (sending ? 'chat.sending' : 'chat.send') | t }}
+                  [disabled]="!canSendMessage()"
+                  [attr.aria-label]="(sending ? 'chat.sending' : 'chat.send') | t"
+                  [attr.title]="(sending ? 'chat.sending' : 'chat.send') | t">
+                  <span aria-hidden="true">{{ sending ? '…' : '➤' }}</span>
+                  <span class="inbox-visually-hidden">{{ (sending ? 'chat.sending' : 'chat.send') | t }}</span>
                 </button>
               </div>
+            </div>
+            <div class="inbox-composer-bottom">
+              <span>{{ 'chat.enterHint' | t }} · {{ draft.length }}/2000</span>
             </div>
           </form>
         } @else {
           <div class="inbox-welcome">
-            <span class="inbox-welcome-icon" aria-hidden="true">💬</span>
+            <span class="inbox-welcome-icon" aria-hidden="true">✉</span>
             <h2>{{ 'inbox.welcomeTitle' | t }}</h2>
             <p>{{ 'inbox.welcomeText' | t }}</p>
             <span class="inbox-privacy">{{ 'inbox.secure' | t }}</span>
