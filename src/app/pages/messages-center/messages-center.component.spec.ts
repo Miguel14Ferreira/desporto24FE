@@ -880,13 +880,14 @@ describe('Unified Jynlo message center', () => {
       pause: jasmine.createSpy('firstPause').and.callFake(() => { first.paused = true; })
     };
     const second = {
-      paused: false, ended: false, duration: 45, currentTime: 2,
+      paused: true, ended: false, duration: 45, currentTime: 2,
       pause: jasmine.createSpy('secondPause').and.callFake(() => { second.paused = true; })
     };
     component.onVoiceReady({...message(peer.key, 81), attachmentName: '1.webm'}, first as unknown as HTMLAudioElement);
     component.onVoiceReady({...message(peer.key, 82), attachmentName: '2.webm'}, second as unknown as HTMLAudioElement);
     component.onVoicePlaybackEvent(81, first as unknown as HTMLAudioElement);
     expect(component.voicePlaying.has(81)).toBeTrue();
+    second.paused = false; // The second HTMLAudioElement has just emitted "playing".
     component.onVoicePlaybackEvent(82, second as unknown as HTMLAudioElement);
     expect(first.pause).toHaveBeenCalledTimes(1);
     expect(second.pause).not.toHaveBeenCalled();
