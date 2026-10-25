@@ -148,7 +148,8 @@ export class VenueSuggestEditComponent implements OnInit {
     this.missingChanges = false;
     const changes = this.changes;
     if (!Object.keys(changes).length) { this.missingChanges = true; return; }
-    if (this.reason.trim().length < 10 || !this.selectedSports.length
+    if (this.reason.trim().length < 10
+        || (changes.sports !== undefined && !this.selectedSports.length)
         || !this.draft.name.trim() || !this.draft.city.trim()
         || (changes.address !== undefined && !changes.address.trim())) {
       this.submitError = true;
