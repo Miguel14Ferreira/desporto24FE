@@ -379,6 +379,20 @@ describe('CommunitiesComponent public session eligibility', () => {
     expect(component['suggestMatchField']('Golos Casa', 'IGNORE')).toBe('HOME_SCORE');
     expect(component['suggestMatchField']('Golos Fora', 'IGNORE')).toBe('AWAY_SCORE');
     expect(component['suggestMatchField']('Jornada', 'IGNORE')).toBe('ROUND');
+    // A historical knockout Excel is likely to name the phase column Fase,
+    // not Jornada. The importer must keep it for source-stage navigation.
+    for (const header of [
+      'Fase', 'Fase do torneio', 'Fase da competição', 'Fase eliminatória',
+      'Eliminatória', 'Etapa', 'Stage', 'Phase', 'Knockout Round',
+      'Round name', 'Meia-final'
+    ]) {
+      const expected = header === 'Meia-final' ? 'IGNORE' : 'ROUND';
+      expect(component['suggestMatchField'](header, 'IGNORE'))
+        .withContext(header).toBe(expected);
+    }
+    expect(component['suggestMatchField']('Fase', 'DATE')).toBe('ROUND');
+    expect(component['suggestMatchField']('Fase de grupos', 'IGNORE')).toBe('IGNORE');
+
     expect(component['suggestMatchField']('Equipa', 'PLAYER')).toBe('IGNORE');
     component.importMappings = [{ columnIndex: 0, header: 'Equipa A', field: 'HOME', confidence: 1 }];
     component.matchPreview = { sheetName: 'Dados', sourceRows: 1, acceptedRows: 1,
@@ -390,6 +404,27 @@ describe('CommunitiesComponent public session eligibility', () => {
     component.selectImportMode('STANDINGS');
     expect(component.matchPreview).toBeUndefined();
     expect(component.importMode).toBe('STANDINGS');
+  });
+
+  it('maps Fase to source ROUND across sheet inspection and retains the original header', () => {
+    component.importMode = 'MATCHES';
+    component.importPreview = {
+      fileName: 'torneio.xlsx',
+      sheets: [{
+        name: 'Torneio 2024', nonEmptyRows: 7, structure: 'TABULAR',
+        headers: ['Casa', 'Fora', 'Resultado', 'Data', 'Fase'],
+        sampleRows: [['Águias', 'Lobos', '2-1', '2024-04-01', 'Quartos de final']],
+        columnSuggestions: [
+          { columnIndex: 3, header: 'Data', field: 'DATE', confidence: 1 },
+          { columnIndex: 4, header: 'Fase', field: 'DATE', confidence: 0.3 }
+        ]
+      }]
+    };
+    component.selectImportSheet('Torneio 2024');
+    expect(component.importMappings.map(mapping => mapping.field))
+      .toEqual(['HOME', 'AWAY', 'SCORE', 'DATE', 'ROUND']);
+    expect(component.importMappings[4].header).toBe('Fase');
+    expect(component.importSheetName).toBe('Torneio 2024');
   });
 
   it('only previews historical matches and never invokes any persistence endpoint', () => {
