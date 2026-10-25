@@ -1152,9 +1152,10 @@
                                 (ngModelChange)="sprintBracketQualifyingRoundIdDraft = null">
                                 <option value="EIGHT_RIDER_FINALS">{{ 'communities.trackCycling.bracketFormat' | t }}</option>
                                 <option value="SIXTEEN_RIDER_1_8">{{ 'communities.trackCycling.bracketFormat16' | t }}</option>
+                                <option value="TWENTY_EIGHT_RIDER_1_16">{{ 'communities.trackCycling.bracketFormat28' | t }}</option>
                               </select>
                             </label>
-                            @if (sprintBracketFormatDraft === 'SIXTEEN_RIDER_1_8') {
+                            @if (sprintBracketFormatDraft !== 'EIGHT_RIDER_FINALS') {
                               <label>
                                 <span>{{ 'communities.trackCycling.qualifyingSource' | t }}</span>
                                 <select [(ngModel)]="sprintBracketQualifyingRoundIdDraft">
@@ -1164,7 +1165,9 @@
                                   }
                                 </select>
                               </label>
-                              <small>{{ 'communities.trackCycling.qualifyingHint' | t }}</small>
+                              <small>{{ (sprintBracketFormatDraft === 'TWENTY_EIGHT_RIDER_1_16'
+                                ? 'communities.trackCycling.qualifyingHint28'
+                                : 'communities.trackCycling.qualifyingHint') | t }}</small>
                             }
                             <button type="button" class="btn btn-primary" (click)="createSprintBracket()"
                               [disabled]="sprintBracketSaving || !canCreateSprintBracket()">
@@ -1181,11 +1184,13 @@
                         @for (bracket of sprintBrackets; track bracket.id) {
                           <div class="season-round-hint">
                             <strong>{{ bracket.name }}</strong>
-                            <span> · {{ (bracket.format === 'SIXTEEN_RIDER_1_8'
-                              ? 'communities.trackCycling.bracketFormat16'
-                              : 'communities.trackCycling.bracketFormat') | t }}</span>
+                            <span> · {{ (bracket.format === 'TWENTY_EIGHT_RIDER_1_16'
+                              ? 'communities.trackCycling.bracketFormat28'
+                              : bracket.format === 'SIXTEEN_RIDER_1_8'
+                                ? 'communities.trackCycling.bracketFormat16'
+                                : 'communities.trackCycling.bracketFormat') | t }}</span>
                           </div>
-                          @if (bracket.format === 'SIXTEEN_RIDER_1_8' && bracket.qualifyingSeeds?.length) {
+                          @if (bracket.format !== 'EIGHT_RIDER_FINALS' && bracket.qualifyingSeeds?.length) {
                             <p class="round-sport-guidance">{{ 'communities.trackCycling.qualifyingSource' | t }}: #{{ bracket.qualifyingRoundId }}</p>
                             <div class="round-meta-form">
                               @for (rider of bracket.qualifyingSeeds; track rider) {
@@ -1338,7 +1343,8 @@
                                   <span>{{ 'communities.trackCycling.heatNumber' | t }}</span>
                                   <select [(ngModel)]="sprintHeatNumberDraft">
                                     <option [ngValue]="1">1</option>
-                                    @if (roundDisciplineDraft !== 'SPRINT_EIGHTH_FINAL') {
+                                    @if (roundDisciplineDraft !== 'SPRINT_EIGHTH_FINAL'
+                                      && roundDisciplineDraft !== 'SPRINT_SIXTEENTH_FINAL') {
                                       <option [ngValue]="2">2</option>
                                       <option [ngValue]="3">3</option>
                                     }
