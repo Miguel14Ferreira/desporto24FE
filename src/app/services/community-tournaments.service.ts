@@ -14,7 +14,7 @@ import {
   TournamentParticipantPage,
   TournamentScheduleSummary,
   TournamentStandings, TournamentTeam, TournamentTeamMatchPage, TournamentTeamMatch,
-  TournamentTeamScheduleSummary, TournamentTeamStandings, TournamentTeamGroups, TournamentRaceOverview
+  TournamentTeamScheduleSummary, TournamentTeamStandings, TournamentTeamGroups, TournamentRaceOverview, InlineSpeedOverview
 } from '../pages/model/community-tournament';
 
 /** Community result-by-position formats verified end to end. */
@@ -89,6 +89,34 @@ export class CommunityTournamentsService {
   unlinkRace(communityId: number, tournamentId: number, roundId: number): Observable<TournamentRaceOverview> {
     return this.http.delete<TournamentRaceOverview>(
       this.url(communityId, tournamentId) + '/races/' + roundId);
+  }
+
+
+  /** Only explicitly linked Patinagem de Velocidade results; never generic race points. */
+  inlineSpeedOverview(communityId: number, tournamentId: number): Observable<InlineSpeedOverview> {
+    return this.http.get<InlineSpeedOverview>(
+      this.url(communityId, tournamentId) + '/inline-speed');
+  }
+
+  linkInlineSpeedHeat(communityId: number, tournamentId: number, roundId: number,
+                      heatNumber: number): Observable<InlineSpeedOverview> {
+    return this.http.put<InlineSpeedOverview>(
+      this.url(communityId, tournamentId) + '/inline-speed/heats/' + roundId,
+      {}, { params: { heatNumber: String(heatNumber) } });
+  }
+
+  unlinkInlineSpeedHeat(communityId: number, tournamentId: number,
+                        roundId: number): Observable<InlineSpeedOverview> {
+    return this.http.delete<InlineSpeedOverview>(
+      this.url(communityId, tournamentId) + '/inline-speed/heats/' + roundId);
+  }
+
+  confirmInlineSpeedQualification(communityId: number, tournamentId: number,
+      sourceStage: 'FIRST' | 'QUARTER' | 'SEMI', playerIds: number[],
+      reason: string): Observable<InlineSpeedOverview> {
+    return this.http.put<InlineSpeedOverview>(
+      this.url(communityId, tournamentId) + '/inline-speed/qualifications/' + sourceStage,
+      { playerIds, reason });
   }
 
   /** Team tournaments have their own draft, roster and match lifecycle. */
