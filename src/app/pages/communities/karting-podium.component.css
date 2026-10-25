@@ -1,0 +1,51 @@
+:host { display: block; min-width: 0; }
+/* Preserve the tournament component's base heading and paragraph rules across Angular view encapsulation. */
+h5 { margin: 0; font-size: 1rem; }
+p { margin: 0; color: #cbd5e1; line-height: 1.5; }
+
+/* Archived race championship podium, shared with Karting and other supported race sports. */
+.karting-final-podium {
+  display: grid; gap: 1.05rem; padding: clamp(1rem, 2.5vw, 1.6rem);
+  border: 1px solid rgba(234,179,8,.37); border-radius: 1rem;
+  background: linear-gradient(135deg,rgba(96,61,12,.29),rgba(7,43,40,.4) 66%,rgba(11,32,50,.7));
+}
+.karting-podium-heading { display: grid; gap: .35rem; }
+.karting-podium-heading h5 { font-size: 1.18rem; font-weight: 850; }
+.karting-podium-heading p { font-size: .82rem; color: #cbd5e1; }
+.karting-podium-kicker {
+  color: #fcd34d; font-size: .67rem; font-weight: 850; letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.karting-podium-grid {
+  display: grid; grid-template-columns: repeat(3, minmax(0,1fr));
+  gap: .7rem; align-items: stretch;
+}
+.karting-podium-place {
+  display: flex; align-items: center; text-align: center; flex-direction: column;
+  justify-content: center; min-width: 0; gap: .3rem;
+  padding: 1rem .6rem; border: 1px solid rgba(148,163,184,.3);
+  border-radius: .9rem; background: rgba(18,40,58,.86);
+}
+.karting-podium-place.is-first {
+  border-color: rgba(251,191,36,.66);
+  background: linear-gradient(180deg,rgba(161,98,7,.24),rgba(14,41,52,.86));
+  box-shadow: 0 0 0 1px rgba(251,191,36,.12) inset;
+}
+.karting-podium-place.is-second { border-color: rgba(203,213,225,.38); }
+.karting-podium-place.is-third { border-color: rgba(217,119,6,.33); }
+.karting-podium-medal { font-size: 2rem; line-height: 1.25; }
+.karting-podium-rank { font-size: .78rem; font-weight: 850; color: #e2e8f0; }
+.karting-podium-place strong {
+  font-size: clamp(.8rem,1.4vw,1rem); color: #fff;
+  overflow-wrap: anywhere; line-height: 1.35;
+}
+.karting-podium-points { font-size: .89rem; font-weight: 850; color: #a7f3d0; }
+.karting-podium-place small { font-size: .69rem; color: #cbd5e1; }
+.karting-shared-title {
+  color: #fde68a !important; font-size: .83rem; line-height: 1.5;
+}
+
+@media (max-width: 660px) {
+  .karting-podium-grid { grid-template-columns: 1fr; }
+  .karting-podium-place { padding: .75rem; }
+}
