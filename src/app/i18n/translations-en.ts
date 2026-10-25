@@ -1,5 +1,16 @@
 // Loaded only for users who choose English. Keep the original key/value table intact.
 export const EN: Record<string, string> = {
+  'communities.inlineSpeed.evidenceType': 'Official evidence type',
+  'communities.inlineSpeed.evidenceSelect': 'Choose evidence reviewed',
+  'communities.inlineSpeed.evidenceReference': 'Evidence or minutes reference',
+  'communities.inlineSpeed.evidenceReferenceHint': 'Enter a verifiable reference: official report ID, video identifier or official link. Original race times are unchanged.',
+  'communities.inlineSpeed.evidenceRequired': 'Provide an evidence type and an official reference of 8 to 500 characters.',
+  'communities.inlineSpeed.evidence.PHOTO_FINISH': 'Photo finish',
+  'communities.inlineSpeed.evidence.VIDEO_REVIEW': 'Video review',
+  'communities.inlineSpeed.evidence.OFFICIAL_MINUTES': 'Official jury minutes',
+  'communities.inlineSpeed.evidence.TIEBREAK_TRIAL': 'Additional trial actually held',
+  'communities.inlineSpeed.evidence.OTHER': 'Other official document',
+  'communities.inlineSpeed.evidence.legacy': 'Earlier ruling without structured evidence',
   'communities.inlineSpeed.tieHistory': 'Auditable tie-break history',
   'communities.inlineSpeed.tieVersion': 'Revision',
   'communities.inlineSpeed.tieOutdated': 'Original results have changed',
