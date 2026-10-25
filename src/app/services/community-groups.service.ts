@@ -28,7 +28,7 @@ export interface TrackSprintIncident {
   heatNumber: number;
   incidentType: 'FALL' | 'PUNCTURE' | 'BICYCLE_DEFECT' | 'RULE_INFRINGEMENT' | 'OTHER';
   details: string;
-  status: 'PENDING' | 'DECIDED' | 'ADJUDICATION_REQUIRED' | 'RESTART_AUTHORIZED' | 'OFFICIAL_HEAT_AWARDED';
+  status: 'PENDING' | 'DECIDED' | 'ADJUDICATION_REQUIRED' | 'RESTART_AUTHORIZED' | 'OFFICIAL_HEAT_AWARDED' | 'OFFICIAL_SERIES_AWARDED';
   reportedBy: string;
   reportedAt: string;
   decisionType: 'RESTART_REQUIRED' | 'OFFICIAL_RESULT_TO_RECORD' | 'DISCIPLINARY_RULING' | null;
@@ -592,6 +592,16 @@ export class CommunityGroupsService {
       this.url + '/' + communityId + '/seasons/' + seasonId
       + '/track-sprint-brackets/' + bracketId + '/incidents/' + incidentId
       + '/official-award', payload);
+  }
+
+  confirmSprintBo3SeriesVerdict(communityId: number, seasonId: number, bracketId: number,
+    incidentId: number,
+    payload: {winnerUsername: string; basis: 'INTENTIONAL_FALL'; reference: string; reason: string}):
+    Observable<TrackSprintIncident> {
+    return this.http.put<TrackSprintIncident>(
+      this.url + '/' + communityId + '/seasons/' + seasonId
+      + '/track-sprint-brackets/' + bracketId + '/incidents/' + incidentId
+      + '/official-series-verdict', payload);
   }
 
   endTrackSprintCompetition(communityId: number, seasonId: number, bracketId: number,
