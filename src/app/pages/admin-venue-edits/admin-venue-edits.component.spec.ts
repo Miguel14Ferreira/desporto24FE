@@ -68,7 +68,7 @@ describe('AdminVenueEditsComponent', () => {
     component.sourceReviewed = true;
     api.decide.and.returnValue(of({ ...contactSuggestion, status: 'APPROVED' }));
     component.decide();
-    expect(api.decide).toHaveBeenCalledOnceWith(31, 'approve', '');
+    expect(api.decide).toHaveBeenCalledOnceWith(31, 'approve', '', true);
     expect(component.selected).toBeNull();
   });
 

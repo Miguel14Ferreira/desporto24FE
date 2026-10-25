@@ -115,7 +115,12 @@ export class AdminVenueEditsComponent implements OnInit, OnDestroy {
     const id = this.selected.id, decision = this.action;
     this.updating = true;
     this.actionError = false;
-    this.api.decide(id, decision, this.note.trim())
+    // The server must receive the moderator's explicit attestation; the UI-only
+    // checkbox must never be mistaken for an authorization check.
+    const decisionRequest = decision === 'approve' && this.hasProposedContact(this.selected)
+      ? this.api.decide(id, decision, this.note.trim(), this.sourceReviewed)
+      : this.api.decide(id, decision, this.note.trim());
+    decisionRequest
       .pipe(timeout(12000), takeUntil(this.destroyed),
         finalize(() => { this.updating = false; this.cdr.markForCheck(); }))
       .subscribe({
