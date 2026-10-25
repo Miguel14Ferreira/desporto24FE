@@ -1415,7 +1415,7 @@
                                 <small>{{ 'communities.trackCycling.interruptionPartial' | t }}</small>
                                 <div class="round-meta-form">
                                   @for (placing of stop.regulatoryPlacings; track placing.username) {
-                                    <small>{{ placing.position }}.º · {{ placing.username }}</small>
+                                    <small>{{ 'communities.trackCycling.interruptionPosition' | t }} {{ placing.position }} · {{ placing.username }}</small>
                                   }
                                 </div>
                               }
