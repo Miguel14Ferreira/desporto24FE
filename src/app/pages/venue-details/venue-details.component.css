@@ -497,3 +497,30 @@
 @media(max-width:640px){.venue-detail-page{padding:22px 14px}.venue-detail-page .venue-header{padding:23px}}
 
 .venue-edit-link{display:inline-flex;text-decoration:none;margin:11px 0 3px;align-items:center;gap:7px}
+
+/* Map and contact cards use the same Concept One visual language as venue details. */
+.venue-visit-section{margin:25px 0 28px}
+.venue-visit-intro h2{color:#fff;font-size:1.3rem;margin:0 0 8px}
+.venue-visit-intro p{color:#b0cbd5;margin:0 0 19px;line-height:1.5}
+.venue-visit-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,.85fr);gap:16px}
+.venue-visit-card{padding:20px;border:1px solid rgba(153,213,218,.23);
+  border-radius:18px;background:linear-gradient(145deg,#123242,#0b2635);min-width:0}
+.venue-visit-card h3{color:#f3fbfd;font-size:1.06rem;margin:0 0 16px}
+.venue-map-iframe{display:block;width:100%;height:300px;border:0;border-radius:13px;
+  background:#17384a}
+.venue-map-credit{display:block;margin-top:9px;color:#b0d0d8;font-size:.76rem}
+.venue-map-credit a{color:#8eefd3;text-decoration:underline}
+.venue-map-unavailable{padding:35px 17px;min-height:165px;display:grid;place-content:center;
+  text-align:center;color:#b4d5de;background:#173b4a;border-radius:13px;line-height:1.5}
+.venue-visit-action{display:inline-flex;justify-content:center;align-items:center;text-align:center;
+  padding:10px 14px;margin-top:14px;text-decoration:none;white-space:normal}
+.venue-contact-number{color:#fff;font-weight:750;font-size:1.23rem;margin:6px 0 8px;
+  overflow-wrap:anywhere}
+.venue-contact-caveat{display:block;color:#a6c4d2;font-size:.79rem;margin:12px 0;line-height:1.55}
+.venue-contact-missing{color:#b8d4dc;line-height:1.6;margin:8px 0}
+.venue-contact-other-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:6px}
+.venue-contact-other-actions .venue-visit-action{font-size:.85rem;margin-top:9px}
+.venue-website-under-contact{display:inline-block;margin-top:18px;color:#9ff1dc;text-decoration:underline}
+@media(max-width:800px){.venue-visit-grid{grid-template-columns:1fr}}
+@media(max-width:480px){.venue-visit-card{padding:14px}.venue-map-iframe{height:265px}
+  .venue-contact-other-actions{flex-direction:column}.venue-contact-other-actions .venue-visit-action{width:100%}}
