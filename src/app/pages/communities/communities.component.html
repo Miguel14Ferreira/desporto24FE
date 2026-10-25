@@ -1578,7 +1578,7 @@
                                           <span>{{ 'communities.trackCycling.incidentDecisionReason' | t }}</span>
                                           <textarea [(ngModel)]="sprintAwardReason" maxlength="500"></textarea>
                                         </label>
-                                        @if (incident.status === 'OFFICIAL_SERIES_AWARDED') {
+                                        @if (sprintCanConfirmSeriesVerdict(bracket,incident)) {
                                           <small>{{ 'communities.trackCycling.seriesVerdictNoFake' | t }}</small>
                                         } @else if (sprintIsBo3Award(incident)) {
                                           <small>{{ 'communities.trackCycling.awardHeatNumber' | t }}:
