@@ -91,6 +91,8 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     this.attachmentReady = false;
     this.selectedAttachment = null;
     this.selectedGif = null;
+    ++this.mutationVersion;
+    this.cancelMessageMutation();
     this.closeEmojiPicker();
     this.cancelVoiceRecording();
     this.clearAttachmentPreviews();
@@ -1093,7 +1095,15 @@ export class MessagesCenterComponent implements OnInit, OnDestroy, AfterViewChec
     if (key === this.selectedKey) {
       this.messages = mutate(this.messages);
       this.messageSearchResults = mutate(this.messageSearchResults);
-      if (updated.deletedAt) this.releaseAttachmentPreview(updated.id);
+      if (updated.deletedAt) {
+        const previewUrl = this.attachmentPreviews.get(updated.id);
+        if (previewUrl) {
+          this.releaseVoicePlayer(updated.id);
+          URL.revokeObjectURL(previewUrl);
+          this.attachmentPreviews.delete(updated.id);
+        }
+        this.attachmentLoading.delete(updated.id);
+      }
     }
     const cache = this.recentThreadCache.get(key);
     if (cache) this.recentThreadCache.set(key, {
