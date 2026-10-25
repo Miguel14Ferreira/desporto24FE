@@ -213,15 +213,8 @@
                   </div>
                 }
                 @if (readGiphyMessage(message.text); as giphy) {
-                  <div class="inbox-giphy-message">
-                    <img [src]="giphy.mediaUrl" [alt]="'chat.gifImage' | t" loading="lazy" referrerpolicy="no-referrer">
-                    @if (giphy.caption) {
-                      <p>{{ giphy.caption }}</p>
-                    }
-                    <a [href]="giphy.pageUrl" target="_blank" rel="noopener noreferrer">
-                      via GIPHY · {{ giphy.creator }}
-                    </a>
-                  </div>
+                  <app-giphy-embed [id]="giphy.id" [pageUrl]="giphy.pageUrl"
+                    [caption]="giphy.caption" [creator]="giphy.creator"></app-giphy-embed>
                 } @else if (showMessageBody(message)) {
                   <p>{{ message.text }}</p>
                 }
