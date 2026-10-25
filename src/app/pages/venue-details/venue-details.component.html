@@ -24,7 +24,7 @@
         </a>
         @if (venue.sports) {
           <div class="venue-hero-sports">
-            @for (sport of venue.sports.split(/[,;]+/); track sport) {
+            @for (sport of venueSports; track sport) {
               <span>{{ sport.trim() }}</span>
             }
           </div>
