@@ -10,7 +10,8 @@ import { historicalMatchReviewFlags } from './community-historical-match-review'
 import {
   CommunityTournament, TournamentPointRules, TeamTieBreakPriority, TournamentMatch, TournamentParticipant, TournamentStandingRow,
   TournamentStandings, TournamentTeam, TournamentTeamMatch, TournamentTeamStandings, TournamentTeamGroups,
-  TournamentRaceOverview, TournamentRaceStanding, TournamentRaceEntry
+  TournamentRaceOverview, TournamentRaceStanding, TournamentRaceEntry,
+  InlineSpeedOverview, InlineSpeedProposal, InlineSpeedSkater, InlineSpeedStage
 } from '../model/community-tournament';
 import { CommunityTournamentsService, isRaceChampionshipSport, RaceChampionshipSport } from '../../services/community-tournaments.service';
 import { AuthenticationService } from '../../services/authethication.service';
@@ -119,6 +120,12 @@ export class CommunityTournamentsComponent implements OnChanges {
   matchesHasMore = false;
   standings?: TournamentStandings;
   raceOverview?: TournamentRaceOverview;
+  speedOverview?: InlineSpeedOverview;
+  speedError = false;
+  speedHeats: Record<number, number> = {};
+  speedSelections: Record<string, number[]> = {};
+  speedReasons: Record<string, string> = {};
+  private speedRevision = 0;
   raceError = false;
   racePointsDraft = '';
   private raceRevision = 0;
@@ -176,6 +183,8 @@ export class CommunityTournamentsComponent implements OnChanges {
    */
   get creationSportNoticeKey(): string | null {
     if (!this.sportDraft.trim()) return null;
+    if (this.sportDraft === 'Patinagem de Velocidade' && !this.showTeamCreate)
+      return null;
     switch (formatForSport(this.sportDraft)) {
       case 'race':
         return 'communities.tournaments.creationRaceNotice';
@@ -297,6 +306,142 @@ export class CommunityTournamentsComponent implements OnChanges {
     return this.selected?.scoringMode === 'RACE_POINTS';
   }
 
+  get isInlineSpeedCompetition(): boolean {
+    return this.selected?.sport === 'Patinagem de Velocidade'
+      && this.selected?.entryType !== 'TEAM'
+      && this.selected?.scoringMode == null
+      && !this.selected?.historicalArchiveId;
+  }
+
+  speedStage(eventType: string): InlineSpeedStage {
+    if (eventType.endsWith('_FIRST_ROUND')) return 'FIRST';
+    if (eventType.endsWith('_QUARTER_HEAT')) return 'QUARTER';
+    if (eventType.endsWith('_SEMI_HEAT')) return 'SEMI';
+    return 'FINAL';
+  }
+
+  speedMaximumHeats(eventType: string): number {
+    return { FIRST: 64, QUARTER: 4, SEMI: 2, FINAL: 1 }[this.speedStage(eventType)];
+  }
+
+  speedStageName(stage: InlineSpeedStage): string {
+    return t('communities.inlineSpeed.stage.' + stage);
+  }
+
+  /** API warnings are authoritative but intentionally not locale-specific. */
+  speedProposalWarning(proposal: InlineSpeedProposal): string {
+    const warning = proposal.warning;
+    if (warning.includes('repetido')) return t('communities.inlineSpeed.warningDuplicate');
+    if (warning.includes('tempos')) return t('communities.inlineSpeed.warningTimes');
+    if (warning.includes('Posições')) return t('communities.inlineSpeed.warningPlaces');
+    if (!proposal.ready) return t('communities.inlineSpeed.warningIncomplete');
+    if (warning.includes('16.º/17.º') || proposal.playerIds.length > proposal.expectedCount)
+      return t('communities.inlineSpeed.warningTie17');
+    if (warning.includes('Empate')) return t('communities.inlineSpeed.warningTie');
+    if (warning.includes('estrada')) return t('communities.inlineSpeed.warningRoad');
+    return t('communities.inlineSpeed.warningPending');
+  }
+
+  speedStageSkaters(stage: InlineSpeedStage): InlineSpeedSkater[] {
+    const athletes = new Map<number, InlineSpeedSkater>();
+    for (const heat of this.speedOverview?.linkedHeats ?? []) {
+      if (this.speedStage(heat.eventType) !== stage) continue;
+      for (const skater of heat.skaters) athletes.set(skater.playerId, skater);
+    }
+    return [...athletes.values()].sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  speedChosen(stage: string, playerId: number): boolean {
+    return (this.speedSelections[stage] ?? []).includes(playerId);
+  }
+
+  toggleSpeedChosen(stage: string, playerId: number): void {
+    const previous = this.speedSelections[stage] ?? [];
+    this.speedSelections[stage] = previous.includes(playerId)
+      ? previous.filter(id => id !== playerId) : [...previous, playerId];
+  }
+
+  speedDecision(stage: string) {
+    return this.speedOverview?.decisions.find(decision => decision.sourceStage === stage);
+  }
+
+  loadInlineSpeed(): void {
+    const tournament = this.selected;
+    if (!tournament || !this.isMember || this.detailsLoading) return;
+    const communityId = this.community.id, revision = ++this.speedRevision;
+    this.detailsLoading = true;
+    this.speedError = false;
+    this.api.inlineSpeedOverview(communityId, tournament.id).pipe(
+      timeout(12000),
+      finalize(() => {
+        if (revision === this.speedRevision) {
+          this.detailsLoading = false;
+          this.changeDetector.markForCheck();
+        }
+      })
+    ).subscribe({
+      next: response => {
+        if (revision !== this.speedRevision || this.community.id !== communityId
+            || this.selected?.id !== tournament.id) return;
+        this.speedOverview = response;
+        for (const heat of response.availableHeats)
+          this.speedHeats[heat.roundId] ??= 1;
+        this.speedSelections = {};
+        for (const proposal of response.proposals) {
+          this.speedSelections[proposal.sourceStage] =
+            [...(response.decisions.find(item => item.sourceStage === proposal.sourceStage)
+              ?.playerIds ?? proposal.playerIds)];
+        }
+        this.changeDetector.markForCheck();
+      },
+      error: () => {
+        if (revision === this.speedRevision && this.selected?.id === tournament.id) {
+          this.speedError = true;
+          this.showError(t('communities.inlineSpeed.loadError'));
+        }
+      }
+    });
+  }
+
+  async linkSpeedHeat(roundId: number): Promise<void> {
+    if (!this.selected || !this.canManage || this.busy) return;
+    const number = this.speedHeats[roundId] ?? 1;
+    if (!Number.isInteger(number) || number < 1 || number > 64) {
+      this.showError(t('communities.inlineSpeed.invalidHeat')); return;
+    }
+    await this.mutate(this.api.linkInlineSpeedHeat(this.community.id, this.selected.id, roundId, number),
+      t('communities.inlineSpeed.linked'), overview => {
+        this.speedOverview = overview;
+        this.updateSelected({ ...this.selected!, status: 'IN_PROGRESS' });
+        this.loadInlineSpeed();
+      });
+  }
+
+  async unlinkSpeedHeat(roundId: number): Promise<void> {
+    if (!this.selected || !this.canManage || this.busy) return;
+    await this.mutate(this.api.unlinkInlineSpeedHeat(this.community.id, this.selected.id, roundId),
+      t('communities.inlineSpeed.unlinked'), overview => {
+        this.speedOverview = overview;
+        if (!overview.linkedHeats.length)
+          this.updateSelected({ ...this.selected!, status: 'DRAFT', startedAt: null });
+        this.loadInlineSpeed();
+      });
+  }
+
+  async confirmSpeedStage(proposal: InlineSpeedProposal): Promise<void> {
+    if (!this.selected || !this.canManage || this.busy || !proposal.ready) return;
+    const ids = this.speedSelections[proposal.sourceStage] ?? [];
+    if (!ids.length || new Set(ids).size !== ids.length) {
+      this.showError(t('communities.inlineSpeed.noSelection')); return;
+    }
+    const reason = this.speedReasons[proposal.sourceStage] ?? '';
+    await this.mutate(this.api.confirmInlineSpeedQualification(this.community.id, this.selected.id,
+      proposal.sourceStage, ids, reason), t('communities.inlineSpeed.confirmed'), overview => {
+      this.speedOverview = overview;
+      this.loadInlineSpeed();
+    });
+  }
+
   /** Completed championships using the validated race-result formats. */
   get kartingPalmares(): CommunityTournament[] {
     return this.tournaments
@@ -340,11 +485,14 @@ export class CommunityTournamentsComponent implements OnChanges {
   }
 
   get isSportFormatSupported(): boolean {
-    return this.isRaceChampionshipDraft || this.classificationProfile.isRoundRobinSupported
+    return (!this.showTeamCreate && this.sportDraft === 'Patinagem de Velocidade')
+      || this.isRaceChampionshipDraft || this.classificationProfile.isRoundRobinSupported
       && !(this.showTeamCreate && this.classificationProfile.scoringMode === 'CHESS_HALF_POINTS');
   }
 
   get sportFormatWarning(): string {
+    if (!this.showTeamCreate && this.sportDraft === 'Patinagem de Velocidade')
+      return t('communities.inlineSpeed.creationHelp');
     if (this.isRaceChampionshipDraft) {
       if (this.sportDraft === 'BMX') return t('communities.race.bmxRacingOnly');
       if (this.sportDraft === 'Ciclismo de Estrada') return t('communities.roadCycling.championshipNotice');
@@ -813,6 +961,10 @@ export class CommunityTournamentsComponent implements OnChanges {
     this.busy = false;
     this.detailsLoading = false;
     this.selected = tournament;
+    ++this.speedRevision;
+    this.speedOverview = undefined;
+    this.speedError = false;
+    this.speedSelections = {};
     this.historicalArchive = undefined;
     this.historicalArchivePage = 0;
     this.historicalReviewCursor = { quarterfinal: -1, semifinal: -1, final: -1 };
@@ -857,6 +1009,10 @@ export class CommunityTournamentsComponent implements OnChanges {
     }
     if (tournament.entryType === 'TEAM') {
       this.loadTeams();
+      return;
+    }
+    if (this.isInlineSpeedCompetition) {
+      this.loadInlineSpeed();
       return;
     }
     if (tournament.scoringMode === 'RACE_POINTS') {

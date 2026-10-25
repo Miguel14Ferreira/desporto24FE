@@ -235,3 +235,45 @@ export interface TournamentRaceOverview {
   availableRaces: TournamentRaceRound[];
   standings: TournamentRaceStanding[];
 }
+
+/** Official World Skate 2026 progression; never inferred as a final placement. */
+export type InlineSpeedStage = 'FIRST' | 'QUARTER' | 'SEMI' | 'FINAL';
+export interface InlineSpeedSkater {
+  playerId: number;
+  name: string;
+  position: number | null;
+  seconds: number | null;
+  disqualified: boolean;
+}
+export interface InlineSpeedHeat {
+  roundId: number;
+  name: string;
+  eventType: string;
+  heatNumber: number;
+  skaters: InlineSpeedSkater[];
+}
+export interface InlineSpeedProposal {
+  sourceStage: Exclude<InlineSpeedStage, 'FINAL'>;
+  targetStage: Exclude<InlineSpeedStage, 'FIRST'>;
+  playerIds: number[];
+  expectedCount: number;
+  ready: boolean;
+  warning: string;
+}
+export interface InlineSpeedDecision {
+  sourceStage: Exclude<InlineSpeedStage, 'FINAL'>;
+  targetStage: Exclude<InlineSpeedStage, 'FIRST'>;
+  playerIds: number[];
+  reason: string | null;
+  confirmedBy: string;
+  confirmedAt: string;
+  stale: boolean;
+}
+export interface InlineSpeedOverview {
+  tournamentId: number;
+  discipline: 'TRACK_500D' | 'ROAD_LAP' | null;
+  linkedHeats: InlineSpeedHeat[];
+  availableHeats: InlineSpeedHeat[];
+  proposals: InlineSpeedProposal[];
+  decisions: InlineSpeedDecision[];
+}

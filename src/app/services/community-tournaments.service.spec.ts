@@ -115,4 +115,26 @@ describe('CommunityTournamentsService API contract', () => {
     service.complete(7, 9).subscribe();
     expect(http.post).toHaveBeenCalledWith(base + '/complete', null);
   });
+  it('reads and links only real speed skating heats with an explicit heat number', () => {
+    service.inlineSpeedOverview(7, 9).subscribe();
+    expect(http.get).toHaveBeenCalledWith(base + '/inline-speed');
+    service.linkInlineSpeedHeat(7, 9, 71, 3).subscribe();
+    const [url, body, options] = http.put.calls.mostRecent().args;
+    expect(url).toBe(base + '/inline-speed/heats/71');
+    expect(body).toEqual({});
+    expect((options as any).params.heatNumber).toBe('3');
+  });
+
+  it('unlinks only tournament linkage, without a destructive round request', () => {
+    service.unlinkInlineSpeedHeat(7, 9, 71).subscribe();
+    expect(http.delete).toHaveBeenCalledWith(base + '/inline-speed/heats/71');
+  });
+
+  it('submits a human judge decision with an explicit roster and reason', () => {
+    service.confirmInlineSpeedQualification(7, 9, 'QUARTER', [12, 8], 'Chief judge decision').subscribe();
+    expect(http.put).toHaveBeenCalledWith(
+      base + '/inline-speed/qualifications/QUARTER',
+      { playerIds: [12, 8], reason: 'Chief judge decision' });
+  });
+
 });
