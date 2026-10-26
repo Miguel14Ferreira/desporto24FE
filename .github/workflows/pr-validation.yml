@@ -17,6 +17,7 @@ on:
       - 'scripts/qa/jynlo-karting-live-readonly.test.cjs'
       - 'scripts/ci-browser/public_api_contract_READONLY.cjs'
       - 'scripts/ci-browser/concept_one_mobile_readonly.cjs'
+      - 'scripts/ci-browser/concept_one_populated_admin_readonly.cjs'
       - 'scripts/ci-browser/desktop_candidate_smoke.cjs'
       - 'scripts/ci-browser/authenticated_candidate_smoke.cjs'
       - 'package.json'
@@ -156,6 +157,47 @@ jobs:
           path: |
             artifacts/concept-one-mobile/
             artifacts/desktop-candidate/*.png
+          retention-days: 3
+          if-no-files-found: ignore
+
+      # Filled, visually rich moderation pages at 390px and 1366px:
+      # signed-in test admin is fake, all remote HTTP and WS are intercepted.
+      - name: Install isolated Chromium for populated admin audit
+        if: ${{ startsWith(github.head_ref, 'qa/concept-one-populated-admin-mobile-') }}
+        run: |
+          QA_DEPS="$RUNNER_TEMP/jynlo-premium-admin-browser"
+          mkdir -p "$QA_DEPS" node_modules
+          printf '%s\\n' '{"private":true,"dependencies":{"playwright":"1.56.1"}}' > "$QA_DEPS/package.json"
+          npm install --prefix "$QA_DEPS" --no-audit --no-fund
+          ln -s "$QA_DEPS/node_modules/playwright" node_modules/playwright
+          "$QA_DEPS/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Verify populated admin screens and details in mobile and desktop Chromium
+        if: ${{ startsWith(github.head_ref, 'qa/concept-one-populated-admin-mobile-') }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/ci-browser/spa_server.py dist/desporto24 4173 > /tmp/jynlo-admin-spa.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          ready=0
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent --output /dev/null http://127.0.0.1:4173/; then
+              ready=1
+              break
+            fi
+            sleep 1
+          done
+          if [ "$ready" != "1" ]; then
+            cat /tmp/jynlo-admin-spa.log
+            exit 1
+          fi
+          node scripts/ci-browser/concept_one_populated_admin_readonly.cjs
+      - name: Save populated admin screenshots
+        if: ${{ always() && startsWith(github.head_ref, 'qa/concept-one-populated-admin-mobile-') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: jynlo-populated-admin-mobile-audit
+          path: artifacts/concept-one-admin-populated/
           retention-days: 3
           if-no-files-found: ignore
 
