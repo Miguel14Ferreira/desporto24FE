@@ -1607,6 +1607,11 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
     return invite.id === this.requestedInviteId();
   }
 
+  /** Keeps deep-link emphasis in the page; the invites panel only renders it. */
+  get targetedInviteId(): number | null {
+    return this.requestedInviteId();
+  }
+
   backToCommunities(): void {
     void this.router.navigate(['/menu/communities']);
   }
