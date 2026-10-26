@@ -177,6 +177,7 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   sprintAwardReference = '';
   sprintAwardReason = '';
   sprintIncidentError = '';
+  private sprintReviewContext = '';
   sprintReviewBracketId: number | null = null;
   sprintReviewIncidentId: number | null = null;
   sprintReviewHistory: TrackSprintOfficialReview[] = [];
@@ -2453,9 +2454,12 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
   private loadSprintBrackets(communityId: number, seasonId: number | null): void {
     const requestVersion = ++this.sprintBracketRequestVersion;
     this.sprintBrackets = [];
-    this.sprintReviewBracketId = null;
-    this.sprintReviewIncidentId = null;
-    this.sprintReviewHistory = [];
+    if (this.sprintReviewContext !== communityId + '/' + seasonId) {
+      this.sprintReviewBracketId = null;
+      this.sprintReviewIncidentId = null;
+      this.sprintReviewHistory = [];
+      this.sprintReviewContext = '';
+    }
     this.sprintBracketError = '';
     if (seasonId == null || !this.communityRoundSports.includes('Ciclismo de Pista')) {
       this.sprintBracketLoading = false;
@@ -2582,10 +2586,12 @@ export class CommunitiesComponent implements OnInit, OnDestroy, AfterViewChecked
       this.sprintReviewBracketId = null;
       this.sprintReviewIncidentId = null;
       this.sprintReviewHistory = [];
+      this.sprintReviewContext = '';
       return;
     }
     this.sprintReviewBracketId = bracketId;
     this.sprintReviewIncidentId = incidentId;
+    this.sprintReviewContext = this.selected?.id + '/' + this.selectedSeasonId;
     this.sprintReviewMode = 'REQUEST';
     this.sprintReviewPresident = '';
     this.sprintReviewReference = '';
