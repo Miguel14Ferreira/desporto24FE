@@ -39,7 +39,8 @@ describe('CommunityTabsComponent', () => {
     const fixture = render({ competitions: true, archives: true, rankings: true });
     const handler = jasmine.createSpy('tab-request');
     fixture.componentInstance.tabRequested.subscribe(handler);
-    const buttons = fixture.nativeElement.querySelectorAll<HTMLButtonElement>('.community-tabs button');
+    const root = fixture.nativeElement as HTMLElement;
+    const buttons = root.querySelectorAll<HTMLButtonElement>('.community-tabs button');
     buttons[1].click();
     buttons[4].click();
     expect(handler.calls.allArgs()).toEqual([['feed'], ['ranking']]);
