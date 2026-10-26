@@ -1,0 +1,110 @@
+/*
+ * Concept One Mobile Premium — first responsive foundation.
+ * The real Angular screens and server data remain unchanged.
+ * Only applies to authenticated app routes on phone-size viewports.
+ */
+@media (max-width: 767px) {
+  body:has(.mobile-tabbar) {
+    padding-bottom: calc(72px + env(safe-area-inset-bottom));
+    overflow-x: clip;
+    background: #061b29;
+  }
+
+  body:has(.mobile-tabbar) :is(
+    .feed-page,
+    .discover-page,
+    .communities-page,
+    .community-page
+  ) {
+    padding-top: calc(78px + env(safe-area-inset-top));
+    padding-inline: 12px;
+    background:
+      radial-gradient(ellipse at 95% 0, rgba(28, 154, 145, .16), transparent 42%),
+      linear-gradient(165deg, #061b29, #092a3a 63%, #071e2e);
+  }
+
+  body:has(.mobile-tabbar) .inbox-page {
+    padding: calc(75px + env(safe-area-inset-top)) 10px 14px;
+    background: linear-gradient(155deg, #061b29, #092a3a 66%, #071e2e);
+  }
+
+  body:has(.mobile-tabbar) :is(
+    .feed-page,
+    .discover-page,
+    .communities-page,
+    .community-page
+  ) :is(.page-header h1, .discover-header h1) {
+    font-size: clamp(1.65rem, 7vw, 2.2rem);
+    line-height: 1.16;
+    letter-spacing: -.035em;
+  }
+
+  body:has(.mobile-tabbar) :is(
+    .feed-page,
+    .discover-page,
+    .communities-page,
+    .community-page
+  ) :is(.subtitle, .page-header .subtitle) {
+    font-size: .88rem;
+    line-height: 1.5;
+  }
+
+  body:has(.mobile-tabbar) :is(
+    .feed-card,
+    .composer,
+    .week-hub-card,
+    .feed-discovery-card,
+    .feed-suggested-sessions,
+    .discover-search,
+    .pillar-panel,
+    .community-card,
+    .create-card,
+    .community-detail,
+    .state-card
+  ) {
+    border-radius: 17px;
+  }
+
+  body:has(.mobile-tabbar) :is(
+    .inbox-sidebar,
+    .inbox-detail
+  ) {
+    border-radius: 17px;
+  }
+
+  body:has(.mobile-tabbar) .inbox-layout {
+    gap: 12px;
+  }
+
+  body:has(.mobile-tabbar) .inbox-entry {
+    min-height: 70px;
+  }
+
+  body:has(.mobile-tabbar) .inbox-side-top {
+    padding: 14px 12px;
+  }
+
+  body:has(.mobile-tabbar) :is(
+    .discover-search input,
+    .community-discovery input,
+    .inbox-search input
+  ) {
+    font-size: 16px; /* Avoid iOS focus zoom. */
+  }
+
+  body:has(.mobile-tabbar) :is(
+    .feed-page,
+    .discover-page,
+    .communities-page,
+    .community-page,
+    .inbox-page
+  ) :is(a, button, input, select, textarea):focus-visible {
+    outline-color: #71f5d2;
+  }
+}
+
+@media (max-width: 350px) {
+  body:has(.mobile-tabbar) :is(.feed-page, .discover-page, .communities-page, .community-page) {
+    padding-inline: 9px;
+  }
+}
