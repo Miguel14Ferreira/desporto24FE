@@ -71,7 +71,7 @@
                   </span>
                   <h2>{{ selected.subject }}</h2>
                 </div>
-                <button type="button" class="close-detail" (click)="close()">×</button>
+                <button type="button" class="close-detail" [attr.aria-label]="'adminIdeas.closeDetails' | t" [title]="'adminIdeas.closeDetails' | t" (click)="close()">×</button>
               </div>
 
               <div class="submitter">

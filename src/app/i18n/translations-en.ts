@@ -3719,6 +3719,7 @@ export const EN: Record<string, string> = {
   'adminIdeas.emptyTitle': 'No ideas yet.',
   'adminIdeas.emptyText': 'New suggestions will appear here.',
   'adminIdeas.selectTitle': 'Select an idea',
+  'adminIdeas.closeDetails': 'Close details',
   'adminIdeas.selectText': 'Open a suggestion to review its details and update the status.',
   'adminIdeas.receivedAt': 'Received on',
   'adminIdeas.statusField': 'Status',
