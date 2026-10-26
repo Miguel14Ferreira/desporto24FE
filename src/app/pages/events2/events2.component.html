@@ -73,6 +73,19 @@
           </datalist>
         </label>
 
+        @if (canChoosePlayFormat) {
+          <label class="session-play-format-field">
+            <span>{{ 'createSession.playFormat' | t }}</span>
+            <select name="playFormat" [(ngModel)]="playFormat" [disabled]="loading">
+              <option value="INDIVIDUAL">{{ 'createSession.playFormatIndividual' | t }}</option>
+              <option value="PAIRS">{{ 'createSession.playFormatPairs' | t }}</option>
+            </select>
+            @if (playFormat === 'PAIRS') {
+              <small>{{ 'createSession.playFormatPairsHint' | t }}</small>
+            }
+          </label>
+        }
+
         <label>
           <span>{{ 'createSession.dateTime' | t }} *</span>
           <input
