@@ -1,0 +1,55 @@
+/* Scoped read-only rankings table; parent computes rank, season and visibility. */
+:host{display:block;}
+.ranking-table-wrap {
+  margin-top: .8rem;
+  overflow-x: auto;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: .85rem;
+}
+
+.ranking-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 620px;
+}
+
+.ranking-table th,
+.ranking-table td {
+  padding: .72rem .7rem;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.ranking-table th {
+  color: #94a3b8;
+  font-size: .72rem;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.ranking-table th:nth-child(2),
+.ranking-table td:nth-child(2) {
+  text-align: left;
+}
+
+.ranking-table tr.podium {
+  background: rgba(125,211,252,.035);
+}
+.ranking-player {display:grid;gap:.08rem;}
+.ranking-player span{color:#64748b;font-size:.72rem;}
+
+.points-cell {
+  color: #bae6fd;
+  font-weight: 950;
+}
+
+
+.module-empty{
+  min-height:240px;display:grid;place-items:center;align-content:center;
+  gap:.45rem;padding:1.25rem;text-align:center;color:#94a3b8;
+  border:1px solid rgba(255,255,255,.09);border-radius:.9rem;
+  background:rgba(255,255,255,.035);
+}
+.module-empty h3,.module-empty p{margin:0;}
+.module-empty.compact{min-height:130px;margin-top:.8rem;}
