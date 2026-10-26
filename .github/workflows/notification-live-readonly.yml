@@ -1,6 +1,7 @@
 name: Jynlo LIVE notification QA (read-only, manual)
 # Opt-in. Requires two existing protected GitHub Actions secrets for disposable QA accounts.
-# This workflow never changes preferences, creates invitations, or sends email.
+# This workflow never changes preferences, creates invitations, sends email,
+# joins sessions, or sends messages. Login POST only; all other LIVE requests GET.
 on:
   workflow_dispatch:
 permissions:
@@ -25,3 +26,7 @@ jobs:
         run: node --test scripts/qa/jynlo-notifications-live-readonly.test.cjs
       - name: Probe two disposable QA accounts without modifying notifications
         run: node scripts/qa/jynlo-notifications-live-readonly.cjs
+      - name: Validate guarded read-only session runner with synthetic responses
+        run: node --test scripts/qa/jynlo-sessions-live-readonly.test.cjs
+      - name: Read authorized QA session lists and details from LIVE API (GET only after login)
+        run: node scripts/qa/jynlo-sessions-live-readonly.cjs
