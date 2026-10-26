@@ -17,6 +17,8 @@ on:
       - 'scripts/qa/jynlo-karting-live-readonly.test.cjs'
       - 'scripts/ci-browser/public_api_contract_READONLY.cjs'
       - 'scripts/ci-browser/concept_one_mobile_readonly.cjs'
+      - 'scripts/ci-browser/desktop_candidate_smoke.cjs'
+      - 'scripts/ci-browser/authenticated_candidate_smoke.cjs'
       - 'package.json'
       - 'package-lock.json'
       - 'angular.json'
@@ -142,12 +144,18 @@ jobs:
             exit 1
           fi
           node scripts/ci-browser/concept_one_mobile_readonly.cjs
+          # Additional coverage for public session preview and community creation/details.
+          # Reuse the same compiled candidate, browser package and isolated API mocks.
+          node scripts/ci-browser/desktop_candidate_smoke.cjs
+          node scripts/ci-browser/authenticated_candidate_smoke.cjs
       - name: Save 390px Premium audit screenshots
         if: ${{ always() && startsWith(github.head_ref, 'qa/concept-one-mobile-chromium-390-') }}
         uses: actions/upload-artifact@v4
         with:
           name: jynlo-concept-one-mobile-audit
-          path: artifacts/concept-one-mobile/
+          path: |
+            artifacts/concept-one-mobile/
+            artifacts/desktop-candidate/*.png
           retention-days: 3
           if-no-files-found: ignore
 
