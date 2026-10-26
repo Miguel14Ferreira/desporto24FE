@@ -511,3 +511,150 @@
   body:has(.mobile-tabbar) .feed-page .week-hub-heading { flex-direction: column; }
   body:has(.mobile-tabbar) .feed-page .week-hub-create { width: 100%; }
 }
+
+
+/* Contrast/accessibility audit after real 390px Chromium screenshots.
+   Several legacy component rules apply !important, so phone overrides are explicit. */
+@media (max-width: 767px) {
+  body:has(.mobile-tabbar) nav.site-nav.site-nav--mobile {
+    background: rgba(255,255,255,.99) !important;
+    border-bottom: 1px solid #e2eae6 !important;
+  }
+  body:has(.mobile-tabbar) nav.site-nav.site-nav--mobile .brand {
+    color: #10232a !important;
+  }
+  body:has(.mobile-tabbar) nav.site-nav.site-nav--mobile .brand span {
+    color: #087b56 !important;
+  }
+  body:has(.mobile-tabbar) nav.site-nav.site-nav--mobile .notification-link,
+  body:has(.mobile-tabbar) nav.site-nav.site-nav--mobile .account-menu summary {
+    background: #f4f8f6 !important;
+    border-color: #d7e6df !important;
+    color: #163035 !important;
+  }
+  body:has(.mobile-tabbar) nav.site-nav.site-nav--mobile .notification-link__icon {
+    color: #163035 !important;
+    stroke: #163035 !important;
+  }
+  body:has(.mobile-tabbar) nav.site-nav.site-nav--mobile .account-menu summary span[aria-hidden="true"] {
+    display: inline !important;
+    font-size: 20px !important;
+    color: #163035 !important;
+    line-height: 1 !important;
+    visibility: visible !important;
+  }
+  body:has(.mobile-tabbar) nav.site-nav.site-nav--mobile .account-menu__panel {
+    background: #fff !important;
+    border-color: #dbe9e3 !important;
+  }
+  body:has(.mobile-tabbar) nav.site-nav.site-nav--mobile .account-menu__panel a {
+    color: #1a3c42 !important;
+  }
+  body:has(.mobile-tabbar) nav.site-nav.site-nav--mobile .account-menu__panel .language-switch button {
+    color: #526c70;
+  }
+
+  body:has(.mobile-tabbar) :is(
+    .feed-page,.discover-page,.communities-page,.profile-page,.inbox-page
+  ) :is(input,select,textarea) {
+    background: #fff !important;
+    border-color: #d6e4dd !important;
+    color: #132b30 !important;
+    -webkit-text-fill-color: #132b30;
+    color-scheme: light;
+  }
+  body:has(.mobile-tabbar) :is(
+    .feed-page,.discover-page,.communities-page,.profile-page,.inbox-page
+  ) :is(input,textarea)::placeholder {
+    color: #62777b !important;
+    -webkit-text-fill-color: #62777b;
+    opacity: 1;
+  }
+  body:has(.mobile-tabbar) .inbox-page .inbox-search input,
+  body:has(.mobile-tabbar) .inbox-page .inbox-compose-toolbar textarea {
+    background: #f7faf8 !important;
+    color: #142d32 !important;
+  }
+  body:has(.mobile-tabbar) .inbox-page .inbox-compose-toolbar textarea {
+    background: transparent !important;
+  }
+
+  body:has(.mobile-tabbar) .feed-page .week-hub-heading p:not(.week-hub-eyebrow),
+  body:has(.mobile-tabbar) .feed-page .week-muted,
+  body:has(.mobile-tabbar) .feed-page .week-item > span,
+  body:has(.mobile-tabbar) .feed-page .week-recruit-copy p {
+    color: #596f75 !important;
+  }
+  body:has(.mobile-tabbar) .feed-page .week-hub-heading :is(.week-hub-eyebrow,h2),
+  body:has(.mobile-tabbar) .feed-page .week-card-heading h3 {
+    color: #14292f !important;
+  }
+  body:has(.mobile-tabbar) .feed-page .week-hub-heading .week-hub-eyebrow {
+    color: #086c50 !important;
+  }
+  body:has(.mobile-tabbar) .feed-page :is(.week-hub-create,.week-recruit-cta).jynlo-action:is(a,button) {
+    background: #087b56 !important;
+    border-color: #087b56 !important;
+    color: #fff !important;
+  }
+  body:has(.mobile-tabbar) .feed-page .jynlo-feed-hero .eyebrow {
+    color: #e1fff2 !important;
+  }
+
+  body:has(.mobile-tabbar) .discover-page .discover-search :is(label > span,.search-copy span),
+  body:has(.mobile-tabbar) .communities-page .community-discovery label > span,
+  body:has(.mobile-tabbar) .inbox-page .inbox-search > span {
+    color: #3e595e !important;
+  }
+  body:has(.mobile-tabbar) .discover-page .discover-error {
+    border-color: #f0d8ce !important;
+    background: #fff8f5 !important;
+    color: #5b4241 !important;
+  }
+  body:has(.mobile-tabbar) .discover-page .discover-error :is(div,span,p) {
+    color: #57676c !important;
+  }
+  body:has(.mobile-tabbar) .discover-page .discover-error strong {
+    color: #a23f42 !important;
+  }
+  body:has(.mobile-tabbar) .communities-page .community-discovery button.jynlo-action--primary {
+    background: #087b56 !important;
+    border-color: #087b56 !important;
+    color: #fff !important;
+  }
+  body:has(.mobile-tabbar) .communities-page .community-discovery button.jynlo-action--primary:disabled {
+    opacity: .6 !important;
+  }
+  body:has(.mobile-tabbar) .inbox-page :is(.inbox-empty-side a,.inbox-side-footer a,.inbox-privacy) {
+    color: #087052 !important;
+  }
+  body:has(.mobile-tabbar) .inbox-page .inbox-unread-note {
+    color: #5a7176 !important;
+  }
+  body:has(.mobile-tabbar) .profile-page .identity {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    flex-wrap: wrap;
+    text-align: left !important;
+  }
+  body:has(.mobile-tabbar) .profile-page .avatar {
+    width: 72px !important;
+    height: 72px !important;
+    flex: 0 0 72px !important;
+    box-shadow: none !important;
+  }
+  body:has(.mobile-tabbar) .profile-page .identity-copy {
+    flex: 1 1 140px;
+    text-align: left !important;
+  }
+  body:has(.mobile-tabbar) .profile-page :is(
+    .profile-completion-card__heading > strong,
+    .profile-completion-missing span,.profile-completion-missing a
+  ) {
+    color: #176953 !important;
+  }
+  body:has(.mobile-tabbar) .profile-page .profile-completion-missing a {
+    text-decoration: underline;
+  }
+}
