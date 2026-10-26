@@ -112,9 +112,10 @@
             <strong>{{ 'venue.edit.reason' | t }}</strong>
             <p>{{ item.reason }}</p>
           </div>
-          @if (hasProposedContact(item)) {
+          @if (hasProposedContact(item) || sourceLink(item)) {
             <div class="admin-edit-source">
-              <strong>{{ 'venue.edit.admin.sourceHeading' | t }}</strong>
+              <strong>{{ (hasProposedContact(item)
+                ? 'venue.edit.admin.sourceHeading' : 'venue.edit.admin.evidenceHeading') | t }}</strong>
               @if (sourceLink(item); as safeSource) {
                 <a [href]="safeSource" target="_blank" rel="noopener noreferrer">
                   {{ 'venue.edit.admin.openSource' | t }}
@@ -122,8 +123,9 @@
               } @else {
                 <p role="alert">{{ 'venue.edit.admin.missingSource' | t }}</p>
               }
-              <small>{{ 'venue.edit.admin.sourceWarning' | t }}</small>
-              @if (mode === 'pending' && sourceLink(item)) {
+              <small>{{ (hasProposedContact(item)
+                ? 'venue.edit.admin.sourceWarning' : 'venue.edit.admin.evidenceWarning') | t }}</small>
+              @if (hasProposedContact(item) && mode === 'pending' && sourceLink(item)) {
                 <label class="admin-edit-source-check">
                   <input type="checkbox" name="sourceReviewed" [(ngModel)]="sourceReviewed">
                   <span>{{ 'venue.edit.admin.sourceReviewed' | t }}</span>
