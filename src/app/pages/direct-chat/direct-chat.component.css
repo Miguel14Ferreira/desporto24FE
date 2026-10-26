@@ -458,9 +458,25 @@ h1 {
   background: #58dec4; color: #052c2c; text-align: center; font-variant-numeric: tabular-nums;
 }
 
-/* Keep reactions below the bubble, never on top of the message or the timestamp. */
-.message-list .message {position:relative;margin-bottom:14px;}
- .message-list .message:has(app-chat-reactions:focus-within) {z-index:20;}
-.message-list .message app-chat-reactions {position:absolute;bottom:-15px;left:12px;z-index:3;}
+/* Direct chat uses the same reserved-space reaction badge geometry as inbox.
+   Never cover message text, date, or reply actions. */
+.message-list .message {position:relative;margin-bottom:4px;}
+.message-list .message:has(app-chat-reactions.has-reactions) {margin-bottom:36px;}
+.message-list .message:has(app-chat-reactions:focus-within) {z-index:20;}
+.message-list .message app-chat-reactions {
+  position:absolute;bottom:-14px;left:12px;z-index:3;
+  max-width:calc(100% - 24px);
+}
+.message-list .message:has(app-chat-reactions.has-reactions) app-chat-reactions {bottom:-34px;}
 .message-list .message.own-message app-chat-reactions {left:auto;right:12px;}
+@media (hover:hover) and (pointer:fine) {
+  .message app-chat-reactions:not(.has-reactions):not(.is-picker-open) {
+    opacity:0;pointer-events:none;transition:opacity .12s ease;
+  }
+  .message:hover app-chat-reactions:not(.has-reactions),
+  .message app-chat-reactions:focus-within {
+    opacity:1;pointer-events:auto;
+  }
+}
+.message-list {padding-bottom:42px;}
 
