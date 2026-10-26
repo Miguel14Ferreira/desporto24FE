@@ -84,11 +84,11 @@ describe('Unified Jynlo message center', () => {
     component.conversations = [peer];
     component.selectedKey = peer.key;
     component.draft = 'Ainda vou responder';
-    component.scrollRequested = true;
+    (component as any).scrollRequested = true;
     component.backToMobileInbox();
     expect(component.selectedKey).toBeNull();
     expect((component as any).drafts.get(peer.key)).toBe('Ainda vou responder');
-    expect(component.scrollRequested).toBeFalse();
+    expect((component as any).scrollRequested).toBeFalse();
     expect(direct.send).not.toHaveBeenCalled();
     expect(sessions.postMessage).not.toHaveBeenCalled();
     expect(timeline.send).not.toHaveBeenCalled();
