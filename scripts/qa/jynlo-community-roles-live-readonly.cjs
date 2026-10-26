@@ -166,6 +166,7 @@ function createRunner({ fetchImpl = globalThis.fetch, output = console.log } = {
     const common = sharedMemberships(lists[0], lists[1]);
     let rolePairs = 0;
     let tournamentDetails = 0;
+    let ownTournamentFallbacks = 0;
     // Only shared communities already authorized for BOTH disposable accounts.
     for (const item of common) {
       const other = lists[1].find(c => c.id === item.id);
@@ -177,6 +178,19 @@ function createRunner({ fetchImpl = globalThis.fetch, output = console.log } = {
       for (const token of tokens) tournamentDetails += await listTournaments(item.id, token);
     }
 
+    // A pair of disposable QA accounts may not share a populated tournament.
+    // Fall back to ONE exclusive, already-owned community per account, only
+    // when shared reads found no tournament details. No community mutations.
+    if (tournamentDetails === 0) {
+      const commonIds = new Set(common.map(c => c.id));
+      for (let i = 0; i < 2; i++) {
+        const owned = lists[i].find(c => !commonIds.has(c.id));
+        if (!owned) continue;
+        ownTournamentFallbacks++;
+        tournamentDetails += await listTournaments(owned.id, tokens[i]);
+      }
+    }
+
     let denied = 0;
     for (let i = 0; i < 2 && denied < MAX_NEGATIVE_PROBES; i++) {
       const candidate = nonmemberProbe(lists[i], lists[1 - i]);
@@ -186,15 +200,22 @@ function createRunner({ fetchImpl = globalThis.fetch, output = console.log } = {
     }
 
     // Only aggregate coverage counters are output; no PII, tokens or IDs.
-    output('[PASS] LIVE QA own-community roles verified on two disposable accounts.');
+    output('[PASS] Two disposable QA accounts authenticated independently.');
+    if (detailChecks) output('[PASS] Own-community details and roles verified; count=' + detailChecks + '.');
+    else output('[SKIP] Neither QA account has an owned membership in the sampled lists; role details untested.');
     if (rolePairs) output('[PASS] Distinct manager/member role pair found in shared QA memberships.');
     else output('[SKIP] No shared QA community with a manager/member role split.');
-    if (tournamentDetails) output('[PASS] Shared tournament detail reads agree with their lists.');
-    else output('[SKIP] No shared tournament sample in the bounded first page.');
+    if (tournamentDetails) {
+      output('[PASS] Authorized tournament detail reads agree with their lists; count='
+        + tournamentDetails + '.');
+    } else {
+      output('[SKIP] No authorized tournament detail sample in shared or fallback first pages.');
+    }
     if (denied) output('[PASS] Private non-member community detail refused via GET.');
     else output('[SKIP] No private QA community exclusive to one account; denial not tested.');
     return { accounts: 2, ownDetails: detailChecks, shared: common.length,
-      managerMemberPairs: rolePairs, tournamentDetails, deniedChecks: denied };
+      managerMemberPairs: rolePairs, tournamentDetails, ownTournamentFallbacks,
+      deniedChecks: denied };
   }
   return { run };
 }

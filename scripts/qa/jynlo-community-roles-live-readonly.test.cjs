@@ -49,10 +49,15 @@ function syntheticApi({ memberships = [own1, own2], allowUnauthorized = false } 
       }
       return Response.json(own);
     }
-    const tournaments = /^\/api\/communities\/7\/tournaments\?page=0$/.exec(path);
-    if (tournaments) return Response.json({ page: 0, hasMore: false,
-      tournaments: [{ id: 11, status: 'DRAFT' }] });
-    if (path === '/api/communities/7/tournaments/11') {
+    const tournaments = /^\/api\/communities\/([1-9]\d*)\/tournaments\?page=0$/.exec(path);
+    if (tournaments) {
+      assert.ok(memberships[index].some(x => x.id === Number(tournaments[1])));
+      return Response.json({ page: 0, hasMore: false,
+        tournaments: [{ id: 11, status: 'DRAFT' }] });
+    }
+    const tournamentDetail = /^\/api\/communities\/([1-9]\d*)\/tournaments\/11$/.exec(path);
+    if (tournamentDetail) {
+      assert.ok(memberships[index].some(x => x.id === Number(tournamentDetail[1])));
       return Response.json({ id: 11, status: 'DRAFT' });
     }
     throw Error('UNEXPECTED_TEST_ENDPOINT');
@@ -106,7 +111,8 @@ test('only two allowed login POSTs; read roles, shared tournament, and a denied 
   }).run({ passwords: VALID_PASSWORDS });
   assert.deepEqual(result, {
     accounts: 2, ownDetails: 3, shared: 1,
-    managerMemberPairs: 1, tournamentDetails: 2, deniedChecks: 1
+    managerMemberPairs: 1, tournamentDetails: 2, ownTournamentFallbacks: 0,
+    deniedChecks: 1
   });
   assert.equal(api.calls.filter(x => x.method === 'POST').length, 2);
   assert.ok(api.calls.filter(x => x.method === 'POST')
@@ -150,4 +156,42 @@ test('missing credentials reject before any outbound request', async () => {
     throw Error('SHOULD_NOT_HAPPEN');
   }}).run({ passwords: [] }), /QA_SECRETS_NOT_CONFIGURED/);
   assert.equal(invoked, 0);
+});
+
+test('no shared community: bounded own-community fallback reads tournaments without changing data', async () => {
+  const own = [
+    [{ id: 9, myRole: 'OWNER', visibility: 'PRIVATE' }],
+    [{ id: 8, myRole: 'MEMBER', visibility: 'PRIVATE' }]
+  ];
+  const api = syntheticApi({ memberships: own });
+  const lines = [];
+  const result = await createRunner({
+    fetchImpl: api.fetchImpl, output: msg => lines.push(msg)
+  }).run({ passwords: VALID_PASSWORDS });
+  assert.deepEqual(result, {
+    accounts: 2, ownDetails: 2, shared: 0,
+    managerMemberPairs: 0, tournamentDetails: 2, ownTournamentFallbacks: 2,
+    deniedChecks: 1
+  });
+  assert.equal(api.calls.filter(c => c.method !== 'GET').length, 2);
+  assert.ok(api.calls.filter(c => c.path.includes('/tournaments')).every(c => c.method === 'GET'));
+  assert.ok(lines.some(x => x.includes('tournament detail reads agree')));
+  assert.ok(lines.some(x => x.includes('No shared QA community')));
+  assert.ok(lines.every(x => !x.includes('jynloteste') && !x.includes('/api/communities/9')));
+});
+
+test('empty community memberships: report SKIP, never claim role or tournament coverage', async () => {
+  const api = syntheticApi({ memberships: [[], []] });
+  const lines = [];
+  const result = await createRunner({
+    fetchImpl: api.fetchImpl, output: msg => lines.push(msg)
+  }).run({ passwords: VALID_PASSWORDS });
+  assert.equal(result.ownDetails, 0);
+  assert.equal(result.tournamentDetails, 0);
+  assert.equal(result.ownTournamentFallbacks, 0);
+  assert.equal(result.deniedChecks, 0);
+  assert.ok(lines.some(x => x.startsWith('[SKIP]') && x.includes('role details untested')));
+  assert.ok(lines.some(x => x.startsWith('[SKIP]') && x.includes('No authorized tournament')));
+  assert.ok(lines.every(x => !x.includes('roles verified')));
+  assert.equal(api.calls.length, 4, 'two logins and two authorized membership GETs only');
 });
