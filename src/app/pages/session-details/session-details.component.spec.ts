@@ -214,6 +214,22 @@ describe('SessionDetailsComponent', () => {
     expect(shell.querySelector('.detail-grid')?.textContent).toContain('2/4');
   });
 
+  it('gives back navigation and membership blocks consistent Premium breathing room', () => {
+    component.session = { ...session, joined: true };
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    const back = root.querySelector<HTMLElement>('.jynlo-session-detail-premium .detail-shell > .back-link');
+    const membership = root.querySelector<HTMLElement>('.detail-content > .membership-status');
+    const actions = root.querySelector<HTMLElement>('.detail-content > .session-top-actions');
+    expect(back).not.toBeNull();
+    expect(membership).not.toBeNull();
+    expect(actions).not.toBeNull();
+    const expected = matchMedia('(max-width: 760px)').matches ? '20px' : '24px';
+    expect(getComputedStyle(back!).marginBottom).toBe(expected);
+    expect(getComputedStyle(membership!).marginTop).toBe(expected);
+    expect(getComputedStyle(actions!).marginTop).toBe(expected);
+  });
+
   it('retains confirmed and waitlisted membership badges with Premium styling', () => {
     component.session = { ...session, joined: true, waitlisted: false };
     fixture.detectChanges();
