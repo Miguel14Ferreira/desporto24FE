@@ -1,0 +1,510 @@
+/*
+ * Jynlo Concept One Mobile Premium — light, spacious PHONE-only experience.
+ * Everything is scoped to authenticated routes AND <=767px. Desktop stays dark.
+ * Reuses real API-backed views; no synthetic cards or duplicated behaviour.
+ */
+@media (max-width: 767px) {
+  body:has(.mobile-tabbar) {
+    --jynlo-phone-bg: #f5f8f7;
+    --jynlo-phone-card: #ffffff;
+    --jynlo-phone-text: #102027;
+    --jynlo-phone-muted: #617179;
+    --jynlo-phone-line: #e1ebe8;
+    --jynlo-phone-green: #087a59;
+    --jynlo-phone-mint: #d8f8e9;
+    background: var(--jynlo-phone-bg);
+    color: var(--jynlo-phone-text);
+  }
+
+  /* App shell follows the light mockup. Public pages and desktop are unchanged. */
+  body:has(.mobile-tabbar) .site-nav--mobile {
+    background: rgba(255,255,255,.98);
+    border-color: var(--jynlo-phone-line);
+    box-shadow: 0 2px 16px rgba(16, 41, 45, .045);
+  }
+  body:has(.mobile-tabbar) .site-nav--mobile .brand {
+    color: #071b23;
+  }
+  body:has(.mobile-tabbar) .site-nav--mobile .brand span {
+    color: #087a59;
+  }
+  body:has(.mobile-tabbar) .site-nav--mobile :is(.notification-link,.account-menu summary) {
+    background: #f4f8f6;
+    border-color: #e1eae6;
+    color: #182f31;
+  }
+  body:has(.mobile-tabbar) .site-nav--mobile .notification-badge {
+    background: #05764e;
+    color: #fff;
+  }
+  body:has(.mobile-tabbar) .mobile-tabbar {
+    background: rgba(255,255,255,.98);
+    border-top-color: #e1eae6;
+    box-shadow: 0 -4px 24px rgba(13, 51, 44, .05);
+  }
+  body:has(.mobile-tabbar) .mobile-tabbar__link {
+    color: #74858c;
+    gap: 4px;
+    border-radius: 13px;
+    font-size: clamp(.59rem,2.35vw,.71rem);
+  }
+  body:has(.mobile-tabbar) .mobile-tabbar__link.is-current,
+  body:has(.mobile-tabbar) .mobile-tabbar__link:hover {
+    color: #046d4a;
+    background: rgba(15, 151, 102, .085);
+  }
+  body:has(.mobile-tabbar) .mobile-tabbar__link:focus-visible {
+    outline-color: #098c60;
+  }
+
+  /* The five main views all use the SAME breathing room and card rhythm. */
+  body:has(.mobile-tabbar) :is(
+    .feed-page, .discover-page, .communities-page, .profile-page, .inbox-page
+  ) {
+    background: var(--jynlo-phone-bg) !important;
+    color: var(--jynlo-phone-text);
+    padding: calc(76px + env(safe-area-inset-top)) 14px
+      calc(24px + env(safe-area-inset-bottom));
+    min-height: 100dvh;
+  }
+  body:has(.mobile-tabbar) :is(
+    .feed-shell,.discover-shell,.communities-shell,.profile-shell,.inbox-shell
+  ) {
+    max-width: 560px;
+    margin-inline: auto;
+    min-width: 0;
+  }
+  body:has(.mobile-tabbar) :is(
+    .feed-page,.discover-page,.communities-page,.profile-page,.inbox-page
+  ) :is(h1,h2,h3,h4) {
+    color: var(--jynlo-phone-text);
+    letter-spacing: -.028em;
+    overflow-wrap: anywhere;
+  }
+  body:has(.mobile-tabbar) :is(
+    .feed-page,.discover-page,.communities-page,.profile-page,.inbox-page
+  ) :is(.subtitle, .eyebrow, .section-kicker) {
+    line-height: 1.45;
+  }
+  body:has(.mobile-tabbar) :is(
+    .discover-page,.communities-page,.profile-page
+  ) :is(.subtitle,.page-header .subtitle,.discover-header .subtitle) {
+    color: var(--jynlo-phone-muted) !important;
+    font-size: .86rem;
+    line-height: 1.45;
+    margin-top: 5px;
+  }
+  body:has(.mobile-tabbar) :is(
+    .discover-page,.communities-page,.profile-page
+  ) :is(.eyebrow,.section-kicker) {
+    color: var(--jynlo-phone-green) !important;
+    font-size: .66rem;
+    letter-spacing: .09em;
+  }
+  body:has(.mobile-tabbar) :is(
+    .discover-page,.communities-page,.profile-page
+  ) :is(.page-header,.discover-header) {
+    padding: 4px 2px 12px;
+    margin: 0 0 12px;
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    min-height: 0;
+  }
+  body:has(.mobile-tabbar) :is(
+    .discover-page,.communities-page,.profile-page
+  ) :is(.page-header h1,.discover-header h1) {
+    font-size: clamp(1.62rem,6vw,2rem);
+    line-height: 1.16;
+    margin: 2px 0 0;
+  }
+
+  /* Primary actions are recognisably green, secondary actions remain quiet. */
+  body:has(.mobile-tabbar) :is(
+    .feed-page,.discover-page,.communities-page,.profile-page
+  ) :is(.jynlo-action--primary,.jynlo-action--accent) {
+    --jynlo-action-text: #ffffff;
+    --jynlo-action-border: #047b57;
+    --jynlo-action-bg: #087b56;
+    --jynlo-action-hover: #076748;
+  }
+  body:has(.mobile-tabbar) :is(
+    .feed-page,.discover-page,.communities-page,.profile-page
+  ) .jynlo-action--neutral {
+    --jynlo-action-text: #1b4b43;
+    --jynlo-action-border: #cbdfd9;
+    --jynlo-action-bg: #f3faf6;
+    --jynlo-action-hover: #e5f5eb;
+  }
+  body:has(.mobile-tabbar) :is(
+    .feed-page,.discover-page,.communities-page,.profile-page,.inbox-page
+  ) :is(input,select,textarea) {
+    color: #13292f;
+    background: #fff;
+    border-color: #d5e3df;
+    min-width: 0;
+    font-size: 16px;
+  }
+  body:has(.mobile-tabbar) :is(
+    .feed-page,.discover-page,.communities-page,.profile-page,.inbox-page
+  ) :is(input,select,textarea)::placeholder { color: #73848a; }
+  body:has(.mobile-tabbar) :is(
+    .feed-page,.discover-page,.communities-page,.profile-page,.inbox-page
+  ) :is(a,button,input,select,textarea):focus-visible {
+    outline: 2px solid #0c9772;
+    outline-offset: 2px;
+  }
+
+  /* INÍCIO — compact photo hero, actual upcoming sessions, then the feed.
+     Stories remain accessible BELOW the useful day-to-day content. */
+  body:has(.mobile-tabbar) .feed-shell {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+  body:has(.mobile-tabbar) .feed-shell > .page-header { order: 1; }
+  body:has(.mobile-tabbar) .feed-shell > .week-hub { order: 2; }
+  body:has(.mobile-tabbar) .feed-shell > .feed-layout { order: 3; }
+  body:has(.mobile-tabbar) .feed-shell > app-social-stories { order: 4; }
+  body:has(.mobile-tabbar) .feed-page.jynlo-feed-premium .jynlo-feed-hero {
+    min-height: 218px;
+    padding: 23px 21px;
+    margin: 0;
+    display: flex;
+    align-items: flex-end;
+    border-radius: 20px;
+    border-color: #dce9e5;
+    box-shadow: 0 9px 24px rgba(19,53,41,.11);
+  }
+  body:has(.mobile-tabbar) .jynlo-feed-hero::before {
+    inset: 0 !important;
+    opacity: .72 !important;
+  }
+  body:has(.mobile-tabbar) .jynlo-feed-hero::after {
+    background: linear-gradient(0deg,rgba(4,28,24,.93),rgba(4,28,24,.28) 68%,rgba(4,28,24,.04)) !important;
+  }
+  body:has(.mobile-tabbar) .feed-page .jynlo-feed-hero :is(h1,.eyebrow) {
+    color: #fff !important;
+  }
+  body:has(.mobile-tabbar) .feed-page .jynlo-feed-hero h1 {
+    max-width: 265px;
+    font-size: clamp(1.65rem,7.1vw,2rem) !important;
+    line-height: 1.13;
+  }
+  body:has(.mobile-tabbar) .feed-page .jynlo-feed-hero .subtitle {
+    color: #e6f7f0 !important;
+    margin: 8px 0 13px;
+    font-size: .81rem;
+    line-height: 1.45;
+  }
+  .jynlo-mobile-feed-title { display: none; }
+  body:has(.mobile-tabbar) .jynlo-desktop-feed-title { display: none; }
+  body:has(.mobile-tabbar) .jynlo-mobile-feed-title { display: inline; }
+  .jynlo-mobile-explore { display: none; }
+  body:has(.mobile-tabbar) .jynlo-mobile-explore {
+    display: inline-flex;
+    align-items: center;
+    min-height: 39px;
+    padding: 8px 15px;
+    border: 0;
+    border-radius: 999px;
+    background: #46e2b4;
+    color: #063f32;
+    text-decoration: none;
+    font-size: .79rem;
+    font-weight: 850;
+  }
+  body:has(.mobile-tabbar) .feed-page.jynlo-feed-premium .week-hub {
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    gap: 12px;
+    margin: 0;
+    background: transparent !important;
+    border: 0;
+    box-shadow: none;
+  }
+  body:has(.mobile-tabbar) .feed-page .week-hub-heading { order: 1; gap: 10px; margin: 0 3px; }
+  body:has(.mobile-tabbar) .feed-page .week-hub-grid { order: 2; display: grid; gap: 12px; margin: 0; }
+  body:has(.mobile-tabbar) .feed-page .week-recruit { order: 3; }
+  body:has(.mobile-tabbar) .feed-page .week-hub-heading h2 { font-size: 1.18rem; }
+  body:has(.mobile-tabbar) .feed-page .week-hub-heading p { color: #637379; }
+  body:has(.mobile-tabbar) .feed-page .week-hub-heading .week-hub-eyebrow { color: #087b56; }
+  body:has(.mobile-tabbar) .feed-page .week-hub-create {
+    width: auto;
+    min-height: 39px !important;
+    padding: 9px 13px !important;
+    font-size: .78rem !important;
+  }
+  body:has(.mobile-tabbar) .feed-page .week-hub-card,
+  body:has(.mobile-tabbar) .feed-page.jynlo-feed-premium .jynlo-premium-feed-grid :is(.feed-card,.composer,.state-card,.feed-discovery-card),
+  body:has(.mobile-tabbar) .feed-page .week-recruit {
+    padding: 16px;
+    background: #fff !important;
+    color: #152b30;
+    border: 1px solid #e1ebe8 !important;
+    border-radius: 17px;
+    box-shadow: 0 5px 18px rgba(15,55,49,.045);
+  }
+  body:has(.mobile-tabbar) .feed-page .week-recruit { margin: 0; gap: 12px; }
+  body:has(.mobile-tabbar) .feed-page .week-recruit :is(strong,p,.week-recruit-field,.week-recruit-label) { color: #244047; }
+  body:has(.mobile-tabbar) .feed-page .week-card-heading h3,
+  body:has(.mobile-tabbar) .feed-page .week-item strong,
+  body:has(.mobile-tabbar) .feed-page .week-recruit strong { color: #13262c; }
+  body:has(.mobile-tabbar) .feed-page .week-item {
+    padding: 11px 1px;
+    border: 0;
+    border-bottom: 1px solid #e6efeb;
+    border-radius: 0;
+    background: transparent;
+  }
+  body:has(.mobile-tabbar) .feed-page .week-item > span,
+  body:has(.mobile-tabbar) .feed-page .week-muted,
+  body:has(.mobile-tabbar) .feed-page .week-recruit-copy p { color: #62777b; }
+  body:has(.mobile-tabbar) .feed-page :is(.week-item small,.week-card-link,.week-hub-eyebrow) { color: #097954; }
+  body:has(.mobile-tabbar) .feed-page .feed-layout { gap: 14px; }
+  body:has(.mobile-tabbar) .feed-page .feed-main,
+  body:has(.mobile-tabbar) .feed-page .feed-sidebar { gap: 14px; }
+  body:has(.mobile-tabbar) .feed-page :is(.post-content,.author-copy strong,.feed-suggested-person strong) { color: #172d32 !important; }
+  body:has(.mobile-tabbar) .feed-page :is(.post-meta,.post-date,.feed-suggested-person small,.session-preview span) { color: #687e82; }
+  body:has(.mobile-tabbar) .feed-page :is(.session-preview,.feed-suggested-person,.feed-suggested-session) {
+    border: 1px solid #e0ebe7;
+    border-radius: 13px;
+    background: #f8fbfa;
+  }
+  body:has(.mobile-tabbar) .feed-page .composer textarea {
+    color: #173337;
+    background: #f7faf9;
+    border-color: #d7e6df;
+  }
+
+  /* JOGAR — keep real search, venue/session/person results and errors visible.
+     Search is compact and the data becomes a calm vertical card list. */
+  body:has(.mobile-tabbar) .discover-page .discover-header { margin-bottom: 9px; }
+  body:has(.mobile-tabbar) .discover-page .discover-search,
+  body:has(.mobile-tabbar) .discover-page .pillar-panel,
+  body:has(.mobile-tabbar) .discover-page .state-card {
+    padding: 15px;
+    margin-top: 0;
+    border: 1px solid #e1ebe8;
+    background: #fff !important;
+    border-radius: 17px;
+    box-shadow: 0 5px 18px rgba(15,55,49,.04);
+  }
+  body:has(.mobile-tabbar) .discover-page .discover-search { margin-bottom: 14px; }
+  body:has(.mobile-tabbar) .discover-page :is(.search-copy strong,.pillar-heading h2,.result-card strong) {
+    color: #13272d;
+  }
+  body:has(.mobile-tabbar) .discover-page :is(.search-copy span,.search-fields label > span,.result-card span,.result-card small) {
+    color: #687d81;
+  }
+  body:has(.mobile-tabbar) .discover-page .search-fields { grid-template-columns: 1fr; gap: 11px; }
+  body:has(.mobile-tabbar) .discover-page .search-fields button {
+    background: #087b56;
+    color: #fff;
+    min-height: 46px;
+  }
+  body:has(.mobile-tabbar) .discover-page .discovery-grid { display: grid; grid-template-columns: 1fr; gap: 13px; }
+  body:has(.mobile-tabbar) .discover-page .pillar-icon { background: #e7f7f0; }
+  body:has(.mobile-tabbar) .discover-page .result-count { background: #e7f7f0; color: #05714e; }
+  body:has(.mobile-tabbar) .discover-page .result-card {
+    padding: 12px;
+    background: #f8fbfa;
+    border-color: #e1ebe8;
+    color: #1b3437;
+  }
+
+  /* COMUNIDADES — discover the actual groups before a very tall pitch.
+     The WhatsApp pitch remains intact, lower on the page. */
+  body:has(.mobile-tabbar) .communities-page:not(.community-detail-page) .communities-shell {
+    display: flex;
+    flex-direction: column;
+    gap: 13px;
+  }
+  body:has(.mobile-tabbar) .communities-page:not(.community-detail-page) .communities-shell > .page-header { order: 0; }
+  body:has(.mobile-tabbar) .communities-page:not(.community-detail-page) .communities-shell > .community-discovery { order: 1; }
+  body:has(.mobile-tabbar) .communities-page:not(.community-detail-page) .communities-shell > .invites-card,
+  body:has(.mobile-tabbar) .communities-page:not(.community-detail-page) .communities-shell > .communities-layout,
+  body:has(.mobile-tabbar) .communities-page:not(.community-detail-page) .communities-shell > .empty-state { order: 2; }
+  body:has(.mobile-tabbar) .communities-page:not(.community-detail-page) .communities-shell > app-community-discovery-pitch { order: 3; }
+  body:has(.mobile-tabbar) .communities-page .page-header { flex-direction: column; align-items: stretch; gap: 10px; }
+  body:has(.mobile-tabbar) .communities-page .row-actions { gap: 8px; }
+  body:has(.mobile-tabbar) .communities-page :is(.create-card,.community-detail,.community-card,.invites-card,.state-card,.feedback) {
+    border-color: #dfebe6 !important;
+    border-radius: 17px;
+    background: #fff !important;
+    box-shadow: 0 5px 18px rgba(15,55,49,.04);
+    color: #172d32;
+  }
+  body:has(.mobile-tabbar) .communities-page :is(.create-card h2,.community-card strong,.community-card-copy strong,.community-detail h2) {
+    color: #142b30;
+  }
+  body:has(.mobile-tabbar) .communities-page :is(.create-card p,.community-card small,.community-card span,.community-card-copy small,.community-detail p,.mine-hint) {
+    color: #677d80;
+  }
+  body:has(.mobile-tabbar) .communities-page .community-discovery .form-grid { grid-template-columns: 1fr; gap: 12px; }
+  body:has(.mobile-tabbar) .communities-page .community-discovery .row-actions.full-width { display: grid; grid-template-columns: 1fr 1fr; }
+  body:has(.mobile-tabbar) .communities-page .community-discovery .row-actions.full-width button { min-width: 0; width: 100%; }
+  body:has(.mobile-tabbar) .communities-page .community-discovery .community-card { padding: 12px; gap: 11px; }
+  body:has(.mobile-tabbar) .communities-page .community-discovery .sport-tag,
+  body:has(.mobile-tabbar) .communities-page .visibility {
+    border: 1px solid #cfe7db;
+    background: #eef9f3;
+    color: #08734f;
+  }
+  body:has(.mobile-tabbar) .communities-page .community-discovery label span { color: #4b6266; }
+  body:has(.mobile-tabbar) .communities-page .community-pitch {
+    min-height: 0;
+    border-radius: 18px;
+    padding: 18px;
+  }
+  body:has(.mobile-tabbar) .communities-page .community-pitch h2 { font-size: clamp(1.3rem,6vw,1.75rem); }
+  body:has(.mobile-tabbar) .communities-page .community-pitch p { font-size: .85rem; line-height: 1.5; }
+
+  /* MENSAGENS — genuine unified inbox, with white list and readable states.
+     Actual conversation content, permissions and composer remain untouched. */
+  body:has(.mobile-tabbar) .inbox-page .inbox-sidebar,
+  body:has(.mobile-tabbar) .inbox-page .inbox-detail {
+    background: #fff;
+    border: 1px solid #e1ebe8;
+    box-shadow: 0 6px 18px rgba(15,55,49,.045);
+    border-radius: 18px;
+  }
+  body:has(.mobile-tabbar) .inbox-page .inbox-side-top,
+  body:has(.mobile-tabbar) .inbox-page .inbox-detail-heading,
+  body:has(.mobile-tabbar) .inbox-page .inbox-side-footer {
+    background: #fff;
+    border-color: #e7efeb;
+  }
+  body:has(.mobile-tabbar) .inbox-page :is(.inbox-side-heading h1,.inbox-entry-top strong,.inbox-detail-heading h2) {
+    color: #142a30;
+  }
+  body:has(.mobile-tabbar) .inbox-page :is(.inbox-side-heading p,.inbox-entry-snippet,.inbox-entry-kind,.inbox-detail-heading p,.inbox-connection) {
+    color: #687e82;
+  }
+  body:has(.mobile-tabbar) .inbox-page .inbox-search span { color: #435b62; }
+  body:has(.mobile-tabbar) .inbox-page .inbox-search input {
+    background: #f6faf8;
+    border-color: #dbe7e2;
+    color: #152d31;
+  }
+  body:has(.mobile-tabbar) .inbox-page .inbox-filters button {
+    color: #50686b;
+    border-color: #dce9e3;
+    background: #f8fbfa;
+    min-height: 36px;
+  }
+  body:has(.mobile-tabbar) .inbox-page .inbox-filters button.active {
+    color: #fff;
+    border-color: #087b56;
+    background: #087b56;
+  }
+  body:has(.mobile-tabbar) .inbox-page .inbox-entry {
+    border-color: #e9f0ed;
+    background: #fff;
+    min-height: 78px;
+    padding: 13px 11px;
+  }
+  body:has(.mobile-tabbar) .inbox-page .inbox-entry.is-selected { background: #edf8f2; border-color: #b5e1d0; }
+  body:has(.mobile-tabbar) .inbox-page :is(.inbox-loading,.inbox-empty-side,.inbox-notice) {
+    border: 1px solid #e2ede7;
+    color: #486267;
+    background: #f5faf7;
+  }
+  body:has(.mobile-tabbar) .inbox-page .inbox-notice {
+    color: #875114;
+    background: #fff4df;
+    border-color: #f4d7a5;
+  }
+  body:has(.mobile-tabbar) .inbox-page .inbox-side-footer a {
+    border-color: #dceae5;
+    background: #f4faf7;
+    color: #087052;
+    font-size: .72rem;
+  }
+  body:has(.mobile-tabbar) .inbox-page .inbox-detail {
+    background: #f7faf9;
+  }
+  body:has(.mobile-tabbar) .inbox-page .inbox-mobile-back {
+    border-color: #cfe8db;
+    background: #e9f8f0;
+    color: #087052;
+  }
+  body:has(.mobile-tabbar) .inbox-page .inbox-composer {
+    background: #fff;
+    border-color: #e4ede9;
+  }
+  body:has(.mobile-tabbar) .inbox-page .inbox-compose-toolbar {
+    background: #f5faf8;
+    border-color: #d9e8e2;
+  }
+  body:has(.mobile-tabbar) .inbox-page .inbox-compose-toolbar textarea { background: transparent; }
+  body:has(.mobile-tabbar) .inbox-page .inbox-privacy { color: #087454; }
+
+  /* PERFIL — photo/avatar, readable sports chips and compact real stats.
+     Security-sensitive account information remains at the bottom as before. */
+  body:has(.mobile-tabbar) .profile-page .page-header {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  body:has(.mobile-tabbar) .profile-page .page-header .subtitle { max-width: 220px; }
+  body:has(.mobile-tabbar) .profile-page .header-actions { flex: 0 0 auto; align-self: center; }
+  body:has(.mobile-tabbar) .profile-page .header-actions .jynlo-action { min-height: 39px !important; padding: 8px 10px !important; font-size: .71rem !important; }
+  body:has(.mobile-tabbar) .profile-page .profile-card,
+  body:has(.mobile-tabbar) .profile-page .state-card {
+    padding: 17px;
+    background: #fff !important;
+    border: 1px solid #e0ebe7;
+    border-radius: 18px;
+    box-shadow: 0 6px 18px rgba(15,55,49,.045);
+  }
+  body:has(.mobile-tabbar) .profile-page .identity { align-items: center; gap: 14px; padding-bottom: 14px; border-color: #e4eee8; }
+  body:has(.mobile-tabbar) .profile-page .avatar {
+    width: 72px; height: 72px; flex-basis: 72px;
+    border-radius: 50%;
+    border: 3px solid #d7f1e5;
+    background: #e3f6eb;
+    color: #076f50;
+  }
+  body:has(.mobile-tabbar) .profile-page .identity-copy h2 { font-size: 1.33rem; color: #10272c; }
+  body:has(.mobile-tabbar) .profile-page .identity-copy p,
+  body:has(.mobile-tabbar) .profile-page :is(.avatar ~ div small,.bio-card p,.account-section span) { color: #62797b; }
+  body:has(.mobile-tabbar) .profile-page .sports-identity-line span,
+  body:has(.mobile-tabbar) .profile-page .favorite-sport-chip {
+    background: #eaf8f0;
+    border-color: #d0eadc;
+    color: #086c50;
+  }
+  body:has(.mobile-tabbar) .profile-page :is(.profile-completion-card,.activity-grid > div,.details-grid > div,.reliability-grid > div) {
+    border: 1px solid #e2eee8;
+    background: #f7faf8;
+    border-radius: 13px;
+  }
+  body:has(.mobile-tabbar) .profile-page .profile-completion-card h3,
+  body:has(.mobile-tabbar) .profile-page .activity-grid strong,
+  body:has(.mobile-tabbar) .profile-page :is(.details-grid strong,.reliability-grid strong) { color: #173238; }
+  body:has(.mobile-tabbar) .profile-page :is(.profile-completion-card p,.activity-grid span,.details-grid span,.reliability-grid span) {
+    color: #647a7d;
+  }
+  body:has(.mobile-tabbar) .profile-page :is(.profile-completion-card,.activity-section,.reliability-card,.account-section) {
+    border-top-color: #e1ebe6;
+  }
+  body:has(.mobile-tabbar) .profile-page .activity-grid {
+    grid-template-columns: repeat(2,minmax(0,1fr));
+    gap: 10px;
+  }
+
+  /* All phone screens keep a comfortable bottom inset above five destinations. */
+  body:has(.mobile-tabbar) :is(
+    .feed-page,.discover-page,.communities-page,.profile-page,.inbox-page
+  ) { padding-bottom: calc(30px + env(safe-area-inset-bottom)); }
+}
+
+@media (max-width: 360px) {
+  body:has(.mobile-tabbar) .profile-page .page-header { flex-wrap: wrap; }
+  body:has(.mobile-tabbar) .feed-page .week-hub-heading { flex-direction: column; }
+  body:has(.mobile-tabbar) .feed-page .week-hub-create { width: 100%; }
+}
