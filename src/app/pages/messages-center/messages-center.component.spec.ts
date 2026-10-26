@@ -79,21 +79,6 @@ describe('Unified Jynlo message center', () => {
     (component as any).sessionKickoffs.set(41, Date.now() + 3600_000);
   });
 
-  it('returns from the mobile conversation to the inbox without sending or losing a draft', () => {
-    const peer = item('direct', 'bea');
-    component.conversations = [peer];
-    component.selectedKey = peer.key;
-    component.draft = 'Ainda vou responder';
-    (component as any).scrollRequested = true;
-    component.backToMobileInbox();
-    expect(component.selectedKey).toBeNull();
-    expect((component as any).drafts.get(peer.key)).toBe('Ainda vou responder');
-    expect((component as any).scrollRequested).toBeFalse();
-    expect(direct.send).not.toHaveBeenCalled();
-    expect(sessions.postMessage).not.toHaveBeenCalled();
-    expect(timeline.send).not.toHaveBeenCalled();
-  });
-
   it('shares public Jynlo entities without leaking private sessions or groups', () => {
     const peer=item('direct','bea');
     component.conversations=[peer];

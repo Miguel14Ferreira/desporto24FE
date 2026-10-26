@@ -297,8 +297,6 @@ export const EN: Record<string, string> = {
   'stories.deleteConfirm': 'Delete this Story?',
   'stories.copied': 'Link copied!',
   'stories.shareFallback': 'The link could not be copied. You can share the address from your browser.',
-  'mobile.heroTitle': 'Your next game starts here',
-  'mobile.explore': 'Explore sessions',
   'nav.home': 'Home',
   'nav.about': 'About',
   'nav.contact': 'Contact',
