@@ -3726,6 +3726,7 @@ const PT: Dictionary = {
   'adminIdeas.emptyTitle': 'Ainda não existem ideias.',
   'adminIdeas.emptyText': 'Quando alguém enviar uma sugestão, ela aparecerá aqui.',
   'adminIdeas.selectTitle': 'Seleciona uma ideia',
+  'adminIdeas.closeDetails': 'Fechar detalhes',
   'adminIdeas.selectText': 'Abre uma sugestão para veres todos os detalhes e alterares o estado.',
   'adminIdeas.receivedAt': 'Recebida em',
   'adminIdeas.statusField': 'Estado',
