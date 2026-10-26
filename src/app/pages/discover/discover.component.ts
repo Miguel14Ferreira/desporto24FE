@@ -33,6 +33,7 @@ export class DiscoverComponent implements OnInit {
   private sportEdited = false;
   private locationEdited = false;
   venues: Venue[] = [];
+  venuesHasMore = false;
   topVenueResults: Venue[] = [];
   sessions: SessionSummary[] = [];
   topSessionResults: SessionSummary[] = [];
@@ -263,6 +264,7 @@ export class DiscoverComponent implements OnInit {
     this.venuesLoadError = false;
     this.sessionsLoadError = false;
     this.peopleLoadError = false;
+    this.venuesHasMore = false;
 
     forkJoin({
       venues: this.withRecovery(
@@ -270,12 +272,11 @@ export class DiscoverComponent implements OnInit {
           ? this.venueService.search(
               undefined, sport || undefined,
               this.nearbyVenuePosition.latitude, this.nearbyVenuePosition.longitude,
-              this.nearbyVenueRadiusKm)
-          // Discover only shows a preview; use the bounded national catalogue query.
-          // The full result set remains available via the paginated directory link.
+              this.nearbyVenueRadiusKm).pipe(map(venues => ({ venues, hasMore: false })))
+          // The regular preview uses the bounded catalogue; never imply its page is the total.
           : this.venueService.suggest(undefined, location || undefined, sport || undefined, 0)
-              .pipe(map(page => page.venues)),
-        [] as Venue[], 'venues', requestId
+              .pipe(map(page => ({ venues: page.venues, hasMore: page.hasMore }))),
+        { venues: [] as Venue[], hasMore: false }, 'venues', requestId
       ),
       sessions: this.withRecovery(
         this.sessionService.discover({
@@ -304,8 +305,13 @@ export class DiscoverComponent implements OnInit {
       }))
       .subscribe(({ venues, sessions, people }) => {
         if (requestId !== this.searchRequestId) return;
-        this.venues = venues;
-        this.topVenueResults = venues.slice(0, 4);
+        // Keep the GPS API's distance order. Normal previews favour exact city and
+        // informative entries within the first server-paginated page only.
+        const venueResults = this.nearbyVenuePosition
+          ? venues.venues : this.rankVenuePreview(venues.venues, location);
+        this.venues = venueResults;
+        this.venuesHasMore = venues.hasMore;
+        this.topVenueResults = venueResults.slice(0, 4);
         this.sessions = sessions;
         this.topSessionResults = sessions.slice(0, 4);
         if (peopleRequestId === this.peopleRequestId) {
@@ -313,6 +319,35 @@ export class DiscoverComponent implements OnInit {
           this.topPeopleResults = people.slice(0, 4);
         }
       });
+  }
+
+
+  /** Stable ranking within the first bounded page; the full directory keeps server order. */
+  private rankVenuePreview(venues: Venue[], city: string): Venue[] {
+    const clean = (text: string): string => text.trim().toLocaleLowerCase('pt')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const expectedCity = clean(city);
+    const score = (venue: Venue): number => {
+      let relevance = expectedCity && clean(venue.city || '') === expectedCity ? 100 : 0;
+      if (venue.sports?.trim()) relevance += 8;
+      if ((venue.address || '').trim()) relevance += 4;
+      if (venue.latitude != null && venue.longitude != null
+          && Number.isFinite(venue.latitude) && Number.isFinite(venue.longitude)) relevance += 4;
+      if (venue.venueType?.trim()) relevance += 1;
+      return relevance;
+    };
+    return [...venues].sort((left, right) => score(right) - score(left));
+  }
+
+  /** Offer controlled, explicit filter relaxation only after a genuine empty search. */
+  broadenVenueSearch(filter: 'sport' | 'city' | 'all'): void {
+    if (filter === 'all') {
+      this.clear();
+      return;
+    }
+    if (filter === 'sport') this.onSportChange('');
+    if (filter === 'city') this.onLocationChange('');
+    this.search();
   }
 
   searchPlayers(): void {
