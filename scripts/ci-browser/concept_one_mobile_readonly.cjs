@@ -251,6 +251,8 @@ async function main() {
               assert.equal(mobileSkin.tabs, 'grid',
                 route + ': five-tab navigation must be visible on phones');
               assert.equal(mobileSkin.firstTab, '/menu/feed');
+              assert.match(mobileSkin.header, /^rgba?\(255,\s*255,\s*255(?:,|\))/,
+                route + ': authenticated phone header must use premium white skin');
             } else {
               assert.equal(mobileSkin.tabs, 'none',
                 route + ': desktop must not show mobile tab bar');
