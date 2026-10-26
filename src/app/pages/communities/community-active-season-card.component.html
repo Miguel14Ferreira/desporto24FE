@@ -1,0 +1,35 @@
+<div class="active-season-card">
+                          <div>
+                            <strong>{{ name }}</strong>
+                            <span>{{ 'communities.activeSeasonHint' | t }}</span>
+                          </div>
+
+                          @if (!confirming) {
+                            <button
+                              type="button"
+                              class="danger-action small jynlo-action jynlo-action--danger jynlo-action--compact"
+                              (click)="requestClose.emit()">
+                              {{ 'communities.closeSeason' | t }}
+                            </button>
+                          } @else {
+                            <div class="season-close-confirmation">
+                              <span>{{ 'communities.closeSeasonConfirmText' | t }}</span>
+                              <div class="row-actions">
+                                <button
+                                  type="button"
+                                  class="danger-action small jynlo-action jynlo-action--danger jynlo-action--compact"
+                                  [disabled]="saving"
+                                  (click)="confirmClose.emit()">
+                                  {{ 'communities.confirmCloseSeason' | t }}
+                                </button>
+                                <button
+                                  type="button"
+                                  class="secondary-action small jynlo-action jynlo-action--neutral jynlo-action--compact"
+                                  [disabled]="saving"
+                                  (click)="cancelClose.emit()">
+                                  {{ 'common.cancel' | t }}
+                                </button>
+                              </div>
+                            </div>
+                          }
+                        </div>

@@ -827,41 +827,14 @@
                           </button>
                         </div>
                       } @else {
-                        <div class="active-season-card">
-                          <div>
-                            <strong>{{ activeSeason()?.name }}</strong>
-                            <span>{{ 'communities.activeSeasonHint' | t }}</span>
-                          </div>
-
-                          @if (!closeSeasonConfirming) {
-                            <button
-                              type="button"
-                              class="danger-action small jynlo-action jynlo-action--danger jynlo-action--compact"
-                              (click)="requestCloseSeason()">
-                              {{ 'communities.closeSeason' | t }}
-                            </button>
-                          } @else {
-                            <div class="season-close-confirmation">
-                              <span>{{ 'communities.closeSeasonConfirmText' | t }}</span>
-                              <div class="row-actions">
-                                <button
-                                  type="button"
-                                  class="danger-action small jynlo-action jynlo-action--danger jynlo-action--compact"
-                                  [disabled]="seasonSaving"
-                                  (click)="closeActiveSeason()">
-                                  {{ 'communities.confirmCloseSeason' | t }}
-                                </button>
-                                <button
-                                  type="button"
-                                  class="secondary-action small jynlo-action jynlo-action--neutral jynlo-action--compact"
-                                  [disabled]="seasonSaving"
-                                  (click)="cancelCloseSeason()">
-                                  {{ 'common.cancel' | t }}
-                                </button>
-                              </div>
-                            </div>
-                          }
-                        </div>
+                        <app-community-active-season-card
+                          [name]="activeSeason()?.name || ''"
+                          [confirming]="closeSeasonConfirming"
+                          [saving]="seasonSaving"
+                          (requestClose)="requestCloseSeason()"
+                          (confirmClose)="closeActiveSeason()"
+                          (cancelClose)="cancelCloseSeason()"
+                        ></app-community-active-season-card>
                       }
                     }
 
@@ -928,26 +901,8 @@
                       </div>
                     }
 
-                    @if (competition?.settings?.rankingsEnabled && trophies().length > 0) {
-                      <div class="trophies-grid">
-                        @for (season of trophies(); track season.id) {
-                          <article class="trophy-card">
-                            <span class="trophy-icon">🏆</span>
-                            <div>
-                              <strong>{{ season.name }}</strong>
-                              <span>
-                                {{ season.championDisplayName || season.championUsername }}
-                                · {{ season.championPoints }} {{ 'communities.pointsShort' | t }}
-                              </span>
-                            </div>
-                          </article>
-                        }
-                      </div>
-                    } @else if (competition?.settings?.rankingsEnabled) {
-                      <div class="module-empty compact">
-                        <h3>{{ 'communities.noTrophies' | t }}</h3>
-                        <p>{{ 'communities.noTrophiesText' | t }}</p>
-                      </div>
+                    @if (competition?.settings?.rankingsEnabled) {
+                      <app-community-season-trophies [seasons]="trophies()"></app-community-season-trophies>
                     }
                   </section>
                 }
