@@ -3,7 +3,7 @@ import { ChangeDetectorRef } from '@angular/core';
 import { fakeAsync, flushMicrotasks, TestBed, tick } from '@angular/core/testing';
 import { NEVER, Subject, of, throwError } from 'rxjs';
 import { environment } from 'src/environment/environment';
-import { AdminAuditComponent, AdminPlatformOverview, AdminGrowthTrends } from './admin-audit.component';
+import { AdminAuditComponent, AdminPlatformOverview, AdminGrowthTrends, AdminVenueQuality } from './admin-audit.component';
 
 describe('AdminAuditComponent — platform overview in audit page', () => {
   let http: jasmine.SpyObj<HttpClient>;
@@ -33,6 +33,18 @@ describe('AdminAuditComponent — platform overview in audit page', () => {
     ]
   };
 
+
+  const quality: AdminVenueQuality = {
+    venues: 158, withoutSport: 22, withoutCoordinates: 37,
+    withoutAddress: 56, withoutAddressAndCoordinates: 12,
+    districts: [
+      { district: 'Lisboa', venues: 100, withoutSport: 12, withoutCoordinates: 25, withoutAddress: 38, withoutAddressAndCoordinates: 4 },
+      { district: 'Sem distrito', venues: 8, withoutSport: 7, withoutCoordinates: 8, withoutAddress: 8, withoutAddressAndCoordinates: 8 },
+      { district: 'Porto', venues: 50, withoutSport: 3, withoutCoordinates: 4, withoutAddress: 10, withoutAddressAndCoordinates: 0 }
+    ],
+    generatedAt: '2026-10-26T19:00:00Z'
+  };
+
   beforeEach(() => {
     http = jasmine.createSpyObj<HttpClient>('HttpClient', ['get', 'post']);
     changeDetector = jasmine.createSpyObj<ChangeDetectorRef>('ChangeDetectorRef', ['markForCheck', 'detectChanges']);
@@ -40,6 +52,46 @@ describe('AdminAuditComponent — platform overview in audit page', () => {
   });
 
   afterEach(() => component.ngOnDestroy());
+
+
+  it('loads venue quality only after the administrator expands the section', () => {
+    http.get.and.returnValues(of(summary), of(trends), of(quality));
+    component.ngOnInit();
+    expect(http.get).toHaveBeenCalledTimes(2);
+    component.toggleVenueQuality();
+    expect(http.get).toHaveBeenCalledTimes(3);
+    expect(http.get).toHaveBeenCalledWith(
+      environment.apiUrl + '/api/admin/overview/venue-quality'
+    );
+    expect(component.quality?.withoutSport).toBe(22);
+    expect(component.quality?.withoutAddressAndCoordinates).toBe(12);
+    expect(component.quality?.districts[0].district).toBe('Lisboa');
+    expect(component.qualityLoading).toBeFalse();
+
+    component.toggleVenueQuality();
+    component.toggleVenueQuality();
+    expect(http.get).toHaveBeenCalledTimes(3);
+  });
+
+  it('can retry venue coverage independently from activity indicators', () => {
+    http.get.and.returnValue(throwError(() => new Error('connection lost')));
+    component.toggleVenueQuality();
+    expect(component.qualityError).toContain('Não foi possível');
+    expect(component.quality).toBeNull();
+
+    http.get.and.returnValue(of(quality));
+    component.loadVenueQuality();
+    expect(component.qualityError).toBe('');
+    expect(component.quality?.venues).toBe(158);
+  });
+
+  it('cancels pending venue coverage on leaving the admin page', fakeAsync(() => {
+    http.get.and.returnValue(NEVER);
+    component.toggleVenueQuality();
+    component.ngOnDestroy();
+    tick(12_001);
+    expect(component.qualityError).toBe('');
+  }));
 
   it('loads admin counters and eight-week trends on entering the dashboard', () => {
     http.get.and.returnValues(of(summary), of(trends));
