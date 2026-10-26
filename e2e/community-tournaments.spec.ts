@@ -3556,3 +3556,138 @@ test('Premium populated tournament QA: 33 participants display the 32-player saf
   expect(fixture.scheduleAttempts).toBe(0);
   expect(fixture.organizerMutations).toEqual([]);
 });
+
+
+/**
+ * Premium populated tournament QA — strict role split in TWO distinct browsers.
+ * Independent fake JWTs, independent mocked role-dependent API responses.
+ * Deliberately does not submit enrollment, scheduling, deletion, result changes
+ * or any moderation operation. Does not use LIVE accounts or backend.
+ */
+test('Premium populated tournament QA: organizer can draft a result while participant only reads the same round', async ({ browser }, testInfo) => {
+  test.setTimeout(100_000);
+  const ownerContext = await browser.newContext();
+  const memberContext = await browser.newContext();
+  try {
+    const owner = await ownerContext.newPage();
+    const member = await memberContext.newPage();
+    const ownerApi = await mockCommunityApi(owner, 'OWNER', 'paged');
+    const memberApi = await mockCommunityApi(member, 'MEMBER', 'paged');
+    for (const width of [390, 1366]) {
+      await Promise.all([owner.setViewportSize({ width, height: 844 }),
+        member.setViewportSize({ width, height: 844 })]);
+      for (const language of ['pt', 'en']) {
+        await Promise.all([owner.goto('/menu/communities/7?tab=tournaments'),
+          member.goto('/menu/communities/7?tab=tournaments')]);
+        await Promise.all([owner.evaluate(v => localStorage.setItem('d24-language', v), language),
+          member.evaluate(v => localStorage.setItem('d24-language', v), language)]);
+        await Promise.all([owner.reload(), member.reload()]);
+        await expect(owner.locator('.tournament-heading h4')).toHaveText('Liga de Outono');
+        await expect(member.locator('.tournament-heading h4')).toHaveText('Liga de Outono');
+        await expect(owner.locator('.match-card').first()).toBeVisible();
+        await expect(member.locator('.match-card').first()).toBeVisible();
+
+        // Identical mock match, different privilege; member cannot edit even
+        // when explicitly opening the same competition as an organizer.
+        const ownerForm = owner.locator('.match-card').first().locator('.score-edit');
+        await expect(ownerForm).toBeVisible();
+        await expect(member.locator('.score-edit')).toHaveCount(0);
+        await expect(member.locator('.match-card .match-score').first()).toBeVisible();
+        await expect(member.locator('.create-tournament')).toHaveCount(0);
+        await expect(member.locator('.competition-delete-confirm')).toHaveCount(0);
+        const inputs = ownerForm.locator('input[type="number"]');
+        await expect(inputs).toHaveCount(2);
+        const save = ownerForm.locator('button');
+        await expect(save).toBeDisabled();
+        await inputs.nth(0).fill('3');
+        await inputs.nth(1).fill('1');
+        await expect(save).toBeEnabled();
+
+        for (const page of [owner, member]) {
+          const dims = await page.evaluate(() => ({
+            viewport: innerWidth, documentWidth: document.documentElement.scrollWidth
+          }));
+          expect(dims.documentWidth, JSON.stringify(dims))
+            .toBeLessThanOrEqual(width + 2);
+        }
+        await testInfo.attach('roles-result-' + width + '-' + language, {
+          body: await ownerForm.screenshot(), contentType: 'image/png'
+        });
+        // Never click the enabled save button.
+        const ownerToken = await owner.evaluate(() => localStorage.getItem('t'));
+        const memberToken = await member.evaluate(() => localStorage.getItem('t'));
+        expect(ownerToken).not.toEqual(memberToken);
+      }
+    }
+    expect(ownerApi.organizerMutations).toEqual([]);
+    expect(memberApi.organizerMutations).toEqual([]);
+    expect(ownerApi.scheduleAttempts).toBe(0);
+    expect(memberApi.scheduleAttempts).toBe(0);
+    for (const fixture of [ownerApi, memberApi]) {
+      expect(fixture.unmocked.filter(url =>
+        /^(POST|PUT|PATCH|DELETE) \/api\/communities\//.test(url))).toEqual([]);
+    }
+  } finally {
+    await Promise.all([ownerContext.close(), memberContext.close()]);
+  }
+});
+
+test('Premium populated tournament QA: member views both team rosters but never sees organizer scheduling controls', async ({ browser }, testInfo) => {
+  test.setTimeout(100_000);
+  const ownerContext = await browser.newContext();
+  const memberContext = await browser.newContext();
+  try {
+    const owner = await ownerContext.newPage();
+    const member = await memberContext.newPage();
+    const ownerApi = await mockCommunityApi(owner, 'OWNER', 'teams-schedule');
+    const memberApi = await mockCommunityApi(member, 'MEMBER', 'teams-schedule');
+    for (const width of [390, 1366]) {
+      await Promise.all([owner.setViewportSize({ width, height: 844 }),
+        member.setViewportSize({ width, height: 844 })]);
+      await Promise.all([owner.goto('/menu/communities/7?tab=tournaments'),
+        member.goto('/menu/communities/7?tab=tournaments')]);
+      await expect(owner.locator('.team-roster-card')).toHaveCount(2);
+      await expect(member.locator('.team-roster-card')).toHaveCount(2);
+      for (const page of [owner, member]) {
+        await expect(page.locator('.team-roster-card').first()).toContainText('Azuis');
+        await expect(page.locator('.team-roster-card').last()).toContainText('Verdes');
+      }
+      await expect(owner.locator('.team-schedule-action')).toBeVisible();
+      await expect(member.locator('.team-schedule-action')).toHaveCount(0);
+      await expect(member.locator('.team-player-assign')).toHaveCount(0);
+      await expect(member.getByRole('button', { name: 'Adicionar equipa' })).toHaveCount(0);
+      await expect(member.getByRole('button', { name: 'Eliminar competição' })).toHaveCount(0);
+
+      const publish = owner.locator('.team-schedule-action > button');
+      await expect(publish).toBeEnabled();
+      await publish.click();
+      const confirm = owner.locator('.team-schedule-action .confirm-actions');
+      await expect(confirm).toBeVisible();
+      await expect(member.locator('.confirm-actions')).toHaveCount(0);
+      await testInfo.attach('roles-team-confirmation-' + width, {
+        body: await owner.locator('.team-schedule-action').screenshot(),
+        contentType: 'image/png'
+      });
+      // Only cancel in the owner's browser. Never call schedule.
+      await confirm.locator('button').last().click();
+      await expect(confirm).toHaveCount(0);
+      for (const page of [owner, member]) {
+        const size = await page.evaluate(() => ({
+          viewport: innerWidth, documentWidth: document.documentElement.scrollWidth
+        }));
+        expect(size.documentWidth, JSON.stringify(size))
+          .toBeLessThanOrEqual(width + 2);
+      }
+    }
+    expect(ownerApi.teamFixtures).toHaveLength(0);
+    expect(memberApi.teamFixtures).toHaveLength(0);
+    expect(ownerApi.organizerMutations).toEqual([]);
+    expect(memberApi.organizerMutations).toEqual([]);
+    for (const fixture of [ownerApi, memberApi]) {
+      expect(fixture.unmocked.filter(url =>
+        /^(POST|PUT|PATCH|DELETE) \/api\/communities\//.test(url))).toEqual([]);
+    }
+  } finally {
+    await Promise.all([ownerContext.close(), memberContext.close()]);
+  }
+});
