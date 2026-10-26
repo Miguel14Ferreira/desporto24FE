@@ -27,7 +27,7 @@ describe('AdminUserReportsComponent PT/EN Concept One audit', () => {
     localStorage.setItem('d24-language', 'pt');
     service = jasmine.createSpyObj<AdminUserReportsService>('AdminUserReportsService', ['listOpen', 'updateStatus']);
     service.listOpen.and.returnValue(of([report]));
-    service.updateStatus.and.returnValue(of(void 0));
+    service.updateStatus.and.returnValue(of({ ...report, status: 'REVIEWED' }));
     await TestBed.configureTestingModule({
       declarations: [AdminUserReportsComponent],
       imports: TEST_IMPORTS,
