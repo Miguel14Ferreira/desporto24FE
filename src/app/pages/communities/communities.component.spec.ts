@@ -184,6 +184,63 @@ describe('CommunitiesComponent public session eligibility', () => {
     }
   });
 
+  it('keeps overturned BO3 closed until explicit continuation with real riders and heat', () => {
+    component.selected={id:12} as any;
+    component.selectedSeasonId=44;
+    spyOn(component,'activeSeason').and.returnValue({id:44} as any);
+    component.sprintBrackets=[{
+      id:53,
+      incidents:[{id:7,seriesKey:'SP53-Q2',heatNumber:1,
+        status:'OFFICIAL_SERIES_AWARDED'}],
+      matches:[{seriesKey:'SP53-Q2',riderA:'r1',riderB:'r24',
+        status:'READY',winner:null}]
+    } as any];
+    component.sprintReviewBracketId=53;
+    component.sprintReviewIncidentId=7;
+    component.sprintReviewHistory=[{
+      id:101,incidentId:7,action:'OVERTURNED',
+      officialName:'Fictional President',
+      officialReference:'Synthetic official chair revocation 2026/111',
+      panelReference:'Synthetic panel review 2026/110',
+      reason:'The series result is overturned',
+      recordedBy:'fixture_owner',recordedAt:'2026-10-26T00:00:00Z'
+    }];
+    component.sprintReviewMode='RECTIFY';
+    component.sprintReviewPresident='Fictional President';
+    component.sprintReviewReference='Synthetic new continuation document 2026/112';
+    component.sprintReviewReason='Both riders can continue after a recorded annulment';
+    const write=jasmine.createSpy('rectifySprintOfficialReview')
+      .and.returnValue(of({action:'RECTIFIED'}));
+    (component as any).communityService={rectifySprintOfficialReview:write};
+    spyOn<any>(component,'loadSprintReviewHistory').and.stub();
+    spyOn<any>(component,'loadSprintBrackets').and.stub();
+
+    // Neither cyclist order nor reinstatement nor next heat may be assumed.
+    component.saveSprintReview();
+    expect(write).not.toHaveBeenCalled();
+    component.sprintReviewSanctionAnnulledConfirmed=true;
+    component.sprintReviewRiderOrderConfirmed=true;
+    component.saveSprintReview();
+    expect(write).not.toHaveBeenCalled();
+    component.sprintReviewNextHeatNumber=1;
+    component.saveSprintReview();
+    expect(write).toHaveBeenCalledWith(12,44,53,7,jasmine.objectContaining({
+      orderedRiders:['r1','r24'],nextHeatNumber:1,
+      overturnedDecisionReference:'Synthetic official chair revocation 2026/111',
+      sanctionAnnulledByPresident:true
+    }));
+    const current=localStorage.getItem('d24-language');
+    try {
+      localStorage.setItem('d24-language','pt');
+      expect(t('communities.trackCycling.rectifyNoFake')).toContain('Sem nova vitória');
+      localStorage.setItem('d24-language','en');
+      expect(t('communities.trackCycling.rectifyNoFake')).toContain('No winner');
+    } finally {
+      if(current===null)localStorage.removeItem('d24-language');
+      else localStorage.setItem('d24-language',current);
+    }
+  });
+
   it('requires a documented full-series decision for BO3 disqualification', () => {
     const bracket={format:'OLYMPIC_TWENTY_FOUR_REPECHAGE',interruption:null,
       matches:[{seriesKey:'SP53-Q1',status:'IN_PROGRESS',
