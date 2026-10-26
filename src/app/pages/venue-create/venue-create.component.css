@@ -354,3 +354,23 @@
   border-radius: 999px;
 }
 .venue-create-form select[aria-invalid="true"] { border-color: #f87171; }
+
+
+/* Form groups, not individual controls: protect dense sports and amenity grids. */
+.venue-create-page .venue-create-form > .venue-create-section-title:not(:first-child) {
+  margin-top: 16px;
+}
+.venue-create-page .venue-create-form > .venue-create-similar {
+  margin-block: 4px;
+}
+.venue-create-page .venue-create-form > details.venue-create-amenities {
+  margin-top: 8px;
+}
+@media (max-width: 640px) {
+  .venue-create-page .venue-create-form > .venue-create-section-title:not(:first-child) {
+    margin-top: 12px;
+  }
+  .venue-create-page .venue-create-form > details.venue-create-amenities {
+    margin-top: 4px;
+  }
+}
