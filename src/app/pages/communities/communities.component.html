@@ -1192,7 +1192,9 @@
                                           : incident.status === 'ADJUDICATION_REQUIRED'
                                             ? ('communities.trackCycling.disciplineBlocked' | t)
                                             : incident.status === 'FAULT_START_PENDING'
-                                              ? ('communities.trackCycling.faultPending' | t)
+                                              ? ((incident.decisionType === 'PRE_SPRINT_RESTART'
+                                                ? 'communities.trackCycling.preSprintPending'
+                                                : 'communities.trackCycling.faultPending') | t)
                                             : incident.status === 'FAULT_START_OK'
                                               ? ('communities.trackCycling.faultAuthorized' | t)
                                             : incident.status === 'RESTART_PENDING'
