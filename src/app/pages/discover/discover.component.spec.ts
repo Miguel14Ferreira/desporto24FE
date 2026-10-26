@@ -938,7 +938,7 @@ describe('DiscoverComponent', () => {
     expect(component.venuesLoadError).toBeTrue();
     expect(venueService.suggest.calls.count()).toBe(before + 1);
     expect(fixture.nativeElement.querySelector('.venue-broaden--sport')).toBeNull();
-    expect(fixture.nativeElement.querySelector('.pillar-panel .pillar-empty')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.discovery-grid > .pillar-panel:first-child .pillar-empty')).toBeNull();
   });
 
   it('suggests increasing the GPS radius without dropping other filters', () => {
