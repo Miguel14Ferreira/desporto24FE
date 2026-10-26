@@ -16,6 +16,9 @@ Nunca partilhar passwords, tokens ou screenshots de dados LIVE em PRs, logs ou c
 - Se as duas contas pertencerem à mesma comunidade, consulta no máximo duas comunidades
   partilhadas, dois detalhes de torneios por conta e confirma a diferença de papéis
   **OWNER/ADMIN/MEMBER**, se existir.
+- Se não existir um detalhe de torneio numa comunidade partilhada, consulta no máximo
+  **uma comunidade já pertencente a cada conta** para procurar uma amostra autorizada.
+  Só faz GET e mantém o limite global de 34 pedidos.
 - Se uma comunidade **PRIVATE** pertencer apenas a uma das contas, testa no máximo um
   pedido de detalhe com o outro utilizador, esperando 403 ou 404. Nunca lê o corpo
   dessa resposta, nem mesmo se o servidor devolver incorretamente 200.
@@ -29,6 +32,9 @@ alteração de papéis ou eliminação. Logo, não pode demonstrar que um MEMBER
 403 ao tentar gravar resultados, nem substitui os testes do backend Spring.
 Se não existirem comunidades partilhadas com papéis distintos, regista `[SKIP]`:
 **não** reportar “permissões de gestão validadas” nesses casos.
+Também regista `[SKIP]` quando a amostra tem zero comunidades ou zero detalhes de
+ torneios; só imprime `[PASS]` para a cobertura que realmente executou. Os
+contadores são agregados e nunca incluem identificadores.
 
 ## Execução
 
