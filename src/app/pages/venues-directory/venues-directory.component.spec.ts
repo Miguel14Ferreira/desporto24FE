@@ -73,4 +73,25 @@ describe('VenuesDirectoryComponent', () => {
     expect(component.venues[0].id).toBe(15);
     component.ngOnDestroy();
   });
+  it('restores the filtered page when returning from a venue detail', () => {
+    const restored = new VenuesDirectoryComponent(api,
+      { snapshot: { queryParamMap: convertToParamMap({
+        page: '2', district: 'Lisboa', city: 'Oeiras', name: 'Campo'
+      }) } } as ActivatedRoute,
+      { markForCheck: () => {} } as ChangeDetectorRef);
+    restored.ngOnInit();
+    expect(api.suggest).toHaveBeenCalledOnceWith('Campo', 'Oeiras', '', 2, 'Lisboa');
+    expect(restored.page).toBe(2);
+    restored.ngOnDestroy();
+  });
+
+  it('ignores invalid page parameters rather than requesting an unsafe page', () => {
+    const restored = new VenuesDirectoryComponent(api,
+      { snapshot: { queryParamMap: convertToParamMap({ page: '-100', district: 'Lisboa' }) } } as ActivatedRoute,
+      { markForCheck: () => {} } as ChangeDetectorRef);
+    restored.ngOnInit();
+    expect(api.suggest).toHaveBeenCalledOnceWith('', '', '', 0, 'Lisboa');
+    restored.ngOnDestroy();
+  });
+
 });
