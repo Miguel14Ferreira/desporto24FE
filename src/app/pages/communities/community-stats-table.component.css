@@ -1,0 +1,16 @@
+/* Read-only statistics table. Horizontal scroll and column metrics preserved. */
+:host {display:block;}
+.stats-table-wrap {
+  margin-top:.8rem;overflow-x:auto;
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:.85rem;
+}
+.stats-table {width:100%;border-collapse:collapse;min-width:820px;}
+.stats-table th,.stats-table td {
+  padding:.72rem .7rem;border-bottom:1px solid rgba(255,255,255,.06);
+  text-align:center;white-space:nowrap;
+}
+.stats-table th {color:#94a3b8;font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;}
+.stats-table th:first-child,.stats-table td:first-child{text-align:left;}
+.ranking-player{display:grid;gap:.08rem;}
+.ranking-player span{color:#64748b;font-size:.72rem;}
