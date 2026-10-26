@@ -1277,7 +1277,7 @@
                                               ? ('communities.trackCycling.neutralPending' | t)
                                             : incident.status === 'POSITIONS_PENDING'
                                               ? ('communities.trackCycling.neutralPositionsPending' | t)
-                                            : incident.status === 'NEUTRAL_RESTART_AUTHORIZED'
+                                            : incident.status === 'NEUTRAL_RESTART_OK'
                                               ? ('communities.trackCycling.neutralAuthorized' | t)
                                             : incident.status === 'RESTART_AUTHORIZED'
                                               ? ('communities.trackCycling.rerunAuthorized' | t)
@@ -1527,7 +1527,7 @@
                                   @if (incident.status === 'POSITIONS_PENDING') {
                                     <p role="note">{{ 'communities.trackCycling.neutralPositionsNotice' | t }}</p>
                                   }
-                                  @if (incident.status === 'NEUTRAL_RESTART_AUTHORIZED') {
+                                  @if (incident.status === 'NEUTRAL_RESTART_OK') {
                                     <p role="note">{{ 'communities.trackCycling.neutralNoWinner' | t }}</p>
                                     <small>{{ 'communities.trackCycling.neutralSameRiders' | t }}:
                                       {{ (incident.rerunRiders || []).join(' · ') }}</small>
