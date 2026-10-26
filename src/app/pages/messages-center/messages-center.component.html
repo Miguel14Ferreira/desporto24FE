@@ -83,9 +83,9 @@
         @if (selected; as conversation) {
           <header class="inbox-detail-heading">
             <button type="button" class="inbox-mobile-back" (click)="backToMobileInbox()"
-              [attr.aria-label]="'inbox.backToList' | t" [attr.title]="'inbox.backToList' | t">
+              [attr.aria-label]="'inbox.backInbox' | t" [attr.title]="'inbox.backInbox' | t">
               <span aria-hidden="true">←</span>
-              <span>{{ 'inbox.backToList' | t }}</span>
+              <span>{{ 'inbox.backInbox' | t }}</span>
             </button>
             <div class="inbox-chat-identity">
               <span class="inbox-avatar inbox-detail-avatar"
