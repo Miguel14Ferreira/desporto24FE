@@ -3826,7 +3826,7 @@ const PT: Dictionary = {
   'sessionDetail.excelPlayerUnranked': 'Sem pontuação associada · média estimada {{points}}',
   'sessionDetail.teamsExcelUsed': 'Pontuação Excel associada a {{known}} de {{total}} jogadores confirmados.',
   'sessionDetail.teamsExcelPrivacy': 'Apenas o organizador consulta esta sugestão. Os jogadores são divididos em duas equipas, sem publicar pontuações individuais.',
-  'sessionDetail.teamsText': 'Usa o histórico da comunidade para sugerir duas equipas equilibradas.',
+  'sessionDetail.teamsText': 'Escolhe o histórico dos jogos ou os pontos da classificação individual Excel mais recente. A sugestão usa apenas jogadores confirmados e só é guardada após confirmares.',
   'sessionDetail.generateTeams': 'Gerar equipas',
   'sessionDetail.regenerateTeams': 'Gerar novas equipas',
   'sessionDetail.generatingTeams': 'A gerar equipas...',
