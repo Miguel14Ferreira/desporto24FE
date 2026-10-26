@@ -3819,7 +3819,7 @@ export const EN: Record<string, string> = {
   'sessionDetail.excelPlayerUnranked': 'No linked ranking · estimated average {{points}}',
   'sessionDetail.teamsExcelUsed': 'Excel points linked for {{known}} of {{total}} confirmed players.',
   'sessionDetail.teamsExcelPrivacy': 'Only the organiser can preview this suggestion. Players are split into two teams without publishing individual scores.',
-  'sessionDetail.teamsText': 'Use the community history to suggest two balanced teams.',
+  'sessionDetail.teamsText': 'Choose match history or the latest imported individual Excel standings. Only confirmed players are considered, and the suggestion is saved only after your confirmation.',
   'sessionDetail.generateTeams': 'Generate teams',
   'sessionDetail.regenerateTeams': 'Generate new teams',
   'sessionDetail.generatingTeams': 'Generating teams...',
