@@ -1,4 +1,6 @@
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { RouterTestingModule } from '@angular/router/testing';
+import { TestBed } from '@angular/core/testing';
 import { of, Subject, throwError } from 'rxjs';
 import { ChangeDetectorRef } from '@angular/core';
 import { VenuesDirectoryComponent } from './venues-directory.component';
@@ -83,6 +85,31 @@ describe('VenuesDirectoryComponent', () => {
     expect(api.suggest).toHaveBeenCalledOnceWith('Campo', 'Oeiras', '', 2, 'Lisboa');
     expect(restored.page).toBe(2);
     restored.ngOnDestroy();
+  });
+
+  it('keeps filters, result heading and catalogue cards visually separated', async () => {
+    await TestBed.configureTestingModule({
+      imports: [VenuesDirectoryComponent, RouterTestingModule],
+      providers: [
+        { provide: VenueService, useValue: api },
+        { provide: ActivatedRoute, useValue: {
+          snapshot: { queryParamMap: convertToParamMap({ district: 'Lisboa' }) }
+        } }
+      ]
+    }).compileComponents();
+    const rendered = TestBed.createComponent(VenuesDirectoryComponent);
+    rendered.detectChanges();
+    const root: HTMLElement = rendered.nativeElement;
+    const filters = root.querySelector<HTMLElement>('.venue-directory-filters');
+    const heading = root.querySelector<HTMLElement>('.venue-directory-result-heading');
+    const cards = root.querySelectorAll<HTMLElement>('.venue-directory-card');
+    expect(filters).not.toBeNull();
+    expect(heading).not.toBeNull();
+    expect(cards.length).toBe(1);
+    const narrow = window.matchMedia('(max-width: 620px)').matches;
+    expect(getComputedStyle(filters!).gap).toBe(narrow ? '14px' : '16px');
+    expect(getComputedStyle(heading!).marginTop).toBe(narrow ? '20px' : '24px');
+    rendered.destroy();
   });
 
   it('ignores invalid page parameters rather than requesting an unsafe page', () => {
